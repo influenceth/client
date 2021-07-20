@@ -1,19 +1,22 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { QueryClient, QueryClientProvider } from 'react-query';
 
-import { Provider } from 'react-redux'
-import { store } from './store'
-
-import App from './App';
+import Game from '~/views/Game';
+import Interface from '~/views/Interface';
+import Scene from '~/views/Scene';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 
+const queryClient = new QueryClient();
+
 ReactDOM.render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <App />
-    </Provider>
-  </React.StrictMode>,
+  <QueryClientProvider client={queryClient} contextSharing={true}>
+    <Game>
+      <Interface />
+      <Scene />
+    </Game>
+  </QueryClientProvider>,
   document.getElementById('root')
 );
 
