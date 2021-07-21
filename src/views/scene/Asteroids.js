@@ -1,9 +1,7 @@
 import { useRef, useState, useEffect, useLayoutEffect } from 'react';
-import { useFrame } from '@react-three/fiber';
 
 // eslint-disable-next-line
 import Worker from 'worker-loader!../../worker';
-import constants from '~/constants';
 import useStore from '~/hooks/useStore';
 import useAsteroids from '~/hooks/useAsteroids';
 

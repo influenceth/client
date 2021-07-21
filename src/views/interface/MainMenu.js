@@ -3,7 +3,7 @@ import { color } from 'styled-system';
 
 import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
-import Logo from '~/assets/menu-logo.svg';
+import Logo from './mainMenu/menu-logo.svg';
 import { FaEthereum } from 'react-icons/fa';
 import { MdSettings } from 'react-icons/md';
 import { GiArchBridge} from 'react-icons/gi';

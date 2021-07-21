@@ -4,7 +4,6 @@ import { useTexture } from '@react-three/drei';
 
 // eslint-disable-next-line
 import Worker from 'worker-loader!../../worker';
-import constants from '~/constants';
 import usePlanets from '~/hooks/usePlanets';
 import useStore from '~/hooks/useStore';
 

@@ -258,7 +258,7 @@ class Lensflare extends Mesh {
       occlusionMap.dispose()
 
       for (let i = 0, l = elements.length; i < l; i++) {
-        elements[i].texture.dispose()
+        elements[i].texture?.dispose()
       }
     }
   }
