@@ -1,4 +1,4 @@
-import React from 'react';
+import { Suspense } from 'react';
 import ReactDOM from 'react-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
@@ -11,12 +11,14 @@ import reportWebVitals from './reportWebVitals';
 const queryClient = new QueryClient();
 
 ReactDOM.render(
-  <QueryClientProvider client={queryClient} contextSharing={true}>
-    <Game>
-      <Interface />
-      <Scene />
-    </Game>
-  </QueryClientProvider>,
+  <Suspense fallback={<div>Loading...</div>}>
+    <QueryClientProvider client={queryClient} contextSharing={true}>
+      <Game>
+        <Interface />
+        <Scene />
+      </Game>
+    </QueryClientProvider>
+  </Suspense>,
   document.getElementById('root')
 );
 

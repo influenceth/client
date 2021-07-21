@@ -4,7 +4,8 @@ import { Canvas } from '@react-three/fiber';
 import styled from 'styled-components';
 
 import { TrackballModControls } from '~/components/TrackballModControls';
-import constants from '~/config/constants';
+import constants from '~/constants';
+import Star from './scene/Star';
 import Asteroids from './scene/Asteroids';
 
 const StyledContainer = styled.div`
@@ -46,6 +47,7 @@ const Scene = (props) => {
       <Canvas {...config} >
         <QueryClientProvider client={queryClient} contextSharing={true}>
           <TrackballModControls maxDistance={10 * constants.AU}>
+            <Star />
             <Asteroids />
           </TrackballModControls>
         </QueryClientProvider>

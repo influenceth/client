@@ -1,6 +1,6 @@
 import { useRef, useLayoutEffect } from 'react';
 
-import constants from '~/config/constants';
+import constants from '~/constants';
 import useAsteroids from '~/hooks/useAsteroids';
 
 const Asteroids = (props) => {
@@ -14,9 +14,7 @@ const Asteroids = (props) => {
     });
 
     flatData = [].concat.apply([], data);
-    positions = Array(2500 * 3).fill(0);
-    positions.splice(0, flatData.length, ...flatData);
-    positions = new Float32Array(positions);
+    positions = new Float32Array(flatData);
   }
 
   const geometry = useRef();
@@ -26,12 +24,7 @@ const Asteroids = (props) => {
   });
 
   return (
-    <points
-      onContextMenu={(e) => console.log('context menu')}
-      onClick={(e) => console.log('click')}
-      onDoubleClick={(e) => console.log('double click')}
-      onPointerOver={(e) => console.log('over')}
-      onPointerOut={(e) => console.log('out')}>
+    <points>
       <bufferGeometry ref={geometry} attach="geometry">
         <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3]} />
       </bufferGeometry>
