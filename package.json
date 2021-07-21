@@ -8,7 +8,7 @@
     "axios": "^0.21.1",
     "glsl-noise": "^0.0.0",
     "glslify": "^7.1.1",
-    "influence-utils": "^0.6.0",
+    "influence-utils": "^0.7.0",
     "react": "^17.0.2",
     "react-app-rewired": "^2.1.8",
     "react-dom": "^17.0.2",

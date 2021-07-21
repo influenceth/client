@@ -1,11 +1,13 @@
 import { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import { AdditiveBlending } from 'three';
 import { useTexture } from '@react-three/drei';
+import { KeplerianOrbit } from 'influence-utils';
 
 // eslint-disable-next-line
 import Worker from 'worker-loader!../../worker';
 import usePlanets from '~/hooks/usePlanets';
 import useStore from '~/hooks/useStore';
+import Orbit from './planets/Orbit';
 
 const worker = new Worker();
 
@@ -32,18 +34,23 @@ const Planets = (props) => {
   });
 
   return (
-    <points>
-      <bufferGeometry ref={geometry}>
-        <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3]} />
-      </bufferGeometry>
-      <pointsMaterial
-        blending={AdditiveBlending}
-        color="white"
-        map={texture}
-        size={6}
-        sizeAttenuation={false}
-        transparent={true} />
-    </points>
+    <group position={[ 0, 0, 0 ]}>
+      <points>
+        <bufferGeometry ref={geometry}>
+          <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3]} />
+        </bufferGeometry>
+        <pointsMaterial
+          blending={AdditiveBlending}
+          color="white"
+          map={texture}
+          size={6}
+          sizeAttenuation={false}
+          transparent={true} />
+      </points>
+      {planets.data && planets.data.map((p, i) => {
+        return (<Orbit key={i} planet={p} />);
+      })}
+    </group>
   )
 };
 
