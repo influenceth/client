@@ -6,10 +6,6 @@ import { Lensflare, LensflareElement } from '~/lib/Lensflare';
 
 import constants from '~/constants';
 import config from './star/lensflareConfig';
-import lensflare1 from './star/lensflare1.png';
-import lensflare2 from './star/lensflare2.png';
-import lensflare3 from './star/lensflare3.png';
-import star1 from './star/star1.png';
 
 // Setup initial lensflare to be modified by renders
 const lensflare = new Lensflare();
@@ -18,7 +14,14 @@ lensflareElements.push(new LensflareElement(null, 6, 0));
 lensflareElements.forEach((e) => lensflare.addElement(e));
 
 const Star = (props) => {
-  const textures = useTexture([ lensflare1, lensflare2, lensflare3, star1 ]);
+  const path = `${process.env.PUBLIC_URL}/textures/star/`;
+  const textures = useTexture([
+    `${path}lensflare1.png`,
+    `${path}lensflare2.png`,
+    `${path}lensflare3.png`,
+    `${path}star1.png`
+  ]);
+
   const [ alpha, setAlpha ] = useState(0);
   const [ size, setSize ] = useState(0);
 

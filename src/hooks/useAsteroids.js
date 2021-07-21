@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const useAsteroids = () => {
   return useQuery('asteroids', async () => {
-    const response = await axios.get(`${process.env.REACT_APP_API_URL}/asteroids`);
+    const response = await axios.get(`${process.env.REACT_APP_API_URL}/v1/asteroids`);
     return response.data;
   });
 };

@@ -1,23 +1,30 @@
-import { useRef, useLayoutEffect } from 'react';
+import { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import { useFrame } from '@react-three/fiber';
 
+// eslint-disable-next-line
+import Worker from 'worker-loader!../../worker';
 import constants from '~/constants';
+import useStore from '~/hooks/useStore';
 import useAsteroids from '~/hooks/useAsteroids';
+
+const worker = new Worker();
 
 const Asteroids = (props) => {
   const asteroids = useAsteroids();
-  let positions = new Float32Array(2500 * 3);
-  let data, flatData;
-
-  if (asteroids.data) {
-    data = asteroids.data.map((a) => {
-      return [ a.p.x * constants.AU, a.p.y * constants.AU, a.p.z * constants.AU ];
-    });
-
-    flatData = [].concat.apply([], data);
-    positions = new Float32Array(flatData);
-  }
-
+  const [ positions, setPositions ] = useState(new Float32Array(2500 * 3));
+  const adaliaTime = useStore(state => state.adaliaTime);
   const geometry = useRef();
+
+  // Listen for changes to asteroids data or global time and update asteroid positions
+  useEffect(() => {
+    if (asteroids.data) {
+      worker.postMessage({ topic: 'updateAsteroidPositions', asteroids: asteroids.data, elapsed: adaliaTime });
+    }
+  }, [ asteroids.data, adaliaTime ]);
+
+  worker.onmessage = (event) => {
+    if (event.data.topic === 'asteroidPositions') setPositions(new Float32Array(event.data.positions));
+  };
 
   useLayoutEffect(() => {
     geometry.current?.computeBoundingSphere();
@@ -25,10 +32,10 @@ const Asteroids = (props) => {
 
   return (
     <points>
-      <bufferGeometry ref={geometry} attach="geometry">
+      <bufferGeometry ref={geometry}>
         <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial attach="material" color="white" sizeAttenuation={false} size={2} />
+      <pointsMaterial color="white" sizeAttenuation={false} size={2} />
     </points>
   )
 };
