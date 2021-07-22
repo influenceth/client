@@ -1,6 +1,8 @@
 import styled from 'styled-components';
 import { ThemeProvider } from 'styled-components'
 import MainMenu from './interface/MainMenu';
+import Wallet from './interface/Wallet';
+import Watchlist from './interface/Watchlist';
 import Pane from '~/components/Pane';
 import theme from './theme';
 
@@ -18,6 +20,8 @@ const Interface = () => {
     <ThemeProvider theme={theme}>
       <StyledInterface>
         <MainMenu />
+        <Wallet />
+        <Watchlist />
       </StyledInterface>
     </ThemeProvider>
   );

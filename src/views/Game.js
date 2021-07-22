@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { START_TIMESTAMP } from 'influence-utils';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
@@ -12,9 +11,12 @@ const StyledMain = styled.main`
 `;
 
 const Game = (props) => {
-  // Update the game time to now
-  const updateAdaliaTime = useStore(state => state.updateAdaliaTime);
-  updateAdaliaTime(((Date.now() / 1000) - START_TIMESTAMP) / 3600);
+  // Update the current game time once at launch
+  const resetAdaliaTime = useStore(state => state.resetAdaliaTime);
+
+  useEffect(() => {
+    resetAdaliaTime();
+  }, [ resetAdaliaTime ])
 
   return (
     <StyledMain>
