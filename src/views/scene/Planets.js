@@ -1,7 +1,6 @@
 import { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import { AdditiveBlending } from 'three';
 import { useTexture } from '@react-three/drei';
-import { KeplerianOrbit } from 'influence-utils';
 
 // eslint-disable-next-line
 import Worker from 'worker-loader!../../worker';

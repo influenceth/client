@@ -1,5 +1,4 @@
 import styled from 'styled-components';
-import { color } from 'styled-system';
 
 const StyledMenuItem = styled.div`
   align-items: center;

@@ -1,9 +1,6 @@
 import create from 'zustand';
 import { persist } from 'zustand/middleware'
-import { isExpired, decodeToken } from 'react-jwt';
 import axios from 'axios';
-
-import { START_TIMESTAMP } from 'influence-utils';
 
 const useStore = create(persist((set, get) => ({
 
@@ -37,17 +34,19 @@ const useStore = create(persist((set, get) => ({
   },
 
   // Adalian time in days elapsed since founding
-  adaliaTime: 0,
+  time: 0,
+
+  // Whether the time is auto-updating
+  autoUpdatingTime: true,
 
   // Updates the current time for time controls
-  updateAdaliaTime: (time) => set(state => {
-    return { adaliaTime: time };
+  updateTime: (time) => set(state => {
+    return { time: time };
   }),
 
-  // Resets the Adalian time to current
-  resetAdaliaTime: () => set(state => {
-    const time = ((Date.now() / 1000) - START_TIMESTAMP) / 3600;
-    return { adaliaTime: time };
+  // Pause auto-updates of Adalia time
+  updateAutoUpdatingTime: (updating) => set(state => {
+    return { autoUpdatingTime: updating };
   })
 })));
 

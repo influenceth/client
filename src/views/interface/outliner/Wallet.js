@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import useEagerConnect from '~/hooks/useEagerConnect';
 import useInactiveListener from '~/hooks/useInactiveListener';
 import { injected } from '~/lib/connectors';
+import Pane from './Pane';
 
 const StyledWallet = styled.div`
   pointer-events: auto;
@@ -32,23 +33,25 @@ const Wallet = () => {
   useInactiveListener(!triedEager || !!activatingConnector);
 
   return (
-    <StyledWallet>
-      <h2>Wallet</h2>
-      <span>{account}</span>
-      <button
-        onClick={() => {
-          setActivatingConnector(injected);
-          activate(injected);
-        }}>
-        Connect
-      </button>
-      <button
-        onClick={() => {
-          deactivate();
-        }}>
-        Disconnect
-      </button>
-    </StyledWallet>
+    <Pane>
+      <StyledWallet>
+        <h2>Wallet</h2>
+        <span>{account}</span>
+        <button
+          onClick={() => {
+            setActivatingConnector(injected);
+            activate(injected);
+          }}>
+          Connect
+        </button>
+        <button
+          onClick={() => {
+            deactivate();
+          }}>
+          Disconnect
+        </button>
+      </StyledWallet>
+    </Pane>
   );
 };
 

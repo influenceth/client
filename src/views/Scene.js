@@ -27,13 +27,14 @@ const Scene = (props) => {
   ], { path: `${process.env.PUBLIC_URL}/textures/skybox/`});
 
   const glConfig = {
+    frameloop: 'demand',
+    shadows: true,
     camera: {
       fov: 75,
       near: 1000000,
       far: constants.MAX_SYSTEM_RADIUS * constants.AU * 2,
       position: [ 4 * constants.AU, 0, 1.5 * constants.AU ]
     },
-    shadows: true,
     onCreated: (state) => {
       state.scene.background = skybox;
       state.raycaster.params.Points = {
@@ -52,7 +53,7 @@ const Scene = (props) => {
 
   return (
     <StyledContainer>
-      {process.env.NODE_ENV === 'development' && (<Stats />)}
+      {process.env.FPS && (<Stats />)}
       <Canvas {...glConfig} >
         <QueryClientProvider client={queryClient} contextSharing={true}>
           <TrackballModControls maxDistance={10 * constants.AU}>

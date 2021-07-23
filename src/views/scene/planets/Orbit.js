@@ -1,5 +1,4 @@
 import { useRef, useLayoutEffect } from 'react';
-import { Color } from 'three';
 import { KeplerianOrbit } from 'influence-utils';
 
 import constants from '~/constants';

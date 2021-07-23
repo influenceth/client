@@ -1,8 +1,8 @@
 import styled from 'styled-components';
-import { color } from 'styled-system';
 
 import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
+import Time from './mainMenu/Time';
 import Logo from './mainMenu/menu-logo.svg';
 import { FaEthereum } from 'react-icons/fa';
 import { MdSettings } from 'react-icons/md';
@@ -13,14 +13,15 @@ import { HiCollection } from 'react-icons/hi';
 import { GiMoonOrbit } from 'react-icons/gi';
 import { BiListCheck } from 'react-icons/bi';
 
-const Wrapper = styled.div`
+const StyledMainMenu = styled.div`
   align-items: flex-end;
+  bottom: 0;
   box-sizing: border-box;
   display: flex;
-  flex: 1 0 auto;
   padding: 25px 0 25px 25px;
   pointer-events: auto;
-  position: relative;
+  position: absolute;
+  width: 100%;
 `;
 
 const Background = styled.div`
@@ -74,17 +75,16 @@ const MenuWrapper = styled.div`
 const MenuFiller = styled.div`
   border-bottom: 4px solid ${props => props.theme.colors.mainBorder};
   flex: 1 0 auto;
-  margin-right: 25px;
 `;
 
 const MainMenu = (props) => {
   return (
-    <Wrapper>
+    <StyledMainMenu>
       <StyledLogo src={Logo} />
       <Background />
       <CornerBackground />
       <CornerBorder viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="0,25 0,21 21,0 25, 0" />
+        <polygon points="0,25 0,21 23,0 25,0" />
       </CornerBorder>
       <MenuWrapper>
         <Menu title="Map">
@@ -102,8 +102,9 @@ const MainMenu = (props) => {
           <MenuItem name="Rewards" icon={<AiFillStar />} />
         </Menu>
         <MenuFiller />
+        <Time />
       </MenuWrapper>
-    </Wrapper>
+    </StyledMainMenu>
   );
 };
 

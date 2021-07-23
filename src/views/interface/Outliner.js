@@ -1,27 +1,36 @@
 import styled from 'styled-components';
-import { color } from 'styled-system';
 
-const Wrapper = styled.div`
-  background-color: rgba(0, 0, 0, 0.33);
+import Wallet from './outliner/Wallet';
+
+const StyledOutliner = styled.div`
+  background-color: ${props => props.theme.colors.contentBackdrop};
   backdrop-filter: blur(4px);
   flex: 0 1 auto;
   height: 100%;
+  overflow: hidden;
   padding-bottom: 50px;
   pointer-events: auto;
+  height: 100%;
+  max-width: 25px;
+  transition: max-width 0.3s ease;
+
+  &:hover {
+    max-width: 360px;
+  }
 `;
 
-const StyledOutliner = styled.div`
-  border-left: 4px solid rgb(255, 255, 255, 0.25);
-  height: 100%;
-  min-width: 360px;
+const Container = styled.div`
+  padding: 0 10px;
+  width: 360px;
 `;
 
 const Outliner = (props) => {
   return (
-    <Wrapper>
-      <StyledOutliner>
-      </StyledOutliner>
-    </Wrapper>
+    <StyledOutliner>
+      <Container>
+        <Wallet />
+      </Container>
+    </StyledOutliner>
   );
 };
 

@@ -1,8 +1,7 @@
 import styled from 'styled-components';
+import Details from './interface/Details';
 import MainMenu from './interface/MainMenu';
 import Outliner from './interface/Outliner';
-import Pane from '~/components/Pane';
-import theme from '~/theme';
 
 const StyledInterface = styled.div`
   align-items: flex-end;
@@ -16,10 +15,19 @@ const StyledInterface = styled.div`
   z-index: 1000;
 `;
 
+const MainContainer = styled.div`
+  flex: 1 0 auto;
+  height: 100%;
+  position: relative;
+`;
+
 const Interface = () => {
   return (
     <StyledInterface>
-      <MainMenu />
+      <MainContainer>
+        <Details />
+        <MainMenu />
+      </MainContainer>
       <Outliner />
     </StyledInterface>
   );

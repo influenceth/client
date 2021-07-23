@@ -1,5 +1,4 @@
 import styled from 'styled-components';
-import { color } from 'styled-system';
 
 const StyledMenu = styled.div`
   cursor: pointer;
@@ -20,10 +19,11 @@ const MenuHeader = styled.div`
   font-size: 13px;
   font-weight: bold;
   height: 40px;
-  letter-spacing: 5px;
+  letter-spacing: 3px;
   line-height: 53px;
   text-align: center;
   text-transform: uppercase;
+  text-shadow: 0 0 3px black;
   transition: all 0.4s ease;
 
   ${StyledMenu}:hover & {

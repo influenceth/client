@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
 import { useWeb3React } from '@web3-react/core';
-import axios from 'axios';
 import { utils } from 'ethers';
 
 import useStore from '~/hooks/useStore';
@@ -24,7 +23,7 @@ const useAuth = () => {
         setAuthed(true);
       }
     }
-  }, [ token, account ]);
+  }, [ token, account, getToken, library ]);
 
   return { token, authed };
 };
