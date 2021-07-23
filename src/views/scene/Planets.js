@@ -8,6 +8,7 @@ import Worker from 'worker-loader!../../worker';
 import usePlanets from '~/hooks/usePlanets';
 import useStore from '~/hooks/useStore';
 import Orbit from './planets/Orbit';
+import theme from '~/theme';
 
 const worker = new Worker();
 
@@ -41,7 +42,7 @@ const Planets = (props) => {
         </bufferGeometry>
         <pointsMaterial
           blending={AdditiveBlending}
-          color="white"
+          color={theme.colors.main}
           map={texture}
           size={6}
           sizeAttenuation={false}

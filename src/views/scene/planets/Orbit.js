@@ -1,7 +1,9 @@
 import { useRef, useLayoutEffect } from 'react';
+import { Color } from 'three';
 import { KeplerianOrbit } from 'influence-utils';
 
 import constants from '~/constants';
+import theme from '~/theme';
 
 const Orbit = (props) => {
   const geometry = useRef();
@@ -10,6 +12,7 @@ const Orbit = (props) => {
   keplerianOrbit.getSmoothOrbit(360).forEach(p => {
     vertices.push(...[ p.x, p.y, p.z ].map(v => v * constants.AU))
   });
+
   const positions = new Float32Array(vertices);
 
   useLayoutEffect(() => {
@@ -22,7 +25,7 @@ const Orbit = (props) => {
         <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3]} />
       </bufferGeometry>
       <lineBasicMaterial
-        color="white"
+        color={theme.colors.main}
         depthWrite={false}
         opacity={0.3}
         transparent={true} />

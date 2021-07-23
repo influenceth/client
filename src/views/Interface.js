@@ -1,13 +1,14 @@
 import styled from 'styled-components';
-import { ThemeProvider } from 'styled-components'
 import MainMenu from './interface/MainMenu';
-import Wallet from './interface/Wallet';
-import Watchlist from './interface/Watchlist';
+import Outliner from './interface/Outliner';
 import Pane from '~/components/Pane';
-import theme from './theme';
+import theme from '~/theme';
 
 const StyledInterface = styled.div`
+  align-items: flex-end;
   bottom: 0;
+  display: flex;
+  flex-direction: row;
   pointer-events: none;
   position: absolute;
   top: 0;
@@ -17,13 +18,10 @@ const StyledInterface = styled.div`
 
 const Interface = () => {
   return (
-    <ThemeProvider theme={theme}>
-      <StyledInterface>
-        <MainMenu />
-        <Wallet />
-        <Watchlist />
-      </StyledInterface>
-    </ThemeProvider>
+    <StyledInterface>
+      <MainMenu />
+      <Outliner />
+    </StyledInterface>
   );
 };
 

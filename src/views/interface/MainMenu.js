@@ -14,12 +14,48 @@ import { GiMoonOrbit } from 'react-icons/gi';
 import { BiListCheck } from 'react-icons/bi';
 
 const Wrapper = styled.div`
-  bottom: 0;
+  align-items: flex-end;
   box-sizing: border-box;
+  display: flex;
+  flex: 1 0 auto;
   padding: 25px 0 25px 25px;
   pointer-events: auto;
+  position: relative;
+`;
+
+const Background = styled.div`
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0),
+    ${props => props.theme.colors.contentBackdrop} 50%,
+    ${props => props.theme.colors.contentBackdrop}
+  );
+  backdrop-filter: blur(4px);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 25px;
   position: absolute;
-  width: 100%;
+`;
+
+const CornerBackground = styled.div`
+  background: ${props => props.theme.colors.contentBackdrop};
+  backdrop-filter: blur(4px);
+  bottom: 25px;
+  clip-path: polygon(0 100%, 100% 100%, 100% 0);
+  right: 0;
+  position: absolute;
+  height: 25px;
+  width: 25px;
+`;
+
+const CornerBorder = styled.svg`
+  fill: ${props => props.theme.colors.mainBorder};
+  bottom: 25px;
+  right: 0;
+  position: absolute;
+  height: 25px;
+  width: 25px;
 `;
 
 const StyledLogo = styled.img`
@@ -31,18 +67,25 @@ const StyledLogo = styled.img`
 const MenuWrapper = styled.div`
   align-items: flex-end;
   display: flex;
+  flex: 1 0 auto;
   margin-left: 98px;
 `;
 
 const MenuFiller = styled.div`
-  border-bottom: 4px solid rgb(255, 255, 255, 0.25);
+  border-bottom: 4px solid ${props => props.theme.colors.mainBorder};
   flex: 1 0 auto;
+  margin-right: 25px;
 `;
 
 const MainMenu = (props) => {
   return (
     <Wrapper>
       <StyledLogo src={Logo} />
+      <Background />
+      <CornerBackground />
+      <CornerBorder viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="0,25 0,21 21,0 25, 0" />
+      </CornerBorder>
       <MenuWrapper>
         <Menu title="Map">
           <MenuItem name="Assets" icon={<HiCollection />} />

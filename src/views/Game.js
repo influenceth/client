@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { ThemeProvider } from 'styled-components'
 
 import useStore from '~/hooks/useStore';
+import theme from '~/theme';
 
 const StyledMain = styled.main`
   bottom: 0;
@@ -19,9 +21,11 @@ const Game = (props) => {
   }, [ resetAdaliaTime ])
 
   return (
-    <StyledMain>
-      {props.children}
-    </StyledMain>
+    <ThemeProvider theme={theme}>
+      <StyledMain>
+        {props.children}
+      </StyledMain>
+    </ThemeProvider>
   );
 };
 
