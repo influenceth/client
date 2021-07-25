@@ -8,10 +8,7 @@ import { injected } from '~/lib/connectors';
 import Pane from './Pane';
 
 const StyledWallet = styled.div`
-  pointer-events: auto;
-  right: 0;
-  position: absolute;
-  top: 0;
+  color: white;
 `;
 
 const Wallet = () => {

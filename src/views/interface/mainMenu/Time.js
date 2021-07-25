@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { START_TIMESTAMP } from 'influence-utils';
 
 import useInterval from '~/hooks/useInterval';
-import useStore from '~/hooks/useStore';
+import useTimeStore from '~/hooks/useTimeStore';
 
 const StyledTime = styled.div`
   cursor: pointer;
@@ -36,16 +36,16 @@ const DaysSince = styled.div`
 const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
 
 const Time = (props) => {
-  const time = useStore(state => state.time);
-  const updateTime = useStore(state => state.updateTime);
-  const autoUpdatingTime = useStore(state => state.autoUpdatingTime);
+  const time = useTimeStore(state => state.time);
+  const updateAdaliaTime = useTimeStore(state => state.updateTime);
+  const autoUpdatingTime = useTimeStore(state => state.autoUpdatingTime);
   const displayTime = time - diff;
 
   // Automatically updates the in-game time once per second unless auto-updates are off
   useInterval(() => {
     if (autoUpdatingTime) {
       const currentTime = ((Date.now() / 1000) - START_TIMESTAMP) / 3600;
-      updateTime(currentTime);
+      updateAdaliaTime(currentTime);
     }
   }, 1000);
 

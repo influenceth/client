@@ -1,17 +1,20 @@
 import create from 'zustand';
-import { persist } from 'zustand/middleware'
+import { persist } from 'zustand/middleware';
 import axios from 'axios';
 
-const useStore = create(persist((set, get) => ({
-
+const useTokenStore = create(persist((set, get) => ({
+  // Authentication / Bearer token (jwt)
   token: undefined,
 
+  // Whether token handshakes / Ethereum signing are happening
   gettingToken: false,
 
+  // Update the JWT in state
   updateToken: (token) => set(state => {
     return { token: token };
   }),
 
+  // Fires off the handshakes required to request a token
   getToken: async (library, account) => {
     if (get().gettingToken) return;
     set({ gettingToken: true });
@@ -31,23 +34,7 @@ const useStore = create(persist((set, get) => ({
     } finally {
       set({ gettingToken: false });
     }
-  },
-
-  // Adalian time in days elapsed since founding
-  time: 0,
-
-  // Whether the time is auto-updating
-  autoUpdatingTime: true,
-
-  // Updates the current time for time controls
-  updateTime: (time) => set(state => {
-    return { time: time };
-  }),
-
-  // Pause auto-updates of Adalia time
-  updateAutoUpdatingTime: (updating) => set(state => {
-    return { autoUpdatingTime: updating };
-  })
+  }
 })));
 
-export default useStore;
+export default useTokenStore;

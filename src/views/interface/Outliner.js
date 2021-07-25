@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 
 import Wallet from './outliner/Wallet';
+import Watchlist from './outliner/Watchlist';
 
 const StyledOutliner = styled.div`
   background-color: ${props => props.theme.colors.contentBackdrop};
@@ -8,7 +9,6 @@ const StyledOutliner = styled.div`
   flex: 0 1 auto;
   height: 100%;
   overflow: hidden;
-  padding-bottom: 50px;
   pointer-events: auto;
   height: 100%;
   max-width: 25px;
@@ -29,6 +29,7 @@ const Outliner = (props) => {
     <StyledOutliner>
       <Container>
         <Wallet />
+        <Watchlist />
       </Container>
     </StyledOutliner>
   );

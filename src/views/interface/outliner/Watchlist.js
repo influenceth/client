@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 import useUser from '~/hooks/useUser';
 import useUpdateWatchlist from '~/hooks/useUpdateWatchlist';
+import Pane from './Pane';
 
 const StyledWatchlist = styled.div`
   pointer-events: auto;
@@ -15,18 +16,20 @@ const Watchlist = (props) => {
   const { mutate } = useUpdateWatchlist();
 
   return (
-    <StyledWatchlist>
-      <ul>
-        {user.isSuccess && user.data.watchlist.map((w) => {
-          return (
-            <li key={w.i}>
-              <span>{w.i}</span>
-              <span>{JSON.stringify(w.tags)}</span>
-            </li>
-          );
-        })}
-      </ul>
-    </StyledWatchlist>
+    <Pane>
+      <StyledWatchlist>
+        <ul>
+          {user.isSuccess && user.data.watchlist.map((w) => {
+            return (
+              <li key={w.i}>
+                <span>{w.i}</span>
+                <span>{JSON.stringify(w.tags)}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </StyledWatchlist>
+    </Pane>
   );
 };
 

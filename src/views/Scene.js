@@ -27,7 +27,6 @@ const Scene = (props) => {
   ], { path: `${process.env.PUBLIC_URL}/textures/skybox/`});
 
   const glConfig = {
-    frameloop: 'demand',
     shadows: true,
     camera: {
       fov: 75,
