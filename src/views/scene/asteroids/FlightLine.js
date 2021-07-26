@@ -1,6 +1,6 @@
-import { useRef, useEffect, useState, useLayoutEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Color, Vector3 } from 'three';
+import { Color } from 'three';
 
 import frag from './flightLine/flightLine.frag';
 import vert from './flightLine/flightLine.vert';
@@ -9,49 +9,42 @@ import theme from '~/theme';
 const initialUniforms = {
   uCol: { type: 'c', value: new Color(theme.colors.main) },
   uTime: { type: 'i', value: 0 },
-  uStart: { type: 'vec3', value: new Vector3() },
-  uEnd: { type: 'vec3', value: new Vector3() }
+  uStart: { type: 'vec3', value: new Float32Array(3) }
 };
 
 const FlightLine = (props) => {
-  const { points } = props;
-  const [ start, setStart ] = useState(new Float32Array([0, 0, 0]));
-  const [ end, setEnd ] = useState(new Vector3(0, 0, 0));
-  const [ uniforms, setUniforms ] = useState(initialUniforms);
+  const { originPos, destinationPos } = props;
+  const [ points, setPoints ] = useState(new Float32Array(2 * 3));
 
-  const flightGeom = useRef();
+  const material = useRef();
 
   useEffect(() => {
-    setStart(new Vector3(...points.slice(0, 3)));
-    setEnd(new Vector3(...points.slice(3)));
-  }, [ points ]);
+    const newFlight = new Float32Array(2 * 3);
+    newFlight.set(originPos);
+    newFlight.set(destinationPos, 3);
+    setPoints(newFlight);
+    material.current.uniforms.uStart.value = originPos;
+  }, [ originPos, destinationPos ]);
 
   useFrame(() => {
-    const time = uniforms.uTime.value;
-    setUniforms({
-      ...uniforms,
-      uTime: {...uniforms.uTime, value: time + 1 },
-      uStart: {...uniforms.uStart, value: start },
-      uEnd: {...uniforms.uEnd, value: end },
-    });
-  });
-
-  useLayoutEffect(() => {
-    flightGeom.current?.computeBoundingSphere();
+    const time = material.current.uniforms.uTime.value;
+    material.current.uniforms.uTime.value = time + 1;
   });
 
   return (
     <line>
-      <bufferGeometry ref={flightGeom}>
+      <bufferGeometry>
         <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points, 3 ]} />
       </bufferGeometry>
-      <shaderMaterial attach="material" args={[{
-        depthWrite: false,
-        fragmentShader: frag,
-        transparent: true,
-        vertexShader: vert,
-        uniforms: uniforms
-      }]} />
+      <shaderMaterial
+        ref={material}
+        args={[{
+          depthWrite: false,
+          fragmentShader: frag,
+          transparent: true,
+          vertexShader: vert,
+          uniforms: initialUniforms
+        }]} />
     </line>
   );
 };

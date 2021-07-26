@@ -1,15 +1,16 @@
 import { useRef, useState, useEffect, useLayoutEffect } from 'react';
 
-import vert from './asteroids/asteroids.vert';
-import frag from './asteroids/asteroids.frag';
-import constants from '~/constants';
-
 // eslint-disable-next-line
 import Worker from 'worker-loader!../../worker';
 import useTimeStore from '~/hooks/useTimeStore';
 import useAsteroidsStore from '~/hooks/useAsteroidsStore';
 import useAsteroids from '~/hooks/useAsteroids';
 import FlightLine from './asteroids/FlightLine';
+import Orbit from './asteroids/Orbit';
+import Marker from './asteroids/Marker';
+import vert from './asteroids/asteroids.vert';
+import frag from './asteroids/asteroids.frag';
+import constants from '~/constants';
 
 const worker = new Worker();
 
@@ -23,7 +24,9 @@ const Asteroids = (props) => {
 
   const [ positions, setPositions ] = useState();
   const [ radii, setRadii ] = useState();
-  const [ flight, setFlight ] = useState(new Float32Array(2 * 3));
+  const [ hoveredPos, setHoveredPos ] = useState();
+  const [ originPos, setOriginPos ] = useState();
+  const [ destinationPos, setDestinationPos ] = useState();
 
   const asteroidsGeom = useRef();
 
@@ -42,10 +45,15 @@ const Asteroids = (props) => {
   const onMouseOver = (e) => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
+    const id = asteroids.data[index].i;
+    if (id === origin.i || id === destination.i) return;
+    const pos = positions.slice(index * 3, index * 3 + 3);
+    setHoveredPos(pos);
   };
 
   const onMouseOut = (e) => {
     e.stopPropagation();
+    setHoveredPos(null);
   };
 
   // When asteroids are newly filtered, or there are changes to origin / destination
@@ -63,7 +71,7 @@ const Asteroids = (props) => {
   useEffect(() => {
     if (!asteroids.data) return;
     worker.postMessage({ topic: 'updateAsteroidPositions', elapsed: time });
-  }, [ time ]);
+  }, [ time, asteroids.data ]);
 
   // Receives position updates from the worker
   worker.onmessage = (event) => {
@@ -72,16 +80,14 @@ const Asteroids = (props) => {
 
   useEffect(() => {
     if (asteroids.data && positions) {
-      // Updates flight path if an origin and destination are designated
-      if (origin && destination) {
-        const newFlight = new Float32Array(2 * 3);
+      if (origin) {
         const originKey = asteroids.data.findIndex(a => a.i === origin.i);
+        setOriginPos(positions.slice(originKey * 3, originKey * 3 + 3));
+      }
+
+      if (destination) {
         const destKey = asteroids.data.findIndex(a => a.i === destination.i);
-        newFlight.set(positions.slice(originKey * 3, originKey * 3 + 3));
-        newFlight.set(positions.slice(destKey * 3, destKey * 3 + 3), 3);
-        setFlight(newFlight);
-      } else {
-        setFlight(null);
+        setDestinationPos(positions.slice(destKey * 3, destKey * 3 + 3));
       }
 
       // Update asteroid radii attribute to scale point size
@@ -121,7 +127,12 @@ const Asteroids = (props) => {
           }]} />
         </points>
       )}
-      {flight && <FlightLine points={flight} />}
+      {hoveredPos && <Marker asteroidPos={hoveredPos} />}
+      {origin && <Orbit asteroid={origin} />}
+      {originPos && <Marker asteroidPos={originPos} />}
+      {destination && <Orbit asteroid={destination} />}
+      {destinationPos && <Marker asteroidPos={destinationPos} />}
+      {originPos && destinationPos && <FlightLine originPos={originPos} destinationPos={destinationPos} />}
     </group>
   )
 };

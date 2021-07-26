@@ -1,5 +1,5 @@
 import { useQueryClient, QueryClientProvider } from 'react-query';
-import { Object3D, Vector3 } from 'three';
+import { Object3D, Vector3, sRGBEncoding } from 'three';
 import { Canvas } from '@react-three/fiber';
 import { useCubeTexture, Stats } from '@react-three/drei';
 import styled from 'styled-components';
@@ -36,6 +36,7 @@ const Scene = (props) => {
     },
     onCreated: (state) => {
       state.scene.background = skybox;
+      state.scene.background.encoding = sRGBEncoding;
       state.raycaster.params.Points = {
         near: 1000000,
         far: constants.MAX_SYSTEM_RADIUS * constants.AU * 2,
@@ -52,7 +53,7 @@ const Scene = (props) => {
 
   return (
     <StyledContainer>
-      {process.env.FPS && (<Stats />)}
+      {Number(process.env.REACT_APP_FPS) === 1 && (<Stats />)}
       <Canvas {...glConfig} >
         <QueryClientProvider client={queryClient} contextSharing={true}>
           <TrackballModControls maxDistance={10 * constants.AU}>

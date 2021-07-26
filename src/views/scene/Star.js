@@ -61,7 +61,7 @@ const Star = (props) => {
         <sphereGeometry args={[ 500000000, 10, 10 ]} />
         <meshBasicMaterial color="white" depthWrite={false} />
       </mesh>
-      {!process.env.REACT_APP_DISABLE_LENSFLARE && (<primitive object={lensflare} />)}
+      {Number(process.env.REACT_APP_DISABLE_LENSFLARE) === 0 && <primitive object={lensflare} />}
     </group>
   )
 };

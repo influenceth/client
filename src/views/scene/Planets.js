@@ -15,7 +15,7 @@ const Planets = (props) => {
   const planets = usePlanets();
   const [ positions, setPositions ] = useState(new Float32Array(5 * 3));
   const adaliaTime = useTimeStore(state => state.adaliaTime);
-  const texture = useTexture(`${process.env.PUBLIC_URL}/textures/planet.png`);
+  const texture = useTexture(`${process.env.PUBLIC_URL}/textures/circleFaded.png`);
   const geometry = useRef();
 
   // Listen for changes to planets data or global time and update planet positions

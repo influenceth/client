@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import styled from 'styled-components';
 import { START_TIMESTAMP } from 'influence-utils';
 
@@ -41,13 +42,23 @@ const Time = (props) => {
   const autoUpdatingTime = useTimeStore(state => state.autoUpdatingTime);
   const displayTime = time - diff;
 
-  // Automatically updates the in-game time once per second unless auto-updates are off
-  useInterval(() => {
+  const resetToCurrentTime = () => {
     if (autoUpdatingTime) {
       const currentTime = ((Date.now() / 1000) - START_TIMESTAMP) / 3600;
       updateAdaliaTime(currentTime);
     }
-  }, 1000);
+  };
+
+  // Update time once immediately upon launching
+  useEffect(() => {
+    resetToCurrentTime();
+  }, [])
+
+  // Automatically updates the in-game time once per second unless auto-updates are off
+  useInterval(() => {
+    resetToCurrentTime();
+    // updateAdaliaTime(time + 0.25);
+  }, 10000);
 
   return (
     <StyledTime>
