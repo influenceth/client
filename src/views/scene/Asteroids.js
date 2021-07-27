@@ -46,7 +46,7 @@ const Asteroids = (props) => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
     const id = asteroids.data[index].i;
-    if (id === origin.i || id === destination.i) return;
+    if (id === origin?.i || id === destination?.i) return;
     const pos = positions.slice(index * 3, index * 3 + 3);
     setHoveredPos(pos);
   };

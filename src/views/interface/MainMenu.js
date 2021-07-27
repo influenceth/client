@@ -39,26 +39,6 @@ const Background = styled.div`
   position: absolute;
 `;
 
-const CornerBackground = styled.div`
-  background: ${props => props.theme.colors.contentBackdrop};
-  backdrop-filter: blur(4px);
-  bottom: 25px;
-  clip-path: polygon(0 100%, 100% 100%, 100% 0);
-  right: 0;
-  position: absolute;
-  height: 25px;
-  width: 25px;
-`;
-
-const CornerBorder = styled.svg`
-  fill: ${props => props.theme.colors.mainBorder};
-  bottom: 25px;
-  right: 0;
-  position: absolute;
-  height: 25px;
-  width: 25px;
-`;
-
 const StyledLogo = styled.img`
   bottom: 25px;
   height: 40px;
@@ -82,10 +62,6 @@ const MainMenu = (props) => {
     <StyledMainMenu>
       <StyledLogo src={Logo} />
       <Background />
-      <CornerBackground />
-      <CornerBorder viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="0,25 0,21 23,0 25,0" />
-      </CornerBorder>
       <MenuWrapper>
         <Menu title="Map">
           <MenuItem name="Assets" icon={<HiCollection />} />

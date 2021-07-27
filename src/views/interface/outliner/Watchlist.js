@@ -16,7 +16,7 @@ const Watchlist = (props) => {
   const { mutate } = useUpdateWatchlist();
 
   return (
-    <Pane>
+    <Pane title="Watchlist">
       <StyledWatchlist>
         <ul>
           {user.isSuccess && user.data.watchlist.map((w) => {

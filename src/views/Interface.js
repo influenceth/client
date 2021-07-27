@@ -4,7 +4,7 @@ import MainMenu from './interface/MainMenu';
 import Outliner from './interface/Outliner';
 
 const StyledInterface = styled.div`
-  align-items: flex-end;
+  align-items: stretch;
   bottom: 0;
   display: flex;
   flex-direction: row;
@@ -17,7 +17,6 @@ const StyledInterface = styled.div`
 
 const MainContainer = styled.div`
   flex: 1 0 auto;
-  height: 100%;
   position: relative;
 `;
 

@@ -7,7 +7,6 @@ import useTimeStore from '~/hooks/useTimeStore';
 
 const StyledTime = styled.div`
   cursor: pointer;
-  margin-right: 25px;
   max-height: 44px;
   overflow: hidden;
   transition: all 0.6s ease;
@@ -40,24 +39,17 @@ const Time = (props) => {
   const time = useTimeStore(state => state.time);
   const updateAdaliaTime = useTimeStore(state => state.updateTime);
   const autoUpdatingTime = useTimeStore(state => state.autoUpdatingTime);
+  const updateToCurrentTime = useTimeStore(state => state.updateToCurrentTime);
   const displayTime = time - diff;
-
-  const resetToCurrentTime = () => {
-    if (autoUpdatingTime) {
-      const currentTime = ((Date.now() / 1000) - START_TIMESTAMP) / 3600;
-      updateAdaliaTime(currentTime);
-    }
-  };
 
   // Update time once immediately upon launching
   useEffect(() => {
-    resetToCurrentTime();
+    updateToCurrentTime();
   }, [])
 
   // Automatically updates the in-game time once per second unless auto-updates are off
   useInterval(() => {
-    resetToCurrentTime();
-    // updateAdaliaTime(time + 0.25);
+    updateToCurrentTime();
   }, 10000);
 
   return (

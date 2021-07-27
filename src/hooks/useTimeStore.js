@@ -1,4 +1,5 @@
 import create from 'zustand';
+import { START_TIMESTAMP } from 'influence-utils';
 
 const useTimeStore = create((set, get) => ({
   // Adalian time in days elapsed since founding
@@ -10,6 +11,13 @@ const useTimeStore = create((set, get) => ({
   // Updates the current time for time controls
   updateTime: (time) => set(state => {
     return { time: time };
+  }),
+
+  // Updates to the current Adalia time
+  updateToCurrentTime: () => set(state => {
+    if (get().autoUpdatingTime) {
+      return { time: ((Date.now() / 1000) - START_TIMESTAMP) / 3600 }
+    }
   }),
 
   // Pause auto-updates of Adalia time

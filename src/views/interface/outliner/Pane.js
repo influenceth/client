@@ -1,18 +1,12 @@
 import styled from 'styled-components';
 
-const Wrapper = styled.div`
-  background-color: rgba(132, 164, 220, 0.5);
-  border-left: 5px solid rgb(132, 164, 220);
-  clip-path:
-    polygon(
-      0% 0%,
-      100% 0%,
-      100% calc(100% - 20px),
-      calc(100% - 20px) 100%,
-      0% 100%
-    );
+import theme from '~/theme';
+
+const StyledPane = styled.div`
+  border-left: 4px solid ${props => props.theme.colors.main};
   font-size: 14px;
-  padding: 15px;
+  padding: 15px 15px 15px 21px;
+  margin: 10px 0;
 `;
 
 const Title = styled.h2`
@@ -23,12 +17,12 @@ const Title = styled.h2`
 
 const Pane = (props) => {
   return (
-    <Wrapper>
+    <StyledPane>
       {props.title && (
         <Title>{props.title}</Title>)
       }
       {props.children}
-    </Wrapper>
+    </StyledPane>
   );
 };
 

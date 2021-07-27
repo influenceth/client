@@ -6,10 +6,7 @@ import useEagerConnect from '~/hooks/useEagerConnect';
 import useInactiveListener from '~/hooks/useInactiveListener';
 import { injected } from '~/lib/connectors';
 import Pane from './Pane';
-
-const StyledWallet = styled.div`
-  color: white;
-`;
+import Button from '~/components/Button';
 
 const Wallet = () => {
   const web3Context = useWeb3React();
@@ -30,24 +27,22 @@ const Wallet = () => {
   useInactiveListener(!triedEager || !!activatingConnector);
 
   return (
-    <Pane>
-      <StyledWallet>
-        <h2>Wallet</h2>
-        <span>{account}</span>
-        <button
+    <Pane title="Wallet">
+      <span>{account}</span>
+      {!active && (
+        <Button
           onClick={() => {
             setActivatingConnector(injected);
             activate(injected);
           }}>
           Connect
-        </button>
-        <button
-          onClick={() => {
-            deactivate();
-          }}>
+        </Button>
+      )}
+      {active && (
+        <Button onClick={() => deactivate()}>
           Disconnect
-        </button>
-      </StyledWallet>
+        </Button>
+      )}
     </Pane>
   );
 };
