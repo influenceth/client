@@ -2,12 +2,11 @@ import styled from 'styled-components';
 
 import theme from '~/theme';
 
-const StyledPane = styled.div`
+const StyledSection = styled.div`
   background-color: rgba(255, 255, 255, 0.075);
   font-size: 14px;
   padding: 20px 15px;
-  padding-left: 25px;
-  margin: 0px 10px 10px 25px;
+  margin: 0 0 10px 25px;
   position: relative;
 
   &:after {
@@ -40,7 +39,7 @@ const Tab = styled.div`
   left: -25px;
   transition: all 0.3s ease;
 
-  ${StyledPane}:hover & {
+  ${StyledSection}:hover & {
     background-color: ${props => props.theme.colors.main};
 
     & > svg {
@@ -63,9 +62,9 @@ const Title = styled.h2`
   padding: 0 0 10px 0;
 `;
 
-const Pane = (props) => {
+const Section = (props) => {
   return (
-    <StyledPane>
+    <StyledSection>
       <Tab>
         {props.icon}
       </Tab>
@@ -73,8 +72,8 @@ const Pane = (props) => {
         <Title>{props.title}</Title>)
       }
       {props.children}
-    </StyledPane>
+    </StyledSection>
   );
 };
 
-export default Pane;
+export default Section;

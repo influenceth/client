@@ -3,7 +3,7 @@ import { AiFillEye } from 'react-icons/ai';
 
 import useUser from '~/hooks/useUser';
 import useUpdateWatchlist from '~/hooks/useUpdateWatchlist';
-import Pane from './Pane';
+import Section from './Section';
 
 const StyledWatchlist = styled.div`
   pointer-events: auto;
@@ -17,7 +17,7 @@ const Watchlist = (props) => {
   const { mutate } = useUpdateWatchlist();
 
   return (
-    <Pane title="Watchlist" icon={<AiFillEye />}>
+    <Section title="Watchlist" icon={<AiFillEye />}>
       <StyledWatchlist>
         <ul>
           {user.isSuccess && user.data.watchlist.map((w) => {
@@ -30,7 +30,7 @@ const Watchlist = (props) => {
           })}
         </ul>
       </StyledWatchlist>
-    </Pane>
+    </Section>
   );
 };
 

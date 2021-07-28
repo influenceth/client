@@ -3,14 +3,14 @@ import { AiFillStar } from 'react-icons/ai';
 
 import useUser from '~/hooks/useUser';
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
-import Pane from './Pane';
+import Section from './Section';
 
 const OwnedAsteroids = (props) => {
   const user = useUser();
   const asteroids = useOwnedAsteroids();
 
   return (
-    <Pane title="Owned Asteroids" icon={<AiFillStar />}>
+    <Section title="Owned Asteroids" icon={<AiFillStar />}>
       <ul>
         {asteroids.data?.map(a => (
           <li key={a.i}>
@@ -18,7 +18,7 @@ const OwnedAsteroids = (props) => {
           </li>
         ))}
       </ul>
-    </Pane>
+    </Section>
   );
 };
 

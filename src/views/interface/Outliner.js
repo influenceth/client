@@ -2,11 +2,12 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import Switch from 'react-switch';
 
-import Pane from './outliner/Pane';
+import useSettingsStore from '~/hooks/useSettingsStore';
 import Wallet from './outliner/Wallet';
 import Watchlist from './outliner/Watchlist';
 import OwnedAsteroids from './outliner/OwnedAsteroids';
 import TimeControl from './outliner/TimeControl';
+import SystemControls from './outliner/SystemControls';
 import theme from '~/theme';
 
 const MainContainer = styled.div`
@@ -66,10 +67,12 @@ const RightContainer = styled.div`
 
 const StyledOutliner = styled.div`
   width: 385px;
+  max-height: calc(100% - 50px);
+  overflow-y: scroll;
 `;
 
 const Outliner = (props) => {
-  const [ stayOpen, setStayOpen ] = useState(false);
+  const outlinerPinned = useSettingsStore(state => state.outlinerPinned);
 
   return (
     <MainContainer>
@@ -79,25 +82,14 @@ const Outliner = (props) => {
           <polygon points="0,50 0,46 23,25 23,0 25,0 25,25" />
         </CornerBorder>
       </Border>
-      <RightContainer stayOpen={stayOpen}>
+      <RightContainer stayOpen={outlinerPinned}>
         <StyledOutliner>
-          <Pane>
-            <span>Lock open</span>
-            <Switch
-              onChange={() => setStayOpen(!stayOpen)}
-              checked={stayOpen}
-              height={24}
-              width={46}
-              handleDiameter={18}
-              onColor={theme.colors.mainHex}
-              uncheckedIcon={false}
-              checkedIcon={false} />
-          </Pane>
           <Wallet />
           <Watchlist />
           <OwnedAsteroids />
           <TimeControl />
         </StyledOutliner>
+        <SystemControls />
       </RightContainer>
       <Background />
     </MainContainer>

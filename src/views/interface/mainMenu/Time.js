@@ -37,15 +37,13 @@ const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
 
 const Time = (props) => {
   const time = useTimeStore(state => state.time);
-  const updateAdaliaTime = useTimeStore(state => state.updateTime);
-  const autoUpdatingTime = useTimeStore(state => state.autoUpdatingTime);
   const updateToCurrentTime = useTimeStore(state => state.updateToCurrentTime);
   const displayTime = time - diff;
 
   // Update time once immediately upon launching
   useEffect(() => {
     updateToCurrentTime();
-  }, [])
+  }, [ updateToCurrentTime ])
 
   // Automatically updates the in-game time once per second unless auto-updates are off
   useInterval(() => {

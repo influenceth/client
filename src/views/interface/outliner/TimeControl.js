@@ -4,7 +4,7 @@ import { START_TIMESTAMP } from 'influence-utils';
 import { MdFastRewind, MdFastForward, MdPlayArrow, MdPause, MdStop } from 'react-icons/md';
 import { HiClock } from 'react-icons/hi';
 
-import Pane from './Pane';
+import Section from './Section';
 import DataReadout from '~/components/DataReadout';
 import IconButton from '~/components/IconButton';
 import useInterval from '~/hooks/useInterval';
@@ -53,7 +53,7 @@ const TimeControl = (props) => {
   ));
 
   return (
-    <Pane title="Time Control" icon={<HiClock />}>
+    <Section title="Time Control" icon={<HiClock />}>
       <DataReadout label="Adalia Time" data={adaliaTime} />
       <DataReadout label="Actual Time" data={actualTime} />
       {!playing && <IconButton data-tip="Play" onClick={play}><MdPlayArrow /></IconButton>}
@@ -61,7 +61,7 @@ const TimeControl = (props) => {
       {playing && <IconButton data-tip="Fast Forward" onClick={() => setSpeed(speed - 1)}><MdFastRewind /></IconButton>}
       {playing && <IconButton data-tip="Rewind" onClick={() => setSpeed(speed + 1)}><MdFastForward /></IconButton>}
       {playing && <IconButton data-tip="Reset to Current" onClick={stop}><MdStop /></IconButton>}
-    </Pane>
+    </Section>
   );
 };
 

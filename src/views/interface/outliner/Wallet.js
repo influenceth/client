@@ -6,7 +6,7 @@ import { MdAccountBalanceWallet } from 'react-icons/md';
 import useEagerConnect from '~/hooks/useEagerConnect';
 import useInactiveListener from '~/hooks/useInactiveListener';
 import { injected } from '~/lib/connectors';
-import Pane from './Pane';
+import Section from './Section';
 import Button from '~/components/Button';
 
 const Wallet = () => {
@@ -28,7 +28,7 @@ const Wallet = () => {
   useInactiveListener(!triedEager || !!activatingConnector);
 
   return (
-    <Pane title="Wallet" icon={<MdAccountBalanceWallet />}>
+    <Section title="Wallet" icon={<MdAccountBalanceWallet />}>
       <span>{account}</span>
       {!active && (
         <Button
@@ -44,7 +44,7 @@ const Wallet = () => {
           Disconnect
         </Button>
       )}
-    </Pane>
+    </Section>
   );
 };
 

@@ -5,7 +5,7 @@ import ReactTooltip from 'react-tooltip';
 import theme from '~/theme';
 
 const StyledIconButton = styled.button`
-  border: 1px solid ${props => props.theme.colors.main};
+  border: ${props => props.borderless ? '0px' : '1px'} solid ${props => props.theme.colors.main};
   background-color: transparent;
   border-radius: 2px;
   cursor: pointer;
@@ -14,7 +14,7 @@ const StyledIconButton = styled.button`
   font-size: 15px;
   height: 30px;
   width: 30px;
-  padding: 4px;
+  padding: ${props => props.borderless ? '5px' : '4px'};
   transition: all 300ms ease;
   position: relative;
   margin-right: 10px;
