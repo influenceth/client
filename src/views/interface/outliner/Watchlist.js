@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { AiFillEye } from 'react-icons/ai';
 
 import useUser from '~/hooks/useUser';
 import useUpdateWatchlist from '~/hooks/useUpdateWatchlist';
@@ -16,7 +17,7 @@ const Watchlist = (props) => {
   const { mutate } = useUpdateWatchlist();
 
   return (
-    <Pane title="Watchlist">
+    <Pane title="Watchlist" icon={<AiFillEye />}>
       <StyledWatchlist>
         <ul>
           {user.isSuccess && user.data.watchlist.map((w) => {

@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import styled from 'styled-components';
+import { START_TIMESTAMP } from 'influence-utils';
+import { MdFastRewind, MdFastForward, MdPlayArrow, MdPause, MdStop } from 'react-icons/md';
+import { HiClock } from 'react-icons/hi';
 
 import Pane from './Pane';
-import Button from '~/components/Button';
+import DataReadout from '~/components/DataReadout';
+import IconButton from '~/components/IconButton';
 import useInterval from '~/hooks/useInterval';
 import useTimeStore from '~/hooks/useTimeStore';
+
+// Calculate the difference in game days between the start timestamp and the lore start time
+const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
 
 const TimeControl = (props) => {
   const [ speed, setSpeed ] = useState(1);
@@ -34,13 +41,26 @@ const TimeControl = (props) => {
     updateTime(time + speed);
   }, 1000 / 30);
 
+  const displayTime = time - diff;
+  const adaliaTime = `
+    ${displayTime >= 0 ? '+' : ''}
+    ${displayTime.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+    days since Arrival
+  `;
+
+  const actualTime = (new Date((time * 86400 / 24 + START_TIMESTAMP) * 1000).toLocaleString([],
+    { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }
+  ));
+
   return (
-    <Pane title="Time Control">
-      {!playing && <Button onClick={play}>Play</Button>}
-      {playing && <Button onClick={pause}>Pause</Button>}
-      {playing && <Button onClick={() => setSpeed(speed - 1)}>- Speed</Button>}
-      {playing && <Button onClick={() => setSpeed(speed + 1)}>+ Speed</Button>}
-      {playing && <Button onClick={stop}>Stop</Button>}
+    <Pane title="Time Control" icon={<HiClock />}>
+      <DataReadout label="Adalia Time" data={adaliaTime} />
+      <DataReadout label="Actual Time" data={actualTime} />
+      {!playing && <IconButton data-tip="Play" onClick={play}><MdPlayArrow /></IconButton>}
+      {playing && <IconButton data-tip="Pause" onClick={pause}><MdPause /></IconButton>}
+      {playing && <IconButton data-tip="Fast Forward" onClick={() => setSpeed(speed - 1)}><MdFastRewind /></IconButton>}
+      {playing && <IconButton data-tip="Rewind" onClick={() => setSpeed(speed + 1)}><MdFastForward /></IconButton>}
+      {playing && <IconButton data-tip="Reset to Current" onClick={stop}><MdStop /></IconButton>}
     </Pane>
   );
 };

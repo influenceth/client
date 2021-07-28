@@ -4,8 +4,7 @@ import theme from '~/theme';
 
 const StyledButton = styled.button`
   border: 1px solid ${props => props.theme.colors.main};
-  background-color: black;
-  background-image: linear-gradient(120deg, rgba(54, 167, 205, 0.1), rgba(54, 167, 205, 0.25));
+  background-color: transparent;
   clip-path: polygon(
     0 0,
     100% 0,
@@ -24,7 +23,7 @@ const StyledButton = styled.button`
 
   &:hover {
     color: white;
-    background-color: ${props => props.theme.colors.main};
+    background-image: linear-gradient(120deg, rgba(54, 167, 205, 0.1), rgba(54, 167, 205, 0.25));
   }
 `;
 

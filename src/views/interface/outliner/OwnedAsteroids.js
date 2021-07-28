@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { AiFillStar } from 'react-icons/ai';
 
 import useUser from '~/hooks/useUser';
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
@@ -9,7 +10,7 @@ const OwnedAsteroids = (props) => {
   const asteroids = useOwnedAsteroids();
 
   return (
-    <Pane title="Owned Asteroids">
+    <Pane title="Owned Asteroids" icon={<AiFillStar />}>
       <ul>
         {asteroids.data?.map(a => (
           <li key={a.i}>

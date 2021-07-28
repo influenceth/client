@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
+import { MdAccountBalanceWallet } from 'react-icons/md';
 
 import useEagerConnect from '~/hooks/useEagerConnect';
 import useInactiveListener from '~/hooks/useInactiveListener';
@@ -27,7 +28,7 @@ const Wallet = () => {
   useInactiveListener(!triedEager || !!activatingConnector);
 
   return (
-    <Pane title="Wallet">
+    <Pane title="Wallet" icon={<MdAccountBalanceWallet />}>
       <span>{account}</span>
       {!active && (
         <Button

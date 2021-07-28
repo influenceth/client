@@ -36,7 +36,7 @@ const Scene = (props) => {
     },
     onCreated: (state) => {
       state.scene.background = skybox;
-      state.scene.background.encoding = sRGBEncoding;
+      state.scene.background.encoding = 3000;
       state.raycaster.params.Points = {
         near: 1000000,
         far: constants.MAX_SYSTEM_RADIUS * constants.AU * 2,

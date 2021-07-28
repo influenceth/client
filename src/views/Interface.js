@@ -1,4 +1,6 @@
 import styled from 'styled-components';
+import ReactTooltip from 'react-tooltip';
+
 import Details from './interface/Details';
 import MainMenu from './interface/MainMenu';
 import Outliner from './interface/Outliner';
@@ -23,6 +25,7 @@ const MainContainer = styled.div`
 const Interface = () => {
   return (
     <StyledInterface>
+      <ReactTooltip id="global" place="left" effect="solid" />
       <MainContainer>
         <Details />
         <MainMenu />

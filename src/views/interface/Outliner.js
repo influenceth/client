@@ -57,7 +57,6 @@ const CornerBorder = styled.svg`
 
 const RightContainer = styled.div`
   max-width: ${props => props.stayOpen ? '385px' : '25px'};
-  overflow: hidden;
   transition: max-width 0.3s ease;
 
   &:hover {
