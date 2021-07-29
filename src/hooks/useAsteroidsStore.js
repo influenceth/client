@@ -35,6 +35,19 @@ const useAsteroidsStore = create(persist((set, get) => ({
 
   deselectDestination: () => set(state => {
     return { destination: null };
+  }),
+
+  // Whether to include owned asteroids in the map result set
+  includeOwned: null,
+
+  setIncludeOwned: (includeOwned) => set(state => {
+    return { includeOwned: includeOwned };
+  }),
+
+  hoveredAsteroid: null,
+
+  setHoveredAsteroid: (i) => set(state => {
+    return { hoveredAsteroid: i };
   })
 })));
 

@@ -6,7 +6,7 @@ import { MdAccountBalanceWallet } from 'react-icons/md';
 import useEagerConnect from '~/hooks/useEagerConnect';
 import useInactiveListener from '~/hooks/useInactiveListener';
 import { injected } from '~/lib/connectors';
-import Section from './Section';
+import Section from '~/components/Section';
 import Button from '~/components/Button';
 
 const Wallet = () => {

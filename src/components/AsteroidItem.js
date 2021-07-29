@@ -1,10 +1,14 @@
 import styled from 'styled-components';
 import utils from 'influence-utils';
 
-import { useAsteroidsStore } from '~/hooks/useAsteroidsStore';
+import useAsteroidsStore from '~/hooks/useAsteroidsStore';
 
 const StyledAsteroidItem = styled.li`
-  height: 50px;
+  height: 40px;
+`;
+
+const Description = styled.span`
+  line-height: 40px;
 `;
 
 const RarityBadge = styled.span`
@@ -20,15 +24,18 @@ const RarityBadge = styled.span`
 
 const AsteroidItem = (props) => {
   const { asteroid } = props;
+  const setHovered = useAsteroidsStore(state => state.setHoveredAsteroid);
 
   return (
-    <StyledAsteroidItem>
-      <span>
+    <StyledAsteroidItem
+      onMouseOver={() => setHovered(asteroid.i)}
+      onMouseOut={() => setHovered(null)}>
+      <Description>
         {asteroid.name}{' - '}
         {utils.toSize(asteroid.r)}{' '}
         {utils.toSpectralType(asteroid.spectralType)}{'-type'}
         {asteroid.scanned && <RarityBadge rarity={utils.toRarity(asteroid.bonuses)}> &#9679;</RarityBadge>}
-      </span>
+      </Description>
     </StyledAsteroidItem>
   );
 };

@@ -21,6 +21,8 @@ const Asteroids = (props) => {
   const selectOrigin = useAsteroidsStore(state => state.selectOrigin);
   const destination = useAsteroidsStore(state => state.destination);
   const selectDestination = useAsteroidsStore(state => state.selectDestination);
+  const hovered = useAsteroidsStore(state => state.hoveredAsteroid);
+  const setHovered = useAsteroidsStore(state => state.setHoveredAsteroid);
 
   const [ positions, setPositions ] = useState();
   const [ radii, setRadii ] = useState();
@@ -46,15 +48,29 @@ const Asteroids = (props) => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
     const id = asteroids.data[index].i;
-    if (id === origin?.i || id === destination?.i) return;
-    const pos = positions.slice(index * 3, index * 3 + 3);
-    setHoveredPos(pos);
+    setHovered(id);
   };
 
   const onMouseOut = (e) => {
     e.stopPropagation();
-    setHoveredPos(null);
+    setHovered(null);
   };
+
+  useEffect(() => {
+    if (!hovered || hovered === origin?.i || hovered === destination?.i) {
+      setHoveredPos(null);
+      return;
+    }
+
+    const index = asteroids.data.findIndex(a => a.i === hovered);
+
+    if (index > -1) {
+      const pos = positions.slice(index * 3, index * 3 + 3);
+      setHoveredPos(pos);
+    } else {
+      setHoveredPos(null);
+    }
+  }, [ hovered, setHovered, positions, asteroids.data ]);
 
   // When asteroids are newly filtered, or there are changes to origin / destination
   useEffect(() => {
@@ -79,7 +95,8 @@ const Asteroids = (props) => {
   };
 
   useEffect(() => {
-    if (asteroids.data && positions) {
+    // Check that we have data, positions are processed, and they're in sync
+    if (asteroids.data && positions && asteroids.data.length * 3 === positions.length) {
       if (origin) {
         const originKey = asteroids.data.findIndex(a => a.i === origin.i);
         setOriginPos(positions.slice(originKey * 3, originKey * 3 + 3));

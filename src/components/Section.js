@@ -28,9 +28,11 @@ const StyledSection = styled.div`
   }
 `;
 
-const ScrollContainer = styled.div`
+const Content = styled.div`
   max-height: ${props => props.minimized ? '0px' : '33vh'};
-  overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   transition: all 0.3s ease;
   padding-bottom: ${props => props.minimized ? '0' : '20px'};
 `;
@@ -76,7 +78,6 @@ const Section = (props) => {
   const [ minimized, setMinimized ] = useState(false);
 
   const toggleMinimize = () => {
-    console.log(minimized);
     setMinimized(!minimized);
   };
 
@@ -86,9 +87,9 @@ const Section = (props) => {
         {props.icon}
       </Tab>
       {props.title && <Title onClick={toggleMinimize}>{props.title}</Title>}
-      <ScrollContainer minimized={minimized}>
+      <Content minimized={minimized}>
         {props.children}
-      </ScrollContainer>
+      </Content>
     </StyledSection>
   );
 };

@@ -14,7 +14,6 @@ const SettingsManager = (props) => {
   ], { path: `${process.env.PUBLIC_URL}/textures/skybox/`});
 
   useEffect(() => {
-    console.log('running');
     if (skyboxHidden) {
       scene.background = null;
     } else {

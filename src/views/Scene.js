@@ -1,7 +1,8 @@
 import { useQueryClient, QueryClientProvider } from 'react-query';
 import { Object3D, Vector3, sRGBEncoding } from 'three';
 import { Canvas } from '@react-three/fiber';
-import { Stats } from '@react-three/drei';
+import { useContextBridge, Stats } from '@react-three/drei';
+import { getWeb3ReactContext } from '@web3-react/core';
 import styled from 'styled-components';
 
 import { TrackballModControls } from '~/components/TrackballModControls';
@@ -19,6 +20,15 @@ const StyledContainer = styled.div`
 `;
 
 const Scene = (props) => {
+  /**
+   * Grab reference to queryClient to recreate QueryClientProvider within Canvas element
+   * See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#gotchas
+   */
+  const queryClient = useQueryClient();
+
+  // Use ContextBridge to make wallet available within canvas
+  const ContextBridge = useContextBridge(getWeb3ReactContext());
+
   // Orient such that z is up, perpindicular to the stellar plane
   Object3D.DefaultUp = new Vector3(0, 0, 1);
 
@@ -39,24 +49,20 @@ const Scene = (props) => {
     }
   };
 
-  /**
-   * Grab reference to queryClient to recreate QueryClientProvider within Canvas element
-   * See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#gotchas
-   */
-  const queryClient = useQueryClient();
-
   return (
     <StyledContainer>
       {Number(process.env.REACT_APP_FPS) === 1 && (<Stats />)}
       <Canvas {...glConfig} >
-        <SettingsManager />
-        <QueryClientProvider client={queryClient} contextSharing={true}>
-          <TrackballModControls maxDistance={10 * constants.AU}>
-            <Star />
-            <Planets />
-            <Asteroids />
-          </TrackballModControls>
-        </QueryClientProvider>
+        <ContextBridge>
+          <SettingsManager />
+          <QueryClientProvider client={queryClient} contextSharing={true}>
+            <TrackballModControls maxDistance={10 * constants.AU}>
+              <Star />
+              <Planets />
+              <Asteroids />
+            </TrackballModControls>
+          </QueryClientProvider>
+        </ContextBridge>
       </Canvas>
     </StyledContainer>
   );

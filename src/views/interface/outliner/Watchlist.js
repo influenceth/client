@@ -3,7 +3,7 @@ import { AiFillEye } from 'react-icons/ai';
 
 import useUser from '~/hooks/useUser';
 import useUpdateWatchlist from '~/hooks/useUpdateWatchlist';
-import Section from './Section';
+import Section from '~/components/Section';
 
 const StyledWatchlist = styled.div`
   pointer-events: auto;

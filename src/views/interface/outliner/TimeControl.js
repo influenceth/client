@@ -4,7 +4,7 @@ import { START_TIMESTAMP } from 'influence-utils';
 import { MdFastRewind, MdFastForward, MdPlayArrow, MdPause, MdStop } from 'react-icons/md';
 import { HiClock } from 'react-icons/hi';
 
-import Section from './Section';
+import Section from '~/components/Section';
 import DataReadout from '~/components/DataReadout';
 import IconButton from '~/components/IconButton';
 import useInterval from '~/hooks/useInterval';
@@ -61,9 +61,24 @@ const TimeControl = (props) => {
       <Controls>
         {!playing && <IconButton data-tip="Play" onClick={play}><MdPlayArrow /></IconButton>}
         {playing && <IconButton data-tip="Pause" onClick={pause}><MdPause /></IconButton>}
-        {playing && <IconButton data-tip="Fast Forward" onClick={() => setSpeed(speed - 1)}><MdFastRewind /></IconButton>}
-        {playing && <IconButton data-tip="Rewind" onClick={() => setSpeed(speed + 1)}><MdFastForward /></IconButton>}
-        {playing && <IconButton data-tip="Reset to Current" onClick={stop}><MdStop /></IconButton>}
+        <IconButton
+          data-tip="Rewind"
+          onClick={() => setSpeed(speed - 1)}
+          disabled={!playing}>
+          <MdFastRewind />
+        </IconButton>
+        <IconButton
+          data-tip="Fast Forward"
+          onClick={() => setSpeed(speed + 1)}
+          disabled={!playing}>
+          <MdFastForward />
+        </IconButton>
+        <IconButton
+          data-tip="Reset to Current"
+          onClick={stop}
+          disabled={!playing}>
+          <MdStop />
+        </IconButton>
       </Controls>
       <DataReadout label="Adalia Time" data={adaliaTime} />
       <DataReadout label="Actual Time" data={actualTime} />
