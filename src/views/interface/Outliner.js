@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import styled from 'styled-components';
-import Switch from 'react-switch';
 
 import useSettingsStore from '~/hooks/useSettingsStore';
 import Wallet from './outliner/Wallet';

@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import screenfull from 'screenfull';
 import { AiOutlineSetting, AiOutlinePushpin, AiFillPushpin } from 'react-icons/ai';
 import { MdFullscreen, MdFullscreenExit } from 'react-icons/md';
+import { BsEyeSlash, BsEye } from 'react-icons/bs';
 
 import useSettingsStore from '~/hooks/useSettingsStore';
 import IconButton from '~/components/IconButton';
@@ -20,6 +21,8 @@ const StyledSystemControls = styled.div`
 const SystemControls = (props) => {
   const outlinerPinned = useSettingsStore(state => state.outlinerPinned);
   const setOutlinerPinned = useSettingsStore(state => state.setOutlinerPinned);
+  const skyboxHidden = useSettingsStore(state => state.skyboxHidden);
+  const setSkyboxHidden = useSettingsStore(state => state.setSkyboxHidden);
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
   screenfull.on('change', () => {
@@ -58,6 +61,22 @@ const SystemControls = (props) => {
           onClick={() => screenfull.exit()}
           borderless>
           <MdFullscreenExit />
+        </IconButton>
+      )}
+      {!skyboxHidden && (
+        <IconButton
+          data-tip="Hide Skybox"
+          onClick={() => setSkyboxHidden(true)}
+          borderless>
+          <BsEyeSlash />
+        </IconButton>
+      )}
+      {skyboxHidden && (
+        <IconButton
+          data-tip="Show Skybox"
+          onClick={() => setSkyboxHidden(false)}
+          borderless>
+          <BsEye />
         </IconButton>
       )}
       <IconButton

@@ -1,14 +1,15 @@
 import { useQueryClient, QueryClientProvider } from 'react-query';
 import { Object3D, Vector3, sRGBEncoding } from 'three';
 import { Canvas } from '@react-three/fiber';
-import { useCubeTexture, Stats } from '@react-three/drei';
+import { Stats } from '@react-three/drei';
 import styled from 'styled-components';
 
 import { TrackballModControls } from '~/components/TrackballModControls';
-import constants from '~/constants';
 import Star from './scene/Star';
 import Planets from './scene/Planets';
 import Asteroids from './scene/Asteroids';
+import SettingsManager from './scene/SettingsManager';
+import constants from '~/constants';
 
 const StyledContainer = styled.div`
   bottom: 0;
@@ -21,11 +22,6 @@ const Scene = (props) => {
   // Orient such that z is up, perpindicular to the stellar plane
   Object3D.DefaultUp = new Vector3(0, 0, 1);
 
-  // Import skybox textures
-  const skybox = useCubeTexture([
-    'sky_pos_x.jpg', 'sky_neg_x.jpg', 'sky_pos_y.jpg', 'sky_neg_y.jpg', 'sky_pos_z.jpg', 'sky_neg_z.jpg'
-  ], { path: `${process.env.PUBLIC_URL}/textures/skybox/`});
-
   const glConfig = {
     shadows: true,
     camera: {
@@ -35,8 +31,6 @@ const Scene = (props) => {
       position: [ 4 * constants.AU, 0, 1.5 * constants.AU ]
     },
     onCreated: (state) => {
-      state.scene.background = skybox;
-      state.scene.background.encoding = 3000;
       state.raycaster.params.Points = {
         near: 1000000,
         far: constants.MAX_SYSTEM_RADIUS * constants.AU * 2,
@@ -55,6 +49,7 @@ const Scene = (props) => {
     <StyledContainer>
       {Number(process.env.REACT_APP_FPS) === 1 && (<Stats />)}
       <Canvas {...glConfig} >
+        <SettingsManager />
         <QueryClientProvider client={queryClient} contextSharing={true}>
           <TrackballModControls maxDistance={10 * constants.AU}>
             <Star />

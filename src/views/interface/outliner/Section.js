@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import styled from 'styled-components';
 
 import theme from '~/theme';
@@ -5,7 +6,7 @@ import theme from '~/theme';
 const StyledSection = styled.div`
   background-color: rgba(255, 255, 255, 0.075);
   font-size: 14px;
-  padding: 20px 15px;
+  padding: 0 20px;
   margin: 0 0 10px 25px;
   position: relative;
 
@@ -25,6 +26,13 @@ const StyledSection = styled.div`
   &:hover:after {
     opacity: 1;
   }
+`;
+
+const ScrollContainer = styled.div`
+  max-height: ${props => props.minimized ? '0px' : '500px'};
+  overflow-y: scroll;
+  transition: all 0.3s ease;
+  padding-bottom: ${props => props.minimized ? '0' : '20px'};
 `;
 
 const Tab = styled.div`
@@ -57,21 +65,30 @@ const Tab = styled.div`
 `;
 
 const Title = styled.h2`
+  cursor: pointer;
   font-size: 18px;
   margin: 0;
-  padding: 0 0 10px 0;
+  height: 75px;
+  line-height: 75px;
 `;
 
 const Section = (props) => {
+  const [ minimized, setMinimized ] = useState(false);
+
+  const toggleMinimize = () => {
+    console.log(minimized);
+    setMinimized(!minimized);
+  };
+
   return (
     <StyledSection>
       <Tab>
         {props.icon}
       </Tab>
-      {props.title && (
-        <Title>{props.title}</Title>)
-      }
-      {props.children}
+      {props.title && <Title onClick={toggleMinimize}>{props.title}</Title>}
+      <ScrollContainer minimized={minimized}>
+        {props.children}
+      </ScrollContainer>
     </StyledSection>
   );
 };
