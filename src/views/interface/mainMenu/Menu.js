@@ -16,10 +16,10 @@ const StyledMenu = styled.div`
 const MenuHeader = styled.div`
   border-bottom: 4px solid rgb(255, 255, 255, 0.25);
   color: rgb(255, 255, 255, 0.6);
-  font-size: 13px;
+  font-size: ${props => props.theme.fontSizes.mainText};
   font-weight: bold;
   height: 40px;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   line-height: 53px;
   text-align: center;
   text-transform: uppercase;

@@ -1,17 +1,13 @@
 import styled from 'styled-components';
 
+import useSettingsStore from '~/hooks/useSettingsStore';
 import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
 import Time from './mainMenu/Time';
 import Logo from './mainMenu/menu-logo.svg';
-import { FaEthereum } from 'react-icons/fa';
-import { MdSettings } from 'react-icons/md';
-import { GiArchBridge} from 'react-icons/gi';
-import { RiHistoryFill } from 'react-icons/ri';
-import { AiFillStar } from 'react-icons/ai';
-import { HiCollection } from 'react-icons/hi';
-import { GiMoonOrbit } from 'react-icons/gi';
-import { BiListCheck } from 'react-icons/bi';
+import { MdAccountBalanceWallet } from 'react-icons/md';
+import { AiFillStar, AiFillEye } from 'react-icons/ai';
+import { RiRouteFill } from 'react-icons/ri';
 
 const StyledMainMenu = styled.div`
   align-items: flex-end;
@@ -57,28 +53,44 @@ const MenuFiller = styled.div`
   flex: 1 0 auto;
 `;
 
+const EndMenuFiller = styled(MenuFiller)`
+  flex: 0 0 auto;
+  width: 10px;
+`;
+
 const MainMenu = (props) => {
+  const setOutlinerSectionVisible = useSettingsStore(state => state.setOutlinerSectionVisible);
+
   return (
     <StyledMainMenu>
       <StyledLogo src={Logo} />
       <Background />
       <MenuWrapper>
         <Menu title="Account">
-          <MenuItem name="Assets" icon={<HiCollection />} />
-          <MenuItem name="Planning" icon={<GiMoonOrbit />} />
-          <MenuItem name="Watchlist" icon={<BiListCheck />} />
+          <MenuItem
+            name="Wallet"
+            icon={<MdAccountBalanceWallet />}
+            onClick={() => setOutlinerSectionVisible('wallet')} />
+          <MenuItem
+            name="Watchlist"
+            icon={<AiFillEye />}
+            onClick={() => setOutlinerSectionVisible('watchlist')} />
         </Menu>
         <Menu title="Assets">
-          <MenuItem name="Wallet" icon={<FaEthereum />} />
-          <MenuItem name="Bridge" icon={<GiArchBridge />} />
-          <MenuItem name="Settings" icon={<MdSettings />} />
+          <MenuItem
+            name="Asteroids"
+            icon={<AiFillStar />}
+            onClick={() => setOutlinerSectionVisible('ownedAsteroids')} />
         </Menu>
         <Menu title="Map">
-          <MenuItem name="History" icon={<RiHistoryFill />} />
-          <MenuItem name="Rewards" icon={<AiFillStar />} />
+          <MenuItem
+            name="Route Planner"
+            icon={<RiRouteFill />}
+            onClick={() => setOutlinerSectionVisible('routePlanner')} />
         </Menu>
         <MenuFiller />
-        <Time />
+        <Time onClick={() => setOutlinerSectionVisible('timeControl')} />
+        <EndMenuFiller />
       </MenuWrapper>
     </StyledMainMenu>
   );

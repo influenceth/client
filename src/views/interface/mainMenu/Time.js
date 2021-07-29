@@ -51,7 +51,7 @@ const Time = (props) => {
   }, 10000);
 
   return (
-    <StyledTime>
+    <StyledTime {...props}>
       <DaysSince>
         <span>{displayTime >= 0 ? '+' : '-'}</span>
         <span>{displayTime.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>

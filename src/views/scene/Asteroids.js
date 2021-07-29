@@ -100,11 +100,15 @@ const Asteroids = (props) => {
       if (origin) {
         const originKey = asteroids.data.findIndex(a => a.i === origin.i);
         setOriginPos(positions.slice(originKey * 3, originKey * 3 + 3));
+      } else {
+        setOriginPos(null);
       }
 
       if (destination) {
         const destKey = asteroids.data.findIndex(a => a.i === destination.i);
         setDestinationPos(positions.slice(destKey * 3, destKey * 3 + 3));
+      } else {
+        setDestinationPos(null);
       }
 
       // Update asteroid radii attribute to scale point size

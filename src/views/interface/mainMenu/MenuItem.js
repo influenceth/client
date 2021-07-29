@@ -4,11 +4,10 @@ const StyledMenuItem = styled.div`
   align-items: center;
   color: rgba(255, 255, 255, 0.75);
   display: flex;
-  font-size: 13px;
+  font-size: ${props => props.theme.fontSizes.mainText};
   height: 44px;
   justify-content: left;
-  letter-spacing: 2px;
-  line-height: 44px;
+  letter-spacing: 1px;
   text-align: center;
   text-transform: uppercase;
   transition: all 0.3s ease 25ms;
@@ -32,7 +31,7 @@ const StyledMenuItem = styled.div`
 
 const MenuItem = (props) => {
   return (
-    <StyledMenuItem>
+    <StyledMenuItem {...props}>
       {props.icon}
       <span>{props.name}</span>
     </StyledMenuItem>

@@ -5,6 +5,7 @@ import useSettingsStore from '~/hooks/useSettingsStore';
 import Wallet from './outliner/Wallet';
 import Watchlist from './outliner/Watchlist';
 import OwnedAsteroids from './outliner/OwnedAsteroids';
+import RoutePlanner from './outliner/RoutePlanner';
 import TimeControl from './outliner/TimeControl';
 import SystemControls from './outliner/SystemControls';
 import theme from '~/theme';
@@ -72,6 +73,8 @@ const StyledOutliner = styled.div`
 
 const Outliner = (props) => {
   const outlinerPinned = useSettingsStore(state => state.outlinerPinned);
+  const outlinerSections = useSettingsStore(state => state.outlinerSections);
+  const setOutlinerSectionVisible = useSettingsStore(state => state.setOutlinerSectionVisible);
 
   return (
     <MainContainer>
@@ -83,10 +86,11 @@ const Outliner = (props) => {
       </Border>
       <RightContainer stayOpen={outlinerPinned}>
         <StyledOutliner>
-          <Wallet />
-          <OwnedAsteroids />
-          <Watchlist />
-          <TimeControl />
+          {outlinerSections.wallet.visible && <Wallet />}
+          {outlinerSections.ownedAsteroids.visible && <OwnedAsteroids />}
+          {outlinerSections.watchlist.visible && <Watchlist />}
+          {outlinerSections.routePlanner.visible && <RoutePlanner />}
+          {outlinerSections.timeControl.visible && <TimeControl />}
         </StyledOutliner>
         <SystemControls />
       </RightContainer>

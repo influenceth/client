@@ -8,19 +8,32 @@ import useAsteroidsStore from '~/hooks/useAsteroidsStore';
 import IconButton from '~/components/IconButton';
 import Section from '~/components/Section';
 import AsteroidItem from '~/components/AsteroidItem';
+import theme from '~/theme';
 
 const Controls = styled.div`
   flex: 0 0 auto;
-  padding-bottom: 25px;
+  padding-bottom: 15px;
 `;
 
 const AsteroidList = styled.ul`
-  border-top: 1px solid #666;
+  border-top: 1px solid ${props => props.theme.colors.contentBorder};
+  box-shadow: inset 0 5px 7px -8px #000;
   flex: 0 1 auto;
   overflow-y: scroll;
   list-style-type: none;
   padding: 0;
   margin: 0;
+`;
+
+const StyledAsteroidItem = styled(AsteroidItem)`
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+
+  &:hover {
+    background-color: #222222;
+    border-top: 1px solid ${props => props.theme.colors.contentBorder};
+    border-bottom: 1px solid ${props => props.theme.colors.contentBorder};
+  }
 `;
 
 const OwnedAsteroids = (props) => {
@@ -30,7 +43,10 @@ const OwnedAsteroids = (props) => {
   const setIncludeOwned = useAsteroidsStore(state => state.setIncludeOwned);
 
   return (
-    <Section title="Owned Asteroids" icon={<AiFillStar />}>
+    <Section
+      name="ownedAsteroids"
+      title="Owned Asteroids"
+      icon={<AiFillStar />}>
       <Controls>
         {!includeOwned && (
           <IconButton
@@ -49,7 +65,7 @@ const OwnedAsteroids = (props) => {
         <IconButton data-tip="Apply Filters"><RiFilter2Fill /></IconButton>
       </Controls>
       <AsteroidList>
-        {asteroids.data?.map(a => <AsteroidItem key={a.i} asteroid={a} />)}
+        {asteroids.data?.map(a => <StyledAsteroidItem key={a.i} asteroid={a} />)}
       </AsteroidList>
     </Section>
   );

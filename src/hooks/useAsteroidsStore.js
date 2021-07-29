@@ -8,6 +8,10 @@ const useAsteroidsStore = create(persist((set, get) => ({
 
   // Updates the origin to a new asteroid
   selectOrigin: async (newOrigin) => {
+    if (newOrigin === get().destination?.i) {
+      set({ destination: null });
+    }
+
     try {
       const asteroid = await axios.get(`${process.env.REACT_APP_API_URL}/v1/asteroids/${newOrigin}`);
       set({ origin: asteroid.data });
@@ -25,6 +29,10 @@ const useAsteroidsStore = create(persist((set, get) => ({
 
   // Updates the destination to a new asteroid
   selectDestination: async (newDest) => {
+    if (newDest === get().origin?.i) {
+      set({ origin: null });
+    }
+
     try {
       const asteroid = await axios.get(`${process.env.REACT_APP_API_URL}/v1/asteroids/${newDest}`);
       set({ destination: asteroid.data });

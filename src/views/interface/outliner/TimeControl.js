@@ -57,10 +57,20 @@ const TimeControl = (props) => {
   ));
 
   return (
-    <Section title="Time Control" icon={<HiClock />}>
+    <Section
+      name="timeControl"
+      title="Time Control"
+      icon={<HiClock />}>
       <Controls>
         {!playing && <IconButton data-tip="Play" onClick={play}><MdPlayArrow /></IconButton>}
-        {playing && <IconButton data-tip="Pause" onClick={pause}><MdPause /></IconButton>}
+        {playing && (
+          <IconButton
+            data-tip="Reset to Current"
+            onClick={stop}
+            disabled={!playing}>
+            <MdStop />
+          </IconButton>
+        )}
         <IconButton
           data-tip="Rewind"
           onClick={() => setSpeed(speed - 1)}
@@ -68,16 +78,16 @@ const TimeControl = (props) => {
           <MdFastRewind />
         </IconButton>
         <IconButton
+          data-tip="Pause"
+          onClick={pause}
+          disabled={!playing}>
+          <MdPause />
+        </IconButton>
+        <IconButton
           data-tip="Fast Forward"
           onClick={() => setSpeed(speed + 1)}
           disabled={!playing}>
           <MdFastForward />
-        </IconButton>
-        <IconButton
-          data-tip="Reset to Current"
-          onClick={stop}
-          disabled={!playing}>
-          <MdStop />
         </IconButton>
       </Controls>
       <DataReadout label="Adalia Time" data={adaliaTime} />

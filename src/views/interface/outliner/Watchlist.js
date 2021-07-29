@@ -17,7 +17,10 @@ const Watchlist = (props) => {
   const { mutate } = useUpdateWatchlist();
 
   return (
-    <Section title="Watchlist" icon={<AiFillEye />}>
+    <Section
+      name="watchlist"
+      title="Watchlist"
+      icon={<AiFillEye />}>
       <StyledWatchlist>
         <ul>
           {user.isSuccess && user.data.watchlist.map((w) => {

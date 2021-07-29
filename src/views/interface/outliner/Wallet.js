@@ -28,7 +28,10 @@ const Wallet = () => {
   useInactiveListener(!triedEager || !!activatingConnector);
 
   return (
-    <Section title="Wallet" icon={<MdAccountBalanceWallet />}>
+    <Section
+      name="wallet"
+      title="Wallet"
+      icon={<MdAccountBalanceWallet />}>
       <span>{account}</span>
       {!active && (
         <Button

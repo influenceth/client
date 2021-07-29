@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import styled from 'styled-components';
+import { MdClear } from 'react-icons/md';
 
+import useSettingsStore from '~/hooks/useSettingsStore';
+import IconButton from './IconButton';
 import theme from '~/theme';
 
 const StyledSection = styled.div`
@@ -74,20 +77,38 @@ const Title = styled.h2`
   line-height: 75px;
 `;
 
+const CloseButton = styled(IconButton)`
+  position: absolute;
+  right: 10px;
+  top: 23px;
+  opacity: 0;
+
+  ${StyledSection}:hover & {
+    opacity: 1;
+  }
+`;
+
 const Section = (props) => {
-  const [ minimized, setMinimized ] = useState(false);
+  const sectionSettings = useSettingsStore(state => state.outlinerSections[props.name]);
+  const setOutlinerSectionExpanded = useSettingsStore(state => state.setOutlinerSectionExpanded);
+  const setOutlinerSectionVisible = useSettingsStore(state => state.setOutlinerSectionVisible);
 
   const toggleMinimize = () => {
-    setMinimized(!minimized);
+    setOutlinerSectionExpanded(props.name, !sectionSettings.expanded);
+  };
+
+  const closeSection = () => {
+    setOutlinerSectionVisible(props.name, false);
   };
 
   return (
-    <StyledSection>
+    <StyledSection {...props}>
       <Tab>
         {props.icon}
       </Tab>
       {props.title && <Title onClick={toggleMinimize}>{props.title}</Title>}
-      <Content minimized={minimized}>
+      <CloseButton onClick={closeSection} borderless><MdClear /></CloseButton>
+      <Content minimized={!sectionSettings.expanded}>
         {props.children}
       </Content>
     </StyledSection>

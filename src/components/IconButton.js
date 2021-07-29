@@ -19,9 +19,19 @@ const StyledIconButton = styled.button`
   position: relative;
   margin-right: 10px;
 
+  &:disabled {
+    color: ${props => props.theme.colors.disabledText};
+    border-color: ${props => props.theme.colors.disabledText};
+  }
+
   &:hover {
     color: white;
     background-image: linear-gradient(120deg, rgba(54, 167, 205, 0.1), rgba(54, 167, 205, 0.25));
+  }
+
+  &:disabled:hover {
+    color: ${props => props.theme.colors.disabledText};
+    background-image: none;
   }
 
   & > svg {

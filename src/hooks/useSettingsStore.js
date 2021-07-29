@@ -16,6 +16,44 @@ const useSettingsStore = create(persist((set, get) => ({
   // Set whether the skybox is hidden
   setSkyboxHidden: (hidden) => set(state => {
     return { skyboxHidden: hidden };
+  }),
+
+  outlinerSections: {
+    wallet: {
+      visible: true,
+      expanded: true
+    },
+    ownedAsteroids: {
+      visible: true,
+      expanded: false
+    },
+    watchlist: {
+      visible: true,
+      expanded: false
+    },
+    routePlanner: {
+      visible: false,
+      expanded: true
+    },
+    timeControl: {
+      visible: false,
+      expanded: true
+    }
+  },
+
+  setOutlinerSectionVisible: (section, visible = true) => set(state => {
+    console.log(section, visible);
+    const oldSections = get().outlinerSections;
+    const newSection = {...oldSections[section], visible: visible };
+    const newSections = {...oldSections, [section]: newSection };
+    return { outlinerSections: newSections };
+  }),
+
+  setOutlinerSectionExpanded: (section, expanded = true) => set(state => {
+    const oldSections = get().outlinerSections;
+    const newSection = {...oldSections[section], expanded: expanded };
+    const newSections = {...oldSections, [section]: newSection };
+    return { outlinerSections: newSections };
   })
 })));
 
