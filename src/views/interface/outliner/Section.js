@@ -29,7 +29,7 @@ const StyledSection = styled.div`
 `;
 
 const ScrollContainer = styled.div`
-  max-height: ${props => props.minimized ? '0px' : '500px'};
+  max-height: ${props => props.minimized ? '0px' : '33vh'};
   overflow-y: scroll;
   transition: all 0.3s ease;
   padding-bottom: ${props => props.minimized ? '0' : '20px'};

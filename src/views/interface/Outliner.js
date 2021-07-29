@@ -84,8 +84,8 @@ const Outliner = (props) => {
       <RightContainer stayOpen={outlinerPinned}>
         <StyledOutliner>
           <Wallet />
-          <Watchlist />
           <OwnedAsteroids />
+          <Watchlist />
           <TimeControl />
         </StyledOutliner>
         <SystemControls />

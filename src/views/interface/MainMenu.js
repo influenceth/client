@@ -63,17 +63,17 @@ const MainMenu = (props) => {
       <StyledLogo src={Logo} />
       <Background />
       <MenuWrapper>
-        <Menu title="Map">
+        <Menu title="Account">
           <MenuItem name="Assets" icon={<HiCollection />} />
           <MenuItem name="Planning" icon={<GiMoonOrbit />} />
           <MenuItem name="Watchlist" icon={<BiListCheck />} />
         </Menu>
-        <Menu title="Account">
+        <Menu title="Assets">
           <MenuItem name="Wallet" icon={<FaEthereum />} />
           <MenuItem name="Bridge" icon={<GiArchBridge />} />
           <MenuItem name="Settings" icon={<MdSettings />} />
         </Menu>
-        <Menu title="Profile">
+        <Menu title="Map">
           <MenuItem name="History" icon={<RiHistoryFill />} />
           <MenuItem name="Rewards" icon={<AiFillStar />} />
         </Menu>

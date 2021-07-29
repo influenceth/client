@@ -13,6 +13,10 @@ import useTimeStore from '~/hooks/useTimeStore';
 // Calculate the difference in game days between the start timestamp and the lore start time
 const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
 
+const Controls = styled.div`
+  padding-bottom: 25px;
+`;
+
 const TimeControl = (props) => {
   const [ speed, setSpeed ] = useState(1);
   const [ playing, setPlaying ] = useState(false);
@@ -54,13 +58,15 @@ const TimeControl = (props) => {
 
   return (
     <Section title="Time Control" icon={<HiClock />}>
+      <Controls>
+        {!playing && <IconButton data-tip="Play" onClick={play}><MdPlayArrow /></IconButton>}
+        {playing && <IconButton data-tip="Pause" onClick={pause}><MdPause /></IconButton>}
+        {playing && <IconButton data-tip="Fast Forward" onClick={() => setSpeed(speed - 1)}><MdFastRewind /></IconButton>}
+        {playing && <IconButton data-tip="Rewind" onClick={() => setSpeed(speed + 1)}><MdFastForward /></IconButton>}
+        {playing && <IconButton data-tip="Reset to Current" onClick={stop}><MdStop /></IconButton>}
+      </Controls>
       <DataReadout label="Adalia Time" data={adaliaTime} />
       <DataReadout label="Actual Time" data={actualTime} />
-      {!playing && <IconButton data-tip="Play" onClick={play}><MdPlayArrow /></IconButton>}
-      {playing && <IconButton data-tip="Pause" onClick={pause}><MdPause /></IconButton>}
-      {playing && <IconButton data-tip="Fast Forward" onClick={() => setSpeed(speed - 1)}><MdFastRewind /></IconButton>}
-      {playing && <IconButton data-tip="Rewind" onClick={() => setSpeed(speed + 1)}><MdFastForward /></IconButton>}
-      {playing && <IconButton data-tip="Reset to Current" onClick={stop}><MdStop /></IconButton>}
     </Section>
   );
 };
