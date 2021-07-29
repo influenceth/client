@@ -4,6 +4,7 @@ import { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import Worker from 'worker-loader!../../worker';
 import useTimeStore from '~/hooks/useTimeStore';
 import useAsteroidsStore from '~/hooks/useAsteroidsStore';
+import useSettingsStore from '~/hooks/useSettingsStore';
 import useAsteroids from '~/hooks/useAsteroids';
 import FlightLine from './asteroids/FlightLine';
 import Orbit from './asteroids/Orbit';
@@ -23,6 +24,7 @@ const Asteroids = (props) => {
   const selectDestination = useAsteroidsStore(state => state.selectDestination);
   const hovered = useAsteroidsStore(state => state.hoveredAsteroid);
   const setHovered = useAsteroidsStore(state => state.setHoveredAsteroid);
+  const routePlannerActive = useSettingsStore(state => state.outlinerSections.routePlanner.visible);
 
   const [ positions, setPositions ] = useState();
   const [ radii, setRadii ] = useState();
@@ -40,6 +42,7 @@ const Asteroids = (props) => {
 
   const onContextClick = (e) => {
     e.stopPropagation();
+    if (!routePlannerActive) return; // Only allow picking a destination if the route planner is open
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
     selectDestination(asteroids.data[index].i);
   }
@@ -56,6 +59,7 @@ const Asteroids = (props) => {
     setHovered(null);
   };
 
+  // Responds to hover changes in the store which could be fired from the HUD
   useEffect(() => {
     if (!hovered || hovered === origin?.i || hovered === destination?.i) {
       setHoveredPos(null);

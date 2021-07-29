@@ -89,6 +89,10 @@ const RoutePlanner = (props) => {
 
   }, [ origin, destination, time ]);
 
+  useEffect(() => {
+    return () => deselectDestination();
+  }, [ deselectDestination ]);
+
   return (
     <Section
       name="routePlanner"

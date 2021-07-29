@@ -42,7 +42,6 @@ const useSettingsStore = create(persist((set, get) => ({
   },
 
   setOutlinerSectionVisible: (section, visible = true) => set(state => {
-    console.log(section, visible);
     const oldSections = get().outlinerSections;
     const newSection = {...oldSections[section], visible: visible };
     const newSections = {...oldSections, [section]: newSection };
