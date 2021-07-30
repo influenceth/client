@@ -1,7 +1,6 @@
-import create from 'zustand';
 import { START_TIMESTAMP } from 'influence-utils';
 
-const useTimeStore = create((set, get) => ({
+const timeStore = (set, get) => ({
   // Adalian time in days elapsed since founding
   time: 0,
 
@@ -24,6 +23,6 @@ const useTimeStore = create((set, get) => ({
   updateAutoUpdatingTime: (updating) => set(state => {
     return { autoUpdatingTime: updating };
   })
-}));
+});
 
-export default useTimeStore;
+export default timeStore;

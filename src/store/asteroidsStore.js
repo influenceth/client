@@ -1,8 +1,6 @@
-import create from 'zustand';
-import { persist } from 'zustand/middleware';
 import axios from 'axios';
 
-const useAsteroidsStore = create(persist((set, get) => ({
+const asteroidsStore = (set, get) => ({
   // Currently selected asteroid Id, doubles as the origin for flight planning
   origin: null,
 
@@ -57,6 +55,6 @@ const useAsteroidsStore = create(persist((set, get) => ({
   setHoveredAsteroid: (i) => set(state => {
     return { hoveredAsteroid: i };
   })
-})));
+});
 
-export default useAsteroidsStore;
+export default asteroidsStore;

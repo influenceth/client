@@ -1,10 +1,8 @@
-import create from 'zustand';
-import { persist } from 'zustand/middleware';
 import axios from 'axios';
 
-const useTokenStore = create(persist((set, get) => ({
+const tokenStore = (set, get) => ({
   // Authentication / Bearer token (jwt)
-  token: undefined,
+  token: null,
 
   // Whether token handshakes / Ethereum signing are happening
   gettingToken: false,
@@ -35,6 +33,6 @@ const useTokenStore = create(persist((set, get) => ({
       set({ gettingToken: false });
     }
   }
-})));
+});
 
-export default useTokenStore;
+export default tokenStore;

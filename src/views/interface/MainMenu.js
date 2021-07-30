@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-import useSettingsStore from '~/hooks/useSettingsStore';
+import useStore from '~/hooks/useStore';
 import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
 import Time from './mainMenu/Time';
@@ -14,9 +14,11 @@ const StyledMainMenu = styled.div`
   bottom: 0;
   box-sizing: border-box;
   display: flex;
+  flex: 0 1 auto;
+  height: 94px;
   padding: 25px 0 25px 25px;
   pointer-events: auto;
-  position: absolute;
+  position: relative;
   width: 100%;
 `;
 
@@ -59,7 +61,7 @@ const EndMenuFiller = styled(MenuFiller)`
 `;
 
 const MainMenu = (props) => {
-  const setOutlinerSectionVisible = useSettingsStore(state => state.setOutlinerSectionVisible);
+  const setOutlinerSectionActive = useStore(state => state.setOutlinerSectionActive);
 
   return (
     <StyledMainMenu>
@@ -70,26 +72,26 @@ const MainMenu = (props) => {
           <MenuItem
             name="Wallet"
             icon={<MdAccountBalanceWallet />}
-            onClick={() => setOutlinerSectionVisible('wallet')} />
+            onClick={() => setOutlinerSectionActive('wallet')} />
           <MenuItem
             name="Watchlist"
             icon={<AiFillEye />}
-            onClick={() => setOutlinerSectionVisible('watchlist')} />
+            onClick={() => setOutlinerSectionActive('watchlist')} />
         </Menu>
         <Menu title="Assets">
           <MenuItem
             name="Asteroids"
             icon={<AiFillStar />}
-            onClick={() => setOutlinerSectionVisible('ownedAsteroids')} />
+            onClick={() => setOutlinerSectionActive('ownedAsteroids')} />
         </Menu>
         <Menu title="Map">
           <MenuItem
             name="Route Planner"
             icon={<RiRouteFill />}
-            onClick={() => setOutlinerSectionVisible('routePlanner')} />
+            onClick={() => setOutlinerSectionActive('routePlanner')} />
         </Menu>
         <MenuFiller />
-        <Time onClick={() => setOutlinerSectionVisible('timeControl')} />
+        <Time onClick={() => setOutlinerSectionActive('timeControl')} />
         <EndMenuFiller />
       </MenuWrapper>
     </StyledMainMenu>

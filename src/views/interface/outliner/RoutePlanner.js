@@ -5,14 +5,12 @@ import { RiRouteFill, RiPagesFill } from 'react-icons/ri';
 import { MdRemoveCircle } from 'react-icons/md';
 import { GiHorizontalFlip } from 'react-icons/gi';
 
-import useAsteroidsStore from '~/hooks/useAsteroidsStore';
-import useTimeStore from '~/hooks/useTimeStore';
+import useStore from '~/hooks/useStore';
 import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
 import AsteroidItem from '~/components/AsteroidItem';
 import DataReadout from '~/components/DataReadout';
 import constants from '~/constants';
-import theme from '~/theme';
 
 const Controls = styled.div`
   flex: 0 0 auto;
@@ -31,7 +29,7 @@ const AsteroidLabel = styled.li`
   border-right: 1px solid ${props => props.theme.colors.mainBorder};
   border-radius: 3px 3px 0 0 ;
   color: ${props => props.theme.colors.secondaryText};
-  background-color: #252525;
+  background-color: ${props => props.theme.colors.contentHighlight};
   height: 30px;
   line-height: 30px;
   padding-left: 10px;
@@ -65,13 +63,13 @@ const LinkLine = styled.li`
 
 const RoutePlanner = (props) => {
   const [ distance, setDistance ] = useState(null);
-  const time = useTimeStore(state => state.time);
-  const origin = useAsteroidsStore(state => state.origin);
-  const destination = useAsteroidsStore(state => state.destination);
-  const deselectOrigin = useAsteroidsStore(state => state.deselectOrigin);
-  const deselectDestination = useAsteroidsStore(state => state.deselectDestination);
-  const selectOrigin = useAsteroidsStore(state => state.selectOrigin);
-  const selectDestination = useAsteroidsStore(state => state.selectDestination);
+  const time = useStore(state => state.time);
+  const origin = useStore(state => state.origin);
+  const destination = useStore(state => state.destination);
+  const deselectOrigin = useStore(state => state.deselectOrigin);
+  const deselectDestination = useStore(state => state.deselectDestination);
+  const selectOrigin = useStore(state => state.selectOrigin);
+  const selectDestination = useStore(state => state.selectDestination);
 
   useEffect(() => {
     if (!origin || !destination) {

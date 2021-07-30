@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { START_TIMESTAMP } from 'influence-utils';
 
 import useInterval from '~/hooks/useInterval';
-import useTimeStore from '~/hooks/useTimeStore';
+import useStore from '~/hooks/useStore';
 
 const StyledTime = styled.div`
   cursor: pointer;
@@ -36,8 +36,8 @@ const DaysSince = styled.div`
 const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
 
 const Time = (props) => {
-  const time = useTimeStore(state => state.time);
-  const updateToCurrentTime = useTimeStore(state => state.updateToCurrentTime);
+  const time = useStore(state => state.time);
+  const updateToCurrentTime = useStore(state => state.updateToCurrentTime);
   const displayTime = time - diff;
 
   // Update time once immediately upon launching

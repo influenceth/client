@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import { useCubeTexture } from '@react-three/drei';
 
-import useSettingsStore from '~/hooks/useSettingsStore';
+import useStore from '~/hooks/useStore';
 
 const SettingsManager = (props) => {
   const { scene } = useThree();
-  const skyboxHidden = useSettingsStore(state => state.skyboxHidden);
+  const skyboxHidden = useStore(state => state.skyboxHidden);
 
   // Import skybox textures
   const skybox = useCubeTexture([

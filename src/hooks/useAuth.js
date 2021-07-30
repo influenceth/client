@@ -3,11 +3,11 @@ import { isExpired, decodeToken } from 'react-jwt';
 import { useWeb3React } from '@web3-react/core';
 import { utils } from 'ethers';
 
-import useTokenStore from '~/hooks/useTokenStore';
+import useStore from '~/hooks/useStore';
 
 const useAuth = () => {
-  const token = useTokenStore(state => state.token);
-  const getToken = useTokenStore(state => state.getToken);
+  const token = useStore(state => state.token);
+  const getToken = useStore(state => state.getToken);
   const { library, account } = useWeb3React();
   const [ authed, setAuthed ] = useState(false);
 

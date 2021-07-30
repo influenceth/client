@@ -1,10 +1,8 @@
-import { useState } from 'react';
 import styled from 'styled-components';
 import { MdClear } from 'react-icons/md';
 
-import useSettingsStore from '~/hooks/useSettingsStore';
+import useStore from '~/hooks/useStore';
 import IconButton from './IconButton';
-import theme from '~/theme';
 
 const StyledSection = styled.div`
   background-color: rgba(255, 255, 255, 0.075);
@@ -32,12 +30,12 @@ const StyledSection = styled.div`
 `;
 
 const Content = styled.div`
-  max-height: ${props => props.minimized ? '0px' : '33vh'};
   display: flex;
   flex-direction: column;
+  max-height: ${props => props.minimized ? '0' : '33vh'};
   overflow: hidden;
-  transition: all 0.3s ease;
   padding-bottom: ${props => props.minimized ? '0' : '20px'};
+  transition: all 0.3s ease;
 `;
 
 const Tab = styled.div`
@@ -89,16 +87,17 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Section = (props) => {
-  const sectionSettings = useSettingsStore(state => state.outlinerSections[props.name]);
-  const setOutlinerSectionExpanded = useSettingsStore(state => state.setOutlinerSectionExpanded);
-  const setOutlinerSectionVisible = useSettingsStore(state => state.setOutlinerSectionVisible);
+  const sectionSettings = useStore(state => state.outlinerSections[props.name]);
+  const setOutlinerSectionExpanded = useStore(state => state.setOutlinerSectionExpanded);
+  const setOutlinerSectionActive = useStore(state => state.setOutlinerSectionActive);
 
   const toggleMinimize = () => {
     setOutlinerSectionExpanded(props.name, !sectionSettings.expanded);
   };
 
   const closeSection = () => {
-    setOutlinerSectionVisible(props.name, false);
+    if (props.onClose && typeof props.onClose === 'function') props.onClose();
+    setOutlinerSectionActive(props.name, false);
   };
 
   return (

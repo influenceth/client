@@ -4,11 +4,11 @@ import { START_TIMESTAMP } from 'influence-utils';
 import { MdFastRewind, MdFastForward, MdPlayArrow, MdPause, MdStop } from 'react-icons/md';
 import { HiClock } from 'react-icons/hi';
 
+import useInterval from '~/hooks/useInterval';
+import useStore from '~/hooks/useStore';
 import Section from '~/components/Section';
 import DataReadout from '~/components/DataReadout';
 import IconButton from '~/components/IconButton';
-import useInterval from '~/hooks/useInterval';
-import useTimeStore from '~/hooks/useTimeStore';
 
 // Calculate the difference in game days between the start timestamp and the lore start time
 const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
@@ -20,10 +20,10 @@ const Controls = styled.div`
 const TimeControl = (props) => {
   const [ speed, setSpeed ] = useState(1);
   const [ playing, setPlaying ] = useState(false);
-  const time = useTimeStore(state => state.time);
-  const updateTime = useTimeStore(state => state.updateTime);
-  const updateAutoUpdatingTime = useTimeStore(state => state.updateAutoUpdatingTime);
-  const updateToCurrentTime = useTimeStore(state => state.updateToCurrentTime);
+  const time = useStore(state => state.time);
+  const updateTime = useStore(state => state.updateTime);
+  const updateAutoUpdatingTime = useStore(state => state.updateAutoUpdatingTime);
+  const updateToCurrentTime = useStore(state => state.updateToCurrentTime);
 
   const play = () => {
     setPlaying(true);

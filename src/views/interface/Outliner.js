@@ -1,14 +1,12 @@
-import { useState } from 'react';
 import styled from 'styled-components';
 
-import useSettingsStore from '~/hooks/useSettingsStore';
+import useStore from '~/hooks/useStore';
 import Wallet from './outliner/Wallet';
 import Watchlist from './outliner/Watchlist';
 import OwnedAsteroids from './outliner/OwnedAsteroids';
 import RoutePlanner from './outliner/RoutePlanner';
 import TimeControl from './outliner/TimeControl';
 import SystemControls from './outliner/SystemControls';
-import theme from '~/theme';
 
 const MainContainer = styled.div`
   display: flex;
@@ -72,9 +70,8 @@ const StyledOutliner = styled.div`
 `;
 
 const Outliner = (props) => {
-  const outlinerPinned = useSettingsStore(state => state.outlinerPinned);
-  const outlinerSections = useSettingsStore(state => state.outlinerSections);
-  const setOutlinerSectionVisible = useSettingsStore(state => state.setOutlinerSectionVisible);
+  const outlinerPinned = useStore(state => state.outlinerPinned);
+  const outlinerSections = useStore(state => state.outlinerSections);
 
   return (
     <MainContainer>
@@ -86,11 +83,11 @@ const Outliner = (props) => {
       </Border>
       <RightContainer stayOpen={outlinerPinned}>
         <StyledOutliner>
-          {outlinerSections.wallet.visible && <Wallet />}
-          {outlinerSections.ownedAsteroids.visible && <OwnedAsteroids />}
-          {outlinerSections.watchlist.visible && <Watchlist />}
-          {outlinerSections.routePlanner.visible && <RoutePlanner />}
-          {outlinerSections.timeControl.visible && <TimeControl />}
+          {outlinerSections.wallet.active && <Wallet />}
+          {outlinerSections.ownedAsteroids.active && <OwnedAsteroids />}
+          {outlinerSections.watchlist.active && <Watchlist />}
+          {outlinerSections.routePlanner.active && <RoutePlanner />}
+          {outlinerSections.timeControl.active && <TimeControl />}
         </StyledOutliner>
         <SystemControls />
       </RightContainer>

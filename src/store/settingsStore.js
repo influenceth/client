@@ -1,7 +1,4 @@
-import create from 'zustand';
-import { persist } from 'zustand/middleware';
-
-const useSettingsStore = create(persist((set, get) => ({
+const settingsStore = (set, get) => ({
   // Whether the right pane is pinned open
   outlinerPinned: false,
 
@@ -20,30 +17,30 @@ const useSettingsStore = create(persist((set, get) => ({
 
   outlinerSections: {
     wallet: {
-      visible: true,
+      active: true,
       expanded: true
     },
     ownedAsteroids: {
-      visible: true,
+      active: true,
       expanded: false
     },
     watchlist: {
-      visible: true,
+      active: true,
       expanded: false
     },
     routePlanner: {
-      visible: false,
+      active: false,
       expanded: true
     },
     timeControl: {
-      visible: false,
+      active: false,
       expanded: true
     }
   },
 
-  setOutlinerSectionVisible: (section, visible = true) => set(state => {
+  setOutlinerSectionActive: (section, active = true) => set(state => {
     const oldSections = get().outlinerSections;
-    const newSection = {...oldSections[section], visible: visible };
+    const newSection = {...oldSections[section], active: active };
     const newSections = {...oldSections, [section]: newSection };
     return { outlinerSections: newSections };
   }),
@@ -54,6 +51,6 @@ const useSettingsStore = create(persist((set, get) => ({
     const newSections = {...oldSections, [section]: newSection };
     return { outlinerSections: newSections };
   })
-})));
+});
 
-export default useSettingsStore;
+export default settingsStore;

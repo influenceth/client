@@ -1,7 +1,5 @@
 import styled from 'styled-components';
 
-import theme from '~/theme';
-
 const StyledDataReadout = styled.div`
   display: flex;
   padding-bottom: 10px;

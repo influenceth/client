@@ -1,9 +1,11 @@
 import styled from 'styled-components';
 import utils from 'influence-utils';
 import { IoIosPin } from 'react-icons/io';
+import { MdCancel } from 'react-icons/md';
 
-import useAsteroidsStore from '~/hooks/useAsteroidsStore';
+import useStore from '~/hooks/useStore';
 import IconButton from '~/components/IconButton';
+import BonusBadge from '~/components/BonusBadge';
 import theme from '~/theme';
 
 const StyledAsteroidItem = styled.li`
@@ -13,7 +15,11 @@ const StyledAsteroidItem = styled.li`
   overflow: hidden;
 
   &:hover {
-    max-height: 80px;
+    max-height: 120px;
+  }
+
+  &{Description} {
+    color: ${props => props.selected ? props.theme.colors.main : 'inherit'};
   }
 `;
 
@@ -22,31 +28,31 @@ const Description = styled.span`
   line-height: 40px;
 `;
 
+const Bonuses = styled.div`
+  display: flex;
+  height: 40px;
+`;
+
 const Controls = styled.div`
   height: 40px;
 `;
 
 const RarityBadge = styled.span`
-  color: ${props => {
-    if (props.rarity === 'Common') return '#bbbbbb';
-    if (props.rarity === 'Uncommon') return '#69ebf4';
-    if (props.rarity === 'Rare') return '#4f90ff';
-    if (props.rarity === 'Superior') return '#884fff';
-    if (props.rarity === 'Exceptional') return '#ff984f';
-    if (props.rarity === 'Incomparable') return '#ffd94f';
-  }}
+  color: ${props => theme.colors.rarity[props.rarity]};
 `;
 
 const AsteroidItem = (props) => {
   const { asteroid } = props;
-  const setHovered = useAsteroidsStore(state => state.setHoveredAsteroid);
-  const origin = useAsteroidsStore(state => state.origin);
-  const selectOrigin = useAsteroidsStore(state => state.selectOrigin);
+  const setHovered = useStore(state => state.setHoveredAsteroid);
+  const origin = useStore(state => state.origin);
+  const selectOrigin = useStore(state => state.selectOrigin);
+  const deselectOrigin = useStore(state => state.deselectOrigin);
 
   return (
     <StyledAsteroidItem
       onMouseOver={() => setHovered(asteroid.i)}
       onMouseOut={() => setHovered(null)}
+      selected={origin?.i === asteroid.i}
       {...props}>
       <Description>
         {asteroid.name}{' - '}
@@ -54,14 +60,26 @@ const AsteroidItem = (props) => {
         {utils.toSpectralType(asteroid.spectralType)}{'-type'}
         {asteroid.scanned && <RarityBadge rarity={utils.toRarity(asteroid.bonuses)}> &#9679;</RarityBadge>}
       </Description>
+      {asteroid.bonuses?.length > 0 && (
+        <Bonuses>
+          {asteroid.bonuses.map(b => <BonusBadge bonus={b} key={b.type} />)}
+        </Bonuses>
+      )}
       <Controls>
-        <IconButton
-          data-tip="Select Asteroid"
-          onClick={() => selectOrigin(asteroid.i)}
-          disabled={origin?.i === asteroid.i}
-          borderless>
-          <IoIosPin />
-        </IconButton>
+        {origin?.i !== asteroid.i && (
+          <IconButton
+            data-tip="Select Asteroid"
+            onClick={() => selectOrigin(asteroid.i)}>
+            <IoIosPin />
+          </IconButton>
+        )}
+        {origin?.i === asteroid.i && (
+          <IconButton
+            data-tip="Deselect Asteroid"
+            onClick={() => deselectOrigin()}>
+            <MdCancel />
+          </IconButton>
+        )}
       </Controls>
     </StyledAsteroidItem>
   );

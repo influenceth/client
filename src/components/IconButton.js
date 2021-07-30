@@ -2,8 +2,6 @@ import { useEffect } from 'react';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 
-import theme from '~/theme';
-
 const StyledIconButton = styled.button`
   border: ${props => props.borderless ? '0px' : '1px'} solid ${props => props.theme.colors.main};
   background-color: transparent;

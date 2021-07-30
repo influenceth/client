@@ -5,7 +5,7 @@ import { AiOutlineSetting, AiOutlinePushpin, AiFillPushpin } from 'react-icons/a
 import { MdFullscreen, MdFullscreenExit } from 'react-icons/md';
 import { BsEyeSlash, BsEye } from 'react-icons/bs';
 
-import useSettingsStore from '~/hooks/useSettingsStore';
+import useStore from '~/hooks/useStore';
 import IconButton from '~/components/IconButton';
 
 const StyledSystemControls = styled.div`
@@ -19,10 +19,10 @@ const StyledSystemControls = styled.div`
 `;
 
 const SystemControls = (props) => {
-  const outlinerPinned = useSettingsStore(state => state.outlinerPinned);
-  const setOutlinerPinned = useSettingsStore(state => state.setOutlinerPinned);
-  const skyboxHidden = useSettingsStore(state => state.skyboxHidden);
-  const setSkyboxHidden = useSettingsStore(state => state.setSkyboxHidden);
+  const outlinerPinned = useStore(state => state.outlinerPinned);
+  const setOutlinerPinned = useStore(state => state.setOutlinerPinned);
+  const skyboxHidden = useStore(state => state.skyboxHidden);
+  const setSkyboxHidden = useStore(state => state.setSkyboxHidden);
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
   screenfull.on('change', () => {

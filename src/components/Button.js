@@ -1,7 +1,5 @@
 import styled from 'styled-components';
 
-import theme from '~/theme';
-
 const StyledButton = styled.button`
   border: 1px solid ${props => props.theme.colors.main};
   background-color: transparent;

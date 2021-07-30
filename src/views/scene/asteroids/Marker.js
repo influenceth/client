@@ -14,7 +14,7 @@ const initialUniforms = {
 
 const Marker = (props) => {
   const { asteroidPos } = props;
-  const [ points, setPoints ] = useState(new Float32Array(2 * 3));
+  const [ points, setPoints ] = useState(asteroidPos);
   const planeTexture = useTexture(`${process.env.PUBLIC_URL}/textures/circleFaded.png`);
   const asteroidTexture = useTexture(`${process.env.PUBLIC_URL}/textures/marker.png`);
 
@@ -26,7 +26,7 @@ const Marker = (props) => {
   }, [ asteroidPos ]);
 
   return (
-    <group>
+    <group opacity={0}>
       <points>
         <bufferGeometry>
           <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points.slice(0, 3), 3 ]} />

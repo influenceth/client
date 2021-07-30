@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import ReactDOM from 'react-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Web3ReactProvider } from '@web3-react/core';
 import { Web3Provider } from '@ethersproject/providers';
@@ -22,8 +23,10 @@ ReactDOM.render(
     <Web3ReactProvider getLibrary={getLibrary}>
       <QueryClientProvider client={queryClient} contextSharing={true}>
         <Game>
-          <Interface />
-          <Scene />
+          <Router>
+            <Interface />
+            <Scene />
+          </Router>
         </Game>
       </QueryClientProvider>
     </Web3ReactProvider>

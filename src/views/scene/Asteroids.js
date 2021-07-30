@@ -1,10 +1,8 @@
-import { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import { Suspense, useRef, useState, useEffect, useLayoutEffect } from 'react';
 
 // eslint-disable-next-line
 import Worker from 'worker-loader!../../worker';
-import useTimeStore from '~/hooks/useTimeStore';
-import useAsteroidsStore from '~/hooks/useAsteroidsStore';
-import useSettingsStore from '~/hooks/useSettingsStore';
+import useStore from '~/hooks/useStore';
 import useAsteroids from '~/hooks/useAsteroids';
 import FlightLine from './asteroids/FlightLine';
 import Orbit from './asteroids/Orbit';
@@ -17,14 +15,14 @@ const worker = new Worker();
 
 const Asteroids = (props) => {
   const asteroids = useAsteroids();
-  const time = useTimeStore(state => state.time);
-  const origin = useAsteroidsStore(state => state.origin);
-  const selectOrigin = useAsteroidsStore(state => state.selectOrigin);
-  const destination = useAsteroidsStore(state => state.destination);
-  const selectDestination = useAsteroidsStore(state => state.selectDestination);
-  const hovered = useAsteroidsStore(state => state.hoveredAsteroid);
-  const setHovered = useAsteroidsStore(state => state.setHoveredAsteroid);
-  const routePlannerActive = useSettingsStore(state => state.outlinerSections.routePlanner.visible);
+  const time = useStore(state => state.time);
+  const origin = useStore(state => state.origin);
+  const selectOrigin = useStore(state => state.selectOrigin);
+  const destination = useStore(state => state.destination);
+  const selectDestination = useStore(state => state.selectDestination);
+  const hovered = useStore(state => state.hoveredAsteroid);
+  const setHovered = useStore(state => state.setHoveredAsteroid);
+  const routePlannerActive = useStore(state => state.outlinerSections.routePlanner.active);
 
   const [ positions, setPositions ] = useState();
   const [ radii, setRadii ] = useState();
@@ -66,15 +64,17 @@ const Asteroids = (props) => {
       return;
     }
 
-    const index = asteroids.data.findIndex(a => a.i === hovered);
+    if (asteroids.data && positions && asteroids.data.length * 3 === positions.length) {
+      const index = asteroids.data?.findIndex(a => a.i === hovered);
 
-    if (index > -1) {
-      const pos = positions.slice(index * 3, index * 3 + 3);
-      setHoveredPos(pos);
-    } else {
-      setHoveredPos(null);
+      if (index > -1) {
+        const pos = positions.slice(index * 3, index * 3 + 3);
+        setHoveredPos(pos);
+      } else {
+        setHoveredPos(null);
+      }
     }
-  }, [ hovered, setHovered, positions, asteroids.data ]);
+  }, [ hovered, setHovered, origin, destination, positions, asteroids.data ]);
 
   // When asteroids are newly filtered, or there are changes to origin / destination
   useEffect(() => {
@@ -152,11 +152,13 @@ const Asteroids = (props) => {
           }]} />
         </points>
       )}
-      {hoveredPos && <Marker asteroidPos={hoveredPos} />}
+      <Suspense fallback={<group />}>
+        {hoveredPos && <Marker asteroidPos={hoveredPos} />}
+        {originPos && <Marker asteroidPos={originPos} />}
+        {destinationPos && <Marker asteroidPos={destinationPos} />}
+      </Suspense>
       {origin && <Orbit asteroid={origin} />}
-      {originPos && <Marker asteroidPos={originPos} />}
       {destination && <Orbit asteroid={destination} />}
-      {destinationPos && <Marker asteroidPos={destinationPos} />}
       {originPos && destinationPos && <FlightLine originPos={originPos} destinationPos={destinationPos} />}
     </group>
   )

@@ -1,9 +1,10 @@
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
+import { Switch, Route } from 'react-router-dom';
 
-import Details from './interface/Details';
 import MainMenu from './interface/MainMenu';
 import Outliner from './interface/Outliner';
+import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -18,8 +19,12 @@ const StyledInterface = styled.div`
 `;
 
 const MainContainer = styled.div`
+  display: flex;
+  flex-direction: column;
   flex: 1 0 auto;
+  justify-content: flex-end;
   position: relative;
+  height: 100%;
 `;
 
 const Interface = () => {
@@ -27,7 +32,11 @@ const Interface = () => {
     <StyledInterface>
       <ReactTooltip id="global" place="left" effect="solid" />
       <MainContainer>
-        <Details />
+        <Switch>
+          <Route path="/owned-asteroids">
+            <OwnedAsteroidsTable />
+          </Route>
+        </Switch>
         <MainMenu />
       </MainContainer>
       <Outliner />
