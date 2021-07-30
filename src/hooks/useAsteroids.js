@@ -18,7 +18,8 @@ const useAsteroids = () => {
       const { includeOwned, ...newQuery } = query;
       setQuery(newQuery);
     }
-  }, [ query, account, includeOwnedAsteroids ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ account, includeOwnedAsteroids ]);
 
   return useQuery([ 'asteroids', query ], async () => {
     const response = await axios.get(`${process.env.REACT_APP_API_URL}/v1/asteroids`, { params: query });
