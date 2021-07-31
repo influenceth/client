@@ -18,6 +18,7 @@ const Asteroids = (props) => {
   const time = useStore(state => state.time);
   const origin = useStore(state => state.origin);
   const selectOrigin = useStore(state => state.selectOrigin);
+  const deselectOrigin = useStore(state => state.deselectOrigin);
   const destination = useStore(state => state.destination);
   const selectDestination = useStore(state => state.selectDestination);
   const hovered = useStore(state => state.hoveredAsteroid);
@@ -40,8 +41,9 @@ const Asteroids = (props) => {
 
   const onContextClick = (e) => {
     e.stopPropagation();
-    if (!routePlannerActive) return; // Only allow picking a destination if the route planner is open
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
+    if (asteroids.data[index].i === origin?.i) deselectOrigin();
+    if (!routePlannerActive) return; // Only allow picking a destination if the route planner is open
     selectDestination(asteroids.data[index].i);
   }
 

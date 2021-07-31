@@ -11,6 +11,8 @@ const useStore = create(persist((set, get) => ({
     ...settingsStore(set, get),
     ...timeStore(set, get),
     ...tokenStore(set, get)
-})));
+}), {
+  blacklist: [ 'time' ]
+}));
 
 export default useStore;

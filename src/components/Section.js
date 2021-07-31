@@ -92,7 +92,7 @@ const Section = (props) => {
   const setOutlinerSectionActive = useStore(state => state.setOutlinerSectionActive);
 
   const toggleMinimize = () => {
-    setOutlinerSectionExpanded(props.name, !sectionSettings.expanded);
+    setOutlinerSectionExpanded(props.name, !sectionSettings?.expanded);
   };
 
   const closeSection = () => {

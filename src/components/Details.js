@@ -33,6 +33,7 @@ const Header = styled.h1`
 `;
 
 const Content = styled.div`
+  flex: 1 1 auto;
   overflow-y: scroll;
 `;
 

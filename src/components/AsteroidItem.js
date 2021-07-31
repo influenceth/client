@@ -60,11 +60,6 @@ const AsteroidItem = (props) => {
         {utils.toSpectralType(asteroid.spectralType)}{'-type'}
         {asteroid.scanned && <RarityBadge rarity={utils.toRarity(asteroid.bonuses)}> &#9679;</RarityBadge>}
       </Description>
-      {asteroid.bonuses?.length > 0 && (
-        <Bonuses>
-          {asteroid.bonuses.map(b => <BonusBadge bonus={b} key={b.type} />)}
-        </Bonuses>
-      )}
       <Controls>
         {origin?.i !== asteroid.i && (
           <IconButton
@@ -81,6 +76,11 @@ const AsteroidItem = (props) => {
           </IconButton>
         )}
       </Controls>
+      {asteroid.bonuses?.length > 0 && (
+        <Bonuses>
+          {asteroid.bonuses.map(b => <BonusBadge bonus={b} key={b.type} />)}
+        </Bonuses>
+      )}
     </StyledAsteroidItem>
   );
 };

@@ -12,6 +12,23 @@ import Asteroids from './scene/Asteroids';
 import SettingsManager from './scene/SettingsManager';
 import constants from '~/constants';
 
+const glConfig = {
+  shadows: true,
+  camera: {
+    fov: 75,
+    near: 1000000,
+    far: constants.MAX_SYSTEM_RADIUS * constants.AU * 2,
+    position: [ 4 * constants.AU, 0, 1.5 * constants.AU ]
+  },
+  onCreated: (state) => {
+    state.raycaster.params.Points = {
+      near: 1000000,
+      far: constants.MAX_SYSTEM_RADIUS * constants.AU * 2,
+      threshold: 0.025 * constants.AU
+    };
+  }
+};
+
 const StyledContainer = styled.div`
   bottom: 0;
   position: absolute;
@@ -31,23 +48,6 @@ const Scene = (props) => {
 
   // Orient such that z is up, perpindicular to the stellar plane
   Object3D.DefaultUp = new Vector3(0, 0, 1);
-
-  const glConfig = {
-    shadows: true,
-    camera: {
-      fov: 75,
-      near: 1000000,
-      far: constants.MAX_SYSTEM_RADIUS * constants.AU * 2,
-      position: [ 4 * constants.AU, 0, 1.5 * constants.AU ]
-    },
-    onCreated: (state) => {
-      state.raycaster.params.Points = {
-        near: 1000000,
-        far: constants.MAX_SYSTEM_RADIUS * constants.AU * 2,
-        threshold: 0.025 * constants.AU
-      };
-    }
-  };
 
   return (
     <StyledContainer>

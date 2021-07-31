@@ -20,6 +20,10 @@ const settingsStore = (set, get) => ({
       active: true,
       expanded: true
     },
+    asteroid: {
+      active: false,
+      expanded: true
+    },
     ownedAsteroids: {
       active: true,
       expanded: false

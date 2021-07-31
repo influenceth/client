@@ -60,7 +60,7 @@ const Marker = (props) => {
           color="white"
           map={planeTexture}
           size={9}
-          opacity={0.5}
+          opacity={0.75}
           depthWrite={false}
           sizeAttenuation={false}
           transparent={true} />

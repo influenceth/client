@@ -2,12 +2,19 @@ import { useEffect, useState } from 'react';
 import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
 import { MdAccountBalanceWallet } from 'react-icons/md';
+import { FaEthereum } from 'react-icons/fa';
+import { VscDebugDisconnect } from 'react-icons/vsc';
 
 import useEagerConnect from '~/hooks/useEagerConnect';
 import useInactiveListener from '~/hooks/useInactiveListener';
 import { injected } from '~/lib/connectors';
 import Section from '~/components/Section';
-import Button from '~/components/Button';
+import IconButton from '~/components/IconButton';
+
+const Controls = styled.div`
+  flex: 0 0 auto;
+  padding-bottom: 15px;
+`;
 
 const Wallet = () => {
   const web3Context = useWeb3React();
@@ -32,21 +39,26 @@ const Wallet = () => {
       name="wallet"
       title="Wallet"
       icon={<MdAccountBalanceWallet />}>
+      <Controls>
+       {!active && (
+          <IconButton
+            data-tip="Connect Wallet"
+            onClick={() => {
+              setActivatingConnector(injected);
+              activate(injected);
+            }}>
+            <FaEthereum />
+          </IconButton>
+        )}
+        {active && (
+          <IconButton
+            data-tip="Disconnect Wallet"
+            onClick={() => deactivate()}>
+            <VscDebugDisconnect />
+          </IconButton>
+        )}
+      </Controls>
       <span>{account}</span>
-      {!active && (
-        <Button
-          onClick={() => {
-            setActivatingConnector(injected);
-            activate(injected);
-          }}>
-          Connect
-        </Button>
-      )}
-      {active && (
-        <Button onClick={() => deactivate()}>
-          Disconnect
-        </Button>
-      )}
     </Section>
   );
 };

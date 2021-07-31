@@ -5,6 +5,7 @@ import { Switch, Route } from 'react-router-dom';
 import MainMenu from './interface/MainMenu';
 import Outliner from './interface/Outliner';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
+import AsteroidDetails from './interface/details/AsteroidDetails';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -16,6 +17,14 @@ const StyledInterface = styled.div`
   top: 0;
   width: 100%;
   z-index: 1000;
+
+  & a {
+    color: white;
+  }
+
+  & a:hover {
+    text-decoration: none;
+  }
 `;
 
 const MainContainer = styled.div`
@@ -35,6 +44,9 @@ const Interface = () => {
         <Switch>
           <Route path="/owned-asteroids">
             <OwnedAsteroidsTable />
+          </Route>
+          <Route path="/asteroids/:i">
+            <AsteroidDetails />
           </Route>
         </Switch>
         <MainMenu />

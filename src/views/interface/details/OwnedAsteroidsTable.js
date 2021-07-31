@@ -1,7 +1,10 @@
+import { useEffect } from 'react';
 import utils from 'influence-utils';
+import { useHistory } from 'react-router-dom';
 import DataTable, { createTheme } from 'react-data-table-component';
 
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
+import useStore from '~/hooks/useStore';
 import Details from '~/components/Details';
 import theme from '~/theme';
 
@@ -85,6 +88,13 @@ const styleOverrides = {
 
 const OwnedAsteroidsTable = (props) => {
   const asteroids = useOwnedAsteroids();
+  const active = useStore(state => state.outlinerSections.ownedAsteroids.active);
+  const history = useHistory();
+
+  // Close if the owned asteroids section is closed
+  useEffect(() => {
+    if (!active) history.push('/');
+  }, [ active ]);
 
   return (
     <Details title="Owned Asteroids">

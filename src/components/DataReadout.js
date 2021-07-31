@@ -8,8 +8,10 @@ const StyledDataReadout = styled.div`
 
 const Label = styled.label`
   color: ${props => props.theme.colors.secondaryText};
+  display: flex;
   flex: 0 1 auto;
   padding-right: 10px;
+  white-space: nowrap;
 
   &:after {
     content: ':';
@@ -19,6 +21,8 @@ const Label = styled.label`
 const Data = styled.span`
   color: ${props => props.theme.colors.mainText};
   flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const DataReadout = (props) => {

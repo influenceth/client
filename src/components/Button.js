@@ -1,6 +1,9 @@
+import { useEffect } from 'react';
 import styled from 'styled-components';
+import ReactTooltip from 'react-tooltip';
 
 const StyledButton = styled.button`
+  align-items: center;
   border: 1px solid ${props => props.theme.colors.main};
   background-color: transparent;
   clip-path: polygon(
@@ -12,30 +15,49 @@ const StyledButton = styled.button`
   );
   cursor: pointer;
   color: ${props => props.theme.colors.main};
+  display: flex;
   font-family: 'Jura', sans-serif;
   font-size: 15px;
   height: 35px;
   transition: all 300ms ease;
   padding: 0 10px;
   position: relative;
+  width: 150px;
+
+  &:disabled {
+    color: ${props => props.theme.colors.disabledText};
+    border-color: ${props => props.theme.colors.disabledText};
+  }
 
   &:hover {
     color: white;
     background-image: linear-gradient(120deg, rgba(54, 167, 205, 0.1), rgba(54, 167, 205, 0.25));
   }
+
+  &:disabled:hover {
+    color: ${props => props.theme.colors.disabledText};
+    background-image: none;
+  }
+
+  & > * {
+    margin-right: 5px;
+  }
 `;
 
 const Corner = styled.svg`
+  bottom: 0;
+  height: 10px;
+  margin-right: 0;
+  position: absolute;
+  right: 0;
   stroke: ${props => props.theme.colors.main};
   stroke-width: 1px;
-  height: 10px;
   width: 10px;
-  position: absolute;
-  bottom: 0;
-  right: 0;
 `;
 
 const Button = (props) => {
+  useEffect(() => ReactTooltip.rebuild(), []);
+
   return (
     <StyledButton {...props}>
       {props.children}
