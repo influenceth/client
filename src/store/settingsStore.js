@@ -25,12 +25,12 @@ const settingsStore = (set, get) => ({
       expanded: true
     },
     ownedAsteroids: {
-      active: true,
-      expanded: false
+      active: false,
+      expanded: true
     },
     watchlist: {
-      active: true,
-      expanded: false
+      active: false,
+      expanded: true
     },
     routePlanner: {
       active: false,

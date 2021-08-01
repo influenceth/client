@@ -1,31 +1,64 @@
 import { useEffect, useState } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
+import { useQuery } from 'react-query';
+import axios from 'axios';
 import { useWeb3React } from '@web3-react/core';
 import { utils } from 'ethers';
 
 import useStore from '~/hooks/useStore';
 
 const useAuth = () => {
-  const token = useStore(state => state.token);
-  const getToken = useStore(state => state.getToken);
+  const token = useStore(state => state.auth.token);
+  const dispatchTokenInvalidated = useStore(state => state.dispatchTokenInvalidated);
+  const dispatchAuthenticated = useStore(state => state.dispatchAuthenticated);
   const { library, account } = useWeb3React();
-  const [ authed, setAuthed ] = useState(false);
 
+  // Invalidate token if the token has expired
+  useEffect(() => {
+    if (!!token && isExpired(token)) dispatchTokenInvalidated();
+  }, [ token ]);
+
+  // Invalidate token if an account isn't connected
+  useEffect(() => {
+    if (!account) dispatchTokenInvalidated();
+  }, [ account]);
+
+  // Invalidate the token if the token doesn't match the current account
   useEffect(() => {
     const decoded = decodeToken(token);
 
-    // If jwt is empty or expired but account is connected
-    if (isExpired(token) && account) getToken(library, account);
-
-    // If token is valid and matches account set authed to true
-    if (!isExpired(token) && decoded.sub && account) {
-      if (utils.getAddress(decoded.sub) === utils.getAddress(account)) {
-        setAuthed(true);
-      }
+    if (!!account && decoded?.sub) {
+      if (utils.getAddress(decoded.sub) !== utils.getAddress(account)) dispatchTokenInvalidated();
     }
-  }, [ token, account, getToken, library ]);
+  }, [ token, account ]);
 
-  return { token, authed };
+  const loginQuery = useQuery([ 'login', account ], async () => {
+    const response = await axios.get(`${process.env.REACT_APP_API_URL}/v1/auth/login/${account}`);
+    return response.data.message;
+  }, { enabled: !token && !!account });
+
+  const signQuery = useQuery([ 'sign', account ], async () => {
+    const signature = await library.getSigner(account).signMessage(loginQuery.data);
+    return signature;
+  }, {
+    enabled: loginQuery.isSuccess && !token && !!account,
+    refetchOnWindowFocus: false
+  });
+
+  const verifyQuery = useQuery([ 'verify', account ], async () => {
+    const response = await axios.post(
+      `${process.env.REACT_APP_API_URL}/v1/auth/login/${account}`,
+      { sig: signQuery.data }
+    );
+
+    return response.data.token;
+  }, { enabled: signQuery.isSuccess && !token && !!account });
+
+  useEffect(() => {
+    if (verifyQuery.isSuccess) dispatchAuthenticated(verifyQuery.data);
+  }, [ verifyQuery ]);
+
+  return { token };
 };
 
 export default useAuth;

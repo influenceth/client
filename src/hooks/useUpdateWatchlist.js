@@ -4,7 +4,7 @@ import axios from 'axios';
 import useAuth from '~/hooks/useAuth';
 
 const useUpdateWatchlist = () => {
-  const { token, authed } = useAuth();
+  const { token, authenticated } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation(async (watchlist) => {
@@ -17,7 +17,7 @@ const useUpdateWatchlist = () => {
     return response.data;
   },
   {
-    enabled: !!authed,
+    enabled: !!authenticated,
     onSuccess: async () => {
       await queryClient.invalidateQueries([ 'user', token ]);
     }

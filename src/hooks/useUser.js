@@ -4,7 +4,7 @@ import axios from 'axios';
 import useAuth from '~/hooks/useAuth';
 
 const useUser = () => {
-  const { token, authed } = useAuth();
+  const { token } = useAuth();
 
   return useQuery([ 'user', token ], async () => {
     const response = await axios.get(
@@ -13,7 +13,7 @@ const useUser = () => {
     );
 
     return response.data;
-  }, { enabled: !!authed });
+  }, { enabled: !!token });
 };
 
 export default useUser;

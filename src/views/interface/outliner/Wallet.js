@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
 import { MdAccountBalanceWallet } from 'react-icons/md';
@@ -17,21 +18,29 @@ const Controls = styled.div`
 `;
 
 const Wallet = () => {
-  const web3Context = useWeb3React();
-  const { connector, library, chainId, account, activate, deactivate, active, error } = web3Context;
+  const { connector, account, activate, deactivate, active } = useWeb3React();
+  const queryClient = useQueryClient();
   const [ activatingConnector, setActivatingConnector ] = useState();
 
-  // handle logic to recognize the connector currently being activated
+  // Recognize the connector currently being activated
   useEffect(() => {
     if (activatingConnector && activatingConnector === connector) {
       setActivatingConnector(undefined);
     }
   }, [ activatingConnector, connector ]);
 
-  // Handle logic to eagerly connect to the injected ethereum provider, if it exists and has granted access already
+  // Remove auth queries when wallet is disconnected
+  const disconnectWallet = () => {
+    queryClient.removeQueries([ 'login', account ]);
+    queryClient.removeQueries([ 'sign', account ]);
+    queryClient.removeQueries([ 'verify', account ]);
+    deactivate();
+  };
+
+  // Eagerly connect to the injected ethereum provider, if it exists and has granted access already
   const triedEager = useEagerConnect();
 
-  // Handle logic to connect in reaction to certain events on the injected ethereum provider, if it exists
+  // Connect in reaction to certain events on the injected ethereum provider, if it exists
   useInactiveListener(!triedEager || !!activatingConnector);
 
   return (
@@ -53,7 +62,7 @@ const Wallet = () => {
         {active && (
           <IconButton
             data-tip="Disconnect Wallet"
-            onClick={() => deactivate()}>
+            onClick={() => disconnectWallet()}>
             <VscDebugDisconnect />
           </IconButton>
         )}
