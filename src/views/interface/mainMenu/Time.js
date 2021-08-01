@@ -36,18 +36,21 @@ const DaysSince = styled.div`
 const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
 
 const Time = (props) => {
-  const time = useStore(state => state.time);
-  const updateToCurrentTime = useStore(state => state.updateToCurrentTime);
+  const time = useStore(state => state.time.current);
+  const autoUpdating = useStore(state => state.time.autoUpdating);
+  const dispatchTimeUpdated = useStore(state => state.dispatchTimeUpdated);
   const displayTime = time - diff;
+
+  const currentTime = () => ((Date.now() / 1000) - START_TIMESTAMP) / 3600;
 
   // Update time once immediately upon launching
   useEffect(() => {
-    updateToCurrentTime();
-  }, [ updateToCurrentTime ])
+    if (autoUpdating) dispatchTimeUpdated(currentTime());
+  }, [ dispatchTimeUpdated, autoUpdating ])
 
   // Automatically updates the in-game time once per second unless auto-updates are off
   useInterval(() => {
-    updateToCurrentTime();
+    if (autoUpdating) dispatchTimeUpdated(currentTime());
   }, 10000);
 
   return (

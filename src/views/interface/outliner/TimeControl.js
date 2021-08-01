@@ -20,14 +20,14 @@ const Controls = styled.div`
 const TimeControl = (props) => {
   const [ speed, setSpeed ] = useState(1);
   const [ playing, setPlaying ] = useState(false);
-  const time = useStore(state => state.time);
-  const updateTime = useStore(state => state.updateTime);
-  const updateAutoUpdatingTime = useStore(state => state.updateAutoUpdatingTime);
-  const updateToCurrentTime = useStore(state => state.updateToCurrentTime);
+  const time = useStore(state => state.time.current);
+  const dispatchTimeUpdated = useStore(state => state.dispatchTimeUpdated);
+  const dispatchTimeControled = useStore(state => state.dispatchTimeControled);
+  const dispatchTimeUncontrolled = useStore(state => state.dispatchTimeUncontrolled);
 
   const play = () => {
     setPlaying(true);
-    updateAutoUpdatingTime(false);
+    dispatchTimeControled();
   };
 
   const pause = () => {
@@ -36,13 +36,13 @@ const TimeControl = (props) => {
 
   const stop = () => {
     setPlaying(false);
-    updateAutoUpdatingTime(true);
-    updateToCurrentTime();
+    dispatchTimeUncontrolled();
+    dispatchTimeUpdated(((Date.now() / 1000) - START_TIMESTAMP) / 3600);
   };
 
   useInterval(() => {
     if (!playing) return;
-    updateTime(time + speed);
+    dispatchTimeUpdated(time + speed);
   }, 1000 / 30);
 
   const displayTime = time - diff;

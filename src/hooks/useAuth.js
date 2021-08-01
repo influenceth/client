@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
 import { useQuery } from 'react-query';
-import axios from 'axios';
 import { useWeb3React } from '@web3-react/core';
 import { utils } from 'ethers';
 
+import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
 
 const useAuth = () => {
@@ -16,12 +16,7 @@ const useAuth = () => {
   // Invalidate token if the token has expired
   useEffect(() => {
     if (!!token && isExpired(token)) dispatchTokenInvalidated();
-  }, [ token ]);
-
-  // Invalidate token if an account isn't connected
-  useEffect(() => {
-    if (!account) dispatchTokenInvalidated();
-  }, [ account]);
+  }, [ token, dispatchTokenInvalidated ]);
 
   // Invalidate the token if the token doesn't match the current account
   useEffect(() => {
@@ -30,12 +25,13 @@ const useAuth = () => {
     if (!!account && decoded?.sub) {
       if (utils.getAddress(decoded.sub) !== utils.getAddress(account)) dispatchTokenInvalidated();
     }
-  }, [ token, account ]);
+  }, [ token, account, dispatchTokenInvalidated ]);
 
-  const loginQuery = useQuery([ 'login', account ], async () => {
-    const response = await axios.get(`${process.env.REACT_APP_API_URL}/v1/auth/login/${account}`);
-    return response.data.message;
-  }, { enabled: !token && !!account });
+  const loginQuery = useQuery(
+    [ 'login', account ],
+    () => api.requestLogin(account),
+    { enabled: !token && !!account }
+  );
 
   const signQuery = useQuery([ 'sign', account ], async () => {
     const signature = await library.getSigner(account).signMessage(loginQuery.data);
@@ -45,18 +41,15 @@ const useAuth = () => {
     refetchOnWindowFocus: false
   });
 
-  const verifyQuery = useQuery([ 'verify', account ], async () => {
-    const response = await axios.post(
-      `${process.env.REACT_APP_API_URL}/v1/auth/login/${account}`,
-      { sig: signQuery.data }
-    );
-
-    return response.data.token;
-  }, { enabled: signQuery.isSuccess && !token && !!account });
+  const verifyQuery = useQuery(
+    [ 'verify', account ],
+    () => api.verifyLogin(account, signQuery.data),
+    { enabled: signQuery.isSuccess && !token && !!account }
+  );
 
   useEffect(() => {
     if (verifyQuery.isSuccess) dispatchAuthenticated(verifyQuery.data);
-  }, [ verifyQuery ]);
+  }, [ verifyQuery, dispatchAuthenticated ]);
 
   return { token };
 };

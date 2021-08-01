@@ -77,6 +77,7 @@ const OwnedAsteroids = (props) => {
         </IconButton>
       </Controls>
       <AsteroidList>
+        {asteroids.data?.length === 0 && <li><span>No owned asteroids</span></li>}
         {asteroids.data?.map(a => <StyledAsteroidItem key={a.i} asteroid={a} />)}
       </AsteroidList>
     </Section>

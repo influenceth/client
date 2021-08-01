@@ -1,11 +1,7 @@
 import { useQuery } from 'react-query';
-import axios from 'axios';
 
-const usePlanets = () => {
-  return useQuery('planets', async () => {
-    const response = await axios.get(`${process.env.REACT_APP_API_URL}/v1/planets`);
-    return response.data;
-  });
-};
+import api from '~/lib/api';
+
+const usePlanets = () => useQuery('planets', api.getPlanets);
 
 export default usePlanets;

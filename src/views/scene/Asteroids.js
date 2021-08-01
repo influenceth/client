@@ -15,7 +15,7 @@ const worker = new Worker();
 
 const Asteroids = (props) => {
   const asteroids = useAsteroids();
-  const time = useStore(state => state.time);
+  const time = useStore(state => state.time.current);
   const origin = useStore(state => state.origin);
   const selectOrigin = useStore(state => state.selectOrigin);
   const deselectOrigin = useStore(state => state.deselectOrigin);

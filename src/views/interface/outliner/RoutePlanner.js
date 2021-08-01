@@ -63,7 +63,7 @@ const LinkLine = styled.li`
 
 const RoutePlanner = (props) => {
   const [ distance, setDistance ] = useState(null);
-  const time = useStore(state => state.time);
+  const time = useStore(state => state.time.current);
   const origin = useStore(state => state.origin);
   const destination = useStore(state => state.destination);
   const deselectOrigin = useStore(state => state.deselectOrigin);
