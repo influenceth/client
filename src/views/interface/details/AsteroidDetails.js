@@ -8,6 +8,7 @@ import { AiFillEdit } from 'react-icons/ai';
 
 import useStore from '~/hooks/useStore';
 import useSale from '~/hooks/useSale';
+import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidPrice from '~/hooks/useAsteroidPrice';
 import useBuyAsteroid from '~/hooks/useBuyAsteroid';
 import Details from '~/components/Details';
@@ -65,66 +66,69 @@ const Dimensions = styled.div`
 const AsteroidDetails = (props) => {
   const { i } = useParams();
   const history = useHistory();
-  const [ previousOrigin, setPreviousOrigin ] = useState(null);
-  const asteroid = useStore(state => state.origin);
   const sale = useSale();
-  const asteroidPrice = useAsteroidPrice(i);
+  const origin = useStore(state => state.asteroids.origin);
+  const asteroid = useAsteroid(origin);
+  const asteroidPrice = useAsteroidPrice(asteroid.data);
   const buyAsteroid = useBuyAsteroid();
-  const selectOrigin = useStore(state => state.selectOrigin);
+  const dispatchOriginSelected = useStore(state => state.dispatchOriginSelected);
+  const [ previousOrigin, setPreviousOrigin ] = useState(null);
 
   // Force the asteroid to load into the origin if coming direct from URL
   useEffect(() => {
-    selectOrigin(i);
-  }, [ selectOrigin ]);
+    if (i) dispatchOriginSelected(Number(i));
+  }, [ i, dispatchOriginSelected ]);
 
   // Checks for a origin -> null transition to close the view
   useEffect(() => {
-    if (previousOrigin && !asteroid) history.push('/');
-    setPreviousOrigin(asteroid);
+    if (previousOrigin && !origin) history.push('/');
+    if (asteroid.data) setPreviousOrigin(asteroid.data.i);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ asteroid ]);
+  }, [ origin, asteroid ]);
 
   return (
     <Details
-      title={`${asteroid?.name} Details`}>
-      <StyledAsteroidDetails>
-        <SidePanel>
-          {sale && (
-            <DataReadout label="Price" data={
-              asteroidPrice.data ? `${ethersUtils.formatEther(asteroidPrice?.data)} ETH` : '... ETH'
-            } />
-          )}
-          {sale && (
+      title={asteroid.data ? `${asteroid.data.name} Details` : 'Asteroid Details'}>
+      {asteroid.data && (
+        <StyledAsteroidDetails>
+          <SidePanel>
+            {sale && !asteroid.data.owner && (
+              <DataReadout label="Price" data={
+                asteroidPrice.data ? `${ethersUtils.formatEther(asteroidPrice.data)} ETH` : '... ETH'
+              } />
+            )}
+            {sale && !asteroid.data.owner && (
+              <StyledButton
+                data-tip="Purchase development rights"
+                data-for="global"
+                disabled={!asteroidPrice.data}
+                onClick={() => buyAsteroid.mutate(asteroid.data.i)}>
+                <MdFlag /> Purchase
+              </StyledButton>
+            )}
             <StyledButton
-              data-tip="Purchase development rights"
-              data-for="global"
-              disabled={!asteroidPrice.data}
-              onClick={() => buyAsteroid.mutate(asteroid.i)}>
-              <MdFlag /> Purchase
+              data-tip="Scan for resource bonuses"
+              data-for="global">
+              <MdBlurOff /> Scan
             </StyledButton>
-          )}
-          <StyledButton
-            data-tip="Scan for resource bonuses"
-            data-for="global">
-            <MdBlurOff /> Scan
-          </StyledButton>
-          <StyledButton
-            data-tip="Update asteroid name"
-            data-for="global">
-            <AiFillEdit /> Name
-          </StyledButton>
-        </SidePanel>
-        <MainPanel>
-          <Resources>
-            <ResourceMix>
-            </ResourceMix>
-            <Bonuses>
-            </Bonuses>
-          </Resources>
-          <Dimensions>
-          </Dimensions>
-        </MainPanel>
-      </StyledAsteroidDetails>
+            <StyledButton
+              data-tip="Update asteroid name"
+              data-for="global">
+              <AiFillEdit /> Name
+            </StyledButton>
+          </SidePanel>
+          <MainPanel>
+            <Resources>
+              <ResourceMix>
+              </ResourceMix>
+              <Bonuses>
+              </Bonuses>
+            </Resources>
+            <Dimensions>
+            </Dimensions>
+          </MainPanel>
+        </StyledAsteroidDetails>
+      )}
     </Details>
   );
 };

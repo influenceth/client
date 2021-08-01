@@ -6,6 +6,7 @@ import { MdRemoveCircle } from 'react-icons/md';
 import { GiHorizontalFlip } from 'react-icons/gi';
 
 import useStore from '~/hooks/useStore';
+import useAsteroid from '~/hooks/useAsteroid';
 import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
 import AsteroidItem from '~/components/AsteroidItem';
@@ -64,21 +65,23 @@ const LinkLine = styled.li`
 const RoutePlanner = (props) => {
   const [ distance, setDistance ] = useState(null);
   const time = useStore(state => state.time.current);
-  const origin = useStore(state => state.origin);
-  const destination = useStore(state => state.destination);
-  const deselectOrigin = useStore(state => state.deselectOrigin);
-  const deselectDestination = useStore(state => state.deselectDestination);
-  const selectOrigin = useStore(state => state.selectOrigin);
-  const selectDestination = useStore(state => state.selectDestination);
+  const originId = useStore(state => state.asteroids.origin);
+  const destinationId = useStore(state => state.asteroids.destination);
+  const origin = useAsteroid(originId);
+  const destination = useAsteroid(destinationId);
+  const dispatchOriginCleared = useStore(state => state.dispatchOriginCleared);
+  const dispatchDestinationCleared = useStore(state => state.dispatchDestinationCleared);
+  const dispatchOriginSelected = useStore(state => state.dispatchOriginSelected);
+  const dispatchDestinationSelected = useStore(state => state.dispatchDestinationSelected);
 
   useEffect(() => {
-    if (!origin || !destination) {
+    if (!origin.data || !destination.data) {
       setDistance(null);
       return;
     }
 
-    const originPos = (new KeplerianOrbit(origin.orbital)).getPositionAtTime(time);
-    const destPos = (new KeplerianOrbit(destination.orbital)).getPositionAtTime(time);
+    const originPos = (new KeplerianOrbit(origin.data.orbital)).getPositionAtTime(time);
+    const destPos = (new KeplerianOrbit(destination.data.orbital)).getPositionAtTime(time);
     setDistance(Math.sqrt(
       Math.pow(originPos.x - destPos.x, 2) +
       Math.pow(originPos.y - destPos.y, 2) +
@@ -88,8 +91,8 @@ const RoutePlanner = (props) => {
   }, [ origin, destination, time ]);
 
   useEffect(() => {
-    return () => deselectDestination();
-  }, [ deselectDestination ]);
+    return () => dispatchDestinationCleared();
+  }, [ dispatchDestinationCleared ]);
 
   return (
     <Section
@@ -99,38 +102,38 @@ const RoutePlanner = (props) => {
       <Controls>
         <IconButton
           data-tip="Route Details"
-          disabled={!origin || !destination}>
+          disabled={!originId || !destinationId}>
           <RiPagesFill />
         </IconButton>
         <IconButton
           data-tip="Flip Route"
           onClick={() => {
-            selectOrigin(destination.i);
-            selectDestination(origin.i);
+            dispatchOriginSelected(destinationId);
+            dispatchDestinationSelected(originId);
           }}
-          disabled={!origin || !destination}>
+          disabled={!originId || !destinationId}>
           <GiHorizontalFlip />
         </IconButton>
         <IconButton
           data-tip="Clear Route"
           onClick={() => {
-            deselectOrigin(null);
-            deselectDestination(null);
+            dispatchOriginCleared();
+            dispatchDestinationCleared();
           }}
-          disabled={!origin && !destination}>
+          disabled={!originId && !destinationId}>
           <MdRemoveCircle />
         </IconButton>
       </Controls>
       <AsteroidList>
         <AsteroidLabel>Origin</AsteroidLabel>
-        {origin && <StyledAsteroidItem asteroid={origin} />}
-        {!origin && <Message>Select an origin</Message>}
+        {origin.data && <StyledAsteroidItem asteroid={origin.data} />}
+        {!originId && <Message>Select an origin</Message>}
         <LinkLine>
           {distance && <DataReadout label="Distance" data={`${Math.round(distance).toLocaleString()} km`} />}
         </LinkLine>
         <AsteroidLabel>Destination</AsteroidLabel>
-        {destination && <StyledAsteroidItem asteroid={destination} />}
-        {!destination && <Message>Select a destination</Message>}
+        {destination.data && <StyledAsteroidItem asteroid={destination.data} />}
+        {!destinationId && <Message>Select a destination</Message>}
       </AsteroidList>
     </Section>
   );

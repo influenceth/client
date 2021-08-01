@@ -19,10 +19,12 @@ const StyledSystemControls = styled.div`
 `;
 
 const SystemControls = (props) => {
-  const outlinerPinned = useStore(state => state.outlinerPinned);
-  const setOutlinerPinned = useStore(state => state.setOutlinerPinned);
-  const skyboxHidden = useStore(state => state.skyboxHidden);
-  const setSkyboxHidden = useStore(state => state.setSkyboxHidden);
+  const outlinerPinned = useStore(state => state.outliner.pinned);
+  const dispatchOutlinerPinned = useStore(state => state.dispatchOutlinerPinned);
+  const dispatchOutlinerUnpinned = useStore(state => state.dispatchOutlinerUnpinned);
+  const skyboxVisible = useStore(state => state.graphics.skybox);
+  const dispatchSkyboxHidden = useStore(state => state.dispatchSkyboxHidden);
+  const dispatchSkyboxUnhidden = useStore(state => state.dispatchSkyboxUnhidden);
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
   screenfull.on('change', () => {
@@ -34,7 +36,7 @@ const SystemControls = (props) => {
       {!outlinerPinned && (
         <IconButton
           data-tip="Pin Outliner"
-          onClick={() => setOutlinerPinned(true)}
+          onClick={dispatchOutlinerPinned}
           borderless>
           <AiOutlinePushpin />
         </IconButton>
@@ -42,7 +44,7 @@ const SystemControls = (props) => {
       {outlinerPinned && (
         <IconButton
           data-tip="Unpin Outliner"
-          onClick={() => setOutlinerPinned(false)}
+          onClick={dispatchOutlinerUnpinned}
           borderless>
           <AiFillPushpin />
         </IconButton>
@@ -63,18 +65,18 @@ const SystemControls = (props) => {
           <MdFullscreenExit />
         </IconButton>
       )}
-      {!skyboxHidden && (
+      {skyboxVisible && (
         <IconButton
           data-tip="Hide Skybox"
-          onClick={() => setSkyboxHidden(true)}
+          onClick={dispatchSkyboxHidden}
           borderless>
           <BsEyeSlash />
         </IconButton>
       )}
-      {skyboxHidden && (
+      {!skyboxVisible && (
         <IconButton
           data-tip="Show Skybox"
-          onClick={() => setSkyboxHidden(false)}
+          onClick={dispatchSkyboxUnhidden}
           borderless>
           <BsEye />
         </IconButton>

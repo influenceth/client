@@ -3,11 +3,24 @@ import { persist } from 'zustand/middleware';
 import produce from 'immer';
 import { START_TIMESTAMP } from 'influence-utils';
 
-import asteroidsStore from '~/store/asteroidsStore';
-import settingsStore from '~/store/settingsStore';
-
 const useStore = create(persist((set, get) => ({
-    ...asteroidsStore(set, get),
+    asteroids: {
+      origin: null,
+      destination: null,
+      hovered: null,
+      filters: {},
+      highlight: null,
+      owned: {
+        mapped: false,
+        filtered: false,
+        highlighted: false
+      },
+      watched: {
+        mapped: false,
+        filtered: false,
+        highlighted: false
+      }
+    },
 
     auth: {
       token: null
@@ -18,13 +31,60 @@ const useStore = create(persist((set, get) => ({
       autoUpdating: true
     },
 
-    ...settingsStore(set, get),
+    outliner: {
+      pinned: true,
+      wallet: { active: true, expanded: true },
+      selectedAsteroid: { active: false, expanded: true },
+      filters: { active: false, expanded: true },
+      ownedAsteroids: { active: false, expanded: true },
+      ownedCrew: { active: false, expanded: true },
+      watchlist: { active: false, expanded: true },
+      routePlanner: { active: false, expanded: true },
+      timeControl: { active: false, expanded: true }
+    },
+
+    graphics: {
+      skybox: true
+    },
+
+    dispatchOutlinerPinned: () => set(produce(state => {
+      state.outliner.pinned = true;
+    })),
+
+    dispatchOutlinerUnpinned: () => set(produce(state => {
+      state.outliner.pinned = false;
+    })),
+
+    dispatchOutlinerSectionActivated: (section) => set(produce(state => {
+      state.outliner[section].active = true;
+      state.outliner.pinned = true;
+    })),
+
+    dispatchOutlinerSectionDeactivated: (section) => set(produce(state => {
+      state.outliner[section].active = false;
+    })),
+
+    dispatchOutlinerSectionExpanded: (section) => set(produce(state => {
+      state.outliner[section].expanded = true;
+    })),
+
+    dispatchOutlinerSectionCollapsed: (section) => set(produce(state => {
+      state.outliner[section].expanded = false;
+    })),
+
+    dispatchSkyboxHidden: () => set(produce(state => {
+      state.graphics.skybox = false;
+    })),
+
+    dispatchSkyboxUnhidden: () => set(produce(state => {
+      state.graphics.skybox = true;
+    })),
 
     dispatchOriginSelected: (i) => set(produce(state => {
       state.asteroids.origin = i;
     })),
 
-    dispatchOriginCleared: (i) => set(produce(state => {
+    dispatchOriginCleared: () => set(produce(state => {
       state.asteroids.origin = null;
     })),
 
@@ -32,8 +92,16 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.destination = i;
     })),
 
-    dispatchDestinationCleared: (i) => set(produce(state => {
+    dispatchDestinationCleared: () => set(produce(state => {
       state.asteroids.destination = null;
+    })),
+
+    dispatchAsteroidHovered: (i) => set(produce(state => {
+      state.asteroids.hovered = i;
+    })),
+
+    dispatchAsteroidUnhovered: () => set(produce(state => {
+      state.asteroids.hovered = null;
     })),
 
     dispatchTimeUpdated: (time) => set(produce(state => {

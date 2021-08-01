@@ -43,16 +43,17 @@ const RarityBadge = styled.span`
 
 const AsteroidItem = (props) => {
   const { asteroid } = props;
-  const setHovered = useStore(state => state.setHoveredAsteroid);
-  const origin = useStore(state => state.origin);
-  const selectOrigin = useStore(state => state.selectOrigin);
-  const deselectOrigin = useStore(state => state.deselectOrigin);
+  const dispatchAsteroidHovered = useStore(state => state.dispatchAsteroidHovered);
+  const dispatchAsteroidUnhovered = useStore(state => state.dispatchAsteroidUnhovered);
+  const origin = useStore(state => state.asteroids.origin);
+  const selectOrigin = useStore(state => state.dispatchOriginSelected);
+  const clearOrigin = useStore(state => state.dispatchOriginCleared);
 
   return (
     <StyledAsteroidItem
-      onMouseOver={() => setHovered(asteroid.i)}
-      onMouseOut={() => setHovered(null)}
-      selected={origin?.i === asteroid.i}
+      onMouseOver={() => dispatchAsteroidHovered(asteroid.i)}
+      onMouseOut={dispatchAsteroidUnhovered}
+      selected={origin === asteroid.i}
       {...props}>
       <Description>
         {asteroid.name}{' - '}
@@ -61,17 +62,17 @@ const AsteroidItem = (props) => {
         {asteroid.scanned && <RarityBadge rarity={utils.toRarity(asteroid.bonuses)}> &#9679;</RarityBadge>}
       </Description>
       <Controls>
-        {origin?.i !== asteroid.i && (
+        {origin !== asteroid.i && (
           <IconButton
             data-tip="Select Asteroid"
             onClick={() => selectOrigin(asteroid.i)}>
             <IoIosPin />
           </IconButton>
         )}
-        {origin?.i === asteroid.i && (
+        {origin === asteroid.i && (
           <IconButton
             data-tip="Deselect Asteroid"
-            onClick={() => deselectOrigin()}>
+            onClick={() => clearOrigin()}>
             <MdCancel />
           </IconButton>
         )}

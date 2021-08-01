@@ -23,7 +23,7 @@ const Watchlist = (props) => {
       icon={<AiFillEye />}>
       <StyledWatchlist>
         <ul>
-          {user.isSuccess && user.data.watchlist.map((w) => {
+          {user.data && user.data.watchlist.map((w) => {
             return (
               <li key={w.i}>
                 <span>{w.i}</span>

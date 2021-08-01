@@ -4,6 +4,7 @@ import { Suspense, useRef, useState, useEffect, useLayoutEffect } from 'react';
 import Worker from 'worker-loader!../../worker';
 import useStore from '~/hooks/useStore';
 import useAsteroids from '~/hooks/useAsteroids';
+import useAsteroid from '~/hooks/useAsteroid';
 import FlightLine from './asteroids/FlightLine';
 import Orbit from './asteroids/Orbit';
 import Marker from './asteroids/Marker';
@@ -16,14 +17,17 @@ const worker = new Worker();
 const Asteroids = (props) => {
   const asteroids = useAsteroids();
   const time = useStore(state => state.time.current);
-  const origin = useStore(state => state.origin);
-  const selectOrigin = useStore(state => state.selectOrigin);
-  const deselectOrigin = useStore(state => state.deselectOrigin);
-  const destination = useStore(state => state.destination);
-  const selectDestination = useStore(state => state.selectDestination);
-  const hovered = useStore(state => state.hoveredAsteroid);
-  const setHovered = useStore(state => state.setHoveredAsteroid);
-  const routePlannerActive = useStore(state => state.outlinerSections.routePlanner.active);
+  const originId = useStore(state => state.asteroids.origin);
+  const origin = useAsteroid(originId);
+  const dispatchOriginSelected = useStore(state => state.dispatchOriginSelected);
+  const dispatchOriginCleared = useStore(state => state.dispatchOriginCleared);
+  const destinationId = useStore(state => state.asteroids.destination);
+  const destination = useAsteroid(destinationId);
+  const dispatchDestinationSelected = useStore(state => state.dispatchDestinationSelected);
+  const hovered = useStore(state => state.asteroids.hovered);
+  const dispatchAsteroidHovered = useStore(state => state.dispatchAsteroidHovered);
+  const dispatchAsteroidUnhovered = useStore(state => state.dispatchAsteroidUnhovered);
+  const routePlannerActive = useStore(state => state.outliner.routePlanner.active);
 
   const [ positions, setPositions ] = useState();
   const [ radii, setRadii ] = useState();
@@ -36,32 +40,32 @@ const Asteroids = (props) => {
   const onClick = (e) => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
-    selectOrigin(asteroids.data[index].i);
+    dispatchOriginSelected(asteroids.data[index].i);
   };
 
   const onContextClick = (e) => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
-    if (asteroids.data[index].i === origin?.i) deselectOrigin();
+    if (asteroids.data[index].i === originId) dispatchOriginCleared();
     if (!routePlannerActive) return; // Only allow picking a destination if the route planner is open
-    selectDestination(asteroids.data[index].i);
+    dispatchDestinationSelected(asteroids.data[index].i);
   }
 
   const onMouseOver = (e) => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
     const id = asteroids.data[index].i;
-    setHovered(id);
+    dispatchAsteroidHovered(id);
   };
 
   const onMouseOut = (e) => {
     e.stopPropagation();
-    setHovered(null);
+    dispatchAsteroidUnhovered();
   };
 
   // Responds to hover changes in the store which could be fired from the HUD
   useEffect(() => {
-    if (!hovered || hovered === origin?.i || hovered === destination?.i) {
+    if (!hovered || hovered === originId || hovered === destinationId) {
       setHoveredPos(null);
       return;
     }
@@ -76,18 +80,18 @@ const Asteroids = (props) => {
         setHoveredPos(null);
       }
     }
-  }, [ hovered, setHovered, origin, destination, positions, asteroids.data ]);
+  }, [ hovered, originId, destinationId, positions, asteroids.data ]);
 
   // When asteroids are newly filtered, or there are changes to origin / destination
   useEffect(() => {
     if (!asteroids.data) return;
     const toProcess = asteroids.data;
 
-    if (origin && !toProcess.some(a => a.i === origin.i)) toProcess.push(origin);
-    if (destination && !toProcess.some(a => a.i === destination.i)) toProcess.push(destination);
+    if (origin.data && !toProcess.some(a => a.i === origin.data.i)) toProcess.push(origin.data);
+    if (destination.data && !toProcess.some(a => a.i === destination.data.i)) toProcess.push(destination.data);
 
     worker.postMessage({ topic: 'updateAsteroidsData', asteroids: asteroids.data });
-  }, [ asteroids.data, origin, destination ]);
+  }, [ asteroids.data, origin.data, destination.data, destination ]);
 
   // Update asteroid positions whenever the time changes in-game
   useEffect(() => {
@@ -103,15 +107,15 @@ const Asteroids = (props) => {
   useEffect(() => {
     // Check that we have data, positions are processed, and they're in sync
     if (asteroids.data && positions && asteroids.data.length * 3 === positions.length) {
-      if (origin) {
-        const originKey = asteroids.data.findIndex(a => a.i === origin.i);
+      if (origin.data) {
+        const originKey = asteroids.data.findIndex(a => a.i === originId);
         setOriginPos(positions.slice(originKey * 3, originKey * 3 + 3));
       } else {
         setOriginPos(null);
       }
 
-      if (destination) {
-        const destKey = asteroids.data.findIndex(a => a.i === destination.i);
+      if (destinationId) {
+        const destKey = asteroids.data.findIndex(a => a.i === destinationId);
         setDestinationPos(positions.slice(destKey * 3, destKey * 3 + 3));
       } else {
         setDestinationPos(null);
@@ -120,7 +124,7 @@ const Asteroids = (props) => {
       // Update asteroid radii attribute to scale point size
       setRadii(new Float32Array(asteroids.data.map(a => a.r)));
     }
-  }, [ asteroids.data, positions, origin, destination ]);
+  }, [ asteroids.data, positions, originId, destinationId ]);
 
   useLayoutEffect(() => {
     asteroidsGeom.current?.computeBoundingSphere();
@@ -159,8 +163,8 @@ const Asteroids = (props) => {
         {originPos && <Marker asteroidPos={originPos} />}
         {destinationPos && <Marker asteroidPos={destinationPos} />}
       </Suspense>
-      {origin && <Orbit asteroid={origin} />}
-      {destination && <Orbit asteroid={destination} />}
+      {origin.data && <Orbit asteroid={origin.data} />}
+      {destination.data && <Orbit asteroid={destination.data} />}
       {originPos && destinationPos && <FlightLine originPos={originPos} destinationPos={destinationPos} />}
     </group>
   )

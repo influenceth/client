@@ -7,21 +7,21 @@ import IconButton from './IconButton';
 const StyledSection = styled.div`
   background-color: rgba(255, 255, 255, 0.075);
   font-size: 14px;
-  padding: 0 20px;
   margin: 0 0 10px 25px;
+  padding: 0 20px;
   position: relative;
 
   &:after {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
     background-image: linear-gradient(0.25turn, rgba(54, 167, 205, 0.1), rgba(0, 0, 0, 0));
+    bottom: 0;
+    content: '';
+    left: 0;
     opacity: 0;
-    transition: all 0.3s ease;
     pointer-events: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: all 0.3s ease;
   }
 
   &:hover:after {
@@ -40,15 +40,15 @@ const Content = styled.div`
 
 const Tab = styled.div`
   align-items: stretch;
-  background-color: rgb(255, 255, 255, 0.15);
   backdrop-filter: blur(4px);
+  background-color: rgb(255, 255, 255, 0.15);
   display: flex;
-  position: absolute;
-  width: 25px;
   height: 100%;
-  top: 0;
   left: -25px;
+  position: absolute;
+  top: 0;
   transition: all 0.3s ease;
+  width: 25px;
 
   ${StyledSection}:hover & {
     background-color: ${props => props.theme.colors.main};
@@ -63,23 +63,23 @@ const Tab = styled.div`
     flex: 0 1 auto;
     height: 100%;
     width: 100%;
-    padding: 4px;
+    padding: 0 4px;
   }
 `;
 
 const Title = styled.h2`
   cursor: pointer;
   font-size: 18px;
+  height: 60px;
+  line-height: 60px;
   margin: 0;
-  height: 75px;
-  line-height: 75px;
 `;
 
 const CloseButton = styled(IconButton)`
+  opacity: 0;
   position: absolute;
   right: 10px;
-  top: 23px;
-  opacity: 0;
+  top: 15px;
 
   ${StyledSection}:hover & {
     opacity: 1;
@@ -87,17 +87,23 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Section = (props) => {
-  const sectionSettings = useStore(state => state.outlinerSections[props.name]);
-  const setOutlinerSectionExpanded = useStore(state => state.setOutlinerSectionExpanded);
-  const setOutlinerSectionActive = useStore(state => state.setOutlinerSectionActive);
+  const sectionSettings = useStore(state => state.outliner[props.name]);
+  const dispatchOutlinerSectionExpanded = useStore(state => state.dispatchOutlinerSectionExpanded);
+  const dispatchOutlinerSectionCollapsed = useStore(state => state.dispatchOutlinerSectionCollapsed);
+  const dispatchOutlinerSectionActivated = useStore(state => state.dispatchOutlinerSectionActivated);
+  const dispatchOutlinerSectionDeactivated = useStore(state => state.dispatchOutlinerSectionDeactivated);
 
   const toggleMinimize = () => {
-    setOutlinerSectionExpanded(props.name, !sectionSettings?.expanded);
+    if (sectionSettings?.expanded) {
+      dispatchOutlinerSectionCollapsed(props.name);
+    } else {
+      dispatchOutlinerSectionExpanded(props.name);
+    }
   };
 
   const closeSection = () => {
     if (props.onClose && typeof props.onClose === 'function') props.onClose();
-    setOutlinerSectionActive(props.name, false);
+    dispatchOutlinerSectionDeactivated(props.name);
   };
 
   return (

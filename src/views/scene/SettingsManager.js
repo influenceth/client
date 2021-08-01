@@ -6,7 +6,7 @@ import useStore from '~/hooks/useStore';
 
 const SettingsManager = (props) => {
   const { scene } = useThree();
-  const skyboxHidden = useStore(state => state.skyboxHidden);
+  const skyboxVisible = useStore(state => state.graphics.skybox);
 
   // Import skybox textures
   const skybox = useCubeTexture([
@@ -14,13 +14,13 @@ const SettingsManager = (props) => {
   ], { path: `${process.env.PUBLIC_URL}/textures/skybox/`});
 
   useEffect(() => {
-    if (skyboxHidden) {
-      scene.background = null;
-    } else {
+    if (skyboxVisible) {
       scene.background = skybox;
       scene.background.encoding = 3000;
+    } else {
+      scene.background = null;
     }
-  }, [ scene, skyboxHidden, skybox ]);
+  }, [ scene, skyboxVisible, skybox ]);
 
   return null;
 };

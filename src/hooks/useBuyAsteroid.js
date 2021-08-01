@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useMutation } from 'react-query';
+import { useMutation, useQueryClient } from 'react-query';
 import { useWeb3React } from '@web3-react/core';
 import { ethers } from 'ethers';
 import { contracts } from 'influence-utils';
 
 const useBuyAsteroid = (i) => {
+  const queryClient = useQueryClient();
   const { account, library } = useWeb3React();
   const [ contract, setContract ] = useState();
 
@@ -23,11 +24,16 @@ const useBuyAsteroid = (i) => {
   return useMutation(async (i) => {
     const price = await contract.getAsteroidPrice(i);
     const tx = await contract.buyAsteroid(i, { value: price });
-    console.log(tx);
-    const receipt = await tx.await();
+    const receipt = await tx.wait();
     console.log(receipt);
     return receipt;
-  }, { enabled: !!contract && !!account });
+  }, {
+    enabled: !!contract && !!account,
+    onSuccess: () => {
+      queryClient.invalidateQueries([ 'asteroid', i ]);
+      queryClient.invalidateQueries('asteroids');
+    }
+  });
 };
 
 export default useBuyAsteroid;

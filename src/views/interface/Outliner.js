@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
 import Wallet from './outliner/Wallet';
-import Asteroid from './outliner/Asteroid';
+import SelectedAsteroid from './outliner/SelectedAsteroid';
 import Watchlist from './outliner/Watchlist';
 import OwnedAsteroids from './outliner/OwnedAsteroids';
 import RoutePlanner from './outliner/RoutePlanner';
@@ -71,9 +71,8 @@ const StyledOutliner = styled.div`
 `;
 
 const Outliner = (props) => {
-  const outlinerPinned = useStore(state => state.outlinerPinned);
-  const outlinerSections = useStore(state => state.outlinerSections);
-  const selectedAsteroid = useStore(state => state.origin);
+  const outliner = useStore(state => state.outliner);
+  const origin = useStore(state => state.asteroids.origin);
 
   return (
     <MainContainer>
@@ -83,14 +82,14 @@ const Outliner = (props) => {
           <polygon points="0,50 0,46 23,25 23,0 25,0 25,25" />
         </CornerBorder>
       </Border>
-      <RightContainer stayOpen={outlinerPinned}>
+      <RightContainer stayOpen={outliner.pinned}>
         <StyledOutliner>
           <Wallet />
-          {selectedAsteroid && <Asteroid asteroid={selectedAsteroid} />}
-          {outlinerSections.ownedAsteroids.active && <OwnedAsteroids />}
-          {outlinerSections.watchlist.active && <Watchlist />}
-          {outlinerSections.routePlanner.active && <RoutePlanner />}
-          {outlinerSections.timeControl.active && <TimeControl />}
+          {origin && <SelectedAsteroid asteroidId={origin} />}
+          {outliner.ownedAsteroids.active && <OwnedAsteroids />}
+          {outliner.watchlist.active && <Watchlist />}
+          {outliner.routePlanner.active && <RoutePlanner />}
+          {outliner.timeControl.active && <TimeControl />}
         </StyledOutliner>
         <SystemControls />
       </RightContainer>

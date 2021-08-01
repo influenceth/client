@@ -11,7 +11,15 @@ import Scene from '~/views/Scene';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnMount: false,
+      staleTime: 12000
+    }
+  }
+});
+
 const getLibrary = (provider) => {
   const library = new Web3Provider(provider);
   library.pollingInterval = 12000;

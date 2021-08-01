@@ -4,26 +4,28 @@ import { useWeb3React } from '@web3-react/core';
 import { ethers } from 'ethers';
 import { contracts } from 'influence-utils';
 
-const useAsteroidPrice = (i) => {
+const useAsteroidPrice = (asteroid) => {
   const { account, library } = useWeb3React();
   const [ contract, setContract ] = useState();
 
   // Sets up contract object with appropriate provider
   useEffect(() => {
-    const provider = !!account ? library.getSigner(account) : library;
-    const newContract = new ethers.Contract(
-      process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
-      contracts.ArvadCrewSale,
-      provider
-    );
+    if (library) {
+      const provider = !!account ? library.getSigner(account) : library;
+      const newContract = new ethers.Contract(
+        process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
+        contracts.ArvadCrewSale,
+        provider
+      );
 
-    setContract(newContract);
+      setContract(newContract);
+    }
   }, [ account, library ]);
 
-  return useQuery([ 'asteroidPrice', i ], async () => {
-    const price = await contract.getAsteroidPrice(i);
+  return useQuery([ 'asteroidPrice', asteroid?.i ], async () => {
+    const price = await contract.getAsteroidPrice(asteroid.i);
     return price;
-  }, { enabled: !!contract });
+  }, { enabled: !!contract && !!asteroid });
 };
 
 export default useAsteroidPrice;

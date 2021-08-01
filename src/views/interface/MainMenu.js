@@ -61,7 +61,7 @@ const EndMenuFiller = styled(MenuFiller)`
 `;
 
 const MainMenu = (props) => {
-  const setOutlinerSectionActive = useStore(state => state.setOutlinerSectionActive);
+  const dispatchOutlinerSectionActivated = useStore(state => state.dispatchOutlinerSectionActivated);
 
   return (
     <StyledMainMenu>
@@ -72,26 +72,26 @@ const MainMenu = (props) => {
           <MenuItem
             name="Wallet"
             icon={<MdAccountBalanceWallet />}
-            onClick={() => setOutlinerSectionActive('wallet')} />
+            onClick={() => dispatchOutlinerSectionActivated('wallet')} />
           <MenuItem
             name="Watchlist"
             icon={<AiFillEye />}
-            onClick={() => setOutlinerSectionActive('watchlist')} />
+            onClick={() => dispatchOutlinerSectionActivated('watchlist')} />
         </Menu>
         <Menu title="Assets">
           <MenuItem
             name="Asteroids"
             icon={<AiFillStar />}
-            onClick={() => setOutlinerSectionActive('ownedAsteroids')} />
+            onClick={() => dispatchOutlinerSectionActivated('ownedAsteroids')} />
         </Menu>
         <Menu title="Map">
           <MenuItem
             name="Route Planner"
             icon={<RiRouteFill />}
-            onClick={() => setOutlinerSectionActive('routePlanner')} />
+            onClick={() => dispatchOutlinerSectionActivated('routePlanner')} />
         </Menu>
         <MenuFiller />
-        <Time onClick={() => setOutlinerSectionActive('timeControl')} />
+        <Time onClick={() => dispatchOutlinerSectionActivated('timeControl')} />
         <EndMenuFiller />
       </MenuWrapper>
     </StyledMainMenu>
