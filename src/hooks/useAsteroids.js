@@ -7,20 +7,22 @@ import useStore from '~/hooks/useStore';
 
 const useAsteroids = () => {
   const { account } = useWeb3React();
-  const includeOwnedAsteroids = useStore(state => state.includeOwned);
+  const includeOwned = useStore(state => state.asteroids.owned.mapped);
+  const filterOwned = useStore(state => state.asteroids.owned.filtered);
+  const includeWatchlist = useStore(state => state.asteroids.watched.mapped);
+  const filiterWatchlist = useStore(state => state.asteroids.watched.filtered);
+  const filters = useStore(state => state.asteroids.filters);
   const [ query, setQuery ] = useState({});
 
   useEffect(() => {
-    if (account && includeOwnedAsteroids) {
-      setQuery({ ...query, includeOwned: account });
-    } else {
-      const { includeOwned, ...newQuery } = query;
-      setQuery(newQuery);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ account, includeOwnedAsteroids ]);
+    const newQuery = Object.assign({}, filters);
 
-  return useQuery([ 'asteroids', query ], () => api.getAsteroids(query));
+    if (!!account && includeOwned) newQuery.includeOwned = account;
+    setQuery(newQuery);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ account, includeOwned, includeWatchlist, filters ]);
+
+  return useQuery([ 'asteroids', query ], () => api.getAsteroids(query), { keepPreviousData: true });
 };
 
 export default useAsteroids;

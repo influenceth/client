@@ -18,7 +18,7 @@ const StyledButton = styled.button`
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: 15px;
-  height: 35px;
+  min-height: 35px;
   transition: all 300ms ease;
   padding: 0 10px;
   position: relative;
@@ -27,6 +27,10 @@ const StyledButton = styled.button`
   &:disabled {
     color: ${props => props.theme.colors.disabledText};
     border-color: ${props => props.theme.colors.disabledText};
+
+    & > svg {
+      stroke: ${props => props.theme.colors.disabledText};
+    }
   }
 
   &:hover {

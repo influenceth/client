@@ -38,14 +38,15 @@ const StyledAsteroidItem = styled(AsteroidItem)`
 
 const OwnedAsteroids = (props) => {
   const asteroids = useOwnedAsteroids();
-  const includeOwned = useStore(state => state.includeOwned);
-  const setIncludeOwned = useStore(state => state.setIncludeOwned);
+  const includeOwned = useStore(state => state.asteroids.owned.mapped);
+  const dispatchOwnedAsteroidsMapped = useStore(state => state.dispatchOwnedAsteroidsMapped);
+  const dispatchOwnedAsteroidsUnmapped = useStore(state => state.dispatchOwnedAsteroidsUnmapped);
   const history = useHistory();
 
   // Removes owned asteroids from search set when section is closed
   useEffect(() => {
-    return () => setIncludeOwned(false);
-  }, [ setIncludeOwned ]);
+    return () => dispatchOwnedAsteroidsUnmapped()
+  }, [ dispatchOwnedAsteroidsUnmapped ]);
 
   let title = 'Owned Asteroids';
 
@@ -58,14 +59,14 @@ const OwnedAsteroids = (props) => {
         {!includeOwned && (
           <IconButton
             data-tip="Show on Map"
-            onClick={() => setIncludeOwned(true)}>
+            onClick={dispatchOwnedAsteroidsMapped}>
             <RiEyeFill />
           </IconButton>
         )}
         {includeOwned && (
           <IconButton
             data-tip="Hide on Map"
-            onClick={() => setIncludeOwned(false)}>
+            onClick={dispatchOwnedAsteroidsUnmapped}>
             <RiEyeOffFill />
           </IconButton>
         )}

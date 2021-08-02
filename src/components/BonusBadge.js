@@ -50,6 +50,7 @@ const BonusBadge = (props) => {
 
   return (
     <StyledBonusBadge
+      {...props}
       level={level}
       data-for="global"
       data-tip={description}>

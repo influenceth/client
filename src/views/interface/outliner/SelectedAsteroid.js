@@ -3,7 +3,7 @@ import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import utils from 'influence-utils';
 import { KeplerianOrbit } from 'influence-utils';
-import { GiAsteroid } from 'react-icons/gi';
+import { IoIosPin } from 'react-icons/io';
 import { RiZoomInFill, RiPagesFill } from 'react-icons/ri';
 
 import useStore from '~/hooks/useStore';
@@ -12,7 +12,7 @@ import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
 import DataReadout from '~/components/DataReadout';
 import BonusBadge from '~/components/BonusBadge';
-import constants from '~/constants';
+import formatters from '~/lib/formatters';
 
 const Controls = styled.div`
   flex: 0 0 auto;
@@ -35,32 +35,11 @@ const SelectedAsteroid = (props) => {
   const history = useHistory();
   const clearOrigin = useStore(state => state.dispatchOriginCleared);
 
-  const period = (a) => {
-    const orbit = new KeplerianOrbit(a.orbital);
-    return orbit.getPeriod().toFixed(0).toLocaleString() + ' days';
-  };
-
-  const surfaceArea = (a) => {
-    const area = (4 * Math.PI * Math.pow(asteroid.radius / 1000, 2)).toFixed(1);
-    return Number(area).toLocaleString() + ' km²';
-  };
-
-  const inclination = (a) => (a.orbital.i * 180 / Math.PI).toLocaleString() + '°';
-
-  const owner = (a) => {
-    if (a.owner) {
-      const url = `${process.env.REACT_APP_OPEN_SEA_URL}/accounts/${a.owner}`;
-      return <a target="_blank" rel="noreferrer" href={url}>{a.owner}</a>;
-    } else {
-      return 'Un-owned';
-    }
-  };
-
   return (
     <Section
       name="selectedAsteroid"
-      title={asteroid.data ? asteroid.data.name : 'Loading...'}
-      icon={<GiAsteroid />}
+      title={asteroid.data ? `${asteroid.data.name} Overview` : 'Loading...'}
+      icon={<IoIosPin />}
       onClose={() => clearOrigin()}>
       {asteroid.data && (
         <Controls>
@@ -77,13 +56,13 @@ const SelectedAsteroid = (props) => {
       )}
       {asteroid.data && (
         <AsteroidData>
-          <DataReadout label="Current Owner" data={owner(asteroid.data)} />
-          <DataReadout label="Spectral Type" data={`${utils.toSpectralType(asteroid.data.spectralType)}-type`} />
-          <DataReadout label="Radius" data={`${asteroid.data.radius.toLocaleString()} m`} />
-          <DataReadout label="Surface Area" data={surfaceArea(asteroid.data)} />
-          <DataReadout label="Orbital Period" data={period(asteroid.data)} />
-          <DataReadout label="Semi-major Axis" data={`${asteroid.data.orbital.a.toLocaleString()} AU`} />
-          <DataReadout label="Inclination" data={inclination(asteroid.data)} />
+          <DataReadout label="Current Owner" data={formatters.assetOwner(asteroid.data.owner)} />
+          <DataReadout label="Spectral Type" data={formatters.spectralType(asteroid.data.spectralType)} />
+          <DataReadout label="Radius" data={formatters.radius(asteroid.data.radius)} />
+          <DataReadout label="Surface Area" data={formatters.surfaceArea(asteroid.data.radius)} />
+          <DataReadout label="Orbital Period" data={formatters.period(asteroid.data.orbital.a)} />
+          <DataReadout label="Semi-major Axis" data={formatters.axis(asteroid.data.orbital.a)} />
+          <DataReadout label="Inclination" data={formatters.inclination(asteroid.data.orbital.i)} />
           {asteroid.data.bonuses?.length > 0 && (
             <Bonuses>
               {asteroid.data.bonuses.map(b => <BonusBadge bonus={b} key={b.type} />)}

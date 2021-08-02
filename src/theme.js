@@ -24,7 +24,9 @@ const theme = {
     }
   },
   fontSizes: {
-    mainText: '14px'
+    mainText: '14px',
+    detailText: '16px',
+    featureText: '20px'
   }
 };
 

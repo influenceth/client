@@ -104,6 +104,14 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.hovered = null;
     })),
 
+    dispatchOwnedAsteroidsMapped: () => set(produce(state => {
+      state.asteroids.owned.mapped = true;
+    })),
+
+    dispatchOwnedAsteroidsUnmapped: () => set(produce(state => {
+      state.asteroids.owned.mapped = false;
+    })),
+
     dispatchTimeUpdated: (time) => set(produce(state => {
       state.time.current = time;
     })),

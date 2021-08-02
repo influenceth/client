@@ -19,10 +19,11 @@ const StyledInterface = styled.div`
   z-index: 1000;
 
   & a {
-    color: white;
+    color: ${props => props.theme.colors.mainText};
   }
 
   & a:hover {
+    color: white;
     text-decoration: none;
   }
 `;

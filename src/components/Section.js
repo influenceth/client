@@ -90,7 +90,6 @@ const Section = (props) => {
   const sectionSettings = useStore(state => state.outliner[props.name]);
   const dispatchOutlinerSectionExpanded = useStore(state => state.dispatchOutlinerSectionExpanded);
   const dispatchOutlinerSectionCollapsed = useStore(state => state.dispatchOutlinerSectionCollapsed);
-  const dispatchOutlinerSectionActivated = useStore(state => state.dispatchOutlinerSectionActivated);
   const dispatchOutlinerSectionDeactivated = useStore(state => state.dispatchOutlinerSectionDeactivated);
 
   const toggleMinimize = () => {
