@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 import { AiFillStar } from 'react-icons/ai';
-import { RiEyeFill, RiEyeOffFill, RiFilter2Fill, RiTableFill } from 'react-icons/ri';
+import { RiFilter2Fill as FilterIcon, RiTableFill } from 'react-icons/ri';
+import { FaMapMarkedAlt as ShowOnMapIcon } from 'react-icons/fa';
 
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useStore from '~/hooks/useStore';
@@ -39,8 +40,11 @@ const StyledAsteroidItem = styled(AsteroidItem)`
 const OwnedAsteroids = (props) => {
   const asteroids = useOwnedAsteroids();
   const includeOwned = useStore(state => state.asteroids.owned.mapped);
+  const filterOwned = useStore(state => state.asteroids.owned.filtered);
   const dispatchOwnedAsteroidsMapped = useStore(state => state.dispatchOwnedAsteroidsMapped);
   const dispatchOwnedAsteroidsUnmapped = useStore(state => state.dispatchOwnedAsteroidsUnmapped);
+  const dispatchOwnedAsteroidsFiltered = useStore(state => state.dispatchOwnedAsteroidsFiltered);
+  const dispatchOwnedAsteroidsUnfiltered = useStore(state => state.dispatchOwnedAsteroidsUnfiltered);
   const history = useHistory();
 
   // Removes owned asteroids from search set when section is closed
@@ -54,21 +58,18 @@ const OwnedAsteroids = (props) => {
       title="Owned Asteroids"
       icon={<AiFillStar />}>
       <Controls>
-        {!includeOwned && (
-          <IconButton
-            data-tip="Show on Map"
-            onClick={dispatchOwnedAsteroidsMapped}>
-            <RiEyeFill />
-          </IconButton>
-        )}
-        {includeOwned && (
-          <IconButton
-            data-tip="Hide on Map"
-            onClick={dispatchOwnedAsteroidsUnmapped}>
-            <RiEyeOffFill />
-          </IconButton>
-        )}
-        <IconButton data-tip="Apply Filters"><RiFilter2Fill /></IconButton>
+        <IconButton
+          data-tip={includeOwned ? 'Hide on Map' : 'Show on Map'}
+          onClick={() => includeOwned ? dispatchOwnedAsteroidsUnmapped() : dispatchOwnedAsteroidsMapped()}
+          active={includeOwned}>
+          <ShowOnMapIcon />
+        </IconButton>
+        <IconButton
+          data-tip={filterOwned ? 'Remove Filters' : 'Apply Filters'}
+          onClick={() => filterOwned ? dispatchOwnedAsteroidsUnfiltered() : dispatchOwnedAsteroidsFiltered()}
+          active={filterOwned}>
+          <FilterIcon />
+        </IconButton>
         <IconButton
           data-tip="Open in Table"
           onClick={() => history.push('/owned-asteroids')}>

@@ -37,7 +37,7 @@ const StyledLogEntry = styled.li`
     vertical-align: top;
   }
 
-  & > a {
+  & a {
     color: ${props => props.theme.colors.secondaryText};
   }
 `;

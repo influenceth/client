@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import utils from 'influence-utils';
 import { IoIosPin } from 'react-icons/io';
-import { MdCancel } from 'react-icons/md';
+import { BiTargetLock } from 'react-icons/bi';
 
 import useStore from '~/hooks/useStore';
 import IconButton from '~/components/IconButton';
@@ -48,6 +48,10 @@ const AsteroidItem = (props) => {
   const origin = useStore(state => state.asteroids.origin);
   const selectOrigin = useStore(state => state.dispatchOriginSelected);
   const clearOrigin = useStore(state => state.dispatchOriginCleared);
+  const routePlannerActive = useStore(state => state.outliner.routePlanner.active);
+  const destination = useStore(state => state.asteroids.destination);
+  const selectDestination = useStore(state => state.dispatchDestinationSelected);
+  const clearDestination = useStore(state => state.dispatchDestinationCleared);
 
   return (
     <StyledAsteroidItem
@@ -62,18 +66,18 @@ const AsteroidItem = (props) => {
         {asteroid.scanned && <RarityBadge rarity={utils.toRarity(asteroid.bonuses)}> &#9679;</RarityBadge>}
       </Description>
       <Controls>
-        {origin !== asteroid.i && (
+        <IconButton
+          data-tip={origin === asteroid.i ? 'Deselect Asteroid' : 'Select Asteroid'}
+          onClick={() => origin === asteroid.i ? clearOrigin() : selectOrigin(asteroid.i)}
+          active={origin === asteroid.i}>
+          <IoIosPin />
+        </IconButton>
+        {routePlannerActive && (
           <IconButton
-            data-tip="Select Asteroid"
-            onClick={() => selectOrigin(asteroid.i)}>
-            <IoIosPin />
-          </IconButton>
-        )}
-        {origin === asteroid.i && (
-          <IconButton
-            data-tip="Deselect Asteroid"
-            onClick={() => clearOrigin()}>
-            <MdCancel />
+            data-tip={destination === asteroid.i ? 'Clear Destination' : 'Set as Destination'}
+            onClick={() => destination === asteroid.i ? clearDestination() : selectDestination(asteroid.i)}
+            active={destination === asteroid.i}>
+            <BiTargetLock />
           </IconButton>
         )}
       </Controls>

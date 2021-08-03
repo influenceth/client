@@ -78,7 +78,7 @@ const Title = styled.h2`
 
 const CloseButton = styled(IconButton)`
   opacity: 0;
-  position: absolute;
+  position: absolute !important;
   right: 10px;
   top: 15px;
 
@@ -109,8 +109,8 @@ const Section = (props) => {
   const animContent = useSpring({
     from: { maxHeight: '0vh', paddingBottom: '0px' },
     to: {
-      maxHeight: !sectionSettings.expanded ? '33vh' : '0vh',
-      paddingBottom: !sectionSettings.expanded ? '20px' : '0px'
+      maxHeight: sectionSettings.expanded ? '33vh' : '0vh',
+      paddingBottom: sectionSettings.expanded ? '20px' : '0px'
     },
     config: { duration: 250, clamp: true }
   });

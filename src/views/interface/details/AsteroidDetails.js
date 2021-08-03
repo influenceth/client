@@ -65,7 +65,6 @@ const Rarity = styled.div`
 `;
 
 const Subtitle = styled.h2`
-  /* background-image: linear-gradient(0.25turn, rgba(54, 167, 205, 0.20), rgba(0, 0, 0, 0)); */
   border-bottom: 1px solid ${props => props.theme.colors.contentBorder};
   font-size: 18px;
   height: 40px;
@@ -77,7 +76,11 @@ const Subtitle = styled.h2`
 const Data = styled.div`
   display: flex;
   flex-direction: column;
-  margin: 20px 10px 10px 15px;
+  margin: 20px 10px 5px 15px;
+`;
+
+const GeneralData = styled(DataReadout)`
+  margin: 5px 0;
 `;
 
 const Controls = styled.div`
@@ -189,16 +192,31 @@ const Dimensions = styled.div`
   flex: 1 0 auto;
   flex-direction: row;
   flex-wrap: wrap;
+  justify-content: center;
   padding-top: 20px;
+
+  & * {
+    /* border: 1px solid red; */
+  }
 `;
 
 const Dimension = styled.div`
+  align-items: center;
   display: flex;
   flex: 0 0 32%;
+  flex-direction: column;
   justify-content: center;
 `;
 
-const StyledDataReadout = styled(DataReadout)`
+const DimensionIcon = styled.svg`
+  fill: transparent;
+  flex: 0 1 auto;
+  stroke: white;
+  margin-bottom: 10px;
+  max-width: 100px;
+`;
+
+const DimensionData = styled(DataReadout)`
   flex-direction: column;
   font-size: ${props => props.theme.fontSizes.detailText};
 `;
@@ -287,15 +305,15 @@ const AsteroidDetails = (props) => {
               <span>{utils.toRarity(asteroid.data.bonuses)}</span>
             </Rarity>
             <Data>
-              <DataReadout label="Owner" data={formatters.assetOwner(asteroid.data.owner)} />
+              <GeneralData label="Owner" data={formatters.assetOwner(asteroid.data.owner)} />
               {sale && !asteroid.data.owner && (
-                <DataReadout label="Price" data={
+                <GeneralData label="Price" data={
                   asteroidPrice.data ? `${ethersUtils.formatEther(asteroidPrice.data)} ETH` : '... ETH'
                 } />
               )}
-              <DataReadout label="Scan Status" data={scanStatusDesc()} />
+              <GeneralData label="Scan Status" data={scanStatusDesc()} />
               {asteroid.data.owner && !asteroid.data.scanned && (
-                <DataReadout label="Scanning Boost" data={formatters.scanningBoost(asteroid.data.purchaseOrder)} />
+                <GeneralData label="Scanning Boost" data={formatters.scanningBoost(asteroid.data.purchaseOrder)} />
               )}
             </Data>
             <Controls>
@@ -384,22 +402,40 @@ const AsteroidDetails = (props) => {
             </Resources>
             <Dimensions>
               <Dimension>
-                <StyledDataReadout label="Orbital Period" data={formatters.period(asteroid.data.orbital.a)} />
+                <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="50" cy="50" r="40" />
+                </DimensionIcon>
+                <DimensionData label="Orbital Period" data={formatters.period(asteroid.data.orbital.a)} />
               </Dimension>
               <Dimension>
-                <StyledDataReadout label="Semi-major Axis" data={formatters.axis(asteroid.data.orbital.a)} />
+                <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="50" cy="50" r="40" />
+                </DimensionIcon>
+                <DimensionData label="Semi-major Axis" data={formatters.axis(asteroid.data.orbital.a)} />
               </Dimension>
               <Dimension>
-                <StyledDataReadout label="Inclination" data={formatters.inclination(asteroid.data.orbital.i)} />
+                <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="50" cy="50" r="40" />
+                </DimensionIcon>
+                <DimensionData label="Inclination" data={formatters.inclination(asteroid.data.orbital.i)} />
               </Dimension>
               <Dimension>
-                <StyledDataReadout label="Eccentricity" data={asteroid.data.orbital.e} />
+                <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="50" cy="50" r="40" />
+                </DimensionIcon>
+                <DimensionData label="Eccentricity" data={asteroid.data.orbital.e} />
               </Dimension>
               <Dimension>
-                <StyledDataReadout label="Radius" data={formatters.radius(asteroid.data.radius)} />
+                <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="50" cy="50" r="40" />
+                </DimensionIcon>
+                <DimensionData label="Radius" data={formatters.radius(asteroid.data.radius)} />
               </Dimension>
               <Dimension>
-                <StyledDataReadout label="Surface Area" data={formatters.surfaceArea(asteroid.data.radius)} />
+                <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="50" cy="50" r="40" />
+                </DimensionIcon>
+                <DimensionData label="Surface Area" data={formatters.surfaceArea(asteroid.data.radius)} />
               </Dimension>
             </Dimensions>
           </MainPanel>

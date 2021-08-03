@@ -112,6 +112,30 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.owned.mapped = false;
     })),
 
+    dispatchOwnedAsteroidsFiltered: () => set(produce(state => {
+      state.asteroids.owned.filtered = true;
+    })),
+
+    dispatchOwnedAsteroidsUnfiltered: () => set(produce(state => {
+      state.asteroids.owned.filtered = false;
+    })),
+
+    dispatchWatchedAsteroidsMapped: () => set(produce(state => {
+      state.asteroids.watched.mapped = true;
+    })),
+
+    dispatchWatchedAsteroidsUnmapped: () => set(produce(state => {
+      state.asteroids.watched.mapped = false;
+    })),
+
+    dispatchWatchedAsteroidsFiltered: () => set(produce(state => {
+      state.asteroids.watched.filtered = true;
+    })),
+
+    dispatchWatchedAsteroidsUnfiltered: () => set(produce(state => {
+      state.asteroids.watched.filtered = false;
+    })),
+
     dispatchTimeUpdated: (time) => set(produce(state => {
       state.time.current = time;
     })),

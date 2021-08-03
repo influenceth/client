@@ -1,19 +1,14 @@
 import { useQuery } from 'react-query';
-import axios from 'axios';
+import api from '~/lib/api';
 
 import useAuth from '~/hooks/useAuth';
 
 const useUser = () => {
   const { token } = useAuth();
 
-  return useQuery([ 'user', token ], async () => {
-    const response = await axios.get(
-      `${process.env.REACT_APP_API_URL}/v1/user`,
-      { headers: { Authorization: `Bearer ${token}` }}
-    );
+  const getUser = useQuery([ 'user', token ], api.getUser, { enabled: !!token });
 
-    return response.data;
-  }, { enabled: !!token });
+  return { getUser };
 };
 
 export default useUser;

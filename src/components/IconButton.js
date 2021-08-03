@@ -38,12 +38,38 @@ const StyledIconButton = styled.button`
   }
 `;
 
+const CancelIndicator = styled.svg`
+  bottom: 0;
+  filter: drop-shadow(1px -1px 1px rgba(0, 0, 0, 1));
+  height: 100% !important;
+  left: 0;
+  position: absolute;
+  stroke: ${props => props.theme.colors.main};
+  stroke-width: 2px;
+  right: 0;
+  top: 0;
+  transition: all 300ms ease;
+  width: 100% !important;
+
+  &:hover {
+    stroke: white;
+  }
+`;
+
 const IconButton = (props) => {
-  useEffect(() => ReactTooltip.rebuild(), []);
+  const { active, 'data-tip': dataTip } = props;
+
+  useEffect(() => ReactTooltip.rebuild(), [ dataTip ]);
 
   return (
-    <StyledIconButton data-for="global" {...props}>
+    // Adding 'key' forces data-tip to actually update on the tooltip
+    <StyledIconButton data-for="global" key={dataTip} {...props}>
       {props.children}
+      {active && (
+        <CancelIndicator viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+          <line x1="6" y1="6" x2="24" y2="24" />
+        </CancelIndicator>
+      )}
     </StyledIconButton>
   );
 };

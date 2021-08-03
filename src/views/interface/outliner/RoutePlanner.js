@@ -67,21 +67,21 @@ const RoutePlanner = (props) => {
   const time = useStore(state => state.time.current);
   const originId = useStore(state => state.asteroids.origin);
   const destinationId = useStore(state => state.asteroids.destination);
-  const origin = useAsteroid(originId);
-  const destination = useAsteroid(destinationId);
+  const { data: origin } = useAsteroid(originId);
+  const { data: destination } = useAsteroid(destinationId);
   const dispatchOriginCleared = useStore(state => state.dispatchOriginCleared);
   const dispatchDestinationCleared = useStore(state => state.dispatchDestinationCleared);
   const dispatchOriginSelected = useStore(state => state.dispatchOriginSelected);
   const dispatchDestinationSelected = useStore(state => state.dispatchDestinationSelected);
 
   useEffect(() => {
-    if (!origin.data || !destination.data) {
+    if (!origin || !destination) {
       setDistance(null);
       return;
     }
 
-    const originPos = (new KeplerianOrbit(origin.data.orbital)).getPositionAtTime(time);
-    const destPos = (new KeplerianOrbit(destination.data.orbital)).getPositionAtTime(time);
+    const originPos = (new KeplerianOrbit(origin.orbital)).getPositionAtTime(time);
+    const destPos = (new KeplerianOrbit(destination.orbital)).getPositionAtTime(time);
     setDistance(Math.sqrt(
       Math.pow(originPos.x - destPos.x, 2) +
       Math.pow(originPos.y - destPos.y, 2) +
@@ -126,14 +126,14 @@ const RoutePlanner = (props) => {
       </Controls>
       <AsteroidList>
         <AsteroidLabel>Origin</AsteroidLabel>
-        {origin.data && <StyledAsteroidItem asteroid={origin.data} />}
-        {!originId && <Message>Select an origin</Message>}
+        {origin && <StyledAsteroidItem asteroid={origin} />}
+        {!origin && <Message>Select an origin</Message>}
         <LinkLine>
           {distance && <DataReadout label="Distance" data={`${Math.round(distance).toLocaleString()} km`} />}
         </LinkLine>
         <AsteroidLabel>Destination</AsteroidLabel>
-        {destination.data && <StyledAsteroidItem asteroid={destination.data} />}
-        {!destinationId && <Message>Select a destination</Message>}
+        {destination && <StyledAsteroidItem asteroid={destination} />}
+        {!destination && <Message>Select a destination</Message>}
       </AsteroidList>
     </Section>
   );
