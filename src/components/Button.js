@@ -5,7 +5,7 @@ import ReactTooltip from 'react-tooltip';
 const StyledButton = styled.button`
   align-items: center;
   border: 1px solid ${props => props.theme.colors.main};
-  background-color: transparent;
+  background-color: black;
   clip-path: polygon(
     0 0,
     100% 0,
@@ -63,7 +63,7 @@ const Button = (props) => {
   useEffect(() => ReactTooltip.rebuild(), []);
 
   return (
-    <StyledButton {...props}>
+    <StyledButton {...props} data-place="right">
       {props.children}
       <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
         <line x1="0" y1="10" x2="10" y2="0" />

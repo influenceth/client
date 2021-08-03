@@ -48,8 +48,6 @@ const OwnedAsteroids = (props) => {
     return () => dispatchOwnedAsteroidsUnmapped()
   }, [ dispatchOwnedAsteroidsUnmapped ]);
 
-  let title = 'Owned Asteroids';
-
   return (
     <Section
       name="ownedAsteroids"

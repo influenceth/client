@@ -4,7 +4,8 @@ import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
 import utils from 'influence-utils';
 import { utils as ethersUtils } from 'ethers';
-import { MdFlag, MdBlurOff } from 'react-icons/md';
+import { MdFlag, MdBlurOff, MdClose } from 'react-icons/md';
+import { BsCheckCircle } from 'react-icons/bs';
 import { AiFillEdit } from 'react-icons/ai';
 
 import useStore from '~/hooks/useStore';
@@ -15,9 +16,11 @@ import useBuyAsteroid from '~/hooks/useBuyAsteroid';
 import useScanAsteroid from '~/hooks/useScanAsteroid';
 import Details from '~/components/Details';
 import Button from '~/components/Button';
+import TextInput from '~/components/TextInput';
 import IconButton from '~/components/IconButton';
 import BonusBadge from '~/components/BonusBadge';
 import DataReadout from '~/components/DataReadout';
+import LogEntry from '~/components/LogEntry';
 import formatters from '~/lib/formatters';
 
 const resourceNames = {
@@ -44,7 +47,7 @@ const SidePanel = styled.div`
 
 const Rarity = styled.div`
   display: flex;
-  margin-bottom: 15px;
+  margin: 10px 15px;
 
   & span {
     color: ${props => props.theme.colors.rarity[props.rarity]};
@@ -61,16 +64,53 @@ const Rarity = styled.div`
   }
 `;
 
-const StyledButton = styled(Button)`
-  margin: 10px 0;
+const Subtitle = styled.h2`
+  /* background-image: linear-gradient(0.25turn, rgba(54, 167, 205, 0.20), rgba(0, 0, 0, 0)); */
+  border-bottom: 1px solid ${props => props.theme.colors.contentBorder};
+  font-size: 18px;
+  height: 40px;
+  line-height: 40px;
+  margin: 10px 0 0 0;
+  padding-left: 15px;
 `;
 
-const Log = styled.ul`
-  border-top: 1px solid ${props => props.theme.colors.contentBorder};
+const Data = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin: 20px 10px 10px 15px;
+`;
+
+const Controls = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+`;
+
+const NameForm = styled.div`
+  display: flex;
+  margin: 15px 20px 0 20px;
+
+  & input {
+    margin-right: 10px;
+  }
+`;
+
+const StyledButton = styled(Button)`
+  margin: 15px 20px 0 20px;
+`;
+
+const Log = styled.div`
   flex: 0 1 33%;
-  margin: auto 0 0 0;
-  padding: 0;
   min-height: 300px;
+
+  & ul {
+    display: flex;
+    flex-direction: column-reverse;
+    list-style-type: none;
+    margin: 10px 0 0 5px;
+    overflow-y: hidden;
+    padding: 0;
+  }
 `;
 
 const MainPanel = styled.div`
@@ -113,22 +153,20 @@ const BonusBars = styled.div`
 
 const BonusBar = styled.div`
   background-color: ${props => {
-    if (props.on) return props.theme.colors.bonus[`level${props.level}`];
-    if (!props.on) return props.theme.colors.disabledText;
+    if (props.shown) return props.theme.colors.bonus[`level${props.level}`];
+    if (!props.shown) return props.theme.colors.disabledText;
   }};
-  border-radius: 3px;
-  height: 15px;
+  border-radius: 2px;
+  height: 12px;
   margin-bottom: 2px;
-  width: 20px;
+  width: 15px;
 `;
 
 const StyledBonusBadge = styled(BonusBadge)`
-  flex: 1 0 auto;
-  height: auto;
-  margin: 0 10px;
-  max-height: 39px;
-  max-width: 39px;
-  width: auto;
+  flex: 0 1 auto;
+  margin: 0 8px;
+  height: 30px;
+  width: 30px;
 `;
 
 const BonusDesc = styled.div`
@@ -139,9 +177,14 @@ const BonusDesc = styled.div`
   & span {
     margin-bottom: 5px;
   }
+
+  & span:last-child {
+    font-size: ${props => props.theme.fontSizes.mainText};
+  }
 `;
 
 const Dimensions = styled.div`
+  align-items: center;
   display: flex;
   flex: 1 0 auto;
   flex-direction: row;
@@ -150,9 +193,9 @@ const Dimensions = styled.div`
 `;
 
 const Dimension = styled.div`
-  justify-content: center;
   display: flex;
   flex: 0 0 32%;
+  justify-content: center;
 `;
 
 const StyledDataReadout = styled(DataReadout)`
@@ -172,6 +215,7 @@ const AsteroidDetails = (props) => {
   const { startScan, finalizeScan, status: scanStatus } = useScanAsteroid();
   const dispatchOriginSelected = useStore(state => state.dispatchOriginSelected);
   const [ previousOrigin, setPreviousOrigin ] = useState(null);
+  const [ naming, setNaming ] = useState(false);
 
   const scanStatusDesc = () => {
     if ([ 'startScanInProgress', 'startScanCompleted', 'finalizeScanInProgress' ].includes(scanStatus)) {
@@ -197,15 +241,15 @@ const AsteroidDetails = (props) => {
     return (
       <Bonus key={b.base.type}>
         <BonusBars visible={hasResourceType}>
-          <BonusBar on={bonus.level >= 3} level={bonus.level} />
-          <BonusBar on={bonus.level >= 2} level={bonus.level} />
-          <BonusBar on={bonus.level >= 1} level={bonus.level} />
+          <BonusBar shown={bonus.level >= 3} level={bonus.level} />
+          <BonusBar shown={bonus.level >= 2} level={bonus.level} />
+          <BonusBar shown={bonus.level >= 1} level={bonus.level} />
         </BonusBars>
         <StyledBonusBadge visible={hasResourceType} bonus={bonus} />
         <BonusDesc>
           <span>{resourceNames[bonus.type]}</span>
           {hasResourceType && <span>{`+${bonus.modifier}%`}</span>}
-          {!hasResourceType && <span>None present</span>}
+          {!hasResourceType && <span>Not present</span>}
         </BonusDesc>
       </Bonus>
     );
@@ -228,7 +272,7 @@ const AsteroidDetails = (props) => {
   }, [ origin, asteroid ]);
 
   const goToOpenSeaAsteroid = (i) => {
-    const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/{i}`;
+    const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/${i}`;
     window.open(url, '_blank');
   };
 
@@ -242,60 +286,94 @@ const AsteroidDetails = (props) => {
               <div />
               <span>{utils.toRarity(asteroid.data.bonuses)}</span>
             </Rarity>
-            <DataReadout label="Owner" data={formatters.assetOwner(asteroid.data.owner)} />
-            {sale && !asteroid.data.owner && (
-              <DataReadout label="Price" data={
-                asteroidPrice.data ? `${ethersUtils.formatEther(asteroidPrice.data)} ETH` : '... ETH'
-              } />
-            )}
-            <DataReadout label="Scan Status" data={scanStatusDesc()} />
-            {asteroid.data.owner && !asteroid.data.scanned && (
-              <DataReadout label="Scanning Boost" data={formatters.scanningBoost(asteroid.data.purchaseOrder)} />
-            )}
-            {!asteroid.data.owner && (
+            <Data>
+              <DataReadout label="Owner" data={formatters.assetOwner(asteroid.data.owner)} />
+              {sale && !asteroid.data.owner && (
+                <DataReadout label="Price" data={
+                  asteroidPrice.data ? `${ethersUtils.formatEther(asteroidPrice.data)} ETH` : '... ETH'
+                } />
+              )}
+              <DataReadout label="Scan Status" data={scanStatusDesc()} />
+              {asteroid.data.owner && !asteroid.data.scanned && (
+                <DataReadout label="Scanning Boost" data={formatters.scanningBoost(asteroid.data.purchaseOrder)} />
+              )}
+            </Data>
+            <Controls>
+              <Subtitle>Manage</Subtitle>
+              {!asteroid.data.owner && (
+                <StyledButton
+                  data-tip="Purchase development rights"
+                  data-for="global"
+                  disabled={!account || !sale || !asteroidPrice.data}
+                  onClick={() => buyAsteroid.mutate(asteroid.data.i)}>
+                  <MdFlag /> Purchase
+                </StyledButton>
+              )}
+              {asteroid.data.owner && asteroid.data.owner !== account && (
+                <StyledButton
+                  data-tip="Purchase on OpenSea"
+                  data-for="global"
+                  disabled={!asteroidPrice.data}
+                  onClick={() => goToOpenSeaAsteroid(asteroid.data.i)}>
+                  <MdFlag /> Purchase
+                </StyledButton>
+              )}
+              {asteroid.data.owner === account && (
+                <StyledButton
+                  data-tip="List on OpenSea"
+                  data-for="global"
+                  disabled={!asteroidPrice.data}
+                  onClick={() => goToOpenSeaAsteroid(asteroid.data.i)}>
+                  <MdFlag /> List for Sale
+                </StyledButton>
+              )}
+              {!asteroid.data.scanned && !asteroid.data.scanning && (
+                <StyledButton
+                  data-tip="Scan for resource bonuses"
+                  data-for="global"
+                  onClick={() => startScan.mutate(asteroid.data.i)}
+                  disabled={asteroid.data.owner !== account || scanStatus === 'startScanInProgress'}>
+                  <MdBlurOff /> Start Scan
+                </StyledButton>
+              )}
+              {!asteroid.data.scanned && asteroid.data.scanning && (
+                <StyledButton
+                  data-tip="Retrieve scan results"
+                  data-for="global"
+                  onClick={() => finalizeScan.mutate(asteroid.data.i)}
+                  disabled={asteroid.data.owner !== account}>
+                  <MdBlurOff /> Finalize Scan
+                </StyledButton>
+              )}
               <StyledButton
-                data-tip="Purchase development rights"
+                data-tip="Update asteroid name"
                 data-for="global"
-                disabled={!account || !sale || !asteroidPrice.data}
-                onClick={() => buyAsteroid.mutate(asteroid.data.i)}>
-                <MdFlag /> Purchase
+                onClick={() => setNaming(true)}
+                disabled={asteroid.data.owner !== account || naming}>
+                <AiFillEdit /> Name
               </StyledButton>
-            )}
-            {asteroid.data.owner && (
-              <StyledButton
-                data-tip="Purchase on OpenSea"
-                data-for="global"
-                disabled={!asteroidPrice.data}
-                onClick={() => goToOpenSeaAsteroid(asteroid.data.i)}>
-                <MdFlag /> Purchase
-              </StyledButton>
-            )}
-            {!asteroid.data.scanned && !asteroid.data.scanning && (
-              <StyledButton
-                data-tip="Scan for resource bonuses"
-                data-for="global"
-                onClick={() => startScan.mutate(asteroid.data.i)}
-                disabled={asteroid.data.owner !== account}>
-                <MdBlurOff /> Start Scan
-              </StyledButton>
-            )}
-            {!asteroid.data.scanned && asteroid.data.scanning && (
-              <StyledButton
-                data-tip="Retrieve scan results"
-                data-for="global"
-                onClick={() => finalizeScan.mutate(asteroid.data.i)}
-                disabled={asteroid.data.owner !== account}>
-                <MdBlurOff /> Finalize Scan
-              </StyledButton>
-            )}
-            <StyledButton
-              data-tip="Update asteroid name"
-              data-for="global"
-              disabled={asteroid.data.owner !== account}>
-              <AiFillEdit /> Name
-            </StyledButton>
+              {naming && (
+                <NameForm>
+                  <TextInput placeholder={asteroid.data.name} />
+                  <IconButton
+                    data-tip="Submit"
+                    data-for="global">
+                    <BsCheckCircle />
+                  </IconButton>
+                  <IconButton
+                    data-tip="Cancel"
+                    data-for="global"
+                    onClick={() => setNaming(false)}>
+                    <MdClose />
+                  </IconButton>
+                </NameForm>
+              )}
+            </Controls>
             <Log>
-              <span>Log</span>
+              <Subtitle>Logs</Subtitle>
+              <ul>
+                {asteroid.data.events.map(e => <LogEntry type={'asteroid'} tx={e} />)}
+              </ul>
             </Log>
           </SidePanel>
           <MainPanel>

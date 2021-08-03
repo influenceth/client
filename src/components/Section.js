@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { MdClear } from 'react-icons/md';
+import { useSpring, animated } from 'react-spring';
 
 import useStore from '~/hooks/useStore';
 import IconButton from './IconButton';
@@ -12,7 +13,7 @@ const StyledSection = styled.div`
   position: relative;
 
   &:after {
-    background-image: linear-gradient(0.25turn, rgba(54, 167, 205, 0.1), rgba(0, 0, 0, 0));
+    background-image: linear-gradient(0.25turn, rgba(54, 167, 205, 0.15), rgba(0, 0, 0, 0));
     bottom: 0;
     content: '';
     left: 0;
@@ -21,7 +22,8 @@ const StyledSection = styled.div`
     position: absolute;
     right: 0;
     top: 0;
-    transition: all 0.3s ease;
+    transition: all 0.5s ease;
+    z-index: -1;
   }
 
   &:hover:after {
@@ -29,12 +31,10 @@ const StyledSection = styled.div`
   }
 `;
 
-const Content = styled.div`
+const Content = styled(animated.div)`
   display: flex;
   flex-direction: column;
-  max-height: ${props => props.minimized ? '0' : '33vh'};
   overflow: hidden;
-  padding-bottom: ${props => props.minimized ? '0' : '20px'};
   transition: all 0.3s ease;
 `;
 
@@ -73,6 +73,7 @@ const Title = styled.h2`
   height: 60px;
   line-height: 60px;
   margin: 0;
+  overflow: hidden;
 `;
 
 const CloseButton = styled(IconButton)`
@@ -105,6 +106,15 @@ const Section = (props) => {
     dispatchOutlinerSectionDeactivated(props.name);
   };
 
+  const animContent = useSpring({
+    from: { maxHeight: '0vh', paddingBottom: '0px' },
+    to: {
+      maxHeight: !sectionSettings.expanded ? '33vh' : '0vh',
+      paddingBottom: !sectionSettings.expanded ? '20px' : '0px'
+    },
+    config: { duration: 250, clamp: true }
+  });
+
   return (
     <StyledSection {...props}>
       <Tab>
@@ -112,7 +122,7 @@ const Section = (props) => {
       </Tab>
       {props.title && <Title onClick={toggleMinimize}>{props.title}</Title>}
       <CloseButton onClick={closeSection} borderless><MdClear /></CloseButton>
-      <Content minimized={!sectionSettings.expanded}>
+      <Content style={animContent}>
         {props.children}
       </Content>
     </StyledSection>

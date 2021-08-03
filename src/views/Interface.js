@@ -31,7 +31,7 @@ const StyledInterface = styled.div`
 const MainContainer = styled.div`
   display: flex;
   flex-direction: column;
-  flex: 1 0 auto;
+  flex: 1 1 auto;
   justify-content: flex-end;
   position: relative;
   height: 100%;

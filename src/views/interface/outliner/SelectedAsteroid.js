@@ -1,8 +1,5 @@
-import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
-import utils from 'influence-utils';
-import { KeplerianOrbit } from 'influence-utils';
 import { IoIosPin } from 'react-icons/io';
 import { RiZoomInFill, RiPagesFill } from 'react-icons/ri';
 
@@ -38,7 +35,7 @@ const SelectedAsteroid = (props) => {
   return (
     <Section
       name="selectedAsteroid"
-      title={asteroid.data ? `${asteroid.data.name} Overview` : 'Loading...'}
+      title={asteroid.data ? `${asteroid.data.name} Overview` : ''}
       icon={<IoIosPin />}
       onClose={() => clearOrigin()}>
       {asteroid.data && (

@@ -18,7 +18,6 @@ const StyledDetails = styled.div`
   flex-direction: column;
   flex: 1 1 auto;
   margin: 25px 44px 0 25px;
-  padding: 25px 35px 35px 25px;
   pointer-events: auto;
   position: relative;
   overflow: hidden;
@@ -26,21 +25,23 @@ const StyledDetails = styled.div`
 `;
 
 const Header = styled.h1`
+  background-image: linear-gradient(0.25turn, rgba(54, 167, 205, 0.15), rgba(0, 0, 0, 0));
   font-size: 24px;
   font-weight: 400;
-  padding: 10px 0 40px 0;
+  padding: 25px;
   margin: 0;
 `;
 
 const Content = styled.div`
   flex: 1 1 auto;
   overflow-y: scroll;
+  margin: 25px 35px 35px 25px;
 `;
 
 const CloseButton = styled(IconButton)`
   position: absolute;
-  top: 35px;
-  right: 25px;
+  top: 25px;
+  right: 20px;
 `;
 
 const Details = (props) => {
