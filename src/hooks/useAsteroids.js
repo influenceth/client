@@ -18,9 +18,11 @@ const useAsteroids = () => {
     const newQuery = Object.assign({}, filters);
     if (!!account && includeOwned) newQuery.includeOwned = account;
     if (!!account && includeWatched) newQuery.includeWatched = true;
+    if (!!account && filterOwned) newQuery.filterOwned = true;
+    if (!!account && filterWatched) newQuery.filterWatched = true;
     setQuery(newQuery);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ account, includeOwned, includeWatched, filters ]);
+}, [ account, includeOwned, includeWatched, filterOwned, filterWatched, filters ]);
 
   return useQuery([ 'asteroids', query ], () => api.getAsteroids(query), { keepPreviousData: true });
 };

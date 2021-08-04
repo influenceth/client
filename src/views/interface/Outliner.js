@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
 import Wallet from './outliner/Wallet';
+import Filters from './outliner/Filters';
 import SelectedAsteroid from './outliner/SelectedAsteroid';
 import Watchlist from './outliner/Watchlist';
 import OwnedAsteroids from './outliner/OwnedAsteroids';
@@ -85,6 +86,7 @@ const Outliner = (props) => {
       <RightContainer stayOpen={outliner.pinned}>
         <StyledOutliner>
           <Wallet />
+          {outliner.filters.active && <Filters />}
           {origin && <SelectedAsteroid asteroidId={origin} />}
           {outliner.ownedAsteroids.active && <OwnedAsteroids />}
           {outliner.watchlist.active && <Watchlist />}

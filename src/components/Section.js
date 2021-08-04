@@ -109,7 +109,7 @@ const Section = (props) => {
   const animContent = useSpring({
     from: { maxHeight: '0vh', paddingBottom: '0px' },
     to: {
-      maxHeight: sectionSettings.expanded ? '33vh' : '0vh',
+      maxHeight: sectionSettings.expanded ? '40vh' : '0vh',
       paddingBottom: sectionSettings.expanded ? '20px' : '0px'
     },
     config: { duration: 250, clamp: true }

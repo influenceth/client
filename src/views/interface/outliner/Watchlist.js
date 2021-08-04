@@ -26,6 +26,21 @@ const StyledWatchlist = styled.div`
   padding: 0;
 `;
 
+const StyledAsteroidItem = styled(AsteroidItem)`
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+
+  &:hover {
+    background-color: ${props => props.theme.colors.contentHighlight};
+    border-top: 1px solid ${props => props.theme.colors.contentBorder};
+    border-bottom: 1px solid ${props => props.theme.colors.contentBorder};
+  }
+
+  &:first-child {
+    border-top: 0;
+  }
+`;
+
 const Watchlist = (props) => {
   const history = useHistory();
   const { watchlist: { data: watchlist }} = useWatchlist();
@@ -61,7 +76,9 @@ const Watchlist = (props) => {
         </IconButton>
       </Controls>
       <StyledWatchlist>
-        {watchlist && watchlist.map((w) => <AsteroidItem key={w.asteroid.i} asteroid={w.asteroid} />)}
+        {watchlist && watchlist.map(w => (
+          <StyledAsteroidItem key={w.asteroid.i} asteroid={w.asteroid} watched={true} />
+        ))}
       </StyledWatchlist>
     </Section>
   );

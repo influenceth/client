@@ -4,7 +4,7 @@ const theme = {
     mainBorder: 'rgba(255, 255, 255, 0.25)',
     contentBorder: '#666666',
     contentBackdrop: 'rgba(0, 0, 0, 0.5)',
-    contentHighlight: '#252525',
+    contentHighlight: 'rgba(40, 40, 40, 0.5)',
     mainText: '#cccccc',
     secondaryText: '#999999',
     disabledText: '#666666',

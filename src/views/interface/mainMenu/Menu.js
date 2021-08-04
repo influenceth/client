@@ -18,7 +18,7 @@ const MenuHeader = styled.div`
   color: rgb(255, 255, 255, 0.6);
   font-size: ${props => props.theme.fontSizes.mainText};
   font-weight: bold;
-  height: 40px;
+  height: 44px;
   letter-spacing: 2px;
   line-height: 53px;
   text-align: center;

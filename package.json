@@ -21,6 +21,7 @@
     "react-dom": "^17.0.2",
     "react-icons": "^4.2.0",
     "react-jwt": "^1.1.2",
+    "react-numeric-input": "^2.2.3",
     "react-query": "^3.16.0",
     "react-redux": "^7.2.4",
     "react-router-dom": "^5.2.0",

@@ -34,7 +34,7 @@ const Bonuses = styled.div`
 const SelectedAsteroid = (props) => {
   const { asteroidId } = props;
   const { data: asteroid } = useAsteroid(asteroidId);
-  const { watchlist: { data: watchlist }, ids: watchlistIds } = useWatchlist();
+  const { ids: watchlistIds } = useWatchlist();
   const history = useHistory();
   const clearOrigin = useStore(state => state.dispatchOriginCleared);
   const watchlistActive = useStore(state => state.outliner.watchlist.active);
@@ -86,6 +86,7 @@ const SelectedAsteroid = (props) => {
           <DataReadout label="Orbital Period" data={formatters.period(asteroid.orbital.a)} />
           <DataReadout label="Semi-major Axis" data={formatters.axis(asteroid.orbital.a)} />
           <DataReadout label="Inclination" data={formatters.inclination(asteroid.orbital.i)} />
+          <DataReadout label="Eccentricity" data={asteroid.orbital.e} />
           {asteroid.bonuses?.length > 0 && (
             <Bonuses>
               {asteroid.bonuses.map(b => <BonusBadge bonus={b} key={b.type} />)}

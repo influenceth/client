@@ -104,6 +104,10 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.hovered = null;
     })),
 
+    dispatchFiltersUpdated: (filters) => set(produce(state => {
+      state.asteroids.filters = filters;
+    })),
+
     dispatchOwnedAsteroidsMapped: () => set(produce(state => {
       state.asteroids.owned.mapped = true;
     })),

@@ -31,9 +31,13 @@ const StyledAsteroidItem = styled(AsteroidItem)`
   border-bottom: 1px solid transparent;
 
   &:hover {
-    background-color: rgba(40, 40, 40, 0.5);
+    background-color: ${props => props.theme.colors.contentHighlight};
     border-top: 1px solid ${props => props.theme.colors.contentBorder};
     border-bottom: 1px solid ${props => props.theme.colors.contentBorder};
+  }
+
+  &:first-child {
+    border-top: 0;
   }
 `;
 

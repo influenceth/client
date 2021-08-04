@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { FiExternalLink as LinkIcon } from 'react-icons/fi';
 
 import formatters from '~/lib/formatters';
 
@@ -23,12 +24,10 @@ const getDesc = {
 };
 
 const StyledLogEntry = styled.li`
-  display: flex;
-  flex-direction: column;
   font-size: ${props => props.theme.fontSizes.mainText};
   margin: 10px;
 
-  & div a {
+  & a {
     color: ${props => props.theme.colors.secondaryText};
     display: inline-block;
     text-overflow: ellipsis;
@@ -42,16 +41,18 @@ const StyledLogEntry = styled.li`
   }
 `;
 
+const IconLink = styled.a`
+  margin-left: 5px;
+`;
+
 const LogEntry = (props) => {
   const { type, tx } = props;
   const url = `${process.env.REACT_APP_ETHERSCAN_URL}/tx/${tx.transactionHash}`;
 
   return (
     <StyledLogEntry>
-      <div>
-        {getDesc[type][tx.event](tx)}
-      </div>
-      <a href={url} rel="noreferrer" target="_blank">View on Etherscan</a>
+      {getDesc[type][tx.event](tx)}
+      <IconLink href={url} rel="noreferrer" target="_blank"><LinkIcon /></IconLink>
     </StyledLogEntry>
   );
 };

@@ -94,6 +94,7 @@ const OwnedAsteroidsTable = (props) => {
   // Close if the owned asteroids section is closed
   useEffect(() => {
     if (!active) history.push('/');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ active ]);
 
   return (

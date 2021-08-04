@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 
 const StyledDataReadout = styled.div`
+  align-items: flex-end;
   display: flex;
   padding-bottom: 10px;
   font-size: ${props => props.theme.fontSizes.mainText};

@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import styled from 'styled-components';
 
 const StyledTextInput = styled.div`
+  flex: 0 1 auto;
 `;
 
 const StyledInput = styled.input`
   background-color: transparent;
-  border: 1px solid ${props => props.theme.colors.main};
+  border: 0px;
+  border-bottom: 1px solid ${props => props.theme.colors.main};
   color: ${props => props.theme.colors.mainText};
   font-size: ${props => props.theme.fontSizes.mainText};
+  text-align: ${props => props.format === 'numeric' ? 'right' : 'left'};
   height: 28px;
   padding: 0 5px;
-  width: 140px;
 
   &:focus {
     outline: none;
@@ -19,15 +21,23 @@ const StyledInput = styled.input`
 `;
 
 const TextInput = (props) => {
-  const { placeholder } = props;
-  const [ value, setValue ] = useState('');
+  const { placeholder, initialValue, onChange, format, ...restProps } = props;
+  const [ value, setValue ] = useState(initialValue || '');
+
+  const _onChange = (e) => {
+    let parsed = e.target.value;
+    if (format === 'numeric') parsed = Number(parsed.replace(/[\D.]*/g,''));
+    setValue(parsed);
+    if (onChange) onChange(parsed);
+  };
 
   return (
-    <StyledTextInput {...props}>
+    <StyledTextInput {...restProps}>
       <StyledInput
         type="text"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
+        format={format || 'text'}
+        value={Number(value).toLocaleString()}
+        onChange={_onChange}
         placeholder={placeholder ? placeholder : ''}
         spellCheck="false" />
     </StyledTextInput>

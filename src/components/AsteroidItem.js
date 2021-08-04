@@ -2,8 +2,10 @@ import styled from 'styled-components';
 import utils from 'influence-utils';
 import { IoIosPin } from 'react-icons/io';
 import { BiTargetLock } from 'react-icons/bi';
+import { AiFillEye as WatchIcon } from 'react-icons/ai';
 
 import useStore from '~/hooks/useStore';
+import useUnWatchAsteroid from '~/hooks/useUnWatchAsteroid';
 import IconButton from '~/components/IconButton';
 import BonusBadge from '~/components/BonusBadge';
 import theme from '~/theme';
@@ -42,7 +44,7 @@ const RarityBadge = styled.span`
 `;
 
 const AsteroidItem = (props) => {
-  const { asteroid } = props;
+  const { asteroid, watched } = props;
   const dispatchAsteroidHovered = useStore(state => state.dispatchAsteroidHovered);
   const dispatchAsteroidUnhovered = useStore(state => state.dispatchAsteroidUnhovered);
   const origin = useStore(state => state.asteroids.origin);
@@ -52,6 +54,7 @@ const AsteroidItem = (props) => {
   const destination = useStore(state => state.asteroids.destination);
   const selectDestination = useStore(state => state.dispatchDestinationSelected);
   const clearDestination = useStore(state => state.dispatchDestinationCleared);
+  const unWatchAsteroid = useUnWatchAsteroid();
 
   return (
     <StyledAsteroidItem
@@ -78,6 +81,14 @@ const AsteroidItem = (props) => {
             onClick={() => destination === asteroid.i ? clearDestination() : selectDestination(asteroid.i)}
             active={destination === asteroid.i}>
             <BiTargetLock />
+          </IconButton>
+        )}
+        {watched && (
+          <IconButton
+            data-tip="Un-watch Asteroid"
+            onClick={() => unWatchAsteroid.mutate(asteroid.i)}
+            active={true}>
+            <WatchIcon />
           </IconButton>
         )}
       </Controls>

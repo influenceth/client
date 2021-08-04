@@ -23,10 +23,10 @@ const descriptions = {
 
 const StyledBonusBadge = styled.div`
   border-radius: 50%;
-  height: 20px;
+  height: 30px;
   margin-right: 10px;
   padding: 5px;
-  width: 20px;
+  width: 30px;
 
   & > svg {
     fill: ${props => props.theme.colors.bonus[`level${props.level}`]};

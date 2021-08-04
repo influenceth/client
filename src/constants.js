@@ -5,6 +5,10 @@ const constants = {
   MIN_ASTEROID_RADIUS: 1000, // in meters
   MAX_AXIS: 4.0, // Maximum semi-major axis in AU
   MIN_AXIS: 0.8, // Minimum semi-major axis in AU
+  MIN_INCLINATION: 0,
+  MAX_INCLINATION: 40,
+  MIN_ECCENTRICITY: 0,
+  MAX_ECCENTRICITY: 0.4,
   STAR_INTENSITY: 2, // as it relates to THREE light
 
   // Performance settings

@@ -280,6 +280,7 @@ const AsteroidDetails = (props) => {
 
   useEffect(() => {
     if (asteroid.data?.i) history.push(`/asteroids/${asteroid.data.i}`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ asteroid.data ]);
 
   // Checks for a origin -> null transition to close the view
@@ -390,7 +391,7 @@ const AsteroidDetails = (props) => {
             <Log>
               <Subtitle>Logs</Subtitle>
               <ul>
-                {asteroid.data.events.map(e => <LogEntry type={'asteroid'} tx={e} />)}
+                {asteroid.data.events.map(e => <LogEntry key={e.transactionHash} type={'asteroid'} tx={e} />)}
               </ul>
             </Log>
           </SidePanel>

@@ -5,6 +5,7 @@ onmessage = async function(event) {
   switch (event.data.topic) {
     case 'updateAsteroidsData':
       updateAsteroidsData(event.data.asteroids);
+      updateAsteroidPositions(event.data.elapsed);
       break;
     case 'updateAsteroidPositions':
       updateAsteroidPositions(event.data.elapsed);

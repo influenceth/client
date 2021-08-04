@@ -7,7 +7,7 @@ import Time from './mainMenu/Time';
 import Logo from './mainMenu/menu-logo.svg';
 import { MdAccountBalanceWallet } from 'react-icons/md';
 import { AiFillStar, AiFillEye } from 'react-icons/ai';
-import { RiRouteFill } from 'react-icons/ri';
+import { RiRouteFill, RiFilter2Fill as FilterIcon } from 'react-icons/ri';
 
 const StyledMainMenu = styled.div`
   align-items: flex-end;
@@ -85,6 +85,10 @@ const MainMenu = (props) => {
             onClick={() => dispatchOutlinerSectionActivated('ownedAsteroids')} />
         </Menu>
         <Menu title="Map">
+          <MenuItem
+            name="Filters"
+            icon={<FilterIcon />}
+            onClick={() => dispatchOutlinerSectionActivated('filters')} />
           <MenuItem
             name="Route Planner"
             icon={<RiRouteFill />}

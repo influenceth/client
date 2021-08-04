@@ -8,8 +8,6 @@ const StyledMenuItem = styled.div`
   height: 44px;
   justify-content: left;
   letter-spacing: 1px;
-  text-align: center;
-  text-transform: uppercase;
   transition: all 0.3s ease 25ms;
 
   &:hover {
@@ -24,7 +22,7 @@ const StyledMenuItem = styled.div`
   & svg {
     flex: 0 1 auto;
     height: 15px;
-    margin: 0 7px;
+    margin: 0 10px 0 5px;
     width: 15px;
   }
 `;
