@@ -1,9 +1,9 @@
 import styled from 'styled-components';
 
 const StyledDataReadout = styled.div`
-  align-items: flex-end;
+  align-items: center;
   display: flex;
-  padding-bottom: 10px;
+  padding: 5px 0;
   font-size: ${props => props.theme.fontSizes.mainText};
 `;
 

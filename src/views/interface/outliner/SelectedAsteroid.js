@@ -18,7 +18,7 @@ import formatters from '~/lib/formatters';
 
 const Controls = styled.div`
   flex: 0 0 auto;
-  padding-bottom: 20px;
+  padding-bottom: 15px;
 `;
 
 const AsteroidData = styled.div`
@@ -29,6 +29,7 @@ const Bonuses = styled.div`
   align-items: center;
   display: flex;
   height: 40px;
+  margin-top: 5px;
 `;
 
 const SelectedAsteroid = (props) => {
@@ -48,12 +49,18 @@ const SelectedAsteroid = (props) => {
     } else {
       setInWatchlist(false);
     }
-  }, [ watchlistIds, asteroid ])
+  }, [ watchlistIds, asteroid ]);
+
+  const title = () => {
+    if (asteroid && asteroid.customName) return asteroid.customName;
+    if (asteroid && asteroid.baseName) return asteroid.baseName;
+    return '';
+  };
 
   return (
     <Section
       name="selectedAsteroid"
-      title={asteroid ? `${asteroid.name} Overview` : ''}
+      title={title()}
       icon={<IoIosPin />}
       onClose={() => clearOrigin()}>
       {asteroid && (

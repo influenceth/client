@@ -25,10 +25,12 @@ const StyledDetails = styled.div`
 `;
 
 const Header = styled.h1`
-  background-image: linear-gradient(0.25turn, rgba(54, 167, 205, 0.15), rgba(0, 0, 0, 0));
+  border-left: 5px solid ${props => props.theme.colors.main};
   font-size: 24px;
   font-weight: 400;
-  padding: 25px;
+  height: 60px;
+  line-height: 60px;
+  padding: 0 0 0 30px;
   margin: 0;
 `;
 

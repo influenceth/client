@@ -19,7 +19,9 @@ const getDesc = {
 
     ScanStarted: (e) => <span>Resource scan initiated</span>,
 
-    AsteroidScanned: (e) => <span>Resource scan completed</span>
+    AsteroidScanned: (e) => <span>Resource scan completed</span>,
+
+    NameChanged: (e) => <span>{`Asteroid re-named to "${e.returnValues.newName}"`}</span>
   }
 };
 

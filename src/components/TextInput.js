@@ -6,6 +6,7 @@ const StyledInput = styled.input`
   border: 0px;
   border-bottom: 1px solid ${props => props.theme.colors.main};
   color: ${props => props.theme.colors.mainText};
+  font-family: 'Jura', sans-serif;
   font-size: ${props => props.theme.fontSizes.mainText};
   text-align: ${props => props.format === 'numeric' ? 'right' : 'left'};
   height: 28px;
@@ -13,6 +14,10 @@ const StyledInput = styled.input`
 
   &:focus {
     outline: none;
+  }
+
+  &:invalid {
+    border-bottom: 1px solid red;
   }
 `;
 

@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import DataReadout from '~/components/DataReadout';
 import NumberInput from '~/components/NumberInput';
+import formatters from '~/lib/formatters';
 import constants from '~/constants';
 
 const initialValues = {
@@ -12,6 +13,11 @@ const initialValues = {
 
 const StyledInput = styled(NumberInput)`
   height: 24px;
+`;
+
+const Period = styled.span`
+  color: ${props => props.theme.colors.secondaryText};
+  margin-left: 10px;
 `;
 
 const AxisFilter = (props) => {
@@ -28,29 +34,33 @@ const AxisFilter = (props) => {
 
   return (
     <>
-      <h3>Semi-major Axis</h3>
+      <h3>Semi-major Axis (Period)</h3>
       <DataReadout
         label="Min. Axis (AU)"
         data={
-          <StyledInput
-            initialValue={initialValues.axisMin}
-            min={initialValues.axisMin}
-            max={initialValues.axisMax}
-            step={0.001}
-            format={format}
-            onChange={(v) => setAxisMin(Number(v))} />
-          } />
+          <>
+            <StyledInput
+              initialValue={initialValues.axisMin}
+              min={initialValues.axisMin}
+              max={initialValues.axisMax}
+              step={0.001}
+              format={format}
+              onChange={(v) => setAxisMin(Number(v))} />
+            <Period>({formatters.period(axisMin)})</Period>
+          </>} />
       <DataReadout
         label="Max. Axis (AU)"
         data={
-          <StyledInput
-            initialValue={initialValues.axisMax}
-            min={initialValues.axisMin}
-            max={initialValues.axisMax}
-            step={0.001}
-            format={format}
-            onChange={(v) => setAxisMax(Number(v))} />
-          } />
+          <>
+            <StyledInput
+              initialValue={initialValues.axisMax}
+              min={initialValues.axisMin}
+              max={initialValues.axisMax}
+              step={0.001}
+              format={format}
+              onChange={(v) => setAxisMax(Number(v))} />
+            <Period>({formatters.period(axisMax)})</Period>
+          </>} />
     </>
   );
 };

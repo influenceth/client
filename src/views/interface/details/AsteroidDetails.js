@@ -14,6 +14,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidPrice from '~/hooks/useAsteroidPrice';
 import useBuyAsteroid from '~/hooks/useBuyAsteroid';
 import useScanAsteroid from '~/hooks/useScanAsteroid';
+import useNameAsteroid from '~/hooks/useNameAsteroid';
 import Details from '~/components/Details';
 import Button from '~/components/Button';
 import TextInput from '~/components/TextInput';
@@ -194,10 +195,6 @@ const Dimensions = styled.div`
   flex-wrap: wrap;
   justify-content: center;
   padding-top: 20px;
-
-  & * {
-    /* border: 1px solid red; */
-  }
 `;
 
 const Dimension = styled.div`
@@ -227,20 +224,22 @@ const AsteroidDetails = (props) => {
   const { account } = useWeb3React();
   const sale = useSale();
   const origin = useStore(state => state.asteroids.origin);
-  const asteroid = useAsteroid(origin);
-  const asteroidPrice = useAsteroidPrice(asteroid.data);
+  const { data: asteroid } = useAsteroid(origin);
+  const { data: asteroidPrice } = useAsteroidPrice(asteroid);
   const buyAsteroid = useBuyAsteroid();
   const { startScan, finalizeScan, status: scanStatus } = useScanAsteroid();
+  const nameAsteroid = useNameAsteroid();
   const dispatchOriginSelected = useStore(state => state.dispatchOriginSelected);
   const [ previousOrigin, setPreviousOrigin ] = useState(null);
   const [ naming, setNaming ] = useState(false);
+  const [ newName, setNewName ] = useState('');
 
   const scanStatusDesc = () => {
     if ([ 'startScanInProgress', 'startScanCompleted', 'finalizeScanInProgress' ].includes(scanStatus)) {
       return 'Scan in progress...';
-    } else if (asteroid.data.scanning) {
+    } else if (asteroid.scanning) {
       return 'Scan in progress...';
-    } else if (asteroid.data.scanned) {
+    } else if (asteroid.scanned) {
       return 'Scan completed'
     } else {
       return 'Un-scanned'
@@ -249,10 +248,10 @@ const AsteroidDetails = (props) => {
 
   const bonusElement = (b) => {
     let bonus = b.base;
-    const hasResourceType = b.spectralTypes.includes(asteroid.data.spectralType);
+    const hasResourceType = b.spectralTypes.includes(asteroid.spectralType);
 
     if (hasResourceType) {
-      const found = asteroid.data.bonuses.find(f => f.type === b.base.type);
+      const found = asteroid.bonuses.find(f => f.type === b.base.type);
       if (found) bonus = found;
     }
 
@@ -279,14 +278,14 @@ const AsteroidDetails = (props) => {
   }, [ i, dispatchOriginSelected ]);
 
   useEffect(() => {
-    if (asteroid.data?.i) history.push(`/asteroids/${asteroid.data.i}`);
+    if (asteroid?.i) history.push(`/asteroids/${asteroid.i}`);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ asteroid.data ]);
+  }, [ asteroid ]);
 
   // Checks for a origin -> null transition to close the view
   useEffect(() => {
     if (previousOrigin && !origin) history.push('/');
-    if (asteroid.data) setPreviousOrigin(asteroid.data.i);
+    if (!!asteroid) setPreviousOrigin(asteroid.i);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ origin, asteroid ]);
 
@@ -297,70 +296,70 @@ const AsteroidDetails = (props) => {
 
   return (
     <Details
-      title={asteroid.data ? `${asteroid.data.name} Details` : 'Asteroid Details'}>
-      {asteroid.data && (
+      title={!!asteroid ? `${asteroid.name} - Details` : 'Asteroid Details'}>
+      {!!asteroid && (
         <StyledAsteroidDetails>
           <SidePanel>
-            <Rarity rarity={utils.toRarity(asteroid.data.bonuses)}>
+            <Rarity rarity={utils.toRarity(asteroid.bonuses)}>
               <div />
-              <span>{utils.toRarity(asteroid.data.bonuses)}</span>
+              <span>{utils.toRarity(asteroid.bonuses)}</span>
             </Rarity>
             <Data>
-              <GeneralData label="Owner" data={formatters.assetOwner(asteroid.data.owner)} />
-              {sale && !asteroid.data.owner && (
+              <GeneralData label="Owner" data={formatters.assetOwner(asteroid.owner)} />
+              {sale && !asteroid.owner && (
                 <GeneralData label="Price" data={
-                  asteroidPrice.data ? `${ethersUtils.formatEther(asteroidPrice.data)} ETH` : '... ETH'
+                  asteroidPrice ? `${ethersUtils.formatEther(asteroidPrice)} ETH` : '... ETH'
                 } />
               )}
               <GeneralData label="Scan Status" data={scanStatusDesc()} />
-              {asteroid.data.owner && !asteroid.data.scanned && (
-                <GeneralData label="Scanning Boost" data={formatters.scanningBoost(asteroid.data.purchaseOrder)} />
+              {asteroid.owner && !asteroid.scanned && (
+                <GeneralData label="Scanning Boost" data={formatters.scanningBoost(asteroid.purchaseOrder)} />
               )}
             </Data>
             <Controls>
               <Subtitle>Manage</Subtitle>
-              {!asteroid.data.owner && (
+              {!asteroid.owner && (
                 <StyledButton
                   data-tip="Purchase development rights"
                   data-for="global"
-                  disabled={!account || !sale || !asteroidPrice.data}
-                  onClick={() => buyAsteroid.mutate(asteroid.data.i)}>
+                  disabled={!account || !sale || !asteroidPrice}
+                  onClick={() => buyAsteroid.mutate({ i: asteroid.i })}>
                   <MdFlag /> Purchase
                 </StyledButton>
               )}
-              {asteroid.data.owner && asteroid.data.owner !== account && (
+              {asteroid.owner && asteroid.owner !== account && (
                 <StyledButton
                   data-tip="Purchase on OpenSea"
                   data-for="global"
-                  disabled={!asteroidPrice.data}
-                  onClick={() => goToOpenSeaAsteroid(asteroid.data.i)}>
+                  disabled={!asteroidPrice}
+                  onClick={() => goToOpenSeaAsteroid(asteroid.i)}>
                   <MdFlag /> Purchase
                 </StyledButton>
               )}
-              {asteroid.data.owner === account && (
+              {asteroid.owner === account && (
                 <StyledButton
                   data-tip="List on OpenSea"
                   data-for="global"
-                  disabled={!asteroidPrice.data}
-                  onClick={() => goToOpenSeaAsteroid(asteroid.data.i)}>
+                  disabled={!asteroidPrice}
+                  onClick={() => goToOpenSeaAsteroid(asteroid.i)}>
                   <MdFlag /> List for Sale
                 </StyledButton>
               )}
-              {!asteroid.data.scanned && !asteroid.data.scanning && (
+              {!asteroid.scanned && !asteroid.scanning && (
                 <StyledButton
                   data-tip="Scan for resource bonuses"
                   data-for="global"
-                  onClick={() => startScan.mutate(asteroid.data.i)}
-                  disabled={asteroid.data.owner !== account || scanStatus === 'startScanInProgress'}>
+                  onClick={() => startScan.mutate({ i: asteroid.i })}
+                  disabled={asteroid.owner !== account || scanStatus === 'startScanInProgress'}>
                   <MdBlurOff /> Start Scan
                 </StyledButton>
               )}
-              {!asteroid.data.scanned && asteroid.data.scanning && (
+              {!asteroid.scanned && asteroid.scanning && (
                 <StyledButton
                   data-tip="Retrieve scan results"
                   data-for="global"
-                  onClick={() => finalizeScan.mutate(asteroid.data.i)}
-                  disabled={asteroid.data.owner !== account}>
+                  onClick={() => finalizeScan.mutate({ i: asteroid.i })}
+                  disabled={asteroid.owner !== account}>
                   <MdBlurOff /> Finalize Scan
                 </StyledButton>
               )}
@@ -368,15 +367,23 @@ const AsteroidDetails = (props) => {
                 data-tip="Update asteroid name"
                 data-for="global"
                 onClick={() => setNaming(true)}
-                disabled={asteroid.data.owner !== account || naming}>
+                disabled={asteroid.owner !== account || naming}>
                 <AiFillEdit /> Name
               </StyledButton>
               {naming && (
                 <NameForm>
-                  <TextInput placeholder={asteroid.data.name} />
+                  <TextInput
+                    pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                    initialValue=""
+                    onChange={(v) => setNewName(v)} />
                   <IconButton
                     data-tip="Submit"
-                    data-for="global">
+                    data-for="global"
+                    onClick={() => {
+                      nameAsteroid.mutate({ i: asteroid.i, name: newName });
+                      setNewName('');
+                      setNaming(false);
+                    }}>
                     <BsCheckCircle />
                   </IconButton>
                   <IconButton
@@ -391,7 +398,7 @@ const AsteroidDetails = (props) => {
             <Log>
               <Subtitle>Logs</Subtitle>
               <ul>
-                {asteroid.data.events.map(e => <LogEntry key={e.transactionHash} type={'asteroid'} tx={e} />)}
+                {asteroid.events.map(e => <LogEntry key={e.transactionHash} type={'asteroid'} tx={e} />)}
               </ul>
             </Log>
           </SidePanel>
@@ -406,37 +413,37 @@ const AsteroidDetails = (props) => {
                 <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="50" cy="50" r="40" />
                 </DimensionIcon>
-                <DimensionData label="Orbital Period" data={formatters.period(asteroid.data.orbital.a)} />
+                <DimensionData label="Orbital Period" data={formatters.period(asteroid.orbital.a)} />
               </Dimension>
               <Dimension>
                 <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="50" cy="50" r="40" />
                 </DimensionIcon>
-                <DimensionData label="Semi-major Axis" data={formatters.axis(asteroid.data.orbital.a)} />
+                <DimensionData label="Semi-major Axis" data={formatters.axis(asteroid.orbital.a)} />
               </Dimension>
               <Dimension>
                 <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="50" cy="50" r="40" />
                 </DimensionIcon>
-                <DimensionData label="Inclination" data={formatters.inclination(asteroid.data.orbital.i)} />
+                <DimensionData label="Inclination" data={formatters.inclination(asteroid.orbital.i)} />
               </Dimension>
               <Dimension>
                 <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="50" cy="50" r="40" />
                 </DimensionIcon>
-                <DimensionData label="Eccentricity" data={asteroid.data.orbital.e} />
+                <DimensionData label="Eccentricity" data={asteroid.orbital.e} />
               </Dimension>
               <Dimension>
                 <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="50" cy="50" r="40" />
                 </DimensionIcon>
-                <DimensionData label="Radius" data={formatters.radius(asteroid.data.radius)} />
+                <DimensionData label="Radius" data={formatters.radius(asteroid.radius)} />
               </Dimension>
               <Dimension>
                 <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="50" cy="50" r="40" />
                 </DimensionIcon>
-                <DimensionData label="Surface Area" data={formatters.surfaceArea(asteroid.data.radius)} />
+                <DimensionData label="Surface Area" data={formatters.surfaceArea(asteroid.radius)} />
               </Dimension>
             </Dimensions>
           </MainPanel>

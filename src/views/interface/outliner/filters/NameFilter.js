@@ -12,14 +12,16 @@ const NameFilter = (props) => {
   const [ value, setValue ] = useState('');
 
   useEffect(() => {
-    onChange({ name: value });
+    if (onChange) onChange({ name: value });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ value ]);
 
   return (
     <>
       <StyledTitle>Name</StyledTitle>
-      <TextInput onChange={(v) => setValue(v)} placeholder="Asteroid name..." />
+      <TextInput
+        onChange={(v) => setValue(v)}
+        placeholder="Asteroid name..." />
     </>
   );
 };

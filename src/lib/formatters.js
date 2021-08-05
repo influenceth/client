@@ -1,4 +1,5 @@
 import utils from 'influence-utils';
+import { utils as ethersUtils } from 'ethers';
 
 const formatters = {
 
@@ -38,6 +39,13 @@ const formatters = {
     } else {
       return 'Un-owned';
     }
+  },
+
+  asteroidPrice: (r, sale) => {
+    const base = Number(ethersUtils.formatEther(sale.baseAsteroidPrice));
+    const lot = Number(ethersUtils.formatEther(sale.baseLotPrice));
+    const price = base + (lot * 4 * Math.pow((r / 1000), 2));
+    return price;
   }
 };
 

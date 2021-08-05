@@ -6,9 +6,10 @@ const StyledInput = styled.input`
   border: 0px;
   border-bottom: 1px solid ${props => props.theme.colors.main};
   color: ${props => props.theme.colors.mainText};
+  font-family: 'Jura', sans-serif;
   font-size: ${props => props.theme.fontSizes.mainText};
   text-align: right;
-  height: 28px;
+  height: 25px;
   padding: 0 10px 0 5px;
 
   &:focus {

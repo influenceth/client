@@ -120,7 +120,7 @@ const Filters = (props) => {
           <SpectralIcon />
         </IconButton>
         <IconButton
-          data-tip={'Filter by Semi-major Axis'}
+          data-tip={'Filter by Semi-major Axis (Period)'}
           onClick={() => activeFilters.axis ? turnOffFilter('axis') : turnOnFilter('axis')}
           active={activeFilters.axis}>
           <AxisIcon />

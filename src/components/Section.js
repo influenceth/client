@@ -74,6 +74,9 @@ const Title = styled.h2`
   line-height: 60px;
   margin: 0;
   overflow: hidden;
+  padding-right: 45px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const CloseButton = styled(IconButton)`

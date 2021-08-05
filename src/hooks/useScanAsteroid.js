@@ -4,7 +4,7 @@ import { useWeb3React } from '@web3-react/core';
 import { ethers } from 'ethers';
 import { contracts } from 'influence-utils';
 
-const useScanAsteroid = (i) => {
+const useScanAsteroid = () => {
   const queryClient = useQueryClient();
   const { account, library } = useWeb3React();
   const [ contract, setContract ] = useState();
@@ -22,7 +22,7 @@ const useScanAsteroid = (i) => {
     setContract(newContract);
   }, [ account, library ]);
 
-  const startScan = useMutation(async (i) => {
+  const startScan = useMutation(async ({ i }) => {
     const tx = await contract.startScan(i);
     const receipt = await tx.wait(2);
     return receipt;
@@ -33,14 +33,14 @@ const useScanAsteroid = (i) => {
       console.error(e);
       setStatus(null);
     },
-    onSuccess: () => {
+    onSuccess: (data, { i }) => {
       setStatus('startScanCompleted');
       queryClient.invalidateQueries([ 'asteroid', i ]);
       queryClient.invalidateQueries('asteroids');
     }
   });
 
-  const finalizeScan = useMutation(async (i) => {
+  const finalizeScan = useMutation(async ({ i }) => {
     const tx = await contract.finalizeScan(i);
     const receipt = await tx.wait();
     return receipt;
@@ -48,7 +48,7 @@ const useScanAsteroid = (i) => {
     enabled: !!contract && !!account,
     onMutate: () => setStatus('finalizeScanInProgress'),
     onError: () => setStatus('startScanCompleted'),
-    onSuccess: () => {
+    onSuccess: (data, { i }) => {
       setStatus('scanComplete');
       queryClient.invalidateQueries([ 'asteroid', i ]);
       queryClient.invalidateQueries('asteroids');
