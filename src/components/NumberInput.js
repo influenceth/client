@@ -17,7 +17,7 @@ const StyledInput = styled.input`
 `;
 
 const NumberInput = (props) => {
-  const { initialValue, onChange, format, parse, ...restProps } = props;
+  const { initialValue, onChange, ...restProps } = props;
   const [ value, setValue ] = useState(initialValue || 0);
 
   const _onChange = (e) => {

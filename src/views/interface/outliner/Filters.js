@@ -14,6 +14,7 @@ import { AiOutlineArrowsAlt as AxisIcon } from 'react-icons/ai';
 import useStore from '~/hooks/useStore';
 import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
+import NameFilter from './filters/NameFilter';
 import RadiusFilter from './filters/RadiusFilter';
 import SpectralTypesFilter from './filters/SpectralTypesFilter';
 import AxisFilter from './filters/AxisFilter';
@@ -22,6 +23,7 @@ import EccentricityFilter from './filters/EccentricityFilter';
 import OwnershipFilter from './filters/OwnershipFilter';
 
 const filterKeys = {
+  name: [ 'name' ],
   radius: [ 'radiusMin', 'radiusMax' ],
   spectralTypes: [ 'spectralTypes' ],
   axis: [ 'axisMin', 'axisMax' ],
@@ -75,7 +77,6 @@ const Filters = (props) => {
   });
 
   useEffect(() => {
-    console.log(filters);
     dispatchFiltersUpdated(filters);
   }, [ filters, dispatchFiltersUpdated ]);
 
@@ -102,8 +103,8 @@ const Filters = (props) => {
       <Controls>
         <IconButton
           data-tip={'Filter by Name'}
-          onClick={() => true}
-          active={false}>
+          onClick={() => activeFilters.name ? turnOffFilter('name') : turnOnFilter('name')}
+          active={activeFilters.name}>
           <NameIcon />
         </IconButton>
         <IconButton
@@ -144,6 +145,7 @@ const Filters = (props) => {
         </IconButton>
       </Controls>
       <StyledFilters>
+        {activeFilters.name && <FilterGroup><NameFilter onChange={onFiltersChange} /></FilterGroup>}
         {activeFilters.radius && <FilterGroup><RadiusFilter onChange={onFiltersChange} /></FilterGroup>}
         {activeFilters.spectralTypes && <FilterGroup><SpectralTypesFilter onChange={onFiltersChange} /></FilterGroup>}
         {activeFilters.axis && <FilterGroup><AxisFilter onChange={onFiltersChange} /></FilterGroup>}

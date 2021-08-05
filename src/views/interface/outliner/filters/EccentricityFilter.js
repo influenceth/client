@@ -21,7 +21,8 @@ const EccentricityFilter = (props) => {
 
   useEffect(() => {
     if (onChange) onChange({ eccMin, eccMax });
-  }, [ onChange, eccMin, eccMax ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ eccMin, eccMax ]);
 
   return (
     <>

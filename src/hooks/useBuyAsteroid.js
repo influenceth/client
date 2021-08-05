@@ -25,7 +25,6 @@ const useBuyAsteroid = (i) => {
     const price = await contract.getAsteroidPrice(i);
     const tx = await contract.buyAsteroid(i, { value: price });
     const receipt = await tx.wait();
-    console.log(receipt);
     return receipt;
   }, {
     enabled: !!contract && !!account,

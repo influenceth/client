@@ -32,7 +32,8 @@ const OwnershipFilter = (props) => {
       if (types.ownedBy !== null) returnValues.push(types.ownedBy);
       onChange({ ownedBy: returnValues.join(',') });
     }
-  }, [ onChange, types ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ types ]);
 
   const toggleUnowned = () => setTypes(Object.assign({}, types, { unowned: !types.unowned }));
   const toggleOwned = () => setTypes(Object.assign({}, types, { owned: !types.owned }));

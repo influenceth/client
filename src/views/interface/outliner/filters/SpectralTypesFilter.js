@@ -22,7 +22,8 @@ const SpectralTypesFilter = (props) => {
 
   useEffect(() => {
     if (onChange) onChange({ spectralTypes: types.join(',') });
-  }, [ onChange, types ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ types ]);
 
   const toggleType = (k) => {
     const newTypes = types.slice();

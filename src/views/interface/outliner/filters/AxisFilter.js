@@ -21,7 +21,8 @@ const AxisFilter = (props) => {
 
   useEffect(() => {
     if (onChange) onChange({ axisMin, axisMax });
-  }, [ onChange, axisMin, axisMax ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ axisMin, axisMax ]);
 
   const format = (num) => `${num} AU`;
 

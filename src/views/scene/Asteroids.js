@@ -113,7 +113,6 @@ const Asteroids = (props) => {
 
   // Receives position updates from the worker
   worker.onmessage = (event) => {
-    console.log('positions', event.data.positions.length / 3);
     if (event.data.topic === 'asteroidPositions') setPositions(new Float32Array(event.data.positions));
   };
 

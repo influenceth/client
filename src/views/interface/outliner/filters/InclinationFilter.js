@@ -24,7 +24,8 @@ const InclinationFilter = (props) => {
       incMin: Math.PI * incMin / 180,
       incMax: Math.PI * incMax / 180
     });
-  }, [ onChange, incMin, incMax ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ incMin, incMax ]);
 
   return (
     <>

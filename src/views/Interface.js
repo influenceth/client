@@ -5,6 +5,7 @@ import { Switch, Route } from 'react-router-dom';
 import MainMenu from './interface/MainMenu';
 import Outliner from './interface/Outliner';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
+import WatchlistTable from './interface/details/WatchlistTable';
 import AsteroidDetails from './interface/details/AsteroidDetails';
 
 const StyledInterface = styled.div`
@@ -45,6 +46,9 @@ const Interface = () => {
         <Switch>
           <Route path="/owned-asteroids">
             <OwnedAsteroidsTable />
+          </Route>
+          <Route path="/watchlist">
+            <WatchlistTable />
           </Route>
           <Route path="/asteroids/:i">
             <AsteroidDetails />

@@ -3,7 +3,7 @@ import utils from 'influence-utils';
 import { useHistory } from 'react-router-dom';
 import DataTable, { createTheme } from 'react-data-table-component';
 
-import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
+import useWatchlist from '~/hooks/useWatchlist';
 import useStore from '~/hooks/useStore';
 import Details from '~/components/Details';
 import theme from '~/theme';
@@ -86,22 +86,22 @@ const styleOverrides = {
   }
 };
 
-const OwnedAsteroidsTable = (props) => {
-  const { data: asteroids } = useOwnedAsteroids();
-  const active = useStore(state => state.outliner.ownedAsteroids.active);
+const WatchlistTable = (props) => {
+  const { watchlist: { data: watchlist }} = useWatchlist();
+  const active = useStore(state => state.outliner.watchlist.active);
   const history = useHistory();
 
-  // Close if the owned asteroids section is closed
+  // Close if the watchlist section is closed
   useEffect(() => {
     if (!active) history.push('/');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ active ]);
 
   return (
-    <Details title="Owned Asteroids">
+    <Details title="Watched Asteroids">
       <DataTable
         columns={columns}
-        data={asteroids}
+        data={watchlist.map(w => w.asteroid)}
         fixedHeader={true}
         fixedHeaderScrollHeight="calc(100vh - 256px)"
         highlightOnHover={true}
@@ -112,4 +112,4 @@ const OwnedAsteroidsTable = (props) => {
   );
 };
 
-export default OwnedAsteroidsTable;
+export default WatchlistTable;

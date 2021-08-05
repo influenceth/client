@@ -1,10 +1,6 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 
-const StyledTextInput = styled.div`
-  flex: 0 1 auto;
-`;
-
 const StyledInput = styled.input`
   background-color: transparent;
   border: 0px;
@@ -21,26 +17,20 @@ const StyledInput = styled.input`
 `;
 
 const TextInput = (props) => {
-  const { placeholder, initialValue, onChange, format, ...restProps } = props;
+  const { initialValue, onChange, ...restProps } = props;
   const [ value, setValue ] = useState(initialValue || '');
 
   const _onChange = (e) => {
-    let parsed = e.target.value;
-    if (format === 'numeric') parsed = Number(parsed.replace(/[\D.]*/g,''));
-    setValue(parsed);
-    if (onChange) onChange(parsed);
+    setValue(e.target.value);
+    if (onChange) onChange(e.target.value);
   };
 
   return (
-    <StyledTextInput {...restProps}>
-      <StyledInput
-        type="text"
-        format={format || 'text'}
-        value={Number(value).toLocaleString()}
-        onChange={_onChange}
-        placeholder={placeholder ? placeholder : ''}
-        spellCheck="false" />
-    </StyledTextInput>
+    <StyledInput
+      type="text"
+      value={value}
+      onChange={_onChange}
+      {...restProps} />
   );
 };
 

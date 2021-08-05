@@ -21,7 +21,8 @@ const RadiusFilter = (props) => {
 
   useEffect(() => {
     if (onChange) onChange({ radiusMin, radiusMax });
-  }, [ onChange, radiusMin, radiusMax ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ radiusMin, radiusMax ]);
 
   return (
     <>
