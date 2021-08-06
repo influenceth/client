@@ -145,6 +145,7 @@ const Asteroids = (props) => {
   // Update colors
   useEffect(() => {
     const color = new Color();
+
     const newColors = mappedAsteroids.map(a => {
       if (highlightConfig && a.f) return highlighters[highlightConfig.field](a.f, highlightConfig);
       if (a.owned) return color.set(ownedColor).toArray();

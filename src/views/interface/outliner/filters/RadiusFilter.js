@@ -6,6 +6,7 @@ import useSale from '~/hooks/useSale';
 import DataReadout from '~/components/DataReadout';
 import NumberInput from '~/components/NumberInput';
 import ColorPicker from '~/components/ColorPicker';
+import Ether from '~/components/Ether';
 import Highlighter from './Highlighter';
 import formatters from '~/lib/formatters';
 import constants from '~/constants';
@@ -88,7 +89,7 @@ const RadiusFilter = (props) => {
                 min={initialValues.radiusMin}
                 max={initialValues.radiusMax}
                 onChange={(v) => setRadiusMin(Number(v))} />
-              <Price>({!!sale ? formatters.asteroidPrice(radiusMin, sale) : '...'} ETH)</Price>
+              <Price>({!!sale ? formatters.asteroidPrice(radiusMin, sale) : '...'} <Ether />)</Price>
             </>} />
         {highlight?.field === 'radius' && (
           <ColorPicker initialColor={colorFrom} onChange={(c) => setColorFrom(c)} />
@@ -104,7 +105,7 @@ const RadiusFilter = (props) => {
                 min={initialValues.radiusMin}
                 max={initialValues.radiusMax}
                 onChange={(v) => setRadiusMax(Number(v))} />
-              <Price>({!!sale ? formatters.asteroidPrice(radiusMax, sale) : '...'} ETH)</Price>
+              <Price>({!!sale ? formatters.asteroidPrice(radiusMax, sale) : '...'} <Ether />)</Price>
             </>} />
         {highlight?.field === 'radius' && (
           <ColorPicker initialColor={colorTo} onChange={(c) => setColorTo(c)} />

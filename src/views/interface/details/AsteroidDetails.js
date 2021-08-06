@@ -21,6 +21,7 @@ import TextInput from '~/components/TextInput';
 import IconButton from '~/components/IconButton';
 import DataReadout from '~/components/DataReadout';
 import LogEntry from '~/components/LogEntry';
+import Ether from '~/components/Ether';
 import ResourceBonuses from './asteroidDetails/ResourceBonuses';
 import Dimensions from './asteroidDetails/Dimensions';
 import formatters from '~/lib/formatters';
@@ -192,7 +193,7 @@ const AsteroidDetails = (props) => {
               <GeneralData label="Owner" data={formatters.assetOwner(asteroid.owner)} />
               {sale && !asteroid.owner && (
                 <GeneralData label="Price" data={
-                  asteroidPrice ? `${ethersUtils.formatEther(asteroidPrice)} ETH` : '... ETH'
+                  asteroidPrice ? <>{ethersUtils.formatEther(asteroidPrice)} <Ether /></> : <>... <Ether /></>
                 } />
               )}
               <GeneralData label="Scan Status" data={scanStatusDesc()} />
