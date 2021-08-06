@@ -82,7 +82,6 @@ const AxisFilter = (props) => {
                 min={initialValues.axisMin}
                 max={initialValues.axisMax}
                 step={0.001}
-                format={format}
                 onChange={(v) => setAxisMin(Number(v))} />
               <Period>({formatters.period(axisMin)})</Period>
             </>} />
@@ -100,7 +99,6 @@ const AxisFilter = (props) => {
                 min={initialValues.axisMin}
                 max={initialValues.axisMax}
                 step={0.001}
-                format={format}
                 onChange={(v) => setAxisMax(Number(v))} />
               <Period>({formatters.period(axisMax)})</Period>
             </>} />

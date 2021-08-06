@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-
+import { useWeb3React } from '@web3-react/core';
 import useStore from '~/hooks/useStore';
 import Wallet from './outliner/Wallet';
 import Filters from './outliner/Filters';
@@ -74,6 +74,7 @@ const StyledOutliner = styled.div`
 const Outliner = (props) => {
   const outliner = useStore(state => state.outliner);
   const origin = useStore(state => state.asteroids.origin);
+  const { account } = useWeb3React();
 
   return (
     <MainContainer>
@@ -88,8 +89,8 @@ const Outliner = (props) => {
           <Wallet />
           {outliner.filters.active && <Filters />}
           {origin && <SelectedAsteroid asteroidId={origin} />}
-          {outliner.ownedAsteroids.active && <OwnedAsteroids />}
-          {outliner.watchlist.active && <Watchlist />}
+          {outliner.ownedAsteroids.active && !!account && <OwnedAsteroids />}
+          {outliner.watchlist.active && !!account && <Watchlist />}
           {outliner.routePlanner.active && <RoutePlanner />}
           {outliner.timeControl.active && <TimeControl />}
         </StyledOutliner>

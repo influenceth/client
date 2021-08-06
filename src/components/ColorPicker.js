@@ -8,17 +8,13 @@ const StyledColorPicker = styled.div`
 `;
 
 const Toggle = styled.div`
-  background-color: ${props => props.color};
-  border: 1px solid ${props => props.theme.colors.main};
-  border-radius: 3px;
   cursor: pointer;
   height: 30px;
   padding: 5px;
   width: 30px;
 
   & svg {
-    color: ${props => props.theme.colors.main};
-    filter: drop-shadow(0px 0px 1px rgba(0, 0, 0, 1));
+    color: ${props => props.color};
     height: 20px;
     width: 20px;
   }

@@ -65,7 +65,9 @@ const FilterGroup = styled.div`
 `;
 
 const Filters = (props) => {
-  const dispatchFiltersUpdated = useStore(state => state.dispatchFiltersUpdated);
+  const updateFilters = useStore(state => state.dispatchFiltersUpdated);
+  const updateHighlights = useStore(state => state.dispatchHighlightUpdated);
+
   const [ filters, setFilters ] = useState({});
   const [ activeFilters, setActiveFilters ] = useState({
     name: false,
@@ -78,8 +80,16 @@ const Filters = (props) => {
   });
 
   useEffect(() => {
-    dispatchFiltersUpdated(filters);
-  }, [ filters, dispatchFiltersUpdated ]);
+    updateFilters(filters);
+  }, [ filters, updateFilters ]);
+
+  useEffect(() => {
+    return () => {
+      updateFilters({});
+      updateHighlights(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const turnOnFilter = (name) => {
     setActiveFilters(Object.assign({}, activeFilters, { [name]: true }));
