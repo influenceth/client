@@ -22,7 +22,6 @@ const useNameAsteroid = () => {
   }, [ account, library ]);
 
   return useMutation(async ({ i, name }) => {
-    console.log(i, name);
     const tx = await contract.setName(i, name);
     const receipt = await tx.wait();
     return receipt;

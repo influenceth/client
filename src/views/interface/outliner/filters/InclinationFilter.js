@@ -19,7 +19,6 @@ const StyledInput = styled(NumberInput)`
 
 const FilterSection = styled.div`
   display: flex;
-  justify-content: space-between;
 `;
 
 const InclinationFilter = (props) => {
@@ -71,7 +70,7 @@ const InclinationFilter = (props) => {
   useEffect(() => {
     return () => highlight?.field === 'inclination' && updateHighlight(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ updateHighlight ]);
+  }, []);
 
   return (
     <>

@@ -20,7 +20,6 @@ const StyledInput = styled(NumberInput)`
 
 const FilterSection = styled.div`
   display: flex;
-  justify-content: space-between;
 `;
 
 const Period = styled.span`
@@ -62,7 +61,7 @@ const AxisFilter = (props) => {
   useEffect(() => {
     return () => highlight?.field === 'axis' && updateHighlight(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ updateHighlight ]);
+  }, []);
 
   const format = (num) => `${num} AU`;
 

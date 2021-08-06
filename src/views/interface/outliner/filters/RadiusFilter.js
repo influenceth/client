@@ -22,7 +22,6 @@ const StyledInput = styled(NumberInput)`
 
 const FilterSection = styled.div`
   display: flex;
-  justify-content: space-between;
 `;
 
 const Price = styled.span`
@@ -71,7 +70,7 @@ const RadiusFilter = (props) => {
   useEffect(() => {
     return () => highlight?.field === 'radius' && updateHighlight(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ updateHighlight ]);
+  }, []);
 
   return (
     <>
