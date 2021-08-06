@@ -1,5 +1,7 @@
 import { Color } from 'three';
 
+import constants from '~/constants';
+
 const minMaxHighlighter = (v, config) => {
   const color = new Color(config.from);
   const pct = (v - config.min) / (config.max - config.min);
@@ -15,7 +17,10 @@ const highlighters = {
 
   radius: (v, config) => {
     const color = new Color(config.from);
-    const pct = Math.pow((v - config.min) / (config.max - config.min), 0.2);
+    const min = Math.pow(config.min / constants.MAX_ASTEROID_RADIUS, -1 / 0.475);
+    const max = Math.pow(config.max / constants.MAX_ASTEROID_RADIUS, -1 / 0.475);
+    const value = Math.pow(v / constants.MAX_ASTEROID_RADIUS, -1 / 0.475);
+    const pct = (value - min) / (max - min);
     return color.lerp(new Color(config.to), pct).toArray();
   },
 
