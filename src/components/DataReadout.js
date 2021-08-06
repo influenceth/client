@@ -3,8 +3,8 @@ import styled from 'styled-components';
 const StyledDataReadout = styled.div`
   align-items: center;
   display: flex;
-  padding: 5px 0;
   font-size: ${props => props.theme.fontSizes.mainText};
+  padding: 5px 0;
 `;
 
 const Label = styled.label`
@@ -23,6 +23,7 @@ const Data = styled.span`
   color: ${props => props.theme.colors.mainText};
   flex: 0 1 auto;
   overflow: hidden;
+  position: relative;
   text-overflow: ellipsis;
 `;
 

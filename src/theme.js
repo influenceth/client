@@ -5,6 +5,7 @@ const theme = {
     contentBorder: '#666666',
     contentBackdrop: 'rgba(0, 0, 0, 0.5)',
     contentHighlight: 'rgba(40, 40, 40, 0.5)',
+    contentDark: 'rgb(40, 40, 40)',
     mainText: '#cccccc',
     secondaryText: '#999999',
     disabledText: '#666666',

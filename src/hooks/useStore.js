@@ -13,12 +13,14 @@ const useStore = create(persist((set, get) => ({
       owned: {
         mapped: false,
         filtered: false,
-        highlighted: false
+        highlighted: false,
+        highlightColor: '#AB149E'
       },
       watched: {
         mapped: false,
         filtered: false,
-        highlighted: false
+        highlighted: false,
+        highlightColor: '#AB149E'
       }
     },
 
@@ -108,6 +110,10 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.filters = filters;
     })),
 
+    dispatchHighlightUpdated: (settings) => set(produce(state => {
+      state.asteroids.highlight = settings;
+    })),
+
     dispatchOwnedAsteroidsMapped: () => set(produce(state => {
       state.asteroids.owned.mapped = true;
     })),
@@ -124,6 +130,10 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.owned.filtered = false;
     })),
 
+    dispatchOwnedAsteroidColorChange: (color) => set(produce(state => {
+      state.asteroids.owned.highlightColor = color;
+    })),
+
     dispatchWatchedAsteroidsMapped: () => set(produce(state => {
       state.asteroids.watched.mapped = true;
     })),
@@ -138,6 +148,10 @@ const useStore = create(persist((set, get) => ({
 
     dispatchWatchedAsteroidsUnfiltered: () => set(produce(state => {
       state.asteroids.watched.filtered = false;
+    })),
+
+    dispatchWatchedAsteroidColorChange: (color) => set(produce(state => {
+      state.asteroids.watched.highlightColor = color;
     })),
 
     dispatchTimeUpdated: (time) => set(produce(state => {

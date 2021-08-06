@@ -1,12 +1,8 @@
-uniform float uMinSize;
-uniform float uMaxSize;
-uniform float uMinRadius;
-uniform float uMaxRadius;
-attribute float radius;
+attribute vec3 highlightColor;
 varying vec3 vColor;
 
 void main() {
-  vColor = color;
-  gl_PointSize = clamp(uMaxSize * pow(abs((radius - uMinRadius) / uMaxRadius), 0.33), uMinSize, uMaxSize);
+  vColor = highlightColor;
+  gl_PointSize = 2.0;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }

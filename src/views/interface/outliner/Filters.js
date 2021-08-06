@@ -54,6 +54,7 @@ const FilterGroup = styled.div`
   display: flex;
   flex-direction: column;
   padding: 10px;
+  position: relative;
   margin-top: 10px;
 
   & h3 {

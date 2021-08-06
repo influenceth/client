@@ -1,4 +1,5 @@
 import { Suspense, useRef, useState, useEffect, useLayoutEffect } from 'react';
+import { Color } from 'three';
 
 // eslint-disable-next-line
 import Worker from 'worker-loader!../../worker';
@@ -8,6 +9,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import FlightLine from './asteroids/FlightLine';
 import Orbit from './asteroids/Orbit';
 import Marker from './asteroids/Marker';
+import highlighters from './asteroids/highlighters';
 import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
 import constants from '~/constants';
@@ -20,20 +22,23 @@ const Asteroids = (props) => {
   const destinationId = useStore(state => state.asteroids.destination);
   const hovered = useStore(state => state.asteroids.hovered);
   const routePlannerActive = useStore(state => state.outliner.routePlanner.active);
+  const ownedColor = useStore(state => state.asteroids.owned.highlightColor);
+  const watchedColor = useStore(state => state.asteroids.watched.highlightColor);
+  const highlightConfig = useStore(state => state.asteroids.highlight);
 
   const { data: asteroids } = useAsteroids();
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
 
-  const dispatchOriginSelected = useStore(state => state.dispatchOriginSelected);
-  const dispatchOriginCleared = useStore(state => state.dispatchOriginCleared);
-  const dispatchDestinationSelected = useStore(state => state.dispatchDestinationSelected);
-  const dispatchAsteroidHovered = useStore(state => state.dispatchAsteroidHovered);
-  const dispatchAsteroidUnhovered = useStore(state => state.dispatchAsteroidUnhovered);
+  const selectOrigin = useStore(state => state.dispatchOriginSelected);
+  const clearOrigin = useStore(state => state.dispatchOriginCleared);
+  const selectDestination = useStore(state => state.dispatchDestinationSelected);
+  const hoverAsteroid = useStore(state => state.dispatchAsteroidHovered);
+  const unhoverAsteroid = useStore(state => state.dispatchAsteroidUnhovered);
 
   const [ mappedAsteroids, setMappedAsteroids ] = useState([]);
   const [ positions, setPositions ] = useState(new Float32Array());
-  const [ radii, setRadii ] = useState(new Float32Array());
+  const [ colors, setColors ] = useState(new Float32Array());
   const [ hoveredPos, setHoveredPos ] = useState();
   const [ originPos, setOriginPos ] = useState();
   const [ destinationPos, setDestinationPos ] = useState();
@@ -43,27 +48,29 @@ const Asteroids = (props) => {
   const onClick = (e) => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
-    dispatchOriginSelected(asteroids[index].i);
+    if (asteroids[index]) selectOrigin(asteroids[index].i);
   };
 
   const onContextClick = (e) => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
-    if (asteroids[index].i === originId) dispatchOriginCleared();
-    if (!routePlannerActive) return; // Only allow picking a destination if the route planner is open
-    dispatchDestinationSelected(asteroids[index].i);
+
+    if (asteroids[index]) {
+      if (asteroids[index].i === originId) clearOrigin();
+      if (!routePlannerActive) return; // Only allow picking a destination if the route planner is open
+      selectDestination(asteroids[index].i);
+    }
   }
 
   const onMouseOver = (e) => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
-    const id = asteroids[index].i;
-    dispatchAsteroidHovered(id);
+    if (asteroids[index]) hoverAsteroid(asteroids[index].i);
   };
 
   const onMouseOut = (e) => {
     e.stopPropagation();
-    dispatchAsteroidUnhovered();
+    unhoverAsteroid();
   };
 
   // Update state when asteroids from server, origin, or destination change
@@ -132,11 +139,21 @@ const Asteroids = (props) => {
       } else {
         setDestinationPos(null);
       }
-
-      // Update asteroid radii attribute to scale point size
-      setRadii(new Float32Array(mappedAsteroids.map(a => a.r)));
     }
   }, [ mappedAsteroids, positions, originId, destinationId ]);
+
+  // Update colors
+  useEffect(() => {
+    const color = new Color();
+    const newColors = mappedAsteroids.map(a => {
+      if (highlightConfig && a.f) return highlighters[highlightConfig.field](a.f, highlightConfig);
+      if (a.owned) return color.set(ownedColor).toArray();
+      if (a.watched) return color.set(watchedColor).toArray();
+      return [ 0.87, 0.87, 0.87 ];
+    });
+
+    setColors(new Float32Array([].concat.apply([], newColors)));
+  }, [ mappedAsteroids, ownedColor, watchedColor, highlightConfig ]);
 
   useLayoutEffect(() => {
     asteroidsGeom.current?.computeBoundingSphere();
@@ -144,7 +161,7 @@ const Asteroids = (props) => {
 
   return (
     <group>
-      {positions?.length > 0 && !!radii && (
+      {positions?.length > 0 && colors?.length > 0 && (
         <points
           onClick={onClick}
           onContextMenu={onContextClick}
@@ -152,7 +169,7 @@ const Asteroids = (props) => {
           onPointerOut={onMouseOut} >
           <bufferGeometry ref={asteroidsGeom}>
             <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3 ]} />
-            <bufferAttribute attachObject={[ 'attributes', 'radius' ]} args={[ radii, 1 ]} />
+            <bufferAttribute attachObject={[ 'attributes', 'highlightColor' ]} args={[ colors, 3 ]} />
           </bufferGeometry>
           <shaderMaterial args={[{
             depthWrite: false,

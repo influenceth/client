@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 import { AiFillEye } from 'react-icons/ai';
@@ -10,8 +11,10 @@ import useUpdateWatchlist from '~/hooks/useUpdateWatchlist';
 import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
 import AsteroidItem from '~/components/AsteroidItem';
+import ColorPicker from '~/components/ColorPicker';
 
 const Controls = styled.div`
+  display: flex;
   flex: 0 0 auto;
   padding-bottom: 15px;
 `;
@@ -46,10 +49,17 @@ const Watchlist = (props) => {
   const { watchlist: { data: watchlist }} = useWatchlist();
   const includeWatched = useStore(state => state.asteroids.watched.mapped);
   const filterWatched = useStore(state => state.asteroids.watched.filtered);
-  const dispatchWatchedAsteroidsMapped = useStore(state => state.dispatchWatchedAsteroidsMapped);
-  const dispatchWatchedAsteroidsUnmapped = useStore(state => state.dispatchWatchedAsteroidsUnmapped);
-  const dispatchWatchedAsteroidsFiltered = useStore(state => state.dispatchWatchedAsteroidsFiltered);
-  const dispatchWatchedAsteroidsUnfiltered = useStore(state => state.dispatchWatchedAsteroidsUnfiltered);
+  const highlightColor = useStore(state => state.asteroids.watched.highlightColor);
+  const showOnMap = useStore(state => state.dispatchWatchedAsteroidsMapped);
+  const removeFromMap = useStore(state => state.dispatchWatchedAsteroidsUnmapped);
+  const applyFilters = useStore(state => state.dispatchWatchedAsteroidsFiltered);
+  const removeFilters = useStore(state => state.dispatchWatchedAsteroidsUnfiltered);
+  const changeColor = useStore(state => state.dispatchWatchedAsteroidColorChange);
+
+  // Removes watched asteroids from search set when section is closed
+  useEffect(() => {
+    return () => removeFromMap()
+  }, [ removeFromMap ]);
 
   return (
     <Section
@@ -59,13 +69,13 @@ const Watchlist = (props) => {
       <Controls>
         <IconButton
           data-tip={includeWatched ? 'Hide on Map' : 'Show on Map'}
-          onClick={() => includeWatched ? dispatchWatchedAsteroidsUnmapped() : dispatchWatchedAsteroidsMapped()}
+          onClick={() => includeWatched ? removeFromMap() : showOnMap()}
           active={includeWatched}>
           <ShowOnMapIcon />
         </IconButton>
         <IconButton
           data-tip={filterWatched ? 'Remove Filters' : 'Apply Filters'}
-          onClick={() => filterWatched ? dispatchWatchedAsteroidsUnfiltered() : dispatchWatchedAsteroidsFiltered()}
+          onClick={() => filterWatched ? removeFilters() : applyFilters()}
           active={filterWatched}>
           <FilterIcon />
         </IconButton>
@@ -74,6 +84,7 @@ const Watchlist = (props) => {
           onClick={() => history.push('/watchlist')}>
           <RiTableFill />
         </IconButton>
+        {includeWatched && <ColorPicker initialColor={highlightColor} onChange={changeColor} />}
       </Controls>
       <StyledWatchlist>
         {watchlist && watchlist.map(w => (

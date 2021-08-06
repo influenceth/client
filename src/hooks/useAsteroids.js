@@ -12,6 +12,7 @@ const useAsteroids = () => {
   const includeWatched = useStore(state => state.asteroids.watched.mapped);
   const filterWatched = useStore(state => state.asteroids.watched.filtered);
   const filters = useStore(state => state.asteroids.filters);
+  const highlight = useStore(state => state.asteroids.highlight);
   const [ query, setQuery ] = useState({});
 
   useEffect(() => {
@@ -20,9 +21,10 @@ const useAsteroids = () => {
     if (!!account && includeWatched) newQuery.includeWatched = true;
     if (!!account && filterOwned) newQuery.filterOwned = true;
     if (!!account && filterWatched) newQuery.filterWatched = true;
+    if (!!highlight) newQuery.highlight = highlight.field;
     setQuery(newQuery);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [ account, includeOwned, includeWatched, filterOwned, filterWatched, filters ]);
+}, [ account, includeOwned, includeWatched, filterOwned, filterWatched, filters, highlight ]);
 
   return useQuery([ 'asteroids', query ], () => api.getAsteroids(query), { keepPreviousData: true });
 };

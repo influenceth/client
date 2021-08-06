@@ -19,19 +19,11 @@ import Details from '~/components/Details';
 import Button from '~/components/Button';
 import TextInput from '~/components/TextInput';
 import IconButton from '~/components/IconButton';
-import BonusBadge from '~/components/BonusBadge';
 import DataReadout from '~/components/DataReadout';
 import LogEntry from '~/components/LogEntry';
+import ResourceBonuses from './asteroidDetails/ResourceBonuses';
+import Dimensions from './asteroidDetails/Dimensions';
 import formatters from '~/lib/formatters';
-
-const resourceNames = {
-  yield: 'Yield',
-  volatile: 'Volatiles',
-  metal: 'Metals',
-  organic: 'Organics',
-  rareearth: 'Rare Earth',
-  fissile: 'Fissiles'
-};
 
 const StyledAsteroidDetails = styled.div`
   align-items: stretch;
@@ -136,88 +128,6 @@ const ResourceMix = styled.div`
   flex: 1 1 33%;
 `;
 
-const Bonuses = styled.div`
-  display: flex;
-  flex: 1 1 67%;
-  flex-wrap: wrap;
-  justify-content: space-between;
-`;
-
-const Bonus = styled.div`
-  align-items: center;
-  display: flex;
-  flex: 0 0 32%;
-`;
-
-const BonusBars = styled.div`
-  display: flex;
-  flex: 0 0 20px;
-  flex-direction: column;
-`;
-
-const BonusBar = styled.div`
-  background-color: ${props => {
-    if (props.shown) return props.theme.colors.bonus[`level${props.level}`];
-    if (!props.shown) return props.theme.colors.disabledText;
-  }};
-  border-radius: 2px;
-  height: 12px;
-  margin-bottom: 2px;
-  width: 15px;
-`;
-
-const StyledBonusBadge = styled(BonusBadge)`
-  flex: 0 1 auto;
-  margin: 0 8px;
-  height: 30px;
-  width: 30px;
-`;
-
-const BonusDesc = styled.div`
-  display: flex;
-  flex-direction: column;
-  font-size: ${props => props.theme.fontSizes.detailText};
-
-  & span {
-    margin-bottom: 5px;
-  }
-
-  & span:last-child {
-    font-size: ${props => props.theme.fontSizes.mainText};
-  }
-`;
-
-const Dimensions = styled.div`
-  align-items: center;
-  display: flex;
-  flex: 1 0 auto;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-  padding-top: 20px;
-`;
-
-const Dimension = styled.div`
-  align-items: center;
-  display: flex;
-  flex: 0 0 32%;
-  flex-direction: column;
-  justify-content: center;
-`;
-
-const DimensionIcon = styled.svg`
-  fill: transparent;
-  flex: 0 1 auto;
-  stroke: white;
-  margin-bottom: 10px;
-  max-width: 100px;
-`;
-
-const DimensionData = styled(DataReadout)`
-  flex-direction: column;
-  font-size: ${props => props.theme.fontSizes.detailText};
-`;
-
 const AsteroidDetails = (props) => {
   const { i } = useParams();
   const history = useHistory();
@@ -244,32 +154,6 @@ const AsteroidDetails = (props) => {
     } else {
       return 'Un-scanned'
     }
-  };
-
-  const bonusElement = (b) => {
-    let bonus = b.base;
-    const hasResourceType = b.spectralTypes.includes(asteroid.spectralType);
-
-    if (hasResourceType) {
-      const found = asteroid.bonuses.find(f => f.type === b.base.type);
-      if (found) bonus = found;
-    }
-
-    return (
-      <Bonus key={b.base.type}>
-        <BonusBars visible={hasResourceType}>
-          <BonusBar shown={bonus.level >= 3} level={bonus.level} />
-          <BonusBar shown={bonus.level >= 2} level={bonus.level} />
-          <BonusBar shown={bonus.level >= 1} level={bonus.level} />
-        </BonusBars>
-        <StyledBonusBadge visible={hasResourceType} bonus={bonus} />
-        <BonusDesc>
-          <span>{resourceNames[bonus.type]}</span>
-          {hasResourceType && <span>{`+${bonus.modifier}%`}</span>}
-          {!hasResourceType && <span>Not present</span>}
-        </BonusDesc>
-      </Bonus>
-    );
   };
 
   // Force the asteroid to load into the origin if coming direct from URL
@@ -406,46 +290,9 @@ const AsteroidDetails = (props) => {
             <Resources>
               <ResourceMix>
               </ResourceMix>
-              <Bonuses>{utils.BONUS_MAPS.map(b => bonusElement(b))}</Bonuses>
+              <ResourceBonuses asteroid={asteroid} />
             </Resources>
-            <Dimensions>
-              <Dimension>
-                <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="50" cy="50" r="40" />
-                </DimensionIcon>
-                <DimensionData label="Orbital Period" data={formatters.period(asteroid.orbital.a)} />
-              </Dimension>
-              <Dimension>
-                <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="50" cy="50" r="40" />
-                </DimensionIcon>
-                <DimensionData label="Semi-major Axis" data={formatters.axis(asteroid.orbital.a)} />
-              </Dimension>
-              <Dimension>
-                <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="50" cy="50" r="40" />
-                </DimensionIcon>
-                <DimensionData label="Inclination" data={formatters.inclination(asteroid.orbital.i)} />
-              </Dimension>
-              <Dimension>
-                <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="50" cy="50" r="40" />
-                </DimensionIcon>
-                <DimensionData label="Eccentricity" data={asteroid.orbital.e} />
-              </Dimension>
-              <Dimension>
-                <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="50" cy="50" r="40" />
-                </DimensionIcon>
-                <DimensionData label="Radius" data={formatters.radius(asteroid.radius)} />
-              </Dimension>
-              <Dimension>
-                <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="50" cy="50" r="40" />
-                </DimensionIcon>
-                <DimensionData label="Surface Area" data={formatters.surfaceArea(asteroid.radius)} />
-              </Dimension>
-            </Dimensions>
+            <Dimensions asteroid={asteroid} />
           </MainPanel>
         </StyledAsteroidDetails>
       )}

@@ -10,8 +10,10 @@ import useStore from '~/hooks/useStore';
 import IconButton from '~/components/IconButton';
 import Section from '~/components/Section';
 import AsteroidItem from '~/components/AsteroidItem';
+import ColorPicker from '~/components/ColorPicker';
 
 const Controls = styled.div`
+  display: flex;
   flex: 0 0 auto;
   padding-bottom: 15px;
 `;
@@ -42,19 +44,21 @@ const StyledAsteroidItem = styled(AsteroidItem)`
 `;
 
 const OwnedAsteroids = (props) => {
-  const asteroids = useOwnedAsteroids();
+  const history = useHistory();
+  const { data: asteroids } = useOwnedAsteroids();
   const includeOwned = useStore(state => state.asteroids.owned.mapped);
   const filterOwned = useStore(state => state.asteroids.owned.filtered);
-  const dispatchOwnedAsteroidsMapped = useStore(state => state.dispatchOwnedAsteroidsMapped);
-  const dispatchOwnedAsteroidsUnmapped = useStore(state => state.dispatchOwnedAsteroidsUnmapped);
-  const dispatchOwnedAsteroidsFiltered = useStore(state => state.dispatchOwnedAsteroidsFiltered);
-  const dispatchOwnedAsteroidsUnfiltered = useStore(state => state.dispatchOwnedAsteroidsUnfiltered);
-  const history = useHistory();
+  const highlightColor = useStore(state => state.asteroids.watched.highlightColor);
+  const showOnMap = useStore(state => state.dispatchOwnedAsteroidsMapped);
+  const removeFromMap = useStore(state => state.dispatchOwnedAsteroidsUnmapped);
+  const applyFilters = useStore(state => state.dispatchOwnedAsteroidsFiltered);
+  const removeFilters = useStore(state => state.dispatchOwnedAsteroidsUnfiltered);
+  const changeColor = useStore(state => state.dispatchOwnedAsteroidColorChange);
 
   // Removes owned asteroids from search set when section is closed
   useEffect(() => {
-    return () => dispatchOwnedAsteroidsUnmapped()
-  }, [ dispatchOwnedAsteroidsUnmapped ]);
+    return () => removeFromMap()
+  }, [ removeFromMap ]);
 
   return (
     <Section
@@ -64,13 +68,13 @@ const OwnedAsteroids = (props) => {
       <Controls>
         <IconButton
           data-tip={includeOwned ? 'Hide on Map' : 'Show on Map'}
-          onClick={() => includeOwned ? dispatchOwnedAsteroidsUnmapped() : dispatchOwnedAsteroidsMapped()}
+          onClick={() => includeOwned ? removeFromMap() : showOnMap()}
           active={includeOwned}>
           <ShowOnMapIcon />
         </IconButton>
         <IconButton
           data-tip={filterOwned ? 'Remove Filters' : 'Apply Filters'}
-          onClick={() => filterOwned ? dispatchOwnedAsteroidsUnfiltered() : dispatchOwnedAsteroidsFiltered()}
+          onClick={() => filterOwned ? removeFilters() : applyFilters()}
           active={filterOwned}>
           <FilterIcon />
         </IconButton>
@@ -79,10 +83,11 @@ const OwnedAsteroids = (props) => {
           onClick={() => history.push('/owned-asteroids')}>
           <RiTableFill />
         </IconButton>
+        {includeOwned && <ColorPicker initialColor={highlightColor} onChange={changeColor} />}
       </Controls>
       <AsteroidList>
-        {asteroids.data?.length === 0 && <li><span>No owned asteroids</span></li>}
-        {asteroids.data?.map(a => <StyledAsteroidItem key={a.i} asteroid={a} />)}
+        {asteroids?.length === 0 && <li><span>No owned asteroids</span></li>}
+        {asteroids?.map(a => <StyledAsteroidItem key={a.i} asteroid={a} />)}
       </AsteroidList>
     </Section>
   );

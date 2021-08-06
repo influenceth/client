@@ -45,7 +45,7 @@ const formatters = {
     const base = Number(ethersUtils.formatEther(sale.baseAsteroidPrice));
     const lot = Number(ethersUtils.formatEther(sale.baseLotPrice));
     const price = base + (lot * 4 * Math.pow((r / 1000), 2));
-    return price;
+    return price.toLocaleString([], { maximumFractionDigits: 4 });
   }
 };
 
