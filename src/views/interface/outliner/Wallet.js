@@ -8,7 +8,7 @@ import { VscDebugDisconnect } from 'react-icons/vsc';
 
 import useEagerConnect from '~/hooks/useEagerConnect';
 import useInactiveListener from '~/hooks/useInactiveListener';
-import { injected } from '~/lib/connectors';
+import { injected } from '~/lib/blockchain/connectors';
 import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
 

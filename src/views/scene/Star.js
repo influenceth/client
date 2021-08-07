@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Color, Vector3 } from 'three';
 import { useThree, useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
-import { Lensflare, LensflareElement } from '~/lib/Lensflare';
+import { Lensflare, LensflareElement } from '~/lib/graphics/Lensflare';
 
-import constants from '~/constants';
+import constants from '~/lib/constants';
 import config from './star/lensflareConfig';
 
 // Setup initial lensflare to be modified by renders

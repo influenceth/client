@@ -5,7 +5,7 @@ import { KeplerianOrbit } from 'influence-utils';
 
 import frag from './orbit/orbit.frag';
 import vert from './orbit/orbit.vert';
-import constants from '~/constants';
+import constants from '~/lib/constants';
 import theme from '~/theme';
 
 const order = new Float32Array(Array(360).fill().map((_, i) => i+1));

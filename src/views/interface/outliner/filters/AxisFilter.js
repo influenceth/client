@@ -7,7 +7,7 @@ import NumberInput from '~/components/NumberInput';
 import ColorPicker from '~/components/ColorPicker';
 import Highlighter from './Highlighter';
 import formatters from '~/lib/formatters';
-import constants from '~/constants';
+import constants from '~/lib/constants';
 
 const initialValues = {
   axisMin: constants.MIN_AXIS,

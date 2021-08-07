@@ -4,7 +4,7 @@ import { AdditiveBlending, DoubleSide } from 'three';
 
 import frag from './marker/marker.frag';
 import vert from './marker/marker.vert';
-import constants from '~/constants';
+import constants from '~/lib/constants';
 import theme from '~/theme';
 
 const markerMaxRadius = constants.AU / 50;

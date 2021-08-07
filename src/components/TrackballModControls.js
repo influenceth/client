@@ -1,6 +1,6 @@
 import { forwardRef, useRef, useLayoutEffect, useEffect, useState } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
-import TrackballModControlsImpl from '~/lib/TrackballModControlsImpl';
+import TrackballModControlsImpl from '~/lib/graphics/TrackballModControlsImpl';
 
 export const TrackballModControls = forwardRef(({ children, ...props }, ref) => {
   const { camera, maxDistance } = props;

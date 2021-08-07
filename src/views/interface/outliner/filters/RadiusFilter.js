@@ -9,7 +9,7 @@ import ColorPicker from '~/components/ColorPicker';
 import Ether from '~/components/Ether';
 import Highlighter from './Highlighter';
 import formatters from '~/lib/formatters';
-import constants from '~/constants';
+import constants from '~/lib/constants';
 
 const initialValues = {
   radiusMin: constants.MIN_ASTEROID_RADIUS,

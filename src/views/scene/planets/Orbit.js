@@ -1,7 +1,7 @@
 import { useRef, useLayoutEffect } from 'react';
 import { KeplerianOrbit } from 'influence-utils';
 
-import constants from '~/constants';
+import constants from '~/lib/constants';
 import theme from '~/theme';
 
 const Orbit = (props) => {

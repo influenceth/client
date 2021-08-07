@@ -6,7 +6,7 @@ import DataReadout from '~/components/DataReadout';
 import NumberInput from '~/components/NumberInput';
 import ColorPicker from '~/components/ColorPicker';
 import Highlighter from './Highlighter';
-import constants from '~/constants';
+import constants from '~/lib/constants';
 
 const initialValues = {
   eccMin: constants.MIN_ECCENTRICITY,

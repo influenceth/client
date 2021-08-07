@@ -12,7 +12,7 @@ import Marker from './asteroids/Marker';
 import highlighters from './asteroids/highlighters';
 import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
-import constants from '~/constants';
+import constants from '~/lib/constants';
 
 const worker = new Worker();
 
@@ -42,7 +42,6 @@ const Asteroids = (props) => {
   const [ hoveredPos, setHoveredPos ] = useState();
   const [ originPos, setOriginPos ] = useState();
   const [ destinationPos, setDestinationPos ] = useState();
-
   const asteroidsGeom = useRef();
 
   const onClick = (e) => {

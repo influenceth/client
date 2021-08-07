@@ -9,8 +9,9 @@ import { TrackballModControls } from '~/components/TrackballModControls';
 import Star from './scene/Star';
 import Planets from './scene/Planets';
 import Asteroids from './scene/Asteroids';
+import Asteroid from './scene/Asteroid';
 import SettingsManager from './scene/SettingsManager';
-import constants from '~/constants';
+import constants from '~/lib/constants';
 
 const glConfig = {
   shadows: true,
@@ -60,6 +61,7 @@ const Scene = (props) => {
               <Star />
               <Planets />
               <Asteroids />
+              <Asteroid />
             </TrackballModControls>
           </QueryClientProvider>
         </ContextBridge>

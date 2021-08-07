@@ -11,7 +11,7 @@ import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
 import AsteroidItem from '~/components/AsteroidItem';
 import DataReadout from '~/components/DataReadout';
-import constants from '~/constants';
+import constants from '~/lib/constants';
 
 const Controls = styled.div`
   flex: 0 0 auto;

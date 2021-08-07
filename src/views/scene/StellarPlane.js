@@ -2,7 +2,7 @@ import { DoubleSide } from 'three';
 
 import frag from './stellarPlane/stellarPlane.frag';
 import vert from './stellarPlane/stellarPlane.vert';
-import constants from '~/constants';
+import constants from '~/lib/constants';
 
 const maxRadius = constants.AU * 9;
 const initialUniforms = {

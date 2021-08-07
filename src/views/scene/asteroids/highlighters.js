@@ -1,6 +1,6 @@
 import { Color } from 'three';
 
-import constants from '~/constants';
+import constants from '~/lib/constants';
 
 const minMaxHighlighter = (v, config) => {
   const color = new Color(config.from);
