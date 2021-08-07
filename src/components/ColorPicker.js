@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import styled from 'styled-components';
 import { CompactPicker } from 'react-color';
 import { IoIosColorFill as ColorIcon } from 'react-icons/io';

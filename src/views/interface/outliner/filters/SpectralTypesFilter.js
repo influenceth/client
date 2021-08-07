@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { SPECTRAL_TYPES } from 'influence-utils';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
@@ -15,11 +15,6 @@ const StyledTitle = styled.h3`
   margin-bottom: 10px !important;
 `;
 
-const FilterSection = styled.div`
-  display: flex;
-  justify-content: space-between;
-`;
-
 const SpectralType = styled.div`
   align-items: center;
   display: flex;
@@ -28,8 +23,8 @@ const SpectralType = styled.div`
 const SpectralTypesFilter = (props) => {
   const { onChange } = props;
 
-  const highlight = useStore(state => state.asteroids.highlight);
   const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
+  const highlightActive = useRef(false);
 
   const [ types, setTypes ] = useState(initialValues);
   const [ colors, setColors ] = useState([
@@ -47,10 +42,12 @@ const SpectralTypesFilter = (props) => {
   ]);
 
   const handleHighlightToggle = () => {
-    if (highlight?.field === 'spectralType') {
+    if (!!highlightActive.current) {
       updateHighlight(null);
+      highlightActive.current = false;
     } else {
       updateHighlight({ field: 'spectralType', colorMap: colors });
+      highlightActive.current = true;
     }
   };
 
@@ -73,12 +70,12 @@ const SpectralTypesFilter = (props) => {
   };
 
   useEffect(() => {
-    if (highlight?.field === 'spectralType') updateHighlight({ field: 'spectralType', colorMap: colors });
+    if (!!highlightActive.current) updateHighlight({ field: 'spectralType', colorMap: colors });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ updateHighlight, colors ]);
 
   useEffect(() => {
-    return () => highlight?.field === 'spectralType' && updateHighlight(null);
+    return () => highlightActive.current && updateHighlight(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -86,7 +83,7 @@ const SpectralTypesFilter = (props) => {
     <>
       <StyledTitle>Spectral Types</StyledTitle>
       <Highlighter
-        active={highlight?.field === 'radius'}
+        active={!!highlightActive.current}
         onClick={handleHighlightToggle} />
       {SPECTRAL_TYPES.map((v, k) => {
         return (
@@ -97,7 +94,7 @@ const SpectralTypesFilter = (props) => {
               {types.includes(k) ? <CheckedIcon /> : <UncheckedIcon />}
             </IconButton>
             <span>{v}-Type</span>
-            {highlight?.field === 'spectralType' && (
+            {!!highlightActive.current && (
               <ColorPicker initialColor={colors[k]} onChange={(c) => {
                 const newColors = colors.slice(0);
                 newColors[k] = c;

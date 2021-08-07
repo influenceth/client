@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
@@ -30,8 +30,8 @@ const Period = styled.span`
 const AxisFilter = (props) => {
   const { onChange } = props;
 
-  const highlight = useStore(state => state.asteroids.highlight);
   const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
+  const highlightActive = useRef(false);
 
   const [ axisMin, setAxisMin ] = useState(initialValues.axisMin);
   const [ axisMax, setAxisMax ] = useState(initialValues.axisMax);
@@ -39,10 +39,12 @@ const AxisFilter = (props) => {
   const [ colorTo, setColorTo ] = useState('#FA28FF');
 
   const handleHighlightToggle = () => {
-    if (highlight?.field === 'axis') {
+    if (!!highlightActive.current) {
       updateHighlight(null);
+      highlightActive.current = false;
     } else {
       updateHighlight({ field: 'axis', min: axisMin, max: axisMax, from: colorFrom, to: colorTo });
+      highlightActive.current = true;
     }
   };
 
@@ -52,24 +54,22 @@ const AxisFilter = (props) => {
   }, [ axisMin, axisMax ]);
 
   useEffect(() => {
-    if (highlight?.field === 'axis') {
+    if (!!highlightActive.current) {
       updateHighlight({ field: 'axis', min: axisMin, max: axisMax, from: colorFrom, to: colorTo });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ updateHighlight, axisMin, axisMax, colorTo, colorFrom ]);
 
   useEffect(() => {
-    return () => highlight?.field === 'axis' && updateHighlight(null);
+    return () => highlightActive.current && updateHighlight(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const format = (num) => `${num} AU`;
 
   return (
     <>
       <h3>Semi-major Axis (Period)</h3>
       <Highlighter
-        active={highlight?.field === 'axis'}
+        active={!!highlightActive.current}
         onClick={handleHighlightToggle} />
       <FilterSection>
         <DataReadout
@@ -84,7 +84,7 @@ const AxisFilter = (props) => {
                 onChange={(v) => setAxisMin(Number(v))} />
               <Period>({formatters.period(axisMin)})</Period>
             </>} />
-        {highlight?.field === 'axis' && (
+        {!!highlightActive.current && (
           <ColorPicker initialColor={colorFrom} onChange={(c) => setColorFrom(c)} />
         )}
       </FilterSection>
@@ -101,7 +101,7 @@ const AxisFilter = (props) => {
                 onChange={(v) => setAxisMax(Number(v))} />
               <Period>({formatters.period(axisMax)})</Period>
             </>} />
-        {highlight?.field === 'axis' && (
+        {!!highlightActive.current && (
           <ColorPicker initialColor={colorTo} onChange={(c) => setColorTo(c)} />
         )}
       </FilterSection>

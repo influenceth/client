@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
@@ -33,8 +33,8 @@ const RadiusFilter = (props) => {
   const { onChange } = props;
   const { data: sale } = useSale();
 
-  const highlight = useStore(state => state.asteroids.highlight);
   const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
+  const highlightActive = useRef(false);
 
   const [ radiusMin, setRadiusMin ] = useState(initialValues.radiusMin);
   const [ radiusMax, setRadiusMax ] = useState(initialValues.radiusMax);
@@ -42,8 +42,9 @@ const RadiusFilter = (props) => {
   const [ colorTo, setColorTo ] = useState('#FA28FF');
 
   const handleHighlightToggle = () => {
-    if (highlight?.field === 'radius') {
+    if (!!highlightActive.current) {
       updateHighlight(null);
+      highlightActive.current = false;
     } else {
       updateHighlight({
         field: 'radius',
@@ -52,6 +53,8 @@ const RadiusFilter = (props) => {
         from: colorFrom,
         to: colorTo
       });
+
+      highlightActive.current = true;
     }
   };
 
@@ -61,14 +64,14 @@ const RadiusFilter = (props) => {
   }, [ radiusMin, radiusMax ]);
 
   useEffect(() => {
-    if (highlight?.field === 'radius') {
+    if (!!highlightActive.current) {
       updateHighlight({ field: 'radius', min: radiusMin, max: radiusMax, from: colorFrom, to: colorTo });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ updateHighlight, radiusMin, radiusMax, colorTo, colorFrom ]);
 
   useEffect(() => {
-    return () => highlight?.field === 'radius' && updateHighlight(null);
+    return () => highlightActive.current && updateHighlight(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -76,7 +79,7 @@ const RadiusFilter = (props) => {
     <>
       <h3>Asteroid Radius (Price)</h3>
       <Highlighter
-        active={highlight?.field === 'radius'}
+        active={!!highlightActive.current}
         onClick={handleHighlightToggle} />
       <FilterSection>
         <DataReadout
@@ -90,7 +93,7 @@ const RadiusFilter = (props) => {
                 onChange={(v) => setRadiusMin(Number(v))} />
               <Price>({!!sale ? formatters.asteroidPrice(radiusMin, sale) : '...'} <Ether />)</Price>
             </>} />
-        {highlight?.field === 'radius' && (
+        {!!highlightActive.current && (
           <ColorPicker initialColor={colorFrom} onChange={(c) => setColorFrom(c)} />
         )}
       </FilterSection>
@@ -106,7 +109,7 @@ const RadiusFilter = (props) => {
                 onChange={(v) => setRadiusMax(Number(v))} />
               <Price>({!!sale ? formatters.asteroidPrice(radiusMax, sale) : '...'} <Ether />)</Price>
             </>} />
-        {highlight?.field === 'radius' && (
+        {!!highlightActive.current && (
           <ColorPicker initialColor={colorTo} onChange={(c) => setColorTo(c)} />
         )}
       </FilterSection>

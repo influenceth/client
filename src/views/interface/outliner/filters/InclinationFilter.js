@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
@@ -24,8 +24,8 @@ const FilterSection = styled.div`
 const InclinationFilter = (props) => {
   const { onChange } = props;
 
-  const highlight = useStore(state => state.asteroids.highlight);
   const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
+  const highlightActive = useRef(false);
 
   const [ incMin, setIncMin ] = useState(initialValues.incMin);
   const [ incMax, setIncMax ] = useState(initialValues.incMax);
@@ -33,8 +33,9 @@ const InclinationFilter = (props) => {
   const [ colorTo, setColorTo ] = useState('#FA28FF');
 
   const handleHighlightToggle = () => {
-    if (highlight?.field === 'inclination') {
+    if (!!highlightActive.current) {
       updateHighlight(null);
+      highlightActive.current = false;
     } else {
       updateHighlight({
         field: 'inclination',
@@ -43,6 +44,8 @@ const InclinationFilter = (props) => {
         from: colorFrom,
         to: colorTo
       });
+
+      highlightActive.current = true;
     }
   };
 
@@ -55,7 +58,7 @@ const InclinationFilter = (props) => {
   }, [ incMin, incMax ]);
 
   useEffect(() => {
-    if (highlight?.field === 'inclination') {
+    if (!!highlightActive.current) {
       updateHighlight({
         field: 'inclination',
         min: Math.PI * incMin / 180,
@@ -68,7 +71,7 @@ const InclinationFilter = (props) => {
   }, [ updateHighlight, incMin, incMax, colorTo, colorFrom ]);
 
   useEffect(() => {
-    return () => highlight?.field === 'inclination' && updateHighlight(null);
+    return () => highlightActive.current && updateHighlight(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -76,11 +79,11 @@ const InclinationFilter = (props) => {
     <>
       <h3>Orbit Inclination</h3>
       <Highlighter
-        active={highlight?.field === 'inclination'}
+        active={!!highlightActive.current}
         onClick={handleHighlightToggle} />
       <FilterSection>
         <DataReadout
-          label="Min. Inclination (deg)"
+          label="Min (deg)"
           data={
             <StyledInput
               initialValue={initialValues.incMin}
@@ -89,13 +92,13 @@ const InclinationFilter = (props) => {
               step={0.01}
               onChange={(v) => setIncMin(Number(v))} />
             } />
-        {highlight?.field === 'inclination' && (
+        {!!highlightActive.current && (
           <ColorPicker initialColor={colorFrom} onChange={(c) => setColorFrom(c)} />
         )}
       </FilterSection>
       <FilterSection>
         <DataReadout
-          label="Max. Inclination (deg)"
+          label="Max (deg)"
           data={
             <StyledInput
               initialValue={initialValues.incMax}
@@ -104,7 +107,7 @@ const InclinationFilter = (props) => {
               step={0.01}
               onChange={(v) => setIncMax(Number(v))} />
             } />
-        {highlight?.field === 'inclination' && (
+        {!!highlightActive.current && (
           <ColorPicker initialColor={colorTo} onChange={(c) => setColorTo(c)} />
         )}
       </FilterSection>
