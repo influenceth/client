@@ -6,6 +6,8 @@ import { START_TIMESTAMP } from 'influence-utils';
 const useStore = create(persist((set, get) => ({
     asteroids: {
       origin: null,
+      zoomed: false, // Either false or an object with previous camera position
+      zoomedFrom: null,
       destination: null,
       hovered: null,
       filters: {},
@@ -49,7 +51,7 @@ const useStore = create(persist((set, get) => ({
       skybox: true,
       shadows: true,
       shadowSize: 1024,
-      textureSize: 512
+      textureSize: 1024
     },
 
     dispatchOutlinerPinned: () => set(produce(state => {
@@ -107,6 +109,18 @@ const useStore = create(persist((set, get) => ({
 
     dispatchAsteroidUnhovered: () => set(produce(state => {
       state.asteroids.hovered = null;
+    })),
+
+    dispatchAsteroidZoomedIn: () => set(produce(state => {
+      state.asteroids.zoomed = true;
+    })),
+
+    dispatchAsteroidZoomedOut: () => set(produce(state => {
+      state.asteroids.zoomed = false;
+    })),
+
+    dispatchAsteroidZoomedFrom: (from) => set(produce(state => {
+      state.asteroids.zoomedFrom = from;
     })),
 
     dispatchFiltersUpdated: (filters) => set(produce(state => {

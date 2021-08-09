@@ -32,6 +32,9 @@ const Asteroid = (props) => {
   const mapSize = useStore(state => state.graphics.textureSize);
   const shadows = useStore(state => state.graphics.shadows);
   const shadowSize = useStore(state => state.graphics.shadowSize);
+  const zoomed = useStore(state => state.asteroids.zoomed);
+  const zoomedFrom = useStore(state => state.asteroids.zoomedFrom);
+  const setZoomFrom = useStore(state => state.dispatchAsteroidZoomedFrom);
   const { data: asteroidData } = useAsteroid(origin);
 
   const group = useRef();
@@ -117,9 +120,7 @@ const Asteroid = (props) => {
       const geometry = new CubeSphere(1, 50);
       geometry.displaceWithHeightMap(maps.heightMap, config.radius, config);
       delete geometry.parameters;
-      const geometryJSON = geometry.toJSON();
-      const loader = new BufferGeometryLoader();
-      setGeometry(loader.parse(geometryJSON));
+      setGeometry(geometry);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ maps ]);
@@ -157,6 +158,7 @@ const Asteroid = (props) => {
       const posVec = new Vector3(...position);
       light.current.intensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
       light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(asteroidData.radius * 10));
+      console.log(geometry);
       geometry.computeBoundingSphere();
       const maxRadius = geometry.boundingSphere.radius + geometry.boundingSphere.center.length();
       const radiusBump = 0; // this.asteroidConfig.ringsPresent ? 1 : 0;
@@ -173,8 +175,15 @@ const Asteroid = (props) => {
     }
   }, [ geometry ]);
 
+  // Zooms the camera to the correct location
   useEffect(() => {
-    if (!!geometry) {
+    if (zoomed && !!geometry) {
+      setZoomFrom({
+        scene: controls.targetScene.position.clone(),
+        position: controls.object.position.clone(),
+        up: controls.object.up.clone()
+      });
+
       let panTo = new Vector3(...position);
       panTo.negate();
       controls.targetScene.position.copy(panTo);
@@ -185,7 +194,22 @@ const Asteroid = (props) => {
       camera.near = 100;
       camera.updateProjectionMatrix();
     }
-  }, [ geometry ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ geometry, zoomed ]);
+
+  // Handle zooming back out
+  useEffect(() => {
+    if (!zoomed && !!zoomedFrom) {
+      controls.targetScene.position.copy(zoomedFrom.scene);
+      controls.minDistance = 0;
+      controls.maxDistance = 10 * constants.AU;
+      controls.object.position.copy(zoomedFrom.position);
+      controls.object.up.copy(zoomedFrom.up);
+      camera.near = 1000000;
+      camera.updateProjectionMatrix();
+      setZoomFrom();
+    }
+  }, [ zoomed, zoomedFrom ]);
 
   return (
     <group position={position} ref={group} >

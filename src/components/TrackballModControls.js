@@ -3,7 +3,7 @@ import { useThree, useFrame } from '@react-three/fiber';
 import TrackballModControlsImpl from '~/lib/graphics/TrackballModControlsImpl';
 
 export const TrackballModControls = forwardRef(({ children, ...props }, ref) => {
-  const { camera, maxDistance } = props;
+  const { camera, maxDistance, minDistance } = props;
   const { gl, invalidate } = useThree();
   const defaultCamera = useThree(({ camera }) => camera);
   const set = useThree(({ set }) => set)
@@ -11,6 +11,7 @@ export const TrackballModControls = forwardRef(({ children, ...props }, ref) => 
   const [ controls ] = useState(() => new TrackballModControlsImpl(explCamera, gl.domElement))
   const group = useRef();
 
+  if (minDistance) controls.minDistance = minDistance;
   if (maxDistance) controls.maxDistance = maxDistance;
 
   useLayoutEffect(() => {
