@@ -1,15 +1,14 @@
-import THREE from '~/lib/graphics/THREE';
+import { Vector3 } from 'three';
 import Seed from '~/lib/math/Seed';
-import OctaveNoise from '~/lib/math/OctaveNoise';
-import constants from '~/config/constants';
+import OctaveNoise from '~/lib/graphics/OctaveNoise';
+import constants from '~/lib/constants';
 
 // Responsible for generating a config for any asteroid to be generated
 class Config {
-  constructor(seed, type, radius, graphicsSettings) {
-    this.seedGen = new Seed(seed);
-    this.type = type;
-    this.radius = radius;
-    this.settings = graphicsSettings;
+  constructor(asteroid) {
+    this.seedGen = new Seed(asteroid.seed);
+    this.type = asteroid.spectralType;
+    this.radius = asteroid.radius;
 
     return {
       cleaveCut: this._cleaveCut(),
@@ -25,6 +24,7 @@ class Config {
       dispWeight: this._dispWeight(),
       featuresFreq: this._featuresFreq(),
       normalIntensity: this._normalIntensity(),
+      radius: this.radius,
       ringsMinMax: this._ringsMinMax(),
       ringsPresent: this._ringsPresent(),
       ringsVariation: this._ringsVariation(),
@@ -175,7 +175,7 @@ class Config {
   // Vector to stretch the asteroid along
   _stretch() {
     const mod = 0.45 * (1 - this._radiusMod(2));
-    return new THREE.Vector3(1, 1, 1).sub(this.seedGen.getVector3().multiplyScalar(mod));
+    return new Vector3(1, 1, 1).sub(this.seedGen.getVector3().multiplyScalar(mod));
   }
 
   // Recursive noise passes to determine detail of topography. Higher numbers have finer detail.

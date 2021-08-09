@@ -1,4 +1,4 @@
-import THREE from '~/lib/graphics/THREE';
+import { Vector3 } from 'three';
 import md5 from 'md5';
 
 // Takes an asteroid seed as an argument and returns various seed types
@@ -32,7 +32,7 @@ class Seed {
     const x = parseInt(this.seed.substr(offset, 4), 16);
     const y = parseInt(this.seed.substr(offset + 4, 4), 16);
     const z = parseInt(this.seed.substr(offset + 8, 4), 16);
-    const v  = new THREE.Vector3(x, y, z);
+    const v  = new Vector3(x, y, z);
     return v.setLength(1);
   }
 

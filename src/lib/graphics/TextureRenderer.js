@@ -36,7 +36,6 @@ class TextureRenderer {
   render(width, height, material) {
     this.plane.material = material;
     this.target.setSize(width, height);
-    this.renderer.setSize(width, height);
     this.renderer.setRenderTarget(this.target);
     this.renderer.render(this.scene, this.camera);
     const buffer = new Uint8Array(width * height * 4);

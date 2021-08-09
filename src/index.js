@@ -1,13 +1,10 @@
 import { Suspense } from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter as Router } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Web3ReactProvider } from '@web3-react/core';
 import { Web3Provider } from '@ethersproject/providers';
 
 import Game from '~/views/Game';
-import Interface from '~/views/Interface';
-import Scene from '~/views/Scene';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 
@@ -30,12 +27,7 @@ ReactDOM.render(
   <Suspense fallback={<div>Loading...</div>}>
     <Web3ReactProvider getLibrary={getLibrary}>
       <QueryClientProvider client={queryClient} contextSharing={true}>
-        <Game>
-          <Router>
-            <Interface />
-            <Scene />
-          </Router>
-        </Game>
+        <Game />
       </QueryClientProvider>
     </Web3ReactProvider>
   </Suspense>,

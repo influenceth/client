@@ -6,6 +6,7 @@ export const TrackballModControls = forwardRef(({ children, ...props }, ref) => 
   const { camera, maxDistance } = props;
   const { gl, invalidate } = useThree();
   const defaultCamera = useThree(({ camera }) => camera);
+  const set = useThree(({ set }) => set)
   const explCamera = camera || defaultCamera;
   const [ controls ] = useState(() => new TrackballModControlsImpl(explCamera, gl.domElement))
   const group = useRef();
@@ -28,6 +29,10 @@ export const TrackballModControls = forwardRef(({ children, ...props }, ref) => 
   useFrame(() => {
     if (controls.enabled) controls.update();
   });
+
+  useEffect(() => {
+    set({ controls });
+  }, [ controls ]);
 
   return controls ? (
     <>

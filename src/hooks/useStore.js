@@ -46,7 +46,10 @@ const useStore = create(persist((set, get) => ({
     },
 
     graphics: {
-      skybox: true
+      skybox: true,
+      shadows: true,
+      shadowSize: 1024,
+      textureSize: 512
     },
 
     dispatchOutlinerPinned: () => set(produce(state => {

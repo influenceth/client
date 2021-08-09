@@ -20,17 +20,11 @@ onmessage = async function(event) {
     case 'updatePlanetPositions':
       updatePlanetPositions(event.data.planets, event.data.elapsed);
       break;
-    case 'canvas':
-      canvas = event.data.canvas;
-      canvas.style = { width: 0, height: 0 };
-      const renderer = new WebGLRenderer({ canvas: canvas, antialias: true });
-      textureRenderer = new TextureRenderer(renderer);
-      break;
     case 'renderGeometry':
-      renderGeometry(event.data.heightMap, event.data.radius, event.data.asteroidConfig);
+      renderGeometry(event.data.heightMap, event.data.config);
       break;
     case 'renderMaps':
-      renderMaps(event.data.mapSize, event.data.asteroidConfig);
+      renderMaps(event.data.mapSize, event.data.config);
       break;
     default:
       console.error('Method not supported');
@@ -39,8 +33,14 @@ onmessage = async function(event) {
 
 // Caches asteroids data, canvas and textureRenderer in the worker
 let asteroidsData = [];
-let canvas;
 let textureRenderer;
+
+// Setup offscreen canvas
+if (OffscreenCanvas !== 'undefined') {
+  const offscreen = new OffscreenCanvas(0, 0);
+  const renderer = new WebGLRenderer({ canvas: offscreen, antialias: true });
+  textureRenderer = new TextureRenderer(renderer);
+}
 
 const updateAsteroidsData = function(newAsteroidsData) {
   asteroidsData = newAsteroidsData;
@@ -66,18 +66,18 @@ const updatePlanetPositions = function(planets, elapsed = 0) {
   postMessage({ topic: 'planetPositions', positions: flatData });
 };
 
-const renderMaps = async function(mapSize, asteroidConfig) {
+const renderMaps = async function(mapSize, config) {
   if (textureRenderer === undefined) throw new Error('Renderer must be set first with offscreen canvas');
-  const heightMap = new HeightMap(mapSize, asteroidConfig, textureRenderer);
-  const colorMapObj = new ColorMap(mapSize, heightMap, asteroidConfig, textureRenderer);
+  const heightMap = new HeightMap(mapSize, config, textureRenderer);
+  const colorMapObj = new ColorMap(mapSize, heightMap, config, textureRenderer);
   const colorMap = await colorMapObj.generateColorMap();
-  const normalMap = new NormalMap(mapSize, heightMap, asteroidConfig, textureRenderer);
+  const normalMap = new NormalMap(mapSize, heightMap, config, textureRenderer);
   postMessage({ topic: 'maps', heightMap, colorMap, normalMap });
 };
 
-const renderGeometry = function(heightMap, radius, asteroidConfig) {
+const renderGeometry = function(heightMap, config) {
   const geometry = new CubeSphere(1, 50);
-  geometry.displaceWithHeightMap(heightMap, radius, asteroidConfig);
+  geometry.displaceWithHeightMap(heightMap, config.radius, config);
   delete geometry.parameters;
   const geometryJSON = geometry.toJSON();
   postMessage({ topic: 'geometry', geometryJSON });

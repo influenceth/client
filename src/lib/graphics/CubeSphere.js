@@ -99,8 +99,8 @@ class CubeSphere extends BoxGeometry {
     for (let i = 0; i < 6; i++) {
       let vi;
       map = maps[sides[i]];
-      tWidth = map.image.width;
-      tHeight = map.image.height;
+      tWidth = map.width;
+      tHeight = map.height;
       start = this.groups[i].start;
       count = this.groups[i].count;
 
@@ -110,7 +110,7 @@ class CubeSphere extends BoxGeometry {
         const v = new Vector3().fromArray(vertices.array, vi * 3);
         const s = Math.round(uvs[vi * 2] * (tWidth - 1));
         const t = Math.round(uvs[vi * 2 + 1] * (tHeight - 1));
-        const mod = -1 + map.image.data[(tWidth * t + s) * 4 + 3] / 128;
+        const mod = -1 + map.buffer[(tWidth * t + s) * 4 + 3] / 128;
         v.setLength(radius * (1 + mod * config.dispWeight)).multiply(config.stretch);
         vertices.setXYZ(vi, v.x, v.y, v.z);
         touched.add(vi);
