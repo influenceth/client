@@ -9,7 +9,7 @@ const constants = {
   MAX_INCLINATION: 40,
   MIN_ECCENTRICITY: 0,
   MAX_ECCENTRICITY: 0.4,
-  STAR_INTENSITY: 2, // as it relates to THREE light
+  STAR_INTENSITY: 1, // as it relates to THREE light
 
   // Performance settings
   GRAPHICS_LOW: {

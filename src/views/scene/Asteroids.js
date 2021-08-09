@@ -21,6 +21,7 @@ const Asteroids = (props) => {
   const originId = useStore(state => state.asteroids.origin);
   const destinationId = useStore(state => state.asteroids.destination);
   const hovered = useStore(state => state.asteroids.hovered);
+  const zoomStatus = useStore(state => state.asteroids.zoomStatus);
   const routePlannerActive = useStore(state => state.outliner.routePlanner.active);
   const ownedColor = useStore(state => state.asteroids.owned.highlightColor);
   const watchedColor = useStore(state => state.asteroids.watched.highlightColor);
@@ -163,10 +164,10 @@ const Asteroids = (props) => {
     <group>
       {positions?.length > 0 && colors?.length > 0 && (
         <points
-          onClick={onClick}
-          onContextMenu={onContextClick}
-          onPointerOver={onMouseOver}
-          onPointerOut={onMouseOut} >
+          onClick={zoomStatus === 'out' && onClick}
+          onContextMenu={zoomStatus === 'out' && onContextClick}
+          onPointerOver={zoomStatus === 'out' && onMouseOver}
+          onPointerOut={zoomStatus === 'out' && onMouseOut} >
           <bufferGeometry ref={asteroidsGeom}>
             <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3 ]} />
             <bufferAttribute attachObject={[ 'attributes', 'highlightColor' ]} args={[ colors, 3 ]} />
@@ -176,7 +177,7 @@ const Asteroids = (props) => {
             fragmentShader: frag,
             transparent: true,
             uniforms: {
-              uOpacity: { type: 'f', value: 1.0 },
+              uOpacity: { type: 'f', value: zoomStatus === 'out' ? 1.0 : 0.5 },
               uMinSize: { type: 'f', value: 2.0 },
               uMaxSize: { type: 'f', value: 3.5 },
               uMinRadius: { type: 'f', value: constants.MIN_ASTEROID_RADIUS },
@@ -188,13 +189,13 @@ const Asteroids = (props) => {
         </points>
       )}
       <Suspense fallback={<group />}>
-        {hoveredPos && <Marker asteroidPos={hoveredPos} />}
-        {originPos && <Marker asteroidPos={originPos} />}
+        {hoveredPos && zoomStatus === 'out' && <Marker asteroidPos={hoveredPos} />}
+        {originPos && zoomStatus === 'out' && <Marker asteroidPos={originPos} />}
         {destinationPos && <Marker asteroidPos={destinationPos} />}
       </Suspense>
-      {!!origin && <Orbit asteroid={origin} />}
+      {!!origin && zoomStatus === 'out' && <Orbit asteroid={origin} />}
       {!!destination && <Orbit asteroid={destination} />}
-      {originPos && destinationPos && <FlightLine originPos={originPos} destinationPos={destinationPos} />}
+      {originPos && destinationPos && zoomStatus === 'out' && <FlightLine originPos={originPos} destinationPos={destinationPos} />}
     </group>
   )
 };

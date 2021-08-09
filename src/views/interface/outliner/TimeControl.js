@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { START_TIMESTAMP } from 'influence-utils';
 import { MdFastRewind, MdFastForward, MdPlayArrow, MdPause, MdStop } from 'react-icons/md';
@@ -17,8 +17,11 @@ const Controls = styled.div`
   padding-bottom: 25px;
 `;
 
+const speeds = [ 0, 0.0025, 0.005, 0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 1.28, 2.56, 5.12 ];
+
 const TimeControl = (props) => {
-  const [ speed, setSpeed ] = useState(1);
+  const [ speed, setSpeed ] = useState(0);
+  const [ speedSetting, setSpeedSetting ] = useState(0);
   const [ playing, setPlaying ] = useState(false);
   const time = useStore(state => state.time.current);
   const dispatchTimeUpdated = useStore(state => state.dispatchTimeUpdated);
@@ -31,7 +34,7 @@ const TimeControl = (props) => {
   };
 
   const pause = () => {
-    setSpeed(0);
+    setSpeedSetting(0);
   };
 
   const stop = () => {
@@ -39,6 +42,16 @@ const TimeControl = (props) => {
     dispatchTimeUncontrolled();
     dispatchTimeUpdated(((Date.now() / 1000) - START_TIMESTAMP) / 3600);
   };
+
+  const changeSpeed = (direction) => {
+    const newSpeed = speeds[Math.abs(speedSetting + direction)];
+    if (newSpeed) setSpeedSetting(speedSetting + direction);
+  };
+
+  useEffect(() => {
+    const dir = speedSetting < 0 ? -1 : 1;
+    setSpeed(speeds[Math.abs(speedSetting)] * dir);
+  }, [ speedSetting ]);
 
   useInterval(() => {
     if (!playing) return;
@@ -73,7 +86,7 @@ const TimeControl = (props) => {
         )}
         <IconButton
           data-tip="Rewind"
-          onClick={() => setSpeed(speed - 1)}
+          onClick={() => changeSpeed(-1)}
           disabled={!playing}>
           <MdFastRewind />
         </IconButton>
@@ -85,7 +98,7 @@ const TimeControl = (props) => {
         </IconButton>
         <IconButton
           data-tip="Fast Forward"
-          onClick={() => setSpeed(speed + 1)}
+          onClick={() => changeSpeed(1)}
           disabled={!playing}>
           <MdFastForward />
         </IconButton>

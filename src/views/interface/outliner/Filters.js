@@ -43,7 +43,7 @@ const StyledFilters = styled.div`
   list-style-type: none;
   margin: 0;
   overflow-y: scroll;
-  padding: 0;
+  padding: 0 2px 0 0;
 `;
 
 const FilterGroup = styled.div`

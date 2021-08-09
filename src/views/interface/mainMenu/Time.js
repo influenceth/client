@@ -51,7 +51,7 @@ const Time = (props) => {
   // Automatically updates the in-game time once per second unless auto-updates are off
   useInterval(() => {
     if (autoUpdating) dispatchTimeUpdated(currentTime());
-  }, 10000);
+  }, 1000 / 30);
 
   return (
     <StyledTime {...props}>

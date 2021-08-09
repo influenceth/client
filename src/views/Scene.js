@@ -1,10 +1,12 @@
+import { useEffect } from 'react';
 import { useQueryClient, QueryClientProvider } from 'react-query';
-import { Object3D, Vector3, sRGBEncoding } from 'three';
+import { Object3D, Vector3 } from 'three';
 import { Canvas } from '@react-three/fiber';
 import { useContextBridge, Stats } from '@react-three/drei';
 import { getWeb3ReactContext } from '@web3-react/core';
 import styled from 'styled-components';
 
+import useStore from '~/hooks/useStore';
 import { TrackballModControls } from '~/components/TrackballModControls';
 import Star from './scene/Star';
 import Planets from './scene/Planets';
@@ -49,6 +51,20 @@ const Scene = (props) => {
 
   // Orient such that z is up, perpindicular to the stellar plane
   Object3D.DefaultUp = new Vector3(0, 0, 1);
+
+  const zoomedFrom = useStore(state => state.asteroids.zoomedFrom);
+  const setZoomedFrom = useStore(state => state.dispatchAsteroidZoomedFrom);
+
+  useEffect(() => {
+    if (!zoomedFrom) {
+      setZoomedFrom({
+        scene: new Vector3(0, 0, 0),
+        position: new Vector3(4 * constants.AU, 0, 1.5 * constants.AU),
+        up: new Vector3(0, 0, 1)
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <StyledContainer>

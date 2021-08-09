@@ -33,7 +33,7 @@ export const TrackballModControls = forwardRef(({ children, ...props }, ref) => 
 
   useEffect(() => {
     set({ controls });
-  }, [ controls ]);
+  }, [ controls, set ]);
 
   return controls ? (
     <>

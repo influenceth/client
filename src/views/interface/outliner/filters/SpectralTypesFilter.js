@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { SPECTRAL_TYPES } from 'influence-utils';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
@@ -24,8 +24,8 @@ const SpectralTypesFilter = (props) => {
   const { onChange } = props;
 
   const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
-  const highlightActive = useRef(false);
 
+  const [ highlightActive, setHighlightActive ] = useState(false);
   const [ types, setTypes ] = useState(initialValues);
   const [ colors, setColors ] = useState([
     '#6efaf4',
@@ -42,12 +42,12 @@ const SpectralTypesFilter = (props) => {
   ]);
 
   const handleHighlightToggle = () => {
-    if (!!highlightActive.current) {
+    if (highlightActive) {
       updateHighlight(null);
-      highlightActive.current = false;
+      setHighlightActive(false);
     } else {
       updateHighlight({ field: 'spectralType', colorMap: colors });
-      highlightActive.current = true;
+      setHighlightActive(true);
     }
   };
 
@@ -70,12 +70,12 @@ const SpectralTypesFilter = (props) => {
   };
 
   useEffect(() => {
-    if (!!highlightActive.current) updateHighlight({ field: 'spectralType', colorMap: colors });
+    if (highlightActive) updateHighlight({ field: 'spectralType', colorMap: colors });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ updateHighlight, colors ]);
 
   useEffect(() => {
-    return () => highlightActive.current && updateHighlight(null);
+    return () => highlightActive && updateHighlight(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -83,7 +83,7 @@ const SpectralTypesFilter = (props) => {
     <>
       <StyledTitle>Spectral Types</StyledTitle>
       <Highlighter
-        active={!!highlightActive.current}
+        active={highlightActive}
         onClick={handleHighlightToggle} />
       {SPECTRAL_TYPES.map((v, k) => {
         return (
@@ -94,7 +94,7 @@ const SpectralTypesFilter = (props) => {
               {types.includes(k) ? <CheckedIcon /> : <UncheckedIcon />}
             </IconButton>
             <span>{v}-Type</span>
-            {!!highlightActive.current && (
+            {highlightActive && (
               <ColorPicker initialColor={colors[k]} onChange={(c) => {
                 const newColors = colors.slice(0);
                 newColors[k] = c;

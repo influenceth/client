@@ -42,10 +42,9 @@ const SelectedAsteroid = (props) => {
   const unWatchAsteroid = useUnWatchAsteroid();
 
   const watchlistActive = useStore(state => state.outliner.watchlist.active);
-  const zoomed = useStore(state => state.asteroids.zoomed);
+  const zoomStatus = useStore(state => state.asteroids.zoomStatus);
   const clearOrigin = useStore(state => state.dispatchOriginCleared);
-  const zoomIn = useStore(state => state.dispatchAsteroidZoomedIn);
-  const zoomOut = useStore(state => state.dispatchAsteroidZoomedOut);
+  const updateZoomStatus = useStore(state => state.dispatchZoomStatusChanged);
 
   const [ inWatchlist, setInWatchlist ] = useState(false);
 
@@ -76,17 +75,17 @@ const SelectedAsteroid = (props) => {
             onClick={() => history.push(`/asteroids/${asteroid.i}`)}>
             <RiPagesFill />
           </IconButton>
-          {!zoomed && (
+          {zoomStatus === 'out' && (
             <IconButton
               data-tip="Zoom to Asteroid"
-              onClick={zoomIn}>
+              onClick={() => updateZoomStatus('zooming-in')}>
               <ZoomInIcon />
             </IconButton>
           )}
-          {zoomed && (
+          {zoomStatus === 'in' && (
             <IconButton
               data-tip="Zoom Out to System"
-              onClick={zoomOut}>
+              onClick={() => updateZoomStatus('zooming-out')}>
               <ZoomOutIcon />
             </IconButton>
           )}

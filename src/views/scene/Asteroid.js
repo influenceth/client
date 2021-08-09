@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3 } from 'three';
 import { useThree } from '@react-three/fiber';
+import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
 
 // eslint-disable-next-line
@@ -32,14 +33,17 @@ const Asteroid = (props) => {
   const mapSize = useStore(state => state.graphics.textureSize);
   const shadows = useStore(state => state.graphics.shadows);
   const shadowSize = useStore(state => state.graphics.shadowSize);
-  const zoomed = useStore(state => state.asteroids.zoomed);
+  const zoomStatus = useStore(state => state.asteroids.zoomStatus);
   const zoomedFrom = useStore(state => state.asteroids.zoomedFrom);
-  const setZoomFrom = useStore(state => state.dispatchAsteroidZoomedFrom);
+  const updateZoomStatus = useStore(state => state.dispatchZoomStatusChanged);
+  const setZoomedFrom = useStore(state => state.dispatchAsteroidZoomedFrom);
   const { data: asteroidData } = useAsteroid(origin);
 
   const group = useRef();
   const light = useRef();
+  const mesh = useRef();
   const asteroidOrbit = useRef();
+  const rotationAxis = useRef();
 
   const [ position, setPosition ] = useState([ 0, 0, 0 ]);
   const [ config, setConfig ] = useState();
@@ -53,10 +57,13 @@ const Asteroid = (props) => {
     if (!asteroidData) asteroidOrbit.current = null;
 
     if (asteroidOrbit.current && time) {
-      // TODO: add back time dependency
       setPosition(Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU));
     }
-  }, [ asteroidData ]);
+
+    if (mesh.current && config && time) {
+      mesh.current.setRotationFromAxisAngle(rotationAxis.current, time * config.rotationSpeed * 2 * Math.PI);
+    }
+  }, [ asteroidData, config, time ]);
 
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
@@ -73,13 +80,19 @@ const Asteroid = (props) => {
         m.map?.dispose();
         m.normalMap?.dispose();
       });
+
       setMaterials(null);
+
+      if (zoomStatus === 'in') updateZoomStatus('zooming-out');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ asteroidData ]);
 
-  // Kicks of rendering of each map based on the asteroid's unique config either in worker or main
+  // Kicks off rendering of each map based on the asteroid's unique config either in worker or main
   useEffect(() => {
     if (!config || !mapSize) return;
+
+    rotationAxis.current = config.seed.clone().normalize();
 
     if (!!worker) {
       worker.postMessage({ topic: 'renderMaps', mapSize, config });
@@ -153,69 +166,107 @@ const Asteroid = (props) => {
     setMaterials(materials);
   }, [ maps ]);
 
+  // Configures the light component once the geometry is created
   useEffect(() => {
-    if (geometry) {
-      const posVec = new Vector3(...position);
-      light.current.intensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
-      light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(asteroidData.radius * 10));
-      console.log(geometry);
-      geometry.computeBoundingSphere();
-      const maxRadius = geometry.boundingSphere.radius + geometry.boundingSphere.center.length();
-      const radiusBump = 0; // this.asteroidConfig.ringsPresent ? 1 : 0;
+    if (!geometry || !asteroidData) return;
+    const posVec = new Vector3(...position);
+    light.current.intensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
+    light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(asteroidData.radius * 10));
+    geometry.computeBoundingSphere();
+    const maxRadius = geometry.boundingSphere.radius + geometry.boundingSphere.center.length();
+    const radiusBump = 0; // config.ringsPresent ? 1 : 0;
 
-      if (shadows) {
-        light.current.castShadow = true;
-        light.current.shadow.mapSize.height = light.current.shadow.mapSize.width = shadowSize;
-        light.current.shadow.camera.near = maxRadius * (9 - radiusBump);
-        light.current.shadow.camera.far = maxRadius * (11 + radiusBump);
-        light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius * (1 + radiusBump);
-        light.current.shadow.camera.right = light.current.shadow.camera.top = maxRadius * (1 + radiusBump);
-        light.current.shadow.camera.updateProjectionMatrix();
-      }
+    if (shadows) {
+      light.current.castShadow = true;
+      light.current.shadow.mapSize.height = light.current.shadow.mapSize.width = shadowSize;
+      light.current.shadow.camera.near = maxRadius * (9 - radiusBump);
+      light.current.shadow.camera.far = maxRadius * (11 + radiusBump);
+      light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius * (1 + radiusBump);
+      light.current.shadow.camera.right = light.current.shadow.camera.top = maxRadius * (1 + radiusBump);
+      light.current.shadow.camera.updateProjectionMatrix();
     }
-  }, [ geometry ]);
+  }, [ geometry, asteroidData, position, shadows, shadowSize ]);
 
   // Zooms the camera to the correct location
+  const shouldZoomIn = zoomStatus === 'zooming-in' && geometry && controls && camera && !!asteroidData;
   useEffect(() => {
-    if (zoomed && !!geometry) {
-      setZoomFrom({
-        scene: controls.targetScene.position.clone(),
-        position: controls.object.position.clone(),
-        up: controls.object.up.clone()
-      });
+    if (!shouldZoomIn) return;
 
-      let panTo = new Vector3(...position);
-      panTo.negate();
-      controls.targetScene.position.copy(panTo);
-      controls.minDistance = asteroidData.radius * 1.2;
-      controls.maxDistance = asteroidData.radius * 4.0;
-      const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
-      controls.object.position.copy(zoomTo);
-      camera.near = 100;
-      camera.updateProjectionMatrix();
-    }
+    setZoomedFrom({
+      scene: controls.targetScene.position.clone(),
+      position: controls.object.position.clone(),
+      up: controls.object.up.clone()
+    });
+
+    // Pan the target scene to center the asteroid
+    let panTo = new Vector3(...position);
+    group.current?.position.copy(panTo);
+    panTo.negate();
+    gsap.to(controls.targetScene.position, {...panTo, duration: 2, ease: 'power4.out' });
+
+    // Update distances to maximize precision
+    controls.minDistance = asteroidData.radius * 1.2;
+    controls.maxDistance = asteroidData.radius * 4.0;
+
+    // Zoom in the camera to the asteroid
+    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
+    gsap.to(controls.object.position, {
+      ...zoomTo,
+      duration: 2,
+      ease: 'power4.out',
+      onComplete: () => {
+        controls.noPan = true;
+        camera.near = 100;
+        camera.updateProjectionMatrix();
+        updateZoomStatus('in');
+      }
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ geometry, zoomed ]);
+  }, [ shouldZoomIn ]);
 
   // Handle zooming back out
+  const shouldZoomOut = zoomStatus === 'zooming-out' && zoomedFrom && camera && controls;
   useEffect(() => {
-    if (!zoomed && !!zoomedFrom) {
-      controls.targetScene.position.copy(zoomedFrom.scene);
-      controls.minDistance = 0;
-      controls.maxDistance = 10 * constants.AU;
-      controls.object.position.copy(zoomedFrom.position);
-      controls.object.up.copy(zoomedFrom.up);
-      camera.near = 1000000;
-      camera.updateProjectionMatrix();
-      setZoomFrom();
-    }
-  }, [ zoomed, zoomedFrom ]);
+    if (!shouldZoomOut) return;
+
+    // Pan the scene back to the original orientation
+    gsap.to(controls.targetScene.position, {...zoomedFrom.scene, duration: 2, ease: 'power4.in' });
+    controls.minDistance = 0;
+    controls.maxDistance = 10 * constants.AU;
+
+    // Zoom the camera out and put it right side up
+    gsap.to(controls.object.up, {...zoomedFrom.up, duration: 2, ease: 'power4.in' });
+    gsap.to(controls.object.position, {
+      ...zoomedFrom.position,
+      duration: 2,
+      ease: 'power4.in',
+      onComplete: () => {
+        controls.noPan = false;
+        camera.near = 1000000;
+        camera.updateProjectionMatrix();
+        updateZoomStatus('out');
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ shouldZoomOut ]);
+
+  const shouldUpdatePosition = zoomStatus === 'in' && position && camera && controls;
+  useEffect(() => {
+    if (!shouldUpdatePosition) return;
+
+    let panTo = new Vector3(...position);
+    group.current?.position.copy(panTo);
+    panTo.negate();
+    controls.targetScene.position.copy(panTo);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ shouldUpdatePosition, position, asteroidData ]);
 
   return (
-    <group position={position} ref={group} >
+    <group ref={group} >
       <directionalLight ref={light} />
-      {!!geometry && !!materials && (
+      {geometry && materials && (
         <mesh
+          ref={mesh}
           material={materials}
           castShadow={shadows}
           receiveShadow={shadows}>

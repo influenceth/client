@@ -16,7 +16,6 @@ const SettingsManager = (props) => {
   useEffect(() => {
     if (skyboxVisible) {
       scene.background = skybox;
-      scene.background.encoding = 3000;
     } else {
       scene.background = null;
     }
