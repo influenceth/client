@@ -6,7 +6,7 @@ import useInterval from '~/hooks/useInterval';
 import useStore from '~/hooks/useStore';
 
 const StyledTime = styled.div`
-  cursor: pointer;
+  cursor: ${props => props.theme.cursors.active};
   max-height: 44px;
   overflow: hidden;
   transition: all 0.6s ease;

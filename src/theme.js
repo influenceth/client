@@ -1,3 +1,6 @@
+import cursor from '~/assets/cursor.png';
+import cursorActive from '~/assets/cursor-active.png';
+
 const theme = {
   colors: {
     main: '#36a7cd',
@@ -28,6 +31,10 @@ const theme = {
     mainText: '14px',
     detailText: '16px',
     featureText: '20px'
+  },
+  cursors: {
+    default: `url(${cursor}) 5 5, auto`,
+    active: `url(${cursorActive}) 5 5, auto`
   }
 };
 

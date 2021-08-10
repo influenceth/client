@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import styled from 'styled-components';
-import { useHistory } from 'react-router-dom';
 import { useWeb3React } from '@web3-react/core';
 import screenfull from 'screenfull';
 import Clipboard from 'react-clipboard.js';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
-import { MdContentCopy as CopyIcon } from 'react-icons/md';
 
 import useStore from '~/hooks/useStore';
 import Details from '~/components/Details';
@@ -53,7 +51,6 @@ const StyledClipboard = styled(Clipboard)`
 `;
 
 const Settinigs = (props) => {
-  const history = useHistory();
   const { account } = useWeb3React();
   const graphics = useStore(state => state.graphics);
   const setTextureSize = useStore(state => state.dispatchTextureSizeSet);
@@ -121,8 +118,8 @@ const Settinigs = (props) => {
                 Medium
               </Button>
               <Button
-                active={graphics.shadowSize === 4092}
-                onClick={() => setShadowSize(4092)}>
+                active={graphics.shadowSize === 4096}
+                onClick={() => setShadowSize(4096)}>
                 High
               </Button>
             </ControlGroup>

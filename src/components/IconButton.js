@@ -6,7 +6,6 @@ const StyledIconButton = styled.button`
   border: ${props => props.borderless ? '0px' : '1px'} solid ${props => props.theme.colors.main};
   background-color: transparent;
   border-radius: 2px;
-  cursor: pointer;
   color: ${props => props.theme.colors.main};
   font-family: 'Jura', sans-serif;
   font-size: 15px;

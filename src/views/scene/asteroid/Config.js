@@ -8,7 +8,8 @@ class Config {
   constructor(asteroid) {
     this.seedGen = new Seed(asteroid.seed);
     this.type = asteroid.spectralType;
-    this.radius = asteroid.radius;
+    this.radius = asteroid.radius
+    this.bonuses = asteroid.bonuses;
 
     return {
       cleaveCut: this._cleaveCut(),
@@ -144,7 +145,11 @@ class Config {
   }
 
   _ringsPresent() {
-    return true;
+    if (this.bonuses.some(b => b.name === 'Volatile3') && this.bonuses.some(b => b.type === 'yield' && b.yield > 1)) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   _ringsVariation() {

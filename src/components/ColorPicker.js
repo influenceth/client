@@ -8,7 +8,6 @@ const StyledColorPicker = styled.div`
 `;
 
 const Toggle = styled.div`
-  cursor: pointer;
   height: 30px;
   padding: 5px;
   width: 30px;

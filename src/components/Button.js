@@ -13,7 +13,6 @@ const StyledButton = styled.button`
     calc(100% - 9.5px) 100%,
     0 100%
   );
-  cursor: pointer;
   color: ${props => props.active ? 'white' : props.theme.colors.main};
   display: flex;
   font-family: 'Jura', sans-serif;

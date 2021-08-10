@@ -70,7 +70,7 @@ const Tab = styled.div`
 `;
 
 const Title = styled.h2`
-  cursor: pointer;
+  cursor: ${props => props.theme.cursors.active};
   font-size: 18px;
   height: 60px;
   line-height: 60px;

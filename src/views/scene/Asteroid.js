@@ -173,7 +173,7 @@ const Asteroid = (props) => {
     light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(asteroidData.radius * 10));
     geometry.computeBoundingSphere();
     const maxRadius = geometry.boundingSphere.radius + geometry.boundingSphere.center.length();
-    const radiusBump = 0; // config.ringsPresent ? 1 : 0;
+    const radiusBump = config.ringsPresent ? 1 : 0;
 
     if (shadows) {
       light.current.shadow.camera.near = maxRadius * (9 - radiusBump);
@@ -195,10 +195,6 @@ const Asteroid = (props) => {
       up: controls.object.up.clone()
     });
 
-    // Update distances to maximize precision
-    controls.minDistance = asteroidData.radius * 1.2;
-    controls.maxDistance = asteroidData.radius * 4.0;
-
     const panTo = new Vector3(...position);
     group.current?.position.copy(panTo);
     panTo.negate();
@@ -206,14 +202,7 @@ const Asteroid = (props) => {
 
     const timeline = gsap.timeline({
       defaults: { duration: 2, ease: 'power4.out' },
-      onComplete: () => {
-        controls.targetScene.position.copy(panTo);
-        controls.object.position.copy(zoomTo);
-        controls.noPan = true;
-        controls.object.near = 100;
-        controls.object.updateProjectionMatrix();
-        updateZoomStatus('in');
-      }
+      onComplete: () => updateZoomStatus('in')
     });
 
     // Pan the target scene to center the asteroid
@@ -223,6 +212,26 @@ const Asteroid = (props) => {
     timeline.to(controls.object.position, { ...zoomTo }, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomIn ]);
+
+  const shouldFinishZoomIn = zoomStatus === 'in' && controls && !!asteroidData;
+  useEffect(() => {
+    if (!shouldFinishZoomIn) return;
+
+    // Update distances to maximize precision
+    controls.minDistance = asteroidData.radius * 1.2;
+    controls.maxDistance = asteroidData.radius * 4.0;
+
+    const panTo = new Vector3(...position);
+    group.current?.position.copy(panTo);
+    panTo.negate();
+    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
+    controls.targetScene.position.copy(panTo);
+    controls.object.position.copy(zoomTo);
+    controls.noPan = true;
+    controls.object.near = 100;
+    controls.object.updateProjectionMatrix();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ shouldFinishZoomIn ]);
 
   // Handle zooming back out
   const shouldZoomOut = zoomStatus === 'zooming-out' && zoomedFrom && controls;
@@ -254,6 +263,7 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomOut ]);
 
+  // Updates controls and scene position when time or asteroid changes
   const shouldUpdatePosition = zoomStatus === 'in' && position && controls;
   useEffect(() => {
     if (!shouldUpdatePosition) return;

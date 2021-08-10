@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 const StyledMenu = styled.div`
-  cursor: pointer;
+  cursor: ${props => props.theme.cursors.active};
   margin-right: 10px;
   max-height: 44px;
   overflow: hidden;
