@@ -190,15 +190,18 @@ const AsteroidDetails = (props) => {
               <span>{utils.toRarity(asteroid.bonuses)}</span>
             </Rarity>
             <Data>
-              <GeneralData label="Owner" data={formatters.assetOwner(asteroid.owner)} />
+              <GeneralData label="Owner">{formatters.assetOwner(asteroid.owner)}</GeneralData>
               {sale && !asteroid.owner && (
-                <GeneralData label="Price" data={
-                  asteroidPrice ? <>{ethersUtils.formatEther(asteroidPrice)} <Ether /></> : <>... <Ether /></>
-                } />
+                <GeneralData label="Price">
+                  {asteroidPrice && <>{ethersUtils.formatEther(asteroidPrice)} <Ether /></>}
+                  {!asteroidPrice && <>... <Ether /></>}
+                </GeneralData>
               )}
-              <GeneralData label="Scan Status" data={scanStatusDesc()} />
+              <GeneralData label="Scan Status">{scanStatusDesc()}</GeneralData>
               {asteroid.owner && !asteroid.scanned && (
-                <GeneralData label="Scanning Boost" data={formatters.scanningBoost(asteroid.purchaseOrder)} />
+                <GeneralData label="Scanning Boost">
+                  {formatters.scanningBoost(asteroid.purchaseOrder)}
+                </GeneralData>
               )}
             </Data>
             <Controls>

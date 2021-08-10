@@ -66,31 +66,27 @@ const EccentricityFilter = (props) => {
         active={!!highlightActive.current}
         onClick={handleHighlightToggle} />
       <FilterSection>
-        <DataReadout
-          label="Min"
-          data={
-            <StyledInput
-              initialValue={initialValues.eccMin}
-              min={initialValues.eccMin}
-              max={initialValues.eccMax}
-              step={0.001}
-              onChange={(v) => setEccMin(Number(v))} />
-            } />
+        <DataReadout label="Min">
+          <StyledInput
+            initialValue={initialValues.eccMin}
+            min={initialValues.eccMin}
+            max={initialValues.eccMax}
+            step={0.001}
+            onChange={(v) => setEccMin(Number(v))} />
+        </DataReadout>
         {!!highlightActive.current && (
           <ColorPicker initialColor={colorFrom} onChange={(c) => setColorFrom(c)} />
         )}
       </FilterSection>
       <FilterSection>
-        <DataReadout
-          label="Max"
-          data={
-            <StyledInput
-              initialValue={initialValues.eccMax}
-              min={initialValues.eccMin}
-              max={initialValues.eccMax}
-              step={0.001}
-              onChange={(v) => setEccMax(Number(v))} />
-            } />
+        <DataReadout label="Max">
+          <StyledInput
+            initialValue={initialValues.eccMax}
+            min={initialValues.eccMin}
+            max={initialValues.eccMax}
+            step={0.001}
+            onChange={(v) => setEccMax(Number(v))} />
+        </DataReadout>
         {!!highlightActive.current && (
           <ColorPicker initialColor={colorTo} onChange={(c) => setColorTo(c)} />
         )}

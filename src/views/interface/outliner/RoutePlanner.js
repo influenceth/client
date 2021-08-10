@@ -129,7 +129,7 @@ const RoutePlanner = (props) => {
         {origin && <StyledAsteroidItem asteroid={origin} />}
         {!origin && <Message>Select an origin</Message>}
         <LinkLine>
-          {distance && <DataReadout label="Distance" data={`${Math.round(distance).toLocaleString()} km`} />}
+          {distance && <DataReadout label="Distance">{`${Math.round(distance).toLocaleString()} km`}</DataReadout>}
         </LinkLine>
         <AsteroidLabel>Destination</AsteroidLabel>
         {destination && <StyledAsteroidItem asteroid={destination} />}

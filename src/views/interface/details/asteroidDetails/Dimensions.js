@@ -43,37 +43,37 @@ const Dimensions = (props) => {
         <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="40" />
         </DimensionIcon>
-        <DimensionData label="Orbital Period" data={formatters.period(asteroid.orbital.a)} />
+        <DimensionData label="Orbital Period">{formatters.period(asteroid.orbital.a)}</DimensionData>
       </Dimension>
       <Dimension>
         <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="40" />
         </DimensionIcon>
-        <DimensionData label="Semi-major Axis" data={formatters.axis(asteroid.orbital.a)} />
+        <DimensionData label="Semi-major Axis">{formatters.axis(asteroid.orbital.a)}</DimensionData>
       </Dimension>
       <Dimension>
         <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="40" />
         </DimensionIcon>
-        <DimensionData label="Inclination" data={formatters.inclination(asteroid.orbital.i)} />
+        <DimensionData label="Inclination">{formatters.inclination(asteroid.orbital.i)}</DimensionData>
       </Dimension>
       <Dimension>
         <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="40" />
         </DimensionIcon>
-        <DimensionData label="Eccentricity" data={asteroid.orbital.e} />
+        <DimensionData label="Eccentricity">{asteroid.orbital.e}</DimensionData>
       </Dimension>
       <Dimension>
         <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="40" />
         </DimensionIcon>
-        <DimensionData label="Radius" data={formatters.radius(asteroid.radius)} />
+        <DimensionData label="Radius">{formatters.radius(asteroid.radius)}</DimensionData>
       </Dimension>
       <Dimension>
         <DimensionIcon viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="40" />
         </DimensionIcon>
-        <DimensionData label="Surface Area" data={formatters.surfaceArea(asteroid.radius)} />
+        <DimensionData label="Surface Area">{formatters.surfaceArea(asteroid.radius)}</DimensionData>
       </Dimension>
     </StyledDimensions>
   );

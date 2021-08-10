@@ -5,8 +5,9 @@ import { useCubeTexture } from '@react-three/drei';
 import useStore from '~/hooks/useStore';
 
 const SettingsManager = (props) => {
-  const { scene } = useThree();
+  const { scene, camera } = useThree();
   const skyboxVisible = useStore(state => state.graphics.skybox);
+  const fov = useStore(state => state.graphics.fov);
 
   // Import skybox textures
   const skybox = useCubeTexture([
@@ -20,6 +21,13 @@ const SettingsManager = (props) => {
       scene.background = null;
     }
   }, [ scene, skyboxVisible, skybox ]);
+
+  useEffect(() => {
+    if (fov && camera) {
+      camera.fov = fov;
+      camera.updateProjectionMatrix();
+    }
+  }, [ fov, camera ]);
 
   return null;
 };

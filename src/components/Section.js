@@ -120,7 +120,7 @@ const Section = (props) => {
     } else {
       gsap.to(content.current, {  maxHeight: '0vh', paddingBottom: '0px', duration: 0.25, ease: 'power1.out' });
     }
-  }, [ content.current, sectionSettings.expanded ]);
+  }, [ sectionSettings.expanded ]);
 
   return (
     <StyledSection {...props}>

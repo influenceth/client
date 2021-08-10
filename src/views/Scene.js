@@ -54,6 +54,7 @@ const Scene = (props) => {
 
   const zoomedFrom = useStore(state => state.asteroids.zoomedFrom);
   const setZoomedFrom = useStore(state => state.dispatchAsteroidZoomedFrom);
+  const statsOn = useStore(state => state.graphics.stats);
 
   useEffect(() => {
     if (!zoomedFrom) {
@@ -68,7 +69,7 @@ const Scene = (props) => {
 
   return (
     <StyledContainer>
-      {Number(process.env.REACT_APP_FPS) === 1 && (<Stats />)}
+      {statsOn && (<Stats />)}
       <Canvas {...glConfig} >
         <ContextBridge>
           <SettingsManager />

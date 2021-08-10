@@ -82,31 +82,27 @@ const InclinationFilter = (props) => {
         active={!!highlightActive.current}
         onClick={handleHighlightToggle} />
       <FilterSection>
-        <DataReadout
-          label="Min (deg)"
-          data={
-            <StyledInput
-              initialValue={initialValues.incMin}
-              min={initialValues.incMin}
-              max={initialValues.incMax}
-              step={0.01}
-              onChange={(v) => setIncMin(Number(v))} />
-            } />
+        <DataReadout label="Min (deg)">
+          <StyledInput
+            initialValue={initialValues.incMin}
+            min={initialValues.incMin}
+            max={initialValues.incMax}
+            step={0.01}
+            onChange={(v) => setIncMin(Number(v))} />
+        </DataReadout>
         {!!highlightActive.current && (
           <ColorPicker initialColor={colorFrom} onChange={(c) => setColorFrom(c)} />
         )}
       </FilterSection>
       <FilterSection>
-        <DataReadout
-          label="Max (deg)"
-          data={
-            <StyledInput
-              initialValue={initialValues.incMax}
-              min={initialValues.incMin}
-              max={initialValues.incMax}
-              step={0.01}
-              onChange={(v) => setIncMax(Number(v))} />
-            } />
+        <DataReadout label="Max (deg)">
+          <StyledInput
+            initialValue={initialValues.incMax}
+            min={initialValues.incMin}
+            max={initialValues.incMax}
+            step={0.01}
+            onChange={(v) => setIncMax(Number(v))} />
+        </DataReadout>
         {!!highlightActive.current && (
           <ColorPicker initialColor={colorTo} onChange={(c) => setColorTo(c)} />
         )}

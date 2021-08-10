@@ -27,7 +27,6 @@ if (!!window.Worker && typeof OffscreenCanvas !== 'undefined') {
 
 const Asteroid = (props) => {
   const controls = useThree(({ controls }) => controls);
-  const camera = useThree(({ camera }) => camera);
   const origin = useStore(state => state.asteroids.origin);
   const time = useStore(state => state.time.current);
   const mapSize = useStore(state => state.graphics.textureSize);
@@ -177,8 +176,6 @@ const Asteroid = (props) => {
     const radiusBump = 0; // config.ringsPresent ? 1 : 0;
 
     if (shadows) {
-      light.current.castShadow = true;
-      light.current.shadow.mapSize.height = light.current.shadow.mapSize.width = shadowSize;
       light.current.shadow.camera.near = maxRadius * (9 - radiusBump);
       light.current.shadow.camera.far = maxRadius * (11 + radiusBump);
       light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius * (1 + radiusBump);
@@ -270,7 +267,12 @@ const Asteroid = (props) => {
 
   return (
     <group ref={group} >
-      <directionalLight ref={light} />
+      <directionalLight
+        ref={light}
+        color={0xffeedd}
+        castShadow={shadows}
+        shadow-mapSize-height={shadowSize}
+        shadow-mapSize-width={shadowSize} />
       {geometry && materials && (
         <mesh
           ref={mesh}

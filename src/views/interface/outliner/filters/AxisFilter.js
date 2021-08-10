@@ -72,35 +72,33 @@ const AxisFilter = (props) => {
         active={!!highlightActive.current}
         onClick={handleHighlightToggle} />
       <FilterSection>
-        <DataReadout
-          label="Min (AU)"
-          data={
-            <>
-              <StyledInput
-                initialValue={initialValues.axisMin}
-                min={initialValues.axisMin}
-                max={initialValues.axisMax}
-                step={0.001}
-                onChange={(v) => setAxisMin(Number(v))} />
-              <Period>({formatters.period(axisMin)})</Period>
-            </>} />
+        <DataReadout label="Min (AU)">
+          <>
+            <StyledInput
+              initialValue={initialValues.axisMin}
+              min={initialValues.axisMin}
+              max={initialValues.axisMax}
+              step={0.001}
+              onChange={(v) => setAxisMin(Number(v))} />
+            <Period>({formatters.period(axisMin)})</Period>
+          </>
+        </DataReadout>
         {!!highlightActive.current && (
           <ColorPicker initialColor={colorFrom} onChange={(c) => setColorFrom(c)} />
         )}
       </FilterSection>
       <FilterSection>
-        <DataReadout
-          label="Max (AU)"
-          data={
-            <>
-              <StyledInput
-                initialValue={initialValues.axisMax}
-                min={initialValues.axisMin}
-                max={initialValues.axisMax}
-                step={0.001}
-                onChange={(v) => setAxisMax(Number(v))} />
-              <Period>({formatters.period(axisMax)})</Period>
-            </>} />
+        <DataReadout label="Max (AU)">
+          <>
+            <StyledInput
+              initialValue={initialValues.axisMax}
+              min={initialValues.axisMin}
+              max={initialValues.axisMax}
+              step={0.001}
+              onChange={(v) => setAxisMax(Number(v))} />
+            <Period>({formatters.period(axisMax)})</Period>
+          </>
+        </DataReadout>
         {!!highlightActive.current && (
           <ColorPicker initialColor={colorTo} onChange={(c) => setColorTo(c)} />
         )}

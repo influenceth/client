@@ -39,7 +39,7 @@ const useStore = create(persist((set, get) => ({
       pinned: true,
       wallet: { active: true, expanded: true },
       selectedAsteroid: { active: false, expanded: true },
-      filters: { active: false, expanded: true },
+      filters: { active: true, expanded: true },
       ownedAsteroids: { active: false, expanded: true },
       ownedCrew: { active: false, expanded: true },
       watchlist: { active: false, expanded: true },
@@ -48,10 +48,12 @@ const useStore = create(persist((set, get) => ({
     },
 
     graphics: {
+      lensflare: true,
       skybox: true,
       shadows: true,
-      shadowSize: 2048,
-      textureSize: 2048
+      shadowSize: 1024,
+      textureSize: 512,
+      fov: 75
     },
 
     dispatchOutlinerPinned: () => set(produce(state => {
@@ -79,12 +81,49 @@ const useStore = create(persist((set, get) => ({
       state.outliner[section].expanded = false;
     })),
 
+    dispatchTextureSizeSet: (size) => set(produce(state => {
+      state.graphics.textureSize = size;
+    })),
+
     dispatchSkyboxHidden: () => set(produce(state => {
       state.graphics.skybox = false;
     })),
 
     dispatchSkyboxUnhidden: () => set(produce(state => {
       state.graphics.skybox = true;
+    })),
+
+    dispatchLensflareHidden: () => set(produce(state => {
+      state.graphics.lensflare = false;
+    })),
+
+    dispatchLensflareUnhidden: () => set(produce(state => {
+      state.graphics.lensflare = true;
+    })),
+
+    dispatchShadowsOff: () => set(produce(state => {
+      state.graphics.shadows = false;
+    })),
+
+    dispatchShadowsOn: () => set(produce(state => {
+      state.graphics.shadows = true;
+    })),
+
+    dispatchShadowSizeSet: (size) => set(produce(state => {
+      state.graphics.shadowSize = size;
+    })),
+
+    dispatchFOVSet: (fov) => set(produce(state => {
+      if (fov < 45 || fov > 175) return;
+      state.graphics.fov = fov;
+    })),
+
+    dispatchStatsOn: () => set(produce(state => {
+      state.graphics.stats = true;
+    })),
+
+    dispatchStatsOff: () => set(produce(state => {
+      state.graphics.stats = false;
     })),
 
     dispatchOriginSelected: (i) => set(produce(state => {
@@ -187,6 +226,7 @@ const useStore = create(persist((set, get) => ({
       state.auth.token = null;
     }))
 }), {
+  version: 0,
   blacklist: [ 'time' ]
 }));
 

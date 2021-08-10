@@ -103,8 +103,8 @@ const TimeControl = (props) => {
           <MdFastForward />
         </IconButton>
       </Controls>
-      <DataReadout label="Adalia Time" data={adaliaTime} />
-      <DataReadout label="Actual Time" data={actualTime} />
+      <DataReadout label="Adalia Time">{adaliaTime}</DataReadout>
+      <DataReadout label="Actual Time">{actualTime}</DataReadout>
     </Section>
   );
 };

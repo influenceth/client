@@ -15,6 +15,10 @@ const StyledInput = styled.input`
   &:focus {
     outline: none;
   }
+
+  &:invalid {
+    border-bottom: 1px solid red;
+  }
 `;
 
 const NumberInput = (props) => {

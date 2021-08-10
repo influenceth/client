@@ -72,7 +72,7 @@ const Filters = (props) => {
   const [ filters, setFilters ] = useState({});
   const [ activeFilters, setActiveFilters ] = useState({
     name: false,
-    radius: false,
+    radius: true,
     spectralType: false,
     axis: false,
     inclination: false,
@@ -101,7 +101,6 @@ const Filters = (props) => {
     filterKeys[name].forEach(k => delete newFilters[k]);
     setFilters(newFilters);
     setActiveFilters(Object.assign({}, activeFilters, { [name]: false }));
-    console.log(activeHighlight, name);
     if (activeHighlight?.field === name) updateHighlights(null);
   };
 

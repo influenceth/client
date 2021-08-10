@@ -7,6 +7,7 @@ import Outliner from './interface/Outliner';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import WatchlistTable from './interface/details/WatchlistTable';
 import AsteroidDetails from './interface/details/AsteroidDetails';
+import Settings from './interface/details/Settings';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -52,6 +53,9 @@ const Interface = () => {
           </Route>
           <Route path="/asteroids/:i">
             <AsteroidDetails />
+          </Route>
+          <Route path="/settings">
+            <Settings />
           </Route>
         </Switch>
         <MainMenu />

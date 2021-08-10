@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import screenfull from 'screenfull';
 import { AiOutlineSetting, AiOutlinePushpin, AiFillPushpin } from 'react-icons/ai';
@@ -19,6 +20,7 @@ const StyledSystemControls = styled.div`
 `;
 
 const SystemControls = (props) => {
+  const history = useHistory();
   const outlinerPinned = useStore(state => state.outliner.pinned);
   const dispatchOutlinerPinned = useStore(state => state.dispatchOutlinerPinned);
   const dispatchOutlinerUnpinned = useStore(state => state.dispatchOutlinerUnpinned);
@@ -83,6 +85,7 @@ const SystemControls = (props) => {
       )}
       <IconButton
         data-tip="Settings"
+        onClick={() => history.push('/settings')}
         borderless>
         <AiOutlineSetting />
       </IconButton>

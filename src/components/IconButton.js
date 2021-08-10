@@ -18,18 +18,23 @@ const StyledIconButton = styled.button`
   margin-right: 10px;
 
   &:disabled {
-    color: ${props => props.theme.colors.disabledText};
     border-color: ${props => props.theme.colors.disabledText};
+    color: ${props => props.theme.colors.disabledText};
   }
 
   &:hover {
-    color: white;
     background-image: linear-gradient(120deg, rgba(54, 167, 205, 0.1), rgba(54, 167, 205, 0.25));
+    color: white;
+  }
+
+  &:active {
+    background-color: ${props => props.theme.colors.main};
+    color: white;
   }
 
   &:disabled:hover {
-    color: ${props => props.theme.colors.disabledText};
     background-image: none;
+    color: ${props => props.theme.colors.disabledText};
   }
 
   & > svg {

@@ -101,14 +101,14 @@ const SelectedAsteroid = (props) => {
       )}
       {asteroid && (
         <AsteroidData>
-          <DataReadout label="Current Owner" data={formatters.assetOwner(asteroid.owner)} />
-          <DataReadout label="Spectral Type" data={formatters.spectralType(asteroid.spectralType)} />
-          <DataReadout label="Radius" data={formatters.radius(asteroid.radius)} />
-          <DataReadout label="Surface Area" data={formatters.surfaceArea(asteroid.radius)} />
-          <DataReadout label="Orbital Period" data={formatters.period(asteroid.orbital.a)} />
-          <DataReadout label="Semi-major Axis" data={formatters.axis(asteroid.orbital.a)} />
-          <DataReadout label="Inclination" data={formatters.inclination(asteroid.orbital.i)} />
-          <DataReadout label="Eccentricity" data={asteroid.orbital.e} />
+          <DataReadout label="Current Owner">{formatters.assetOwner(asteroid.owner)}</DataReadout>
+          <DataReadout label="Spectral Type">{formatters.spectralType(asteroid.spectralType)}</DataReadout>
+          <DataReadout label="Radius">{formatters.radius(asteroid.radius)}</DataReadout>
+          <DataReadout label="Surface Area">{formatters.surfaceArea(asteroid.radius)}</DataReadout>
+          <DataReadout label="Orbital Period">{formatters.period(asteroid.orbital.a)}</DataReadout>
+          <DataReadout label="Semi-major Axis">{formatters.axis(asteroid.orbital.a)}</DataReadout>
+          <DataReadout label="Inclination">{formatters.inclination(asteroid.orbital.i)}</DataReadout>
+          <DataReadout label="Eccentricity">{asteroid.orbital.e}</DataReadout>
           {asteroid.bonuses?.length > 0 && (
             <Bonuses>
               {asteroid.bonuses.map(b => <BonusBadge bonus={b} key={b.type} />)}

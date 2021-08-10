@@ -82,33 +82,31 @@ const RadiusFilter = (props) => {
         active={!!highlightActive.current}
         onClick={handleHighlightToggle} />
       <FilterSection>
-        <DataReadout
-          label="Min (m)"
-          data={
-            <>
-              <StyledInput
-                initialValue={initialValues.radiusMin}
-                min={initialValues.radiusMin}
-                max={initialValues.radiusMax}
-                onChange={(v) => setRadiusMin(Number(v))} />
-              <Price>({!!sale ? formatters.asteroidPrice(radiusMin, sale) : '...'} <Ether />)</Price>
-            </>} />
+        <DataReadout label="Min (m)">
+          <>
+            <StyledInput
+              initialValue={initialValues.radiusMin}
+              min={initialValues.radiusMin}
+              max={initialValues.radiusMax}
+              onChange={(v) => setRadiusMin(Number(v))} />
+            <Price>({!!sale ? formatters.asteroidPrice(radiusMin, sale) : '...'} <Ether />)</Price>
+          </>
+        </DataReadout>
         {!!highlightActive.current && (
           <ColorPicker initialColor={colorFrom} onChange={(c) => setColorFrom(c)} />
         )}
       </FilterSection>
       <FilterSection>
-        <DataReadout
-          label="Max (m)"
-          data={
-            <>
-              <StyledInput
-                initialValue={initialValues.radiusMax}
-                min={initialValues.radiusMin}
-                max={initialValues.radiusMax}
-                onChange={(v) => setRadiusMax(Number(v))} />
-              <Price>({!!sale ? formatters.asteroidPrice(radiusMax, sale) : '...'} <Ether />)</Price>
-            </>} />
+        <DataReadout label="Max (m)">
+          <>
+            <StyledInput
+              initialValue={initialValues.radiusMax}
+              min={initialValues.radiusMin}
+              max={initialValues.radiusMax}
+              onChange={(v) => setRadiusMax(Number(v))} />
+            <Price>({!!sale ? formatters.asteroidPrice(radiusMax, sale) : '...'} <Ether />)</Price>
+          </>
+        </DataReadout>
         {!!highlightActive.current && (
           <ColorPicker initialColor={colorTo} onChange={(c) => setColorTo(c)} />
         )}

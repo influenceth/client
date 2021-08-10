@@ -4,6 +4,7 @@ import { useThree, useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import { Lensflare, LensflareElement } from '~/lib/graphics/Lensflare';
 
+import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import config from './star/lensflareConfig';
 
@@ -22,6 +23,7 @@ const Star = (props) => {
     `${path}star1.png`
   ]);
 
+  const lensflareOn = useStore(state => state.graphics.lensflare);
   const [ alpha, setAlpha ] = useState(0);
   const [ size, setSize ] = useState(0);
 
@@ -61,7 +63,7 @@ const Star = (props) => {
         <sphereGeometry args={[ 500000000, 10, 10 ]} />
         <meshBasicMaterial color="white" depthWrite={false} />
       </mesh>
-      {Number(process.env.REACT_APP_DISABLE_LENSFLARE) === 0 && <primitive object={lensflare} />}
+      {lensflareOn && <primitive object={lensflare} />}
     </group>
   )
 };

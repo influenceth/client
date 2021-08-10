@@ -5,16 +5,16 @@ import ReactTooltip from 'react-tooltip';
 const StyledButton = styled.button`
   align-items: center;
   border: 1px solid ${props => props.theme.colors.main};
-  background-color: black;
+  background-color: ${props => props.active ? props.theme.colors.main : 'black'};
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(100% - 11px),
-    calc(100% - 11px) 100%,
+    100% calc(100% - 9.5px),
+    calc(100% - 9.5px) 100%,
     0 100%
   );
   cursor: pointer;
-  color: ${props => props.theme.colors.main};
+  color: ${props => props.active ? 'white' : props.theme.colors.main};
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: 15px;
@@ -22,6 +22,7 @@ const StyledButton = styled.button`
   transition: all 300ms ease;
   padding: 0 10px;
   position: relative;
+  min-width: 100px;
   width: 150px;
 
   &:disabled {
@@ -34,13 +35,18 @@ const StyledButton = styled.button`
   }
 
   &:hover {
-    color: white;
     background-image: linear-gradient(120deg, rgba(54, 167, 205, 0.1), rgba(54, 167, 205, 0.25));
+    color: white;
+  }
+
+  &:active {
+    background-color: ${props => props.theme.colors.main};
+    color: white;
   }
 
   &:disabled:hover {
-    color: ${props => props.theme.colors.disabledText};
     background-image: none;
+    color: ${props => props.theme.colors.disabledText};
   }
 
   & > * {
@@ -49,11 +55,11 @@ const StyledButton = styled.button`
 `;
 
 const Corner = styled.svg`
-  bottom: 0;
+  bottom: -1px;
   height: 10px;
   margin-right: 0;
   position: absolute;
-  right: 0;
+  right: -1px;
   stroke: ${props => props.theme.colors.main};
   stroke-width: 1px;
   width: 10px;

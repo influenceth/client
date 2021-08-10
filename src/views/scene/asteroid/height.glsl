@@ -90,7 +90,10 @@ float getDisplacement(vec3 p) {
 // Generates overall topography, hills, cliffs, etc.
 float getTopography(vec3 p) {
   p = p * uTopoFreq + uSeed;
-  return recursiveCNoise(p, uTopoDetail);
+  float topo = recursiveCNoise(p, uTopoDetail);
+  float uniformNoise = fract(sin(dot(p.xy ,vec2(12.9898,78.233))) * 43758.5453);
+  float noiseWeight = 0.005;
+  return ((1.0 - noiseWeight) * topo) + (noiseWeight * uniformNoise);
 }
 
 // Generates craters and combines with topography

@@ -31,7 +31,7 @@ const DataReadout = (props) => {
   return (
     <StyledDataReadout {...props}>
       <Label>{props.label || ''}</Label>
-      <Data>{props.data || ''}</Data>
+      <Data>{props.children}</Data>
     </StyledDataReadout>
   );
 };
