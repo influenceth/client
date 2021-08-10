@@ -38,10 +38,12 @@ const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
 const Time = (props) => {
   const time = useStore(state => state.time.current);
   const autoUpdating = useStore(state => state.time.autoUpdating);
+  const zoomStatus = useStore(state => state.asteroids.zoomStatus);
   const dispatchTimeUpdated = useStore(state => state.dispatchTimeUpdated);
-  const displayTime = time - diff;
 
+  const displayTime = time - diff;
   const currentTime = () => ((Date.now() / 1000) - START_TIMESTAMP) / 3600;
+  const increment = zoomStatus !== 'out' ? 1000 / 30 : 10000;
 
   // Update time once immediately upon launching
   useEffect(() => {
@@ -51,7 +53,7 @@ const Time = (props) => {
   // Automatically updates the in-game time once per second unless auto-updates are off
   useInterval(() => {
     if (autoUpdating) dispatchTimeUpdated(currentTime());
-  }, 1000 / 30);
+  }, increment);
 
   return (
     <StyledTime {...props}>

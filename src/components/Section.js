@@ -1,6 +1,7 @@
+import { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { MdClear } from 'react-icons/md';
-import { useSpring, animated } from 'react-spring';
+import gsap from 'gsap';
 
 import useStore from '~/hooks/useStore';
 import IconButton from './IconButton';
@@ -31,11 +32,12 @@ const StyledSection = styled.div`
   }
 `;
 
-const Content = styled(animated.div)`
+const Content = styled.div`
   display: flex;
   flex-direction: column;
+  max-height: 0vh;
   overflow: hidden;
-  transition: all 0.3s ease;
+  padding-bottom: 0px;
 `;
 
 const Tab = styled.div`
@@ -96,6 +98,8 @@ const Section = (props) => {
   const dispatchOutlinerSectionCollapsed = useStore(state => state.dispatchOutlinerSectionCollapsed);
   const dispatchOutlinerSectionDeactivated = useStore(state => state.dispatchOutlinerSectionDeactivated);
 
+  const content = useRef();
+
   const toggleMinimize = () => {
     if (sectionSettings?.expanded) {
       dispatchOutlinerSectionCollapsed(props.name);
@@ -109,14 +113,14 @@ const Section = (props) => {
     dispatchOutlinerSectionDeactivated(props.name);
   };
 
-  const animContent = useSpring({
-    from: { maxHeight: '0vh', paddingBottom: '0px' },
-    to: {
-      maxHeight: sectionSettings.expanded ? '40vh' : '0vh',
-      paddingBottom: sectionSettings.expanded ? '20px' : '0px'
-    },
-    config: { duration: 250, clamp: true }
-  });
+  useEffect(() => {
+    if (!content?.current) return;
+    if (sectionSettings.expanded) {
+      gsap.to(content.current, {  maxHeight: '40vh', paddingBottom: '20px', duration: 0.25, ease: 'power1.in' });
+    } else {
+      gsap.to(content.current, {  maxHeight: '0vh', paddingBottom: '0px', duration: 0.25, ease: 'power1.out' });
+    }
+  }, [ content.current, sectionSettings.expanded ]);
 
   return (
     <StyledSection {...props}>
@@ -125,7 +129,7 @@ const Section = (props) => {
       </Tab>
       {props.title && <Title onClick={toggleMinimize}>{props.title}</Title>}
       <CloseButton onClick={closeSection} borderless><MdClear /></CloseButton>
-      <Content style={animContent}>
+      <Content ref={content}>
         {props.children}
       </Content>
     </StyledSection>

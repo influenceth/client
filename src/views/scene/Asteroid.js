@@ -188,7 +188,7 @@ const Asteroid = (props) => {
   }, [ geometry, asteroidData, position, shadows, shadowSize ]);
 
   // Zooms the camera to the correct location
-  const shouldZoomIn = zoomStatus === 'zooming-in' && geometry && controls && camera && !!asteroidData;
+  const shouldZoomIn = zoomStatus === 'zooming-in' && controls && !!asteroidData;
   useEffect(() => {
     if (!shouldZoomIn) return;
 
@@ -198,59 +198,66 @@ const Asteroid = (props) => {
       up: controls.object.up.clone()
     });
 
-    // Pan the target scene to center the asteroid
-    let panTo = new Vector3(...position);
-    group.current?.position.copy(panTo);
-    panTo.negate();
-    gsap.to(controls.targetScene.position, {...panTo, duration: 2, ease: 'power4.out' });
-
     // Update distances to maximize precision
     controls.minDistance = asteroidData.radius * 1.2;
     controls.maxDistance = asteroidData.radius * 4.0;
 
-    // Zoom in the camera to the asteroid
+    const panTo = new Vector3(...position);
+    group.current?.position.copy(panTo);
+    panTo.negate();
     const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
-    gsap.to(controls.object.position, {
-      ...zoomTo,
-      duration: 2,
-      ease: 'power4.out',
+
+    const timeline = gsap.timeline({
+      defaults: { duration: 2, ease: 'power4.out' },
       onComplete: () => {
+        controls.targetScene.position.copy(panTo);
+        controls.object.position.copy(zoomTo);
         controls.noPan = true;
-        camera.near = 100;
-        camera.updateProjectionMatrix();
+        controls.object.near = 100;
+        controls.object.updateProjectionMatrix();
         updateZoomStatus('in');
       }
     });
+
+    // Pan the target scene to center the asteroid
+    timeline.to(controls.targetScene.position, { ...panTo }, 0);
+
+    // Zoom in the camera to the asteroid
+    timeline.to(controls.object.position, { ...zoomTo }, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomIn ]);
 
   // Handle zooming back out
-  const shouldZoomOut = zoomStatus === 'zooming-out' && zoomedFrom && camera && controls;
+  const shouldZoomOut = zoomStatus === 'zooming-out' && zoomedFrom && controls;
   useEffect(() => {
     if (!shouldZoomOut) return;
 
-    // Pan the scene back to the original orientation
-    gsap.to(controls.targetScene.position, {...zoomedFrom.scene, duration: 2, ease: 'power4.in' });
     controls.minDistance = 0;
     controls.maxDistance = 10 * constants.AU;
 
-    // Zoom the camera out and put it right side up
-    gsap.to(controls.object.up, {...zoomedFrom.up, duration: 2, ease: 'power4.in' });
-    gsap.to(controls.object.position, {
-      ...zoomedFrom.position,
-      duration: 2,
-      ease: 'power4.in',
+    const timeline = gsap.timeline({
+      defaults: { duration: 2, ease: 'power4.in' },
       onComplete: () => {
+        controls.targetScene.position.copy(zoomedFrom.scene);
+        controls.object.position.copy(zoomedFrom.position);
+        controls.object.up.copy(zoomedFrom.up);
         controls.noPan = false;
-        camera.near = 1000000;
-        camera.updateProjectionMatrix();
+        controls.object.near = 1000000;
+        controls.object.updateProjectionMatrix();
         updateZoomStatus('out');
       }
     });
+
+    // Pan the scene back to the original orientation
+    timeline.to(controls.targetScene.position, { ...zoomedFrom.scene }, 0);
+
+    // Zoom the camera out and put it right side up
+    timeline.to(controls.object.position, { ...zoomedFrom.position }, 0);
+    timeline.to(controls.object.up, { ...zoomedFrom.up }, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomOut ]);
 
-  const shouldUpdatePosition = zoomStatus === 'in' && position && camera && controls;
+  const shouldUpdatePosition = zoomStatus === 'in' && position && controls;
   useEffect(() => {
     if (!shouldUpdatePosition) return;
 

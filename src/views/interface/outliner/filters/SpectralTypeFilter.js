@@ -20,7 +20,7 @@ const SpectralType = styled.div`
   display: flex;
 `;
 
-const SpectralTypesFilter = (props) => {
+const SpectralTypeFilter = (props) => {
   const { onChange } = props;
 
   const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
@@ -52,7 +52,7 @@ const SpectralTypesFilter = (props) => {
   };
 
   useEffect(() => {
-    if (onChange) onChange({ spectralTypes: types.join(',') });
+    if (onChange) onChange({ spectralType: types.join(',') });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ types ]);
 
@@ -108,4 +108,4 @@ const SpectralTypesFilter = (props) => {
   );
 };
 
-export default SpectralTypesFilter;
+export default SpectralTypeFilter;

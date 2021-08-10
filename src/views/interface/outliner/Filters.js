@@ -16,7 +16,7 @@ import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
 import NameFilter from './filters/NameFilter';
 import RadiusFilter from './filters/RadiusFilter';
-import SpectralTypesFilter from './filters/SpectralTypesFilter';
+import SpectralTypeFilter from './filters/SpectralTypeFilter';
 import AxisFilter from './filters/AxisFilter';
 import InclinationFilter from './filters/InclinationFilter';
 import EccentricityFilter from './filters/EccentricityFilter';
@@ -25,7 +25,7 @@ import OwnershipFilter from './filters/OwnershipFilter';
 const filterKeys = {
   name: [ 'name' ],
   radius: [ 'radiusMin', 'radiusMax' ],
-  spectralTypes: [ 'spectralTypes' ],
+  spectralType: [ 'spectralType' ],
   axis: [ 'axisMin', 'axisMax' ],
   inclination: [ 'incMin', 'incMax' ],
   eccentricity: [ 'eccMin', 'eccMax' ],
@@ -65,6 +65,7 @@ const FilterGroup = styled.div`
 `;
 
 const Filters = (props) => {
+  const activeHighlight = useStore(state => state.asteroids.highlight);
   const updateFilters = useStore(state => state.dispatchFiltersUpdated);
   const updateHighlights = useStore(state => state.dispatchHighlightUpdated);
 
@@ -72,7 +73,7 @@ const Filters = (props) => {
   const [ activeFilters, setActiveFilters ] = useState({
     name: false,
     radius: false,
-    spectralTypes: false,
+    spectralType: false,
     axis: false,
     inclination: false,
     eccentricity: false,
@@ -100,6 +101,8 @@ const Filters = (props) => {
     filterKeys[name].forEach(k => delete newFilters[k]);
     setFilters(newFilters);
     setActiveFilters(Object.assign({}, activeFilters, { [name]: false }));
+    console.log(activeHighlight, name);
+    if (activeHighlight?.field === name) updateHighlights(null);
   };
 
   const onFiltersChange = (v) => {
@@ -126,8 +129,8 @@ const Filters = (props) => {
         </IconButton>
         <IconButton
           data-tip={'Filter by Spectral Type'}
-          onClick={() => activeFilters.spectralTypes ? turnOffFilter('spectralTypes') : turnOnFilter('spectralTypes')}
-          active={activeFilters.spectralTypes}>
+          onClick={() => activeFilters.spectralType ? turnOffFilter('spectralType') : turnOnFilter('spectralType')}
+          active={activeFilters.spectralType}>
           <SpectralIcon />
         </IconButton>
         <IconButton
@@ -158,7 +161,7 @@ const Filters = (props) => {
       <StyledFilters>
         {activeFilters.name && <FilterGroup><NameFilter onChange={onFiltersChange} /></FilterGroup>}
         {activeFilters.radius && <FilterGroup><RadiusFilter onChange={onFiltersChange} /></FilterGroup>}
-        {activeFilters.spectralTypes && <FilterGroup><SpectralTypesFilter onChange={onFiltersChange} /></FilterGroup>}
+        {activeFilters.spectralType && <FilterGroup><SpectralTypeFilter onChange={onFiltersChange} /></FilterGroup>}
         {activeFilters.axis && <FilterGroup><AxisFilter onChange={onFiltersChange} /></FilterGroup>}
         {activeFilters.inclination && <FilterGroup><InclinationFilter onChange={onFiltersChange} /></FilterGroup>}
         {activeFilters.eccentricity && <FilterGroup><EccentricityFilter onChange={onFiltersChange} /></FilterGroup>}

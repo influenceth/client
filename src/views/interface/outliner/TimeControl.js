@@ -17,7 +17,7 @@ const Controls = styled.div`
   padding-bottom: 25px;
 `;
 
-const speeds = [ 0, 0.0025, 0.005, 0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 1.28, 2.56, 5.12 ];
+const speeds = [ 0, 0.001, 0.0025, 0.005, 0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 1.28, 2.56, 5.12 ];
 
 const TimeControl = (props) => {
   const [ speed, setSpeed ] = useState(0);
@@ -45,7 +45,7 @@ const TimeControl = (props) => {
 
   const changeSpeed = (direction) => {
     const newSpeed = speeds[Math.abs(speedSetting + direction)];
-    if (newSpeed) setSpeedSetting(speedSetting + direction);
+    if (Number.isFinite(newSpeed)) setSpeedSetting(speedSetting + direction);
   };
 
   useEffect(() => {
