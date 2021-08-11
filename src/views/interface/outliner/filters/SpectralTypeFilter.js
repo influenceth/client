@@ -4,7 +4,6 @@ import { SPECTRAL_TYPES } from 'influence-utils';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 
 import useStore from '~/hooks/useStore';
-
 import IconButton from '~/components/IconButton'
 import ColorPicker from '~/components/ColorPicker';
 import Highlighter from './Highlighter';
