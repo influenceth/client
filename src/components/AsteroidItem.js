@@ -21,7 +21,7 @@ const StyledAsteroidItem = styled.li`
   }
 
   &{Description} {
-    color: ${p => p.selected ? props.theme.colors.main : 'inherit'};
+    color: ${p => p.selected ? p.theme.colors.main : 'inherit'};
   }
 `;
 
@@ -40,7 +40,7 @@ const Controls = styled.div`
 `;
 
 const RarityBadge = styled.span`
-  color: ${props => theme.colors.rarity[props.rarity]};
+  color: ${p => theme.colors.rarity[p.rarity]};
 `;
 
 const AsteroidItem = (props) => {

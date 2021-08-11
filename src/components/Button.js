@@ -5,7 +5,7 @@ import ReactTooltip from 'react-tooltip';
 const StyledButton = styled.button`
   align-items: center;
   border: 1px solid ${p => p.theme.colors.main};
-  background-color: ${p => p.active ? props.theme.colors.main : 'transparent'};
+  background-color: ${p => p.active ? p.theme.colors.main : 'transparent'};
   clip-path: polygon(
     0 0,
     100% 0,
@@ -13,7 +13,7 @@ const StyledButton = styled.button`
     calc(100% - 9.5px) 100%,
     0 100%
   );
-  color: ${p => p.active ? 'white' : props.theme.colors.main};
+  color: ${p => p.active ? 'white' : p.theme.colors.main};
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: 15px;

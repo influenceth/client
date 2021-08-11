@@ -29,11 +29,11 @@ const StyledBonusBadge = styled.div`
   width: 30px;
 
   & > svg {
-    fill: ${p => p.theme.colors.bonus[`level${props.level}`]};
+    fill: ${p => p.theme.colors.bonus[`level${p.level}`]};
   }
 
   &:hover {
-    background-color: ${p => p.theme.colors.bonus[`level${props.level}`]};
+    background-color: ${p => p.theme.colors.bonus[`level${p.level}`]};
 
     & > svg {
       fill: black;

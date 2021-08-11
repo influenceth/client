@@ -44,14 +44,14 @@ const Rarity = styled.div`
   margin: 10px 15px;
 
   & span {
-    color: ${p => p.theme.colors.rarity[props.rarity]};
+    color: ${p => p.theme.colors.rarity[p.rarity]};
     font-size: ${p => p.theme.fontSizes.featureText};
     line-height: ${p => p.theme.fontSizes.featureText};
     margin-left: 10px;
   }
 
   & div {
-    background-color: ${p => p.theme.colors.rarity[props.rarity]};
+    background-color: ${p => p.theme.colors.rarity[p.rarity]};
     border-radius: 50%;
     height: ${p => p.theme.fontSizes.featureText};
     width: ${p => p.theme.fontSizes.featureText};
