@@ -28,8 +28,8 @@ const OwnershipType = styled.div`
 const OwnershipFilter = (props) => {
   const { onChange } = props;
   const { account } = useWeb3React();
-  const highlight = useStore(state => state.asteroids.highlight);
-  const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
+  const highlight = useStore(s => s.asteroids.highlight);
+  const updateHighlight = useStore(s => s.dispatchHighlightUpdated);
 
   const [ highlightActive, setHighlightActive ] = useState(false);
   const [ types, setTypes ] = useState(initialValues);

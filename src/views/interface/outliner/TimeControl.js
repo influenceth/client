@@ -23,10 +23,10 @@ const TimeControl = (props) => {
   const [ speed, setSpeed ] = useState(0);
   const [ speedSetting, setSpeedSetting ] = useState(0);
   const [ playing, setPlaying ] = useState(false);
-  const time = useStore(state => state.time.current);
-  const dispatchTimeUpdated = useStore(state => state.dispatchTimeUpdated);
-  const dispatchTimeControled = useStore(state => state.dispatchTimeControled);
-  const dispatchTimeUncontrolled = useStore(state => state.dispatchTimeUncontrolled);
+  const time = useStore(s => s.time.current);
+  const dispatchTimeUpdated = useStore(s => s.dispatchTimeUpdated);
+  const dispatchTimeControled = useStore(s => s.dispatchTimeControled);
+  const dispatchTimeUncontrolled = useStore(s => s.dispatchTimeUncontrolled);
 
   const play = () => {
     setPlaying(true);

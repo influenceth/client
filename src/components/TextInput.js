@@ -4,11 +4,11 @@ import styled from 'styled-components';
 const StyledInput = styled.input`
   background-color: transparent;
   border: 0px;
-  border-bottom: 1px solid ${props => props.theme.colors.main};
-  color: ${props => props.theme.colors.mainText};
+  border-bottom: 1px solid ${p => p.theme.colors.main};
+  color: ${p => p.theme.colors.mainText};
   font-family: 'Jura', sans-serif;
-  font-size: ${props => props.theme.fontSizes.mainText};
-  text-align: ${props => props.format === 'numeric' ? 'right' : 'left'};
+  font-size: ${p => p.theme.fontSizes.mainText};
+  text-align: ${p => p.format === 'numeric' ? 'right' : 'left'};
   height: 28px;
   padding: 0 5px;
 

@@ -41,10 +41,10 @@ const SelectedAsteroid = (props) => {
   const watchAsteroid = useWatchAsteroid();
   const unWatchAsteroid = useUnWatchAsteroid();
 
-  const watchlistActive = useStore(state => state.outliner.watchlist.active);
-  const zoomStatus = useStore(state => state.asteroids.zoomStatus);
-  const clearOrigin = useStore(state => state.dispatchOriginCleared);
-  const updateZoomStatus = useStore(state => state.dispatchZoomStatusChanged);
+  const watchlistActive = useStore(s => s.outliner.watchlist.active);
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const clearOrigin = useStore(s => s.dispatchOriginCleared);
+  const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const [ inWatchlist, setInWatchlist ] = useState(false);
 

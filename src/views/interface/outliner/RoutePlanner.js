@@ -25,29 +25,29 @@ const AsteroidList = styled.ul`
 `;
 
 const AsteroidLabel = styled.li`
-  border-top: 1px solid ${props => props.theme.colors.mainBorder};
-  border-left: 1px solid ${props => props.theme.colors.mainBorder};
-  border-right: 1px solid ${props => props.theme.colors.mainBorder};
+  border-top: 1px solid ${p => p.theme.colors.mainBorder};
+  border-left: 1px solid ${p => p.theme.colors.mainBorder};
+  border-right: 1px solid ${p => p.theme.colors.mainBorder};
   border-radius: 3px 3px 0 0 ;
-  color: ${props => props.theme.colors.secondaryText};
-  background-color: ${props => props.theme.colors.contentHighlight};
+  color: ${p => p.theme.colors.secondaryText};
+  background-color: ${p => p.theme.colors.contentHighlight};
   height: 30px;
   line-height: 30px;
   padding-left: 10px;
 `;
 
 const StyledAsteroidItem = styled(AsteroidItem)`
-  border-bottom: 1px solid ${props => props.theme.colors.mainBorder};
-  border-left: 1px solid ${props => props.theme.colors.mainBorder};
-  border-right: 1px solid ${props => props.theme.colors.mainBorder};
+  border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
+  border-left: 1px solid ${p => p.theme.colors.mainBorder};
+  border-right: 1px solid ${p => p.theme.colors.mainBorder};
   border-radius: 0 0 3px 3px;
   padding-left: 10px;
 `;
 
 const Message = styled.li`
-  border-bottom: 1px solid ${props => props.theme.colors.mainBorder};
-  border-left: 1px solid ${props => props.theme.colors.mainBorder};
-  border-right: 1px solid ${props => props.theme.colors.mainBorder};
+  border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
+  border-left: 1px solid ${p => p.theme.colors.mainBorder};
+  border-right: 1px solid ${p => p.theme.colors.mainBorder};
   border-radius: 0 0 3px 3px;
   padding-left: 10px;
   height: 40px;
@@ -55,7 +55,7 @@ const Message = styled.li`
 `;
 
 const LinkLine = styled.li`
-  border-left: 1px solid ${props => props.theme.colors.mainBorder};
+  border-left: 1px solid ${p => p.theme.colors.mainBorder};
   height: 40px;
   line-height: 40px;
   margin-left: 30px;
@@ -64,15 +64,15 @@ const LinkLine = styled.li`
 
 const RoutePlanner = (props) => {
   const [ distance, setDistance ] = useState(null);
-  const time = useStore(state => state.time.current);
-  const originId = useStore(state => state.asteroids.origin);
-  const destinationId = useStore(state => state.asteroids.destination);
+  const time = useStore(s => s.time.current);
+  const originId = useStore(s => s.asteroids.origin);
+  const destinationId = useStore(s => s.asteroids.destination);
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
-  const dispatchOriginCleared = useStore(state => state.dispatchOriginCleared);
-  const dispatchDestinationCleared = useStore(state => state.dispatchDestinationCleared);
-  const dispatchOriginSelected = useStore(state => state.dispatchOriginSelected);
-  const dispatchDestinationSelected = useStore(state => state.dispatchDestinationSelected);
+  const dispatchOriginCleared = useStore(s => s.dispatchOriginCleared);
+  const dispatchDestinationCleared = useStore(s => s.dispatchDestinationCleared);
+  const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
+  const dispatchDestinationSelected = useStore(s => s.dispatchDestinationSelected);
 
   useEffect(() => {
     if (!origin || !destination) {

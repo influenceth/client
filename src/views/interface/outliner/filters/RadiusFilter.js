@@ -26,7 +26,7 @@ const FilterSection = styled.div`
 `;
 
 const Price = styled.span`
-  color: ${props => props.theme.colors.secondaryText};
+  color: ${p => p.theme.colors.secondaryText};
   margin-left: 10px;
 `;
 
@@ -34,8 +34,8 @@ const RadiusFilter = (props) => {
   const { onChange } = props;
   const { data: sale } = useSale();
 
-  const highlight = useStore(state => state.asteroids.highlight);
-  const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
+  const highlight = useStore(s => s.asteroids.highlight);
+  const updateHighlight = useStore(s => s.dispatchHighlightUpdated);
 
   const [ highlightActive, setHighlightActive ] = useState(false);
   const [ radiusMin, setRadiusMin ] = useState(initialValues.radiusMin);

@@ -88,7 +88,7 @@ const styleOverrides = {
 
 const OwnedAsteroidsTable = (props) => {
   const { data: asteroids } = useOwnedAsteroids();
-  const active = useStore(state => state.outliner.ownedAsteroids.active);
+  const active = useStore(s => s.outliner.ownedAsteroids.active);
   const history = useHistory();
 
   // Close if the owned asteroids section is closed

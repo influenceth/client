@@ -13,7 +13,7 @@ const Toggle = styled.div`
   width: 30px;
 
   & svg {
-    color: ${props => props.color};
+    color: ${p => p.color};
     height: 20px;
     width: 20px;
   }
@@ -27,7 +27,7 @@ const PickerContainer = styled.div`
 `;
 
 const StyledCompactPicker = styled(CompactPicker)`
-  background-color: ${props => props.theme.colors.contentDark};
+  background-color: ${p => p.theme.colors.contentDark};
 
   & input {
     color: white !important;

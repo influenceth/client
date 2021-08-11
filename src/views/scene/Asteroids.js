@@ -17,25 +17,25 @@ import constants from '~/lib/constants';
 const worker = new Worker();
 
 const Asteroids = (props) => {
-  const time = useStore(state => state.time.current);
-  const originId = useStore(state => state.asteroids.origin);
-  const destinationId = useStore(state => state.asteroids.destination);
-  const hovered = useStore(state => state.asteroids.hovered);
-  const zoomStatus = useStore(state => state.asteroids.zoomStatus);
-  const routePlannerActive = useStore(state => state.outliner.routePlanner.active);
-  const ownedColor = useStore(state => state.asteroids.owned.highlightColor);
-  const watchedColor = useStore(state => state.asteroids.watched.highlightColor);
-  const highlightConfig = useStore(state => state.asteroids.highlight);
+  const time = useStore(s => s.time.current);
+  const originId = useStore(s => s.asteroids.origin);
+  const destinationId = useStore(s => s.asteroids.destination);
+  const hovered = useStore(s => s.asteroids.hovered);
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const routePlannerActive = useStore(s => s.outliner.routePlanner.active);
+  const ownedColor = useStore(s => s.asteroids.owned.highlightColor);
+  const watchedColor = useStore(s => s.asteroids.watched.highlightColor);
+  const highlightConfig = useStore(s => s.asteroids.highlight);
 
   const { data: asteroids } = useAsteroids();
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
 
-  const selectOrigin = useStore(state => state.dispatchOriginSelected);
-  const clearOrigin = useStore(state => state.dispatchOriginCleared);
-  const selectDestination = useStore(state => state.dispatchDestinationSelected);
-  const hoverAsteroid = useStore(state => state.dispatchAsteroidHovered);
-  const unhoverAsteroid = useStore(state => state.dispatchAsteroidUnhovered);
+  const selectOrigin = useStore(s => s.dispatchOriginSelected);
+  const clearOrigin = useStore(s => s.dispatchOriginCleared);
+  const selectDestination = useStore(s => s.dispatchDestinationSelected);
+  const hoverAsteroid = useStore(s => s.dispatchAsteroidHovered);
+  const unhoverAsteroid = useStore(s => s.dispatchAsteroidUnhovered);
 
   const [ mappedAsteroids, setMappedAsteroids ] = useState([]);
   const [ positions, setPositions ] = useState(new Float32Array());

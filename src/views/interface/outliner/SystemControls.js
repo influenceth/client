@@ -21,12 +21,12 @@ const StyledSystemControls = styled.div`
 
 const SystemControls = (props) => {
   const history = useHistory();
-  const outlinerPinned = useStore(state => state.outliner.pinned);
-  const dispatchOutlinerPinned = useStore(state => state.dispatchOutlinerPinned);
-  const dispatchOutlinerUnpinned = useStore(state => state.dispatchOutlinerUnpinned);
-  const skyboxVisible = useStore(state => state.graphics.skybox);
-  const dispatchSkyboxHidden = useStore(state => state.dispatchSkyboxHidden);
-  const dispatchSkyboxUnhidden = useStore(state => state.dispatchSkyboxUnhidden);
+  const outlinerPinned = useStore(s => s.outliner.pinned);
+  const dispatchOutlinerPinned = useStore(s => s.dispatchOutlinerPinned);
+  const dispatchOutlinerUnpinned = useStore(s => s.dispatchOutlinerUnpinned);
+  const skyboxVisible = useStore(s => s.graphics.skybox);
+  const dispatchSkyboxHidden = useStore(s => s.dispatchSkyboxHidden);
+  const dispatchSkyboxUnhidden = useStore(s => s.dispatchSkyboxUnhidden);
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
   screenfull.on('change', () => {

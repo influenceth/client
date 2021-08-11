@@ -7,7 +7,7 @@ import api from '~/lib/api';
 const useUnWatchAsteroid = () => {
   const { token } = useAuth();
   const queryClient = useQueryClient();
-  const watchedMapped = useStore(state => state.asteroids.watched.mapped);
+  const watchedMapped = useStore(s => s.asteroids.watched.mapped);
 
   return useMutation(async (i) => api.unWatchAsteroid(i),
   {

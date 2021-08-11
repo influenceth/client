@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
 import { useQuery } from 'react-query';
 import { useWeb3React } from '@web3-react/core';
@@ -7,11 +7,17 @@ import { utils } from 'ethers';
 import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
 
-const useAuth = () => {
-  const token = useStore(state => state.auth.token);
-  const dispatchTokenInvalidated = useStore(state => state.dispatchTokenInvalidated);
-  const dispatchAuthenticated = useStore(state => state.dispatchAuthenticated);
+const useAuth = (startOnMount = true) => {
+  const token = useStore(s => s.auth.token);
+  const dispatchTokenInvalidated = useStore(s => s.dispatchTokenInvalidated);
+  const dispatchAuthenticated = useStore(s => s.dispatchAuthenticated);
   const { library, account } = useWeb3React();
+  const [ activated, setActivated ] = useState(startOnMount);
+
+  // Listen for props change to immediately start generating token
+  useEffect(() => {
+    setActivated(startOnMount);
+  }, [ startOnMount ]);
 
   // Invalidate token if the token has expired
   useEffect(() => {
@@ -30,7 +36,7 @@ const useAuth = () => {
   const loginQuery = useQuery(
     [ 'login', account ],
     () => api.requestLogin(account),
-    { enabled: !token && !!account }
+    { enabled: !token && !!account && activated }
   );
 
   const signQuery = useQuery([ 'sign', account ], async () => {

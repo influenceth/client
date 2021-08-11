@@ -31,7 +31,7 @@ const DimensionIcon = styled.svg`
 
 const DimensionData = styled(DataReadout)`
   flex-direction: column;
-  font-size: ${props => props.theme.fontSizes.detailText};
+  font-size: ${p => p.theme.fontSizes.detailText};
 `;
 
 const Dimensions = (props) => {

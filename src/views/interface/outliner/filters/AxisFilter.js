@@ -24,15 +24,15 @@ const FilterSection = styled.div`
 `;
 
 const Period = styled.span`
-  color: ${props => props.theme.colors.secondaryText};
+  color: ${p => p.theme.colors.secondaryText};
   margin-left: 10px;
 `;
 
 const AxisFilter = (props) => {
   const { onChange } = props;
 
-  const highlight = useStore(state => state.asteroids.highlight);
-  const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
+  const highlight = useStore(s => s.asteroids.highlight);
+  const updateHighlight = useStore(s => s.dispatchHighlightUpdated);
 
   const [ highlightActive, setHighlightActive ] = useState(false);
   const [ axisMin, setAxisMin ] = useState(initialValues.axisMin);

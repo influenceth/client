@@ -52,9 +52,9 @@ const Scene = (props) => {
   // Orient such that z is up, perpindicular to the stellar plane
   Object3D.DefaultUp = new Vector3(0, 0, 1);
 
-  const zoomedFrom = useStore(state => state.asteroids.zoomedFrom);
-  const setZoomedFrom = useStore(state => state.dispatchAsteroidZoomedFrom);
-  const statsOn = useStore(state => state.graphics.stats);
+  const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
+  const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
+  const statsOn = useStore(s => s.graphics.stats);
 
   useEffect(() => {
     if (!zoomedFrom) {

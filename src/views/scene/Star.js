@@ -23,7 +23,7 @@ const Star = (props) => {
     `${path}star1.png`
   ]);
 
-  const lensflareOn = useStore(state => state.graphics.lensflare);
+  const lensflareOn = useStore(s => s.graphics.lensflare);
   const [ alpha, setAlpha ] = useState(0);
   const [ size, setSize ] = useState(0);
 

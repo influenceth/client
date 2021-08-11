@@ -21,7 +21,7 @@ const StyledInterface = styled.div`
   z-index: 1000;
 
   & a {
-    color: ${props => props.theme.colors.mainText};
+    color: ${p => p.theme.colors.mainText};
   }
 
   & a:hover {

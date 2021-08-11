@@ -44,22 +44,22 @@ const Rarity = styled.div`
   margin: 10px 15px;
 
   & span {
-    color: ${props => props.theme.colors.rarity[props.rarity]};
-    font-size: ${props => props.theme.fontSizes.featureText};
-    line-height: ${props => props.theme.fontSizes.featureText};
+    color: ${p => p.theme.colors.rarity[props.rarity]};
+    font-size: ${p => p.theme.fontSizes.featureText};
+    line-height: ${p => p.theme.fontSizes.featureText};
     margin-left: 10px;
   }
 
   & div {
-    background-color: ${props => props.theme.colors.rarity[props.rarity]};
+    background-color: ${p => p.theme.colors.rarity[props.rarity]};
     border-radius: 50%;
-    height: ${props => props.theme.fontSizes.featureText};
-    width: ${props => props.theme.fontSizes.featureText};
+    height: ${p => p.theme.fontSizes.featureText};
+    width: ${p => p.theme.fontSizes.featureText};
   }
 `;
 
 const Subtitle = styled.h2`
-  border-bottom: 1px solid ${props => props.theme.colors.contentBorder};
+  border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
   font-size: 18px;
   height: 40px;
   line-height: 40px;
@@ -94,6 +94,7 @@ const NameForm = styled.div`
 
 const StyledButton = styled(Button)`
   margin: 15px 20px 0 20px;
+  width: 150px;
 `;
 
 const Log = styled.div`
@@ -118,7 +119,7 @@ const MainPanel = styled.div`
 `;
 
 const Resources = styled.div`
-  border-bottom: 1px solid ${props => props.theme.colors.contentBorder};
+  border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
   display: flex;
   flex: 0 1 auto;
   padding-bottom: 20px;
@@ -134,13 +135,13 @@ const AsteroidDetails = (props) => {
   const history = useHistory();
   const { account } = useWeb3React();
   const sale = useSale();
-  const origin = useStore(state => state.asteroids.origin);
+  const origin = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(origin);
   const { data: asteroidPrice } = useAsteroidPrice(asteroid);
   const buyAsteroid = useBuyAsteroid();
   const { startScan, finalizeScan, status: scanStatus } = useScanAsteroid();
   const nameAsteroid = useNameAsteroid();
-  const dispatchOriginSelected = useStore(state => state.dispatchOriginSelected);
+  const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const [ previousOrigin, setPreviousOrigin ] = useState(null);
   const [ naming, setNaming ] = useState(false);
   const [ newName, setNewName ] = useState('');

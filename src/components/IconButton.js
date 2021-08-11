@@ -3,22 +3,22 @@ import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 
 const StyledIconButton = styled.button`
-  border: ${props => props.borderless ? '0px' : '1px'} solid ${props => props.theme.colors.main};
+  border: ${p => p.borderless ? '0px' : '1px'} solid ${p => p.theme.colors.main};
   background-color: transparent;
   border-radius: 2px;
-  color: ${props => props.theme.colors.main};
+  color: ${p => p.theme.colors.main};
   font-family: 'Jura', sans-serif;
   font-size: 15px;
   height: 30px;
   width: 30px;
-  padding: ${props => props.borderless ? '5px' : '4px'};
+  padding: ${p => p.borderless ? '5px' : '4px'};
   transition: all 300ms ease;
   position: relative;
   margin-right: 10px;
 
   &:disabled {
-    border-color: ${props => props.theme.colors.disabledText};
-    color: ${props => props.theme.colors.disabledText};
+    border-color: ${p => p.theme.colors.disabledText};
+    color: ${p => p.theme.colors.disabledText};
   }
 
   &:hover {
@@ -27,13 +27,13 @@ const StyledIconButton = styled.button`
   }
 
   &:active {
-    background-color: ${props => props.theme.colors.main};
+    background-color: ${p => p.theme.colors.main};
     color: white;
   }
 
   &:disabled:hover {
     background-image: none;
-    color: ${props => props.theme.colors.disabledText};
+    color: ${p => p.theme.colors.disabledText};
   }
 
   & > svg {
@@ -48,7 +48,7 @@ const CancelIndicator = styled.svg`
   height: 100% !important;
   left: 0;
   position: absolute;
-  stroke: ${props => props.theme.colors.main};
+  stroke: ${p => p.theme.colors.main};
   stroke-width: 2px;
   right: 0;
   top: 0;

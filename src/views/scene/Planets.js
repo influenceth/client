@@ -14,7 +14,7 @@ const worker = new Worker();
 const Planets = (props) => {
   const planets = usePlanets();
   const [ positions, setPositions ] = useState(new Float32Array(5 * 3));
-  const adaliaTime = useStore(state => state.adaliaTime);
+  const adaliaTime = useStore(s => s.adaliaTime);
   const texture = useTexture(`${process.env.PUBLIC_URL}/textures/circleFaded.png`);
   const geometry = useRef();
 

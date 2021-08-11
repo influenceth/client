@@ -53,7 +53,7 @@ const Tab = styled.div`
   width: 25px;
 
   ${StyledSection}:hover & {
-    background-color: ${props => props.theme.colors.main};
+    background-color: ${p => p.theme.colors.main};
 
     & > svg {
       color: white;
@@ -70,7 +70,7 @@ const Tab = styled.div`
 `;
 
 const Title = styled.h2`
-  cursor: ${props => props.theme.cursors.active};
+  cursor: ${p => p.theme.cursors.active};
   font-size: 18px;
   height: 60px;
   line-height: 60px;
@@ -93,10 +93,10 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Section = (props) => {
-  const sectionSettings = useStore(state => state.outliner[props.name]);
-  const dispatchOutlinerSectionExpanded = useStore(state => state.dispatchOutlinerSectionExpanded);
-  const dispatchOutlinerSectionCollapsed = useStore(state => state.dispatchOutlinerSectionCollapsed);
-  const dispatchOutlinerSectionDeactivated = useStore(state => state.dispatchOutlinerSectionDeactivated);
+  const sectionSettings = useStore(s => s.outliner[props.name]);
+  const dispatchOutlinerSectionExpanded = useStore(s => s.dispatchOutlinerSectionExpanded);
+  const dispatchOutlinerSectionCollapsed = useStore(s => s.dispatchOutlinerSectionCollapsed);
+  const dispatchOutlinerSectionDeactivated = useStore(s => s.dispatchOutlinerSectionDeactivated);
 
   const content = useRef();
 

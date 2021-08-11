@@ -6,8 +6,8 @@ import useStore from '~/hooks/useStore';
 
 const SettingsManager = (props) => {
   const { scene, camera } = useThree();
-  const skyboxVisible = useStore(state => state.graphics.skybox);
-  const fov = useStore(state => state.graphics.fov);
+  const skyboxVisible = useStore(s => s.graphics.skybox);
+  const fov = useStore(s => s.graphics.fov);
 
   // Import skybox textures
   const skybox = useCubeTexture([

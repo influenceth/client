@@ -25,8 +25,8 @@ const FilterSection = styled.div`
 const InclinationFilter = (props) => {
   const { onChange } = props;
 
-  const highlight = useStore(state => state.asteroids.highlight);
-  const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
+  const highlight = useStore(s => s.asteroids.highlight);
+  const updateHighlight = useStore(s => s.dispatchHighlightUpdated);
 
   const [ highlightActive, setHighlightActive ] = useState(false);
   const [ incMin, setIncMin ] = useState(initialValues.incMin);

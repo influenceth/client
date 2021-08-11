@@ -88,7 +88,7 @@ const styleOverrides = {
 
 const WatchlistTable = (props) => {
   const { watchlist: { data: watchlist }} = useWatchlist();
-  const active = useStore(state => state.outliner.watchlist.active);
+  const active = useStore(s => s.outliner.watchlist.active);
   const history = useHistory();
 
   // Close if the watchlist section is closed

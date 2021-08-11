@@ -19,7 +19,7 @@ const Controls = styled.div`
 `;
 
 const AsteroidList = styled.ul`
-  border-top: 1px solid ${props => props.theme.colors.contentBorder};
+  border-top: 1px solid ${p => p.theme.colors.contentBorder};
   box-shadow: inset 0 5px 7px -8px #000;
   flex: 0 1 auto;
   list-style-type: none;
@@ -33,9 +33,9 @@ const StyledAsteroidItem = styled(AsteroidItem)`
   border-bottom: 1px solid transparent;
 
   &:hover {
-    background-color: ${props => props.theme.colors.contentHighlight};
-    border-top: 1px solid ${props => props.theme.colors.contentBorder};
-    border-bottom: 1px solid ${props => props.theme.colors.contentBorder};
+    background-color: ${p => p.theme.colors.contentHighlight};
+    border-top: 1px solid ${p => p.theme.colors.contentBorder};
+    border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
   }
 
   &:first-child {
@@ -46,14 +46,14 @@ const StyledAsteroidItem = styled(AsteroidItem)`
 const OwnedAsteroids = (props) => {
   const history = useHistory();
   const { data: asteroids } = useOwnedAsteroids();
-  const includeOwned = useStore(state => state.asteroids.owned.mapped);
-  const filterOwned = useStore(state => state.asteroids.owned.filtered);
-  const highlightColor = useStore(state => state.asteroids.watched.highlightColor);
-  const showOnMap = useStore(state => state.dispatchOwnedAsteroidsMapped);
-  const removeFromMap = useStore(state => state.dispatchOwnedAsteroidsUnmapped);
-  const applyFilters = useStore(state => state.dispatchOwnedAsteroidsFiltered);
-  const removeFilters = useStore(state => state.dispatchOwnedAsteroidsUnfiltered);
-  const changeColor = useStore(state => state.dispatchOwnedAsteroidColorChange);
+  const includeOwned = useStore(s => s.asteroids.owned.mapped);
+  const filterOwned = useStore(s => s.asteroids.owned.filtered);
+  const highlightColor = useStore(s => s.asteroids.watched.highlightColor);
+  const showOnMap = useStore(s => s.dispatchOwnedAsteroidsMapped);
+  const removeFromMap = useStore(s => s.dispatchOwnedAsteroidsUnmapped);
+  const applyFilters = useStore(s => s.dispatchOwnedAsteroidsFiltered);
+  const removeFilters = useStore(s => s.dispatchOwnedAsteroidsUnfiltered);
+  const changeColor = useStore(s => s.dispatchOwnedAsteroidColorChange);
 
   // Removes owned asteroids from search set when section is closed
   useEffect(() => {

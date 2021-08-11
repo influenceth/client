@@ -7,12 +7,12 @@ import useStore from '~/hooks/useStore';
 
 const useAsteroids = () => {
   const { account } = useWeb3React();
-  const includeOwned = useStore(state => state.asteroids.owned.mapped);
-  const filterOwned = useStore(state => state.asteroids.owned.filtered);
-  const includeWatched = useStore(state => state.asteroids.watched.mapped);
-  const filterWatched = useStore(state => state.asteroids.watched.filtered);
-  const filters = useStore(state => state.asteroids.filters);
-  const highlight = useStore(state => state.asteroids.highlight);
+  const includeOwned = useStore(s => s.asteroids.owned.mapped);
+  const filterOwned = useStore(s => s.asteroids.owned.filtered);
+  const includeWatched = useStore(s => s.asteroids.watched.mapped);
+  const filterWatched = useStore(s => s.asteroids.watched.filtered);
+  const filters = useStore(s => s.asteroids.filters);
+  const highlight = useStore(s => s.asteroids.highlight);
   const [ query, setQuery ] = useState({});
 
   useEffect(() => {

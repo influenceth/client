@@ -4,8 +4,8 @@ import ReactTooltip from 'react-tooltip';
 
 const StyledButton = styled.button`
   align-items: center;
-  border: 1px solid ${props => props.theme.colors.main};
-  background-color: ${props => props.active ? props.theme.colors.main : 'black'};
+  border: 1px solid ${p => p.theme.colors.main};
+  background-color: ${p => p.active ? props.theme.colors.main : 'transparent'};
   clip-path: polygon(
     0 0,
     100% 0,
@@ -13,23 +13,22 @@ const StyledButton = styled.button`
     calc(100% - 9.5px) 100%,
     0 100%
   );
-  color: ${props => props.active ? 'white' : props.theme.colors.main};
+  color: ${p => p.active ? 'white' : props.theme.colors.main};
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: 15px;
   min-height: 35px;
   transition: all 300ms ease;
-  padding: 0 10px;
+  padding: 0 15px 0 10px;
   position: relative;
-  min-width: 100px;
-  width: 150px;
+  min-width: 75px;
 
   &:disabled {
-    color: ${props => props.theme.colors.disabledText};
-    border-color: ${props => props.theme.colors.disabledText};
+    color: ${p => p.theme.colors.disabledText};
+    border-color: ${p => p.theme.colors.disabledText};
 
     & > svg {
-      stroke: ${props => props.theme.colors.disabledText};
+      stroke: ${p => p.theme.colors.disabledText};
     }
   }
 
@@ -39,13 +38,13 @@ const StyledButton = styled.button`
   }
 
   &:active {
-    background-color: ${props => props.theme.colors.main};
+    background-color: ${p => p.theme.colors.main};
     color: white;
   }
 
   &:disabled:hover {
     background-image: none;
-    color: ${props => props.theme.colors.disabledText};
+    color: ${p => p.theme.colors.disabledText};
   }
 
   & > * {
@@ -59,7 +58,7 @@ const Corner = styled.svg`
   margin-right: 0;
   position: absolute;
   right: -1px;
-  stroke: ${props => props.theme.colors.main};
+  stroke: ${p => p.theme.colors.main};
   stroke-width: 1px;
   width: 10px;
 `;
@@ -68,7 +67,7 @@ const Button = (props) => {
   useEffect(() => ReactTooltip.rebuild(), []);
 
   return (
-    <StyledButton {...props} data-place="right">
+    <StyledButton {...props} data-place={props['data-place'] || "right"}>
       {props.children}
       <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
         <line x1="0" y1="10" x2="10" y2="0" />

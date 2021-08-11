@@ -21,7 +21,7 @@ const StyledAsteroidItem = styled.li`
   }
 
   &{Description} {
-    color: ${props => props.selected ? props.theme.colors.main : 'inherit'};
+    color: ${p => p.selected ? props.theme.colors.main : 'inherit'};
   }
 `;
 
@@ -45,15 +45,15 @@ const RarityBadge = styled.span`
 
 const AsteroidItem = (props) => {
   const { asteroid, watched } = props;
-  const dispatchAsteroidHovered = useStore(state => state.dispatchAsteroidHovered);
-  const dispatchAsteroidUnhovered = useStore(state => state.dispatchAsteroidUnhovered);
-  const origin = useStore(state => state.asteroids.origin);
-  const selectOrigin = useStore(state => state.dispatchOriginSelected);
-  const clearOrigin = useStore(state => state.dispatchOriginCleared);
-  const routePlannerActive = useStore(state => state.outliner.routePlanner.active);
-  const destination = useStore(state => state.asteroids.destination);
-  const selectDestination = useStore(state => state.dispatchDestinationSelected);
-  const clearDestination = useStore(state => state.dispatchDestinationCleared);
+  const dispatchAsteroidHovered = useStore(s => s.dispatchAsteroidHovered);
+  const dispatchAsteroidUnhovered = useStore(s => s.dispatchAsteroidUnhovered);
+  const origin = useStore(s => s.asteroids.origin);
+  const selectOrigin = useStore(s => s.dispatchOriginSelected);
+  const clearOrigin = useStore(s => s.dispatchOriginCleared);
+  const routePlannerActive = useStore(s => s.outliner.routePlanner.active);
+  const destination = useStore(s => s.asteroids.destination);
+  const selectDestination = useStore(s => s.dispatchDestinationSelected);
+  const clearDestination = useStore(s => s.dispatchDestinationCleared);
   const unWatchAsteroid = useUnWatchAsteroid();
 
   return (

@@ -20,7 +20,7 @@ const Controls = styled.div`
 `;
 
 const StyledWatchlist = styled.div`
-  border-top: 1px solid ${props => props.theme.colors.contentBorder};
+  border-top: 1px solid ${p => p.theme.colors.contentBorder};
   box-shadow: inset 0 5px 7px -8px #000;
   flex: 0 1 auto;
   list-style-type: none;
@@ -34,9 +34,9 @@ const StyledAsteroidItem = styled(AsteroidItem)`
   border-bottom: 1px solid transparent;
 
   &:hover {
-    background-color: ${props => props.theme.colors.contentHighlight};
-    border-top: 1px solid ${props => props.theme.colors.contentBorder};
-    border-bottom: 1px solid ${props => props.theme.colors.contentBorder};
+    background-color: ${p => p.theme.colors.contentHighlight};
+    border-top: 1px solid ${p => p.theme.colors.contentBorder};
+    border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
   }
 
   &:first-child {
@@ -47,14 +47,14 @@ const StyledAsteroidItem = styled(AsteroidItem)`
 const Watchlist = (props) => {
   const history = useHistory();
   const { watchlist: { data: watchlist }} = useWatchlist();
-  const includeWatched = useStore(state => state.asteroids.watched.mapped);
-  const filterWatched = useStore(state => state.asteroids.watched.filtered);
-  const highlightColor = useStore(state => state.asteroids.watched.highlightColor);
-  const showOnMap = useStore(state => state.dispatchWatchedAsteroidsMapped);
-  const removeFromMap = useStore(state => state.dispatchWatchedAsteroidsUnmapped);
-  const applyFilters = useStore(state => state.dispatchWatchedAsteroidsFiltered);
-  const removeFilters = useStore(state => state.dispatchWatchedAsteroidsUnfiltered);
-  const changeColor = useStore(state => state.dispatchWatchedAsteroidColorChange);
+  const includeWatched = useStore(s => s.asteroids.watched.mapped);
+  const filterWatched = useStore(s => s.asteroids.watched.filtered);
+  const highlightColor = useStore(s => s.asteroids.watched.highlightColor);
+  const showOnMap = useStore(s => s.dispatchWatchedAsteroidsMapped);
+  const removeFromMap = useStore(s => s.dispatchWatchedAsteroidsUnmapped);
+  const applyFilters = useStore(s => s.dispatchWatchedAsteroidsFiltered);
+  const removeFilters = useStore(s => s.dispatchWatchedAsteroidsUnfiltered);
+  const changeColor = useStore(s => s.dispatchWatchedAsteroidColorChange);
 
   // Removes watched asteroids from search set when section is closed
   useEffect(() => {

@@ -26,8 +26,8 @@ const Background = styled.div`
   background: linear-gradient(
     to right,
     rgba(0, 0, 0, 0),
-    ${props => props.theme.colors.contentBackdrop} 50%,
-    ${props => props.theme.colors.contentBackdrop}
+    ${p => p.theme.colors.contentBackdrop} 50%,
+    ${p => p.theme.colors.contentBackdrop}
   );
   backdrop-filter: blur(4px);
   bottom: 0;
@@ -51,7 +51,7 @@ const MenuWrapper = styled.div`
 `;
 
 const MenuFiller = styled.div`
-  border-bottom: 4px solid ${props => props.theme.colors.mainBorder};
+  border-bottom: 4px solid ${p => p.theme.colors.mainBorder};
   flex: 1 0 auto;
 `;
 
@@ -61,7 +61,7 @@ const EndMenuFiller = styled(MenuFiller)`
 `;
 
 const MainMenu = (props) => {
-  const dispatchOutlinerSectionActivated = useStore(state => state.dispatchOutlinerSectionActivated);
+  const dispatchOutlinerSectionActivated = useStore(s => s.dispatchOutlinerSectionActivated);
 
   return (
     <StyledMainMenu>

@@ -48,8 +48,8 @@ const StyledFilters = styled.div`
 
 const FilterGroup = styled.div`
   align-items: stretch;
-  background-color: ${props => props.theme.colors.contentHighlight};
-  border: 1px solid ${props => props.theme.colors.contentBorder};
+  background-color: ${p => p.theme.colors.contentHighlight};
+  border: 1px solid ${p => p.theme.colors.contentBorder};
   border-radius: 5px;
   display: flex;
   flex-direction: column;
@@ -58,16 +58,16 @@ const FilterGroup = styled.div`
   margin-top: 10px;
 
   & h3 {
-    font-size: ${props => props.theme.fontSizes.detailText};
+    font-size: ${p => p.theme.fontSizes.detailText};
     margin: 0 0 5px 0;
     padding: 0;
   }
 `;
 
 const Filters = (props) => {
-  const activeHighlight = useStore(state => state.asteroids.highlight);
-  const updateFilters = useStore(state => state.dispatchFiltersUpdated);
-  const updateHighlights = useStore(state => state.dispatchHighlightUpdated);
+  const activeHighlight = useStore(s => s.asteroids.highlight);
+  const updateFilters = useStore(s => s.dispatchFiltersUpdated);
+  const updateHighlights = useStore(s => s.dispatchHighlightUpdated);
 
   const [ filters, setFilters ] = useState({});
   const [ activeFilters, setActiveFilters ] = useState({

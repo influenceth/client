@@ -27,15 +27,15 @@ if (!!window.Worker && typeof OffscreenCanvas !== 'undefined') {
 
 const Asteroid = (props) => {
   const controls = useThree(({ controls }) => controls);
-  const origin = useStore(state => state.asteroids.origin);
-  const time = useStore(state => state.time.current);
-  const mapSize = useStore(state => state.graphics.textureSize);
-  const shadows = useStore(state => state.graphics.shadows);
-  const shadowSize = useStore(state => state.graphics.shadowSize);
-  const zoomStatus = useStore(state => state.asteroids.zoomStatus);
-  const zoomedFrom = useStore(state => state.asteroids.zoomedFrom);
-  const updateZoomStatus = useStore(state => state.dispatchZoomStatusChanged);
-  const setZoomedFrom = useStore(state => state.dispatchAsteroidZoomedFrom);
+  const origin = useStore(s => s.asteroids.origin);
+  const time = useStore(s => s.time.current);
+  const mapSize = useStore(s => s.graphics.textureSize);
+  const shadows = useStore(s => s.graphics.shadows);
+  const shadowSize = useStore(s => s.graphics.shadowSize);
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
+  const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
+  const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const { data: asteroidData } = useAsteroid(origin);
 
   const group = useRef();

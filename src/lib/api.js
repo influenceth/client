@@ -9,7 +9,7 @@ const instance = axios.create(config);
 
 useStore.subscribe(newToken => {
   instance.defaults.headers = { Authorization: `Bearer ${newToken}`}
-}, state => state.auth.token);
+}, s => s.auth.token);
 
 const api = {
 

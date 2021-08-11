@@ -16,7 +16,7 @@ const StyledSettings = styled.div`
   padding-left: 15px;
 
   & h3 {
-    border-bottom: 1px solid ${props => props.theme.colors.contentBorder};
+    border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
     padding-bottom: 3px;
   }
 `;
@@ -52,18 +52,18 @@ const StyledClipboard = styled(Clipboard)`
 
 const Settinigs = (props) => {
   const { account } = useWeb3React();
-  const graphics = useStore(state => state.graphics);
-  const setTextureSize = useStore(state => state.dispatchTextureSizeSet);
-  const turnOnSkybox = useStore(state => state.dispatchSkyboxUnhidden);
-  const turnOffSkybox = useStore(state => state.dispatchSkyboxHidden);
-  const turnOnLensflare = useStore(state => state.dispatchLensflareUnhidden);
-  const turnOffLensflare = useStore(state => state.dispatchLensflareHidden);
-  const turnOnShadows = useStore(state => state.dispatchShadowsOn);
-  const turnOffShadows = useStore(state => state.dispatchShadowsOff);
-  const setShadowSize = useStore(state => state.dispatchShadowSizeSet);
-  const setFOV = useStore(state => state.dispatchFOVSet);
-  const turnOnStats = useStore(state => state.dispatchStatsOn);
-  const turnOffStats = useStore(state => state.dispatchStatsOff);
+  const graphics = useStore(s => s.graphics);
+  const setTextureSize = useStore(s => s.dispatchTextureSizeSet);
+  const turnOnSkybox = useStore(s => s.dispatchSkyboxUnhidden);
+  const turnOffSkybox = useStore(s => s.dispatchSkyboxHidden);
+  const turnOnLensflare = useStore(s => s.dispatchLensflareUnhidden);
+  const turnOffLensflare = useStore(s => s.dispatchLensflareHidden);
+  const turnOnShadows = useStore(s => s.dispatchShadowsOn);
+  const turnOffShadows = useStore(s => s.dispatchShadowsOff);
+  const setShadowSize = useStore(s => s.dispatchShadowSizeSet);
+  const setFOV = useStore(s => s.dispatchFOVSet);
+  const turnOnStats = useStore(s => s.dispatchStatsOn);
+  const turnOffStats = useStore(s => s.dispatchStatsOff);
 
   const [ localFOV, setLocalFOV ] = useState(graphics.fov);
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);

@@ -4,7 +4,7 @@ const StyledMenuItem = styled.div`
   align-items: center;
   color: rgba(255, 255, 255, 0.75);
   display: flex;
-  font-size: ${props => props.theme.fontSizes.mainText};
+  font-size: ${p => p.theme.fontSizes.mainText};
   height: 44px;
   justify-content: left;
   letter-spacing: 1px;
@@ -12,7 +12,7 @@ const StyledMenuItem = styled.div`
 
   &:hover {
     color: white;
-    background-color: ${props => props.theme.colors.main};
+    background-color: ${p => p.theme.colors.main};
   }
 
   & span {

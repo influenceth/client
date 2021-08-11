@@ -3,12 +3,12 @@ import styled from 'styled-components';
 const StyledDataReadout = styled.div`
   align-items: center;
   display: flex;
-  font-size: ${props => props.theme.fontSizes.mainText};
+  font-size: ${p => p.theme.fontSizes.mainText};
   padding: 5px 0;
 `;
 
 const Label = styled.label`
-  color: ${props => props.theme.colors.secondaryText};
+  color: ${p => p.theme.colors.secondaryText};
   display: flex;
   flex: 0 1 auto;
   padding-right: 10px;
@@ -20,7 +20,7 @@ const Label = styled.label`
 `;
 
 const Data = styled.span`
-  color: ${props => props.theme.colors.mainText};
+  color: ${p => p.theme.colors.mainText};
   flex: 0 1 auto;
   overflow: hidden;
   position: relative;

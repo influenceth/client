@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 const StyledMenu = styled.div`
-  cursor: ${props => props.theme.cursors.active};
+  cursor: ${p => p.theme.cursors.active};
   margin-right: 10px;
   max-height: 44px;
   overflow: hidden;
@@ -16,7 +16,7 @@ const StyledMenu = styled.div`
 const MenuHeader = styled.div`
   border-bottom: 4px solid rgb(255, 255, 255, 0.25);
   color: rgb(255, 255, 255, 0.6);
-  font-size: ${props => props.theme.fontSizes.mainText};
+  font-size: ${p => p.theme.fontSizes.mainText};
   font-weight: bold;
   height: 44px;
   letter-spacing: 2px;
@@ -27,8 +27,8 @@ const MenuHeader = styled.div`
   transition: all 0.4s ease;
 
   ${StyledMenu}:hover & {
-    border-bottom: 4px solid ${props => props.theme.colors.main};
-    color: ${props => props.theme.colors.main};
+    border-bottom: 4px solid ${p => p.theme.colors.main};
+    color: ${p => p.theme.colors.main};
   }
 `;
 

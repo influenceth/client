@@ -6,7 +6,7 @@ import useInterval from '~/hooks/useInterval';
 import useStore from '~/hooks/useStore';
 
 const StyledTime = styled.div`
-  cursor: ${props => props.theme.cursors.active};
+  cursor: ${p => p.theme.cursors.active};
   max-height: 44px;
   overflow: hidden;
   transition: all 0.6s ease;
@@ -27,7 +27,7 @@ const DaysSince = styled.div`
   transition: all 0.4s ease;
 
   ${StyledTime}:hover & {
-    border-bottom: 4px solid ${props => props.theme.colors.main};
+    border-bottom: 4px solid ${p => p.theme.colors.main};
     color: white;
   }
 `;
@@ -36,10 +36,10 @@ const DaysSince = styled.div`
 const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
 
 const Time = (props) => {
-  const time = useStore(state => state.time.current);
-  const autoUpdating = useStore(state => state.time.autoUpdating);
-  const zoomStatus = useStore(state => state.asteroids.zoomStatus);
-  const dispatchTimeUpdated = useStore(state => state.dispatchTimeUpdated);
+  const time = useStore(s => s.time.current);
+  const autoUpdating = useStore(s => s.time.autoUpdating);
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const dispatchTimeUpdated = useStore(s => s.dispatchTimeUpdated);
 
   const displayTime = time - diff;
   const currentTime = () => ((Date.now() / 1000) - START_TIMESTAMP) / 3600;

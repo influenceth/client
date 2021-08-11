@@ -52,14 +52,14 @@ const StyledBonusBadge = styled(BonusBadge)`
 const BonusDesc = styled.div`
   display: flex;
   flex-direction: column;
-  font-size: ${props => props.theme.fontSizes.detailText};
+  font-size: ${p => p.theme.fontSizes.detailText};
 
   & span {
     margin-bottom: 5px;
   }
 
   & span:last-child {
-    font-size: ${props => props.theme.fontSizes.mainText};
+    font-size: ${p => p.theme.fontSizes.mainText};
   }
 `;
 

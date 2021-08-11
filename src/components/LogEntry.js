@@ -26,12 +26,12 @@ const getDesc = {
 };
 
 const StyledLogEntry = styled.li`
-  color: ${props => props.theme.colors.secondaryText};
-  font-size: ${props => props.theme.fontSizes.mainText};
+  color: ${p => p.theme.colors.secondaryText};
+  font-size: ${p => p.theme.fontSizes.mainText};
   margin: 10px;
 
   & a {
-    color: ${props => props.theme.colors.mainText};
+    color: ${p => p.theme.colors.mainText};
     display: inline-block;
     text-overflow: ellipsis;
     max-width: 100px;
@@ -40,11 +40,11 @@ const StyledLogEntry = styled.li`
   }
 
   & a {
-    color: ${props => props.theme.colors.mainText};
+    color: ${p => p.theme.colors.mainText};
   }
 
   &:before {
-    color: ${props => props.theme.colors.main};
+    color: ${p => p.theme.colors.main};
     content: '» ';
   }
 `;

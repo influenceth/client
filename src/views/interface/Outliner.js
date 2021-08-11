@@ -18,7 +18,7 @@ const MainContainer = styled.div`
 `;
 
 const Background = styled.div`
-  background-color: ${props => props.theme.colors.contentBackdrop};
+  background-color: ${p => p.theme.colors.contentBackdrop};
   backdrop-filter: blur(4px);
   clip-path: polygon(
     100% 0,
@@ -45,19 +45,19 @@ const Border = styled.div`
 `;
 
 const UprightBorder = styled.div`
-  border-right: 2px solid ${props => props.theme.colors.mainBorder};
+  border-right: 2px solid ${p => p.theme.colors.mainBorder};
   flex: 1 1 auto;
 `;
 
 const CornerBorder = styled.svg`
-  fill: ${props => props.theme.colors.mainBorder};
+  fill: ${p => p.theme.colors.mainBorder};
   flex: 0 0 auto;
   height: 50px;
   width: 25px;
 `;
 
 const RightContainer = styled.div`
-  max-width: ${props => props.stayOpen ? '385px' : '25px'};
+  max-width: ${p => p.stayOpen ? '385px' : '25px'};
   transition: max-width 0.3s ease;
 
   &:hover {
@@ -72,8 +72,8 @@ const StyledOutliner = styled.div`
 `;
 
 const Outliner = (props) => {
-  const outliner = useStore(state => state.outliner);
-  const origin = useStore(state => state.asteroids.origin);
+  const outliner = useStore(s => s.outliner);
+  const origin = useStore(s => s.asteroids.origin);
   const { account } = useWeb3React();
 
   return (

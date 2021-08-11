@@ -5,7 +5,7 @@ import { MdClose } from 'react-icons/md';
 import IconButton from '~/components/IconButton';
 
 const StyledDetails = styled.div`
-  background-color: ${props => props.theme.colors.contentBackdrop};
+  background-color: ${p => p.theme.colors.contentBackdrop};
   backdrop-filter: blur(4px);
   clip-path: polygon(
     0 0,
@@ -25,7 +25,7 @@ const StyledDetails = styled.div`
 `;
 
 const Header = styled.h1`
-  border-left: 5px solid ${props => props.theme.colors.main};
+  border-left: 5px solid ${p => p.theme.colors.main};
   font-size: 24px;
   font-weight: 400;
   height: 60px;
