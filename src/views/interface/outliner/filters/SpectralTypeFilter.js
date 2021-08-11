@@ -8,6 +8,7 @@ import IconButton from '~/components/IconButton'
 import ColorPicker from '~/components/ColorPicker';
 import Highlighter from './Highlighter';
 
+const field = 'spectralType';
 const initialValues = SPECTRAL_TYPES.map((v, k) => k);
 
 const StyledTitle = styled.h3`
@@ -22,6 +23,7 @@ const SpectralType = styled.div`
 const SpectralTypeFilter = (props) => {
   const { onChange } = props;
 
+  const highlight = useStore(state => state.asteroids.highlight);
   const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
 
   const [ highlightActive, setHighlightActive ] = useState(false);
@@ -43,10 +45,8 @@ const SpectralTypeFilter = (props) => {
   const handleHighlightToggle = () => {
     if (highlightActive) {
       updateHighlight(null);
-      setHighlightActive(false);
     } else {
-      updateHighlight({ field: 'spectralType', colorMap: colors });
-      setHighlightActive(true);
+      updateHighlight({ field: field, colorMap: colors });
     }
   };
 
@@ -69,7 +69,11 @@ const SpectralTypeFilter = (props) => {
   };
 
   useEffect(() => {
-    if (highlightActive) updateHighlight({ field: 'spectralType', colorMap: colors });
+    setHighlightActive(highlight?.field === field);
+  }, [ highlight ]);
+
+  useEffect(() => {
+    if (highlightActive) updateHighlight({ field: field, colorMap: colors });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ updateHighlight, colors ]);
 

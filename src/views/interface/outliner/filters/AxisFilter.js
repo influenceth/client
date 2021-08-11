@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
@@ -9,6 +9,7 @@ import Highlighter from './Highlighter';
 import formatters from '~/lib/formatters';
 import constants from '~/lib/constants';
 
+const field = 'axis';
 const initialValues = {
   axisMin: constants.MIN_AXIS,
   axisMax: constants.MAX_AXIS
@@ -30,21 +31,20 @@ const Period = styled.span`
 const AxisFilter = (props) => {
   const { onChange } = props;
 
+  const highlight = useStore(state => state.asteroids.highlight);
   const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
-  const highlightActive = useRef(false);
 
+  const [ highlightActive, setHighlightActive ] = useState(false);
   const [ axisMin, setAxisMin ] = useState(initialValues.axisMin);
   const [ axisMax, setAxisMax ] = useState(initialValues.axisMax);
   const [ colorFrom, setColorFrom ] = useState('#73D8FF');
   const [ colorTo, setColorTo ] = useState('#FA28FF');
 
   const handleHighlightToggle = () => {
-    if (!!highlightActive.current) {
+    if (highlightActive) {
       updateHighlight(null);
-      highlightActive.current = false;
     } else {
-      updateHighlight({ field: 'axis', min: axisMin, max: axisMax, from: colorFrom, to: colorTo });
-      highlightActive.current = true;
+      updateHighlight({ field: field, min: axisMin, max: axisMax, from: colorFrom, to: colorTo });
     }
   };
 
@@ -54,14 +54,18 @@ const AxisFilter = (props) => {
   }, [ axisMin, axisMax ]);
 
   useEffect(() => {
-    if (!!highlightActive.current) {
-      updateHighlight({ field: 'axis', min: axisMin, max: axisMax, from: colorFrom, to: colorTo });
+    setHighlightActive(highlight?.field === field);
+  }, [ highlight ]);
+
+  useEffect(() => {
+    if (highlightActive) {
+      updateHighlight({ field: field, min: axisMin, max: axisMax, from: colorFrom, to: colorTo });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ updateHighlight, axisMin, axisMax, colorTo, colorFrom ]);
 
   useEffect(() => {
-    return () => highlightActive.current && updateHighlight(null);
+    return () => highlightActive && updateHighlight(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -69,7 +73,7 @@ const AxisFilter = (props) => {
     <>
       <h3>Semi-major Axis (Period)</h3>
       <Highlighter
-        active={!!highlightActive.current}
+        active={highlightActive}
         onClick={handleHighlightToggle} />
       <FilterSection>
         <DataReadout label="Min (AU)">
@@ -99,7 +103,7 @@ const AxisFilter = (props) => {
             <Period>({formatters.period(axisMax)})</Period>
           </>
         </DataReadout>
-        {!!highlightActive.current && (
+        {highlightActive && (
           <ColorPicker initialColor={colorTo} onChange={(c) => setColorTo(c)} />
         )}
       </FilterSection>

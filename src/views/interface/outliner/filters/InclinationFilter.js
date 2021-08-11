@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
@@ -8,6 +8,7 @@ import ColorPicker from '~/components/ColorPicker';
 import Highlighter from './Highlighter';
 import constants from '~/lib/constants';
 
+const field = 'inclination';
 const initialValues = {
   incMin: constants.MIN_INCLINATION,
   incMax: constants.MAX_INCLINATION
@@ -24,28 +25,26 @@ const FilterSection = styled.div`
 const InclinationFilter = (props) => {
   const { onChange } = props;
 
+  const highlight = useStore(state => state.asteroids.highlight);
   const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
-  const highlightActive = useRef(false);
 
+  const [ highlightActive, setHighlightActive ] = useState(false);
   const [ incMin, setIncMin ] = useState(initialValues.incMin);
   const [ incMax, setIncMax ] = useState(initialValues.incMax);
   const [ colorFrom, setColorFrom ] = useState('#73D8FF');
   const [ colorTo, setColorTo ] = useState('#FA28FF');
 
   const handleHighlightToggle = () => {
-    if (!!highlightActive.current) {
+    if (highlightActive) {
       updateHighlight(null);
-      highlightActive.current = false;
     } else {
       updateHighlight({
-        field: 'inclination',
+        field: field,
         min: Math.PI * incMin / 180,
         max: Math.PI * incMax / 180,
         from: colorFrom,
         to: colorTo
       });
-
-      highlightActive.current = true;
     }
   };
 
@@ -58,9 +57,13 @@ const InclinationFilter = (props) => {
   }, [ incMin, incMax ]);
 
   useEffect(() => {
-    if (!!highlightActive.current) {
+    setHighlightActive(highlight?.field === field);
+  }, [ highlight ]);
+
+  useEffect(() => {
+    if (highlightActive) {
       updateHighlight({
-        field: 'inclination',
+        field: field,
         min: Math.PI * incMin / 180,
         max: Math.PI * incMax / 180,
         from: colorFrom,
@@ -71,7 +74,7 @@ const InclinationFilter = (props) => {
   }, [ updateHighlight, incMin, incMax, colorTo, colorFrom ]);
 
   useEffect(() => {
-    return () => highlightActive.current && updateHighlight(null);
+    return () => highlightActive && updateHighlight(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -79,7 +82,7 @@ const InclinationFilter = (props) => {
     <>
       <h3>Orbit Inclination</h3>
       <Highlighter
-        active={!!highlightActive.current}
+        active={highlightActive}
         onClick={handleHighlightToggle} />
       <FilterSection>
         <DataReadout label="Min (deg)">
@@ -90,7 +93,7 @@ const InclinationFilter = (props) => {
             step={0.01}
             onChange={(v) => setIncMin(Number(v))} />
         </DataReadout>
-        {!!highlightActive.current && (
+        {highlightActive && (
           <ColorPicker initialColor={colorFrom} onChange={(c) => setColorFrom(c)} />
         )}
       </FilterSection>
@@ -103,7 +106,7 @@ const InclinationFilter = (props) => {
             step={0.01}
             onChange={(v) => setIncMax(Number(v))} />
         </DataReadout>
-        {!!highlightActive.current && (
+        {highlightActive && (
           <ColorPicker initialColor={colorTo} onChange={(c) => setColorTo(c)} />
         )}
       </FilterSection>

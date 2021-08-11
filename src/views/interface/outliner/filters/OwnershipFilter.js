@@ -9,6 +9,7 @@ import TextInput from '~/components/TextInput';
 import ColorPicker from '~/components/ColorPicker';
 import Highlighter from './Highlighter';
 
+const field = 'ownership';
 const initialValues = {
   owned: true,
   unowned: true,
@@ -27,6 +28,7 @@ const OwnershipType = styled.div`
 const OwnershipFilter = (props) => {
   const { onChange } = props;
   const { account } = useWeb3React();
+  const highlight = useStore(state => state.asteroids.highlight);
   const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
 
   const [ highlightActive, setHighlightActive ] = useState(false);
@@ -41,10 +43,8 @@ const OwnershipFilter = (props) => {
   const handleHighlightToggle = () => {
     if (highlightActive) {
       updateHighlight(null);
-      setHighlightActive(false);
     } else {
-      updateHighlight({ field: 'ownership', colorMap: colors });
-      setHighlightActive(true);
+      updateHighlight({ field: field, colorMap: colors });
     }
   };
 
@@ -73,7 +73,11 @@ const OwnershipFilter = (props) => {
   }, [ types ]);
 
   useEffect(() => {
-    if (highlightActive) updateHighlight({ field: 'ownership', colorMap: colors });
+    setHighlightActive(highlight?.field === field);
+  }, [ highlight ]);
+
+  useEffect(() => {
+    if (highlightActive) updateHighlight({ field: field, colorMap: colors });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ updateHighlight, colors ]);
 

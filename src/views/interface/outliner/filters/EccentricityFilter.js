@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
@@ -8,6 +8,7 @@ import ColorPicker from '~/components/ColorPicker';
 import Highlighter from './Highlighter';
 import constants from '~/lib/constants';
 
+const field = 'eccentricity';
 const initialValues = {
   eccMin: constants.MIN_ECCENTRICITY,
   eccMax: constants.MAX_ECCENTRICITY
@@ -24,21 +25,20 @@ const FilterSection = styled.div`
 const EccentricityFilter = (props) => {
   const { onChange } = props;
 
+  const highlight = useStore(state => state.asteroids.highlight);
   const updateHighlight = useStore(state => state.dispatchHighlightUpdated);
-  const highlightActive = useRef(false);
 
+  const [ highlightActive, setHighlightActive ] = useState(false);
   const [ eccMin, setEccMin ] = useState(initialValues.eccMin);
   const [ eccMax, setEccMax ] = useState(initialValues.eccMax);
   const [ colorFrom, setColorFrom ] = useState('#73D8FF');
   const [ colorTo, setColorTo ] = useState('#FA28FF');
 
   const handleHighlightToggle = () => {
-    if (!!highlightActive.current) {
+    if (highlightActive) {
       updateHighlight(null);
-      highlightActive.current = false;
     } else {
-      updateHighlight({ field: 'eccentricity', min: eccMin, max: eccMax, from: colorFrom, to: colorTo });
-      highlightActive.current = true;
+      updateHighlight({ field: field, min: eccMin, max: eccMax, from: colorFrom, to: colorTo });
     }
   };
 
@@ -48,14 +48,18 @@ const EccentricityFilter = (props) => {
   }, [ eccMin, eccMax ]);
 
   useEffect(() => {
-    if (!!highlightActive.current) {
-      updateHighlight({ field: 'eccentricity', min: eccMin, max: eccMax, from: colorFrom, to: colorTo });
+    setHighlightActive(highlight?.field === field);
+  }, [ highlight ]);
+
+  useEffect(() => {
+    if (highlightActive) {
+      updateHighlight({ field: field, min: eccMin, max: eccMax, from: colorFrom, to: colorTo });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ updateHighlight, eccMin, eccMax, colorTo, colorFrom ]);
 
   useEffect(() => {
-    return () => highlightActive.current && updateHighlight(null);
+    return () => highlightActive && updateHighlight(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -63,7 +67,7 @@ const EccentricityFilter = (props) => {
     <>
       <h3>Orbit Eccentricity</h3>
       <Highlighter
-        active={!!highlightActive.current}
+        active={highlightActive}
         onClick={handleHighlightToggle} />
       <FilterSection>
         <DataReadout label="Min">
@@ -74,7 +78,7 @@ const EccentricityFilter = (props) => {
             step={0.001}
             onChange={(v) => setEccMin(Number(v))} />
         </DataReadout>
-        {!!highlightActive.current && (
+        {highlightActive && (
           <ColorPicker initialColor={colorFrom} onChange={(c) => setColorFrom(c)} />
         )}
       </FilterSection>
@@ -87,7 +91,7 @@ const EccentricityFilter = (props) => {
             step={0.001}
             onChange={(v) => setEccMax(Number(v))} />
         </DataReadout>
-        {!!highlightActive.current && (
+        {highlightActive && (
           <ColorPicker initialColor={colorTo} onChange={(c) => setColorTo(c)} />
         )}
       </FilterSection>
