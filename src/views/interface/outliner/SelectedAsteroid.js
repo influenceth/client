@@ -14,6 +14,7 @@ import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
 import DataReadout from '~/components/DataReadout';
 import BonusBadge from '~/components/BonusBadge';
+import AddressLink from '~/components/AddressLink';
 import formatters from '~/lib/formatters';
 
 const Controls = styled.div`
@@ -101,7 +102,9 @@ const SelectedAsteroid = (props) => {
       )}
       {asteroid && (
         <AsteroidData>
-          <DataReadout label="Current Owner">{formatters.assetOwner(asteroid.owner)}</DataReadout>
+          <DataReadout label="Current Owner">
+            {asteroid.owner ? <AddressLink address={asteroid.owner} /> : 'Un-owned'}
+          </DataReadout>
           <DataReadout label="Spectral Type">{formatters.spectralType(asteroid.spectralType)}</DataReadout>
           <DataReadout label="Radius">{formatters.radius(asteroid.radius)}</DataReadout>
           <DataReadout label="Surface Area">{formatters.surfaceArea(asteroid.radius)}</DataReadout>

@@ -63,7 +63,7 @@ const AsteroidItem = (props) => {
       selected={origin === asteroid.i}
       {...props}>
       <Description>
-        {asteroid.name}{' - '}
+        {asteroid.customName || asteroid.baseName}{' - '}
         {utils.toSize(asteroid.r)}{' '}
         {utils.toSpectralType(asteroid.spectralType)}{'-type'}
         {asteroid.scanned && <RarityBadge rarity={utils.toRarity(asteroid.bonuses)}> &#9679;</RarityBadge>}

@@ -22,6 +22,7 @@ import IconButton from '~/components/IconButton';
 import DataReadout from '~/components/DataReadout';
 import LogEntry from '~/components/LogEntry';
 import Ether from '~/components/Ether';
+import AddressLink from '~/components/AddressLink';
 import ResourceBonuses from './asteroidDetails/ResourceBonuses';
 import Dimensions from './asteroidDetails/Dimensions';
 import formatters from '~/lib/formatters';
@@ -191,7 +192,7 @@ const AsteroidDetails = (props) => {
               <span>{utils.toRarity(asteroid.bonuses)}</span>
             </Rarity>
             <Data>
-              <GeneralData label="Owner">{formatters.assetOwner(asteroid.owner)}</GeneralData>
+              <GeneralData label="Owner"><AddressLink address={asteroid.owner} /></GeneralData>
               {sale && !asteroid.owner && (
                 <GeneralData label="Price">
                   {asteroidPrice && <>{ethersUtils.formatEther(asteroidPrice)} <Ether /></>}
@@ -287,7 +288,9 @@ const AsteroidDetails = (props) => {
             <Log>
               <Subtitle>Logs</Subtitle>
               <ul>
-                {asteroid.events.map(e => <LogEntry key={e.transactionHash} type={'asteroid'} tx={e} />)}
+                {asteroid.events.map(e => (
+                  <LogEntry key={e.transactionHash} type={`Asteroid_${e.event}`} data={e} />
+                ))}
               </ul>
             </Log>
           </SidePanel>

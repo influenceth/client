@@ -30,6 +30,10 @@ const useStore = create(persist((set, get) => ({
       token: null
     },
 
+    logs: {
+      alerts: []
+    },
+
     time: {
       current: ((Date.now() / 1000) - START_TIMESTAMP) / 3600,
       autoUpdating: true
@@ -38,8 +42,9 @@ const useStore = create(persist((set, get) => ({
     outliner: {
       pinned: true,
       wallet: { active: true, expanded: true },
-      selectedAsteroid: { active: false, expanded: true },
+      log: { active: true, expanded: true },
       filters: { active: true, expanded: true },
+      selectedAsteroid: { active: false, expanded: true },
       ownedAsteroids: { active: false, expanded: true },
       ownedCrew: { active: false, expanded: true },
       watchlist: { active: false, expanded: true },
@@ -56,6 +61,10 @@ const useStore = create(persist((set, get) => ({
       fov: 75
     },
 
+    dispatchAlertLogged: (alert) => set(produce(state => {
+      state.logs.alerts.unshift(alert);
+    })),
+
     dispatchOutlinerPinned: () => set(produce(state => {
       state.outliner.pinned = true;
     })),
@@ -65,20 +74,20 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchOutlinerSectionActivated: (section) => set(produce(state => {
-      state.outliner[section].active = true;
+      if (state.outliner[section]) state.outliner[section].active = true;
       state.outliner.pinned = true;
     })),
 
     dispatchOutlinerSectionDeactivated: (section) => set(produce(state => {
-      state.outliner[section].active = false;
+      if (state.outliner[section]) state.outliner[section].active = false;
     })),
 
     dispatchOutlinerSectionExpanded: (section) => set(produce(state => {
-      state.outliner[section].expanded = true;
+      if (state.outliner[section]) state.outliner[section].expanded = true;
     })),
 
     dispatchOutlinerSectionCollapsed: (section) => set(produce(state => {
-      state.outliner[section].expanded = false;
+      if (state.outliner[section]) state.outliner[section].expanded = false;
     })),
 
     dispatchTextureSizeSet: (size) => set(produce(state => {

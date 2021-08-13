@@ -37,6 +37,7 @@ const useScanAsteroid = () => {
       setStatus('startScanCompleted');
       queryClient.invalidateQueries([ 'asteroid', i ]);
       queryClient.invalidateQueries('asteroids');
+      queryClient.invalidateQueries('events');
     }
   });
 
@@ -52,6 +53,7 @@ const useScanAsteroid = () => {
       setStatus('scanComplete');
       queryClient.invalidateQueries([ 'asteroid', i ]);
       queryClient.invalidateQueries('asteroids');
+      queryClient.invalidateQueries('events');
     }
   });
 

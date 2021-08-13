@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { useWeb3React } from '@web3-react/core';
 import { utils } from 'ethers';
 
@@ -8,6 +8,7 @@ import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
 
 const useAuth = (startOnMount = true) => {
+  const queryClient = useQueryClient();
   const token = useStore(s => s.auth.token);
   const dispatchTokenInvalidated = useStore(s => s.dispatchTokenInvalidated);
   const dispatchAuthenticated = useStore(s => s.dispatchAuthenticated);
@@ -36,28 +37,42 @@ const useAuth = (startOnMount = true) => {
   const loginQuery = useQuery(
     [ 'login', account ],
     () => api.requestLogin(account),
-    { enabled: !token && !!account && activated }
+    {
+      enabled: !token && !!account && activated,
+      refetchOnWindowFocus: false,
+      retry: false
+    }
   );
 
-  const signQuery = useQuery([ 'sign', account ], async () => {
-    const signature = await library.getSigner(account).signMessage(loginQuery.data);
+  const restartLogin = () => loginQuery.refetch();
+  const message = loginQuery?.data || null;
+
+  const signQuery = useQuery([ 'sign', account, message ], async () => {
+    console.log(message);
+    const signature = await library.getSigner(account).signMessage(message);
     return signature;
   }, {
-    enabled: loginQuery.isSuccess && !token && !!account,
-    refetchOnWindowFocus: false
+    enabled: !!message && !token && !!account && !!library,
+    refetchOnWindowFocus: false,
+    retry: false,
+    onSuccess: () => queryClient.invalidateQueries('verify')
   });
 
   const verifyQuery = useQuery(
     [ 'verify', account ],
     () => api.verifyLogin(account, signQuery.data),
-    { enabled: signQuery.isSuccess && !token && !!account }
+    {
+      enabled: signQuery.isSuccess && !token && !!account,
+      refetchOnWindowFocus: false,
+      retry: false
+    }
   );
 
   useEffect(() => {
     if (verifyQuery.isSuccess) dispatchAuthenticated(verifyQuery.data);
   }, [ verifyQuery, dispatchAuthenticated ]);
 
-  return { token };
+  return { restartLogin, token };
 };
 
 export default useAuth;

@@ -12,7 +12,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnMount: false,
-      staleTime: 12000
+      staleTime: 60000
     }
   }
 });

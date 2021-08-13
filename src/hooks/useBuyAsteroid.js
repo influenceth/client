@@ -31,6 +31,7 @@ const useBuyAsteroid = () => {
     onSuccess: (data, { i }) => {
       queryClient.invalidateQueries([ 'asteroid', i ]);
       queryClient.invalidateQueries('asteroids');
+      queryClient.invalidateQueries('events');
     }
   });
 };

@@ -54,8 +54,7 @@ const Wallet = () => {
   const queryClient = useQueryClient();
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
   const [ activatingConnector, setActivatingConnector ] = useState();
-  const [ login, setLogin ] = useState(false);
-  const { token } = useAuth(login);
+  const { token, restartLogin } = useAuth();
   const status = account ? (token ? 'logged-in' : 'connected') : 'disconnected';
 
   // Recognize the connector currently being activated
@@ -71,7 +70,6 @@ const Wallet = () => {
     queryClient.removeQueries([ 'sign', account ]);
     queryClient.removeQueries([ 'verify', account ]);
     invalidateToken();
-    setLogin(false);
     deactivate();
   };
 
@@ -85,6 +83,7 @@ const Wallet = () => {
     <Section
       name="wallet"
       title="Account"
+      sticky={true}
       icon={<WalletIcon />}>
       <Info>
         <Indicator status={status}>●</Indicator>
@@ -110,7 +109,7 @@ const Wallet = () => {
             data-tip="Login with Ethereum"
             data-for="global"
             data-place="left"
-            onClick={() => setLogin(true)}>
+            onClick={() => restartLogin()}>
             <LoginIcon /> Login
           </Button>
         )}

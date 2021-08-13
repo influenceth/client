@@ -2,6 +2,7 @@ import styled from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
 import useStore from '~/hooks/useStore';
 import Wallet from './outliner/Wallet';
+import Log from './outliner/Log';
 import Filters from './outliner/Filters';
 import SelectedAsteroid from './outliner/SelectedAsteroid';
 import Watchlist from './outliner/Watchlist';
@@ -87,6 +88,7 @@ const Outliner = (props) => {
       <RightContainer stayOpen={outliner.pinned}>
         <StyledOutliner>
           <Wallet />
+          <Log />
           {outliner.filters.active && <Filters />}
           {origin && <SelectedAsteroid asteroidId={origin} />}
           {outliner.ownedAsteroids.active && !!account && <OwnedAsteroids />}

@@ -13,8 +13,13 @@ useStore.subscribe(newToken => {
 
 const api = {
 
-  getUser: async (token) => {
+  getUser: async () => {
     const response = await instance.get('/v1/user');
+    return response.data;
+  },
+
+  getEvents: async (since) => {
+    const response = await instance.get(`/v1/user/events?since=${since}`);
     return response.data;
   },
 

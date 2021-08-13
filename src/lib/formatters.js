@@ -31,16 +31,6 @@ const formatters = {
     return desc;
   },
 
-  // Account formatters
-  assetOwner: (owner = null) => {
-    if (owner) {
-      const url = `${process.env.REACT_APP_OPEN_SEA_URL}/accounts/${owner}`;
-      return <a target="_blank" rel="noreferrer" href={url}>{owner}</a>;
-    } else {
-      return 'Un-owned';
-    }
-  },
-
   asteroidPrice: (r, sale) => {
     const base = Number(ethersUtils.formatEther(sale.baseAsteroidPrice));
     const lot = Number(ethersUtils.formatEther(sale.baseLotPrice));
