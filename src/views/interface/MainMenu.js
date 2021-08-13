@@ -37,10 +37,11 @@ const Background = styled.div`
   position: absolute;
 `;
 
-const StyledLogo = styled.img`
+const StyledLogo = styled(Logo)`
   bottom: 25px;
   height: 40px;
   position: absolute;
+  width: auto;
 `;
 
 const MenuWrapper = styled.div`
@@ -65,7 +66,7 @@ const MainMenu = (props) => {
 
   return (
     <StyledMainMenu>
-      <StyledLogo src={Logo} />
+      <StyledLogo />
       <Background />
       <MenuWrapper>
         <Menu title="Account">

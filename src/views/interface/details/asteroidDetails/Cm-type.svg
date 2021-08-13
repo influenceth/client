@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="317.548" height="263.05" viewBox="0 0 317.548 263.05">
+  <g id="Cm-type" transform="translate(15.949 4.05)">
+    <g id="Group_346" data-name="Group 346" transform="translate(66.598 10.95)">
+      <g id="Group_342" data-name="Group 342" transform="translate(0 0)">
+        <path id="Path_258" data-name="Path 258" d="M896.958,256.167a3.817,3.817,0,0,0,3.553,3.805,102.48,102.48,0,0,1,58.6,180.573,3.82,3.82,0,0,0-.634,5.164h0a3.816,3.816,0,0,0,5.544.688,110.125,110.125,0,0,0-62.988-194.056,3.821,3.821,0,0,0-4.076,3.818Z" transform="translate(-783.193 -252.332)" fill="#ff852b"/>
+        <path id="Path_259" data-name="Path 259" d="M765.524,323.532a102.635,102.635,0,0,1,87.5-63.565,3.819,3.819,0,0,0,3.555-3.805h0a3.822,3.822,0,0,0-4.08-3.817,110.294,110.294,0,0,0-94.058,68.332,3.819,3.819,0,0,0,2.369,5.06h0A3.821,3.821,0,0,0,765.524,323.532Z" transform="translate(-750.339 -252.332)" fill="#78d356"/>
+        <path id="Path_260" data-name="Path 260" d="M932.526,510.607a3.818,3.818,0,0,0-5.119-.984,102.052,102.052,0,0,1-108,0,3.818,3.818,0,0,0-5.119.984h0a3.819,3.819,0,0,0,1.045,5.478,109.68,109.68,0,0,0,116.145,0,3.819,3.819,0,0,0,1.045-5.478Z" transform="translate(-763.409 -312.721)" fill="#8a15ff"/>
+        <path id="Path_261" data-name="Path 261" d="M792.641,470.388h0a3.815,3.815,0,0,0-.633-5.16A102.4,102.4,0,0,1,758.544,362.39a3.812,3.812,0,0,0-2.52-4.547l-.007,0a3.811,3.811,0,0,0-4.881,2.685,110.015,110.015,0,0,0,35.96,110.55A3.818,3.818,0,0,0,792.641,470.388Z" transform="translate(-747.926 -277.01)" fill="#5bc0f5"/>
+        <path id="Path_290" data-name="Path 290" d="M896.958,256.167a3.817,3.817,0,0,0,3.553,3.805,102.48,102.48,0,0,1,58.6,180.573,3.82,3.82,0,0,0-.634,5.164h0a3.816,3.816,0,0,0,5.544.688,110.125,110.125,0,0,0-62.988-194.056,3.821,3.821,0,0,0-4.076,3.818Z" transform="translate(-783.193 -252.332)" fill="#ff852b" opacity="0.5"/>
+        <path id="Path_291" data-name="Path 291" d="M765.524,323.532a102.635,102.635,0,0,1,87.5-63.565,3.819,3.819,0,0,0,3.555-3.805h0a3.822,3.822,0,0,0-4.08-3.817,110.294,110.294,0,0,0-94.058,68.332,3.819,3.819,0,0,0,2.369,5.06h0A3.821,3.821,0,0,0,765.524,323.532Z" transform="translate(-750.339 -252.332)" fill="#78d356" opacity="0.5"/>
+        <path id="Path_292" data-name="Path 292" d="M932.526,510.607a3.818,3.818,0,0,0-5.119-.984,102.052,102.052,0,0,1-108,0,3.818,3.818,0,0,0-5.119.984h0a3.819,3.819,0,0,0,1.045,5.478,109.68,109.68,0,0,0,116.145,0,3.819,3.819,0,0,0,1.045-5.478Z" transform="translate(-763.409 -312.721)" fill="#8a15ff" opacity="0.5"/>
+        <path id="Path_293" data-name="Path 293" d="M792.641,470.388h0a3.815,3.815,0,0,0-.633-5.16A102.4,102.4,0,0,1,758.544,362.39a3.812,3.812,0,0,0-2.52-4.547l-.007,0a3.811,3.811,0,0,0-4.881,2.685,110.015,110.015,0,0,0,35.96,110.55A3.818,3.818,0,0,0,792.641,470.388Z" transform="translate(-747.926 -277.01)" fill="#5bc0f5" opacity="0.5"/>
+      </g>
+    </g>
+    <text id="Cm-type-2" data-name="Cm-type" transform="translate(177.051 130)" fill="#c7c7c7" font-size="32" font-family="Jura" font-weight="300"><tspan x="-64.496" y="0">Cm-type</tspan></text>
+    <text id="Fissile" transform="translate(151.051 256)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Fissile</tspan></text>
+    <text id="Metals" transform="translate(249.051 17)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Metals</tspan></text>
+    <text id="Organics" transform="translate(31.051 17)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Organics</tspan></text>
+    <text id="Volatiles" transform="translate(-15.949 147)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Volatiles</tspan></text>
+  </g>
+</svg>

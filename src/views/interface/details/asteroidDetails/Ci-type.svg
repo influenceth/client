@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="285" height="249.929" viewBox="0 0 285 249.929">
+  <g id="Ci-type" transform="translate(-0.051 15)">
+    <g id="Group_347" data-name="Group 347" transform="translate(35.598 0)">
+      <g id="Group_343" data-name="Group 343" transform="translate(0)">
+        <path id="Path_271" data-name="Path 271" d="M268.385,468.428a3.826,3.826,0,0,0-3.561-3.813,102.584,102.584,0,0,1,0-204.636,3.826,3.826,0,0,0,3.561-3.812h0a3.828,3.828,0,0,0-4.087-3.824,110.239,110.239,0,0,0,0,219.909,3.828,3.828,0,0,0,4.087-3.824Z" transform="translate(-161.968 -252.333)" fill="#5bc0f5"/>
+        <path id="Path_272" data-name="Path 272" d="M311,256.167h0a3.826,3.826,0,0,0,3.561,3.813,102.584,102.584,0,0,1,0,204.636A3.826,3.826,0,0,0,311,468.428h0a3.828,3.828,0,0,0,4.087,3.824,110.239,110.239,0,0,0,0-219.909A3.828,3.828,0,0,0,311,256.167Z" transform="translate(-196.929 -252.333)" fill="#78d356"/>
+        <path id="Path_288" data-name="Path 288" d="M268.385,468.428a3.826,3.826,0,0,0-3.561-3.813,102.584,102.584,0,0,1,0-204.636,3.826,3.826,0,0,0,3.561-3.812h0a3.828,3.828,0,0,0-4.087-3.824,110.239,110.239,0,0,0,0,219.909,3.828,3.828,0,0,0,4.087-3.824Z" transform="translate(-161.968 -252.333)" fill="#5bc0f5" opacity="0.5"/>
+        <path id="Path_289" data-name="Path 289" d="M311,256.167h0a3.826,3.826,0,0,0,3.561,3.813,102.584,102.584,0,0,1,0,204.636A3.826,3.826,0,0,0,311,468.428h0a3.828,3.828,0,0,0,4.087,3.824,110.239,110.239,0,0,0,0-219.909A3.828,3.828,0,0,0,311,256.167Z" transform="translate(-196.929 -252.333)" fill="#78d356" opacity="0.5"/>
+      </g>
+    </g>
+    <text id="Ci-type-2" data-name="Ci-type" transform="translate(146.051 119)" fill="#c7c7c7" font-size="32" font-family="Jura" font-weight="300"><tspan x="-55.2" y="0">Ci-type</tspan></text>
+    <text id="Volatiles" transform="translate(0.051 17)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Volatiles</tspan></text>
+    <text id="Organics" transform="translate(219.051 17)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Organics</tspan></text>
+  </g>
+</svg>

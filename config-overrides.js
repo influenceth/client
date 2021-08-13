@@ -15,6 +15,26 @@ const addGlslifyLoader = () => config => {
   return config;
 };
 
+const addSVGR = () => config => {
+  const loaders = config.module.rules.find(rule => Array.isArray(rule.oneOf)).oneOf;
+  loaders.unshift({
+    test: /\.svg$/,
+    exclude: /node_modules/,
+    use: [{
+      loader: '@svgr/webpack',
+      options: {
+        svgoConfig: {
+          plugins: {
+            removeViewBox: false
+          }
+        }
+      }
+    }]
+  });
+
+  return config;
+}
+
 module.exports = override(
   addBabelPlugin([
     'babel-plugin-root-import',
@@ -23,5 +43,6 @@ module.exports = override(
       'rootPathSuffix': 'src'
     }
   ]),
-  addGlslifyLoader()
+  addGlslifyLoader(),
+  addSVGR()
 );

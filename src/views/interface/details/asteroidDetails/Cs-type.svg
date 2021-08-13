@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="312" height="275" viewBox="0 0 312 275">
+  <g id="Cs-Type" transform="translate(0 5)">
+    <g id="Group_351" data-name="Group 351" transform="translate(55.235 10)">
+      <g id="Group_333" data-name="Group 333">
+        <path id="Path_248" data-name="Path 248" d="M179.566,323.532a102.635,102.635,0,0,1,87.5-63.565,3.819,3.819,0,0,0,3.555-3.805h0a3.822,3.822,0,0,0-4.08-3.817,110.292,110.292,0,0,0-94.058,68.332,3.819,3.819,0,0,0,2.369,5.06h0A3.821,3.821,0,0,0,179.566,323.532Z" transform="translate(-164.381 -252.333)" fill="#5bc0f5"/>
+        <path id="Path_249" data-name="Path 249" d="M314.555,259.966a102.635,102.635,0,0,1,87.5,63.565,3.821,3.821,0,0,0,4.718,2.2h0a3.819,3.819,0,0,0,2.369-5.06,110.293,110.293,0,0,0-94.058-68.332A3.822,3.822,0,0,0,311,256.16h0A3.819,3.819,0,0,0,314.555,259.966Z" transform="translate(-197.235 -252.333)" fill="#78d356"/>
+        <path id="Path_250" data-name="Path 250" d="M206.683,470.388h0a3.814,3.814,0,0,0-.634-5.16A102.4,102.4,0,0,1,172.586,362.39a3.812,3.812,0,0,0-2.52-4.547l-.007,0a3.81,3.81,0,0,0-4.881,2.684,110.016,110.016,0,0,0,35.96,110.551A3.818,3.818,0,0,0,206.683,470.388Z" transform="translate(-161.968 -277.009)" fill="#8a15ff"/>
+        <path id="Path_251" data-name="Path 251" d="M427.905,357.843a3.812,3.812,0,0,0-2.52,4.547,102.4,102.4,0,0,1-33.462,102.838,3.814,3.814,0,0,0-.634,5.16h0a3.818,3.818,0,0,0,5.544.688,110.015,110.015,0,0,0,35.96-110.55,3.811,3.811,0,0,0-4.881-2.685Z" transform="translate(-216.003 -277.01)" fill="#ff852b"/>
+        <path id="Path_252" data-name="Path 252" d="M346.568,510.607a3.818,3.818,0,0,0-5.119-.984,102.054,102.054,0,0,1-108,0,3.817,3.817,0,0,0-5.119.983h0a3.819,3.819,0,0,0,1.045,5.478,109.68,109.68,0,0,0,116.145,0,3.819,3.819,0,0,0,1.045-5.478Z" transform="translate(-177.451 -312.721)" fill="#ff3636"/>
+        <path id="Path_273" data-name="Path 273" d="M179.566,323.532a102.635,102.635,0,0,1,87.5-63.565,3.819,3.819,0,0,0,3.555-3.805h0a3.822,3.822,0,0,0-4.08-3.817,110.292,110.292,0,0,0-94.058,68.332,3.819,3.819,0,0,0,2.369,5.06h0A3.821,3.821,0,0,0,179.566,323.532Z" transform="translate(-164.381 -252.333)" fill="#5bc0f5" opacity="0.5"/>
+        <path id="Path_274" data-name="Path 274" d="M314.555,259.966a102.635,102.635,0,0,1,87.5,63.565,3.821,3.821,0,0,0,4.718,2.2h0a3.819,3.819,0,0,0,2.369-5.06,110.293,110.293,0,0,0-94.058-68.332A3.822,3.822,0,0,0,311,256.16h0A3.819,3.819,0,0,0,314.555,259.966Z" transform="translate(-197.235 -252.333)" fill="#78d356" opacity="0.5"/>
+        <path id="Path_275" data-name="Path 275" d="M206.683,470.388h0a3.814,3.814,0,0,0-.634-5.16A102.4,102.4,0,0,1,172.586,362.39a3.812,3.812,0,0,0-2.52-4.547l-.007,0a3.81,3.81,0,0,0-4.881,2.684,110.016,110.016,0,0,0,35.96,110.551A3.818,3.818,0,0,0,206.683,470.388Z" transform="translate(-161.968 -277.009)" fill="#8a15ff" opacity="0.5"/>
+        <path id="Path_276" data-name="Path 276" d="M427.905,357.843a3.812,3.812,0,0,0-2.52,4.547,102.4,102.4,0,0,1-33.462,102.838,3.814,3.814,0,0,0-.634,5.16h0a3.818,3.818,0,0,0,5.544.688,110.015,110.015,0,0,0,35.96-110.55,3.811,3.811,0,0,0-4.881-2.685Z" transform="translate(-216.003 -277.01)" fill="#ff852b" opacity="0.5"/>
+        <path id="Path_277" data-name="Path 277" d="M346.568,510.607a3.818,3.818,0,0,0-5.119-.984,102.054,102.054,0,0,1-108,0,3.817,3.817,0,0,0-5.119.983h0a3.819,3.819,0,0,0,1.045,5.478,109.68,109.68,0,0,0,116.145,0,3.819,3.819,0,0,0,1.045-5.478Z" transform="translate(-177.451 -312.721)" fill="#ff3636" opacity="0.5"/>
+      </g>
+    </g>
+    <text id="Cs-type-2" data-name="Cs-type" transform="translate(165 129)" fill="#c7c7c7" font-size="32" font-family="Jura" font-weight="300"><tspan x="-60.304" y="0">Cs-type</tspan></text>
+    <text id="Volatiles" transform="translate(0 208)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Volatiles</tspan></text>
+    <text id="Metals" transform="translate(263 208)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Metals</tspan></text>
+    <text id="Organics" transform="translate(31 17)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Organics</tspan></text>
+    <text id="Rare_Earth" data-name="Rare Earth" transform="translate(123 267)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Rare Earth</tspan></text>
+    <text id="Fissile" transform="translate(237 27)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Fissile</tspan></text>
+  </g>
+</svg>

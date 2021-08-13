@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="294.39" height="250" viewBox="0 0 294.39 250">
+  <g id="S-type" transform="translate(14.598 4.807)">
+    <g id="Group_330" data-name="Group 330" transform="translate(0.402 10.193)">
+      <g id="Group_328" data-name="Group 328" transform="translate(0)">
+        <path id="Path_243" data-name="Path 243" d="M367.526,469.477a3.831,3.831,0,0,0-5.073,1.169,102.576,102.576,0,0,1-169.515,0,3.83,3.83,0,0,0-5.072-1.169h0a3.792,3.792,0,0,0-1.265,5.416,110.227,110.227,0,0,0,182.19,0,3.791,3.791,0,0,0-1.265-5.416Z" transform="translate(-167.696 -303.059)" fill="#ff3636"/>
+        <path id="Path_244" data-name="Path 244" d="M311,256.146a3.805,3.805,0,0,0,3.542,3.791A101.984,101.984,0,0,1,398.973,406.2a3.8,3.8,0,0,0,1.514,4.956l0,0a3.8,3.8,0,0,0,5.314-1.6,109.6,109.6,0,0,0-90.741-157.21,3.807,3.807,0,0,0-4.064,3.8Z" transform="translate(-196.824 -252.333)" fill="#ff852b"/>
+        <path id="Path_245" data-name="Path 245" d="M178.3,411.153a3.8,3.8,0,0,0,1.515-4.956,101.984,101.984,0,0,1,84.431-146.26,3.805,3.805,0,0,0,3.542-3.791h0a3.807,3.807,0,0,0-4.064-3.8,109.6,109.6,0,0,0-90.741,157.21,3.8,3.8,0,0,0,5.314,1.6Z" transform="translate(-161.968 -252.333)" fill="#8a15ff"/>
+      </g>
+      <g id="Group_329" data-name="Group 329" transform="translate(0)">
+        <path id="Path_243-2" data-name="Path 243" d="M367.526,469.477a3.831,3.831,0,0,0-5.073,1.169,102.576,102.576,0,0,1-169.515,0,3.83,3.83,0,0,0-5.072-1.169h0a3.792,3.792,0,0,0-1.265,5.416,110.227,110.227,0,0,0,182.19,0,3.791,3.791,0,0,0-1.265-5.416Z" transform="translate(-167.696 -303.059)" fill="#ff3636" opacity="0.5"/>
+        <path id="Path_244-2" data-name="Path 244" d="M311,256.146a3.805,3.805,0,0,0,3.542,3.791A101.984,101.984,0,0,1,398.973,406.2a3.8,3.8,0,0,0,1.514,4.956l0,0a3.8,3.8,0,0,0,5.314-1.6,109.6,109.6,0,0,0-90.741-157.21,3.807,3.807,0,0,0-4.064,3.8Z" transform="translate(-196.824 -252.333)" fill="#ff852b" opacity="0.5"/>
+        <path id="Path_245-2" data-name="Path 245" d="M178.3,411.153a3.8,3.8,0,0,0,1.515-4.956,101.984,101.984,0,0,1,84.431-146.26,3.805,3.805,0,0,0,3.542-3.791h0a3.807,3.807,0,0,0-4.064-3.8,109.6,109.6,0,0,0-90.741,157.21,3.8,3.8,0,0,0,5.314,1.6Z" transform="translate(-161.968 -252.333)" fill="#8a15ff" opacity="0.5"/>
+      </g>
+    </g>
+    <text id="S-type-2" data-name="S-type" transform="translate(110.402 129.193)" fill="#c7c7c7" font-size="32" font-family="Jura" font-weight="300"><tspan x="-51.6" y="0">S-type</tspan></text>
+    <text id="Fissile" transform="translate(-10.208 17)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Fissile</tspan></text>
+    <text id="Rare_Earth" data-name="Rare Earth" transform="translate(203.792 217)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Rare Earth</tspan></text>
+    <text id="Metals" transform="translate(193.792 17)" fill="#c7c7c7" font-size="16" font-family="Jura" font-weight="300"><tspan x="0" y="0">Metals</tspan></text>
+  </g>
+</svg>

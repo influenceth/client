@@ -23,6 +23,7 @@ import DataReadout from '~/components/DataReadout';
 import LogEntry from '~/components/LogEntry';
 import Ether from '~/components/Ether';
 import AddressLink from '~/components/AddressLink';
+import ResourceMix from './asteroidDetails/ResourceMix';
 import ResourceBonuses from './asteroidDetails/ResourceBonuses';
 import Dimensions from './asteroidDetails/Dimensions';
 import formatters from '~/lib/formatters';
@@ -122,13 +123,22 @@ const MainPanel = styled.div`
 const Resources = styled.div`
   border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
   display: flex;
-  flex: 0 1 auto;
+  flex: 0 1 40%;
   padding-bottom: 20px;
-  min-height: 250px;
+  max-height: 40%;
 `;
 
-const ResourceMix = styled.div`
-  flex: 1 1 33%;
+const StyledResourceMix = styled(ResourceMix)`
+  display: flex;
+  flex: 0 1 33%;
+  margin: 20px 25px;
+  justify-content: center;
+
+  & svg {
+    flex: 0 1 auto;
+    height: auto;
+    width: auto;
+  }
 `;
 
 const AsteroidDetails = (props) => {
@@ -157,8 +167,6 @@ const AsteroidDetails = (props) => {
       setScanStatus('unscanned');
     }
   }, [ txStatus, asteroid?.scanning, asteroid?.scanned ]);
-
-  console.log(scanStatus);
 
   // Force the asteroid to load into the origin if coming direct from URL
   useEffect(() => {
@@ -296,8 +304,7 @@ const AsteroidDetails = (props) => {
           </SidePanel>
           <MainPanel>
             <Resources>
-              <ResourceMix>
-              </ResourceMix>
+              <StyledResourceMix spectralType={asteroid.spectralType} />
               <ResourceBonuses asteroid={asteroid} />
             </Resources>
             <Dimensions asteroid={asteroid} />

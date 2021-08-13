@@ -16,7 +16,8 @@ const StyledResourceBonuses = styled.div`
   display: flex;
   flex: 1 1 67%;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: space-around;
+  margin-left: 20px;
 `;
 
 const Bonus = styled.div`
@@ -37,16 +38,21 @@ const BonusBar = styled.div`
     if (!props.shown) return props.theme.colors.disabledText;
   }};
   border-radius: 2px;
-  height: 12px;
+  height: 1.5vh;
   margin-bottom: 2px;
-  width: 15px;
+  width: 1.6vh;
 `;
 
 const StyledBonusBadge = styled(BonusBadge)`
-  flex: 0 1 auto;
+  display: flex;
+  flex: 0 1 4.5vh;
   margin: 0 8px;
-  height: 30px;
-  width: 30px;
+  height: auto;
+
+  & svg {
+    height: auto;
+    width: auto;
+  }
 `;
 
 const BonusDesc = styled.div`

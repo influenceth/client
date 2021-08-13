@@ -12,7 +12,11 @@ const AddressLink = (props) => {
     if (account && account === address) setText('you');
   }, [ account, address ]);
 
-  return  <a target="_blank" rel="noreferrer" href={url}>{text}</a>;
+  if (address) {
+    return <a target="_blank" rel="noreferrer" href={url}>{text}</a>;
+  } else {
+    return <span>Un-owned</span>
+  }
 };
 
 export default AddressLink;
