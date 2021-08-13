@@ -14,7 +14,6 @@ import useAuth from '~/hooks/useAuth';
 import { injected } from '~/lib/blockchain/connectors';
 import Section from '~/components/Section';
 import Button from '~/components/Button';
-import IconButton from '~/components/IconButton';
 
 const Controls = styled.div`
   display: flex;
@@ -50,7 +49,7 @@ const Indicator = styled.span`
 `;
 
 const Wallet = () => {
-  const { connector, account, activate, deactivate, active } = useWeb3React();
+  const { connector, account, activate, deactivate } = useWeb3React();
   const queryClient = useQueryClient();
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
   const [ activatingConnector, setActivatingConnector ] = useState();

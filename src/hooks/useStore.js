@@ -65,6 +65,16 @@ const useStore = create(persist((set, get) => ({
       state.logs.alerts.unshift(alert);
     })),
 
+    dispatchAlertNotified: (alert) => set(produce(state => {
+      const index = state.logs.alerts.findIndex(a => a.type === alert.type && a.timestamp === alert.timestamp);
+      state.logs.alerts[index]['notified'] = true;
+    })),
+
+    dispatchAlertDismissed: (alert) => set(produce(state => {
+      const index = state.logs.alerts.findIndex(a => a.type === alert.type && a.timestamp === alert.timestamp);
+      state.logs.alerts.splice(index, 1);
+    })),
+
     dispatchOutlinerPinned: () => set(produce(state => {
       state.outliner.pinned = true;
     })),

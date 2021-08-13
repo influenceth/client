@@ -12,6 +12,7 @@ const theme = {
     mainText: '#cccccc',
     secondaryText: '#999999',
     disabledText: '#666666',
+    error: '#df4300',
     bonus: {
       level0: '#999999',
       level1: 'rgb(105, 235, 244)',

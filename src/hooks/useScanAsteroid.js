@@ -34,10 +34,13 @@ const useScanAsteroid = () => {
       setStatus(null);
     },
     onSuccess: (data, { i }) => {
+      console.log('started scan');
       setStatus('startScanCompleted');
-      queryClient.invalidateQueries([ 'asteroid', i ]);
-      queryClient.invalidateQueries('asteroids');
-      queryClient.invalidateQueries('events');
+      setTimeout(() => {
+        queryClient.invalidateQueries([ 'asteroid', i ]);
+        queryClient.invalidateQueries('asteroids');
+        queryClient.invalidateQueries('events');
+      }, 1000);
     }
   });
 
@@ -50,10 +53,13 @@ const useScanAsteroid = () => {
     onMutate: () => setStatus('finalizeScanInProgress'),
     onError: () => setStatus('startScanCompleted'),
     onSuccess: (data, { i }) => {
+      console.log('completing scan');
       setStatus('scanComplete');
-      queryClient.invalidateQueries([ 'asteroid', i ]);
-      queryClient.invalidateQueries('asteroids');
-      queryClient.invalidateQueries('events');
+      setTimeout(() => {
+        queryClient.invalidateQueries([ 'asteroid', i ]);
+        queryClient.invalidateQueries('asteroids');
+        queryClient.invalidateQueries('events');
+      }, 1000);
     }
   });
 

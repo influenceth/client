@@ -1,13 +1,13 @@
 import styled from 'styled-components';
-import { Link } from 'react-router-dom';
 import { FiExternalLink as LinkIcon } from 'react-icons/fi';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 import { MdBlurOff as ScanIcon } from 'react-icons/md';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
+import { RiErrorWarningFill as ErrorIcon, RiCloseCircleLine as DismissIcon } from 'react-icons/ri';
 
+import useStore from '~/hooks/useStore';
 import AsteroidLink from '~/components/AsteroidLink';
 import AddressLink from '~/components/AddressLink';
-import formatters from '~/lib/formatters';
 
 const StyledLogEntry = styled.li`
   align-items: center;
@@ -33,6 +33,10 @@ const StyledLogEntry = styled.li`
     margin-right: 8px;
     width: 16px;
   }
+`;
+
+const StyledErrorIcon = styled(ErrorIcon)`
+  color: ${p => p.theme.colors.error} !important;
 `;
 
 const Description = styled.div`
@@ -106,12 +110,32 @@ const entries = {
       </Description>
       {getTxLink(e.transactionHash)}
     </StyledLogEntry>
-  )
+  ),
+
+  Asteroid_NamingError: (e) => {
+    const dismissAlert = useStore(s => s.dispatchAlertDismissed);
+
+    return (
+      <StyledLogEntry>
+        <StyledErrorIcon />
+        <Description>
+          <span>Error naming asteroid </span>
+          <AsteroidLink id={e.i} />
+        </Description>
+        <IconLink onClick={() => dismissAlert(e)}><DismissIcon /></IconLink>
+      </StyledLogEntry>
+    );
+  }
 };
 
 const LogEntry = (props) => {
   const { type, data } = props;
-  return entries[type](data);
+
+  try {
+    return entries[type](data);
+  } catch (e) {
+    return <span>Placeholder</span>
+  }
 };
 
 export default LogEntry;

@@ -6,11 +6,7 @@ const useAsteroid = (i) => {
   return useQuery(
     [ 'asteroid', i ],
     () => api.getAsteroid(i),
-    {
-      enabled: !!i,
-      refetchInterval: 10000,
-      refetchIntervalInBackground: true
-    }
+    { enabled: !!i }
   );
 };
 

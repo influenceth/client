@@ -10,7 +10,7 @@ const AddressLink = (props) => {
 
   useEffect(() => {
     if (account && account === address) setText('you');
-  }, [ account ]);
+  }, [ account, address ]);
 
   return  <a target="_blank" rel="noreferrer" href={url}>{text}</a>;
 };

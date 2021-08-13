@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
 import { useQuery, useQueryClient } from 'react-query';
 import { useWeb3React } from '@web3-react/core';

@@ -8,6 +8,7 @@ import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import WatchlistTable from './interface/details/WatchlistTable';
 import AsteroidDetails from './interface/details/AsteroidDetails';
 import Settings from './interface/details/Settings';
+import Alerts from './interface/Alerts';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -43,6 +44,7 @@ const Interface = () => {
   return (
     <StyledInterface>
       <ReactTooltip id="global" place="left" effect="solid" />
+      <Alerts />
       <MainContainer>
         <Switch>
           <Route path="/owned-asteroids">

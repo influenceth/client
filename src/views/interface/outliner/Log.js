@@ -27,6 +27,13 @@ const EmptyMessage = styled.span`
 const Log = () => {
   const { events } = useEvents();
   const alerts = useStore(s => s.logs.alerts);
+  const [ combined, setCombined ] = useState([]);
+
+  useEffect(() => {
+    const newCombined = events.concat(alerts);
+    newCombined.sort((a, b) => b.timestamp - a.timestamp);
+    setCombined(newCombined);
+  }, [ events, alerts ]);
 
   return (
     <Section
@@ -34,12 +41,13 @@ const Log = () => {
       title="Captain's Log"
       icon={<LogIcon />}>
       <LogList>
-        {events?.length === 0 && (
+        {combined?.length === 0 && (
           <EmptyMessage>No log events recorded.</EmptyMessage>
         )}
-        {events && events.map(e => (
-          <LogEntry key={e.transactionHash} type={`${e.assetType}_${e.event}`} data={e} />
-        ))}
+        {combined && combined.map(e => {
+          const type = e.type || `${e.assetType}_${e.event}`;
+          return <LogEntry key={`${type}.${e.timestamp}`} type={type} data={e} />;
+        })}
       </LogList>
     </Section>
   );

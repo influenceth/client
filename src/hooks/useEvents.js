@@ -28,6 +28,7 @@ const useEvents = () => {
       setEvents(uniq(newEvents, 'transactionHash'));
       setLatest(Math.floor(Date.now() / 1000));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ eventsQuery.data ]);
 
   // Reset on logout / disconnect

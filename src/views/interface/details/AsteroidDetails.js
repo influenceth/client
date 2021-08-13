@@ -136,28 +136,29 @@ const AsteroidDetails = (props) => {
   const history = useHistory();
   const { account } = useWeb3React();
   const sale = useSale();
-  const origin = useStore(s => s.asteroids.origin);
-  const { data: asteroid } = useAsteroid(origin);
+  const { data: asteroid } = useAsteroid(Number(i));
   const { data: asteroidPrice } = useAsteroidPrice(asteroid);
   const buyAsteroid = useBuyAsteroid();
-  const { startScan, finalizeScan, status: scanStatus } = useScanAsteroid();
+  const { startScan, finalizeScan, status: txStatus } = useScanAsteroid();
   const nameAsteroid = useNameAsteroid();
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
-  const [ previousOrigin, setPreviousOrigin ] = useState(null);
   const [ naming, setNaming ] = useState(false);
   const [ newName, setNewName ] = useState('');
+  const [ scanStatus, setScanStatus ] = useState('unscanned');
 
-  const scanStatusDesc = () => {
-    if ([ 'startScanInProgress', 'startScanCompleted', 'finalizeScanInProgress' ].includes(scanStatus)) {
-      return 'Scan in progress...';
-    } else if (asteroid.scanning) {
-      return 'Scan in progress...';
-    } else if (asteroid.scanned) {
-      return 'Scan completed'
+  useEffect(() => {
+    if (txStatus) {
+      setScanStatus(txStatus);
+    } else if (asteroid?.scanning) {
+      setScanStatus('startScanCompleted');
+    } else if (asteroid?.scanned) {
+      setScanStatus('finalizeScanCompleted');
     } else {
-      return 'Un-scanned'
+      setScanStatus('unscanned');
     }
-  };
+  }, [ txStatus, asteroid?.scanning, asteroid?.scanned ]);
+
+  console.log(scanStatus);
 
   // Force the asteroid to load into the origin if coming direct from URL
   useEffect(() => {
@@ -168,13 +169,6 @@ const AsteroidDetails = (props) => {
     if (asteroid?.i) history.push(`/asteroids/${asteroid.i}`);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ asteroid ]);
-
-  // Checks for a origin -> null transition to close the view
-  useEffect(() => {
-    if (previousOrigin && !origin) history.push('/');
-    if (!!asteroid) setPreviousOrigin(asteroid.i);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ origin, asteroid ]);
 
   const goToOpenSeaAsteroid = (i) => {
     const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/${i}`;
@@ -199,7 +193,13 @@ const AsteroidDetails = (props) => {
                   {!asteroidPrice && <>... <Ether /></>}
                 </GeneralData>
               )}
-              <GeneralData label="Scan Status">{scanStatusDesc()}</GeneralData>
+              <GeneralData label="Scan Status">
+                {scanStatus === 'unscanned' && 'Un-scanned'}
+                {scanStatus === 'startScanInProgress' && 'Starting scan...'}
+                {scanStatus === 'startScanCompleted' && 'Scan in progress...'}
+                {scanStatus === 'finalizeScanInProgress' && 'Retrieving scan results...'}
+                {scanStatus === 'finalizeScanCompleted' && 'Scan completed'}
+              </GeneralData>
               {asteroid.owner && !asteroid.scanned && (
                 <GeneralData label="Scanning Boost">
                   {formatters.scanningBoost(asteroid.purchaseOrder)}
@@ -207,7 +207,7 @@ const AsteroidDetails = (props) => {
               )}
             </Data>
             <Controls>
-              <Subtitle>Manage</Subtitle>
+              <Subtitle>Manage Asteroid</Subtitle>
               {!asteroid.owner && (
                 <StyledButton
                   data-tip="Purchase development rights"
@@ -235,7 +235,7 @@ const AsteroidDetails = (props) => {
                   <MdFlag /> List for Sale
                 </StyledButton>
               )}
-              {!asteroid.scanned && !asteroid.scanning && (
+              {[ 'unscanned', 'startScanInProgress' ].includes(scanStatus) && (
                 <StyledButton
                   data-tip="Scan for resource bonuses"
                   data-for="global"
@@ -244,12 +244,12 @@ const AsteroidDetails = (props) => {
                   <MdBlurOff /> Start Scan
                 </StyledButton>
               )}
-              {!asteroid.scanned && asteroid.scanning && (
+              {[ 'startScanCompleted', 'finalizeScanInProgress' ].includes(scanStatus) && (
                 <StyledButton
                   data-tip="Retrieve scan results"
                   data-for="global"
                   onClick={() => finalizeScan.mutate({ i: asteroid.i })}
-                  disabled={asteroid.owner !== account}>
+                  disabled={asteroid.owner !== account || scanStatus === 'finalizeScanInProgress'}>
                   <MdBlurOff /> Finalize Scan
                 </StyledButton>
               )}
@@ -286,7 +286,7 @@ const AsteroidDetails = (props) => {
               )}
             </Controls>
             <Log>
-              <Subtitle>Logs</Subtitle>
+              <Subtitle>Asteroid Events</Subtitle>
               <ul>
                 {asteroid.events.map(e => (
                   <LogEntry key={e.transactionHash} type={`Asteroid_${e.event}`} data={e} />
