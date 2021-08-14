@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Web3ReactProvider } from '@web3-react/core';
 import { Web3Provider } from '@ethersproject/providers';
 
-import Game from '~/views/Game';
+import Game from './Game';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 

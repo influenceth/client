@@ -61,6 +61,28 @@ const useStore = create(persist((set, get) => ({
       fov: 75
     },
 
+    sounds: {
+      music: 100,
+      effects: 100,
+      toPlay: null
+    },
+
+    dispatchSoundPlayed: () => set(produce(state => {
+      state.sounds.toPlay = null;
+    })),
+
+    dispatchSoundRequested: (sound) => set(produce(state => {
+      state.sounds.toPlay = sound;
+    })),
+
+    dispatchMusicVolumeSet: (volume) => set(produce(state => {
+      state.sounds.music = volume;
+    })),
+
+    dispatchEffectsVolumeSet: (volume) => set(produce(state => {
+      state.sounds.effects = volume;
+    })),
+
     dispatchAlertLogged: (alert) => set(produce(state => {
       state.logs.alerts.unshift(alert);
     })),

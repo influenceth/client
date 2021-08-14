@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 
+import useStore from '~/hooks/useStore';
+
 const StyledIconButton = styled.button`
   border: ${p => p.borderless ? '0px' : '1px'} solid ${p => p.theme.colors.main};
   background-color: transparent;
@@ -61,13 +63,19 @@ const CancelIndicator = styled.svg`
 `;
 
 const IconButton = (props) => {
-  const { active, 'data-tip': dataTip } = props;
+  const { active, 'data-tip': dataTip, onClick, ...restProps} = props;
+  const playSound = useStore(s => s.dispatchSoundRequested);
+
+  const _onClick = (e) => {
+    playSound('effects.click');
+    if (onClick) onClick(e);
+  }
 
   useEffect(() => ReactTooltip.rebuild(), [ dataTip ]);
 
   return (
     // Adding 'key' forces data-tip to actually update on the tooltip
-    <StyledIconButton data-for="global" key={dataTip} {...props}>
+    <StyledIconButton  {...restProps} onClick={_onClick} data-for="global" key={dataTip}>
       {props.children}
       {active && (
         <CancelIndicator viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">

@@ -11,6 +11,7 @@ import DataReadout from '~/components/DataReadout';
 import Button from '~/components/Button';
 import IconButton from '~/components/IconButton';
 import NumberInput from '~/components/NumberInput';
+import Range from '~/components/Range';
 
 const StyledSettings = styled.div`
   padding-left: 15px;
@@ -43,6 +44,7 @@ const StyledDataReadout = styled(DataReadout)`
   & span {
     align-items: center;
     display: flex;
+    flex: 1 0 auto;
   }
 `;
 
@@ -53,6 +55,7 @@ const StyledClipboard = styled(Clipboard)`
 const Settinigs = (props) => {
   const { account } = useWeb3React();
   const graphics = useStore(s => s.graphics);
+  const sounds = useStore(s => s.sounds);
   const setTextureSize = useStore(s => s.dispatchTextureSizeSet);
   const turnOnSkybox = useStore(s => s.dispatchSkyboxUnhidden);
   const turnOffSkybox = useStore(s => s.dispatchSkyboxHidden);
@@ -64,6 +67,8 @@ const Settinigs = (props) => {
   const setFOV = useStore(s => s.dispatchFOVSet);
   const turnOnStats = useStore(s => s.dispatchStatsOn);
   const turnOffStats = useStore(s => s.dispatchStatsOff);
+  const adjustMusicVolume = useStore(s => s.dispatchMusicVolumeSet);
+  const adjustEffectsVolume = useStore(s => s.dispatchEffectsVolumeSet);
 
   const [ localFOV, setLocalFOV ] = useState(graphics.fov);
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
@@ -177,7 +182,21 @@ const Settinigs = (props) => {
         </StyledDataReadout>
 
         <h3>Sound</h3>
-        <StyledDataReadout label="Volume">
+        <StyledDataReadout label="Music Volume">
+          <Range
+            type="slider"
+            min={0}
+            max={100}
+            defaultValue={sounds.music}
+            onChange={adjustMusicVolume} />
+        </StyledDataReadout>
+        <StyledDataReadout label="Effects Volume">
+          <Range
+            type="slider"
+            min={0}
+            max={100}
+            defaultValue={sounds.effects}
+            onChange={adjustEffectsVolume} />
         </StyledDataReadout>
 
         <h3>Referrals</h3>

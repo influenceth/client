@@ -25,10 +25,10 @@ const images = [
 ];
 
 const ResourceMix = (props) => {
-  const { spectralType } = props;
+  const { spectralType, ...restProps } = props;
 
   return (
-    <div {...props}>
+    <div {...restProps}>
       {images[spectralType]}
     </div>
   );

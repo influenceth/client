@@ -51,7 +51,7 @@ const Alerts = (props) => {
       send(<LogEntry type="Asteroid_NamingError" data={a} />);
       notifyAlert(a);
     });
-  }, [ alerts ]);
+  }, [ alerts, notifyAlert ]);
 
   return (
     <StyledReactNotification />

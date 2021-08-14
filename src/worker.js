@@ -3,9 +3,9 @@ import { WebGLRenderer } from 'three';
 
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 import CubeSphere from '~/lib/graphics/CubeSphere';
-import HeightMap from '~/views/scene/asteroid/HeightMap';
-import ColorMap from '~/views/scene/asteroid/ColorMap';
-import NormalMap from '~/views/scene/asteroid/NormalMap';
+import HeightMap from '~/game/scene/asteroid/HeightMap';
+import ColorMap from '~/game/scene/asteroid/ColorMap';
+import NormalMap from '~/game/scene/asteroid/NormalMap';
 import constants from '~/lib/constants';
 
 onmessage = async function(event) {
