@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Howl } from 'howler';
+import { Howler, Howl } from 'howler';
 
 import useStore from '~/hooks/useStore';
 import ambient1 from '~/assets/ambient1.mp3';
@@ -19,14 +19,14 @@ class Sound extends Howl {
 
 const sounds = {
   effects: {
-    click: new Sound({ src: [ click ], volume: 0.25 }),
-    failure: new Sound({ src: [ failure ], volume: 1.0 }),
-    success: new Sound({ src: [ success ], volume: 1.0 })
+    click: { src: [ click ], html5: true, preload: false, volume: 0.25 },
+    failure: { src: [ failure ], html5: true, preload: false, volume: 1.0 },
+    success: { src: [ success ], html5: true, preload: false, volume: 1.0 }
   },
   music: {
-    ambient1: new Sound({ src: [ ambient1 ], volume: 1.0 }),
-    ambient2: new Sound({ src: [ ambient2 ], volume: 1.0 }),
-    ambient3: new Sound({ src: [ ambient3 ], volume: 1.0 }),
+    ambient1: { src: [ ambient1 ], html5: true, preload: false, volume: 1.0 },
+    ambient2: { src: [ ambient2 ], html5: true, preload: false, volume: 1.0 },
+    ambient3: { src: [ ambient3 ], html5: true, preload: false, volume: 1.0 },
   }
 };
 
@@ -36,30 +36,46 @@ const Audio = (props) => {
   const effectsVolume = useStore(s => s.sounds.effects);
   const endSound = useStore(s => s.dispatchSoundPlayed);
   const [ lastTrack, setLastTrack ] = useState(null);
+  const [ currentTrack, setCurrentTrack ] = useState(null);
+
+  useEffect(() => {
+    return () => Howler.unload();
+  }, []);
 
   // Play random ambient music with a gap between them
   useEffect(() => {
     const tracks = Object.values(sounds.music);
     let index = Math.floor(Math.random() * (tracks.length - 1));
     if (index === lastTrack) index++;
-    const track = tracks[index];
-    track.play();
-    track.fade(0, track._baseVolume * musicVolume / 100, 5000);
-    track.on('end', () => {
-      setTimeout(() => setLastTrack(index), Math.random() * 60000 * 3);
-    });
+
+    if (musicVolume === 0) {
+      setTimeout(() => setLastTrack(index), Math.random() * 60000 * 5);
+    } else {
+      const track = new Sound(tracks[index]);
+      setCurrentTrack(track);
+      track.load();
+      track.volume(tracks[index].volume * musicVolume / 100);
+      track.play();
+      track.fade(0, track._baseVolume * musicVolume / 100, 5000);
+      track.on('end', () => {
+        track.stop();
+        track.unload();
+        setCurrentTrack(null);
+        setTimeout(() => setLastTrack(index), Math.random() * 60000 * 5);
+      });
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ lastTrack ]);
 
   // Adjust volume of music tracks
   useEffect(() => {
-    Object.values(sounds.music).forEach(s => s.volume(s._baseVolume * musicVolume / 100));
+    if (currentTrack) currentTrack.volume(currentTrack._baseVolume * musicVolume / 100);
   }, [ musicVolume ]);
 
   // Adjust volume of music tracks
-  useEffect(() => {
-    Object.values(sounds.effects).forEach(s => s.volume(s._baseVolume * effectsVolume / 100));
-  }, [ effectsVolume ]);
+  // useEffect(() => {
+  //   Object.values(sounds.effects).forEach(s => s.volume(s._baseVolume * effectsVolume / 100));
+  // }, [ effectsVolume ]);
 
   // Listen for new sound request and play it
   useEffect(() => {
@@ -67,12 +83,20 @@ const Audio = (props) => {
 
     try {
       const [ type, name ] = toPlay.split('.');
-      sounds[type][name].play();
+      const sound = new Sound(sounds[type][name]);
+      sound.load();
+      sound.volume(sounds[type][name].volume * effectsVolume / 100);
+      sound.play();
+      sound.on('end', () => {
+        sound.stop();
+        sound.unload();
+      });
     } catch (e) {
       console.error(e);
     } finally {
       endSound();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ toPlay, endSound ]);
 
   return null;

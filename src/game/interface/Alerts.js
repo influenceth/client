@@ -25,7 +25,7 @@ const send = (message, options = {}) => {
   try {
     options.message = message;
     const mergedOptions = Object.assign({}, JSON.parse(JSON.stringify(defaults)), options);
-    if (mergedOptions.type === 'info') mergedOptions.dismiss.duration = 5000;
+    if (mergedOptions.type === 'info') mergedOptions.dismiss.duration = 0;
     notify.addNotification(mergedOptions);
   } catch (e) {
     console.error(e);
@@ -33,11 +33,28 @@ const send = (message, options = {}) => {
 };
 
 const StyledReactNotification = styled(ReactNotification)`
+  & .notification-container--top-center {
+    top: 0 !important;
+  }
+
   & .notification__item {
     background-color: ${p => p.theme.colors.contentBackdrop};
     border-color: ${p => p.theme.colors.main};
     border-radius: 0;
+    border-width: 5px;
     cursor: ${p => p.theme.cursors.active};
+  }
+
+  & .notification__item.notification__item--warning {
+    border-color: ${p => p.theme.colors.error};
+  }
+
+  & .notification__close {
+    background-color: transparent !important;
+  }
+
+  & .notification__close:after {
+    font-size: 20px !important;
   }
 `;
 
@@ -48,7 +65,10 @@ const Alerts = (props) => {
   useEffect(() => {
     if (alerts?.length === 0) return;
     alerts.filter(a => !a.notified).forEach(a => {
-      send(<LogEntry type="Asteroid_NamingError" data={a} />);
+      const { level, type, duration, ...data } = a;
+      const options = level ? { type: level } : {};
+      if (duration) options.duration = duration;
+      send(<LogEntry type={type} data={data} />, options);
       notifyAlert(a);
     });
   }, [ alerts, notifyAlert ]);

@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import uniq from 'lodash.uniq';
 
-import api from '~/lib/api';
-
+import useStore from '~/hooks/useStore';
 import useAuth from '~/hooks/useAuth';
+import api from '~/lib/api';
 
 const useEvents = () => {
   const { token } = useAuth();
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const [ latest, setLatest ] = useState(0);
   const [ events, setEvents ] = useState([]);
 
@@ -24,6 +25,14 @@ const useEvents = () => {
   // Update for new incoming events
   useEffect(() => {
     if (eventsQuery.data) {
+      if (latest > 0) {
+        eventsQuery.data.forEach(e => {
+          const type = e.type || `${e.assetType}_${e.event}`;
+          const alert = Object.assign({}, e, { type: type, duration: 5000 });
+          createAlert(alert);
+        });
+      }
+
       const newEvents = eventsQuery.data.slice().concat(events);
       setEvents(uniq(newEvents, 'transactionHash'));
       setLatest(Math.floor(Date.now() / 1000));

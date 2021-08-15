@@ -4,6 +4,7 @@ import { ThemeProvider } from 'styled-components';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
+import Intro from '~/game/Intro';
 import Interface from '~/game/Interface';
 import Scene from '~/game/Scene';
 import Audio from '~/game/Audio';
@@ -19,6 +20,11 @@ const StyledMain = styled.main`
 const Game = (props) => {
   const gpuInfo = useDetectGPU();
   const [ showScene, setShowScene ] = useState(false);
+  const [ loading, setLoading ] = useState(true);
+
+  const onVideoComplete = () => {
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!gpuInfo) return;
@@ -35,6 +41,7 @@ const Game = (props) => {
   return (
     <ThemeProvider theme={theme}>
       <Router>
+        {loading && <Intro onVideoComplete={onVideoComplete} />}
         <StyledMain>
           <Interface />
           {showScene && <Scene />}

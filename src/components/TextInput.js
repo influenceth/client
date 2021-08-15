@@ -17,7 +17,7 @@ const StyledInput = styled.input`
   }
 
   &:invalid {
-    border-bottom: 1px solid red;
+    border-bottom: 1px solid ${props => props.theme.colors.error};
   }
 `;
 

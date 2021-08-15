@@ -3,9 +3,8 @@ import { FiExternalLink as LinkIcon } from 'react-icons/fi';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 import { MdBlurOff as ScanIcon } from 'react-icons/md';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
-import { RiErrorWarningFill as ErrorIcon, RiCloseCircleLine as DismissIcon } from 'react-icons/ri';
+import { RiErrorWarningFill as ErrorIcon } from 'react-icons/ri';
 
-import useStore from '~/hooks/useStore';
 import AsteroidLink from '~/components/AsteroidLink';
 import AddressLink from '~/components/AddressLink';
 
@@ -113,16 +112,13 @@ const entries = {
   ),
 
   Asteroid_NamingError: (e) => {
-    const dismissAlert = useStore(s => s.dispatchAlertDismissed);
-
     return (
       <StyledLogEntry>
-        <StyledErrorIcon />
         <Description>
           <span>Error naming asteroid </span>
           <AsteroidLink id={e.i} />
+          <span>Please try a different name and ensure no symbols or extra spaces are included.</span>
         </Description>
-        <IconLink onClick={() => dismissAlert(e)}><DismissIcon /></IconLink>
       </StyledLogEntry>
     );
   }

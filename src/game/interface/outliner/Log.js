@@ -1,11 +1,8 @@
-import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { AiFillAlert as LogIcon } from 'react-icons/ai';
 
-import useStore from '~/hooks/useStore';
 import useEvents from '~hooks/useEvents';
 import Section from '~/components/Section';
-import IconButton from '~/components/IconButton';
 import LogEntry from '~/components/LogEntry';
 
 const LogList = styled.ul`
@@ -25,14 +22,6 @@ const EmptyMessage = styled.span`
 
 const Log = () => {
   const { events } = useEvents();
-  const alerts = useStore(s => s.logs.alerts);
-  const [ combined, setCombined ] = useState([]);
-
-  useEffect(() => {
-    const newCombined = events.concat(alerts);
-    newCombined.sort((a, b) => b.timestamp - a.timestamp);
-    setCombined(newCombined);
-  }, [ events, alerts ]);
 
   return (
     <Section
@@ -40,10 +29,10 @@ const Log = () => {
       title="Captain's Log"
       icon={<LogIcon />}>
       <LogList>
-        {combined?.length === 0 && (
+        {events?.length === 0 && (
           <EmptyMessage>No log events recorded.</EmptyMessage>
         )}
-        {combined && combined.map(e => {
+        {events && events.map(e => {
           const type = e.type || `${e.assetType}_${e.event}`;
           return <LogEntry key={`${type}.${e.timestamp}`} type={type} data={e} />;
         })}

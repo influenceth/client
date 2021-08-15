@@ -101,7 +101,6 @@ const StyledButton = styled(Button)`
 
 const Log = styled.div`
   flex: 0 1 33%;
-  min-height: 300px;
 
   & ul {
     display: flex;
@@ -133,6 +132,7 @@ const StyledResourceMix = styled(ResourceMix)`
   flex: 0 1 33%;
   margin: 20px 25px;
   justify-content: center;
+  max-width: 33%;
 
   & svg {
     flex: 0 1 auto;

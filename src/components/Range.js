@@ -3,6 +3,9 @@ import 'rc-slider/assets/index.css';
 import styled from 'styled-components';
 
 const StyledSlider = styled(Slider)`
+  margin: 0 20px;
+  max-width: 360px;
+
   & .rc-slider-handle {
     background-color: black;
     border: 2px solid ${props => props.theme.colors.main};

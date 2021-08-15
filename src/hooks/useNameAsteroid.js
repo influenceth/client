@@ -47,7 +47,11 @@ const useNameAsteroid = () => {
 
     onError: (err, { i }, context) => {
       console.error(err, i, context);
-      createAlert({ type: 'Asteroid_NamingError', i: i, timestamp: Math.round(Date.now() / 1000) });
+      createAlert({
+        type: 'Asteroid_NamingError',
+        level: 'warning',
+        i: i, timestamp: Math.round(Date.now() / 1000)
+      });
       queryClient.setQueryData([ 'asteroid', i ], context.previousAsteroid);
       queryClient.invalidateQueries([ 'asteroid', i ]);
     },

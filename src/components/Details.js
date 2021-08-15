@@ -17,7 +17,7 @@ const StyledDetails = styled.div`
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  margin: 25px 44px 0 25px;
+  margin: 25px 25px 0 25px;
   pointer-events: auto;
   position: relative;
   overflow: hidden;
