@@ -8,6 +8,7 @@ import AsteroidsTable from './interface/details/AsteroidsTable';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import WatchlistTable from './interface/details/WatchlistTable';
 import AsteroidDetails from './interface/details/AsteroidDetails';
+import RouteDetails from './interface/details/RouteDetails';
 import Settings from './interface/details/Settings';
 import Alerts from './interface/Alerts';
 
@@ -51,14 +52,17 @@ const Interface = () => {
           <Route exact path="/asteroids">
             <AsteroidsTable />
           </Route>
+          <Route path="/asteroids/:i">
+            <AsteroidDetails />
+          </Route>
           <Route path="/owned-asteroids">
             <OwnedAsteroidsTable />
           </Route>
           <Route path="/watchlist">
             <WatchlistTable />
           </Route>
-          <Route path="/asteroids/:i">
-            <AsteroidDetails />
+          <Route path="/route">
+            <RouteDetails />
           </Route>
           <Route path="/settings">
             <Settings />

@@ -9,6 +9,7 @@ import Logo from './mainMenu/menu-logo.svg';
 import { MdAccountBalanceWallet } from 'react-icons/md';
 import { AiFillStar, AiFillEye } from 'react-icons/ai';
 import { RiRouteFill, RiFilter2Fill as FilterIcon, RiTableFill } from 'react-icons/ri';
+import { HiUserGroup as CrewIcon } from 'react-icons/hi';
 
 const StyledMainMenu = styled.div`
   align-items: flex-end;
@@ -82,6 +83,9 @@ const MainMenu = (props) => {
             name="Asteroids"
             icon={<AiFillStar />}
             onClick={() => dispatchOutlinerSectionActivated('ownedAsteroids')} />
+          <MenuItem
+            name="Crew Members"
+            icon={<CrewIcon />} />
         </Menu>
         <Menu title="Map">
           <MenuItem

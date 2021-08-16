@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { KeplerianOrbit } from 'influence-utils';
 import { RiRouteFill, RiPagesFill } from 'react-icons/ri';
@@ -64,6 +65,7 @@ const LinkLine = styled.li`
 
 const RoutePlanner = (props) => {
   const [ distance, setDistance ] = useState(null);
+  const history = useHistory();
   const time = useStore(s => s.time.current);
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
@@ -102,7 +104,8 @@ const RoutePlanner = (props) => {
       <Controls>
         <IconButton
           data-tip="Route Details"
-          disabled={!originId || !destinationId}>
+          disabled={!originId || !destinationId}
+          onClick={() => history.push('/route')}>
           <RiPagesFill />
         </IconButton>
         <IconButton
