@@ -56,7 +56,7 @@ const Message = styled.li`
 
 const LinkLine = styled.li`
   border-left: 1px solid ${p => p.theme.colors.mainBorder};
-  height: 40px;
+  height: 50px;
   line-height: 40px;
   margin-left: 30px;
   padding-left: 20px;

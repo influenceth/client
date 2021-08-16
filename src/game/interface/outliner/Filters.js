@@ -111,7 +111,7 @@ const Filters = (props) => {
   return (
     <Section
       name="filters"
-      title="Map Filters"
+      title="Asteroid Filters"
       icon={<FilterIcon />}>
       <Controls>
         <IconButton

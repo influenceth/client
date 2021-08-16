@@ -185,7 +185,11 @@ const AsteroidDetails = (props) => {
   }, [ i, dispatchOriginSelected ]);
 
   useEffect(() => {
-    if (asteroid?.i) history.push(`/asteroids/${asteroid.i}`);
+    if (asteroid?.i) {
+      const url = `/asteroids/${asteroid.i}`;
+      if (history.pathname === url) return;
+      history.push(url);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ asteroid ]);
 

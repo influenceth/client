@@ -20,7 +20,7 @@ const StyledMenuItem = styled.div`
   }
 
   & svg {
-    flex: 0 1 auto;
+    flex: 0 0 auto;
     height: 15px;
     margin: 0 10px 0 5px;
     width: 15px;

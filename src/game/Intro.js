@@ -20,6 +20,7 @@ const Intro = (props) => {
 
   const _onEnded = () => {
     gsap.to(container.current, {
+      delay: 0.5,
       opacity: 0,
       duration: 1,
       ease: 'power1.out',

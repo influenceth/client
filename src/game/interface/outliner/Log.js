@@ -26,7 +26,7 @@ const Log = () => {
   return (
     <Section
       name="log"
-      title="Captain's Log"
+      title="Activity Log"
       icon={<LogIcon />}>
       <LogList>
         {events?.length === 0 && (

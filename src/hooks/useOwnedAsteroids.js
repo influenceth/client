@@ -11,7 +11,7 @@ const useOwnedAsteroids = () => {
   return useQuery(
     [ 'asteroids', {...baseQuery, ownedBy: account } ],
     () => api.getAsteroids({...baseQuery, ownedBy: account }),
-    { enabled: !!account }
+    { enabled: !!account, staleTime: 60000 * 5 }
   );
 };
 

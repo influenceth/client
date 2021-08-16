@@ -8,7 +8,11 @@ const useWatchlist = () => {
   const { token } = useAuth();
   const [ ids, setIds ] = useState([]);
 
-  const watchlist = useQuery([ 'watchlist', token ], api.getWatchlist, { enabled: !!token });
+  const watchlist = useQuery(
+    [ 'watchlist', token ],
+    api.getWatchlist,
+    { enabled: !!token, staleTime: 60000 * 5 }
+  );
 
   useEffect(() => {
     if (watchlist.data) {

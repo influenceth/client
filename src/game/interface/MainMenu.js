@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { useHistory } from 'react-router-dom';
 
 import useStore from '~/hooks/useStore';
 import Menu from './mainMenu/Menu';
@@ -7,7 +8,7 @@ import Time from './mainMenu/Time';
 import Logo from './mainMenu/menu-logo.svg';
 import { MdAccountBalanceWallet } from 'react-icons/md';
 import { AiFillStar, AiFillEye } from 'react-icons/ai';
-import { RiRouteFill, RiFilter2Fill as FilterIcon } from 'react-icons/ri';
+import { RiRouteFill, RiFilter2Fill as FilterIcon, RiTableFill } from 'react-icons/ri';
 
 const StyledMainMenu = styled.div`
   align-items: flex-end;
@@ -63,6 +64,7 @@ const EndMenuFiller = styled(MenuFiller)`
 
 const MainMenu = (props) => {
   const dispatchOutlinerSectionActivated = useStore(s => s.dispatchOutlinerSectionActivated);
+  const history = useHistory();
 
   return (
     <StyledMainMenu>
@@ -70,10 +72,6 @@ const MainMenu = (props) => {
       <Background />
       <MenuWrapper>
         <Menu title="Account">
-          <MenuItem
-            name="Wallet"
-            icon={<MdAccountBalanceWallet />}
-            onClick={() => dispatchOutlinerSectionActivated('wallet')} />
           <MenuItem
             name="Watchlist"
             icon={<AiFillEye />}
@@ -90,6 +88,10 @@ const MainMenu = (props) => {
             name="Filters"
             icon={<FilterIcon />}
             onClick={() => dispatchOutlinerSectionActivated('filters')} />
+          <MenuItem
+            name="Filtered Asteroids"
+            icon={<RiTableFill />}
+            onClick={() => history.push('/asteroids')} />
           <MenuItem
             name="Route Planner"
             icon={<RiRouteFill />}

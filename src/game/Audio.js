@@ -59,7 +59,7 @@ const Audio = (props) => {
     let index = Math.floor(Math.random() * tracks.length);
     if (index === lastTrack) index++;
 
-    if (musicVolume === 0) {
+    if (musicVolume === 0 || !tracks[index]) {
       setTimeout(() => setLastTrack(index), Math.random() * 60000 * 3);
     } else {
       const track = new Sound(tracks[index]);
