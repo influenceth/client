@@ -5,6 +5,7 @@ import useStore from '~/hooks/useStore';
 import ambient1 from '~/assets/ambient1.mp3';
 import ambient2 from '~/assets/ambient2.mp3';
 import ambient3 from '~/assets/ambient3.mp3';
+import ambient4 from '~/assets/ambient4.mp3';
 import click from '~/assets/click.wav';
 import failure from '~/assets/failure.wav';
 import success from '~/assets/success.wav';
@@ -27,6 +28,7 @@ const sounds = {
     ambient1: { src: [ ambient1 ], html5: true, preload: false, volume: 1.0 },
     ambient2: { src: [ ambient2 ], html5: true, preload: false, volume: 1.0 },
     ambient3: { src: [ ambient3 ], html5: true, preload: false, volume: 1.0 },
+    ambient4: { src: [ ambient4 ], html5: true, preload: false, volume: 1.0 },
   }
 };
 
@@ -35,21 +37,30 @@ const Audio = (props) => {
   const musicVolume = useStore(s => s.sounds.music);
   const effectsVolume = useStore(s => s.sounds.effects);
   const endSound = useStore(s => s.dispatchSoundPlayed);
+  const [ soundEnabled, setSoundEnabled ] = useState(null);
   const [ lastTrack, setLastTrack ] = useState(null);
   const [ currentTrack, setCurrentTrack ] = useState(null);
 
   useEffect(() => {
+    const onClick = () => {
+      setTimeout(() => setSoundEnabled(true), 5000);
+      document.body.removeEventListener('click', onClick);
+    };
+
+    document.body.addEventListener('click', onClick);
     return () => Howler.unload();
   }, []);
 
   // Play random ambient music with a gap between them
   useEffect(() => {
+    if (!soundEnabled) return;
+
     const tracks = Object.values(sounds.music);
-    let index = Math.floor(Math.random() * (tracks.length - 1));
+    let index = Math.floor(Math.random() * tracks.length);
     if (index === lastTrack) index++;
 
     if (musicVolume === 0) {
-      setTimeout(() => setLastTrack(index), Math.random() * 60000 * 5);
+      setTimeout(() => setLastTrack(index), Math.random() * 60000 * 3);
     } else {
       const track = new Sound(tracks[index]);
       setCurrentTrack(track);
@@ -61,21 +72,16 @@ const Audio = (props) => {
         track.stop();
         track.unload();
         setCurrentTrack(null);
-        setTimeout(() => setLastTrack(index), Math.random() * 60000 * 5);
+        setTimeout(() => setLastTrack(index), Math.random() * 60000 * 3);
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ lastTrack ]);
+}, [ lastTrack, soundEnabled ]);
 
   // Adjust volume of music tracks
   useEffect(() => {
     if (currentTrack) currentTrack.volume(currentTrack._baseVolume * musicVolume / 100);
-  }, [ musicVolume ]);
-
-  // Adjust volume of music tracks
-  // useEffect(() => {
-  //   Object.values(sounds.effects).forEach(s => s.volume(s._baseVolume * effectsVolume / 100));
-  // }, [ effectsVolume ]);
+  }, [ musicVolume, currentTrack ]);
 
   // Listen for new sound request and play it
   useEffect(() => {

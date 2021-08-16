@@ -25,6 +25,7 @@ const useEvents = () => {
   // Update for new incoming events
   useEffect(() => {
     if (eventsQuery.data) {
+      // If not the initial query send off alerts for new events
       if (latest > 0) {
         eventsQuery.data.forEach(e => {
           const type = e.type || `${e.assetType}_${e.event}`;

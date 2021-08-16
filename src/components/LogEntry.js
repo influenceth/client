@@ -3,20 +3,19 @@ import { FiExternalLink as LinkIcon } from 'react-icons/fi';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 import { MdBlurOff as ScanIcon } from 'react-icons/md';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
-import { RiErrorWarningFill as ErrorIcon } from 'react-icons/ri';
 
 import AsteroidLink from '~/components/AsteroidLink';
 import AddressLink from '~/components/AddressLink';
 
 const StyledLogEntry = styled.li`
   align-items: center;
-  color: ${p => p.theme.colors.secondaryText};
+  color: ${p => p.theme.colors.mainText};
   display: flex;
   font-size: ${p => p.theme.fontSizes.mainText};
   margin: 12px 0;
 
   & a {
-    color: ${p => p.theme.colors.secondaryText};
+    color: ${p => p.theme.colors.mainText};
     display: inline-block;
     text-overflow: ellipsis;
     max-width: 100px;
@@ -32,10 +31,6 @@ const StyledLogEntry = styled.li`
     margin-right: 8px;
     width: 16px;
   }
-`;
-
-const StyledErrorIcon = styled(ErrorIcon)`
-  color: ${p => p.theme.colors.error} !important;
 `;
 
 const Description = styled.div`
@@ -118,6 +113,44 @@ const entries = {
           <span>Error naming asteroid </span>
           <AsteroidLink id={e.i} />
           <span>Please try a different name and ensure no symbols or extra spaces are included.</span>
+        </Description>
+      </StyledLogEntry>
+    );
+  },
+
+  Asteroid_ScanningError: (e) => {
+    return (
+      <StyledLogEntry>
+        <Description>
+          <span>Error starting resource scan on asteroid </span>
+          <AsteroidLink id={e.i} />
+          <span>Please check your transaction and try again.</span>
+        </Description>
+      </StyledLogEntry>
+    );
+  },
+
+  Asteroid_FinalizeScanError: (e) => {
+    return (
+      <StyledLogEntry>
+        <Description>
+          <span>Error finalizing resource scan for asteroid </span>
+          <AsteroidLink id={e.i} />
+          <span>Please check your transaction and try again.</span>
+        </Description>
+      </StyledLogEntry>
+    );
+  },
+
+  Game_GPUPrompt: (e) => {
+    return (
+      <StyledLogEntry>
+        <Description>
+          <span>Please consider turning on browser hardware accleration for a better experience.</span>
+          <span> Find instructions </span>
+          <a href="https://www.computerhope.com/issues/ch002154.htm" rel="noreferrer" target="_blank">
+            here
+          </a>
         </Description>
       </StyledLogEntry>
     );

@@ -25,7 +25,6 @@ const send = (message, options = {}) => {
   try {
     options.message = message;
     const mergedOptions = Object.assign({}, JSON.parse(JSON.stringify(defaults)), options);
-    if (mergedOptions.type === 'info') mergedOptions.dismiss.duration = 0;
     notify.addNotification(mergedOptions);
   } catch (e) {
     console.error(e);
@@ -61,17 +60,25 @@ const StyledReactNotification = styled(ReactNotification)`
 const Alerts = (props) => {
   const alerts = useStore(s => s.logs.alerts);
   const notifyAlert = useStore(s => s.dispatchAlertNotified);
+  const playSound = useStore(s => s.dispatchSoundRequested);
 
   useEffect(() => {
     if (alerts?.length === 0) return;
     alerts.filter(a => !a.notified).forEach(a => {
       const { level, type, duration, ...data } = a;
       const options = level ? { type: level } : {};
-      if (duration) options.duration = duration;
+      if (duration) options.dismiss = { duration: duration };
       send(<LogEntry type={type} data={data} />, options);
+
+      if (level === 'warning') {
+        playSound('effects.failure');
+      } else {
+        playSound('effects.success');
+      }
+
       notifyAlert(a);
     });
-  }, [ alerts, notifyAlert ]);
+  }, [ alerts, notifyAlert, playSound ]);
 
   return (
     <StyledReactNotification />

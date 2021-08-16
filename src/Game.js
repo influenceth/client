@@ -4,6 +4,7 @@ import { ThemeProvider } from 'styled-components';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
+import useStore from '~/hooks/useStore';
 import Intro from '~/game/Intro';
 import Interface from '~/game/Interface';
 import Scene from '~/game/Scene';
@@ -19,6 +20,7 @@ const StyledMain = styled.main`
 
 const Game = (props) => {
   const gpuInfo = useDetectGPU();
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const [ showScene, setShowScene ] = useState(false);
   const [ loading, setLoading ] = useState(true);
 
@@ -33,10 +35,13 @@ const Game = (props) => {
       if (gpuInfo.tier > 0) {
         setShowScene(true)
       } else {
-        // TODO: send prompt to turn on hardware acceleration
+        createAlert({
+          type: 'Game_GPUPrompt',
+          level: 'warning'
+        });
       }
     }
-  }, [ gpuInfo ]);
+  }, [ gpuInfo, createAlert ]);
 
   return (
     <ThemeProvider theme={theme}>

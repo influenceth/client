@@ -6,7 +6,7 @@ import { contracts } from 'influence-utils';
 
 import useStore from '~/hooks/useStore';
 
-const useNameAsteroid = () => {
+const useNameAsteroid = (i) => {
   const queryClient = useQueryClient();
   const { account, library } = useWeb3React();
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -24,14 +24,14 @@ const useNameAsteroid = () => {
     setContract(newContract);
   }, [ account, library ]);
 
-  return useMutation(async ({ i, name }) => {
+  return useMutation(async ({ name }) => {
     const tx = await contract.setName(i, name);
     const receipt = await tx.wait();
     return receipt;
   }, {
     enabled: !!contract && !!account,
 
-    onMutate: async ({ i, name }) => {
+    onMutate: async ({ name }) => {
       await queryClient.cancelQueries([ 'asteroid', i ]);
       const previousAsteroid = queryClient.getQueryData([ 'asteroid', i ]);
       queryClient.setQueryData([ 'asteroid', i ], old => {
@@ -45,7 +45,7 @@ const useNameAsteroid = () => {
       return { previousAsteroid };
     },
 
-    onError: (err, { i }, context) => {
+    onError: (err, vars, context) => {
       console.error(err, i, context);
       createAlert({
         type: 'Asteroid_NamingError',
@@ -56,7 +56,7 @@ const useNameAsteroid = () => {
       queryClient.invalidateQueries([ 'asteroid', i ]);
     },
 
-    onSuccess: (data, { i }) => {
+    onSuccess: () => {
       setTimeout(() => {
         queryClient.invalidateQueries([ 'asteroid', i ]);
         queryClient.invalidateQueries('asteroids');

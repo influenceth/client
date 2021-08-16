@@ -13,7 +13,8 @@ import useSale from '~/hooks/useSale';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidPrice from '~/hooks/useAsteroidPrice';
 import useBuyAsteroid from '~/hooks/useBuyAsteroid';
-import useScanAsteroid from '~/hooks/useScanAsteroid';
+import useStartAsteroidScan from '~/hooks/useStartAsteroidScan';
+import useFinalizeAsteroidScan from '~/hooks/useFinalizeAsteroidScan';
 import useNameAsteroid from '~/hooks/useNameAsteroid';
 import Details from '~/components/Details';
 import Button from '~/components/Button';
@@ -128,6 +129,7 @@ const Resources = styled.div`
 `;
 
 const StyledResourceMix = styled(ResourceMix)`
+  align-items: stretch;
   display: flex;
   flex: 0 1 33%;
   margin: 20px 25px;
@@ -135,8 +137,10 @@ const StyledResourceMix = styled(ResourceMix)`
   max-width: 33%;
 
   & svg {
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     height: auto;
+    margin: auto 0;
+    max-height: 300px;
     width: auto;
   }
 `;
@@ -148,25 +152,32 @@ const AsteroidDetails = (props) => {
   const sale = useSale();
   const { data: asteroid } = useAsteroid(Number(i));
   const { data: asteroidPrice } = useAsteroidPrice(asteroid);
-  const buyAsteroid = useBuyAsteroid();
-  const { startScan, finalizeScan, status: txStatus } = useScanAsteroid();
-  const nameAsteroid = useNameAsteroid();
+  const buyAsteroid = useBuyAsteroid(Number(i));
+  const startScan = useStartAsteroidScan(Number(i));
+  const finalizeScan = useFinalizeAsteroidScan(Number(i));
+  const nameAsteroid = useNameAsteroid(Number(i));
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const [ naming, setNaming ] = useState(false);
   const [ newName, setNewName ] = useState('');
   const [ scanStatus, setScanStatus ] = useState('unscanned');
 
   useEffect(() => {
-    if (txStatus) {
-      setScanStatus(txStatus);
-    } else if (asteroid?.scanning) {
-      setScanStatus('startScanCompleted');
+    if (finalizeScan.isSuccess) {
+      setScanStatus('retrieved');
+    } else if (finalizeScan.isLoading) {
+      setScanStatus('retrieving')
+    } else if (startScan.isSuccess) {
+      setScanStatus('scanned');
+    } else if (startScan.isLoading) {
+      setScanStatus('scanning');
     } else if (asteroid?.scanned) {
-      setScanStatus('finalizeScanCompleted');
+      setScanStatus('retrieved');
+    } else if (asteroid?.scanning) {
+      setScanStatus('scanned');
     } else {
       setScanStatus('unscanned');
     }
-  }, [ txStatus, asteroid?.scanning, asteroid?.scanned ]);
+  }, [ startScan, finalizeScan, asteroid?.scanning, asteroid?.scanned ]);
 
   // Force the asteroid to load into the origin if coming direct from URL
   useEffect(() => {
@@ -203,10 +214,10 @@ const AsteroidDetails = (props) => {
               )}
               <GeneralData label="Scan Status">
                 {scanStatus === 'unscanned' && 'Un-scanned'}
-                {scanStatus === 'startScanInProgress' && 'Starting scan...'}
-                {scanStatus === 'startScanCompleted' && 'Scan in progress...'}
-                {scanStatus === 'finalizeScanInProgress' && 'Retrieving scan results...'}
-                {scanStatus === 'finalizeScanCompleted' && 'Scan completed'}
+                {scanStatus === 'scanning' && 'Starting scan...'}
+                {scanStatus === 'scanned' && 'Awaiting scan results...'}
+                {scanStatus === 'retrieving' && 'Retrieving scan results...'}
+                {scanStatus === 'retrieved' && 'Scan complete'}
               </GeneralData>
               {asteroid.owner && !asteroid.scanned && (
                 <GeneralData label="Scanning Boost">
@@ -221,7 +232,7 @@ const AsteroidDetails = (props) => {
                   data-tip="Purchase development rights"
                   data-for="global"
                   disabled={!account || !sale || !asteroidPrice}
-                  onClick={() => buyAsteroid.mutate({ i: asteroid.i })}>
+                  onClick={() => buyAsteroid.mutate()}>
                   <MdFlag /> Purchase
                 </StyledButton>
               )}
@@ -243,21 +254,21 @@ const AsteroidDetails = (props) => {
                   <MdFlag /> List for Sale
                 </StyledButton>
               )}
-              {[ 'unscanned', 'startScanInProgress' ].includes(scanStatus) && (
+              {[ 'unscanned', 'scanning' ].includes(scanStatus) && (
                 <StyledButton
                   data-tip="Scan for resource bonuses"
                   data-for="global"
-                  onClick={() => startScan.mutate({ i: asteroid.i })}
-                  disabled={asteroid.owner !== account || scanStatus === 'startScanInProgress'}>
+                  onClick={() => startScan.mutate()}
+                  disabled={asteroid.owner !== account || scanStatus === 'scanning'}>
                   <MdBlurOff /> Start Scan
                 </StyledButton>
               )}
-              {[ 'startScanCompleted', 'finalizeScanInProgress' ].includes(scanStatus) && (
+              {[ 'scanned', 'retrieving' ].includes(scanStatus) && (
                 <StyledButton
                   data-tip="Retrieve scan results"
                   data-for="global"
-                  onClick={() => finalizeScan.mutate({ i: asteroid.i })}
-                  disabled={asteroid.owner !== account || scanStatus === 'finalizeScanInProgress'}>
+                  onClick={() => finalizeScan.mutate()}
+                  disabled={asteroid.owner !== account || scanStatus === 'retrieving'}>
                   <MdBlurOff /> Finalize Scan
                 </StyledButton>
               )}
@@ -278,7 +289,7 @@ const AsteroidDetails = (props) => {
                     data-tip="Submit"
                     data-for="global"
                     onClick={() => {
-                      nameAsteroid.mutate({ i: asteroid.i, name: newName });
+                      nameAsteroid.mutate({ name: newName });
                       setNewName('');
                       setNaming(false);
                     }}>

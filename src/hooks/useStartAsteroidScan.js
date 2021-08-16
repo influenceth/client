@@ -4,11 +4,13 @@ import { useWeb3React } from '@web3-react/core';
 import { ethers } from 'ethers';
 import { contracts } from 'influence-utils';
 
-const useScanAsteroid = () => {
+import useStore from '~/hooks/useStore';
+
+const useStartAsteroidScan = (i) => {
   const queryClient = useQueryClient();
   const { account, library } = useWeb3React();
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const [ contract, setContract ] = useState();
-  const [ status, setStatus ] = useState();
 
   // Sets up contract object with appropriate provider
   useEffect(() => {
@@ -22,20 +24,35 @@ const useScanAsteroid = () => {
     setContract(newContract);
   }, [ account, library ]);
 
-  const startScan = useMutation(async ({ i }) => {
+  return useMutation(async () => {
     const tx = await contract.startScan(i);
     const receipt = await tx.wait(2);
     return receipt;
   }, {
     enabled: !!contract && !!account,
-    onMutate: () => setStatus('startScanInProgress'),
-    onError: (e) => {
-      console.error(e);
-      setStatus(null);
+
+    onMutate: async () => {
+      await queryClient.cancelQueries([ 'asteroid', i ]);
+      const previousAsteroid = queryClient.getQueryData([ 'asteroid', i ]);
+      queryClient.setQueryData([ 'asteroid', i ], old => {
+        return { ...old, scanning: true }
+      });
+
+      return { previousAsteroid };
     },
-    onSuccess: (data, { i }) => {
-      console.log('started scan');
-      setStatus('startScanCompleted');
+
+    onError: (err, vars, context) => {
+      console.error(err, i, context);
+      createAlert({
+        type: 'Asteroid_ScanningError',
+        level: 'warning',
+        i: i, timestamp: Math.round(Date.now() / 1000)
+      });
+      queryClient.setQueryData([ 'asteroid', i ], context.previousAsteroid);
+      queryClient.invalidateQueries([ 'asteroid', i ]);
+    },
+
+    onSuccess: () => {
       setTimeout(() => {
         queryClient.invalidateQueries([ 'asteroid', i ]);
         queryClient.invalidateQueries('asteroids');
@@ -43,27 +60,6 @@ const useScanAsteroid = () => {
       }, 1000);
     }
   });
-
-  const finalizeScan = useMutation(async ({ i }) => {
-    const tx = await contract.finalizeScan(i);
-    const receipt = await tx.wait();
-    return receipt;
-  }, {
-    enabled: !!contract && !!account,
-    onMutate: () => setStatus('finalizeScanInProgress'),
-    onError: () => setStatus('startScanCompleted'),
-    onSuccess: (data, { i }) => {
-      console.log('completing scan');
-      setStatus('scanComplete');
-      setTimeout(() => {
-        queryClient.invalidateQueries([ 'asteroid', i ]);
-        queryClient.invalidateQueries('asteroids');
-        queryClient.invalidateQueries('events');
-      }, 1000);
-    }
-  });
-
-  return { startScan, finalizeScan, status };
 };
 
-export default useScanAsteroid;
+export default useStartAsteroidScan;
