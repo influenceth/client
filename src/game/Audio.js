@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { Howler, Howl } from 'howler';
 
 import useStore from '~/hooks/useStore';
-import ambient1 from '~/assets/ambient1.mp3';
-import ambient2 from '~/assets/ambient2.mp3';
-import ambient3 from '~/assets/ambient3.mp3';
-import ambient4 from '~/assets/ambient4.mp3';
-import click from '~/assets/click.wav';
-import failure from '~/assets/failure.wav';
-import success from '~/assets/success.wav';
+import ambient1 from '~/assets/sounds/ambient1.mp3';
+import ambient2 from '~/assets/sounds/ambient2.mp3';
+import ambient3 from '~/assets/sounds/ambient3.mp3';
+import ambient4 from '~/assets/sounds/ambient4.mp3';
+import click from '~/assets/sounds/click.wav';
+import failure from '~/assets/sounds/failure.wav';
+import success from '~/assets/sounds/success.wav';
 
 class Sound extends Howl {
   constructor(args) {
@@ -48,7 +48,11 @@ const Audio = (props) => {
     };
 
     document.body.addEventListener('click', onClick);
-    return () => Howler.unload();
+
+    return () => {
+      Howler.unload();
+      document.body.removeEventListener('click', onClick);
+    };
   }, []);
 
   // Play random ambient music with a gap between them

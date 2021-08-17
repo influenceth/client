@@ -4,7 +4,7 @@
 
 html, body {
   background-color: black;
-  cursor: url('./assets/cursor.png') 5 5, auto;
+  cursor: url('./assets/images/cursor.png') 5 5, auto;
   color: #cccccc;
   font-family: 'Jura', sans-serif;
   margin: 0;
@@ -15,7 +15,7 @@ html, body {
 }
 
 a, button {
-  cursor: url('./assets/cursor-active.png') 5 5, auto;
+  cursor: url('./assets/images/cursor-active.png') 5 5, auto;
 }
 
 * {

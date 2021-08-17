@@ -1,5 +1,5 @@
-import cursor from '~/assets/cursor.png';
-import cursorActive from '~/assets/cursor-active.png';
+import cursor from '~/assets/images/cursor.png';
+import cursorActive from '~/assets/images/cursor-active.png';
 
 const theme = {
   colors: {

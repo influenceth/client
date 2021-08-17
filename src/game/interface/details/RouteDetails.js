@@ -17,6 +17,9 @@ import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
 import Details from '~/components/Details';
 import AsteroidDataCard from '~/components/AsteroidDataCard';
+import DimensionMetric from '~/components/DimensionMetric';
+import axisImage from '~/assets/images/semi-major-axis.png';
+import inclinationImage from '~/assets/images/inclination.png';
 import constants from '~/lib/constants';
 import theme from '~/theme';
 
@@ -52,17 +55,34 @@ const AsteroidInfo = styled.div`
     border-radius: 3px 3px 0 0 ;
     color: ${p => p.theme.colors.secondaryText};
     margin: 0;
-    padding: 25px 15px;
+    padding: 25px;
   }
 `;
 
-const StyledAsteroidDataCard = styled(AsteroidDataCard)`
+const AsteroidInfoData = styled.div`
   border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
   border-left: 1px solid ${p => p.theme.colors.mainBorder};
   border-right: 1px solid ${p => p.theme.colors.mainBorder};
   border-radius: 0 0 3px 3px;
+  display: flex;
   flex: 1 0 auto;
-  padding: 15px;
+  flex-direction: column;
+  padding: 25px;
+`;
+
+const OrbitalMetrics = styled.div`
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: space-between;
+`;
+
+const StyledDimensionMetric = styled(DimensionMetric)`
+  align-items: center;
+  display: flex;
+  flex: 0 0 40%;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 40%;
 `;
 
 const RouteInfo = styled.div`
@@ -137,9 +157,11 @@ const RouteDetails = (props) => {
   const destinationId = useStore(s => s.asteroids.destination);
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
+  const [ routeUpdated, setRouteUpdated ] = useState(true);
   const [ distances, setDistances ] = useState({});
   const [ data, setData ] = useState([]);
   const [ now, setNow ] = useState([]);
+  const [ metrics, setMetrics ] = useState({});
   const [ chartDimensions, setChartDimensions ] = useState();
   const detailsEl = useRef();
 
@@ -151,13 +173,16 @@ const RouteDetails = (props) => {
     const originVec = new Vector3();
     const destVec = new Vector3();
     const newDistances = {};
-    const numPoints = 250;
-    const step = 20;
+    const numPoints = 500;
+    const step = 10;
+
+    // Time hasn't changed don't recalculate
+    if (!routeUpdated && now[0]?.x === time - (time % step) - diff) return;
 
     for (let i = -numPoints / 2; i <= numPoints / 2; i++) {
       const calcTime = time - (time % step) + (i * step);
 
-      if (distances[calcTime]) {
+      if (!routeUpdated && distances[calcTime] && i !== 0) {
         newDistances[calcTime] = distances[calcTime];
       } else {
         originVec.fromArray(Object.values(originOrbit.getPositionAtTime(calcTime)));
@@ -165,7 +190,23 @@ const RouteDetails = (props) => {
         newDistances[calcTime] = { x: calcTime - diff, y:  constants.AU * originVec.distanceTo(destVec) / 1000 };
       }
 
-      if (i === 0) setNow([ newDistances[calcTime] ]);
+      if (i === 0) {
+        const newMetrics = {
+          origin: {
+            plane: constants.AU * originVec.z / 1000,
+            radius: constants.AU * originVec.length() / 1000,
+          },
+          dest: {
+            plane: constants.AU * destVec.z / 1000,
+            radius: constants.AU * destVec.length() / 1000,
+          }
+        };
+
+        setMetrics(newMetrics);
+        setNow([ newDistances[calcTime] ]);
+      }
+
+      if (routeUpdated) setRouteUpdated(false);
     }
 
     setDistances(newDistances);
@@ -173,20 +214,48 @@ const RouteDetails = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ origin, destination, time ]);
 
+  useEffect(() => {
+    setRouteUpdated(true);
+  }, [ originId, destinationId ]);
+
+  // Use screen size to resize chart
   useLayoutEffect(() => {
-    setChartDimensions({ height: detailsEl.current.clientHeight / 3, width: detailsEl.current.clientWidth });
+    const handleResize = () => {
+      if (!detailsEl?.current) return;
+      setChartDimensions({ height: detailsEl.current.clientHeight / 3, width: detailsEl.current.clientWidth });
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return (
     <Details title="Route Details">
       <StyledRouteDetails ref={detailsEl} >
         <Info>
-          {origin && (
-            <AsteroidInfo>
-              <h3>Origin: {origin.customName || origin.baseName}</h3>
-              <StyledAsteroidDataCard asteroid={origin} />
-            </AsteroidInfo>
-          )}
+          <AsteroidInfo>
+            <h3>Origin: {origin ? origin.customName || origin.baseName : ''}</h3>
+            <AsteroidInfoData>
+              {!origin && <span>Select an origin asteroid...</span>}
+              {origin && (
+                <>
+                  <AsteroidDataCard asteroid={origin} />
+                  <OrbitalMetrics>
+                    <StyledDimensionMetric
+                      image={axisImage}
+                      label="Distance from Adalia"
+                      text={`${numeral(metrics.origin?.radius).format('0,0')} km` || '... km'} />
+                    <StyledDimensionMetric
+                      image={inclinationImage}
+                      label="Distance from Plane"
+                      text={`${numeral(metrics.origin?.plane).format('0,0')} km` || '... km'} />
+                  </OrbitalMetrics>
+                </>
+              )}
+            </AsteroidInfoData>
+          </AsteroidInfo>
           <RouteInfo>
             <RouteMetrics>
               <h3>Current Distance:</h3>
@@ -201,12 +270,27 @@ const RouteDetails = (props) => {
               <div className="right"/>
             </RouteLines>
           </RouteInfo>
-          {destination && (
-            <AsteroidInfo>
-              <h3>Destination: {destination.customName || destination.baseName}</h3>
-              <StyledAsteroidDataCard asteroid={destination} />
-            </AsteroidInfo>
-          )}
+          <AsteroidInfo>
+            <h3>Destination: {destination ? destination.customName || destination.baseName: ''}</h3>
+            <AsteroidInfoData>
+              {!destination && <span>Select a destination asteroid...</span>}
+              {destination && (
+                <>
+                  <AsteroidDataCard asteroid={destination} />
+                  <OrbitalMetrics>
+                    <StyledDimensionMetric
+                      image={axisImage}
+                      label="Distance from Adalia"
+                      text={`${numeral(metrics.dest?.radius).format('0,0')} km` || '... km'} />
+                    <StyledDimensionMetric
+                      image={inclinationImage}
+                      label="Distance from Plane"
+                      text={`${numeral(metrics.dest?.plane).format('0,0')} km` || '... km'} />
+                  </OrbitalMetrics>
+                </>
+              )}
+            </AsteroidInfoData>
+          </AsteroidInfo>
         </Info>
         <StyledChart>
           <VictoryChart
@@ -250,14 +334,15 @@ const RouteDetails = (props) => {
             </defs>
             <VictoryAxis
               dependentAxis
-              offsetX={chartDimensions?.width / 2 || 0}
+              offsetX={(chartDimensions?.width - 1) / 2 || 0}
               tickFormat={(t) => numeral(t).format('0a') + ' km'}
               style={{
                 axis: {
-                  stroke: theme.colors.mainBorder
+                  stroke: theme.colors.mainBorder,
+                  strokeWidth: '2px'
                 },
                 grid: {
-                  stroke: '#111',
+                  stroke: 'none',
                   strokeDasharray: 'none'
                 },
                 ticks: {
