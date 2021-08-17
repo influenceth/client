@@ -38,6 +38,7 @@ const Content = styled.div`
   flex: 1 1 auto;
   overflow-y: scroll;
   margin: 25px 35px 35px 25px;
+  position: relative;
 `;
 
 const CloseButton = styled(IconButton)`

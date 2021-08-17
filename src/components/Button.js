@@ -77,7 +77,7 @@ const Button = (props) => {
   useEffect(() => ReactTooltip.rebuild(), []);
 
   return (
-    <StyledButton {...restProps} onClick={_onClick} data-place={dataPlace || "right"} key={dataTip}>
+    <StyledButton {...restProps} onClick={_onClick} data-tip={dataTip} data-place={dataPlace || "right"} key={dataTip}>
       {props.children}
       <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
         <line x1="0" y1="10" x2="10" y2="0" />

@@ -12,25 +12,15 @@ import useUnWatchAsteroid from '~/hooks/useUnWatchAsteroid';
 import useWatchlist from '~/hooks/useWatchlist';
 import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
-import DataReadout from '~/components/DataReadout';
-import BonusBadge from '~/components/BonusBadge';
-import AddressLink from '~/components/AddressLink';
-import formatters from '~/lib/formatters';
+import AsteroidDataCard from '~/components/AsteroidDataCard';
 
 const Controls = styled.div`
   flex: 0 0 auto;
   padding-bottom: 15px;
 `;
 
-const AsteroidData = styled.div`
+const StyledAsteroidDataCard = styled(AsteroidDataCard)`
   overflow-y: scroll;
-`;
-
-const Bonuses = styled.div`
-  align-items: center;
-  display: flex;
-  height: 40px;
-  margin-top: 5px;
 `;
 
 const SelectedAsteroid = (props) => {
@@ -100,25 +90,7 @@ const SelectedAsteroid = (props) => {
           )}
         </Controls>
       )}
-      {asteroid && (
-        <AsteroidData>
-          <DataReadout label="Current Owner">
-            {asteroid.owner ? <AddressLink address={asteroid.owner} /> : 'Un-owned'}
-          </DataReadout>
-          <DataReadout label="Spectral Type">{formatters.spectralType(asteroid.spectralType)}</DataReadout>
-          <DataReadout label="Radius">{formatters.radius(asteroid.radius)}</DataReadout>
-          <DataReadout label="Surface Area">{formatters.surfaceArea(asteroid.radius)}</DataReadout>
-          <DataReadout label="Orbital Period">{formatters.period(asteroid.orbital.a)}</DataReadout>
-          <DataReadout label="Semi-major Axis">{formatters.axis(asteroid.orbital.a)}</DataReadout>
-          <DataReadout label="Inclination">{formatters.inclination(asteroid.orbital.i)}</DataReadout>
-          <DataReadout label="Eccentricity">{asteroid.orbital.e}</DataReadout>
-          {asteroid.bonuses?.length > 0 && (
-            <Bonuses>
-              {asteroid.bonuses.map(b => <BonusBadge bonus={b} key={b.type} />)}
-            </Bonuses>
-          )}
-        </AsteroidData>
-      )}
+      {asteroid && <StyledAsteroidDataCard asteroid={asteroid} />}
     </Section>
   );
 };

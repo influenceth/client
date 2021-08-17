@@ -6,7 +6,6 @@ import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
 import Time from './mainMenu/Time';
 import Logo from './mainMenu/menu-logo.svg';
-import { MdAccountBalanceWallet } from 'react-icons/md';
 import { AiFillStar, AiFillEye } from 'react-icons/ai';
 import { RiRouteFill, RiFilter2Fill as FilterIcon, RiTableFill } from 'react-icons/ri';
 import { HiUserGroup as CrewIcon } from 'react-icons/hi';

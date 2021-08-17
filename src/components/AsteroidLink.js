@@ -15,7 +15,7 @@ const AsteroidLink = (props) => {
     } else {
       setName(initialName || `#${id}`);
     }
-  }, [ owned, id ]);
+  }, [ owned, id, initialName ]);
 
   return <Link to={`/asteroids/${id}`}>{name}</Link>;
 };

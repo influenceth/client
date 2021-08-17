@@ -75,7 +75,7 @@ const IconButton = (props) => {
 
   return (
     // Adding 'key' forces data-tip to actually update on the tooltip
-    <StyledIconButton  {...restProps} onClick={_onClick} data-for="global" key={dataTip}>
+    <StyledIconButton  {...restProps} onClick={_onClick} data-tip={dataTip} data-for="global" key={dataTip}>
       {props.children}
       {active && (
         <CancelIndicator viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
