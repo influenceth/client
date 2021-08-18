@@ -48,6 +48,21 @@ const api = {
     return response.data;
   },
 
+  getCrewMember: async (i) => {
+    const response = await instance.get(`/v1/crew/${i}`);
+    return response.data;
+  },
+
+  getCrewMembers: async (query) => {
+    const response = await instance.get('/v1/crew', { params: query });
+    return response.data;
+  },
+
+  getMintableCrew: async (query) => {
+    const response = await instance.get('/v1/crew/mintable', { params: query });
+    return response.data;
+  },
+
   getPlanets: async () => {
     const response = await instance.get('/v1/planets');
     return response.data;

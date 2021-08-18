@@ -51,6 +51,7 @@ const Indicator = styled.span`
 const Wallet = () => {
   const { connector, account, activate, deactivate } = useWeb3React();
   const queryClient = useQueryClient();
+  const forceExpand = useStore(s => s.dispatchOutlinerSectionExpanded);
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
   const [ activatingConnector, setActivatingConnector ] = useState();
   const { token, restartLogin } = useAuth();
@@ -71,6 +72,10 @@ const Wallet = () => {
     invalidateToken();
     deactivate();
   };
+
+  useEffect(() => {
+    if (status === 'disconnected') forceExpand('wallet');
+  }, [ status ]);
 
   // Eagerly connect to the injected ethereum provider, if it exists and has granted access already
   const triedEager = useEagerConnect();

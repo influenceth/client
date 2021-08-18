@@ -7,6 +7,7 @@ import Filters from './outliner/Filters';
 import SelectedAsteroid from './outliner/SelectedAsteroid';
 import Watchlist from './outliner/Watchlist';
 import OwnedAsteroids from './outliner/OwnedAsteroids';
+import OwnedCrew from './outliner/OwnedCrew';
 import RoutePlanner from './outliner/RoutePlanner';
 import TimeControl from './outliner/TimeControl';
 import SystemControls from './outliner/SystemControls';
@@ -88,12 +89,13 @@ const Outliner = (props) => {
       <RightContainer stayOpen={outliner.pinned}>
         <StyledOutliner>
           <Wallet />
-          <Log />
+          {!!account && <Log />}
           {outliner.filters.active && <Filters />}
           {origin && <SelectedAsteroid asteroidId={origin} />}
           {outliner.ownedAsteroids.active && !!account && <OwnedAsteroids />}
           {outliner.watchlist.active && !!account && <Watchlist />}
           {outliner.routePlanner.active && <RoutePlanner />}
+          {outliner.ownedCrew.active && !!account && <OwnedCrew />}
           {outliner.timeControl.active && <TimeControl />}
         </StyledOutliner>
         <SystemControls />

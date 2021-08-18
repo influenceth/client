@@ -84,7 +84,8 @@ const MainMenu = (props) => {
             onClick={() => dispatchOutlinerSectionActivated('ownedAsteroids')} />
           <MenuItem
             name="Crew Members"
-            icon={<CrewIcon />} />
+            icon={<CrewIcon />}
+            onClick={() => dispatchOutlinerSectionActivated('ownedCrew')} />
         </Menu>
         <Menu title="Map">
           <MenuItem

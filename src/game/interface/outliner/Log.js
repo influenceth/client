@@ -27,6 +27,7 @@ const Log = () => {
     <Section
       name="log"
       title="Activity Log"
+      sticky
       icon={<LogIcon />}>
       <LogList>
         {events?.length === 0 && (
