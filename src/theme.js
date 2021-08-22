@@ -1,6 +1,14 @@
 import cursor from '~/assets/images/cursor.png';
 import cursorActive from '~/assets/images/cursor-active.png';
 
+const gray = '#bbbbbb';
+const teal = '#69ebf4';
+const blue = '#4f90ff';
+const purple = '#884fff';
+const orange = '#ff984f';
+const yellow = '#ffd94f';
+const red = '#df4300';
+
 const theme = {
   colors: {
     main: '#36a7cd',
@@ -12,7 +20,7 @@ const theme = {
     mainText: '#cccccc',
     secondaryText: '#999999',
     disabledText: '#666666',
-    error: '#df4300',
+    error: red,
     bonus: {
       level0: '#999999',
       level1: 'rgb(105, 235, 244)',
@@ -20,12 +28,19 @@ const theme = {
       level3: 'rgb(136, 79, 255)'
     },
     rarity: {
-      Common: '#bbbbbb',
-      Uncommon: '#69ebf4',
-      Rare: '#4f90ff',
-      Superior: '#884fff',
-      Exceptional: '#ff984f',
-      Incomparable: '#ffd94f'
+      Common: gray,
+      Uncommon: teal,
+      Rare: blue,
+      Superior: purple,
+      Exceptional: orange,
+      Incomparable: yellow
+    },
+    classes: {
+      Pilot: purple,
+      Engineer: red,
+      Miner: orange,
+      Merchant: yellow,
+      Scientist: blue
     }
   },
   fontSizes: {

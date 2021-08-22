@@ -23,6 +23,7 @@ const glConfig = {
     far: constants.MAX_SYSTEM_RADIUS * constants.AU * 2,
     position: [ 4 * constants.AU, 0, 1.5 * constants.AU ]
   },
+  powerPreference: 'default',
   onCreated: (state) => {
     state.raycaster.params.Points = {
       near: 1000000,

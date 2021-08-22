@@ -1,0 +1,21 @@
+{
+  "root": "build/",
+  "routes": {
+    "/**": "index.html"
+  },
+  "https_only": true,
+  "headers": {
+    "/index.html": {
+      "Cache-Control": "no-store, no-cache"
+    },
+    "/asset-manifest.json": {
+      "Cache-Control": "no-store, no-cache"
+    },
+    "/manifest.json": {
+      "Cache-Control": "no-store, no-cache"
+    },
+    "/static/**": {
+      "Cache-Control": "max-age=31536000"
+    }
+  }
+}

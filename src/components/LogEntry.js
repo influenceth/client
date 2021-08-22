@@ -3,8 +3,10 @@ import { FiExternalLink as LinkIcon } from 'react-icons/fi';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 import { MdBlurOff as ScanIcon } from 'react-icons/md';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
+import { HiUserGroup as CrewIcon } from 'react-icons/hi';
 
 import AsteroidLink from '~/components/AsteroidLink';
+import CrewLink from '~/components/CrewLink';
 import AddressLink from '~/components/AddressLink';
 
 const StyledLogEntry = styled.li`
@@ -151,6 +153,48 @@ const entries = {
           <a href="https://www.computerhope.com/issues/ch002154.htm" rel="noreferrer" target="_blank">
             here
           </a>
+        </Description>
+      </StyledLogEntry>
+    );
+  },
+
+  CrewMember_Transfer: (e) => {
+    return (
+      <StyledLogEntry>
+        <TransferIcon />
+        <Description>
+          <span>Crew member </span>
+          <CrewLink id={e.returnValues.tokenId} />
+          <span> transferred from</span>
+          <AddressLink address={e.returnValues.from} />
+          <span>to </span>
+          <AddressLink address={e.returnValues.to} />
+        </Description>
+        {getTxLink(e.transactionHash)}
+      </StyledLogEntry>
+    );
+  },
+
+  Asteroid_AsteroidUsed: (e) => {
+    return (
+      <StyledLogEntry>
+        <CrewIcon />
+        <Description>
+          <span>Crew member </span>
+          <CrewLink id={e.returnValues.crewId} />
+          <span> minted with </span>
+          <AsteroidLink id={e.returnValues.asteroidId} />
+        </Description>
+        {getTxLink(e.transactionHash)}
+      </StyledLogEntry>
+    );
+  },
+
+  CrewMember_SettlingError: (e) => {
+    return (
+      <StyledLogEntry>
+        <Description>
+          <span>Error minting crew member, please check your transaction and try again.</span>
         </Description>
       </StyledLogEntry>
     );

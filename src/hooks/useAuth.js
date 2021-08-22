@@ -48,7 +48,6 @@ const useAuth = (startOnMount = true) => {
   const message = loginQuery?.data || null;
 
   const signQuery = useQuery([ 'sign', account, message ], async () => {
-    console.log(message);
     const signature = await library.getSigner(account).signMessage(message);
     return signature;
   }, {

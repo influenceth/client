@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Web3ReactProvider } from '@web3-react/core';
 import { Web3Provider } from '@ethersproject/providers';
-import LoadingAnimation from "react-spinners/PropagateLoader";
+import LoadingAnimation from 'react-spinners/PropagateLoader';
 import styled from 'styled-components';
 
 import Game from './Game';

@@ -39,7 +39,7 @@ const SidePanel = styled.div`
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
-  width: 300px;
+  width: 325px;
 `;
 
 const Rarity = styled.div`
@@ -129,7 +129,7 @@ const Resources = styled.div`
 `;
 
 const StyledResourceMix = styled(ResourceMix)`
-  align-items: stretch;
+  align-items: center;
   display: flex;
   flex: 0 1 33%;
   margin: 20px 25px;
@@ -137,11 +137,7 @@ const StyledResourceMix = styled(ResourceMix)`
   max-width: 33%;
 
   & svg {
-    flex: 1 1 auto;
-    height: auto;
-    margin: auto 0;
-    max-height: 300px;
-    width: auto;
+    flex: 1 1 0;
   }
 `;
 

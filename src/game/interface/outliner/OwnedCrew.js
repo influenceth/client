@@ -1,12 +1,12 @@
-import { useEffect } from 'react';
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 import { RiPagesFill as DetailIcon } from 'react-icons/ri';
 import { HiUserGroup as CrewIcon } from 'react-icons/hi';
+import { BiTransfer as TradeIcon } from 'react-icons/bi';
+import { toCrewClass } from 'influence-utils';
 
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useMintableCrew from '~/hooks/useMintableCrew';
-import useStore from '~/hooks/useStore';
 import IconButton from '~/components/IconButton';
 import Section from '~/components/Section';
 
@@ -27,7 +27,24 @@ const CrewList = styled.ul`
 `;
 
 const StyledCrewItem = styled.li`
-  padding: 10px 0;
+  align-items: stretch;
+  display: flex;
+  padding-left: 10px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+
+  &:hover {
+    max-height: 120px;
+  }
+`;
+
+const Description = styled.span`
+  height: 40px;
+  line-height: 40px;
+`;
+
+const ClassBadge = styled.span`
+  color: ${p => p.theme.colors.classes[p.crewClass]};
 `;
 
 const OwnedCrew = (props) => {
@@ -46,6 +63,11 @@ const OwnedCrew = (props) => {
           onClick={() => history.push('/owned-crew')}>
           <DetailIcon />
         </IconButton>
+        <IconButton
+          data-tip="Trade Crew Members"
+          onClick={() => window.open(`${process.env.REACT_APP_OPEN_SEA_URL}/collection/influenceth-crew`)}>
+          <TradeIcon />
+        </IconButton>
       </Controls>
       <CrewList>
         {crew?.length === 0 && mintable?.length === 0 && <li><span>No owned crew</span></li>}
@@ -54,6 +76,16 @@ const OwnedCrew = (props) => {
             <span>No owned crew. {mintable.length} crew members available to be minted.</span>
           </StyledCrewItem>
         )}
+        {crew?.length > 0 && crew.map(c => (
+          <StyledCrewItem key={c.i}>
+            <Description>
+              {crew.name || `Crew Member #${c.i}`}
+              <span> - </span>
+              {toCrewClass(c.crewClass)}
+              {<ClassBadge crewClass={toCrewClass(c.crewClass)}> &#9679;</ClassBadge>}
+            </Description>
+          </StyledCrewItem>
+        ))}
       </CrewList>
     </Section>
   );

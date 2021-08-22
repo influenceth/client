@@ -6,6 +6,8 @@ import MainMenu from './interface/MainMenu';
 import Outliner from './interface/Outliner';
 import AsteroidsTable from './interface/details/AsteroidsTable';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
+import OwnedCrew from './interface/details/OwnedCrew';
+import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import WatchlistTable from './interface/details/WatchlistTable';
 import AsteroidDetails from './interface/details/AsteroidDetails';
 import RouteDetails from './interface/details/RouteDetails';
@@ -16,11 +18,12 @@ const StyledInterface = styled.div`
   align-items: stretch;
   bottom: 0;
   display: flex;
-  flex-direction: row;
+  flex: 1 1 0;
   pointer-events: none;
   position: absolute;
   top: 0;
-  width: 100%;
+  max-width: 100%;
+  min-width: 100%;
   z-index: 1000;
 
   & a {
@@ -36,10 +39,11 @@ const StyledInterface = styled.div`
 const MainContainer = styled.div`
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  flex: 1 1 0;
+  height: 100%;
   justify-content: flex-end;
   position: relative;
-  height: 100%;
+  min-width: 0;
 `;
 
 const Interface = () => {
@@ -57,6 +61,12 @@ const Interface = () => {
           </Route>
           <Route path="/owned-asteroids">
             <OwnedAsteroidsTable />
+          </Route>
+          <Route path="/owned-crew">
+            <OwnedCrew />
+          </Route>
+          <Route path="/crew/:i">
+            <CrewMemberDetails />
           </Route>
           <Route path="/watchlist">
             <WatchlistTable />

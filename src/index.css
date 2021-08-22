@@ -11,6 +11,7 @@ html, body {
   min-height: 100vh;
   overflow: hidden;
   padding: 0;
+  pointer-events: none;
   width: 100%;
 }
 
@@ -33,6 +34,7 @@ input::-webkit-inner-spin-button {
 
 /* Scroll bar styles */
 ::-webkit-scrollbar {
+  height: 5px;
   width: 5px;
 }
 

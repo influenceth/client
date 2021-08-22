@@ -35,7 +35,9 @@ const Log = () => {
         )}
         {events && events.map(e => {
           const type = e.type || `${e.assetType}_${e.event}`;
-          return <LogEntry key={`${type}.${e.timestamp}`} type={type} data={e} />;
+          let key = `${type}.${e.timestamp}`;
+          if (e.transactionHash) key += `.${e.transactionHash}`;
+          return <LogEntry key={key} type={type} data={e} />;
         })}
       </LogList>
     </Section>

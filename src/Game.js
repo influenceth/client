@@ -13,6 +13,7 @@ import theme from '~/theme';
 
 const StyledMain = styled.main`
   bottom: 0;
+  display: flex;
   position: absolute;
   top: 0;
   width: 100%;

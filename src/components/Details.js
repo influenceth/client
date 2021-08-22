@@ -16,12 +16,12 @@ const StyledDetails = styled.div`
   );
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  flex: 1 1 0;
+  height: 100%;
   margin: 25px 25px 0 25px;
   pointer-events: auto;
   position: relative;
   overflow: hidden;
-  height: 100%;
 `;
 
 const Header = styled.h1`
@@ -35,9 +35,10 @@ const Header = styled.h1`
 `;
 
 const Content = styled.div`
-  flex: 1 1 auto;
+  flex: 1 1 0;
   overflow-y: scroll;
   margin: 25px 35px 35px 25px;
+  min-width: 0;
   position: relative;
 `;
 

@@ -14,7 +14,7 @@ import SystemControls from './outliner/SystemControls';
 
 const MainContainer = styled.div`
   display: flex;
-  flex: 0 1 auto;
+  flex: 0 1 0;
   pointer-events: auto;
   position: relative;
 `;

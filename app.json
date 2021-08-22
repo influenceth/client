@@ -1,0 +1,61 @@
+{
+  "name": "influence-client",
+  "buildpacks": [
+    {
+      "url": "https://github.com/mars/create-react-app-buildpack.git"
+    }
+  ],
+  "env": {
+    "REACT_APP_API_URL": {
+      "description": "Base URL of the Influence API server, does not include trailing slash",
+      "required": true
+    },
+    "REACT_APP_OPEN_SEA_URL": {
+      "description": "Base URL for OpenSea. Does not include trailing slash",
+      "required": true
+    },
+    "REACT_APP_ETHERSCAN_URL": {
+      "description": "Base URL for Etherscan. Does not include trailing slash",
+      "required": true
+    },
+    "REACT_APP_ETH_PROVIDER": {
+      "description": "Base websocket URL for Infura (or potentially Alchemy). Does not include trailing slash",
+      "required": true
+    },
+    "REACT_APP_NETWORK_ID": {
+      "description": "Network ID for appropriate chain (1 = Mainnet, 4 = Rinkeby, [timestamp] = ganache)",
+      "required": true
+    },
+    "REACT_APP_CHAIN_ID": {
+      "description": "Chain ID for appropriate chain (1 = Mainnet, 4 = Rinkeby, 1337 = ganache)",
+      "required": true
+    },
+    "REACT_APP_CONTRACT_ASTEROID_FEATURES": {
+      "required": true
+    },
+    "REACT_APP_CONTRACT_ASTEROID_NAMES": {
+      "required": true
+    },
+    "REACT_APP_CONTRACT_ASTEROID_SCANS": {
+      "required": true
+    },
+    "REACT_APP_CONTRACT_ASTEROID_TOKEN": {
+      "required": true
+    },
+    "REACT_APP_CONTRACT_PLANETS": {
+      "required": true
+    },
+    "REACT_APP_CONTRACT_ARVAD_CREW_SALE": {
+      "required": true
+    },
+    "REACT_APP_CONTRACT_CREW_TOKEN": {
+      "required": true
+    },
+    "REACT_APP_CONTRACT_CREW_FEATURES": {
+      "required": true
+    },
+    "REACT_APP_CONTRACT_CREW_NAMES": {
+      "required": true
+    }
+  }
+}

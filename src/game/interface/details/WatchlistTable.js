@@ -105,7 +105,9 @@ const WatchlistTable = (props) => {
         fixedHeader={true}
         fixedHeaderScrollHeight="calc(100vh - 256px)"
         highlightOnHover={true}
-        pagination={true}
+        pagination
+        paginationPerPage={25}
+        paginationRowsPerPageOptions={[ 10, 15, 20, 25 ]}
         customStyles={styleOverrides}
         theme="influence" />
     </Details>

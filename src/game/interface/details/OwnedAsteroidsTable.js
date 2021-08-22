@@ -1,10 +1,7 @@
-import { useEffect } from 'react';
 import utils from 'influence-utils';
-import { useHistory } from 'react-router-dom';
 import DataTable, { createTheme } from 'react-data-table-component';
 
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
-import useStore from '~/hooks/useStore';
 import Details from '~/components/Details';
 import theme from '~/theme';
 
@@ -88,24 +85,18 @@ const styleOverrides = {
 
 const OwnedAsteroidsTable = (props) => {
   const { data: asteroids } = useOwnedAsteroids();
-  const active = useStore(s => s.outliner.ownedAsteroids.active);
-  const history = useHistory();
-
-  // Close if the owned asteroids section is closed
-  useEffect(() => {
-    if (!active) history.push('/');
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ active ]);
 
   return (
     <Details title="Owned Asteroids">
       <DataTable
         columns={columns}
         data={asteroids}
-        fixedHeader={true}
-        fixedHeaderScrollHeight="calc(100vh - 256px)"
+        fixedHeader
+        fixedHeaderScrollHeight="calc(100vh - 355px)"
         highlightOnHover={true}
-        pagination={true}
+        pagination
+        paginationPerPage={25}
+        paginationRowsPerPageOptions={[ 10, 15, 20, 25 ]}
         customStyles={styleOverrides}
         theme="influence" />
     </Details>
