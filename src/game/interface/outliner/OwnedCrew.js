@@ -7,8 +7,10 @@ import { toCrewClass } from 'influence-utils';
 
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useMintableCrew from '~/hooks/useMintableCrew';
+import CrewMemberItem from '~/components/CrewMemberItem';
 import IconButton from '~/components/IconButton';
 import Section from '~/components/Section';
+import ListEmptyMessage from '~/components/ListEmptyMessage';
 
 const Controls = styled.div`
   display: flex;
@@ -24,27 +26,6 @@ const CrewList = styled.ul`
   margin: 0;
   overflow-y: scroll;
   padding: 0;
-`;
-
-const StyledCrewItem = styled.li`
-  align-items: stretch;
-  display: flex;
-  padding-left: 10px;
-  transition: all 0.3s ease;
-  overflow: hidden;
-
-  &:hover {
-    max-height: 120px;
-  }
-`;
-
-const Description = styled.span`
-  height: 40px;
-  line-height: 40px;
-`;
-
-const ClassBadge = styled.span`
-  color: ${p => p.theme.colors.classes[p.crewClass]};
 `;
 
 const OwnedCrew = (props) => {
@@ -70,22 +51,15 @@ const OwnedCrew = (props) => {
         </IconButton>
       </Controls>
       <CrewList>
-        {crew?.length === 0 && mintable?.length === 0 && <li><span>No owned crew</span></li>}
-        {crew?.length === 0 && mintable?.length > 0 && (
-          <StyledCrewItem>
-            <span>No owned crew. {mintable.length} crew members available to be minted.</span>
-          </StyledCrewItem>
+        {crew?.length === 0 && mintable?.length === 0 && (
+          <ListEmptyMessage><span>No owned crew</span></ListEmptyMessage>
         )}
-        {crew?.length > 0 && crew.map(c => (
-          <StyledCrewItem key={c.i}>
-            <Description>
-              {c.name || `Crew Member #${c.i}`}
-              <span> - </span>
-              {toCrewClass(c.crewClass) || 'Unknown Class'}
-              {<ClassBadge crewClass={toCrewClass(c.crewClass)}> &#9679;</ClassBadge>}
-            </Description>
-          </StyledCrewItem>
-        ))}
+        {crew?.length === 0 && mintable?.length > 0 && (
+            <ListEmptyMessage>
+              <span>No owned crew. {mintable.length} crew members available to be minted.</span>
+            </ListEmptyMessage>
+        )}
+        {crew?.length > 0 && crew.map(c => <CrewMemberItem key={c.i} crew={c} />)}
       </CrewList>
     </Section>
   );

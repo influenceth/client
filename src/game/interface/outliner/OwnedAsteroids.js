@@ -11,6 +11,7 @@ import IconButton from '~/components/IconButton';
 import Section from '~/components/Section';
 import AsteroidItem from '~/components/AsteroidItem';
 import ColorPicker from '~/components/ColorPicker';
+import ListEmptyMessage from '~/components/ListEmptyMessage';
 
 const Controls = styled.div`
   display: flex;
@@ -26,21 +27,6 @@ const AsteroidList = styled.ul`
   margin: 0;
   overflow-y: scroll;
   padding: 0;
-`;
-
-const StyledAsteroidItem = styled(AsteroidItem)`
-  border-top: 1px solid transparent;
-  border-bottom: 1px solid transparent;
-
-  &:hover {
-    background-color: ${p => p.theme.colors.contentHighlight};
-    border-top: 1px solid ${p => p.theme.colors.contentBorder};
-    border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
-  }
-
-  &:first-child {
-    border-top: 0;
-  }
 `;
 
 const OwnedAsteroids = (props) => {
@@ -86,8 +72,8 @@ const OwnedAsteroids = (props) => {
         {includeOwned && <ColorPicker initialColor={highlightColor} onChange={changeColor} />}
       </Controls>
       <AsteroidList>
-        {asteroids?.length === 0 && <li><span>No owned asteroids</span></li>}
-        {asteroids?.map(a => <StyledAsteroidItem key={a.i} asteroid={a} />)}
+        {asteroids?.length === 0 && <ListEmptyMessage><span>No owned asteroids</span></ListEmptyMessage>}
+        {asteroids?.map(a => <AsteroidItem key={a.i} asteroid={a} />)}
       </AsteroidList>
     </Section>
   );

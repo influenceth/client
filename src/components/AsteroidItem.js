@@ -10,24 +10,33 @@ import IconButton from '~/components/IconButton';
 import BonusBadge from '~/components/BonusBadge';
 import theme from '~/theme';
 
-const StyledAsteroidItem = styled.li`
-  padding-left: 10px;
-  transition: all 0.3s ease;
-  max-height: 40px;
-  overflow: hidden;
-
-  &:hover {
-    max-height: 120px;
-  }
-
-  &{Description} {
-    color: ${p => p.selected ? p.theme.colors.main : 'inherit'};
-  }
-`;
-
 const Description = styled.span`
   height: 40px;
   line-height: 40px;
+`;
+
+const StyledAsteroidItem = styled.li`
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  max-height: 40px;
+  overflow: hidden;
+  padding-left: 10px;
+  transition: all 0.3s ease;
+
+  &:first-child:hover {
+    border-top: 0;
+  }
+
+  &:hover {
+    background-color: ${p => p.theme.colors.contentHighlight};
+    border-top: 1px solid ${p => p.theme.colors.contentBorder};
+    border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
+    max-height: 120px;
+  }
+
+  & ${Description} {
+    color: ${p => p.selected ? p.theme.colors.main : 'inherit'};
+  }
 `;
 
 const Bonuses = styled.div`
@@ -44,7 +53,7 @@ const RarityBadge = styled.span`
 `;
 
 const AsteroidItem = (props) => {
-  const { asteroid, watched } = props;
+  const { asteroid, watched, ...restProps } = props;
   const dispatchAsteroidHovered = useStore(s => s.dispatchAsteroidHovered);
   const dispatchAsteroidUnhovered = useStore(s => s.dispatchAsteroidUnhovered);
   const origin = useStore(s => s.asteroids.origin);
@@ -61,7 +70,7 @@ const AsteroidItem = (props) => {
       onMouseOver={() => dispatchAsteroidHovered(asteroid.i)}
       onMouseOut={dispatchAsteroidUnhovered}
       selected={origin === asteroid.i}
-      {...props}>
+      {...restProps}>
       <Description>
         {asteroid.customName || asteroid.baseName}{' - '}
         {utils.toSize(asteroid.r)}{' '}

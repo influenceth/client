@@ -12,6 +12,7 @@ import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
 import AsteroidItem from '~/components/AsteroidItem';
 import ColorPicker from '~/components/ColorPicker';
+import ListEmptyMessage from '~/components/ListEmptyMessage';
 
 const Controls = styled.div`
   display: flex;
@@ -27,21 +28,6 @@ const StyledWatchlist = styled.div`
   margin: 0;
   overflow-y: scroll;
   padding: 0;
-`;
-
-const StyledAsteroidItem = styled(AsteroidItem)`
-  border-top: 1px solid transparent;
-  border-bottom: 1px solid transparent;
-
-  &:hover {
-    background-color: ${p => p.theme.colors.contentHighlight};
-    border-top: 1px solid ${p => p.theme.colors.contentBorder};
-    border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
-  }
-
-  &:first-child {
-    border-top: 0;
-  }
 `;
 
 const Watchlist = (props) => {
@@ -87,9 +73,10 @@ const Watchlist = (props) => {
         {includeWatched && <ColorPicker initialColor={highlightColor} onChange={changeColor} />}
       </Controls>
       <StyledWatchlist>
-        {watchlist && watchlist.map(w => (
-          <StyledAsteroidItem key={w.asteroid.i} asteroid={w.asteroid} watched={true} />
-        ))}
+        {(watchlist?.length === 0 || !watchlist) && (
+          <ListEmptyMessage><span>No asteroids have been watched yet</span></ListEmptyMessage>
+        )}
+        {watchlist?.length > 0 && watchlist.map(w => <AsteroidItem key={w.asteroid.i} asteroid={w.asteroid} watched={true} />)}
       </StyledWatchlist>
     </Section>
   );

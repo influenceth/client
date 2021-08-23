@@ -67,12 +67,6 @@ const Subtitle = styled.h2`
   margin: 10px 0 0 0;
 `;
 
-const Data = styled.div`
-  display: flex;
-  flex-direction: column;
-  margin: 20px 10px 5px 15px;
-`;
-
 const GeneralData = styled(DataReadout)`
   margin: 5px 0;
 `;

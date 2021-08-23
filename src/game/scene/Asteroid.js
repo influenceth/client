@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3 } from 'three';
+import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3, CameraHelper } from 'three';
 import { useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
@@ -14,6 +14,7 @@ import Config from './asteroid/Config';
 import HeightMap from './asteroid/HeightMap';
 import ColorMap from './asteroid/ColorMap';
 import NormalMap from './asteroid/NormalMap';
+import Rings from './asteroid/Rings';
 import constants from '~/lib/constants';
 
 // Setup worker or main thread textureRenderer depending on browser
@@ -173,13 +174,13 @@ const Asteroid = (props) => {
     light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(asteroidData.radius * 10));
     geometry.computeBoundingSphere();
     const maxRadius = geometry.boundingSphere.radius + geometry.boundingSphere.center.length();
-    const radiusBump = config.ringsPresent ? 1 : 0;
+    const radiusBump = config?.ringsPresent ? 1.5 : 0;
 
     if (shadows) {
-      light.current.shadow.camera.near = maxRadius * (9 - radiusBump);
+      light.current.shadow.camera.near = maxRadius * 9;
       light.current.shadow.camera.far = maxRadius * (11 + radiusBump);
-      light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius * (1 + radiusBump);
-      light.current.shadow.camera.right = light.current.shadow.camera.top = maxRadius * (1 + radiusBump);
+      light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius;
+      light.current.shadow.camera.right = light.current.shadow.camera.top = maxRadius;
       light.current.shadow.camera.updateProjectionMatrix();
     }
   }, [ geometry, asteroidData, position, shadows, shadowSize ]);
@@ -291,6 +292,12 @@ const Asteroid = (props) => {
           receiveShadow={shadows}>
           <primitive attach="geometry" object={geometry} />
         </mesh>
+      )}
+      {config?.ringsPresent && geometry && (
+        <Rings
+          receiveShadow={shadows}
+          config={config}
+          onUpdate={(m) => m.lookAt(rotationAxis?.current)} />
       )}
     </group>
   );

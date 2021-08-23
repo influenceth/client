@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import styled from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
+
 import useStore from '~/hooks/useStore';
 import Wallet from './outliner/Wallet';
 import Log from './outliner/Log';
@@ -76,7 +78,12 @@ const StyledOutliner = styled.div`
 const Outliner = (props) => {
   const outliner = useStore(s => s.outliner);
   const origin = useStore(s => s.asteroids.origin);
+  const activateSection = useStore(s => s.dispatchOutlinerSectionActivated);
   const { account } = useWeb3React();
+
+  useEffect(() => {
+    if (origin) activateSection('selectedAsteroid');
+  }, [ origin ]);
 
   return (
     <MainContainer>

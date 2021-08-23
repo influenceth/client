@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { MdClear } from 'react-icons/md';
 import gsap from 'gsap';
@@ -63,7 +63,7 @@ const Tab = styled.div`
   & > svg {
     color: rgba(255, 255, 255, 0.5);
     flex: 0 1 auto;
-    height: 100%;
+    height: 60px;
     width: 100%;
     padding: 0 4px;
   }
@@ -93,26 +93,32 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Section = (props) => {
-  const { sticky } = props;
+  const { sticky, title, icon, children, name, ...restProps } = props;
   const sectionSettings = useStore(s => s.outliner[props.name]);
-  const dispatchOutlinerSectionExpanded = useStore(s => s.dispatchOutlinerSectionExpanded);
-  const dispatchOutlinerSectionCollapsed = useStore(s => s.dispatchOutlinerSectionCollapsed);
-  const dispatchOutlinerSectionDeactivated = useStore(s => s.dispatchOutlinerSectionDeactivated);
+  const expandSection = useStore(s => s.dispatchOutlinerSectionExpanded);
+  const collapseSection = useStore(s => s.dispatchOutlinerSectionCollapsed);
+  const deactivateSection = useStore(s => s.dispatchOutlinerSectionDeactivated);
 
+  const section = useRef();
   const content = useRef();
 
   const toggleMinimize = () => {
     if (sectionSettings?.expanded) {
-      dispatchOutlinerSectionCollapsed(props.name);
+      collapseSection(name);
     } else {
-      dispatchOutlinerSectionExpanded(props.name);
+      expandSection(name);
     }
   };
 
   const closeSection = () => {
     if (props.onClose && typeof props.onClose === 'function') props.onClose();
-    dispatchOutlinerSectionDeactivated(props.name);
+    deactivateSection(name);
   };
+
+  // Scroll to the newly opened section
+  useLayoutEffect(() => {
+    section.current.parentNode.scrollTop = section.current.offsetTop;
+  }, []);
 
   useEffect(() => {
     if (!content?.current) return;
@@ -124,15 +130,11 @@ const Section = (props) => {
   }, [ sectionSettings?.expanded ]);
 
   return (
-    <StyledSection {...props}>
-      <Tab>
-        {props.icon}
-      </Tab>
-      {props.title && <Title onClick={toggleMinimize}>{props.title}</Title>}
+    <StyledSection ref={section} {...restProps}>
+      <Tab>{icon}</Tab>
+      {title && <Title onClick={toggleMinimize}>{title}</Title>}
       {!sticky && <CloseButton onClick={closeSection} borderless><MdClear /></CloseButton>}
-      <Content ref={content}>
-        {props.children}
-      </Content>
+      <Content ref={content}>{children}</Content>
     </StyledSection>
   );
 };

@@ -42,6 +42,7 @@ const StyledAsteroidItem = styled(AsteroidItem)`
   border-left: 1px solid ${p => p.theme.colors.mainBorder};
   border-right: 1px solid ${p => p.theme.colors.mainBorder};
   border-radius: 0 0 3px 3px;
+  border-top: 0 !important;
   padding-left: 10px;
 `;
 
