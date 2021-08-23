@@ -32,7 +32,7 @@ const Bonus = styled.div`
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}) {
     flex: 1 1 50%;
-    padding: 5px 0;
+    padding: 5px 5px;
   }
 `;
 

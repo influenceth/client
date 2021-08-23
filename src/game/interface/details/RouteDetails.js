@@ -14,6 +14,7 @@ import styled from 'styled-components';
 import { KeplerianOrbit, START_TIMESTAMP } from 'influence-utils';
 
 import useStore from '~/hooks/useStore';
+import useScreenSize from '~/hooks/useScreenSize';
 import useAsteroid from '~/hooks/useAsteroid';
 import Details from '~/components/Details';
 import AsteroidDataCard from '~/components/AsteroidDataCard';
@@ -32,13 +33,23 @@ const StyledRouteDetails = styled.div`
   justify-content: space-between;
   padding-left: 15px;
   height: 100%;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    height: auto;
+    padding: 0;
+    margin-top: 15px;
+  }
 `;
 
 const Info = styled.div`
   display: flex;
-  flex: 1 0 auto;
+  flex: 1 0 0;
   justify-content: center;
   width: 100%;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    flex-direction: column;
+  }
 `;
 
 const AsteroidInfo = styled.div`
@@ -57,6 +68,10 @@ const AsteroidInfo = styled.div`
     margin: 0;
     padding: 25px;
   }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    margin: 0 15px;
+  }
 `;
 
 const AsteroidInfoData = styled.div`
@@ -65,14 +80,14 @@ const AsteroidInfoData = styled.div`
   border-right: 1px solid ${p => p.theme.colors.mainBorder};
   border-radius: 0 0 3px 3px;
   display: flex;
-  flex: 1 0 auto;
+  flex: 1 0 0;
   flex-direction: column;
   padding: 25px;
 `;
 
 const OrbitalMetrics = styled.div`
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   justify-content: space-between;
 `;
 
@@ -149,9 +164,16 @@ const Ship = styled.svg`
 
 const StyledChart = styled.div`
   flex: 0 0 33%;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    flex: 1 1 0;
+    height: 450px;
+    width: 100%;
+  }
 `;
 
 const RouteDetails = (props) => {
+  const { isMobile } = useScreenSize();
   const time = useStore(s => s.time.current);
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
@@ -222,7 +244,8 @@ const RouteDetails = (props) => {
   useLayoutEffect(() => {
     const handleResize = () => {
       if (!detailsEl?.current) return;
-      setChartDimensions({ height: detailsEl.current.clientHeight / 3, width: detailsEl.current.clientWidth });
+      const divisor = isMobile ? 2 : 3;
+      setChartDimensions({ height: detailsEl.current.clientHeight / divisor, width: detailsEl.current.clientWidth });
     };
 
     window.addEventListener('resize', handleResize);
@@ -261,14 +284,16 @@ const RouteDetails = (props) => {
               <h3>Current Distance:</h3>
               <span>{numeral(now[0]?.y).format('0,0') || '...'} km</span>
             </RouteMetrics>
-            <RouteLines>
-              <Ship xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8.467 19.844">
-                <path d="M4.233 19.844l4.233-9.929V0L5.712 6.398l-1.479-2.03-1.479 2.03L0 0v9.914z">
-                </path>
-              </Ship>
-              <div className="left"/>
-              <div className="right"/>
-            </RouteLines>
+            {!isMobile && (
+              <RouteLines>
+                <Ship xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8.467 19.844">
+                  <path d="M4.233 19.844l4.233-9.929V0L5.712 6.398l-1.479-2.03-1.479 2.03L0 0v9.914z">
+                  </path>
+                </Ship>
+                <div className="left"/>
+                <div className="right"/>
+              </RouteLines>
+            )}
           </RouteInfo>
           <AsteroidInfo>
             <h3>Destination: {destination ? destination.customName || destination.baseName: ''}</h3>

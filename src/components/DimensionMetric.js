@@ -7,13 +7,18 @@ const DimensionImage = styled.div`
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   margin: 20px;
   width: 100%;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    margin: 5px;
+    min-height: 70px;
+  }
 `;
 
 const DimensionData = styled(DataReadout)`
-  flex: 0 1 auto;
+  flex: 0 1 0;
   flex-direction: column;
   font-size: ${p => p.theme.fontSizes.detailText};
 
