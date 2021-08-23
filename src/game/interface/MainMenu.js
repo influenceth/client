@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import styled from 'styled-components';
-import { useHistory } from 'react-router-dom';
 import { useWeb3React } from '@web3-react/core';
 
 import useStore from '~/hooks/useStore';
@@ -14,7 +13,7 @@ import { AiFillStar, AiFillEye } from 'react-icons/ai';
 import { FaMapMarkedAlt } from 'react-icons/fa';
 import { FiMenu } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
-import { RiRouteFill, RiFilter2Fill as FilterIcon, RiTableFill } from 'react-icons/ri';
+import { RiRouteFill, RiFilter2Fill as FilterIcon } from 'react-icons/ri';
 import { HiUserGroup as CrewIcon } from 'react-icons/hi';
 
 const StyledMainMenu = styled.div`
@@ -94,7 +93,6 @@ const MenuControl = styled(IconButton)`
 const MainMenu = (props) => {
   const activateSection = useStore(s => s.dispatchOutlinerSectionActivated);
   const playSound = useStore(s => s.dispatchSoundRequested);
-  const history = useHistory();
   const { account } = useWeb3React();
   const { isMobile } = useScreenSize();
   const [ showMenu, setShowMenu ] = useState(!isMobile);

@@ -101,7 +101,7 @@ const Outliner = (props) => {
 
   useEffect(() => {
     if (origin) activateSection('selectedAsteroid');
-  }, [ origin ]);
+  }, [ origin, activateSection ]);
 
   return (
     <MainContainer>

@@ -3,7 +3,6 @@ import { useHistory } from 'react-router-dom';
 import { RiPagesFill as DetailIcon } from 'react-icons/ri';
 import { HiUserGroup as CrewIcon } from 'react-icons/hi';
 import { BiTransfer as TradeIcon } from 'react-icons/bi';
-import { toCrewClass } from 'influence-utils';
 
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useMintableCrew from '~/hooks/useMintableCrew';

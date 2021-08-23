@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { toCrewClass, toCrewCollection, toCrewTitle } from 'influence-utils';
+import { toCrewClass } from 'influence-utils';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 
 import useOwnedCrew from '~/hooks/useOwnedCrew';
@@ -9,7 +9,6 @@ import useMintableCrew from '~/hooks/useMintableCrew';
 import useSettleCrew from '~/hooks/useSettleCrew';
 import Details from '~/components/Details';
 import Button from '~/components/Button';
-import IconButton from '~/components/IconButton';
 import DataReadout from '~/components/DataReadout';
 import formatters from '~/lib/formatters';
 import silhouette from '~/assets/images/silhouette.png';
@@ -74,11 +73,6 @@ const CrewInfo = styled.div`
 const CrewName = styled.span`
   font-size: ${p => p.theme.fontSizes.featureText};
   padding: 15px 0;
-`;
-
-const CrewClass = styled.span`
-  font-size: ${p => p.theme.fontSizes.mainText};
-  width: 50%;
 `;
 
 const CrewAvatar = styled.img`

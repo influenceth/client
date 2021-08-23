@@ -8,7 +8,6 @@ import { FaMapMarkedAlt as ShowOnMapIcon } from 'react-icons/fa';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import useWatchlist from '~/hooks/useWatchlist';
-import useUpdateWatchlist from '~/hooks/useUpdateWatchlist';
 import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
 import AsteroidItem from '~/components/AsteroidItem';

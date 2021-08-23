@@ -7,7 +7,6 @@ import { MdNavigateBefore, MdNavigateNext } from 'react-icons/md';
 
 import usePagedAsteroids from '~/hooks/usePagedAsteroids';
 import useAsteroidsCount from '~/hooks/useAsteroidsCount';
-import useStore from '~/hooks/useStore';
 import IconButton from '~/components/IconButton';
 import Section from '~/components/Section';
 import AsteroidItem from '~/components/AsteroidItem';

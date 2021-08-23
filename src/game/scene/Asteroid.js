@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3, CameraHelper } from 'three';
+import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3 } from 'three';
 import { useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
@@ -183,7 +183,7 @@ const Asteroid = (props) => {
       light.current.shadow.camera.right = light.current.shadow.camera.top = maxRadius;
       light.current.shadow.camera.updateProjectionMatrix();
     }
-  }, [ geometry, asteroidData, position, shadows, shadowSize ]);
+  }, [ geometry, asteroidData, position, shadows, shadowSize, config?.ringsPresent ]);
 
   // Zooms the camera to the correct location
   const shouldZoomIn = zoomStatus === 'zooming-in' && controls && !!asteroidData;

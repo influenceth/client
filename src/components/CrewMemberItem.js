@@ -3,9 +3,7 @@ import { useHistory } from 'react-router-dom';
 import { toCrewClass } from 'influence-utils';
 import { BsFillPersonFill as DetailsIcon } from 'react-icons/bs';
 
-import useStore from '~/hooks/useStore';
 import IconButton from '~/components/IconButton';
-import theme from '~/theme';
 
 const Description = styled.span`
   height: 40px;

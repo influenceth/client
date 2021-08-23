@@ -10,14 +10,10 @@ import {
   RingGeometry
 } from 'three';
 
-import useStore from '~/hooks/useStore';
-
 const Rings = (props) => {
   const { config, ...restProps } = props;
   const [ geometry, setGeometry ] = useState();
   const [ texture, setTexture ] = useState();
-
-  const shadows = useStore(s => s.graphics.shadows);
 
   useEffect(() => {
     const size = 512;
@@ -55,6 +51,7 @@ const Rings = (props) => {
 
     setGeometry(ringsGeometry);
     setTexture(ringsTexture);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
