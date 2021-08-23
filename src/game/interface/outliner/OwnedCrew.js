@@ -79,9 +79,9 @@ const OwnedCrew = (props) => {
         {crew?.length > 0 && crew.map(c => (
           <StyledCrewItem key={c.i}>
             <Description>
-              {crew.name || `Crew Member #${c.i}`}
+              {c.name || `Crew Member #${c.i}`}
               <span> - </span>
-              {toCrewClass(c.crewClass)}
+              {toCrewClass(c.crewClass) || 'Unknown Class'}
               {<ClassBadge crewClass={toCrewClass(c.crewClass)}> &#9679;</ClassBadge>}
             </Description>
           </StyledCrewItem>

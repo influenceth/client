@@ -67,23 +67,16 @@ const Subtitle = styled.h2`
   height: 40px;
   line-height: 40px;
   margin: 10px 0 0 0;
-  padding-left: 15px;
 `;
 
-const Data = styled.div`
+const Pane = styled.div`
   display: flex;
   flex-direction: column;
-  margin: 20px 10px 5px 15px;
+  margin: 0 0 20px 15px;
 `;
 
 const GeneralData = styled(DataReadout)`
   margin: 5px 0;
-`;
-
-const Controls = styled.div`
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 20px;
 `;
 
 const NameForm = styled.div`
@@ -96,7 +89,7 @@ const NameForm = styled.div`
 `;
 
 const StyledButton = styled(Button)`
-  margin: 15px 20px 0 20px;
+  margin-top: 15px;
   width: 150px;
 `;
 
@@ -204,7 +197,8 @@ const AsteroidDetails = (props) => {
               <div />
               <span>{utils.toRarity(asteroid.bonuses)}</span>
             </Rarity>
-            <Data>
+            <Pane>
+              <Subtitle>Asteroid Info</Subtitle>
               <GeneralData label="Owner"><AddressLink address={asteroid.owner} /></GeneralData>
               {sale && !asteroid.owner && (
                 <GeneralData label="Price">
@@ -224,8 +218,8 @@ const AsteroidDetails = (props) => {
                   {formatters.scanningBoost(asteroid.purchaseOrder)}
                 </GeneralData>
               )}
-            </Data>
-            <Controls>
+            </Pane>
+            <Pane>
               <Subtitle>Manage Asteroid</Subtitle>
               {!asteroid.owner && (
                 <StyledButton
@@ -303,15 +297,17 @@ const AsteroidDetails = (props) => {
                   </IconButton>
                 </NameForm>
               )}
-            </Controls>
-            <Log>
+            </Pane>
+            <Pane>
               <Subtitle>Asteroid Events</Subtitle>
-              <ul>
-                {asteroid.events.map(e => (
-                  <LogEntry key={e.transactionHash} type={`Asteroid_${e.event}`} data={e} />
-                ))}
-              </ul>
-            </Log>
+              <Log>
+                <ul>
+                  {asteroid.events.map(e => (
+                    <LogEntry key={e.transactionHash} type={`Asteroid_${e.event}`} data={e} />
+                  ))}
+                </ul>
+              </Log>
+            </Pane>
           </SidePanel>
           <MainPanel>
             <Resources>

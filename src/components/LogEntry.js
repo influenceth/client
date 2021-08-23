@@ -198,7 +198,31 @@ const entries = {
         </Description>
       </StyledLogEntry>
     );
-  }
+  },
+
+  CrewMember_NamingError: (e) => {
+    return (
+      <StyledLogEntry>
+        <Description>
+          <span>Error naming crew member </span>
+          <CrewLink id={e.i} />
+          <span>. Please try a different name and ensure no symbols or extra spaces are included.</span>
+        </Description>
+      </StyledLogEntry>
+    );
+  },
+
+  CrewMember_NameChanged: (e) => (
+    <StyledLogEntry>
+      <NameIcon />
+      <Description>
+        <span>Crew member </span>
+        <CrewLink id={e.returnValues.crewId} />
+        <span>{` re-named to "${e.returnValues.newName}"`}</span>
+      </Description>
+      {getTxLink(e.transactionHash)}
+    </StyledLogEntry>
+  ),
 };
 
 const LogEntry = (props) => {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { toCrewClass } from 'influence-utils';
+import { toCrewClass, toCrewCollection, toCrewTitle } from 'influence-utils';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 
 import useOwnedCrew from '~/hooks/useOwnedCrew';
@@ -9,6 +9,7 @@ import useMintableCrew from '~/hooks/useMintableCrew';
 import useSettleCrew from '~/hooks/useSettleCrew';
 import Details from '~/components/Details';
 import Button from '~/components/Button';
+import IconButton from '~/components/IconButton';
 import DataReadout from '~/components/DataReadout';
 import formatters from '~/lib/formatters';
 import silhouette from '~/assets/images/silhouette.png';
@@ -62,22 +63,31 @@ const CrewInfo = styled.div`
   padding-left: 15px;
 `;
 
-const CrewClass = styled.span`
+const CrewName = styled.span`
   font-size: ${p => p.theme.fontSizes.featureText};
   padding: 15px 0;
 `;
 
-const CrewName = styled.span`
+const CrewClass = styled.span`
   font-size: ${p => p.theme.fontSizes.mainText};
   width: 50%;
 `;
 
 const CrewAvatar = styled.img`
+  display: ${p => p.visible ? 'block' : 'none'};
+  filter: brightness(80%);
   height: 100%;
   object-fit: contain;
   object-position: 100% 100%;
+  padding: 10px 0 0 10px;
   position: absolute;
+  transition: all 0.3s ease;
   width: 100%;
+
+  ${CrewMember}:hover & {
+    filter: brightness(100%);
+    padding: 0;
+  }
 `;
 
 const StyledButton = styled(Button)`
@@ -89,10 +99,17 @@ const EmptyMessage = styled.div`
   margin: auto auto;
 `;
 
+const ClassBadge = styled.span`
+  color: ${p => p.theme.colors.classes[p.crewClass]};
+`;
+
 const OwnedCrewMember = (props) => {
   const { crew } = props;
   const [ imageLoaded, setImageLoaded ] = useState(false);
   const history = useHistory();
+  const imageUrl = crew.crewCollection ?
+    `${process.env.REACT_APP_API_URL}/v1/metadata/crew/${crew.i}/card.svg?bustOnly=true` :
+    silhouette;
   const loadingCss = css`
     left: 50%;
     top: 50%;
@@ -103,10 +120,14 @@ const OwnedCrewMember = (props) => {
       <LoadingAnimation color={'white'} css={loadingCss} loading={!imageLoaded} />
       <CrewAvatar
         onLoad={() => setImageLoaded(true)}
-        src={`${process.env.REACT_APP_API_URL}/v1/metadata/crew/${crew.i}/card.svg?bustOnly=true`} />
+        visible={imageLoaded}
+        src={imageUrl} />
       <CrewInfo>
-        <CrewClass>{toCrewClass(crew.crewClass)}</CrewClass>
-        <CrewName>{crew.name || `Crew Member #${crew.i}`}</CrewName>
+        <CrewName>
+          {crew.name || `Crew Member #${crew.i}`}
+          <ClassBadge crewClass={toCrewClass(crew.crewClass)}> &#9679;</ClassBadge>
+        </CrewName>
+        <DataReadout label="Class">{toCrewClass(crew.crewClass) || 'Unknown Class'}</DataReadout>
       </CrewInfo>
     </CrewMember>
   );
@@ -116,15 +137,16 @@ const MintableCrewMember = (props) => {
   const { asteroid, ...restProps } = props;
   const settleCrew = useSettleCrew(asteroid.i);
   const collection = asteroid.purchaseOrder <= 1859 ? 'Arvad Specialist' : 'Arvad Citizen';
+  const bonus = Math.pow(250000 - asteroid.i, 2) / 2500000000;
 
   return (
     <CrewMember {...restProps}>
-      <CrewAvatar src={silhouette} />
+      <CrewAvatar visible={true} src={silhouette} />
       <CrewInfo>
-        <CrewClass>{asteroid.name}</CrewClass>
+        <CrewName>{asteroid.name}</CrewName>
         <DataReadout label="Crew Type">{collection}</DataReadout>
         <DataReadout label="Asteroid Radius">{formatters.radius(asteroid.r)}</DataReadout>
-        <DataReadout label="Bonus to Mint">12.5%</DataReadout>
+        <DataReadout label="Bonus to Mint">+{bonus.toLocaleString()}%</DataReadout>
         <StyledButton
           onClick={() => settleCrew.mutate()}>
           Mint Crew Member
