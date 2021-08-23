@@ -1,12 +1,18 @@
+import { useState } from 'react';
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 
 import useStore from '~/hooks/useStore';
+import useScreenSize from '~/hooks/useScreenSize';
+import IconButton from '~/components/IconButton';
 import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
 import Time from './mainMenu/Time';
 import Logo from './mainMenu/menu-logo.svg';
 import { AiFillStar, AiFillEye } from 'react-icons/ai';
+import { FaMapMarkedAlt } from 'react-icons/fa';
+import { FiMenu } from 'react-icons/fi';
+import { MdClose } from 'react-icons/md';
 import { RiRouteFill, RiFilter2Fill as FilterIcon, RiTableFill } from 'react-icons/ri';
 import { HiUserGroup as CrewIcon } from 'react-icons/hi';
 
@@ -21,6 +27,16 @@ const StyledMainMenu = styled.div`
   pointer-events: auto;
   position: relative;
   width: 100%;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    background-color: black;
+    height: ${p => p.showMenu ? '100%' : '50px'};
+    padding: 10px;
+    position: absolute;
+    transition: all 0.3s ease;
+    width: ${p => p.showMenu ? '100%' : '50px'};
+    z-index: 1;
+  }
 `;
 
 const Background = styled.div`
@@ -50,6 +66,13 @@ const MenuWrapper = styled.div`
   display: flex;
   flex: 1 0 auto;
   margin-left: 98px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    flex-direction: column;
+    height: 100%;
+    margin: 0;
+    width: 100%;
+  }
 `;
 
 const MenuFiller = styled.div`
@@ -62,48 +85,75 @@ const EndMenuFiller = styled(MenuFiller)`
   width: 10px;
 `;
 
+const MenuControl = styled(IconButton)`
+  position: absolute;
+`;
+
 const MainMenu = (props) => {
-  const dispatchOutlinerSectionActivated = useStore(s => s.dispatchOutlinerSectionActivated);
+  const activateSection = useStore(s => s.dispatchOutlinerSectionActivated);
+  const playSound = useStore(s => s.dispatchSoundRequested);
   const history = useHistory();
+  const { isMobile } = useScreenSize();
+  const [ showMenu, setShowMenu ] = useState(!isMobile);
+
+  const openSection = (section) => {
+    activateSection(section);
+    playSound('effects.click');
+  };
 
   return (
-    <StyledMainMenu>
-      <StyledLogo />
-      <Background />
+    <StyledMainMenu showMenu={showMenu}>
+      {!isMobile && (
+        <>
+          <StyledLogo />
+          <Background />
+        </>
+      )}
+      {isMobile && (
+        <MenuControl
+          onClick={() => setShowMenu(!showMenu)}
+          borderless>
+          {!showMenu ? <FiMenu /> : <MdClose />}
+        </MenuControl>
+      )}
       <MenuWrapper>
         <Menu title="Account">
           <MenuItem
             name="Watchlist"
             icon={<AiFillEye />}
-            onClick={() => dispatchOutlinerSectionActivated('watchlist')} />
+            onClick={() => openSection('watchlist')} />
         </Menu>
         <Menu title="Assets">
           <MenuItem
             name="Asteroids"
             icon={<AiFillStar />}
-            onClick={() => dispatchOutlinerSectionActivated('ownedAsteroids')} />
+            onClick={() => openSection('ownedAsteroids')} />
           <MenuItem
             name="Crew Members"
             icon={<CrewIcon />}
-            onClick={() => dispatchOutlinerSectionActivated('ownedCrew')} />
+            onClick={() => openSection('ownedCrew')} />
         </Menu>
         <Menu title="Map">
           <MenuItem
             name="Filters"
             icon={<FilterIcon />}
-            onClick={() => dispatchOutlinerSectionActivated('filters')} />
+            onClick={() => openSection('filters')} />
           <MenuItem
-            name="Filtered Asteroids"
-            icon={<RiTableFill />}
-            onClick={() => history.push('/asteroids')} />
+            name="Mapped Asteroids"
+            icon={<FaMapMarkedAlt />}
+            onClick={() => openSection('mappedAsteroids')} />
           <MenuItem
             name="Route Planner"
             icon={<RiRouteFill />}
-            onClick={() => dispatchOutlinerSectionActivated('routePlanner')} />
+            onClick={() => openSection('routePlanner')} />
         </Menu>
-        <MenuFiller />
-        <Time onClick={() => dispatchOutlinerSectionActivated('timeControl')} />
-        <EndMenuFiller />
+        {!isMobile && (
+          <>
+            <MenuFiller />
+            <Time onClick={() => openSection('timeControl')} />
+            <EndMenuFiller />
+          </>
+        )}
       </MenuWrapper>
     </StyledMainMenu>
   );

@@ -7,20 +7,26 @@ import { MdFullscreen, MdFullscreenExit } from 'react-icons/md';
 import { BsEyeSlash, BsEye } from 'react-icons/bs';
 
 import useStore from '~/hooks/useStore';
+import useScreenSize from '~/hooks/useScreenSize';
 import IconButton from '~/components/IconButton';
 
 const StyledSystemControls = styled.div`
-  display: flex;
-  justify-content: flex-end;
   align-items: center;
-  height: 50px;
-  width: 385px;
-  position: absolute;
   bottom: 0;
+  display: flex;
+  height: 50px;
+  justify-content: flex-end;
+  position: absolute;
+  width: 385px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    width: 100%;
+  }
 `;
 
 const SystemControls = (props) => {
   const history = useHistory();
+  const { isMobile } = useScreenSize();
   const outlinerPinned = useStore(s => s.outliner.pinned);
   const dispatchOutlinerPinned = useStore(s => s.dispatchOutlinerPinned);
   const dispatchOutlinerUnpinned = useStore(s => s.dispatchOutlinerUnpinned);
@@ -35,7 +41,7 @@ const SystemControls = (props) => {
 
   return (
     <StyledSystemControls>
-      {!outlinerPinned && (
+      {!outlinerPinned && !isMobile && (
         <IconButton
           data-tip="Pin Outliner"
           onClick={dispatchOutlinerPinned}
@@ -43,7 +49,7 @@ const SystemControls = (props) => {
           <AiOutlinePushpin />
         </IconButton>
       )}
-      {outlinerPinned && (
+      {outlinerPinned && !isMobile && (
         <IconButton
           data-tip="Unpin Outliner"
           onClick={dispatchOutlinerUnpinned}
@@ -51,7 +57,7 @@ const SystemControls = (props) => {
           <AiFillPushpin />
         </IconButton>
       )}
-      {!fullscreen && (
+      {!fullscreen && !isMobile && (
         <IconButton
           data-tip="Go Fullscreen"
           onClick={() => screenfull.request()}
@@ -59,7 +65,7 @@ const SystemControls = (props) => {
           <MdFullscreen />
         </IconButton>
       )}
-      {fullscreen && (
+      {fullscreen && !isMobile && (
         <IconButton
           data-tip="Exit Fullscreen"
           onClick={() => screenfull.exit()}
@@ -67,7 +73,7 @@ const SystemControls = (props) => {
           <MdFullscreenExit />
         </IconButton>
       )}
-      {skyboxVisible && (
+      {skyboxVisible && !isMobile && (
         <IconButton
           data-tip="Hide Skybox"
           onClick={dispatchSkyboxHidden}
@@ -75,7 +81,7 @@ const SystemControls = (props) => {
           <BsEyeSlash />
         </IconButton>
       )}
-      {!skyboxVisible && (
+      {!skyboxVisible && !isMobile && (
         <IconButton
           data-tip="Show Skybox"
           onClick={dispatchSkyboxUnhidden}

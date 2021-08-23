@@ -6,6 +6,7 @@ import useStore from '~/hooks/useStore';
 import Wallet from './outliner/Wallet';
 import Log from './outliner/Log';
 import Filters from './outliner/Filters';
+import MappedAsteroids from './outliner/MappedAsteroids';
 import SelectedAsteroid from './outliner/SelectedAsteroid';
 import Watchlist from './outliner/Watchlist';
 import OwnedAsteroids from './outliner/OwnedAsteroids';
@@ -19,6 +20,10 @@ const MainContainer = styled.div`
   flex: 0 1 0;
   pointer-events: auto;
   position: relative;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    min-width: 100%;
+  }
 `;
 
 const Background = styled.div`
@@ -46,6 +51,10 @@ const Border = styled.div`
   flex-direction: column;
   padding-bottom: 25px;
   width: 25px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    display: none;
+  }
 `;
 
 const UprightBorder = styled.div`
@@ -67,12 +76,21 @@ const RightContainer = styled.div`
   &:hover {
     max-width: 385px;
   }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    max-width: 100% !important;
+    width: 100%;
+  }
 `;
 
 const StyledOutliner = styled.div`
-  width: 385px;
   max-height: calc(100% - 50px);
   overflow-y: scroll;
+  width: 385px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    width: 100%;
+  }
 `;
 
 const Outliner = (props) => {
@@ -97,13 +115,14 @@ const Outliner = (props) => {
         <StyledOutliner>
           <Wallet />
           {!!account && <Log />}
-          {outliner.filters.active && <Filters />}
+          {outliner.filters?.active && <Filters />}
+          {outliner.mappedAsteroids?.active && <MappedAsteroids />}
           {origin && <SelectedAsteroid asteroidId={origin} />}
-          {outliner.ownedAsteroids.active && !!account && <OwnedAsteroids />}
-          {outliner.watchlist.active && !!account && <Watchlist />}
-          {outliner.routePlanner.active && <RoutePlanner />}
-          {outliner.ownedCrew.active && !!account && <OwnedCrew />}
-          {outliner.timeControl.active && <TimeControl />}
+          {outliner.ownedAsteroids?.active && !!account && <OwnedAsteroids />}
+          {outliner.watchlist?.active && !!account && <Watchlist />}
+          {outliner.routePlanner?.active && <RoutePlanner />}
+          {outliner.ownedCrew?.active && !!account && <OwnedCrew />}
+          {outliner.timeControl?.active && <TimeControl />}
         </StyledOutliner>
         <SystemControls />
       </RightContainer>

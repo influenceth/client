@@ -18,12 +18,22 @@ const StyledResourceBonuses = styled.div`
   flex-wrap: wrap;
   justify-content: space-around;
   margin-left: 20px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    flex: 1 1 0;
+    margin: 0;
+  }
 `;
 
 const Bonus = styled.div`
   align-items: center;
   display: flex;
   flex: 0 0 32%;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    flex: 1 1 50%;
+    padding: 5px 0;
+  }
 `;
 
 const BonusBars = styled.div`

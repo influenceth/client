@@ -14,6 +14,8 @@ import theme from '~/theme';
 const StyledMain = styled.main`
   bottom: 0;
   display: flex;
+  min-height: 100%;
+  overflow: hidden;
   position: absolute;
   top: 0;
   width: 100%;

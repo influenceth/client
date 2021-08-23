@@ -13,6 +13,10 @@ const StyledSection = styled.div`
   padding: 0 20px;
   position: relative;
 
+  &:last-child {
+    margin-bottom: 0;
+  }
+
   &:after {
     background-image: linear-gradient(0.25turn, rgba(54, 167, 205, 0.15), rgba(0, 0, 0, 0));
     bottom: 0;
@@ -30,12 +34,16 @@ const StyledSection = styled.div`
   &:hover:after {
     opacity: 1;
   }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    background-color: ${p => p.theme.colors.mobileBackground};
+  }
 `;
 
 const Content = styled.div`
   display: flex;
   flex-direction: column;
-  max-height: 0vh;
+  max-height: 0;
   overflow: hidden;
   padding-bottom: 0px;
 `;
@@ -90,6 +98,10 @@ const CloseButton = styled(IconButton)`
   ${StyledSection}:hover & {
     opacity: 1;
   }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    opacity: 1;
+  }
 `;
 
 const Section = (props) => {
@@ -123,9 +135,9 @@ const Section = (props) => {
   useEffect(() => {
     if (!content?.current) return;
     if (sectionSettings?.expanded) {
-      gsap.to(content.current, {  maxHeight: '33vh', paddingBottom: '20px', duration: 0.25, ease: 'power1.in' });
+      gsap.to(content.current, {  maxHeight: '350px', paddingBottom: '20px', duration: 0.25, ease: 'power1.in' });
     } else {
-      gsap.to(content.current, {  maxHeight: '0vh', paddingBottom: '0px', duration: 0.25, ease: 'power1.out' });
+      gsap.to(content.current, {  maxHeight: '0px', paddingBottom: '0px', duration: 0.25, ease: 'power1.out' });
     }
   }, [ sectionSettings?.expanded ]);
 

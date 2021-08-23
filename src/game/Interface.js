@@ -2,6 +2,7 @@ import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { Switch, Route } from 'react-router-dom';
 
+import useScreenSize from '~/hooks/useScreenSize';
 import MainMenu from './interface/MainMenu';
 import Outliner from './interface/Outliner';
 import AsteroidsTable from './interface/details/AsteroidsTable';
@@ -44,12 +45,20 @@ const MainContainer = styled.div`
   justify-content: flex-end;
   position: relative;
   min-width: 0;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+  }
 `;
 
 const Interface = () => {
+  const { isMobile } = useScreenSize();
+
   return (
     <StyledInterface>
-      <ReactTooltip id="global" place="left" effect="solid" />
+      {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
       <Alerts />
       <MainContainer>
         <Switch>

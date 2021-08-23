@@ -11,8 +11,8 @@ const HighlightToggle = styled(IconButton)`
   width: 25px;
 
   & svg {
-    height: 15px;
-    width: 15px;
+    height: 15px !important;
+    width: 15px !important;
   }
 `;
 

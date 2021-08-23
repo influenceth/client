@@ -33,6 +33,10 @@ const StyledAsteroidDetails = styled.div`
   align-items: stretch;
   display: flex;
   height: 100%;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    flex-direction: column;
+  }
 `;
 
 const SidePanel = styled.div`
@@ -40,6 +44,11 @@ const SidePanel = styled.div`
   flex: 0 0 auto;
   flex-direction: column;
   width: 325px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    padding: 15px;
+    width: 100%;
+  }
 `;
 
 const Rarity = styled.div`
@@ -111,6 +120,12 @@ const MainPanel = styled.div`
   flex-direction: column;
   flex: 1 1 auto;
   margin-left: 20px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    padding: 15px;
+    margin: 0;
+    width: 100%;
+  }
 `;
 
 const Resources = styled.div`
@@ -119,6 +134,11 @@ const Resources = styled.div`
   flex: 0 1 40%;
   padding-bottom: 20px;
   max-height: 40%;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    flex-direction: column;
+    max-height: none;
+  }
 `;
 
 const StyledResourceMix = styled(ResourceMix)`
@@ -131,6 +151,11 @@ const StyledResourceMix = styled(ResourceMix)`
 
   & svg {
     flex: 1 1 0;
+  }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    flex: 1 1 0;
+    max-width: 100%;
   }
 `;
 

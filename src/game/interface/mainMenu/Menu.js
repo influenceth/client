@@ -11,6 +11,12 @@ const StyledMenu = styled.div`
   &:hover {
     max-height: 250px;
   }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    margin: 0;
+    max-height: none;
+    width: 100%;
+  }
 `;
 
 const MenuHeader = styled.div`

@@ -6,6 +6,7 @@ import Clipboard from 'react-clipboard.js';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 
 import useStore from '~/hooks/useStore';
+import useScreenSize from '~/hooks/useScreenSize';
 import Details from '~/components/Details';
 import DataReadout from '~/components/DataReadout';
 import Button from '~/components/Button';
@@ -54,6 +55,7 @@ const StyledClipboard = styled(Clipboard)`
 
 const Settinigs = (props) => {
   const { account } = useWeb3React();
+  const { isMobile } = useScreenSize();
   const graphics = useStore(s => s.graphics);
   const sounds = useStore(s => s.sounds);
   const setTextureSize = useStore(s => s.dispatchTextureSizeSet);
@@ -80,106 +82,110 @@ const Settinigs = (props) => {
   return (
     <Details title="Settings">
       <StyledSettings>
-        <h3>Graphics</h3>
-        <StyledDataReadout label="Texture Quality">
-          <ControlGroup>
-            <Button
-              active={graphics.textureSize === 512}
-              onClick={() => setTextureSize(512)}>
-              Low
-            </Button>
-            <Button
-              active={graphics.textureSize === 1024}
-              onClick={() => setTextureSize(1024)}>
-              Medium
-            </Button>
-            <Button
-              active={graphics.textureSize === 2048}
-              onClick={() => setTextureSize(2048)}>
-              High
-            </Button>
-          </ControlGroup>
-        </StyledDataReadout>
-        <StyledDataReadout label="Dynamic Shadows">
-          <IconButton
-            data-tip="Toggle Shadows"
-            data-for="global"
-            onClick={() => graphics.shadows ? turnOffShadows() : turnOnShadows()}
-            borderless>
-            {graphics.shadows ? <CheckedIcon /> : <UncheckedIcon />}
-          </IconButton>
-        </StyledDataReadout>
-        {graphics.shadows && (
-          <StyledDataReadout label="Shadow Quality">
-            <ControlGroup>
-              <Button
-                active={graphics.shadowSize === 1024}
-                onClick={() => setShadowSize(1024)}>
-                Low
-              </Button>
-              <Button
-                active={graphics.shadowSize === 2048}
-                onClick={() => setShadowSize(2048)}>
-                Medium
-              </Button>
-              <Button
-                active={graphics.shadowSize === 4096}
-                onClick={() => setShadowSize(4096)}>
-                High
-              </Button>
-            </ControlGroup>
-          </StyledDataReadout>
+        {!isMobile && (
+          <>
+            <h3>Graphics</h3>
+            <StyledDataReadout label="Texture Quality">
+              <ControlGroup>
+                <Button
+                  active={graphics.textureSize === 512}
+                  onClick={() => setTextureSize(512)}>
+                  Low
+                </Button>
+                <Button
+                  active={graphics.textureSize === 1024}
+                  onClick={() => setTextureSize(1024)}>
+                  Medium
+                </Button>
+                <Button
+                  active={graphics.textureSize === 2048}
+                  onClick={() => setTextureSize(2048)}>
+                  High
+                </Button>
+              </ControlGroup>
+            </StyledDataReadout>
+            <StyledDataReadout label="Dynamic Shadows">
+              <IconButton
+                data-tip="Toggle Shadows"
+                data-for="global"
+                onClick={() => graphics.shadows ? turnOffShadows() : turnOnShadows()}
+                borderless>
+                {graphics.shadows ? <CheckedIcon /> : <UncheckedIcon />}
+              </IconButton>
+            </StyledDataReadout>
+            {graphics.shadows && (
+              <StyledDataReadout label="Shadow Quality">
+                <ControlGroup>
+                  <Button
+                    active={graphics.shadowSize === 1024}
+                    onClick={() => setShadowSize(1024)}>
+                    Low
+                  </Button>
+                  <Button
+                    active={graphics.shadowSize === 2048}
+                    onClick={() => setShadowSize(2048)}>
+                    Medium
+                  </Button>
+                  <Button
+                    active={graphics.shadowSize === 4096}
+                    onClick={() => setShadowSize(4096)}>
+                    High
+                  </Button>
+                </ControlGroup>
+              </StyledDataReadout>
+            )}
+            <StyledDataReadout label="Field of View">
+              <ControlGroup>
+                <NumberInput
+                  initialValue={graphics.fov}
+                  onChange={v => setLocalFOV(v)}
+                  min={45}
+                  max={175} />
+                <Button
+                  onClick={() => setFOV(localFOV)}
+                  disabled={localFOV === graphics.fov}>
+                  Update
+                </Button>
+              </ControlGroup>
+            </StyledDataReadout>
+            <StyledDataReadout label="Fullscreen">
+              <IconButton
+                data-tip="Toggle Fullscreen"
+                data-for="global"
+                onClick={() => fullscreen ? screenfull.exit() : screenfull.request()}
+                borderless>
+                {fullscreen ? <CheckedIcon /> : <UncheckedIcon />}
+              </IconButton>
+            </StyledDataReadout>
+            <StyledDataReadout label="Skybox">
+              <IconButton
+                data-tip="Toggle Skybox"
+                data-for="global"
+                onClick={() => graphics.skybox ? turnOffSkybox() : turnOnSkybox()}
+                borderless>
+                {graphics.skybox ? <CheckedIcon /> : <UncheckedIcon />}
+              </IconButton>
+            </StyledDataReadout>
+            <StyledDataReadout label="Stellar Lensflare">
+              <IconButton
+                data-tip="Toggle Stellar Lensflare"
+                data-for="global"
+                onClick={() => graphics.lensflare ? turnOffLensflare() : turnOnLensflare()}
+                borderless>
+                {graphics.lensflare ? <CheckedIcon /> : <UncheckedIcon />}
+              </IconButton>
+            </StyledDataReadout>
+            <StyledDataReadout label="Performance Stats">
+              <IconButton
+                data-tip="Toggle Performance Stats"
+                data-for="global"
+                onClick={() => graphics.stats ? turnOffStats() : turnOnStats()}
+                borderless>
+                {graphics.stats ? <CheckedIcon /> : <UncheckedIcon />}
+              </IconButton>
+            </StyledDataReadout>
+          </>
         )}
-        <StyledDataReadout label="Field of View">
-          <ControlGroup>
-            <NumberInput
-              initialValue={graphics.fov}
-              onChange={v => setLocalFOV(v)}
-              min={45}
-              max={175} />
-            <Button
-              onClick={() => setFOV(localFOV)}
-              disabled={localFOV === graphics.fov}>
-              Update
-            </Button>
-          </ControlGroup>
-        </StyledDataReadout>
-        <StyledDataReadout label="Fullscreen">
-          <IconButton
-            data-tip="Toggle Fullscreen"
-            data-for="global"
-            onClick={() => fullscreen ? screenfull.exit() : screenfull.request()}
-            borderless>
-            {fullscreen ? <CheckedIcon /> : <UncheckedIcon />}
-          </IconButton>
-        </StyledDataReadout>
-        <StyledDataReadout label="Skybox">
-          <IconButton
-            data-tip="Toggle Skybox"
-            data-for="global"
-            onClick={() => graphics.skybox ? turnOffSkybox() : turnOnSkybox()}
-            borderless>
-            {graphics.skybox ? <CheckedIcon /> : <UncheckedIcon />}
-          </IconButton>
-        </StyledDataReadout>
-        <StyledDataReadout label="Stellar Lensflare">
-          <IconButton
-            data-tip="Toggle Stellar Lensflare"
-            data-for="global"
-            onClick={() => graphics.lensflare ? turnOffLensflare() : turnOnLensflare()}
-            borderless>
-            {graphics.lensflare ? <CheckedIcon /> : <UncheckedIcon />}
-          </IconButton>
-        </StyledDataReadout>
-        <StyledDataReadout label="Performance Stats">
-          <IconButton
-            data-tip="Toggle Performance Stats"
-            data-for="global"
-            onClick={() => graphics.stats ? turnOffStats() : turnOnStats()}
-            borderless>
-            {graphics.stats ? <CheckedIcon /> : <UncheckedIcon />}
-          </IconButton>
-        </StyledDataReadout>
 
         <h3>Sound</h3>
         <StyledDataReadout label="Music Volume">

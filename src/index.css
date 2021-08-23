@@ -7,8 +7,8 @@ html, body {
   cursor: url('./assets/images/cursor.png') 5 5, auto;
   color: #cccccc;
   font-family: 'Jura', sans-serif;
+  height: 100%;
   margin: 0;
-  min-height: 100vh;
   overflow: hidden;
   padding: 0;
   scroll-behavior: smooth;

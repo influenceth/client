@@ -13,6 +13,7 @@ const theme = {
   colors: {
     main: '#36a7cd',
     mainBorder: 'rgba(255, 255, 255, 0.25)',
+    mobileBackground: '#181818',
     contentBorder: '#666666',
     contentBackdrop: 'rgba(0, 0, 0, 0.5)',
     contentHighlight: 'rgba(40, 40, 40, 0.5)',
@@ -51,6 +52,9 @@ const theme = {
   cursors: {
     default: `url(${cursor}) 5 5, auto`,
     active: `url(${cursorActive}) 5 5, auto`
+  },
+  breakpoints: {
+    mobile: '400px'
   }
 };
 

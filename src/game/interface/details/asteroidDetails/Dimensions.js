@@ -12,11 +12,17 @@ import formatters from '~/lib/formatters';
 const StyledDimensions = styled.div`
   align-items: stretch;
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
   padding-top: 20px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    align-items: center;
+    flex-direction: column;
+    margin: 0;
+  }
 `;
 
 const StyledDimensionMetric = styled(DimensionMetric)`
