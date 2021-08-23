@@ -7,6 +7,7 @@ import { FaMapMarkedAlt as ShowOnMapIcon } from 'react-icons/fa';
 
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useStore from '~/hooks/useStore';
+import useScreenSize from '~/hooks/useScreenSize';
 import IconButton from '~/components/IconButton';
 import Section from '~/components/Section';
 import AsteroidItem from '~/components/AsteroidItem';
@@ -31,6 +32,7 @@ const AsteroidList = styled.ul`
 
 const OwnedAsteroids = (props) => {
   const history = useHistory();
+  const { isMobile } = useScreenSize();
   const { data: asteroids } = useOwnedAsteroids();
   const includeOwned = useStore(s => s.asteroids.owned.mapped);
   const filterOwned = useStore(s => s.asteroids.owned.filtered);
@@ -52,12 +54,14 @@ const OwnedAsteroids = (props) => {
       title="Owned Asteroids"
       icon={<AiFillStar />}>
       <Controls>
-        <IconButton
-          data-tip={includeOwned ? 'Hide on Map' : 'Show on Map'}
-          onClick={() => includeOwned ? removeFromMap() : showOnMap()}
-          active={includeOwned}>
-          <ShowOnMapIcon />
-        </IconButton>
+        {!isMobile && (
+          <IconButton
+            data-tip={includeOwned ? 'Hide on Map' : 'Show on Map'}
+            onClick={() => includeOwned ? removeFromMap() : showOnMap()}
+            active={includeOwned}>
+            <ShowOnMapIcon />
+          </IconButton>
+        )}
         <IconButton
           data-tip={filterOwned ? 'Remove Filters' : 'Apply Filters'}
           onClick={() => filterOwned ? removeFilters() : applyFilters()}

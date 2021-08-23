@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
+import { useWeb3React } from '@web3-react/core';
 
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
@@ -68,6 +69,7 @@ const MenuWrapper = styled.div`
   margin-left: 98px;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    display: ${p => p.showMenu ? 'block': 'none'};
     flex-direction: column;
     height: 100%;
     margin: 0;
@@ -93,12 +95,14 @@ const MainMenu = (props) => {
   const activateSection = useStore(s => s.dispatchOutlinerSectionActivated);
   const playSound = useStore(s => s.dispatchSoundRequested);
   const history = useHistory();
+  const { account } = useWeb3React();
   const { isMobile } = useScreenSize();
   const [ showMenu, setShowMenu ] = useState(!isMobile);
 
   const openSection = (section) => {
     activateSection(section);
     playSound('effects.click');
+    if (isMobile) setShowMenu(false);
   };
 
   return (
@@ -116,23 +120,27 @@ const MainMenu = (props) => {
           {!showMenu ? <FiMenu /> : <MdClose />}
         </MenuControl>
       )}
-      <MenuWrapper>
-        <Menu title="Account">
-          <MenuItem
-            name="Watchlist"
-            icon={<AiFillEye />}
-            onClick={() => openSection('watchlist')} />
-        </Menu>
-        <Menu title="Assets">
-          <MenuItem
-            name="Asteroids"
-            icon={<AiFillStar />}
-            onClick={() => openSection('ownedAsteroids')} />
-          <MenuItem
-            name="Crew Members"
-            icon={<CrewIcon />}
-            onClick={() => openSection('ownedCrew')} />
-        </Menu>
+      <MenuWrapper showMenu={showMenu}>
+        {!!account && (
+          <Menu title="Account">
+            <MenuItem
+              name="Watchlist"
+              icon={<AiFillEye />}
+              onClick={() => openSection('watchlist')} />
+          </Menu>
+        )}
+        {!!account && (
+          <Menu title="Assets">
+            <MenuItem
+              name="Asteroids"
+              icon={<AiFillStar />}
+              onClick={() => openSection('ownedAsteroids')} />
+            <MenuItem
+              name="Crew Members"
+              icon={<CrewIcon />}
+              onClick={() => openSection('ownedCrew')} />
+          </Menu>
+        )}
         <Menu title="Map">
           <MenuItem
             name="Filters"

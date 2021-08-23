@@ -31,6 +31,11 @@ const SidePanel = styled.div`
   flex: 0 0 auto;
   flex-direction: column;
   width: 325px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    padding: 15px;
+    width: 100%;
+  }
 `;
 
 const Avatar = styled.div`
@@ -48,6 +53,18 @@ const Avatar = styled.div`
   position: absolute;
   right: 0;
   width: 50%;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    background-image: linear-gradient(
+      340deg,
+      ${p => p.theme.colors.classes[p.crewClass]}AA,
+      ${p => p.theme.colors.classes[p.crewClass]}00 40%
+    );
+    border: 0;
+    height: auto;
+    position: relative;
+    width: 100%;
+  }
 `;
 
 const AvatarImage = styled.img`
@@ -57,6 +74,10 @@ const AvatarImage = styled.img`
   height: 100%;
   position: absolute;
   width: 100%;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    position: relative;
+  }
 `;
 
 const Subtitle = styled.h2`
@@ -79,7 +100,7 @@ const Pane = styled.div`
 
 const NameForm = styled.div`
   display: flex;
-  margin: 15px 20px 0 20px;
+  margin-top: 15px;
 
   & input {
     margin-right: 10px;

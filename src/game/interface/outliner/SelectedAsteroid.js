@@ -6,6 +6,7 @@ import { RiZoomInFill as ZoomInIcon, RiZoomOutFill as ZoomOutIcon, RiPagesFill }
 import { AiFillEye as WatchIcon } from 'react-icons/ai';
 
 import useStore from '~/hooks/useStore';
+import useScreenSize from '~/hooks/useScreenSize';
 import useAsteroid from '~/hooks/useAsteroid';
 import useWatchAsteroid from '~/hooks/useWatchAsteroid';
 import useUnWatchAsteroid from '~/hooks/useUnWatchAsteroid';
@@ -26,6 +27,7 @@ const StyledAsteroidDataCard = styled(AsteroidDataCard)`
 const SelectedAsteroid = (props) => {
   const { asteroidId } = props;
   const history = useHistory();
+  const { isMobile } = useScreenSize();
 
   const { data: asteroid } = useAsteroid(asteroidId);
   const { ids: watchlistIds } = useWatchlist();
@@ -66,7 +68,7 @@ const SelectedAsteroid = (props) => {
             onClick={() => history.push(`/asteroids/${asteroid.i}`)}>
             <RiPagesFill />
           </IconButton>
-          {zoomStatus === 'out' && (
+          {zoomStatus === 'out' && !isMobile && (
             <IconButton
               data-tip="Zoom to Asteroid"
               onClick={() => updateZoomStatus('zooming-in')}>

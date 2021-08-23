@@ -114,7 +114,7 @@ const entries = {
         <Description>
           <span>Error naming asteroid </span>
           <AsteroidLink id={e.i} />
-          <span>Please try a different name and ensure no symbols or extra spaces are included.</span>
+          <span>. Please try a different name and ensure no symbols or extra spaces are included.</span>
         </Description>
       </StyledLogEntry>
     );
@@ -126,7 +126,7 @@ const entries = {
         <Description>
           <span>Error starting resource scan on asteroid </span>
           <AsteroidLink id={e.i} />
-          <span>Please check your transaction and try again.</span>
+          <span>. Please check your transaction and try again.</span>
         </Description>
       </StyledLogEntry>
     );
@@ -138,7 +138,7 @@ const entries = {
         <Description>
           <span>Error finalizing resource scan for asteroid </span>
           <AsteroidLink id={e.i} />
-          <span>Please check your transaction and try again.</span>
+          <span>. Please check your transaction and try again.</span>
         </Description>
       </StyledLogEntry>
     );

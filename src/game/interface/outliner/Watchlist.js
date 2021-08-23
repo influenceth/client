@@ -6,6 +6,7 @@ import { RiFilter2Fill as FilterIcon, RiTableFill } from 'react-icons/ri';
 import { FaMapMarkedAlt as ShowOnMapIcon } from 'react-icons/fa';
 
 import useStore from '~/hooks/useStore';
+import useScreenSize from '~/hooks/useScreenSize';
 import useWatchlist from '~/hooks/useWatchlist';
 import useUpdateWatchlist from '~/hooks/useUpdateWatchlist';
 import Section from '~/components/Section';
@@ -32,6 +33,7 @@ const StyledWatchlist = styled.div`
 
 const Watchlist = (props) => {
   const history = useHistory();
+  const { isMobile } = useScreenSize();
   const { watchlist: { data: watchlist }} = useWatchlist();
   const includeWatched = useStore(s => s.asteroids.watched.mapped);
   const filterWatched = useStore(s => s.asteroids.watched.filtered);
@@ -53,12 +55,14 @@ const Watchlist = (props) => {
       title="Watchlist"
       icon={<AiFillEye />}>
       <Controls>
-        <IconButton
-          data-tip={includeWatched ? 'Hide on Map' : 'Show on Map'}
-          onClick={() => includeWatched ? removeFromMap() : showOnMap()}
-          active={includeWatched}>
-          <ShowOnMapIcon />
-        </IconButton>
+        {!isMobile && (
+          <IconButton
+            data-tip={includeWatched ? 'Hide on Map' : 'Show on Map'}
+            onClick={() => includeWatched ? removeFromMap() : showOnMap()}
+            active={includeWatched}>
+            <ShowOnMapIcon />
+          </IconButton>
+        )}
         <IconButton
           data-tip={filterWatched ? 'Remove Filters' : 'Apply Filters'}
           onClick={() => filterWatched ? removeFilters() : applyFilters()}

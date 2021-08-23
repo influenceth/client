@@ -90,7 +90,7 @@ const GeneralData = styled(DataReadout)`
 
 const NameForm = styled.div`
   display: flex;
-  margin: 15px 20px 0 20px;
+  margin-top: 15px;
 
   & input {
     margin-right: 10px;

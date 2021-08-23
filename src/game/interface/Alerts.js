@@ -55,6 +55,13 @@ const StyledReactNotification = styled(ReactNotification)`
   & .notification__close:after {
     font-size: 20px !important;
   }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+    & .notification__item {
+      background-color: black;
+    }
+  }
+}
 `;
 
 const Alerts = (props) => {
