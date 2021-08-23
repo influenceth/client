@@ -29,7 +29,7 @@ const StyledMainMenu = styled.div`
   position: relative;
   width: 100%;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     background-color: black;
     height: ${p => p.showMenu ? '100%' : '50px'};
     padding: 10px;
@@ -68,7 +68,7 @@ const MenuWrapper = styled.div`
   flex: 1 0 auto;
   margin-left: 98px;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     display: ${p => p.showMenu ? 'block': 'none'};
     flex-direction: column;
     height: 100%;

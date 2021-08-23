@@ -35,7 +35,7 @@ const StyledSection = styled.div`
     opacity: 1;
   }
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     background-color: ${p => p.theme.colors.mobileBackground};
   }
 `;
@@ -99,7 +99,7 @@ const CloseButton = styled(IconButton)`
     opacity: 1;
   }
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     opacity: 1;
   }
 `;

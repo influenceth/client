@@ -46,7 +46,7 @@ const MainContainer = styled.div`
   position: relative;
   min-width: 0;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     bottom: 0;
     position: absolute;
     width: 100%;

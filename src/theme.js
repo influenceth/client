@@ -54,7 +54,7 @@ const theme = {
     active: `url(${cursorActive}) 5 5, auto`
   },
   breakpoints: {
-    mobile: '400px'
+    mobile: 1023
   }
 };
 

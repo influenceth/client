@@ -22,7 +22,7 @@ const StyledCrewDetails = styled.div`
   min-width: 0;
   padding-left: 12px;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding: 0;
   }
 `;
@@ -33,7 +33,7 @@ const CrewHeader = styled.div`
   flex: 0 0 10%;
   font-size: ${p => p.theme.fontSizes.featureText};
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding-left: 20px;
   }
 `;
@@ -97,7 +97,7 @@ const CrewAvatar = styled.img`
     padding: 0;
   }
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     filter: none;
   }
 `;

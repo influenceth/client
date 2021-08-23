@@ -11,7 +11,7 @@ const DimensionImage = styled.div`
   margin: 20px;
   width: 100%;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     margin: 5px;
     min-height: 70px;
   }

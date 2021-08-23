@@ -56,7 +56,7 @@ const StyledReactNotification = styled(ReactNotification)`
     font-size: 20px !important;
   }
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     & .notification__item {
       background-color: black;
     }

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 
+import theme from '~/theme';
+
 const useScreenSize = () => {
   const [ width, setWidth ] = useState(window.innerWidth);
-  const isMobile = width < 400;
-  const isTablet = width < 1200 && width >= 400;
+  const isMobile = width <= theme.breakpoints.mobile;
+  const isTablet = width < 1200 && width > theme.breakpoints.mobile;
   const isDesktop = width >= 1200;
 
   const updateWidth = () => {

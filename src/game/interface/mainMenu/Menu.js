@@ -12,7 +12,7 @@ const StyledMenu = styled.div`
     max-height: 250px;
   }
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     margin: 0;
     max-height: none;
     width: 100%;

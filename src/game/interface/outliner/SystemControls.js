@@ -19,7 +19,7 @@ const StyledSystemControls = styled.div`
   position: absolute;
   width: 385px;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     width: 100%;
   }
 `;

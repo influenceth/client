@@ -21,7 +21,7 @@ const MainContainer = styled.div`
   pointer-events: auto;
   position: relative;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     min-width: 100%;
   }
 `;
@@ -52,7 +52,7 @@ const Border = styled.div`
   padding-bottom: 25px;
   width: 25px;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     display: none;
   }
 `;
@@ -77,7 +77,7 @@ const RightContainer = styled.div`
     max-width: 385px;
   }
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     max-width: 100% !important;
     width: 100%;
   }
@@ -88,7 +88,7 @@ const StyledOutliner = styled.div`
   overflow-y: scroll;
   width: 385px;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     width: 100%;
   }
 `;

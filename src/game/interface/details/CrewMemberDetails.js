@@ -32,7 +32,7 @@ const SidePanel = styled.div`
   flex-direction: column;
   width: 325px;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding: 15px;
     width: 100%;
   }
@@ -54,7 +54,7 @@ const Avatar = styled.div`
   right: 0;
   width: 50%;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     background-image: linear-gradient(
       340deg,
       ${p => p.theme.colors.classes[p.crewClass]}AA,
@@ -75,7 +75,7 @@ const AvatarImage = styled.img`
   position: absolute;
   width: 100%;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     position: relative;
   }
 `;

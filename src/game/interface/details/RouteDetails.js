@@ -34,7 +34,7 @@ const StyledRouteDetails = styled.div`
   padding-left: 15px;
   height: 100%;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     height: auto;
     padding: 0;
     margin-top: 15px;
@@ -47,7 +47,7 @@ const Info = styled.div`
   justify-content: center;
   width: 100%;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     flex-direction: column;
   }
 `;
@@ -69,7 +69,7 @@ const AsteroidInfo = styled.div`
     padding: 25px;
   }
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     margin: 0 15px;
   }
 `;
@@ -164,12 +164,6 @@ const Ship = styled.svg`
 
 const StyledChart = styled.div`
   flex: 0 0 33%;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
-    flex: 1 1 0;
-    height: 450px;
-    width: 100%;
-  }
 `;
 
 const RouteDetails = (props) => {
@@ -244,8 +238,8 @@ const RouteDetails = (props) => {
   useLayoutEffect(() => {
     const handleResize = () => {
       if (!detailsEl?.current) return;
-      const divisor = isMobile ? 2 : 3;
-      setChartDimensions({ height: detailsEl.current.clientHeight / divisor, width: detailsEl.current.clientWidth });
+      const height = isMobile ? 400 : detailsEl.current.clientHeight / 3;
+      setChartDimensions({ height: height, width: detailsEl.current.clientWidth });
     };
 
     window.addEventListener('resize', handleResize);

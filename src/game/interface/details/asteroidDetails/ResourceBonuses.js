@@ -19,7 +19,7 @@ const StyledResourceBonuses = styled.div`
   justify-content: space-around;
   margin-left: 20px;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     flex: 1 1 0;
     margin: 0;
   }
@@ -30,7 +30,7 @@ const Bonus = styled.div`
   display: flex;
   flex: 0 0 32%;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     flex: 1 1 50%;
     padding: 5px 5px;
   }

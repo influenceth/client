@@ -23,7 +23,7 @@ const StyledDetails = styled.div`
   position: relative;
   overflow: hidden;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     background-color: ${p => p.theme.colors.mobileBackground};
     backdrop-filter: none;
     clip-path: none;
@@ -41,7 +41,7 @@ const Header = styled.h1`
   padding: 0 0 0 30px;
   margin: 0;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding-left: 20px;
   }
 `;
@@ -53,7 +53,7 @@ const Content = styled.div`
   min-width: 0;
   position: relative;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     margin: 0;
   }
 `;
@@ -63,7 +63,7 @@ const CloseButton = styled(IconButton)`
   top: 17px;
   right: 20px;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     right: 0;
   }
 `;

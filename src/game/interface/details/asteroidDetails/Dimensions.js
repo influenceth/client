@@ -18,7 +18,7 @@ const StyledDimensions = styled.div`
   justify-content: center;
   padding-top: 20px;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}) {
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     align-items: center;
     flex-direction: column;
     margin: 0;
