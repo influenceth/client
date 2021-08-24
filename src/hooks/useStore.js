@@ -269,6 +269,7 @@ const useStore = create(persist((set, get) => ({
       state.referrer = refCode;
     }))
 }), {
+  name: 'influence',
   version: 0,
   blacklist: [ 'time' ]
 }));

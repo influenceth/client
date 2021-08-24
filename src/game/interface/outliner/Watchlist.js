@@ -1,13 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 import { AiFillEye } from 'react-icons/ai';
 import { RiFilter2Fill as FilterIcon, RiTableFill } from 'react-icons/ri';
 import { FaMapMarkedAlt as ShowOnMapIcon } from 'react-icons/fa';
+import { ImMoveDown } from 'react-icons/im';
 
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import useWatchlist from '~/hooks/useWatchlist';
+import useWatchAsteroid from '~/hooks/useWatchAsteroid';
 import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
 import AsteroidItem from '~/components/AsteroidItem';
@@ -35,6 +37,7 @@ const Watchlist = (props) => {
   const history = useHistory();
   const { isMobile } = useScreenSize();
   const { watchlist: { data: watchlist }} = useWatchlist();
+  const watchAsteroid = useWatchAsteroid();
   const includeWatched = useStore(s => s.asteroids.watched.mapped);
   const filterWatched = useStore(s => s.asteroids.watched.filtered);
   const highlightColor = useStore(s => s.asteroids.watched.highlightColor);
@@ -43,6 +46,27 @@ const Watchlist = (props) => {
   const applyFilters = useStore(s => s.dispatchWatchedAsteroidsFiltered);
   const removeFilters = useStore(s => s.dispatchWatchedAsteroidsUnfiltered);
   const changeColor = useStore(s => s.dispatchWatchedAsteroidColorChange);
+  const [ oldWatchlist, setOldWatchlist ] = useState(null);
+
+  // Moves the old watchlist over and deletes old localstorage
+  const migrateWatchlist = () => {
+    if (oldWatchlist) {
+      oldWatchlist.forEach(a => watchAsteroid.mutate(a));
+      setOldWatchlist(null);
+      window.localStorage.removeItem('state');
+    }
+  };
+
+  useEffect(() => {
+    const local = window.localStorage.getItem('state');
+
+     try {
+       const watchlist = JSON.parse(local)?.user?.watchlist;
+       if (watchlist) setOldWatchlist(watchlist.map(w => w.asteroidId));
+     } catch (e) {
+       console.log('No watchlist to migrate');
+     }
+  }, []);
 
   // Removes watched asteroids from search set when section is closed
   useEffect(() => {
@@ -74,6 +98,13 @@ const Watchlist = (props) => {
           onClick={() => history.push('/watchlist')}>
           <RiTableFill />
         </IconButton>
+        {oldWatchlist && (
+          <IconButton
+            data-tip="Migrate old watchlist"
+            onClick={migrateWatchlist}>
+            <ImMoveDown />
+          </IconButton>
+        )}
         {includeWatched && <ColorPicker initialColor={highlightColor} onChange={changeColor} />}
       </Controls>
       <StyledWatchlist>
