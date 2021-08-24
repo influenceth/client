@@ -21,7 +21,8 @@ const Controls = styled.div`
 `;
 
 const StyledAsteroidDataCard = styled(AsteroidDataCard)`
-  overflow-y: scroll;
+  overflow-y: auto;
+  scrollbar-width: thin;
 `;
 
 const SelectedAsteroid = (props) => {

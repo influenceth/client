@@ -85,7 +85,8 @@ const RightContainer = styled.div`
 
 const StyledOutliner = styled.div`
   max-height: calc(100% - 50px);
-  overflow-y: scroll;
+  overflow-y: auto;
+  scrollbar-width: thin;
   width: 385px;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {

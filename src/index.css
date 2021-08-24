@@ -12,6 +12,7 @@ html, body {
   overflow: hidden;
   padding: 0;
   scroll-behavior: smooth;
+  scrollbar-color: rgba(255, 255, 255, 0.25) rgba(50, 50, 50, 0.3);
   width: 100%;
 }
 

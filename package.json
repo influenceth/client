@@ -17,7 +17,7 @@
     "howler": "^2.2.3",
     "immer": "^8.0.1",
     "import": "^0.0.6",
-    "influence-utils": "^0.10.0",
+    "influence-utils": "^0.11.0",
     "lodash.uniq": "^4.5.0",
     "md5": "^2.3.0",
     "noisejs": "^2.1.0",

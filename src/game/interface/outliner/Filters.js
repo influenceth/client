@@ -42,8 +42,9 @@ const StyledFilters = styled.div`
   flex: 0 1 auto;
   list-style-type: none;
   margin: 0;
-  overflow-y: scroll;
+  overflow-y: auto;
   padding: 0 2px 0 0;
+  scrollbar-width: thin;
 `;
 
 const FilterGroup = styled.div`

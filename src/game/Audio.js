@@ -72,7 +72,7 @@ const Audio = (props) => {
       track.volume(tracks[index].volume * musicVolume / 100);
       track.play();
       track.fade(0, track._baseVolume * musicVolume / 100, 5000);
-      track.on('end', () => {
+      track.once('end', () => {
         track.stop();
         track.unload();
         setCurrentTrack(null);
@@ -97,7 +97,7 @@ const Audio = (props) => {
       sound.load();
       sound.volume(sounds[type][name].volume * effectsVolume / 100);
       sound.play();
-      sound.on('end', () => {
+      sound.once('end', () => {
         sound.stop();
         sound.unload();
       });

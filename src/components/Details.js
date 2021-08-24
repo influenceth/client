@@ -48,10 +48,11 @@ const Header = styled.h1`
 
 const Content = styled.div`
   flex: 1 1 0;
-  overflow-y: scroll;
   margin: 25px 35px 35px 25px;
   min-width: 0;
+  overflow-y: auto;
   position: relative;
+  scrollbar-width: thin;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     margin: 0;

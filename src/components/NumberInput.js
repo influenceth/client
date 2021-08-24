@@ -11,6 +11,7 @@ const StyledInput = styled.input`
   text-align: right;
   height: 25px;
   padding: 0 10px 0 5px;
+  width: 100px;
 
   &:focus {
     outline: none;

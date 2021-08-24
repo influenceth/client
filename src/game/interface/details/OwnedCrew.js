@@ -43,6 +43,7 @@ const CrewList = styled.div`
   height: 45%;
   min-width: 0;
   overflow-x: auto;
+  scrollbar-width: thin;
 `;
 
 const CrewMember = styled.div`

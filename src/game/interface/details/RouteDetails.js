@@ -29,10 +29,11 @@ const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
 const StyledRouteDetails = styled.div`
   align-items: center;
   display: flex;
+  flex: 1 1 0;
   flex-direction: column;
   justify-content: space-between;
   padding-left: 15px;
-  height: 100%;
+  height: calc(100% - 5px);
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     height: auto;

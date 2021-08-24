@@ -18,7 +18,7 @@ const DimensionImage = styled.div`
 `;
 
 const DimensionData = styled(DataReadout)`
-  flex: 0 1 0;
+  flex: 1 1 0;
   flex-direction: column;
   font-size: ${p => p.theme.fontSizes.detailText};
 

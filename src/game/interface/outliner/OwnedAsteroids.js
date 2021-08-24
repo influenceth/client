@@ -26,8 +26,9 @@ const AsteroidList = styled.ul`
   flex: 0 1 auto;
   list-style-type: none;
   margin: 0;
-  overflow-y: scroll;
+  overflow-y: auto;
   padding: 0;
+  scrollbar-width: thin;
 `;
 
 const OwnedAsteroids = (props) => {

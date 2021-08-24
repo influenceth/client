@@ -21,7 +21,8 @@ const Label = styled.label`
 
 const Data = styled.span`
   color: ${p => p.theme.colors.mainText};
-  flex: 0 1 auto;
+  display: flex;
+  flex: 1 1 0;
   overflow: hidden;
   position: relative;
   text-overflow: ellipsis;
