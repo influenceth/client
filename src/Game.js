@@ -9,6 +9,7 @@ import Intro from '~/game/Intro';
 import Interface from '~/game/Interface';
 import Scene from '~/game/Scene';
 import Audio from '~/game/Audio';
+import Referral from '~/game/Referral';
 import theme from '~/theme';
 
 const StyledMain = styled.main`
@@ -50,6 +51,7 @@ const Game = (props) => {
     <ThemeProvider theme={theme}>
       <Router>
         {loading && <Intro onVideoComplete={onVideoComplete} />}
+        <Referral />
         <StyledMain>
           <Interface />
           {showScene && <Scene />}

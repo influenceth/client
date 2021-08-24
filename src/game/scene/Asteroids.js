@@ -188,14 +188,20 @@ const Asteroids = (props) => {
           }]} />
         </points>
       )}
-      <Suspense fallback={<group />}>
-        {hoveredPos && zoomStatus === 'out' && <Marker asteroidPos={hoveredPos} />}
-        {originPos && zoomStatus === 'out' && <Marker asteroidPos={originPos} />}
-        {destinationPos && <Marker asteroidPos={destinationPos} />}
-      </Suspense>
-      {!!origin && zoomStatus === 'out' && <Orbit asteroid={origin} />}
-      {!!destination && <Orbit asteroid={destination} />}
-      {originPos && destinationPos && zoomStatus === 'out' && <FlightLine originPos={originPos} destinationPos={destinationPos} />}
+      {zoomStatus === 'out' && (
+        <Suspense fallback={<group />}>
+          {hoveredPos && <Marker asteroidPos={hoveredPos} />}
+          {originPos && <Marker asteroidPos={originPos} />}
+          {destinationPos && <Marker asteroidPos={destinationPos} />}
+        </Suspense>
+      )}
+      {zoomStatus === 'out' && (
+        <>
+          {!!origin && <Orbit asteroid={origin} />}
+          {!!destination && <Orbit asteroid={destination} />}
+          {originPos && destinationPos && <FlightLine originPos={originPos} destinationPos={destinationPos} />}
+        </>
+      )}
     </group>
   )
 };

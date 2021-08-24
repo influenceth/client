@@ -38,6 +38,16 @@ const api = {
     return response.data;
   },
 
+  getReferralCount: async () => {
+    const response = await instance.get('v1/user/referrals');
+    return response.data;
+  },
+
+  createReferral: async (referral) => {
+    const response = await instance.post(`/v1/user/referrals`, referral);
+    return response.status;
+  },
+
   getAsteroid: async (i) => {
     const response = await instance.get(`/v1/asteroids/${i}`);
     return response.data;

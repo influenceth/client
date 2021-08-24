@@ -13,6 +13,7 @@ import useSale from '~/hooks/useSale';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidPrice from '~/hooks/useAsteroidPrice';
 import useBuyAsteroid from '~/hooks/useBuyAsteroid';
+import useCreateReferral from '~/hooks/useCreateReferral';
 import useStartAsteroidScan from '~/hooks/useStartAsteroidScan';
 import useFinalizeAsteroidScan from '~/hooks/useFinalizeAsteroidScan';
 import useNameAsteroid from '~/hooks/useNameAsteroid';
@@ -167,6 +168,7 @@ const AsteroidDetails = (props) => {
   const { data: asteroid } = useAsteroid(Number(i));
   const { data: asteroidPrice } = useAsteroidPrice(asteroid);
   const buyAsteroid = useBuyAsteroid(Number(i));
+  const createReferral = useCreateReferral(Number(i));
   const startScan = useStartAsteroidScan(Number(i));
   const finalizeScan = useFinalizeAsteroidScan(Number(i));
   const nameAsteroid = useNameAsteroid(Number(i));
@@ -251,7 +253,10 @@ const AsteroidDetails = (props) => {
                   data-tip="Purchase development rights"
                   data-for="global"
                   disabled={!account || !sale || !asteroidPrice}
-                  onClick={() => buyAsteroid.mutate()}>
+                  onClick={() => {
+                    buyAsteroid.mutate();
+                    createReferral.mutate();
+                  }}>
                   <MdFlag /> Purchase
                 </StyledButton>
               )}

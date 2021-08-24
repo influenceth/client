@@ -68,6 +68,8 @@ const useStore = create(persist((set, get) => ({
       toPlay: null
     },
 
+    referrer: null,
+
     dispatchSoundPlayed: () => set(produce(state => {
       state.sounds.toPlay = null;
     })),
@@ -261,6 +263,10 @@ const useStore = create(persist((set, get) => ({
 
     dispatchTokenInvalidated: () => set(produce(state => {
       state.auth.token = null;
+    })),
+
+    dispatchReferrerSet: (refCode) => set(produce(state => {
+      state.referrer = refCode;
     }))
 }), {
   version: 0,

@@ -6,6 +6,7 @@ import Clipboard from 'react-clipboard.js';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 
 import useStore from '~/hooks/useStore';
+import useReferralsCount from '~/hooks/useReferralsCount';
 import useScreenSize from '~/hooks/useScreenSize';
 import Details from '~/components/Details';
 import DataReadout from '~/components/DataReadout';
@@ -53,9 +54,10 @@ const StyledClipboard = styled(Clipboard)`
   text-decoration: none;
 `;
 
-const Settinigs = (props) => {
+const Settings = (props) => {
   const { account } = useWeb3React();
   const { isMobile } = useScreenSize();
+  const { data: referralsCount } = useReferralsCount();
   const graphics = useStore(s => s.graphics);
   const sounds = useStore(s => s.sounds);
   const setTextureSize = useStore(s => s.dispatchTextureSizeSet);
@@ -219,9 +221,12 @@ const Settinigs = (props) => {
             </>
           )}
         </StyledDataReadout>
+        {account && (
+          <StyledDataReadout label="Completed Referrals">{referralsCount}</StyledDataReadout>
+        )}
       </StyledSettings>
     </Details>
   );
 };
 
-export default Settinigs;
+export default Settings;

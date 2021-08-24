@@ -30,7 +30,6 @@ const useBuyAsteroid = (i) => {
     enabled: !!contract && !!account,
     onSuccess: () => {
       setTimeout(() => {
-        console.log(i);
         queryClient.invalidateQueries([ 'asteroid', i ]);
         queryClient.invalidateQueries('asteroids');
         queryClient.invalidateQueries('events');
