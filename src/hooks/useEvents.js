@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
-import uniq from 'lodash.uniq';
+import uniq from 'lodash.uniqby';
 
 import useStore from '~/hooks/useStore';
 import useAuth from '~/hooks/useAuth';
