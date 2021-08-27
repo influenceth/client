@@ -9,7 +9,7 @@ const useReferralsCount = () => {
   return useQuery(
     [ 'referralsCount', token ],
     () => api.getReferralCount(),
-    { enabled: !!token, staleTime: 60000 * 5 }
+    { enabled: !!token }
   );
 };
 

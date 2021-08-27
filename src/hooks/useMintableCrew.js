@@ -9,7 +9,7 @@ const useMintableCrew = () => {
   return useQuery(
     [ 'mintableCrew', { owner: account } ],
     () => api.getMintableCrew({ owner: account }),
-    { enabled: !!account, staleTime: 60000 * 5 }
+    { enabled: !!account }
   );
 };
 

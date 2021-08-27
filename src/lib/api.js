@@ -58,6 +58,11 @@ const api = {
     return response.data;
   },
 
+  getOwnedAsteroidsCount: async () => {
+    const response = await instance.get('/v1/asteroids/ownedCount');
+    return response.data;
+  },
+
   getCrewMember: async (i) => {
     const response = await instance.get(`/v1/crew/${i}`);
     return response.data;

@@ -46,7 +46,8 @@ const useStartAsteroidScan = (i) => {
       createAlert({
         type: 'Asteroid_ScanningError',
         level: 'warning',
-        i: i, timestamp: Math.round(Date.now() / 1000)
+        i: i,
+        timestamp: Math.round(Date.now() / 1000)
       });
       queryClient.setQueryData([ 'asteroid', i ], context.previousAsteroid);
       queryClient.invalidateQueries([ 'asteroid', i ]);
@@ -54,6 +55,11 @@ const useStartAsteroidScan = (i) => {
 
     onSuccess: () => {
       setTimeout(() => {
+        createAlert({
+          type: 'Asteroid_ReadyToFinalizeScan',
+          i: i,
+          timestamp: Math.round(Date.now() / 1000)
+        });
         queryClient.invalidateQueries([ 'asteroid', i ]);
         queryClient.invalidateQueries('asteroids');
         queryClient.invalidateQueries('events');

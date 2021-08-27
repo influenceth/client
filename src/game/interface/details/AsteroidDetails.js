@@ -4,9 +4,6 @@ import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
 import utils from 'influence-utils';
 import { utils as ethersUtils } from 'ethers';
-import { MdFlag, MdBlurOff, MdClose } from 'react-icons/md';
-import { BsCheckCircle } from 'react-icons/bs';
-import { AiFillEdit } from 'react-icons/ai';
 
 import useStore from '~/hooks/useStore';
 import useSale from '~/hooks/useSale';
@@ -18,6 +15,8 @@ import useStartAsteroidScan from '~/hooks/useStartAsteroidScan';
 import useFinalizeAsteroidScan from '~/hooks/useFinalizeAsteroidScan';
 import useNameAsteroid from '~/hooks/useNameAsteroid';
 import Details from '~/components/Details';
+import Form from '~/components/Form';
+import Text from '~/components/Text';
 import Button from '~/components/Button';
 import TextInput from '~/components/TextInput';
 import IconButton from '~/components/IconButton';
@@ -25,6 +24,7 @@ import DataReadout from '~/components/DataReadout';
 import LogEntry from '~/components/LogEntry';
 import Ether from '~/components/Ether';
 import AddressLink from '~/components/AddressLink';
+import { EditIcon, CheckIcon, ClaimIcon, ScanIcon } from '~/components/Icons';
 import ResourceMix from './asteroidDetails/ResourceMix';
 import ResourceBonuses from './asteroidDetails/ResourceBonuses';
 import Dimensions from './asteroidDetails/Dimensions';
@@ -98,11 +98,6 @@ const NameForm = styled.div`
   }
 `;
 
-const StyledButton = styled(Button)`
-  margin-top: 15px;
-  width: 150px;
-`;
-
 const Log = styled.div`
   flex: 0 1 33%;
 
@@ -173,6 +168,7 @@ const AsteroidDetails = (props) => {
   const finalizeScan = useFinalizeAsteroidScan(Number(i));
   const nameAsteroid = useNameAsteroid(Number(i));
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
+  const [ buying, setBuying ] = useState(false);
   const [ naming, setNaming ] = useState(false);
   const [ newName, setNewName ] = useState('');
   const [ scanStatus, setScanStatus ] = useState('unscanned');
@@ -249,83 +245,93 @@ const AsteroidDetails = (props) => {
             <Pane>
               <Subtitle>Manage Asteroid</Subtitle>
               {!asteroid.owner && (
-                <StyledButton
+                <Button
                   data-tip="Purchase development rights"
                   data-for="global"
                   disabled={!account || !sale || !asteroidPrice}
+                  loading={buying}
                   onClick={() => {
-                    buyAsteroid.mutate();
+                    setBuying(true);
+                    buyAsteroid.mutate(null, { onSettled: () => setBuying(false) });
                     createReferral.mutate();
                   }}>
-                  <MdFlag /> Purchase
-                </StyledButton>
+                  <ClaimIcon /> Purchase
+                </Button>
               )}
               {asteroid.owner && asteroid.owner !== account && (
-                <StyledButton
+                <Button
                   data-tip="Purchase on OpenSea"
                   data-for="global"
                   disabled={!asteroidPrice}
                   onClick={() => goToOpenSeaAsteroid(asteroid.i)}>
-                  <MdFlag /> Purchase
-                </StyledButton>
+                  <ClaimIcon /> Purchase
+                </Button>
               )}
               {asteroid.owner === account && (
-                <StyledButton
+                <Button
                   data-tip="List on OpenSea"
                   data-for="global"
                   disabled={!asteroidPrice}
                   onClick={() => goToOpenSeaAsteroid(asteroid.i)}>
-                  <MdFlag /> List for Sale
-                </StyledButton>
+                  <ClaimIcon /> List for Sale
+                </Button>
               )}
-              {[ 'unscanned', 'scanning' ].includes(scanStatus) && (
-                <StyledButton
-                  data-tip="Scan for resource bonuses"
+              {scanStatus !== 'retrieved' && (
+                <Form
+                  title={<><ScanIcon /><span>Resource Scan</span></>}
+                  data-tip="Scan surface for resources"
                   data-for="global"
-                  onClick={() => startScan.mutate()}
-                  disabled={asteroid.owner !== account || scanStatus === 'scanning'}>
-                  <MdBlurOff /> Start Scan
-                </StyledButton>
+                  loading={[ 'scanning', 'retrieving' ].includes(scanStatus)}>
+                  <Text>
+                    Scanning requires two steps which *must* be mined within ~45 minutes of each other.
+                    Combined cost is under 140,000 gas.
+                  </Text>
+                  {[ 'unscanned', 'scanning' ].includes(scanStatus) && (
+                    <Button
+                      data-tip="Scan for resource bonuses"
+                      data-for="global"
+                      onClick={() => startScan.mutate()}
+                      loading={scanStatus === 'scanning'}
+                      disabled={asteroid.owner !== account || scanStatus === 'scanning'}>
+                      <ScanIcon /> Start Scan
+                    </Button>
+                  )}
+                  {[ 'scanned', 'retrieving' ].includes(scanStatus) && (
+                    <Button
+                      data-tip="Retrieve scan results"
+                      data-for="global"
+                      onClick={() => finalizeScan.mutate()}
+                      loading={scanStatus === 'retrieving'}
+                      disabled={asteroid.owner !== account || scanStatus === 'retrieving'}>
+                      <ScanIcon /> Finalize Scan
+                    </Button>
+                  )}
+                </Form>
               )}
-              {[ 'scanned', 'retrieving' ].includes(scanStatus) && (
-                <StyledButton
-                  data-tip="Retrieve scan results"
+              {asteroid.owner === account && (
+                <Form
+                  title={<><EditIcon /><span>Change Name</span></>}
+                  data-tip="Update asteroid name"
                   data-for="global"
-                  onClick={() => finalizeScan.mutate()}
-                  disabled={asteroid.owner !== account || scanStatus === 'retrieving'}>
-                  <MdBlurOff /> Finalize Scan
-                </StyledButton>
-              )}
-              <StyledButton
-                data-tip="Update asteroid name"
-                data-for="global"
-                onClick={() => setNaming(true)}
-                disabled={asteroid.owner !== account || naming}>
-                <AiFillEdit /> Name
-              </StyledButton>
-              {naming && (
-                <NameForm>
-                  <TextInput
-                    pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
-                    initialValue=""
-                    onChange={(v) => setNewName(v)} />
-                  <IconButton
-                    data-tip="Submit"
-                    data-for="global"
-                    onClick={() => {
-                      nameAsteroid.mutate({ name: newName });
-                      setNewName('');
-                      setNaming(false);
-                    }}>
-                    <BsCheckCircle />
-                  </IconButton>
-                  <IconButton
-                    data-tip="Cancel"
-                    data-for="global"
-                    onClick={() => setNaming(false)}>
-                    <MdClose />
-                  </IconButton>
-                </NameForm>
+                  loading={naming}>
+                  <Text>Names must be unique, and can only include letters, numbers, and single spaces.</Text>
+                  <NameForm>
+                    <TextInput
+                      pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                      initialValue=""
+                      disabled={naming}
+                      onChange={(v) => setNewName(v)} />
+                    <IconButton
+                      data-tip="Submit"
+                      data-for="global"
+                      onClick={() => {
+                        setNaming(true);
+                        nameAsteroid.mutate({ name: newName }, { onSettled: () => setNaming(false) });
+                      }}>
+                      <CheckIcon />
+                    </IconButton>
+                  </NameForm>
+                </Form>
               )}
             </Pane>
             <Pane>

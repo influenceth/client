@@ -27,7 +27,7 @@ const useAsteroidsCount = () => {
   return useQuery(
     [ 'asteroidsCount', query ],
     () => api.getAsteroids(query),
-    { keepPreviousData: true,  staleTime: 60000 * 5 }
+    { keepPreviousData: true }
   );
 };
 

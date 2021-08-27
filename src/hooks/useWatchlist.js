@@ -11,7 +11,7 @@ const useWatchlist = () => {
   const watchlist = useQuery(
     [ 'watchlist', token ],
     api.getWatchlist,
-    { enabled: !!token, staleTime: 60000 * 5 }
+    { enabled: !!token }
   );
 
   useEffect(() => {

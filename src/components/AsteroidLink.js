@@ -12,12 +12,10 @@ const AsteroidLink = (props) => {
     if (owned) {
       const match = owned.find(a => a.i === Number(id));
       if (match) setName(match.customName || match.baseName);
-    } else {
-      setName(initialName || `#${id}`);
     }
   }, [ owned, id, initialName ]);
 
-  return <Link to={`/asteroids/${id}`}>{name}</Link>;
+  return <Link to={`/asteroids/${id}`}>{name || `#${id}`}</Link>;
 };
 
 export default AsteroidLink;

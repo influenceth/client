@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import ReactTooltip from 'react-tooltip';
+import LoadingAnimation from 'react-spinners/BarLoader';
 
 import useStore from '~/hooks/useStore';
+import theme from '~/theme';
 
 const StyledButton = styled.button`
   align-items: center;
@@ -19,11 +21,13 @@ const StyledButton = styled.button`
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: 15px;
+  margin-top: 15px;
   min-height: 35px;
   transition: all 300ms ease;
   padding: 0 15px 0 10px;
   position: relative;
   min-width: 75px;
+  width: 175px;
 
   &:disabled {
     color: ${p => p.theme.colors.disabledText};
@@ -65,8 +69,16 @@ const Corner = styled.svg`
   width: 10px;
 `;
 
+const loadingCss = css`
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 100%;
+`;
+
 const Button = (props) => {
-  const { onClick, 'data-tip': dataTip, 'data-place': dataPlace, ...restProps } = props;
+  const { onClick, 'data-tip': dataTip, 'data-place': dataPlace, loading, ...restProps } = props;
   const playSound = useStore(s => s.dispatchSoundRequested);
 
   const _onClick = (e) => {
@@ -78,6 +90,7 @@ const Button = (props) => {
 
   return (
     <StyledButton {...restProps} onClick={_onClick} data-tip={dataTip} data-place={dataPlace || "right"} key={dataTip}>
+      {loading && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
       {props.children}
       <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
         <line x1="0" y1="10" x2="10" y2="0" />

@@ -46,7 +46,7 @@ const usePagedAsteroids = () => {
   const query = useQuery(
     [ 'pagedAsteroids', params ],
     () => api.getAsteroids(params),
-    { keepPreviousData: true, staleTime: 60000 * 5 }
+    { keepPreviousData: true }
   );
 
   return { query, setPage, setPerPage, setSort };

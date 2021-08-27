@@ -212,7 +212,7 @@ const Asteroid = (props) => {
     // Zoom in the camera to the asteroid
     timeline.to(controls.object.position, { ...zoomTo }, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ shouldZoomIn ]);
+}, [ shouldZoomIn ]);
 
   const shouldFinishZoomIn = zoomStatus === 'in' && controls && !!asteroidData;
   useEffect(() => {
@@ -232,7 +232,7 @@ const Asteroid = (props) => {
     controls.object.near = 100;
     controls.object.updateProjectionMatrix();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ shouldFinishZoomIn ]);
+}, [ shouldFinishZoomIn, asteroidData ]);
 
   // Handle zooming back out
   const shouldZoomOut = zoomStatus === 'zooming-out' && zoomedFrom && controls;

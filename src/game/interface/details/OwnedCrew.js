@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { toCrewClass } from 'influence-utils';
+import { toCrewClass, toCrewCollection } from 'influence-utils';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useMintableCrew from '~/hooks/useMintableCrew';
 import useSettleCrew from '~/hooks/useSettleCrew';
+import useOwnedAsteroidsCount from '~/hooks/useOwnedAsteroidsCount';
 import Details from '~/components/Details';
+import AsteroidLink from '~/components/AsteroidLink';
 import Button from '~/components/Button';
 import DataReadout from '~/components/DataReadout';
-import formatters from '~/lib/formatters';
+import { CrewMemberIcon, WarningIcon } from '~/components/Icons';
 import silhouette from '~/assets/images/silhouette.png';
 
 const StyledCrewDetails = styled.div`
@@ -68,7 +70,7 @@ const CrewInfo = styled.div`
   flex: 0 0 auto;
   flex-direction: column;
   height: 100%;
-  padding-left: 15px;
+  padding: 0 15px;
 `;
 
 const CrewName = styled.span`
@@ -101,13 +103,27 @@ const StyledButton = styled(Button)`
   margin: auto 0 15px 0;
 `;
 
-const EmptyMessage = styled.div`
+const WarningMessage = styled.div`
+  align-items: center;
+  display: flex;
   font-size: ${p => p.theme.fontSizes.detailText};
+  line-height: 20px;
   margin: auto auto;
+  z-index: 1;
+
+  & svg {
+    flex: 1 0 auto;
+    margin-right: 10px;
+  }
 `;
 
 const ClassBadge = styled.span`
   color: ${p => p.theme.colors.classes[p.crewClass]};
+`;
+
+const loadingCss = css`
+  left: 50%;
+  top: 50%;
 `;
 
 const OwnedCrewMember = (props) => {
@@ -117,10 +133,6 @@ const OwnedCrewMember = (props) => {
   const imageUrl = crew.crewCollection ?
     `${process.env.REACT_APP_API_URL}/v1/metadata/crew/${crew.i}/card.svg?bustOnly=true` :
     silhouette;
-  const loadingCss = css`
-    left: 50%;
-    top: 50%;
-  `;
 
   return (
     <CrewMember onClick={() => history.push(`/crew/${crew.i}`)}>
@@ -141,22 +153,37 @@ const OwnedCrewMember = (props) => {
 };
 
 const MintableCrewMember = (props) => {
-  const { asteroid, ...restProps } = props;
+  const { asteroid, canMint, ...restProps } = props;
   const settleCrew = useSettleCrew(asteroid.i);
-  const collection = asteroid.purchaseOrder <= 1859 ? 'Arvad Specialist' : 'Arvad Citizen';
-  const bonus = Math.pow(250000 - asteroid.i, 2) / 2500000000;
+  const collection = asteroid.purchaseOrder <= 1859 ? 1 : 2;
+  const bonus = (collection === 1 ? 25 : 0) + Math.pow(250000 - asteroid.i, 2) / 2500000000;
+  const [ minting, setMinting ] = useState(false);
 
   return (
     <CrewMember {...restProps}>
       <CrewAvatar visible={true} src={silhouette} />
       <CrewInfo>
-        <CrewName>{asteroid.name}</CrewName>
-        <DataReadout label="Crew Type">{collection}</DataReadout>
-        <DataReadout label="Asteroid Radius">{formatters.radius(asteroid.r)}</DataReadout>
-        <DataReadout label="Bonus to Mint">+{bonus.toLocaleString()}%</DataReadout>
+        <CrewName><AsteroidLink initialName={asteroid.name} id={asteroid.i} /></CrewName>
+        <DataReadout label="Crew Type">{toCrewCollection(collection)}</DataReadout>
+        <DataReadout label="Attribute Roll Bonus">
+          +{bonus.toLocaleString({}, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
+        </DataReadout>
+        {!canMint && (
+          <WarningMessage>
+            <WarningIcon />
+            <span>Arvad Citizens are mintable at completion of sale</span>
+          </WarningMessage>
+        )}
         <StyledButton
-          onClick={() => settleCrew.mutate()}>
-          Mint Crew Member
+          data-tip={canMint ? 'Mint new crew member' : 'Not available until sale is complete'}
+          data-for="global"
+          onClick={() => {
+            setMinting(true);
+            settleCrew.mutate(null, { onSettled: () => setMinting(false) })
+          }}
+          loading={minting}
+          disabled={!canMint || minting}>
+          <CrewMemberIcon /> Mint Crew
         </StyledButton>
       </CrewInfo>
     </CrewMember>
@@ -166,6 +193,7 @@ const MintableCrewMember = (props) => {
 const OwnedCrew = (props) => {
   const { data: crew } = useOwnedCrew();
   const { data: mintable } = useMintableCrew();
+  const { data: ownedCount } = useOwnedAsteroidsCount();
 
   return (
     <Details title="Owned Crew">
@@ -174,7 +202,10 @@ const OwnedCrew = (props) => {
           {(!crew || crew.length === 0) && (
             <CrewMember>
               <CrewInfo>
-                <EmptyMessage>No owned crew available</EmptyMessage>
+                <WarningMessage>
+                  <WarningIcon />
+                  <span>No owned crew available</span>
+                </WarningMessage>
               </CrewInfo>
             </CrewMember>
           )}
@@ -185,11 +216,17 @@ const OwnedCrew = (props) => {
           {(!mintable || mintable.length === 0) && (
             <CrewMember>
               <CrewInfo>
-                <EmptyMessage>No crew available to mint</EmptyMessage>
+                <WarningMessage>
+                  <WarningIcon />
+                  <span>No crew available to mint</span>
+                </WarningMessage>
               </CrewInfo>
             </CrewMember>
           )}
-          {mintable && mintable.map(a => <MintableCrewMember asteroid={a} key={a.i} />)}
+          {mintable && mintable.map(a => {
+            const canMint = a.purchaseOrder <= 1859 || ownedCount >= 1869;
+            return <MintableCrewMember asteroid={a} key={a.i} canMint={canMint} />;
+          })}
         </CrewList>
       </StyledCrewDetails>
     </Details>

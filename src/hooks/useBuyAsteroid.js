@@ -28,6 +28,7 @@ const useBuyAsteroid = (i) => {
     return receipt;
   }, {
     enabled: !!contract && !!account,
+
     onSuccess: () => {
       setTimeout(() => {
         queryClient.invalidateQueries([ 'asteroid', i ]);

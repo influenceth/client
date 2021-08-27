@@ -1,8 +1,8 @@
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
-import { MdClose } from 'react-icons/md';
 
 import IconButton from '~/components/IconButton';
+import { CloseIcon } from '~/components/Icons';
 
 const StyledDetails = styled.div`
   background-color: ${p => p.theme.colors.contentBackdrop};
@@ -79,7 +79,7 @@ const Details = (props) => {
       <CloseButton
         onClick={() => history.push('/')}
         borderless>
-        <MdClose />
+        <CloseIcon />
       </CloseButton>
       <Content>
         {props.children}

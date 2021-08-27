@@ -80,7 +80,7 @@ const RadiusFilter = (props) => {
 
   return (
     <>
-      <h3>Asteroid Radius (Price)</h3>
+      <h3>Asteroid Radius{sale ? ' (Price)' : ''}</h3>
       <Highlighter
         active={highlightActive}
         onClick={handleHighlightToggle} />
@@ -92,7 +92,7 @@ const RadiusFilter = (props) => {
               min={initialValues.radiusMin}
               max={initialValues.radiusMax}
               onChange={(v) => setRadiusMin(Number(v))} />
-            <Price>({!!sale ? formatters.asteroidPrice(radiusMin, sale) : '...'} <Ether />)</Price>
+            {sale && <Price>{formatters.asteroidPrice(radiusMin, sale)} <Ether /></Price>}
           </>
         </DataReadout>
         {highlightActive && (
@@ -107,7 +107,7 @@ const RadiusFilter = (props) => {
               min={initialValues.radiusMin}
               max={initialValues.radiusMax}
               onChange={(v) => setRadiusMax(Number(v))} />
-            <Price>({!!sale ? formatters.asteroidPrice(radiusMax, sale) : '...'} <Ether />)</Price>
+            {sale && <Price>{formatters.asteroidPrice(radiusMax, sale)} <Ether /></Price>}
           </>
         </DataReadout>
         {highlightActive && (

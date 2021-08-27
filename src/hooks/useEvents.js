@@ -23,7 +23,7 @@ const useEvents = () => {
   );
 
   // Update for new incoming events
-  // TODO: handle invalidations here
+  // TODO: handle invalidations here?
   useEffect(() => {
     if (eventsQuery.data) {
       // If not the initial query send off alerts for new events

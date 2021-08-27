@@ -2,10 +2,6 @@ import { useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useWeb3React, UnsupportedChainIdError } from '@web3-react/core';
 import styled from 'styled-components';
-import { MdAccountBalanceWallet as WalletIcon } from 'react-icons/md';
-import { FaEthereum as ConnectIcon } from 'react-icons/fa';
-import { VscDebugDisconnect as DisconnectIcon } from 'react-icons/vsc';
-import { RiLoginCircleFill as LoginIcon, RiAlertFill as ErrorIcon } from 'react-icons/ri';
 
 import useStore from '~/hooks/useStore';
 import useEagerConnect from '~/hooks/useEagerConnect';
@@ -14,6 +10,7 @@ import useAuth from '~/hooks/useAuth';
 import { injected } from '~/lib/blockchain/connectors';
 import Section from '~/components/Section';
 import Button from '~/components/Button';
+import { ConnectIcon, DisconnectIcon, LoginIcon, WalletIcon, WarningIcon } from '~/components/Icons';
 
 const networkNames = {
   1: 'Ethereum Mainnet',
@@ -41,7 +38,6 @@ const Controls = styled.div`
 const Info = styled.div`
   align-items: center;
   display: flex;
-  margin-bottom: 15px;
 
   & span {
     overflow: hidden;
@@ -68,7 +64,7 @@ const Error = styled.div`
   margin-bottom: 20px;
 `;
 
-const StyledErrorIcon = styled(ErrorIcon)`
+const StyledErrorIcon = styled(WarningIcon)`
   color: ${p => p.theme.colors.error};
   height: 20px;
   margin-right: 5px;

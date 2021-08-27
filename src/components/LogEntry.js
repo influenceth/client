@@ -57,22 +57,32 @@ const getTxLink = (txHash) => {
 };
 
 const entries = {
-  Asteroid_Transfer: (e) => {
-    return (
-      <StyledLogEntry>
-        <TransferIcon />
-        <Description>
-          <span>Asteroid </span>
-          <AsteroidLink id={e.returnValues.tokenId} />
-          <span> transferred from</span>
-          <AddressLink address={e.returnValues.from} />
-          <span>to </span>
-          <AddressLink address={e.returnValues.to} />
-        </Description>
-        {getTxLink(e.transactionHash)}
-      </StyledLogEntry>
-    );
-  },
+  Game_GPUPrompt: (e) => (
+    <StyledLogEntry>
+      <Description>
+        <span>Please consider turning on browser hardware accleration for a better experience.</span>
+        <span> Find instructions </span>
+        <a href="https://www.computerhope.com/issues/ch002154.htm" rel="noreferrer" target="_blank">
+          here
+        </a>
+      </Description>
+    </StyledLogEntry>
+  ),
+
+  Asteroid_Transfer: (e) => (
+    <StyledLogEntry>
+      <TransferIcon />
+      <Description>
+        <span>Asteroid </span>
+        <AsteroidLink id={e.returnValues.tokenId} />
+        <span> transferred from</span>
+        <AddressLink address={e.returnValues.from} />
+        <span>to </span>
+        <AddressLink address={e.returnValues.to} />
+      </Description>
+      {getTxLink(e.transactionHash)}
+    </StyledLogEntry>
+  ),
 
   Asteroid_ScanStarted: (e) => (
     <StyledLogEntry>
@@ -82,6 +92,17 @@ const entries = {
         <AsteroidLink id={e.returnValues.asteroidId} />
       </Description>
       {getTxLink(e.transactionHash)}
+    </StyledLogEntry>
+  ),
+
+  Asteroid_ReadyToFinalizeScan: (e) => (
+    <StyledLogEntry>
+      <ScanIcon />
+      <Description>
+        <span>Ready to finalize scan on </span>
+        <AsteroidLink id={e.i} />
+        <span>. Scan *must* be submitted and mined within 256 blocks (~45 min)</span>
+      </Description>
     </StyledLogEntry>
   ),
 
@@ -108,109 +129,81 @@ const entries = {
     </StyledLogEntry>
   ),
 
-  Asteroid_NamingError: (e) => {
-    return (
-      <StyledLogEntry>
-        <Description>
-          <span>Error naming asteroid </span>
-          <AsteroidLink id={e.i} />
-          <span>. Please try a different name and ensure no symbols or extra spaces are included.</span>
-        </Description>
-      </StyledLogEntry>
-    );
-  },
+  Asteroid_NamingError: (e) => (
+    <StyledLogEntry>
+      <Description>
+        <span>Error naming asteroid </span>
+        <AsteroidLink id={e.i} />
+        <span>. Please try a different name and ensure no symbols or extra spaces are included.</span>
+      </Description>
+    </StyledLogEntry>
+  ),
 
-  Asteroid_ScanningError: (e) => {
-    return (
-      <StyledLogEntry>
-        <Description>
-          <span>Error starting resource scan on asteroid </span>
-          <AsteroidLink id={e.i} />
-          <span>. Please check your transaction and try again.</span>
-        </Description>
-      </StyledLogEntry>
-    );
-  },
+  Asteroid_ScanningError: (e) => (
+    <StyledLogEntry>
+      <Description>
+        <span>Error starting resource scan on asteroid </span>
+        <AsteroidLink id={e.i} />
+        <span>. Please check your transaction and try again.</span>
+      </Description>
+    </StyledLogEntry>
+  ),
 
-  Asteroid_FinalizeScanError: (e) => {
-    return (
-      <StyledLogEntry>
-        <Description>
-          <span>Error finalizing resource scan for asteroid </span>
-          <AsteroidLink id={e.i} />
-          <span>. Please check your transaction and try again.</span>
-        </Description>
-      </StyledLogEntry>
-    );
-  },
+  Asteroid_FinalizeScanError: (e) => (
+    <StyledLogEntry>
+      <Description>
+        <span>Error finalizing resource scan for asteroid </span>
+        <AsteroidLink id={e.i} />
+        <span>. Please check your transaction and try again.</span>
+      </Description>
+    </StyledLogEntry>
+  ),
 
-  Game_GPUPrompt: (e) => {
-    return (
-      <StyledLogEntry>
-        <Description>
-          <span>Please consider turning on browser hardware accleration for a better experience.</span>
-          <span> Find instructions </span>
-          <a href="https://www.computerhope.com/issues/ch002154.htm" rel="noreferrer" target="_blank">
-            here
-          </a>
-        </Description>
-      </StyledLogEntry>
-    );
-  },
+  Asteroid_AsteroidUsed: (e) => (
+    <StyledLogEntry>
+      <CrewIcon />
+      <Description>
+        <span>Crew member </span>
+        <CrewLink id={e.returnValues.crewId} />
+        <span> minted with </span>
+        <AsteroidLink id={e.returnValues.asteroidId} />
+      </Description>
+      {getTxLink(e.transactionHash)}
+    </StyledLogEntry>
+  ),
 
-  CrewMember_Transfer: (e) => {
-    return (
-      <StyledLogEntry>
-        <TransferIcon />
-        <Description>
-          <span>Crew member </span>
-          <CrewLink id={e.returnValues.tokenId} />
-          <span> transferred from</span>
-          <AddressLink address={e.returnValues.from} />
-          <span>to </span>
-          <AddressLink address={e.returnValues.to} />
-        </Description>
-        {getTxLink(e.transactionHash)}
-      </StyledLogEntry>
-    );
-  },
+  CrewMember_Transfer: (e) => (
+    <StyledLogEntry>
+      <TransferIcon />
+      <Description>
+        <span>Crew member </span>
+        <CrewLink id={e.returnValues.tokenId} />
+        <span> transferred from</span>
+        <AddressLink address={e.returnValues.from} />
+        <span>to </span>
+        <AddressLink address={e.returnValues.to} />
+      </Description>
+      {getTxLink(e.transactionHash)}
+    </StyledLogEntry>
+  ),
 
-  Asteroid_AsteroidUsed: (e) => {
-    return (
-      <StyledLogEntry>
-        <CrewIcon />
-        <Description>
-          <span>Crew member </span>
-          <CrewLink id={e.returnValues.crewId} />
-          <span> minted with </span>
-          <AsteroidLink id={e.returnValues.asteroidId} />
-        </Description>
-        {getTxLink(e.transactionHash)}
-      </StyledLogEntry>
-    );
-  },
+  CrewMember_SettlingError: (e) => (
+    <StyledLogEntry>
+      <Description>
+        <span>Error minting crew member, please check your transaction and try again.</span>
+      </Description>
+    </StyledLogEntry>
+  ),
 
-  CrewMember_SettlingError: (e) => {
-    return (
-      <StyledLogEntry>
-        <Description>
-          <span>Error minting crew member, please check your transaction and try again.</span>
-        </Description>
-      </StyledLogEntry>
-    );
-  },
-
-  CrewMember_NamingError: (e) => {
-    return (
-      <StyledLogEntry>
-        <Description>
-          <span>Error naming crew member </span>
-          <CrewLink id={e.i} />
-          <span>. Please try a different name and ensure no symbols or extra spaces are included.</span>
-        </Description>
-      </StyledLogEntry>
-    );
-  },
+  CrewMember_NamingError: (e) => (
+    <StyledLogEntry>
+      <Description>
+        <span>Error naming crew member </span>
+        <CrewLink id={e.i} />
+        <span>. Please try a different name and ensure no symbols or extra spaces are included.</span>
+      </Description>
+    </StyledLogEntry>
+  ),
 
   CrewMember_NameChanged: (e) => (
     <StyledLogEntry>
@@ -223,6 +216,42 @@ const entries = {
       {getTxLink(e.transactionHash)}
     </StyledLogEntry>
   ),
+
+  Sale_TimeToStart: (e) => (
+    <StyledLogEntry>
+      <Description>
+        <span>
+          The next asteroid development rights sale will start at
+          {` ${(new Date(e.start * 1000)).toLocaleString()}`}
+        </span>
+      </Description>
+    </StyledLogEntry>
+  ),
+
+  Sale_Started: (e) => {
+    const singular = e.available === 1;
+
+    return (
+      <StyledLogEntry>
+        <Description>
+          <span>
+            An asteroid development rights sale is now open!
+            There {singular ? 'is' : 'are'} {e.available.toLocaleString()} remaining asteroid{singular ? '' : 's'} available.
+          </span>
+        </Description>
+      </StyledLogEntry>
+    );
+  },
+
+  Sale_Ended: (e) => (
+    <StyledLogEntry>
+      <Description>
+        <span>
+          The asteroid development rights sale has completed.
+        </span>
+      </Description>
+    </StyledLogEntry>
+  )
 };
 
 const LogEntry = (props) => {

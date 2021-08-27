@@ -2,6 +2,7 @@ import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { Switch, Route } from 'react-router-dom';
 
+import useSale from '~/hooks/useSale';
 import useScreenSize from '~/hooks/useScreenSize';
 import MainMenu from './interface/MainMenu';
 import Outliner from './interface/Outliner';
@@ -14,6 +15,7 @@ import AsteroidDetails from './interface/details/AsteroidDetails';
 import RouteDetails from './interface/details/RouteDetails';
 import Settings from './interface/details/Settings';
 import Alerts from './interface/Alerts';
+import SaleNotifier from './interface/SaleNotifier';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -55,11 +57,13 @@ const MainContainer = styled.div`
 
 const Interface = () => {
   const { isMobile } = useScreenSize();
+  const { data: sale } = useSale();
 
   return (
     <StyledInterface>
       {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
       <Alerts />
+      {sale && <SaleNotifier sale={sale} />}
       <MainContainer>
         <Switch>
           <Route exact path="/asteroids">

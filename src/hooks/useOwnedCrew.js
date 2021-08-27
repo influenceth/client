@@ -9,7 +9,7 @@ const useOwnedCrew = () => {
   return useQuery(
     [ 'crewMembers', { owner: account } ],
     () => api.getCrewMembers({ owner: account }),
-    { enabled: !!account, staleTime: 60000 * 5 }
+    { enabled: !!account }
   );
 };
 

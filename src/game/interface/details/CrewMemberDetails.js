@@ -4,18 +4,18 @@ import { useWeb3React } from '@web3-react/core';
 import styled, { css } from 'styled-components';
 import { toCrewClass, toCrewTitle, toCrewCollection } from 'influence-utils';
 import LoadingAnimation from 'react-spinners/PuffLoader';
-import { MdFlag as SaleIcon, MdClose } from 'react-icons/md';
-import { BsCheckCircle } from 'react-icons/bs';
-import { AiFillEdit as NameIcon } from 'react-icons/ai';
 
 import useCrewMember from '~/hooks/useCrewMember';
 import useNameCrew from '~/hooks/useNameCrew';
 import Details from '~/components/Details';
+import Form from '~/components/Form';
+import Text from '~/components/Text';
 import Button from '~/components/Button';
 import IconButton from '~/components/IconButton';
 import DataReadout from '~/components/DataReadout';
 import TextInput from '~/components/TextInput';
 import LogEntry from '~/components/LogEntry';
+import { EditIcon, CheckIcon, ClaimIcon } from '~/components/Icons';
 
 const goToOpenSeaCrew = (i) => {
   const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_CREW_TOKEN}/${i}`;
@@ -107,11 +107,6 @@ const NameForm = styled.div`
   }
 `;
 
-const StyledButton = styled(Button)`
-  margin-top: 15px;
-  width: 150px;
-`;
-
 const Log = styled.div`
   flex: 0 1 33%;
 
@@ -151,42 +146,40 @@ const CrewMemberDetails = (props) => {
             </Pane>
             <Pane>
               <Subtitle>Manage Crew Member</Subtitle>
-              {!crew.name && account === crew.owner && (
-                <StyledButton
-                  onClick={() => setNaming(true)}>
-                  <NameIcon />Set Name
-                </StyledButton>
+              {!crew.name && (
+                <Form
+                  title={<><EditIcon /><span>Set Name</span></>}
+                  data-tip="Name crew member"
+                  data-for="global"
+                  loading={naming}>
+                  <Text>
+                    A crew member can only be named once!
+                    Names must be unique, and can only include letters, numbers, and single spaces.
+                  </Text>
+                  <NameForm>
+                    <TextInput
+                      pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                      initialValue=""
+                      disabled={naming}
+                      onChange={(v) => setNewName(v)} />
+                    <IconButton
+                      data-tip="Submit"
+                      data-for="global"
+                      onClick={() => {
+                        setNaming(true);
+                        nameCrew.mutate({ name: newName }, { onSettled: () => setNaming(false) });
+                      }}>
+                      <CheckIcon />
+                    </IconButton>
+                  </NameForm>
+                </Form>
               )}
-              {naming && (
-                <NameForm>
-                  <TextInput
-                    pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
-                    initialValue=""
-                    onChange={(v) => setNewName(v)} />
-                  <IconButton
-                    data-tip="Submit"
-                    data-for="global"
-                    onClick={() => {
-                      nameCrew.mutate({ name: newName });
-                      setNewName('');
-                      setNaming(false);
-                    }}>
-                    <BsCheckCircle />
-                  </IconButton>
-                  <IconButton
-                    data-tip="Cancel"
-                    data-for="global"
-                    onClick={() => setNaming(false)}>
-                    <MdClose />
-                  </IconButton>
-                </NameForm>
-              )}
-              <StyledButton
+              <Button
                 data-tip={account === crew.owner ? 'List on OpenSea' : 'Purchase on OpenSea'}
                 data-for="global"
                 onClick={() => goToOpenSeaCrew(crew.i)}>
-                <SaleIcon />{account === crew.owner ? 'List for Sale' : 'Purcahse Crew'}
-              </StyledButton>
+                <ClaimIcon />{account === crew.owner ? 'List for Sale' : 'Purcahse Crew'}
+              </Button>
             </Pane>
             <Pane>
               <Subtitle>Crew Log</Subtitle>

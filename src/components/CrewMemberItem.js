@@ -1,9 +1,9 @@
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 import { toCrewClass } from 'influence-utils';
-import { BsFillPersonFill as DetailsIcon } from 'react-icons/bs';
 
 import IconButton from '~/components/IconButton';
+import { CrewMemberIcon } from '~/components/Icons';
 
 const Description = styled.span`
   height: 40px;
@@ -58,7 +58,7 @@ const CrewMemberItem = (props) => {
         <IconButton
           data-tip={'Crew Member Details'}
           onClick={() => history.push(`/crew/${crew.i}`)}>
-          <DetailsIcon />
+          <CrewMemberIcon />
         </IconButton>
       </Controls>
     </StyledCrewMemberItem>

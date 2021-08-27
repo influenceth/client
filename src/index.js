@@ -14,7 +14,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnMount: false,
-      staleTime: 60000
+      staleTime: 60000 * 5
     }
   }
 });
