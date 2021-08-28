@@ -129,6 +129,16 @@ const entries = {
     </StyledLogEntry>
   ),
 
+  Asteroid_BuyingError: (e) => (
+    <StyledLogEntry>
+      <Description>
+        <span>Error purchasing development rights on asteroid </span>
+        <AsteroidLink id={e.i} />
+        <span>. Please check your transaction and try again.</span>
+      </Description>
+    </StyledLogEntry>
+  ),
+
   Asteroid_NamingError: (e) => (
     <StyledLogEntry>
       <Description>

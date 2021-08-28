@@ -31,16 +31,6 @@ const useNameCrew = (i) => {
   }, {
     enabled: !!contract && !!account,
 
-    onMutate: async ({ name }) => {
-      await queryClient.cancelQueries([ 'crewMember', i ]);
-      const previousCrew = queryClient.getQueryData([ 'crewMember', i ]);
-      queryClient.setQueryData([ 'crewMember', i ], old => {
-        return { ...old, name: name }
-      });
-
-      return { previousCrew };
-    },
-
     onError: (err, vars, context) => {
       console.error(err, i, context);
       createAlert({
@@ -48,8 +38,6 @@ const useNameCrew = (i) => {
         level: 'warning',
         i: i, timestamp: Math.round(Date.now() / 1000)
       });
-      queryClient.setQueryData([ 'crewMember', i ], context.previousCrew);
-      queryClient.invalidateQueries([ 'crewMember', i ]);
     },
 
     onSuccess: () => {

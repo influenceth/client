@@ -29,6 +29,15 @@ const useBuyAsteroid = (i) => {
   }, {
     enabled: !!contract && !!account,
 
+    onError: (err, vars, context) => {
+      console.error(err, i, context);
+      createAlert({
+        type: 'Asteroid_BuyingError',
+        level: 'warning',
+        i: i, timestamp: Math.round(Date.now() / 1000)
+      });
+    },
+
     onSuccess: () => {
       setTimeout(() => {
         queryClient.invalidateQueries([ 'asteroid', i ]);
