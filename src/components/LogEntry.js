@@ -222,7 +222,7 @@ const entries = {
       <Description>
         <span>
           The next asteroid development rights sale will start at
-          {` ${(new Date(e.start * 1000)).toLocaleString()}`}
+          {` ${(new Date(e.start)).toLocaleString()}`}
         </span>
       </Description>
     </StyledLogEntry>
