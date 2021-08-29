@@ -26,7 +26,7 @@ const useStartAsteroidScan = (i) => {
 
   return useMutation(async () => {
     const tx = await contract.startScan(i);
-    const receipt = await tx.wait(2);
+    const receipt = await tx.wait(3);
     return receipt;
   }, {
     enabled: !!contract && !!account,

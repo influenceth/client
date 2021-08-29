@@ -38,12 +38,14 @@ const MappedAsteroids = (props) => {
 
   useEffect(() => {
     setPage(currentPage);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ currentPage ]);
 
   useEffect(() => {
     const newLastPage = Math.ceil(count / 25);
     setLastPage(newLastPage);
     if (currentPage > newLastPage) setCurrentPage(newLastPage);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ count, setLastPage ]);
 
   return (

@@ -21,8 +21,18 @@ const SaleNotifier = (props) => {
 
   useEffect(() => {
     if (!soldCount) return;
-    if (sale.saleStartTime > Date.now() / 1000) setStatus('unstarted');
+
+    // Sale starts in the future. Wait for the time until it starts and set to starting
+    if (sale.saleStartTime > Date.now() / 1000) {
+      setStatus('unstarted');
+      const timeUntilSale = (sale.saleStartTime * 1000) - Date.now();
+      setTimeout(() => setStatus('starting'), timeUntilSale);
+    }
+
+    // Sale has started. Start polling blockchain to make sure block time is ready
     if (sale.saleStartTime < Date.now() / 1000 && soldCount < sale.endCount) setStatus('starting');
+
+    // Sale has already ended.
     if (sale.saleStartTime < Date.now() / 1000 && soldCount >= sale.endCount) setStatus('ended');
   }, [ sale, soldCount ]);
 

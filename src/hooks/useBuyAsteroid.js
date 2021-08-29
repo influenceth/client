@@ -4,10 +4,13 @@ import { useWeb3React } from '@web3-react/core';
 import { ethers } from 'ethers';
 import { contracts } from 'influence-utils';
 
+import useStore from '~/hooks/useStore';
+
 const useBuyAsteroid = (i) => {
   const queryClient = useQueryClient();
   const { account, library } = useWeb3React();
   const [ contract, setContract ] = useState();
+  const createAlert = useStore(s => s.dispatchAlertLogged);
 
   // Sets up contract object with appropriate provider
   useEffect(() => {
@@ -42,6 +45,7 @@ const useBuyAsteroid = (i) => {
       setTimeout(() => {
         queryClient.invalidateQueries([ 'asteroid', i ]);
         queryClient.invalidateQueries('asteroids');
+        queryClient.invalidateQueries('mintableCrew');
         queryClient.invalidateQueries('events');
       }, 1000);
     }

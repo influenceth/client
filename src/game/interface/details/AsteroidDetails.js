@@ -3,12 +3,10 @@ import { useHistory, useParams } from 'react-router-dom';
 import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
 import utils from 'influence-utils';
-import { utils as ethersUtils } from 'ethers';
 
 import useStore from '~/hooks/useStore';
 import useSale from '~/hooks/useSale';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAsteroidPrice from '~/hooks/useAsteroidPrice';
 import useBuyAsteroid from '~/hooks/useBuyAsteroid';
 import useCreateReferral from '~/hooks/useCreateReferral';
 import useStartAsteroidScan from '~/hooks/useStartAsteroidScan';
@@ -159,9 +157,8 @@ const AsteroidDetails = (props) => {
   const { i } = useParams();
   const history = useHistory();
   const { account } = useWeb3React();
-  const sale = useSale();
+  const { data: sale } = useSale();
   const { data: asteroid } = useAsteroid(Number(i));
-  const { data: asteroidPrice } = useAsteroidPrice(asteroid);
   const buyAsteroid = useBuyAsteroid(Number(i));
   const createReferral = useCreateReferral(Number(i));
   const startScan = useStartAsteroidScan(Number(i));
@@ -225,8 +222,7 @@ const AsteroidDetails = (props) => {
               <GeneralData label="Owner"><AddressLink address={asteroid.owner} /></GeneralData>
               {sale && !asteroid.owner && (
                 <GeneralData label="Price">
-                  {asteroidPrice && <>{ethersUtils.formatEther(asteroidPrice)} <Ether /></>}
-                  {!asteroidPrice && <>... <Ether /></>}
+                  <span>{formatters.asteroidPrice(asteroid.r, sale)} <Ether /></span>
                 </GeneralData>
               )}
               <GeneralData label="Scan Status">
@@ -248,7 +244,7 @@ const AsteroidDetails = (props) => {
                 <Button
                   data-tip="Purchase development rights"
                   data-for="global"
-                  disabled={!account || !sale || !asteroidPrice}
+                  disabled={!account || !sale}
                   loading={buying}
                   onClick={() => {
                     setBuying(true);
@@ -262,7 +258,6 @@ const AsteroidDetails = (props) => {
                 <Button
                   data-tip="Purchase on OpenSea"
                   data-for="global"
-                  disabled={!asteroidPrice}
                   onClick={() => goToOpenSeaAsteroid(asteroid.i)}>
                   <ClaimIcon /> Purchase
                 </Button>
@@ -271,7 +266,6 @@ const AsteroidDetails = (props) => {
                 <Button
                   data-tip="List on OpenSea"
                   data-for="global"
-                  disabled={!asteroidPrice}
                   onClick={() => goToOpenSeaAsteroid(asteroid.i)}>
                   <ClaimIcon /> List for Sale
                 </Button>

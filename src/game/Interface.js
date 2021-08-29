@@ -1,6 +1,8 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { Switch, Route } from 'react-router-dom';
+import { useIsFetching } from 'react-query'
+import LoadingAnimation from 'react-spinners/BarLoader';
 
 import useSale from '~/hooks/useSale';
 import useScreenSize from '~/hooks/useScreenSize';
@@ -16,6 +18,7 @@ import RouteDetails from './interface/details/RouteDetails';
 import Settings from './interface/details/Settings';
 import Alerts from './interface/Alerts';
 import SaleNotifier from './interface/SaleNotifier';
+import theme from '~/theme';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -55,13 +58,24 @@ const MainContainer = styled.div`
   }
 `;
 
+const loadingCss = css`
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 100%;
+  z-index: 1;
+`;
+
 const Interface = () => {
   const { isMobile } = useScreenSize();
   const { data: sale } = useSale();
+  const isFetching = useIsFetching();
 
   return (
     <StyledInterface>
       {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
+      {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
       <Alerts />
       {sale && <SaleNotifier sale={sale} />}
       <MainContainer>
