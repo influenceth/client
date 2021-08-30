@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@ethersproject/providers": "^5.4.1",
+    "@react-hook/throttle": "^2.2.0",
     "@react-three/drei": "^7.2.1",
     "@react-three/fiber": "^6.1.2",
     "@web3-react/core": "^6.1.9",
@@ -17,7 +18,7 @@
     "howler": "^2.2.3",
     "immer": "^8.0.1",
     "import": "^0.0.6",
-    "influence-utils": "^0.13.0",
+    "influence-utils": "^1.0.0",
     "lodash.uniqby": "^4.7.0",
     "md5": "^2.3.0",
     "noisejs": "^2.1.0",

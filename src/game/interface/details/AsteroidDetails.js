@@ -270,7 +270,7 @@ const AsteroidDetails = (props) => {
                   <ClaimIcon /> List for Sale
                 </Button>
               )}
-              {scanStatus !== 'retrieved' && (
+              {asteroid.owner === account && scanStatus !== 'retrieved' && (
                 <Form
                   title={<><ScanIcon /><span>Resource Scan</span></>}
                   data-tip="Scan surface for resources"

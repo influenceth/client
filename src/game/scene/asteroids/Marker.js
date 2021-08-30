@@ -27,54 +27,58 @@ const Marker = (props) => {
 
   return (
     <group opacity={0}>
-      <points>
-        <bufferGeometry>
-          <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points.slice(0, 3), 3 ]} />
-        </bufferGeometry>
-        <pointsMaterial
-          blending={AdditiveBlending}
-          color={theme.colors.main}
-          map={asteroidTexture}
-          size={20}
-          opacity={0.8}
-          depthWrite={false}
-          sizeAttenuation={false}
-          transparent={true} />
-      </points>
-      <line>
-        <bufferGeometry>
-          <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points, 3 ]} />
-        </bufferGeometry>
-        <lineBasicMaterial
-          color="white"
-          depthWrite={false}
-          opacity={0.5}
-          transparent={true} />
-      </line>
-      <points>
-        <bufferGeometry>
-          <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points.slice(3), 3 ]} />
-        </bufferGeometry>
-        <pointsMaterial
-          blending={AdditiveBlending}
-          color="white"
-          map={planeTexture}
-          size={9}
-          opacity={0.75}
-          depthWrite={false}
-          sizeAttenuation={false}
-          transparent={true} />
-      </points>
-      <mesh position={[ ...points.slice(3) ]}>
-        <circleGeometry args={[ markerMaxRadius, 20 ]} />
-        <shaderMaterial
-          uniforms={initialUniforms}
-          transparent={true}
-          depthWrite={false}
-          fragmentShader={frag}
-          vertexShader={vert}
-          side={DoubleSide} />
-      </mesh>
+      {points?.length === 6 && (
+        <>
+          <points>
+            <bufferGeometry>
+              <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points.slice(0, 3), 3 ]} />
+            </bufferGeometry>
+            <pointsMaterial
+              blending={AdditiveBlending}
+              color={theme.colors.main}
+              map={asteroidTexture}
+              size={20}
+              opacity={0.8}
+              depthWrite={false}
+              sizeAttenuation={false}
+              transparent={true} />
+          </points>
+          <line>
+            <bufferGeometry>
+              <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points, 3 ]} />
+            </bufferGeometry>
+            <lineBasicMaterial
+              color="white"
+              depthWrite={false}
+              opacity={0.5}
+              transparent={true} />
+          </line>
+          <points>
+            <bufferGeometry>
+              <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points.slice(3), 3 ]} />
+            </bufferGeometry>
+            <pointsMaterial
+              blending={AdditiveBlending}
+              color="white"
+              map={planeTexture}
+              size={9}
+              opacity={0.75}
+              depthWrite={false}
+              sizeAttenuation={false}
+              transparent={true} />
+          </points>
+          <mesh position={[ ...points.slice(3) ]}>
+            <circleGeometry args={[ markerMaxRadius, 20 ]} />
+            <shaderMaterial
+              uniforms={initialUniforms}
+              transparent={true}
+              depthWrite={false}
+              fragmentShader={frag}
+              vertexShader={vert}
+              side={DoubleSide} />
+          </mesh>
+        </>
+      )}
     </group>
   );
 };

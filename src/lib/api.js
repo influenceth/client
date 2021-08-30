@@ -44,6 +44,7 @@ const api = {
   },
 
   createReferral: async (referral) => {
+    if (!referral?.referrer) return null;
     const response = await instance.post(`/v1/user/referrals`, referral);
     return response.status;
   },

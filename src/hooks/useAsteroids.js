@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useThrottle } from '@react-hook/throttle';
 import { useQuery } from 'react-query';
 import { useWeb3React } from '@web3-react/core';
 
@@ -13,7 +14,7 @@ const useAsteroids = () => {
   const filterWatched = useStore(s => s.asteroids.watched.filtered);
   const filters = useStore(s => s.asteroids.filters);
   const highlight = useStore(s => s.asteroids.highlight);
-  const [ query, setQuery ] = useState({});
+  const [ query, setQuery ] = useThrottle({}, 2, true);
 
   useEffect(() => {
     const newQuery = Object.assign({}, filters);
