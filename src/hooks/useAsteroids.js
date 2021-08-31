@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useThrottle } from '@react-hook/throttle';
 import { useQuery } from 'react-query';
 import { useWeb3React } from '@web3-react/core';

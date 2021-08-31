@@ -83,22 +83,28 @@ const AsteroidInfoData = styled.div`
   display: flex;
   flex: 1 0 0;
   flex-direction: column;
+  overflow-y: auto;
   padding: 25px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    flex: 1 1 auto;
+  }
 `;
 
 const OrbitalMetrics = styled.div`
   display: flex;
   flex: 1 1 0;
   justify-content: space-between;
+  min-height: 150px;
 `;
 
 const StyledDimensionMetric = styled(DimensionMetric)`
   align-items: center;
   display: flex;
-  flex: 0 0 40%;
+  flex: 0 0 45%;
   flex-direction: column;
   justify-content: center;
-  max-width: 40%;
+  max-width: 45%;
 `;
 
 const RouteInfo = styled.div`
