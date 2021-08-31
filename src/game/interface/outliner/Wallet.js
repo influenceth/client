@@ -98,7 +98,7 @@ const Wallet = () => {
   };
 
   useEffect(() => {
-    if (status === 'disconnected' || !!error) forceExpand('wallet');
+    if (status !== 'logged-in' || !!error) forceExpand('wallet');
     if (status === 'logged-in') forceCollapse('wallet');
   }, [ status, error, forceExpand, forceCollapse ]);
 
