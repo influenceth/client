@@ -12,9 +12,11 @@ import {
   MdFastForward,
   MdPlayArrow,
   MdPause,
-  MdStop
+  MdStop,
+  MdNavigateBefore,
+  MdNavigateNext
 } from 'react-icons/md';
-import { RiRouteFill, RiLoginCircleFill, RiAlertFill, RiFilter2Fill } from 'react-icons/ri';
+import { RiTableFill, RiRouteFill, RiLoginCircleFill, RiAlertFill, RiFilter2Fill } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
 import { VscDebugDisconnect } from 'react-icons/vsc';
 
@@ -43,5 +45,8 @@ export {
   HiUserGroup as CrewIcon,
   AiFillEye as EyeIcon,
   AiFillStar as StarIcon,
-  FaMapMarkedAlt as MapIcon
+  FaMapMarkedAlt as MapIcon,
+  MdNavigateBefore as PreviousIcon,
+  MdNavigateNext as NextIcon,
+  RiTableFill as TableIcon
 };

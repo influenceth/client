@@ -1,16 +1,13 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
-import { RiTableFill } from 'react-icons/ri';
-import { FaMapMarkedAlt } from 'react-icons/fa';
-import { MdNavigateBefore, MdNavigateNext } from 'react-icons/md';
 
 import usePagedAsteroids from '~/hooks/usePagedAsteroids';
-import useAsteroidsCount from '~/hooks/useAsteroidsCount';
 import IconButton from '~/components/IconButton';
 import Section from '~/components/Section';
 import AsteroidItem from '~/components/AsteroidItem';
 import ListEmptyMessage from '~/components/ListEmptyMessage';
+import { MapIcon, PreviousIcon, NextIcon, TableIcon } from '~/components/Icons';
 
 const Controls = styled.div`
   display: flex;
@@ -31,10 +28,9 @@ const AsteroidList = styled.ul`
 
 const MappedAsteroids = (props) => {
   const history = useHistory();
-  const { query, setPage } = usePagedAsteroids();
-  const { data: count } = useAsteroidsCount();
+  const perPage = 25;
+  const { query, setPage, setPerPage } = usePagedAsteroids();
   const [ currentPage, setCurrentPage ] = useState(1);
-  const [ lastPage, setLastPage ] = useState(1);
 
   useEffect(() => {
     setPage(currentPage);
@@ -42,34 +38,32 @@ const MappedAsteroids = (props) => {
   }, [ currentPage ]);
 
   useEffect(() => {
-    const newLastPage = Math.ceil(count / 25);
-    setLastPage(newLastPage);
-    if (currentPage > newLastPage) setCurrentPage(newLastPage);
+    setPerPage(perPage);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ count, setLastPage ]);
+  }, []);
 
   return (
     <Section
       name="mappedAsteroids"
       title="Mapped Asteroids"
-      icon={<FaMapMarkedAlt />}>
+      icon={<MapIcon />}>
       <Controls>
         <IconButton
           data-tip="Open in Table"
           onClick={() => history.push('/asteroids')}>
-          <RiTableFill />
+          <TableIcon />
         </IconButton>
         <IconButton
           data-tip="Previous Page"
           disabled={!query?.data || currentPage === 1}
           onClick={() => setCurrentPage(currentPage - 1)}>
-          <MdNavigateBefore />
+          <PreviousIcon />
         </IconButton>
         <IconButton
           data-tip="Next Page"
-          disabled={!query?.data || currentPage === lastPage}
+          disabled={!query?.data || query?.data.length < perPage}
           onClick={() => setCurrentPage(currentPage + 1)}>
-          <MdNavigateNext />
+          <NextIcon />
         </IconButton>
       </Controls>
       <AsteroidList>
