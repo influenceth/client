@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { START_TIMESTAMP } from 'influence-utils';
-import { MdFastRewind, MdFastForward, MdPlayArrow, MdPause, MdStop } from 'react-icons/md';
-import { HiClock } from 'react-icons/hi';
 
 import useInterval from '~/hooks/useInterval';
 import useStore from '~/hooks/useStore';
 import Section from '~/components/Section';
 import DataReadout from '~/components/DataReadout';
 import IconButton from '~/components/IconButton';
+import { RewindIcon, FastForwardIcon, PlayIcon, PauseIcon, StopIcon, TimeIcon } from '~/components/Icons';
 
 // Calculate the difference in game days between the start timestamp and the lore start time
 const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
@@ -73,34 +72,34 @@ const TimeControl = (props) => {
     <Section
       name="timeControl"
       title="Time Control"
-      icon={<HiClock />}>
+      icon={<TimeIcon />}>
       <Controls>
-        {!playing && <IconButton data-tip="Play" onClick={play}><MdPlayArrow /></IconButton>}
+        {!playing && <IconButton data-tip="Play" onClick={play}><PlayIcon /></IconButton>}
         {playing && (
           <IconButton
             data-tip="Reset to Current"
             onClick={stop}
             disabled={!playing}>
-            <MdStop />
+            <StopIcon />
           </IconButton>
         )}
         <IconButton
           data-tip="Rewind"
           onClick={() => changeSpeed(-1)}
           disabled={!playing}>
-          <MdFastRewind />
+          <RewindIcon />
         </IconButton>
         <IconButton
           data-tip="Pause"
           onClick={pause}
           disabled={!playing}>
-          <MdPause />
+          <PauseIcon />
         </IconButton>
         <IconButton
           data-tip="Fast Forward"
           onClick={() => changeSpeed(1)}
           disabled={!playing}>
-          <MdFastForward />
+          <FastForwardIcon />
         </IconButton>
       </Controls>
       <DataReadout label="Adalia Time">{adaliaTime}</DataReadout>

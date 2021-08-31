@@ -25,7 +25,7 @@ const useAsteroidsCount = () => {
 }, [ account, includeOwned, includeWatched, filterOwned, filterWatched, filters ]);
 
   return useQuery(
-    [ 'asteroidsCount', query ],
+    [ 'asteroids', 'count', query ],
     () => api.getAsteroids(query),
     { keepPreviousData: true }
   );

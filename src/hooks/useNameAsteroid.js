@@ -31,20 +31,6 @@ const useNameAsteroid = (i) => {
   }, {
     enabled: !!contract && !!account,
 
-    onMutate: async ({ name }) => {
-      await queryClient.cancelQueries([ 'asteroid', i ]);
-      const previousAsteroid = queryClient.getQueryData([ 'asteroid', i ]);
-      queryClient.setQueryData([ 'asteroid', i ], old => {
-        return {
-          ...old,
-          customName: name,
-          name: `${old.baseName} '${name}'`
-        }
-      });
-
-      return { previousAsteroid };
-    },
-
     onError: (err, vars, context) => {
       console.error(err, i, context);
       createAlert({
@@ -52,16 +38,10 @@ const useNameAsteroid = (i) => {
         level: 'warning',
         i: i, timestamp: Math.round(Date.now() / 1000)
       });
-      queryClient.setQueryData([ 'asteroid', i ], context.previousAsteroid);
-      queryClient.invalidateQueries([ 'asteroid', i ]);
     },
 
     onSuccess: () => {
-      setTimeout(() => {
-        queryClient.invalidateQueries([ 'asteroid', i ]);
-        queryClient.invalidateQueries('asteroids');
-        queryClient.invalidateQueries('events');
-      }, 1000);
+      setTimeout(() => queryClient.invalidateQueries('events'), 1000);
     }
   });
 };

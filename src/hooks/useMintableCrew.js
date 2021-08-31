@@ -7,7 +7,7 @@ const useMintableCrew = () => {
   const { account } = useWeb3React();
 
   return useQuery(
-    [ 'mintableCrew', { owner: account } ],
+    [ 'asteroids', 'mintableCrew', { owner: account } ],
     () => api.getMintableCrew({ owner: account }),
     { enabled: !!account }
   );

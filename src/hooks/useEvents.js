@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import uniq from 'lodash.uniqby';
 
 import useStore from '~/hooks/useStore';
 import useAuth from '~/hooks/useAuth';
 import api from '~/lib/api';
 
+const toInvalidate = {
+  'Asteroid': [ 'asteroids' ],
+  'CrewMember': [ 'crew' ]
+};
+
 const useEvents = () => {
   const { token } = useAuth();
+  const queryClient = useQueryClient();
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const [ latest, setLatest ] = useState(0);
   const [ events, setEvents ] = useState([]);
@@ -29,6 +35,7 @@ const useEvents = () => {
       // If not the initial query send off alerts for new events
       if (latest > 0) {
         eventsQuery.data.forEach(e => {
+          if (toInvalidate[e.assetType]) toInvalidate[e.assetType].forEach(q => queryClient.invalidateQueries(q));
           const type = e.type || `${e.assetType}_${e.event}`;
           const alert = Object.assign({}, e, { type: type, duration: 5000 });
           createAlert(alert);

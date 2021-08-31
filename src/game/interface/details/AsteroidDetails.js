@@ -153,6 +153,15 @@ const StyledResourceMix = styled(ResourceMix)`
   }
 `;
 
+const scanMessages = {
+  unscanned: 'Scanning requires two steps which *must* be mined within ~45 minutes of each other. ' +
+    'Combined cost is under 140,000 gas.',
+  scanning: 'Scan in progress. Waiting for scan to be ready for retrieval...',
+  scanned: 'Scan ready for retrieval. You *must* finalize scan and have transaction mined ' +
+    'within 256 block (~45 minutes).',
+  retrieving: 'Retrieving resource scan results...'
+};
+
 const AsteroidDetails = (props) => {
   const { i } = useParams();
   const history = useHistory();
@@ -276,10 +285,7 @@ const AsteroidDetails = (props) => {
                   data-tip="Scan surface for resources"
                   data-for="global"
                   loading={[ 'scanning', 'retrieving' ].includes(scanStatus)}>
-                  <Text>
-                    Scanning requires two steps which *must* be mined within ~45 minutes of each other.
-                    Combined cost is under 140,000 gas.
-                  </Text>
+                  <Text>{scanMessages[scanStatus]}</Text>
                   {[ 'unscanned', 'scanning' ].includes(scanStatus) && (
                     <Button
                       data-tip="Scan for resource bonuses"

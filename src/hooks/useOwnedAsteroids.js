@@ -9,7 +9,7 @@ const useOwnedAsteroids = () => {
   const { account } = useWeb3React();
 
   return useQuery(
-    [ 'asteroids', {...baseQuery, ownedBy: account } ],
+    [ 'asteroids', 'search', {...baseQuery, ownedBy: account } ],
     () => api.getAsteroids({...baseQuery, ownedBy: account }),
     { enabled: !!account }
   );

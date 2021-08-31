@@ -166,7 +166,7 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchOriginSelected: (i) => set(produce(state => {
-      state.asteroids.origin = i;
+      if (Number(i) > 0 && Number(i) <= 250000) state.asteroids.origin = Number(i);
     })),
 
     dispatchOriginCleared: () => set(produce(state => {
@@ -174,7 +174,7 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchDestinationSelected: (i) => set(produce(state => {
-      state.asteroids.destination = i;
+      if (Number(i) > 0 && Number(i) <= 250000) state.asteroids.destination = Number(i);
     })),
 
     dispatchDestinationCleared: () => set(produce(state => {
@@ -182,7 +182,7 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchAsteroidHovered: (i) => set(produce(state => {
-      state.asteroids.hovered = i;
+      state.asteroids.hovered = Number(i);
     })),
 
     dispatchAsteroidUnhovered: () => set(produce(state => {

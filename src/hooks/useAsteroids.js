@@ -28,7 +28,7 @@ const useAsteroids = () => {
 }, [ account, includeOwned, includeWatched, filterOwned, filterWatched, filters, highlight ]);
 
   return useQuery(
-    [ 'asteroids', query ],
+    [ 'asteroids', 'search', query ],
     () => api.getAsteroids(query),
     { keepPreviousData: true }
   );

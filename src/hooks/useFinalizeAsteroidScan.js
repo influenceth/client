@@ -41,11 +41,7 @@ const useFinalizeAsteroidScan = (i) => {
     },
 
     onSuccess: () => {
-      setTimeout(() => {
-        queryClient.invalidateQueries([ 'asteroid', i ]);
-        queryClient.invalidateQueries('asteroids');
-        queryClient.invalidateQueries('events');
-      }, 1000);
+      setTimeout(() => queryClient.invalidateQueries('events'), 1000);
     }
   });
 };

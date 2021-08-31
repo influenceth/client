@@ -41,11 +41,7 @@ const useSettleCrew = (i) => {
     },
 
     onSuccess: () => {
-      setTimeout(() => {
-        queryClient.invalidateQueries('mintableCrew');
-        queryClient.invalidateQueries('crewMembers');
-        queryClient.invalidateQueries('events');
-      }, 1000);
+      setTimeout(() => queryClient.invalidateQueries('events'), 1000);
     }
   });
 };

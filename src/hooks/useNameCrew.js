@@ -41,11 +41,7 @@ const useNameCrew = (i) => {
     },
 
     onSuccess: () => {
-      setTimeout(() => {
-        queryClient.invalidateQueries([ 'crewMember', i ]);
-        queryClient.invalidateQueries('crewMembers');
-        queryClient.invalidateQueries('events');
-      }, 1000);
+      setTimeout(() => queryClient.invalidateQueries('events'), 1000);
     }
   });
 };

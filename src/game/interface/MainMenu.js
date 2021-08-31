@@ -5,16 +5,22 @@ import { useWeb3React } from '@web3-react/core';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import IconButton from '~/components/IconButton';
+import {
+  TimeIcon,
+  RouteIcon,
+  CloseIcon,
+  MenuIcon,
+  FilterIcon,
+  CrewIcon,
+  EyeIcon,
+  StarIcon,
+  MapIcon
+} from '~/components/Icons';
 import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
 import Time from './mainMenu/Time';
 import Logo from './mainMenu/menu-logo.svg';
-import { AiFillStar, AiFillEye } from 'react-icons/ai';
-import { FaMapMarkedAlt } from 'react-icons/fa';
-import { FiMenu } from 'react-icons/fi';
-import { MdClose } from 'react-icons/md';
-import { RiRouteFill, RiFilter2Fill as FilterIcon } from 'react-icons/ri';
-import { HiUserGroup as CrewIcon } from 'react-icons/hi';
+import LogoLong from '~/assets/images/logo.svg';
 
 const StyledMainMenu = styled.div`
   align-items: flex-end;
@@ -61,6 +67,14 @@ const StyledLogo = styled(Logo)`
   width: auto;
 `;
 
+const StyledLogoLong = styled(LogoLong)`
+  height: 40px;
+  min-width: 100%;
+  padding-right: 20px;
+  position: absolute;
+  top: 15px;
+`;
+
 const MenuWrapper = styled.div`
   align-items: flex-end;
   display: flex;
@@ -72,6 +86,7 @@ const MenuWrapper = styled.div`
     flex-direction: column;
     height: 100%;
     margin: 0;
+    padding-top: 60px;
     width: 100%;
   }
 `;
@@ -115,15 +130,16 @@ const MainMenu = (props) => {
         <MenuControl
           onClick={() => setShowMenu(!showMenu)}
           borderless>
-          {!showMenu ? <FiMenu /> : <MdClose />}
+          {!showMenu ? <MenuIcon /> : <CloseIcon />}
         </MenuControl>
       )}
       <MenuWrapper showMenu={showMenu}>
+        {isMobile && <StyledLogoLong />}
         {!!account && (
           <Menu title="Account">
             <MenuItem
               name="Watchlist"
-              icon={<AiFillEye />}
+              icon={<EyeIcon />}
               onClick={() => openSection('watchlist')} />
           </Menu>
         )}
@@ -131,7 +147,7 @@ const MainMenu = (props) => {
           <Menu title="Assets">
             <MenuItem
               name="Asteroids"
-              icon={<AiFillStar />}
+              icon={<StarIcon />}
               onClick={() => openSection('ownedAsteroids')} />
             <MenuItem
               name="Crew Members"
@@ -146,12 +162,16 @@ const MainMenu = (props) => {
             onClick={() => openSection('filters')} />
           <MenuItem
             name="Mapped Asteroids"
-            icon={<FaMapMarkedAlt />}
+            icon={<MapIcon />}
             onClick={() => openSection('mappedAsteroids')} />
           <MenuItem
             name="Route Planner"
-            icon={<RiRouteFill />}
+            icon={<RouteIcon />}
             onClick={() => openSection('routePlanner')} />
+          <MenuItem
+            name="Time Controls"
+            icon={<TimeIcon />}
+            onClick={() => openSection('timeControl')} />
         </Menu>
         {!isMobile && (
           <>

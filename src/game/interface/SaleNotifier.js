@@ -30,10 +30,13 @@ const SaleNotifier = (props) => {
     }
 
     // Sale has started. Start polling blockchain to make sure block time is ready
-    if (sale.saleStartTime < Date.now() / 1000 && soldCount < sale.endCount) setStatus('starting');
+    if (sale.saleStartTime < Date.now() / 1000 && soldCount < sale.endCount && status !== 'started') {
+      setStatus('starting');
+    }
 
     // Sale has already ended.
     if (sale.saleStartTime < Date.now() / 1000 && soldCount >= sale.endCount) setStatus('ended');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ sale, soldCount ]);
 
   useEffect(() => {

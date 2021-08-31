@@ -7,7 +7,7 @@ const useOwnedCrew = () => {
   const { account } = useWeb3React();
 
   return useQuery(
-    [ 'crewMembers', { owner: account } ],
+    [ 'crew', 'search', { owner: account } ],
     () => api.getCrewMembers({ owner: account }),
     { enabled: !!account }
   );

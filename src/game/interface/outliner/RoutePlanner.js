@@ -12,6 +12,7 @@ import Section from '~/components/Section';
 import IconButton from '~/components/IconButton';
 import AsteroidItem from '~/components/AsteroidItem';
 import DataReadout from '~/components/DataReadout';
+import AsteroidById from '~/components/AsteroidById';
 import constants from '~/lib/constants';
 
 const Controls = styled.div`
@@ -51,9 +52,7 @@ const Message = styled.li`
   border-left: 1px solid ${p => p.theme.colors.mainBorder};
   border-right: 1px solid ${p => p.theme.colors.mainBorder};
   border-radius: 0 0 3px 3px;
-  padding-left: 10px;
-  height: 40px;
-  line-height: 40px;
+  padding: 10px;
 `;
 
 const LinkLine = styled.li`
@@ -131,13 +130,23 @@ const RoutePlanner = (props) => {
       <AsteroidList>
         <AsteroidLabel>Origin</AsteroidLabel>
         {origin && <StyledAsteroidItem asteroid={origin} />}
-        {!origin && <Message>Select an asteroid (left-click on map)</Message>}
+        {!origin && (
+          <Message>
+            <span>Select an asteroid (left-click map)</span>
+            <AsteroidById targetAsteroid="origin" />
+          </Message>
+        )}
         <LinkLine>
           {distance && <DataReadout label="Distance">{`${Math.round(distance).toLocaleString()} km`}</DataReadout>}
         </LinkLine>
         <AsteroidLabel>Destination</AsteroidLabel>
         {destination && <StyledAsteroidItem asteroid={destination} />}
-        {!destination && <Message>Select a destination (right-click on map)</Message>}
+        {!destination && (
+          <Message>
+            <span>Select a destination (right-click map)</span>
+            <AsteroidById targetAsteroid="destination" />
+          </Message>
+        )}
       </AsteroidList>
     </Section>
   );

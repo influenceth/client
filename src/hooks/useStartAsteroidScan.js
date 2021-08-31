@@ -31,16 +31,6 @@ const useStartAsteroidScan = (i) => {
   }, {
     enabled: !!contract && !!account,
 
-    onMutate: async () => {
-      await queryClient.cancelQueries([ 'asteroid', i ]);
-      const previousAsteroid = queryClient.getQueryData([ 'asteroid', i ]);
-      queryClient.setQueryData([ 'asteroid', i ], old => {
-        return { ...old, scanning: true }
-      });
-
-      return { previousAsteroid };
-    },
-
     onError: (err, vars, context) => {
       console.error(err, i, context);
       createAlert({
@@ -49,8 +39,6 @@ const useStartAsteroidScan = (i) => {
         i: i,
         timestamp: Math.round(Date.now() / 1000)
       });
-      queryClient.setQueryData([ 'asteroid', i ], context.previousAsteroid);
-      queryClient.invalidateQueries([ 'asteroid', i ]);
     },
 
     onSuccess: () => {
@@ -60,8 +48,7 @@ const useStartAsteroidScan = (i) => {
           i: i,
           timestamp: Math.round(Date.now() / 1000)
         });
-        queryClient.invalidateQueries([ 'asteroid', i ]);
-        queryClient.invalidateQueries('asteroids');
+
         queryClient.invalidateQueries('events');
       }, 1000);
     }

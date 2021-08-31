@@ -4,7 +4,7 @@ import api from '~/lib/api';
 
 const useAsteroid = (i) => {
   return useQuery(
-    [ 'asteroid', i ],
+    [ 'asteroids', i ],
     () => api.getAsteroid(i),
     { enabled: !!i }
   );

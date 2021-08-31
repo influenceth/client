@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import TextInput from '~/components/TextInput';
+import AsteroidById from '~/components/AsteroidById';
 
 const StyledTitle = styled.h3`
   margin-bottom: 10px !important;
@@ -21,7 +22,8 @@ const NameFilter = (props) => {
       <StyledTitle>Name</StyledTitle>
       <TextInput
         onChange={(v) => setValue(v)}
-        placeholder="Asteroid name..." />
+        placeholder="Filter by asteroid name..." />
+      <AsteroidById />
     </>
   );
 };

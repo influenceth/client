@@ -7,7 +7,7 @@ const useReferralsCount = () => {
   const { token } = useAuth();
 
   return useQuery(
-    [ 'referralsCount', token ],
+    [ 'referrals', 'count', token ],
     () => api.getReferralCount(),
     { enabled: !!token }
   );
