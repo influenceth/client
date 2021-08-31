@@ -246,6 +246,7 @@ const AsteroidDetails = (props) => {
                   {formatters.scanningBoost(asteroid.purchaseOrder)}
                 </GeneralData>
               )}
+              <GeneralData label="Size">{utils.toSize(asteroid.r)}</GeneralData>
             </Pane>
             <Pane>
               <Subtitle>Manage Asteroid</Subtitle>
@@ -271,7 +272,7 @@ const AsteroidDetails = (props) => {
                   <ClaimIcon /> Purchase
                 </Button>
               )}
-              {asteroid.owner === account && (
+              {asteroid.owner && asteroid.owner === account && (
                 <Button
                   data-tip="List on OpenSea"
                   data-for="global"
@@ -279,7 +280,7 @@ const AsteroidDetails = (props) => {
                   <ClaimIcon /> List for Sale
                 </Button>
               )}
-              {asteroid.owner === account && scanStatus !== 'retrieved' && (
+              {asteroid.owner && asteroid.owner === account && scanStatus !== 'retrieved' && (
                 <Form
                   title={<><ScanIcon /><span>Resource Scan</span></>}
                   data-tip="Scan surface for resources"
@@ -308,7 +309,7 @@ const AsteroidDetails = (props) => {
                   )}
                 </Form>
               )}
-              {asteroid.owner === account && (
+              {asteroid.owner && asteroid.owner === account && (
                 <Form
                   title={<><EditIcon /><span>Change Name</span></>}
                   data-tip="Update asteroid name"
