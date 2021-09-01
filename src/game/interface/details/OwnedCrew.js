@@ -131,7 +131,7 @@ const OwnedCrewMember = (props) => {
   const [ imageLoaded, setImageLoaded ] = useState(false);
   const history = useHistory();
   const imageUrl = crew.crewCollection ?
-    `${process.env.REACT_APP_API_URL}/v1/metadata/crew/${crew.i}/card.svg?bustOnly=true` :
+    `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crew.i}/image.svg?bustOnly=true` :
     silhouette;
 
   return (

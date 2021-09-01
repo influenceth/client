@@ -211,14 +211,12 @@ const Settings = (props) => {
         <StyledDataReadout label="Referral Link">
           {!account && <span>Connect wallet to generate link</span>}
           {account && (
-            <>
-              <StyledClipboard
-                component="a"
-                button-href="#"
-                data-clipboard-text={`${document.location.origin}?r=${account}`}>
-                <Button>Click / tap to copy</Button>
-              </StyledClipboard>
-            </>
+            <StyledClipboard
+              component="a"
+              button-href="#"
+              data-clipboard-text={`${document.location.origin}?r=${account}`}>
+              <Button>Click / tap to copy</Button>
+            </StyledClipboard>
           )}
         </StyledDataReadout>
         {account && (

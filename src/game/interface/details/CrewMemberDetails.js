@@ -195,7 +195,7 @@ const CrewMemberDetails = (props) => {
             <AvatarImage
               onLoad={() => setImageLoaded(true)}
               visible={imageLoaded}
-              src={`${process.env.REACT_APP_API_URL}/v1/metadata/crew/${crew.i}/card.svg?bustOnly=true&width=900`} />
+              src={`${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crew.i}/image.svg?bustOnly=true&width=900`} />
           </Avatar>
         </StyledCrewMemberDetails>
       )}
