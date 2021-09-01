@@ -22,8 +22,8 @@ const AsteroidDataCard = (props) => {
     <div {...restProps}>
       {asteroid && (
         <>
-          <DataReadout label="Asteroid Id">{asteroid.i}</DataReadout>
-          <DataReadout label="Current Owner">
+          <DataReadout label="Asteroid Id" copyable={asteroid.i}>{asteroid.i}</DataReadout>
+          <DataReadout label="Current Owner" copyable={asteroid.owner}>
             {asteroid.owner ? <AddressLink address={asteroid.owner} /> : 'Un-owned'}
           </DataReadout>
           {!!sale && !asteroid.owner && (
@@ -32,12 +32,24 @@ const AsteroidDataCard = (props) => {
             </DataReadout>
           )}
           <DataReadout label="Spectral Type">{formatters.spectralType(asteroid.spectralType)}</DataReadout>
-          <DataReadout label="Radius">{formatters.radius(asteroid.radius)}</DataReadout>
+          <DataReadout label="Radius" copyable={asteroid.radius}>{formatters.radius(asteroid.radius)}</DataReadout>
           <DataReadout label="Surface Area">{formatters.surfaceArea(asteroid.radius)}</DataReadout>
-          <DataReadout label="Orbital Period">{formatters.period(asteroid.orbital.a)}</DataReadout>
-          <DataReadout label="Semi-major Axis">{formatters.axis(asteroid.orbital.a)}</DataReadout>
-          <DataReadout label="Inclination">{formatters.inclination(asteroid.orbital.i)}</DataReadout>
-          <DataReadout label="Eccentricity">{asteroid.orbital.e}</DataReadout>
+          <DataReadout
+            label="Orbital Period"
+            copyable={asteroid.orbital.a}>
+            {formatters.period(asteroid.orbital.a)}
+          </DataReadout>
+          <DataReadout
+            label="Semi-major Axis"
+            copyable={asteroid.orbital.a}>
+            {formatters.axis(asteroid.orbital.a)}
+          </DataReadout>
+          <DataReadout
+            label="Inclination"
+            copyable={asteroid.orbital.i * 180 / Math.PI}>
+            {formatters.inclination(asteroid.orbital.i)}
+          </DataReadout>
+          <DataReadout label="Eccentricity" copyable={asteroid.orbital.e}>{asteroid.orbital.e}</DataReadout>
           {asteroid.bonuses?.length > 0 && (
             <Bonuses>
               {asteroid.bonuses.map(b => <BonusBadge bonus={b} key={b.type} />)}

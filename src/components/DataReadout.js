@@ -1,4 +1,8 @@
 import styled from 'styled-components';
+import Clipboard from 'react-clipboard.js';
+
+import useStore from '~/hooks/useStore';
+import { CopyIcon } from '~/components/Icons';
 
 const StyledDataReadout = styled.div`
   align-items: center;
@@ -28,11 +32,42 @@ const Data = styled.span`
   text-overflow: ellipsis;
 `;
 
+const StyledClipboard = styled(Clipboard)`
+  background-color: transparent;
+  border: 0;
+  color: ${p => p.theme.colors.mainText};
+  visibility: hidden;
+
+  &:hover {
+    color: ${p => p.theme.colors.main};
+  }
+
+  &:active {
+    color: ${p => p.theme.colors.mainText};
+  }
+
+  ${Data}:hover & {
+    visibility: visible;
+  }
+`;
+
 const DataReadout = (props) => {
+  const { copyable, ...restProps } = props;
+  const playSound = useStore(s => s.dispatchSoundRequested);
+
   return (
-    <StyledDataReadout {...props}>
+    <StyledDataReadout {...restProps}>
       <Label>{props.label || ''}</Label>
-      <Data>{props.children}</Data>
+      <Data>
+        {props.children}
+        {copyable && (
+          <StyledClipboard
+            data-clipboard-text={copyable}
+            onClick={() => playSound('effects.click')}>
+            <CopyIcon />
+          </StyledClipboard>
+        )}
+      </Data>
     </StyledDataReadout>
   );
 };

@@ -1,6 +1,6 @@
 import { AiFillEdit, AiFillEye, AiFillStar } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle } from 'react-icons/bs';
-import { FaEthereum, FaMapMarkedAlt } from 'react-icons/fa';
+import { FaEthereum, FaMapMarkedAlt, FaCopy } from 'react-icons/fa';
 import { FiMenu } from 'react-icons/fi';
 import { HiClock, HiUserGroup } from 'react-icons/hi';
 import {
@@ -48,5 +48,6 @@ export {
   FaMapMarkedAlt as MapIcon,
   MdNavigateBefore as PreviousIcon,
   MdNavigateNext as NextIcon,
-  RiTableFill as TableIcon
+  RiTableFill as TableIcon,
+  FaCopy as CopyIcon
 };
