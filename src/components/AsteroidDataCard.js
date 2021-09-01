@@ -23,7 +23,7 @@ const AsteroidDataCard = (props) => {
       {asteroid && (
         <>
           <DataReadout label="Asteroid Id" copyable={asteroid.i}>{asteroid.i}</DataReadout>
-          <DataReadout label="Current Owner" copyable={asteroid.owner}>
+          <DataReadout label="Current Owner">
             {asteroid.owner ? <AddressLink address={asteroid.owner} /> : 'Un-owned'}
           </DataReadout>
           {!!sale && !asteroid.owner && (
