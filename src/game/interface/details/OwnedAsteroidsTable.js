@@ -3,6 +3,7 @@ import DataTable, { createTheme } from 'react-data-table-component';
 
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import Details from '~/components/Details';
+import Pagination from '~/components/Pagination';
 import theme from '~/theme';
 
 const columns = [
@@ -95,6 +96,7 @@ const OwnedAsteroidsTable = (props) => {
         fixedHeaderScrollHeight="calc(100vh - 355px)"
         highlightOnHover={true}
         pagination
+        paginationComponent={Pagination}
         paginationPerPage={25}
         paginationRowsPerPageOptions={[ 10, 15, 20, 25 ]}
         customStyles={styleOverrides}
