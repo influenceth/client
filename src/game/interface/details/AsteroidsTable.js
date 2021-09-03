@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import DataTable, { createTheme } from 'react-data-table-component';
 
 import usePagedAsteroids from '~/hooks/usePagedAsteroids';
-import useAsteroidsCount from '~/hooks/useAsteroidsCount';
 import Details from '~/components/Details';
+import Pagination from '~/components/Pagination';
 import theme from '~/theme';
 
 const columns = [
@@ -108,7 +108,6 @@ const styleOverrides = {
 
 const AsteroidsTable = (props) => {
   const { query, setPage, setPerPage, setSort } = usePagedAsteroids();
-  const { data: count } = useAsteroidsCount();
 
   const handleSort = (field, direction) => {
     direction = direction.charAt(0).toUpperCase() + direction.slice(1);
@@ -116,7 +115,7 @@ const AsteroidsTable = (props) => {
   };
 
   return (
-    <Details title="Filtered Asteroids">
+    <Details title="Mapped Asteroids">
       <DataTable
         columns={columns}
         data={query?.data || []}
@@ -129,10 +128,9 @@ const AsteroidsTable = (props) => {
         fixedHeaderScrollHeight="calc(100vh - 355px)"
         highlightOnHover
         pagination
+        paginationComponent={Pagination}
         paginationServer
         paginationPerPage={25}
-        paginationRowsPerPageOptions={[ 10, 15, 20, 25 ]}
-        paginationTotalRows={count || 0}
         customStyles={styleOverrides}
         theme="influence" />
     </Details>

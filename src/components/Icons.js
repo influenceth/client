@@ -14,7 +14,8 @@ import {
   MdPause,
   MdStop,
   MdNavigateBefore,
-  MdNavigateNext
+  MdNavigateNext,
+  MdFirstPage
 } from 'react-icons/md';
 import { RiTableFill, RiRouteFill, RiLoginCircleFill, RiAlertFill, RiFilter2Fill } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
@@ -49,5 +50,6 @@ export {
   MdNavigateBefore as PreviousIcon,
   MdNavigateNext as NextIcon,
   RiTableFill as TableIcon,
-  FaCopy as CopyIcon
+  FaCopy as CopyIcon,
+  MdFirstPage as BeginningIcon
 };

@@ -44,7 +44,7 @@ const useStore = create(persist((set, get) => ({
       wallet: { active: true, expanded: true },
       log: { active: true, expanded: true },
       filters: { active: true, expanded: true },
-      mappedAsteroids: { active: false, expanded: true },
+      mappedAsteroids: { active: true, expanded: true },
       selectedAsteroid: { active: false, expanded: true },
       ownedAsteroids: { active: false, expanded: true },
       ownedCrew: { active: false, expanded: true },
