@@ -23,7 +23,7 @@ const useEvents = () => {
     () => api.getEvents(latest),
     {
       enabled: !!token,
-      refetchInterval: 10000,
+      refetchInterval: 12500,
       refetchIntervalInBackground: true
     }
   );

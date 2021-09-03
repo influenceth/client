@@ -250,7 +250,7 @@ const AsteroidDetails = (props) => {
             </Pane>
             <Pane>
               <Subtitle>Manage Asteroid</Subtitle>
-              {!asteroid.owner && (
+              {sale && !asteroid.owner && (
                 <Button
                   data-tip="Purchase development rights"
                   data-for="global"
