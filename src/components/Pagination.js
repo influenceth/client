@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import styled from 'styled-components';
 
 import IconButton from '~components/IconButton';
@@ -16,10 +16,7 @@ const Pagination = (props) => {
   const handlePrevious = useCallback(() => onChangePage(currentPage - 1), [ currentPage, onChangePage ]);
   const handleNext = useCallback(() => onChangePage(currentPage + 1), [ currentPage, onChangePage ]);
   const handleFirst = useCallback(() => onChangePage(1), [ onChangePage ]);
-  const startCount = useMemo(() => (currentPage - 1) * rowsPerPage + 1, [ currentPage, rowsPerPage ]);
-  const endCount = useMemo(() => (currentPage - 1) * rowsPerPage + rowCount, [ currentPage, rowsPerPage, rowCount ]);
 
-  console.log(props);
   return (
     <StyledPagination>
       <IconButton

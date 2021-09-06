@@ -29,6 +29,11 @@ const StyledButton = styled.button`
   min-width: 75px;
   width: 175px;
 
+  & > svg {
+    max-height: 24px;
+    max-width: 24px;
+  }
+
   &:disabled {
     color: ${p => p.theme.colors.disabledText};
     border-color: ${p => p.theme.colors.disabledText};

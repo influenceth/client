@@ -7,10 +7,12 @@ import useStore from '~/hooks/useStore';
 import useEagerConnect from '~/hooks/useEagerConnect';
 import useInactiveListener from '~/hooks/useInactiveListener';
 import useAuth from '~/hooks/useAuth';
-import { injected } from '~/lib/blockchain/connectors';
+import { injected, walletconnect } from '~/lib/blockchain/connectors';
 import Section from '~/components/Section';
 import Button from '~/components/Button';
-import { ConnectIcon, DisconnectIcon, LoginIcon, WalletIcon, WarningIcon } from '~/components/Icons';
+import { DisconnectIcon, LoginIcon, WalletIcon, WarningIcon } from '~/components/Icons';
+import MetamaskLogo from '~/assets/images/metamask-fox.svg';
+import WalletConnectLogo from '~/assets/images/walletconnect-logo.svg';
 
 const networkNames = {
   1: 'Ethereum Mainnet',
@@ -29,6 +31,7 @@ const getErrorMessage = (error) => {
 const Controls = styled.div`
   display: flex;
   flex: 0 0 auto;
+  flex-direction: column;
 
   & > * {
     margin-right: 10px;
@@ -94,6 +97,7 @@ const Wallet = () => {
     queryClient.removeQueries([ 'sign', account ]);
     queryClient.removeQueries([ 'verify', account ]);
     invalidateToken();
+    if (connector.close) connector.close(); // for WalletConnect
     deactivate();
   };
 
@@ -129,17 +133,29 @@ const Wallet = () => {
       <Controls>
         {status === 'disconnected' && (
           <Button
-            data-tip="Connect Wallet"
+            data-tip="Metamask"
             data-for="global"
             data-place="left"
             onClick={() => {
               setActivatingConnector(injected);
               activate(injected);
             }}>
-            <ConnectIcon /> Connect
+            <MetamaskLogo /> Metamask
           </Button>
-         )}
-         {status === 'connected' && (
+        )}
+        {status === 'disconnected' && (
+          <Button
+            data-tip="WalletConnect"
+            data-for="global"
+            data-place="left"
+            onClick={() => {
+              setActivatingConnector(walletconnect);
+              activate(walletconnect);
+            }}>
+            <WalletConnectLogo /> WalletConnect
+          </Button>
+        )}
+        {status === 'connected' && (
           <Button
             data-tip="Login with Ethereum"
             data-for="global"
@@ -147,8 +163,8 @@ const Wallet = () => {
             onClick={() => restartLogin()}>
             <LoginIcon /> Login
           </Button>
-         )}
-         {[ 'connected', 'logged-in' ].includes(status) && (
+        )}
+        {[ 'connected', 'logged-in' ].includes(status) && (
           <Button
             data-tip="Disconnect Wallet"
             data-for="global"
@@ -156,7 +172,7 @@ const Wallet = () => {
             onClick={() => disconnectWallet()}>
             <DisconnectIcon /> Disconnect
           </Button>
-         )}
+        )}
       </Controls>
     </Section>
   );
