@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
 import { useQuery, useQueryClient } from 'react-query';
 import { useWeb3React } from '@web3-react/core';
+import { WalletConnectConnector } from '@web3-react/walletconnect-connector';
 import { utils } from 'ethers';
 
 import api from '~/lib/api';
@@ -12,7 +13,7 @@ const useAuth = (startOnMount = true) => {
   const token = useStore(s => s.auth.token);
   const dispatchTokenInvalidated = useStore(s => s.dispatchTokenInvalidated);
   const dispatchAuthenticated = useStore(s => s.dispatchAuthenticated);
-  const { library, account } = useWeb3React();
+  const { connector, library, account } = useWeb3React();
   const [ activated, setActivated ] = useState(startOnMount);
 
   // Listen for props change to immediately start generating token
@@ -48,7 +49,17 @@ const useAuth = (startOnMount = true) => {
   const message = loginQuery?.data || null;
 
   const signQuery = useQuery([ 'sign', account, message ], async () => {
-    const signature = await library.getSigner(account).signMessage(message);
+    let signature;
+
+    if (connector instanceof WalletConnectConnector) {
+      signature = await library.send(
+        'personal_sign',
+        [ utils.hexlify(utils.toUtf8Bytes(message)), account.toLowerCase() ]
+      );
+    } else {
+      signature = await library.getSigner(account).signMessage(message);
+    }
+
     return signature;
   }, {
     enabled: !!message && !token && !!account && !!library,
