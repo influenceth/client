@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useWeb3React, UnsupportedChainIdError } from '@web3-react/core';
+import {
+  NoEthereumProviderError,
+  UserRejectedRequestError as UserRejectedRequestErrorInjected
+} from '@web3-react/injected-connector';
+import { UserRejectedRequestError as UserRejectedRequestErrorWC } from '@web3-react/walletconnect-connector';
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
@@ -13,6 +18,7 @@ import Button from '~/components/Button';
 import { DisconnectIcon, LoginIcon, WalletIcon, WarningIcon } from '~/components/Icons';
 import MetamaskLogo from '~/assets/images/metamask-fox.svg';
 import WalletConnectLogo from '~/assets/images/walletconnect-logo.svg';
+import BraveLogo from '~/assets/images/brave-icon.svg';
 
 const networkNames = {
   1: 'Ethereum Mainnet',
@@ -21,8 +27,15 @@ const networkNames = {
 };
 
 const getErrorMessage = (error) => {
-  if (error instanceof UnsupportedChainIdError) {
+  if (error instanceof NoEthereumProviderError) {
+    return 'No Ethereum browser extension detected, install MetaMask or visit from a dApp browser on mobile.';
+  } else if (error instanceof UnsupportedChainIdError) {
     return `Network unsupported, please connect to ${networkNames[process.env.REACT_APP_CHAIN_ID]}.`;
+  } else if (
+    error instanceof UserRejectedRequestErrorInjected ||
+    error instanceof UserRejectedRequestErrorWC
+  ) {
+    return 'Please authorize Influence to access your Ethereum account.';
   } else {
     return 'An unknown error occurred, please check the console for details.';
   }
@@ -120,7 +133,7 @@ const Wallet = () => {
       icon={<WalletIcon />}>
       <Info>
         <Indicator status={status}>●</Indicator>
-        {status === 'disconnected' && <span>Wallet disconnected</span>}
+        {status === 'disconnected' && <span>Wallet disconnected. Connect with:</span>}
         {status === 'connected' && <span>Connected as {account}</span>}
         {status === 'logged-in' && <span>Logged in as {account}</span>}
       </Info>
@@ -131,7 +144,19 @@ const Wallet = () => {
         </Error>
       )}
       <Controls>
-        {status === 'disconnected' && (
+        {status === 'disconnected' && !!navigator.brave && (
+          <Button
+            data-tip="Brave Browser"
+            data-for="global"
+            data-place="left"
+            onClick={() => {
+              setActivatingConnector(injected);
+              activate(injected);
+            }}>
+            <BraveLogo viewBox="0 0 55 64" /> Brave
+          </Button>
+        )}
+        {status === 'disconnected' && !navigator.brave && (
           <Button
             data-tip="Metamask"
             data-for="global"
