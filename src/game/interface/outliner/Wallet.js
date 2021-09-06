@@ -174,6 +174,7 @@ const Wallet = () => {
             data-for="global"
             data-place="left"
             onClick={() => {
+              if (walletconnect?.close) walletconnect.close();
               setActivatingConnector(walletconnect);
               activate(walletconnect);
             }}>
