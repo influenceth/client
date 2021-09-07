@@ -36,9 +36,9 @@ const Game = (props) => {
     if (!gpuInfo) return;
 
     if (!gpuInfo.isMobile) {
-      if (gpuInfo.tier > 0) {
-        setShowScene(true)
-      } else {
+      setShowScene(true)
+
+      if (gpuInfo.tier === 0) {
         createAlert({
           type: 'Game_GPUPrompt',
           level: 'warning'
