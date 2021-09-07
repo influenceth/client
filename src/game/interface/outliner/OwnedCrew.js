@@ -46,7 +46,7 @@ const OwnedCrew = (props) => {
         </IconButton>
         <IconButton
           data-tip="Trade Crew Members"
-          onClick={() => window.open(`${process.env.REACT_APP_OPEN_SEA_URL}/collection/influenceth-crew`)}>
+          onClick={() => window.open(`${process.env.REACT_APP_OPEN_SEA_URL}/collection/influence-crew`)}>
           <TradeIcon />
         </IconButton>
       </Controls>
