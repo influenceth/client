@@ -254,7 +254,7 @@ const AsteroidDetails = (props) => {
                 <Button
                   data-tip="Purchase development rights"
                   data-for="global"
-                  disabled={!account || !sale}
+                  disabled={!account || sale?.saleStartTime > (Date.now() / 1000)}
                   loading={buying}
                   onClick={() => {
                     setBuying(true);
