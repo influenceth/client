@@ -224,7 +224,7 @@ const OwnedCrew = (props) => {
             </CrewMember>
           )}
           {mintable && mintable.map(a => {
-            const canMint = a.purchaseOrder <= 1859 || ownedCount >= 1869;
+            const canMint = a.purchaseOrder <= 1859 || ownedCount >= 11100;
             return <MintableCrewMember asteroid={a} key={a.i} canMint={canMint} />;
           })}
         </CrewList>
