@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import screenfull from 'screenfull';
@@ -35,9 +35,13 @@ const SystemControls = (props) => {
   const dispatchSkyboxUnhidden = useStore(s => s.dispatchSkyboxUnhidden);
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
-  screenfull.on('change', () => {
-    setFullscreen(screenfull.isEnabled && screenfull.isFullscreen);
-  });
+  useEffect(() => {
+    if (screenfull.isEnabled) {
+      screenfull.on('change', () => {
+        setFullscreen(screenfull.isEnabled && screenfull.isFullscreen);
+      });
+    }
+  }, []);
 
   return (
     <StyledSystemControls>
@@ -57,7 +61,7 @@ const SystemControls = (props) => {
           <AiFillPushpin />
         </IconButton>
       )}
-      {!fullscreen && !isMobile && (
+      {screenfull.isEnabled && !fullscreen && !isMobile && (
         <IconButton
           data-tip="Go Fullscreen"
           onClick={() => screenfull.request()}
@@ -65,7 +69,7 @@ const SystemControls = (props) => {
           <MdFullscreen />
         </IconButton>
       )}
-      {fullscreen && !isMobile && (
+      {screenfull.isEnabled && fullscreen && !isMobile && (
         <IconButton
           data-tip="Exit Fullscreen"
           onClick={() => screenfull.exit()}

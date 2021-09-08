@@ -15,7 +15,7 @@ const StyledIntro = styled.div`
 `;
 
 const Intro = (props) => {
-  const { onVideoComplete } = props;
+  const { onVideoComplete, onVideoError, ...restProps } = props;
   const container = useRef();
 
   const _onEnded = () => {
@@ -31,13 +31,15 @@ const Intro = (props) => {
   };
 
   return (
-    <StyledIntro ref={container}>
+    <StyledIntro ref={container} {...restProps}>
       <ReactPlayer
         url={IntroVideo}
         height={'100%'}
         width={'100%'}
+        volume={0}
         muted={true}
         playing={true}
+        onError={_onEnded}
         onEnded={_onEnded} />
     </StyledIntro>
   );

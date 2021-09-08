@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
 import screenfull from 'screenfull';
@@ -77,9 +77,13 @@ const Settings = (props) => {
   const [ localFOV, setLocalFOV ] = useState(graphics.fov);
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
-  screenfull.on('change', () => {
-    setFullscreen(screenfull.isEnabled && screenfull.isFullscreen);
-  });
+  useEffect(() => {
+    if (screenfull.isEnabled) {
+      screenfull.on('change', () => {
+        setFullscreen(screenfull.isEnabled && screenfull.isFullscreen);
+      });
+    }
+  }, []);
 
   return (
     <Details title="Settings">
@@ -150,15 +154,17 @@ const Settings = (props) => {
                 </Button>
               </ControlGroup>
             </StyledDataReadout>
-            <StyledDataReadout label="Fullscreen">
-              <IconButton
-                data-tip="Toggle Fullscreen"
-                data-for="global"
-                onClick={() => fullscreen ? screenfull.exit() : screenfull.request()}
-                borderless>
-                {fullscreen ? <CheckedIcon /> : <UncheckedIcon />}
-              </IconButton>
-            </StyledDataReadout>
+            {screenfull.isEnabled && (
+              <StyledDataReadout label="Fullscreen">
+                <IconButton
+                  data-tip="Toggle Fullscreen"
+                  data-for="global"
+                  onClick={() => fullscreen ? screenfull.exit() : screenfull.request()}
+                  borderless>
+                  {fullscreen ? <CheckedIcon /> : <UncheckedIcon />}
+                </IconButton>
+              </StyledDataReadout>
+            )}
             <StyledDataReadout label="Skybox">
               <IconButton
                 data-tip="Toggle Skybox"
