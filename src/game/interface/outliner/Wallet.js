@@ -27,6 +27,8 @@ const networkNames = {
 };
 
 const getErrorMessage = (error) => {
+  console.error(error);
+
   if (error instanceof NoEthereumProviderError) {
     return 'No Ethereum browser extension detected, install MetaMask or visit from a dApp browser on mobile.';
   } else if (error instanceof UnsupportedChainIdError) {
@@ -144,7 +146,7 @@ const Wallet = () => {
         </Error>
       )}
       <Controls>
-        {status === 'disconnected' && !!navigator.brave && (
+        {status === 'disconnected' && window.ethereum && !!navigator.brave && (
           <Button
             data-tip="Brave Browser"
             data-for="global"
@@ -156,7 +158,7 @@ const Wallet = () => {
             <BraveLogo viewBox="0 0 55 64" /> Brave
           </Button>
         )}
-        {status === 'disconnected' && !navigator.brave && (
+        {status === 'disconnected' && window.ethereum && !navigator.brave && (
           <Button
             data-tip="Metamask"
             data-for="global"

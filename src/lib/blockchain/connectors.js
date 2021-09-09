@@ -6,7 +6,10 @@ export const injected = new InjectedConnector({
 });
 
 export const walletconnect = new WalletConnectConnector({
-  rpc: { 4: 'https://rinkeby.infura.io/v3/df039ca14ccd47d7bc89c7dd7d1d6b98' },
+  rpc: {
+    1: `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_ID}`,
+    4: `https://rinkeby.infura.io/v3/${process.env.REACT_APP_INFURA_ID}`
+  },
   infuraId: process.env.REACT_APP_INFURA_ID,
   qrcode: true
 });
