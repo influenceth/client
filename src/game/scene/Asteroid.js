@@ -15,6 +15,7 @@ import HeightMap from './asteroid/HeightMap';
 import ColorMap from './asteroid/ColorMap';
 import NormalMap from './asteroid/NormalMap';
 import Rings from './asteroid/Rings';
+import exportModel from './asteroid/export';
 import constants from '~/lib/constants';
 
 // Setup worker or main thread textureRenderer depending on browser
