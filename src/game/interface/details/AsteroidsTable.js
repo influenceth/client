@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import utils from 'influence-utils';
 import { Link } from 'react-router-dom';
 import DataTable, { createTheme } from 'react-data-table-component';
@@ -113,6 +114,10 @@ const AsteroidsTable = (props) => {
     direction = direction.charAt(0).toUpperCase() + direction.slice(1);
     setSort(field.sortKey + direction);
   };
+
+  useEffect(() => {
+    if (query?.data?.length === 0) setPage(1);
+  }, [ query?.data ]);
 
   return (
     <Details title="Mapped Asteroids">
