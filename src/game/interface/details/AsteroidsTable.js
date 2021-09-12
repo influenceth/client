@@ -117,7 +117,7 @@ const AsteroidsTable = (props) => {
 
   useEffect(() => {
     if (query?.data?.length === 0) setPage(1);
-  }, [ query?.data ]);
+  }, [ query?.data, setPage ]);
 
   return (
     <Details title="Mapped Asteroids">

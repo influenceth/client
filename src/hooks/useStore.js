@@ -68,7 +68,17 @@ const useStore = create(persist((set, get) => ({
       toPlay: null
     },
 
+    sale: false,
+
     referrer: null,
+
+    dispatchSaleStarted: () => set(produce(state => {
+      state.sale = true;
+    })),
+
+    dispatchSaleEnded: () => set(produce(state => {
+      state.sale = false;
+    })),
 
     dispatchSoundPlayed: () => set(produce(state => {
       state.sounds.toPlay = null;
