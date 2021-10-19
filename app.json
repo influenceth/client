@@ -26,10 +26,6 @@
       "description": "Base websocket URL for Infura (or potentially Alchemy). Does not include trailing slash",
       "required": true
     },
-    "REACT_APP_NETWORK_ID": {
-      "description": "Network ID for appropriate chain (1 = Mainnet, 4 = Rinkeby, [timestamp] = ganache)",
-      "required": true
-    },
     "REACT_APP_CHAIN_ID": {
       "description": "Chain ID for appropriate chain (1 = Mainnet, 4 = Rinkeby, 1337 = ganache)",
       "required": true
