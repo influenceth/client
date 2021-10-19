@@ -22,7 +22,7 @@ import DataReadout from '~/components/DataReadout';
 import LogEntry from '~/components/LogEntry';
 import Ether from '~/components/Ether';
 import AddressLink from '~/components/AddressLink';
-import { EditIcon, CheckIcon, ClaimIcon, ScanIcon } from '~/components/Icons';
+import { DownloadModelIcon, EditIcon, CheckIcon, ClaimIcon, ScanIcon } from '~/components/Icons';
 import ResourceMix from './asteroidDetails/ResourceMix';
 import ResourceBonuses from './asteroidDetails/ResourceBonuses';
 import Dimensions from './asteroidDetails/Dimensions';
@@ -174,6 +174,7 @@ const AsteroidDetails = (props) => {
   const finalizeScan = useFinalizeAsteroidScan(Number(i));
   const nameAsteroid = useNameAsteroid(Number(i));
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
+  const dispatchModelDownload = useStore(s => s.dispatchModelDownloadRequested);
   const [ buying, setBuying ] = useState(false);
   const [ naming, setNaming ] = useState(false);
   const [ newName, setNewName ] = useState('');
@@ -333,6 +334,14 @@ const AsteroidDetails = (props) => {
                     </IconButton>
                   </NameForm>
                 </Form>
+              )}
+              {asteroid.owner && asteroid.owner === account && (
+                <Button
+                  data-tip="Download 3d Model"
+                  data-for="global"
+                  onClick={() => dispatchModelDownload()}>
+                  <DownloadModelIcon /> Download Model
+                </Button>
               )}
             </Pane>
             <Pane>

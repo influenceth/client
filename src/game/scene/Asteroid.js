@@ -8,6 +8,7 @@ import { KeplerianOrbit } from 'influence-utils';
 import Worker from 'worker-loader!../../worker';
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
+import constants from '~/lib/constants';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 import CubeSphere from '~/lib/graphics/CubeSphere';
 import Config from './asteroid/Config';
@@ -16,7 +17,6 @@ import ColorMap from './asteroid/ColorMap';
 import NormalMap from './asteroid/NormalMap';
 import Rings from './asteroid/Rings';
 import exportModel from './asteroid/export';
-import constants from '~/lib/constants';
 
 // Setup worker or main thread textureRenderer depending on browser
 let worker, textureRenderer;
@@ -38,6 +38,8 @@ const Asteroid = (props) => {
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
+  const requestingModelDownload = useStore(s => s.asteroids.requestingModelDownload);
+  const onModelDownload = useStore(s => s.dispatchModelDownloadComplete);
   const { data: asteroidData } = useAsteroid(origin);
 
   const group = useRef();
@@ -213,7 +215,7 @@ const Asteroid = (props) => {
     // Zoom in the camera to the asteroid
     timeline.to(controls.object.position, { ...zoomTo }, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [ shouldZoomIn ]);
+  }, [ shouldZoomIn ]);
 
   const shouldFinishZoomIn = zoomStatus === 'in' && controls && !!asteroidData;
   useEffect(() => {
@@ -233,7 +235,7 @@ const Asteroid = (props) => {
     controls.object.near = 100;
     controls.object.updateProjectionMatrix();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [ shouldFinishZoomIn, asteroidData ]);
+  }, [ shouldFinishZoomIn, asteroidData ]);
 
   // Handle zooming back out
   const shouldZoomOut = zoomStatus === 'zooming-out' && zoomedFrom && controls;
@@ -276,6 +278,14 @@ const Asteroid = (props) => {
     controls.targetScene.position.copy(panTo);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldUpdatePosition, position, asteroidData ]);
+
+  // Initiates download of generated mesh (when requested and ready)
+  const exportableMesh = geometry && materials && mesh && mesh.current;
+  useEffect(() => {
+    if (!requestingModelDownload && exportableMesh) return;  
+    exportModel(exportableMesh, onModelDownload);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestingModelDownload, exportableMesh]);
 
   return (
     <group ref={group} >

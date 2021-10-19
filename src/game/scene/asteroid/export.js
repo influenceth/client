@@ -16,17 +16,21 @@ const saveArrayBuffer = (buffer, filename) => {
   save(new Blob([ buffer ], { type: 'application/octet-stream' }), filename);
 };
 
-const exportGLTF = (input) => {
+const exportGLTF = (input, onComplete) => {
   const gltfExporter = new GLTFExporter();
-
-  gltfExporter.parse(input, function (result) {
-    if (result instanceof ArrayBuffer) {
-      saveArrayBuffer(result, 'asteroid.glb');
-    } else {
-      const output = JSON.stringify( result, null, 2 );
-      saveString(output, 'asteroid.gltf');
-    }
-  });
+  try {
+    gltfExporter.parse(input, function (result) {
+      if (result instanceof ArrayBuffer) {
+        saveArrayBuffer(result, 'asteroid.glb');
+      } else {
+        const output = JSON.stringify( result, null, 2 );
+        saveString(output, 'asteroid.gltf');
+      }
+      if (onComplete) onComplete(true);
+    });
+  } catch (e) {
+    if (onComplete) onComplete(false);
+  }
 };
 
 export default exportGLTF;
