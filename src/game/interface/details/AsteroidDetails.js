@@ -173,6 +173,7 @@ const AsteroidDetails = (props) => {
   const startScan = useStartAsteroidScan(Number(i));
   const finalizeScan = useFinalizeAsteroidScan(Number(i));
   const nameAsteroid = useNameAsteroid(Number(i));
+  const saleIsActive = useStore(s => s.sale);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchModelDownload = useStore(s => s.dispatchModelDownloadRequested);
   const [ buying, setBuying ] = useState(false);
@@ -255,7 +256,7 @@ const AsteroidDetails = (props) => {
                 <Button
                   data-tip="Purchase development rights"
                   data-for="global"
-                  disabled={!account || sale?.saleStartTime > (Date.now() / 1000)}
+                  disabled={!account || !saleIsActive}
                   loading={buying}
                   onClick={() => {
                     setBuying(true);

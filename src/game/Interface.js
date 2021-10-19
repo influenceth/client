@@ -1,6 +1,6 @@
 import styled, { css } from 'styled-components';
 import ReactTooltip from 'react-tooltip';
-import { Switch, Route } from 'react-router-dom';
+import { Switch, Route, Redirect } from 'react-router-dom';
 import { useIsFetching } from 'react-query'
 import LoadingAnimation from 'react-spinners/BarLoader';
 
@@ -83,7 +83,8 @@ const Interface = () => {
           <Route exact path="/asteroids">
             <AsteroidsTable />
           </Route>
-          <Route path="/asteroids/:i">
+          <Redirect from="/:i(\d+)" to="/asteroids/:i" />
+          <Route path="/asteroids/:i(\d+)">
             <AsteroidDetails />
           </Route>
           <Route path="/owned-asteroids">
@@ -92,7 +93,7 @@ const Interface = () => {
           <Route path="/owned-crew">
             <OwnedCrew />
           </Route>
-          <Route path="/crew/:i">
+          <Route path="/crew/:i(\d+)">
             <CrewMemberDetails />
           </Route>
           <Route path="/watchlist">

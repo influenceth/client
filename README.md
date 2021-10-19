@@ -2,6 +2,31 @@
 
 The browser game client for Influence.
 
+## Test Environment
+1. Initialize your .env file:
+    ```
+    echo "REACT_APP_API_URL=http://localhost:3001
+    REACT_APP_IMAGES_URL=http://localhost:3001
+    REACT_APP_OPEN_SEA_URL=https://opensea.io
+    REACT_APP_ETHERSCAN_URL=https://etherscan.io
+    REACT_APP_ETH_PROVIDER=http://localhost:8545
+    REACT_APP_CHAIN_ID=1337
+    REACT_APP_CONTRACT_PLANETS=
+    REACT_APP_CONTRACT_ASTEROID_TOKEN=
+    REACT_APP_CONTRACT_ASTEROID_FEATURES=
+    REACT_APP_CONTRACT_ASTEROID_SCANS=
+    REACT_APP_CONTRACT_ASTEROID_SALE=
+    REACT_APP_CONTRACT_ASTEROID_NAMES=
+    REACT_APP_CONTRACT_ARVAD_CREW_SALE=
+    REACT_APP_CONTRACT_CREW_TOKEN
+    REACT_APP_CONTRACT_CREW_FEATURES=
+    REACT_APP_CONTRACT_CREW_NAMES=
+    " > .env
+    ```
+1. Adjust or fill in any missing .env variables as needed.
+    > i.e. All `REACT_APP_CONTRACT_*` values should have been output at the end of the `seedChain` script in the `contacts` project. (You will need to prepend `REACT_APP_` to the variable names).
+1. Run `npm start`.
+
 ## Available Scripts
 
 In the project directory, you can run:

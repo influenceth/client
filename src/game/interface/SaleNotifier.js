@@ -9,6 +9,8 @@ const SaleNotifier = (props) => {
   const { sale } = props;
   const { library } = useWeb3React();
   const { data: soldCount } = useOwnedAsteroidsCount();
+  const saleStarted = useStore(s => s.dispatchSaleStarted);
+  const saleEnded = useStore(s => s.dispatchSaleEnded);
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const [ status, setStatus ] = useState();
 
@@ -40,17 +42,26 @@ const SaleNotifier = (props) => {
   }, [ sale, soldCount ]);
 
   useEffect(() => {
-    if (status === 'started') createAlert({
-      type: 'Sale_Started',
-      available: sale.endCount - soldCount
-    });
+    if (status === 'started') {
+      saleStarted();
+      createAlert({
+        type: 'Sale_Started',
+        available: sale.endCount - soldCount
+      });
+    }
 
-    if (status === 'unstarted') createAlert({
-      type: 'Sale_TimeToStart',
-      start: sale.saleStartTime * 1000
-    });
+    if (status === 'unstarted') {
+      saleEnded();
+      createAlert({
+        type: 'Sale_TimeToStart',
+        start: sale.saleStartTime * 1000
+      });
+    }
 
-    if (status === 'ended') createAlert({ type: 'Sale_Ended' });
+    if (status === 'ended') {
+      saleEnded();
+      createAlert({ type: 'Sale_Ended' });
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ status ]);
 
