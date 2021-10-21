@@ -19,6 +19,7 @@ import {
 } from 'react-icons/md';
 import { RiTableFill, RiRouteFill, RiLoginCircleFill, RiAlertFill, RiFilter2Fill } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
+import { WiMoonAltWaningCrescent5 } from 'react-icons/wi';
 import { VscDebugDisconnect } from 'react-icons/vsc';
 
 export {
@@ -51,5 +52,6 @@ export {
   MdNavigateNext as NextIcon,
   RiTableFill as TableIcon,
   FaCopy as CopyIcon,
-  MdFirstPage as BeginningIcon
+  MdFirstPage as BeginningIcon,
+  WiMoonAltWaningCrescent5 as DownloadModelIcon
 };
