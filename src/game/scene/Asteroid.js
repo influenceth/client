@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3 } from 'three';
+import { BufferAttribute, BufferGeometry, DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, PointsMaterial, Vector3 } from 'three';
 import { useThree } from '@react-three/fiber';
+import { useThrottle } from '@react-hook/throttle';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
 
@@ -26,6 +27,69 @@ if (!!window.Worker && typeof OffscreenCanvas !== 'undefined') {
   textureRenderer = new TextureRenderer();
 }
 
+const phi = Math.PI * (3 - Math.sqrt(5)); // golden angle in radians
+
+function getAngleDiff(angle1, angle2) {
+  const diff = angle1 - angle2;
+  return Math.atan2(Math.sin(diff), Math.cos(diff));
+}
+
+function getThetaTolerance(samples) {
+  if (samples < 1e2) return 2 * Math.PI;
+  if (samples < 1e4) return Math.PI / (Math.log10(samples) + 1);
+  return Math.PI / (Math.log10(samples) + 3);
+}
+
+// we know points should be ~1km apart, which means if we limit our checks to
+// a range of +-0.5km in any dimension, we should feel confident we will get
+// at least one point (NOTE: distribution isn't perfect, so worth a safety factor)
+const getNearbyFibPoints = (center, samples, radius) => {
+  const lotSize = 1000 / radius; // TODO: is lot size in config?
+  const yRadiusToSearch = 2 * lotSize;
+
+  let centerTheta = Math.atan(center.z / center.x);
+  // TODO: will thetaTolerance make things weird at poles? could skip check at highest and lowest indexes...
+  const thetaTolerance = getThetaTolerance(samples); // TODO: could be calculated once per asteroid
+  console.log({ thetaTolerance });
+
+  const maxIndex = Math.min(samples - 1, Math.ceil((1 - center.y + yRadiusToSearch) * (samples - 1) / 2));
+  const minIndex = Math.max(0, Math.floor((1 - center.y - yRadiusToSearch) * (samples - 1) / 2));
+  
+  const points = [];
+  for(let index = minIndex; index < maxIndex; index++) {
+    const theta = phi * index;
+    
+    // skip if this point is not within a threshold of angle to center
+    if (Math.abs(getAngleDiff(centerTheta, theta)) > thetaTolerance) continue;
+
+    const y = 1 - (index / (samples - 1)) * 2;
+    const radiusAtY = Math.sqrt(1 - y * y);
+    const x = Math.cos(theta) * radiusAtY;
+    const z = Math.sin(theta) * radiusAtY;
+    points.push([
+      x * radius,
+      y * radius,
+      z * radius,
+      Math.abs(center.x - x) + Math.abs(center.y - y) + Math.abs(center.z - z)
+    ]);
+  }
+  console.log(`${maxIndex - minIndex} points in range; ${points.length} checked`);
+
+  const final = points
+    .sort((a, b) => a[3] < b[3] ? -1 : 1)
+    .map((p) => [p[0], p[1], p[2]])
+    .slice(0, 15);
+  return [
+    final[0],
+    final[0],
+    ...final
+  ];
+};
+
+const vectorArrayToGeometryBuffer = (points) => {
+  return points.reduce((acc, cur) => cur ? [...acc, cur[0], cur[1], cur[2]] : acc, []);
+};
+
 const Asteroid = (props) => {
   const controls = useThree(({ controls }) => controls);
   const origin = useStore(s => s.asteroids.origin);
@@ -42,6 +106,7 @@ const Asteroid = (props) => {
   const group = useRef();
   const light = useRef();
   const mesh = useRef();
+  const fibMesh = useRef();
   const asteroidOrbit = useRef();
   const rotationAxis = useRef();
 
@@ -50,6 +115,8 @@ const Asteroid = (props) => {
   const [ maps, setMaps ] = useState();
   const [ materials, setMaterials ] = useState();
   const [ geometry, setGeometry ] = useState();
+  const [ fibGeometry, setFibGeometry ] = useState();
+  const [ mousePos, setMousePos ] = useThrottle(null, 30);
 
   // Positions the asteroid in space based on time changes
   useEffect(() => {
@@ -61,15 +128,20 @@ const Asteroid = (props) => {
     }
 
     if (mesh.current && config && time) {
-      mesh.current.setRotationFromAxisAngle(rotationAxis.current, time * config.rotationSpeed * 2 * Math.PI);
+      const rotation = time * config.rotationSpeed * 2 * Math.PI;
+      mesh.current.setRotationFromAxisAngle(rotationAxis.current, rotation);
+      if (fibMesh.current) {
+        fibMesh.current.setRotationFromAxisAngle(rotationAxis.current, rotation);
+      }
     }
-  }, [ asteroidData, config, time ]);
+  }, [ asteroidData, config, time, mesh.current, fibMesh.current ]);
 
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
     if (!!asteroidData) setConfig(new Config(asteroidData));
 
     // Cleanup when there's no data
+    // TODO: if can ever jump directly between asteroids, this cleanup will need to happen on asteroid change as well
     if (!asteroidData) {
       setConfig(null);
 
@@ -138,7 +210,7 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ maps ]);
 
-  // Recieves the updated maps and applies them to the material
+  // Receives the updated maps and applies them to the material
   useEffect(() => {
     if (!maps) return;
     const processed = {};
@@ -212,7 +284,7 @@ const Asteroid = (props) => {
     // Zoom in the camera to the asteroid
     timeline.to(controls.object.position, { ...zoomTo }, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [ shouldZoomIn ]);
+  }, [ shouldZoomIn ]);
 
   const shouldFinishZoomIn = zoomStatus === 'in' && controls && !!asteroidData;
   useEffect(() => {
@@ -232,7 +304,7 @@ const Asteroid = (props) => {
     controls.object.near = 100;
     controls.object.updateProjectionMatrix();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [ shouldFinishZoomIn, asteroidData ]);
+  }, [ shouldFinishZoomIn, asteroidData ]);
 
   // Handle zooming back out
   const shouldZoomOut = zoomStatus === 'zooming-out' && zoomedFrom && controls;
@@ -276,8 +348,47 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldUpdatePosition, position, asteroidData ]);
 
+  const showFib = true;
+
+  const [fibMaterial, setFibMaterial] = useState();
+  useEffect(() => {
+    if (config) {
+      setFibMaterial(
+        new PointsMaterial({
+          color: 0xff0000,
+          size: config.radius / 40,
+          opacity: 0.33,
+          transparent: true
+        })
+      );
+    }
+  }, [config]);
+
+  useEffect(() => {
+    if (mousePos && mousePos.intersections.length > 0) {
+      const intersection = mousePos.intersections[0];
+      const fibGeo = new BufferGeometry();
+      const lots = Math.floor(4 * Math.PI * config.radius * config.radius / 1e6);
+      const nearbyFibPoints = getNearbyFibPoints(intersection.face.normal, lots, asteroidData.radius);
+
+      fibGeo.setAttribute(
+        'position',
+        new BufferAttribute(
+          new Float32Array(
+            vectorArrayToGeometryBuffer(nearbyFibPoints)
+          ),
+          3
+        )
+      );
+      setFibGeometry(fibGeo);
+      //console.log("move", intersection);
+    } else {
+      setFibGeometry(null);
+    }
+  }, [mousePos]);
+
   return (
-    <group ref={group} >
+    <group ref={group}>
       <directionalLight
         ref={light}
         color={0xffeedd}
@@ -289,9 +400,15 @@ const Asteroid = (props) => {
           ref={mesh}
           material={materials}
           castShadow={shadows}
-          receiveShadow={shadows}>
+          receiveShadow={shadows}
+          onPointerMove={setMousePos}>
           <primitive attach="geometry" object={geometry} />
         </mesh>
+      )}
+      {showFib && fibGeometry && (
+        <points ref={fibMesh} material={fibMaterial}>
+          <primitive attach="geometry" object={fibGeometry} />
+        </points>
       )}
       {config?.ringsPresent && geometry && (
         <Rings
