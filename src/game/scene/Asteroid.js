@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { BufferAttribute, BufferGeometry, DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, PointsMaterial, Vector3 } from 'three';
+import {
+  AdditiveBlending, BufferAttribute, BufferGeometry, DataTexture, LessDepth,
+  BufferGeometryLoader, MeshStandardMaterial, PointsMaterial, Vector3,
+SrcAlphaFactor, OneMinusSrcAlphaFactor, DstAlphaFactor } from 'three';
 import { useThree } from '@react-three/fiber';
 import { useThrottle } from '@react-hook/throttle';
 import gsap from 'gsap';
@@ -14,6 +17,7 @@ import CubeSphere from '~/lib/graphics/CubeSphere';
 import Config from './asteroid/Config';
 import HeightMap from './asteroid/HeightMap';
 import ColorMap from './asteroid/ColorMap';
+import LotMap from './asteroid/FiboMap';
 import NormalMap from './asteroid/NormalMap';
 import Rings from './asteroid/Rings';
 import constants from '~/lib/constants';
@@ -30,14 +34,18 @@ if (!!window.Worker && typeof OffscreenCanvas !== 'undefined') {
 const phi = Math.PI * (3 - Math.sqrt(5)); // golden angle in radians
 
 function getAngleDiff(angle1, angle2) {
-  const diff = angle1 - angle2;
-  return Math.atan2(Math.sin(diff), Math.cos(diff));
+  const a1 = angle1 >= 0 ? angle1 : (angle1 + 2 * Math.PI);
+  const a2 = angle2 >= 0 ? angle2 : (angle2 + 2 * Math.PI);
+  const diff = Math.abs(a1 - a2) % (2 * Math.PI);
+  return diff <= Math.PI ? diff : (diff - Math.PI);
+  //const diff = angle1 - angle2;
+  //return Math.atan2(Math.sin(diff), Math.cos(diff));
 }
 
 function getThetaTolerance(samples) {
   if (samples < 1e2) return 2 * Math.PI;
   if (samples < 1e4) return Math.PI / (Math.log10(samples) + 1);
-  return Math.PI / (Math.log10(samples) + 3);
+  return Math.PI / (2 * Math.log10(samples));
 }
 
 // we know points should be ~1km apart, which means if we limit our checks to
@@ -49,8 +57,8 @@ const getNearbyFibPoints = (center, samples, radius) => {
 
   let centerTheta = Math.atan(center.z / center.x);
   // TODO: will thetaTolerance make things weird at poles? could skip check at highest and lowest indexes...
-  const thetaTolerance = getThetaTolerance(samples); // TODO: could be calculated once per asteroid
-  console.log({ thetaTolerance });
+  // TODO: could be calculated once per asteroid rather than per mouse move (unless need to treat differently at poles)
+  const thetaTolerance = getThetaTolerance(samples);
 
   const maxIndex = Math.min(samples - 1, Math.ceil((1 - center.y + yRadiusToSearch) * (samples - 1) / 2));
   const minIndex = Math.max(0, Math.floor((1 - center.y - yRadiusToSearch) * (samples - 1) / 2));
@@ -62,7 +70,7 @@ const getNearbyFibPoints = (center, samples, radius) => {
     // skip if this point is not within a threshold of angle to center
     if (Math.abs(getAngleDiff(centerTheta, theta)) > thetaTolerance) continue;
 
-    const y = 1 - (index / (samples - 1)) * 2;
+    const y = 1 - (2 * index / (samples - 1));
     const radiusAtY = Math.sqrt(1 - y * y);
     const x = Math.cos(theta) * radiusAtY;
     const z = Math.sin(theta) * radiusAtY;
@@ -166,13 +174,19 @@ const Asteroid = (props) => {
 
     rotationAxis.current = config.seed.clone().normalize();
 
+
+    console.log('asteroid config', config);
+
     if (!!worker) {
+      let start = Date.now();
       worker.postMessage({ topic: 'renderMaps', mapSize, config });
 
       worker.onmessage = (event) => {
         if (event.data.topic === 'maps') {
-          const { heightMap, colorMap, normalMap } = event.data;
-          setMaps({ heightMap, colorMap, normalMap });
+          let end = Date.now()
+          console.log('map ready', ((end - start)/1000).toFixed(3));
+          const { heightMap, colorMap, normalMap, lotMap } = event.data;
+          setMaps({ heightMap, colorMap, normalMap, lotMap });
         }
       };
     } else if (!!textureRenderer) {
@@ -181,7 +195,9 @@ const Asteroid = (props) => {
         const colorMapObj = new ColorMap(mapSize, heightMap, config, textureRenderer);
         const colorMap = await colorMapObj.generateColorMap();
         const normalMap = new NormalMap(mapSize, heightMap, config, textureRenderer);
-        setMaps({ heightMap, colorMap, normalMap });
+        setMaps({ heightMap, colorMap, normalMap });/* TODO:
+        const lotMap = new LotMap(mapSize, config, textureRenderer);
+        setMaps({ heightMap, colorMap, normalMap, lotMap });*/
       };
 
       renderMaps();
@@ -215,8 +231,9 @@ const Asteroid = (props) => {
     if (!maps) return;
     const processed = {};
     const materials = [];
+    const lotMaterials = [];
 
-    Object.keys(maps).forEach(k => {
+    Object.keys(maps).forEach(k => { if (k === 'lotMap') return;
       processed[k] = maps[k].map(m => {
         const tex = new DataTexture(m.buffer, m.width, m.height, m.format);
         return Object.assign(tex, m.options);
@@ -233,9 +250,25 @@ const Asteroid = (props) => {
         normalMap: processed.normalMap[i],
         roughness: 1
       }));
+
+      /*
+      lotMaterials.push(new MeshStandardMaterial({
+        //alphaMap: processed.lotMap[i],
+        blending: AdditiveBlending,
+        blendSrc: SrcAlphaFactor,
+        blendDst: DstAlphaFactor,
+        color: 0xffffff,
+        emissive: 0x36a7cd,
+        emissiveIntensity: 1,
+        dithering: true,
+        map: processed.lotMap[i],
+        metalness: 1,
+      }));
+      */
     }
 
     setMaterials(materials);
+    //setFibMaterial(lotMaterials);
   }, [ maps ]);
 
   // Configures the light component once the geometry is created
@@ -355,7 +388,7 @@ const Asteroid = (props) => {
     if (config) {
       setFibMaterial(
         new PointsMaterial({
-          color: 0xff0000,
+          color: 0x0000ff,
           size: config.radius / 40,
           opacity: 0.33,
           transparent: true
@@ -405,7 +438,7 @@ const Asteroid = (props) => {
           <primitive attach="geometry" object={geometry} />
         </mesh>
       )}
-      {showFib && fibGeometry && (
+      {showFib && fibMaterial && fibGeometry && (
         <points ref={fibMesh} material={fibMaterial}>
           <primitive attach="geometry" object={fibGeometry} />
         </points>

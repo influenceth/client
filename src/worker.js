@@ -5,6 +5,7 @@ import TextureRenderer from '~/lib/graphics/TextureRenderer';
 import CubeSphere from '~/lib/graphics/CubeSphere';
 import HeightMap from '~/game/scene/asteroid/HeightMap';
 import ColorMap from '~/game/scene/asteroid/ColorMap';
+import LotMap from '~/game/scene/asteroid/FiboMap';
 import NormalMap from '~/game/scene/asteroid/NormalMap';
 import constants from '~/lib/constants';
 
@@ -72,7 +73,9 @@ const renderMaps = async function(mapSize, config) {
   const colorMapObj = new ColorMap(mapSize, heightMap, config, textureRenderer);
   const colorMap = await colorMapObj.generateColorMap();
   const normalMap = new NormalMap(mapSize, heightMap, config, textureRenderer);
-  postMessage({ topic: 'maps', heightMap, colorMap, normalMap });
+  const lotMapObj = new LotMap(mapSize, config, textureRenderer);
+  const lotMap = await lotMapObj.generateFiboMap();
+  postMessage({ topic: 'maps', heightMap, colorMap, normalMap, lotMap });
 };
 
 const renderGeometry = function(heightMap, config) {
