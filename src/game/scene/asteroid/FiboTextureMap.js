@@ -6,21 +6,23 @@ import {
   NearestFilter,
   ShaderMaterial,
   Vector2,
-  Vector3,
   LinearMipMapLinearFilter,
   LinearFilter,
   RGBFormat
 } from 'three';
 import { unitFiboCubeSphere } from '~/lib/graphics/fiboUtils';
-import fiboShader from './fibo.glsl';
+import fiboShader from './fibo_texture.glsl';
 
 class FiboMap {
   constructor(res, config, textureRenderer) {
     this.res = res;
     this.config = config;
     this.textureRenderer = textureRenderer;
-    this.points = unitFiboCubeSphere(Math.round(4 * Math.PI * config.radius * config.radius / 1e6));
-    console.log('points', this.points);
+    const faceData = unitFiboCubeSphere(Math.round(4 * Math.PI * config.radius * config.radius / 1e6), true);
+    this.dataTextures = faceData.map((faceData) => {
+      return new DataTexture(faceData, 1, 1, RGBFormat);
+    });
+    console.log('fibomap', this.dataTextures);
 
     // TODO: generate fibonacci sphere coordinates based on # samples
     //  uniforms should pass in...
@@ -45,18 +47,10 @@ class FiboMap {
     const maps = [];
 
     for (let i = 0; i < 6; i++) {
-      const maxPoints = 500;
-      const points = this.points[i].slice(0, maxPoints).map((p) => new Vector2(p.x, p.y));
-      const indices = this.points[i].slice(0, maxPoints).map((p) => p.z);
-      while (points.length < maxPoints) {
-        points.push(new Vector2(0.0));
-      }
       material = new ShaderMaterial({
         fragmentShader: fiboShader,
         uniforms: {
-          uIndices: { type: 'i', value: indices },
-          uPoints: { type: 'v2', value: points },
-          uPointTally: { type: 'i', value: points.length },//this.points[i].length },
+          tData: { type: 't', value: this.dataTextures[i] },
           uResolution: { type: 'v2', value: new Vector2(this.res, this.res) }
         }
       });

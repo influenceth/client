@@ -1,8 +1,9 @@
 import { KeplerianOrbit } from 'influence-utils';
-import { WebGLRenderer } from 'three';
+import { BufferGeometry, Vector3, WebGLRenderer } from 'three';
 
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 import CubeSphere from '~/lib/graphics/CubeSphere';
+import { fiboOnHeightMap } from '~/lib/graphics/fiboUtils';
 import HeightMap from '~/game/scene/asteroid/HeightMap';
 import ColorMap from '~/game/scene/asteroid/ColorMap';
 import LotMap from '~/game/scene/asteroid/FiboMap';
@@ -23,6 +24,7 @@ onmessage = async function(event) {
       break;
     case 'renderGeometry':
       renderGeometry(event.data.heightMap, event.data.config);
+      //renderLotGeometry(event.data.heightMap, event.data.config);
       break;
     case 'renderMaps':
       renderMaps(event.data.mapSize, event.data.config);
@@ -85,3 +87,12 @@ const renderGeometry = function(heightMap, config) {
   const geometryJSON = geometry.toJSON();
   postMessage({ topic: 'geometry', geometryJSON });
 };
+
+const renderLotGeometry = async function(heightMap, config) {
+  const samples = Math.floor(4 * Math.PI * config.radius * config.radius / 1e6);
+  const bufferGeometry = new BufferGeometry();
+  bufferGeometry.setFromPoints(fiboOnHeightMap(samples, heightMap, config));
+  const lotGeometryJSON = bufferGeometry.toJSON();
+  postMessage({ topic: 'lotGeometry', lotGeometryJSON });
+};
+
