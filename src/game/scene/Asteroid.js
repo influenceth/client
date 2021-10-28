@@ -1,8 +1,5 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import {
-  AdditiveBlending, BufferAttribute, BufferGeometry, DataTexture, LessDepth,
-  BufferGeometryLoader, MeshBasicMaterial, MeshStandardMaterial, PointsMaterial, Vector3,
-SrcAlphaFactor, OneMinusSrcAlphaFactor, DstAlphaFactor } from 'three';
+import { useState, useEffect, useRef } from 'react';
+import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3 } from 'three';
 import { useThree } from '@react-three/fiber';
 import { useThrottle } from '@react-hook/throttle';
 import gsap from 'gsap';
@@ -14,11 +11,10 @@ import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 import CubeSphere from '~/lib/graphics/CubeSphere';
-import { fiboOnHeightMap, getNearbyFibPoints } from '~/lib/graphics/fiboUtils';
+import { getNearbyFibPoints } from '~/lib/graphics/fiboUtils';
 import Config from './asteroid/Config';
 import HeightMap from './asteroid/HeightMap';
 import ColorMap from './asteroid/ColorMap';
-import LotMap from './asteroid/FiboMap';
 import NormalMap from './asteroid/NormalMap';
 import Rings from './asteroid/Rings';
 import constants from '~/lib/constants';
@@ -32,9 +28,8 @@ if (!!window.Worker && typeof OffscreenCanvas !== 'undefined') {
   textureRenderer = new TextureRenderer();
 }
 
-const vectorArrayToGeometryBuffer = (points) => {
-  return points.reduce((acc, cur) => cur ? [...acc, cur[0], cur[1], cur[2]] : acc, []);
-};
+const NEARBY_LOTS_TO_RENDER = 20;  // TODO: set this back to 12 - 20 range
+const nullNearMouseLots = Array.from(Array(NEARBY_LOTS_TO_RENDER)).map(() => new Vector3(0.0));
 
 const Asteroid = (props) => {
   const controls = useThree(({ controls }) => controls);
@@ -52,21 +47,19 @@ const Asteroid = (props) => {
   const group = useRef();
   const light = useRef();
   const mesh = useRef();
-  const lotsMesh = useRef();
-  const lotsGeo = useRef();
-  const fibMesh = useRef();
-  const fibPointsMesh = useRef();
+  const lotMesh = useRef();
   const asteroidOrbit = useRef();
   const rotationAxis = useRef();
 
-  const [ position, setPosition ] = useState([ 0, 0, 0 ]);
   const [ config, setConfig ] = useState();
-  const [ lotGeometry, setLotGeometry ] = useState();
+  const [ geometry, setGeometry ] = useState();
   const [ maps, setMaps ] = useState();
   const [ materials, setMaterials ] = useState();
-  const [ geometry, setGeometry ] = useState();
-  const [ fibGeometry, setFibGeometry ] = useState();
   const [ mousePos, setMousePos ] = useThrottle(null, 30);
+  const [ mouseIntersect, setMouseIntersect ] = useState();
+  const [ nearMouseLots, setNearMouseLots ] = useState();
+  const [ position, setPosition ] = useState([ 0, 0, 0 ]);
+  const [ rotation, setRotation ] = useState(0);
 
   // Positions the asteroid in space based on time changes
   useEffect(() => {
@@ -78,19 +71,18 @@ const Asteroid = (props) => {
     }
 
     if (mesh.current && config && time) {
-      const rotation = time * config.rotationSpeed * 2 * Math.PI;
-      mesh.current.setRotationFromAxisAngle(rotationAxis.current, rotation);
-      if (fibMesh.current) {
-        fibMesh.current.setRotationFromAxisAngle(rotationAxis.current, rotation);
-      }
-      if (fibPointsMesh.current) {
-        fibPointsMesh.current.setRotationFromAxisAngle(rotationAxis.current, rotation);
-      }
-      if (lotsMesh.current) {
-        lotsMesh.current.setRotationFromAxisAngle(rotationAxis.current, rotation);
-      }
+      setRotation(time * config.rotationSpeed * 2 * Math.PI);
     }
-  }, [ asteroidData, config, time, mesh.current, fibMesh.current, fibPointsMesh.current, lotsMesh.current ]);
+  }, [ asteroidData, config, time ]);
+
+  useEffect(() => {
+    if (mesh.current) {
+      mesh.current.setRotationFromAxisAngle(rotationAxis.current, rotation);
+    }
+    if (lotMesh.current) {
+      lotMesh.current.setRotationFromAxisAngle(rotationAxis.current, rotation);
+    }
+  }, [rotation]);
 
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
@@ -104,15 +96,14 @@ const Asteroid = (props) => {
       geometry?.dispose();
       setGeometry(null);
 
-      lotGeometry?.dispose();
-      setLotGeometry(null);
-
       materials?.forEach(m => {
         m.map?.dispose();
         m.normalMap?.dispose();
       });
 
       setMaterials(null);
+      setNearMouseLots(null);
+      // TODO: any other lot-related cleanup?
 
       if (zoomStatus === 'in') updateZoomStatus('zooming-out');
     }
@@ -129,9 +120,8 @@ const Asteroid = (props) => {
       worker.postMessage({ topic: 'renderMaps', mapSize, config });
       worker.onmessage = (event) => {
         if (event.data.topic === 'maps') {
-          const { heightMap, colorMap, normalMap, lotMap } = event.data;
-          console.log('lotMap', lotMap);
-          setMaps({ heightMap, colorMap, normalMap, lotMap });
+          const { heightMap, colorMap, normalMap } = event.data;
+          setMaps({ heightMap, colorMap, normalMap });
         }
       };
     } else if (!!textureRenderer) {
@@ -141,7 +131,6 @@ const Asteroid = (props) => {
         const colorMap = await colorMapObj.generateColorMap();
         const normalMap = new NormalMap(mapSize, heightMap, config, textureRenderer);
         setMaps({ heightMap, colorMap, normalMap });
-        /* TODO: replicate lot rendering */
       };
 
       renderMaps();
@@ -158,12 +147,7 @@ const Asteroid = (props) => {
       worker.onmessage = (event) => {
         if (event.data.topic === 'geometry') {
           const loader = new BufferGeometryLoader();
-          //console.log('event.data.geometryJSON', event.data.geometryJSON);
           setGeometry(loader.parse(event.data.geometryJSON));
-        } else if (event.data.topic === 'lotGeometry') {
-          const loader = new BufferGeometryLoader();
-          //console.log('event.data.lotGeometryJSON', event.data.lotGeometryJSON);
-          setLotGeometry(loader.parse(event.data.lotGeometryJSON));
         }
       };
     } else if (!!textureRenderer) {
@@ -176,18 +160,18 @@ const Asteroid = (props) => {
   }, [ maps ]);
 
   // Receives the updated maps and applies them to the material
-  const [fibMaterials, setFibMaterials] = useState();
   useEffect(() => {
     if (!maps) return;
     const processed = {};
     const materials = [];
-    const lotMaterials = [];
 
     Object.keys(maps).forEach(k => {
-      processed[k] = maps[k].map(m => {
-        const tex = new DataTexture(m.buffer, m.width, m.height, m.format);
-        return Object.assign(tex, m.options);
-      });
+      if (['colorMap', 'normalMap'].includes(k)) {
+        processed[k] = maps[k].map(m => {
+          const tex = new DataTexture(m.buffer, m.width, m.height, m.format);
+          return Object.assign(tex, m.options);
+        });
+      }
     });
 
     for (let i = 0; i < 6; i++) {
@@ -200,27 +184,9 @@ const Asteroid = (props) => {
         normalMap: processed.normalMap[i],
         roughness: 1
       }));
-
-      if (processed.lotMap[i]) {
-        console.log('processed.lotMap[i]', processed.lotMap[i]);
-        lotMaterials.push(new MeshBasicMaterial({
-          //alphaMap: processed.lotMap[i],
-          // uncomment blending stuff:
-          //blending: AdditiveBlending,
-          //blendSrc: SrcAlphaFactor,
-          //blendDst: DstAlphaFactor,
-          color: 0xffffff,
-          //emissive: 0x36a7cd,
-          //emissiveIntensity: 1,
-          dithering: true,
-          map: processed.lotMap[i],
-          metalness: 1,
-        }));
-      }
     }
 
     setMaterials(materials);
-    setFibMaterials(lotMaterials);
   }, [ maps ]);
 
   // Configures the light component once the geometry is created
@@ -333,69 +299,23 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldUpdatePosition, position, asteroidData ]);
 
-  const showFib = true;
-
-  const [fibPointsMaterials, setFibPointsMaterials] = useState();
   useEffect(() => {
-    if (config) {
-      setFibPointsMaterials(
-        new PointsMaterial({
-          color: 0x0000ff,
-          size: config.radius / 40,
-          //opacity: 0.33,
-          //transparent: true
-        })
-      );
-    }
-  }, [config]);
+    if (mousePos && mousePos.intersections?.length > 0) {
+      var intersection = new Vector3();
+      intersection.copy(mousePos.intersections[0].point);
+      intersection.applyAxisAngle(rotationAxis.current, -1 * rotation);
 
-  useEffect(() => {
-    if (mousePos && mousePos.intersections.length > 0) {
-      const intersection = mousePos.intersections[0];
-      const fibGeo = new BufferGeometry();
       const lots = Math.floor(4 * Math.PI * config.radius * config.radius / 1e6);
-      const nearbyFibPoints = getNearbyFibPoints(intersection.face.normal, lots, asteroidData.radius);
+      const nearbyFibPoints = getNearbyFibPoints(intersection.normalize(), lots, asteroidData.radius, NEARBY_LOTS_TO_RENDER);
+      while (nearbyFibPoints.length < NEARBY_LOTS_TO_RENDER) {
+        nearbyFibPoints.push(new Vector3(0.0));
+      }
 
-      // TODO: pass changing uniforms to shader (based on mouse position):
-      //  - (limited number of) points
-      //  - mouse position (for alpha layer)
-      // check distance from mouse... if > Xkm, skip
-      //  find minimum distance to any point
-      //  if minimum distance > threshold, color (for line) -- antialias with alpha function
-      //  else,
-      //    find point closest to mouse...
-      //    if my closest point and mouses closest point are the same
-      //      highlight with partial opacity
-      //    else, leave clear
-      //  apply alpha based on distance from mouse
-
-      // TODO: do above in 2d first, then come back and fix for 3d
-
-      // TODO: how do we handle across-the-cube-sphere-edge?
-      // NOTE: distance above should be "spherized" distance (i think?)
-      //  can we pass in 3d fragcoord? may need to pass in z value per point to calculate distance?
-
-
-
-
-
-
-
-
-      // TODO: reuse same buffergeometry if keeping as point field (but better to use as shader)
-      fibGeo.setAttribute(
-        'position',
-        new BufferAttribute(
-          new Float32Array(
-            vectorArrayToGeometryBuffer(nearbyFibPoints)
-          ),
-          3
-        )
-      );
-      setFibGeometry(fibGeo);
-      //console.log("move", intersection);
+      setMouseIntersect(intersection);
+      setNearMouseLots(nearbyFibPoints.map((p) => p.normalize()));
     } else {
-      setFibGeometry(null);
+      setMouseIntersect(null);
+      setNearMouseLots(null);
     }
   }, [mousePos]);
 
@@ -412,85 +332,155 @@ const Asteroid = (props) => {
           ref={mesh}
           material={materials}
           castShadow={shadows}
-          receiveShadow={shadows}
-          onPointerMove={setMousePos}>
+          receiveShadow={shadows}>
           <primitive attach="geometry" object={geometry} />
         </mesh>
       )}
-      {/*geometry && (
+      {geometry && (
         <mesh
           ref={lotMesh}
+          onPointerMove={setMousePos}
+          onPointerOut={setMousePos}
           scale={1.01}>
           <primitive attach="geometry" object={geometry} />
           <shaderMaterial attach="material" args={[{
-            transparent: true,
-            uniforms: {
-              uSamples: { type: 'f', value: Math.floor(4 * Math.PI * config.radius * config.radius / 1e6) },
-              uResolution: mapSize
-            },
-            fragmentShader: `
-              uniform float uSamples;
-              varying vec3 vNearest;
-              flat in int iIndex;
-              void main() {
-                //vec2 fib = vNearest.xy;
-                //vec2 uv = gl_FragCoord.xy;
-                //if (distance(uv, fib) > 0.0) {
-                //  gl_FragColor = vec4(0.0, 0.0, 1.0, 0.75);
-                //}
-                gl_FragColor = vec4(float(iIndex) / uSamples, 0.0, 1.0 - float(iIndex) / uSamples, 1);
-              }
-            `,
-          }]} />
-        </mesh>
-      )*/}
+              transparent: true,
+              uniforms: {
+                uMouse: { type: 'v', value: mouseIntersect || new Vector3(0.0) },
+                uMouseIn: { type: 'b', value: !!mouseIntersect },
+                uNearbyLots: { type: 'v', value: nearMouseLots || nullNearMouseLots }
+              },
+              vertexShader: `
+                varying vec3 vPosition;
 
-      {/*
-      {lotGeometry && config && (
-        <points ref={lotsMesh} scale={1.01}>
-          <primitive attach="geometry" object={lotGeometry} />
-          <shaderMaterial attach="material" args={[{
-            transparent: true,
-            uniforms: {
-              uSamples: { type: 'f', value: Math.floor(4 * Math.PI * config.radius * config.radius / 1e6) },
-              uResolution: mapSize
-            },
-            vertexShader: `varying vec3 vNearest;
-              void main() {
-                vNearest = position;
-                gl_PointSize = 10.0;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-              }
-            `,
-            fragmentShader: `
-              uniform float uSamples;
-              varying vec3 vNearest;
-              flat in int iIndex;
-              void main() {
-                //vec2 fib = vNearest.xy;
-                //vec2 uv = gl_FragCoord.xy;
-                //if (distance(uv, fib) > 0.0) {
-                //  gl_FragColor = vec4(0.0, 0.0, 1.0, 0.75);
-                //}
-                gl_FragColor = vec4(float(iIndex) / uSamples, 0.0, 1.0 - float(iIndex) / uSamples, 1);
-              }
-            `,
+                void main() {
+                  vPosition = position;
+                  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+              `,
+              fragmentShader: `
+                varying vec3 vPosition;
+
+                uniform vec3 uMouse;
+                uniform bool uMouseIn;
+                uniform vec3 uNearbyLots[${NEARBY_LOTS_TO_RENDER}];
+
+                float mouseHighlightWidth = 0.5; // TODO: should calculate based on asteroid size
+
+                struct ClosestLotInfo {
+                  int index;
+                  float distance;
+                };
+
+                ClosestLotInfo closestLot(vec3 testPosition) {
+                  int closestPoint = -1;
+                  float minDist = -1.0;
+                  for (int i = 0; i < ${NEARBY_LOTS_TO_RENDER}; i++) {
+                    if (length(uNearbyLots[i]) > 0.0) {
+                      float testDist = distance(testPosition, uNearbyLots[i]);
+                      if (minDist < 0.0 || testDist < minDist) {
+                        minDist = testDist;
+                        closestPoint = i;
+                      }
+                    }
+                  }
+                  return ClosestLotInfo(closestPoint, minDist);
+                }
+
+                void calcClosestLots(inout ClosestLotInfo closest[2], vec3 testPosition) {
+                  for (int i = 0; i < ${NEARBY_LOTS_TO_RENDER}; i++) {
+                    if (length(uNearbyLots[i]) > 0.0) {
+                      float testDist = distance(testPosition, uNearbyLots[i]);
+                      if (closest[0].distance < 0.0 || testDist < closest[0].distance) {
+                        closest[1] = closest[0];
+                        closest[0].index = i;
+                        closest[0].distance = testDist;
+                      } else if (closest[1].distance < 0.0 || testDist < closest[1].distance) {
+                        closest[1].index = i;
+                        closest[1].distance = testDist;
+                      }
+                    }
+                  }
+                }
+
+                vec4 tileByClosest(float mDist, vec3 uv) {
+                  ClosestLotInfo lot = closestLot(uv);
+
+                  float minMouseRadius = 0.85 * mouseHighlightWidth;
+                  float maxMouseRadius = mouseHighlightWidth;
+
+                  float alphaMax = 0.8 - (clamp(mDist, minMouseRadius, maxMouseRadius) - minMouseRadius) / (maxMouseRadius - minMouseRadius);
+                  
+                  // TODO: if not using these, can remove mins calc and the uniform
+                  //  (unless need for asteroid radius scaling)
+                  return vec4(
+                    lot.index == 0 ? 0.8 : 0.0,
+                    lot.index == 0 ? 0.8 : 0.0,
+                    lot.index == 0 ? 1.0 : 1.0 / float(lot.index),
+                    lot.index == 0 ? 1.0 : alphaMax
+                    //1.0 - pow(float(lot.index)/float(${NEARBY_LOTS_TO_RENDER-12}), 2.0)
+                  );
+                }
+
+                vec4 outlineByClosest(float mDist, vec3 uv) {
+                  ClosestLotInfo lots[2] = ClosestLotInfo[2](
+                    ClosestLotInfo(-1, -1.0),
+                    ClosestLotInfo(-1, -1.0)
+                  );
+
+                  calcClosestLots(lots, uv);
+                    
+                  float minMouseRadius = 0.5 * mouseHighlightWidth;
+                  float maxMouseRadius = mouseHighlightWidth;
+
+                  float alphaMax = 0.8 - (clamp(mDist, minMouseRadius, maxMouseRadius) - minMouseRadius) / (maxMouseRadius - minMouseRadius);
+
+                  // if near border between tiles, color as line
+                  float distanceFromNextLot = lots[1].distance - lots[0].distance;
+                  if (distanceFromNextLot < 0.015) {
+                    if (lots[0].index == 0) {
+                      return vec4(0.21, 0.65, 0.8, 0.8);
+                    }
+                    float fade = min(1.0, pow(68.0 * distanceFromNextLot, 2.0) + 0.3);
+                    return vec4(0.0, 0.0, 1.0, min(alphaMax, 1.0) * fade);
+
+                  // if nearest mouse tile, color as highlighted
+                  } else if (lots[0].index == 0) {
+                    return vec4(0.4, 0.4, 1.0, 0.2);
+                  }
+
+                  return vec4(0.0);
+                }
+
+                void main() {
+                  gl_FragColor = vec4(0.0);
+                  if (uMouseIn) {
+                    vec3 p = normalize(vPosition);
+                    vec3 m = normalize(uMouse);
+                    float mDist = distance(p, m);
+                    if (mDist < mouseHighlightWidth) {
+                      
+                      // mark the y-poles for debugging
+                      //if (p.y > 0.9) {
+                      //  gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+                      //} else if(p.y < -0.9) {
+                      //  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+                      // mark the lot centers
+                      //if (lot.distance < 0.02) {
+                      //  gl_FragColor = vec4(1.0);
+                      //} else {
+                      //  gl_FragColor = tileByClosest(mDist, p);
+                          gl_FragColor = outlineByClosest(mDist, p);
+                      //}
+
+
+                    }
+                  }
+                }
+              `
           }]} />
-        </points>
-      )}
-      */}
-      {showFib && fibMaterials && geometry && (
-        <mesh ref={fibMesh} material={fibMaterials}>
-          <primitive attach="geometry" object={geometry} />
         </mesh>
       )}
-      {/*
-      {showFib && fibPointsMaterials && fibGeometry && (
-        <points ref={fibPointsMesh} material={fibPointsMaterials}>
-          <primitive attach="geometry" object={fibGeometry} />
-        </points>
-      )}
-      */}
       {config?.ringsPresent && geometry && (
         <Rings
           receiveShadow={shadows}

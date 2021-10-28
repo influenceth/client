@@ -6,7 +6,6 @@ import CubeSphere from '~/lib/graphics/CubeSphere';
 import { fiboOnHeightMap } from '~/lib/graphics/fiboUtils';
 import HeightMap from '~/game/scene/asteroid/HeightMap';
 import ColorMap from '~/game/scene/asteroid/ColorMap';
-import LotMap from '~/game/scene/asteroid/FiboMap';
 import NormalMap from '~/game/scene/asteroid/NormalMap';
 import constants from '~/lib/constants';
 
@@ -24,7 +23,6 @@ onmessage = async function(event) {
       break;
     case 'renderGeometry':
       renderGeometry(event.data.heightMap, event.data.config);
-      //renderLotGeometry(event.data.heightMap, event.data.config);
       break;
     case 'renderMaps':
       renderMaps(event.data.mapSize, event.data.config);
@@ -75,9 +73,7 @@ const renderMaps = async function(mapSize, config) {
   const colorMapObj = new ColorMap(mapSize, heightMap, config, textureRenderer);
   const colorMap = await colorMapObj.generateColorMap();
   const normalMap = new NormalMap(mapSize, heightMap, config, textureRenderer);
-  const lotMapObj = new LotMap(mapSize, config, textureRenderer);
-  const lotMap = await lotMapObj.generateFiboMap();
-  postMessage({ topic: 'maps', heightMap, colorMap, normalMap, lotMap });
+  postMessage({ topic: 'maps', heightMap, colorMap, normalMap });
 };
 
 const renderGeometry = function(heightMap, config) {
@@ -86,13 +82,5 @@ const renderGeometry = function(heightMap, config) {
   delete geometry.parameters;
   const geometryJSON = geometry.toJSON();
   postMessage({ topic: 'geometry', geometryJSON });
-};
-
-const renderLotGeometry = async function(heightMap, config) {
-  const samples = Math.floor(4 * Math.PI * config.radius * config.radius / 1e6);
-  const bufferGeometry = new BufferGeometry();
-  bufferGeometry.setFromPoints(fiboOnHeightMap(samples, heightMap, config));
-  const lotGeometryJSON = bufferGeometry.toJSON();
-  postMessage({ topic: 'lotGeometry', lotGeometryJSON });
 };
 

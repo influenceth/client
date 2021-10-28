@@ -105,8 +105,9 @@ export const fiboOnHeightMap = (samples, maps, config) => {
 // we know points should be ~1km apart, which means if we limit our checks to
 // a range of +-0.5km in any dimension, we should feel confident we will get
 // at least one point (NOTE: distribution isn't perfect, so worth a safety factor)
-export const getNearbyFibPoints = (center, samples, radius, heightMap) => {
-  const lotSize = 1000 / radius; // TODO: is lot size in config?
+const poleBuffer = 0.7;
+export const getNearbyFibPoints = (center, samples, radius, maxToReturn) => {
+  const lotSize = 1000 / radius;
   const yRadiusToSearch = 2 * lotSize;
 
   let centerTheta = Math.atan(center.z / center.x);
@@ -117,32 +118,36 @@ export const getNearbyFibPoints = (center, samples, radius, heightMap) => {
   const maxIndex = Math.min(samples - 1, Math.ceil((1 - center.y + yRadiusToSearch) * (samples - 1) / 2));
   const minIndex = Math.max(0, Math.floor((1 - center.y - yRadiusToSearch) * (samples - 1) / 2));
   
+  //console.log(center, { centerTheta, thetaTolerance, maxIndex, minIndex });
+
   const points = [];
   for(let index = minIndex; index < maxIndex; index++) {
     const theta = phi * index;
     
     // skip if this point is not within a threshold of angle to center
-    if (Math.abs(getAngleDiff(centerTheta, theta)) > thetaTolerance) continue;
+    // TODO: there is a bug when center.x is negative...
+    if (center.x > 0 && center.y < poleBuffer && center.y > -poleBuffer) {
+      if (getAngleDiff(centerTheta, theta) > thetaTolerance) continue;
+    }
 
     const y = 1 - (2 * index / (samples - 1));
     const radiusAtY = Math.sqrt(1 - y * y);
     const x = Math.cos(theta) * radiusAtY;
     const z = Math.sin(theta) * radiusAtY;
+
     points.push([
-      x * radius,
-      y * radius,
-      z * radius,
+      x,
+      y,
+      z,
       Math.abs(center.x - x) + Math.abs(center.y - y) + Math.abs(center.z - z)
     ]);
   }
-  console.log(`${maxIndex - minIndex} points in range; ${points.length} checked`);
+  //console.log(`${maxIndex - minIndex} points in range; ${points.length} checked`);
 
   return points
     .sort((a, b) => a[3] < b[3] ? -1 : 1)
-    .map((p) => [p[0], p[1], p[2]])
-    .slice(0, 15);
-    // TODO: scale remaining points using height map;
-    // TODO: could simulate voronoi by finding minimum point separation, and shading anything > 0.5*min
+    .map((p) => new Vector3(p[0], p[1], p[2]))
+    .slice(0, maxToReturn);
 };
 
 ////////////////////////////////////////////////////////
@@ -159,10 +164,11 @@ export const displaceVectorWithHeightMap = (original, u, v, map, config) => {
 };
 
 export const getAngleDiff = (angle1, angle2) => {
+  const debug = (angle1 < 0);
   const a1 = angle1 >= 0 ? angle1 : (angle1 + 2 * Math.PI);
   const a2 = angle2 >= 0 ? angle2 : (angle2 + 2 * Math.PI);
   const diff = Math.abs(a1 - a2) % (2 * Math.PI);
-  return diff <= Math.PI ? diff : (diff - Math.PI);
+  return diff > Math.PI ? (2 * Math.PI - diff) : diff;
   //const diff = angle1 - angle2;
   //return Math.atan2(Math.sin(diff), Math.cos(diff));
 }
