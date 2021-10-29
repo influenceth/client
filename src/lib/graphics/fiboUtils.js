@@ -105,28 +105,26 @@ export const fiboOnHeightMap = (samples, maps, config) => {
 // we know points should be ~1km apart, which means if we limit our checks to
 // a range of +-0.5km in any dimension, we should feel confident we will get
 // at least one point (NOTE: distribution isn't perfect, so worth a safety factor)
-const poleBuffer = 0.7;
+const poleBuffer = 0.85;  // TODO: poleBuffer should be proportional to lotSize instead of % of sphere
 export const getNearbyFibPoints = (center, samples, radius, maxToReturn) => {
   const lotSize = 1000 / radius;
   const yRadiusToSearch = 2 * lotSize;
 
-  let centerTheta = Math.atan(center.z / center.x);
-  // TODO: will thetaTolerance make things weird at poles? could skip check at highest and lowest indexes...
-  // TODO: could be calculated once per asteroid rather than per mouse move (unless need to treat differently at poles)
+  let centerTheta = Math.atan2(center.z, center.x);
+  
+  // TODO: rather than poleBuffer, thetaTolerance should probably expand to 2*PI as approach pole
+  //    and converge to minimum (that is inverse to samples) near equator
   const thetaTolerance = getThetaTolerance(samples);
 
   const maxIndex = Math.min(samples - 1, Math.ceil((1 - center.y + yRadiusToSearch) * (samples - 1) / 2));
   const minIndex = Math.max(0, Math.floor((1 - center.y - yRadiusToSearch) * (samples - 1) / 2));
-  
-  //console.log(center, { centerTheta, thetaTolerance, maxIndex, minIndex });
 
   const points = [];
   for(let index = minIndex; index < maxIndex; index++) {
     const theta = phi * index;
     
     // skip if this point is not within a threshold of angle to center
-    // TODO: there is a bug when center.x is negative...
-    if (center.x > 0 && center.y < poleBuffer && center.y > -poleBuffer) {
+    if (center.y < poleBuffer && center.y > -poleBuffer) {
       if (getAngleDiff(centerTheta, theta) > thetaTolerance) continue;
     }
 
@@ -142,7 +140,7 @@ export const getNearbyFibPoints = (center, samples, radius, maxToReturn) => {
       Math.abs(center.x - x) + Math.abs(center.y - y) + Math.abs(center.z - z)
     ]);
   }
-  //console.log(`${maxIndex - minIndex} points in range; ${points.length} checked`);
+  console.log(`${maxIndex - minIndex} points in range; ${points.length} checked`);
 
   return points
     .sort((a, b) => a[3] < b[3] ? -1 : 1)
@@ -164,17 +162,15 @@ export const displaceVectorWithHeightMap = (original, u, v, map, config) => {
 };
 
 export const getAngleDiff = (angle1, angle2) => {
-  const debug = (angle1 < 0);
   const a1 = angle1 >= 0 ? angle1 : (angle1 + 2 * Math.PI);
   const a2 = angle2 >= 0 ? angle2 : (angle2 + 2 * Math.PI);
   const diff = Math.abs(a1 - a2) % (2 * Math.PI);
   return diff > Math.PI ? (2 * Math.PI - diff) : diff;
-  //const diff = angle1 - angle2;
-  //return Math.atan2(Math.sin(diff), Math.cos(diff));
 }
 
+// TODO: flesh this out
 export const getThetaTolerance = (samples) => { 
   if (samples < 1e2) return 2 * Math.PI;
-  if (samples < 1e4) return Math.PI / (Math.log10(samples) + 1);
+  if (samples < 1e3) return Math.PI / (Math.log10(samples) + 1);
   return Math.PI / (2 * Math.log10(samples));
 }
