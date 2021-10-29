@@ -105,11 +105,11 @@ class CubeSphere extends BoxGeometry {
       count = this.groups[i].count;
 
       for (let j = start; j < start + count; j++) {
-        vi = this.index.array[j]; // vertexindex
+        vi = this.index.array[j];
         if (touched.has(vi)) continue;
         const v = new Vector3().fromArray(vertices.array, vi * 3);
-        const s = Math.round(uvs[vi * 2] * (tWidth - 1));       // u
-        const t = Math.round(uvs[vi * 2 + 1] * (tHeight - 1));  // v
+        const s = Math.round(uvs[vi * 2] * (tWidth - 1));
+        const t = Math.round(uvs[vi * 2 + 1] * (tHeight - 1));
         const mod = -1 + map.buffer[(tWidth * t + s) * 4 + 3] / 128;
         v.setLength(radius * (1 + mod * config.dispWeight)).multiply(config.stretch);
         vertices.setXYZ(vi, v.x, v.y, v.z);

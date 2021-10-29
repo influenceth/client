@@ -82,4 +82,3 @@ const renderGeometry = function(heightMap, config) {
   const geometryJSON = geometry.toJSON();
   postMessage({ topic: 'geometry', geometryJSON });
 };
-
