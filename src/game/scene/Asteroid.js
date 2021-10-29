@@ -315,6 +315,7 @@ const Asteroid = (props) => {
           <primitive attach="geometry" object={geometry} />
         </mesh>
       )}
+      {/* TODO: don't render this layer if "lot" mode not on */}
       {geometry && (
         <AsteroidLots
           geometry={geometry}
