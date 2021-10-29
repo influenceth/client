@@ -31,7 +31,7 @@ const Lots = ({ geometry, radius, rotation, rotationAxis }) => {
 
   const meshReady = !!lotMesh.current;
   useEffect(() => {
-    if (meshReady && rotationAxis) {
+    if (lotMesh.current && rotationAxis) {
       lotMesh.current.setRotationFromAxisAngle(rotationAxis, rotation);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

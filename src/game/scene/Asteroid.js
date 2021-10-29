@@ -73,7 +73,7 @@ const Asteroid = (props) => {
   // NOTE: if make changes in the below block, also update asteroid/lots.js for consistency
   const meshReady = !!mesh.current;
   useEffect(() => {
-    if (meshReady) {
+    if (mesh.current) {
       mesh.current.setRotationFromAxisAngle(rotationAxis.current, rotation);
     }
   }, [rotation, meshReady]);
