@@ -1,9 +1,8 @@
 import { KeplerianOrbit } from 'influence-utils';
-import { BufferGeometry, Vector3, WebGLRenderer } from 'three';
+import { WebGLRenderer } from 'three';
 
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 import CubeSphere from '~/lib/graphics/CubeSphere';
-import { fiboOnHeightMap } from '~/lib/graphics/fiboUtils';
 import HeightMap from '~/game/scene/asteroid/HeightMap';
 import ColorMap from '~/game/scene/asteroid/ColorMap';
 import NormalMap from '~/game/scene/asteroid/NormalMap';

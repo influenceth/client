@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3 } from 'three';
 import { useThree } from '@react-three/fiber';
-import { useThrottle } from '@react-hook/throttle';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
 
@@ -11,12 +10,12 @@ import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 import CubeSphere from '~/lib/graphics/CubeSphere';
-import { getNearbyFibPoints } from '~/lib/graphics/fiboUtils';
 import Config from './asteroid/Config';
 import HeightMap from './asteroid/HeightMap';
 import ColorMap from './asteroid/ColorMap';
 import NormalMap from './asteroid/NormalMap';
 import Rings from './asteroid/Rings';
+import AsteroidLots from './asteroid/Lots';
 import constants from '~/lib/constants';
 
 // Setup worker or main thread textureRenderer depending on browser
@@ -27,9 +26,6 @@ if (!!window.Worker && typeof OffscreenCanvas !== 'undefined') {
 } else {
   textureRenderer = new TextureRenderer();
 }
-
-const NEARBY_LOTS_TO_RENDER = 20;  // TODO: set this back to 12 - 20 range
-const nullNearMouseLots = Array.from(Array(NEARBY_LOTS_TO_RENDER)).map(() => new Vector3(0.0));
 
 const Asteroid = (props) => {
   const controls = useThree(({ controls }) => controls);
@@ -47,7 +43,6 @@ const Asteroid = (props) => {
   const group = useRef();
   const light = useRef();
   const mesh = useRef();
-  const lotMesh = useRef();
   const asteroidOrbit = useRef();
   const rotationAxis = useRef();
 
@@ -55,9 +50,6 @@ const Asteroid = (props) => {
   const [ geometry, setGeometry ] = useState();
   const [ maps, setMaps ] = useState();
   const [ materials, setMaterials ] = useState();
-  const [ mousePos, setMousePos ] = useThrottle(null, 30);
-  const [ mouseIntersect, setMouseIntersect ] = useState();
-  const [ nearMouseLots, setNearMouseLots ] = useState();
   const [ position, setPosition ] = useState([ 0, 0, 0 ]);
   const [ rotation, setRotation ] = useState(0);
 
@@ -70,17 +62,15 @@ const Asteroid = (props) => {
       setPosition(Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU));
     }
 
-    if (mesh.current && config && time) {
+    if (config && time) {
       setRotation(time * config.rotationSpeed * 2 * Math.PI);
     }
   }, [ asteroidData, config, time ]);
 
+  // NOTE: if make changes in the below block, also update asteroid/lots.js for consistency
   useEffect(() => {
     if (mesh.current) {
       mesh.current.setRotationFromAxisAngle(rotationAxis.current, rotation);
-    }
-    if (lotMesh.current) {
-      lotMesh.current.setRotationFromAxisAngle(rotationAxis.current, rotation);
     }
   }, [rotation]);
 
@@ -102,8 +92,6 @@ const Asteroid = (props) => {
       });
 
       setMaterials(null);
-      setNearMouseLots(null);
-      // TODO: any other lot-related cleanup?
 
       if (zoomStatus === 'in') updateZoomStatus('zooming-out');
     }
@@ -299,26 +287,6 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldUpdatePosition, position, asteroidData ]);
 
-  useEffect(() => {
-    if (mousePos && mousePos.intersections?.length > 0) {
-      var intersection = new Vector3();
-      intersection.copy(mousePos.intersections[0].point);
-      intersection.applyAxisAngle(rotationAxis.current, -1 * rotation);
-
-      const lots = Math.floor(4 * Math.PI * config.radius * config.radius / 1e6);
-      const nearbyFibPoints = getNearbyFibPoints(intersection.normalize(), lots, asteroidData.radius, NEARBY_LOTS_TO_RENDER);
-      while (nearbyFibPoints.length < NEARBY_LOTS_TO_RENDER) {
-        nearbyFibPoints.push(new Vector3(0.0));
-      }
-
-      setMouseIntersect(intersection);
-      setNearMouseLots(nearbyFibPoints.map((p) => p.normalize()));
-    } else {
-      setMouseIntersect(null);
-      setNearMouseLots(null);
-    }
-  }, [mousePos]);
-
   return (
     <group ref={group}>
       <directionalLight
@@ -337,149 +305,12 @@ const Asteroid = (props) => {
         </mesh>
       )}
       {geometry && (
-        <mesh
-          ref={lotMesh}
-          onPointerMove={setMousePos}
-          onPointerOut={setMousePos}
-          scale={1.01}>
-          <primitive attach="geometry" object={geometry} />
-          <shaderMaterial attach="material" args={[{
-              transparent: true,
-              uniforms: {
-                uMouse: { type: 'v', value: mouseIntersect || new Vector3(0.0) },
-                uMouseIn: { type: 'b', value: !!mouseIntersect },
-                uNearbyLots: { type: 'v', value: nearMouseLots || nullNearMouseLots }
-              },
-              vertexShader: `
-                varying vec3 vPosition;
-
-                void main() {
-                  vPosition = position;
-                  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-              `,
-              fragmentShader: `
-                varying vec3 vPosition;
-
-                uniform vec3 uMouse;
-                uniform bool uMouseIn;
-                uniform vec3 uNearbyLots[${NEARBY_LOTS_TO_RENDER}];
-
-                float mouseHighlightWidth = 0.5; // TODO: should calculate based on asteroid size
-
-                struct ClosestLotInfo {
-                  int index;
-                  float distance;
-                };
-
-                ClosestLotInfo closestLot(vec3 testPosition) {
-                  int closestPoint = -1;
-                  float minDist = -1.0;
-                  for (int i = 0; i < ${NEARBY_LOTS_TO_RENDER}; i++) {
-                    if (length(uNearbyLots[i]) > 0.0) {
-                      float testDist = distance(testPosition, uNearbyLots[i]);
-                      if (minDist < 0.0 || testDist < minDist) {
-                        minDist = testDist;
-                        closestPoint = i;
-                      }
-                    }
-                  }
-                  return ClosestLotInfo(closestPoint, minDist);
-                }
-
-                void calcClosestLots(inout ClosestLotInfo closest[2], vec3 testPosition) {
-                  for (int i = 0; i < ${NEARBY_LOTS_TO_RENDER}; i++) {
-                    if (length(uNearbyLots[i]) > 0.0) {
-                      float testDist = distance(testPosition, uNearbyLots[i]);
-                      if (closest[0].distance < 0.0 || testDist < closest[0].distance) {
-                        closest[1] = closest[0];
-                        closest[0].index = i;
-                        closest[0].distance = testDist;
-                      } else if (closest[1].distance < 0.0 || testDist < closest[1].distance) {
-                        closest[1].index = i;
-                        closest[1].distance = testDist;
-                      }
-                    }
-                  }
-                }
-
-                vec4 tileByClosest(float mDist, vec3 uv) {
-                  ClosestLotInfo lot = closestLot(uv);
-
-                  float minMouseRadius = 0.85 * mouseHighlightWidth;
-                  float maxMouseRadius = mouseHighlightWidth;
-
-                  float alphaMax = 0.8 - (clamp(mDist, minMouseRadius, maxMouseRadius) - minMouseRadius) / (maxMouseRadius - minMouseRadius);
-                  
-                  // TODO: if not using these, can remove mins calc and the uniform
-                  //  (unless need for asteroid radius scaling)
-                  return vec4(
-                    lot.index == 0 ? 0.8 : 0.0,
-                    lot.index == 0 ? 0.8 : 0.0,
-                    lot.index == 0 ? 1.0 : 1.0 / float(lot.index),
-                    lot.index == 0 ? 1.0 : alphaMax
-                    //1.0 - pow(float(lot.index)/float(${NEARBY_LOTS_TO_RENDER-12}), 2.0)
-                  );
-                }
-
-                vec4 outlineByClosest(float mDist, vec3 uv) {
-                  ClosestLotInfo lots[2] = ClosestLotInfo[2](
-                    ClosestLotInfo(-1, -1.0),
-                    ClosestLotInfo(-1, -1.0)
-                  );
-
-                  calcClosestLots(lots, uv);
-                    
-                  float minMouseRadius = 0.5 * mouseHighlightWidth;
-                  float maxMouseRadius = mouseHighlightWidth;
-
-                  float alphaMax = 0.8 - (clamp(mDist, minMouseRadius, maxMouseRadius) - minMouseRadius) / (maxMouseRadius - minMouseRadius);
-
-                  // if near border between tiles, color as line
-                  float distanceFromNextLot = lots[1].distance - lots[0].distance;
-                  if (distanceFromNextLot < 0.015) {
-                    if (lots[0].index == 0) {
-                      return vec4(0.21, 0.65, 0.8, 0.8);
-                    }
-                    float fade = min(1.0, pow(68.0 * distanceFromNextLot, 2.0) + 0.3);
-                    return vec4(0.0, 0.0, 1.0, min(alphaMax, 1.0) * fade);
-
-                  // if nearest mouse tile, color as highlighted
-                  } else if (lots[0].index == 0) {
-                    return vec4(0.4, 0.4, 1.0, 0.2);
-                  }
-
-                  return vec4(0.0);
-                }
-
-                void main() {
-                  gl_FragColor = vec4(0.0);
-                  if (uMouseIn) {
-                    vec3 p = normalize(vPosition);
-                    vec3 m = normalize(uMouse);
-                    float mDist = distance(p, m);
-                    if (mDist < mouseHighlightWidth) {
-                      
-                      // mark the y-poles for debugging
-                      //if (p.y > 0.9) {
-                      //  gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
-                      //} else if(p.y < -0.9) {
-                      //  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-                      // mark the lot centers
-                      //if (lot.distance < 0.02) {
-                      //  gl_FragColor = vec4(1.0);
-                      //} else {
-                      //  gl_FragColor = tileByClosest(mDist, p);
-                          gl_FragColor = outlineByClosest(mDist, p);
-                      //}
-
-
-                    }
-                  }
-                }
-              `
-          }]} />
-        </mesh>
+        <AsteroidLots
+          geometry={geometry}
+          radius={config.radius}
+          rotation={rotation}
+          rotationAxis={rotationAxis?.current}
+        />
       )}
       {config?.ringsPresent && geometry && (
         <Rings

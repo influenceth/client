@@ -1,4 +1,4 @@
-import { Vector2, Vector3 } from 'three';
+import { Vector3 } from 'three';
 
 const phi = Math.PI * (3 - Math.sqrt(5));
 
@@ -51,7 +51,6 @@ export const unitFiboCubeSphere = (samples, outputAsVector3Buffer) => {
     } else {
       faces[faceIndex].push(new Vector3(u, v, index));
     }
-    // TODO: check that the orientation on these is correct (maybe by writing number or sizing up so we know spiral is contiguous OR checking from polar coordinates)
   }
 
   return faces;
@@ -96,36 +95,45 @@ export const fiboOnHeightMap = (samples, maps, config) => {
     }
 
     geometry.push(v);
-    // TODO: check that the orientation on these is correct (maybe by writing number or sizing up so we know spiral is contiguous OR checking from polar coordinates)
   }
 
   return geometry;
 };
 
-// we know points should be ~1km apart, which means if we limit our checks to
-// a range of +-0.5km in any dimension, we should feel confident we will get
-// at least one point (NOTE: distribution isn't perfect, so worth a safety factor)
-const poleBuffer = 0.85;  // TODO: poleBuffer should be proportional to lotSize instead of % of sphere
-export const getNearbyFibPoints = (center, samples, radius, maxToReturn) => {
-  const lotSize = 1000 / radius;
-  const yRadiusToSearch = 2 * lotSize;
+export const getNearbyFiboPoints = (center, samples, maxToReturn) => {
+  const returnAllPoints = !maxToReturn;
 
-  let centerTheta = Math.atan2(center.z, center.x);
+  let arcToSearch, yToSearch, maxIndex, minIndex, centerTheta, thetaTolerance;
+  if (returnAllPoints) {
+    minIndex = 0;
+    maxIndex = samples - 1;
+  } else {
+    // assuming # of lots returning represent a circular area around center,
+    // the radius of which is ~the arc length we need to search
+    //    SA of unit sphere (4 * pi * r^2) == 4 * pi
+    //    lotArea is SA / samples == 4 * pi / samples
+    //    targetArea is pi * search_radius^2 == maxToReturn * lotArea
+    //      search_radius = sqrt(maxToReturn * (4 * pi / samples) / pi)
+    // + 10% safety factor
+    arcToSearch = 1.1 * Math.sqrt(4 * maxToReturn / samples);
   
-  // TODO: rather than poleBuffer, thetaTolerance should probably expand to 2*PI as approach pole
-  //    and converge to minimum (that is inverse to samples) near equator
-  const thetaTolerance = getThetaTolerance(samples);
-
-  const maxIndex = Math.min(samples - 1, Math.ceil((1 - center.y + yRadiusToSearch) * (samples - 1) / 2));
-  const minIndex = Math.max(0, Math.floor((1 - center.y - yRadiusToSearch) * (samples - 1) / 2));
+    // angle of arclen == arclen / radius (radius is 1)
+    // y of angle == sin(angle) * radius (radius is 1)
+    yToSearch = Math.sin(arcToSearch);
+    maxIndex = Math.min(samples - 1, Math.ceil((1 - center.y + yToSearch) * (samples - 1) / 2));
+    minIndex = Math.max(0, Math.floor((1 - center.y - yToSearch) * (samples - 1) / 2));
+  
+    centerTheta = Math.atan2(center.z, center.x);
+    thetaTolerance = arcToSearch / Math.sqrt(1 - center.y * center.y);
+  }
 
   const points = [];
   for(let index = minIndex; index < maxIndex; index++) {
     const theta = phi * index;
-    
-    // skip if this point is not within a threshold of angle to center
-    if (center.y < poleBuffer && center.y > -poleBuffer) {
-      if (getAngleDiff(centerTheta, theta) > thetaTolerance) continue;
+    if (!returnAllPoints) {
+      if (getAngleDiff(centerTheta, theta) > thetaTolerance) {
+        continue;
+      }
     }
 
     const y = 1 - (2 * index / (samples - 1));
@@ -137,15 +145,20 @@ export const getNearbyFibPoints = (center, samples, radius, maxToReturn) => {
       x,
       y,
       z,
-      Math.abs(center.x - x) + Math.abs(center.y - y) + Math.abs(center.z - z)
+      index,
+      Math.abs(center.x - x) + Math.abs(center.y - y) + Math.abs(center.z - z),
     ]);
   }
-  console.log(`${maxIndex - minIndex} points in range; ${points.length} checked`);
+  //console.log(`${maxIndex - minIndex} points in range; ${points.length} checked`);
 
-  return points
-    .sort((a, b) => a[3] < b[3] ? -1 : 1)
-    .map((p) => new Vector3(p[0], p[1], p[2]))
-    .slice(0, maxToReturn);
+  const sortedPoints = points
+    .sort((a, b) => a[4] < b[4] ? -1 : 1)
+    .slice(0, maxToReturn || undefined);
+
+  return {
+    closestIndex: sortedPoints[0][3],
+    points: sortedPoints.map((p) => new Vector3(p[0], p[1], p[2]))
+  };
 };
 
 ////////////////////////////////////////////////////////
@@ -166,11 +179,4 @@ export const getAngleDiff = (angle1, angle2) => {
   const a2 = angle2 >= 0 ? angle2 : (angle2 + 2 * Math.PI);
   const diff = Math.abs(a1 - a2) % (2 * Math.PI);
   return diff > Math.PI ? (2 * Math.PI - diff) : diff;
-}
-
-// TODO: flesh this out
-export const getThetaTolerance = (samples) => { 
-  if (samples < 1e2) return 2 * Math.PI;
-  if (samples < 1e3) return Math.PI / (Math.log10(samples) + 1);
-  return Math.PI / (2 * Math.log10(samples));
 }
