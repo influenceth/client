@@ -29,11 +29,13 @@ const Lots = ({ geometry, radius, rotation, rotationAxis }) => {
     return Math.sqrt(4 * NEARBY_LOTS_TO_RENDER / lotCount);
   }, [lotCount]);
 
+  const meshReady = !!lotMesh.current;
   useEffect(() => {
-    if (lotMesh.current) {
+    if (meshReady && rotationAxis) {
       lotMesh.current.setRotationFromAxisAngle(rotationAxis, rotation);
     }
-  }, [rotationAxis, rotation]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rotation, meshReady]);
   
   useEffect(() => {
     if (mousePos && mousePos.intersections?.length > 0) {

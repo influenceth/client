@@ -71,11 +71,12 @@ const Asteroid = (props) => {
   }, [ asteroidData, config, time ]);
 
   // NOTE: if make changes in the below block, also update asteroid/lots.js for consistency
+  const meshReady = !!mesh.current;
   useEffect(() => {
-    if (mesh.current) {
+    if (meshReady) {
       mesh.current.setRotationFromAxisAngle(rotationAxis.current, rotation);
     }
-  }, [rotation]);
+  }, [rotation, meshReady]);
 
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
