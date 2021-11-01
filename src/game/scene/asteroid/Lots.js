@@ -3,9 +3,12 @@ import { Vector3 } from 'three';
 import { useThrottle } from '@react-hook/throttle';
 
 import { getNearbyFiboPoints } from '~/lib/graphics/fiboUtils';
+import lotShader from './lots.glsl';
+import lotVertexShader from './lots.vert';
 
-const NEARBY_LOTS_TO_RENDER = 20;
-const MAX_LOTS_TO_RENDER = 40;    // (intended for small asteroids)
+// NOTE: if change MAX_LOTS_TO_RENDER, also update two references in lots.glsl
+const MAX_LOTS_TO_RENDER = 40; 
+const TARGET_LOTS_TO_RENDER = 20;
 const nullNearMouseLots = Array.from(Array(MAX_LOTS_TO_RENDER)).map(() => new Vector3(0.0));
 
 const Lots = ({ geometry, radius, rotation, rotationAxis }) => {
@@ -23,10 +26,12 @@ const Lots = ({ geometry, radius, rotation, rotationAxis }) => {
   }, [radius]);
 
   const mouseRadius = useMemo(() => {
-    if (lotCount <= MAX_LOTS_TO_RENDER) return 5;
+    // if total lot count < max lots to render, going to show all with full opacity
+    // (100 is an arbitrarily large number w/r/t unit sphere radius)
+    if (lotCount <= MAX_LOTS_TO_RENDER) return 100;
 
     // for math explanation of below, see "arcToSearch" in fiboUtils
-    return Math.sqrt(4 * NEARBY_LOTS_TO_RENDER / lotCount);
+    return Math.sqrt(4 * TARGET_LOTS_TO_RENDER / lotCount);
   }, [lotCount]);
 
   const meshReady = !!lotMesh.current;
@@ -49,7 +54,7 @@ const Lots = ({ geometry, radius, rotation, rotationAxis }) => {
       const { closestIndex, points: nearbyFibPoints } = getNearbyFiboPoints(
         intersection.normalize(),
         lotCount,
-        lotCount <= MAX_LOTS_TO_RENDER ? null : NEARBY_LOTS_TO_RENDER
+        lotCount <= MAX_LOTS_TO_RENDER ? null : TARGET_LOTS_TO_RENDER
       );
       while (nearbyFibPoints.length < MAX_LOTS_TO_RENDER) {
         nearbyFibPoints.push(new Vector3(0.0));
@@ -57,7 +62,6 @@ const Lots = ({ geometry, radius, rotation, rotationAxis }) => {
 
       setMouseLotIndex(closestIndex);
       setMouseIntersect(intersection);
-      // TODO: should already be normalized?
       setNearMouseLots(nearbyFibPoints);
     } else {
       setMouseLotIndex(null);
@@ -87,88 +91,8 @@ const Lots = ({ geometry, radius, rotation, rotationAxis }) => {
             uMouseRadius: { type: 'f', value: mouseRadius },
             uNearbyLots: { type: 'v', value: nearMouseLots || nullNearMouseLots }
           },
-          vertexShader: `
-            varying vec3 vPosition;
-
-            void main() {
-              vPosition = position;
-              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-          `,
-          fragmentShader: `
-            varying vec3 vPosition;
-
-            uniform vec3 uMouse;
-            uniform bool uMouseIn;
-            uniform float uMouseRadius;
-            uniform vec3 uNearbyLots[${MAX_LOTS_TO_RENDER}];
-
-            struct NearbyLot {
-              int index;
-              float distance;
-            };
-
-            void updateClosestLots(inout NearbyLot closest[2], vec3 testPosition) {
-              for (int i = 0; i < ${MAX_LOTS_TO_RENDER}; i++) {
-                if (length(uNearbyLots[i]) > 0.0) {
-                  float testDist = distance(testPosition, uNearbyLots[i]);
-                  if (closest[0].distance < 0.0 || testDist < closest[0].distance) {
-                    closest[1] = closest[0];
-                    closest[0].index = i;
-                    closest[0].distance = testDist;
-                  } else if (closest[1].distance < 0.0 || testDist < closest[1].distance) {
-                    closest[1].index = i;
-                    closest[1].distance = testDist;
-                  }
-                }
-              }
-            }
-
-            vec4 outlineByClosest(float mDist, vec3 uv) {
-              NearbyLot lots[2] = NearbyLot[2](
-                NearbyLot(-1, -1.0),
-                NearbyLot(-1, -1.0)
-              );
-
-              updateClosestLots(lots, uv);
-              if (false && lots[0].distance < 0.02) {
-                return vec4(1.0);
-              }
-                
-              float minMouseRadius = 0.5 * uMouseRadius;
-              float maxMouseRadius = 0.85 * uMouseRadius;
-
-              float alphaMax = 0.8 - (clamp(mDist, minMouseRadius, maxMouseRadius) - minMouseRadius) / (maxMouseRadius - minMouseRadius);
-
-              // if near border between tiles, color as line
-              float distanceFromNextLot = lots[1].distance - lots[0].distance;
-              if (distanceFromNextLot < 0.015) {
-                if (lots[0].index == 0) {
-                  return vec4(0.21, 0.65, 0.8, 0.8);
-                }
-                float fade = min(1.0, pow(68.0 * distanceFromNextLot, 2.0) + 0.3);
-                return vec4(0.0, 0.0, 1.0, min(alphaMax, 1.0) * fade);
-
-              // if nearest mouse tile, color as highlighted
-              } else if (lots[0].index == 0) {
-                return vec4(0.4, 0.4, 1.0, 0.2);
-              }
-
-              return vec4(0.0);
-            }
-
-            void main() {
-              gl_FragColor = vec4(0.0);
-              if (uMouseIn) {
-                vec3 p = normalize(vPosition);
-                vec3 m = normalize(uMouse);
-                float mDist = distance(p, m);
-                if (mDist < uMouseRadius) {
-                  gl_FragColor = outlineByClosest(mDist, p);
-                }
-              }
-            }
-          `
+          vertexShader: lotVertexShader,
+          fragmentShader: lotShader
       }]} />
     </mesh>
   );
