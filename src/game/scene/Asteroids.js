@@ -90,7 +90,8 @@ const Asteroids = (props) => {
 
   // Responds to hover changes in the store which could be fired from the HUD
   useEffect(() => {
-    if (!hovered || hovered === originId || hovered === destinationId) {
+    if (!hovered) return;
+    if (hovered === originId || hovered === destinationId) {
       setHoveredPos(null);
       return;
     }

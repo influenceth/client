@@ -63,12 +63,13 @@ const Lots = ({ geometry, radius, rotation, rotationAxis }) => {
       setMouseLotIndex(closestIndex);
       setMouseIntersect(intersection);
       setNearMouseLots(nearbyFibPoints);
-    } else {
+    } else if (mouseLotIndex || mouseIntersect || nearMouseLots) {
       setMouseLotIndex(null);
       setMouseIntersect(null);
       setNearMouseLots(null);
     }
-  }, [lotCount, mousePos, rotation, rotationAxis]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lotCount, mousePos]);
 
   const handleClick = useCallback(() => {
     window.alert(`clicked ${mouseLotIndex}`);

@@ -154,6 +154,7 @@ const Asteroid = (props) => {
   // Receives the updated maps and applies them to the material
   useEffect(() => {
     if (!maps) return;
+
     const processed = {};
     const materials = [];
 
@@ -184,6 +185,7 @@ const Asteroid = (props) => {
   // Configures the light component once the geometry is created
   useEffect(() => {
     if (!geometry || !asteroidData) return;
+
     const posVec = new Vector3(...position);
     light.current.intensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
     light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(asteroidData.radius * 10));
