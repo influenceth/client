@@ -89,7 +89,8 @@ const Lots = ({ geometry, radius, rotation, rotationAxis }) => {
             uMouse: { type: 'v', value: mouseIntersect || new Vector3(0.0) },
             uMouseIn: { type: 'b', value: !!mouseIntersect },
             uMouseRadius: { type: 'f', value: mouseRadius },
-            uNearbyLots: { type: 'v', value: nearMouseLots || nullNearMouseLots }
+            uNearbyLots: { type: 'v', value: nearMouseLots || nullNearMouseLots },
+            uRadius: { type: 'f', value: radius}
           },
           vertexShader: lotVertexShader,
           fragmentShader: lotShader

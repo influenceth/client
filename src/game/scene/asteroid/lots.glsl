@@ -4,6 +4,7 @@ uniform vec3 uMouse;
 uniform bool uMouseIn;
 uniform float uMouseRadius;
 uniform vec3 uNearbyLots[40];
+uniform float uRadius;
 
 struct NearbyLot {
   int index;
@@ -42,13 +43,15 @@ vec4 outlineByClosest(float mDist, vec3 uv) {
 
   float alphaMax = 0.8 - (clamp(mDist, minMouseRadius, maxMouseRadius) - minMouseRadius) / (maxMouseRadius - minMouseRadius);
 
+  float lineWidth = 75.0 / uRadius;
+
   // if near border between tiles, color as line
   float distanceFromNextLot = lots[1].distance - lots[0].distance;
-  if (distanceFromNextLot < 0.015) {
+  if (distanceFromNextLot < lineWidth) {
     if (lots[0].index == 0) {
       return vec4(0.21, 0.65, 0.8, 0.8);
     }
-    float fade = min(1.0, pow(68.0 * distanceFromNextLot, 2.0) + 0.3);
+    float fade = min(1.0, pow((uRadius / 100.0) * distanceFromNextLot, 2.0) + 0.3);
     return vec4(0.0, 0.0, 1.0, min(alphaMax, 1.0) * fade);
 
   // if nearest mouse tile, color as highlighted
