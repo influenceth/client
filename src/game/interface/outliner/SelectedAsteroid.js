@@ -4,6 +4,8 @@ import styled from 'styled-components';
 import { IoIosPin } from 'react-icons/io';
 import { RiZoomInFill as ZoomInIcon, RiZoomOutFill as ZoomOutIcon, RiPagesFill } from 'react-icons/ri';
 import { AiFillEye as WatchIcon } from 'react-icons/ai';
+import { GiHexes as LotsOnIcon } from 'react-icons/gi';
+import { FiHexagon as LotsOffIcon } from 'react-icons/fi';
 
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
@@ -37,8 +39,10 @@ const SelectedAsteroid = (props) => {
 
   const watchlistActive = useStore(s => s.outliner.watchlist.active);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const lotSelectionEnabled = useStore(s => s.asteroids.lotSelectionMode);
   const clearOrigin = useStore(s => s.dispatchOriginCleared);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
+  const enableLotSelection = useStore(s => s.dispatchLotSelectionMode);
 
   const [ inWatchlist, setInWatchlist ] = useState(false);
 
@@ -69,6 +73,13 @@ const SelectedAsteroid = (props) => {
             onClick={() => history.push(`/asteroids/${asteroid.i}`)}>
             <RiPagesFill />
           </IconButton>
+          {zoomStatus === 'in' && (
+            <IconButton
+              data-tip={`${lotSelectionEnabled ? 'Disable' : 'Enable'} Lot Explorer`}
+              onClick={() => enableLotSelection(!lotSelectionEnabled)}>
+              {lotSelectionEnabled ? <LotsOffIcon /> : <LotsOnIcon />}
+            </IconButton>
+          )}
           {zoomStatus === 'out' && !isMobile && (
             <IconButton
               data-tip="Zoom to Asteroid"

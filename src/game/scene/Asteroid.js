@@ -37,6 +37,7 @@ const Asteroid = (props) => {
   const shadowSize = useStore(s => s.graphics.shadowSize);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
+  const lotSelectionEnabled = useStore(s => s.asteroids.lotSelectionMode);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const requestingModelDownload = useStore(s => s.asteroids.requestingModelDownload);
@@ -48,6 +49,7 @@ const Asteroid = (props) => {
   const mesh = useRef();
   const asteroidOrbit = useRef();
   const rotationAxis = useRef();
+  const previousTime = useRef();
 
   const [ config, setConfig ] = useState();
   const [ geometry, setGeometry ] = useState();
@@ -77,6 +79,24 @@ const Asteroid = (props) => {
       mesh.current.setRotationFromAxisAngle(rotationAxis.current, rotation);
     }
   }, [rotation, meshReady]);
+
+  useEffect(() => {
+    if (!lotSelectionEnabled) {
+      previousTime.current = null;
+    }
+  }, [lotSelectionEnabled]);
+
+  useEffect(() => {
+    if (config && controls && time && lotSelectionEnabled) {
+      if (rotationAxis.current && previousTime.current) {
+        const zoomTo = controls.object.position.clone();
+        zoomTo.applyAxisAngle(rotationAxis.current, (time - previousTime.current) * config.rotationSpeed * 2 * Math.PI);
+        controls.object.position.copy(zoomTo);
+        controls.object.updateProjectionMatrix();
+      }
+      previousTime.current = time;
+    }
+  }, [config, controls, time, lotSelectionEnabled])
 
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
@@ -318,8 +338,7 @@ const Asteroid = (props) => {
           <primitive attach="geometry" object={geometry} />
         </mesh>
       )}
-      {/* TODO: don't render this layer if "lot" mode not on */}
-      {geometry && (
+      {lotSelectionEnabled && geometry && (
         <AsteroidLots
           geometry={geometry}
           radius={config.radius}

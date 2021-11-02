@@ -12,6 +12,7 @@ const useStore = create(persist((set, get) => ({
       hovered: null,
       filters: {},
       highlight: null,
+      lotSelectionMode: false,
       owned: {
         mapped: false,
         filtered: false,
@@ -177,7 +178,10 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchOriginSelected: (i) => set(produce(state => {
-      if (Number(i) > 0 && Number(i) <= 250000) state.asteroids.origin = Number(i);
+      if (Number(i) > 0 && Number(i) <= 250000) {
+        state.asteroids.origin = Number(i);
+        state.asteroids.lotSelectionMode = false;
+      }
     })),
 
     dispatchOriginCleared: () => set(produce(state => {
@@ -254,6 +258,10 @@ const useStore = create(persist((set, get) => ({
 
     dispatchWatchedAsteroidColorChange: (color) => set(produce(state => {
       state.asteroids.watched.highlightColor = color;
+    })),
+
+    dispatchLotSelectionMode: (enable) => set(produce(state => {
+      state.asteroids.lotSelectionMode = enable;
     })),
 
     dispatchTimeUpdated: (time) => set(produce(state => {
