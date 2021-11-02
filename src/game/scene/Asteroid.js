@@ -204,16 +204,16 @@ const Asteroid = (props) => {
 
   // Configures the light component once the geometry is created
   useEffect(() => {
-    if (!geometry || !asteroidData) return;
+    if (!geometry || !asteroidData || !light.current) return;
 
     const posVec = new Vector3(...position);
     light.current.intensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
     light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(asteroidData.radius * 10));
     geometry.computeBoundingSphere();
-    const maxRadius = geometry.boundingSphere.radius + geometry.boundingSphere.center.length();
-    const radiusBump = config?.ringsPresent ? 1.5 : 0;
 
     if (shadows) {
+      const maxRadius = geometry.boundingSphere.radius + geometry.boundingSphere.center.length();
+      const radiusBump = config?.ringsPresent ? 1.5 : 0;
       light.current.shadow.camera.near = maxRadius * 9;
       light.current.shadow.camera.far = maxRadius * (11 + radiusBump);
       light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius;

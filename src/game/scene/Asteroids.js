@@ -12,7 +12,6 @@ import Marker from './asteroids/Marker';
 import highlighters from './asteroids/highlighters';
 import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
-import constants from '~/lib/constants';
 
 const worker = new Worker();
 
@@ -179,10 +178,6 @@ const Asteroids = (props) => {
             transparent: true,
             uniforms: {
               uOpacity: { type: 'f', value: zoomStatus === 'out' ? 1.0 : 0.5 },
-              uMinSize: { type: 'f', value: 2.0 },
-              uMaxSize: { type: 'f', value: 3.5 },
-              uMinRadius: { type: 'f', value: constants.MIN_ASTEROID_RADIUS },
-              uMaxRadius: { type: 'f', value: constants.MAX_ASTEROID_RADIUS }
             },
             vertexColors: true,
             vertexShader: vert

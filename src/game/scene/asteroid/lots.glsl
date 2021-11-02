@@ -34,9 +34,10 @@ vec4 outlineByClosest(float mDist, vec3 uv) {
   );
 
   updateClosestLots(lots, uv);
-  if (false && lots[0].distance < 0.02) {
-    return vec4(1.0);
-  }
+  // uncomment this to see actual points:
+  //if (lots[0].distance < 0.02) {
+  //  return vec4(1.0);
+  //}
     
   float minMouseRadius = 0.5 * uMouseRadius;
   float maxMouseRadius = 0.85 * uMouseRadius;
@@ -63,13 +64,15 @@ vec4 outlineByClosest(float mDist, vec3 uv) {
 }
 
 void main() {
-  gl_FragColor = vec4(0.0);
-  if (uMouseIn) {
-    vec3 p = normalize(vPosition);
-    vec3 m = normalize(uMouse);
-    float mDist = distance(p, m);
-    if (mDist < uMouseRadius) {
-      gl_FragColor = outlineByClosest(mDist, p);
-    }
-  }
+  // if mouse is not in, discard
+  if (!uMouseIn) discard;
+
+  // else, if not close enough to mouse to matter, discard
+  vec3 p = normalize(vPosition);
+  vec3 m = normalize(uMouse);
+  float mDist = distance(p, m);
+  if (mDist > uMouseRadius) discard;
+
+  // else, highlight according to desired display pattern
+  gl_FragColor = outlineByClosest(mDist, p);
 }
