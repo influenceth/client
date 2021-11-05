@@ -1,4 +1,4 @@
-import { Vector3 } from 'three';
+import { Raycaster, Vector3 } from 'three';
 
 const phi = Math.PI * (3 - Math.sqrt(5));
 
@@ -20,6 +20,9 @@ export const unitFiboSphere = (samples) => {
   return geometry;
 }
 
+/* NOTE: the lot highlighter calculates the fibo positions post-distortion
+          but these functions calculate them pre-distortion, so they do not
+          match up... using raycaster method instead (via surfaceFiboPoint)
 export const unitFiboCubeSphere = (samples, outputAsVector3Buffer) => {
   const faceIndexes = { px: 0, nx: 1, py: 2, ny: 3, pz: 4, nz: 5 };
   const faces = [[],[],[],[],[],[]];
@@ -56,48 +59,72 @@ export const unitFiboCubeSphere = (samples, outputAsVector3Buffer) => {
   return faces;
 };
 
-export const fiboOnHeightMap = (samples, maps, config) => {
-  const geometry = [];
-  for (let index = 0; index < samples; index++) {
-    const v = new Vector3().fromArray(unitFiboPoint(index, samples));
-
-    const xAbs = Math.abs(v.x);
-    const yAbs = Math.abs(v.y);
-    const zAbs = Math.abs(v.z);
-    if (xAbs > yAbs && xAbs > zAbs) {
-      const pos = v.x > 0;
-      displaceVectorWithHeightMap(
-        v,
-        ((pos ? -1 : 1) * v.z / xAbs + 1) / 2,
-        (v.y / xAbs + 1) / 2,
-        maps[pos ? 0 : 1],
-        config
-      );
-      
-    } else if (yAbs > xAbs && yAbs > zAbs) {
-      const pos = v.y > 0;
-      displaceVectorWithHeightMap(
-        v,
-        (v.x / yAbs + 1) / 2,
-        ((pos ? -1 : 1) * v.z / yAbs + 1) / 2,
-        maps[pos ? 3 : 2],
-        config
-      );
-    } else {
-      const pos = v.z > 0;
-      displaceVectorWithHeightMap(
-        v,
-        ((pos ? 1 : -1) * v.x / zAbs + 1) / 2,
-        (v.y / zAbs + 1) / 2,
-        maps[pos ? 4 : 5],
-        config
-      );
-    }
-
-    geometry.push(v);
+export const heightMapFiboPoint = (index, samples, maps, config, scale = 1.0) => {
+  const v = (new Vector3()).fromArray(unitFiboPoint(index, samples));
+  
+  const xAbs = Math.abs(v.x);
+  const yAbs = Math.abs(v.y);
+  const zAbs = Math.abs(v.z);
+  if (xAbs > yAbs && xAbs > zAbs) {
+    const pos = v.x > 0;
+    displaceVectorWithHeightMap(
+      v,
+      ((pos ? -1 : 1) * v.z / xAbs + 1) / 2,
+      (v.y / xAbs + 1) / 2,
+      maps[pos ? 0 : 1],
+      config,
+      scale
+    );
+    
+  } else if (yAbs > xAbs && yAbs > zAbs) {
+    const pos = v.y > 0;
+    displaceVectorWithHeightMap(
+      v,
+      (v.x / yAbs + 1) / 2,
+      ((pos ? -1 : 1) * v.z / yAbs + 1) / 2,
+      maps[pos ? 3 : 2],
+      config,
+      scale
+    );
+  } else if (true) {
+    const pos = v.z > 0;
+    displaceVectorWithHeightMap(
+      v,
+      ((pos ? 1 : -1) * v.x / zAbs + 1) / 2,
+      (v.y / zAbs + 1) / 2,
+      maps[pos ? 4 : 5],
+      config,
+      scale
+    );
   }
 
+  return v;
+};
+
+export const heightMapFiboSphere = (samples, maps, config) => {
+  const geometry = [];
+  for (let index = 0; index < samples; index++) {
+    geometry.push(heightMapFiboPoint(index, samples, maps, config));
+  }
   return geometry;
+};
+*/
+
+export const surfaceFiboPoint = (index, samples, surface, radius) => {
+  if (!index || !samples || !surface || !radius) return null;
+
+  const fiboUV = new Vector3(...unitFiboPoint(index, samples));
+  const r = new Raycaster(
+    fiboUV.clone().multiplyScalar(2.0 * radius),
+    fiboUV.clone().negate(),
+    0,
+    2.0 * radius
+  );
+  const intersections = r.intersectObject(surface, true);
+  if (intersections.length > 0) {
+    return intersections[0].point;
+  }
+  return null;
 };
 
 export const getNearbyFiboPoints = (center, samples, maxToReturn) => {
@@ -106,7 +133,7 @@ export const getNearbyFiboPoints = (center, samples, maxToReturn) => {
   let arcToSearch, yToSearch, maxIndex, minIndex, centerTheta, thetaTolerance;
   if (returnAllPoints) {
     minIndex = 0;
-    maxIndex = samples - 1;
+    maxIndex = samples;
   } else {
     // assuming # of lots returning represent a circular area around center,
     // the radius of which is ~the arc length we need to search
@@ -164,15 +191,17 @@ export const getNearbyFiboPoints = (center, samples, maxToReturn) => {
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
 
-export const displaceVectorWithHeightMap = (original, u, v, map, config) => {
+/* NOTE: see notes on unitFiboCubeSphere above
+export const displaceVectorWithHeightMap = (original, u, v, map, config, scale = 1.0) => {
   const tWidth = map.width;
   const tHeight = map.height;
   const s = Math.round(u * (tWidth - 1));
   const t = Math.round(v * (tHeight - 1));
   const mod = -1 + map.buffer[(tWidth * t + s) * 4 + 3] / 128;
-  original.setLength(config.radius * (1 + mod * config.dispWeight)).multiply(config.stretch);
+  original.setLength(config.radius * (1 + mod * config.dispWeight)).multiply(config.stretch).multiplyScalar(scale);
   return [original.x, original.y, original.z];
 };
+*/
 
 export const getAngleDiff = (angle1, angle2) => {
   const a1 = angle1 >= 0 ? angle1 : (angle1 + 2 * Math.PI);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3 } from 'three';
 import { useThree } from '@react-three/fiber';
 import gsap from 'gsap';
@@ -11,6 +11,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import constants from '~/lib/constants';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 import CubeSphere from '~/lib/graphics/CubeSphere';
+import Buildings from './asteroid/Buildings';
 import ColorMap from './asteroid/ColorMap';
 import Config from './asteroid/Config';
 import exportModel from './asteroid/export';
@@ -321,6 +322,17 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestingModelDownload, exportableMesh]);
 
+  const lotCount = useMemo(() => {
+    if (config?.radius) {
+      return Math.floor(4 * Math.PI * config.radius * config.radius / 1e6);
+    }
+    return null;
+  }, [config?.radius]);
+
+  const buildings = useMemo(() => {
+    return Array.apply(null, Array(lotCount)).map((x, i) => ({ lot: i }));
+  }, [lotCount]);
+
   return (
     <group ref={group}>
       <directionalLight
@@ -338,15 +350,26 @@ const Asteroid = (props) => {
           <primitive attach="geometry" object={geometry} />
         </mesh>
       )}
-      {lotSelectionEnabled && geometry && (
+      {geometry && lotSelectionEnabled && (
         <AsteroidLots
           geometry={geometry}
+          lotCount={lotCount}
           radius={config.radius}
           rotation={rotation}
           rotationAxis={rotationAxis?.current}
         />
       )}
-      {config?.ringsPresent && geometry && (
+      {geometry && mesh.current && buildings && buildings.length > 0 && (
+        <Buildings
+          buildings={buildings}
+          surface={mesh.current}
+          radius={config.radius}
+          lotCount={lotCount}
+          rotation={rotation}
+          rotationAxis={rotationAxis?.current}
+        />
+      )}
+      {geometry && config?.ringsPresent && (
         <Rings
           receiveShadow={shadows}
           config={config}

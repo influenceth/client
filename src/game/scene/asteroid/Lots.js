@@ -11,7 +11,7 @@ const MAX_LOTS_TO_RENDER = 40;
 const TARGET_LOTS_TO_RENDER = 20;
 const nullNearMouseLots = Array.from(Array(MAX_LOTS_TO_RENDER)).map(() => new Vector3(0.0));
 
-const Lots = ({ geometry, radius, rotation, rotationAxis }) => {
+const Lots = ({ geometry, lotCount, radius, rotation, rotationAxis }) => {
   const lotMesh = useRef();
 
   // TODO (enhancement): should decrease throttle rate until
@@ -20,10 +20,6 @@ const Lots = ({ geometry, radius, rotation, rotationAxis }) => {
   const [ mouseLotIndex, setMouseLotIndex ] = useState();
   const [ mouseIntersect, setMouseIntersect ] = useState();
   const [ nearMouseLots, setNearMouseLots ] = useState();
-
-  const lotCount = useMemo(() => {
-    return Math.floor(4 * Math.PI * radius * radius / 1e6);
-  }, [radius]);
 
   const mouseRadius = useMemo(() => {
     // if total lot count < max lots to render, going to show all with full opacity
