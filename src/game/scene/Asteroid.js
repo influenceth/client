@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3 } from 'three';
 import { useThree } from '@react-three/fiber';
 import gsap from 'gsap';
@@ -117,6 +117,7 @@ const Asteroid = (props) => {
       });
 
       setMaterials(null);
+      setBuildings([]);
 
       if (zoomStatus === 'in') updateZoomStatus('zooming-out');
     }
@@ -329,9 +330,14 @@ const Asteroid = (props) => {
     return null;
   }, [config?.radius]);
 
-  const buildings = useMemo(() => {
-    return Array.apply(null, Array(lotCount)).map((x, i) => ({ lot: i }));
-  }, [lotCount]);
+  const [buildings, setBuildings] = useState([]);
+  const onLotClick = useCallback((lotIndex) => {
+    if (!!buildings.find((b) => b.lot === lotIndex)) {
+      setBuildings(buildings.filter((b) => b.lot !== lotIndex));
+    } else {
+      setBuildings([...buildings, { lot: lotIndex }]);
+    }
+  }, [buildings]);
 
   return (
     <group ref={group}>
@@ -354,6 +360,7 @@ const Asteroid = (props) => {
         <AsteroidLots
           geometry={geometry}
           lotCount={lotCount}
+          onClick={onLotClick}
           radius={config.radius}
           rotation={rotation}
           rotationAxis={rotationAxis?.current}

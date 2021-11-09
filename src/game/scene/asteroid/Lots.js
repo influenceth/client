@@ -11,7 +11,7 @@ const MAX_LOTS_TO_RENDER = 40;
 const TARGET_LOTS_TO_RENDER = 20;
 const nullNearMouseLots = Array.from(Array(MAX_LOTS_TO_RENDER)).map(() => new Vector3(0.0));
 
-const Lots = ({ geometry, lotCount, radius, rotation, rotationAxis }) => {
+const Lots = ({ geometry, lotCount, onClick, radius, rotation, rotationAxis }) => {
   const lotMesh = useRef();
 
   // TODO (enhancement): should decrease throttle rate until
@@ -68,8 +68,10 @@ const Lots = ({ geometry, lotCount, radius, rotation, rotationAxis }) => {
   }, [lotCount, mousePos]);
 
   const handleClick = useCallback(() => {
-    window.alert(`clicked ${mouseLotIndex}`);
-  }, [mouseLotIndex]);
+    if (onClick) {
+      onClick(mouseLotIndex);
+    }
+  }, [mouseLotIndex, onClick]);
 
   if (!geometry) return null;
   return (

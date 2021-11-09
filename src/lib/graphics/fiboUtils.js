@@ -110,19 +110,26 @@ export const heightMapFiboSphere = (samples, maps, config) => {
 };
 */
 
-export const surfaceFiboPoint = (index, samples, surface, radius) => {
-  if (!index || !samples || !surface || !radius) return null;
-
+// TODO: if all of these are going to be calculated before initial render, then can place them
+//  before rotation (and just leave those parts out)
+const raycaster = new Raycaster();
+export const surfaceFiboPoint = (index, samples, surface, radius, rotation = null, rotationAxis = null) => {
   const fiboUV = new Vector3(...unitFiboPoint(index, samples));
-  const r = new Raycaster(
-    fiboUV.clone().multiplyScalar(2.0 * radius),
-    fiboUV.clone().negate(),
-    0,
-    2.0 * radius
+  if (rotation && rotationAxis) {
+    fiboUV.applyAxisAngle(rotationAxis, rotation);
+  }
+
+  raycaster.set(
+    fiboUV.clone().multiplyScalar(3.0 * radius),
+    fiboUV.clone().negate()
   );
-  const intersections = r.intersectObject(surface, true);
+  const intersections = raycaster.intersectObject(surface, true);
   if (intersections.length > 0) {
-    return intersections[0].point;
+    const intersect = intersections[0].point.clone();
+    if (rotation && rotationAxis) {
+      intersect.applyAxisAngle(rotationAxis, -rotation);
+    }
+    return intersect;
   }
   return null;
 };
