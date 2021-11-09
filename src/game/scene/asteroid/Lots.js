@@ -69,9 +69,9 @@ const Lots = ({ geometry, lotCount, onClick, radius, rotation, rotationAxis }) =
 
   const handleClick = useCallback(() => {
     if (onClick) {
-      onClick(mouseLotIndex);
+      onClick(mouseLotIndex, (nearMouseLots || [])[0]);
     }
-  }, [mouseLotIndex, onClick]);
+  }, [mouseLotIndex, nearMouseLots, onClick]);
 
   if (!geometry) return null;
   return (

@@ -330,14 +330,30 @@ const Asteroid = (props) => {
     return null;
   }, [config?.radius]);
 
+  const lookAtPosition = useCallback((position) => {
+    if (controls?.object?.position) {
+      const zoomTo = position
+        .clone()
+        .normalize()
+        .multiplyScalar(controls.object.position.length())  // maintain same distance
+        .applyAxisAngle(rotationAxis.current, rotation);    // keep up with rotation
+      
+      const timeline = gsap.timeline({
+        defaults: { duration: 1, ease: 'power4.out' },
+      });
+      timeline.to(controls.object.position, { ...zoomTo }, 0);
+    }
+  }, [controls?.object?.position, rotation]);
+
   const [buildings, setBuildings] = useState([]);
-  const onLotClick = useCallback((lotIndex) => {
+  const onLotClick = useCallback((lotIndex, lotPosition) => {
     if (!!buildings.find((b) => b.lot === lotIndex)) {
       setBuildings(buildings.filter((b) => b.lot !== lotIndex));
     } else {
       setBuildings([...buildings, { lot: lotIndex }]);
     }
-  }, [buildings]);
+    lookAtPosition(lotPosition);
+  }, [buildings, lookAtPosition]);
 
   return (
     <group ref={group}>
