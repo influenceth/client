@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Color, Vector3 } from 'three';
 import { useThree, useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
@@ -14,6 +14,8 @@ const lensflareElements = config.map((c) => new LensflareElement(null, c[1], c[2
 lensflareElements.push(new LensflareElement(null, 6, 0));
 lensflareElements.forEach((e) => lensflare.addElement(e));
 
+const worldPos = new Vector3();
+
 const Star = (props) => {
   const path = `${process.env.PUBLIC_URL}/textures/star/`;
   const textures = useTexture([
@@ -24,12 +26,10 @@ const Star = (props) => {
   ]);
 
   const lensflareOn = useStore(s => s.graphics.lensflare);
-  const [ alpha, setAlpha ] = useState(0);
-  const [ size, setSize ] = useState(0);
 
   const mesh = useRef();
+  const distance = useRef();
   const { camera } = useThree();
-  const worldPos = new Vector3();
 
   // Update lensflare elements with textures after loaded
   useEffect(() => {
@@ -39,23 +39,23 @@ const Star = (props) => {
     lensflareElements[lensflareElements.length - 1].texture = textures[3];
   }, [ textures ]);
 
-  // On each frame calculate the proper alpha and size for lensflare elements
+  // On each frame calculate view distance, then update alpha and size for lensflare elements as needed
   useFrame((state, delta) => {
     const viewDistance = mesh.current.getWorldPosition(worldPos).distanceTo(camera.position);
-    const stdDist = 3 * viewDistance / constants.AU / constants.MAX_SYSTEM_RADIUS;
-    const intensity = 1 / Math.pow(stdDist + 1, 2);
-    setAlpha(5 * intensity);
-    setSize(200 * intensity);
-  });
+    if (viewDistance !== distance.current) {
+      distance.current = viewDistance;
+      const stdDist = 3 * viewDistance / constants.AU / constants.MAX_SYSTEM_RADIUS;
+      const intensity = 1 / Math.pow(stdDist + 1, 2);
+      const alpha = 5 * intensity;
+      const size = 200 * intensity;
 
-  // Update alpha and size for lensflare elements when state changes
-  useEffect(() => {
-    config.forEach((c, i) => {
-      lensflareElements[i].size = c[1] * size;
-      lensflareElements[i].alpha = c[4] * alpha;
-    });
-    lensflareElements[lensflareElements.length - 1].size = 6 * size;
-  }, [ size, alpha ]);
+      config.forEach((c, i) => {
+        lensflareElements[i].size = c[1] * size;
+        lensflareElements[i].alpha = c[4] * alpha;
+      });
+      lensflareElements[lensflareElements.length - 1].size = 6 * size;
+    }
+  });
 
   return (
     <group position={[ 0, 0, 0 ]}>

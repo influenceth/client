@@ -1,4 +1,4 @@
-import { useRef, useLayoutEffect } from 'react';
+import { useMemo, useRef } from 'react';
 import { KeplerianOrbit } from 'influence-utils';
 
 import constants from '~/lib/constants';
@@ -6,17 +6,23 @@ import theme from '~/theme';
 
 const Orbit = (props) => {
   const geometry = useRef();
-  const keplerianOrbit = new KeplerianOrbit(props.planet.orbital);
-  const vertices = [];
-  keplerianOrbit.getSmoothOrbit(360).forEach(p => {
-    vertices.push(...[ p.x, p.y, p.z ].map(v => v * constants.AU))
-  });
 
-  const positions = new Float32Array(vertices);
+  const positions = useMemo(() => {
+    const vertices = [];
+    const keplerianOrbit = new KeplerianOrbit(props.planet.orbital);
+    keplerianOrbit.getSmoothOrbit(360).forEach(p => {
+      vertices.push(...[ p.x, p.y, p.z ].map(v => v * constants.AU))
+    });
 
-  useLayoutEffect(() => {
-    geometry.current?.computeBoundingSphere();
-  });
+    return new Float32Array(vertices);
+  }, [props.planet.orbital]);
+
+  // (commented out because not sure this is needed)
+  // useLayoutEffect(() => {
+  //   if (geometry.current) {
+  //     geometry.current.computeBoundingSphere();
+  //   }
+  // });
 
   return (
     <lineLoop>

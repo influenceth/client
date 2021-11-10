@@ -33,26 +33,26 @@ const DaysSince = styled.div`
 `;
 
 // Calculate the difference in game days between the start timestamp and the lore start time
+// TODO: should 1618668000 be in influence-utils also?
 const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
 
 const Time = (props) => {
-  const time = useStore(s => s.time.current);
+  const time = useStore(s => s.time.precise);
   const autoUpdating = useStore(s => s.time.autoUpdating);
-  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const dispatchTimeUpdated = useStore(s => s.dispatchTimeUpdated);
 
   const displayTime = time - diff;
-  const currentTime = () => ((Date.now() / 1000) - START_TIMESTAMP) / 3600;
-  const increment = zoomStatus !== 'out' ? 1000 / 30 : 10000;
+  const increment = 1000 / 30;
 
   // Update time once immediately upon launching
   useEffect(() => {
-    if (autoUpdating) dispatchTimeUpdated(currentTime());
+    if (autoUpdating) dispatchTimeUpdated();
   }, [ dispatchTimeUpdated, autoUpdating ])
 
   // Automatically updates the in-game time once per second unless auto-updates are off
+  // TODO: might be safer to use useFrame here w/ minimum update interval OR useTimeout
   useInterval(() => {
-    if (autoUpdating) dispatchTimeUpdated(currentTime());
+    if (autoUpdating) dispatchTimeUpdated();
   }, increment);
 
   return (

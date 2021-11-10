@@ -36,6 +36,7 @@ const useStore = create(persist((set, get) => ({
     },
 
     time: {
+      precise: ((Date.now() / 1000) - START_TIMESTAMP) / 3600,
       current: ((Date.now() / 1000) - START_TIMESTAMP) / 3600,
       autoUpdating: true
     },
@@ -257,10 +258,18 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchTimeUpdated: (time) => set(produce(state => {
-      state.time.current = time;
+      // default time to current time
+      const useTime = time || ((Date.now() / 1000) - START_TIMESTAMP) / 3600;
+
+      // "precise" time for zoomed-in elements
+      state.time.precise = useTime;
+
+      // "current" time for zoomed-out elements (more granular)
+      const incrHours = 10 / 3600;
+      state.time.current = Math.round(useTime / incrHours) * incrHours;
     })),
 
-    dispatchTimeControled: () => set(produce(state => {
+    dispatchTimeControlled: () => set(produce(state => {
       state.time.autoUpdating = false;
     })),
 

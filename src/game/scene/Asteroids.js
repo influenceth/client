@@ -1,4 +1,4 @@
-import { Suspense, useRef, useState, useEffect, useLayoutEffect } from 'react';
+import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Color } from 'three';
 
 // eslint-disable-next-line
@@ -12,7 +12,6 @@ import Marker from './asteroids/Marker';
 import highlighters from './asteroids/highlighters';
 import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
-import constants from '~/lib/constants';
 
 const worker = new Worker();
 
@@ -45,35 +44,19 @@ const Asteroids = (props) => {
   const [ destinationPos, setDestinationPos ] = useState();
   const asteroidsGeom = useRef();
 
-  const onClick = (e) => {
-    e.stopPropagation();
-    const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
-    if (asteroids[index]) selectOrigin(asteroids[index].i);
-  };
-
-  const onContextClick = (e) => {
-    e.stopPropagation();
-    const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
-
-    if (asteroids[index]) {
-      if (asteroids[index].i === originId) clearOrigin();
-      if (!routePlannerActive) return; // Only allow picking a destination if the route planner is open
-      selectDestination(asteroids[index].i);
+  // Worker subscriptions
+  useEffect(() => {
+    if (!!worker) {
+      worker.onmessage = (event) => {
+        if (event.data.topic === 'asteroidPositions') {
+          setPositions(new Float32Array(event.data.positions));
+        }
+      };
     }
-  }
-
-  const onMouseOver = (e) => {
-    e.stopPropagation();
-    const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
-    if (asteroids[index]) hoverAsteroid(asteroids[index].i);
-  };
-
-  const onMouseOut = (e) => {
-    e.stopPropagation();
-    unhoverAsteroid();
-  };
+  }, []);
 
   // Update state when asteroids from server, origin, or destination change
+  const isZoomedIn = zoomStatus === 'in';
   useEffect(() => {
     const newMappedAsteroids = !!asteroids ? asteroids.slice() : [];
 
@@ -85,8 +68,13 @@ const Asteroids = (props) => {
       newMappedAsteroids.push(Object.assign({}, destination));
     }
 
-    setMappedAsteroids(newMappedAsteroids);
-  }, [ asteroids, origin, destination ]);
+    // if zoomed in, don't render the point for the origin (since rendering 3d version)
+    setMappedAsteroids(
+      origin && isZoomedIn
+        ? newMappedAsteroids.filter((a) => a.i !== origin.i)
+        : newMappedAsteroids
+    );
+  }, [ asteroids, origin, destination, isZoomedIn ]);
 
   // Responds to hover changes in the store which could be fired from the HUD
   useEffect(() => {
@@ -110,18 +98,12 @@ const Asteroids = (props) => {
   // When asteroids are newly filtered, or there are changes to origin / destination
   useEffect(() => {
     worker.postMessage({ topic: 'updateAsteroidsData', asteroids: mappedAsteroids, elapsed: time });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ mappedAsteroids ]);
+  }, [ mappedAsteroids ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update asteroid positions whenever the time changes in-game
   useEffect(() => {
     worker.postMessage({ topic: 'updateAsteroidPositions', elapsed: time });
   }, [ time ]);
-
-  // Receives position updates from the worker
-  worker.onmessage = (event) => {
-    if (event.data.topic === 'asteroidPositions') setPositions(new Float32Array(event.data.positions));
-  };
 
   useEffect(() => {
     // Check that we have data, positions are processed, and they're in sync
@@ -156,9 +138,41 @@ const Asteroids = (props) => {
     setColors(new Float32Array([].concat.apply([], newColors)));
   }, [ mappedAsteroids, ownedColor, watchedColor, highlightConfig ]);
 
+  // (only needed for mouse effects, which are only used when zoomStatus is out)
   useLayoutEffect(() => {
-    asteroidsGeom.current?.computeBoundingSphere();
+    if (zoomStatus === 'out' && asteroidsGeom.current) {
+      asteroidsGeom.current.computeBoundingSphere();
+    }
   });
+
+  // mouse event handlers
+  const onClick = useCallback((e) => {
+    e.stopPropagation();
+    const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
+    if (asteroids[index]) selectOrigin(asteroids[index].i);
+  }, [asteroids]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onContextClick = useCallback((e) => {
+    e.stopPropagation();
+    const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
+
+    if (asteroids[index]) {
+      if (asteroids[index].i === originId) clearOrigin();
+      if (!routePlannerActive) return; // Only allow picking a destination if the route planner is open
+      selectDestination(asteroids[index].i);
+    }
+  }, [asteroids, originId, routePlannerActive]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onMouseOver = useCallback((e) => {
+    e.stopPropagation();
+    const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
+    if (asteroids[index]) hoverAsteroid(asteroids[index].i);
+  }, [asteroids]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onMouseOut = useCallback((e) => {
+    e.stopPropagation();
+    unhoverAsteroid();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <group>
@@ -167,7 +181,7 @@ const Asteroids = (props) => {
           onClick={zoomStatus === 'out' && onClick}
           onContextMenu={zoomStatus === 'out' && onContextClick}
           onPointerOver={zoomStatus === 'out' && onMouseOver}
-          onPointerOut={zoomStatus === 'out' && onMouseOut} >
+          onPointerOut={zoomStatus === 'out' && onMouseOut}>
           <bufferGeometry ref={asteroidsGeom}>
             <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3 ]} />
             <bufferAttribute attachObject={[ 'attributes', 'highlightColor' ]} args={[ colors, 3 ]} />
@@ -178,10 +192,6 @@ const Asteroids = (props) => {
             transparent: true,
             uniforms: {
               uOpacity: { type: 'f', value: zoomStatus === 'out' ? 1.0 : 0.5 },
-              uMinSize: { type: 'f', value: 2.0 },
-              uMaxSize: { type: 'f', value: 3.5 },
-              uMinRadius: { type: 'f', value: constants.MIN_ASTEROID_RADIUS },
-              uMaxRadius: { type: 'f', value: constants.MAX_ASTEROID_RADIUS }
             },
             vertexColors: true,
             vertexShader: vert
