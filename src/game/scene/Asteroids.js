@@ -1,5 +1,6 @@
 import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Color } from 'three';
+import { useThrottle } from '@react-hook/throttle';
 
 // eslint-disable-next-line
 import Worker from 'worker-loader!../../worker';
@@ -42,6 +43,9 @@ const Asteroids = (props) => {
   const [ hoveredPos, setHoveredPos ] = useState();
   const [ originPos, setOriginPos ] = useState();
   const [ destinationPos, setDestinationPos ] = useState();
+
+  const [ mousePos, setMousePos ] = useThrottle(null, 30);
+
   const asteroidsGeom = useRef();
 
   // Worker subscriptions
@@ -138,6 +142,17 @@ const Asteroids = (props) => {
     setColors(new Float32Array([].concat.apply([], newColors)));
   }, [ mappedAsteroids, ownedColor, watchedColor, highlightConfig ]);
 
+  useEffect(() => {
+    if (mousePos && mousePos.intersections?.length > 0) {
+      const index = mousePos.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
+      if (asteroids[index]) {
+        return hoverAsteroid(asteroids[index].i);
+      }
+    } 
+    unhoverAsteroid();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mousePos]);
+
   // (only needed for mouse effects, which are only used when zoomStatus is out)
   useLayoutEffect(() => {
     if (zoomStatus === 'out' && asteroidsGeom.current) {
@@ -163,25 +178,14 @@ const Asteroids = (props) => {
     }
   }, [asteroids, originId, routePlannerActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const onMouseOver = useCallback((e) => {
-    e.stopPropagation();
-    const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
-    if (asteroids[index]) hoverAsteroid(asteroids[index].i);
-  }, [asteroids]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const onMouseOut = useCallback((e) => {
-    e.stopPropagation();
-    unhoverAsteroid();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   return (
     <group>
       {positions?.length > 0 && colors?.length > 0 && (
         <points
           onClick={zoomStatus === 'out' && onClick}
           onContextMenu={zoomStatus === 'out' && onContextClick}
-          onPointerOver={zoomStatus === 'out' && onMouseOver}
-          onPointerOut={zoomStatus === 'out' && onMouseOut}>
+          onPointerOver={zoomStatus === 'out' && setMousePos}
+          onPointerOut={zoomStatus === 'out' && setMousePos}>
           <bufferGeometry ref={asteroidsGeom}>
             <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3 ]} />
             <bufferAttribute attachObject={[ 'attributes', 'highlightColor' ]} args={[ colors, 3 ]} />
