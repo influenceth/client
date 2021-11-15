@@ -15,7 +15,7 @@ import IconButton from '~/components/IconButton';
 import DataReadout from '~/components/DataReadout';
 import TextInput from '~/components/TextInput';
 import LogEntry from '~/components/LogEntry';
-import { EditIcon, CheckIcon, ClaimIcon } from '~/components/Icons';
+import { EditIcon, CheckCircleIcon, ClaimIcon } from '~/components/Icons';
 
 const goToOpenSeaCrew = (i) => {
   const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_CREW_TOKEN}/${i}`;
@@ -169,7 +169,7 @@ const CrewMemberDetails = (props) => {
                         setNaming(true);
                         nameCrew.mutate({ name: newName }, { onSettled: () => setNaming(false) });
                       }}>
-                      <CheckIcon />
+                      <CheckCircleIcon />
                     </IconButton>
                   </NameForm>
                 </Form>

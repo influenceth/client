@@ -6,18 +6,19 @@ import LoadingAnimation from 'react-spinners/BarLoader';
 
 import useSale from '~/hooks/useSale';
 import useScreenSize from '~/hooks/useScreenSize';
+import Alerts from './interface/Alerts';
 import MainMenu from './interface/MainMenu';
 import Outliner from './interface/Outliner';
+import SaleNotifier from './interface/SaleNotifier';
+import AsteroidDetails from './interface/details/AsteroidDetails';
 import AsteroidsTable from './interface/details/AsteroidsTable';
+import CrewAssignments from './interface/details/CrewAssignments';
+import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
-import CrewMemberDetails from './interface/details/CrewMemberDetails';
-import WatchlistTable from './interface/details/WatchlistTable';
-import AsteroidDetails from './interface/details/AsteroidDetails';
 import RouteDetails from './interface/details/RouteDetails';
 import Settings from './interface/details/Settings';
-import Alerts from './interface/Alerts';
-import SaleNotifier from './interface/SaleNotifier';
+import WatchlistTable from './interface/details/WatchlistTable';
 import theme from '~/theme';
 
 const StyledInterface = styled.div`
@@ -92,6 +93,9 @@ const Interface = () => {
           </Route>
           <Route path="/owned-crew">
             <OwnedCrew />
+          </Route>
+          <Route path="/crew-assignments">
+            <CrewAssignments />
           </Route>
           <Route path="/crew/:i(\d+)">
             <CrewMemberDetails />

@@ -12,6 +12,7 @@ const red = '#df4300';
 const theme = {
   colors: {
     main: '#36a7cd',
+    mainRGB: '0, 191, 255', // NOTE: this should be rgb of `main`
     mainBorder: 'rgba(255, 255, 255, 0.25)',
     mobileBackground: '#181818',
     contentBorder: '#666666',
@@ -21,6 +22,8 @@ const theme = {
     mainText: '#cccccc',
     secondaryText: '#999999',
     disabledText: '#666666',
+    success: '#54de94',
+    successRGB: '84, 222, 148', // NOTE: this should be rgb of `success`
     error: red,
     bonus: {
       level0: '#999999',

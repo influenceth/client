@@ -141,6 +141,10 @@ const MainMenu = (props) => {
               name="Watchlist"
               icon={<EyeIcon />}
               onClick={() => openSection('watchlist')} />
+            <MenuItem
+              name="Crew Assignments"
+              icon={<CrewIcon />}
+              onClick={() => openSection('crewAssignments')} />
           </Menu>
         )}
         {!!account && (

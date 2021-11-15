@@ -1,13 +1,15 @@
 import { AiFillEdit, AiFillEye, AiFillStar } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle } from 'react-icons/bs';
-import { FaEthereum, FaMapMarkedAlt, FaCopy } from 'react-icons/fa';
+import { FaCheck, FaEthereum, FaMapMarkedAlt, FaCopy } from 'react-icons/fa';
 import { FiMenu } from 'react-icons/fi';
-import { HiClock, HiUserGroup } from 'react-icons/hi';
+import { HiClock, HiLockClosed, HiUserGroup } from 'react-icons/hi';
 import {
   MdAccountBalanceWallet,
   MdFlag,
   MdBlurOff,
+  MdChevronRight,
   MdClose,
+  MdExpandMore,
   MdFastRewind,
   MdFastForward,
   MdPlayArrow,
@@ -17,41 +19,46 @@ import {
   MdNavigateNext,
   MdFirstPage
 } from 'react-icons/md';
-import { RiTableFill, RiRouteFill, RiLoginCircleFill, RiAlertFill, RiFilter2Fill } from 'react-icons/ri';
+import { RiTableFill, RiRouteFill, RiLoginCircleFill, RiAlertLine, RiAlertFill, RiFilter2Fill } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
 import { WiMoonAltWaningCrescent5 } from 'react-icons/wi';
 import { VscDebugDisconnect } from 'react-icons/vsc';
 
 export {
-  BsFillPersonFill as CrewMemberIcon,
-  RiRouteFill as RouteIcon,
-  RiLoginCircleFill as LoginIcon,
-  RiAlertFill as WarningIcon,
-  FaEthereum as ConnectIcon,
-  FiMenu as MenuIcon,
-  MdAccountBalanceWallet as WalletIcon,
-  VscDebugDisconnect as DisconnectIcon,
-  MdFlag as ClaimIcon,
-  MdBlurOff as ScanIcon,
-  MdClose as CloseIcon,
   AiFillEdit as EditIcon,
-  BsCheckCircle as CheckIcon,
-  TiArrowRight as GoIcon,
-  MdFastRewind as RewindIcon,
-  MdFastForward as FastForwardIcon,
-  MdPlayArrow as PlayIcon,
-  MdPause as PauseIcon,
-  MdStop as StopIcon,
-  HiClock as TimeIcon,
-  RiFilter2Fill as FilterIcon,
-  HiUserGroup as CrewIcon,
   AiFillEye as EyeIcon,
   AiFillStar as StarIcon,
+  BsCheckCircle as CheckCircleIcon,
+  BsFillPersonFill as CrewMemberIcon,
+  FaCheck as CheckIcon,
+  FaCopy as CopyIcon,
+  FaEthereum as ConnectIcon,
   FaMapMarkedAlt as MapIcon,
+  FiMenu as MenuIcon,
+  HiClock as TimeIcon,
+  HiLockClosed as LockIcon,
+  HiUserGroup as CrewIcon,
+  MdAccountBalanceWallet as WalletIcon,
+  MdBlurOff as ScanIcon,
+  MdChevronRight as CollapsedIcon,
+  MdClose as CloseIcon,
+  MdExpandMore as ExpandedIcon,
+  MdFastRewind as RewindIcon,
+  MdFastForward as FastForwardIcon,
+  MdFirstPage as BeginningIcon,
+  MdFlag as ClaimIcon,
   MdNavigateBefore as PreviousIcon,
   MdNavigateNext as NextIcon,
+  MdPause as PauseIcon,
+  MdPlayArrow as PlayIcon,
+  MdStop as StopIcon,
+  RiAlertFill as WarningIcon,
+  RiAlertLine as WarningOutlineIcon,
+  RiFilter2Fill as FilterIcon,
+  RiLoginCircleFill as LoginIcon,
+  RiRouteFill as RouteIcon,
   RiTableFill as TableIcon,
-  FaCopy as CopyIcon,
-  MdFirstPage as BeginningIcon,
+  TiArrowRight as GoIcon,
+  VscDebugDisconnect as DisconnectIcon,
   WiMoonAltWaningCrescent5 as DownloadModelIcon
 };

@@ -22,7 +22,7 @@ import DataReadout from '~/components/DataReadout';
 import LogEntry from '~/components/LogEntry';
 import Ether from '~/components/Ether';
 import AddressLink from '~/components/AddressLink';
-import { DownloadModelIcon, EditIcon, CheckIcon, ClaimIcon, ScanIcon } from '~/components/Icons';
+import { DownloadModelIcon, EditIcon, CheckCircleIcon, ClaimIcon, ScanIcon } from '~/components/Icons';
 import ResourceMix from './asteroidDetails/ResourceMix';
 import ResourceBonuses from './asteroidDetails/ResourceBonuses';
 import Dimensions from './asteroidDetails/Dimensions';
@@ -331,7 +331,7 @@ const AsteroidDetails = (props) => {
                         setNaming(true);
                         nameAsteroid.mutate({ name: newName }, { onSettled: () => setNaming(false) });
                       }}>
-                      <CheckIcon />
+                      <CheckCircleIcon />
                     </IconButton>
                   </NameForm>
                 </Form>

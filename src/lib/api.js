@@ -89,6 +89,12 @@ const api = {
     return response.data[0];
   },
 
+  getUserStories: async () => {
+    const response = await instance.get('/v1/user/stories');
+    console.log({ response });
+    return response.data;
+  },
+
   requestLogin: async (account) => {
     const response = await instance.get(`/v1/auth/login/${account}`);
     return response.data.message;

@@ -36,7 +36,8 @@ const useSettleCrew = (i) => {
       createAlert({
         type: 'CrewMember_SettlingError',
         level: 'warning',
-        i: i, timestamp: Math.round(Date.now() / 1000)
+        i: i,
+        timestamp: Math.round(Date.now() / 1000)
       });
     },
 

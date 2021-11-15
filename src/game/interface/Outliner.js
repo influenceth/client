@@ -3,17 +3,18 @@ import styled from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
 
 import useStore from '~/hooks/useStore';
-import Wallet from './outliner/Wallet';
-import Log from './outliner/Log';
+import CrewAssignments from './outliner/CrewAssignments';
 import Filters from './outliner/Filters';
+import Log from './outliner/Log';
 import MappedAsteroids from './outliner/MappedAsteroids';
-import SelectedAsteroid from './outliner/SelectedAsteroid';
-import Watchlist from './outliner/Watchlist';
 import OwnedAsteroids from './outliner/OwnedAsteroids';
 import OwnedCrew from './outliner/OwnedCrew';
 import RoutePlanner from './outliner/RoutePlanner';
-import TimeControl from './outliner/TimeControl';
+import SelectedAsteroid from './outliner/SelectedAsteroid';
 import SystemControls from './outliner/SystemControls';
+import TimeControl from './outliner/TimeControl';
+import Wallet from './outliner/Wallet';
+import Watchlist from './outliner/Watchlist';
 
 const MainContainer = styled.div`
   display: flex;
@@ -123,6 +124,7 @@ const Outliner = (props) => {
           {outliner.watchlist?.active && !!account && <Watchlist />}
           {outliner.routePlanner?.active && <RoutePlanner />}
           {outliner.ownedCrew?.active && !!account && <OwnedCrew />}
+          {outliner.crewAssignments?.active && !!account && <CrewAssignments />}
           {outliner.timeControl?.active && <TimeControl />}
         </StyledOutliner>
         <SystemControls />
