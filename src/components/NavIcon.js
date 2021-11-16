@@ -14,7 +14,7 @@ const Container = styled.div`
   width: 100%;
 
   & > *:first-child {
-    opacity: ${p => p.faded ? 0.7 : 1};
+    color: ${p => p.color || 'inherit'};
     position: absolute;
     font-size: 50%;
   }

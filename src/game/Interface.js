@@ -12,6 +12,7 @@ import Outliner from './interface/Outliner';
 import SaleNotifier from './interface/SaleNotifier';
 import AsteroidDetails from './interface/details/AsteroidDetails';
 import AsteroidsTable from './interface/details/AsteroidsTable';
+import CrewAssignment from './interface/details/crewAssignments/Assignment';
 import CrewAssignments from './interface/details/CrewAssignments';
 import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
@@ -96,6 +97,9 @@ const Interface = () => {
           </Route>
           <Route path="/crew-assignments">
             <CrewAssignments />
+          </Route>
+          <Route path="/crew-assignment">
+            <CrewAssignment />
           </Route>
           <Route path="/crew/:i(\d+)">
             <CrewMemberDetails />

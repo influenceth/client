@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 import { BsChevronDoubleDown as SelectIcon } from 'react-icons/bs';
 
 import useCrewAssignments from '~/hooks/useCrewAssignments';
@@ -225,20 +225,19 @@ const ChapterProgress = ({ crewReady, status }) => {
   if (status === 'locked') {
     return <LockIcon style={{ opacity: 0.7 }} />;
   }
+
+  const color = status === 'complete' ? theme.colors.success : theme.colors.main;
   return (
     <>
-      <span style={{
-        color: status === 'complete' ? theme.colors.success : theme.colors.main,
-        marginRight: 6
-      }}>{crewReady}</span>
+      <span style={{ color, marginRight: 6 }}>{crewReady}</span>
       {status === 'complete'
         ? (
-          <CheckIcon style={{ color: theme.colors.success }} />
+          <CheckIcon style={{ color }} />
         )
         : (
           <ProgressIcon
             size={'1em'}
-            onColor={theme.colors.main}
+            onColor={color}
             offColor={'#003f54'}
             status={status}
           />
@@ -291,16 +290,10 @@ const CrewAssignments = (props) => {
                 <span>
                   {/* TODO:
                     - "coming soon" should not have hover effect
-
-                    - lines between diamonds
-                    - diamond outline for selection
-                    - on hover background
-                    - active cursor where appropriate
                     - handle word wrapping / truncating for smaller devices
+                    - scroll to first do-able story?
                     --
                     - "no-crew" message
-                    - default selection to first do-able story?
-                    - expand / collapse?
                   */}
                   {/* TODO: is this safer as table for diamond / title split (i.e. in case of wrapping)? */}
                   {chapters.map(({ id, title, ready, partial, complete }, i) => {

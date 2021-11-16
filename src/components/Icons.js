@@ -1,5 +1,5 @@
 import { AiFillEdit, AiFillEye, AiFillStar } from 'react-icons/ai';
-import { BsFillPersonFill, BsCheckCircle } from 'react-icons/bs';
+import { BsFillPersonFill, BsCheckCircle, BsChevronLeft } from 'react-icons/bs';
 import { FaCheck, FaEthereum, FaMapMarkedAlt, FaCopy } from 'react-icons/fa';
 import { FiMenu } from 'react-icons/fi';
 import { HiClock, HiLockClosed, HiUserGroup } from 'react-icons/hi';
@@ -29,6 +29,7 @@ export {
   AiFillEye as EyeIcon,
   AiFillStar as StarIcon,
   BsCheckCircle as CheckCircleIcon,
+  BsChevronLeft as BackIcon,
   BsFillPersonFill as CrewMemberIcon,
   FaCheck as CheckIcon,
   FaCopy as CopyIcon,

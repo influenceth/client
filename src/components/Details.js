@@ -32,14 +32,17 @@ const StyledDetails = styled.div`
   }
 `;
 
+const headerHeight = 60;
 const Header = styled.h1`
   border-left: 5px solid ${p => p.theme.colors.main};
   font-size: 24px;
   font-weight: 400;
-  height: 60px;
-  line-height: 60px;
+  height: ${headerHeight}px;
+  line-height: ${headerHeight}px;
   padding: 0 0 0 30px;
+  position: relative;
   margin: 0;
+  z-index: 1;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding-left: 20px;
@@ -48,11 +51,12 @@ const Header = styled.h1`
 
 const Content = styled.div`
   flex: 1 1 0;
-  margin: 25px 35px 35px 25px;
+  margin: ${p => p.fullModalContent ? '-60px 0 0' : '25px 35px 35px 25px'};
   min-width: 0;
   overflow-y: auto;
   position: relative;
   scrollbar-width: thin;
+  z-index: 0;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     margin: 0;
@@ -63,6 +67,7 @@ const CloseButton = styled(IconButton)`
   position: absolute !important;
   top: 17px;
   right: 20px;
+  z-index: 1;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     right: 0;
@@ -70,7 +75,7 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Details = (props) => {
-  const { title, ...restProps } = props;
+  const { title, fullModalContent, ...restProps } = props;
   const history = useHistory();
 
   return (
@@ -81,7 +86,7 @@ const Details = (props) => {
         borderless>
         <CloseIcon />
       </CloseButton>
-      <Content>
+      <Content fullModalContent={fullModalContent}>
         {props.children}
       </Content>
     </StyledDetails>

@@ -34,9 +34,11 @@ const Card = styled.div`
   background: rgba(20, 20, 20, 0.75);
   cursor: ${({ theme, clickable }) => clickable && theme.cursors.active};
   height: 275px;
+  min-height: 275px;
   margin: 0px 12px 12px 0;
   position: relative;
   width: 200px;
+  min-width: 200px;
 
   ${p => p.fade ? `
     & ${CardHeader},
@@ -142,7 +144,7 @@ const loadingCss = css`
   top: 50%;
 `;
 
-const CrewCard = ({ config = {}, crew, onClick }) => {
+const CrewCard = ({ config = { alwaysOn: [] }, crew, onClick }) => {
   const [ imageLoaded, setImageLoaded ] = useState(false);
   const imageUrl = crew.crewCollection
     ? `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crew.i}/image.svg?bustOnly=true`
