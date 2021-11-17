@@ -7,6 +7,7 @@ import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import Button from '~/components/Button';
 import Details from '~/components/Details';
+import Dialog from '~/components/Dialog';
 import { BackIcon } from '~/components/Icons';
 import NavIcon from '~/components/NavIcon';
 import CrewCard from './CrewCard';
@@ -122,10 +123,6 @@ const Path = styled.div`
     border-top: 1px solid rgba(255, 255, 255,0.2);
   }
 
-  &:hover > div {
-    background-color: rgba(255, 255, 255, 0.2);
-  }
-
   & > div {
     align-items: flex-start;
     display: flex;
@@ -144,8 +141,11 @@ const Path = styled.div`
     }
   }
 
-  &:hover > div > span:last-child {
-    color: white;
+  ${p => p.selected ? '&' : '&:hover'} > div {
+    background-color: rgba(255, 255, 255, 0.2);
+    & > span:last-child {
+      color: white;
+    }
   }
 `;
 
@@ -159,6 +159,47 @@ const PagePrompt = styled.div`
   margin-bottom: 1em;
 `;
 
+const Confirmation = styled.div`
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  width: 650px;
+`;
+const ConfirmationTitle = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  height: 60px;
+  padding: 8px;
+  & > h4 { flex: 1, margin: 0 }
+`;
+const ConfirmationBody = styled.div`
+  flex: 1;
+  font-size: 15px;
+  padding: 40px 80px;
+  & > article {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    color: ${p => p.theme.colors.main};
+    padding: 1em 2em;
+  }
+`;
+const ConfirmationButtons = styled.div`
+  display: flex;
+  flex-direction: row;
+  height: 60px;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 8px 16px;
+  & > button {
+    margin-top: 0;
+    margin-left: 1em;
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+`;
+
 // TODO: ...
 // zero-indexed
 const currentStep = 1;
@@ -167,70 +208,100 @@ const totalSteps = 3;
 const CrewAssignment = (props) => {
   const { data: crew } = useOwnedCrew();
 
-  const selectPath = useCallback((id) => () => {
-    console.log(`${id} selected`);
+  const [selection, setSelection] = useState();
+
+  const selectPath = useCallback((path) => () => {
+    setSelection(path);
   });
+
+  const confirmPath = useCallback(() => {
+
+  }, []);
 
   if (!story || !crew) return null;
   return (
-    <Details title="Assignments" fullModalContent={true}>
-      <CoverImage src={story.coverImg} ready />
-      <AboveFold>
-        <BackButton><BackIcon /> Back</BackButton>
-        <Title>{story.title}</Title>
-      </AboveFold>
-      <BelowFold>
-        <CrewCard crew={crew[0]} />
-        <Body>
-          <PageContent>{story.content}</PageContent>
-          {story.prompt && (
-            <>
-              <PagePrompt>{story.prompt}</PagePrompt>
-              <div>
-                {story.paths.map(({ content, id }, i) => (
-                  <Path key={id} onClick={selectPath(id)}>
-                    <div>
-                      <span>{String.fromCharCode(65 + i)}</span>
-                      <span>{content}</span>
+    <>
+      <Details title="Assignments" edgeToEdge>
+        <CoverImage src={story.coverImg} ready />
+        <AboveFold>
+          <BackButton><BackIcon /> Back</BackButton>
+          <Title>{story.title}</Title>
+        </AboveFold>
+        <BelowFold>
+          <CrewCard crew={crew[0]} />
+          <Body>
+            <PageContent>{story.content}</PageContent>
+            {story.prompt && (
+              <>
+                <PagePrompt>{story.prompt}</PagePrompt>
+                <div>
+                  {story.paths.map((path, i) => (
+                    <Path key={path.id}
+                      selected={path.id === selection?.id}
+                      onClick={selectPath(path)}>
+                      <div>
+                        <span>{String.fromCharCode(65 + i)}</span>
+                        <span>{path.content}</span>
+                      </div>
+                    </Path>
+                  ))}
+                </div>
+              </>
+            )}
+            {!story.prompt && (
+              <Button style={{ margin: '0 auto' }}>Finish</Button>
+            )}
+          </Body>
+          <Flourish>
+            <h4 style={{ marginBottom: 6 }}>{currentStep + 1} of {totalSteps}</h4>
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+              {Array.from({ length: totalSteps }, (x, i) => {
+                let color = '#777';
+                if (i < currentStep) {
+                  color = theme.colors.main;
+                } else if (i === currentStep) {
+                  color = '#FFF';
+                }
+                return (
+                  <>
+                    {i > 0 && (
+                      <div style={{
+                        height: 0,
+                        borderTop: `1px dotted ${i <= currentStep ? '#FFF' : '#777'}`,
+                        width: '1.5em'
+                      }} />
+                    )}
+                    <div style={{ fontSize: '150%', width: '1.5em', height: '1.5em' }}>
+                      <NavIcon selected={i === currentStep} color={color} />
                     </div>
-                  </Path>
-                ))}
+                  </>
+                );
+              })}
+            </div>
+          </Flourish>
+        </BelowFold>
+      </Details>
+      {selection && (
+        <Dialog>
+          <Confirmation>
+            <ConfirmationTitle>
+              <div style={{ fontSize: 28, lineHeight: '28px', width: 44 }}>
+                <NavIcon selected selectedColor={'white'} />
               </div>
-            </>
-          )}
-          {!story.prompt && (
-            <Button style={{ margin: '0 auto' }}>Finish</Button>
-          )}
-        </Body>
-        <Flourish>
-          <h4 style={{ marginBottom: 6 }}>{currentStep + 1} of {totalSteps}</h4>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-            {Array.from({ length: totalSteps }, (x, i) => {
-              let color = '#777';
-              if (i < currentStep) {
-                color = theme.colors.main;
-              } else if (i === currentStep) {
-                color = '#FFF';
-              }
-              return (
-                <>
-                  {i > 0 && (
-                    <div style={{
-                      height: 0,
-                      borderTop: `1px dotted ${i <= currentStep ? '#FFF' : '#777'}`,
-                      width: '1.5em'
-                    }} />
-                  )}
-                  <div style={{ fontSize: '150%', width: '1.5em', height: '1.5em' }}>
-                    <NavIcon selected={i === currentStep} color={color} />
-                  </div>
-                </>
-              );
-            })}
-          </div>
-        </Flourish>
-      </BelowFold>
-    </Details>
+              <h4>Your Selection:</h4>
+            </ConfirmationTitle>
+            <ConfirmationBody>
+              <PagePrompt>{story.prompt}</PagePrompt>
+              <article>{selection.content}</article>
+            </ConfirmationBody>
+            <ConfirmationButtons>
+              <Button onClick={selectPath()}>Back</Button>
+              <Button onClick={confirmPath}>Confirm</Button>
+            </ConfirmationButtons>
+          </Confirmation>
+        </Dialog>
+      )}
+    </>
   );
 };
 

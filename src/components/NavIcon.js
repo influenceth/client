@@ -20,7 +20,7 @@ const Container = styled.div`
   }
   & > *:last-child {
     position: absolute;
-    color: ${p => p.theme.colors.main};
+    color: ${p => p.selectedColor || p.theme.colors.main};
     display: ${p => p.selected ? 'block' : 'none'};
   }
 `;

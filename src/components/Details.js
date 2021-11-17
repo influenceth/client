@@ -51,7 +51,7 @@ const Header = styled.h1`
 
 const Content = styled.div`
   flex: 1 1 0;
-  margin: ${p => p.fullModalContent ? '-60px 0 0' : '25px 35px 35px 25px'};
+  margin: ${p => p.edgeToEdge ? '-60px 0 0' : '25px 35px 35px 25px'};
   min-width: 0;
   overflow-y: auto;
   position: relative;
@@ -75,7 +75,7 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Details = (props) => {
-  const { title, fullModalContent, ...restProps } = props;
+  const { title, edgeToEdge, ...restProps } = props;
   const history = useHistory();
 
   return (
@@ -86,7 +86,7 @@ const Details = (props) => {
         borderless>
         <CloseIcon />
       </CloseButton>
-      <Content fullModalContent={fullModalContent}>
+      <Content edgeToEdge={edgeToEdge}>
         {props.children}
       </Content>
     </StyledDetails>
