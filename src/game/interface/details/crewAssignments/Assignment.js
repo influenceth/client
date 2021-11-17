@@ -170,7 +170,7 @@ const ConfirmationTitle = styled.div`
   display: flex;
   flex-direction: row;
   height: 60px;
-  padding: 8px;
+  padding: 8px 16px;
   & > h4 { flex: 1, margin: 0 }
 `;
 const ConfirmationBody = styled.div`
@@ -271,9 +271,7 @@ const CrewAssignment = (props) => {
                         width: '1.5em'
                       }} />
                     )}
-                    <div style={{ fontSize: '150%', width: '1.5em', height: '1.5em' }}>
-                      <NavIcon selected={i === currentStep} color={color} />
-                    </div>
+                    <NavIcon selected={i === currentStep} size={'1.5em'} color={color} />
                   </>
                 );
               })}
@@ -285,9 +283,11 @@ const CrewAssignment = (props) => {
         <Dialog>
           <Confirmation>
             <ConfirmationTitle>
-              <div style={{ fontSize: 28, lineHeight: '28px', width: 44 }}>
-                <NavIcon selected selectedColor={'white'} />
-              </div>
+              <NavIcon
+                selected
+                selectedColor={'white'} 
+                size={28}
+                style={{ marginRight: 8 }} />
               <h4>Your Selection:</h4>
             </ConfirmationTitle>
             <ConfirmationBody>
