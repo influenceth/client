@@ -19,6 +19,7 @@ const CardLayer = styled.div`
 const CardHeader = styled(CardLayer)`
   bottom: auto;
   padding: 8px;
+  text-align: left;
 `;
 
 const CardImage = styled(CardLayer)`
@@ -35,7 +36,6 @@ const Card = styled.div`
   cursor: ${({ theme, clickable }) => clickable && theme.cursors.active};
   height: 275px;
   min-height: 275px;
-  margin: 0px 12px 12px 0;
   position: relative;
   width: 200px;
   min-width: 200px;

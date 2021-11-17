@@ -347,11 +347,12 @@ const CrewAssignments = (props) => {
           </SectionHeader>
           <SectionBody style={{ display: 'flex', flexWrap: 'wrap', paddingLeft: 3, paddingTop: 3 }}>
             {(crew || []).map((c, i) => (
-              <CrewCard
-                key={c.i}
-                crew={c}
-                config={crewStates[Object.keys(crewStates)[i]]}
-                onClick={selectCrew(c)} />
+              <div key={c.i} style={{ padding: '0 12px 12px 0' }}>
+                <CrewCard
+                  crew={c}
+                  config={crewStates[Object.keys(crewStates)[i]]}
+                  onClick={selectCrew(c)} />
+              </div>
             ))}
           </SectionBody>
         </div>

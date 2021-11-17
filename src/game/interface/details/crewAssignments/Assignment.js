@@ -228,7 +228,9 @@ const CrewAssignment = (props) => {
           <Title>{story.title}</Title>
         </AboveFold>
         <BelowFold>
-          <CrewCard crew={crew[0]} />
+          <div style={{ padding: '0 12px 12px 0' }}>
+            <CrewCard crew={crew[0]} />
+          </div>
           <Body>
             <PageContent>{story.content}</PageContent>
             {story.prompt && (
@@ -263,7 +265,7 @@ const CrewAssignment = (props) => {
                   color = '#FFF';
                 }
                 return (
-                  <>
+                  <React.Fragment key={i}>
                     {i > 0 && (
                       <div style={{
                         height: 0,
@@ -272,7 +274,7 @@ const CrewAssignment = (props) => {
                       }} />
                     )}
                     <NavIcon selected={i === currentStep} size={'1.5em'} color={color} />
-                  </>
+                  </React.Fragment>
                 );
               })}
             </div>

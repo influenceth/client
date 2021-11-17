@@ -1,0 +1,236 @@
+import React, { useCallback, useState } from 'react';
+import { useHistory } from 'react-router-dom';
+import styled from 'styled-components';
+import {
+  BiWrench as WrenchIcon,
+  BiLink as LinkIcon,
+  BiMoney as SwayIcon,
+  BiTrophy as TrophyIcon,
+} from 'react-icons/bi';
+
+import orbitalPeriodImage from '~/assets/images/orbital-period.png';
+import TwitterLogo from '~/assets/images/twitter-icon.svg';
+import useCrewAssignments from '~/hooks/useCrewAssignments';
+import useOwnedCrew from '~/hooks/useOwnedCrew';
+import Button from '~/components/Button';
+import Details from '~/components/Details';
+import Dialog from '~/components/Dialog';
+import { BackIcon } from '~/components/Icons';
+import NavIcon from '~/components/NavIcon';
+import CrewCard from './CrewCard';
+
+import theme from '~/theme.js';
+
+const story = {
+  title: 'Earth and the Void',
+  coverImg: 'https://images.fineartamerica.com/images/artworkimages/mediumlarge/2/spacex-bfr-leaving-earth-filip-hellman.jpg',
+};
+const rewards = [{
+  Icon: WrenchIcon,
+  title: 'Talented Mechanic',
+  description: 'The limited scraps aboard the Arvad have made you extra resoureful with repurposing existing technologies to new needs.'
+}];
+
+const TitleBox = styled.div`
+  border-bottom: 1px solid #444;
+  border-top: 1px solid #444;
+  color: white;
+  display: flex;
+  font-size: 40px;
+  line-height: 40px;
+  justify-content: center;
+  margin: 0 auto;
+  overflow: visible;
+  padding: 10px 0 14px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  width: 250px;
+`;
+const Content = styled.div`
+  margin: 16px 12px;
+  & > b {
+    color: white;
+  }
+`;
+const CardContainer = styled.div`
+  padding: 10px;
+  background: black;
+  border: 1px solid #444;
+`;
+const ImageryContainer = styled.div`
+  position: relative;
+
+  & > div:first-child {
+    background-image: url(${p => p.src});
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    position: absolute;
+    top: 20px;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    z-index: 1;
+  }
+  & > div:last-child {
+    position: relative;
+    z-index: 2;
+
+    align-items: center;  
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+  }
+`;
+const Reward = styled.div`
+  background: black;
+  max-width: 400px;
+  padding: 20px 40px;
+  text-align: left;
+  & > h4 {
+    color: white;
+    font-size: 18px;
+    font-weight: normal;
+    margin: 0 0 12px;
+  }
+  & > div {
+    display: flex;
+    align-items: flex-start;
+    & > *:first-child {
+      border: 1px solid #555;
+      border-radius: 50%;
+      color: white;
+      font-size: 150%;
+      margin-right: 0.5em;
+      padding: 0.2em;
+    }
+    & > *:last-child {
+      font-size: 14px;
+      & > b {
+        color: white;
+        display: block;
+        margin-bottom: 4px;
+      }
+    }
+  }
+`;
+const SharingPrompt = styled(Content)`
+  display: inline-block;
+  font-size: 90%;
+  width: 600px;
+`;
+const SharingSection = styled.div`
+  display: flex;
+  & > div {
+    flex: 1;
+  }
+  & h5 {
+    margin: 0;
+  }
+`;
+const SwaySection = styled.div`
+  border-right: 1px solid #444;
+  color: rgb(226, 84, 32);
+  
+  & > div {
+    align-items: center;
+    background: rgb(226, 84, 32, 0.1);
+    display: flex;
+    font-size: 40px;
+    font-weight: bold;
+    justify-content: center;
+    margin: 5px auto 10px;
+    padding: 10px;
+    width: 300px;
+  }
+`;
+const TwitterSection = styled.div`
+  & button {
+    display: flex;
+    height: 66px;
+    justify-content: space-between;
+    margin: 20px auto 10px;
+    text-transform: uppercase;
+    width: 300px;
+  }
+`;
+const LinkWithIcon = styled.a`
+  align-items: center;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  font-size: 90%;
+  justify-content: center;
+  text-transform: uppercase;
+  & > * {
+    color: #656565;
+    transition: color 100ms ease;
+  }
+  & > span {
+    margin-left: 4px; 
+  }
+  &:hover > * {
+    color: #999;
+  }
+`;
+
+const Completion = (props) => {
+  const { data: crew } = useOwnedCrew();
+
+  if (!story || !crew) return null;
+  return (
+    <Details style={{ color: '#999', textAlign: 'center' }}>
+      <TitleBox>Assignment Complete</TitleBox>
+      <Content>Congratulations! You have completed <b>{story.title}</b> for your crew member.</Content>
+      <ImageryContainer src={story.coverImg}>
+        <div />
+        <div>
+          <CardContainer>
+            <CrewCard crew={crew[0]} />
+          </CardContainer>
+          <Reward>
+            <h4>This crew member has gained traits:</h4>
+            {rewards.map(({ Icon, title, description }) => (
+              <div key={title}>
+                <Icon />
+                <div style={{ flex: 1 }}>
+                  <b>{title}</b>
+                  <span>{description}</span>
+                </div>
+              </div>
+            ))}
+          </Reward>
+        </div>
+      </ImageryContainer>
+      <SharingPrompt>
+        Earn <b>Sway</b> for each friend who signs up using your unique referral link.
+        Referral Points can be later spent to unlock exclusive in-game items, rewards, and cosmetics!
+      </SharingPrompt>
+      <SharingSection>
+        <SwaySection>
+          <h5>Earned Per Referral</h5>
+          <div>15 <SwayIcon /></div>
+          <LinkWithIcon>
+            <TrophyIcon />
+            <span>Visit the Referral Leaderboard</span>
+          </LinkWithIcon>
+        </SwaySection>
+        <TwitterSection>
+          <Button>
+            <span>Share on Twitter</span>
+            <TwitterLogo />
+          </Button>
+          <LinkWithIcon>
+            <LinkIcon />
+            <span>Copy Referral Link</span>
+          </LinkWithIcon>
+        </TwitterSection>
+      </SharingSection>
+      <div style={{ marginTop: 32, textAlign: 'right' }}>
+        <a style={{ textDecoration: 'underline' }}>FINISH</a>
+      </div>
+    </Details>
+  );
+};
+
+export default Completion;

@@ -51,7 +51,15 @@ const Header = styled.h1`
 
 const Content = styled.div`
   flex: 1 1 0;
-  margin: ${p => p.edgeToEdge ? '-60px 0 0' : '25px 35px 35px 25px'};
+  ${p => {
+    if (p.edgeToEdge) {
+      if (p.hasTitle) {
+        return 'margin: -60px 0 0;';
+      }
+      return 'margin: 0;';
+    }
+    return 'margin: 25px 35px 35px 25px;';
+  }}
   min-width: 0;
   overflow-y: auto;
   position: relative;
@@ -86,7 +94,7 @@ const Details = (props) => {
         borderless>
         <CloseIcon />
       </CloseButton>
-      <Content edgeToEdge={edgeToEdge}>
+      <Content edgeToEdge={edgeToEdge} hasTitle={!!title}>
         {props.children}
       </Content>
     </StyledDetails>
