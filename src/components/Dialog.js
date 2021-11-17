@@ -1,15 +1,21 @@
-import React from 'react';
-import styled from 'styled-components';
+import React, { useEffect, useRef } from 'react';
+import styled, { keyframes } from 'styled-components';
+
+const fadeIn = keyframes`
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+`;
 
 const Backdrop = styled.div`
+  animation: ${fadeIn} 200ms linear 1;
   pointer-events: auto;
   position: fixed;
   top: 0;
   right: 0;
   left: 0;
   bottom: 0;
-  background: ${p => p.theme.colors.contentBackdrop};
-  z-index: 2147483647;
+  background-color: ${p => p.theme.colors.contentBackdrop};
+  z-index: 10001;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -24,7 +30,6 @@ const Modal = styled.div`
   max-height: 90%;
   overflow: auto;
 `;
-
 
 const Dialog = (props) => (
   <Backdrop>
