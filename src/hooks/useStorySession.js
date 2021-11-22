@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
+import { useHistory } from 'react-router-dom';
 
 import api from '~/lib/api';
+import useStore from '~/hooks/useStore';
 
 const useStorySession = (id) => {
+  const history = useHistory();
   const queryClient = useQueryClient();
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+
   const [currentStep, setCurrentStep] = useState(0);
   const [pathContent, setPathContent] = useState();
 
@@ -49,50 +54,60 @@ const useStorySession = (id) => {
         });
       }
     }
-  }, [story]);
+  }, [currentStep, selectablePaths, story]);
 
   // path selection
   const commitPath = useCallback(async (path) => {
     let content;
-    if (session.pathHistory.includes(path)) {
-      console.log('GET path', path);
-      content = await api.getStorySessionPath(session.id, path);
-      content.linkedPaths = selectablePaths(content.linkedPaths, currentStep + 1);
-    } else {
-      console.log('PATCH path', path);
-      content = await api.patchStorySessionPath(session.id, path);
-      if (content) {
-        const sessionCacheKey = [ 'storySession', id ];
-        const currentCacheValue = queryClient.getQueryData(sessionCacheKey);
-        queryClient.setQueryData(
-          sessionCacheKey,
-          {
-            ...currentCacheValue,
-            pathHistory: [
-              ...currentCacheValue.pathHistory,
-              path
-            ]
-            // TODO: isComplete
-          }
-        );
+    try {
+      if (session.pathHistory.includes(path)) {
+        content = await api.getStorySessionPath(session.id, path);
+        content.linkedPaths = selectablePaths(content.linkedPaths, currentStep + 1);
+      } else {
+        content = await api.patchStorySessionPath(session.id, path);
+        if (content) {
+          const sessionCacheKey = [ 'storySession', session.id ];
+          const currentCacheValue = queryClient.getQueryData(sessionCacheKey);
+          queryClient.setQueryData(
+            sessionCacheKey,
+            {
+              ...currentCacheValue,
+              pathHistory: [
+                ...currentCacheValue.pathHistory,
+                path
+              ]
+            }
+          );
+        }
       }
+    } catch (e) {
+      console.warn(e);
     }
     
     if (content) {
       const nextStep = currentStep + 1;
       setCurrentStep(nextStep);
       setPathContent(content);
-    } else {
-      // TODO: clear all story-related caches
-    }
-  }, [currentStep, session]);
 
-  // TODO: image needs to be attached with all content (backend can default to story value or not)
-  // TODO: respond with function to fetch, patch, etc
-  // TODO: on completion, invalidate book and books
+      // if just completed assignment (i.e. no more choices), then refetch book and books
+      if (content.linkedPaths.length === 0) {
+        queryClient.refetchQueries('books');
+        queryClient.refetchQueries('book', story.book);
+      }
+
+    // if no content found, probably because trying to make invalid choice... redirect to main page with error
+    } else {
+      createAlert({
+        type: 'GenericLoadingError',
+        label: 'crew assignment path',
+        level: 'warning',
+      });
+      history.push(`/crew-assignments/${story.book}`);
+    }
+  }, [createAlert, currentStep, history, queryClient, selectablePaths, story.book, session]);
 
   const storyState = useMemo(() => {
-    console.log({ session, story, pathContent });
+    //console.log({ session, story, pathContent });
     if (story && session && pathContent) {
       return {
         ...story,

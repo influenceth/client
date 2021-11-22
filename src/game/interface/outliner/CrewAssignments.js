@@ -1,7 +1,5 @@
-import { useMemo } from 'react';
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
-import { RiPagesFill as DetailIcon } from 'react-icons/ri';
 import { ChapterIcon, RocketIcon } from '~/components/Icons';
 
 import useBooks from '~/hooks/useBooks';
@@ -58,7 +56,7 @@ const CrewAssignments = (props) => {
           <ListEmptyMessage><span>No crew assignments available.</span></ListEmptyMessage>
         )}
         {books?.length > 0 && books.map(book => {
-          const badgeValue = (crew?.length || 0) - (book.stats?.sessions?.completed || 0);
+          const badgeValue = (crew?.length || 0) - (book.stats?.completed || 0);
           return (
             <ListHoverItem
               key={book.id}

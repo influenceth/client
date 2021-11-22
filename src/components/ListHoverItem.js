@@ -1,5 +1,4 @@
 import styled from 'styled-components';
-import { useHistory } from 'react-router-dom';
 
 const Description = styled.span`
   height: 40px;
@@ -34,19 +33,15 @@ const Controls = styled.div`
   height: 40px;
 `;
 
-const ListHoverItem = ({ title, hoverContent, selected }) => {
-  const history = useHistory();
-
-  return (
-    <HoverItem selected={selected}>
-      <Description>
-        {title}
-      </Description>
-      <Controls>
-        {hoverContent}
-      </Controls>
-    </HoverItem>
-  );
-};
+const ListHoverItem = ({ title, hoverContent, selected }) => (
+  <HoverItem selected={selected}>
+    <Description>
+      {title}
+    </Description>
+    <Controls>
+      {hoverContent}
+    </Controls>
+  </HoverItem>
+);
 
 export default ListHoverItem;

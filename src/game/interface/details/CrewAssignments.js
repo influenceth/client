@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useParams, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { BsChevronDoubleDown as SelectIcon } from 'react-icons/bs';
 
 import useBook from '~/hooks/useBook';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
+import useMintableCrew from '~/hooks/useMintableCrew';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStore from '~/hooks/useStore';
 import Details from '~/components/Details';
@@ -52,6 +53,27 @@ const SectionBody = styled.div`
   margin-top: 1.5em;
   overflow: auto;
   scrollbar-width: thin;
+`;
+
+const CrewSection = styled(SectionBody)`
+  display: flex;
+  flex-wrap: wrap;
+  padding-left: 3px;
+  padding-top: 3px;
+  & > div {
+    padding: 0 12px 12px 0;
+  }
+`;
+
+const CrewlessSection = styled(SectionBody)`
+  padding: 15px;
+  background: rgba(51, 51, 51, 0.5);
+  text-align: center;
+  & > div {
+    & > a {
+      white-space: nowrap;
+    }
+  } 
 `;
 
 const SectionHeader = styled.div`
@@ -206,37 +228,29 @@ const ChapterProgress = ({ crewReady, status }) => {
   );
 }
 
-/* TODO:
- - sound fx?
- - "no crew" message
- - enhancement:
-  - "scroll to" firstIncompleteStory
-  - use theme on heights and paddings and font sizes?
- - mobile:
-  - handle word wrapping / truncating for smaller devices
-*/
-
 const CrewAssignments = (props) => {
   const { id: bookId } = useParams();
   const history = useHistory();
 
   const createStorySession = useCreateStorySession();
   const { data: crew } = useOwnedCrew();
+  const { data: mintable } = useMintableCrew();
   const { data: book, isError } = useBook(bookId);
   const createAlert = useStore(s => s.dispatchAlertLogged);
+  const playSound = useStore(s => s.dispatchSoundRequested);
 
   const [selectedStory, setSelectedStory] = useState();
 
   const selectStory = useCallback((story) => () => {
+    playSound(story === null ? 'effects.failure' : 'effects.click');
     setSelectedStory(story);
-  }, []);
+  }, [playSound]);
 
   const selectCrew = useCallback((crewId) => async () => {
     if (crewId) {
       let session = (selectedStory.sessions || []).find((s) => s.owner === crewId);
 
       // if no session yet, create one
-      // TODO: loading... (disable buttons?)
       if (!session) {
         session = await new Promise((resolve, reject) => {
           createStorySession.mutate({
@@ -251,12 +265,15 @@ const CrewAssignments = (props) => {
       }
 
       if (session) {
+        playSound('effects.success');
         history.push(`/crew-assignment/${session.id}`);
+      } else {
+        playSound('effects.failure');
       }
-
-      // TODO: report error?
+    } else {
+      playSound('effects.failure');
     }
-  }, [selectedStory]);
+  }, [bookId, createStorySession, history, playSound, selectedStory]);
 
   useEffect(() => {
     if (book && crew) {
@@ -318,7 +335,6 @@ const CrewAssignments = (props) => {
     }
   }, [book, crew]);
 
-  // TODO: show loading?
   if (!book) {
     if (isError) {
       createAlert({
@@ -354,17 +370,16 @@ const CrewAssignments = (props) => {
                 </PartTitle>
                 <span>
                   {stories.map(({ story }, i) => {
-                    if (!story) return null;
-                    const { id, title, ready, partial, status } = story;
+                    const { id, title, ready, partial, status } = (story || { status: 'locked' });
                     return (
                       <ChapterRow
-                        key={id || i}
-                        onClick={selectStory(status == 'locked' ? null : story)}
+                        key={id || `placeholder_${i}`}
+                        onClick={selectStory(status === 'locked' ? null : story)}
                         status={status}>
                         <DiamondContainer connect={i > 0}>
-                          <NavIcon selected={id === selectedStory?.id} />
+                          <NavIcon selected={selectedStory && id === selectedStory.id} />
                         </DiamondContainer>
-                        <ChapterRowInner index={x} selected={id === selectedStory?.id}>
+                        <ChapterRowInner index={x} selected={selectedStory && id === selectedStory.id}>
                           <div>
                             <div>{title || 'Coming Soon'}</div>
                             <ChapterProgress
@@ -393,18 +408,38 @@ const CrewAssignments = (props) => {
             <SectionTitle>Owned Crew ({crew?.length || 0})</SectionTitle>
             <SectionSubtitle>Select a Crew Member to begin the assignment with:</SectionSubtitle>
           </SectionHeader>
-          <SectionBody style={{ display: 'flex', flexWrap: 'wrap', paddingLeft: 3, paddingTop: 3 }}>
-            {(crew || []).map((c) => {
-              return (
-                <div key={c.i} style={{ padding: '0 12px 12px 0' }}>
-                  <CrewCard
-                    crew={c}
-                    config={crewStates[selectedStory?.crewStatuses[c.i] || 'notReady']}
-                    onClick={selectCrew(c.i)} />
+          {crew && crew.length > 0
+            ? (
+              <CrewSection>
+                {crew.map((c) => {
+                  const crewStatus = selectedStory?.crewStatuses[c.i] || 'notReady';
+                  return (
+                    <div key={c.i}>
+                      <CrewCard
+                        crew={c}
+                        config={crewStates[crewStatus]}
+                        onClick={selectCrew(crewStatus !== 'notReady' ? c.i : null)} />
+                    </div>
+                  );
+                })}
+              </CrewSection>
+            )
+            : (
+              <CrewlessSection>
+                <h4>You must have a crew to complete crew assignments.</h4>
+                <div>
+                  <a href={`${process.env.REACT_APP_OPEN_SEA_URL}/collection/influence-crew`} target="_blank" rel="noreferrer">Click here</a>
+                  {' '}to acquire crew members through trade
+                  {true || mintable?.length
+                    ? (
+                      <span>
+                        {', '}or <Link to="/owned-crew">click here</Link> to mint your own.
+                      </span>
+                    ) : '.'}
                 </div>
-              );
-            })}
-          </SectionBody>
+              </CrewlessSection>
+            )
+          }
         </div>
       </div>
     </Details>

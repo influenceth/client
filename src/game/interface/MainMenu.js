@@ -128,7 +128,7 @@ const MainMenu = (props) => {
   const missionsBadge = useMemo(() => {
     if (books?.length > 0 && crew?.length > 0) {
       return books.reduce((acc, book) => {
-        return acc + (crew.length - (book.stats?.sessions?.completed || 0));
+        return acc + (crew.length - (book.stats?.completed || 0));
       }, 0);
     }
     return 0;

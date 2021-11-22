@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   BiWrench as WrenchIcon,
@@ -160,7 +160,6 @@ const LinkWithIcon = styled.a`
 
 const CrewAssignmentComplete = (props) => {
   const { id: sessionId } = useParams();
-  const history = useHistory();
   const { data: allCrew } = useOwnedCrew();
   const { storyState } = useStorySession(sessionId);
 
@@ -190,7 +189,6 @@ const CrewAssignmentComplete = (props) => {
           <CardContainer>
             <CrewCard crew={crew} />
           </CardContainer>
-          {/* TODO: hexagonal outline */}
           {rewards.length > 0 && (
             <Reward>
               <h4>This crew member has gained traits:</h4>
@@ -214,7 +212,7 @@ const CrewAssignmentComplete = (props) => {
       <SharingSection>
         <SwaySection>
           <h5>Earned Per Referral</h5>
-          <div>15 <SwayIcon /></div>{/* TODO: this should be in a constants file / influence-utils? */}
+          <div>15 <SwayIcon /></div>
           <LinkWithIcon>
             <TrophyIcon />
             <span>Visit the Referral Leaderboard</span>
@@ -232,9 +230,7 @@ const CrewAssignmentComplete = (props) => {
         </TwitterSection>
       </SharingSection>
       <div style={{ marginTop: 32, textAlign: 'right' }}>
-        <a
-          onClick={() => history.push(onCloseDestination)}
-          style={{ textDecoration: 'underline' }}>FINISH</a>
+        <Link to={onCloseDestination}>FINISH</Link>
       </div>
     </Details>
   );

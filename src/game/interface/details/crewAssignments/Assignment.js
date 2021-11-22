@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import orbitalPeriodImage from '~/assets/images/orbital-period.png';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
+import useStore from '~/hooks/useStore';
 import Button from '~/components/Button';
 import Details from '~/components/Details';
 import Dialog from '~/components/Dialog';
@@ -175,14 +176,14 @@ const ConfirmationButtons = styled.div`
   }
 `;
 
-const totalSteps = 3; // TODO: add to story
+const totalSteps = 3;
 
-// TODO: maybe rename this session or storysession or something?
 const CrewAssignment = (props) => {
   const { id: sessionId } = useParams();
   const history = useHistory();
   const { data: allCrew } = useOwnedCrew();
   const { currentStep, storyState, commitPath } = useStorySession(sessionId);
+  const playSound = useStore(s => s.dispatchSoundRequested);
 
   const [selection, setSelection] = useState();
 
@@ -192,6 +193,8 @@ const CrewAssignment = (props) => {
   }, [currentStep]);
 
   const selectPath = useCallback((path) => () => {
+    playSound('effects.click');
+
     // if only one choice, don't need to confirm
     if (storyState.linkedPaths?.length === 1) {
       commitPath(path.path);
@@ -199,21 +202,22 @@ const CrewAssignment = (props) => {
     } else {
       setSelection(path);
     }
-  });
+  }, [commitPath, playSound, storyState]);
 
   const confirmPath = useCallback(() => {
+    playSound('effects.click');
     commitPath(selection.path);
-    // TODO: disable buttons until next page loaded?
-  }, [selection]);
+  }, [commitPath, playSound, selection]);
 
   const goBack = useCallback(() => {
+    playSound('effects.click');
     history.push(`/crew-assignments/${storyState.book}`);
-  });
+  }, [history, playSound, storyState]);
 
   const finish = useCallback(() => {
-    // TODO: add validation to "complete" page
+    playSound('effects.success');
     history.push(`/crew-assignment/${sessionId}/complete`);
-  });
+  }, [history, playSound, sessionId]);
 
   const crew = useMemo(() => {
     return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);

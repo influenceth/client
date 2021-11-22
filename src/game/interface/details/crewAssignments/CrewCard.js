@@ -153,7 +153,10 @@ const CrewCard = ({ config = { alwaysOn: [] }, crew, onClick }) => {
     <Card {...config} onClick={onClick}>
       <LoadingAnimation color={'white'} css={loadingCss} loading={!imageLoaded} />
       <CardImage visible={imageLoaded}>
-        <img src={imageUrl} onLoad={() => setImageLoaded(true)} />
+        <img
+          alt={crew.name || `Crew Member #${crew.i}`}
+          src={imageUrl}
+          onLoad={() => setImageLoaded(true)} />
       </CardImage>
       <CardHeader>
         <CrewName>
