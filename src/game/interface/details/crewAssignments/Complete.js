@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   BiWrench as WrenchIcon,
@@ -8,28 +8,12 @@ import {
   BiTrophy as TrophyIcon,
 } from 'react-icons/bi';
 
-import orbitalPeriodImage from '~/assets/images/orbital-period.png';
 import TwitterLogo from '~/assets/images/twitter-icon.svg';
-import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useStorySession from '~/hooks/useStorySession';
 import Button from '~/components/Button';
 import Details from '~/components/Details';
-import Dialog from '~/components/Dialog';
-import { BackIcon } from '~/components/Icons';
-import NavIcon from '~/components/NavIcon';
 import CrewCard from './CrewCard';
-
-import theme from '~/theme.js';
-
-const story = {
-  title: 'Earth and the Void',
-  coverImg: 'https://images.fineartamerica.com/images/artworkimages/mediumlarge/2/spacex-bfr-leaving-earth-filip-hellman.jpg',
-};
-const rewards = [{
-  Icon: WrenchIcon,
-  title: 'Talented Mechanic',
-  description: 'The limited scraps aboard the Arvad have made you extra resoureful with repurposing existing technologies to new needs.'
-}];
 
 const TitleBox = styled.div`
   border-bottom: 1px solid #444;
@@ -106,7 +90,7 @@ const Reward = styled.div`
       padding: 0.2em;
     }
     & > *:last-child {
-      font-size: 14px;
+      font-size: 13px;
       & > b {
         color: white;
         display: block;
@@ -174,32 +158,53 @@ const LinkWithIcon = styled.a`
   }
 `;
 
-const Completion = (props) => {
-  const { data: crew } = useOwnedCrew();
+const CrewAssignmentComplete = (props) => {
+  const { id: sessionId } = useParams();
+  const history = useHistory();
+  const { data: allCrew } = useOwnedCrew();
+  const { storyState } = useStorySession(sessionId);
 
-  if (!story || !crew) return null;
+  // TODO: these should be loaded from session vvv
+  const rewards = [{
+    Icon: WrenchIcon,
+    title: 'Talented Mechanic',
+    description: 'The limited scraps aboard the Arvad have made you extra resoureful with repurposing existing technologies to new needs.'
+  }];
+  // ^^^
+
+  const crew = useMemo(() => {
+    return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
+  }, [storyState, allCrew]);
+
+  if (!storyState || !crew) return null;
+  const onCloseDestination = `/crew-assignments/${storyState.book}`;
   return (
-    <Details style={{ color: '#999', textAlign: 'center' }}>
+    <Details
+      onCloseDestination={onCloseDestination}
+      style={{ color: '#999', textAlign: 'center' }}>
       <TitleBox>Assignment Complete</TitleBox>
-      <Content>Congratulations! You have completed <b>{story.title}</b> for your crew member.</Content>
-      <ImageryContainer src={story.coverImg}>
+      <Content>Congratulations! You have completed <b>{storyState.title}</b> for your crew member.</Content>
+      <ImageryContainer src={storyState.image}>
         <div />
         <div>
           <CardContainer>
-            <CrewCard crew={crew[0]} />
+            <CrewCard crew={crew} />
           </CardContainer>
-          <Reward>
-            <h4>This crew member has gained traits:</h4>
-            {rewards.map(({ Icon, title, description }) => (
-              <div key={title}>
-                <Icon />
-                <div style={{ flex: 1 }}>
-                  <b>{title}</b>
-                  <span>{description}</span>
+          {/* TODO: hexagonal outline */}
+          {rewards.length > 0 && (
+            <Reward>
+              <h4>This crew member has gained traits:</h4>
+              {rewards.map(({ Icon, title, description }) => (
+                <div key={title}>
+                  <Icon />
+                  <div style={{ flex: 1 }}>
+                    <b>{title}</b>
+                    <span>{description}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </Reward>
+              ))}
+            </Reward>
+          )}
         </div>
       </ImageryContainer>
       <SharingPrompt>
@@ -209,7 +214,7 @@ const Completion = (props) => {
       <SharingSection>
         <SwaySection>
           <h5>Earned Per Referral</h5>
-          <div>15 <SwayIcon /></div>
+          <div>15 <SwayIcon /></div>{/* TODO: this should be in a constants file / influence-utils? */}
           <LinkWithIcon>
             <TrophyIcon />
             <span>Visit the Referral Leaderboard</span>
@@ -227,10 +232,12 @@ const Completion = (props) => {
         </TwitterSection>
       </SharingSection>
       <div style={{ marginTop: 32, textAlign: 'right' }}>
-        <a style={{ textDecoration: 'underline' }}>FINISH</a>
+        <a
+          onClick={() => history.push(onCloseDestination)}
+          style={{ textDecoration: 'underline' }}>FINISH</a>
       </div>
     </Details>
   );
 };
 
-export default Completion;
+export default CrewAssignmentComplete;

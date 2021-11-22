@@ -13,7 +13,7 @@ import SaleNotifier from './interface/SaleNotifier';
 import AsteroidDetails from './interface/details/AsteroidDetails';
 import AsteroidsTable from './interface/details/AsteroidsTable';
 import CrewAssignment from './interface/details/crewAssignments/Assignment';
-import CrewAssignmentComplete from './interface/details/crewAssignments/Completion';
+import CrewAssignmentComplete from './interface/details/crewAssignments/Complete';
 import CrewAssignments from './interface/details/CrewAssignments';
 import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
@@ -96,13 +96,13 @@ const Interface = () => {
           <Route path="/owned-crew">
             <OwnedCrew />
           </Route>
-          <Route path="/crew-assignments">
+          <Route exact path="/crew-assignments/:id([a-z0-9]+)">
             <CrewAssignments />
           </Route>
-          <Route path="/crew-assignment">
+          <Route exact path="/crew-assignment/:id([a-z0-9]+)">
             <CrewAssignment />
           </Route>
-          <Route path="/crew-assignment-complete">
+          <Route path="/crew-assignment/:id([a-z0-9]+)/complete">
             <CrewAssignmentComplete />
           </Route>
           <Route path="/crew/:i(\d+)">

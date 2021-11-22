@@ -1,10 +1,10 @@
-import React, { useCallback, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import orbitalPeriodImage from '~/assets/images/orbital-period.png';
-import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useStorySession from '~/hooks/useStorySession';
 import Button from '~/components/Button';
 import Details from '~/components/Details';
 import Dialog from '~/components/Dialog';
@@ -13,33 +13,6 @@ import NavIcon from '~/components/NavIcon';
 import CrewCard from './CrewCard';
 
 import theme from '~/theme.js';
-
-const story = {
-  title: 'Earth and the Void',
-  coverImg: 'https://images.fineartamerica.com/images/artworkimages/mediumlarge/2/spacex-bfr-leaving-earth-filip-hellman.jpg',
-  content: `A century and a half ago, humanity started fleeing a dying Earth aboard a fleet of massive generational chips, each with a crew of thousands.
-
-Your ancestor was lucky enough to earn a spot on one of them.`,
-  prompt: 'How did they secure that spot?',
-  paths: [
-    {
-      id: '23',
-      content: 'Labour. They helped build the fleet, earning one spot for one of their children to fly away to survival.'
-    },
-    {
-      id: '24',
-      content: 'Merit. The mission required exceptional minds, who earned a spot in exchange for teaching the first generation born aboard the skills that would be needed for survival.'
-    },
-    {
-      id: '25',
-      content: 'Wealth. Even at the end of all things, money and power has value. It isn\'t glamorous, but it is what it is. They bought their ticket.',
-    },
-    {
-      id: '26',
-      content: 'Luck. Hope is a powerful force, and people will bet everything on long shots if there\'s nothing else. But it worked out for them, and they won a single place aboard in the Berth Lotteries.'
-    }
-  ]
-};
 
 const CoverImage = styled.div`
   height: calc(100% - 310px);
@@ -73,6 +46,7 @@ const BelowFold = styled.div`
 
 const BackButton = styled.div`
   align-items: center;
+  cursor: ${p => p.theme.cursors.active};
   display: flex;
   font-size: 14px;
   font-weight: bold;
@@ -89,11 +63,12 @@ const Title = styled.div`
 `;
 
 const Body = styled.div`
+  flex: 1;
   font-size: 90%;
   height: 100%;
   overflow: auto;
   padding: 0 25px 0;
-  flex: 1;
+  scrollbar-width: thin;
 `;
 
 const Flourish = styled.div`
@@ -200,62 +175,92 @@ const ConfirmationButtons = styled.div`
   }
 `;
 
-// TODO: ...
-// zero-indexed
-const currentStep = 1;
-const totalSteps = 3;
+const totalSteps = 3; // TODO: add to story
 
+// TODO: maybe rename this session or storysession or something?
 const CrewAssignment = (props) => {
-  const { data: crew } = useOwnedCrew();
+  const { id: sessionId } = useParams();
+  const history = useHistory();
+  const { data: allCrew } = useOwnedCrew();
+  const { currentStep, storyState, commitPath } = useStorySession(sessionId);
 
   const [selection, setSelection] = useState();
 
+  // on step change, clear selection (to close modal)
+  useEffect(() => {
+    setSelection();
+  }, [currentStep]);
+
   const selectPath = useCallback((path) => () => {
-    setSelection(path);
+    // if only one choice, don't need to confirm
+    if (storyState.linkedPaths?.length === 1) {
+      commitPath(path.path);
+    // else, confirm in modal
+    } else {
+      setSelection(path);
+    }
   });
 
   const confirmPath = useCallback(() => {
+    commitPath(selection.path);
+    // TODO: disable buttons until next page loaded?
+  }, [selection]);
 
-  }, []);
+  const goBack = useCallback(() => {
+    history.push(`/crew-assignments/${storyState.book}`);
+  });
 
-  if (!story || !crew) return null;
+  const finish = useCallback(() => {
+    // TODO: add validation to "complete" page
+    history.push(`/crew-assignment/${sessionId}/complete`);
+  });
+
+  const crew = useMemo(() => {
+    return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
+  }, [storyState, allCrew]);
+
+  if (!storyState || !crew) return null;
   return (
     <>
       <Details title="Assignments" edgeToEdge>
-        <CoverImage src={story.coverImg} ready />
+        <CoverImage src={storyState.image} ready />
         <AboveFold>
-          <BackButton><BackIcon /> Back</BackButton>
-          <Title>{story.title}</Title>
+          <BackButton onClick={goBack}><BackIcon /> Back</BackButton>
+          <Title>{storyState.title}</Title>
         </AboveFold>
         <BelowFold>
           <div style={{ padding: '0 12px 12px 0' }}>
-            <CrewCard crew={crew[0]} />
+            <CrewCard crew={crew} />
           </div>
           <Body>
-            <PageContent>{story.content}</PageContent>
-            {story.prompt && (
-              <>
-                <PagePrompt>{story.prompt}</PagePrompt>
-                <div>
-                  {story.paths.map((path, i) => (
-                    <Path key={path.id}
-                      selected={path.id === selection?.id}
-                      onClick={selectPath(path)}>
-                      <div>
-                        <span>{String.fromCharCode(65 + i)}</span>
-                        <span>{path.content}</span>
-                      </div>
-                    </Path>
-                  ))}
-                </div>
-              </>
-            )}
-            {!story.prompt && (
-              <Button style={{ margin: '0 auto' }}>Finish</Button>
-            )}
+            <PageContent>{storyState.content}</PageContent>
+            {(storyState.linkedPaths || []).length > 0
+              ? (
+                <>
+                  <PagePrompt>{storyState.prompt}</PagePrompt>
+                  <div>
+                    {storyState.linkedPaths.map((linkedPath, i) => (
+                      <Path key={linkedPath.path}
+                        selected={linkedPath.path === selection?.id}
+                        onClick={selectPath(linkedPath)}>
+                        <div>
+                          <span>{String.fromCharCode(65 + i)}</span>
+                          <span>{linkedPath.text}</span>
+                        </div>
+                      </Path>
+                    ))}
+                  </div>
+                </>
+              )
+              : (
+                <Button
+                  onClick={finish}
+                  style={{ margin: '0 auto' }}>Finish</Button>
+              )
+            }
           </Body>
           <Flourish>
-            <h4 style={{ marginBottom: 6 }}>{currentStep + 1} of {totalSteps}</h4>
+            <h4 style={{ marginBottom: 6 }}>{Math.min(totalSteps, currentStep + 1)} of {totalSteps}</h4>
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
               {Array.from({ length: totalSteps }, (x, i) => {
                 let color = '#777';
@@ -293,8 +298,8 @@ const CrewAssignment = (props) => {
               <h4>Your Selection:</h4>
             </ConfirmationTitle>
             <ConfirmationBody>
-              <PagePrompt>{story.prompt}</PagePrompt>
-              <article>{selection.content}</article>
+              <PagePrompt>{storyState.prompt}</PagePrompt>
+              <article>{selection.text}</article>
             </ConfirmationBody>
             <ConfirmationButtons>
               <Button onClick={selectPath()}>Back</Button>

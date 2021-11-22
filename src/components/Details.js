@@ -83,14 +83,14 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Details = (props) => {
-  const { title, edgeToEdge, ...restProps } = props;
+  const { title, edgeToEdge, onCloseDestination, ...restProps } = props;
   const history = useHistory();
 
   return (
     <StyledDetails {...restProps}>
       {title && <Header>{title}</Header>}
       <CloseButton
-        onClick={() => history.push('/')}
+        onClick={() => history.push(onCloseDestination || '/')}
         borderless>
         <CloseIcon />
       </CloseButton>

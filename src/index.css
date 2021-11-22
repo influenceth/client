@@ -49,3 +49,13 @@ input::-webkit-inner-spin-button {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
+
+/* Custom SVG icons */
+svg.icon {
+  fill: currentColor;
+  width: 1em;
+  height: 1em;
+  stroke: currentColor;
+  vertical-align: middle;
+  overflow: hidden;
+}
