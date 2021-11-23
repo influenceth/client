@@ -83,7 +83,7 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Details = (props) => {
-  const { title, edgeToEdge, onCloseDestination, ...restProps } = props;
+  const { title, contentProps = {}, edgeToEdge, onCloseDestination, ...restProps } = props;
   const history = useHistory();
 
   return (
@@ -94,7 +94,7 @@ const Details = (props) => {
         borderless>
         <CloseIcon />
       </CloseButton>
-      <Content edgeToEdge={edgeToEdge} hasTitle={!!title}>
+      <Content edgeToEdge={edgeToEdge} hasTitle={!!title} {...contentProps}>
         {props.children}
       </Content>
     </StyledDetails>

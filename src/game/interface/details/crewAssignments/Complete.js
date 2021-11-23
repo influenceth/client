@@ -31,7 +31,7 @@ const TitleBox = styled.div`
   width: 250px;
 `;
 const Content = styled.div`
-  margin: 16px 12px;
+  margin: 24px 12px;
   & > b {
     color: white;
   }
@@ -140,6 +140,7 @@ const SharingPrompt = styled(Content)`
 `;
 const SharingSection = styled.div`
   display: flex;
+  margin-bottom: 24px;
   & > div {
     flex: 1;
   }
@@ -214,6 +215,7 @@ const CrewAssignmentComplete = (props) => {
   return (
     <Details
       onCloseDestination={onCloseDestination}
+      contentProps={{ style: { display: 'flex', flexDirection: 'column', } }}
       style={{ color: '#999', textAlign: 'center' }}>
       <TitleBox>Assignment Complete</TitleBox>
       <Content>Congratulations! You have completed <b>{storyState.title}</b> for your crew member.</Content>
@@ -241,31 +243,35 @@ const CrewAssignmentComplete = (props) => {
           )}
         </div>
       </ImageryContainer>
-      <SharingPrompt>
-        Earn <b>Sway</b> for each friend who signs up using your unique referral link.
-        Referral Points can be later spent to unlock exclusive in-game items, rewards, and cosmetics!
-      </SharingPrompt>
-      <SharingSection>
-        <SwaySection>
-          <h5>Earned Per Referral</h5>
-          <div>15 <SwayIcon /></div>
-          <LinkWithIcon>
-            <TrophyIcon />
-            <span>Visit the Referral Leaderboard</span>
-          </LinkWithIcon>
-        </SwaySection>
-        <TwitterSection>
-          <Button>
-            <span>Share on Twitter</span>
-            <TwitterLogo />
-          </Button>
-          <LinkWithIcon>
-            <LinkIcon />
-            <span>Copy Referral Link</span>
-          </LinkWithIcon>
-        </TwitterSection>
-      </SharingSection>
-      <div style={{ marginTop: 32, textAlign: 'right' }}>
+      <div style={{ display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'center' }}>
+        <div>
+          <SharingPrompt>
+            Earn <b>Sway</b> for each friend who signs up using your unique referral link.
+            Referral Points can be later spent to unlock exclusive in-game items, rewards, and cosmetics!
+          </SharingPrompt>
+          <SharingSection>
+            <SwaySection>
+              <h5>Earned Per Referral</h5>
+              <div>15 <SwayIcon /></div>
+              <LinkWithIcon>
+                <TrophyIcon />
+                <span>Visit the Referral Leaderboard</span>
+              </LinkWithIcon>
+            </SwaySection>
+            <TwitterSection>
+              <Button>
+                <span>Share on Twitter</span>
+                <TwitterLogo />
+              </Button>
+              <LinkWithIcon>
+                <LinkIcon />
+                <span>Copy Referral Link</span>
+              </LinkWithIcon>
+            </TwitterSection>
+          </SharingSection>
+        </div>
+      </div>
+      <div style={{ textAlign: 'right' }}>
         <Link to={onCloseDestination}>FINISH</Link>
       </div>
     </Details>
