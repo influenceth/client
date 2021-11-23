@@ -58,10 +58,7 @@ const theme = {
   },
   breakpoints: {
     mobile: 1023,
-    xs: 599,
-    sm: 899,
-    md: 1199,
-    lg: 1535,
+    xl: 1599
   }
 };
 

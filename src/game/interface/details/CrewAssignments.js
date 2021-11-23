@@ -63,16 +63,15 @@ const SectionBody = styled.div`
 `;
 
 const CrewSection = styled(SectionBody)`
-  display: flex;
-  flex-wrap: wrap;
   padding-left: 3px;
   padding-top: 3px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  @media (min-width: ${p => p.theme.breakpoints.xl}px) {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
   & > div {
-    flex: 0 1 50%;
     padding: 0 12px 12px 0;
-    @media (min-width: ${p => p.theme.breakpoints.lg}px) {
-      flex-basis: 33%;
-    }
   }
 `;
 
