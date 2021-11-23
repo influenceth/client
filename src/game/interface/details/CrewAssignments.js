@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams, Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { useWeb3React } from '@web3-react/core';
 import { BsChevronDoubleDown as SelectIcon } from 'react-icons/bs';
 
 import useBook from '~/hooks/useBook';
@@ -237,6 +238,7 @@ const ChapterProgress = ({ crewReady, status }) => {
 const CrewAssignments = (props) => {
   const { id: bookId } = useParams();
   const history = useHistory();
+  const { account } = useWeb3React();
 
   const createStorySession = useCreateStorySession();
   const { data: crew } = useOwnedCrew();
@@ -408,8 +410,8 @@ const CrewAssignments = (props) => {
         <div style={{ width: 40 }} />
         
         <SectionContainer>
-          {!crew && <Loader />}
-          {crew && (
+          {account && !crew && <Loader />}
+          {!(account && !crew) && (
             <>
               <SectionHeader style={{
                 justifyContent: 'flex-end',
