@@ -9,10 +9,11 @@ import {
 } from 'react-icons/bi';
 
 import TwitterLogo from '~/assets/images/twitter-icon.svg';
+import Button from '~/components/Button';
+import CopyReferralLink from '~/components/CopyReferralLink';
+import Details from '~/components/Details';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
-import Button from '~/components/Button';
-import Details from '~/components/Details';
 import CrewCard from './CrewCard';
 
 const TitleBox = styled.div`
@@ -263,10 +264,12 @@ const CrewAssignmentComplete = (props) => {
                 <span>Share on Twitter</span>
                 <TwitterLogo />
               </Button>
-              <LinkWithIcon>
-                <LinkIcon />
-                <span>Copy Referral Link</span>
-              </LinkWithIcon>
+              <CopyReferralLink>
+                <LinkWithIcon>
+                  <LinkIcon />
+                  <span>Copy Referral Link</span>
+                </LinkWithIcon>
+              </CopyReferralLink>
             </TwitterSection>
           </SharingSection>
         </div>

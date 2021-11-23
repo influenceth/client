@@ -73,6 +73,7 @@ const Body = styled.div`
   flex: 1;
   font-size: 90%;
   height: 100%;
+  line-height: 1.25em;
   overflow: auto;
   padding: 0 25px 0;
   position: relative;

@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
 import screenfull from 'screenfull';
-import Clipboard from 'react-clipboard.js';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 
 import useStore from '~/hooks/useStore';
 import useReferralsCount from '~/hooks/useReferralsCount';
 import useScreenSize from '~/hooks/useScreenSize';
+import CopyReferralLink from '~/components/CopyReferralLink';
 import Details from '~/components/Details';
 import DataReadout from '~/components/DataReadout';
 import Button from '~/components/Button';
@@ -50,9 +50,6 @@ const StyledDataReadout = styled(DataReadout)`
   }
 `;
 
-const StyledClipboard = styled(Clipboard)`
-  text-decoration: none;
-`;
 
 const Settings = (props) => {
   const { account } = useWeb3React();
@@ -215,15 +212,12 @@ const Settings = (props) => {
 
         <h3>Referrals</h3>
         <StyledDataReadout label="Referral Link">
-          {!account && <span>Connect wallet to generate link</span>}
-          {account && (
-            <StyledClipboard
-              component="a"
-              button-href="#"
-              data-clipboard-text={`${document.location.origin}?r=${account}`}>
-              <Button>Click / tap to copy</Button>
-            </StyledClipboard>
-          )}
+          <CopyReferralLink
+            fallbackContent={(
+              <span>Connect wallet to generate link</span>
+            )}>
+            <Button>Click / tap to copy</Button>
+          </CopyReferralLink>
         </StyledDataReadout>
         {account && (
           <StyledDataReadout label="Completed Referrals">{referralsCount}</StyledDataReadout>
