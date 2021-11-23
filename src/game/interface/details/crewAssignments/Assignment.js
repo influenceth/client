@@ -236,7 +236,7 @@ const CrewAssignment = (props) => {
     setCoverImageLoaded(storyState.image);
   };
   useEffect(() => {
-    if (storyState?.image !== coverImageLoaded) {
+    if (storyState && storyState.image !== coverImageLoaded) {
       setCoverImageLoaded();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
