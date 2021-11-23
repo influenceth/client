@@ -11,6 +11,7 @@ const useStorySession = (id) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const [currentStep, setCurrentStep] = useState(0);
+  const [loadingPath, setLoadingPath] = useState(false);
   const [pathContent, setPathContent] = useState();
 
   // load the session
@@ -58,6 +59,8 @@ const useStorySession = (id) => {
 
   // path selection
   const commitPath = useCallback(async (path) => {
+    setLoadingPath(true);
+
     let content;
     try {
       if (session.pathHistory.includes(path)) {
@@ -88,6 +91,7 @@ const useStorySession = (id) => {
       const nextStep = currentStep + 1;
       setCurrentStep(nextStep);
       setPathContent(content);
+      setLoadingPath(false);
 
       // if just completed assignment (i.e. no more choices), then refetch book and books
       if (content.linkedPaths.length === 0) {
@@ -104,7 +108,7 @@ const useStorySession = (id) => {
       });
       history.push(`/crew-assignments/${story.book}`);
     }
-  }, [createAlert, currentStep, history, queryClient, selectablePaths, story.book, session]);
+  }, [createAlert, currentStep, history, queryClient, selectablePaths, story, session]);
 
   const storyState = useMemo(() => {
     //console.log({ session, story, pathContent });
@@ -121,7 +125,8 @@ const useStorySession = (id) => {
   return {
     currentStep,
     storyState: storyState,
-    commitPath: commitPath
+    commitPath: commitPath,
+    loadingPath
   };
 };
 

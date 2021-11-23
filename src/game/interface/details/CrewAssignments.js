@@ -9,6 +9,7 @@ import useMintableCrew from '~/hooks/useMintableCrew';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStore from '~/hooks/useStore';
 import Details from '~/components/Details';
+import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import TitleWithUnderline from '~/components/TitleWithUnderline';
 import { CheckIcon, ExpandedIcon, CrewMemberIcon, LockIcon, WarningOutlineIcon } from '~/components/Icons';
@@ -47,6 +48,11 @@ const crewStates = {
     rgb: '255, 255, 255',
   }
 };
+
+const SectionContainer = styled.div`
+  flex: 1;
+  position: relative;
+`;
 
 const SectionBody = styled.div`
   height: calc(100% - 40px - 1.5em);
@@ -335,19 +341,16 @@ const CrewAssignments = (props) => {
     }
   }, [book, crew]);
 
-  if (!book) {
-    if (isError) {
-      createAlert({
-        type: 'GenericLoadingError',
-        label: 'crew assignment collection',
-        level: 'warning',
-      });
-      history.push('/');
-    }
-    return null;
+  if (!book && isError) {
+    createAlert({
+      type: 'GenericLoadingError',
+      label: 'crew assignment collection',
+      level: 'warning',
+    });
+    history.push('/');
   }
 
-  const { title, parts } = book;
+  const { title, parts } = book || {};
   return (
     <Details title="Assignments">
       <div style={{
@@ -355,92 +358,102 @@ const CrewAssignments = (props) => {
         flexDirection: 'row',
         height: '100%'
       }}>
-        <div style={{ flex: 1 }}>
-          <BookHeader>
-            <BookIcon><CrewMemberIcon /></BookIcon>
-            <TitleWithUnderline>{title}</TitleWithUnderline>
-          </BookHeader>
+        <SectionContainer>
+          {!book && <Loader />}
+          {book && (
+            <>
+              <BookHeader>
+                <BookIcon><CrewMemberIcon /></BookIcon>
+                <TitleWithUnderline>{title}</TitleWithUnderline>
+              </BookHeader>
 
-          <SectionBody style={{ paddingRight: 10 }}>
-            {parts.map(({ title, stories }, x) => (
-              <PartSection key={x}>
-                <PartTitle>
-                  <div>{title}</div>
-                  <div><ExpandedIcon /></div>
-                </PartTitle>
-                <span>
-                  {stories.map(({ story }, i) => {
-                    const { id, title, ready, partial, status } = (story || { status: 'locked' });
-                    return (
-                      <ChapterRow
-                        key={id || `placeholder_${i}`}
-                        onClick={selectStory(status === 'locked' ? null : story)}
-                        status={status}>
-                        <DiamondContainer connect={i > 0}>
-                          <NavIcon selected={selectedStory && id === selectedStory.id} />
-                        </DiamondContainer>
-                        <ChapterRowInner index={x} selected={selectedStory && id === selectedStory.id}>
-                          <div>
-                            <div>{title || 'Coming Soon'}</div>
-                            <ChapterProgress
-                              crewReady={ready + partial}
-                              status={status}
-                            />
-                          </div>
-                        </ChapterRowInner>
-                      </ChapterRow>
-                    )
-                  })}
-                </span>
-              </PartSection>
-            ))}
-          </SectionBody>
-        </div>
+              <SectionBody style={{ paddingRight: 10 }}>
+                {parts.map(({ title, stories }, x) => (
+                  <PartSection key={x}>
+                    <PartTitle>
+                      <div>{title}</div>
+                      <div><ExpandedIcon /></div>
+                    </PartTitle>
+                    <span>
+                      {stories.map(({ story }, i) => {
+                        const { id, title, ready, partial, status } = (story || { status: 'locked' });
+                        return (
+                          <ChapterRow
+                            key={id || `placeholder_${i}`}
+                            onClick={selectStory(status === 'locked' ? null : story)}
+                            status={status}>
+                            <DiamondContainer connect={i > 0}>
+                              <NavIcon selected={selectedStory && id === selectedStory.id} />
+                            </DiamondContainer>
+                            <ChapterRowInner index={x} selected={selectedStory && id === selectedStory.id}>
+                              <div>
+                                <div>{title || 'Coming Soon'}</div>
+                                <ChapterProgress
+                                  crewReady={ready + partial}
+                                  status={status}
+                                />
+                              </div>
+                            </ChapterRowInner>
+                          </ChapterRow>
+                        )
+                      })}
+                    </span>
+                  </PartSection>
+                ))}
+              </SectionBody>
+            </>
+          )}
+        </SectionContainer>
 
         <div style={{ width: 40 }} />
         
-        <div style={{ flex: 1 }}>
-          <SectionHeader style={{
-            justifyContent: 'flex-end',
-            display: 'flex',
-            flexDirection: 'column',
-          }}>
-            <SectionTitle>Owned Crew ({crew?.length || 0})</SectionTitle>
-            <SectionSubtitle>Select a Crew Member to begin the assignment with:</SectionSubtitle>
-          </SectionHeader>
-          {crew && crew.length > 0
-            ? (
-              <CrewSection>
-                {crew.map((c) => {
-                  const crewStatus = selectedStory?.crewStatuses[c.i] || 'notReady';
-                  return (
-                    <div key={c.i}>
-                      <CrewCard
-                        crew={c}
-                        config={crewStates[crewStatus]}
-                        onClick={selectCrew(crewStatus !== 'notReady' ? c.i : null)} />
+        <SectionContainer>
+          {!crew && <Loader />}
+          {crew && (
+            <>
+              <SectionHeader style={{
+                justifyContent: 'flex-end',
+                display: 'flex',
+                flexDirection: 'column',
+              }}>
+                <SectionTitle>Owned Crew ({crew?.length || 0})</SectionTitle>
+                <SectionSubtitle>Select a Crew Member to begin the assignment with:</SectionSubtitle>
+              </SectionHeader>
+              {crew && crew.length > 0
+                ? (
+                  <CrewSection>
+                    {crew.map((c) => {
+                      const crewStatus = selectedStory?.crewStatuses[c.i] || 'notReady';
+                      return (
+                        <div key={c.i}>
+                          <CrewCard
+                            crew={c}
+                            config={crewStates[crewStatus]}
+                            onClick={selectCrew(crewStatus !== 'notReady' ? c.i : null)} />
+                        </div>
+                      );
+                    })}
+                  </CrewSection>
+                )
+                : (
+                  <CrewlessSection>
+                    <h4>You must have a crew to complete crew assignments.</h4>
+                    <div>
+                      <a href={`${process.env.REACT_APP_OPEN_SEA_URL}/collection/influence-crew`} target="_blank" rel="noreferrer">Click here</a>
+                      {' '}to acquire crew members through trade
+                      {true || mintable?.length
+                        ? (
+                          <span>
+                            {', '}or <Link to="/owned-crew">click here</Link> to mint your own.
+                          </span>
+                        ) : '.'}
                     </div>
-                  );
-                })}
-              </CrewSection>
-            )
-            : (
-              <CrewlessSection>
-                <h4>You must have a crew to complete crew assignments.</h4>
-                <div>
-                  <a href={`${process.env.REACT_APP_OPEN_SEA_URL}/collection/influence-crew`} target="_blank" rel="noreferrer">Click here</a>
-                  {' '}to acquire crew members through trade
-                  {true || mintable?.length
-                    ? (
-                      <span>
-                        {', '}or <Link to="/owned-crew">click here</Link> to mint your own.
-                      </span>
-                    ) : '.'}
-                </div>
-              </CrewlessSection>
-            )
-          }
-        </div>
+                  </CrewlessSection>
+                )
+              }
+            </>
+          )}
+        </SectionContainer>
       </div>
     </Details>
   );

@@ -10,10 +10,15 @@ import Button from '~/components/Button';
 import Details from '~/components/Details';
 import Dialog from '~/components/Dialog';
 import { BackIcon } from '~/components/Icons';
+import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import CrewCard from './CrewCard';
 
 import theme from '~/theme.js';
+
+const InvisibleImage = styled.img`
+  display: none;
+`;
 
 const CoverImage = styled.div`
   height: calc(100% - 310px);
@@ -24,9 +29,10 @@ const CoverImage = styled.div`
     background-size: cover;
     content: '';
     display: block;
-    height: ${p => p.ready ? '100%' : '0'};
+    opacity: ${p => p.ready ? 1 : 0};
+    height: 100%;
     mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
-    transition: height 1000ms ease;
+    transition: opacity 700ms ease-out;
   }
 `;
 
@@ -69,6 +75,7 @@ const Body = styled.div`
   height: 100%;
   overflow: auto;
   padding: 0 25px 0;
+  position: relative;
   scrollbar-width: thin;
 `;
 
@@ -182,7 +189,7 @@ const CrewAssignment = (props) => {
   const { id: sessionId } = useParams();
   const history = useHistory();
   const { data: allCrew } = useOwnedCrew();
-  const { currentStep, storyState, commitPath } = useStorySession(sessionId);
+  const { currentStep, storyState, commitPath, loadingPath } = useStorySession(sessionId);
   const playSound = useStore(s => s.dispatchSoundRequested);
 
   const [selection, setSelection] = useState();
@@ -223,72 +230,94 @@ const CrewAssignment = (props) => {
     return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
   }, [storyState, allCrew]);
 
-  if (!storyState || !crew) return null;
+  const [coverImageLoaded, setCoverImageLoaded] = useState();
+  const onCoverImageLoad = () => {
+    setCoverImageLoaded(storyState.image);
+  };
+  useEffect(() => {
+    if (storyState?.image !== coverImageLoaded) {
+      setCoverImageLoaded();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storyState?.image]);
+
+  const contentReady = storyState && crew;
   return (
     <>
       <Details title="Assignments" edgeToEdge>
-        <CoverImage src={storyState.image} ready />
-        <AboveFold>
-          <BackButton onClick={goBack}><BackIcon /> Back</BackButton>
-          <Title>{storyState.title}</Title>
-        </AboveFold>
-        <BelowFold>
-          <div style={{ padding: '0 12px 12px 0' }}>
-            <CrewCard crew={crew} />
-          </div>
-          <Body>
-            <PageContent>{storyState.content}</PageContent>
-            {(storyState.linkedPaths || []).length > 0
-              ? (
-                <>
-                  <PagePrompt>{storyState.prompt}</PagePrompt>
-                  <div>
-                    {storyState.linkedPaths.map((linkedPath, i) => (
-                      <Path key={linkedPath.path}
-                        selected={linkedPath.path === selection?.id}
-                        onClick={selectPath(linkedPath)}>
-                        <div>
-                          <span>{String.fromCharCode(65 + i)}</span>
-                          <span>{linkedPath.text}</span>
-                        </div>
-                      </Path>
-                    ))}
-                  </div>
-                </>
-              )
-              : (
-                <Button
-                  onClick={finish}
-                  style={{ margin: '0 auto' }}>Finish</Button>
-              )
-            }
-          </Body>
-          <Flourish>
-            <h4 style={{ marginBottom: 6 }}>{Math.min(totalSteps, currentStep + 1)} of {totalSteps}</h4>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-              {Array.from({ length: totalSteps }, (x, i) => {
-                let color = '#777';
-                if (i < currentStep) {
-                  color = theme.colors.main;
-                } else if (i === currentStep) {
-                  color = '#FFF';
-                }
-                return (
-                  <React.Fragment key={i}>
-                    {i > 0 && (
-                      <div style={{
-                        height: 0,
-                        borderTop: `1px dotted ${i <= currentStep ? '#FFF' : '#777'}`,
-                        width: '1.5em'
-                      }} />
-                    )}
-                    <NavIcon selected={i === currentStep} size={'1.5em'} color={color} />
-                  </React.Fragment>
-                );
-              })}
-            </div>
-          </Flourish>
-        </BelowFold>
+        {!contentReady && <Loader />}
+        {contentReady && (
+          <>
+            <InvisibleImage src={storyState.image} onLoad={onCoverImageLoad} />
+            <CoverImage src={storyState.image} ready={!!coverImageLoaded} />
+            <AboveFold>
+              <BackButton onClick={goBack}><BackIcon /> Back</BackButton>
+              <Title>{storyState.title}</Title>
+            </AboveFold>
+            <BelowFold>
+              <div style={{ padding: '0 12px 12px 0' }}>
+                <CrewCard crew={crew} />
+              </div>
+              <Body>
+                {loadingPath && <Loader />}
+                {!loadingPath && (
+                  <>
+                    <PageContent>{storyState.content}</PageContent>
+                    {(storyState.linkedPaths || []).length > 0
+                      ? (
+                        <>
+                          <PagePrompt>{storyState.prompt}</PagePrompt>
+                          <div>
+                            {storyState.linkedPaths.map((linkedPath, i) => (
+                              <Path key={linkedPath.path}
+                                selected={linkedPath.path === selection?.id}
+                                onClick={selectPath(linkedPath)}>
+                                <div>
+                                  <span>{String.fromCharCode(65 + i)}</span>
+                                  <span>{linkedPath.text}</span>
+                                </div>
+                              </Path>
+                            ))}
+                          </div>
+                        </>
+                      )
+                      : (
+                        <Button
+                          onClick={finish}
+                          style={{ margin: '0 auto' }}>Finish</Button>
+                      )
+                    }
+                  </>
+                )}
+              </Body>
+              <Flourish>
+                <h4 style={{ marginBottom: 6 }}>{Math.min(totalSteps, currentStep + 1)} of {totalSteps}</h4>
+                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                  {Array.from({ length: totalSteps }, (x, i) => {
+                    let color = '#777';
+                    if (i < currentStep) {
+                      color = theme.colors.main;
+                    } else if (i === currentStep) {
+                      color = '#FFF';
+                    }
+                    return (
+                      <React.Fragment key={i}>
+                        {i > 0 && (
+                          <div style={{
+                            height: 0,
+                            borderTop: `1px dotted ${i <= currentStep ? '#FFF' : '#777'}`,
+                            width: '1.5em'
+                          }} />
+                        )}
+                        <NavIcon selected={i === currentStep} size={'1.5em'} color={color} />
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </Flourish>
+            </BelowFold>
+          </>
+        )}
       </Details>
       {selection && (
         <Dialog>
@@ -302,12 +331,17 @@ const CrewAssignment = (props) => {
               <h4>Your Selection:</h4>
             </ConfirmationTitle>
             <ConfirmationBody>
-              <PagePrompt>{storyState.prompt}</PagePrompt>
-              <article>{selection.text}</article>
+              {loadingPath && <Loader />}
+              {!loadingPath && (
+                <>
+                  <PagePrompt>{storyState.prompt}</PagePrompt>
+                  <article>{selection.text}</article>
+                </>
+              )}
             </ConfirmationBody>
             <ConfirmationButtons>
-              <Button onClick={selectPath()}>Back</Button>
-              <Button onClick={confirmPath}>Confirm</Button>
+              <Button onClick={selectPath()} disabled={loadingPath}>Back</Button>
+              <Button onClick={confirmPath} disabled={loadingPath}>Confirm</Button>
             </ConfirmationButtons>
           </Confirmation>
         </Dialog>
