@@ -66,8 +66,9 @@ const OverlayButton = styled.div`
   font-weight: bold;
   margin-bottom: 12px;
   padding: 4px;
-  text-transform: uppercase;
   text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0px 0px 3px black;
   transition: opacity ${tSpeed} ease-in;
   width: calc(100% - 16px);
 `;

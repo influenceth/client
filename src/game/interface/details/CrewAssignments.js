@@ -258,8 +258,12 @@ const CrewAssignments = (props) => {
   const [collapsedParts, setCollapsedParts] = useState([]);
 
   const selectStory = useCallback((story) => () => {
-    playSound(story === null ? 'effects.failure' : 'effects.click');
-    setSelectedStory(story);
+    if (story) {
+      playSound('effects.click');
+      setSelectedStory(story);
+    } else {
+      playSound('effects.failure');
+    }
   }, [playSound]);
 
   const selectCrew = useCallback((crewId) => async () => {
@@ -293,6 +297,7 @@ const CrewAssignments = (props) => {
 
   useEffect(() => {
     if (book && crew) {
+      let lastStory = null;
       let firstIncompleteStory = null;
       let crewReadyForNext = crew.map(({ i }) => i);
       book.parts.forEach(({ stories }) => {
@@ -338,16 +343,17 @@ const CrewAssignments = (props) => {
               story.status = 'notready';
             }
 
-            // find first incomplete story
+            // find first incomplete story (and keep track of last story as fallback)
             if (firstIncompleteStory === null && story.status !== 'complete') {
               firstIncompleteStory = story;
             }
+            lastStory = story;
           } else {
             story.status = 'locked';
           }
         });
       });
-      setSelectedStory(firstIncompleteStory);
+      setSelectedStory(firstIncompleteStory || lastStory);
     }
   }, [book, crew]);
 
