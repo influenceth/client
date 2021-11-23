@@ -13,7 +13,7 @@ import Details from '~/components/Details';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import TitleWithUnderline from '~/components/TitleWithUnderline';
-import { CheckIcon, ExpandedIcon, CrewMemberIcon, LockIcon, WarningOutlineIcon } from '~/components/Icons';
+import { CheckIcon, CollapsedIcon, ExpandedIcon, CrewMemberIcon, LockIcon, WarningOutlineIcon } from '~/components/Icons';
 import CrewCard from './crewAssignments/CrewCard';
 
 import theme from '~/theme.js';
@@ -115,17 +115,8 @@ const BookIcon = styled.div`
   margin-right: 0.5em;
 `;
 
-const PartSection = styled.div`
-  margin-top: 1.5em;
-  &:first-child { margin-top: 0; }
-  & > div {
-    display: flex;
-    justifyContent: space-between;
-    height: 24px;
-    width: 100%; 
-  }
-`;
 const PartTitle = styled.div`
+  cursor: ${p => p.theme.cursors.active};
   div:nth-child(1) {
     color: ${p => p.theme.colors.main};
     flex: 1;
@@ -134,6 +125,22 @@ const PartTitle = styled.div`
   div:nth-child(2) {
     font-size: 20px;
   }
+`;
+const PartSection = styled.div`
+  margin-top: 1.5em;
+  &:first-child { margin-top: 0; }
+  & > ${PartTitle} {
+    display: flex;
+    justifyContent: space-between;
+    height: 24px;
+    width: 100%; 
+  }
+`;
+
+const ChaptersContainer = styled.div`
+  max-height: ${p => p.collapsed ? '1px' : '400px'};
+  overflow: hidden;
+  transition: max-height 250ms ease-out;
 `;
 
 const ChapterRowInner = styled.div`
@@ -248,6 +255,7 @@ const CrewAssignments = (props) => {
   const playSound = useStore(s => s.dispatchSoundRequested);
 
   const [selectedStory, setSelectedStory] = useState();
+  const [collapsedParts, setCollapsedParts] = useState([]);
 
   const selectStory = useCallback((story) => () => {
     playSound(story === null ? 'effects.failure' : 'effects.click');
@@ -343,6 +351,20 @@ const CrewAssignments = (props) => {
     }
   }, [book, crew]);
 
+  const togglePart = useCallback((partId) => () => {
+    playSound('effects.click');
+    if (collapsedParts.includes(partId)) {
+      setCollapsedParts(
+        collapsedParts.filter((p) => p !== partId)
+      );
+    } else {
+      setCollapsedParts([
+        ...collapsedParts,
+        partId
+      ]);
+    }
+  }, [collapsedParts, playSound]);
+
   if (!book && isError) {
     createAlert({
       type: 'GenericLoadingError',
@@ -370,38 +392,41 @@ const CrewAssignments = (props) => {
               </BookHeader>
 
               <SectionBody style={{ paddingRight: 10 }}>
-                {parts.map(({ title, stories }, x) => (
-                  <PartSection key={x}>
-                    <PartTitle>
-                      <div>{title}</div>
-                      <div><ExpandedIcon /></div>
-                    </PartTitle>
-                    <span>
-                      {stories.map(({ story }, i) => {
-                        const { id, title, ready, partial, status } = (story || { status: 'locked' });
-                        return (
-                          <ChapterRow
-                            key={id || `placeholder_${i}`}
-                            onClick={selectStory(status === 'locked' ? null : story)}
-                            status={status}>
-                            <DiamondContainer connect={i > 0}>
-                              <NavIcon selected={selectedStory && id === selectedStory.id} />
-                            </DiamondContainer>
-                            <ChapterRowInner index={x} selected={selectedStory && id === selectedStory.id}>
-                              <div>
-                                <div>{title || 'Coming Soon'}</div>
-                                <ChapterProgress
-                                  crewReady={ready + partial}
-                                  status={status}
-                                />
-                              </div>
-                            </ChapterRowInner>
-                          </ChapterRow>
-                        )
-                      })}
-                    </span>
-                  </PartSection>
-                ))}
+                {parts.map(({ title, stories }, x) => {
+                  const isCollapsed = collapsedParts.includes(title);
+                  return (
+                    <PartSection key={x}>
+                      <PartTitle onClick={togglePart(title)}>
+                        <div>{title}</div>
+                        <div>{isCollapsed ? <CollapsedIcon /> : <ExpandedIcon />}</div>
+                      </PartTitle>
+                      <ChaptersContainer collapsed={isCollapsed}>
+                        {stories.map(({ story }, i) => {
+                          const { id, title, ready, partial, status } = (story || { status: 'locked' });
+                          return (
+                            <ChapterRow
+                              key={id || `placeholder_${i}`}
+                              onClick={selectStory(status === 'locked' ? null : story)}
+                              status={status}>
+                              <DiamondContainer connect={i > 0}>
+                                <NavIcon selected={selectedStory && id === selectedStory.id} />
+                              </DiamondContainer>
+                              <ChapterRowInner index={x} selected={selectedStory && id === selectedStory.id}>
+                                <div>
+                                  <div>{title || 'Coming Soon'}</div>
+                                  <ChapterProgress
+                                    crewReady={ready + partial}
+                                    status={status}
+                                  />
+                                </div>
+                              </ChapterRowInner>
+                            </ChapterRow>
+                          )
+                        })}
+                      </ChaptersContainer>
+                    </PartSection>
+                  );
+                })}
               </SectionBody>
             </>
           )}
