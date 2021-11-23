@@ -68,7 +68,11 @@ const CrewSection = styled(SectionBody)`
   padding-left: 3px;
   padding-top: 3px;
   & > div {
+    flex: 0 1 50%;
     padding: 0 12px 12px 0;
+    @media (min-width: ${p => p.theme.breakpoints.lg}px) {
+      flex-basis: 33%;
+    }
   }
 `;
 

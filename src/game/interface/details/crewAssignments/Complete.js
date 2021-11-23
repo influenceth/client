@@ -38,9 +38,10 @@ const Content = styled.div`
   }
 `;
 const CardContainer = styled.div`
-  padding: 10px;
   background: black;
   border: 1px solid #444;
+  padding: 10px;
+  width: 200px;
 `;
 const ImageryContainer = styled.div`
   position: relative;

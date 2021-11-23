@@ -34,11 +34,9 @@ const CardImage = styled(CardLayer)`
 const Card = styled.div`
   background: rgba(20, 20, 20, 0.75);
   cursor: ${({ theme, clickable }) => clickable && theme.cursors.active};
-  height: 275px;
-  min-height: 275px;
+  padding-top: 137.5%;
   position: relative;
-  width: 200px;
-  min-width: 200px;
+  width: 100%;
 
   ${p => p.fade ? `
     & ${CardHeader},

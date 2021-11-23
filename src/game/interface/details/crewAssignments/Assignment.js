@@ -44,11 +44,18 @@ const AboveFold = styled.div`
   z-index: 1;
 `;
 
+const belowFoldHeight = 310;
 const BelowFold = styled.div`
   display: flex;
   flex-direction: row;
-  height: 310px;
+  height: ${belowFoldHeight}px;
   padding: 10px 0 10px 35px;
+`;
+
+// width is based on aspect ratio of crew cards
+const CrewContainer = styled.div`
+  padding: 0 12px 12px 0;
+  width: ${belowFoldHeight / 1.375}px;
 `;
 
 const BackButton = styled.div`
@@ -256,9 +263,9 @@ const CrewAssignment = (props) => {
               <Title>{storyState.title}</Title>
             </AboveFold>
             <BelowFold>
-              <div style={{ padding: '0 12px 12px 0' }}>
+              <CrewContainer>
                 <CrewCard crew={crew} />
-              </div>
+              </CrewContainer>
               <Body>
                 {loadingPath && <Loader />}
                 {!loadingPath && (
