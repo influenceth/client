@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import {
   BiWrench as WrenchIcon,
   BiLink as LinkIcon,
@@ -67,13 +67,46 @@ const ImageryContainer = styled.div`
     width: 100%;
   }
 `;
-const Reward = styled.div`
+
+const rewardContainerTransition = keyframes`
+  0% {
+    height: 140px;
+    width: 0;
+    overflow: hidden;
+  }
+  50% {
+    height: 140px;
+    width: 400px;
+    overflow: hidden;
+  }
+  100% {
+    overflow: auto;
+    width: 400px;
+  }
+`;
+const RewardContainer = styled.div`
+  animation: ${rewardContainerTransition} 500ms normal forwards ease-out 500ms;
   background: black;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 140px;
   max-width: 400px;
-  padding: 20px 40px;
+  width: 0;
+`;
+
+const rewardTransition = keyframes`
+  0% { opacity: 0; }
+  75% { opacity: 0; }
+  100% { opacity: 1; }
+`;
+const Reward = styled.div`
+  animation: ${rewardTransition} 500ms normal forwards ease-out 500ms;
+  color: white;
+  opacity: 0;
+  padding: 8px 40px;
   text-align: left;
   & > h4 {
-    color: white;
     font-size: 18px;
     font-weight: normal;
     margin: 0 0 12px;
@@ -84,7 +117,6 @@ const Reward = styled.div`
     & > *:first-child {
       border: 1px solid #555;
       border-radius: 50%;
-      color: white;
       font-size: 150%;
       margin-right: 0.5em;
       padding: 0.2em;
@@ -92,9 +124,11 @@ const Reward = styled.div`
     & > *:last-child {
       font-size: 13px;
       & > b {
-        color: white;
         display: block;
         margin-bottom: 4px;
+      }
+      & > span {
+        opacity: 0.7;
       }
     }
   }
@@ -190,18 +224,20 @@ const CrewAssignmentComplete = (props) => {
             <CrewCard crew={crew} />
           </CardContainer>
           {rewards.length > 0 && (
-            <Reward>
-              <h4>This crew member has gained traits:</h4>
-              {rewards.map(({ Icon, title, description }) => (
-                <div key={title}>
-                  <Icon />
-                  <div style={{ flex: 1 }}>
-                    <b>{title}</b>
-                    <span>{description}</span>
+            <RewardContainer>
+              <Reward>
+                <h4>This crew member has gained traits:</h4>
+                {rewards.map(({ Icon, title, description }) => (
+                  <div key={title}>
+                    <Icon />
+                    <div style={{ flex: 1 }}>
+                      <b>{title}</b>
+                      <span>{description}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </Reward>
+                ))}
+              </Reward>
+            </RewardContainer>
           )}
         </div>
       </ImageryContainer>
