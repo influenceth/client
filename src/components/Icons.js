@@ -24,6 +24,7 @@ import { TiArrowRight } from 'react-icons/ti';
 import { WiMoonAltWaningCrescent5 } from 'react-icons/wi';
 import { VscDebugDisconnect } from 'react-icons/vsc';
 
+import ArvadSVG from '~/assets/icons/ArvadIcon.svg';
 import ChapterSVG from '~/assets/icons/ChapterIcon.svg';
 import RocketSVG from '~/assets/icons/RocketIcon.svg';
 import TrophySVG from '~/assets/icons/TrophyIcon.svg';
@@ -35,6 +36,7 @@ import TrophySVG from '~/assets/icons/TrophyIcon.svg';
   2) <defs> and <style> data should be removed (and references to any internal classes removed from paths, etc)
   3) View the altered SVG to make sure it still looks right.
 */
+export const ArvadIcon = () => <ArvadSVG className="icon" style={{ width: '1.94em' }} />;
 export const ChapterIcon = () => <ChapterSVG className="icon" />;
 export const RocketIcon = () => <RocketSVG className="icon" />;
 export const TrophyIcon = () => <TrophySVG className="icon" />;

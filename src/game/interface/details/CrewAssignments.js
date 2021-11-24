@@ -13,7 +13,14 @@ import Details from '~/components/Details';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import TitleWithUnderline from '~/components/TitleWithUnderline';
-import { CheckIcon, CollapsedIcon, ExpandedIcon, CrewMemberIcon, LockIcon, WarningOutlineIcon } from '~/components/Icons';
+import {
+  ArvadIcon,
+  CheckIcon,
+  CollapsedIcon,
+  ExpandedIcon,
+  LockIcon,
+  WarningOutlineIcon
+} from '~/components/Icons';
 import CrewCard from './crewAssignments/CrewCard';
 
 import theme from '~/theme.js';
@@ -115,7 +122,8 @@ const BookHeader = styled(SectionHeader)`
 `;
 const BookIcon = styled.div`
   font-size: 1.5em;  
-  margin-right: 0.5em;
+  margin-right: 0.4em;
+  margin-bottom: 0.25em;
 `;
 
 const PartTitle = styled.div`
@@ -396,7 +404,7 @@ const CrewAssignments = (props) => {
           {book && (
             <>
               <BookHeader>
-                <BookIcon><CrewMemberIcon /></BookIcon>
+                <BookIcon><ArvadIcon /></BookIcon>
                 <TitleWithUnderline>{title}</TitleWithUnderline>
               </BookHeader>
 

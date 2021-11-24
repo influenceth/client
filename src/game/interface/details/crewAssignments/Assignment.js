@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
-import orbitalPeriodImage from '~/assets/images/orbital-period.png';
+import ArvadImage from '~/assets/images/Arvad-stamp.svg';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
 import useStore from '~/hooks/useStore';
@@ -88,16 +88,22 @@ const Body = styled.div`
 `;
 
 const Flourish = styled.div`
-  text-align: center;
   overflow: hidden;
+  text-align: center;
   width: 250px;
-  &:after {
-    background: url(${orbitalPeriodImage}) no-repeat center center;
-    background-size: contain;
-    content: '';
-    display: block;
-    margin: 0 auto;
-    opacity: 0.35;
+`;
+
+const FlourishCentered = styled.div`
+align-items: center;
+display: flex;
+flex-direction: row;
+justify-content: center;
+`;
+
+const FlourishImageContainer = styled(FlourishCentered)`
+  color: ${p => p.theme.colors.main};
+  opacity: 0.15;
+  & > * {
     width: 175px;
     height: 175px;
   }
@@ -300,7 +306,7 @@ const CrewAssignment = (props) => {
               </Body>
               <Flourish>
                 <h4 style={{ marginBottom: 6 }}>{Math.min(totalSteps, currentStep + 1)} of {totalSteps}</h4>
-                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                <FlourishCentered>
                   {Array.from({ length: totalSteps }, (x, i) => {
                     let color = '#777';
                     if (i < currentStep) {
@@ -321,7 +327,10 @@ const CrewAssignment = (props) => {
                       </React.Fragment>
                     );
                   })}
-                </div>
+                </FlourishCentered>
+                <FlourishImageContainer>
+                  <ArvadImage />
+                </FlourishImageContainer>
               </Flourish>
             </BelowFold>
           </>
