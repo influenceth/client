@@ -2,14 +2,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
-import ArvadImage from '~/assets/images/Arvad-stamp.svg';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
 import useStore from '~/hooks/useStore';
 import Button from '~/components/Button';
 import Details from '~/components/Details';
 import Dialog from '~/components/Dialog';
-import { BackIcon } from '~/components/Icons';
+import { ArvadIcon, BackIcon } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import CrewCard from './CrewCard';
@@ -88,25 +87,25 @@ const Body = styled.div`
 `;
 
 const Flourish = styled.div`
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   text-align: center;
   width: 250px;
 `;
 
 const FlourishCentered = styled.div`
-align-items: center;
-display: flex;
-flex-direction: row;
-justify-content: center;
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
 `;
 
 const FlourishImageContainer = styled(FlourishCentered)`
   color: ${p => p.theme.colors.main};
+  flex: 1;
+  font-size: 100px;
   opacity: 0.15;
-  & > * {
-    width: 175px;
-    height: 175px;
-  }
 `;
 
 const Path = styled.div`
@@ -329,7 +328,7 @@ const CrewAssignment = (props) => {
                   })}
                 </FlourishCentered>
                 <FlourishImageContainer>
-                  <ArvadImage />
+                  <ArvadIcon />
                 </FlourishImageContainer>
               </Flourish>
             </BelowFold>
