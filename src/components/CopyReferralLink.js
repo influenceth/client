@@ -25,8 +25,7 @@ const CopyReferralLink = ({ children, fallbackContent }) => {
   if (!account) return fallbackContent || null;
   return (
     <StyledClipboard
-      component="a"
-      button-href="#"
+      component="span"
       data-clipboard-text={`${document.location.origin}?r=${account}`}
       onClick={handleClick}>
       {children}
