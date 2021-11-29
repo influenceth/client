@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
+import { toCrewClass } from 'influence-utils';
 
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
 import useStore from '~/hooks/useStore';
 import Button from '~/components/Button';
+import CrewClassBadge from '~/components/CrewClassBadge';
 import Details from '~/components/Details';
 import Dialog from '~/components/Dialog';
 import { ArvadIcon, BackIcon } from '~/components/Icons';
@@ -15,12 +17,18 @@ import CrewCard from './CrewCard';
 
 import theme from '~/theme.js';
 
+const belowFoldHeight = 310;
+
 const InvisibleImage = styled.img`
   display: none;
 `;
 
 const CoverImage = styled.div`
-  height: calc(100% - 310px);
+  height: calc(100% - ${belowFoldHeight}px);
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    height: 33%;
+  }
+
   &:before {
     background-image: url(${p => p.src});
     background-repeat: no-repeat;
@@ -41,20 +49,46 @@ const AboveFold = styled.div`
   padding: 0 35px;
   position: relative;
   z-index: 1;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    height: auto;
+    margin-top: -30px;
+    padding: 0 25px;
+  }
 `;
 
-const belowFoldHeight = 310;
 const BelowFold = styled.div`
   display: flex;
   flex-direction: row;
   height: ${belowFoldHeight}px;
   padding: 10px 0 10px 35px;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    padding: 10px 0 0;
+  }
 `;
 
 // width is based on aspect ratio of crew cards
 const CrewContainer = styled.div`
   padding: 0 12px 12px 0;
   width: ${belowFoldHeight / 1.375}px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: none;
+  }
+`;
+
+const MobileCrewContainer = styled.div`
+  display: none;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    align-items: center;
+    display: flex;
+    & > div:first-child {
+      flex: 1;
+    }
+    & > div:last-child {
+      font-size: 13px;
+    }
+  }
 `;
 
 const BackButton = styled.div`
@@ -73,6 +107,10 @@ const BackButton = styled.div`
 const Title = styled.div`
   font-size: 36px;
   font-weight: bold;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    font-size: 28px;
+  }
 `;
 
 const Body = styled.div`
@@ -92,6 +130,10 @@ const Flourish = styled.div`
   overflow: hidden;
   text-align: center;
   width: 250px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: none;
+  }
 `;
 
 const FlourishCentered = styled.div`
@@ -160,6 +202,10 @@ const Confirmation = styled.div`
   flex-direction: column;
   min-height: 300px;
   width: 650px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    width: 90vw;
+  }
 `;
 const ConfirmationTitle = styled.div`
   align-items: center;
@@ -178,6 +224,10 @@ const ConfirmationBody = styled.div`
     border-top: 1px solid rgba(255, 255, 255, 0.2);
     color: ${p => p.theme.colors.main};
     padding: 1em 2em;
+  }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    padding: 40px 20px;
   }
 `;
 const ConfirmationButtons = styled.div`
@@ -260,14 +310,21 @@ const CrewAssignment = (props) => {
       <Details title="Assignments" edgeToEdge>
         {!contentReady && <Loader />}
         {contentReady && (
-          <>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <InvisibleImage src={storyState.image} onLoad={onCoverImageLoad} />
             <CoverImage src={storyState.image} ready={!!coverImageLoaded} />
             <AboveFold>
               <BackButton onClick={goBack}><BackIcon /> Back</BackButton>
               <Title>{storyState.title}</Title>
+              <MobileCrewContainer>
+                <div>
+                  <b>{crew.name || `Crew Member #${crew.i}`}</b>
+                  {' '}<CrewClassBadge crewClass={crew.crewClass} />
+                </div>
+                <div>{toCrewClass(crew.crewClass) || 'Unknown Class'}</div>
+              </MobileCrewContainer>
             </AboveFold>
-            <BelowFold>
+            <BelowFold style={{ flex: 1 }}>
               <CrewContainer>
                 <CrewCard crew={crew} />
               </CrewContainer>
@@ -332,7 +389,7 @@ const CrewAssignment = (props) => {
                 </FlourishImageContainer>
               </Flourish>
             </BelowFold>
-          </>
+          </div>
         )}
       </Details>
       {selection && (

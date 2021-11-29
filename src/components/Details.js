@@ -67,7 +67,7 @@ const Content = styled.div`
   z-index: 0;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    margin: 0;
+    margin: ${p => p.edgeToEdge && p.hasTitle ? '-60px 0 0' : '0'};
   }
 `;
 

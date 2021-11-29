@@ -4,6 +4,7 @@ import styled, { css } from 'styled-components';
 import { toCrewClass } from 'influence-utils';
 
 import silhouette from '~/assets/images/silhouette.png';
+import CrewClassBadge from '~/components/CrewClassBadge';
 import DataReadout from '~/components/DataReadout';
 
 const tSpeed = '300ms';
@@ -54,10 +55,9 @@ const CrewName = styled.span`
   font-size: ${p => p.theme.fontSizes.detailText};
   font-weight: bold;
   padding: 15px 0;
-`;
-
-const ClassBadge = styled.span`
-  color: ${p => p.theme.colors.classes[p.crewClass]};
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    font-size: 85%;
+  }
 `;
 
 const OverlayButton = styled.div`
@@ -91,11 +91,22 @@ const OverlayIcon = styled.div`
   top: calc(50% - 30px);
 `;
 
+const CardOverlayHoverCss = css`
+  border: 1px solid rgba(${(p) => p.rgb});
+  outline: 3px solid rgba(${(p) => p.rgb}, 0.5);
+  ${OverlayButton},
+  ${OverlayCaption},
+  ${OverlayFlourish},
+  ${OverlayIcon} {
+    opacity: 1;
+  }
+`;
+
 const CardOverlay = styled(CardLayer)`
   align-items: center;
   border: 1px solid ${(p) => p.alwaysOn.includes('border') ? `rgb(${(p) => p.rgb})` : 'transparent'};
   outline: 3px solid ${(p) => p.alwaysOn.includes('border') ? `rgba(${(p) => p.rgb}, 0.5)` : 'transparent'};
-  color: rgb(${(p) => p.rgb});
+  color: rgb(${(p) => p.rgb || '255,255,255'});
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -126,14 +137,11 @@ const CardOverlay = styled(CardLayer)`
   }
 
   &:hover {
-    border: 1px solid rgba(${(p) => p.rgb});
-    outline: 3px solid rgba(${(p) => p.rgb}, 0.5);
-    ${OverlayButton},
-    ${OverlayCaption},
-    ${OverlayFlourish},
-    ${OverlayIcon} {
-      opacity: 1;
-    }
+    ${CardOverlayHoverCss}
+  }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    ${(p) => p.rgb && CardOverlayHoverCss}
   }
 `;
 
@@ -160,7 +168,7 @@ const CrewCard = ({ config = { alwaysOn: [] }, crew, onClick }) => {
       <CardHeader>
         <CrewName>
           {crew.name || `Crew Member #${crew.i}`}
-          <ClassBadge crewClass={toCrewClass(crew.crewClass)}> &#9679;</ClassBadge>
+          {' '}<CrewClassBadge crewClass={crew.crewClass} />
         </CrewName>
         <DataReadout label="Class" style={{ fontSize: 11 }}>{toCrewClass(crew.crewClass) || 'Unknown Class'}</DataReadout>
       </CardHeader>

@@ -15,6 +15,7 @@ import NavIcon from '~/components/NavIcon';
 import TitleWithUnderline from '~/components/TitleWithUnderline';
 import {
   ArvadIcon,
+  BackIcon,
   CheckIcon,
   CollapsedIcon,
   ExpandedIcon,
@@ -57,16 +58,65 @@ const crewStates = {
   }
 };
 
+const HEADER_HEIGHT = 40;
+
 const SectionContainer = styled.div`
   flex: 1;
   position: relative;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    padding: 0 10px;
+    ${p => !p.visible ? 'display: none;' : ''}
+  }
+`;
+
+const SectionHeader = styled.div`
+  height: ${HEADER_HEIGHT}px;
 `;
 
 const SectionBody = styled.div`
-  height: calc(100% - 40px - 1.5em);
+  height: calc(100% - ${HEADER_HEIGHT}px - 1.5em);
   margin-top: 1.5em;
   overflow: auto;
   scrollbar-width: thin;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    margin-top: 10px;
+  }
+`;
+
+const SectionSpacer = styled.div`
+  width: 40px;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: none;
+  }
+`;
+
+const CrewHeader = styled(SectionHeader)`
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: none;
+  }
+`;
+
+const MobileCrewHeaderContainer = styled.div`
+  display: none;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: flex;
+    flex-direction: row;
+    & ${CrewHeader} {
+      display: flex;
+      flex: 1;
+    }
+    & > div:first-child {
+      align-items: center;
+      display: flex;
+      font-size: 24px;
+      height: ${HEADER_HEIGHT}px;
+      justify-content: center;
+      width: ${HEADER_HEIGHT}px;
+    }
+  }
 `;
 
 const CrewSection = styled(SectionBody)`
@@ -91,10 +141,6 @@ const CrewlessSection = styled(SectionBody)`
       white-space: nowrap;
     }
   } 
-`;
-
-const SectionHeader = styled.div`
-  height: 40px;
 `;
 
 const SectionTitle = styled.div`
@@ -124,6 +170,14 @@ const BookIcon = styled.div`
   font-size: 1.5em;  
   margin-right: 0.4em;
   margin-bottom: 0.25em;
+`;
+
+const BookBody = styled(SectionBody)`
+  padding-right: 10px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    padding-right: 0px;
+  }
 `;
 
 const PartTitle = styled.div`
@@ -265,13 +319,15 @@ const CrewAssignments = (props) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
 
-  const [selectedStory, setSelectedStory] = useState();
   const [collapsedParts, setCollapsedParts] = useState([]);
+  const [mobileView, setMobileView] = useState('book');
+  const [selectedStory, setSelectedStory] = useState();
 
   const selectStory = useCallback((story) => () => {
     if (story) {
       playSound('effects.click');
       setSelectedStory(story);
+      setMobileView('crew');
     } else {
       playSound('effects.failure');
     }
@@ -399,7 +455,7 @@ const CrewAssignments = (props) => {
         flexDirection: 'row',
         height: '100%'
       }}>
-        <SectionContainer>
+        <SectionContainer visible={mobileView === 'book'}>
           {!book && <Loader />}
           {book && (
             <>
@@ -408,7 +464,7 @@ const CrewAssignments = (props) => {
                 <TitleWithUnderline>{title}</TitleWithUnderline>
               </BookHeader>
 
-              <SectionBody style={{ paddingRight: 10 }}>
+              <BookBody>
                 {parts.map(({ title, stories }, x) => {
                   const isCollapsed = collapsedParts.includes(title);
                   return (
@@ -444,25 +500,32 @@ const CrewAssignments = (props) => {
                     </PartSection>
                   );
                 })}
-              </SectionBody>
+              </BookBody>
             </>
           )}
         </SectionContainer>
 
-        <div style={{ width: 40 }} />
+        <SectionSpacer />
         
-        <SectionContainer>
+        <SectionContainer visible={mobileView === 'crew'}>
           {account && !crew && <Loader />}
           {!(account && !crew) && (
             <>
-              <SectionHeader style={{
-                justifyContent: 'flex-end',
-                display: 'flex',
-                flexDirection: 'column',
-              }}>
+              <CrewHeader>
                 <SectionTitle>Owned Crew ({crew?.length || 0})</SectionTitle>
                 <SectionSubtitle>Select a Crew Member to begin the assignment with:</SectionSubtitle>
-              </SectionHeader>
+              </CrewHeader>
+
+              <MobileCrewHeaderContainer>
+                <div onClick={() => setMobileView('book')}>
+                  <BackIcon />
+                </div>
+                <CrewHeader>
+                  <SectionTitle>{selectedStory?.title || ''}</SectionTitle>
+                  <SectionSubtitle>Select a Crew Member to begin the assignment with:</SectionSubtitle>
+                </CrewHeader>
+              </MobileCrewHeaderContainer>
+
               {crew && crew.length > 0
                 ? (
                   <CrewSection>

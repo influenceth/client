@@ -30,16 +30,23 @@ const TitleBox = styled.div`
   text-transform: uppercase;
   white-space: nowrap;
   width: 250px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    margin-top: 8px;
+    white-space: normal;
+  }
 `;
 const Content = styled.div`
   margin: 24px 12px;
   & > b {
     color: white;
+    white-space: nowrap;
   }
 `;
 const CardContainer = styled.div`
   background: black;
   border: 1px solid #444;
+  max-width: 100%;
   padding: 10px;
   width: 200px;
 `;
@@ -65,6 +72,7 @@ const ImageryContainer = styled.div`
     align-items: center;  
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: center;
     width: 100%;
   }
@@ -95,6 +103,35 @@ const RewardContainer = styled.div`
   height: 140px;
   max-width: 400px;
   width: 0;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: none;
+  }
+`;
+
+const mobileRewardContainerTransition = keyframes`
+  0% {
+    max-height: 0;
+  }
+  50% {
+    max-height: 35vh;
+  }
+  100% {
+    max-height: 35vh;
+  }
+`;
+const MobileRewardContainer = styled.div`
+  display: none;
+  width: 100%;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    animation: ${mobileRewardContainerTransition} 500ms normal forwards ease-out 500ms;
+    display: initial;
+    max-height: 0;
+    & > div {
+      max-height: 100%;
+      overflow: auto;
+    }
+  }
 `;
 
 const rewardTransition = keyframes`
@@ -114,8 +151,9 @@ const Reward = styled.div`
     margin: 0 0 12px;
   }
   & > div {
-    display: flex;
     align-items: flex-start;
+    display: flex;
+    margin-bottom: 8px;
     & > *:first-child {
       border: 1px solid #555;
       border-radius: 50%;
@@ -125,6 +163,7 @@ const Reward = styled.div`
     }
     & > *:last-child {
       font-size: 13px;
+      margin-bottom: 0;
       & > b {
         display: block;
         margin-bottom: 4px;
@@ -134,11 +173,37 @@ const Reward = styled.div`
       }
     }
   }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    padding: 8px 25px 0;
+    & > h4 {
+      color: #656565;
+      font-size: 15px;
+      font-weight: bold;
+    }
+  }
 `;
+
+const MobileFlourish = styled.div`
+  border-bottom: 4px solid rgb(226, 84, 32);
+  border-top: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+  height: 0;
+  margin: 15px auto -10px;
+  width: 50%;
+  display: none;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: block;
+  }
+`;
+
 const SharingPrompt = styled(Content)`
   display: inline-block;
   font-size: 90%;
-  width: 600px;
+  max-width: 600px;
+  width: 90%;
 `;
 const SharingSection = styled.div`
   display: flex;
@@ -148,6 +213,10 @@ const SharingSection = styled.div`
   }
   & h5 {
     margin: 0;
+  }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    flex-direction: column;
   }
 `;
 const SwaySection = styled.div`
@@ -195,22 +264,50 @@ const LinkWithIcon = styled.a`
   }
 `;
 
+const FinishContainer = styled.div`
+  padding-right: 12px;
+  text-align: right;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    padding-bottom: 12px;
+  }
+`;
+
+// TODO: these should be loaded from session vvv
+const rewards = [{
+  Icon: WrenchIcon,
+  title: 'Talented Mechanic',
+  description: 'The limited scraps aboard the Arvad have made you extra resoureful with repurposing existing technologies to new needs.'
+}];
+// ^^^
+
 const CrewAssignmentComplete = (props) => {
   const { id: sessionId } = useParams();
   const { data: allCrew } = useOwnedCrew();
   const { storyState } = useStorySession(sessionId);
 
-  // TODO: these should be loaded from session vvv
-  const rewards = [{
-    Icon: WrenchIcon,
-    title: 'Talented Mechanic',
-    description: 'The limited scraps aboard the Arvad have made you extra resoureful with repurposing existing technologies to new needs.'
-  }];
-  // ^^^
-
   const crew = useMemo(() => {
     return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
   }, [storyState, allCrew]);
+
+  const rewardNode = useMemo(() => {
+    if (rewards.length > 0) {
+      return (
+        <Reward>
+          <h4>This crew member has gained traits:</h4>
+          {rewards.map(({ Icon, title, description }) => (
+            <div key={title}>
+              <Icon />
+              <div style={{ flex: 1 }}>
+                <b>{title}</b>
+                <span>{description}</span>
+              </div>
+            </div>
+          ))}
+        </Reward>
+      );
+    }
+    return null;
+  }, [rewards]);
 
   if (!storyState || !crew) return null;
   const onCloseDestination = `/crew-assignments/${storyState.book}`;
@@ -227,24 +324,23 @@ const CrewAssignmentComplete = (props) => {
           <CardContainer>
             <CrewCard crew={crew} />
           </CardContainer>
-          {rewards.length > 0 && (
+          {rewardNode && (
             <RewardContainer>
-              <Reward>
-                <h4>This crew member has gained traits:</h4>
-                {rewards.map(({ Icon, title, description }) => (
-                  <div key={title}>
-                    <Icon />
-                    <div style={{ flex: 1 }}>
-                      <b>{title}</b>
-                      <span>{description}</span>
-                    </div>
-                  </div>
-                ))}
-              </Reward>
+              {rewardNode}
             </RewardContainer>
           )}
         </div>
       </ImageryContainer>
+      {rewardNode && (
+        <MobileRewardContainer>
+          <div>
+            {rewardNode}
+          </div>
+        </MobileRewardContainer>
+      )}
+
+      <MobileFlourish />
+
       <div style={{ display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'center' }}>
         <div>
           <SharingPrompt>
@@ -275,9 +371,9 @@ const CrewAssignmentComplete = (props) => {
           </SharingSection>
         </div>
       </div>
-      <div style={{ textAlign: 'right' }}>
+      <FinishContainer>
         <Link to={onCloseDestination}>FINISH</Link>
-      </div>
+      </FinishContainer>
     </Details>
   );
 };
