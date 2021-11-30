@@ -3,7 +3,6 @@ import { useHistory, useParams, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
 import { BsChevronDoubleDown as SelectIcon } from 'react-icons/bs';
-import { Helmet } from 'react-helmet';
 
 import useBook from '~/hooks/useBook';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
@@ -456,13 +455,6 @@ const CrewAssignments = (props) => {
         flexDirection: 'row',
         height: '100%'
       }}>
-        <Helmet>
-          <title>{`Influence Crew Assignments: ${title}`}</title>
-          <meta name="twitter:card" content="summary" />{/* TODO: summary_large_image */}
-          <meta property="og:url" content={window.location.href} />
-          <meta property="og:title" content={`Influence Crew Assignments: ${title}`} />
-          <meta property="og:description" content="Book." />
-        </Helmet>
         <SectionContainer visible={mobileView === 'book'}>
           {!book && <Loader />}
           {book && (

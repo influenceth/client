@@ -2,10 +2,8 @@ import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { ThemeProvider } from 'styled-components';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import { useDetectGPU } from '@react-three/drei';
 
-import Logo from '~/assets/images/orbital-period.png';
 import useStore from '~/hooks/useStore';
 import Intro from '~/game/Intro';
 import Interface from '~/game/Interface';
@@ -51,15 +49,6 @@ const Game = (props) => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Helmet>
-        <title>Influence</title>{/* TODO: this should match whatever is in index.html */}
-        <meta name="twitter:card" content="summary" />{/* TODO: summary_large_image */}
-        <meta name="twitter:site" content="@influenceth" />{/* TODO: these should match value in .env probably */}
-        <meta property="og:url" content={window.location.href} />
-        <meta property="og:title" content="Influence MMO" />
-        <meta property="og:description" content="Space strategy MMO built on Ethereum." />
-        <meta property="og:image" content={Logo} />
-      </Helmet>
       <Router>
         {loading && <Intro onVideoComplete={onVideoComplete} />}
         <Referral />
