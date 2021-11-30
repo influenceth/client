@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
+import { useWeb3React } from '@web3-react/core';
 import {
   BiWrench as WrenchIcon,
   BiLink as LinkIcon,
@@ -281,6 +282,7 @@ const rewards = [{
 // ^^^
 
 const CrewAssignmentComplete = (props) => {
+  const { account } = useWeb3React();
   const { id: sessionId } = useParams();
   const { data: allCrew } = useOwnedCrew();
   const { storyState } = useStorySession(sessionId);
@@ -307,7 +309,19 @@ const CrewAssignmentComplete = (props) => {
       );
     }
     return null;
-  }, [rewards]);
+  }, []);
+
+  const shareOnTwitter = useCallback(() => {
+    const tweet = [
+      `I just completed "${storyState.title}"`,
+      `Come join the belt and become one of the first Adalians. Earn rewards by completing Crew Assignments TODAY.`,
+      `Join Now!`,
+      `#PlayToEarn #PlayAndEarn #NFTGaming`
+    ].join('\n\n');
+    // TODO: update referral link
+    // TODO: include image
+    window.open(`https://twitter.com/intent/tweet?text=${window.encodeURIComponent(tweet)}&url=${window.encodeURIComponent(`${document.location.origin}?r=${account}`)}`);
+  }, [account, storyState]);
 
   if (!storyState || !crew) return null;
   const onCloseDestination = `/crew-assignments/${storyState.book}`;
@@ -357,7 +371,7 @@ const CrewAssignmentComplete = (props) => {
               </LinkWithIcon>
             </SwaySection>
             <TwitterSection>
-              <Button>
+              <Button onClick={shareOnTwitter}>
                 <span>Share on Twitter</span>
                 <TwitterLogo />
               </Button>
