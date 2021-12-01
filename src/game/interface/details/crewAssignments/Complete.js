@@ -312,15 +312,18 @@ const CrewAssignmentComplete = (props) => {
   }, []);
 
   const shareOnTwitter = useCallback(() => {
-    const tweet = [
-      `I just completed "${storyState.title}"`,
-      `Come join the belt and become one of the first Adalians. Earn rewards by completing Crew Assignments TODAY.`,
-      `Join Now!`,
-      `#PlayToEarn #PlayAndEarn #NFTGaming`
-    ].join('\n\n');
-    // TODO: update referral link
-    // TODO: include image
-    window.open(`https://twitter.com/intent/tweet?text=${window.encodeURIComponent(tweet)}&url=${window.encodeURIComponent(`${document.location.origin}?r=${account}`)}`);
+    const params = new URLSearchParams({
+      text: [
+        `I just completed @influenceth's "${storyState.title}"`,
+        // (alternative to above): `Assignment completed: "${storyState.title}"\nTrait unlocked: “TODO”`
+        `Come join the belt and become one of the first Adalians. Earn rewards by completing Crew Assignments TODAY.`,
+        `Join Now:`,
+      ].join('\n\n'),
+      hashtags: 'PlayToEarn,PlayAndEarn,NFTGaming',
+      url: `${process.env.REACT_APP_API_URL}/og/crew-assignment/${sessionId}/${account}`,
+      //via: 'influenceth'
+    });
+    window.open(`https://twitter.com/intent/tweet?${params.toString()}`);
   }, [account, storyState]);
 
   if (!storyState || !crew) return null;
