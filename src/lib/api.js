@@ -17,6 +17,11 @@ const api = {
     return response.data;
   },
 
+  getUserAssignments: async () => {
+    const response = await instance.get('/v1/user/assignments');
+    return response.data;
+  },
+
   getEvents: async (since) => {
     const response = await instance.get(`/v1/user/events?since=${since}`);
     return response.data;

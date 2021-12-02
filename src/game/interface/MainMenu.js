@@ -1,9 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import styled from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
 
 import useBooks from '~/hooks/useBooks';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import IconButton from '~/components/IconButton';
@@ -114,8 +113,8 @@ const MainMenu = (props) => {
   const { account } = useWeb3React();
   const { isMobile } = useScreenSize();
 
-  const { data: books } = useBooks();
-  const { data: crew } = useOwnedCrew();
+  const { data: bookData } = useBooks();
+  const { totalAssignments } = bookData || {};
 
   const [ showMenu, setShowMenu ] = useState(!isMobile);
 
@@ -124,15 +123,6 @@ const MainMenu = (props) => {
     playSound('effects.click');
     if (isMobile) setShowMenu(false);
   };
-
-  const missionsBadge = useMemo(() => {
-    if (books?.length > 0 && crew?.length > 0) {
-      return books.reduce((acc, book) => {
-        return acc + (crew.length - (book.stats?.completed || 0));
-      }, 0);
-    }
-    return 0;
-  }, [books, crew]);
 
   return (
     <StyledMainMenu showMenu={showMenu}>
@@ -189,12 +179,14 @@ const MainMenu = (props) => {
             icon={<TimeIcon />}
             onClick={() => openSection('timeControl')} />
         </Menu>
-        <Menu title="Missions" badge={missionsBadge}>
-          <MenuItem
-            name="Crew Assignments"
-            icon={<RocketIcon />}
-            onClick={() => openSection('crewAssignments')} />
-        </Menu>
+        {!!account && (
+          <Menu title="Missions" badge={totalAssignments}>
+            <MenuItem
+              name="Crew Assignments"
+              icon={<RocketIcon />}
+              onClick={() => openSection('crewAssignments')} />
+          </Menu>
+        )}
         {!isMobile && (
           <>
             <MenuFiller />

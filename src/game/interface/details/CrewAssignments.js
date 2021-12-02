@@ -296,7 +296,7 @@ const ProgressIcon = styled.span`
 `;
 
 const CrewAssignments = (props) => {
-  const { id: bookId } = useParams();
+  const { id: bookId, selected: initialSelectedId } = useParams();
   const history = useHistory();
   const { account } = useWeb3React();
 
@@ -352,15 +352,21 @@ const CrewAssignments = (props) => {
 
   useEffect(() => {
     if (book && crew) {
-      let lastStory = null;
       let firstIncompleteStory = null;
+      let initialSelectedStory = null;
+      let lastStory = null;
       let crewReadyForNext = crew.map(({ i }) => i);
       book.parts.forEach(({ stories }) => {
         stories.forEach((item, i) => {
           if (!item.story) item.story = { id: `placeholder_${i}` };
 
           const { story } = item;
-          if (story.title) {
+          const comingSoon = !story.title
+            || story.title === 'COMING_SOON'
+            || (story.availableOn && new Date(story.availableOn) > new Date());
+          if (comingSoon) {
+            story.status = 'locked';
+          } else {
             story.crewStatuses = {};
             story.ready = 0;
             story.partial = 0;
@@ -398,19 +404,21 @@ const CrewAssignments = (props) => {
               story.status = 'notready';
             }
 
+            // set story of desired selection from url (if any)
+            if (initialSelectedId && initialSelectedId === story.id) {
+              initialSelectedStory = story;
+            }
             // find first incomplete story (and keep track of last story as fallback)
             if (firstIncompleteStory === null && story.status !== 'complete') {
               firstIncompleteStory = story;
             }
             lastStory = story;
-          } else {
-            story.status = 'locked';
           }
         });
       });
-      setSelectedStory(firstIncompleteStory || lastStory);
+      setSelectedStory(initialSelectedStory || firstIncompleteStory || lastStory);
     }
-  }, [book, crew]);
+  }, [book, crew, initialSelectedId]);
 
   const togglePart = useCallback((partId) => () => {
     playSound('effects.click');
@@ -475,7 +483,7 @@ const CrewAssignments = (props) => {
                               </DiamondContainer>
                               <ChapterRowInner index={x} selected={selectedStory && id === selectedStory.id}>
                                 <div>
-                                  <div>{title || 'Coming Soon'}</div>
+                                  <div>{status === 'locked' ? 'Coming Soon' : title}</div>
                                   {status === 'locked' && <LockIcon style={{ opacity: 0.7 }} />}
                                   {status !== 'locked' && (
                                     <ChapterProgressContainer crewReady={ready + partial} status={status}>

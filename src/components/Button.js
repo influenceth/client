@@ -4,6 +4,7 @@ import ReactTooltip from 'react-tooltip';
 import LoadingAnimation from 'react-spinners/BarLoader';
 
 import useStore from '~/hooks/useStore';
+import Badge from '~/components/Badge';
 import theme from '~/theme';
 
 const StyledButton = styled.button`
@@ -74,6 +75,12 @@ const Corner = styled.svg`
   width: 10px;
 `;
 
+const StyledBadge = styled(Badge)`
+  font-size: 80%;
+  margin-left: 12px;
+  margin-right: -6px;
+`;
+
 const loadingCss = css`
   left: 0;
   position: absolute;
@@ -97,6 +104,9 @@ const Button = (props) => {
     <StyledButton {...restProps} onClick={_onClick} data-tip={dataTip} data-place={dataPlace || "right"} key={dataTip}>
       {loading && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
       {props.children}
+      {props.badge && (
+        <StyledBadge value={props.badge} />
+      )}
       <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
         <line x1="0" y1="10" x2="10" y2="0" />
       </Corner>

@@ -2,17 +2,18 @@ import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { KeplerianOrbit } from 'influence-utils';
-import { RiRouteFill, RiPagesFill } from 'react-icons/ri';
+import { RiRouteFill } from 'react-icons/ri';
 import { MdRemoveCircle } from 'react-icons/md';
 import { GiHorizontalFlip } from 'react-icons/gi';
 
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
-import Section from '~/components/Section';
-import IconButton from '~/components/IconButton';
+import AsteroidById from '~/components/AsteroidById';
 import AsteroidItem from '~/components/AsteroidItem';
 import DataReadout from '~/components/DataReadout';
-import AsteroidById from '~/components/AsteroidById';
+import IconButton from '~/components/IconButton';
+import { DetailIcon } from '~/components/Icons';
+import Section from '~/components/Section';
 import constants from '~/lib/constants';
 
 const Controls = styled.div`
@@ -106,7 +107,7 @@ const RoutePlanner = (props) => {
           data-tip="Route Details"
           disabled={!originId || !destinationId}
           onClick={() => history.push('/route')}>
-          <RiPagesFill />
+          <DetailIcon />
         </IconButton>
         <IconButton
           data-tip="Flip Route"

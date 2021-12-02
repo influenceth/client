@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { IoIosPin } from 'react-icons/io';
-import { RiZoomInFill as ZoomInIcon, RiZoomOutFill as ZoomOutIcon, RiPagesFill } from 'react-icons/ri';
+import { RiZoomInFill as ZoomInIcon, RiZoomOutFill as ZoomOutIcon } from 'react-icons/ri';
 import { AiFillEye as WatchIcon } from 'react-icons/ai';
 
 import useStore from '~/hooks/useStore';
@@ -11,9 +11,10 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useWatchAsteroid from '~/hooks/useWatchAsteroid';
 import useUnWatchAsteroid from '~/hooks/useUnWatchAsteroid';
 import useWatchlist from '~/hooks/useWatchlist';
-import Section from '~/components/Section';
-import IconButton from '~/components/IconButton';
 import AsteroidDataCard from '~/components/AsteroidDataCard';
+import IconButton from '~/components/IconButton';
+import { DetailIcon } from '~/components/Icons';
+import Section from '~/components/Section';
 
 const Controls = styled.div`
   flex: 0 0 auto;
@@ -67,7 +68,7 @@ const SelectedAsteroid = (props) => {
           <IconButton
             data-tip="Details"
             onClick={() => history.push(`/asteroids/${asteroid.i}`)}>
-            <RiPagesFill />
+            <DetailIcon />
           </IconButton>
           {zoomStatus === 'out' && !isMobile && (
             <IconButton

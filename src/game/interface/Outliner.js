@@ -124,7 +124,7 @@ const Outliner = (props) => {
           {outliner.watchlist?.active && !!account && <Watchlist />}
           {outliner.routePlanner?.active && <RoutePlanner />}
           {outliner.ownedCrew?.active && !!account && <OwnedCrew />}
-          {outliner.crewAssignments?.active && <CrewAssignments />}
+          {outliner.crewAssignments?.active && !!account && <CrewAssignments />}
           {outliner.timeControl?.active && <TimeControl />}
         </StyledOutliner>
         <SystemControls />

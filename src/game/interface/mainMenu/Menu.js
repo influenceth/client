@@ -1,5 +1,7 @@
 import styled from 'styled-components';
 
+import Badge from '~/components/Badge';
+
 const StyledMenu = styled.div`
   cursor: ${p => p.theme.cursors.active};
   margin-right: 10px;
@@ -19,22 +21,11 @@ const StyledMenu = styled.div`
   }
 `;
 
-const Badge = styled.span`
-  align-items: center;
-  background: ${p => p.theme.colors.main};
-  border-radius: 50%;
-  color: white;
-  display: flex;
+const StyledBadge = styled(Badge)`
   font-size: 85%;
-  font-weight: bold;
-  height: 1.4em;
-  justify-content: center;
-  opacity: 1;
   position: absolute;
   right: 8px;
   top: 6px;
-  transition: opacity 0.4s ease 0.2s;
-  width: 1.4em;
 `;
 
 const MenuHeader = styled.div`
@@ -55,7 +46,7 @@ const MenuHeader = styled.div`
     border-bottom: 4px solid ${p => p.theme.colors.main};
     color: ${p => p.theme.colors.main};
 
-    & ${Badge} {
+    & ${StyledBadge} {
       opacity: 0;
     }
   }
@@ -70,7 +61,7 @@ const Menu = (props) => (
   <StyledMenu>
     <MenuHeader>
       <span>{props.title}</span>
-      {props.badge > 0 && <Badge>{props.badge}</Badge>}
+      <StyledBadge max={99} value={props.badge} />
     </MenuHeader>
     <MenuItems>
       {props.children}

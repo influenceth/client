@@ -19,7 +19,7 @@ import {
   MdNavigateNext,
   MdFirstPage
 } from 'react-icons/md';
-import { RiTableFill, RiRouteFill, RiLoginCircleFill, RiAlertFill, RiFilter2Fill } from 'react-icons/ri';
+import { RiPagesFill, RiTableFill, RiRouteFill, RiLoginCircleFill, RiAlertFill, RiFilter2Fill } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
 import { WiMoonAltWaningCrescent5 } from 'react-icons/wi';
 import { VscDebugDisconnect } from 'react-icons/vsc';
@@ -68,6 +68,7 @@ export {
   BsFillPersonFill as CrewMemberIcon,
   FaCopy as CopyIcon,
   FaEthereum as ConnectIcon,
+  RiPagesFill as DetailIcon,
   FaMapMarkedAlt as MapIcon,
   FiMenu as MenuIcon,
   HiClock as TimeIcon,

@@ -96,7 +96,7 @@ const Interface = () => {
           <Route path="/owned-crew">
             <OwnedCrew />
           </Route>
-          <Route exact path="/crew-assignments/:id([a-z0-9]+)">
+          <Route exact path="/crew-assignments/:id([a-z0-9]+)/:selected?">
             <CrewAssignments />
           </Route>
           <Route exact path="/crew-assignment/:id([a-z0-9]+)">
