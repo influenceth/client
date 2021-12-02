@@ -4,15 +4,17 @@ import styled, { keyframes } from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
 import {
   BiWrench as WrenchIcon,
-  BiLink as LinkIcon,
   BiMoney as SwayIcon,
-  BiTrophy as TrophyIcon,
 } from 'react-icons/bi';
 
 import TwitterLogo from '~/assets/images/twitter-icon.svg';
 import Button from '~/components/Button';
 import CopyReferralLink from '~/components/CopyReferralLink';
 import Details from '~/components/Details';
+import {
+  LinkIcon,
+  TrophyIcon
+} from '~/components/Icons';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
 import CrewCard from './CrewCard';
@@ -324,7 +326,7 @@ const CrewAssignmentComplete = (props) => {
       //via: 'influenceth'
     });
     window.open(`https://twitter.com/intent/tweet?${params.toString()}`);
-  }, [account, storyState]);
+  }, [account, sessionId, storyState]);
 
   if (!storyState || !crew) return null;
   const onCloseDestination = `/crew-assignments/${storyState.book}`;

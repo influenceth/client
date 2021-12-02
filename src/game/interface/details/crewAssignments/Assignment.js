@@ -10,7 +10,7 @@ import Button from '~/components/Button';
 import CrewClassBadge from '~/components/CrewClassBadge';
 import Details from '~/components/Details';
 import Dialog from '~/components/Dialog';
-import { ArvadIcon, BackIcon } from '~/components/Icons';
+import { BackIcon, GenesisIcon } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import CrewCard from './CrewCard';
@@ -146,8 +146,8 @@ const FlourishCentered = styled.div`
 const FlourishImageContainer = styled(FlourishCentered)`
   color: ${p => p.theme.colors.main};
   flex: 1;
-  font-size: 100px;
-  opacity: 0.15;
+  font-size: 150px;
+  opacity: 0.2;
 `;
 
 const Path = styled.div`
@@ -385,7 +385,7 @@ const CrewAssignment = (props) => {
                   })}
                 </FlourishCentered>
                 <FlourishImageContainer>
-                  <ArvadIcon />
+                  <GenesisIcon />{/* TODO: should come from backend in book data */}
                 </FlourishImageContainer>
               </Flourish>
             </BelowFold>

@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
-import { BsChevronDoubleDown as SelectIcon } from 'react-icons/bs';
 
 import useBook from '~/hooks/useBook';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
@@ -14,9 +13,10 @@ import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import TitleWithUnderline from '~/components/TitleWithUnderline';
 import {
-  ArvadIcon,
+  GenesisIcon,
   BackIcon,
   CheckIcon,
+  ChevronDoubleDownIcon as SelectIcon,
   CollapsedIcon,
   ExpandedIcon,
   LockIcon,
@@ -167,9 +167,9 @@ const BookHeader = styled(SectionHeader)`
   }
 `;
 const BookIcon = styled.div`
-  font-size: 1.5em;  
-  margin-right: 0.4em;
-  margin-bottom: 0.25em;
+  font-size: 2em;  
+  margin-right: 12px;
+  margin-bottom: 12px;
 `;
 
 const BookBody = styled(SectionBody)`
@@ -267,6 +267,17 @@ const DiamondContainer = styled.div`
     }`}
 `;
 
+const ChapterProgressContainer = styled.span`
+  align-items: center;
+  color: ${p => p.status === 'complete' ? p.theme.colors.success : p.theme.colors.main};
+  display: flex;
+  flex-direction: row;
+  &:before {
+    content: "${p => p.crewReady > 0 ? p.crewReady : ''}";
+    margin-right: 6px;
+  }
+`;
+
 const ProgressIcon = styled.span`
   border-radius: 50%;
   display: block;
@@ -274,38 +285,15 @@ const ProgressIcon = styled.span`
   width: ${p => p.size};
   ${p => {
     if (p.status === 'notready') {
-      return `border: 0.2em solid ${p.activeColor};`;
+      return `border: 0.2em solid currentColor;`;
     } else if (p.status === 'full') {
-      return `background: ${p.activeColor};`;
+      return `background: currentColor;`;
     } else if (p.status === 'partial') {
-      return `background: linear-gradient(to right, ${p.inactiveColor} 50%, ${p.activeColor} 50%);`;
+      return `background: linear-gradient(to right, ${p.inactiveColor} 50%, currentColor 50%);`;
     }
     return '';
   }}
 `;
-
-const ChapterProgress = ({ crewReady, status }) => {
-  if (status === 'locked') {
-    return <LockIcon style={{ opacity: 0.7 }} />;
-  }
-
-  const color = status === 'complete' ? theme.colors.success : theme.colors.main;
-  return (
-    <>
-      <span style={{ color, marginRight: 6 }}>{crewReady > -1 ? crewReady : ''}</span>
-      {status === 'complete'
-        ? <CheckIcon style={{ color }} />
-        : (
-          <ProgressIcon
-            size={'1em'}
-            activeColor={color}
-            inactiveColor={'#003f54'}
-            status={status}
-          />
-      )}
-    </>
-  );
-}
 
 const CrewAssignments = (props) => {
   const { id: bookId } = useParams();
@@ -460,10 +448,11 @@ const CrewAssignments = (props) => {
           {book && (
             <>
               <BookHeader>
-                <BookIcon><ArvadIcon /></BookIcon>
+                <BookIcon>
+                  <GenesisIcon />{/* TODO: should come from backend in book data */}
+                </BookIcon>
                 <TitleWithUnderline>{title}</TitleWithUnderline>
               </BookHeader>
-
               <BookBody>
                 {parts.map(({ title, stories }, x) => {
                   const isCollapsed = collapsedParts.includes(title);
@@ -487,10 +476,18 @@ const CrewAssignments = (props) => {
                               <ChapterRowInner index={x} selected={selectedStory && id === selectedStory.id}>
                                 <div>
                                   <div>{title || 'Coming Soon'}</div>
-                                  <ChapterProgress
-                                    crewReady={ready + partial}
-                                    status={status}
-                                  />
+                                  {status === 'locked' && <LockIcon style={{ opacity: 0.7 }} />}
+                                  {status !== 'locked' && (
+                                    <ChapterProgressContainer crewReady={ready + partial} status={status}>
+                                      {status === 'complete' && <CheckIcon />}
+                                      {status !== 'complete' && (
+                                        <ProgressIcon size="1em"
+                                          inactiveColor="#003f54"
+                                          status={status}
+                                        />
+                                      )}
+                                    </ChapterProgressContainer>
+                                  )}
                                 </div>
                               </ChapterRowInner>
                             </ChapterRow>

@@ -8,16 +8,16 @@ import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import IconButton from '~/components/IconButton';
 import {
-  ChapterIcon,
-  TimeIcon,
-  RouteIcon,
   CloseIcon,
-  MenuIcon,
-  FilterIcon,
   CrewIcon,
   EyeIcon,
+  FilterIcon,
+  MapIcon,
+  MenuIcon,
+  RocketIcon,
+  RouteIcon,
   StarIcon,
-  MapIcon
+  TimeIcon
 } from '~/components/Icons';
 import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
@@ -192,7 +192,7 @@ const MainMenu = (props) => {
         <Menu title="Missions" badge={missionsBadge}>
           <MenuItem
             name="Crew Assignments"
-            icon={<ChapterIcon />}
+            icon={<RocketIcon />}
             onClick={() => openSection('crewAssignments')} />
         </Menu>
         {!isMobile && (
