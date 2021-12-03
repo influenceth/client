@@ -362,19 +362,24 @@ const CrewAssignmentComplete = (props) => {
 
       <div style={{ display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'center' }}>
         <div>
+          {/* 
           <SharingPrompt>
             Earn <b>Sway</b> for each friend who signs up using your unique recruitment link.
             Recruitment Points can be later spent to unlock exclusive in-game items, rewards, and cosmetics!
           </SharingPrompt>
+          */}
           <SharingSection>
+            {/* TODO: sway-per-referral should probably be in influence-utils */}
+            {/* 
             <SwaySection>
               <h5>Earned Per Recruitment</h5>
               <div>15 <SwayIcon /></div>
               <LinkWithIcon>
                 <TrophyIcon />
-                <span>Visit the Recruitment Leaderboard</span>
+                <span>Visit Recruitment Leaderboard</span>
               </LinkWithIcon>
             </SwaySection>
+            */}
             <TwitterSection>
               <Button onClick={shareOnTwitter}>
                 <span>Share on Twitter</span>
