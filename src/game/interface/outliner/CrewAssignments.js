@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 
-import useBooks from '~/hooks/useBooks';
+import useCrewAssignments from '~/hooks/useCrewAssignments';
 import Button from '~/components/Button';
 import IconButton from '~/components/IconButton';
 import { ChapterIcon, DetailIcon, RocketIcon } from '~/components/Icons';
@@ -63,8 +63,8 @@ const ChapterRow = styled.div`
 
 const CrewAssignments = (props) => {
   const history = useHistory();
-  const { data: bookData } = useBooks();
-  const { assignmentsByBook, totalAssignments } = bookData || {};
+  const { data: assignmentData } = useCrewAssignments();
+  const { assignmentsByBook, totalAssignments } = assignmentData || {};
 
   const actionableBooks = useMemo(
     () => (assignmentsByBook || []).filter((b) => b.actionable),

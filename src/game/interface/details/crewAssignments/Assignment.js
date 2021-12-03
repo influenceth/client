@@ -301,10 +301,6 @@ const CrewAssignment = (props) => {
     return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
   }, [storyState, allCrew]);
 
-  const BookIcon = useMemo(() => {
-
-  });
-
   const contentReady = storyState && crew;
   return (
     <>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
 
-import useBooks from '~/hooks/useBooks';
+import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import IconButton from '~/components/IconButton';
@@ -113,8 +113,8 @@ const MainMenu = (props) => {
   const { account } = useWeb3React();
   const { isMobile } = useScreenSize();
 
-  const { data: bookData } = useBooks();
-  const { totalAssignments } = bookData || {};
+  const { data: crewAssignmentData } = useCrewAssignments();
+  const { totalAssignments } = crewAssignmentData || {};
 
   const [ showMenu, setShowMenu ] = useState(!isMobile);
 

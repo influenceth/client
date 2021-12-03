@@ -93,9 +93,9 @@ const useStorySession = (id) => {
       setPathContent(content);
       setLoadingPath(false);
 
-      // if just completed assignment (i.e. no more choices), then refetch book and books
+      // if just completed assignment (i.e. no more choices), then refetch assignments and book (for sessions)
       if (content.linkedPaths.length === 0) {
-        queryClient.refetchQueries('books');
+        queryClient.refetchQueries('assignments');
         queryClient.refetchQueries('book', story.book);
       }
 

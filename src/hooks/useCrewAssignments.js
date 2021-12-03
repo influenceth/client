@@ -3,12 +3,11 @@ import useAuth from '~/hooks/useAuth';
 
 import api from '~/lib/api';
 
-// TODO: change this hook name
-const useBooks = () => {
+const useCrewAssignments = () => {
   const { token } = useAuth();
 
   return useQuery(
-    [ 'books', token ],
+    [ 'assignments', token ],
     async () => {
       const assignmentsByBook = {};
       let totalAssignments = 0;
@@ -39,4 +38,4 @@ const useBooks = () => {
   );
 };
 
-export default useBooks;
+export default useCrewAssignments;
