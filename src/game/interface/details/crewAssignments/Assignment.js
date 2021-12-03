@@ -138,6 +138,13 @@ const Flourish = styled.div`
   }
 `;
 
+const NavSpacer = styled.div`
+  border-top: 1px dotted ${p => p.completed ? '#FFF' : '#777'};
+  height: 0;
+  margin: 0 8px;
+  width: 1.5em;
+`;
+
 const FlourishCentered = styled.div`
   align-items: center;
   display: flex;
@@ -369,14 +376,12 @@ const CrewAssignment = (props) => {
                     }
                     return (
                       <React.Fragment key={i}>
-                        {i > 0 && (
-                          <div style={{
-                            height: 0,
-                            borderTop: `1px dotted ${i <= currentStep ? '#FFF' : '#777'}`,
-                            width: '1.5em'
-                          }} />
-                        )}
-                        <NavIcon selected={i === currentStep} size={'1.5em'} color={color} />
+                        {i > 0 && <NavSpacer completed={i <= currentStep} />}
+                        <NavIcon
+                          animate
+                          selected={i === currentStep}
+                          size="1.2em"
+                          color={color} />
                       </React.Fragment>
                     );
                   })}
@@ -397,7 +402,7 @@ const CrewAssignment = (props) => {
               <NavIcon
                 selected
                 selectedColor={'white'} 
-                size={28}
+                size={23}
                 style={{ marginRight: 8 }} />
               <h4>Your Selection:</h4>
             </ConfirmationTitle>

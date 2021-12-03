@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 
@@ -104,14 +104,14 @@ const CrewAssignments = (props) => {
       {actionableBooks?.length > 0 && (
         <AssignmentsList>
           {actionableBooks.map(book => (
-            <>
+            <React.Fragment key={book.id}>
               <BookTitle>{book.title}</BookTitle>
               {book.stories.filter(story => story.actionable > 0).map(story => (
-                <ChapterRow onClick={handleClick(story)}>
+                <ChapterRow key={story.id} onClick={handleClick(story)}>
                   <ChapterIcon /> {story.title}
                 </ChapterRow>
               ))}
-            </>
+            </React.Fragment>
           ))}
         </AssignmentsList>
       )}

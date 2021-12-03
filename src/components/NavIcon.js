@@ -1,44 +1,98 @@
 import React from 'react';
-import {
-  BsDiamond as OuterIcon,
-  BsDiamondFill as Icon
-} from 'react-icons/bs';
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 
 const Wrapper = styled.div`
-  display: inline-block;
-  font-size: ${p => p.size || '1em'};
-  height: ${p => p.size || '1em'};
-  width: ${p => p.size || '1em'};
-  & > div {
-    align-items: center;
-    display: flex;
-    height: 100%;
-    justify-content: center;
-    position: relative;
-    width: 100%;
-  
-    & > *:first-child {
-      color: ${p => p.color || 'inherit'};
-      position: absolute;
-      font-size: 50%;
-    }
-    & > *:last-child {
-      position: absolute;
-      color: ${p => p.selectedColor || p.theme.colors.main};
-      display: ${p => p.selected ? 'block' : 'none'};
-    }
-  }
+  align-items: center;
+  display: inline-flex;
+  font-size: ${p => p.size};
+  height: ${p => p.size};
+  justify-content: center;
+  overflow: visible;
+  width: ${p => p.size};
 `;
 
+const InnerWrapper = styled.div`
+  align-items: center;
+  display: inline-flex;
+  height: 100%;
+  justify-content: center;
+  overflow: visible;
+  position: relative;
+  transform: rotate(45deg);
+  width: 100%;
+  z-index: 2;
+`;
+
+const InnerIcon = styled.div`
+  background: ${p => p.color || 'currentColor'};
+  border-radius: 6.25%;
+  width: 50%;
+  height: 50%;
+`;
+
+const mainKeyframes = keyframes`
+  0% {
+    transform: scale(1);
+  }
+  8.3% {
+    transform: scale(0.75);
+  }
+  16.6% {
+    transform: scale(1);
+  }
+`;
+const mainAnimation = css`
+  animation: ${mainKeyframes} 2000ms linear infinite;
+`;
+const OuterSelectionIcon = styled.div`
+  ${p => p.animate && mainAnimation};
+  background: transparent;
+  border: 0.1em solid ${p => p.selectedColor || p.theme.colors.main};
+  border-radius: 6.25%;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+`;
+
+const highlightAnimation = keyframes`
+  0% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  8.3% {
+    transform: scale(0.75);
+    opacity: 1;
+  }
+  16.6% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(2);
+    opacity: 0;
+  }
+`;
+const OuterSelectionHighlight = styled.div`
+  animation: ${highlightAnimation} 2000ms linear infinite;
+  background: transparent;
+  border: 0.05em solid ${p => p.theme.colors.main};
+  border-radius: 0;
+  opacity: 0;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+`;
+
+// TODO: currently, even-number size causes squares to appear misaligned
+// (would be a nice enhancement to fix)
 const NavIcon = ({ size, ...props }) => {
   const standardSize = Number.isInteger(size) ? `${size}px` : (size || '1em');
   return (
     <Wrapper {...props} size={standardSize}>
-      <div>
-        <Icon />
-        <OuterIcon />
-      </div>
+      <InnerWrapper>
+        <InnerIcon {...props} />
+        {props.selected && <OuterSelectionIcon {...props} />}
+        {props.selected && props.animate && <OuterSelectionHighlight {...props} />}
+      </InnerWrapper>
     </Wrapper>
   );
 }

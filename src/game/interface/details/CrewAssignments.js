@@ -253,9 +253,13 @@ const diamondConnectionHeight = 20;
 const DiamondContainer = styled.div`
   align-items: center;
   display: flex;
+  font-size: 80%;
   height: 100%;
+  justify-content: center;
+  margin: 0 0.1em 0 0.5em;
   position: relative;
   width: 1em;
+  z-index: 2;
   ${(p) => p.connect && `
     &:before {
       content: '';
@@ -265,6 +269,7 @@ const DiamondContainer = styled.div`
       border-left: 1px dotted #AAA;
       bottom: calc(100% - ${diamondConnectionHeight / 2}px);
       left: calc(50% - 1px);
+      z-index: 1;
     }`}
 `;
 
@@ -474,14 +479,16 @@ const CrewAssignments = (props) => {
                       </PartTitle>
                       <ChaptersContainer collapsed={isCollapsed}>
                         {stories.map(({ story }, i) => {
-                          const { id, title, ready, partial, status } = (story || { status: 'locked' });
+                          const { id, title, ready, partial, status } = (story || { id: i, status: 'locked' });
                           return (
                             <ChapterRow
-                              key={id || `placeholder_${i}`}
+                              key={id}
                               onClick={selectStory(status === 'locked' ? null : story)}
                               status={status}>
                               <DiamondContainer connect={i > 0}>
-                                <NavIcon selected={selectedStory && id === selectedStory.id} />
+                                <NavIcon
+                                  animate
+                                  selected={selectedStory && id === selectedStory.id} />
                               </DiamondContainer>
                               <ChapterRowInner index={x} selected={selectedStory && id === selectedStory.id}>
                                 <div>
