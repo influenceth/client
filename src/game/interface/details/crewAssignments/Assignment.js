@@ -3,6 +3,7 @@ import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { toCrewClass } from 'influence-utils';
 
+import useBook from '~/hooks/useBook';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
 import useStore from '~/hooks/useStore';
@@ -10,9 +11,10 @@ import Button from '~/components/Button';
 import CrewClassBadge from '~/components/CrewClassBadge';
 import Details from '~/components/Details';
 import Dialog from '~/components/Dialog';
-import { BackIcon, GenesisIcon } from '~/components/Icons';
+import { ArvadIcon, BackIcon } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
+import SvgFromSrc from '~/components/SvgFromSrc';
 import CrewCard from './CrewCard';
 
 import theme from '~/theme.js';
@@ -146,7 +148,7 @@ const FlourishCentered = styled.div`
 const FlourishImageContainer = styled(FlourishCentered)`
   color: ${p => p.theme.colors.main};
   flex: 1;
-  font-size: 150px;
+  font-size: ${p => p.shrinkIcon ? '100px' : '150px'};
   opacity: 0.2;
 `;
 
@@ -253,6 +255,7 @@ const CrewAssignment = (props) => {
   const history = useHistory();
   const { data: allCrew } = useOwnedCrew();
   const { currentStep, storyState, commitPath, loadingPath } = useStorySession(sessionId);
+  const { data: book } = useBook(storyState?.book)
   const playSound = useStore(s => s.dispatchSoundRequested);
 
   const [coverImageLoaded, setCoverImageLoaded] = useState();
@@ -297,6 +300,10 @@ const CrewAssignment = (props) => {
   const crew = useMemo(() => {
     return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
   }, [storyState, allCrew]);
+
+  const BookIcon = useMemo(() => {
+
+  });
 
   const contentReady = storyState && crew;
   return (
@@ -378,8 +385,9 @@ const CrewAssignment = (props) => {
                     );
                   })}
                 </FlourishCentered>
-                <FlourishImageContainer>
-                  <GenesisIcon />{/* TODO: should come from backend in book data */}
+                <FlourishImageContainer shrinkIcon={book && !book.icon}>
+                  {book && book.icon && <SvgFromSrc src={book.icon} />}
+                  {book && !book.icon && <ArvadIcon />}
                 </FlourishImageContainer>
               </Flourish>
             </BelowFold>

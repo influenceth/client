@@ -13,7 +13,7 @@ import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import TitleWithUnderline from '~/components/TitleWithUnderline';
 import {
-  GenesisIcon,
+  ArvadIcon,
   BackIcon,
   CheckIcon,
   ChevronDoubleDownIcon as SelectIcon,
@@ -22,6 +22,7 @@ import {
   LockIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
+import SvgFromSrc from '~/components/SvgFromSrc';
 import CrewCard from './crewAssignments/CrewCard';
 
 import theme from '~/theme.js';
@@ -457,7 +458,8 @@ const CrewAssignments = (props) => {
             <>
               <BookHeader>
                 <BookIcon>
-                  <GenesisIcon />{/* TODO: should come from backend in book data */}
+                  {book.icon && <SvgFromSrc src={book.icon} />}
+                  {!book.icon && <ArvadIcon />}
                 </BookIcon>
                 <TitleWithUnderline>{title}</TitleWithUnderline>
               </BookHeader>

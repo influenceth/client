@@ -28,7 +28,6 @@ import ArvadSVG from '~/assets/icons/ArvadIcon.svg';
 import ChapterSVG from '~/assets/icons/ChapterIcon.svg';
 import CheckSVG from '~/assets/icons/CheckIcon.svg';
 import ChevronDoubleDownSVG from '~/assets/icons/ChevronDoubleDownIcon.svg';
-import GenesisSVG from '~/assets/icons/GenesisIcon.svg';
 import LinkSVG from '~/assets/icons/LinkIcon.svg';
 import LockSVG from '~/assets/icons/LockIcon.svg';
 import RocketSVG from '~/assets/icons/RocketIcon.svg';
@@ -52,7 +51,6 @@ export const ArvadIcon = () => <ArvadSVG className="icon" style={{ width: '1.94e
 export const ChapterIcon = () => <ChapterSVG className="icon" />;
 export const CheckIcon = () => <CheckSVG className="icon" style={{ width: '1.314em' }} />;
 export const ChevronDoubleDownIcon = () => <ChevronDoubleDownSVG className="icon" />;
-export const GenesisIcon = () => <GenesisSVG className="icon" />;
 export const LinkIcon = () => <LinkSVG className="icon" />;
 export const LockIcon = () => <LockSVG className="icon" />;
 export const RocketIcon = () => <RocketSVG className="icon" />;

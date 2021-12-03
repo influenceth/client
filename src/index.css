@@ -59,3 +59,16 @@ svg.icon {
   vertical-align: middle;
   overflow: hidden;
 }
+.icon-from-src-wrapper {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  overflow: hidden;
+}
+.icon-from-src-wrapper > svg {
+  fill: currentColor;
+  height: 100%;
+  stroke: currentColor;
+  width: 100%;
+}
