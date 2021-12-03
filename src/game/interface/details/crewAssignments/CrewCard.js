@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import LoadingAnimation from 'react-spinners/PuffLoader';
-import styled, { css } from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import { toCrewClass } from 'influence-utils';
 
 import silhouette from '~/assets/images/silhouette.png';
+import AttentionDot from '~/components/AttentionDot';
 import CrewClassBadge from '~/components/CrewClassBadge';
 import DataReadout from '~/components/DataReadout';
 
@@ -60,14 +61,22 @@ const CrewName = styled.span`
   }
 `;
 
+const AttentionIcon = styled(AttentionDot)`
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  margin-top: -6px;
+`;
+
 const OverlayButton = styled.div`
+  background-color: transparent;
   font-weight: bold;
   margin-bottom: 12px;
   padding: 4px;
+  position: relative;
   text-align: center;
   text-transform: uppercase;
   text-shadow: 0px 0px 3px black;
-  transition: opacity ${tSpeed} ease-in;
   width: calc(100% - 16px);
 `;
 
@@ -92,13 +101,28 @@ const OverlayIcon = styled.div`
 `;
 
 const CardOverlayHoverCss = css`
-  border: 1px solid rgba(${(p) => p.rgb});
-  outline: 3px solid rgba(${(p) => p.rgb}, 0.5);
+  border: 1px solid rgba(${(p) => p.rgbHover || p.rgb});
+  outline: 3px solid rgba(${(p) => p.rgbHover || p.rgb}, 0.5);
   ${OverlayButton},
   ${OverlayCaption},
   ${OverlayFlourish},
   ${OverlayIcon} {
     opacity: 1;
+  }
+`;
+
+const buttonKeyframes = (rgb, isAnimated) => keyframes`
+  0% {
+    background-color: rgba(${rgb}, 0.3);
+    color: rgba(${rgb}, 1.0);
+  }
+  50% {
+    background-color: rgba(${rgb}, ${isAnimated ? 0.2 : 0.3});
+    color: rgba(${rgb}, ${isAnimated ? 0.7 : 1.0});
+  }
+  100% {
+    background-color: rgba(${rgb}, 0.3);
+    color: rgba(${rgb}, 1.0);
   }
 `;
 
@@ -115,9 +139,13 @@ const CardOverlay = styled(CardLayer)`
   width: 100%;
 
   ${OverlayButton} {
+    animation: ${p => buttonKeyframes(p.rgb, p.buttonAttention)} 1000ms linear infinite;
     background-color: rgba(${(p) => p.rgb}, 0.3);
     color: rgb(${(p) => p.rgb});
     opacity: ${(p) => p.alwaysOn.includes('button') ? 1 : 0};
+    &:after {
+      content: "${p => p.button}";
+    }
   }
   ${OverlayCaption} {
     opacity: ${(p) => p.alwaysOn.includes('caption') ? 1 : 0};
@@ -127,17 +155,47 @@ const CardOverlay = styled(CardLayer)`
     opacity: ${(p) => p.alwaysOn.includes('border') ? 1 : 0};
   }
   ${OverlayIcon} {
-    opacity: ${(p) => p.alwaysOn.includes('icon') ? 1 : 0};
+    ${(p) => {
+      if (p.alwaysOn.includes('icon')) {
+        return `
+          opacity: 1;
+        `;
+      }
+      return `
+        color: ${p.rgbHover ? `rgb(${p.rgbHover})` : 'inherit'};
+        opacity: 0;
+      `;
+    }}
   }
 
   ${OverlayButton},
   ${OverlayCaption},
   ${OverlayIcon} {
-    transition: opacity ${tSpeed} ease-in;
+    transition: opacity ${tSpeed} ease-in, color ${tSpeed} ease-in, background-color ${tSpeed} ease-in;
   }
 
   &:hover {
     ${CardOverlayHoverCss}
+    ${p => p.rgbHover && `
+      color: rgb(${p.rgbHover});
+      ${OverlayButton} {
+        background-color: rgba(${p.rgbHover}, 0.3);
+        color: rgb(${p.rgbHover});
+      }
+      ${OverlayFlourish} {
+        border-bottom-color: rgb(${p.rgbHover});
+      }
+    `}
+
+    ${OverlayButton} {
+      animation: none;
+      &:after {
+        content: "${p => p.buttonHover || p.button}";
+      }
+      ${AttentionIcon} {
+        display: none;
+      }
+    }
   }
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
@@ -176,7 +234,11 @@ const CrewCard = ({ config = { alwaysOn: [] }, crew, onClick }) => {
         {config.icon && <OverlayIcon>{config.icon}</OverlayIcon>}
         <div style={{ flex: 1 }} />
         {config.caption && <OverlayCaption>{config.caption}</OverlayCaption>}
-        {config.button && <OverlayButton>{config.button}</OverlayButton>}
+        {config.button && (
+          <OverlayButton>
+            {config.buttonAttention && <AttentionIcon size={11} />}
+          </OverlayButton>
+        )}
         <OverlayFlourish />
       </CardOverlay>
     </Card>

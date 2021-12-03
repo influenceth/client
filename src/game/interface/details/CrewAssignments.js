@@ -29,11 +29,15 @@ import theme from '~/theme.js';
 
 const crewStates = {
   ready: {
-    alwaysOn: [],
-    button: 'Begin Assignment',
+    alwaysOn: ['button'],
+    button: 'Ready to Start',
+    buttonAttention: true,
+    buttonHover: 'Begin Assignment',
+    buttonIconHover: null,
     clickable: true,
     icon: <SelectIcon />,
-    rgb: '255, 255, 255',
+    rgb: theme.colors.mainRGB,
+    rgbHover: '255, 255, 255',
   },
   notReady: {
     alwaysOn: ['button', 'caption', 'icon'],
@@ -41,7 +45,7 @@ const crewStates = {
     caption: 'This character must finish a previous chapter first.',
     fade: true,
     icon: <WarningOutlineIcon />,
-    rgb: theme.colors.mainRGB,
+    rgb: '200, 129, 55'
   },
   complete: {
     alwaysOn: ['button', 'icon'],
