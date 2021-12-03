@@ -98,11 +98,6 @@ const api = {
     return response.data;
   },
 
-  getBooks: async () => {
-    const response = await instance.get('/v1/books');
-    return response.data;
-  },
-
   getStory: async (id) => {
     const response = await instance.get(`/v1/stories/${id}`);
     return response.data;

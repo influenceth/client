@@ -39,7 +39,7 @@ const CoverImage = styled.div`
     opacity: ${p => p.ready ? 1 : 0};
     height: 100%;
     mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
-    transition: opacity 700ms ease-out;
+    transition: opacity 750ms ease-out, background-image 750ms ease-out;
   }
 `;
 
@@ -255,12 +255,17 @@ const CrewAssignment = (props) => {
   const { currentStep, storyState, commitPath, loadingPath } = useStorySession(sessionId);
   const playSound = useStore(s => s.dispatchSoundRequested);
 
+  const [coverImageLoaded, setCoverImageLoaded] = useState();
   const [selection, setSelection] = useState();
 
   // on step change, clear selection (to close modal)
   useEffect(() => {
     setSelection();
   }, [currentStep]);
+
+  const onCoverImageLoad = useCallback(() => {
+    setCoverImageLoaded(storyState?.image);
+  }, [storyState?.image]);
 
   const selectPath = useCallback((path) => () => {
     playSound('effects.click');
@@ -293,17 +298,6 @@ const CrewAssignment = (props) => {
     return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
   }, [storyState, allCrew]);
 
-  const [coverImageLoaded, setCoverImageLoaded] = useState();
-  const onCoverImageLoad = () => {
-    setCoverImageLoaded(storyState.image);
-  };
-  useEffect(() => {
-    if (storyState && storyState.image !== coverImageLoaded) {
-      setCoverImageLoaded();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storyState?.image]);
-
   const contentReady = storyState && crew;
   return (
     <>
@@ -312,7 +306,7 @@ const CrewAssignment = (props) => {
         {contentReady && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <InvisibleImage src={storyState.image} onLoad={onCoverImageLoad} />
-            <CoverImage src={storyState.image} ready={!!coverImageLoaded} />
+            <CoverImage src={storyState.image} ready={storyState.image === coverImageLoaded} />
             <AboveFold>
               <BackButton onClick={goBack}><BackIcon /> Back</BackButton>
               <Title>{storyState.title}</Title>
