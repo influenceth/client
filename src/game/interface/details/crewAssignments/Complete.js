@@ -363,16 +363,16 @@ const CrewAssignmentComplete = (props) => {
       <div style={{ display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'center' }}>
         <div>
           <SharingPrompt>
-            Earn <b>Sway</b> for each friend who signs up using your unique referral link.
-            Referral Points can be later spent to unlock exclusive in-game items, rewards, and cosmetics!
+            Earn <b>Sway</b> for each friend who signs up using your unique recruitment link.
+            Recruitment Points can be later spent to unlock exclusive in-game items, rewards, and cosmetics!
           </SharingPrompt>
           <SharingSection>
             <SwaySection>
-              <h5>Earned Per Referral</h5>
+              <h5>Earned Per Recruitment</h5>
               <div>15 <SwayIcon /></div>
               <LinkWithIcon>
                 <TrophyIcon />
-                <span>Visit the Referral Leaderboard</span>
+                <span>Visit the Recruitment Leaderboard</span>
               </LinkWithIcon>
             </SwaySection>
             <TwitterSection>
@@ -383,7 +383,7 @@ const CrewAssignmentComplete = (props) => {
               <CopyReferralLink>
                 <LinkWithIcon>
                   <LinkIcon />
-                  <span>Copy Referral Link</span>
+                  <span>Copy Recruitment Link</span>
                 </LinkWithIcon>
               </CopyReferralLink>
             </TwitterSection>

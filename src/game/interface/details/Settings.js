@@ -210,8 +210,8 @@ const Settings = (props) => {
             onChange={adjustEffectsVolume} />
         </StyledDataReadout>
 
-        <h3>Referrals</h3>
-        <StyledDataReadout label="Referral Link">
+        <h3>Recruitment</h3>
+        <StyledDataReadout label="Recruitment Link">
           <CopyReferralLink
             fallbackContent={(
               <span>Connect wallet to generate link</span>
@@ -220,7 +220,7 @@ const Settings = (props) => {
           </CopyReferralLink>
         </StyledDataReadout>
         {account && (
-          <StyledDataReadout label="Completed Referrals">{referralsCount}</StyledDataReadout>
+          <StyledDataReadout label="Completed Recruitments">{referralsCount}</StyledDataReadout>
         )}
       </StyledSettings>
     </Details>
