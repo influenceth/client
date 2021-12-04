@@ -109,6 +109,17 @@ const CardOverlayHoverCss = css`
   ${OverlayIcon} {
     opacity: 1;
   }
+
+  ${p => p.rgbHover && `
+    color: rgb(${p.rgbHover});
+    ${OverlayButton} {
+      background-color: rgba(${p.rgbHover}, 0.3);
+      color: rgb(${p.rgbHover});
+    }
+    ${OverlayFlourish} {
+      border-bottom-color: rgb(${p.rgbHover});
+    }
+  `}
 `;
 
 const buttonKeyframes = (rgb, isAnimated) => keyframes`
@@ -181,17 +192,6 @@ const CardOverlay = styled(CardLayer)`
 
   &:hover {
     ${CardOverlayHoverCss}
-    ${p => p.rgbHover && `
-      color: rgb(${p.rgbHover});
-      ${OverlayButton} {
-        background-color: rgba(${p.rgbHover}, 0.3);
-        color: rgb(${p.rgbHover});
-      }
-      ${OverlayFlourish} {
-        border-bottom-color: rgb(${p.rgbHover});
-      }
-    `}
-
     ${OverlayButton} {
       animation: none;
       &:after {
