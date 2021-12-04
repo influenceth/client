@@ -96,7 +96,7 @@ const useStorySession = (id) => {
       // if just completed assignment (i.e. no more choices), then refetch assignments and book (for sessions)
       if (content.linkedPaths.length === 0) {
         queryClient.refetchQueries('assignments');
-        queryClient.refetchQueries('book', story.book);
+        queryClient.refetchQueries(['book', story.book]);
       }
 
     // if no content found, probably because trying to make invalid choice... redirect to main page with error
