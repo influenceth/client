@@ -117,13 +117,18 @@ const buttonKeyframes = (rgb, isAnimated) => keyframes`
     color: rgba(${rgb}, 1.0);
   }
   50% {
-    background-color: rgba(${rgb}, ${isAnimated ? 0.2 : 0.3});
-    color: rgba(${rgb}, ${isAnimated ? 0.7 : 1.0});
+    background-color: rgba(${rgb}, 0.2);
+    color: rgba(${rgb}, 0.7);
   }
   100% {
     background-color: rgba(${rgb}, 0.3);
     color: rgba(${rgb}, 1.0);
   }
+`;
+
+// this ensures that keyframes are always inserted even though only conditionally used below
+css`
+  animation: ${buttonKeyframes('255, 255, 255')} 1000ms linear infinite;
 `;
 
 const CardOverlay = styled(CardLayer)`
@@ -139,7 +144,7 @@ const CardOverlay = styled(CardLayer)`
   width: 100%;
 
   ${OverlayButton} {
-    animation: ${p => buttonKeyframes(p.rgb, p.buttonAttention)} 1000ms linear infinite;
+    ${p => p.buttonAttention ? `animation: ${p => buttonKeyframes(p.rgb)} 1000ms linear infinite;` : ''}
     background-color: rgba(${(p) => p.rgb}, 0.3);
     color: rgb(${(p) => p.rgb});
     opacity: ${(p) => p.alwaysOn.includes('button') ? 1 : 0};
