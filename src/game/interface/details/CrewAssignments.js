@@ -404,14 +404,15 @@ const CrewAssignments = (props) => {
             crewReadyForNext = crewCompleted;
 
             // set story status
-            if (story.complete === crew?.length) {
-              story.status = 'complete';
-            } else if (story.ready + story.partial === crew?.length) {
-              story.status = 'full';
-            } else if (story.ready + story.partial + story.complete === crew?.length) {
-              story.status = 'partial';
-            } else {
-              story.status = 'notready';
+            story.status = 'notready';
+            if (crew?.length > 0) {
+              if (story.complete === crew.length) {
+                story.status = 'complete';
+              } else if (story.ready + story.partial === crew.length) {
+                story.status = 'full';
+              } else if (story.ready + story.partial + story.complete === crew.length) {
+                story.status = 'partial';
+              }
             }
 
             // set story of desired selection from url (if any)
