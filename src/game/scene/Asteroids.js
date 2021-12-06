@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Color } from 'three';
 import { useThrottle } from '@react-hook/throttle';
 
@@ -153,12 +153,12 @@ const Asteroids = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mousePos]);
 
-  // (only needed for mouse effects, which are only used when zoomStatus is out)
-  useLayoutEffect(() => {
-    if (zoomStatus === 'out' && asteroidsGeom.current) {
+  // re-computeBoundingSphere on geometry change
+  useEffect(() => {
+    if (asteroidsGeom.current) {
       asteroidsGeom.current.computeBoundingSphere();
     }
-  });
+  }, [positions]);
 
   // mouse event handlers
   const onClick = useCallback((e) => {

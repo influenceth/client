@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { KeplerianOrbit } from 'influence-utils';
 
 import constants from '~/lib/constants';
@@ -17,12 +17,12 @@ const Orbit = (props) => {
     return new Float32Array(vertices);
   }, [props.planet.orbital]);
 
-  // (commented out because not sure this is needed)
-  // useLayoutEffect(() => {
-  //   if (geometry.current) {
-  //     geometry.current.computeBoundingSphere();
-  //   }
-  // });
+  // re-computeBoundingSphere on geometry change
+  useEffect(() => {
+    if (geometry.current) {
+      geometry.current.computeBoundingSphere();
+    }
+  }, [positions]);
 
   return (
     <lineLoop>

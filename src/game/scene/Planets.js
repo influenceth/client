@@ -31,14 +31,14 @@ const Planets = (props) => {
         if (event.data.topic === 'planetPositions') setPositions(new Float32Array(event.data.positions));
       };
     }
-  }, [])
+  }, []);
 
-  // (commented out because not sure this is needed)
-  // useLayoutEffect(() => {
-  //   if (geometry.current) {
-  //     geometry.current.computeBoundingSphere();
-  //   }
-  // });
+  // re-computeBoundingSphere on geometry change
+  useEffect(() => {
+    if (geometry.current) {
+      geometry.current.computeBoundingSphere();
+    }
+  }, [positions]);
 
   return (
     <group position={[ 0, 0, 0 ]}>
