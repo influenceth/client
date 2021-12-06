@@ -2,10 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
-import {
-  BiWrench as WrenchIcon,
-  BiMoney as SwayIcon,
-} from 'react-icons/bi';
+import { BiMoney as SwayIcon } from 'react-icons/bi';
 import { FaPortrait as RewardIcon } from 'react-icons/fa';
 import { CREW_TRAITS } from 'influence-utils';
 
