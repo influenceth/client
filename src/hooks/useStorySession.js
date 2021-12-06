@@ -34,6 +34,18 @@ const useStorySession = (id) => {
     }
   );
 
+  // make sure load objective if navigate directly to "assignment completed" page
+  const { data: objective } = useQuery(
+    [ 'storySessionObjective', id ],
+    async () => {
+      const lastPath = await api.getStorySessionPath(session.id, session.pathHistory[session.pathHistory.length - 1]);
+      return lastPath?.objective;
+    },
+    {
+      enabled: !!session?.isComplete
+    }
+  );
+
   // get selectablePaths
   const selectablePaths = useCallback((allPaths, step) => {
     const selectedPath = session?.pathHistory[step];
@@ -93,8 +105,13 @@ const useStorySession = (id) => {
       setPathContent(content);
       setLoadingPath(false);
 
-      // if just completed assignment (i.e. no more choices), then refetch assignments and book (for sessions)
+      // if just completed assignment (i.e. no more choices), then set objective and refetch assignments and book (for sessions)
       if (content.linkedPaths.length === 0) {
+        queryClient.setQueryData(
+          [ 'storySessionObjective', session.id ],
+          content.objective
+        );
+
         queryClient.refetchQueries('assignments');
         queryClient.refetchQueries(['book', story.book]);
       }
@@ -111,22 +128,22 @@ const useStorySession = (id) => {
   }, [createAlert, currentStep, history, queryClient, selectablePaths, story, session]);
 
   const storyState = useMemo(() => {
-    //console.log({ session, story, pathContent });
     if (story && session && pathContent) {
       return {
         ...story,
         ...session,
-        ...pathContent
+        ...pathContent,
+        objective
       };
     }
     return null;
-  }, [pathContent, session, story]);
+  }, [pathContent, objective, session, story]);
 
   return {
-    currentStep,
-    storyState: storyState,
     commitPath: commitPath,
-    loadingPath
+    currentStep,
+    loadingPath,
+    storyState: storyState,
   };
 };
 

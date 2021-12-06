@@ -6,6 +6,8 @@ import {
   BiWrench as WrenchIcon,
   BiMoney as SwayIcon,
 } from 'react-icons/bi';
+import { FaPortrait as RewardIcon } from 'react-icons/fa';
+import { CREW_TRAITS } from 'influence-utils';
 
 import TwitterLogo from '~/assets/images/twitter-icon.svg';
 import Button from '~/components/Button';
@@ -275,14 +277,6 @@ const FinishContainer = styled.div`
   }
 `;
 
-// TODO: these should be loaded from session vvv
-const rewards = [{
-  Icon: WrenchIcon,
-  title: 'Talented Mechanic',
-  description: 'The limited scraps aboard the Arvad have made you extra resoureful with repurposing existing technologies to new needs.'
-}];
-// ^^^
-
 const CrewAssignmentComplete = (props) => {
   const { account } = useWeb3React();
   const { id: sessionId } = useParams();
@@ -293,25 +287,30 @@ const CrewAssignmentComplete = (props) => {
     return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
   }, [storyState, allCrew]);
 
+  const reward = useMemo(() => {
+    if (storyState?.objective && CREW_TRAITS[storyState.objective - 1]) {
+      return CREW_TRAITS[storyState.objective - 1];
+    }
+    return null;
+  }, [storyState?.objective]);
+
   const rewardNode = useMemo(() => {
-    if (rewards.length > 0) {
+    if (reward) {
       return (
         <Reward>
           <h4>This crew member has gained traits:</h4>
-          {rewards.map(({ Icon, title, description }) => (
-            <div key={title}>
-              <Icon />
-              <div style={{ flex: 1 }}>
-                <b>{title}</b>
-                <span>{description}</span>
-              </div>
+          <div>
+            <RewardIcon />
+            <div style={{ flex: 1 }}>
+              <b>{reward.name}</b>
+              <span>{reward.description}</span>
             </div>
-          ))}
+          </div>
         </Reward>
       );
     }
     return null;
-  }, []);
+  }, [reward]);
 
   const shareOnTwitter = useCallback(() => {
     const params = new URLSearchParams({
