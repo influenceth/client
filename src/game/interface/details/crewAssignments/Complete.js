@@ -4,7 +4,7 @@ import styled, { keyframes } from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
 import { BiMoney as SwayIcon } from 'react-icons/bi';
 import { FaPortrait as RewardIcon } from 'react-icons/fa';
-import { CREW_TRAITS } from 'influence-utils';
+import { toCrewTrait } from 'influence-utils';
 
 import TwitterLogo from '~/assets/images/twitter-icon.svg';
 import Button from '~/components/Button';
@@ -285,10 +285,7 @@ const CrewAssignmentComplete = (props) => {
   }, [storyState, allCrew]);
 
   const reward = useMemo(() => {
-    if (storyState?.objective && CREW_TRAITS[storyState.objective - 1]) {
-      return CREW_TRAITS[storyState.objective - 1];
-    }
-    return null;
+    return (storyState?.objective && toCrewTrait(storyState.objective)) || null;
   }, [storyState?.objective]);
 
   const rewardNode = useMemo(() => {
