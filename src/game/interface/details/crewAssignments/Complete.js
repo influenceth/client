@@ -1,22 +1,52 @@
 import React, { useCallback, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
-import { BiMoney as SwayIcon } from 'react-icons/bi';
 import { FaPortrait as RewardIcon } from 'react-icons/fa';
 import { toCrewTrait } from 'influence-utils';
 
-import TwitterLogo from '~/assets/images/twitter-icon.svg';
 import Button from '~/components/Button';
 import CopyReferralLink from '~/components/CopyReferralLink';
 import Details from '~/components/Details';
-import {
-  LinkIcon,
-  TrophyIcon
-} from '~/components/Icons';
+import { LinkIcon, TwitterIcon } from '~/components/Icons';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
 import CrewCard from './CrewCard';
+
+const slideOutTransition = keyframes`
+  0% {
+    height: 296px;
+    width: 0;
+    overflow: hidden;
+  }
+  50% {
+    height: 296px;
+    width: 400px;
+    overflow: hidden;
+  }
+  100% {
+    overflow: auto;
+    width: 400px;
+  }
+`;
+
+const mobileSlideOutTransition = keyframes`
+  0% {
+    max-height: 0;
+  }
+  50% {
+    max-height: 40vh;
+  }
+  100% {
+    max-height: 40vh;
+  }
+`;
+
+const opacityTransition = keyframes`
+  0% { opacity: 0; }
+  75% { opacity: 0; }
+  100% { opacity: 1; }
+`;
 
 const TitleBox = styled.div`
   border-bottom: 1px solid #444;
@@ -46,13 +76,20 @@ const Content = styled.div`
   }
 `;
 const CardContainer = styled.div`
-  background: black;
-  border: 1px solid #444;
-  max-width: 100%;
-  padding: 10px;
-  width: 200px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 4px;
+  position: relative;
+  z-index: 3;
+  & > div {
+    background: black;
+    max-width: 100%;
+    padding: 8px;
+    width: 220px;
+  }
 `;
 const ImageryContainer = styled.div`
+  flex: 1;
+  padding: 50px 0;
   position: relative;
 
   & > div:first-child {
@@ -61,11 +98,13 @@ const ImageryContainer = styled.div`
     background-position: center center;
     background-size: cover;
     position: absolute;
-    top: 20px;
-    bottom: 20px;
+    top: 0;
+    bottom: 0;
     left: 0;
     right: 0;
     z-index: 1;
+    mask-image: linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.7) 50%, transparent 100%);
+    transition: opacity 750ms ease-out, background-image 750ms ease-out;
   }
   & > div:last-child {
     position: relative;
@@ -80,164 +119,108 @@ const ImageryContainer = styled.div`
   }
 `;
 
-const rewardContainerTransition = keyframes`
-  0% {
-    height: 140px;
+const SlideOut = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  @media (min-width: ${p => p.theme.breakpoints.mobile}px) {
+    animation: ${slideOutTransition} 500ms normal forwards ease-out 500ms;
+    height: 296px;
+    margin-left: -6px;
+    overflow: hidden;
     width: 0;
-    overflow: hidden;
   }
-  50% {
-    height: 140px;
-    width: 400px;
-    overflow: hidden;
-  }
-  100% {
-    overflow: auto;
-    width: 400px;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    animation: ${mobileSlideOutTransition} 500ms normal forwards ease-out 500ms;
+    max-height: 0;
   }
 `;
-const RewardContainer = styled.div`
-  animation: ${rewardContainerTransition} 500ms normal forwards ease-out 500ms;
+
+const RewardSection = styled.div`
   background: black;
   display: flex;
   flex-direction: column;
   justify-content: center;
   height: 140px;
-  max-width: 400px;
-  width: 0;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    display: none;
-  }
-`;
-
-const mobileRewardContainerTransition = keyframes`
-  0% {
-    max-height: 0;
-  }
-  50% {
-    max-height: 35vh;
-  }
-  100% {
-    max-height: 35vh;
-  }
-`;
-const MobileRewardContainer = styled.div`
-  display: none;
-  width: 100%;
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    animation: ${mobileRewardContainerTransition} 500ms normal forwards ease-out 500ms;
-    display: initial;
-    max-height: 0;
-    & > div {
-      max-height: 100%;
-      overflow: auto;
-    }
-  }
-`;
-
-const rewardTransition = keyframes`
-  0% { opacity: 0; }
-  75% { opacity: 0; }
-  100% { opacity: 1; }
-`;
-const Reward = styled.div`
-  animation: ${rewardTransition} 500ms normal forwards ease-out 500ms;
-  color: white;
-  opacity: 0;
-  padding: 8px 40px;
-  text-align: left;
-  & > h4 {
-    font-size: 18px;
-    font-weight: normal;
-    margin: 0 0 12px;
-  }
   & > div {
-    align-items: flex-start;
-    display: flex;
-    margin-bottom: 8px;
-    & > *:first-child {
-      border: 1px solid #555;
-      border-radius: 50%;
-      font-size: 150%;
-      margin-right: 0.5em;
-      padding: 0.2em;
-    }
-    & > *:last-child {
-      font-size: 13px;
-      margin-bottom: 0;
-      & > b {
-        display: block;
-        margin-bottom: 4px;
-      }
-      & > span {
-        opacity: 0.7;
-      }
-    }
-  }
+    animation: ${opacityTransition} 500ms normal forwards ease-out 500ms;
+    color: white;
+    opacity: 0;
+    padding: 8px 40px;
+    text-align: left;
+    width: 400px;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    padding: 8px 25px 0;
     & > h4 {
-      color: #656565;
-      font-size: 15px;
-      font-weight: bold;
+      font-size: 18px;
+      font-weight: normal;
+      margin: 0 0 12px;
+      @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+        color: #656565;
+        font-size: 15px;
+        font-weight: bold;
+      }
+    }
+    & > div {
+      align-items: flex-start;
+      display: flex;
+      margin-bottom: 8px;
+      & > *:first-child {
+        border: 1px solid #555;
+        border-radius: 50%;
+        font-size: 150%;
+        margin-right: 0.5em;
+        padding: 0.2em;
+      }
+      & > *:last-child {
+        font-size: 13px;
+        margin-bottom: 0;
+        & > b {
+          display: block;
+          margin-bottom: 4px;
+        }
+        & > span {
+          opacity: 0.7;
+        }
+      }
+    }
+  
+    @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+      padding: 8px 25px 0;
+      width: 100%;
     }
   }
-`;
-
-const MobileFlourish = styled.div`
-  border-bottom: 4px solid rgb(226, 84, 32);
-  border-top: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-left: 4px solid transparent;
-  height: 0;
-  margin: 15px auto -10px;
-  width: 50%;
-  display: none;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    display: block;
+    background: rgba(0, 0, 0, 0.8);
+    height: auto;
+    margin: -20px 8px 0;
+    max-width: 400px;
+    padding: 20px 0 10px;
   }
 `;
 
-const SharingPrompt = styled(Content)`
-  display: inline-block;
-  font-size: 90%;
-  max-width: 600px;
-  width: 90%;
+const TwitterButton = styled(Button)`
+  color: white;
+  background: #1b9df0;
+  border-color: #1b9df0;
+  font-weight: bold;
+  justify-content: center !important;
+  & > span {
+    font-size: 16px;
+    margin-right: 32px;
+    white-space: nowrap;
+  }
+  & > svg {
+    font-size: 36px;
+    max-height: 36px;
+    max-width: 36px;
+  }
 `;
-const SharingSection = styled.div`
-  display: flex;
-  margin-bottom: 24px;
-  & > div {
-    flex: 1;
-  }
-  & h5 {
-    margin: 0;
-  }
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    flex-direction: column;
-  }
-`;
-const SwaySection = styled.div`
-  border-right: 1px solid #444;
-  color: rgb(226, 84, 32);
-  
-  & > div {
-    align-items: center;
-    background: rgb(226, 84, 32, 0.1);
-    display: flex;
-    font-size: 40px;
-    font-weight: bold;
-    justify-content: center;
-    margin: 5px auto 10px;
-    padding: 10px;
-    width: 300px;
-  }
-`;
-const TwitterSection = styled.div`
+const RecruitSection = styled.div`
+  animation: ${opacityTransition} 1500ms normal forwards ease-out 500ms;
+  opacity: 0;
   & button {
     display: flex;
     height: 66px;
@@ -254,21 +237,26 @@ const LinkWithIcon = styled.a`
   font-size: 90%;
   justify-content: center;
   text-transform: uppercase;
+  white-space: nowrap;
   & > * {
-    color: #656565;
+    color: #BBB;
     transition: color 100ms ease;
   }
   & > span {
     margin-left: 4px; 
   }
   &:hover > * {
-    color: #999;
+    color: #EEE;
   }
 `;
 
 const FinishContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
   padding-right: 12px;
-  text-align: right;
+  & > button {
+    text-transform: uppercase;
+  }
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding-bottom: 12px;
   }
@@ -277,8 +265,11 @@ const FinishContainer = styled.div`
 const CrewAssignmentComplete = (props) => {
   const { account } = useWeb3React();
   const { id: sessionId } = useParams();
+  const history = useHistory();
   const { data: allCrew } = useOwnedCrew();
   const { storyState } = useStorySession(sessionId);
+
+  const onCloseDestination = useMemo(() => `/crew-assignments/${storyState?.book}`, [storyState?.book]);
 
   const crew = useMemo(() => {
     return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
@@ -287,24 +278,6 @@ const CrewAssignmentComplete = (props) => {
   const reward = useMemo(() => {
     return (storyState?.objective && toCrewTrait(storyState.objective)) || null;
   }, [storyState?.objective]);
-
-  const rewardNode = useMemo(() => {
-    if (reward) {
-      return (
-        <Reward>
-          <h4>This crew member has gained traits:</h4>
-          <div>
-            <RewardIcon />
-            <div style={{ flex: 1 }}>
-              <b>{reward.name}</b>
-              <span>{reward.description}</span>
-            </div>
-          </div>
-        </Reward>
-      );
-    }
-    return null;
-  }, [reward]);
 
   const shareOnTwitter = useCallback(() => {
     const params = new URLSearchParams({
@@ -320,9 +293,46 @@ const CrewAssignmentComplete = (props) => {
     });
     window.open(`https://twitter.com/intent/tweet?${params.toString()}`);
   }, [account, sessionId, storyState]);
+  
+  const handleFinish = useCallback(() => {
+    history.push(onCloseDestination);
+  }, [history, onCloseDestination]);
+
+  const slideOutContents = useMemo(() => {
+    if (!storyState) return null;
+    return (
+      <>
+        {reward && (
+          <RewardSection>
+            <div>
+              <h4>This crew member has gained traits:</h4>
+              <div>
+                <RewardIcon />
+                <div style={{ flex: 1 }}>
+                  <b>{reward.name}</b>
+                  <span>{reward.description}</span>
+                </div>
+              </div>
+            </div>
+          </RewardSection>
+        )}
+        <RecruitSection>
+          <TwitterButton onClick={shareOnTwitter}>
+            <span>Share on Twitter</span>
+            <TwitterIcon />
+          </TwitterButton>
+          <CopyReferralLink>
+            <LinkWithIcon>
+              <LinkIcon />
+              <span>Copy Recruitment Link</span>
+            </LinkWithIcon>
+          </CopyReferralLink>
+        </RecruitSection>
+      </>
+    );
+  }, [reward, shareOnTwitter, storyState]);
 
   if (!storyState || !crew) return null;
-  const onCloseDestination = `/crew-assignments/${storyState.book}`;
   return (
     <Details
       onCloseDestination={onCloseDestination}
@@ -334,62 +344,18 @@ const CrewAssignmentComplete = (props) => {
         <div />
         <div>
           <CardContainer>
-            <CrewCard crew={crew} />
+            <div>
+              <CrewCard crew={crew} />
+            </div>
           </CardContainer>
-          {rewardNode && (
-            <RewardContainer>
-              {rewardNode}
-            </RewardContainer>
-          )}
+          <SlideOut>
+            {slideOutContents}
+          </SlideOut>
         </div>
       </ImageryContainer>
-      {rewardNode && (
-        <MobileRewardContainer>
-          <div>
-            {rewardNode}
-          </div>
-        </MobileRewardContainer>
-      )}
 
-      <MobileFlourish />
-
-      <div style={{ display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'center' }}>
-        <div>
-          {/* 
-          <SharingPrompt>
-            Earn <b>Sway</b> for each friend who signs up using your unique recruitment link.
-            Recruitment Points can be later spent to unlock exclusive in-game items, rewards, and cosmetics!
-          </SharingPrompt>
-          */}
-          <SharingSection>
-            {/* TODO: sway-per-referral should probably be in influence-utils */}
-            {/* 
-            <SwaySection>
-              <h5>Earned Per Recruitment</h5>
-              <div>15 <SwayIcon /></div>
-              <LinkWithIcon>
-                <TrophyIcon />
-                <span>Visit Recruitment Leaderboard</span>
-              </LinkWithIcon>
-            </SwaySection>
-            */}
-            <TwitterSection>
-              <Button onClick={shareOnTwitter}>
-                <span>Share on Twitter</span>
-                <TwitterLogo />
-              </Button>
-              <CopyReferralLink>
-                <LinkWithIcon>
-                  <LinkIcon />
-                  <span>Copy Recruitment Link</span>
-                </LinkWithIcon>
-              </CopyReferralLink>
-            </TwitterSection>
-          </SharingSection>
-        </div>
-      </div>
       <FinishContainer>
-        <Link to={onCloseDestination}>FINISH</Link>
+        <Button onClick={handleFinish}>Finish</Button>
       </FinishContainer>
     </Details>
   );

@@ -32,6 +32,7 @@ import LinkSVG from '~/assets/icons/LinkIcon.svg';
 import LockSVG from '~/assets/icons/LockIcon.svg';
 import RocketSVG from '~/assets/icons/RocketIcon.svg';
 import TrophySVG from '~/assets/icons/TrophyIcon.svg';
+import TwitterSVG from '~/assets/icons/TwitterIcon.svg';
 import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
 
 /*
@@ -55,6 +56,7 @@ export const LinkIcon = () => <LinkSVG className="icon" />;
 export const LockIcon = () => <LockSVG className="icon" />;
 export const RocketIcon = () => <RocketSVG className="icon" />;
 export const TrophyIcon = () => <TrophySVG className="icon" />;
+export const TwitterIcon = () => <TwitterSVG className="icon" />;
 export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
 
 export {
