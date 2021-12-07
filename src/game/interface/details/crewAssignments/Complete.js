@@ -235,7 +235,9 @@ const LinkWithIcon = styled.a`
   cursor: ${p => p.theme.cursors.active};
   display: flex;
   font-size: 90%;
+  font-weight: bold;
   justify-content: center;
+  text-shadow: 1px 2px 3px rgba(0, 0, 0, 1);
   text-transform: uppercase;
   white-space: nowrap;
   & > * {
