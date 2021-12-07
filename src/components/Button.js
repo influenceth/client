@@ -45,7 +45,8 @@ const StyledButton = styled.button`
   }
 
   &:hover {
-    background-image: linear-gradient(120deg, rgba(54, 167, 205, 0.1), rgba(54, 167, 205, 0.25));
+    /*background-image: linear-gradient(120deg, rgba(54, 167, 205, 0.1), rgba(54, 167, 205, 0.25));*/
+    background-color: rgba(54, 167, 205, 0.25);
     color: white;
   }
 
@@ -55,7 +56,8 @@ const StyledButton = styled.button`
   }
 
   &:disabled:hover {
-    background-image: none;
+    /*background-image: none;*/
+    background-color: transparent;
     color: ${p => p.theme.colors.disabledText};
   }
 

@@ -26,8 +26,8 @@ const InnerWrapper = styled.div`
 const InnerIcon = styled.div`
   background: ${p => p.color || 'currentColor'};
   border-radius: 6.25%;
-  width: 50%;
-  height: 50%;
+  width: 45%;
+  height: 45%;
 `;
 
 const mainKeyframes = keyframes`
@@ -47,7 +47,7 @@ const mainAnimation = css`
 const OuterSelectionIcon = styled.div`
   ${p => p.animate && mainAnimation};
   background: transparent;
-  border: 0.1em solid ${p => p.selectedColor || p.theme.colors.main};
+  border: 1px solid ${p => p.selectedColor || p.theme.colors.main};
   border-radius: 6.25%;
   position: absolute;
   height: 100%;
@@ -74,7 +74,7 @@ const highlightAnimation = keyframes`
 const OuterSelectionHighlight = styled.div`
   animation: ${highlightAnimation} 2000ms linear infinite;
   background: transparent;
-  border: 0.05em solid ${p => p.theme.colors.main};
+  border: 1px solid ${p => p.theme.colors.main};
   border-radius: 0;
   opacity: 0;
   position: absolute;

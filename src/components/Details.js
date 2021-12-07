@@ -76,6 +76,7 @@ const CloseButton = styled(IconButton)`
   top: 17px;
   right: 20px;
   z-index: 1;
+  ${p => p.hasBackground ? 'background: rgba(0, 0, 0, 0.75);' : ''}
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     right: 0;
@@ -91,6 +92,7 @@ const Details = (props) => {
       {title && <Header>{title}</Header>}
       <CloseButton
         onClick={() => history.push(onCloseDestination || '/')}
+        hasBackground={edgeToEdge}
         borderless>
         <CloseIcon />
       </CloseButton>

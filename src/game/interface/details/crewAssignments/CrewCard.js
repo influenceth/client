@@ -9,6 +9,7 @@ import CrewClassBadge from '~/components/CrewClassBadge';
 import DataReadout from '~/components/DataReadout';
 
 const tSpeed = '300ms';
+const tFunction = 'ease';
 
 const CardLayer = styled.div`
   position: absolute;
@@ -44,7 +45,7 @@ const Card = styled.div`
     & ${CardHeader},
     & ${CardImage} {
       opacity: 0.5;
-      transition: opacity ${tSpeed} ease-in;
+      transition: opacity ${tSpeed} ${tFunction};
     }
     &:hover ${CardHeader} {
       opacity: 1;
@@ -65,7 +66,7 @@ const AttentionIcon = styled(AttentionDot)`
   position: absolute;
   left: 8px;
   top: 50%;
-  margin-top: -6px;
+  margin-top: -5px;
 `;
 
 const OverlayButton = styled.div`
@@ -151,12 +152,12 @@ const CardOverlay = styled(CardLayer)`
   flex-direction: column;
   height: 100%;
   justify-content: flex-end;
-  transition: outline ${tSpeed} ease-in;
+  transition: border ${tSpeed} ${tFunction}, outline ${tSpeed} ${tFunction};
   width: 100%;
 
   ${OverlayButton} {
     ${p => p.buttonAttention ? `animation: ${p => buttonKeyframes(p.rgb)} 1000ms linear infinite;` : ''}
-    background-color: rgba(${(p) => p.rgb}, 0.3);
+    background-color: rgba(${(p) => p.rgb}, 0.25);
     color: rgb(${(p) => p.rgb});
     opacity: ${(p) => p.alwaysOn.includes('button') ? 1 : 0};
     &:after {
@@ -187,7 +188,7 @@ const CardOverlay = styled(CardLayer)`
   ${OverlayButton},
   ${OverlayCaption},
   ${OverlayIcon} {
-    transition: opacity ${tSpeed} ease-in, color ${tSpeed} ease-in, background-color ${tSpeed} ease-in;
+    transition: opacity ${tSpeed} ${tFunction}, color ${tSpeed} ${tFunction}, background-color ${tSpeed} ${tFunction};
   }
 
   &:hover {
@@ -241,7 +242,7 @@ const CrewCard = ({ config = { alwaysOn: [] }, crew, onClick }) => {
         {config.caption && <OverlayCaption>{config.caption}</OverlayCaption>}
         {config.button && (
           <OverlayButton>
-            {config.buttonAttention && <AttentionIcon size={11} />}
+            {config.buttonAttention && <AttentionIcon size={10} />}
           </OverlayButton>
         )}
         <OverlayFlourish />

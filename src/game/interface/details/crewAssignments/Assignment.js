@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { toCrewClass } from 'influence-utils';
 
 import useBook from '~/hooks/useBook';
@@ -19,14 +19,19 @@ import CrewCard from './CrewCard';
 
 import theme from '~/theme.js';
 
-const belowFoldHeight = 310;
+const foldOffset = 28;
+
+const opacityTransition = keyframes`
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+`;
 
 const InvisibleImage = styled.img`
   display: none;
 `;
 
 const CoverImage = styled.div`
-  height: calc(100% - ${belowFoldHeight}px);
+  height: calc(50% + ${foldOffset}px);
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     height: 33%;
   }
@@ -48,9 +53,13 @@ const CoverImage = styled.div`
 const AboveFold = styled.div`
   height: 88px;
   margin-top: -88px;
+  opacity: 0;
   padding: 0 35px;
   position: relative;
   z-index: 1;
+
+  opacity: ${p => p.ready ? 1 : 0};
+  transition: opacity 750ms ease-out;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     height: auto;
@@ -62,17 +71,31 @@ const AboveFold = styled.div`
 const BelowFold = styled.div`
   display: flex;
   flex-direction: row;
-  height: ${belowFoldHeight}px;
+  height: calc(50% - ${foldOffset}px);
   padding: 10px 0 10px 35px;
+  position: relative;
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding: 10px 0 0;
+    height: 67%;
+  }
+
+  & > * {
+    opacity: 0;
+    &:nth-child(1) {
+      animation: ${opacityTransition} 600ms normal forwards ease 200ms;
+    }
+    &:nth-child(2) {
+      animation: ${opacityTransition} 600ms normal forwards ease 400ms;
+    }
+    &:nth-child(3) {
+      animation: ${opacityTransition} 600ms normal forwards ease 600ms;
+    }
   }
 `;
 
-// width is based on aspect ratio of crew cards
 const CrewContainer = styled.div`
   padding: 0 12px 12px 0;
-  width: ${belowFoldHeight / 1.375}px;
+  width: 225px;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     display: none;
@@ -96,13 +119,16 @@ const MobileCrewContainer = styled.div`
 const BackButton = styled.div`
   align-items: center;
   cursor: ${p => p.theme.cursors.active};
-  display: flex;
+  display: inline-flex;
   font-size: 14px;
   font-weight: bold;
   margin-bottom: 1em;
   text-transform: uppercase;
   & *:first-child {
     margin-right: 0.75em;
+  }
+  &:hover {
+    color: white;
   }
 `;
 
@@ -126,6 +152,10 @@ const Body = styled.div`
   scrollbar-width: thin;
 `;
 
+const ContentContainer = styled.div`
+  max-width: 800px;
+`;
+
 const Flourish = styled.div`
   display: flex;
   flex-direction: column;
@@ -133,7 +163,7 @@ const Flourish = styled.div`
   text-align: center;
   width: 250px;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+  @media (max-width: 1300px) {
     display: none;
   }
 `;
@@ -153,10 +183,10 @@ const FlourishCentered = styled.div`
 `;
 
 const FlourishImageContainer = styled(FlourishCentered)`
-  color: ${p => p.theme.colors.main};
+  color: white;
   flex: 1;
-  font-size: ${p => p.shrinkIcon ? '100px' : '150px'};
-  opacity: 0.2;
+  font-size: ${p => p.shrinkIcon ? '80px' : '120px'};
+  opacity: 0.1;
 `;
 
 const Path = styled.div`
@@ -309,15 +339,16 @@ const CrewAssignment = (props) => {
   }, [storyState, allCrew]);
 
   const contentReady = storyState && crew;
+  const pathIsReady = contentReady && storyState.image === coverImageLoaded && !loadingPath;
   return (
     <>
-      <Details title="Assignments" edgeToEdge>
+      <Details title="Crew Assignments" edgeToEdge>
         {!contentReady && <Loader />}
         {contentReady && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <InvisibleImage src={storyState.image} onLoad={onCoverImageLoad} />
             <CoverImage src={storyState.image} ready={storyState.image === coverImageLoaded} />
-            <AboveFold>
+            <AboveFold ready={storyState.image === coverImageLoaded}>
               <BackButton onClick={goBack}><BackIcon /> Back</BackButton>
               <Title>{storyState.title}</Title>
               <MobileCrewContainer>
@@ -328,69 +359,71 @@ const CrewAssignment = (props) => {
                 <div>{toCrewClass(crew.crewClass) || 'Unknown Class'}</div>
               </MobileCrewContainer>
             </AboveFold>
-            <BelowFold style={{ flex: 1 }}>
-              <CrewContainer>
-                <CrewCard crew={crew} />
-              </CrewContainer>
-              <Body>
-                {loadingPath && <Loader />}
-                {!loadingPath && (
-                  <>
-                    <PageContent>{storyState.content}</PageContent>
-                    {(storyState.linkedPaths || []).length > 0
-                      ? (
-                        <>
-                          <PagePrompt>{storyState.prompt}</PagePrompt>
-                          <div>
-                            {storyState.linkedPaths.map((linkedPath, i) => (
-                              <Path key={linkedPath.path}
-                                selected={linkedPath.path === selection?.id}
-                                onClick={selectPath(linkedPath)}>
-                                <div>
-                                  <span>{String.fromCharCode(65 + i)}</span>
-                                  <span>{linkedPath.text}</span>
-                                </div>
-                              </Path>
-                            ))}
-                          </div>
-                        </>
-                      )
-                      : (
-                        <Button
-                          onClick={finish}
-                          style={{ margin: '0 auto' }}>Finish</Button>
-                      )
-                    }
-                  </>
-                )}
-              </Body>
-              <Flourish>
-                <h4 style={{ marginBottom: 6 }}>{Math.min(totalSteps, currentStep + 1)} of {totalSteps}</h4>
-                <FlourishCentered>
-                  {Array.from({ length: totalSteps }, (x, i) => {
-                    let color = '#777';
-                    if (i < currentStep) {
-                      color = theme.colors.main;
-                    } else if (i === currentStep) {
-                      color = '#FFF';
-                    }
-                    return (
-                      <React.Fragment key={i}>
-                        {i > 0 && <NavSpacer completed={i <= currentStep} />}
-                        <NavIcon
-                          animate
-                          selected={i === currentStep}
-                          size="1.2em"
-                          color={color} />
-                      </React.Fragment>
-                    );
-                  })}
-                </FlourishCentered>
-                <FlourishImageContainer shrinkIcon={book && !book.icon}>
-                  {book && book.icon && <SvgFromSrc src={book.icon} />}
-                  {book && !book.icon && <ArvadIcon />}
-                </FlourishImageContainer>
-              </Flourish>
+            <BelowFold>
+              {!pathIsReady && <Loader />}
+              {pathIsReady && (
+                <>
+                  <CrewContainer>
+                    <CrewCard crew={crew} />
+                  </CrewContainer>
+                  <Body>
+                    <ContentContainer>
+                      <PageContent>{storyState.content}</PageContent>
+                      {(storyState.linkedPaths || []).length > 0
+                        ? (
+                          <>
+                            <PagePrompt>{storyState.prompt}</PagePrompt>
+                            <div>
+                              {storyState.linkedPaths.map((linkedPath, i) => (
+                                <Path key={linkedPath.path}
+                                  selected={linkedPath.path === selection?.id}
+                                  onClick={selectPath(linkedPath)}>
+                                  <div>
+                                    <span>{String.fromCharCode(65 + i)}</span>
+                                    <span>{linkedPath.text}</span>
+                                  </div>
+                                </Path>
+                              ))}
+                            </div>
+                          </>
+                        )
+                        : (
+                          <Button
+                            onClick={finish}
+                            style={{ margin: '0 auto' }}>Finish</Button>
+                        )
+                      }
+                    </ContentContainer>
+                  </Body>
+                  <Flourish>
+                    <h4 style={{ marginBottom: 8 }}>{Math.min(totalSteps, currentStep + 1)} of {totalSteps}</h4>
+                    <FlourishCentered>
+                      {Array.from({ length: totalSteps }, (x, i) => {
+                        let color = '#777';
+                        if (i < currentStep) {
+                          color = theme.colors.main;
+                        } else if (i === currentStep) {
+                          color = '#FFF';
+                        }
+                        return (
+                          <React.Fragment key={i}>
+                            {i > 0 && <NavSpacer completed={i <= currentStep} />}
+                            <NavIcon
+                              animate
+                              selected={i === currentStep}
+                              size="1em"
+                              color={color} />
+                          </React.Fragment>
+                        );
+                      })}
+                    </FlourishCentered>
+                    <FlourishImageContainer shrinkIcon={book && !book.icon}>
+                      {book && book.icon && <SvgFromSrc src={book.icon} />}
+                      {book && !book.icon && <ArvadIcon />}
+                    </FlourishImageContainer>
+                  </Flourish>
+                </>
+              )}
             </BelowFold>
           </div>
         )}

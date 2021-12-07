@@ -57,6 +57,7 @@ const crewStates = {
   incomplete: {
     alwaysOn: ['button'],
     button: 'Continue »',
+    buttonAttention: true,
     clickable: true,
     icon: <SelectIcon />,
     rgb: '255, 255, 255',
@@ -456,7 +457,7 @@ const CrewAssignments = (props) => {
 
   const { title, parts } = book || {};
   return (
-    <Details title="Assignments">
+    <Details title="Crew Assignments">
       <div style={{
         display: 'flex',
         flexDirection: 'row',

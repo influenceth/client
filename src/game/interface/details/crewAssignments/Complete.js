@@ -88,6 +88,7 @@ const CardContainer = styled.div`
   }
 `;
 const ImageryContainer = styled.div`
+  display: flex;
   flex: 1;
   padding: 50px 0;
   position: relative;
@@ -219,7 +220,7 @@ const TwitterButton = styled(Button)`
 `;
 
 const RecruitSection = styled.div`
-  animation: ${opacityTransition} 1500ms normal forwards ease-out 500ms;
+  animation: ${opacityTransition} 500ms normal forwards ease-out 750ms;
   opacity: 0;
   & button {
     display: flex;
