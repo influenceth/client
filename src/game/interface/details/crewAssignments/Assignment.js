@@ -20,6 +20,7 @@ import CrewCard from './CrewCard';
 import theme from '~/theme.js';
 
 const foldOffset = 28;
+const belowFoldMin = 256;
 
 const opacityTransition = keyframes`
   0% { opacity: 0; }
@@ -32,8 +33,11 @@ const InvisibleImage = styled.img`
 
 const CoverImage = styled.div`
   height: calc(50% + ${foldOffset}px);
+  max-height: calc(100% - ${foldOffset}px - ${belowFoldMin}px);
+
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     height: 33%;
+    max-height: none;
   }
 
   &:before {
@@ -72,11 +76,13 @@ const BelowFold = styled.div`
   display: flex;
   flex-direction: row;
   height: calc(50% - ${foldOffset}px);
+  min-height: ${belowFoldMin}px;
   padding: 10px 0 10px 35px;
   position: relative;
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    padding: 10px 0 0;
     height: 67%;
+    min-height: none;
+    padding: 10px 0 0;
   }
 
   & > * {
@@ -142,29 +148,35 @@ const Title = styled.div`
 `;
 
 const Body = styled.div`
-  flex: 1;
+  flex: 0 1 775px;
   font-size: 90%;
   height: 100%;
   line-height: 1.25em;
   overflow: auto;
-  padding: 0 25px 0;
+  padding-bottom: 25px;
+  padding-left: 25px;
   position: relative;
   scrollbar-width: thin;
-`;
 
-const ContentContainer = styled.div`
-  max-width: 800px;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    padding-top: 5px;
+    padding-bottom: 30px;
+  }
 `;
 
 const Flourish = styled.div`
   display: flex;
+  flex: 1 0 250px;
   flex-direction: column;
   overflow: hidden;
   text-align: center;
-  width: 250px;
 
   @media (max-width: 1300px) {
     display: none;
+  }
+
+  & > h4 {
+    margin-bottom: 16px;
   }
 `;
 
@@ -184,8 +196,8 @@ const FlourishCentered = styled.div`
 
 const FlourishImageContainer = styled(FlourishCentered)`
   color: white;
-  flex: 1;
   font-size: ${p => p.shrinkIcon ? '80px' : '120px'};
+  margin-top: 16px;
   opacity: 0.1;
 `;
 
@@ -367,36 +379,34 @@ const CrewAssignment = (props) => {
                     <CrewCard crew={crew} />
                   </CrewContainer>
                   <Body>
-                    <ContentContainer>
-                      <PageContent>{storyState.content}</PageContent>
-                      {(storyState.linkedPaths || []).length > 0
-                        ? (
-                          <>
-                            <PagePrompt>{storyState.prompt}</PagePrompt>
-                            <div>
-                              {storyState.linkedPaths.map((linkedPath, i) => (
-                                <Path key={linkedPath.path}
-                                  selected={linkedPath.path === selection?.id}
-                                  onClick={selectPath(linkedPath)}>
-                                  <div>
-                                    <span>{String.fromCharCode(65 + i)}</span>
-                                    <span>{linkedPath.text}</span>
-                                  </div>
-                                </Path>
-                              ))}
-                            </div>
-                          </>
-                        )
-                        : (
-                          <Button
-                            onClick={finish}
-                            style={{ margin: '0 auto' }}>Finish</Button>
-                        )
-                      }
-                    </ContentContainer>
+                    <PageContent>{storyState.content}</PageContent>
+                    {(storyState.linkedPaths || []).length > 0
+                      ? (
+                        <>
+                          <PagePrompt>{storyState.prompt}</PagePrompt>
+                          <div>
+                            {storyState.linkedPaths.map((linkedPath, i) => (
+                              <Path key={linkedPath.path}
+                                selected={linkedPath.path === selection?.id}
+                                onClick={selectPath(linkedPath)}>
+                                <div>
+                                  <span>{String.fromCharCode(65 + i)}</span>
+                                  <span>{linkedPath.text}</span>
+                                </div>
+                              </Path>
+                            ))}
+                          </div>
+                        </>
+                      )
+                      : (
+                        <Button
+                          onClick={finish}
+                          style={{ margin: '0 auto' }}>Finish</Button>
+                      )
+                    }
                   </Body>
                   <Flourish>
-                    <h4 style={{ marginBottom: 8 }}>{Math.min(totalSteps, currentStep + 1)} of {totalSteps}</h4>
+                    <h4>{Math.min(totalSteps, currentStep + 1)} of {totalSteps}</h4>
                     <FlourishCentered>
                       {Array.from({ length: totalSteps }, (x, i) => {
                         let color = '#777';

@@ -295,7 +295,7 @@ const ProgressIcon = styled.span`
   height: ${p => p.size};
   width: ${p => p.size};
   ${p => {
-    if (p.status === 'notready') {
+    if (p.status === 'notReady') {
       return `border: 0.2em solid currentColor;`;
     } else if (p.status === 'full') {
       return `background: currentColor;`;
@@ -334,33 +334,36 @@ const CrewAssignments = (props) => {
   }, [playSound]);
 
   const selectCrew = useCallback((crewId) => async () => {
-    if (crewId) {
-      let session = (selectedStory.sessions || []).find((s) => s.owner === crewId);
+    if (bookReady && selectedStory) {
+      const crewStatus = selectedStory.crewStatuses[crewId];
+      if (crewStatus && !['notReady', 'loading'].includes(crewStatus)) {
+        let session = (selectedStory.sessions || []).find((s) => s.owner === crewId);
 
-      // if no session yet, create one
-      if (!session) {
-        session = await new Promise((resolve, reject) => {
-          createStorySession.mutate({
-            bookId,
-            storyId: selectedStory.id,
-            crewId
-          }, {
-            onSuccess: resolve,
-            onError: reject
-          })
-        });
-      }
+        // if no session yet, create one
+        if (!session) {
+          session = await new Promise((resolve, reject) => {
+            createStorySession.mutate({
+              bookId,
+              storyId: selectedStory.id,
+              crewId
+            }, {
+              onSuccess: resolve,
+              onError: reject
+            })
+          });
+        }
 
-      if (session) {
-        playSound('effects.success');
-        history.push(`/crew-assignment/${session.id}`);
-      } else {
-        playSound('effects.failure');
+        if (session) {
+          playSound('effects.success');
+          history.push(`/crew-assignment/${session.id}`);
+          return;
+        }
       }
-    } else {
-      playSound('effects.failure');
+      return;
     }
-  }, [bookId, createStorySession, history, playSound, selectedStory]);
+    
+    playSound('effects.failure');
+  }, [bookId, bookReady, createStorySession, history, playSound, selectedStory]);
 
   useEffect(() => {
     if (book && crew) {
@@ -406,7 +409,7 @@ const CrewAssignments = (props) => {
             crewReadyForNext = crewCompleted;
 
             // set story status
-            story.status = 'notready';
+            story.status = 'notReady';
             if (crew?.length > 0) {
               if (story.complete === crew.length) {
                 story.status = 'complete';
@@ -552,13 +555,13 @@ const CrewAssignments = (props) => {
                 ? (
                   <CrewSection>
                     {crew.map((c) => {
-                      const crewStatus = selectedStory?.crewStatuses[c.i] || 'notReady';
+                      const crewStatus = bookReady ? selectedStory?.crewStatuses[c.i] : 'loading';
                       return (
                         <div key={c.i}>
                           <CrewCard
                             crew={c}
-                            config={crewStates[crewStatus]}
-                            onClick={selectCrew(crewStatus !== 'notReady' ? c.i : null)} />
+                            config={crewStates[crewStatus || 'notReady']}
+                            onClick={selectCrew(c.i)} />
                         </div>
                       );
                     })}
