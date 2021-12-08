@@ -47,6 +47,9 @@ const selectionKeyframes = keyframes`
   16.6% {
     transform: scale(1);
   }
+  100% {
+    transform: scale(1);
+  }
 `;
 const selectionAnimation = css`
   animation: ${selectionKeyframes} 2000ms linear infinite;
@@ -75,6 +78,10 @@ const highlightAnimation = keyframes`
     transform: scale(1);
   }
   50% {
+    transform: scale(2);
+    opacity: 0;
+  }
+  100% {
     transform: scale(2);
     opacity: 0;
   }
