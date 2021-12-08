@@ -319,6 +319,7 @@ const CrewAssignments = (props) => {
   const playSound = useStore(s => s.dispatchSoundRequested);
 
   const [collapsedParts, setCollapsedParts] = useState([]);
+  const [bookReady, setBookReady] = useState(false);
   const [mobileView, setMobileView] = useState('book');
   const [selectedStory, setSelectedStory] = useState();
 
@@ -429,6 +430,7 @@ const CrewAssignments = (props) => {
         });
       });
       setSelectedStory(initialSelectedStory || firstIncompleteStory || lastStory);
+      setBookReady(true);
     }
   }, [book, crew, initialSelectedId]);
 
@@ -464,8 +466,8 @@ const CrewAssignments = (props) => {
         height: '100%'
       }}>
         <SectionContainer visible={mobileView === 'book'}>
-          {!book && <Loader />}
-          {book && (
+          {!bookReady && <Loader />}
+          {bookReady && (
             <>
               <BookHeader>
                 <BookIcon>
