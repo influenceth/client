@@ -239,7 +239,7 @@ const ChapterRowInner = styled.div`
 
 const ChapterRow = styled.div`
   align-items: center;
-  color: ${p => p.status === 'locked' ? '#AAA' : 'white'};
+  color: ${p => p.status === 'locked' ? '#666' : 'white'};
   cursor: ${p => p.status === 'locked' ? null : p.theme.cursors.active};
   display: flex;
   flex-direction: row;

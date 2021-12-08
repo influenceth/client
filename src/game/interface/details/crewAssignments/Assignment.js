@@ -434,9 +434,9 @@ const CrewAssignment = (props) => {
             <ConfirmationTitle>
               <NavIcon
                 selected
-                selectedColor={'white'} 
-                size={23}
-                style={{ marginRight: 8 }} />
+                selectedColor="white"
+                size={22}
+                style={{ marginRight: 12 }} />
               <h4>Your Selection:</h4>
             </ConfirmationTitle>
             <ConfirmationBody>

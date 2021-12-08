@@ -1,36 +1,43 @@
 import React from 'react';
 import styled, { css, keyframes } from 'styled-components';
 
+const innerDiamondDimension = 20;
+const outerDiamondDimension = 47;
+const rounding = 2;
+
 const Wrapper = styled.div`
-  align-items: center;
-  display: inline-flex;
-  font-size: ${p => p.size};
   height: ${p => p.size};
-  justify-content: center;
   overflow: visible;
+  position: relative;
   width: ${p => p.size};
 `;
 
 const InnerWrapper = styled.div`
-  align-items: center;
-  display: inline-flex;
-  height: 100%;
-  justify-content: center;
+  display: block;
+  height: 200%;
+  left: 50%;
+  margin-left: -100%;
+  margin-top: -100%;
   overflow: visible;
-  position: relative;
+  position: absolute;
+  top: 50%;
   transform: rotate(45deg);
-  width: 100%;
+  width: 200%;
   z-index: 2;
 `;
 
-const InnerIcon = styled.div`
-  background: ${p => p.color || 'currentColor'};
-  border-radius: 6.25%;
-  width: 45%;
-  height: 45%;
+const Svg = styled.svg`
+  height: 100%;
+  width: 100%;
 `;
 
-const mainKeyframes = keyframes`
+const InnerDiamond = styled.rect`
+  rx: ${rounding};
+  x: ${50 - innerDiamondDimension / 2};
+  y: ${50 - innerDiamondDimension / 2};
+`;
+
+const selectionKeyframes = keyframes`
   0% {
     transform: scale(1);
   }
@@ -41,17 +48,18 @@ const mainKeyframes = keyframes`
     transform: scale(1);
   }
 `;
-const mainAnimation = css`
-  animation: ${mainKeyframes} 2000ms linear infinite;
+const selectionAnimation = css`
+  animation: ${selectionKeyframes} 2000ms linear infinite;
 `;
-const OuterSelectionIcon = styled.div`
-  ${p => p.animate && mainAnimation};
-  background: transparent;
-  border: 1px solid ${p => p.selectedColor || p.theme.colors.main};
-  border-radius: 6.25%;
-  position: absolute;
-  height: 100%;
-  width: 100%;
+const SelectionDiamond = styled.rect`
+  ${p => p.animate && selectionAnimation};
+  fill: transparent;
+  rx: ${rounding};
+  stroke: ${p => p.selectedColor || p.theme.colors.main};
+  stroke-width: ${p => p.animate ? 3.5 : 2};
+  transform-origin: center;
+  x: ${50 - outerDiamondDimension / 2};
+  y: ${50 - outerDiamondDimension / 2};
 `;
 
 const highlightAnimation = keyframes`
@@ -71,27 +79,36 @@ const highlightAnimation = keyframes`
     opacity: 0;
   }
 `;
-const OuterSelectionHighlight = styled.div`
+const HighlightDiamond = styled(SelectionDiamond)`
   animation: ${highlightAnimation} 2000ms linear infinite;
-  background: transparent;
-  border: 1px solid ${p => p.theme.colors.main};
-  border-radius: 0;
   opacity: 0;
-  position: absolute;
-  height: 100%;
-  width: 100%;
+  stroke: ${p => p.theme.colors.main};
+  rx: 0;
 `;
 
-// TODO: currently, even-number size causes squares to appear misaligned
-// (would be a nice enhancement to fix)
 const NavIcon = ({ size, ...props }) => {
   const standardSize = Number.isInteger(size) ? `${size}px` : (size || '1em');
   return (
-    <Wrapper {...props} size={standardSize}>
+    <Wrapper size={standardSize} {...props}>
       <InnerWrapper>
-        <InnerIcon {...props} />
-        {props.selected && <OuterSelectionIcon {...props} />}
-        {props.selected && props.animate && <OuterSelectionHighlight {...props} />}
+        <Svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" viewBox="0 0 100 100">
+          <InnerDiamond
+            fill={props.color || 'currentColor'}
+            height={innerDiamondDimension}
+            width={innerDiamondDimension} />
+          {props.selected && (
+            <SelectionDiamond
+              {...props}
+              height={outerDiamondDimension}
+              width={outerDiamondDimension} />
+          )}
+          {props.selected && props.animate && (
+            <HighlightDiamond
+              {...props}
+              height={outerDiamondDimension}
+              width={outerDiamondDimension} />
+          )}
+        </Svg>
       </InnerWrapper>
     </Wrapper>
   );

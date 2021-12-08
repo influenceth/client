@@ -2,82 +2,74 @@ import React from 'react';
 import styled, { keyframes } from 'styled-components';
 
 const Wrapper = styled.div`
-  align-items: center;
-  display: inline-flex;
-  font-size: ${p => p.size};
   height: ${p => p.size};
-  justify-content: center;
   overflow: visible;
+  position: relative;
   width: ${p => p.size};
 `;
 
 const InnerWrapper = styled.div`
-  align-items: center;
-  display: inline-flex;
-  height: 83.3%;
-  justify-content: center;
+  display: block;
+  height: 400%;
+  left: 50%;
+  margin-left: -200%;
+  margin-top: -200%;
   overflow: visible;
-  position: relative;
-  width: 83.3%;
+  position: absolute;
+  top: 50%;
+  width: 400%;
   z-index: 2;
 `;
-const innerAnimation = keyframes`
-  0% {
-    transform: scale(1);
-  }
-  8.3% {
-    transform: scale(0.6);
-  }
-  16.6% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(1);
-  }
-`;
-const InnerIcon = styled.div`
-  animation: ${innerAnimation} 2000ms linear infinite;
-  background: currentColor;
-  border-radius: 100%;
+
+const Svg = styled.svg`
   height: 100%;
   width: 100%;
 `;
 
+const innerAnimation = keyframes`
+  0% { r: 10; }
+  8.3% { r: 6; }
+  16.6% { r: 10; }
+  100% { r: 10; }
+`;
+const InnerCircle = styled.circle`
+  animation: ${innerAnimation} 2000ms linear infinite;
+  cx: 50;
+  cy: 50;
+  fill: currentColor;
+  r: 10;
+`;
+
 const ringAnimation = keyframes`
   0% {
-    height: 60%;
     opacity: 0;
-    width: 60%;
+    r: 6;
   }
   8.3% {
-    height: 60%;
     opacity: 0;
-    width: 60%;
+    r: 6;
   }
   16.6% {
-    height: 120%;
     opacity: 1;
-    width: 120%;
+    r: 12;
   }
   50% {
-    height: 400%;
     opacity: 0;
-    width: 400%;
+    r: 40;
   }
   100% {
-    height: 400%;
     opacity: 0;
-    width: 400%;
+    r: 40;
   }
 `;
-const RingOne = styled.div`
+const RingOne = styled.circle`
   animation: ${ringAnimation} 2000ms linear infinite;
-  background: transparent;
-  border: 1px solid currentColor;
-  border-radius: 100%;
-  height: 60%;
-  position: absolute;
-  width: 60%;
+  cx: 50;
+  cy: 50;
+  fill: transparent;
+  stroke: currentColor;
+  stroke-width: 2;
+  r: 6;
 `;
 
 const RingTwo = styled(RingOne)`
@@ -87,14 +79,16 @@ const RingTwo = styled(RingOne)`
 const AttentionDot = ({ size, ...props }) => {
   const standardSize = Number.isInteger(size) ? `${size}px` : (size || '1em');
   return (
-    <Wrapper {...props} size={standardSize}>
+    <Wrapper size={standardSize} {...props}>
       <InnerWrapper>
-        <InnerIcon />
-        <RingOne />
-        <RingTwo />
+        <Svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" viewBox="0 0 100 100">
+          <InnerCircle />
+          <RingOne />
+          <RingTwo />
+        </Svg>
       </InnerWrapper>
     </Wrapper>
   );
-}
+};
 
 export default AttentionDot;

@@ -63,7 +63,7 @@ const CrewName = styled.span`
 `;
 
 const AttentionIcon = styled(AttentionDot)`
-  position: absolute;
+  position: absolute !important;
   left: 8px;
   top: 50%;
   margin-top: -5px;
