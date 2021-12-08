@@ -285,12 +285,11 @@ const CrewAssignmentComplete = (props) => {
   const shareOnTwitter = useCallback(() => {
     const params = new URLSearchParams({
       text: [
-        `I just completed @influenceth's "${storyState.title}"`,
-        // (alternative to above): `Assignment completed: "${storyState.title}"\nTrait unlocked: “TODO”`
-        `Come join the belt and become one of the first Adalians. Earn rewards by completing Crew Assignments TODAY.`,
+        `I just completed Crew Assignment: "${storyState.title}"`,
+        `Be one of the first to join @influenceth and explore Adalia today!`,
         `Join Now:`,
       ].join('\n\n'),
-      hashtags: 'PlayToEarn,PlayAndEarn,NFTGaming',
+      hashtags: 'PlayToEarn,NFTGaming',
       url: `${process.env.REACT_APP_API_URL}/og/crew-assignment/${sessionId}/${account}`,
       //via: 'influenceth'
     });
