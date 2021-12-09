@@ -35,11 +35,18 @@ const useStorySession = (id) => {
   );
 
   // make sure load objective if navigate directly to "assignment completed" page
+  // TODO: actually support multiple objectives
   const { data: objective } = useQuery(
     [ 'storySessionObjective', id ],
     async () => {
       const lastPath = await api.getStorySessionPath(session.id, session.pathHistory[session.pathHistory.length - 1]);
-      return (lastPath?.objectives || [lastPath?.objective])[0];
+      if (lastPath) {
+        if (lastPath.objectives && lastPath.objectives.length > 0) {
+          return lastPath.objectives[0];
+        }
+        return lastPath.objective;
+      }
+      return null;
     },
     {
       enabled: !!session?.isComplete

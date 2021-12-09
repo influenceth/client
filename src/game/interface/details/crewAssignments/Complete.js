@@ -90,11 +90,8 @@ const CardContainer = styled.div`
 const ImageryContainer = styled.div`
   display: flex;
   flex: 1;
+  padding: 15px 0;
   position: relative;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    padding: 15px 0;
-  }
 
   & > div:first-child {
     background-image: url(${p => p.src});
