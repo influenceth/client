@@ -285,7 +285,7 @@ const CrewAssignmentComplete = (props) => {
   const shareOnTwitter = useCallback(() => {
     const params = new URLSearchParams({
       text: [
-        `I just completed Crew Assignment: "${storyState.title}"`,
+        `I just completed the Crew Assignment: "${storyState.title}"`,
         `Be one of the first to join @influenceth and explore Adalia today!`,
         `Join Now:`,
       ].join('\n\n'),
