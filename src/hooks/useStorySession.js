@@ -5,13 +5,10 @@ import { useHistory } from 'react-router-dom';
 import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
 
-// TODO: obly expect objectives (not objective) and support display of multiple in UI
+// TODO: support multiple objectives here and in UI
 const getObjectiveFromPath = (path) => {
-  if (path) {
-    if (path.objectives && path.objectives.length > 0) {
-      return path.objectives[0];
-    }
-    return path.objective;
+  if (path?.objectives && path.objectives.length > 0) {
+    return path.objectives[0];
   }
   return null;
 };
