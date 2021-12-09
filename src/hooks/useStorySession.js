@@ -5,6 +5,17 @@ import { useHistory } from 'react-router-dom';
 import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
 
+// TODO: obly expect objectives (not objective) and support display of multiple in UI
+const getObjectiveFromPath = (path) => {
+  if (path) {
+    if (path.objectives && path.objectives.length > 0) {
+      return path.objectives[0];
+    }
+    return path.objective;
+  }
+  return null;
+};
+
 const useStorySession = (id) => {
   const history = useHistory();
   const queryClient = useQueryClient();
@@ -35,18 +46,11 @@ const useStorySession = (id) => {
   );
 
   // make sure load objective if navigate directly to "assignment completed" page
-  // TODO: actually support multiple objectives
   const { data: objective } = useQuery(
     [ 'storySessionObjective', id ],
     async () => {
       const lastPath = await api.getStorySessionPath(session.id, session.pathHistory[session.pathHistory.length - 1]);
-      if (lastPath) {
-        if (lastPath.objectives && lastPath.objectives.length > 0) {
-          return lastPath.objectives[0];
-        }
-        return lastPath.objective;
-      }
-      return null;
+      return getObjectiveFromPath(lastPath);
     },
     {
       enabled: !!session?.isComplete
@@ -116,7 +120,7 @@ const useStorySession = (id) => {
       if (content.linkedPaths.length === 0) {
         queryClient.setQueryData(
           [ 'storySessionObjective', session.id ],
-          content.objective
+          getObjectiveFromPath(content)
         );
 
         queryClient.refetchQueries('assignments');
