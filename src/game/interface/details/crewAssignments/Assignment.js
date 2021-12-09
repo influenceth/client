@@ -54,9 +54,11 @@ const CoverImage = styled.div`
   }
 `;
 
+const aboveFoldHeight = 88;
+const aboveFoldMobileMargin = -30;
 const AboveFold = styled.div`
-  height: 88px;
-  margin-top: -88px;
+  height: ${aboveFoldHeight}px;
+  margin-top: -${aboveFoldHeight}px;
   opacity: 0;
   padding: 0 35px;
   position: relative;
@@ -66,8 +68,7 @@ const AboveFold = styled.div`
   transition: opacity 750ms ease-out;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    height: auto;
-    margin-top: -30px;
+    margin-top: ${aboveFoldMobileMargin}px;
     padding: 0 25px;
   }
 `;
@@ -76,12 +77,13 @@ const BelowFold = styled.div`
   display: flex;
   flex-direction: row;
   height: calc(50% - ${foldOffset}px);
-  min-height: ${belowFoldMin}px;
   padding: 10px 0 10px 35px;
   position: relative;
+  @media (min-width: ${p => p.theme.breakpoints.mobile}px) {
+    min-height: ${belowFoldMin}px;
+  }
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    height: 67%;
-    min-height: none;
+    height: calc(67% - ${aboveFoldHeight + aboveFoldMobileMargin}px);
     padding: 10px 0 0;
   }
 
@@ -100,8 +102,8 @@ const BelowFold = styled.div`
 `;
 
 const CrewContainer = styled.div`
+  flex: 0 0 210px;
   padding: 0 12px 12px 0;
-  width: 225px;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     display: none;
@@ -153,14 +155,12 @@ const Body = styled.div`
   height: 100%;
   line-height: 1.25em;
   overflow: auto;
-  padding-bottom: 25px;
-  padding-left: 25px;
+  padding: 0 25px 25px 25px;
   position: relative;
   scrollbar-width: thin;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding-top: 5px;
-    padding-bottom: 30px;
   }
 `;
 

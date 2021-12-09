@@ -32,13 +32,13 @@ const slideOutTransition = keyframes`
 
 const mobileSlideOutTransition = keyframes`
   0% {
-    max-height: 0;
+    transform: scaleX(0);
   }
   50% {
-    max-height: 40vh;
+    transform: scaleX(1);
   }
   100% {
-    max-height: 40vh;
+    transform: scaleX(1);
   }
 `;
 
@@ -93,7 +93,7 @@ const ImageryContainer = styled.div`
   position: relative;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    padding: 50px 0;
+    padding: 15px 0;
   }
 
   & > div:first-child {
@@ -136,7 +136,7 @@ const SlideOut = styled.div`
   }
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     animation: ${mobileSlideOutTransition} 500ms normal forwards ease-out 500ms;
-    max-height: 0;
+    transform: scaleX(0);
   }
 `;
 

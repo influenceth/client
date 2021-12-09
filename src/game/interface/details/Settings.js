@@ -40,7 +40,7 @@ const ControlGroup = styled.div`
 
 const StyledDataReadout = styled(DataReadout)`
   & label {
-    width: 150px;
+    width: 175px;
   }
 
   & span {
