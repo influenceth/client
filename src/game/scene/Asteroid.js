@@ -9,28 +9,21 @@ import Worker from 'worker-loader!../../worker';
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
 import constants from '~/lib/constants';
+import { renderAsteroidMaps } from '~/lib/geometryUtils';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
-import CubeSphere from '~/lib/graphics/CubeSphere';
 import Config from './asteroid/Config';
-import HeightMap from './asteroid/HeightMap';
-import ColorMap from './asteroid/ColorMap';
-import NormalMap from './asteroid/NormalMap';
 import Rings from './asteroid/Rings';
 import exportModel from './asteroid/export';
 
-// Setup worker or main thread textureRenderer depending on browser
-let worker, textureRenderer;
+const worker = new Worker();
 
-if (!!window.Worker && typeof OffscreenCanvas !== 'undefined') {
-  worker = new Worker();
-} else {
-  textureRenderer = new TextureRenderer();
-}
+// only instantiate textureRendered if offscreenCanvas not available
+const textureRenderer = typeof OffscreenCanvas === 'undefined' && new TextureRenderer();
 
 const Asteroid = (props) => {
   const controls = useThree(({ controls }) => controls);
   const origin = useStore(s => s.asteroids.origin);
-  const time = useStore(s => s.time.current);
+  const time = useStore(s => s.time.precise);
   const mapSize = useStore(s => s.graphics.textureSize);
   const shadows = useStore(s => s.graphics.shadows);
   const shadowSize = useStore(s => s.graphics.shadowSize);
@@ -53,6 +46,19 @@ const Asteroid = (props) => {
   const [ maps, setMaps ] = useState();
   const [ materials, setMaterials ] = useState();
   const [ geometry, setGeometry ] = useState();
+
+  // Worker subscriptions
+  useEffect(() => {
+    worker.onmessage = (event) => {
+      if (event.data.topic === 'maps') {
+        const { colorMap, heightMap, normalMap } = event.data;
+        setMaps({ colorMap, heightMap, normalMap });
+      } else if (event.data.topic === 'geometry') {
+        const loader = new BufferGeometryLoader();
+        setGeometry(loader.parse(event.data.geometryJSON));
+      }
+    };
+  }, []);
 
   // Positions the asteroid in space based on time changes
   useEffect(() => {
@@ -97,47 +103,19 @@ const Asteroid = (props) => {
 
     rotationAxis.current = config.seed.clone().normalize();
 
-    if (!!worker) {
+    // if fallback textureRenderer is set, no offscreen canvas, so have
+    // to render the maps on the main thread; else, use the worker
+    if (textureRenderer) {
+      renderAsteroidMaps(mapSize, config, textureRenderer).then(setMaps);
+    } else if (!!worker) {
       worker.postMessage({ topic: 'renderMaps', mapSize, config });
-
-      worker.onmessage = (event) => {
-        if (event.data.topic === 'maps') {
-          const { heightMap, colorMap, normalMap } = event.data;
-          setMaps({ heightMap, colorMap, normalMap });
-        }
-      };
-    } else if (!!textureRenderer) {
-      const renderMaps = async () => {
-        const heightMap = new HeightMap(mapSize, config, textureRenderer);
-        const colorMapObj = new ColorMap(mapSize, heightMap, config, textureRenderer);
-        const colorMap = await colorMapObj.generateColorMap();
-        const normalMap = new NormalMap(mapSize, heightMap, config, textureRenderer);
-        setMaps({ heightMap, colorMap, normalMap });
-      };
-
-      renderMaps();
     }
   }, [ config, mapSize ]);
 
   // Receives updated maps and generates the geometry based on heightMap
   useEffect(() => {
-    if (!config || !maps) return;
-
-    if (!!worker) {
-      worker.postMessage({ topic: 'renderGeometry', heightMap: maps.heightMap, config });
-
-      worker.onmessage = (event) => {
-        if (event.data.topic === 'geometry') {
-          const loader = new BufferGeometryLoader();
-          setGeometry(loader.parse(event.data.geometryJSON));
-        }
-      };
-    } else if (!!textureRenderer) {
-      const geometry = new CubeSphere(1, 50);
-      geometry.displaceWithHeightMap(maps.heightMap, config.radius, config);
-      delete geometry.parameters;
-      setGeometry(geometry);
-    }
+    if (!config || !maps || !worker) return;
+    worker.postMessage({ topic: 'renderGeometry', heightMap: maps.heightMap, config });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ maps ]);
 
@@ -171,7 +149,7 @@ const Asteroid = (props) => {
 
   // Configures the light component once the geometry is created
   useEffect(() => {
-    if (!geometry || !asteroidData) return;
+    if (!geometry || !asteroidData || !light.current) return;
     const posVec = new Vector3(...position);
     light.current.intensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
     light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(asteroidData.radius * 10));
@@ -282,13 +260,13 @@ const Asteroid = (props) => {
   // Initiates download of generated mesh (when requested and ready)
   const exportableMesh = geometry && materials && mesh && mesh.current;
   useEffect(() => {
-    if (!requestingModelDownload && exportableMesh) return;  
+    if (!(requestingModelDownload && exportableMesh)) return;
     exportModel(exportableMesh, onModelDownload);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestingModelDownload, exportableMesh]);
 
   return (
-    <group ref={group} >
+    <group ref={group}>
       <directionalLight
         ref={light}
         color={0xffeedd}
@@ -312,6 +290,6 @@ const Asteroid = (props) => {
       )}
     </group>
   );
-};
+}
 
 export default Asteroid;

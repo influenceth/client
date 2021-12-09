@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { AdditiveBlending } from 'three';
 import { useTexture } from '@react-three/drei';
 
@@ -14,24 +14,31 @@ const worker = new Worker();
 const Planets = (props) => {
   const planets = usePlanets();
   const [ positions, setPositions ] = useState(new Float32Array(5 * 3));
-  const adaliaTime = useStore(s => s.adaliaTime);
+  const time = useStore(s => s.time.current);
   const texture = useTexture(`${process.env.PUBLIC_URL}/textures/circleFaded.png`);
   const geometry = useRef();
 
   // Listen for changes to planets data or global time and update planet positions
   useEffect(() => {
     if (planets.data) {
-      worker.postMessage({ topic: 'updatePlanetPositions', planets: planets.data, elapsed: adaliaTime });
+      worker.postMessage({ topic: 'updatePlanetPositions', planets: planets.data, elapsed: time });
     }
-  }, [ planets.data, adaliaTime ]);
+  }, [ planets.data, time ]);
 
-  worker.onmessage = (event) => {
-    if (event.data.topic === 'planetPositions') setPositions(new Float32Array(event.data.positions));
-  };
+  useEffect(() => {
+    if (!!worker) {
+      worker.onmessage = (event) => {
+        if (event.data.topic === 'planetPositions') setPositions(new Float32Array(event.data.positions));
+      };
+    }
+  }, []);
 
-  useLayoutEffect(() => {
-    geometry.current?.computeBoundingSphere();
-  });
+  // re-computeBoundingSphere on geometry change
+  useEffect(() => {
+    if (geometry.current) {
+      geometry.current.computeBoundingSphere();
+    }
+  }, [positions]);
 
   return (
     <group position={[ 0, 0, 0 ]}>
@@ -47,9 +54,7 @@ const Planets = (props) => {
           sizeAttenuation={false}
           transparent={true} />
       </points>
-      {planets.data && planets.data.map((p, i) => {
-        return (<Orbit key={i} planet={p} />);
-      })}
+      {planets.data && planets.data.map((p) => <Orbit key={p.i} planet={p} />)}
     </group>
   )
 };

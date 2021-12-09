@@ -22,14 +22,14 @@ const TimeControl = (props) => {
   const [ speed, setSpeed ] = useState(0);
   const [ speedSetting, setSpeedSetting ] = useState(0);
   const [ playing, setPlaying ] = useState(false);
-  const time = useStore(s => s.time.current);
+  const time = useStore(s => s.time.precise);
   const dispatchTimeUpdated = useStore(s => s.dispatchTimeUpdated);
-  const dispatchTimeControled = useStore(s => s.dispatchTimeControled);
+  const dispatchTimeControlled = useStore(s => s.dispatchTimeControlled);
   const dispatchTimeUncontrolled = useStore(s => s.dispatchTimeUncontrolled);
 
   const play = () => {
     setPlaying(true);
-    dispatchTimeControled();
+    dispatchTimeControlled();
   };
 
   const pause = () => {
@@ -39,7 +39,7 @@ const TimeControl = (props) => {
   const stop = () => {
     setPlaying(false);
     dispatchTimeUncontrolled();
-    dispatchTimeUpdated(((Date.now() / 1000) - START_TIMESTAMP) / 3600);
+    dispatchTimeUpdated();
   };
 
   const changeSpeed = (direction) => {
