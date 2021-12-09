@@ -2,19 +2,21 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
 
+import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import IconButton from '~/components/IconButton';
 import {
-  TimeIcon,
-  RouteIcon,
   CloseIcon,
-  MenuIcon,
-  FilterIcon,
   CrewIcon,
   EyeIcon,
+  FilterIcon,
+  MapIcon,
+  MenuIcon,
+  RocketIcon,
+  RouteIcon,
   StarIcon,
-  MapIcon
+  TimeIcon
 } from '~/components/Icons';
 import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
@@ -110,6 +112,10 @@ const MainMenu = (props) => {
   const playSound = useStore(s => s.dispatchSoundRequested);
   const { account } = useWeb3React();
   const { isMobile } = useScreenSize();
+
+  const { data: crewAssignmentData } = useCrewAssignments();
+  const { totalAssignments } = crewAssignmentData || {};
+
   const [ showMenu, setShowMenu ] = useState(!isMobile);
 
   const openSection = (section) => {
@@ -173,6 +179,14 @@ const MainMenu = (props) => {
             icon={<TimeIcon />}
             onClick={() => openSection('timeControl')} />
         </Menu>
+        {!!account && (
+          <Menu title="Missions" badge={totalAssignments}>
+            <MenuItem
+              name="Crew Assignments"
+              icon={<RocketIcon />}
+              onClick={() => openSection('crewAssignments')} />
+          </Menu>
+        )}
         {!isMobile && (
           <>
             <MenuFiller />

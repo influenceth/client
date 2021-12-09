@@ -1,6 +1,5 @@
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
-import { RiPagesFill as DetailIcon } from 'react-icons/ri';
 import { HiUserGroup as CrewIcon } from 'react-icons/hi';
 import { BiTransfer as TradeIcon } from 'react-icons/bi';
 
@@ -8,8 +7,9 @@ import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useMintableCrew from '~/hooks/useMintableCrew';
 import CrewMemberItem from '~/components/CrewMemberItem';
 import IconButton from '~/components/IconButton';
-import Section from '~/components/Section';
+import { DetailIcon } from '~/components/Icons';
 import ListEmptyMessage from '~/components/ListEmptyMessage';
+import Section from '~/components/Section';
 
 const Controls = styled.div`
   display: flex;

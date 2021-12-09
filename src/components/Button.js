@@ -4,6 +4,7 @@ import ReactTooltip from 'react-tooltip';
 import LoadingAnimation from 'react-spinners/BarLoader';
 
 import useStore from '~/hooks/useStore';
+import Badge from '~/components/Badge';
 import theme from '~/theme';
 
 const StyledButton = styled.button`
@@ -44,7 +45,8 @@ const StyledButton = styled.button`
   }
 
   &:hover {
-    background-image: linear-gradient(120deg, rgba(54, 167, 205, 0.1), rgba(54, 167, 205, 0.25));
+    /*background-image: linear-gradient(120deg, rgba(54, 167, 205, 0.1), rgba(54, 167, 205, 0.25));*/
+    background-color: rgba(54, 167, 205, 0.25);
     color: white;
   }
 
@@ -54,7 +56,8 @@ const StyledButton = styled.button`
   }
 
   &:disabled:hover {
-    background-image: none;
+    /*background-image: none;*/
+    background-color: transparent;
     color: ${p => p.theme.colors.disabledText};
   }
 
@@ -72,6 +75,12 @@ const Corner = styled.svg`
   stroke: ${p => p.theme.colors.main};
   stroke-width: 1px;
   width: 10px;
+`;
+
+const StyledBadge = styled(Badge)`
+  font-size: 80%;
+  margin-left: 12px;
+  margin-right: -6px;
 `;
 
 const loadingCss = css`
@@ -97,6 +106,9 @@ const Button = (props) => {
     <StyledButton {...restProps} onClick={_onClick} data-tip={dataTip} data-place={dataPlace || "right"} key={dataTip}>
       {loading && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
       {props.children}
+      {props.badge && (
+        <StyledBadge value={props.badge} />
+      )}
       <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
         <line x1="0" y1="10" x2="10" y2="0" />
       </Corner>

@@ -12,9 +12,13 @@ useStore.subscribe(newToken => {
 }, s => s.auth.token);
 
 const api = {
-
   getUser: async () => {
     const response = await instance.get('/v1/user');
+    return response.data;
+  },
+
+  getUserAssignments: async () => {
+    const response = await instance.get('/v1/user/assignments');
     return response.data;
   },
 
@@ -87,6 +91,36 @@ const api = {
   getSale: async () => {
     const response = await instance.get('/v1/sales');
     return response.data[0];
+  },
+
+  getBook: async (id) => {
+    const response = await instance.get(`/v1/books/${id}`);
+    return response.data;
+  },
+
+  getStory: async (id) => {
+    const response = await instance.get(`/v1/stories/${id}`);
+    return response.data;
+  },
+
+  createStorySession: async (crewMember, story) => {
+    const response = await instance.post(`/v1/stories/sessions`, { crewMember, story });
+    return response.data;
+  },
+
+  getStorySession: async (id) => {
+    const response = await instance.get(`/v1/stories/sessions/${id}`);
+    return response.data;
+  },
+
+  getStorySessionPath: async (sessionId, pathId) => {
+    const response = await instance.get(`/v1/stories/sessions/${sessionId}/paths/${pathId}`);
+    return response.data;
+  },
+
+  patchStorySessionPath: async (sessionId, pathId) => {
+    const response = await instance.patch(`/v1/stories/sessions/${sessionId}/paths/${pathId}`);
+    return response.data;
   },
 
   requestLogin: async (account) => {

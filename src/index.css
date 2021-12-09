@@ -1,5 +1,5 @@
 @import-normalize;
-@import url('https://fonts.googleapis.com/css2?family=Jura:wght@300;400&family=Lato:wght@100;300;400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jura:wght@300;400;700&family=Lato:wght@100;300;400&display=swap');
 
 html, body {
   background-color: black;
@@ -48,4 +48,27 @@ input::-webkit-inner-spin-button {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
+}
+
+/* Custom SVG icons */
+svg.icon {
+  fill: currentColor;
+  width: 1em;
+  height: 1em;
+  stroke: currentColor;
+  vertical-align: middle;
+  overflow: hidden;
+}
+.icon-from-src-wrapper {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  overflow: hidden;
+}
+.icon-from-src-wrapper > svg {
+  fill: currentColor;
+  height: 100%;
+  stroke: currentColor;
+  width: 100%;
 }

@@ -3,6 +3,21 @@ import { persist } from 'zustand/middleware';
 import produce from 'immer';
 import { START_TIMESTAMP } from 'influence-utils';
 
+// (keep these out of state so can change)
+const outlinerSectionDefaults = {
+  wallet: { active: true, expanded: true },
+  log: { active: true, expanded: true },
+  filters: { active: true, expanded: true },
+  mappedAsteroids: { active: true, expanded: true },
+  selectedAsteroid: { active: false, expanded: true },
+  ownedAsteroids: { active: false, expanded: true },
+  ownedCrew: { active: false, expanded: true },
+  crewAssignments: { active: false, expanded: true },
+  watchlist: { active: false, expanded: true },
+  routePlanner: { active: false, expanded: true },
+  timeControl: { active: false, expanded: true }
+};
+
 const useStore = create(persist((set, get) => ({
     asteroids: {
       origin: null,
@@ -42,16 +57,7 @@ const useStore = create(persist((set, get) => ({
 
     outliner: {
       pinned: true,
-      wallet: { active: true, expanded: true },
-      log: { active: true, expanded: true },
-      filters: { active: true, expanded: true },
-      mappedAsteroids: { active: true, expanded: true },
-      selectedAsteroid: { active: false, expanded: true },
-      ownedAsteroids: { active: false, expanded: true },
-      ownedCrew: { active: false, expanded: true },
-      watchlist: { active: false, expanded: true },
-      routePlanner: { active: false, expanded: true },
-      timeControl: { active: false, expanded: true }
+      ...outlinerSectionDefaults
     },
 
     graphics: {
@@ -115,20 +121,24 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchOutlinerSectionActivated: (section) => set(produce(state => {
-      if (state.outliner[section]) state.outliner[section].active = true;
+      if (!state.outliner[section]) state.outliner[section] = { ...outlinerSectionDefaults[section] };
+      state.outliner[section].active = true;
       state.outliner.pinned = true;
     })),
 
     dispatchOutlinerSectionDeactivated: (section) => set(produce(state => {
-      if (state.outliner[section]) state.outliner[section].active = false;
+      if (!state.outliner[section]) state.outliner[section] = { ...outlinerSectionDefaults[section] };
+      state.outliner[section].active = false;
     })),
 
     dispatchOutlinerSectionExpanded: (section) => set(produce(state => {
-      if (state.outliner[section]) state.outliner[section].expanded = true;
+      if (!state.outliner[section]) state.outliner[section] = { ...outlinerSectionDefaults[section] };
+      state.outliner[section].expanded = true;
     })),
 
     dispatchOutlinerSectionCollapsed: (section) => set(produce(state => {
-      if (state.outliner[section]) state.outliner[section].expanded = false;
+      if (!state.outliner[section]) state.outliner[section] = { ...outlinerSectionDefaults[section] };
+      state.outliner[section].expanded = false;
     })),
 
     dispatchTextureSizeSet: (size) => set(produce(state => {

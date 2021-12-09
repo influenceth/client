@@ -227,6 +227,22 @@ const entries = {
     </StyledLogEntry>
   ),
 
+  GenericAlert: (e) => (
+    <StyledLogEntry>
+      <Description>
+        {e.content}
+      </Description>
+    </StyledLogEntry>
+  ),
+
+  GenericLoadingError: (e) => (
+    <StyledLogEntry>
+      <Description>
+        <span>Error loading {e.label || 'data'}. Please refresh and try again.</span>
+      </Description>
+    </StyledLogEntry>
+  ),
+
   Sale_TimeToStart: (e) => (
     <StyledLogEntry>
       <Description>
