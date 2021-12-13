@@ -180,7 +180,7 @@ const MainMenu = (props) => {
             onClick={() => openSection('timeControl')} />
         </Menu>
         {!!account && (
-          <Menu title="Activities" badge={totalAssignments}>
+          <Menu title="Missions" badge={totalAssignments}>
             <MenuItem
               name="Crew Assignments"
               icon={<RocketIcon />}
