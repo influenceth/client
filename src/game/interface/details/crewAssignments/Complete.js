@@ -142,22 +142,20 @@ const RewardSection = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-height: 296px;
+  height: 140px;
 
   & > div {
     animation: ${opacityTransition} 500ms normal forwards ease-out 500ms;
     color: white;
     opacity: 0;
-    padding: 24px 24px 0px 36px;
+    padding: 8px 20px 8px 40px;
     text-align: left;
     width: 400px;
 
     & > h4 {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-      font-size: 16px;
-      font-weight: bold;
-      margin: 0 0 16px;
-      padding-bottom: 16px;
+      font-size: 18px;
+      font-weight: normal;
+      margin: 0 0 12px;
       @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
         color: #656565;
         font-size: 15px;
@@ -167,7 +165,7 @@ const RewardSection = styled.div`
     & > div {
       align-items: flex-start;
       display: flex;
-      margin-bottom: 24px;
+      margin-bottom: 8px;
       & > *:first-child {
         font-size: 48px;
         margin-left: -12px;
@@ -181,7 +179,6 @@ const RewardSection = styled.div`
           margin-bottom: 4px;
         }
         & > span {
-          font-size: 12px;
           opacity: 0.7;
         }
       }
@@ -279,12 +276,9 @@ const CrewAssignmentComplete = (props) => {
     return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
   }, [storyState, allCrew]);
 
-  const rewards = useMemo(() => {
-    return (storyState?.objectives || []).map((id) => ({
-      id,
-      ...toCrewTrait(id)
-    }));
-  }, [storyState?.objectives]);
+  const reward = useMemo(() => {
+    return (storyState?.objective && toCrewTrait(storyState.objective)) || null;
+  }, [storyState?.objective]);
 
   const shareOnTwitter = useCallback(() => {
     const params = new URLSearchParams({
@@ -308,25 +302,35 @@ const CrewAssignmentComplete = (props) => {
     if (!storyState) return null;
     return (
       <>
-        {rewards?.length > 0 && (
+        {reward && (
           <RewardSection>
             <div>
               <h4>This crew member has gained traits:</h4>
-              {rewards.map((reward) => (
-                <div>
-                  <CrewTraitIcon trait={reward.id} />
-                  <div style={{ flex: 1 }}>
-                    <b>{reward.name}</b>
-                    <span>{reward.description}</span>
-                  </div>
+              <div>
+                <CrewTraitIcon trait={storyState.objective} />
+                <div style={{ flex: 1 }}>
+                  <b>{reward.name}</b>
+                  <span>{reward.description}</span>
                 </div>
-              ))}
+              </div>
             </div>
           </RewardSection>
         )}
+        <RecruitSection>
+          <TwitterButton onClick={shareOnTwitter}>
+            <span>Share on Twitter</span>
+            <TwitterIcon />
+          </TwitterButton>
+          <CopyReferralLink>
+            <LinkWithIcon>
+              <LinkIcon />
+              <span>Copy Recruitment Link</span>
+            </LinkWithIcon>
+          </CopyReferralLink>
+        </RecruitSection>
       </>
     );
-  }, [rewards, shareOnTwitter, storyState]);
+  }, [reward, shareOnTwitter, storyState]);
 
   if (!storyState || !crew) return null;
   return (
@@ -349,19 +353,6 @@ const CrewAssignmentComplete = (props) => {
           </SlideOut>
         </div>
       </ImageryContainer>
-
-      <RecruitSection>
-        <TwitterButton onClick={shareOnTwitter}>
-          <span>Share on Twitter</span>
-          <TwitterIcon />
-        </TwitterButton>
-        <CopyReferralLink>
-          <LinkWithIcon>
-            <LinkIcon />
-            <span>Copy Recruitment Link</span>
-          </LinkWithIcon>
-        </CopyReferralLink>
-      </RecruitSection>
 
       <FinishContainer>
         <Button onClick={handleFinish}>Finish</Button>
