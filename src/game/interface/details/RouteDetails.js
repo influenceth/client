@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   VictoryChart,
   VictoryVoronoiContainer,
@@ -242,7 +242,7 @@ const RouteDetails = (props) => {
   }, [ originId, destinationId ]);
 
   // Use screen size to resize chart
-  useLayoutEffect(() => {
+  useEffect(() => {
     const handleResize = () => {
       if (!detailsEl?.current) return;
       const height = isMobile ? 400 : detailsEl.current.clientHeight / 3;
