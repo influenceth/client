@@ -267,7 +267,7 @@ const LinkWithIcon = styled.a`
 `;
 
 const FinishContainer = styled.div`
-  height: 75px;
+  padding-bottom: 25px;
   padding-right: 35px;
   text-align: right;
   & > button {
@@ -318,29 +318,26 @@ const CrewAssignmentComplete = (props) => {
     history.push(onCloseDestination);
   }, [history, onCloseDestination]);
 
-  const slideOutContents = useMemo(() => {
-    if (!storyState) return null;
-    return (
-      <>
-        {rewards?.length > 0 && (
-          <RewardSection>
-            <div>
-              <h4>This crew member has gained traits:</h4>
-              {rewards.map((reward) => (
-                <div key={reward.id}>
-                  <CrewTraitIcon trait={reward.id} />
-                  <div style={{ flex: 1 }}>
-                    <b>{reward.name}</b>
-                    <span>{reward.description}</span>
-                  </div>
+  const slideOutContents = useMemo(() => (
+    <>
+      {rewards?.length > 0 && (
+        <RewardSection>
+          <div>
+            <h4>This crew member has gained traits:</h4>
+            {rewards.map((reward) => (
+              <div key={reward.id}>
+                <CrewTraitIcon trait={reward.id} />
+                <div style={{ flex: 1 }}>
+                  <b>{reward.name}</b>
+                  <span>{reward.description}</span>
                 </div>
-              ))}
-            </div>
-          </RewardSection>
-        )}
-      </>
-    );
-  }, [rewards, shareOnTwitter, storyState]);
+              </div>
+            ))}
+          </div>
+        </RewardSection>
+      )}
+    </>
+  ), [rewards]);
 
   if (!storyState || !crew) return null;
   return (
