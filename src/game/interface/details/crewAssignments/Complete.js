@@ -68,6 +68,7 @@ const Title = styled.div`
   width: 250px;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    margin-top: 8px;
     white-space: normal;
   }
 `;
@@ -101,10 +102,6 @@ const ImageryContainer = styled.div`
   & > div:last-child {
     position: relative;
     z-index: 2;
-  }
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    padding-top: 15px;
   }
 `;
 const CardWrapper = styled.div`
@@ -169,8 +166,8 @@ const RewardSection = styled.div`
       margin: 0 0 16px;
       padding-bottom: 16px;
       @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-        
-        font-size: 14px;
+        color: #656565;
+        font-size: 15px;
         font-weight: bold;
       }
     }
@@ -198,7 +195,7 @@ const RewardSection = styled.div`
     }
   
     @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-      padding: 12px 25px 0;
+      padding: 8px 25px 0;
       width: 100%;
     }
   }
@@ -208,7 +205,7 @@ const RewardSection = styled.div`
     height: auto;
     margin: -20px 8px 0;
     max-width: 400px;
-    padding: 20px 0 0px;
+    padding: 20px 0 10px;
   }
 `;
 
@@ -222,9 +219,6 @@ const RecruitSection = styled.div`
     margin: 0 auto 10px;
     text-transform: uppercase;
     width: 300px;
-  }
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    margin-bottom: 16px;
   }
 `;
 const TwitterButton = styled(Button)`
@@ -276,7 +270,6 @@ const FinishContainer = styled.div`
   }
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding-bottom: 12px;
-    padding-right: 24px;
   }
 `;
 
@@ -327,7 +320,7 @@ const CrewAssignmentComplete = (props) => {
             <div>
               <h4>This crew member has gained traits:</h4>
               {rewards.map((reward) => (
-                <div key={reward.id}>
+                <div>
                   <CrewTraitIcon trait={reward.id} />
                   <div style={{ flex: 1 }}>
                     <b>{reward.name}</b>
