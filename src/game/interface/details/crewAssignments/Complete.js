@@ -2,11 +2,11 @@ import React, { useCallback, useMemo } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
-import { FaPortrait as RewardIcon } from 'react-icons/fa';
 import { toCrewTrait } from 'influence-utils';
 
 import Button from '~/components/Button';
 import CopyReferralLink from '~/components/CopyReferralLink';
+import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/Details';
 import { LinkIcon, TwitterIcon } from '~/components/Icons';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
@@ -148,7 +148,7 @@ const RewardSection = styled.div`
     animation: ${opacityTransition} 500ms normal forwards ease-out 500ms;
     color: white;
     opacity: 0;
-    padding: 8px 40px;
+    padding: 8px 20px 8px 40px;
     text-align: left;
     width: 400px;
 
@@ -167,11 +167,9 @@ const RewardSection = styled.div`
       display: flex;
       margin-bottom: 8px;
       & > *:first-child {
-        border: 1px solid #555;
-        border-radius: 50%;
-        font-size: 150%;
-        margin-right: 0.5em;
-        padding: 0.2em;
+        font-size: 48px;
+        margin-left: -12px;
+        margin-right: 12px;
       }
       & > *:last-child {
         font-size: 13px;
@@ -309,7 +307,7 @@ const CrewAssignmentComplete = (props) => {
             <div>
               <h4>This crew member has gained traits:</h4>
               <div>
-                <RewardIcon />
+                <CrewTraitIcon trait={storyState.objective} />
                 <div style={{ flex: 1 }}>
                   <b>{reward.name}</b>
                   <span>{reward.description}</span>
