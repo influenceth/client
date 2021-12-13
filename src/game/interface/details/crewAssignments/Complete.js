@@ -49,16 +49,20 @@ const opacityTransition = keyframes`
 `;
 
 const TitleBox = styled.div`
-  border-bottom: 1px solid #444;
-  border-top: 1px solid #444;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 24px 0;
+`;
+const Title = styled.div`
+  border-bottom: 1px solid #222;
   color: white;
   display: flex;
   font-size: 40px;
+  font-weight: light;
   line-height: 40px;
   justify-content: center;
-  margin: 0 auto;
+  margin: 0 auto 6px;
   overflow: visible;
-  padding: 10px 0 14px;
+  padding-bottom: 12px;
   text-transform: uppercase;
   white-space: nowrap;
   width: 250px;
@@ -68,29 +72,17 @@ const TitleBox = styled.div`
     white-space: normal;
   }
 `;
-const Content = styled.div`
-  margin: 24px 12px;
-  & > b {
-    color: white;
-    white-space: nowrap;
-  }
+const Subtitle = styled.div`
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  white-space: nowrap;
 `;
-const CardContainer = styled.div`
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  padding: 4px;
-  position: relative;
-  z-index: 3;
-  & > div {
-    background: black;
-    max-width: 100%;
-    padding: 8px;
-    width: 220px;
-  }
-`;
+
 const ImageryContainer = styled.div`
   display: flex;
   flex: 1;
-  padding: 15px 0;
+  padding: 25px 0 0;
   position: relative;
 
   & > div:first-child {
@@ -110,13 +102,28 @@ const ImageryContainer = styled.div`
   & > div:last-child {
     position: relative;
     z-index: 2;
+  }
+`;
+const CardWrapper = styled.div`
+  align-items: center;  
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding: 30px;
+  justify-content: center;
+  width: 100%;
+`;
 
-    align-items: center;  
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    width: 100%;
+const CardContainer = styled.div`
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 4px;
+  position: relative;
+  z-index: 3;
+  & > div {
+    background: black;
+    max-width: 100%;
+    padding: 8px;
+    width: 220px;
   }
 `;
 
@@ -202,6 +209,18 @@ const RewardSection = styled.div`
   }
 `;
 
+const RecruitSection = styled.div`
+  animation: ${opacityTransition} 500ms normal forwards ease-out 750ms;
+  opacity: 0;
+  & button {
+    display: flex;
+    height: 66px;
+    justify-content: space-between;
+    margin: 0 auto 10px;
+    text-transform: uppercase;
+    width: 300px;
+  }
+`;
 const TwitterButton = styled(Button)`
   color: white;
   background: #1b9df0;
@@ -219,24 +238,11 @@ const TwitterButton = styled(Button)`
     max-width: 36px;
   }
 `;
-
-const RecruitSection = styled.div`
-  animation: ${opacityTransition} 500ms normal forwards ease-out 750ms;
-  opacity: 0;
-  & button {
-    display: flex;
-    height: 66px;
-    justify-content: space-between;
-    margin: 20px auto 10px;
-    text-transform: uppercase;
-    width: 300px;
-  }
-`;
 const LinkWithIcon = styled.a`
   align-items: center;
   cursor: ${p => p.theme.cursors.active};
   display: flex;
-  font-size: 90%;
+  font-size: 80%;
   font-weight: bold;
   justify-content: center;
   text-shadow: 1px 2px 3px rgba(0, 0, 0, 1);
@@ -255,10 +261,11 @@ const LinkWithIcon = styled.a`
 `;
 
 const FinishContainer = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  padding-right: 12px;
+  height: 75px;
+  padding-right: 35px;
+  text-align: right;
   & > button {
+    display: inline-block;
     text-transform: uppercase;
   }
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
@@ -333,35 +340,45 @@ const CrewAssignmentComplete = (props) => {
     <Details
       onCloseDestination={onCloseDestination}
       contentProps={{ style: { display: 'flex', flexDirection: 'column', } }}
+      edgeToEdge
       style={{ color: '#999', textAlign: 'center' }}>
-      <TitleBox>Assignment Complete</TitleBox>
-      <Content>Congratulations! You have completed <b>{storyState.title}</b> for your crew member.</Content>
       <ImageryContainer src={storyState.image}>
         <div />
-        <div>
-          <CardContainer>
-            <div>
-              <CrewCard crew={crew} />
-            </div>
-          </CardContainer>
-          <SlideOut>
-            {slideOutContents}
-          </SlideOut>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
+          <TitleBox>
+            <Title>Assignment Complete</Title>
+            <Subtitle>{storyState.title}</Subtitle>
+          </TitleBox>
+          <div>
+            <CardWrapper>
+              <CardContainer>
+                <div>
+                  <CrewCard crew={crew} />
+                </div>
+              </CardContainer>
+              <SlideOut>
+                {slideOutContents}
+              </SlideOut>
+            </CardWrapper>
+
+            <RecruitSection>
+              <TwitterButton onClick={shareOnTwitter}>
+                <span>Share on Twitter</span>
+                <TwitterIcon />
+              </TwitterButton>
+              <CopyReferralLink>
+                <LinkWithIcon>
+                  <LinkIcon />
+                  <span>Copy Recruitment Link</span>
+                </LinkWithIcon>
+              </CopyReferralLink>
+            </RecruitSection>
+          </div>
+          {/* NOTE: the below empty div's are to help with flex spacing on tall screens */}
+          <div />
+          <div />
         </div>
       </ImageryContainer>
-
-      <RecruitSection>
-        <TwitterButton onClick={shareOnTwitter}>
-          <span>Share on Twitter</span>
-          <TwitterIcon />
-        </TwitterButton>
-        <CopyReferralLink>
-          <LinkWithIcon>
-            <LinkIcon />
-            <span>Copy Recruitment Link</span>
-          </LinkWithIcon>
-        </CopyReferralLink>
-      </RecruitSection>
 
       <FinishContainer>
         <Button onClick={handleFinish}>Finish</Button>
