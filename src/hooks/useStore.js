@@ -4,18 +4,19 @@ import produce from 'immer';
 import { START_TIMESTAMP } from 'influence-utils';
 
 // (keep these out of state so can change)
+const sectionDefault = { active: false, expanded: true, highlighted: false };
 const outlinerSectionDefaults = {
-  wallet: { active: true, expanded: true },
-  log: { active: true, expanded: true },
-  filters: { active: true, expanded: true },
-  mappedAsteroids: { active: true, expanded: true },
-  selectedAsteroid: { active: false, expanded: true },
-  ownedAsteroids: { active: false, expanded: true },
-  ownedCrew: { active: false, expanded: true },
-  crewAssignments: { active: false, expanded: true },
-  watchlist: { active: false, expanded: true },
-  routePlanner: { active: false, expanded: true },
-  timeControl: { active: false, expanded: true }
+  wallet: { ...sectionDefault, active: true },
+  log: { ...sectionDefault, active: true },
+  filters: { ...sectionDefault, active: true },
+  mappedAsteroids: { ...sectionDefault, active: true },
+  selectedAsteroid: { ...sectionDefault },
+  ownedAsteroids: { ...sectionDefault },
+  ownedCrew: { ...sectionDefault },
+  crewAssignments: { ...sectionDefault },
+  watchlist: { ...sectionDefault },
+  routePlanner: { ...sectionDefault },
+  timeControl: { ...sectionDefault }
 };
 
 const useStore = create(persist((set, get) => ({
@@ -124,7 +125,12 @@ const useStore = create(persist((set, get) => ({
     dispatchOutlinerSectionActivated: (section) => set(produce(state => {
       if (!state.outliner[section]) state.outliner[section] = { ...outlinerSectionDefaults[section] };
       state.outliner[section].active = true;
+      state.outliner[section].expanded = true;
+      state.outliner[section].highlighted = true;
       state.outliner.pinned = true;
+      setTimeout(() => {
+        set(produce(state => { state.outliner[section].highlighted = false; }));
+      }, 0);
     })),
 
     dispatchOutlinerSectionDeactivated: (section) => set(produce(state => {

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { MdClear } from 'react-icons/md';
 import gsap from 'gsap';
@@ -51,7 +51,7 @@ const Content = styled.div`
 const Tab = styled.div`
   align-items: stretch;
   backdrop-filter: blur(4px);
-  background-color: rgb(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.15);
   display: flex;
   height: 100%;
   left: -25px;
@@ -60,9 +60,9 @@ const Tab = styled.div`
   transition: all 0.3s ease;
   width: 25px;
 
+  ${p => p.highlighting ? '&,' : ''}
   ${StyledSection}:hover & {
     background-color: ${p => p.theme.colors.main};
-
     & > svg {
       color: white;
     }
@@ -111,6 +111,7 @@ const Section = (props) => {
   const collapseSection = useStore(s => s.dispatchOutlinerSectionCollapsed);
   const deactivateSection = useStore(s => s.dispatchOutlinerSectionDeactivated);
 
+  const [highlighting, setHighlighting] = useState();
   const section = useRef();
   const content = useRef();
 
@@ -127,10 +128,16 @@ const Section = (props) => {
     deactivateSection(name);
   };
 
-  // Scroll to the newly opened section
-  useLayoutEffect(() => {
-    section.current.parentNode.scrollTop = section.current.offsetTop;
-  }, []);
+  // Scroll to the newly opened section and highlight
+  useEffect(() => {
+    if (section.current && sectionSettings?.highlighted) {
+      section.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setHighlighting(true);
+      setTimeout(() => {
+        setHighlighting(false);
+      }, 1500);
+    }
+  }, [sectionSettings?.highlighted]);
 
   useEffect(() => {
     if (!content?.current) return;
@@ -143,7 +150,7 @@ const Section = (props) => {
 
   return (
     <StyledSection ref={section} {...restProps}>
-      <Tab>{icon}</Tab>
+      <Tab highlighting={highlighting}>{icon}</Tab>
       {title && <Title onClick={toggleMinimize}>{title}</Title>}
       {!sticky && <CloseButton onClick={closeSection} borderless><MdClear /></CloseButton>}
       <Content ref={content}>{children}</Content>
