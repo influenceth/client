@@ -39,7 +39,7 @@ const useStorySession = (id) => {
     [ 'storySessionObjectives', id ],
     async () => {
       const lastPath = await api.getStorySessionPath(session.id, session.pathHistory[session.pathHistory.length - 1]);
-      return lastPath?.objectives;
+      return lastPath?.objectives; // [1, ...lastPath?.objectives];  // TODO: remove extra
     },
     {
       enabled: !!session?.isComplete
