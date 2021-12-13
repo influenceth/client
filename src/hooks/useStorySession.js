@@ -26,8 +26,8 @@ const useStorySession = (id) => {
 
   // load the story
   const { data: story } = useQuery(
-    [ 'story', session?.story ],
-    () => api.getStory(session?.story, session?.id),
+    [ 'story', session?.story, id ],
+    () => api.getStory(session.story, id),
     {
       enabled: !!session?.story,
       retry: false
@@ -38,7 +38,7 @@ const useStorySession = (id) => {
   const { data: objectives } = useQuery(
     [ 'storySessionObjectives', id ],
     async () => {
-      const lastPath = await api.getStorySessionPath(session.id, session.pathHistory[session.pathHistory.length - 1]);
+      const lastPath = await api.getStoryPath(session.story, session.pathHistory[session.pathHistory.length - 1], id);
       return lastPath?.objectives;
     },
     {
@@ -76,7 +76,7 @@ const useStorySession = (id) => {
     let content;
     try {
       if (session.pathHistory.includes(path)) {
-        content = await api.getStoryPath(session.story, session.id, path);
+        content = await api.getStoryPath(session.story, path, session.id);
         content.linkedPaths = selectablePaths(content.linkedPaths, currentStep + 1);
       } else {
         content = await api.patchStorySessionPath(session.id, path);

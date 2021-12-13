@@ -113,9 +113,11 @@ const api = {
     return response.data;
   },
 
-  getStoryPath: async (storyId, sessionId, pathId) => {
-    const response = await instance.get(`/v1/stories/${storyId}/paths/${pathId}`,
-      { params: { session: sessionId } });
+  getStoryPath: async (storyId, pathId, sessionId) => {
+    const response = await instance.get(
+      `/v1/stories/${storyId}/paths/${pathId}`,
+      { params: { session: sessionId } }
+    );
     return response.data;
   },
 
