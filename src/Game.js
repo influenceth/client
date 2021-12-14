@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { ThemeProvider } from 'styled-components';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
 import useStore from '~/hooks/useStore';
+import LandingPage from '~/game/Landing';
 import Intro from '~/game/Intro';
 import Interface from '~/game/Interface';
 import Scene from '~/game/Scene';
@@ -50,13 +51,20 @@ const Game = (props) => {
   return (
     <ThemeProvider theme={theme}>
       <Router>
-        {loading && <Intro onVideoComplete={onVideoComplete} />}
         <Referral />
-        <StyledMain>
-          <Interface />
-          {showScene && <Scene />}
-          <Audio />
-        </StyledMain>
+        <Switch>
+          <Route exact path="/landing/:source?">
+            <LandingPage />
+          </Route>
+          <Route>
+            {loading && <Intro onVideoComplete={onVideoComplete} />}
+            <StyledMain>
+              <Interface />
+              {showScene && <Scene />}
+              <Audio />
+            </StyledMain>
+          </Route>
+        </Switch>
       </Router>
     </ThemeProvider>
   );
