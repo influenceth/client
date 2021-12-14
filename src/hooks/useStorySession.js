@@ -5,14 +5,6 @@ import { useHistory } from 'react-router-dom';
 import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
 
-// TODO: support multiple objectives here and in UI
-const getObjectiveFromPath = (path) => {
-  if (path?.objectives && path.objectives.length > 0) {
-    return path.objectives[0];
-  }
-  return null;
-};
-
 const useStorySession = (id) => {
   const history = useHistory();
   const queryClient = useQueryClient();
@@ -42,12 +34,12 @@ const useStorySession = (id) => {
     }
   );
 
-  // make sure load objective if navigate directly to "assignment completed" page
-  const { data: objective } = useQuery(
-    [ 'storySessionObjective', id ],
+  // make sure load objectives if navigate directly to "assignment completed" page
+  const { data: objectives } = useQuery(
+    [ 'storySessionObjectives', id ],
     async () => {
       const lastPath = await api.getStorySessionPath(session.id, session.pathHistory[session.pathHistory.length - 1]);
-      return getObjectiveFromPath(lastPath);
+      return lastPath?.objectives;
     },
     {
       enabled: !!session?.isComplete
@@ -113,11 +105,11 @@ const useStorySession = (id) => {
       setPathContent(content);
       setLoadingPath(false);
 
-      // if just completed assignment (i.e. no more choices), then set objective and refetch assignments and book (for sessions)
+      // if just completed assignment (i.e. no more choices), then set objectives and refetch assignments and book (for sessions)
       if (content.linkedPaths.length === 0) {
         queryClient.setQueryData(
-          [ 'storySessionObjective', session.id ],
-          getObjectiveFromPath(content)
+          [ 'storySessionObjectives', session.id ],
+          content.objectives
         );
 
         queryClient.refetchQueries('assignments');
@@ -141,11 +133,11 @@ const useStorySession = (id) => {
         ...story,
         ...session,
         ...pathContent,
-        objective
+        objectives
       };
     }
     return null;
-  }, [pathContent, objective, session, story]);
+  }, [pathContent, objectives, session, story]);
 
   return {
     commitPath: commitPath,

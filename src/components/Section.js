@@ -1,10 +1,12 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
-import styled from 'styled-components';
+import { useEffect, useRef, useState } from 'react';
+import styled, { css, keyframes } from 'styled-components';
 import { MdClear } from 'react-icons/md';
 import gsap from 'gsap';
 
 import useStore from '~/hooks/useStore';
 import IconButton from './IconButton';
+
+const HIGHLIGHT_DURATION = 1500;
 
 const StyledSection = styled.div`
   background-color: rgba(255, 255, 255, 0.075);
@@ -48,10 +50,20 @@ const Content = styled.div`
   padding-bottom: 0px;
 `;
 
+const attnKeyframes = (rgb) => keyframes`
+  0% { background-color: rgba(255, 255, 255, 0.15); }
+  25% { background-color: rgba(${rgb}, 0.9); }
+  75% { background-color: rgba(${rgb}, 0.9); }
+  100% { background-color: rgba(255, 255, 255, 0.15); }
+`;
+const attnAnimation = css`
+  animation: ${p => attnKeyframes(p.theme.colors.mainRGB)} ${HIGHLIGHT_DURATION/2}ms ease-in 2;
+`;
 const Tab = styled.div`
+  ${p => p.highlighting ? attnAnimation : ''}
   align-items: stretch;
   backdrop-filter: blur(4px);
-  background-color: rgb(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.15);
   display: flex;
   height: 100%;
   left: -25px;
@@ -59,10 +71,9 @@ const Tab = styled.div`
   top: 0;
   transition: all 0.3s ease;
   width: 25px;
-
+  
   ${StyledSection}:hover & {
     background-color: ${p => p.theme.colors.main};
-
     & > svg {
       color: white;
     }
@@ -111,6 +122,7 @@ const Section = (props) => {
   const collapseSection = useStore(s => s.dispatchOutlinerSectionCollapsed);
   const deactivateSection = useStore(s => s.dispatchOutlinerSectionDeactivated);
 
+  const [highlighting, setHighlighting] = useState();
   const section = useRef();
   const content = useRef();
 
@@ -127,10 +139,16 @@ const Section = (props) => {
     deactivateSection(name);
   };
 
-  // Scroll to the newly opened section
-  useLayoutEffect(() => {
-    section.current.parentNode.scrollTop = section.current.offsetTop;
-  }, []);
+  // Scroll to the newly opened section and highlight
+  useEffect(() => {
+    if (section.current && sectionSettings?.highlighted) {
+      section.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setHighlighting(true);
+      setTimeout(() => {
+        setHighlighting(false);
+      }, HIGHLIGHT_DURATION);
+    }
+  }, [sectionSettings?.highlighted]);
 
   useEffect(() => {
     if (!content?.current) return;
@@ -143,7 +161,7 @@ const Section = (props) => {
 
   return (
     <StyledSection ref={section} {...restProps}>
-      <Tab>{icon}</Tab>
+      <Tab highlighting={highlighting}>{icon}</Tab>
       {title && <Title onClick={toggleMinimize}>{title}</Title>}
       {!sticky && <CloseButton onClick={closeSection} borderless><MdClear /></CloseButton>}
       <Content ref={content}>{children}</Content>
