@@ -11,7 +11,7 @@ const LandingPage = (props) => {
     } else {
       history.push('/');
     }
-  }, []);
+  }, [history, source]);
 
   return null;
 };
