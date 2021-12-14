@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import { MdClear } from 'react-icons/md';
 import gsap from 'gsap';
 
 import useStore from '~/hooks/useStore';
 import IconButton from './IconButton';
+
+const HIGHLIGHT_DURATION = 1500;
 
 const StyledSection = styled.div`
   background-color: rgba(255, 255, 255, 0.075);
@@ -48,7 +50,17 @@ const Content = styled.div`
   padding-bottom: 0px;
 `;
 
+const attnKeyframes = (rgb) => keyframes`
+  0% { background-color: rgba(255, 255, 255, 0.15); }
+  25% { background-color: rgba(${rgb}, 0.9); }
+  75% { background-color: rgba(${rgb}, 0.9); }
+  100% { background-color: rgba(255, 255, 255, 0.15); }
+`;
+const attnAnimation = css`
+  animation: ${p => attnKeyframes(p.theme.colors.mainRGB)} ${HIGHLIGHT_DURATION/2}ms ease-in 2;
+`;
 const Tab = styled.div`
+  ${p => p.highlighting ? attnAnimation : ''}
   align-items: stretch;
   backdrop-filter: blur(4px);
   background-color: rgba(255, 255, 255, 0.15);
@@ -59,8 +71,7 @@ const Tab = styled.div`
   top: 0;
   transition: all 0.3s ease;
   width: 25px;
-
-  ${p => p.highlighting ? '&,' : ''}
+  
   ${StyledSection}:hover & {
     background-color: ${p => p.theme.colors.main};
     & > svg {
@@ -135,7 +146,7 @@ const Section = (props) => {
       setHighlighting(true);
       setTimeout(() => {
         setHighlighting(false);
-      }, 1500);
+      }, HIGHLIGHT_DURATION);
     }
   }, [sectionSettings?.highlighted]);
 
