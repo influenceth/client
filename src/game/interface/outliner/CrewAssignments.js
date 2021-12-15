@@ -89,7 +89,7 @@ const CrewAssignments = (props) => {
       <Controls>
         <IconButton
           data-tip="Details"
-          disabled={assignmentsByBook?.length === 0}
+          disabled={(assignmentsByBook || []).length === 0}
           onClick={handleClick()}>
           <DetailIcon />
         </IconButton>
