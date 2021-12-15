@@ -72,11 +72,11 @@ const CrewAssignments = (props) => {
   );
 
   const handleClick = useCallback((story) => () => {
-    if (story) {
+    if (story && story.book) {
       history.push(`/crew-assignments/${story.book.id}/${story.id}`);
-    } else if(actionableBooks > 0) {
+    } else if(actionableBooks?.length > 0) {
       history.push(`/crew-assignments/${actionableBooks[0].id}`);
-    } else {
+    } else if(assignmentsByBook?.length > 0) {
       history.push(`/crew-assignments/${assignmentsByBook[0].id}`);
     }
   }, [actionableBooks, assignmentsByBook, history]);
@@ -89,6 +89,7 @@ const CrewAssignments = (props) => {
       <Controls>
         <IconButton
           data-tip="Details"
+          disabled={(assignmentsByBook || []).length === 0}
           onClick={handleClick()}>
           <DetailIcon />
         </IconButton>
