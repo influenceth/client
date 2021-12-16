@@ -23,6 +23,7 @@ const useServiceWorker = () => {
         const awaitInstallingWorker = () => {
           if (registration.installing) {
             registration.installing.addEventListener('statechange', () => {
+              console.log('registration pre check', registration);
               console.log('onstatechange', registration.installing.state);
                 if (registration.installing.state === 'installed') {
                   console.log('installed');
