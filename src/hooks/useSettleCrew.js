@@ -42,7 +42,10 @@ const useSettleCrew = (i) => {
     },
 
     onSuccess: () => {
-      setTimeout(() => queryClient.invalidateQueries('events'), 1000);
+      setTimeout(() => {
+        queryClient.invalidateQueries('assignments');
+        queryClient.invalidateQueries('events');
+      }, 1000);
     }
   });
 };

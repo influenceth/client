@@ -48,15 +48,19 @@ const useServiceWorker = () => {
   return {
     updateNeeded,
     onUpdateVersion: useCallback(() => {
+      console.log('onUpdateVersion');
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration().then((reg) => {
           if (reg) {
+            console.log('skipWaiting');
             reg.waiting.postMessage('skipWaiting');
           } else {
+            console.log('reload 1');
             window.location.reload();
           }
         });
       } else {
+        console.log('reload 2');
         window.location.reload();
       }
     }, [])

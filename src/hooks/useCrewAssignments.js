@@ -7,7 +7,7 @@ const useCrewAssignments = () => {
   const { token } = useAuth();
 
   return useQuery(
-    [ 'assignments', token ],
+    [ 'assignments' ],
     async () => {
       const assignmentsByBook = {};
       let totalAssignments = 0;
@@ -34,6 +34,9 @@ const useCrewAssignments = () => {
         assignmentsByBook: Object.values(assignmentsByBook),
         totalAssignments
       };
+    },
+    {
+      enabled: !!token
     }
   );
 };
