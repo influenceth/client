@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import useInterval from '~/hooks/useInterval';
+
 const useServiceWorker = () => {
   const [updateNeeded, setUpdateNeeded] = useState(false);
   //const refreshing = useRef(false);
@@ -9,65 +11,62 @@ const useServiceWorker = () => {
       console.log('in nav');
       navigator.serviceWorker.getRegistration().then((registration) => {
         console.log('registrration', registration);
-        if (registration) {
-          registration.addEventListener('onupdatefound', () => {
-            console.log('onupdatefound');
-            const installingWorker = registration.installing;
-            if (installingWorker) {
-              console.log('installingWorker', installingWorker);
-              installingWorker.onstatechange = () => {
-                console.log('onstatechange', installingWorker.state);
-                if (installingWorker.state === 'installed') {
+
+        function awaitInstallingWorker() {
+          if (registration.installing) {
+            registration.installing.addEventListener('statechange', function() {
+              console.log('onstatechange', registration.installing.state);
+                if (registration.installing.state === 'installed') {
                   console.log('installed');
                   if (navigator.serviceWorker.controller) {
                     console.log('ready to reload');
                     setUpdateNeeded(true);
                   }
                 }
-              };
-            }
-          });
-        }
-      });
-
-      /*
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('controllerchange');
-        if (refreshing.current) return;
-        refreshing.current = true;
-        window.location.reload();
-      });
-  
-      navigator.serviceWorker.getRegistration().then((reg) => {
-        function waitForInstall() {
-          console.log('wait for install')
-          reg.installing.addEventListener('statechange', function() {
-            console.log('statechange', this.state);
-            if (this.state === 'installed') {
-              setUpdateNeeded(true);
-            }
-          });
+            });
+          }
         }
 
-        console.log('reg', reg);
+        if (registration) {
+          // already waiting (i.e. ready)
+          if (registration.waiting) {
+            console.log('already waiting');
+            setUpdateNeeded(true);
 
-        // if no reg, nothing to do
-        if (!reg) return;
+          // already installing (i.e. ready once installed)
+          } else if (registration.installing) {
+            console.log('installingWorker', registration.installing);
+            awaitInstallingWorker();
 
-        // if new version is already waiting, prompt now
-        if (reg.waiting) return setUpdateNeeded(true);
+          // nothing happening yet
+          } else {
+            console.log('nothing yet');
+            registration.addEventListener('updatefound', () => {
+              console.log('update found');
+              awaitInstallingWorker();
+            });
 
-        // if new version is still installing, wait for install
-        if (reg.installing) return waitForInstall();
-
-        // if nothing new yet, listen for updatefound, then wait for install
-        reg.addEventListener('updatefound', waitForInstall);
+            registration.update();
+          }
+        }
       });
-      */
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // check for app updates regularly
+  useInterval(() => {
+    console.log('interval');
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then((registration) => {
+        if (registration) {
+          console.log('update');
+          registration.update();
+        }
+      });
+    }
+  }, updateNeeded ? null : 30000);
 
   return {
     updateNeeded,
