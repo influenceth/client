@@ -53,7 +53,7 @@ const useServiceWorker = () => {
         navigator.serviceWorker.getRegistration().then((reg) => {
           if (reg) {
             console.log('skipWaiting');
-            reg.waiting.postMessage('skipWaiting');
+            reg.waiting.postMessage({type: 'SKIP_WAITING'});
           } else {
             console.log('reload 1');
             window.location.reload();
