@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const useServiceWorker = () => {
-  const [updateNeeded, setUpdateNeeded] = useState(true);
+  const [updateNeeded, setUpdateNeeded] = useState(false);
   const refreshing = useRef(false);
 
   useEffect(() => {

@@ -61,7 +61,7 @@ const entries = {
     <StyledLogEntry>
       <Description>
         <span>A new version of Influence is now available! </span>
-        <span><a onClick={e.onReload} style={{ textDecoration: 'underline' }}>Click here</a> to update your experience.</span>
+        <span>Click here to update your experience.</span>
       </Description>
     </StyledLogEntry>
   ),

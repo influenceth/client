@@ -56,8 +56,9 @@ const Game = (props) => {
       createAlert({
         type: 'App_Updated',
         level: 'warning',
-        disableDismiss: true,
-        onReload: onUpdateVersion
+        duration: 0,
+        hideCloseIcon: true,
+        onRemoval: onUpdateVersion
       });
     }
   }, [createAlert, updateNeeded, onUpdateVersion]);
