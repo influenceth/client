@@ -22,10 +22,11 @@ const useServiceWorker = () => {
 
         const awaitInstallingWorker = () => {
           if (registration.installing) {
-            registration.installing.addEventListener('statechange', () => {
-              console.log('registration pre check', registration);
-              console.log('onstatechange', registration.installing.state);
-                if (registration.installing.state === 'installed') {
+            const installingWorker = registration.installing;
+            installingWorker.addEventListener('statechange', (x) => {
+              console.log('registration pre check', registration, x);
+              console.log('onstatechange', installingWorker.state);
+                if (installingWorker.state === 'installed') {
                   console.log('installed');
                   if (navigator.serviceWorker.controller) {
                     console.log('ready to reload');
@@ -54,8 +55,6 @@ const useServiceWorker = () => {
               console.log('update found');
               awaitInstallingWorker();
             });
-
-            registration.update();
           }
         }
       });

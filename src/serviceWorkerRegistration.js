@@ -91,11 +91,10 @@ function registerValidSW(swUrl, config) {
         };
       };
 
-      // poll for new version of app
+      // poll for new version of app every 5m
       setInterval(() => {
-        console.log('check for updates');
         registration.update();
-      }, 30e3); // TODO: increase to ~10m
+      }, 30e3);
     })
     .catch((error) => {
       console.error('Error during service worker registration:', error);
