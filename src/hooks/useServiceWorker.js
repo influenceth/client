@@ -9,23 +9,25 @@ const useServiceWorker = () => {
       console.log('in nav');
       navigator.serviceWorker.getRegistration().then((registration) => {
         console.log('registrration', registration);
-        registration.addEventListener('onupdatefound', () => {
-          console.log('onupdatefound');
-          const installingWorker = registration.installing;
-          if (installingWorker) {
-            console.log('installingWorker', installingWorker);
-            installingWorker.onstatechange = () => {
-              console.log('onstatechange', installingWorker.state);
-              if (installingWorker.state === 'installed') {
-                console.log('installed');
-                if (navigator.serviceWorker.controller) {
-                  console.log('ready to reload');
-                  setUpdateNeeded(true);
+        if (registration) {
+          registration.addEventListener('onupdatefound', () => {
+            console.log('onupdatefound');
+            const installingWorker = registration.installing;
+            if (installingWorker) {
+              console.log('installingWorker', installingWorker);
+              installingWorker.onstatechange = () => {
+                console.log('onstatechange', installingWorker.state);
+                if (installingWorker.state === 'installed') {
+                  console.log('installed');
+                  if (navigator.serviceWorker.controller) {
+                    console.log('ready to reload');
+                    setUpdateNeeded(true);
+                  }
                 }
-              }
-            };
-          }
-        });
+              };
+            }
+          });
+        }
       });
 
       /*
@@ -73,11 +75,13 @@ const useServiceWorker = () => {
       console.log('onUpdateVersion');
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration().then((registration) => {
-          console.log('reg', registration);
-          console.log('waiting', registration.waiting);
-          console.log('installing', registration.installing);
-          console.log('installed', registration.installed);
-          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          if (registration) {
+            console.log('reg', registration);
+            console.log('waiting', registration.waiting);
+            console.log('installing', registration.installing);
+            console.log('installed', registration.installed);
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
         });
       }
       /*
