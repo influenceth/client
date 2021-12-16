@@ -4,6 +4,7 @@ import { ThemeProvider } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
+import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import LandingPage from '~/game/Landing';
 import Intro from '~/game/Intro';
@@ -16,7 +17,7 @@ import theme from '~/theme';
 const StyledMain = styled.main`
   bottom: 0;
   display: flex;
-  min-height: 100%;
+  min-height: 99%;
   overflow: hidden;
   position: absolute;
   top: 0;
@@ -25,6 +26,8 @@ const StyledMain = styled.main`
 
 const Game = (props) => {
   const gpuInfo = useDetectGPU();
+  useServiceWorker();
+
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const [ showScene, setShowScene ] = useState(false);
   const [ loading, setLoading ] = useState(true);

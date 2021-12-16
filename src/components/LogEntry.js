@@ -57,6 +57,15 @@ const getTxLink = (txHash) => {
 };
 
 const entries = {
+  App_Updated: (e) => {
+    <StyledLogEntry>
+      <Description>
+        <span>A new version of Influence is now available! </span>
+        <span onClick={e.onClick}>Click here to update your experience.</span>
+      </Description>
+    </StyledLogEntry>
+  },
+
   Game_GPUPrompt: (e) => (
     <StyledLogEntry>
       <Description>
