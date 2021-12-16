@@ -12,9 +12,9 @@ const useServiceWorker = () => {
       navigator.serviceWorker.getRegistration().then((registration) => {
         console.log('registrration', registration);
 
-        function awaitInstallingWorker() {
+        const awaitInstallingWorker = () => {
           if (registration.installing) {
-            registration.installing.addEventListener('statechange', function() {
+            registration.installing.addEventListener('statechange', () => {
               console.log('onstatechange', registration.installing.state);
                 if (registration.installing.state === 'installed') {
                   console.log('installed');
@@ -25,7 +25,7 @@ const useServiceWorker = () => {
                 }
             });
           }
-        }
+        };
 
         if (registration) {
           // already waiting (i.e. ready)
