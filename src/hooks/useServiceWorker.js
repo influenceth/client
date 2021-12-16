@@ -1,14 +1,22 @@
-import { useCallback, useEffect, useState } from 'react';
-
-import useInterval from '~/hooks/useInterval';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const useServiceWorker = () => {
   const [updateNeeded, setUpdateNeeded] = useState(false);
-  //const refreshing = useRef(false);
+  const refreshing = useRef(false);
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       console.log('in nav');
+
+      // if there is a controller change (i.e. if new serviceworker becomes active),
+      // reload the page so that newly cached assets are actually the ones in use
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing.current) return;
+        refreshing.current = true;
+        window.location.reload();
+      });
+
+      // evaluate serviceworker state, prompt user to reload if a new version is ready
       navigator.serviceWorker.getRegistration().then((registration) => {
         console.log('registrration', registration);
 
@@ -55,19 +63,6 @@ const useServiceWorker = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // check for app updates regularly
-  useInterval(() => {
-    console.log('interval');
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistration().then((registration) => {
-        if (registration) {
-          console.log('update');
-          registration.update();
-        }
-      });
-    }
-  }, updateNeeded ? null : 30000);
-
   return {
     updateNeeded,
     onUpdateVersion: useCallback(() => {
@@ -77,29 +72,10 @@ const useServiceWorker = () => {
           if (registration) {
             console.log('reg', registration);
             console.log('waiting', registration.waiting);
-            console.log('installing', registration.installing);
-            console.log('installed', registration.installed);
             registration.waiting.postMessage({ type: 'SKIP_WAITING' });
           }
         });
       }
-      /*
-      console.log('onUpdateVersion');
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistration().then((reg) => {
-          if (reg) {
-            console.log('skipWaiting');
-            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-          } else {
-            console.log('reload 1');
-            window.location.reload();
-          }
-        });
-      } else {
-        console.log('reload 2');
-        window.location.reload();
-      }
-      */
     }, [])
   }
 };
