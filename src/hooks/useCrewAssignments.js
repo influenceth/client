@@ -7,7 +7,7 @@ const useCrewAssignments = () => {
   const { token } = useAuth();
 
   return useQuery(
-    [ 'assignments' ],
+    [ 'assignments', token ],
     async () => {
       const assignmentsByBook = {};
       let totalAssignments = 0;
