@@ -26,7 +26,7 @@ const StyledMain = styled.main`
 
 const Game = (props) => {
   const gpuInfo = useDetectGPU();
-  useServiceWorker();
+  const { updateNeeded, onUpdateVersion } = useServiceWorker();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const [ showScene, setShowScene ] = useState(false);
@@ -50,6 +50,17 @@ const Game = (props) => {
       }
     }
   }, [ gpuInfo, createAlert ]);
+
+  useEffect(() => {
+    if (updateNeeded) {
+      createAlert({
+        type: 'App_Updated',
+        level: 'warning',
+        disableDismiss: true,
+        onReload: onUpdateVersion
+      });
+    }
+  }, [createAlert, updateNeeded, onUpdateVersion]);
 
   return (
     <ThemeProvider theme={theme}>

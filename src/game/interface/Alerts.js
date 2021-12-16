@@ -72,9 +72,17 @@ const Alerts = (props) => {
   useEffect(() => {
     if (alerts?.length === 0) return;
     alerts.filter(a => !a.notified).forEach(a => {
-      const { level, type, duration, ...data } = a;
+      const { level, type, duration, disableDismiss, ...data } = a;
       const options = level ? { type: level } : {};
       if (duration) options.dismiss = { duration: duration };
+      if (disableDismiss) {
+        options.dismiss = {
+          ...(options.dismiss || defaults.dismiss),
+          click: false,
+          touch: false,
+          showIcon: false
+        }
+      }
       send(<LogEntry type={type} data={data} />, options);
 
       if (level === 'warning') {

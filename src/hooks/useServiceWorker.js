@@ -1,21 +1,8 @@
-import { useEffect, useRef } from 'react';
-import useStore from '~/hooks/useStore';
-
-const alertParams = {
-  type: 'App_Updated',
-  level: 'warning',
-  onClick: () => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistration().then((reg) => {
-        reg.waiting.postMessage('skipWaiting');
-      });
-    }
-  }
-};
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const useServiceWorker = () => {
+  const [updateNeeded, setUpdateNeeded] = useState(true);
   const refreshing = useRef(false);
-  const createAlert = useStore(s => s.dispatchAlertLogged);
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -34,7 +21,7 @@ const useServiceWorker = () => {
           reg.installing.addEventListener('statechange', function() {
             console.log('statechange', this.state);
             if (this.state === 'installed') {
-              createAlert(alertParams);
+              setUpdateNeeded(true);
             }
           });
         }
@@ -45,7 +32,7 @@ const useServiceWorker = () => {
         if (!reg) return;
 
         // if new version is already waiting, prompt now
-        if (reg.waiting) return createAlert(alertParams);
+        if (reg.waiting) return setUpdateNeeded(true);
 
         // if new version is still installing, wait for install
         if (reg.installing) return waitForInstall();
@@ -57,6 +44,23 @@ const useServiceWorker = () => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  return {
+    updateNeeded,
+    onUpdateVersion: useCallback(() => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then((reg) => {
+          if (reg) {
+            reg.waiting.postMessage('skipWaiting');
+          } else {
+            window.location.reload();
+          }
+        });
+      } else {
+        window.location.reload();
+      }
+    }, [])
+  }
 };
 
 export default useServiceWorker;
