@@ -291,7 +291,6 @@ const entries = {
 
 const LogEntry = (props) => {
   const { type, data } = props;
-console.log('type', type);
   try {
     return entries[type](data);
   } catch (e) {

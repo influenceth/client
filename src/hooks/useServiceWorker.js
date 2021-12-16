@@ -6,7 +6,6 @@ const useServiceWorker = () => {
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      console.log('in nav');
 
       // if there is a controller change (i.e. if new serviceworker becomes active),
       // reload the page so that newly cached assets are actually the ones in use
@@ -18,18 +17,15 @@ const useServiceWorker = () => {
 
       // evaluate serviceworker state, prompt user to reload if a new version is ready
       navigator.serviceWorker.getRegistration().then((registration) => {
-        console.log('registrration', registration);
+        if (!registration) return;
 
+        // if there is an installing worker, wait until it is installed, then prompt user to update
         const awaitInstallingWorker = () => {
           if (registration.installing) {
             const installingWorker = registration.installing;
-            installingWorker.addEventListener('statechange', (x) => {
-              console.log('registration pre check', registration, x);
-              console.log('onstatechange', installingWorker.state);
+            installingWorker.addEventListener('statechange', () => {
                 if (installingWorker.state === 'installed') {
-                  console.log('installed');
                   if (navigator.serviceWorker.controller) {
-                    console.log('ready to reload');
                     setUpdateNeeded(true);
                   }
                 }
@@ -37,25 +33,19 @@ const useServiceWorker = () => {
           }
         };
 
-        if (registration) {
-          // already waiting (i.e. ready)
-          if (registration.waiting) {
-            console.log('already waiting');
-            setUpdateNeeded(true);
+        // already waiting (i.e. ready)
+        if (registration.waiting) {
+          setUpdateNeeded(true);
 
-          // already installing (i.e. ready once installed)
-          } else if (registration.installing) {
-            console.log('installingWorker', registration.installing);
+        // already installing (i.e. ready once installed)
+        } else if (registration.installing) {
+          awaitInstallingWorker();
+
+        // nothing happening yet
+        } else {
+          registration.addEventListener('updatefound', () => {
             awaitInstallingWorker();
-
-          // nothing happening yet
-          } else {
-            console.log('nothing yet');
-            registration.addEventListener('updatefound', () => {
-              console.log('update found');
-              awaitInstallingWorker();
-            });
-          }
+          });
         }
       });
     }
@@ -66,12 +56,9 @@ const useServiceWorker = () => {
   return {
     updateNeeded,
     onUpdateVersion: useCallback(() => {
-      console.log('onUpdateVersion');
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration().then((registration) => {
-          if (registration) {
-            console.log('reg', registration);
-            console.log('waiting', registration.waiting);
+          if (registration && registration.waiting) {
             registration.waiting.postMessage({ type: 'SKIP_WAITING' });
           }
         });
