@@ -115,6 +115,9 @@ const CardWrapper = styled.div`
   padding: 30px;
   justify-content: center;
   width: 100%;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    padding: 20px 0;
+  }
 `;
 
 const CardContainer = styled.div`
