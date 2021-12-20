@@ -98,8 +98,8 @@ const api = {
     return response.data;
   },
 
-  getStory: async (id) => {
-    const response = await instance.get(`/v1/stories/${id}`);
+  getStory: async (id, sessionId) => {
+    const response = await instance.get(`/v1/stories/${id}`, { params: { session: sessionId }});
     return response.data;
   },
 
@@ -113,8 +113,11 @@ const api = {
     return response.data;
   },
 
-  getStorySessionPath: async (sessionId, pathId) => {
-    const response = await instance.get(`/v1/stories/sessions/${sessionId}/paths/${pathId}`);
+  getStoryPath: async (storyId, pathId, sessionId) => {
+    const response = await instance.get(
+      `/v1/stories/${storyId}/paths/${pathId}`,
+      { params: { session: sessionId } }
+    );
     return response.data;
   },
 
