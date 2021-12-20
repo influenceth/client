@@ -68,7 +68,7 @@ const Game = (props) => {
       <Router>
         <Referral />
         <Switch>
-          <Route path="/play/:path?/:param1?/:param2?/:param3?">
+          <Route path="/play">
             <LandingPage />
           </Route>
           <Route>
