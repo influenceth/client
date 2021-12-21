@@ -163,6 +163,9 @@ const SectionSubtitle = styled.div`
   font-size: 13px;  
   line-height: 1.6em;
   opacity: 0.6;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    white-space: nowrap;
+  }
 `;
 
 const BookHeader = styled(SectionHeader)`
@@ -552,7 +555,7 @@ const CrewAssignments = (props) => {
                 </div>
                 <CrewHeader>
                   <SectionTitle>{selectedStory?.title || ''}</SectionTitle>
-                  <SectionSubtitle>Select a Crew Member to begin the assignment with:</SectionSubtitle>
+                  <SectionSubtitle>Select a Crew Member to begin the assignment:</SectionSubtitle>
                 </CrewHeader>
               </MobileCrewHeaderContainer>
 
