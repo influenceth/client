@@ -128,16 +128,17 @@ const MobileCrewHeaderContainer = styled.div`
 const CrewSection = styled(SectionBody)`
   padding-left: 3px;
   padding-top: 3px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  height: auto;
-  @media (min-width: ${p => p.theme.breakpoints.xl}px) {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  }
   & > div {
-    padding: 0 12px 12px 0;
-    @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-      padding-right: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    @media (min-width: ${p => p.theme.breakpoints.xl}px) {
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+    & > div {
+      padding: 0 12px 12px 0;
+      @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+        padding-right: 0;
+      }
     }
   }
 `;
@@ -162,6 +163,9 @@ const SectionSubtitle = styled.div`
   font-size: 13px;  
   line-height: 1.6em;
   opacity: 0.6;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    white-space: nowrap;
+  }
 `;
 
 const BookHeader = styled(SectionHeader)`
@@ -551,24 +555,26 @@ const CrewAssignments = (props) => {
                 </div>
                 <CrewHeader>
                   <SectionTitle>{selectedStory?.title || ''}</SectionTitle>
-                  <SectionSubtitle>Select a Crew Member to begin the assignment with:</SectionSubtitle>
+                  <SectionSubtitle>Select a Crew Member to begin the assignment:</SectionSubtitle>
                 </CrewHeader>
               </MobileCrewHeaderContainer>
 
               {crew && crew.length > 0
                 ? (
                   <CrewSection>
-                    {crew.map((c) => {
-                      const crewStatus = bookReady ? selectedStory?.crewStatuses[c.i] : 'loading';
-                      return (
-                        <div key={c.i}>
-                          <CrewCard
-                            crew={c}
-                            config={crewStates[crewStatus || 'notReady']}
-                            onClick={selectCrew(c.i)} />
-                        </div>
-                      );
-                    })}
+                    <div>
+                      {crew.map((c) => {
+                        const crewStatus = bookReady ? selectedStory?.crewStatuses[c.i] : 'loading';
+                        return (
+                          <div key={c.i}>
+                            <CrewCard
+                              crew={c}
+                              config={crewStates[crewStatus || 'notReady']}
+                              onClick={selectCrew(c.i)} />
+                          </div>
+                        );
+                      })}
+                    </div>
                   </CrewSection>
                 )
                 : (

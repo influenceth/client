@@ -4,6 +4,20 @@ import { useHistory } from 'react-router-dom';
 import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
 
+const Wrapper = styled.div`
+  flex: 1 1 0;
+  max-width: ${p => p.fullWidth ? 'none' : (p.maxWidth || '1400px')};
+  padding: 25px 25px 0;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    padding: 0 0 50px 0;
+    z-index: 1;
+  }
+`;
+
 const StyledDetails = styled.div`
   background-color: ${p => p.theme.colors.contentBackdrop};
   backdrop-filter: blur(4px);
@@ -16,21 +30,14 @@ const StyledDetails = styled.div`
   );
   display: flex;
   flex-direction: column;
-  flex: 1 1 0;
   height: 100%;
-  margin: 25px 25px 0 25px;
-  max-width: ${p => p.fullWidth ? 'none' : (p.maxWidth || '1400px')};
-  pointer-events: auto;
-  position: relative;
   overflow: hidden;
-  width: 100%;
+  pointer-events: auto;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     background-color: ${p => p.theme.colors.mobileBackground};
     backdrop-filter: none;
     clip-path: none;
-    margin: 0 0 50px 0;
-    z-index: 1;
   }
 `;
 
@@ -90,18 +97,20 @@ const Details = (props) => {
   const history = useHistory();
 
   return (
-    <StyledDetails {...restProps}>
-      {title && <Header>{title}</Header>}
-      <CloseButton
-        onClick={() => history.push(onCloseDestination || '/')}
-        hasBackground={edgeToEdge}
-        borderless>
-        <CloseIcon />
-      </CloseButton>
-      <Content edgeToEdge={edgeToEdge} hasTitle={!!title} {...contentProps}>
-        {props.children}
-      </Content>
-    </StyledDetails>
+    <Wrapper {...restProps}>
+      <StyledDetails {...restProps}>
+        {title && <Header>{title}</Header>}
+        <CloseButton
+          onClick={() => history.push(onCloseDestination || '/')}
+          hasBackground={edgeToEdge}
+          borderless>
+          <CloseIcon />
+        </CloseButton>
+        <Content edgeToEdge={edgeToEdge} hasTitle={!!title} {...contentProps}>
+          {props.children}
+        </Content>
+      </StyledDetails>
+    </Wrapper>
   );
 };
 

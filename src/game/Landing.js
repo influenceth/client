@@ -1,7 +1,10 @@
 import { Redirect, Route, Switch } from 'react-router-dom';
 
 const redirect = (url) => {
-  window.location.href = url;
+  // timeout to ensure referrer gets set before script terminating
+  setTimeout(() => {
+    window.location.href = url;
+  }, 100);
 };
 
 // the /play prefix is used for generated sharing URLs, especially when we
