@@ -19,6 +19,9 @@ import Svg17 from '~/assets/icons/crew_traits/17.svg';
 import Svg18 from '~/assets/icons/crew_traits/18.svg';
 import Svg19 from '~/assets/icons/crew_traits/19.svg';
 import Svg20 from '~/assets/icons/crew_traits/20.svg';
+import Svg21 from '~/assets/icons/crew_traits/21.svg';
+import Svg22 from '~/assets/icons/crew_traits/22.svg';
+import Svg23 from '~/assets/icons/crew_traits/23.svg';
 import FallbackSvg from '~/assets/icons/RocketIcon.svg';
 
 const innerDim = 0.54;
@@ -26,7 +29,8 @@ const innerShift = (1 - innerDim) / 2;
 const indexedIcons = [
   null, // 1-indexed
   Svg1, Svg2, Svg3, Svg4, Svg5, Svg6, Svg7, Svg8, Svg9, Svg10,
-  Svg11, Svg12, Svg13, Svg14, Svg15, Svg16, Svg17, Svg18, Svg19, Svg20
+  Svg11, Svg12, Svg13, Svg14, Svg15, Svg16, Svg17, Svg18, Svg19, Svg20,
+  Svg21, Svg22, Svg23,
 ];
 
 const CrewTraitIcon = ({ trait }) => {
