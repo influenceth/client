@@ -33,10 +33,11 @@ const getOpengraphTags = async (originalUrl) => {
             tags['og:title'] = `Influence ▸ ${book.title}`;
             tags['og:description'] = 'Every choice can change the balance.'
               + ' Choose your own path, earn rewards, and expand your influence across the belt.';
-            tags['og:image'] = book.image;
+            // TODO: should rasterize image because SVGs don't seem to work on twitter card
+            //tags['og:image'] = book.image;
             // TODO: if book icons are consistent dimensions, provide og:image:* here
-            delete tags['og:image:height'];
-            delete tags['og:image:width'];
+            //delete tags['og:image:height'];
+            //delete tags['og:image:width'];
           }
         }
         break;
