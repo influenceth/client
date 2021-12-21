@@ -57,6 +57,15 @@ const getTxLink = (txHash) => {
 };
 
 const entries = {
+  App_Updated: (e) => (
+    <StyledLogEntry>
+      <Description>
+        <span>A new version of Influence is now available! </span>
+        <span>Click here to update your experience.</span>
+      </Description>
+    </StyledLogEntry>
+  ),
+
   Game_GPUPrompt: (e) => (
     <StyledLogEntry>
       <Description>
@@ -282,7 +291,6 @@ const entries = {
 
 const LogEntry = (props) => {
   const { type, data } = props;
-
   try {
     return entries[type](data);
   } catch (e) {

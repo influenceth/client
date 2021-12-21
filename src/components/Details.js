@@ -19,9 +19,11 @@ const StyledDetails = styled.div`
   flex: 1 1 0;
   height: 100%;
   margin: 25px 25px 0 25px;
+  max-width: ${p => p.fullWidth ? 'none' : (p.maxWidth || '1400px')};
   pointer-events: auto;
   position: relative;
   overflow: hidden;
+  width: 100%;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     background-color: ${p => p.theme.colors.mobileBackground};

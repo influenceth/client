@@ -4,6 +4,7 @@ import { ThemeProvider } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
+import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import LandingPage from '~/game/Landing';
 import Intro from '~/game/Intro';
@@ -25,6 +26,8 @@ const StyledMain = styled.main`
 
 const Game = (props) => {
   const gpuInfo = useDetectGPU();
+  const { updateNeeded, onUpdateVersion } = useServiceWorker();
+
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const [ showScene, setShowScene ] = useState(false);
   const [ loading, setLoading ] = useState(true);
@@ -48,12 +51,24 @@ const Game = (props) => {
     }
   }, [ gpuInfo, createAlert ]);
 
+  useEffect(() => {
+    if (updateNeeded) {
+      createAlert({
+        type: 'App_Updated',
+        level: 'warning',
+        duration: 0,
+        hideCloseIcon: true,
+        onRemoval: onUpdateVersion
+      });
+    }
+  }, [createAlert, updateNeeded, onUpdateVersion]);
+
   return (
     <ThemeProvider theme={theme}>
       <Router>
         <Referral />
         <Switch>
-          <Route exact path="/landing/:source?">
+          <Route path="/play">
             <LandingPage />
           </Route>
           <Route>

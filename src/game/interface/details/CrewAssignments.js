@@ -130,11 +130,15 @@ const CrewSection = styled(SectionBody)`
   padding-top: 3px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  height: auto;
   @media (min-width: ${p => p.theme.breakpoints.xl}px) {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
   & > div {
     padding: 0 12px 12px 0;
+    @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+      padding-right: 0;
+    }
   }
 `;
 
@@ -462,7 +466,7 @@ const CrewAssignments = (props) => {
 
   const { title, parts } = book || {};
   return (
-    <Details title="Crew Assignments">
+    <Details title="Crew Assignments" maxWidth="2200px">
       <div style={{
         display: 'flex',
         flexDirection: 'row',

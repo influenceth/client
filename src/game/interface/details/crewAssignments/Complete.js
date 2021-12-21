@@ -115,6 +115,9 @@ const CardWrapper = styled.div`
   padding: 30px;
   justify-content: center;
   width: 100%;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    padding: 20px 0;
+  }
 `;
 
 const CardContainer = styled.div`
@@ -308,7 +311,7 @@ const CrewAssignmentComplete = (props) => {
         `Join Now:`,
       ].join('\n\n'),
       hashtags: 'PlayToEarn,NFTGaming',
-      url: `${process.env.REACT_APP_API_URL}/og/crew-assignment/${sessionId}/${account}`,
+      url: `${document.location.origin}/play/crew-assignment/${sessionId}?r=${account}`,
       //via: 'influenceth'
     });
     window.open(`https://twitter.com/intent/tweet?${params.toString()}`);

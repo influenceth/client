@@ -46,6 +46,7 @@ const StyledInterface = styled.div`
 `;
 
 const MainContainer = styled.div`
+  align-items: center;
   display: flex;
   flex-direction: column;
   flex: 1 1 0;
@@ -55,6 +56,7 @@ const MainContainer = styled.div`
   min-width: 0;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    align-items: normal;
     bottom: 0;
     position: absolute;
     width: 100%;

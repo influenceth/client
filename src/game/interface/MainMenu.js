@@ -30,7 +30,7 @@ const StyledMainMenu = styled.div`
   box-sizing: border-box;
   display: flex;
   flex: 0 1 auto;
-  height: 94px;
+  height: 75px;
   padding: 25px 0 25px 25px;
   pointer-events: auto;
   position: relative;

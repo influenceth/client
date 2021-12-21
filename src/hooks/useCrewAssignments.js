@@ -34,6 +34,9 @@ const useCrewAssignments = () => {
         assignmentsByBook: Object.values(assignmentsByBook),
         totalAssignments
       };
+    },
+    {
+      enabled: !!token
     }
   );
 };

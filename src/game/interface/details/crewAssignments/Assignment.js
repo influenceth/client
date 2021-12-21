@@ -102,7 +102,8 @@ const BelowFold = styled.div`
 `;
 
 const CrewContainer = styled.div`
-  flex: 0 0 210px;
+  flex: 0 1 275px;
+  min-width: 210px;
   padding: 0 12px 12px 0;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
