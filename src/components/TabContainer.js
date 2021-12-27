@@ -11,10 +11,6 @@ const Container = styled.div`
   ${p => p.negativeTopMargin ? `margin-top: -${TAB_HEIGHT}px;`: ''}
   overflow: hidden;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    margin-top: 0;
-  }
-
   ${p => p.css || ''}
 `;
 const Tabs = styled.div`

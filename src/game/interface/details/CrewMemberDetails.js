@@ -37,13 +37,14 @@ const goToOpenSeaCrew = (i) => {
 };
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
+const breakpoint = 1375;
 
 const Content = styled.div`
   display: flex;
   flex-direction: row;
   height: 100%;
   padding: 40px 35px 25px;
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+  @media (max-width: ${breakpoint}px) {
     flex-direction: column;
     height: auto;
     padding: 10px 0 0px;
@@ -58,7 +59,7 @@ const Subtitle = styled.h5`
 `;
 
 const ManagementSubtitle = styled(Subtitle)`
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+  @media (max-width: ${breakpoint}px) {
     display: none;
   }
 `;
@@ -70,7 +71,9 @@ const CrewBasics = styled.div`
   height: 100%;
   overflow: hidden;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+  @media (max-width: ${breakpoint}px) {
+    flex-direction: row;
+    flex-wrap: wrap;
     height: auto;
     overflow: visible;
     margin-bottom: 25px;
@@ -81,6 +84,16 @@ const CrewBasics = styled.div`
 const CardWrapper = styled.div`
   border: 1px solid #363636;
   padding: 2px;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    flex: 0 1 400px;
+    @media (min-width: 440px) {
+      margin: 0 10px 0 0;
+    }
+  }
+  @media (min-width: ${p => p.theme.breakpoints.mobile}px) and (max-width: ${breakpoint}px) {
+    flex: 0 1 350px;
+    margin: 0 10px 0 0;
+  }
 `;
 
 const BelowCardWrapper = styled.div`
@@ -95,7 +108,7 @@ const CrewDetails = styled.div`
   flex-direction: column;
   height: 100%;
   padding-left: 25px;
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+  @media (max-width: ${breakpoint}px) {
     display: block;
     padding-left: 0;
   }
@@ -118,12 +131,13 @@ const Management = styled.div`
 const tabContainerCss = css`
   flex: 1 0 60%;
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+  @media (max-width: ${breakpoint}px) {
     background: rgba(${p => p.theme.colors.mainRGB}, 0.05);
     border: 2px solid rgba(${p => p.theme.colors.mainRGB}, 0.15);
     border-left: none;
     border-right: none;
     box-shadow: -4px 0 8px rgba(${p => p.theme.colors.mainRGB}, 0.25);
+    margin-top: 0;
   }
 `;
 
@@ -133,7 +147,7 @@ const TraitPane = styled.div`
   height: 100%;
   padding: 8px 0 0;
   width: 100%;
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+  @media (max-width: ${breakpoint}px) {
     flex-direction: column-reverse;
     padding: 0;
   }
@@ -146,7 +160,7 @@ const AllTraits = styled.div`
   grid-template-rows: ${(traitSize)}px;
   overflow: auto;
   scrollbar-width: thin;
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+  @media (max-width: ${breakpoint}px) {
     display: flex;
     flex: none;
     flex-direction: row;
@@ -178,7 +192,7 @@ const Trait = styled.div`
     }
   }
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+  @media (max-width: ${breakpoint}px) {
     ${p => p.selected && 'background: linear-gradient(to top, transparent 0%, rgb(255, 255, 255, 0.175) 100%);'}
     border-top: 1px solid ${borderColor};
   }
@@ -221,7 +235,7 @@ const NoTraitsMessage = styled.div`
     width: auto;
   }
   
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+  @media (max-width: ${breakpoint}px) {
     border-bottom: 2px solid #18313a;
   }
 `;
@@ -243,7 +257,7 @@ const Display = styled.div`
     font-size: 16px;
     margin: 0;
   }
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+  @media (max-width: ${breakpoint}px) {
     min-height: 0;
     padding-top: 20px;
   }
@@ -256,6 +270,7 @@ const Description = styled.div`
   display: flex;
   font-size: 12px;
   height: 80px;
+  justify-content: center;
   padding: 5px;
   text-align: center;
   width: 100%;
@@ -263,7 +278,7 @@ const Description = styled.div`
     max-height: 100%;
     overflow: auto;
   }
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+  @media (max-width: ${breakpoint}px) {
     border: none;
   }
 `;
@@ -300,7 +315,7 @@ const Log = styled.div`
     padding: 5px 0;
   }
   & ${LogHeader} {
-    @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    @media (max-width: ${breakpoint}px) {
       display: none;
     }
   }
@@ -313,18 +328,19 @@ const Log = styled.div`
     overflow-y: auto;
     & ul {
       margin-right: -5px;
-      @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+      @media (max-width: ${breakpoint}px) {
         margin-right: 0;
       }
     }
 
-    @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    @media (max-width: ${breakpoint}px) {
       border-top: none;
-      height: calc(100vh - 180px);
+      height: auto;
+      max-height: calc(100vh - 160px);
     }
   }
 
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+  @media (max-width: ${breakpoint}px) {
     display: block;
     margin: 0 -10px;
   }
@@ -520,76 +536,7 @@ const CrewMemberDetails = (props) => {
                     {crew?.events.map(e => (
                       <LogEntry
                         key={e.transactionHash}
-                        data={{
-                          ...e,
-                          returnValues: {
-                            ...e.returnValues,
-                            from: '0x4567'
-                          }
-                        }}
-                        type={`CrewMember_${e.event}`}
-                        isTabular />
-                    ))}
-                      
-                    {crew?.events.map(e => (
-                      <LogEntry
-                        key={e.transactionHash}
                         data={e}
-                        type={`CrewMember_${e.event}`}
-                        isTabular />
-                    ))}
-                    {crew?.events.map(e => (
-                      <LogEntry
-                        key={e.transactionHash}
-                        data={e}
-                        type={`CrewMember_${e.event}`}
-                        isTabular />
-                    ))}
-                    {crew?.events.map(e => (
-                      <LogEntry
-                        key={e.transactionHash}
-                        data={e}
-                        type={`CrewMember_${e.event}`}
-                        isTabular />
-                    ))}
-                    {crew?.events.map(e => (
-                      <LogEntry
-                        key={e.transactionHash}
-                        data={e}
-                        type={`CrewMember_${e.event}`}
-                        isTabular />
-                    ))}
-                    {crew?.events.map(e => (
-                      <LogEntry
-                        key={e.transactionHash}
-                        data={e}
-                        type={`CrewMember_${e.event}`}
-                        isTabular />
-                    ))}
-                    {crew?.events.map(e => (
-                      <LogEntry
-                        key={e.transactionHash}
-                        data={e}
-                        type={`CrewMember_${e.event}`}
-                        isTabular />
-                    ))}
-                    {crew?.events.map(e => (
-                      <LogEntry
-                        key={e.transactionHash}
-                        data={e}
-                        type={`CrewMember_${e.event}`}
-                        isTabular />
-                    ))}
-                    {crew?.events.map(e => (
-                      <LogEntry
-                        key={e.transactionHash}
-                        data={{
-                          ...e,
-                          returnValues: {
-                            ...e.returnValues,
-                            from: '0x123'
-                          }
-                        }}
                         type={`CrewMember_${e.event}`}
                         isTabular />
                     ))}
