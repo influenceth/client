@@ -1,101 +1,271 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
 import { useWeb3React } from '@web3-react/core';
 import styled, { css } from 'styled-components';
-import { toCrewClass, toCrewTitle, toCrewCollection } from 'influence-utils';
-import LoadingAnimation from 'react-spinners/PuffLoader';
+import { toCrewClass, toCrewCollection, toCrewTitle, toCrewTrait } from 'influence-utils';
+import { FaBookOpen as BioIcon } from 'react-icons/fa';
+import { RiBarChart2Fill as StatsIcon } from 'react-icons/ri';
 
+import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewMember from '~/hooks/useCrewMember';
 import useNameCrew from '~/hooks/useNameCrew';
+import useStore from '~/hooks/useStore';
+import Button from '~/components/Button';
+import CrewCard from '~/components/CrewCard';
+import DataReadout from '~/components/DataReadout';
 import Details from '~/components/Details';
 import Form from '~/components/Form';
-import Text from '~/components/Text';
-import Button from '~/components/Button';
 import IconButton from '~/components/IconButton';
-import DataReadout from '~/components/DataReadout';
-import TextInput from '~/components/TextInput';
+import {
+  CheckCircleIcon,
+  ClaimIcon,
+  EditIcon,
+  HexagonIcon,
+  WarningOutlineIcon
+} from '~/components/Icons';
 import LogEntry from '~/components/LogEntry';
-import { EditIcon, CheckCircleIcon, ClaimIcon } from '~/components/Icons';
+import TabContainer from '~/components/TabContainer';
+import Text from '~/components/Text';
+import TextInput from '~/components/TextInput';
+
+import { unixTimeToGameTime } from '~/lib/utils';
+import CrewTraitIcon from '~/components/CrewTraitIcon';
 
 const goToOpenSeaCrew = (i) => {
   const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_CREW_TOKEN}/${i}`;
   window.open(url, '_blank');
 };
 
-const StyledCrewMemberDetails = styled.div`
+const borderColor = 'rgba(200, 200, 200, 0.15)';
+
+const Content = styled.div`
+  display: flex;
+  flex-direction: row;
   height: 100%;
-`;
-
-const SidePanel = styled.div`
-  display: flex;
-  flex: 0 0 auto;
-  flex-direction: column;
-  width: 325px;
-
+  padding: 40px 35px 25px;
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    padding: 15px;
-    width: 100%;
-  }
-`;
-
-const Avatar = styled.div`
-  align-items: center;
-  background-image: linear-gradient(
-    300deg,
-    ${p => p.theme.colors.classes[p.crewClass]}AA,
-    ${p => p.theme.colors.classes[p.crewClass]}00 40%
-  );
-  border-bottom: 1px solid ${p => p.theme.colors.main};
-  border-right: 1px solid ${p => p.theme.colors.main};
-  bottom: 0;
-  display: flex;
-  height: calc(100% - 25px);
-  position: absolute;
-  right: 0;
-  width: 50%;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    background-image: linear-gradient(
-      340deg,
-      ${p => p.theme.colors.classes[p.crewClass]}AA,
-      ${p => p.theme.colors.classes[p.crewClass]}00 40%
-    );
-    border: 0;
+    flex-direction: column;
     height: auto;
-    position: relative;
-    width: 100%;
+    padding: 10px 0 0px;
   }
 `;
 
-const AvatarImage = styled.img`
-  display: ${p => p.visible ? 'block' : 'none'};
-  object-fit: contain;
-  object-position: 100% 100%;
-  height: 100%;
-  position: absolute;
-  width: 100%;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    position: relative;
-  }
-`;
-
-const Subtitle = styled.h2`
-  border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
-  font-size: 18px;
-  height: 40px;
-  line-height: 40px;
+const Subtitle = styled.h5`
+  border-bottom: 1px solid ${borderColor};
+  font-size: 14px;
+  line-height: 32px;
   margin: 10px 0 0 0;
 `;
 
-const GeneralData = styled(DataReadout)`
-  margin: 5px 0;
+const ManagementSubtitle = styled(Subtitle)`
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: none;
+  }
 `;
 
-const Pane = styled.div`
+const CrewBasics = styled.div`
   display: flex;
   flex-direction: column;
-  margin: 0 0 20px 15px;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    height: auto;
+    overflow: visible;
+    margin-bottom: 25px;
+    padding: 0 15px;
+  }
+`;
+
+const CardWrapper = styled.div`
+  border: 1px solid #363636;
+  padding: 2px;
+`;
+
+const BelowCardWrapper = styled.div`
+  margin-top: 5px;
+  overflow-x: hidden;
+  overflow-y: auto;
+`;
+
+const CrewDetails = styled.div`
+  display: flex;  
+  flex: 3;
+  flex-direction: column;
+  height: 100%;
+  padding-left: 25px;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: block;
+    padding-left: 0;
+  }
+`;
+
+const CrewLabels = styled.div`
+  color: white;
+  font-size: 85%;
+  line-height: 1.4em;
+  margin-top: -5px;
+  & label {
+    color: #666666;
+  }
+`;
+
+const Management = styled.div`
+  padding-top: 15px;
+`;
+
+const tabContainerCss = css`
+  flex: 1 0 60%;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.05);
+    border: 2px solid rgba(${p => p.theme.colors.mainRGB}, 0.15);
+    border-left: none;
+    border-right: none;
+    box-shadow: -4px 0 8px rgba(${p => p.theme.colors.mainRGB}, 0.25);
+  }
+`;
+
+const TraitPane = styled.div`
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  padding: 8px 0 0;
+  width: 100%;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    flex-direction: column-reverse;
+    padding: 0;
+  }
+`;
+const traitSize = 128;
+const AllTraits = styled.div`
+  display: grid;
+  flex: 2 0 ${(traitSize + 5) * 3}px;
+  grid-template-columns: repeat(auto-fill, minmax(${(traitSize)}px, 1fr));
+  grid-template-rows: ${(traitSize)}px;
+  overflow: auto;
+  scrollbar-width: thin;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: flex;
+    flex: none;
+    flex-direction: row;
+  }
+`;
+const Trait = styled.div`
+  align-items: center;
+  ${p => p.selected && 'background: linear-gradient(to bottom, transparent 0%, rgb(255, 255, 255, 0.175) 100%);'}
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  flex: 1 0 ${traitSize}px;
+  flex-direction: column;
+  font-size: ${traitSize - 32 - 10}px;
+  height: ${traitSize}px;
+  justify-content: center;
+  padding: 5px;
+  line-height: ${0.74 * (traitSize - 32 - 10)}px;
+
+  & > h6 {
+    color: ${p => p.selected ? 'white' : p.theme.colors.secondaryText};
+    font-size: 12px;
+    line-height: 32px;
+    margin: 0;
+  }
+
+  &:hover {
+    & > h6 {
+      color: white;
+    }
+  }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    ${p => p.selected && 'background: linear-gradient(to top, transparent 0%, rgb(255, 255, 255, 0.175) 100%);'}
+    border-top: 1px solid ${borderColor};
+  }
+`;
+
+const TraitSelected = styled.div`
+  align-items: center;
+  display: flex;
+  flex: 1 0 225px;
+  flex-direction: column;
+  padding-left: 10px;
+`;
+
+const NoTraitsMessage = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px;
+  width: 100%;
+  & > div {
+    opacity: 0.5;
+  }
+  & > div:first-child {
+    font-size: 80px;
+  }
+  & > div:nth-child(2) {
+    font-size: 14px;
+    line-height: 32px;
+  }
+  & > button {
+    font-size: 85%;
+    font-weight: bold;
+    margin-top: 24px;
+    padding-left: 40px;
+    padding-right: 40px;
+    opacity: 1;
+    text-transform: uppercase;
+    white-space: nowrap;
+    width: auto;
+  }
+  
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    border-bottom: 2px solid #18313a;
+  }
+`;
+
+const Display = styled.div`
+  align-items: center;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 175px;
+  overflow: hidden;
+  padding: 0 0 10px;
+  & > div {
+    font-size: 100px;
+    line-height: 74px;
+  }
+  & > h6 {
+    font-size: 16px;
+    margin: 0;
+  }
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    min-height: 0;
+    padding-top: 20px;
+  }
+`;
+const Description = styled.div`
+  align-items: center;
+  border-bottom: 1px solid ${borderColor};
+  border-top: 1px solid ${borderColor};
+  color: ${p => p.theme.colors.mainText};
+  display: flex;
+  font-size: 12px;
+  height: 80px;
+  padding: 5px;
+  text-align: center;
+  width: 100%;
+  & > div {
+    max-height: 100%;
+    overflow: auto;
+  }
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    border: none;
+  }
 `;
 
 const NameForm = styled.div`
@@ -107,97 +277,329 @@ const NameForm = styled.div`
   }
 `;
 
-const Log = styled.div`
-  flex: 0 1 33%;
+const History = styled.div`
+  display: flex;
+  flex: 1 0 40%;
+  flex-direction: column;
+  margin-top: 25px;
+  overflow: hidden;
+  padding: 0 15px;
+`;
 
+const LogHeader = styled.ul``;
+const Log = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
   & ul {
     display: flex;
     flex-direction: column-reverse;
     list-style-type: none;
-    margin: 10px 0 0 5px;
-    overflow-y: hidden;
-    padding: 0;
+    margin: 0;
+    padding: 5px 0;
+  }
+  & ${LogHeader} {
+    @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+      display: none;
+    }
+  }
+
+  & > div {
+    border-top: 1px solid ${borderColor};
+    flex: 1;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    & ul {
+      margin-right: -5px;
+      @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+        margin-right: 0;
+      }
+    }
+
+    @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+      border-top: none;
+      height: calc(100vh - 180px);
+    }
+  }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: block;
+    margin: 0 -10px;
   }
 `;
 
 const CrewMemberDetails = (props) => {
   const { i } = useParams();
+  const history = useHistory();
+  const { data: assignmentData } = useCrewAssignments();
   const { data: crew } = useCrewMember(i);
   const nameCrew = useNameCrew(i);
   const { account } = useWeb3React();
-  const [ imageLoaded, setImageLoaded ] = useState(false);
+  const playSound = useStore(s => s.dispatchSoundRequested);
+
   const [ naming, setNaming ] = useState(false);
   const [ newName, setNewName ] = useState('');
-  const loadingCss = css`
-    margin: auto;
-  `;
+  const [ selectedTrait, setSelectedTrait ] = useState();
+
+  const startDate = useMemo(() => {
+    if (crew?.events?.length > 0) {
+      return unixTimeToGameTime(crew.events[0].timestamp);
+    }
+    return null;
+  }, [crew?.events]);
+
+  const goToCrewAssignments = useCallback(() => {
+    if (assignmentData?.assignmentsByBook?.length > 0) {
+      history.push(`/crew-assignments/${assignmentData.assignmentsByBook[0].id}`);
+    }
+  }, [assignmentData?.assignmentsByBook, history]);
+
+  const selectTrait = useCallback((trait, mute) => () => {
+    setSelectedTrait({
+      ...(toCrewTrait(trait) || {}),
+      id: trait
+    });
+    if (!mute) {
+      playSound('effects.click');
+    }
+  }, [playSound]);
+
+  useEffect(() => {
+    if(crew?.traits?.length > 0) {
+      selectTrait(crew.traits[0], true)();
+    }
+  }, [crew?.traits, selectTrait]);
 
   return (
     <Details
-      title={!!crew ? `${crew.name || `Crew Member #${crew.i}`} - Details` : 'Crew Member Details'}>
+      contentProps={{ style: { margin: 0 } }}
+      title="Crewmate Profile">
       {crew && (
-        <StyledCrewMemberDetails>
-          <SidePanel>
-            <Pane>
-              <Subtitle>Crew Member Info</Subtitle>
-              <GeneralData label="Class">{toCrewClass(crew.crewClass) || 'Unknown Class'}</GeneralData>
-              <GeneralData label="Title">{toCrewTitle(crew.title) || 'Unknown Title'}</GeneralData>
-              <GeneralData label="Collection">{toCrewCollection(crew.crewCollection) || 'Arvad Citizen'}</GeneralData>
-            </Pane>
-            <Pane>
-              <Subtitle>Manage Crew Member</Subtitle>
-              {!crew.name && (
-                <Form
-                  title={<><EditIcon /><span>Set Name</span></>}
-                  data-tip="Name crew member"
+        <Content>
+          <CrewBasics>
+            <CardWrapper>
+              <CrewCard crew={crew} />
+            </CardWrapper>
+            <BelowCardWrapper>
+              <CrewLabels>
+                <DataReadout label="Career Start" slim inheritFontSize style={{ margin: '1.4em 0' }}>
+                  {startDate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SA
+                </DataReadout>
+                <DataReadout label="Class" slim inheritFontSize>{toCrewClass(crew.crewClass)}</DataReadout>
+                <DataReadout label="Title" slim inheritFontSize>{toCrewTitle(crew.title)}</DataReadout>
+                <DataReadout label="Collection" slim inheritFontSize>{toCrewCollection(crew.crewCollection)}</DataReadout>
+              </CrewLabels>
+              <Management>
+                <ManagementSubtitle>Management</ManagementSubtitle>
+                {!crew.name && (
+                  <Form
+                    title={<><EditIcon /><span>Set Name</span></>}
+                    data-tip="Name crew member"
+                    data-for="global"
+                    loading={naming}>
+                    <Text>
+                      A crew member can only be named once!
+                      Names must be unique, and can only include letters, numbers, and single spaces.
+                    </Text>
+                    <NameForm>
+                      <TextInput
+                        pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                        initialValue=""
+                        disabled={naming}
+                        onChange={(v) => setNewName(v)} />
+                      <IconButton
+                        data-tip="Submit"
+                        data-for="global"
+                        onClick={() => {
+                          setNaming(true);
+                          nameCrew.mutate({ name: newName }, { onSettled: () => setNaming(false) });
+                        }}>
+                        <CheckCircleIcon />
+                      </IconButton>
+                    </NameForm>
+                  </Form>
+                )}
+                <Button
+                  data-tip={account === crew.owner ? 'List on OpenSea' : 'Purchase on OpenSea'}
                   data-for="global"
-                  loading={naming}>
-                  <Text>
-                    A crew member can only be named once!
-                    Names must be unique, and can only include letters, numbers, and single spaces.
-                  </Text>
-                  <NameForm>
-                    <TextInput
-                      pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
-                      initialValue=""
-                      disabled={naming}
-                      onChange={(v) => setNewName(v)} />
-                    <IconButton
-                      data-tip="Submit"
-                      data-for="global"
-                      onClick={() => {
-                        setNaming(true);
-                        nameCrew.mutate({ name: newName }, { onSettled: () => setNaming(false) });
-                      }}>
-                      <CheckCircleIcon />
-                    </IconButton>
-                  </NameForm>
-                </Form>
-              )}
-              <Button
-                data-tip={account === crew.owner ? 'List on OpenSea' : 'Purchase on OpenSea'}
-                data-for="global"
-                onClick={() => goToOpenSeaCrew(crew.i)}>
-                <ClaimIcon />{account === crew.owner ? 'List for Sale' : 'Purcahse Crew'}
-              </Button>
-            </Pane>
-            <Pane>
+                  onClick={() => goToOpenSeaCrew(crew.i)}>
+                  <ClaimIcon />{account === crew.owner ? 'List for Sale' : 'Purchase Crew'}
+                </Button>
+              </Management>
+            </BelowCardWrapper>
+          </CrewBasics>
+          <CrewDetails>
+            <TabContainer
+              css={tabContainerCss}
+              tabs={[
+                {
+                  icon: <HexagonIcon />,
+                  label: 'Traits',
+                },
+                {
+                  icon: <BioIcon />,
+                  label: 'Bio',
+                  disabled: true
+                },
+                {
+                  icon: <StatsIcon />,
+                  label: 'Stats',
+                  disabled: true,
+                }
+              ]}
+              panes={[
+                (
+                  <TraitPane>
+                    {crew?.traits?.length > 0 && (
+                      <>
+                        <AllTraits>
+                          {crew.traits.map((trait) => {
+                            const { name } = toCrewTrait(trait) || {};
+                            if (name) {
+                              return (
+                                <Trait
+                                  onClick={selectTrait(trait)}
+                                  selected={selectedTrait?.id === trait}>
+                                  <CrewTraitIcon trait={trait} />
+                                  <h6>{name}</h6>
+                                </Trait>
+                              );
+                            }
+                            return null;
+                          })}
+                        </AllTraits>
+                        <TraitSelected>
+                          <Display>
+                            <div>
+                              <CrewTraitIcon trait={selectedTrait?.id} />
+                            </div>
+                            <h6>{selectedTrait?.name}</h6>
+                          </Display>
+                          {selectedTrait?.description && (
+                            <Description>
+                              <div>
+                                {selectedTrait?.description}
+                              </div>
+                            </Description>
+                          )}
+                        </TraitSelected>
+                      </>
+                    )}
+                    {!crew?.traits?.length && (
+                      <NoTraitsMessage>
+                        <div>
+                          <WarningOutlineIcon />
+                        </div>
+                        <div>
+                          This crewmate doesn't have any traits.
+                        </div>
+                        {assignmentData?.assignmentsByBook?.length > 0 && (
+                          <Button onClick={goToCrewAssignments}>
+                            Go to Crew Assignments
+                          </Button>
+                        )}
+                      </NoTraitsMessage>
+                    )}
+                  </TraitPane>
+                ),
+                null,
+                null
+              ]}
+              negativeTopMargin
+            />
+            <History>
               <Subtitle>Crew Log</Subtitle>
               <Log>
-                <ul>
-                  {crew.events.map(e => <LogEntry key={e.transactionHash} type={`CrewMember_${e.event}`} data={e} />)}
-                </ul>
+                <LogHeader>
+                  <LogEntry isHeaderRow isTabular />
+                </LogHeader>
+                <div>
+                  <ul>
+                    {crew?.events.map(e => (
+                      <LogEntry
+                        key={e.transactionHash}
+                        data={{
+                          ...e,
+                          returnValues: {
+                            ...e.returnValues,
+                            from: '0x4567'
+                          }
+                        }}
+                        type={`CrewMember_${e.event}`}
+                        isTabular />
+                    ))}
+                      
+                    {crew?.events.map(e => (
+                      <LogEntry
+                        key={e.transactionHash}
+                        data={e}
+                        type={`CrewMember_${e.event}`}
+                        isTabular />
+                    ))}
+                    {crew?.events.map(e => (
+                      <LogEntry
+                        key={e.transactionHash}
+                        data={e}
+                        type={`CrewMember_${e.event}`}
+                        isTabular />
+                    ))}
+                    {crew?.events.map(e => (
+                      <LogEntry
+                        key={e.transactionHash}
+                        data={e}
+                        type={`CrewMember_${e.event}`}
+                        isTabular />
+                    ))}
+                    {crew?.events.map(e => (
+                      <LogEntry
+                        key={e.transactionHash}
+                        data={e}
+                        type={`CrewMember_${e.event}`}
+                        isTabular />
+                    ))}
+                    {crew?.events.map(e => (
+                      <LogEntry
+                        key={e.transactionHash}
+                        data={e}
+                        type={`CrewMember_${e.event}`}
+                        isTabular />
+                    ))}
+                    {crew?.events.map(e => (
+                      <LogEntry
+                        key={e.transactionHash}
+                        data={e}
+                        type={`CrewMember_${e.event}`}
+                        isTabular />
+                    ))}
+                    {crew?.events.map(e => (
+                      <LogEntry
+                        key={e.transactionHash}
+                        data={e}
+                        type={`CrewMember_${e.event}`}
+                        isTabular />
+                    ))}
+                    {crew?.events.map(e => (
+                      <LogEntry
+                        key={e.transactionHash}
+                        data={{
+                          ...e,
+                          returnValues: {
+                            ...e.returnValues,
+                            from: '0x123'
+                          }
+                        }}
+                        type={`CrewMember_${e.event}`}
+                        isTabular />
+                    ))}
+                  </ul>
+                </div>
               </Log>
-            </Pane>
-          </SidePanel>
-          <Avatar crewClass={toCrewClass(crew.crewClass)}>
-            <LoadingAnimation color={'white'} css={loadingCss} loading={!imageLoaded} />
-            <AvatarImage
-              onLoad={() => setImageLoaded(true)}
-              visible={imageLoaded}
-              src={`${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crew.i}/image.svg?bustOnly=true&width=900`} />
-          </Avatar>
-        </StyledCrewMemberDetails>
+            </History>
+          </CrewDetails>
+
+        </Content>
       )}
     </Details>
   );
