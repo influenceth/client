@@ -4,6 +4,7 @@ import { ThemeProvider } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
+import { AuthProvider } from '~/contexts/AuthContext';
 import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import LandingPage from '~/game/Landing';
@@ -64,24 +65,26 @@ const Game = (props) => {
   }, [createAlert, updateNeeded, onUpdateVersion]);
 
   return (
-    <ThemeProvider theme={theme}>
-      <Router>
-        <Referral />
-        <Switch>
-          <Route path="/play">
-            <LandingPage />
-          </Route>
-          <Route>
-            {loading && <Intro onVideoComplete={onVideoComplete} />}
-            <StyledMain>
-              <Interface />
-              {showScene && <Scene />}
-              <Audio />
-            </StyledMain>
-          </Route>
-        </Switch>
-      </Router>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider theme={theme}>
+        <Router>
+          <Referral />
+          <Switch>
+            <Route path="/play">
+              <LandingPage />
+            </Route>
+            <Route>
+              {loading && <Intro onVideoComplete={onVideoComplete} />}
+              <StyledMain>
+                <Interface />
+                {showScene && <Scene />}
+                <Audio />
+              </StyledMain>
+            </Route>
+          </Switch>
+        </Router>
+      </ThemeProvider>
+    </AuthProvider>
   );
 };
 
