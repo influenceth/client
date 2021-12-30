@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
 import utils from 'influence-utils';
@@ -164,59 +164,53 @@ const scanMessages = {
 
 const AsteroidDetails = (props) => {
   const { i } = useParams();
-  const history = useHistory();
   const { account } = useWeb3React();
   const { data: sale } = useSale();
   const { data: asteroid } = useAsteroid(Number(i));
-  const buyAsteroid = useBuyAsteroid(Number(i));
   const createReferral = useCreateReferral(Number(i));
-  const startScan = useStartAsteroidScan(Number(i));
-  const finalizeScan = useFinalizeAsteroidScan(Number(i));
-  const nameAsteroid = useNameAsteroid(Number(i));
+  const { buyAsteroid, buying } = useBuyAsteroid(Number(i));
+  const { nameAsteroid, naming } = useNameAsteroid(Number(i));
+  const { startAsteroidScan, startingScan } = useStartAsteroidScan(Number(i));
+  const { finalizeAsteroidScan, finalizingScan } = useFinalizeAsteroidScan(Number(i));
+
   const saleIsActive = useStore(s => s.sale);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchModelDownload = useStore(s => s.dispatchModelDownloadRequested);
-  const [ buying, setBuying ] = useState(false);
-  const [ naming, setNaming ] = useState(false);
   const [ newName, setNewName ] = useState('');
-  const [ scanStatus, setScanStatus ] = useState('unscanned');
-
-  useEffect(() => {
-    if (finalizeScan.isSuccess) {
-      setScanStatus('retrieved');
-    } else if (finalizeScan.isLoading) {
-      setScanStatus('retrieving')
-    } else if (startScan.isSuccess) {
-      setScanStatus('scanned');
-    } else if (startScan.isLoading) {
-      setScanStatus('scanning');
-    } else if (asteroid?.scanned) {
-      setScanStatus('retrieved');
-    } else if (asteroid?.scanning) {
-      setScanStatus('scanned');
-    } else {
-      setScanStatus('unscanned');
-    }
-  }, [ startScan, finalizeScan, asteroid?.scanning, asteroid?.scanned ]);
 
   // Force the asteroid to load into the origin if coming direct from URL
   useEffect(() => {
     if (i) dispatchOriginSelected(Number(i));
   }, [ i, dispatchOriginSelected ]);
 
+  // on asteroid change, reset name input field on asteroid change
   useEffect(() => {
-    if (asteroid?.i) {
-      const url = `/asteroids/${asteroid.i}`;
-      if (history.pathname === url) return;
-      history.push(url);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ asteroid ]);
+    setNewName('');
+  }, [i]);
 
-  const goToOpenSeaAsteroid = (i) => {
+  const updateAsteroidName = useCallback(() => {
+    if (newName) {
+      nameAsteroid(newName);
+    }
+  }, [nameAsteroid, newName]);
+
+  const goToOpenSeaAsteroid = useCallback((i) => {
     const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/${i}`;
     window.open(url, '_blank');
-  };
+  }, []);
+
+  const scanStatus = useMemo(() => {
+    if (finalizingScan) {
+      return 'retrieving';
+    } else if (startingScan) {
+      return 'scanning';
+    } else if (asteroid?.scanned) {
+      return 'retrieved';
+    } else if (asteroid?.scanning) {
+      return 'scanned';
+    }
+    return 'unscanned';
+  }, [ startingScan, finalizingScan, asteroid?.scanning, asteroid?.scanned ]);
 
   return (
     <Details
@@ -256,11 +250,10 @@ const AsteroidDetails = (props) => {
                 <Button
                   data-tip="Purchase development rights"
                   data-for="global"
-                  disabled={!account || !saleIsActive}
+                  disabled={!account || !saleIsActive || buying}
                   loading={buying}
                   onClick={() => {
-                    setBuying(true);
-                    buyAsteroid.mutate(null, { onSettled: () => setBuying(false) });
+                    buyAsteroid();
                     createReferral.mutate();
                   }}>
                   <ClaimIcon /> Purchase
@@ -293,7 +286,7 @@ const AsteroidDetails = (props) => {
                     <Button
                       data-tip="Scan for resource bonuses"
                       data-for="global"
-                      onClick={() => startScan.mutate()}
+                      onClick={() => startAsteroidScan()}
                       loading={scanStatus === 'scanning'}
                       disabled={asteroid.owner !== account || scanStatus === 'scanning'}>
                       <ScanIcon /> Start Scan
@@ -303,7 +296,7 @@ const AsteroidDetails = (props) => {
                     <Button
                       data-tip="Retrieve scan results"
                       data-for="global"
-                      onClick={() => finalizeScan.mutate()}
+                      onClick={() => finalizeAsteroidScan()}
                       loading={scanStatus === 'retrieving'}
                       disabled={asteroid.owner !== account || scanStatus === 'retrieving'}>
                       <ScanIcon /> Finalize Scan
@@ -320,17 +313,16 @@ const AsteroidDetails = (props) => {
                   <Text>Names must be unique, and can only include letters, numbers, and single spaces.</Text>
                   <NameForm>
                     <TextInput
-                      pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
-                      initialValue=""
                       disabled={naming}
+                      initialValue=""
+                      pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                      resetOnChange={i}
                       onChange={(v) => setNewName(v)} />
                     <IconButton
                       data-tip="Submit"
                       data-for="global"
-                      onClick={() => {
-                        setNaming(true);
-                        nameAsteroid.mutate({ name: newName }, { onSettled: () => setNaming(false) });
-                      }}>
+                      disabled={naming}
+                      onClick={updateAsteroidName}>
                       <CheckCircleIcon />
                     </IconButton>
                   </NameForm>

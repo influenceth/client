@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 const StyledInput = styled.input`
@@ -21,8 +21,8 @@ const StyledInput = styled.input`
   }
 `;
 
-const TextInput = (props) => {
-  const { initialValue, onChange, ...restProps } = props;
+const TextInput = forwardRef((props, ref) => {
+  const { initialValue, onChange, resetOnChange, ...restProps } = props;
   const [ value, setValue ] = useState(initialValue || '');
 
   const _onChange = (e) => {
@@ -30,13 +30,18 @@ const TextInput = (props) => {
     if (onChange) onChange(e.target.value);
   };
 
+  useEffect(() => {
+    _onChange({ target: { value: initialValue || '' } });
+  }, [resetOnChange]);  // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <StyledInput
+      ref={ref}
       type="text"
       value={value}
       onChange={_onChange}
       {...restProps} />
   );
-};
+});
 
 export default TextInput;

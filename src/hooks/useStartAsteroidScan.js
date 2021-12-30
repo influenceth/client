@@ -1,58 +1,24 @@
-import { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from 'react-query';
-import { useWeb3React } from '@web3-react/core';
-import { ethers } from 'ethers';
-import { contracts } from 'influence-utils';
+import { useCallback, useContext, useMemo } from 'react';
 
-import useStore from '~/hooks/useStore';
+import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 
 const useStartAsteroidScan = (i) => {
-  const queryClient = useQueryClient();
-  const { account, library } = useWeb3React();
-  const createAlert = useStore(s => s.dispatchAlertLogged);
-  const [ contract, setContract ] = useState();
+  const { execute, getStatus } = useContext(ChainTransactionContext);
 
-  // Sets up contract object with appropriate provider
-  useEffect(() => {
-    const provider = !!account ? library.getSigner(account) : library;
-    const newContract = new ethers.Contract(
-      process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
-      contracts.AsteroidScans,
-      provider
-    );
+  const startAsteroidScan = useCallback(
+    () => execute('START_ASTEROID_SCAN', { i }),
+    [execute, i]
+  );
 
-    setContract(newContract);
-  }, [ account, library ]);
+  const status = useMemo(
+    () => getStatus('START_ASTEROID_SCAN', { i }),
+    [getStatus, i]
+  );
 
-  return useMutation(async () => {
-    const tx = await contract.startScan(i);
-    const receipt = await tx.wait(3);
-    return receipt;
-  }, {
-    enabled: !!contract && !!account,
-
-    onError: (err, vars, context) => {
-      console.error(err, i, context);
-      createAlert({
-        type: 'Asteroid_ScanningError',
-        level: 'warning',
-        i: i,
-        timestamp: Math.round(Date.now() / 1000)
-      });
-    },
-
-    onSuccess: () => {
-      setTimeout(() => {
-        createAlert({
-          type: 'Asteroid_ReadyToFinalizeScan',
-          i: i,
-          timestamp: Math.round(Date.now() / 1000)
-        });
-
-        queryClient.invalidateQueries('events');
-      }, 1000);
-    }
-  });
+  return {
+    startAsteroidScan,
+    startingScan: status === 'pending'
+  };
 };
 
 export default useStartAsteroidScan;

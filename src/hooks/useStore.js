@@ -71,6 +71,8 @@ const useStore = create(persist((set, get) => ({
       fov: 75
     },
 
+    pendingTransactions: [],
+
     sounds: {
       music: 100,
       effects: 100,
@@ -311,7 +313,23 @@ const useStore = create(persist((set, get) => ({
 
     dispatchModelDownloadComplete: () => set(produce(state => {
       state.asteroids.requestingModelDownload = false;
-    }))
+    })),
+
+    dispatchPendingTransaction: ({ key, vars, txHash }) => set(produce(state => {
+      if (!state.pendingTransactions) state.pendingTransactions = [];
+      state.pendingTransactions.push({
+        key,
+        vars,
+        txHash,
+        timestamp: Date.now()
+      });
+    })),
+
+    dispatchPendingTransactionSettled: (txHash) => set(produce(state => {
+      if (!state.pendingTransactions) state.pendingTransactions = [];
+      state.pendingTransactions = state.pendingTransactions.filter((tx) => tx.txHash !== txHash);
+    })),
+
 }), {
   name: 'influence',
   version: 0,

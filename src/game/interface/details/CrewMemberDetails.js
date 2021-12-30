@@ -120,17 +120,17 @@ const Log = styled.div`
   }
 `;
 
+const loadingCss = css`
+  margin: auto;
+`;
+
 const CrewMemberDetails = (props) => {
   const { i } = useParams();
-  const { data: crew } = useCrewMember(i);
-  const nameCrew = useNameCrew(i);
+  const { data: crew } = useCrewMember(Number(i));
+  const { nameCrew, naming } = useNameCrew(Number(i));
   const { account } = useWeb3React();
   const [ imageLoaded, setImageLoaded ] = useState(false);
-  const [ naming, setNaming ] = useState(false);
   const [ newName, setNewName ] = useState('');
-  const loadingCss = css`
-    margin: auto;
-  `;
 
   return (
     <Details
@@ -161,14 +161,13 @@ const CrewMemberDetails = (props) => {
                       pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
                       initialValue=""
                       disabled={naming}
+                      resetOnChange={i}
                       onChange={(v) => setNewName(v)} />
                     <IconButton
                       data-tip="Submit"
                       data-for="global"
-                      onClick={() => {
-                        setNaming(true);
-                        nameCrew.mutate({ name: newName }, { onSettled: () => setNaming(false) });
-                      }}>
+                      disabled={naming}
+                      onClick={() => nameCrew(newName)}>
                       <CheckCircleIcon />
                     </IconButton>
                   </NameForm>
