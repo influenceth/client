@@ -14,7 +14,6 @@ const getContracts = (queryClient) => ({
   'NAME_ASTEROID': {
     address: process.env.REACT_APP_CONTRACT_ASTEROID_NAMES,
     config: configs.AsteroidNames,
-    isEqual: (varsA, varsB) => varsA.i === varsB.i,
     transact: (contract) => ({ i, name }) => contract.setName(i, name),
     onSuccess: (receipt, { i, name }) => {
       // TODO: update asteroids, owned asteroids, specific asteroid
@@ -31,7 +30,6 @@ const getContracts = (queryClient) => ({
   'BUY_ASTEROID': {
     address: process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
     config: configs.ArvadCrewSale,
-    isEqual: (varsA, varsB) => varsA.i === varsB.i,
     transact: (contract) => async ({ i, name }) => {
       const price = await contract.getAsteroidPrice(i);
       return contract.buyAsteroid(i, { value: price });
@@ -50,11 +48,11 @@ const getContracts = (queryClient) => ({
   'START_ASTEROID_SCAN': {
     address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
     config: configs.AsteroidScans,
-    isEqual: (varsA, varsB) => varsA.i === varsB.i,
     transact: (contract) => ({ i }) => contract.startScan(i),
     onSuccess: (receipt, { i }) => {
       queryClient.invalidateQueries('events');
     },
+    // TODO: this should not fire until after the wait(3)
     getSuccessAlert: (receipt, { i }) => ({
       type: 'Asteroid_ReadyToFinalizeScan',
       i: i,
@@ -70,7 +68,6 @@ const getContracts = (queryClient) => ({
   'FINALIZE_ASTEROID_SCAN': {
     address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
     config: configs.AsteroidScans,
-    isEqual: (varsA, varsB) => varsA.i === varsB.i,
     transact: (contract) => ({ i }) => contract.finalizeScan(i),
     onSuccess: (receipt, { i }) => {
       // TODO: ...
@@ -86,7 +83,6 @@ const getContracts = (queryClient) => ({
   'SETTLE_CREW': {
     address: process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
     config: configs.ArvadCrewSale,
-    isEqual: (varsA, varsB) => varsA.i === varsB.i,
     transact: (contract) => ({ i }) => contract.mintCrewWithAsteroid(i),
     onSuccess: (receipt, { i }) => {
       // TODO: ...
@@ -103,7 +99,6 @@ const getContracts = (queryClient) => ({
   'NAME_CREW': {
     address: process.env.REACT_APP_CONTRACT_CREW_NAMES,
     config: configs.CrewNames,
-    isEqual: (varsA, varsB) => varsA.i === varsB.i,
     transact: (contract) => ({ i, name }) => contract.setName(i, name),
     onSuccess: (receipt, { i, name }) => {
       // TODO: ...
@@ -216,8 +211,16 @@ export function ChainTransactionProvider({ children }) {
   //      (i.e. for pre-tx delay, post-tx wait, and complete)
   const getStatus = useCallback((key, vars) => {
     if (contracts && contracts[key]) {
-      const pending = !!pendingTransactions.find((tx) => tx.key === key && contracts[key].isEqual(tx.vars, vars));
-      return pending ? 'pending' : 'ready';
+      const isPending = !!pendingTransactions.find((tx) => {
+        if (tx.key === key) {
+          if (contracts[key].isEqual) {
+            return contracts[key].isEqual(tx.vars, vars);
+          }
+          return tx.vars.i === vars.i;
+        }
+        return false;
+      });
+      return isPending ? 'pending' : 'ready';
     }
     return null;
   }, [contracts, pendingTransactions]);
