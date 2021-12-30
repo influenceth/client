@@ -177,7 +177,7 @@ const CrewMemberDetails = (props) => {
                 data-tip={account === crew.owner ? 'List on OpenSea' : 'Purchase on OpenSea'}
                 data-for="global"
                 onClick={() => goToOpenSeaCrew(crew.i)}>
-                <ClaimIcon />{account === crew.owner ? 'List for Sale' : 'Purcahse Crew'}
+                <ClaimIcon />{account === crew.owner ? 'List for Sale' : 'Purchase Crew'}
               </Button>
             </Pane>
             <Pane>
