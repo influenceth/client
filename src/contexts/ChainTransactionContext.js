@@ -10,15 +10,18 @@ const TIMEOUT = 600e3;  // 10 minutes
 
 const ChainTransactionContext = createContext();
 
+// TODO: enhancement... rather than invalidating, make updates to cache value directly
+// (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)
 const getContracts = (queryClient) => ({
   'NAME_ASTEROID': {
     address: process.env.REACT_APP_CONTRACT_ASTEROID_NAMES,
     config: configs.AsteroidNames,
     transact: (contract) => ({ i, name }) => contract.setName(i, name),
     onSuccess: (receipt, { i, name }) => {
-      // TODO: update asteroids, owned asteroids, specific asteroid
-      queryClient.invalidateQueries('asteroid', i);
+      queryClient.invalidateQueries('asteroids', i);
+      queryClient.invalidateQueries('asteroids', 'search');
       queryClient.invalidateQueries('events');
+      queryClient.invalidateQueries('watchlist');
     },
     getErrorAlert: ({ i }) => ({
       type: 'Asteroid_NamingError',
@@ -35,8 +38,12 @@ const getContracts = (queryClient) => ({
       return contract.buyAsteroid(i, { value: price });
     },
     onSuccess: (receipt, { i, name }) => {
-      // TODO: ...
+      queryClient.invalidateQueries('asteroids', i);
+      queryClient.invalidateQueries('asteroids', 'mintableCrew');
+      queryClient.invalidateQueries('asteroids', 'ownedCount');
+      queryClient.invalidateQueries('asteroids', 'search');
       queryClient.invalidateQueries('events');
+      queryClient.invalidateQueries('watchlist');
     },
     getErrorAlert: ({ i }) => ({
       type: 'Asteroid_BuyingError',
@@ -48,11 +55,12 @@ const getContracts = (queryClient) => ({
   'START_ASTEROID_SCAN': {
     address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
     config: configs.AsteroidScans,
+    confirms: 3,
     transact: (contract) => ({ i }) => contract.startScan(i),
     onSuccess: (receipt, { i }) => {
+      queryClient.invalidateQueries('asteroids', i);
       queryClient.invalidateQueries('events');
     },
-    // TODO: this should not fire until after the wait(3)
     getSuccessAlert: (receipt, { i }) => ({
       type: 'Asteroid_ReadyToFinalizeScan',
       i: i,
@@ -70,8 +78,11 @@ const getContracts = (queryClient) => ({
     config: configs.AsteroidScans,
     transact: (contract) => ({ i }) => contract.finalizeScan(i),
     onSuccess: (receipt, { i }) => {
-      // TODO: ...
+      queryClient.invalidateQueries('asteroids', i);
+      queryClient.invalidateQueries('asteroids', 'search');
       queryClient.invalidateQueries('events');
+      queryClient.invalidateQueries('events');
+      queryClient.invalidateQueries('watchlist');
     },
     getErrorAlert: ({ i }) => ({
       type: 'Asteroid_FinalizeScanError',
@@ -85,8 +96,9 @@ const getContracts = (queryClient) => ({
     config: configs.ArvadCrewSale,
     transact: (contract) => ({ i }) => contract.mintCrewWithAsteroid(i),
     onSuccess: (receipt, { i }) => {
-      // TODO: ...
       queryClient.invalidateQueries('assignments');
+      queryClient.invalidateQueries('asteroids', 'mintableCrew');
+      queryClient.invalidateQueries('crew', 'search');
       queryClient.invalidateQueries('events');
     },
     getErrorAlert: ({ i }) => ({
@@ -101,7 +113,8 @@ const getContracts = (queryClient) => ({
     config: configs.CrewNames,
     transact: (contract) => ({ i, name }) => contract.setName(i, name),
     onSuccess: (receipt, { i, name }) => {
-      // TODO: ...
+      queryClient.invalidateQueries('crew', i);
+      queryClient.invalidateQueries('crew', 'search');
       queryClient.invalidateQueries('events');
     },
     getErrorAlert: ({ i }) => ({
@@ -127,7 +140,16 @@ export function ChainTransactionProvider({ children }) {
       const processedContracts = {};
       const contractConfig = getContracts(queryClient);
       Object.keys(contractConfig).forEach((k) => {
-        const { address, config, transact, onSuccess, getSuccessAlert, getErrorAlert, isEqual } = contractConfig[k];
+        const {
+          address,
+          config,
+          transact,
+          onSuccess,
+          getSuccessAlert,
+          getErrorAlert,
+          confirms,
+          isEqual
+        } = contractConfig[k];
         processedContracts[k] = {
           execute: transact(new ethers.Contract(address, config, provider)),
           onSuccess: (receipt, vars) => {
@@ -144,6 +166,7 @@ export function ChainTransactionProvider({ children }) {
               createAlert(getErrorAlert(vars));
             }
           },
+          confirms: confirms || 1,
           isEqual
         };
       });
@@ -155,16 +178,12 @@ export function ChainTransactionProvider({ children }) {
   const waitingTxs = useRef([]);
   useEffect(() => {
     if (contracts && pendingTransactions?.length) {
-      console.log('pending transactions', pendingTransactions);
       pendingTransactions.forEach(({ key, vars, txHash, timestamp }) => {
         if (!txHash) return dispatchPendingTransactionSettled(txHash);
         if (!waitingTxs.current.includes(txHash)) {
           waitingTxs.current.push(txHash);
-          // TODO: test timeout
-          console.log('waitForTransaction', provider, txHash, 1, TIMEOUT - (Date.now() - timestamp) );
-          provider.provider.waitForTransaction(txHash, 1, TIMEOUT - (Date.now() - timestamp))
+          provider.provider.waitForTransaction(txHash, contracts[key].confirms, TIMEOUT - (Date.now() - timestamp))
             .then((receipt) => {
-              console.log('then', txHash, receipt, vars);
               if (receipt) {
                 contracts[key].onSuccess(receipt, vars);
               } else {
@@ -172,15 +191,12 @@ export function ChainTransactionProvider({ children }) {
               }
             })
             .catch((err) => {
-              console.log('catch', err, vars);
               contracts[key].onError(err, vars);
             })
             .finally(() => {
-              console.log('finally', vars);
               dispatchPendingTransactionSettled(txHash);
               waitingTxs.current = waitingTxs.current.filter((tx) => tx.txHash !== txHash);
             });
-          console.log('after', txHash);
         }
       });
     }
@@ -190,11 +206,9 @@ export function ChainTransactionProvider({ children }) {
     if (contracts && contracts[key]) {
       const { execute, onError } = contracts[key];
       try {
-        console.log('vars', vars);
         const tx = await execute(vars);
-        console.log('tx', tx);
         dispatchPendingTransaction({ key, vars, txHash: tx.hash });
-        // TODO: can add a handler for optimistic update
+        // TODO (enh): can add a handler for optimistic update
       } catch (e) {
         onError(e, vars);
       }
@@ -207,7 +221,7 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [contracts]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // TODO: status should be 'submitting', 'confirming', and 'ready'
+  // TODO (enh): status could be 'submitting', 'confirming', and 'ready'
   //      (i.e. for pre-tx delay, post-tx wait, and complete)
   const getStatus = useCallback((key, vars) => {
     if (contracts && contracts[key]) {
