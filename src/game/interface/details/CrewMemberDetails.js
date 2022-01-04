@@ -100,6 +100,8 @@ const BelowCardWrapper = styled.div`
   margin-top: 5px;
   overflow-x: hidden;
   overflow-y: auto;
+  padding-right: 3px;
+  flex: 1;
 `;
 
 const CrewDetails = styled.div`
@@ -129,7 +131,7 @@ const Management = styled.div`
 `;
 
 const tabContainerCss = css`
-  flex: 1 0 60%;
+  flex: 0 0 368px;
 
   @media (max-width: ${breakpoint}px) {
     background: rgba(${p => p.theme.colors.mainRGB}, 0.05);
@@ -294,7 +296,7 @@ const NameForm = styled.div`
 
 const History = styled.div`
   display: flex;
-  flex: 1 0 40%;
+  flex: 1;
   flex-direction: column;
   margin-top: 25px;
   overflow: hidden;
@@ -336,7 +338,7 @@ const Log = styled.div`
     @media (max-width: ${breakpoint}px) {
       border-top: none;
       height: auto;
-      max-height: calc(100vh - 160px);
+      max-height: calc(100vh - 200px);
     }
   }
 

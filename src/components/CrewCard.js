@@ -43,7 +43,7 @@ const CardImage = styled(CardLayer)`
     width: 100%;
   }
 
-  ${p => p.mask ? `mask-image: linear-gradient(to bottom, black 75%, transparent 100%);` : ''}
+  ${p => p.applyMask ? `mask-image: linear-gradient(to bottom, black 75%, transparent 100%);` : ''}
 `;
 
 const Card = styled.div`
@@ -98,7 +98,7 @@ const loadingCss = css`
   top: 50%;
 `;
 
-const CrewCard = ({ crew, onClick, maskImage, overlay, ...props }) => {
+const CrewCard = ({ crew, onClick, overlay, ...props }) => {
   const [ imageLoaded, setImageLoaded ] = useState(false);
   const imageUrl = crew.crewCollection
     ? `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crew.i}/image.svg?bustOnly=true`
@@ -106,7 +106,7 @@ const CrewCard = ({ crew, onClick, maskImage, overlay, ...props }) => {
   return (
     <Card onClick={onClick} hasOverlay={!!overlay} {...props}>
       <LoadingAnimation color={'white'} css={loadingCss} loading={!imageLoaded} />
-      <CardImage visible={imageLoaded} mask={!overlay}>
+      <CardImage visible={imageLoaded} applyMask={!overlay}>
         <img
           alt={crew.name || `Crew Member #${crew.i}`}
           src={imageUrl}
