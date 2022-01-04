@@ -1,66 +1,9 @@
-import { useState } from 'react';
-import LoadingAnimation from 'react-spinners/PuffLoader';
 import styled, { css, keyframes } from 'styled-components';
-import { toCrewClass } from 'influence-utils';
 
-import silhouette from '~/assets/images/silhouette.png';
 import AttentionDot from '~/components/AttentionDot';
-import CrewClassBadge from '~/components/CrewClassBadge';
-import DataReadout from '~/components/DataReadout';
 
-const tSpeed = '300ms';
-const tFunction = 'ease';
-
-const CardLayer = styled.div`
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-`;
-
-const CardHeader = styled(CardLayer)`
-  bottom: auto;
-  padding: 8px;
-  text-align: left;
-`;
-
-const CardImage = styled(CardLayer)`
-  top: auto;
-
-  & > img {
-    display: ${p => p.visible ? 'block' : 'none'};
-    width: 100%;
-  }
-`;
-
-const Card = styled.div`
-  background: rgba(20, 20, 20, 0.75);
-  cursor: ${({ theme, clickable }) => clickable && theme.cursors.active};
-  padding-top: 137.5%;
-  position: relative;
-  width: 100%;
-
-  ${p => p.fade ? `
-    & ${CardHeader},
-    & ${CardImage} {
-      opacity: 0.5;
-      transition: opacity ${tSpeed} ${tFunction};
-    }
-    &:hover ${CardHeader} {
-      opacity: 1;
-    }
-  ` : ``}
-`;
-
-const CrewName = styled.span`
-  font-size: ${p => p.theme.fontSizes.detailText};
-  font-weight: bold;
-  padding: 15px 0;
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    font-size: 85%;
-  }
-`;
+export const cardTransitionSpeed = '300ms';
+export const cardTransitionFunction = 'ease';
 
 const AttentionIcon = styled(AttentionDot)`
   position: absolute !important;
@@ -123,7 +66,7 @@ const CardOverlayHoverCss = css`
   `}
 `;
 
-const buttonKeyframes = (rgb, isAnimated) => keyframes`
+const buttonKeyframes = (rgb) => keyframes`
   0% {
     background-color: rgba(${rgb}, 0.3);
     color: rgba(${rgb}, 1.0);
@@ -143,16 +86,22 @@ css`
   animation: ${buttonKeyframes('255, 255, 255')} 1000ms linear infinite;
 `;
 
-const CardOverlay = styled(CardLayer)`
+const CardOverlay = styled.div`
   align-items: center;
   border: 1px solid ${(p) => p.alwaysOn.includes('border') ? `rgb(${(p) => p.rgb})` : 'transparent'};
-  outline: 3px solid ${(p) => p.alwaysOn.includes('border') ? `rgba(${(p) => p.rgb}, 0.5)` : 'transparent'};
+  bottom: 0;
   color: rgb(${(p) => p.rgb || '255,255,255'});
   display: flex;
   flex-direction: column;
+  left: 0;
   height: 100%;
   justify-content: flex-end;
-  transition: border ${tSpeed} ${tFunction}, outline ${tSpeed} ${tFunction};
+  outline: 3px solid ${(p) => p.alwaysOn.includes('border') ? `rgba(${(p) => p.rgb}, 0.5)` : 'transparent'};
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: border ${cardTransitionSpeed} ${cardTransitionFunction},
+    outline ${cardTransitionSpeed} ${cardTransitionFunction};
   width: 100%;
 
   ${OverlayButton} {
@@ -188,7 +137,7 @@ const CardOverlay = styled(CardLayer)`
   ${OverlayButton},
   ${OverlayCaption},
   ${OverlayIcon} {
-    transition: opacity ${tSpeed} ${tFunction}, color ${tSpeed} ${tFunction}, background-color ${tSpeed} ${tFunction};
+    transition: opacity ${cardTransitionSpeed} ${cardTransitionFunction}, color ${cardTransitionSpeed} ${cardTransitionFunction}, background-color ${cardTransitionSpeed} ${cardTransitionFunction};
   }
 
   &:hover {
@@ -209,46 +158,18 @@ const CardOverlay = styled(CardLayer)`
   }
 `;
 
-const loadingCss = css`
-  position: absolute;
-  left: calc(50% - 30px);
-  top: 50%;
-`;
+const CrewCardOverlay = (config) => (
+  <CardOverlay {...config} alwaysOn={config.alwaysOn || []}>
+    {config.icon && <OverlayIcon>{config.icon}</OverlayIcon>}
+    <div style={{ flex: 1 }} />
+    {config.caption && <OverlayCaption>{config.caption}</OverlayCaption>}
+    {config.button && (
+      <OverlayButton>
+        {config.buttonAttention && <AttentionIcon size={10} />}
+      </OverlayButton>
+    )}
+    <OverlayFlourish />
+  </CardOverlay>
+);
 
-const CrewCard = ({ config = { alwaysOn: [] }, crew, onClick }) => {
-  const [ imageLoaded, setImageLoaded ] = useState(false);
-  const imageUrl = crew.crewCollection
-    ? `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crew.i}/image.svg?bustOnly=true`
-    : silhouette;
-  return (
-    <Card {...config} onClick={onClick}>
-      <LoadingAnimation color={'white'} css={loadingCss} loading={!imageLoaded} />
-      <CardImage visible={imageLoaded}>
-        <img
-          alt={crew.name || `Crew Member #${crew.i}`}
-          src={imageUrl}
-          onLoad={() => setImageLoaded(true)} />
-      </CardImage>
-      <CardHeader>
-        <CrewName>
-          {crew.name || `Crew Member #${crew.i}`}
-          {' '}<CrewClassBadge crewClass={crew.crewClass} />
-        </CrewName>
-        <DataReadout label="Class" style={{ fontSize: 11 }}>{toCrewClass(crew.crewClass) || 'Unknown Class'}</DataReadout>
-      </CardHeader>
-      <CardOverlay {...config}>
-        {config.icon && <OverlayIcon>{config.icon}</OverlayIcon>}
-        <div style={{ flex: 1 }} />
-        {config.caption && <OverlayCaption>{config.caption}</OverlayCaption>}
-        {config.button && (
-          <OverlayButton>
-            {config.buttonAttention && <AttentionIcon size={10} />}
-          </OverlayButton>
-        )}
-        <OverlayFlourish />
-      </CardOverlay>
-    </Card>
-  );
-};
-
-export default CrewCard;
+export default CrewCardOverlay;

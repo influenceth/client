@@ -8,14 +8,14 @@ import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
 import useStore from '~/hooks/useStore';
 import Button from '~/components/Button';
-import CrewClassBadge from '~/components/CrewClassBadge';
+import CrewCard from '~/components/CrewCard';
+import CrewClassIcon from '~/components/CrewClassIcon';
 import Details from '~/components/Details';
 import Dialog from '~/components/Dialog';
 import { ArvadIcon, BackIcon } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import SvgFromSrc from '~/components/SvgFromSrc';
-import CrewCard from './CrewCard';
 
 import theme from '~/theme.js';
 
@@ -367,7 +367,7 @@ const CrewAssignment = (props) => {
               <MobileCrewContainer>
                 <div>
                   <b>{crew.name || `Crew Member #${crew.i}`}</b>
-                  {' '}<CrewClassBadge crewClass={crew.crewClass} />
+                  {' '}<CrewClassIcon crewClass={crew.crewClass} />
                 </div>
                 <div>{toCrewClass(crew.crewClass) || 'Unknown Class'}</div>
               </MobileCrewContainer>

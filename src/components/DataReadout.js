@@ -7,8 +7,8 @@ import { CopyIcon } from '~/components/Icons';
 const StyledDataReadout = styled.div`
   align-items: center;
   display: flex;
-  font-size: ${p => p.theme.fontSizes.mainText};
-  padding: 5px 0;
+  font-size: ${p => p.inheritFontSize ? 'inherit' : p.theme.fontSizes.mainText};
+  padding: ${p => p.slim ? '0' : '5px 0'};
 `;
 
 const Label = styled.label`
@@ -57,7 +57,7 @@ const DataReadout = (props) => {
 
   return (
     <StyledDataReadout {...restProps}>
-      <Label>{props.label || ''}</Label>
+      {props.label && <Label>{props.label}</Label>}
       <Data>
         {props.children}
         {copyable && (

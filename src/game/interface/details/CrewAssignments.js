@@ -8,6 +8,7 @@ import useCreateStorySession from '~/hooks/useCreateStorySession';
 import useMintableCrew from '~/hooks/useMintableCrew';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStore from '~/hooks/useStore';
+import CrewCard from '~/components/CrewCard';
 import Details from '~/components/Details';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
@@ -23,7 +24,6 @@ import {
   WarningOutlineIcon
 } from '~/components/Icons';
 import SvgFromSrc from '~/components/SvgFromSrc';
-import CrewCard from './crewAssignments/CrewCard';
 
 import theme from '~/theme.js';
 
@@ -50,6 +50,7 @@ const crewStates = {
   complete: {
     alwaysOn: ['button', 'icon'],
     button: 'Finished',
+    clickable: true,
     fade: true,
     icon: <CheckIcon />,
     rgb: theme.colors.successRGB,
@@ -565,11 +566,14 @@ const CrewAssignments = (props) => {
                     <div>
                       {crew.map((c) => {
                         const crewStatus = bookReady ? selectedStory?.crewStatuses[c.i] : 'loading';
+                        const uiConfig = crewStates[crewStatus || 'notReady'] || {};
                         return (
                           <div key={c.i}>
                             <CrewCard
                               crew={c}
-                              config={crewStates[crewStatus || 'notReady']}
+                              clickable={uiConfig.clickable}
+                              fade={uiConfig.fade}
+                              overlay={uiConfig}
                               onClick={selectCrew(c.i)} />
                           </div>
                         );

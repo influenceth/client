@@ -48,6 +48,7 @@ const theme = {
     }
   },
   fontSizes: {
+    smallText: '12px',
     mainText: '14px',
     detailText: '16px',
     featureText: '20px'

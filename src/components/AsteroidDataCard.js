@@ -14,6 +14,17 @@ const Bonuses = styled.div`
   margin-top: 5px;
 `;
 
+const LongTextWrap = styled.span`
+  text-overflow: ellipsis;
+  max-width: 100px;
+  overflow: hidden;
+  vertical-align: top;
+  white-space: nowrap;
+  @media (min-width: ${p => p.theme.breakpoints.xl}px) {
+    max-width: 250px;
+  }
+`;
+
 const AsteroidDataCard = (props) => {
   const { asteroid, ...restProps } = props;
   const { data: sale } = useSale();
@@ -24,7 +35,9 @@ const AsteroidDataCard = (props) => {
         <>
           <DataReadout label="Asteroid Id" copyable={asteroid.i}>{asteroid.i}</DataReadout>
           <DataReadout label="Current Owner">
-            {asteroid.owner ? <AddressLink address={asteroid.owner} /> : 'Un-owned'}
+            <LongTextWrap>
+              <AddressLink address={asteroid.owner} />
+            </LongTextWrap>
           </DataReadout>
           {!!sale && !asteroid.owner && (
             <DataReadout label="Price">
