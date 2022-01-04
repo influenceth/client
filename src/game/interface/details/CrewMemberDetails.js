@@ -131,8 +131,11 @@ const Management = styled.div`
 `;
 
 const tabContainerCss = css`
-  flex: 0 0 368px;
-
+  flex: 0 0 330px;
+  @media (min-height: 950px) {
+    flex-basis: 45%;
+    max-height: 500px;
+  }
   @media (max-width: ${breakpoint}px) {
     background: rgba(${p => p.theme.colors.mainRGB}, 0.05);
     border: 2px solid rgba(${p => p.theme.colors.mainRGB}, 0.15);
@@ -278,6 +281,7 @@ const Description = styled.div`
   width: 100%;
   & > div {
     max-height: 100%;
+    max-width: 500px;
     overflow: auto;
   }
   @media (max-width: ${breakpoint}px) {
