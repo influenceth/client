@@ -102,6 +102,12 @@ const BelowCardWrapper = styled.div`
   overflow-y: auto;
   padding-right: 3px;
   flex: 1;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    flex: none;
+    max-width: 100%;
+    overflow-y: visible;
+    overflow-x: visible;
+  }
 `;
 
 const CrewDetails = styled.div`
