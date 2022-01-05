@@ -167,8 +167,8 @@ const traitSize = 128;
 const AllTraits = styled.div`
   display: grid;
   flex: 2 0 ${(traitSize + 5) * 3}px;
-  grid-template-columns: repeat(auto-fill, minmax(${(traitSize)}px, 1fr));
-  grid-template-rows: ${(traitSize)}px;
+  grid-template-columns: repeat(auto-fill, minmax(${traitSize}px, 1fr));
+  grid-template-rows: ${traitSize}px;
   overflow: auto;
   scrollbar-width: thin;
   @media (max-width: ${breakpoint}px) {
@@ -284,15 +284,16 @@ const Description = styled.div`
   color: ${p => p.theme.colors.mainText};
   display: flex;
   font-size: 12px;
-  height: 80px;
+  height: 85px;
   justify-content: center;
   padding: 5px;
   text-align: center;
   width: 100%;
   & > div {
-    max-height: 100%;
+    max-height: 75px;
     max-width: 500px;
     overflow: auto;
+    padding: 1px 0;
   }
   @media (max-width: ${breakpoint}px) {
     border: none;
@@ -487,7 +488,7 @@ const CrewMemberDetails = (props) => {
                     {crew?.traits?.length > 0 && (
                       <>
                         <AllTraits>
-                          {crew.traits.map((trait) => {
+                          {crew.traits/*[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32]*/.map((trait) => {
                             const { name } = toCrewTrait(trait) || {};
                             if (name) {
                               return (
