@@ -6,12 +6,12 @@ import { toCrewTrait } from 'influence-utils';
 
 import Button from '~/components/Button';
 import CopyReferralLink from '~/components/CopyReferralLink';
+import CrewCard from '~/components/CrewCard';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/Details';
 import { LinkIcon, TwitterIcon } from '~/components/Icons';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
-import CrewCard from './CrewCard';
 
 const slideOutTransition = keyframes`
   0% {
@@ -321,26 +321,26 @@ const CrewAssignmentComplete = (props) => {
     history.push(onCloseDestination);
   }, [history, onCloseDestination]);
 
-  const slideOutContents = useMemo(() => (
-    <>
-      {rewards?.length > 0 && (
-        <RewardSection>
-          <div>
-            <h4>This crew member has gained traits:</h4>
-            {rewards.map((reward) => (
-              <div key={reward.id}>
-                <CrewTraitIcon trait={reward.id} />
-                <div style={{ flex: 1 }}>
-                  <b>{reward.name}</b>
-                  <span>{reward.description}</span>
+  const slideOutContents = useMemo(() =>
+    rewards?.length > 0
+      ? (
+          <RewardSection>
+            <div>
+              <h4>This crew member has gained traits:</h4>
+              {rewards.map((reward) => (
+                <div key={reward.id}>
+                  <CrewTraitIcon trait={reward.id} />
+                  <div style={{ flex: 1 }}>
+                    <b>{reward.name}</b>
+                    <span>{reward.description}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </RewardSection>
-      )}
-    </>
-  ), [rewards]);
+              ))}
+            </div>
+          </RewardSection>
+        )
+      : null
+  , [rewards]);
 
   if (!storyState || !crew) return null;
   return (
@@ -363,9 +363,11 @@ const CrewAssignmentComplete = (props) => {
                   <CrewCard crew={crew} />
                 </div>
               </CardContainer>
-              <SlideOut>
-                {slideOutContents}
-              </SlideOut>
+              {slideOutContents && (
+                <SlideOut>
+                  {slideOutContents}
+                </SlideOut>
+              )}
             </CardWrapper>
 
             <RecruitSection>

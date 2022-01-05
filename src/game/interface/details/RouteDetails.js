@@ -55,7 +55,7 @@ const Info = styled.div`
 
 const AsteroidInfo = styled.div`
   display: flex;
-  flex: 0 0 33%;
+  flex: 1 0 33%;
   flex-direction: column;
   padding-bottom: 35px;
 
@@ -105,11 +105,17 @@ const StyledDimensionMetric = styled(DimensionMetric)`
   flex-direction: column;
   justify-content: center;
   max-width: 45%;
+
+  @media (max-width: 1500px) {
+    & > div {
+      font-size: 14px;
+    }
+  }
 `;
 
 const RouteInfo = styled.div`
   display: flex;
-  flex: 0 0 33%;
+  flex: 0 1 33%;
   flex-direction: column;
   height: 100%;
 `;
@@ -121,7 +127,8 @@ const RouteMetrics = styled.div`
   flex-direction: column;
   height: 50%;
   justify-content: flex-end;
-  padding-bottom: 25px;
+  padding: 0 10px 25px;
+  white-space: nowrap;
 
   & h3 {
     color: ${p => p.theme.colors.secondaryText};

@@ -57,14 +57,14 @@ svg.icon {
   height: 1em;
   stroke: currentColor;
   stroke-width: 0;
-  vertical-align: middle;
+  vertical-align: text-bottom;
   overflow: hidden;
 }
 .icon-from-src-wrapper {
   display: inline-block;
   width: 1em;
   height: 1em;
-  vertical-align: middle;
+  vertical-align: text-bottom;
   overflow: hidden;
 }
 .icon-from-src-wrapper > svg {

@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import styled from 'styled-components';
-import { START_TIMESTAMP } from 'influence-utils';
 
 import useInterval from '~/hooks/useInterval';
 import useStore from '~/hooks/useStore';
+import { orbitTimeToGameTime } from '~/lib/utils';
 
 const StyledTime = styled.div`
   cursor: ${p => p.theme.cursors.active};
@@ -32,16 +32,12 @@ const DaysSince = styled.div`
   }
 `;
 
-// Calculate the difference in game days between the start timestamp and the lore start time
-// TODO: should 1618668000 be in influence-utils also?
-const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
-
 const Time = (props) => {
   const time = useStore(s => s.time.precise);
   const autoUpdating = useStore(s => s.time.autoUpdating);
   const dispatchTimeUpdated = useStore(s => s.dispatchTimeUpdated);
 
-  const displayTime = time - diff;
+  const displayTime = orbitTimeToGameTime(time);
   const increment = 1000 / 30;
 
   // Update time once immediately upon launching
