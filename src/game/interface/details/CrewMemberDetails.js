@@ -363,6 +363,8 @@ const Log = styled.div`
   }
 `;
 
+const MIN_TRAIT_SLOTS = 12;
+
 const CrewMemberDetails = (props) => {
   const { i } = useParams();
   const history = useHistory();
@@ -398,6 +400,13 @@ const CrewMemberDetails = (props) => {
       playSound('effects.click');
     }
   }, [playSound]);
+
+  const fillerTraits = useMemo(() => {
+    if (crew?.traits.length > 0 && crew?.traits.length < MIN_TRAIT_SLOTS) {
+      return Array.from(Array(MIN_TRAIT_SLOTS - crew.traits.length));
+    }
+    return [];
+  }, [crew?.traits]);
 
   useEffect(() => {
     if(crew?.traits?.length > 0) {
@@ -488,7 +497,7 @@ const CrewMemberDetails = (props) => {
                     {crew?.traits?.length > 0 && (
                       <>
                         <AllTraits>
-                          {crew.traits/*[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32]*/.map((trait) => {
+                          {crew.traits.map((trait) => {
                             const { name } = toCrewTrait(trait) || {};
                             if (name) {
                               return (
@@ -502,6 +511,12 @@ const CrewMemberDetails = (props) => {
                             }
                             return null;
                           })}
+                          {fillerTraits.map((tmp, i) => (
+                            <Trait key={i} style={{ opacity: 0.10 }}>
+                              <HexagonIcon />
+                              <h6>&nbsp;</h6>
+                            </Trait>
+                          ))}
                         </AllTraits>
                         <TraitSelected>
                           <Display>
