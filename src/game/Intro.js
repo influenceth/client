@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import ReactPlayer from 'react-player/lazy';
 import styled from 'styled-components';
 import gsap from 'gsap';
@@ -48,27 +48,17 @@ const ButtonContainer = styled.div`
 `;
 
 const isStandalone = (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches);
-
 let installedApps = [];
-/*
-if (navigator.getInstalledRelatedApps) {
-  navigator.getInstalledRelatedApps().then((apps) => {
-    installedApps = apps;
-    console.log('installedApps', installedApps);
-  });
-}
-*/
 
 const Intro = (props) => {
   const { onVideoComplete, onVideoError, ...restProps } = props;
 
-  const [launching, setLaunching] = useState(false);
-  const [videoPlaying, setVideoPlaying] = useState(true);
   const container = useRef();
-  console.log('in intro', !!window.installPrompt);
+  const [closing, setClosing] = useState(false);
+  const [launchOptions, setLaunchOptions] = useState([]);
 
-  const launchStandard = useCallback(() => {
-    setLaunching(true);
+  const closeIntro = useCallback(() => {
+    setClosing(true); // (so they fade back out)
     gsap.to(container.current, {
       delay: 0.5,
       opacity: 0,
@@ -77,6 +67,7 @@ const Intro = (props) => {
       onComplete: () => {
         if (onVideoComplete) onVideoComplete();
 
+        // TODO: remove
         // logging out of curiosity
         if (navigator.getInstalledRelatedApps) {
           navigator.getInstalledRelatedApps().then((apps) => {
@@ -88,15 +79,15 @@ const Intro = (props) => {
     });
   }, [onVideoComplete]);
 
-  const launchOptions = useMemo(() => {
-    console.log('launchOptions useMemo');
-    const options = [];
+  const onVideoEnded = useCallback(() => {
+    // if standalone, launch standard
+    if (isStandalone) return closeIntro();
 
     // always have standard option
-    options.push({
+    const options = [{
       label: 'Standard',
-      onClick: launchStandard
-    });
+      onClick: closeIntro
+    }];
 
     // include fullscreen option if fullscreen is available
     const docElem = document.documentElement;
@@ -111,7 +102,7 @@ const Intro = (props) => {
           } else if (docElem.msRequestFullscreen) { /* IE11 */
             docElem.msRequestFullscreen();
           }
-          launchStandard();
+          closeIntro();
         }
       });
     }
@@ -126,7 +117,7 @@ const Intro = (props) => {
           const { outcome } = await window.installPrompt.userChoice;
           if (outcome === 'accepted') {
             window.installPrompt = null;
-            launchStandard();
+            closeIntro();
           }
         }
       });
@@ -141,16 +132,15 @@ const Intro = (props) => {
       });
     }
 
-    return options;
-  }, [launchStandard]);
+    // if only one option, just "click" it automatically
+    if (options.length === 1) {
+      options[0].onClick();
 
-  const onVideoEnded = useCallback(() => {
-    // if only one launch option, just use it
-    if (isStandalone || launchOptions.length === 1) {
-      launchOptions[0].onClick();
+    // else, set launch options for user selection
+    } else {
+      setLaunchOptions(options);
     }
-    setVideoPlaying(false);
-  }, [launchOptions]);
+  }, [closeIntro]);
 
   return (
     <StyledIntro ref={container} {...restProps}>
@@ -161,9 +151,9 @@ const Intro = (props) => {
         volume={0}
         muted={true}
         playing={true}
-        onError={launchStandard}
+        onError={closeIntro}
         onEnded={onVideoEnded} />
-      <Launcher hiding={videoPlaying || launching}>
+      <Launcher hiding={closing || launchOptions?.length < 2}>
         <h4>Launch Experience:</h4>
         <ButtonContainer>
           {launchOptions.map(({ label, onClick }) => (
