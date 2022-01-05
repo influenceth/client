@@ -49,14 +49,8 @@ const ButtonContainer = styled.div`
 
 const isStandalone = (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches);
 
-if (navigator.getInstalledRelatedApps) {
-  navigator.getInstalledRelatedApps().then((apps) => {
-    console.log('installedApps', apps);
-  });
-}
-
 const Intro = (props) => {
-  const { onVideoComplete, onVideoError, ...restProps } = props;
+  const { onComplete, ...restProps } = props;
 
   const container = useRef();
   const [closing, setClosing] = useState(false);
@@ -69,11 +63,9 @@ const Intro = (props) => {
       opacity: 0,
       duration: 1,
       ease: 'power1.out',
-      onComplete: () => {
-        if (onVideoComplete) onVideoComplete();
-      }
+      onComplete
     });
-  }, [onVideoComplete]);
+  }, [onComplete]);
 
   const onVideoEnded = useCallback(() => {
     // if standalone, launch standard
