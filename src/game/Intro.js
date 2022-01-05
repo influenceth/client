@@ -48,7 +48,12 @@ const ButtonContainer = styled.div`
 `;
 
 const isStandalone = (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches);
-let installedApps = [];
+
+if (navigator.getInstalledRelatedApps) {
+  navigator.getInstalledRelatedApps().then((apps) => {
+    console.log('installedApps', apps);
+  });
+}
 
 const Intro = (props) => {
   const { onVideoComplete, onVideoError, ...restProps } = props;
@@ -66,15 +71,6 @@ const Intro = (props) => {
       ease: 'power1.out',
       onComplete: () => {
         if (onVideoComplete) onVideoComplete();
-
-        // TODO: remove
-        // logging out of curiosity
-        if (navigator.getInstalledRelatedApps) {
-          navigator.getInstalledRelatedApps().then((apps) => {
-            installedApps = apps;
-            console.log('installedApps', installedApps);
-          });
-        }
       }
     });
   }, [onVideoComplete]);
@@ -108,7 +104,6 @@ const Intro = (props) => {
     }
 
     // include "install" option if PWA install is available
-    console.log('before', !!window.installPrompt);
     if (!!window.installPrompt) {
       options.push({
         label: 'Install App',
@@ -119,15 +114,6 @@ const Intro = (props) => {
             window.installPrompt = null;
             closeIntro();
           }
-        }
-      });
-
-    // else, if PWA already installed, send to PWA
-    } else if (installedApps.length) {
-      options.push({
-        label: 'Open App',
-        onClick: async () => {
-          console.log('open app');
         }
       });
     }
