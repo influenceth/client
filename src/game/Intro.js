@@ -49,6 +49,14 @@ const ButtonContainer = styled.div`
 
 const isStandalone = (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches);
 
+let installedApps = [];
+if (navigator.getInstalledRelatedApps) {
+  navigator.getInstalledRelatedApps().then((apps) => {
+    installedApps = apps;
+    console.log('installedApps', installedApps);
+  });
+}
+
 const Intro = (props) => {
   const { onVideoComplete, onVideoError, ...restProps } = props;
 
@@ -78,41 +86,51 @@ const Intro = (props) => {
       onClick: launchStandard
     });
 
-    // if standalone, don't need options... will just do launchStandard
-    if (!isStandalone) {
+    // include fullscreen option if fullscreen is available
+    const docElem = document.documentElement;
+    if (docElem.requestFullscreen || docElem.webkitRequestFullscreen || docElem.msRequestFullscreen) {
+      options.push({
+        label: 'Fullscreen',
+        onClick: () => {
+          if (docElem.requestFullscreen) {
+            docElem.requestFullscreen();
+          } else if (docElem.webkitRequestFullscreen) { /* Safari */
+            docElem.webkitRequestFullscreen();
+          } else if (docElem.msRequestFullscreen) { /* IE11 */
+            docElem.msRequestFullscreen();
+          }
+          launchStandard();
+        }
+      });
+    }
 
-      // include fullscreen option if fullscreen is available
-      const docElem = document.documentElement;
-      if (docElem.requestFullscreen || docElem.webkitRequestFullscreen || docElem.msRequestFullscreen) {
-        options.push({
-          label: 'Fullscreen',
-          onClick: () => {
-            if (docElem.requestFullscreen) {
-              docElem.requestFullscreen();
-            } else if (docElem.webkitRequestFullscreen) { /* Safari */
-              docElem.webkitRequestFullscreen();
-            } else if (docElem.msRequestFullscreen) { /* IE11 */
-              docElem.msRequestFullscreen();
-            }
+    // include "install" option if PWA install is available
+    if (window.installPrompt) {
+      options.push({
+        label: 'Install App',
+        onClick: async () => {
+          window.installPrompt.prompt();
+          const { outcome } = await window.installPrompt.userChoice;
+          if (outcome === 'accepted') {
+            window.installPrompt = null;
             launchStandard();
           }
-        });
-      }
+        }
+      });
 
-      // include "install" option if PWA install is available
-      if (window.installPrompt) {
-        options.push({
-          label: 'Install',
-          onClick: async () => {
-            window.installPrompt.prompt();
-            const { outcome } = await window.installPrompt.userChoice;
-            if (outcome === 'accepted') {
-              window.installPrompt = null;
-              launchStandard();
-            }
+    // else, if PWA already installed, send to PWA
+    } else if (installedApps.length) {
+      options.push({
+        label: 'Open App',
+        onClick: async () => {
+          window.installPrompt.prompt();
+          const { outcome } = await window.installPrompt.userChoice;
+          if (outcome === 'accepted') {
+            window.installPrompt = null;
+            launchStandard();
           }
-        });
-      }
+        }
+      });
     }
 
     return options;
@@ -120,7 +138,7 @@ const Intro = (props) => {
 
   const onVideoEnded = useCallback(() => {
     // if only one launch option, just use it
-    if (launchOptions.length === 1) {
+    if (isStandalone || launchOptions.length === 1) {
       launchOptions[0].onClick();
     }
     setVideoPlaying(false);
