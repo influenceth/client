@@ -65,6 +65,7 @@ const Intro = (props) => {
   const [launching, setLaunching] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(true);
   const container = useRef();
+  console.log('in intro', !!window.installPrompt);
 
   const launchStandard = useCallback(() => {
     setLaunching(true);
@@ -88,6 +89,7 @@ const Intro = (props) => {
   }, [onVideoComplete]);
 
   const launchOptions = useMemo(() => {
+    console.log('launchOptions useMemo');
     const options = [];
 
     // always have standard option
@@ -115,7 +117,8 @@ const Intro = (props) => {
     }
 
     // include "install" option if PWA install is available
-    if (window.installPrompt) {
+    console.log('before', !!window.installPrompt);
+    if (!!window.installPrompt) {
       options.push({
         label: 'Install App',
         onClick: async () => {
@@ -133,12 +136,7 @@ const Intro = (props) => {
       options.push({
         label: 'Open App',
         onClick: async () => {
-          window.installPrompt.prompt();
-          const { outcome } = await window.installPrompt.userChoice;
-          if (outcome === 'accepted') {
-            window.installPrompt = null;
-            launchStandard();
-          }
+          console.log('open app');
         }
       });
     }
