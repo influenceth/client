@@ -30,7 +30,7 @@ const Game = (props) => {
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const [ showScene, setShowScene ] = useState(false);
-  const [ loading, setLoading ] = useState(true);
+  const [ loading, setLoading ] = useState(process.env.NODE_ENV !== 'development');
 
   const onVideoComplete = () => {
     setLoading(false);

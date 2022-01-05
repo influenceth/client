@@ -48,12 +48,14 @@ ReactDOM.render(
   document.getElementById('root')
 );
 
-// Learn more about service workers: https://cra.link/PWA
-serviceWorkerRegistration.register();
+// listen for installprompt (should keep this before serviceworker registration)
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   window.installPrompt = e;
 });
+
+// Learn more about service workers: https://cra.link/PWA
+serviceWorkerRegistration.register();
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
