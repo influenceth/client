@@ -490,6 +490,7 @@ const CrewMemberDetails = (props) => {
                             if (name) {
                               return (
                                 <Trait
+                                  key={trait}
                                   onClick={selectTrait(trait)}
                                   selected={selectedTrait?.id === trait}>
                                   <CrewTraitIcon trait={trait} />
