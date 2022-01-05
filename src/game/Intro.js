@@ -50,12 +50,14 @@ const ButtonContainer = styled.div`
 const isStandalone = (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches);
 
 let installedApps = [];
+/*
 if (navigator.getInstalledRelatedApps) {
   navigator.getInstalledRelatedApps().then((apps) => {
     installedApps = apps;
     console.log('installedApps', installedApps);
   });
 }
+*/
 
 const Intro = (props) => {
   const { onVideoComplete, onVideoError, ...restProps } = props;
@@ -73,6 +75,14 @@ const Intro = (props) => {
       ease: 'power1.out',
       onComplete: () => {
         if (onVideoComplete) onVideoComplete();
+
+        // logging out of curiosity
+        if (navigator.getInstalledRelatedApps) {
+          navigator.getInstalledRelatedApps().then((apps) => {
+            installedApps = apps;
+            console.log('installedApps', installedApps);
+          });
+        }
       }
     });
   }, [onVideoComplete]);

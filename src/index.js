@@ -49,8 +49,10 @@ ReactDOM.render(
 );
 
 // listen for installprompt (should keep this before serviceworker registration)
+console.log('addEventListener', 'beforeinstallprompt');
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
+  console.log('beforeinstallprompt triggered');
   window.installPrompt = e;
 });
 
