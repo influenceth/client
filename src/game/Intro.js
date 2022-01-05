@@ -81,11 +81,13 @@ const Intro = (props) => {
   }, [launchStandard]);
 
   const installPWA = useCallback(async () => {
-    window.installPromptable.prompt();
-    const { outcome } = await window.installPromptable.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
-    window.installPromptable = null;
-  }, []);
+    window.installPrompt.prompt();
+    const { outcome } = await window.installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      window.installPrompt = null;
+      launchStandard();
+    }
+  }, [launchStandard]);
 
   return (
     <StyledIntro ref={container} {...restProps}>
@@ -107,9 +109,9 @@ const Intro = (props) => {
           <Button onClick={launchFullscreen}>
             Fullscreen
           </Button>
-          {window.installPromptable && (
+          {window.installPrompt && (
             <Button onClick={installPWA}>
-              Install
+              Install App
             </Button>
           )}
         </ButtonContainer>
