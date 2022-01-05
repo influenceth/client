@@ -25,6 +25,6 @@
   "prefer_related_applications": true,
   "related_applications": [{
     "platform": "webapp",
-    "id": "https://influence-client-br-ready-scre.herokuapp.com/manifest.json"
+    "url": "https://influence-client-br-ready-scre.herokuapp.com/manifest.json"
   }]
 }
