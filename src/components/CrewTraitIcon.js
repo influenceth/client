@@ -22,15 +22,24 @@ import Svg20 from '~/assets/icons/crew_traits/20.svg';
 import Svg21 from '~/assets/icons/crew_traits/21.svg';
 import Svg22 from '~/assets/icons/crew_traits/22.svg';
 import Svg23 from '~/assets/icons/crew_traits/23.svg';
+import Svg24 from '~/assets/icons/crew_traits/24.svg';
+import Svg25 from '~/assets/icons/crew_traits/25.svg';
+import Svg26 from '~/assets/icons/crew_traits/26.svg';
+import Svg27 from '~/assets/icons/crew_traits/27.svg';
+import Svg28 from '~/assets/icons/crew_traits/28.svg';
+import Svg29 from '~/assets/icons/crew_traits/29.svg';
+import Svg30 from '~/assets/icons/crew_traits/30.svg';
+import Svg31 from '~/assets/icons/crew_traits/31.svg';
+import Svg32 from '~/assets/icons/crew_traits/32.svg';
 import FallbackSvg from '~/assets/icons/RocketIcon.svg';
 
 const innerDim = 0.54;
 const innerShift = (1 - innerDim) / 2;
-const indexedIcons = [
-  null, // 1-indexed
-  Svg1, Svg2, Svg3, Svg4, Svg5, Svg6, Svg7, Svg8, Svg9, Svg10,
-  Svg11, Svg12, Svg13, Svg14, Svg15, Svg16, Svg17, Svg18, Svg19, Svg20,
-  Svg21, Svg22, Svg23,
+const indexedIcons = [ // 1-indexed
+  null, Svg1, Svg2, Svg3, Svg4, Svg5, Svg6, Svg7, Svg8, Svg9,
+  Svg10, Svg11, Svg12, Svg13, Svg14, Svg15, Svg16, Svg17, Svg18, Svg19,
+  Svg20, Svg21, Svg22, Svg23, Svg24, Svg25, Svg26, Svg27, Svg28, Svg29,
+  Svg30, Svg31, Svg32, 
 ];
 
 const CrewTraitIcon = ({ trait }) => {
