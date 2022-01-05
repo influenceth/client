@@ -290,7 +290,10 @@ const CrewAssignmentComplete = (props) => {
   const { data: allCrew } = useOwnedCrew();
   const { storyState } = useStorySession(sessionId);
 
-  const onCloseDestination = useMemo(() => `/crew-assignments/${storyState?.book}`, [storyState?.book]);
+  const onCloseDestination = useMemo(
+    () => `/crew-assignments/${storyState?.book}/${storyState?.story}`,
+    [storyState?.book, storyState?.story]
+  );
 
   const crew = useMemo(() => {
     return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
