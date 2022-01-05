@@ -339,7 +339,7 @@ const CrewAssignment = (props) => {
 
   const goBack = useCallback(() => {
     playSound('effects.click');
-    history.push(`/crew-assignments/${storyState.book}`);
+    history.push(`/crew-assignments/${storyState?.book}/${storyState?.story}`);
   }, [history, playSound, storyState]);
 
   const finish = useCallback(() => {
