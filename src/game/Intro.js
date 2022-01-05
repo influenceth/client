@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import ReactPlayer from 'react-player/lazy';
 import styled from 'styled-components';
 import gsap from 'gsap';
@@ -47,16 +47,17 @@ const ButtonContainer = styled.div`
   }
 `;
 
+const isStandalone = (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches);
+
 const Intro = (props) => {
   const { onVideoComplete, onVideoError, ...restProps } = props;
+
+  const [launching, setLaunching] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(true);
   const container = useRef();
 
-  const onVideoEnded = useCallback(() => {
-    setVideoPlaying(false);
-  }, []);
-
   const launchStandard = useCallback(() => {
+    setLaunching(true);
     gsap.to(container.current, {
       delay: 0.5,
       opacity: 0,
@@ -68,26 +69,62 @@ const Intro = (props) => {
     });
   }, [onVideoComplete]);
 
-  const launchFullscreen = useCallback(() => {
-    const elem = document.documentElement;
-    if (elem.requestFullscreen) {
-      elem.requestFullscreen();
-    } else if (elem.webkitRequestFullscreen) { /* Safari */
-      elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) { /* IE11 */
-      elem.msRequestFullscreen();
+  const launchOptions = useMemo(() => {
+    const options = [];
+
+    // always have standard option
+    options.push({
+      label: 'Standard',
+      onClick: launchStandard
+    });
+
+    // if standalone, don't need options... will just do launchStandard
+    if (!isStandalone) {
+
+      // include fullscreen option if fullscreen is available
+      const docElem = document.documentElement;
+      if (docElem.requestFullscreen || docElem.webkitRequestFullscreen || docElem.msRequestFullscreen) {
+        options.push({
+          label: 'Fullscreen',
+          onClick: () => {
+            if (docElem.requestFullscreen) {
+              docElem.requestFullscreen();
+            } else if (docElem.webkitRequestFullscreen) { /* Safari */
+              docElem.webkitRequestFullscreen();
+            } else if (docElem.msRequestFullscreen) { /* IE11 */
+              docElem.msRequestFullscreen();
+            }
+            launchStandard();
+          }
+        });
+      }
+
+      // include "install" option if PWA install is available
+      if (window.installPrompt) {
+        options.push({
+          label: 'Install',
+          onClick: async () => {
+            window.installPrompt.prompt();
+            const { outcome } = await window.installPrompt.userChoice;
+            if (outcome === 'accepted') {
+              window.installPrompt = null;
+              launchStandard();
+            }
+          }
+        });
+      }
     }
-    launchStandard();
+
+    return options;
   }, [launchStandard]);
 
-  const installPWA = useCallback(async () => {
-    window.installPrompt.prompt();
-    const { outcome } = await window.installPrompt.userChoice;
-    if (outcome === 'accepted') {
-      window.installPrompt = null;
-      launchStandard();
+  const onVideoEnded = useCallback(() => {
+    // if only one launch option, just use it
+    if (launchOptions.length === 1) {
+      launchOptions[0].onClick();
     }
-  }, [launchStandard]);
+    setVideoPlaying(false);
+  }, [launchOptions]);
 
   return (
     <StyledIntro ref={container} {...restProps}>
@@ -100,20 +137,14 @@ const Intro = (props) => {
         playing={true}
         onError={launchStandard}
         onEnded={onVideoEnded} />
-      <Launcher hiding={videoPlaying}>
+      <Launcher hiding={videoPlaying || launching}>
         <h4>Launch Experience:</h4>
         <ButtonContainer>
-          <Button onClick={launchStandard}>
-            Standard
-          </Button>
-          <Button onClick={launchFullscreen}>
-            Fullscreen
-          </Button>
-          {window.installPrompt && (
-            <Button onClick={installPWA}>
-              Install App
+          {launchOptions.map(({ label, onClick }) => (
+            <Button key={label} onClick={onClick}>
+              {label}
             </Button>
-          )}
+          ))}
         </ButtonContainer>
       </Launcher>
     </StyledIntro>
