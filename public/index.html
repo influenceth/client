@@ -30,6 +30,14 @@
       when a crawler's user-agent is detected by the server
     -->
     <meta name="opengraph" />
+    <script>
+      console.log('beforeInstallPrompt addEventListener');
+      window.addEventListener('beforeinstallprompt', (e) => {
+        console.log(`'beforeinstallprompt' event was fired.`);  // TODO: remove this
+        e.preventDefault();
+        window.installPromptable = e;
+      });
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
