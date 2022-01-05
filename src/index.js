@@ -48,6 +48,12 @@ ReactDOM.render(
   document.getElementById('root')
 );
 
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  window.installPromptable = e;
+  console.log(`'beforeinstallprompt' event was fired.`);  // TODO: remove this
+});
+
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: https://cra.link/PWA
