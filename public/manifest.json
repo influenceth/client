@@ -21,5 +21,10 @@
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#36a7cd",
-  "background_color": "#000000"
+  "background_color": "#000000",
+  "prefer_related_applications": true,
+  "related_applications": [{
+    "platform": "webapp",
+    "id": "https://influence-client-br-ready-scre.herokuapp.com/manifest.json"
+  }]
 }
