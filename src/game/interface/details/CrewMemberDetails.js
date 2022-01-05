@@ -195,6 +195,10 @@ const Trait = styled.div`
     font-size: 12px;
     line-height: 32px;
     margin: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &:hover {
