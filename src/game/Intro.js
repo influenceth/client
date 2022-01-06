@@ -16,24 +16,16 @@ const StyledIntro = styled.div`
 `;
 
 const Launcher = styled.div`
-  top: 62.5%;
+  bottom: 27.75%;
   left: 0;
   opacity: ${p => p.hiding ? 0: 1};
   position: fixed;
   right: 0;
   text-align: center;
   transition: opacity 600ms ease;
-  & > h4 {
-    margin: 0 0 15px;
-    opacity: 0.5;
-    @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-      font-size: 90%;
-    }
-  }
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    top: auto;
-    bottom: 15px;
+    bottom: 5%;
   }
 `;
 const ButtonContainer = styled.div`
@@ -43,7 +35,7 @@ const ButtonContainer = styled.div`
   justify-content: center;
   padding: 0 20px;
   & > button {
-    margin: 0 10px 15px;
+    margin: 15px 10px 0;
   }
 `;
 
@@ -73,7 +65,7 @@ const Intro = (props) => {
 
     // always have standard option
     const options = [{
-      label: 'Standard',
+      label: 'Launch',
       onClick: closeIntro
     }];
 
@@ -81,7 +73,7 @@ const Intro = (props) => {
     const docElem = document.documentElement;
     if (docElem.requestFullscreen || docElem.webkitRequestFullscreen || docElem.msRequestFullscreen) {
       options.push({
-        label: 'Fullscreen',
+        label: 'Launch Fullscreen',
         onClick: () => {
           if (docElem.requestFullscreen) {
             docElem.requestFullscreen();
@@ -132,7 +124,6 @@ const Intro = (props) => {
         onError={closeIntro}
         onEnded={onVideoEnded} />
       <Launcher hiding={closing || launchOptions?.length < 2}>
-        <h4>Launch Experience:</h4>
         <ButtonContainer>
           {launchOptions.map(({ label, onClick }) => (
             <Button key={label} onClick={onClick}>
