@@ -23,7 +23,7 @@
     "howler": "^2.2.3",
     "immer": "^8.0.1",
     "import": "^0.0.6",
-    "influence-utils": "^1.4.0",
+    "influence-utils": "^1.5.0",
     "isbot-fast": "^1.2.0",
     "lodash.uniqby": "^4.7.0",
     "md5": "^2.3.0",
