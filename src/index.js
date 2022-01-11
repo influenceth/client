@@ -48,8 +48,12 @@ ReactDOM.render(
   document.getElementById('root')
 );
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
+// listen for installprompt (should keep this before serviceworker registration)
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  window.installPrompt = e;
+});
+
 // Learn more about service workers: https://cra.link/PWA
 serviceWorkerRegistration.register();
 
