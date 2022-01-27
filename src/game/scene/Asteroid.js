@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Vector3, Box3, Sphere } from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import gsap from 'gsap';
@@ -44,9 +44,19 @@ const Asteroid = (props) => {
   const position = useRef();
   const rotation = useRef(0);
 
+  const disposeGeometry = useCallback(() => {
+    if (quadtreeRef.current) {
+      geometry.current.groups.forEach((g) => {
+        quadtreeRef.current.remove(g);
+      });
+    }
+    geometry.current.dispose();
+    geometry.current = null;
+  }, []);
+
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
-    if (asteroidData) {
+    if (asteroidData && asteroidData.asteroidId === origin) {
       const c = new Config(asteroidData);
       setConfig(c);
 
@@ -57,7 +67,8 @@ const Asteroid = (props) => {
       position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU);
       rotation.current = time * c.rotationSpeed * 2 * Math.PI;;
 
-      // TODO: should we check if geometry.current already exists so we can dispose it first?
+      // if geometry.current already exists, dispose first
+      if (geometry.current) disposeGeometry();
       geometry.current = new QuadtreeCubeSphere(c);
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.add(g);
@@ -68,15 +79,7 @@ const Asteroid = (props) => {
       setConfig();
       asteroidOrbit.current = null;
       rotationAxis.current = null;
-
-      // remove geometry from scene and dispose of geometry
-      if (geometry.current) {
-        geometry.current.groups.forEach((g) => {
-          quadtreeRef.current.remove(g);
-        });
-        geometry.current.dispose();
-      }
-      geometry.current = null;
+      if (geometry.current) disposeGeometry();
 
       if (zoomStatus === 'in') updateZoomStatus('zooming-out');
     }
@@ -200,6 +203,7 @@ const Asteroid = (props) => {
 
   // Positions the asteroid in space based on time changes
   useFrame(() => {
+    if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
 
     // tally frame
