@@ -1,21 +1,21 @@
-import * as THREE from 'three';
+import { Box3, Vector3 } from 'three';
 
 class QuadtreePlane {
   constructor({ localToWorld, minChunkSize, size, worldStretch }) {
     this.localToWorld = localToWorld;
     this.minChunkSize = minChunkSize;
     this.size = size;
-    this.worldStretch = worldStretch || new THREE.Vector3(1, 1, 1);
+    this.worldStretch = worldStretch || new Vector3(1, 1, 1);
 
-    const rootNode = new THREE.Box3(
-      new THREE.Vector3(-1 * size, -1 * size, 0),
-      new THREE.Vector3(size, size, 0),
+    const rootNode = new Box3(
+      new Vector3(-1 * size, -1 * size, 0),
+      new Vector3(size, size, 0),
     );
     this.root = {
       bounds: rootNode,
       children: [],
-      center: rootNode.getCenter(new THREE.Vector3()),
-      size: rootNode.getSize(new THREE.Vector3()),
+      center: rootNode.getCenter(new Vector3()),
+      size: rootNode.getSize(new Vector3()),
       root: true
     };
     this.root.sphereCenter = this.getSphereCenter(this.root);
@@ -66,32 +66,32 @@ class QuadtreePlane {
   }
 
   generateChildren(child) {
-    const midpoint = child.bounds.getCenter(new THREE.Vector3());
+    const midpoint = child.bounds.getCenter(new Vector3());
 
     // Bottom left
-    const b1 = new THREE.Box3(child.bounds.min, midpoint);
+    const b1 = new Box3(child.bounds.min, midpoint);
 
     // Bottom right
-    const b2 = new THREE.Box3(
-      new THREE.Vector3(midpoint.x, child.bounds.min.y, 0),
-      new THREE.Vector3(child.bounds.max.x, midpoint.y, 0)
+    const b2 = new Box3(
+      new Vector3(midpoint.x, child.bounds.min.y, 0),
+      new Vector3(child.bounds.max.x, midpoint.y, 0)
     );
 
     // Top left
-    const b3 = new THREE.Box3(
-      new THREE.Vector3(child.bounds.min.x, midpoint.y, 0),
-      new THREE.Vector3(midpoint.x, child.bounds.max.y, 0)
+    const b3 = new Box3(
+      new Vector3(child.bounds.min.x, midpoint.y, 0),
+      new Vector3(midpoint.x, child.bounds.max.y, 0)
     );
 
     // Top right
-    const b4 = new THREE.Box3(midpoint, child.bounds.max);
+    const b4 = new Box3(midpoint, child.bounds.max);
 
     return [b1, b2, b3, b4].map((b) => {
       const node = {
         bounds: b,
         children: [],
-        center: b.getCenter(new THREE.Vector3()),
-        size: b.getSize(new THREE.Vector3())
+        center: b.getCenter(new Vector3()),
+        size: b.getSize(new Vector3())
       };
       node.sphereCenter = this.getSphereCenter(node);
       return node;

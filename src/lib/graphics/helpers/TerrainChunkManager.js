@@ -118,7 +118,7 @@ class TerrainChunkManager {
       if (!this.pool[node.chunk._params.width]) {
         this.pool[node.chunk._params.width] = [];
       }
-      node.chunk.destroy();
+      node.chunk.dispose();
     }
 
     // show new chunks

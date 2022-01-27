@@ -1,4 +1,17 @@
-import * as THREE from 'three';
+import {
+  CanvasTexture,
+  Color,
+  DataTexture,
+  LinearFilter,
+  LinearMipMapLinearFilter,
+  ImageBitmapLoader,
+  NearestFilter,
+  ShaderMaterial,
+  TextureLoader,
+  Vector2,
+  Vector3,
+  WebGLRenderer,
+} from 'three';
 import colorShader from '~/game/scene/asteroid/color.glsl';
 import displacementShader from '~/game/scene/asteroid/displacement.glsl';
 import heightShader from '~/game/scene/asteroid/height.glsl';
@@ -20,7 +33,7 @@ const rampsPath = `${process.env.PUBLIC_URL}/textures/asteroid/ramps.png`;
 
 // TODO: offscreen canvas?
 const textureRenderer = new TextureRenderer(
-  new THREE.WebGLRenderer({
+  new WebGLRenderer({
     canvas: new OffscreenCanvas(0, 0),
     antialias: true
   })
@@ -32,19 +45,19 @@ export async function initChunkTextures() {
   if (!ramps) {
     let loader;
     try {
-      loader = new THREE.TextureLoader();
+      loader = new TextureLoader();
       ramps = await loader.loadAsync(rampsPath);
     } catch (e) {
-      loader = new THREE.ImageBitmapLoader();
-      ramps = new THREE.CanvasTexture(await loader.loadAsync(rampsPath));
+      loader = new ImageBitmapLoader();
+      ramps = new CanvasTexture(await loader.loadAsync(rampsPath));
     }
-    ramps.minFilter = THREE.NearestFilter;
-    ramps.magFilter = THREE.NearestFilter;
+    ramps.minFilter = NearestFilter;
+    ramps.magFilter = NearestFilter;
   }
 }
 
 function generateDisplacementMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, config) {
-  const material = new THREE.ShaderMaterial({
+  const material = new ShaderMaterial({
     fragmentShader: displacementShader,
     uniforms: {
       uChunkOffset: { type: 'v2', value: chunkOffset },
@@ -53,7 +66,7 @@ function generateDisplacementMap(cubeTransform, chunkSize, chunkOffset, chunkRes
       uDispPasses: { type: 'i', value: config.dispPasses },
       uDispPersist: { type: 'f', value: config.dispPersist },
       uDispWeight: { type: 'f', value: config.dispWeight },
-      uResolution: { type: 'v2', value: new THREE.Vector2(chunkResolution, chunkResolution) },
+      uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
       uSeed: { type: 'v3', value: config.seed },
       uTransform: { type: 'mat4', value: cubeTransform },
     }
@@ -63,8 +76,8 @@ function generateDisplacementMap(cubeTransform, chunkSize, chunkOffset, chunkRes
   texture.options = {
     flipY: true,
     generateMipmaps: true,
-    minFilter: THREE.LinearMipMapLinearFilter,
-    magFilter: THREE.LinearFilter,
+    minFilter: LinearMipMapLinearFilter,
+    magFilter: LinearFilter,
     needsUpdate: true
   };
 
@@ -72,7 +85,7 @@ function generateDisplacementMap(cubeTransform, chunkSize, chunkOffset, chunkRes
 }
 
 function generateHeightMap(displacementMap, cubeTransform, chunkSize, chunkOffset, chunkResolution, config) {
-  const material = new THREE.ShaderMaterial({
+  const material = new ShaderMaterial({
     fragmentShader: heightShader,
     uniforms: {
       tDisplacementMap: { type: 't', value: displacementMap },
@@ -87,7 +100,7 @@ function generateHeightMap(displacementMap, cubeTransform, chunkSize, chunkOffse
       uCraterSteep: { type: 'f', value: config.craterSteep },
       uDispWeight: { type: 'f', value: config.dispWeight },
       uFeaturesFreq: { type: 'f', value: config.featuresFreq },
-      uResolution: { type: 'v2', value: new THREE.Vector2(chunkResolution, chunkResolution) },
+      uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
       uRimVariation: { type: 'f', value: config.rimVariation },
       uRimWeight: { type: 'f', value: config.rimWeight },
       uRimWidth: { type: 'f', value: config.rimWidth },
@@ -104,8 +117,8 @@ function generateHeightMap(displacementMap, cubeTransform, chunkSize, chunkOffse
   texture.options = {
     flipY: true,
     generateMipmaps: true,
-    minFilter: THREE.LinearMipMapLinearFilter,
-    magFilter: THREE.LinearFilter,
+    minFilter: LinearMipMapLinearFilter,
+    magFilter: LinearFilter,
     needsUpdate: true
   };
 
@@ -115,21 +128,21 @@ function generateHeightMap(displacementMap, cubeTransform, chunkSize, chunkOffse
 function generateColorMap(heightMap, chunkResolution, config) {
   if (!ramps) throw new Error('Ramps not yet loaded!');
 
-  const material = new THREE.ShaderMaterial({
+  const material = new ShaderMaterial({
     fragmentShader: colorShader,
     uniforms: {
       tHeightMap: { type: 't', value: heightMap },
       tRamps: { type: 't', value: ramps },
       uSpectral: { type: 'f', value: config.spectralType },
-      uResolution: { type: 'v2', value: new THREE.Vector2(chunkResolution, chunkResolution) }
+      uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) }
     }
   });
 
   const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
   texture.options = {
     generateMipmaps: true,
-    minFilter: THREE.LinearMipMapLinearFilter,
-    magFilter: THREE.LinearFilter,
+    minFilter: LinearMipMapLinearFilter,
+    magFilter: LinearFilter,
     needsUpdate: true
   };
 
@@ -137,22 +150,22 @@ function generateColorMap(heightMap, chunkResolution, config) {
 }
 
 function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, config) {
-  const material = new THREE.ShaderMaterial({
+  const material = new ShaderMaterial({
     extensions: { derivatives: true },
     fragmentShader: normalShader,
     uniforms: {
       tHeightMap: { type: 't', value: heightMap },
       uCompatibilityScalar: { type: 'f', value: compatibilityScalar },
       uNormalIntensity: { type: 'f', value: config.normalIntensity },
-      uResolution: { type: 'v2', value: new THREE.Vector2(chunkResolution, chunkResolution) }
+      uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) }
     }
   });
 
   const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
   texture.options = {
     generateMipmaps: true,
-    minFilter: THREE.LinearMipMapLinearFilter,
-    magFilter: THREE.LinearFilter,
+    minFilter: LinearMipMapLinearFilter,
+    magFilter: LinearFilter,
     needsUpdate: true
   };
 
@@ -160,7 +173,7 @@ function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, conf
 }
 
 function mapToDataTexture(map) {
-  return new THREE.DataTexture(
+  return new DataTexture(
     map.buffer,
     map.width,
     map.height,
@@ -171,9 +184,9 @@ function mapToDataTexture(map) {
 export function rebuildChunkGeometry({ config, groupMatrix, offset, radius, resolution, side, width }) {
   if (!ramps) return;
 
-  const _D = new THREE.Vector3();
-  const _P = new THREE.Vector3();
-  const _N = new THREE.Vector3();
+  const _D = new Vector3();
+  const _P = new Vector3();
+  const _N = new Vector3();
 
   const positions = [];
   const colors = [];
@@ -199,9 +212,10 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, radius, reso
     resolutionPlusOne,
     config
   );
+  const displacementMapDataTexture = mapToDataTexture(displacementMap);
 
   const heightMap = generateHeightMap(
-    mapToDataTexture(displacementMap),
+    displacementMapDataTexture,
     localToWorld,
     chunkSize,
     chunkOffset,
@@ -223,8 +237,11 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, radius, reso
     config
   );
 
-  // TODO: colorshader texture could be passed directly into attribute (after mapping from 4 to 3 values)
+  // done with interim data textures
+  displacementMapDataTexture.dispose();
+  heightMapDataTexture.dispose();
 
+  // build geometry
   for (let x = 0; x < resolutionPlusOne; x++) {
     const xp = width * x / resolution;
     for (let y = 0; y < resolutionPlusOne; y++) {
@@ -263,7 +280,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, radius, reso
       positions.push(_P.x, _P.y, _P.z);
 
       // colors
-      const color = new THREE.Color(
+      const color = new Color(
         colorMap.buffer[bufferIndex * 4] / 256.0,
         colorMap.buffer[bufferIndex * 4 + 1] / 256.0,
         colorMap.buffer[bufferIndex * 4 + 2] / 256.0

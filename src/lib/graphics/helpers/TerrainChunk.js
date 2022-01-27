@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import { BufferAttribute, BufferGeometry, Float32BufferAttribute, Mesh } from 'three';
 
 import { rebuildChunkGeometry } from './TerrainChunkUtils';
 
@@ -8,16 +8,16 @@ class TerrainChunk {
     this._config = config;
     this._textureRenderer = textureRenderer;
     
-    this._geometry = new THREE.BufferGeometry();
-    this._plane = new THREE.Mesh(this._geometry, params.material);
+    this._geometry = new BufferGeometry();
+    this._plane = new Mesh(this._geometry, params.material);
     this._plane.castShadow = false;
     this._plane.receiveShadow = true;
     this._params.group.add(this._plane);
   }
   
-  destroy() {
-    // TODO: should probably dispose of geometry and mesh as well
+  dispose() {
     this._params.group.remove(this._plane);
+    this._geometry.dispose();
   }
 
   hide() {
@@ -51,13 +51,13 @@ class TerrainChunk {
   updateGeometry(data) {
     if (!data) return;
     this._geometry.setAttribute(
-      'position', new THREE.Float32BufferAttribute(data.positions, 3));
+      'position', new Float32BufferAttribute(data.positions, 3));
     this._geometry.setAttribute(
-      'color', new THREE.Float32BufferAttribute(data.colors, 3));
+      'color', new Float32BufferAttribute(data.colors, 3));
     this._geometry.setAttribute(
-      'normal', new THREE.Float32BufferAttribute(data.normals, 3));
+      'normal', new Float32BufferAttribute(data.normals, 3));
     this._geometry.setIndex(
-      new THREE.BufferAttribute(new Uint32Array(data.indices), 1));
+      new BufferAttribute(new Uint32Array(data.indices), 1));
   }
 }
 

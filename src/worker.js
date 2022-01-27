@@ -44,7 +44,7 @@ const updatePlanetPositions = function(planets, elapsed = 0) {
   });
 };
 
-const rebuildAsteroidChunks = function(chunks, elapsed = 0) {
+const rebuildAsteroidChunks = function(chunks) {
   initChunkTextures().then(() => {
     Promise.all(
       chunks.map((chunk) => {

@@ -1,4 +1,12 @@
-import * as THREE from 'three';
+import {
+  FrontSide,
+  Group,
+  LessDepth,
+  Matrix4,
+  MeshStandardMaterial,
+  Vector3,
+  VertexColors
+} from 'three';
 import QuadtreePlane from './helpers/QuadtreePlane';
 import TerrainChunkManager from './helpers/TerrainChunkManager';
 
@@ -21,20 +29,20 @@ const dictDifference = function(dictA, dictB) {
 };
 
 const cubeTransforms = [
-  (new THREE.Matrix4()).makeRotationX(-Math.PI / 2), // +Y
-  (new THREE.Matrix4()).makeRotationX(Math.PI / 2),  // -Y
-  (new THREE.Matrix4()).makeRotationY(Math.PI / 2),  // +X
-  (new THREE.Matrix4()).makeRotationY(-Math.PI / 2), // -X
-  new THREE.Matrix4(),                               // +Z
-  (new THREE.Matrix4()).makeRotationY(Math.PI),      // -Z
+  (new Matrix4()).makeRotationX(-Math.PI / 2), // +Y
+  (new Matrix4()).makeRotationX(Math.PI / 2),  // -Y
+  (new Matrix4()).makeRotationY(Math.PI / 2),  // +X
+  (new Matrix4()).makeRotationY(-Math.PI / 2), // -X
+  new Matrix4(),                               // +Z
+  (new Matrix4()).makeRotationY(Math.PI),      // -Z
 ];
 const cubeTranslations = [
-  (m, radius) => m.premultiply(new THREE.Matrix4().makeTranslation(0, radius, 0)),  // +Y
-  (m, radius) => m.premultiply(new THREE.Matrix4().makeTranslation(0, -radius, 0)), // -Y
-  (m, radius) => m.premultiply(new THREE.Matrix4().makeTranslation(radius, 0, 0)),  // +X
-  (m, radius) => m.premultiply(new THREE.Matrix4().makeTranslation(-radius, 0, 0)), // -X
-  (m, radius) => m.premultiply(new THREE.Matrix4().makeTranslation(0, 0, radius)),  // +Z
-  (m, radius) => m.premultiply(new THREE.Matrix4().makeTranslation(0, 0, -radius)), // -Z
+  (m, radius) => m.premultiply(new Matrix4().makeTranslation(0, radius, 0)),  // +Y
+  (m, radius) => m.premultiply(new Matrix4().makeTranslation(0, -radius, 0)), // -Y
+  (m, radius) => m.premultiply(new Matrix4().makeTranslation(radius, 0, 0)),  // +X
+  (m, radius) => m.premultiply(new Matrix4().makeTranslation(-radius, 0, 0)), // -X
+  (m, radius) => m.premultiply(new Matrix4().makeTranslation(0, 0, radius)),  // +Z
+  (m, radius) => m.premultiply(new Matrix4().makeTranslation(0, 0, -radius)), // -Z
 ];
 
 export const MIN_CHUNK_SIZE = 400; // TODO: resolution
@@ -78,20 +86,25 @@ class QuadtreeCubeSphereManager {
       radius: config.radius,
       stretch: config.stretch
     });
-    this.material = new THREE.MeshStandardMaterial({
+    this.material = new MeshStandardMaterial({
       color: 0xFFFFFF,
-      depthFunc: THREE.LessDepth,
+      depthFunc: LessDepth,
       dithering: true,
       metalness: 0,
       roughness: 1,
-      side: THREE.FrontSide,
-      vertexColors: THREE.VertexColors,
+      side: FrontSide,
+      vertexColors: VertexColors,
       // wireframe: true,
     });
 
     this.builder = new TerrainChunkManager(config, false);
-    this.groups = [...new Array(6)].map(_ => new THREE.Group());
+    this.groups = [...new Array(6)].map(_ => new Group());
     this.chunks = {};
+  }
+
+  dispose() {
+    Object.values(this.chunks).forEach((chunk) => chunk.dispose());
+    this.material.dispose();
   }
 
   setCameraPosition(cameraPosition) {
@@ -100,8 +113,8 @@ class QuadtreeCubeSphereManager {
     const sides = this.quadtreeCube.getSides();
 
     let updatedChunks = {};
-    const center = new THREE.Vector3();
-    const dimensions = new THREE.Vector3();
+    const center = new Vector3();
+    const dimensions = new Vector3();
     for (let i = 0; i < sides.length; i++) {
       this.groups[i].matrix = sides[i].transform;
       this.groups[i].matrixAutoUpdate = false;
@@ -135,7 +148,7 @@ class QuadtreeCubeSphereManager {
     for (let k in difference) {
       const [xp, yp, zp] = difference[k].position;
 
-      const offset = new THREE.Vector3(xp, yp, zp);
+      const offset = new Vector3(xp, yp, zp);
       updatedChunks[k] = {
         position: [xp, zp],
         chunk: this.createChunk(
