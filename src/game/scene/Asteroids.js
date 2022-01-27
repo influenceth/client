@@ -2,19 +2,16 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Color } from 'three';
 import { useThrottle } from '@react-hook/throttle';
 
-// eslint-disable-next-line
-import Worker from 'worker-loader!../../worker';
-import useStore from '~/hooks/useStore';
-import useAsteroids from '~/hooks/useAsteroids';
 import useAsteroid from '~/hooks/useAsteroid';
+import useAsteroids from '~/hooks/useAsteroids';
+import useStore from '~/hooks/useStore';
+import useWebWorker from '~/hooks/useWebWorker';
 import FlightLine from './asteroids/FlightLine';
 import Orbit from './asteroids/Orbit';
 import Marker from './asteroids/Marker';
 import highlighters from './asteroids/highlighters';
 import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
-
-const worker = new Worker();
 
 const Asteroids = (props) => {
   const time = useStore(s => s.time.current);
@@ -26,6 +23,7 @@ const Asteroids = (props) => {
   const ownedColor = useStore(s => s.asteroids.owned.highlightColor);
   const watchedColor = useStore(s => s.asteroids.watched.highlightColor);
   const highlightConfig = useStore(s => s.asteroids.highlight);
+  const { processInBackground } = useWebWorker();
 
   const { data: asteroids } = useAsteroids();
   const { data: origin } = useAsteroid(originId);
@@ -47,17 +45,6 @@ const Asteroids = (props) => {
   const [ mousePos, setMousePos ] = useThrottle(null, 30);
 
   const asteroidsGeom = useRef();
-
-  // Worker subscriptions
-  useEffect(() => {
-    if (!!worker) {
-      worker.onmessage = (event) => {
-        if (event.data.topic === 'asteroidPositions') {
-          setPositions(new Float32Array(event.data.positions));
-        }
-      };
-    }
-  }, []);
 
   // Update state when asteroids from server, origin, or destination change
   const isZoomedIn = zoomStatus === 'in';
@@ -99,15 +86,21 @@ const Asteroids = (props) => {
     }
   }, [ hovered, originId, destinationId, positions, mappedAsteroids ]);
 
-  // When asteroids are newly filtered, or there are changes to origin / destination
+  // Update asteroid positions whenever the time changes in-game or mapped asteroids are updated
+  // TODO: use useFrame instead...
+  // TODO: potentially could chunk this in groups of 100 so spread out between threads
+  //        OR wait until previous complete OR wait until workerpool not busy
   useEffect(() => {
-    worker.postMessage({ topic: 'updateAsteroidsData', asteroids: mappedAsteroids, elapsed: time });
-  }, [ mappedAsteroids ]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Update asteroid positions whenever the time changes in-game
-  useEffect(() => {
-    worker.postMessage({ topic: 'updateAsteroidPositions', elapsed: time });
-  }, [ time ]);
+    // TODO (enahancement): worker used to cache mappedAsteroids, but now that there are multiple
+    //  workers, that is not possible... maybe could cache inputs in worker manager and only
+    //  send updated input vars per topic to save on copying
+    processInBackground(
+      { topic: 'updateAsteroidPositions', asteroids: mappedAsteroids, elapsed: time },
+      (data) => {
+        setPositions(new Float32Array(data.positions));
+      }
+    )
+  }, [ mappedAsteroids, processInBackground, time ]);
 
   useEffect(() => {
     // Check that we have data, positions are processed, and they're in sync

@@ -188,10 +188,11 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, radius, reso
   const _P = new Vector3();
   const _N = new Vector3();
 
-  const positions = [];
-  const colors = [];
-  const normals = [];
-  const indices = [];
+  const bufferTally = resolution * resolution * 3;
+  const positions = [];//new Float32Array(bufferTally);
+  const colors = [];//new Float32Array(bufferTally);
+  const normals = [];//new Float32Array(bufferTally);
+  const indices = [];//new Uint32Array(bufferTally * 6);
 
   const localToWorld = groupMatrix;
   const resolutionPlusOne = resolution + 1;

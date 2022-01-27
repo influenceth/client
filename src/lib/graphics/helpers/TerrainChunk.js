@@ -58,6 +58,9 @@ class TerrainChunk {
       'normal', new Float32BufferAttribute(data.normals, 3));
     this._geometry.setIndex(
       new BufferAttribute(new Uint32Array(data.indices), 1));
+    this._geometry.attributes.position.needsUpdate = true;
+    this._geometry.attributes.normal.needsUpdate = true;
+    this._geometry.attributes.color.needsUpdate = true;
   }
 }
 

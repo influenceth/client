@@ -2,40 +2,35 @@ import { useRef, useEffect } from 'react';
 import { AdditiveBlending, Float32BufferAttribute } from 'three';
 import { useTexture } from '@react-three/drei';
 
-// eslint-disable-next-line
-import Worker from 'worker-loader!../../worker';
 import usePlanets from '~/hooks/usePlanets';
 import useStore from '~/hooks/useStore';
+import useWebWorker from '~/hooks/useWebWorker';
 import Orbit from './planets/Orbit';
 import theme from '~/theme';
-
-const worker = new Worker();
 
 const Planets = (props) => {
   const planets = usePlanets();
   const time = useStore(s => s.time.current);
   const texture = useTexture(`${process.env.PUBLIC_URL}/textures/circleFaded.png`);
+  const { processInBackground } = useWebWorker();
   
   const geometry = useRef();
 
-  useEffect(() => {
-    worker.onmessage = (event) => {
-      if (event.data.topic === 'planetPositions') {
-        geometry.current.setAttribute(
-          'position',
-          new Float32BufferAttribute(event.data.positions, 3)
-        );
-        geometry.current.computeBoundingSphere();
-      }
-    };
-  }, []);
-
   // Listen for changes to planets data or global time and update planet positions
   useEffect(() => {
-    if (planets.data) {
-      worker.postMessage({ topic: 'updatePlanetPositions', planets: planets.data, elapsed: time });
+    if (planets.data && time) {
+      processInBackground(
+        { topic: 'updatePlanetPositions', planets: planets.data, elapsed: time },
+        (data) => {
+          geometry.current.setAttribute(
+            'position',
+            new Float32BufferAttribute(data.positions, 3)
+          );
+          geometry.current.computeBoundingSphere();
+        }
+      );
     }
-  }, [ planets.data, time ]);
+  }, [ planets.data, processInBackground, time ]);
 
   return (
     <group position={[ 0, 0, 0 ]}>

@@ -8,7 +8,8 @@ import {
   VertexColors
 } from 'three';
 import QuadtreePlane from './helpers/QuadtreePlane';
-import TerrainChunkManager from './helpers/TerrainChunkManager';
+import TerrainChunkManager from './helpers/TerrainChunkManagerThreaded';
+// import TerrainChunkManager from './helpers/TerrainChunkManager';
 
 const dictIntersection = function(dictA, dictB) {
   const intersection = {};
@@ -79,7 +80,7 @@ class QuadtreeCubeSphere {
 }
 
 class QuadtreeCubeSphereManager {
-  constructor(config) {
+  constructor(config, workerPool) {
     this.radius = config.radius;
 
     this.quadtreeCube = new QuadtreeCubeSphere({
@@ -97,7 +98,7 @@ class QuadtreeCubeSphereManager {
       // wireframe: true,
     });
 
-    this.builder = new TerrainChunkManager(config, false);
+    this.builder = new TerrainChunkManager(config, workerPool);
     this.groups = [...new Array(6)].map(_ => new Group());
     this.chunks = {};
   }
@@ -163,9 +164,16 @@ class QuadtreeCubeSphereManager {
 
     // update class
     this.chunks = updatedChunks;
+  }
 
-    // run builder
-    this.builder.update();
+  removeRetiredChunks() {
+    return this.builder.recycleOldChunks();
+  }
+
+  showCurrentChunks() {
+    for (let k in this.chunks) {
+      this.chunks[k].chunk.show();
+    }
   }
 
   createChunk(side, group, offset, width, resolution) {

@@ -6,6 +6,7 @@ import { KeplerianOrbit } from 'influence-utils';
 
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
+import useWebWorker from '~/hooks/useWebWorker';
 import constants from '~/lib/constants';
 import QuadtreeCubeSphere, { MIN_CHUNK_SIZE } from '~/lib/graphics/QuadtreeCubeSphere';
 import Config from './asteroid/Config';
@@ -30,6 +31,8 @@ const Asteroid = (props) => {
   // const requestingModelDownload = useStore(s => s.asteroids.requestingModelDownload);
   // const onModelDownload = useStore(s => s.dispatchModelDownloadComplete);
   const { data: asteroidData } = useAsteroid(origin);
+
+  const webWorkerPool = useWebWorker();
 
   const [config, setConfig] = useState();
 
@@ -69,7 +72,7 @@ const Asteroid = (props) => {
 
       // if geometry.current already exists, dispose first
       if (geometry.current) disposeGeometry();
-      geometry.current = new QuadtreeCubeSphere(c);
+      geometry.current = new QuadtreeCubeSphere(c, webWorkerPool);
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.add(g);
       });
@@ -206,6 +209,12 @@ const Asteroid = (props) => {
     if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
 
+    // if builder is not busy, make sure we are showing most recent chunks
+    if (!geometry.current.builder.isBusy()) {
+      geometry.current.removeRetiredChunks();
+      geometry.current.showCurrentChunks();
+    }
+
     // tally frame
     frameCycle.current = (frameCycle.current + 1) % FRAME_CYCLE_LENGTH;
 
@@ -235,21 +244,23 @@ const Asteroid = (props) => {
     
     // update quadtree on "significant" movement so it can rebuild children appropriately
     // TODO (enhancement): TARGET_REDRAW_DISTANCE should probably depend on zoom level
-    const updateQuadCube = !cameraPosition.current
-      || cameraPosition.current.distanceTo(controls.object.position) > TARGET_REDRAW_DISTANCE
-      || (updatedRotation - rotation.current) * asteroidData.radius > TARGET_REDRAW_DISTANCE
-    ;
-    if (updateQuadCube) {
-      cameraPosition.current = controls.object.position.clone();
-      rotation.current = updatedRotation;
+    if (!geometry.current.builder.isBusy()) {
+      const updateQuadCube = !cameraPosition.current
+        || cameraPosition.current.distanceTo(controls.object.position) > TARGET_REDRAW_DISTANCE
+        || (updatedRotation - rotation.current) * asteroidData.radius > TARGET_REDRAW_DISTANCE
+      ;
+      if (updateQuadCube) {
+        cameraPosition.current = controls.object.position.clone();
+        rotation.current = updatedRotation;
 
-      // send updated camera position to quads for processing
-      geometry.current.setCameraPosition(
-        controls.object.position.clone().applyAxisAngle(
-          rotationAxis.current,
-          -rotation.current
-        )
-      );
+        // send updated camera position to quads for processing
+        geometry.current.setCameraPosition(
+          controls.object.position.clone().applyAxisAngle(
+            rotationAxis.current,
+            -rotation.current
+          )
+        );
+      }
     }
 
     // re-evaluate raycaster on every Xth frame to ensure zoom bounds are safe
