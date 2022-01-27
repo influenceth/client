@@ -1,170 +1,111 @@
-import { useState, useEffect, useRef } from 'react';
-import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3 } from 'three';
-import { useThree } from '@react-three/fiber';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Vector3, Box3, Sphere } from 'three';
+import { useFrame, useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
 
-// eslint-disable-next-line
-import Worker from 'worker-loader!../../worker';
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
 import constants from '~/lib/constants';
-import { renderAsteroidMaps } from '~/lib/geometryUtils';
-import TextureRenderer from '~/lib/graphics/TextureRenderer';
+import QuadtreeCubeSphere, { MIN_CHUNK_SIZE } from '~/lib/graphics/QuadtreeCubeSphere';
 import Config from './asteroid/Config';
 import Rings from './asteroid/Rings';
-import exportModel from './asteroid/export';
+// import exportModel from './asteroid/export';
 
-const worker = new Worker();
-
-// only instantiate textureRendered if offscreenCanvas not available
-const textureRenderer = typeof OffscreenCanvas === 'undefined' && new TextureRenderer();
+const TARGET_MAX_ZOOM_Y = 2000;
+const TARGET_REDRAW_DISTANCE = MIN_CHUNK_SIZE / 2;
 
 const Asteroid = (props) => {
-  const controls = useThree(({ controls }) => controls);
+  const { controls, raycaster, scene } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const time = useStore(s => s.time.precise);
-  const mapSize = useStore(s => s.graphics.textureSize);
+  // const mapSize = useStore(s => s.graphics.textureSize); // TODO: apply user settings
   const shadows = useStore(s => s.graphics.shadows);
   const shadowSize = useStore(s => s.graphics.shadowSize);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
-  const requestingModelDownload = useStore(s => s.asteroids.requestingModelDownload);
-  const onModelDownload = useStore(s => s.dispatchModelDownloadComplete);
+  // const requestingModelDownload = useStore(s => s.asteroids.requestingModelDownload);
+  // const onModelDownload = useStore(s => s.dispatchModelDownloadComplete);
   const { data: asteroidData } = useAsteroid(origin);
 
+  const [config, setConfig] = useState();
+
+  const geometry = useRef();
+  const quadtreeRef = useRef();
+  const cameraPosition = useRef();
+  const frameCycle = useRef(0);
   const group = useRef();
   const light = useRef();
-  const mesh = useRef();
   const asteroidOrbit = useRef();
   const rotationAxis = useRef();
-
-  const [ position, setPosition ] = useState([ 0, 0, 0 ]);
-  const [ config, setConfig ] = useState();
-  const [ maps, setMaps ] = useState();
-  const [ materials, setMaterials ] = useState();
-  const [ geometry, setGeometry ] = useState();
-
-  // Worker subscriptions
-  useEffect(() => {
-    worker.onmessage = (event) => {
-      if (event.data.topic === 'maps') {
-        const { colorMap, heightMap, normalMap } = event.data;
-        setMaps({ colorMap, heightMap, normalMap });
-      } else if (event.data.topic === 'geometry') {
-        const loader = new BufferGeometryLoader();
-        setGeometry(loader.parse(event.data.geometryJSON));
-      }
-    };
-  }, []);
-
-  // Positions the asteroid in space based on time changes
-  useEffect(() => {
-    if (!!asteroidData && !asteroidOrbit.current) asteroidOrbit.current = new KeplerianOrbit(asteroidData.orbital);
-    if (!asteroidData) asteroidOrbit.current = null;
-
-    if (asteroidOrbit.current && time) {
-      setPosition(Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU));
-    }
-
-    if (mesh.current && config && time) {
-      mesh.current.setRotationFromAxisAngle(rotationAxis.current, time * config.rotationSpeed * 2 * Math.PI);
-    }
-  }, [ asteroidData, config, time ]);
+  const position = useRef([ 0, 0, 0 ]);
+  const rotation = useRef(0);
 
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
-    if (!!asteroidData) setConfig(new Config(asteroidData));
+    if (asteroidData) {
+      const c = new Config(asteroidData);
+      setConfig(c);
 
-    // Cleanup when there's no data
-    if (!asteroidData) {
-      setConfig(null);
+      asteroidOrbit.current = new KeplerianOrbit(asteroidData.orbital);
+      rotationAxis.current = c.seed.clone().normalize();
 
-      geometry?.dispose();
-      setGeometry(null);
-
-      materials?.forEach(m => {
-        m.map?.dispose();
-        m.normalMap?.dispose();
+      // TODO: should we check if geometry.current already exists so we can clear it
+      geometry.current = new QuadtreeCubeSphere(c);
+      geometry.current.groups.forEach((g) => {
+        quadtreeRef.current.add(g);
       });
 
-      setMaterials(null);
+    // cleanup if no data
+    } else {
+      setConfig();
+      asteroidOrbit.current = null;
+      rotationAxis.current = null;
+      geometry.current = null;
+
+      // TODO: dispose of geometry, materials, and all maps (instead of just above)
+      // geometry?.dispose();
+      // setGeometry(null);
+
+      // materials?.forEach(m => {
+      //   m.map?.dispose();
+      //   m.normalMap?.dispose();
+      // });
+
+      // setMaterials(null);
 
       if (zoomStatus === 'in') updateZoomStatus('zooming-out');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ asteroidData ]);
 
-  // Kicks off rendering of each map based on the asteroid's unique config either in worker or main
-  useEffect(() => {
-    if (!config || !mapSize) return;
-
-    rotationAxis.current = config.seed.clone().normalize();
-
-    // if fallback textureRenderer is set, no offscreen canvas, so have
-    // to render the maps on the main thread; else, use the worker
-    if (textureRenderer) {
-      renderAsteroidMaps(mapSize, config, textureRenderer).then(setMaps);
-    } else if (!!worker) {
-      worker.postMessage({ topic: 'renderMaps', mapSize, config });
-    }
-  }, [ config, mapSize ]);
-
-  // Receives updated maps and generates the geometry based on heightMap
-  useEffect(() => {
-    if (!config || !maps || !worker) return;
-    worker.postMessage({ topic: 'renderGeometry', heightMap: maps.heightMap, config });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ maps ]);
-
-  // Recieves the updated maps and applies them to the material
-  useEffect(() => {
-    if (!maps) return;
-    const processed = {};
-    const materials = [];
-
-    Object.keys(maps).forEach(k => {
-      processed[k] = maps[k].map(m => {
-        const tex = new DataTexture(m.buffer, m.width, m.height, m.format);
-        return Object.assign(tex, m.options);
-      });
-    });
-
-    for (let i = 0; i < 6; i++) {
-      materials.push(new MeshStandardMaterial({
-        color: 0xffffff,
-        depthFunc: LessDepth,
-        dithering: true,
-        map: processed.colorMap[i],
-        metalness: 0,
-        normalMap: processed.normalMap[i],
-        roughness: 1
-      }));
-    }
-
-    setMaterials(materials);
-  }, [ maps ]);
+  // TODO: review these vvv
+  //  (esp. zoom processes to make sure can only be triggered once per asteroid)
 
   // Configures the light component once the geometry is created
-  useEffect(() => {
-    if (!geometry || !asteroidData || !light.current) return;
-    const posVec = new Vector3(...position);
+  const reinitLighting = useCallback(() => {
+    if (!asteroidData || !quadtreeRef.current || !light.current || !position.current) return;
+
+    const posVec = new Vector3(...position.current);
     light.current.intensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
     light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(asteroidData.radius * 10));
-    geometry.computeBoundingSphere();
-    const maxRadius = geometry.boundingSphere.radius + geometry.boundingSphere.center.length();
-    const radiusBump = config?.ringsPresent ? 1.5 : 0;
 
     if (shadows) {
+      const bbox = new Box3().setFromObject(quadtreeRef.current);
+      const bsphere = bbox.getBoundingSphere(new Sphere());
+      const maxRadius = bsphere.radius + bsphere.center.length();
+      const radiusBump = config?.ringsPresent ? 1.5 : 0;
+
       light.current.shadow.camera.near = maxRadius * 9;
       light.current.shadow.camera.far = maxRadius * (11 + radiusBump);
       light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius;
       light.current.shadow.camera.right = light.current.shadow.camera.top = maxRadius;
       light.current.shadow.camera.updateProjectionMatrix();
     }
-  }, [ geometry, asteroidData, position, shadows, shadowSize, config?.ringsPresent ]);
+  }, [asteroidData, shadows, config?.ringsPresent]);
+  useEffect(reinitLighting, [ reinitLighting ]);
 
   // Zooms the camera to the correct location
   const shouldZoomIn = zoomStatus === 'zooming-in' && controls && !!asteroidData;
@@ -177,7 +118,7 @@ const Asteroid = (props) => {
       up: controls.object.up.clone()
     });
 
-    const panTo = new Vector3(...position);
+    const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
     const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
@@ -200,10 +141,10 @@ const Asteroid = (props) => {
     if (!shouldFinishZoomIn) return;
 
     // Update distances to maximize precision
-    controls.minDistance = asteroidData.radius * 1.2;
+    controls.minDistance = asteroidData.radius * 1.5;
     controls.maxDistance = asteroidData.radius * 4.0;
 
-    const panTo = new Vector3(...position);
+    const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
     const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
@@ -213,7 +154,7 @@ const Asteroid = (props) => {
     controls.object.near = 100;
     controls.object.updateProjectionMatrix();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ shouldFinishZoomIn, asteroidData ]);
+  }, [ shouldFinishZoomIn, asteroidData?.radius ]);
 
   // Handle zooming back out
   const shouldZoomOut = zoomStatus === 'zooming-out' && zoomedFrom && controls;
@@ -245,25 +186,92 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomOut ]);
 
-  // Updates controls and scene position when time or asteroid changes
-  const shouldUpdatePosition = zoomStatus === 'in' && position && controls;
-  useEffect(() => {
-    if (!shouldUpdatePosition) return;
+  // TODO: review these ^^^
 
-    let panTo = new Vector3(...position);
-    group.current?.position.copy(panTo);
-    panTo.negate();
-    controls.targetScene.position.copy(panTo);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ shouldUpdatePosition, position, asteroidData ]);
-
+  // TODO: fix this
   // Initiates download of generated mesh (when requested and ready)
-  const exportableMesh = geometry && materials && mesh && mesh.current;
-  useEffect(() => {
-    if (!(requestingModelDownload && exportableMesh)) return;
-    exportModel(exportableMesh, onModelDownload);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestingModelDownload, exportableMesh]);
+  // const exportableMesh = geometry && materials && mesh && mesh.current;
+  // useEffect(() => {
+  //   if (!(requestingModelDownload && exportableMesh)) return;
+  //   exportModel(exportableMesh, onModelDownload);
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [requestingModelDownload, exportableMesh]);
+
+  const surfaceDistance = useMemo(() => {
+    return (TARGET_MAX_ZOOM_Y / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180));
+  }, [controls?.object?.fov])
+
+  // Positions the asteroid in space based on time changes
+  useFrame(() => {
+    if (!geometry.current?.builder?.ready) return;
+
+    // tally frame
+    frameCycle.current = (frameCycle.current + 1) % 4;
+
+    // update asteroid position
+    if (asteroidOrbit.current && time) {
+      position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU);
+
+      // update object and camera position
+      // (is this necessary?)
+      const positionVec3 = new Vector3(...position.current);
+      group.current.position.copy(positionVec3);
+      positionVec3.negate();
+      controls.targetScene.position.copy(positionVec3);
+    }
+
+    // update asteroid rotation
+    let updatedRotation = rotation.current;
+    if (config?.rotationSpeed && time) {
+      updatedRotation = time * config.rotationSpeed * 2 * Math.PI;
+      quadtreeRef.current.setRotationFromAxisAngle(
+        rotationAxis.current,
+        updatedRotation
+      );
+    }
+
+    // if first update, reinit lighting
+    if (!cameraPosition.current) {
+      reinitLighting();
+    }
+    
+    // update quadtree on "significant" movement so it can rebuild children appropriately
+    const updateQuadCube = !cameraPosition.current
+      || cameraPosition.current.distanceTo(controls.object.position) > TARGET_REDRAW_DISTANCE
+      || (updatedRotation - rotation.current) * asteroidData.radius > TARGET_REDRAW_DISTANCE
+    ;
+    if (updateQuadCube) {
+      cameraPosition.current = controls.object.position.clone();
+      rotation.current = updatedRotation;
+
+      // send updated camera position to quads for processing
+      geometry.current.setCameraPosition(
+        controls.object.position.clone().applyAxisAngle(
+          rotationAxis.current,
+          -rotation.current
+        )
+      );
+    }
+
+    // re-evaluate raycaster on every Xth frame to ensure zoom bounds are safe
+    // (i.e. close enough to surface but not inside surface)
+    if (frameCycle.current === 0) {
+      raycaster.set(
+        controls.object.position.clone(),
+        controls.object.position.clone().negate().normalize()
+      );
+      const intersection = (raycaster.intersectObjects(scene.children, true) || [])
+        .find((i) => i.object?.constructor?.name === 'Mesh');
+      if (intersection) {
+        controls.minDistance = Math.min(
+          controls.object.position.length() - intersection.distance + surfaceDistance,
+          1.5 * asteroidData.radius
+        );
+      } else {
+        controls.minDistance = 1.5 * asteroidData.radius;
+      }
+    }
+  });
 
   return (
     <group ref={group}>
@@ -273,16 +281,8 @@ const Asteroid = (props) => {
         castShadow={shadows}
         shadow-mapSize-height={shadowSize}
         shadow-mapSize-width={shadowSize} />
-      {geometry && materials && (
-        <mesh
-          ref={mesh}
-          material={materials}
-          castShadow={shadows}
-          receiveShadow={shadows}>
-          <primitive attach="geometry" object={geometry} />
-        </mesh>
-      )}
-      {config?.ringsPresent && geometry && (
+      <group ref={quadtreeRef} />
+      {config?.ringsPresent && geometry.current && (
         <Rings
           receiveShadow={shadows}
           config={config}

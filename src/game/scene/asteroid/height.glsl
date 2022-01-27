@@ -1,3 +1,6 @@
+uniform sampler2D tDisplacementMap;
+uniform vec2 uChunkOffset;
+uniform float uChunkSize;
 uniform float uCleaveCut;
 uniform float uCleaveWeight;
 uniform float uCraterCut;
@@ -5,9 +8,6 @@ uniform float uCraterFalloff;
 uniform int uCraterPasses;
 uniform float uCraterPersist;
 uniform float uCraterSteep;
-uniform float uDispFreq;
-uniform int uDispPasses;
-uniform float uDispPersist;
 uniform float uDispWeight;
 uniform float uFeaturesFreq;
 uniform vec2 uResolution;
@@ -19,20 +19,30 @@ uniform float uRimWidth;
 uniform int uTopoDetail;
 uniform float uTopoFreq;
 uniform float uTopoWeight;
-uniform mat3 uTransform;
+uniform mat4 uTransform;
 
-#pragma glslify: cnoise = require(glsl-noise/classic/3d)
-#pragma glslify: snoise = require(glsl-noise/simplex/3d)
-#pragma glslify: cellular = require(../../../lib/graphics/cellular3)
+#pragma glslify: cnoise = require('glsl-noise/classic/3d')
+#pragma glslify: snoise = require('glsl-noise/simplex/3d')
+#pragma glslify: cellular = require('../../../lib/graphics/cellular3')
 
-const float PI = 3.1415926535897932384626433832795;
+float getDisplacement() {
+  vec2 uv = gl_FragCoord.xy / uResolution;
+  vec2 disp16 = texture2D(tDisplacementMap, uv).xy;
+  float disp = disp16.x * 255.0 + disp16.y;
+  return 1.0 - disp / 256.0;
+}
 
-vec3 uvToSphere(vec2 uv) {
+vec3 getUnitSphereCoords() {
+
   // Standardize to a 2 unit cube centered on origin
   vec2 textCoord = (gl_FragCoord.xy - (uResolution.xy / 2.0)) / ((uResolution.xy - 1.0) / 2.0);
 
+  // Scale to chunk size and center
+  textCoord = textCoord * uChunkSize + uChunkOffset.xy;
+
   // Calculate the unit vector for each point thereby spherizing the cube
-  return normalize(uTransform * vec3(textCoord.xy, 1.0));
+  vec4 transformed = uTransform * vec4(textCoord.xy, 1.0, 0.0);
+  return normalize(vec3(transformed.xyz));
 }
 
 float normalizeNoise(float n) {
@@ -61,37 +71,11 @@ float recursiveCNoise(vec3 p, int octaves) {
   return pow(h, 1.0);
 }
 
-float recursiveSNoise(vec3 p, int octaves, float pers) {
-  float total = 0.0;
-  float frequency = 1.0;
-  float amplitude = 1.0;
-  float maxValue = 0.0;
-
-  for (int i = 0; i < 9; i++) {
-    if (i == octaves) {
-      break;
-    }
-
-    total += snoise(p * frequency) * amplitude;
-    maxValue += amplitude;
-    amplitude *= pers;
-    frequency *= 2.0;
-  }
-
-  return normalizeNoise(total / maxValue);
-}
-
-// Generates coarse displacement to shape the asteroid
-float getDisplacement(vec3 p) {
-  p = p * uDispFreq + uSeed;
-  return recursiveSNoise(p, uDispPasses, uDispPersist);
-}
-
 // Generates overall topography, hills, cliffs, etc.
 float getTopography(vec3 p) {
   p = p * uTopoFreq + uSeed;
   float topo = recursiveCNoise(p, uTopoDetail);
-  float uniformNoise = fract(sin(dot(p.xy ,vec2(12.9898,78.233))) * 43758.5453);
+  float uniformNoise = fract(sin(dot(p.xy, vec2(12.9898,78.233))) * 43758.5453);
   float noiseWeight = 0.005;
   return ((1.0 - noiseWeight) * topo) + (noiseWeight * uniformNoise);
 }
@@ -129,14 +113,14 @@ float getFeatures(vec3 p, int layers) {
 }
 
 void main() {
-  // Reduce by resolution
-  vec2 uv = (gl_FragCoord.xy - 0.5) / (uResolution - 1.0);
 
   // Standardize to unit radius spherical coordinates
-  vec3 point = uvToSphere(uv);
+  vec3 point = getUnitSphereCoords();
 
   // Get overall displacement
-  float disp = getDisplacement(point);
+  float disp = getDisplacement();
+
+  // Get final point location
   point = point * (1.0 + disp * uDispWeight) * uStretch;
 
   // Get topography to encode seperately
@@ -146,5 +130,12 @@ void main() {
   float height = 0.5 * (getFeatures(point, uCraterPasses) + topo * uTopoWeight) + 0.5;
 
   // Encode height and disp in different channels
-  gl_FragColor = vec4(floor(height * 255.0) / 255.0, fract(height * 255.0), topo, disp);
+  // r, g: used in normalmap
+  // b: used in colormap
+  gl_FragColor = vec4(
+    floor(height * 255.0) / 255.0,
+    fract(height * 255.0),
+    topo,
+    0.0
+  );
 }

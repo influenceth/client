@@ -11,6 +11,7 @@ import {
   RGBAFormat
 } from 'three';
 
+// TODO: remove this?
 class TextureRenderer {
   constructor(renderer) {
     if (renderer === undefined) {

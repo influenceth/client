@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect } from 'react';
-import { AdditiveBlending } from 'three';
+import { useRef, useEffect } from 'react';
+import { AdditiveBlending, Float32BufferAttribute } from 'three';
 import { useTexture } from '@react-three/drei';
 
 // eslint-disable-next-line
@@ -13,10 +13,22 @@ const worker = new Worker();
 
 const Planets = (props) => {
   const planets = usePlanets();
-  const [ positions, setPositions ] = useState(new Float32Array(5 * 3));
   const time = useStore(s => s.time.current);
   const texture = useTexture(`${process.env.PUBLIC_URL}/textures/circleFaded.png`);
+  
   const geometry = useRef();
+
+  useEffect(() => {
+    worker.onmessage = (event) => {
+      if (event.data.topic === 'planetPositions') {
+        geometry.current.setAttribute(
+          'position',
+          new Float32BufferAttribute(event.data.positions, 3)
+        );
+        geometry.current.computeBoundingSphere();
+      }
+    };
+  }, []);
 
   // Listen for changes to planets data or global time and update planet positions
   useEffect(() => {
@@ -25,27 +37,10 @@ const Planets = (props) => {
     }
   }, [ planets.data, time ]);
 
-  useEffect(() => {
-    if (!!worker) {
-      worker.onmessage = (event) => {
-        if (event.data.topic === 'planetPositions') setPositions(new Float32Array(event.data.positions));
-      };
-    }
-  }, []);
-
-  // re-computeBoundingSphere on geometry change
-  useEffect(() => {
-    if (geometry.current) {
-      geometry.current.computeBoundingSphere();
-    }
-  }, [positions]);
-
   return (
     <group position={[ 0, 0, 0 ]}>
       <points>
-        <bufferGeometry ref={geometry}>
-          <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3]} />
-        </bufferGeometry>
+        <bufferGeometry ref={geometry} />
         <pointsMaterial
           blending={AdditiveBlending}
           color={theme.colors.main}

@@ -1,7 +1,7 @@
-import { WebGLRenderer } from 'three';
+import { Matrix4, Vector3 } from 'three';
 
 import * as utils from '~/lib/geometryUtils';
-import TextureRenderer from '~/lib/graphics/TextureRenderer';
+import { initChunkTextures, rebuildChunkGeometry } from '~/lib/graphics/helpers/TerrainChunkUtils';
 
 onmessage = async function(event) {
   switch (event.data.topic) {
@@ -15,27 +15,16 @@ onmessage = async function(event) {
     case 'updatePlanetPositions':
       updatePlanetPositions(event.data.planets, event.data.elapsed);
       break;
-    case 'renderGeometry':
-      renderGeometry(event.data.heightMap, event.data.config);
-      break;
-    case 'renderMaps':
-      renderMaps(event.data.mapSize, event.data.config);
+    case 'rebuildAsteroidChunks':
+      rebuildAsteroidChunks(event.data.chunks);
       break;
     default:
       console.error('Method not supported');
   }
 };
 
-// Caches asteroids data, canvas and textureRenderer in the worker
+// caches asteroids data in the worker
 let asteroidsData = [];
-let textureRenderer;
-
-// Setup offscreen canvas
-if (typeof OffscreenCanvas !== 'undefined') {
-  const offscreen = new OffscreenCanvas(0, 0);
-  const renderer = new WebGLRenderer({ canvas: offscreen, antialias: true });
-  textureRenderer = new TextureRenderer(renderer);
-}
 
 const updateAsteroidsData = function(newAsteroidsData) {
   asteroidsData = newAsteroidsData;
@@ -55,16 +44,22 @@ const updatePlanetPositions = function(planets, elapsed = 0) {
   });
 };
 
-const renderMaps = async function(mapSize, config) {
-  postMessage({
-    topic: 'maps',
-    ...(await utils.renderAsteroidMaps(mapSize, config, textureRenderer))
-  });
-};
-
-const renderGeometry = function(heightMap, config) {
-  postMessage({
-    topic: 'geometry',
-    geometryJSON: utils.renderAsteroidGeometry(heightMap, config)
+const rebuildAsteroidChunks = function(chunks, elapsed = 0) {
+  initChunkTextures().then(() => {
+    Promise.all(
+      chunks.map((chunk) => {
+        // (re-init THREE class objects since were abstracted to generic objects when passed to worker)
+        chunk.offset = new Vector3(chunk.offset.x, chunk.offset.y, chunk.offset.z);
+        chunk.groupMatrix = (new Matrix4()).fromArray(chunk.groupMatrix.elements);
+        return rebuildChunkGeometry(chunk);
+      })
+    )
+    .then((rebuilt) => {
+      console.log({ rebuilt });
+      postMessage({
+        topic: 'rebuiltAsteroidChunks',
+        chunks: rebuilt
+      });
+    });
   });
 };

@@ -336,7 +336,7 @@ const AsteroidDetails = (props) => {
                   </NameForm>
                 </Form>
               )}
-              {asteroid.owner && asteroid.owner === account && (
+              {/* TODO: fix and re-enable */ false && asteroid.owner && asteroid.owner === account && (
                 <Button
                   data-tip="Download 3d Model"
                   data-for="global"
