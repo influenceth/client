@@ -103,7 +103,7 @@ class QuadtreeCubeSphereManager {
   }
 
   dispose() {
-    Object.values(this.chunks).forEach((chunk) => chunk.dispose());
+    Object.values(this.chunks).forEach(({ chunk }) => chunk.dispose());
     this.material.dispose();
   }
 
