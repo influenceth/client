@@ -259,9 +259,8 @@ const Asteroid = (props) => {
         controls.object.position.clone(),
         controls.object.position.clone().negate().normalize()
       );
-      console.log('intersections', raycaster.intersectObjects(scene.children, true));
       const intersection = (raycaster.intersectObjects(scene.children, true) || [])
-        .find((i) => i.object?.constructor?.name === 'Mesh');
+        .find((i) => i.object?.type === 'Mesh');
       if (intersection) {
         controls.minDistance = Math.min(
           controls.object.position.length() - intersection.distance + surfaceDistance,
