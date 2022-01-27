@@ -259,6 +259,7 @@ const Asteroid = (props) => {
         controls.object.position.clone(),
         controls.object.position.clone().negate().normalize()
       );
+      console.log('intersections', raycaster.intersectObjects(scene.children, true));
       const intersection = (raycaster.intersectObjects(scene.children, true) || [])
         .find((i) => i.object?.constructor?.name === 'Mesh');
       if (intersection) {
