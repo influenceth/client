@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3 } from 'three';
+import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3, CanvasTexture, DoubleSide } from 'three';
 import { useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
@@ -125,22 +125,15 @@ const Asteroid = (props) => {
     const processed = {};
     const materials = [];
 
-    Object.keys(maps).forEach(k => {
-      processed[k] = maps[k].map(m => {
-        const tex = new DataTexture(m.buffer, m.width, m.height, m.format);
-        return Object.assign(tex, m.options);
-      });
-    });
-
     for (let i = 0; i < 6; i++) {
       materials.push(new MeshStandardMaterial({
         color: 0xffffff,
         depthFunc: LessDepth,
         dithering: true,
-        map: processed.colorMap[i],
+        map: new CanvasTexture(maps.colorMap[i].bmp),
         metalness: 0,
-        normalMap: processed.normalMap[i],
-        roughness: 1
+        roughness: 1,
+        normalMap: new CanvasTexture(maps.normalMap[i].bmp)
       }));
     }
 

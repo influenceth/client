@@ -8,7 +8,11 @@ import {
   PlaneBufferGeometry,
   ShaderMaterial,
   Mesh,
-  RGBAFormat
+  RGBAFormat,
+  Color,
+  BoxGeometry,
+  MeshBasicMaterial,
+  DoubleSide
 } from 'three';
 
 class TextureRenderer {
@@ -35,12 +39,20 @@ class TextureRenderer {
 
   render(width, height, material) {
     this.plane.material = material;
+    this.renderer.setSize(width, height);
+    this.renderer.domElement.width = width
+    this.renderer.domElement.height = height
+    this.renderer.setRenderTarget(null);
+    this.renderer.render(this.scene, this.camera)
+    const bitmap = this.renderer.domElement.transferToImageBitmap()
+
     this.target.setSize(width, height);
     this.renderer.setRenderTarget(this.target);
     this.renderer.render(this.scene, this.camera);
     const buffer = new Uint8Array(width * height * 4);
     this.renderer.readRenderTargetPixels(this.target, 0, 0, width, height, buffer);
-    return { buffer, width, height, format: RGBAFormat };
+
+    return { buffer, width, height, format: RGBAFormat, bmp: bitmap };
   }
 }
 

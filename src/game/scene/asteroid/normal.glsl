@@ -12,7 +12,8 @@ void main() {
   // Contract coordinates by 1 pixel on all sides
   vec2 halfRes = uResolution.xy / 2.0;
   vec2 contractionRatio = (uResolution.xy - 2.0) / (uResolution - 1.0);
-  vec2 centerCoord = (gl_FragCoord.xy - halfRes) * contractionRatio + halfRes;
+  vec2 flipped = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+  vec2 centerCoord = (flipped.xy - halfRes) * contractionRatio + halfRes;
 
   // Sample half a pixel in each direction (normalizing to 0,1)
   vec2 upCoord = (centerCoord + vec2(0.0, 1.0)) / uResolution.xy;

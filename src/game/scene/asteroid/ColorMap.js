@@ -43,6 +43,16 @@ class ColorMap {
     for (let i = 0; i < 6; i++) {
       material = new ShaderMaterial({
         fragmentShader: colorShader,
+        vertexShader: `
+          varying vec3 vUv; 
+
+          void main() {
+            vUv = position; 
+      
+            vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
+            gl_Position = projectionMatrix * modelViewPosition; 
+          }
+        `,
         uniforms: {
           tHeightMap: { type: 't', value: this.heightMap[i] },
           tRamps: { type: 't', value: ramps },

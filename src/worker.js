@@ -33,6 +33,7 @@ let textureRenderer;
 // Setup offscreen canvas
 if (typeof OffscreenCanvas !== 'undefined') {
   const offscreen = new OffscreenCanvas(0, 0);
+  offscreen.style = { width: 0, height: 0 };
   const renderer = new WebGLRenderer({ canvas: offscreen, antialias: true });
   textureRenderer = new TextureRenderer(renderer);
 }
