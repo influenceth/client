@@ -13,6 +13,7 @@ import colorShader from './color.glsl';
 
 const rampsPath = `${process.env.PUBLIC_URL}/textures/asteroid/ramps.png`;
 
+let first = true;
 class ColorMap {
   constructor(res, heightMap, config, textureRenderer) {
     this.res = res;
@@ -61,15 +62,17 @@ class ColorMap {
         }
       });
 
-      const textureArgs = this.textureRenderer.render(this.res, this.res, material);
-      textureArgs.options = {
-        generateMipmaps: true,
-        minFilter: LinearMipMapLinearFilter,
-        magFilter: LinearFilter,
-        needsUpdate: true
-      };
-
-      maps.push(textureArgs);
+      const bitmap = this.textureRenderer.renderBitmap(this.res, this.res, material);
+      // PMK vvv
+      if (first) {
+        const canvas = document.getElementById('test_canvas');
+        canvas.style.height = `${bitmap.height}px`;
+        canvas.style.width = `${bitmap.width}px`;
+        const ctx = canvas.getContext('bitmaprenderer');
+        ctx.transferFromImageBitmap(bitmap);
+      }
+      // PMK ^^^
+      maps.push({ bmp: bitmap });
     }
 
     return maps;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3, CanvasTexture, DoubleSide } from 'three';
+import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3, CanvasTexture, DoubleSide, WebGLRenderer } from 'three';
 import { useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
@@ -18,7 +18,13 @@ import exportModel from './asteroid/export';
 const worker = new Worker();
 
 // only instantiate textureRendered if offscreenCanvas not available
-const textureRenderer = typeof OffscreenCanvas === 'undefined' && new TextureRenderer();
+// const textureRenderer = typeof OffscreenCanvas === 'undefined' && new TextureRenderer();
+// PMK vvv
+const offscreen = new OffscreenCanvas(0, 0);
+  offscreen.style = { width: 0, height: 0 };
+  const renderer = new WebGLRenderer({ canvas: offscreen, antialias: true });
+  const textureRenderer = new TextureRenderer(renderer);
+// PMK ^^^
 
 const Asteroid = (props) => {
   const controls = useThree(({ controls }) => controls);
