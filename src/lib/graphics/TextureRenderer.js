@@ -39,20 +39,13 @@ class TextureRenderer {
 
   render(width, height, material) {
     this.plane.material = material;
-    this.renderer.setSize(width, height);
-    this.renderer.domElement.width = width
-    this.renderer.domElement.height = height
-    this.renderer.setRenderTarget(null);
-    this.renderer.render(this.scene, this.camera)
-    const bitmap = this.renderer.domElement.transferToImageBitmap()
-
     this.target.setSize(width, height);
     this.renderer.setRenderTarget(this.target);
     this.renderer.render(this.scene, this.camera);
     const buffer = new Uint8Array(width * height * 4);
     this.renderer.readRenderTargetPixels(this.target, 0, 0, width, height, buffer);
 
-    return { buffer, width, height, format: RGBAFormat, bmp: bitmap };
+    return { buffer, width, height, format: RGBAFormat };
   }
 
   renderBitmap(width, height, material) {
@@ -65,24 +58,6 @@ class TextureRenderer {
     const bitmap = this.renderer.domElement.transferToImageBitmap();
     return bitmap;
   }
-
-  // PMK vvv
-  downloadBitmap() {
-    this.renderer.getContext().canvas.convertToBlob().then((b) => {
-      var a = document.createElement('a');
-      a.textContent = 'Download';
-      document.body.appendChild(a);
-      a.style.display = 'block';
-      a.style.position = 'fixed';
-      a.style.right = 0;
-      a.style.top = 0;
-      a.style.zIndex = 100000;
-      a.download = 'test.png';
-      a.href = window.URL.createObjectURL(b);
-      document.body.append(a);
-    });
-  }
-  // ^^^
 }
 
 export default TextureRenderer;
