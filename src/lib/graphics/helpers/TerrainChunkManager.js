@@ -15,7 +15,7 @@ class TerrainChunkManager {
   }
 
   isBusy() {
-    return false;
+    return this.updating || !this.ready;
   }
 
   reset() {

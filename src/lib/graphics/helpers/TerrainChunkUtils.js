@@ -23,21 +23,15 @@ const rampsPath = `${process.env.PUBLIC_URL}/textures/asteroid/ramps.png`;
 // // TODO: this was in Asteroid (for no-offscreen-worker)
 // const textureRenderer = typeof OffscreenCanvas === 'undefined' && new TextureRenderer();
 
-// // TODO: this was in worker
-// // Setup offscreen canvas
-// if (typeof OffscreenCanvas !== 'undefined') {
-//   const offscreen = new OffscreenCanvas(0, 0);
-//   const renderer = new WebGLRenderer({ canvas: offscreen, antialias: true });
-//   textureRenderer = new TextureRenderer(renderer);
-// }
-
-// TODO: offscreen canvas?
-const textureRenderer = new TextureRenderer(
-  new WebGLRenderer({
-    canvas: new OffscreenCanvas(0, 0),
-    antialias: true
-  })
-);
+// TODO: this was in worker
+// Setup offscreen canvas
+let textureRenderer;
+if (typeof OffscreenCanvas !== 'undefined') {
+  const offscreen = new OffscreenCanvas(0, 0);
+  offscreen.style = { width: 0, height: 0 };
+  const renderer = new WebGLRenderer({ canvas: offscreen, antialias: true });
+  textureRenderer = new TextureRenderer(renderer);
+}
 
 // load ramps
 let ramps;
@@ -113,16 +107,17 @@ function generateHeightMap(displacementMap, cubeTransform, chunkSize, chunkOffse
     }
   });
 
-  const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-  texture.options = {
-    flipY: true,
-    generateMipmaps: true,
-    minFilter: LinearMipMapLinearFilter,
-    magFilter: LinearFilter,
-    needsUpdate: true
-  };
+  // const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
+  // texture.options = {
+  //   flipY: true,
+  //   generateMipmaps: true,
+  //   minFilter: LinearMipMapLinearFilter,
+  //   magFilter: LinearFilter,
+  //   needsUpdate: true
+  // };
+  // return texture;
 
-  return texture;
+  return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
 function generateColorMap(heightMap, chunkResolution, config) {
@@ -138,15 +133,15 @@ function generateColorMap(heightMap, chunkResolution, config) {
     }
   });
 
-  const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-  texture.options = {
-    generateMipmaps: true,
-    minFilter: LinearMipMapLinearFilter,
-    magFilter: LinearFilter,
-    needsUpdate: true
-  };
+  // const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
+  // texture.options = {
+  //   generateMipmaps: true,
+  //   minFilter: LinearMipMapLinearFilter,
+  //   magFilter: LinearFilter,
+  //   needsUpdate: true
+  // };
 
-  return texture;
+  return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
 function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, config) {
@@ -161,15 +156,15 @@ function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, conf
     }
   });
 
-  const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-  texture.options = {
-    generateMipmaps: true,
-    minFilter: LinearMipMapLinearFilter,
-    magFilter: LinearFilter,
-    needsUpdate: true
-  };
+  // const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
+  // texture.options = {
+  //   generateMipmaps: true,
+  //   minFilter: LinearMipMapLinearFilter,
+  //   magFilter: LinearFilter,
+  //   needsUpdate: true
+  // };
 
-  return texture;
+  return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
 function mapToDataTexture(map) {
@@ -181,30 +176,62 @@ function mapToDataTexture(map) {
   );
 }
 
-export function rebuildChunkGeometry({ config, groupMatrix, offset, radius, resolution, side, width }) {
+let totalRuns = 0;
+let totals = {};
+let startTime;
+function benchmark(tag) {
+  if (!tag) {
+    startTime = Date.now();
+    totalRuns++;
+  }
+  else {
+    if (!totals[tag]) totals[tag] = 0;
+    totals[tag] += Date.now() - startTime;
+  }
+}
+setInterval(() => {
+  const b = {};
+  let prevTime = 0;
+  Object.keys(totals).forEach((k) => {
+    const thisTime = Math.round(totals[k] / totalRuns);
+    if (k === '_') {
+      b['TOTAL'] = thisTime;
+    } else {
+      b[k] = thisTime - prevTime;
+      prevTime = thisTime;
+    }
+  });
+  console.log(`b ${totalRuns}`, b);
+}, 5000);
+
+export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, side, width }) {
   if (!ramps) return;
+  benchmark();
 
   const _D = new Vector3();
   const _P = new Vector3();
   const _N = new Vector3();
 
-  const bufferTally = resolution * resolution * 3;
-  const positions = [];//new Float32Array(bufferTally);
-  const colors = [];//new Float32Array(bufferTally);
-  const normals = [];//new Float32Array(bufferTally);
-  const indices = [];//new Uint32Array(bufferTally * 6);
-
   const localToWorld = groupMatrix;
   const resolutionPlusOne = resolution + 1;
   const half = width / 2;
-  const chunkSize = width / (2 * radius);
-  const chunkOffset = offset.clone().multiplyScalar(1 / radius);
+  const chunkSize = width / (2 * config.radius);
+  const chunkOffset = offset.clone().multiplyScalar(1 / config.radius);
 
   // meant to help match normal intensity on dynamic resolution asteroids
   // to previously fixed resolution asteroids (height difference between
   // neighbor samples is used to calculate normal, but now that width is
   // dynamic between those samples, need to accomodate for consistent "slope")
-  const normalCompatibilityScale = (0.0025 * radius * resolution) / width;
+  const normalCompatibilityScale = (0.0025 * config.radius * resolution) / width;
+
+  const bufferTally = resolutionPlusOne * resolutionPlusOne * 3;
+  const positions = new Float32Array(bufferTally);
+  // const colors = new Float32Array(bufferTally);
+  // const normals = new Float32Array(bufferTally);
+  const uvs = new Float32Array(resolutionPlusOne * resolutionPlusOne * 2);
+  const indices = new Uint32Array(resolution * resolution * 3 * 2);
+
+  benchmark('setup');
 
   const displacementMap = generateDisplacementMap(
     localToWorld,
@@ -215,7 +242,9 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, radius, reso
   );
   const displacementMapDataTexture = mapToDataTexture(displacementMap);
 
-  const heightMap = generateHeightMap(
+  benchmark('displacementmap');
+
+  const heightBitmap = generateHeightMap(
     displacementMapDataTexture,
     localToWorld,
     chunkSize,
@@ -223,24 +252,30 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, radius, reso
     resolutionPlusOne,
     config
   );
-  const heightMapDataTexture = mapToDataTexture(heightMap);
+  benchmark('height bitmap');
+  const heightTexture = new CanvasTexture(heightBitmap);
+  benchmark('height texture');
 
-  const colorMap = generateColorMap(
-    heightMapDataTexture,
+  const colorBitmap = generateColorMap(
+    heightTexture,
     resolutionPlusOne,
     config
   );
+  benchmark('color');
 
-  const normalMap = generateNormalMap(
-    heightMapDataTexture,
+  const normalBitmap = generateNormalMap(
+    heightTexture,
     resolutionPlusOne,
     normalCompatibilityScale,
     config
   );
+  benchmark('normal');
 
   // done with interim data textures
-  displacementMapDataTexture.dispose();
-  heightMapDataTexture.dispose();
+  displacementMapDataTexture.dispose(); // TODO: uncomment or remove
+  heightBitmap.close();
+  heightTexture.dispose();
+  benchmark('dispose');
 
   // build geometry
   for (let x = 0; x < resolutionPlusOne; x++) {
@@ -249,9 +284,10 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, radius, reso
       const yp = width * y / resolution;
 
       const bufferIndex = resolutionPlusOne * y + x;
+      const outputIndex = resolutionPlusOne * x + y;
 
       // compute position and direction
-      _P.set(xp - half, yp - half, radius);
+      _P.set(xp - half, yp - half, config.radius);
       _P.add(offset);
       _P.normalize();
       _D.copy(_P);
@@ -261,7 +297,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, radius, reso
         displacementMap.buffer[bufferIndex * 4 + 0]
         + displacementMap.buffer[bufferIndex * 4 + 1] / 255.0 // TODO: should this be 256?
       ) / 128.0;
-      _P.setLength(radius * (1 + displacement * config.dispWeight));
+      _P.setLength(config.radius * (1 + displacement * config.dispWeight));
 
       // apply stretch deformation
       // TODO (enhancement): there is probably some way to use matrix to apply these
@@ -278,40 +314,57 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, radius, reso
         _P.y *= config.stretch.y;
         _P.z *= config.stretch.z;
       }
-      positions.push(_P.x, _P.y, _P.z);
+      positions[outputIndex * 3 + 0] = _P.x;
+      positions[outputIndex * 3 + 1] = _P.y;
+      positions[outputIndex * 3 + 2] = _P.z;
 
-      // colors
-      const color = new Color(
-        colorMap.buffer[bufferIndex * 4] / 256.0,
-        colorMap.buffer[bufferIndex * 4 + 1] / 256.0,
-        colorMap.buffer[bufferIndex * 4 + 2] / 256.0
-      );
-      colors.push(color.r, color.g, color.b);
+      // uv
+      uvs[outputIndex * 2 + 0] = x / resolution;
+      uvs[outputIndex * 2 + 1] = y / resolution;
 
-      // normals
-      const nx = normalMap.buffer[bufferIndex * 4] / 128 - 1;
-      const ny = normalMap.buffer[bufferIndex * 4 + 1] / 128 - 1;
-      _N.x = _D.x + nx;
-      _N.y = _D.y + ny;
-      _N.z = _D.z;
-      _N.normalize();
-      normals.push(_N.x, _N.y, _N.z);
+      // // colors
+      // const color = new Color(
+      //   colorMap.buffer[bufferIndex * 4] / 255.0,
+      //   colorMap.buffer[bufferIndex * 4 + 1] / 255.0,
+      //   colorMap.buffer[bufferIndex * 4 + 2] / 255.0
+      // );
+      // colors[outputIndex * 3 + 0] = color.r;
+      // colors[outputIndex * 3 + 1] = color.g;
+      // colors[outputIndex * 3 + 2] = color.b;
+
+      // // normals
+      // const nx = normalMap.buffer[bufferIndex * 4] / 128 - 1;
+      // const ny = normalMap.buffer[bufferIndex * 4 + 1] / 128 - 1;
+      // _N.x = _D.x + nx;
+      // _N.y = _D.y + ny;
+      // _N.z = _D.z;
+      // _N.normalize();
+      // normals[outputIndex * 3 + 0] = _N.x;
+      // normals[outputIndex * 3 + 1] = _N.y;
+      // normals[outputIndex * 3 + 2] = _N.z;
     }
   }
+  benchmark('apply');
 
   // index points
   for (let i = 0; i < resolution; i++) {
     for (let j = 0; j < resolution; j++) {
-      indices.push(
-          i * (resolution + 1) + j,
-          (i + 1) * (resolution + 1) + j + 1,
-          i * (resolution + 1) + j + 1);
-      indices.push(
-          (i + 1) * (resolution + 1) + j,
-          (i + 1) * (resolution + 1) + j + 1,
-          i * (resolution + 1) + j);
+      const outputIndex = resolution * i + j;
+      indices[outputIndex * 6 + 0] = i * (resolution + 1) + j;
+      indices[outputIndex * 6 + 1] = (i + 1) * (resolution + 1) + j + 1;
+      indices[outputIndex * 6 + 2] = i * (resolution + 1) + j + 1;
+      indices[outputIndex * 6 + 3] = (i + 1) * (resolution + 1) + j;
+      indices[outputIndex * 6 + 4] = (i + 1) * (resolution + 1) + j + 1;
+      indices[outputIndex * 6 + 5] = i * (resolution + 1) + j;
     }
   }
+  benchmark('_');
 
-  return { positions, colors, normals, indices };
+  return {
+    positions,
+    colorBitmap,
+    normalBitmap,
+    uvs,
+    indices
+  };
 }

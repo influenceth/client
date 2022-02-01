@@ -29,7 +29,7 @@ float getDisplacement() {
   vec2 uv = gl_FragCoord.xy / uResolution;
   vec2 disp16 = texture2D(tDisplacementMap, uv).xy;
   float disp = disp16.x * 255.0 + disp16.y;
-  return 1.0 - disp / 256.0;
+  return 1.0 - disp / 128.0;
 }
 
 vec3 getUnitSphereCoords() {
@@ -136,6 +136,6 @@ void main() {
     floor(height * 255.0) / 255.0,
     fract(height * 255.0),
     topo,
-    0.0
+    1.0
   );
 }

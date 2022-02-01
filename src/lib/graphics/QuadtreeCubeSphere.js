@@ -4,12 +4,11 @@ import {
   LessDepth,
   Matrix4,
   MeshStandardMaterial,
-  Vector3,
-  VertexColors
+  Vector3
 } from 'three';
 import QuadtreePlane from './helpers/QuadtreePlane';
-import TerrainChunkManager from './helpers/TerrainChunkManagerThreaded';
-// import TerrainChunkManager from './helpers/TerrainChunkManager';
+import TerrainChunkManager from './helpers/TerrainChunkManager';
+import TerrainChunkManagerThreaded from './helpers/TerrainChunkManagerThreaded';
 
 const dictIntersection = function(dictA, dictB) {
   const intersection = {};
@@ -46,7 +45,7 @@ const cubeTranslations = [
   (m, radius) => m.premultiply(new Matrix4().makeTranslation(0, 0, -radius)), // -Z
 ];
 
-export const MIN_CHUNK_SIZE = 400; // TODO: resolution
+export const MIN_CHUNK_SIZE = 1000; // TODO: resolution (was 500, then 400)
 
 class QuadtreeCubeSphere {
   constructor({ radius, stretch }) {
@@ -94,11 +93,15 @@ class QuadtreeCubeSphereManager {
       metalness: 0,
       roughness: 1,
       side: FrontSide,
-      vertexColors: VertexColors,
       // wireframe: true,
     });
 
-    this.builder = new TerrainChunkManager(config, workerPool);
+    this.threaded = false && !!workerPool;  // TODO: force-disabled
+    if (this.threaded) {
+      this.builder = new TerrainChunkManagerThreaded(config, workerPool); 
+    } else {
+      this.builder = new TerrainChunkManager(config);
+    }
     this.groups = [...new Array(6)].map(_ => new Group());
     this.chunks = {};
   }
@@ -139,6 +142,12 @@ class QuadtreeCubeSphereManager {
     const difference = dictDifference(updatedChunks, this.chunks);
     const recycle = Object.values(dictDifference(this.chunks, updatedChunks));
 
+    // console.log('new chunks', {
+    //   keep: Object.keys(intersection).length,
+    //   create: Object.keys(difference).length,
+    //   recycle: recycle.length,
+    // });
+
     // recycle recently deprecated chunks
     this.builder.queueForRecycling(recycle);
 
@@ -157,22 +166,27 @@ class QuadtreeCubeSphereManager {
           difference[k].group,
           offset,
           difference[k].size,
-          64 // TODO: resolution
+          64 // TODO: resolution (was 64)
         ),
       };
     }
 
     // update class
     this.chunks = updatedChunks;
+
+    // manually kick off update here if not threaded
+    if (!this.threaded) {
+      this.builder.update();
+    }
   }
 
-  removeRetiredChunks() {
-    return this.builder.recycleOldChunks();
-  }
-
-  showCurrentChunks() {
-    for (let k in this.chunks) {
-      this.chunks[k].chunk.show();
+  finishPendingUpdate() {
+    // if not threaded, this is already handled within builder
+    if (this.threaded) {
+      this.builder.recycleOldChunks();
+      for (let k in this.chunks) {
+        this.chunks[k].chunk.show();
+      }
     }
   }
 

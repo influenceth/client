@@ -76,14 +76,20 @@ const Scene = (props) => {
           <SettingsManager />
           <QueryClientProvider client={queryClient} contextSharing={true}>
             <TrackballModControls maxDistance={10 * constants.AU}>
+              {/* TODO: restore
               <Star />
               <Planets />
               <Asteroids />
+              */}
               <Asteroid />
             </TrackballModControls>
           </QueryClientProvider>
         </ContextBridge>
       </Canvas>
+      {/* TODO: remove debug */}
+      <div style={{ position: 'fixed', bottom: 72, left: 0, }}>
+        <canvas id="test_canvas" style={{ width: 0, height: 0, border: '1px solid white' }} />
+      </div>
     </StyledContainer>
   );
 };

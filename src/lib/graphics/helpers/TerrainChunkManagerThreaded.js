@@ -11,7 +11,7 @@ class TerrainChunkManagerThreaded {
   }
 
   isBusy() {
-    return this.workerPool.isBusy();
+    return this.workerPool.isBusy() || !this.ready;
   }
 
   allocateChunk(params) {

@@ -15,7 +15,39 @@ import Rings from './asteroid/Rings';
 
 const TARGET_MAX_ZOOM_Y = 2000;
 const TARGET_REDRAW_DISTANCE = MIN_CHUNK_SIZE / 2;
-const FRAME_CYCLE_LENGTH = 4;
+const FRAME_CYCLE_LENGTH = 15;
+const FALLBACK_MIN_ZOOM = 1.2;
+
+// TODO: remove debug
+let totalRuns = 0;
+let totals = {};
+let startTime;
+function benchmark(tag) {
+  if (!tag) {
+    startTime = Date.now();
+    totalRuns++;
+  }
+  else {
+    if (!totals[tag]) totals[tag] = 0;
+    totals[tag] += Date.now() - startTime;
+  }
+}
+
+// TODO: remove debug
+// setInterval(() => {
+//   const b = {};
+//   let prevTime = 0;
+//   Object.keys(totals).forEach((k) => {
+//     const thisTime = Math.round(totals[k] / totalRuns);
+//     if (k === '_') {
+//       b['TOTAL'] = thisTime;
+//     } else {
+//       b[k] = thisTime - prevTime;
+//       prevTime = thisTime;
+//     }
+//   });
+//   console.log(`b ${totalRuns}`, b);
+// }, 5000);
 
 const Asteroid = (props) => {
   const { controls, raycaster, scene } = useThree();
@@ -146,13 +178,13 @@ const Asteroid = (props) => {
     if (!shouldFinishZoomIn) return;
 
     // Update distances to maximize precision
-    controls.minDistance = asteroidData.radius * 1.5;
+    controls.minDistance = asteroidData.radius * FALLBACK_MIN_ZOOM;
     controls.maxDistance = asteroidData.radius * 4.0;
 
     const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
-    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
+    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 3.0);
     controls.targetScene.position.copy(panTo);
     controls.object.position.copy(zoomTo);
     controls.noPan = true;
@@ -204,19 +236,31 @@ const Asteroid = (props) => {
     return (TARGET_MAX_ZOOM_Y / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180));
   }, [controls?.object?.fov])
 
+  const updatePending = useRef();
+
   // Positions the asteroid in space based on time changes
   useFrame(() => {
     if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
-
-    // if builder is not busy, make sure we are showing most recent chunks
-    if (!geometry.current.builder.isBusy()) {
-      geometry.current.removeRetiredChunks();
-      geometry.current.showCurrentChunks();
-    }
+    benchmark();
 
     // tally frame
     frameCycle.current = (frameCycle.current + 1) % FRAME_CYCLE_LENGTH;
+
+    // if builder is not busy, make sure we are showing most recent chunks
+    if (updatePending.current) {
+      if (!geometry.current.builder.isBusy()) {
+        geometry.current.finishPendingUpdate();
+
+        // TODO: would it be faster to put into single thread or groups?
+        //  frame rate is good, but updates are taking forever when zoomed in (like 10 - 20s)
+        //  - is it not preserving existing chunks?
+        //  - is it too expensive to pass in input?
+        // console.log('update finished', Date.now() - updatePending.current);
+        updatePending.current = null;
+      }
+    }
+    benchmark('optional update');
 
     // update asteroid position
     if (asteroidOrbit.current && time) {
@@ -241,6 +285,7 @@ const Asteroid = (props) => {
         );
       }
     }
+    benchmark('pos and rot');
     
     // update quadtree on "significant" movement so it can rebuild children appropriately
     // TODO (enhancement): TARGET_REDRAW_DISTANCE should probably depend on zoom level
@@ -254,6 +299,9 @@ const Asteroid = (props) => {
         rotation.current = updatedRotation;
 
         // send updated camera position to quads for processing
+        // console.log('update started');
+        updatePending.current = Date.now();
+        // TODO: if not threaded, this should not be blocking while all math done
         geometry.current.setCameraPosition(
           controls.object.position.clone().applyAxisAngle(
             rotationAxis.current,
@@ -262,25 +310,34 @@ const Asteroid = (props) => {
         );
       }
     }
+    benchmark('set cam');
 
     // re-evaluate raycaster on every Xth frame to ensure zoom bounds are safe
     // (i.e. close enough to surface but not inside surface)
+    // TODO: this can be kicked off from here, but should not be blocking...
     if (frameCycle.current === 0) {
-      raycaster.set(
-        controls.object.position.clone(),
-        controls.object.position.clone().negate().normalize()
-      );
-      const intersection = (raycaster.intersectObjects(scene.children, true) || [])
-        .find((i) => i.object?.type === 'Mesh');
-      if (intersection) {
-        controls.minDistance = Math.min(
-          controls.object.position.length() - intersection.distance + surfaceDistance,
-          1.5 * asteroidData.radius
+      if (controls && cameraPosition.current && quadtreeRef.current?.children) {
+        raycaster.set(
+          controls.object.position.clone(),
+          controls.object.position.clone().negate().normalize()
         );
-      } else {
-        controls.minDistance = 1.5 * asteroidData.radius;
+        const intersection = (raycaster.intersectObjects(quadtreeRef.current.children) || [])
+          .find((i) => i.object?.type === 'Mesh');
+        if (intersection) {
+          // TODO: if current distance < new min, then pan first, then reset minDistance
+          controls.minDistance = Math.min(
+            controls.object.position.length() - intersection.distance + surfaceDistance,
+            FALLBACK_MIN_ZOOM * asteroidData.radius
+          );
+        } else if(controls.minDistance < FALLBACK_MIN_ZOOM * asteroidData.radius) {
+          controls.minDistance *= 1.1;
+        } else {
+          controls.minDistance = FALLBACK_MIN_ZOOM * asteroidData.radius;
+        }
       }
     }
+    benchmark('raycasted');
+    benchmark('_');
   });
 
   return (

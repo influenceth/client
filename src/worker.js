@@ -33,23 +33,47 @@ const updatePlanetPositions = function(planets, elapsed = 0) {
   });
 };
 
-const rebuildTerrainChunk = function (chunk) {
+// TODO: remove debug
+let taskTotal = 0;
+let taskTally = 0;
+// setInterval(() => {
+//   if (taskTally > 0) {
+//     console.log(
+//       `avg execution time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
+//     );
+//   }
+// }, 5000);
+
+const rebuildTerrainChunk = function (chunk, debug) {
   initChunkTextures().then(() => {
+    chunk.config.seed = new Vector3(chunk.config.seed.x, chunk.config.seed.y, chunk.config.seed.z);
+    chunk.config.stretch = new Vector3(chunk.config.stretch.x, chunk.config.stretch.y, chunk.config.stretch.z);
     chunk.offset = new Vector3(chunk.offset.x, chunk.offset.y, chunk.offset.z);
     chunk.groupMatrix = (new Matrix4()).fromArray(chunk.groupMatrix.elements);
+    // TODO: remove debug
+    const startTime = Date.now();
     const rebuiltChunk = rebuildChunkGeometry(chunk);
-    const x = new Uint32Array(200);
+    if (debug) { // TODO: remove debug
+      taskTotal += Date.now() - startTime;
+      taskTally++;
+    }
     postMessage({
       topic: 'rebuiltTerrainChunk',
       chunk: rebuiltChunk
     }, [
-      x.buffer
+      rebuiltChunk.positions.buffer,
+      rebuiltChunk.uvs.buffer,
+      rebuiltChunk.indices.buffer,
+      rebuiltChunk.colorBitmap,
+      rebuiltChunk.normalBitmap,
     ]);
-    // TODO: could we use transfer to pass rendered chunks back?
-    // (see `transfer` on https://developer.mozilla.org/en-US/docs/Web/API/Worker/postMessage)
   });
 };
 
+// try to preload textures
+initChunkTextures();
+
+// TODO: remove
 // const rebuildAsteroidChunks = function(chunks) {
 //   initChunkTextures().then(() => {
 //     Promise.all(

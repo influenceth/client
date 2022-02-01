@@ -44,8 +44,8 @@ class QuadtreePlane {
 
   _setCameraPosition(child, pos) {
     const distToChild = child.sphereCenter.distanceTo(pos);
-    // TODO: resolution
-    if (distToChild < child.size.x * 1.4 && child.size.x >= this.minChunkSize * 2) {
+    // TODO: resolution (was 1.25, then 1.4)
+    if (distToChild < child.size.x * 1.25 && child.size.x >= this.minChunkSize * 2) {
       child.children = this.generateChildren(child);
 
       for (let c of child.children) {

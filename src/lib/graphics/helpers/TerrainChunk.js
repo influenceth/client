@@ -1,15 +1,35 @@
-import { BufferAttribute, BufferGeometry, Float32BufferAttribute, Mesh } from 'three';
+import {
+  BufferAttribute,
+  BufferGeometry,
+  CanvasTexture,
+  Float32BufferAttribute,
+  Mesh,
+} from 'three';
 
 import { rebuildChunkGeometry } from './TerrainChunkUtils';
+
+// TODO: remove debug
+let first = true;
+let taskTotal = 0;
+let taskTally = 0;
+setInterval(() => {
+  if (taskTally > 0) {
+    console.log(
+      `avg execution time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
+    );
+  }
+  first = true;
+}, 5000);
 
 class TerrainChunk {
   constructor(params, config, textureRenderer) {
     this._params = params;
     this._config = config;
     this._textureRenderer = textureRenderer;
-    
+
     this._geometry = new BufferGeometry();
-    this._plane = new Mesh(this._geometry, params.material);
+    this._material = params.material.clone();
+    this._plane = new Mesh(this._geometry, this._material);
     this._plane.castShadow = false;
     this._plane.receiveShadow = true;
     this._params.group.add(this._plane);
@@ -18,6 +38,7 @@ class TerrainChunk {
   dispose() {
     this._params.group.remove(this._plane);
     this._geometry.dispose();
+    this._material.dispose();
   }
 
   hide() {
@@ -25,42 +46,71 @@ class TerrainChunk {
   }
 
   show() {
-    this._plane.visible = true;
+    if (!this._plane.visible) {
+      this._plane.visible = true;
+    }
   }
 
   getRebuildParams() {
+    // TODO: this manipulation is probably only worth it when using postMessage
+    //  (i.e. not for work on main thread)
+    const {
+      ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
+      ...prunedConfig
+    } = this._config;
     return {
-      config: this._config,
+      // TODO: could cache
+      config: prunedConfig,
+      resolution: this._params.resolution,
+
+      // TODO: specific to chunk
       groupMatrix: this._params.group.matrix.clone(),
       offset: this._params.offset.clone(),
-      radius: this._params.radius,
-      resolution: this._params.resolution,
       side: this._params.side,
       width: this._params.width
     }
   }
 
   rebuild() {
-    this.updateGeometry(
-      rebuildChunkGeometry(
-        this.getRebuildParams()
-      )
-    );
+    const params = this.getRebuildParams();
+    const startTime = Date.now();
+    const chunk = rebuildChunkGeometry(params);
+    if (true) {
+      taskTotal += Date.now() - startTime;
+      taskTally++;
+    }
+    this.updateGeometry(chunk);
   }
 
   updateGeometry(data) {
     if (!data) return;
-    this._geometry.setAttribute(
-      'position', new Float32BufferAttribute(data.positions, 3));
-    this._geometry.setAttribute(
-      'color', new Float32BufferAttribute(data.colors, 3));
-    this._geometry.setAttribute(
-      'normal', new Float32BufferAttribute(data.normals, 3));
-    this._geometry.setIndex(
-      new BufferAttribute(new Uint32Array(data.indices), 1));
+
+    // TODO: can we use planeGeometry?
+    // TODO: uvs are consistent if resolution is consistent... don't need to update each time
+    
+    this._geometry.setAttribute('position', new Float32BufferAttribute(data.positions, 3));
+    this._geometry.setAttribute('uv', new Float32BufferAttribute(data.uvs, 2));
+    this._geometry.setIndex(new BufferAttribute(data.indices, 1));
+
     this._geometry.attributes.position.needsUpdate = true;
-    this._geometry.attributes.normal.needsUpdate = true;
-    this._geometry.attributes.color.needsUpdate = true;
+    this._geometry.attributes.uv.needsUpdate = true;
+    this._geometry.computeVertexNormals();
+
+    if (false && first) {
+      const debug = 'colorBitmap';
+      first = false;
+      const canvas = document.getElementById('test_canvas');
+      canvas.style.height = `${data[debug].height}px`;
+      canvas.style.width = `${data[debug].width}px`;
+      const ctx = canvas.getContext('bitmaprenderer');
+      ctx.transferFromImageBitmap(data[debug]);
+    } else {
+      this._material.setValues({
+        map: new CanvasTexture(data.colorBitmap),
+        normalMap: new CanvasTexture(data.normalBitmap),
+      });
+      this._material.needsUpdate = true;
+    }
   }
 }
 

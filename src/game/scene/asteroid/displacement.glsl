@@ -8,9 +8,7 @@ uniform vec2 uResolution;
 uniform vec3 uSeed;
 uniform mat4 uTransform;
 
-#pragma glslify: cnoise = require('glsl-noise/classic/3d')
 #pragma glslify: snoise = require('glsl-noise/simplex/3d')
-#pragma glslify: cellular = require('../../../lib/graphics/cellular3')
 
 vec3 getUnitSphereCoords() {
 
@@ -27,28 +25,6 @@ vec3 getUnitSphereCoords() {
 
 float normalizeNoise(float n) {
   return 0.5 * n + 0.5;
-}
-
-float recursiveCNoise(vec3 p, int octaves) {
-  float scale = pow(2.0, min(float(octaves), 6.0));
-  vec3 displace;
-
-  for (int i = 0; i < 6; i ++) {
-    if (i == octaves) {
-      break;
-    }
-
-    displace = vec3(
-      normalizeNoise(cnoise(p.xyz * scale + displace)),
-      normalizeNoise(cnoise(p.yzx * scale + displace)),
-      normalizeNoise(cnoise(p.zxy * scale + displace))
-    );
-
-    scale *= 0.5;
-  }
-
-  float h = normalizeNoise(cnoise(p * scale + displace));
-  return pow(h, 1.0);
 }
 
 float recursiveSNoise(vec3 p, int octaves, float pers) {
@@ -86,6 +62,13 @@ void main() {
   // Get overall displacement
   float disp = getDisplacement(point);
 
-  // Encode disp and disp-fraction in different channels
   gl_FragColor = vec4(floor(disp * 255.0) / 255.0, fract(disp * 255.0), 0.0, 0.0);
+
+  // TODO (enhancement): could add third channel here if need more precision
+  //gl_FragColor = vec4(
+  //  floor(disp * 65025.0) / 65025.0,
+  //  floor(fract(disp * 65025.0) / 255.0),
+  //  fract(disp * 255.0),
+  //  0.0
+  //);
 }
