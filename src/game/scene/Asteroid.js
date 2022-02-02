@@ -180,7 +180,7 @@ const Asteroid = (props) => {
     if (!shouldFinishZoomIn) return;
 
     // Update distances to maximize precision
-    controls.minDistance = asteroidData.radius * FALLBACK_MIN_ZOOM;
+    controls.minDistance = 0; // TODO: asteroidData.radius * FALLBACK_MIN_ZOOM;
     controls.maxDistance = asteroidData.radius * 4.0;
 
     const panTo = new Vector3(...position.current);
@@ -191,7 +191,7 @@ const Asteroid = (props) => {
     controls.targetScene.position.copy(panTo);
     controls.object.position.copy(zoomTo);
     controls.noPan = true;
-    controls.object.near = 100;
+    controls.object.near = 1; // TODO: 100;
     controls.object.updateProjectionMatrix();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldFinishZoomIn, asteroidData?.radius ]);
@@ -315,31 +315,33 @@ const Asteroid = (props) => {
     }
     benchmark('set cam');
 
+    // TODO: re-evaluate raycaster...
+
     // re-evaluate raycaster on every Xth frame to ensure zoom bounds are safe
     // (i.e. close enough to surface but not inside surface)
     // TODO: this can be kicked off from here, but should not be blocking...
-    if (frameCycle.current === 0) {
-      if (controls && cameraPosition.current && quadtreeRef.current?.children) {
-        raycaster.set(
-          controls.object.position.clone(),
-          controls.object.position.clone().negate().normalize()
-        );
-        const intersection = (raycaster.intersectObjects(quadtreeRef.current.children) || [])
-          .find((i) => i.object?.type === 'Mesh');
-        if (intersection) {
-          // TODO: if current distance < new min, then pan first, then reset minDistance
-          controls.minDistance = Math.min(
-            controls.object.position.length() - intersection.distance + surfaceDistance,
-            FALLBACK_MIN_ZOOM * asteroidData.radius
-          );
-        } else if(controls.minDistance < FALLBACK_MIN_ZOOM * asteroidData.radius) {
-          controls.minDistance *= 1.1;
-        } else {
-          controls.minDistance = FALLBACK_MIN_ZOOM * asteroidData.radius;
-        }
-      }
-    }
-    benchmark('raycasted');
+    // if (frameCycle.current === 0) {
+    //   if (controls && cameraPosition.current && quadtreeRef.current?.children) {
+    //     raycaster.set(
+    //       controls.object.position.clone(),
+    //       controls.object.position.clone().negate().normalize()
+    //     );
+    //     const intersection = (raycaster.intersectObjects(quadtreeRef.current.children) || [])
+    //       .find((i) => i.object?.type === 'Mesh');
+    //     if (intersection) {
+    //       // TODO: if current distance < new min, then pan first, then reset minDistance
+    //       controls.minDistance = Math.min(
+    //         controls.object.position.length() - intersection.distance + surfaceDistance,
+    //         FALLBACK_MIN_ZOOM * asteroidData.radius
+    //       );
+    //     } else if(controls.minDistance < FALLBACK_MIN_ZOOM * asteroidData.radius) {
+    //       controls.minDistance *= 1.1;
+    //     } else {
+    //       controls.minDistance = FALLBACK_MIN_ZOOM * asteroidData.radius;
+    //     }
+    //   }
+    // }
+    // benchmark('raycasted');
     benchmark('_');
   });
 

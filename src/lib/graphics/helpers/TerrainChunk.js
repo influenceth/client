@@ -32,11 +32,18 @@ class TerrainChunk {
     this._plane = new Mesh(this._geometry, this._material);
     this._plane.castShadow = false;
     this._plane.receiveShadow = true;
+  }
+
+  attachToGroup() {
     this._params.group.add(this._plane);
+  }
+
+  detachFromGroup() {
+    this._params.group.remove(this._plane);
   }
   
   dispose() {
-    this._params.group.remove(this._plane);
+    this.detachFromGroup();
     this._geometry.dispose();
     this._material.dispose();
   }

@@ -41,6 +41,7 @@ class TerrainChunkManager {
     }
 
     chunk.hide();
+    chunk.attachToGroup();
 
     this._queued.push(chunk);
 
@@ -67,7 +68,10 @@ class TerrainChunkManager {
       if (!this.pool[node.chunk._params.width]) {
         this.pool[node.chunk._params.width] = [];
       }
-      node.chunk.dispose();
+      // using pool by adding below (instead of the dispose)
+      // node.chunk.dispose();
+      node.chunk.detachFromGroup();
+      this.pool[node.chunk._params.width].push(node.chunk);
     }
 
     // show new chunks
