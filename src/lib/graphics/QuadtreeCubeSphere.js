@@ -45,7 +45,7 @@ const cubeTranslations = [
   (m, radius) => m.premultiply(new Matrix4().makeTranslation(0, 0, -radius)), // -Z
 ];
 
-export const MIN_CHUNK_SIZE = 1000; // TODO: resolution (was 500, then 400)
+export const MIN_CHUNK_SIZE = 400; // TODO: resolution (was 500, then 400)
 
 class QuadtreeCubeSphere {
   constructor({ radius, stretch }) {
@@ -61,6 +61,9 @@ class QuadtreeCubeSphere {
           worldStretch: stretch
         }),
       });
+
+      // TODO: remove debug
+      //if (this.sides.length === 2) break;
     }
   }
 

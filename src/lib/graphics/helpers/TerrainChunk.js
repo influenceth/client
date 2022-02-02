@@ -96,8 +96,12 @@ class TerrainChunk {
     this._geometry.attributes.uv.needsUpdate = true;
     this._geometry.computeVertexNormals();
 
+
+    const displacementScale = 2 * this._config.radius * this._config.dispWeight;
+    const displacementMapTexture = new CanvasTexture(data.displacementBitmap);
+
     if (false && first) {
-      const debug = 'colorBitmap';
+      const debug = 'displacementBitmap';
       first = false;
       const canvas = document.getElementById('test_canvas');
       canvas.style.height = `${data[debug].height}px`;
@@ -106,6 +110,9 @@ class TerrainChunk {
       ctx.transferFromImageBitmap(data[debug]);
     } else {
       this._material.setValues({
+        displacementBias: -displacementScale / 2,
+        displacementMap: displacementMapTexture,
+        displacementScale: displacementScale,
         map: new CanvasTexture(data.colorBitmap),
         normalMap: new CanvasTexture(data.normalBitmap),
       });

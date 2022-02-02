@@ -25,17 +25,9 @@ uniform mat4 uTransform;
 #pragma glslify: snoise = require('glsl-noise/simplex/3d')
 #pragma glslify: cellular = require('../../../lib/graphics/cellular3')
 
-float getDisplacement() {
-  vec2 uv = gl_FragCoord.xy / uResolution;
-  vec2 disp16 = texture2D(tDisplacementMap, uv).xy;
-  float disp = disp16.x * 255.0 + disp16.y;
-  return 1.0 - disp / 128.0;
-}
-
-vec3 getUnitSphereCoords() {
-
+vec3 getUnitSphereCoords(vec2 flipY) {
   // Standardize to a 2 unit cube centered on origin
-  vec2 textCoord = (gl_FragCoord.xy - (uResolution.xy / 2.0)) / ((uResolution.xy - 1.0) / 2.0);
+  vec2 textCoord = (flipY.xy - (uResolution.xy / 2.0)) / ((uResolution.xy - 1.0) / 2.0);
 
   // Scale to chunk size and center
   textCoord = textCoord * uChunkSize + uChunkOffset.xy;
@@ -43,6 +35,18 @@ vec3 getUnitSphereCoords() {
   // Calculate the unit vector for each point thereby spherizing the cube
   vec4 transformed = uTransform * vec4(textCoord.xy, 1.0, 0.0);
   return normalize(vec3(transformed.xyz));
+}
+
+float getDisplacement(vec2 flipY) {
+  vec2 uv = flipY.xy / uResolution;
+  //uv.y = -1.0 * uv.y;
+  vec3 disp3 = texture2D(tDisplacementMap, uv).xyz;
+  float disp = (disp3.x + disp3.y + disp3.z) / 3.0;
+  return 1.0 - disp * 2.0;
+
+  //vec2 disp16 = texture2D(tDisplacementMap, uv).xy;
+  //float disp = disp16.x * 255.0 + disp16.y;
+  //return 1.0 - disp / 128.0;
 }
 
 float normalizeNoise(float n) {
@@ -113,12 +117,13 @@ float getFeatures(vec3 p, int layers) {
 }
 
 void main() {
+  vec2 flipY = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
 
   // Standardize to unit radius spherical coordinates
-  vec3 point = getUnitSphereCoords();
+  vec3 point = getUnitSphereCoords(flipY);
 
   // Get overall displacement
-  float disp = getDisplacement();
+  float disp = getDisplacement(flipY);
 
   // Get final point location
   point = point * (1.0 + disp * uDispWeight) * uStretch;

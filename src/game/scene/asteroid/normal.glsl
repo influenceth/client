@@ -10,8 +10,8 @@ float getHeight(vec2 p) {
 }
 
 void main() {
-  vec2 centerCoord = gl_FragCoord.xy;
-  //vec2 centerCoord = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+  //vec2 centerCoord = gl_FragCoord.xy;
+  vec2 centerCoord = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
 
   vec2 upCoord = (centerCoord + vec2(0.0, 1.0)) / uResolution.xy;
   vec2 downCoord = (centerCoord + vec2(0.0, -1.0)) / uResolution.xy;

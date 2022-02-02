@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Vector3, Box3, Sphere } from 'three';
+import { Vector3, Box3, Sphere, AxesHelper } from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
@@ -129,6 +129,8 @@ const Asteroid = (props) => {
     const posVec = new Vector3(...position.current);
     light.current.intensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
     light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(asteroidData?.radius * 10));
+    // TODO: remove this:
+    light.current.position.copy(new Vector3(1, 0, 0).multiplyScalar(asteroidData?.radius * 10));
 
     if (shadows) {
       const bbox = new Box3().setFromObject(quadtreeRef.current);
@@ -184,7 +186,8 @@ const Asteroid = (props) => {
     const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
-    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 3.0);
+    //const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
+    const zoomTo = new Vector3(1, 0, 0).multiplyScalar(asteroidData.radius * 2.0); // TODO: remove debug
     controls.targetScene.position.copy(panTo);
     controls.object.position.copy(zoomTo);
     controls.noPan = true;
@@ -277,7 +280,7 @@ const Asteroid = (props) => {
     // update asteroid rotation
     let updatedRotation = rotation.current;
     if (config?.rotationSpeed && time) {
-      updatedRotation = time * config.rotationSpeed * 2 * Math.PI;
+      updatedRotation = 0;// time * config.rotationSpeed * 2 * Math.PI;  // TODO: uncomment
       if (updatedRotation !== rotation.current) {
         quadtreeRef.current.setRotationFromAxisAngle(
           rotationAxis.current,
@@ -355,6 +358,7 @@ const Asteroid = (props) => {
           config={config}
           onUpdate={(m) => m.lookAt(rotationAxis?.current)} />
       )}
+      <primitive object={new AxesHelper(config?.radius * 2)} />{/* TODO: remove */}
     </group>
   );
 }

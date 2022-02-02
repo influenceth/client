@@ -11,9 +11,11 @@ uniform mat4 uTransform;
 #pragma glslify: snoise = require('glsl-noise/simplex/3d')
 
 vec3 getUnitSphereCoords() {
+  vec2 flipY = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+  //vec2 flipY = vec2(gl_FragCoord.xy);
 
   // Standardize to a 2 unit cube centered on origin
-  vec2 textCoord = (gl_FragCoord.xy - (uResolution.xy / 2.0)) / ((uResolution.xy - 1.0) / 2.0);
+  vec2 textCoord = (flipY.xy - (uResolution.xy / 2.0)) / ((uResolution.xy - 1.0) / 2.0);
 
   // Scale to chunk size and center
   textCoord = textCoord * uChunkSize + uChunkOffset.xy;
@@ -62,13 +64,17 @@ void main() {
   // Get overall displacement
   float disp = getDisplacement(point);
 
-  gl_FragColor = vec4(floor(disp * 255.0) / 255.0, fract(disp * 255.0), 0.0, 0.0);
+  //gl_FragColor = vec4(floor(disp * 255.0) / 255.0, fract(disp * 255.0), 0.0, 0.0);
 
-  // TODO (enhancement): could add third channel here if need more precision
-  //gl_FragColor = vec4(
-  //  floor(disp * 65025.0) / 65025.0,
-  //  floor(fract(disp * 65025.0) / 255.0),
-  //  fract(disp * 255.0),
-  //  0.0
-  //);
+  disp = disp * 255.0;
+  float base = floor(disp);
+  float extra = round(fract(disp) * 3.0);
+
+  // 765-levels of gray for displacement map
+  gl_FragColor = vec4(
+    (base + (extra > 0.0 ? 1.0 : 0.0)) / 255.0,
+    (base + (extra > 1.0 ? 1.0 : 0.0)) / 255.0,
+    (base + (extra > 2.0 ? 1.0 : 0.0)) / 255.0,
+    1.0
+  );
 }
