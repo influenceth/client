@@ -1,9 +1,6 @@
 import {
-  FrontSide,
   Group,
-  LessDepth,
   Matrix4,
-  MeshStandardMaterial,
   Vector3
 } from 'three';
 import QuadtreePlane from './helpers/QuadtreePlane';
@@ -89,15 +86,6 @@ class QuadtreeCubeSphereManager {
       radius: config.radius,
       stretch: config.stretch
     });
-    this.material = new MeshStandardMaterial({
-      color: 0xFFFFFF,
-      depthFunc: LessDepth,
-      dithering: true,
-      metalness: 0,
-      roughness: 1,
-      side: FrontSide,
-      // wireframe: true,
-    });
 
     this.threaded = false && !!workerPool;  // TODO: force-disabled
     if (this.threaded) {
@@ -111,7 +99,6 @@ class QuadtreeCubeSphereManager {
 
   dispose() {
     Object.values(this.chunks).forEach(({ chunk }) => chunk.dispose());
-    this.material.dispose();
   }
 
   setCameraPosition(cameraPosition) {
@@ -197,7 +184,6 @@ class QuadtreeCubeSphereManager {
     return this.builder.allocateChunk({
       side,
       group: group,
-      material: this.material,
       width: width,
       offset: offset,
       radius: this.radius,

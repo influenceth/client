@@ -3,7 +3,10 @@ import {
   BufferGeometry,
   CanvasTexture,
   Float32BufferAttribute,
+  FrontSide,
+  LessDepth,
   Mesh,
+  MeshStandardMaterial
 } from 'three';
 
 import { rebuildChunkGeometry } from './TerrainChunkUtils';
@@ -28,7 +31,25 @@ class TerrainChunk {
     this._textureRenderer = textureRenderer;
 
     this._geometry = new BufferGeometry();
-    this._material = params.material.clone();
+    this._material = new MeshStandardMaterial({
+      color: 0xFFFFFF,
+      depthFunc: LessDepth,
+      dithering: true,
+      metalness: 0,
+      roughness: 1,
+      side: FrontSide,
+      // wireframe: true,
+      onBeforeCompile: function (shader) {
+        shader.vertexShader = shader.vertexShader.replace(
+          '#include <displacementmap_vertex>',
+          `#ifdef USE_DISPLACEMENTMAP
+            vec2 disp16 = texture2D(displacementMap, vUv).xy;
+            float disp = (disp16.x * 255.0 + disp16.y) / 255.0;
+            transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias );
+          #endif`
+        );
+      }
+    });
     this._plane = new Mesh(this._geometry, this._material);
     this._plane.castShadow = false;
     this._plane.receiveShadow = true;

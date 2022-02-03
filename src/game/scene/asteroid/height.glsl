@@ -40,13 +40,9 @@ vec3 getUnitSphereCoords(vec2 flipY) {
 float getDisplacement(vec2 flipY) {
   vec2 uv = flipY.xy / uResolution;
   //uv.y = -1.0 * uv.y;
-  vec3 disp3 = texture2D(tDisplacementMap, uv).xyz;
-  float disp = (disp3.x + disp3.y + disp3.z) / 3.0;
-  return 1.0 - disp * 2.0;
-
-  //vec2 disp16 = texture2D(tDisplacementMap, uv).xy;
-  //float disp = disp16.x * 255.0 + disp16.y;
-  //return 1.0 - disp / 128.0;
+  vec2 disp16 = texture2D(tDisplacementMap, uv).xy;
+  float disp = disp16.x * 255.0 + disp16.y;
+  return 1.0 - disp / 128.0;
 }
 
 float normalizeNoise(float n) {
@@ -102,8 +98,8 @@ float getFeatures(vec3 p, int layers) {
 
     varNoise = snoise(pow(uCraterFalloff, float(i)) * 8.0 * (p + uSeed));
     cellNoise = cellular(pow(uCraterFalloff, float(i)) * (p + uSeed)) + varNoise * uRimVariation;
-    craters = pow((clamp(cellNoise.x, 0.0, uCraterCut) * (1.0 / uCraterCut)), uCraterSteep) - 1.0 +
-      (1.0 - smoothstep(uCraterCut, uCraterCut + rim, cellNoise.x)) * uRimWeight;
+    craters = pow((clamp(cellNoise.x, 0.0, uCraterCut) * (1.0 / uCraterCut)), uCraterSteep) - 1.0
+      + (1.0 - smoothstep(uCraterCut, uCraterCut + rim, cellNoise.x)) * uRimWeight;
     totalCraters += craters * weight;
     maxTotal += weight;
     weight *= uCraterPersist;

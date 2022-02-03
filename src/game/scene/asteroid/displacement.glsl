@@ -64,17 +64,5 @@ void main() {
   // Get overall displacement
   float disp = getDisplacement(point);
 
-  //gl_FragColor = vec4(floor(disp * 255.0) / 255.0, fract(disp * 255.0), 0.0, 0.0);
-
-  disp = disp * 255.0;
-  float base = floor(disp);
-  float extra = round(fract(disp) * 3.0);
-
-  // 765-levels of gray for displacement map
-  gl_FragColor = vec4(
-    (base + (extra > 0.0 ? 1.0 : 0.0)) / 255.0,
-    (base + (extra > 1.0 ? 1.0 : 0.0)) / 255.0,
-    (base + (extra > 2.0 ? 1.0 : 0.0)) / 255.0,
-    1.0
-  );
+  gl_FragColor = vec4(floor(disp * 255.0) / 255.0, fract(disp * 255.0), 0.0, 0.0);
 }
