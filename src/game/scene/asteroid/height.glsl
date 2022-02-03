@@ -1,4 +1,3 @@
-uniform sampler2D tDisplacementMap;
 uniform vec2 uChunkOffset;
 uniform float uChunkSize;
 uniform float uCleaveCut;
@@ -8,6 +7,9 @@ uniform float uCraterFalloff;
 uniform int uCraterPasses;
 uniform float uCraterPersist;
 uniform float uCraterSteep;
+uniform float uDispFreq;
+uniform int uDispPasses;
+uniform float uDispPersist;
 uniform float uDispWeight;
 uniform float uFeaturesFreq;
 uniform vec2 uResolution;
@@ -25,7 +27,9 @@ uniform mat4 uTransform;
 #pragma glslify: snoise = require('glsl-noise/simplex/3d')
 #pragma glslify: cellular = require('../../../lib/graphics/cellular3')
 
-vec3 getUnitSphereCoords(vec2 flipY) {
+vec3 getUnitSphereCoords() {
+  vec2 flipY = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+
   // Standardize to a 2 unit cube centered on origin
   vec2 textCoord = (flipY.xy - (uResolution.xy / 2.0)) / ((uResolution.xy - 1.0) / 2.0);
 
@@ -37,16 +41,28 @@ vec3 getUnitSphereCoords(vec2 flipY) {
   return normalize(vec3(transformed.xyz));
 }
 
-float getDisplacement(vec2 flipY) {
-  vec2 uv = flipY.xy / uResolution;
-  //uv.y = -1.0 * uv.y;
-  vec2 disp16 = texture2D(tDisplacementMap, uv).xy;
-  float disp = disp16.x * 255.0 + disp16.y;
-  return 1.0 - disp / 128.0;
-}
-
 float normalizeNoise(float n) {
   return 0.5 * n + 0.5;
+}
+
+float recursiveSNoise(vec3 p, int octaves, float pers) {
+  float total = 0.0;
+  float frequency = 1.0;
+  float amplitude = 1.0;
+  float maxValue = 0.0;
+
+  for (int i = 0; i < 9; i++) {
+    if (i == octaves) {
+      break;
+    }
+
+    total += snoise(p * frequency) * amplitude;
+    maxValue += amplitude;
+    amplitude *= pers;
+    frequency *= 2.0;
+  }
+
+  return normalizeNoise(total / maxValue);
 }
 
 float recursiveCNoise(vec3 p, int octaves) {
@@ -69,6 +85,13 @@ float recursiveCNoise(vec3 p, int octaves) {
 
   float h = normalizeNoise(cnoise(p * scale + displace));
   return pow(h, 1.0);
+}
+
+// Generates coarse displacement to shape the asteroid
+float getDisplacement(vec3 p) {
+  p.y = -1.0 * p.y; // (to match original noise sampling)
+  p = p * uDispFreq + uSeed;
+  return recursiveSNoise(p, uDispPasses, uDispPersist);
 }
 
 // Generates overall topography, hills, cliffs, etc.
@@ -113,22 +136,26 @@ float getFeatures(vec3 p, int layers) {
 }
 
 void main() {
-  vec2 flipY = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
 
   // Standardize to unit radius spherical coordinates
-  vec3 point = getUnitSphereCoords(flipY);
+  vec3 point = getUnitSphereCoords();
 
-  // Get overall displacement
-  float disp = getDisplacement(flipY);
+  // Get course displacement
+  float disp = getDisplacement(point);
 
-  // Get final point location
+  // Get final course point location
   point = point * (1.0 + disp * uDispWeight) * uStretch;
 
   // Get topography to encode seperately
   float topo = getTopography(point);
 
-  // Combine it all into a heightmap
-  float height = 0.5 * (getFeatures(point, uCraterPasses) + topo * uTopoWeight) + 0.5;
+  // Get fine displacement
+  //float height = 0.5 * (getFeatures(point, uCraterPasses) + topo * uTopoWeight) + 0.5;
+  float fine = getFeatures(point, uCraterPasses) + topo * uTopoWeight;
+
+  // Get total displacement
+  float fineWeight = 0.05;  // TODO: move into constant or config
+  float height = (1.0 - fineWeight) * disp + fineWeight * fine;
 
   // Encode height and disp in different channels
   // r, g: used in normalmap

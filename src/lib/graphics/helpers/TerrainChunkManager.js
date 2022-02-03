@@ -2,6 +2,10 @@
 import TerrainChunk from './TerrainChunk';
 import { initChunkTextures } from './TerrainChunkUtils';
 
+const ENABLE_POOL = false;
+
+// TODO: make sure pool is entirely disposed of when switching asteroids
+//  (because pool is asteroid-specific since config not updated on recycle)
 class TerrainChunkManager {
   constructor(config) {
     this.config = config;
@@ -68,10 +72,12 @@ class TerrainChunkManager {
       if (!this.pool[node.chunk._params.width]) {
         this.pool[node.chunk._params.width] = [];
       }
-      // using pool by adding below (instead of the dispose)
-      // node.chunk.dispose();
-      node.chunk.detachFromGroup();
-      this.pool[node.chunk._params.width].push(node.chunk);
+      if (ENABLE_POOL) {
+        node.chunk.detachFromGroup();
+        this.pool[node.chunk._params.width].push(node.chunk);
+      } else {
+        node.chunk.dispose();
+      }
     }
 
     // show new chunks

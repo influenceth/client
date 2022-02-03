@@ -82,11 +82,11 @@ function generateDisplacementMap(cubeTransform, chunkSize, chunkOffset, chunkRes
   // return texture;
 }
 
-function generateHeightMap(displacementMap, cubeTransform, chunkSize, chunkOffset, chunkResolution, config) {
+function generateHeightMap(/*displacementMap, */cubeTransform, chunkSize, chunkOffset, chunkResolution, config) {
   const material = new ShaderMaterial({
     fragmentShader: heightShader,
     uniforms: {
-      tDisplacementMap: { type: 't', value: displacementMap },
+      // tDisplacementMap: { type: 't', value: displacementMap },
       uChunkOffset: { type: 'v2', value: chunkOffset },
       uChunkSize: { type: 'f', value: chunkSize },
       uCleaveCut: { type: 'f', value: config.cleaveCut },
@@ -96,6 +96,9 @@ function generateHeightMap(displacementMap, cubeTransform, chunkSize, chunkOffse
       uCraterPasses: { type: 'i', value: config.craterPasses },
       uCraterPersist: { type: 'f', value: config.craterPersist },
       uCraterSteep: { type: 'f', value: config.craterSteep },
+      uDispFreq: { type: 'f', value: config.dispFreq },
+      uDispPasses: { type: 'i', value: config.dispPasses },
+      uDispPersist: { type: 'f', value: config.dispPersist },
       uDispWeight: { type: 'f', value: config.dispWeight },
       uFeaturesFreq: { type: 'f', value: config.featuresFreq },
       uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
@@ -237,19 +240,19 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
 
   benchmark('setup');
 
-  const displacementBitmap = generateDisplacementMap(
-    localToWorld,
-    chunkSize,
-    chunkOffset,
-    resolutionPlusOne,
-    config
-  );
-  const displacementTexture = new CanvasTexture(displacementBitmap);
+  // const displacementBitmap = generateDisplacementMap(
+  //   localToWorld,
+  //   chunkSize,
+  //   chunkOffset,
+  //   resolutionPlusOne,
+  //   config
+  // );
+  // const displacementTexture = new CanvasTexture(displacementBitmap);
 
-  benchmark('displacementmap');
+  // benchmark('displacementmap');
 
   const heightBitmap = generateHeightMap(
-    displacementTexture,
+    // displacementTexture,
     localToWorld,
     chunkSize,
     chunkOffset,
@@ -276,8 +279,8 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
   benchmark('normal');
 
   // done with interim data textures
-  displacementTexture.dispose();
-  heightBitmap.close();
+  // displacementTexture.dispose();
+  // heightBitmap.close();
   heightTexture.dispose();
   benchmark('dispose');
 
@@ -312,19 +315,19 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
 
       // apply stretch deformation
       // TODO (enhancement): there is probably some way to use matrix to apply these
-      if ([0,1].includes(side)) {
-        _P.x *= config.stretch.x;
-        _P.y *= config.stretch.z;
-        _P.z *= config.stretch.y;
-      } else if ([2,3].includes(side)) {
-        _P.x *= config.stretch.z;
-        _P.y *= config.stretch.y;
-        _P.z *= config.stretch.x;
-      } else {
-        _P.x *= config.stretch.x;
-        _P.y *= config.stretch.y;
-        _P.z *= config.stretch.z;
-      }
+      // if ([0,1].includes(side)) {
+      //   _P.x *= config.stretch.x;
+      //   _P.y *= config.stretch.z;
+      //   _P.z *= config.stretch.y;
+      // } else if ([2,3].includes(side)) {
+      //   _P.x *= config.stretch.z;
+      //   _P.y *= config.stretch.y;
+      //   _P.z *= config.stretch.x;
+      // } else {
+      //   _P.x *= config.stretch.x;
+      //   _P.y *= config.stretch.y;
+      //   _P.z *= config.stretch.z;
+      // }
       positions[outputIndex * 3 + 0] = _P.x;
       positions[outputIndex * 3 + 1] = _P.y;
       positions[outputIndex * 3 + 2] = _P.z;
@@ -353,7 +356,8 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
   return {
     positions,
     colorBitmap,
-    displacementBitmap,
+    // displacementBitmap,
+    heightBitmap,
     normalBitmap,
     uvs,
     indices

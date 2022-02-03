@@ -6,7 +6,8 @@ import {
   FrontSide,
   LessDepth,
   Mesh,
-  MeshStandardMaterial
+  MeshStandardMaterial,
+  Vector3
 } from 'three';
 
 import { rebuildChunkGeometry } from './TerrainChunkUtils';
@@ -24,11 +25,27 @@ setInterval(() => {
   first = true;
 }, 5000);
 
+// TODO: geometry is static per chunk... only rebuild on re-allocation (i.e. move)
+//  uvs and indices are now static per resolution (can build once and copy)
+//  build once, use the pool
+
+// NOTE: could probably fix flipY issue by flipping Y in uv's instead of in every shader
+
 class TerrainChunk {
   constructor(params, config, textureRenderer) {
     this._params = params;
     this._config = config;
     this._textureRenderer = textureRenderer;
+
+    // transform stretch per side
+    let stretch;
+    if ([0,1].includes(this._params.side)) {
+      stretch = new Vector3(config.stretch.x, config.stretch.z, config.stretch.y);
+    } else if ([2,3].includes(this._params.side)) {
+      stretch = new Vector3(config.stretch.z, config.stretch.y, config.stretch.x);
+    } else {
+      stretch = config.stretch.clone();
+    }
 
     this._geometry = new BufferGeometry();
     this._material = new MeshStandardMaterial({
@@ -40,14 +57,24 @@ class TerrainChunk {
       side: FrontSide,
       // wireframe: true,
       onBeforeCompile: function (shader) {
-        shader.vertexShader = shader.vertexShader.replace(
-          '#include <displacementmap_vertex>',
-          `#ifdef USE_DISPLACEMENTMAP
-            vec2 disp16 = texture2D(displacementMap, vUv).xy;
-            float disp = (disp16.x * 255.0 + disp16.y) / 255.0;
-            transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias );
-          #endif`
-        );
+        shader.uniforms.uRadius = { type: 'f', value: config.radius };
+        shader.uniforms.uStretch = { type: 'v3', value: stretch };
+        shader.vertexShader = shader.vertexShader
+          .replace(
+            '#include <displacementmap_pars_vertex>',
+            `#include <displacementmap_pars_vertex>
+            uniform float uRadius;
+            uniform vec3 uStretch;`
+          )
+          .replace(
+            '#include <displacementmap_vertex>',
+            `#ifdef USE_DISPLACEMENTMAP
+              vec2 disp16 = texture2D(displacementMap, vUv).xy;
+              float disp = (disp16.x * 255.0 + disp16.y) / 255.0;
+              transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias );
+              transformed += transformed * (uStretch - 1.0);
+            #endif`
+          );
       }
     });
     this._plane = new Mesh(this._geometry, this._material);
@@ -126,7 +153,6 @@ class TerrainChunk {
 
 
     const displacementScale = 2 * this._config.radius * this._config.dispWeight;
-    const displacementMapTexture = new CanvasTexture(data.displacementBitmap);
 
     if (false && first) {
       const debug = 'displacementBitmap';
@@ -139,10 +165,10 @@ class TerrainChunk {
     } else {
       this._material.setValues({
         displacementBias: -displacementScale / 2,
-        displacementMap: displacementMapTexture,
+        displacementMap: new CanvasTexture(data.heightBitmap),
         displacementScale: displacementScale,
         map: new CanvasTexture(data.colorBitmap),
-        normalMap: new CanvasTexture(data.normalBitmap),
+        //normalMap: new CanvasTexture(data.normalBitmap),
       });
       this._material.needsUpdate = true;
     }
