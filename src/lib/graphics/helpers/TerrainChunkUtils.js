@@ -10,6 +10,7 @@ import {
   TextureLoader,
   Vector2,
   Vector3,
+  Vector4,
   WebGLRenderer,
 } from 'three';
 import colorShader from '~/game/scene/asteroid/color.glsl';
@@ -18,6 +19,7 @@ import displacementShader from '~/game/scene/asteroid/displacement.glsl';
 import heightShader from '~/game/scene/asteroid/height.glsl';
 import normalShader from '~/game/scene/asteroid/normal.glsl';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
+import { simplex3dOctaves } from '~/lib/graphics/GlslCompatibleNoise';
 
 const rampsPath = `${process.env.PUBLIC_URL}/textures/asteroid/ramps.png`;
 
@@ -208,13 +210,17 @@ setInterval(() => {
   // console.log(`b ${totalRuns}`, b);
 }, 5000);
 
+let first = true;
 export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, side, width }) {
   if (!ramps) return;
   benchmark();
+  first = true;
 
   const _D = new Vector3();
   const _P = new Vector3();
   const _N = new Vector3();
+  const _S = new Vector3();
+  const _S4 = new Vector4();
 
   const localToWorld = groupMatrix;
   const resolutionPlusOne = resolution + 1;
@@ -296,6 +302,25 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
       _P.normalize();
       _D.copy(_P);
 
+      // real-width texture coords, shifted to -half to +half, then shifted to chunk center
+      _S4.set(xp - half + offset.x, yp - half + offset.y, config.radius, 0.0);
+      _S4.applyMatrix4(localToWorld);
+      _S.set(_S4.x, _S4.y, _S4.z);
+      _S.normalize();
+      _S.y *= -1;
+      _S.multiplyScalar(config.dispFreq).add(config.seed);
+
+      // console.log('dispPasses', config.dispPasses);
+      const displacement = simplex3dOctaves(
+        _S.x,
+        _S.y,
+        _S.z,
+        Math.round(config.dispPasses),
+        config.dispPersist,
+        true
+      );
+      _P.setLength(config.radius * (1 + displacement * config.dispWeight));
+
       // displace the position
       // const displacement = -1 + (
       //   displacementMap.buffer[bufferIndex * 4 + 0]
@@ -308,7 +333,6 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
       //   + displacementMap.buffer[bufferIndex * 4 + 2]
       // ) / 384.0;
       // _P.setLength(config.radius * (1 + displacement * config.dispWeight));
-      _P.setLength(config.radius);
 
       // apply stretch deformation
       // TODO (enhancement): there is probably some way to use matrix to apply these

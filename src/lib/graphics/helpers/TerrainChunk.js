@@ -118,7 +118,7 @@ class TerrainChunk {
     } else {
       this._material.setValues({
         displacementBias: -displacementScale / 2,
-        displacementMap: displacementMapTexture,
+        // displacementMap: displacementMapTexture,
         displacementScale: displacementScale,
         map: new CanvasTexture(data.colorBitmap),
         normalMap: new CanvasTexture(data.normalBitmap),
