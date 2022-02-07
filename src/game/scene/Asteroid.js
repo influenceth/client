@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Vector3, Box3, Sphere, AxesHelper } from 'three';
+import { Vector3, Box3, Sphere, AxesHelper, CameraHelper, DirectionalLightHelper } from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
@@ -100,7 +100,7 @@ const Asteroid = (props) => {
 
       // init position and rotation
       position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU);
-      rotation.current = time * c.rotationSpeed * 2 * Math.PI;;
+      rotation.current = time * c.rotationSpeed * 2 * Math.PI;
 
       // if geometry.current already exists, dispose first
       if (geometry.current) disposeGeometry();
@@ -122,29 +122,31 @@ const Asteroid = (props) => {
   }, [ asteroidData ]);
 
   // Configures the light component once the geometry is created
-  const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent])
+  const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent]);
   useEffect(() => {
-    if (!(asteroidData?.radius && quadtreeRef.current && light.current && position.current)) return;
+    if (!(asteroidData?.radius && quadtreeRef.current && light.current && position.current && config?.stretch)) return;
+
+    const lightDistance = asteroidData?.radius * 10;
 
     const posVec = new Vector3(...position.current);
     light.current.intensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
-    light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(asteroidData?.radius * 10));
+    light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(lightDistance));
     // TODO: remove this:
-    light.current.position.copy(new Vector3(1, 0, 0).multiplyScalar(asteroidData?.radius * 10));
+    // light.current.position.copy(new Vector3(1, 0, 0).multiplyScalar(lightDistance));
 
     if (shadows) {
-      const bbox = new Box3().setFromObject(quadtreeRef.current);
-      const bsphere = bbox.getBoundingSphere(new Sphere());
-      const maxRadius = bsphere.radius + bsphere.center.length();
-      const radiusBump = ringsPresent ? 1.5 : 0;
-
-      light.current.shadow.camera.near = maxRadius * 9;
-      light.current.shadow.camera.far = maxRadius * (11 + radiusBump);
+      let maxRadius = ringsPresent
+        ? asteroidData?.radius * 1.5
+        : asteroidData?.radius * Math.max(config.stretch.x, config.stretch.y, config.stretch.z);
+      light.current.shadow.bias = -0.07;
+      light.current.shadow.camera.near = lightDistance - maxRadius;
+      light.current.shadow.camera.far = lightDistance + maxRadius;
       light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius;
       light.current.shadow.camera.right = light.current.shadow.camera.top = maxRadius;
       light.current.shadow.camera.updateProjectionMatrix();
     }
-  }, [asteroidData?.radius, ringsPresent, shadows]);
+  }, [asteroidData?.radius, config?.stretch, ringsPresent, shadows]);
+
 
   // Zooms the camera to the correct location
   const shouldZoomIn = zoomStatus === 'zooming-in' && controls && !!asteroidData;
@@ -187,7 +189,7 @@ const Asteroid = (props) => {
     group.current?.position.copy(panTo);
     panTo.negate();
     //const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
-    const zoomTo = new Vector3(1, 0, 0).multiplyScalar(asteroidData.radius * 2.0); // TODO: remove debug
+    const zoomTo = new Vector3(0, 1, 0).multiplyScalar(asteroidData.radius * 2.0); // TODO: remove debug
     controls.targetScene.position.copy(panTo);
     controls.object.position.copy(zoomTo);
     controls.noPan = true;
@@ -316,7 +318,6 @@ const Asteroid = (props) => {
     benchmark('set cam');
 
     // TODO: re-evaluate raycaster...
-
     // re-evaluate raycaster on every Xth frame to ensure zoom bounds are safe
     // (i.e. close enough to surface but not inside surface)
     // TODO: this can be kicked off from here, but should not be blocking...
@@ -360,7 +361,16 @@ const Asteroid = (props) => {
           config={config}
           onUpdate={(m) => m.lookAt(rotationAxis?.current)} />
       )}
-      <primitive object={new AxesHelper(config?.radius * 2)} />{/* TODO: remove */}
+      {/* TODO: remove all helpers */}
+      {/*
+      <mesh>
+        <sphereGeometry args={[config?.radius]} />
+        <meshStandardMaterial color={0xff0000} opacity={0.3} transparent={true} />
+      </mesh>
+        */}
+      {false && light.current && <primitive object={new DirectionalLightHelper(light.current, 2 * config?.radius)} />}
+      {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
+      {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
     </group>
   );
 }

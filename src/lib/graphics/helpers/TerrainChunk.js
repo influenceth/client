@@ -7,6 +7,7 @@ import {
   LessDepth,
   Mesh,
   MeshStandardMaterial,
+  PCFSoftShadowMap,
   Vector3
 } from 'three';
 
@@ -31,6 +32,10 @@ setInterval(() => {
 
 // NOTE: could probably fix flipY issue by flipping Y in uv's instead of in every shader
 
+// TODO: remove
+// const colors = [0x333333, 0xff0000, 0x00ff00, 0x0000ff, 0xff00ff, 0x00ffff, 0xffff00, 0xffffff, 0xff7700, 0x77ff00, 0x77ff77, 0xff0077];
+// const randomColor = () => colors[Math.floor(Math.random()*colors.length)];
+
 class TerrainChunk {
   constructor(params, config, textureRenderer) {
     this._params = params;
@@ -47,39 +52,54 @@ class TerrainChunk {
       stretch = config.stretch.clone();
     }
 
+    const displacementScale = 2 * this._config.radius * this._config.dispWeight;
+    const displacementBias = -displacementScale / 2;
+
     this._geometry = new BufferGeometry();
     this._material = new MeshStandardMaterial({
       color: 0xFFFFFF,
       depthFunc: LessDepth,
+      displacementBias,
+      displacementScale,
       dithering: true,
       metalness: 0,
       roughness: 1,
       side: FrontSide,
       // wireframe: true,
       onBeforeCompile: function (shader) {
+        // TODO: remove any uniforms that are not being used
         shader.uniforms.uRadius = { type: 'f', value: config.radius };
+        shader.uniforms.uRadiusUnstretch = { type: 'f', value: 1 / Math.min(config.stretch.x, config.stretch.y, config.stretch.z) };
         shader.uniforms.uStretch = { type: 'v3', value: stretch };
-        shader.vertexShader = shader.vertexShader
-          .replace(
-            '#include <displacementmap_pars_vertex>',
-            `#include <displacementmap_pars_vertex>
-            uniform float uRadius;
-            uniform vec3 uStretch;`
-          )
-          .replace(
+        shader.vertexShader = `
+          uniform float uRadius;
+          uniform float uRadiusUnstretch;
+          uniform vec3 uStretch;
+          ${shader.vertexShader.replace(
             '#include <displacementmap_vertex>',
             `#ifdef USE_DISPLACEMENTMAP
               vec2 disp16 = texture2D(displacementMap, vUv).xy;
               float disp = (disp16.x * 255.0 + disp16.y) / 255.0;
+              // stretch back to radius
+              transformed *= uRadiusUnstretch;
+              // displace along normal
               transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias );
-              transformed += transformed * (uStretch - 1.0);
+              // stretch along normal
+              transformed *= uStretch;
             #endif`
-          );
+          )}
+        `;
       }
     });
+
     this._plane = new Mesh(this._geometry, this._material);
-    this._plane.castShadow = false;
+    this._plane.castShadow = true;
     this._plane.receiveShadow = true;
+    // if (first) { first= false; console.log(this._plane);}
+    // this._plane.onBeforeRender = function (renderer) {
+    //   renderer.shadowMap.enabled = true;
+    //   renderer.shadowMap.type = PCFSoftShadowMap;
+    // };
   }
 
   attachToGroup() {
@@ -151,9 +171,6 @@ class TerrainChunk {
     this._geometry.attributes.uv.needsUpdate = true;
     this._geometry.computeVertexNormals();
 
-
-    const displacementScale = 2 * this._config.radius * this._config.dispWeight;
-
     if (false && first) {
       const debug = 'displacementBitmap';
       first = false;
@@ -164,11 +181,9 @@ class TerrainChunk {
       ctx.transferFromImageBitmap(data[debug]);
     } else {
       this._material.setValues({
-        displacementBias: -displacementScale / 2,
         displacementMap: new CanvasTexture(data.heightBitmap),
-        displacementScale: displacementScale,
         map: new CanvasTexture(data.colorBitmap),
-        //normalMap: new CanvasTexture(data.normalBitmap),
+        normalMap: new CanvasTexture(data.normalBitmap),
       });
       this._material.needsUpdate = true;
     }

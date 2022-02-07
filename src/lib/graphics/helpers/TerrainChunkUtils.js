@@ -1,9 +1,6 @@
 import {
   CanvasTexture,
-  Color,
   DataTexture,
-  LinearFilter,
-  LinearMipMapLinearFilter,
   ImageBitmapLoader,
   NearestFilter,
   ShaderMaterial,
@@ -311,7 +308,8 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
       //   + displacementMap.buffer[bufferIndex * 4 + 2]
       // ) / 384.0;
       // _P.setLength(config.radius * (1 + displacement * config.dispWeight));
-      _P.setLength(config.radius);
+      _P.setLength(config.radius * Math.min(config.stretch.x, config.stretch.y, config.stretch.z));
+      // _P.setLength(config.radius);
 
       // apply stretch deformation
       // TODO (enhancement): there is probably some way to use matrix to apply these
