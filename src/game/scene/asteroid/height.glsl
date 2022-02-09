@@ -27,6 +27,8 @@ uniform mat4 uTransform;
 #pragma glslify: snoise = require('glsl-noise/simplex/3d')
 #pragma glslify: cellular = require('../../../lib/graphics/cellular3')
 
+const float FINE_DISPLACEMENT_WEIGHT = 0.05;
+
 vec3 getUnitSphereCoords() {
   vec2 flipY = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
 
@@ -37,7 +39,7 @@ vec3 getUnitSphereCoords() {
   textCoord = textCoord * uChunkSize + uChunkOffset.xy;
 
   // Calculate the unit vector for each point thereby spherizing the cube
-  vec4 transformed = uTransform * vec4(textCoord.xy, 1.0, 0.0);
+  vec4 transformed = uTransform * vec4(textCoord, 1.0, 0.0);
   return normalize(vec3(transformed.xyz));
 }
 
@@ -150,12 +152,10 @@ void main() {
   float topo = getTopography(point);
 
   // Get fine displacement
-  //float height = 0.5 * (getFeatures(point, uCraterPasses) + topo * uTopoWeight) + 0.5;
   float fine = getFeatures(point, uCraterPasses) + topo * uTopoWeight;
 
   // Get total displacement
-  float fineWeight = 0.05;  // TODO: move into constant or config
-  float height = (1.0 - fineWeight) * disp + fineWeight * fine;
+  float height = (1.0 - FINE_DISPLACEMENT_WEIGHT) * disp + FINE_DISPLACEMENT_WEIGHT * fine;
 
   // Encode height and disp in different channels
   // r, g: used in normalmap

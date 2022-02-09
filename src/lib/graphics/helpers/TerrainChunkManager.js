@@ -1,8 +1,9 @@
 
 import TerrainChunk from './TerrainChunk';
 import { initChunkTextures } from './TerrainChunkUtils';
+import constants from '~/lib/constants';
 
-const ENABLE_POOL = false;
+const { ENABLE_TERRAIN_CHUNK_RESOURCE_POOL } = constants;
 
 // TODO: make sure pool is entirely disposed of when switching asteroids
 //  (because pool is asteroid-specific since config not updated on recycle)
@@ -57,6 +58,8 @@ class TerrainChunkManager {
   }
 
   update() {
+    console.log('update');
+    
     if (this.updating) return;
     this.updating = true;
 
@@ -72,7 +75,7 @@ class TerrainChunkManager {
       if (!this.pool[node.chunk._params.width]) {
         this.pool[node.chunk._params.width] = [];
       }
-      if (ENABLE_POOL) {
+      if (ENABLE_TERRAIN_CHUNK_RESOURCE_POOL) {
         node.chunk.detachFromGroup();
         this.pool[node.chunk._params.width].push(node.chunk);
       } else {

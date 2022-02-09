@@ -42,6 +42,9 @@ class TerrainChunk {
     this._config = config;
     this._textureRenderer = textureRenderer;
 
+    const _heightScale = params.minHeight / this._config.radius;
+    this._heightScale = _heightScale;
+
     // transform stretch per side
     let stretch;
     if ([0,1].includes(this._params.side)) {
@@ -56,6 +59,8 @@ class TerrainChunk {
     const displacementBias = -displacementScale / 2;
 
     this._geometry = new BufferGeometry();
+    this.initGeometry();
+
     this._material = new MeshStandardMaterial({
       color: 0xFFFFFF,
       depthFunc: LessDepth,
@@ -68,22 +73,20 @@ class TerrainChunk {
       // wireframe: true,
       onBeforeCompile: function (shader) {
         // TODO: remove any uniforms that are not being used
-        shader.uniforms.uRadius = { type: 'f', value: config.radius };
-        shader.uniforms.uRadiusUnstretch = { type: 'f', value: 1 / Math.min(config.stretch.x, config.stretch.y, config.stretch.z) };
+        shader.uniforms.uHeightScale = { type: 'f', value: _heightScale };
         shader.uniforms.uStretch = { type: 'v3', value: stretch };
         shader.vertexShader = `
-          uniform float uRadius;
-          uniform float uRadiusUnstretch;
+          uniform float uHeightScale;
           uniform vec3 uStretch;
           ${shader.vertexShader.replace(
             '#include <displacementmap_vertex>',
             `#ifdef USE_DISPLACEMENTMAP
               vec2 disp16 = texture2D(displacementMap, vUv).xy;
-              float disp = (disp16.x * 255.0 + disp16.y) / 255.0;
-              // stretch back to radius
-              transformed *= uRadiusUnstretch;
+              float disp = (disp16.x * 255.0 + disp16.y) / 256.0;
+              // stretch back to radius (geometry initialized at minHeight for chunk)
+              transformed /= uHeightScale;
               // displace along normal
-              transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias );
+              transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias);
               // stretch along normal
               transformed *= uStretch;
             #endif`
@@ -92,8 +95,9 @@ class TerrainChunk {
       }
     });
 
+
     this._plane = new Mesh(this._geometry, this._material);
-    this._plane.castShadow = true;
+    this._plane.castShadow = false;
     this._plane.receiveShadow = true;
     // if (first) { first= false; console.log(this._plane);}
     // this._plane.onBeforeRender = function (renderer) {
@@ -141,12 +145,14 @@ class TerrainChunk {
       // TODO: specific to chunk
       groupMatrix: this._params.group.matrix.clone(),
       offset: this._params.offset.clone(),
+      width: this._params.width,
+      heightScale: this._heightScale,
       side: this._params.side,
-      width: this._params.width
     }
   }
 
   rebuild() {
+    console.log('rebuild');
     const params = this.getRebuildParams();
     const startTime = Date.now();
     const chunk = rebuildChunkGeometry(params);
@@ -157,21 +163,53 @@ class TerrainChunk {
     this.updateGeometry(chunk);
   }
 
+  initGeometry() {
+    const resolution = this._params.resolution;
+    const resolutionPlusOne = resolution + 1;
+    
+    // TODO: could we also set position just once here as well?
+
+    // init uv's
+    const uvs = new Float32Array(resolutionPlusOne * resolutionPlusOne * 2);
+    for (let x = 0; x < resolutionPlusOne; x++) {
+      for (let y = 0; y < resolutionPlusOne; y++) {
+        const outputIndex = (resolutionPlusOne * x + y) * 2;
+        uvs[outputIndex + 0] = x / resolution;
+        uvs[outputIndex + 1] = y / resolution;
+      }
+    }
+
+    // init indices
+    const indices = new Uint32Array(resolution * resolution * 3 * 2);
+    for (let i = 0; i < resolution; i++) {
+      for (let j = 0; j < resolution; j++) {
+        const outputIndex = (resolution * i + j) * 6;
+        indices[outputIndex + 0] = i * (resolution + 1) + j;
+        indices[outputIndex + 1] = (i + 1) * (resolution + 1) + j + 1;
+        indices[outputIndex + 2] = i * (resolution + 1) + j + 1;
+        indices[outputIndex + 3] = (i + 1) * (resolution + 1) + j;
+        indices[outputIndex + 4] = (i + 1) * (resolution + 1) + j + 1;
+        indices[outputIndex + 5] = i * (resolution + 1) + j;
+      }
+    }
+
+    // update geometry
+    this._geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
+    this._geometry.setIndex(new BufferAttribute(indices, 1));
+    this._geometry.attributes.uv.needsUpdate = true;
+  }
+
   updateGeometry(data) {
     if (!data) return;
 
-    // TODO: can we use planeGeometry?
-    // TODO: uvs are consistent if resolution is consistent... don't need to update each time
-    
+    // update positions
     this._geometry.setAttribute('position', new Float32BufferAttribute(data.positions, 3));
-    this._geometry.setAttribute('uv', new Float32BufferAttribute(data.uvs, 2));
-    this._geometry.setIndex(new BufferAttribute(data.indices, 1));
-
     this._geometry.attributes.position.needsUpdate = true;
-    this._geometry.attributes.uv.needsUpdate = true;
     this._geometry.computeVertexNormals();
 
-    if (false && first) {
+    // debug (if debugging)
+    const writeDebugBitmap = false && first;
+    if (writeDebugBitmap) {
       const debug = 'displacementBitmap';
       first = false;
       const canvas = document.getElementById('test_canvas');
@@ -179,7 +217,15 @@ class TerrainChunk {
       canvas.style.width = `${data[debug].width}px`;
       const ctx = canvas.getContext('bitmaprenderer');
       ctx.transferFromImageBitmap(data[debug]);
+
+    // update material
     } else {
+      // (dispose of all previous material maps)
+      if (this._material.displacementMap) this._material.displacementMap.dispose();
+      if (this._material.map) this._material.map.dispose();
+      if (this._material.normalMap) this._material.normalMap.dispose();
+
+      // (set new values)
       this._material.setValues({
         displacementMap: new CanvasTexture(data.heightBitmap),
         map: new CanvasTexture(data.colorBitmap),

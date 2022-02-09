@@ -1,11 +1,18 @@
 import { Box3, Vector3 } from 'three';
+import constants from '~/lib/constants';
+
+const {
+  MIN_CHUNK_SIZE,
+  QUADTREE_SPLIT_DISTANCE
+} = constants;
 
 class QuadtreePlane {
-  constructor({ localToWorld, minChunkSize, size, worldStretch }) {
+  constructor({ localToWorld, size, worldStretch, heightSamples, sampleResolution }) {
     this.localToWorld = localToWorld;
-    this.minChunkSize = minChunkSize;
-    this.size = size;
+    this.rootSize = size;
     this.worldStretch = worldStretch || new Vector3(1, 1, 1);
+    this.heightSamples = heightSamples;
+    this.resolution = sampleResolution;
 
     const rootNode = new Box3(
       new Vector3(-1 * size, -1 * size, 0),
@@ -18,7 +25,7 @@ class QuadtreePlane {
       size: rootNode.getSize(new Vector3()),
       root: true
     };
-    this.root.sphereCenter = this.getSphereCenter(this.root);
+    this.setSphereCenter(this.root);
   }
 
   getChildren() {
@@ -44,8 +51,7 @@ class QuadtreePlane {
 
   _setCameraPosition(child, pos) {
     const distToChild = child.sphereCenter.distanceTo(pos);
-    // TODO: resolution (was 1.25, then 1.4)
-    if (distToChild < child.size.x * 1.25 && child.size.x >= this.minChunkSize * 2) {
+    if (distToChild < child.size.x * QUADTREE_SPLIT_DISTANCE && child.size.x >= MIN_CHUNK_SIZE * 2) {
       child.children = this.generateChildren(child);
 
       for (let c of child.children) {
@@ -56,13 +62,40 @@ class QuadtreePlane {
     }
   }
 
-  getSphereCenter(node) {
+  getHeightMinMax(node) {
+    // get resolution-specific edges of the node
+    const mult = this.resolution / (2 * this.rootSize);
+    const xMin = Math.floor((this.rootSize + node.center.x - node.size.x / 2) * mult);
+    const xMax = Math.floor((this.rootSize + node.center.x + node.size.x / 2) * mult);
+    const yMin = Math.floor((this.rootSize + node.center.y - node.size.y / 2) * mult);
+    const yMax = Math.floor((this.rootSize + node.center.y + node.size.y / 2) * mult);
+
+    let minmax = [null, null];
+    for (let x = xMin; x < xMax; x++) {
+      for (let y = yMin; y < yMax; y++) {
+        const cur = this.heightSamples[this.resolution * y + x];
+        if (minmax[0] === null || cur < minmax[0]) minmax[0] = cur;
+        if (minmax[1] === null || cur > minmax[1]) minmax[1] = cur;
+      }
+    }
+    if (xMin === xMax || yMin === yMax) {
+      console.log('between points', minmax);
+    }
+    return minmax;
+  }
+
+  setSphereCenter(node) {
+    const [unstretchedMin] = this.getHeightMinMax(node);
+
     const sphereCenter = node.center.clone();
-    sphereCenter.applyMatrix4(this.localToWorld);
+    sphereCenter.z = this.rootSize;
     sphereCenter.normalize();
-    sphereCenter.multiplyScalar(this.size);
+    sphereCenter.setLength(unstretchedMin);
+    sphereCenter.applyMatrix4(this.localToWorld);
     sphereCenter.multiply(this.worldStretch);
-    return sphereCenter;
+    
+    node.sphereCenter = sphereCenter;
+    node.sphereCenterHeight = sphereCenter.length();
   }
 
   generateChildren(child) {
@@ -93,7 +126,7 @@ class QuadtreePlane {
         center: b.getCenter(new Vector3()),
         size: b.getSize(new Vector3())
       };
-      node.sphereCenter = this.getSphereCenter(node);
+      this.setSphereCenter(node);
       return node;
     });
   }

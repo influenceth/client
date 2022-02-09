@@ -2,6 +2,8 @@ import {
   CanvasTexture,
   DataTexture,
   ImageBitmapLoader,
+  LinearFilter,
+  LinearMipMapLinearFilter,
   NearestFilter,
   ShaderMaterial,
   TextureLoader,
@@ -10,8 +12,6 @@ import {
   WebGLRenderer,
 } from 'three';
 import colorShader from '~/game/scene/asteroid/color.glsl';
-import displacementShader from '~/game/scene/asteroid/displacement.glsl';
-// import duplicationShader from '~/game/scene/asteroid/duplication.glsl';
 import heightShader from '~/game/scene/asteroid/height.glsl';
 import normalShader from '~/game/scene/asteroid/normal.glsl';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
@@ -48,42 +48,10 @@ export async function initChunkTextures() {
   }
 }
 
-function generateDisplacementMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, config) {
-  const material = new ShaderMaterial({
-    fragmentShader: displacementShader,
-    uniforms: {
-      uChunkOffset: { type: 'v2', value: chunkOffset },
-      uChunkSize: { type: 'f', value: chunkSize },
-      uDispFreq: { type: 'f', value: config.dispFreq },
-      uDispPasses: { type: 'i', value: config.dispPasses },
-      uDispPersist: { type: 'f', value: config.dispPersist },
-      uDispWeight: { type: 'f', value: config.dispWeight },
-      uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
-      uSeed: { type: 'v3', value: config.seed },
-      uTransform: { type: 'mat4', value: cubeTransform },
-    }
-  });
-
-  return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
-
-
-  // const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-  // texture.options = {
-  //   flipY: true,
-  //   generateMipmaps: true,
-  //   minFilter: LinearMipMapLinearFilter,
-  //   magFilter: LinearFilter,
-  //   needsUpdate: true
-  // };
-
-  // return texture;
-}
-
-function generateHeightMap(/*displacementMap, */cubeTransform, chunkSize, chunkOffset, chunkResolution, config) {
+export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, config, returnType = 'bitmap') {
   const material = new ShaderMaterial({
     fragmentShader: heightShader,
     uniforms: {
-      // tDisplacementMap: { type: 't', value: displacementMap },
       uChunkOffset: { type: 'v2', value: chunkOffset },
       uChunkSize: { type: 'f', value: chunkSize },
       uCleaveCut: { type: 'f', value: config.cleaveCut },
@@ -111,16 +79,16 @@ function generateHeightMap(/*displacementMap, */cubeTransform, chunkSize, chunkO
     }
   });
 
-  // const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-  // texture.options = {
-  //   flipY: true,
-  //   generateMipmaps: true,
-  //   minFilter: LinearMipMapLinearFilter,
-  //   magFilter: LinearFilter,
-  //   needsUpdate: true
-  // };
-  // return texture;
-
+  if (returnType === 'texture') {
+    const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
+    texture.options = {
+      generateMipmaps: true,
+      minFilter: LinearMipMapLinearFilter,
+      magFilter: LinearFilter,
+      needsUpdate: true
+    };
+    return texture;
+  }
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
@@ -137,14 +105,6 @@ function generateColorMap(heightMap, chunkResolution, config) {
     }
   });
 
-  // const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-  // texture.options = {
-  //   generateMipmaps: true,
-  //   minFilter: LinearMipMapLinearFilter,
-  //   magFilter: LinearFilter,
-  //   needsUpdate: true
-  // };
-
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
@@ -160,24 +120,7 @@ function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, conf
     }
   });
 
-  // const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-  // texture.options = {
-  //   generateMipmaps: true,
-  //   minFilter: LinearMipMapLinearFilter,
-  //   magFilter: LinearFilter,
-  //   needsUpdate: true
-  // };
-
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
-}
-
-function mapToDataTexture(map) {
-  return new DataTexture(
-    map.buffer,
-    map.width,
-    map.height,
-    map.format
-  );
 }
 
 let totalRuns = 0;
@@ -208,7 +151,7 @@ setInterval(() => {
   // console.log(`b ${totalRuns}`, b);
 }, 5000);
 
-export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, side, width }) {
+export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, width, heightScale, side }) {
   if (!ramps) return;
   benchmark();
 
@@ -232,24 +175,10 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
   const positions = new Float32Array(bufferTally);
   // const colors = new Float32Array(bufferTally);
   // const normals = new Float32Array(bufferTally);
-  const uvs = new Float32Array(resolutionPlusOne * resolutionPlusOne * 2);
-  const indices = new Uint32Array(resolution * resolution * 3 * 2);
 
   benchmark('setup');
 
-  // const displacementBitmap = generateDisplacementMap(
-  //   localToWorld,
-  //   chunkSize,
-  //   chunkOffset,
-  //   resolutionPlusOne,
-  //   config
-  // );
-  // const displacementTexture = new CanvasTexture(displacementBitmap);
-
-  // benchmark('displacementmap');
-
   const heightBitmap = generateHeightMap(
-    // displacementTexture,
     localToWorld,
     chunkSize,
     chunkOffset,
@@ -277,9 +206,10 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
 
   // done with interim data textures
   // displacementTexture.dispose();
-  // heightBitmap.close();
   heightTexture.dispose();
   benchmark('dispose');
+
+  let debug = false;
 
   // build geometry
   for (let x = 0; x < resolutionPlusOne; x++) {
@@ -293,13 +223,16 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
       // compute position and direction
       _P.set(xp - half, yp - half, config.radius);
       _P.add(offset);
+      debug = debug && offset.x === -5555.5 && offset.y === -5555.5 && xp === half && yp === half;
+      if (debug) console.log(_P.clone());
       _P.normalize();
+      if (debug) console.log(_P.clone());
       _D.copy(_P);
 
       // displace the position
       // const displacement = -1 + (
       //   displacementMap.buffer[bufferIndex * 4 + 0]
-      //   + displacementMap.buffer[bufferIndex * 4 + 1] / 255.0 // TODO: should this be 256?
+      //   + displacementMap.buffer[bufferIndex * 4 + 1] / 255.0
       // ) / 128.0;
       // _P.setLength(config.radius * (1 + displacement * config.dispWeight));
       // const displacement = -1 + (
@@ -308,8 +241,16 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
       //   + displacementMap.buffer[bufferIndex * 4 + 2]
       // ) / 384.0;
       // _P.setLength(config.radius * (1 + displacement * config.dispWeight));
-      _P.setLength(config.radius * Math.min(config.stretch.x, config.stretch.y, config.stretch.z));
-      // _P.setLength(config.radius);
+
+      // TODO: stretch
+      // _P.setLength(config.radius * Math.min(config.stretch.x, config.stretch.y, config.stretch.z));
+      _P.setLength(config.radius * heightScale);
+      if (debug) console.log(_P.clone());
+      // if (debug) {
+      //   debug = false;
+      //   const _X = _P.clone().applyMatrix4(localToWorld);
+      //   console.log('_P', _P, _X);
+      // }
 
       // apply stretch deformation
       // TODO (enhancement): there is probably some way to use matrix to apply these
@@ -329,35 +270,16 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
       positions[outputIndex * 3 + 0] = _P.x;
       positions[outputIndex * 3 + 1] = _P.y;
       positions[outputIndex * 3 + 2] = _P.z;
-
-      // uv
-      uvs[outputIndex * 2 + 0] = x / resolution;
-      uvs[outputIndex * 2 + 1] = y / resolution;
     }
   }
   benchmark('apply');
-
-  // index points
-  for (let i = 0; i < resolution; i++) {
-    for (let j = 0; j < resolution; j++) {
-      const outputIndex = resolution * i + j;
-      indices[outputIndex * 6 + 0] = i * (resolution + 1) + j;
-      indices[outputIndex * 6 + 1] = (i + 1) * (resolution + 1) + j + 1;
-      indices[outputIndex * 6 + 2] = i * (resolution + 1) + j + 1;
-      indices[outputIndex * 6 + 3] = (i + 1) * (resolution + 1) + j;
-      indices[outputIndex * 6 + 4] = (i + 1) * (resolution + 1) + j + 1;
-      indices[outputIndex * 6 + 5] = i * (resolution + 1) + j;
-    }
-  }
+  
   benchmark('_');
 
   return {
     positions,
     colorBitmap,
-    // displacementBitmap,
     heightBitmap,
-    normalBitmap,
-    uvs,
-    indices
+    normalBitmap
   };
 }

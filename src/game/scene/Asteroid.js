@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Vector3, Box3, Sphere, AxesHelper, CameraHelper, DirectionalLightHelper } from 'three';
+import { Vector3, Box3, Sphere, AxesHelper, CameraHelper, DirectionalLightHelper, BufferAttribute } from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
@@ -8,13 +8,19 @@ import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
 import useWebWorker from '~/hooks/useWebWorker';
 import constants from '~/lib/constants';
-import QuadtreeCubeSphere, { MIN_CHUNK_SIZE } from '~/lib/graphics/QuadtreeCubeSphere';
+import QuadtreeCubeSphere from '~/lib/graphics/QuadtreeCubeSphere';
 import Config from './asteroid/Config';
 import Rings from './asteroid/Rings';
 // import exportModel from './asteroid/export';
 
-const TARGET_MAX_ZOOM_Y = 2000;
-const TARGET_REDRAW_DISTANCE = MIN_CHUNK_SIZE / 2;
+const {
+  MIN_CHUNK_SIZE,
+  MIN_FRUSTRUM_HEIGHT,
+  UPDATE_QUADTREE_EVERY_CHUNK,
+  GEOMETRY_SHRINK,
+  GEOMETRY_SHRINK_MAX,
+} = constants;
+const UPDATE_QUADTREE_EVERY = MIN_CHUNK_SIZE * UPDATE_QUADTREE_EVERY_CHUNK;
 const FRAME_CYCLE_LENGTH = 15;
 const FALLBACK_MIN_ZOOM = 1.2;
 
@@ -68,6 +74,7 @@ const Asteroid = (props) => {
 
   const [config, setConfig] = useState();
 
+  const debug = useRef();
   const geometry = useRef();
   const quadtreeRef = useRef();
   const cameraPosition = useRef();
@@ -132,7 +139,7 @@ const Asteroid = (props) => {
     light.current.intensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
     light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(lightDistance));
     // TODO: remove this:
-    // light.current.position.copy(new Vector3(1, 0, 0).multiplyScalar(lightDistance));
+    light.current.position.copy(new Vector3(0, 1, 0).multiplyScalar(lightDistance));
 
     if (shadows) {
       let maxRadius = ringsPresent
@@ -238,8 +245,9 @@ const Asteroid = (props) => {
   // }, [requestingModelDownload, exportableMesh]);
 
   const surfaceDistance = useMemo(() => {
-    return (TARGET_MAX_ZOOM_Y / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180));
-  }, [controls?.object?.fov])
+    return (MIN_FRUSTRUM_HEIGHT / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180))
+      + Math.min(asteroidData?.radius * GEOMETRY_SHRINK, GEOMETRY_SHRINK_MAX); // account for culling shrink
+  }, [controls?.object?.fov, asteroidData?.radius])
 
   const updatePending = useRef();
 
@@ -257,13 +265,43 @@ const Asteroid = (props) => {
       if (!geometry.current.builder.isBusy()) {
         geometry.current.finishPendingUpdate();
 
-        // TODO: would it be faster to put into single thread or groups?
-        //  frame rate is good, but updates are taking forever when zoomed in (like 10 - 20s)
-        //  - is it not preserving existing chunks?
-        //  - is it too expensive to pass in input?
+        if (debug.current) {
+          // const d = geometry.current.debug();
+          const d = new Float32Array(geometry.current.debug());
+          debug.current.geometry.setAttribute('position', new BufferAttribute(d, 3));
+          debug.current.geometry.attributes.position.needsUpdate = true;
+        }
+
         // console.log('update finished', Date.now() - updatePending.current);
         updatePending.current = null;
       }
+    } else {
+      // TODO: re-evaluate raycaster...
+      // re-evaluate raycaster on every Xth frame to ensure zoom bounds are safe
+      // (i.e. close enough to surface but not inside surface)
+      // TODO: this can be kicked off from here, but should not be blocking...
+      if (frameCycle.current === 0) {
+        if (controls && cameraPosition.current && quadtreeRef.current?.children) {
+          raycaster.set(
+            controls.object.position.clone(),
+            controls.object.position.clone().negate().normalize()
+          );
+          const intersection = (raycaster.intersectObjects(quadtreeRef.current.children) || [])
+            .find((i) => i.object?.type === 'Mesh');
+          if (intersection) {
+            // TODO: if current distance < new min, then pan first, then reset minDistance
+            controls.minDistance = Math.min(
+              controls.object.position.length() - intersection.distance + surfaceDistance,
+              FALLBACK_MIN_ZOOM * asteroidData.radius
+            );
+          } else if(controls.minDistance < FALLBACK_MIN_ZOOM * asteroidData.radius) {
+            controls.minDistance *= 1.01;
+          } else {
+            controls.minDistance = FALLBACK_MIN_ZOOM * asteroidData.radius;
+          }
+        }
+      }
+      benchmark('raycasted');
     }
     benchmark('optional update');
 
@@ -293,11 +331,11 @@ const Asteroid = (props) => {
     benchmark('pos and rot');
     
     // update quadtree on "significant" movement so it can rebuild children appropriately
-    // TODO (enhancement): TARGET_REDRAW_DISTANCE should probably depend on zoom level
+    // TODO (enhancement): UPDATE_QUADTREE_EVERY should probably depend on zoom level
     if (!geometry.current.builder.isBusy()) {
       const updateQuadCube = !cameraPosition.current
-        || cameraPosition.current.distanceTo(controls.object.position) > TARGET_REDRAW_DISTANCE
-        || (updatedRotation - rotation.current) * asteroidData.radius > TARGET_REDRAW_DISTANCE
+        || cameraPosition.current.distanceTo(controls.object.position) > UPDATE_QUADTREE_EVERY
+        || (updatedRotation - rotation.current) * asteroidData.radius > UPDATE_QUADTREE_EVERY
       ;
       if (updateQuadCube) {
         cameraPosition.current = controls.object.position.clone();
@@ -306,44 +344,27 @@ const Asteroid = (props) => {
         // send updated camera position to quads for processing
         // console.log('update started');
         updatePending.current = Date.now();
+
         // TODO: if not threaded, this should not be blocking while all math done
-        geometry.current.setCameraPosition(
-          controls.object.position.clone().applyAxisAngle(
-            rotationAxis.current,
-            -rotation.current
-          )
-        );
+        new Promise(() => {
+          geometry.current.setCameraPosition(
+            controls.object.position.clone().applyAxisAngle(
+              rotationAxis.current,
+              -rotation.current
+            )
+          );
+        });
       }
     }
     benchmark('set cam');
 
-    // TODO: re-evaluate raycaster...
-    // re-evaluate raycaster on every Xth frame to ensure zoom bounds are safe
-    // (i.e. close enough to surface but not inside surface)
-    // TODO: this can be kicked off from here, but should not be blocking...
-    // if (frameCycle.current === 0) {
-    //   if (controls && cameraPosition.current && quadtreeRef.current?.children) {
-    //     raycaster.set(
-    //       controls.object.position.clone(),
-    //       controls.object.position.clone().negate().normalize()
-    //     );
-    //     const intersection = (raycaster.intersectObjects(quadtreeRef.current.children) || [])
-    //       .find((i) => i.object?.type === 'Mesh');
-    //     if (intersection) {
-    //       // TODO: if current distance < new min, then pan first, then reset minDistance
-    //       controls.minDistance = Math.min(
-    //         controls.object.position.length() - intersection.distance + surfaceDistance,
-    //         FALLBACK_MIN_ZOOM * asteroidData.radius
-    //       );
-    //     } else if(controls.minDistance < FALLBACK_MIN_ZOOM * asteroidData.radius) {
-    //       controls.minDistance *= 1.1;
-    //     } else {
-    //       controls.minDistance = FALLBACK_MIN_ZOOM * asteroidData.radius;
-    //     }
-    //   }
-    // }
-    // benchmark('raycasted');
+    
     benchmark('_');
+
+    // debug.current.setRotationFromAxisAngle(
+    //   new Vector3(0, 1, 0),
+    //   Math.PI
+    // );
   });
 
   return (
@@ -362,15 +383,26 @@ const Asteroid = (props) => {
           onUpdate={(m) => m.lookAt(rotationAxis?.current)} />
       )}
       {/* TODO: remove all helpers */}
-      {/*
-      <mesh>
-        <sphereGeometry args={[config?.radius]} />
-        <meshStandardMaterial color={0xff0000} opacity={0.3} transparent={true} />
-      </mesh>
-        */}
+      {false && (
+        <>
+          <mesh>
+            <sphereGeometry args={[12099.76]} />
+            <meshStandardMaterial color={0xff00ff} opacity={0.3} transparent={true} />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={[10154.07]} />
+            <meshStandardMaterial color={0x00ff00} opacity={0.3} transparent={true} />
+          </mesh>
+        </>
+      )}
+      {false && (
+        <points ref={debug}>
+          <pointsMaterial attach="material" size={100} sizeAttenuation={true} color={0xff0000} />
+        </points>
+      )}
       {false && light.current && <primitive object={new DirectionalLightHelper(light.current, 2 * config?.radius)} />}
       {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
-      {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
+      {true && <primitive object={new AxesHelper(config?.radius * 2)} />}
     </group>
   );
 }

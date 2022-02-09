@@ -6,6 +6,16 @@ import {
 import QuadtreePlane from './helpers/QuadtreePlane';
 import TerrainChunkManager from './helpers/TerrainChunkManager';
 import TerrainChunkManagerThreaded from './helpers/TerrainChunkManagerThreaded';
+import { generateHeightMap } from './helpers/TerrainChunkUtils';
+import constants from '~/lib/constants';
+
+const {
+  ENABLE_TERRAIN_CHUNK_MULTITHREADING,
+  MIN_CHUNK_SIZE,
+  CHUNK_RESOLUTION,
+  GEOMETRY_SHRINK,
+  GEOMETRY_SHRINK_MAX
+} = constants;
 
 const dictIntersection = function(dictA, dictB) {
   const intersection = {};
@@ -33,35 +43,67 @@ const cubeTransforms = [
   new Matrix4(),                               // +Z
   (new Matrix4()).makeRotationY(Math.PI),      // -Z
 ];
-const cubeTranslations = [
-  (m, radius) => m.premultiply(new Matrix4().makeTranslation(0, radius, 0)),  // +Y
-  (m, radius) => m.premultiply(new Matrix4().makeTranslation(0, -radius, 0)), // -Y
-  (m, radius) => m.premultiply(new Matrix4().makeTranslation(radius, 0, 0)),  // +X
-  (m, radius) => m.premultiply(new Matrix4().makeTranslation(-radius, 0, 0)), // -X
-  (m, radius) => m.premultiply(new Matrix4().makeTranslation(0, 0, radius)),  // +Z
-  (m, radius) => m.premultiply(new Matrix4().makeTranslation(0, 0, -radius)), // -Z
-];
 
-export const MIN_CHUNK_SIZE = 400; // TODO: resolution (was 500, then 400)
+const getPrerenderResolution = (radius) => {
+  const targetResolution = 2 * radius / MIN_CHUNK_SIZE;
+  if (targetResolution < 32) return 16;
+  if (targetResolution < 64) return 32;
+  if (targetResolution < 128) return 64;
+  if (targetResolution < 256) return 128;
+  if (targetResolution < 512) return 256;
+  if (targetResolution < 1024) return 512;
+  return 1024;
+};
 
 class QuadtreeCubeSphere {
-  constructor({ radius, stretch }) {
+  constructor(config) {
+    const { radius, stretch } = config;
     this.sides = [];
 
+    const prerenderResolution = getPrerenderResolution(radius);
     for (let i in cubeTransforms) {
       this.sides.push({
         transform: cubeTransforms[i].clone(),
         quadtree: new QuadtreePlane({
           size: radius,
           minChunkSize: MIN_CHUNK_SIZE,
-          localToWorld: cubeTranslations[i](cubeTransforms[i].clone(), radius),
+          heightSamples: this.prerenderCoarseGeometry(
+            cubeTransforms[i].clone(),
+            prerenderResolution,
+            config
+          ),
+          sampleResolution: prerenderResolution,
+          localToWorld: cubeTransforms[i].clone(),
           worldStretch: stretch
         }),
       });
 
       // TODO: remove debug
-      //if (this.sides.length === 2) break;
+      // if (this.sides.length === 3) break;
     }
+  }
+
+  // preprocess geometry from high-res texture
+  prerenderCoarseGeometry(sideTransform, resolution, config) {
+    const heightMap = generateHeightMap(
+      sideTransform,
+      1,
+      new Vector3(0, 0, 0),
+      resolution,
+      config,
+      'texture'
+    );
+
+    // TODO: use Float32Array?
+    const heightSamples = [];
+    for (let y = 0; y < resolution; y++) {
+      for (let x = 0; x < resolution; x++) {
+        const bi = (resolution * (resolution - y - 1) + x) * 4; // (flip y)
+        const disp = -1 + (heightMap.buffer[bi] + heightMap.buffer[bi + 1] / 255) / 128;
+        heightSamples.push(config.radius * (1 + disp * config.dispWeight));
+      }
+    }
+    return heightSamples;
   }
 
   setCameraPosition(position) {
@@ -82,12 +124,9 @@ class QuadtreeCubeSphereManager {
   constructor(config, workerPool) {
     this.radius = config.radius;
 
-    this.quadtreeCube = new QuadtreeCubeSphere({
-      radius: config.radius,
-      stretch: config.stretch
-    });
+    this.quadtreeCube = new QuadtreeCubeSphere(config);
 
-    this.threaded = false && !!workerPool;  // TODO: force-disabled
+    this.threaded = ENABLE_TERRAIN_CHUNK_MULTITHREADING && !!workerPool;
     if (this.threaded) {
       this.builder = new TerrainChunkManagerThreaded(config, workerPool); 
     } else {
@@ -95,6 +134,37 @@ class QuadtreeCubeSphereManager {
     }
     this.groups = [...new Array(6)].map(_ => new Group());
     this.chunks = {};
+  }
+
+  debug() {
+    const coords = [];
+    this.quadtreeCube.sides.forEach(({ quadtree }) => {
+      quadtree.getChildren().forEach((node) => {
+        coords.push(...Object.values(node.sphereCenter));
+      });
+    });
+    return coords;
+
+    // const coords = [];
+    // const resolution = Math.sqrt(this.quadtreeCube.sides[0].quadtree.heightSamples.length);
+    // const width = 2 * this.radius;
+    // const half = this.radius;
+    // this.quadtreeCube.sides.forEach(({ transform, quadtree: { heightSamples } }) => {
+    //   for (let x = 0; x < resolution; x++) {
+    //     for (let y = 0; y < resolution; y++) {
+    //       const _P = new Vector3(
+    //         width * (x + 0.5) / resolution - half,
+    //         width * (y + 0.5) / resolution - half,
+    //         this.radius
+    //       );
+    //       _P.applyMatrix4(transform);
+    //       _P.normalize();
+    //       _P.setLength(heightSamples[resolution * y + x]);
+    //       coords.push(_P.x, _P.y, _P.z);
+    //     }
+    //   }
+    // });
+    // return coords;
   }
 
   dispose() {
@@ -122,6 +192,7 @@ class QuadtreeCubeSphereManager {
           position: [center.x, center.y, center.z],
           bounds: node.bounds,
           size: dimensions.x,
+          minHeight: node.sphereCenterHeight - Math.min(this.radius * GEOMETRY_SHRINK, GEOMETRY_SHRINK_MAX),
         };
         const key = `${child.position[0]}/${child.position[1]} [${child.size}] [${child.index}]`;
         updatedChunks[key] = child;
@@ -132,6 +203,7 @@ class QuadtreeCubeSphereManager {
     const difference = dictDifference(updatedChunks, this.chunks);
     const recycle = Object.values(dictDifference(this.chunks, updatedChunks));
 
+    // TODO: remove
     // console.log('new chunks', {
     //   keep: Object.keys(intersection).length,
     //   create: Object.keys(difference).length,
@@ -156,7 +228,8 @@ class QuadtreeCubeSphereManager {
           difference[k].group,
           offset,
           difference[k].size,
-          64 // TODO: resolution (was 64)
+          difference[k].minHeight,
+          CHUNK_RESOLUTION
         ),
       };
     }
@@ -180,14 +253,15 @@ class QuadtreeCubeSphereManager {
     }
   }
 
-  createChunk(side, group, offset, width, resolution) {
+  createChunk(side, group, offset, width, minHeight, resolution) {
     return this.builder.allocateChunk({
       side,
       group: group,
       width: width,
       offset: offset,
       radius: this.radius,
-      resolution: resolution,
+      resolution,
+      minHeight
     });
   }
 }
