@@ -86,10 +86,10 @@ const Scene = (props) => {
           </QueryClientProvider>
         </ContextBridge>
       </Canvas>
-      {/* TODO: remove debug */}
+      {/* TODO: remove debug 
       <div style={{ position: 'fixed', bottom: 72, left: 0, }}>
         <canvas id="test_canvas" style={{ width: 0, height: 0, border: '1px solid white' }} />
-      </div>
+      </div>*/}
     </StyledContainer>
   );
 };

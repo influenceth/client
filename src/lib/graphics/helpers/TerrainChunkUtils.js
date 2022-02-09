@@ -1,6 +1,5 @@
 import {
   CanvasTexture,
-  DataTexture,
   ImageBitmapLoader,
   LinearFilter,
   LinearMipMapLinearFilter,
@@ -18,17 +17,16 @@ import TextureRenderer from '~/lib/graphics/TextureRenderer';
 
 const rampsPath = `${process.env.PUBLIC_URL}/textures/asteroid/ramps.png`;
 
-// // TODO: this was in Asteroid (for no-offscreen-worker)
-// const textureRenderer = typeof OffscreenCanvas === 'undefined' && new TextureRenderer();
-
-// TODO: this was in worker
-// Setup offscreen canvas
+// set up texture renderer (ideally w/ offscreen canvas)
 let textureRenderer;
 if (typeof OffscreenCanvas !== 'undefined') {
   const offscreen = new OffscreenCanvas(0, 0);
   offscreen.style = { width: 0, height: 0 };
   const renderer = new WebGLRenderer({ canvas: offscreen, antialias: true });
   textureRenderer = new TextureRenderer(renderer);
+} else {
+  // TODO: this might need a canvas
+  textureRenderer = new TextureRenderer();
 }
 
 // load ramps
@@ -151,13 +149,9 @@ setInterval(() => {
   // console.log(`b ${totalRuns}`, b);
 }, 5000);
 
-export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, width, heightScale, side }) {
+export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, width, heightScale }) {
   if (!ramps) return;
   benchmark();
-
-  const _D = new Vector3();
-  const _P = new Vector3();
-  const _N = new Vector3();
 
   const localToWorld = groupMatrix;
   const resolutionPlusOne = resolution + 1;
@@ -170,11 +164,6 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
   // neighbor samples is used to calculate normal, but now that width is
   // dynamic between those samples, need to accomodate for consistent "slope")
   const normalCompatibilityScale = (0.0025 * config.radius * resolution) / width;
-
-  const bufferTally = resolutionPlusOne * resolutionPlusOne * 3;
-  const positions = new Float32Array(bufferTally);
-  // const colors = new Float32Array(bufferTally);
-  // const normals = new Float32Array(bufferTally);
 
   benchmark('setup');
 
@@ -205,74 +194,31 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
   benchmark('normal');
 
   // done with interim data textures
-  // displacementTexture.dispose();
   heightTexture.dispose();
   benchmark('dispose');
 
-  let debug = false;
-
   // build geometry
+  const _P = new Vector3();
+  const bufferTally = resolutionPlusOne * resolutionPlusOne * 3;
+  const positions = new Float32Array(bufferTally);
   for (let x = 0; x < resolutionPlusOne; x++) {
     const xp = width * x / resolution;
     for (let y = 0; y < resolutionPlusOne; y++) {
       const yp = width * y / resolution;
 
-      const bufferIndex = resolutionPlusOne * y + x;
-      const outputIndex = resolutionPlusOne * x + y;
 
-      // compute position and direction
+      // compute position, direction, and length
       _P.set(xp - half, yp - half, config.radius);
       _P.add(offset);
-      debug = debug && offset.x === -5555.5 && offset.y === -5555.5 && xp === half && yp === half;
-      if (debug) console.log(_P.clone());
       _P.normalize();
-      if (debug) console.log(_P.clone());
-      _D.copy(_P);
-
-      // displace the position
-      // const displacement = -1 + (
-      //   displacementMap.buffer[bufferIndex * 4 + 0]
-      //   + displacementMap.buffer[bufferIndex * 4 + 1] / 255.0
-      // ) / 128.0;
-      // _P.setLength(config.radius * (1 + displacement * config.dispWeight));
-      // const displacement = -1 + (
-      //   displacementMap.buffer[bufferIndex * 4 + 0]
-      //   + displacementMap.buffer[bufferIndex * 4 + 1]
-      //   + displacementMap.buffer[bufferIndex * 4 + 2]
-      // ) / 384.0;
-      // _P.setLength(config.radius * (1 + displacement * config.dispWeight));
-
-      // TODO: stretch
-      // _P.setLength(config.radius * Math.min(config.stretch.x, config.stretch.y, config.stretch.z));
       _P.setLength(config.radius * heightScale);
-      if (debug) console.log(_P.clone());
-      // if (debug) {
-      //   debug = false;
-      //   const _X = _P.clone().applyMatrix4(localToWorld);
-      //   console.log('_P', _P, _X);
-      // }
 
-      // apply stretch deformation
-      // TODO (enhancement): there is probably some way to use matrix to apply these
-      // if ([0,1].includes(side)) {
-      //   _P.x *= config.stretch.x;
-      //   _P.y *= config.stretch.z;
-      //   _P.z *= config.stretch.y;
-      // } else if ([2,3].includes(side)) {
-      //   _P.x *= config.stretch.z;
-      //   _P.y *= config.stretch.y;
-      //   _P.z *= config.stretch.x;
-      // } else {
-      //   _P.x *= config.stretch.x;
-      //   _P.y *= config.stretch.y;
-      //   _P.z *= config.stretch.z;
-      // }
-      positions[outputIndex * 3 + 0] = _P.x;
-      positions[outputIndex * 3 + 1] = _P.y;
-      positions[outputIndex * 3 + 2] = _P.z;
+      const outputIndex = 3 * (resolutionPlusOne * x + y);
+      positions[outputIndex + 0] = _P.x;
+      positions[outputIndex + 1] = _P.y;
+      positions[outputIndex + 2] = _P.z;
     }
   }
-  benchmark('apply');
   
   benchmark('_');
 

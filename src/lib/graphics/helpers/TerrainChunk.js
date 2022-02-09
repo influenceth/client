@@ -147,7 +147,7 @@ class TerrainChunk {
       offset: this._params.offset.clone(),
       width: this._params.width,
       heightScale: this._heightScale,
-      side: this._params.side,
+      // side: this._params.side,
     }
   }
 
@@ -205,7 +205,7 @@ class TerrainChunk {
     // update positions
     this._geometry.setAttribute('position', new Float32BufferAttribute(data.positions, 3));
     this._geometry.attributes.position.needsUpdate = true;
-    this._geometry.computeVertexNormals();
+    this._geometry.computeVertexNormals();  // TODO: this takes a long time, should potentially multithread
 
     // debug (if debugging)
     const writeDebugBitmap = false && first;
@@ -213,10 +213,14 @@ class TerrainChunk {
       const debug = 'displacementBitmap';
       first = false;
       const canvas = document.getElementById('test_canvas');
-      canvas.style.height = `${data[debug].height}px`;
-      canvas.style.width = `${data[debug].width}px`;
-      const ctx = canvas.getContext('bitmaprenderer');
-      ctx.transferFromImageBitmap(data[debug]);
+      if (canvas?.length) {
+        canvas.style.height = `${data[debug].height}px`;
+        canvas.style.width = `${data[debug].width}px`;
+        const ctx = canvas.getContext('bitmaprenderer');
+        ctx.transferFromImageBitmap(data[debug]);
+      } else {
+        console.log('#test_canvas not found!');
+      }
 
     // update material
     } else {
