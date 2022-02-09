@@ -230,10 +230,12 @@ class TerrainChunk {
       if (this._material.normalMap) this._material.normalMap.dispose();
 
       // (set new values)
+      // NOTE: the weird syntax here is because receive different format if coming from
+      //  offscreen-canvas-enabled renderer vs not
       this._material.setValues({
-        displacementMap: new CanvasTexture(data.heightBitmap),
-        map: new CanvasTexture(data.colorBitmap),
-        normalMap: new CanvasTexture(data.normalBitmap),
+        displacementMap: data.heightBitmap.image ? data.heightBitmap : new CanvasTexture(data.heightBitmap),
+        map: data.colorBitmap.image ? data.colorBitmap : new CanvasTexture(data.colorBitmap),
+        normalMap: data.normalBitmap.image ? data.normalBitmap : new CanvasTexture(data.normalBitmap),
       });
       this._material.needsUpdate = true;
     }

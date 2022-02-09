@@ -1,24 +1,27 @@
 import {
-  WebGLRenderer,
-  Scene,
-  OrthographicCamera,
-  WebGLRenderTarget,
-  LinearMipMapLinearFilter,
+  DataTexture,
   LinearFilter,
-  PlaneBufferGeometry,
-  ShaderMaterial,
+  LinearMipMapLinearFilter,
   Mesh,
-  RGBAFormat
+  OrthographicCamera,
+  PlaneBufferGeometry,
+  RGBAFormat,
+  Scene,
+  ShaderMaterial,
+  WebGLRenderer,
+  WebGLRenderTarget
 } from 'three';
 
 class TextureRenderer {
-  constructor(renderer) {
-    if (renderer === undefined) {
-      this.renderer = new WebGLRenderer({ antialias: true });
-    } else {
-      this.renderer = renderer;
+  constructor() {
+    let canvas;
+    this.isOffscreen = (typeof OffscreenCanvas !== 'undefined');
+    if (this.isOffscreen) {
+      canvas = new OffscreenCanvas(0, 0);
+      canvas.style = { width: 0, height: 0 };
     }
 
+    this.renderer = new WebGLRenderer({ canvas, antialias: true });
     this.scene = new Scene();
     this.camera = new OrthographicCamera(-1, 1, 1, -1, 1, 1000);
     this.target = new WebGLRenderTarget(1, 1, {
@@ -52,6 +55,18 @@ class TextureRenderer {
   }
 
   renderBitmap(width, height, material, benchmark) {
+    // (transferToImageBitmap only supported in offscreencanvas, so here is workaround for "onscreen" canvas)
+    if (!this.isOffscreen) {
+      const map = this.render(width, height, material, benchmark);
+      const dataTexture = new DataTexture(map.buffer, map.width, map.height, map.format);
+      dataTexture.flipY = true;
+      dataTexture.generateMipmaps = true;
+      dataTexture.minFilter = LinearMipMapLinearFilter;
+      dataTexture.magFilter = LinearFilter;
+      dataTexture.needsUpdate = true;
+      return dataTexture;
+    }
+
     if (!benchmark) benchmark = () => {};
     benchmark('inRender');
     this.plane.material = material;

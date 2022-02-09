@@ -8,7 +8,6 @@ import {
   TextureLoader,
   Vector2,
   Vector3,
-  WebGLRenderer,
 } from 'three';
 import colorShader from '~/game/scene/asteroid/color.glsl';
 import heightShader from '~/game/scene/asteroid/height.glsl';
@@ -18,16 +17,7 @@ import TextureRenderer from '~/lib/graphics/TextureRenderer';
 const rampsPath = `${process.env.PUBLIC_URL}/textures/asteroid/ramps.png`;
 
 // set up texture renderer (ideally w/ offscreen canvas)
-let textureRenderer;
-if (typeof OffscreenCanvas !== 'undefined') {
-  const offscreen = new OffscreenCanvas(0, 0);
-  offscreen.style = { width: 0, height: 0 };
-  const renderer = new WebGLRenderer({ canvas: offscreen, antialias: true });
-  textureRenderer = new TextureRenderer(renderer);
-} else {
-  // TODO: this might need a canvas
-  textureRenderer = new TextureRenderer();
-}
+const textureRenderer = new TextureRenderer();
 
 // load ramps
 let ramps;
@@ -175,7 +165,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
     config
   );
   benchmark('height bitmap');
-  const heightTexture = new CanvasTexture(heightBitmap);
+  const heightTexture = heightBitmap.image ? heightBitmap : new CanvasTexture(heightBitmap);
   benchmark('height texture');
 
   const colorBitmap = generateColorMap(
