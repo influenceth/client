@@ -13,14 +13,14 @@ const constants = {
 
   // Asteroid settings
   CHUNK_RESOLUTION: 64,
+  CHUNK_SPLIT_DISTANCE: 1.25, // TODO: this should probably always be >= 0.5
+  MIN_CHUNK_SIZE: 400,
   ENABLE_TERRAIN_CHUNK_MULTITHREADING: false, // true is actually seemingly less performant b/c GPU
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: false,
   GEOMETRY_SHRINK: 0.05,       // (multiplied by radius)
   GEOMETRY_SHRINK_MAX: 1000,  // meters
-  MIN_CHUNK_SIZE: 400,
   MIN_FRUSTRUM_HEIGHT: 2000,
   UPDATE_QUADTREE_EVERY_CHUNK: 0.5, // (multiplied by MIN_CHUNK_SIZE)
-  QUADTREE_SPLIT_DISTANCE: 1.25,
 
   // Performance settings
   GRAPHICS_LOW: {

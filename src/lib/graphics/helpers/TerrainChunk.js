@@ -26,16 +26,6 @@ setInterval(() => {
   first = true;
 }, 5000);
 
-// TODO: geometry is static per chunk... only rebuild on re-allocation (i.e. move)
-//  uvs and indices are now static per resolution (can build once and copy)
-//  build once, use the pool
-
-// NOTE: could probably fix flipY issue by flipping Y in uv's instead of in every shader
-
-// TODO: remove
-// const colors = [0x333333, 0xff0000, 0x00ff00, 0x0000ff, 0xff00ff, 0x00ffff, 0xffff00, 0xffffff, 0xff7700, 0x77ff00, 0x77ff77, 0xff0077];
-// const randomColor = () => colors[Math.floor(Math.random()*colors.length)];
-
 class TerrainChunk {
   constructor(params, config, textureRenderer) {
     this._params = params;
@@ -72,7 +62,6 @@ class TerrainChunk {
       side: FrontSide,
       // wireframe: true,
       onBeforeCompile: function (shader) {
-        // TODO: remove any uniforms that are not being used
         shader.uniforms.uHeightScale = { type: 'f', value: _heightScale };
         shader.uniforms.uStretch = { type: 'v3', value: stretch };
         shader.vertexShader = `
@@ -94,6 +83,8 @@ class TerrainChunk {
         `;
       }
     });
+
+    // TODO: skirts (could pass edge (1/0) in extra displacementMap channel) (would allow for better edge-normal sampling)
 
 
     this._plane = new Mesh(this._geometry, this._material);
@@ -170,6 +161,7 @@ class TerrainChunk {
     // TODO: could we also set position just once here as well?
 
     // init uv's
+    // NOTE: could probably flip y in these UVs instead of in every shader
     const uvs = new Float32Array(resolutionPlusOne * resolutionPlusOne * 2);
     for (let x = 0; x < resolutionPlusOne; x++) {
       for (let y = 0; y < resolutionPlusOne; y++) {
@@ -232,11 +224,19 @@ class TerrainChunk {
       // (set new values)
       // NOTE: the weird syntax here is because receive different format if coming from
       //  offscreen-canvas-enabled renderer vs not
-      this._material.setValues({
-        displacementMap: data.heightBitmap.image ? data.heightBitmap : new CanvasTexture(data.heightBitmap),
-        map: data.colorBitmap.image ? data.colorBitmap : new CanvasTexture(data.colorBitmap),
-        normalMap: data.normalBitmap.image ? data.normalBitmap : new CanvasTexture(data.normalBitmap),
-      });
+      if (data.heightBitmap.image && data.colorBitmap.image && data.normalBitmap.image) {
+        this._material.setValues({
+          displacementMap: data.heightBitmap,
+          map: data.colorBitmap,
+          normalMap: data.normalBitmap,
+        });
+      } else {
+        this._material.setValues({
+          displacementMap: new CanvasTexture(data.heightBitmap),
+          map: new CanvasTexture(data.colorBitmap),
+          normalMap: new CanvasTexture(data.normalBitmap),
+        });
+      }
       this._material.needsUpdate = true;
     }
   }

@@ -3,7 +3,7 @@ import constants from '~/lib/constants';
 
 const {
   MIN_CHUNK_SIZE,
-  QUADTREE_SPLIT_DISTANCE
+  CHUNK_SPLIT_DISTANCE
 } = constants;
 
 class QuadtreePlane {
@@ -51,7 +51,7 @@ class QuadtreePlane {
 
   _setCameraPosition(child, pos) {
     const distToChild = child.sphereCenter.distanceTo(pos);
-    if (distToChild < child.size.x * QUADTREE_SPLIT_DISTANCE && child.size.x >= MIN_CHUNK_SIZE * 2) {
+    if (distToChild < child.size.x * CHUNK_SPLIT_DISTANCE && child.size.x >= MIN_CHUNK_SIZE * 2) {
       child.children = this.generateChildren(child);
 
       for (let c of child.children) {

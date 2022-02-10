@@ -255,7 +255,6 @@ const Asteroid = (props) => {
   useFrame(() => {
     if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
-    benchmark();
 
     // tally frame
     frameCycle.current = (frameCycle.current + 1) % FRAME_CYCLE_LENGTH;
@@ -263,6 +262,7 @@ const Asteroid = (props) => {
     // if builder is not busy, make sure we are showing most recent chunks
     if (updatePending.current) {
       if (!geometry.current.builder.isBusy()) {
+        // vvv BENCHMARK <1ms
         geometry.current.finishPendingUpdate();
 
         if (debug.current) {
@@ -274,14 +274,17 @@ const Asteroid = (props) => {
 
         // console.log('update finished', Date.now() - updatePending.current);
         updatePending.current = null;
+        // ^^^
       }
     } else {
+
       // TODO: re-evaluate raycaster...
       // re-evaluate raycaster on every Xth frame to ensure zoom bounds are safe
       // (i.e. close enough to surface but not inside surface)
       // TODO: this can be kicked off from here, but should not be blocking...
       if (frameCycle.current === 0) {
         if (controls && cameraPosition.current && quadtreeRef.current?.children) {
+          // vvv BENCHMARK 4ms
           raycaster.set(
             controls.object.position.clone(),
             controls.object.position.clone().negate().normalize()
@@ -299,12 +302,12 @@ const Asteroid = (props) => {
           } else {
             controls.minDistance = FALLBACK_MIN_ZOOM * asteroidData.radius;
           }
+          // ^^^
         }
       }
-      benchmark('raycasted');
     }
-    benchmark('optional update');
 
+    // vvv BENCHMARK <1ms
     // update asteroid position
     if (asteroidOrbit.current && time) {
       position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU);
@@ -320,7 +323,7 @@ const Asteroid = (props) => {
     // update asteroid rotation
     let updatedRotation = rotation.current;
     if (config?.rotationSpeed && time) {
-      updatedRotation = 0;// time * config.rotationSpeed * 2 * Math.PI;  // TODO: uncomment
+      updatedRotation = time * config.rotationSpeed * 2 * Math.PI;  // TODO: uncomment
       if (updatedRotation !== rotation.current) {
         quadtreeRef.current.setRotationFromAxisAngle(
           rotationAxis.current,
@@ -328,7 +331,7 @@ const Asteroid = (props) => {
         );
       }
     }
-    benchmark('pos and rot');
+    // ^^^
     
     // update quadtree on "significant" movement so it can rebuild children appropriately
     // TODO (enhancement): UPDATE_QUADTREE_EVERY should probably depend on zoom level
@@ -346,25 +349,26 @@ const Asteroid = (props) => {
         updatePending.current = Date.now();
 
         // TODO: if not threaded, this should not be blocking while all math done
-        new Promise(() => {
+        setTimeout(() => {
+          // vvv BENCHMARK 50-60ms
           geometry.current.setCameraPosition(
             controls.object.position.clone().applyAxisAngle(
               rotationAxis.current,
               -rotation.current
             )
           );
-        });
+          // ^^^
+        }, 0);
       }
     }
-    benchmark('set cam');
 
-    
-    benchmark('_');
-
-    // debug.current.setRotationFromAxisAngle(
-    //   new Vector3(0, 1, 0),
-    //   Math.PI
-    // );
+    // TODO: remove debug
+    if (debug.current) {
+      debug.current.setRotationFromAxisAngle(
+        new Vector3(0, 1, 0),
+        Math.PI
+      );
+    }
   });
 
   return (
@@ -402,7 +406,7 @@ const Asteroid = (props) => {
       )}
       {false && light.current && <primitive object={new DirectionalLightHelper(light.current, 2 * config?.radius)} />}
       {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
-      {true && <primitive object={new AxesHelper(config?.radius * 2)} />}
+      {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
     </group>
   );
 }
