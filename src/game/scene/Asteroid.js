@@ -323,7 +323,7 @@ const Asteroid = (props) => {
     // update asteroid rotation
     let updatedRotation = rotation.current;
     if (config?.rotationSpeed && time) {
-      updatedRotation = time * config.rotationSpeed * 2 * Math.PI;  // TODO: uncomment
+      updatedRotation = 0;//time * config.rotationSpeed * 2 * Math.PI;  // TODO: uncomment
       if (updatedRotation !== rotation.current) {
         quadtreeRef.current.setRotationFromAxisAngle(
           rotationAxis.current,

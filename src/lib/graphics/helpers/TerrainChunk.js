@@ -11,7 +11,10 @@ import {
   Vector3
 } from 'three';
 
+import constants from '~/lib/constants';
 import { rebuildChunkGeometry } from './TerrainChunkUtils';
+
+const { CHUNK_RESOLUTION } = constants;
 
 // TODO: remove debug
 let first = true;
@@ -144,9 +147,10 @@ class TerrainChunk {
 
   rebuild() {
     console.log('rebuild');
-    const params = this.getRebuildParams();
     const startTime = Date.now();
-    const chunk = rebuildChunkGeometry(params);
+    const chunk = rebuildChunkGeometry(
+      this.getRebuildParams()
+    );
     if (true) {
       taskTotal += Date.now() - startTime;
       taskTally++;
@@ -197,17 +201,19 @@ class TerrainChunk {
     // update positions
     this._geometry.setAttribute('position', new Float32BufferAttribute(data.positions, 3));
     this._geometry.attributes.position.needsUpdate = true;
-    this._geometry.computeVertexNormals();  // TODO: this takes a long time, should potentially multithread
+    // since normals are just "normal" before map, use positions (faster than computeVertexNormals)
+    this._geometry.setAttribute('normal', new Float32BufferAttribute(data.positions, 3));
+    this._geometry.attributes.normal.needsUpdate = true;
 
     // debug (if debugging)
-    const writeDebugBitmap = false && first;
-    if (writeDebugBitmap) {
-      const debug = 'displacementBitmap';
+    if (false && first) {
+      const debug = 'normalBitmap';
       first = false;
       const canvas = document.getElementById('test_canvas');
-      if (canvas?.length) {
+      if (!!canvas) {
         canvas.style.height = `${data[debug].height}px`;
         canvas.style.width = `${data[debug].width}px`;
+        canvas.style.zoom = 300 / CHUNK_RESOLUTION;
         const ctx = canvas.getContext('bitmaprenderer');
         ctx.transferFromImageBitmap(data[debug]);
       } else {
@@ -222,21 +228,13 @@ class TerrainChunk {
       if (this._material.normalMap) this._material.normalMap.dispose();
 
       // (set new values)
-      // NOTE: the weird syntax here is because receive different format if coming from
-      //  offscreen-canvas-enabled renderer vs not
-      if (data.heightBitmap.image && data.colorBitmap.image && data.normalBitmap.image) {
-        this._material.setValues({
-          displacementMap: data.heightBitmap,
-          map: data.colorBitmap,
-          normalMap: data.normalBitmap,
-        });
-      } else {
-        this._material.setValues({
-          displacementMap: new CanvasTexture(data.heightBitmap),
-          map: new CanvasTexture(data.colorBitmap),
-          normalMap: new CanvasTexture(data.normalBitmap),
-        });
-      }
+      // NOTE: the ternaries below are b/c there is different format for data generated
+      //  on offscreen canvas vs normal canvas (i.e. if offscreencanvas not supported)
+      this._material.setValues({
+        displacementMap: data.heightBitmap.image ? data.heightBitmap: new CanvasTexture(data.heightBitmap),
+        map: data.colorBitmap.image ? data.colorBitmap: new CanvasTexture(data.colorBitmap),
+        normalMap: data.normalBitmap.image ? data.normalBitmap: new CanvasTexture(data.normalBitmap),
+      });
       this._material.needsUpdate = true;
     }
   }
