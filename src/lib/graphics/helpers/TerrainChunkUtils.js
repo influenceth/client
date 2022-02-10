@@ -13,6 +13,9 @@ import colorShader from '~/game/scene/asteroid/color.glsl';
 import heightShader from '~/game/scene/asteroid/height.glsl';
 import normalShader from '~/game/scene/asteroid/normal.glsl';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
+import constants from '~/lib/constants';
+
+const { ENABLE_TERRAIN_CHUNK_SKIRTS } = constants;
 
 const rampsPath = `${process.env.PUBLIC_URL}/textures/asteroid/ramps.png`;
 
@@ -139,9 +142,12 @@ setInterval(() => {
   // console.log(`b ${totalRuns}`, b);
 }, 5000);
 
-export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, width, heightScale }) {
+export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale, ...params }) {
   if (!ramps) return;
   benchmark();
+
+  const resolution = params.resolution + (ENABLE_TERRAIN_CHUNK_SKIRTS ? 2 : 0);
+  const width = params.width * (resolution / params.resolution);
 
   const localToWorld = groupMatrix;
   const resolutionPlusOne = resolution + 1;
@@ -153,7 +159,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
   // to previously fixed resolution asteroids (height difference between
   // neighbor samples is used to calculate normal, but now that width is
   // dynamic between those samples, need to accomodate for consistent "slope")
-  const normalCompatibilityScale = (0.0025 * config.radius * resolution) / width;
+  const normalCompatibilityScale = (0.0025 * config.radius * params.resolution) / width;
 
   benchmark('setup');
 
@@ -191,17 +197,19 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
   const _P = new Vector3();
   const bufferTally = resolutionPlusOne * resolutionPlusOne * 3;
   const positions = new Float32Array(bufferTally);
-  for (let x = 0; x < resolutionPlusOne; x++) {
-    const xp = width * x / resolution;
-    for (let y = 0; y < resolutionPlusOne; y++) {
-      const yp = width * y / resolution;
+  let normals;
 
+  for (let x = 0; x < resolutionPlusOne; x++) {
+    const useX = ENABLE_TERRAIN_CHUNK_SKIRTS ? Math.max(1, Math.min(x, resolution - 1)) : x;
+    const xp = width * useX / resolution - half;
+    for (let y = 0; y < resolutionPlusOne; y++) {
+      const useY = ENABLE_TERRAIN_CHUNK_SKIRTS ? Math.max(1, Math.min(y, resolution - 1)) : y;
+      const yp = width * useY / resolution - half;
 
       // compute position, direction, and length
-      _P.set(xp - half, yp - half, config.radius);
+      _P.set(xp, yp, config.radius);
       _P.add(offset);
-      _P.normalize();
-      _P.setLength(config.radius * heightScale);
+      _P.setLength(config.radius * heightScale * ((useX !== x || useY !== y) ? 0.95 : 1));
 
       const outputIndex = 3 * (resolutionPlusOne * x + y);
       positions[outputIndex + 0] = _P.x;
@@ -209,11 +217,37 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
       positions[outputIndex + 2] = _P.z;
     }
   }
+
+  // set normals to be consistent with positions (except where skirts; then use neighboring normal)
+  if (ENABLE_TERRAIN_CHUNK_SKIRTS) {
+    normals = new Float32Array(bufferTally);
+    for (let x = 0; x < resolutionPlusOne; x++) {
+      for (let y = 0; y < resolutionPlusOne; y++) {
+        const outputIndex = 3 * (resolutionPlusOne * x + y);
+        if (x === 0) {
+          normals[outputIndex + 0] = positions[3 * (resolutionPlusOne * (x + 1) + y)];
+        } else if (x === resolution) {
+          normals[outputIndex + 0] = positions[3 * (resolutionPlusOne * (x - 1) + y)];
+        } else {
+          normals[outputIndex + 0] = positions[outputIndex];
+        }
+        if (y === 0) {
+          normals[outputIndex + 1] = positions[outputIndex + 1 + 3];
+        } else if (y === resolution) {
+          normals[outputIndex + 1] = positions[outputIndex + 1 - 3];
+        } else {
+          normals[outputIndex + 1] = positions[outputIndex + 1];
+        }
+        normals[outputIndex + 2] = positions[outputIndex + 2];
+      }
+    }
+  }
   
   benchmark('_');
 
   return {
     positions,
+    normals,
     colorBitmap,
     heightBitmap,
     normalBitmap

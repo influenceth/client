@@ -79,7 +79,7 @@ class QuadtreeCubeSphere {
       });
 
       // TODO: remove debug
-      // if (this.sides.length === 3) break;
+      // if (this.sides.length === 1) break;
     }
   }
 
@@ -136,6 +136,7 @@ class QuadtreeCubeSphereManager {
     this.chunks = {};
   }
 
+  // TODO: remove debug
   debug() {
     const coords = [];
     this.quadtreeCube.sides.forEach(({ quadtree }) => {

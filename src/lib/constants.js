@@ -15,6 +15,7 @@ const constants = {
   CHUNK_RESOLUTION: 64,
   CHUNK_SPLIT_DISTANCE: 1.25, // TODO: this should probably always be >= 0.5
   MIN_CHUNK_SIZE: 400,
+  ENABLE_TERRAIN_CHUNK_SKIRTS: true,
   ENABLE_TERRAIN_CHUNK_MULTITHREADING: false, // true is actually seemingly less performant b/c GPU
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: false,
   GEOMETRY_SHRINK: 0.05,       // (multiplied by radius)

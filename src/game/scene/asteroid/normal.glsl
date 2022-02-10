@@ -3,26 +3,22 @@ uniform float uCompatibilityScalar;
 uniform float uNormalIntensity;
 uniform vec2 uResolution;
 
-float getHeight(vec2 p) {
-  vec2 height16 = texture2D(tHeightMap, p).xy;
-  float height = height16.x * 255.0 + height16.y;
-  return height / 256.0;
+float getHeight(vec2 fragCoord) {
+  vec2 uv = fragCoord / uResolution.xy;
+  vec2 height16 = texture2D(tHeightMap, uv).xy;
+  float height = (height16.x * 255.0 + height16.y) / 256.0;
+  return height;
 }
 
 void main() {
   //vec2 centerCoord = gl_FragCoord.xy;
   vec2 centerCoord = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
 
-  vec2 upCoord = (centerCoord + vec2(0.0, 1.0)) / uResolution.xy;
-  vec2 downCoord = (centerCoord + vec2(0.0, -1.0)) / uResolution.xy;
-  vec2 rightCoord = (centerCoord + vec2(1.0, 0.0)) / uResolution.xy;
-  vec2 leftCoord = (centerCoord + vec2(-1.0, 0.0)) / uResolution.xy;
-
-  // Get height at each coordinate
-  float up = getHeight(upCoord);
-  float down = getHeight(downCoord);
-  float right = getHeight(rightCoord);
-  float left = getHeight(leftCoord);
+  // Get height at each neighbor coordinate
+  float up = getHeight(centerCoord + vec2(0.0, 1.0));
+  float down = getHeight(centerCoord + vec2(0.0, -1.0));
+  float right = getHeight(centerCoord + vec2(1.0, 0.0));
+  float left = getHeight(centerCoord + vec2(-1.0, 0.0));
 
   // attempt to scale normal intensity to previous fixed-resolution intensity
   float xMult = uCompatibilityScalar;
@@ -30,12 +26,18 @@ void main() {
 
   // samples beyond the edge of the texture will get edge value, but it
   // seems to be smoother to just 2x center-to-sample height change
-  // TODO (enhancement): a real fix would be to sample from nearest terrain
-  //  chunk OR to render all of our textures with an extra value on each edge
-  if (centerCoord.x == 0.5 || centerCoord.x == uResolution.x - 0.5) {
+  if (centerCoord.x == 0.5) {
+    left = getHeight(centerCoord);
+    xMult *= 2.0;
+  } else if(centerCoord.x == uResolution.x - 0.5) {
+    right = getHeight(centerCoord);
     xMult *= 2.0;
   }
-  if (centerCoord.y == 0.5 || centerCoord.y == uResolution.y - 0.5) {
+  if (centerCoord.y == 0.5) {
+    down = getHeight(centerCoord);
+    yMult *= 2.0;
+  } else if(centerCoord.y == uResolution.y - 0.5) {
+    up = getHeight(centerCoord);
     yMult *= 2.0;
   }
 
