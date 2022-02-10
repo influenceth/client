@@ -139,7 +139,7 @@ setInterval(() => {
   // console.log(`b ${totalRuns}`, b);
 }, 5000);
 
-export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, width, heightScale }) {
+export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale, resolution, width }) {
   if (!ramps) return;
   benchmark();
 
@@ -192,15 +192,13 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, resolution, 
   const bufferTally = resolutionPlusOne * resolutionPlusOne * 3;
   const positions = new Float32Array(bufferTally);
   for (let x = 0; x < resolutionPlusOne; x++) {
-    const xp = width * x / resolution;
+    const xp = width * x / resolution - half;
     for (let y = 0; y < resolutionPlusOne; y++) {
-      const yp = width * y / resolution;
-
+      const yp = width * y / resolution - half;
 
       // compute position, direction, and length
-      _P.set(xp - half, yp - half, config.radius);
+      _P.set(xp, yp, config.radius);
       _P.add(offset);
-      _P.normalize();
       _P.setLength(config.radius * heightScale);
 
       const outputIndex = 3 * (resolutionPlusOne * x + y);
