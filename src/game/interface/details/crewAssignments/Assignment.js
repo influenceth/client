@@ -43,7 +43,7 @@ const CoverImage = styled.div`
   &:before {
     background-image: url(${p => p.src});
     background-repeat: no-repeat;
-    background-position: center center;
+    background-position: ${p => p.center || 'center center'};
     background-size: cover;
     content: '';
     display: block;
@@ -339,7 +339,7 @@ const CrewAssignment = (props) => {
 
   const goBack = useCallback(() => {
     playSound('effects.click');
-    history.push(`/crew-assignments/${storyState.book}`);
+    history.push(`/crew-assignments/${storyState?.book}/${storyState?.story}`);
   }, [history, playSound, storyState]);
 
   const finish = useCallback(() => {
@@ -360,7 +360,10 @@ const CrewAssignment = (props) => {
         {contentReady && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <InvisibleImage src={storyState.image} onLoad={onCoverImageLoad} />
-            <CoverImage src={storyState.image} ready={storyState.image === coverImageLoaded} />
+            <CoverImage
+              src={storyState.image}
+              center={storyState.imageCenter}
+              ready={storyState.image === coverImageLoaded} />
             <AboveFold ready={storyState.image === coverImageLoaded}>
               <BackButton onClick={goBack}><BackIcon /> Back</BackButton>
               <Title>{storyState.title}</Title>

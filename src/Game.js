@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { ThemeProvider } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
@@ -26,17 +26,19 @@ const StyledMain = styled.main`
   width: 100%;
 `;
 
+const DISABLE_INTRO = process.env.NODE_ENV === 'development';
+
 const Game = (props) => {
   const gpuInfo = useDetectGPU();
   const { updateNeeded, onUpdateVersion } = useServiceWorker();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const [ showScene, setShowScene ] = useState(false);
-  const [ loading, setLoading ] = useState(true);
+  const [ introEnabled, setIntroEnabled ] = useState(!DISABLE_INTRO);
 
-  const onVideoComplete = () => {
-    setLoading(false);
-  };
+  const onIntroComplete = useCallback(() => {
+    setIntroEnabled(false);
+  }, []);
 
   useEffect(() => {
     if (!gpuInfo) return;
@@ -76,7 +78,7 @@ const Game = (props) => {
                 <LandingPage />
               </Route>
               <Route>
-                {loading && <Intro onVideoComplete={onVideoComplete} />}
+                {introEnabled && <Intro onVideoComplete={onIntroComplete} />}
                 <StyledMain>
                   <Interface />
                   {showScene && <Scene />}

@@ -167,8 +167,8 @@ const traitSize = 128;
 const AllTraits = styled.div`
   display: grid;
   flex: 2 0 ${(traitSize + 5) * 3}px;
-  grid-template-columns: repeat(auto-fill, minmax(${(traitSize)}px, 1fr));
-  grid-template-rows: ${(traitSize)}px;
+  grid-template-columns: repeat(auto-fill, minmax(${traitSize}px, 1fr));
+  grid-template-rows: ${traitSize}px;
   overflow: auto;
   scrollbar-width: thin;
   @media (max-width: ${breakpoint}px) {
@@ -284,15 +284,16 @@ const Description = styled.div`
   color: ${p => p.theme.colors.mainText};
   display: flex;
   font-size: 12px;
-  height: 80px;
+  height: 85px;
   justify-content: center;
   padding: 5px;
   text-align: center;
   width: 100%;
   & > div {
-    max-height: 100%;
+    max-height: 75px;
     max-width: 500px;
     overflow: auto;
+    padding: 1px 0;
   }
   @media (max-width: ${breakpoint}px) {
     border: none;
@@ -362,6 +363,8 @@ const Log = styled.div`
   }
 `;
 
+const MIN_TRAIT_SLOTS = 12;
+
 const CrewMemberDetails = (props) => {
   const { i } = useParams();
   const history = useHistory();
@@ -396,6 +399,13 @@ const CrewMemberDetails = (props) => {
       playSound('effects.click');
     }
   }, [playSound]);
+
+  const fillerTraits = useMemo(() => {
+    if (crew?.traits.length > 0 && crew?.traits.length < MIN_TRAIT_SLOTS) {
+      return Array.from(Array(MIN_TRAIT_SLOTS - crew.traits.length));
+    }
+    return [];
+  }, [crew?.traits]);
 
   useEffect(() => {
     if(crew?.traits?.length > 0) {
@@ -500,6 +510,12 @@ const CrewMemberDetails = (props) => {
                             }
                             return null;
                           })}
+                          {fillerTraits.map((tmp, i) => (
+                            <Trait key={i} style={{ opacity: 0.10 }}>
+                              <HexagonIcon />
+                              <h6>&nbsp;</h6>
+                            </Trait>
+                          ))}
                         </AllTraits>
                         <TraitSelected>
                           <Display>
