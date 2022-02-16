@@ -63,7 +63,7 @@ class TerrainChunk {
       metalness: 0,
       roughness: 1,
       side: FrontSide,
-      // wireframe: true,
+      wireframe: true,
       onBeforeCompile: function (shader) {
         shader.uniforms.uHeightScale = { type: 'f', value: _heightScale };
         shader.uniforms.uStretch = { type: 'v3', value: stretch };
@@ -125,8 +125,8 @@ class TerrainChunk {
   }
 
   getRebuildParams() {
-    // TODO: this manipulation is probably only worth it when using postMessage
-    //  (i.e. not for work on main thread)
+    // TODO: this manipulation is intended to minimize data sent on postMessage
+    //  (i.e. not worth it for work on main thread)
     const {
       ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
       ...prunedConfig
@@ -139,6 +139,7 @@ class TerrainChunk {
       // TODO: specific to chunk
       groupMatrix: this._params.group.matrix.clone(),
       offset: this._params.offset.clone(),
+      edgeStrides: this._params.stitchingStrides,
       width: this._params.width,
       heightScale: this._heightScale,
       // side: this._params.side,

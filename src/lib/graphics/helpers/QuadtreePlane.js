@@ -23,6 +23,7 @@ class QuadtreePlane {
       children: [],
       center: rootNode.getCenter(new Vector3()),
       size: rootNode.getSize(new Vector3()),
+      neighbors: {},
       root: true
     };
     this.setSphereCenter(this.root);
@@ -47,6 +48,7 @@ class QuadtreePlane {
 
   setCameraPosition(pos) {
     this._setCameraPosition(this.root, pos);
+    this._populateNeighbors(this.root);
   }
 
   _setCameraPosition(child, pos) {
@@ -60,6 +62,45 @@ class QuadtreePlane {
     } else {
       child.children = [];
     }
+  }
+
+  _populateNeighbors(parent) {
+    if (parent.root) {
+      // TODO: attach neighboring sides (w/ transforms)
+    }
+    if (parent.children) {
+      // populate node.children.neighbors (SW, SE, NW, NE)
+      parent.children.forEach((child, i) => {
+        child.neighbors = {};
+        if (i === 0) {
+          child.neighbors.N = parent.children[2];
+          child.neighbors.S = this.getClosestNeighborChild(parent.neighbors.S, 2);
+          child.neighbors.E = parent.children[1];
+          child.neighbors.W = this.getClosestNeighborChild(parent.neighbors.W, 1);
+        } else if (i === 1) {
+          child.neighbors.N = parent.children[3];
+          child.neighbors.S = this.getClosestNeighborChild(parent.neighbors.S, 3);
+          child.neighbors.E = this.getClosestNeighborChild(parent.neighbors.E, 0);
+          child.neighbors.W = parent.children[0];
+        } else if (i === 2) {
+          child.neighbors.N = this.getClosestNeighborChild(parent.neighbors.N, 0);
+          child.neighbors.S = parent.children[0];
+          child.neighbors.E = parent.children[3];
+          child.neighbors.W = this.getClosestNeighborChild(parent.neighbors.W, 3);
+        } else if (i === 3) {
+          child.neighbors.N = this.getClosestNeighborChild(parent.neighbors.N, 1);
+          child.neighbors.S = parent.children[1];
+          child.neighbors.E = this.getClosestNeighborChild(parent.neighbors.E, 2);
+          child.neighbors.W = parent.children[2];
+        }
+        this._populateNeighbors(child);
+      });
+    }
+  }
+
+  getClosestNeighborChild(neighborParentNode, neighborPos) {
+    if (neighborParentNode?.children?.length > 0) return neighborParentNode.children[neighborPos];
+    return neighborParentNode;
   }
 
   getHeightMinMax(node) {
@@ -79,7 +120,7 @@ class QuadtreePlane {
       }
     }
     if (xMin === xMax || yMin === yMax) {
-      console.log('between points', minmax);
+      // console.log('between points', minmax);
     }
     return minmax;
   }
@@ -98,29 +139,34 @@ class QuadtreePlane {
     node.sphereCenterHeight = sphereCenter.length();
   }
 
-  generateChildren(child) {
-    const midpoint = child.bounds.getCenter(new Vector3());
-
-    // Bottom left
-    const b1 = new Box3(child.bounds.min, midpoint);
-
-    // Bottom right
-    const b2 = new Box3(
-      new Vector3(midpoint.x, child.bounds.min.y, 0),
-      new Vector3(child.bounds.max.x, midpoint.y, 0)
-    );
-
-    // Top left
-    const b3 = new Box3(
-      new Vector3(child.bounds.min.x, midpoint.y, 0),
-      new Vector3(midpoint.x, child.bounds.max.y, 0)
-    );
-
-    // Top right
-    const b4 = new Box3(midpoint, child.bounds.max);
-
-    return [b1, b2, b3, b4].map((b) => {
+  generateChildren(parent) {
+    const midpoint = parent.bounds.getCenter(new Vector3());
+    return [
+      {
+        b: new Box3(parent.bounds.min, midpoint),
+        orientation: 'SW', 
+      },
+      {
+        b: new Box3(
+          new Vector3(midpoint.x, parent.bounds.min.y, 0),
+          new Vector3(parent.bounds.max.x, midpoint.y, 0)
+        ),
+        orientation: 'SE', 
+      },
+      {
+        b: new Box3(
+          new Vector3(parent.bounds.min.x, midpoint.y, 0),
+          new Vector3(midpoint.x, parent.bounds.max.y, 0)
+        ),
+        orientation: 'NW', 
+      },
+      {
+        b: new Box3(midpoint, parent.bounds.max),
+        orientation: 'NE', 
+      },
+    ].map(({ b, orientation }) => {
       const node = {
+        breadcrumbs: [...(parent.breadcrumbs || []), orientation],  // TODO: do we need breadcrumbs?
         bounds: b,
         children: [],
         center: b.getCenter(new Vector3()),

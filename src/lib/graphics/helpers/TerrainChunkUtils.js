@@ -11,6 +11,7 @@ import {
 } from 'three';
 import colorShader from '~/game/scene/asteroid/color.glsl';
 import heightShader from '~/game/scene/asteroid/height.glsl';
+import heightShaderWithStitching from '~/game/scene/asteroid/height_w_stitching.glsl';
 import normalShader from '~/game/scene/asteroid/normal.glsl';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 
@@ -36,9 +37,11 @@ export async function initChunkTextures() {
   }
 }
 
-export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, config, returnType = 'bitmap') {
+export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, edgeStrides, config, returnType = 'bitmap') {
   const material = new ShaderMaterial({
-    fragmentShader: heightShader,
+    fragmentShader: (edgeStrides.N === 1 && edgeStrides.S === 1 && edgeStrides.E === 1 && edgeStrides.W === 1)
+      ? heightShader
+      : heightShaderWithStitching,
     uniforms: {
       uChunkOffset: { type: 'v2', value: chunkOffset },
       uChunkSize: { type: 'f', value: chunkSize },
@@ -53,6 +56,10 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uDispPasses: { type: 'i', value: config.dispPasses },
       uDispPersist: { type: 'f', value: config.dispPersist },
       uDispWeight: { type: 'f', value: config.dispWeight },
+      uEdgeStrideN: { type: 'f', value: edgeStrides.N },
+      uEdgeStrideS: { type: 'f', value: edgeStrides.S },
+      uEdgeStrideE: { type: 'f', value: edgeStrides.E },
+      uEdgeStrideW: { type: 'f', value: edgeStrides.W },
       uFeaturesFreq: { type: 'f', value: config.featuresFreq },
       uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
       uRimVariation: { type: 'f', value: config.rimVariation },
@@ -80,7 +87,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-function generateColorMap(heightMap, chunkResolution, config) {
+function generateColorMap(heightMap, chunkResolution, edgeStrides, config) {
   if (!ramps) throw new Error('Ramps not yet loaded!');
 
   const material = new ShaderMaterial({
@@ -89,7 +96,13 @@ function generateColorMap(heightMap, chunkResolution, config) {
       tHeightMap: { type: 't', value: heightMap },
       tRamps: { type: 't', value: ramps },
       uSpectral: { type: 'f', value: config.spectralType },
-      uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) }
+      uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
+
+      // TODO: remove
+      uEdgeStrideN: { type: 'f', value: edgeStrides.N },
+      uEdgeStrideS: { type: 'f', value: edgeStrides.S },
+      uEdgeStrideE: { type: 'f', value: edgeStrides.E },
+      uEdgeStrideW: { type: 'f', value: edgeStrides.W },
     }
   });
 
@@ -139,7 +152,7 @@ setInterval(() => {
   // console.log(`b ${totalRuns}`, b);
 }, 5000);
 
-export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale, resolution, width }) {
+export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale, edgeStrides, resolution, width }) {
   if (!ramps) return;
   benchmark();
 
@@ -162,6 +175,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
     chunkSize,
     chunkOffset,
     resolutionPlusOne,
+    edgeStrides,
     config
   );
   benchmark('height bitmap');
@@ -171,6 +185,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
   const colorBitmap = generateColorMap(
     heightTexture,
     resolutionPlusOne,
+    edgeStrides,
     config
   );
   benchmark('color');
@@ -189,17 +204,77 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
 
   // build geometry
   const _P = new Vector3();
+  const _S = new Vector3();
   const bufferTally = resolutionPlusOne * resolutionPlusOne * 3;
   const positions = new Float32Array(bufferTally);
+  const scaledHeight = config.radius * heightScale;
   for (let x = 0; x < resolutionPlusOne; x++) {
     const xp = width * x / resolution - half;
     for (let y = 0; y < resolutionPlusOne; y++) {
       const yp = width * y / resolution - half;
+      let midStride = false;
 
-      // compute position, direction, and length
-      _P.set(xp, yp, config.radius);
-      _P.add(offset);
-      _P.setLength(config.radius * heightScale);
+      // handle stitching on EW
+      if ((x === resolution && edgeStrides.E > 1) || (x === 0 && edgeStrides.W > 1)) {
+        const stride = Math.max(edgeStrides.E, edgeStrides.W);
+        const strideMod = y % stride;
+        if (strideMod > 0) {
+          midStride = true;
+
+          // set _P to stride-start point, set _S to stride-end point, then lerp between
+          _P.set(
+            xp,
+            width * Math.floor(y / stride) * stride / resolution - half,
+            config.radius
+          );
+          _P.add(offset);
+          _P.setLength(scaledHeight);
+
+          _S.set(
+            xp,
+            width * Math.ceil(y / stride) * stride / resolution - half,
+            config.radius
+          );
+          _S.add(offset);
+          _S.setLength(scaledHeight);
+
+          _P.lerp(_S, strideMod / stride);
+        }
+
+      // handle stitching on NS
+      } else if ((y === resolution && edgeStrides.N > 1) || (y === 0 && edgeStrides.S > 1)) {
+        const stride = Math.max(edgeStrides.N, edgeStrides.S);
+        const strideMod = x % stride;
+        if (strideMod > 0) {
+          midStride = true;
+
+          // set _P to stride-start point, set _S to stride-end point, then lerp between
+          _P.set(
+            width * Math.floor(x / stride) * stride / resolution - half,
+            yp,
+            config.radius
+          );
+          _P.add(offset);
+          _P.setLength(scaledHeight);
+
+          _S.set(
+            width * Math.ceil(x / stride) * stride / resolution - half,
+            yp,
+            config.radius
+          );
+          _S.add(offset);
+          _S.setLength(scaledHeight);
+
+          _P.lerp(_S, strideMod / stride);
+        }
+      }
+      
+      // handle all other points
+      if (!midStride) {
+        _P.set(xp, yp, config.radius);
+        _P.add(offset);
+        _P.setLength(scaledHeight);
+      }
 
       const outputIndex = 3 * (resolutionPlusOne * x + y);
       positions[outputIndex + 0] = _P.x;

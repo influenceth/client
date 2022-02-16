@@ -11,6 +11,10 @@ uniform float uDispFreq;
 uniform int uDispPasses;
 uniform float uDispPersist;
 uniform float uDispWeight;
+uniform float uEdgeStrideN;
+uniform float uEdgeStrideS;
+uniform float uEdgeStrideE;
+uniform float uEdgeStrideW;
 uniform float uFeaturesFreq;
 uniform vec2 uResolution;
 uniform vec3 uSeed;
@@ -168,5 +172,42 @@ vec4 getOutputForPoint(vec2 flipY) {
 
 void main() {
   vec2 flipY = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
-  gl_FragColor = getOutputForPoint(flipY);
+
+  float strideX = flipY.y == 0.5 ? uEdgeStrideS : (
+    flipY.y == uResolution.y - 0.5 ? uEdgeStrideN : 1.0
+  );
+  float x = flipY.x - 0.5;
+  float strideModX = mod(x, strideX);
+
+  float strideY = flipY.x == 0.5 ? uEdgeStrideW : (
+    flipY.x == uResolution.x - 0.5 ? uEdgeStrideE : 1.0
+  );
+  float y = flipY.y - 0.5;
+  float strideModY = mod(y, strideY);
+
+  float mixAmount = max(strideModX / strideX, strideModY / strideY);
+
+  vec2 point1 = vec2(
+    strideModX > 0.0 ? floor(x / strideX) * strideX + 0.5 : flipY.x,
+    strideModY > 0.0 ? floor(y / strideY) * strideY + 0.5 : flipY.y
+  );
+  vec4 output1 = getOutputForPoint(point1);
+  float height1 = (output1.x * 255.0 + output1.y) / 255.0;
+
+  vec2 point2 = vec2(
+    strideModX > 0.0 ? ceil(x / strideX) * strideX + 0.5 : flipY.x,
+    strideModY > 0.0 ? ceil(y / strideY) * strideY + 0.5 : flipY.y
+  );
+  vec4 output2 = getOutputForPoint(point2);
+  float height2 = (output2.x * 255.0 + output2.y) / 255.0;
+
+  float height = mix(height1, height2, mixAmount);
+  float topo = mix(output1.z, output1.z, mixAmount);
+
+  gl_FragColor = vec4(
+    floor(height * 255.0) / 255.0,
+    fract(height * 255.0),
+    strideModX / 2.0,
+    strideModY / 2.0
+  );
 }
