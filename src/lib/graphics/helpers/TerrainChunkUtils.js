@@ -87,7 +87,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-function generateColorMap(heightMap, chunkResolution, edgeStrides, config) {
+function generateColorMap(heightMap, chunkResolution, config, { edgeStrides, chunkSize }) {
   if (!ramps) throw new Error('Ramps not yet loaded!');
 
   const material = new ShaderMaterial({
@@ -103,13 +103,14 @@ function generateColorMap(heightMap, chunkResolution, edgeStrides, config) {
       uEdgeStrideS: { type: 'f', value: edgeStrides.S },
       uEdgeStrideE: { type: 'f', value: edgeStrides.E },
       uEdgeStrideW: { type: 'f', value: edgeStrides.W },
+      uChunkSize: { type: 'f', value: chunkSize },
     }
   });
 
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, config) {
+function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, config, returnType = 'bitmap') {
   const material = new ShaderMaterial({
     extensions: { derivatives: true },
     fragmentShader: normalShader,
@@ -121,6 +122,16 @@ function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, conf
     }
   });
 
+  if (returnType === 'texture') {
+    const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
+    texture.options = {
+      generateMipmaps: true,
+      minFilter: LinearMipMapLinearFilter,
+      magFilter: LinearFilter,
+      needsUpdate: true
+    };
+    return texture;
+  }
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
@@ -164,14 +175,10 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
 
   // TODO: remove debug
   // let debug = false;
-  // if (chunkOffset.x === 0.5 && chunkOffset.y === -0.5 && chunkSize === 0.5) {
-  //   if (edgeStrides.W === 1) {
-  //     debug = '0.5,-0.5';
-  //   }
-  // } else if (chunkOffset.x === -0.25 && chunkOffset.y === -0.25 && chunkSize === 0.25) {
-  //   if (edgeStrides.E === 2) {
-  //     debug = '-0.25,-0.25';
-  //   }
+  // if (chunkOffset.x === -0.625 && chunkOffset.y === -0.875 && chunkSize === 0.125) {
+  //   debug = '-0.625,-0.875';
+  // } else if (chunkOffset.x === -0.875 && chunkOffset.y === -0.875 && chunkSize === 0.125) {
+  //   debug = '-0.875,-0.875';
   // }
 
   // meant to help match normal intensity on dynamic resolution asteroids
@@ -191,13 +198,31 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
     config
   );
 
+  benchmark('height bitmap');
+  const heightTexture = heightBitmap.image ? heightBitmap : new CanvasTexture(heightBitmap);
+  benchmark('height texture');
+
+  const colorBitmap = generateColorMap(
+    heightTexture,
+    resolutionPlusOne,
+    config,
+    { edgeStrides, chunkSize }
+  );
+  benchmark('color');
+
+  const normalBitmap = generateNormalMap(
+    heightTexture,
+    resolutionPlusOne,
+    normalCompatibilityScale,
+    config
+  );
+  benchmark('normal');
+
   // if (debug) {
-  //   const debugTexture = generateHeightMap(
-  //     localToWorld,
-  //     chunkSize,
-  //     chunkOffset,
+  //   const debugTexture = generateNormalMap(
+  //     heightTexture,
   //     resolutionPlusOne,
-  //     edgeStrides,
+  //     normalCompatibilityScale,
   //     config,
   //     'texture'
   //   );
@@ -217,26 +242,6 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
   //   }
   //   console.log(txt.join('\n'));
   // }
-
-  benchmark('height bitmap');
-  const heightTexture = heightBitmap.image ? heightBitmap : new CanvasTexture(heightBitmap);
-  benchmark('height texture');
-
-  const colorBitmap = generateColorMap(
-    heightTexture,
-    resolutionPlusOne,
-    edgeStrides,
-    config
-  );
-  benchmark('color');
-
-  const normalBitmap = generateNormalMap(
-    heightTexture,
-    resolutionPlusOne,
-    normalCompatibilityScale,
-    config
-  );
-  benchmark('normal');
 
   // done with interim data textures
   heightTexture.dispose();
@@ -262,13 +267,14 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
           midStride = true;
 
           // set _P to stride-start point, set _S to stride-end point, then lerp between
+          // * "+ 1" to avoid seams from rounding differences and z-fighting
           _P.set(
             xp,
             width * Math.floor(y / stride) * stride / resolution - half,
             config.radius
           );
           _P.add(offset);
-          _P.setLength(scaledHeight);
+          _P.setLength(scaledHeight + 1); // *
 
           _S.set(
             xp,
@@ -276,7 +282,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
             config.radius
           );
           _S.add(offset);
-          _S.setLength(scaledHeight);
+          _S.setLength(scaledHeight + 1); // *
 
           _P.lerp(_S, strideMod / stride);
         }
@@ -296,7 +302,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
             config.radius
           );
           _P.add(offset);
-          _P.setLength(scaledHeight);
+          _P.setLength(scaledHeight + 1); // *
 
           _S.set(
             width * Math.ceil(x / stride) * stride / resolution - half,
@@ -304,7 +310,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
             config.radius
           );
           _S.add(offset);
-          _S.setLength(scaledHeight);
+          _S.setLength(scaledHeight + 1); // *
 
           _P.lerp(_S, strideMod / stride);
         }

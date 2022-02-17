@@ -5,14 +5,15 @@ uniform vec2 uResolution;
 
 float getHeight(vec2 fragCoord) {
   vec2 uv = fragCoord / uResolution.xy;
+  uv.y = 1.0 - uv.y;
   vec2 height16 = texture2D(tHeightMap, uv).xy;
   float height = (height16.x * 255.0 + height16.y) / 256.0;
   return height;
 }
 
 void main() {
-  //vec2 centerCoord = gl_FragCoord.xy;
-  vec2 centerCoord = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+  vec2 centerCoord = gl_FragCoord.xy;
+  //vec2 centerCoord = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
 
   // Get height at each neighbor coordinate
   float up = getHeight(centerCoord + vec2(0.0, 1.0));
