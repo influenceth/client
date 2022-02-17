@@ -161,6 +161,7 @@ class QuadtreeCubeSphere {
       new Vector3(0, 0, 0),
       resolution,
       { N: 1, S: 1, E: 1, W: 1 }, 
+      false,
       config,
       'texture'
     );

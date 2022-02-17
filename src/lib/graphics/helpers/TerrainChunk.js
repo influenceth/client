@@ -13,7 +13,7 @@ import {
 import constants from '~/lib/constants';
 import { rebuildChunkGeometry } from './TerrainChunkUtils';
 
-const { CHUNK_RESOLUTION } = constants;
+const { CHUNK_RESOLUTION, OVERSAMPLE_CHUNK_TEXTURES } = constants;
 
 // TODO: remove debug
 let first = true;
@@ -131,13 +131,14 @@ class TerrainChunk {
       // TODO: could cache
       config: prunedConfig,
       resolution: this._params.resolution,
+      oversample: OVERSAMPLE_CHUNK_TEXTURES,
 
       // TODO: specific to chunk
       groupMatrix: this._params.group.matrix.clone(),
       offset: this._params.offset.clone(),
       edgeStrides: this._params.stitchingStrides,
       width: this._params.width,
-      heightScale: this._heightScale,
+      heightScale: this._heightScale
       // side: this._params.side,
     }
   }
@@ -165,8 +166,13 @@ class TerrainChunk {
     for (let x = 0; x < resolutionPlusOne; x++) {
       for (let y = 0; y < resolutionPlusOne; y++) {
         const outputIndex = (resolutionPlusOne * x + y) * 2;
-        uvs[outputIndex + 0] = (x + 0.5) / resolutionPlusOne;
-        uvs[outputIndex + 1] = (y + 0.5) / resolutionPlusOne;
+        if (OVERSAMPLE_CHUNK_TEXTURES) {
+          uvs[outputIndex + 0] = (x + 1.5) / (resolutionPlusOne + 2);
+          uvs[outputIndex + 1] = (y + 1.5) / (resolutionPlusOne + 2);
+        } else {
+          uvs[outputIndex + 0] = (x + 0.5) / resolutionPlusOne;
+          uvs[outputIndex + 1] = (y + 0.5) / resolutionPlusOne;
+        }
       }
     }
 

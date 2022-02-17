@@ -37,7 +37,7 @@ export async function initChunkTextures() {
   }
 }
 
-export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, edgeStrides, config, returnType = 'bitmap') {
+export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, edgeStrides, oversample, config, returnType = 'bitmap') {
   const material = new ShaderMaterial({
     fragmentShader: (edgeStrides.N === 1 && edgeStrides.S === 1 && edgeStrides.E === 1 && edgeStrides.W === 1)
       ? heightShader
@@ -61,6 +61,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uEdgeStrideE: { type: 'f', value: edgeStrides.E },
       uEdgeStrideW: { type: 'f', value: edgeStrides.W },
       uFeaturesFreq: { type: 'f', value: config.featuresFreq },
+      uOversample: { type: 'f', value: oversample ? 1.0 : 0.0 },
       uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
       uRimVariation: { type: 'f', value: config.rimVariation },
       uRimWeight: { type: 'f', value: config.rimWeight },
@@ -87,7 +88,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-function generateColorMap(heightMap, chunkResolution, config, { edgeStrides, chunkSize }) {
+function generateColorMap(heightMap, chunkResolution, config, { edgeStrides, chunkSize }, returnType = 'bitmap') {
   if (!ramps) throw new Error('Ramps not yet loaded!');
 
   const material = new ShaderMaterial({
@@ -107,6 +108,16 @@ function generateColorMap(heightMap, chunkResolution, config, { edgeStrides, chu
     }
   });
 
+  if (returnType === 'texture') {
+    const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
+    texture.options = {
+      generateMipmaps: true,
+      minFilter: LinearMipMapLinearFilter,
+      magFilter: LinearFilter,
+      needsUpdate: true
+    };
+    return texture;
+  }
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
@@ -163,7 +174,7 @@ setInterval(() => {
   // console.log(`b ${totalRuns}`, b);
 }, 5000);
 
-export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale, edgeStrides, resolution, width }) {
+export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale, edgeStrides, resolution, width, oversample }) {
   if (!ramps) return;
   benchmark();
 
@@ -173,12 +184,15 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
   const chunkSize = width / (2 * config.radius);
   const chunkOffset = offset.clone().multiplyScalar(1 / config.radius);
 
+  const textureResolution = oversample ? resolutionPlusOne + 2 : resolutionPlusOne;
+  const textureSize = oversample ? chunkSize * (1 + 2 / resolution) : chunkSize;
+
   // TODO: remove debug
   // let debug = false;
-  // if (chunkOffset.x === -0.625 && chunkOffset.y === -0.875 && chunkSize === 0.125) {
-  //   debug = '-0.625,-0.875';
-  // } else if (chunkOffset.x === -0.875 && chunkOffset.y === -0.875 && chunkSize === 0.125) {
-  //   debug = '-0.875,-0.875';
+  // if (chunkOffset.x === -0.25 && chunkOffset.y === -0.25) {
+  //   debug = '-0.25,-0.25';
+  // } else if (chunkOffset.x === 0.25 && chunkOffset.y === -0.25) {
+  //   debug = '0.25,-0.25';
   // }
 
   // meant to help match normal intensity on dynamic resolution asteroids
@@ -187,50 +201,22 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
   // dynamic between those samples, need to accomodate for consistent "slope")
   const normalCompatibilityScale = (0.0025 * config.radius * resolution) / width;
 
-  benchmark('setup');
-
-  const heightBitmap = generateHeightMap(
-    localToWorld,
-    chunkSize,
-    chunkOffset,
-    resolutionPlusOne,
-    edgeStrides,
-    config
-  );
-
-  benchmark('height bitmap');
-  const heightTexture = heightBitmap.image ? heightBitmap : new CanvasTexture(heightBitmap);
-  benchmark('height texture');
-
-  const colorBitmap = generateColorMap(
-    heightTexture,
-    resolutionPlusOne,
-    config,
-    { edgeStrides, chunkSize }
-  );
-  benchmark('color');
-
-  const normalBitmap = generateNormalMap(
-    heightTexture,
-    resolutionPlusOne,
-    normalCompatibilityScale,
-    config
-  );
-  benchmark('normal');
-
   // if (debug) {
-  //   const debugTexture = generateNormalMap(
-  //     heightTexture,
-  //     resolutionPlusOne,
-  //     normalCompatibilityScale,
+  //   const debugTexture = generateHeightMap(
+  //     localToWorld,
+  //     textureSize,
+  //     chunkOffset,
+  //     textureResolution,
+  //     edgeStrides,
+  //     oversample,
   //     config,
   //     'texture'
   //   );
   //   const txt = [debug];
-  //   for (let y = 0; y < resolutionPlusOne; y++) {
+  //   for (let y = 0; y < textureResolution; y++) {
   //     const row = [];
-  //     for (let x = 0; x < resolutionPlusOne; x++) {
-  //       const bi = 4 * (resolutionPlusOne * y + x);
+  //     for (let x = 0; x < textureResolution; x++) {
+  //       const bi = 4 * (textureResolution * y + x);
   //       row.push(`[${x},${y}] ` + [
   //         debugTexture.buffer[bi],
   //         debugTexture.buffer[bi+1],
@@ -242,6 +228,38 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
   //   }
   //   console.log(txt.join('\n'));
   // }
+
+  benchmark('setup');
+
+  const heightBitmap = generateHeightMap(
+    localToWorld,
+    textureSize,
+    chunkOffset,
+    textureResolution,
+    edgeStrides,
+    oversample,
+    config
+  );
+
+  benchmark('height bitmap');
+  const heightTexture = heightBitmap.image ? heightBitmap : new CanvasTexture(heightBitmap);
+  benchmark('height texture');
+
+  const colorBitmap = generateColorMap(
+    heightTexture,
+    textureResolution,
+    config,
+    { edgeStrides, chunkSize }
+  );
+  benchmark('color');
+
+  const normalBitmap = generateNormalMap(
+    heightTexture,
+    textureResolution,
+    normalCompatibilityScale,
+    config
+  );
+  benchmark('normal');
 
   // done with interim data textures
   heightTexture.dispose();
