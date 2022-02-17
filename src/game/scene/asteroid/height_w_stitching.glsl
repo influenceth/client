@@ -207,7 +207,7 @@ void main() {
   gl_FragColor = vec4(
     floor(height * 255.0) / 255.0,
     fract(height * 255.0),
-    strideModX / 2.0,
-    strideModY / 2.0
+    topo,
+    1.0
   );
 }

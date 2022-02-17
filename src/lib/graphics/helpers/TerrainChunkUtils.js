@@ -162,6 +162,18 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
   const chunkSize = width / (2 * config.radius);
   const chunkOffset = offset.clone().multiplyScalar(1 / config.radius);
 
+  // TODO: remove debug
+  // let debug = false;
+  // if (chunkOffset.x === 0.5 && chunkOffset.y === -0.5 && chunkSize === 0.5) {
+  //   if (edgeStrides.W === 1) {
+  //     debug = '0.5,-0.5';
+  //   }
+  // } else if (chunkOffset.x === -0.25 && chunkOffset.y === -0.25 && chunkSize === 0.25) {
+  //   if (edgeStrides.E === 2) {
+  //     debug = '-0.25,-0.25';
+  //   }
+  // }
+
   // meant to help match normal intensity on dynamic resolution asteroids
   // to previously fixed resolution asteroids (height difference between
   // neighbor samples is used to calculate normal, but now that width is
@@ -178,6 +190,34 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
     edgeStrides,
     config
   );
+
+  // if (debug) {
+  //   const debugTexture = generateHeightMap(
+  //     localToWorld,
+  //     chunkSize,
+  //     chunkOffset,
+  //     resolutionPlusOne,
+  //     edgeStrides,
+  //     config,
+  //     'texture'
+  //   );
+  //   const txt = [debug];
+  //   for (let y = 0; y < resolutionPlusOne; y++) {
+  //     const row = [];
+  //     for (let x = 0; x < resolutionPlusOne; x++) {
+  //       const bi = 4 * (resolutionPlusOne * y + x);
+  //       row.push(`[${x},${y}] ` + [
+  //         debugTexture.buffer[bi],
+  //         debugTexture.buffer[bi+1],
+  //         debugTexture.buffer[bi+2],
+  //         debugTexture.buffer[bi+3],
+  //       ].join(','));
+  //     }
+  //     txt.push(row.join('\t'));
+  //   }
+  //   console.log(txt.join('\n'));
+  // }
+
   benchmark('height bitmap');
   const heightTexture = heightBitmap.image ? heightBitmap : new CanvasTexture(heightBitmap);
   benchmark('height texture');
@@ -205,8 +245,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
   // build geometry
   const _P = new Vector3();
   const _S = new Vector3();
-  const bufferTally = resolutionPlusOne * resolutionPlusOne * 3;
-  const positions = new Float32Array(bufferTally);
+  const positions = new Float32Array(resolutionPlusOne * resolutionPlusOne * 3);
   const scaledHeight = config.radius * heightScale;
   for (let x = 0; x < resolutionPlusOne; x++) {
     const xp = width * x / resolution - half;
@@ -218,6 +257,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
       if ((x === resolution && edgeStrides.E > 1) || (x === 0 && edgeStrides.W > 1)) {
         const stride = Math.max(edgeStrides.E, edgeStrides.W);
         const strideMod = y % stride;
+        // if (debug) console.log(`${debug}: ${x},${y}: x-edge ${strideMod}/${stride}`);
         if (strideMod > 0) {
           midStride = true;
 
@@ -245,6 +285,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
       } else if ((y === resolution && edgeStrides.N > 1) || (y === 0 && edgeStrides.S > 1)) {
         const stride = Math.max(edgeStrides.N, edgeStrides.S);
         const strideMod = x % stride;
+        // if (debug) console.log(`${debug}: ${x},${y}: y-edge ${strideMod}/${stride}`);
         if (strideMod > 0) {
           midStride = true;
 
@@ -271,10 +312,31 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
       
       // handle all other points
       if (!midStride) {
+        // if (debug) console.log(`${debug}: ${x},${y}: no stride`);
         _P.set(xp, yp, config.radius);
         _P.add(offset);
         _P.setLength(scaledHeight);
+        // if (debug === `-0.125,-0.375` && x === 4 && y === 2) console.log('scaled', _P.clone());
+        // if (debug === `0.25,-0.25` && x === 0 && y === 3) console.log('scaled', _P.clone());
       }
+
+      // if (debug === '-0.125,-0.375' && x === resolution) {
+      //   console.log(debug, y, _P.clone());
+      // }
+      // if (debug === '0.25,-0.25' && x === 0) {
+      //   console.log(debug, y, _P.clone());
+      // }
+
+      // init uv's
+      // NOTE: could probably flip y in these UVs instead of in every shader
+      // const uvs = new Float32Array(resolutionPlusOne * resolutionPlusOne * 2);
+      // for (let x = 0; x < resolutionPlusOne; x++) {
+      //   for (let y = 0; y < resolutionPlusOne; y++) {
+      //     const outputIndex = (resolutionPlusOne * x + y) * 2;
+      //     uvs[outputIndex + 0] = x / resolution;
+      //     uvs[outputIndex + 1] = y / resolution;
+      //   }
+      // }
 
       const outputIndex = 3 * (resolutionPlusOne * x + y);
       positions[outputIndex + 0] = _P.x;

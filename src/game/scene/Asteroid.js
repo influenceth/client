@@ -389,16 +389,10 @@ const Asteroid = (props) => {
       )}
       {/* TODO: remove all helpers */}
       {false && (
-        <>
-          <mesh>
-            <sphereGeometry args={[12099.76]} />
-            <meshStandardMaterial color={0xff00ff} opacity={0.3} transparent={true} />
-          </mesh>
-          <mesh>
-            <sphereGeometry args={[10154.07]} />
-            <meshStandardMaterial color={0x00ff00} opacity={0.3} transparent={true} />
-          </mesh>
-        </>
+        <mesh>
+          <sphereGeometry args={[13000]} />
+          <meshStandardMaterial color={0x0000ff} opacity={0.9} transparent={true} />
+        </mesh>
       )}
       {false && (
         <points ref={debug}>
@@ -408,6 +402,7 @@ const Asteroid = (props) => {
       {false && light.current && <primitive object={new DirectionalLightHelper(light.current, 2 * config?.radius)} />}
       {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
       {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
+      {false && <ambientLight intensity={0.4} />}
     </group>
   );
 }

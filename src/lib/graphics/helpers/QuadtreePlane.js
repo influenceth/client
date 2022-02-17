@@ -65,13 +65,10 @@ class QuadtreePlane {
   }
 
   _populateNeighbors(parent) {
-    if (parent.root) {
-      // TODO: attach neighboring sides (w/ transforms)
-    }
     if (parent.children) {
-      // populate node.children.neighbors (SW, SE, NW, NE)
+      // populate node.children.neighbors
+      // (order of children is SW, SE, NW, NE)
       parent.children.forEach((child, i) => {
-        child.neighbors = {};
         if (i === 0) {
           child.neighbors.N = parent.children[2];
           child.neighbors.S = this.getClosestNeighborChild(parent.neighbors.S, 2);
@@ -96,6 +93,30 @@ class QuadtreePlane {
         this._populateNeighbors(child);
       });
     }
+  }
+
+  // TODO (enhancement): there is almost certainly a more explicit way to do this than
+  //  using distanceTo, but this currently benchmarks to <1ms when run for all sides,
+  //  so leaving it for now
+  //  - one thought: could we derive resolution of edge's neighbor based on how far camera
+  //                 is from would-be sphereCenter of a same-sized chunk?
+  //  - more likely: transform NSEW for each side, so can do similarly to _populateNeighbors
+  populateNonsideNeighbors(faceChildren) {
+    this.getChildren().forEach((child) => {
+      Object.keys(child.neighbors).forEach((dir) => {
+        if (!child.neighbors[dir]) {
+          const { closest } = faceChildren[dir].reduce((acc, testChild) => {
+            const dist = child.sphereCenter.distanceTo(testChild.sphereCenter);
+            if (acc.closestDist === null || dist < acc.closestDist) {
+              acc.closest = testChild;
+              acc.closestDist = dist;
+            }
+            return acc;
+          }, { closest: null, closestDist: null });
+          child.neighbors[dir] = closest;
+        }
+      });
+    });
   }
 
   getClosestNeighborChild(neighborParentNode, neighborPos) {
@@ -164,13 +185,13 @@ class QuadtreePlane {
         b: new Box3(midpoint, parent.bounds.max),
         orientation: 'NE', 
       },
-    ].map(({ b, orientation }) => {
+    ].map(({ b }) => {
       const node = {
-        breadcrumbs: [...(parent.breadcrumbs || []), orientation],  // TODO: do we need breadcrumbs?
         bounds: b,
         children: [],
         center: b.getCenter(new Vector3()),
-        size: b.getSize(new Vector3())
+        size: b.getSize(new Vector3()),
+        neighbors: {}
       };
       this.setSphereCenter(node);
       return node;

@@ -44,6 +44,16 @@ const cubeTransforms = [
   (new Matrix4()).makeRotationY(Math.PI),      // -Z
 ];
 
+// N, S, E, W per side
+const sideNeighbors = [
+  [5,4,2,3],
+  [4,5,2,3],
+  [0,1,5,4],
+  [0,1,4,5],
+  [0,1,2,3],
+  [0,1,3,4],
+];
+
 const getPrerenderResolution = (radius) => {
   const targetResolution = 2 * radius / MIN_CHUNK_SIZE;
   if (targetResolution < 32) return 16;
@@ -63,6 +73,7 @@ class QuadtreeCubeSphere {
     const prerenderResolution = getPrerenderResolution(radius);
     for (let i in cubeTransforms) {
       this.sides.push({
+        index: i,
         transform: cubeTransforms[i].clone(),
         quadtree: new QuadtreePlane({
           size: radius,
@@ -79,7 +90,7 @@ class QuadtreeCubeSphere {
       });
 
       // TODO: remove debug
-      if (this.sides.length === 1) break;
+      // if (this.sides.length === 1) break;
     }
   }
 
@@ -87,61 +98,61 @@ class QuadtreeCubeSphere {
   prerenderCoarseGeometry(sideTransform, resolution, config) {
 
     // TODO: remove debug
-    const debug1 = generateHeightMap(
-      sideTransform,
-      0.5,
-      new Vector3(0.5, -0.5, 0),
-      CHUNK_RESOLUTION + 1,
-      { N: 1, S: 1, E: 1, W: 1 },
-      config,
-      'texture'
-    );
-    const debug2 = generateHeightMap(
-      sideTransform,
-      0.25,
-      new Vector3(-0.25, -0.25, 0),
-      CHUNK_RESOLUTION + 1,
-      { N: 2, S: 1, E: 2, W: 1 },
-      config,
-      'texture'
-    );
+    // const debug1 = generateHeightMap(
+    //   sideTransform,
+    //   0.25,
+    //   new Vector3(0.25, -0.25, 0),
+    //   CHUNK_RESOLUTION + 1,
+    //   { N: 2, S: 1, E: 1, W: 1 },
+    //   config,
+    //   'texture'
+    // );
+    // const debug2 = generateHeightMap(
+    //   sideTransform,
+    //   0.125,
+    //   new Vector3(-0.125, -0.125, 0),
+    //   CHUNK_RESOLUTION + 1,
+    //   { N: 2, S: 1, E: 2, W: 1 },
+    //   config,
+    //   'texture'
+    // );
 
-    const x1 = 0;
-    const x2 = CHUNK_RESOLUTION;
-    const r = CHUNK_RESOLUTION + 1;
-    for (let y = 0; y < r; y++) {
-      const bi1 = (r * (r - y - 1) + x1) * 4; // (flip y)
-      const bi2 = (r * (r - y - 1) + x2) * 4; // (flip y)
-      const log = [
-        [
-          debug1.buffer[bi1],
-          debug1.buffer[bi1+1],
-          debug1.buffer[bi1+2],
-          debug1.buffer[bi1+3],
-        ].join(','),
-        [
-          debug2.buffer[bi2],
-          debug2.buffer[bi2+1],
-          debug2.buffer[bi2+2],
-          debug2.buffer[bi2+3],
-        ].join(','),
-        // (debug1.buffer[bi1] * 255 + debug1.buffer[bi1+1]) / 256,
-        // (debug2.buffer[bi2] * 255 + debug2.buffer[bi2+1]) / 256,
-      ];
-      // if (y >= CHUNK_RESOLUTION / 2) {
-      //   const y2 = (y - CHUNK_RESOLUTION / 2) * 2;
-      //   const bi2 = (r * (r - y2 - 1) + x2) * 4; // (flip y)
-      //   if (Math.round(bi2) == bi2) {
-      //     log.push([
-      //       debug2.buffer[bi2],
-      //       debug2.buffer[bi2+1],
-      //       debug2.buffer[bi2+2],
-      //       debug2.buffer[bi2+3],
-      //     ].join(','));
-      //   }
-      // }
-      console.log(log);
-    }
+    // const x1 = 0;
+    // const x2 = CHUNK_RESOLUTION;
+    // const r = CHUNK_RESOLUTION + 1;
+    // for (let y = 0; y < r; y++) {
+    //   const bi1 = (r * (r - y - 1) + x1) * 4; // (flip y)
+    //   const bi2 = (r * (r - y - 1) + x2) * 4; // (flip y)
+    //   const log = [
+    //     [
+    //       debug1.buffer[bi1],
+    //       debug1.buffer[bi1+1],
+    //       debug1.buffer[bi1+2],
+    //       debug1.buffer[bi1+3],
+    //     ].join(','),
+    //     [
+    //       debug2.buffer[bi2],
+    //       debug2.buffer[bi2+1],
+    //       debug2.buffer[bi2+2],
+    //       debug2.buffer[bi2+3],
+    //     ].join(','),
+    //     // (debug1.buffer[bi1] * 255 + debug1.buffer[bi1+1]) / 256,
+    //     // (debug2.buffer[bi2] * 255 + debug2.buffer[bi2+1]) / 256,
+    //   ];
+    //   // if (y >= CHUNK_RESOLUTION / 2) {
+    //   //   const y2 = (y - CHUNK_RESOLUTION / 2) * 2;
+    //   //   const bi2 = (r * (r - y2 - 1) + x2) * 4; // (flip y)
+    //   //   if (Math.round(bi2) == bi2) {
+    //   //     log.push([
+    //   //       debug2.buffer[bi2],
+    //   //       debug2.buffer[bi2+1],
+    //   //       debug2.buffer[bi2+2],
+    //   //       debug2.buffer[bi2+3],
+    //   //     ].join(','));
+    //   //   }
+    //   // }
+    //   console.log(log);
+    // }
 
     const s = Date.now();
     const heightMap = generateHeightMap(
@@ -170,6 +181,18 @@ class QuadtreeCubeSphere {
   setCameraPosition(position) {
     for (let s of this.sides) {
       s.quadtree.setCameraPosition(position);
+    }
+
+    // populate cross-side neighbors (now that all sides' chunks are ready)
+    const childrenBySide = this.sides.map((s) => s.quadtree.getChildren());
+    for (let s of this.sides) {
+      const [N, S, E, W] = sideNeighbors[s.index];
+      s.quadtree.populateNonsideNeighbors({
+        N: childrenBySide[N] || [],
+        S: childrenBySide[S] || [],
+        E: childrenBySide[E] || [],
+        W: childrenBySide[W] || [],
+      });
     }
   }
 

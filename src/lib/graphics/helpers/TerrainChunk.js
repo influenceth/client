@@ -7,7 +7,6 @@ import {
   LessDepth,
   Mesh,
   MeshStandardMaterial,
-  PCFSoftShadowMap,
   Vector3
 } from 'three';
 
@@ -63,7 +62,7 @@ class TerrainChunk {
       metalness: 0,
       roughness: 1,
       side: FrontSide,
-      wireframe: true,
+      // wireframe: true,
       onBeforeCompile: function (shader) {
         shader.uniforms.uHeightScale = { type: 'f', value: _heightScale };
         shader.uniforms.uStretch = { type: 'v3', value: stretch };
@@ -75,7 +74,7 @@ class TerrainChunk {
             `#ifdef USE_DISPLACEMENTMAP
               vec2 disp16 = texture2D(displacementMap, vUv).xy;
               float disp = (disp16.x * 255.0 + disp16.y) / 256.0;
-              // stretch back to radius (geometry initialized at minHeight for chunk)
+              // stretch back to original geometry (geometry initialized at minHeight for chunk)
               transformed /= uHeightScale;
               // displace along normal
               transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias);
@@ -86,9 +85,6 @@ class TerrainChunk {
         `;
       }
     });
-
-    // TODO: skirts (could pass edge (1/0) in extra displacementMap channel) (would allow for better edge-normal sampling)
-
 
     this._plane = new Mesh(this._geometry, this._material);
     this._plane.castShadow = false;
@@ -162,8 +158,6 @@ class TerrainChunk {
   initGeometry() {
     const resolution = this._params.resolution;
     const resolutionPlusOne = resolution + 1;
-    
-    // TODO: could we also set position just once here as well?
 
     // init uv's
     // NOTE: could probably flip y in these UVs instead of in every shader
@@ -171,8 +165,8 @@ class TerrainChunk {
     for (let x = 0; x < resolutionPlusOne; x++) {
       for (let y = 0; y < resolutionPlusOne; y++) {
         const outputIndex = (resolutionPlusOne * x + y) * 2;
-        uvs[outputIndex + 0] = x / resolution;
-        uvs[outputIndex + 1] = y / resolution;
+        uvs[outputIndex + 0] = (x + 0.5) / resolutionPlusOne;
+        uvs[outputIndex + 1] = (y + 0.5) / resolutionPlusOne;
       }
     }
 
@@ -181,12 +175,12 @@ class TerrainChunk {
     for (let i = 0; i < resolution; i++) {
       for (let j = 0; j < resolution; j++) {
         const outputIndex = (resolution * i + j) * 6;
-        indices[outputIndex + 0] = i * (resolution + 1) + j;
-        indices[outputIndex + 1] = (i + 1) * (resolution + 1) + j + 1;
-        indices[outputIndex + 2] = i * (resolution + 1) + j + 1;
-        indices[outputIndex + 3] = (i + 1) * (resolution + 1) + j;
-        indices[outputIndex + 4] = (i + 1) * (resolution + 1) + j + 1;
-        indices[outputIndex + 5] = i * (resolution + 1) + j;
+        indices[outputIndex + 0] = i * resolutionPlusOne + j;
+        indices[outputIndex + 1] = (i + 1) * resolutionPlusOne + j + 1;
+        indices[outputIndex + 2] = i * resolutionPlusOne + j + 1;
+        indices[outputIndex + 3] = (i + 1) * resolutionPlusOne + j;
+        indices[outputIndex + 4] = (i + 1) * resolutionPlusOne + j + 1;
+        indices[outputIndex + 5] = i * resolutionPlusOne + j;
       }
     }
 

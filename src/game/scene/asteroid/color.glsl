@@ -19,9 +19,8 @@ void main() {
   gl_FragColor = texture2D(tRamps, vec2((uSpectral + 0.5) / 11.0, height.b));
 
   vec2 flipY = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
-  if (flipY.x == 0.5) {
-    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-  } else if (flipY.y == 0.5 || flipY.y == uResolution.y - 0.5 || flipY.x == uResolution.x - 0.5) {
-    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-  }
+  // TODO: remove
+  //if (uEdgeStrideE > 1.0 && flipY.x == uResolution.x - 0.5) {
+    //gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
+  //}
 }
