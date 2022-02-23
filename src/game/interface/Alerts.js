@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import styled from 'styled-components';
-import ReactNotification, { store as notify } from 'react-notifications-component';
+import { ReactNotifications, store as notify } from 'react-notifications-component';
 import 'react-notifications-component/dist/theme.css';
 import 'animate.css';
 
@@ -31,7 +31,7 @@ const send = (message, options = {}) => {
   }
 };
 
-const StyledReactNotification = styled(ReactNotification)`
+const StyledReactNotification = styled(ReactNotifications)`
   & .notification-container--top-center {
     top: 0 !important;
   }
