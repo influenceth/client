@@ -2,11 +2,14 @@ import {
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
+  DoubleSide,
   Float32BufferAttribute,
   FrontSide,
   LessDepth,
   Mesh,
+  MeshDepthMaterial,
   MeshStandardMaterial,
+  RGBADepthPacking,
   Vector3
 } from 'three';
 
@@ -27,6 +30,24 @@ setInterval(() => {
   }
   first = true;
 }, 5000);
+
+const patchShader = (vertexShader) => `
+  uniform float uHeightScale;
+  uniform vec3 uStretch;
+  ${vertexShader.replace(
+    '#include <displacementmap_vertex>',
+    `#ifdef USE_DISPLACEMENTMAP
+      vec2 disp16 = texture2D(displacementMap, vUv).xy;
+      float disp = (disp16.x * 255.0 + disp16.y) / 256.0;
+      // stretch back to original geometry (geometry initialized at minHeight for chunk)
+      transformed /= uHeightScale;
+      // displace along normal
+      transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias);
+      // stretch along normal
+      transformed *= uStretch;
+    #endif`
+  )}
+`;
 
 class TerrainChunk {
   constructor(params, config, textureRenderer) {
@@ -54,46 +75,38 @@ class TerrainChunk {
     this.initGeometry();
 
     this._material = new MeshStandardMaterial({
+      alphaTest: 0.5,   // TODO: shadows -- should this be tuned?
       color: 0xFFFFFF,
       depthFunc: LessDepth,
       displacementBias,
       displacementScale,
       dithering: true,
+      // flatShading: true,
       metalness: 0,
       roughness: 1,
       side: FrontSide,
+      shadowSide: DoubleSide,
       // wireframe: true,
       onBeforeCompile: function (shader) {
         shader.uniforms.uHeightScale = { type: 'f', value: _heightScale };
         shader.uniforms.uStretch = { type: 'v3', value: stretch };
-        shader.vertexShader = `
-          uniform float uHeightScale;
-          uniform vec3 uStretch;
-          ${shader.vertexShader.replace(
-            '#include <displacementmap_vertex>',
-            `#ifdef USE_DISPLACEMENTMAP
-              vec2 disp16 = texture2D(displacementMap, vUv).xy;
-              float disp = (disp16.x * 255.0 + disp16.y) / 256.0;
-              // stretch back to original geometry (geometry initialized at minHeight for chunk)
-              transformed /= uHeightScale;
-              // displace along normal
-              transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias);
-              // stretch along normal
-              transformed *= uStretch;
-            #endif`
-          )}
-        `;
-      }
+        shader.vertexShader = patchShader(shader.vertexShader);
+      },
     });
 
     this._plane = new Mesh(this._geometry, this._material);
-    this._plane.castShadow = false;
+
+    // TODO: do not use customDepthMaterial if shadows are disabled in user settings
+    this._plane.customDepthMaterial = new MeshDepthMaterial({
+      depthPacking: RGBADepthPacking,
+      onBeforeCompile: (shader) => {
+        shader.uniforms.uHeightScale = { type: 'f', value: _heightScale };
+        shader.uniforms.uStretch = { type: 'v3', value: stretch };
+        shader.vertexShader = patchShader(shader.vertexShader);
+      }
+    });
+    this._plane.castShadow = true;
     this._plane.receiveShadow = true;
-    // if (first) { first= false; console.log(this._plane);}
-    // this._plane.onBeforeRender = function (renderer) {
-    //   renderer.shadowMap.enabled = true;
-    //   renderer.shadowMap.type = PCFSoftShadowMap;
-    // };
   }
 
   attachToGroup() {
@@ -196,6 +209,7 @@ class TerrainChunk {
     this._geometry.attributes.uv.needsUpdate = true;
   }
 
+  // TODO: without pool, is this ever used after initial build?
   updateGeometry(data) {
     if (!data) return;
 
@@ -232,9 +246,9 @@ class TerrainChunk {
       // NOTE: the ternaries below are b/c there is different format for data generated
       //  on offscreen canvas vs normal canvas (i.e. if offscreencanvas not supported)
       this._material.setValues({
-        displacementMap: data.heightBitmap.image ? data.heightBitmap: new CanvasTexture(data.heightBitmap),
-        map: data.colorBitmap.image ? data.colorBitmap: new CanvasTexture(data.colorBitmap),
-        normalMap: data.normalBitmap.image ? data.normalBitmap: new CanvasTexture(data.normalBitmap),
+        displacementMap: data.heightBitmap.image ? data.heightBitmap : new CanvasTexture(data.heightBitmap),
+        map: data.colorBitmap.image ? data.colorBitmap : new CanvasTexture(data.colorBitmap),
+        normalMap: data.normalBitmap.image ? data.normalBitmap : new CanvasTexture(data.normalBitmap),
       });
       this._material.needsUpdate = true;
     }

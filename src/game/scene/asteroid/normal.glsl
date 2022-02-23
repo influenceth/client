@@ -19,17 +19,13 @@ void main() {
   float right = getHeight(centerCoord + vec2(1.0, 0.0));
   float left = getHeight(centerCoord + vec2(-1.0, 0.0));
 
-  // attempt to scale normal intensity to previous fixed-resolution intensity
-  float xMult = uCompatibilityScalar;
-  float yMult = uCompatibilityScalar;
-
   // Calculate X vector
-  float xNormal = (left - right) * xMult;
+  float xNormal = (left - right) * uCompatibilityScalar;
   xNormal = sign(xNormal) * pow(abs(xNormal), uNormalIntensity);
   xNormal = 0.5 * xNormal + 0.5;
 
   // Calculate Y vector
-  float yNormal = (down - up) * yMult;
+  float yNormal = (down - up) * uCompatibilityScalar;
   yNormal = sign(yNormal) * pow(abs(yNormal), uNormalIntensity);
   yNormal = 0.5 * yNormal + 0.5;
 

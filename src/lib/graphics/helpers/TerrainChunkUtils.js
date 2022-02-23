@@ -56,6 +56,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uDispPasses: { type: 'i', value: config.dispPasses },
       uDispPersist: { type: 'f', value: config.dispPersist },
       uDispWeight: { type: 'f', value: config.dispWeight },
+      uDispFineWeight: { type: 'f', value: 0.08 },
       uEdgeStrideN: { type: 'f', value: edgeStrides.N },
       uEdgeStrideS: { type: 'f', value: edgeStrides.S },
       uEdgeStrideE: { type: 'f', value: edgeStrides.E },
@@ -195,11 +196,15 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
   //   debug = '0.25,-0.25';
   // }
 
-  // meant to help match normal intensity on dynamic resolution asteroids
-  // to previously fixed resolution asteroids (height difference between
-  // neighbor samples is used to calculate normal, but now that width is
-  // dynamic between those samples, need to accomodate for consistent "slope")
-  const normalCompatibilityScale = (0.0025 * config.radius * resolution) / width;
+  // meant to match normal intensity of dynamic resolution asteroids to legacy
+  // fixed resolution asteroids (height difference between neighbor samples is
+  // used to calculate normal, but now that width is variable b/w samples, so
+  // need to accomodate that dynamicism for consistent "slope")
+  //  NOTE: this targets legacy user settings for resolution-of-512-textures, which
+  //        was consistent across all asteroid sizes... 
+  //  TODO (enhancement): could also standardize betweeen asteroids, but that's different
+  //        than legacy
+  const normalCompatibilityScale = textureResolution / (512 * textureSize);
 
   // if (debug) {
   //   const debugTexture = generateHeightMap(

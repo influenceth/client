@@ -1,0 +1,15 @@
+diff --git a/node_modules/three/build/three.module.js b/node_modules/three/build/three.module.js
+index 2bcabf7..4897399 100644
+--- a/node_modules/three/build/three.module.js
++++ b/node_modules/three/build/three.module.js
+@@ -20743,7 +20743,9 @@ function WebGLShadowMap( _renderer, _objects, _capabilities ) {
+ 
+ 			if ( cachedMaterial === undefined ) {
+ 
+-				cachedMaterial = result.clone();
++				// if user explicitly passed custom material, cloning seems unnecessary
++				// and clobbers any onBeforeCompile, etc properties ignored in clone
++				cachedMaterial = customMaterial !== undefined ? result : result.clone();
+ 				materialsForVariant[ keyB ] = cachedMaterial;
+ 
+ 			}

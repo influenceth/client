@@ -145,7 +145,7 @@ const Asteroid = (props) => {
       let maxRadius = ringsPresent
         ? asteroidData?.radius * 1.5
         : asteroidData?.radius * Math.max(config.stretch.x, config.stretch.y, config.stretch.z);
-      light.current.shadow.bias = -0.07;
+      light.current.shadow.bias = -0.01;  // TODO: shadows
       light.current.shadow.camera.near = lightDistance - maxRadius;
       light.current.shadow.camera.far = lightDistance + maxRadius;
       light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius;
@@ -196,11 +196,11 @@ const Asteroid = (props) => {
     group.current?.position.copy(panTo);
     panTo.negate();
     //const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
-    const zoomTo = new Vector3(0, 1, 0).multiplyScalar(asteroidData.radius * 2.0); // TODO: remove debug
+    const zoomTo = new Vector3(1, 0, 0).multiplyScalar(asteroidData.radius * 2.0); // TODO: remove debug
     controls.targetScene.position.copy(panTo);
     controls.object.position.copy(zoomTo);
     controls.noPan = true;
-    controls.object.near = 1; // TODO: 100;
+    controls.object.near = 100;
     controls.object.updateProjectionMatrix();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldFinishZoomIn, asteroidData?.radius ]);
@@ -324,7 +324,7 @@ const Asteroid = (props) => {
     let updatedRotation = rotation.current;
     if (config?.rotationSpeed && time) {
       updatedRotation = time * config.rotationSpeed * 2 * Math.PI
-      updatedRotation = 0; // TODO: remove
+      // updatedRotation = 0; // TODO: remove
       if (updatedRotation !== rotation.current) {
         quadtreeRef.current.setRotationFromAxisAngle(
           rotationAxis.current,
@@ -390,8 +390,8 @@ const Asteroid = (props) => {
       {/* TODO: remove all helpers */}
       {false && (
         <mesh>
-          <sphereGeometry args={[13000]} />
-          <meshStandardMaterial color={0x0000ff} opacity={0.9} transparent={true} />
+          <sphereGeometry args={[14350]} />
+          <meshStandardMaterial color={0x0000ff} opacity={0.8} transparent={true} />
         </mesh>
       )}
       {false && (

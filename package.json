@@ -62,7 +62,8 @@
     "build-server": "webpack --config server.webpack.config.js",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
-    "heroku-prebuild": "node ./prebuild.js"
+    "heroku-prebuild": "node ./prebuild.js",
+    "postinstall": "patch-package"
   },
   "eslintConfig": {
     "extends": [
@@ -90,6 +91,7 @@
     "babel-plugin-root-import": "^6.6.0",
     "customize-cra": "^1.0.0",
     "glslify-loader": "^2.0.0",
+    "patch-package": "^6.4.7",
     "raw-loader": "^4.0.2",
     "redux-devtools": "^3.7.0",
     "worker-loader": "^3.0.8"

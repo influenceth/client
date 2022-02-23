@@ -12,6 +12,7 @@ uniform int uDispPasses;
 uniform float uDispPersist;
 uniform float uDispWeight;
 uniform float uFeaturesFreq;
+uniform float uDispFineWeight;
 uniform vec2 uResolution;
 uniform vec3 uSeed;
 uniform vec3 uStretch;
@@ -26,8 +27,6 @@ uniform mat4 uTransform;
 #pragma glslify: cnoise = require('glsl-noise/classic/3d')
 #pragma glslify: snoise = require('glsl-noise/simplex/3d')
 #pragma glslify: cellular = require('../../../lib/graphics/cellular3')
-
-const float FINE_DISPLACEMENT_WEIGHT = 0.05;
 
 vec3 getUnitSphereCoords(vec2 flipY) {
 
@@ -153,7 +152,7 @@ vec4 getOutputForPoint(vec2 flipY) {
   float fine = getFeatures(point, uCraterPasses) + topo * uTopoWeight;
 
   // Get total displacement
-  float height = (1.0 - FINE_DISPLACEMENT_WEIGHT) * disp + FINE_DISPLACEMENT_WEIGHT * fine;
+  float height = (1.0 - uDispFineWeight) * disp + uDispFineWeight * fine;
 
   // Encode height and disp in different channels
   // r, g: used in normalmap
