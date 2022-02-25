@@ -87,12 +87,14 @@ class TerrainChunk {
       side: FrontSide,
       shadowSide: DoubleSide,
       // wireframe: true,
-      onBeforeCompile: function (shader) {
+    });
+    if (this._params.csm) {
+      this._params.csm.setupMaterial(this._material, function (shader) {
         shader.uniforms.uHeightScale = { type: 'f', value: _heightScale };
         shader.uniforms.uStretch = { type: 'v3', value: stretch };
         shader.vertexShader = patchShader(shader.vertexShader);
-      },
-    });
+      });
+    }
 
     this._plane = new Mesh(this._geometry, this._material);
 

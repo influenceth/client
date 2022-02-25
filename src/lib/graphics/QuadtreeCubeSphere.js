@@ -330,6 +330,10 @@ class QuadtreeCubeSphereManager {
     }
   }
 
+  setCSM(csm) {
+    this.csm = csm;
+  }
+
   finishPendingUpdate() {
     // if not threaded, this is already handled within builder
     if (this.threaded) {
@@ -349,7 +353,8 @@ class QuadtreeCubeSphereManager {
       radius: this.radius,
       resolution,
       stitchingStrides,
-      minHeight
+      minHeight,
+      csm: this.csm
     });
   }
 }

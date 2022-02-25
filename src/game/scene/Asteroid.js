@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Vector3, Box3, Sphere, AxesHelper, CameraHelper, DirectionalLightHelper, BufferAttribute } from 'three';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
+import { Vector3, Box3, Sphere, DoubleSide, AxesHelper, CameraHelper, DirectionalLightHelper, BufferAttribute, MeshPhongMaterial, PlaneGeometry, Mesh } from 'three';
+import { CSM } from 'three/examples/jsm/csm/CSM';
+import { CSMHelper } from 'three/examples/jsm/csm/CSMHelper';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
 
@@ -56,7 +58,7 @@ function benchmark(tag) {
 // }, 5000);
 
 const Asteroid = (props) => {
-  const { controls, raycaster, scene } = useThree();
+  const { camera, controls, gl, raycaster, scene } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const time = useStore(s => s.time.precise);
   // const mapSize = useStore(s => s.graphics.textureSize); // TODO: apply user settings
@@ -80,11 +82,12 @@ const Asteroid = (props) => {
   const cameraPosition = useRef();
   const frameCycle = useRef(0);
   const group = useRef();
-  const light = useRef();
   const asteroidOrbit = useRef();
   const rotationAxis = useRef();
   const position = useRef();
   const rotation = useRef(0);
+  const csmHelper = useRef();
+  const floor = useRef();
 
   const disposeGeometry = useCallback(() => {
     if (quadtreeRef.current) {
@@ -92,12 +95,30 @@ const Asteroid = (props) => {
         quadtreeRef.current.remove(g);
       });
     }
+    if (geometry.current.csm) {
+      geometry.current.csm.remove();
+      geometry.current.csm.dispose();
+    }
+    if (group.current && csmHelper.current) {
+      group.current.remove(csmHelper.current);
+    }
     geometry.current.dispose();
     geometry.current = null;
   }, []);
 
+  const onUnload = useCallback(() => {
+    setConfig();
+    asteroidOrbit.current = null;
+    rotationAxis.current = null;
+    position.current = null;
+    rotation.current = null;
+    if (geometry.current) disposeGeometry();
+  }, []);
+
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
+
+
     if (asteroidData && asteroidData.asteroidId === origin) {
       const c = new Config(asteroidData);
       setConfig(c);
@@ -118,40 +139,87 @@ const Asteroid = (props) => {
 
     // cleanup if no data
     } else {
-      setConfig();
-      asteroidOrbit.current = null;
-      rotationAxis.current = null;
-      if (geometry.current) disposeGeometry();
-
+      onUnload();
       if (zoomStatus === 'in') updateZoomStatus('zooming-out');
     }
+
+    // return cleanup
+    return onUnload;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ asteroidData ]);
 
   // Configures the light component once the geometry is created
   const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent]);
   useEffect(() => {
-    if (!(asteroidData?.radius && quadtreeRef.current && light.current && position.current && config?.stretch)) return;
+    if (!(asteroidData?.radius && geometry.current && quadtreeRef.current && position.current && config?.stretch)) return;
 
+    let maxRadius = ringsPresent
+      ? asteroidData?.radius * 1.5
+      : asteroidData?.radius * Math.max(config.stretch.x, config.stretch.y, config.stretch.z);
     const lightDistance = asteroidData?.radius * 10;
-
     const posVec = new Vector3(...position.current);
-    light.current.intensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
-    light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(lightDistance));
-    // TODO: remove this:
-    light.current.position.copy(new Vector3(0, 1, 0).multiplyScalar(lightDistance));
 
-    if (shadows) {
-      let maxRadius = ringsPresent
-        ? asteroidData?.radius * 1.5
-        : asteroidData?.radius * Math.max(config.stretch.x, config.stretch.y, config.stretch.z);
-      light.current.shadow.bias = -0.01;  // TODO: shadows
-      light.current.shadow.camera.near = lightDistance - maxRadius;
-      light.current.shadow.camera.far = lightDistance + maxRadius;
-      light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius;
-      light.current.shadow.camera.right = light.current.shadow.camera.top = maxRadius;
-      light.current.shadow.camera.updateProjectionMatrix();
+    // TODO: figure out params -- far, margin
+    // TODO: figure out updates with camera
+
+    // TODO: make sure disabled-shadows is supported
+    if (shadows && !geometry.current.csm) {
+      const csm = new CSM({
+        // maxFar: 2 * asteroidData.radius,
+        cascades: 3, // TODO: ...
+        // mode: 'logarithmic', // TODO: comment out for "practical"
+        shadowMapSize: shadowSize,
+        lightColor: 0xffeedd,
+        lightDirection: new Vector3(0, -1, 0).normalize(),// TODO: posVec.clone().normalize().negate(),
+        lightIntensity: constants.STAR_INTENSITY / (posVec.length() / constants.AU),
+        lightNear: 1,
+        lightFar: 2 * lightDistance,
+        // lightMargin: 1000, // TODO: what effect does this have
+        lightMargin: 50000,
+        camera,
+        parent: scene
+      });
+
+      // set camera near and far
+      // for (let i = 0; i < csm.lights.length; i++) {
+      //   csm.lights[i].shadow.camera.bottom = csm.lights[i].shadow.camera.left = -maxRadius;
+      //   csm.lights[i].shadow.camera.right = csm.lights[i].shadow.camera.top = maxRadius;
+      //   csm.lights[i].shadow.camera.updateProjectionMatrix();
+      // }
+
+      geometry.current.setCSM(csm);
+
+      csmHelper.current = new CSMHelper(csm);
+
+      csmHelper.current.displayFrustum = true;
+      csmHelper.current.displayPlanes = true;
+      csmHelper.current.displayShadowBounds = true;
+      group.current.add(csmHelper.current);
+
+      const floorMaterial = new MeshPhongMaterial( { color: '#252a34' } );
+      csm.setupMaterial( floorMaterial );
+
+      const floor = new Mesh(new PlaneGeometry( 100000, 100000, 8, 8 ), floorMaterial );
+      floor.castShadow = true;
+      floor.receiveShadow = true;
+      group.current.add( floor );
     }
+
+    // TODO: light position?
+    // light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(lightDistance));
+
+    // TODO: any of these?
+    // if (shadows) {
+    //   let maxRadius = ringsPresent
+    //     ? asteroidData?.radius * 1.5
+    //     : asteroidData?.radius * Math.max(config.stretch.x, config.stretch.y, config.stretch.z);
+    //   light.current.shadow.bias = -0.01;  // TODO: shadows
+    //   light.current.shadow.camera.near = lightDistance - maxRadius;
+    //   light.current.shadow.camera.far = lightDistance + maxRadius;
+    //   light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius;
+    //   light.current.shadow.camera.right = light.current.shadow.camera.top = maxRadius;
+    //   light.current.shadow.camera.updateProjectionMatrix();
+    // }
   }, [asteroidData?.radius, config?.stretch, ringsPresent, shadows]);
 
 
@@ -363,6 +431,13 @@ const Asteroid = (props) => {
       }
     }
 
+    if (geometry.current?.csm) {
+      // TODO: benchmark
+      geometry.current.csm.update();
+      geometry.current.csm.updateFrustums();
+      if (csmHelper.current) csmHelper.current.update(); // TODO: remove helper
+    }
+
     // TODO: remove debug
     if (debug.current) {
       debug.current.setRotationFromAxisAngle(
@@ -374,12 +449,6 @@ const Asteroid = (props) => {
 
   return (
     <group ref={group}>
-      <directionalLight
-        ref={light}
-        color={0xffeedd}
-        castShadow={shadows}
-        shadow-mapSize-height={shadowSize}
-        shadow-mapSize-width={shadowSize} />
       <group ref={quadtreeRef} />
       {config?.ringsPresent && geometry.current && (
         <Rings
@@ -399,8 +468,12 @@ const Asteroid = (props) => {
           <pointsMaterial attach="material" size={100} sizeAttenuation={true} color={0xff0000} />
         </points>
       )}
-      {false && light.current && <primitive object={new DirectionalLightHelper(light.current, 2 * config?.radius)} />}
-      {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
+      {true && geometry.current?.csm && geometry.current.csm.lights.map((light, i) => (
+        <Fragment key={`helper_${i}`}>
+          {false && <primitive object={new DirectionalLightHelper(light, 2 * config?.radius)} />}
+          {true && light?.shadow?.camera && <primitive object={new CameraHelper(light.shadow.camera)} />}
+        </Fragment>
+      ))}
       {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
       {false && <ambientLight intensity={0.4} />}
     </group>
