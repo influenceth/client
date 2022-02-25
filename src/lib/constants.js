@@ -12,8 +12,8 @@ const constants = {
   STAR_INTENSITY: 1, // as it relates to THREE light
 
   // Asteroid settings
-  CHUNK_RESOLUTION: 256,      // 64
-  CHUNK_SPLIT_DISTANCE: 0.8,  // 1.25 (this should probably always be >= 0.5 functionally)
+  CHUNK_RESOLUTION: 64,      // 256, 64
+  CHUNK_SPLIT_DISTANCE: 1.25,  // 0.8, 1.25 (this should probably always be >= 0.5 functionally)
   MIN_CHUNK_SIZE: 1000,       // 400
   ENABLE_TERRAIN_CHUNK_MULTITHREADING: false, // true is actually seemingly less performant b/c GPU
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: false,
@@ -22,6 +22,7 @@ const constants = {
   MIN_FRUSTRUM_HEIGHT: 2000,
   UPDATE_QUADTREE_EVERY_CHUNK: 0.5, // (multiplied by MIN_CHUNK_SIZE)
   OVERSAMPLE_CHUNK_TEXTURES: true,
+  ENABLE_CSM: true, // cascading shadow maps
 
   // Performance settings
   GRAPHICS_LOW: {

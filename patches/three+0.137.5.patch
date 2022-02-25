@@ -1,5 +1,5 @@
 diff --git a/node_modules/three/examples/jsm/csm/CSM.js b/node_modules/three/examples/jsm/csm/CSM.js
-index c96e627..90a40ec 100644
+index c96e627..f1398b2 100644
 --- a/node_modules/three/examples/jsm/csm/CSM.js
 +++ b/node_modules/three/examples/jsm/csm/CSM.js
 @@ -30,6 +30,7 @@ export class CSM {
@@ -24,17 +24,32 @@ index c96e627..90a40ec 100644
  	}
  
 -	setupMaterial( material ) {
-+	setupMaterial( material, additionalOnBeforeCompile ) {
++	setupMaterial( material, preexistingOnBeforeCompile ) {
  
  		material.defines = material.defines || {};
  		material.defines.USE_CSM = 1;
-@@ -261,6 +262,9 @@ export class CSM {
+@@ -260,7 +261,11 @@ export class CSM {
+ 		const scope = this;
  		const shaders = this.shaders;
  
++		material.userData.preexistingOnBeforeCompile = preexistingOnBeforeCompile;
  		material.onBeforeCompile = function ( shader ) {
-+			if (additionalOnBeforeCompile) {
-+				additionalOnBeforeCompile(shader);
++			if (preexistingOnBeforeCompile) {
++				preexistingOnBeforeCompile(shader);
 +			}
  
  			const far = Math.min( scope.camera.far, scope.maxFar );
  			scope.getExtendedBreaks( breaksVec2 );
+@@ -354,7 +359,11 @@ export class CSM {
+ 		const shaders = this.shaders;
+ 		shaders.forEach( function ( shader, material ) {
+ 
+-			delete material.onBeforeCompile;
++			if (material.userData.preexistingOnBeforeCompile) {
++				material.onBeforeCompile = material.userData.preexistingOnBeforeCompile;
++			} else {
++				delete material.onBeforeCompile;
++			}
+ 			delete material.defines.USE_CSM;
+ 			delete material.defines.CSM_CASCADES;
+ 			delete material.defines.CSM_FADE;

@@ -160,20 +160,20 @@ function benchmark(tag) {
     totals[tag] += Date.now() - startTime;
   }
 }
-setInterval(() => {
-  const b = {};
-  let prevTime = 0;
-  Object.keys(totals).forEach((k) => {
-    const thisTime = Math.round(totals[k] / totalRuns);
-    if (k === '_') {
-      b['TOTAL'] = thisTime;
-    } else {
-      b[k] = thisTime - prevTime;
-      prevTime = thisTime;
-    }
-  });
-  // console.log(`b ${totalRuns}`, b);
-}, 5000);
+// setInterval(() => {
+//   const b = {};
+//   let prevTime = 0;
+//   Object.keys(totals).forEach((k) => {
+//     const thisTime = Math.round(totals[k] / totalRuns);
+//     if (k === '_') {
+//       b['TOTAL'] = thisTime;
+//     } else {
+//       b[k] = thisTime - prevTime;
+//       prevTime = thisTime;
+//     }
+//   });
+//   console.log(`b ${totalRuns}`, b);
+// }, 5000);
 
 export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale, edgeStrides, resolution, width, oversample }) {
   if (!ramps) return;
@@ -345,6 +345,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
         _P.set(xp, yp, config.radius);
         _P.add(offset);
         _P.setLength(scaledHeight);
+        if (x >= 20 && x <= 23 && y >= 20 && y <= 23) _P.setLength(scaledHeight + 250);
         // if (debug === `-0.125,-0.375` && x === 4 && y === 2) console.log('scaled', _P.clone());
         // if (debug === `0.25,-0.25` && x === 0 && y === 3) console.log('scaled', _P.clone());
       }

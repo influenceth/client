@@ -334,6 +334,10 @@ class QuadtreeCubeSphereManager {
     this.csm = csm;
   }
 
+  setShadowsEnabled(state) {
+    this.shadowsEnabled = !!state;
+  }
+
   finishPendingUpdate() {
     // if not threaded, this is already handled within builder
     if (this.threaded) {
@@ -354,7 +358,8 @@ class QuadtreeCubeSphereManager {
       resolution,
       stitchingStrides,
       minHeight,
-      csm: this.csm
+      csm: this.csm,
+      shadowsEnabled: this.shadowsEnabled
     });
   }
 }

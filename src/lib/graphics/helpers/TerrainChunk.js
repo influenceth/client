@@ -31,6 +31,9 @@ setInterval(() => {
   first = true;
 }, 5000);
 
+// TODO: look at how CSM module does shader updates... if implement this, wouldn't 
+//    THREE.ShaderChunk.lights_fragment_begin = THREE.CSMShader.lights_fragment_begin;
+//    THREE.ShaderChunk.lights_pars_begin = THREE.CSMShader.lights_pars_begin;
 const patchShader = (vertexShader) => `
   uniform float uHeightScale;
   uniform vec3 uStretch;
@@ -55,7 +58,7 @@ class TerrainChunk {
     this._config = config;
     this._textureRenderer = textureRenderer;
 
-    const _heightScale = params.minHeight / this._config.radius;
+    const _heightScale = 1; //params.minHeight / this._config.radius;
     this._heightScale = _heightScale;
 
     // transform stretch per side
@@ -74,8 +77,14 @@ class TerrainChunk {
     this._geometry = new BufferGeometry();
     this.initGeometry();
 
+    const onBeforeCompile = function (shader) {
+      shader.uniforms.uHeightScale = { type: 'f', value: _heightScale };
+      shader.uniforms.uStretch = { type: 'v3', value: stretch };
+      shader.vertexShader = patchShader(shader.vertexShader);
+    };
+
     this._material = new MeshStandardMaterial({
-      alphaTest: 0.5,   // TODO: shadows -- should this be tuned?
+      alphaTest: 0.5,          // TODO: was using this w/o CSM, but may not be needed w/ CSM (may need to tune anyway)
       color: 0xFFFFFF,
       depthFunc: LessDepth,
       displacementBias,
@@ -85,28 +94,32 @@ class TerrainChunk {
       metalness: 0,
       roughness: 1,
       side: FrontSide,
-      shadowSide: DoubleSide,
+      // shadowSide: DoubleSide, // TODO: this was required w/o CSM, but doesn't play nice with CSM
       // wireframe: true,
     });
-    if (this._params.csm) {
-      this._params.csm.setupMaterial(this._material, function (shader) {
-        shader.uniforms.uHeightScale = { type: 'f', value: _heightScale };
-        shader.uniforms.uStretch = { type: 'v3', value: stretch };
-        shader.vertexShader = patchShader(shader.vertexShader);
-      });
+    if (this._params.shadowsEnabled && this._params.csm) {
+      this._params.csm.setupMaterial(this._material, onBeforeCompile);
+    } else {
+      this._material.onBeforeCompile = onBeforeCompile;
     }
 
+    // initialize mesh
     this._plane = new Mesh(this._geometry, this._material);
 
-    // TODO: do not use customDepthMaterial if shadows are disabled in user settings
-    this._plane.customDepthMaterial = new MeshDepthMaterial({
-      depthPacking: RGBADepthPacking,
-      onBeforeCompile: (shader) => {
-        shader.uniforms.uHeightScale = { type: 'f', value: _heightScale };
-        shader.uniforms.uStretch = { type: 'v3', value: stretch };
-        shader.vertexShader = patchShader(shader.vertexShader);
+    // add customDepthMaterial (with CSM or not)
+    if (this._params.shadowsEnabled) {
+      if (this._params.csm) {
+        this._plane.customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
+        this._params.csm.setupMaterial(this._plane.customDepthMaterial, onBeforeCompile);
+      } else {
+        this._plane.customDepthMaterial = new MeshDepthMaterial({
+          depthPacking: RGBADepthPacking,
+          onBeforeCompile
+        });
       }
-    });
+    }
+
+    // TODO: should these be in above conditional?
     this._plane.castShadow = true;
     this._plane.receiveShadow = true;
   }
