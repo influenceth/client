@@ -27,7 +27,7 @@ const UPDATE_QUADTREE_EVERY = MIN_CHUNK_SIZE * UPDATE_QUADTREE_EVERY_CHUNK;
 const FRAME_CYCLE_LENGTH = 15;
 
 const INITIAL_ZOOM = 2;
-const MIN_ZOOM_DEFAULT = 1.2; // TODO: should probably multiple by max stretch
+const MIN_ZOOM_DEFAULT = 1.2; // TODO: should probably multiply by max stretch
 const MAX_ZOOM = 4;
 const DEBUG_CSM = false;
 
@@ -174,6 +174,8 @@ const Asteroid = (props) => {
 
       // TODO: implement user graphics settings
       // TODO: could potentially add higher multiple to smallest distance
+      
+      // TODO: does number of cascades impact performance? if not, we should definitely add more
       const minSurfaceDistance = Math.min(
         (MIN_FRUSTRUM_HEIGHT / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
         (MIN_ZOOM_DEFAULT - 1) * asteroidData.radius
@@ -205,7 +207,7 @@ const Asteroid = (props) => {
       geometry.current.setCSM(csm);
       geometry.current.setShadowsEnabled(true);
 
-      // TODO: can remove this
+      // TODO: remove this
       if (DEBUG_CSM) {
         csmHelper.current = new CSMHelper(csm);
         csmHelper.current.displayFrustum = false;
