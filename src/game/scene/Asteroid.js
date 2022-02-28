@@ -25,7 +25,11 @@ const {
 } = constants;
 const UPDATE_QUADTREE_EVERY = MIN_CHUNK_SIZE * UPDATE_QUADTREE_EVERY_CHUNK;
 const FRAME_CYCLE_LENGTH = 15;
-const FALLBACK_MIN_ZOOM = 1.2;
+
+const INITIAL_ZOOM = 2;
+const MIN_ZOOM_DEFAULT = 1.2; // TODO: should probably multiple by max stretch
+const MAX_ZOOM = 4;
+const DEBUG_CSM = false;
 
 // TODO: remove debug
 let totalRuns = 0;
@@ -89,7 +93,7 @@ const Asteroid = (props) => {
   const position = useRef();
   const rotation = useRef(0);
   const csmHelper = useRef(); // TODO: remove
-  const floor = useRef(); // TODO: remove
+  const aspectRatio = useRef();
 
   const disposeGeometry = useCallback(() => {
     if (quadtreeRef.current) {
@@ -158,66 +162,65 @@ const Asteroid = (props) => {
     const lightDirection = new Vector3(0, -1, 0).normalize(); // TODO: posVec.clone().normalize();
     const lightIntensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
     const maxRadius = ringsPresent
-      ? asteroidData?.radius * 1.5
-      : asteroidData?.radius * Math.max(config.stretch.x, config.stretch.y, config.stretch.z);
+      ? asteroidData.radius * 1.5
+      : asteroidData.radius * Math.max(config.stretch.x, config.stretch.y, config.stretch.z);
 
     // TODO: make sure disabled-shadows is supported
     // TODO: if `shadows` is toggled (or asteroid changed), need to cleanup csm here
 
     if (shadows && ENABLE_CSM && !geometry.current.csm) {
-      const cascades = 5; // TODO: tune / potentially by user graphics settings
+      // TODO (enhancement): if it helps with performance, could always maintain just
+      //  a near and a far cascade (and change maxFar and splits when camera moves)
+
+      // TODO: implement user graphics settings
+      // TODO: could potentially add higher multiple to smallest distance
+      const minSurfaceDistance = Math.min(
+        (MIN_FRUSTRUM_HEIGHT / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
+        (MIN_ZOOM_DEFAULT - 1) * asteroidData.radius
+      );
+      const cascadeConfig = [];
+      cascadeConfig.unshift(MAX_ZOOM);
+      cascadeConfig.unshift(INITIAL_ZOOM - Math.min(config.stretch.x, config.stretch.y, config.stretch.z));
+      const midCascade = 8 * minSurfaceDistance / asteroidData.radius;
+      if (midCascade < cascadeConfig[0]) cascadeConfig.unshift(midCascade);
+      cascadeConfig.unshift(2 * minSurfaceDistance / asteroidData.radius);
+
       const csm = new CSM({
         fade: true,
-        maxFar: cascades * maxRadius,
-        cascades,
-        mode: 'logarithmic', // TODO: comment out for "practical"
-        shadowMapSize: shadowSize, // TODO: uncomment
+        maxFar: asteroidData.radius * MAX_ZOOM,
+        cascades: cascadeConfig.length,
+        mode: 'custom',
+        customSplitsCallback: (cascades, near, far, target) => {
+          cascadeConfig.forEach((r) => target.push(r / MAX_ZOOM));
+        },
+        shadowMapSize: shadowSize,
         lightColor,
         lightDirection,
-        lightIntensity: lightIntensity,// TODO: do we need to divide by cascades? do these add up?
+        lightIntensity,
         lightNear: 1,
-        lightFar: 10 * maxRadius,
-        // lightMargin: 2 * asteroidData.radius, // TODO: what effect does this have
+        lightFar: 10 * asteroidData.radius,
         camera,
-        parent: scene // TODO: could probably also use group.current
+        parent: group.current
       });
-      // TODO: customSplitsCallback
-      // NOTES:
-      //  - lightNear set shadowcamera near
-      //  - lightFar  "                 far
-      //  - maxFar: cascades go from eyecamera.near to min(eyecamera.far, maxFar)
-      //      breaks go from [0, 1]
-      //  - fade is slightly more resource intensive but may improve shadow appearance
-      //  - mode will probably need to be custom, but should figure out once working better
-      //      - will then need to implement customSplitsCallback
-      //  - shadowMapSize should potentially be `/ cascades`?
-      //  - lightMargin
-      // TODO: need to setAspect on resize
-
-      // TODO: ?
-      // set camera near and far
-      // for (let i = 0; i < csm.lights.length; i++) {
-      //   csm.lights[i].shadow.camera.bottom = csm.lights[i].shadow.camera.left = -maxRadius;
-      //   csm.lights[i].shadow.camera.right = csm.lights[i].shadow.camera.top = maxRadius;
-      //   csm.lights[i].shadow.camera.updateProjectionMatrix();
-      // }
-
       geometry.current.setCSM(csm);
       geometry.current.setShadowsEnabled(true);
 
-      csmHelper.current = new CSMHelper(csm);
-      csmHelper.current.displayFrustum = false;
-      csmHelper.current.displayPlanes = false;
-      csmHelper.current.displayShadowBounds = false;
-      // group.current.add(csmHelper.current);
-
-      const floorMaterial = new MeshPhongMaterial( { color: '#252a34' } );
-      csm.setupMaterial( floorMaterial );
-
-      const floor = new Mesh(new PlaneGeometry( 100000, 100000, 8, 8 ), floorMaterial );
-      floor.castShadow = true;
-      floor.receiveShadow = true;
-      group.current.add( floor );
+      // TODO: can remove this
+      if (DEBUG_CSM) {
+        csmHelper.current = new CSMHelper(csm);
+        csmHelper.current.displayFrustum = false;
+        csmHelper.current.displayPlanes = false;
+        csmHelper.current.displayShadowBounds = false;
+        group.current.add(csmHelper.current);
+  
+        const floorMaterial = new MeshPhongMaterial( { color: '#252a34' } );
+        csm.setupMaterial( floorMaterial );
+  
+        const floor = new Mesh(new PlaneGeometry( 100000, 100000, 8, 8 ), floorMaterial );
+        floor.castShadow = true;
+        floor.receiveShadow = true;
+        group.current.add( floor );
+      }
     } else {
       light.current = new DirectionalLight(lightColor, lightIntensity);
       group.current.add(light.current);
@@ -251,7 +254,7 @@ const Asteroid = (props) => {
     const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
-    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
+    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * INITIAL_ZOOM);
 
     const timeline = gsap.timeline({
       defaults: { duration: 2, ease: 'power4.out' },
@@ -271,14 +274,14 @@ const Asteroid = (props) => {
     if (!shouldFinishZoomIn) return;
 
     // Update distances to maximize precision
-    controls.minDistance = 0; // TODO: asteroidData.radius * FALLBACK_MIN_ZOOM;
-    controls.maxDistance = asteroidData.radius * 4.0;
+    controls.minDistance = 0; // TODO: asteroidData.radius * MIN_ZOOM_DEFAULT;
+    controls.maxDistance = asteroidData.radius * MAX_ZOOM;
 
     const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
-    //const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
-    const zoomTo = new Vector3(1, 0, 0).multiplyScalar(asteroidData.radius * 2.0); // TODO: remove debug
+    //const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * INITIAL_ZOOM);
+    const zoomTo = new Vector3(1, 0, 0).multiplyScalar(asteroidData.radius * INITIAL_ZOOM); // TODO: remove debug
     controls.targetScene.position.copy(panTo);
     controls.object.position.copy(zoomTo);
     controls.noPan = true;
@@ -329,7 +332,7 @@ const Asteroid = (props) => {
   const surfaceDistance = useMemo(() => {
     return (MIN_FRUSTRUM_HEIGHT / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180))
       + Math.min(asteroidData?.radius * GEOMETRY_SHRINK, GEOMETRY_SHRINK_MAX); // account for culling shrink
-  }, [controls?.object?.fov, asteroidData?.radius])
+  }, [controls?.object?.fov, asteroidData?.radius]);
 
   const updatePending = useRef();
 
@@ -377,12 +380,12 @@ const Asteroid = (props) => {
             // TODO: if current distance < new min, then pan first, then reset minDistance
             controls.minDistance = Math.min(
               controls.object.position.length() - intersection.distance + surfaceDistance,
-              FALLBACK_MIN_ZOOM * asteroidData.radius
+              MIN_ZOOM_DEFAULT * asteroidData.radius
             );
-          } else if(controls.minDistance < FALLBACK_MIN_ZOOM * asteroidData.radius) {
+          } else if(controls.minDistance < MIN_ZOOM_DEFAULT * asteroidData.radius) {
             controls.minDistance *= 1.01;
           } else {
-            controls.minDistance = FALLBACK_MIN_ZOOM * asteroidData.radius;
+            controls.minDistance = MIN_ZOOM_DEFAULT * asteroidData.radius;
           }
           // ^^^
         }
@@ -406,7 +409,7 @@ const Asteroid = (props) => {
     let updatedRotation = rotation.current;
     if (config?.rotationSpeed && time) {
       updatedRotation = time * config.rotationSpeed * 2 * Math.PI
-      // updatedRotation = 0; // TODO: remove
+      updatedRotation = 0; // TODO: remove
       if (updatedRotation !== rotation.current) {
         quadtreeRef.current.setRotationFromAxisAngle(
           rotationAxis.current,
@@ -446,10 +449,17 @@ const Asteroid = (props) => {
     }
 
     if (geometry.current?.csm) {
-      // TODO: benchmark
+      // vvv BENCHMARK <1ms
       geometry.current.csm.update();
-      geometry.current.csm.updateFrustums();
-      if (csmHelper.current) csmHelper.current.update(); // TODO: remove helper
+      const updatedAspect = window.innerWidth / window.innerHeight;
+      if (aspectRatio.current !== updatedAspect) {
+        aspectRatio.current = updatedAspect;
+        geometry.current.csm.updateFrustums();
+      }
+      // ^^^
+      if (csmHelper.current) {
+        csmHelper.current.update();
+      }
     }
 
     // TODO: remove debug
@@ -458,6 +468,14 @@ const Asteroid = (props) => {
         new Vector3(0, 1, 0),
         Math.PI
       );
+    }
+
+    // 
+    const debugInfo = document.getElementById('debug_info');
+    if (!!debugInfo && config?.radius) {
+      debugInfo.innerText = (controls.object.position.length() / config?.radius).toFixed(2);
+    } else {
+      console.log('#debug_info not found!');
     }
   });
 

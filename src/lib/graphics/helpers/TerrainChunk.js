@@ -58,7 +58,7 @@ class TerrainChunk {
     this._config = config;
     this._textureRenderer = textureRenderer;
 
-    const _heightScale = 1; //params.minHeight / this._config.radius;
+    const _heightScale = params.minHeight / this._config.radius;
     this._heightScale = _heightScale;
 
     // transform stretch per side

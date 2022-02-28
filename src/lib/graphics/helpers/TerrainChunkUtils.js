@@ -345,7 +345,7 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
         _P.set(xp, yp, config.radius);
         _P.add(offset);
         _P.setLength(scaledHeight);
-        if (x >= 20 && x <= 23 && y >= 20 && y <= 23) _P.setLength(scaledHeight + 250);
+        // if (x >= 20 && x <= 23 && y >= 20 && y <= 23) _P.setLength(scaledHeight + 250);
         // if (debug === `-0.125,-0.375` && x === 4 && y === 2) console.log('scaled', _P.clone());
         // if (debug === `0.25,-0.25` && x === 0 && y === 3) console.log('scaled', _P.clone());
       }
