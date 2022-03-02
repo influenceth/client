@@ -13,12 +13,54 @@ import colorShader from '~/game/scene/asteroid/color.glsl';
 import heightShader from '~/game/scene/asteroid/height.glsl';
 import heightShaderWithStitching from '~/game/scene/asteroid/height_w_stitching.glsl';
 import normalShader from '~/game/scene/asteroid/normal.glsl';
+import constants from '~/lib/constants';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
+
+const { OVERSAMPLE_CHUNK_TEXTURES } = constants;
 
 const rampsPath = `${process.env.PUBLIC_URL}/textures/asteroid/ramps.png`;
 
 // set up texture renderer (ideally w/ offscreen canvas)
 const textureRenderer = new TextureRenderer();
+
+// TODO: remove this debug vvv
+let first = true;
+let totalRuns = 0;
+let totals = {};
+let startTime;
+function benchmark(tag) {
+  if (!tag) {
+    startTime = Date.now();
+    totalRuns++;
+  }
+  else {
+    if (!totals[tag]) totals[tag] = 0;
+    totals[tag] += Date.now() - startTime;
+  }
+}
+// setInterval(() => {
+//   if (first) {
+//     first = false;
+//     totals = {};
+//     totalRuns = 0;
+//     return;
+//   }
+
+//   const b = {};
+//   let prevTime = 0;
+//   Object.keys(totals).forEach((k) => {
+//     const thisTime = Math.round(totals[k] / totalRuns);
+//     if (k === '_') {
+//       b['TOTAL'] = thisTime;
+//     } else {
+//       b[k] = thisTime - prevTime;
+//       prevTime = thisTime;
+//     }
+//   });
+//   console.log(`b ${totalRuns}`, b);
+// }, 5000);
+// ^^^
+
 
 // load ramps
 let ramps;
@@ -147,54 +189,109 @@ function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, conf
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-let totalRuns = 0;
-let totals = {};
-let startTime;
-function benchmark(tag) {
-  if (!tag) {
-    startTime = Date.now();
-    totalRuns++;
-  }
-  else {
-    if (!totals[tag]) totals[tag] = 0;
-    totals[tag] += Date.now() - startTime;
-  }
-}
-// setInterval(() => {
-//   const b = {};
-//   let prevTime = 0;
-//   Object.keys(totals).forEach((k) => {
-//     const thisTime = Math.round(totals[k] / totalRuns);
-//     if (k === '_') {
-//       b['TOTAL'] = thisTime;
-//     } else {
-//       b[k] = thisTime - prevTime;
-//       prevTime = thisTime;
-//     }
-//   });
-//   console.log(`b ${totalRuns}`, b);
-// }, 5000);
-
-export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale, edgeStrides, resolution, width, oversample }) {
-  if (!ramps) return;
-  benchmark();
-
-  const localToWorld = groupMatrix;
+export function rebuildChunkGeometry({ edgeStrides, heightScale, offset, radius, resolution, width }) {
+  const scaledHeight = radius * heightScale;
   const resolutionPlusOne = resolution + 1;
   const half = width / 2;
+
+  const _P = new Vector3();
+  const _S = new Vector3();
+  const positions = new Float32Array(resolutionPlusOne * resolutionPlusOne * 3);
+  for (let x = 0; x < resolutionPlusOne; x++) {
+    const xp = width * x / resolution - half;
+    for (let y = 0; y < resolutionPlusOne; y++) {
+      const yp = width * y / resolution - half;
+      
+      let midStride = false;
+      const strideEW = (x === resolution && edgeStrides.E > 1) ? edgeStrides.E : (
+        (x === 0 && edgeStrides.W > 1) ? edgeStrides.W : 1
+      );
+      const strideNS = (y === resolution && edgeStrides.N > 1) ? edgeStrides.N : (
+        (y === 0 && edgeStrides.S > 1) ? edgeStrides.S : 1
+      );
+
+      // handle stitching on EW
+      if (strideEW > 1) {
+        const stride = strideEW;
+        const strideMod = y % stride;
+        // if (debug) console.log(`${debug}: ${x},${y}: x-edge ${strideMod}/${stride}`);
+        if (strideMod > 0) {
+          midStride = true;
+
+          // set _P to stride-start point, set _S to stride-end point, then lerp between
+          // * "+ 1" to avoid seams from rounding differences and z-fighting
+          const strideMult = width * stride / resolution;
+          _P.set(
+            xp,
+            Math.floor(y / stride) * strideMult - half,
+            radius
+          );
+          _P.add(offset);
+          _P.setLength(scaledHeight + 1); // *
+
+          _S.set(
+            xp,
+            Math.ceil(y / stride) * strideMult - half,
+            radius
+          );
+          _S.add(offset);
+          _S.setLength(scaledHeight + 1); // *
+
+          _P.lerp(_S, strideMod / stride);
+        }
+      } else if (strideNS > 1) {
+        const stride = strideNS;
+        const strideMod = x % stride;
+        if (strideMod > 0) {
+          midStride = true;
+
+          // set _P to stride-start point, set _S to stride-end point, then lerp between
+          const strideMult = width * stride / resolution;
+          _P.set(
+            Math.floor(x / stride) * strideMult - half,
+            yp,
+            radius
+          );
+          _P.add(offset);
+          _P.setLength(scaledHeight + 1); // *
+
+          _S.set(
+            Math.ceil(x / stride) * strideMult - half,
+            yp,
+            radius
+          );
+          _S.add(offset);
+          _S.setLength(scaledHeight + 1); // *
+
+          _P.lerp(_S, strideMod / stride);
+        }
+      }
+      
+      // handle all other points
+      if (!midStride) {
+        _P.set(xp, yp, radius);
+        _P.add(offset);
+        _P.setLength(scaledHeight);
+      }
+
+      const outputIndex = 3 * (resolutionPlusOne * x + y);
+      positions[outputIndex + 0] = _P.x;
+      positions[outputIndex + 1] = _P.y;
+      positions[outputIndex + 2] = _P.z;
+    }
+  }
+
+  return positions;
+}
+
+export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, resolution, width }) {
+  const localToWorld = groupMatrix;
   const chunkSize = width / (2 * config.radius);
   const chunkOffset = offset.clone().multiplyScalar(1 / config.radius);
 
-  const textureResolution = oversample ? resolutionPlusOne + 2 : resolutionPlusOne;
-  const textureSize = oversample ? chunkSize * (1 + 2 / resolution) : chunkSize;
-
-  // TODO: remove debug
-  // let debug = false;
-  // if (chunkOffset.x === -0.25 && chunkOffset.y === -0.25) {
-  //   debug = '-0.25,-0.25';
-  // } else if (chunkOffset.x === 0.25 && chunkOffset.y === -0.25) {
-  //   debug = '0.25,-0.25';
-  // }
+  const resolutionPlusOne = resolution + 1;
+  const textureResolution = OVERSAMPLE_CHUNK_TEXTURES ? resolutionPlusOne + 2 : resolutionPlusOne;
+  const textureSize = OVERSAMPLE_CHUNK_TEXTURES ? chunkSize * (1 + 2 / resolution) : chunkSize;
 
   // meant to match normal intensity of dynamic resolution asteroids to legacy
   // fixed resolution asteroids (height difference between neighbor samples is
@@ -206,49 +303,16 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
   //        than legacy
   const normalCompatibilityScale = textureResolution / (512 * textureSize);
 
-  // if (debug) {
-  //   const debugTexture = generateHeightMap(
-  //     localToWorld,
-  //     textureSize,
-  //     chunkOffset,
-  //     textureResolution,
-  //     edgeStrides,
-  //     oversample,
-  //     config,
-  //     'texture'
-  //   );
-  //   const txt = [debug];
-  //   for (let y = 0; y < textureResolution; y++) {
-  //     const row = [];
-  //     for (let x = 0; x < textureResolution; x++) {
-  //       const bi = 4 * (textureResolution * y + x);
-  //       row.push(`[${x},${y}] ` + [
-  //         debugTexture.buffer[bi],
-  //         debugTexture.buffer[bi+1],
-  //         debugTexture.buffer[bi+2],
-  //         debugTexture.buffer[bi+3],
-  //       ].join(','));
-  //     }
-  //     txt.push(row.join('\t'));
-  //   }
-  //   console.log(txt.join('\n'));
-  // }
-
-  benchmark('setup');
-
   const heightBitmap = generateHeightMap(
     localToWorld,
     textureSize,
     chunkOffset,
     textureResolution,
     edgeStrides,
-    oversample,
+    OVERSAMPLE_CHUNK_TEXTURES,
     config
   );
-
-  benchmark('height bitmap');
   const heightTexture = heightBitmap.image ? heightBitmap : new CanvasTexture(heightBitmap);
-  benchmark('height texture');
 
   const colorBitmap = generateColorMap(
     heightTexture,
@@ -256,131 +320,21 @@ export function rebuildChunkGeometry({ config, groupMatrix, offset, heightScale,
     config,
     { edgeStrides, chunkSize }
   );
-  benchmark('color');
 
+  // TODO: does this need edge strides as well?
   const normalBitmap = generateNormalMap(
     heightTexture,
     textureResolution,
     normalCompatibilityScale,
     config
   );
-  benchmark('normal');
 
   // done with interim data textures
   heightTexture.dispose();
-  benchmark('dispose');
-
-  // build geometry
-  const _P = new Vector3();
-  const _S = new Vector3();
-  const positions = new Float32Array(resolutionPlusOne * resolutionPlusOne * 3);
-  const scaledHeight = config.radius * heightScale;
-  for (let x = 0; x < resolutionPlusOne; x++) {
-    const xp = width * x / resolution - half;
-    for (let y = 0; y < resolutionPlusOne; y++) {
-      const yp = width * y / resolution - half;
-      let midStride = false;
-
-      // handle stitching on EW
-      if ((x === resolution && edgeStrides.E > 1) || (x === 0 && edgeStrides.W > 1)) {
-        const stride = Math.max(edgeStrides.E, edgeStrides.W);
-        const strideMod = y % stride;
-        // if (debug) console.log(`${debug}: ${x},${y}: x-edge ${strideMod}/${stride}`);
-        if (strideMod > 0) {
-          midStride = true;
-
-          // set _P to stride-start point, set _S to stride-end point, then lerp between
-          // * "+ 1" to avoid seams from rounding differences and z-fighting
-          _P.set(
-            xp,
-            width * Math.floor(y / stride) * stride / resolution - half,
-            config.radius
-          );
-          _P.add(offset);
-          _P.setLength(scaledHeight + 1); // *
-
-          _S.set(
-            xp,
-            width * Math.ceil(y / stride) * stride / resolution - half,
-            config.radius
-          );
-          _S.add(offset);
-          _S.setLength(scaledHeight + 1); // *
-
-          _P.lerp(_S, strideMod / stride);
-        }
-
-      // handle stitching on NS
-      } else if ((y === resolution && edgeStrides.N > 1) || (y === 0 && edgeStrides.S > 1)) {
-        const stride = Math.max(edgeStrides.N, edgeStrides.S);
-        const strideMod = x % stride;
-        // if (debug) console.log(`${debug}: ${x},${y}: y-edge ${strideMod}/${stride}`);
-        if (strideMod > 0) {
-          midStride = true;
-
-          // set _P to stride-start point, set _S to stride-end point, then lerp between
-          _P.set(
-            width * Math.floor(x / stride) * stride / resolution - half,
-            yp,
-            config.radius
-          );
-          _P.add(offset);
-          _P.setLength(scaledHeight + 1); // *
-
-          _S.set(
-            width * Math.ceil(x / stride) * stride / resolution - half,
-            yp,
-            config.radius
-          );
-          _S.add(offset);
-          _S.setLength(scaledHeight + 1); // *
-
-          _P.lerp(_S, strideMod / stride);
-        }
-      }
-      
-      // handle all other points
-      if (!midStride) {
-        // if (debug) console.log(`${debug}: ${x},${y}: no stride`);
-        _P.set(xp, yp, config.radius);
-        _P.add(offset);
-        _P.setLength(scaledHeight);
-        // if (x >= 20 && x <= 23 && y >= 20 && y <= 23) _P.setLength(scaledHeight + 250);
-        // if (debug === `-0.125,-0.375` && x === 4 && y === 2) console.log('scaled', _P.clone());
-        // if (debug === `0.25,-0.25` && x === 0 && y === 3) console.log('scaled', _P.clone());
-      }
-
-      // if (debug === '-0.125,-0.375' && x === resolution) {
-      //   console.log(debug, y, _P.clone());
-      // }
-      // if (debug === '0.25,-0.25' && x === 0) {
-      //   console.log(debug, y, _P.clone());
-      // }
-
-      // init uv's
-      // NOTE: could probably flip y in these UVs instead of in every shader
-      // const uvs = new Float32Array(resolutionPlusOne * resolutionPlusOne * 2);
-      // for (let x = 0; x < resolutionPlusOne; x++) {
-      //   for (let y = 0; y < resolutionPlusOne; y++) {
-      //     const outputIndex = (resolutionPlusOne * x + y) * 2;
-      //     uvs[outputIndex + 0] = x / resolution;
-      //     uvs[outputIndex + 1] = y / resolution;
-      //   }
-      // }
-
-      const outputIndex = 3 * (resolutionPlusOne * x + y);
-      positions[outputIndex + 0] = _P.x;
-      positions[outputIndex + 1] = _P.y;
-      positions[outputIndex + 2] = _P.z;
-    }
-  }
   
-  benchmark('_');
-
   return {
-    positions,
-    colorBitmap,
     heightBitmap,
+    colorBitmap,
     normalBitmap
   };
 }

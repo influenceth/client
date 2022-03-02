@@ -1,7 +1,7 @@
-import { Matrix4, Vector3 } from 'three';
+import { Vector3 } from 'three';
 
 import * as utils from '~/lib/geometryUtils';
-import { initChunkTextures, rebuildChunkGeometry } from '~/lib/graphics/helpers/TerrainChunkUtils';
+import { rebuildChunkGeometry } from '~/lib/graphics/helpers/TerrainChunkUtils';
 
 onmessage = function(event) {
   switch (event.data.topic) {
@@ -11,8 +11,8 @@ onmessage = function(event) {
     case 'updatePlanetPositions':
       updatePlanetPositions(event.data.planets, event.data.elapsed);
       break;
-    case 'rebuildTerrainChunk':
-      rebuildTerrainChunk(event.data.chunk);
+    case 'rebuildTerrainGeometry':
+      rebuildTerrainGeometry(event.data.chunk);
       break;
     default:
       console.error('Method not supported');
@@ -44,52 +44,21 @@ let taskTally = 0;
 //   }
 // }, 5000);
 
-const rebuildTerrainChunk = function (chunk, debug) {
-  initChunkTextures().then(() => {
-    chunk.config.seed = new Vector3(chunk.config.seed.x, chunk.config.seed.y, chunk.config.seed.z);
-    chunk.config.stretch = new Vector3(chunk.config.stretch.x, chunk.config.stretch.y, chunk.config.stretch.z);
-    chunk.offset = new Vector3(chunk.offset.x, chunk.offset.y, chunk.offset.z);
-    chunk.groupMatrix = (new Matrix4()).fromArray(chunk.groupMatrix.elements);
-    // TODO: remove debug
-    const startTime = Date.now();
-    const rebuiltChunk = rebuildChunkGeometry(chunk);
-    if (debug) { // TODO: remove debug
-      taskTotal += Date.now() - startTime;
-      taskTally++;
-    }
-    postMessage({
-      topic: 'rebuiltTerrainChunk',
-      chunk: rebuiltChunk
-    }, [
-      rebuiltChunk.positions.buffer,
-      rebuiltChunk.uvs.buffer,
-      rebuiltChunk.indices.buffer,
-      rebuiltChunk.colorBitmap,
-      rebuiltChunk.normalBitmap,
-    ]);
-  });
-};
+const rebuildTerrainGeometry = function (chunk, debug) {
+  chunk.offset = new Vector3(chunk.offset[0], chunk.offset[1], chunk.offset[2]);
+  // TODO: remove debug
+  const startTime = Date.now();
+  const positions = rebuildChunkGeometry(chunk);
+  if (debug) { // TODO: remove debug
+    taskTotal += Date.now() - startTime;
+    taskTally++;
+  }
 
-// try to preload textures
-initChunkTextures();
-
-// TODO: remove
-// const rebuildAsteroidChunks = function(chunks) {
-//   initChunkTextures().then(() => {
-//     Promise.all(
-//       chunks.map((chunk) => {
-//         // (re-init THREE class objects since were abstracted to generic objects when passed to worker)
-//         chunk.offset = new Vector3(chunk.offset.x, chunk.offset.y, chunk.offset.z);
-//         chunk.groupMatrix = (new Matrix4()).fromArray(chunk.groupMatrix.elements);
-//         return rebuildChunkGeometry(chunk);
-//       })
-//     )
-//     .then((rebuilt) => {
-//       console.log({ rebuilt });
-//       postMessage({
-//         topic: 'rebuiltAsteroidChunks',
-//         chunks: rebuilt
-//       });
-//     });
-//   });
-// };
+  // TODO: check structure of positions
+  postMessage({
+    topic: 'rebuiltTerrainChunk',
+    positions
+  }, [
+    positions.buffer,
+  ]);
+}

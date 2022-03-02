@@ -26,7 +26,6 @@ const constants = {
 
   // (performance)
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: true,
-  ENABLE_TERRAIN_CHUNK_MULTITHREADING: false, // true is actually seemingly less performant b/c GPU
   UPDATE_QUADTREE_EVERY_CHUNK: 0.5, // (multiplied by MIN_CHUNK_SIZE)
 
   // Performance settings

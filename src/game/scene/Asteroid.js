@@ -26,6 +26,7 @@ const {
 const UPDATE_QUADTREE_EVERY = MIN_CHUNK_SIZE * UPDATE_QUADTREE_EVERY_CHUNK;
 const FRAME_CYCLE_LENGTH = 15;
 
+const MAP_RENDER_TIME_PER_CYCLE = 8;
 const INITIAL_ZOOM = 2;
 const MIN_ZOOM_DEFAULT = 1.2; // TODO: should probably multiply by max stretch
 const MAX_ZOOM = 4;
@@ -35,6 +36,7 @@ const DEBUG_CSM = false;
 let totalRuns = 0;
 let totals = {};
 let startTime;
+let first = true;
 function benchmark(tag) {
   if (!tag) {
     startTime = Date.now();
@@ -47,20 +49,26 @@ function benchmark(tag) {
 }
 
 // TODO: remove debug
-// setInterval(() => {
-//   const b = {};
-//   let prevTime = 0;
-//   Object.keys(totals).forEach((k) => {
-//     const thisTime = Math.round(totals[k] / totalRuns);
-//     if (k === '_') {
-//       b['TOTAL'] = thisTime;
-//     } else {
-//       b[k] = thisTime - prevTime;
-//       prevTime = thisTime;
-//     }
-//   });
-//   console.log(`b ${totalRuns}`, b);
-// }, 5000);
+setInterval(() => {
+  if (first) {
+    first = false;
+    totalRuns = 0;
+    totals = {};
+    return;
+  }
+  const b = {};
+  let prevTime = 0;
+  Object.keys(totals).forEach((k) => {
+    const thisTime = Math.round(totals[k] / totalRuns);
+    if (k === '_') {
+      b['TOTAL'] = thisTime;
+    } else {
+      b[k] = thisTime - prevTime;
+      prevTime = thisTime;
+    }
+  });
+  console.log(`b ${totalRuns}`, b);
+}, 5000);
 
 const Asteroid = (props) => {
   const { camera, controls, gl, raycaster, scene } = useThree();
@@ -349,20 +357,14 @@ const Asteroid = (props) => {
     frameCycle.current = (frameCycle.current + 1) % FRAME_CYCLE_LENGTH;
 
     // if builder is not busy, make sure we are showing most recent chunks
-    if (updatePending.current) {
-      if (!geometry.current.builder.isBusy()) {
-        // vvv BENCHMARK <1ms
-        geometry.current.finishPendingUpdate();
-
-        if (debug.current) {
-          // const d = geometry.current.debug();
-          const d = new Float32Array(geometry.current.debug());
-          debug.current.geometry.setAttribute('position', new BufferAttribute(d, 3));
-          debug.current.geometry.attributes.position.needsUpdate = true;
-        }
-
-        // console.log('update finished', Date.now() - updatePending.current);
-        updatePending.current = null;
+    if (geometry.current.builder.isPreparingUpdate()) {
+      if (geometry.current.builder.isReadyToFinish()) {
+        // vvv BENCHMARK 1ms
+        geometry.current.builder.update();
+        // ^^^
+      } else {
+        // vvv BENCHMARK 8ms (matches MAP_RENDER_TIME_PER_CYCLE)
+        geometry.current.builder.updateMaps(Date.now() + MAP_RENDER_TIME_PER_CYCLE);
         // ^^^
       }
     } else {
@@ -371,7 +373,7 @@ const Asteroid = (props) => {
       // re-evaluate raycaster on every Xth frame to ensure zoom bounds are safe
       // (i.e. close enough to surface but not inside surface)
       // TODO: this can be kicked off from here, but should not be blocking...
-      if (frameCycle.current === 0) {
+      if (false && frameCycle.current === 0) {
         if (controls && cameraPosition.current && quadtreeRef.current?.children) {
           // vvv BENCHMARK 4ms
           raycaster.set(
@@ -425,7 +427,7 @@ const Asteroid = (props) => {
     
     // update quadtree on "significant" movement so it can rebuild children appropriately
     // TODO (enhancement): UPDATE_QUADTREE_EVERY should probably depend on zoom level
-    if (!geometry.current.builder.isBusy()) {
+    if (!geometry.current.builder.isBusy() && !geometry.current.builder.isPreparingUpdate()) {
       const updateQuadCube = !cameraPosition.current
         || cameraPosition.current.distanceTo(controls.object.position) > UPDATE_QUADTREE_EVERY
         || (updatedRotation - rotation.current) * asteroidData.radius > UPDATE_QUADTREE_EVERY
@@ -438,17 +440,15 @@ const Asteroid = (props) => {
         // console.log('update started');
         updatePending.current = Date.now();
 
-        // TODO: if not threaded, this should not be blocking while all math done
-        setTimeout(() => {
-          // vvv BENCHMARK 50-60ms
-          geometry.current.setCameraPosition(
-            controls.object.position.clone().applyAxisAngle(
-              rotationAxis.current,
-              -rotation.current
-            )
-          );
-          // ^^^
-        }, 0);
+        // TODO: try to thread this
+        // vvv BENCHMARK 5ms
+        geometry.current.setCameraPosition(
+          controls.object.position.clone().applyAxisAngle(
+            rotationAxis.current,
+            -rotation.current
+          )
+        );
+        // ^^^
       }
     }
 
@@ -473,14 +473,14 @@ const Asteroid = (props) => {
         Math.PI
       );
     }
-
-    // 
-    const debugInfo = document.getElementById('debug_info');
-    if (!!debugInfo && config?.radius) {
-      debugInfo.innerText = (controls.object.position.length() / config?.radius).toFixed(2);
-    } else {
-      console.log('#debug_info not found!');
-    }
+    setTimeout(() => {
+      const debugInfo = document.getElementById('debug_info');
+      if (!!debugInfo && config?.radius) {
+        debugInfo.innerText = (controls.object.position.length() / config?.radius).toFixed(2);
+      } else {
+        console.log('#debug_info not found!');
+      }
+    });
   });
 
   return (

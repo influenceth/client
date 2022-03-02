@@ -31,6 +31,8 @@ setInterval(() => {
   first = true;
 }, 5000);
 
+const GEO_ATTR_CACHE = {};
+
 class TerrainChunk {
   constructor(params, config, { csmManager, shadowsEnabled }) {
     this._params = params;
@@ -184,97 +186,69 @@ class TerrainChunk {
     }
   }
 
-  getRebuildParams() {
-    // TODO: this manipulation is intended to minimize data sent on postMessage
-    //  (i.e. not worth it for work on main thread)
-    const {
-      ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
-      ...prunedConfig
-    } = this._config;
-    return {
-      // TODO: could cache
-      config: prunedConfig,
-      resolution: this._params.resolution,
-      oversample: OVERSAMPLE_CHUNK_TEXTURES,
-
-      // TODO: specific to chunk
-      groupMatrix: this._params.group.matrix.clone(),
-      offset: this._params.offset.clone(),
-      edgeStrides: this._params.stitchingStrides,
-      width: this._params.width,
-      heightScale: this._heightScale
-      // side: this._params.side,
-    }
-  }
-
-  rebuild() {
-    const startTime = Date.now();
-    const chunk = rebuildChunkGeometry(
-      this.getRebuildParams()
-    );
-    if (true) {
-      taskTotal += Date.now() - startTime;
-      taskTally++;
-    }
-    this.updateGeometry(chunk);
-  }
-
   initGeometry() {
     const resolution = this._params.resolution;
-    const resolutionPlusOne = resolution + 1;
-
-    // init uv's
-    // NOTE: could probably flip y in these UVs instead of in every shader
-    const uvs = new Float32Array(resolutionPlusOne * resolutionPlusOne * 2);
-    for (let x = 0; x < resolutionPlusOne; x++) {
-      for (let y = 0; y < resolutionPlusOne; y++) {
-        const outputIndex = (resolutionPlusOne * x + y) * 2;
-        if (OVERSAMPLE_CHUNK_TEXTURES) {
-          uvs[outputIndex + 0] = (x + 1.5) / (resolutionPlusOne + 2);
-          uvs[outputIndex + 1] = (y + 1.5) / (resolutionPlusOne + 2);
-        } else {
-          uvs[outputIndex + 0] = (x + 0.5) / resolutionPlusOne;
-          uvs[outputIndex + 1] = (y + 0.5) / resolutionPlusOne;
+    // using cache since these should be same for every chunk
+    if (!GEO_ATTR_CACHE[resolution]) {
+      const resolutionPlusOne = resolution + 1;
+  
+      // init uv's
+      // NOTE: could probably flip y in these UVs instead of in every shader
+      const uvs = new Float32Array(resolutionPlusOne * resolutionPlusOne * 2);
+      for (let x = 0; x < resolutionPlusOne; x++) {
+        for (let y = 0; y < resolutionPlusOne; y++) {
+          const outputIndex = (resolutionPlusOne * x + y) * 2;
+          if (OVERSAMPLE_CHUNK_TEXTURES) {
+            uvs[outputIndex + 0] = (x + 1.5) / (resolutionPlusOne + 2);
+            uvs[outputIndex + 1] = (y + 1.5) / (resolutionPlusOne + 2);
+          } else {
+            uvs[outputIndex + 0] = (x + 0.5) / resolutionPlusOne;
+            uvs[outputIndex + 1] = (y + 0.5) / resolutionPlusOne;
+          }
         }
       }
-    }
-
-    // init indices
-    const indices = new Uint32Array(resolution * resolution * 3 * 2);
-    for (let i = 0; i < resolution; i++) {
-      for (let j = 0; j < resolution; j++) {
-        const outputIndex = (resolution * i + j) * 6;
-        indices[outputIndex + 0] = i * resolutionPlusOne + j;
-        indices[outputIndex + 1] = (i + 1) * resolutionPlusOne + j + 1;
-        indices[outputIndex + 2] = i * resolutionPlusOne + j + 1;
-        indices[outputIndex + 3] = (i + 1) * resolutionPlusOne + j;
-        indices[outputIndex + 4] = (i + 1) * resolutionPlusOne + j + 1;
-        indices[outputIndex + 5] = i * resolutionPlusOne + j;
+    
+      // init indices
+      const indices = new Uint32Array(resolution * resolution * 3 * 2);
+      for (let i = 0; i < resolution; i++) {
+        for (let j = 0; j < resolution; j++) {
+          const outputIndex = (resolution * i + j) * 6;
+          indices[outputIndex + 0] = i * resolutionPlusOne + j;
+          indices[outputIndex + 1] = (i + 1) * resolutionPlusOne + j + 1;
+          indices[outputIndex + 2] = i * resolutionPlusOne + j + 1;
+          indices[outputIndex + 3] = (i + 1) * resolutionPlusOne + j;
+          indices[outputIndex + 4] = (i + 1) * resolutionPlusOne + j + 1;
+          indices[outputIndex + 5] = i * resolutionPlusOne + j;
+        }
       }
+
+      GEO_ATTR_CACHE[resolution] = { uvs, indices };
     }
 
     // update geometry
-    this._geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
-    this._geometry.setIndex(new BufferAttribute(indices, 1));
+    this._geometry.setIndex(new BufferAttribute(GEO_ATTR_CACHE[resolution].indices, 1));
+    this._geometry.setAttribute('uv', new Float32BufferAttribute(GEO_ATTR_CACHE[resolution].uvs, 2));
     this._geometry.attributes.uv.needsUpdate = true;
   }
 
   // TODO: without pool, is this ever used after initial build?
-  updateGeometry(data) {
-    if (!data) return;
+  updateGeometry(positions) {
 
     // update positions
-    this._geometry.setAttribute('position', new Float32BufferAttribute(data.positions, 3));
+    this._geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
     this._geometry.attributes.position.needsUpdate = true;
     
     // since normals are just "normal" before map, use positions (faster than computeVertexNormals)
-    this._geometry.setAttribute('normal', new Float32BufferAttribute(data.positions, 3));
+    this._geometry.setAttribute('normal', new Float32BufferAttribute(positions, 3));
     this._geometry.attributes.normal.needsUpdate = true;
+    // this._geometry.normalizeNormals(); // TODO: investigate if this is helpful or needed
 
     // if reusing geometry (i.e. by resource pooling), then must re-compute bounding sphere or else
     // chunk will be culled by camera as-if in prior position
     this._geometry.computeBoundingSphere();
+  }
 
+  updateMaps(data) {
     // debug (if debugging)
     if (false && first) {
       const debug = 'normalBitmap';
