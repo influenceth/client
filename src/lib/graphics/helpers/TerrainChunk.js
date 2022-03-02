@@ -31,74 +31,42 @@ setInterval(() => {
   first = true;
 }, 5000);
 
-// TODO: look at how CSM module does shader updates... if implement this, wouldn't 
-//    THREE.ShaderChunk.lights_fragment_begin = THREE.CSMShader.lights_fragment_begin;
-//    THREE.ShaderChunk.lights_pars_begin = THREE.CSMShader.lights_pars_begin;
-const patchShader = (vertexShader) => `
-  uniform float uHeightScale;
-  uniform vec3 uStretch;
-  ${vertexShader.replace(
-    '#include <displacementmap_vertex>',
-    `#ifdef USE_DISPLACEMENTMAP
-      vec2 disp16 = texture2D(displacementMap, vUv).xy;
-      float disp = (disp16.x * 255.0 + disp16.y) / 256.0;
-      // stretch back to original geometry (geometry initialized at minHeight for chunk)
-      transformed /= uHeightScale;
-      // displace along normal
-      transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias);
-      // stretch along normal
-      transformed *= uStretch;
-    #endif`
-  )}
-`;
-
 class TerrainChunk {
-  constructor(params, config, textureRenderer) {
+  constructor(params, config, { csmManager, shadowsEnabled }) {
     this._params = params;
     this._config = config;
-    this._textureRenderer = textureRenderer;
+    this._csmManager = csmManager;
+    this._shadowsEnabled = shadowsEnabled;
+    this.updateDerived();
 
-    const _heightScale = params.minHeight / this._config.radius;
-    this._heightScale = _heightScale;
-
-    // transform stretch per side
-    let stretch;
-    if ([0,1].includes(this._params.side)) {
-      stretch = new Vector3(config.stretch.x, config.stretch.z, config.stretch.y);
-    } else if ([2,3].includes(this._params.side)) {
-      stretch = new Vector3(config.stretch.z, config.stretch.y, config.stretch.x);
-    } else {
-      stretch = config.stretch.clone();
-    }
-
-    const displacementScale = 2 * this._config.radius * this._config.dispWeight;
-    const displacementBias = -displacementScale / 2;
-
+    // init geometry
     this._geometry = new BufferGeometry();
     this.initGeometry();
 
-    const onBeforeCompile = function (shader) {
-      shader.uniforms.uHeightScale = { type: 'f', value: _heightScale };
-      shader.uniforms.uStretch = { type: 'v3', value: stretch };
-      shader.vertexShader = patchShader(shader.vertexShader);
-    };
-
+    // init material
     this._material = new MeshStandardMaterial({
       alphaTest: 0.5,          // TODO: was using this w/o CSM, but may not be needed w/ CSM (may need to tune anyway)
       color: 0xFFFFFF,
       depthFunc: LessDepth,
-      displacementBias,
-      displacementScale,
+      displacementBias: -1 * this._config.radius * this._config.dispWeight,
+      displacementScale: 2 * this._config.radius * this._config.dispWeight,
       dithering: true,
       // flatShading: true,
       metalness: 0,
       roughness: 1,
       side: FrontSide,
-      // shadowSide: DoubleSide, // TODO: this was required w/o CSM, but doesn't play nice with CSM
+      shadowSide: csmManager ? null : DoubleSide,  // doubleside doesn't play nice w/ CSM
       // wireframe: true,
     });
-    if (this._params.shadowsEnabled && this._params.csm) {
-      this._params.csm.setupMaterial(this._material, onBeforeCompile);
+
+    // apply onBeforeCompile to primary material
+    const onBeforeCompile = this.getOnBeforeCompile(
+      this._material,
+      this._heightScale,
+      this._stretch
+    );
+    if (shadowsEnabled && csmManager) {
+      csmManager.setupMaterial(this._material, onBeforeCompile);
     } else {
       this._material.onBeforeCompile = onBeforeCompile;
     }
@@ -107,21 +75,89 @@ class TerrainChunk {
     this._plane = new Mesh(this._geometry, this._material);
 
     // add customDepthMaterial (with CSM or not)
-    if (this._params.shadowsEnabled) {
-      if (this._params.csm) {
-        this._plane.customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
-        this._params.csm.setupMaterial(this._plane.customDepthMaterial, onBeforeCompile);
+    if (shadowsEnabled) {
+      this._plane.customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
+      const onBeforeCompileDepth = this.getOnBeforeCompile(
+        this._plane.customDepthMaterial,
+        this._heightScale,
+        this._stretch,
+        true
+      );
+
+      if (csmManager) {
+        csmManager.setupMaterial(this._plane.customDepthMaterial, onBeforeCompileDepth);
       } else {
-        this._plane.customDepthMaterial = new MeshDepthMaterial({
-          depthPacking: RGBADepthPacking,
-          onBeforeCompile
-        });
+        this._plane.customDepthMaterial.onBeforeCompile = onBeforeCompileDepth;
       }
     }
 
     // TODO: should these be in above conditional?
     this._plane.castShadow = true;
     this._plane.receiveShadow = true;
+  }
+
+  getOnBeforeCompile(material, heightScale, stretch) {
+    return function (shader) {
+      shader.uniforms.uHeightScale = { type: 'f', value: heightScale };
+      shader.uniforms.uStretch = { type: 'v3', value: stretch };
+      shader.vertexShader = `
+        uniform float uHeightScale;
+        uniform vec3 uStretch;
+        ${shader.vertexShader.replace(
+          '#include <displacementmap_vertex>',
+          `#ifdef USE_DISPLACEMENTMAP
+            vec2 disp16 = texture2D(displacementMap, vUv).xy;
+            float disp = (disp16.x * 255.0 + disp16.y) / 256.0;
+            // stretch back to original geometry (geometry initialized at minHeight for chunk)
+            transformed /= uHeightScale;
+            // displace along normal
+            transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias);
+            // stretch along normal
+            transformed *= uStretch;
+          #endif`
+        )}
+      `;
+      material.userData.shader = shader;
+    };
+  }
+
+  // it's possible in a race-condition that a chunk is constructed but never rendered...
+  // in this case, onBeforeCompile is never run, so material's shader is never set...
+  // these chunks are disposed of rather than reused (in theory, could instead reapply
+  // onBeforeCompile, etc, but gets a little tricky with CSM setup)
+  isReusable() {
+    return !!this._material?.userData?.shader
+      && (!this._shadowsEnabled || !!this._plane?.customDepthMaterial?.userData?.shader);
+  }
+
+  updateDerived() {
+    // get heightScale for chunk
+    this._heightScale = this._params.minHeight / this._config.radius;
+
+    // transform stretch per side
+    if ([0,1].includes(this._params.side)) {
+      this._stretch = new Vector3(this._config.stretch.x, this._config.stretch.z, this._config.stretch.y);
+    } else if ([2,3].includes(this._params.side)) {
+      this._stretch = new Vector3(this._config.stretch.z, this._config.stretch.y, this._config.stretch.x);
+    } else {
+      this._stretch = this._config.stretch.clone();
+    }
+
+    // according to https://threejs.org/docs/#manual/en/introduction/How-to-update-things,
+    // uniform values are sent to shader every frame automatically (so no need for needsUpdate)
+    if (this._material?.userData?.shader) {
+      this._material.userData.shader.uniforms.uHeightScale.value = this._heightScale;
+      this._material.userData.shader.uniforms.uStretch.value = this._stretch;
+    }
+    if (this._plane?.customDepthMaterial?.userData?.shader) {
+      this._plane.customDepthMaterial.userData.shader.uniforms.uHeightScale.value = this._heightScale;
+      this._plane.customDepthMaterial.userData.shader.uniforms.uStretch.value = this._stretch;
+    }
+  }
+
+  reconfigure(newParams) {
+    this._params = newParams;
+    this.updateDerived();
   }
 
   attachToGroup() {
@@ -172,7 +208,6 @@ class TerrainChunk {
   }
 
   rebuild() {
-    console.log('rebuild');
     const startTime = Date.now();
     const chunk = rebuildChunkGeometry(
       this.getRebuildParams()
@@ -231,9 +266,14 @@ class TerrainChunk {
     // update positions
     this._geometry.setAttribute('position', new Float32BufferAttribute(data.positions, 3));
     this._geometry.attributes.position.needsUpdate = true;
+    
     // since normals are just "normal" before map, use positions (faster than computeVertexNormals)
     this._geometry.setAttribute('normal', new Float32BufferAttribute(data.positions, 3));
     this._geometry.attributes.normal.needsUpdate = true;
+
+    // if reusing geometry (i.e. by resource pooling), then must re-compute bounding sphere or else
+    // chunk will be culled by camera as-if in prior position
+    this._geometry.computeBoundingSphere();
 
     // debug (if debugging)
     if (false && first) {

@@ -17,7 +17,7 @@ import Rings from './asteroid/Rings';
 
 const {
   MIN_CHUNK_SIZE,
-  MIN_FRUSTRUM_HEIGHT,
+  MIN_FRUSTUM_AT_SURFACE,
   UPDATE_QUADTREE_EVERY_CHUNK,
   GEOMETRY_SHRINK,
   GEOMETRY_SHRINK_MAX,
@@ -119,6 +119,7 @@ const Asteroid = (props) => {
     position.current = null;
     rotation.current = null;
     if (geometry.current) disposeGeometry();
+    if (light.current) light.current.dispose();
   }, []);
 
   // Update texture generation config when new asteroid data is available
@@ -159,7 +160,7 @@ const Asteroid = (props) => {
     const posVec = new Vector3(...position.current);
     const lightColor = 0xffeedd;
     const lightDistance = asteroidData?.radius * 10;
-    const lightDirection = new Vector3(0, -1, 0).normalize(); // TODO: posVec.clone().normalize();
+    const lightDirection = posVec.clone().normalize();
     const lightIntensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
     const maxRadius = ringsPresent
       ? asteroidData.radius * 1.5
@@ -177,7 +178,7 @@ const Asteroid = (props) => {
       
       // TODO: does number of cascades impact performance? if not, we should definitely add more
       const minSurfaceDistance = Math.min(
-        (MIN_FRUSTRUM_HEIGHT / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
+        (MIN_FRUSTUM_AT_SURFACE / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
         (MIN_ZOOM_DEFAULT - 1) * asteroidData.radius
       );
       const cascadeConfig = [];
@@ -210,9 +211,9 @@ const Asteroid = (props) => {
       // TODO: remove this
       if (DEBUG_CSM) {
         csmHelper.current = new CSMHelper(csm);
-        csmHelper.current.displayFrustum = false;
-        csmHelper.current.displayPlanes = false;
-        csmHelper.current.displayShadowBounds = false;
+        csmHelper.current.displayFrustum = true;
+        csmHelper.current.displayPlanes = true;
+        csmHelper.current.displayShadowBounds = true;
         group.current.add(csmHelper.current);
   
         const floorMaterial = new MeshPhongMaterial( { color: '#252a34' } );
@@ -225,6 +226,7 @@ const Asteroid = (props) => {
       }
     } else {
       light.current = new DirectionalLight(lightColor, lightIntensity);
+      light.current.castShadow = true;
       group.current.add(light.current);
 
       light.current.position.copy(lightDirection.negate().multiplyScalar(lightDistance));
@@ -332,7 +334,7 @@ const Asteroid = (props) => {
   // }, [requestingModelDownload, exportableMesh]);
 
   const surfaceDistance = useMemo(() => {
-    return (MIN_FRUSTRUM_HEIGHT / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180))
+    return (MIN_FRUSTUM_AT_SURFACE / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180))
       + Math.min(asteroidData?.radius * GEOMETRY_SHRINK, GEOMETRY_SHRINK_MAX); // account for culling shrink
   }, [controls?.object?.fov, asteroidData?.radius]);
 
@@ -411,7 +413,7 @@ const Asteroid = (props) => {
     let updatedRotation = rotation.current;
     if (config?.rotationSpeed && time) {
       updatedRotation = time * config.rotationSpeed * 2 * Math.PI
-      updatedRotation = 0; // TODO: remove
+      // updatedRotation = 0; // TODO: remove
       if (updatedRotation !== rotation.current) {
         quadtreeRef.current.setRotationFromAxisAngle(
           rotationAxis.current,

@@ -301,6 +301,7 @@ class QuadtreeCubeSphereManager {
 
     // re-init updatedChunks to those that already exist
     updatedChunks = intersection;
+    //console.log(`${Object.keys(updatedChunks).length} chunks unchanged`);
 
     // then create any new ones needed
     for (let k in difference) {
@@ -330,12 +331,13 @@ class QuadtreeCubeSphereManager {
     }
   }
 
-  setCSM(csm) {
-    this.csm = csm;
+  setCSM(csmManager) {
+    this.csm = csmManager;
+    this.builder.csmManager = this.csm;
   }
 
   setShadowsEnabled(state) {
-    this.shadowsEnabled = !!state;
+    this.builder.shadowsEnabled = !!state;
   }
 
   finishPendingUpdate() {
@@ -358,7 +360,6 @@ class QuadtreeCubeSphereManager {
       resolution,
       stitchingStrides,
       minHeight,
-      csm: this.csm,
       shadowsEnabled: this.shadowsEnabled
     });
   }

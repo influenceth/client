@@ -10,6 +10,8 @@ const { ENABLE_TERRAIN_CHUNK_RESOURCE_POOL } = constants;
 class TerrainChunkManager {
   constructor(config) {
     this.config = config;
+    this.csmManager = null;
+    this.shadowsEnabled = false;
     this.pool = {};
     this.reset();
 
@@ -39,10 +41,19 @@ class TerrainChunkManager {
 
     let chunk = null;
     if (this.pool[w].length > 0) {
+      // console.log('reuse', w);
       chunk = this.pool[w].pop();
-      chunk._params = params;
+      chunk.reconfigure(params);
     } else {
-      chunk = new TerrainChunk(params, this.config);
+      // console.log('create', w);
+      chunk = new TerrainChunk(
+        params,
+        this.config,
+        {
+          csmManager: this.csmManager,
+          shadowsEnabled: this.shadowsEnabled,
+        }
+      );
     }
 
     chunk.hide();
@@ -63,7 +74,7 @@ class TerrainChunkManager {
     if (this.updating) return;
     this.updating = true;
 
-    // rebuild new chunks
+    // (re)build new chunks
     let chunk;
     while (chunk = this._queued.pop()) { // eslint-disable-line
       chunk.rebuild();
@@ -72,10 +83,11 @@ class TerrainChunkManager {
     
     // recycle old chunks
     for (let node of this._old) {
+      // (pool bucket should already exist, but sanity-insurance)
       if (!this.pool[node.chunk._params.width]) {
         this.pool[node.chunk._params.width] = [];
       }
-      if (ENABLE_TERRAIN_CHUNK_RESOURCE_POOL) {
+      if (ENABLE_TERRAIN_CHUNK_RESOURCE_POOL && node.chunk.isReusable()) {
         node.chunk.detachFromGroup();
         this.pool[node.chunk._params.width].push(node.chunk);
       } else {
