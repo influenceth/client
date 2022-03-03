@@ -19,8 +19,6 @@ const {
   MIN_CHUNK_SIZE,
   MIN_FRUSTUM_AT_SURFACE,
   UPDATE_QUADTREE_EVERY_CHUNK,
-  GEOMETRY_SHRINK,
-  GEOMETRY_SHRINK_MAX,
   ENABLE_CSM
 } = constants;
 const UPDATE_QUADTREE_EVERY = MIN_CHUNK_SIZE * UPDATE_QUADTREE_EVERY_CHUNK;
@@ -75,7 +73,7 @@ const Asteroid = (props) => {
   const origin = useStore(s => s.asteroids.origin);
   const time = useStore(s => s.time.precise);
   // const mapSize = useStore(s => s.graphics.textureSize); // TODO: apply user settings
-  const shadows = useStore(s => s.graphics.shadows);
+  const shadowMode = useStore(s => s.graphics.shadowMode);
   const shadowSize = useStore(s => s.graphics.shadowSize);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
@@ -104,20 +102,33 @@ const Asteroid = (props) => {
   const aspectRatio = useRef();
 
   const disposeGeometry = useCallback(() => {
-    if (quadtreeRef.current) {
+    if (geometry.current && quadtreeRef.current) {
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.remove(g);
       });
     }
-    if (geometry.current.csm) {
+    if (geometry.current?.csm) {
       geometry.current.csm.remove();
       geometry.current.csm.dispose();
+      geometry.current.csm = undefined;
     }
     if (group.current && csmHelper.current) {
       group.current.remove(csmHelper.current);
     }
-    geometry.current.dispose();
-    geometry.current = null;
+    if (geometry.current) {
+      geometry.current.dispose();
+      geometry.current = null;
+    }
+  }, []);
+
+  const disposeLight = useCallback(() => {
+    if (group.current && light.current) {
+      group.current.remove(light.current);
+    }
+    if (light.current) {
+      light.current.dispose();
+      light.current = null;
+    }
   }, []);
 
   const onUnload = useCallback(() => {
@@ -126,8 +137,8 @@ const Asteroid = (props) => {
     rotationAxis.current = null;
     position.current = null;
     rotation.current = null;
-    if (geometry.current) disposeGeometry();
-    if (light.current) light.current.dispose();
+    disposeLight();
+    disposeGeometry();
   }, []);
 
   const surfaceDistance = useMemo(
@@ -170,6 +181,32 @@ const Asteroid = (props) => {
   const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent]);
   useEffect(() => {
     if (!(asteroidData?.radius && geometry.current && quadtreeRef.current && position.current && config?.stretch)) return;
+    
+    // calculate intended shadow mode
+    let intendedShadowMode = 'none';
+    if (ENABLE_CSM && shadowMode === 2) {
+      intendedShadowMode = `${shadowSize}_CSM`;
+    } else if (shadowMode > 0) {
+      intendedShadowMode = `${shadowSize}`;
+    }
+
+    // if no changes, exit now
+    if (geometry.current.shadowMode && geometry.current.shadowMode === intendedShadowMode) {
+      return;
+    }
+
+    // must reinit geometry and lights entirely if already a shadow mode set
+    if (geometry.current.shadowMode) {
+      disposeGeometry();
+      disposeLight();
+
+      geometry.current = new QuadtreeCubeSphere(config, webWorkerPool);
+      geometry.current.groups.forEach((g) => {
+        quadtreeRef.current.add(g);
+      });
+    }
+
+    // init params
     const posVec = new Vector3(...position.current);
     const lightColor = 0xffeedd;
     const lightDistance = asteroidData?.radius * 10;
@@ -178,18 +215,15 @@ const Asteroid = (props) => {
     const maxRadius = ringsPresent
       ? asteroidData.radius * 1.5
       : asteroidData.radius * Math.max(config.stretch.x, config.stretch.y, config.stretch.z);
-
-    // TODO: make sure disabled-shadows is supported
-    // TODO: if `shadows` is toggled (or asteroid changed), need to cleanup csm here
-
-    if (shadows && ENABLE_CSM && !geometry.current.csm) {
-      // TODO (enhancement): if it helps with performance, could always maintain just
-      //  a near and a far cascade (and change maxFar and splits when camera moves)
-
-      // TODO: implement user graphics settings
+    
+    //
+    // CSM setup
+    //
+    if (ENABLE_CSM && shadowMode === 2) {
       // TODO: could potentially add higher multiple to smallest distance
-      
       // TODO: does number of cascades impact performance? if not, we should definitely add more
+
+      // setup cascades
       const minSurfaceDistance = Math.min(surfaceDistance, (MIN_ZOOM_DEFAULT - 1) * asteroidData.radius);
       const cascadeConfig = [];
       cascadeConfig.unshift(MAX_ZOOM);
@@ -198,6 +232,7 @@ const Asteroid = (props) => {
       if (midCascade < cascadeConfig[0]) cascadeConfig.unshift(midCascade);
       cascadeConfig.unshift(2 * minSurfaceDistance / asteroidData.radius);
 
+      // init CSM
       const csm = new CSM({
         fade: true,
         maxFar: asteroidData.radius * MAX_ZOOM,
@@ -226,21 +261,29 @@ const Asteroid = (props) => {
         csmHelper.current.displayShadowBounds = true;
         group.current.add(csmHelper.current);
   
-        const floorMaterial = new MeshPhongMaterial( { color: '#252a34' } );
-        csm.setupMaterial( floorMaterial );
+        // TODO: need to remove floor in cleanup if keep this
+        // const floorMaterial = new MeshPhongMaterial( { color: '#252a34' } );
+        // csm.setupMaterial( floorMaterial );
   
-        const floor = new Mesh(new PlaneGeometry( 100000, 100000, 8, 8 ), floorMaterial );
-        floor.castShadow = true;
-        floor.receiveShadow = true;
-        group.current.add( floor );
+        // const floor = new Mesh(new PlaneGeometry( 100000, 100000, 8, 8 ), floorMaterial );
+        // floor.castShadow = true;
+        // floor.receiveShadow = true;
+        // group.current.add( floor );
       }
+
+    //
+    // Non-CSM setup
+    //
     } else {
+      
+      // create light
       light.current = new DirectionalLight(lightColor, lightIntensity);
-      light.current.castShadow = true;
+      light.current.position.copy(lightDirection.negate().multiplyScalar(lightDistance));
+      light.current.castShadow = true;  // TODO: should this be in below if-clause?
       group.current.add(light.current);
 
-      light.current.position.copy(lightDirection.negate().multiplyScalar(lightDistance));
-      if (shadows) {
+      // if traditional shadows, update shadow camera
+      if (shadowMode > 0) {
         light.current.shadow.bias = -0.01;
         light.current.shadow.camera.near = lightDistance - maxRadius;
         light.current.shadow.camera.far = lightDistance + maxRadius;
@@ -252,7 +295,11 @@ const Asteroid = (props) => {
         geometry.current.setShadowsEnabled(false);
       }
     }
-  }, [asteroidData?.radius, config?.stretch, ringsPresent, shadows, surfaceDistance]);
+
+    // set current shadowMode
+    geometry.current.shadowMode = intendedShadowMode;
+
+  }, [asteroidData?.radius, config, ringsPresent, shadowMode, shadowSize, surfaceDistance]);
 
   // Zooms the camera to the correct location
   const shouldZoomIn = zoomStatus === 'zooming-in' && controls && !!asteroidData;
@@ -470,9 +517,10 @@ const Asteroid = (props) => {
   return (
     <group ref={group}>
       <group ref={quadtreeRef} />
+      {/* TODO: need to pass in CSM to rings probably */}
       {config?.ringsPresent && geometry.current && (
         <Rings
-          receiveShadow={shadows}
+          receiveShadow={shadowMode > 0}
           config={config}
           onUpdate={(m) => m.lookAt(rotationAxis?.current)} />
       )}

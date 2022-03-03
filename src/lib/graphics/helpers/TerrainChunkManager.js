@@ -22,6 +22,14 @@ class TerrainChunkManager {
     });
   }
 
+  dispose() {
+    Object.keys(this.pool).forEach((w) => {
+      let chunk;
+      while(chunk = this.pool[w].pop()) chunk.dispose();
+    });
+    this.pool = {};
+  }
+
   isBusy() {
     // TODO: do we need workerPool check in here?
     return !this.ready || this.workerPool.isBusy() || this.waitingOn > this._new.length;

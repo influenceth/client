@@ -65,7 +65,7 @@ const useStore = create(persist((set, get) => ({
     graphics: {
       lensflare: true,
       skybox: true,
-      shadows: true,
+      shadowMode: 1,
       shadowSize: 1024,
       textureSize: 512,
       fov: 75
@@ -168,12 +168,8 @@ const useStore = create(persist((set, get) => ({
       state.graphics.lensflare = true;
     })),
 
-    dispatchShadowsOff: () => set(produce(state => {
-      state.graphics.shadows = false;
-    })),
-
-    dispatchShadowsOn: () => set(produce(state => {
-      state.graphics.shadows = true;
+    dispatchShadowModeSet: (mode) => set(produce(state => {
+      state.graphics.shadowMode = mode; // 0 is off, 1 is standard, 2 is CSM
     })),
 
     dispatchShadowSizeSet: (size) => set(produce(state => {

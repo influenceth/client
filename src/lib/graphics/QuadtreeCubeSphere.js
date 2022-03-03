@@ -159,6 +159,7 @@ class QuadtreeCubeSphereManager {
 
   dispose() {
     Object.values(this.chunks).forEach(({ chunk }) => chunk.dispose());
+    this.builder.dispose();
   }
 
   setCSM(csmManager) {

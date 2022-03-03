@@ -14,7 +14,7 @@ index 2bcabf7..4897399 100644
  
  			}
 diff --git a/node_modules/three/examples/jsm/csm/CSM.js b/node_modules/three/examples/jsm/csm/CSM.js
-index c96e627..eee4ae5 100644
+index c96e627..52580c0 100644
 --- a/node_modules/three/examples/jsm/csm/CSM.js
 +++ b/node_modules/three/examples/jsm/csm/CSM.js
 @@ -30,6 +30,7 @@ export class CSM {
@@ -34,13 +34,15 @@ index c96e627..eee4ae5 100644
  			light.castShadow = true;
  			light.shadow.mapSize.width = this.shadowMapSize;
  			light.shadow.mapSize.height = this.shadowMapSize;
-@@ -239,12 +240,15 @@ export class CSM {
+@@ -239,12 +240,17 @@ export class CSM {
  
  	injectInclude() {
  		
-+		// (something to consider... see matching lines in dispose())
-+		// ShaderChunk.lights_fragment_begin_bkp = ShaderChunk.lights_fragment_begin;
-+		// ShaderChunk.lights_pars_begin_bkp = ShaderChunk.lights_pars_begin;
++		// backup original shader chunks
++		ShaderChunk.lights_fragment_begin_bkp = ShaderChunk.lights_fragment_begin;
++		ShaderChunk.lights_pars_begin_bkp = ShaderChunk.lights_pars_begin;
++
++		// replace lighting shaders with CSM customizations
  		ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin;
  		ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin;
  
@@ -51,7 +53,7 @@ index c96e627..eee4ae5 100644
  
  		material.defines = material.defines || {};
  		material.defines.USE_CSM = 1;
-@@ -260,7 +264,11 @@ export class CSM {
+@@ -260,7 +266,11 @@ export class CSM {
  		const scope = this;
  		const shaders = this.shaders;
  
@@ -63,13 +65,22 @@ index c96e627..eee4ae5 100644
  
  			const far = Math.min( scope.camera.far, scope.maxFar );
  			scope.getExtendedBreaks( breaksVec2 );
-@@ -350,11 +358,17 @@ export class CSM {
- 	}
+@@ -344,6 +354,7 @@ export class CSM {
+ 		for ( let i = 0; i < this.lights.length; i ++ ) {
+ 
+ 			this.parent.remove( this.lights[ i ] );
++			this.lights[ i ].dispose();
+ 
+ 		}
+ 
+@@ -351,10 +362,18 @@ export class CSM {
  
  	dispose() {
-+		// ShaderChunk.lights_fragment_begin = ShaderChunk.lights_fragment_begin_bkp;
-+		// ShaderChunk.lights_pars_begin = ShaderChunk.lights_pars_begin_bkp;
  
++		// undo ShaderChunk rewrites
++		ShaderChunk.lights_fragment_begin = ShaderChunk.lights_fragment_begin_bkp;
++		ShaderChunk.lights_pars_begin = ShaderChunk.lights_pars_begin_bkp;
++
  		const shaders = this.shaders;
  		shaders.forEach( function ( shader, material ) {
  

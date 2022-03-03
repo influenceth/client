@@ -82,7 +82,6 @@ class TerrainChunk {
         this._plane.customDepthMaterial,
         this._heightScale,
         this._stretch,
-        true
       );
 
       if (csmManager) {

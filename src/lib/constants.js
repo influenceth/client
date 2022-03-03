@@ -22,7 +22,7 @@ const constants = {
   GEOMETRY_SHRINK: 0.05,        // 0.05, (multiplied by radius)
   GEOMETRY_SHRINK_MAX: 1000,    // 1000 (meters)
   MIN_FRUSTUM_AT_SURFACE: 2000, // closest zoom so that X meters visible w/i frustum height
-  ENABLE_CSM: false, // cascading shadow maps
+  ENABLE_CSM: true, // cascading shadow maps
 
   // (performance)
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: true,
@@ -30,21 +30,21 @@ const constants = {
 
   // Performance settings
   GRAPHICS_LOW: {
-    shadows: false,
+    shadowMode: 0,
     textureSize: 512
   },
   GRAPHICS_MID: {
-    shadows: true,
+    shadowMode: 1,
     shadowSize: 1024,
     textureSize: 512
   },
   GRAPHICS_HIGH: {
-    shadows: true,
+    shadowMode: 2,
     shadowSize: 2048,
     textureSize: 1024
   },
   GRAPHICS_ULTRA: {
-    shadows: true,
+    shadowMode: 2,
     shadowSize: 4096,
     textureSize: 2048
   }

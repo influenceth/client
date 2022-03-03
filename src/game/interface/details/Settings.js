@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
 import screenfull from 'screenfull';
@@ -62,8 +62,7 @@ const Settings = (props) => {
   const turnOffSkybox = useStore(s => s.dispatchSkyboxHidden);
   const turnOnLensflare = useStore(s => s.dispatchLensflareUnhidden);
   const turnOffLensflare = useStore(s => s.dispatchLensflareHidden);
-  const turnOnShadows = useStore(s => s.dispatchShadowsOn);
-  const turnOffShadows = useStore(s => s.dispatchShadowsOff);
+  const setShadowMode = useStore(s => s.dispatchShadowModeSet);
   const setShadowSize = useStore(s => s.dispatchShadowSizeSet);
   const setFOV = useStore(s => s.dispatchFOVSet);
   const turnOnStats = useStore(s => s.dispatchStatsOn);
@@ -81,6 +80,31 @@ const Settings = (props) => {
       });
     }
   }, []);
+
+  const setShadowQuality = useCallback((quality) => {
+    if (quality === 'off') {
+      setShadowMode(0);
+    } else if (quality === 'low') {
+      setShadowMode(1);
+      setShadowSize(1024);
+    } else if (quality === 'mid') {
+      setShadowMode(2);
+      setShadowSize(2048);
+    } else if (quality === 'high') {
+      setShadowMode(2);
+      setShadowSize(4096);
+    }
+  });
+
+  const toggleShadows = useCallback(() => {
+    if (graphics.shadowMode === 0) {
+      if (graphics.shadowSize === 1024) setShadowQuality('low');
+      if (graphics.shadowSize === 2048) setShadowQuality('mid');
+      if (graphics.shadowSize === 4096) setShadowQuality('high');
+    } else {
+      setShadowQuality('off');
+    }
+  }, [graphics.shadowMode, graphics.shadowSize]);
 
   return (
     <Details title="Settings">
@@ -111,27 +135,27 @@ const Settings = (props) => {
               <IconButton
                 data-tip="Toggle Shadows"
                 data-for="global"
-                onClick={() => graphics.shadows ? turnOffShadows() : turnOnShadows()}
+                onClick={() => toggleShadows()}
                 borderless>
-                {graphics.shadows ? <CheckedIcon /> : <UncheckedIcon />}
+                {graphics.shadowMode > 0 ? <CheckedIcon /> : <UncheckedIcon />}
               </IconButton>
             </StyledDataReadout>
-            {graphics.shadows && (
+            {graphics.shadowMode > 0 && (
               <StyledDataReadout label="Shadow Quality">
                 <ControlGroup>
                   <Button
                     active={graphics.shadowSize === 1024}
-                    onClick={() => setShadowSize(1024)}>
+                    onClick={() => setShadowQuality('low')}>
                     Low
                   </Button>
                   <Button
                     active={graphics.shadowSize === 2048}
-                    onClick={() => setShadowSize(2048)}>
+                    onClick={() => setShadowQuality('mid')}>
                     Medium
                   </Button>
                   <Button
                     active={graphics.shadowSize === 4096}
-                    onClick={() => setShadowSize(4096)}>
+                    onClick={() => setShadowQuality('high')}>
                     High
                   </Button>
                 </ControlGroup>
