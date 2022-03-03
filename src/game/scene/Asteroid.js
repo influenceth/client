@@ -130,6 +130,11 @@ const Asteroid = (props) => {
     if (light.current) light.current.dispose();
   }, []);
 
+  const surfaceDistance = useMemo(
+    () => (MIN_FRUSTUM_AT_SURFACE / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
+    [controls?.object?.fov]
+  );
+
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
     if (asteroidData && asteroidData.asteroidId === origin) {
@@ -185,10 +190,7 @@ const Asteroid = (props) => {
       // TODO: could potentially add higher multiple to smallest distance
       
       // TODO: does number of cascades impact performance? if not, we should definitely add more
-      const minSurfaceDistance = Math.min(
-        (MIN_FRUSTUM_AT_SURFACE / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
-        (MIN_ZOOM_DEFAULT - 1) * asteroidData.radius
-      );
+      const minSurfaceDistance = Math.min(surfaceDistance, (MIN_ZOOM_DEFAULT - 1) * asteroidData.radius);
       const cascadeConfig = [];
       cascadeConfig.unshift(MAX_ZOOM);
       cascadeConfig.unshift(INITIAL_ZOOM - Math.min(config.stretch.x, config.stretch.y, config.stretch.z));
@@ -250,7 +252,7 @@ const Asteroid = (props) => {
         geometry.current.setShadowsEnabled(false);
       }
     }
-  }, [asteroidData?.radius, config?.stretch, ringsPresent, shadows]);
+  }, [asteroidData?.radius, config?.stretch, ringsPresent, shadows, surfaceDistance]);
 
   // Zooms the camera to the correct location
   const shouldZoomIn = zoomStatus === 'zooming-in' && controls && !!asteroidData;
@@ -286,7 +288,7 @@ const Asteroid = (props) => {
     if (!shouldFinishZoomIn) return;
 
     // Update distances to maximize precision
-    controls.minDistance = 0; // TODO: asteroidData.radius * MIN_ZOOM_DEFAULT;
+    controls.minDistance = asteroidData.radius * MIN_ZOOM_DEFAULT;
     controls.maxDistance = asteroidData.radius * MAX_ZOOM;
 
     const panTo = new Vector3(...position.current);
@@ -341,11 +343,6 @@ const Asteroid = (props) => {
   // // eslint-disable-next-line react-hooks/exhaustive-deps
   // }, [requestingModelDownload, exportableMesh]);
 
-  const surfaceDistance = useMemo(() => {
-    return (MIN_FRUSTUM_AT_SURFACE / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180))
-      + Math.min(asteroidData?.radius * GEOMETRY_SHRINK, GEOMETRY_SHRINK_MAX); // account for culling shrink
-  }, [controls?.object?.fov, asteroidData?.radius]);
-
   const updatePending = useRef();
 
   // Positions the asteroid in space based on time changes
@@ -364,39 +361,26 @@ const Asteroid = (props) => {
         // ^^^
       } else {
         // vvv BENCHMARK 8ms (matches MAP_RENDER_TIME_PER_CYCLE)
+        // TODO: would it be smoother for UI to pass to worker (even though slower)?
         geometry.current.builder.updateMaps(Date.now() + MAP_RENDER_TIME_PER_CYCLE);
         // ^^^
       }
-    } else {
-
-      // TODO: re-evaluate raycaster...
-      // re-evaluate raycaster on every Xth frame to ensure zoom bounds are safe
-      // (i.e. close enough to surface but not inside surface)
-      // TODO: this can be kicked off from here, but should not be blocking...
-      if (false && frameCycle.current === 0) {
-        if (controls && cameraPosition.current && quadtreeRef.current?.children) {
-          // vvv BENCHMARK 4ms
-          raycaster.set(
-            controls.object.position.clone(),
-            controls.object.position.clone().negate().normalize()
-          );
-          const intersection = (raycaster.intersectObjects(quadtreeRef.current.children) || [])
-            .find((i) => i.object?.type === 'Mesh');
-          if (intersection) {
-            // TODO: if current distance < new min, then pan first, then reset minDistance
-            controls.minDistance = Math.min(
-              controls.object.position.length() - intersection.distance + surfaceDistance,
-              MIN_ZOOM_DEFAULT * asteroidData.radius
-            );
-          } else if(controls.minDistance < MIN_ZOOM_DEFAULT * asteroidData.radius) {
-            controls.minDistance *= 1.01;
-          } else {
-            controls.minDistance = MIN_ZOOM_DEFAULT * asteroidData.radius;
-          }
-          // ^^^
-        }
+    }
+    
+    // vvv BENCHMARK ~0ms
+    // control dynamic zoom limit (zoom out slowly if too low... else, just update boundary)
+    // NOTE: raycasting would technically be more accurate here, but it's way less performant
+    //       (3ms+ for just closest mesh... if all quadtree children, closer to 20ms) and need
+    //       to incorporate geometry shrink returned intersection distance
+    if (controls && geometry.current?.closestChunkHeight) {
+      const minDistance = geometry.current.closestChunkHeight + surfaceDistance;
+      if (controls.object.position.length() < minDistance) {
+        controls.minDistance += 5;
+      } else {
+        controls.minDistance = minDistance;
       }
     }
+    // ^^^
 
     // vvv BENCHMARK <1ms
     // update asteroid position

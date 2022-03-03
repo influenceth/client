@@ -175,6 +175,8 @@ class QuadtreeCubeSphereManager {
 
     const sides = this.quadtreeCube.getSides();
 
+    let closestKey = null;
+    let closestDistance = null;
     let updatedChunks = {};
     for (let i = 0; i < sides.length; i++) {
       this.groups[i].matrix = sides[i].transform;
@@ -195,6 +197,11 @@ class QuadtreeCubeSphereManager {
 
         const key = `${child.position[0]}/${child.position[1]} [${child.size}] [${Object.values(child.stitchingStrides).join('')}] [${child.index}]`;
         updatedChunks[key] = child;
+
+        if (closestDistance === null || node.distanceToCamera < closestDistance) {
+          closestKey = key;
+          closestDistance = node.distanceToCamera;
+        }
       }
     }
 
@@ -223,6 +230,7 @@ class QuadtreeCubeSphereManager {
 
       updatedChunks[k] = {
         position: [xp, zp],
+        sphereCenterHeight: difference[k].sphereCenterHeight,
         chunk: this.builder.allocateChunk({
           side: difference[k].index,
           group: difference[k].group,
@@ -239,6 +247,7 @@ class QuadtreeCubeSphereManager {
 
     // update class
     this.chunks = updatedChunks;
+    this.closestChunkHeight = closestKey ? this.chunks[closestKey].sphereCenterHeight : null;
   }
 }
 

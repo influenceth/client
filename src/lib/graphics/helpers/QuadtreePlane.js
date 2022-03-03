@@ -61,6 +61,7 @@ class QuadtreePlane {
       }
     } else {
       child.children = [];
+      child.distanceToCamera = distToChild;
     }
   }
 
@@ -140,9 +141,9 @@ class QuadtreePlane {
         if (minmax[1] === null || cur > minmax[1]) minmax[1] = cur;
       }
     }
-    if (xMin === xMax || yMin === yMax) {
-      // console.log('between points', minmax);
-    }
+    // if (xMin === xMax || yMin === yMax) {
+    //   console.log('between points', minmax);
+    // }
     return minmax;
   }
 

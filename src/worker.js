@@ -34,27 +34,20 @@ const updatePlanetPositions = function(planets, elapsed = 0) {
 };
 
 // TODO: remove debug
-let taskTotal = 0;
-let taskTally = 0;
+// let taskTotal = 0;
+// let taskTally = 0;
 // setInterval(() => {
 //   if (taskTally > 0) {
 //     console.log(
-//       `avg execution time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
+//       `avg execution time (internal, over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
 //     );
 //   }
 // }, 5000);
 
-const rebuildTerrainGeometry = function (chunk, debug) {
+const rebuildTerrainGeometry = function (chunk) {
   chunk.offset = new Vector3(chunk.offset[0], chunk.offset[1], chunk.offset[2]);
-  // TODO: remove debug
-  const startTime = Date.now();
   const positions = rebuildChunkGeometry(chunk);
-  if (debug) { // TODO: remove debug
-    taskTotal += Date.now() - startTime;
-    taskTally++;
-  }
 
-  // TODO: check structure of positions
   postMessage({
     topic: 'rebuiltTerrainChunk',
     positions

@@ -70,7 +70,7 @@ class WorkerThreadPool {
 
       const startTime = Date.now();
       w.postMessage(workItem, (v) => {
-        if (resetPending && taskTally === 20) {
+        if (resetPending && taskTally === 20) { // TODO: remove debug
           taskTotal = 0;
           taskTally = 0;
           resetPending = false;

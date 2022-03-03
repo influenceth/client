@@ -14,7 +14,6 @@ import {
 } from 'three';
 
 import constants from '~/lib/constants';
-import { rebuildChunkGeometry } from './TerrainChunkUtils';
 
 const { CHUNK_RESOLUTION, OVERSAMPLE_CHUNK_TEXTURES } = constants;
 
