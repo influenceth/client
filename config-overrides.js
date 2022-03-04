@@ -15,6 +15,19 @@ const addGlslifyLoader = () => config => {
   return config;
 };
 
+const addDataUriFileLoader = () => config => {
+  const loaders = config.module.rules.find(rule => Array.isArray(rule.oneOf)).oneOf;
+  loaders.unshift({
+    test: /\.datauri$/,
+    exclude: /node_modules/,
+    use: [
+      'raw-loader',
+    ]
+  });
+
+  return config;
+};
+
 const addSVGR = () => config => {
   const loaders = config.module.rules.find(rule => Array.isArray(rule.oneOf)).oneOf;
   loaders.unshift({
@@ -44,5 +57,6 @@ module.exports = override(
     }
   ]),
   addGlslifyLoader(),
+  addDataUriFileLoader(),
   addSVGR()
 );

@@ -86,9 +86,8 @@ class WorkerThreadPool {
   }
 }
 
-const workerThreadPool = new WorkerThreadPool(
-  (navigator?.hardwareConcurrency || 4) - 1 // spare one for main thread
-);
+// TODO: should we subtract 1 for main thread?
+const workerThreadPool = new WorkerThreadPool(navigator?.hardwareConcurrency || 4);
 
 const useWebWorker = () => {
   return useMemo(() => ({

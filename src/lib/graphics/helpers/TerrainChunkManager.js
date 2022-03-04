@@ -5,6 +5,7 @@ import constants from '~/lib/constants';
 
 const {
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL,
+  DISABLE_BACKGROUND_TERRAIN_MAPS
 } = constants;
 
 class TerrainChunkManager {
@@ -16,10 +17,12 @@ class TerrainChunkManager {
     this.pool = {};
     this.reset();
 
-    this.ready = false;
-    initChunkTextures().then(() => {
+    if (DISABLE_BACKGROUND_TERRAIN_MAPS) {
+      this.ready = false;
+      initChunkTextures().then(() => { this.ready = true; });
+    } else {
       this.ready = true;
-    });
+    }
   }
 
   dispose() {
@@ -31,8 +34,7 @@ class TerrainChunkManager {
   }
 
   isBusy() {
-    // TODO: do we need workerPool check in here?
-    return !this.ready || this.workerPool.isBusy() || this.waitingOn > this._new.length;
+    return !this.ready || this.waitingOn > this._new.length;
   }
 
   isPreparingUpdate() {
@@ -78,6 +80,11 @@ class TerrainChunkManager {
     chunk.hide();
     chunk.attachToGroup();
 
+    const extraArgs = DISABLE_BACKGROUND_TERRAIN_MAPS ? {} : {
+      config: this.config,
+      groupMatrix: chunk._params.group.matrix.clone(),
+    };
+
     // TODO: the leaner we can make params, the better for webworker
     // TODO: make sure passing buffer by reference
     const scope = this;
@@ -91,11 +98,17 @@ class TerrainChunkManager {
           radius: scope.config.radius,
           resolution: chunk._params.resolution,
           width: chunk._params.width,
+          ...extraArgs
         }
       },
-      ({ positions }) => {
+      ({ positions, maps }) => {
         chunk.updateGeometry(positions);
-        scope._queued.push(chunk);
+        if (DISABLE_BACKGROUND_TERRAIN_MAPS) {
+          scope._queued.push(chunk);
+        } else {
+          chunk.updateMaps(maps);
+          scope._new.push(chunk);
+        }
       }
     );
 

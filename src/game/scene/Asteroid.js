@@ -68,6 +68,16 @@ setInterval(() => {
   console.log(`b ${totalRuns}`, b);
 }, 5000);
 
+let taskTotal = 0;
+let taskTally = 0;
+setInterval(() => {
+  if (taskTally > 0) {
+    console.log(
+      `avg update time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
+    );
+  }
+}, 5000);
+
 const Asteroid = (props) => {
   const { camera, controls, gl, raycaster, scene } = useThree();
   const origin = useStore(s => s.asteroids.origin);
@@ -405,6 +415,15 @@ const Asteroid = (props) => {
       if (geometry.current.builder.isReadyToFinish()) {
         // vvv BENCHMARK 1ms
         geometry.current.builder.update();
+        
+        // TODO: remove below and updatePending stuff
+        if (taskTally === 1) {  // overwrite first load since so long for workers
+          taskTotal = 2 * (Date.now() - updatePending.current);
+        } else {
+          taskTotal += Date.now() - updatePending.current;
+        }
+        taskTally++;
+        updatePending.current = null;
         // ^^^
       } else {
         // vvv BENCHMARK 8ms (matches MAP_RENDER_TIME_PER_CYCLE)

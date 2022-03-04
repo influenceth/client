@@ -26,6 +26,7 @@ const constants = {
 
   // (performance)
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: true,
+  DISABLE_BACKGROUND_TERRAIN_MAPS: false,  // force terrain textures to be rendered on main thread
   UPDATE_QUADTREE_EVERY_CHUNK: 0.5, // (multiplied by MIN_CHUNK_SIZE)
 
   // Performance settings

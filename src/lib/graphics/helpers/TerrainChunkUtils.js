@@ -13,12 +13,11 @@ import colorShader from '~/game/scene/asteroid/color.glsl';
 import heightShader from '~/game/scene/asteroid/height.glsl';
 import heightShaderWithStitching from '~/game/scene/asteroid/height_w_stitching.glsl';
 import normalShader from '~/game/scene/asteroid/normal.glsl';
+import rampsDataUri from '~/game/scene/asteroid/ramps.png.datauri';
 import constants from '~/lib/constants';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 
 const { OVERSAMPLE_CHUNK_TEXTURES } = constants;
-
-const rampsPath = `${process.env.PUBLIC_URL}/textures/asteroid/ramps.png`;
 
 // set up texture renderer (ideally w/ offscreen canvas)
 const textureRenderer = new TextureRenderer();
@@ -69,10 +68,10 @@ export async function initChunkTextures() {
     let loader;
     try {
       loader = new TextureLoader();
-      ramps = await loader.loadAsync(rampsPath);
+      ramps = await loader.loadAsync(rampsDataUri);
     } catch (e) {
       loader = new ImageBitmapLoader();
-      ramps = new CanvasTexture(await loader.loadAsync(rampsPath));
+      ramps = new CanvasTexture(await loader.loadAsync(rampsDataUri));
     }
     ramps.minFilter = NearestFilter;
     ramps.magFilter = NearestFilter;

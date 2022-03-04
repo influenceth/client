@@ -1,7 +1,12 @@
 import { Vector3 } from 'three';
 
+import constants from '~/lib/constants';
 import * as utils from '~/lib/geometryUtils';
-import { rebuildChunkGeometry } from '~/lib/graphics/helpers/TerrainChunkUtils';
+import { rebuildChunkGeometry, rebuildChunkMaps, initChunkTextures } from '~/lib/graphics/helpers/TerrainChunkUtils';
+
+const {
+  DISABLE_BACKGROUND_TERRAIN_MAPS
+} = constants;
 
 onmessage = function(event) {
   switch (event.data.topic) {
@@ -47,11 +52,29 @@ const updatePlanetPositions = function(planets, elapsed = 0) {
 const rebuildTerrainGeometry = function (chunk) {
   chunk.offset = new Vector3(chunk.offset[0], chunk.offset[1], chunk.offset[2]);
   const positions = rebuildChunkGeometry(chunk);
-
-  postMessage({
-    topic: 'rebuiltTerrainChunk',
-    positions
-  }, [
-    positions.buffer,
-  ]);
+  if (DISABLE_BACKGROUND_TERRAIN_MAPS) {
+    postMessage({
+      topic: 'rebuiltTerrainChunk',
+      positions,
+    }, [
+      positions.buffer,
+    ]);
+  } else {
+    initChunkTextures().then(() => {
+      const maps = rebuildChunkMaps(chunk);
+      postMessage({
+        topic: 'rebuiltTerrainChunk',
+        positions,
+        maps
+      }, [
+        positions.buffer,
+        maps.colorBitmap,
+        maps.heightBitmap,
+        maps.normalBitmap,
+      ]);
+    });
+  }
 }
+
+// try to init textures pre-emptively
+initChunkTextures();
