@@ -189,6 +189,7 @@ class QuadtreeCubeSphereManager {
           position: [node.center.x, node.center.y, node.center.z],
           bounds: node.bounds,
           size: node.size.x,
+          sphereCenter: node.sphereCenter,
           sphereCenterHeight: node.sphereCenterHeight,
           stitchingStrides: {} 
         };
@@ -231,6 +232,7 @@ class QuadtreeCubeSphereManager {
 
       updatedChunks[k] = {
         position: [xp, zp],
+        sphereCenter: difference[k].sphereCenter,
         sphereCenterHeight: difference[k].sphereCenterHeight,
         chunk: this.builder.allocateChunk({
           side: difference[k].index,
@@ -248,7 +250,6 @@ class QuadtreeCubeSphereManager {
 
     // update class
     this.chunks = updatedChunks;
-    this.closestChunkHeight = closestKey ? this.chunks[closestKey].sphereCenterHeight : null;
   }
 }
 

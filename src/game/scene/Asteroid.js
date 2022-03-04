@@ -351,8 +351,7 @@ const Asteroid = (props) => {
     const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
-    //const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * INITIAL_ZOOM);
-    const zoomTo = new Vector3(1, 0, 0).multiplyScalar(asteroidData.radius * INITIAL_ZOOM); // TODO: remove debug
+    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * INITIAL_ZOOM);
     controls.targetScene.position.copy(panTo);
     controls.object.position.copy(zoomTo);
     controls.noPan = true;
@@ -400,6 +399,34 @@ const Asteroid = (props) => {
   // // eslint-disable-next-line react-hooks/exhaustive-deps
   // }, [requestingModelDownload, exportableMesh]);
 
+  // NOTE: raycasting would technically be more accurate here, but it's way less performant
+  //       (3ms+ for just closest mesh... if all quadtree children, closer to 20ms) and need
+  //       to incorporate geometry shrink returned intersection distance
+  const applyingZoomLimits = useRef(0);
+  const applyZoomLimits = useCallback((cameraPosition, chunks) => {
+    applyingZoomLimits.current = true;
+    setTimeout(() => {
+      const [closestChunk, closestDistance] = chunks.reduce((acc, c) => {
+        const distance = c.sphereCenter.distanceTo(cameraPosition);
+        return (!acc || distance < acc[1]) ? [c, distance] : acc;
+      }, null);
+
+      const minDistance = closestChunk.sphereCenterHeight + surfaceDistance;
+      
+      // too close, so should animate camera out (jump to surface immediately though)
+      if (closestDistance < surfaceDistance) {
+        controls.minDistance = Math.max(cameraPosition.length(), closestChunk.sphereCenterHeight);
+        applyingZoomLimits.current = minDistance - controls.minDistance;
+
+      // can just set
+      } else {
+        controls.minDistance = minDistance;
+        applyingZoomLimits.current = false;
+      }
+    }, 0);
+  }, [surfaceDistance]);
+
+
   const updatePending = useRef();
 
   // Positions the asteroid in space based on time changes
@@ -409,44 +436,6 @@ const Asteroid = (props) => {
 
     // tally frame
     frameCycle.current = (frameCycle.current + 1) % FRAME_CYCLE_LENGTH;
-
-    // if builder is not busy, make sure we are showing most recent chunks
-    if (geometry.current.builder.isPreparingUpdate()) {
-      if (geometry.current.builder.isReadyToFinish()) {
-        // vvv BENCHMARK 1ms
-        geometry.current.builder.update();
-        
-        // TODO: remove below and updatePending stuff
-        if (taskTally === 1) {  // overwrite first load since so long for workers
-          taskTotal = 2 * (Date.now() - updatePending.current);
-        } else {
-          taskTotal += Date.now() - updatePending.current;
-        }
-        taskTally++;
-        updatePending.current = null;
-        // ^^^
-      } else {
-        // vvv BENCHMARK 8ms (matches MAP_RENDER_TIME_PER_CYCLE)
-        // TODO: would it be smoother for UI to pass to worker (even though slower)?
-        geometry.current.builder.updateMaps(Date.now() + MAP_RENDER_TIME_PER_CYCLE);
-        // ^^^
-      }
-    }
-    
-    // vvv BENCHMARK ~0ms
-    // control dynamic zoom limit (zoom out slowly if too low... else, just update boundary)
-    // NOTE: raycasting would technically be more accurate here, but it's way less performant
-    //       (3ms+ for just closest mesh... if all quadtree children, closer to 20ms) and need
-    //       to incorporate geometry shrink returned intersection distance
-    if (controls && geometry.current?.closestChunkHeight) {
-      const minDistance = geometry.current.closestChunkHeight + surfaceDistance;
-      if (controls.object.position.length() < minDistance) {
-        controls.minDistance += 5;
-      } else {
-        controls.minDistance = minDistance;
-      }
-    }
-    // ^^^
 
     // vvv BENCHMARK <1ms
     // update asteroid position
@@ -473,6 +462,49 @@ const Asteroid = (props) => {
         );
       }
     }
+
+    const rotatedCameraPosition = controls.object.position.clone().applyAxisAngle(
+      rotationAxis.current,
+      -rotation.current
+    );
+    // ^^^
+
+    // if builder is not busy, make sure we are showing most recent chunks
+    if (geometry.current.builder.isPreparingUpdate()) {
+      if (geometry.current.builder.isReadyToFinish()) {
+        // vvv BENCHMARK 1ms
+        geometry.current.builder.update();
+        
+        // TODO: remove below and updatePending stuff
+        if (taskTally === 1) {  // overwrite first load since so long for workers
+          taskTotal = 2 * (Date.now() - updatePending.current);
+        } else {
+          taskTotal += Date.now() - updatePending.current;
+        }
+        taskTally++;
+        updatePending.current = null;
+        // ^^^
+      } else {
+        // vvv BENCHMARK 8ms (matches MAP_RENDER_TIME_PER_CYCLE)
+        // TODO: would it be smoother for UI to pass to worker (even though slower)?
+        geometry.current.builder.updateMaps(Date.now() + MAP_RENDER_TIME_PER_CYCLE);
+        // ^^^
+      }
+    }
+    
+    // vvv BENCHMARK ~0ms
+    // control dynamic zoom limit (zoom out if too low... else, just update boundary)
+    if (controls && Object.values(geometry.current?.chunks).length) {
+      if (applyingZoomLimits.current) {
+        if (applyingZoomLimits.current !== true) {
+          const amount = Math.max(5, applyingZoomLimits.current / 10);
+          applyingZoomLimits.current = Math.max(0, applyingZoomLimits.current - amount);
+          controls.minDistance += amount;
+        }
+      } else {
+        applyZoomLimits(rotatedCameraPosition, Object.values(geometry.current.chunks));
+      }
+    }
     // ^^^
     
     // update quadtree on "significant" movement so it can rebuild children appropriately
@@ -490,14 +522,8 @@ const Asteroid = (props) => {
         // console.log('update started');
         updatePending.current = Date.now();
 
-        // TODO: try to thread this
         // vvv BENCHMARK 5ms
-        geometry.current.setCameraPosition(
-          controls.object.position.clone().applyAxisAngle(
-            rotationAxis.current,
-            -rotation.current
-          )
-        );
+        geometry.current.setCameraPosition(rotatedCameraPosition);
         // ^^^
       }
     }
