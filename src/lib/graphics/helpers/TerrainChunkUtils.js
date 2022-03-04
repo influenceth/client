@@ -188,7 +188,8 @@ function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, conf
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-export function rebuildChunkGeometry({ edgeStrides, heightScale, offset, radius, resolution, width }) {
+export function rebuildChunkGeometry({ config, edgeStrides, heightScale, offset, resolution, width }) {
+  const radius = config.radius;
   const scaledHeight = radius * heightScale;
   const resolutionPlusOne = resolution + 1;
   const half = width / 2;

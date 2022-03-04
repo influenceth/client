@@ -9,10 +9,19 @@ const {
 } = constants;
 
 class TerrainChunkManager {
-  constructor(config, workerPool) {
+  constructor(i, config, workerPool) {
+    this.asteroidId = i;
     this.config = config;
+    
+    const {
+      ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
+      ...prunedConfig
+    } = this.config;
+    this.prunedConfig = prunedConfig; // for passing to webworker
+
     this.csmManager = null;
     this.shadowsEnabled = false;
+
     this.workerPool = workerPool;
     this.pool = {};
     this.reset();
@@ -80,26 +89,25 @@ class TerrainChunkManager {
     chunk.hide();
     chunk.attachToGroup();
 
-    const extraArgs = DISABLE_BACKGROUND_TERRAIN_MAPS ? {} : {
-      config: this.config,
-      groupMatrix: chunk._params.group.matrix.clone(),
-    };
-
     // TODO: the leaner we can make params, the better for webworker
     // TODO: make sure passing buffer by reference
     const scope = this;
     this.workerPool.processInBackground(
       {
         topic: 'rebuildTerrainGeometry',
+        asteroid: {
+          key: this.asteroidId,
+          config: this.prunedConfig,
+          resolution: chunk._params.resolution,
+        },
         chunk: {
           edgeStrides: chunk._params.stitchingStrides,
           heightScale: chunk._heightScale,
           offset: chunk._params.offset.toArray(),
-          radius: scope.config.radius,
-          resolution: chunk._params.resolution,
           width: chunk._params.width,
-          ...extraArgs
-        }
+          groupMatrix: chunk._params.group.matrix.clone(),
+        },
+        _cacheable: 'asteroid'
       },
       ({ positions, maps }) => {
         chunk.updateGeometry(positions);

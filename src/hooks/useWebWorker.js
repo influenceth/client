@@ -19,6 +19,7 @@ setInterval(() => {
 class WorkerThread {
   constructor() {
     this.id = workerIds++;
+    this.paramCache = {};
     this.messageCallback = null;
 
     this.worker = new Worker();
@@ -34,6 +35,17 @@ class WorkerThread {
   }
 
   postMessage(msg, callback) {
+    // if worker has cached cacheable params already, then don't include in params
+    // else, if new, then note the new cache key
+    if (msg._cacheable) {
+      if (this.paramCache[msg._cacheable] === msg[msg._cacheable]?.key) {
+        delete msg[msg._cacheable];
+      } else {
+        this.paramCache[msg._cacheable] = msg[msg._cacheable]?.key;
+      }
+      delete msg._cacheable;
+    }
+
     msg._id = this.id;
     this.messageCallback = callback;
     this.worker.postMessage(msg);

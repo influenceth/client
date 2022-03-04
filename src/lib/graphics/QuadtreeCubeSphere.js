@@ -147,12 +147,12 @@ class QuadtreeCubeSphere {
 }
 
 class QuadtreeCubeSphereManager {
-  constructor(config, workerPool) {
+  constructor(i, config, workerPool) {
     this.radius = config.radius;
 
     this.quadtreeCube = new QuadtreeCubeSphere(config);
 
-    this.builder = new TerrainChunkManager(config, workerPool);
+    this.builder = new TerrainChunkManager(i, config, workerPool);
     this.groups = [...new Array(6)].map(_ => new Group());
     this.chunks = {};
   }

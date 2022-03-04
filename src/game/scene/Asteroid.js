@@ -171,7 +171,7 @@ const Asteroid = (props) => {
 
       // if geometry.current already exists, dispose first
       if (geometry.current) disposeGeometry();
-      geometry.current = new QuadtreeCubeSphere(c, webWorkerPool);
+      geometry.current = new QuadtreeCubeSphere(origin, c, webWorkerPool);
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.add(g);
       });
@@ -399,6 +399,7 @@ const Asteroid = (props) => {
   // // eslint-disable-next-line react-hooks/exhaustive-deps
   // }, [requestingModelDownload, exportableMesh]);
 
+  // TODO (enhancement): could use webworker for calculations here, but may not be worth the overhead
   // NOTE: raycasting would technically be more accurate here, but it's way less performant
   //       (3ms+ for just closest mesh... if all quadtree children, closer to 20ms) and need
   //       to incorporate geometry shrink returned intersection distance
@@ -492,7 +493,7 @@ const Asteroid = (props) => {
       }
     }
     
-    // vvv BENCHMARK ~0ms
+    // vvv BENCHMARK <1ms
     // control dynamic zoom limit (zoom out if too low... else, just update boundary)
     if (controls && Object.values(geometry.current?.chunks).length) {
       if (applyingZoomLimits.current) {

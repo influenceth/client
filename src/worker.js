@@ -8,6 +8,10 @@ const {
   DISABLE_BACKGROUND_TERRAIN_MAPS
 } = constants;
 
+let cache = {
+  asteroid: {}
+};
+
 onmessage = function(event) {
   switch (event.data.topic) {
     case 'updateAsteroidPositions':
@@ -17,7 +21,11 @@ onmessage = function(event) {
       updatePlanetPositions(event.data.planets, event.data.elapsed);
       break;
     case 'rebuildTerrainGeometry':
-      rebuildTerrainGeometry(event.data.chunk);
+      if (event.data.asteroid) cache.asteroid = event.data.asteroid;
+      rebuildTerrainGeometry({
+        ...cache.asteroid,
+        ...event.data.chunk
+      });
       break;
     default:
       console.error('Method not supported');

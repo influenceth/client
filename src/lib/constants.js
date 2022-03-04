@@ -19,14 +19,14 @@ const constants = {
   OVERSAMPLE_CHUNK_TEXTURES: true,  // NOTE: this probably doesn't need to be a constant; we should always do this
 
   // (culling, zoom, camera, shadows)
-  GEOMETRY_SHRINK: 0.05,        // 0.05, (multiplied by radius)
+  GEOMETRY_SHRINK: 0.075,        // 0.05, (multiplied by radius)
   GEOMETRY_SHRINK_MAX: 1000,    // 1000 (meters)
   MIN_FRUSTUM_AT_SURFACE: 2000, // closest zoom so that X meters visible w/i frustum height
   ENABLE_CSM: true, // cascading shadow maps
 
   // (performance)
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: true,
-  DISABLE_BACKGROUND_TERRAIN_MAPS: false,  // force terrain textures to be rendered on main thread
+  DISABLE_BACKGROUND_TERRAIN_MAPS: typeof OffscreenCanvas === 'undefined',  // force terrain textures to be rendered on main thread
   UPDATE_QUADTREE_EVERY_CHUNK: 0.5, // (multiplied by MIN_CHUNK_SIZE)
 
   // Performance settings
