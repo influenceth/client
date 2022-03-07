@@ -16,12 +16,12 @@ import Rings from './asteroid/Rings';
 // import exportModel from './asteroid/export';
 
 const {
-  MIN_CHUNK_SIZE,
   MIN_FRUSTUM_AT_SURFACE,
-  UPDATE_QUADTREE_EVERY_CHUNK,
+  CHUNK_SPLIT_DISTANCE,
+  UPDATE_QUADTREE_EVERY,
   ENABLE_CSM
 } = constants;
-const UPDATE_QUADTREE_EVERY = MIN_CHUNK_SIZE * UPDATE_QUADTREE_EVERY_CHUNK;
+const UPDATE_DISTANCE_MULT = CHUNK_SPLIT_DISTANCE * UPDATE_QUADTREE_EVERY;
 const FRAME_CYCLE_LENGTH = 15;
 
 const MAP_RENDER_TIME_PER_CYCLE = 8;
@@ -100,7 +100,7 @@ const Asteroid = (props) => {
   const debug = useRef();
   const geometry = useRef();
   const quadtreeRef = useRef();
-  const cameraPosition = useRef();
+  const lastCameraPosition = useRef();
   const frameCycle = useRef(0);
   const group = useRef();
   const light = useRef();
@@ -110,6 +110,15 @@ const Asteroid = (props) => {
   const rotation = useRef(0);
   const csmHelper = useRef(); // TODO: remove
   const aspectRatio = useRef();
+
+  const maxStretch = useMemo(
+    () => config?.stretch ? Math.max(config.stretch.x, config.stretch.y, config.stretch.z) : 1
+    [config?.stretch]
+  );
+  const minStretch = useMemo(
+    () => config?.stretch ? Math.min(config.stretch.x, config.stretch.y, config.stretch.z) : 1
+    [config?.stretch]
+  );
 
   const disposeGeometry = useCallback(() => {
     if (geometry.current && quadtreeRef.current) {
@@ -224,7 +233,7 @@ const Asteroid = (props) => {
     const lightIntensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
     const maxRadius = ringsPresent
       ? asteroidData.radius * 1.5
-      : asteroidData.radius * Math.max(config.stretch.x, config.stretch.y, config.stretch.z);
+      : asteroidData.radius * maxStretch;
     
     //
     // CSM setup
@@ -237,7 +246,7 @@ const Asteroid = (props) => {
       const minSurfaceDistance = Math.min(surfaceDistance, (MIN_ZOOM_DEFAULT - 1) * asteroidData.radius);
       const cascadeConfig = [];
       cascadeConfig.unshift(MAX_ZOOM);
-      cascadeConfig.unshift(INITIAL_ZOOM - Math.min(config.stretch.x, config.stretch.y, config.stretch.z));
+      cascadeConfig.unshift(INITIAL_ZOOM - minStretch);
       const midCascade = 8 * minSurfaceDistance / asteroidData.radius;
       if (midCascade < cascadeConfig[0]) cascadeConfig.unshift(midCascade);
       cascadeConfig.unshift(2 * minSurfaceDistance / asteroidData.radius);
@@ -461,6 +470,7 @@ const Asteroid = (props) => {
           rotationAxis.current,
           updatedRotation
         );
+        rotation.current = updatedRotation;
       }
     }
 
@@ -509,25 +519,26 @@ const Asteroid = (props) => {
     // ^^^
     
     // update quadtree on "significant" movement so it can rebuild children appropriately
-    // TODO (enhancement): UPDATE_QUADTREE_EVERY should probably depend on zoom level
     if (!geometry.current.builder.isBusy() && !geometry.current.builder.isPreparingUpdate()) {
-      const updateQuadCube = !cameraPosition.current
-        || cameraPosition.current.distanceTo(controls.object.position) > UPDATE_QUADTREE_EVERY
-        || (updatedRotation - rotation.current) * asteroidData.radius > UPDATE_QUADTREE_EVERY
+      
+      // update quads if
+      //  a) camera height changes by UPDATE_DISTANCE_MULT
+      //  b) camera position changes by rotational equivalent of UPDATE_DISTANCE_MULT at maxStretch surface
+      const cameraHeight = rotatedCameraPosition.length();
+      const updateQuadtreeEvery = geometry.current.smallestActiveChunkSize * UPDATE_DISTANCE_MULT;
+      const updateQuadCube = !lastCameraPosition.current
+        || Math.abs(lastCameraPosition.current.length() - cameraHeight) > updateQuadtreeEvery
+        || lastCameraPosition.current.distanceTo(rotatedCameraPosition) > updateQuadtreeEvery * cameraHeight / (asteroidData.radius * maxStretch)
       ;
       if (updateQuadCube) {
-        // TODO: evaluate rotatedCameraPosition only (instead of both)
-        cameraPosition.current = controls.object.position.clone();
-        rotation.current = updatedRotation;
+        lastCameraPosition.current = rotatedCameraPosition.clone();
 
         // send updated camera position to quads for processing
         // console.log('update started');
         updatePending.current = Date.now();
 
-        // vvv BENCHMARK 5ms
-        benchmark();
+        // vvv BENCHMARK 4ms (zoomed-in)
         geometry.current.setCameraPosition(rotatedCameraPosition);
-        benchmark('setCameraPosition');
         // ^^^
       }
     }

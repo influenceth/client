@@ -26,6 +26,7 @@ setInterval(() => {
 class QuadtreeCubeSphereManager {
   constructor(i, config, workerPool) {
     this.radius = config.radius;
+    this.smallestActiveChunkSize = 2 * config.radius;
 
     this.quadtreeCube = new QuadtreeCubeSphere(config);
 
@@ -53,8 +54,7 @@ class QuadtreeCubeSphereManager {
 
     const sides = this.quadtreeCube.getSides();
 
-    let closestKey = null;
-    let closestDistance = null;
+    let smallestActiveChunk = null;
     let updatedChunks = {};
     let newChunkTally = 0;
     for (let i = 0; i < sides.length; i++) {
@@ -94,13 +94,13 @@ class QuadtreeCubeSphereManager {
         }
 
         // track the closest chunk
-        if (closestDistance === null || node.distanceToCamera < closestDistance) {
-          closestKey = key;
-          closestDistance = node.distanceToCamera;
+        if (smallestActiveChunk === null || node.size.x < smallestActiveChunk) {
+          smallestActiveChunk = node.size.x;
         }
       }
     }
     this.builder.waitForChunks(newChunkTally);
+    this.smallestActiveChunkSize = smallestActiveChunk;
 
     // recycle now-deprecated chunks
     this.builder.queueForRecycling(
