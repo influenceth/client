@@ -89,8 +89,6 @@ class TerrainChunkManager {
     chunk.hide();
     chunk.attachToGroup();
 
-    // TODO: the leaner we can make params, the better for webworker
-    // TODO: make sure passing buffer by reference
     const scope = this;
     this.workerPool.processInBackground(
       {
@@ -128,10 +126,10 @@ class TerrainChunkManager {
   }
 
   queueForRecycling(chunks) {
-    this._old = [...chunks];
+    // this._old = [...chunks];
+    this._old = chunks; // doesn't seem like this needs clone, so not wasting resources
   }
 
-  // TODO: limit per call so limited per frame?
   updateMaps(until) {
     let chunk;
     while (chunk = this._queued.pop()) { // eslint-disable-line

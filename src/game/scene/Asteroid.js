@@ -516,6 +516,7 @@ const Asteroid = (props) => {
         || (updatedRotation - rotation.current) * asteroidData.radius > UPDATE_QUADTREE_EVERY
       ;
       if (updateQuadCube) {
+        // TODO: evaluate rotatedCameraPosition only (instead of both)
         cameraPosition.current = controls.object.position.clone();
         rotation.current = updatedRotation;
 
@@ -524,7 +525,9 @@ const Asteroid = (props) => {
         updatePending.current = Date.now();
 
         // vvv BENCHMARK 5ms
+        benchmark();
         geometry.current.setCameraPosition(rotatedCameraPosition);
+        benchmark('setCameraPosition');
         // ^^^
       }
     }
