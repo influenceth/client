@@ -44,20 +44,29 @@ class TerrainChunk {
     // init geometry
     this._geometry = new BufferGeometry();
     this.initGeometry();
-
+  
     // init material
+    const extraMaterialProps = {};
+    if (!shadowsEnabled) {
+      // without shadows, asteroids look way more detailed with flat shading... but also looks like all craters are same depth
+      // extraMaterialProps.flatShading = true; // TODO: ...
+    } else if (csmManager) {
+      extraMaterialProps.alphaTest = 0.5; // TODO: this may not be needed
+    } else {
+      // extraMaterialProps.shadowSide = DoubleSide;
+      extraMaterialProps.alphaTest = 0.5; // TODO: this may not be needed
+    }
+
     this._material = new MeshStandardMaterial({
-      alphaTest: 0.5,          // TODO: was using this w/o CSM, but may not be needed w/ CSM (may need to tune anyway)
-      color: 0xFFFFFF,
+      color: 0xffffff,
       depthFunc: LessDepth,
       displacementBias: -1 * this._config.radius * this._config.dispWeight,
       displacementScale: 2 * this._config.radius * this._config.dispWeight,
       dithering: true,
-      // flatShading: true,
       metalness: 0,
       roughness: 1,
       side: FrontSide,
-      shadowSide: csmManager ? null : DoubleSide,  // doubleside doesn't play nice w/ CSM
+      ...extraMaterialProps
       // wireframe: true,
     });
 

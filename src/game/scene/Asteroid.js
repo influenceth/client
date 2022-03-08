@@ -302,7 +302,9 @@ const Asteroid = (props) => {
 
       // if traditional shadows, update shadow camera
       if (shadowMode > 0) {
-        light.current.shadow.bias = -0.01;
+        light.current.shadow.mapSize.width = shadowSize;
+        light.current.shadow.mapSize.height = shadowSize;
+        // light.current.shadow.bias = 1 / shadowSize;
         light.current.shadow.camera.near = lightDistance - maxRadius;
         light.current.shadow.camera.far = lightDistance + maxRadius;
         light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius;
@@ -595,8 +597,9 @@ const Asteroid = (props) => {
           {true && light?.shadow?.camera && <primitive object={new CameraHelper(light.shadow.camera)} />}
         </Fragment>
       ))}
+      {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
       {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
-      {false && <ambientLight intensity={0.2} />}
+      {false && <ambientLight intensity={0.3} />}
     </group>
   );
 }
