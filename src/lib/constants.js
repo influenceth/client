@@ -1,4 +1,3 @@
-const baseChunkResolution = 128;
 const constants = {
   AU: 149597870700, // in meters
   MAX_SYSTEM_RADIUS: 10, // in AU
@@ -18,6 +17,7 @@ const constants = {
   MIN_CHUNK_SIZE: 500,       // 1000
   CHUNK_SPLIT_DISTANCE: 1.0,  // 1.0, 0.8, 1.25 (this should probably always be >= 0.5 functionally)
   OVERSAMPLE_CHUNK_TEXTURES: true,  // NOTE: this probably doesn't need to be a constant; we should always do this
+  NORMAL_SCALE: 1.25,
 
   // (culling, zoom, camera, shadows)
   GEOMETRY_SHRINK: 0.075,        // 0.05, (multiplied by radius)

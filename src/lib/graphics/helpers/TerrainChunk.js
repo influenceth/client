@@ -10,12 +10,16 @@ import {
   MeshDepthMaterial,
   MeshStandardMaterial,
   RGBADepthPacking,
+  Vector2,
   Vector3
 } from 'three';
 
 import constants from '~/lib/constants';
 
-const { OVERSAMPLE_CHUNK_TEXTURES } = constants;
+const {
+  NORMAL_SCALE,
+  OVERSAMPLE_CHUNK_TEXTURES,
+} = constants;
 
 // TODO: remove debug
 let first = true;
@@ -31,6 +35,7 @@ setInterval(() => {
 }, 5000);
 
 const GEO_ATTR_CACHE = {};
+const normalScale = new Vector2(NORMAL_SCALE, NORMAL_SCALE);
 
 class TerrainChunk {
   constructor(params, config, { csmManager, shadowsEnabled, resolution }) {
@@ -51,9 +56,9 @@ class TerrainChunk {
       // without shadows, asteroids look way more detailed with flat shading... but also looks like all craters are same depth
       // extraMaterialProps.flatShading = true; // TODO: ...
     } else if (csmManager) {
+      // extraMaterialProps.shadowSide = DoubleSide;
       extraMaterialProps.alphaTest = 0.5; // TODO: this may not be needed
     } else {
-      // extraMaterialProps.shadowSide = DoubleSide;
       extraMaterialProps.alphaTest = 0.5; // TODO: this may not be needed
     }
 
@@ -64,6 +69,7 @@ class TerrainChunk {
       displacementScale: 2 * this._config.radius * this._config.dispWeight,
       dithering: true,
       metalness: 0,
+      normalScale,
       roughness: 1,
       side: FrontSide,
       ...extraMaterialProps
