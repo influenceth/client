@@ -249,7 +249,7 @@ class TerrainChunk {
   updateMaps(data) {
     // debug (if debugging)
     if (false && first) {
-      const debug = 'normalBitmap';
+      const debug = 'heightBitmap';
       first = false;
       const canvas = document.getElementById('test_canvas');
       if (!!canvas) {

@@ -13,15 +13,15 @@ const {
 } = constants;
 
 // TODO: remove
-let taskTotal = 0;
-let taskTally = 0;
-setInterval(() => {
-  if (taskTally > 0) {
-    console.log(
-      `avg children time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
-    );
-  }
-}, 5000);
+// let taskTotal = 0;
+// let taskTally = 0;
+// setInterval(() => {
+//   if (taskTally > 0) {
+//     console.log(
+//       `avg children time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
+//     );
+//   }
+// }, 5000);
 
 class QuadtreeCubeSphereManager {
   constructor(i, config, workerPool) {

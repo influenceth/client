@@ -23,7 +23,7 @@ class QuadtreePlane {
       children: [],
       center: rootNode.getCenter(new Vector3()),
       size: rootNode.getSize(new Vector3()),
-      neighbors: {},
+      neighbors: { N: null, S: null, E: null, W: null },
       root: true
     };
     this.setSphereCenter(this.root);

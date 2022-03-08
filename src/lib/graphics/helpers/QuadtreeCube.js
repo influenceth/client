@@ -79,7 +79,7 @@ class QuadtreeCubeSphere {
   // preprocess geometry from high-res texture
   prerenderCoarseGeometry(sideTransform, resolution, config) {
 
-    // TODO: move to worker?
+    // TODO: move to worker? if do, update heightSamples so can "transfer" buffer
     const s = Date.now();
     const heightMap = generateHeightMap(
       sideTransform,
@@ -91,7 +91,7 @@ class QuadtreeCubeSphere {
       config,
       'texture'
     );
-    console.log('time for coarse', Date.now() - s);
+    // console.log('time for coarse', Date.now() - s);
 
     // TODO: use Float32Array?
     const heightSamples = [];

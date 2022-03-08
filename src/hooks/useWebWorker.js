@@ -8,13 +8,13 @@ let taskTotal = 0;
 let taskTally = 0;
 let resetPending = true;
 
-setInterval(() => {
-  if (!resetPending && taskTally > 0) {
-    console.log(
-      `avg response time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
-    );
-  }
-}, 5000);
+// setInterval(() => {
+//   if (!resetPending && taskTally > 0) {
+//     console.log(
+//       `avg response time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
+//     );
+//   }
+// }, 5000);
 
 class WorkerThread {
   constructor() {

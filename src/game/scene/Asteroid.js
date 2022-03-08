@@ -47,26 +47,26 @@ function benchmark(tag) {
 }
 
 // TODO: remove debug
-setInterval(() => {
-  if (first) {
-    first = false;
-    totalRuns = 0;
-    totals = {};
-    return;
-  }
-  const b = {};
-  let prevTime = 0;
-  Object.keys(totals).forEach((k) => {
-    const thisTime = Math.round(totals[k] / totalRuns);
-    if (k === '_') {
-      b['TOTAL'] = thisTime;
-    } else {
-      b[k] = thisTime - prevTime;
-      prevTime = thisTime;
-    }
-  });
-  console.log(`b ${totalRuns}`, b);
-}, 5000);
+// setInterval(() => {
+//   if (first) {
+//     first = false;
+//     totalRuns = 0;
+//     totals = {};
+//     return;
+//   }
+//   const b = {};
+//   let prevTime = 0;
+//   Object.keys(totals).forEach((k) => {
+//     const thisTime = Math.round(totals[k] / totalRuns);
+//     if (k === '_') {
+//       b['TOTAL'] = thisTime;
+//     } else {
+//       b[k] = thisTime - prevTime;
+//       prevTime = thisTime;
+//     }
+//   });
+//   console.log(`b ${totalRuns}`, b);
+// }, 5000);
 
 let taskTotal = 0;
 let taskTally = 0;
@@ -603,7 +603,7 @@ const Asteroid = (props) => {
         </Fragment>
       ))}
       {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
-      {false && <ambientLight intensity={0.4} />}
+      {false && <ambientLight intensity={0.2} />}
     </group>
   );
 }
