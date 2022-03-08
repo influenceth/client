@@ -27,7 +27,7 @@ const sideNeighbors = [
   [0,1,5,4],
   [0,1,4,5],
   [0,1,2,3],
-  [0,1,3,4],
+  [0,1,3,2],
 ];
 
 const getPrerenderResolution = (radius) => {
