@@ -9,7 +9,7 @@ const {
 } = constants;
 
 class TerrainChunkManager {
-  constructor(i, config, workerPool) {
+  constructor(i, config, textureSize, workerPool) {
     this.asteroidId = i;
     this.config = config;
     
@@ -21,6 +21,7 @@ class TerrainChunkManager {
 
     this.csmManager = null;
     this.shadowsEnabled = false;
+    this.textureSize = textureSize;
 
     this.workerPool = workerPool;
     this.pool = {};
@@ -80,6 +81,7 @@ class TerrainChunkManager {
         this.config,
         {
           csmManager: this.csmManager,
+          resolution: this.textureSize,
           shadowsEnabled: this.shadowsEnabled,
         },
         this.workerPool
@@ -96,7 +98,6 @@ class TerrainChunkManager {
         asteroid: {
           key: this.asteroidId,
           config: this.prunedConfig,
-          resolution: chunk._params.resolution,
         },
         chunk: {
           edgeStrides: chunk._params.stitchingStrides,
@@ -104,6 +105,7 @@ class TerrainChunkManager {
           offset: chunk._params.offset.toArray(),
           width: chunk._params.width,
           groupMatrix: chunk._params.group.matrix.clone(),
+          resolution: this.textureSize,
         },
         _cacheable: 'asteroid'
       },

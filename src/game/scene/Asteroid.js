@@ -16,13 +16,13 @@ import Rings from './asteroid/Rings';
 // import exportModel from './asteroid/export';
 
 const {
+  CHUNK_RESOLUTION,
   MIN_FRUSTUM_AT_SURFACE,
   CHUNK_SPLIT_DISTANCE,
   UPDATE_QUADTREE_EVERY,
   ENABLE_CSM
 } = constants;
 const UPDATE_DISTANCE_MULT = CHUNK_SPLIT_DISTANCE * UPDATE_QUADTREE_EVERY;
-const FRAME_CYCLE_LENGTH = 15;
 
 const MAP_RENDER_TIME_PER_CYCLE = 8;
 const INITIAL_ZOOM = 2;
@@ -82,7 +82,7 @@ const Asteroid = (props) => {
   const { camera, controls, gl, raycaster, scene } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const time = useStore(s => s.time.precise);
-  // const mapSize = useStore(s => s.graphics.textureSize); // TODO: apply user settings
+  const textureSizeMult = useStore(s => s.graphics.textureSizeMult) || 1;
   const shadowMode = useStore(s => s.graphics.shadowMode);
   const shadowSize = useStore(s => s.graphics.shadowSize);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
@@ -101,7 +101,6 @@ const Asteroid = (props) => {
   const geometry = useRef();
   const quadtreeRef = useRef();
   const lastCameraPosition = useRef();
-  const frameCycle = useRef(0);
   const group = useRef();
   const light = useRef();
   const asteroidOrbit = useRef();
@@ -180,7 +179,7 @@ const Asteroid = (props) => {
 
       // if geometry.current already exists, dispose first
       if (geometry.current) disposeGeometry();
-      geometry.current = new QuadtreeCubeSphere(origin, c, webWorkerPool);
+      geometry.current = new QuadtreeCubeSphere(origin, c, textureSizeMult * CHUNK_RESOLUTION, webWorkerPool);
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.add(g);
       });
@@ -202,11 +201,11 @@ const Asteroid = (props) => {
     if (!(asteroidData?.radius && geometry.current && quadtreeRef.current && position.current && config?.stretch)) return;
     
     // calculate intended shadow mode
-    let intendedShadowMode = 'none';
+    let intendedShadowMode = `${textureSizeMult}`;
     if (ENABLE_CSM && shadowMode === 2) {
-      intendedShadowMode = `${shadowSize}_CSM`;
+      intendedShadowMode = `${textureSizeMult}_CSM${shadowSize}`;
     } else if (shadowMode > 0) {
-      intendedShadowMode = `${shadowSize}`;
+      intendedShadowMode = `${textureSizeMult}_${shadowSize}`;
     }
 
     // if no changes, exit now
@@ -219,7 +218,7 @@ const Asteroid = (props) => {
       disposeGeometry();
       disposeLight();
 
-      geometry.current = new QuadtreeCubeSphere(config, webWorkerPool);
+      geometry.current = new QuadtreeCubeSphere(origin, config, textureSizeMult * CHUNK_RESOLUTION, webWorkerPool);
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.add(g);
       });
@@ -318,7 +317,7 @@ const Asteroid = (props) => {
     // set current shadowMode
     geometry.current.shadowMode = intendedShadowMode;
 
-  }, [asteroidData?.radius, config, ringsPresent, shadowMode, shadowSize, surfaceDistance]);
+  }, [asteroidData?.radius, config, ringsPresent, shadowMode, shadowSize, textureSizeMult, surfaceDistance]);
 
   // Zooms the camera to the correct location
   const shouldZoomIn = zoomStatus === 'zooming-in' && controls && !!asteroidData;
@@ -444,9 +443,6 @@ const Asteroid = (props) => {
     if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
 
-    // tally frame
-    frameCycle.current = (frameCycle.current + 1) % FRAME_CYCLE_LENGTH;
-
     // vvv BENCHMARK <1ms
     // update asteroid position
     if (asteroidOrbit.current && time) {
@@ -518,20 +514,17 @@ const Asteroid = (props) => {
     }
     // ^^^
     
-    // update quadtree on "significant" movement so it can rebuild children appropriately
+    // update quads if not already updating AND one of these is true...
+    //  a) camera height changes by UPDATE_DISTANCE_MULT
+    //  b) camera position changes by rotational equivalent of UPDATE_DISTANCE_MULT at maxStretch surface
     if (!geometry.current.builder.isBusy() && !geometry.current.builder.isPreparingUpdate()) {
-      
-      // update quads if
-      //  a) camera height changes by UPDATE_DISTANCE_MULT
-      //  b) camera position changes by rotational equivalent of UPDATE_DISTANCE_MULT at maxStretch surface
       const cameraHeight = rotatedCameraPosition.length();
       const updateQuadtreeEvery = geometry.current.smallestActiveChunkSize * UPDATE_DISTANCE_MULT;
-      const updateQuadCube = !lastCameraPosition.current
-        || Math.abs(lastCameraPosition.current.length() - cameraHeight) > updateQuadtreeEvery
-        || lastCameraPosition.current.distanceTo(rotatedCameraPosition) > updateQuadtreeEvery * cameraHeight / (asteroidData.radius * maxStretch)
+      const updateQuadCube = !geometry.current.cameraPosition
+        || Math.abs(geometry.current.cameraPosition.length() - cameraHeight) > updateQuadtreeEvery
+        || geometry.current.cameraPosition.distanceTo(rotatedCameraPosition) > updateQuadtreeEvery * cameraHeight / (asteroidData.radius * maxStretch)
       ;
       if (updateQuadCube) {
-        lastCameraPosition.current = rotatedCameraPosition.clone();
 
         // send updated camera position to quads for processing
         // console.log('update started');

@@ -65,9 +65,9 @@ const useStore = create(persist((set, get) => ({
     graphics: {
       lensflare: true,
       skybox: true,
-      shadowMode: 1,
+      shadowMode: 0,
       shadowSize: 1024,
-      textureSize: 512,
+      textureSizeMult: 1,
       fov: 75
     },
 
@@ -149,7 +149,7 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchTextureSizeSet: (size) => set(produce(state => {
-      state.graphics.textureSize = size;
+      state.graphics.textureSizeMult = size;
     })),
 
     dispatchSkyboxHidden: () => set(produce(state => {

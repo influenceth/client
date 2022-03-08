@@ -115,18 +115,18 @@ const Settings = (props) => {
             <StyledDataReadout label="Texture Quality">
               <ControlGroup>
                 <Button
-                  active={graphics.textureSize === 512}
-                  onClick={() => setTextureSize(512)}>
+                  active={graphics.textureSizeMult === 1}
+                  onClick={() => setTextureSize(1)}>
                   Low
                 </Button>
                 <Button
-                  active={graphics.textureSize === 1024}
-                  onClick={() => setTextureSize(1024)}>
+                  active={graphics.textureSizeMult === 2}
+                  onClick={() => setTextureSize(2)}>
                   Medium
                 </Button>
                 <Button
-                  active={graphics.textureSize === 2048}
-                  onClick={() => setTextureSize(2048)}>
+                  active={graphics.textureSizeMult === 4}
+                  onClick={() => setTextureSize(4)}>
                   High
                 </Button>
               </ControlGroup>

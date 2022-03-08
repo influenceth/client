@@ -15,7 +15,7 @@ import {
 
 import constants from '~/lib/constants';
 
-const { CHUNK_RESOLUTION, OVERSAMPLE_CHUNK_TEXTURES } = constants;
+const { OVERSAMPLE_CHUNK_TEXTURES } = constants;
 
 // TODO: remove debug
 let first = true;
@@ -33,11 +33,12 @@ setInterval(() => {
 const GEO_ATTR_CACHE = {};
 
 class TerrainChunk {
-  constructor(params, config, { csmManager, shadowsEnabled }) {
+  constructor(params, config, { csmManager, shadowsEnabled, resolution }) {
     this._params = params;
     this._config = config;
     this._csmManager = csmManager;
     this._shadowsEnabled = shadowsEnabled;
+    this._resolution = resolution;
     this.updateDerived();
 
     // init geometry
@@ -185,7 +186,7 @@ class TerrainChunk {
   }
 
   initGeometry() {
-    const resolution = this._params.resolution;
+    const resolution = this._resolution;
     // using cache since these should be same for every chunk
     if (!GEO_ATTR_CACHE[resolution]) {
       const resolutionPlusOne = resolution + 1;
@@ -255,7 +256,7 @@ class TerrainChunk {
       if (!!canvas) {
         canvas.style.height = `${data[debug].height}px`;
         canvas.style.width = `${data[debug].width}px`;
-        canvas.style.zoom = 300 / CHUNK_RESOLUTION;
+        canvas.style.zoom = 300 / this._resolution;
         const ctx = canvas.getContext('bitmaprenderer');
         ctx.transferFromImageBitmap(data[debug]);
       } else {

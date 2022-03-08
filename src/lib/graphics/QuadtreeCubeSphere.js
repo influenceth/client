@@ -7,7 +7,6 @@ import TerrainChunkManager from './helpers/TerrainChunkManager';
 import constants from '~/lib/constants';
 
 const {
-  CHUNK_RESOLUTION,
   GEOMETRY_SHRINK,
   GEOMETRY_SHRINK_MAX
 } = constants;
@@ -24,13 +23,14 @@ const {
 // }, 5000);
 
 class QuadtreeCubeSphereManager {
-  constructor(i, config, workerPool) {
+  constructor(i, config, textureSize, workerPool) {
     this.radius = config.radius;
+    this.cameraPosition = null;
     this.smallestActiveChunkSize = 2 * config.radius;
 
     this.quadtreeCube = new QuadtreeCubeSphere(config);
 
-    this.builder = new TerrainChunkManager(i, config, workerPool);
+    this.builder = new TerrainChunkManager(i, config, textureSize, workerPool);
     this.groups = [...new Array(6)].map(_ => new Group());
     this.chunks = {};
   }
@@ -50,6 +50,7 @@ class QuadtreeCubeSphereManager {
   }
 
   setCameraPosition(cameraPosition) {
+    this.cameraPosition = cameraPosition;
     this.quadtreeCube.setCameraPosition(cameraPosition);
 
     const sides = this.quadtreeCube.getSides();
@@ -84,7 +85,6 @@ class QuadtreeCubeSphereManager {
               offset: new Vector3(node.center.x, node.center.y, node.center.z),
               width: node.size.x,
               radius: this.radius,
-              resolution: CHUNK_RESOLUTION,
               stitchingStrides,
               minHeight: node.sphereCenterHeight - Math.min(this.radius * GEOMETRY_SHRINK, GEOMETRY_SHRINK_MAX),
               shadowsEnabled: this.shadowsEnabled

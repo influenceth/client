@@ -1,3 +1,4 @@
+const baseChunkResolution = 128;
 const constants = {
   AU: 149597870700, // in meters
   MAX_SYSTEM_RADIUS: 10, // in AU
@@ -14,8 +15,8 @@ const constants = {
   // Asteroid settings
   // (resolution)
   CHUNK_RESOLUTION: 128,      // 256, 64
-  CHUNK_SPLIT_DISTANCE: 1.0,  // 0.8, 1.25 (this should probably always be >= 0.5 functionally)
   MIN_CHUNK_SIZE: 500,       // 1000
+  CHUNK_SPLIT_DISTANCE: 1.0,  // 1.0, 0.8, 1.25 (this should probably always be >= 0.5 functionally)
   OVERSAMPLE_CHUNK_TEXTURES: true,  // NOTE: this probably doesn't need to be a constant; we should always do this
 
   // (culling, zoom, camera, shadows)
@@ -29,25 +30,25 @@ const constants = {
   DISABLE_BACKGROUND_TERRAIN_MAPS: typeof OffscreenCanvas === 'undefined',  // force terrain textures to be rendered on main thread
   UPDATE_QUADTREE_EVERY: 0.33, // (multiplied by CHUNK_SPLIT_DISTANCE)
 
-  // Performance settings
+  // Default performance settings
   GRAPHICS_LOW: {
     shadowMode: 0,
-    textureSize: 512
+    textureSizeMult: 1
   },
   GRAPHICS_MID: {
     shadowMode: 1,
     shadowSize: 1024,
-    textureSize: 512
+    textureSizeMult: 1
   },
   GRAPHICS_HIGH: {
     shadowMode: 2,
     shadowSize: 2048,
-    textureSize: 1024
+    textureSizeMult: 2
   },
   GRAPHICS_ULTRA: {
     shadowMode: 2,
     shadowSize: 4096,
-    textureSize: 2048
+    textureSizeMult: 4
   }
 };
 
