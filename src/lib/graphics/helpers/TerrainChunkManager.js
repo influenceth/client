@@ -12,6 +12,7 @@ class TerrainChunkManager {
   constructor(i, config, textureSize, workerPool) {
     this.asteroidId = i;
     this.config = config;
+    this.workerPool = workerPool;
     
     const {
       ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
@@ -22,9 +23,7 @@ class TerrainChunkManager {
     this.csmManager = null;
     this.shadowsEnabled = false;
     this.textureSize = textureSize;
-
-    this.workerPool = workerPool;
-    this.pool = {};
+    this.pool = [];
     this.reset();
 
     if (DISABLE_BACKGROUND_TERRAIN_MAPS) {
@@ -36,11 +35,8 @@ class TerrainChunkManager {
   }
 
   dispose() {
-    Object.keys(this.pool).forEach((w) => {
-      let chunk;
-      while(chunk = this.pool[w].pop()) chunk.dispose();
-    });
-    this.pool = {};
+    let chunk;
+    while(chunk = this.pool.pop()) chunk.dispose();
   }
 
   isBusy() {
@@ -63,19 +59,10 @@ class TerrainChunkManager {
   }
 
   allocateChunk(params) {
-    const w = params.width;
-
-    if (!this.pool[w]) {
-      this.pool[w] = [];
-    }
-
-    let chunk = null;
-    if (this.pool[w].length > 0) {
-      // console.log('reuse', w);
-      chunk = this.pool[w].pop();
+    let chunk = this.pool.pop();
+    if (chunk) { // console.log('reuse');
       chunk.reconfigure(params);
-    } else {
-      // console.log('create', w);
+    } else {  // console.log('create');
       chunk = new TerrainChunk(
         params,
         this.config,
@@ -162,13 +149,9 @@ class TerrainChunkManager {
     // recycle old chunks
     let node;
     while (node = this._old.pop()) { // eslint-disable-line
-      // (pool bucket should already exist, but sanity-insurance)
-      if (!this.pool[node.chunk._params.width]) {
-        this.pool[node.chunk._params.width] = [];
-      }
       if (ENABLE_TERRAIN_CHUNK_RESOURCE_POOL && node.chunk.isReusable()) {
         node.chunk.detachFromGroup();
-        this.pool[node.chunk._params.width].push(node.chunk);
+        this.pool.push(node.chunk);
       } else {
         node.chunk.dispose();
       }
