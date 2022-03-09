@@ -79,7 +79,7 @@ class TerrainChunkManager {
     chunk.attachToGroup();
 
     const scope = this;
-    this.workerPool.processInBackground(
+    this.workerPool.gpuProcessInBackground(
       {
         topic: 'rebuildTerrainGeometry',
         asteroid: {

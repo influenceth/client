@@ -99,12 +99,15 @@ class WorkerThreadPool {
 }
 
 // TODO: should we subtract 1 for main thread?
-const workerThreadPool = new WorkerThreadPool(navigator?.hardwareConcurrency || 4);
+const MIN_CONCURRENCY_FOR_DEDICATED_GPU_THREAD = 2;
+const totalWorkers = navigator?.hardwareConcurrency || 4;
+const cpuWorkerThreadPool = new WorkerThreadPool(totalWorkers >= MIN_CONCURRENCY_FOR_DEDICATED_GPU_THREAD ? totalWorkers - 1 : totalWorkers);
+const gpuWorkerThreadPool = totalWorkers >= MIN_CONCURRENCY_FOR_DEDICATED_GPU_THREAD ? new WorkerThreadPool(1) : null;
 
 const useWebWorker = () => {
   return useMemo(() => ({
-    isBusy: () => workerThreadPool.isBusy(),
-    processInBackground: (message, callback) => workerThreadPool.addToQueue(message, callback)
+    processInBackground: (message, callback) => cpuWorkerThreadPool.addToQueue(message, callback),
+    gpuProcessInBackground: (message, callback) => (gpuWorkerThreadPool || cpuWorkerThreadPool).addToQueue(message, callback),
   }), []);
 };
 
