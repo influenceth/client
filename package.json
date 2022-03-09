@@ -93,6 +93,7 @@
     "glslify-loader": "^2.0.0",
     "patch-package": "^6.4.7",
     "raw-loader": "^4.0.2",
+    "react-error-overlay": "6.0.9",
     "worker-loader": "^3.0.8"
   }
 }

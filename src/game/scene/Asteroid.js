@@ -100,7 +100,6 @@ const Asteroid = (props) => {
   const debug = useRef();
   const geometry = useRef();
   const quadtreeRef = useRef();
-  const lastCameraPosition = useRef();
   const group = useRef();
   const light = useRef();
   const asteroidOrbit = useRef();

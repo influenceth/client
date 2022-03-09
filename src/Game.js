@@ -39,10 +39,8 @@ const Game = (props) => {
   }, []);
 
   useEffect(() => {
-    if (!gpuInfo) return;
-
-    if (!gpuInfo.isMobile) {
-      setShowScene(true)
+    if (gpuInfo && !gpuInfo.isMobile) {
+      setShowScene(true);
 
       if (gpuInfo.tier === 0) {
         createAlert({
