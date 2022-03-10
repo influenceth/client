@@ -531,7 +531,7 @@ const Asteroid = (props) => {
         // console.log('update started');
         updatePending.current = Date.now();
 
-        // vvv BENCHMARK 4ms (zoomed-in)
+        // vvv BENCHMARK 4-6ms (zoomed-in)
         geometry.current.setCameraPosition(rotatedCameraPosition);
         // ^^^
       }

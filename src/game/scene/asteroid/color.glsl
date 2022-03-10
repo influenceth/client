@@ -4,11 +4,12 @@ uniform float uSpectral;
 uniform vec2 uResolution;
 
 // TODO: remove edge stuff from this shader
-uniform float uEdgeStrideN;
-uniform float uEdgeStrideS;
-uniform float uEdgeStrideE;
-uniform float uEdgeStrideW;
-uniform float uChunkSize;
+//uniform float uEdgeStrideN;
+//uniform float uEdgeStrideS;
+//uniform float uEdgeStrideE;
+//uniform float uEdgeStrideW;
+//uniform float uChunkSize;
+//uniform int uSide;
 
 void main() {
   // Reduce by resolution

@@ -6,19 +6,67 @@ const {
   CHUNK_SPLIT_DISTANCE
 } = constants;
 
+
+// // (generation function for edgeToEdgeMap)
+// const sideNeighbors = [
+//   [5,4,2,3],
+//   [4,5,2,3],
+//   [0,1,5,4],
+//   [0,1,4,5],
+//   [0,1,2,3],
+//   [0,1,3,2],
+// ];
+// const edgeToEdgeMap = [];
+// for (let i = 0; i < 6; i++) {
+//   edgeToEdgeMap[i] = [];
+//   for (let d = 0; d < 4; d++) {
+//     const sideIndexOfMyNeighbor = sideNeighbors[i][d];
+//     const directionFromNeighborToMe = sideNeighbors[sideIndexOfMyNeighbor].indexOf(i);
+//     edgeToEdgeMap[i][d] = [
+//       sideIndexOfMyNeighbor,
+//       directions[directionFromNeighborToMe],
+//       // flip bounds on some edges
+//       (d === 0 && directionFromNeighborToMe === 0)    // N to N (sides 5 to 0, 0 to 5)
+//       || (d === 0 && directionFromNeighborToMe === 3) // N to W (sides 3 to 0)
+//       || (d === 1 && directionFromNeighborToMe === 1) // S to S (sides 5 to 1, 1 to 5)
+//       || (d === 1 && directionFromNeighborToMe === 2) // S to E (sides 2 to 1)
+//       || (d === 2 && directionFromNeighborToMe === 1) // E to S (sides 1 to 2)
+//       || (d === 3 && directionFromNeighborToMe === 0) // W to N (sides 0 to 3)
+//     ];
+//   }
+// }
+
+// yR, y0, xR, x0
+const directions = ['N','S','E','W'];
+
+// each row describes the edges on each side
+// (i.e. row 0 is for face 0; NSEW are faces 5423;
+//  face 0 is N from the perspective of all 4 faces;
+//  flip bounds for neighbor testing on edge 0 and 3)
+const edgeToEdgeMap = [
+  [[5,'N',true], [4,'N',false],[2,'N',false],[3,'N',true]],
+  [[4,'S',false],[5,'S',true], [2,'S',true], [3,'S',false]],
+  [[0,'E',false],[1,'E',true], [5,'W',false],[4,'E',false]],
+  [[0,'W',true], [1,'W',false],[4,'W',false],[5,'E',false]],
+  [[0,'S',false],[1,'N',false],[2,'W',false],[3,'E',false]],
+  [[0,'N',true], [1,'S',true], [3,'W',false],[2,'E',false]]
+];
+
 class QuadtreePlane {
-  constructor({ localToWorld, size, worldStretch, heightSamples, sampleResolution }) {
+  constructor({ localToWorld, size, worldStretch, heightSamples, sampleResolution, side }) {
     this.localToWorld = localToWorld;
     this.rootSize = size;
     this.worldStretch = worldStretch || new Vector3(1, 1, 1);
     this.heightSamples = heightSamples;
     this.resolution = sampleResolution;
+    this.side = side;
 
     const rootNode = new Box3(
       new Vector3(-1 * size, -1 * size, 0),
       new Vector3(size, size, 0),
     );
     this.root = {
+      side,
       bounds: rootNode,
       children: [],
       center: rootNode.getCenter(new Vector3()),
@@ -27,6 +75,7 @@ class QuadtreePlane {
       root: true
     };
     this.setSphereCenter(this.root);
+    this.edges = { N: null, S: null, E: null, W: null };
   }
 
   getChildren() {
@@ -48,7 +97,7 @@ class QuadtreePlane {
 
   setCameraPosition(pos) {
     this._setCameraPosition(this.root, pos);
-    this._populateNeighbors(this.root);
+    this.populateNeighbors();
   }
 
   _setCameraPosition(child, pos) {
@@ -63,6 +112,11 @@ class QuadtreePlane {
       child.children = [];
       child.distanceToCamera = distToChild;
     }
+  }
+
+  populateNeighbors() {
+    this.root.neighbors = { N: null, S: null, E: null, W: null };
+    this._populateNeighbors(this.root);
   }
 
   _populateNeighbors(parent) {
@@ -96,33 +150,49 @@ class QuadtreePlane {
     }
   }
 
-  // TODO (enhancement): there is almost certainly a more explicit way to do this than
-  //  using distanceTo, but this currently benchmarks to <1ms when run for all sides,
-  //  so leaving it for now
-  //  - one thought: could we derive resolution of edge's neighbor based on how far camera
-  //                 is from would-be sphereCenter of a same-sized chunk?
-  //  - more likely: transform NSEW for each side, so can do similarly to _populateNeighbors
-  populateNonsideNeighbors(faceChildren) {
-    this.getChildren().forEach((child) => {
-      Object.keys(child.neighbors).forEach((dir) => {
-        if (!child.neighbors[dir]) {
-          const { closest } = faceChildren[dir].reduce((acc, testChild) => {
-            const dist = child.sphereCenter.distanceTo(testChild.sphereCenter);
-            if (acc.closestDist === null || dist < acc.closestDist) {
-              acc.closest = testChild;
-              acc.closestDist = dist;
-            }
-            return acc;
-          }, { closest: null, closestDist: null });
-          child.neighbors[dir] = closest;
-        }
-      });
-    });
-  }
-
   getClosestNeighborChild(neighborParentNode, neighborPos) {
     if (neighborParentNode?.children?.length > 0) return neighborParentNode.children[neighborPos];
     return neighborParentNode;
+  }
+
+  // for each of this face's edges, use the edgeToEdgeMap to get the matching
+  // edge on the neighboring face, then populate my edge chunks neighbors
+  populateNonsideNeighbors(allSides) {
+    for (let i in directions) {
+      const dir = directions[i];
+      const [neighborSideIndex, neighborsEdgeIndex, flipBounds] = edgeToEdgeMap[this.side][i];
+      const neighborChildren = (allSides[neighborSideIndex]?.quadtree?.edges || {})[neighborsEdgeIndex];
+
+      // for all of my edge children, find neighbor
+      // NOTE: if child has greater or equal size to neighbor, neighbor will not be set
+      this.edges[dir].forEach((child) => {
+        // on N or S edge, test neighbor with x (else, y); if flip bounds, negate coord
+        const testCoord = (flipBounds ? -1 : 1) * child.chunk.center[i < 2 ? 'x' : 'y'];
+        const childNeighbor = (neighborChildren || []).find(({ min, max }) => {
+          return (testCoord > min && testCoord < max);
+        });
+        child.chunk.neighbors[dir] = (childNeighbor || {}).chunk;
+      });
+    }
+  }
+
+  // define edges with chunk/min/max
+  // TODO (enhancement): this could potentially be handled in an existing loop
+  populateEdges() {
+    Object.keys(this.edges).forEach((dir) => { this.edges[dir] = []; });
+
+    this.getChildren().forEach((child) => {
+      Object.keys(child.neighbors).forEach((dir) => {
+        if (!child.neighbors[dir]) {
+          const useCoord = (dir === 'N' || dir === 'S') ? 'x' : 'y';
+          this.edges[dir].push({
+            chunk: child,
+            min: child.bounds.min[useCoord],
+            max: child.bounds.max[useCoord],
+          });
+        }
+      })
+    });
   }
 
   getHeightMinMax(node) {
@@ -188,11 +258,12 @@ class QuadtreePlane {
       },
     ].map(({ b }) => {
       const node = {
+        side: this.side,
         bounds: b,
         children: [],
         center: b.getCenter(new Vector3()),
         size: b.getSize(new Vector3()),
-        neighbors: {}
+        neighbors: { N: null, S: null, E: null, W: null },
       };
       this.setSphereCenter(node);
       return node;

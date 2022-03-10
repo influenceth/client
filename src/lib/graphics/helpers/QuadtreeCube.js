@@ -20,16 +20,6 @@ const cubeTransforms = [
   (new Matrix4()).makeRotationY(Math.PI),      // -Z
 ];
 
-// N, S, E, W per side
-const sideNeighbors = [
-  [5,4,2,3],
-  [4,5,2,3],
-  [0,1,5,4],
-  [0,1,4,5],
-  [0,1,2,3],
-  [0,1,3,2],
-];
-
 const getPrerenderResolution = (radius) => {
   const targetResolution = 2 * radius / MIN_CHUNK_SIZE;
   if (targetResolution < 32) return 16;
@@ -42,37 +32,32 @@ const getPrerenderResolution = (radius) => {
 };
 
 class QuadtreeCubeSphere {
-  constructor(config, sides) {
-    if (sides) {
-      this.sides = sides;
-      return;
+  constructor(config) {
+    const { radius, stretch } = config;
+    this.sides = [];
 
-    } else {
-      const { radius, stretch } = config;
-      this.sides = [];
+    const prerenderResolution = getPrerenderResolution(radius);
+    for (let i in cubeTransforms) {
+      this.sides.push({
+        index: i,
+        transform: cubeTransforms[i].clone(),
+        quadtree: new QuadtreePlane({
+          side: i,
+          size: radius,
+          minChunkSize: MIN_CHUNK_SIZE,
+          heightSamples: this.prerenderCoarseGeometry(
+            cubeTransforms[i].clone(),
+            prerenderResolution,
+            config
+          ),
+          sampleResolution: prerenderResolution,
+          localToWorld: cubeTransforms[i].clone(),
+          worldStretch: stretch,
+        }),
+      });
 
-      const prerenderResolution = getPrerenderResolution(radius);
-      for (let i in cubeTransforms) {
-        this.sides.push({
-          index: i,
-          transform: cubeTransforms[i].clone(),
-          quadtree: new QuadtreePlane({
-            size: radius,
-            minChunkSize: MIN_CHUNK_SIZE,
-            heightSamples: this.prerenderCoarseGeometry(
-              cubeTransforms[i].clone(),
-              prerenderResolution,
-              config
-            ),
-            sampleResolution: prerenderResolution,
-            localToWorld: cubeTransforms[i].clone(),
-            worldStretch: stretch
-          }),
-        });
-
-        // TODO: remove debug
-        // if (this.sides.length === 1) break;
-      }
+      // TODO: remove debug
+      // if (this.sides.length === 5) break;
     }
   }
 
@@ -109,20 +94,14 @@ class QuadtreeCubeSphere {
     // vvv BENCHMARK <1ms when zoomed out, ~2ms when zoomed in
     for (let s of this.sides) {
       s.quadtree.setCameraPosition(position);
+      s.quadtree.populateEdges();
     }
     // ^^^
-    
+
     // vvv BENCHMARK <1ms
     // populate cross-side neighbors (now that all sides' chunks are ready)
-    const childrenBySide = this.sides.map((s) => s.quadtree.getChildren());
     for (let s of this.sides) {
-      const [N, S, E, W] = sideNeighbors[s.index];
-      s.quadtree.populateNonsideNeighbors({
-        N: childrenBySide[N] || [],
-        S: childrenBySide[S] || [],
-        E: childrenBySide[E] || [],
-        W: childrenBySide[W] || [],
-      });
+      s.quadtree.populateNonsideNeighbors(this.sides);
     }
     // ^^^
   }

@@ -97,7 +97,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uDispPasses: { type: 'i', value: config.dispPasses },
       uDispPersist: { type: 'f', value: config.dispPersist },
       uDispWeight: { type: 'f', value: config.dispWeight },
-      uDispFineWeight: { type: 'f', value: 0.08 },
+      uDispFineWeight: { type: 'f', value: 0.075 },
       uEdgeStrideN: { type: 'f', value: edgeStrides.N },
       uEdgeStrideS: { type: 'f', value: edgeStrides.S },
       uEdgeStrideE: { type: 'f', value: edgeStrides.E },
@@ -130,7 +130,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-function generateColorMap(heightMap, chunkResolution, config, { edgeStrides, chunkSize }, returnType = 'bitmap') {
+function generateColorMap(heightMap, chunkResolution, config, /*{ edgeStrides, chunkSize, side }, */returnType = 'bitmap') {
   if (!ramps) throw new Error('Ramps not yet loaded!');
 
   const material = new ShaderMaterial({
@@ -142,11 +142,12 @@ function generateColorMap(heightMap, chunkResolution, config, { edgeStrides, chu
       uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
 
       // TODO: remove
-      uEdgeStrideN: { type: 'f', value: edgeStrides.N },
-      uEdgeStrideS: { type: 'f', value: edgeStrides.S },
-      uEdgeStrideE: { type: 'f', value: edgeStrides.E },
-      uEdgeStrideW: { type: 'f', value: edgeStrides.W },
-      uChunkSize: { type: 'f', value: chunkSize },
+      // uEdgeStrideN: { type: 'f', value: edgeStrides.N },
+      // uEdgeStrideS: { type: 'f', value: edgeStrides.S },
+      // uEdgeStrideE: { type: 'f', value: edgeStrides.E },
+      // uEdgeStrideW: { type: 'f', value: edgeStrides.W },
+      // uChunkSize: { type: 'f', value: chunkSize },
+      // uSide: { type: 'i', value: side },
     }
   });
 
@@ -318,7 +319,7 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
     heightTexture,
     textureResolution,
     config,
-    { edgeStrides, chunkSize }
+    //{ edgeStrides, chunkSize, side }
   );
 
   // TODO: does this need edge strides as well?
