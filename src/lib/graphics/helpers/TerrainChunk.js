@@ -18,6 +18,7 @@ import constants from '~/lib/constants';
 
 const {
   NORMAL_SCALE,
+  NORMAL_SCALE_SHADOWLESS,
   OVERSAMPLE_CHUNK_TEXTURES,
 } = constants;
 
@@ -35,7 +36,6 @@ setInterval(() => {
 }, 5000);
 
 const GEO_ATTR_CACHE = {};
-const normalScale = new Vector2(NORMAL_SCALE, NORMAL_SCALE);
 
 class TerrainChunk {
   constructor(params, config, { csmManager, shadowsEnabled, resolution }) {
@@ -59,6 +59,7 @@ class TerrainChunk {
       // extraMaterialProps.shadowSide = DoubleSide;
       extraMaterialProps.alphaTest = 0.5; // TODO: this may not be needed
     } else {
+      // extraMaterialProps.shadowSide = DoubleSide;
       extraMaterialProps.alphaTest = 0.5; // TODO: this may not be needed
     }
 
@@ -69,7 +70,7 @@ class TerrainChunk {
       displacementScale: 2 * this._config.radius * this._config.dispWeight,
       dithering: true,
       metalness: 0,
-      normalScale,
+      normalScale: shadowsEnabled ? new Vector2(NORMAL_SCALE, NORMAL_SCALE) : new Vector2(NORMAL_SCALE_SHADOWLESS, NORMAL_SCALE_SHADOWLESS),
       roughness: 1,
       side: FrontSide,
       ...extraMaterialProps
@@ -93,6 +94,13 @@ class TerrainChunk {
 
     // add customDepthMaterial (with CSM or not)
     if (shadowsEnabled) {
+      this._plane.castShadow = true;
+      this._plane.receiveShadow = true;
+
+      // TODO: this looks better without depthPacking, but might be because not visible at all
+      
+      
+      
       this._plane.customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
       const onBeforeCompileDepth = this.getOnBeforeCompile(
         this._plane.customDepthMaterial,
@@ -106,10 +114,6 @@ class TerrainChunk {
         this._plane.customDepthMaterial.onBeforeCompile = onBeforeCompileDepth;
       }
     }
-
-    // TODO: should these be in above conditional?
-    this._plane.castShadow = true;
-    this._plane.receiveShadow = true;
   }
 
   getOnBeforeCompile(material, heightScale, stretch) {
@@ -245,7 +249,6 @@ class TerrainChunk {
     this._geometry.attributes.uv.needsUpdate = true;
   }
 
-  // TODO: without pool, is this ever used after initial build?
   updateGeometry(positions) {
 
     // update positions
@@ -255,7 +258,6 @@ class TerrainChunk {
     // since normals are just "normal" before map, use positions (faster than computeVertexNormals)
     this._geometry.setAttribute('normal', new Float32BufferAttribute(positions, 3));
     this._geometry.attributes.normal.needsUpdate = true;
-    // this._geometry.normalizeNormals(); // TODO: investigate if this is helpful or needed
 
     // if reusing geometry (i.e. by resource pooling), then must re-compute bounding sphere or else
     // chunk will be culled by camera as-if in prior position

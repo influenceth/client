@@ -26,7 +26,7 @@ const UPDATE_DISTANCE_MULT = CHUNK_SPLIT_DISTANCE * UPDATE_QUADTREE_EVERY;
 
 const MAP_RENDER_TIME_PER_CYCLE = 8;
 const INITIAL_ZOOM = 2;
-const MIN_ZOOM_DEFAULT = 1.2; // TODO: should probably multiply by max stretch
+const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 4;
 const DEBUG_CSM = false;
 
@@ -107,6 +107,7 @@ const Asteroid = (props) => {
   const position = useRef();
   const rotation = useRef(0);
   const csmHelper = useRef(); // TODO: remove
+  const csmHelperFloor = useRef(); // TODO: remove
   const aspectRatio = useRef();
 
   const maxStretch = useMemo(
@@ -131,6 +132,9 @@ const Asteroid = (props) => {
     }
     if (group.current && csmHelper.current) {
       group.current.remove(csmHelper.current);
+    }
+    if (group.current && csmHelperFloor.current) {
+      group.current.remove(csmHelperFloor.current);
     }
     if (geometry.current) {
       geometry.current.dispose();
@@ -278,14 +282,12 @@ const Asteroid = (props) => {
         csmHelper.current.displayShadowBounds = true;
         group.current.add(csmHelper.current);
   
-        // TODO: need to remove floor in cleanup if keep this
-        // const floorMaterial = new MeshPhongMaterial( { color: '#252a34' } );
-        // csm.setupMaterial( floorMaterial );
-  
-        // const floor = new Mesh(new PlaneGeometry( 100000, 100000, 8, 8 ), floorMaterial );
-        // floor.castShadow = true;
-        // floor.receiveShadow = true;
-        // group.current.add( floor );
+        const floorMaterial = new MeshPhongMaterial( { color: '#252a34' } );
+        csm.setupMaterial( floorMaterial );
+        csmHelperFloor.current = new Mesh(new PlaneGeometry( 100000, 100000, 8, 8 ), floorMaterial );
+        csmHelperFloor.current.castShadow = true;
+        csmHelperFloor.current.receiveShadow = true;
+        group.current.add( csmHelperFloor.current );
       }
 
     //
@@ -296,11 +298,11 @@ const Asteroid = (props) => {
       // create light
       light.current = new DirectionalLight(lightColor, lightIntensity);
       light.current.position.copy(lightDirection.negate().multiplyScalar(lightDistance));
-      light.current.castShadow = true;  // TODO: should this be in below if-clause?
       group.current.add(light.current);
 
       // if traditional shadows, update shadow camera
       if (shadowMode > 0) {
+        light.current.castShadow = true;
         light.current.shadow.mapSize.width = shadowSize;
         light.current.shadow.mapSize.height = shadowSize;
         // light.current.shadow.bias = 1 / shadowSize;
@@ -354,7 +356,7 @@ const Asteroid = (props) => {
     if (!shouldFinishZoomIn) return;
 
     // Update distances to maximize precision
-    controls.minDistance = asteroidData.radius * MIN_ZOOM_DEFAULT;
+    controls.minDistance = asteroidData.radius * maxStretch * MIN_ZOOM_DEFAULT;
     controls.maxDistance = asteroidData.radius * MAX_ZOOM;
 
     const panTo = new Vector3(...position.current);
@@ -492,9 +494,10 @@ const Asteroid = (props) => {
         taskTally++;
         updatePending.current = null;
         // ^^^
+
+      // (this is used if maps are generated on main thread instead of worker)
       } else {
         // vvv BENCHMARK 8ms (matches MAP_RENDER_TIME_PER_CYCLE)
-        // TODO: would it be smoother for UI to pass to worker (even though slower)?
         geometry.current.builder.updateMaps(Date.now() + MAP_RENDER_TIME_PER_CYCLE);
         // ^^^
       }

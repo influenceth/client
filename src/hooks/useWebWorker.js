@@ -98,9 +98,8 @@ class WorkerThreadPool {
   }
 }
 
-// TODO: should we subtract 1 for main thread?
 const MIN_CONCURRENCY_FOR_DEDICATED_GPU_THREAD = 2;
-const totalWorkers = navigator?.hardwareConcurrency || 4;
+const totalWorkers = (navigator?.hardwareConcurrency || 4) - 1; // CPUs minus 1
 const cpuWorkerThreadPool = new WorkerThreadPool(totalWorkers >= MIN_CONCURRENCY_FOR_DEDICATED_GPU_THREAD ? totalWorkers - 1 : totalWorkers);
 const gpuWorkerThreadPool = totalWorkers >= MIN_CONCURRENCY_FOR_DEDICATED_GPU_THREAD ? new WorkerThreadPool(1) : null;
 

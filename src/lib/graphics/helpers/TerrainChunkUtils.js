@@ -315,14 +315,14 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
   );
   const heightTexture = heightBitmap.image ? heightBitmap : new CanvasTexture(heightBitmap);
 
+  // (both color and normal maps are built from height map data, so do not need to separately
+  //  stitch color and normal maps since they are built from the stitched height map values)
   const colorBitmap = generateColorMap(
     heightTexture,
     textureResolution,
     config,
-    //{ edgeStrides, chunkSize, side }
   );
 
-  // TODO: does this need edge strides as well?
   const normalBitmap = generateNormalMap(
     heightTexture,
     textureResolution,
