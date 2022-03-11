@@ -3,6 +3,10 @@ import { persist } from 'zustand/middleware';
 import produce from 'immer';
 import { START_TIMESTAMP } from 'influence-utils';
 
+import constants from '~/lib/constants';
+
+const { CHUNK_RESOLUTION } = constants;
+
 // (keep these out of state so can change)
 const sectionDefault = { active: false, expanded: true, highlighted: false };
 const outlinerSectionDefaults = {
@@ -17,6 +21,21 @@ const outlinerSectionDefaults = {
   watchlist: { ...sectionDefault },
   routePlanner: { ...sectionDefault },
   timeControl: { ...sectionDefault }
+};
+
+// special getters
+export const middleware = {
+  shadowQuality: (q) => {
+    if (q === 1) return { shadowMode: 1, shadowSize: 1024 };
+    if (q === 2) return { shadowMode: 2, shadowSize: 2048 };
+    if (q === 3) return { shadowMode: 2, shadowSize: 4096 };
+    return { shadowMode: 0, shadowSize: 1024 };
+  },
+  terrainQuality: (q) => {
+    if (q === 2) return { textureSize: 2 * CHUNK_RESOLUTION };
+    if (q === 3) return { textureSize: 4 * CHUNK_RESOLUTION };
+    return { textureSize: 1 * CHUNK_RESOLUTION };
+  }
 };
 
 const useStore = create(persist((set, get) => ({
@@ -65,9 +84,8 @@ const useStore = create(persist((set, get) => ({
     graphics: {
       lensflare: true,
       skybox: true,
-      shadowMode: 0,
-      shadowSize: 1024,
-      textureSizeMult: 1,
+      shadowQuality: 0,
+      textureQuality: 1,
       fov: 75
     },
 
@@ -148,8 +166,8 @@ const useStore = create(persist((set, get) => ({
       state.outliner[section].expanded = false;
     })),
 
-    dispatchTextureSizeSet: (size) => set(produce(state => {
-      state.graphics.textureSizeMult = size;
+    dispatchTextureQualitySet: (quality) => set(produce(state => {
+      state.graphics.textureQuality = quality;
     })),
 
     dispatchSkyboxHidden: () => set(produce(state => {
@@ -168,12 +186,9 @@ const useStore = create(persist((set, get) => ({
       state.graphics.lensflare = true;
     })),
 
-    dispatchShadowModeSet: (mode) => set(produce(state => {
-      state.graphics.shadowMode = mode; // 0 is off, 1 is standard, 2 is CSM
-    })),
-
-    dispatchShadowSizeSet: (size) => set(produce(state => {
-      state.graphics.shadowSize = size;
+    // 0 is off, 1 is low, 2 is mid, 3 is high
+    dispatchShadowQualitySet: (level) => set(produce(state => {
+      state.graphics.shadowQuality = level;
     })),
 
     dispatchFOVSet: (fov) => set(produce(state => {

@@ -6,7 +6,7 @@ import { CSMHelper } from 'three/examples/jsm/csm/CSMHelper';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
 
-import useStore from '~/hooks/useStore';
+import useStore, { middleware } from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
 import useWebWorker from '~/hooks/useWebWorker';
 import constants from '~/lib/constants';
@@ -82,9 +82,8 @@ const Asteroid = (props) => {
   const { camera, controls, gl, raycaster, scene } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const time = useStore(s => s.time.precise);
-  const textureSizeMult = useStore(s => s.graphics.textureSizeMult) || 1;
-  const shadowMode = useStore(s => s.graphics.shadowMode);
-  const shadowSize = useStore(s => s.graphics.shadowSize);
+  const { textureSize } = middleware.terrainQuality(useStore(s => s.graphics.textureQuality));
+  const { shadowSize, shadowMode } = middleware.shadowQuality(useStore(s => s.graphics.shadowQuality));
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
@@ -182,7 +181,7 @@ const Asteroid = (props) => {
 
       // if geometry.current already exists, dispose first
       if (geometry.current) disposeGeometry();
-      geometry.current = new QuadtreeCubeSphere(origin, c, textureSizeMult * CHUNK_RESOLUTION, webWorkerPool);
+      geometry.current = new QuadtreeCubeSphere(origin, c, textureSize, webWorkerPool);
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.add(g);
       });
@@ -204,11 +203,11 @@ const Asteroid = (props) => {
     if (!(asteroidData?.radius && geometry.current && quadtreeRef.current && position.current && config?.stretch)) return;
     
     // calculate intended shadow mode
-    let intendedShadowMode = `${textureSizeMult}`;
+    let intendedShadowMode = `${textureSize}`;
     if (ENABLE_CSM && shadowMode === 2) {
-      intendedShadowMode = `${textureSizeMult}_CSM${shadowSize}`;
+      intendedShadowMode = `${textureSize}_CSM${shadowSize}`;
     } else if (shadowMode > 0) {
-      intendedShadowMode = `${textureSizeMult}_${shadowSize}`;
+      intendedShadowMode = `${textureSize}_${shadowSize}`;
     }
 
     // if no changes, exit now
@@ -221,7 +220,7 @@ const Asteroid = (props) => {
       disposeGeometry();
       disposeLight();
 
-      geometry.current = new QuadtreeCubeSphere(origin, config, textureSizeMult * CHUNK_RESOLUTION, webWorkerPool);
+      geometry.current = new QuadtreeCubeSphere(origin, config, textureSize, webWorkerPool);
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.add(g);
       });
@@ -248,10 +247,10 @@ const Asteroid = (props) => {
       const minSurfaceDistance = Math.min(surfaceDistance, (MIN_ZOOM_DEFAULT - 1) * asteroidData.radius);
       const cascadeConfig = [];
       cascadeConfig.unshift(MAX_ZOOM);
-      cascadeConfig.unshift(INITIAL_ZOOM - minStretch);
-      const midCascade = 8 * minSurfaceDistance / asteroidData.radius;
-      if (midCascade < cascadeConfig[0]) cascadeConfig.unshift(midCascade);
-      cascadeConfig.unshift(2 * minSurfaceDistance / asteroidData.radius);
+      // cascadeConfig.unshift(INITIAL_ZOOM - minStretch);
+      // const midCascade = 8 * minSurfaceDistance / asteroidData.radius;
+      // if (midCascade < cascadeConfig[0]) cascadeConfig.unshift(midCascade);
+      // cascadeConfig.unshift(2 * minSurfaceDistance / asteroidData.radius);
 
       // init CSM
       const csm = new CSM({
@@ -320,7 +319,7 @@ const Asteroid = (props) => {
     // set current shadowMode
     geometry.current.shadowMode = intendedShadowMode;
 
-  }, [asteroidData?.radius, config, ringsPresent, shadowMode, shadowSize, textureSizeMult, surfaceDistance]);
+  }, [asteroidData?.radius, config, ringsPresent, shadowMode, shadowSize, textureSize, surfaceDistance]);
 
   // Zooms the camera to the correct location
   const shouldZoomIn = zoomStatus === 'zooming-in' && controls && !!asteroidData;

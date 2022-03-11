@@ -34,22 +34,22 @@ const constants = {
   // Default performance settings
   GRAPHICS_LOW: {
     shadowMode: 0,
-    textureSizeMult: 1
+    textureQuality: 1
   },
   GRAPHICS_MID: {
     shadowMode: 1,
     shadowSize: 1024,
-    textureSizeMult: 1
+    textureQuality: 1
   },
   GRAPHICS_HIGH: {
     shadowMode: 2,
     shadowSize: 2048,
-    textureSizeMult: 2
+    textureQuality: 2
   },
   GRAPHICS_ULTRA: {
     shadowMode: 2,
     shadowSize: 4096,
-    textureSizeMult: 4
+    textureQuality: 3
   }
 };
 

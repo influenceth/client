@@ -57,13 +57,12 @@ const Settings = (props) => {
   const { data: referralsCount } = useReferralsCount();
   const graphics = useStore(s => s.graphics);
   const sounds = useStore(s => s.sounds);
-  const setTextureSize = useStore(s => s.dispatchTextureSizeSet);
   const turnOnSkybox = useStore(s => s.dispatchSkyboxUnhidden);
   const turnOffSkybox = useStore(s => s.dispatchSkyboxHidden);
   const turnOnLensflare = useStore(s => s.dispatchLensflareUnhidden);
   const turnOffLensflare = useStore(s => s.dispatchLensflareHidden);
-  const setShadowMode = useStore(s => s.dispatchShadowModeSet);
-  const setShadowSize = useStore(s => s.dispatchShadowSizeSet);
+  const setShadowQuality = useStore(s => s.dispatchShadowQualitySet);
+  const setTextureQuality = useStore(s => s.dispatchTextureQualitySet);
   const setFOV = useStore(s => s.dispatchFOVSet);
   const turnOnStats = useStore(s => s.dispatchStatsOn);
   const turnOffStats = useStore(s => s.dispatchStatsOff);
@@ -81,31 +80,6 @@ const Settings = (props) => {
     }
   }, []);
 
-  const setShadowQuality = useCallback((quality) => {
-    if (quality === 'off') {
-      setShadowMode(0);
-    } else if (quality === 'low') {
-      setShadowMode(1);
-      setShadowSize(1024);
-    } else if (quality === 'mid') {
-      setShadowMode(2);
-      setShadowSize(2048);
-    } else if (quality === 'high') {
-      setShadowMode(2);
-      setShadowSize(4096);
-    }
-  });
-
-  const toggleShadows = useCallback(() => {
-    if (graphics.shadowMode === 0) {
-      if (graphics.shadowSize === 1024) setShadowQuality('low');
-      if (graphics.shadowSize === 2048) setShadowQuality('mid');
-      if (graphics.shadowSize === 4096) setShadowQuality('high');
-    } else {
-      setShadowQuality('off');
-    }
-  }, [graphics.shadowMode, graphics.shadowSize]);
-
   return (
     <Details title="Settings">
       <StyledSettings>
@@ -115,18 +89,18 @@ const Settings = (props) => {
             <StyledDataReadout label="Texture Quality">
               <ControlGroup>
                 <Button
-                  active={graphics.textureSizeMult === 1}
-                  onClick={() => setTextureSize(1)}>
+                  active={!graphics.textureQuality || graphics.textureQuality === 1}
+                  onClick={() => setTextureQuality(1)}>
                   Low
                 </Button>
                 <Button
-                  active={graphics.textureSizeMult === 2}
-                  onClick={() => setTextureSize(2)}>
+                  active={graphics.textureQuality === 2}
+                  onClick={() => setTextureQuality(2)}>
                   Medium
                 </Button>
                 <Button
-                  active={graphics.textureSizeMult === 4}
-                  onClick={() => setTextureSize(4)}>
+                  active={graphics.textureQuality === 3}
+                  onClick={() => setTextureQuality(4)}>
                   High
                 </Button>
               </ControlGroup>
@@ -135,27 +109,27 @@ const Settings = (props) => {
               <IconButton
                 data-tip="Toggle Shadows"
                 data-for="global"
-                onClick={() => toggleShadows()}
+                onClick={() => setShadowQuality(graphics.shadowQuality > 0 ? 0 : 1)}
                 borderless>
-                {graphics.shadowMode > 0 ? <CheckedIcon /> : <UncheckedIcon />}
+                {graphics.shadowQuality > 0 ? <CheckedIcon /> : <UncheckedIcon />}
               </IconButton>
             </StyledDataReadout>
-            {graphics.shadowMode > 0 && (
+            {graphics.shadowQuality > 0 && (
               <StyledDataReadout label="Shadow Quality">
                 <ControlGroup>
                   <Button
-                    active={graphics.shadowSize === 1024}
-                    onClick={() => setShadowQuality('low')}>
+                    active={graphics.shadowQuality === 1}
+                    onClick={() => setShadowQuality(1)}>
                     Low
                   </Button>
                   <Button
-                    active={graphics.shadowSize === 2048}
-                    onClick={() => setShadowQuality('mid')}>
+                    active={graphics.shadowQuality === 2}
+                    onClick={() => setShadowQuality(2)}>
                     Medium
                   </Button>
                   <Button
-                    active={graphics.shadowSize === 4096}
-                    onClick={() => setShadowQuality('high')}>
+                    active={graphics.shadowQuality === 3}
+                    onClick={() => setShadowQuality(3)}>
                     High
                   </Button>
                 </ControlGroup>
