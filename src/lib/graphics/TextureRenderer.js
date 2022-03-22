@@ -14,8 +14,9 @@ import {
 
 class TextureRenderer {
   constructor() {
-    let canvas;
     this.isOffscreen = (typeof OffscreenCanvas !== 'undefined');
+    
+    let canvas;
     if (this.isOffscreen) {
       canvas = new OffscreenCanvas(0, 0);
       canvas.style = { width: 0, height: 0 };
@@ -46,7 +47,7 @@ class TextureRenderer {
     return { buffer, width, height, format: RGBAFormat };
   }
 
-  renderBitmap(width, height, material) {
+  renderBitmap(width, height, material, dataTextureOptions = {}) {
     // (transferToImageBitmap only supported in offscreencanvas, so here is workaround for "onscreen" canvas)
     if (!this.isOffscreen) {
       const map = this.render(width, height, material);
@@ -55,6 +56,7 @@ class TextureRenderer {
       dataTexture.generateMipmaps = true;
       dataTexture.minFilter = LinearMipMapLinearFilter;
       dataTexture.magFilter = LinearFilter;
+      Object.keys(dataTextureOptions).forEach((k) => dataTexture[k] = dataTextureOptions[k]);
       dataTexture.needsUpdate = true;
       return dataTexture;
     }

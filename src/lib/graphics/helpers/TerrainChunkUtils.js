@@ -20,7 +20,13 @@ import TextureRenderer from '~/lib/graphics/TextureRenderer';
 const { OVERSAMPLE_CHUNK_TEXTURES } = constants;
 
 // set up texture renderer (ideally w/ offscreen canvas)
-const textureRenderer = new TextureRenderer();
+let _textureRenderer;
+function getTextureRenderer() {
+  if (!_textureRenderer) {
+    _textureRenderer = new TextureRenderer();
+  }
+  return _textureRenderer;
+}
 
 // TODO: remove this debug vvv
 let first = true;
@@ -117,6 +123,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
     }
   });
 
+  const textureRenderer = getTextureRenderer();
   if (returnType === 'texture') {
     const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
     texture.options = {
@@ -127,7 +134,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
     };
     return texture;
   }
-  return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
+  return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material, { magFilter: NearestFilter });
 }
 
 function generateColorMap(heightMap, chunkSize, chunkOffset, chunkResolution, cubeTransform, oversample, config, returnType = 'bitmap') {
@@ -151,6 +158,7 @@ function generateColorMap(heightMap, chunkSize, chunkOffset, chunkResolution, cu
     }
   });
 
+  const textureRenderer = getTextureRenderer();
   if (returnType === 'texture') {
     const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
     texture.options = {
@@ -176,7 +184,8 @@ function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, over
       uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
     }
   });
-
+  
+  const textureRenderer = getTextureRenderer();
   if (returnType === 'texture') {
     const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
     texture.options = {

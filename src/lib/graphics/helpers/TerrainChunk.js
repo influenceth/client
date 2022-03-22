@@ -283,7 +283,6 @@ class TerrainChunk {
     // NOTE: the ternaries below are b/c there is different format for data generated
     //  on offscreen canvas vs normal canvas (i.e. if offscreencanvas not supported)
     this._material.setValues({
-      // TODO: if using filter on CanvasTexture, make sure update DataTexture as well
       displacementMap: data.heightBitmap.image ? data.heightBitmap : new CanvasTexture(data.heightBitmap, undefined, undefined, undefined, NearestFilter),
       map: data.colorBitmap.image ? data.colorBitmap : new CanvasTexture(data.colorBitmap),
       normalMap: data.normalBitmap.image ? data.normalBitmap : new CanvasTexture(data.normalBitmap)
