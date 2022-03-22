@@ -16,7 +16,7 @@ void main() {
   vec2 uv = gl_FragCoord.xy / uResolution;
   uv.y = 1.0 - uv.y;
 
-  // Get height from topo map and convert to color from ramp
-  float topo = texture2D(tHeightMap, uv).b;
-  gl_FragColor = texture2D(tRamps, vec2((uSpectral + 0.5) / 11.0, 1.0 - topo));
+  // Get height from height map and convert to color from ramp
+  float height = texture2D(tHeightMap, uv).b;
+  gl_FragColor = texture2D(tRamps, vec2((uSpectral + 0.5) / 11.0, 1.0 - height));
 }

@@ -14,16 +14,16 @@ const constants = {
   // Asteroid settings
   // (resolution)
   CHUNK_RESOLUTION: 128,      // 256, 64
-  MIN_CHUNK_SIZE: 500,       // 1000
+  MIN_CHUNK_SIZE: 1000,       // 1000
   CHUNK_SPLIT_DISTANCE: 1.0,  // 1.0, 0.8, 1.25 (this should probably always be >= 0.5 functionally)
   OVERSAMPLE_CHUNK_TEXTURES: true,  // NOTE: this probably doesn't need to be a constant; we should always do this
   NORMAL_SCALE: 1.25,
   NORMAL_SCALE_SHADOWLESS: 2.0,
 
   // (culling, zoom, camera, shadows)
-  GEOMETRY_SHRINK: 0.075,        // 0.05, (multiplied by radius)
+  GEOMETRY_SHRINK: 0.1,        // 0.05, (multiplied by radius)
   GEOMETRY_SHRINK_MAX: 1000,    // 1000 (meters)
-  MIN_FRUSTUM_AT_SURFACE: 2000, // closest zoom so that X meters visible w/i frustum height
+  MIN_FRUSTUM_AT_SURFACE: 4000, // closest zoom so that X meters visible w/i frustum height
   ENABLE_CSM: true, // cascading shadow maps
 
   // (performance)

@@ -97,11 +97,11 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uDispPasses: { type: 'i', value: config.dispPasses },
       uDispPersist: { type: 'f', value: config.dispPersist },
       uDispWeight: { type: 'f', value: config.dispWeight },
-      uDispFineWeight: { type: 'f', value: 0.075 },
       uEdgeStrideN: { type: 'f', value: edgeStrides.N },
       uEdgeStrideS: { type: 'f', value: edgeStrides.S },
       uEdgeStrideE: { type: 'f', value: edgeStrides.E },
       uEdgeStrideW: { type: 'f', value: edgeStrides.W },
+      uExtraPasses: { type: 'i', value: config.extraPasses },
       uFeaturesFreq: { type: 'f', value: config.featuresFreq },
       uOversample: { type: 'f', value: oversample ? 1.0 : 0.0 },
       uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
@@ -293,6 +293,7 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
   const resolutionPlusOne = resolution + 1;
   const textureResolution = OVERSAMPLE_CHUNK_TEXTURES ? resolutionPlusOne + 2 : resolutionPlusOne;
   const textureSize = OVERSAMPLE_CHUNK_TEXTURES ? chunkSize * (1 + 2 / resolution) : chunkSize;
+  config.extraPasses = Math.log2(1 / chunkSize);
 
   // meant to match normal intensity of dynamic resolution asteroids to legacy
   // fixed resolution asteroids (height difference between neighbor samples is

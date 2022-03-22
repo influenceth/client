@@ -127,7 +127,7 @@ class TerrainChunk {
           '#include <displacementmap_vertex>',
           `#ifdef USE_DISPLACEMENTMAP
             vec2 disp16 = texture2D(displacementMap, vUv).xy;
-            float disp = (disp16.x * 255.0 + disp16.y) / 256.0;
+            float disp = (disp16.x * 255.0 + disp16.y) / 255.0;
             // stretch back to original geometry (geometry initialized at minHeight for chunk)
             transformed /= uHeightScale;
             // displace along normal

@@ -25,29 +25,21 @@ float recursiveSNoise(vec3 p, int octaves, float pers) {
   float amplitude = 1.0;
   float maxValue = 0.0;
 
-  for (int i = 0; i < 9; i++) {
-    if (i == octaves) {
-      break;
-    }
-
+  for (int i = 0; i < octaves; i++) {
     total += snoise(p * frequency) * amplitude;
     maxValue += amplitude;
     amplitude *= pers;
     frequency *= 2.0;
   }
 
-  return normalizeNoise(total / maxValue);
+  return total / maxValue;
 }
 
 float recursiveCNoise(vec3 p, int octaves) {
-  float scale = pow(2.0, min(float(octaves), 6.0));
+  float scale = pow(2.0, float(octaves));
   vec3 displace;
 
-  for (int i = 0; i < 6; i ++) {
-    if (i == octaves) {
-      break;
-    }
-
+  for (int i = 0; i < octaves; i ++) {
     displace = vec3(
       normalizeNoise(cnoise(p.xyz * scale + displace)),
       normalizeNoise(cnoise(p.yzx * scale + displace)),
@@ -57,28 +49,24 @@ float recursiveCNoise(vec3 p, int octaves) {
     scale *= 0.5;
   }
 
-  float h = normalizeNoise(cnoise(p * scale + displace));
-  return pow(h, 1.0);
+  return cnoise(p * scale + displace);
 }
 
 // Generates coarse displacement to shape the asteroid
-float getDisplacement(vec3 p) {
+float getDisplacement(vec3 p, int octaves) {
   p.y = -1.0 * p.y; // (to match original noise sampling)
   p = p * uDispFreq + uSeed;
-  return recursiveSNoise(p, uDispPasses, uDispPersist);
+  return recursiveSNoise(p, octaves, uDispPersist);
 }
 
 // Generates overall topography, hills, cliffs, etc.
-float getTopography(vec3 p) {
+float getTopography(vec3 p, int octaves) {
   p = p * uTopoFreq + uSeed;
-  float topo = recursiveCNoise(p, uTopoDetail);
-  float uniformNoise = fract(sin(dot(p.xy, vec2(12.9898,78.233))) * 43758.5453);
-  float noiseWeight = 0.005;
-  return ((1.0 - noiseWeight) * topo) + (noiseWeight * uniformNoise);
+  return recursiveCNoise(p, octaves);
 }
 
 // Generates craters and combines with topography
-float getFeatures(vec3 p, int layers) {
+float getFeatures(vec3 p, int octaves) {
   p = p * uFeaturesFreq + uSeed;
   float rim = uCraterCut * uRimWidth;
   float varNoise;
@@ -88,11 +76,7 @@ float getFeatures(vec3 p, int layers) {
   float totalCraters = 0.0;
   float maxTotal = 0.0;
 
-  for (int i = 0; i < 6; i++) {
-    if (i == layers) {
-      break;
-    }
-
+  for (int i = 0; i < octaves; i++) {
     varNoise = snoise(pow(uCraterFalloff, float(i)) * 8.0 * (p + uSeed));
     cellNoise = cellular(pow(uCraterFalloff, float(i)) * (p + uSeed)) + varNoise * uRimVariation;
     craters = pow((clamp(cellNoise.x, 0.0, uCraterCut) * (1.0 / uCraterCut)), uCraterSteep) - 1.0
@@ -109,24 +93,27 @@ float getFeatures(vec3 p, int layers) {
   return (totalCraters + cleave) / maxTotal;
 }
 
-vec4 getHeight(vec2 flipY) {
+vec4 getHeight(vec2 flipY, int skipPasses) {
+  int modPasses = uExtraPasses - skipPasses;
+
   // Standardize to unit radius spherical coordinates
   vec3 point = getUnitSphereCoords(flipY);
 
   // Get course displacement
-  float disp = getDisplacement(point);
+  float disp = getDisplacement(point, uDispPasses + modPasses); // 1 to -1
 
-  // Get final course point location
-  point = point * (1.0 + disp * uDispWeight) * uStretch;
+  // Get final coarse point location
+  point = point * (1.0 + normalizeNoise(disp) * uDispWeight) * uStretch;
 
-  // Get topography to encode seperately
-  float topo = getTopography(point);
+  // Get topography and features
+  float topo = getTopography(point, uTopoDetail + modPasses); // -1 to 1
+  float features = getFeatures(point, uCraterPasses + modPasses); // -1 to 1
 
-  // Get fine displacement
-  float fine = getFeatures(point, uCraterPasses) + topo * uTopoWeight;
+  // Define fine displacement
+  float fine = (topo * uTopoWeight + features * 2.0) / (uTopoWeight + 2.0); // -1 to 1
 
   // Get total displacement
-  float height = (1.0 - uDispFineWeight) * disp + uDispFineWeight * fine;
+  float height = normalizeNoise(0.85 * disp + 0.15 * fine);
 
   // Encode height and disp in different channels
   // r, g: used in normalmap
@@ -134,7 +121,7 @@ vec4 getHeight(vec2 flipY) {
   return vec4(
     floor(height * 255.0) / 255.0,
     fract(height * 255.0),
-    topo,
+    normalizeNoise(topo), // 0 to 1
     1.0
   );
 }
