@@ -5,21 +5,13 @@ uniform float uChunkSize;
 uniform bool uOversampling;
 uniform vec2 uResolution;
 uniform vec3 uSeed;
+//uniform int uSide;
 uniform float uSpectral;
 uniform int uTopoDetail;
 uniform float uTopoFreq;
 uniform mat4 uTransform;
 
 #pragma glslify: cnoise = require('glsl-noise/classic/3d')
-
-
-// TODO: remove edge stuff from this shader
-//uniform float uEdgeStrideN;
-//uniform float uEdgeStrideS;
-//uniform float uEdgeStrideE;
-//uniform float uEdgeStrideW;
-//uniform float uChunkSize;
-uniform int uSide;
 
 vec3 getUnitSphereCoords(vec2 flipY) {
 

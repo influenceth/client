@@ -164,19 +164,16 @@ function generateColorMap(heightMap, chunkSize, chunkOffset, chunkResolution, cu
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-function generateNormalMap(heightMap, chunkSize, chunkOffset, chunkResolution, cubeTransform, compatibilityScalar, oversample, config, returnType = 'bitmap') {
+function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, oversample, config, returnType = 'bitmap') {
   const material = new ShaderMaterial({
     extensions: { derivatives: true },
     fragmentShader: normalShader,
     uniforms: {
       tHeightMap: { type: 't', value: heightMap },
-      uChunkOffset: { type: 'v2', value: chunkOffset },
-      uChunkSize: { type: 'f', value: chunkSize },
       uCompatibilityScalar: { type: 'f', value: compatibilityScalar },
       uNormalIntensity: { type: 'f', value: config.normalIntensity },
       uOversampling: { type: 'b', value: oversample },
       uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
-      uTransform: { type: 'mat4', value: cubeTransform },
     }
   });
 
@@ -333,10 +330,7 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
 
   const normalBitmap = generateNormalMap(
     heightTexture,
-    textureSize,
-    chunkOffset,
     textureResolution,
-    localToWorld,
     normalCompatibilityScale,
     OVERSAMPLE_CHUNK_TEXTURES,
     config
