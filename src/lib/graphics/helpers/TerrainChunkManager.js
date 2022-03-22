@@ -93,6 +93,7 @@ class TerrainChunkManager {
           width: chunk._params.width,
           groupMatrix: chunk._params.group.matrix.clone(),
           resolution: this.textureSize,
+          side: chunk._params.side
         },
         _cacheable: 'asteroid'
       },
@@ -128,8 +129,9 @@ class TerrainChunkManager {
           edgeStrides: chunk._params.stitchingStrides,
           groupMatrix: chunk._params.group.matrix.clone(),
           offset: chunk._params.offset.clone(),
-          resolution: chunk._params.resolution,
-          width: chunk._params.width,
+          resolution: chunk._resolution,
+          side: chunk._params.side,
+          width: chunk._params.width
         })
       );
       this._new.push(chunk);

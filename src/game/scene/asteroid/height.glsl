@@ -23,13 +23,26 @@ uniform int uTopoDetail;
 uniform float uTopoFreq;
 uniform float uTopoWeight;
 uniform mat4 uTransform;
+uniform bool uOversampling;
 
 #pragma glslify: cnoise = require('glsl-noise/classic/3d')
 #pragma glslify: snoise = require('glsl-noise/simplex/3d')
 #pragma glslify: cellular = require('../../../lib/graphics/cellular3')
 
 vec3 getUnitSphereCoords(vec2 flipY) {
-
+  // NOTE: this turned out to probably not be as impactful enough to justify its complexity
+  // (if use, todo): this needs to only happen at the cube edges (i.e. not between chunks!)
+  // (if use, todo): this needs to be replicated in height_w_stitching
+    // for oversampling at edges, wrap the edge
+    // NOTE: this would have problems if resolution.x and resolution.y were different
+    // NOTE: -3.0 == -1.0 (b/c # of faces is # vertexes - 1) + -2.0 (to calculate interval excluding oversampling)
+    // float z = uOversampling && (flipY.x == 0.5 || flipY.x == uResolution.x - 0.5 || flipY.y == 0.5 || flipY.y == uResolution.y - 0.5) ? 1.0 - 2.0 / (uResolution.x - 3.0) : 1.0;
+    // flipY.x = uOversampling && flipY.x == 0.5 ? 1.5 : flipY.x;
+    // flipY.x = uOversampling && flipY.x == uResolution.x - 0.5 ? uResolution.x - 1.5 : flipY.x;
+    // flipY.y = uOversampling && flipY.y == 0.5 ? 1.5 : flipY.y;
+    // flipY.y = uOversampling && flipY.y == uResolution.y - 0.5 ? uResolution.y - 1.5 : flipY.y;
+  float z = 1.0;
+  
   // Standardize to a 2 unit cube centered on origin
   vec2 textCoord = (flipY.xy - (uResolution.xy / 2.0)) / ((uResolution.xy - 1.0) / 2.0);
 
@@ -37,7 +50,7 @@ vec3 getUnitSphereCoords(vec2 flipY) {
   textCoord = textCoord * uChunkSize + uChunkOffset.xy;
 
   // Calculate the unit vector for each point thereby spherizing the cube
-  vec4 transformed = uTransform * vec4(textCoord, 1.0, 0.0);
+  vec4 transformed = uTransform * vec4(textCoord, z, 0.0);
   return normalize(vec3(transformed.xyz));
 }
 
@@ -145,7 +158,6 @@ vec4 getOutputForPoint(vec2 flipY) {
   // Get final course point location
   point = point * (1.0 + disp * uDispWeight) * uStretch;
 
-  // Get topography to encode seperately
   float topo = getTopography(point);
 
   // Get fine displacement
@@ -154,14 +166,17 @@ vec4 getOutputForPoint(vec2 flipY) {
   // Get total displacement
   float height = (1.0 - uDispFineWeight) * disp + uDispFineWeight * fine;
 
+  // get normalized fine height for normal map
+  float fineHeight = 0.5 * fine + 0.5;
+
   // Encode height and disp in different channels
   // r, g: used in normalmap
-  // b: used in colormap
+  // b, a: used in colormap
   return vec4(
     floor(height * 255.0) / 255.0,
     fract(height * 255.0),
-    topo,
-    1.0
+    floor(fineHeight * 255.0) / 255.0,
+    fract(fineHeight * 255.0)
   );
 }
 

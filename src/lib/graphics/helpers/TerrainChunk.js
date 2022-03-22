@@ -2,13 +2,13 @@ import {
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
-  DoubleSide,
   Float32BufferAttribute,
   FrontSide,
   LessDepth,
   Mesh,
   MeshDepthMaterial,
   MeshStandardMaterial,
+  NearestFilter,
   RGBADepthPacking,
   Vector2,
   Vector3
@@ -73,8 +73,8 @@ class TerrainChunk {
       normalScale: shadowsEnabled ? new Vector2(NORMAL_SCALE, NORMAL_SCALE) : new Vector2(NORMAL_SCALE_SHADOWLESS, NORMAL_SCALE_SHADOWLESS),
       roughness: 1,
       side: FrontSide,
-      ...extraMaterialProps
       // wireframe: true,
+      ...extraMaterialProps
     });
 
     // apply onBeforeCompile to primary material
@@ -134,6 +134,9 @@ class TerrainChunk {
             transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias);
             // stretch along normal
             transformed *= uStretch;
+            // re-init pre-normalmap normal to match position
+            // (set post-displacement coarse normals b/f application of normalmap)
+            vNormal = normalize( normalMatrix * vec3(transformed.xyz) );
           #endif`
         )}
       `;
@@ -219,9 +222,15 @@ class TerrainChunk {
           if (OVERSAMPLE_CHUNK_TEXTURES) {
             uvs[outputIndex + 0] = (x + 1.5) / (resolutionPlusOne + 2);
             uvs[outputIndex + 1] = (y + 1.5) / (resolutionPlusOne + 2);
+            // (alternative):
+            // uvs[outputIndex + 0] = (x + 1.0) / (resolution + 2);
+            // uvs[outputIndex + 1] = (y + 1.0) / (resolution + 2);
           } else {
             uvs[outputIndex + 0] = (x + 0.5) / resolutionPlusOne;
             uvs[outputIndex + 1] = (y + 0.5) / resolutionPlusOne;
+            // (alternative):
+            // uvs[outputIndex + 0] = x / resolution;
+            // uvs[outputIndex + 1] = y / resolution;
           }
         }
       }
@@ -265,38 +274,21 @@ class TerrainChunk {
   }
 
   updateMaps(data) {
-    // debug (if debugging)
-    if (false && first) {
-      const debug = 'heightBitmap';
-      first = false;
-      const canvas = document.getElementById('test_canvas');
-      if (!!canvas) {
-        canvas.style.height = `${data[debug].height}px`;
-        canvas.style.width = `${data[debug].width}px`;
-        canvas.style.zoom = 300 / this._resolution;
-        const ctx = canvas.getContext('bitmaprenderer');
-        ctx.transferFromImageBitmap(data[debug]);
-      } else {
-        console.log('#test_canvas not found!');
-      }
+    // (dispose of all previous material maps)
+    if (this._material.displacementMap) this._material.displacementMap.dispose();
+    if (this._material.map) this._material.map.dispose();
+    if (this._material.normalMap) this._material.normalMap.dispose();
 
-    // update material
-    } else {
-      // (dispose of all previous material maps)
-      if (this._material.displacementMap) this._material.displacementMap.dispose();
-      if (this._material.map) this._material.map.dispose();
-      if (this._material.normalMap) this._material.normalMap.dispose();
-
-      // (set new values)
-      // NOTE: the ternaries below are b/c there is different format for data generated
-      //  on offscreen canvas vs normal canvas (i.e. if offscreencanvas not supported)
-      this._material.setValues({
-        displacementMap: data.heightBitmap.image ? data.heightBitmap : new CanvasTexture(data.heightBitmap),
-        map: data.colorBitmap.image ? data.colorBitmap : new CanvasTexture(data.colorBitmap),
-        normalMap: data.normalBitmap.image ? data.normalBitmap : new CanvasTexture(data.normalBitmap),
-      });
-      this._material.needsUpdate = true;
-    }
+    // (set new values)
+    // NOTE: the ternaries below are b/c there is different format for data generated
+    //  on offscreen canvas vs normal canvas (i.e. if offscreencanvas not supported)
+    this._material.setValues({
+      // TODO: if using filter on CanvasTexture, make sure update DataTexture as well
+      displacementMap: data.heightBitmap.image ? data.heightBitmap : new CanvasTexture(data.heightBitmap, undefined, undefined, undefined, NearestFilter),
+      map: data.colorBitmap.image ? data.colorBitmap : new CanvasTexture(data.colorBitmap),
+      normalMap: data.normalBitmap.image ? data.normalBitmap : new CanvasTexture(data.normalBitmap)
+    });
+    this._material.needsUpdate = true;
   }
 }
 

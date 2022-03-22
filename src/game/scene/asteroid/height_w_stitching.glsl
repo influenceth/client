@@ -17,7 +17,7 @@ uniform float uEdgeStrideE;
 uniform float uEdgeStrideW;
 uniform float uFeaturesFreq;
 uniform float uDispFineWeight;
-uniform float uOversample;
+uniform bool uOversampling;
 uniform vec2 uResolution;
 uniform vec3 uSeed;
 uniform vec3 uStretch;
@@ -159,21 +159,25 @@ vec4 getOutputForPoint(vec2 flipY) {
   // Get total displacement
   float height = (1.0 - uDispFineWeight) * disp + uDispFineWeight * fine;
 
+  // get normalized fine height for normal map
+  float fineHeight = 0.5 * fine + 0.5;
+
   // Encode height and disp in different channels
   // r, g: used in normalmap
-  // b: used in colormap
+  // b, a: used in colormap
   return vec4(
     floor(height * 255.0) / 255.0,
     fract(height * 255.0),
-    topo,
-    1.0
+    floor(fineHeight * 255.0) / 255.0,
+    fract(fineHeight * 255.0)
   );
 }
 
 void main() {
   vec2 flipY = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
 
-  float edgeDistance = 0.5 + uOversample;
+  float oversampleAddOn = uOversampling ? 1.0 : 0.0;
+  float edgeDistance = 0.5 + oversampleAddOn;
   float strideX = flipY.y <= edgeDistance
     ? uEdgeStrideS
     : (
@@ -202,6 +206,7 @@ void main() {
   );
   vec4 output1 = getOutputForPoint(point1);
   float height1 = (output1.x * 255.0 + output1.y) / 255.0;
+  float fineHeight1 = (output1.z * 255.0 + output1.w) / 255.0;
 
   vec2 point2 = vec2(
     strideModX > 0.0 ? ceil(x / strideX) * strideX + edgeDistance : flipY.x,
@@ -209,14 +214,14 @@ void main() {
   );
   vec4 output2 = getOutputForPoint(point2);
   float height2 = (output2.x * 255.0 + output2.y) / 255.0;
+  float fineHeight2 = (output2.z * 255.0 + output2.w) / 255.0;
 
   float height = mix(height1, height2, mixAmount);
-  float topo = mix(output1.z, output1.z, mixAmount);
-
+  float fineHeight = mix(fineHeight1, fineHeight2, mixAmount);
   gl_FragColor = vec4(
     floor(height * 255.0) / 255.0,
     fract(height * 255.0),
-    topo,
-    1.0
+    floor(fineHeight * 255.0) / 255.0,
+    fract(fineHeight * 255.0)
   );
 }

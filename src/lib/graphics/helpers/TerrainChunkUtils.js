@@ -103,7 +103,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uEdgeStrideE: { type: 'f', value: edgeStrides.E },
       uEdgeStrideW: { type: 'f', value: edgeStrides.W },
       uFeaturesFreq: { type: 'f', value: config.featuresFreq },
-      uOversample: { type: 'f', value: oversample ? 1.0 : 0.0 },
+      uOversampling: { type: 'b', value: oversample },
       uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
       uRimVariation: { type: 'f', value: config.rimVariation },
       uRimWeight: { type: 'f', value: config.rimWeight },
@@ -130,7 +130,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-function generateColorMap(heightMap, chunkResolution, config, /*{ edgeStrides, chunkSize, side }, */returnType = 'bitmap') {
+function generateColorMap(heightMap, chunkSize, chunkOffset, chunkResolution, cubeTransform, oversample, config, returnType = 'bitmap') {
   if (!ramps) throw new Error('Ramps not yet loaded!');
 
   const material = new ShaderMaterial({
@@ -138,16 +138,16 @@ function generateColorMap(heightMap, chunkResolution, config, /*{ edgeStrides, c
     uniforms: {
       tHeightMap: { type: 't', value: heightMap },
       tRamps: { type: 't', value: ramps },
-      uSpectral: { type: 'f', value: config.spectralType },
+      uChunkOffset: { type: 'v2', value: chunkOffset },
+      uChunkSize: { type: 'f', value: chunkSize },
+      uOversampling: { type: 'b', value: oversample },
       uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
-
-      // TODO: remove
-      // uEdgeStrideN: { type: 'f', value: edgeStrides.N },
-      // uEdgeStrideS: { type: 'f', value: edgeStrides.S },
-      // uEdgeStrideE: { type: 'f', value: edgeStrides.E },
-      // uEdgeStrideW: { type: 'f', value: edgeStrides.W },
-      // uChunkSize: { type: 'f', value: chunkSize },
-      // uSide: { type: 'i', value: side },
+      uSeed: { type: 'v3', value: config.seed },
+      uSpectral: { type: 'f', value: config.spectralType },
+      uTopoDetail: { type: 'i', value: config.topoDetail },
+      uTopoFreq: { type: 'f', value: config.topoFreq },
+      uTransform: { type: 'mat4', value: cubeTransform },
+      //uSide: { type: 'i', value: side },
     }
   });
 
@@ -164,15 +164,19 @@ function generateColorMap(heightMap, chunkResolution, config, /*{ edgeStrides, c
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, config, returnType = 'bitmap') {
+function generateNormalMap(heightMap, chunkSize, chunkOffset, chunkResolution, cubeTransform, compatibilityScalar, oversample, config, returnType = 'bitmap') {
   const material = new ShaderMaterial({
     extensions: { derivatives: true },
     fragmentShader: normalShader,
     uniforms: {
       tHeightMap: { type: 't', value: heightMap },
+      uChunkOffset: { type: 'v2', value: chunkOffset },
+      uChunkSize: { type: 'f', value: chunkSize },
       uCompatibilityScalar: { type: 'f', value: compatibilityScalar },
       uNormalIntensity: { type: 'f', value: config.normalIntensity },
-      uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) }
+      uOversampling: { type: 'b', value: oversample },
+      uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
+      uTransform: { type: 'mat4', value: cubeTransform },
     }
   });
 
@@ -319,14 +323,22 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
   //  stitch color and normal maps since they are built from the stitched height map values)
   const colorBitmap = generateColorMap(
     heightTexture,
+    textureSize,
+    chunkOffset,
     textureResolution,
-    config,
+    localToWorld,
+    OVERSAMPLE_CHUNK_TEXTURES,
+    config
   );
 
   const normalBitmap = generateNormalMap(
     heightTexture,
+    textureSize,
+    chunkOffset,
     textureResolution,
+    localToWorld,
     normalCompatibilityScale,
+    OVERSAMPLE_CHUNK_TEXTURES,
     config
   );
 
@@ -339,3 +351,60 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
     normalBitmap
   };
 }
+
+
+
+/* DEBUGGING HELPERS (drop into rebuildChunkMaps):
+  // (output data)
+  if (debug) {
+    const t = generateHeightMap(
+      localToWorld,
+      textureSize,
+      chunkOffset,
+      textureResolution,
+      edgeStrides,
+      OVERSAMPLE_CHUNK_TEXTURES,
+      config,
+      'texture'
+    );
+
+    // height
+    const tx = [];
+    for (let y = 0; y < textureResolution; y++) {
+      tx[y] = [];
+      for (let x = 0; x < textureResolution; x++) {
+        const outputIndex = 4 * (textureResolution * y + x);
+        const height = (t.buffer[outputIndex + 0] + t.buffer[outputIndex + 1] / 255) / 256;
+        tx[y][x] = height.toFixed(3);
+      }
+    }
+    console.log(tx.map((xx) => xx.join('\t')).join('\n'));
+  }
+
+  // (draw texture) -- NOTE: DISABLE_BACKGROUND_TERRAIN_MAPS must be true
+  if (debug) {
+    const debugBitmap = generateNormalMap(
+      heightTexture,
+      textureResolution,
+      normalCompatibilityScale,
+      OVERSAMPLE_CHUNK_TEXTURES,
+      config,
+      {
+        cubeTransform: localToWorld,
+        chunkSize: textureSize,
+        chunkOffset,
+        side
+      }
+    );
+    const canvas = document.getElementById('test_canvas');
+    if (!!canvas) {
+      canvas.style.height = `${debugBitmap.height}px`;
+      canvas.style.width = `${debugBitmap.width}px`;
+      canvas.style.zoom = 300 / debugBitmap.width;
+      const ctx = canvas.getContext('bitmaprenderer');
+      ctx.transferFromImageBitmap(debugBitmap);
+    } else {
+      console.log('#test_canvas not found!');
+    }
+  }
+*/
