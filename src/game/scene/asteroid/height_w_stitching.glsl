@@ -17,7 +17,6 @@ uniform float uEdgeStrideE;
 uniform float uEdgeStrideW;
 uniform int uExtraPasses;
 uniform float uFeaturesFreq;
-uniform float uDispFineWeight;
 uniform bool uOversampling;
 uniform vec2 uResolution;
 uniform vec3 uSeed;
@@ -30,7 +29,7 @@ uniform float uTopoFreq;
 uniform float uTopoWeight;
 uniform mat4 uTransform;
 
-#pragma glslify: getHeight = require('./partials/getHeight', uChunkOffset=uChunkOffset, uChunkSize=uChunkSize, uCleaveCut=uCleaveCut, uCleaveWeight=uCleaveWeight, uCraterCut=uCraterCut, uCraterFalloff=uCraterFalloff, uCraterPasses=uCraterPasses, uCraterPersist=uCraterPersist, uCraterSteep=uCraterSteep, uDispFineWeight=uDispFineWeight, uDispFreq=uDispFreq, uDispPasses=uDispPasses, uDispPersist=uDispPersist, uDispWeight=uDispWeight, uExtraPasses=uExtraPasses, uFeaturesFreq=uFeaturesFreq, uOversampling=uOversampling, uResolution=uResolution, uRimVariation=uRimVariation, uRimWeight=uRimWeight, uRimWidth=uRimWidth, uSeed=uSeed, uStretch=uStretch, uTopoDetail=uTopoDetail, uTopoFreq=uTopoFreq, uTopoWeight=uTopoWeight, uTransform=uTransform)
+#pragma glslify: getHeight = require('./partials/getHeight', uChunkOffset=uChunkOffset, uChunkSize=uChunkSize, uCleaveCut=uCleaveCut, uCleaveWeight=uCleaveWeight, uCraterCut=uCraterCut, uCraterFalloff=uCraterFalloff, uCraterPasses=uCraterPasses, uCraterPersist=uCraterPersist, uCraterSteep=uCraterSteep, uDispFreq=uDispFreq, uDispPasses=uDispPasses, uDispPersist=uDispPersist, uDispWeight=uDispWeight, uExtraPasses=uExtraPasses, uFeaturesFreq=uFeaturesFreq, uOversampling=uOversampling, uResolution=uResolution, uRimVariation=uRimVariation, uRimWeight=uRimWeight, uRimWidth=uRimWidth, uSeed=uSeed, uStretch=uStretch, uTopoDetail=uTopoDetail, uTopoFreq=uTopoFreq, uTopoWeight=uTopoWeight, uTransform=uTransform)
 
 void main() {
   vec2 flipY = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
@@ -58,12 +57,13 @@ void main() {
   float strideModY = mod(y, strideY);
 
   float mixAmount = max(strideModX / strideX, strideModY / strideY);
+  int skipPasses = int(max(strideX - 1.0, strideY - 1.0));
 
   vec2 point1 = vec2(
     strideModX > 0.0 ? floor(x / strideX) * strideX + edgeDistance : flipY.x,
     strideModY > 0.0 ? floor(y / strideY) * strideY + edgeDistance : flipY.y
   );
-  vec4 output1 = getHeight(point1, 0);
+  vec4 output1 = getHeight(point1, skipPasses);
   float height1 = (output1.x * 255.0 + output1.y) / 255.0;
   float fineHeight1 = (output1.z * 255.0 + output1.w) / 255.0;
 
@@ -71,7 +71,7 @@ void main() {
     strideModX > 0.0 ? ceil(x / strideX) * strideX + edgeDistance : flipY.x,
     strideModY > 0.0 ? ceil(y / strideY) * strideY + edgeDistance : flipY.y
   );
-  vec4 output2 = getHeight(point2, 0);
+  vec4 output2 = getHeight(point2, skipPasses);
   float height2 = (output2.x * 255.0 + output2.y) / 255.0;
   float fineHeight2 = (output2.z * 255.0 + output2.w) / 255.0;
 
