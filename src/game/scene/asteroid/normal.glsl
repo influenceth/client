@@ -10,7 +10,7 @@ uniform mat4 uTransform;
 float getHeight(vec2 fragCoord) {
   vec2 uv = fragCoord / uResolution.xy;
   vec2 height16 = texture2D(tHeightMap, uv).xy;
-  return (height16.x * 255.0 + height16.y) / 256.0;
+  return (height16.x * 255.0 + height16.y) / 255.0;
 }
 
 void main() {
