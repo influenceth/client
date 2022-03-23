@@ -59,7 +59,7 @@ float getFeatures(vec3 p, int octaves) {
 }
 
 vec4 getHeight(vec2 flipY, int skipPasses) {
-  int modPasses = uExtraPasses - skipPasses;
+  int modPasses = max(0, uExtraPasses - skipPasses);
 
   // Standardize to unit radius spherical coordinates
   vec3 point = getUnitSphereCoords(flipY);
