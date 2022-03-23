@@ -85,7 +85,7 @@ export async function initChunkTextures() {
   }
 }
 
-export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, edgeStrides, oversample, config, returnType = 'bitmap') {
+export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, edgeStrides, extraPasses, oversample, config, returnType = 'bitmap') {
   const material = new ShaderMaterial({
     fragmentShader: (edgeStrides.N === 1 && edgeStrides.S === 1 && edgeStrides.E === 1 && edgeStrides.W === 1)
       ? heightShader
@@ -108,7 +108,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uEdgeStrideS: { type: 'f', value: edgeStrides.S },
       uEdgeStrideE: { type: 'f', value: edgeStrides.E },
       uEdgeStrideW: { type: 'f', value: edgeStrides.W },
-      uExtraPasses: { type: 'i', value: config.extraPasses },
+      uExtraPasses: { type: 'i', value: extraPasses },
       uFeaturesFreq: { type: 'f', value: config.featuresFreq },
       uOversampling: { type: 'b', value: oversample },
       uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
@@ -138,7 +138,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material, { magFilter: NearestFilter });
 }
 
-function generateColorMap(heightMap, chunkSize, chunkOffset, chunkResolution, cubeTransform, oversample, config, returnType = 'bitmap') {
+function generateColorMap(heightMap, chunkSize, chunkOffset, chunkResolution, cubeTransform, extraPasses, oversample, config, returnType = 'bitmap') {
   if (!ramps) throw new Error('Ramps not yet loaded!');
 
   const material = new ShaderMaterial({
@@ -148,6 +148,7 @@ function generateColorMap(heightMap, chunkSize, chunkOffset, chunkResolution, cu
       tRamps: { type: 't', value: ramps },
       uChunkOffset: { type: 'v2', value: chunkOffset },
       uChunkSize: { type: 'f', value: chunkSize },
+      uExtraPasses: { type: 'i', value: extraPasses },
       uOversampling: { type: 'b', value: oversample },
       uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
       uSeed: { type: 'v3', value: config.seed },
@@ -304,7 +305,7 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
   const resolutionPlusOne = resolution + 1;
   const textureResolution = OVERSAMPLE_CHUNK_TEXTURES ? resolutionPlusOne + 2 : resolutionPlusOne;
   const textureSize = OVERSAMPLE_CHUNK_TEXTURES ? chunkSize * (1 + 2 / resolution) : chunkSize;
-  config.extraPasses = Math.log2(1 / chunkSize);
+  const extraPasses = Math.log2(1 / chunkSize);
 
   // meant to match normal intensity of dynamic resolution asteroids to legacy
   // fixed resolution asteroids (height difference between neighbor samples is
@@ -322,6 +323,7 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
     chunkOffset,
     textureResolution,
     edgeStrides,
+    extraPasses,
     OVERSAMPLE_CHUNK_TEXTURES,
     config
   );
@@ -335,6 +337,7 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
     chunkOffset,
     textureResolution,
     localToWorld,
+    extraPasses,
     OVERSAMPLE_CHUNK_TEXTURES,
     config
   );
