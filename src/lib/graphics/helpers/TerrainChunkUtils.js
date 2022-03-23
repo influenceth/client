@@ -1,5 +1,6 @@
 import {
   CanvasTexture,
+  Float32BufferAttribute,
   ImageBitmapLoader,
   LinearFilter,
   LinearMipMapLinearFilter,
@@ -353,6 +354,40 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
     colorBitmap,
     normalBitmap
   };
+}
+
+export function applyDisplacementToGeometry(geometry, resolution, radius, displacementMap, displacementBias, displacementScale, stretch) {
+  const resolutionPlusOne = resolution + 1;
+  const positions = geometry.getAttribute('position').array;
+
+  const displacementData = getTextureRenderer().textureToDataBuffer(displacementMap);
+  if (!displacementData) return;
+
+  const _P = new Vector3();
+  const osAdd = OVERSAMPLE_CHUNK_TEXTURES ? 1 : 0;
+  const osResolution = resolutionPlusOne + (OVERSAMPLE_CHUNK_TEXTURES ? 2 : 0);
+  for (let x = 0; x < resolutionPlusOne; x++) {
+    for (let y = 0; y < resolutionPlusOne; y++) {
+      const positionIndex = 3 * (resolutionPlusOne * x + y);
+      const textureIndex = 4 * (osResolution * (y + osAdd) + (x + osAdd));
+      
+      const displacementTextureValue = (displacementData[textureIndex + 0] + displacementData[textureIndex + 1] / 255) / 256;
+      
+      _P.x = positions[positionIndex + 0];
+      _P.y = positions[positionIndex + 1];
+      _P.z = positions[positionIndex + 2];
+      _P.setLength(radius + displacementTextureValue * displacementScale + displacementBias);
+      _P.multiply(stretch);
+
+      positions[positionIndex + 0] = _P.x;
+      positions[positionIndex + 1] = _P.y;
+      positions[positionIndex + 2] = _P.z;
+    }
+  }
+
+  // update geometry
+  geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geometry.attributes.position.needsUpdate = true;
 }
 
 

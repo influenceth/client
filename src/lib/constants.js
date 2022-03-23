@@ -19,6 +19,7 @@ const constants = {
   OVERSAMPLE_CHUNK_TEXTURES: true,  // NOTE: this probably doesn't need to be a constant; we should always do this
   NORMAL_SCALE: 1.25,
   NORMAL_SCALE_SHADOWLESS: 2.0,
+  MODEL_EXPORT_RESOLUTION: 512,
 
   // (culling, zoom, camera, shadows)
   GEOMETRY_SHRINK: 0.075,        // 0.05, (multiplied by radius)

@@ -3,6 +3,8 @@ import Seed from '~/lib/math/Seed';
 import OctaveNoise from '~/lib/graphics/OctaveNoise';
 import constants from '~/lib/constants';
 
+// TODO: this should probably be elsewhere in the dir tree since it's not only used by scene
+
 // Responsible for generating a config for any asteroid to be generated
 class Config {
   constructor(asteroid) {

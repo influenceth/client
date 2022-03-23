@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { useWeb3React } from '@web3-react/core';
+import { Group, Vector3 } from 'three';
 import styled from 'styled-components';
 import utils from 'influence-utils';
 
@@ -12,6 +13,10 @@ import useCreateReferral from '~/hooks/useCreateReferral';
 import useStartAsteroidScan from '~/hooks/useStartAsteroidScan';
 import useFinalizeAsteroidScan from '~/hooks/useFinalizeAsteroidScan';
 import useNameAsteroid from '~/hooks/useNameAsteroid';
+import useWebWorker from '~/hooks/useWebWorker';
+import constants from '~/lib/constants';
+import formatters from '~/lib/formatters';
+import QuadtreeCubeSphere from '~/lib/graphics/QuadtreeCubeSphere';
 import Details from '~/components/Details';
 import Form from '~/components/Form';
 import Text from '~/components/Text';
@@ -23,10 +28,11 @@ import LogEntry from '~/components/LogEntry';
 import Ether from '~/components/Ether';
 import AddressLink from '~/components/AddressLink';
 import { DownloadModelIcon, EditIcon, CheckCircleIcon, ClaimIcon, ScanIcon } from '~/components/Icons';
+import Config from '~/game/scene/asteroid/Config';
+import exportModel from '~/game/scene/asteroid/export';
 import ResourceMix from './asteroidDetails/ResourceMix';
 import ResourceBonuses from './asteroidDetails/ResourceBonuses';
 import Dimensions from './asteroidDetails/Dimensions';
-import formatters from '~/lib/formatters';
 
 const StyledAsteroidDetails = styled.div`
   align-items: stretch;
@@ -175,11 +181,13 @@ const AsteroidDetails = (props) => {
   const nameAsteroid = useNameAsteroid(Number(i));
   const saleIsActive = useStore(s => s.sale);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
-  const dispatchModelDownload = useStore(s => s.dispatchModelDownloadRequested);
+  const webWorkerPool = useWebWorker();
+
   const [ buying, setBuying ] = useState(false);
   const [ naming, setNaming ] = useState(false);
   const [ newName, setNewName ] = useState('');
   const [ scanStatus, setScanStatus ] = useState('unscanned');
+  const [ exportingModel, setExportingModel ] = useState(false);
 
   useEffect(() => {
     if (finalizeScan.isSuccess) {
@@ -212,6 +220,48 @@ const AsteroidDetails = (props) => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ asteroid ]);
+
+  const download3dModel = useCallback(() => {
+    if (exportingModel || !asteroid) return;
+
+    setExportingModel(true);
+    const exportable = new Group();
+    const manager = new QuadtreeCubeSphere(
+      asteroid.asteroidId,
+      new Config(asteroid),
+      constants.MODEL_EXPORT_RESOLUTION,
+      webWorkerPool
+    );
+    manager.groups.forEach((g) => exportable.add(g));
+    manager.setCameraPosition(new Vector3(0, 0, constants.AU));  // make sure one quad per side
+
+    const waitUntilReady = (callback) => {
+      if (manager.builder.isPreparingUpdate()) {
+        if (!manager.builder.isReadyToFinish()) {
+          manager.builder.updateMaps();
+        } else {
+          manager.builder.update();
+          callback();
+        }
+      }
+      setTimeout(waitUntilReady, 100, callback);
+    };
+    new Promise(waitUntilReady).then(() => {
+      Object.values(manager.chunks).forEach(({ chunk }) => {
+        chunk.makeExportable();
+      });
+
+      exportModel(exportable, () => {
+
+        // dispose of resources
+        manager.groups.forEach((g) => exportable.remove(g));
+        manager.dispose();
+
+        // restore button state
+        setExportingModel(false);
+      });
+    });
+  }, [asteroid, exportingModel]);
 
   const goToOpenSeaAsteroid = (i) => {
     const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/${i}`;
@@ -336,11 +386,13 @@ const AsteroidDetails = (props) => {
                   </NameForm>
                 </Form>
               )}
-              {/* TODO: fix and re-enable */ false && asteroid.owner && asteroid.owner === account && (
+              {asteroid.owner && asteroid.owner === account && (
                 <Button
                   data-tip="Download 3d Model"
                   data-for="global"
-                  onClick={() => dispatchModelDownload()}>
+                  disabled={exportingModel}
+                  loading={exportingModel}
+                  onClick={download3dModel}>
                   <DownloadModelIcon /> Download Model
                 </Button>
               )}

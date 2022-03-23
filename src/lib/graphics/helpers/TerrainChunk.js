@@ -15,6 +15,7 @@ import {
 } from 'three';
 
 import constants from '~/lib/constants';
+import { applyDisplacementToGeometry } from './TerrainChunkUtils';
 
 const {
   NORMAL_SCALE,
@@ -287,6 +288,28 @@ class TerrainChunk {
       map: data.colorBitmap.image ? data.colorBitmap : new CanvasTexture(data.colorBitmap),
       normalMap: data.normalBitmap.image ? data.normalBitmap : new CanvasTexture(data.normalBitmap)
     });
+    this._material.needsUpdate = true;
+  }
+
+  makeExportable() {
+    applyDisplacementToGeometry(
+      this._geometry,
+      this._resolution,
+      this._config.radius,
+      this._material.displacementMap,
+      this._material.displacementBias,
+      this._material.displacementScale,
+      this._stretch
+    );
+
+    // compute accurate normals since displacement now in geometry data
+    this._geometry.computeVertexNormals();
+    this._geometry.attributes.normal.needsUpdate = true;
+
+    // flip color map, remove displacement and normal maps since now in geometry data
+    this._material.map.flipY = false;
+    this._material.map.needsUpdate = true;
+    this._material.setValues({ displacementMap: null, normalMap: null });
     this._material.needsUpdate = true;
   }
 }

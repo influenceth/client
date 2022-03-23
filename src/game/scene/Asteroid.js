@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Vector3, Box3, Sphere, DoubleSide, AxesHelper, CameraHelper, DirectionalLight, DirectionalLightHelper, BufferAttribute, MeshPhongMaterial, PlaneGeometry, Mesh } from 'three';
+import { Vector3, Box3, Sphere, DoubleSide, AxesHelper, CameraHelper, DirectionalLight, DirectionalLightHelper, BufferAttribute, MeshPhongMaterial, PlaneGeometry, Mesh, Group } from 'three';
 import { CSM } from 'three/examples/jsm/csm/CSM';
 import { CSMHelper } from 'three/examples/jsm/csm/CSMHelper';
 import gsap from 'gsap';
@@ -13,10 +13,8 @@ import constants from '~/lib/constants';
 import QuadtreeCubeSphere from '~/lib/graphics/QuadtreeCubeSphere';
 import Config from './asteroid/Config';
 import Rings from './asteroid/Rings';
-// import exportModel from './asteroid/export';
 
 const {
-  CHUNK_RESOLUTION,
   MIN_FRUSTUM_AT_SURFACE,
   CHUNK_SPLIT_DISTANCE,
   UPDATE_QUADTREE_EVERY,
@@ -88,8 +86,6 @@ const Asteroid = (props) => {
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
-  // const requestingModelDownload = useStore(s => s.asteroids.requestingModelDownload);
-  // const onModelDownload = useStore(s => s.dispatchModelDownloadComplete);
   const { data: asteroidData } = useAsteroid(origin);
 
   const webWorkerPool = useWebWorker();
@@ -400,17 +396,10 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomOut ]);
 
-  // TODO: fix this
-  // Initiates download of generated mesh (when requested and ready)
-  // const exportableMesh = geometry && materials && mesh && mesh.current;
-  // useEffect(() => {
-  //   if (!(requestingModelDownload && exportableMesh)) return;
-  //   exportModel(exportableMesh, onModelDownload);
-  // // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [requestingModelDownload, exportableMesh]);
-
+  // TODO: needs to calculate the distance from chunk to camera to evaluate quads already,
+  //       so why don't we just use that instead of calculating distanceTo again?
   // TODO (enhancement): could use webworker for calculations here, but may not be worth the overhead
-  // NOTE: raycasting would technically be more accurate here, but it's way less performant
+  // NOTE: raycasting technically might be more accurate here, but it's way less performant
   //       (3ms+ for just closest mesh... if all quadtree children, closer to 20ms) and need
   //       to incorporate geometry shrink returned intersection distance
   const applyingZoomLimits = useRef(0);

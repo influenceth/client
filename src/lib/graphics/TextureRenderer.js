@@ -3,6 +3,7 @@ import {
   LinearFilter,
   LinearMipMapLinearFilter,
   Mesh,
+  MeshBasicMaterial,
   OrthographicCamera,
   PlaneBufferGeometry,
   RGBAFormat,
@@ -68,6 +69,15 @@ class TextureRenderer {
     this.renderer.setRenderTarget(null);
     this.renderer.render(this.scene, this.camera);
     return this.renderer.domElement.transferToImageBitmap();
+  }
+
+  textureToDataBuffer(texture) {
+    const pixels = this.render(
+      texture.image?.width || 0,
+      texture.image?.height || 0,
+      new MeshBasicMaterial({ map: texture })
+    );
+    return pixels?.buffer;
   }
 }
 

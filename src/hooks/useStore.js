@@ -59,7 +59,6 @@ const useStore = create(persist((set, get) => ({
         highlighted: false,
         highlightColor: '#AB149E'
       },
-      requestingModelDownload: false
     },
 
     auth: {
@@ -314,14 +313,6 @@ const useStore = create(persist((set, get) => ({
 
     dispatchReferrerSet: (refCode) => set(produce(state => {
       state.referrer = refCode;
-    })),
-
-    dispatchModelDownloadRequested: () => set(produce(state => {
-      state.asteroids.requestingModelDownload = true;
-    })),
-
-    dispatchModelDownloadComplete: () => set(produce(state => {
-      state.asteroids.requestingModelDownload = false;
     }))
 }), {
   name: 'influence',
