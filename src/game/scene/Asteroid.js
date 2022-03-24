@@ -9,9 +9,9 @@ import { KeplerianOrbit } from 'influence-utils';
 import useStore, { middleware } from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
 import useWebWorker from '~/hooks/useWebWorker';
+import Config from '~/lib/asteroidConfig';
 import constants from '~/lib/constants';
-import QuadtreeCubeSphere from '~/lib/graphics/QuadtreeCubeSphere';
-import Config from './asteroid/Config';
+import QuadtreeCubeSphere from './asteroid/helpers/QuadtreeCubeSphere';
 import Rings from './asteroid/Rings';
 
 const {

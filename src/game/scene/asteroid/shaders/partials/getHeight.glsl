@@ -1,5 +1,5 @@
 #pragma glslify: snoise = require('glsl-noise/simplex/3d')
-#pragma glslify: cellular = require('../../../../lib/graphics/cellular3')
+#pragma glslify: cellular = require('../../../../../lib/graphics/cellular3')
 #pragma glslify: getTopography = require('./getTopography', uSeed=uSeed, uTopoFreq=uTopoFreq)
 #pragma glslify: getUnitSphereCoords = require('./getUnitSphereCoords', uChunkOffset=uChunkOffset, uChunkSize=uChunkSize, uResolution=uResolution, uTransform=uTransform)
 

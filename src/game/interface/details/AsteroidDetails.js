@@ -14,9 +14,11 @@ import useStartAsteroidScan from '~/hooks/useStartAsteroidScan';
 import useFinalizeAsteroidScan from '~/hooks/useFinalizeAsteroidScan';
 import useNameAsteroid from '~/hooks/useNameAsteroid';
 import useWebWorker from '~/hooks/useWebWorker';
+import Config from '~/lib/asteroidConfig';
 import constants from '~/lib/constants';
 import formatters from '~/lib/formatters';
-import QuadtreeCubeSphere from '~/lib/graphics/QuadtreeCubeSphere';
+import exportGLTF from '~/lib/graphics/exportGLTF';
+
 import Details from '~/components/Details';
 import Form from '~/components/Form';
 import Text from '~/components/Text';
@@ -28,8 +30,7 @@ import LogEntry from '~/components/LogEntry';
 import Ether from '~/components/Ether';
 import AddressLink from '~/components/AddressLink';
 import { DownloadModelIcon, EditIcon, CheckCircleIcon, ClaimIcon, ScanIcon } from '~/components/Icons';
-import Config from '~/game/scene/asteroid/Config';
-import exportModel from '~/game/scene/asteroid/export';
+import QuadtreeCubeSphere from '~/game/scene/asteroid/helpers/QuadtreeCubeSphere';
 import ResourceMix from './asteroidDetails/ResourceMix';
 import ResourceBonuses from './asteroidDetails/ResourceBonuses';
 import Dimensions from './asteroidDetails/Dimensions';
@@ -251,7 +252,7 @@ const AsteroidDetails = (props) => {
         chunk.makeExportable();
       });
 
-      exportModel(exportable, () => {
+      exportGLTF(exportable, `asteroid_${i}`, () => {
 
         // dispose of resources
         manager.groups.forEach((g) => exportable.remove(g));

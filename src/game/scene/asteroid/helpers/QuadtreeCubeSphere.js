@@ -2,8 +2,8 @@ import {
   Group,
   Vector3
 } from 'three';
-import QuadtreeCubeSphere from './helpers/QuadtreeCube';
-import TerrainChunkManager from './helpers/TerrainChunkManager';
+import QuadtreeCubeSphere from './QuadtreeCube';
+import TerrainChunkManager from './TerrainChunkManager';
 import constants from '~/lib/constants';
 
 const {

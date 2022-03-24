@@ -16,15 +16,15 @@ const saveArrayBuffer = (buffer, filename) => {
   save(new Blob([ buffer ], { type: 'application/octet-stream' }), filename);
 };
 
-const exportGLTF = (input, onComplete) => {
+const exportGLTF = (input, filename, onComplete) => {
   const gltfExporter = new GLTFExporter();
   try {
     gltfExporter.parse(input, function (result) {
       if (result instanceof ArrayBuffer) {
-        saveArrayBuffer(result, 'asteroid.glb');
+        saveArrayBuffer(result, `${filename}.glb`);
       } else {
         const output = JSON.stringify( result, null, 2 );
-        saveString(output, 'asteroid.gltf');
+        saveString(output, `${filename}.gltf`);
       }
       if (onComplete) onComplete(true);
     });

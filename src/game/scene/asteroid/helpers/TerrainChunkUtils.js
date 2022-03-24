@@ -10,11 +10,11 @@ import {
   Vector2,
   Vector3,
 } from 'three';
-import colorShader from '~/game/scene/asteroid/color.glsl';
-import heightShader from '~/game/scene/asteroid/height.glsl';
-import heightShaderWithStitching from '~/game/scene/asteroid/height_w_stitching.glsl';
-import normalShader from '~/game/scene/asteroid/normal.glsl';
-import rampsDataUri from '~/game/scene/asteroid/ramps.png.datauri';
+import colorShader from '~/game/scene/asteroid/shaders/color.glsl';
+import heightShader from '~/game/scene/asteroid/shaders/height.glsl';
+import heightShaderWithStitching from '~/game/scene/asteroid/shaders/height_w_stitching.glsl';
+import normalShader from '~/game/scene/asteroid/shaders/normal.glsl';
+import rampsDataUri from '~/game/scene/asteroid/helpers/ramps.png.datauri';
 import constants from '~/lib/constants';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 
@@ -141,7 +141,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material, { magFilter: NearestFilter });
 }
 
-function generateColorMap(heightMap, chunkSize, chunkOffset, chunkResolution, cubeTransform, extraPasses, oversample, config, returnType = 'bitmap') {
+export function generateColorMap(heightMap, chunkSize, chunkOffset, chunkResolution, cubeTransform, extraPasses, oversample, config, returnType = 'bitmap') {
   if (!ramps) throw new Error('Ramps not yet loaded!');
 
   const material = new ShaderMaterial({
@@ -177,7 +177,7 @@ function generateColorMap(heightMap, chunkSize, chunkOffset, chunkResolution, cu
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, oversample, config, returnType = 'bitmap') {
+export function generateNormalMap(heightMap, chunkResolution, compatibilityScalar, oversample, config, returnType = 'bitmap') {
   const material = new ShaderMaterial({
     extensions: { derivatives: true },
     fragmentShader: normalShader,
