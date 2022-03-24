@@ -48,7 +48,8 @@ float getFeatures(vec3 p, int octaves) {
       + (1.0 - smoothstep(uCraterCut, uCraterCut + rim, cellNoise.x)) * uRimWeight;
     totalCraters += craters * weight;
     maxTotal += weight;
-    weight *= uCraterPersist;
+    // (fade last two passes more so less obvious popping in)
+    weight *= uCraterPersist * (i < octaves - 2 ? 1.0 : 0.6);
   }
 
   // Generate some linear features that look like rock cleavage
