@@ -1,11 +1,8 @@
 uniform sampler2D tHeightMap;
-uniform vec2 uChunkOffset;
-uniform float uChunkSize;
 uniform float uCompatibilityScalar;
 uniform float uNormalIntensity;
 uniform bool uOversampling;
 uniform vec2 uResolution;
-uniform mat4 uTransform;
 
 float getHeight(vec2 fragCoord) {
   vec2 uv = fragCoord / uResolution.xy;
