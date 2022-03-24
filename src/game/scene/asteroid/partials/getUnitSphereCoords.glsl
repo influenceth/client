@@ -1,7 +1,6 @@
 vec3 getUnitSphereCoords(vec2 flipY) {
   // NOTE: this turned out to probably not be as impactful enough to justify its complexity
   // (if use, todo): this needs to only happen at the cube edges (i.e. not between chunks!)
-  // (if use, todo): this needs to be replicated in height_w_stitching
     // for oversampling at edges, wrap the edge
     // NOTE: this would have problems if resolution.x and resolution.y were different
     // NOTE: -3.0 == -1.0 (b/c # of faces is # vertexes - 1) + -2.0 (to calculate interval excluding oversampling)

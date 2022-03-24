@@ -55,9 +55,11 @@ class Config {
   _adjustedRadius() {
     // R = r / (((sx*sy)^1.6 + (sx*sz)^1.6 + (sy*sz)^1.6) / 3)^(1/3.2)
     const stretch = this._stretch();
-    return this.radius / Math.pow(
-      (Math.pow(stretch.x * stretch.y, 1.6) + Math.pow(stretch.x * stretch.z, 1.6) + Math.pow(stretch.y * stretch.z, 1.6)) / 3,
-      1 / 3.2
+    return Math.floor(
+      this.radius / Math.pow(
+        (Math.pow(stretch.x * stretch.y, 1.6) + Math.pow(stretch.x * stretch.z, 1.6) + Math.pow(stretch.y * stretch.z, 1.6)) / 3,
+        1 / 3.2
+      )
     );
   }
 
@@ -155,7 +157,7 @@ class Config {
     const widthMod = this.seedGen.getFloat('ringsMax') * 0.5;
     let maxMod = minMod + widthMod;
     if (maxMod > 2.0) maxMod = 2.0;
-    return [ this.radius * minMod, this.radius * maxMod ];
+    return [ this.radius * minMod, this.radius * maxMod ];  // TODO: should this be adjustedRadius?
   }
 
   _ringsPresent() {

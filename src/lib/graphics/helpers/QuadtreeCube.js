@@ -63,7 +63,6 @@ class QuadtreeCubeSphere {
 
   // preprocess geometry from high-res texture
   prerenderCoarseGeometry(sideTransform, resolution, config) {
-
     const s = Date.now();
     const heightMap = generateHeightMap(
       sideTransform,
@@ -82,7 +81,7 @@ class QuadtreeCubeSphere {
     for (let y = 0; y < resolution; y++) {
       for (let x = 0; x < resolution; x++) {
         const bi = (resolution * (resolution - y - 1) + x) * 4; // (flip y)
-        const disp = -1 + (heightMap.buffer[bi] + heightMap.buffer[bi + 1] / 255) / 128;
+        const disp = -1 + (heightMap.buffer[bi] + heightMap.buffer[bi + 1] / 255) / 127.5;
         heightSamples.push(config.radius * (1 + disp * config.dispWeight));
       }
     }
