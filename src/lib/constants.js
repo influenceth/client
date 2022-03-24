@@ -15,10 +15,10 @@ const constants = {
   // (resolution)
   CHUNK_RESOLUTION: 128,      // 256, 64
   MIN_CHUNK_SIZE: 1000,       // 1000
-  CHUNK_SPLIT_DISTANCE: 1.1,  // 1.0, 0.8, 1.25 (this should probably always be >= 0.5 functionally)
+  CHUNK_SPLIT_DISTANCE: 1.15,  // 1.0, 0.8, 1.25 (this should probably always be >= 0.5 functionally)
   OVERSAMPLE_CHUNK_TEXTURES: true,  // NOTE: this probably doesn't need to be a constant; we should always do this
-  NORMAL_SCALE: 1.25,
-  NORMAL_SCALE_SHADOWLESS: 2.0,
+  NORMAL_SCALE: 1.0,
+  NORMAL_SCALE_SHADOWLESS: 1.5,
   MODEL_EXPORT_RESOLUTION: 512,
 
   // (culling, zoom, camera, shadows)

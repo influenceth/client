@@ -9,7 +9,7 @@ uniform mat4 uTransform;
 
 float getHeight(vec2 fragCoord) {
   vec2 uv = fragCoord / uResolution.xy;
-  vec2 height16 = texture2D(tHeightMap, uv).xy;
+  vec2 height16 = texture2D(tHeightMap, uv).zw;
   return (height16.x * 255.0 + height16.y) / 255.0;
 }
 
@@ -37,12 +37,9 @@ void main() {
   yNormal = sign(yNormal) * pow(abs(yNormal), uNormalIntensity);
   yNormal = 0.5 * yNormal + 0.5;
 
-  // TODO: this is only relevant at face corners, not all chunk corners
-  // NOTE: only relevant if oversampling... otherwise, edges will mismatch anyway
-  bool isCorner = uOversampling && (flipY.x == 1.5 || flipY.x == uResolution.x - 1.5) && (flipY.y == 1.5 || flipY.y == uResolution.y - 1.5);
   gl_FragColor = vec4(
-    isCorner ? 0.5 : xNormal,
-    isCorner ? 0.5 : yNormal,
+    xNormal,
+    yNormal,
     1.0,
     1.0
   );
