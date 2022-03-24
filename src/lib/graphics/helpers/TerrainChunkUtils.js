@@ -18,7 +18,10 @@ import rampsDataUri from '~/game/scene/asteroid/ramps.png.datauri';
 import constants from '~/lib/constants';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 
-const { OVERSAMPLE_CHUNK_TEXTURES } = constants;
+const {
+  CHUNK_RESOLUTION,
+  OVERSAMPLE_CHUNK_TEXTURES
+} = constants;
 
 // set up texture renderer (ideally w/ offscreen canvas)
 let _textureRenderer;
@@ -305,7 +308,11 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
   const resolutionPlusOne = resolution + 1;
   const textureResolution = OVERSAMPLE_CHUNK_TEXTURES ? resolutionPlusOne + 2 : resolutionPlusOne;
   const textureSize = OVERSAMPLE_CHUNK_TEXTURES ? chunkSize * (1 + 2 / resolution) : chunkSize;
-  const extraPasses = Math.log2(1 / chunkSize);
+
+  // extra passes added based on resolution of chunk and zoom level of chunk
+  // i.e. at low user settings, (resolution / CHUNK_RESOLUTION) - 1 is 0, at high is 3
+  // i.e. each zoom level adds a pass
+  const extraPasses = Math.ceil(Math.log2(1 / chunkSize) + (resolution / CHUNK_RESOLUTION) - 1);
 
   // meant to match normal intensity of dynamic resolution asteroids to legacy
   // fixed resolution asteroids (height difference between neighbor samples is
