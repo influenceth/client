@@ -411,10 +411,13 @@ const Asteroid = (props) => {
         return (!acc || distance < acc[1]) ? [c, distance] : acc;
       }, null);
 
-      const minDistance = closestChunk.sphereCenterHeight + surfaceDistance;
+      const minDistance = Math.min(
+        config.radius * INITIAL_ZOOM,  // (for smallest asteroids where initial zoom > min surface distance)
+        closestChunk.sphereCenterHeight + surfaceDistance
+      );
       
       // too close, so should animate camera out (jump to surface immediately though)
-      if (closestDistance < surfaceDistance) {
+      if (minDistance > controls.minDistance && closestDistance < surfaceDistance) {
         controls.minDistance = Math.max(cameraPosition.length(), closestChunk.sphereCenterHeight);
         applyingZoomLimits.current = minDistance - controls.minDistance;
 
@@ -424,7 +427,7 @@ const Asteroid = (props) => {
         applyingZoomLimits.current = false;
       }
     }, 0);
-  }, [surfaceDistance]);
+  }, [surfaceDistance, config?.nominalRadius]);
 
 
   const updatePending = useRef();
