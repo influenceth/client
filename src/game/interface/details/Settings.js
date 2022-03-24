@@ -100,7 +100,7 @@ const Settings = (props) => {
                 </Button>
                 <Button
                   active={graphics.textureQuality === 3}
-                  onClick={() => setTextureQuality(4)}>
+                  onClick={() => setTextureQuality(3)}>
                   High
                 </Button>
               </ControlGroup>
