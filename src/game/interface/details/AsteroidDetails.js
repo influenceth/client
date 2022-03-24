@@ -30,7 +30,7 @@ import LogEntry from '~/components/LogEntry';
 import Ether from '~/components/Ether';
 import AddressLink from '~/components/AddressLink';
 import { DownloadModelIcon, EditIcon, CheckCircleIcon, ClaimIcon, ScanIcon } from '~/components/Icons';
-import QuadtreeCubeSphere from '~/game/scene/asteroid/helpers/QuadtreeCubeSphere';
+import QuadtreeTerrainCube from '~/game/scene/asteroid/helpers/QuadtreeTerrainCube';
 import ResourceMix from './asteroidDetails/ResourceMix';
 import ResourceBonuses from './asteroidDetails/ResourceBonuses';
 import Dimensions from './asteroidDetails/Dimensions';
@@ -227,7 +227,7 @@ const AsteroidDetails = (props) => {
 
     setExportingModel(true);
     const exportable = new Group();
-    const manager = new QuadtreeCubeSphere(
+    const manager = new QuadtreeTerrainCube(
       asteroid.asteroidId,
       new Config(asteroid),
       constants.MODEL_EXPORT_RESOLUTION,

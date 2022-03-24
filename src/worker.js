@@ -2,7 +2,7 @@ import { Vector3 } from 'three';
 
 import constants from '~/lib/constants';
 import * as utils from '~/lib/geometryUtils';
-import { rebuildChunkGeometry, rebuildChunkMaps, initChunkTextures } from '~/lib/graphics/helpers/TerrainChunkUtils';
+import { rebuildChunkGeometry, rebuildChunkMaps, initChunkTextures } from '~/game/scene/asteroid/helpers/TerrainChunkUtils';
 
 const {
   DISABLE_BACKGROUND_TERRAIN_MAPS

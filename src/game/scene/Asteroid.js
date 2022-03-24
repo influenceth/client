@@ -11,7 +11,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useWebWorker from '~/hooks/useWebWorker';
 import Config from '~/lib/asteroidConfig';
 import constants from '~/lib/constants';
-import QuadtreeCubeSphere from './asteroid/helpers/QuadtreeCubeSphere';
+import QuadtreeTerrainCube from './asteroid/helpers/QuadtreeTerrainCube';
 import Rings from './asteroid/Rings';
 
 const {
@@ -177,7 +177,7 @@ const Asteroid = (props) => {
 
       // if geometry.current already exists, dispose first
       if (geometry.current) disposeGeometry();
-      geometry.current = new QuadtreeCubeSphere(origin, c, textureSize, webWorkerPool);
+      geometry.current = new QuadtreeTerrainCube(origin, c, textureSize, webWorkerPool);
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.add(g);
       });
@@ -216,7 +216,7 @@ const Asteroid = (props) => {
       disposeGeometry();
       disposeLight();
 
-      geometry.current = new QuadtreeCubeSphere(origin, config, textureSize, webWorkerPool);
+      geometry.current = new QuadtreeTerrainCube(origin, config, textureSize, webWorkerPool);
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.add(g);
       });

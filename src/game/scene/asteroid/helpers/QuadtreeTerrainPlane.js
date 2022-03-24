@@ -52,7 +52,7 @@ const edgeToEdgeMap = [
   [[0,'N',true], [1,'S',true], [3,'W',false],[2,'E',false]]
 ];
 
-class QuadtreePlane {
+class QuadtreeTerrainPlane {
   constructor({ localToWorld, size, worldStretch, heightSamples, sampleResolution, side }) {
     this.localToWorld = localToWorld;
     this.rootSize = size;
@@ -271,4 +271,4 @@ class QuadtreePlane {
   }
 }
 
-export default QuadtreePlane;
+export default QuadtreeTerrainPlane;

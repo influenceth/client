@@ -14,7 +14,7 @@ import colorShader from '~/game/scene/asteroid/shaders/color.glsl';
 import heightShader from '~/game/scene/asteroid/shaders/height.glsl';
 import heightShaderWithStitching from '~/game/scene/asteroid/shaders/height_w_stitching.glsl';
 import normalShader from '~/game/scene/asteroid/shaders/normal.glsl';
-import rampsDataUri from '~/game/scene/asteroid/helpers/ramps.png.datauri';
+import rampsDataUri from '~/game/scene/asteroid/helpers/_ramps.png.datauri';
 import constants from '~/lib/constants';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 
