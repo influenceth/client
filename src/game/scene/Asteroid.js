@@ -196,8 +196,8 @@ const Asteroid = (props) => {
   // Configures the light component once the geometry is created
   const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent]);
   useEffect(() => {
-    if (!(asteroidData?.radius && geometry.current && quadtreeRef.current && position.current && config?.stretch)) return;
-    
+    if (!(config?.radius && config?.stretch && geometry.current && quadtreeRef.current && position.current)) return;
+
     // calculate intended shadow mode
     let intendedShadowMode = `${textureSize}`;
     if (ENABLE_CSM && shadowMode === 2) {
@@ -225,12 +225,12 @@ const Asteroid = (props) => {
     // init params
     const posVec = new Vector3(...position.current);
     const lightColor = 0xffeedd;
-    const lightDistance = asteroidData?.radius * 10;
+    const lightDistance = config.radius * 10;
     const lightDirection = posVec.clone().normalize();
     const lightIntensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
     const maxRadius = ringsPresent
-      ? asteroidData.radius * 1.5
-      : asteroidData.radius * maxStretch;
+      ? config.radius * 1.5
+      : config.radius * maxStretch;
     
     //
     // CSM setup
@@ -240,18 +240,18 @@ const Asteroid = (props) => {
       // TODO: does number of cascades impact performance? if not, we should definitely add more
 
       // setup cascades
-      const minSurfaceDistance = Math.min(surfaceDistance, (MIN_ZOOM_DEFAULT - 1) * asteroidData.radius);
+      const minSurfaceDistance = Math.min(surfaceDistance, (MIN_ZOOM_DEFAULT - 1) * config.radius);
       const cascadeConfig = [];
       cascadeConfig.unshift(MAX_ZOOM);
       // cascadeConfig.unshift(INITIAL_ZOOM - minStretch);
-      // const midCascade = 8 * minSurfaceDistance / asteroidData.radius;
+      // const midCascade = 8 * minSurfaceDistance / config.radius;
       // if (midCascade < cascadeConfig[0]) cascadeConfig.unshift(midCascade);
-      // cascadeConfig.unshift(2 * minSurfaceDistance / asteroidData.radius);
+      // cascadeConfig.unshift(2 * minSurfaceDistance / config.radius);
 
       // init CSM
       const csm = new CSM({
         fade: true,
-        maxFar: asteroidData.radius * MAX_ZOOM,
+        maxFar: config.radius * MAX_ZOOM,
         cascades: cascadeConfig.length,
         mode: 'custom',
         customSplitsCallback: (cascades, near, far, target) => {
@@ -262,7 +262,7 @@ const Asteroid = (props) => {
         lightDirection,
         lightIntensity,
         lightNear: 1,
-        lightFar: 10 * asteroidData.radius,
+        lightFar: 10 * config.radius,
         camera,
         parent: group.current
       });
@@ -315,10 +315,10 @@ const Asteroid = (props) => {
     // set current shadowMode
     geometry.current.shadowMode = intendedShadowMode;
 
-  }, [asteroidData?.radius, config, ringsPresent, shadowMode, shadowSize, textureSize, surfaceDistance]);
+  }, [config, ringsPresent, shadowMode, shadowSize, textureSize, surfaceDistance]);
 
   // Zooms the camera to the correct location
-  const shouldZoomIn = zoomStatus === 'zooming-in' && controls && !!asteroidData;
+  const shouldZoomIn = zoomStatus === 'zooming-in' && controls && config?.radius;
   useEffect(() => {
     if (!shouldZoomIn) return;
 
@@ -331,7 +331,7 @@ const Asteroid = (props) => {
     const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
-    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * INITIAL_ZOOM);
+    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM);
 
     const timeline = gsap.timeline({
       defaults: { duration: 2, ease: 'power4.out' },
@@ -346,25 +346,25 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomIn ]);
 
-  const shouldFinishZoomIn = zoomStatus === 'in' && controls && !!asteroidData;
+  const shouldFinishZoomIn = zoomStatus === 'in' && controls && config?.radius;
   useEffect(() => {
     if (!shouldFinishZoomIn) return;
 
     // Update distances to maximize precision
-    controls.minDistance = asteroidData.radius * maxStretch * MIN_ZOOM_DEFAULT;
-    controls.maxDistance = asteroidData.radius * MAX_ZOOM;
+    controls.minDistance = config.radius * maxStretch * MIN_ZOOM_DEFAULT;
+    controls.maxDistance = config.radius * MAX_ZOOM;
 
     const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
-    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * INITIAL_ZOOM);
+    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM);
     controls.targetScene.position.copy(panTo);
     controls.object.position.copy(zoomTo);
     controls.noPan = true;
     controls.object.near = 100;
     controls.object.updateProjectionMatrix();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ shouldFinishZoomIn, asteroidData?.radius ]);
+  }, [ shouldFinishZoomIn ]);
 
   // Handle zooming back out
   const shouldZoomOut = zoomStatus === 'zooming-out' && zoomedFrom && controls;
@@ -514,7 +514,7 @@ const Asteroid = (props) => {
       const updateQuadtreeEvery = geometry.current.smallestActiveChunkSize * UPDATE_DISTANCE_MULT;
       const updateQuadCube = !geometry.current.cameraPosition
         || Math.abs(geometry.current.cameraPosition.length() - cameraHeight) > updateQuadtreeEvery
-        || geometry.current.cameraPosition.distanceTo(rotatedCameraPosition) > updateQuadtreeEvery * cameraHeight / (asteroidData.radius * maxStretch)
+        || geometry.current.cameraPosition.distanceTo(rotatedCameraPosition) > updateQuadtreeEvery * cameraHeight / (config.radius * maxStretch)
       ;
       if (updateQuadCube) {
 

@@ -27,7 +27,8 @@ class Config {
       dispWeight: this._dispWeight(),
       featuresFreq: this._featuresFreq(),
       normalIntensity: this._normalIntensity(),
-      radius: this.radius,
+      radius: this._adjustedRadius(),
+      radiusNominal: this.radius,
       ringsMinMax: this._ringsMinMax(),
       ringsPresent: this._ringsPresent(),
       ringsVariation: this._ringsVariation(),
@@ -47,6 +48,17 @@ class Config {
   // Returns a modifier based on the radius raise to a power (optional)
   _radiusMod(pow = 1) {
     return Math.pow(this.radius / constants.MAX_ASTEROID_RADIUS, pow);
+  }
+  
+  // Returns the radius of a sphere, which if stretched into an ellipsoid by
+  // _stretch, would have the same surface area as the nominal radius
+  _adjustedRadius() {
+    // R = r / (((sx*sy)^1.6 + (sx*sz)^1.6 + (sy*sz)^1.6) / 3)^(1/3.2)
+    const stretch = this._stretch();
+    return this.radius / Math.pow(
+      (Math.pow(stretch.x * stretch.y, 1.6) + Math.pow(stretch.x * stretch.z, 1.6) + Math.pow(stretch.y * stretch.z, 1.6)) / 3,
+      1 / 3.2
+    );
   }
 
   // Defines the upper cutoff (starts at -1.0) for cleavage lines. Must be less than 0
