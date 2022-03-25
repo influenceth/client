@@ -404,6 +404,7 @@ const Asteroid = (props) => {
   //       to incorporate geometry shrink returned intersection distance
   const applyingZoomLimits = useRef(0);
   const applyZoomLimits = useCallback((cameraPosition, chunks) => {
+    if (!config?.radius) return;
     applyingZoomLimits.current = true;
     setTimeout(() => {
       const [closestChunk, closestDistance] = chunks.reduce((acc, c) => {
@@ -412,7 +413,7 @@ const Asteroid = (props) => {
       }, null);
 
       const minDistance = Math.min(
-        config.radius * INITIAL_ZOOM,  // (for smallest asteroids where initial zoom > min surface distance)
+        config?.radius * INITIAL_ZOOM,  // (for smallest asteroids where initial zoom > min surface distance)
         closestChunk.sphereCenterHeight + surfaceDistance
       );
       
@@ -427,7 +428,7 @@ const Asteroid = (props) => {
         applyingZoomLimits.current = false;
       }
     }, 0);
-  }, [surfaceDistance, config?.nominalRadius]);
+  }, [surfaceDistance, config?.radius]);
 
 
   const updatePending = useRef();
