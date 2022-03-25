@@ -4,7 +4,7 @@ uniform vec2 uChunkOffset;
 uniform float uChunkSize;
 uniform int uExtraPasses;
 uniform bool uOversampling;
-uniform vec2 uResolution;
+uniform float uResolution;
 uniform vec3 uSeed;
 uniform float uSpectral;
 uniform int uTopoDetail;
@@ -21,10 +21,10 @@ float normalizeNoise(float n) {
 void main() {
   vec2 flipY = uOversampling
     ? vec2(
-      max(1.5, min(gl_FragCoord.x, uResolution.x - 1.5)),
-      max(1.5, min(uResolution.y - gl_FragCoord.y, uResolution.y - 1.5))
+      max(1.5, min(gl_FragCoord.x, uResolution - 1.5)),
+      max(1.5, min(uResolution - gl_FragCoord.y, uResolution - 1.5))
     )
-    : vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+    : vec2(gl_FragCoord.x, uResolution - gl_FragCoord.y);
 
   vec2 height16 = texture2D(tHeightMap, flipY / uResolution).xy;
   float height = (height16.x * 255.0 + height16.y) / 255.0;

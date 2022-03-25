@@ -114,7 +114,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uExtraPasses: { type: 'i', value: extraPasses },
       uFeaturesFreq: { type: 'f', value: config.featuresFreq },
       uOversampling: { type: 'b', value: oversample },
-      uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
+      uResolution: { type: 'f', value: chunkResolution },
       uRimVariation: { type: 'f', value: config.rimVariation },
       uRimWeight: { type: 'f', value: config.rimWeight },
       uRimWidth: { type: 'f', value: config.rimWidth },
@@ -153,7 +153,7 @@ export function generateColorMap(heightMap, chunkSize, chunkOffset, chunkResolut
       uChunkSize: { type: 'f', value: chunkSize },
       uExtraPasses: { type: 'i', value: extraPasses },
       uOversampling: { type: 'b', value: oversample },
-      uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
+      uResolution: { type: 'f', value: chunkResolution },
       uSeed: { type: 'v3', value: config.seed },
       uSpectral: { type: 'f', value: config.spectralType },
       uTopoDetail: { type: 'i', value: config.topoDetail },
@@ -188,7 +188,7 @@ export function generateNormalMap(heightMap, chunkResolution, chunkWidth, compat
       uDisplacementScale: { type: 'f', value: 2 * config.radius * config.dispWeight },
       uNormalIntensity: { type: 'f', value: config.normalIntensity },
       uOversampling: { type: 'b', value: oversample },
-      uResolution: { type: 'v2', value: new Vector2(chunkResolution, chunkResolution) },
+      uResolution: { type: 'f', value: chunkResolution },
     }
   });
   

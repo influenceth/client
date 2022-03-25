@@ -132,8 +132,7 @@ class TerrainChunk {
             transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias);
             // stretch along normal
             transformed *= uStretch;
-            // re-init pre-normalmap normal to match position
-            // (set post-displacement coarse normals b/f application of normalmap)
+            // re-init pre-normalmap normal to match stretched position (b/f application of normalmap)
             vNormal = normalize( normalMatrix * vec3(transformed.xyz) );
           #endif`
         )}

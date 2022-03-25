@@ -18,7 +18,7 @@ uniform float uEdgeStrideW;
 uniform int uExtraPasses;
 uniform float uFeaturesFreq;
 uniform bool uOversampling;
-uniform vec2 uResolution;
+uniform float uResolution;
 uniform vec3 uSeed;
 uniform vec3 uStretch;
 uniform float uRimVariation;
@@ -32,14 +32,14 @@ uniform mat4 uTransform;
 #pragma glslify: getHeight = require('./partials/getHeight', uChunkOffset=uChunkOffset, uChunkSize=uChunkSize, uCleaveCut=uCleaveCut, uCleaveWeight=uCleaveWeight, uCraterCut=uCraterCut, uCraterFalloff=uCraterFalloff, uCraterPasses=uCraterPasses, uCraterPersist=uCraterPersist, uCraterSteep=uCraterSteep, uDispFreq=uDispFreq, uDispPasses=uDispPasses, uDispPersist=uDispPersist, uDispWeight=uDispWeight, uExtraPasses=uExtraPasses, uFeaturesFreq=uFeaturesFreq, uOversampling=uOversampling, uResolution=uResolution, uRimVariation=uRimVariation, uRimWeight=uRimWeight, uRimWidth=uRimWidth, uSeed=uSeed, uStretch=uStretch, uTopoDetail=uTopoDetail, uTopoFreq=uTopoFreq, uTopoWeight=uTopoWeight, uTransform=uTransform)
 
 void main() {
-  vec2 flipY = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+  vec2 flipY = vec2(gl_FragCoord.x, uResolution - gl_FragCoord.y);
 
   float oversampleAddOn = uOversampling ? 1.0 : 0.0;
   float edgeDistance = 0.5 + oversampleAddOn;
   float strideX = flipY.y <= edgeDistance
     ? uEdgeStrideS
     : (
-      flipY.y >= uResolution.y - edgeDistance
+      flipY.y >= uResolution - edgeDistance
         ? uEdgeStrideN
         : 1.0
     );
@@ -49,7 +49,7 @@ void main() {
   float strideY = flipY.x <= edgeDistance
     ? uEdgeStrideW
     : (
-      flipY.x >= uResolution.x - edgeDistance
+      flipY.x >= uResolution - edgeDistance
         ? uEdgeStrideE
         : 1.0
     );
