@@ -76,9 +76,9 @@ const Scene = (props) => {
           <SettingsManager />
           <QueryClientProvider client={queryClient} contextSharing={true}>
             <TrackballModControls maxDistance={10 * constants.AU}>
-              {/* TODO: restore
               <Star />
               <Planets />
+              {/* TODO: restore
               <Asteroids />
               */}
               <Asteroid />

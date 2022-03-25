@@ -1,13 +1,18 @@
+#define PI 3.1415926535897932384626433832795
+#define SAMPLE_DISTANCE 1.0
+
 uniform sampler2D tHeightMap;
+uniform float uChunkWidth;
 uniform float uCompatibilityScalar;
+uniform float uDisplacementScale;
 uniform float uNormalIntensity;
 uniform bool uOversampling;
 uniform vec2 uResolution;
 
 float getHeight(vec2 fragCoord) {
   vec2 uv = fragCoord / uResolution.xy;
-  vec2 height16 = texture2D(tHeightMap, uv).zw;
-  return (height16.x * 255.0 + height16.y) / 255.0;
+  vec2 height16 = texture2D(tHeightMap, uv).xy;
+  return uDisplacementScale * (height16.x * 255.0 + height16.y) / 255.0;
 }
 
 void main() {
@@ -20,23 +25,16 @@ void main() {
     : vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
   //flipY = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
   
-  float sampleStep = 1.0;
+  // Calculate height changes (right - left, above - below)
+  vec2 widthBetweenSamples = 2.0 * SAMPLE_DISTANCE * uChunkWidth / uResolution;
+  float xHeightChange = getHeight(flipY + vec2(SAMPLE_DISTANCE, 0.0)) - getHeight(flipY + vec2(-SAMPLE_DISTANCE, 0.0));
+  float yHeightChange = getHeight(flipY + vec2(0.0, SAMPLE_DISTANCE)) - getHeight(flipY + vec2(0.0, -SAMPLE_DISTANCE));
 
-  // Calculate X vector
-  float xNormal = getHeight(flipY + vec2(-sampleStep, 0.0)) - getHeight(flipY + vec2(sampleStep, 0.0));
-  xNormal *= uCompatibilityScalar;
-  xNormal = sign(xNormal) * pow(abs(xNormal), uNormalIntensity);
-  xNormal = 0.5 * xNormal + 0.5;
-
-  // Calculate Y vector
-  float yNormal = getHeight(flipY + vec2(0.0, -sampleStep)) - getHeight(flipY + vec2(0.0, sampleStep));
-  yNormal *= uCompatibilityScalar;
-  yNormal = sign(yNormal) * pow(abs(yNormal), uNormalIntensity);
-  yNormal = 0.5 * yNormal + 0.5;
-
+  // calculate angle of normal based on slope of height change
+  // NOTE: vec4(0.5, 0.5, 1.0, 1.0) is straight up
   gl_FragColor = vec4(
-    xNormal,
-    yNormal,
+    0.5 - atan(xHeightChange / widthBetweenSamples.x) / PI,
+    0.5 - atan(yHeightChange / widthBetweenSamples.y) / PI,
     1.0,
     1.0
   );

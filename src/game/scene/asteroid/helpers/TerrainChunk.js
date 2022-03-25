@@ -18,9 +18,8 @@ import constants from '~/lib/constants';
 import { applyDisplacementToGeometry } from './TerrainChunkUtils';
 
 const {
-  NORMAL_SCALE,
-  NORMAL_SCALE_SHADOWLESS,
   OVERSAMPLE_CHUNK_TEXTURES,
+  SHADOWLESS_NORMAL_SCALE,
 } = constants;
 
 // TODO: remove debug
@@ -54,8 +53,7 @@ class TerrainChunk {
     // init material
     const extraMaterialProps = {};
     if (!shadowsEnabled) {
-      // without shadows, asteroids look way more detailed with flat shading... but also looks like all craters are same depth
-      // extraMaterialProps.flatShading = true; // TODO: ...
+      extraMaterialProps.normalScale = new Vector2(SHADOWLESS_NORMAL_SCALE, SHADOWLESS_NORMAL_SCALE);
     } else if (csmManager) {
       // extraMaterialProps.shadowSide = DoubleSide;
       extraMaterialProps.alphaTest = 0.5; // TODO: this may not be needed
@@ -71,7 +69,6 @@ class TerrainChunk {
       displacementScale: 2 * this._config.radius * this._config.dispWeight,
       dithering: true,
       metalness: 0,
-      normalScale: shadowsEnabled ? new Vector2(NORMAL_SCALE, NORMAL_SCALE) : new Vector2(NORMAL_SCALE_SHADOWLESS, NORMAL_SCALE_SHADOWLESS),
       roughness: 1,
       side: FrontSide,
       // wireframe: true,

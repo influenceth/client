@@ -79,7 +79,8 @@ vec4 getHeight(vec2 flipY, int skipPasses) {
   float fine = (topo * uTopoWeight + features * 2.0) / (uTopoWeight + 2.0); // -1 to 1
 
   // Get total displacement
-  float height = normalizeNoise(0.85 * disp + 0.15 * fine);
+  float fineWeight = 0.15;
+  float height = normalizeNoise((1.0 - fineWeight) * disp + fineWeight * fine);
 
   // get normalized fine height for normal map
   float fineHeight = 0.5 * fine + 0.5;

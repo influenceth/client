@@ -17,8 +17,6 @@ const constants = {
   MIN_CHUNK_SIZE: 2000,
   CHUNK_SPLIT_DISTANCE: 1.25,  // NOTE: this should probably always be >= 0.5 functionally
   OVERSAMPLE_CHUNK_TEXTURES: true,  // NOTE: this probably doesn't need to be a constant; we should always do this
-  NORMAL_SCALE: 1.0,
-  NORMAL_SCALE_SHADOWLESS: 1.5,
   MODEL_EXPORT_RESOLUTION: 512,
 
   // (culling, zoom, camera, shadows)
@@ -26,6 +24,7 @@ const constants = {
   GEOMETRY_SHRINK_MAX: 2000,    // 2000 (meters)
   MIN_FRUSTUM_AT_SURFACE: 4000, // closest zoom so that X meters visible w/i frustum height
   ENABLE_CSM: true, // cascading shadow maps
+  SHADOWLESS_NORMAL_SCALE: 1.5, // TODO: revisit?
 
   // (performance)
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: true,
