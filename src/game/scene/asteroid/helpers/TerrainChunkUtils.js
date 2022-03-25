@@ -141,7 +141,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material, { magFilter: NearestFilter });
 }
 
-export function generateColorMap(heightMap, chunkSize, chunkOffset, chunkResolution, cubeTransform, extraPasses, oversample, config, returnType = 'bitmap') {
+export function generateColorMap(heightMap, chunkResolution, oversample, config, returnType = 'bitmap') {
   if (!ramps) throw new Error('Ramps not yet loaded!');
 
   const material = new ShaderMaterial({
@@ -149,16 +149,9 @@ export function generateColorMap(heightMap, chunkSize, chunkOffset, chunkResolut
     uniforms: {
       tHeightMap: { type: 't', value: heightMap },
       tRamps: { type: 't', value: ramps },
-      uChunkOffset: { type: 'v2', value: chunkOffset },
-      uChunkSize: { type: 'f', value: chunkSize },
-      uExtraPasses: { type: 'i', value: extraPasses },
       uOversampling: { type: 'b', value: oversample },
       uResolution: { type: 'f', value: chunkResolution },
-      uSeed: { type: 'v3', value: config.seed },
       uSpectral: { type: 'f', value: config.spectralType },
-      uTopoDetail: { type: 'i', value: config.topoDetail },
-      uTopoFreq: { type: 'f', value: config.topoFreq },
-      uTransform: { type: 'mat4', value: cubeTransform },
       //uSide: { type: 'i', value: side },
     }
   });
@@ -342,11 +335,7 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
   //  stitch color and normal maps since they are built from the stitched height map values)
   const colorBitmap = generateColorMap(
     heightTexture,
-    textureSize,
-    chunkOffset,
     textureResolution,
-    localToWorld,
-    extraPasses,
     OVERSAMPLE_CHUNK_TEXTURES,
     config
   );

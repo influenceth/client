@@ -65,7 +65,7 @@ void main() {
   );
   vec4 output1 = getHeight(point1, skipPasses);
   float height1 = (output1.x * 255.0 + output1.y) / 255.0;
-  float fineHeight1 = (output1.z * 255.0 + output1.w) / 255.0;
+  float topo1 = output1.z;
 
   vec2 point2 = vec2(
     strideModX > 0.0 ? ceil(x / strideX) * strideX + edgeDistance : flipY.x,
@@ -73,15 +73,15 @@ void main() {
   );
   vec4 output2 = getHeight(point2, skipPasses);
   float height2 = (output2.x * 255.0 + output2.y) / 255.0;
-  float fineHeight2 = (output2.z * 255.0 + output2.w) / 255.0;
+  float topo2 = output2.z;
 
   float height = mix(height1, height2, mixAmount);
-  float fineHeight = mix(fineHeight1, fineHeight2, mixAmount);
+  float topo = mix(topo1, topo2, mixAmount);
 
   gl_FragColor = vec4(
     floor(height * 255.0) / 255.0,
     fract(height * 255.0),
-    floor(fineHeight * 255.0) / 255.0,
-    fract(fineHeight * 255.0)
+    topo,
+    0.0
   );
 }
