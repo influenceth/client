@@ -346,6 +346,10 @@ const Asteroid = (props) => {
 
     // Zoom in the camera to the asteroid
     timeline.to(controls.object.position, { ...zoomTo }, 0);
+
+    // make sure can see asteroid as zoom
+    controls.object.near = 100;
+    controls.object.updateProjectionMatrix();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomIn ]);
 
@@ -363,9 +367,10 @@ const Asteroid = (props) => {
     const zoomTo = controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM);
     controls.targetScene.position.copy(panTo);
     controls.object.position.copy(zoomTo);
-    controls.noPan = true;
     controls.object.near = 100;
     controls.object.updateProjectionMatrix();
+    controls.noPan = true;
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldFinishZoomIn ]);
 
@@ -383,9 +388,9 @@ const Asteroid = (props) => {
         controls.targetScene.position.copy(zoomedFrom.scene);
         controls.object.position.copy(zoomedFrom.position);
         controls.object.up.copy(zoomedFrom.up);
-        controls.noPan = false;
         controls.object.near = 1000000;
         controls.object.updateProjectionMatrix();
+        controls.noPan = false;
         updateZoomStatus('out');
       }
     });
@@ -445,6 +450,7 @@ const Asteroid = (props) => {
   useFrame(() => {
     if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
+    if (zoomStatus === 'out') return;
 
     // vvv BENCHMARK <1ms
     // update asteroid position
@@ -473,10 +479,12 @@ const Asteroid = (props) => {
       }
     }
 
-    const rotatedCameraPosition = controls.object.position.clone().applyAxisAngle(
-      rotationAxis.current,
-      -rotation.current
-    );
+    // (if currently zooming in, we'll want to setCameraPosition for camera's destination so doesn't
+    //  re-render as soon as it arrives)
+    const rotatedCameraPosition = zoomStatus === 'zooming-in'
+      ? controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM)
+      : controls.object.position.clone();
+    rotatedCameraPosition.applyAxisAngle(rotationAxis.current, -rotation.current);
     // ^^^
 
     // if builder is not busy, make sure we are showing most recent chunks
