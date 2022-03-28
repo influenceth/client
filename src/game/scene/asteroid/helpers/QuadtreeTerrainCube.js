@@ -156,13 +156,15 @@ class QuadtreeTerrainCube {
         });
         const key = `${node.center.x}/${node.center.y} [${node.size.x}] [${Object.values(stitchingStrides).join('')}] [${i}]`;
 
-        // if this chunk already exists, init in updatedChunks
+        // if this chunk already exists, add to updatedChunks as-is (just update distanceToCamera)
         if (this.chunks[key]) {
           updatedChunks[key] = this.chunks[key];
+          updatedChunks[key].distanceToCamera = node.distanceToCamera;
 
         // else, allocate a new chunk
         } else {
           updatedChunks[key] = {
+            distanceToCamera: node.distanceToCamera,
             position: [node.center.x, node.center.z],
             sphereCenter: node.sphereCenter,
             sphereCenterHeight: node.sphereCenterHeight,

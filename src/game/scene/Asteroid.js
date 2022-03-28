@@ -404,10 +404,7 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomOut ]);
 
-  // TODO: needs to calculate the distance from chunk to camera to evaluate quads already,
-  //       so why don't we just use that instead of calculating distanceTo again?
-  // TODO (enhancement): could use webworker for calculations here, but may not be worth the overhead
-  // NOTE: raycasting technically might be more accurate here, but it's way less performant
+  // NOTE: raycasting technically *might* be more accurate here, but it's way less performant
   //       (3ms+ for just closest mesh... if all quadtree children, closer to 20ms) and need
   //       to incorporate geometry shrink returned intersection distance
   const applyingZoomLimits = useRef(0);
@@ -415,9 +412,9 @@ const Asteroid = (props) => {
     if (!config?.radius) return;
     applyingZoomLimits.current = true;
     setTimeout(() => {
+      // vvv BENCHMARK <1ms (even zoomed-in on huge)
       const [closestChunk, closestDistance] = chunks.reduce((acc, c) => {
-        const distance = c.sphereCenter.distanceTo(cameraPosition);
-        return (!acc || distance < acc[1]) ? [c, distance] : acc;
+        return (!acc || c.distanceToCamera < acc[1]) ? [c, c.distanceToCamera] : acc;
       }, null);
 
       const minDistance = Math.min(
@@ -435,6 +432,7 @@ const Asteroid = (props) => {
         controls.minDistance = minDistance;
         applyingZoomLimits.current = false;
       }
+      // ^^^
     }, 0);
   }, [surfaceDistance, config?.radius]);
 
