@@ -93,7 +93,7 @@ const Scene = (props) => {
           </div>
         </div>
       )}
-      {true && /* TODO: remove debug */(
+      {false && /* TODO: remove debug */(
         <div id="debug_info" style={{ position: 'fixed', top: -1, left: 95, background: 'black', border: '1px solid white', padding: '8px 4px', fontSize: 11, minWidth: 60, textAlign: 'center' }} />
       )}
     </StyledContainer>

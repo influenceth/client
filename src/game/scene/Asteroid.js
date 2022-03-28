@@ -91,6 +91,7 @@ const Asteroid = (props) => {
   const webWorkerPool = useWebWorker();
 
   const [config, setConfig] = useState();
+  const [terrainUpdateNeeded, setTerrainUpdateNeeded] = useState();
 
   const debug = useRef();
   const geometry = useRef();
@@ -104,6 +105,7 @@ const Asteroid = (props) => {
   const csmHelper = useRef(); // TODO: remove
   const csmHelperFloor = useRef(); // TODO: remove
   const aspectRatio = useRef();
+  const updateStart = useRef(); // TODO: remove
 
   const maxStretch = useMemo(
     () => config?.stretch ? Math.max(config.stretch.x, config.stretch.y, config.stretch.z) : 1
@@ -112,6 +114,11 @@ const Asteroid = (props) => {
   const minStretch = useMemo(
     () => config?.stretch ? Math.min(config.stretch.x, config.stretch.y, config.stretch.z) : 1
     [config?.stretch]
+  );
+  const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent]);
+  const surfaceDistance = useMemo(
+    () => (MIN_FRUSTUM_AT_SURFACE / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
+    [controls?.object?.fov]
   );
 
   const disposeGeometry = useCallback(() => {
@@ -157,21 +164,18 @@ const Asteroid = (props) => {
     disposeGeometry();
   }, []);
 
-  const surfaceDistance = useMemo(
-    () => (MIN_FRUSTUM_AT_SURFACE / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
-    [controls?.object?.fov]
-  );
-
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
+    // when asteroidData is loaded for selected asteroid...
     if (asteroidData && asteroidData.asteroidId === origin) {
+
+      // init config
       const c = new Config(asteroidData);
       setConfig(c);
 
+      // init orbit, position, and rotation
       asteroidOrbit.current = new KeplerianOrbit(asteroidData.orbital);
       rotationAxis.current = c.seed.clone().normalize();
-
-      // init position and rotation
       position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU);
       rotation.current = time * c.rotationSpeed * 2 * Math.PI;
 
@@ -194,7 +198,6 @@ const Asteroid = (props) => {
   }, [ asteroidData ]);
 
   // Configures the light component once the geometry is created
-  const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent]);
   useEffect(() => {
     if (!(config?.radius && config?.stretch && geometry.current && quadtreeRef.current && position.current)) return;
 
@@ -430,8 +433,13 @@ const Asteroid = (props) => {
     }, 0);
   }, [surfaceDistance, config?.radius]);
 
-
-  const updatePending = useRef();
+  useEffect(() => {
+    if (geometry.current && terrainUpdateNeeded) {
+      // vvv BENCHMARK 2ms (zoomed-out), 7-20ms+ (zoomed-in)
+      geometry.current.setCameraPosition(terrainUpdateNeeded);
+      // ^^^
+    }
+  }, [terrainUpdateNeeded]);
 
   // Positions the asteroid in space based on time changes
   useFrame(() => {
@@ -444,7 +452,7 @@ const Asteroid = (props) => {
       position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU);
 
       // update object and camera position
-      // TODO: is this necessary?
+      // TODO: is this necessary every frame?
       const positionVec3 = new Vector3(...position.current);
       group.current.position.copy(positionVec3);
       positionVec3.negate();
@@ -477,14 +485,14 @@ const Asteroid = (props) => {
         // vvv BENCHMARK 1ms
         geometry.current.builder.update();
         
-        // TODO: remove below and updatePending stuff
+        // TODO: remove below
         if (taskTally === 1) {  // overwrite first load since so long for workers
-          taskTotal = 2 * (Date.now() - updatePending.current);
+          taskTotal = 2 * (Date.now() - updateStart.current);
         } else {
-          taskTotal += Date.now() - updatePending.current;
+          taskTotal += Date.now() - updateStart.current;
         }
         taskTally++;
-        updatePending.current = null;
+        updateStart.current = null;
         // ^^^
 
       // (this is used if maps are generated on main thread instead of worker)
@@ -495,7 +503,6 @@ const Asteroid = (props) => {
       }
     }
     
-    // vvv BENCHMARK <1ms
     // control dynamic zoom limit (zoom out if too low... else, just update boundary)
     if (controls && Object.values(geometry.current?.chunks).length) {
       if (applyingZoomLimits.current) {
@@ -505,30 +512,28 @@ const Asteroid = (props) => {
           controls.minDistance += amount;
         }
       } else {
+        // vvv BENCHMARK <1ms
         applyZoomLimits(rotatedCameraPosition, Object.values(geometry.current.chunks));
+        // ^^^
       }
     }
-    // ^^^
     
     // update quads if not already updating AND one of these is true...
     //  a) camera height changes by UPDATE_DISTANCE_MULT
     //  b) camera position changes by rotational equivalent of UPDATE_DISTANCE_MULT at maxStretch surface
     if (!geometry.current.builder.isBusy() && !geometry.current.builder.isPreparingUpdate()) {
+      // vvv BENCHMARK <1ms
       const cameraHeight = rotatedCameraPosition.length();
       const updateQuadtreeEvery = geometry.current.smallestActiveChunkSize * UPDATE_DISTANCE_MULT;
       const updateQuadCube = !geometry.current.cameraPosition
         || Math.abs(geometry.current.cameraPosition.length() - cameraHeight) > updateQuadtreeEvery
         || geometry.current.cameraPosition.distanceTo(rotatedCameraPosition) > updateQuadtreeEvery * cameraHeight / (config.radius * maxStretch)
       ;
+      // ^^^
       if (updateQuadCube) {
-
-        // send updated camera position to quads for processing
-        // console.log('update started');
-        updatePending.current = Date.now();
-
-        // vvv BENCHMARK 4-6ms (zoomed-in)
-        geometry.current.setCameraPosition(rotatedCameraPosition);
-        // ^^^
+        // initiate update of quads (based on camera position)
+        updateStart.current = Date.now();
+        setTerrainUpdateNeeded(rotatedCameraPosition.clone());
       }
     }
 
@@ -547,20 +552,20 @@ const Asteroid = (props) => {
     }
 
     // TODO: remove debug
-    if (debug.current) {
-      debug.current.setRotationFromAxisAngle(
-        new Vector3(0, 1, 0),
-        Math.PI
-      );
-    }
-    setTimeout(() => {
-      const debugInfo = document.getElementById('debug_info');
-      if (!!debugInfo && config?.radius) {
-        debugInfo.innerText = (controls.object.position.length() / config?.radius).toFixed(2);
-      } else {
-        console.log('#debug_info not found!');
-      }
-    });
+    // if (debug.current) {
+    //   debug.current.setRotationFromAxisAngle(
+    //     new Vector3(0, 1, 0),
+    //     Math.PI
+    //   );
+    // }
+    // setTimeout(() => {
+    //   const debugInfo = document.getElementById('debug_info');
+    //   if (!!debugInfo && config?.radius) {
+    //     debugInfo.innerText = (controls.object.position.length() / config?.radius).toFixed(2);
+    //   } else {
+    //     console.log('#debug_info not found!');
+    //   }
+    // });
   });
 
   return (

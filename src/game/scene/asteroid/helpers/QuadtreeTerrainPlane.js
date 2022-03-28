@@ -58,7 +58,7 @@ class QuadtreeTerrainPlane {
     this.rootSize = size;
     this.worldStretch = worldStretch || new Vector3(1, 1, 1);
     this.heightSamples = heightSamples;
-    this.resolution = sampleResolution;
+    this.heightSampleResolution = sampleResolution;
     this.side = side;
 
     const rootNode = new Box3(
@@ -197,7 +197,7 @@ class QuadtreeTerrainPlane {
 
   getHeightMinMax(node) {
     // get resolution-specific edges of the node
-    const mult = this.resolution / (2 * this.rootSize);
+    const mult = this.heightSampleResolution / (2 * this.rootSize);
     const xMin = Math.floor((this.rootSize + node.center.x - node.size.x / 2) * mult);
     const xMax = Math.floor((this.rootSize + node.center.x + node.size.x / 2) * mult);
     const yMin = Math.floor((this.rootSize + node.center.y - node.size.y / 2) * mult);
@@ -206,7 +206,7 @@ class QuadtreeTerrainPlane {
     let minmax = [null, null];
     for (let x = xMin; x < xMax; x++) {
       for (let y = yMin; y < yMax; y++) {
-        const cur = this.heightSamples[this.resolution * y + x];
+        const cur = this.heightSamples[this.heightSampleResolution * y + x];
         if (minmax[0] === null || cur < minmax[0]) minmax[0] = cur;
         if (minmax[1] === null || cur > minmax[1]) minmax[1] = cur;
       }

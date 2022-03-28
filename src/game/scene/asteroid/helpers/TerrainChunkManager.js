@@ -8,13 +8,24 @@ const {
   DISABLE_BACKGROUND_TERRAIN_MAPS
 } = constants;
 
+// TODO: remove
+let taskTotal = 0;
+let taskTally = 0;
+setInterval(() => {
+  if (taskTally > 0) {
+    console.log(
+      `avg new chunk time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
+    );
+  }
+}, 5000);
+
 class TerrainChunkManager {
   constructor(i, config, textureSize, workerPool) {
     this.asteroidId = i;
     this.config = config;
     this.workerPool = workerPool;
     
-    const {
+    const { // NOTE: if update this pruning, replicate in QuadtreeTerrainCube
       ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
       ...prunedConfig
     } = this.config;
@@ -48,7 +59,9 @@ class TerrainChunkManager {
   }
 
   isReadyToFinish() {
-    return this.waitingOn > 0 && (this._new.length === this.waitingOn);
+    // TODO: ">=" should be "===" but occasionally on initial asteroid load, extra 6 (initial sides) get put in _new
+    //  (should track down at some point)
+    return this.waitingOn > 0 && (this._new.length >= this.waitingOn);
   }
 
   reset() {

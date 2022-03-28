@@ -22,11 +22,13 @@ const Planets = (props) => {
       processInBackground(
         { topic: 'updatePlanetPositions', planets: planets.data, elapsed: time },
         (data) => {
-          geometry.current.setAttribute(
-            'position',
-            new Float32BufferAttribute(data.positions, 3)
-          );
-          geometry.current.computeBoundingSphere();
+          if (geometry.current && data.positions) {
+            geometry.current.setAttribute(
+              'position',
+              new Float32BufferAttribute(data.positions, 3)
+            );
+            geometry.current.computeBoundingSphere();
+          }
         }
       );
     }
