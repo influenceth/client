@@ -492,8 +492,8 @@ const Asteroid = (props) => {
         geometry.current.builder.update();
         
         // TODO: remove below
-        if (taskTally === 1) {  // overwrite first load since so long for workers
-          taskTotal = 2 * (Date.now() - updateStart.current);
+        if (taskTally === 9) {  // overwrite first load since so long for workers
+          taskTotal = 10 * (Date.now() - updateStart.current);
         } else {
           taskTotal += Date.now() - updateStart.current;
         }

@@ -1,5 +1,11 @@
 import { useMemo } from 'react';
+import { ImageBitmapLoader } from 'three';
+
+import rampsDataUri from '~/game/scene/asteroid/helpers/_ramps.png.datauri';
+import constants from '~/lib/constants'
 import Worker from 'worker-loader!../worker'; // eslint-disable-line
+
+const { USE_DEDICATED_GPU_WORKER } = constants;
 
 let workerIds = 0;
 
@@ -34,7 +40,7 @@ class WorkerThread {
     callback(event.data);
   }
 
-  postMessage(msg, callback) {
+  postMessage(msg, callback, transfer = []) {
     // if worker has cached cacheable params already, then don't include in params
     // else, if new, then note the new cache key
     if (msg._cacheable) {
@@ -48,16 +54,39 @@ class WorkerThread {
 
     msg._id = this.id;
     this.messageCallback = callback;
-    this.worker.postMessage(msg);
+    this.worker.postMessage(msg, transfer);
   }
 }
 
 class WorkerThreadPool {
-  constructor(tally) {
+  constructor(tally, initForGpuWork) {
     this.workers = [...Array(tally)].map(_ => new WorkerThread());
-    this.available = [...this.workers];
+    if (initForGpuWork) {
+      this.available = [];
+      this.initGpuAssets(tally);  // will set available once init'd available
+    } else {
+      this.available = [...this.workers];
+    }
     this.busy = {};
     this.workQueue = [];
+  }
+
+  async initGpuAssets(tally) {
+    const loader = new ImageBitmapLoader();
+    for(let i = 0; i < tally; i++) {
+      const rampsBitmap = await loader.loadAsync(rampsDataUri);
+      this.workers[i].postMessage({
+        topic: 'initGpuAssets',
+        data: {
+          ramps: rampsBitmap
+        }
+      }, () => {
+        this.available.push(this.workers[i]);
+        if (this.workQueue.length) this.processQueue();
+      }, [
+        rampsBitmap
+      ]);
+    }
   }
 
   getWorkerTally() {
@@ -98,10 +127,10 @@ class WorkerThreadPool {
   }
 }
 
-const MIN_CONCURRENCY_FOR_DEDICATED_GPU_THREAD = 2;
 const totalWorkers = (navigator?.hardwareConcurrency || 4) - 1; // CPUs minus 1
-const cpuWorkerThreadPool = new WorkerThreadPool(totalWorkers >= MIN_CONCURRENCY_FOR_DEDICATED_GPU_THREAD ? totalWorkers - 1 : totalWorkers);
-const gpuWorkerThreadPool = totalWorkers >= MIN_CONCURRENCY_FOR_DEDICATED_GPU_THREAD ? new WorkerThreadPool(1) : null;
+const dedicatedGpuWorkers = USE_DEDICATED_GPU_WORKER && totalWorkers >= 2 ? 1 : 0;
+const cpuWorkerThreadPool = new WorkerThreadPool(totalWorkers - dedicatedGpuWorkers, dedicatedGpuWorkers === 0);
+const gpuWorkerThreadPool = dedicatedGpuWorkers > 0 ? new WorkerThreadPool(dedicatedGpuWorkers, true) : null;
 
 const useWebWorker = () => {
   return useMemo(() => ({

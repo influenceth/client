@@ -73,18 +73,22 @@ function benchmark(tag) {
 
 // load ramps
 let ramps;
-export async function initChunkTextures() {
+export async function initChunkTextures(preloadedBitmap) {
   if (!ramps) {
-    let loader;
-    try {
-      loader = new TextureLoader();
-      ramps = await loader.loadAsync(rampsDataUri);
-    } catch (e) {
-      loader = new ImageBitmapLoader();
-      ramps = new CanvasTexture(await loader.loadAsync(rampsDataUri));
+    if (preloadedBitmap) {
+      ramps = new CanvasTexture(preloadedBitmap);
+    } else {
+      let loader;
+      try {
+        loader = new TextureLoader();
+        ramps = await loader.loadAsync(rampsDataUri);
+      } catch (e) {
+        loader = new ImageBitmapLoader();
+        ramps = new CanvasTexture(await loader.loadAsync(rampsDataUri));
+      }
+      ramps.minFilter = NearestFilter;
+      ramps.magFilter = NearestFilter;
     }
-    ramps.minFilter = NearestFilter;
-    ramps.magFilter = NearestFilter;
   }
 }
 

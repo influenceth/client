@@ -14,6 +14,9 @@ let cache = {
 
 onmessage = function(event) {
   switch (event.data.topic) {
+    case 'initGpuAssets':
+      initGpuAssets(event.data.data);
+      break;
     case 'updateAsteroidPositions':
       updateAsteroidPositions(event.data.asteroids, event.data.elapsed);
       break;
@@ -30,6 +33,11 @@ onmessage = function(event) {
     default:
       console.error('Method not supported');
   }
+};
+
+const initGpuAssets = function(data) {
+  initChunkTextures(data.ramps);
+  postMessage({ topic: 'initedGpuAssets' });
 };
 
 const updateAsteroidPositions = function(asteroids, elapsed = 0) {
@@ -83,6 +91,3 @@ const rebuildTerrainGeometry = function (chunk) {
     });
   }
 }
-
-// try to init textures pre-emptively
-initChunkTextures();
