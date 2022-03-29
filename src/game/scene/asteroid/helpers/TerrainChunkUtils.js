@@ -209,6 +209,10 @@ export function rebuildChunkGeometry({ config, edgeStrides, minHeight, offset, r
   const resolutionPlusOne = resolution + 1;
   const half = width / 2;
 
+  // "+ 1" to avoid seams from rounding differences and z-fighting
+  // TODO: is this still necessary? with shadows on, it actually makes seams worse
+  const stitchingBias = 1;
+
   const _P = new Vector3();
   const _S = new Vector3();
   const positions = new Float32Array(resolutionPlusOne * resolutionPlusOne * 3);
@@ -235,7 +239,6 @@ export function rebuildChunkGeometry({ config, edgeStrides, minHeight, offset, r
           midStride = true;
 
           // set _P to stride-start point, set _S to stride-end point, then lerp between
-          // * "+ 1" to avoid seams from rounding differences and z-fighting
           const strideMult = width * stride / resolution;
           _P.set(
             xp,
@@ -243,7 +246,7 @@ export function rebuildChunkGeometry({ config, edgeStrides, minHeight, offset, r
             radius
           );
           _P.add(offset);
-          _P.setLength(undisplacedHeight + 1); // *
+          _P.setLength(undisplacedHeight + stitchingBias);
 
           _S.set(
             xp,
@@ -251,7 +254,7 @@ export function rebuildChunkGeometry({ config, edgeStrides, minHeight, offset, r
             radius
           );
           _S.add(offset);
-          _S.setLength(undisplacedHeight + 1); // *
+          _S.setLength(undisplacedHeight + stitchingBias);
 
           _P.lerp(_S, strideMod / stride);
         }
@@ -269,7 +272,7 @@ export function rebuildChunkGeometry({ config, edgeStrides, minHeight, offset, r
             radius
           );
           _P.add(offset);
-          _P.setLength(undisplacedHeight + 1); // *
+          _P.setLength(undisplacedHeight + stitchingBias);
 
           _S.set(
             Math.ceil(x / stride) * strideMult - half,
@@ -277,7 +280,7 @@ export function rebuildChunkGeometry({ config, edgeStrides, minHeight, offset, r
             radius
           );
           _S.add(offset);
-          _S.setLength(undisplacedHeight + 1); // *
+          _S.setLength(undisplacedHeight + stitchingBias);
 
           _P.lerp(_S, strideMod / stride);
         }

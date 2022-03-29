@@ -96,14 +96,12 @@ class TerrainChunk {
       this._plane.receiveShadow = true;
 
       // TODO: this looks better without depthPacking, but might be because not visible at all
-      
-      
-      
       this._plane.customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
       const onBeforeCompileDepth = this.getOnBeforeCompile(
         this._plane.customDepthMaterial,
         this._config.radius,
         this._stretch,
+        false
       );
 
       if (csmManager) {
@@ -114,7 +112,7 @@ class TerrainChunk {
     }
   }
 
-  getOnBeforeCompile(material, radius, stretch) {
+  getOnBeforeCompile(material, radius, stretch, updateVNormal = true) {
     return function (shader) {
       shader.uniforms.uRadius = { type: 'v3', value: radius };
       shader.uniforms.uStretch = { type: 'v3', value: stretch };
@@ -131,7 +129,7 @@ class TerrainChunk {
             // stretch according to config
             transformed *= uStretch;
             // re-init pre-normalmap normal to match stretched position (b/f application of normalmap)
-            vNormal = normalize( normalMatrix * vec3(transformed.xyz) );
+            ${updateVNormal ? 'vNormal = normalize( normalMatrix * vec3(transformed.xyz) );' : ''}
           #endif`
         )}
       `;
