@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Vector3, Box3, Sphere, DoubleSide, AxesHelper, CameraHelper, DirectionalLight, DirectionalLightHelper, BufferAttribute, MeshPhongMaterial, PlaneGeometry, Mesh, Group } from 'three';
+import { Vector3, Box3, Sphere, DoubleSide, AxesHelper, CameraHelper, DirectionalLight, DirectionalLightHelper, BufferAttribute, MeshPhongMaterial, PlaneGeometry, Mesh, Group, BufferGeometry } from 'three';
 import { CSM } from 'three/examples/jsm/csm/CSM';
 import { CSMHelper } from 'three/examples/jsm/csm/CSMHelper';
 import gsap from 'gsap';
@@ -100,7 +100,7 @@ const Asteroid = (props) => {
   const [config, setConfig] = useState();
   const [terrainUpdateNeeded, setTerrainUpdateNeeded] = useState();
 
-  const debug = useRef();
+  const debug = useRef(); // TODO: remove
   const geometry = useRef();
   const quadtreeRef = useRef();
   const group = useRef();
@@ -365,7 +365,7 @@ const Asteroid = (props) => {
     if (!shouldFinishZoomIn) return;
 
     // Update distances to maximize precision
-    controls.minDistance = config.radius * maxStretch * MIN_ZOOM_DEFAULT;
+    controls.minDistance = config.radius * MIN_ZOOM_DEFAULT;
     controls.maxDistance = config.radius * MAX_ZOOM;
 
     const panTo = new Vector3(...position.current);
@@ -416,8 +416,7 @@ const Asteroid = (props) => {
   //       performant to re-use that BUT that is also outdated as the camera moves
   //       until the quads are recalculated
   // NOTE: raycasting technically *might* be more accurate here, but it's way less performant
-  //       (3ms+ for just closest mesh... if all quadtree children, closer to 20ms) and need
-  //       to incorporate geometry shrink returned intersection distance
+  //       (3ms+ for just closest mesh... if all quadtree children, closer to 20ms)
   const applyingZoomLimits = useRef(0);
   const applyZoomLimits = useCallback((cameraPosition, chunks) => {
     if (!config?.radius) return;
@@ -430,7 +429,7 @@ const Asteroid = (props) => {
       }, null);
 
       const minDistance = Math.min(
-        config?.radius * INITIAL_ZOOM,  // (for smallest asteroids where initial zoom > min surface distance)
+        config?.radius * MIN_ZOOM_DEFAULT,  // for smallest asteroids to match legacy (where this > min surface distance)
         closestChunk.sphereCenterHeight + surfaceDistance
       );
       
@@ -439,7 +438,7 @@ const Asteroid = (props) => {
         controls.minDistance = Math.max(cameraPosition.length(), closestChunk.sphereCenterHeight);
         applyingZoomLimits.current = minDistance - controls.minDistance;
 
-      // can just set
+      // else, can just set
       } else {
         controls.minDistance = minDistance;
         applyingZoomLimits.current = false;
@@ -486,6 +485,12 @@ const Asteroid = (props) => {
           rotationAxis.current,
           updatedRotation
         );
+        // if (debug.current) {  // TODO: remove debug
+        //   debug.current.setRotationFromAxisAngle(
+        //     rotationAxis.current,
+        //     updatedRotation
+        //   );
+        // }
         rotation.current = updatedRotation;
       }
     }
@@ -513,6 +518,20 @@ const Asteroid = (props) => {
         taskTally++;
         terrainUpdateStart = null;
         // ^^^
+
+        // if (debug.current) {
+        //   const vertices = Object.values(geometry.current.chunks)
+        //     .map((c) => c.sphereCenter.clone().addScalar(1))
+        //     .reduce((acc, cur) => {
+        //       acc.push(cur.x);
+        //       acc.push(cur.y);
+        //       acc.push(cur.z);
+        //       return acc;
+        //     }, [])
+        //   ;
+        //   debug.current.geometry.setAttribute('position', new BufferAttribute( new Float32Array(vertices), 3 ) );
+        //   debug.current.geometry.attributes.position.needsUpdate = true;
+        // }
 
       // (this is used if maps are generated on main thread instead of worker)
       } else {
@@ -573,12 +592,6 @@ const Asteroid = (props) => {
     }
 
     // TODO: remove debug
-    // if (debug.current) {
-    //   debug.current.setRotationFromAxisAngle(
-    //     new Vector3(0, 1, 0),
-    //     Math.PI
-    //   );
-    // }
     // setTimeout(() => {
     //   const debugInfo = document.getElementById('debug_info');
     //   if (!!debugInfo && config?.radius) {
@@ -608,7 +621,7 @@ const Asteroid = (props) => {
       )}
       {false && (
         <points ref={debug}>
-          <pointsMaterial attach="material" size={100} sizeAttenuation={true} color={0xff0000} />
+          <pointsMaterial attach="material" size={1000} sizeAttenuation={true} color={0xff0000} />
         </points>
       )}
       {false && geometry.current?.csm && geometry.current.csm.lights.map((light, i) => (

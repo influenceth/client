@@ -78,7 +78,7 @@ class TerrainChunk {
     // apply onBeforeCompile to primary material
     const onBeforeCompile = this.getOnBeforeCompile(
       this._material,
-      this._heightScale,
+      this._config.radius,
       this._stretch
     );
     if (shadowsEnabled && csmManager) {
@@ -102,7 +102,7 @@ class TerrainChunk {
       this._plane.customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
       const onBeforeCompileDepth = this.getOnBeforeCompile(
         this._plane.customDepthMaterial,
-        this._heightScale,
+        this._config.radius,
         this._stretch,
       );
 
@@ -114,23 +114,21 @@ class TerrainChunk {
     }
   }
 
-  getOnBeforeCompile(material, heightScale, stretch) {
+  getOnBeforeCompile(material, radius, stretch) {
     return function (shader) {
-      shader.uniforms.uHeightScale = { type: 'f', value: heightScale };
+      shader.uniforms.uRadius = { type: 'v3', value: radius };
       shader.uniforms.uStretch = { type: 'v3', value: stretch };
       shader.vertexShader = `
-        uniform float uHeightScale;
+        uniform float uRadius;
         uniform vec3 uStretch;
         ${shader.vertexShader.replace(
           '#include <displacementmap_vertex>',
           `#ifdef USE_DISPLACEMENTMAP
             vec2 disp16 = texture2D(displacementMap, vUv).xy;
             float disp = (disp16.x * 255.0 + disp16.y) / 255.0;
-            // stretch back to original geometry (geometry initialized at minHeight for chunk)
-            transformed /= uHeightScale;
-            // displace along normal
-            transformed += normalize( objectNormal ) * (disp * displacementScale + displacementBias);
-            // stretch along normal
+            // set height along normal (which is set to spherical position)
+            transformed = normalize(objectNormal) * (uRadius + disp * displacementScale + displacementBias);
+            // stretch according to config
             transformed *= uStretch;
             // re-init pre-normalmap normal to match stretched position (b/f application of normalmap)
             vNormal = normalize( normalMatrix * vec3(transformed.xyz) );
@@ -150,9 +148,9 @@ class TerrainChunk {
       && (!this._shadowsEnabled || !!this._plane?.customDepthMaterial?.userData?.shader);
   }
 
+  // NOTE: if limit resource pooling to by side, these updates aren't necessary BUT uniforms
+  //  are sent either way, so it probably doesn't matter
   updateDerived() {
-    // get heightScale for chunk
-    this._heightScale = this._params.minHeight / this._config.radius;
 
     // transform stretch per side
     if ([0,1].includes(this._params.side)) {
@@ -166,11 +164,11 @@ class TerrainChunk {
     // according to https://threejs.org/docs/#manual/en/introduction/How-to-update-things,
     // uniform values are sent to shader every frame automatically (so no need for needsUpdate)
     if (this._material?.userData?.shader) {
-      this._material.userData.shader.uniforms.uHeightScale.value = this._heightScale;
+      this._material.userData.shader.uniforms.uRadius.value = this._config.radius;
       this._material.userData.shader.uniforms.uStretch.value = this._stretch;
     }
     if (this._plane?.customDepthMaterial?.userData?.shader) {
-      this._plane.customDepthMaterial.userData.shader.uniforms.uHeightScale.value = this._heightScale;
+      this._plane.customDepthMaterial.userData.shader.uniforms.uRadius.value = this._config.radius;
       this._plane.customDepthMaterial.userData.shader.uniforms.uStretch.value = this._stretch;
     }
   }
@@ -255,14 +253,14 @@ class TerrainChunk {
     this._geometry.attributes.uv.needsUpdate = true;
   }
 
-  updateGeometry(positions) {
+  updateGeometry(positions, normals) {
 
-    // update positions
+    // update positions (these are already stretched so not culled inappropriately)
     this._geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
     this._geometry.attributes.position.needsUpdate = true;
     
-    // since normals are just "normal" before map, use positions (faster than computeVertexNormals)
-    this._geometry.setAttribute('normal', new Float32BufferAttribute(positions, 3));
+    // update normals (these are unstretched so displacement map can displace, then stretch)
+    this._geometry.setAttribute('normal', new Float32BufferAttribute(normals, 3));
     this._geometry.attributes.normal.needsUpdate = true;
 
     // if reusing geometry (i.e. by resource pooling), then must re-compute bounding sphere or else

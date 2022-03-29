@@ -20,8 +20,6 @@ const constants = {
   MODEL_EXPORT_RESOLUTION: 512,
 
   // (culling, zoom, camera, shadows)
-  GEOMETRY_SHRINK: 0.075,       // (multiplied by radius)
-  GEOMETRY_SHRINK_MAX: 15000,    // (meters)
   MIN_FRUSTUM_AT_SURFACE: 4000, // closest zoom so that X meters visible w/i frustum height
   ENABLE_CSM: true, // cascading shadow maps
   SHADOWLESS_NORMAL_SCALE: 1.5, // exaggerate normals when shadows are disabled

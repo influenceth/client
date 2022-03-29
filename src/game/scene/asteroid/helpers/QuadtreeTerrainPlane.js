@@ -2,7 +2,6 @@ import { Box3, Vector3 } from 'three';
 import constants from '~/lib/constants';
 
 const {
-  MIN_CHUNK_SIZE,
   CHUNK_SPLIT_DISTANCE
 } = constants;
 
@@ -53,12 +52,13 @@ const edgeToEdgeMap = [
 ];
 
 class QuadtreeTerrainPlane {
-  constructor({ localToWorld, size, worldStretch, heightSamples, sampleResolution, side }) {
+  constructor({ heightSamples, localToWorld, minChunkSize, sampleResolution, side, size, worldStretch }) {
     this.localToWorld = localToWorld;
     this.rootSize = size;
     this.worldStretch = worldStretch || new Vector3(1, 1, 1);
     this.heightSamples = heightSamples;
     this.heightSampleResolution = sampleResolution;
+    this.minChunkSize = minChunkSize;
     this.side = side;
 
     const rootNode = new Box3(
@@ -102,7 +102,7 @@ class QuadtreeTerrainPlane {
 
   _setCameraPosition(child, pos) {
     const distToChild = child.sphereCenter.distanceTo(pos);
-    if (distToChild < child.size.x * CHUNK_SPLIT_DISTANCE && child.size.x >= MIN_CHUNK_SIZE * 2) {
+    if (distToChild < child.size.x * CHUNK_SPLIT_DISTANCE && child.size.x >= this.minChunkSize * 2) {
       child.children = this.generateChildren(child);
 
       for (let c of child.children) {
@@ -218,6 +218,7 @@ class QuadtreeTerrainPlane {
 
   setSphereCenter(node) {
     const [unstretchedMin] = this.getHeightMinMax(node);
+    node.unstretchedMin = unstretchedMin;
 
     const sphereCenter = node.center.clone();
     sphereCenter.z = this.rootSize;

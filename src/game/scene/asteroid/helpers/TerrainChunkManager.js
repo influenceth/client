@@ -101,17 +101,18 @@ class TerrainChunkManager {
         },
         chunk: {
           edgeStrides: chunk._params.stitchingStrides,
-          heightScale: chunk._heightScale,
           offset: chunk._params.offset.toArray(),
           width: chunk._params.width,
           groupMatrix: chunk._params.group.matrix.clone(),
+          minHeight: chunk._params.minHeight,
           resolution: this.textureSize,
-          side: chunk._params.side
+          side: chunk._params.side,
+          stretch: chunk._stretch.toArray(),
         },
         _cacheable: 'asteroid'
       },
-      ({ positions, maps }) => {
-        chunk.updateGeometry(positions);
+      ({ positions, normals, maps }) => {
+        chunk.updateGeometry(positions, normals);
         if (DISABLE_BACKGROUND_TERRAIN_MAPS) {
           scope._queued.push(chunk);
         } else {

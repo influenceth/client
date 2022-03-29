@@ -8,11 +8,7 @@ import TerrainChunkManager from './TerrainChunkManager';
 import { generateHeightMap } from './TerrainChunkUtils';
 import constants from '~/lib/constants';
 
-const {
-  GEOMETRY_SHRINK,
-  GEOMETRY_SHRINK_MAX,
-  MIN_CHUNK_SIZE
-} = constants;
+const { MIN_CHUNK_SIZE } = constants;
 
 const cubeTransforms = [
   (new Matrix4()).makeRotationX(-Math.PI / 2), // +Y
@@ -23,8 +19,8 @@ const cubeTransforms = [
   (new Matrix4()).makeRotationY(Math.PI),      // -Z
 ];
 
-const getPrerenderResolution = (radius) => {
-  const targetResolution = 2 * radius / MIN_CHUNK_SIZE;
+const getPrerenderResolution = (radius, minChunkSize = MIN_CHUNK_SIZE) => {
+  const targetResolution = 2 * radius / minChunkSize;
   if (targetResolution < 32) return 16;
   if (targetResolution < 64) return 32;
   if (targetResolution < 128) return 64;
@@ -55,9 +51,14 @@ class QuadtreeTerrainCube {
     this.groups = [...new Array(6)].map(_ => new Group());
     this.chunks = {};
 
+    // adjust min chunk size for this asteroid (this is mostly to provide higher resolution for
+    // smallest asteroids because user can zoom in proportionally farther)
+    // if >30km, x1; if >3k, x0.5; else, x0.33
+    this.minChunkSize = MIN_CHUNK_SIZE / Math.max(1, 6 - Math.round(Math.log10(this.radius)));
+
     // build the sides of the cube (each a quadtreeplane)
     this.sides = [];
-    const prerenderResolution = getPrerenderResolution(this.radius);
+    const prerenderResolution = getPrerenderResolution(this.radius, this.minChunkSize);
     for (let i in cubeTransforms) {
       this.sides.push({
         index: i,
@@ -65,7 +66,7 @@ class QuadtreeTerrainCube {
         quadtree: new QuadtreeTerrainPlane({
           side: i,
           size: this.radius,
-          minChunkSize: MIN_CHUNK_SIZE,
+          minChunkSize: this.minChunkSize,
           heightSamples: this.prerenderCoarseGeometry(
             cubeTransforms[i].clone(),
             prerenderResolution,
@@ -167,14 +168,14 @@ class QuadtreeTerrainCube {
             sphereCenter: node.sphereCenter,
             sphereCenterHeight: node.sphereCenterHeight,
             chunk: this.builder.allocateChunk({
-              side: i,
               group: this.groups[i],
+              minHeight: node.unstretchedMin,
               offset: new Vector3(node.center.x, node.center.y, node.center.z),
-              width: node.size.x,
               radius: this.radius,
+              side: i,
               stitchingStrides,
-              minHeight: node.sphereCenterHeight - Math.min(this.radius * GEOMETRY_SHRINK, GEOMETRY_SHRINK_MAX),
-              shadowsEnabled: this.shadowsEnabled
+              shadowsEnabled: this.shadowsEnabled,
+              width: node.size.x
             })
           };
           newChunkTally++;

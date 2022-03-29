@@ -203,15 +203,16 @@ export function generateNormalMap(heightMap, chunkResolution, chunkWidth, compat
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-export function rebuildChunkGeometry({ config, edgeStrides, heightScale, offset, resolution, width }) {
+export function rebuildChunkGeometry({ config, edgeStrides, minHeight, offset, resolution, stretch, width }) {
   const radius = config.radius;
-  const scaledHeight = radius * heightScale;
+  const undisplacedHeight = minHeight;
   const resolutionPlusOne = resolution + 1;
   const half = width / 2;
 
   const _P = new Vector3();
   const _S = new Vector3();
   const positions = new Float32Array(resolutionPlusOne * resolutionPlusOne * 3);
+  const normals = new Float32Array(resolutionPlusOne * resolutionPlusOne * 3);
   for (let x = 0; x < resolutionPlusOne; x++) {
     const xp = width * x / resolution - half;
     for (let y = 0; y < resolutionPlusOne; y++) {
@@ -242,7 +243,7 @@ export function rebuildChunkGeometry({ config, edgeStrides, heightScale, offset,
             radius
           );
           _P.add(offset);
-          _P.setLength(scaledHeight + 1); // *
+          _P.setLength(undisplacedHeight + 1); // *
 
           _S.set(
             xp,
@@ -250,7 +251,7 @@ export function rebuildChunkGeometry({ config, edgeStrides, heightScale, offset,
             radius
           );
           _S.add(offset);
-          _S.setLength(scaledHeight + 1); // *
+          _S.setLength(undisplacedHeight + 1); // *
 
           _P.lerp(_S, strideMod / stride);
         }
@@ -268,7 +269,7 @@ export function rebuildChunkGeometry({ config, edgeStrides, heightScale, offset,
             radius
           );
           _P.add(offset);
-          _P.setLength(scaledHeight + 1); // *
+          _P.setLength(undisplacedHeight + 1); // *
 
           _S.set(
             Math.ceil(x / stride) * strideMult - half,
@@ -276,7 +277,7 @@ export function rebuildChunkGeometry({ config, edgeStrides, heightScale, offset,
             radius
           );
           _S.add(offset);
-          _S.setLength(scaledHeight + 1); // *
+          _S.setLength(undisplacedHeight + 1); // *
 
           _P.lerp(_S, strideMod / stride);
         }
@@ -286,17 +287,22 @@ export function rebuildChunkGeometry({ config, edgeStrides, heightScale, offset,
       if (!midStride) {
         _P.set(xp, yp, radius);
         _P.add(offset);
-        _P.setLength(scaledHeight);
+        _P.setLength(undisplacedHeight);
       }
-
+      
       const outputIndex = 3 * (resolutionPlusOne * x + y);
+      normals[outputIndex + 0] = _P.x;
+      normals[outputIndex + 1] = _P.y;
+      normals[outputIndex + 2] = _P.z;
+
+      _P.multiply(stretch);
       positions[outputIndex + 0] = _P.x;
       positions[outputIndex + 1] = _P.y;
       positions[outputIndex + 2] = _P.z;
     }
   }
 
-  return positions;
+  return { normals, positions };
 }
 
 export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, resolution, width }) {

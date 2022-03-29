@@ -67,13 +67,16 @@ const updatePlanetPositions = function(planets, elapsed = 0) {
 
 const rebuildTerrainGeometry = function (chunk) {
   chunk.offset = new Vector3(chunk.offset[0], chunk.offset[1], chunk.offset[2]);
-  const positions = rebuildChunkGeometry(chunk);
+  chunk.stretch = new Vector3(chunk.stretch[0], chunk.stretch[1], chunk.stretch[2]);
+  const { positions, normals } = rebuildChunkGeometry(chunk);
   if (DISABLE_BACKGROUND_TERRAIN_MAPS) {
     postMessage({
       topic: 'rebuiltTerrainChunk',
       positions,
+      normals
     }, [
       positions.buffer,
+      normals.buffer
     ]);
   } else {
     initChunkTextures().then(() => {
@@ -81,9 +84,11 @@ const rebuildTerrainGeometry = function (chunk) {
       postMessage({
         topic: 'rebuiltTerrainChunk',
         positions,
+        normals,
         maps
       }, [
         positions.buffer,
+        normals.buffer,
         maps.colorBitmap,
         maps.heightBitmap,
         maps.normalBitmap,
