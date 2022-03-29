@@ -39,8 +39,11 @@ function benchmark(tag) {
     totalRuns++;
   }
   else {
-    if (!totals[tag]) totals[tag] = 0;
-    totals[tag] += Date.now() - startTime;
+    if (!totals[tag]) totals[tag] = { total: 0, max: 0 };
+    const t = Date.now() - startTime;
+
+    totals[tag].total += t;
+    if (t > totals[tag].max) totals[tag].max = t;
   }
 }
 
@@ -55,12 +58,14 @@ function benchmark(tag) {
 //   const b = {};
 //   let prevTime = 0;
 //   Object.keys(totals).forEach((k) => {
-//     const thisTime = Math.round(totals[k] / totalRuns);
+//     const thisTime = Math.round(totals[k].total / totalRuns);
+//     const thisMax = totals[k].max;
 //     if (k === '_') {
 //       b['TOTAL'] = thisTime;
 //     } else {
 //       b[k] = thisTime - prevTime;
 //       prevTime = thisTime;
+//       // b[`${k}_MAX`] = thisMax;
 //     }
 //   });
 //   console.log(`b ${totalRuns}`, b);
@@ -75,6 +80,8 @@ setInterval(() => {
     );
   }
 }, 5000);
+
+let terrainUpdateStart; // TODO: remove
 
 const Asteroid = (props) => {
   const { camera, controls, gl, raycaster, scene } = useThree();
@@ -105,7 +112,7 @@ const Asteroid = (props) => {
   const csmHelper = useRef(); // TODO: remove
   const csmHelperFloor = useRef(); // TODO: remove
   const aspectRatio = useRef();
-  const updateStart = useRef(); // TODO: remove
+  const settingCameraPosition = useRef();
 
   const maxStretch = useMemo(
     () => config?.stretch ? Math.max(config.stretch.x, config.stretch.y, config.stretch.z) : 1
@@ -440,6 +447,7 @@ const Asteroid = (props) => {
     if (geometry.current && terrainUpdateNeeded) {
       // vvv BENCHMARK 2ms (zoomed-out), 7-20ms+ (zoomed-in)
       geometry.current.setCameraPosition(terrainUpdateNeeded);
+      settingCameraPosition.current = false;
       // ^^^
     }
   }, [terrainUpdateNeeded]);
@@ -493,12 +501,12 @@ const Asteroid = (props) => {
         
         // TODO: remove below
         if (taskTally === 9) {  // overwrite first load since so long for workers
-          taskTotal = 10 * (Date.now() - updateStart.current);
+          taskTotal = 10 * (Date.now() - terrainUpdateStart);
         } else {
-          taskTotal += Date.now() - updateStart.current;
+          taskTotal += Date.now() - terrainUpdateStart;
         }
         taskTally++;
-        updateStart.current = null;
+        terrainUpdateStart = null;
         // ^^^
 
       // (this is used if maps are generated on main thread instead of worker)
@@ -527,7 +535,7 @@ const Asteroid = (props) => {
     // update quads if not already updating AND one of these is true...
     //  a) camera height changes by UPDATE_DISTANCE_MULT
     //  b) camera position changes by rotational equivalent of UPDATE_DISTANCE_MULT at maxStretch surface
-    if (!geometry.current.builder.isBusy() && !geometry.current.builder.isPreparingUpdate()) {
+    if (!settingCameraPosition.current && !geometry.current.builder.isBusy() && !geometry.current.builder.isPreparingUpdate()) {
       // vvv BENCHMARK <1ms
       const cameraHeight = rotatedCameraPosition.length();
       const updateQuadtreeEvery = geometry.current.smallestActiveChunkSize * UPDATE_DISTANCE_MULT;
@@ -536,9 +544,11 @@ const Asteroid = (props) => {
         || geometry.current.cameraPosition.distanceTo(rotatedCameraPosition) > updateQuadtreeEvery * cameraHeight / (config.radius * maxStretch)
       ;
       // ^^^
+
+      // initiate update of quads (based on camera position)
       if (updateQuadCube) {
-        // initiate update of quads (based on camera position)
-        updateStart.current = Date.now();
+        terrainUpdateStart = Date.now();
+        settingCameraPosition.current = true;
         setTerrainUpdateNeeded(rotatedCameraPosition.clone());
       }
     }
