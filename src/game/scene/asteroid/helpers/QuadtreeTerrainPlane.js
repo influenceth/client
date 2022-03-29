@@ -110,7 +110,6 @@ class QuadtreeTerrainPlane {
       }
     } else {
       child.children = [];
-      child.distanceToCamera = distToChild;
     }
   }
 

@@ -411,6 +411,10 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomOut ]);
 
+  // NOTE: in theory, all distances between sphereCenter's to camera are calculated
+  //       in quadtree calculation and could be passed back here, so would be more
+  //       performant to re-use that BUT that is also outdated as the camera moves
+  //       until the quads are recalculated
   // NOTE: raycasting technically *might* be more accurate here, but it's way less performant
   //       (3ms+ for just closest mesh... if all quadtree children, closer to 20ms) and need
   //       to incorporate geometry shrink returned intersection distance
@@ -421,7 +425,8 @@ const Asteroid = (props) => {
     setTimeout(() => {
       // vvv BENCHMARK <1ms (even zoomed-in on huge)
       const [closestChunk, closestDistance] = chunks.reduce((acc, c) => {
-        return (!acc || c.distanceToCamera < acc[1]) ? [c, c.distanceToCamera] : acc;
+        const distance = c.sphereCenter.distanceTo(cameraPosition);
+        return (!acc || distance < acc[1]) ? [c, distance] : acc;
       }, null);
 
       const minDistance = Math.min(
