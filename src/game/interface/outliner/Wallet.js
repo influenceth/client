@@ -23,6 +23,7 @@ import BraveLogo from '~/assets/images/brave-icon.svg';
 const networkNames = {
   1: 'Ethereum Mainnet',
   4: 'Rinkeby Testnet',
+  5: 'Goerli Testnet',
   1337: 'Local Testnet'
 };
 
