@@ -5,24 +5,30 @@ import { ethers } from 'ethers';
 import { contracts } from 'influence-utils';
 
 import useStore from '~/hooks/useStore';
+import useSale from '~/hooks/useSale';
 
 const useBuyAsteroid = (i) => {
   const queryClient = useQueryClient();
   const { account, library } = useWeb3React();
   const [ contract, setContract ] = useState();
+  const { data: sale } = useSale();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   // Sets up contract object with appropriate provider
   useEffect(() => {
     const provider = !!account ? library.getSigner(account) : library;
-    const newContract = new ethers.Contract(
-      process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
-      contracts.ArvadCrewSale,
-      provider
-    );
+    let address = process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE;
+    let contract = contracts.ArvadCrewSale;
 
+    // Uses the first sale to support testnet usage
+    if (!!sale && !sale.endCount) {
+      address = process.env.REACT_APP_CONTRACT_ASTEROID_SALE;
+      contract = contracts.AsteroidSale;
+    }
+
+    const newContract = new ethers.Contract(address, contract, provider);
     setContract(newContract);
-  }, [ account, library ]);
+  }, [ account, library, sale ]);
 
   return useMutation(async () => {
     const price = await contract.getAsteroidPrice(i);
