@@ -92,10 +92,8 @@ const useStore = create(persist((set, get) => ({
       Object.keys(defaults).forEach((k) => {
         if (!state.graphics.hasOwnProperty(k) || state.graphics[k] === undefined) {
           state.graphics[k] = defaults[k];
-          console.log('set', k, defaults[k]);
         }
       });
-      console.log('gpuInfo', gpuInfo, defaults);
     })),
 
     dispatchSaleStarted: () => set(produce(state => {

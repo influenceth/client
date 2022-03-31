@@ -20,7 +20,7 @@ const constants = {
   MODEL_EXPORT_RESOLUTION: 512,
 
   // (culling, zoom, camera, shadows)
-  ENABLE_SHADOWS: false,
+  ENABLE_SHADOWS: true,
   ENABLE_CSM: true, // cascading shadow maps (ENABLE_SHADOWS must also be true)
   MIN_FRUSTUM_AT_SURFACE: 4000, // closest zoom so that X meters visible w/i frustum height
   SHADOWLESS_NORMAL_SCALE: 1.5, // exaggerate normals when shadows are disabled
@@ -33,21 +33,23 @@ const constants = {
 
   // Default performance settings
   // (corresponding to GPU tiers 0-3)
+  // TODO: don't want to defauly shadowQuality to a value until actually implemented
+  //       (i.e. in case want to alter defaults)
   GRAPHICS_DEFAULTS: [
     {
-      shadowQuality: 0,
+      // shadowQuality: 0,
       textureQuality: 1
     },
     {
-      shadowQuality: 0,
+      // shadowQuality: 0,
       textureQuality: 2
     },
     {
-      shadowQuality: 1,
+      // shadowQuality: 1,
       textureQuality: 2
     },
     {
-      shadowQuality: 2,
+      // shadowQuality: 2,
       textureQuality: 3
     }
   ]

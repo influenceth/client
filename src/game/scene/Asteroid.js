@@ -28,6 +28,7 @@ const INITIAL_ZOOM = 2;
 const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 4;
 const DEBUG_CSM = false;
+const DIRECTIONAL_LIGHT_DISTANCE = 10;
 
 // TODO: remove debug
 let totalRuns = 0;
@@ -237,7 +238,7 @@ const Asteroid = (props) => {
     // init params
     const posVec = new Vector3(...position.current);
     const lightColor = 0xffeedd;
-    const lightDistance = config.radius * 10;
+    const lightDistance = config.radius * DIRECTIONAL_LIGHT_DISTANCE;
     const lightDirection = posVec.clone().normalize();
     const lightIntensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
     const maxRadius = ringsPresent
@@ -252,9 +253,9 @@ const Asteroid = (props) => {
       // TODO: does number of cascades impact performance? if not, we should definitely add more
 
       // setup cascades
-      const minSurfaceDistance = Math.min(surfaceDistance, (MIN_ZOOM_DEFAULT - 1) * config.radius);
       const cascadeConfig = [];
       cascadeConfig.unshift(MAX_ZOOM);
+      // const minSurfaceDistance = Math.min(surfaceDistance, (MIN_ZOOM_DEFAULT - 1) * config.radius);
       // cascadeConfig.unshift(INITIAL_ZOOM - minStretch);
       // const midCascade = 8 * minSurfaceDistance / config.radius;
       // if (midCascade < cascadeConfig[0]) cascadeConfig.unshift(midCascade);
@@ -462,8 +463,6 @@ const Asteroid = (props) => {
   useFrame(() => {
     if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
-    // (let run once to pre-render, but then don't update if zoomed out)
-    if (geometry.current.cameraPosition && (zoomStatus === 'out' || zoomStatus === 'zooming-out')) return;
 
     // vvv BENCHMARK <1ms
     // update asteroid position
@@ -471,12 +470,26 @@ const Asteroid = (props) => {
     if (asteroidOrbit.current && time) {
       position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU);
 
-      // update object and camera position
-      // TODO: is this necessary every frame?
-      const positionVec3 = new Vector3(...position.current);
-      group.current.position.copy(positionVec3);
-      positionVec3.negate();
-      controls.targetScene.position.copy(positionVec3);
+      // update object and camera position (if zoomed in)
+      if (zoomStatus === 'in') {
+        const positionVec3 = new Vector3(...position.current);
+        group.current.position.copy(positionVec3);
+        positionVec3.negate();
+        controls.targetScene.position.copy(positionVec3);
+      }
+
+      // update light position (since asteroid has moved around star)
+      if (zoomStatus !== 'out') {
+        if (geometry.current.csm) {
+          geometry.current.csm.lightDirection.copy(
+            new Vector3(...position.current).normalize()
+          )
+        } else if (light.current) {
+          light.current.position.copy(
+            new Vector3(...position.current).negate().multiplyScalar(config.radius * DIRECTIONAL_LIGHT_DISTANCE)
+          );
+        }
+      }
     }
 
     // update asteroid rotation
@@ -501,9 +514,9 @@ const Asteroid = (props) => {
 
     // (if currently zooming in, we'll want to setCameraPosition for camera's destination so doesn't
     //  re-render as soon as it arrives)
-    const rotatedCameraPosition = zoomStatus === 'zooming-in'
-      ? controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM)
-      : controls.object.position.clone();
+    const rotatedCameraPosition = zoomStatus === 'in'
+      ? controls.object.position.clone()
+      : controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM);
     rotatedCameraPosition.applyAxisAngle(rotationAxis.current, -rotation.current);
     // ^^^
 
@@ -544,6 +557,9 @@ const Asteroid = (props) => {
         // ^^^
       }
     }
+
+    // if zoomed out, let run once to prerender, but then don't run the rest of the frame
+    if (geometry.current.cameraPosition && (zoomStatus === 'out' || zoomStatus === 'zooming-out')) return;
     
     // control dynamic zoom limit (zoom out if too low... else, just update boundary)
     if (controls && Object.values(geometry.current?.chunks).length) {
