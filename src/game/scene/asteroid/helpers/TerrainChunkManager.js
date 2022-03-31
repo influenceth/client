@@ -47,7 +47,7 @@ class TerrainChunkManager {
 
   dispose() {
     let chunk;
-    while(chunk = this.pool.pop()) chunk.dispose();
+    while(chunk = this.pool.pop()) chunk.dispose(); // eslint-disable-line no-cond-assign
   }
 
   isBusy() {
@@ -160,7 +160,7 @@ class TerrainChunkManager {
 
   update() {
     if (this.isBusy()) return;
-    console.log(`adding ${this._new.length} chunks, removing ${this._old.length} chunks`);
+    // console.log(`adding ${this._new.length} chunks, removing ${this._old.length} chunks`);
 
     // recycle old chunks
     let node;

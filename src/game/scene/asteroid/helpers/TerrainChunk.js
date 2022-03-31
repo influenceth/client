@@ -23,17 +23,17 @@ const {
 } = constants;
 
 // TODO: remove debug
-let first = true;
-let taskTotal = 0;
-let taskTally = 0;
-setInterval(() => {
-  if (taskTally > 0) {
-    console.log(
-      `avg execution time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
-    );
-  }
-  first = true;
-}, 5000);
+// let first = true;
+// let taskTotal = 0;
+// let taskTally = 0;
+// setInterval(() => {
+//   if (taskTally > 0) {
+//     console.log(
+//       `avg execution time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
+//     );
+//   }
+//   first = true;
+// }, 5000);
 
 const GEO_ATTR_CACHE = {};
 

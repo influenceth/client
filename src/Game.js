@@ -52,7 +52,7 @@ const Game = (props) => {
         });
       }
     }
-  }, [ gpuInfo, createAlert ]);
+  }, [ gpuInfo, createAlert, dispatchGpuInfo ]);
 
   useEffect(() => {
     if (updateNeeded) {

@@ -2,8 +2,6 @@ import { useContext } from 'react';
 import styled from 'styled-components';
 
 import ClockContext from '~/contexts/ClockContext';
-import useInterval from '~/hooks/useInterval';
-import { orbitTimeToGameTime } from '~/lib/utils';
 
 const StyledTime = styled.div`
   cursor: ${p => p.theme.cursors.active};

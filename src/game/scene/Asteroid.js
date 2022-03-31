@@ -1,6 +1,15 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Vector3, Box3, Sphere, DoubleSide, AxesHelper, CameraHelper, DirectionalLight, DirectionalLightHelper, BufferAttribute, MeshPhongMaterial, PlaneGeometry, Mesh, Group, BufferGeometry } from 'three';
+import { 
+  AxesHelper,
+  CameraHelper,
+  DirectionalLight,
+  DirectionalLightHelper,
+  Mesh,
+  MeshPhongMaterial,
+  PlaneGeometry,
+  Vector3
+} from 'three';
 import { CSM } from 'three/examples/jsm/csm/CSM';
 import { CSMHelper } from 'three/examples/jsm/csm/CSMHelper';
 import gsap from 'gsap';
@@ -31,23 +40,23 @@ const DEBUG_CSM = false;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
 
 // TODO: remove debug
-let totalRuns = 0;
-let totals = {};
-let startTime;
-let first = true;
-function benchmark(tag) {
-  if (!tag) {
-    startTime = Date.now();
-    totalRuns++;
-  }
-  else {
-    if (!totals[tag]) totals[tag] = { total: 0, max: 0 };
-    const t = Date.now() - startTime;
+// let totalRuns = 0;
+// let totals = {};
+// let startTime;
+// let first = true;
+// function benchmark(tag) {
+//   if (!tag) {
+//     startTime = Date.now();
+//     totalRuns++;
+//   }
+//   else {
+//     if (!totals[tag]) totals[tag] = { total: 0, max: 0 };
+//     const t = Date.now() - startTime;
 
-    totals[tag].total += t;
-    if (t > totals[tag].max) totals[tag].max = t;
-  }
-}
+//     totals[tag].total += t;
+//     if (t > totals[tag].max) totals[tag].max = t;
+//   }
+// }
 
 // TODO: remove debug
 // setInterval(() => {
@@ -73,20 +82,24 @@ function benchmark(tag) {
 //   console.log(`b ${totalRuns}`, b);
 // }, 5000);
 
+// for terrain benchmarking...
+const BENCHMARK_TERRAIN_UPDATES = false;
 let taskTotal = 0;
 let taskTally = 0;
-setInterval(() => {
-  if (taskTally > 0) {
-    console.log(
-      `avg update time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
-    );
-  }
-}, 5000);
+if (BENCHMARK_TERRAIN_UPDATES) {
+  setInterval(() => {
+    if (taskTally > 0) {
+      console.log(
+        `avg update time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
+      );
+    }
+  }, 5000);
+}
 
 let terrainUpdateStart; // TODO: remove
 
 const Asteroid = (props) => {
-  const { camera, controls, gl, raycaster, scene } = useThree();
+  const { camera, controls } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const { textureSize } = useStore(s => s.getTerrainQuality());
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
@@ -117,13 +130,13 @@ const Asteroid = (props) => {
   const settingCameraPosition = useRef();
 
   const maxStretch = useMemo(
-    () => config?.stretch ? Math.max(config.stretch.x, config.stretch.y, config.stretch.z) : 1
+    () => config?.stretch ? Math.max(config.stretch.x, config.stretch.y, config.stretch.z) : 1,
     [config?.stretch]
   );
-  const minStretch = useMemo(
-    () => config?.stretch ? Math.min(config.stretch.x, config.stretch.y, config.stretch.z) : 1
-    [config?.stretch]
-  );
+  // const minStretch = useMemo(
+  //   () => config?.stretch ? Math.min(config.stretch.x, config.stretch.y, config.stretch.z) : 1,
+  //   [config?.stretch]
+  // );
   const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent]);
   const surfaceDistance = useMemo(
     () => (MIN_FRUSTUM_AT_SURFACE / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
@@ -171,7 +184,7 @@ const Asteroid = (props) => {
     rotation.current = null;
     disposeLight();
     disposeGeometry();
-  }, []);
+  }, [disposeLight, disposeGeometry]);
 
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
@@ -328,6 +341,7 @@ const Asteroid = (props) => {
     // set current shadowMode
     geometry.current.shadowMode = intendedShadowMode;
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, ringsPresent, shadowMode, shadowSize, textureSize, surfaceDistance]);
 
   // Zooms the camera to the correct location
@@ -437,9 +451,9 @@ const Asteroid = (props) => {
       );
       
       // too close, so should animate camera out (jump to surface immediately though)
-      if (minDistance > controls.minDistance && closestDistance < surfaceDistance) {
+      if (minDistance > controls?.minDistance && closestDistance < surfaceDistance) {
         controls.minDistance = Math.max(cameraPosition.length(), closestChunk.sphereCenterHeight);
-        applyingZoomLimits.current = minDistance - controls.minDistance;
+        applyingZoomLimits.current = minDistance - controls?.minDistance;
 
       // else, can just set
       } else {
@@ -448,7 +462,8 @@ const Asteroid = (props) => {
       }
       // ^^^
     }, 0);
-  }, [surfaceDistance, config?.radius]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [surfaceDistance, config?.radius, controls?.minDistance]);
 
   useEffect(() => {
     if (geometry.current && terrainUpdateNeeded) {
@@ -527,13 +542,15 @@ const Asteroid = (props) => {
         geometry.current.builder.update();
         
         // TODO: remove below
-        if (taskTally === 9) {  // overwrite first load since so long for workers
-          taskTotal = 10 * (Date.now() - terrainUpdateStart);
-        } else {
-          taskTotal += Date.now() - terrainUpdateStart;
+        if (BENCHMARK_TERRAIN_UPDATES) {
+          if (taskTally < 5) {  // overwrite first load since so long for workers
+            taskTotal = 5 * (Date.now() - terrainUpdateStart);
+          } else {
+            taskTotal += Date.now() - terrainUpdateStart;
+          }
+          taskTally++;
+          terrainUpdateStart = null;
         }
-        taskTally++;
-        terrainUpdateStart = null;
         // ^^^
 
         // if (debug.current) {

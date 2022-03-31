@@ -113,7 +113,8 @@ const Asteroids = (props) => {
         }
       )
     }
-  }, [coarseTime, mappedAsteroids])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coarseTime, asteroidsWorkerPayload])
 
   useEffect(() => {
     // Check that we have data, positions are processed, and they're in sync

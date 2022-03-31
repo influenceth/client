@@ -32,7 +32,7 @@ export function ClockProvider({ children }) {
       }, 0);
     }
   }, [contextValue, getTime]);
-  useEffect(updateClock, []);
+  useEffect(updateClock, []); // eslint-disable-line react-hooks/exhaustive-deps
   useInterval(updateClock, INTERVAL_LENGTH);
 
   return (

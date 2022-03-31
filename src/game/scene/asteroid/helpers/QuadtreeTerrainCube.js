@@ -90,7 +90,7 @@ class QuadtreeTerrainCube {
 
   // preprocess geometry from high-res texture
   prerenderCoarseGeometry(sideTransform, resolution, config) {
-    const s = Date.now();
+    // const s = Date.now();
     const heightMap = generateHeightMap(
       sideTransform,
       1,

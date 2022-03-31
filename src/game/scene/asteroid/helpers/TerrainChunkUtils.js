@@ -7,7 +7,6 @@ import {
   NearestFilter,
   ShaderMaterial,
   TextureLoader,
-  Vector2,
   Vector3,
 } from 'three';
 import colorShader from '~/game/scene/asteroid/shaders/color.glsl';
@@ -33,20 +32,20 @@ function getTextureRenderer() {
 }
 
 // TODO: remove this debug vvv
-let first = true;
-let totalRuns = 0;
-let totals = {};
-let startTime;
-function benchmark(tag) {
-  if (!tag) {
-    startTime = Date.now();
-    totalRuns++;
-  }
-  else {
-    if (!totals[tag]) totals[tag] = 0;
-    totals[tag] += Date.now() - startTime;
-  }
-}
+// let first = true;
+// let totalRuns = 0;
+// let totals = {};
+// let startTime;
+// function benchmark(tag) {
+//   if (!tag) {
+//     startTime = Date.now();
+//     totalRuns++;
+//   }
+//   else {
+//     if (!totals[tag]) totals[tag] = 0;
+//     totals[tag] += Date.now() - startTime;
+//   }
+// }
 // setInterval(() => {
 //   if (first) {
 //     first = false;

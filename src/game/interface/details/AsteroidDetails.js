@@ -252,7 +252,7 @@ const AsteroidDetails = (props) => {
         chunk.makeExportable();
       });
 
-      exportGLTF(exportable, `asteroid_${i}`, () => {
+      exportGLTF(exportable, `asteroid_${asteroid.asteroidId}`, () => {
 
         // dispose of resources
         manager.groups.forEach((g) => exportable.remove(g));
@@ -262,6 +262,8 @@ const AsteroidDetails = (props) => {
         setExportingModel(false);
       });
     });
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [asteroid, exportingModel]);
 
   const goToOpenSeaAsteroid = (i) => {

@@ -10,9 +10,9 @@ const { USE_DEDICATED_GPU_WORKER } = constants;
 let workerIds = 0;
 
 // TODO: remove debug
-let taskTotal = 0;
-let taskTally = 0;
-let resetPending = true;
+// let taskTotal = 0;
+// let taskTally = 0;
+// let resetPending = true;
 
 // setInterval(() => {
 //   if (!resetPending && taskTally > 0) {
@@ -109,15 +109,15 @@ class WorkerThreadPool {
 
       const [workItem, workResolve] = this.workQueue.shift();
 
-      const startTime = Date.now();
+      // const startTime = Date.now();
       w.postMessage(workItem, (v) => {
-        if (resetPending && taskTally === 20) { // TODO: remove debug
-          taskTotal = 0;
-          taskTally = 0;
-          resetPending = false;
-        }
-        taskTotal += Date.now() - startTime;
-        taskTally++;
+        // if (resetPending && taskTally === 20) { // TODO: remove debug
+        //   taskTotal = 0;
+        //   taskTally = 0;
+        //   resetPending = false;
+        // }
+        // taskTotal += Date.now() - startTime;
+        // taskTally++;
         delete this.busy[w.id];
         this.available.push(w);
         workResolve(v);

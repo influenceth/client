@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import ClockContext from '~/contexts/ClockContext';
@@ -24,28 +24,28 @@ const TimeControl = (props) => {
   const [ speedSetting, setSpeedSetting ] = useState(0);
   const [ playing, setPlaying ] = useState(false);
 
-  const play = () => {
+  const play = useCallback(() => {
     setPlaying(true);
     dispatchTimeOverride(getTime(), 0);
-  };
+  }, [dispatchTimeOverride, getTime]);
 
-  const pause = () => {
+  const pause = useCallback(() => {
     setSpeedSetting(0);
     dispatchTimeOverride(getTime(), 0);
-  };
+  }, [dispatchTimeOverride, getTime]);
 
-  const stop = () => {
+  const stop = useCallback(() => {
     setPlaying(false);
     setSpeedSetting(0);
     dispatchTimeOverride();
-  };
+  }, [dispatchTimeOverride]);
 
-  const changeSpeed = (direction) => {
+  const changeSpeed = useCallback((direction) => {
     const newSpeed = speeds[Math.abs(speedSetting + direction)];
     if (Number.isFinite(newSpeed)) {
       setSpeedSetting(speedSetting + direction);
     }
-  };
+  }, [speedSetting]);
 
   useEffect(() => {
     if (timeOverride) {
@@ -53,7 +53,7 @@ const TimeControl = (props) => {
       const selectedSpeed = speeds[Math.abs(speedSetting)] * dir;
       dispatchTimeOverride(getTime(), selectedSpeed);
     }
-  }, [ speedSetting ]);
+  }, [ dispatchTimeOverride, getTime, speedSetting ]);  // eslint-disable-line react-hooks/exhaustive-deps
   
   const adaliaTime = `${displayTime} days since Arrival`;
   const actualTime = realWorldTime.toLocaleString([], {
