@@ -21,14 +21,14 @@ const useBuyAsteroid = (i) => {
     let contract = contracts.ArvadCrewSale;
 
     // Uses the first sale to support testnet usage
-    if (!sale.endCount) {
+    if (!!sale && !sale.endCount) {
       address = process.env.REACT_APP_CONTRACT_ASTEROID_SALE;
       contract = contracts.AsteroidSale;
     }
 
     const newContract = new ethers.Contract(address, contract, provider);
     setContract(newContract);
-  }, [ account, library ]);
+  }, [ account, library, sale ]);
 
   return useMutation(async () => {
     const price = await contract.getAsteroidPrice(i);
