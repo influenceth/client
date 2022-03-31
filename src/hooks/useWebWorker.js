@@ -71,6 +71,9 @@ class WorkerThreadPool {
     this.workQueue = [];
   }
 
+  // NOTE: this helps speed up initial "on" time when using multiple gpu-focused
+  //  webworkers concurrently... it's not necessary when using a dedicated gpu
+  //  worker, but it doesn't hurt anything
   async initGpuAssets(tally) {
     const loader = new ImageBitmapLoader();
     for(let i = 0; i < tally; i++) {
