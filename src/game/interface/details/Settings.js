@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
 import screenfull from 'screenfull';
@@ -14,6 +14,9 @@ import Button from '~/components/Button';
 import IconButton from '~/components/IconButton';
 import NumberInput from '~/components/NumberInput';
 import Range from '~/components/Range';
+import constants from '~/lib/constants';
+
+const { ENABLE_SHADOWS } = constants;
 
 const StyledSettings = styled.div`
   padding-left: 15px;
@@ -105,35 +108,39 @@ const Settings = (props) => {
                 </Button>
               </ControlGroup>
             </StyledDataReadout>
-            <StyledDataReadout label="Dynamic Shadows">
-              <IconButton
-                data-tip="Toggle Shadows"
-                data-for="global"
-                onClick={() => setShadowQuality(graphics.shadowQuality > 0 ? 0 : 1)}
-                borderless>
-                {graphics.shadowQuality > 0 ? <CheckedIcon /> : <UncheckedIcon />}
-              </IconButton>
-            </StyledDataReadout>
-            {graphics.shadowQuality > 0 && (
-              <StyledDataReadout label="Shadow Quality">
-                <ControlGroup>
-                  <Button
-                    active={graphics.shadowQuality === 1}
-                    onClick={() => setShadowQuality(1)}>
-                    Low
-                  </Button>
-                  <Button
-                    active={graphics.shadowQuality === 2}
-                    onClick={() => setShadowQuality(2)}>
-                    Medium
-                  </Button>
-                  <Button
-                    active={graphics.shadowQuality === 3}
-                    onClick={() => setShadowQuality(3)}>
-                    High
-                  </Button>
-                </ControlGroup>
-              </StyledDataReadout>
+            {ENABLE_SHADOWS && (
+              <>
+                <StyledDataReadout label="Dynamic Shadows">
+                  <IconButton
+                    data-tip="Toggle Shadows"
+                    data-for="global"
+                    onClick={() => setShadowQuality(graphics.shadowQuality > 0 ? 0 : 1)}
+                    borderless>
+                    {graphics.shadowQuality > 0 ? <CheckedIcon /> : <UncheckedIcon />}
+                  </IconButton>
+                </StyledDataReadout>
+                {graphics.shadowQuality > 0 && (
+                  <StyledDataReadout label="Shadow Quality">
+                    <ControlGroup>
+                      <Button
+                        active={graphics.shadowQuality === 1}
+                        onClick={() => setShadowQuality(1)}>
+                        Low
+                      </Button>
+                      <Button
+                        active={graphics.shadowQuality === 2}
+                        onClick={() => setShadowQuality(2)}>
+                        Medium
+                      </Button>
+                      <Button
+                        active={graphics.shadowQuality === 3}
+                        onClick={() => setShadowQuality(3)}>
+                        High
+                      </Button>
+                    </ControlGroup>
+                  </StyledDataReadout>
+                )}
+              </>
             )}
             <StyledDataReadout label="Field of View">
               <ControlGroup>

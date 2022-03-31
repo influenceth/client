@@ -32,6 +32,7 @@ const Game = (props) => {
   const { updateNeeded, onUpdateVersion } = useServiceWorker();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
+  const dispatchGpuInfo = useStore(s => s.dispatchGpuInfo);
   const [ showScene, setShowScene ] = useState(false);
   const [ introEnabled, setIntroEnabled ] = useState(!DISABLE_INTRO);
 
@@ -42,6 +43,7 @@ const Game = (props) => {
   useEffect(() => {
     if (gpuInfo && !gpuInfo.isMobile) {
       setShowScene(true);
+      dispatchGpuInfo(gpuInfo);
 
       if (gpuInfo.tier === 0) {
         createAlert({

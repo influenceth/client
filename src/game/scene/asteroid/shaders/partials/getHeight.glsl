@@ -103,9 +103,6 @@ vec4 getHeight(vec2 flipY, int skipPasses) {
   float fineWeight = 0.15;
   float height = normalizeNoise((1.0 - fineWeight) * disp + fineWeight * fine);
 
-  // get normalized fine height for normal map
-  float fineHeight = 0.5 * fine + 0.5;
-
   // Encode height and disp in different channels
   // r, g: used in displacement map
   // b, a: used in normal map

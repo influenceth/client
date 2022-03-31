@@ -1,11 +1,14 @@
 import create from 'zustand';
 import { persist } from 'zustand/middleware';
 import produce from 'immer';
-import { START_TIMESTAMP } from 'influence-utils';
 
 import constants from '~/lib/constants';
 
-const { CHUNK_RESOLUTION } = constants;
+const {
+  CHUNK_RESOLUTION,
+  GRAPHICS_DEFAULTS,
+  ENABLE_SHADOWS
+} = constants;
 
 // (keep these out of state so can change)
 const sectionDefault = { active: false, expanded: true, highlighted: false };
@@ -62,11 +65,12 @@ const useStore = create(persist((set, get) => ({
     },
 
     graphics: {
+      fov: 75,
       lensflare: true,
       skybox: true,
-      shadowQuality: 0,
-      textureQuality: 1,
-      fov: 75
+      // (these will default per the gpu tier):
+      shadowQuality: undefined,
+      textureQuality: undefined,
     },
 
     sounds: {
@@ -81,6 +85,18 @@ const useStore = create(persist((set, get) => ({
 
     //
     // DISPATCHERS
+
+    dispatchGpuInfo: (gpuInfo) => set(produce(state => {
+      // this sets defaults if they are not already
+      const defaults = GRAPHICS_DEFAULTS[gpuInfo.tier] || {};
+      Object.keys(defaults).forEach((k) => {
+        if (!state.graphics.hasOwnProperty(k) || state.graphics[k] === undefined) {
+          state.graphics[k] = defaults[k];
+          console.log('set', k, defaults[k]);
+        }
+      });
+      console.log('gpuInfo', gpuInfo, defaults);
+    })),
 
     dispatchSaleStarted: () => set(produce(state => {
       state.sale = true;
@@ -287,7 +303,7 @@ const useStore = create(persist((set, get) => ({
     // SPECIAL GETTERS
 
     getShadowQuality: () => {
-      const q = get().graphics?.shadowQuality;
+      const q = ENABLE_SHADOWS ? get().graphics?.shadowQuality : 0;
       if (q === 1) return { shadowMode: 1, shadowSize: 1024 };
       if (q === 2) return { shadowMode: 2, shadowSize: 2048 };
       if (q === 3) return { shadowMode: 2, shadowSize: 4096 };

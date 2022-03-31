@@ -462,7 +462,8 @@ const Asteroid = (props) => {
   useFrame(() => {
     if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
-    if (zoomStatus === 'out') return;
+    // (let run once to pre-render, but then don't update if zoomed out)
+    if (geometry.current.cameraPosition && (zoomStatus === 'out' || zoomStatus === 'zooming-out')) return;
 
     // vvv BENCHMARK <1ms
     // update asteroid position
