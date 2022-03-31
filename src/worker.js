@@ -34,6 +34,14 @@ onmessage = function(event) {
         ...event.data.chunk
       });
       break;
+    // used if want to just update cache values (but do no work)
+    case 'updateParamCache': {
+      Object.keys(event.data).forEach((k) => {
+        if (cache.hasOwnProperty(k)) cache[k] = event.data[k];
+      });
+      postMessage({ topic: 'updatedParamCache'});
+      break;
+    }
     default:
       console.error('Method not supported');
   }

@@ -5,7 +5,8 @@ import constants from '~/lib/constants';
 
 const {
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL,
-  DISABLE_BACKGROUND_TERRAIN_MAPS
+  DISABLE_BACKGROUND_TERRAIN_MAPS,
+  USE_DEDICATED_GPU_WORKER
 } = constants;
 
 // TODO: remove
@@ -30,6 +31,18 @@ class TerrainChunkManager {
       ...prunedConfig
     } = this.config;
     this.prunedConfig = prunedConfig; // for passing to webworker
+
+    // if not using dedicated gpu worker, broadcast the asteroid data
+    // to all workers up front to avoid clunky zooming on warm-up
+    if (!USE_DEDICATED_GPU_WORKER) {
+      this.workerPool.broadcast({
+        topic: 'updateParamCache',
+        asteroid: {
+          key: this.asteroidId,
+          config: this.prunedConfig,
+        }
+      });
+    }
 
     this.csmManager = null;
     this.shadowsEnabled = false;

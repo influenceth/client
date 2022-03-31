@@ -37,7 +37,7 @@ class WorkerThread {
   onMessage(event) {
     const callback = this.messageCallback;
     this.messageCallback = null;
-    callback(event.data);
+    if (callback) callback(event.data);
   }
 
   postMessage(msg, callback, transfer = []) {
@@ -89,6 +89,13 @@ class WorkerThreadPool {
     }
   }
 
+  // i.e. post to all workers in pool
+  broadcast(msg) {
+    for(let i = 0; i < this.workers.length; i++) {
+      this.workers[i].postMessage(msg);
+    }
+  }
+
   getWorkerTally() {
     return this.workers.length;
   }
@@ -134,6 +141,10 @@ const gpuWorkerThreadPool = dedicatedGpuWorkers > 0 ? new WorkerThreadPool(dedic
 
 const useWebWorker = () => {
   return useMemo(() => ({
+    broadcast: (message) => {
+      cpuWorkerThreadPool.broadcast(message);
+      if (gpuWorkerThreadPool) gpuWorkerThreadPool.broadcast(message);
+    },
     processInBackground: (message, callback) => cpuWorkerThreadPool.addToQueue(message, callback),
     gpuProcessInBackground: (message, callback) => (gpuWorkerThreadPool || cpuWorkerThreadPool).addToQueue(message, callback),
   }), []);
