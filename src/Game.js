@@ -4,6 +4,7 @@ import { ThemeProvider } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
+import { ClockProvider } from '~/contexts/ClockContext';
 import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import LandingPage from '~/game/Landing';
@@ -72,12 +73,14 @@ const Game = (props) => {
             <LandingPage />
           </Route>
           <Route>
-            {introEnabled && <Intro onComplete={onIntroComplete} />}
-            <StyledMain>
-              <Interface />
-              {showScene && <Scene />}
-              <Audio />
-            </StyledMain>
+            <ClockProvider>
+              {introEnabled && <Intro onComplete={onIntroComplete} />}
+              <StyledMain>
+                <Interface />
+                {showScene && <Scene />}
+                <Audio />
+              </StyledMain>
+            </ClockProvider>
           </Route>
         </Switch>
       </Router>

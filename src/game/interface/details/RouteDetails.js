@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useContext, useEffect, useState, useRef } from 'react';
 import {
   VictoryChart,
   VictoryVoronoiContainer,
@@ -11,20 +11,20 @@ import {
 import { Vector3 } from 'three';
 import numeral from 'numeral';
 import styled from 'styled-components';
-import { KeplerianOrbit, START_TIMESTAMP } from 'influence-utils';
+import { KeplerianOrbit } from 'influence-utils';
 
+import ClockContext from '~/contexts/ClockContext';
+import useAsteroid from '~/hooks/useAsteroid';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
-import useAsteroid from '~/hooks/useAsteroid';
 import Details from '~/components/Details';
 import AsteroidDataCard from '~/components/AsteroidDataCard';
 import DimensionMetric from '~/components/DimensionMetric';
 import axisImage from '~/assets/images/semi-major-axis.png';
 import inclinationImage from '~/assets/images/inclination.png';
 import constants from '~/lib/constants';
+import { LORE_TIME_DIFF } from '~/lib/utils';
 import theme from '~/theme';
-
-const diff = 24 * (1618668000 - START_TIMESTAMP) / 86400;
 
 const StyledRouteDetails = styled.div`
   align-items: center;
@@ -182,17 +182,19 @@ const StyledChart = styled.div`
 
 const RouteDetails = (props) => {
   const { isMobile } = useScreenSize();
-  const time = useStore(s => s.time.current);
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
+  const { coarseTime: time } = useContext(ClockContext);
+  
   const [ routeUpdated, setRouteUpdated ] = useState(true);
   const [ distances, setDistances ] = useState({});
   const [ data, setData ] = useState([]);
   const [ now, setNow ] = useState([]);
   const [ metrics, setMetrics ] = useState({});
   const [ chartDimensions, setChartDimensions ] = useState();
+  
   const detailsEl = useRef();
 
   useEffect(() => {
@@ -207,7 +209,7 @@ const RouteDetails = (props) => {
     const step = 10;
 
     // Time hasn't changed don't recalculate
-    if (!routeUpdated && now[0]?.x === time - (time % step) - diff) return;
+    if (!routeUpdated && now[0]?.x === time - (time % step) - LORE_TIME_DIFF) return;
 
     for (let i = -numPoints / 2; i <= numPoints / 2; i++) {
       const calcTime = time - (time % step) + (i * step);
@@ -217,7 +219,7 @@ const RouteDetails = (props) => {
       } else {
         originVec.fromArray(Object.values(originOrbit.getPositionAtTime(calcTime)));
         destVec.fromArray(Object.values(destOrbit.getPositionAtTime(calcTime)));
-        newDistances[calcTime] = { x: calcTime - diff, y:  constants.AU * originVec.distanceTo(destVec) / 1000 };
+        newDistances[calcTime] = { x: calcTime - LORE_TIME_DIFF, y:  constants.AU * originVec.distanceTo(destVec) / 1000 };
       }
 
       if (i === 0) {
@@ -331,7 +333,7 @@ const RouteDetails = (props) => {
             containerComponent={
               <VictoryVoronoiContainer
                 labels={({ datum }) => {
-                  const days = datum.x - time + diff;
+                  const days = datum.x - time + LORE_TIME_DIFF;
                   return `${days > 0 ? '+' : ''}${numeral(days).format('0,0')} days`;
                 }}
                 labelComponent={
@@ -356,14 +358,14 @@ const RouteDetails = (props) => {
             width={chartDimensions?.width || 1000}>
             <defs>
               <linearGradient id="gradient-fill" x1="0%" y1="100%" x2="0%" y2="0%">
-                <stop offset="0" stop-color="#36a7cd" />
-                <stop offset="0.14285714285714285" stop-color="#00a2dc" />
-                <stop offset="0.2857142857142857" stop-color="#009beb" />
-                <stop offset="0.42857142857142855" stop-color="#0093f8" />
-                <stop offset="0.5714285714285714" stop-color="#0088ff" />
-                <stop offset="0.7142857142857142" stop-color="#007bff" />
-                <stop offset="0.8571428571428571" stop-color="#5669ff" />
-                <stop offset="1" stop-color="#884fff" />
+                <stop offset="0" stopColor="#36a7cd" />
+                <stop offset="0.14285714285714285" stopColor="#00a2dc" />
+                <stop offset="0.2857142857142857" stopColor="#009beb" />
+                <stop offset="0.42857142857142855" stopColor="#0093f8" />
+                <stop offset="0.5714285714285714" stopColor="#0088ff" />
+                <stop offset="0.7142857142857142" stopColor="#007bff" />
+                <stop offset="0.8571428571428571" stopColor="#5669ff" />
+                <stop offset="1" stopColor="#884fff" />
               </linearGradient>
             </defs>
             <VictoryAxis

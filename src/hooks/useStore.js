@@ -23,21 +23,6 @@ const outlinerSectionDefaults = {
   timeControl: { ...sectionDefault }
 };
 
-// special getters
-export const middleware = {
-  shadowQuality: (q) => {
-    if (q === 1) return { shadowMode: 1, shadowSize: 1024 };
-    if (q === 2) return { shadowMode: 2, shadowSize: 2048 };
-    if (q === 3) return { shadowMode: 2, shadowSize: 4096 };
-    return { shadowMode: 0, shadowSize: 1024 };
-  },
-  terrainQuality: (q) => {
-    if (q === 2) return { textureSize: 2 * CHUNK_RESOLUTION };
-    if (q === 3) return { textureSize: 4 * CHUNK_RESOLUTION };
-    return { textureSize: 1 * CHUNK_RESOLUTION };
-  }
-};
-
 const useStore = create(persist((set, get) => ({
     asteroids: {
       origin: null,
@@ -69,11 +54,7 @@ const useStore = create(persist((set, get) => ({
       alerts: []
     },
 
-    time: {
-      precise: ((Date.now() / 1000) - START_TIMESTAMP) / 3600,
-      current: ((Date.now() / 1000) - START_TIMESTAMP) / 3600,
-      autoUpdating: true
-    },
+    timeOverride: null,
 
     outliner: {
       pinned: true,
@@ -97,6 +78,9 @@ const useStore = create(persist((set, get) => ({
     sale: false,
 
     referrer: null,
+
+    //
+    // DISPATCHERS
 
     dispatchSaleStarted: () => set(produce(state => {
       state.sale = true;
@@ -283,25 +267,9 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.watched.highlightColor = color;
     })),
 
-    dispatchTimeUpdated: (time) => set(produce(state => {
-      // default time to current time
-      const useTime = time || ((Date.now() / 1000) - START_TIMESTAMP) / 3600;
-
-      // "precise" time for zoomed-in elements
-      state.time.precise = useTime;
-
-      // "current" time for zoomed-out elements (more granular)
-      const incrHours = 10 / 3600;
-      state.time.current = Math.round(useTime / incrHours) * incrHours;
-    })),
-
-    dispatchTimeControlled: () => set(produce(state => {
-      state.time.autoUpdating = false;
-    })),
-
-    dispatchTimeUncontrolled: () => set(produce(state => {
-      state.time.autoUpdating = true;
-    })),
+    dispatchTimeOverride: (anchor, speed) => set((produce(state => {
+      state.timeOverride = anchor ? { anchor, speed, ts: Date.now() } : null;
+    }))),
 
     dispatchAuthenticated: (token) => set(produce(state => {
       state.auth.token = token;
@@ -313,11 +281,30 @@ const useStore = create(persist((set, get) => ({
 
     dispatchReferrerSet: (refCode) => set(produce(state => {
       state.referrer = refCode;
-    }))
+    })),
+
+    //
+    // SPECIAL GETTERS
+
+    getShadowQuality: () => {
+      const q = get().graphics?.shadowQuality;
+      if (q === 1) return { shadowMode: 1, shadowSize: 1024 };
+      if (q === 2) return { shadowMode: 2, shadowSize: 2048 };
+      if (q === 3) return { shadowMode: 2, shadowSize: 4096 };
+      return { shadowMode: 0, shadowSize: 1024 };
+    },
+
+    getTerrainQuality: () => {
+      const q = get().graphics?.textureQuality;
+      if (q === 2) return { textureSize: 2 * CHUNK_RESOLUTION };
+      if (q === 3) return { textureSize: 4 * CHUNK_RESOLUTION };
+      return { textureSize: 1 * CHUNK_RESOLUTION };
+    },
+
 }), {
   name: 'influence',
   version: 0,
-  blacklist: [ 'time' ]
+  blacklist: [ 'timeOverride' ]
 }));
 
 export default useStore;

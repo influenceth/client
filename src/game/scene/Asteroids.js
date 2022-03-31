@@ -1,11 +1,13 @@
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useContext, useCallback, useEffect, useRef, useState } from 'react';
 import { Color } from 'three';
-import { useThrottle } from '@react-hook/throttle';
+import { useThrottleCallback } from '@react-hook/throttle';
 
+import ClockContext from '~/contexts/ClockContext';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroids from '~/hooks/useAsteroids';
 import useStore from '~/hooks/useStore';
 import useWebWorker from '~/hooks/useWebWorker';
+
 import FlightLine from './asteroids/FlightLine';
 import Orbit from './asteroids/Orbit';
 import Marker from './asteroids/Marker';
@@ -14,7 +16,6 @@ import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
 
 const Asteroids = (props) => {
-  const time = useStore(s => s.time.current);
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
   const hovered = useStore(s => s.asteroids.hovered);
@@ -28,6 +29,7 @@ const Asteroids = (props) => {
   const { data: asteroids } = useAsteroids();
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
+  const { coarseTime } = useContext(ClockContext);
 
   const selectOrigin = useStore(s => s.dispatchOriginSelected);
   const clearOrigin = useStore(s => s.dispatchOriginCleared);
@@ -36,13 +38,14 @@ const Asteroids = (props) => {
   const unhoverAsteroid = useStore(s => s.dispatchAsteroidUnhovered);
 
   const [ mappedAsteroids, setMappedAsteroids ] = useState([]);
+  const [ asteroidsWorkerPayload, setAsteroidsWorkerPayload ] = useState();
   const [ positions, setPositions ] = useState(new Float32Array());
   const [ colors, setColors ] = useState(new Float32Array());
   const [ hoveredPos, setHoveredPos ] = useState();
   const [ originPos, setOriginPos ] = useState();
   const [ destinationPos, setDestinationPos ] = useState();
 
-  const [ mousePos, setMousePos ] = useThrottle(null, 30);
+  const isUpdating = useRef(false);
 
   const asteroidsGeom = useRef();
 
@@ -51,20 +54,23 @@ const Asteroids = (props) => {
   useEffect(() => {
     const newMappedAsteroids = !!asteroids ? asteroids.slice() : [];
 
-    if (!!origin && !newMappedAsteroids.some(a => a.i === origin.i)) {
+    if (!!origin && !newMappedAsteroids.find(a => a.i === origin.i)) {
       newMappedAsteroids.push(Object.assign({}, origin));
     }
 
-    if (!!destination && !newMappedAsteroids.some(a => a.i === destination.i)) {
+    if (!!destination && !newMappedAsteroids.find(a => a.i === destination.i)) {
       newMappedAsteroids.push(Object.assign({}, destination));
     }
 
     // if zoomed in, don't render the point for the origin (since rendering 3d version)
-    setMappedAsteroids(
-      origin && isZoomedIn
-        ? newMappedAsteroids.filter((a) => a.i !== origin.i)
-        : newMappedAsteroids
-    );
+    const newValue = origin && isZoomedIn
+      ? newMappedAsteroids.filter((a) => a.i !== origin.i)
+      : newMappedAsteroids;
+    setMappedAsteroids(newValue);
+    setAsteroidsWorkerPayload({
+      key: newValue.map((a) => a.i).join(','),
+      orbitals: newValue.map((a) => a.orbital),
+    })
   }, [ asteroids, origin, destination, isZoomedIn ]);
 
   // Responds to hover changes in the store which could be fired from the HUD
@@ -87,20 +93,27 @@ const Asteroids = (props) => {
   }, [ hovered, originId, destinationId, positions, mappedAsteroids ]);
 
   // Update asteroid positions whenever the time changes in-game or mapped asteroids are updated
-  // TODO: use useFrame instead...
-  // TODO: potentially could chunk this in groups of 100 so spread out between threads
-  //        OR wait until previous complete OR wait until workerpool not busy
+  // TODO: would probably have much smoother motion (at very fast-forwarded speeds) by
+  //  managing trigger for this in a useFrame loop (rather than listening for coarseTime update),
+  //  and setting geometry attributes directly, rather than through state... could potentially do
+  //  fewer updates / only update on coarseTime when zoomed in
   useEffect(() => {
-    // TODO (enahancement): worker used to cache mappedAsteroids, but now that there are multiple
-    //  workers, that is not possible... maybe could cache inputs in worker manager and only
-    //  send updated input vars per topic to save on copying
-    processInBackground(
-      { topic: 'updateAsteroidPositions', asteroids: mappedAsteroids, elapsed: time },
-      (data) => {
-        setPositions(new Float32Array(data.positions));
-      }
-    )
-  }, [ mappedAsteroids, processInBackground, time ]);
+    if (coarseTime && asteroidsWorkerPayload && !isUpdating.current) {
+      isUpdating.current = true;
+      processInBackground(
+        {
+          topic: 'updateAsteroidPositions',
+          asteroids: asteroidsWorkerPayload,
+          elapsed: coarseTime,
+          _cacheable: 'asteroids'
+        },
+        (data) => {
+          setPositions(data.positions);
+          isUpdating.current = false;
+        }
+      )
+    }
+  }, [coarseTime, mappedAsteroids])
 
   useEffect(() => {
     // Check that we have data, positions are processed, and they're in sync
@@ -135,17 +148,6 @@ const Asteroids = (props) => {
     setColors(new Float32Array([].concat.apply([], newColors)));
   }, [ mappedAsteroids, ownedColor, watchedColor, highlightConfig ]);
 
-  useEffect(() => {
-    if (mousePos && mousePos.intersections?.length > 0) {
-      const index = mousePos.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
-      if (asteroids[index]) {
-        return hoverAsteroid(asteroids[index].i);
-      }
-    } 
-    unhoverAsteroid();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mousePos]);
-
   // re-computeBoundingSphere on geometry change
   useEffect(() => {
     if (asteroidsGeom.current) {
@@ -170,6 +172,16 @@ const Asteroids = (props) => {
       selectDestination(asteroids[index].i);
     }
   }, [asteroids, originId, routePlannerActive]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const setMousePos = useThrottleCallback((mousePos) => {
+    if (mousePos && mousePos.intersections?.length > 0) {
+      const index = mousePos.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
+      if (asteroids[index]) {
+        return hoverAsteroid(asteroids[index].i);
+      }
+    } 
+    unhoverAsteroid();
+  }, 30);  // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <group>
@@ -196,14 +208,12 @@ const Asteroids = (props) => {
         </points>
       )}
       {zoomStatus === 'out' && (
-        <Suspense fallback={<group />}>
-          {hoveredPos && <Marker asteroidPos={hoveredPos} />}
-          {originPos && <Marker asteroidPos={originPos} />}
-          {destinationPos && <Marker asteroidPos={destinationPos} />}
-        </Suspense>
-      )}
-      {zoomStatus === 'out' && (
         <>
+          <Suspense fallback={<group />}>
+            {hoveredPos && <Marker asteroidPos={hoveredPos} />}
+            {originPos && <Marker asteroidPos={originPos} />}
+            {destinationPos && <Marker asteroidPos={destinationPos} />}
+          </Suspense>
           {!!origin && <Orbit asteroid={origin} />}
           {!!destination && <Orbit asteroid={destination} />}
           {originPos && destinationPos && <FlightLine originPos={originPos} destinationPos={destinationPos} />}

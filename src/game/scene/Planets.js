@@ -1,16 +1,17 @@
-import { useRef, useEffect } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { AdditiveBlending, Float32BufferAttribute } from 'three';
 import { useTexture } from '@react-three/drei';
 
+import ClockContext from '~/contexts/ClockContext';
 import usePlanets from '~/hooks/usePlanets';
-import useStore from '~/hooks/useStore';
 import useWebWorker from '~/hooks/useWebWorker';
 import Orbit from './planets/Orbit';
 import theme from '~/theme';
 
 const Planets = (props) => {
   const planets = usePlanets();
-  const time = useStore(s => s.time.current);
+  const { coarseTime } = useContext(ClockContext);
+
   const texture = useTexture(`${process.env.PUBLIC_URL}/textures/circleFaded.png`);
   const { processInBackground } = useWebWorker();
   
@@ -18,9 +19,17 @@ const Planets = (props) => {
 
   // Listen for changes to planets data or global time and update planet positions
   useEffect(() => {
-    if (planets.data && time) {
+    if (planets.data && coarseTime) {
       processInBackground(
-        { topic: 'updatePlanetPositions', planets: planets.data, elapsed: time },
+        {
+          topic: 'updatePlanetPositions',
+          planets: {
+            key: '_planets',
+            orbitals: planets.data.map((p) => p.orbital)
+          },
+          elapsed: coarseTime,
+          _cacheable: 'planets'
+        },
         (data) => {
           if (geometry.current && data.positions) {
             geometry.current.setAttribute(
@@ -32,7 +41,7 @@ const Planets = (props) => {
         }
       );
     }
-  }, [ planets.data, processInBackground, time ]);
+  }, [ planets.data, processInBackground, coarseTime ]);
 
   return (
     <group position={[ 0, 0, 0 ]}>

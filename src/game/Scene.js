@@ -6,6 +6,7 @@ import { useContextBridge, Stats } from '@react-three/drei';
 import { getWeb3ReactContext } from '@web3-react/core';
 import styled from 'styled-components';
 
+import ClockContext from '~/contexts/ClockContext';
 import useStore from '~/hooks/useStore';
 import { TrackballModControls } from '~/components/TrackballModControls';
 import Star from './scene/Star';
@@ -48,7 +49,10 @@ const Scene = (props) => {
   const queryClient = useQueryClient();
 
   // Use ContextBridge to make wallet available within canvas
-  const ContextBridge = useContextBridge(getWeb3ReactContext());
+  const ContextBridge = useContextBridge(
+    getWeb3ReactContext(),
+    ClockContext
+  );
 
   // Orient such that z is up, perpindicular to the stellar plane
   Object3D.DefaultUp = new Vector3(0, 0, 1);
@@ -78,9 +82,7 @@ const Scene = (props) => {
             <TrackballModControls maxDistance={10 * constants.AU}>
               <Star />
               <Planets />
-              {/* TODO: restore
               <Asteroids />
-              */}
               <Asteroid />
             </TrackballModControls>
           </QueryClientProvider>

@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+import { useContext } from 'react';
 import styled from 'styled-components';
 
+import ClockContext from '~/contexts/ClockContext';
 import useInterval from '~/hooks/useInterval';
-import useStore from '~/hooks/useStore';
 import { orbitTimeToGameTime } from '~/lib/utils';
 
 const StyledTime = styled.div`
@@ -33,30 +33,12 @@ const DaysSince = styled.div`
 `;
 
 const Time = (props) => {
-  const time = useStore(s => s.time.precise);
-  const autoUpdating = useStore(s => s.time.autoUpdating);
-  const dispatchTimeUpdated = useStore(s => s.dispatchTimeUpdated);
-
-  const displayTime = orbitTimeToGameTime(time);
-  const increment = 1000 / 30;
-
-  // Update time once immediately upon launching
-  useEffect(() => {
-    if (autoUpdating) dispatchTimeUpdated();
-  }, [ dispatchTimeUpdated, autoUpdating ])
-
-  // Automatically updates the in-game time once per second unless auto-updates are off
-  // TODO: might be safer to use useFrame here w/ minimum update interval OR useTimeout
-  useInterval(() => {
-    if (autoUpdating) dispatchTimeUpdated();
-  }, increment);
+  const { displayTime } = useContext(ClockContext);
 
   return (
     <StyledTime {...props}>
       <DaysSince>
-        <span>{displayTime >= 0 ? '+' : '-'}</span>
-        <span>{displayTime.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-        <span> days</span>
+        <span>{displayTime} days</span>
       </DaysSince>
     </StyledTime>
   );

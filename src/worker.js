@@ -9,7 +9,9 @@ const {
 } = constants;
 
 let cache = {
-  asteroid: {}
+  asteroid: {},
+  asteroids: {},
+  planets: {},
 };
 
 onmessage = function(event) {
@@ -18,10 +20,12 @@ onmessage = function(event) {
       initGpuAssets(event.data.data);
       break;
     case 'updateAsteroidPositions':
-      updateAsteroidPositions(event.data.asteroids, event.data.elapsed);
+      if (event.data.asteroids) cache.asteroids = event.data.asteroids;
+      updateAsteroidPositions(cache.asteroids?.orbitals, event.data.elapsed);
       break;
     case 'updatePlanetPositions':
-      updatePlanetPositions(event.data.planets, event.data.elapsed);
+      if (event.data.planets) cache.planets = event.data.planets;
+      updatePlanetPositions(cache.planets?.orbitals, event.data.elapsed);
       break;
     case 'rebuildTerrainGeometry':
       if (event.data.asteroid) cache.asteroid = event.data.asteroid;
@@ -40,18 +44,20 @@ const initGpuAssets = function(data) {
   postMessage({ topic: 'initedGpuAssets' });
 };
 
-const updateAsteroidPositions = function(asteroids, elapsed = 0) {
+const updateAsteroidPositions = function(orbitals, elapsed = 0) {
+  const positions = utils.getUpdatedAsteroidPositions(orbitals, elapsed);
   postMessage({
     topic: 'asteroidPositions',
-    positions: utils.getUpdatedAsteroidPositions(asteroids, elapsed)
-  });
+    positions
+  }, [positions.buffer]);
 };
 
-const updatePlanetPositions = function(planets, elapsed = 0) {
+const updatePlanetPositions = function(orbitals, elapsed = 0) {
+  const positions = utils.getUpdatedPlanetPositions(orbitals, elapsed);
   postMessage({
     topic: 'planetPositions',
-    positions: utils.getUpdatedPlanetPositions(planets, elapsed)
-  });
+    positions
+  }, [positions.buffer]);
 };
 
 // TODO: remove debug

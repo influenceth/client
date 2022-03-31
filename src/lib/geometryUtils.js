@@ -2,21 +2,25 @@ import { KeplerianOrbit } from 'influence-utils';
 
 import constants from '~/lib/constants';
 
-export const getUpdatedAsteroidPositions = function(asteroidsData, elapsed = 0) {
-  const positions = asteroidsData.map(a => {
-    const coords = (new KeplerianOrbit(a.orbital)).getPositionAtTime(elapsed);
-    return Object.keys(coords).map((key, i) => coords[key] *= constants.AU);
+export const getUpdatedAsteroidPositions = function(orbitals, elapsed = 0) {
+  const positions = new Float32Array(orbitals.length * 3);
+  orbitals.forEach((orbital, i) => {
+    const coords = (new KeplerianOrbit(orbital)).getPositionAtTime(elapsed);
+    positions[i * 3 + 0] = coords.x * constants.AU;
+    positions[i * 3 + 1] = coords.y * constants.AU;
+    positions[i * 3 + 2] = coords.z * constants.AU;
   });
-
-  return [].concat.apply([], positions);
+  return positions;
 };
 
-export const getUpdatedPlanetPositions = function(planets, elapsed = 0) {
-  const positions = planets.map(p => {
-    const coords = (new KeplerianOrbit(p.orbital)).getPositionAtTime(elapsed);
-    return Object.keys(coords).map((key, i) => coords[key] *= constants.AU);
+export const getUpdatedPlanetPositions = function(orbitals, elapsed = 0) {
+  const positions = new Float32Array(orbitals.length * 3);
+  orbitals.forEach((orbital, i) => {
+    const coords = (new KeplerianOrbit(orbital)).getPositionAtTime(elapsed);
+    positions[i * 3 + 0] = coords.x * constants.AU;
+    positions[i * 3 + 1] = coords.y * constants.AU;
+    positions[i * 3 + 2] = coords.z * constants.AU;
   });
-
-  return [].concat.apply([], positions);
+  return positions;
 };
 

@@ -6,8 +6,9 @@ import { CSMHelper } from 'three/examples/jsm/csm/CSMHelper';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
 
-import useStore, { middleware } from '~/hooks/useStore';
+import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
+import useGetTime from '~/hooks/useGetTime';
 import useWebWorker from '~/hooks/useWebWorker';
 import Config from '~/lib/asteroidConfig';
 import constants from '~/lib/constants';
@@ -86,15 +87,15 @@ let terrainUpdateStart; // TODO: remove
 const Asteroid = (props) => {
   const { camera, controls, gl, raycaster, scene } = useThree();
   const origin = useStore(s => s.asteroids.origin);
-  const time = useStore(s => s.time.precise);
-  const { textureSize } = middleware.terrainQuality(useStore(s => s.graphics.textureQuality));
-  const { shadowSize, shadowMode } = middleware.shadowQuality(useStore(s => s.graphics.shadowQuality));
+  const { textureSize } = useStore(s => s.getTerrainQuality());
+  const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const { data: asteroidData } = useAsteroid(origin);
 
+  const getTime = useGetTime();
   const webWorkerPool = useWebWorker();
 
   const [config, setConfig] = useState();
@@ -181,6 +182,7 @@ const Asteroid = (props) => {
       setConfig(c);
 
       // init orbit, position, and rotation
+      const time = getTime();
       asteroidOrbit.current = new KeplerianOrbit(asteroidData.orbital);
       rotationAxis.current = c.seed.clone().normalize();
       position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU);
@@ -464,6 +466,7 @@ const Asteroid = (props) => {
 
     // vvv BENCHMARK <1ms
     // update asteroid position
+    const time = getTime();
     if (asteroidOrbit.current && time) {
       position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU);
 
