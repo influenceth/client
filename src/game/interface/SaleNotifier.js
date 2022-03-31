@@ -24,6 +24,7 @@ const SaleNotifier = (props) => {
   useEffect(() => {
     if (!Number.isInteger(soldCount)) return;
 
+    // Use original sale value to support testnet usage
     const endCount = sale.endCount || 1859;
 
     // Sale starts in the future. Wait for the time until it starts and set to starting
@@ -45,6 +46,7 @@ const SaleNotifier = (props) => {
 
   useEffect(() => {
     if (status === 'started') {
+      // Use original sale value to support testnet usage
       const endCount = sale.endCount || 1859;
 
       saleStarted();
