@@ -53,7 +53,7 @@ const TimeControl = (props) => {
       const selectedSpeed = speeds[Math.abs(speedSetting)] * dir;
       dispatchTimeOverride(getTime(), selectedSpeed);
     }
-  }, [ dispatchTimeOverride, getTime, speedSetting ]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ speedSetting ]);  // eslint-disable-line react-hooks/exhaustive-deps
   
   const adaliaTime = `${displayTime} days since Arrival`;
   const actualTime = realWorldTime.toLocaleString([], {
