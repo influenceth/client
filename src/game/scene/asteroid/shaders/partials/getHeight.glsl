@@ -82,6 +82,7 @@ float getFeatures(vec3 p, int octaves) {
 
 vec4 getHeight(vec2 flipY, int skipPasses) {
   int modPasses = max(0, uExtraPasses - skipPasses);
+  float uCoarseDispFraction = 1.0 - uFineDispFraction;
 
   // Standardize to unit radius spherical coordinates
   vec3 point = getUnitSphereCoords(flipY);
@@ -89,8 +90,10 @@ vec4 getHeight(vec2 flipY, int skipPasses) {
   // Get course displacement
   float disp = getDisplacement(point, uDispPasses + modPasses); // 1 to -1
 
-  // Get final coarse point location
-  point = point * (1.0 + normalizeNoise(disp) * uDispWeight) * uStretch;
+  // Get final coarse point location (NOTE: the commented out version is technically
+  // incorrect (and appearance of "stretching" on craters), but is closer to legacy sampling)
+  //point = point * (1.0 + normalizeNoise(disp) * uDispWeight) * uStretch;
+   point = point * (1.0 + disp * uCoarseDispFraction * uDispWeight) * uStretch;
 
   // Get topography and features
   float topo = getTopography(point, uTopoDetail + modPasses); // -1 to 1
@@ -100,8 +103,7 @@ vec4 getHeight(vec2 flipY, int skipPasses) {
   float fine = (topo * uTopoWeight + features * 2.0) / (uTopoWeight + 2.0); // -1 to 1
 
   // Get total displacement
-  float fineWeight = 0.15;
-  float height = normalizeNoise((1.0 - fineWeight) * disp + fineWeight * fine);
+  float height = normalizeNoise(uCoarseDispFraction * disp + uFineDispFraction * fine);
 
   // Encode height and disp in different channels
   // r, g: used in displacement map

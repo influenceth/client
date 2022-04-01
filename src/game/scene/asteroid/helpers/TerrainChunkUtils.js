@@ -116,6 +116,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uEdgeStrideW: { type: 'f', value: edgeStrides.W },
       uExtraPasses: { type: 'i', value: extraPasses },
       uFeaturesFreq: { type: 'f', value: config.featuresFreq },
+      uFineDispFraction: { type: 'f', value: config.fineDispFraction },
       uOversampling: { type: 'b', value: oversample },
       uResolution: { type: 'f', value: chunkResolution },
       uRimVariation: { type: 'f', value: config.rimVariation },
@@ -173,16 +174,14 @@ export function generateColorMap(heightMap, chunkResolution, oversample, config,
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-export function generateNormalMap(heightMap, chunkResolution, chunkWidth, compatibilityScalar, oversample, config, returnType = 'bitmap') {
+export function generateNormalMap(heightMap, chunkResolution, chunkWidth, oversample, config, returnType = 'bitmap') {
   const material = new ShaderMaterial({
     extensions: { derivatives: true },
     fragmentShader: normalShader,
     uniforms: {
       tHeightMap: { type: 't', value: heightMap },
       uChunkWidth: { type: 'f', value: chunkWidth },
-      uCompatibilityScalar: { type: 'f', value: compatibilityScalar },
       uDisplacementScale: { type: 'f', value: 2 * config.radius * config.dispWeight },
-      uNormalIntensity: { type: 'f', value: config.normalIntensity },
       uOversampling: { type: 'b', value: oversample },
       uResolution: { type: 'f', value: chunkResolution },
     }
@@ -321,16 +320,6 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
   // i.e. each zoom level adds a pass
   const extraPasses = Math.ceil(Math.log2(1 / chunkSize) + (resolution / CHUNK_RESOLUTION) - 1);
 
-  // meant to match normal intensity of dynamic resolution asteroids to legacy
-  // fixed resolution asteroids (height difference between neighbor samples is
-  // used to calculate normal, but now that width is variable b/w samples, so
-  // need to accomodate that dynamicism for consistent "slope")
-  //  NOTE: this targets legacy user settings for resolution-of-512-textures, which
-  //        was consistent across all asteroid sizes... 
-  //  TODO (enhancement): could also standardize betweeen asteroids, but that's different
-  //        than legacy
-  const normalCompatibilityScale = textureResolution / (512 * textureSize);
-
   const heightBitmap = generateHeightMap(
     localToWorld,
     textureSize,
@@ -356,7 +345,6 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
     heightTexture,
     textureResolution,
     textureSize * (2 * config.radius),
-    normalCompatibilityScale,
     OVERSAMPLE_CHUNK_TEXTURES,
     config
   );
@@ -439,7 +427,6 @@ export function applyDisplacementToGeometry(geometry, resolution, radius, displa
     const debugBitmap = generateNormalMap(
       heightTexture,
       textureResolution,
-      normalCompatibilityScale,
       OVERSAMPLE_CHUNK_TEXTURES,
       config,
       {

@@ -3,9 +3,7 @@
 
 uniform sampler2D tHeightMap;
 uniform float uChunkWidth;
-uniform float uCompatibilityScalar;
 uniform float uDisplacementScale;
-uniform float uNormalIntensity;
 uniform bool uOversampling;
 uniform float uResolution;
 

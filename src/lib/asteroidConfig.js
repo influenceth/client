@@ -13,6 +13,8 @@ class Config {
     this.radius = asteroid.radius
     this.bonuses = asteroid.bonuses;
 
+    const dispWeightCoarse = this._dispWeightCoarse();
+    const dispWeightFine = this._dispWeightFine();
     return {
       cleaveCut: this._cleaveCut(),
       cleaveWeight: this._cleaveWeight(),
@@ -24,9 +26,9 @@ class Config {
       dispFreq: this._dispFreq(),
       dispPasses: this._dispPasses(),
       dispPersist: this._dispPersist(),
-      dispWeight: this._dispWeight(),
+      dispWeight: dispWeightCoarse + dispWeightFine,
       featuresFreq: this._featuresFreq(),
-      normalIntensity: this._normalIntensity(),
+      fineDispFraction: dispWeightFine / (dispWeightCoarse + dispWeightFine),
       radius: this._adjustedRadius(),
       radiusNominal: this.radius,
       ringsMinMax: this._ringsMinMax(),
@@ -123,18 +125,22 @@ class Config {
   }
 
   // How much an asteroid should displace out of spherical towards displacement
-  _dispWeight() {
+  _dispWeightCoarse() {
+    // [0.0138,0.3926]
     return (0.275 + this.seedGen.getFloat('dispWeight') / 10) * (1.05 - this._radiusMod())
+  }
+
+  // How much weight for fine-displacement features
+  // NOTE: Earth's deepest crater is 0.3% radius, Moon's is 0.7% radius, so if assuming depth doubles with
+  //       quartering radius, AP should be ~1.4% and lasteroid should be ~22.4%
+  _dispWeightFine() {
+    //return 0.014 / this._radiusMod(0.45); // [0.014,0.200]
+    return 0.018 / this._radiusMod(0.45); // [0.018,0.191]
   }
 
   // Baseline frequency for features like craters and lines. Higher values make noise "noiser"
   _featuresFreq() {
     return 0.5 * this._radiusMod(2) + 2.0;
-  }
-
-  // Determines how prominent the normal mapping shading is. Lower values make for darker / sharper shadows
-  _normalIntensity() {
-    return 0.1 * this._radiusMod(2) + 0.4;
   }
 
   // How much to take the rims of craters out of round. Larger numbers make them less round.
