@@ -51,12 +51,15 @@ const OwnedCrew = (props) => {
         </IconButton>
       </Controls>
       <CrewList>
+        {!mintable && (
+          <ListEmptyMessage><span>Crewmates unavailable for minting.</span></ListEmptyMessage>
+        )}
         {crew?.length === 0 && mintable?.length === 0 && (
-          <ListEmptyMessage><span>No owned crew</span></ListEmptyMessage>
+          <ListEmptyMessage><span>No owned crewmates.</span></ListEmptyMessage>
         )}
         {crew?.length === 0 && mintable?.length > 0 && (
             <ListEmptyMessage>
-              <span>No owned crew. {mintable.length} crew members available to be minted.</span>
+              <span>No owned crewmates, {mintable.length} available to be minted.</span>
             </ListEmptyMessage>
         )}
         {crew?.length > 0 && crew.map(c => <CrewMemberItem key={c.i} crew={c} />)}
