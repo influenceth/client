@@ -76,6 +76,7 @@ class WorkerThreadPool {
   //  worker, but it doesn't hurt anything
   async initGpuAssets(tally) {
     const loader = new ImageBitmapLoader();
+    loader.setOptions({ imageOrientation: 'flipY' });
     for(let i = 0; i < tally; i++) {
       const rampsBitmap = await loader.loadAsync(rampsDataUri);
       this.workers[i].postMessage({

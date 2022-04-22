@@ -76,6 +76,7 @@ export async function initChunkTextures(preloadedBitmap) {
   if (!ramps) {
     if (preloadedBitmap) {
       ramps = new CanvasTexture(preloadedBitmap);
+      ramps.generateMipmaps = false;
     } else {
       let loader;
       try {
@@ -83,7 +84,9 @@ export async function initChunkTextures(preloadedBitmap) {
         ramps = await loader.loadAsync(rampsDataUri);
       } catch (e) {
         loader = new ImageBitmapLoader();
+        loader.setOptions({ imageOrientation: 'flipY' });
         ramps = new CanvasTexture(await loader.loadAsync(rampsDataUri));
+        ramps.generateMipmaps = false;
       }
       ramps.minFilter = NearestFilter;
       ramps.magFilter = NearestFilter;
