@@ -16,6 +16,7 @@ import CrewAssignment from './interface/details/crewAssignments/Assignment';
 import CrewAssignmentComplete from './interface/details/crewAssignments/Complete';
 import CrewAssignments from './interface/details/CrewAssignments';
 import CrewMemberDetails from './interface/details/CrewMemberDetails';
+import ModelViewer from './interface/details/ModelViewer';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
 import RouteDetails from './interface/details/RouteDetails';
@@ -109,6 +110,9 @@ const Interface = () => {
           </Route>
           <Route path="/crew/:i(\d+)">
             <CrewMemberDetails />
+          </Route>
+          <Route path="/viewer">
+            <ModelViewer />
           </Route>
           <Route path="/watchlist">
             <WatchlistTable />
