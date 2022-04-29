@@ -19,7 +19,7 @@ const Draggables = () => {
     return () => {
       document.removeEventListener('keydown', openDraggableOnKeydown);
     }
-  }, []);
+  }, [openDraggableOnKeydown]);
   // ^^^
 
   return Object.keys(draggables).map((id) => {

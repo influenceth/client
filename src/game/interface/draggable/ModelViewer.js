@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, Suspense } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Box3, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -100,7 +100,9 @@ const Model = ({ url, onLoaded }) => {
     return () => {
       scene.remove(model.current);
     }
-  }, [url]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onLoaded, url]);
 
   return null;
 }

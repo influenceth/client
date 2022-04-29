@@ -114,11 +114,11 @@ const DraggableModal = ({ draggableId, ...props }) => {
       y: 100 * Math.min(Math.max(0, e.nativeEvent.y - draggingFrom.y), window.innerHeight - e.target.clientHeight) / window.innerHeight,
     });
     setDraggingFrom();
-  }, [draggingFrom]);
+  }, [dispatchDraggableMoved, draggableId, draggingFrom]);
 
   const handleMouseDown = useCallback((e) => {
     dispatchDraggableToFront(draggableId);
-  }, [draggableId]);
+  }, [dispatchDraggableToFront, draggableId]);
 
   const { title, contentProps = {}, draggableData, ...restProps } = props;
 
