@@ -7,6 +7,7 @@ import LoadingAnimation from 'react-spinners/BarLoader';
 import useSale from '~/hooks/useSale';
 import useScreenSize from '~/hooks/useScreenSize';
 import Alerts from './interface/Alerts';
+import Draggables from './interface/Draggables';
 import MainMenu from './interface/MainMenu';
 import Outliner from './interface/Outliner';
 import SaleNotifier from './interface/SaleNotifier';
@@ -16,7 +17,6 @@ import CrewAssignment from './interface/details/crewAssignments/Assignment';
 import CrewAssignmentComplete from './interface/details/crewAssignments/Complete';
 import CrewAssignments from './interface/details/CrewAssignments';
 import CrewMemberDetails from './interface/details/CrewMemberDetails';
-import ModelViewer from './interface/details/ModelViewer';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
 import RouteDetails from './interface/details/RouteDetails';
@@ -111,9 +111,6 @@ const Interface = () => {
           <Route path="/crew/:i(\d+)">
             <CrewMemberDetails />
           </Route>
-          <Route path="/viewer">
-            <ModelViewer />
-          </Route>
           <Route path="/watchlist">
             <WatchlistTable />
           </Route>
@@ -127,6 +124,7 @@ const Interface = () => {
         <MainMenu />
       </MainContainer>
       <Outliner />
+      <Draggables />
     </StyledInterface>
   );
 };

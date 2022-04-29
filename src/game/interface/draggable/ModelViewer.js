@@ -3,16 +3,16 @@ import { Box3, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { useCubeTexture } from '@react-three/drei';
-import { useLoader, useThree, Canvas } from '@react-three/fiber';
+import { useThree, Canvas } from '@react-three/fiber';
 import { RiRefreshLine as SwitcherIcon } from 'react-icons/ri';
 import BarLoader from 'react-spinners/BarLoader';
-import styled, { css } from 'styled-components';
+import { css } from 'styled-components';
 
-import useStore from '~/hooks/useStore';
-import Details from '~/components/Details';
+import DraggableModal from '~/components/DraggableModal';
 
 const loader = new GLTFLoader();
 
+// TODO: remove these placeholders from assets
 const models = [
   'DamagedHelmet',
   'Ammonia',
@@ -117,16 +117,9 @@ const Skybox = (props) => {
   return null;
 };
 
-const ModelViewer = (props) => {
+const ModelViewer = ({ draggableId }) => {
   const [i, setI] = useState(0);
   const [loadingModel, setLoadingModel] = useState(true);
-
-  // TODO:
-  //  - generic draggable modal
-  //  - specific mockup for this modal:
-  //    https://app.asana.com/0/1201175948505706/1202191784285132/f
-
-  // TODO: add "settings" section, only visible in local and devnet, with button to open modal  
 
   const toggleI = useCallback(() => {
     setLoadingModel(true);
@@ -138,7 +131,7 @@ const ModelViewer = (props) => {
   }, []);
 
   return (
-    <Details title={(
+    <DraggableModal draggableId={draggableId} title={(
       <div style={{ alignItems: 'center', display: 'flex' }}>
         <div style={{ marginRight: 8 }}>Model Viewer</div>
         <SwitcherIcon onClick={toggleI} />
@@ -149,8 +142,8 @@ const ModelViewer = (props) => {
         <ambientLight intensity={1.0} />
         <Skybox />
       </Canvas>
-      <BarLoader color="#333" loading={loadingModel} css={loadingCss} />
-    </Details>
+      <BarLoader color="#777" height="3" loading={loadingModel} css={loadingCss} />
+    </DraggableModal>
   );
 };
 

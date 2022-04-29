@@ -42,7 +42,7 @@ const Game = (props) => {
     if (!gpuInfo) return;
 
     if (!gpuInfo.isMobile) {
-      setShowScene(true)
+      setShowScene(true);
 
       if (gpuInfo.tier === 0) {
         createAlert({
