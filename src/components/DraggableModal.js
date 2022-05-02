@@ -32,6 +32,10 @@ const Container = styled.div`
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     background-color: ${p => p.theme.colors.mobileBackground};
     backdrop-filter: none;
+    height: 100vh;
+    max-height: none;
+    max-width: none;
+    width: 100vw;
   }
 `;
 
@@ -48,6 +52,7 @@ const Header = styled.div`
   z-index: 1;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    border-left-width: 5px;
     padding-left: 20px;
   }
 `;
@@ -77,7 +82,7 @@ const Content = styled.div`
   background: rgba(255,255,255,0.15);
   max-height: calc(80vh - 40px);
   padding: 8px;
-  min-width: 0;
+  min-width: 0; 
   overflow-y: auto;
   position: relative;
   scrollbar-width: thin;
@@ -85,6 +90,8 @@ const Content = styled.div`
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding: 0;
+    height: calc(100vh - 40px);
+    max-height: none;
   }
 `;
 
@@ -129,6 +136,8 @@ const DraggableModal = ({ draggableId, ...props }) => {
 
   const { title, contentProps = {}, draggableData, ...restProps } = props;
 
+  // TODO: on some mobile devices, might be good to actually disable draggable / drag events,
+  //  but doesn't actually seem possible to drag on mobile emulator at least
   return (
     <Wrapper
       draggable

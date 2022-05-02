@@ -6,7 +6,7 @@ import { useCubeTexture } from '@react-three/drei';
 import { useThree, Canvas } from '@react-three/fiber';
 import { RiRefreshLine as SwitcherIcon } from 'react-icons/ri';
 import BarLoader from 'react-spinners/BarLoader';
-import { css } from 'styled-components';
+import styled, { css } from 'styled-components';
 
 import DraggableModal from '~/components/DraggableModal';
 
@@ -19,6 +19,19 @@ const models = [
   'Soldier',
   'Xenotime',
 ];
+
+const CanvasContainer = styled.div`
+  height: 400px;
+  max-height: calc(80vh - 56px);
+  max-width: calc(80vw - 16px);
+  width: 400px;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    height: 100%;
+    max-height: none;
+    max-width: none;
+    width: 100%;
+  }
+`;
 
 const loadingCss = css`
   left: 0;
@@ -142,11 +155,13 @@ const ModelViewer = ({ draggableId }) => {
         <SwitcherIcon onClick={toggleI} />
       </div>
     )}>
-      <Canvas style={{ height: 400, maxHeight: 'calc(80vh - 56px)', width: 400, maxWidth: 'calc(80vw - 16px)' }}>
-        <Model url={`/models/${models[i]}.glb`} onLoaded={handleLoaded} />
-        <ambientLight intensity={1.0} />
-        <Skybox />
-      </Canvas>
+      <CanvasContainer>
+        <Canvas style={{ height: '100%', width: '100%' }}>
+          <Model url={`/models/${models[i]}.glb`} onLoaded={handleLoaded} />
+          <ambientLight intensity={1.0} />
+          <Skybox />
+        </Canvas>
+      </CanvasContainer>
       <BarLoader color="#777" height={3} loading={loadingModel} css={loadingCss} />
     </DraggableModal>
   );
