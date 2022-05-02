@@ -9,10 +9,10 @@ const Wrapper = styled.div`
   height: 400px;
   left: ${p => p.position?.x || 0}%;
   max-width: 100%;
+  opacity: ${p => p.isDragging ? '0' : '1'};
   overflow: hidden;
   position: fixed;
   top: ${p => p.position?.y || 0}%;
-  visibility: ${p => p.isDragging ? 'hidden' : 'visible'};
   width: 400px;
   z-index: ${p => (p.draggableIndex || 0) + 100};
 
@@ -38,20 +38,40 @@ const Container = styled.div`
 `;
 
 const headerHeight = 40;
-const Header = styled.h1`
+const Header = styled.div`
+  align-items: center;
   border-left: 3px solid ${p => p.theme.colors.main};
   cursor: ${p => p.theme.cursors.active};
-  font-size: 20px;
-  font-weight: 400;
+  display: flex;
+  flex-direction: row;
   height: ${headerHeight}px;
-  line-height: ${headerHeight}px;
   padding: 0 0 0 20px;
   position: relative;
-  margin: 0;
   z-index: 1;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding-left: 20px;
+  }
+`;
+
+const Title = styled.h1`
+  flex: 1;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: ${headerHeight}px;
+  margin: 0;
+`;
+
+const CloseButton = styled(IconButton)`
+  border: 0;
+  height: 24px;
+  margin-right: 10px;
+  padding: 2px;
+  width: 24px;
+  z-index: 1;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    right: 0;
   }
 `;
 
@@ -67,17 +87,6 @@ const Content = styled.div`
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding: 0;
-  }
-`;
-
-const CloseButton = styled(IconButton)`
-  position: absolute !important;
-  top: 5px;
-  right: -4px;
-  z-index: 1;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    right: 0;
   }
 `;
 
@@ -133,10 +142,12 @@ const DraggableModal = ({ draggableId, ...props }) => {
       draggableIndex={draggableIndex}
       {...restProps}>
       <Container {...restProps}>
-        {title && <Header>{title}</Header>}
-        <CloseButton onClick={() => dispatchDraggableClose(draggableId)} {...undraggable}>
-          <CloseIcon />
-        </CloseButton>
+        <Header>
+          {title && <Title>{title}</Title>}
+          <CloseButton onClick={() => dispatchDraggableClose(draggableId)} {...undraggable}>
+            <CloseIcon />
+          </CloseButton>
+        </Header>
         <Content {...contentProps} {...undraggable}>
           {props.children}
         </Content>
