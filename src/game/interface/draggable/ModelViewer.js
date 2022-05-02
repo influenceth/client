@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box3, Vector3 } from 'three';
+import { Box3, Vector3, AxesHelper } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { useCubeTexture } from '@react-three/drei';
@@ -34,7 +34,16 @@ const Model = ({ url, onLoaded }) => {
   const controls = useRef();
   const model = useRef();
 
-  // init the camera
+  // init the camera (reset when url changes)
+  useEffect(() => {
+    camera.position.set(0, 0, 1);
+    camera.up.set(0, 1, 0);
+    if (controls.current) {
+      controls.current.update();
+    }
+  }, [url]);
+
+  // init orbitcontrols
   useEffect(() => {
     controls.current = new OrbitControls(camera, gl.domElement);
 
@@ -46,12 +55,6 @@ const Model = ({ url, onLoaded }) => {
       controls.current.dispose();
     };
   }, [camera, gl]);
-
-  // reset camera on url change
-  useEffect(() => {
-    controls.current.object.position.set(0, 0, 1.0);
-    controls.current.update();
-  }, [url]);
 
   // load the model on url change
   useEffect(() => {
@@ -139,12 +142,12 @@ const ModelViewer = ({ draggableId }) => {
         <SwitcherIcon onClick={toggleI} />
       </div>
     )}>
-      <Canvas>
+      <Canvas style={{ height: 400, maxHeight: 'calc(80vh - 56px)', width: 400, maxWidth: 'calc(80vw - 16px)' }}>
         <Model url={`/models/${models[i]}.glb`} onLoaded={handleLoaded} />
         <ambientLight intensity={1.0} />
         <Skybox />
       </Canvas>
-      <BarLoader color="#777" height="3" loading={loadingModel} css={loadingCss} />
+      <BarLoader color="#777" height={3} loading={loadingModel} css={loadingCss} />
     </DraggableModal>
   );
 };

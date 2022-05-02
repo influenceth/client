@@ -6,14 +6,11 @@ import { CloseIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
 
 const Wrapper = styled.div`
-  height: 400px;
   left: ${p => p.position?.x || 0}%;
-  max-width: 100%;
   opacity: ${p => p.isDragging ? '0' : '1'};
   overflow: hidden;
   position: fixed;
   top: ${p => p.position?.y || 0}%;
-  width: 400px;
   z-index: ${p => (p.draggableIndex || 0) + 100};
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
@@ -26,7 +23,8 @@ const Container = styled.div`
   backdrop-filter: blur(4px);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  max-height: 80vh;
+  max-width: 80vw;
   overflow: hidden;
   pointer-events: auto;
   position: relative;
@@ -77,7 +75,7 @@ const CloseButton = styled(IconButton)`
 
 const Content = styled.div`
   background: rgba(255,255,255,0.15);
-  flex: 1 1 0;
+  max-height: calc(80vh - 40px);
   padding: 8px;
   min-width: 0;
   overflow-y: auto;
