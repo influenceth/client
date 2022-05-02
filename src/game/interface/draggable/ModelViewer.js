@@ -49,7 +49,10 @@ const Model = ({ url, onLoaded }) => {
 
   // init the camera (reset when url changes)
   useEffect(() => {
-    camera.position.set(0, 0, 1);
+    // TODO (enhancement): on mobile, aspect ratio is such that zoomed out to 1 may
+    //  not have view of full width of 1.0 at 0,0,0... so on mobile, should probably
+    //  set this to 1.5+
+    camera.position.set(0, 0, 1.5);
     camera.up.set(0, 1, 0);
     if (controls.current) {
       controls.current.update();
@@ -135,6 +138,7 @@ const Skybox = (props) => {
   return null;
 };
 
+// TODO (enhancement): on resize, make sure dialogs still entirely on screen
 const ModelViewer = ({ draggableId }) => {
   const [i, setI] = useState(0);
   const [loadingModel, setLoadingModel] = useState(true);

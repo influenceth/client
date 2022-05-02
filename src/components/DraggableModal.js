@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import IconButton from '~/components/IconButton';
@@ -127,6 +127,8 @@ const DraggableModal = ({ draggableId, ...props }) => {
       x: 100 * Math.min(Math.max(0, e.nativeEvent.x - draggingFrom.x), window.innerWidth - e.target.clientWidth) / window.innerWidth,
       y: 100 * Math.min(Math.max(0, e.nativeEvent.y - draggingFrom.y), window.innerHeight - e.target.clientHeight) / window.innerHeight,
     });
+    // TODO: this causes race condition b/w local and app-level states (which
+    //  sometimes makes modal reappear in old position before jumping to new)
     setDraggingFrom();
   }, [dispatchDraggableMoved, draggableId, draggingFrom]);
 
