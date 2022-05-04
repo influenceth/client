@@ -78,7 +78,7 @@ const Game = (props) => {
                 <LandingPage />
               </Route>
               <Route>
-                {introEnabled && <Intro onVideoComplete={onIntroComplete} />}
+                {introEnabled && <Intro onComplete={onIntroComplete} />}
                 <StyledMain>
                   <Interface />
                   {showScene && <Scene />}
