@@ -1,6 +1,7 @@
 import { useCallback, useContext, useMemo } from 'react';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import useSale from '~/hooks/useSale';
 
 const useBuyAsteroid = (i) => {
   const { execute, getStatus } = useContext(ChainTransactionContext);
