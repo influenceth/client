@@ -1,56 +1,29 @@
-import { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from 'react-query';
-import { useWeb3React } from '@web3-react/core';
-import { ethers } from 'ethers';
-import { contracts } from 'influence-utils';
+import { useCallback, useContext, useMemo } from 'react';
 
-import useStore from '~/hooks/useStore';
+import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useSale from '~/hooks/useSale';
 
 const useBuyAsteroid = (i) => {
-  const queryClient = useQueryClient();
-  const { account, library } = useWeb3React();
-  const [ contract, setContract ] = useState();
+  const { execute, getStatus } = useContext(ChainTransactionContext);
   const { data: sale } = useSale();
-  const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  // Sets up contract object with appropriate provider
-  useEffect(() => {
-    const provider = !!account ? library.getSigner(account) : library;
-    let address = process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE;
-    let contract = contracts.ArvadCrewSale;
+  // BUY_ASTEROID_1ST_SALE references fisrt sale to support testnet usage
+  const contractKey = sale && !sale.endCount ? 'BUY_ASTEROID_1ST_SALE' : 'BUY_ASTEROID';
 
-    // Uses the first sale to support testnet usage
-    if (!!sale && !sale.endCount) {
-      address = process.env.REACT_APP_CONTRACT_ASTEROID_SALE;
-      contract = contracts.AsteroidSale;
-    }
+  const buyAsteroid = useCallback(
+    () => execute(contractKey, { i }),
+    [execute, contractKey, i]
+  );
 
-    const newContract = new ethers.Contract(address, contract, provider);
-    setContract(newContract);
-  }, [ account, library, sale ]);
+  const status = useMemo(
+    () => getStatus(contractKey, { i }),
+    [getStatus, contractKey, i]
+  );
 
-  return useMutation(async () => {
-    const price = await contract.getAsteroidPrice(i);
-    const tx = await contract.buyAsteroid(i, { value: price });
-    const receipt = await tx.wait();
-    return receipt;
-  }, {
-    enabled: !!contract && !!account,
-
-    onError: (err, vars, context) => {
-      console.error(err, i, context);
-      createAlert({
-        type: 'Asteroid_BuyingError',
-        level: 'warning',
-        i: i, timestamp: Math.round(Date.now() / 1000)
-      });
-    },
-
-    onSuccess: () => {
-      setTimeout(() => queryClient.invalidateQueries('events'), 1000);
-    }
-  });
+  return {
+    buyAsteroid,
+    buying: status === 'pending'
+  };
 };
 
 export default useBuyAsteroid;

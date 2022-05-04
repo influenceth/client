@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
 import utils from 'influence-utils';
@@ -9,8 +9,7 @@ import useSale from '~/hooks/useSale';
 import useAsteroid from '~/hooks/useAsteroid';
 import useBuyAsteroid from '~/hooks/useBuyAsteroid';
 import useCreateReferral from '~/hooks/useCreateReferral';
-import useStartAsteroidScan from '~/hooks/useStartAsteroidScan';
-import useFinalizeAsteroidScan from '~/hooks/useFinalizeAsteroidScan';
+import useScanAsteroid from '~/hooks/useScanAsteroid';
 import useNameAsteroid from '~/hooks/useNameAsteroid';
 import Details from '~/components/Details';
 import Form from '~/components/Form';
@@ -154,69 +153,49 @@ const StyledResourceMix = styled(ResourceMix)`
 `;
 
 const scanMessages = {
-  unscanned: 'Scanning requires two steps which *must* be mined within ~45 minutes of each other. ' +
+  UNSCANNED: 'Scanning requires two steps which *must* be mined within ~45 minutes of each other. ' +
     'Combined cost is under 140,000 gas.',
-  scanning: 'Scan in progress. Waiting for scan to be ready for retrieval...',
-  scanned: 'Scan ready for retrieval. You *must* finalize scan and have transaction mined ' +
+  SCANNING: 'Scan in progress. Waiting for scan to be ready for retrieval...',
+  SCAN_READY: 'Scan ready for retrieval. You *must* finalize scan and have transaction mined ' +
     'within 256 block (~45 minutes).',
-  retrieving: 'Retrieving resource scan results...'
+  RETRIEVING: 'Retrieving resource scan results...'
 };
 
 const AsteroidDetails = (props) => {
   const { i } = useParams();
-  const history = useHistory();
   const { account } = useWeb3React();
   const { data: sale } = useSale();
   const { data: asteroid } = useAsteroid(Number(i));
-  const buyAsteroid = useBuyAsteroid(Number(i));
   const createReferral = useCreateReferral(Number(i));
-  const startScan = useStartAsteroidScan(Number(i));
-  const finalizeScan = useFinalizeAsteroidScan(Number(i));
-  const nameAsteroid = useNameAsteroid(Number(i));
+  const { buyAsteroid, buying } = useBuyAsteroid(Number(i));
+  const { nameAsteroid, naming } = useNameAsteroid(Number(i));
+  const { startAsteroidScan, finalizeAsteroidScan, scanStatus } = useScanAsteroid(asteroid);
+
   const saleIsActive = useStore(s => s.sale);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchModelDownload = useStore(s => s.dispatchModelDownloadRequested);
-  const [ buying, setBuying ] = useState(false);
-  const [ naming, setNaming ] = useState(false);
   const [ newName, setNewName ] = useState('');
-  const [ scanStatus, setScanStatus ] = useState('unscanned');
-
-  useEffect(() => {
-    if (finalizeScan.isSuccess) {
-      setScanStatus('retrieved');
-    } else if (finalizeScan.isLoading) {
-      setScanStatus('retrieving')
-    } else if (startScan.isSuccess) {
-      setScanStatus('scanned');
-    } else if (startScan.isLoading) {
-      setScanStatus('scanning');
-    } else if (asteroid?.scanned) {
-      setScanStatus('retrieved');
-    } else if (asteroid?.scanning) {
-      setScanStatus('scanned');
-    } else {
-      setScanStatus('unscanned');
-    }
-  }, [ startScan, finalizeScan, asteroid?.scanning, asteroid?.scanned ]);
 
   // Force the asteroid to load into the origin if coming direct from URL
   useEffect(() => {
     if (i) dispatchOriginSelected(Number(i));
   }, [ i, dispatchOriginSelected ]);
 
+  // on asteroid change, reset name input field on asteroid change
   useEffect(() => {
-    if (asteroid?.i) {
-      const url = `/asteroids/${asteroid.i}`;
-      if (history.pathname === url) return;
-      history.push(url);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ asteroid ]);
+    setNewName('');
+  }, [i]);
 
-  const goToOpenSeaAsteroid = (i) => {
+  const updateAsteroidName = useCallback(() => {
+    if (newName) {
+      nameAsteroid(newName);
+    }
+  }, [nameAsteroid, newName]);
+
+  const goToOpenSeaAsteroid = useCallback((i) => {
     const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/${i}`;
     window.open(url, '_blank');
-  };
+  }, []);
 
   return (
     <Details
@@ -237,11 +216,12 @@ const AsteroidDetails = (props) => {
                 </GeneralData>
               )}
               <GeneralData label="Scan Status">
-                {scanStatus === 'unscanned' && 'Un-scanned'}
-                {scanStatus === 'scanning' && 'Starting scan...'}
-                {scanStatus === 'scanned' && 'Awaiting scan results...'}
-                {scanStatus === 'retrieving' && 'Retrieving scan results...'}
-                {scanStatus === 'retrieved' && 'Scan complete'}
+                {scanStatus === 'UNSCANNED' && 'Un-scanned'}
+                {scanStatus === 'SCANNING' && 'Starting scan...'}
+                {scanStatus === 'SCAN_READY' && 'Awaiting scan results...'}
+                {scanStatus === 'RETRIEVING' && 'Retrieving scan results...'}
+                {scanStatus === 'RETRIEVED' && 'Scan complete'}
+                {scanStatus === 'ABANDONED' && '(results unclaimed)'}
               </GeneralData>
               {asteroid.owner && !asteroid.scanned && (
                 <GeneralData label="Scanning Boost">
@@ -256,11 +236,10 @@ const AsteroidDetails = (props) => {
                 <Button
                   data-tip="Purchase development rights"
                   data-for="global"
-                  disabled={!account || !saleIsActive}
+                  disabled={!account || !saleIsActive || buying}
                   loading={buying}
                   onClick={() => {
-                    setBuying(true);
-                    buyAsteroid.mutate(null, { onSettled: () => setBuying(false) });
+                    buyAsteroid();
                     createReferral.mutate();
                   }}>
                   <ClaimIcon /> Purchase
@@ -282,30 +261,30 @@ const AsteroidDetails = (props) => {
                   <ClaimIcon /> List for Sale
                 </Button>
               )}
-              {asteroid.owner && asteroid.owner === account && scanStatus !== 'retrieved' && (
+              {asteroid.owner && asteroid.owner === account && !asteroid.scanned && (
                 <Form
                   title={<><ScanIcon /><span>Resource Scan</span></>}
                   data-tip="Scan surface for resources"
                   data-for="global"
-                  loading={[ 'scanning', 'retrieving' ].includes(scanStatus)}>
+                  loading={[ 'SCANNING', 'RETRIEVING' ].includes(scanStatus)}>
                   <Text>{scanMessages[scanStatus]}</Text>
-                  {[ 'unscanned', 'scanning' ].includes(scanStatus) && (
+                  {[ 'UNSCANNED', 'SCANNING' ].includes(scanStatus) && (
                     <Button
                       data-tip="Scan for resource bonuses"
                       data-for="global"
-                      onClick={() => startScan.mutate()}
-                      loading={scanStatus === 'scanning'}
-                      disabled={asteroid.owner !== account || scanStatus === 'scanning'}>
+                      onClick={() => startAsteroidScan()}
+                      loading={scanStatus === 'SCANNING'}
+                      disabled={asteroid.owner !== account || scanStatus === 'SCANNING'}>
                       <ScanIcon /> Start Scan
                     </Button>
                   )}
-                  {[ 'scanned', 'retrieving' ].includes(scanStatus) && (
+                  {[ 'SCAN_READY', 'RETRIEVING' ].includes(scanStatus) && (
                     <Button
                       data-tip="Retrieve scan results"
                       data-for="global"
-                      onClick={() => finalizeScan.mutate()}
-                      loading={scanStatus === 'retrieving'}
-                      disabled={asteroid.owner !== account || scanStatus === 'retrieving'}>
+                      onClick={() => finalizeAsteroidScan()}
+                      loading={scanStatus === 'RETRIEVING'}
+                      disabled={asteroid.owner !== account || scanStatus === 'RETRIEVING'}>
                       <ScanIcon /> Finalize Scan
                     </Button>
                   )}
@@ -320,17 +299,16 @@ const AsteroidDetails = (props) => {
                   <Text>Names must be unique, and can only include letters, numbers, and single spaces.</Text>
                   <NameForm>
                     <TextInput
-                      pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
-                      initialValue=""
                       disabled={naming}
+                      initialValue=""
+                      pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                      resetOnChange={i}
                       onChange={(v) => setNewName(v)} />
                     <IconButton
                       data-tip="Submit"
                       data-for="global"
-                      onClick={() => {
-                        setNaming(true);
-                        nameAsteroid.mutate({ name: newName }, { onSettled: () => setNaming(false) });
-                      }}>
+                      disabled={naming}
+                      onClick={updateAsteroidName}>
                       <CheckCircleIcon />
                     </IconButton>
                   </NameForm>
