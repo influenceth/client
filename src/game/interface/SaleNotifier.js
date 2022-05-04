@@ -22,7 +22,10 @@ const SaleNotifier = (props) => {
   }, status === 'starting' ? 1000 : null);
 
   useEffect(() => {
-    if (!soldCount) return;
+    if (!Number.isInteger(soldCount)) return;
+
+    // Use original sale value to support testnet usage
+    const endCount = sale.endCount || 1859;
 
     // Sale starts in the future. Wait for the time until it starts and set to starting
     if (sale.saleStartTime > Date.now() / 1000) {
@@ -32,21 +35,24 @@ const SaleNotifier = (props) => {
     }
 
     // Sale has started. Start polling blockchain to make sure block time is ready
-    if (sale.saleStartTime < Date.now() / 1000 && soldCount < sale.endCount && status !== 'started') {
+    if (sale.saleStartTime < Date.now() / 1000 && soldCount < endCount && status !== 'started') {
       setStatus('starting');
     }
 
     // Sale has already ended.
-    if (sale.saleStartTime < Date.now() / 1000 && soldCount >= sale.endCount) setStatus('ended');
+    if (sale.saleStartTime < Date.now() / 1000 && soldCount >= endCount) setStatus('ended');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ sale, soldCount ]);
 
   useEffect(() => {
     if (status === 'started') {
+      // Use original sale value to support testnet usage
+      const endCount = sale.endCount || 1859;
+
       saleStarted();
       createAlert({
         type: 'Sale_Started',
-        available: sale.endCount - soldCount
+        available: endCount - soldCount
       });
     }
 

@@ -52,6 +52,28 @@ const getContracts = (queryClient) => ({
       timestamp: Math.round(Date.now() / 1000)
     })
   },
+  'BUY_ASTEROID_1ST_SALE': {
+    address: process.env.REACT_APP_CONTRACT_ASTEROID_SALE,
+    config: configs.AsteroidSale,
+    transact: (contract) => async ({ i, name }) => {
+      const price = await contract.getAsteroidPrice(i);
+      return contract.buyAsteroid(i, { value: price });
+    },
+    onSuccess: (receipt, { i, name }) => {
+      queryClient.invalidateQueries('asteroids', i);
+      queryClient.invalidateQueries('asteroids', 'mintableCrew');
+      queryClient.invalidateQueries('asteroids', 'ownedCount');
+      queryClient.invalidateQueries('asteroids', 'search');
+      queryClient.invalidateQueries('events');
+      queryClient.invalidateQueries('watchlist');
+    },
+    getErrorAlert: ({ i }) => ({
+      type: 'Asteroid_BuyingError',
+      level: 'warning',
+      i,
+      timestamp: Math.round(Date.now() / 1000)
+    })
+  },
   'START_ASTEROID_SCAN': {
     address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
     config: configs.AsteroidScans,
