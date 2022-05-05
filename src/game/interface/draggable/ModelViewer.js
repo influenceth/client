@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box3, Vector3, AxesHelper } from 'three';
+import { Box3, EquirectangularReflectionMapping, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { useCubeTexture } from '@react-three/drei';
-import { useThree, Canvas } from '@react-three/fiber';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
+import { useFrame, useThree, Canvas } from '@react-three/fiber';
 import { RiRefreshLine as SwitcherIcon } from 'react-icons/ri';
 import BarLoader from 'react-spinners/BarLoader';
 import styled, { css } from 'styled-components';
@@ -57,7 +57,7 @@ const Model = ({ url, onLoaded }) => {
     if (controls.current) {
       controls.current.update();
     }
-  }, [url]);
+  }, [url]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // init orbitcontrols
   useEffect(() => {
@@ -123,18 +123,33 @@ const Model = ({ url, onLoaded }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onLoaded, url]);
 
+  useFrame(() => {
+    if (model.current) {
+      model.current.rotation.y += 0.005;
+    }
+  });
+
   return null;
 }
 
 const Skybox = (props) => {
   const { scene } = useThree();
 
-  const skybox = useCubeTexture([
-    'sky_pos_x.jpg', 'sky_neg_x.jpg', 'sky_pos_y.jpg', 'sky_neg_y.jpg', 'sky_pos_z.jpg', 'sky_neg_z.jpg'
-  ], { path: `${process.env.PUBLIC_URL}/textures/skybox/`});
+  useEffect(() => {
+    let cleanupTexture;
+    new RGBELoader().load('textures/model-viewer/studio_small.hdr', function (texture) {
+      cleanupTexture = texture;
+      texture.mapping = EquirectangularReflectionMapping;
+      scene.background = texture;
+      scene.environment = texture;
+    });
+    return () => {
+      if (cleanupTexture) {
+        cleanupTexture.dispose();
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  scene.background = skybox;
-  scene.environment = skybox;
   return null;
 };
 
@@ -162,7 +177,6 @@ const ModelViewer = ({ draggableId }) => {
       <CanvasContainer>
         <Canvas style={{ height: '100%', width: '100%' }}>
           <Model url={`/models/${models[i]}.glb`} onLoaded={handleLoaded} />
-          <ambientLight intensity={1.0} />
           <Skybox />
         </Canvas>
       </CanvasContainer>
