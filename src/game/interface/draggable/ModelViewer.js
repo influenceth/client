@@ -132,7 +132,7 @@ const Model = ({ url, onLoaded }) => {
   return null;
 }
 
-const Skybox = (props) => {
+const Skybox = ({ onLoaded }) => {
   const { scene } = useThree();
 
   useEffect(() => {
@@ -142,6 +142,7 @@ const Skybox = (props) => {
       texture.mapping = EquirectangularReflectionMapping;
       scene.background = texture;
       scene.environment = texture;
+      onLoaded();
     });
     return () => {
       if (cleanupTexture) {
@@ -156,6 +157,7 @@ const Skybox = (props) => {
 // TODO (enhancement): on resize, make sure dialogs still entirely on screen
 const ModelViewer = ({ draggableId }) => {
   const [i, setI] = useState(0);
+  const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState(true);
 
   const toggleI = useCallback(() => {
@@ -176,11 +178,11 @@ const ModelViewer = ({ draggableId }) => {
     )}>
       <CanvasContainer>
         <Canvas style={{ height: '100%', width: '100%' }}>
-          <Model url={`/models/${models[i]}.glb`} onLoaded={handleLoaded} />
-          <Skybox />
+          <Skybox onLoaded={() => setLoadingSkybox(false)} />
+          {!loadingSkybox && <Model url={`/models/${models[i]}.glb`} onLoaded={handleLoaded} />}
         </Canvas>
       </CanvasContainer>
-      <BarLoader color="#777" height={3} loading={loadingModel} css={loadingCss} />
+      <BarLoader color="#777" height={3} loading={loadingModel || loadingSkybox} css={loadingCss} />
     </DraggableModal>
   );
 };
