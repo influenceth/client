@@ -66,7 +66,7 @@ const recursivelySetEnvMapIntensity = (model, intensity) => {
 };
 
 const ENV = {
-  bg: 'interior_darkened.hdr',
+  bg: 'courtyard_darkened2.hdr',
   intensity: 1
 };
 
