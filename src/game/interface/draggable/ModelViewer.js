@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box3, EquirectangularReflectionMapping, Vector3 } from 'three';
+import { AxesHelper, Box3, DirectionalLight, DirectionalLightHelper, EquirectangularReflectionMapping, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
@@ -66,8 +66,9 @@ const envOptions = [
   { bg: 'studio.hdr', intensity: 1 },
   { bg: 'studio_darkened.hdr', intensity: 25 },
   { bg: 'studio_darkened2.hdr', intensity: 500 },
+  { bg: 'studio_darkened2.hdr', intensity: 1 },
 ];
-const ENV = envOptions[2];
+const ENV = envOptions[3];
 
 const Model = ({ url, onLoaded }) => {
   const { camera, gl, scene } = useThree();
@@ -99,6 +100,15 @@ const Model = ({ url, onLoaded }) => {
       controls.current.dispose();
     };
   }, [camera, gl]);
+
+  // init axeshelper
+  useEffect(() => {
+    const axesHelper = new AxesHelper(5);
+    //scene.add(axesHelper);
+    return () => {
+      scene.remove(axesHelper);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // load the model on url change
   useEffect(() => {
@@ -133,6 +143,7 @@ const Model = ({ url, onLoaded }) => {
       },
 
       // onprogress
+      // TODO (enhancement): share the below with user
       (xhr) => {
         // console.log((xhr.loaded / xhr.total) * 100 + '% loaded');
       },
@@ -183,6 +194,48 @@ const Skybox = ({ onLoaded }) => {
   return null;
 };
 
+const Lighting = () => {
+  const { scene } = useThree();
+
+
+  useEffect(() => {
+    const sunLight = new DirectionalLight(0xFFFFFF);
+    sunLight.intensity = 0.5;
+    sunLight.position.set(-2, 10, 0);
+    scene.add(sunLight);
+
+    const keyLight = new DirectionalLight(0xFFFFFF);
+    keyLight.intensity = 1.0;
+    keyLight.position.set(-2, 2, 2);
+    scene.add(keyLight);
+
+    const rimLight = new DirectionalLight(0x9ECFFF);
+    rimLight.intensity = 0.25;
+    rimLight.position.set(4, 2, 4);
+    scene.add(rimLight);
+
+    const helper1 = new DirectionalLightHelper(sunLight);
+    // scene.add(helper1);
+
+    const helper2 = new DirectionalLightHelper(keyLight);
+    // scene.add(helper2);
+
+    const helper3 = new DirectionalLightHelper(rimLight);
+    // scene.add(helper3);
+
+    return () => {
+      if (sunLight) scene.remove(sunLight);
+      if (keyLight) scene.remove(keyLight);
+      if (rimLight) scene.remove(rimLight);
+      if (helper1) scene.remove(helper1);
+      if (helper2) scene.remove(helper2);
+      if (helper3) scene.remove(helper3);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return null;
+};
+
 const ModelViewer = ({ draggableId }) => {
   const [openMenu, setOpenMenu] = useState(false);
   const [model, setModel] = useState(models[Math.floor(Math.random() * models.length)]);
@@ -216,6 +269,7 @@ const ModelViewer = ({ draggableId }) => {
         <Canvas style={{ height: '100%', width: '100%' }}>
           <Skybox onLoaded={() => setLoadingSkybox(false)} />
           {!loadingSkybox && <Model url={`https://res.cloudinary.com/influenceth/image/upload/v1651851083/models/${model.slug}`} onLoaded={handleLoaded} />}
+          <Lighting />
         </Canvas>
       </CanvasContainer>
       <BarLoader color="#777" height={3} loading={loadingModel || loadingSkybox} css={loadingCss} />
