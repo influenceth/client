@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AxesHelper, Box3, DirectionalLight, DirectionalLightHelper, EquirectangularReflectionMapping, Vector3 } from 'three';
+import {
+  // AxesHelper, DirectionalLightHelper,
+  Box3, DirectionalLight, EquirectangularReflectionMapping, Vector3
+} from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
@@ -46,11 +49,11 @@ const MenuItem = styled.div`
 `;
 
 const loadingCss = css`
-  left: 0;
+  bottom: 3px;
+  left: 3px;
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 100%;
+  right: 3px;
+  width: calc(100% - 6px);
 `;
 
 const recursivelySetEnvMapIntensity = (model, intensity) => {
@@ -62,13 +65,10 @@ const recursivelySetEnvMapIntensity = (model, intensity) => {
   });
 };
 
-const envOptions = [
-  { bg: 'studio.hdr', intensity: 1 },
-  { bg: 'studio_darkened.hdr', intensity: 25 },
-  { bg: 'studio_darkened2.hdr', intensity: 500 },
-  { bg: 'studio_darkened2.hdr', intensity: 1 },
-];
-const ENV = envOptions[3];
+const ENV = {
+  bg: 'interior_darkened.hdr',
+  intensity: 1
+};
 
 const Model = ({ url, onLoaded }) => {
   const { camera, gl, scene } = useThree();
@@ -81,8 +81,10 @@ const Model = ({ url, onLoaded }) => {
     // TODO (enhancement): on mobile, aspect ratio is such that zoomed out to 1 may
     //  not have view of full width of 1.0 at 0,0,0... so on mobile, should probably
     //  set this to 1.5+
-    camera.position.set(0, 0, 1.5);
+    camera.position.set(0, 0.75, 1.5);
     camera.up.set(0, 1, 0);
+    camera.fov = 50;
+    camera.updateProjectionMatrix();
     if (controls.current) {
       controls.current.update();
     }
@@ -102,13 +104,13 @@ const Model = ({ url, onLoaded }) => {
   }, [camera, gl]);
 
   // init axeshelper
-  useEffect(() => {
-    const axesHelper = new AxesHelper(5);
-    //scene.add(axesHelper);
-    return () => {
-      scene.remove(axesHelper);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // useEffect(() => {
+  //   const axesHelper = new AxesHelper(5);
+  //   scene.add(axesHelper);
+  //   return () => {
+  //     scene.remove(axesHelper);
+  //   };
+  // }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // load the model on url change
   useEffect(() => {
@@ -126,14 +128,23 @@ const Model = ({ url, onLoaded }) => {
         model.current = gltf.scene;
         recursivelySetEnvMapIntensity(model.current, ENV.intensity);
 
+        // console.log('model.current', gltf);
+        // TODO: use gltf.scene.position to position center?
+
         // get bounding box of model
         const bbox = new Box3().setFromObject(model.current);
         const center = bbox.getCenter(new Vector3());
         const size = bbox.getSize(new Vector3());
+        // console.log({
+        //   center, size
+        // });
 
         // update scale (normalize to max dimensional size of 1.0), then adjust to center at 0,0,0
         const scaleValue = 1.0 / Math.max(size.x, size.y, size.z);
         const posValue = new Vector3(center.x, center.y, center.z).multiplyScalar(-scaleValue);
+        // console.log({
+        //   scaleValue, posValue
+        // });
 
         scene.add(model.current);
         model.current.scale.set(scaleValue, scaleValue, scaleValue);
@@ -214,22 +225,14 @@ const Lighting = () => {
     rimLight.position.set(4, 2, 4);
     scene.add(rimLight);
 
-    const helper1 = new DirectionalLightHelper(sunLight);
-    // scene.add(helper1);
-
-    const helper2 = new DirectionalLightHelper(keyLight);
-    // scene.add(helper2);
-
-    const helper3 = new DirectionalLightHelper(rimLight);
-    // scene.add(helper3);
+    // const helper = new DirectionalLightHelper(sunLight);
+    // scene.add(helper);
 
     return () => {
       if (sunLight) scene.remove(sunLight);
       if (keyLight) scene.remove(keyLight);
       if (rimLight) scene.remove(rimLight);
-      if (helper1) scene.remove(helper1);
-      if (helper2) scene.remove(helper2);
-      if (helper3) scene.remove(helper3);
+      // if (helper) scene.remove(helper);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
