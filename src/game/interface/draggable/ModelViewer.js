@@ -14,10 +14,10 @@ import models from '~/lib/models';
 const loader = new GLTFLoader();
 
 const CanvasContainer = styled.div`
-  height: 400px;
+  height: 500px;
   max-height: calc(80vh - 56px);
   max-width: calc(80vw - 16px);
-  width: 400px;
+  width: 500px;
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     height: 100%;
     max-height: none;

@@ -84,7 +84,7 @@ const CloseButton = styled(IconButton)`
 const Content = styled.div`
   background: rgba(255,255,255,0.15);
   max-height: calc(80vh - 40px);
-  padding: 8px;
+  padding: 3px;
   min-width: 0; 
   overflow-y: auto;
   position: relative;
