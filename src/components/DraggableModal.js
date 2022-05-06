@@ -104,6 +104,7 @@ const undraggable = {
   }
 };
 
+// TODO (enhancement): on resize, make sure dialogs still entirely on screen
 const DraggableModal = ({ draggableId, ...props }) => {
   const { index: draggableIndex, position } = useStore(s => s.draggables[draggableId]);
   const dispatchDraggableClose = useStore(s => s.dispatchDraggableClose);

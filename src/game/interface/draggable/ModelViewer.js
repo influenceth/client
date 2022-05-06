@@ -4,21 +4,14 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { useFrame, useThree, Canvas } from '@react-three/fiber';
-import { RiRefreshLine as SwitcherIcon } from 'react-icons/ri';
+import { BiChevronDown as SelectIcon } from 'react-icons/bi';
 import BarLoader from 'react-spinners/BarLoader';
 import styled, { css } from 'styled-components';
 
 import DraggableModal from '~/components/DraggableModal';
+import models from '~/lib/models';
 
 const loader = new GLTFLoader();
-
-// TODO: remove these placeholders from assets
-const models = [
-  'DamagedHelmet',
-  'Ammonia',
-  'Soldier',
-  'Xenotime',
-];
 
 const CanvasContainer = styled.div`
   height: 400px;
@@ -33,6 +26,25 @@ const CanvasContainer = styled.div`
   }
 `;
 
+const Menu = styled.div`
+  background: black;
+  display: ${p => p.isOpen ? 'block' : 'none'};
+  left: 12px;
+  height: 300px;
+  overflow-y: auto;
+  position: absolute;
+  top: 1px;
+  z-index: 1000;
+`;
+
+const MenuItem = styled.div`
+  cursor: ${p => p.theme.cursors.active};
+  padding: 4px 12px;
+  &:hover {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+  }
+`;
+
 const loadingCss = css`
   left: 0;
   position: absolute;
@@ -40,6 +52,22 @@ const loadingCss = css`
   bottom: 0;
   width: 100%;
 `;
+
+const recursivelySetEnvMapIntensity = (model, intensity) => {
+  if (model?.material?.envMapIntensity) {
+    model.material.envMapIntensity = intensity;
+  }
+  model.children.forEach((c) => {
+    recursivelySetEnvMapIntensity(c, intensity);
+  });
+};
+
+const envOptions = [
+  { bg: 'studio.hdr', intensity: 1 },
+  { bg: 'studio_darkened.hdr', intensity: 25 },
+  { bg: 'studio_darkened2.hdr', intensity: 500 },
+];
+const ENV = envOptions[2];
 
 const Model = ({ url, onLoaded }) => {
   const { camera, gl, scene } = useThree();
@@ -75,7 +103,7 @@ const Model = ({ url, onLoaded }) => {
   // load the model on url change
   useEffect(() => {
     if (model.current) {
-      scene.remove(model.current);
+      model.current.removeFromParent();
     }
     
     // load the model
@@ -86,6 +114,7 @@ const Model = ({ url, onLoaded }) => {
       function (gltf) {
         // TODO (as needed): see https://sbcode.net/threejs/loaders-gltf/ for how to traverse children of model
         model.current = gltf.scene;
+        recursivelySetEnvMapIntensity(model.current, ENV.intensity);
 
         // get bounding box of model
         const bbox = new Box3().setFromObject(model.current);
@@ -137,7 +166,7 @@ const Skybox = ({ onLoaded }) => {
 
   useEffect(() => {
     let cleanupTexture;
-    new RGBELoader().load('textures/model-viewer/studio_small.hdr', function (texture) {
+    new RGBELoader().load(`textures/model-viewer/${ENV.bg}`, function (texture) {
       cleanupTexture = texture;
       texture.mapping = EquirectangularReflectionMapping;
       scene.background = texture;
@@ -154,16 +183,18 @@ const Skybox = ({ onLoaded }) => {
   return null;
 };
 
-// TODO (enhancement): on resize, make sure dialogs still entirely on screen
 const ModelViewer = ({ draggableId }) => {
-  const [i, setI] = useState(0);
+  const [openMenu, setOpenMenu] = useState(false);
+  const [model, setModel] = useState(models[Math.floor(Math.random() * models.length)]);
   const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState(true);
 
-  const toggleI = useCallback(() => {
+  const selectModel = useCallback((m) => {
+    if (loadingModel) return;
     setLoadingModel(true);
-    setI((i + 1) % models.length);
-  }, [i]);
+    setModel(m);
+    setOpenMenu(false);
+  }, [loadingModel]);
 
   const handleLoaded = useCallback((success) => {
     setLoadingModel(false);
@@ -171,15 +202,20 @@ const ModelViewer = ({ draggableId }) => {
 
   return (
     <DraggableModal draggableId={draggableId} title={(
-      <div style={{ alignItems: 'center', display: 'flex' }}>
-        <div style={{ marginRight: 8 }}>Model Viewer</div>
-        <SwitcherIcon onClick={toggleI} />
+      <div onClick={() => setOpenMenu(!openMenu)} style={{ alignItems: 'center', display: 'inline-flex' }}>
+        {model.title}
+        <SelectIcon />
       </div>
     )}>
+      <Menu isOpen={openMenu} onMouseLeave={() => setOpenMenu(false)}>
+        {models.map((m) => (
+          <MenuItem key={m.slug} onClick={() => selectModel(m)}>{m.title}</MenuItem>
+        ))}
+      </Menu>
       <CanvasContainer>
         <Canvas style={{ height: '100%', width: '100%' }}>
           <Skybox onLoaded={() => setLoadingSkybox(false)} />
-          {!loadingSkybox && <Model url={`/models/${models[i]}.glb`} onLoaded={handleLoaded} />}
+          {!loadingSkybox && <Model url={`https://res.cloudinary.com/influenceth/image/upload/v1651851083/models/${model.slug}`} onLoaded={handleLoaded} />}
         </Canvas>
       </CanvasContainer>
       <BarLoader color="#777" height={3} loading={loadingModel || loadingSkybox} css={loadingCss} />
