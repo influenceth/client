@@ -176,7 +176,7 @@ const Model = ({ url, onLoaded }) => {
 
   useFrame(() => {
     if (model.current) {
-      model.current.rotation.y += 0.005;
+      model.current.rotation.y += 0.0025;
     }
   });
 
