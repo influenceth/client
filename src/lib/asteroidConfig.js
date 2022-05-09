@@ -71,39 +71,43 @@ class Config {
   }
 
   // How prominent the cleavage line features appear (can range from 0 to 1)
+  // (as a proportion of maxCraterDepth)
   _cleaveWeight() {
-    return 0.4 * this.seedGen.getFloat('cleaveWeight');
+    return 0.25 * this.seedGen.getFloat('cleaveWeight');
   }
 
   /**
    * Defines the cutoff below which craters will be created from cellular noise (less than 1)
    * Larger values will create more / larger craters at each pass
    */
-  _craterCut() {
-    return 0.15 + 0.15 * this._radiusMod(2);
+  _craterCut() { // [0.15,0.20]
+    return 0.20 - 0.05 * this._radiusMod(2);
   }
 
   // Determines how much smaller each crater pass is. The higher the number the smaller on each pass
-  _craterFalloff() {
+  _craterFalloff() { // [1.5,2.0]
     return 1.5 + 0.5 * this.seedGen.getFloat('craterFalloff');
   }
 
-  // Number of different sizes of crater passes
+  // Number of different sizes of crater passes (at max zoom)
+  // (this is static now because increases as zoom in)
   _craterPasses() {
-    return Math.round(4 + 3 * this._radiusMod(2));
+    return 6;
+    // return Math.round(4 + 3 * this._radiusMod(2));
   }
 
   /**
    * Determines how much impact smaller craters have in the landscape. Higher values make smaller
    * craters more visible.
    */
-  _craterPersist() {
-    return 0.75 - 0.2 * this._radiusMod(2);
+  _craterPersist() {  // [0.45, 0.65]
+    return 0.65 - 0.2 * this._radiusMod(2);
   }
 
   // Determines how steep the walls of the craters are. Higher numbers are steeper
+  // (larger asteroids have more gravity, so less steep walls)
   _craterSteep() {
-    return 8.0;
+    return 6.0 - 2.0 * this._radiusMod(2);
   }
 
   // Baseline frequency for displacement of the asteroid. Higher values makes it noisier.
@@ -134,8 +138,7 @@ class Config {
   // NOTE: Earth's deepest crater is 0.3% radius, Moon's is 0.7% radius, so if assuming depth doubles with
   //       quartering radius, AP should be ~1.4% and lasteroid should be ~22.4%
   _dispWeightFine() {
-    //return 0.014 / this._radiusMod(0.45); // [0.014,0.200]
-    return 0.018 / this._radiusMod(0.45); // [0.018,0.191]
+    return 0.014 / this._radiusMod(0.45); // [0.014,0.200]
   }
 
   // Baseline frequency for features like craters and lines. Higher values make noise "noiser"
@@ -219,7 +222,7 @@ class Config {
   }
 
   // How prominent general topography should be on the asteroid as a whole
-  _topoWeight() {
+  _topoWeight() { // [0.2,0.4]
     return 0.4 - 0.1 * this._radiusMod(2) - 0.1 * this.seedGen.getFloat('topoWeight');
   }
 }

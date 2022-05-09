@@ -23,7 +23,7 @@ const constants = {
   ENABLE_SHADOWS: false,
   ENABLE_CSM: true, // cascading shadow maps (ENABLE_SHADOWS must also be true)
   MIN_FRUSTUM_AT_SURFACE: 4000, // closest zoom so that X meters visible w/i frustum height
-  SHADOWLESS_NORMAL_SCALE: 1.5, // exaggerate normals when shadows are disabled
+  SHADOWLESS_NORMAL_SCALE: 1.2, // exaggerate normals when shadows are disabled
 
   // (performance)
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: true,

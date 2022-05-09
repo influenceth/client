@@ -5,7 +5,7 @@ import {
 } from 'three';
 import QuadtreeTerrainPlane from './QuadtreeTerrainPlane';
 import TerrainChunkManager from './TerrainChunkManager';
-import { generateHeightMap } from './TerrainChunkUtils';
+import { generateHeightMap, getMinChunkSize } from './TerrainChunkUtils';
 import constants from '~/lib/constants';
 
 const { MIN_CHUNK_SIZE } = constants;
@@ -54,7 +54,7 @@ class QuadtreeTerrainCube {
     // adjust min chunk size for this asteroid (this is mostly to provide higher resolution for
     // smallest asteroids because user can zoom in proportionally farther)
     // if >30km, x1; if >3k, x0.5; else, x0.33
-    this.minChunkSize = MIN_CHUNK_SIZE / Math.max(1, 6 - Math.round(Math.log10(this.radius)));
+    this.minChunkSize = getMinChunkSize(this.radius);
 
     // build the sides of the cube (each a quadtreeplane)
     this.sides = [];
@@ -97,6 +97,7 @@ class QuadtreeTerrainCube {
       new Vector3(0, 0, 0),
       resolution,
       { N: 1, S: 1, E: 1, W: 1 },
+      0,
       0,
       false,
       config,

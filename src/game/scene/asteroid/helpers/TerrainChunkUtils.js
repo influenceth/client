@@ -19,6 +19,7 @@ import TextureRenderer from '~/lib/graphics/TextureRenderer';
 
 const {
   CHUNK_RESOLUTION,
+  MIN_CHUNK_SIZE,
   OVERSAMPLE_CHUNK_TEXTURES
 } = constants;
 
@@ -94,7 +95,7 @@ export async function initChunkTextures(preloadedBitmap) {
   }
 }
 
-export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, edgeStrides, extraPasses, oversample, config, returnType = 'bitmap') {
+export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, edgeStrides, extraPasses, extraPassesMax, oversample, config, returnType = 'bitmap') {
   const material = new ShaderMaterial({
     fragmentShader: (edgeStrides.N === 1 && edgeStrides.S === 1 && edgeStrides.E === 1 && edgeStrides.W === 1)
       ? heightShader
@@ -118,8 +119,11 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uEdgeStrideE: { type: 'f', value: edgeStrides.E },
       uEdgeStrideW: { type: 'f', value: edgeStrides.W },
       uExtraPasses: { type: 'i', value: extraPasses },
+      uExtraPassesMax: { type: 'i', value: extraPassesMax },
       uFeaturesFreq: { type: 'f', value: config.featuresFreq },
       uFineDispFraction: { type: 'f', value: config.fineDispFraction },
+      uLandscapeWidth: { type: 'f', value: 2 * config.radius },
+      uMaxCraterDepth: { type: 'f', value: config.radius * config.dispWeight * config.fineDispFraction },
       uOversampling: { type: 'b', value: oversample },
       uResolution: { type: 'f', value: chunkResolution },
       uRimVariation: { type: 'f', value: config.rimVariation },
@@ -309,6 +313,17 @@ export function rebuildChunkGeometry({ config, edgeStrides, minHeight, offset, r
   return { normals, positions };
 }
 
+export function getMinChunkSize(radius) {
+  return MIN_CHUNK_SIZE / Math.max(1, 6 - Math.round(Math.log10(radius)))
+};
+
+// extra passes added based on resolution of chunk and zoom level of chunk
+// i.e. at low user settings, (resolution / CHUNK_RESOLUTION) - 1 is 0, at high is 3
+// i.e. each zoom level adds a pass
+export function getExtraPasses(chunkSize, resolution) {
+  return Math.ceil(Math.log2(1 / chunkSize) + (resolution / CHUNK_RESOLUTION) - 1)
+};
+
 export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, resolution, width }) {
   const localToWorld = groupMatrix;
   const chunkSize = width / (2 * config.radius);
@@ -318,10 +333,8 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
   const textureResolution = OVERSAMPLE_CHUNK_TEXTURES ? resolutionPlusOne + 2 : resolutionPlusOne;
   const textureSize = OVERSAMPLE_CHUNK_TEXTURES ? chunkSize * (1 + 2 / resolution) : chunkSize;
 
-  // extra passes added based on resolution of chunk and zoom level of chunk
-  // i.e. at low user settings, (resolution / CHUNK_RESOLUTION) - 1 is 0, at high is 3
-  // i.e. each zoom level adds a pass
-  const extraPasses = Math.ceil(Math.log2(1 / chunkSize) + (resolution / CHUNK_RESOLUTION) - 1);
+  const extraPasses = getExtraPasses(chunkSize, resolution);
+  const extraPassesMax = getExtraPasses(getMinChunkSize(config.radius) / (2 * config.radius), resolution) - 1;
 
   const heightBitmap = generateHeightMap(
     localToWorld,
@@ -330,6 +343,7 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
     textureResolution,
     edgeStrides,
     extraPasses,
+    extraPassesMax,
     OVERSAMPLE_CHUNK_TEXTURES,
     config
   );
