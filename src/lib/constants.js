@@ -13,7 +13,7 @@ const constants = {
 
   // Asteroid settings
   // (resolution)
-  CHUNK_RESOLUTION: 64,     // NOTE: multiplied by 1, 2, 4 (per user's texture settings)
+  CHUNK_RESOLUTION: 64,      // NOTE: multiplied by 1, 2, 4 (per user's texture settings)
   MIN_CHUNK_SIZE: 2000,
   CHUNK_SPLIT_DISTANCE: 1.25,  // NOTE: this should probably always be >= 0.5 functionally
   OVERSAMPLE_CHUNK_TEXTURES: true,  // NOTE: this probably doesn't need to be a constant; we should always do this
