@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  // AxesHelper, DirectionalLightHelper,
-  Box3, DirectionalLight, EquirectangularReflectionMapping, Vector3
-} from 'three';
+import { Box3, DirectionalLight, EquirectangularReflectionMapping, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
+// import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { useFrame, useThree, Canvas } from '@react-three/fiber';
-import { BiChevronDown as SelectIcon } from 'react-icons/bi';
+import { BiListUl as SelectIcon, BiUpload as UploadIcon } from 'react-icons/bi';
 import BarLoader from 'react-spinners/BarLoader';
 import styled, { css } from 'styled-components';
 
 import DraggableModal from '~/components/DraggableModal';
+import IconButton from '~/components/IconButton';
 import models from '~/lib/models';
+
+// TODO: connect to gpu-graphics settings
+const ENABLE_SHADOWS = true;
 
 const loader = new GLTFLoader();
 
@@ -29,14 +31,27 @@ const CanvasContainer = styled.div`
   }
 `;
 
+const Openers = styled.div`
+  right: 7px;  
+  position: absolute;
+  top: 7px;
+  z-index: 2;
+  & > button {
+    margin-right: 0;
+    &:last-child {
+      margin-left: 4px;
+    }
+  }
+`;
+
 const Menu = styled.div`
   background: black;
+  bottom: 6px;
   display: ${p => p.isOpen ? 'block' : 'none'};
-  left: 12px;
-  height: 300px;
   overflow-y: auto;
   position: absolute;
-  top: 1px;
+  right: 6px;
+  top: 6px;
   z-index: 1000;
 `;
 
@@ -55,20 +70,6 @@ const loadingCss = css`
   right: 3px;
   width: calc(100% - 6px);
 `;
-
-const recursivelySetEnvMapIntensity = (model, intensity) => {
-  if (model?.material?.envMapIntensity) {
-    model.material.envMapIntensity = intensity;
-  }
-  model.children.forEach((c) => {
-    recursivelySetEnvMapIntensity(c, intensity);
-  });
-};
-
-const ENV = {
-  bg: 'courtyard_darkened3.hdr',
-  intensity: 1
-};
 
 const Model = ({ url, onLoaded }) => {
   const { camera, gl, scene } = useThree();
@@ -103,9 +104,9 @@ const Model = ({ url, onLoaded }) => {
     };
   }, [camera, gl]);
 
-  // init axeshelper
+  // // init axeshelper
   // useEffect(() => {
-  //   const axesHelper = new AxesHelper(5);
+  //   const axesHelper = new THREE.AxesHelper(5);
   //   scene.add(axesHelper);
   //   return () => {
   //     scene.remove(axesHelper);
@@ -124,17 +125,30 @@ const Model = ({ url, onLoaded }) => {
 
       // onload
       function (gltf) {
-        // TODO (as needed): see https://sbcode.net/threejs/loaders-gltf/ for how to traverse children of model
         model.current = gltf.scene;
-        recursivelySetEnvMapIntensity(model.current, ENV.intensity);
+        model.current.traverse(function (object) {
+          if (object.isMesh) {
+            // self-shadowing 
+            if (ENABLE_SHADOWS) {
+              object.castShadow = true;
+              object.receiveShadow = true;
+            }
 
-        // console.log('model.current', gltf);
+            // env-map intensity
+            if (object.material?.envMapIntensity) {
+              object.material.envMapIntensity = 0.2;  // (can customize)
+            }
+          }
+        });
+
         // TODO: use gltf.scene.position to position center?
 
         // get bounding box of model
         const bbox = new Box3().setFromObject(model.current);
         const center = bbox.getCenter(new Vector3());
         const size = bbox.getSize(new Vector3());
+        console.log('gltf', gltf.scene, center, size);
+        
         // console.log({
         //   center, size
         // });
@@ -188,7 +202,7 @@ const Skybox = ({ onLoaded }) => {
 
   useEffect(() => {
     let cleanupTexture;
-    new RGBELoader().load(`textures/model-viewer/${ENV.bg}`, function (texture) {
+    new RGBELoader().load(`textures/model-viewer/courtyard_darkened4.hdr`, function (texture) {
       cleanupTexture = texture;
       texture.mapping = EquirectangularReflectionMapping;
       scene.background = texture;
@@ -206,10 +220,14 @@ const Skybox = ({ onLoaded }) => {
 };
 
 const Lighting = () => {
-  const { scene } = useThree();
-
+  const { gl, scene } = useThree();
 
   useEffect(() => {
+    if (ENABLE_SHADOWS) {
+      gl.shadowMap.enabled = true;
+      gl.shadowMap.type = PCFSoftShadowMap;
+    }
+    
     const sunLight = new DirectionalLight(0xFFFFFF);
     sunLight.intensity = 0.5;
     sunLight.position.set(-2, 10, 0);
@@ -218,6 +236,7 @@ const Lighting = () => {
     const keyLight = new DirectionalLight(0xFFFFFF);
     keyLight.intensity = 1.0;
     keyLight.position.set(-2, 2, 2);
+    keyLight.castShadow = ENABLE_SHADOWS;
     scene.add(keyLight);
 
     const rimLight = new DirectionalLight(0x9ECFFF);
@@ -225,28 +244,46 @@ const Lighting = () => {
     rimLight.position.set(4, 2, 4);
     scene.add(rimLight);
 
-    // const helper = new DirectionalLightHelper(sunLight);
-    // scene.add(helper);
+    if (ENABLE_SHADOWS) {
+      keyLight.shadow.camera.near = 2.75;
+      keyLight.shadow.camera.far = 4.25;
+      keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.75;
+      keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.75;
+      keyLight.shadow.camera.updateProjectionMatrix();
+      keyLight.shadow.mapSize = new Vector2(1024, 1024);
+      keyLight.shadow.bias = -0.02;
+    }
+
+    // const helper1 = new THREE.CameraHelper( keyLight.shadow.camera );
+    // scene.add(helper1);
+    // const helper2 = new THREE.DirectionalLightHelper(keyLight);
+    // scene.add(helper2);
 
     return () => {
       if (sunLight) scene.remove(sunLight);
       if (keyLight) scene.remove(keyLight);
       if (rimLight) scene.remove(rimLight);
-      // if (helper) scene.remove(helper);
+      // if (helper1) scene.remove(helper1);
+      // if (helper2) scene.remove(helper2);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 };
 
+const reader = new FileReader();
 const ModelViewer = ({ draggableId }) => {
   const [openMenu, setOpenMenu] = useState(false);
-  const [model, setModel] = useState(models[Math.floor(Math.random() * models.length)]);
+  const [model, setModel] = useState(models[0]);
+  const [modelOverride, setModelOverride] = useState();
   const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState(true);
 
+  const fileInput = useRef();
+
   const selectModel = useCallback((m) => {
     if (loadingModel) return;
+    setModelOverride();
     setLoadingModel(true);
     setModel(m);
     setOpenMenu(false);
@@ -256,13 +293,47 @@ const ModelViewer = ({ draggableId }) => {
     setLoadingModel(false);
   }, []);
 
+  const handleUploadClick = useCallback(() => {
+    fileInput.current.click();
+  }, []);
+
+  const handleFile = useCallback((e) => {
+    const file = e.target.files[0];
+    if (file.name.match(/\.(gltf|glb)$/i)) {
+      setLoadingModel(true);
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        setModelOverride(reader.result);
+      };
+    }
+  }, []);
+
   return (
-    <DraggableModal draggableId={draggableId} title={(
-      <div onClick={() => setOpenMenu(!openMenu)} style={{ alignItems: 'center', display: 'inline-flex' }}>
-        {model.title}
-        <SelectIcon />
-      </div>
-    )}>
+    <DraggableModal draggableId={draggableId} title="Model Viewer">
+      <Openers>
+        <IconButton
+          data-for="global"
+          data-place="left"
+          data-tip="Upload Model..." 
+          onClick={handleUploadClick}>
+          <UploadIcon />
+        </IconButton>
+        <input
+          ref={fileInput}
+          onChange={handleFile}
+          onClick={(e) => e.target.value = null}
+          style={{ display: 'none' }}
+          type="file" />
+
+        <IconButton
+          data-for="global"
+          data-place="right"
+          data-tip="Select Model..." 
+          onClick={() => setOpenMenu(!openMenu)}>
+          <SelectIcon />
+        </IconButton>
+      </Openers>
+
       <Menu isOpen={openMenu} onMouseLeave={() => setOpenMenu(false)}>
         {models.map((m) => (
           <MenuItem key={m.slug} onClick={() => selectModel(m)}>{m.title}</MenuItem>
@@ -271,7 +342,11 @@ const ModelViewer = ({ draggableId }) => {
       <CanvasContainer>
         <Canvas style={{ height: '100%', width: '100%' }}>
           <Skybox onLoaded={() => setLoadingSkybox(false)} />
-          {!loadingSkybox && <Model url={`https://res.cloudinary.com/influenceth/image/upload/v1651851083/models/${model.slug}`} onLoaded={handleLoaded} />}
+          {!loadingSkybox && (
+            <Model
+              onLoaded={handleLoaded}
+              url={modelOverride || `https://res.cloudinary.com/influenceth/image/upload/v1651851083/models/${model.slug}`} />
+          )}
           <Lighting />
         </Canvas>
       </CanvasContainer>
