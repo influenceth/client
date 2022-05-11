@@ -162,7 +162,7 @@ const DraggableModal = ({ draggableId, ...props }) => {
         <Header
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}>
-          {title && <Title {...undraggable}>{title}</Title>}
+          {title && <Title>{title}</Title>}
           <CloseButton {...undraggable} onClick={() => dispatchDraggableClose(draggableId)}>
             <CloseIcon />
           </CloseButton>

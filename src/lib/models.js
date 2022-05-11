@@ -57,7 +57,7 @@ const models = [
   },
   {
     slug: 'M_Fissile_Uranite_lxhxmh',
-    title: 'Uranite'
+    title: 'Uraninite'
   },
   {
     slug: 'M_RareEarth_Xenotime_ttocai',

@@ -56,10 +56,11 @@ const Menu = styled.div`
 `;
 
 const MenuItem = styled.div`
-  cursor: ${p => p.theme.cursors.active};
+  background: rgba(${p => p.theme.colors.mainRGB}, ${p => p.isSelected ? 0.5 : 0.0});
+  cursor: ${p => p.isSelected ? p.theme.cursors.default : p.theme.cursors.active};
   padding: 4px 12px;
   &:hover {
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+    background: rgba(${p => p.theme.colors.mainRGB}, ${p => p.isSelected ? 0.5 : 0.2});
   }
 `;
 
@@ -79,10 +80,9 @@ const Model = ({ url, onLoaded }) => {
 
   // init the camera (reset when url changes)
   useEffect(() => {
-    // TODO (enhancement): on mobile, aspect ratio is such that zoomed out to 1 may
-    //  not have view of full width of 1.0 at 0,0,0... so on mobile, should probably
-    //  set this to 1.5+
-    camera.position.set(0, 0.75, 1.5);
+    // TODO (enhancement): on mobile, aspect ratio is such that zoomed out to 1 may not have
+    //  view of full width of 1.0 at 0,0,0... so on mobile, should probably set this to 1.5+
+    camera.position.set(0, 0.75, 1.25);
     camera.up.set(0, 1, 0);
     camera.fov = 50;
     camera.updateProjectionMatrix();
@@ -104,7 +104,7 @@ const Model = ({ url, onLoaded }) => {
     };
   }, [camera, gl]);
 
-  // // init axeshelper
+  // init axeshelper
   // useEffect(() => {
   //   const axesHelper = new THREE.AxesHelper(5);
   //   scene.add(axesHelper);
@@ -113,11 +113,16 @@ const Model = ({ url, onLoaded }) => {
   //   };
   // }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // const box3h = useRef();
+
   // load the model on url change
   useEffect(() => {
     if (model.current) {
       model.current.removeFromParent();
     }
+    // if (box3h.current) {
+    //   box3h.current.removeFromParent();
+    // }
     
     // load the model
     loader.load(
@@ -125,45 +130,56 @@ const Model = ({ url, onLoaded }) => {
 
       // onload
       function (gltf) {
-        model.current = gltf.scene;
-        model.current.traverse(function (object) {
-          if (object.isMesh) {
+        model.current = gltf.scene || gltf.scenes[0];
+        model.current.traverse(function (node) {
+          if (node.isMesh) {
             // self-shadowing 
             if (ENABLE_SHADOWS) {
-              object.castShadow = true;
-              object.receiveShadow = true;
+              node.castShadow = true;
+              node.receiveShadow = true;
             }
 
             // env-map intensity
-            if (object.material?.envMapIntensity) {
-              object.material.envMapIntensity = 0.2;  // (can customize)
+            if (node.material?.envMapIntensity) {
+              node.material.envMapIntensity = 3.0;
             }
+
+            // only worry about depth on non-transparent materials
+            // (from https://github.com/donmccurdy/three-gltf-viewer/blob/main/src/viewer.js)
+            node.material.depthWrite = !node.material.transparent;
           }
         });
 
-        // TODO: use gltf.scene.position to position center?
-
-        // get bounding box of model
+        // resize
+        //  (assuming rotating around y, then make sure max x-z dimensions
+        //   fit inside 1 and y-height fit inside 1)
         const bbox = new Box3().setFromObject(model.current);
-        const center = bbox.getCenter(new Vector3());
-        const size = bbox.getSize(new Vector3());
-        console.log('gltf', gltf.scene, center, size);
-        
-        // console.log({
-        //   center, size
-        // });
-
-        // update scale (normalize to max dimensional size of 1.0), then adjust to center at 0,0,0
-        const scaleValue = 1.0 / Math.max(size.x, size.y, size.z);
-        const posValue = new Vector3(center.x, center.y, center.z).multiplyScalar(-scaleValue);
-        // console.log({
-        //   scaleValue, posValue
-        // });
-
-        scene.add(model.current);
+        const crossVector = new Vector3();
+        crossVector.subVectors(
+          new Vector3(bbox.max.x, 0, bbox.max.z),
+          new Vector3(bbox.min.x, 0, bbox.min.z),
+        );
+        const height = bbox.max.y - bbox.min.y;
+        const scaleValue = 1.0 / Math.max(height, crossVector.length());
         model.current.scale.set(scaleValue, scaleValue, scaleValue);
-        model.current.position.set(posValue.x, posValue.y, posValue.z);
 
+        // reposition (to put center at origin)
+        bbox.setFromObject(model.current);
+        const center = bbox.getCenter(new Vector3());
+        model.current.position.x += model.current.position.x - center.x;
+        model.current.position.y += model.current.position.y - center.y;
+        model.current.position.z += model.current.position.z - center.z;
+
+        // bbox.setFromObject(model.current);
+        // box3h.current = new THREE.Box3Helper(bbox);
+        // scene.add(box3h.current);
+
+        // initial rotation simulates initial camera position in blender
+        // (halfway between the x and z axis)
+        model.current.rotation.y = -Math.PI / 4;
+
+        // add to scene and report as loaded
+        scene.add(model.current);
         onLoaded(true);
       },
 
@@ -192,9 +208,18 @@ const Model = ({ url, onLoaded }) => {
     if (model.current) {
       model.current.rotation.y += 0.0025;
     }
+    // if (box3h.current) {
+    //   box3h.current.rotation.y += 0.0025;
+    // }
   });
 
   return null;
+  // return (
+  //   <mesh>
+  //     <boxGeometry args={[1, 1, 1]} />
+  //     <meshStandardMaterial color="orange" opacity={0.2} transparent />
+  //   </mesh>
+  // );
 }
 
 const Skybox = ({ onLoaded }) => {
@@ -223,20 +248,9 @@ const Lighting = () => {
   const { gl, scene } = useThree();
 
   useEffect(() => {
-    if (ENABLE_SHADOWS) {
-      gl.shadowMap.enabled = true;
-      gl.shadowMap.type = PCFSoftShadowMap;
-    }
-    
-    const sunLight = new DirectionalLight(0xFFFFFF);
-    sunLight.intensity = 0.5;
-    sunLight.position.set(-2, 10, 0);
-    scene.add(sunLight);
-
     const keyLight = new DirectionalLight(0xFFFFFF);
     keyLight.intensity = 1.0;
     keyLight.position.set(-2, 2, 2);
-    keyLight.castShadow = ENABLE_SHADOWS;
     scene.add(keyLight);
 
     const rimLight = new DirectionalLight(0x9ECFFF);
@@ -245,6 +259,10 @@ const Lighting = () => {
     scene.add(rimLight);
 
     if (ENABLE_SHADOWS) {
+      gl.shadowMap.enabled = true;
+      gl.shadowMap.type = PCFSoftShadowMap;
+
+      keyLight.castShadow = true;
       keyLight.shadow.camera.near = 2.75;
       keyLight.shadow.camera.far = 4.25;
       keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.75;
@@ -260,7 +278,7 @@ const Lighting = () => {
     // scene.add(helper2);
 
     return () => {
-      if (sunLight) scene.remove(sunLight);
+      // if (sunLight) scene.remove(sunLight);
       if (keyLight) scene.remove(keyLight);
       if (rimLight) scene.remove(rimLight);
       // if (helper1) scene.remove(helper1);
@@ -335,9 +353,20 @@ const ModelViewer = ({ draggableId }) => {
       </Openers>
 
       <Menu isOpen={openMenu} onMouseLeave={() => setOpenMenu(false)}>
-        {models.map((m) => (
-          <MenuItem key={m.slug} onClick={() => selectModel(m)}>{m.title}</MenuItem>
-        ))}
+        {modelOverride && (
+          <MenuItem isSelected>(Custom)</MenuItem>
+        )}
+        {models.map((m) => {
+          const isSelected = !modelOverride && m.slug === model.slug;
+          return (
+            <MenuItem
+              key={m.slug}
+              isSelected={isSelected}
+              onClick={() => isSelected ? false : selectModel(m)}>
+              {m.title}
+            </MenuItem>
+          );
+        })}
       </Menu>
       <CanvasContainer>
         <Canvas style={{ height: '100%', width: '100%' }}>
