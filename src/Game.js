@@ -6,6 +6,7 @@ import { useDetectGPU } from '@react-three/drei';
 
 import { AuthProvider } from '~/contexts/AuthContext';
 import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
+import { ClockProvider } from '~/contexts/ClockContext';
 import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import LandingPage from '~/game/Landing';
@@ -33,6 +34,7 @@ const Game = (props) => {
   const { updateNeeded, onUpdateVersion } = useServiceWorker();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
+  const dispatchGpuInfo = useStore(s => s.dispatchGpuInfo);
   const [ showScene, setShowScene ] = useState(false);
   const [ introEnabled, setIntroEnabled ] = useState(!DISABLE_INTRO);
 
@@ -41,10 +43,9 @@ const Game = (props) => {
   }, []);
 
   useEffect(() => {
-    if (!gpuInfo) return;
-
-    if (!gpuInfo.isMobile) {
-      setShowScene(true)
+    if (gpuInfo && !gpuInfo.isMobile) {
+      setShowScene(true);
+      dispatchGpuInfo(gpuInfo);
 
       if (gpuInfo.tier === 0) {
         createAlert({
@@ -53,7 +54,7 @@ const Game = (props) => {
         });
       }
     }
-  }, [ gpuInfo, createAlert ]);
+  }, [ gpuInfo, createAlert, dispatchGpuInfo ]);
 
   useEffect(() => {
     if (updateNeeded) {
@@ -78,12 +79,14 @@ const Game = (props) => {
                 <LandingPage />
               </Route>
               <Route>
-                {introEnabled && <Intro onComplete={onIntroComplete} />}
-                <StyledMain>
-                  <Interface />
-                  {showScene && <Scene />}
-                  <Audio />
-                </StyledMain>
+                <ClockProvider>
+                  {introEnabled && <Intro onComplete={onIntroComplete} />}
+                  <StyledMain>
+                    <Interface />
+                    {showScene && <Scene />}
+                    <Audio />
+                  </StyledMain>
+                </ClockProvider>
               </Route>
             </Switch>
           </Router>

@@ -6,6 +6,7 @@ import { useContextBridge, Stats } from '@react-three/drei';
 import { getWeb3ReactContext } from '@web3-react/core';
 import styled from 'styled-components';
 
+import ClockContext from '~/contexts/ClockContext';
 import useStore from '~/hooks/useStore';
 import { TrackballModControls } from '~/components/TrackballModControls';
 import Star from './scene/Star';
@@ -48,7 +49,10 @@ const Scene = (props) => {
   const queryClient = useQueryClient();
 
   // Use ContextBridge to make wallet available within canvas
-  const ContextBridge = useContextBridge(getWeb3ReactContext());
+  const ContextBridge = useContextBridge(
+    getWeb3ReactContext(),
+    ClockContext
+  );
 
   // Orient such that z is up, perpindicular to the stellar plane
   Object3D.DefaultUp = new Vector3(0, 0, 1);
@@ -84,6 +88,16 @@ const Scene = (props) => {
           </QueryClientProvider>
         </ContextBridge>
       </Canvas>
+      {false && /* TODO: remove debug */(
+        <div style={{ position: 'fixed', bottom: 72, left: 0, }}>
+          <div style={{ border: '1px solid white', padding: 4, background: '#222' }}>
+            <canvas id="test_canvas" style={{ width: 0, height: 0, verticalAlign: 'bottom' }} />
+          </div>
+        </div>
+      )}
+      {false && /* TODO: remove debug */(
+        <div id="debug_info" style={{ position: 'fixed', top: -1, left: 95, background: 'black', border: '1px solid white', padding: '8px 4px', fontSize: 11, minWidth: 60, textAlign: 'center' }} />
+      )}
     </StyledContainer>
   );
 };

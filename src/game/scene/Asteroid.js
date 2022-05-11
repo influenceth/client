@@ -1,173 +1,352 @@
-import { useState, useEffect, useRef } from 'react';
-import { DataTexture, LessDepth, BufferGeometryLoader, MeshStandardMaterial, Vector3 } from 'three';
-import { useThree } from '@react-three/fiber';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import {
+  // BufferAttribute,
+  AxesHelper,
+  CameraHelper,
+  DirectionalLight,
+  DirectionalLightHelper,
+  Mesh,
+  MeshPhongMaterial,
+  PlaneGeometry,
+  Vector3
+} from 'three';
+import { CSM } from 'three/examples/jsm/csm/CSM';
+import { CSMHelper } from 'three/examples/jsm/csm/CSMHelper';
 import gsap from 'gsap';
 import { KeplerianOrbit } from 'influence-utils';
 
-// eslint-disable-next-line
-import Worker from 'worker-loader!../../worker';
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
+import useGetTime from '~/hooks/useGetTime';
+import useWebWorker from '~/hooks/useWebWorker';
+import Config from '~/lib/asteroidConfig';
 import constants from '~/lib/constants';
-import { renderAsteroidMaps } from '~/lib/geometryUtils';
-import TextureRenderer from '~/lib/graphics/TextureRenderer';
-import Config from './asteroid/Config';
+import QuadtreeTerrainCube from './asteroid/helpers/QuadtreeTerrainCube';
 import Rings from './asteroid/Rings';
-import exportModel from './asteroid/export';
 
-const worker = new Worker();
+const {
+  MIN_FRUSTUM_AT_SURFACE,
+  CHUNK_SPLIT_DISTANCE,
+  UPDATE_QUADTREE_EVERY,
+  ENABLE_CSM
+} = constants;
+const UPDATE_DISTANCE_MULT = CHUNK_SPLIT_DISTANCE * UPDATE_QUADTREE_EVERY;
 
-// only instantiate textureRendered if offscreenCanvas not available
-const textureRenderer = typeof OffscreenCanvas === 'undefined' && new TextureRenderer();
+const MAP_RENDER_TIME_PER_CYCLE = 8;
+const INITIAL_ZOOM = 2;
+const MIN_ZOOM_DEFAULT = 1.2;
+const MAX_ZOOM = 4;
+const DEBUG_CSM = false;
+const DIRECTIONAL_LIGHT_DISTANCE = 10;
+
+// TODO: remove debug
+// let totalRuns = 0;
+// let totals = {};
+// let startTime;
+// let first = true;
+// function benchmark(tag) {
+//   if (!tag) {
+//     startTime = Date.now();
+//     totalRuns++;
+//   }
+//   else {
+//     if (!totals[tag]) totals[tag] = { total: 0, max: 0 };
+//     const t = Date.now() - startTime;
+
+//     totals[tag].total += t;
+//     if (t > totals[tag].max) totals[tag].max = t;
+//   }
+// }
+
+// TODO: remove debug
+// setInterval(() => {
+//   if (first) {
+//     first = false;
+//     totalRuns = 0;
+//     totals = {};
+//     return;
+//   }
+//   const b = {};
+//   let prevTime = 0;
+//   Object.keys(totals).forEach((k) => {
+//     const thisTime = Math.round(totals[k].total / totalRuns);
+//     const thisMax = totals[k].max;
+//     if (k === '_') {
+//       b['TOTAL'] = thisTime;
+//     } else {
+//       b[k] = thisTime - prevTime;
+//       prevTime = thisTime;
+//       // b[`${k}_MAX`] = thisMax;
+//     }
+//   });
+//   console.log(`b ${totalRuns}`, b);
+// }, 5000);
+
+// for terrain benchmarking...
+const BENCHMARK_TERRAIN_UPDATES = false;
+let taskTotal = 0;
+let taskTally = 0;
+if (BENCHMARK_TERRAIN_UPDATES) {
+  setInterval(() => {
+    if (taskTally > 0) {
+      console.log(
+        `avg update time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
+      );
+    }
+  }, 5000);
+}
+
+let terrainUpdateStart; // TODO: remove
 
 const Asteroid = (props) => {
-  const controls = useThree(({ controls }) => controls);
+  const { camera, controls } = useThree();
   const origin = useStore(s => s.asteroids.origin);
-  const time = useStore(s => s.time.precise);
-  const mapSize = useStore(s => s.graphics.textureSize);
-  const shadows = useStore(s => s.graphics.shadows);
-  const shadowSize = useStore(s => s.graphics.shadowSize);
+  const { textureSize } = useStore(s => s.getTerrainQuality());
+  const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
-  const requestingModelDownload = useStore(s => s.asteroids.requestingModelDownload);
-  const onModelDownload = useStore(s => s.dispatchModelDownloadComplete);
   const { data: asteroidData } = useAsteroid(origin);
 
+  const getTime = useGetTime();
+  const webWorkerPool = useWebWorker();
+
+  const [config, setConfig] = useState();
+  const [terrainUpdateNeeded, setTerrainUpdateNeeded] = useState();
+
+  const debug = useRef(); // TODO: remove
+  const geometry = useRef();
+  const quadtreeRef = useRef();
   const group = useRef();
   const light = useRef();
-  const mesh = useRef();
   const asteroidOrbit = useRef();
   const rotationAxis = useRef();
+  const position = useRef();
+  const rotation = useRef(0);
+  const csmHelper = useRef(); // TODO: remove
+  const csmHelperFloor = useRef(); // TODO: remove
+  const aspectRatio = useRef();
+  const settingCameraPosition = useRef();
 
-  const [ position, setPosition ] = useState([ 0, 0, 0 ]);
-  const [ config, setConfig ] = useState();
-  const [ maps, setMaps ] = useState();
-  const [ materials, setMaterials ] = useState();
-  const [ geometry, setGeometry ] = useState();
+  const maxStretch = useMemo(
+    () => config?.stretch ? Math.max(config.stretch.x, config.stretch.y, config.stretch.z) : 1,
+    [config?.stretch]
+  );
+  // const minStretch = useMemo(
+  //   () => config?.stretch ? Math.min(config.stretch.x, config.stretch.y, config.stretch.z) : 1,
+  //   [config?.stretch]
+  // );
+  const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent]);
+  const surfaceDistance = useMemo(
+    () => (MIN_FRUSTUM_AT_SURFACE / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
+    [controls?.object?.fov]
+  );
 
-  // Worker subscriptions
-  useEffect(() => {
-    worker.onmessage = (event) => {
-      if (event.data.topic === 'maps') {
-        const { colorMap, heightMap, normalMap } = event.data;
-        setMaps({ colorMap, heightMap, normalMap });
-      } else if (event.data.topic === 'geometry') {
-        const loader = new BufferGeometryLoader();
-        setGeometry(loader.parse(event.data.geometryJSON));
-      }
-    };
+  const disposeGeometry = useCallback(() => {
+    if (geometry.current && quadtreeRef.current) {
+      geometry.current.groups.forEach((g) => {
+        quadtreeRef.current.remove(g);
+      });
+    }
+    if (geometry.current?.csm) {
+      geometry.current.csm.remove();
+      geometry.current.csm.dispose();
+      geometry.current.csm = undefined;
+    }
+    if (group.current && csmHelper.current) {
+      group.current.remove(csmHelper.current);
+    }
+    if (group.current && csmHelperFloor.current) {
+      group.current.remove(csmHelperFloor.current);
+    }
+    if (geometry.current) {
+      geometry.current.dispose();
+      geometry.current = null;
+    }
   }, []);
 
-  // Positions the asteroid in space based on time changes
-  useEffect(() => {
-    if (!!asteroidData && !asteroidOrbit.current) asteroidOrbit.current = new KeplerianOrbit(asteroidData.orbital);
-    if (!asteroidData) asteroidOrbit.current = null;
-
-    if (asteroidOrbit.current && time) {
-      setPosition(Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU));
+  const disposeLight = useCallback(() => {
+    if (group.current && light.current) {
+      group.current.remove(light.current);
     }
-
-    if (mesh.current && config && time) {
-      mesh.current.setRotationFromAxisAngle(rotationAxis.current, time * config.rotationSpeed * 2 * Math.PI);
+    if (light.current) {
+      light.current.dispose();
+      light.current = null;
     }
-  }, [ asteroidData, config, time ]);
+  }, []);
+
+  const onUnload = useCallback(() => {
+    setConfig();
+    asteroidOrbit.current = null;
+    rotationAxis.current = null;
+    position.current = null;
+    rotation.current = null;
+    disposeLight();
+    disposeGeometry();
+  }, [disposeLight, disposeGeometry]);
 
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
-    if (!!asteroidData) setConfig(new Config(asteroidData));
+    // when asteroidData is loaded for selected asteroid...
+    if (asteroidData && asteroidData.asteroidId === origin) {
 
-    // Cleanup when there's no data
-    if (!asteroidData) {
-      setConfig(null);
+      // init config
+      const c = new Config(asteroidData);
+      setConfig(c);
 
-      geometry?.dispose();
-      setGeometry(null);
+      // init orbit, position, and rotation
+      const time = getTime();
+      asteroidOrbit.current = new KeplerianOrbit(asteroidData.orbital);
+      rotationAxis.current = c.seed.clone().normalize();
+      position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU);
+      rotation.current = time * c.rotationSpeed * 2 * Math.PI;
 
-      materials?.forEach(m => {
-        m.map?.dispose();
-        m.normalMap?.dispose();
+      // if geometry.current already exists, dispose first
+      if (geometry.current) disposeGeometry();
+      geometry.current = new QuadtreeTerrainCube(origin, c, textureSize, webWorkerPool);
+      geometry.current.groups.forEach((g) => {
+        quadtreeRef.current.add(g);
       });
 
-      setMaterials(null);
-
+    // cleanup if no data
+    } else {
+      onUnload();
       if (zoomStatus === 'in') updateZoomStatus('zooming-out');
     }
+
+    // return cleanup
+    return onUnload;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ asteroidData ]);
 
-  // Kicks off rendering of each map based on the asteroid's unique config either in worker or main
-  useEffect(() => {
-    if (!config || !mapSize) return;
-
-    rotationAxis.current = config.seed.clone().normalize();
-
-    // if fallback textureRenderer is set, no offscreen canvas, so have
-    // to render the maps on the main thread; else, use the worker
-    if (textureRenderer) {
-      renderAsteroidMaps(mapSize, config, textureRenderer).then(setMaps);
-    } else if (!!worker) {
-      worker.postMessage({ topic: 'renderMaps', mapSize, config });
-    }
-  }, [ config, mapSize ]);
-
-  // Receives updated maps and generates the geometry based on heightMap
-  useEffect(() => {
-    if (!config || !maps || !worker) return;
-    worker.postMessage({ topic: 'renderGeometry', heightMap: maps.heightMap, config });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ maps ]);
-
-  // Recieves the updated maps and applies them to the material
-  useEffect(() => {
-    if (!maps) return;
-    const processed = {};
-    const materials = [];
-
-    Object.keys(maps).forEach(k => {
-      processed[k] = maps[k].map(m => {
-        const tex = new DataTexture(m.buffer, m.width, m.height, m.format);
-        return Object.assign(tex, m.options);
-      });
-    });
-
-    for (let i = 0; i < 6; i++) {
-      materials.push(new MeshStandardMaterial({
-        color: 0xffffff,
-        depthFunc: LessDepth,
-        dithering: true,
-        map: processed.colorMap[i],
-        metalness: 0,
-        normalMap: processed.normalMap[i],
-        roughness: 1
-      }));
-    }
-
-    setMaterials(materials);
-  }, [ maps ]);
-
   // Configures the light component once the geometry is created
   useEffect(() => {
-    if (!geometry || !asteroidData || !light.current) return;
-    const posVec = new Vector3(...position);
-    light.current.intensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
-    light.current.position.copy(posVec.clone().normalize().negate().multiplyScalar(asteroidData.radius * 10));
-    geometry.computeBoundingSphere();
-    const maxRadius = geometry.boundingSphere.radius + geometry.boundingSphere.center.length();
-    const radiusBump = config?.ringsPresent ? 1.5 : 0;
+    if (!(config?.radius && config?.stretch && geometry.current && quadtreeRef.current && position.current)) return;
 
-    if (shadows) {
-      light.current.shadow.camera.near = maxRadius * 9;
-      light.current.shadow.camera.far = maxRadius * (11 + radiusBump);
-      light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius;
-      light.current.shadow.camera.right = light.current.shadow.camera.top = maxRadius;
-      light.current.shadow.camera.updateProjectionMatrix();
+    // calculate intended shadow mode
+    let intendedShadowMode = `${textureSize}`;
+    if (ENABLE_CSM && shadowMode === 2) {
+      intendedShadowMode = `${textureSize}_CSM${shadowSize}`;
+    } else if (shadowMode > 0) {
+      intendedShadowMode = `${textureSize}_${shadowSize}`;
     }
-  }, [ geometry, asteroidData, position, shadows, shadowSize, config?.ringsPresent ]);
+
+    // if no changes, exit now
+    if (geometry.current.shadowMode && geometry.current.shadowMode === intendedShadowMode) {
+      return;
+    }
+
+    // must reinit geometry and lights entirely if already a shadow mode set
+    if (geometry.current.shadowMode) {
+      disposeGeometry();
+      disposeLight();
+
+      geometry.current = new QuadtreeTerrainCube(origin, config, textureSize, webWorkerPool);
+      geometry.current.groups.forEach((g) => {
+        quadtreeRef.current.add(g);
+      });
+    }
+
+    // init params
+    const posVec = new Vector3(...position.current);
+    const lightColor = 0xffeedd;
+    const lightDistance = config.radius * DIRECTIONAL_LIGHT_DISTANCE;
+    const lightDirection = posVec.clone().normalize();
+    const lightIntensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
+    const maxRadius = ringsPresent
+      ? config.radius * 1.5
+      : config.radius * maxStretch;
+    
+    //
+    // CSM setup
+    //
+    if (ENABLE_CSM && shadowMode === 2) {
+      // TODO: could potentially add higher multiple to smallest distance
+      // TODO: does number of cascades impact performance? if not, we should definitely add more
+
+      // setup cascades
+      const cascadeConfig = [];
+      cascadeConfig.unshift(MAX_ZOOM);
+      // const minSurfaceDistance = Math.min(surfaceDistance, (MIN_ZOOM_DEFAULT - 1) * config.radius);
+      // cascadeConfig.unshift(INITIAL_ZOOM - minStretch);
+      // const midCascade = 8 * minSurfaceDistance / config.radius;
+      // if (midCascade < cascadeConfig[0]) cascadeConfig.unshift(midCascade);
+      // cascadeConfig.unshift(2 * minSurfaceDistance / config.radius);
+
+      // init CSM
+      const csm = new CSM({
+        fade: true,
+        maxFar: config.radius * MAX_ZOOM,
+        cascades: cascadeConfig.length,
+        mode: 'custom',
+        customSplitsCallback: (cascades, near, far, target) => {
+          cascadeConfig.forEach((r) => target.push(r / MAX_ZOOM));
+        },
+        shadowMapSize: shadowSize,
+        lightColor,
+        lightDirection,
+        lightIntensity,
+        lightNear: 1,
+        lightFar: 10 * config.radius,
+        camera,
+        parent: group.current
+      });
+      geometry.current.setCSM(csm);
+      geometry.current.setShadowsEnabled(true);
+
+      // TODO: remove this
+      if (DEBUG_CSM) {
+        csmHelper.current = new CSMHelper(csm);
+        csmHelper.current.displayFrustum = true;
+        csmHelper.current.displayPlanes = true;
+        csmHelper.current.displayShadowBounds = true;
+        group.current.add(csmHelper.current);
+  
+        const floorMaterial = new MeshPhongMaterial( { color: '#252a34' } );
+        csm.setupMaterial( floorMaterial );
+        csmHelperFloor.current = new Mesh(new PlaneGeometry( 100000, 100000, 8, 8 ), floorMaterial );
+        csmHelperFloor.current.castShadow = true;
+        csmHelperFloor.current.receiveShadow = true;
+        group.current.add( csmHelperFloor.current );
+      }
+
+    //
+    // Non-CSM setup
+    //
+    } else {
+      
+      // create light
+      light.current = new DirectionalLight(lightColor, lightIntensity);
+      light.current.position.copy(lightDirection.negate().multiplyScalar(lightDistance));
+      group.current.add(light.current);
+
+      // if traditional shadows, update shadow camera
+      if (shadowMode > 0) {
+        light.current.castShadow = true;
+        light.current.shadow.mapSize.width = shadowSize;
+        light.current.shadow.mapSize.height = shadowSize;
+        // light.current.shadow.bias = 1 / shadowSize;
+        light.current.shadow.camera.near = lightDistance - maxRadius;
+        light.current.shadow.camera.far = lightDistance + maxRadius;
+        light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius;
+        light.current.shadow.camera.right = light.current.shadow.camera.top = maxRadius;
+        light.current.shadow.camera.updateProjectionMatrix();
+        geometry.current.setShadowsEnabled(true);
+      } else {
+        geometry.current.setShadowsEnabled(false);
+      }
+    }
+
+    // set current shadowMode
+    geometry.current.shadowMode = intendedShadowMode;
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config, ringsPresent, shadowMode, shadowSize, textureSize, surfaceDistance]);
 
   // Zooms the camera to the correct location
-  const shouldZoomIn = zoomStatus === 'zooming-in' && controls && !!asteroidData;
+  const shouldZoomIn = zoomStatus === 'zooming-in' && controls && config?.radius;
   useEffect(() => {
     if (!shouldZoomIn) return;
 
@@ -177,10 +356,10 @@ const Asteroid = (props) => {
       up: controls.object.up.clone()
     });
 
-    const panTo = new Vector3(...position);
+    const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
-    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
+    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM);
 
     const timeline = gsap.timeline({
       defaults: { duration: 2, ease: 'power4.out' },
@@ -192,28 +371,33 @@ const Asteroid = (props) => {
 
     // Zoom in the camera to the asteroid
     timeline.to(controls.object.position, { ...zoomTo }, 0);
+
+    // make sure can see asteroid as zoom
+    controls.object.near = 100;
+    controls.object.updateProjectionMatrix();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomIn ]);
 
-  const shouldFinishZoomIn = zoomStatus === 'in' && controls && !!asteroidData;
+  const shouldFinishZoomIn = zoomStatus === 'in' && controls && config?.radius;
   useEffect(() => {
     if (!shouldFinishZoomIn) return;
 
     // Update distances to maximize precision
-    controls.minDistance = asteroidData.radius * 1.2;
-    controls.maxDistance = asteroidData.radius * 4.0;
+    controls.minDistance = config.radius * MIN_ZOOM_DEFAULT;
+    controls.maxDistance = config.radius * MAX_ZOOM;
 
-    const panTo = new Vector3(...position);
+    const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
-    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(asteroidData.radius * 2.0);
+    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM);
     controls.targetScene.position.copy(panTo);
     controls.object.position.copy(zoomTo);
-    controls.noPan = true;
     controls.object.near = 100;
     controls.object.updateProjectionMatrix();
+    controls.noPan = true;
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ shouldFinishZoomIn, asteroidData ]);
+  }, [ shouldFinishZoomIn ]);
 
   // Handle zooming back out
   const shouldZoomOut = zoomStatus === 'zooming-out' && zoomedFrom && controls;
@@ -229,9 +413,9 @@ const Asteroid = (props) => {
         controls.targetScene.position.copy(zoomedFrom.scene);
         controls.object.position.copy(zoomedFrom.position);
         controls.object.up.copy(zoomedFrom.up);
-        controls.noPan = false;
         controls.object.near = 1000000;
         controls.object.updateProjectionMatrix();
+        controls.noPan = false;
         updateZoomStatus('out');
       }
     });
@@ -245,49 +429,248 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomOut ]);
 
-  // Updates controls and scene position when time or asteroid changes
-  const shouldUpdatePosition = zoomStatus === 'in' && position && controls;
-  useEffect(() => {
-    if (!shouldUpdatePosition) return;
+  // NOTE: in theory, all distances between sphereCenter's to camera are calculated
+  //       in quadtree calculation and could be passed back here, so would be more
+  //       performant to re-use that BUT that is also outdated as the camera moves
+  //       until the quads are recalculated
+  // NOTE: raycasting technically *might* be more accurate here, but it's way less performant
+  //       (3ms+ for just closest mesh... if all quadtree children, closer to 20ms)
+  const applyingZoomLimits = useRef(0);
+  const applyZoomLimits = useCallback((cameraPosition, chunks) => {
+    if (!config?.radius) return;
+    applyingZoomLimits.current = true;
+    setTimeout(() => {
+      // vvv BENCHMARK <1ms (even zoomed-in on huge)
+      const [closestChunk, closestDistance] = chunks.reduce((acc, c) => {
+        const distance = c.sphereCenter.distanceTo(cameraPosition);
+        return (!acc || distance < acc[1]) ? [c, distance] : acc;
+      }, null);
 
-    let panTo = new Vector3(...position);
-    group.current?.position.copy(panTo);
-    panTo.negate();
-    controls.targetScene.position.copy(panTo);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ shouldUpdatePosition, position, asteroidData ]);
+      const minDistance = Math.min(
+        config?.radius * MIN_ZOOM_DEFAULT,  // for smallest asteroids to match legacy (where this > min surface distance)
+        closestChunk.sphereCenterHeight + surfaceDistance
+      );
+      
+      // too close, so should animate camera out (jump to surface immediately though)
+      if (minDistance > controls?.minDistance && closestDistance < surfaceDistance) {
+        controls.minDistance = Math.max(cameraPosition.length(), closestChunk.sphereCenterHeight);
+        applyingZoomLimits.current = minDistance - controls?.minDistance;
 
-  // Initiates download of generated mesh (when requested and ready)
-  const exportableMesh = geometry && materials && mesh && mesh.current;
-  useEffect(() => {
-    if (!(requestingModelDownload && exportableMesh)) return;
-    exportModel(exportableMesh, onModelDownload);
+      // else, can just set
+      } else {
+        controls.minDistance = minDistance;
+        applyingZoomLimits.current = false;
+      }
+      // ^^^
+    }, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestingModelDownload, exportableMesh]);
+  }, [surfaceDistance, config?.radius, controls?.minDistance]);
+
+  useEffect(() => {
+    if (geometry.current && terrainUpdateNeeded) {
+      // vvv BENCHMARK 2ms (zoomed-out), 7-20ms+ (zoomed-in)
+      geometry.current.setCameraPosition(terrainUpdateNeeded);
+      settingCameraPosition.current = false;
+      // ^^^
+    }
+  }, [terrainUpdateNeeded]);
+
+  // Positions the asteroid in space based on time changes
+  useFrame(() => {
+    if (!asteroidData) return;
+    if (!geometry.current?.builder?.ready) return;
+
+    // vvv BENCHMARK <1ms
+    // update asteroid position
+    const time = getTime();
+    if (asteroidOrbit.current && time) {
+      position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU);
+
+      // update object and camera position (if zoomed in)
+      if (zoomStatus === 'in') {
+        const positionVec3 = new Vector3(...position.current);
+        group.current.position.copy(positionVec3);
+        positionVec3.negate();
+        controls.targetScene.position.copy(positionVec3);
+      }
+
+      // update light position (since asteroid has moved around star)
+      if (zoomStatus !== 'out') {
+        if (geometry.current.csm) {
+          geometry.current.csm.lightDirection.copy(
+            new Vector3(...position.current).normalize()
+          )
+        } else if (light.current) {
+          light.current.position.copy(
+            new Vector3(...position.current).negate().multiplyScalar(config.radius * DIRECTIONAL_LIGHT_DISTANCE)
+          );
+        }
+      }
+    }
+
+    // update asteroid rotation
+    let updatedRotation = rotation.current;
+    if (config?.rotationSpeed && time) {
+      updatedRotation = time * config.rotationSpeed * 2 * Math.PI
+      // updatedRotation = 0; // TODO: remove
+      if (updatedRotation !== rotation.current) {
+        quadtreeRef.current.setRotationFromAxisAngle(
+          rotationAxis.current,
+          updatedRotation
+        );
+        // if (debug.current) {  // TODO: remove debug
+        //   debug.current.setRotationFromAxisAngle(
+        //     rotationAxis.current,
+        //     updatedRotation
+        //   );
+        // }
+        rotation.current = updatedRotation;
+      }
+    }
+
+    // (if currently zooming in, we'll want to setCameraPosition for camera's destination so doesn't
+    //  re-render as soon as it arrives)
+    const rotatedCameraPosition = zoomStatus === 'in'
+      ? controls.object.position.clone()
+      : controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM);
+    rotatedCameraPosition.applyAxisAngle(rotationAxis.current, -rotation.current);
+    // ^^^
+
+    // if builder is not busy, make sure we are showing most recent chunks
+    if (geometry.current.builder.isPreparingUpdate()) {
+      if (geometry.current.builder.isReadyToFinish()) {
+        // vvv BENCHMARK 1ms
+        geometry.current.builder.update();
+        
+        // TODO: remove below
+        if (BENCHMARK_TERRAIN_UPDATES) {
+          if (taskTally < 5) {  // overwrite first load since so long for workers
+            taskTotal = 5 * (Date.now() - terrainUpdateStart);
+          } else {
+            taskTotal += Date.now() - terrainUpdateStart;
+          }
+          taskTally++;
+          terrainUpdateStart = null;
+        }
+        // ^^^
+
+        // if (debug.current) {
+        //   const vertices = Object.values(geometry.current.chunks)
+        //     .map((c) => c.sphereCenter.clone().addScalar(1))
+        //     .reduce((acc, cur) => {
+        //       acc.push(cur.x);
+        //       acc.push(cur.y);
+        //       acc.push(cur.z);
+        //       return acc;
+        //     }, [])
+        //   ;
+        //   debug.current.geometry.setAttribute('position', new BufferAttribute( new Float32Array(vertices), 3 ) );
+        //   debug.current.geometry.attributes.position.needsUpdate = true;
+        // }
+
+      // (this is used if maps are generated on main thread instead of worker)
+      } else {
+        // vvv BENCHMARK 8ms (matches MAP_RENDER_TIME_PER_CYCLE)
+        geometry.current.builder.updateMaps(Date.now() + MAP_RENDER_TIME_PER_CYCLE);
+        // ^^^
+      }
+    }
+
+    // if zoomed out, let run once to prerender, but then don't run the rest of the frame
+    if (geometry.current.cameraPosition && (zoomStatus === 'out' || zoomStatus === 'zooming-out')) return;
+    
+    // control dynamic zoom limit (zoom out if too low... else, just update boundary)
+    if (controls && Object.values(geometry.current?.chunks).length) {
+      if (applyingZoomLimits.current) {
+        if (applyingZoomLimits.current !== true) {
+          const amount = Math.max(5, applyingZoomLimits.current / 10);
+          applyingZoomLimits.current = Math.max(0, applyingZoomLimits.current - amount);
+          controls.minDistance += amount;
+        }
+      } else {
+        // vvv BENCHMARK <1ms
+        applyZoomLimits(rotatedCameraPosition, Object.values(geometry.current.chunks));
+        // ^^^
+      }
+    }
+    
+    // update quads if not already updating AND one of these is true...
+    //  a) camera height changes by UPDATE_DISTANCE_MULT
+    //  b) camera position changes by rotational equivalent of UPDATE_DISTANCE_MULT at maxStretch surface
+    if (!settingCameraPosition.current && !geometry.current.builder.isBusy() && !geometry.current.builder.isPreparingUpdate()) {
+      // vvv BENCHMARK <1ms
+      const cameraHeight = rotatedCameraPosition.length();
+      const updateQuadtreeEvery = geometry.current.smallestActiveChunkSize * UPDATE_DISTANCE_MULT;
+      const updateQuadCube = !geometry.current.cameraPosition
+        || Math.abs(geometry.current.cameraPosition.length() - cameraHeight) > updateQuadtreeEvery
+        || geometry.current.cameraPosition.distanceTo(rotatedCameraPosition) > updateQuadtreeEvery * cameraHeight / (config.radius * maxStretch)
+      ;
+      // ^^^
+
+      // initiate update of quads (based on camera position)
+      if (updateQuadCube) {
+        terrainUpdateStart = Date.now();
+        settingCameraPosition.current = true;
+        setTerrainUpdateNeeded(rotatedCameraPosition.clone());
+      }
+    }
+
+    if (geometry.current?.csm) {
+      // vvv BENCHMARK <1ms
+      geometry.current.csm.update();
+      const updatedAspect = window.innerWidth / window.innerHeight;
+      if (aspectRatio.current !== updatedAspect) {
+        aspectRatio.current = updatedAspect;
+        geometry.current.csm.updateFrustums();
+      }
+      // ^^^
+      if (csmHelper.current) {
+        csmHelper.current.update();
+      }
+    }
+
+    // TODO: remove debug
+    // setTimeout(() => {
+    //   const debugInfo = document.getElementById('debug_info');
+    //   if (!!debugInfo && config?.radius) {
+    //     debugInfo.innerText = (controls.object.position.length() / config?.radius).toFixed(2);
+    //   } else {
+    //     console.log('#debug_info not found!');
+    //   }
+    // });
+  });
 
   return (
     <group ref={group}>
-      <directionalLight
-        ref={light}
-        color={0xffeedd}
-        castShadow={shadows}
-        shadow-mapSize-height={shadowSize}
-        shadow-mapSize-width={shadowSize} />
-      {geometry && materials && (
-        <mesh
-          ref={mesh}
-          material={materials}
-          castShadow={shadows}
-          receiveShadow={shadows}>
-          <primitive attach="geometry" object={geometry} />
-        </mesh>
-      )}
-      {config?.ringsPresent && geometry && (
+      <group ref={quadtreeRef} />
+      {/* TODO: need to pass in CSM to rings probably */}
+      {config?.ringsPresent && geometry.current && (
         <Rings
-          receiveShadow={shadows}
+          receiveShadow={shadowMode > 0}
           config={config}
           onUpdate={(m) => m.lookAt(rotationAxis?.current)} />
       )}
+      {/* TODO: remove all helpers */}
+      {false && (
+        <mesh>
+          <sphereGeometry args={[14350]} />
+          <meshStandardMaterial color={0x0000ff} opacity={0.8} transparent={true} />
+        </mesh>
+      )}
+      {false && (
+        <points ref={debug}>
+          <pointsMaterial attach="material" size={500} sizeAttenuation={true} color={0xff0000} />
+        </points>
+      )}
+      {false && geometry.current?.csm && geometry.current.csm.lights.map((light, i) => (
+        <Fragment key={`helper_${i}`}>
+          {false && <primitive object={new DirectionalLightHelper(light, 2 * config?.radius)} />}
+          {true && light?.shadow?.camera && <primitive object={new CameraHelper(light.shadow.camera)} />}
+        </Fragment>
+      ))}
+      {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
+      {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
+      {false && <ambientLight intensity={0.3} />}
     </group>
   );
 }

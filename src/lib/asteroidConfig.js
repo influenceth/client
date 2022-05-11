@@ -3,6 +3,8 @@ import Seed from '~/lib/math/Seed';
 import OctaveNoise from '~/lib/graphics/OctaveNoise';
 import constants from '~/lib/constants';
 
+// TODO: this should probably be elsewhere in the dir tree since it's not only used by scene
+
 // Responsible for generating a config for any asteroid to be generated
 class Config {
   constructor(asteroid) {
@@ -11,6 +13,8 @@ class Config {
     this.radius = asteroid.radius
     this.bonuses = asteroid.bonuses;
 
+    const dispWeightCoarse = this._dispWeightCoarse();
+    const dispWeightFine = this._dispWeightFine();
     return {
       cleaveCut: this._cleaveCut(),
       cleaveWeight: this._cleaveWeight(),
@@ -22,10 +26,11 @@ class Config {
       dispFreq: this._dispFreq(),
       dispPasses: this._dispPasses(),
       dispPersist: this._dispPersist(),
-      dispWeight: this._dispWeight(),
+      dispWeight: dispWeightCoarse + dispWeightFine,
       featuresFreq: this._featuresFreq(),
-      normalIntensity: this._normalIntensity(),
-      radius: this.radius,
+      fineDispFraction: dispWeightFine / (dispWeightCoarse + dispWeightFine),
+      radius: this._adjustedRadius(),
+      radiusNominal: this.radius,
       ringsMinMax: this._ringsMinMax(),
       ringsPresent: this._ringsPresent(),
       ringsVariation: this._ringsVariation(),
@@ -46,6 +51,19 @@ class Config {
   _radiusMod(pow = 1) {
     return Math.pow(this.radius / constants.MAX_ASTEROID_RADIUS, pow);
   }
+  
+  // Returns the radius of a sphere, which if stretched into an ellipsoid by
+  // _stretch, would have the same surface area as the nominal radius
+  _adjustedRadius() {
+    // R = r / (((sx*sy)^1.6 + (sx*sz)^1.6 + (sy*sz)^1.6) / 3)^(1/3.2)
+    const stretch = this._stretch();
+    return Math.floor(
+      this.radius / Math.pow(
+        (Math.pow(stretch.x * stretch.y, 1.6) + Math.pow(stretch.x * stretch.z, 1.6) + Math.pow(stretch.y * stretch.z, 1.6)) / 3,
+        1 / 3.2
+      )
+    );
+  }
 
   // Defines the upper cutoff (starts at -1.0) for cleavage lines. Must be less than 0
   _cleaveCut() {
@@ -53,39 +71,43 @@ class Config {
   }
 
   // How prominent the cleavage line features appear (can range from 0 to 1)
+  // (as a proportion of maxCraterDepth)
   _cleaveWeight() {
-    return 0.4 * this.seedGen.getFloat('cleaveWeight');
+    return 0.25 * this.seedGen.getFloat('cleaveWeight');
   }
 
   /**
    * Defines the cutoff below which craters will be created from cellular noise (less than 1)
    * Larger values will create more / larger craters at each pass
    */
-  _craterCut() {
-    return 0.15 + 0.15 * this._radiusMod(2);
+  _craterCut() { // [0.15,0.20]
+    return 0.20 - 0.05 * this._radiusMod(2);
   }
 
   // Determines how much smaller each crater pass is. The higher the number the smaller on each pass
-  _craterFalloff() {
+  _craterFalloff() { // [1.5,2.0]
     return 1.5 + 0.5 * this.seedGen.getFloat('craterFalloff');
   }
 
-  // Number of different sizes of crater passes
+  // Number of different sizes of crater passes (at max zoom)
+  // (this is static now because increases as zoom in)
   _craterPasses() {
-    return Math.round(4 + 3 * this._radiusMod(2));
+    return 6;
+    // return Math.round(4 + 3 * this._radiusMod(2));
   }
 
   /**
    * Determines how much impact smaller craters have in the landscape. Higher values make smaller
    * craters more visible.
    */
-  _craterPersist() {
-    return 0.75 - 0.2 * this._radiusMod(2);
+  _craterPersist() {  // [0.45, 0.65]
+    return 0.65 - 0.2 * this._radiusMod(2);
   }
 
   // Determines how steep the walls of the craters are. Higher numbers are steeper
+  // (larger asteroids have more gravity, so less steep walls)
   _craterSteep() {
-    return 8.0;
+    return 6.0 - 2.0 * this._radiusMod(2);
   }
 
   // Baseline frequency for displacement of the asteroid. Higher values makes it noisier.
@@ -107,18 +129,21 @@ class Config {
   }
 
   // How much an asteroid should displace out of spherical towards displacement
-  _dispWeight() {
+  _dispWeightCoarse() {
+    // [0.0138,0.3926]
     return (0.275 + this.seedGen.getFloat('dispWeight') / 10) * (1.05 - this._radiusMod())
+  }
+
+  // How much weight for fine-displacement features
+  // NOTE: Earth's deepest crater is 0.3% radius, Moon's is 0.7% radius, so if assuming depth doubles with
+  //       quartering radius, AP should be ~1.4% and lasteroid should be ~22.4%
+  _dispWeightFine() {
+    return 0.014 / this._radiusMod(0.45); // [0.014,0.200]
   }
 
   // Baseline frequency for features like craters and lines. Higher values make noise "noiser"
   _featuresFreq() {
     return 0.5 * this._radiusMod(2) + 2.0;
-  }
-
-  // Determines how prominent the normal mapping shading is. Lower values make for darker / sharper shadows
-  _normalIntensity() {
-    return 0.1 * this._radiusMod(2) + 0.4;
   }
 
   // How much to take the rims of craters out of round. Larger numbers make them less round.
@@ -141,7 +166,7 @@ class Config {
     const widthMod = this.seedGen.getFloat('ringsMax') * 0.5;
     let maxMod = minMod + widthMod;
     if (maxMod > 2.0) maxMod = 2.0;
-    return [ this.radius * minMod, this.radius * maxMod ];
+    return [ this.radius * minMod, this.radius * maxMod ];  // TODO: should this be adjustedRadius?
   }
 
   _ringsPresent() {
@@ -197,7 +222,7 @@ class Config {
   }
 
   // How prominent general topography should be on the asteroid as a whole
-  _topoWeight() {
+  _topoWeight() { // [0.2,0.4]
     return 0.4 - 0.1 * this._radiusMod(2) - 0.1 * this.seedGen.getFloat('topoWeight');
   }
 }
