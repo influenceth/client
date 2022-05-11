@@ -4,6 +4,8 @@ import { ThemeProvider } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
+import { AuthProvider } from '~/contexts/AuthContext';
+import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
 import { ClockProvider } from '~/contexts/ClockContext';
 import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
@@ -67,26 +69,30 @@ const Game = (props) => {
   }, [createAlert, updateNeeded, onUpdateVersion]);
 
   return (
-    <ThemeProvider theme={theme}>
-      <Router>
-        <Referral />
-        <Switch>
-          <Route path="/play">
-            <LandingPage />
-          </Route>
-          <Route>
-            <ClockProvider>
-              {introEnabled && <Intro onComplete={onIntroComplete} />}
-              <StyledMain>
-                <Interface />
-                {showScene && <Scene />}
-                <Audio />
-              </StyledMain>
-            </ClockProvider>
-          </Route>
-        </Switch>
-      </Router>
-    </ThemeProvider>
+    <AuthProvider>
+      <ChainTransactionProvider>
+        <ThemeProvider theme={theme}>
+          <Router>
+            <Referral />
+            <Switch>
+              <Route path="/play">
+                <LandingPage />
+              </Route>
+              <Route>
+                <ClockProvider>
+                  {introEnabled && <Intro onComplete={onIntroComplete} />}
+                  <StyledMain>
+                    <Interface />
+                    {showScene && <Scene />}
+                    <Audio />
+                  </StyledMain>
+                </ClockProvider>
+              </Route>
+            </Switch>
+          </Router>
+        </ThemeProvider>
+      </ChainTransactionProvider>
+    </AuthProvider>
   );
 };
 

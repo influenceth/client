@@ -1,50 +1,29 @@
-import { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from 'react-query';
-import { useWeb3React } from '@web3-react/core';
-import { ethers } from 'ethers';
-import { contracts } from 'influence-utils';
+import { useCallback, useContext, useMemo } from 'react';
 
-import useStore from '~/hooks/useStore';
+import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import useSale from '~/hooks/useSale';
 
 const useBuyAsteroid = (i) => {
-  const queryClient = useQueryClient();
-  const { account, library } = useWeb3React();
-  const [ contract, setContract ] = useState();
-  const createAlert = useStore(s => s.dispatchAlertLogged);
+  const { execute, getStatus } = useContext(ChainTransactionContext);
+  const { data: sale } = useSale();
 
-  // Sets up contract object with appropriate provider
-  useEffect(() => {
-    const provider = !!account ? library.getSigner(account) : library;
-    const newContract = new ethers.Contract(
-      process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
-      contracts.ArvadCrewSale,
-      provider
-    );
+  // BUY_ASTEROID_1ST_SALE references fisrt sale to support testnet usage
+  const contractKey = sale && !sale.endCount ? 'BUY_ASTEROID_1ST_SALE' : 'BUY_ASTEROID';
 
-    setContract(newContract);
-  }, [ account, library ]);
+  const buyAsteroid = useCallback(
+    () => execute(contractKey, { i }),
+    [execute, contractKey, i]
+  );
 
-  return useMutation(async () => {
-    const price = await contract.getAsteroidPrice(i);
-    const tx = await contract.buyAsteroid(i, { value: price });
-    const receipt = await tx.wait();
-    return receipt;
-  }, {
-    enabled: !!contract && !!account,
+  const status = useMemo(
+    () => getStatus(contractKey, { i }),
+    [getStatus, contractKey, i]
+  );
 
-    onError: (err, vars, context) => {
-      console.error(err, i, context);
-      createAlert({
-        type: 'Asteroid_BuyingError',
-        level: 'warning',
-        i: i, timestamp: Math.round(Date.now() / 1000)
-      });
-    },
-
-    onSuccess: () => {
-      setTimeout(() => queryClient.invalidateQueries('events'), 1000);
-    }
-  });
+  return {
+    buyAsteroid,
+    buying: status === 'pending'
+  };
 };
 
 export default useBuyAsteroid;
