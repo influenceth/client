@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { 
+import {
+  // BufferAttribute,
   AxesHelper,
   CameraHelper,
   DirectionalLight,
@@ -658,7 +659,7 @@ const Asteroid = (props) => {
       )}
       {false && (
         <points ref={debug}>
-          <pointsMaterial attach="material" size={1000} sizeAttenuation={true} color={0xff0000} />
+          <pointsMaterial attach="material" size={500} sizeAttenuation={true} color={0xff0000} />
         </points>
       )}
       {false && geometry.current?.csm && geometry.current.csm.lights.map((light, i) => (

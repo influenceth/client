@@ -198,9 +198,9 @@ class QuadtreeTerrainPlane {
     // get resolution-specific edges of the node
     const mult = this.heightSampleResolution / (2 * this.rootSize);
     const xMin = Math.floor((this.rootSize + node.center.x - node.size.x / 2) * mult);
-    const xMax = Math.floor((this.rootSize + node.center.x + node.size.x / 2) * mult);
+    const xMax = Math.max(xMin + 1, Math.floor((this.rootSize + node.center.x + node.size.x / 2) * mult));
     const yMin = Math.floor((this.rootSize + node.center.y - node.size.y / 2) * mult);
-    const yMax = Math.floor((this.rootSize + node.center.y + node.size.y / 2) * mult);
+    const yMax = Math.max(yMin + 1, Math.floor((this.rootSize + node.center.y + node.size.y / 2) * mult));
 
     let minmax = [null, null];
     for (let x = xMin; x < xMax; x++) {
@@ -210,9 +210,6 @@ class QuadtreeTerrainPlane {
         if (minmax[1] === null || cur > minmax[1]) minmax[1] = cur;
       }
     }
-    // if (xMin === xMax || yMin === yMax) {
-    //   console.log('between points', minmax);
-    // }
     return minmax;
   }
 
@@ -223,7 +220,7 @@ class QuadtreeTerrainPlane {
     const sphereCenter = node.center.clone();
     sphereCenter.z = this.rootSize;
     sphereCenter.normalize();
-    sphereCenter.setLength(unstretchedMin);
+    sphereCenter.setLength(node.unstretchedMin);
     sphereCenter.applyMatrix4(this.localToWorld);
     sphereCenter.multiply(this.worldStretch);
     
