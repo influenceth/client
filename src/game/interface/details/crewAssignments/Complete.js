@@ -374,10 +374,12 @@ const CrewAssignmentComplete = (props) => {
             </CardWrapper>
 
             <RecruitSection>
-              <TwitterButton onClick={shareOnTwitter}>
-                <span>Share on Twitter</span>
-                <TwitterIcon />
-              </TwitterButton>
+              {process.env.NODE_ENV !== 'staging' && (
+                <TwitterButton onClick={shareOnTwitter}>
+                  <span>Share on Twitter</span>
+                  <TwitterIcon />
+                </TwitterButton>
+              )}
               <CopyReferralLink>
                 <LinkWithIcon>
                   <LinkIcon />
