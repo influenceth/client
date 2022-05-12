@@ -374,7 +374,7 @@ const CrewAssignmentComplete = (props) => {
             </CardWrapper>
 
             <RecruitSection>
-              {process.env.NODE_ENV !== 'staging' && (
+              {['development', 'production'].includes(process.env.NODE_ENV) && (
                 <TwitterButton onClick={shareOnTwitter}>
                   <span>Share on Twitter</span>
                   <TwitterIcon />
