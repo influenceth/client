@@ -1,70 +1,112 @@
-import { WebGLRenderer } from 'three';
+import { Vector3 } from 'three';
 
+import constants from '~/lib/constants';
 import * as utils from '~/lib/geometryUtils';
-import TextureRenderer from '~/lib/graphics/TextureRenderer';
+import { rebuildChunkGeometry, rebuildChunkMaps, initChunkTextures } from '~/game/scene/asteroid/helpers/TerrainChunkUtils';
 
-onmessage = async function(event) {
+const {
+  DISABLE_BACKGROUND_TERRAIN_MAPS
+} = constants;
+
+let cache = {
+  asteroid: {},
+  asteroids: {},
+  planets: {},
+};
+
+onmessage = function(event) {
   switch (event.data.topic) {
-    case 'updateAsteroidsData':
-      updateAsteroidsData(event.data.asteroids);
-      updateAsteroidPositions(event.data.elapsed);
+    case 'initGpuAssets':
+      initGpuAssets(event.data.data);
       break;
     case 'updateAsteroidPositions':
-      updateAsteroidPositions(event.data.elapsed);
+      if (event.data.asteroids) cache.asteroids = event.data.asteroids;
+      updateAsteroidPositions(cache.asteroids?.orbitals, event.data.elapsed);
       break;
     case 'updatePlanetPositions':
-      updatePlanetPositions(event.data.planets, event.data.elapsed);
+      if (event.data.planets) cache.planets = event.data.planets;
+      updatePlanetPositions(cache.planets?.orbitals, event.data.elapsed);
       break;
-    case 'renderGeometry':
-      renderGeometry(event.data.heightMap, event.data.config);
+    case 'rebuildTerrainGeometry':
+      if (event.data.asteroid) cache.asteroid = event.data.asteroid;
+      rebuildTerrainGeometry({
+        ...cache.asteroid,
+        ...event.data.chunk
+      });
       break;
-    case 'renderMaps':
-      renderMaps(event.data.mapSize, event.data.config);
+    // used if want to just update cache values (but do no work)
+    case 'updateParamCache': {
+      Object.keys(event.data).forEach((k) => {
+        if (cache.hasOwnProperty(k)) cache[k] = event.data[k];
+      });
+      postMessage({ topic: 'updatedParamCache'});
       break;
+    }
     default:
       console.error('Method not supported');
   }
 };
 
-// Caches asteroids data, canvas and textureRenderer in the worker
-let asteroidsData = [];
-let textureRenderer;
-
-// Setup offscreen canvas
-if (typeof OffscreenCanvas !== 'undefined') {
-  const offscreen = new OffscreenCanvas(0, 0);
-  const renderer = new WebGLRenderer({ canvas: offscreen, antialias: true });
-  textureRenderer = new TextureRenderer(renderer);
-}
-
-const updateAsteroidsData = function(newAsteroidsData) {
-  asteroidsData = newAsteroidsData;
+const initGpuAssets = function(data) {
+  initChunkTextures(data.ramps);
+  postMessage({ topic: 'initedGpuAssets' });
 };
 
-const updateAsteroidPositions = function(elapsed = 0) {
+const updateAsteroidPositions = function(orbitals, elapsed = 0) {
+  const positions = utils.getUpdatedAsteroidPositions(orbitals, elapsed);
   postMessage({
     topic: 'asteroidPositions',
-    positions: utils.getUpdatedAsteroidPositions(asteroidsData, elapsed)
-  });
+    positions
+  }, [positions.buffer]);
 };
 
-const updatePlanetPositions = function(planets, elapsed = 0) {
+const updatePlanetPositions = function(orbitals, elapsed = 0) {
+  const positions = utils.getUpdatedPlanetPositions(orbitals, elapsed);
   postMessage({
     topic: 'planetPositions',
-    positions: utils.getUpdatedPlanetPositions(planets, elapsed)
-  });
+    positions
+  }, [positions.buffer]);
 };
 
-const renderMaps = async function(mapSize, config) {
-  postMessage({
-    topic: 'maps',
-    ...(await utils.renderAsteroidMaps(mapSize, config, textureRenderer))
-  });
-};
+// TODO: remove debug
+// let taskTotal = 0;
+// let taskTally = 0;
+// setInterval(() => {
+//   if (taskTally > 0) {
+//     console.log(
+//       `avg execution time (internal, over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
+//     );
+//   }
+// }, 5000);
 
-const renderGeometry = function(heightMap, config) {
-  postMessage({
-    topic: 'geometry',
-    geometryJSON: utils.renderAsteroidGeometry(heightMap, config)
-  });
-};
+const rebuildTerrainGeometry = function (chunk) {
+  chunk.offset = new Vector3(chunk.offset[0], chunk.offset[1], chunk.offset[2]);
+  chunk.stretch = new Vector3(chunk.stretch[0], chunk.stretch[1], chunk.stretch[2]);
+  const { positions, normals } = rebuildChunkGeometry(chunk);
+  if (DISABLE_BACKGROUND_TERRAIN_MAPS) {
+    postMessage({
+      topic: 'rebuiltTerrainChunk',
+      positions,
+      normals
+    }, [
+      positions.buffer,
+      normals.buffer
+    ]);
+  } else {
+    initChunkTextures().then(() => {
+      const maps = rebuildChunkMaps(chunk);
+      postMessage({
+        topic: 'rebuiltTerrainChunk',
+        positions,
+        normals,
+        maps
+      }, [
+        positions.buffer,
+        normals.buffer,
+        maps.colorBitmap,
+        maps.heightBitmap,
+        maps.normalBitmap,
+      ]);
+    });
+  }
+}

@@ -1,51 +1,52 @@
-import { useRef, useState, useEffect } from 'react';
-import { AdditiveBlending } from 'three';
+import { useContext, useEffect, useRef } from 'react';
+import { AdditiveBlending, Float32BufferAttribute } from 'three';
 import { useTexture } from '@react-three/drei';
 
-// eslint-disable-next-line
-import Worker from 'worker-loader!../../worker';
+import ClockContext from '~/contexts/ClockContext';
 import usePlanets from '~/hooks/usePlanets';
-import useStore from '~/hooks/useStore';
+import useWebWorker from '~/hooks/useWebWorker';
 import Orbit from './planets/Orbit';
 import theme from '~/theme';
 
-const worker = new Worker();
-
 const Planets = (props) => {
   const planets = usePlanets();
-  const [ positions, setPositions ] = useState(new Float32Array(5 * 3));
-  const time = useStore(s => s.time.current);
+  const { coarseTime } = useContext(ClockContext);
+
   const texture = useTexture(`${process.env.PUBLIC_URL}/textures/circleFaded.png`);
+  const { processInBackground } = useWebWorker();
+  
   const geometry = useRef();
 
   // Listen for changes to planets data or global time and update planet positions
   useEffect(() => {
-    if (planets.data) {
-      worker.postMessage({ topic: 'updatePlanetPositions', planets: planets.data, elapsed: time });
+    if (planets.data && coarseTime) {
+      processInBackground(
+        {
+          topic: 'updatePlanetPositions',
+          planets: {
+            key: '_planets',
+            orbitals: planets.data.map((p) => p.orbital)
+          },
+          elapsed: coarseTime,
+          _cacheable: 'planets'
+        },
+        (data) => {
+          if (geometry.current && data.positions) {
+            geometry.current.setAttribute(
+              'position',
+              new Float32BufferAttribute(data.positions, 3)
+            );
+            geometry.current.computeBoundingSphere();
+          }
+        }
+      );
     }
-  }, [ planets.data, time ]);
-
-  useEffect(() => {
-    if (!!worker) {
-      worker.onmessage = (event) => {
-        if (event.data.topic === 'planetPositions') setPositions(new Float32Array(event.data.positions));
-      };
-    }
-  }, []);
-
-  // re-computeBoundingSphere on geometry change
-  useEffect(() => {
-    if (geometry.current) {
-      geometry.current.computeBoundingSphere();
-    }
-  }, [positions]);
+  }, [ planets.data, processInBackground, coarseTime ]);
 
   return (
     <group position={[ 0, 0, 0 ]}>
       <points>
-        <bufferGeometry ref={geometry}>
-          <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3]} />
-        </bufferGeometry>
+        <bufferGeometry ref={geometry} />
         <pointsMaterial
           blending={AdditiveBlending}
           color={theme.colors.main}

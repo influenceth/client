@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
 import screenfull from 'screenfull';
@@ -14,6 +14,9 @@ import Button from '~/components/Button';
 import IconButton from '~/components/IconButton';
 import NumberInput from '~/components/NumberInput';
 import Range from '~/components/Range';
+import constants from '~/lib/constants';
+
+const { ENABLE_SHADOWS } = constants;
 
 const StyledSettings = styled.div`
   padding-left: 15px;
@@ -57,14 +60,12 @@ const Settings = (props) => {
   const { data: referralsCount } = useReferralsCount();
   const graphics = useStore(s => s.graphics);
   const sounds = useStore(s => s.sounds);
-  const setTextureSize = useStore(s => s.dispatchTextureSizeSet);
   const turnOnSkybox = useStore(s => s.dispatchSkyboxUnhidden);
   const turnOffSkybox = useStore(s => s.dispatchSkyboxHidden);
   const turnOnLensflare = useStore(s => s.dispatchLensflareUnhidden);
   const turnOffLensflare = useStore(s => s.dispatchLensflareHidden);
-  const turnOnShadows = useStore(s => s.dispatchShadowsOn);
-  const turnOffShadows = useStore(s => s.dispatchShadowsOff);
-  const setShadowSize = useStore(s => s.dispatchShadowSizeSet);
+  const setShadowQuality = useStore(s => s.dispatchShadowQualitySet);
+  const setTextureQuality = useStore(s => s.dispatchTextureQualitySet);
   const setFOV = useStore(s => s.dispatchFOVSet);
   const turnOnStats = useStore(s => s.dispatchStatsOn);
   const turnOffStats = useStore(s => s.dispatchStatsOff);
@@ -91,51 +92,55 @@ const Settings = (props) => {
             <StyledDataReadout label="Texture Quality">
               <ControlGroup>
                 <Button
-                  active={graphics.textureSize === 512}
-                  onClick={() => setTextureSize(512)}>
+                  active={!graphics.textureQuality || graphics.textureQuality === 1}
+                  onClick={() => setTextureQuality(1)}>
                   Low
                 </Button>
                 <Button
-                  active={graphics.textureSize === 1024}
-                  onClick={() => setTextureSize(1024)}>
+                  active={graphics.textureQuality === 2}
+                  onClick={() => setTextureQuality(2)}>
                   Medium
                 </Button>
                 <Button
-                  active={graphics.textureSize === 2048}
-                  onClick={() => setTextureSize(2048)}>
+                  active={graphics.textureQuality === 3}
+                  onClick={() => setTextureQuality(3)}>
                   High
                 </Button>
               </ControlGroup>
             </StyledDataReadout>
-            <StyledDataReadout label="Dynamic Shadows">
-              <IconButton
-                data-tip="Toggle Shadows"
-                data-for="global"
-                onClick={() => graphics.shadows ? turnOffShadows() : turnOnShadows()}
-                borderless>
-                {graphics.shadows ? <CheckedIcon /> : <UncheckedIcon />}
-              </IconButton>
-            </StyledDataReadout>
-            {graphics.shadows && (
-              <StyledDataReadout label="Shadow Quality">
-                <ControlGroup>
-                  <Button
-                    active={graphics.shadowSize === 1024}
-                    onClick={() => setShadowSize(1024)}>
-                    Low
-                  </Button>
-                  <Button
-                    active={graphics.shadowSize === 2048}
-                    onClick={() => setShadowSize(2048)}>
-                    Medium
-                  </Button>
-                  <Button
-                    active={graphics.shadowSize === 4096}
-                    onClick={() => setShadowSize(4096)}>
-                    High
-                  </Button>
-                </ControlGroup>
-              </StyledDataReadout>
+            {ENABLE_SHADOWS && (
+              <>
+                <StyledDataReadout label="Dynamic Shadows">
+                  <IconButton
+                    data-tip="Toggle Shadows"
+                    data-for="global"
+                    onClick={() => setShadowQuality(graphics.shadowQuality > 0 ? 0 : 1)}
+                    borderless>
+                    {graphics.shadowQuality > 0 ? <CheckedIcon /> : <UncheckedIcon />}
+                  </IconButton>
+                </StyledDataReadout>
+                {graphics.shadowQuality > 0 && (
+                  <StyledDataReadout label="Shadow Quality">
+                    <ControlGroup>
+                      <Button
+                        active={graphics.shadowQuality === 1}
+                        onClick={() => setShadowQuality(1)}>
+                        Low
+                      </Button>
+                      <Button
+                        active={graphics.shadowQuality === 2}
+                        onClick={() => setShadowQuality(2)}>
+                        Medium
+                      </Button>
+                      <Button
+                        active={graphics.shadowQuality === 3}
+                        onClick={() => setShadowQuality(3)}>
+                        High
+                      </Button>
+                    </ControlGroup>
+                  </StyledDataReadout>
+                )}
+              </>
             )}
             <StyledDataReadout label="Field of View">
               <ControlGroup>

@@ -101,7 +101,7 @@ const models = [
   },
   {
     "slug": "Fissile_Uranite_wz2rda",
-    "title": "Uraninite"
+    "title": "Uranite"
   },
   {
     "slug": "Volatile_Water_tnxrl3",

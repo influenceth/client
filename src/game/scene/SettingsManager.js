@@ -14,16 +14,18 @@ const SettingsManager = (props) => {
     'sky_pos_x.jpg', 'sky_neg_x.jpg', 'sky_pos_y.jpg', 'sky_neg_y.jpg', 'sky_pos_z.jpg', 'sky_neg_z.jpg'
   ], { path: `${process.env.PUBLIC_URL}/textures/skybox/`});
 
+  // toggle background on / off per settings
   useEffect(() => {
-    if (skyboxVisible) {
+    if (skyboxVisible && !scene.background && skybox) {
       scene.background = skybox;
-    } else {
+    } else if (!skyboxVisible && scene.background) {
       scene.background = null;
     }
   }, [ scene, skyboxVisible, skybox ]);
 
+  // toggle fov as needed
   useEffect(() => {
-    if (fov && camera) {
+    if (fov && camera && camera.fov !== fov) {
       camera.fov = fov;
       camera.updateProjectionMatrix();
     }

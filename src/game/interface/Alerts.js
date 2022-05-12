@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import styled from 'styled-components';
-import ReactNotification, { store as notify } from 'react-notifications-component';
+import { ReactNotifications, Store as notify } from 'react-notifications-component';
 import 'react-notifications-component/dist/theme.css';
 import 'animate.css';
 
@@ -31,12 +31,12 @@ const send = (message, options = {}) => {
   }
 };
 
-const StyledReactNotification = styled(ReactNotification)`
-  & .notification-container--top-center {
+const StyledReactNotification = styled(ReactNotifications)`
+  & .rnc__notification-container--top-center {
     top: 0 !important;
   }
 
-  & .notification__item {
+  & .rnc__notification-item {
     background-color: ${p => p.theme.colors.contentBackdrop};
     border-color: ${p => p.theme.colors.main};
     border-radius: 0;
@@ -44,20 +44,20 @@ const StyledReactNotification = styled(ReactNotification)`
     cursor: ${p => p.theme.cursors.active};
   }
 
-  & .notification__item.notification__item--warning {
+  & .rnc__notification-item.rnc__notification-item--warning {
     border-color: ${p => p.theme.colors.error};
   }
 
-  & .notification__close {
+  & .rnc__notification-close-mark {
     background-color: transparent !important;
   }
 
-  & .notification__close:after {
+  & .rnc__notification-close-mark:after {
     font-size: 20px !important;
   }
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    & .notification__item {
+    & .rnc__notification-item {
       background-color: black;
     }
   }

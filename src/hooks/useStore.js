@@ -1,7 +1,14 @@
 import create from 'zustand';
 import { persist } from 'zustand/middleware';
 import produce from 'immer';
-import { START_TIMESTAMP } from 'influence-utils';
+
+import constants from '~/lib/constants';
+
+const {
+  CHUNK_RESOLUTION,
+  GRAPHICS_DEFAULTS,
+  ENABLE_SHADOWS
+} = constants;
 
 // (keep these out of state so can change)
 const sectionDefault = { active: false, expanded: true, highlighted: false };
@@ -40,7 +47,6 @@ const useStore = create(persist((set, get) => ({
         highlighted: false,
         highlightColor: '#AB149E'
       },
-      requestingModelDownload: false
     },
 
     auth: {
@@ -51,11 +57,7 @@ const useStore = create(persist((set, get) => ({
       alerts: []
     },
 
-    time: {
-      precise: ((Date.now() / 1000) - START_TIMESTAMP) / 3600,
-      current: ((Date.now() / 1000) - START_TIMESTAMP) / 3600,
-      autoUpdating: true
-    },
+    timeOverride: null,
 
     draggables: {},
 
@@ -65,13 +67,15 @@ const useStore = create(persist((set, get) => ({
     },
 
     graphics: {
+      fov: 75,
       lensflare: true,
       skybox: true,
-      shadows: true,
-      shadowSize: 1024,
-      textureSize: 512,
-      fov: 75
+      // (these will default per the gpu tier):
+      shadowQuality: undefined,
+      textureQuality: undefined,
     },
+
+    pendingTransactions: [],
 
     sounds: {
       music: 100,
@@ -82,6 +86,19 @@ const useStore = create(persist((set, get) => ({
     sale: false,
 
     referrer: null,
+
+    //
+    // DISPATCHERS
+
+    dispatchGpuInfo: (gpuInfo) => set(produce(state => {
+      // this sets defaults if they are not already
+      const defaults = GRAPHICS_DEFAULTS[gpuInfo.tier] || {};
+      Object.keys(defaults).forEach((k) => {
+        if (!state.graphics.hasOwnProperty(k) || state.graphics[k] === undefined) {
+          state.graphics[k] = defaults[k];
+        }
+      });
+    })),
 
     dispatchSaleStarted: () => set(produce(state => {
       state.sale = true;
@@ -179,8 +196,8 @@ const useStore = create(persist((set, get) => ({
       state.outliner[section].expanded = false;
     })),
 
-    dispatchTextureSizeSet: (size) => set(produce(state => {
-      state.graphics.textureSize = size;
+    dispatchTextureQualitySet: (quality) => set(produce(state => {
+      state.graphics.textureQuality = quality;
     })),
 
     dispatchSkyboxHidden: () => set(produce(state => {
@@ -199,16 +216,9 @@ const useStore = create(persist((set, get) => ({
       state.graphics.lensflare = true;
     })),
 
-    dispatchShadowsOff: () => set(produce(state => {
-      state.graphics.shadows = false;
-    })),
-
-    dispatchShadowsOn: () => set(produce(state => {
-      state.graphics.shadows = true;
-    })),
-
-    dispatchShadowSizeSet: (size) => set(produce(state => {
-      state.graphics.shadowSize = size;
+    // 0 is off, 1 is low, 2 is mid, 3 is high
+    dispatchShadowQualitySet: (level) => set(produce(state => {
+      state.graphics.shadowQuality = level;
     })),
 
     dispatchFOVSet: (fov) => set(produce(state => {
@@ -304,25 +314,9 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.watched.highlightColor = color;
     })),
 
-    dispatchTimeUpdated: (time) => set(produce(state => {
-      // default time to current time
-      const useTime = time || ((Date.now() / 1000) - START_TIMESTAMP) / 3600;
-
-      // "precise" time for zoomed-in elements
-      state.time.precise = useTime;
-
-      // "current" time for zoomed-out elements (more granular)
-      const incrHours = 10 / 3600;
-      state.time.current = Math.round(useTime / incrHours) * incrHours;
-    })),
-
-    dispatchTimeControlled: () => set(produce(state => {
-      state.time.autoUpdating = false;
-    })),
-
-    dispatchTimeUncontrolled: () => set(produce(state => {
-      state.time.autoUpdating = true;
-    })),
+    dispatchTimeOverride: (anchor, speed) => set((produce(state => {
+      state.timeOverride = anchor ? { anchor, speed, ts: Date.now() } : null;
+    }))),
 
     dispatchAuthenticated: (token) => set(produce(state => {
       state.auth.token = token;
@@ -336,17 +330,43 @@ const useStore = create(persist((set, get) => ({
       state.referrer = refCode;
     })),
 
-    dispatchModelDownloadRequested: () => set(produce(state => {
-      state.asteroids.requestingModelDownload = true;
+    //
+    // SPECIAL GETTERS
+
+    getShadowQuality: () => {
+      const q = ENABLE_SHADOWS ? get().graphics?.shadowQuality : 0;
+      if (q === 1) return { shadowMode: 1, shadowSize: 1024 };
+      if (q === 2) return { shadowMode: 2, shadowSize: 2048 };
+      if (q === 3) return { shadowMode: 2, shadowSize: 4096 };
+      return { shadowMode: 0, shadowSize: 1024 };
+    },
+
+    getTerrainQuality: () => {
+      const q = get().graphics?.textureQuality;
+      if (q === 2) return { textureSize: 2 * CHUNK_RESOLUTION };
+      if (q === 3) return { textureSize: 4 * CHUNK_RESOLUTION };
+      return { textureSize: 1 * CHUNK_RESOLUTION };
+    },
+
+    dispatchPendingTransaction: ({ key, vars, txHash }) => set(produce(state => {
+      if (!state.pendingTransactions) state.pendingTransactions = [];
+      state.pendingTransactions.push({
+        key,
+        vars,
+        txHash,
+        timestamp: Date.now()
+      });
     })),
 
-    dispatchModelDownloadComplete: () => set(produce(state => {
-      state.asteroids.requestingModelDownload = false;
-    }))
+    dispatchPendingTransactionSettled: (txHash) => set(produce(state => {
+      if (!state.pendingTransactions) state.pendingTransactions = [];
+      state.pendingTransactions = state.pendingTransactions.filter((tx) => tx.txHash !== txHash);
+    })),
+
 }), {
   name: 'influence',
   version: 0,
-  blacklist: [ 'time' ]
+  blacklist: [ 'timeOverride' ]
 }));
 
 export default useStore;

@@ -154,10 +154,9 @@ const OwnedCrewMember = (props) => {
 
 const MintableCrewMember = (props) => {
   const { asteroid, canMint, ...restProps } = props;
-  const settleCrew = useSettleCrew(asteroid.i);
+  const { settleCrew, settling } = useSettleCrew(Number(asteroid.i));
   const collection = asteroid.purchaseOrder <= 1859 ? 1 : 2;
   const bonus = (collection === 1 ? 25 : 0) + Math.pow(250000 - asteroid.i, 2) / 2500000000;
-  const [ minting, setMinting ] = useState(false);
 
   return (
     <CrewMember {...restProps}>
@@ -177,12 +176,9 @@ const MintableCrewMember = (props) => {
         <StyledButton
           data-tip={canMint ? 'Mint new crew member' : 'Not available until sale is complete'}
           data-for="global"
-          onClick={() => {
-            setMinting(true);
-            settleCrew.mutate(null, { onSettled: () => setMinting(false) })
-          }}
-          loading={minting}
-          disabled={!canMint || minting}>
+          onClick={() => settleCrew()}
+          loading={settling}
+          disabled={!canMint || settling}>
           <CrewMemberIcon /> Mint Crew
         </StyledButton>
       </CrewInfo>

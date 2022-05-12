@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { KeplerianOrbit } from 'influence-utils';
@@ -6,8 +6,9 @@ import { RiRouteFill } from 'react-icons/ri';
 import { MdRemoveCircle } from 'react-icons/md';
 import { GiHorizontalFlip } from 'react-icons/gi';
 
-import useStore from '~/hooks/useStore';
+import ClockContext from '~/contexts/ClockContext';
 import useAsteroid from '~/hooks/useAsteroid';
+import useStore from '~/hooks/useStore';
 import AsteroidById from '~/components/AsteroidById';
 import AsteroidItem from '~/components/AsteroidItem';
 import DataReadout from '~/components/DataReadout';
@@ -67,15 +68,16 @@ const LinkLine = styled.li`
 const RoutePlanner = (props) => {
   const [ distance, setDistance ] = useState(null);
   const history = useHistory();
-  const time = useStore(s => s.time.current);
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
-  const { data: origin } = useAsteroid(originId);
-  const { data: destination } = useAsteroid(destinationId);
   const dispatchOriginCleared = useStore(s => s.dispatchOriginCleared);
   const dispatchDestinationCleared = useStore(s => s.dispatchDestinationCleared);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchDestinationSelected = useStore(s => s.dispatchDestinationSelected);
+
+  const { data: origin } = useAsteroid(originId);
+  const { data: destination } = useAsteroid(destinationId);
+  const { coarseTime: time } = useContext(ClockContext);
 
   useEffect(() => {
     if (!origin || !destination) {

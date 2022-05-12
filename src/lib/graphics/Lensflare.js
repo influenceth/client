@@ -6,7 +6,7 @@ import {
   BufferGeometry,
   ClampToEdgeWrapping,
   Color,
-  DataTexture,
+  FramebufferTexture,
   InterleavedBuffer,
   InterleavedBufferAttribute,
   Mesh,
@@ -34,13 +34,13 @@ class Lensflare extends Mesh {
 
     // textures
 
-    const tempMap = new DataTexture(new Uint8Array(16 * 16 * 3), 16, 16, RGBFormat)
+    const tempMap = new FramebufferTexture(16, 16, RGBFormat)
     tempMap.minFilter = NearestFilter
     tempMap.magFilter = NearestFilter
     tempMap.wrapS = ClampToEdgeWrapping
     tempMap.wrapT = ClampToEdgeWrapping
 
-    const occlusionMap = new DataTexture(new Uint8Array(16 * 16 * 3), 16, 16, RGBFormat)
+    const occlusionMap = new FramebufferTexture(16, 16, RGBFormat)
     occlusionMap.minFilter = NearestFilter
     occlusionMap.magFilter = NearestFilter
     occlusionMap.wrapS = ClampToEdgeWrapping

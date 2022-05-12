@@ -95,8 +95,8 @@ const Model = ({ url, onLoaded }) => {
   useEffect(() => {
     controls.current = new OrbitControls(camera, gl.domElement);
 
-    controls.current.minDistance = 0.75;
-    controls.current.maxDistance = 10;
+    controls.current.minDistance = 0.6;
+    controls.current.maxDistance = 5;
     controls.current.target.set(0, 0, 0);
 
     return () => {
