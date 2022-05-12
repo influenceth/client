@@ -1,67 +1,115 @@
 const models = [
   {
-    slug: 'M_Volatile_Ammonia_mwjdop',
-    title: 'Ammonia'
+    "slug": "Polymer_Alkene_w0j7bn",
+    "title": "Alkene"
   },
   {
-    slug: 'M_Organic_Bitumen_gv6bdc',
-    title: 'Bitumen'
+    "slug": "Volatile_Ammonia_jm0xoi",
+    "title": "Ammonia"
   },
   {
-    slug: 'M_Volatile_CarbonMonoxide_tv0ty3',
-    title: 'Carbon Monoxide'
+    "slug": "Common_Apatite_h4dat0",
+    "title": "Apatite"
   },
   {
-    slug: 'M_Common_Fledspar_uclavf',
-    title: 'Feldspar'
+    "slug": "Organic_Bitumen_ugdb5g",
+    "title": "Bitumen"
   },
   {
-    slug: 'M_Graphite_zckgh0',
-    title: 'Graphite'
+    "slug": "Organic_Calcite_ucdk8x",
+    "title": "Calcite"
   },
   {
-    slug: 'M_HydrochloricAcid_pq6kt4',
-    title: 'Hydrochloric Acid'
+    "slug": "Volatile_CarbonMonoxide_dueonc",
+    "title": "Carbon Monoxide"
   },
   {
-    slug: 'M_HydroflouricAcid_ofwsb1',
-    title: 'Hydroflouric Acid'
+    "slug": "Fissile_Coffinite_t8heji",
+    "title": "Coffinite"
   },
   {
-    slug: 'M_Organic_Magnesite_sffo0r',
-    title: 'Magnesite'
+    "slug": "Common_Feldspar_fvn2qe",
+    "title": "Feldspar"
   },
   {
-    slug: 'M_RareEarth_Merrillite_djz4u6',
-    title: 'Merrillite'
+    "slug": "Metal_Graphite_z43lq5",
+    "title": "Graphite"
   },
   {
-    slug: 'M_NitricAcid_mnys4a',
-    title: 'Nitric Acid'
+    "slug": "Acid_HydrochloricAcid_krvbgc",
+    "title": "Hydrochloric Acid"
   },
   {
-    slug: 'M_PhosphoricAcid_anys0g',
-    title: 'Phosphoric Acid'
+    "slug": "Acid_HydroflouricAcid_gfupqh",
+    "title": "Hydroflouric Acid"
   },
   {
-    slug: 'M_Common_Pyroxene_ejgljl',
-    title: 'Pyroxene'
+    "slug": "Organic_Magnesite_fjjiqd",
+    "title": "Magnesite"
   },
   {
-    slug: 'M_Silicone_pgwxhq',
-    title: 'Silicone'
+    "slug": "RareEarth_Merrilite_peqfrl",
+    "title": "Merrillite"
   },
   {
-    slug: 'M_SulfuricAcid_gfljc4',
-    title: 'Sulfuric Acid'
+    "slug": "Acid_NitricAcid_mfhbmb",
+    "title": "Nitric Acid"
   },
   {
-    slug: 'M_Fissile_Uranite_lxhxmh',
-    title: 'Uraninite'
+    "slug": "Volatile_Nitrogen_yj8r6q",
+    "title": "Nitrogen"
   },
   {
-    slug: 'M_RareEarth_Xenotime_ttocai',
-    title: 'Xenotime'
+    "slug": "Common_Olivine_wrjihu",
+    "title": "Olivine"
+  },
+  {
+    "slug": "Acid_PhosphoricAcid_d5nirs",
+    "title": "Phosphoric Acid"
+  },
+  {
+    "slug": "Common_Pyroxene_a8yg5u",
+    "title": "Pyroxene"
+  },
+  {
+    "slug": "Metal_Rhabdite_g0p95k",
+    "title": "Rhabdite"
+  },
+  {
+    "slug": "Polymer_Silicone_n5ugdj",
+    "title": "Silicone"
+  },
+  {
+    "slug": "Base_SodiumHydroxide_ccmjzi",
+    "title": "Sodium Hydroxide"
+  },
+  {
+    "slug": "Volatile_SulfurDioxide_ile3y0",
+    "title": "Sulfur Dioxide"
+  },
+  {
+    "slug": "Acid_SulfuricAcid_hahsqk",
+    "title": "Sulfuric Acid"
+  },
+  {
+    "slug": "Metal_Taenite_memb5t",
+    "title": "Taenite"
+  },
+  {
+    "slug": "Metal_Troilite_aanshg",
+    "title": "Troilite"
+  },
+  {
+    "slug": "Fissile_Uranite_wz2rda",
+    "title": "Uraninite"
+  },
+  {
+    "slug": "Volatile_Water_tnxrl3",
+    "title": "Water"
+  },
+  {
+    "slug": "RareEarth_Xenotime_rkbeyl",
+    "title": "Xenotime"
   }
 ];
 
