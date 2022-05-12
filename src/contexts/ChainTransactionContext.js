@@ -206,16 +206,20 @@ export function ChainTransactionProvider({ children }) {
           waitingTxs.current.push(txHash);
           provider.provider.waitForTransaction(txHash, contracts[key].confirms, TIMEOUT - (Date.now() - timestamp))
             .then((receipt) => {
-              if (receipt) {
-                contracts[key].onSuccess(receipt, vars);
-              } else {
-                contracts[key].onError('No transaction receipt generated.', vars);
-              }
+              setTimeout(() => {  // (wait for backend to get synced before acknoledging frontend-detected changes)
+                if (receipt) {
+                  contracts[key].onSuccess(receipt, vars);
+                } else {
+                  contracts[key].onError('No transaction receipt generated.', vars);
+                }
+
+                dispatchPendingTransactionSettled(txHash);
+                waitingTxs.current = waitingTxs.current.filter((tx) => tx.txHash !== txHash);
+              }, 15e3);
             })
             .catch((err) => {
               contracts[key].onError(err, vars);
-            })
-            .finally(() => {
+
               dispatchPendingTransactionSettled(txHash);
               waitingTxs.current = waitingTxs.current.filter((tx) => tx.txHash !== txHash);
             });
