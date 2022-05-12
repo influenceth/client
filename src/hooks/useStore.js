@@ -59,6 +59,8 @@ const useStore = create(persist((set, get) => ({
 
     timeOverride: null,
 
+    draggables: {},
+
     outliner: {
       pinned: true,
       ...outlinerSectionDefaults
@@ -129,6 +131,35 @@ const useStore = create(persist((set, get) => ({
     dispatchAlertNotified: (alert) => set(produce(state => {
       const index = state.logs.alerts.findIndex(a => a.type === alert.type && a.timestamp === alert.timestamp);
       state.logs.alerts.splice(index, 1);
+    })),
+
+    dispatchDraggableClose: (id) => set(produce(state => {
+      delete state.draggables[id];
+    })),
+
+    dispatchDraggableOpen: (type, params) => set(produce(state => {
+      const id = Date.now();
+      state.draggables[id] = {
+        type,
+        params,
+        position: { x: 0, y: 0 }, // TODO: ...
+        index: Object.values(state.draggables).reduce((acc, cur) => acc < cur.index ? cur.index : acc, 0) + 1,
+      };
+    })),
+
+    dispatchDraggableToFront: (id) => set(produce(state => {
+      if (state.draggables[id]) {
+        const maxIndex = Object.values(state.draggables).reduce((acc, cur) => acc < cur.index ? cur.index : acc, 0);
+        if (state.draggables[id].index < maxIndex) {
+          state.draggables[id].index = maxIndex + 1;
+        }
+      }
+    })),
+
+    dispatchDraggableMoved: (id, position) => set(produce(state => {
+      if (state.draggables[id]) {
+        state.draggables[id].position = position;
+      }
     })),
 
     dispatchOutlinerPinned: () => set(produce(state => {

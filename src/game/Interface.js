@@ -7,6 +7,7 @@ import LoadingAnimation from 'react-spinners/BarLoader';
 import useSale from '~/hooks/useSale';
 import useScreenSize from '~/hooks/useScreenSize';
 import Alerts from './interface/Alerts';
+import Draggables from './interface/Draggables';
 import MainMenu from './interface/MainMenu';
 import Outliner from './interface/Outliner';
 import SaleNotifier from './interface/SaleNotifier';
@@ -123,6 +124,7 @@ const Interface = () => {
         <MainMenu />
       </MainContainer>
       <Outliner />
+      <Draggables />
     </StyledInterface>
   );
 };

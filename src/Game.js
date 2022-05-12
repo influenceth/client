@@ -43,7 +43,9 @@ const Game = (props) => {
   }, []);
 
   useEffect(() => {
-    if (gpuInfo && !gpuInfo.isMobile) {
+    if (!gpuInfo) return;
+
+    if (!gpuInfo.isMobile) {
       setShowScene(true);
       dispatchGpuInfo(gpuInfo);
 
