@@ -83,15 +83,15 @@ const Interface = () => {
 
   // NOTE: requested by art team for easier screenshots vvv
   const toggleInterface = useCallback((e) => {
-    if (e.clientX >= window.innerWidth - 1 && e.clientY >= window.innerHeight - 1) {
+    if (e.ctrlKey && e.which === 120) { // ctrl+f9
       setHideInterface(!hideInterface);
     }
   }, [hideInterface]);
 
   useEffect(() => {
-    document.addEventListener('click', toggleInterface);
+    document.addEventListener('keyup', toggleInterface);
     return () => {
-      document.removeEventListener('click', toggleInterface);
+      document.removeEventListener('keyup', toggleInterface);
     }
   }, [toggleInterface]);
   // ^^^
