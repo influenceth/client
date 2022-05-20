@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from 'react';
 import styled, { css } from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { Switch, Route, Redirect } from 'react-router-dom';
@@ -27,7 +28,7 @@ import theme from '~/theme';
 const StyledInterface = styled.div`
   align-items: stretch;
   bottom: 0;
-  display: flex;
+  display: ${p => p.hide ? 'none' : 'flex'};
   flex: 1 1 0;
   pointer-events: none;
   position: absolute;
@@ -78,8 +79,25 @@ const Interface = () => {
   const { data: sale } = useSale();
   const isFetching = useIsFetching();
 
+  const [hideInterface, setHideInterface] = useState(false);
+
+  // NOTE: requested by art team for easier screenshots vvv
+  const toggleInterface = useCallback((e) => {
+    if (e.ctrlKey && e.which === 120) { // ctrl+f9
+      setHideInterface(!hideInterface);
+    }
+  }, [hideInterface]);
+
+  useEffect(() => {
+    document.addEventListener('keyup', toggleInterface);
+    return () => {
+      document.removeEventListener('keyup', toggleInterface);
+    }
+  }, [toggleInterface]);
+  // ^^^
+
   return (
-    <StyledInterface>
+    <StyledInterface hide={hideInterface}>
       {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
       {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
       <Alerts />
