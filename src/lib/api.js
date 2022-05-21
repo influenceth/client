@@ -24,7 +24,10 @@ const api = {
 
   getEvents: async (since) => {
     const response = await instance.get(`/v1/user/events?since=${since}`);
-    return response.data;
+    return {
+      events: response.data,
+      blockNumber: parseInt(response.headers['eth-block-number'])
+    };
   },
 
   getWatchlist: async () => {
