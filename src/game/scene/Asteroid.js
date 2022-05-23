@@ -23,7 +23,9 @@ import useWebWorker from '~/hooks/useWebWorker';
 import Config from '~/lib/asteroidConfig';
 import constants from '~/lib/constants';
 import QuadtreeTerrainCube from './asteroid/helpers/QuadtreeTerrainCube';
+import Plots from './asteroid/Plots';
 import Rings from './asteroid/Rings';
+import Telemetry from './asteroid/Telemetry';
 
 const {
   MIN_FRUSTUM_AT_SURFACE,
@@ -640,9 +642,24 @@ const Asteroid = (props) => {
     // });
   });
 
+
+
   return (
     <group ref={group}>
       <group ref={quadtreeRef} />
+
+      <Plots />
+
+      {config?.radius && (
+        <Telemetry
+          axis={rotationAxis.current}
+          getPosition={() => position.current}
+          getRotation={() => rotation.current}
+          hasAccess={true}
+          radius={config.radius}
+        />
+      )}
+
       {/* TODO: need to pass in CSM to rings probably */}
       {config?.ringsPresent && geometry.current && (
         <Rings
