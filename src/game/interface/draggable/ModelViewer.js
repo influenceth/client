@@ -137,7 +137,6 @@ const Model = ({ url, onLoaded }) => {
       // onload
       function (gltf) {
         model.current = gltf.scene || gltf.scenes[0];
-        console.log('MODEL', model.current);
         model.current.traverse(function (node) {
           if (node.isMesh) {
             // self-shadowing 
