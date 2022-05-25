@@ -3,6 +3,7 @@ import { Box3, DirectionalLight, EquirectangularReflectionMapping, PCFSoftShadow
 // import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { useFrame, useThree, Canvas } from '@react-three/fiber';
 import { BiListUl as SelectIcon, BiUpload as UploadIcon } from 'react-icons/bi';
@@ -16,7 +17,12 @@ import models from '~/lib/models';
 // TODO: connect to gpu-graphics settings
 const ENABLE_SHADOWS = true;
 
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderConfig({ type: 'js' });
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+
 const loader = new GLTFLoader();
+loader.setDRACOLoader(dracoLoader);
 
 const CanvasContainer = styled.div`
   height: 500px;
@@ -131,6 +137,7 @@ const Model = ({ url, onLoaded }) => {
       // onload
       function (gltf) {
         model.current = gltf.scene || gltf.scenes[0];
+        console.log('MODEL', model.current);
         model.current.traverse(function (node) {
           if (node.isMesh) {
             // self-shadowing 
