@@ -358,7 +358,16 @@ const useStore = create(persist((set, get) => ({
       });
     })),
 
-    dispatchPendingTransactionSettled: (txHash) => set(produce(state => {
+    dispatchPendingTransactionUpdate: (txHash, params) => set(produce(state => {
+      if (!state.pendingTransactions) state.pendingTransactions = [];
+      const txIndex = state.pendingTransactions.findIndex((tx) => tx.txHash === txHash);
+      state.pendingTransactions[txIndex] = {
+        ...state.pendingTransactions[txIndex],
+        ...params
+      }
+    })),
+
+    dispatchPendingTransactionComplete: (txHash) => set(produce(state => {
       if (!state.pendingTransactions) state.pendingTransactions = [];
       state.pendingTransactions = state.pendingTransactions.filter((tx) => tx.txHash !== txHash);
     })),

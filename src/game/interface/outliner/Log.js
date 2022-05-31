@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { AiFillAlert as LogIcon } from 'react-icons/ai';
 
-import useEvents from '~hooks/useEvents';
+import useEvents from '~/hooks/useEvents';
 import Section from '~/components/Section';
 import LogEntry from '~/components/LogEntry';
 

@@ -7,6 +7,7 @@ import { useDetectGPU } from '@react-three/drei';
 import { AuthProvider } from '~/contexts/AuthContext';
 import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
 import { ClockProvider } from '~/contexts/ClockContext';
+import { EventsProvider } from '~/contexts/EventsContext';
 import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import LandingPage from '~/game/Landing';
@@ -72,28 +73,30 @@ const Game = (props) => {
 
   return (
     <AuthProvider>
-      <ChainTransactionProvider>
-        <ThemeProvider theme={theme}>
-          <Router>
-            <Referral />
-            <Switch>
-              <Route path="/play">
-                <LandingPage />
-              </Route>
-              <Route>
-                <ClockProvider>
+      <EventsProvider>
+        <ChainTransactionProvider>
+          <ThemeProvider theme={theme}>
+            <Router>
+              <Referral />
+              <Switch>
+                <Route path="/play">
+                  <LandingPage />
+                </Route>
+                <Route>
                   {introEnabled && <Intro onComplete={onIntroComplete} />}
-                  <StyledMain>
-                    <Interface />
-                    {showScene && <Scene />}
-                    <Audio />
-                  </StyledMain>
-                </ClockProvider>
-              </Route>
-            </Switch>
-          </Router>
-        </ThemeProvider>
-      </ChainTransactionProvider>
+                  <ClockProvider>
+                    <StyledMain>
+                      <Interface />
+                      {showScene && <Scene />}
+                      <Audio />
+                    </StyledMain>
+                  </ClockProvider>
+                </Route>
+              </Switch>
+            </Router>
+          </ThemeProvider>
+        </ChainTransactionProvider>
+      </EventsProvider>
     </AuthProvider>
   );
 };

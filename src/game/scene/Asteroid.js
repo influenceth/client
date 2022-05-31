@@ -530,7 +530,7 @@ const Asteroid = (props) => {
 
     // (if currently zooming in, we'll want to setCameraPosition for camera's destination so doesn't
     //  re-render as soon as it arrives)
-    const rotatedCameraPosition = zoomStatus === 'in'
+    const rotatedCameraPosition = zoomStatus === 'in' || !config?.radius
       ? controls.object.position.clone()
       : controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM);
     rotatedCameraPosition.applyAxisAngle(rotationAxis.current, -rotation.current);
