@@ -26,7 +26,7 @@ const getContracts = (queryClient) => ({
   'BUY_ASTEROID': {
     address: process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
     config: configs.ArvadCrewSale,
-    transact: (contract) => async ({ i, name }) => {
+    transact: (contract) => async ({ i }) => {
       const price = await contract.getAsteroidPrice(i);
       return contract.buyAsteroid(i, { value: price });
     },
@@ -40,7 +40,7 @@ const getContracts = (queryClient) => ({
   'BUY_ASTEROID_1ST_SALE': {
     address: process.env.REACT_APP_CONTRACT_ASTEROID_SALE,
     config: configs.AsteroidSale,
-    transact: (contract) => async ({ i, name }) => {
+    transact: (contract) => async ({ i }) => {
       const price = await contract.getAsteroidPrice(i);
       return contract.buyAsteroid(i, { value: price });
     },
@@ -209,23 +209,27 @@ export function ChainTransactionProvider({ children }) {
         const { key, vars, txHash, txEvent } = tx;
 
         // if event had previously been received, just waiting for confirms
-        if (txEvent && currentBlockNumber >= txEvent.blockNumber + contracts[key].confirms) {
-          contracts[key].onConfirmed(txEvent, vars);
-          dispatchPendingTransactionComplete(txHash);
+        if (txEvent) {
+          if (currentBlockNumber >= txEvent.blockNumber + contracts[key].confirms) {
+            contracts[key].onConfirmed(txEvent, vars);
+            dispatchPendingTransactionComplete(txHash);
+          }
 
         // else, check for event
         // TODO (enhancement): only need to check new events
         } else {
-          const txEvent = (events || []).find((e) => e.transactionHash === txHash);
-          if (txEvent) {
-            contracts[key].onEventReceived(txEvent, vars);
+          const newEvent = (events || []).find((e) => e.transactionHash === txHash);
+          if (newEvent) {
+            contracts[key].onEventReceived(newEvent, vars);
 
-            // if this event has already been confirmed, trigger completion too; else, just update status
-            if (currentBlockNumber >= txEvent.blockNumber + contracts[key].confirms) {
-              contracts[key].onConfirmed(txEvent, vars);
+            // if this event has already been confirmed, trigger completion too
+            if (currentBlockNumber >= newEvent.blockNumber + contracts[key].confirms) {
+              contracts[key].onConfirmed(newEvent, vars);
               dispatchPendingTransactionComplete(txHash);
+
+            // else, just update pending transaction with event record
             } else {
-              dispatchPendingTransactionUpdate(txHash, { txEvent });
+              dispatchPendingTransactionUpdate(txHash, { txEvent: newEvent });
             }
           }
         }
