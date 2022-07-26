@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
+
 import { useWeb3React, UnsupportedChainIdError } from '@web3-react/core';
 import {
   NoEthereumProviderError,
@@ -9,16 +10,11 @@ import { UserRejectedRequestError as UserRejectedRequestErrorWC } from '@web3-re
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
-import useEagerConnect from '~/hooks/useEagerConnect';
-import useInactiveListener from '~/hooks/useInactiveListener';
 import useAuth from '~/hooks/useAuth';
-import { injected, walletconnect } from '~/lib/blockchain/connectors';
 import Section from '~/components/Section';
 import Button from '~/components/Button';
 import { DisconnectIcon, LoginIcon, WalletIcon, WarningIcon } from '~/components/Icons';
-import MetamaskLogo from '~/assets/images/metamask-fox.svg';
-import WalletConnectLogo from '~/assets/images/walletconnect-logo.svg';
-import BraveLogo from '~/assets/images/brave-icon.svg';
+import starknetIcon from '~/assets/images/starknet-icon.png';
 
 const networkNames = {
   1: 'Ethereum Mainnet',
@@ -90,43 +86,34 @@ const StyledErrorIcon = styled(WarningIcon)`
   width: 20px;
 `;
 
+// TODO: if completely logged out, should we always present the list? i.e. rather than just enabling first
+
 const Wallet = () => {
-  const { connector, account, activate, deactivate, error } = useWeb3React();
   const queryClient = useQueryClient();
   const forceExpand = useStore(s => s.dispatchOutlinerSectionExpanded);
   const forceCollapse = useStore(s => s.dispatchOutlinerSectionCollapsed);
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
-  const [ activatingConnector, setActivatingConnector ] = useState();
-  const { token, restartLogin } = useAuth();
-  const status = account ? (token ? 'logged-in' : 'connected') : 'disconnected';
 
-  // Recognize the connector currently being activated
-  useEffect(() => {
-    if (activatingConnector && activatingConnector === connector) {
-      setActivatingConnector(undefined);
-    }
-  }, [ activatingConnector, connector ]);
+  const { token, restartLogin, wallet } = useAuth();
+  const status = wallet.account && wallet.isConnected ? (token ? 'logged-in' : 'connected') : 'disconnected';
 
   // Remove auth queries when wallet is disconnected
   const disconnectWallet = () => {
-    queryClient.removeQueries([ 'login', account ]);
-    queryClient.removeQueries([ 'sign', account ]);
-    queryClient.removeQueries([ 'verify', account ]);
+    queryClient.removeQueries([ 'login', wallet.account ]);
+    queryClient.removeQueries([ 'sign', wallet.account ]);
+    queryClient.removeQueries([ 'verify', wallet.account ]);
     invalidateToken();
-    if (connector.close) connector.close(); // for WalletConnect
-    deactivate();
+    wallet.disconnect();
   };
 
   useEffect(() => {
-    if (status !== 'logged-in' || !!error) forceExpand('wallet');
+    if (status !== 'logged-in' || !!wallet.error) forceExpand('wallet');
     if (status === 'logged-in') forceCollapse('wallet');
-  }, [ status, error, forceExpand, forceCollapse ]);
-
-  // Eagerly connect to the injected ethereum provider, if it exists and has granted access already
-  const triedEager = useEagerConnect();
-
-  // Connect in reaction to certain events on the injected ethereum provider, if it exists
-  useInactiveListener(!triedEager || !!activatingConnector);
+  }, [ status, wallet.error, forceExpand, forceCollapse ]);
+  
+  useEffect(() => {
+    wallet.reconnect();
+  }, []);
 
   return (
     <Section
@@ -136,57 +123,29 @@ const Wallet = () => {
       icon={<WalletIcon />}>
       <Info>
         <Indicator status={status}>●</Indicator>
-        {status === 'disconnected' && <span>Wallet disconnected. Connect with:</span>}
-        {status === 'connected' && <span>Connected as {account}</span>}
-        {status === 'logged-in' && <span>Logged in as {account}</span>}
+        {status === 'disconnected' && <span>Wallet is disconnected.</span>}
+        {status === 'connected' && <span>Connected as {wallet.account}</span>}
+        {status === 'logged-in' && <span>Logged in as {wallet.account}</span>}
       </Info>
-      {!!error && (
+      {!!wallet.error && (
         <Error>
           <StyledErrorIcon />
-          <span>{getErrorMessage(error)}</span>
+          <span>{getErrorMessage(wallet.error)}</span>
         </Error>
       )}
       <Controls>
-        {status === 'disconnected' && window.ethereum && !!navigator.brave && (
-          <Button
-            data-tip="Brave Browser"
-            data-for="global"
-            data-place="left"
-            onClick={() => {
-              setActivatingConnector(injected);
-              activate(injected);
-            }}>
-            <BraveLogo viewBox="0 0 55 64" /> Brave
-          </Button>
-        )}
-        {status === 'disconnected' && window.ethereum && !navigator.brave && (
-          <Button
-            data-tip="Metamask"
-            data-for="global"
-            data-place="left"
-            onClick={() => {
-              setActivatingConnector(injected);
-              activate(injected);
-            }}>
-            <MetamaskLogo /> Metamask
-          </Button>
-        )}
         {status === 'disconnected' && (
           <Button
-            data-tip="WalletConnect"
+            data-tip="Connect to StarkNet"
             data-for="global"
             data-place="left"
-            onClick={() => {
-              if (walletconnect?.close) walletconnect.close();
-              setActivatingConnector(walletconnect);
-              activate(walletconnect);
-            }}>
-            <WalletConnectLogo /> WalletConnect
+            onClick={() => wallet.connect({ showList: true })}>
+            <img src={starknetIcon} height={18} width={18} /> Connect Wallet
           </Button>
         )}
         {status === 'connected' && (
           <Button
-            data-tip="Login with Ethereum"
+            data-tip="Login with Wallet"
             data-for="global"
             data-place="left"
             onClick={() => restartLogin()}>

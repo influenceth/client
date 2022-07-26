@@ -107,7 +107,7 @@ const getContracts = (queryClient) => ({
 });
 
 export function ChainTransactionProvider({ children }) {
-  const { web3: { provider } } = useAuth();
+  const { wallet: { provider } } = useAuth();
   const queryClient = useQueryClient();
   const { events, lastBlockNumber } = useEvents();
 

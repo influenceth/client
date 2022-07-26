@@ -134,8 +134,8 @@ const api = {
     return response.data.message;
   },
 
-  verifyLogin: async (account, signature) => {
-    const response = await instance.post(`/v1/auth/login/${account}`, { sig: signature });
+  verifyLogin: async (account, params) => {
+    const response = await instance.post(`/v1/auth/login/${account}`, params);
     return response.data.token;
   }
 };
