@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { useWeb3React } from '@web3-react/core';
 import screenfull from 'screenfull';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 
+import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import useReferralsCount from '~/hooks/useReferralsCount';
 import useScreenSize from '~/hooks/useScreenSize';
@@ -55,7 +55,7 @@ const StyledDataReadout = styled(DataReadout)`
 
 
 const Settings = (props) => {
-  const { account } = useWeb3React();
+  const { account } = useAuth();
   const { isMobile } = useScreenSize();
   const { data: referralsCount } = useReferralsCount();
   const graphics = useStore(s => s.graphics);

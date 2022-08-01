@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams, Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { useWeb3React } from '@web3-react/core';
 
+import useAuth from '~/hooks/useAuth';
 import useBook from '~/hooks/useBook';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
 import useMintableCrew from '~/hooks/useMintableCrew';
@@ -318,7 +318,7 @@ const ProgressIcon = styled.span`
 const CrewAssignments = (props) => {
   const { id: bookId, selected: initialSelectedId } = useParams();
   const history = useHistory();
-  const { account } = useWeb3React();
+  const { account } = useAuth();
 
   const createStorySession = useCreateStorySession();
   const { data: crew } = useOwnedCrew();

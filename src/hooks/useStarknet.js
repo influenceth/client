@@ -2,8 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   getStarknet,
   connect,
-  disconnect,
-  defaultProvider
+  disconnect
  } from 'get-starknet';
 import { starknetContracts as configs } from 'influence-utils';
 import { Contract, getChecksumAddress } from 'starknet';
@@ -23,6 +22,19 @@ const useStarknet = () => {
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState();
 
+  const ti = useRef(Date.now());
+  const i = useRef();
+  useEffect(() => {
+    i.current = setInterval(() => {
+      if (Date.now() < ti.current + 1000) {
+        console.log(JSON.stringify(account));
+      } else {
+        clearInterval(i.current);
+        i.current = null;
+      }
+    }, 10);
+  }, []);
+
   const onConnectionResult = (connectedAccount = null) => {
     const checksumAddress = connectedAccount && getChecksumAddress(connectedAccount);
     setAccount(checksumAddress);
@@ -34,6 +46,7 @@ const useStarknet = () => {
   };
 
   const attemptConnection = useCallback(async (prompt) => {
+    console.log('attemptConnection')
     try {
       setConnecting(true);
       await starknet.enable();

@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import { useThrottle } from '@react-hook/throttle';
 import { useQuery } from 'react-query';
-import { useWeb3React } from '@web3-react/core';
 
 import api from '~/lib/api';
+import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 
 const useAsteroids = () => {
-  const { account } = useWeb3React();
+  const { account } = useAuth();
   const includeOwned = useStore(s => s.asteroids.owned.mapped);
   const filterOwned = useStore(s => s.asteroids.owned.filtered);
   const includeWatched = useStore(s => s.asteroids.watched.mapped);

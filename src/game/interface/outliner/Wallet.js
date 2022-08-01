@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 
-import { useWeb3React, UnsupportedChainIdError } from '@web3-react/core';
+// TODO: @web3-react is only used here and in lib/connectors
+//  (can probably be deprecated)
+import { UnsupportedChainIdError } from '@web3-react/core';
 import {
   NoEthereumProviderError,
   UserRejectedRequestError as UserRejectedRequestErrorInjected
 } from '@web3-react/injected-connector';
 import { UserRejectedRequestError as UserRejectedRequestErrorWC } from '@web3-react/walletconnect-connector';
+
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
@@ -95,7 +98,7 @@ const Wallet = () => {
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
 
   const { token, restartLogin, wallet } = useAuth();
-  const status = wallet.account && wallet.isConnected ? (token ? 'logged-in' : 'connected') : 'disconnected';
+  const status = wallet.account ? (token ? 'logged-in' : 'connected') : 'disconnected';
 
   // Remove auth queries when wallet is disconnected
   const disconnectWallet = () => {

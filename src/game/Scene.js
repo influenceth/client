@@ -3,9 +3,9 @@ import { useQueryClient, QueryClientProvider } from 'react-query';
 import { Object3D, Vector3 } from 'three';
 import { Canvas } from '@react-three/fiber';
 import { useContextBridge, Stats } from '@react-three/drei';
-import { getWeb3ReactContext } from '@web3-react/core';
 import styled from 'styled-components';
 
+import AuthContext from '~/contexts/AuthContext';
 import ClockContext from '~/contexts/ClockContext';
 import useStore from '~/hooks/useStore';
 import { TrackballModControls } from '~/components/TrackballModControls';
@@ -50,7 +50,7 @@ const Scene = (props) => {
 
   // Use ContextBridge to make wallet available within canvas
   const ContextBridge = useContextBridge(
-    getWeb3ReactContext(),
+    AuthContext,
     ClockContext
   );
 

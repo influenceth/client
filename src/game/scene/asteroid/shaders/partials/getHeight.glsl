@@ -133,6 +133,9 @@ float getFeatures(vec3 p, int octaves) {
     rims = (1.0 - smoothstep(uCraterCut, uCraterCut + rimWidth, cellNoise.x)) * rimWeight; // [0,rimWeight]
     rims *= craterDepth * fadeIn;
     
+    // TODO: would it be possible to allow all inner craters BUT scale down their height
+    //  so that height is 100% normal at craterWidth from rim (and 0% at 3/4 of way to rim)
+
     // apply craters and rims, being thoughtful of overlap
     isSafeInternalCrater = (
       totalCraters < 0.0

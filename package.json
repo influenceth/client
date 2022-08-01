@@ -10,7 +10,6 @@
     "@web3-react/core": "^6.1.9",
     "@web3-react/injected-connector": "^6.0.7",
     "@web3-react/walletconnect-connector": "6.2.8",
-    "@web3auth/sign-in-with-starkware": "^1.0.0",
     "animate.css": "^4.1.1",
     "axios": "^0.21.1",
     "compression": "^1.7.4",
@@ -25,7 +24,7 @@
     "howler": "^2.2.3",
     "immer": "^8.0.1",
     "import": "^0.0.6",
-    "influence-utils": "^1.7.0",
+    "influence-utils": "^2.0.0",
     "isbot-fast": "^1.2.0",
     "lodash.uniqby": "^4.7.0",
     "md5": "^2.3.0",
@@ -69,6 +68,9 @@
     "postinstall": "patch-package"
   },
   "eslintConfig": {
+    "env": {
+      "es2020": true
+    },
     "extends": [
       "react-app",
       "react-app/jest"

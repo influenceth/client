@@ -84,7 +84,7 @@ const entries = {
     content: (
       <>
         <span>Asteroid </span>
-        <AsteroidLink id={e.returnValues.asteroidId} />
+        <AsteroidLink id={e.returnValues.asteroidId || e.returnValues.tokenId} />
         <span>{` re-named to "${e.returnValues.newName}"`}</span>
       </>
     ),
@@ -180,7 +180,7 @@ const entries = {
     content: (
       <>
         <span>Crew member </span>
-        <CrewLink id={e.returnValues.crewId} />
+        <CrewLink id={e.returnValues.crewId || e.returnValues.tokenId} />
         <span>{` re-named to "${e.returnValues.newName}"`}</span>
       </>
     ),

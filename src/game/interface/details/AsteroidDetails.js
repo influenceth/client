@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useWeb3React } from '@web3-react/core';
 import { Group, Vector3 } from 'three';
 import styled from 'styled-components';
 import utils from 'influence-utils';
 
+import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import useSale from '~/hooks/useSale';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -170,7 +170,7 @@ const scanMessages = {
 
 const AsteroidDetails = (props) => {
   const { i } = useParams();
-  const { account } = useWeb3React();
+  const { account } = useAuth();
   const { data: sale } = useSale();
   const { data: asteroid } = useAsteroid(Number(i));
   const createReferral = useCreateReferral(Number(i));
@@ -286,6 +286,14 @@ const AsteroidDetails = (props) => {
             <Pane>
               <Subtitle>Manage Asteroid</Subtitle>
               {sale && !asteroid.owner && (
+                <span
+                  data-tip="(not yet supported)"
+                  data-for="global">
+                  <Button disabled>
+                    <ClaimIcon /> Purchase
+                  </Button>
+                </span>
+              )/* TODO: (
                 <Button
                   data-tip="Purchase development rights"
                   data-for="global"
@@ -297,7 +305,7 @@ const AsteroidDetails = (props) => {
                   }}>
                   <ClaimIcon /> Purchase
                 </Button>
-              )}
+              )*/}
               {asteroid.owner && asteroid.owner !== account && (
                 <Button
                   data-tip="Purchase on OpenSea"
@@ -322,6 +330,14 @@ const AsteroidDetails = (props) => {
                   loading={[ 'SCANNING', 'RETRIEVING' ].includes(scanStatus)}>
                   <Text>{scanMessages[scanStatus]}</Text>
                   {[ 'UNSCANNED', 'SCANNING' ].includes(scanStatus) && (
+                    <span
+                      data-tip="(not yet supported)"
+                      data-for="global">
+                      <Button disabled>
+                        <ScanIcon /> Start Scan
+                      </Button>
+                    </span>
+                  )/* TODO: ((
                     <Button
                       data-tip="Scan for resource bonuses"
                       data-for="global"
@@ -330,8 +346,16 @@ const AsteroidDetails = (props) => {
                       disabled={asteroid.owner !== account || scanStatus === 'SCANNING'}>
                       <ScanIcon /> Start Scan
                     </Button>
-                  )}
+                  )*/}
                   {[ 'SCAN_READY', 'RETRIEVING' ].includes(scanStatus) && (
+                    <span
+                      data-tip="(not yet supported)"
+                      data-for="global">
+                      <Button disabled>
+                        <ScanIcon /> Finalize Scan
+                      </Button>
+                    </span>
+                  )/* TODO: ((
                     <Button
                       data-tip="Retrieve scan results"
                       data-for="global"
@@ -340,7 +364,7 @@ const AsteroidDetails = (props) => {
                       disabled={asteroid.owner !== account || scanStatus === 'RETRIEVING'}>
                       <ScanIcon /> Finalize Scan
                     </Button>
-                  )}
+                  )*/}
                 </Form>
               )}
               {asteroid.owner && asteroid.owner === account && (
@@ -383,7 +407,7 @@ const AsteroidDetails = (props) => {
               <Log>
                 <ul>
                   {asteroid.events.map(e => (
-                    <LogEntry key={e.transactionHash} type={`Asteroid_${e.event}`} data={e} />
+                    <LogEntry key={`${e.transactionHash}_${e.logIndex}`} type={`Asteroid_${e.event}`} data={e} />
                   ))}
                 </ul>
               </Log>

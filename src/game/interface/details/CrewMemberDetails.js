@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import { useWeb3React } from '@web3-react/core';
 import styled, { css } from 'styled-components';
 import { toCrewClass, toCrewCollection, toCrewTitle, toCrewTrait } from 'influence-utils';
 import { FaBookOpen as BioIcon } from 'react-icons/fa';
 import { RiBarChart2Fill as StatsIcon } from 'react-icons/ri';
 
+import useAuth from '~/hooks/useAuth';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewMember from '~/hooks/useCrewMember';
 import useNameCrew from '~/hooks/useNameCrew';
@@ -368,7 +368,7 @@ const MIN_TRAIT_SLOTS = 12;
 const CrewMemberDetails = (props) => {
   const { i } = useParams();
   const history = useHistory();
-  const { account } = useWeb3React();
+  const { account } = useAuth();
   const { data: assignmentData } = useCrewAssignments();
   const { data: crew } = useCrewMember(i);
   const { nameCrew, naming } = useNameCrew(Number(i));
@@ -566,7 +566,7 @@ const CrewMemberDetails = (props) => {
                   <ul>
                     {crew?.events.map(e => (
                       <LogEntry
-                        key={e.transactionHash}
+                        key={`${e.transactionHash}_${e.logIndex}`}
                         data={e}
                         type={`CrewMember_${e.event}`}
                         isTabular />

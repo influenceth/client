@@ -173,6 +173,12 @@ const MintableCrewMember = (props) => {
             <span>Arvad Citizens are mintable at completion of sale</span>
           </WarningMessage>
         )}
+        <span data-tip="(not yet supported)" data-for="global" style={{ marginTop: 'auto' }}>
+          <StyledButton disabled>
+            <CrewMemberIcon /> Mint Crew
+          </StyledButton>
+        </span>
+        {/* TODO: 
         <StyledButton
           data-tip={canMint ? 'Mint new crew member' : 'Not available until sale is complete'}
           data-for="global"
@@ -181,6 +187,7 @@ const MintableCrewMember = (props) => {
           disabled={!canMint || settling}>
           <CrewMemberIcon /> Mint Crew
         </StyledButton>
+        */}
       </CrewInfo>
     </CrewMember>
   );

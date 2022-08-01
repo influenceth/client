@@ -30,6 +30,10 @@
       "description": "Chain ID for appropriate chain (1 = Mainnet, 4 = Rinkeby, 5 = Goerli, 1337 = ganache)",
       "required": true
     },
+    "REACT_APP_STARKNET_NETWORK": {
+      "description": "Base URL for Starknet network.",
+      "required": true
+    },
     "REACT_APP_CONTRACT_ASTEROID_FEATURES": {
       "required": true
     },

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
-import { useWeb3React } from '@web3-react/core';
 
+import useAuth from '~/hooks/useAuth';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
@@ -110,9 +110,9 @@ const MenuControl = styled(IconButton)`
 const MainMenu = (props) => {
   const activateSection = useStore(s => s.dispatchOutlinerSectionActivated);
   const playSound = useStore(s => s.dispatchSoundRequested);
-  const { account } = useWeb3React();
   const { isMobile } = useScreenSize();
 
+  const { account } = useAuth();
   const { data: crewAssignmentData } = useCrewAssignments();
   const { totalAssignments } = crewAssignmentData || {};
 

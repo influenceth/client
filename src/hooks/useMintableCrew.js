@@ -1,10 +1,10 @@
 import { useQuery } from 'react-query';
-import { useWeb3React } from '@web3-react/core';
 
 import api from '~/lib/api';
+import useAuth from '~/hooks/useAuth';
 
 const useMintableCrew = () => {
-  const { account } = useWeb3React();
+  const { account } = useAuth();
 
   return useQuery(
     [ 'asteroids', 'mintableCrew', { owner: account } ],

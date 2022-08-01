@@ -47,7 +47,7 @@ const Game = (props) => {
     if (!gpuInfo) return;
 
     if (!gpuInfo.isMobile) {
-      // setShowScene(true);
+      setShowScene(true);
       dispatchGpuInfo(gpuInfo);
 
       if (gpuInfo.tier === 0) {
