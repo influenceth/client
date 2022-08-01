@@ -99,7 +99,7 @@ const getContracts = () => ({
 });
 
 export function ChainTransactionProvider({ children }) {
-  const { token, wallet: { wallet } } = useAuth();
+  const { wallet: { starknet } } = useAuth();
   const { events, lastBlockNumber } = useEvents();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -108,22 +108,8 @@ export function ChainTransactionProvider({ children }) {
   const dispatchPendingTransactionComplete = useStore(s => s.dispatchPendingTransactionComplete);
   const pendingTransactions = useStore(s => s.pendingTransactions);
 
-  // TODO: this should probably be in useAuth
-  // argent seems to initialize to the goerli network, then switch to the user's selection
-  //  - we detect that as a network change and prompt to reconnect unnecessarily (invalidating token)
-  //  - if not for below, we would also use the wrong network to check the pending transaction (and
-  //    thus get a NOT_RECEIVED response, and thus clear the pending transaction)
-  let account;
-  let provider;
-  // make sure actually connected
-  // (otherwise, might use wrong provider b/c argentx is effed)
-  if (wallet.isConnected && token) {
-    account = wallet.account;
-    provider = wallet.provider;
-  }
-
   const contracts = useMemo(() => {
-    if (!!account) {
+    if (!!starknet?.account) {
       const processedContracts = {};
       const contractConfig = getContracts();
       Object.keys(contractConfig).forEach((k) => {
@@ -139,9 +125,8 @@ export function ChainTransactionProvider({ children }) {
           confirms,
           isEqual
         } = contractConfig[k];
-        console.log('account', account);
         processedContracts[k] = {
-          execute: transact(new Contract(config, address, account)),
+          execute: transact(new Contract(config, address, starknet.account)),
           onTransactionError: (err, vars) => {
             console.error(err, vars);
             if (getErrorAlert) {
@@ -167,7 +152,7 @@ export function ChainTransactionProvider({ children }) {
       return processedContracts;
     }
     return null;
-  }, [createAlert, account?.baseUrl]);
+  }, [createAlert, starknet?.account?.baseUrl]);
 
   const transactionWaiters = useRef([]);
 
@@ -183,7 +168,7 @@ export function ChainTransactionProvider({ children }) {
           // NOTE: waitForTransaction is slow -- often slower than server to receive and process
           //  event and send back to frontend... so we are using it just to listen for errors
           //  (events from backend will demonstrate success)
-          provider.waitForTransaction(txHash, 1, TIMEOUT - (Date.now() - timestamp))
+          starknet.provider.waitForTransaction(txHash, 1, TIMEOUT - (Date.now() - timestamp))
             // .then((receipt) => {
             //   if (receipt) {
             //     console.log('transaction settled');

@@ -1,15 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 
-// TODO: @web3-react is only used here and in lib/connectors
-//  (can probably be deprecated)
-import { UnsupportedChainIdError } from '@web3-react/core';
-import {
-  NoEthereumProviderError,
-  UserRejectedRequestError as UserRejectedRequestErrorInjected
-} from '@web3-react/injected-connector';
-import { UserRejectedRequestError as UserRejectedRequestErrorWC } from '@web3-react/walletconnect-connector';
-
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
@@ -18,30 +9,6 @@ import Section from '~/components/Section';
 import Button from '~/components/Button';
 import { DisconnectIcon, LoginIcon, WalletIcon, WarningIcon } from '~/components/Icons';
 import starknetIcon from '~/assets/images/starknet-icon.png';
-
-const networkNames = {
-  1: 'Ethereum Mainnet',
-  4: 'Rinkeby Testnet',
-  5: 'Goerli Testnet',
-  1337: 'Local Testnet'
-};
-
-const getErrorMessage = (error) => {
-  console.error(error);
-
-  if (error instanceof NoEthereumProviderError) {
-    return 'No Ethereum browser extension detected, install MetaMask or visit from a dApp browser on mobile.';
-  } else if (error instanceof UnsupportedChainIdError) {
-    return `Network unsupported, please connect to ${networkNames[process.env.REACT_APP_CHAIN_ID]}.`;
-  } else if (
-    error instanceof UserRejectedRequestErrorInjected ||
-    error instanceof UserRejectedRequestErrorWC
-  ) {
-    return 'Please authorize Influence to access your Ethereum account.';
-  } else {
-    return 'An unknown error occurred, please check the console for details.';
-  }
-};
 
 const Controls = styled.div`
   display: flex;
@@ -89,22 +56,16 @@ const StyledErrorIcon = styled(WarningIcon)`
   width: 20px;
 `;
 
-// TODO: if completely logged out, should we always present the list? i.e. rather than just enabling first
-
 const Wallet = () => {
-  const queryClient = useQueryClient();
   const forceExpand = useStore(s => s.dispatchOutlinerSectionExpanded);
   const forceCollapse = useStore(s => s.dispatchOutlinerSectionCollapsed);
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
 
-  const { token, restartLogin, wallet } = useAuth();
+  const { token, login, wallet } = useAuth();
   const status = wallet.account ? (token ? 'logged-in' : 'connected') : 'disconnected';
 
   // Remove auth queries when wallet is disconnected
   const disconnectWallet = () => {
-    queryClient.removeQueries([ 'login', wallet.account ]);
-    queryClient.removeQueries([ 'sign', wallet.account ]);
-    queryClient.removeQueries([ 'verify', wallet.account ]);
     invalidateToken();
     wallet.disconnect();
   };
@@ -113,10 +74,6 @@ const Wallet = () => {
     if (status !== 'logged-in' || !!wallet.error) forceExpand('wallet');
     if (status === 'logged-in') forceCollapse('wallet');
   }, [ status, wallet.error, forceExpand, forceCollapse ]);
-  
-  useEffect(() => {
-    wallet.reconnect();
-  }, []);
 
   return (
     <Section
@@ -133,7 +90,7 @@ const Wallet = () => {
       {!!wallet.error && (
         <Error>
           <StyledErrorIcon />
-          <span>{getErrorMessage(wallet.error)}</span>
+          <span>{wallet.error}</span>
         </Error>
       )}
       <Controls>
@@ -142,7 +99,7 @@ const Wallet = () => {
             data-tip="Connect to StarkNet"
             data-for="global"
             data-place="left"
-            onClick={() => wallet.connect({ showList: true })}>
+            onClick={wallet.connect}>
             <img src={starknetIcon} height={18} width={18} /> Connect Wallet
           </Button>
         )}
@@ -151,7 +108,7 @@ const Wallet = () => {
             data-tip="Login with Wallet"
             data-for="global"
             data-place="left"
-            onClick={() => restartLogin()}>
+            onClick={login}>
             <LoginIcon /> Login
           </Button>
         )}
@@ -160,7 +117,7 @@ const Wallet = () => {
             data-tip="Disconnect Wallet"
             data-for="global"
             data-place="left"
-            onClick={() => disconnectWallet()}>
+            onClick={disconnectWallet}>
             <DisconnectIcon /> Disconnect
           </Button>
         )}

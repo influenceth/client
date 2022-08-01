@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { ThemeProvider } from 'styled-components';
+import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
@@ -8,6 +8,7 @@ import { AuthProvider } from '~/contexts/AuthContext';
 import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
 import { ClockProvider } from '~/contexts/ClockContext';
 import { EventsProvider } from '~/contexts/EventsContext';
+import { WalletProvider } from '~/contexts/WalletContext';
 import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import LandingPage from '~/game/Landing';
@@ -26,6 +27,16 @@ const StyledMain = styled.main`
   position: absolute;
   top: 0;
   width: 100%;
+`;
+
+// for starknet modals
+const GlobalStyle = createGlobalStyle`
+  .s-dialog {
+    z-index: 1010 !important;
+  }
+  .s-overlay {
+    z-index: 1009 !important;
+  }
 `;
 
 const DISABLE_INTRO = process.env.NODE_ENV === 'development';
@@ -72,32 +83,35 @@ const Game = (props) => {
   }, [createAlert, updateNeeded, onUpdateVersion]);
 
   return (
-    <AuthProvider>
-      <EventsProvider>
-        <ChainTransactionProvider>
-          <ThemeProvider theme={theme}>
-            <Router>
-              <Referral />
-              <Switch>
-                <Route path="/play">
-                  <LandingPage />
-                </Route>
-                <Route>
-                  {introEnabled && <Intro onComplete={onIntroComplete} />}
-                  <ClockProvider>
-                    <StyledMain>
-                      <Interface />
-                      {showScene && <Scene />}
-                      <Audio />
-                    </StyledMain>
-                  </ClockProvider>
-                </Route>
-              </Switch>
-            </Router>
-          </ThemeProvider>
-        </ChainTransactionProvider>
-      </EventsProvider>
-    </AuthProvider>
+    <WalletProvider>
+      <AuthProvider>
+        <EventsProvider>
+          <ChainTransactionProvider>
+            <ThemeProvider theme={theme}>
+              <GlobalStyle />
+              <Router>
+                <Referral />
+                <Switch>
+                  <Route path="/play">
+                    <LandingPage />
+                  </Route>
+                  <Route>
+                    {introEnabled && <Intro onComplete={onIntroComplete} />}
+                    <ClockProvider>
+                      <StyledMain>
+                        <Interface />
+                        {showScene && <Scene />}
+                        <Audio />
+                      </StyledMain>
+                    </ClockProvider>
+                  </Route>
+                </Switch>
+              </Router>
+            </ThemeProvider>
+          </ChainTransactionProvider>
+        </EventsProvider>
+      </AuthProvider>
+    </WalletProvider>
   );
 };
 

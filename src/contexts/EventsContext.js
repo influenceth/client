@@ -93,8 +93,11 @@ export function EventsProvider({ children }) {
       }
 
       const newEvents = eventsQuery.data.events.slice().concat(events);
+      // TODO: should this uniquification include logIndex? some transactions now include multiple events
       setEvents(uniq(newEvents, 'transactionHash'));
-      setLatest(Math.floor(Date.now() / 1000));
+
+      const latestEvent = newEvents.sort((a, b) => b.timestamp - a.timestamp)[0];
+      setLatest(latestEvent?.timestamp ? latestEvent.timestamp + 1 : 0);
       setLastBlockNumber(eventsQuery.data.blockNumber);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -112,8 +115,7 @@ export function EventsProvider({ children }) {
   return (
     <EventsContext.Provider value={{
       lastBlockNumber,
-      events,
-      latest
+      events
     }}>
       {children}
     </EventsContext.Provider>

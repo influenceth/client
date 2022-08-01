@@ -17,7 +17,7 @@
     "ethers": "^5.4.1",
     "express": "^4.17.2",
     "express-sslify": "^1.2.0",
-    "get-starknet": "^1.4.1",
+    "get-starknet": "^1.4.2",
     "glsl-noise": "^0.0.0",
     "glslify": "^7.1.1",
     "gsap": "^3.7.1",
