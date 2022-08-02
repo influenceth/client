@@ -22,12 +22,16 @@
       "description": "Base URL for OpenSea. Does not include trailing slash",
       "required": true
     },
+    "REACT_APP_STARKNET_NETWORK": {
+      "description": "Base URL for Starknet network.",
+      "required": true
+    },
     "REACT_APP_ETHERSCAN_URL": {
       "description": "Base URL for Etherscan. Does not include trailing slash",
       "required": true
     },
-    "REACT_APP_STARKNET_NETWORK": {
-      "description": "Base URL for Starknet network.",
+    "REACT_APP_VOYAGER_URL": {
+      "description": "Base URL for Voyager. Does not include trailing slash",
       "required": true
     },
     "REACT_APP_CONTRACT_ASTEROID_TOKEN": {

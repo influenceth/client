@@ -9,7 +9,12 @@ import AddressLink from '~/components/AddressLink';
 
 // TODO: L2 transition
 // (probably need to support linking to both L1 and L2 transactions for backward compatiblity)
-const getTxLink = (txHash) => `${process.env.REACT_APP_ETHERSCAN_URL}/tx/${txHash}`;
+const getTxLink = (event) => {
+  if (event.__t === 'Ethereum') {
+    return `${process.env.REACT_APP_ETHERSCAN_URL}/tx/${event.transactionHash}`;
+  }
+  return `${process.env.REACT_APP_VOYAGER_URL}/tx/${event.transactionHash}`;
+}
 
 const entries = {
   App_Updated: (e) => ({
@@ -45,7 +50,7 @@ const entries = {
         <AddressLink address={e.returnValues.to} />
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
 
   Asteroid_ScanStarted: (e) => ({
@@ -56,7 +61,7 @@ const entries = {
         <AsteroidLink id={e.returnValues.asteroidId} />
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
 
   Asteroid_ReadyToFinalizeScan: (e) => ({
@@ -78,7 +83,7 @@ const entries = {
         <AsteroidLink id={e.returnValues.asteroidId} />
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
 
   Asteroid_NameChanged: (e) => ({
@@ -90,7 +95,7 @@ const entries = {
         <span>{` re-named to "${e.returnValues.newName}"`}</span>
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
 
   Asteroid_BuyingError: (e) => ({
@@ -143,7 +148,7 @@ const entries = {
         <AsteroidLink id={e.returnValues.asteroidId} />
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
 
   CrewMember_Transfer: (e) => ({
@@ -158,7 +163,7 @@ const entries = {
         <AddressLink address={e.returnValues.to} />
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
 
   CrewMember_SettlingError: (e) => ({
@@ -186,7 +191,7 @@ const entries = {
         <span>{` re-named to "${e.returnValues.newName}"`}</span>
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
 
   GenericAlert: (e) => ({
