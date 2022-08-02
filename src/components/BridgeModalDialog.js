@@ -69,7 +69,7 @@ const CloseButton = styled(IconButton)`
   }
 `;
 
-export default ({ onClose }) => {
+const BridgeModalDialog = ({ onClose }) => {
   const openBridge = () => {
     window.open(process.env.REACT_APP_BRIDGE_URL);
     onClose();
@@ -82,13 +82,13 @@ export default ({ onClose }) => {
           <CloseIcon />
         </CloseButton>
         <ContentBody>
-          <img src={starknetLogo} />
+          <img src={starknetLogo} alt="Starknet" />
           <InnerContainer>
             <Title>Influence is now on Starknet, the L2 Ethereum Network!</Title>
             <div>
               All of your assets are still accounted for and can still be traded on either
-              L1 Ethereum (<a href="https://opensea.io/Influence?tab=created" target="_blank">OpenSea</a>)
-              or Starknet (<a href="https://playoasis.xyz/" target="_blank">PlayOasis</a>).
+              L1 Ethereum (<a href="https://opensea.io/Influence?tab=created" target="_blank" rel="noreferrer">OpenSea</a>)
+              or Starknet (<a href="https://playoasis.xyz/" target="_blank" rel="noreferrer">PlayOasis</a>).
             </div>
             <div>
               In the interest of lower transaction fees, however, Influence itself will only be
@@ -102,4 +102,6 @@ export default ({ onClose }) => {
       </Container>
     </Dialog>
   );
-}
+};
+
+export default BridgeModalDialog;

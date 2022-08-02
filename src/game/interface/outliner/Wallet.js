@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import styled from 'styled-components';
 
@@ -56,6 +56,14 @@ const StyledErrorIcon = styled(WarningIcon)`
   width: 20px;
 `;
 
+const Link = styled.span`
+  color: ${p => p.theme.colors.mainText};
+  cursor: ${p => p.theme.cursors.active};
+  &:hover {
+    color: white;
+  }
+`;
+
 const Wallet = () => {
   const forceExpand = useStore(s => s.dispatchOutlinerSectionExpanded);
   const forceCollapse = useStore(s => s.dispatchOutlinerSectionCollapsed);
@@ -89,7 +97,7 @@ const Wallet = () => {
       title="Account"
       sticky={true}
       icon={<WalletIcon />}
-      action={(<a onClick={openBridgeModal}>Assets on L1?</a>)}>
+      action={(<Link onClick={openBridgeModal}>Assets on L1?</Link>)}>
       <Info>
         <Indicator status={status}>●</Indicator>
         {status === 'disconnected' && <span>Wallet is disconnected.</span>}
@@ -109,7 +117,7 @@ const Wallet = () => {
             data-for="global"
             data-place="left"
             onClick={wallet.connect}>
-            <img src={starknetIcon} height={18} width={18} /> Connect Wallet
+            <img src={starknetIcon} alt="Starknet" height={18} width={18} /> Connect Wallet
           </Button>
         )}
         {status === 'connected' && (

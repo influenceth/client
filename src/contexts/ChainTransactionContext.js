@@ -1,7 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
 import { starknetContracts as configs } from 'influence-utils';
 import {Contract, shortString, uint256 } from 'starknet';
-import { getStarknet } from 'get-starknet';
 
 import useAuth from '~/hooks/useAuth';
 import useEvents from '~/hooks/useEvents';
@@ -152,7 +151,7 @@ export function ChainTransactionProvider({ children }) {
       return processedContracts;
     }
     return null;
-  }, [createAlert, starknet?.account?.baseUrl]);
+  }, [createAlert, starknet?.account?.address, starknet?.account?.baseUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionWaiters = useRef([]);
 

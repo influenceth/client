@@ -25,7 +25,7 @@ export function WalletProvider({ children }) {
   const [error, setError] = useState();
   const [starknetReady, setStarknetReady] = useState();
 
-  const onConnectionResult = (connectedAccount = null) => {
+  const onConnectionResult = useCallback((connectedAccount = null) => {
     let checksumAddress = connectedAccount && getChecksumAddress(connectedAccount);
     if (checksumAddress && starknet?.provider?.baseUrl !== process.env.REACT_APP_STARKNET_NETWORK) {
       setError(`You must connect to a Starknet wallet on the following network to login: ${process.env.REACT_APP_STARKNET_NETWORK}`);
@@ -39,7 +39,7 @@ export function WalletProvider({ children }) {
       onConnectCallback.current(checksumAddress);
       onConnectCallback.current = null;
     }
-  };
+  }, [starknet?.provider?.baseUrl]);
 
   const attemptConnection = useCallback(async (prompt) => {
     try {
@@ -48,11 +48,12 @@ export function WalletProvider({ children }) {
       if (!starknet.isConnected) {
         connect({ showList: prompt, modalOptions: { theme: 'dark' } });
       }
-      onConnectionResult(starknet.isConnected ? starknet?.account?.address : null);
+      onConnectionResult(starknet.isConnected ? starknet.account?.address : null);
     } catch(e) {
       setError(e);
     }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onConnectionResult, starknet?.isConnected, starknet?.account?.address]);
 
   // while connecting or connected, listen for network changes from extension
   // (since there is no disconnect in argentx, we just always listen)
@@ -95,7 +96,7 @@ export function WalletProvider({ children }) {
         onConnectionResult(null);
       }
     }
-  }, [!!starknet?.isPreauthorized]);
+  }, [!!starknet?.isPreauthorized]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <WalletContext.Provider value={{

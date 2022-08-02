@@ -6,7 +6,7 @@ import LoadingAnimation from 'react-spinners/PuffLoader';
 
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useMintableCrew from '~/hooks/useMintableCrew';
-import useSettleCrew from '~/hooks/useSettleCrew';
+// import useSettleCrew from '~/hooks/useSettleCrew';
 import useOwnedAsteroidsCount from '~/hooks/useOwnedAsteroidsCount';
 import Details from '~/components/Details';
 import AsteroidLink from '~/components/AsteroidLink';
@@ -154,7 +154,7 @@ const OwnedCrewMember = (props) => {
 
 const MintableCrewMember = (props) => {
   const { asteroid, canMint, ...restProps } = props;
-  const { settleCrew, settling } = useSettleCrew(Number(asteroid.i));
+  // const { settleCrew, settling } = useSettleCrew(Number(asteroid.i));
   const collection = asteroid.purchaseOrder <= 1859 ? 1 : 2;
   const bonus = (collection === 1 ? 25 : 0) + Math.pow(250000 - asteroid.i, 2) / 2500000000;
 

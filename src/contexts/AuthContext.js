@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useContext, useState } from 'react';
+import { createContext, useCallback, useEffect, useContext } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
 
 import WalletContext from '~/contexts/WalletContext';
@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
         });
       }
     }
-  }, [account, !token, dispatchAuthenticated]);
+  }, [account, !token, dispatchAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <AuthContext.Provider value={{
