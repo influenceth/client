@@ -31,6 +31,7 @@ import TextInput from '~/components/TextInput';
 import { unixTimeToGameTime } from '~/lib/utils';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 
+// TODO: L2 transition
 const goToOpenSeaCrew = (i) => {
   const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_CREW_TOKEN}/${i}`;
   window.open(url, '_blank');

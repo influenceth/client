@@ -26,44 +26,27 @@
       "description": "Base URL for Etherscan. Does not include trailing slash",
       "required": true
     },
-    "REACT_APP_ETH_PROVIDER": {
-      "description": "Base websocket URL for Infura (or potentially Alchemy). Does not include trailing slash",
-      "required": true
-    },
-    "REACT_APP_CHAIN_ID": {
-      "description": "Chain ID for appropriate chain (1 = Mainnet, 4 = Rinkeby, 5 = Goerli, 1337 = ganache)",
-      "required": true
-    },
     "REACT_APP_STARKNET_NETWORK": {
       "description": "Base URL for Starknet network.",
       "required": true
     },
-    "REACT_APP_CONTRACT_ASTEROID_FEATURES": {
-      "required": true
-    },
-    "REACT_APP_CONTRACT_ASTEROID_NAMES": {
-      "required": true
-    },
-    "REACT_APP_CONTRACT_ASTEROID_SCANS": {
-      "required": true
-    },
     "REACT_APP_CONTRACT_ASTEROID_TOKEN": {
-      "required": true
-    },
-    "REACT_APP_CONTRACT_PLANETS": {
-      "required": true
-    },
-    "REACT_APP_CONTRACT_ARVAD_CREW_SALE": {
-      "required": true
+      "required": false
     },
     "REACT_APP_CONTRACT_CREW_TOKEN": {
+      "required": false
+    },
+    "REACT_APP_STARKNET_DISPATCHER": {
       "required": true
     },
-    "REACT_APP_CONTRACT_CREW_FEATURES": {
+    "REACT_APP_STARKNET_ASTEROID_TOKEN": {
       "required": true
     },
-    "REACT_APP_CONTRACT_CREW_NAMES": {
+    "REACT_APP_STARKNET_CREWMATE_TOKEN": {
       "required": true
+    },
+    "REACT_APP_HIDE_SOCIAL": {
+      "required": false
     }
   }
 }

@@ -245,6 +245,7 @@ const AsteroidDetails = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [asteroid, exportingModel]);
 
+  // TODO: L2 transition
   const goToOpenSeaAsteroid = useCallback((i) => {
     const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/${i}`;
     window.open(url, '_blank');

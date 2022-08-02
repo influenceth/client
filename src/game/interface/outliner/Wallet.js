@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQueryClient } from 'react-query';
 
 import styled from 'styled-components';
 
