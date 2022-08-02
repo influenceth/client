@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import useStore from '~/hooks/useStore';
 import useAuth from '~/hooks/useAuth';
 import Section from '~/components/Section';
+import BridgeModalDialog from '~/components/BridgeModalDialog';
 import Button from '~/components/Button';
 import { DisconnectIcon, LoginIcon, WalletIcon, WarningIcon } from '~/components/Icons';
 import starknetIcon from '~/assets/images/starknet-icon.png';
@@ -62,6 +63,8 @@ const Wallet = () => {
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
 
   const { token, login, wallet } = useAuth();
+  const [bridgeModalOpen, setBridgeModalOpen] = useState(false);
+
   const status = wallet.account ? (token ? 'logged-in' : 'connected') : 'disconnected';
 
   // Remove auth queries when wallet is disconnected
@@ -75,12 +78,19 @@ const Wallet = () => {
     if (status === 'logged-in') forceCollapse('wallet');
   }, [ status, wallet.error, forceExpand, forceCollapse ]);
 
+  const openBridgeModal = (e) => {
+    e.stopPropagation();
+    setBridgeModalOpen(true);
+    return false;
+  };
+
   return (
     <Section
       name="wallet"
       title="Account"
       sticky={true}
-      icon={<WalletIcon />}>
+      icon={<WalletIcon />}
+      action={(<a onClick={openBridgeModal}>Assets on L1?</a>)}>
       <Info>
         <Indicator status={status}>●</Indicator>
         {status === 'disconnected' && <span>Wallet is disconnected.</span>}
@@ -122,6 +132,9 @@ const Wallet = () => {
           </Button>
         )}
       </Controls>
+      {bridgeModalOpen && (
+        <BridgeModalDialog onClose={() => setBridgeModalOpen(false)} />
+      )}
     </Section>
   );
 };

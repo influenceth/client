@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useWeb3React } from '@web3-react/core';
 
+import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import useInterval from '~/hooks/useInterval';
 import useOwnedAsteroidsCount from '~/hooks/useOwnedAsteroidsCount';
 
 const SaleNotifier = (props) => {
   const { sale } = props;
-  const { library } = useWeb3React();
+  const { wallet } = useAuth();
   const { data: soldCount } = useOwnedAsteroidsCount();
   const saleStarted = useStore(s => s.dispatchSaleStarted);
   const saleEnded = useStore(s => s.dispatchSaleEnded);
@@ -15,8 +15,8 @@ const SaleNotifier = (props) => {
   const [ status, setStatus ] = useState();
 
   useInterval(async () => {
-    if (status === 'starting' && library) {
-      const block = await library.getBlock('latest');
+    if (status === 'starting' && wallet?.starknet?.provider) {
+      const block = await wallet.starknet.provider.getBlock('latest');
       if (block.timestamp > sale.saleStartTime) setStatus('started');
     }
   }, status === 'starting' ? 1000 : null);

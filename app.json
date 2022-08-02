@@ -14,6 +14,10 @@
       "description": "Base URL of the Influence images server, does not include trailing slash",
       "required": true
     },
+    "REACT_APP_BRIDGE_URL": {
+      "description": "Base URL of the Influence L1/L2 bridge",
+      "required": true
+    },
     "REACT_APP_OPEN_SEA_URL": {
       "description": "Base URL for OpenSea. Does not include trailing slash",
       "required": true

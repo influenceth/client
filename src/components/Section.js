@@ -8,6 +8,14 @@ import IconButton from './IconButton';
 
 const HIGHLIGHT_DURATION = 1500;
 
+const Action = styled.div`
+  font-size: 13px;
+  font-weight: normal;
+  position: absolute;
+  top: 0;
+  right: 8px;
+`;
+
 const StyledSection = styled.div`
   background-color: rgba(255, 255, 255, 0.075);
   font-size: 14px;
@@ -116,7 +124,7 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Section = (props) => {
-  const { sticky, title, icon, children, name, ...restProps } = props;
+  const { action, sticky, title, icon, children, name, ...restProps } = props;
   const sectionSettings = useStore(s => s.outliner[props.name]);
   const expandSection = useStore(s => s.dispatchOutlinerSectionExpanded);
   const collapseSection = useStore(s => s.dispatchOutlinerSectionCollapsed);
@@ -162,7 +170,7 @@ const Section = (props) => {
   return (
     <StyledSection ref={section} {...restProps}>
       <Tab highlighting={highlighting}>{icon}</Tab>
-      {title && <Title onClick={toggleMinimize}>{title}</Title>}
+      {title && <Title onClick={toggleMinimize}>{title}{action && sectionSettings?.expanded && <Action>{action}</Action>}</Title>}
       {!sticky && <CloseButton onClick={closeSection} borderless><MdClear /></CloseButton>}
       <Content ref={content}>{children}</Content>
     </StyledSection>

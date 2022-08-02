@@ -1,0 +1,105 @@
+import React from 'react';
+import styled from 'styled-components';
+
+import BrightButton from '~/components/BrightButton';
+import IconButton from '~/components/IconButton';
+import { CloseIcon } from '~/components/Icons';
+import Dialog from '~/components/Dialog';
+import starknetLogo from '~/assets/images/starknet-logo.png';
+
+const Container = styled.div`
+  background: linear-gradient(45deg, rgba(2,0,36,1) 0%, rgba(31,31,90,1) 100%);
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  position: relative;
+  width: 650px;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    width: 90vw;
+  }
+`;
+const ContentBody = styled.div`
+  flex: 1;
+  font-size: 15px;
+  padding: 40px 80px;
+  & > img {
+    display: block;
+    margin: 0 auto;
+  }
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    padding: 40px 20px;
+  }
+`;
+
+const InnerContainer = styled.div`
+  border: 1px solid rgba(255,255,255,0.3);
+  border-width: 1px 0;
+  margin: 25px 0 35px;
+  padding: 20px 0;
+  & > div {
+    text-align: center;
+    &:not(:last-child) {
+      margin-bottom: 20px;
+    }
+  }
+`;
+
+const Title = styled.div`
+  color: ${p => p.theme.colors.main};
+  font-weight: bold;
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+`;
+
+const CloseButton = styled(IconButton)`
+  opacity: 0.6;
+  position: absolute !important;
+  top: 12px;
+  right: 5px;
+  z-index: 1;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    right: 0;
+  }
+`;
+
+export default ({ onClose }) => {
+  const openBridge = () => {
+    window.open(process.env.REACT_APP_BRIDGE_URL);
+    onClose();
+  };
+
+  return (
+    <Dialog>
+      <Container>
+        <CloseButton onClick={onClose} borderless>
+          <CloseIcon />
+        </CloseButton>
+        <ContentBody>
+          <img src={starknetLogo} />
+          <InnerContainer>
+            <Title>Influence is now on Starknet, the L2 Ethereum Network!</Title>
+            <div>
+              All of your assets are still accounted for and can still be traded on either
+              L1 Ethereum (<a href="https://opensea.io/Influence?tab=created" target="_blank">OpenSea</a>)
+              or Starknet (<a href="https://playoasis.xyz/" target="_blank">PlayOasis</a>).
+            </div>
+            <div>
+              In the interest of lower transaction fees, however, Influence itself will only be
+              playable with assets that have been bridged to Layer 2.
+            </div>
+          </InnerContainer>
+          <ButtonContainer> 
+            <BrightButton onClick={openBridge}>Open the L1/L2 Bridge</BrightButton>
+          </ButtonContainer>
+        </ContentBody>
+      </Container>
+    </Dialog>
+  );
+}
