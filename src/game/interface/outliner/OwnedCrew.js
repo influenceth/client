@@ -1,13 +1,12 @@
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
-import { HiUserGroup as CrewIcon } from 'react-icons/hi';
 import { BiTransfer as TradeIcon } from 'react-icons/bi';
 
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useMintableCrew from '~/hooks/useMintableCrew';
 import CrewMemberItem from '~/components/CrewMemberItem';
 import IconButton from '~/components/IconButton';
-import { DetailIcon } from '~/components/Icons';
+import { CrewIcon, DetailIcon } from '~/components/Icons';
 import ListEmptyMessage from '~/components/ListEmptyMessage';
 import Section from '~/components/Section';
 

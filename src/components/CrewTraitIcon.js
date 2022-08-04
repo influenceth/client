@@ -62,11 +62,11 @@ const indexedIcons = [ // 1-indexed
   Svg50
 ];
 
-const CrewTraitIcon = ({ trait }) => {
+const CrewTraitIcon = ({ hideHexagon, trait }) => {
   const InnerIcon = indexedIcons[Number(trait)] || FallbackSvg;
   return (
     <svg className="icon">
-      <HexagonSVG />
+      {!hideHexagon && <HexagonSVG />}
       <InnerIcon
         className="icon"
         height={`${innerDim}em`}

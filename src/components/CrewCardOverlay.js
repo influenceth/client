@@ -140,18 +140,20 @@ const CardOverlay = styled.div`
     transition: opacity ${cardTransitionSpeed} ${cardTransitionFunction}, color ${cardTransitionSpeed} ${cardTransitionFunction}, background-color ${cardTransitionSpeed} ${cardTransitionFunction};
   }
 
-  &:hover {
-    ${CardOverlayHoverCss}
-    ${OverlayButton} {
-      animation: none;
-      &:after {
-        content: "${p => p.buttonHover || p.button}";
-      }
-      ${AttentionIcon} {
-        display: none;
+  ${p => !p.disableHover && `
+    &:hover {
+      ${CardOverlayHoverCss}
+      ${OverlayButton} {
+        animation: none;
+        &:after {
+          content: "${p => p.buttonHover || p.button}";
+        }
+        ${AttentionIcon} {
+          display: none;
+        }
       }
     }
-  }
+  `}
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     ${(p) => p.rgb && CardOverlayHoverCss}

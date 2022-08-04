@@ -53,6 +53,7 @@ const Card = styled.div`
     : ''
   }
   cursor: ${p => p.clickable && p.theme.cursors.active};
+  font-size: ${p => p.fontSize || p.theme.fontSizes.detailText};
   padding-top: 137.5%;
   position: relative;
   width: 100%;
@@ -67,12 +68,22 @@ const Card = styled.div`
       opacity: 1;
     }
   ` : ''}
+
+  ${p => p.hideFooter && `
+    & ${CardFooter} {
+      display: none;
+    }
+  `}
 `;
 
 const CrewName = styled.span`
-  font-size: ${p => p.theme.fontSizes.detailText};
   font-weight: bold;
-  padding: 15px 0;
+  ${p => p.noWrapName && `
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `}
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     font-size: 85%;
   }
@@ -80,15 +91,23 @@ const CrewName = styled.span`
 
 const EmblemContainer = styled.div`
   margin-left: -4px;
-  width: 56px;
+  width: 3.5em;
+  ${p => p.hideEmblem && 'display: none;'}
 `;
 const FooterStats = styled.div`
-  font-size: 11px;
+  font-size: 0.68em;
+  min-width: 0;
   & > div:first-child {
     color: white;
-    font-size: 12px;
+    font-size: 1.1em;
     font-weight: bold;
     text-transform: uppercase;
+  }
+  & > div {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 `;
 
@@ -113,11 +132,11 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
           onLoad={() => setImageLoaded(true)} />
       </CardImage>
       <CardHeader>
-        <CrewName>
+        <CrewName {...props}>
           <CrewClassIcon crewClass={crew.crewClass} />{' '}
-          {crew.name || `Crew Member #${crew.i}`}
+          {crew.name || `Crew Member #${crew.i || ''}`}
         </CrewName>
-        <DataReadout style={{ fontSize: 11 }}>{toCrewCollection(crew.crewCollection)}</DataReadout>
+        <DataReadout style={{ fontSize: '0.68em' }}>{toCrewCollection(crew.crewCollection)}</DataReadout>
       </CardHeader>
       {!overlay && (
         <CardFooter>

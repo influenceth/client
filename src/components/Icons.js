@@ -2,7 +2,7 @@ import { AiFillEdit, AiFillEye, AiFillStar } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle, BsChevronLeft } from 'react-icons/bs';
 import { FaEthereum, FaMapMarkedAlt, FaCopy } from 'react-icons/fa';
 import { FiMenu } from 'react-icons/fi';
-import { HiClock, HiUserGroup } from 'react-icons/hi';
+import { HiClock } from 'react-icons/hi';
 import {
   MdAccountBalanceWallet,
   MdFlag,
@@ -25,13 +25,18 @@ import { WiMoonAltWaningCrescent5 } from 'react-icons/wi';
 import { VscDebugDisconnect } from 'react-icons/vsc';
 
 import ArvadSVG from '~/assets/icons/ArvadIcon.svg';
+import CaptainSVG from '~/assets/icons/CaptainIcon.svg';
 import ChapterSVG from '~/assets/icons/ChapterIcon.svg';
 import CheckSVG from '~/assets/icons/CheckIcon.svg';
 import ChevronDoubleDownSVG from '~/assets/icons/ChevronDoubleDownIcon.svg';
+import CrewSVG from '~/assets/icons/CrewIcon.svg';
 import HexagonSVG from '~/assets/icons/HexagonIcon.svg';
 import LinkSVG from '~/assets/icons/LinkIcon.svg';
 import LockSVG from '~/assets/icons/LockIcon.svg';
+import PromoteSVG from '~/assets/icons/PromoteIcon.svg';
 import RocketSVG from '~/assets/icons/RocketIcon.svg';
+import SwaySVG from '~/assets/icons/SwayIcon.svg';
+import SwayMonochromeSVG from '~/assets/icons/SwayMonoIcon.svg';
 import TrophySVG from '~/assets/icons/TrophyIcon.svg';
 import TwitterSVG from '~/assets/icons/TwitterIcon.svg';
 import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
@@ -50,13 +55,19 @@ import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
   5) View the altered SVG to make sure it still looks right (https://www.svgviewer.dev/ is a good tool)
 */
 export const ArvadIcon = () => <ArvadSVG className="icon" style={{ width: '1.94em' }} />;
+export const CaptainIcon = () => <CaptainSVG className="icon" style={{ width: '3.05em' }} />;
 export const ChapterIcon = () => <ChapterSVG className="icon" />;
 export const CheckIcon = () => <CheckSVG className="icon" style={{ width: '1.314em' }} />;
 export const ChevronDoubleDownIcon = () => <ChevronDoubleDownSVG className="icon" />;
+export const ChevronDoubleUpIcon = () => <ChevronDoubleDownSVG className="icon" style={{ transform: 'rotate(180deg)' }} />;
+export const CrewIcon = () => <CrewSVG className="icon" />;
 export const HexagonIcon = () => <HexagonSVG className="icon" />;
 export const LinkIcon = () => <LinkSVG className="icon" />;
 export const LockIcon = () => <LockSVG className="icon" />;
+export const PromoteIcon = () => <PromoteSVG className="icon" />;
 export const RocketIcon = () => <RocketSVG className="icon" />;
+export const SwayIcon = () => <SwaySVG className="icon" />;
+export const SwayMonochromeIcon = () => <SwayMonochromeSVG className="icon" />;
 export const TrophyIcon = () => <TrophySVG className="icon" />;
 export const TwitterIcon = () => <TwitterSVG className="icon" />;
 export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
@@ -74,7 +85,7 @@ export {
   FaMapMarkedAlt as MapIcon,
   FiMenu as MenuIcon,
   HiClock as TimeIcon,
-  HiUserGroup as CrewIcon,
+  // HiUserGroup as CrewIcon,
   MdAccountBalanceWallet as WalletIcon,
   MdBlurOff as ScanIcon,
   MdChevronRight as CollapsedIcon,
