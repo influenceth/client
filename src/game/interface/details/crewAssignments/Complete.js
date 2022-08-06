@@ -290,6 +290,8 @@ const CrewAssignmentComplete = (props) => {
   const { data: allCrew } = useOwnedCrew();
   const { storyState } = useStorySession(sessionId);
 
+  // TODO: don't show this page if origin story
+
   const onCloseDestination = useMemo(
     () => `/crew-assignments/${storyState?.book}/${storyState?.story}`,
     [storyState?.book, storyState?.story]
@@ -374,7 +376,7 @@ const CrewAssignmentComplete = (props) => {
             </CardWrapper>
 
             <RecruitSection>
-              {process.env.NODE_ENV !== 'goerli' && (
+              {!process.env.REACT_APP_HIDE_SOCIAL && (
                 <TwitterButton onClick={shareOnTwitter}>
                   <span>Share on Twitter</span>
                   <TwitterIcon />

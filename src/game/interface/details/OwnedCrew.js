@@ -22,11 +22,17 @@ import {
 } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
+import useAuth from '~/hooks/useAuth';
+import useCreateStorySession from '~/hooks/useCreateStorySession';
+import useOriginStory from '~/hooks/useOriginStory';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useMintableCrew from '~/hooks/useMintableCrew';
 import useSettleCrew from '~/hooks/useSettleCrew';
+import useStore from '~/hooks/useStore';
 import useOwnedAsteroidsCount from '~/hooks/useOwnedAsteroidsCount';
 import theme from '~/theme.js';
+import { useHistory } from 'react-router-dom';
+import TriangleTip from '~/components/TriangleTip';
 
 const Container = styled.div`
   display: flex;
@@ -36,7 +42,7 @@ const Container = styled.div`
 `;
 
 const Title = styled.h3`
-align-items: center;
+  align-items: center;
   border-bottom: 1px solid #2b2b2b;
   display: flex;
   flex-direction: row;
@@ -204,7 +210,7 @@ const NavIconFlourish = styled(NavIcon)`
 `;
 
 const InfoTooltip = styled.div`
-  background: rgba(16,16,16,0.9);
+  background: rgba(16,16,16,0.95);
   border: 1px solid #333;
   padding: 13px 13px 0;
   pointer-events: none;
@@ -380,7 +386,14 @@ const PopperWrapper = (props) => {
 }
 
 const OwnedCrew = (props) => {
+  const { web3: { account } } = useAuth();
+  const createStorySession = useCreateStorySession();
+  const { data: originStory } = useOriginStory();
   const { data: crew } = useOwnedCrew();
+  const history = useHistory();
+  
+  const playSound = useStore(s => s.dispatchSoundRequested);
+
   // TODO: ?
   // const { data: mintable } = useMintableCrew();
   // const { data: ownedCount } = useOwnedAsteroidsCount();
@@ -393,7 +406,6 @@ const OwnedCrew = (props) => {
   // TODO: should sync state when crew is updated
   useEffect(() => {
     if (crew) {
-      console.log('syncState');
       setActiveCrew((crew || []).length ? [crew[0], crew[1]] : []);
       setInactiveCrew((crew || []).slice(2));
       setIsDirty(false);
@@ -401,9 +413,22 @@ const OwnedCrew = (props) => {
   }, [!!crew]);
 
   // TODO: loading
+  // TODO: useCallback
 
-  const handleClick = (slot) => {
-    console.log('recruit', slot);
+  const handleRecruit = () => {
+    createStorySession.mutate({
+      bookId: originStory.bookId,
+      storyId: originStory.storyId,
+      account
+    }, {
+      onSuccess: (session) => {
+        playSound('effects.success');
+        history.push(`/crew-assignment/${session.id}`);
+      },
+      onError: (err) => {
+        console.error(err);
+      }
+    });
   };
 
   useEffect(() => {
@@ -448,8 +473,8 @@ const OwnedCrew = (props) => {
 
   return (
     <Details title="Owned Crew">
-      {!crew && <Loader />}
-      {crew && (
+      {!(crew && originStory) && <Loader />}
+      {crew && originStory && (
         <Container>
           <Title>My Active Crew: {activeCrew.length} / 5</Title>
           <ActiveCrew>
@@ -459,16 +484,14 @@ const OwnedCrew = (props) => {
                 const isEmpty = !activeCrew[slot];
                 const isNextEmpty = isEmpty && slot === activeCrew.length;
                 const isSelected = !isEmpty;
-
-                const strokeWidth = 6;
                 return (
-                  <PopperWrapper>
+                  <PopperWrapper key={slot}>
                     {(refEl, setRefEl) => (
                       <>
                         <OuterContainer
                           key={slot}
                           clickable={isNextEmpty}
-                          onClick={() => handleClick(slot)}
+                          onClick={handleRecruit}
                           onMouseEnter={() => setHovered(slot)}
                           onMouseLeave={() => setHovered()}
                           selected={isSelected}>
@@ -495,21 +518,7 @@ const OwnedCrew = (props) => {
                                 )}
                                 <CaptainIcon />
                               </CrewContainer>
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                aria-hidden="true"
-                                focusable="false"
-                                viewBox="0 0 100 60"
-                                preserveAspectRatio="none">
-                                <polygon
-                                  points="0,0 100,0 50,50 0,0"
-                                  strokeWidth="0" />
-                                <path
-                                  d={`M-5 0 L50 ${50 + strokeWidth / 2} L105 0`}
-                                  fill="transparent"
-                                  stroke="currentColor"
-                                  strokeWidth={strokeWidth} />
-                              </svg>
+                              <TriangleTip extendStroke strokeColor="currentColor" strokeWidth="6" />
                             </>
                           )}
 

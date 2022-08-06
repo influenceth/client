@@ -139,11 +139,18 @@ const BackButton = styled.div`
   &:hover {
     color: white;
   }
+
+  ${p => p.disableAndHide && `
+    cursor: ${p.theme.cursors.default};
+    opacity: 0;
+    pointer-events: none;
+  `}
 `;
 
 const Title = styled.div`
   font-size: 36px;
   font-weight: bold;
+  ${p => p.ownerType === 'CREW' && 'text-align: center;'}
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     font-size: 28px;
@@ -186,6 +193,11 @@ const NavSpacer = styled.div`
   height: 0;
   margin: 0 8px;
   width: 1.5em;
+
+  ${p => p.steps > 4 && `
+    opacity: 0;
+    width: 0.5em;
+  `}
 `;
 
 const FlourishCentered = styled.div`
@@ -298,8 +310,6 @@ const ConfirmationButtons = styled.div`
   }
 `;
 
-const totalSteps = 3;
-
 const CrewAssignment = (props) => {
   const { id: sessionId } = useParams();
   const history = useHistory();
@@ -310,6 +320,8 @@ const CrewAssignment = (props) => {
 
   const [coverImageLoaded, setCoverImageLoaded] = useState();
   const [selection, setSelection] = useState();
+
+  const totalSteps = storyState.isOriginStory ? 5 : 3;
 
   // on step change, clear selection (to close modal)
   useEffect(() => {
@@ -344,14 +356,18 @@ const CrewAssignment = (props) => {
 
   const finish = useCallback(() => {
     playSound('effects.success');
-    history.push(`/crew-assignment/${sessionId}/complete`);
+    if (storyState.isOriginStory) {
+      history.push(`/crew-assignment/${sessionId}/create`);
+    } else {
+      history.push(`/crew-assignment/${sessionId}/complete`);
+    }
   }, [history, playSound, sessionId]);
 
   const crew = useMemo(() => {
     return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
   }, [storyState, allCrew]);
 
-  const contentReady = storyState && crew;
+  const contentReady = storyState && (crew || storyState.ownerType !== 'CREW_MEMBER');
   const pathIsReady = contentReady && storyState.image === coverImageLoaded && !loadingPath;
   return (
     <>
@@ -365,22 +381,26 @@ const CrewAssignment = (props) => {
               center={storyState.imageCenter}
               ready={storyState.image === coverImageLoaded} />
             <AboveFold ready={storyState.image === coverImageLoaded}>
-              <BackButton onClick={goBack}><BackIcon /> Back</BackButton>
-              <Title>{storyState.title}</Title>
-              <MobileCrewContainer>
-                <div>
-                  <b>{crew.name || `Crew Member #${crew.i}`}</b>
-                  {' '}<CrewClassIcon crewClass={crew.crewClass} />
-                </div>
-                <div>{toCrewClass(crew.crewClass) || 'Unknown Class'}</div>
-              </MobileCrewContainer>
+              <BackButton disableAndHide={storyState.isOriginStory} onClick={goBack}>
+                <BackIcon /> Back
+              </BackButton>
+              <Title ownerType={storyState.ownerType}>{storyState.title}</Title>
+              {crew && (
+                <MobileCrewContainer>
+                  <div>
+                    <b>{crew.name || `Crew Member #${crew.i}`}</b>
+                    {' '}<CrewClassIcon crewClass={crew.crewClass} />
+                  </div>
+                  <div>{toCrewClass(crew.crewClass) || 'Unknown Class'}</div>
+                </MobileCrewContainer>
+              )}
             </AboveFold>
             <BelowFold>
               {!pathIsReady && <Loader />}
               {pathIsReady && (
                 <>
                   <CrewContainer>
-                    <CrewCard crew={crew} />
+                    {crew && <CrewCard crew={crew} />}
                   </CrewContainer>
                   <Body>
                     <PageContent>{storyState.content}</PageContent>
@@ -421,7 +441,7 @@ const CrewAssignment = (props) => {
                         }
                         return (
                           <React.Fragment key={i}>
-                            {i > 0 && <NavSpacer completed={i <= currentStep} />}
+                            {i > 0 && <NavSpacer steps={totalSteps} completed={i <= currentStep} />}
                             <NavIcon
                               animate
                               selected={i === currentStep}

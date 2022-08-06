@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 import styled, { css } from 'styled-components';
+import pick from 'lodash/pick';
 import { toCrewClass, toCrewCollection, toCrewTitle } from 'influence-utils';
 
 import silhouette from '~/assets/images/silhouette.png';
@@ -84,6 +85,11 @@ const CrewName = styled.span`
     text-overflow: ellipsis;
     white-space: nowrap;
   `}
+  ${p => p.largerClassIcon && `
+    & > svg {
+      font-size: 40px;
+    }
+  `}
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     font-size: 85%;
   }
@@ -119,22 +125,38 @@ const loadingCss = css`
 
 const CrewCard = ({ crew, onClick, overlay, ...props }) => {
   const [ imageLoaded, setImageLoaded ] = useState(false);
-  const imageUrl = crew.crewCollection
-    ? `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crew.i}/image.svg?bustOnly=true`
-    : silhouette;
+
+  const useName = crew.name || (crew.i && `Crew Member #${crew.i}`) || '';
+  
+  let imageUrl = silhouette;
+  if (crew.i) {
+    imageUrl = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crew.i}/image.svg?bustOnly=true`;
+  } else if (crew.crewClass) {
+    imageUrl = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
+      pick(crew, [
+        'crewCollection', 'sex', 'body', 'crewClass', 'outfit', 'title',
+        'hair', 'facialFeature', 'hairColor', 'headPiece', 'bonusItem'
+      ])
+    )}`;
+  }
+
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [imageUrl])
+
   return (
     <Card onClick={onClick} hasOverlay={!!overlay} {...props}>
       <LoadingAnimation color={'white'} css={loadingCss} loading={!imageLoaded} />
       <CardImage visible={imageLoaded} applyMask={!overlay}>
         <img
-          alt={crew.name || `Crew Member #${crew.i}`}
+          alt={useName}
           src={imageUrl}
           onLoad={() => setImageLoaded(true)} />
       </CardImage>
       <CardHeader>
         <CrewName {...props}>
           <CrewClassIcon crewClass={crew.crewClass} />{' '}
-          {crew.name || `Crew Member #${crew.i || ''}`}
+          {useName}
         </CrewName>
         <DataReadout style={{ fontSize: '0.68em' }}>{toCrewCollection(crew.crewCollection)}</DataReadout>
       </CardHeader>

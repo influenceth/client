@@ -129,6 +129,11 @@ const api = {
     return response.data;
   },
 
+  getOriginStory: async (id, sessionId) => {
+    const response = await instance.get(`/v1/stories/origin`);
+    return response.data;
+  },
+
   requestLogin: async (account) => {
     const response = await instance.get(`/v1/auth/login/${account}`);
     return response.data.message;
