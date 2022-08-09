@@ -425,9 +425,11 @@ const CrewMemberDetails = (props) => {
             </CardWrapper>
             <BelowCardWrapper>
               <CrewLabels>
-                <DataReadout label="Career Start" slim inheritFontSize style={{ margin: '1.4em 0' }}>
-                  {startDate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SA
-                </DataReadout>
+                {startDate && (
+                  <DataReadout label="Career Start" slim inheritFontSize style={{ margin: '1.4em 0' }}>
+                    {startDate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SA
+                  </DataReadout>
+                )}
                 <DataReadout label="Class" slim inheritFontSize>{toCrewClass(crew.crewClass)}</DataReadout>
                 <DataReadout label="Title" slim inheritFontSize>{toCrewTitle(crew.title)}</DataReadout>
                 <DataReadout label="Collection" slim inheritFontSize>{toCrewCollection(crew.crewCollection)}</DataReadout>

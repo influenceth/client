@@ -3,12 +3,12 @@ import useAuth from '~/hooks/useAuth';
 
 import api from '~/lib/api';
 
-const useOriginStory = () => {
+const useCrewMintingStory = () => {
   const { token } = useAuth();
 
   return useQuery(
-    [ 'stories', 'origin' ],
-    () => api.getOriginStory(),
+    [ 'stories', 'recruitment' ],
+    () => api.getAdalianRecruitmentStory(),
     {
       enabled: !!token,
       retry: false
@@ -16,4 +16,4 @@ const useOriginStory = () => {
   );
 };
 
-export default useOriginStory;
+export default useCrewMintingStory;

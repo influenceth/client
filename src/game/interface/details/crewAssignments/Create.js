@@ -212,8 +212,8 @@ const Trait = styled.div`
 
   & > *:first-child {
     ${p => p.side === 'right' && 'margin-left: 20px;'}
-    font-size: ${p => p.isClass ? `64px` : `80px`};
-    line-height: ${p => p.isClass ? `64px` : `80px`};
+    font-size: 80px;
+    line-height: 80px;
     position: relative;
     text-align: center;
     width: 88px;
@@ -347,31 +347,27 @@ const FinishContainer = styled.div`
   }
 `;
 
+const onCloseDestination = `/owned-crew`;
+
 const CrewAssignmentCreate = (props) => {
   const { account } = useWeb3React();
   const { id: sessionId } = useParams();
   const history = useHistory();
   const { storyState } = useStorySession(sessionId);
 
-  // TODO: don't show anything until first features loaded
-  // TODO: don't show this page if NOT origin story
-
   const [featureLoading, setFeatureLoading] = useState(false);
   const [featureOptions, setFeatureOptions] = useState([]);
   const [featureSelection, setFeatureSelection] = useState();
   const [name, setName] = useState([]);
 
-
-  const crewClassFromStory = 4;
-
-  const onCloseDestination = `/owned-crew`;
-
   const rewards = useMemo(() => {
-    return (storyState?.objectives || [1,22,33]).map((id) => ({
+    return (storyState?.accruedTraits || [])
+    .map((id) => ({
       id,
       ...toCrewTrait(id)
-    }));
-  }, [storyState?.objectives]);
+    }))
+    .sort((a, b) => a.type >= b.type ? -1 : 1);  // impactful > cosmetic
+  }, [storyState?.accruedTraits]);
 
   const shareOnTwitter = useCallback(() => {
     // TODO: ...
@@ -386,7 +382,7 @@ const CrewAssignmentCreate = (props) => {
       //via: 'influenceth'
     });
     window.open(`https://twitter.com/intent/tweet?${params.toString()}`);
-  }, [account, sessionId, storyState]);
+  }, [account, sessionId]);
   
   const handleFinish = useCallback(() => {
     history.push(onCloseDestination);
@@ -397,6 +393,8 @@ const CrewAssignmentCreate = (props) => {
   }, []);
 
   const rerollAppearance = useCallback(async () => {
+    const crewClass = storyState?.classObjective;
+    if (!crewClass) return;
     const sex = Math.ceil(Math.random() * 2);
     const facialFeature = sex === 1 ? [0, 1, 3, 4, 5, 6, 7] : [0, 1, 2];
     const hair = sex === 1 ? [0, 1, 2, 3, 4, 5] : [0, 6, 7, 8, 9, 10, 11];
@@ -405,10 +403,10 @@ const CrewAssignmentCreate = (props) => {
       crewCollection: 4,
       sex,
       body: (sex - 1) * 6 + Math.ceil(Math.random() * 6),
-      crewClass: crewClassFromStory,
+      crewClass,
       title: 0,
       // [by class] 1: [19,20], 2: [21,22], 3: [23,24], 4: [25,26], 5: [27,28]
-      outfit: 18 + (crewClassFromStory - 1) * 2 + Math.ceil(Math.random() * 2),
+      outfit: 18 + (crewClass - 1) * 2 + Math.ceil(Math.random() * 2),
       hair: hair[Math.floor(Math.random() * hair.length)],
       facialFeature: facialFeature[Math.floor(Math.random() * facialFeature.length)],
       hairColor: Math.ceil(Math.random() * 5),
@@ -421,7 +419,7 @@ const CrewAssignmentCreate = (props) => {
       params
     ]);
     setFeatureSelection(featureOptions.length);
-  }, [featureOptions.length]);
+  }, [featureOptions.length, storyState?.classObjective]);
 
   const rollBack = useCallback(() => {
     setFeatureSelection(Math.max(0, featureSelection - 1));
@@ -438,30 +436,31 @@ const CrewAssignmentCreate = (props) => {
 
   useEffect(() => {
     rerollAppearance();
-  }, []);
+  }, [storyState?.classObjective]);
+
+  // show "complete" page for non-recruitment assignments
+  useEffect(() => {
+    if (storyState && !(storyState.tags || []).includes('ADALIAN_RECRUITMENT')) {
+      history.push(`/crew-assignment/${sessionId}/complete`);
+    }
+  }, [!!storyState])
 
   // draft crew
-  const crew = {
-    crewClass: crewClassFromStory,
-    traits: [], // TODO: fill in from objectives
-    ...featureOptions[featureSelection]
-  };
-
-  console.log('rewards');
+  const crew = featureOptions[featureSelection];
 
   const finalized = false;
 
   const rewardTipAttrs = {
     strokeWidth: 1
   }
-  if (!storyState) return null;
+  if (!storyState || !crew) return null;
   return (
     <Details
       onCloseDestination={onCloseDestination}
       contentProps={{ style: { display: 'flex', flexDirection: 'column', } }}
       edgeToEdge
       title="Crew Assignments">
-      <ImageryContainer src={storyState.image}>
+      <ImageryContainer src={storyState.completionImage || storyState.image}>
         <div />
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
           {finalized && (
@@ -479,18 +478,16 @@ const CrewAssignmentCreate = (props) => {
                     largerClassIcon={!finalized} />
                 </div>
               </CardContainer>
-              {!finalized && (
+              {!finalized && rewards.length > 0 && (
                 <Traits>
                   <TraitRow>
-                    <Trait side="left" isClass>
+                    <Trait side="left">
                       <div>
-                        <span>
-                          <CrewClassIcon crewClass={crew.crewClass} overrideColor="inherit" />
-                        </span>
+                        <CrewTraitIcon trait={rewards[0].id} type={rewards[0].type} />
                       </div>
                       <article>
-                        <h4>{toCrewClass(crew.crewClass)}</h4>
-                        <div>{toCrewClassDescription(crew.crewClass)}</div>
+                        <h4>{rewards[0].name}</h4>
+                        <div>{rewards[0].description}</div>
                       </article>
                       <TipHolder>
                         <TriangleTip {...rewardTipAttrs} rotate="90" />
@@ -501,11 +498,11 @@ const CrewAssignmentCreate = (props) => {
                     
                     <Trait side="right">
                       <div>
-                        <CrewTraitIcon trait={rewards[0].id} />
+                        <CrewTraitIcon trait={rewards[1].id} type={rewards[1].type} />
                       </div>
                       <article>
-                        <h4>{rewards[0].name}</h4>
-                        <div>{rewards[0].description}</div>
+                        <h4>{rewards[1].name}</h4>
+                        <div>{rewards[1].description}</div>
                       </article>
                       <TipHolder>
                         <TriangleTip {...rewardTipAttrs} rotate="-90" />
@@ -516,11 +513,11 @@ const CrewAssignmentCreate = (props) => {
                   <TraitRow>
                     <Trait side="left">
                       <div>
-                        <CrewTraitIcon trait={rewards[1].id} />
+                        <CrewTraitIcon trait={rewards[2].id} type={rewards[2].type} />
                       </div>
                       <article>
-                        <h4>{rewards[1].name}</h4>
-                        <div>{rewards[1].description}</div>
+                        <h4>{rewards[2].name}</h4>
+                        <div>{rewards[2].description}</div>
                       </article>
                       <TipHolder side="left">
                         <TriangleTip {...rewardTipAttrs} rotate="90" />
@@ -531,11 +528,11 @@ const CrewAssignmentCreate = (props) => {
 
                     <Trait side="right">
                       <div>
-                        <CrewTraitIcon trait={rewards[2].id} />
+                        <CrewTraitIcon trait={rewards[3].id} type={rewards[3].type} />
                       </div>
                       <article>
-                        <h4>{rewards[2].name}</h4>
-                        <div>{rewards[2].description}</div>
+                        <h4>{rewards[3].name}</h4>
+                        <div>{rewards[3].description}</div>
                       </article>
                       <TipHolder side="right">
                         <TriangleTip {...rewardTipAttrs} rotate="-90" />

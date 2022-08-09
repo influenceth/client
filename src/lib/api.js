@@ -129,8 +129,13 @@ const api = {
     return response.data;
   },
 
-  getOriginStory: async (id, sessionId) => {
-    const response = await instance.get(`/v1/stories/origin`);
+  deleteStorySessionPath: async (sessionId, pathId) => {
+    const response = await instance.delete(`/v1/stories/sessions/${sessionId}/paths/${pathId}`);
+    return response.data;
+  },
+
+  getAdalianRecruitmentStory: async (id, sessionId) => {
+    const response = await instance.get(`/v1/stories/adalian-recruitment`);
     return response.data;
   },
 

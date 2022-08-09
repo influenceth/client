@@ -8,7 +8,7 @@ const useBook = (id) => {
 
   return useQuery(
     [ 'book', id, token ],
-    () => api.getBook(id),
+    () => id && api.getBook(id),
     {
       enabled: !!id,
       retry: false

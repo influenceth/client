@@ -14,7 +14,7 @@ const TriangleTip = ({ extendStroke, fillColor, strokeColor, strokeWidth, rotate
       d={extendStroke ? `M-10 -5 L50 50 L110 -5` : `M0 0 L50 50 L100 0`}
       fill="transparent"
       stroke={strokeColor}
-      strokeAlignment="outer"
+      stroke-alignment="outer"
       strokeWidth={strokeWidth} />
   </svg>
 );

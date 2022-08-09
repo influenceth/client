@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
@@ -290,8 +290,6 @@ const CrewAssignmentComplete = (props) => {
   const { data: allCrew } = useOwnedCrew();
   const { storyState } = useStorySession(sessionId);
 
-  // TODO: don't show this page if origin story
-
   const onCloseDestination = useMemo(
     () => `/crew-assignments/${storyState?.book}/${storyState?.story}`,
     [storyState?.book, storyState?.story]
@@ -302,11 +300,11 @@ const CrewAssignmentComplete = (props) => {
   }, [storyState, allCrew]);
 
   const rewards = useMemo(() => {
-    return (storyState?.objectives || []).map((id) => ({
+    return (storyState?.accruedTraits || []).map((id) => ({
       id,
       ...toCrewTrait(id)
     }));
-  }, [storyState?.objectives]);
+  }, [storyState?.accruedTraits]);
 
   const shareOnTwitter = useCallback(() => {
     const params = new URLSearchParams({
@@ -325,6 +323,13 @@ const CrewAssignmentComplete = (props) => {
   const handleFinish = useCallback(() => {
     history.push(onCloseDestination);
   }, [history, onCloseDestination]);
+
+  // show "create" page for recruitment assignments
+  useEffect(() => {
+    if (storyState && (storyState.tags || []).includes('ADALIAN_RECRUITMENT')) {
+      history.push(`/crew-assignment/${sessionId}/create`);
+    }
+  }, [!!storyState]);
 
   const slideOutContents = useMemo(() =>
     rewards?.length > 0

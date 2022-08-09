@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 import { toCrewClass, toCrewCollection, toCrewTitle, toCrewTrait } from 'influence-utils';
 import { MdAdd as PlusIcon } from 'react-icons/md';
@@ -24,7 +25,7 @@ import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import useAuth from '~/hooks/useAuth';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
-import useOriginStory from '~/hooks/useOriginStory';
+import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useMintableCrew from '~/hooks/useMintableCrew';
 import useSettleCrew from '~/hooks/useSettleCrew';
@@ -386,13 +387,16 @@ const PopperWrapper = (props) => {
 }
 
 const OwnedCrew = (props) => {
-  const { web3: { account } } = useAuth();
+  const { token, web3: { account } } = useAuth();
   const createStorySession = useCreateStorySession();
-  const { data: originStory } = useOriginStory();
+  const { data: crewAssignmentData } = useCrewAssignments();
+  const queryClient = useQueryClient();
   const { data: crew } = useOwnedCrew();
   const history = useHistory();
   
   const playSound = useStore(s => s.dispatchSoundRequested);
+
+  const { crewRecruitmentStoryId, crewRecruitmentSessionId } = crewAssignmentData || {};
 
   // TODO: ?
   // const { data: mintable } = useMintableCrew();
@@ -416,19 +420,39 @@ const OwnedCrew = (props) => {
   // TODO: useCallback
 
   const handleRecruit = () => {
-    createStorySession.mutate({
-      bookId: originStory.bookId,
-      storyId: originStory.storyId,
-      account
-    }, {
-      onSuccess: (session) => {
-        playSound('effects.success');
-        history.push(`/crew-assignment/${session.id}`);
-      },
-      onError: (err) => {
-        console.error(err);
-      }
-    });
+    // continue open session...
+    if (crewRecruitmentSessionId) {
+      history.push(`/crew-assignment/${crewRecruitmentSessionId}`);
+
+    // create new session...
+    } else {
+      createStorySession.mutate({
+        storyId: crewRecruitmentStoryId,
+        account
+      }, {
+        onSuccess: (session) => {
+          // (update the "open" crew session id in query cache)
+          if (session) {
+            const sessionCacheKey = ['assignments', token];
+            const currentCacheValue = queryClient.getQueryData(sessionCacheKey);
+            queryClient.setQueryData(
+              sessionCacheKey,
+              {
+                ...currentCacheValue,
+                crewRecruitmentSessionId: session.id
+              }
+            );
+          }
+
+          // go to assignment
+          playSound('effects.success');
+          history.push(`/crew-assignment/${session.id}`);
+        },
+        onError: (err) => {
+          console.error(err);
+        }
+      });
+    }
   };
 
   useEffect(() => {
@@ -473,8 +497,8 @@ const OwnedCrew = (props) => {
 
   return (
     <Details title="Owned Crew">
-      {!(crew && originStory) && <Loader />}
-      {crew && originStory && (
+      {!(crew && crewRecruitmentStoryId) && <Loader />}
+      {crew && crewRecruitmentStoryId && (
         <Container>
           <Title>My Active Crew: {activeCrew.length} / 5</Title>
           <ActiveCrew>

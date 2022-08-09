@@ -148,7 +148,7 @@ const BackButton = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: 36px;
+  font-size: ${p => p.isMintingStory ? '44px' : '36px'};
   font-weight: bold;
   ${p => p.ownerType === 'CREW' && 'text-align: center;'}
 
@@ -210,7 +210,7 @@ const FlourishCentered = styled.div`
 const FlourishImageContainer = styled(FlourishCentered)`
   color: white;
   font-size: ${p => p.shrinkIcon ? '80px' : '120px'};
-  margin-top: 16px;
+  margin-top: ${p => p.shrinkIcon ? '24px' : '16px'};
   opacity: 0.1;
 `;
 
@@ -321,7 +321,15 @@ const CrewAssignment = (props) => {
   const [coverImageLoaded, setCoverImageLoaded] = useState();
   const [selection, setSelection] = useState();
 
-  const totalSteps = storyState.isOriginStory ? 5 : 3;
+  const isMintingStory = (storyState?.tags || []).includes('ADALIAN_RECRUITMENT');
+  const totalSteps = isMintingStory ? 5 : 3;
+
+  const onCloseDestination = isMintingStory
+    ? `/owned-crew`
+    : `/crew-assignments/${storyState?.book}/${storyState?.story}`;
+  const onCloseDestinationLabel = isMintingStory
+    ? 'Crew Management'
+    : book?.title;
 
   // on step change, clear selection (to close modal)
   useEffect(() => {
@@ -351,17 +359,20 @@ const CrewAssignment = (props) => {
 
   const goBack = useCallback(() => {
     playSound('effects.click');
-    history.push(`/crew-assignments/${storyState?.book}/${storyState?.story}`);
-  }, [history, playSound, storyState]);
+    history.push(onCloseDestination);
+  }, [history, playSound, storyState, isMintingStory]);
+
+  const undoPath = useCallback(() => {
+    commitPath(-1);
+  }, [commitPath]);
 
   const finish = useCallback(() => {
     playSound('effects.success');
-    if (storyState.isOriginStory) {
-      history.push(`/crew-assignment/${sessionId}/create`);
-    } else {
-      history.push(`/crew-assignment/${sessionId}/complete`);
-    }
-  }, [history, playSound, sessionId]);
+    history.push(isMintingStory
+      ? `/crew-assignment/${sessionId}/create`
+      : `/crew-assignment/${sessionId}/complete`
+    );
+  }, [history, playSound, sessionId, isMintingStory]);
 
   const crew = useMemo(() => {
     return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
@@ -371,7 +382,7 @@ const CrewAssignment = (props) => {
   const pathIsReady = contentReady && storyState.image === coverImageLoaded && !loadingPath;
   return (
     <>
-      <Details title="Crew Assignments" edgeToEdge>
+      <Details title="Crew Assignments" edgeToEdge onCloseDestination={onCloseDestination}>
         {!contentReady && <Loader />}
         {contentReady && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -381,10 +392,16 @@ const CrewAssignment = (props) => {
               center={storyState.imageCenter}
               ready={storyState.image === coverImageLoaded} />
             <AboveFold ready={storyState.image === coverImageLoaded}>
-              <BackButton disableAndHide={storyState.isOriginStory} onClick={goBack}>
-                <BackIcon /> Back
-              </BackButton>
-              <Title ownerType={storyState.ownerType}>{storyState.title}</Title>
+              {storyState.features?.canGoBack && currentStep > 0 ? (
+                <BackButton onClick={undoPath}>
+                  <BackIcon /> Previous Selection
+                </BackButton>
+              ) : (
+                <BackButton onClick={goBack}>
+                  <BackIcon /> Back to {onCloseDestinationLabel}
+                </BackButton>
+              )}
+              <Title ownerType={storyState.ownerType} isMintingStory={isMintingStory}>{storyState.title}</Title>
               {crew && (
                 <MobileCrewContainer>
                   <div>
@@ -451,9 +468,9 @@ const CrewAssignment = (props) => {
                         );
                       })}
                     </FlourishCentered>
-                    <FlourishImageContainer shrinkIcon={book && !book.icon}>
+                    <FlourishImageContainer shrinkIcon={!(book && book.icon)}>
                       {book && book.icon && <SvgFromSrc src={book.icon} />}
-                      {book && !book.icon && <ArvadIcon />}
+                      {!(book && book.icon) && <ArvadIcon />}
                     </FlourishImageContainer>
                   </Flourish>
                 </>

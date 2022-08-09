@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { useHistory } from 'react-router-dom';
 
@@ -9,6 +9,8 @@ const useStorySession = (id) => {
   const history = useHistory();
   const queryClient = useQueryClient();
   const createAlert = useStore(s => s.dispatchAlertLogged);
+
+  const initialized = useRef();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [loadingPath, setLoadingPath] = useState(false);
@@ -34,18 +36,6 @@ const useStorySession = (id) => {
     }
   );
 
-  // make sure load objectives if navigate directly to "assignment completed" page
-  const { data: objectives } = useQuery(
-    [ 'storySessionObjectives', id ],
-    async () => {
-      const lastPath = await api.getStoryPath(session.story, session.pathHistory[session.pathHistory.length - 1], id);
-      return lastPath?.objectives;
-    },
-    {
-      enabled: !!session?.isComplete
-    }
-  );
-
   // get selectablePaths
   const selectablePaths = useCallback((allPaths, step) => {
     const selectedPath = session?.pathHistory[step];
@@ -55,44 +45,57 @@ const useStorySession = (id) => {
     return allPaths;
   }, [session?.pathHistory]);
 
-  // step 0 uses default content (from story)
-  useEffect(() => {
-    if (story) {
-      if (currentStep === 0) {
-        setPathContent({
-          content: story.content,
-          image: story.image,
-          linkedPaths: selectablePaths(story.linkedPaths, 0),
-          prompt: story.prompt,
-        });
+  const updatePathHistory = (sessionId, updatedPathHistory) => {
+    const sessionCacheKey = [ 'storySession', sessionId ];
+    const currentCacheValue = queryClient.getQueryData(sessionCacheKey);
+    queryClient.setQueryData(
+      sessionCacheKey,
+      {
+        ...currentCacheValue,
+        pathHistory: [ ...updatedPathHistory ]
       }
-    }
-  }, [currentStep, selectablePaths, story]);
+    );
+  };
+
+  const getDefaultContent = () => ({
+    content: story.content,
+    image: story.image,
+    linkedPaths: selectablePaths(story.linkedPaths, 0),
+    prompt: story.prompt,
+  });
 
   // path selection
+  // [if canGoBack, then will start at current path; else, will start at 0]
   const commitPath = useCallback(async (path) => {
     setLoadingPath(true);
 
     let content;
+    let updatedStep;
+    let updatedPathHistory = session.pathHistory;
     try {
-      if (session.pathHistory.includes(path)) {
+      // if can go back and committing path as "-1"
+      if (story.features?.canGoBack && path === -1) {
+        content = await api.deleteStorySessionPath(session.id, session.pathHistory[session.pathHistory.length - 1]);
+        updatedPathHistory.pop();
+        updatedStep = updatedPathHistory.length;
+        updatePathHistory(session.id, updatedPathHistory);
+        if (updatedStep === 0) {
+          content = getDefaultContent();
+        }
+
+      // else, if have already committed this path, then just replaying... use GET
+      } else if (session.pathHistory.includes(path)) {
+        updatedStep = session.pathHistory.indexOf(path) + 1;
         content = await api.getStoryPath(session.story, path, session.id);
-        content.linkedPaths = selectablePaths(content.linkedPaths, currentStep + 1);
+        content.linkedPaths = selectablePaths(content.linkedPaths, updatedStep);
+
+      // else, commit path and update session and load content
       } else {
         content = await api.patchStorySessionPath(session.id, path);
         if (content) {
-          const sessionCacheKey = [ 'storySession', session.id ];
-          const currentCacheValue = queryClient.getQueryData(sessionCacheKey);
-          queryClient.setQueryData(
-            sessionCacheKey,
-            {
-              ...currentCacheValue,
-              pathHistory: [
-                ...currentCacheValue.pathHistory,
-                path
-              ]
-            }
-          );
+          updatedPathHistory.push(path);
+          updatedStep = updatedPathHistory.length;
+          updatePathHistory(session.id, updatedPathHistory);
         }
       }
     } catch (e) {
@@ -100,20 +103,18 @@ const useStorySession = (id) => {
     }
 
     if (content) {
-      const nextStep = currentStep + 1;
-      setCurrentStep(nextStep);
+      setCurrentStep(updatedStep);
       setPathContent(content);
       setLoadingPath(false);
 
-      // if just completed assignment (i.e. no more choices), then set objectives and refetch assignments and book (for sessions)
+      // if just completed assignment (i.e. no more choices), then refetch full session, assignments and book (for sessions)
       if (content.linkedPaths.length === 0) {
-        queryClient.setQueryData(
-          [ 'storySessionObjectives', session.id ],
-          content.objectives
-        );
-
+        // refetch session upon completion to get accrued traits
+        queryClient.refetchQueries(['storySession', id]);
         queryClient.refetchQueries('assignments');
-        queryClient.refetchQueries(['book', story.book]);
+        if (story.book) {
+          queryClient.refetchQueries(['book', story.book]);
+        }
       }
 
     // if no content found, probably because trying to make invalid choice... redirect to main page with error
@@ -127,20 +128,48 @@ const useStorySession = (id) => {
     }
   }, [createAlert, currentStep, history, queryClient, selectablePaths, story, session]);
 
+  const goToPath = (path) => {
+    if (path) {
+      commitPath(path);
+
+    } else {
+      setCurrentStep(0);
+      setPathContent(getDefaultContent());
+      setLoadingPath(false);
+    }
+  };
+
+  // on initial load, go to appropriate step
+  useEffect(() => {
+    if (!initialized.current) {
+      setLoadingPath(true);
+      if (story && session) {
+        // if canGoBack, start at "current" path
+        if (story.features?.canGoBack && session.pathHistory?.length > 0) {
+          goToPath(session.pathHistory[session.pathHistory.length - 1]);
+        
+        // else, start at initial path (since will present without choices)
+        } else {
+          goToPath();
+        }
+        initialized.current = true;
+      }
+    }
+  }, [story?.id, session?.id, session?.pathHistory, goToPath]);
+
   const storyState = useMemo(() => {
     if (story && session && pathContent) {
       return {
         ...story,
         ...session,
-        ...pathContent,
-        objectives
+        ...pathContent
       };
     }
     return null;
-  }, [pathContent, objectives, session, story]);
+  }, [pathContent, session, story]);
 
   return {
-    commitPath: commitPath,
+    commitPath,
     currentStep,
     loadingPath,
     storyState: storyState,
