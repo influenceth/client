@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { useWeb3React } from '@web3-react/core';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 
+import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import IconButton from '~/components/IconButton';
 import TextInput from '~/components/TextInput';
@@ -27,7 +27,7 @@ const OwnershipType = styled.div`
 
 const OwnershipFilter = (props) => {
   const { onChange } = props;
-  const { account } = useWeb3React();
+  const { account } = useAuth();
   const highlight = useStore(s => s.asteroids.highlight);
   const updateHighlight = useStore(s => s.dispatchHighlightUpdated);
 

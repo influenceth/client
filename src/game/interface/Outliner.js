@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import styled from 'styled-components';
-import { useWeb3React } from '@web3-react/core';
 
+import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import CrewAssignments from './outliner/CrewAssignments';
 import Filters from './outliner/Filters';
@@ -99,7 +99,7 @@ const Outliner = (props) => {
   const outliner = useStore(s => s.outliner);
   const origin = useStore(s => s.asteroids.origin);
   const activateSection = useStore(s => s.dispatchOutlinerSectionActivated);
-  const { account } = useWeb3React();
+  const { account } = useAuth();
 
   useEffect(() => {
     if (origin) activateSection('selectedAsteroid');

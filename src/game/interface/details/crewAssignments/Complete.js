@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { useWeb3React } from '@web3-react/core';
 import { toCrewTrait } from 'influence-utils';
 
+import useAuth from '~/hooks/useAuth';
 import Button from '~/components/Button';
 import CopyReferralLink from '~/components/CopyReferralLink';
 import CrewCard from '~/components/CrewCard';
@@ -284,7 +284,7 @@ const FinishContainer = styled.div`
 `;
 
 const CrewAssignmentComplete = (props) => {
-  const { account } = useWeb3React();
+  const { account } = useAuth();
   const { id: sessionId } = useParams();
   const history = useHistory();
   const { data: allCrew } = useOwnedCrew();

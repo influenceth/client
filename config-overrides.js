@@ -48,9 +48,10 @@ const addSVGR = () => config => {
   return config;
 };
 
-// NOTE: this is entirely for three's GLTFExporter
-addProposalChainingInModules = () => config => {
+patchNpmModules = () => config => {
   const loaders = config.module.rules.find(rule => Array.isArray(rule.oneOf)).oneOf;
+  
+  // NOTE: this is entirely for three's GLTFExporter
   loaders.unshift({
     test: /\.js$/,
     include: /node_modules\/three/,
@@ -58,6 +59,20 @@ addProposalChainingInModules = () => config => {
       loader: 'babel-loader',
       options: {
         plugins: ['@babel/plugin-proposal-optional-chaining']
+      }
+    }]
+  });
+
+  loaders.unshift({
+    test: /\.js$/,
+    include: /node_modules\/@starknet-react/,
+    use: [{
+      loader: 'babel-loader',
+      options: {
+        plugins: [
+          '@babel/plugin-proposal-nullish-coalescing-operator',
+          '@babel/plugin-proposal-optional-chaining'
+        ]
       }
     }]
   });
@@ -73,7 +88,7 @@ module.exports = override(
       'rootPathSuffix': 'src'
     }
   ]),
-  addProposalChainingInModules(),
+  patchNpmModules(),
   addGlslifyLoader(),
   addDataUriFileLoader(),
   addSVGR()

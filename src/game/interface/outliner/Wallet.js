@@ -1,48 +1,14 @@
 import { useEffect, useState } from 'react';
-import { useQueryClient } from 'react-query';
-import { useWeb3React, UnsupportedChainIdError } from '@web3-react/core';
-import {
-  NoEthereumProviderError,
-  UserRejectedRequestError as UserRejectedRequestErrorInjected
-} from '@web3-react/injected-connector';
-import { UserRejectedRequestError as UserRejectedRequestErrorWC } from '@web3-react/walletconnect-connector';
+
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
-import useEagerConnect from '~/hooks/useEagerConnect';
-import useInactiveListener from '~/hooks/useInactiveListener';
 import useAuth from '~/hooks/useAuth';
-import { injected, walletconnect } from '~/lib/blockchain/connectors';
 import Section from '~/components/Section';
+import BridgeModalDialog from '~/components/BridgeModalDialog';
 import Button from '~/components/Button';
 import { DisconnectIcon, LoginIcon, WalletIcon, WarningIcon } from '~/components/Icons';
-import MetamaskLogo from '~/assets/images/metamask-fox.svg';
-import WalletConnectLogo from '~/assets/images/walletconnect-logo.svg';
-import BraveLogo from '~/assets/images/brave-icon.svg';
-
-const networkNames = {
-  1: 'Ethereum Mainnet',
-  4: 'Rinkeby Testnet',
-  5: 'Goerli Testnet',
-  1337: 'Local Testnet'
-};
-
-const getErrorMessage = (error) => {
-  console.error(error);
-
-  if (error instanceof NoEthereumProviderError) {
-    return 'No Ethereum browser extension detected, install MetaMask or visit from a dApp browser on mobile.';
-  } else if (error instanceof UnsupportedChainIdError) {
-    return `Network unsupported, please connect to ${networkNames[process.env.REACT_APP_CHAIN_ID]}.`;
-  } else if (
-    error instanceof UserRejectedRequestErrorInjected ||
-    error instanceof UserRejectedRequestErrorWC
-  ) {
-    return 'Please authorize Influence to access your Ethereum account.';
-  } else {
-    return 'An unknown error occurred, please check the console for details.';
-  }
-};
+import starknetIcon from '~/assets/images/starknet-icon.png';
 
 const Controls = styled.div`
   display: flex;
@@ -90,106 +56,76 @@ const StyledErrorIcon = styled(WarningIcon)`
   width: 20px;
 `;
 
+const Link = styled.span`
+  color: ${p => p.theme.colors.mainText};
+  cursor: ${p => p.theme.cursors.active};
+  &:hover {
+    color: white;
+  }
+`;
+
 const Wallet = () => {
-  const { connector, account, activate, deactivate, error } = useWeb3React();
-  const queryClient = useQueryClient();
   const forceExpand = useStore(s => s.dispatchOutlinerSectionExpanded);
   const forceCollapse = useStore(s => s.dispatchOutlinerSectionCollapsed);
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
-  const [ activatingConnector, setActivatingConnector ] = useState();
-  const { token, restartLogin } = useAuth();
-  const status = account ? (token ? 'logged-in' : 'connected') : 'disconnected';
 
-  // Recognize the connector currently being activated
-  useEffect(() => {
-    if (activatingConnector && activatingConnector === connector) {
-      setActivatingConnector(undefined);
-    }
-  }, [ activatingConnector, connector ]);
+  const { token, login, wallet } = useAuth();
+  const [bridgeModalOpen, setBridgeModalOpen] = useState(false);
+
+  const status = wallet.account ? (token ? 'logged-in' : 'connected') : 'disconnected';
 
   // Remove auth queries when wallet is disconnected
   const disconnectWallet = () => {
-    queryClient.removeQueries([ 'login', account ]);
-    queryClient.removeQueries([ 'sign', account ]);
-    queryClient.removeQueries([ 'verify', account ]);
     invalidateToken();
-    if (connector.close) connector.close(); // for WalletConnect
-    deactivate();
+    wallet.disconnect();
   };
 
   useEffect(() => {
-    if (status !== 'logged-in' || !!error) forceExpand('wallet');
+    if (status !== 'logged-in' || !!wallet.error) forceExpand('wallet');
     if (status === 'logged-in') forceCollapse('wallet');
-  }, [ status, error, forceExpand, forceCollapse ]);
+  }, [ status, wallet.error, forceExpand, forceCollapse ]);
 
-  // Eagerly connect to the injected ethereum provider, if it exists and has granted access already
-  const triedEager = useEagerConnect();
-
-  // Connect in reaction to certain events on the injected ethereum provider, if it exists
-  useInactiveListener(!triedEager || !!activatingConnector);
+  const openBridgeModal = (e) => {
+    e.stopPropagation();
+    setBridgeModalOpen(true);
+    return false;
+  };
 
   return (
     <Section
       name="wallet"
       title="Account"
       sticky={true}
-      icon={<WalletIcon />}>
+      icon={<WalletIcon />}
+      action={(<Link onClick={openBridgeModal}>Assets on L1?</Link>)}>
       <Info>
         <Indicator status={status}>●</Indicator>
-        {status === 'disconnected' && <span>Wallet disconnected. Connect with:</span>}
-        {status === 'connected' && <span>Connected as {account}</span>}
-        {status === 'logged-in' && <span>Logged in as {account}</span>}
+        {status === 'disconnected' && <span>Wallet is disconnected.</span>}
+        {status === 'connected' && <span>Connected as {wallet.account}</span>}
+        {status === 'logged-in' && <span>Logged in as {wallet.account}</span>}
       </Info>
-      {!!error && (
+      {!!wallet.error && (
         <Error>
           <StyledErrorIcon />
-          <span>{getErrorMessage(error)}</span>
+          <span>{wallet.error}</span>
         </Error>
       )}
       <Controls>
-        {status === 'disconnected' && window.ethereum && !!navigator.brave && (
-          <Button
-            data-tip="Brave Browser"
-            data-for="global"
-            data-place="left"
-            onClick={() => {
-              setActivatingConnector(injected);
-              activate(injected);
-            }}>
-            <BraveLogo viewBox="0 0 55 64" /> Brave
-          </Button>
-        )}
-        {status === 'disconnected' && window.ethereum && !navigator.brave && (
-          <Button
-            data-tip="Metamask"
-            data-for="global"
-            data-place="left"
-            onClick={() => {
-              setActivatingConnector(injected);
-              activate(injected);
-            }}>
-            <MetamaskLogo /> Metamask
-          </Button>
-        )}
         {status === 'disconnected' && (
           <Button
-            data-tip="WalletConnect"
+            data-tip="Connect to StarkNet"
             data-for="global"
             data-place="left"
-            onClick={() => {
-              if (walletconnect?.close) walletconnect.close();
-              setActivatingConnector(walletconnect);
-              activate(walletconnect);
-            }}>
-            <WalletConnectLogo /> WalletConnect
+            onClick={wallet.connect}>
+            <img src={starknetIcon} alt="Starknet" height={18} width={18} /> Connect Wallet
           </Button>
         )}
         {status === 'connected' && (
           <Button
-            data-tip="Login with Ethereum"
+            data-tip="Login with Wallet"
             data-for="global"
             data-place="left"
-            onClick={() => restartLogin()}>
+            onClick={login}>
             <LoginIcon /> Login
           </Button>
         )}
@@ -198,11 +134,14 @@ const Wallet = () => {
             data-tip="Disconnect Wallet"
             data-for="global"
             data-place="left"
-            onClick={() => disconnectWallet()}>
+            onClick={disconnectWallet}>
             <DisconnectIcon /> Disconnect
           </Button>
         )}
       </Controls>
+      {bridgeModalOpen && (
+        <BridgeModalDialog onClose={() => setBridgeModalOpen(false)} />
+      )}
     </Section>
   );
 };

@@ -3,13 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@ethersproject/providers": "^5.4.1",
     "@react-hook/throttle": "^2.2.0",
     "@react-three/drei": "^8.8.1",
     "@react-three/fiber": "^7.0.26",
-    "@web3-react/core": "^6.1.9",
-    "@web3-react/injected-connector": "^6.0.7",
-    "@web3-react/walletconnect-connector": "6.2.8",
     "animate.css": "^4.1.1",
     "axios": "^0.21.1",
     "compression": "^1.7.4",
@@ -17,13 +13,14 @@
     "ethers": "^5.4.1",
     "express": "^4.17.2",
     "express-sslify": "^1.2.0",
+    "get-starknet": "^1.4.2",
     "glsl-noise": "^0.0.0",
     "glslify": "^7.1.1",
     "gsap": "^3.7.1",
     "howler": "^2.2.3",
     "immer": "^8.0.1",
     "import": "^0.0.6",
-    "influence-utils": "^1.7.0",
+    "influence-utils": "^2.0.0",
     "isbot-fast": "^1.2.0",
     "lodash.uniqby": "^4.7.0",
     "md5": "^2.3.0",
@@ -50,6 +47,7 @@
     "react-spinners": "^0.11.0",
     "react-tooltip": "^4.2.21",
     "screenfull": "^5.1.0",
+    "starknet": "^3.12.3",
     "styled-components": "^5.3.0",
     "three": "^0.137.5",
     "victory": "^35.10.1",
@@ -67,6 +65,9 @@
     "postinstall": "patch-package"
   },
   "eslintConfig": {
+    "env": {
+      "es2020": true
+    },
     "extends": [
       "react-app",
       "react-app/jest"

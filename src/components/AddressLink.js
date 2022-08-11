@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 
-import { useWeb3React } from '@web3-react/core';
+import useAuth from '~/hooks/useAuth';
 
 const AddressLink = (props) => {
   const { address } = props;
-  const { account } = useWeb3React();
+  const { account } = useAuth();
   const [ text, setText ] = useState(address);
+
+
   const url = `${process.env.REACT_APP_OPEN_SEA_URL}/accounts/${address}`;
 
   useEffect(() => {

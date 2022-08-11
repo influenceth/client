@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import styled from 'styled-components';
-import { useWeb3React } from '@web3-react/core';
 import Clipboard from 'react-clipboard.js';
 
+import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 
 const StyledClipboard = styled(Clipboard)`
@@ -10,7 +10,7 @@ const StyledClipboard = styled(Clipboard)`
 `;
 
 const CopyReferralLink = ({ children, fallbackContent }) => {
-  const { account } = useWeb3React();
+  const { account } = useAuth();
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
 

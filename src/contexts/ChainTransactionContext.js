@@ -1,7 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
-import { ethers } from 'ethers';
-import { useQueryClient } from 'react-query';
-import { contracts as configs } from 'influence-utils';
+import { starknetContracts as configs } from 'influence-utils';
+import {Contract, shortString, uint256 } from 'starknet';
 
 import useAuth from '~/hooks/useAuth';
 import useEvents from '~/hooks/useEvents';
@@ -11,11 +10,14 @@ const TIMEOUT = 600e3;  // 10 minutes
 
 const ChainTransactionContext = createContext();
 
-const getContracts = (queryClient) => ({
+const getContracts = () => ({
   'NAME_ASTEROID': {
-    address: process.env.REACT_APP_CONTRACT_ASTEROID_NAMES,
-    config: configs.AsteroidNames,
-    transact: (contract) => ({ i, name }) => contract.setName(i, name),
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ i, name }) => contract.invoke('Asteroid_setName', [
+      uint256.bnToUint256(i),
+      shortString.encodeShortString(name)
+    ]),
     getErrorAlert: ({ i }) => ({
       type: 'Asteroid_NamingError',
       level: 'warning',
@@ -23,80 +25,69 @@ const getContracts = (queryClient) => ({
       timestamp: Math.round(Date.now() / 1000)
     }),
   },
-  'BUY_ASTEROID': {
-    address: process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
-    config: configs.ArvadCrewSale,
-    transact: (contract) => async ({ i, name }) => {
-      const price = await contract.getAsteroidPrice(i);
-      return contract.buyAsteroid(i, { value: price });
-    },
-    getErrorAlert: ({ i }) => ({
-      type: 'Asteroid_BuyingError',
-      level: 'warning',
-      i,
-      timestamp: Math.round(Date.now() / 1000)
-    })
-  },
-  'BUY_ASTEROID_1ST_SALE': {
-    address: process.env.REACT_APP_CONTRACT_ASTEROID_SALE,
-    config: configs.AsteroidSale,
-    transact: (contract) => async ({ i, name }) => {
-      const price = await contract.getAsteroidPrice(i);
-      return contract.buyAsteroid(i, { value: price });
-    },
-    getErrorAlert: ({ i }) => ({
-      type: 'Asteroid_BuyingError',
-      level: 'warning',
-      i,
-      timestamp: Math.round(Date.now() / 1000)
-    })
-  },
-  'START_ASTEROID_SCAN': {
-    address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
-    config: configs.AsteroidScans,
-    confirms: 3,
-    transact: (contract) => ({ i }) => contract.startScan(i),
-    getErrorAlert: ({ i }) => ({
-      type: 'Asteroid_ScanningError',
-      level: 'warning',
-      i,
-      timestamp: Math.round(Date.now() / 1000)
-    }),
-    getConfirmedAlert: ({ i }) => ({
-      type: 'Asteroid_ReadyToFinalizeScan',
-      i,
-      timestamp: Math.round(Date.now() / 1000)
-    }),
-    onConfirmed: (event, { i }) => {
-      queryClient.invalidateQueries('asteroids', i);
-    }
-  },
-  'FINALIZE_ASTEROID_SCAN': {
-    address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
-    config: configs.AsteroidScans,
-    transact: (contract) => ({ i }) => contract.finalizeScan(i),
-    getErrorAlert: ({ i }) => ({
-      type: 'Asteroid_FinalizeScanError',
-      level: 'warning',
-      i,
-      timestamp: Math.round(Date.now() / 1000)
-    })
-  },
-  'SETTLE_CREW': {
-    address: process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
-    config: configs.ArvadCrewSale,
-    transact: (contract) => ({ i }) => contract.mintCrewWithAsteroid(i),
-    getErrorAlert: ({ i }) => ({
-      type: 'CrewMember_SettlingError',
-      level: 'warning',
-      i,
-      timestamp: Math.round(Date.now() / 1000)
-    })
-  },
+  // 'BUY_ASTEROID': {
+  //   address: process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
+  //   config: configs.ArvadCrewSale,
+  //   transact: (contract) => async ({ i, name }) => {
+  //     const price = await contract.getAsteroidPrice(i);
+  //     return contract.buyAsteroid(i, { value: price });
+  //   },
+  //   getErrorAlert: ({ i }) => ({
+  //     type: 'Asteroid_BuyingError',
+  //     level: 'warning',
+  //     i,
+  //     timestamp: Math.round(Date.now() / 1000)
+  //   })
+  // },
+  // 'START_ASTEROID_SCAN': {
+  //   address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
+  //   config: configs.AsteroidScans,
+  //   confirms: 3,
+  //   transact: (contract) => ({ i }) => contract.startScan(i),
+  //   getErrorAlert: ({ i }) => ({
+  //     type: 'Asteroid_ScanningError',
+  //     level: 'warning',
+  //     i,
+  //     timestamp: Math.round(Date.now() / 1000)
+  //   }),
+  //   getConfirmedAlert: ({ i }) => ({
+  //     type: 'Asteroid_ReadyToFinalizeScan',
+  //     i,
+  //     timestamp: Math.round(Date.now() / 1000)
+  //   }),
+  //   onConfirmed: (event, { i }) => {
+  //     queryClient.invalidateQueries('asteroids', i);
+  //   }
+  // },
+  // 'FINALIZE_ASTEROID_SCAN': {
+  //   address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
+  //   config: configs.AsteroidScans,
+  //   transact: (contract) => ({ i }) => contract.finalizeScan(i),
+  //   getErrorAlert: ({ i }) => ({
+  //     type: 'Asteroid_FinalizeScanError',
+  //     level: 'warning',
+  //     i,
+  //     timestamp: Math.round(Date.now() / 1000)
+  //   })
+  // },
+  // 'SETTLE_CREW': {
+  //   address: process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
+  //   config: configs.ArvadCrewSale,
+  //   transact: (contract) => ({ i }) => contract.mintCrewWithAsteroid(i),
+  //   getErrorAlert: ({ i }) => ({
+  //     type: 'CrewMember_SettlingError',
+  //     level: 'warning',
+  //     i,
+  //     timestamp: Math.round(Date.now() / 1000)
+  //   })
+  // },
   'NAME_CREW': {
-    address: process.env.REACT_APP_CONTRACT_CREW_NAMES,
-    config: configs.CrewNames,
-    transact: (contract) => ({ i, name }) => contract.setName(i, name),
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ i, name }) => contract.invoke('Crewmate_setName', [
+      uint256.bnToUint256(i),
+      shortString.encodeShortString(name)
+    ]),
     getErrorAlert: ({ i }) => ({
       type: 'CrewMember_NamingError',
       level: 'warning',
@@ -107,8 +98,7 @@ const getContracts = (queryClient) => ({
 });
 
 export function ChainTransactionProvider({ children }) {
-  const { web3: { provider } } = useAuth();
-  const queryClient = useQueryClient();
+  const { wallet: { starknet } } = useAuth();
   const { events, lastBlockNumber } = useEvents();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -118,9 +108,9 @@ export function ChainTransactionProvider({ children }) {
   const pendingTransactions = useStore(s => s.pendingTransactions);
 
   const contracts = useMemo(() => {
-    if (queryClient && provider) {
+    if (!!starknet?.account) {
       const processedContracts = {};
-      const contractConfig = getContracts(queryClient);
+      const contractConfig = getContracts();
       Object.keys(contractConfig).forEach((k) => {
         const {
           address,
@@ -135,7 +125,7 @@ export function ChainTransactionProvider({ children }) {
           isEqual
         } = contractConfig[k];
         processedContracts[k] = {
-          execute: transact(new ethers.Contract(address, config, provider)),
+          execute: transact(new Contract(config, address, starknet.account)),
           onTransactionError: (err, vars) => {
             console.error(err, vars);
             if (getErrorAlert) {
@@ -161,7 +151,7 @@ export function ChainTransactionProvider({ children }) {
       return processedContracts;
     }
     return null;
-  }, [createAlert, queryClient, provider]);
+  }, [createAlert, starknet?.account?.address, starknet?.account?.baseUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionWaiters = useRef([]);
 
@@ -177,7 +167,7 @@ export function ChainTransactionProvider({ children }) {
           // NOTE: waitForTransaction is slow -- often slower than server to receive and process
           //  event and send back to frontend... so we are using it just to listen for errors
           //  (events from backend will demonstrate success)
-          provider.provider.waitForTransaction(txHash, 1, TIMEOUT - (Date.now() - timestamp))
+          starknet.provider.waitForTransaction(txHash, 1, TIMEOUT - (Date.now() - timestamp))
             // .then((receipt) => {
             //   if (receipt) {
             //     console.log('transaction settled');
@@ -199,7 +189,7 @@ export function ChainTransactionProvider({ children }) {
         }
       });
     }
-  }, [contracts, pendingTransactions, provider]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [contracts, pendingTransactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (contracts && pendingTransactions?.length) {
@@ -241,7 +231,7 @@ export function ChainTransactionProvider({ children }) {
         dispatchPendingTransaction({
           key,
           vars,
-          txHash: tx.hash,
+          txHash: tx.transaction_hash,
           waitingOn: 'TRANSACTION'
         });
       } catch (e) {
