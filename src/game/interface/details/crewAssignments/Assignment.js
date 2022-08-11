@@ -50,7 +50,9 @@ const CoverImage = styled.div`
     opacity: ${p => p.ready ? 1 : 0};
     height: 100%;
     mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
-    transition: opacity 750ms ease-out, background-image 750ms ease-out;
+    transition:
+      background-position 750ms ease-out,
+      opacity 750ms ease-out;
   }
 `;
 
@@ -131,7 +133,14 @@ const BackButton = styled.div`
   display: inline-flex;
   font-size: 14px;
   font-weight: bold;
-  margin-bottom: 1em;
+  ${p => p.isMintingStory
+    ? `
+      position: relative;
+      bottom: -44px;
+    `
+    : `margin-bottom: 1em;`
+  }
+
   text-transform: uppercase;
   & *:first-child {
     margin-right: 0.75em;
@@ -360,7 +369,7 @@ const CrewAssignment = (props) => {
   const goBack = useCallback(() => {
     playSound('effects.click');
     history.push(onCloseDestination);
-  }, [history, playSound, storyState, isMintingStory]);
+  }, [history, playSound, onCloseDestination]);
 
   const undoPath = useCallback(() => {
     commitPath(-1);
@@ -388,16 +397,16 @@ const CrewAssignment = (props) => {
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <InvisibleImage src={storyState.image} onLoad={onCoverImageLoad} />
             <CoverImage
-              src={storyState.image}
+              src={coverImageLoaded}
               center={storyState.imageCenter}
               ready={storyState.image === coverImageLoaded} />
-            <AboveFold ready={storyState.image === coverImageLoaded}>
+            <AboveFold ready={!!coverImageLoaded}>
               {storyState.features?.canGoBack && currentStep > 0 ? (
-                <BackButton onClick={undoPath}>
+                <BackButton onClick={undoPath} isMintingStory={isMintingStory}>
                   <BackIcon /> Previous Selection
                 </BackButton>
               ) : (
-                <BackButton onClick={goBack}>
+                <BackButton onClick={goBack} isMintingStory={isMintingStory}>
                   <BackIcon /> Back to {onCloseDestinationLabel}
                 </BackButton>
               )}

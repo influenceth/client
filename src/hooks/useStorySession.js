@@ -45,7 +45,7 @@ const useStorySession = (id) => {
     return allPaths;
   }, [session?.pathHistory]);
 
-  const updatePathHistory = (sessionId, updatedPathHistory) => {
+  const updatePathHistory = useCallback((sessionId, updatedPathHistory) => {
     const sessionCacheKey = [ 'storySession', sessionId ];
     const currentCacheValue = queryClient.getQueryData(sessionCacheKey);
     queryClient.setQueryData(
@@ -55,14 +55,14 @@ const useStorySession = (id) => {
         pathHistory: [ ...updatedPathHistory ]
       }
     );
-  };
+  }, [queryClient]);
 
-  const getDefaultContent = () => ({
+  const getDefaultContent = useCallback(() => ({
     content: story.content,
     image: story.image,
     linkedPaths: selectablePaths(story.linkedPaths, 0),
     prompt: story.prompt,
-  });
+  }), [selectablePaths, story]);
 
   // path selection
   // [if canGoBack, then will start at current path; else, will start at 0]
@@ -126,9 +126,9 @@ const useStorySession = (id) => {
       });
       history.push(`/crew-assignments/${story.book}`);
     }
-  }, [createAlert, currentStep, history, queryClient, selectablePaths, story, session]);
+  }, [createAlert, getDefaultContent, history, id, queryClient, selectablePaths, session, story, updatePathHistory]);
 
-  const goToPath = (path) => {
+  const goToPath = useCallback((path) => {
     if (path) {
       commitPath(path);
 
@@ -137,7 +137,7 @@ const useStorySession = (id) => {
       setPathContent(getDefaultContent());
       setLoadingPath(false);
     }
-  };
+  }, [commitPath, getDefaultContent]);
 
   // on initial load, go to appropriate step
   useEffect(() => {
@@ -155,7 +155,7 @@ const useStorySession = (id) => {
         initialized.current = true;
       }
     }
-  }, [story?.id, session?.id, session?.pathHistory, goToPath]);
+  }, [story?.id, session?.id, session?.pathHistory]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const storyState = useMemo(() => {
     if (story && session && pathContent) {

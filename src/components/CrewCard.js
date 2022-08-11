@@ -70,6 +70,11 @@ const Card = styled.div`
     }
   ` : ''}
 
+  ${p => p.hideHeader && `
+    & ${CardHeader} {
+      display: none;
+    }
+  `}
   ${p => p.hideFooter && `
     & ${CardFooter} {
       display: none;
@@ -78,7 +83,7 @@ const Card = styled.div`
 `;
 
 const CrewName = styled.span`
-  font-weight: bold;
+  font-weight: normal;
   ${p => p.noWrapName && `
     display: block;
     overflow: hidden;
@@ -123,7 +128,7 @@ const loadingCss = css`
   top: 50%;
 `;
 
-const CrewCard = ({ crew, onClick, overlay, ...props }) => {
+const CrewCard = ({ crew, onClick, overlay, showClassInHeader, ...props }) => {
   const [ imageLoaded, setImageLoaded ] = useState(false);
 
   const useName = crew.name || (crew.i && `Crew Member #${crew.i}`) || '';
@@ -158,6 +163,7 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
           <CrewClassIcon crewClass={crew.crewClass} />{' '}
           {useName}
         </CrewName>
+        {showClassInHeader && <DataReadout style={{ opacity: 0.7 }}>{toCrewClass(crew.crewClass)}</DataReadout>}
         <DataReadout style={{ fontSize: '0.68em' }}>{toCrewCollection(crew.crewCollection)}</DataReadout>
       </CardHeader>
       {!overlay && (

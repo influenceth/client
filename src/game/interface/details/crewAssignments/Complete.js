@@ -329,7 +329,7 @@ const CrewAssignmentComplete = (props) => {
     if (storyState && (storyState.tags || []).includes('ADALIAN_RECRUITMENT')) {
       history.push(`/crew-assignment/${sessionId}/create`);
     }
-  }, [!!storyState]);
+  }, [!!storyState]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const slideOutContents = useMemo(() =>
     rewards?.length > 0

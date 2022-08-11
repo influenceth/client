@@ -19,7 +19,8 @@ import {
   CrewIcon,
   ChevronDoubleDownIcon as DeactivateIcon,
   ChevronDoubleUpIcon as ActivateIcon,
-  PromoteIcon
+  PromoteIcon,
+  ChevronDoubleDownIcon
 } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
@@ -27,10 +28,10 @@ import useAuth from '~/hooks/useAuth';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
-import useMintableCrew from '~/hooks/useMintableCrew';
-import useSettleCrew from '~/hooks/useSettleCrew';
+// import useMintableCrew from '~/hooks/useMintableCrew';
+// import useSettleCrew from '~/hooks/useSettleCrew';
 import useStore from '~/hooks/useStore';
-import useOwnedAsteroidsCount from '~/hooks/useOwnedAsteroidsCount';
+// import useOwnedAsteroidsCount from '~/hooks/useOwnedAsteroidsCount';
 import theme from '~/theme.js';
 import { useHistory } from 'react-router-dom';
 import TriangleTip from '~/components/TriangleTip';
@@ -42,19 +43,43 @@ const Container = styled.div`
   padding: 0 30px;
 `;
 
-const Title = styled.h3`
+const IconHR = styled.div`
   align-items: center;
-  border-bottom: 1px solid #2b2b2b;
+  color: white;
   display: flex;
   flex-direction: row;
-  font-weight: normal;
-  margin: 0;
-  padding-bottom: 15px;
+  font-size: 85%;
+  width: 100%;
+
+  &:before,
+  &:after {
+    content: '';
+    border-bottom: 1px solid #2b2b2b;
+    flex: 1;
+  }
   & > svg {
-    color: ${p => p.theme.colors.main};
-    display: block;
-    font-size: 150%;
-    margin-right: 6px;
+    margin: 0 20px;
+  }
+`;
+
+const Title = styled.div`
+  & > h3 {
+    align-items: center;
+    ${p => !p.hideBorder && `border-bottom: 1px solid #2b2b2b;`}
+    display: flex;
+    flex-direction: row;
+    font-weight: normal;
+    margin: 0;
+    padding-bottom: 15px;
+    & > svg {
+      color: ${p => p.theme.colors.main};
+      display: block;
+      font-size: 150%;
+      margin-right: 6px;
+    }
+  }
+  & ${IconHR} {
+    margin-top: -7px;
   }
 `;
 
@@ -402,6 +427,9 @@ const OwnedCrew = (props) => {
   // const { data: mintable } = useMintableCrew();
   // const { data: ownedCount } = useOwnedAsteroidsCount();
 
+  // TODO: loading
+  // TODO: useCallback
+
   const [hovered, setHovered] = useState();
   const [activeCrew, setActiveCrew] = useState([]);
   const [inactiveCrew, setInactiveCrew] = useState([]);
@@ -414,10 +442,7 @@ const OwnedCrew = (props) => {
       setInactiveCrew((crew || []).slice(2));
       setIsDirty(false);
     }
-  }, [!!crew]);
-
-  // TODO: loading
-  // TODO: useCallback
+  }, [!!crew]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRecruit = () => {
     // continue open session...
@@ -455,13 +480,15 @@ const OwnedCrew = (props) => {
     }
   };
 
+  // TODO: this is a hack to simulate an initial crew state
+  // TODO: check useEffect dependency array once un-hacked
   useEffect(() => {
     const current = activeCrew.map((c) => c.i).join(',');
     const pristine = (
       (crew || []).length ? [crew[0], crew[1]] : []
     ).map((c) => c.i).join(',');
     setIsDirty(current !== pristine);
-  }, [activeCrew]);
+  }, [activeCrew]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleActivate = (inactiveIndex) => {
     // is there a slot?
@@ -491,6 +518,8 @@ const OwnedCrew = (props) => {
     ]);
   };
 
+  const noop = () => {/* no op */};
+
   const handleSave = () => {
 
   };
@@ -500,7 +529,11 @@ const OwnedCrew = (props) => {
       {!(crew && crewRecruitmentStoryId) && <Loader />}
       {crew && crewRecruitmentStoryId && (
         <Container>
-          <Title>My Active Crew: {activeCrew.length} / 5</Title>
+          <Title>
+            <h3>
+              My Active Crew: {activeCrew.length} / 5
+            </h3>
+          </Title>
           <ActiveCrew>
             <div>
               {[1,2,0,3,4].map((slot) => {
@@ -515,7 +548,6 @@ const OwnedCrew = (props) => {
                         <OuterContainer
                           key={slot}
                           clickable={isNextEmpty}
-                          onClick={handleRecruit}
                           onMouseEnter={() => setHovered(slot)}
                           onMouseLeave={() => setHovered()}
                           selected={isSelected}>
@@ -525,7 +557,7 @@ const OwnedCrew = (props) => {
                                 <div>Captain</div>
                               </CaptainTopFlourish>
                               <CrewContainer isCaptain>
-                                <CardContainer isEmpty={isEmpty} ref={setRefEl}>
+                                <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
                                   {isEmpty && <CrewSilhouetteCard overlay={isNextEmpty ? clickOverlay : undefined} />}
                                   {!isEmpty && <CrewCard crew={crew} fontSize="95%" noWrapName />}
                                 </CardContainer>
@@ -549,7 +581,7 @@ const OwnedCrew = (props) => {
                           {slot !== 0 && (
                             <CrewContainer>
                               <TopFlourish />
-                              <CardContainer isEmpty={isEmpty} ref={setRefEl}>
+                              <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
                                 {isEmpty && <CrewSilhouetteCard overlay={isNextEmpty ? clickOverlay : undefined} />}
                                 {!isEmpty && <CrewCard crew={crew} fontSize="75%" noWrapName />}
                               </CardContainer>
@@ -604,9 +636,14 @@ const OwnedCrew = (props) => {
 
           {inactiveCrew.length > 0 && (
             <InactiveCrewSection>
-              <Title>
-                <CrewIcon style={{ fontSize: '125%' }} />
-                Stationed Crew: {inactiveCrew.length}
+              <Title hideBorder>
+                <h3>
+                  <CrewIcon style={{ fontSize: '125%' }} />
+                  Stationed Crew: {inactiveCrew.length}
+                </h3>
+                <IconHR>
+                  <ChevronDoubleDownIcon />
+                </IconHR>
               </Title>
               <InactiveCrew>
                 {inactiveCrew.map((crew, i) => (

@@ -2,17 +2,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { useWeb3React } from '@web3-react/core';
-import {
-  toCrewClass,
-  toCrewClassDescription,
-  toCrewCollection,
-  toCrewTitle,
-  toCrewTrait
-} from 'influence-utils';
+import { toCrewClass, toCrewClassDescription, toCrewTrait } from 'influence-utils';
 import {
   BiUndo as UndoIcon,
   BiRedo as RedoIcon
 } from 'react-icons/bi';
+import {
+  GiMoebiusStar as CitizenIcon  // TODO: this is placeholder
+} from 'react-icons/gi';
 
 import Button from '~/components/Button';
 import CopyReferralLink from '~/components/CopyReferralLink';
@@ -22,12 +19,24 @@ import Details from '~/components/Details';
 import { LinkIcon, TwitterIcon } from '~/components/Icons';
 import IconButton from '~/components/IconButton';
 import TriangleTip from '~/components/TriangleTip';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+// import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
-import api from '~/lib/api';
+// import api from '~/lib/api';
 import CrewClassIcon from '~/components/CrewClassIcon';
 import TextInput from '~/components/TextInput';
 
+
+const blinkingBackground = (p) => keyframes`
+  0% {
+    background-color: #000;
+  }
+  50% {
+    background-color: rgba(${p.theme.colors.mainRGB}, 0.2);
+  }
+  100% {
+    background-color: #000;
+  }
+`;
 
 const slideOutTransition = keyframes`
   0% {
@@ -45,17 +54,17 @@ const slideOutTransition = keyframes`
 `;
 
 // TODO: (for mobile)
-const mobileSlideOutTransition = keyframes`
-  0% {
-    transform: scaleX(0);
-  }
-  50% {
-    transform: scaleX(1);
-  }
-  100% {
-    transform: scaleX(1);
-  }
-`;
+// const mobileSlideOutTransition = keyframes`
+//   0% {
+//     transform: scaleX(0);
+//   }
+//   50% {
+//     transform: scaleX(1);
+//   }
+//   100% {
+//     transform: scaleX(1);
+//   }
+// `;
 
 const opacityTransition = keyframes`
   0% { opacity: 0; }
@@ -117,11 +126,19 @@ const ImageryContainer = styled.div`
     padding-top: 15px;
   }
 `;
+
+const cardWidth = 360;
+const traitHeight = 150;
+const traitMargin = 2;
+const traitBackground = 'rgba(15,15,15,0.95)';
+const traitBorder = '#444';
+
 const CardWrapper = styled.div`
   align-items: center;  
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  min-height: ${(traitHeight + 2 * traitMargin) * 3}px;
   padding: 15px;
   position: relative;
   justify-content: center;
@@ -140,14 +157,9 @@ const CardContainer = styled.div`
     border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.35);
     max-width: 100%;
     padding: 4px;
-    width: 312px;
+    width: ${cardWidth}px;
   }
 `;
-
-
-const traitHeight = 170;
-const traitBackground = 'rgba(15,15,15,0.95)';
-const traitBorder = '#444';
 
 const Traits = styled.div`
   display: flex;
@@ -169,21 +181,26 @@ const TraitRow = styled.div`
   display: flex;
   flex-direction: row;
   height: ${traitHeight}px;
-  margin: 8px 0;
+  margin: ${traitMargin}px 0;
   overflow: visible;
   transform: scaleX(0);
   width: calc(95% - 120px);
 
-  &:first-child {
+  &:nth-child(1) {
     animation: ${slideOutTransition} 1000ms normal forwards ease-out 500ms;
   }
-  &:last-child {
+  &:nth-child(2) {
     animation: ${slideOutTransition} 1000ms normal forwards ease-out 650ms;
+  }
+  &:nth-child(3) {
+    animation: ${slideOutTransition} 1000ms normal forwards ease-out 800ms;
   }
 `;
 
 const TraitSpacer = styled.div`
-  width: 312px; // (should match card width)
+  border: solid ${traitBorder};
+  border-width: 1px 0;
+  width: ${cardWidth}px; // (should match card width)
 `;
 
 const TipHolder = styled.div`
@@ -191,7 +208,7 @@ const TipHolder = styled.div`
   top: 0;
   & > svg {
     height: 60px;
-    width: ${traitHeight}px;
+    width: ${traitHeight - 1}px;
     & > polygon {
       fill: ${traitBackground};
     }
@@ -212,8 +229,8 @@ const Trait = styled.div`
 
   & > *:first-child {
     ${p => p.side === 'right' && 'margin-left: 20px;'}
-    font-size: 80px;
-    line-height: 80px;
+    font-size: ${p => p.isCrewClass ? '64px' : '80px'};
+    line-height: ${p => p.isCrewClass ? '64px' : '80px'};
     position: relative;
     text-align: center;
     width: 88px;
@@ -232,23 +249,42 @@ const Trait = styled.div`
     }
   }
 
-  & ${TipHolder} {
-    ${p => p.side}: 0;
-    & > svg {
-      transform-origin: top ${p => p.side};
+  ${p => p.side === 'both'
+  ? `
+    & ${TipHolder} {
+      left: 0;
+      & > svg {
+        transform-origin: top left;
+      }
     }
-  }
+    & ${TipHolder}:last-child {
+      left: auto;
+      right: 0;
+      & > svg {
+        transform-origin: top right;
+      }
+    }
+  `
+  : `
+    & ${TipHolder} {
+      ${p.side}: 0;
+      & > svg {
+        transform-origin: top ${p.side};
+      }
+    }
+  `}
 `;
 
 const NameSection = styled.div`
   animation: ${opacityTransition} 1000ms normal forwards ease-out 650ms;
   opacity: 0;
-
   display: flex;
+  margin-top: 5px;
   flex-direction: column;
   align-items: center;
   & > input {
-    background: #111;
+    animation: ${blinkingBackground} 750ms linear 2000ms 2;
+    background: #000;
     border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.35);
     font-size: 28px;
     height: 2em;
@@ -261,7 +297,7 @@ const RerollContainer = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
-  margin-top: 8px;
+  margin-top: 10px;
 
   & > button {
     margin-right: 0;
@@ -355,9 +391,9 @@ const CrewAssignmentCreate = (props) => {
   const history = useHistory();
   const { storyState } = useStorySession(sessionId);
 
-  const [featureLoading, setFeatureLoading] = useState(false);
   const [featureOptions, setFeatureOptions] = useState([]);
   const [featureSelection, setFeatureSelection] = useState();
+  const [finalized, setFinalized] = useState();
   const [name, setName] = useState([]);
 
   const rewards = useMemo(() => {
@@ -386,7 +422,7 @@ const CrewAssignmentCreate = (props) => {
   
   const handleFinish = useCallback(() => {
     history.push(onCloseDestination);
-  }, [history, onCloseDestination]);
+  }, [history]);
 
   const handleNameChange = useCallback((newName) => {
     setName(newName);
@@ -395,6 +431,7 @@ const CrewAssignmentCreate = (props) => {
   const rerollAppearance = useCallback(async () => {
     const crewClass = storyState?.classObjective;
     if (!crewClass) return;
+
     const sex = Math.ceil(Math.random() * 2);
     const facialFeature = sex === 1 ? [0, 1, 3, 4, 5, 6, 7] : [0, 1, 2];
     const hair = sex === 1 ? [0, 1, 2, 3, 4, 5] : [0, 6, 7, 8, 9, 10, 11];
@@ -414,12 +451,11 @@ const CrewAssignmentCreate = (props) => {
       bonusItem: 0
     };
 
-    setFeatureOptions([
-      ...featureOptions,
-      params
-    ]);
-    setFeatureSelection(featureOptions.length);
-  }, [featureOptions.length, storyState?.classObjective]);
+    setFeatureOptions((prevValue) => {
+      setFeatureSelection((prevValue || []).length + 1);
+      return [...(prevValue || []), params]
+    });
+  }, [storyState?.classObjective]);
 
   const rollBack = useCallback(() => {
     setFeatureSelection(Math.max(0, featureSelection - 1));
@@ -427,28 +463,28 @@ const CrewAssignmentCreate = (props) => {
 
   const rollForward = useCallback(() => {
     setFeatureSelection(Math.min(featureOptions.length - 1, featureSelection + 1));
-  }, [featureSelection]);
+  }, [featureOptions.length, featureSelection]);
 
   const finalize = useCallback(() => {
+    console.log({ name });
+    setFinalized(true);
     // order of features (object is already in order, just call Object.values):
     // [ collection, sex, body, class, title, outfit, hair, facialFeatures, hairColor, headPiece, item ]
-  });
+  }, [name]);
 
   useEffect(() => {
     rerollAppearance();
-  }, [storyState?.classObjective]);
+  }, [rerollAppearance]);
 
   // show "complete" page for non-recruitment assignments
   useEffect(() => {
     if (storyState && !(storyState.tags || []).includes('ADALIAN_RECRUITMENT')) {
       history.push(`/crew-assignment/${sessionId}/complete`);
     }
-  }, [!!storyState])
+  }, [!!storyState]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // draft crew
   const crew = featureOptions[featureSelection];
-
-  const finalized = false;
 
   const rewardTipAttrs = {
     strokeWidth: 1
@@ -474,12 +510,45 @@ const CrewAssignmentCreate = (props) => {
                 <div>
                   <CrewCard
                     crew={crew}
-                    hideFooter={!finalized}
-                    largerClassIcon={!finalized} />
+                    fontSize="25px"
+                    showClassInHeader={finalized}
+                    hideFooter />
                 </div>
               </CardContainer>
               {!finalized && rewards.length > 0 && (
                 <Traits>
+                  {crew.crewClass && (
+                    <TraitRow>
+                      <Trait side="left" isCrewClass>
+                        <div>
+                          <CrewClassIcon crewClass={crew.crewClass} overrideColor="inherit" />
+                        </div>
+                        <article>
+                          <h4>{toCrewClass(crew.crewClass)}</h4>
+                          <div>{toCrewClassDescription(crew.crewClass)}</div>
+                        </article>
+                        <TipHolder>
+                          <TriangleTip {...rewardTipAttrs} rotate="90" />
+                        </TipHolder>
+                      </Trait>
+
+                      <TraitSpacer />
+                      
+                      <Trait side="right" isCrewClass>
+                        <div>
+                          <CitizenIcon />
+                        </div>
+                        <article>
+                          <h4>Adalian Citizen</h4>
+                          <div>Completed secondary education and entered adulthood in the Adalian System, after the dismantling of the Arvad.</div>
+                        </article>
+                        <TipHolder>
+                          <TriangleTip {...rewardTipAttrs} rotate="-90" />
+                        </TipHolder>
+                      </Trait>
+                    </TraitRow>
+                  )}
+
                   <TraitRow>
                     <Trait side="left">
                       <div>
@@ -589,7 +658,8 @@ const CrewAssignmentCreate = (props) => {
       </ImageryContainer>
 
       <FinishContainer>
-        <Button onClick={handleFinish}>Finish</Button>
+        {!finalized && <Button onClick={finalize}>Finalize</Button>}
+        {finalized && <Button onClick={handleFinish}>Finish</Button>}
       </FinishContainer>
     </Details>
   );
