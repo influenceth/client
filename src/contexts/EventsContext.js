@@ -10,7 +10,7 @@ import api from '~/lib/api';
 // (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)
 const getInvalidations = (asset, event, data) => {
   try {
-    return {
+    const map = {
       Asteroid: {
         AsteroidScanned: [
           ['asteroids', data.asteroidId],
@@ -47,7 +47,8 @@ const getInvalidations = (asset, event, data) => {
           ['crew', 'search'],
         ],
       }
-    }[asset][event];
+    }
+    return map[asset][event] || [];
   } catch (e) {/* no-op */}
   
   return [];

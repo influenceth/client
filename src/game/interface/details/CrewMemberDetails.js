@@ -432,7 +432,7 @@ const CrewMemberDetails = (props) => {
                   </DataReadout>
                 )}
                 <DataReadout label="Class" slim inheritFontSize>{toCrewClass(crew.crewClass)}</DataReadout>
-                <DataReadout label="Title" slim inheritFontSize>{toCrewTitle(crew.title)}</DataReadout>
+                <DataReadout label="Title" slim inheritFontSize>{crew.title > 0 ? toCrewTitle(crew.title) : '(n/a)'}</DataReadout>
                 <DataReadout label="Collection" slim inheritFontSize>{toCrewCollection(crew.crewCollection)}</DataReadout>
               </CrewLabels>
               <Management>

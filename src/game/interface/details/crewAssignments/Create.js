@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { useWeb3React } from '@web3-react/core';
 import { toCrewClass, toCrewClassDescription, toCrewTrait } from 'influence-utils';
 import {
   BiUndo as UndoIcon,
@@ -14,17 +13,17 @@ import {
 import Button from '~/components/Button';
 import CopyReferralLink from '~/components/CopyReferralLink';
 import CrewCard from '~/components/CrewCard';
+import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/Details';
 import { LinkIcon, TwitterIcon } from '~/components/Icons';
 import IconButton from '~/components/IconButton';
-import TriangleTip from '~/components/TriangleTip';
-// import useOwnedCrew from '~/hooks/useOwnedCrew';
-import useStorySession from '~/hooks/useStorySession';
-// import api from '~/lib/api';
-import CrewClassIcon from '~/components/CrewClassIcon';
 import TextInput from '~/components/TextInput';
-
+import TriangleTip from '~/components/TriangleTip';
+import useAuth from '~/hooks/useAuth';
+import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useStorySession from '~/hooks/useStorySession';
+import useCrewManager from '~/hooks/useCrewManager';
 
 const blinkingBackground = (p) => keyframes`
   0% {
@@ -283,7 +282,9 @@ const NameSection = styled.div`
   flex-direction: column;
   align-items: center;
   & > input {
-    animation: ${blinkingBackground} 750ms linear 2000ms 2;
+    &:not(:disabled) {
+      animation: ${blinkingBackground} 750ms linear 2000ms 2;
+    }
     background: #000;
     border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.35);
     font-size: 28px;
@@ -385,24 +386,37 @@ const FinishContainer = styled.div`
 
 const onCloseDestination = `/owned-crew`;
 
+const driveTraits = [1, 2, 3, 4];
+const driveCosmeticTraits = [36, 37, 38, 39, 40];
+const justCosmeticTraits = [5, 6, 7, 8, 9, 10, 13, 15, 16, 18, 20, 22];
+
+const traitDispOrder = ['classImpactful', 'drive', 'cosmetic', 'driveCosmetic'];
+
 const CrewAssignmentCreate = (props) => {
-  const { account } = useWeb3React();
+  const { account } = useAuth();
   const { id: sessionId } = useParams();
   const history = useHistory();
   const { storyState } = useStorySession(sessionId);
+  const { purchaseAndInitializeCrew, getPendingPurchase } = useCrewManager();
+  const { data: crew } = useOwnedCrew();
 
   const [featureOptions, setFeatureOptions] = useState([]);
   const [featureSelection, setFeatureSelection] = useState();
+  const [finalizing, setFinalizing] = useState();
   const [finalized, setFinalized] = useState();
-  const [name, setName] = useState([]);
+  const [name, setName] = useState('');
 
   const rewards = useMemo(() => {
-    return (storyState?.accruedTraits || [])
-    .map((id) => ({
+    const traits = (storyState?.accruedTraits || []).map((id) => ({
       id,
       ...toCrewTrait(id)
-    }))
-    .sort((a, b) => a.type >= b.type ? -1 : 1);  // impactful > cosmetic
+    }));
+    return {
+      drive: traits.find((t) => driveTraits.includes(t.id)),
+      classImpactful: traits.find((t) => t.type === 'impactful'),
+      driveCosmetic: traits.find((t) => driveCosmeticTraits.includes(t.id)),
+      cosmetic: traits.find((t) => justCosmeticTraits.includes(t.id)),
+    };
   }, [storyState?.accruedTraits]);
 
   const shareOnTwitter = useCallback(() => {
@@ -442,7 +456,6 @@ const CrewAssignmentCreate = (props) => {
       body: (sex - 1) * 6 + Math.ceil(Math.random() * 6),
       crewClass,
       title: 0,
-      // [by class] 1: [19,20], 2: [21,22], 3: [23,24], 4: [25,26], 5: [27,28]
       outfit: 18 + (crewClass - 1) * 2 + Math.ceil(Math.random() * 2),
       hair: hair[Math.floor(Math.random() * hair.length)],
       facialFeature: facialFeature[Math.floor(Math.random() * facialFeature.length)],
@@ -452,7 +465,7 @@ const CrewAssignmentCreate = (props) => {
     };
 
     setFeatureOptions((prevValue) => {
-      setFeatureSelection((prevValue || []).length + 1);
+      setFeatureSelection((prevValue || []).length);
       return [...(prevValue || []), params]
     });
   }, [storyState?.classObjective]);
@@ -466,30 +479,55 @@ const CrewAssignmentCreate = (props) => {
   }, [featureOptions.length, featureSelection]);
 
   const finalize = useCallback(() => {
-    console.log({ name });
-    setFinalized(true);
-    // order of features (object is already in order, just call Object.values):
-    // [ collection, sex, body, class, title, outfit, hair, facialFeatures, hairColor, headPiece, item ]
-  }, [name]);
+    const input = {
+      amount: 0.0025e18,
+      name,
+      features: featureOptions[featureSelection],
+      traits: rewards,
+      sessionId // used to tag the pendingTransaction
+    };
+    purchaseAndInitializeCrew(input);
+  }, [name, featureSelection]);
 
+  // initialize appearance & state
   useEffect(() => {
-    rerollAppearance();
-  }, [rerollAppearance]);
+    const pendingPurchase = getPendingPurchase(sessionId);
+    if (pendingPurchase) {
+      setFeatureOptions([ pendingPurchase.vars.features ]);
+      setFeatureSelection(0);
+      setName(pendingPurchase.vars.name);
+      setFinalizing(true);
+    } else if (featureOptions.length === 0) {
+      rerollAppearance();
+    }
+  }, [getPendingPurchase, rerollAppearance, sessionId, featureOptions.length]);
 
-  // show "complete" page for non-recruitment assignments
+  // show "complete" page (instead of "create") for non-recruitment assignments
   useEffect(() => {
     if (storyState && !(storyState.tags || []).includes('ADALIAN_RECRUITMENT')) {
       history.push(`/crew-assignment/${sessionId}/complete`);
     }
   }, [!!storyState]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // draft crew
-  const crew = featureOptions[featureSelection];
+  // watch purchase status... if pending, set flag
+  useEffect(() => {
+    const pendingPurchase = getPendingPurchase(sessionId); 
+    if (finalizing && !pendingPurchase) {
+      if (crew.find((c) => c.name === name)) {
+        setFinalizing(false);
+        setFinalized(true);
+      }
+      // TODO:? (after timeout, show error)
+    }
+  }, [finalizing, getPendingPurchase, sessionId, crew?.length]);
 
-  const rewardTipAttrs = {
-    strokeWidth: 1
-  }
-  if (!storyState || !crew) return null;
+  // hide until loaded
+  if (!storyState || !featureOptions) return null;
+  if (featureOptions.length === 0) return null;
+
+  // draft crew
+  const crewmate = { ...featureOptions[featureSelection] };
+  if (finalized) crewmate.name = name;
   return (
     <Details
       onCloseDestination={onCloseDestination}
@@ -509,26 +547,27 @@ const CrewAssignmentCreate = (props) => {
               <CardContainer>
                 <div>
                   <CrewCard
-                    crew={crew}
+                    crew={crewmate}
                     fontSize="25px"
+                    hideCollectionInHeader
                     showClassInHeader={finalized}
                     hideFooter />
                 </div>
               </CardContainer>
-              {!finalized && rewards.length > 0 && (
+              {!finalized && (
                 <Traits>
-                  {crew.crewClass && (
+                  {crewmate.crewClass && (
                     <TraitRow>
                       <Trait side="left" isCrewClass>
                         <div>
-                          <CrewClassIcon crewClass={crew.crewClass} overrideColor="inherit" />
+                          <CrewClassIcon crewClass={crewmate.crewClass} overrideColor="inherit" />
                         </div>
                         <article>
-                          <h4>{toCrewClass(crew.crewClass)}</h4>
-                          <div>{toCrewClassDescription(crew.crewClass)}</div>
+                          <h4>{toCrewClass(crewmate.crewClass)}</h4>
+                          <div>{toCrewClassDescription(crewmate.crewClass)}</div>
                         </article>
                         <TipHolder>
-                          <TriangleTip {...rewardTipAttrs} rotate="90" />
+                          <TriangleTip strokeWidth="1" rotate="90" />
                         </TipHolder>
                       </Trait>
 
@@ -543,7 +582,7 @@ const CrewAssignmentCreate = (props) => {
                           <div>Completed secondary education and entered adulthood in the Adalian System, after the dismantling of the Arvad.</div>
                         </article>
                         <TipHolder>
-                          <TriangleTip {...rewardTipAttrs} rotate="-90" />
+                          <TriangleTip strokeWidth="1" rotate="-90" />
                         </TipHolder>
                       </Trait>
                     </TraitRow>
@@ -552,14 +591,14 @@ const CrewAssignmentCreate = (props) => {
                   <TraitRow>
                     <Trait side="left">
                       <div>
-                        <CrewTraitIcon trait={rewards[0].id} type={rewards[0].type} />
+                        <CrewTraitIcon trait={rewards[traitDispOrder[0]].id} type={rewards[traitDispOrder[0]].type} />
                       </div>
                       <article>
-                        <h4>{rewards[0].name}</h4>
-                        <div>{rewards[0].description}</div>
+                        <h4>{rewards[traitDispOrder[0]].name}</h4>
+                        <div>{rewards[traitDispOrder[0]].description}</div>
                       </article>
                       <TipHolder>
-                        <TriangleTip {...rewardTipAttrs} rotate="90" />
+                        <TriangleTip strokeWidth="1" rotate="90" />
                       </TipHolder>
                     </Trait>
 
@@ -567,14 +606,14 @@ const CrewAssignmentCreate = (props) => {
                     
                     <Trait side="right">
                       <div>
-                        <CrewTraitIcon trait={rewards[1].id} type={rewards[1].type} />
+                        <CrewTraitIcon trait={rewards[traitDispOrder[1]].id} type={rewards[traitDispOrder[1]].type} />
                       </div>
                       <article>
-                        <h4>{rewards[1].name}</h4>
-                        <div>{rewards[1].description}</div>
+                        <h4>{rewards[traitDispOrder[1]].name}</h4>
+                        <div>{rewards[traitDispOrder[1]].description}</div>
                       </article>
                       <TipHolder>
-                        <TriangleTip {...rewardTipAttrs} rotate="-90" />
+                        <TriangleTip strokeWidth="1" rotate="-90" />
                       </TipHolder>
                     </Trait>
                   </TraitRow>
@@ -582,14 +621,14 @@ const CrewAssignmentCreate = (props) => {
                   <TraitRow>
                     <Trait side="left">
                       <div>
-                        <CrewTraitIcon trait={rewards[2].id} type={rewards[2].type} />
+                        <CrewTraitIcon trait={rewards[traitDispOrder[2]].id} type={rewards[traitDispOrder[2]].type} />
                       </div>
                       <article>
-                        <h4>{rewards[2].name}</h4>
-                        <div>{rewards[2].description}</div>
+                        <h4>{rewards[traitDispOrder[2]].name}</h4>
+                        <div>{rewards[traitDispOrder[2]].description}</div>
                       </article>
                       <TipHolder side="left">
-                        <TriangleTip {...rewardTipAttrs} rotate="90" />
+                        <TriangleTip strokeWidth="1" rotate="90" />
                       </TipHolder>
                     </Trait>
 
@@ -597,14 +636,14 @@ const CrewAssignmentCreate = (props) => {
 
                     <Trait side="right">
                       <div>
-                        <CrewTraitIcon trait={rewards[3].id} type={rewards[3].type} />
+                        <CrewTraitIcon trait={rewards[traitDispOrder[3]].id} type={rewards[traitDispOrder[3]].type} />
                       </div>
                       <article>
-                        <h4>{rewards[3].name}</h4>
-                        <div>{rewards[3].description}</div>
+                        <h4>{rewards[traitDispOrder[3]].name}</h4>
+                        <div>{rewards[traitDispOrder[3]].description}</div>
                       </article>
                       <TipHolder side="right">
-                        <TriangleTip {...rewardTipAttrs} rotate="-90" />
+                        <TriangleTip strokeWidth="1" rotate="-90" />
                       </TipHolder>
                     </Trait>
                   </TraitRow>
@@ -614,20 +653,20 @@ const CrewAssignmentCreate = (props) => {
 
             {!finalized && (
               <NameSection>
-                <TextInput onChange={handleNameChange} placeholder="Enter Name" />
+                <TextInput disabled={finalizing} onChange={handleNameChange} placeholder="Enter Name" initialValue={name} />
                 <RerollContainer>
                   <IconButton
                     onClick={rollBack}
-                    disabled={featureSelection === 0}
+                    disabled={finalizing || featureSelection === 0}
                     style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
                     <UndoIcon />
                   </IconButton>
                   
-                  <Button onClick={rerollAppearance}>Re-roll Appearance</Button>
+                  <Button disabled={finalizing} onClick={rerollAppearance}>Re-roll Appearance</Button>
                   
                   <IconButton
                     onClick={rollForward}
-                    disabled={featureSelection === featureOptions.length - 1}
+                    disabled={finalizing || featureSelection === featureOptions.length - 1}
                     style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
                     <RedoIcon />
                   </IconButton>
@@ -658,7 +697,7 @@ const CrewAssignmentCreate = (props) => {
       </ImageryContainer>
 
       <FinishContainer>
-        {!finalized && <Button onClick={finalize}>Finalize</Button>}
+        {!finalized && <Button disabled={finalizing} loading={finalizing} onClick={finalize}>Finalize</Button>}
         {finalized && <Button onClick={handleFinish}>Finish</Button>}
       </FinishContainer>
     </Details>

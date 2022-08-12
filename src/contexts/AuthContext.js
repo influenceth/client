@@ -19,6 +19,7 @@ export function AuthProvider({ children }) {
   // Invalidate token if the token has expired
   useEffect(() => {
     if (!!token && isExpired(token)) {
+      console.log('expired')
       dispatchTokenInvalidated();
     }
   }, [ token, dispatchTokenInvalidated ]);

@@ -128,7 +128,7 @@ const loadingCss = css`
   top: 50%;
 `;
 
-const CrewCard = ({ crew, onClick, overlay, showClassInHeader, ...props }) => {
+const CrewCard = ({ crew, onClick, overlay, ...props }) => {
   const [ imageLoaded, setImageLoaded ] = useState(false);
 
   const useName = crew.name || (crew.i && `Crew Member #${crew.i}`) || '';
@@ -163,8 +163,21 @@ const CrewCard = ({ crew, onClick, overlay, showClassInHeader, ...props }) => {
           <CrewClassIcon crewClass={crew.crewClass} />{' '}
           {useName}
         </CrewName>
-        {showClassInHeader && <DataReadout style={{ opacity: 0.7 }}>{toCrewClass(crew.crewClass)}</DataReadout>}
-        <DataReadout style={{ fontSize: '0.68em' }}>{toCrewCollection(crew.crewCollection)}</DataReadout>
+        {!props.hideCollectionInHeader && (
+          <DataReadout style={{
+            fontSize: '0.68em',
+            ...(props.showClassInHeader
+              ? {
+                paddingBottom: 0,
+                marginBottom: -5
+              }
+              : {}
+            )
+            }}>
+            {toCrewCollection(crew.crewCollection)}
+          </DataReadout>
+        )}
+        {props.showClassInHeader && <DataReadout style={{ opacity: 0.7 }}>{toCrewClass(crew.crewClass)}</DataReadout>}
       </CardHeader>
       {!overlay && (
         <CardFooter>

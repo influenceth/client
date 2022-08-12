@@ -380,7 +380,7 @@ const CrewInfoPane = ({ crew, referenceEl, isInactiveCrew, visible }) => {
           </div>
           <div style={{ lineHeight: '1.6em' }}>
             <DataReadout label="Class" slim inheritFontSize>{toCrewClass(crew.crewClass)}</DataReadout>
-            <DataReadout label="Title" slim inheritFontSize>{toCrewTitle(crew.title)}</DataReadout>
+            {crew.title > 0 && <DataReadout label="Title" slim inheritFontSize>{toCrewTitle(crew.title)}</DataReadout>}
             <DataReadout label="Collection" slim inheritFontSize>{toCrewCollection(crew.crewCollection)}</DataReadout>
           </div>
         </article>
@@ -412,7 +412,7 @@ const PopperWrapper = (props) => {
 }
 
 const OwnedCrew = (props) => {
-  const { token, web3: { account } } = useAuth();
+  const { account, token } = useAuth();
   const createStorySession = useCreateStorySession();
   const { data: crewAssignmentData } = useCrewAssignments();
   const queryClient = useQueryClient();
@@ -438,8 +438,8 @@ const OwnedCrew = (props) => {
   // TODO: should sync state when crew is updated
   useEffect(() => {
     if (crew) {
-      setActiveCrew((crew || []).length ? [crew[0], crew[1]] : []);
-      setInactiveCrew((crew || []).slice(2));
+      setActiveCrew(crew.filter((c) => c.activeSlot >= 0));
+      setInactiveCrew(crew.filter((c) => !(c.activeSlot >= 0)));
       setIsDirty(false);
     }
   }, [!!crew]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -480,14 +480,9 @@ const OwnedCrew = (props) => {
     }
   };
 
-  // TODO: this is a hack to simulate an initial crew state
-  // TODO: check useEffect dependency array once un-hacked
   useEffect(() => {
-    const current = activeCrew.map((c) => c.i).join(',');
-    const pristine = (
-      (crew || []).length ? [crew[0], crew[1]] : []
-    ).map((c) => c.i).join(',');
-    setIsDirty(current !== pristine);
+    // TODO: handle isDirty
+    // setIsDirty(current !== pristine);
   }, [activeCrew]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleActivate = (inactiveIndex) => {
