@@ -177,7 +177,7 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
             {toCrewCollection(crew.crewCollection)}
           </DataReadout>
         )}
-        {props.showClassInHeader && <DataReadout style={{ opacity: 0.7 }}>{toCrewClass(crew.crewClass)}</DataReadout>}
+        {props.showClassInHeader && <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>{toCrewClass(crew.crewClass)}</DataReadout>}
       </CardHeader>
       {!overlay && (
         <CardFooter>

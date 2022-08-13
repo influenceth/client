@@ -5,6 +5,7 @@ import uniq from 'lodash.uniqby';
 import useStore from '~/hooks/useStore';
 import useAuth from '~/hooks/useAuth';
 import api from '~/lib/api';
+import getLogContent from '~/lib/getLogContent';
 
 // TODO (enhancement): rather than invalidating, make optimistic updates to cache value directly
 // (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)
@@ -37,6 +38,15 @@ const getInvalidations = (asset, event, data) => {
         ],
       },
       CrewMember: {
+        CrewCompositionChanged: [
+          ['crew', 'search'],
+          ...(data.oldCrew || []).map((i) => ['crew', i]),
+          ...(data.newCrew || []).map((i) => ['crew', i]),
+        ], 
+        FeaturesSet: [
+          ['crew', data.crewId],
+          ['crew', 'search'],
+        ],
         NameChanged: [
           ['crew', data.crewId],
           ['crew', 'search'],
@@ -89,13 +99,12 @@ export function EventsProvider({ children }) {
           // alert
           const type = e.type || `${e.assetType}_${e.event}`;
           const alert = Object.assign({}, e, { type: type, duration: 5000 });
-          createAlert(alert);
+          if (!!getLogContent({ type, data: alert })) createAlert(alert);
         });
       }
 
       const newEvents = eventsQuery.data.events.slice().concat(events);
-      // TODO: should this uniquification include logIndex? some transactions now include multiple events
-      setEvents(uniq(newEvents, 'transactionHash'));
+      setEvents(uniq(newEvents, (x) => `${x.transactionHash}.${x.logIndex}.${x.i}`));
 
       const latestEvent = newEvents.sort((a, b) => b.timestamp - a.timestamp)[0];
       setLatest(latestEvent?.timestamp ? latestEvent.timestamp + 1 : 0);

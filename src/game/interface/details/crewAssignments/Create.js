@@ -489,6 +489,13 @@ const CrewAssignmentCreate = (props) => {
     purchaseAndInitializeCrew(input);
   }, [name, featureSelection]);
 
+  // show "complete" page (instead of "create") for non-recruitment assignments
+  useEffect(() => {
+    if (storyState && !(storyState.tags || []).includes('ADALIAN_RECRUITMENT')) {
+      history.push(`/crew-assignment/${sessionId}/complete`);
+    }
+  }, [!!storyState]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // initialize appearance & state
   useEffect(() => {
     const pendingPurchase = getPendingPurchase(sessionId);
@@ -497,29 +504,23 @@ const CrewAssignmentCreate = (props) => {
       setFeatureSelection(0);
       setName(pendingPurchase.vars.name);
       setFinalizing(true);
-    } else if (featureOptions.length === 0) {
-      rerollAppearance();
-    }
-  }, [getPendingPurchase, rerollAppearance, sessionId, featureOptions.length]);
-
-  // show "complete" page (instead of "create") for non-recruitment assignments
-  useEffect(() => {
-    if (storyState && !(storyState.tags || []).includes('ADALIAN_RECRUITMENT')) {
-      history.push(`/crew-assignment/${sessionId}/complete`);
-    }
-  }, [!!storyState]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // watch purchase status... if pending, set flag
-  useEffect(() => {
-    const pendingPurchase = getPendingPurchase(sessionId); 
-    if (finalizing && !pendingPurchase) {
+    } else if (finalizing) {
       if (crew.find((c) => c.name === name)) {
         setFinalizing(false);
         setFinalized(true);
       }
       // TODO:? (after timeout, show error)
+    } else if (featureOptions.length === 0) {
+      rerollAppearance();
     }
-  }, [finalizing, getPendingPurchase, sessionId, crew?.length]);
+  }, [
+    crew?.length,
+    finalizing,
+    getPendingPurchase,
+    rerollAppearance,
+    sessionId,
+    featureOptions.length
+  ]);
 
   // hide until loaded
   if (!storyState || !featureOptions) return null;

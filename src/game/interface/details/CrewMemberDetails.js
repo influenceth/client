@@ -570,7 +570,7 @@ const CrewMemberDetails = (props) => {
                     {crew?.events.map(e => (
                       <LogEntry
                         key={`${e.transactionHash}_${e.logIndex}`}
-                        data={e}
+                        data={{ ...e, i: crew.i }}
                         type={`CrewMember_${e.event}`}
                         isTabular />
                     ))}

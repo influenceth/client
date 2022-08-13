@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
@@ -27,6 +27,7 @@ import NavIcon from '~/components/NavIcon';
 import useAuth from '~/hooks/useAuth';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
+import useCrewManager from '~/hooks/useCrewManager';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 // import useMintableCrew from '~/hooks/useMintableCrew';
 // import useSettleCrew from '~/hooks/useSettleCrew';
@@ -293,10 +294,10 @@ const Trait = styled.div`
 `;
 
 const OuterContainer = styled.div`
-  color: ${p => p.selected ? p.theme.colors.main : '#444'};
+  color: ${p => p.assigned ? p.theme.colors.main : '#444'};
   & ${CardContainer} {
     opacity: ${p => {
-      if (p.selected) return 1;
+      if (p.assigned) return 1;
       return p.clickable ? 0.75 : 0.5;
     }};
     transform: translateY(0);
@@ -330,7 +331,7 @@ const OuterContainer = styled.div`
     }
   `}
 
-  ${p => p.selected && `
+  ${p => p.assigned && `
     &:hover {
       & ${CardContainer} {
         transform: translateY(-20px);
@@ -371,7 +372,7 @@ const CrewInfoPane = ({ crew, referenceEl, isInactiveCrew, visible }) => {
   
   if (!crew) return null;
   return createPortal(
-    <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000 }} {...attributes.popper}>
+    <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000, pointerEvents: 'none' }} {...attributes.popper}>
       <InfoTooltip visible={visible} isInactiveCrew={isInactiveCrew}>
         <h3>{crew.name || `Crew Member #${crew.i}`}</h3>
         <article>
@@ -406,6 +407,8 @@ const CrewInfoPane = ({ crew, referenceEl, isInactiveCrew, visible }) => {
   );
 }
 
+const inactiveCrewSort = (a, b) => a.name < b.name ? -1 : 1;
+
 const PopperWrapper = (props) => {
   const [refEl, setRefEl] = useState();
   return props.children(refEl, setRefEl);
@@ -417,6 +420,7 @@ const OwnedCrew = (props) => {
   const { data: crewAssignmentData } = useCrewAssignments();
   const queryClient = useQueryClient();
   const { data: crew } = useOwnedCrew();
+  const { changeActiveCrew, getPendingActiveCrewChange } = useCrewManager();
   const history = useHistory();
   
   const playSound = useStore(s => s.dispatchSoundRequested);
@@ -433,18 +437,25 @@ const OwnedCrew = (props) => {
   const [hovered, setHovered] = useState();
   const [activeCrew, setActiveCrew] = useState([]);
   const [inactiveCrew, setInactiveCrew] = useState([]);
-  const [isDirty, setIsDirty] = useState(false);
+  const [pristine, setPristine] = useState();
+  const [saving, setSaving] = useState(false);
 
-  // TODO: should sync state when crew is updated
-  useEffect(() => {
-    if (crew) {
-      setActiveCrew(crew.filter((c) => c.activeSlot >= 0));
-      setInactiveCrew(crew.filter((c) => !(c.activeSlot >= 0)));
-      setIsDirty(false);
-    }
-  }, [!!crew]); // eslint-disable-line react-hooks/exhaustive-deps
+  const resetPristine = useCallback((ac) => {
+    setPristine(ac.map((c) => c.i).join(','));
+  }, []);
 
+  const isDirty = useMemo(() => {
+    return pristine !== activeCrew.map((c) => c.i).join(',');
+  }, [activeCrew, pristine]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // TODO: useCallback
   const handleRecruit = () => {
+    if (isDirty) {
+      playSound('effects.failure');
+      // TODO: nudge to save first
+      return;
+    }
+
     // continue open session...
     if (crewRecruitmentSessionId) {
       history.push(`/crew-assignment/${crewRecruitmentSessionId}`);
@@ -480,11 +491,6 @@ const OwnedCrew = (props) => {
     }
   };
 
-  useEffect(() => {
-    // TODO: handle isDirty
-    // setIsDirty(current !== pristine);
-  }, [activeCrew]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const handleActivate = (inactiveIndex) => {
     // is there a slot?
     if (activeCrew.length < 5) {
@@ -492,13 +498,13 @@ const OwnedCrew = (props) => {
 
       const newInactive = [...inactiveCrew];
       delete newInactive[inactiveIndex];
-      setInactiveCrew([...Object.values(newInactive)]);
+      setInactiveCrew([...Object.values(newInactive)].sort(inactiveCrewSort));
     } else {
-      // TODO: error -- no slot
+      playSound('effects.failure');
     }
   };
   const handleDeactivate = (slot) => {
-    setInactiveCrew([activeCrew[slot], ...inactiveCrew]);
+    setInactiveCrew([activeCrew[slot], ...inactiveCrew].sort(inactiveCrewSort));
 
     const newActive = [...activeCrew];
     delete newActive[slot];
@@ -516,8 +522,39 @@ const OwnedCrew = (props) => {
   const noop = () => {/* no op */};
 
   const handleSave = () => {
-
+    changeActiveCrew({ crew: activeCrew.map((c) => c.i) });
   };
+
+  const initFromCrew = useCallback((crew, pristine) => {
+    const ac = crew
+    .filter((c) => c.activeSlot !== null && c.activeSlot >= 0)
+    .sort((a, b) => a.activeSlot - b.activeSlot);
+    const ic = crew
+      .filter((c) => !(c.activeSlot !== null && c.activeSlot >= 0))
+      .sort(inactiveCrewSort);
+    setActiveCrew(ac);
+    setInactiveCrew(ic);
+    if (pristine) resetPristine(ac);
+  }, []);
+
+  useEffect(() => {
+    const pendingChange = getPendingActiveCrewChange();
+    // TODO: also show as saving if pending purchase (user would have had to navigate back here)
+    if (pendingChange) {
+      setSaving(true);
+      if (crew?.length > 0) {
+        initFromCrew(crew.map((c) => ({
+          ...c,
+          activeSlot: pendingChange.vars.crew.indexOf(c.i)
+        })));
+      }
+    } else if (saving) {
+      setSaving(false);
+      resetPristine(activeCrew);
+    } else if (crew?.length > activeCrew.length + inactiveCrew.length) {
+      initFromCrew(crew, true);
+    }
+  }, [crew?.length, getPendingActiveCrewChange, saving]);
 
   return (
     <Details title="Owned Crew">
@@ -534,8 +571,8 @@ const OwnedCrew = (props) => {
               {[1,2,0,3,4].map((slot) => {
                 const crew = activeCrew[slot] || {};
                 const isEmpty = !activeCrew[slot];
-                const isNextEmpty = isEmpty && slot === activeCrew.length;
-                const isSelected = !isEmpty;
+                const isNextEmpty = isEmpty && slot === activeCrew.length && !saving;
+                const isAssigned = !isEmpty;
                 return (
                   <PopperWrapper key={slot}>
                     {(refEl, setRefEl) => (
@@ -545,7 +582,7 @@ const OwnedCrew = (props) => {
                           clickable={isNextEmpty}
                           onMouseEnter={() => setHovered(slot)}
                           onMouseLeave={() => setHovered()}
-                          selected={isSelected}>
+                          assigned={isAssigned}>
                           {slot === 0 && (
                             <>
                               <CaptainTopFlourish>
@@ -553,12 +590,13 @@ const OwnedCrew = (props) => {
                               </CaptainTopFlourish>
                               <CrewContainer isCaptain>
                                 <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
-                                  {isEmpty && <CrewSilhouetteCard overlay={isNextEmpty ? clickOverlay : undefined} />}
+                                  {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
                                   {!isEmpty && <CrewCard crew={crew} fontSize="95%" noWrapName />}
                                 </CardContainer>
                                 {!isEmpty && (
                                   <ButtonHolder isCaptain>
                                     <IconButton
+                                      disabled={saving}
                                       onClick={() => handleDeactivate(slot)}
                                       data-tip="Make Inactive"
                                       data-place="bottom"
@@ -577,12 +615,13 @@ const OwnedCrew = (props) => {
                             <CrewContainer>
                               <TopFlourish />
                               <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
-                                {isEmpty && <CrewSilhouetteCard overlay={isNextEmpty ? clickOverlay : undefined} />}
+                                {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
                                 {!isEmpty && <CrewCard crew={crew} fontSize="75%" noWrapName />}
                               </CardContainer>
                               {!isEmpty && (
                                 <ButtonHolder>
                                   <IconButton
+                                    disabled={saving}
                                     onClick={() => handleDeactivate(slot)}
                                     data-tip="Inactivate"
                                     data-place="bottom"
@@ -590,6 +629,7 @@ const OwnedCrew = (props) => {
                                     <DeactivateIcon />
                                   </IconButton>
                                   <IconButton
+                                    disabled={saving}
                                     onClick={() => handlePromote(slot)}
                                     data-tip="Promote to Captain"
                                     data-place="bottom"
@@ -599,9 +639,9 @@ const OwnedCrew = (props) => {
                                 </ButtonHolder>
                               )}
                               <NavIconFlourish
-                                background={isSelected ? '' : 'black'}
+                                background={isAssigned ? '' : 'black'}
                                 unselectedBorder="#555"
-                                selected={isSelected}
+                                selected={isAssigned}
                                 size={20}
                               />
                             </CrewContainer>
@@ -624,7 +664,8 @@ const OwnedCrew = (props) => {
           <ButtonRow>
             <Button
               onClick={handleSave}
-              disabled={!isDirty || activeCrew.length === 0}>
+              disabled={saving || !isDirty}
+              loading={saving}>
               Save Changes
             </Button>
           </ButtonRow>
@@ -652,10 +693,13 @@ const OwnedCrew = (props) => {
                           <CrewCard
                             crew={crew}
                             fontSize="65%"
+                            hideCollectionInHeader
+                            showClassInHeader
                             hideFooter
                             noWrapName />
                           <InnerButtonHolder>
                             <IconButton
+                              disabled={saving || activeCrew?.length === 5}
                               onClick={() => handleActivate(i)}
                               data-tip="Make Active"
                               data-place="right"

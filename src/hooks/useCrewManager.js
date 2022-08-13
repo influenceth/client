@@ -9,6 +9,15 @@ const useCrewManager = () => {
     // TODO: ...
   };
 
+  const changeActiveCrew = useCallback(
+    (params) => execute('SET_ACTIVE_CREW', params),
+    [execute]
+  );
+  const getPendingActiveCrewChange = useCallback(
+    (params) => getPendingTx('SET_ACTIVE_CREW', params),
+    [getPendingTx]
+  );
+
   const purchaseAndInitializeCrew = useCallback(
     (params) => execute('PURCHASE_AND_INITIALIZE_CREW', params),
     [execute]
@@ -30,6 +39,8 @@ const useCrewManager = () => {
 
   return {
     getPurchasePrice,
+    changeActiveCrew,
+    getPendingActiveCrewChange,
     purchaseAndInitializeCrew,
     getPendingPurchase,
     initializeCrew,

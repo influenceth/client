@@ -1,7 +1,10 @@
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 import { MdBlurOff as ScanIcon } from 'react-icons/md';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
-import { HiUserGroup as CrewIcon } from 'react-icons/hi';
+import {
+  CrewIcon,
+  PromoteIcon
+} from '~/components/Icons';
 
 import AsteroidLink from '~/components/AsteroidLink';
 import CrewLink from '~/components/CrewLink';
@@ -150,6 +153,36 @@ const entries = {
     ),
     txLink: getTxLink(e),
   }),
+
+  CrewMember_CrewCompositionChanged: (e) => {
+    let action = null;
+    let icon = <CrewIcon />;
+    const { newCrew, oldCrew } = e.returnValues;
+    if (newCrew[0] === e.i) {
+      action = `promoted to Captain`;
+      icon = <PromoteIcon />;
+    }
+    else if (oldCrew[0] === e.i && newCrew.includes(e.i)) {
+      action = `relieved of command`;
+    }
+    else if (newCrew.includes(e.i) && !oldCrew.includes(e.i)) action = `assigned to active duty`;
+    else if (!newCrew.includes(e.i) && oldCrew.includes(e.i)) action = `removed from active duty`;
+    // (if lateral move in active crew, not worth reporting)
+
+    if (action) {
+      return {
+        icon,
+        content: (
+          <>
+            <span>Crew member </span>
+            <CrewLink id={e.i} />
+            <span> {action}.</span>
+          </>
+        ),
+        txLink: getTxLink(e),
+      };
+    }
+  },
 
   CrewMember_Transfer: (e) => ({
     icon: <TransferIcon />,
