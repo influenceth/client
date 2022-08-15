@@ -9,14 +9,15 @@ import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
 import { ClockProvider } from '~/contexts/ClockContext';
 import { EventsProvider } from '~/contexts/EventsContext';
 import { WalletProvider } from '~/contexts/WalletContext';
-import useServiceWorker from '~/hooks/useServiceWorker';
-import useStore from '~/hooks/useStore';
-import LandingPage from '~/game/Landing';
+import Audio from '~/game/Audio';
 import Intro from '~/game/Intro';
 import Interface from '~/game/Interface';
-import Scene from '~/game/Scene';
-import Audio from '~/game/Audio';
+import LandingPage from '~/game/Landing';
+import Redirector from '~/game/Redirector';
 import Referral from '~/game/Referral';
+import Scene from '~/game/Scene';
+import useServiceWorker from '~/hooks/useServiceWorker';
+import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 
 const StyledMain = styled.main`
@@ -90,6 +91,7 @@ const Game = (props) => {
             <ThemeProvider theme={theme}>
               <GlobalStyle />
               <Router>
+                <Redirector />
                 <Referral />
                 <Switch>
                   <Route path="/play">
