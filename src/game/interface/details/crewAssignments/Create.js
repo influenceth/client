@@ -11,6 +11,7 @@ import {
 } from 'react-icons/gi';
 
 import Button from '~/components/Button';
+import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CopyReferralLink from '~/components/CopyReferralLink';
 import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
@@ -385,6 +386,12 @@ const FinishContainer = styled.div`
   }
 `;
 
+const PromptBody = styled.div`
+  border: solid #333;
+  border-width: 1px 0;
+  padding: 16px 24px;
+`;
+
 const onCloseDestination = `/owned-crew`;
 
 const driveTraits = [1, 2, 3, 4];
@@ -404,6 +411,7 @@ const CrewAssignmentCreate = (props) => {
 
   const [featureOptions, setFeatureOptions] = useState([]);
   const [featureSelection, setFeatureSelection] = useState();
+  const [confirming, setConfirming] = useState();
   const [finalizing, setFinalizing] = useState();
   const [finalized, setFinalized] = useState();
   const [name, setName] = useState('');
@@ -480,13 +488,13 @@ const CrewAssignmentCreate = (props) => {
     setFeatureSelection(Math.min(featureOptions.length - 1, featureSelection + 1));
   }, [featureOptions.length, featureSelection]);
 
-  const validateName = useCallback((n) => {
+  const validateName = useCallback(() => {
     let err = '';
-    if (n.length === 0) err = 'Name field cannot be empty.';
-    else if (n.length > 31) err = 'Name is too long.';
-    else if (/^ /.test(n) || / $/.test(n)) err = 'Name cannot have leading or trailing spaces.';
-    else if (/ {2,}/.test(n)) err = 'Name cannot have adjoining spaces.';
-    else if (/[^a-zA-Z0-9 ]/.test(n)) err = 'Name can only contain letters and numbers.';
+    if (name.length === 0) err = 'Name field cannot be empty.';
+    else if (name.length > 31) err = 'Name is too long.';
+    else if (/^ /.test(name) || / $/.test(name)) err = 'Name cannot have leading or trailing spaces.';
+    else if (/ {2,}/.test(name)) err = 'Name cannot have adjoining spaces.';
+    else if (/[^a-zA-Z0-9 ]/.test(name)) err = 'Name can only contain letters and numbers.';
     if (err) {
       createAlert({
         type: 'GenericAlert',
@@ -497,10 +505,15 @@ const CrewAssignmentCreate = (props) => {
       return false;
     }
     return true;
-  }, []);
+  }, [name]);
+
+  const confirmFinalize = useCallback(() => {
+    if (!validateName()) return;
+    setConfirming(true);
+  }, [validateName]);
 
   const finalize = useCallback(() => {
-    if (!validateName(name)) return;
+    setConfirming(false);
     const input = {
       amount: 0.0025e18,  // TODO: read this from somewhere or put in .env
       name,
@@ -724,7 +737,7 @@ const CrewAssignmentCreate = (props) => {
           <Button
             disabled={finalizing || !name}
             loading={finalizing}
-            onClick={finalize}>
+            onClick={confirmFinalize}>
             Finalize
           </Button>
         )}
@@ -735,6 +748,24 @@ const CrewAssignmentCreate = (props) => {
           </Button>
          )}
       </FinishContainer>
+      
+      {confirming && (
+        <ConfirmationDialog
+          title="Confirm Character Minting"
+          body={(
+            <PromptBody>
+              The Crewmate you are about to create will be minted as a new unique
+              Non-fungible Token (NFT)! Once minted, the character can never be deleted
+              or unmade, and is yours to keep or trade forever. All of their stats,
+              actions, skills, and attributes will be appended to their unique history
+              and stored as independent on-chain events.
+            </PromptBody>
+          )}
+          bodyPadding="15px 80px 30px"
+          onConfirm={finalize}
+          onReject={() => setConfirming(false)}
+        />
+      )}
     </Details>
   );
 };

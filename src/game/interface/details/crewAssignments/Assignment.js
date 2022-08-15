@@ -8,10 +8,10 @@ import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
 import useStore from '~/hooks/useStore';
 import Button from '~/components/Button';
+import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
 import Details from '~/components/Details';
-import Dialog from '~/components/Dialog';
 import { ArvadIcon, BackIcon } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
@@ -270,53 +270,11 @@ const PagePrompt = styled.div`
   margin-bottom: 1em;
 `;
 
-const Confirmation = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 300px;
-  width: 650px;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    width: 90vw;
-  }
-`;
-const ConfirmationTitle = styled.div`
-  align-items: center;
-  display: flex;
-  flex-direction: row;
-  height: 60px;
-  padding: 8px 16px;
-  & > h4 { flex: 1, margin: 0 }
-`;
-const ConfirmationBody = styled.div`
-  flex: 1;
-  font-size: 15px;
-  padding: 40px 80px;
-  & > article {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    color: ${p => p.theme.colors.main};
-    padding: 1em 2em;
-  }
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    padding: 40px 20px;
-  }
-`;
-const ConfirmationButtons = styled.div`
-  display: flex;
-  flex-direction: row;
-  height: 60px;
-  justify-content: center;
-  align-items: center;
-  padding: 8px 8px 16px;
-  & > button {
-    margin-top: 0;
-    margin-left: 1em;
-    &:first-child {
-      margin-left: 0;
-    }
-  }
+const PromptDetails = styled.div`
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  color: ${p => p.theme.colors.main};
+  padding: 1em 2em;
 `;
 
 const CrewAssignment = (props) => {
@@ -489,31 +447,18 @@ const CrewAssignment = (props) => {
         )}
       </Details>
       {selection && (
-        <Dialog>
-          <Confirmation>
-            <ConfirmationTitle>
-              <NavIcon
-                selected
-                selectedColor="white"
-                size={22}
-                style={{ marginRight: 12 }} />
-              <h4>Your Selection:</h4>
-            </ConfirmationTitle>
-            <ConfirmationBody>
-              {loadingPath && <Loader />}
-              {!loadingPath && (
-                <>
-                  <PagePrompt>{storyState.prompt}</PagePrompt>
-                  <article>{selection.text}</article>
-                </>
-              )}
-            </ConfirmationBody>
-            <ConfirmationButtons>
-              <Button onClick={selectPath()} disabled={loadingPath}>Back</Button>
-              <Button onClick={confirmPath} disabled={loadingPath}>Confirm</Button>
-            </ConfirmationButtons>
-          </Confirmation>
-        </Dialog>
+        <ConfirmationDialog
+          title="Your Selection:"
+          body={(
+            <>
+              <PagePrompt>{storyState.prompt}</PagePrompt>
+              <PromptDetails>{selection.text}</PromptDetails>
+            </>
+          )}
+          loading={!!loadingPath}
+          onConfirm={confirmPath}
+          onReject={selectPath()}
+        />
       )}
     </>
   );
