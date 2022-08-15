@@ -21,9 +21,10 @@ import IconButton from '~/components/IconButton';
 import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
-import useStorySession from '~/hooks/useStorySession';
 import useCrewManager from '~/hooks/useCrewManager';
+import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useStore from '~/hooks/useStore';
+import useStorySession from '~/hooks/useStorySession';
 
 const blinkingBackground = (p) => keyframes`
   0% {
@@ -399,6 +400,7 @@ const CrewAssignmentCreate = (props) => {
   const { storyState } = useStorySession(sessionId);
   const { purchaseAndInitializeCrew, getPendingPurchase } = useCrewManager();
   const { data: crew } = useOwnedCrew();
+  const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const [featureOptions, setFeatureOptions] = useState([]);
   const [featureSelection, setFeatureSelection] = useState();
@@ -478,9 +480,29 @@ const CrewAssignmentCreate = (props) => {
     setFeatureSelection(Math.min(featureOptions.length - 1, featureSelection + 1));
   }, [featureOptions.length, featureSelection]);
 
+  const validateName = useCallback((n) => {
+    let err = '';
+    if (n.length === 0) err = 'Name field cannot be empty.';
+    else if (n.length > 31) err = 'Name is too long.';
+    else if (/^ /.test(n) || / $/.test(n)) err = 'Name cannot have leading or trailing spaces.';
+    else if (/ {2,}/.test(n)) err = 'Name cannot have adjoining spaces.';
+    else if (/[^a-zA-Z0-9 ]/.test(n)) err = 'Name can only contain letters and numbers.';
+    if (err) {
+      createAlert({
+        type: 'GenericAlert',
+        content: err,
+        level: 'warning',
+        duration: 4000
+      });
+      return false;
+    }
+    return true;
+  }, []);
+
   const finalize = useCallback(() => {
+    if (!validateName(name)) return;
     const input = {
-      amount: 0.0025e18,
+      amount: 0.0025e18,  // TODO: read this from somewhere or put in .env
       name,
       features: featureOptions[featureSelection],
       traits: rewards,
@@ -698,8 +720,20 @@ const CrewAssignmentCreate = (props) => {
       </ImageryContainer>
 
       <FinishContainer>
-        {!finalized && <Button disabled={finalizing} loading={finalizing} onClick={finalize}>Finalize</Button>}
-        {finalized && <Button onClick={handleFinish}>Finish</Button>}
+        {!finalized && (
+          <Button
+            disabled={finalizing || !name}
+            loading={finalizing}
+            onClick={finalize}>
+            Finalize
+          </Button>
+        )}
+        {finalized && (
+          <Button
+            onClick={handleFinish}>
+            Finish
+          </Button>
+         )}
       </FinishContainer>
     </Details>
   );
