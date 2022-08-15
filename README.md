@@ -11,15 +11,17 @@ The browser game client for Influence.
     REACT_APP_OPEN_SEA_URL=https://opensea.io
     REACT_APP_ETHERSCAN_URL=https://etherscan.io
     REACT_APP_STARKNET_NETWORK=http://localhost:9000
-    REACT_APP_CONTRACT_ASTEROID_TOKEN=
-    REACT_APP_CONTRACT_CREW_TOKEN=
+    REACT_APP_VOYAGER_URL=https://voyager.online
+    REACT_APP_CHAIN_ID=1337
+
+    # (this is the devnet token address)
+    REACT_APP_ERC20_TOKEN_ADDRESS=0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488
+
     REACT_APP_STARKNET_DISPATCHER=
-    REACT_APP_STARKNET_ASTEROID_TOKEN=
-    REACT_APP_STARKNET_CREWMATE_TOKEN=
     " > .env
     ```
 1. Adjust or fill in any missing .env variables as needed.
-    > i.e. All `REACT_APP_CONTRACT_*` values should have been output at the end of the `seedChain` script in the `contacts` project. (You will need to prepend `REACT_APP_` to the variable names).
+    > i.e. All `REACT_APP_STARKNET_*` values are available by running `node bin/printEnv.js` from the `starknet-contracts` project.
 1. Run `npm start`.
 
 ## Available Scripts

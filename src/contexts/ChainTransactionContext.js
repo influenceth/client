@@ -104,7 +104,7 @@ const getContracts = (account) => ({
       const price = uint256.bnToUint256(amount);
       const calls = [
         {
-          contractAddress: '0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488',
+          contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
           entrypoint: 'approve',
           calldata: [
             process.env.REACT_APP_STARKNET_DISPATCHER,

@@ -34,6 +34,10 @@
       "description": "Base URL for Voyager. Does not include trailing slash",
       "required": true
     },
+    "REACT_APP_ERC20_TOKEN_ADDRESS": {
+      "description": "Address of ERC20 token for network.",
+      "required": true
+    },
     "REACT_APP_CONTRACT_ASTEROID_TOKEN": {
       "required": false
     },
