@@ -24,6 +24,7 @@ import { TiArrowRight } from 'react-icons/ti';
 import { WiMoonAltWaningCrescent5 } from 'react-icons/wi';
 import { VscDebugDisconnect } from 'react-icons/vsc';
 
+import AdalianSVG from '~/assets/icons/AdalianIcon.svg';
 import ArvadSVG from '~/assets/icons/ArvadIcon.svg';
 import CaptainSVG from '~/assets/icons/CaptainIcon.svg';
 import ChapterSVG from '~/assets/icons/ChapterIcon.svg';
@@ -54,6 +55,7 @@ import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
     Else, on the style below, set the width on the `${width/height}em`
   5) View the altered SVG to make sure it still looks right (https://www.svgviewer.dev/ is a good tool)
 */
+export const AdalianIcon = () => <AdalianSVG className="icon" />;
 export const ArvadIcon = () => <ArvadSVG className="icon" style={{ width: '1.94em' }} />;
 export const CaptainIcon = () => <CaptainSVG className="icon" style={{ width: '3.05em' }} />;
 export const ChapterIcon = () => <ChapterSVG className="icon" />;

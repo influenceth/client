@@ -21,7 +21,7 @@ const getInvalidations = (asset, event, data) => {
         AsteroidUsed: [
           ['asteroids', 'mintableCrew'],
         ],
-        NameChanged: [
+        Asteroid_NameChanged: [
           ['asteroids', data.asteroidId],
           ['asteroids', 'search'],
           ['events'], // (to update name in already-fetched events)
@@ -38,16 +38,20 @@ const getInvalidations = (asset, event, data) => {
         ],
       },
       CrewMember: {
-        CrewCompositionChanged: [
+        Crew_CompositionChanged: [
           ['crew', 'search'],
           ...(data.oldCrew || []).map((i) => ['crew', i]),
           ...(data.newCrew || []).map((i) => ['crew', i]),
         ], 
-        FeaturesSet: [
+        Crewmate_FeaturesSet: [
           ['crew', data.crewId],
           ['crew', 'search'],
         ],
-        NameChanged: [
+        Crewmate_TraitsSet: [
+          ['crew', data.crewId],
+          ['crew', 'search'],
+        ],
+        Crewmate_NameChanged: [
           ['crew', data.crewId],
           ['crew', 'search'],
           ['events'], // (to update name in already-fetched events)
@@ -92,7 +96,9 @@ export function EventsProvider({ children }) {
       // and invalidate related data that should now be updated
       if (latest > 0) {
         eventsQuery.data.events.forEach(e => {
-          getInvalidations(e.assetType, e.event, e.returnValues).forEach((i) => {
+          const invalidations = getInvalidations(e.assetType, e.event, e.returnValues);
+          console.log('e.event', e.event, invalidations);
+          invalidations.forEach((i) => {
             queryClient.invalidateQueries(...i);
           });
           

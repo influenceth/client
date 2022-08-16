@@ -47,12 +47,6 @@
     "REACT_APP_STARKNET_DISPATCHER": {
       "required": true
     },
-    "REACT_APP_STARKNET_ASTEROID_TOKEN": {
-      "required": true
-    },
-    "REACT_APP_STARKNET_CREWMATE_TOKEN": {
-      "required": true
-    },
     "REACT_APP_HIDE_SOCIAL": {
       "required": false
     }

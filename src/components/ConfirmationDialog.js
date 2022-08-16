@@ -61,7 +61,7 @@ const Confirmation = styled.div`
   `}
 `;
 
-const ConfirmationDialog = (props) => (
+const ConfirmationDialog = ({ loading, onConfirm, onReject, ...props }) => (
   <Dialog>
     <Confirmation {...props}>
       <ConfirmationTitle>
@@ -73,12 +73,11 @@ const ConfirmationDialog = (props) => (
         <h4>{props.title || 'Are you sure?'}</h4>
       </ConfirmationTitle>
       <ConfirmationBody>
-        {props.loading && <Loader />}
-        {!props.loading && props.body}
+        {loading ? <Loader /> : props.body}
       </ConfirmationBody>
       <ConfirmationButtons>
-        <Button onClick={props.onReject} disabled={props.loading}>{props.rejectText || 'Back'}</Button>
-        <Button onClick={props.onConfirm} disabled={props.loading}>{props.confirmText || 'Confirm'}</Button>
+        <Button onClick={onReject} disabled={loading}>{props.rejectText || 'Back'}</Button>
+        <Button onClick={onConfirm} disabled={loading}>{props.confirmText || 'Confirm'}</Button>
       </ConfirmationButtons>
     </Confirmation>
   </Dialog>

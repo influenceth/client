@@ -50,7 +50,12 @@ const CardImage = styled(CardLayer)`
 const Card = styled.div`
   background-color: rgba(20, 20, 20, 0.75);
   ${p => !p.hasOverlay
-    ? 'background: linear-gradient(to bottom, rgba(30, 30, 30, 0.15) 10%, rgba(30, 30, 30, 0.85) 50%, rgba(30, 30, 30, 0.15) 90%);'
+    ? `background: linear-gradient(
+        to bottom,
+        rgba(30, 30, 30, 0.15) 10%,
+        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.15` : `30, 30, 30, 0.85`}) 70%,
+        rgba(30, 30, 30, 0.15) 100%
+      );`
     : ''
   }
   cursor: ${p => p.clickable && p.theme.cursors.active};
@@ -132,6 +137,7 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
   const [ imageLoaded, setImageLoaded ] = useState(false);
 
   const useName = crew.name || (crew.i && `Crew Member #${crew.i}`) || '';
+  const classLabel = toCrewClass(crew.crewClass);
   
   let imageUrl = silhouette;
   if (crew.i) {
@@ -147,10 +153,14 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
 
   useEffect(() => {
     setImageLoaded(false);
-  }, [imageUrl])
+  }, [imageUrl]);
 
   return (
-    <Card onClick={onClick} hasOverlay={!!overlay} {...props}>
+    <Card
+      onClick={onClick}
+      hasOverlay={!!overlay}
+      classLabel={classLabel}
+      {...props}>
       <LoadingAnimation color={'white'} css={loadingCss} loading={!imageLoaded} />
       <CardImage visible={imageLoaded} applyMask={!overlay}>
         <img

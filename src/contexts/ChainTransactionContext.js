@@ -87,9 +87,7 @@ const getContracts = (account) => ({
     transact: (contract) => ({ crew }) => {
       return contract.invoke(
         'Crewmate_setCrewComposition',
-        [
-          crew.map((i) => uint256.bnToUint256(i))
-        ]
+        [[...crew]]
       );
     },
     isEqual: () => true,

@@ -89,7 +89,7 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  Asteroid_NameChanged: (e) => ({
+  Asteroid_Asteroid_NameChanged: (e) => ({
     icon: <NameIcon />,
     content: (
       <>
@@ -154,7 +154,7 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  CrewMember_CrewCompositionChanged: (e) => {
+  CrewMember_Crew_CompositionChanged: (e) => {
     let action = null;
     let icon = <CrewIcon />;
     const { newCrew, oldCrew } = e.returnValues;
@@ -215,7 +215,7 @@ const entries = {
     ),
   }),
 
-  CrewMember_NameChanged: (e) => ({
+  CrewMember_Crewmate_NameChanged: (e) => ({
     icon: <NameIcon />,
     content: (
       <>

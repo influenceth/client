@@ -499,14 +499,14 @@ const CrewMemberDetails = (props) => {
                       <>
                         <AllTraits>
                           {crew.traits.map((trait) => {
-                            const { name } = toCrewTrait(trait) || {};
+                            const { name, type } = toCrewTrait(trait) || {};
                             if (name) {
                               return (
                                 <Trait
                                   key={trait}
                                   onClick={selectTrait(trait)}
                                   selected={selectedTrait?.id === trait}>
-                                  <CrewTraitIcon trait={trait} />
+                                  <CrewTraitIcon trait={trait} type={type} />
                                   <h6>{name}</h6>
                                 </Trait>
                               );
@@ -523,7 +523,7 @@ const CrewMemberDetails = (props) => {
                         <TraitSelected>
                           <Display>
                             <div>
-                              <CrewTraitIcon trait={selectedTrait?.id} />
+                              <CrewTraitIcon trait={selectedTrait?.id} type={selectedTrait?.type} />
                             </div>
                             <h6>{selectedTrait?.name}</h6>
                           </Display>

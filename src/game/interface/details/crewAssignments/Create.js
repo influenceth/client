@@ -6,9 +6,6 @@ import {
   BiUndo as UndoIcon,
   BiRedo as RedoIcon
 } from 'react-icons/bi';
-import {
-  GiMoebiusStar as CitizenIcon  // TODO: this is placeholder
-} from 'react-icons/gi';
 
 import Button from '~/components/Button';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
@@ -17,7 +14,7 @@ import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/Details';
-import { LinkIcon, TwitterIcon } from '~/components/Icons';
+import { AdalianIcon, LinkIcon, TwitterIcon } from '~/components/Icons';
 import IconButton from '~/components/IconButton';
 import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
@@ -540,7 +537,7 @@ const CrewAssignmentCreate = (props) => {
       setName(pendingPurchase.vars.name);
       setFinalizing(true);
     } else if (finalizing) {
-      if (crew.find((c) => c.name === name)) {
+      if ((crew || []).find((c) => c.name === name)) {
         setFinalizing(false);
         setFinalized(true);
       }
@@ -611,7 +608,7 @@ const CrewAssignmentCreate = (props) => {
                       
                       <Trait side="right" isCrewClass>
                         <div>
-                          <CitizenIcon />
+                          <AdalianIcon />
                         </div>
                         <article>
                           <h4>Adalian Citizen</h4>
