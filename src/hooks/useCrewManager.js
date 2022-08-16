@@ -5,10 +5,6 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 const useCrewManager = () => {
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
 
-  const getPurchasePrice = () => {
-    // TODO: ...
-  };
-
   const changeActiveCrew = useCallback(
     (params) => execute('SET_ACTIVE_CREW', params),
     [execute]
@@ -38,7 +34,6 @@ const useCrewManager = () => {
   );
 
   return {
-    getPurchasePrice,
     changeActiveCrew,
     getPendingActiveCrewChange,
     purchaseAndInitializeCrew,

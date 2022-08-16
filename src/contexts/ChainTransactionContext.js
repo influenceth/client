@@ -98,22 +98,23 @@ const getContracts = (account) => ({
   'PURCHASE_AND_INITIALIZE_CREW': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: () => ({ amount, name, features, traits }) => {
-      const price = uint256.bnToUint256(amount);
+    transact: (contract) => async ({ name, features, traits }) => {
+      const { price } = await contract.call('CrewmateSale_getPrice');
+      const priceParts = Object.values(price).map((part) => part.toNumber());
       const calls = [
         {
           contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
           entrypoint: 'approve',
           calldata: [
             process.env.REACT_APP_STARKNET_DISPATCHER,
-            ...Object.values(price)
+            ...priceParts
           ]
         },
         {
           contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
           entrypoint: 'Crewmate_purchaseAndInitializeAdalian',
           calldata: [
-            ...Object.values(price),
+            ...priceParts,
             shortString.encodeShortString(name),
             '11', // array len v
             ...[
@@ -336,7 +337,11 @@ export function ChainTransactionProvider({ children }) {
   }, [getPendingTx]);
 
   return (
-    <ChainTransactionContext.Provider value={{ execute, getStatus, getPendingTx }}>
+    <ChainTransactionContext.Provider value={{
+      execute,
+      getStatus,
+      getPendingTx
+    }}>
       {children}
     </ChainTransactionContext.Provider>
   );

@@ -512,7 +512,6 @@ const CrewAssignmentCreate = (props) => {
   const finalize = useCallback(() => {
     setConfirming(false);
     const input = {
-      amount: 0.0025e18,  // TODO: read this from somewhere or put in .env
       name,
       features: featureOptions[featureSelection],
       traits: rewards,
