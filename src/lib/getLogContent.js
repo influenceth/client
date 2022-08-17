@@ -94,7 +94,7 @@ const entries = {
     content: (
       <>
         <span>Asteroid </span>
-        <AsteroidLink id={e.returnValues.asteroidId || e.returnValues.tokenId} />
+        <AsteroidLink id={e.returnValues.asteroidId || e.returnValues.tokenId} forceBaseName />
         <span>{` re-named to "${e.returnValues.newName}"`}</span>
       </>
     ),

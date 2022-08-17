@@ -11,11 +11,45 @@ const TIMEOUT = 600e3;  // 10 minutes
 const ChainTransactionContext = createContext();
 
 const getContracts = (account) => ({
+  'PURCHASE_ASTEROID': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => async ({ i }) => {
+      const { price } = await contract.call('AsteroidSale_getPrice', [i]);
+      const priceParts = Object.values(price).map((part) => part.toNumber());
+      const calls = [
+        {
+          contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+          entrypoint: 'approve',
+          calldata: [
+            process.env.REACT_APP_STARKNET_DISPATCHER,
+            ...priceParts
+          ]
+        },
+        {
+          contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+          entrypoint: 'AsteroidSale_purchase',
+          calldata: [
+            i,
+            ...priceParts
+          ]
+        },
+      ];
+
+      return account.execute(calls);
+    },
+    getErrorAlert: ({ i }) => ({
+      type: 'Asteroid_BuyingError',
+      level: 'warning',
+      i,
+      timestamp: Math.round(Date.now() / 1000)
+    })
+  },
   'NAME_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => ({ i, name }) => contract.invoke('Asteroid_setName', [
-      uint256.bnToUint256(i),
+      i,
       shortString.encodeShortString(name)
     ]),
     getErrorAlert: ({ i }) => ({
@@ -25,20 +59,6 @@ const getContracts = (account) => ({
       timestamp: Math.round(Date.now() / 1000)
     }),
   },
-  // 'BUY_ASTEROID': {
-  //   address: process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
-  //   config: configs.ArvadCrewSale,
-  //   transact: (contract) => async ({ i, name }) => {
-  //     const price = await contract.getAsteroidPrice(i);
-  //     return contract.buyAsteroid(i, { value: price });
-  //   },
-  //   getErrorAlert: ({ i }) => ({
-  //     type: 'Asteroid_BuyingError',
-  //     level: 'warning',
-  //     i,
-  //     timestamp: Math.round(Date.now() / 1000)
-  //   })
-  // },
   // 'START_ASTEROID_SCAN': {
   //   address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
   //   config: configs.AsteroidScans,
@@ -156,7 +176,7 @@ const getContracts = (account) => ({
     transact: (contract) => ({ i, name }) => contract.invoke(
       'Crewmate_setName',
       [
-        uint256.bnToUint256(i),
+        i,
         shortString.encodeShortString(name)
       ]
     ),

@@ -431,7 +431,6 @@ const OwnedCrew = (props) => {
 
   // TODO: ?
   // const { data: mintable } = useMintableCrew();
-  // const { data: ownedCount } = useOwnedAsteroidsCount();
 
   // TODO: loading
   // TODO: useCallback

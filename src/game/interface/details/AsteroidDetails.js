@@ -8,8 +8,8 @@ import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import useSale from '~/hooks/useSale';
 import useAsteroid from '~/hooks/useAsteroid';
-// import useBuyAsteroid from '~/hooks/useBuyAsteroid';
-// import useCreateReferral from '~/hooks/useCreateReferral';
+import useBuyAsteroid from '~/hooks/useBuyAsteroid';
+import useCreateReferral from '~/hooks/useCreateReferral';
 import useScanAsteroid from '~/hooks/useScanAsteroid';
 import useNameAsteroid from '~/hooks/useNameAsteroid';
 import useWebWorker from '~/hooks/useWebWorker';
@@ -173,12 +173,12 @@ const AsteroidDetails = (props) => {
   const { account } = useAuth();
   const { data: sale } = useSale();
   const { data: asteroid } = useAsteroid(Number(i));
-  // const createReferral = useCreateReferral(Number(i));
-  // const { buyAsteroid, buying } = useBuyAsteroid(Number(i));
+  const createReferral = useCreateReferral(Number(i));
+  const { buyAsteroid, buying } = useBuyAsteroid(Number(i));
   const { nameAsteroid, naming } = useNameAsteroid(Number(i));
   const { /*startAsteroidScan, finalizeAsteroidScan,*/ scanStatus } = useScanAsteroid(asteroid);
 
-  // const saleIsActive = useStore(s => s.sale);
+  const saleIsActive = useStore(s => s.sale);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const webWorkerPool = useWebWorker();
 
@@ -287,14 +287,6 @@ const AsteroidDetails = (props) => {
             <Pane>
               <Subtitle>Manage Asteroid</Subtitle>
               {sale && !asteroid.owner && (
-                <span
-                  data-tip="(not yet supported)"
-                  data-for="global">
-                  <Button disabled>
-                    <ClaimIcon /> Purchase
-                  </Button>
-                </span>
-              )/* TODO: (
                 <Button
                   data-tip="Purchase development rights"
                   data-for="global"
@@ -306,7 +298,7 @@ const AsteroidDetails = (props) => {
                   }}>
                   <ClaimIcon /> Purchase
                 </Button>
-              )*/}
+              )}
               {asteroid.owner && asteroid.owner !== account && (
                 <Button
                   data-tip="Purchase on OpenSea"

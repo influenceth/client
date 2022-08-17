@@ -74,13 +74,13 @@ export function EventsProvider({ children }) {
   const { token } = useAuth();
   const queryClient = useQueryClient();
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const [ latest, setLatest ] = useState(0);
+  const [ latest, setLatest ] = useState(-1);
   const [ lastBlockNumber, setLastBlockNumber ] = useState(0);
   const [ events, setEvents ] = useState([]);
 
   const eventsQuery = useQuery(
     [ 'events', token ],
-    () => api.getEvents(latest),
+    () => api.getEvents(Math.max(latest, 0)),
     {
       enabled: !!token,
       refetchInterval: 12500,
@@ -94,7 +94,7 @@ export function EventsProvider({ children }) {
 
       // If not the initial query send off alerts for new events
       // and invalidate related data that should now be updated
-      if (latest > 0) {
+      if (latest > -1) {
         eventsQuery.data.events.forEach(e => {
           const invalidations = getInvalidations(e.assetType, e.event, e.returnValues);
           console.log('e.event', e.event, invalidations);
