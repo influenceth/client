@@ -2,17 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
-import { toCrewClass, toCrewCollection, toCrewTitle, toCrewTrait } from 'influence-utils';
-import { MdAdd as PlusIcon } from 'react-icons/md';
-import { usePopper } from 'react-popper';
+
+import { MdAdd as PlusIcon, MdOutlineSavings } from 'react-icons/md';
 
 import Button from '~/components/Button';
 import CrewCard from '~/components/CrewCard';
-import CrewClassIcon from '~/components/CrewClassIcon';
-import CrewTraitIcon from '~/components/CrewTraitIcon';
+import CrewInfoPane from '~/components/CrewInfoPane';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
 import Cutscene from '~/components/Cutscene';
-import DataReadout from '~/components/DataReadout';
 import Details from '~/components/Details';
 import IconButton from '~/components/IconButton';
 import {
@@ -30,6 +27,7 @@ import useCreateStorySession from '~/hooks/useCreateStorySession';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewManager from '~/hooks/useCrewManager';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme.js';
 import { useHistory } from 'react-router-dom';
@@ -40,6 +38,10 @@ const Container = styled.div`
   flex-direction: column;
   height: 100%;
   padding: 0 30px;
+
+  @media (min-width: 1000px) and (max-width: 1600px) {
+    padding: 0;
+  }
 `;
 
 const IconHR = styled.div`
@@ -58,6 +60,8 @@ const IconHR = styled.div`
   }
   & > svg {
     margin: 0 20px;
+    transition: transform 200ms ease;
+    transform: rotate(${p => p.collapsed ? '0' : '-180deg'});
   }
 `;
 
@@ -87,21 +91,47 @@ const ActiveCrew = styled.div`
   display: flex;
   flex: 1 0;
   justify-content: center;
-  margin-bottom: -40px;
   max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
   padding-top: 5px;
 
   & > div {
     align-items: center;
     display: grid;
     grid-gap: 12px;
-    grid-template-columns: repeat(2, minmax(175px, 18.5fr)) minmax(200px, 26fr) repeat(2, minmax(175px, 18.5fr));
-    width: 92%;
+    grid-template-columns: ${p => p.captainFirst
+      ? `minmax(200px, 26fr) repeat(4, minmax(175px, 18.5fr))`
+      : `repeat(2, minmax(175px, 18.5fr)) minmax(200px, 26fr) repeat(2, minmax(175px, 18.5fr))`
+    };
+    width: 100%;
+
+    @media (min-width: 1600px) {
+      width: 92%;
+    }
+  }
+
+  @media (max-width: 560px) {
+    flex: 1 0;
+    margin-bottom: 0;
+
+    & > div {
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      overflow-y: visible;
+      max-height: 100%;
+      width: 100%;
+    }
+  }
+
+  @media (min-width: 1470px) {
+    margin-bottom: -40px;
   }
 `;
 
 const CrewContainer = styled.div`
-  padding: ${p => p.isCaptain ? '28px 20px 32px' : '32px 12px'};
+  padding: ${p => p.slot === 0 ? '28px 20px 32px' : '32px 12px'};
   position: relative;
   & > svg {
     color: currentColor;
@@ -136,11 +166,19 @@ const CardContainer = styled.div`
 `;
 
 const ButtonRow = styled.div`
-  display: flex;
+  display: inline-flex;
   justify-content: flex-end;
   padding: 15px 0;
-  position: relative;
-  z-index: 1;
+  & > button {
+    position: relative;
+    z-index: 1;
+  }
+`;
+
+const RevertButton = styled(Button)`
+  margin-right: 10px;
+  opacity: 0.5;
+  width: auto;
 `;
 
 const EmptyInactiveCrew = styled.div`
@@ -150,14 +188,19 @@ const EmptyInactiveCrew = styled.div`
 
 const InactiveCrewSection = styled.div`
   position: relative;
-  top: -45px;
-  margin-bottom: -45px;
+  @media (min-width: 1024px) {
+    top: -45px;
+    margin-bottom: -45px;
+  }
 `;
 
 const InactiveCrew = styled.div`
   overflow-y: hidden;
   overflow-x: auto;
+  max-height: ${p => p.collapsed ? 0 : '300px'};
+  opacity: ${p => p.collapsed ? 0 : 1};
   padding: 12px 5px 4px;
+  transition: max-height 300ms ease 150ms, opacity 300ms ease;
   white-space: nowrap;
   width: 100%;
 
@@ -190,6 +233,12 @@ const InactiveCardContainer = styled.div`
   transform: scale(1);
   &:hover {
     transform: scale(1.1);
+    & ${InnerButtonHolder} {
+      opacity: 1;
+    }
+  }
+  
+  @media (max-width: 1023px) {
     & ${InnerButtonHolder} {
       opacity: 1;
     }
@@ -232,63 +281,6 @@ const NavIconFlourish = styled(NavIcon)`
   bottom: -10px;
   left: 50%;
   margin-left: -15px;
-`;
-
-const InfoTooltip = styled.div`
-  background: rgba(16,16,16,0.95);
-  border: 1px solid #333;
-  padding: 13px 13px 0;
-  pointer-events: none;
-  margin-bottom: 6px;
-  opacity: 0;
-  transform: translateY(0);
-  transition: opacity 250ms ease, transform 250ms ease;
-  width: 360px;
-  & > h3 {
-    margin: 0 0 7px;
-  }
-  & > article {
-    border: solid #333;
-    border-width: 1px 0;
-    padding: 7px 0;
-    display: flex;
-    flex-direction: row;
-    font-size: 12px;
-    & > div:first-child {
-      font-size: 25px;
-      width: 41px;
-      text-align: center;
-    }
-    & label {
-      color: #676767;
-    }
-    &:last-child {
-      border-bottom: 0;
-    }
-  }
-  & > div {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 7px 0;
-  }
-  
-  ${p => p.visible && `
-    opacity: 1;
-    transform: translateY(${p.isInactiveCrew ? '-6px' : '-20px'});
-  `}
-`;
-const Trait = styled.div`
-  align-items: center;
-  display: flex;
-  flex-direction: row;
-  font-size: 36px;
-  padding-right: 7px;
-  width: 50%;
-  & h6 {
-    color: #676767;
-    font-size: 12px;
-    margin: 0 0 0 6px;
-  }
 `;
 
 const OuterContainer = styled.div`
@@ -350,6 +342,23 @@ const OuterContainer = styled.div`
     height: 40px;
     width: 100%;
   }
+
+  @media (max-width: 560px) {
+    width: 100%;
+    ${p => p.slot > 0 && `
+      &:before {
+        content: '| ${p.slot + 1} |';
+        display: block;
+        font-size: 22px;
+        margin: 20px 0 8px;
+        text-align: center;
+      }
+    `}
+
+    & ${ButtonHolder} {
+      opacity: 1;
+    }
+  }
 `;
 
 const clickOverlay = {
@@ -363,56 +372,14 @@ const clickOverlay = {
 
 const noop = () => {/* no op */};
 
-// TODO: move to separate file
-const CrewInfoPane = ({ crew, referenceEl, isInactiveCrew, visible }) => {
-  const [popperEl, setPopperEl] = useState();
-  const { styles, attributes } = usePopper(referenceEl, popperEl, {
-    placement: 'top'
-  });
-  
-  if (!crew) return null;
-  return createPortal(
-    <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000, pointerEvents: 'none' }} {...attributes.popper}>
-      <InfoTooltip visible={visible} isInactiveCrew={isInactiveCrew}>
-        <h3>{crew.name || `Crew Member #${crew.i}`}</h3>
-        <article>
-          <div>
-            <CrewClassIcon crewClass={crew.crewClass} />
-          </div>
-          <div style={{ lineHeight: '1.6em' }}>
-            <DataReadout label="Class" slim inheritFontSize>{toCrewClass(crew.crewClass)}</DataReadout>
-            {crew.title > 0 && <DataReadout label="Title" slim inheritFontSize>{toCrewTitle(crew.title)}</DataReadout>}
-            <DataReadout label="Collection" slim inheritFontSize>{toCrewCollection(crew.crewCollection)}</DataReadout>
-          </div>
-        </article>
-        {crew.traits.length > 0 && (
-          <div>
-            {crew.traits.map((trait) => {
-              const { name } = toCrewTrait(trait) || {};
-              if (name) {
-                return (
-                  <Trait key={trait}>
-                    <CrewTraitIcon trait={trait} hideHexagon />
-                    <h6>{name}</h6>
-                  </Trait>
-                );
-              }
-              return null;
-            })}
-          </div>
-        )}
-      </InfoTooltip>
-    </div>,
-    document.body
-  );
-}
-
 const inactiveCrewSort = (a, b) => a.name < b.name ? -1 : 1;
 
 const PopperWrapper = (props) => {
   const [refEl, setRefEl] = useState();
   return props.children(refEl, setRefEl);
 }
+
+const collapsibleWidth = 1200;
 
 const OwnedCrew = (props) => {
   const { account, token } = useAuth();
@@ -422,22 +389,24 @@ const OwnedCrew = (props) => {
   const { data: crew, isLoading: crewIsLoading } = useOwnedCrew();
   const { changeActiveCrew, getPendingActiveCrewChange } = useCrewManager();
   const history = useHistory();
+  const { width } = useScreenSize();
   
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
   const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
 
   const { crewRecruitmentStoryId, crewRecruitmentSessionId } = crewAssignmentData || {};
 
-  // TODO: ?
+  // TODO: 
   // const { data: mintable } = useMintableCrew();
 
-  // TODO: loading
   // TODO: useCallback
 
   const [hovered, setHovered] = useState();
   const [activeCrew, setActiveCrew] = useState([]);
   const [inactiveCrew, setInactiveCrew] = useState([]);
+  const [inactiveCrewCollapsed, setInactiveCrewCollapsed] = useState(width < collapsibleWidth);
   const [pristine, setPristine] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -449,11 +418,20 @@ const OwnedCrew = (props) => {
     return pristine !== activeCrew.map((c) => c.i).join(',');
   }, [activeCrew, pristine]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (width > collapsibleWidth) setInactiveCrewCollapsed(false);
+  }, [width])
+
   // TODO: useCallback
   const handleRecruit = () => {
     if (isDirty) {
+      createAlert({
+        type: 'GenericAlert',
+        content: 'Please save your active crew changes first.',
+        level: 'warning',
+        duration: 3000
+      });
       playSound('effects.failure');
-      // TODO: nudge to save first
       return;
     }
 
@@ -493,7 +471,6 @@ const OwnedCrew = (props) => {
   };
 
   const handleActivate = (inactiveIndex) => {
-    // is there a slot?
     if (activeCrew.length < 5) {
       setActiveCrew([...activeCrew, inactiveCrew[inactiveIndex]]);
 
@@ -501,6 +478,12 @@ const OwnedCrew = (props) => {
       delete newInactive[inactiveIndex];
       setInactiveCrew([...Object.values(newInactive)].sort(inactiveCrewSort));
     } else {
+      createAlert({
+        type: 'GenericAlert',
+        content: 'Your active crew is already full.',
+        level: 'warning',
+        duration: 3000
+      });
       playSound('effects.failure');
     }
   };
@@ -518,6 +501,10 @@ const OwnedCrew = (props) => {
       activeCrew[slot],
       ...Object.values(newActive)
     ]);
+  };
+
+  const handleUndo = () => {
+    initFromCrew(crew, true);
   };
 
   const handleSave = () => {
@@ -564,6 +551,10 @@ const OwnedCrew = (props) => {
     }
   }, [crew?.length, getPendingActiveCrewChange, saving]);
 
+  const slotOrder = useMemo(() => {
+    return width < 1500 ? [0,1,2,3,4] : [1,2,0,3,4]
+  }, [width]);
+  
   return (
     <>
       <Details title="Owned Crew">
@@ -575,9 +566,9 @@ const OwnedCrew = (props) => {
                 My Active Crew: {activeCrew.length} / 5
               </h3>
             </Title>
-            <ActiveCrew>
+            <ActiveCrew captainFirst={slotOrder[0] === 0}>
               <div>
-                {[1,2,0,3,4].map((slot) => {
+                {slotOrder.map((slot) => {
                   const crew = activeCrew[slot] || {};
                   const isEmpty = !activeCrew[slot];
                   const isNextEmpty = isEmpty && slot === activeCrew.length && !saving;
@@ -591,13 +582,14 @@ const OwnedCrew = (props) => {
                             clickable={isNextEmpty}
                             onMouseEnter={() => setHovered(slot)}
                             onMouseLeave={() => setHovered()}
-                            assigned={isAssigned}>
+                            assigned={isAssigned}
+                            slot={slot}>
                             {slot === 0 && (
                               <>
                                 <CaptainTopFlourish>
                                   <div>Captain</div>
                                 </CaptainTopFlourish>
-                                <CrewContainer isCaptain>
+                                <CrewContainer>
                                   <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
                                     {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
                                     {!isEmpty && <CrewCard crew={crew} fontSize="95%" noWrapName />}
@@ -621,7 +613,7 @@ const OwnedCrew = (props) => {
                             )}
 
                             {slot !== 0 && (
-                              <CrewContainer>
+                              <CrewContainer slot={slot}>
                                 <TopFlourish />
                                 <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
                                   {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
@@ -657,11 +649,13 @@ const OwnedCrew = (props) => {
                             )}
                           </OuterContainer>
 
-                          {!isEmpty && (
+                          {!isEmpty && width > 1024 &&  (
                             <CrewInfoPane
                               crew={!isEmpty && crew}
+                              cssWhenVisible="transform: translateY(-20px);"
+                              referenceEl={refEl}
                               visible={hovered === slot}
-                              referenceEl={refEl} />
+                            />
                           )}
                         </>
                       )}
@@ -671,6 +665,11 @@ const OwnedCrew = (props) => {
               </div>
             </ActiveCrew>
             <ButtonRow>
+              {isDirty && !saving && (
+                <RevertButton onClick={handleUndo}>
+                  Revert
+                </RevertButton>
+              )}
               <Button
                 onClick={handleSave}
                 disabled={saving || !isDirty}
@@ -681,16 +680,16 @@ const OwnedCrew = (props) => {
 
             {inactiveCrew.length > 0 && (
               <InactiveCrewSection>
-                <Title hideBorder>
+                <Title hideBorder onClick={() => setInactiveCrewCollapsed(!inactiveCrewCollapsed)}>
                   <h3>
                     <CrewIcon style={{ fontSize: '125%' }} />
                     Stationed Crew: {inactiveCrew.length}
                   </h3>
-                  <IconHR>
+                  <IconHR collapsed={inactiveCrewCollapsed}>
                     <ChevronDoubleDownIcon />
                   </IconHR>
                 </Title>
-                <InactiveCrew>
+                <InactiveCrew collapsed={inactiveCrewCollapsed}>
                   {inactiveCrew.map((crew, i) => (
                     <PopperWrapper key={crew.i}>
                       {(refEl, setRefEl) => (
@@ -720,9 +719,10 @@ const OwnedCrew = (props) => {
 
                           <CrewInfoPane
                             crew={crew}
+                            cssWhenVisible="transform: translateY(-6px);"
+                            referenceEl={refEl}
                             visible={hovered === i + 5}
-                            isInactiveCrew
-                            referenceEl={refEl} />
+                          />
                         </>
                       )}
                     </PopperWrapper>

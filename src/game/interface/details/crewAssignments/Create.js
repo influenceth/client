@@ -14,6 +14,7 @@ import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/Details';
+import Dialog from '~/components/Dialog';
 import { AdalianIcon, LinkIcon, TwitterIcon } from '~/components/Icons';
 import IconButton from '~/components/IconButton';
 import TextInput from '~/components/TextInput';
@@ -87,6 +88,7 @@ const Title = styled.div`
   overflow: visible;
   padding: 12px 0;
   text-transform: uppercase;
+  text-align: center;
   white-space: nowrap;
   width: 250px;
 
@@ -153,9 +155,11 @@ const CardContainer = styled.div`
   z-index: 3;
   & > div {
     border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.35);
-    max-width: 100%;
     padding: 4px;
     width: ${cardWidth}px;
+    @media (min-width: 1024px) {
+      max-width: 22vw;
+    }
   }
 `;
 
@@ -172,6 +176,10 @@ const Traits = styled.div`
   right: 0;
 
   z-index: 2;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: none;
+  }
 `;
 
 const TraitRow = styled.div`
@@ -198,6 +206,7 @@ const TraitRow = styled.div`
 const TraitSpacer = styled.div`
   border: solid ${traitBorder};
   border-width: 1px 0;
+  max-width: 22vw;
   width: ${cardWidth}px; // (should match card width)
 `;
 
@@ -236,7 +245,11 @@ const Trait = styled.div`
   }
   & > article {
     flex: 1;
+    max-height: 100%;
+    overflow: hidden;
+    padding-bottom: 10px;
     padding-left: 10px;
+    padding-top: 10px;
     ${p => p.side === 'left' && 'padding-right: 20px;'}
     & > h4 {
       margin: 0 0 8px;
@@ -247,30 +260,39 @@ const Trait = styled.div`
     }
   }
 
-  ${p => p.side === 'both'
-  ? `
-    & ${TipHolder} {
-      left: 0;
-      & > svg {
-        transform-origin: top left;
-      }
+  & ${TipHolder} {
+    ${p => p.side}: 0;
+    & > svg {
+      transform-origin: top ${p => p.side};
     }
-    & ${TipHolder}:last-child {
-      left: auto;
-      right: 0;
-      & > svg {
-        transform-origin: top right;
-      }
+  }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    border: 0;
+    padding-bottom: 16px;
+    & > *:first-child {
+      font-size: ${p => p.isCrewClass ? '52px' : '64px'};
+      line-height: ${p => p.isCrewClass ? '52px' : '64px'};
+      width: 72px;
     }
-  `
-  : `
-    & ${TipHolder} {
-      ${p.side}: 0;
-      & > svg {
-        transform-origin: top ${p.side};
-      }
+  }
+
+  @media (max-width: 1500px) {
+    & > *:first-child {
+      width: 72px;
     }
-  `}
+    & > article {
+      font-size: 90%;
+    }
+  }
+  @media (min-width: 1024px) and (max-width: 1400px) {
+    & > *:first-child {
+      display: none;
+    }
+    & > article {
+      padding-left: 20px;
+    }
+  }
 `;
 
 const NameSection = styled.div`
@@ -290,6 +312,16 @@ const NameSection = styled.div`
     height: 2em;
     text-align: center;
     width: 440px;
+  }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    margin-top: -10px;
+    padding: 0 8px;
+    width: 100%;
+    & > input {
+      max-width: 440px;
+      width: 100%;
+    }
   }
 `;
 
@@ -377,9 +409,21 @@ const FinishContainer = styled.div`
     display: inline-block;
     text-transform: uppercase;
   }
+
+  @media (min-width: ${p => p.theme.breakpoints.mobile}px) {
+    & > *:first-child {
+      display: none;
+    }
+  }
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    justify-items: flex-end;
+
     padding-bottom: 12px;
-    padding-right: 24px;
+    padding-left: 8px;
+    padding-right: 8px;
   }
 `;
 
@@ -387,6 +431,22 @@ const PromptBody = styled.div`
   border: solid #333;
   border-width: 1px 0;
   padding: 16px 24px;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    padding: 12px;
+  }
+`;
+
+const MobileDialogContainer = styled.div`
+  & > div > div {
+    border: 2px solid ${p => p.theme.colors.main};
+    padding: 20px 5px 10px;
+    & button {
+      margin: 0 0 0 auto;
+    }
+  }
+  @media (min-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: none;
+  }
 `;
 
 const onCloseDestination = `/owned-crew`;
@@ -406,12 +466,13 @@ const CrewAssignmentCreate = (props) => {
   const { data: crew } = useOwnedCrew();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
+  const [confirming, setConfirming] = useState();
   const [featureOptions, setFeatureOptions] = useState([]);
   const [featureSelection, setFeatureSelection] = useState();
-  const [confirming, setConfirming] = useState();
   const [finalizing, setFinalizing] = useState();
   const [finalized, setFinalized] = useState();
   const [name, setName] = useState('');
+  const [traitDetailsOpen, setTraitDetailsOpen] = useState(false);
 
   const rewards = useMemo(() => {
     const traits = (storyState?.accruedTraits || []).map((id) => ({
@@ -540,7 +601,7 @@ const CrewAssignmentCreate = (props) => {
         setFinalizing(false);
         setFinalized(true);
       }
-      // TODO:? (after timeout, show error)
+      // TODO (enhancement): after timeout, show error
     } else if (featureOptions.length === 0) {
       rerollAppearance();
     }
@@ -582,8 +643,9 @@ const CrewAssignmentCreate = (props) => {
                     crew={crewmate}
                     fontSize="25px"
                     hideCollectionInHeader
-                    showClassInHeader={finalized}
-                    hideFooter />
+                    hideFooter
+                    noWrapName={finalized}
+                    showClassInHeader={finalized} />
                 </div>
               </CardContainer>
               {!finalized && (
@@ -730,21 +792,98 @@ const CrewAssignmentCreate = (props) => {
 
       <FinishContainer>
         {!finalized && (
-          <Button
-            disabled={finalizing || !name}
-            loading={finalizing}
-            onClick={confirmFinalize}>
-            Finalize
-          </Button>
+          <>
+            <Button
+              onClick={() => setTraitDetailsOpen(true)}
+              style={{ width: 'auto' }}>
+              Review Traits
+            </Button>
+            <Button
+              disabled={finalizing || !name}
+              loading={finalizing}
+              onClick={confirmFinalize}>
+              Finalize
+            </Button>
+          </>
         )}
         {finalized && (
-          <Button
-            onClick={handleFinish}>
-            Finish
-          </Button>
+          <>
+            <span />
+            <Button
+              onClick={handleFinish}>
+              Finish
+            </Button>
+          </>
          )}
       </FinishContainer>
       
+      {traitDetailsOpen && (
+        <MobileDialogContainer>
+          <Dialog>
+            <Trait isCrewClass>
+              <div>
+                <CrewClassIcon crewClass={crewmate.crewClass} overrideColor="inherit" />
+              </div>
+              <article>
+                <h4>{toCrewClass(crewmate.crewClass)}</h4>
+                <div>{toCrewClassDescription(crewmate.crewClass)}</div>
+              </article>
+            </Trait>
+            
+            <Trait isCrewClass>
+              <div>
+                <AdalianIcon />
+              </div>
+              <article>
+                <h4>Adalian Citizen</h4>
+                <div>Completed secondary education and entered adulthood in the Adalian System, after the dismantling of the Arvad.</div>
+              </article>
+            </Trait>
+              
+            <Trait>
+              <div>
+                <CrewTraitIcon trait={rewards[traitDispOrder[0]].id} type={rewards[traitDispOrder[0]].type} />
+              </div>
+              <article>
+                <h4>{rewards[traitDispOrder[0]].name}</h4>
+                <div>{rewards[traitDispOrder[0]].description}</div>
+              </article>
+            </Trait>
+            
+            <Trait>
+              <div>
+                <CrewTraitIcon trait={rewards[traitDispOrder[1]].id} type={rewards[traitDispOrder[1]].type} />
+              </div>
+              <article>
+                <h4>{rewards[traitDispOrder[1]].name}</h4>
+                <div>{rewards[traitDispOrder[1]].description}</div>
+              </article>
+            </Trait>
+            
+            <Trait>
+              <div>
+                <CrewTraitIcon trait={rewards[traitDispOrder[2]].id} type={rewards[traitDispOrder[2]].type} />
+              </div>
+              <article>
+                <h4>{rewards[traitDispOrder[2]].name}</h4>
+                <div>{rewards[traitDispOrder[2]].description}</div>
+              </article>
+            </Trait>
+
+            <Trait>
+              <div>
+                <CrewTraitIcon trait={rewards[traitDispOrder[3]].id} type={rewards[traitDispOrder[3]].type} />
+              </div>
+              <article>
+                <h4>{rewards[traitDispOrder[3]].name}</h4>
+                <div>{rewards[traitDispOrder[3]].description}</div>
+              </article>
+            </Trait>
+
+            <Button onClick={() => setTraitDetailsOpen(false)}>Close</Button>
+          </Dialog>
+        </MobileDialogContainer>
+      )}
       {confirming && (
         <ConfirmationDialog
           title="Confirm Character Minting"
@@ -757,7 +896,6 @@ const CrewAssignmentCreate = (props) => {
               and stored as independent on-chain events.
             </PromptBody>
           )}
-          bodyPadding="15px 80px 30px"
           onConfirm={finalize}
           onReject={() => setConfirming(false)}
         />

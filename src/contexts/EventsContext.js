@@ -124,7 +124,7 @@ export function EventsProvider({ children }) {
     if (!token) {
       setEvents([]);
       setLastBlockNumber(0);
-      setLatest(0);
+      setLatest(-1);
     }
   }, [ token ]);
 

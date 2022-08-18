@@ -23,7 +23,7 @@ const useCrewManager = () => {
     [getPendingTx]
   );
 
-  // TODO: 
+  // TODO: implement / test these once crew credits / empty crew are implemented
   const initializeCrew = useCallback(
     (params) => execute('INITIALIZE_CREW', params),
     [execute]

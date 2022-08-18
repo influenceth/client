@@ -17,7 +17,7 @@ const ConfirmationTitle = styled.div`
 const ConfirmationBody = styled.div`
   flex: 1;
   font-size: 15px;
-  padding: 40px 80px;
+  padding: 15px 80px 30px;
   & > article {
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     border-top: 1px solid rgba(255, 255, 255, 0.2);
@@ -26,7 +26,10 @@ const ConfirmationBody = styled.div`
   }
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    padding: 40px 20px;
+    padding: 15px 20px 30px;
+    & > article {
+      padding: 0;
+    }
   }
 `;
 const ConfirmationButtons = styled.div`
@@ -53,12 +56,6 @@ const Confirmation = styled.div`
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     width: 90vw;
   }
-
-  ${p => p.bodyPadding && `
-    & ${ConfirmationBody} {
-      padding: ${p.bodyPadding};
-    }
-  `}
 `;
 
 const ConfirmationDialog = ({ loading, onConfirm, onReject, ...props }) => (

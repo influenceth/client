@@ -464,12 +464,16 @@ const CrewMemberDetails = (props) => {
                     </NameForm>
                   </Form>
                 )}
-                <Button
-                  data-tip={account === crew.owner ? 'List on OpenSea' : 'Purchase on OpenSea'}
+
+                <span style={{ width: 175 }}
+                  data-tip="(not yet supported on L2)"
                   data-for="global"
-                  onClick={() => goToOpenSeaCrew(crew.i)}>
-                  <ClaimIcon />{account === crew.owner ? 'List for Sale' : 'Purchase Crew'}
-                </Button>
+                  data-place="right">
+                  <Button disabled onClick={() => goToOpenSeaCrew(crew.i)}>
+                    <ClaimIcon /> {account === crew.owner ? 'List for Sale' : 'Purchase Crew'}
+                  </Button>
+                </span>
+
               </Management>
             </BelowCardWrapper>
           </CrewBasics>

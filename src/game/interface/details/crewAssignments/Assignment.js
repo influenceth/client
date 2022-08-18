@@ -70,6 +70,7 @@ const AboveFold = styled.div`
   transition: opacity 750ms ease-out;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    height: ${aboveFoldHeight * 0.72}px;
     margin-top: ${aboveFoldMobileMargin}px;
     padding: 0 25px;
   }
@@ -140,6 +141,10 @@ const BackButton = styled.div`
     `
     : `margin-bottom: 1em;`
   }
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    bottom: 0;
+    margin-bottom: 1em;
+  }
 
   text-transform: uppercase;
   & *:first-child {
@@ -163,6 +168,7 @@ const Title = styled.div`
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     font-size: 28px;
+    text-align: left;
   }
 `;
 
@@ -275,6 +281,9 @@ const PromptDetails = styled.div`
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   color: ${p => p.theme.colors.main};
   padding: 1em 2em;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    padding: 1em;
+  }
 `;
 
 const CrewAssignment = (props) => {

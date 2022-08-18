@@ -6,7 +6,7 @@ import useAuth from '~/hooks/useAuth';
 const useMintableCrew = () => {
   const { account } = useAuth();
 
-  // TODO: this is a deprecated concept on L2 until we start
+  // TODO: (L2 transition) this is a deprecated concept on L2 until we start
   //  selling starter packs or crew credits
   return useQuery(
     [ 'asteroids', 'mintableCrew', { owner: account } ],

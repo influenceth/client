@@ -10,8 +10,6 @@ import AsteroidLink from '~/components/AsteroidLink';
 import CrewLink from '~/components/CrewLink';
 import AddressLink from '~/components/AddressLink';
 
-// TODO: L2 transition
-// (probably need to support linking to both L1 and L2 transactions for backward compatiblity)
 const getTxLink = (event) => {
   if (event.__t === 'Ethereum') {
     return `${process.env.REACT_APP_ETHERSCAN_URL}/tx/${event.transactionHash}`;

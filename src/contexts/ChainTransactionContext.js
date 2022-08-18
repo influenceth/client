@@ -112,7 +112,9 @@ const getContracts = (account) => ({
     },
     isEqual: () => true,
     getErrorAlert: () => ({
-      // TODO: ...
+      type: 'GenericAlert',
+      content: 'Crew reassignments failed.',
+      level: 'warning',
     })
   },
   'PURCHASE_AND_INITIALIZE_CREW': {

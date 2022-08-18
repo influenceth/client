@@ -300,20 +300,24 @@ const AsteroidDetails = (props) => {
                 </Button>
               )}
               {asteroid.owner && asteroid.owner !== account && (
-                <Button
-                  data-tip="Purchase on OpenSea"
+                <span style={{ width: 175 }}
+                  data-tip="(not yet supported on L2)"
                   data-for="global"
-                  onClick={() => goToOpenSeaAsteroid(asteroid.i)}>
-                  <ClaimIcon /> Purchase
-                </Button>
+                  data-place="right">
+                  <Button disabled onClick={() => goToOpenSeaAsteroid(i)}>
+                    <ScanIcon /> Purchase on OpenSea
+                  </Button>
+                </span>
               )}
               {asteroid.owner && asteroid.owner === account && (
-                <Button
-                  data-tip="List on OpenSea"
+                <span style={{ width: 175 }}
+                  data-tip="(not yet supported on L2)"
                   data-for="global"
-                  onClick={() => goToOpenSeaAsteroid(asteroid.i)}>
-                  <ClaimIcon /> List for Sale
-                </Button>
+                  data-place="right">
+                  <Button disabled onClick={() => goToOpenSeaAsteroid(i)}>
+                    <ScanIcon /> List on OpenSea
+                  </Button>
+                </span>
               )}
               {asteroid.owner && asteroid.owner === account && !asteroid.scanned && (
                 <Form
@@ -324,7 +328,7 @@ const AsteroidDetails = (props) => {
                   <Text>{scanMessages[scanStatus]}</Text>
                   {[ 'UNSCANNED', 'SCANNING' ].includes(scanStatus) && (
                     <span
-                      data-tip="(not yet supported)"
+                      data-tip="(not yet supported on L2)"
                       data-for="global">
                       <Button disabled>
                         <ScanIcon /> Start Scan
@@ -342,7 +346,7 @@ const AsteroidDetails = (props) => {
                   )*/}
                   {[ 'SCAN_READY', 'RETRIEVING' ].includes(scanStatus) && (
                     <span
-                      data-tip="(not yet supported)"
+                      data-tip="(not yet supported on L2)"
                       data-for="global">
                       <Button disabled>
                         <ScanIcon /> Finalize Scan
