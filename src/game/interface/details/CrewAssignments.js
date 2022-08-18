@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams, Link } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -321,7 +321,7 @@ const CrewAssignments = (props) => {
   const { account } = useAuth();
 
   const createStorySession = useCreateStorySession();
-  const { data: crew } = useOwnedCrew();
+  const { data: allCrew/* crew */ } = useOwnedCrew();
   const { data: mintable } = useMintableCrew();
   const { data: book, isError } = useBook(bookId);
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -331,6 +331,17 @@ const CrewAssignments = (props) => {
   const [bookReady, setBookReady] = useState(false);
   const [mobileView, setMobileView] = useState('book');
   const [selectedStory, setSelectedStory] = useState();
+  
+  // TODO: genesis book deprecation vvv
+  const crew = useMemo(() => {
+    if (allCrew) {
+      const eligibleCrew = allCrew.filter((c) => [1,2,3].includes(c.crewCollection));
+      if (eligibleCrew.length === 0) history.push('/owned-crew');
+      return eligibleCrew;
+    }
+    return null;
+  }, [allCrew]);
+  // ^^^
 
   const selectStory = useCallback((story) => () => {
     if (story) {

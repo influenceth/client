@@ -1,10 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import styled from 'styled-components';
 
-import useAuth from '~/hooks/useAuth';
-import useCrewAssignments from '~/hooks/useCrewAssignments';
-import useStore from '~/hooks/useStore';
-import useScreenSize from '~/hooks/useScreenSize';
 import IconButton from '~/components/IconButton';
 import {
   CloseIcon,
@@ -18,6 +14,11 @@ import {
   StarIcon,
   TimeIcon
 } from '~/components/Icons';
+import useAuth from '~/hooks/useAuth';
+import useCrewAssignments from '~/hooks/useCrewAssignments';
+import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useStore from '~/hooks/useStore';
+import useScreenSize from '~/hooks/useScreenSize';
 import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
 import Time from './mainMenu/Time';
@@ -115,6 +116,13 @@ const MainMenu = (props) => {
   const { account } = useAuth();
   const { data: crewAssignmentData } = useCrewAssignments();
   const { totalAssignments } = crewAssignmentData || {};
+  
+  // TODO: genesis book deprecation vvv
+  const { data: crew } = useOwnedCrew();
+  const hasGenesisCrewmate = useMemo(() => {
+    return crew && !!crew.find((c) => [1,2,3].includes(c.crewCollection))
+  }, [crew?.length]);
+  // ^^^
 
   const [ showMenu, setShowMenu ] = useState(!isMobile);
 
@@ -179,7 +187,7 @@ const MainMenu = (props) => {
             icon={<TimeIcon />}
             onClick={() => openSection('timeControl')} />
         </Menu>
-        {!!account && (
+        {!!account && hasGenesisCrewmate && (
           <Menu title="Activities" badge={totalAssignments}>
             <MenuItem
               name="Crew Assignments"
