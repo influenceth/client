@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext } from 'react';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 

@@ -475,16 +475,18 @@ const CrewAssignmentCreate = (props) => {
   const [traitDetailsOpen, setTraitDetailsOpen] = useState(false);
 
   const rewards = useMemo(() => {
-    const traits = (storyState?.accruedTraits || []).map((id) => ({
-      id,
-      ...toCrewTrait(id)
-    }));
-    return {
-      drive: traits.find((t) => driveTraits.includes(t.id)),
-      classImpactful: traits.find((t) => t.type === 'impactful'),
-      driveCosmetic: traits.find((t) => driveCosmeticTraits.includes(t.id)),
-      cosmetic: traits.find((t) => justCosmeticTraits.includes(t.id)),
-    };
+    if (storyState?.accruedTraits) {
+      const traits = (storyState?.accruedTraits || []).map((id) => ({
+        id,
+        ...toCrewTrait(id)
+      }));
+      return {
+        drive: traits.find((t) => driveTraits.includes(t.id)),
+        classImpactful: traits.find((t) => t.type === 'impactful'),
+        driveCosmetic: traits.find((t) => driveCosmeticTraits.includes(t.id)),
+        cosmetic: traits.find((t) => justCosmeticTraits.includes(t.id)),
+      };
+    }
   }, [storyState?.accruedTraits]);
 
   const shareOnTwitter = useCallback(() => {
@@ -563,7 +565,7 @@ const CrewAssignmentCreate = (props) => {
       return false;
     }
     return true;
-  }, [name]);
+  }, [createAlert, name]);
 
   const confirmFinalize = useCallback(() => {
     if (!validateName()) return;
@@ -579,7 +581,8 @@ const CrewAssignmentCreate = (props) => {
       sessionId // used to tag the pendingTransaction
     };
     purchaseAndInitializeCrew(input);
-  }, [name, featureSelection]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, featureOptions?.length, featureSelection, purchaseAndInitializeCrew, !!rewards, sessionId]);
 
   // show "complete" page (instead of "create") for non-recruitment assignments
   useEffect(() => {
@@ -605,17 +608,18 @@ const CrewAssignmentCreate = (props) => {
     } else if (featureOptions.length === 0) {
       rerollAppearance();
     }
-  }, [
+  }, [ // eslint-disable-line react-hooks/exhaustive-deps
     crew?.length,
     finalizing,
     getPendingPurchase,
+    name,
     rerollAppearance,
     sessionId,
     featureOptions.length
   ]);
 
   // hide until loaded
-  if (!storyState || !featureOptions) return null;
+  if (!storyState || !featureOptions || !rewards) return null;
   if (featureOptions.length === 0) return null;
 
   // draft crew

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactPlayer from 'react-player/lazy';
 import styled from 'styled-components';
-import IntroVideo from '~/assets/influence-load.webm';
 
 import Button from '~/components/Button';
 
@@ -39,7 +38,6 @@ const Cutscene = (props) => {
   const { allowSkip, source, onComplete } = props;
 
   const [highlightButtons, setHighlightButtons] = useState(true);
-  const [playing, setPlaying] = useState(false);
 
   const timeout = useRef();
   useEffect(() => {
@@ -51,17 +49,15 @@ const Cutscene = (props) => {
     }
   }, []);
 
-  const handleSkip = useCallback(() => {
-    onComplete();
-  }, []);
+  const handleSkip = onComplete;
 
   const onError = useCallback((err) => {
     console.error(err);
     onComplete();
-  }, []);
+  }, [onComplete]);
 
   return (
-    <Container onClick={() => setPlaying(true)}>
+    <Container>
       <ReactPlayer
         url={source}
         height={'100%'}
@@ -74,7 +70,7 @@ const Cutscene = (props) => {
             forceHLS: true
           }
         }} />
-      {props.allowSkip && (
+      {allowSkip && (
         <ButtonHolder highlight={highlightButtons}>
           <Button onClick={handleSkip}>Skip Cutscene</Button>
         </ButtonHolder>

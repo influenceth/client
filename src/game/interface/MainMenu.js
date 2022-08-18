@@ -121,7 +121,7 @@ const MainMenu = (props) => {
   const { data: crew } = useOwnedCrew();
   const hasGenesisCrewmate = useMemo(() => {
     return crew && !!crew.find((c) => [1,2,3].includes(c.crewCollection))
-  }, [crew?.length]);
+  }, [crew?.length]); // eslint-disable-line react-hooks/exhaustive-deps
   // ^^^
 
   const [ showMenu, setShowMenu ] = useState(!isMobile);

@@ -1,6 +1,6 @@
 import { useQuery } from 'react-query';
 
-import api from '~/lib/api';
+// import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
 
 const useMintableCrew = () => {

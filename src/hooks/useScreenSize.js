@@ -16,7 +16,7 @@ const useScreenSize = () => {
     window.addEventListener('resize', updateWidth);
 
     return () => window.removeEventListener('resize', updateWidth);
-  }, []);
+  }, [updateWidth]);
 
   return { isMobile, isTablet, isDesktop, width };
 };

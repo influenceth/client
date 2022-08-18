@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 
-import { MdAdd as PlusIcon, MdOutlineSavings } from 'react-icons/md';
+import { MdAdd as PlusIcon } from 'react-icons/md';
 
 import Button from '~/components/Button';
 import CrewCard from '~/components/CrewCard';
@@ -381,11 +381,80 @@ const PopperWrapper = (props) => {
 
 const collapsibleWidth = 1200;
 
+const getPristineString = (ac) => ac.map((c) => c.i).join(',');
+
+const reducer = (state, action) => {
+  switch(action.type) {
+    case 'INITIALIZE': {
+      const { crew, pristine } = action;
+      const ac = crew
+        .filter((c) => c.activeSlot !== null && c.activeSlot >= 0)
+        .sort((a, b) => a.activeSlot - b.activeSlot);
+      const ic = crew
+        .filter((c) => !(c.activeSlot !== null && c.activeSlot >= 0))
+        .sort(inactiveCrewSort);
+      return {
+        activeCrew: ac,
+        inactiveCrew: ic,
+        pristine: pristine ? getPristineString(ac) : state.pristine
+      }
+    }
+
+    case 'ACTIVATE': {
+      const { inactiveIndex } = action;
+      const { activeCrew, inactiveCrew } = state;
+      const ac = [...activeCrew, inactiveCrew[inactiveIndex]];
+      const ic = [...inactiveCrew];
+      delete ic[inactiveIndex];
+      return {
+        activeCrew: ac,
+        inactiveCrew: [...Object.values(ic)].sort(inactiveCrewSort),
+        pristine: state.pristine
+      };
+    }
+
+    case 'DEACTIVATE': {
+      const { slot } = action;
+      const { activeCrew, inactiveCrew } = state;
+
+      const ic = [activeCrew[slot], ...inactiveCrew].sort(inactiveCrewSort);
+      const ac = [...activeCrew];
+      delete ac[slot];
+
+      return {
+        activeCrew: [...Object.values(ac)],
+        inactiveCrew: ic,
+        pristine: state.pristine
+      };
+    }
+
+    case 'PROMOTE': {
+      const { slot } = action;
+      const { activeCrew } = state;
+
+      const ac = [...activeCrew];
+      delete ac[slot];
+      return {
+        activeCrew: [
+          activeCrew[slot],
+          ...Object.values(ac)
+        ],
+        inactiveCrew: state.inactiveCrew,
+        pristine: state.pristine
+      };
+    }
+
+    default:
+      return state;
+  }
+}
+
 const OwnedCrew = (props) => {
   const { account, token } = useAuth();
   const createStorySession = useCreateStorySession();
   const { data: crewAssignmentData } = useCrewAssignments();
   const queryClient = useQueryClient();
+  // const { data: mintable } = useMintableCrew();
   const { data: crew, isLoading: crewIsLoading } = useOwnedCrew();
   const { changeActiveCrew, getPendingActiveCrewChange } = useCrewManager();
   const history = useHistory();
@@ -398,21 +467,14 @@ const OwnedCrew = (props) => {
 
   const { crewRecruitmentStoryId, crewRecruitmentSessionId } = crewAssignmentData || {};
 
-  // TODO: 
-  // const { data: mintable } = useMintableCrew();
-
-  // TODO: useCallback
-
+  const [{ activeCrew, inactiveCrew, pristine }, dispatch] = useReducer(reducer, {
+    activeCrew: [],
+    inactiveCrew: [],
+    pristine: ''
+  });
   const [hovered, setHovered] = useState();
-  const [activeCrew, setActiveCrew] = useState([]);
-  const [inactiveCrew, setInactiveCrew] = useState([]);
   const [inactiveCrewCollapsed, setInactiveCrewCollapsed] = useState(width < collapsibleWidth);
-  const [pristine, setPristine] = useState('');
   const [saving, setSaving] = useState(false);
-
-  const resetPristine = useCallback((ac) => {
-    setPristine(ac.map((c) => c.i).join(','));
-  }, []);
 
   const isDirty = useMemo(() => {
     return pristine !== activeCrew.map((c) => c.i).join(',');
@@ -422,8 +484,7 @@ const OwnedCrew = (props) => {
     if (width > collapsibleWidth) setInactiveCrewCollapsed(false);
   }, [width])
 
-  // TODO: useCallback
-  const handleRecruit = () => {
+  const handleRecruit = useCallback(() => {
     if (isDirty) {
       createAlert({
         type: 'GenericAlert',
@@ -468,15 +529,20 @@ const OwnedCrew = (props) => {
         }
       });
     }
-  };
+  }, [ // eslint-disable-line react-hooks/exhaustive-deps
+    account,
+    createAlert,
+    createStorySession,
+    crewRecruitmentSessionId,
+    crewRecruitmentStoryId,
+    isDirty,
+    playSound,
+    token
+  ]);
 
-  const handleActivate = (inactiveIndex) => {
+  const handleActivate = useCallback((inactiveIndex) => {
     if (activeCrew.length < 5) {
-      setActiveCrew([...activeCrew, inactiveCrew[inactiveIndex]]);
-
-      const newInactive = [...inactiveCrew];
-      delete newInactive[inactiveIndex];
-      setInactiveCrew([...Object.values(newInactive)].sort(inactiveCrewSort));
+      dispatch({ type: 'ACTIVATE', inactiveIndex });
     } else {
       createAlert({
         type: 'GenericAlert',
@@ -486,30 +552,27 @@ const OwnedCrew = (props) => {
       });
       playSound('effects.failure');
     }
-  };
-  const handleDeactivate = (slot) => {
-    setInactiveCrew([activeCrew[slot], ...inactiveCrew].sort(inactiveCrewSort));
+  }, [activeCrew?.length, createAlert, playSound]);
 
-    const newActive = [...activeCrew];
-    delete newActive[slot];
-    setActiveCrew([...Object.values(newActive)]);
-  };
-  const handlePromote = (slot) => {
-    const newActive = [...activeCrew];
-    delete newActive[slot];
-    setActiveCrew([
-      activeCrew[slot],
-      ...Object.values(newActive)
-    ]);
-  };
+  const handleDeactivate = useCallback((slot) => {
+    dispatch({ type: 'DEACTIVATE', slot });
+  }, []);
 
-  const handleUndo = () => {
-    initFromCrew(crew, true);
-  };
+  const handlePromote = useCallback((slot) => {
+    dispatch({ type: 'PROMOTE', slot });
+  }, []);
 
-  const handleSave = () => {
+  const handleUndo = useCallback(() => {
+    dispatch({
+      type: 'INITIALIZE',
+      crew,
+      pristine: true
+    });
+  }, [crew]);
+
+  const handleSave = useCallback(() => {
     changeActiveCrew({ crew: activeCrew.map((c) => c.i) });
-  };
+  }, [activeCrew, changeActiveCrew]);
 
   const handleCutsceneComplete = useCallback(() => {
     dispatchSeenIntroVideo(true);
@@ -520,36 +583,42 @@ const OwnedCrew = (props) => {
     
   }, [dispatchSeenIntroVideo, handleRecruit, inactiveCrew?.length]);
 
-  const initFromCrew = useCallback((crew, pristine) => {
-    const ac = crew
-    .filter((c) => c.activeSlot !== null && c.activeSlot >= 0)
-    .sort((a, b) => a.activeSlot - b.activeSlot);
-    const ic = crew
-      .filter((c) => !(c.activeSlot !== null && c.activeSlot >= 0))
-      .sort(inactiveCrewSort);
-    setActiveCrew(ac);
-    setInactiveCrew(ic);
-    if (pristine) resetPristine(ac);
-  }, []);
-
+  // TODO (enhancement): also show as saving if pending purchase or initialization (that will result in a slot being taken)
+  //  probably not high priority b/c user would have had to navigate back here mid-transaction to create an issue
   useEffect(() => {
     const pendingChange = getPendingActiveCrewChange();
-    // TODO: also show as saving if pending purchase (user would have had to navigate back here)
     if (pendingChange) {
       setSaving(true);
       if (crew?.length > 0) {
-        initFromCrew(crew.map((c) => ({
-          ...c,
-          activeSlot: pendingChange.vars.crew.indexOf(c.i)
-        })));
+        dispatch({
+          type: 'INITIALIZE',
+          crew: crew.map((c) => ({
+            ...c,
+            activeSlot: pendingChange.vars.crew.indexOf(c.i)
+          })),
+          pristine: false
+        });
       }
+
     } else if (saving) {
       setSaving(false);
-      resetPristine(activeCrew);
+      dispatch({
+        type: 'INITIALIZE',
+        crew: crew.map((c) => ({
+          ...c,
+          activeSlot: activeCrew.indexOf(c.i)
+        })),
+        pristine: true
+      });
+
     } else if (crew?.length > activeCrew.length + inactiveCrew.length) {
-      initFromCrew(crew, true);
+      dispatch({
+        type: 'INITIALIZE',
+        crew,
+        pristine: true
+      });
     }
-  }, [crew?.length, getPendingActiveCrewChange, saving]);
+  }, [crew?.length, getPendingActiveCrewChange, saving]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const slotOrder = useMemo(() => {
     return width < 1500 ? [0,1,2,3,4] : [1,2,0,3,4]
@@ -680,7 +749,7 @@ const OwnedCrew = (props) => {
 
             {inactiveCrew.length > 0 && (
               <InactiveCrewSection>
-                <Title hideBorder onClick={() => setInactiveCrewCollapsed(!inactiveCrewCollapsed)}>
+                <Title hideBorder onClick={width < collapsibleWidth ? () => setInactiveCrewCollapsed(!inactiveCrewCollapsed) : noop}>
                   <h3>
                     <CrewIcon style={{ fontSize: '125%' }} />
                     Stationed Crew: {inactiveCrew.length}

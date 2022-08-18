@@ -334,13 +334,13 @@ const CrewAssignments = (props) => {
   
   // TODO: genesis book deprecation vvv
   const crew = useMemo(() => {
-    if (allCrew) {
+    if (!!allCrew) {
       const eligibleCrew = allCrew.filter((c) => [1,2,3].includes(c.crewCollection));
       if (eligibleCrew.length === 0) history.push('/owned-crew');
       return eligibleCrew;
     }
     return null;
-  }, [allCrew]);
+  }, [!!allCrew]); // eslint-disable-line react-hooks/exhaustive-deps
   // ^^^
 
   const selectStory = useCallback((story) => () => {

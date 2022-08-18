@@ -20,8 +20,7 @@ const Redirector = () => {
         history.push('/owned-crew');
       }
     }
-
-  }, [ !!token, loggedOut, crewIsLoading, !!crew, history ]);
+  }, [ loggedOut, !!token, crewIsLoading, !!crew ]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 };
