@@ -3,6 +3,7 @@ import ReactPlayer from 'react-player/lazy';
 import styled from 'styled-components';
 
 import Button from '~/components/Button';
+import useStore from '~/hooks/useStore';
 
 const ButtonHolder = styled.div`
   bottom: 0;
@@ -36,18 +37,21 @@ const noop = () => {};
 
 const Cutscene = (props) => {
   const { allowSkip, source, onComplete } = props;
+  const dispatchCutscenePlaying = useStore(s => s.dispatchCutscenePlaying);
 
   const [highlightButtons, setHighlightButtons] = useState(true);
 
   const timeout = useRef();
   useEffect(() => {
+    dispatchCutscenePlaying(true);
     timeout.current = setTimeout(() => {
       setHighlightButtons(false);
     }, 8000);
     return () => {
+      dispatchCutscenePlaying(false);
       if (timeout.current) clearTimeout(timeout.current);
     }
-  }, []);
+  }, [dispatchCutscenePlaying]);
 
   const handleSkip = onComplete;
 

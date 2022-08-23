@@ -624,6 +624,7 @@ const OwnedCrew = (props) => {
     return width < 1500 ? [0,1,2,3,4] : [1,2,0,3,4]
   }, [width]);
   
+  if (!token) return null;
   return (
     <>
       <Details title="Owned Crew">
