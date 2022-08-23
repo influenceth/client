@@ -19,7 +19,6 @@ export function AuthProvider({ children }) {
   // Invalidate token if the token has expired
   useEffect(() => {
     if (!!token && isExpired(token)) {
-      console.log('expired')
       dispatchTokenInvalidated();
     }
   }, [ token, dispatchTokenInvalidated ]);
@@ -43,6 +42,7 @@ export function AuthProvider({ children }) {
         const newToken = await api.verifyLogin(account, { signature: signature.join(',') });
         dispatchAuthenticated(newToken);
       } catch (e) {
+        console.error(e);
         createAlert({
           type: 'GenericAlert',
           level: 'warning',

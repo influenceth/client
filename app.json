@@ -38,12 +38,6 @@
       "description": "Address of ERC20 token for network.",
       "required": true
     },
-    "REACT_APP_CONTRACT_ASTEROID_TOKEN": {
-      "required": false
-    },
-    "REACT_APP_CONTRACT_CREW_TOKEN": {
-      "required": false
-    },
     "REACT_APP_STARKNET_DISPATCHER": {
       "required": true
     },

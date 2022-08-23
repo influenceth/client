@@ -8,12 +8,14 @@ const compression = require('compression');
 const historyApiFallback = require('connect-history-api-fallback');
 const isBot = require('isbot-fast');
 
+const basicAuth = require('./auth');
 const getOpengraphTags = require('./opengraph')
 
 const readFileAsync = promisify(fs.readFile);
 
 const app = express();
 
+if (process.env.AUTH_PASSWORD) app.use(basicAuth);
 app.use(compression());
 app.use(historyApiFallback());
 app.use(enforce.HTTPS({ trustProtoHeader: true }));

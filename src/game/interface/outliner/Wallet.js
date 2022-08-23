@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import styled from 'styled-components';
 
@@ -8,7 +8,6 @@ import Section from '~/components/Section';
 import BridgeModalDialog from '~/components/BridgeModalDialog';
 import Button from '~/components/Button';
 import { DisconnectIcon, LoginIcon, WalletIcon, WarningIcon } from '~/components/Icons';
-import starknetIcon from '~/assets/images/starknet-icon.png';
 
 const Controls = styled.div`
   display: flex;
@@ -70,26 +69,28 @@ const Wallet = () => {
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
 
   const { token, login, wallet } = useAuth();
+  const { account, connectionOptions, disconnect, error } = wallet;
+
   const [bridgeModalOpen, setBridgeModalOpen] = useState(false);
 
-  const status = wallet.account ? (token ? 'logged-in' : 'connected') : 'disconnected';
+  const status = account ? (token ? 'logged-in' : 'connected') : 'disconnected';
 
   // Remove auth queries when wallet is disconnected
-  const disconnectWallet = () => {
+  const disconnectWallet = useCallback(() => {
     invalidateToken();
-    wallet.disconnect();
-  };
+    disconnect();
+  }, [disconnect, invalidateToken]);
 
   useEffect(() => {
-    if (status !== 'logged-in' || !!wallet.error) forceExpand('wallet');
+    if (status !== 'logged-in' || !!error) forceExpand('wallet');
     if (status === 'logged-in') forceCollapse('wallet');
-  }, [ status, wallet.error, forceExpand, forceCollapse ]);
+  }, [ status, error, forceExpand, forceCollapse ]);
 
-  const openBridgeModal = (e) => {
+  const openBridgeModal = useCallback((e) => {
     e.stopPropagation();
     setBridgeModalOpen(true);
     return false;
-  };
+  }, []);
 
   return (
     <Section
@@ -100,26 +101,28 @@ const Wallet = () => {
       action={(<Link onClick={openBridgeModal}>Assets on L1?</Link>)}>
       <Info>
         <Indicator status={status}>●</Indicator>
-        {status === 'disconnected' && <span>Wallet is disconnected.</span>}
-        {status === 'connected' && <span>Connected as {wallet.account}</span>}
-        {status === 'logged-in' && <span>Logged in as {wallet.account}</span>}
+        {status === 'disconnected' && <span>Wallet is disconnected. Connect with...</span>}
+        {status === 'connected' && <span>Connected as {account}</span>}
+        {status === 'logged-in' && <span>Logged in as {account}</span>}
       </Info>
-      {!!wallet.error && (
+      {error && (
         <Error>
-          <StyledErrorIcon />
-          <span>{wallet.error}</span>
+          <StyledErrorIcon /> <span>{error}</span>
         </Error>
       )}
       <Controls>
-        {status === 'disconnected' && (
-          <Button
-            data-tip="Connect to StarkNet"
-            data-for="global"
-            data-place="left"
-            onClick={wallet.connect}>
-            <img src={starknetIcon} alt="Starknet" height={18} width={18} /> Connect Wallet
-          </Button>
-        )}
+        {status === 'disconnected' && connectionOptions.map((connectionOption) => {
+          const { label, logo, dataTip, onClick } = connectionOption;
+          return (
+            <Button
+              key={label}
+              dataTip={dataTip}
+              dataPlace="left"
+              onClick={onClick}>
+              {logo} {label}
+            </Button>
+          );
+        })}
         {status === 'connected' && (
           <Button
             data-tip="Login with Wallet"
@@ -129,7 +132,7 @@ const Wallet = () => {
             <LoginIcon /> Login
           </Button>
         )}
-        {[ 'connected', 'logged-in' ].includes(status) && (
+        {status === 'logged-in' && (
           <Button
             data-tip="Disconnect Wallet"
             data-for="global"
