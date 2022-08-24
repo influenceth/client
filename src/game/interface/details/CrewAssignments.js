@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useParams, Link } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import useAuth from '~/hooks/useAuth';
 import useBook from '~/hooks/useBook';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
-import useMintableCrew from '~/hooks/useMintableCrew';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStore from '~/hooks/useStore';
 import CrewCard from '~/components/CrewCard';
@@ -322,7 +321,6 @@ const CrewAssignments = (props) => {
 
   const createStorySession = useCreateStorySession();
   const { data: allCrew/* crew */ } = useOwnedCrew();
-  const { data: mintable } = useMintableCrew();
   const { data: book, isError } = useBook(bookId);
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
