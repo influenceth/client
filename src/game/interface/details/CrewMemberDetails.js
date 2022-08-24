@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import { useWeb3React } from '@web3-react/core';
 import styled, { css } from 'styled-components';
 import { toCrewClass, toCrewCollection, toCrewTitle, toCrewTrait } from 'influence-utils';
 import { FaBookOpen as BioIcon } from 'react-icons/fa';
 import { RiBarChart2Fill as StatsIcon } from 'react-icons/ri';
 
+import useAuth from '~/hooks/useAuth';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewMember from '~/hooks/useCrewMember';
 import useNameCrew from '~/hooks/useNameCrew';
@@ -30,11 +30,6 @@ import TextInput from '~/components/TextInput';
 
 import { unixTimeToGameTime } from '~/lib/utils';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
-
-const goToOpenSeaCrew = (i) => {
-  const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_CREW_TOKEN}/${i}`;
-  window.open(url, '_blank');
-};
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -368,7 +363,7 @@ const MIN_TRAIT_SLOTS = 12;
 const CrewMemberDetails = (props) => {
   const { i } = useParams();
   const history = useHistory();
-  const { account } = useWeb3React();
+  const { account } = useAuth();
   const { data: assignmentData } = useCrewAssignments();
   const { data: crew } = useCrewMember(i);
   const { nameCrew, naming } = useNameCrew(Number(i));
@@ -389,6 +384,19 @@ const CrewMemberDetails = (props) => {
       history.push(`/crew-assignments/${assignmentData.assignmentsByBook[0].id}`);
     }
   }, [assignmentData?.assignmentsByBook, history]);
+
+  const marketplaceName = crew?.chain === 'ETHEREUM' ? 'OpenSea' : 'Aspect';
+  console.log({ marketplaceName, crew })
+  const goToMarketplaceCrew = useCallback((i) => {
+    let url;
+    if (marketplaceName === 'OpenSea') {
+      // TODO: should theoretically also support v2 crew token here
+      url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_CREW_TOKEN}/${i}`;
+    } else {
+      url = `${process.env.REACT_APP_ASPECT_URL}/asset/${process.env.REACT_APP_STARKNET_CREWMATE_TOKEN}/${i}`;
+    }
+    window.open(url, '_blank');
+  }, [marketplaceName]);
 
   const selectTrait = useCallback((trait, mute) => () => {
     setSelectedTrait({
@@ -425,11 +433,13 @@ const CrewMemberDetails = (props) => {
             </CardWrapper>
             <BelowCardWrapper>
               <CrewLabels>
-                <DataReadout label="Career Start" slim inheritFontSize style={{ margin: '1.4em 0' }}>
-                  {startDate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SA
-                </DataReadout>
+                {startDate && (
+                  <DataReadout label="Career Start" slim inheritFontSize style={{ margin: '1.4em 0' }}>
+                    {startDate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SA
+                  </DataReadout>
+                )}
                 <DataReadout label="Class" slim inheritFontSize>{toCrewClass(crew.crewClass)}</DataReadout>
-                <DataReadout label="Title" slim inheritFontSize>{toCrewTitle(crew.title)}</DataReadout>
+                <DataReadout label="Title" slim inheritFontSize>{crew.title > 0 ? toCrewTitle(crew.title) : '(n/a)'}</DataReadout>
                 <DataReadout label="Collection" slim inheritFontSize>{toCrewCollection(crew.crewCollection)}</DataReadout>
               </CrewLabels>
               <Management>
@@ -461,12 +471,13 @@ const CrewMemberDetails = (props) => {
                     </NameForm>
                   </Form>
                 )}
+
                 <Button
-                  data-tip={account === crew.owner ? 'List on OpenSea' : 'Purchase on OpenSea'}
-                  data-for="global"
-                  onClick={() => goToOpenSeaCrew(crew.i)}>
-                  <ClaimIcon />{account === crew.owner ? 'List for Sale' : 'Purchase Crew'}
+                  disabled={parseInt(crew?.activeSlot) > -1}
+                  onClick={() => goToMarketplaceCrew(crew.i)}>
+                  <ClaimIcon /> {account === crew.owner ? 'List for Sale' : 'Purchase Crew'}
                 </Button>
+
               </Management>
             </BelowCardWrapper>
           </CrewBasics>
@@ -496,14 +507,14 @@ const CrewMemberDetails = (props) => {
                       <>
                         <AllTraits>
                           {crew.traits.map((trait) => {
-                            const { name } = toCrewTrait(trait) || {};
+                            const { name, type } = toCrewTrait(trait) || {};
                             if (name) {
                               return (
                                 <Trait
                                   key={trait}
                                   onClick={selectTrait(trait)}
                                   selected={selectedTrait?.id === trait}>
-                                  <CrewTraitIcon trait={trait} />
+                                  <CrewTraitIcon trait={trait} type={type} />
                                   <h6>{name}</h6>
                                 </Trait>
                               );
@@ -520,7 +531,7 @@ const CrewMemberDetails = (props) => {
                         <TraitSelected>
                           <Display>
                             <div>
-                              <CrewTraitIcon trait={selectedTrait?.id} />
+                              <CrewTraitIcon trait={selectedTrait?.id} type={selectedTrait?.type} />
                             </div>
                             <h6>{selectedTrait?.name}</h6>
                           </Display>
@@ -566,8 +577,8 @@ const CrewMemberDetails = (props) => {
                   <ul>
                     {crew?.events.map(e => (
                       <LogEntry
-                        key={e.transactionHash}
-                        data={e}
+                        key={`${e.transactionHash}_${e.logIndex}`}
+                        data={{ ...e, i: crew.i }}
                         type={`CrewMember_${e.event}`}
                         isTabular />
                     ))}

@@ -1,6 +1,15 @@
 import cursor from '~/assets/images/cursor.png';
 import cursorActive from '~/assets/images/cursor-active.png';
 
+const hexToRGB = (hex) => {
+  const hexParts = hex.toLowerCase().replace(/[^a-z0-9]/g, '').match(/.{1,2}/g);
+  return [
+    parseInt(hexParts[0], 16),
+    parseInt(hexParts[1], 16),
+    parseInt(hexParts[2], 16)
+  ].join(',');
+};
+
 const gray = '#bbbbbb';
 const teal = '#69ebf4';
 const blue = '#4f90ff';
@@ -44,7 +53,14 @@ const theme = {
       Engineer: red,
       Miner: orange,
       Merchant: yellow,
-      Scientist: blue
+      Scientist: blue,
+      rgb: {
+        Pilot: hexToRGB(purple),
+        Engineer: hexToRGB(red),
+        Miner: hexToRGB(orange),
+        Merchant: hexToRGB(yellow),
+        Scientist: hexToRGB(blue),
+      }
     }
   },
   fontSizes: {

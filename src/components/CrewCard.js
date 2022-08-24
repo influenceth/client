@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 import styled, { css } from 'styled-components';
+import pick from 'lodash/pick';
 import { toCrewClass, toCrewCollection, toCrewTitle } from 'influence-utils';
 
 import silhouette from '~/assets/images/silhouette.png';
@@ -49,10 +50,16 @@ const CardImage = styled(CardLayer)`
 const Card = styled.div`
   background-color: rgba(20, 20, 20, 0.75);
   ${p => !p.hasOverlay
-    ? 'background: linear-gradient(to bottom, rgba(30, 30, 30, 0.15) 10%, rgba(30, 30, 30, 0.85) 50%, rgba(30, 30, 30, 0.15) 90%);'
+    ? `background: linear-gradient(
+        to bottom,
+        rgba(30, 30, 30, 0.15) 10%,
+        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.15` : `30, 30, 30, 0.85`}) 70%,
+        rgba(30, 30, 30, 0.15) 100%
+      );`
     : ''
   }
   cursor: ${p => p.clickable && p.theme.cursors.active};
+  font-size: ${p => p.fontSize || p.theme.fontSizes.detailText};
   padding-top: 137.5%;
   position: relative;
   width: 100%;
@@ -67,12 +74,32 @@ const Card = styled.div`
       opacity: 1;
     }
   ` : ''}
+
+  ${p => p.hideHeader && `
+    & ${CardHeader} {
+      display: none;
+    }
+  `}
+  ${p => p.hideFooter && `
+    & ${CardFooter} {
+      display: none;
+    }
+  `}
 `;
 
 const CrewName = styled.span`
-  font-size: ${p => p.theme.fontSizes.detailText};
-  font-weight: bold;
-  padding: 15px 0;
+  font-weight: normal;
+  ${p => p.noWrapName && `
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `}
+  ${p => p.largerClassIcon && `
+    & > svg {
+      font-size: 40px;
+    }
+  `}
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     font-size: 85%;
   }
@@ -80,15 +107,23 @@ const CrewName = styled.span`
 
 const EmblemContainer = styled.div`
   margin-left: -4px;
-  width: 56px;
+  width: 3.5em;
+  ${p => p.hideEmblem && 'display: none;'}
 `;
 const FooterStats = styled.div`
-  font-size: 11px;
+  font-size: 0.68em;
+  min-width: 0;
   & > div:first-child {
     color: white;
-    font-size: 12px;
+    font-size: 1.1em;
     font-weight: bold;
     text-transform: uppercase;
+  }
+  & > div {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 `;
 
@@ -100,24 +135,59 @@ const loadingCss = css`
 
 const CrewCard = ({ crew, onClick, overlay, ...props }) => {
   const [ imageLoaded, setImageLoaded ] = useState(false);
-  const imageUrl = crew.crewCollection
-    ? `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crew.i}/image.svg?bustOnly=true`
-    : silhouette;
+
+  const useName = crew.name || (crew.i && `Crew Member #${crew.i}`) || '';
+  const classLabel = toCrewClass(crew.crewClass);
+  
+  let imageUrl = silhouette;
+  if (crew.i) {
+    imageUrl = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crew.i}/image.svg?bustOnly=true`;
+  } else if (crew.crewClass) {
+    imageUrl = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
+      pick(crew, [
+        'crewCollection', 'sex', 'body', 'crewClass', 'outfit', 'title',
+        'hair', 'facialFeature', 'hairColor', 'headPiece', 'bonusItem'
+      ])
+    )}`;
+  }
+
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [imageUrl]);
+
   return (
-    <Card onClick={onClick} hasOverlay={!!overlay} {...props}>
+    <Card
+      onClick={onClick}
+      hasOverlay={!!overlay}
+      classLabel={classLabel}
+      {...props}>
       <LoadingAnimation color={'white'} css={loadingCss} loading={!imageLoaded} />
       <CardImage visible={imageLoaded} applyMask={!overlay}>
         <img
-          alt={crew.name || `Crew Member #${crew.i}`}
+          alt={useName}
           src={imageUrl}
           onLoad={() => setImageLoaded(true)} />
       </CardImage>
       <CardHeader>
-        <CrewName>
+        <CrewName {...props}>
           <CrewClassIcon crewClass={crew.crewClass} />{' '}
-          {crew.name || `Crew Member #${crew.i}`}
+          {useName}
         </CrewName>
-        <DataReadout style={{ fontSize: 11 }}>{toCrewCollection(crew.crewCollection)}</DataReadout>
+        {!props.hideCollectionInHeader && (
+          <DataReadout style={{
+            fontSize: '0.68em',
+            ...(props.showClassInHeader
+              ? {
+                paddingBottom: 0,
+                marginBottom: -5
+              }
+              : {}
+            )
+            }}>
+            {toCrewCollection(crew.crewCollection)}
+          </DataReadout>
+        )}
+        {props.showClassInHeader && <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>{toCrewClass(crew.crewClass)}</DataReadout>}
       </CardHeader>
       {!overlay && (
         <CardFooter>

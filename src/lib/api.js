@@ -91,8 +91,9 @@ const api = {
     return response.data;
   },
 
-  getSale: async () => {
-    const response = await instance.get('/v1/sales');
+  getSale: async (assetType) => {
+    const params = assetType ? { assetType } : {};
+    const response = await instance.get('/v1/sales', { params });
     return response.data[0];
   },
 
@@ -129,13 +130,23 @@ const api = {
     return response.data;
   },
 
+  deleteStorySessionPath: async (sessionId, pathId) => {
+    const response = await instance.delete(`/v1/stories/sessions/${sessionId}/paths/${pathId}`);
+    return response.data;
+  },
+
+  getAdalianRecruitmentStory: async (id, sessionId) => {
+    const response = await instance.get(`/v1/stories/adalian-recruitment`);
+    return response.data;
+  },
+
   requestLogin: async (account) => {
     const response = await instance.get(`/v1/auth/login/${account}`);
     return response.data.message;
   },
 
-  verifyLogin: async (account, signature) => {
-    const response = await instance.post(`/v1/auth/login/${account}`, { sig: signature });
+  verifyLogin: async (account, params) => {
+    const response = await instance.post(`/v1/auth/login/${account}`, params);
     return response.data.token;
   }
 };

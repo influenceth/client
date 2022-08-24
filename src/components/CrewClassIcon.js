@@ -12,14 +12,14 @@ const indexedIcons = [
   Svg1, Svg2, Svg3, Svg4, Svg5
 ];
 
-const CrewClassIcon = ({ crewClass }) => {
+const CrewClassIcon = ({ crewClass, overrideColor }) => {
   const classLabel = toCrewClass(crewClass);
   const ClassIcon = indexedIcons[Number(crewClass)];
   if (ClassIcon) {
     return (
       <ClassIcon
         className="icon"
-        style={{ color: theme.colors.classes[classLabel] }} />
+        style={{ color: overrideColor || theme.colors.classes[classLabel] }} />
     );
   }
   return null;

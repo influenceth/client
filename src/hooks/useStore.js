@@ -53,6 +53,9 @@ const useStore = create(persist((set, get) => ({
       token: null
     },
 
+    hasSeenIntroVideo: false,
+    cutscenePlaying: false,
+
     logs: {
       alerts: []
     },
@@ -320,6 +323,14 @@ const useStore = create(persist((set, get) => ({
 
     dispatchAuthenticated: (token) => set(produce(state => {
       state.auth.token = token;
+    })),
+
+    dispatchCutscenePlaying: (which) => set(produce(state => {
+      state.cutscenePlaying = which;
+    })),
+
+    dispatchSeenIntroVideo: (which) => set(produce(state => {
+      state.hasSeenIntroVideo = which;
     })),
 
     dispatchTokenInvalidated: () => set(produce(state => {

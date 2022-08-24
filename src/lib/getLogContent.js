@@ -1,13 +1,26 @@
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 import { MdBlurOff as ScanIcon } from 'react-icons/md';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
-import { HiUserGroup as CrewIcon } from 'react-icons/hi';
+import {
+  CrewIcon,
+  PromoteIcon
+} from '~/components/Icons';
 
 import AsteroidLink from '~/components/AsteroidLink';
 import CrewLink from '~/components/CrewLink';
 import AddressLink from '~/components/AddressLink';
 
-const getTxLink = (txHash) => `${process.env.REACT_APP_ETHERSCAN_URL}/tx/${txHash}`;
+const getTxLink = (event) => {
+  if (event.__t === 'Ethereum') {
+    return `${process.env.REACT_APP_ETHERSCAN_URL}/tx/${event.transactionHash}`;
+  }
+  return `${process.env.REACT_APP_VOYAGER_URL}/tx/${event.transactionHash}`;
+}
+
+const saleLabels = {
+  Asteroid: 'asteroid development rights',
+  Crewmate: 'crewmate recruitment'
+};
 
 const entries = {
   App_Updated: (e) => ({
@@ -38,12 +51,12 @@ const entries = {
         <span>Asteroid </span>
         <AsteroidLink id={e.returnValues.tokenId} />
         <span> transferred from </span>
-        <AddressLink address={e.returnValues.from} />
+        <AddressLink address={e.returnValues.from} chain={e.__t} />
         <span> to </span>
-        <AddressLink address={e.returnValues.to} />
+        <AddressLink address={e.returnValues.to} chain={e.__t} />
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
 
   Asteroid_ScanStarted: (e) => ({
@@ -54,7 +67,7 @@ const entries = {
         <AsteroidLink id={e.returnValues.asteroidId} />
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
 
   Asteroid_ReadyToFinalizeScan: (e) => ({
@@ -76,19 +89,19 @@ const entries = {
         <AsteroidLink id={e.returnValues.asteroidId} />
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
 
-  Asteroid_NameChanged: (e) => ({
+  Asteroid_Asteroid_NameChanged: (e) => ({
     icon: <NameIcon />,
     content: (
       <>
         <span>Asteroid </span>
-        <AsteroidLink id={e.returnValues.asteroidId} />
+        <AsteroidLink id={e.returnValues.asteroidId || e.returnValues.tokenId} forceBaseName />
         <span>{` re-named to "${e.returnValues.newName}"`}</span>
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
 
   Asteroid_BuyingError: (e) => ({
@@ -141,8 +154,38 @@ const entries = {
         <AsteroidLink id={e.returnValues.asteroidId} />
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
+
+  CrewMember_Crew_CompositionChanged: (e) => {
+    let action = null;
+    let icon = <CrewIcon />;
+    const { newCrew, oldCrew } = e.returnValues;
+    if (newCrew[0] === e.i) {
+      action = `promoted to Captain`;
+      icon = <PromoteIcon />;
+    }
+    else if (oldCrew[0] === e.i && newCrew.includes(e.i)) {
+      action = `relieved of command`;
+    }
+    else if (newCrew.includes(e.i) && !oldCrew.includes(e.i)) action = `assigned to active duty`;
+    else if (!newCrew.includes(e.i) && oldCrew.includes(e.i)) action = `removed from active duty`;
+    // (if lateral move in active crew, not worth reporting)
+
+    if (action) {
+      return {
+        icon,
+        content: (
+          <>
+            <span>Crew member </span>
+            <CrewLink id={e.i} />
+            <span> {action}.</span>
+          </>
+        ),
+        txLink: getTxLink(e),
+      };
+    }
+  },
 
   CrewMember_Transfer: (e) => ({
     icon: <TransferIcon />,
@@ -151,12 +194,12 @@ const entries = {
         <span>Crew member </span>
         <CrewLink id={e.returnValues.tokenId} />
         <span> transferred from </span>
-        <AddressLink address={e.returnValues.from} />
+        <AddressLink address={e.returnValues.from} chain={e.__t} />
         <span> to </span>
-        <AddressLink address={e.returnValues.to} />
+        <AddressLink address={e.returnValues.to} chain={e.__t} />
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
 
   CrewMember_SettlingError: (e) => ({
@@ -175,16 +218,16 @@ const entries = {
     ),
   }),
 
-  CrewMember_NameChanged: (e) => ({
+  CrewMember_Crewmate_NameChanged: (e) => ({
     icon: <NameIcon />,
     content: (
       <>
         <span>Crew member </span>
-        <CrewLink id={e.returnValues.crewId} />
+        <CrewLink id={e.returnValues.crewId || e.returnValues.tokenId} />
         <span>{` re-named to "${e.returnValues.newName}"`}</span>
       </>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e),
   }),
 
   GenericAlert: (e) => ({
@@ -200,7 +243,7 @@ const entries = {
   Sale_TimeToStart: (e) => ({
     content: (
       <span>
-        The next asteroid development rights sale will start at
+        The next {saleLabels[e.asset]} sale will start at
         {` ${(new Date(e.start)).toLocaleString()}`}
       </span>
     ),
@@ -211,7 +254,7 @@ const entries = {
     return {
       content: (
         <span>
-          An asteroid development rights sale is now open!
+          An {saleLabels[e.asset]} sale is now open!
           There {singular ? 'is' : 'are'} {e.available.toLocaleString()} remaining asteroid{singular ? '' : 's'} available.
         </span>
       ),
@@ -221,7 +264,7 @@ const entries = {
   Sale_Ended: (e) => ({
     content: (
       <span>
-        The asteroid development rights sale has completed.
+        The {saleLabels[e.asset]} sale has completed.
       </span>
     ),
   })

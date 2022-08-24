@@ -7,24 +7,23 @@ The browser game client for Influence.
     ```
     echo "REACT_APP_API_URL=http://localhost:3001
     REACT_APP_IMAGES_URL=http://localhost:3001
-    REACT_APP_OPEN_SEA_URL=https://opensea.io
+    REACT_APP_BRIDGE_URL=http://localhost:4000
+    REACT_APP_STARKNET_NETWORK=http://localhost:9000
+    REACT_APP_VOYAGER_URL=https://voyager.online
     REACT_APP_ETHERSCAN_URL=https://etherscan.io
-    REACT_APP_ETH_PROVIDER=http://localhost:8545
-    REACT_APP_CHAIN_ID=1337
-    REACT_APP_CONTRACT_PLANETS=
-    REACT_APP_CONTRACT_ASTEROID_TOKEN=
-    REACT_APP_CONTRACT_ASTEROID_FEATURES=
-    REACT_APP_CONTRACT_ASTEROID_SCANS=
-    REACT_APP_CONTRACT_ASTEROID_SALE=
-    REACT_APP_CONTRACT_ASTEROID_NAMES=
-    REACT_APP_CONTRACT_ARVAD_CREW_SALE=
-    REACT_APP_CONTRACT_CREW_TOKEN
-    REACT_APP_CONTRACT_CREW_FEATURES=
-    REACT_APP_CONTRACT_CREW_NAMES=
+    REACT_APP_OPEN_SEA_URL=https://opensea.io
+
+    # (this is the devnet token address)
+    REACT_APP_ERC20_TOKEN_ADDRESS=0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488
+    REACT_APP_STARKNET_DISPATCHER=
+
+    REACT_APP_HIDE_SOCIAL=false
+
+    SKIP_PREFLIGHT_CHECK=true
     " > .env
     ```
 1. Adjust or fill in any missing .env variables as needed.
-    > i.e. All `REACT_APP_CONTRACT_*` values should have been output at the end of the `seedChain` script in the `contacts` project. (You will need to prepend `REACT_APP_` to the variable names).
+    > i.e. If you are running starknet devnet, `REACT_APP_STARKNET_DISPATCHER` value is available by running `node bin/printEnv.js` from the `starknet-contracts` project.
 1. Run `npm start`.
 
 ## Available Scripts

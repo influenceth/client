@@ -1,8 +1,6 @@
 import { Suspense } from 'react';
 import ReactDOM from 'react-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { Web3ReactProvider } from '@web3-react/core';
-import { Web3Provider } from '@ethersproject/providers';
 import LoadingAnimation from 'react-spinners/PropagateLoader';
 import styled from 'styled-components';
 
@@ -20,12 +18,6 @@ const queryClient = new QueryClient({
   }
 });
 
-const getLibrary = (provider) => {
-  const library = new Web3Provider(provider);
-  library.pollingInterval = 12000;
-  return library;
-};
-
 const Loader = styled.div`
   align-items: center;
   background-color: black;
@@ -39,11 +31,9 @@ const Loader = styled.div`
 
 ReactDOM.render(
   <Suspense fallback={<Loader><LoadingAnimation color={'white'} loading={true} /></Loader>}>
-    <Web3ReactProvider getLibrary={getLibrary}>
-      <QueryClientProvider client={queryClient} contextSharing={true}>
-        <Game />
-      </QueryClientProvider>
-    </Web3ReactProvider>
+    <QueryClientProvider client={queryClient} contextSharing={true}>
+      <Game />
+    </QueryClientProvider>
   </Suspense>,
   document.getElementById('root')
 );

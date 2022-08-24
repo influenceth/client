@@ -1,13 +1,12 @@
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
-import { HiUserGroup as CrewIcon } from 'react-icons/hi';
 import { BiTransfer as TradeIcon } from 'react-icons/bi';
 
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useMintableCrew from '~/hooks/useMintableCrew';
 import CrewMemberItem from '~/components/CrewMemberItem';
 import IconButton from '~/components/IconButton';
-import { DetailIcon } from '~/components/Icons';
+import { CrewIcon, DetailIcon } from '~/components/Icons';
 import ListEmptyMessage from '~/components/ListEmptyMessage';
 import Section from '~/components/Section';
 
@@ -46,7 +45,7 @@ const OwnedCrew = (props) => {
         </IconButton>
         <IconButton
           data-tip="Trade Crew Members"
-          onClick={() => window.open(`${process.env.REACT_APP_OPEN_SEA_URL}/collection/influence-crew`)}>
+          onClick={() => window.open(`${process.env.REACT_APP_ASPECT_URL}/collection/${process.env.REACT_APP_STARKNET_CREWMATE_TOKEN}`)}>
           <TradeIcon />
         </IconButton>
       </Controls>

@@ -9,7 +9,7 @@ import theme from '~/theme';
 
 const StyledButton = styled.button`
   align-items: center;
-  border: 1px solid ${p => p.theme.colors.main};
+  border: 1px solid ${p => p.color || p.theme.colors.main};
   background-color: ${p => p.active ? p.theme.colors.main : 'transparent'};
   clip-path: polygon(
     0 0,
@@ -18,7 +18,7 @@ const StyledButton = styled.button`
     calc(100% - 9.5px) 100%,
     0 100%
   );
-  color: ${p => p.active ? 'white' : p.theme.colors.main};
+  color: ${p => p.active ? 'white' : (p.color || p.theme.colors.main)};
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: 15px;
@@ -72,7 +72,7 @@ const Corner = styled.svg`
   margin-right: 0;
   position: absolute;
   right: -1px;
-  stroke: ${p => p.theme.colors.main};
+  stroke: ${p => p.color || p.theme.colors.main};
   stroke-width: 1px;
   width: 10px;
 `;
@@ -109,7 +109,7 @@ const Button = (props) => {
       {props.badge && (
         <StyledBadge value={props.badge} />
       )}
-      <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
+      <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg" color={props.color}>
         <line x1="0" y1="10" x2="10" y2="0" />
       </Corner>
     </StyledButton>

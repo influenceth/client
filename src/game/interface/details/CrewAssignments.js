@@ -1,11 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useParams, Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { useWeb3React } from '@web3-react/core';
 
+import useAuth from '~/hooks/useAuth';
 import useBook from '~/hooks/useBook';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
-import useMintableCrew from '~/hooks/useMintableCrew';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStore from '~/hooks/useStore';
 import CrewCard from '~/components/CrewCard';
@@ -318,11 +317,10 @@ const ProgressIcon = styled.span`
 const CrewAssignments = (props) => {
   const { id: bookId, selected: initialSelectedId } = useParams();
   const history = useHistory();
-  const { account } = useWeb3React();
+  const { account } = useAuth();
 
   const createStorySession = useCreateStorySession();
-  const { data: crew } = useOwnedCrew();
-  const { data: mintable } = useMintableCrew();
+  const { data: allCrew/* crew */ } = useOwnedCrew();
   const { data: book, isError } = useBook(bookId);
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
@@ -331,6 +329,17 @@ const CrewAssignments = (props) => {
   const [bookReady, setBookReady] = useState(false);
   const [mobileView, setMobileView] = useState('book');
   const [selectedStory, setSelectedStory] = useState();
+  
+  // TODO: genesis book deprecation vvv
+  const crew = useMemo(() => {
+    if (!!allCrew) {
+      const eligibleCrew = allCrew.filter((c) => [1,2,3].includes(c.crewCollection));
+      if (eligibleCrew.length === 0) history.push('/owned-crew');
+      return eligibleCrew;
+    }
+    return null;
+  }, [!!allCrew]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ^^^
 
   const selectStory = useCallback((story) => () => {
     if (story) {
@@ -584,6 +593,9 @@ const CrewAssignments = (props) => {
                 : (
                   <CrewlessSection>
                     <h4>You must have a crew to complete crew assignments.</h4>
+                    {/* NOTE: this is deprecated for now because any new crew will not be in an eligible
+                      collection for these assignments
+
                     <div>
                       <a href={`${process.env.REACT_APP_OPEN_SEA_URL}/collection/influence-crew`} target="_blank" rel="noreferrer">Click here</a>
                       {' '}to acquire crew members through trade
@@ -594,6 +606,7 @@ const CrewAssignments = (props) => {
                           </span>
                         ) : '.'}
                     </div>
+                    */}
                   </CrewlessSection>
                 )
               }

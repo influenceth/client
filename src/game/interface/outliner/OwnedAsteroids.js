@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 import { AiFillStar } from 'react-icons/ai';
+import { BiTransfer as TradeIcon } from 'react-icons/bi';
 import { RiFilter2Fill as FilterIcon, RiTableFill } from 'react-icons/ri';
 import { FaMapMarkedAlt as ShowOnMapIcon } from 'react-icons/fa';
 
@@ -73,6 +74,11 @@ const OwnedAsteroids = (props) => {
           data-tip="Open in Table"
           onClick={() => history.push('/owned-asteroids')}>
           <RiTableFill />
+        </IconButton>
+        <IconButton
+          data-tip="Trade Asteroids"
+          onClick={() => window.open(`${process.env.REACT_APP_ASPECT_URL}/collection/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}`)}>
+          <TradeIcon />
         </IconButton>
         {includeOwned && <ColorPicker initialColor={highlightColor} onChange={changeColor} />}
       </Controls>

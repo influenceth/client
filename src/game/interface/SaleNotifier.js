@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useWeb3React } from '@web3-react/core';
 
+import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import useInterval from '~/hooks/useInterval';
 import useOwnedAsteroidsCount from '~/hooks/useOwnedAsteroidsCount';
 
 const SaleNotifier = (props) => {
   const { sale } = props;
-  const { library } = useWeb3React();
+  const { wallet } = useAuth();
   const { data: soldCount } = useOwnedAsteroidsCount();
   const saleStarted = useStore(s => s.dispatchSaleStarted);
   const saleEnded = useStore(s => s.dispatchSaleEnded);
@@ -15,8 +15,8 @@ const SaleNotifier = (props) => {
   const [ status, setStatus ] = useState();
 
   useInterval(async () => {
-    if (status === 'starting' && library) {
-      const block = await library.getBlock('latest');
+    if (status === 'starting' && wallet?.starknet?.provider) {
+      const block = await wallet.starknet.provider.getBlock('latest');
       if (block.timestamp > sale.saleStartTime) setStatus('started');
     }
   }, status === 'starting' ? 1000 : null);
@@ -47,12 +47,11 @@ const SaleNotifier = (props) => {
   useEffect(() => {
     if (status === 'started') {
       // Use original sale value to support testnet usage
-      const endCount = sale.endCount || 1859;
-
       saleStarted();
       createAlert({
         type: 'Sale_Started',
-        available: endCount - soldCount
+        asset: sale.assetType,
+        available: sale.saleLimit - (sale.saleCount || 0)
       });
     }
 
@@ -60,13 +59,17 @@ const SaleNotifier = (props) => {
       saleEnded();
       createAlert({
         type: 'Sale_TimeToStart',
+        asset: sale.assetType,
         start: sale.saleStartTime * 1000
       });
     }
 
     if (status === 'ended') {
       saleEnded();
-      createAlert({ type: 'Sale_Ended' });
+      createAlert({
+        type: 'Sale_Ended',
+        asset: sale.assetType
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ status ]);

@@ -1,9 +1,9 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { useWeb3React } from '@web3-react/core';
 import { toCrewTrait } from 'influence-utils';
 
+import useAuth from '~/hooks/useAuth';
 import Button from '~/components/Button';
 import CopyReferralLink from '~/components/CopyReferralLink';
 import CrewCard from '~/components/CrewCard';
@@ -284,7 +284,7 @@ const FinishContainer = styled.div`
 `;
 
 const CrewAssignmentComplete = (props) => {
-  const { account } = useWeb3React();
+  const { account } = useAuth();
   const { id: sessionId } = useParams();
   const history = useHistory();
   const { data: allCrew } = useOwnedCrew();
@@ -300,11 +300,11 @@ const CrewAssignmentComplete = (props) => {
   }, [storyState, allCrew]);
 
   const rewards = useMemo(() => {
-    return (storyState?.objectives || []).map((id) => ({
+    return (storyState?.accruedTraits || []).map((id) => ({
       id,
       ...toCrewTrait(id)
     }));
-  }, [storyState?.objectives]);
+  }, [storyState?.accruedTraits]);
 
   const shareOnTwitter = useCallback(() => {
     const params = new URLSearchParams({
@@ -323,6 +323,13 @@ const CrewAssignmentComplete = (props) => {
   const handleFinish = useCallback(() => {
     history.push(onCloseDestination);
   }, [history, onCloseDestination]);
+
+  // show "create" page for recruitment assignments
+  useEffect(() => {
+    if (storyState && (storyState.tags || []).includes('ADALIAN_RECRUITMENT')) {
+      history.push(`/crew-assignment/${sessionId}/create`);
+    }
+  }, [!!storyState]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const slideOutContents = useMemo(() =>
     rewards?.length > 0
@@ -374,7 +381,7 @@ const CrewAssignmentComplete = (props) => {
             </CardWrapper>
 
             <RecruitSection>
-              {process.env.NODE_ENV !== 'goerli' && (
+              {!process.env.REACT_APP_HIDE_SOCIAL && (
                 <TwitterButton onClick={shareOnTwitter}>
                   <span>Share on Twitter</span>
                   <TwitterIcon />

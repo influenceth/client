@@ -8,10 +8,10 @@ import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
 import useStore from '~/hooks/useStore';
 import Button from '~/components/Button';
+import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
 import Details from '~/components/Details';
-import Dialog from '~/components/Dialog';
 import { ArvadIcon, BackIcon } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
@@ -50,7 +50,9 @@ const CoverImage = styled.div`
     opacity: ${p => p.ready ? 1 : 0};
     height: 100%;
     mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
-    transition: opacity 750ms ease-out, background-image 750ms ease-out;
+    transition:
+      background-position 750ms ease-out,
+      opacity 750ms ease-out;
   }
 `;
 
@@ -68,6 +70,7 @@ const AboveFold = styled.div`
   transition: opacity 750ms ease-out;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    height: ${aboveFoldHeight * 0.72}px;
     margin-top: ${aboveFoldMobileMargin}px;
     padding: 0 25px;
   }
@@ -131,7 +134,18 @@ const BackButton = styled.div`
   display: inline-flex;
   font-size: 14px;
   font-weight: bold;
-  margin-bottom: 1em;
+  ${p => p.isMintingStory
+    ? `
+      position: relative;
+      bottom: -44px;
+    `
+    : `margin-bottom: 1em;`
+  }
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    bottom: 0;
+    margin-bottom: 1em;
+  }
+
   text-transform: uppercase;
   & *:first-child {
     margin-right: 0.75em;
@@ -139,14 +153,22 @@ const BackButton = styled.div`
   &:hover {
     color: white;
   }
+
+  ${p => p.disableAndHide && `
+    cursor: ${p.theme.cursors.default};
+    opacity: 0;
+    pointer-events: none;
+  `}
 `;
 
 const Title = styled.div`
-  font-size: 36px;
+  font-size: ${p => p.isMintingStory ? '44px' : '36px'};
   font-weight: bold;
+  ${p => p.ownerType === 'CREW' && 'text-align: center;'}
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     font-size: 28px;
+    text-align: left;
   }
 `;
 
@@ -186,6 +208,11 @@ const NavSpacer = styled.div`
   height: 0;
   margin: 0 8px;
   width: 1.5em;
+
+  ${p => p.steps > 4 && `
+    opacity: 0;
+    width: 0.5em;
+  `}
 `;
 
 const FlourishCentered = styled.div`
@@ -198,7 +225,7 @@ const FlourishCentered = styled.div`
 const FlourishImageContainer = styled(FlourishCentered)`
   color: white;
   font-size: ${p => p.shrinkIcon ? '80px' : '120px'};
-  margin-top: 16px;
+  margin-top: ${p => p.shrinkIcon ? '24px' : '16px'};
   opacity: 0.1;
 `;
 
@@ -249,56 +276,15 @@ const PagePrompt = styled.div`
   margin-bottom: 1em;
 `;
 
-const Confirmation = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 300px;
-  width: 650px;
-
+const PromptDetails = styled.div`
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  color: ${p => p.theme.colors.main};
+  padding: 1em 2em;
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    width: 90vw;
+    padding: 1em;
   }
 `;
-const ConfirmationTitle = styled.div`
-  align-items: center;
-  display: flex;
-  flex-direction: row;
-  height: 60px;
-  padding: 8px 16px;
-  & > h4 { flex: 1, margin: 0 }
-`;
-const ConfirmationBody = styled.div`
-  flex: 1;
-  font-size: 15px;
-  padding: 40px 80px;
-  & > article {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    color: ${p => p.theme.colors.main};
-    padding: 1em 2em;
-  }
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    padding: 40px 20px;
-  }
-`;
-const ConfirmationButtons = styled.div`
-  display: flex;
-  flex-direction: row;
-  height: 60px;
-  justify-content: center;
-  align-items: center;
-  padding: 8px 8px 16px;
-  & > button {
-    margin-top: 0;
-    margin-left: 1em;
-    &:first-child {
-      margin-left: 0;
-    }
-  }
-`;
-
-const totalSteps = 3;
 
 const CrewAssignment = (props) => {
   const { id: sessionId } = useParams();
@@ -310,6 +296,16 @@ const CrewAssignment = (props) => {
 
   const [coverImageLoaded, setCoverImageLoaded] = useState();
   const [selection, setSelection] = useState();
+
+  const isMintingStory = (storyState?.tags || []).includes('ADALIAN_RECRUITMENT');
+  const totalSteps = isMintingStory ? 5 : 3;
+
+  const onCloseDestination = isMintingStory
+    ? `/owned-crew`
+    : `/crew-assignments/${storyState?.book}/${storyState?.story}`;
+  const onCloseDestinationLabel = isMintingStory
+    ? 'Crew Management'
+    : book?.title;
 
   // on step change, clear selection (to close modal)
   useEffect(() => {
@@ -339,48 +335,65 @@ const CrewAssignment = (props) => {
 
   const goBack = useCallback(() => {
     playSound('effects.click');
-    history.push(`/crew-assignments/${storyState?.book}/${storyState?.story}`);
-  }, [history, playSound, storyState]);
+    history.push(onCloseDestination);
+  }, [history, playSound, onCloseDestination]);
+
+  const undoPath = useCallback(() => {
+    commitPath(-1);
+  }, [commitPath]);
 
   const finish = useCallback(() => {
     playSound('effects.success');
-    history.push(`/crew-assignment/${sessionId}/complete`);
-  }, [history, playSound, sessionId]);
+    history.push(isMintingStory
+      ? `/crew-assignment/${sessionId}/create`
+      : `/crew-assignment/${sessionId}/complete`
+    );
+  }, [history, playSound, sessionId, isMintingStory]);
 
   const crew = useMemo(() => {
     return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
   }, [storyState, allCrew]);
 
-  const contentReady = storyState && crew;
+  const contentReady = storyState && (crew || storyState.ownerType !== 'CREW_MEMBER');
   const pathIsReady = contentReady && storyState.image === coverImageLoaded && !loadingPath;
   return (
     <>
-      <Details title="Crew Assignments" edgeToEdge>
+      <Details title="Crew Assignments" edgeToEdge onCloseDestination={onCloseDestination}>
         {!contentReady && <Loader />}
         {contentReady && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <InvisibleImage src={storyState.image} onLoad={onCoverImageLoad} />
             <CoverImage
-              src={storyState.image}
+              src={coverImageLoaded}
               center={storyState.imageCenter}
               ready={storyState.image === coverImageLoaded} />
-            <AboveFold ready={storyState.image === coverImageLoaded}>
-              <BackButton onClick={goBack}><BackIcon /> Back</BackButton>
-              <Title>{storyState.title}</Title>
-              <MobileCrewContainer>
-                <div>
-                  <b>{crew.name || `Crew Member #${crew.i}`}</b>
-                  {' '}<CrewClassIcon crewClass={crew.crewClass} />
-                </div>
-                <div>{toCrewClass(crew.crewClass) || 'Unknown Class'}</div>
-              </MobileCrewContainer>
+            <AboveFold ready={!!coverImageLoaded}>
+              {storyState.features?.canGoBack && currentStep > 0 ? (
+                <BackButton onClick={undoPath} isMintingStory={isMintingStory}>
+                  <BackIcon /> Previous Selection
+                </BackButton>
+              ) : (
+                <BackButton onClick={goBack} isMintingStory={isMintingStory}>
+                  <BackIcon /> Back to {onCloseDestinationLabel}
+                </BackButton>
+              )}
+              <Title ownerType={storyState.ownerType} isMintingStory={isMintingStory}>{storyState.title}</Title>
+              {crew && (
+                <MobileCrewContainer>
+                  <div>
+                    <b>{crew.name || `Crew Member #${crew.i}`}</b>
+                    {' '}<CrewClassIcon crewClass={crew.crewClass} />
+                  </div>
+                  <div>{toCrewClass(crew.crewClass) || 'Unknown Class'}</div>
+                </MobileCrewContainer>
+              )}
             </AboveFold>
             <BelowFold>
               {!pathIsReady && <Loader />}
               {pathIsReady && (
                 <>
                   <CrewContainer>
-                    <CrewCard crew={crew} />
+                    {crew && <CrewCard crew={crew} />}
                   </CrewContainer>
                   <Body>
                     <PageContent>{storyState.content}</PageContent>
@@ -421,7 +434,7 @@ const CrewAssignment = (props) => {
                         }
                         return (
                           <React.Fragment key={i}>
-                            {i > 0 && <NavSpacer completed={i <= currentStep} />}
+                            {i > 0 && <NavSpacer steps={totalSteps} completed={i <= currentStep} />}
                             <NavIcon
                               animate
                               selected={i === currentStep}
@@ -431,9 +444,9 @@ const CrewAssignment = (props) => {
                         );
                       })}
                     </FlourishCentered>
-                    <FlourishImageContainer shrinkIcon={book && !book.icon}>
+                    <FlourishImageContainer shrinkIcon={!(book && book.icon)}>
                       {book && book.icon && <SvgFromSrc src={book.icon} />}
-                      {book && !book.icon && <ArvadIcon />}
+                      {!(book && book.icon) && <ArvadIcon />}
                     </FlourishImageContainer>
                   </Flourish>
                 </>
@@ -443,31 +456,18 @@ const CrewAssignment = (props) => {
         )}
       </Details>
       {selection && (
-        <Dialog>
-          <Confirmation>
-            <ConfirmationTitle>
-              <NavIcon
-                selected
-                selectedColor="white"
-                size={22}
-                style={{ marginRight: 12 }} />
-              <h4>Your Selection:</h4>
-            </ConfirmationTitle>
-            <ConfirmationBody>
-              {loadingPath && <Loader />}
-              {!loadingPath && (
-                <>
-                  <PagePrompt>{storyState.prompt}</PagePrompt>
-                  <article>{selection.text}</article>
-                </>
-              )}
-            </ConfirmationBody>
-            <ConfirmationButtons>
-              <Button onClick={selectPath()} disabled={loadingPath}>Back</Button>
-              <Button onClick={confirmPath} disabled={loadingPath}>Confirm</Button>
-            </ConfirmationButtons>
-          </Confirmation>
-        </Dialog>
+        <ConfirmationDialog
+          title="Your Selection:"
+          body={(
+            <>
+              <PagePrompt>{storyState.prompt}</PagePrompt>
+              <PromptDetails>{selection.text}</PromptDetails>
+            </>
+          )}
+          loading={!!loadingPath}
+          onConfirm={confirmPath}
+          onReject={selectPath()}
+        />
       )}
     </>
   );

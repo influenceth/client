@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Howler, Howl } from 'howler';
 
 import useStore from '~/hooks/useStore';
@@ -36,10 +36,14 @@ const Audio = (props) => {
   const toPlay = useStore(s => s.sounds.toPlay);
   const musicVolume = useStore(s => s.sounds.music);
   const effectsVolume = useStore(s => s.sounds.effects);
+  const cutscenePlaying = useStore(s => s.cutscenePlaying);
   const endSound = useStore(s => s.dispatchSoundPlayed);
+
   const [ soundEnabled, setSoundEnabled ] = useState(null);
   const [ lastTrack, setLastTrack ] = useState(null);
   const [ currentTrack, setCurrentTrack ] = useState(null);
+
+  const cutsceneWasPlaying = useRef();
 
   useEffect(() => {
     const onClick = () => {
@@ -84,8 +88,24 @@ const Audio = (props) => {
 
   // Adjust volume of music tracks
   useEffect(() => {
-    if (currentTrack) currentTrack.volume(currentTrack._baseVolume * musicVolume / 100);
-  }, [ musicVolume, currentTrack ]);
+    if (currentTrack) {
+      const targetVolume = currentTrack._baseVolume * musicVolume / 100;
+      if (cutscenePlaying) {
+        currentTrack.volume(0);
+        cutsceneWasPlaying.current = true;
+      }
+      else if (cutsceneWasPlaying.current) {
+        currentTrack.volume(0);
+        setTimeout(() => {
+          currentTrack.fade(0, targetVolume, 5000);
+        }, 10000);
+        cutsceneWasPlaying.current = false;
+      }
+      else {
+        currentTrack.volume(targetVolume);
+      }
+    }
+  }, [ musicVolume, currentTrack, cutscenePlaying ]);
 
   // Listen for new sound request and play it
   useEffect(() => {

@@ -1,4 +1,7 @@
-import HexagonSVG from '~/assets/icons/crew_traits/hexagon.svg';
+import styled from 'styled-components';
+
+import HexagonOutlineSVG from '~/assets/icons/crew_traits/hexagon_outline.svg';
+import HexagonInnerHighlightSVG from '~/assets/icons/crew_traits/hexagon_inner_highlight.svg';
 import Svg1 from '~/assets/icons/crew_traits/1.svg';
 import Svg2 from '~/assets/icons/crew_traits/2.svg';
 import Svg3 from '~/assets/icons/crew_traits/3.svg';
@@ -62,11 +65,23 @@ const indexedIcons = [ // 1-indexed
   Svg50
 ];
 
-const CrewTraitIcon = ({ trait }) => {
+const HexagonInnerHighlight = styled(HexagonInnerHighlightSVG)`
+  & > path {
+    color: rgba(${p => p.theme.colors.mainRGB}, 0.15);
+  }
+`;
+
+const CrewTraitIcon = ({ hideHexagon, trait, type }) => {
   const InnerIcon = indexedIcons[Number(trait)] || FallbackSvg;
+  const highlight = type && type === 'impactful';
   return (
     <svg className="icon">
-      <HexagonSVG />
+      {!hideHexagon && (
+        <>
+          <HexagonOutlineSVG />
+          {highlight && <HexagonInnerHighlight />}
+        </>
+      )}
       <InnerIcon
         className="icon"
         height={`${innerDim}em`}

@@ -2,7 +2,7 @@ import { useCallback, useContext, useMemo } from 'react';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 
-const useAsteroidScan = (asteroid) => {
+const useScanAsteroid = (asteroid) => {
   const { execute, getStatus } = useContext(ChainTransactionContext);
 
   const i = asteroid ? Number(asteroid.i) : null;
@@ -43,4 +43,4 @@ const useAsteroidScan = (asteroid) => {
   };
 };
 
-export default useAsteroidScan;
+export default useScanAsteroid;

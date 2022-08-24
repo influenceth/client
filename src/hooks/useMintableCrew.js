@@ -1,14 +1,16 @@
 import { useQuery } from 'react-query';
-import { useWeb3React } from '@web3-react/core';
 
-import api from '~/lib/api';
+// import api from '~/lib/api';
+import useAuth from '~/hooks/useAuth';
 
 const useMintableCrew = () => {
-  const { account } = useWeb3React();
+  const { account } = useAuth();
 
+  // TODO: (L2 transition) this is a deprecated concept on L2 until we start
+  //  selling starter packs or crew credits
   return useQuery(
     [ 'asteroids', 'mintableCrew', { owner: account } ],
-    () => api.getMintableCrew({ owner: account }),
+    () => 0, //api.getMintableCrew({ owner: account }),
     { enabled: !!account }
   );
 };
