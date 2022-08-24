@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
 import { starknetContracts as configs } from 'influence-utils';
-import { Contract, shortString } from 'starknet';
+import { Contract, shortString, uint256 } from 'starknet';
 
 import useAuth from '~/hooks/useAuth';
 import useEvents from '~/hooks/useEvents';
@@ -16,7 +16,7 @@ const getContracts = (account) => ({
     config: configs.Dispatcher,
     transact: (contract) => async ({ i }) => {
       const { price } = await contract.call('AsteroidSale_getPrice', [i]);
-      const priceParts = Object.values(price).map((part) => part.toNumber());
+      const priceParts = Object.values(price).map((part) => BigInt(part).toString());
       const calls = [
         {
           contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
@@ -300,7 +300,8 @@ export function ChainTransactionProvider({ children }) {
         // else, check for event
         // TODO (enhancement): only need to check new events
         } else {
-          const txEvent = (events || []).find((e) => e.transactionHash === txHash);
+          const txHashBInt = BigInt(txHash);
+          const txEvent = (events || []).find((e) => BigInt(e.transactionHash) === txHashBInt);
           if (txEvent) {
             contracts[key].onEventReceived(txEvent, vars);
 

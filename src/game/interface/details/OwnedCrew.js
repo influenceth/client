@@ -606,7 +606,7 @@ const OwnedCrew = (props) => {
         type: 'INITIALIZE',
         crew: crew.map((c) => ({
           ...c,
-          activeSlot: activeCrew.indexOf(c.i)
+          activeSlot: activeCrew.findIndex((ac) => ac.i === c.i)
         })),
         pristine: true
       });

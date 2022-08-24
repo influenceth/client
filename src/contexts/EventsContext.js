@@ -40,8 +40,9 @@ const getInvalidations = (asset, event, data) => {
       CrewMember: {
         Crew_CompositionChanged: [
           ['crew', 'search'],
-          ...(data.oldCrew || []).map((i) => ['crew', i]),
-          ...(data.newCrew || []).map((i) => ['crew', i]),
+          [...(data.oldCrew || []), ...(data.newCrew || [])]
+            .filter((v, i, a) => a.indexOf(v) === i)  // (unique)
+            .map((i) => ['crew', i])
         ], 
         Crewmate_FeaturesSet: [
           ['crew', data.crewId],
