@@ -91,8 +91,9 @@ const api = {
     return response.data;
   },
 
-  getSale: async () => {
-    const response = await instance.get('/v1/sales');
+  getSale: async (assetType) => {
+    const params = assetType ? { assetType } : {};
+    const response = await instance.get('/v1/sales', { params });
     return response.data[0];
   },
 

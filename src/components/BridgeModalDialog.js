@@ -87,8 +87,8 @@ const BridgeModalDialog = ({ onClose }) => {
             <Title>Influence is now on Starknet, the L2 Ethereum Network!</Title>
             <div>
               All of your assets are still accounted for and can still be traded on either
-              L1 Ethereum (<a href="https://opensea.io/Influence?tab=created" target="_blank" rel="noreferrer">OpenSea</a>)
-              or Starknet (<a href="https://playoasis.xyz/" target="_blank" rel="noreferrer">PlayOasis</a>).
+              L1 Ethereum (i.e. via <a href={`${process.env.REACT_APP_OPEN_SEA_URL}/Influence?tab=created`} target="_blank" rel="noreferrer">OpenSea</a>)
+              or Starknet (i.e. via <a href={`${process.env.REACT_APP_ASPECT_URL}/collection/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}`} target="_blank" rel="noreferrer">Aspect</a>).
             </div>
             <div>
               In the interest of lower transaction fees, however, Influence itself will only be

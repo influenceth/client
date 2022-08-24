@@ -22,8 +22,11 @@ const columns = [
     sortKey: 'owner',
     format: row => {
       if (row.owner) {
+        const url = row.chain === 'STARKNET'
+          ? `${process.env.REACT_APP_ASPECT_URL}/${row.owner}`
+          : `${process.env.REACT_APP_OPEN_SEA_URL}/accounts/${row.owner}`;
         return (
-          <a href={`${process.env.REACT_APP_OPEN_SEA_URL}/accounts/${row.owner}`} rel="noreferrer" target="_blank">
+          <a href={url} rel="noreferrer" target="_blank">
             {row.owner}
           </a>
         );

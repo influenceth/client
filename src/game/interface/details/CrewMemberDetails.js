@@ -31,12 +31,6 @@ import TextInput from '~/components/TextInput';
 import { unixTimeToGameTime } from '~/lib/utils';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 
-// TODO: L2 transition
-const goToOpenSeaCrew = (i) => {
-  const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_CREW_TOKEN}/${i}`;
-  window.open(url, '_blank');
-};
-
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
 
@@ -391,6 +385,19 @@ const CrewMemberDetails = (props) => {
     }
   }, [assignmentData?.assignmentsByBook, history]);
 
+  const marketplaceName = crew?.chain === 'ETHEREUM' ? 'OpenSea' : 'Aspect';
+  console.log({ marketplaceName, crew })
+  const goToMarketplaceCrew = useCallback((i) => {
+    let url;
+    if (marketplaceName === 'OpenSea') {
+      // TODO: should theoretically also support v2 crew token here
+      url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_CREW_TOKEN}/${i}`;
+    } else {
+      url = `${process.env.REACT_APP_ASPECT_URL}/asset/${process.env.REACT_APP_STARKNET_CREWMATE_TOKEN}/${i}`;
+    }
+    window.open(url, '_blank');
+  }, [marketplaceName]);
+
   const selectTrait = useCallback((trait, mute) => () => {
     setSelectedTrait({
       ...(toCrewTrait(trait) || {}),
@@ -465,14 +472,11 @@ const CrewMemberDetails = (props) => {
                   </Form>
                 )}
 
-                <span style={{ width: 175 }}
-                  data-tip="(not yet supported on L2)"
-                  data-for="global"
-                  data-place="right">
-                  <Button disabled onClick={() => goToOpenSeaCrew(crew.i)}>
-                    <ClaimIcon /> {account === crew.owner ? 'List for Sale' : 'Purchase Crew'}
-                  </Button>
-                </span>
+                <Button
+                  disabled={parseInt(crew?.activeSlot) > -1}
+                  onClick={() => goToMarketplaceCrew(crew.i)}>
+                  <ClaimIcon /> {account === crew.owner ? 'List for Sale' : 'Purchase Crew'}
+                </Button>
 
               </Management>
             </BelowCardWrapper>

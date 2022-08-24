@@ -36,7 +36,7 @@ const AsteroidDataCard = (props) => {
           <DataReadout label="Asteroid Id" copyable={asteroid.i}>{asteroid.i}</DataReadout>
           <DataReadout label="Current Owner">
             <LongTextWrap>
-              <AddressLink address={asteroid.owner} />
+              <AddressLink address={asteroid.owner} chain={asteroid.chain} />
             </LongTextWrap>
           </DataReadout>
           {!!sale && !asteroid.owner && (

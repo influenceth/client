@@ -245,11 +245,16 @@ const AsteroidDetails = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [asteroid, exportingModel]);
 
-  // TODO: L2 transition
-  const goToOpenSeaAsteroid = useCallback((i) => {
-    const url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/${i}`;
+  const marketplaceName = asteroid?.chain === 'ETHEREUM' ? 'OpenSea' : 'Aspect';
+  const goToMarketplaceAsteroid = useCallback((i) => {
+    let url;
+    if (marketplaceName === 'OpenSea') {
+      url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/${i}`;
+    } else {
+      url = `${process.env.REACT_APP_ASPECT_URL}/asset/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}/${i}`;
+    }
     window.open(url, '_blank');
-  }, []);
+  }, [marketplaceName]);
 
   return (
     <Details
@@ -263,7 +268,7 @@ const AsteroidDetails = (props) => {
             </Rarity>
             <Pane>
               <Subtitle>Asteroid Info</Subtitle>
-              <GeneralData label="Owner"><AddressLink address={asteroid.owner} /></GeneralData>
+              <GeneralData label="Owner"><AddressLink address={asteroid.owner} chain={asteroid.chain} /></GeneralData>
               {sale && !asteroid.owner && (
                 <GeneralData label="Price">
                   <span>{formatters.asteroidPrice(asteroid.r, sale)} <Ether /></span>
@@ -300,24 +305,14 @@ const AsteroidDetails = (props) => {
                 </Button>
               )}
               {asteroid.owner && asteroid.owner !== account && (
-                <span style={{ width: 175 }}
-                  data-tip="(not yet supported on L2)"
-                  data-for="global"
-                  data-place="right">
-                  <Button disabled onClick={() => goToOpenSeaAsteroid(i)}>
-                    <ScanIcon /> Purchase on OpenSea
-                  </Button>
-                </span>
+                <Button onClick={() => goToMarketplaceAsteroid(i)}>
+                  <ClaimIcon /> Purchase
+                </Button>
               )}
               {asteroid.owner && asteroid.owner === account && (
-                <span style={{ width: 175 }}
-                  data-tip="(not yet supported on L2)"
-                  data-for="global"
-                  data-place="right">
-                  <Button disabled onClick={() => goToOpenSeaAsteroid(i)}>
-                    <ScanIcon /> List on OpenSea
-                  </Button>
-                </span>
+                <Button onClick={() => goToMarketplaceAsteroid(i)}>
+                  <ClaimIcon /> List for Sale
+                </Button>
               )}
               {asteroid.owner && asteroid.owner === account && !asteroid.scanned && (
                 <Form

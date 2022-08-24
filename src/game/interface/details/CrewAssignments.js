@@ -595,6 +595,9 @@ const CrewAssignments = (props) => {
                 : (
                   <CrewlessSection>
                     <h4>You must have a crew to complete crew assignments.</h4>
+                    {/* NOTE: this is deprecated for now because any new crew will not be in an eligible
+                      collection for these assignments
+
                     <div>
                       <a href={`${process.env.REACT_APP_OPEN_SEA_URL}/collection/influence-crew`} target="_blank" rel="noreferrer">Click here</a>
                       {' '}to acquire crew members through trade
@@ -605,6 +608,7 @@ const CrewAssignments = (props) => {
                           </span>
                         ) : '.'}
                     </div>
+                    */}
                   </CrewlessSection>
                 )
               }

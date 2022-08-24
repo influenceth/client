@@ -17,6 +17,11 @@ const getTxLink = (event) => {
   return `${process.env.REACT_APP_VOYAGER_URL}/tx/${event.transactionHash}`;
 }
 
+const saleLabels = {
+  Asteroid: 'asteroid development rights',
+  Crewmate: 'crewmate recruitment'
+};
+
 const entries = {
   App_Updated: (e) => ({
     content: (
@@ -46,9 +51,9 @@ const entries = {
         <span>Asteroid </span>
         <AsteroidLink id={e.returnValues.tokenId} />
         <span> transferred from </span>
-        <AddressLink address={e.returnValues.from} />
+        <AddressLink address={e.returnValues.from} chain={e.__t} />
         <span> to </span>
-        <AddressLink address={e.returnValues.to} />
+        <AddressLink address={e.returnValues.to} chain={e.__t} />
       </>
     ),
     txLink: getTxLink(e),
@@ -189,9 +194,9 @@ const entries = {
         <span>Crew member </span>
         <CrewLink id={e.returnValues.tokenId} />
         <span> transferred from </span>
-        <AddressLink address={e.returnValues.from} />
+        <AddressLink address={e.returnValues.from} chain={e.__t} />
         <span> to </span>
-        <AddressLink address={e.returnValues.to} />
+        <AddressLink address={e.returnValues.to} chain={e.__t} />
       </>
     ),
     txLink: getTxLink(e),
@@ -238,7 +243,7 @@ const entries = {
   Sale_TimeToStart: (e) => ({
     content: (
       <span>
-        The next asteroid development rights sale will start at
+        The next {saleLabels[e.asset]} sale will start at
         {` ${(new Date(e.start)).toLocaleString()}`}
       </span>
     ),
@@ -249,7 +254,7 @@ const entries = {
     return {
       content: (
         <span>
-          An asteroid development rights sale is now open!
+          An {saleLabels[e.asset]} sale is now open!
           There {singular ? 'is' : 'are'} {e.available.toLocaleString()} remaining asteroid{singular ? '' : 's'} available.
         </span>
       ),
@@ -259,7 +264,7 @@ const entries = {
   Sale_Ended: (e) => ({
     content: (
       <span>
-        The asteroid development rights sale has completed.
+        The {saleLabels[e.asset]} sale has completed.
       </span>
     ),
   })

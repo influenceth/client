@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
 import { starknetContracts as configs } from 'influence-utils';
-import { Contract, shortString, uint256 } from 'starknet';
+import { Contract, shortString } from 'starknet';
 
 import useAuth from '~/hooks/useAuth';
 import useEvents from '~/hooks/useEvents';
