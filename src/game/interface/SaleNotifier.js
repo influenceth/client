@@ -47,12 +47,11 @@ const SaleNotifier = (props) => {
   useEffect(() => {
     if (status === 'started') {
       // Use original sale value to support testnet usage
-      const endCount = sale.endCount || 1859;
-
       saleStarted();
       createAlert({
         type: 'Sale_Started',
-        available: endCount - soldCount
+        asset: sale.assetType,
+        available: sale.saleLimit - (sale.saleCount || 0)
       });
     }
 
@@ -60,13 +59,17 @@ const SaleNotifier = (props) => {
       saleEnded();
       createAlert({
         type: 'Sale_TimeToStart',
+        asset: sale.assetType,
         start: sale.saleStartTime * 1000
       });
     }
 
     if (status === 'ended') {
       saleEnded();
-      createAlert({ type: 'Sale_Ended' });
+      createAlert({
+        type: 'Sale_Ended',
+        asset: sale.assetType
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ status ]);
