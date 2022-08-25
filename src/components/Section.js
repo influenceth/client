@@ -13,7 +13,7 @@ const Action = styled.div`
   font-weight: normal;
   position: absolute;
   top: 0;
-  right: 8px;
+  right: 20px;
 `;
 
 const StyledSection = styled.div`
