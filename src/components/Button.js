@@ -10,7 +10,10 @@ import theme from '~/theme';
 const StyledButton = styled.button`
   align-items: center;
   border: 1px solid ${p => p.color || p.theme.colors.main};
-  background-color: ${p => p.active ? p.theme.colors.main : 'transparent'};
+  background-color: ${p => {
+    const inactiveColor = p.lessTransparent ? `rgba(0,0,0,0.33)` : 'transparent';
+    return p.active ? p.theme.colors.main : inactiveColor;
+  }};
   clip-path: polygon(
     0 0,
     100% 0,

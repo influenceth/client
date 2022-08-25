@@ -114,7 +114,7 @@ const ImageryContainer = styled.div`
     left: 0;
     right: 0;
     z-index: 1;
-    mask-image: linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.7) 50%, transparent 100%);
+    mask-image: linear-gradient(to bottom,transparent 0%, black 10%, rgba(0,0,0,0.7) 50%, transparent 100%);
     transition: opacity 750ms ease-out, background-image 750ms ease-out;
   }
   & > div:last-child {
@@ -760,7 +760,10 @@ const CrewAssignmentCreate = (props) => {
                     <UndoIcon />
                   </IconButton>
                   
-                  <Button disabled={finalizing} onClick={rerollAppearance}>Re-roll Appearance</Button>
+                  <Button
+                    disabled={finalizing}
+                    lessTransparent
+                    onClick={rerollAppearance}>Re-roll Appearance</Button>
                   
                   <IconButton
                     onClick={rollForward}
