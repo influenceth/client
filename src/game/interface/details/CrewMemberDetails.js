@@ -391,9 +391,9 @@ const CrewMemberDetails = (props) => {
     let url;
     if (marketplaceName === 'OpenSea') {
       // TODO: should theoretically also support v2 crew token here
-      url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_CREW_TOKEN}/${i}`;
+      url = `${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/assets/${process.env.REACT_APP_CONTRACT_CREW_TOKEN}/${i}`;
     } else {
-      url = `${process.env.REACT_APP_ASPECT_URL}/asset/${process.env.REACT_APP_STARKNET_CREWMATE_TOKEN}/${i}`;
+      url = `${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/asset/${process.env.REACT_APP_STARKNET_CREWMATE_TOKEN}/${i}`;
     }
     window.open(url, '_blank');
   }, [marketplaceName]);

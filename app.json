@@ -18,20 +18,24 @@
       "description": "Base URL of the Influence L1/L2 bridge",
       "required": true
     },
-    "REACT_APP_OPEN_SEA_URL": {
-      "description": "Base URL for OpenSea. Does not include trailing slash",
+    "REACT_APP_ETHEREUM_NFT_MARKET_URL": {
+      "description": "Base URL for Ethereum NFT marketplace. Does not include trailing slash",
+      "required": true
+    },
+    "REACT_APP_STARKNET_NFT_MARKET_URL": {
+      "description": "Base URL for Starknet NFT marketplace. Does not include trailing slash",
       "required": true
     },
     "REACT_APP_STARKNET_NETWORK": {
       "description": "Base URL for Starknet network.",
       "required": true
     },
-    "REACT_APP_ETHERSCAN_URL": {
-      "description": "Base URL for Etherscan. Does not include trailing slash",
+    "REACT_APP_ETHEREUM_EXPLORER_URL": {
+      "description": "Base URL for Ethereum block explorer. Does not include trailing slash",
       "required": true
     },
-    "REACT_APP_VOYAGER_URL": {
-      "description": "Base URL for Voyager. Does not include trailing slash",
+    "REACT_APP_STARKNET_EXPLORER_URL": {
+      "description": "Base URL for Starknet block explorer. Does not include trailing slash",
       "required": true
     },
     "REACT_APP_ERC20_TOKEN_ADDRESS": {

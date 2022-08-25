@@ -8,8 +8,8 @@ const AddressLink = (props) => {
   const [ text, setText ] = useState(address);
 
   const url = chain.toUpperCase() === 'STARKNET'
-    ? `${process.env.REACT_APP_ASPECT_URL}/${address}`
-    : `${process.env.REACT_APP_OPEN_SEA_URL}/accounts/${address}`;
+    ? `${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/${address}`
+    : `${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/accounts/${address}`;
 
   useEffect(() => {
     if (account && account === address) setText('you');

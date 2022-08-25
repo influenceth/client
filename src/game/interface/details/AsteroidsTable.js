@@ -23,8 +23,8 @@ const columns = [
     format: row => {
       if (row.owner) {
         const url = row.chain === 'STARKNET'
-          ? `${process.env.REACT_APP_ASPECT_URL}/${row.owner}`
-          : `${process.env.REACT_APP_OPEN_SEA_URL}/accounts/${row.owner}`;
+          ? `${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/${row.owner}`
+          : `${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/accounts/${row.owner}`;
         return (
           <a href={url} rel="noreferrer" target="_blank">
             {row.owner}
