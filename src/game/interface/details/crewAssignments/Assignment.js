@@ -49,7 +49,7 @@ const CoverImage = styled.div`
     display: block;
     opacity: ${p => p.ready ? 1 : 0};
     height: 100%;
-    mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 75%, transparent 100%);
     transition:
       background-position 750ms ease-out,
       opacity 750ms ease-out;
@@ -418,7 +418,7 @@ const CrewAssignment = (props) => {
                       : (
                         <Button
                           onClick={finish}
-                          style={{ margin: '0 auto' }}>Finish</Button>
+                          style={{ margin: '0 auto' }}>{isMintingStory ? 'Create Your Adalian' : 'Finish'}</Button>
                       )
                     }
                   </Body>
