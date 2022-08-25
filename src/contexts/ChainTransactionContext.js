@@ -261,7 +261,7 @@ export function ChainTransactionProvider({ children }) {
           // NOTE: waitForTransaction is slow -- often slower than server to receive and process
           //  event and send back to frontend... so we are using it just to listen for errors
           //  (events from backend will demonstrate success)
-          starknet.provider.waitForTransaction(txHash, 1, TIMEOUT - (Date.now() - timestamp))
+          starknet.provider.waitForTransaction(txHash, TIMEOUT - (Date.now() - timestamp))
             // .then((receipt) => {
             //   if (receipt) {
             //     console.log('transaction settled');
