@@ -6,7 +6,7 @@ import useAuth from '~/hooks/useAuth';
 import useEvents from '~/hooks/useEvents';
 import useStore from '~/hooks/useStore';
 
-const TIMEOUT = 600e3;  // 10 minutes
+const RETRY_INTERVAL = 5e3; // 5 seconds
 
 const ChainTransactionContext = createContext();
 
@@ -253,7 +253,7 @@ export function ChainTransactionProvider({ children }) {
   // so that we can throw any extension-related or timeout errors needed
   useEffect(() => {
     if (contracts && pendingTransactions?.length) {
-      pendingTransactions.forEach(({ key, vars, txHash, timestamp }) => {
+      pendingTransactions.forEach(({ key, vars, txHash }) => {
         if (!txHash) return dispatchPendingTransactionComplete(txHash);
         if (!transactionWaiters.current.includes(txHash)) {
           transactionWaiters.current.push(txHash);
@@ -261,7 +261,7 @@ export function ChainTransactionProvider({ children }) {
           // NOTE: waitForTransaction is slow -- often slower than server to receive and process
           //  event and send back to frontend... so we are using it just to listen for errors
           //  (events from backend will demonstrate success)
-          starknet.provider.waitForTransaction(txHash, TIMEOUT - (Date.now() - timestamp))
+          starknet.provider.waitForTransaction(txHash, RETRY_INTERVAL)
             // .then((receipt) => {
             //   if (receipt) {
             //     console.log('transaction settled');
