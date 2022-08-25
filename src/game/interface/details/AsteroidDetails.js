@@ -249,9 +249,9 @@ const AsteroidDetails = (props) => {
   const goToMarketplaceAsteroid = useCallback((i) => {
     let url;
     if (marketplaceName === 'OpenSea') {
-      url = `${process.env.REACT_APP_OPEN_SEA_URL}/assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/${i}`;
+      url = `${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/${i}`;
     } else {
-      url = `${process.env.REACT_APP_ASPECT_URL}/asset/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}/${i}`;
+      url = `${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/asset/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}/${i}`;
     }
     window.open(url, '_blank');
   }, [marketplaceName]);

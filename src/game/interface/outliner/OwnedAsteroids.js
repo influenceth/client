@@ -77,7 +77,7 @@ const OwnedAsteroids = (props) => {
         </IconButton>
         <IconButton
           data-tip="Trade Asteroids"
-          onClick={() => window.open(`${process.env.REACT_APP_ASPECT_URL}/collection/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}`)}>
+          onClick={() => window.open(`${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/collection/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}`)}>
           <TradeIcon />
         </IconButton>
         {includeOwned && <ColorPicker initialColor={highlightColor} onChange={changeColor} />}

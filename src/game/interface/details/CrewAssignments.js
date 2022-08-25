@@ -597,7 +597,7 @@ const CrewAssignments = (props) => {
                       collection for these assignments
 
                     <div>
-                      <a href={`${process.env.REACT_APP_OPEN_SEA_URL}/collection/influence-crew`} target="_blank" rel="noreferrer">Click here</a>
+                      <a href={`${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/collection/influence-crew`} target="_blank" rel="noreferrer">Click here</a>
                       {' '}to acquire crew members through trade
                       {true || mintable?.length
                         ? (

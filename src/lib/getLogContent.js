@@ -12,9 +12,9 @@ import AddressLink from '~/components/AddressLink';
 
 const getTxLink = (event) => {
   if (event.__t === 'Ethereum') {
-    return `${process.env.REACT_APP_ETHERSCAN_URL}/tx/${event.transactionHash}`;
+    return `${process.env.REACT_APP_ETHEREUM_EXPLORER_URL}/tx/${event.transactionHash}`;
   }
-  return `${process.env.REACT_APP_VOYAGER_URL}/tx/${event.transactionHash}`;
+  return `${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${event.transactionHash}`;
 }
 
 const saleLabels = {

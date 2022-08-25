@@ -9,9 +9,10 @@ The browser game client for Influence.
     REACT_APP_IMAGES_URL=http://localhost:3001
     REACT_APP_BRIDGE_URL=http://localhost:4000
     REACT_APP_STARKNET_NETWORK=http://localhost:9000
-    REACT_APP_VOYAGER_URL=https://voyager.online
-    REACT_APP_ETHERSCAN_URL=https://etherscan.io
-    REACT_APP_OPEN_SEA_URL=https://opensea.io
+    REACT_APP_ETHEREUM_EXPLORER_URL=https://etherscan.io
+    REACT_APP_STARKNET_EXPLORER_URL=https://voyager.online
+    REACT_APP_ETHEREUM_NFT_MARKET_URL=https://opensea.io
+    REACT_APP_STARKNET_NFT_MARKET_URL=https://testnet.aspect.co
 
     # (this is the devnet token address)
     REACT_APP_ERC20_TOKEN_ADDRESS=0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488
