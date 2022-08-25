@@ -1,53 +1,85 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
-import useInterval from '~/hooks/useInterval';
-import useOwnedAsteroidsCount from '~/hooks/useOwnedAsteroidsCount';
 
 const SaleNotifier = (props) => {
   const { sale } = props;
   const { wallet } = useAuth();
-  const { data: soldCount } = useOwnedAsteroidsCount();
-  const saleStarted = useStore(s => s.dispatchSaleStarted);
-  const saleEnded = useStore(s => s.dispatchSaleEnded);
+  const dispatchSaleStarted = useStore(s => s.dispatchSaleStarted);
+  const dispatchSaleEnded = useStore(s => s.dispatchSaleEnded);
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const [ status, setStatus ] = useState();
 
-  useInterval(async () => {
-    if (status === 'starting' && wallet?.starknet?.provider) {
-      const block = await wallet.starknet.provider.getBlock('latest');
-      if (block.timestamp > sale.saleStartTime) setStatus('started');
-    }
-  }, status === 'starting' ? 1000 : null);
+  const poller = useRef();
+  const waiter = useRef();
 
   useEffect(() => {
-    if (!Number.isInteger(soldCount)) return;
+    if (!sale) return;
+    const { cancelled, saleCount, saleLimit, saleStartTime } = sale;
 
-    // Use original sale value to support testnet usage
-    const endCount = sale.endCount || 1859;
+    // clear timeout if re-running this due to a change in sale info
+    if (waiter.current) clearTimeout(waiter.current);
 
-    // Sale starts in the future. Wait for the time until it starts and set to starting
-    if (sale.saleStartTime > Date.now() / 1000) {
-      setStatus('unstarted');
-      const timeUntilSale = (sale.saleStartTime * 1000) - Date.now();
-      setTimeout(() => setStatus('starting'), timeUntilSale);
+    // if cancelled, update status to ended if there is one, otherwise, nothing to do
+    if (cancelled) {
+      if (status) setStatus('ended');
+
+    } else {
+      // Sale starts in the future. Wait for the time until it starts and set to starting
+      if (saleStartTime > Date.now() / 1000) {
+        setStatus('unstarted');
+        const timeUntilSale = (saleStartTime * 1000) - Date.now();
+        waiter.current = setTimeout(() => {
+          setStatus('starting');
+        }, timeUntilSale);
+      }
+
+      // Sale has started. Start polling blockchain to make sure block time is ready
+      if (saleStartTime < Date.now() / 1000 && saleCount < saleLimit && status !== 'started') {
+        setStatus('starting');
+      }
+
+      // Sale has already ended.
+      if (saleStartTime < Date.now() / 1000 && saleCount >= saleLimit) {
+        setStatus('ended');
+      }
     }
 
-    // Sale has started. Start polling blockchain to make sure block time is ready
-    if (sale.saleStartTime < Date.now() / 1000 && soldCount < endCount && status !== 'started') {
-      setStatus('starting');
+    return () => {
+      if (waiter.current) clearTimeout(waiter.current);
     }
 
-    // Sale has already ended.
-    if (sale.saleStartTime < Date.now() / 1000 && soldCount >= endCount) setStatus('ended');
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ sale, soldCount ]);
+  }, [sale?.saleCount, sale?.saleLimit, sale?.saleStartTime, sale?.cancelled]);
+
 
   useEffect(() => {
-    if (status === 'started') {
+    if (poller.current) clearInterval(poller.current);
+    
+    if (status === 'starting') {
+      if (wallet?.starknet?.provider) {
+        const pollFunc = () => {
+          try {
+            wallet.starknet.provider.getBlock('latest').then((block) => {
+              console.log('block', block);
+              if (block.timestamp > sale.saleStartTime) {
+                setStatus('started'); // will trigger another run of this effect, clearing interval
+              }
+            })
+          } catch (e) {
+            console.warn(e);
+          }
+        };
+        poller.current = setInterval(pollFunc, 30e3);
+        pollFunc();
+      }
+    }
+
+    else if (status === 'started') {
       // Use original sale value to support testnet usage
-      saleStarted();
+      dispatchSaleStarted();
       createAlert({
         type: 'Sale_Started',
         asset: sale.assetType,
@@ -55,8 +87,8 @@ const SaleNotifier = (props) => {
       });
     }
 
-    if (status === 'unstarted') {
-      saleEnded();
+    else if (status === 'unstarted') {
+      dispatchSaleEnded();
       createAlert({
         type: 'Sale_TimeToStart',
         asset: sale.assetType,
@@ -64,15 +96,20 @@ const SaleNotifier = (props) => {
       });
     }
 
-    if (status === 'ended') {
-      saleEnded();
+    else if (status === 'ended') {
+      dispatchSaleEnded();
       createAlert({
         type: 'Sale_Ended',
         asset: sale.assetType
       });
     }
+
+    return () => {
+      if (poller.current) clearInterval(poller.current);
+    }
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ status ]);
+  }, [ status, sale?.saleStartTime ]);
 
   return null;
 };
