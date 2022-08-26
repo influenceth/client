@@ -98,7 +98,7 @@ export function EventsProvider({ children }) {
       if (latest > -1) {
         eventsQuery.data.events.forEach(e => {
           const invalidations = getInvalidations(e.assetType, e.event, e.returnValues);
-          console.log('e.event', e.event, invalidations);
+          // console.log('e.event', e.event, invalidations);
           invalidations.forEach((i) => {
             queryClient.invalidateQueries(...i);
           });

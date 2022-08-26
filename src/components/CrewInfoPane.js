@@ -70,7 +70,15 @@ const Trait = styled.div`
 const CrewInfoPane = ({ crew, cssWhenVisible, referenceEl, visible }) => {
   const [popperEl, setPopperEl] = useState();
   const { styles, attributes } = usePopper(referenceEl, popperEl, {
-    placement: 'top'
+    placement: 'top',
+    modifiers: [
+      {
+        name: 'flip',
+        options: {
+          fallbackPlacements: ['top-start', 'top-end', 'right', 'left'],
+        },
+      },
+    ],
   });
   
   if (!crew) return null;

@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 
@@ -9,7 +8,6 @@ import Button from '~/components/Button';
 import CrewCard from '~/components/CrewCard';
 import CrewInfoPane from '~/components/CrewInfoPane';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
-import Cutscene from '~/components/Cutscene';
 import Details from '~/components/Details';
 import IconButton from '~/components/IconButton';
 import {
@@ -39,7 +37,7 @@ const Container = styled.div`
   height: 100%;
   padding: 0 30px;
 
-  @media (min-width: 1000px) and (max-width: 1600px) {
+  @media (min-width: 1024px) and (max-width: 1600px) {
     padding: 0;
   }
 `;
@@ -98,12 +96,15 @@ const ActiveCrew = styled.div`
 
   & > div {
     align-items: center;
-    display: grid;
+    display: ${p => p.height > 0 ? 'grid' : 'none'};
     grid-gap: 12px;
-    grid-template-columns: ${p => p.captainFirst
-      ? `minmax(200px, 26fr) repeat(4, minmax(175px, 18.5fr))`
-      : `repeat(2, minmax(175px, 18.5fr)) minmax(200px, 26fr) repeat(2, minmax(175px, 18.5fr))`
-    };
+    grid-template-columns: ${p => `repeat(5, minmax(auto, ${Math.max(60, 0.7 * (p.height - 125))}px))`};
+    ${``/*
+      p.captainFirst
+        ? `minmax(200px, 26fr) repeat(4, minmax(175px, 18.5fr))`
+        : `repeat(2, minmax(175px, 18.5fr)) minmax(200px, 26fr) repeat(2, minmax(175px, 18.5fr))`
+    */}
+    justify-content: center;
     width: 100%;
 
     @media (min-width: 1600px) {
@@ -118,6 +119,7 @@ const ActiveCrew = styled.div`
     & > div {
       display: flex;
       flex-direction: column;
+      justify-content: flex-start;
       overflow-x: hidden;
       overflow-y: visible;
       max-height: 100%;
@@ -127,6 +129,9 @@ const ActiveCrew = styled.div`
 
   @media (min-width: 1470px) {
     margin-bottom: -40px;
+    & > div {
+      grid-template-columns: ${p => `repeat(5, minmax(auto, ${0.7 * (p.height - 85)}px))`};
+    }
   }
 `;
 
@@ -388,10 +393,10 @@ const reducer = (state, action) => {
     case 'INITIALIZE': {
       const { crew, pristine } = action;
       const ac = crew
-        .filter((c) => c.activeSlot !== null && c.activeSlot >= 0)
+        .filter((c) => parseInt(c.activeSlot) > -1)
         .sort((a, b) => a.activeSlot - b.activeSlot);
       const ic = crew
-        .filter((c) => !(c.activeSlot !== null && c.activeSlot >= 0))
+        .filter((c) => !(parseInt(c.activeSlot) > -1))
         .sort(inactiveCrewSort);
       return {
         activeCrew: ac,
@@ -452,39 +457,39 @@ const reducer = (state, action) => {
 const OwnedCrew = (props) => {
   const { account, token } = useAuth();
   const createStorySession = useCreateStorySession();
-  const { data: crewAssignmentData } = useCrewAssignments();
+  const { data: crewAssignmentData, isLoading: assignmentsAreLoading } = useCrewAssignments();
   const queryClient = useQueryClient();
-  // const { data: mintable } = useMintableCrew();
   const { data: crew, isLoading: crewIsLoading } = useOwnedCrew();
   const { changeActiveCrew, getPendingActiveCrewChange } = useCrewManager();
   const history = useHistory();
-  const { width } = useScreenSize();
+  const { height, width } = useScreenSize();
   
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
-  const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
-  const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
 
   const { crewRecruitmentStoryId, crewRecruitmentSessionId } = crewAssignmentData || {};
+
+  const activeCrewContainer = useRef();
 
   const [{ activeCrew, inactiveCrew, pristine }, dispatch] = useReducer(reducer, {
     activeCrew: [],
     inactiveCrew: [],
     pristine: ''
   });
+  const [activeCrewHeight, setActiveCrewHeight] = useState();
   const [hovered, setHovered] = useState();
   const [inactiveCrewCollapsed, setInactiveCrewCollapsed] = useState(width < collapsibleWidth);
   const [saving, setSaving] = useState(false);
+
+  const isDataLoading = !token || assignmentsAreLoading || crewIsLoading;
 
   const isDirty = useMemo(() => {
     return pristine !== activeCrew.map((c) => c.i).join(',');
   }, [activeCrew, pristine]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (width > collapsibleWidth) setInactiveCrewCollapsed(false);
-  }, [width])
-
   const handleRecruit = useCallback(() => {
+    if (isDataLoading) return;
+
     if (isDirty) {
       createAlert({
         type: 'GenericAlert',
@@ -501,7 +506,7 @@ const OwnedCrew = (props) => {
       history.push(`/crew-assignment/${crewRecruitmentSessionId}`);
 
     // create new session...
-    } else {
+    } else if (crewRecruitmentStoryId) {
       createStorySession.mutate({
         storyId: crewRecruitmentStoryId,
         account
@@ -535,6 +540,7 @@ const OwnedCrew = (props) => {
     createStorySession,
     crewRecruitmentSessionId,
     crewRecruitmentStoryId,
+    isDataLoading,
     isDirty,
     playSound,
     token
@@ -574,18 +580,21 @@ const OwnedCrew = (props) => {
     changeActiveCrew({ crew: activeCrew.map((c) => c.i) });
   }, [activeCrew, changeActiveCrew]);
 
-  const handleCutsceneComplete = useCallback(() => {
-    dispatchSeenIntroVideo(true);
-    // if there is no active or inactive crew, then send straight into assignment
-    if (!(inactiveCrew?.length > 0)) {
-      handleRecruit();
+  const handleActiveCrewHeight = useCallback(() => {
+    if (activeCrewContainer.current) {
+      setActiveCrewHeight(activeCrewContainer.current.clientHeight);
     }
-    
-  }, [dispatchSeenIntroVideo, handleRecruit, inactiveCrew?.length]);
+  }, []);
+
+  useEffect(() => {
+    if (width > collapsibleWidth) setInactiveCrewCollapsed(false);
+  }, [width]);
 
   // TODO (enhancement): also show as saving if pending purchase or initialization (that will result in a slot being taken)
   //  probably not high priority b/c user would have had to navigate back here mid-transaction to create an issue
   useEffect(() => {
+    if (!token || isDataLoading) return;
+
     const pendingChange = getPendingActiveCrewChange();
     if (pendingChange) {
       setSaving(true);
@@ -611,211 +620,216 @@ const OwnedCrew = (props) => {
         pristine: true
       });
 
-    } else if (crew?.length > activeCrew.length + inactiveCrew.length) {
+    } else if (crew?.length !== activeCrew.length + inactiveCrew.length) {
       dispatch({
         type: 'INITIALIZE',
         crew,
         pristine: true
       });
     }
-  }, [crew?.length, getPendingActiveCrewChange, saving]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isDataLoading, crew?.length, getPendingActiveCrewChange, saving]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // if crew is loaded but there is new crew, jump straight into recruitment
+  useEffect(() => {
+    if (!isDataLoading && crew.length === 0) {
+      handleRecruit();
+    }
+  }, [isDataLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const slotOrder = useMemo(() => {
-    return width < 1500 ? [0,1,2,3,4] : [1,2,0,3,4]
+    return width <= 560 ? [0,1,2,3,4] : [1,2,0,3,4]
   }, [width]);
-  
-  if (!token) return null;
-  return (
-    <>
-      <Details title="Owned Crew">
-        {!(crew && crewRecruitmentStoryId) && <Loader />}
-        {crew && crewRecruitmentStoryId && (
-          <Container>
-            <Title>
-              <h3>
-                My Active Crew: {activeCrew.length} / 5
-              </h3>
-            </Title>
-            <ActiveCrew captainFirst={slotOrder[0] === 0}>
-              <div>
-                {slotOrder.map((slot) => {
-                  const crew = activeCrew[slot] || {};
-                  const isEmpty = !activeCrew[slot];
-                  const isNextEmpty = isEmpty && slot === activeCrew.length && !saving;
-                  const isAssigned = !isEmpty;
-                  return (
-                    <PopperWrapper key={slot}>
-                      {(refEl, setRefEl) => (
-                        <>
-                          <OuterContainer
-                            key={slot}
-                            clickable={isNextEmpty}
-                            onMouseEnter={() => setHovered(slot)}
-                            onMouseLeave={() => setHovered()}
-                            assigned={isAssigned}
-                            slot={slot}>
-                            {slot === 0 && (
-                              <>
-                                <CaptainTopFlourish>
-                                  <div>Captain</div>
-                                </CaptainTopFlourish>
-                                <CrewContainer>
-                                  <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
-                                    {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
-                                    {!isEmpty && <CrewCard crew={crew} fontSize="95%" noWrapName />}
-                                  </CardContainer>
-                                  {!isEmpty && (
-                                    <ButtonHolder isCaptain>
-                                      <IconButton
-                                        disabled={saving}
-                                        onClick={() => handleDeactivate(slot)}
-                                        data-tip="Make Inactive"
-                                        data-place="bottom"
-                                        scale="0.85">
-                                        <DeactivateIcon />
-                                      </IconButton>
-                                    </ButtonHolder>
-                                  )}
-                                  <CaptainIcon />
-                                </CrewContainer>
-                                <TriangleTip extendStroke strokeColor="currentColor" strokeWidth="6" />
-                              </>
-                            )}
 
-                            {slot !== 0 && (
-                              <CrewContainer slot={slot}>
-                                <TopFlourish />
+  useEffect(() => {
+    if (isDataLoading) return;
+    else if (!activeCrewContainer.current) setTimeout(handleActiveCrewHeight, 0);
+    else handleActiveCrewHeight();
+  }, [height, handleActiveCrewHeight, isDataLoading]);
+
+  if (isDataLoading) return null;
+  return (
+    <Details title="Owned Crew">
+      {!(crew && crewRecruitmentStoryId) && <Loader />}
+      {crew && crewRecruitmentStoryId && (
+        <Container>
+          <Title>
+            <h3>
+              My Active Crew: {activeCrew.length} / 5
+            </h3>
+          </Title>
+          <ActiveCrew
+            ref={activeCrewContainer}
+            captainFirst={slotOrder[0] === 0}
+            height={activeCrewHeight}>
+            <div>
+              {slotOrder.map((slot) => {
+                const crew = activeCrew[slot] || {};
+                const isEmpty = !activeCrew[slot];
+                const isNextEmpty = isEmpty && slot === activeCrew.length && !saving;
+                const isAssigned = !isEmpty;
+                return (
+                  <PopperWrapper key={slot}>
+                    {(refEl, setRefEl) => (
+                      <>
+                        <OuterContainer
+                          key={slot}
+                          clickable={isNextEmpty}
+                          onMouseEnter={() => setHovered(slot)}
+                          onMouseLeave={() => setHovered()}
+                          assigned={isAssigned}
+                          slot={slot}>
+                          {slot === 0 && (
+                            <>
+                              <CaptainTopFlourish>
+                                <div>Captain</div>
+                              </CaptainTopFlourish>
+                              <CrewContainer>
                                 <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
                                   {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
-                                  {!isEmpty && <CrewCard crew={crew} fontSize="75%" noWrapName />}
+                                  {!isEmpty && <CrewCard crew={crew} fontSize="95%" noWrapName />}
                                 </CardContainer>
                                 {!isEmpty && (
-                                  <ButtonHolder>
+                                  <ButtonHolder isCaptain>
                                     <IconButton
                                       disabled={saving}
                                       onClick={() => handleDeactivate(slot)}
-                                      data-tip="Inactivate"
+                                      data-tip="Make Inactive"
                                       data-place="bottom"
                                       scale="0.85">
                                       <DeactivateIcon />
                                     </IconButton>
-                                    <IconButton
-                                      disabled={saving}
-                                      onClick={() => handlePromote(slot)}
-                                      data-tip="Promote to Captain"
-                                      data-place="bottom"
-                                      scale="0.85">
-                                      <PromoteIcon />
-                                    </IconButton>
                                   </ButtonHolder>
                                 )}
-                                <NavIconFlourish
-                                  background={isAssigned ? '' : 'black'}
-                                  unselectedBorder="#555"
-                                  selected={isAssigned}
-                                  size={20}
-                                />
+                                <CaptainIcon />
                               </CrewContainer>
-                            )}
-                          </OuterContainer>
-
-                          {!isEmpty && width > 1024 &&  (
-                            <CrewInfoPane
-                              crew={!isEmpty && crew}
-                              cssWhenVisible="transform: translateY(-20px);"
-                              referenceEl={refEl}
-                              visible={hovered === slot}
-                            />
+                              <TriangleTip extendStroke strokeColor="currentColor" strokeWidth="6" />
+                            </>
                           )}
-                        </>
-                      )}
-                    </PopperWrapper>
-                  );
-                })}
-              </div>
-            </ActiveCrew>
-            <ButtonRow>
-              {isDirty && !saving && (
-                <RevertButton onClick={handleUndo}>
-                  Revert
-                </RevertButton>
-              )}
-              <Button
-                onClick={handleSave}
-                disabled={saving || !isDirty}
-                loading={saving}>
-                Save Changes
-              </Button>
-            </ButtonRow>
 
-            {inactiveCrew.length > 0 && (
-              <InactiveCrewSection>
-                <Title hideBorder onClick={width < collapsibleWidth ? () => setInactiveCrewCollapsed(!inactiveCrewCollapsed) : noop}>
-                  <h3>
-                    <CrewIcon style={{ fontSize: '125%' }} />
-                    Stationed Crew: {inactiveCrew.length}
-                  </h3>
-                  <IconHR collapsed={inactiveCrewCollapsed}>
-                    <ChevronDoubleDownIcon />
-                  </IconHR>
-                </Title>
-                <InactiveCrew collapsed={inactiveCrewCollapsed}>
-                  {inactiveCrew.map((crew, i) => (
-                    <PopperWrapper key={crew.i}>
-                      {(refEl, setRefEl) => (
-                        <>
-                          <InactiveCardContainer
-                            ref={setRefEl}
-                            onMouseEnter={() => setHovered(i + 5)}
-                            onMouseLeave={() => setHovered()}>
-                            <CrewCard
-                              crew={crew}
-                              fontSize="65%"
-                              hideCollectionInHeader
-                              showClassInHeader
-                              hideFooter
-                              noWrapName />
-                            <InnerButtonHolder>
-                              <IconButton
-                                disabled={saving || activeCrew?.length === 5}
-                                onClick={() => handleActivate(i)}
-                                data-tip="Make Active"
-                                data-place="right"
-                                scale="0.85">
-                                <ActivateIcon />
-                              </IconButton>
-                            </InnerButtonHolder>
-                          </InactiveCardContainer>
+                          {slot !== 0 && (
+                            <CrewContainer slot={slot}>
+                              <TopFlourish />
+                              <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
+                                {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
+                                {!isEmpty && <CrewCard crew={crew} fontSize="75%" noWrapName />}
+                              </CardContainer>
+                              {!isEmpty && (
+                                <ButtonHolder>
+                                  <IconButton
+                                    disabled={saving}
+                                    onClick={() => handleDeactivate(slot)}
+                                    data-tip="Inactivate"
+                                    data-place="bottom"
+                                    scale="0.85">
+                                    <DeactivateIcon />
+                                  </IconButton>
+                                  <IconButton
+                                    disabled={saving}
+                                    onClick={() => handlePromote(slot)}
+                                    data-tip="Promote to Captain"
+                                    data-place="bottom"
+                                    scale="0.85">
+                                    <PromoteIcon />
+                                  </IconButton>
+                                </ButtonHolder>
+                              )}
+                              <NavIconFlourish
+                                background={isAssigned ? '' : 'black'}
+                                unselectedBorder="#555"
+                                selected={isAssigned}
+                                size={20}
+                              />
+                            </CrewContainer>
+                          )}
+                        </OuterContainer>
 
+                        {!isEmpty && width > 1024 &&  (
                           <CrewInfoPane
-                            crew={crew}
-                            cssWhenVisible="transform: translateY(-6px);"
+                            crew={!isEmpty && crew}
+                            cssWhenVisible="transform: translateY(-20px);"
                             referenceEl={refEl}
-                            visible={hovered === i + 5}
+                            visible={hovered === slot}
                           />
-                        </>
-                      )}
-                    </PopperWrapper>
-                  ))}
-                </InactiveCrew>
-              </InactiveCrewSection>
+                        )}
+                      </>
+                    )}
+                  </PopperWrapper>
+                );
+              })}
+            </div>
+          </ActiveCrew>
+          <ButtonRow>
+            {isDirty && !saving && (
+              <RevertButton onClick={handleUndo}>
+                Revert
+              </RevertButton>
             )}
-            {inactiveCrew.length === 0 && (
-              <EmptyInactiveCrew />
-            )}
-          </Container>
-        )}
-      </Details>
+            <Button
+              onClick={handleSave}
+              disabled={saving || !isDirty}
+              loading={saving}>
+              Save Changes
+            </Button>
+          </ButtonRow>
 
-      {!crewIsLoading && activeCrew.length === 0 && !hasSeenIntroVideo && createPortal(
-        <Cutscene
-          source="https://d1c1daundk1ax0.cloudfront.net/influence/goerli/videos/intro.m3u8"
-          allowSkip
-          onComplete={handleCutsceneComplete}
-        />,
-        document.body
+          {inactiveCrew.length > 0 && (
+            <InactiveCrewSection>
+              <Title hideBorder onClick={width < collapsibleWidth ? () => setInactiveCrewCollapsed(!inactiveCrewCollapsed) : noop}>
+                <h3>
+                  <CrewIcon style={{ fontSize: '125%' }} />
+                  Stationed Crew: {inactiveCrew.length}
+                </h3>
+                <IconHR collapsed={inactiveCrewCollapsed}>
+                  <ChevronDoubleDownIcon />
+                </IconHR>
+              </Title>
+              <InactiveCrew collapsed={inactiveCrewCollapsed}>
+                {inactiveCrew.map((crew, i) => (
+                  <PopperWrapper key={crew.i}>
+                    {(refEl, setRefEl) => (
+                      <>
+                        <InactiveCardContainer
+                          ref={setRefEl}
+                          onMouseEnter={() => setHovered(i + 5)}
+                          onMouseLeave={() => setHovered()}>
+                          <CrewCard
+                            crew={crew}
+                            fontSize="65%"
+                            hideCollectionInHeader
+                            showClassInHeader
+                            hideFooter
+                            noWrapName />
+                          <InnerButtonHolder>
+                            <IconButton
+                              disabled={saving || activeCrew?.length === 5}
+                              onClick={() => handleActivate(i)}
+                              data-tip="Make Active"
+                              data-place="right"
+                              scale="0.85">
+                              <ActivateIcon />
+                            </IconButton>
+                          </InnerButtonHolder>
+                        </InactiveCardContainer>
+
+                        <CrewInfoPane
+                          crew={crew}
+                          cssWhenVisible="transform: translateY(-6px);"
+                          referenceEl={refEl}
+                          visible={hovered === i + 5}
+                        />
+                      </>
+                    )}
+                  </PopperWrapper>
+                ))}
+              </InactiveCrew>
+            </InactiveCrewSection>
+          )}
+          {inactiveCrew.length === 0 && (
+            <EmptyInactiveCrew />
+          )}
+        </Container>
       )}
-    </>
+    </Details>
   );
 };
 
