@@ -80,7 +80,7 @@ const CrewInfoPane = ({ crew, cssWhenVisible, referenceEl, visible }) => {
       },
     ],
   });
-  
+
   if (!crew) return null;
   return createPortal(
     <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000, pointerEvents: 'none' }} {...attributes.popper}>

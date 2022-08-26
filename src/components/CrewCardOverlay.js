@@ -166,7 +166,7 @@ const CrewCardOverlay = (config) => (
     <div style={{ flex: 1 }} />
     {config.caption && <OverlayCaption>{config.caption}</OverlayCaption>}
     {config.button && (
-      <OverlayButton>
+      <OverlayButton style={config.buttonStyle || {}}>
         {config.buttonAttention && <AttentionIcon size={10} />}
       </OverlayButton>
     )}

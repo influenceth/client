@@ -268,7 +268,7 @@ const CaptainTopFlourish = styled.div`
   & > div {
     flex: 1;
     font-weight: bold;
-    padding-bottom: 3px;
+    padding: 0 6px 3px;
     text-align: center;
     text-transform: uppercase;
   }
@@ -365,15 +365,6 @@ const OuterContainer = styled.div`
     }
   }
 `;
-
-const clickOverlay = {
-  alwaysOn: ['button','icon'],
-  button: 'Recruit',
-  buttonAttention: true,
-  disableHover: true,
-  icon: <PlusIcon />,
-  rgb: theme.colors.mainRGB,
-};
 
 const noop = () => {/* no op */};
 
@@ -582,6 +573,7 @@ const OwnedCrew = (props) => {
 
   const handleActiveCrewHeight = useCallback(() => {
     if (activeCrewContainer.current) {
+      console.log('activeCrewContainer.current.clientHeight', activeCrewContainer.current.clientHeight, activeCrewContainer.current.getBoundingClientRect().height);
       setActiveCrewHeight(activeCrewContainer.current.clientHeight);
     }
   }, []);
@@ -643,8 +635,18 @@ const OwnedCrew = (props) => {
   useEffect(() => {
     if (isDataLoading) return;
     else if (!activeCrewContainer.current) setTimeout(handleActiveCrewHeight, 0);
-    else handleActiveCrewHeight();
-  }, [height, handleActiveCrewHeight, isDataLoading]);
+    else setTimeout(handleActiveCrewHeight, 0);
+  }, [height, handleActiveCrewHeight, isDataLoading, inactiveCrew?.length > 0]);
+
+  const clickOverlay = useMemo(() => ({
+    alwaysOn: ['button','icon'],
+    button: 'Recruit',
+    buttonAttention: true,
+    buttonStyle: activeCrewHeight < 320 && (activeCrewHeight < 275 ? { display: 'none' } : { fontSize: '10px' }),
+    disableHover: true,
+    icon: <PlusIcon />,
+    rgb: theme.colors.mainRGB,
+  }), [activeCrewHeight]);
 
   if (isDataLoading) return null;
   return (
