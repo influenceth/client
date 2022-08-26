@@ -386,7 +386,6 @@ const CrewMemberDetails = (props) => {
   }, [assignmentData?.assignmentsByBook, history]);
 
   const marketplaceName = crew?.chain === 'ETHEREUM' ? 'OpenSea' : 'Aspect';
-  console.log({ marketplaceName, crew })
   const goToMarketplaceCrew = useCallback((i) => {
     let url;
     if (marketplaceName === 'OpenSea') {

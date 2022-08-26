@@ -63,7 +63,6 @@ const SaleNotifier = (props) => {
         const pollFunc = () => {
           try {
             wallet.starknet.provider.getBlock('latest').then((block) => {
-              console.log('block', block);
               if (block.timestamp > sale.saleStartTime) {
                 setStatus('started'); // will trigger another run of this effect, clearing interval
               }
