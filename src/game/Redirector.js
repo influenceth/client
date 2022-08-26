@@ -16,11 +16,18 @@ const Redirector = () => {
     // if just logged in and crew is ready, send to owned-crew if no crew yet
     if (loggedOut && !!token && !crewIsLoading && !!crew) {
       setLoggedOut(false);
-      if (!crew.find((c) => c.activeSlot >= 0)) {
+      if (!crew.find((c) => parseInt(c.activeSlot) > -1)) {
         history.push('/owned-crew');
       }
     }
   }, [ loggedOut, !!token, crewIsLoading, !!crew ]);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  // logout if have logged out
+  useEffect(() => {
+    if (!token) {
+      setLoggedOut(true);
+    }
+  }, [!token]);
 
   return null;
 };

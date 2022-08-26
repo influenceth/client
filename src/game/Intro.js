@@ -1,10 +1,13 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import ReactPlayer from 'react-player/lazy';
 import styled from 'styled-components';
 import gsap from 'gsap';
 
 import IntroVideo from '~/assets/influence-load.webm';
 import Button from '~/components/Button';
+import Cutscene from '~/components/Cutscene';
+import useStore from '~/hooks/useStore';
 
 const StyledIntro = styled.div`
   background-color: black;
@@ -44,12 +47,20 @@ const isStandalone = (navigator.standalone || window.matchMedia('(display-mode: 
 const Intro = (props) => {
   const { onComplete, ...restProps } = props;
 
+  const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
+  const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
+
   const container = useRef();
   const [closing, setClosing] = useState(false);
+  const [showingTrailer, setShowingTrailer] = useState(false);
   const [launchOptions, setLaunchOptions] = useState([]);
 
+  // TODO: remove this
+  useEffect(() => {
+    dispatchSeenIntroVideo(false);
+  }, []);
+
   const closeIntro = useCallback(() => {
-    setClosing(true); // (so they fade back out)
     gsap.to(container.current, {
       delay: 0.5,
       opacity: 0,
@@ -59,14 +70,29 @@ const Intro = (props) => {
     });
   }, [onComplete]);
 
+  const onTrailerComplete = useCallback(() => {
+    setShowingTrailer(false);
+    dispatchSeenIntroVideo(true);
+    closeIntro();
+  }, [dispatchSeenIntroVideo, closeIntro]);
+
+  const onLaunch = useCallback(() => {
+    setClosing(true); // (so they fade back out)
+    if (!hasSeenIntroVideo) {
+      setShowingTrailer(true);
+    } else {
+      closeIntro();
+    }
+  }, []);
+
   const onVideoEnded = useCallback(() => {
     // if standalone, launch standard
-    if (isStandalone) return closeIntro();
+    if (isStandalone) return onLaunch();
 
     // always have standard option
     const options = [{
       label: 'Launch',
-      onClick: closeIntro
+      onClick: onLaunch
     }];
 
     // include fullscreen option if fullscreen is available
@@ -82,7 +108,7 @@ const Intro = (props) => {
           } else if (docElem.msRequestFullscreen) { /* IE11 */
             docElem.msRequestFullscreen();
           }
-          closeIntro();
+          onLaunch();
         }
       });
     }
@@ -96,21 +122,22 @@ const Intro = (props) => {
           const { outcome } = await window.installPrompt.userChoice;
           if (outcome === 'accepted') {
             window.installPrompt = null;
-            closeIntro();
+            onLaunch();
           }
         }
       });
     }
 
     // if only one option, just "click" it automatically
-    if (options.length === 1) {
-      options[0].onClick();
+    // (only if seen intro video; otherwise, we need the interaction to start the video)
+    if (options.length === 1 && hasSeenIntroVideo) {
+      options[0].onLaunch();
 
     // else, set launch options for user selection
     } else {
       setLaunchOptions(options);
     }
-  }, [closeIntro]);
+  }, [onLaunch]);
 
   return (
     <StyledIntro ref={container} {...restProps}>
@@ -121,7 +148,7 @@ const Intro = (props) => {
         volume={0}
         muted={true}
         playing={true}
-        onError={closeIntro}
+        onError={onVideoEnded}
         onEnded={onVideoEnded} />
       <Launcher hiding={closing || launchOptions?.length < 2}>
         <ButtonContainer>
@@ -132,6 +159,15 @@ const Intro = (props) => {
           ))}
         </ButtonContainer>
       </Launcher>
+
+      {showingTrailer && createPortal(
+        <Cutscene
+          source="https://d1c1daundk1ax0.cloudfront.net/influence/goerli/videos/intro.m3u8"
+          allowSkip
+          onComplete={onTrailerComplete}
+        />,
+        document.body
+      )}
     </StyledIntro>
   );
 };

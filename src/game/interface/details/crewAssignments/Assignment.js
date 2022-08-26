@@ -300,12 +300,18 @@ const CrewAssignment = (props) => {
   const isMintingStory = (storyState?.tags || []).includes('ADALIAN_RECRUITMENT');
   const totalSteps = isMintingStory ? 5 : 3;
 
-  const onCloseDestination = isMintingStory
-    ? `/owned-crew`
-    : `/crew-assignments/${storyState?.book}/${storyState?.story}`;
-  const onCloseDestinationLabel = isMintingStory
-    ? 'Crew Management'
-    : book?.title;
+  let onCloseDestination;
+  let onCloseDestinationLabel;
+  if (storyState?.book) {
+    onCloseDestination = `/crew-assignments/${storyState?.book}/${storyState?.story}`;
+    onCloseDestinationLabel = book?.title;
+  } else if (allCrew?.length > 0) {
+    onCloseDestination = '/owned-crew';
+    onCloseDestinationLabel = 'Crew Management';
+  } else {
+    onCloseDestination = '/';
+    onCloseDestinationLabel = 'The Belt';
+  }
 
   // on step change, clear selection (to close modal)
   useEffect(() => {
