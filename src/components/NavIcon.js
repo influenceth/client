@@ -31,11 +31,7 @@ const Svg = styled.svg`
   width: 100%;
 `;
 
-const InnerDiamond = styled.rect`
-  rx: ${rounding};
-  x: ${50 - innerDiamondDimension / 2};
-  y: ${50 - innerDiamondDimension / 2};
-`;
+const InnerDiamond = styled.rect``;
 
 const selectionKeyframes = keyframes`
   0% {
@@ -57,7 +53,6 @@ const selectionAnimation = css`
 const SelectionDiamond = styled.rect`
   ${p => p.animate && selectionAnimation};
   fill: ${p => p.background || 'transparent'};
-  rx: ${rounding};
   stroke: ${p => {
     if (p.selected) {
       return p.selectedColor || p.theme.colors.main;
@@ -68,9 +63,6 @@ const SelectionDiamond = styled.rect`
   }};
   stroke-width: ${p => p.animate ? 3.5 : 2};
   transform-origin: center;
-  x: ${50 - outerDiamondDimension / 2};
-  y: ${50 - outerDiamondDimension / 2};
-
 
   ${p => p.background ? `background: ${p.background};` : ''}
   ${p => p.border ? `border: 1px solid ${p.border};` : ''}
@@ -101,7 +93,6 @@ const HighlightDiamond = styled(SelectionDiamond)`
   animation: ${highlightAnimation} 2000ms linear infinite;
   opacity: 0;
   stroke: ${p => p.theme.colors.main};
-  rx: 0;
 `;
 
 const NavIcon = ({ size, ...props }) => {
@@ -113,16 +104,27 @@ const NavIcon = ({ size, ...props }) => {
           <InnerDiamond
             fill={props.color || 'currentColor'}
             height={innerDiamondDimension}
-            width={innerDiamondDimension} />
+            width={innerDiamondDimension}
+            x={50 - innerDiamondDimension / 2}
+            y={50 - innerDiamondDimension / 2}
+            rx={rounding}
+            />
           <SelectionDiamond
             {...props}
             height={outerDiamondDimension}
-            width={outerDiamondDimension} />
+            width={outerDiamondDimension}
+            x={50 - outerDiamondDimension / 2}
+            y={50 - outerDiamondDimension / 2}
+            rx={rounding}
+            />
           {props.selected && props.animate && (
             <HighlightDiamond
               {...props}
               height={outerDiamondDimension}
-              width={outerDiamondDimension} />
+              width={outerDiamondDimension}
+              x={50 - outerDiamondDimension / 2}
+              y={50 - outerDiamondDimension / 2}
+              rx={0} />
           )}
         </Svg>
       </InnerWrapper>
