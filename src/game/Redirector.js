@@ -27,7 +27,7 @@ const Redirector = () => {
     if (!token) {
       setLoggedOut(true);
     }
-  }, [!token]);
+  }, [!token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 };

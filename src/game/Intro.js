@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ReactPlayer from 'react-player/lazy';
 import styled from 'styled-components';
@@ -55,11 +55,6 @@ const Intro = (props) => {
   const [showingTrailer, setShowingTrailer] = useState(false);
   const [launchOptions, setLaunchOptions] = useState([]);
 
-  // TODO: remove this
-  useEffect(() => {
-    dispatchSeenIntroVideo(false);
-  }, []);
-
   const closeIntro = useCallback(() => {
     gsap.to(container.current, {
       delay: 0.5,
@@ -83,7 +78,7 @@ const Intro = (props) => {
     } else {
       closeIntro();
     }
-  }, []);
+  }, [closeIntro, hasSeenIntroVideo]);
 
   const onVideoEnded = useCallback(() => {
     // if standalone, launch standard
@@ -137,7 +132,7 @@ const Intro = (props) => {
     } else {
       setLaunchOptions(options);
     }
-  }, [onLaunch]);
+  }, [hasSeenIntroVideo, onLaunch]);
 
   return (
     <StyledIntro ref={container} {...restProps}>
