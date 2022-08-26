@@ -634,8 +634,9 @@ const OwnedCrew = (props) => {
 
   useEffect(() => {
     if (isDataLoading) return;
-    else if (!activeCrewContainer.current) setTimeout(handleActiveCrewHeight, 0);
     else setTimeout(handleActiveCrewHeight, 0);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [height, handleActiveCrewHeight, isDataLoading, inactiveCrew?.length > 0]);
 
   const clickOverlay = useMemo(() => ({
