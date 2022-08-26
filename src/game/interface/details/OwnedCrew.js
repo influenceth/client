@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 
@@ -37,7 +37,7 @@ const Container = styled.div`
   height: 100%;
   padding: 0 30px;
 
-  @media (min-width: 1000px) and (max-width: 1600px) {
+  @media (min-width: 1024px) and (max-width: 1600px) {
     padding: 0;
   }
 `;
@@ -96,12 +96,15 @@ const ActiveCrew = styled.div`
 
   & > div {
     align-items: center;
-    display: grid;
+    display: ${p => p.height > 0 ? 'grid' : 'none'};
     grid-gap: 12px;
-    grid-template-columns: ${p => p.captainFirst
-      ? `minmax(200px, 26fr) repeat(4, minmax(175px, 18.5fr))`
-      : `repeat(2, minmax(175px, 18.5fr)) minmax(200px, 26fr) repeat(2, minmax(175px, 18.5fr))`
-    };
+    grid-template-columns: ${p => `repeat(5, minmax(auto, ${Math.max(60, 0.7 * (p.height - 125))}px))`};
+    ${``/*
+      p.captainFirst
+        ? `minmax(200px, 26fr) repeat(4, minmax(175px, 18.5fr))`
+        : `repeat(2, minmax(175px, 18.5fr)) minmax(200px, 26fr) repeat(2, minmax(175px, 18.5fr))`
+    */}
+    justify-content: center;
     width: 100%;
 
     @media (min-width: 1600px) {
@@ -116,6 +119,7 @@ const ActiveCrew = styled.div`
     & > div {
       display: flex;
       flex-direction: column;
+      justify-content: flex-start;
       overflow-x: hidden;
       overflow-y: visible;
       max-height: 100%;
@@ -125,6 +129,9 @@ const ActiveCrew = styled.div`
 
   @media (min-width: 1470px) {
     margin-bottom: -40px;
+    & > div {
+      grid-template-columns: ${p => `repeat(5, minmax(auto, ${0.7 * (p.height - 85)}px))`};
+    }
   }
 `;
 
@@ -452,22 +459,24 @@ const OwnedCrew = (props) => {
   const createStorySession = useCreateStorySession();
   const { data: crewAssignmentData, isLoading: assignmentsAreLoading } = useCrewAssignments();
   const queryClient = useQueryClient();
-  // const { data: mintable } = useMintableCrew();
   const { data: crew, isLoading: crewIsLoading } = useOwnedCrew();
   const { changeActiveCrew, getPendingActiveCrewChange } = useCrewManager();
   const history = useHistory();
-  const { width } = useScreenSize();
+  const { height, width } = useScreenSize();
   
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
 
   const { crewRecruitmentStoryId, crewRecruitmentSessionId } = crewAssignmentData || {};
 
+  const activeCrewContainer = useRef();
+
   const [{ activeCrew, inactiveCrew, pristine }, dispatch] = useReducer(reducer, {
     activeCrew: [],
     inactiveCrew: [],
     pristine: ''
   });
+  const [activeCrewHeight, setActiveCrewHeight] = useState();
   const [hovered, setHovered] = useState();
   const [inactiveCrewCollapsed, setInactiveCrewCollapsed] = useState(width < collapsibleWidth);
   const [saving, setSaving] = useState(false);
@@ -571,6 +580,12 @@ const OwnedCrew = (props) => {
     changeActiveCrew({ crew: activeCrew.map((c) => c.i) });
   }, [activeCrew, changeActiveCrew]);
 
+  const handleActiveCrewHeight = useCallback(() => {
+    if (activeCrewContainer.current) {
+      setActiveCrewHeight(activeCrewContainer.current.clientHeight);
+    }
+  }, []);
+
   useEffect(() => {
     if (width > collapsibleWidth) setInactiveCrewCollapsed(false);
   }, [width]);
@@ -605,7 +620,7 @@ const OwnedCrew = (props) => {
         pristine: true
       });
 
-    } else if (crew?.length > activeCrew.length + inactiveCrew.length) {
+    } else if (crew?.length !== activeCrew.length + inactiveCrew.length) {
       dispatch({
         type: 'INITIALIZE',
         crew,
@@ -622,9 +637,15 @@ const OwnedCrew = (props) => {
   }, [isDataLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const slotOrder = useMemo(() => {
-    return width < 1500 ? [0,1,2,3,4] : [1,2,0,3,4]
+    return width <= 560 ? [0,1,2,3,4] : [1,2,0,3,4]
   }, [width]);
-  
+
+  useEffect(() => {
+    if (isDataLoading) return;
+    else if (!activeCrewContainer.current) setTimeout(handleActiveCrewHeight, 0);
+    else handleActiveCrewHeight();
+  }, [height, handleActiveCrewHeight, isDataLoading]);
+
   if (isDataLoading) return null;
   return (
     <Details title="Owned Crew">
@@ -636,7 +657,10 @@ const OwnedCrew = (props) => {
               My Active Crew: {activeCrew.length} / 5
             </h3>
           </Title>
-          <ActiveCrew captainFirst={slotOrder[0] === 0}>
+          <ActiveCrew
+            ref={activeCrewContainer}
+            captainFirst={slotOrder[0] === 0}
+            height={activeCrewHeight}>
             <div>
               {slotOrder.map((slot) => {
                 const crew = activeCrew[slot] || {};
