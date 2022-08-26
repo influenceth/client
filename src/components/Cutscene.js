@@ -76,7 +76,7 @@ const Cutscene = (props) => {
         }} />
       {allowSkip && (
         <ButtonHolder highlight={highlightButtons}>
-          <Button onClick={handleSkip}>Skip Cutscene</Button>
+          <Button onClick={handleSkip}>Skip Intro</Button>
         </ButtonHolder>
       )}
     </Container>
