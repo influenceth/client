@@ -134,13 +134,6 @@ const BackButton = styled.div`
   display: inline-flex;
   font-size: 14px;
   font-weight: bold;
-  ${p => p.isMintingStory
-    ? `
-      position: relative;
-      bottom: -44px;
-    `
-    : `margin-bottom: 1em;`
-  }
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     bottom: 0;
     margin-bottom: 1em;
@@ -162,7 +155,7 @@ const BackButton = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: ${p => p.isMintingStory ? '44px' : '36px'};
+  font-size: 36px;
   font-weight: bold;
   ${p => p.ownerType === 'CREW' && 'text-align: center;'}
 
@@ -272,7 +265,7 @@ const PageContent = styled.div`
   margin-bottom: 1.5em;
 `;
 const PagePrompt = styled.div`
-  color: white;  
+  color: white;
   margin-bottom: 1em;
 `;
 
@@ -298,6 +291,7 @@ const CrewAssignment = (props) => {
   const [selection, setSelection] = useState();
 
   const isMintingStory = (storyState?.tags || []).includes('ADALIAN_RECRUITMENT');
+  const headerTitle = isMintingStory ? 'Crewmate Creation' : 'Crew Assignments';
   const totalSteps = isMintingStory ? 5 : 3;
 
   let onCloseDestination;
@@ -364,7 +358,8 @@ const CrewAssignment = (props) => {
   const pathIsReady = contentReady && storyState.image === coverImageLoaded && !loadingPath;
   return (
     <>
-      <Details title="Crew Assignments" edgeToEdge onCloseDestination={onCloseDestination}>
+      <Details
+        title={headerTitle} edgeToEdge onCloseDestination={onCloseDestination}>
         {!contentReady && <Loader />}
         {contentReady && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
