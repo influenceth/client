@@ -27,49 +27,50 @@ const Svg = styled.svg`
 `;
 
 const innerAnimation = keyframes`
-  0% { r: 10; }
-  8.3% { r: 6; }
-  16.6% { r: 10; }
-  100% { r: 10; }
+  0% { transform: scale(1); }
+  8.3% { transform: scale(0.6); }
+  16.6% { transform: scale(1); }
+  100% { transform: scale(1); }
 `;
 const InnerCircle = styled.circle`
   animation: ${innerAnimation} 2000ms linear infinite;
-  cx: 50;
-  cy: 50;
   fill: currentColor;
-  r: 10;
+  transform-origin: center;
 `;
 
 const ringAnimation = keyframes`
   0% {
     opacity: 0;
-    r: 6;
+    transform: scale(1);
+    stroke-width: 2;
   }
   8.3% {
     opacity: 0;
-    r: 6;
+    transform: scale(1);
+    stroke-width: 2;
   }
   16.6% {
     opacity: 1;
-    r: 12;
+    transform: scale(2);
+    stroke-width: 1;
   }
   50% {
     opacity: 0;
-    r: 40;
+    transform: scale(6.67);
+    stroke-width: 0.3;
   }
   100% {
     opacity: 0;
-    r: 40;
+    transform: scale(6.67);
+    stroke-width: 0.3;
   }
 `;
 const RingOne = styled.circle`
   animation: ${ringAnimation} 2000ms linear infinite;
-  cx: 50;
-  cy: 50;
   fill: transparent;
   stroke: currentColor;
   stroke-width: 2;
-  r: 6;
+  transform-origin: center;
 `;
 
 const RingTwo = styled(RingOne)`
@@ -82,9 +83,9 @@ const AttentionDot = ({ size, ...props }) => {
     <Wrapper size={standardSize} {...props}>
       <InnerWrapper>
         <Svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" viewBox="0 0 100 100">
-          <InnerCircle />
-          <RingOne />
-          <RingTwo />
+          <InnerCircle cx={50} cy={50} r={10} />
+          <RingOne cx={50} cy={50} r={6} />
+          <RingTwo cx={50} cy={50} r={6} />
         </Svg>
       </InnerWrapper>
     </Wrapper>
