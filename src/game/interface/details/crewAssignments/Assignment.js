@@ -132,8 +132,16 @@ const BackButton = styled.div`
   align-items: center;
   cursor: ${p => p.theme.cursors.active};
   display: inline-flex;
+  filter: drop-shadow(1px -1px 1px rgba(0, 0, 0, 1));
   font-size: 14px;
   font-weight: bold;
+  ${p => p.isMintingStory
+    ? `
+      position: relative;
+      bottom: -36px;
+    `
+    : `margin-bottom: 1em;`
+  }
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     bottom: 0;
     margin-bottom: 1em;
@@ -155,8 +163,8 @@ const BackButton = styled.div`
 `;
 
 const Title = styled.div`
+  filter: drop-shadow(1px -1px 1px rgba(0, 0, 0, 1));
   font-size: 36px;
-  font-weight: bold;
   ${p => p.ownerType === 'CREW' && 'text-align: center;'}
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
