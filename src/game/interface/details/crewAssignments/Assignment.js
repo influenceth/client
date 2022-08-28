@@ -165,6 +165,7 @@ const BackButton = styled.div`
 const Title = styled.div`
   filter: drop-shadow(1px -1px 1px rgba(0, 0, 0, 1));
   font-size: 36px;
+  pointer-events: none;
   ${p => p.ownerType === 'CREW' && 'text-align: center;'}
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
