@@ -568,7 +568,6 @@ const OwnedCrew = (props) => {
 
   const handleActiveCrewHeight = useCallback(() => {
     if (activeCrewContainer.current) {
-      console.log('activeCrewContainer.current.clientHeight', activeCrewContainer.current.clientHeight, activeCrewContainer.current.getBoundingClientRect().height);
       setActiveCrewHeight(activeCrewContainer.current.clientHeight);
     }
   }, []);
