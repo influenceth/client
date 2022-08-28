@@ -96,14 +96,9 @@ const ActiveCrew = styled.div`
 
   & > div {
     align-items: center;
-    display: ${p => p.height > 0 ? 'grid' : 'none'};
+    display: grid;
     grid-gap: 12px;
     grid-template-columns: ${p => `repeat(5, minmax(auto, ${Math.max(60, 0.7 * (p.height - 125))}px))`};
-    ${``/*
-      p.captainFirst
-        ? `minmax(200px, 26fr) repeat(4, minmax(175px, 18.5fr))`
-        : `repeat(2, minmax(175px, 18.5fr)) minmax(200px, 26fr) repeat(2, minmax(175px, 18.5fr))`
-    */}
     justify-content: center;
     width: 100%;
 
@@ -372,7 +367,7 @@ const inactiveCrewSort = (a, b) => a.name < b.name ? -1 : 1;
 
 const PopperWrapper = (props) => {
   const [refEl, setRefEl] = useState();
-  return props.children(refEl, setRefEl);
+  return props.children(refEl, props.disableRefSetter ? noop : setRefEl);
 }
 
 const collapsibleWidth = 1200;
@@ -467,7 +462,7 @@ const OwnedCrew = (props) => {
     inactiveCrew: [],
     pristine: ''
   });
-  const [activeCrewHeight, setActiveCrewHeight] = useState();
+  const [activeCrewHeight, setActiveCrewHeight] = useState(null);
   const [hovered, setHovered] = useState();
   const [inactiveCrewCollapsed, setInactiveCrewCollapsed] = useState(width < collapsibleWidth);
   const [saving, setSaving] = useState(false);
@@ -605,7 +600,7 @@ const OwnedCrew = (props) => {
       setSaving(false);
       dispatch({
         type: 'INITIALIZE',
-        crew: crew.map((c) => ({
+        crew: (crew || []).map((c) => ({
           ...c,
           activeSlot: activeCrew.findIndex((ac) => ac.i === c.i)
         })),
@@ -634,7 +629,7 @@ const OwnedCrew = (props) => {
 
   useEffect(() => {
     if (isDataLoading) return;
-    else setTimeout(handleActiveCrewHeight, 0);
+    setTimeout(handleActiveCrewHeight, 0);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [height, handleActiveCrewHeight, isDataLoading, inactiveCrew?.length > 0]);
@@ -671,7 +666,7 @@ const OwnedCrew = (props) => {
                 const isNextEmpty = isEmpty && slot === activeCrew.length && !saving;
                 const isAssigned = !isEmpty;
                 return (
-                  <PopperWrapper key={slot}>
+                  <PopperWrapper key={slot} disableRefSetter={activeCrewHeight === null}>
                     {(refEl, setRefEl) => (
                       <>
                         <OuterContainer
