@@ -15,6 +15,7 @@ import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/Details';
 import Dialog from '~/components/Dialog';
+import Ether from '~/components/Ether';
 import { AdalianIcon, LinkIcon, TwitterIcon } from '~/components/Icons';
 import IconButton from '~/components/IconButton';
 import TextInput from '~/components/TextInput';
@@ -22,8 +23,10 @@ import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCrewManager from '~/hooks/useCrewManager';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useSale from '~/hooks/useSale';
 import useStore from '~/hooks/useStore';
 import useStorySession from '~/hooks/useStorySession';
+import formatters from '~/lib/formatters';
 
 const blinkingBackground = (p) => keyframes`
   0% {
@@ -464,6 +467,7 @@ const CrewAssignmentCreate = (props) => {
   const { storyState } = useStorySession(sessionId);
   const { purchaseAndInitializeCrew, getPendingPurchase } = useCrewManager();
   const { data: crew } = useOwnedCrew();
+  const { data: crewSale } = useSale('Crewmate');
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const [confirming, setConfirming] = useState();
@@ -904,6 +908,14 @@ const CrewAssignmentCreate = (props) => {
             </PromptBody>
           )}
           onConfirm={finalize}
+          confirmText={<>
+            Confirm
+            {crewSale && (
+              <span style={{ flex: 1, fontSize: '90%', textAlign: 'right' }}>
+                <Ether>{formatters.crewPrice(crewSale)}</Ether>
+              </span>
+            )}
+          </>}
           onReject={() => setConfirming(false)}
         />
       )}

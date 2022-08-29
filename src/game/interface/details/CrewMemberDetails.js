@@ -299,9 +299,14 @@ const Description = styled.div`
 const NameForm = styled.div`
   display: flex;
   margin-top: 15px;
+  max-width: 100%;
 
   & input {
     margin-right: 10px;
+    min-width: 0;
+  }
+  & button {
+    margin-right: 0;
   }
 `;
 

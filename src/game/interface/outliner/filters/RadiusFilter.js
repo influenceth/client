@@ -92,7 +92,7 @@ const RadiusFilter = (props) => {
               min={initialValues.radiusMin}
               max={initialValues.radiusMax}
               onChange={(v) => setRadiusMin(Number(v))} />
-            {sale && <Price>{formatters.asteroidPrice(radiusMin, sale)} <Ether /></Price>}
+            {sale && <Price><Ether>{formatters.asteroidPrice(radiusMin, sale)}</Ether></Price>}
           </>
         </DataReadout>
         {highlightActive && (
@@ -107,7 +107,7 @@ const RadiusFilter = (props) => {
               min={initialValues.radiusMin}
               max={initialValues.radiusMax}
               onChange={(v) => setRadiusMax(Number(v))} />
-            {sale && <Price>{formatters.asteroidPrice(radiusMax, sale)} <Ether /></Price>}
+            {sale && <Price><Ether>{formatters.asteroidPrice(radiusMax, sale)}</Ether></Price>}
           </>
         </DataReadout>
         {highlightActive && (

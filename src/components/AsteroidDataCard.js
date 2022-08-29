@@ -41,7 +41,7 @@ const AsteroidDataCard = (props) => {
           </DataReadout>
           {!!sale && !asteroid.owner && (
             <DataReadout label="Price">
-              <span>{formatters.asteroidPrice(asteroid.r, sale)} <Ether /></span>
+              <Ether>{formatters.asteroidPrice(asteroid.r, sale)}</Ether>
             </DataReadout>
           )}
           <DataReadout label="Spectral Type">{formatters.spectralType(asteroid.spectralType)}</DataReadout>
