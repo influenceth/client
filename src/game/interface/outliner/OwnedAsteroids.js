@@ -10,6 +10,7 @@ import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import IconButton from '~/components/IconButton';
+import MarketplaceLink from '~/components/MarketplaceLink';
 import Section from '~/components/Section';
 import AsteroidItem from '~/components/AsteroidItem';
 import ColorPicker from '~/components/ColorPicker';
@@ -75,11 +76,18 @@ const OwnedAsteroids = (props) => {
           onClick={() => history.push('/owned-asteroids')}>
           <RiTableFill />
         </IconButton>
-        <IconButton
-          data-tip="Trade Asteroids"
-          onClick={() => window.open(`${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/collection/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}`)}>
-          <TradeIcon />
-        </IconButton>
+        <MarketplaceLink
+          chain="STARKNET"
+          assetType="asteroid">
+          {(onClick, setRefEl) => (
+            <IconButton
+              data-tip="Trade Asteroids"
+              onClick={onClick}
+              setRef={setRefEl}>
+              <TradeIcon />
+            </IconButton>
+          )}
+        </MarketplaceLink>
         {includeOwned && <ColorPicker initialColor={highlightColor} onChange={changeColor} />}
       </Controls>
       <AsteroidList>

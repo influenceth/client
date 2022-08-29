@@ -26,6 +26,7 @@ import TextInput from '~/components/TextInput';
 import IconButton from '~/components/IconButton';
 import DataReadout from '~/components/DataReadout';
 import LogEntry from '~/components/LogEntry';
+import MarketplaceLink from '~/components/MarketplaceLink';
 import Ether from '~/components/Ether';
 import AddressLink from '~/components/AddressLink';
 import { DownloadModelIcon, EditIcon, CheckCircleIcon, ClaimIcon, ScanIcon } from '~/components/Icons';
@@ -245,17 +246,6 @@ const AsteroidDetails = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [asteroid, exportingModel]);
 
-  const marketplaceName = asteroid?.chain === 'ETHEREUM' ? 'OpenSea' : 'Aspect';
-  const goToMarketplaceAsteroid = useCallback((i) => {
-    let url;
-    if (marketplaceName === 'OpenSea') {
-      url = `${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/${i}`;
-    } else {
-      url = `${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/asset/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}/${i}`;
-    }
-    window.open(url, '_blank');
-  }, [marketplaceName]);
-
   return (
     <Details
       title={!!asteroid ? `${asteroid.name} - Details` : 'Asteroid Details'}>
@@ -304,15 +294,17 @@ const AsteroidDetails = (props) => {
                   <ClaimIcon /> Purchase
                 </Button>
               )}
-              {asteroid.owner && asteroid.owner !== account && (
-                <Button onClick={() => goToMarketplaceAsteroid(i)}>
-                  <ClaimIcon /> Purchase
-                </Button>
-              )}
-              {asteroid.owner && asteroid.owner === account && (
-                <Button onClick={() => goToMarketplaceAsteroid(i)}>
-                  <ClaimIcon /> List for Sale
-                </Button>
+              {asteroid.owner && (
+                <MarketplaceLink
+                  chain={asteroid?.chain}
+                  assetType="asteroid"
+                  id={i}>
+                  {(onClick, setRefEl) => (
+                    <Button setRef={setRefEl} onClick={onClick}>
+                      <ClaimIcon /> {account === asteroid.owner ? 'List for Sale' : 'Purchase'}
+                    </Button>  
+                  )}
+                </MarketplaceLink>
               )}
               {asteroid.owner && asteroid.owner === account && !asteroid.scanned && (
                 <Form

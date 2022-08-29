@@ -6,6 +6,7 @@ import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useMintableCrew from '~/hooks/useMintableCrew';
 import CrewMemberItem from '~/components/CrewMemberItem';
 import IconButton from '~/components/IconButton';
+import MarketplaceLink from '~/components/MarketplaceLink';
 import { CrewIcon, DetailIcon } from '~/components/Icons';
 import ListEmptyMessage from '~/components/ListEmptyMessage';
 import Section from '~/components/Section';
@@ -43,11 +44,18 @@ const OwnedCrew = (props) => {
           onClick={() => history.push('/owned-crew')}>
           <DetailIcon />
         </IconButton>
-        <IconButton
-          data-tip="Trade Crew Members"
-          onClick={() => window.open(`${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/collection/${process.env.REACT_APP_STARKNET_CREWMATE_TOKEN}`)}>
-          <TradeIcon />
-        </IconButton>
+        <MarketplaceLink
+          chain="STARKNET"
+          assetType="crewmate">
+          {(onClick, setRefEl) => (
+            <IconButton
+              data-tip="Trade Crew Members"
+              onClick={onClick}
+              setRef={setRefEl}>
+              <TradeIcon />
+            </IconButton>
+          )}
+        </MarketplaceLink>
       </Controls>
       <CrewList>
         {crew?.length === 0 && mintable?.length === 0 && (

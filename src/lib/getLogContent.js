@@ -22,6 +22,8 @@ const saleLabels = {
   Crewmate: 'crewmate recruitment'
 };
 
+const addressMaxWidth = "100px";
+
 const entries = {
   App_Updated: (e) => ({
     content: (
@@ -51,9 +53,9 @@ const entries = {
         <span>Asteroid </span>
         <AsteroidLink id={e.returnValues.tokenId} />
         <span> transferred from </span>
-        <AddressLink address={e.returnValues.from} chain={e.__t} />
+        <AddressLink address={e.returnValues.from} chain={e.__t} maxWidth={addressMaxWidth} />
         <span> to </span>
-        <AddressLink address={e.returnValues.to} chain={e.__t} />
+        <AddressLink address={e.returnValues.to} chain={e.__t} maxWidth={addressMaxWidth} />
       </>
     ),
     txLink: getTxLink(e),
@@ -194,9 +196,9 @@ const entries = {
         <span>Crew member </span>
         <CrewLink id={e.returnValues.tokenId} />
         <span> transferred from </span>
-        <AddressLink address={e.returnValues.from} chain={e.__t} />
+        <AddressLink address={e.returnValues.from} chain={e.__t} maxWidth={addressMaxWidth} />
         <span> to </span>
-        <AddressLink address={e.returnValues.to} chain={e.__t} />
+        <AddressLink address={e.returnValues.to} chain={e.__t} maxWidth={addressMaxWidth} />
       </>
     ),
     txLink: getTxLink(e),
