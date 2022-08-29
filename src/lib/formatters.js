@@ -37,6 +37,11 @@ const formatters = {
     const lotCount = Math.floor(4 * Math.PI * (r / 1000) ** 2);
     const price = base + lot * lotCount;
     return price.toLocaleString([], { maximumFractionDigits: 4 });
+  },
+
+  crewPrice: (sale) => {
+    const price = Number(ethersUtils.formatEther(String(sale.basePrice)));
+    return price.toLocaleString([], { maximumFractionDigits: 3 });
   }
 };
 

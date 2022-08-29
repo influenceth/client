@@ -261,7 +261,7 @@ const AsteroidDetails = (props) => {
               <GeneralData label="Owner"><AddressLink address={asteroid.owner} chain={asteroid.chain} /></GeneralData>
               {sale && !asteroid.owner && (
                 <GeneralData label="Price">
-                  <span>{formatters.asteroidPrice(asteroid.r, sale)} <Ether /></span>
+                  <Ether>{formatters.asteroidPrice(asteroid.r, sale)}</Ether>
                 </GeneralData>
               )}
               <GeneralData label="Scan Status">
