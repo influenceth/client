@@ -64,7 +64,7 @@ const CancelIndicator = styled.svg`
 `;
 
 const IconButton = (props) => {
-  const { active, 'data-tip': dataTip, onClick, ...restProps} = props;
+  const { active, 'data-tip': dataTip, onClick, setRef, ...restProps} = props;
   const playSound = useStore(s => s.dispatchSoundRequested);
 
   const _onClick = (e) => {
@@ -74,6 +74,7 @@ const IconButton = (props) => {
 
   useEffect(() => ReactTooltip.rebuild(), [ dataTip ]);
 
+  if (setRef) restProps.ref = setRef;
   return (
     // Adding 'key' forces data-tip to actually update on the tooltip
     <StyledIconButton {...restProps} onClick={_onClick} data-tip={dataTip} data-for="global" key={dataTip}>

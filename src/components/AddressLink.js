@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import MarketplaceLink from '~/components/MarketplaceLink';
+import OnClickLink from '~/components/OnClickLink';
 import useAuth from '~/hooks/useAuth';
 
 const AddressLink = (props) => {
@@ -7,16 +9,26 @@ const AddressLink = (props) => {
   const { account } = useAuth();
   const [ text, setText ] = useState(address);
 
-  const url = chain.toUpperCase() === 'STARKNET'
-    ? `${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/${address}`
-    : `${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/accounts/${address}`;
-
   useEffect(() => {
     if (account && account === address) setText('you');
   }, [ account, address ]);
 
   if (address) {
-    return <a target="_blank" rel="noreferrer" href={url}>{text}</a>;
+    return (
+      <MarketplaceLink
+        chain={chain.toUpperCase()}
+        assetType="account"
+        id={address}>
+        {(onClick, setRefEl) => (
+          <OnClickLink
+            ref={setRefEl}
+            maxWidth={props.maxWidth}
+            onClick={onClick}>
+            {text}
+          </OnClickLink>
+        )}
+      </MarketplaceLink>
+    );
   } else {
     return <span>Un-owned</span>
   }

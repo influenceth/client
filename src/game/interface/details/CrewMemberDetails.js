@@ -24,6 +24,7 @@ import {
   WarningOutlineIcon
 } from '~/components/Icons';
 import LogEntry from '~/components/LogEntry';
+import MarketplaceLink from '~/components/MarketplaceLink';
 import TabContainer from '~/components/TabContainer';
 import Text from '~/components/Text';
 import TextInput from '~/components/TextInput';
@@ -385,18 +386,6 @@ const CrewMemberDetails = (props) => {
     }
   }, [assignmentData?.assignmentsByBook, history]);
 
-  const marketplaceName = crew?.chain === 'ETHEREUM' ? 'OpenSea' : 'Aspect';
-  const goToMarketplaceCrew = useCallback((i) => {
-    let url;
-    if (marketplaceName === 'OpenSea') {
-      // TODO: should theoretically also support v2 crew token here
-      url = `${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/assets/${process.env.REACT_APP_CONTRACT_CREW_TOKEN}/${i}`;
-    } else {
-      url = `${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/asset/${process.env.REACT_APP_STARKNET_CREWMATE_TOKEN}/${i}`;
-    }
-    window.open(url, '_blank');
-  }, [marketplaceName]);
-
   const selectTrait = useCallback((trait, mute) => () => {
     setSelectedTrait({
       ...(toCrewTrait(trait) || {}),
@@ -471,11 +460,19 @@ const CrewMemberDetails = (props) => {
                   </Form>
                 )}
 
-                <Button
-                  disabled={parseInt(crew?.activeSlot) > -1}
-                  onClick={() => goToMarketplaceCrew(crew.i)}>
-                  <ClaimIcon /> {account === crew.owner ? 'List for Sale' : 'Purchase Crew'}
-                </Button>
+                <MarketplaceLink
+                  chain={crew?.chain}
+                  assetType="crewmate"
+                  id={crew?.i}>
+                  {(onClick, setRefEl) => (
+                    <Button
+                      disabled={parseInt(crew?.activeSlot) > -1}
+                      setRef={setRefEl}
+                      onClick={onClick}>
+                      <ClaimIcon /> {account === crew.owner ? 'List for Sale' : 'Purchase Crew'}
+                    </Button>  
+                  )}
+                </MarketplaceLink>
 
               </Management>
             </BelowCardWrapper>

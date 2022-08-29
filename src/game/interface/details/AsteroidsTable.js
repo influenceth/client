@@ -5,8 +5,10 @@ import DataTable, { createTheme } from 'react-data-table-component';
 
 import usePagedAsteroids from '~/hooks/usePagedAsteroids';
 import Details from '~/components/Details';
+import OnClickLink from '~/components/OnClickLink';
 import Pagination from '~/components/Pagination';
 import theme from '~/theme';
+import MarketplaceLink from '~/components/MarketplaceLink';
 
 const columns = [
   {
@@ -22,13 +24,15 @@ const columns = [
     sortKey: 'owner',
     format: row => {
       if (row.owner) {
-        const url = row.chain === 'STARKNET'
-          ? `${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/${row.owner}`
-          : `${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/accounts/${row.owner}`;
         return (
-          <a href={url} rel="noreferrer" target="_blank">
-            {row.owner}
-          </a>
+          <MarketplaceLink
+            chain={row.chain}
+            assetType="account"
+            id={row.owner}>
+            {(onClick, setRefEl) => (
+              <OnClickLink ref={setRefEl} onClick={onClick}>{row.owner}</OnClickLink>
+            )}
+          </MarketplaceLink>
         );
       } else {
         return 'Un-owned';

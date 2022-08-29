@@ -13,7 +13,7 @@ const Container = styled.div`
   flex-direction: column;
   min-height: 300px;
   position: relative;
-  width: 650px;
+  width: 685px;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     width: 90vw;
@@ -41,6 +41,10 @@ const InnerContainer = styled.div`
     text-align: center;
     &:not(:last-child) {
       margin-bottom: 20px;
+    }
+
+    a {
+      white-space: nowrap;
     }
   }
 `;
@@ -88,7 +92,9 @@ const BridgeModalDialog = ({ onClose }) => {
             <div>
               All of your assets are still accounted for and can still be traded on either
               L1 Ethereum (i.e. via <a href={`${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/Influence?tab=created`} target="_blank" rel="noreferrer">OpenSea</a>)
-              or Starknet (i.e. via <a href={`${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/collection/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}`} target="_blank" rel="noreferrer">Aspect</a>).
+              or Starknet (i.e. via{' '}
+                <a href={`${process.env.REACT_APP_ASPECT_URL}/collection/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}`} target="_blank" rel="noreferrer">Aspect</a>
+                {' or '}<a href={`${process.env.REACT_APP_MINTSQUARE_URL}/collection/${process.env.REACT_APP_MINTSQUARE_MODIFIER}${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}/nfts`} target="_blank" rel="noreferrer">Mint Square</a>).
             </div>
             <div>
               In the interest of lower transaction fees, however, Influence itself will only be

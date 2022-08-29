@@ -95,7 +95,13 @@ const loadingCss = css`
 `;
 
 const Button = (props) => {
-  const { onClick, 'data-tip': dataTip, 'data-place': dataPlace, loading, ...restProps } = props;
+  const {
+    onClick,
+    'data-tip': dataTip,
+    'data-place': dataPlace,
+    loading,
+    setRef,
+    ...restProps } = props;
   const playSound = useStore(s => s.dispatchSoundRequested);
 
   const _onClick = (e) => {
@@ -105,8 +111,14 @@ const Button = (props) => {
 
   useEffect(() => ReactTooltip.rebuild(), []);
 
+  if (setRef) restProps.ref = setRef;
   return (
-    <StyledButton {...restProps} onClick={_onClick} data-tip={dataTip} data-place={dataPlace || "right"} key={dataTip}>
+    <StyledButton
+      onClick={_onClick}
+      data-tip={dataTip}
+      data-place={dataPlace || "right"}
+      key={dataTip}
+      {...restProps}>
       {loading && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
       {props.children}
       {props.badge && (
