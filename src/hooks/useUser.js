@@ -5,10 +5,11 @@ import useAuth from '~/hooks/useAuth';
 
 const useUser = () => {
   const { token } = useAuth();
-
-  const getUser = useQuery([ 'user', token ], api.getUser, { enabled: !!token });
-
-  return { getUser };
+  return useQuery(
+    [ 'user', token ],
+    () => api.getUser(),
+    { enabled: !!token }
+  );
 };
 
 export default useUser;

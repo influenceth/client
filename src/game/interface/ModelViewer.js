@@ -6,16 +6,19 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { useFrame, useThree, Canvas } from '@react-three/fiber';
-import { BiListUl as SelectIcon, BiUpload as UploadIcon } from 'react-icons/bi';
 import BarLoader from 'react-spinners/BarLoader';
 import styled, { css } from 'styled-components';
 
-import DraggableModal from '~/components/DraggableModal';
-import IconButton from '~/components/IconButton';
-import models from '~/lib/models';
+import Button from '~/components/Button';
+import Details from '~/components/FullsizeWrapper';
+import Dropdown from '~/components/Dropdown';
+import NumberInput from '~/components/NumberInput';
+import useAssets from '~/hooks/useAssets';
+import useUser from '~/hooks/useUser';
 
 // TODO: connect to gpu-graphics settings
 const ENABLE_SHADOWS = true;
+const ENV_MAP_STRENGTH = 3;
 
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderConfig({ type: 'js' });
@@ -25,10 +28,8 @@ const loader = new GLTFLoader();
 loader.setDRACOLoader(dracoLoader);
 
 const CanvasContainer = styled.div`
-  height: 500px;
-  max-height: calc(80vh - 56px);
-  max-width: calc(80vw - 16px);
-  width: 500px;
+  height: 100%;
+  width: 100%;
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     height: 100%;
     max-height: none;
@@ -37,36 +38,65 @@ const CanvasContainer = styled.div`
   }
 `;
 
-const Openers = styled.div`
-  right: 7px;  
-  position: absolute;
-  top: 7px;
-  z-index: 2;
-  & > button {
-    margin-right: 0;
-    &:last-child {
-      margin-left: 4px;
-    }
+const Miniform = styled.div`
+  margin-top: 15px;
+  padding-left: 5px;
+  & > label {
+    display: block;
+    font-size: 10px;
+  }
+  & > input {
+    width: 100%;
   }
 `;
 
-const Menu = styled.div`
-  background: black;
-  bottom: 6px;
-  display: ${p => p.isOpen ? 'block' : 'none'};
-  overflow-y: auto;
+const Devtools = styled.div`
+  display: flex;
+  flex-direction: column;
+  left: 32px;
   position: absolute;
-  right: 6px;
-  top: 6px;
-  z-index: 1000;
+  top: 108px;
+  z-index: 2;
+
+  @media (max-width: 800px) {
+    display: none;
+  }
 `;
 
-const MenuItem = styled.div`
-  background: rgba(${p => p.theme.colors.mainRGB}, ${p => p.isSelected ? 0.5 : 0.0});
-  cursor: ${p => p.isSelected ? p.theme.cursors.default : p.theme.cursors.active};
-  padding: 4px 12px;
-  &:hover {
-    background: rgba(${p => p.theme.colors.mainRGB}, ${p => p.isSelected ? 0.5 : 0.2});
+const Dropdowns = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  left: 32px;
+  position: absolute;
+  top: 60px;
+  z-index: 3;
+  & > * {
+    margin-bottom: 2px;
+    margin-right: 10px;
+  }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    left: 20px;
+  }
+`;
+
+const IconContainer = styled.div`
+  background: black;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  bottom: 60px;
+  left: 32px;
+  height: 115px;
+  position: absolute;
+  width: 115px;
+  z-index: 2;
+  & > img {
+    max-height: 100%;
+    width: 100%;
+  }
+
+  @media (max-width: 600px) {
+    display: none;
   }
 `;
 
@@ -78,7 +108,7 @@ const loadingCss = css`
   width: calc(100% - 6px);
 `;
 
-const Model = ({ url, onLoaded }) => {
+const Model = ({ url, onLoaded, overrideEnvStrength }) => {
   const { camera, gl, scene } = useThree();
 
   const controls = useRef();
@@ -88,7 +118,8 @@ const Model = ({ url, onLoaded }) => {
   useEffect(() => {
     // TODO (enhancement): on mobile, aspect ratio is such that zoomed out to 1 may not have
     //  view of full width of 1.0 at 0,0,0... so on mobile, should probably set this to 1.5+
-    camera.position.set(0, 0.75, 1.25);
+    const zoom = 1.75;
+    camera.position.set(0, 0.75 * zoom, 1.25 * zoom);
     camera.up.set(0, 1, 0);
     camera.fov = 50;
     camera.updateProjectionMatrix();
@@ -147,7 +178,7 @@ const Model = ({ url, onLoaded }) => {
 
             // env-map intensity
             if (node.material?.envMapIntensity) {
-              node.material.envMapIntensity = 3.0;
+              node.material.envMapIntensity = ENV_MAP_STRENGTH;
             }
 
             // only worry about depth on non-transparent materials
@@ -160,13 +191,18 @@ const Model = ({ url, onLoaded }) => {
         //  (assuming rotating around y, then make sure max x-z dimensions
         //   fit inside 1 and y-height fit inside 1)
         const bbox = new Box3().setFromObject(model.current);
-        const crossVector = new Vector3();
-        crossVector.subVectors(
-          new Vector3(bbox.max.x, 0, bbox.max.z),
-          new Vector3(bbox.min.x, 0, bbox.min.z),
+        // const crossVector = new Vector3();
+        // crossVector.subVectors(
+        //   new Vector3(bbox.max.x, 0, bbox.max.z),
+        //   new Vector3(bbox.min.x, 0, bbox.min.z),
+        // );
+        // const height = bbox.max.y - bbox.min.y;
+        // const scaleValue = 1.0 / Math.max(height, crossVector.length());
+        const scaleValue = 1.0 / Math.max(
+          bbox.max.x - bbox.min.x,
+          bbox.max.y - bbox.min.y,
+          bbox.max.z - bbox.min.z
         );
-        const height = bbox.max.y - bbox.min.y;
-        const scaleValue = 1.0 / Math.max(height, crossVector.length());
         model.current.scale.set(scaleValue, scaleValue, scaleValue);
 
         // reposition (to put center at origin)
@@ -182,7 +218,7 @@ const Model = ({ url, onLoaded }) => {
 
         // initial rotation simulates initial camera position in blender
         // (halfway between the x and z axis)
-        model.current.rotation.y = -Math.PI / 4;
+        // model.current.rotation.y = -Math.PI / 4;
 
         // add to scene and report as loaded
         scene.add(model.current);
@@ -210,6 +246,17 @@ const Model = ({ url, onLoaded }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onLoaded, url]);
 
+  useEffect(() => {
+    if (!model.current) return;
+    model.current.traverse(function (node) {
+      if (node.isMesh) {
+        if (node.material?.envMapIntensity) {
+          node.material.envMapIntensity = overrideEnvStrength || 3.0;
+        }
+      }
+    });
+  }, [overrideEnvStrength]);
+
   useFrame(() => {
     if (model.current) {
       model.current.rotation.y += 0.0025;
@@ -228,24 +275,43 @@ const Model = ({ url, onLoaded }) => {
   // );
 }
 
-const Skybox = ({ onLoaded }) => {
+const Skybox = ({ onLoaded, overrideBackground, overrideEnvironment }) => {
   const { scene } = useThree();
 
   useEffect(() => {
-    let cleanupTexture;
-    new RGBELoader().load(`textures/model-viewer/courtyard_darkened4.hdr`, function (texture) {
-      cleanupTexture = texture;
+    let cleanupTextures = [];
+
+    const defaultMap = 'textures/model-viewer/courtyard_darkened4.hdr';
+    let background = overrideBackground || defaultMap;
+    let env = overrideEnvironment || defaultMap;
+
+    let waitingOn = background === env ? 1 : 2;
+    new RGBELoader().load(background, function (texture) {
+      cleanupTextures.push(texture);
       texture.mapping = EquirectangularReflectionMapping;
       scene.background = texture;
-      scene.environment = texture;
-      onLoaded();
-    });
-    return () => {
-      if (cleanupTexture) {
-        cleanupTexture.dispose();
+      if (background === env) {
+        scene.environment = texture;
       }
+
+      waitingOn--;
+      if (waitingOn === 0) onLoaded();
+    });
+    if (background !== env) {
+      new RGBELoader().load(env, function (texture) {
+        cleanupTextures.push(texture);
+        texture.mapping = EquirectangularReflectionMapping;
+        scene.environment = texture;
+        
+        waitingOn--;
+        if (waitingOn === 0) onLoaded();
+      });
+    }
+
+    return () => {
+      cleanupTextures.forEach((t) => t.dispose());
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [overrideBackground, overrideEnvironment]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 };
@@ -296,13 +362,20 @@ const Lighting = () => {
 };
 
 const reader = new FileReader();
-const ModelViewer = ({ draggableId }) => {
-  const [openMenu, setOpenMenu] = useState(false);
-  const [model, setModel] = useState(models[0]);
-  const [modelOverride, setModelOverride] = useState();
-  const [loadingSkybox, setLoadingSkybox] = useState(true);
-  const [loadingModel, setLoadingModel] = useState(true);
+const ModelViewer = (props) => {
+  const { data: assets, isLoading: loadingAssets } = useAssets();
+  const { data: user } = useUser();
 
+  const [model, setModel] = useState();
+  const [bgOverride, setBgOverride] = useState();
+  const [envOverride, setEnvOverride] = useState();
+  const [envStrengthOverride, setEnvStrengthOverride] = useState();
+  const [modelOverride, setModelOverride] = useState();
+  const [lightsEnabled, setLightsEnabled] = useState(true);
+  const [loadingSkybox, setLoadingSkybox] = useState(true);
+  const [loadingModel, setLoadingModel] = useState();
+
+  const [uploadType, setUploadType] = useState();
   const fileInput = useRef();
 
   const selectModel = useCallback((m) => {
@@ -310,83 +383,153 @@ const ModelViewer = ({ draggableId }) => {
     setModelOverride();
     setLoadingModel(true);
     setModel(m);
-    setOpenMenu(false);
   }, [loadingModel]);
 
-  const handleLoaded = useCallback((success) => {
+  const handleLoaded = useCallback(() => {
     setLoadingModel(false);
   }, []);
 
-  const handleUploadClick = useCallback(() => {
+  const handleUploadClick = useCallback((which) => () => {
+    setUploadType(which);
     fileInput.current.click();
   }, []);
 
   const handleFile = useCallback((e) => {
     const file = e.target.files[0];
-    if (file.name.match(/\.(gltf|glb)$/i)) {
+    if (uploadType === 'model' && file.name.match(/\.(gltf|glb)$/i)) {
       setLoadingModel(true);
       reader.readAsDataURL(file);
       reader.onload = () => {
         setModelOverride(reader.result);
       };
+    } else if (file.name.match(/\.(hdr)$/i)) {
+      setLoadingSkybox(true);
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        if (uploadType === 'bg') {
+          setBgOverride(reader.result);
+        } else if (uploadType === 'env') {
+          setEnvOverride(reader.result);
+        }
+      };
+    } else {
+      window.alert('Bad file type.');
     }
+  }, [uploadType]);
+
+  const toggleLights = useCallback(() => {
+    setLightsEnabled((e) => !e);
   }, []);
 
+  const [bucket, setBucket] = useState();
+  const [buckets, setBuckets] = useState();
+  const [bucketModels, setBucketModels] = useState();
+  useEffect(() => {
+    if (!!assets) {
+      const bucketSet = new Set(assets.map((a) => a.bucket));
+      const bucketArr = Array.from(bucketSet).sort();
+      setBuckets(bucketArr);
+    }
+  }, [!!assets]);
+  useEffect(() => {
+    if (!!buckets) {
+      setBucket(buckets[0]);
+    }
+  }, [!!buckets]);
+  useEffect(() => {
+    if (!!assets && bucket) {
+      const bAssets = assets.filter((a) => a.bucket === bucket);
+      setBucketModels(bAssets)
+      selectModel(bAssets[0]);
+    }
+  }, [bucket]);
+
+  const isLoading = loadingAssets || loadingModel || loadingSkybox;
   return (
-    <DraggableModal draggableId={draggableId} title="Model Viewer">
-      <Openers>
-        <IconButton
-          data-for="global"
-          data-place="left"
-          data-tip="Upload Model..." 
-          onClick={handleUploadClick}>
-          <UploadIcon />
-        </IconButton>
-        <input
-          ref={fileInput}
-          onChange={handleFile}
-          onClick={(e) => e.target.value = null}
-          style={{ display: 'none' }}
-          type="file" />
+    <Details edgeToEdge title="Resource Details">
+      {buckets && bucketModels && (
+        <Dropdowns>
+          <Dropdown
+            disabled={isLoading}
+            options={buckets}
+            onChange={(b) => setBucket(b)}
+            width="200px" />
+          <Dropdown
+            disabled={isLoading}
+            labelKey="label"
+            options={bucketModels}
+            onChange={(a) => selectModel(a)}
+            resetOn={bucket}
+            width="200px" />
+        </Dropdowns>
+      )}
+      {user?.isAdmin && (
+        <Devtools>
+          <Button
+            disabled={isLoading}
+            onClick={handleUploadClick('model')}>
+            Upload Model
+          </Button>
+          <Button
+            disabled={isLoading}
+            onClick={handleUploadClick('env')}>
+            Upload EnvMap
+          </Button>
+          <Button
+            disabled={isLoading}
+            onClick={handleUploadClick('bg')}>
+            Upload Skybox
+          </Button>
+          <input
+            ref={fileInput}
+            onChange={handleFile}
+            onClick={(e) => e.target.value = null}
+            style={{ display: 'none' }}
+            type="file" />
 
-        <IconButton
-          data-for="global"
-          data-place="right"
-          data-tip="Select Model..." 
-          onClick={() => setOpenMenu(!openMenu)}>
-          <SelectIcon />
-        </IconButton>
-      </Openers>
+          <Button
+            disabled={isLoading}
+            onClick={toggleLights}>
+            Toggle Lighting
+          </Button>
 
-      <Menu isOpen={openMenu} onMouseLeave={() => setOpenMenu(false)}>
-        {modelOverride && (
-          <MenuItem isSelected>(Custom)</MenuItem>
-        )}
-        {models.map((m) => {
-          const isSelected = !modelOverride && m.slug === model.slug;
-          return (
-            <MenuItem
-              key={m.slug}
-              isSelected={isSelected}
-              onClick={() => isSelected ? false : selectModel(m)}>
-              {m.title}
-            </MenuItem>
-          );
-        })}
-      </Menu>
+          <Miniform>
+            <label>Env Map Strength</label>
+            <NumberInput
+              disabled={isLoading}
+              initialValue={ENV_MAP_STRENGTH}
+              min="0"
+              onChange={(v) => setEnvStrengthOverride(parseFloat(v))} />
+          </Miniform>
+        </Devtools>
+      )}
+
+      {model?.iconUrl && (
+        <IconContainer>
+          <img src={model.iconUrl} />
+        </IconContainer>
+      )}
+
       <CanvasContainer>
-        <Canvas style={{ height: '100%', width: '100%' }}>
-          <Skybox onLoaded={() => setLoadingSkybox(false)} />
-          {!loadingSkybox && (
+        <Canvas
+          resize={{ debounce: 5, scroll: false }}
+          style={{ height: '100%', width: '100%' }}>
+          <Skybox
+            onLoaded={() => setLoadingSkybox(false)}
+            overrideBackground={bgOverride}
+            overrideEnvironment={envOverride}
+          />
+          {model?.modelUrl && !loadingSkybox && (
             <Model
               onLoaded={handleLoaded}
-              url={modelOverride || `https://res.cloudinary.com/influenceth/image/upload/v1651851083/models/${model.slug}`} />
+              overrideEnvStrength={envStrengthOverride}
+              url={modelOverride || model.modelUrl} />
           )}
-          <Lighting />
+          {lightsEnabled && <Lighting />}
         </Canvas>
       </CanvasContainer>
-      <BarLoader color="#777" height={3} loading={loadingModel || loadingSkybox} css={loadingCss} />
-    </DraggableModal>
+      <BarLoader color="#777" height={3} loading={isLoading} css={loadingCss} />
+    </Details>
   );
 };
 
