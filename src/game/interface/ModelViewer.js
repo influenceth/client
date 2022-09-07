@@ -39,8 +39,10 @@ const CanvasContainer = styled.div`
 `;
 
 const Miniform = styled.div`
+  display: block !important;
   margin-top: 15px;
   padding-left: 5px;
+  width: 175px;
   & > label {
     display: block;
     font-size: 10px;
@@ -57,6 +59,24 @@ const Devtools = styled.div`
   position: absolute;
   top: 108px;
   z-index: 2;
+
+  & > div {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    margin-top: 15px;
+    & > button {
+      margin: 0;
+    }
+    & > span {
+      cursor: ${p => p.theme.cursors.active};
+      font-size: 10px;
+      padding-left: 10px;
+      &:hover {
+        opacity: 0.7;
+      }
+    }
+  }
 
   @media (max-width: 800px) {
     display: none;
@@ -240,7 +260,9 @@ const Model = ({ url, onLoaded, overrideEnvStrength }) => {
 
     // (clean-up)
     return () => {
-      scene.remove(model.current);
+      if (model.current) {
+        model.current.removeFromParent();
+      }
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -364,13 +386,17 @@ const Lighting = () => {
 const reader = new FileReader();
 const ModelViewer = (props) => {
   const { data: assets, isLoading: loadingAssets } = useAssets();
-  const { data: user } = useUser();
 
+  const [devtoolsEnabled, setDevtoolsEnabled] = useState();
   const [model, setModel] = useState();
   const [bgOverride, setBgOverride] = useState();
+  const [bgOverrideName, setBgOverrideName] = useState();
   const [envOverride, setEnvOverride] = useState();
+  const [envOverrideName, setEnvOverrideName] = useState();
   const [envStrengthOverride, setEnvStrengthOverride] = useState();
   const [modelOverride, setModelOverride] = useState();
+  const [modelOverrideName, setModelOverrideName] = useState();
+
   const [lightsEnabled, setLightsEnabled] = useState(true);
   const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState();
@@ -378,9 +404,22 @@ const ModelViewer = (props) => {
   const [uploadType, setUploadType] = useState();
   const fileInput = useRef();
 
+  const removeOverride = useCallback((which) => () => {
+    if (which === 'model') {
+      setModelOverride();
+      setModelOverrideName();
+    } else if (which === 'bg') {
+      setBgOverride();
+      setBgOverrideName();
+    } else if (which === 'env') {
+      setEnvOverride();
+      setEnvOverrideName();
+    }
+  }, []);
+
   const selectModel = useCallback((m) => {
     if (loadingModel) return;
-    setModelOverride();
+    removeOverride('model')();
     setLoadingModel(true);
     setModel(m);
   }, [loadingModel]);
@@ -401,6 +440,7 @@ const ModelViewer = (props) => {
       reader.readAsDataURL(file);
       reader.onload = () => {
         setModelOverride(reader.result);
+        setModelOverrideName(file.name);
       };
     } else if (file.name.match(/\.(hdr)$/i)) {
       setLoadingSkybox(true);
@@ -408,8 +448,10 @@ const ModelViewer = (props) => {
       reader.onload = () => {
         if (uploadType === 'bg') {
           setBgOverride(reader.result);
+          setBgOverrideName(file.name);
         } else if (uploadType === 'env') {
           setEnvOverride(reader.result);
+          setEnvOverrideName(file.name);
         }
       };
     } else {
@@ -444,6 +486,18 @@ const ModelViewer = (props) => {
     }
   }, [bucket]);
 
+  useEffect(() => {
+    const onKeydown = (e) => {
+      if (e.shiftKey && e.which === 32) {
+        setDevtoolsEnabled((d) => !d);
+      }
+    };
+    document.addEventListener('keydown', onKeydown);
+    return () => {
+      document.removeEventListener('keydown', onKeydown);
+    }
+  }, []);
+
   const isLoading = loadingAssets || loadingModel || loadingSkybox;
   return (
     <Details edgeToEdge title="Resource Details">
@@ -463,44 +517,57 @@ const ModelViewer = (props) => {
             width="200px" />
         </Dropdowns>
       )}
-      {user?.isAdmin && (
+      {process.env.NODE_ENV !== 'production' && devtoolsEnabled && (
         <Devtools>
-          <Button
-            disabled={isLoading}
-            onClick={handleUploadClick('model')}>
-            Upload Model
-          </Button>
-          <Button
-            disabled={isLoading}
-            onClick={handleUploadClick('env')}>
-            Upload EnvMap
-          </Button>
-          <Button
-            disabled={isLoading}
-            onClick={handleUploadClick('bg')}>
-            Upload Skybox
-          </Button>
-          <input
-            ref={fileInput}
-            onChange={handleFile}
-            onClick={(e) => e.target.value = null}
-            style={{ display: 'none' }}
-            type="file" />
-
-          <Button
-            disabled={isLoading}
-            onClick={toggleLights}>
-            Toggle Lighting
-          </Button>
+          <div>
+            <Button
+              disabled={isLoading}
+              onClick={handleUploadClick('model')}>
+              Upload Model
+            </Button>
+            {modelOverrideName && <span onClick={removeOverride('model')}>{modelOverrideName}</span>}
+          </div>
+          <div>
+            <Button
+              disabled={isLoading}
+              onClick={handleUploadClick('env')}>
+              Upload EnvMap
+            </Button>
+            {envOverrideName && <span onClick={removeOverride('env')}>{envOverrideName}</span>}
+          </div>
+          <div>
+            <Button
+              disabled={isLoading}
+              onClick={handleUploadClick('bg')}>
+              Upload Skybox
+            </Button>
+            {bgOverrideName && <span onClick={removeOverride('bg')}>{bgOverrideName}</span>}
+          </div>
+          <div>
+            <Button
+              disabled={isLoading}
+              onClick={toggleLights}>
+              Toggle Lighting
+            </Button>
+            {!lightsEnabled && <span onClick={toggleLights}>Off</span>}
+          </div>
 
           <Miniform>
             <label>Env Map Strength</label>
             <NumberInput
               disabled={isLoading}
               initialValue={ENV_MAP_STRENGTH}
-              min="0"
+              min="0.1"
+              step="0.1"
               onChange={(v) => setEnvStrengthOverride(parseFloat(v))} />
           </Miniform>
+
+          <input
+            ref={fileInput}
+            onChange={handleFile}
+            onClick={(e) => e.target.value = null}
+            style={{ display: 'none' }}
+            type="file" />
         </Devtools>
       )}
 
