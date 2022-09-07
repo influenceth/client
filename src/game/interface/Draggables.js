@@ -1,5 +1,3 @@
-import { useCallback, useEffect } from 'react';
-
 import useStore from '~/hooks/useStore';
 import draggableComponents from '~/game/interface/draggable';
 

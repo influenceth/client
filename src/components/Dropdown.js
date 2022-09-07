@@ -65,12 +65,12 @@ const Dropdown = ({ disabled, initialSelection, labelKey = 'label', onChange, op
   }, [disabled]);
   
   const handleSelection = useCallback((index) => () => {
-    if (selectedIndex != index) {
+    if (selectedIndex !== index) {
       onChange(options[index]);
     }
     setSelectedIndex(index);
     setOpen(false);
-  }, [onChange, selectedIndex]);
+  }, [onChange, options, selectedIndex]);
 
   const handleMouseEnter = useCallback(() => {
     if (closeTimer.current) {
@@ -88,11 +88,11 @@ const Dropdown = ({ disabled, initialSelection, labelKey = 'label', onChange, op
     const i = initialSelection || 0;
     setSelectedIndex(i);
     setSelectedLabel(isObjArr ? options[i][labelKey] : options[i]);
-  }, [options]);
+  }, [options]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setSelectedLabel(isObjArr ? options[selectedIndex][labelKey] : options[selectedIndex]);
-  }, [selectedIndex]);
+  }, [selectedIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setOpen(false);

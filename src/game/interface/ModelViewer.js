@@ -14,7 +14,6 @@ import Details from '~/components/FullsizeWrapper';
 import Dropdown from '~/components/Dropdown';
 import NumberInput from '~/components/NumberInput';
 import useAssets from '~/hooks/useAssets';
-import useUser from '~/hooks/useUser';
 
 // TODO: connect to gpu-graphics settings
 const ENABLE_SHADOWS = true;
@@ -422,7 +421,7 @@ const ModelViewer = (props) => {
     removeOverride('model')();
     setLoadingModel(true);
     setModel(m);
-  }, [loadingModel]);
+  }, [loadingModel, removeOverride]);
 
   const handleLoaded = useCallback(() => {
     setLoadingModel(false);
@@ -472,19 +471,21 @@ const ModelViewer = (props) => {
       const bucketArr = Array.from(bucketSet).sort();
       setBuckets(bucketArr);
     }
-  }, [!!assets]);
+  }, [!!assets]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!!buckets) {
       setBucket(buckets[0]);
     }
-  }, [!!buckets]);
+  }, [!!buckets]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!!assets && bucket) {
-      const bAssets = assets.filter((a) => a.bucket === bucket);
-      setBucketModels(bAssets)
+      const bAssets = assets
+        .filter((a) => a.bucket === bucket)
+        .sort((a, b) => a.label < b.label ? -1 : 1);
+      setBucketModels(bAssets);
       selectModel(bAssets[0]);
     }
-  }, [bucket]);
+  }, [bucket]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const onKeydown = (e) => {
@@ -573,7 +574,7 @@ const ModelViewer = (props) => {
 
       {model?.iconUrl && (
         <IconContainer>
-          <img src={model.iconUrl} />
+          <img src={model.iconUrl} alt={`${model.label} icon`} />
         </IconContainer>
       )}
 
