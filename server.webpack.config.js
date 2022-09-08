@@ -2,12 +2,13 @@ const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   entry: './server.js',
-  mode: process.env.NODE_ENV,
+  mode: 'production',
   node: {
     __dirname: false
   },
   optimization: {
-    minimizer: [new TerserPlugin({ extractComments: false })]
+    minimizer: [new TerserPlugin({ extractComments: false })],
+    nodeEnv: process.env.NODE_ENV
   },
   output: {
     filename: 'server.built.js',
