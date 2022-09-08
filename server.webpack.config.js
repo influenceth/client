@@ -2,7 +2,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   entry: './server.js',
-  mode: 'production',
+  mode: process.env.NODE_ENV,
   node: {
     __dirname: false
   },
