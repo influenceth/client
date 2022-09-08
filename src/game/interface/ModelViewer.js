@@ -120,11 +120,11 @@ const IconContainer = styled.div`
 `;
 
 const loadingCss = css`
-  bottom: 3px;
-  left: 3px;
+  left: 0;
   position: absolute;
-  right: 3px;
-  width: calc(100% - 6px);
+  top: 0;
+  width: 100%;
+  z-index: 10;
 `;
 
 const Model = ({ url, onLoaded, overrideEnvStrength }) => {
@@ -502,6 +502,8 @@ const ModelViewer = (props) => {
   const isLoading = loadingAssets || loadingModel || loadingSkybox;
   return (
     <Details edgeToEdge title="Resource Details">
+      <BarLoader color="#AAA" height={3} loading={isLoading} css={loadingCss} />
+
       {buckets && bucketModels && (
         <Dropdowns>
           <Dropdown
@@ -596,7 +598,6 @@ const ModelViewer = (props) => {
           {lightsEnabled && <Lighting />}
         </Canvas>
       </CanvasContainer>
-      <BarLoader color="#777" height={3} loading={isLoading} css={loadingCss} />
     </Details>
   );
 };
