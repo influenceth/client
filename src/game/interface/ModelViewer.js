@@ -520,7 +520,7 @@ const ModelViewer = (props) => {
             width="200px" />
         </Dropdowns>
       )}
-      {process.env.NODE_ENV !== 'production' && devtoolsEnabled && (
+      {process.env.REACT_APP_ENABLE_DEV_TOOLS && devtoolsEnabled && (
         <Devtools>
           <div>
             <Button
