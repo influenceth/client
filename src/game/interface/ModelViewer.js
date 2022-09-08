@@ -488,8 +488,11 @@ const ModelViewer = (props) => {
   }, [bucket]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    console.log('process.env.NODE_ENV', process.env.NODE_ENV);
     const onKeydown = (e) => {
+      console.log('keydown', e.shiftKey, e.which);
       if (e.shiftKey && e.which === 32) {
+        console.log('in');
         setDevtoolsEnabled((d) => !d);
       }
     };
