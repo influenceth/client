@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
+import { MdWorkspacesOutline as ResourcesIcon } from 'react-icons/md';
 
 import IconButton from '~/components/IconButton';
 import {
@@ -112,6 +114,7 @@ const MainMenu = (props) => {
   const activateSection = useStore(s => s.dispatchOutlinerSectionActivated);
   const playSound = useStore(s => s.dispatchSoundRequested);
   const { isMobile } = useScreenSize();
+  const history = useHistory();
 
   const { account } = useAuth();
   const { data: crewAssignmentData } = useCrewAssignments();
@@ -186,6 +189,12 @@ const MainMenu = (props) => {
             name="Time Controls"
             icon={<TimeIcon />}
             onClick={() => openSection('timeControl')} />
+        </Menu>
+        <Menu title="Viewer">
+          <MenuItem
+            name="Resources"
+            icon={<ResourcesIcon />}
+            onClick={() => history.push('/model-viewer')} />
         </Menu>
         {!!account && hasGenesisCrewmate && (
           <Menu title="Activities" badge={totalAssignments}>

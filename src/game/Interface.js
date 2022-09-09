@@ -10,6 +10,7 @@ import useScreenSize from '~/hooks/useScreenSize';
 import Alerts from './interface/Alerts';
 import Draggables from './interface/Draggables';
 import MainMenu from './interface/MainMenu';
+import ModelViewer from './interface/ModelViewer';
 import Outliner from './interface/Outliner';
 import SaleNotifier from './interface/SaleNotifier';
 import AsteroidDetails from './interface/details/AsteroidDetails';
@@ -111,6 +112,9 @@ const Interface = () => {
           <Redirect from="/:i(\d+)" to="/asteroids/:i" />
           <Route path="/asteroids/:i(\d+)">
             <AsteroidDetails />
+          </Route>
+          <Route path="/model-viewer">
+            <ModelViewer />
           </Route>
           <Route path="/owned-asteroids">
             <OwnedAsteroidsTable />
