@@ -1,26 +1,79 @@
 {
   "short_name": "Influence",
   "name": "Influence",
-  "icons": [
-    {
-      "src": "favicon.ico",
-      "sizes": "48x48 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo-192x192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo-256x256.png",
-      "type": "image/png",
-      "sizes": "256x256"
-    }
-  ],
+  "categories": [ "games", "entertainment" ],
+  "iarc_rating_id": "68a9ddc1-fb4d-4c55-926b-8708ca49bd26",
   "scope": "/",
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#36a7cd",
-  "background_color": "#000000"
+  "background_color": "#000000",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "48x48 32x32 24x24 16x16",
+      "type": "image/x-icon",
+      "purpose": "any"
+    },
+    {
+      "src": "logo-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "logo-256x256.png",
+      "type": "image/png",
+      "sizes": "256x256",
+      "purpose": "any"
+    },
+    {
+      "src": "logo-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "maskable-logo-48x48.png",
+      "type": "image/png",
+      "sizes": "48x48",
+      "purpose": "maskable"
+    },
+    {
+      "src": "maskable-logo-72x72.png",
+      "type": "image/png",
+      "sizes": "72x72",
+      "purpose": "maskable"
+    },
+    {
+      "src": "maskable-logo-96x96.png",
+      "type": "image/png",
+      "sizes": "96x96",
+      "purpose": "maskable"
+    },
+    {
+      "src": "maskable-logo-128x128.png",
+      "type": "image/png",
+      "sizes": "128x128",
+      "purpose": "maskable"
+    },
+    {
+      "src": "maskable-logo-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "maskable-logo-384x384.png",
+      "type": "image/png",
+      "sizes": "384x384",
+      "purpose": "maskable"
+    },
+    {
+      "src": "maskable-logo-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ]
 }
