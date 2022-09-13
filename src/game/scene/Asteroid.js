@@ -14,7 +14,7 @@ import {
 import { CSM } from 'three/examples/jsm/csm/CSM';
 import { CSMHelper } from 'three/examples/jsm/csm/CSMHelper';
 import gsap from 'gsap';
-import { KeplerianOrbit } from 'influence-utils';
+import { KeplerianOrbit, toSpectralType } from 'influence-utils';
 
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -23,7 +23,9 @@ import useWebWorker from '~/hooks/useWebWorker';
 import Config from '~/lib/asteroidConfig';
 import constants from '~/lib/constants';
 import QuadtreeTerrainCube from './asteroid/helpers/QuadtreeTerrainCube';
+import Plots from './asteroid/Plots';
 import Rings from './asteroid/Rings';
+import Telemetry from './asteroid/Telemetry';
 
 const {
   MIN_FRUSTUM_AT_SURFACE,
@@ -643,6 +645,21 @@ const Asteroid = (props) => {
   return (
     <group ref={group}>
       <group ref={quadtreeRef} />
+      <ambientLight intensity={0.1} />
+
+      <Plots />
+
+      {config?.radius && (
+        <Telemetry
+          axis={rotationAxis.current}
+          getPosition={() => position.current}
+          getRotation={() => rotation.current}
+          hasAccess={false}
+          radius={config.radius}
+          spectralType={toSpectralType(config.spectralType)}
+        />
+      )}
+
       {/* TODO: need to pass in CSM to rings probably */}
       {config?.ringsPresent && geometry.current && (
         <Rings
@@ -653,7 +670,7 @@ const Asteroid = (props) => {
       {/* TODO: remove all helpers */}
       {false && (
         <mesh>
-          <sphereGeometry args={[14350]} />
+          <sphereGeometry args={[config?.radius * 1.25]} />
           <meshStandardMaterial color={0x0000ff} opacity={0.8} transparent={true} />
         </mesh>
       )}

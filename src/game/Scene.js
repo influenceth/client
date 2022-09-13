@@ -5,16 +5,17 @@ import { Canvas } from '@react-three/fiber';
 import { useContextBridge, Stats } from '@react-three/drei';
 import styled from 'styled-components';
 
+import { TrackballModControls } from '~/components/TrackballModControls';
 import AuthContext from '~/contexts/AuthContext';
 import ClockContext from '~/contexts/ClockContext';
 import useStore from '~/hooks/useStore';
-import { TrackballModControls } from '~/components/TrackballModControls';
+import constants from '~/lib/constants';
 import Star from './scene/Star';
 import Planets from './scene/Planets';
 import Asteroids from './scene/Asteroids';
 import Asteroid from './scene/Asteroid';
 import SettingsManager from './scene/SettingsManager';
-import constants from '~/lib/constants';
+import Postprocessor from './Postprocessor';
 
 const glConfig = {
   shadows: true,
@@ -75,9 +76,10 @@ const Scene = (props) => {
   return (
     <StyledContainer>
       {statsOn && (<Stats />)}
-      <Canvas {...glConfig} >
+      <Canvas {...glConfig}>
         <ContextBridge>
           <SettingsManager />
+          <Postprocessor />
           <QueryClientProvider client={queryClient} contextSharing={true}>
             <TrackballModControls maxDistance={10 * constants.AU}>
               <Star />
