@@ -328,7 +328,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
           color: `rgb(${theme.colors.mainRGB})`,
           map: shipSprite,
           alphaTest: 0.7,
-          size: Math.round(radius / 65),
+          size: Math.round(radius / 50),
           sizeAttenuation: true
         })
       );
