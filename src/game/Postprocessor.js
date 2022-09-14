@@ -1,10 +1,16 @@
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three'; // TODO: don't import all
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass'
+import {
+  MeshBasicMaterial,
+  ShaderMaterial,
+  Vector2
+} from 'three';
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
 
 const VERTEX_SHADER = `
   varying vec2 vUv;
@@ -26,7 +32,7 @@ const FRAGMENT_SHADER = `
   }
 `;
 
-const darkMaterial = new THREE.MeshBasicMaterial({ color: 'black' });
+const darkMaterial = new MeshBasicMaterial({ color: 'black' });
 const backgrounds = {};
 const materials = {};
 
@@ -35,6 +41,8 @@ const materials = {};
 const Postprocessor = () => {
   const { gl: renderer, camera, scene, size } = useThree();
 
+  const bloomPass = useRef();
+  const fxaaPass = useRef();
   const bloomComposer = useRef();
   const finalComposer = useRef();
 
@@ -93,23 +101,23 @@ const Postprocessor = () => {
 
     const renderScene = new RenderPass( scene, camera );
 
-    const bloomPass = new UnrealBloomPass(
-      new THREE.Vector2( size.width, size.height ),
+    bloomPass.current = new UnrealBloomPass(
+      new Vector2( size.width, size.height ),
       1.5,
       0.4,
       0.85
     );
-    bloomPass.threshold = 0;
-    bloomPass.strength = 2;
-    bloomPass.radius = 0.25;
+    bloomPass.current.threshold = 0;
+    bloomPass.current.strength = 2;
+    bloomPass.current.radius = 0.25;
 
     bloomComposer.current = new EffectComposer( renderer );
     bloomComposer.current.renderToScreen = false;
     bloomComposer.current.addPass( renderScene );
-    bloomComposer.current.addPass( bloomPass );
+    bloomComposer.current.addPass( bloomPass.current );
 
-    const finalPass = new ShaderPass(
-      new THREE.ShaderMaterial({
+    const selectiveBloomPass = new ShaderPass(
+      new ShaderMaterial({
         uniforms: {
           baseTexture: { value: null },
           bloomTexture: { value: bloomComposer.current.renderTarget2.texture }
@@ -120,12 +128,35 @@ const Postprocessor = () => {
       }),
       'baseTexture'
     );
-    finalPass.needsSwap = true;
+    selectiveBloomPass.needsSwap = true;
+
+    const pixelRatio = renderer.getPixelRatio();
+    fxaaPass.current = new ShaderPass( FXAAShader );
+    fxaaPass.current.material.uniforms['resolution'].value.x = 1 / ( size.width * pixelRatio );
+    fxaaPass.current.material.uniforms['resolution'].value.y = 1 / ( size.height * pixelRatio );
   
     finalComposer.current = new EffectComposer( renderer );
     finalComposer.current.addPass( renderScene );
-    finalComposer.current.addPass( finalPass );
+    finalComposer.current.addPass( selectiveBloomPass );
+    finalComposer.current.addPass( fxaaPass.current );
   }, []);
+
+  useEffect(() => {
+    if (bloomComposer.current) {
+      bloomComposer.current.setSize( size.width, size.height );
+    }
+    if (bloomPass.current) {
+      bloomPass.current.resolution = new Vector2( size.width, size.height );
+    }
+    if (finalComposer.current) {
+      finalComposer.current.setSize( size.width, size.height );
+    }
+    if (fxaaPass.current) {
+      const pixelRatio = renderer.getPixelRatio();
+      fxaaPass.current.material.uniforms['resolution'].value.x = 1 / ( size.width * pixelRatio );
+      fxaaPass.current.material.uniforms['resolution'].value.y = 1 / ( size.height * pixelRatio );
+    }
+  }, [size.height, size.width])
 
   useFrame(({ scene }) => {
     if (!(bloomComposer.current && finalComposer.current)) return;
