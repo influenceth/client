@@ -149,7 +149,7 @@ const config = {
   shipCircle: {
     enabled: true,
     dashed: false,
-    displayEmpty: false,  // TODO: implement
+    onEmpty: 'dash', // dash, hide
     orientation: 'equator', // equator, inclination, planar
     bloom: { circle: false, ship: true },
     scale: 1.0, // TODO: try 1.0 on equator (and hide equator line)
@@ -296,50 +296,53 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
     }
 
     if (config.shipCircle.enabled) {
-      const shipSprite = new TextureLoader().load('/disc.png');
-
-      const shipCircle = new LineLoop(
-        geometry.clone().scale(
-          config.shipCircle.scale,
-          config.shipCircle.scale,
-          config.shipCircle.scale,
-        ),
-        config.shipCircle.dashed ? getDashedMaterial() : material.clone()
-      );
-      if (config.shipCircle.dashed) shipCircle.computeLineDistances();
-      shipCircle.userData.bloom = config.shipCircle.bloom.circle;
-
-      const shipVertices = [];
-      const shipRadius = defaultTelemetryRadius * config.shipCircle.scale * radius;
       const shipTally = Math.min(500, Math.round(config.shipCircle.shipsPerLot * 4 * Math.PI * Math.pow(radius / 1e3, 2)) + Math.round(Math.random()));
-      for (let i = 0; i < shipTally; i++) {
-        const angle = 2 * Math.PI * Math.random();
-        const x = shipRadius * Math.cos(angle);
-        const y = shipRadius * Math.sin(angle);
-        const z = 0;
-        shipVertices.push(x, y, z);
-      }
-      
-      const shipPointGeometry = new BufferGeometry();
-      shipPointGeometry.setAttribute('position', new Float32BufferAttribute( shipVertices, 3 ));
-      const shipCirclePoints = new Points(
-        shipPointGeometry,
-        new PointsMaterial({
-          color: `rgb(${theme.colors.mainRGB})`,
-          map: shipSprite,
-          alphaTest: 0.7,
-          size: Math.round(radius / 50),
-          sizeAttenuation: true
-        })
-      );
-      shipCirclePoints.userData.bloom = config.shipCircle.bloom.ship;
+      if (shipTally > 0 || config.shipCircle.onEmpty !== 'hide') {
+        const shipSprite = new TextureLoader().load('/disc.png');
 
-      shipGroup.current = new Group();
-      shipGroup.current.add(shipCircle);
-      shipGroup.current.add(shipCirclePoints);
+        const dashCircle = config.shipCircle.dashed || (shipTally === 0 && config.shipCircle.onEmpty === 'dash');
+        const shipCircle = new LineLoop(
+          geometry.clone().scale(
+            config.shipCircle.scale,
+            config.shipCircle.scale,
+            config.shipCircle.scale,
+          ),
+          dashCircle ? getDashedMaterial() : material.clone()
+        );
+        if (dashCircle) shipCircle.computeLineDistances();
+        shipCircle.userData.bloom = config.shipCircle.bloom.circle;
 
-      if (config.shipCircle.orientation === 'equator') {
-        shipGroup.current.lookAt(axis.clone().normalize());
+        const shipVertices = [];
+        const shipRadius = defaultTelemetryRadius * config.shipCircle.scale * radius;
+        for (let i = 0; i < shipTally; i++) {
+          const angle = 2 * Math.PI * Math.random();
+          const x = shipRadius * Math.cos(angle);
+          const y = shipRadius * Math.sin(angle);
+          const z = 0;
+          shipVertices.push(x, y, z);
+        }
+        
+        const shipPointGeometry = new BufferGeometry();
+        shipPointGeometry.setAttribute('position', new Float32BufferAttribute( shipVertices, 3 ));
+        const shipCirclePoints = new Points(
+          shipPointGeometry,
+          new PointsMaterial({
+            color: `rgb(${theme.colors.mainRGB})`,
+            map: shipSprite,
+            alphaTest: 0.7,
+            size: Math.round(radius / 50),
+            sizeAttenuation: true
+          })
+        );
+        shipCirclePoints.userData.bloom = config.shipCircle.bloom.ship;
+
+        shipGroup.current = new Group();
+        shipGroup.current.add(shipCircle);
+        shipGroup.current.add(shipCirclePoints);
+
+        if (config.shipCircle.orientation === 'equator') {
+          shipGroup.current.lookAt(axis.clone().normalize());
+        }
       }
     }
 
@@ -532,7 +535,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
         // rotate children instead of group because otherwise "inclination" mode breaks (due to repeated lookAt's)
         // TODO (enhancement): if not using inclination, just rotate group
         shipGroup.current.children.forEach((c) => {
-          c.rotateZ(shipAngularVelocity * shipDelta);
+          if (c.isPoints) c.rotateZ(shipAngularVelocity * shipDelta);
         });
         shipTime.current = now;
       }

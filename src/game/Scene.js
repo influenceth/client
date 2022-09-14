@@ -79,7 +79,7 @@ const Scene = (props) => {
       <Canvas {...glConfig}>
         <ContextBridge>
           <SettingsManager />
-          <Postprocessor />
+          {true && <Postprocessor />}
           <QueryClientProvider client={queryClient} contextSharing={true}>
             <TrackballModControls maxDistance={10 * constants.AU}>
               <Star />
