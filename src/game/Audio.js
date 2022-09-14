@@ -67,8 +67,9 @@ const Audio = (props) => {
     let index = Math.floor(Math.random() * tracks.length);
     if (index === lastTrack) index++;
 
+    let to;
     if (musicVolume === 0 || !tracks[index]) {
-      setTimeout(() => setLastTrack(index), Math.random() * 60000 * 3);
+      to = setTimeout(() => setLastTrack(index), Math.random() * 60000 * 3);
     } else {
       const track = new Sound(tracks[index]);
       setCurrentTrack(track);
@@ -80,14 +81,19 @@ const Audio = (props) => {
         track.stop();
         track.unload();
         setCurrentTrack(null);
-        setTimeout(() => setLastTrack(index), Math.random() * 60000 * 3);
+        to = setTimeout(() => setLastTrack(index), Math.random() * 60000 * 3);
       });
     }
+
+    return () => {
+      if (to) clearTimeout(to);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [ lastTrack, soundEnabled ]);
+  }, [ lastTrack, soundEnabled ]);
 
   // Adjust volume of music tracks
   useEffect(() => {
+    let to;
     if (currentTrack) {
       const targetVolume = currentTrack._baseVolume * musicVolume / 100;
       if (cutscenePlaying) {
@@ -96,7 +102,7 @@ const Audio = (props) => {
       }
       else if (cutsceneWasPlaying.current) {
         currentTrack.volume(0);
-        setTimeout(() => {
+        to = setTimeout(() => {
           currentTrack.fade(0, targetVolume, 5000);
         }, 10000);
         cutsceneWasPlaying.current = false;
@@ -104,6 +110,10 @@ const Audio = (props) => {
       else {
         currentTrack.volume(targetVolume);
       }
+    }
+    
+    return () => {
+      if (to) clearTimeout(to);
     }
   }, [ musicVolume, currentTrack, cutscenePlaying ]);
 
