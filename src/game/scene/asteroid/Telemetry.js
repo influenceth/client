@@ -41,7 +41,7 @@ const hexToGLSL = (hex) => {
 };
 const BLUE = hexToGLSL(theme.colors.main);
 const GREEN = hexToGLSL(theme.colors.success);
-const RED = hexToGLSL(theme.colors.error);
+const RED = hexToGLSL('#ff2200');//hexToGLSL(theme.colors.error);
 const SIGNAGE_THETA = 0.05;
 
 const getLineMaterial = (rgb, fogDistance, maxAlpha = 1) => {
@@ -133,18 +133,18 @@ const config = {
   },
   inclinationCircle: {
     enabled: false,
-    bloom: true
+    bloom: false
   },
   planarCircle: {
     enabled: false,
-    bloom: true
+    bloom: false
   },
 
   accessControl: {
     enabled: true,
     orientation: 'planar',  // TODO: implement (equator, inclination, planar)
-    scale: 1.0, // TODO: implement
-    bloom: { disc: false, circle: false, sign: true }
+    scale: null, // null | 1.0,
+    bloom: { disc: false, circle: true, sign: true }
   },
   shipCircle: {
     enabled: true,
@@ -349,7 +349,9 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
       const discMargin = radius * 0.005;
       const discWidth = radius * 0.03;
 
-      const innerDiscRadius = circleRadius + discMargin + discWidth;
+      const innerDiscRadius = config.accessControl.scale
+        ? circleRadius * config.accessControl.scale
+        : circleRadius + discMargin + discWidth;
       const outerDiscRadius = innerDiscRadius + discWidth;
       accessDisc.current = new Mesh(
         new RingGeometry(
