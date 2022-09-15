@@ -34,9 +34,12 @@ const FRAGMENT_SHADER = `
 
 const darkMaterial = new MeshBasicMaterial({ color: 'black' });
 const backgrounds = {};
+const colors = {};
 const materials = {};
 
 // TODO: can we use traverseVisible? is it more efficient?
+
+// TODO: rather than ambient light on asteroid, potentially use a darker and bluer light directly opposite the star
 
 const Postprocessor = () => {
   const { gl: renderer, camera, scene, size } = useThree();
@@ -58,15 +61,16 @@ const Postprocessor = () => {
     } else if (obj.isLensflare) {
       obj.visible = false;
     } else if (obj.material && !obj.userData.bloom) {
-      // TODO: is double-traversing some nodes, that's why this "if" is here
+      // TODO: is double-traversing some nodes, that's why these if's are here
       //  why is this happening?
-      if (obj.material.uuid !== darkMaterial.uuid) {
-        materials[obj.uuid] = obj.material;
-        if (obj.material.displacementMap) {
-          obj.material.colorWrite = false;  // NOTE: this strategy will break colorWrite if we ever use it
-        } else {
-          obj.material = darkMaterial;
+      if (obj.material.displacementMap) {
+        if (!Object.keys(colors).includes(obj.uuid)) {
+          colors[obj.uuid] = obj.material.color;
+          obj.material.setValues({ color: 0x000000 });
         }
+      } else if (obj.material.uuid !== darkMaterial.uuid) {
+        materials[obj.uuid] = obj.material;
+        obj.material = darkMaterial;
       }
     }
   }
@@ -81,11 +85,13 @@ const Postprocessor = () => {
       });
     } else if (obj.isLensflare) {
       obj.visible = true;
-    } else if ( materials[ obj.uuid ] ) {
-      obj.material = materials[ obj.uuid ];
-      delete materials[ obj.uuid ];
-      if (obj.material.displacementMap) {
-        obj.material.colorWrite = true;
+    } else if (obj.material) {
+      if (obj.material.displacementMap && Object.keys(colors).includes(obj.uuid)) {
+        obj.material.setValues({ color: 0xffffff });
+        delete colors[ obj.uuid ];
+      } else if (!obj.material.displacementMap && materials[ obj.uuid ]) {
+        obj.material = materials[ obj.uuid ];
+        delete materials[ obj.uuid ];
       }
     }
   }
