@@ -645,7 +645,7 @@ const Asteroid = (props) => {
   return (
     <group ref={group}>
       <group ref={quadtreeRef} />
-      <ambientLight intensity={0.1} />
+      <ambientLight intensity={0.12} />
 
       <Plots />
 

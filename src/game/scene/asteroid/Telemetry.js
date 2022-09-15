@@ -24,6 +24,7 @@ import {
   Vector3,
   TextureLoader,
 } from 'three';
+import * as THREE from 'three';
 
 import useGetTime from '~/hooks/useGetTime';
 import constants from '~/lib/constants';
@@ -41,7 +42,7 @@ const hexToGLSL = (hex) => {
 };
 const BLUE = hexToGLSL(theme.colors.main);
 const GREEN = hexToGLSL(theme.colors.success);
-const RED = hexToGLSL('#ff2200');//hexToGLSL(theme.colors.error);
+const RED = BLUE;//hexToGLSL('#777777');//hexToGLSL(theme.colors.error);
 const SIGNAGE_THETA = 0.05;
 
 const getLineMaterial = (rgb, fogDistance, maxAlpha = 1) => {
@@ -116,7 +117,7 @@ const getDashedLineMaterial = (color, glslColor, fogDistance, radius, maxAlpha =
 const config = {
   trajectoryLine: {
     enabled: true,
-    bloom: true
+    bloom: false
   },
   rotationalAxis: {
     enabled: true,
@@ -124,34 +125,34 @@ const config = {
   },
   meridianCircle: {
     enabled: true,
-    bloom: true
+    bloom: true,
+    // dashed: true
   },
   equatorCircle: {
     enabled: false,
-    bloom: true,
-    dashed: true
+    bloom: true
   },
   inclinationCircle: {
     enabled: false,
     bloom: false
   },
   planarCircle: {
-    enabled: false,
-    bloom: false
+    enabled: true,
+    bloom: true
   },
 
   accessControl: {
     enabled: true,
-    orientation: 'planar',  // TODO: implement (equator, inclination, planar)
-    scale: null, // null | 1.0,
+    orientation: 'planar',  // equator, planar
+    scale: 1.1, // null | 1.0,
     bloom: { disc: false, circle: true, sign: true }
   },
   shipCircle: {
     enabled: true,
     dashed: false,
-    onEmpty: 'dash', // dash, hide
+    onEmpty: 'hide', // dash, hide
     orientation: 'equator', // equator, inclination, planar
-    bloom: { circle: false, ship: true },
+    bloom: { circle: true, ship: true },
     scale: 1.0, // TODO: try 1.0 on equator (and hide equator line)
     shipsPerLot: 0.02
   }
@@ -363,8 +364,8 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
           circleSegments
         ),
         new MeshBasicMaterial({
-          color: new Color(hasAccess ? theme.colors.success : theme.colors.error).convertSRGBToLinear(),
-          opacity: 0.5,
+          color: new Color(hasAccess ? theme.colors.success : theme.colors.main).convertSRGBToLinear(),
+          opacity: 0.25,
           side: DoubleSide,
           transparent: true
         })
@@ -386,7 +387,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
       const accessLineMaterial = getLineMaterial(
         hasAccess ? GREEN : RED,
         circleAttenuation,
-        0.8
+        1.0
       );
       accessCircle.current = new Line(
         accessCircleGeometry,
@@ -461,30 +462,34 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
       accessGroup.current.add(accessDisc.current);
       accessGroup.current.add(accessCircle.current);
       accessGroup.current.add(accessGroupSign);
+
+      if (config.accessControl.orientation === 'equator') {
+        accessGroup.current.lookAt(axis.clone().normalize());
+      }
     }
 
     // helper.current = new AxesHelper(30000);
 
     if (accessGroup.current) scene.add(accessGroup.current);
-    if (rotationalAxis.current) scene.add(rotationalAxis.current);
     if (equatorCircle.current) scene.add(equatorCircle.current);
-    if (inclinationCircle.current) scene.add(inclinationCircle.current);
-    if (planarCircle.current) scene.add(planarCircle.current);
-    if (shipGroup.current) scene.add(shipGroup.current);
-    if (meridianCircle.current) scene.add(meridianCircle.current);
-    if (trajectory.current) scene.add(trajectory.current);
     if (helper.current) scene.add(helper.current);
+    if (inclinationCircle.current) scene.add(inclinationCircle.current);
+    if (meridianCircle.current) scene.add(meridianCircle.current);
+    if (planarCircle.current) scene.add(planarCircle.current);
+    if (rotationalAxis.current) scene.add(rotationalAxis.current);
+    if (shipGroup.current) scene.add(shipGroup.current);
+    if (trajectory.current) scene.add(trajectory.current);
 
     return () => {
       if (accessGroup.current) scene.remove(accessGroup.current);
-      if (rotationalAxis.current) scene.remove(rotationalAxis.current);
       if (equatorCircle.current) scene.remove(equatorCircle.current);
-      if (inclinationCircle.current) scene.remove(inclinationCircle.current);
-      if (planarCircle.current) scene.remove(planarCircle.current);
-      if (shipGroup.current) scene.remove(shipGroup.current);
-      if (meridianCircle.current) scene.remove(meridianCircle.current);
-      if (trajectory.current) scene.remove(trajectory.current);
       if (helper.current) scene.remove(helper.current);
+      if (inclinationCircle.current) scene.remove(inclinationCircle.current);
+      if (meridianCircle.current) scene.remove(meridianCircle.current);
+      if (planarCircle.current) scene.remove(planarCircle.current);
+      if (rotationalAxis.current) scene.remove(rotationalAxis.current);
+      if (shipGroup.current) scene.remove(shipGroup.current);
+      if (trajectory.current) scene.remove(trajectory.current);
     };
   }, []);
 
