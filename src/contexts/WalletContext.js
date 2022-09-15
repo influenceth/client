@@ -74,6 +74,11 @@ export function WalletProvider({ children }) {
     try {
       setConnecting(true);
       await wallet.enable();
+
+      // TODO (enhancement): if get here, could technically set starknet so start listening to changes
+      //  (i.e. so that if change network or change to a connected account on the same wallet, updates
+      //  the connection without them having to push the button again)
+
       if (!wallet.isConnected) {
         connect({ showList: false });
       }
