@@ -17,7 +17,7 @@ import useAssets from '~/hooks/useAssets';
 
 // TODO: connect to gpu-graphics settings
 const ENABLE_SHADOWS = true;
-const ENV_MAP_STRENGTH = 3;
+const ENV_MAP_STRENGTH = 4.5;
 
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderConfig({ type: 'js' });
@@ -151,7 +151,7 @@ const Model = ({ url, onLoaded, overrideEnvStrength }) => {
   useEffect(() => {
     controls.current = new OrbitControls(camera, gl.domElement);
 
-    controls.current.minDistance = 0.6;
+    controls.current.minDistance = 0.85;
     controls.current.maxDistance = 5;
     controls.current.target.set(0, 0, 0);
 
@@ -302,9 +302,8 @@ const Skybox = ({ onLoaded, overrideBackground, overrideEnvironment }) => {
   useEffect(() => {
     let cleanupTextures = [];
 
-    const defaultMap = 'textures/model-viewer/courtyard_darkened4.hdr';
-    let background = overrideBackground || defaultMap;
-    let env = overrideEnvironment || defaultMap;
+    let background = overrideBackground || 'textures/model-viewer/resource_skybox.hdr';
+    let env = overrideEnvironment || 'textures/model-viewer/resource_envmap.hdr';
 
     let waitingOn = background === env ? 1 : 2;
     new RGBELoader().load(background, function (texture) {
