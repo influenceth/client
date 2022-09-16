@@ -21,8 +21,11 @@ import {
   MeshStandardMaterial,
   RingGeometry,
   ShaderMaterial,
+  Sprite,
+  SpriteMaterial,
   Vector3,
   TextureLoader,
+  PlaneGeometry,
 } from 'three';
 import * as THREE from 'three';
 
@@ -129,7 +132,7 @@ const config = {
     // dashed: true
   },
   equatorCircle: {
-    enabled: false,
+    enabled: true,
     bloom: true
   },
   inclinationCircle: {
@@ -137,23 +140,28 @@ const config = {
     bloom: false
   },
   planarCircle: {
-    enabled: true,
+    enabled: false,
     bloom: true
   },
 
+  northPole: {
+    enabled: true,
+    bloom: true
+  },
   accessControl: {
     enabled: true,
-    orientation: 'planar',  // equator, planar
+    orientation: 'planar',  // equator, planar // TODO: equator does not support camera following
     scale: 1.1, // null | 1.0,
     bloom: { disc: false, circle: true, sign: true }
   },
   shipCircle: {
     enabled: true,
     dashed: false,
+    hideCircle: false,
     onEmpty: 'hide', // dash, hide
     orientation: 'equator', // equator, inclination, planar
     bloom: { circle: true, ship: true },
-    scale: 1.0, // TODO: try 1.0 on equator (and hide equator line)
+    scale: 1.2,
     shipsPerLot: 0.02
   }
 };
@@ -184,6 +192,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
   const equatorCircle = useRef();
   const shipGroup = useRef();
   const meridianCircle = useRef();
+  const northPole = useRef();
   const planarCircle = useRef();  // parallel to avg belt plane (i.e. z = 0)
   const inclinationCircle = useRef(); // parallel to light rays
   const trajectory = useRef();
@@ -296,8 +305,22 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
       trajectory.current.userData.bloom = config.trajectoryLine.bloom;
     }
 
+    if (config.northPole.enabled) {
+      const poleMarkerSize = circleRadius / 10;
+      const pole = axis.clone().multiplyScalar(circleRadius);
+      northPole.current = new Sprite(
+        new SpriteMaterial({
+          color: theme.colors.main,
+          map: new TextureLoader().load('/textures/asteroid/marker_pole.png'),
+        })
+      );
+      northPole.current.scale.set(poleMarkerSize, poleMarkerSize, poleMarkerSize);
+      northPole.current.position.set(pole.x, pole.y, pole.z + poleMarkerSize * 0.2);
+      northPole.current.userData.bloom = config.northPole.bloom;
+    }
+
     if (config.shipCircle.enabled) {
-      const shipTally = Math.min(500, Math.round(config.shipCircle.shipsPerLot * 4 * Math.PI * Math.pow(radius / 1e3, 2)) + Math.round(Math.random()));
+      const shipTally = Math.min(20, Math.round(config.shipCircle.shipsPerLot * 4 * Math.PI * Math.pow(radius / 1e3, 2)) + Math.round(Math.random()));
       if (shipTally > 0 || config.shipCircle.onEmpty !== 'hide') {
         const shipSprite = new TextureLoader().load('/disc.png');
 
@@ -338,7 +361,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
         shipCirclePoints.userData.bloom = config.shipCircle.bloom.ship;
 
         shipGroup.current = new Group();
-        shipGroup.current.add(shipCircle);
+        if (!config.shipCircle.hideCircle) shipGroup.current.add(shipCircle);
         shipGroup.current.add(shipCirclePoints);
 
         if (config.shipCircle.orientation === 'equator') {
@@ -395,66 +418,42 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
       );
       accessCircle.current.userData.bloom = config.accessControl.bloom.circle;
 
-      // sign
-      const signageTheta = SIGNAGE_THETA * 1;
-      const signHeight = accessCircleRadius * signageTheta;
-      const signIconVertices = hasAccess
-        ? [
-          accessCircleRadius * Math.cos(-signageTheta), accessCircleRadius * Math.sin(-signageTheta), -0.25*signHeight,
-          accessCircleRadius * Math.cos(-signageTheta/2), accessCircleRadius * Math.sin(-signageTheta/2), -0.75*signHeight,
-          accessCircleRadius * Math.cos(signageTheta), accessCircleRadius * Math.sin(signageTheta), 0.75*signHeight,
-        ]
-        : [
-          accessCircleRadius * Math.cos(-signageTheta), accessCircleRadius * Math.sin(-signageTheta), signHeight,
-          accessCircleRadius, 0, 0,
-          accessCircleRadius * Math.cos(signageTheta), accessCircleRadius * Math.sin(signageTheta), signHeight,
-          accessCircleRadius, 0, 0,
-          accessCircleRadius * Math.cos(-signageTheta), accessCircleRadius * Math.sin(-signageTheta), -signHeight,
-          accessCircleRadius, 0, 0,
-          accessCircleRadius * Math.cos(signageTheta), accessCircleRadius * Math.sin(signageTheta), -signHeight,
-          accessCircleRadius, 0, 0,
-        ];
-      const signIconGeometry = new BufferGeometry();
-      signIconGeometry.setAttribute('position', new BufferAttribute(new Float32Array(signIconVertices), 3));
-      const signIcon = new Line(
-        signIconGeometry,
-        accessLineMaterial.clone()
+      // "gate"
+      const hGateSprite = new TextureLoader().load('/textures/asteroid/docking_gate_h.png');
+      const dockingGateSize = accessCircleRadius * 2 * Math.PI * SIGNAGE_THETA;
+      const dockingGateHorizontal = new Mesh(
+        new PlaneGeometry(dockingGateSize, dockingGateSize, 1, 1),
+        new MeshBasicMaterial({
+          alphaTest: 0.1,
+          color: theme.colors.main,
+          map: hGateSprite,
+          side: DoubleSide,
+          transparent: true
+        })
       );
-      signIcon.userData.bloom = config.accessControl.bloom.sign;
-      
-      const bracketHeight = signHeight * 1.5;
-      const leftBracketVertices = [
-        accessCircleRadius, accessCircleRadius * Math.sin(-signageTheta * 1), bracketHeight,
-        accessCircleRadius, accessCircleRadius * Math.sin(-signageTheta * 1.5), bracketHeight,
-        accessCircleRadius, accessCircleRadius * Math.sin(-signageTheta * 1.5), -bracketHeight,
-        accessCircleRadius, accessCircleRadius * Math.sin(-signageTheta * 1), -bracketHeight,
-      ];
-      const leftBracketGeometry = new BufferGeometry();
-      leftBracketGeometry.setAttribute('position', new BufferAttribute(new Float32Array(leftBracketVertices), 3));
-      const leftBracket = new Line(
-        leftBracketGeometry,
-        accessLineMaterial.clone()
-      );
-      leftBracket.userData.bloom = config.accessControl.bloom.sign;
+      dockingGateHorizontal.rotateZ(Math.PI / 2);
+      dockingGateHorizontal.position.set(accessCircleRadius, 0, 0);
+      dockingGateHorizontal.userData.bloom = true;
 
-      const rightBracketVertices = [
-        accessCircleRadius, accessCircleRadius * Math.sin(signageTheta * 1), bracketHeight,
-        accessCircleRadius, accessCircleRadius * Math.sin(signageTheta * 1.5), bracketHeight,
-        accessCircleRadius, accessCircleRadius * Math.sin(signageTheta * 1.5), -bracketHeight,
-        accessCircleRadius, accessCircleRadius * Math.sin(signageTheta * 1), -bracketHeight,
-      ];
-      const rightBracketGeometry = new BufferGeometry();
-      rightBracketGeometry.setAttribute('position', new BufferAttribute(new Float32Array(rightBracketVertices), 3));
-      const rightBracket = new Line(
-        rightBracketGeometry,
-        accessLineMaterial.clone()
+      const vGateSprite = new TextureLoader().load('/textures/asteroid/docking_gate_v.png');
+      const dockingGateVertical = new Mesh(
+        new PlaneGeometry(dockingGateSize, dockingGateSize, 1, 1),
+        new MeshBasicMaterial({
+          alphaTest: 0.1,
+          color: theme.colors.main,
+          map: vGateSprite,
+          side: DoubleSide,
+          transparent: true
+        })
       );
-      rightBracket.userData.bloom = config.accessControl.bloom.sign;
+      dockingGateVertical.rotateY(Math.PI / 2);
+      dockingGateVertical.rotateZ(Math.PI / 2);
+      dockingGateVertical.position.set(accessCircleRadius, 0, 0);
+      dockingGateVertical.userData.bloom = true;
 
       const accessGroupSign = new Group();
-      accessGroupSign.add(leftBracket);
-      accessGroupSign.add(signIcon);
-      accessGroupSign.add(rightBracket);
+      accessGroupSign.add(dockingGateHorizontal);
+      accessGroupSign.add(dockingGateVertical);
 
       // put in one group
       accessGroup.current = new Group();
@@ -475,6 +474,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
     if (helper.current) scene.add(helper.current);
     if (inclinationCircle.current) scene.add(inclinationCircle.current);
     if (meridianCircle.current) scene.add(meridianCircle.current);
+    if (northPole.current) scene.add(northPole.current);
     if (planarCircle.current) scene.add(planarCircle.current);
     if (rotationalAxis.current) scene.add(rotationalAxis.current);
     if (shipGroup.current) scene.add(shipGroup.current);
@@ -486,6 +486,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
       if (helper.current) scene.remove(helper.current);
       if (inclinationCircle.current) scene.remove(inclinationCircle.current);
       if (meridianCircle.current) scene.remove(meridianCircle.current);
+      if (northPole.current) scene.remove(northPole.current);
       if (planarCircle.current) scene.remove(planarCircle.current);
       if (rotationalAxis.current) scene.remove(rotationalAxis.current);
       if (shipGroup.current) scene.remove(shipGroup.current);
@@ -545,7 +546,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
         shipTime.current = now;
       }
 
-      if (accessGroup.current) {
+      if (accessGroup.current && config.accessControl.orientation === 'planar') {
         if (controls.object.position.x !== 0) {
           let rot = Math.atan(controls.object.position.y / controls.object.position.x);
           if (controls.object.position.x < 0) rot += Math.PI;
