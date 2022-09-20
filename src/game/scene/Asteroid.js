@@ -123,6 +123,7 @@ const Asteroid = (props) => {
   const quadtreeRef = useRef();
   const group = useRef();
   const light = useRef();
+  const darkLight = useRef();
   const asteroidOrbit = useRef();
   const rotationAxis = useRef();
   const position = useRef();
@@ -176,6 +177,14 @@ const Asteroid = (props) => {
     if (light.current) {
       light.current.dispose();
       light.current = null;
+    }
+
+    if (group.current && darkLight.current) {
+      group.current.remove(darkLight.current);
+    }
+    if (darkLight.current) {
+      darkLight.current.dispose();
+      darkLight.current = null;
     }
   }, []);
 
@@ -257,10 +266,16 @@ const Asteroid = (props) => {
     const lightDistance = config.radius * DIRECTIONAL_LIGHT_DISTANCE;
     const lightDirection = posVec.clone().normalize();
     const lightIntensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
+
+    const darkLightColor = 0xd8ddff;
+    const darkLightDistance = config.radius * DIRECTIONAL_LIGHT_DISTANCE;
+    const darkLightDirection = posVec.negate().clone().normalize();
+    const darkLightIntensity = lightIntensity * 0.25;
+    
     const maxRadius = ringsPresent
       ? config.radius * 1.5
       : config.radius * maxStretch;
-    
+
     //
     // CSM setup
     //
@@ -340,6 +355,11 @@ const Asteroid = (props) => {
         geometry.current.setShadowsEnabled(false);
       }
     }
+
+    // create "dark light"
+    darkLight.current = new DirectionalLight(darkLightColor, darkLightIntensity);
+    darkLight.current.position.copy(darkLightDirection.negate().multiplyScalar(darkLightDistance));
+    group.current.add(darkLight.current);
 
     // set current shadowMode
     geometry.current.shadowMode = intendedShadowMode;
@@ -504,7 +524,12 @@ const Asteroid = (props) => {
           )
         } else if (light.current) {
           light.current.position.copy(
-            new Vector3(...position.current).negate().multiplyScalar(config.radius * DIRECTIONAL_LIGHT_DISTANCE)
+            new Vector3(...position.current).normalize().negate().multiplyScalar(config.radius * DIRECTIONAL_LIGHT_DISTANCE)
+          );
+        }
+        if (darkLight.current) {
+          darkLight.current.position.copy(
+            new Vector3(...position.current).normalize().multiplyScalar(config.radius * DIRECTIONAL_LIGHT_DISTANCE)
           );
         }
       }
@@ -645,7 +670,6 @@ const Asteroid = (props) => {
   return (
     <group ref={group}>
       <group ref={quadtreeRef} />
-      <ambientLight intensity={0.12} />
 
       {config && geometry.current && quadtreeRef.current && (
         <Plots
@@ -690,6 +714,9 @@ const Asteroid = (props) => {
           {true && light?.shadow?.camera && <primitive object={new CameraHelper(light.shadow.camera)} />}
         </Fragment>
       ))}
+      {false && darkLight.current && (
+        <primitive object={new DirectionalLightHelper(darkLight.current, 2 * config?.radius)} />
+      )}
       {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
       {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
       {false && <ambientLight intensity={0.3} />}
