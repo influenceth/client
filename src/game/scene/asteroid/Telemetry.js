@@ -148,6 +148,10 @@ const config = {
     enabled: true,
     bloom: true
   },
+  southPole: {
+    enabled: true,
+    bloom: true
+  },
   accessControl: {
     enabled: true,
     orientation: 'planar',  // equator, planar // TODO: equator does not support camera following
@@ -191,8 +195,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
   const rotationalAxis = useRef();
   const equatorCircle = useRef();
   const shipGroup = useRef();
-  const meridianCircle = useRef();
-  const northPole = useRef();
+  const rotationalMarkersGroup = useRef();
   const planarCircle = useRef();  // parallel to avg belt plane (i.e. z = 0)
   const inclinationCircle = useRef(); // parallel to light rays
   const trajectory = useRef();
@@ -257,13 +260,16 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
       equatorCircle.current.lookAt(axis.clone().normalize());
     }
 
-    if (config.meridianCircle.enabled) {
-      meridianCircle.current = new LineLoop(vertGeometry.clone(), config.meridianCircle.dashed ? getDashedMaterial() : material.clone());
-      if (config.meridianCircle.dashed) meridianCircle.current.computeLineDistances();
-      meridianCircle.current.userData.bloom = config.meridianCircle.bloom;
+    rotationalMarkersGroup.current = new Group();
+    rotationalMarkersGroup.current.lookAt(axis.clone().normalize());
+    rotationalMarkersGroup.current.updateMatrixWorld();
 
-      meridianCircle.current.lookAt(axis.clone().normalize());
-      meridianCircle.current.updateMatrixWorld();
+    if (config.meridianCircle.enabled) {
+      const meridianCircle = new LineLoop(vertGeometry.clone(), config.meridianCircle.dashed ? getDashedMaterial() : material.clone());
+      if (config.meridianCircle.dashed) meridianCircle.computeLineDistances();
+      meridianCircle.userData.bloom = config.meridianCircle.bloom;
+
+      rotationalMarkersGroup.current.add(meridianCircle);
     }
 
     if (config.planarCircle.enabled) {
@@ -307,16 +313,40 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
 
     if (config.northPole.enabled) {
       const poleMarkerSize = circleRadius / 10;
-      const pole = axis.clone().multiplyScalar(circleRadius);
-      northPole.current = new Sprite(
-        new SpriteMaterial({
+      const northPole = new Mesh(
+        new PlaneGeometry(poleMarkerSize, poleMarkerSize, 1, 1),
+        new MeshBasicMaterial({
           color: theme.colors.main,
-          map: new TextureLoader().load('/textures/asteroid/marker_pole.png'),
+          map: new TextureLoader().load('/textures/asteroid/marker_pole_n.png'),
+          side: DoubleSide,
+          transparent: true
         })
       );
-      northPole.current.scale.set(poleMarkerSize, poleMarkerSize, poleMarkerSize);
-      northPole.current.position.set(pole.x, pole.y, pole.z + poleMarkerSize * 0.2);
-      northPole.current.userData.bloom = config.northPole.bloom;
+
+      northPole.position.set(0, 0, circleRadius + poleMarkerSize * 0.2);
+      northPole.rotateX(Math.PI / 2);
+      northPole.userData.bloom = config.northPole.bloom;
+
+      rotationalMarkersGroup.current.add(northPole);
+    }
+
+    if (config.southPole.enabled) {
+      const poleMarkerSize = circleRadius / 10;
+      const southPole = new Mesh(
+        new PlaneGeometry(poleMarkerSize, poleMarkerSize, 1, 1),
+        new MeshBasicMaterial({
+          color: theme.colors.main,
+          map: new TextureLoader().load('/textures/asteroid/marker_pole_s.png'),
+          side: DoubleSide,
+          transparent: true
+        })
+      );
+
+      southPole.position.set(0, 0, -1 * (circleRadius + poleMarkerSize * 0.2));
+      southPole.rotateX(Math.PI / 2);
+      southPole.userData.bloom = config.southPole.bloom;
+
+      rotationalMarkersGroup.current.add(southPole);
     }
 
     if (config.shipCircle.enabled) {
@@ -472,8 +502,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
     if (equatorCircle.current) scene.add(equatorCircle.current);
     if (helper.current) scene.add(helper.current);
     if (inclinationCircle.current) scene.add(inclinationCircle.current);
-    if (meridianCircle.current) scene.add(meridianCircle.current);
-    if (northPole.current) scene.add(northPole.current);
+    if (rotationalMarkersGroup.current) scene.add(rotationalMarkersGroup.current);
     if (planarCircle.current) scene.add(planarCircle.current);
     if (rotationalAxis.current) scene.add(rotationalAxis.current);
     if (shipGroup.current) scene.add(shipGroup.current);
@@ -484,8 +513,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
       if (equatorCircle.current) scene.remove(equatorCircle.current);
       if (helper.current) scene.remove(helper.current);
       if (inclinationCircle.current) scene.remove(inclinationCircle.current);
-      if (meridianCircle.current) scene.remove(meridianCircle.current);
-      if (northPole.current) scene.remove(northPole.current);
+      if (rotationalMarkersGroup.current) scene.remove(rotationalMarkersGroup.current);
       if (planarCircle.current) scene.remove(planarCircle.current);
       if (rotationalAxis.current) scene.remove(rotationalAxis.current);
       if (shipGroup.current) scene.remove(shipGroup.current);
@@ -525,8 +553,8 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
         inclinationCircle.current.lookAt(solar);
       }
 
-      if (meridianCircle.current) {
-        meridianCircle.current.rotateZ(lastRotation.current ? rotation - lastRotation.current : rotation);
+      if (rotationalMarkersGroup.current) {
+        rotationalMarkersGroup.current.rotateZ(lastRotation.current ? rotation - lastRotation.current : rotation);
         lastRotation.current = rotation;
       }
 
