@@ -116,6 +116,7 @@ const Asteroid = (props) => {
   const webWorkerPool = useWebWorker();
 
   const [config, setConfig] = useState();
+  const [terrainInitialized, setTerrainInitialized] = useState();
   const [terrainUpdateNeeded, setTerrainUpdateNeeded] = useState();
 
   const debug = useRef(); // TODO: remove
@@ -568,6 +569,9 @@ const Asteroid = (props) => {
       if (geometry.current.builder.isReadyToFinish()) {
         // vvv BENCHMARK 1ms
         geometry.current.builder.update();
+
+        // let state know terrain has done initial render
+        if (!terrainInitialized) setTerrainInitialized(true);
         
         // TODO: remove below
         if (BENCHMARK_TERRAIN_UPDATES) {
@@ -671,7 +675,7 @@ const Asteroid = (props) => {
     <group ref={group}>
       <group ref={quadtreeRef} />
 
-      {config && geometry.current && quadtreeRef.current && (
+      {config && terrainInitialized && (
         <Plots
           attachTo={quadtreeRef.current}
           config={config}
