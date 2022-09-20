@@ -174,12 +174,10 @@ float getFeatures(vec3 p, int octaves) {
   return (totalCleave < 0.0 ? min(totalCraters, totalCleave) : totalCraters) / uMaxCraterDepth;
 }
 
-vec4 getHeight(vec2 flipY, int skipPasses) {
+// NOTE: point must be a point on unit sphere
+vec4 getHeight(vec3 point, int skipPasses) {
   int modPasses = max(0, uExtraPasses - skipPasses);
   float uCoarseDispFraction = 1.0 - uFineDispFraction;
-
-  // Standardize to unit radius spherical coordinates
-  vec3 point = getUnitSphereCoords(flipY);
 
   // Get course displacement
   float disp = getDisplacement(point, uDispPasses + modPasses, uDispPasses + uExtraPassesMax); // 1 to -1
@@ -199,6 +197,8 @@ vec4 getHeight(vec2 flipY, int skipPasses) {
   // Get total displacement
   float height = normalizeNoise(uCoarseDispFraction * disp + uFineDispFraction * fine);
 
+  // height = abs(sin(point.x));
+
   // Encode height and disp in different channels
   // r, g: used in displacement map
   // b, a: used in normal map
@@ -207,6 +207,13 @@ vec4 getHeight(vec2 flipY, int skipPasses) {
     fract(height * 255.0),
     normalizeNoise(topo),
     0.0
+  );
+}
+
+vec4 getHeight(vec2 flipY, int skipPasses) {
+  return getHeight(
+    getUnitSphereCoords(flipY), // standardize from flipY to spherical coords
+    skipPasses
   );
 }
 

@@ -21,15 +21,14 @@ void main() {
       max(1.5, min(uResolution - gl_FragCoord.y, uResolution - 1.5))
     )
     : vec2(gl_FragCoord.x, uResolution - gl_FragCoord.y);
-  //flipY = vec2(gl_FragCoord.x, uResolution - gl_FragCoord.y);
   
   // Calculate height changes (right - left, above - below)
-  float widthBetweenSamples = 2.0 * SAMPLE_DISTANCE * uChunkWidth / uResolution;
   float xHeightChange = getHeight(flipY + vec2(SAMPLE_DISTANCE, 0.0)) - getHeight(flipY + vec2(-SAMPLE_DISTANCE, 0.0));
   float yHeightChange = getHeight(flipY + vec2(0.0, SAMPLE_DISTANCE)) - getHeight(flipY + vec2(0.0, -SAMPLE_DISTANCE));
 
   // calculate angle of normal based on slope of height change
   // NOTE: vec4(0.5, 0.5, 1.0, 1.0) is straight up
+  float widthBetweenSamples = 2.0 * SAMPLE_DISTANCE * uChunkWidth / uResolution;
   gl_FragColor = vec4(
     0.5 - atan(xHeightChange / widthBetweenSamples) / PI,
     0.5 - atan(yHeightChange / widthBetweenSamples) / PI,

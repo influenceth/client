@@ -72,6 +72,7 @@ class TerrainChunk {
       roughness: 1,
       side: FrontSide,
       // wireframe: true,
+      // transparent: true, opacity: 0.9,
       ...extraMaterialProps
     });
 

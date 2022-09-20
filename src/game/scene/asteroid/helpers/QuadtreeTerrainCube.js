@@ -1,34 +1,15 @@
 import {
   Group,
-  Matrix4,
   Vector3
 } from 'three';
 import QuadtreeTerrainPlane from './QuadtreeTerrainPlane';
 import TerrainChunkManager from './TerrainChunkManager';
-import { generateHeightMap, getMinChunkSize } from './TerrainChunkUtils';
-import constants from '~/lib/constants';
-
-const { MIN_CHUNK_SIZE } = constants;
-
-const cubeTransforms = [
-  (new Matrix4()).makeRotationX(-Math.PI / 2), // +Y
-  (new Matrix4()).makeRotationX(Math.PI / 2),  // -Y
-  (new Matrix4()).makeRotationY(Math.PI / 2),  // +X
-  (new Matrix4()).makeRotationY(-Math.PI / 2), // -X
-  new Matrix4(),                               // +Z
-  (new Matrix4()).makeRotationY(Math.PI),      // -Z
-];
-
-const getPrerenderResolution = (radius, minChunkSize = MIN_CHUNK_SIZE) => {
-  const targetResolution = 2 * radius / minChunkSize;
-  if (targetResolution < 32) return 16;
-  if (targetResolution < 64) return 32;
-  if (targetResolution < 128) return 64;
-  if (targetResolution < 256) return 128;
-  if (targetResolution < 512) return 256;
-  if (targetResolution < 1024) return 512;
-  return 1024;
-};
+import {
+  cubeTransforms,
+  generateHeightMap,
+  getMinChunkSize,
+  getSamplingResolution
+} from './TerrainChunkUtils';
 
 // TODO: remove
 // let taskTotal = 0;
@@ -58,7 +39,7 @@ class QuadtreeTerrainCube {
 
     // build the sides of the cube (each a quadtreeplane)
     this.sides = [];
-    const prerenderResolution = getPrerenderResolution(this.radius, this.minChunkSize);
+    const prerenderResolution = getSamplingResolution(this.radius, this.minChunkSize);
     for (let i in cubeTransforms) {
       this.sides.push({
         index: i,

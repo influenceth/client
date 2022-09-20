@@ -3,6 +3,7 @@ import { Vector3 } from 'three';
 import constants from '~/lib/constants';
 import * as utils from '~/lib/geometryUtils';
 import { rebuildChunkGeometry, rebuildChunkMaps, initChunkTextures } from '~/game/scene/asteroid/helpers/TerrainChunkUtils';
+import { getPlotGeometry } from '~/game/scene/asteroid/helpers/PlotGeometry';
 
 const {
   DISABLE_BACKGROUND_TERRAIN_MAPS
@@ -33,6 +34,9 @@ onmessage = function(event) {
         ...cache.asteroid,
         ...event.data.chunk
       });
+      break;
+    case 'buildPlotGeometry':
+      buildPlotGeometry(event.data.data);
       break;
     // used if want to just update cache values (but do no work)
     case 'updateParamCache': {
@@ -109,4 +113,19 @@ const rebuildTerrainGeometry = function (chunk) {
       ]);
     });
   }
+}
+
+const buildPlotGeometry = function({ config, aboveSurface }) {
+  const { positions, orientations } = getPlotGeometry(
+    config,
+    aboveSurface
+  );
+  postMessage({
+    topic: 'builtPlotGeometry',
+    positions,
+    orientations
+  }, [
+    positions.buffer,
+    orientations.buffer
+  ]);
 }

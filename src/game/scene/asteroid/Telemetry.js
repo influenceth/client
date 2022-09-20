@@ -320,7 +320,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
     }
 
     if (config.shipCircle.enabled) {
-      const shipTally = Math.min(20, Math.round(config.shipCircle.shipsPerLot * 4 * Math.PI * Math.pow(radius / 1e3, 2)) + Math.round(Math.random()));
+      const shipTally = Math.min(200, Math.round(config.shipCircle.shipsPerLot * 4 * Math.PI * Math.pow(radius / 1e3, 2)) + Math.round(Math.random()));
       if (shipTally > 0 || config.shipCircle.onEmpty !== 'hide') {
         const shipSprite = new TextureLoader().load('/disc.png');
 
@@ -432,7 +432,6 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
         })
       );
       dockingGateHorizontal.rotateZ(Math.PI / 2);
-      dockingGateHorizontal.position.set(accessCircleRadius, 0, 0);
       dockingGateHorizontal.userData.bloom = true;
 
       const vGateSprite = new TextureLoader().load('/textures/asteroid/docking_gate_v.png');
@@ -448,12 +447,12 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
       );
       dockingGateVertical.rotateY(Math.PI / 2);
       dockingGateVertical.rotateZ(Math.PI / 2);
-      dockingGateVertical.position.set(accessCircleRadius, 0, 0);
       dockingGateVertical.userData.bloom = true;
 
       const accessGroupSign = new Group();
       accessGroupSign.add(dockingGateHorizontal);
       accessGroupSign.add(dockingGateVertical);
+      accessGroupSign.position.set(accessCircleRadius, 0, 0);
 
       // put in one group
       accessGroup.current = new Group();
@@ -467,7 +466,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
       }
     }
 
-    // helper.current = new AxesHelper(30000);
+    // helper.current = new AxesHelper(2 * radius);
 
     if (accessGroup.current) scene.add(accessGroup.current);
     if (equatorCircle.current) scene.add(equatorCircle.current);

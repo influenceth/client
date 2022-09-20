@@ -26,7 +26,7 @@ class TerrainChunkManager {
     this.config = config;
     this.workerPool = workerPool;
     
-    const { // NOTE: if update this pruning, replicate in QuadtreeTerrainCube
+    const {
       ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
       ...prunedConfig
     } = this.config;

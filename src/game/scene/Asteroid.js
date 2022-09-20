@@ -647,7 +647,12 @@ const Asteroid = (props) => {
       <group ref={quadtreeRef} />
       <ambientLight intensity={0.12} />
 
-      <Plots />
+      {config && geometry.current && quadtreeRef.current && (
+        <Plots
+          attachTo={quadtreeRef.current}
+          config={config}
+          surface={geometry.current} />
+      )}
 
       {config?.radius && (
         <Telemetry

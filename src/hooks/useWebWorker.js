@@ -108,8 +108,8 @@ class WorkerThreadPool {
     return this.workQueue.length > 0 || Object.keys(this.busy).length > 0;
   }
 
-  addToQueue(workItem, resolve) {
-    this.workQueue.push([workItem, resolve]);
+  addToQueue(workItem, resolve, transfer) {
+    this.workQueue.push([workItem, resolve, transfer]);
     this.processQueue();
   }
 
@@ -118,22 +118,26 @@ class WorkerThreadPool {
       const w = this.available.pop();
       this.busy[w.id] = w;
 
-      const [workItem, workResolve] = this.workQueue.shift();
+      const [workItem, workResolve, transfer] = this.workQueue.shift();
 
       // const startTime = Date.now();
-      w.postMessage(workItem, (v) => {
-        // if (resetPending && taskTally === 20) { // TODO: remove debug
-        //   taskTotal = 0;
-        //   taskTally = 0;
-        //   resetPending = false;
-        // }
-        // taskTotal += Date.now() - startTime;
-        // taskTally++;
-        delete this.busy[w.id];
-        this.available.push(w);
-        workResolve(v);
-        this.processQueue();
-      });
+      w.postMessage(
+        workItem,
+        (v) => {
+          // if (resetPending && taskTally === 20) { // TODO: remove debug
+          //   taskTotal = 0;
+          //   taskTally = 0;
+          //   resetPending = false;
+          // }
+          // taskTotal += Date.now() - startTime;
+          // taskTally++;
+          delete this.busy[w.id];
+          this.available.push(w);
+          workResolve(v);
+          this.processQueue();
+        },
+        transfer || []
+      );
     }
   }
 }

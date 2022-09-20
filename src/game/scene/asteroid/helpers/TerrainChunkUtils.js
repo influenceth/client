@@ -4,6 +4,7 @@ import {
   ImageBitmapLoader,
   LinearFilter,
   LinearMipMapLinearFilter,
+  Matrix4,
   NearestFilter,
   ShaderMaterial,
   TextureLoader,
@@ -22,6 +23,30 @@ const {
   MIN_CHUNK_SIZE,
   OVERSAMPLE_CHUNK_TEXTURES
 } = constants;
+
+export const cubeTransforms = [
+  (new Matrix4()).makeRotationX(-Math.PI / 2), // +Y
+  (new Matrix4()).makeRotationX(Math.PI / 2),  // -Y
+  (new Matrix4()).makeRotationY(Math.PI / 2),  // +X
+  (new Matrix4()).makeRotationY(-Math.PI / 2), // -X
+  new Matrix4(),                               // +Z
+  (new Matrix4()).makeRotationY(Math.PI),      // -Z
+];
+
+export const getSamplingResolution = (radius, minChunkSize = MIN_CHUNK_SIZE) => {
+  const targetResolution = 2 * radius / minChunkSize;
+  if (targetResolution < 32) return 16;
+  if (targetResolution < 64) return 32;
+  if (targetResolution < 128) return 64;
+  if (targetResolution < 256) return 128;
+  if (targetResolution < 512) return 256;
+  if (targetResolution < 1024) return 512;
+  if (targetResolution < 2048) return 1024;
+  // TODO: these probably are excessive
+  if (targetResolution < 4096) return 2048;
+  // if (targetResolution < 8192) return 4096;
+  return 4096;
+};
 
 // set up texture renderer (ideally w/ offscreen canvas)
 let _textureRenderer;
