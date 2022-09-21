@@ -5,13 +5,23 @@ import { Contract, shortString } from 'starknet';
 import useAuth from '~/hooks/useAuth';
 import useEvents from '~/hooks/useEvents';
 import useStore from '~/hooks/useStore';
+import constants from '~/lib/constants';
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
 
 const ChainTransactionContext = createContext();
 
+const getTxAccount = (account, sessionAccount, selector) => {
+  if (constants.DEFAULT_SESSION_POLICIES.find((c) => c.selector === selector)) {
+    if (sessionAccount) {
+      return sessionAccount;
+    }
+  }
+  return account;
+};
+
 // TODO (enhancement): use DEFAULT_SESSION_POLICIES for determining account
-const getContracts = (account) => ({
+const getContracts = (account, sessionAccount) => ({
   'PURCHASE_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
@@ -49,11 +59,18 @@ const getContracts = (account) => ({
   'NAME_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    sessionEnabled: true,
-    transact: (contract) => ({ i, name }) => contract.invoke('Asteroid_setName', [
-      i,
-      shortString.encodeShortString(name)
-    ]),
+    transact: (contract) => ({ i, name }) => {
+      const a = getTxAccount(account, sessionAccount, 'Asteroid_setName');
+      console.log({ a });
+      a.execute({
+        contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+        entrypoint: 'Asteroid_setName',
+        calldata: [
+          i,
+          shortString.encodeShortString(name)
+        ]
+      });
+    },
     getErrorAlert: ({ i }) => ({
       type: 'Asteroid_NamingError',
       level: 'warning',
@@ -213,7 +230,6 @@ export function ChainTransactionProvider({ children }) {
         const {
           address,
           config,
-          sessionEnabled,
           transact,
           onConfirmed,
           onEventReceived,
@@ -224,12 +240,12 @@ export function ChainTransactionProvider({ children }) {
           isEqual
         } = contractConfig[k];
         processedContracts[k] = {
-          execute: transact(
-            new Contract(
-              config,
-              address,
-              sessionEnabled && sessionAccount ? sessionAccount : starknet?.account
-            )
+          execute: transact({}
+            // new Contract(
+            //   config,
+            //   address,
+            //   starknet?.account
+            // )
           ),
           onTransactionError: (err, vars) => {
             console.error(err, vars);
@@ -334,12 +350,14 @@ export function ChainTransactionProvider({ children }) {
       const { execute, onTransactionError } = contracts[key];
       try {
         const tx = await execute(vars);
-        dispatchPendingTransaction({
-          key,
-          vars,
-          txHash: tx.transaction_hash,
-          waitingOn: 'TRANSACTION'
-        });
+        if (tx) {
+          dispatchPendingTransaction({
+            key,
+            vars,
+            txHash: tx.transaction_hash,
+            waitingOn: 'TRANSACTION'
+          });
+        }
       } catch (e) {
         onTransactionError(e, vars);
       }

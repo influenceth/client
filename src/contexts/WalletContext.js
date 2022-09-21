@@ -58,6 +58,7 @@ export function WalletProvider({ children }) {
   const sessionAccount = useMemo(() => {
     if (starknet?.provider && sessionWalletData) {
       const { address, signerKeypair, signature } = sessionWalletData;
+      console.log(signerKeypair);
       return new SessionAccount(
         starknet.provider,
         address,
@@ -195,15 +196,16 @@ export function WalletProvider({ children }) {
         starknet.account
       ).then((signedSession) => {
         if (signedSession) {
-          console.log('signedSession', signedSession);
+          const kp = {
+            pub: signer.keyPair.getPublic('hex'),
+            pubEnc: 'hex',
+            priv: signer.keyPair.getPrivate('hex'),
+            privEnc: 'hex',
+          };
+          console.log('signedSession', signedSession, kp);
           dispatchSessionStarted({
             address: starknet.account.address,
-            signerKeypair: {
-              pub: signer.keyPair.getPublic('hex'),
-              pubEnv: 'hex',
-              priv: signer.keyPair.getPrivate('hex'),
-              privEnc: 'hex',
-            },
+            signerKeypair: kp,
             signature: signedSession
           })
         }
