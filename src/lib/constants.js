@@ -52,6 +52,26 @@ const constants = {
       // shadowQuality: 2,
       textureQuality: 3
     }
+  ],
+
+  // Default set of policies for session key plugin
+  DEFAULT_SESSION_POLICIES: [
+    {
+      contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+      selector: 'Asteroid_setName'
+    },
+    {
+      contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+      selector: 'Crewmate_initializeAdalian'
+    },
+    {
+      contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+      selector: 'Crewmate_setName'
+    },
+    {
+      contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+      selector: 'Crewmate_setCrewComposition'
+    }
   ]
 };
 
