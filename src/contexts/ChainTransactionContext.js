@@ -10,6 +10,7 @@ const RETRY_INTERVAL = 5e3; // 5 seconds
 
 const ChainTransactionContext = createContext();
 
+// TODO (enhancement): use DEFAULT_SESSION_POLICIES for determining account
 const getContracts = (account) => ({
   'PURCHASE_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -48,6 +49,7 @@ const getContracts = (account) => ({
   'NAME_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
+    sessionEnabled: true,
     transact: (contract) => ({ i, name }) => contract.invoke('Asteroid_setName', [
       i,
       shortString.encodeShortString(name)
@@ -104,6 +106,7 @@ const getContracts = (account) => ({
   'SET_ACTIVE_CREW': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
+    sessionEnabled: true,
     transact: (contract) => ({ crew }) => {
       return contract.invoke(
         'Crewmate_setCrewComposition',
@@ -175,6 +178,7 @@ const getContracts = (account) => ({
   'NAME_CREW': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
+    sessionEnabled: true,
     transact: (contract) => ({ i, name }) => contract.invoke(
       'Crewmate_setName',
       [
@@ -192,7 +196,7 @@ const getContracts = (account) => ({
 });
 
 export function ChainTransactionProvider({ children }) {
-  const { wallet: { starknet } } = useAuth();
+  const { wallet: { sessionAccount, starknet } } = useAuth();
   const { events, lastBlockNumber } = useEvents();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -204,11 +208,12 @@ export function ChainTransactionProvider({ children }) {
   const contracts = useMemo(() => {
     if (!!starknet?.account) {
       const processedContracts = {};
-      const contractConfig = getContracts(starknet?.account);
+      const contractConfig = getContracts(starknet?.account, sessionAccount);
       Object.keys(contractConfig).forEach((k) => {
         const {
           address,
           config,
+          sessionEnabled,
           transact,
           onConfirmed,
           onEventReceived,
@@ -219,7 +224,13 @@ export function ChainTransactionProvider({ children }) {
           isEqual
         } = contractConfig[k];
         processedContracts[k] = {
-          execute: transact(new Contract(config, address, starknet.account)),
+          execute: transact(
+            new Contract(
+              config,
+              address,
+              sessionEnabled && sessionAccount ? sessionAccount : starknet?.account
+            )
+          ),
           onTransactionError: (err, vars) => {
             console.error(err, vars);
             if (getErrorAlert) {

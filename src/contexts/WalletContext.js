@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, createContext } from 'react';
 import { connect, getInstalledWallets } from 'get-starknet';
+import { Signer } from 'starknet';
+import { createSession, supportsSessions, SessionAccount } from '@argent/x-sessions';
 
 import { Address } from 'influence-utils';
 
 import starknetLogo from '~/assets/images/starknet-icon.png';
 import useStore from '~/hooks/useStore';
+import constants from '~/lib/constants';
 
 const getErrorMessage = (error) => {
   console.error(error);
@@ -30,6 +33,9 @@ const WalletContext = createContext();
 
 export function WalletProvider({ children }) {
   const lastWalletConnected = useStore(s => s.auth.lastWallet);
+  const sessionWalletData = useStore(s => s.auth.sessionWalletData);
+  const dispatchSessionEnded = useStore(s => s.dispatchSessionEnded);
+  const dispatchSessionStarted = useStore(s => s.dispatchSessionStarted);
   const dispatchWalletConnected = useStore(s => s.dispatchWalletConnected);
 
   const onConnectCallback = useRef();
@@ -37,6 +43,7 @@ export function WalletProvider({ children }) {
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState();
   const [installedWallets, setInstalledWallets] = useState([]);
+  const [sessionsEnabled, setSessionsEnabled] = useState(false);
   const [starknet, setStarknet] = useState(false);
   const [starknetReady, setStarknetReady] = useState(false);
 
@@ -48,6 +55,30 @@ export function WalletProvider({ children }) {
     return active && Address.toStandard(starknet.account.address);
   }, [active, starknet?.account?.address]);
 
+  const sessionAccount = useMemo(() => {
+    if (starknet?.provider && sessionWalletData) {
+      const { address, signerKeypair, signature } = sessionWalletData;
+      return new SessionAccount(
+        starknet.provider,
+        address,
+        new Signer(signerKeypair),
+        signature
+      );
+    }
+    return null;
+  }, [sessionWalletData, starknet?.provider])
+  console.log('session', sessionAccount);
+
+  const accountSupportsSessions = useCallback(async (account) => {
+    try {
+      await supportsSessions(account?.address, account);
+      return true;
+    } catch (e) {
+      console.warn(e);
+      return false;
+    }
+  }, []);
+
   const onConnectionResult = useCallback((wallet) => {
     setConnecting(false);
     setStarknet(wallet);
@@ -55,6 +86,7 @@ export function WalletProvider({ children }) {
     // remember last extension connected so that is the one we retry automatically next time
     if (wallet?.account?.address) {
       dispatchWalletConnected(wallet.name);
+      accountSupportsSessions(wallet.account).then((enabled) => setSessionsEnabled(enabled));
     }
 
     if (onConnectCallback.current) {
@@ -149,6 +181,40 @@ export function WalletProvider({ children }) {
     }];
   }, [installedWallets?.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // TODO: we need to end sessions automatically on relevant errors
+  //  (i.e. expiration, fund depletion, etc)
+  const startSession = useCallback(async () => {
+    if (starknet?.account) {
+      const signer = new Signer();
+      createSession(
+        {
+          key: await signer.getPubKey(),
+          expires: Math.round((Date.now() + 86400e3) / 1000),
+          policies: constants.DEFAULT_SESSION_POLICIES
+        },
+        starknet.account
+      ).then((signedSession) => {
+        if (signedSession) {
+          console.log('signedSession', signedSession);
+          dispatchSessionStarted({
+            address: starknet.account.address,
+            signerKeypair: {
+              pub: signer.keyPair.getPublic('hex'),
+              pubEnv: 'hex',
+              priv: signer.keyPair.getPrivate('hex'),
+              privEnc: 'hex',
+            },
+            signature: signedSession
+          })
+        }
+      });
+    }
+  }, [starknet?.account, dispatchSessionStarted]);
+
+  const stopSession = useCallback(() => {
+    dispatchSessionEnded();
+  }, [dispatchSessionEnded]);
+
   // while connecting or connected, listen for network changes from extension
   useEffect(() => {
     const onConnectionChange = (e) => {
@@ -208,7 +274,11 @@ export function WalletProvider({ children }) {
       isConnecting: connecting,
       walletIcon: starknet?.icon && <img src={starknet.icon} alt={`${starknet.name}`} />,
       walletName: starknet?.name,
+      sessionsEnabled,
+      sessionAccount,
       starknet,
+      startSession,
+      stopSession,
     }}>
       {starknetReady && children}
     </WalletContext.Provider>

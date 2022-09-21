@@ -7,7 +7,7 @@ import useAuth from '~/hooks/useAuth';
 import Section from '~/components/Section';
 import BridgeModalDialog from '~/components/BridgeModalDialog';
 import Button from '~/components/Button';
-import { DisconnectIcon, LoginIcon, WalletIcon, WarningIcon } from '~/components/Icons';
+import { DisconnectIcon, LoginIcon, WalletIcon, WarningIcon, PlayIcon, StopIcon } from '~/components/Icons';
 
 const Controls = styled.div`
   display: flex;
@@ -71,6 +71,13 @@ const Account = styled.span`
   }
 `;
 
+const ConnectedOptions = styled.div`
+  display: flex;
+  & > button:first-child {
+    margin-right: 8px;
+  }
+`;
+
 const Error = styled.div`
   align-items: center;
   display: flex;
@@ -98,7 +105,18 @@ const Wallet = () => {
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
 
   const { token, login, wallet } = useAuth();
-  const { account, connectionOptions, disconnect, error, walletIcon, walletName } = wallet;
+  const {
+    account,
+    connectionOptions,
+    disconnect,
+    error,
+    sessionAccount,
+    sessionsEnabled,
+    startSession,
+    stopSession,
+    walletIcon,
+    walletName
+  } = wallet;
 
   const [bridgeModalOpen, setBridgeModalOpen] = useState(false);
 
@@ -112,8 +130,8 @@ const Wallet = () => {
 
   useEffect(() => {
     if (status !== 'logged-in' || !!error) forceExpand('wallet');
-    if (status === 'logged-in') forceCollapse('wallet');
-  }, [ status, error, forceExpand, forceCollapse ]);
+    if (status === 'logged-in' && sessionAccount) forceCollapse('wallet');
+  }, [ status, error, forceExpand, forceCollapse, sessionAccount ]);
 
   const openBridgeModal = useCallback((e) => {
     e.stopPropagation();
@@ -158,19 +176,37 @@ const Wallet = () => {
             </Button>
           );
         })}
-        <div style={{ display: 'flex' }}>
+        <ConnectedOptions style={{ display: 'flex' }}>
           {status === 'connected' && (
-            <>
-              <Button
-                data-tip="Login with Wallet"
-                data-for="global"
-                data-place="bottom"
-                lessTransparent
-                onClick={login}>
-                <LoginIcon /> Login
-              </Button>
-              <span style={{ width: 8 }} />
-            </>
+            <Button
+              data-tip="Login with Wallet"
+              data-for="global"
+              data-place="bottom"
+              lessTransparent
+              onClick={login}>
+              <LoginIcon /> Login
+            </Button>
+          )}
+          {status === 'logged-in' && !sessionAccount && (
+            <Button
+              data-tip="Start Wallet Session"
+              data-for="global"
+              data-place="bottom"
+              disabled={!sessionsEnabled}
+              lessTransparent
+              onClick={startSession}>
+              <PlayIcon /> Start Session
+            </Button>
+          )}
+          {status === 'logged-in' && sessionsEnabled && sessionAccount && (
+            <Button
+              data-tip="End Wallet Session"
+              data-for="global"
+              data-place="bottom"
+              lessTransparent
+              onClick={stopSession}>
+              <StopIcon /> End Session
+            </Button>
           )}
           {status !== 'disconnected' && (
             <Button
@@ -182,7 +218,7 @@ const Wallet = () => {
               <DisconnectIcon /> Disconnect
             </Button>
           )}
-        </div>
+        </ConnectedOptions>
       </Controls>
       {bridgeModalOpen && (
         <BridgeModalDialog onClose={() => setBridgeModalOpen(false)} />

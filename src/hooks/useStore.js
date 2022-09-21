@@ -51,7 +51,8 @@ const useStore = create(persist((set, get) => ({
 
     auth: {
       token: null,
-      lastWallet: null
+      lastWallet: null,
+      sessionWalletData: null
     },
 
     hasSeenIntroVideo: false,
@@ -328,6 +329,14 @@ const useStore = create(persist((set, get) => ({
 
     dispatchWalletConnected: (walletId) => set(produce(state => {
       state.auth.lastWallet = walletId;
+    })),
+
+    dispatchSessionStarted: (data) => set(produce(state => {
+      state.auth.sessionWalletData = data;
+    })),
+
+    dispatchSessionEnded: () => set(produce(state => {
+      state.auth.sessionWalletData = null;
     })),
 
     dispatchCutscenePlaying: (which) => set(produce(state => {
