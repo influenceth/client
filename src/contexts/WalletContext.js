@@ -149,10 +149,6 @@ export function WalletProvider({ children }) {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const disconnect = useCallback(() => {
-    onConnectionResult(null);
-  }, [onConnectionResult]);
-
   const restorePreviousConnection = useCallback((wallet, callback) => {
     if (!wallet) return;
 
@@ -232,6 +228,11 @@ export function WalletProvider({ children }) {
   const stopSession = useCallback(() => {
     dispatchSessionEnded();
   }, [dispatchSessionEnded]);
+
+  const disconnect = useCallback(() => {
+    if (sessionAccount) stopSession();
+    onConnectionResult(null);
+  }, [onConnectionResult, sessionAccount]);
 
   // while connecting or connected, listen for network changes from extension
   useEffect(() => {

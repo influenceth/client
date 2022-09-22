@@ -124,7 +124,6 @@ const Wallet = () => {
 
   // Remove auth queries when wallet is disconnected
   const disconnectWallet = useCallback(() => {
-    if (sessionAccount) stopSession();
     invalidateToken();
     disconnect();
   }, [disconnect, invalidateToken]);
