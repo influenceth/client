@@ -236,23 +236,10 @@ export function ChainTransactionProvider({ children }) {
   const dispatchPendingTransactionUpdate = useStore(s => s.dispatchPendingTransactionUpdate);
   const dispatchPendingTransactionComplete = useStore(s => s.dispatchPendingTransactionComplete);
   const pendingTransactions = useStore(s => s.pendingTransactions);
+  
+  const transactionWaiters = useRef([]);
 
   const [initiatedTransactions, setInitiatedTransactions] = useState([]);
-
-  const initiateTransaction = useCallback((key, vars) => {
-    setInitiatedTransactions((s) => [...s, { key, vars }]);
-  }, []);
-
-  const uninitiateTransaction = useCallback((key, vars) => {
-    setInitiatedTransactions((s) => s.filter((tx) => {
-      if (tx.key === key) {
-        if (contracts[key].isEqual) {
-          return !contracts[key].isEqual(tx.vars, vars);
-        }
-        return tx.vars.i !== vars.i;
-      }
-    }));
-  }, []);
 
   const contracts = useMemo(() => {
     if (starknet?.account || sessionAccount) {
@@ -298,7 +285,17 @@ export function ChainTransactionProvider({ children }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createAlert, starknet?.account?.address, starknet?.account?.baseUrl, sessionAccount?.address]);
 
-  const transactionWaiters = useRef([]);
+  const initiateTransaction = useCallback((key, vars) => {
+    setInitiatedTransactions((s) => [...s, { key, vars }]);
+  }, []);
+
+  const uninitiateTransaction = useCallback((key, vars) => {
+    setInitiatedTransactions((s) => s.filter((tx) => {
+      if (tx.key !== key) return true;
+      if (contracts[key].isEqual) return !contracts[key].isEqual(tx.vars, vars);
+      return tx.vars.i !== vars.i;
+    }));
+  }, [contracts]);
 
   // on initial load, set provider.waitForTransaction for any pendingTransactions
   // so that we can throw any extension-related or timeout errors needed
@@ -408,6 +405,7 @@ export function ChainTransactionProvider({ children }) {
           }
           return tx.vars.i === vars.i;
         }
+        return false;
       });
     }
     return null;
@@ -437,7 +435,7 @@ export function ChainTransactionProvider({ children }) {
     //   return 'initiated';
     }
     return 'ready';
-  }, [getInitiatedTx, getPendingTx]);
+  }, [getPendingTx]);
 
   return (
     <ChainTransactionContext.Provider value={{

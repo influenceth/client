@@ -84,7 +84,7 @@ export function WalletProvider({ children }) {
       }
     }
     return null;
-  }, [sessionWalletData, starknet?.provider])
+  }, [sessionWalletData, starknet?.provider, dispatchOutlinerSectionActivated, dispatchSessionEnded])
 
   const accountSupportsSessions = useCallback(async (account) => {
     try {
