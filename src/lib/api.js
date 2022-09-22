@@ -26,7 +26,8 @@ const api = {
     const response = await instance.get(`/v1/user/events?since=${since}`);
     return {
       events: response.data,
-      blockNumber: parseInt(response.headers['eth-block-number'])
+      blockNumber: parseInt(response.headers['starknet-block-number']),
+      ethBlockNumber: parseInt(response.headers['eth-block-number'])  // NOTE: probably not needed anymore
     };
   },
 

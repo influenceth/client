@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { starknetContracts as configs } from 'influence-utils';
 import { Contract, shortString } from 'starknet';
 
@@ -11,7 +11,7 @@ const RETRY_INTERVAL = 5e3; // 5 seconds
 
 const ChainTransactionContext = createContext();
 
-const getTxAccount = (account, sessionAccount, selector) => {
+const selectAccount = ({ account, sessionAccount }, selector) => {
   if (constants.DEFAULT_SESSION_POLICIES.find((c) => c.selector === selector)) {
     if (sessionAccount) {
       return sessionAccount;
@@ -20,12 +20,16 @@ const getTxAccount = (account, sessionAccount, selector) => {
   return account;
 };
 
-// TODO (enhancement): use DEFAULT_SESSION_POLICIES for determining account
-const getContracts = (account, sessionAccount) => ({
+const contractConfig = {
   'PURCHASE_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => async ({ i }) => {
+    transact: ({ account }) => async ({ i }) => {
+      const contract = new Contract(
+        configs.Dispatcher,
+        process.env.REACT_APP_STARKNET_DISPATCHER,
+        account // NOTE: sessionAccount works fine here too
+      );
       const { price } = await contract.call('AsteroidSale_getPrice', [i]);
       const priceParts = Object.values(price).map((part) => BigInt(part).toString());
       const calls = [
@@ -59,10 +63,8 @@ const getContracts = (account, sessionAccount) => ({
   'NAME_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ i, name }) => {
-      const a = getTxAccount(account, sessionAccount, 'Asteroid_setName');
-      console.log({ a });
-      a.execute({
+    transact: (accounts) => ({ i, name }) => {
+      return selectAccount(accounts, 'Asteroid_setName').execute({
         contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
         entrypoint: 'Asteroid_setName',
         calldata: [
@@ -78,57 +80,19 @@ const getContracts = (account, sessionAccount) => ({
       timestamp: Math.round(Date.now() / 1000)
     }),
   },
-  // 'START_ASTEROID_SCAN': {
-  //   address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
-  //   config: configs.AsteroidScans,
-  //   confirms: 3,
-  //   transact: (contract) => ({ i }) => contract.startScan(i),
-  //   getErrorAlert: ({ i }) => ({
-  //     type: 'Asteroid_ScanningError',
-  //     level: 'warning',
-  //     i,
-  //     timestamp: Math.round(Date.now() / 1000)
-  //   }),
-  //   getConfirmedAlert: ({ i }) => ({
-  //     type: 'Asteroid_ReadyToFinalizeScan',
-  //     i,
-  //     timestamp: Math.round(Date.now() / 1000)
-  //   }),
-  //   onConfirmed: (event, { i }) => {
-  //     queryClient.invalidateQueries('asteroids', i);
-  //   }
-  // },
-  // 'FINALIZE_ASTEROID_SCAN': {
-  //   address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
-  //   config: configs.AsteroidScans,
-  //   transact: (contract) => ({ i }) => contract.finalizeScan(i),
-  //   getErrorAlert: ({ i }) => ({
-  //     type: 'Asteroid_FinalizeScanError',
-  //     level: 'warning',
-  //     i,
-  //     timestamp: Math.round(Date.now() / 1000)
-  //   })
-  // },
-  // 'SETTLE_CREW': {
-  //   address: process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
-  //   config: configs.ArvadCrewSale,
-  //   transact: (contract) => ({ i }) => contract.mintCrewWithAsteroid(i),
-  //   getErrorAlert: ({ i }) => ({
-  //     type: 'CrewMember_SettlingError',
-  //     level: 'warning',
-  //     i,
-  //     timestamp: Math.round(Date.now() / 1000)
-  //   })
-  // },
   'SET_ACTIVE_CREW': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     sessionEnabled: true,
-    transact: (contract) => ({ crew }) => {
-      return contract.invoke(
-        'Crewmate_setCrewComposition',
-        [[...crew]]
-      );
+    transact: (accounts) => ({ crew }) => {
+      return selectAccount(accounts, 'Crewmate_setCrewComposition').execute({
+        contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+        entrypoint: 'Crewmate_setCrewComposition',
+        calldata: [
+          crew.length,
+          ...crew
+        ]
+      });
     },
     isEqual: () => true,
     getErrorAlert: () => ({
@@ -140,7 +104,12 @@ const getContracts = (account, sessionAccount) => ({
   'PURCHASE_AND_INITIALIZE_CREW': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => async ({ name, features, traits }) => {
+    transact: ({ account }) => async ({ name, features, traits }) => {
+      const contract = new Contract(
+        configs.Dispatcher,
+        process.env.REACT_APP_STARKNET_DISPATCHER,
+        account // NOTE: sessionAccount works fine here too
+      );
       const { price } = await contract.call('CrewmateSale_getPrice');
       const priceParts = Object.values(price).map((part) => part.toNumber());
       const calls = [
@@ -196,13 +165,16 @@ const getContracts = (account, sessionAccount) => ({
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     sessionEnabled: true,
-    transact: (contract) => ({ i, name }) => contract.invoke(
-      'Crewmate_setName',
-      [
-        i,
-        shortString.encodeShortString(name)
-      ]
-    ),
+    transact: (accounts) => ({ i, name }) => {
+      return selectAccount(accounts, 'Crewmate_setName').execute({
+        contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+        entrypoint: 'Crewmate_setName',
+        calldata: [
+          i,
+          shortString.encodeShortString(name)
+        ]
+      });
+    },
     getErrorAlert: ({ i }) => ({
       type: 'CrewMember_NamingError',
       level: 'warning',
@@ -210,7 +182,50 @@ const getContracts = (account, sessionAccount) => ({
       timestamp: Math.round(Date.now() / 1000)
     })
   },
-});
+
+  // 'START_ASTEROID_SCAN': {
+  //   address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
+  //   config: configs.AsteroidScans,
+  //   confirms: 3,
+  //   transact: ({ i }) => contract.startScan(i),
+  //   getErrorAlert: ({ i }) => ({
+  //     type: 'Asteroid_ScanningError',
+  //     level: 'warning',
+  //     i,
+  //     timestamp: Math.round(Date.now() / 1000)
+  //   }),
+  //   getConfirmedAlert: ({ i }) => ({
+  //     type: 'Asteroid_ReadyToFinalizeScan',
+  //     i,
+  //     timestamp: Math.round(Date.now() / 1000)
+  //   }),
+  //   onConfirmed: (event, { i }) => {
+  //     queryClient.invalidateQueries('asteroids', i);
+  //   }
+  // },
+  // 'FINALIZE_ASTEROID_SCAN': {
+  //   address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
+  //   config: configs.AsteroidScans,
+  //   transact: ({ i }) => contract.finalizeScan(i),
+  //   getErrorAlert: ({ i }) => ({
+  //     type: 'Asteroid_FinalizeScanError',
+  //     level: 'warning',
+  //     i,
+  //     timestamp: Math.round(Date.now() / 1000)
+  //   })
+  // },
+  // 'SETTLE_CREW': {
+  //   address: process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
+  //   config: configs.ArvadCrewSale,
+  //   transact: ({ i }) => contract.mintCrewWithAsteroid(i),
+  //   getErrorAlert: ({ i }) => ({
+  //     type: 'CrewMember_SettlingError',
+  //     level: 'warning',
+  //     i,
+  //     timestamp: Math.round(Date.now() / 1000)
+  //   })
+  // },
+};
 
 export function ChainTransactionProvider({ children }) {
   const { wallet: { sessionAccount, starknet } } = useAuth();
@@ -222,14 +237,28 @@ export function ChainTransactionProvider({ children }) {
   const dispatchPendingTransactionComplete = useStore(s => s.dispatchPendingTransactionComplete);
   const pendingTransactions = useStore(s => s.pendingTransactions);
 
+  const [initiatedTransactions, setInitiatedTransactions] = useState([]);
+
+  const initiateTransaction = useCallback((key, vars) => {
+    setInitiatedTransactions((s) => [...s, { key, vars }]);
+  }, []);
+
+  const uninitiateTransaction = useCallback((key, vars) => {
+    setInitiatedTransactions((s) => s.filter((tx) => {
+      if (tx.key === key) {
+        if (contracts[key].isEqual) {
+          return !contracts[key].isEqual(tx.vars, vars);
+        }
+        return tx.vars.i !== vars.i;
+      }
+    }));
+  }, []);
+
   const contracts = useMemo(() => {
-    if (!!starknet?.account) {
+    if (starknet?.account || sessionAccount) {
       const processedContracts = {};
-      const contractConfig = getContracts(starknet?.account, sessionAccount);
       Object.keys(contractConfig).forEach((k) => {
         const {
-          address,
-          config,
           transact,
           onConfirmed,
           onEventReceived,
@@ -240,13 +269,7 @@ export function ChainTransactionProvider({ children }) {
           isEqual
         } = contractConfig[k];
         processedContracts[k] = {
-          execute: transact({}
-            // new Contract(
-            //   config,
-            //   address,
-            //   starknet?.account
-            // )
-          ),
+          execute: transact({ account: starknet?.account, sessionAccount }),
           onTransactionError: (err, vars) => {
             console.error(err, vars);
             if (getErrorAlert) {
@@ -272,7 +295,8 @@ export function ChainTransactionProvider({ children }) {
       return processedContracts;
     }
     return null;
-  }, [createAlert, starknet?.account?.address, starknet?.account?.baseUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createAlert, starknet?.account?.address, starknet?.account?.baseUrl, sessionAccount?.address]);
 
   const transactionWaiters = useRef([]);
 
@@ -318,6 +342,7 @@ export function ChainTransactionProvider({ children }) {
 
       pendingTransactions.forEach((tx) => {
         const { key, vars, txHash, txEvent } = tx;
+        dispatchPendingTransactionComplete(txHash);
 
         // if event had previously been received, just waiting for confirms
         if (txEvent && currentBlockNumber >= txEvent.blockNumber + contracts[key].confirms) {
@@ -349,6 +374,7 @@ export function ChainTransactionProvider({ children }) {
     if (contracts && contracts[key]) {
       const { execute, onTransactionError } = contracts[key];
       try {
+        initiateTransaction(key, vars);
         const tx = await execute(vars);
         if (tx) {
           dispatchPendingTransaction({
@@ -357,9 +383,11 @@ export function ChainTransactionProvider({ children }) {
             txHash: tx.transaction_hash,
             waitingOn: 'TRANSACTION'
           });
+          uninitiateTransaction(key, vars);
         }
       } catch (e) {
         onTransactionError(e, vars);
+        uninitiateTransaction(key, vars);
       }
     } else {
       createAlert({
@@ -369,6 +397,21 @@ export function ChainTransactionProvider({ children }) {
       });
     }
   }, [contracts]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const getInitiatedTx = useCallback((key, vars) => {
+    if (contracts && contracts[key]) {
+      // check initiated (no tx hash yet)
+      return initiatedTransactions.find((tx) => {
+        if (tx.key === key) {
+          if (contracts[key].isEqual) {
+            return contracts[key].isEqual(tx.vars, vars);
+          }
+          return tx.vars.i === vars.i;
+        }
+      });
+    }
+    return null;
+  }, [contracts, initiatedTransactions]);
 
   const getPendingTx = useCallback((key, vars) => {
     if (contracts && contracts[key]) {
@@ -386,13 +429,21 @@ export function ChainTransactionProvider({ children }) {
   }, [contracts, pendingTransactions]);
 
   const getStatus = useCallback((key, vars) => {
-    return getPendingTx(key, vars) ? 'pending' : 'ready';
-  }, [getPendingTx]);
+    if (getPendingTx(key, vars)) {
+      return 'pending';
+    // TODO: implement this
+    //  - need to review all components looking specifically for 'pending' or pendingTx
+    // } else if (getInitiatedTx(key, vars)) {
+    //   return 'initiated';
+    }
+    return 'ready';
+  }, [getInitiatedTx, getPendingTx]);
 
   return (
     <ChainTransactionContext.Provider value={{
       execute,
       getStatus,
+      getInitiatedTx,
       getPendingTx
     }}>
       {children}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, createContext } from 'react';
 import { connect, getInstalledWallets } from 'get-starknet';
-import { Signer } from 'starknet';
+import { Provider, Signer } from 'starknet';
 import { createSession, supportsSessions, SessionAccount } from '@argent/x-sessions';
 
 import { Address } from 'influence-utils';
@@ -37,6 +37,7 @@ export function WalletProvider({ children }) {
   const dispatchSessionEnded = useStore(s => s.dispatchSessionEnded);
   const dispatchSessionStarted = useStore(s => s.dispatchSessionStarted);
   const dispatchWalletConnected = useStore(s => s.dispatchWalletConnected);
+  const dispatchOutlinerSectionActivated = useStore(s => s.dispatchOutlinerSectionActivated);
 
   const onConnectCallback = useRef();
 
@@ -57,18 +58,33 @@ export function WalletProvider({ children }) {
 
   const sessionAccount = useMemo(() => {
     if (starknet?.provider && sessionWalletData) {
-      const { address, signerKeypair, signature } = sessionWalletData;
-      console.log(signerKeypair);
-      return new SessionAccount(
-        starknet.provider,
-        address,
-        new Signer(signerKeypair),
-        signature
-      );
+      try {
+        const { address, providerBaseUrl, signerKeypair, signedSession } = sessionWalletData;
+        if (!(address && providerBaseUrl && signerKeypair && signedSession)) throw new Error('Missing session data.');
+        if (JSON.stringify(signedSession.policies) !== JSON.stringify(constants.DEFAULT_SESSION_POLICIES)) throw new Error('Default session policies changed.');
+        if (signedSession.expires < Date.now() / 1000) throw new Error('Session expired.');
+        
+        // rebuild session account provider and signer
+        const provider = new Provider({ sequencer: { baseUrl: providerBaseUrl } });
+
+        const signer = new Signer();
+        signer.keyPair._importPublic(signerKeypair.pub, signerKeypair.pubEnc);
+        signer.keyPair._importPrivate(signerKeypair.priv, signerKeypair.privEnc);
+
+        return new SessionAccount(
+          provider,
+          address,
+          signer,
+          signedSession
+        );
+      } catch (e) {
+        console.warn(e);
+        dispatchSessionEnded();
+        dispatchOutlinerSectionActivated('wallet');
+      }
     }
     return null;
   }, [sessionWalletData, starknet?.provider])
-  console.log('session', sessionAccount);
 
   const accountSupportsSessions = useCallback(async (account) => {
     try {
@@ -196,17 +212,16 @@ export function WalletProvider({ children }) {
         starknet.account
       ).then((signedSession) => {
         if (signedSession) {
-          const kp = {
-            pub: signer.keyPair.getPublic('hex'),
-            pubEnc: 'hex',
-            priv: signer.keyPair.getPrivate('hex'),
-            privEnc: 'hex',
-          };
-          console.log('signedSession', signedSession, kp);
           dispatchSessionStarted({
             address: starknet.account.address,
-            signerKeypair: kp,
-            signature: signedSession
+            providerBaseUrl: starknet.account.baseUrl,
+            signerKeypair: {
+              pub: signer.keyPair.getPublic('hex'),
+              pubEnc: 'hex',
+              priv: signer.keyPair.getPrivate('hex'),
+              privEnc: 'hex',
+            },
+            signedSession
           })
         }
       });
