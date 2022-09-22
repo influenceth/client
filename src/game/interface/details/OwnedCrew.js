@@ -378,10 +378,10 @@ const reducer = (state, action) => {
   switch(action.type) {
     case 'INITIALIZE': {
       const { crew, pristine } = action;
-      const ac = crew
+      const ac = (crew || [])
         .filter((c) => parseInt(c.activeSlot) > -1)
         .sort((a, b) => a.activeSlot - b.activeSlot);
-      const ic = crew
+      const ic = (crew || [])
         .filter((c) => !(parseInt(c.activeSlot) > -1))
         .sort(inactiveCrewSort);
       return {

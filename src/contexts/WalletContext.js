@@ -61,6 +61,7 @@ export function WalletProvider({ children }) {
       try {
         const { address, providerBaseUrl, signerKeypair, signedSession } = sessionWalletData;
         if (!(address && providerBaseUrl && signerKeypair && signedSession)) throw new Error('Missing session data.');
+        if (account && !Address.areEqual(account, address)) throw new Error('Session address mismatch.');
         if (JSON.stringify(signedSession.policies) !== JSON.stringify(constants.DEFAULT_SESSION_POLICIES)) throw new Error('Default session policies changed.');
         if (signedSession.expires < Date.now() / 1000) throw new Error('Session expired.');
         
