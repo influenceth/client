@@ -17,7 +17,7 @@ const useNameCrew = (i) => {
 
   return {
     nameCrew,
-    naming: status === 'pending'
+    naming: status !== 'ready'
   };
 };
 

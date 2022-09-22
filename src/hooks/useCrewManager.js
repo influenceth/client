@@ -9,6 +9,10 @@ const useCrewManager = () => {
     (params) => execute('SET_ACTIVE_CREW', params),
     [execute]
   );
+  const getActiveCrewChangeStatus = useCallback(
+    (params) => getStatus('SET_ACTIVE_CREW', params),
+    [getStatus]
+  );
   const getPendingActiveCrewChange = useCallback(
     (params) => getPendingTx('SET_ACTIVE_CREW', params),
     [getPendingTx]
@@ -17,6 +21,10 @@ const useCrewManager = () => {
   const purchaseAndInitializeCrew = useCallback(
     (params) => execute('PURCHASE_AND_INITIALIZE_CREW', params),
     [execute]
+  );
+  const getPurchaseStatus = useCallback(
+    (sessionId) => getStatus('PURCHASE_AND_INITIALIZE_CREW', { sessionId }),
+    [getStatus]
   );
   const getPendingPurchase = useCallback(
     (sessionId) => getPendingTx('PURCHASE_AND_INITIALIZE_CREW', { sessionId }),
@@ -35,8 +43,10 @@ const useCrewManager = () => {
 
   return {
     changeActiveCrew,
+    getActiveCrewChangeStatus,
     getPendingActiveCrewChange,
     purchaseAndInitializeCrew,
+    getPurchaseStatus,
     getPendingPurchase,
     initializeCrew,
     getInitializationStatus,

@@ -17,7 +17,7 @@ const useSettleCrew = (i) => {
 
   return {
     settleCrew,
-    settling: status === 'pending'
+    settling: status !== 'ready'
   };
 };
 

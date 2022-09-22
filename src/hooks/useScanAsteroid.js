@@ -30,8 +30,12 @@ const useScanAsteroid = (asteroid) => {
   const scanStatus = useMemo(() => {
     if (finalizingScan === 'pending') {
       return 'RETRIEVING';
+    } else if (finalizingScan === 'initiated') {
+      return 'PRE_RETRIEVING';
     } else if (startingScan === 'pending') {
       return 'SCANNING';
+    } else if (startingScan === 'initiated') {
+      return 'PRE_SCANNING';
     }
     return asteroid?.scanStatus || 'UNSCANNED';
   }, [ startingScan, finalizingScan, asteroid?.scanStatus ]);

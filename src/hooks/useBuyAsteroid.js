@@ -17,7 +17,7 @@ const useBuyAsteroid = (i) => {
 
   return {
     buyAsteroid,
-    buying: status === 'pending'
+    buying: status !== 'ready'
   };
 };
 

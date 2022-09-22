@@ -266,8 +266,10 @@ const AsteroidDetails = (props) => {
               )}
               <GeneralData label="Scan Status">
                 {scanStatus === 'UNSCANNED' && 'Un-scanned'}
+                {scanStatus === 'PRE_SCANNING' && 'Waiting for approval...'}
                 {scanStatus === 'SCANNING' && 'Starting scan...'}
                 {scanStatus === 'SCAN_READY' && 'Awaiting scan results...'}
+                {scanStatus === 'PRE_RETRIEVING' && 'Waiting for approval...'}
                 {scanStatus === 'RETRIEVING' && 'Retrieving scan results...'}
                 {scanStatus === 'RETRIEVED' && 'Scan complete'}
                 {scanStatus === 'ABANDONED' && '(results unclaimed)'}
@@ -313,7 +315,7 @@ const AsteroidDetails = (props) => {
                   data-for="global"
                   loading={[ 'SCANNING', 'RETRIEVING' ].includes(scanStatus)}>
                   <Text>{scanMessages[scanStatus]}</Text>
-                  {[ 'UNSCANNED', 'SCANNING' ].includes(scanStatus) && (
+                  {[ 'UNSCANNED', 'SCANNING', 'PRE_SCANNING' ].includes(scanStatus) && (
                     <span
                       data-tip="(not yet supported on L2)"
                       data-for="global">
@@ -327,11 +329,11 @@ const AsteroidDetails = (props) => {
                       data-for="global"
                       onClick={() => startAsteroidScan()}
                       loading={scanStatus === 'SCANNING'}
-                      disabled={asteroid.owner !== account || scanStatus === 'SCANNING'}>
+                      disabled={asteroid.owner !== account || scanStatus === 'SCANNING' || scanStatus === 'PRE_SCANNING'}>
                       <ScanIcon /> Start Scan
                     </Button>
                   )*/}
-                  {[ 'SCAN_READY', 'RETRIEVING' ].includes(scanStatus) && (
+                  {[ 'SCAN_READY', 'RETRIEVING', 'PRE_RETRIEVING' ].includes(scanStatus) && (
                     <span
                       data-tip="(not yet supported on L2)"
                       data-for="global">
@@ -345,7 +347,7 @@ const AsteroidDetails = (props) => {
                       data-for="global"
                       onClick={() => finalizeAsteroidScan()}
                       loading={scanStatus === 'RETRIEVING'}
-                      disabled={asteroid.owner !== account || scanStatus === 'RETRIEVING'}>
+                      disabled={asteroid.owner !== account || scanStatus === 'RETRIEVING' || scanStatus === 'PRE_RETRIEVING'}>
                       <ScanIcon /> Finalize Scan
                     </Button>
                   )*/}

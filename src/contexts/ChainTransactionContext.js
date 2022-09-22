@@ -429,13 +429,12 @@ export function ChainTransactionProvider({ children }) {
   const getStatus = useCallback((key, vars) => {
     if (getPendingTx(key, vars)) {
       return 'pending';
-    // TODO: implement this
-    //  - need to review all components looking specifically for 'pending' or pendingTx
-    // } else if (getInitiatedTx(key, vars)) {
-    //   return 'initiated';
+    }
+    if (getInitiatedTx(key, vars)) {
+      return 'initiated';
     }
     return 'ready';
-  }, [getPendingTx]);
+  }, [getPendingTx, getInitiatedTx]);
 
   return (
     <ChainTransactionContext.Provider value={{

@@ -446,7 +446,7 @@ const OwnedCrew = (props) => {
   const { data: crewAssignmentData, isLoading: assignmentsAreLoading } = useCrewAssignments();
   const queryClient = useQueryClient();
   const { data: crew, isLoading: crewIsLoading } = useOwnedCrew();
-  const { changeActiveCrew, getPendingActiveCrewChange } = useCrewManager();
+  const { changeActiveCrew, getActiveCrewChangeStatus, getPendingActiveCrewChange } = useCrewManager();
   const history = useHistory();
   const { height, width } = useScreenSize();
   
@@ -643,6 +643,12 @@ const OwnedCrew = (props) => {
     rgb: theme.colors.mainRGB,
   }), [activeCrewHeight]);
 
+  // if not ready for changes...
+  const notReady = useMemo(
+    () => saving || getActiveCrewChangeStatus() !== 'ready',
+    [getActiveCrewChangeStatus, saving]
+  );
+
   if (isDataLoading) return null;
   return (
     <Details title="Owned Crew">
@@ -662,7 +668,7 @@ const OwnedCrew = (props) => {
               {slotOrder.map((slot) => {
                 const crew = activeCrew[slot] || {};
                 const isEmpty = !activeCrew[slot];
-                const isNextEmpty = isEmpty && slot === activeCrew.length && !saving;
+                const isNextEmpty = isEmpty && slot === activeCrew.length && !notReady;
                 const isAssigned = !isEmpty;
                 return (
                   <PopperWrapper key={slot} disableRefSetter={activeCrewHeight === null}>
@@ -688,7 +694,7 @@ const OwnedCrew = (props) => {
                                 {!isEmpty && (
                                   <ButtonHolder isCaptain>
                                     <IconButton
-                                      disabled={saving}
+                                      disabled={notReady}
                                       onClick={() => handleDeactivate(slot)}
                                       data-tip="Make Inactive"
                                       data-place="bottom"
@@ -713,7 +719,7 @@ const OwnedCrew = (props) => {
                               {!isEmpty && (
                                 <ButtonHolder>
                                   <IconButton
-                                    disabled={saving}
+                                    disabled={notReady}
                                     onClick={() => handleDeactivate(slot)}
                                     data-tip="Inactivate"
                                     data-place="bottom"
@@ -721,7 +727,7 @@ const OwnedCrew = (props) => {
                                     <DeactivateIcon />
                                   </IconButton>
                                   <IconButton
-                                    disabled={saving}
+                                    disabled={notReady}
                                     onClick={() => handlePromote(slot)}
                                     data-tip="Promote to Captain"
                                     data-place="bottom"
@@ -756,14 +762,14 @@ const OwnedCrew = (props) => {
             </div>
           </ActiveCrew>
           <ButtonRow>
-            {isDirty && !saving && (
+            {isDirty && !notReady && (
               <RevertButton onClick={handleUndo}>
                 Revert
               </RevertButton>
             )}
             <Button
               onClick={handleSave}
-              disabled={saving || !isDirty}
+              disabled={notReady || !isDirty}
               loading={saving}>
               Save Changes
             </Button>
@@ -798,7 +804,7 @@ const OwnedCrew = (props) => {
                             noWrapName />
                           <InnerButtonHolder>
                             <IconButton
-                              disabled={saving || activeCrew?.length === 5}
+                              disabled={notReady || activeCrew?.length === 5}
                               onClick={() => handleActivate(i)}
                               data-tip="Make Active"
                               data-place="right"

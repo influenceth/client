@@ -465,7 +465,7 @@ const CrewAssignmentCreate = (props) => {
   const { id: sessionId } = useParams();
   const history = useHistory();
   const { storyState } = useStorySession(sessionId);
-  const { purchaseAndInitializeCrew, getPendingPurchase } = useCrewManager();
+  const { purchaseAndInitializeCrew, getPendingPurchase, getPurchaseStatus } = useCrewManager();
   const { data: crew } = useOwnedCrew();
   const { data: crewSale } = useSale('Crewmate');
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -473,8 +473,8 @@ const CrewAssignmentCreate = (props) => {
   const [confirming, setConfirming] = useState();
   const [featureOptions, setFeatureOptions] = useState([]);
   const [featureSelection, setFeatureSelection] = useState();
-  const [finalizing, setFinalizing] = useState();
-  const [finalized, setFinalized] = useState();
+  const [purchasing, setPurchasing] = useState();
+  const [purchased, setPurchased] = useState();
   const [name, setName] = useState('');
   const [traitDetailsOpen, setTraitDetailsOpen] = useState(false);
 
@@ -602,11 +602,11 @@ const CrewAssignmentCreate = (props) => {
       setFeatureOptions([ pendingPurchase.vars.features ]);
       setFeatureSelection(0);
       setName(pendingPurchase.vars.name);
-      setFinalizing(true);
-    } else if (finalizing) {
+      setPurchasing(true);
+    } else if (purchasing) {
       if ((crew || []).find((c) => c.name === name)) {
-        setFinalizing(false);
-        setFinalized(true);
+        setPurchasing(false);
+        setPurchased(true);
       }
       // TODO (enhancement): after timeout, show error
     } else if (featureOptions.length === 0) {
@@ -614,7 +614,7 @@ const CrewAssignmentCreate = (props) => {
     }
   }, [ // eslint-disable-line react-hooks/exhaustive-deps
     crew?.length,
-    finalizing,
+    purchasing,
     getPendingPurchase,
     name,
     rerollAppearance,
@@ -622,13 +622,19 @@ const CrewAssignmentCreate = (props) => {
     featureOptions.length
   ]);
 
+  // if not ready for changes...
+  const notReady = useMemo(
+    () => purchasing || getPurchaseStatus(sessionId) !== 'ready',
+    [getPurchaseStatus, purchasing, sessionId]
+  );
+
   // hide until loaded
   if (!storyState || !featureOptions || !rewards) return null;
   if (featureOptions.length === 0) return null;
 
   // draft crew
   const crewmate = { ...featureOptions[featureSelection] };
-  if (finalized) crewmate.name = name;
+  if (purchased) crewmate.name = name;
   return (
     <Details
       onCloseDestination={onCloseDestination}
@@ -638,7 +644,7 @@ const CrewAssignmentCreate = (props) => {
       <ImageryContainer src={storyState.completionImage || storyState.image}>
         <div />
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
-          {finalized && (
+          {purchased && (
             <TitleBox>
               <Title>Crewmate Created</Title>
             </TitleBox>
@@ -652,11 +658,11 @@ const CrewAssignmentCreate = (props) => {
                     fontSize="25px"
                     hideCollectionInHeader
                     hideFooter
-                    noWrapName={finalized}
-                    showClassInHeader={finalized} />
+                    noWrapName={purchased}
+                    showClassInHeader={purchased} />
                 </div>
               </CardContainer>
-              {!finalized && (
+              {!purchased && (
                 <Traits>
                   {crewmate.crewClass && (
                     <TraitRow>
@@ -753,32 +759,32 @@ const CrewAssignmentCreate = (props) => {
               )}
             </CardWrapper>
 
-            {!finalized && (
+            {!purchased && (
               <NameSection>
-                <TextInput disabled={finalizing} onChange={handleNameChange} placeholder="Enter Name" initialValue={name} />
+                <TextInput disabled={notReady} onChange={handleNameChange} placeholder="Enter Name" initialValue={name} />
                 <RerollContainer>
                   <IconButton
                     onClick={rollBack}
-                    disabled={finalizing || featureSelection === 0}
+                    disabled={notReady || featureSelection === 0}
                     style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
                     <UndoIcon />
                   </IconButton>
                   
                   <Button
-                    disabled={finalizing}
+                    disabled={notReady}
                     lessTransparent
                     onClick={rerollAppearance}>Randomize Appearance</Button>
                   
                   <IconButton
                     onClick={rollForward}
-                    disabled={finalizing || featureSelection === featureOptions.length - 1}
+                    disabled={notReady || featureSelection === featureOptions.length - 1}
                     style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
                     <RedoIcon />
                   </IconButton>
                 </RerollContainer>
               </NameSection>
             )}
-            {finalized && (
+            {purchased && (
               <RecruitSection>
                 {!process.env.REACT_APP_HIDE_SOCIAL && (
                   <TwitterButton onClick={shareOnTwitter}>
@@ -802,7 +808,7 @@ const CrewAssignmentCreate = (props) => {
       </ImageryContainer>
 
       <FinishContainer>
-        {!finalized && (
+        {!purchased && (
           <>
             <Button
               onClick={() => setTraitDetailsOpen(true)}
@@ -810,14 +816,14 @@ const CrewAssignmentCreate = (props) => {
               Review Traits
             </Button>
             <Button
-              disabled={finalizing || !name}
-              loading={finalizing}
+              disabled={notReady || !name}
+              loading={purchasing}
               onClick={confirmFinalize}>
               Finalize
             </Button>
           </>
         )}
-        {finalized && (
+        {purchased && (
           <>
             <span />
             <Button

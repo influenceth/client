@@ -17,7 +17,7 @@ const useNameAsteroid = (i) => {
 
   return {
     nameAsteroid,
-    naming: status === 'pending'
+    naming: status !== 'ready'
   };
 };
 
