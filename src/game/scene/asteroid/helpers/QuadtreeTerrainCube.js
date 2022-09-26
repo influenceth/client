@@ -23,23 +23,29 @@ import {
 // }, 5000);
 
 class QuadtreeTerrainCube {
-  constructor(i, config, textureSize, workerPool) {
+  constructor(i, config, textureSize, workerPool, materialOverrides = {}) {
     this.radius = config.radius;
     this.cameraPosition = null;
     this.smallestActiveChunkSize = 2 * this.radius;
-
-    this.builder = new TerrainChunkManager(i, config, textureSize, workerPool);
-    this.groups = [...new Array(6)].map(_ => new Group());
-    this.chunks = {};
 
     // adjust min chunk size for this asteroid (this is mostly to provide higher resolution for
     // smallest asteroids because user can zoom in proportionally farther)
     // if >30km, x1; if >3k, x0.5; else, x0.33
     this.minChunkSize = getMinChunkSize(this.radius);
+    const prerenderResolution = getSamplingResolution(this.radius, this.minChunkSize);
+
+    this.builder = new TerrainChunkManager(
+      i,
+      config,
+      textureSize || prerenderResolution,
+      workerPool,
+      materialOverrides
+    );
+    this.groups = [...new Array(6)].map(_ => new Group());
+    this.chunks = {};
 
     // build the sides of the cube (each a quadtreeplane)
     this.sides = [];
-    const prerenderResolution = getSamplingResolution(this.radius, this.minChunkSize);
     for (let i in cubeTransforms) {
       this.sides.push({
         index: i,
@@ -55,7 +61,7 @@ class QuadtreeTerrainCube {
           ),
           sampleResolution: prerenderResolution,
           localToWorld: cubeTransforms[i].clone(),
-          worldStretch: config.stretch,
+          worldStretch: config.stretch
         }),
       });
 
@@ -90,7 +96,7 @@ class QuadtreeTerrainCube {
     for (let y = 0; y < resolution; y++) {
       for (let x = 0; x < resolution; x++) {
         const bi = (resolution * (resolution - y - 1) + x) * 4; // (flip y)
-        const disp = -1 + (heightMap.buffer[bi] + heightMap.buffer[bi + 1] / 255) / 127.5;
+        const disp = -1 + (heightMap.buffer[bi] + heightMap.buffer[bi + 1] / 255) / 127.5; // (seems like this should be 128)
         heightSamples.push(config.radius * (1 + disp * config.dispWeight));
       }
     }

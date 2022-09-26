@@ -134,7 +134,7 @@ export const getPlotPointGeometry = (index, pointTally, resolution, heightMaps, 
 export const getPlotGeometry = (config, aboveSurface = 0.0) => {
   const pointTally = Math.floor(4 * Math.PI * (config.radiusNominal / 1000) ** 2);
   const resolution = getSamplingResolution(config.radius, 250);
-  console.log('plot sampling resolution', resolution); // TODO: remove
+  // console.log('plot sampling resolution', resolution); // TODO: remove
 
   const heightMaps = [];
   for (let i = 0; i < 6; i++) {
@@ -178,4 +178,68 @@ export const getPlotGeometry = (config, aboveSurface = 0.0) => {
   }
 
   return { positions, orientations };
+}
+
+export const getAngleDiff = (angle1, angle2) => {
+  const a1 = angle1 >= 0 ? angle1 : (angle1 + 2 * Math.PI);
+  const a2 = angle2 >= 0 ? angle2 : (angle2 + 2 * Math.PI);
+  const diff = Math.abs(a1 - a2) % (2 * Math.PI);
+  return diff > Math.PI ? (2 * Math.PI - diff) : diff;
+}
+
+export const getClosestPlots = ({ center, plotTally, findTally }) => {
+  const returnAllPoints = !findTally; // if no findTally attached, return all (sorted)
+
+  let arcToSearch, yToSearch, maxIndex, minIndex, centerTheta, thetaTolerance;
+  if (returnAllPoints || plotTally < 100) {
+    minIndex = 0;
+    maxIndex = plotTally;
+  } else {
+    // assuming # of lots returning represent a circular area around center,
+    // the radius of which is ~the arc length we need to search
+    //    SA of unit sphere (4 * pi * r^2) == 4 * pi
+    //    lotArea is SA / plotTally == 4 * pi / plotTally
+    //    targetArea is pi * search_radius^2 == findTally * lotArea
+    //      search_radius = sqrt(findTally * (4 * pi / plotTally) / pi)
+    // + 10% safety factor
+    arcToSearch = 1.1 * Math.sqrt(4 * findTally / plotTally);
+  
+    // angle of arclen == arclen / radius (radius is 1)
+    // y of angle == sin(angle) * radius (radius is 1)
+    yToSearch = Math.sin(arcToSearch);
+    maxIndex = Math.min(plotTally - 1, Math.ceil((1 - center.y + yToSearch) * (plotTally - 1) / 2));
+    minIndex = Math.max(0, Math.floor((1 - center.y - yToSearch) * (plotTally - 1) / 2));
+  
+    centerTheta = Math.atan2(center.z, center.x);
+    thetaTolerance = arcToSearch / Math.sqrt(1 - center.y * center.y);
+  }
+
+  const points = [];
+  for(let index = minIndex; index < maxIndex; index++) {
+    const theta = phi * index;
+    if (!returnAllPoints) {
+      if (getAngleDiff(centerTheta, theta) > thetaTolerance) {
+        continue;
+      }
+    }
+
+    const y = 1 - (2 * index / (plotTally - 1));
+    const radiusAtY = Math.sqrt(1 - y * y);
+    const x = Math.cos(theta) * radiusAtY;
+    const z = Math.sin(theta) * radiusAtY;
+
+    points.push([
+      x,
+      y,
+      z,
+      index,
+      Math.abs(center.x - x) + Math.abs(center.y - y) + Math.abs(center.z - z),
+    ]);
+  }
+  //console.log(`${maxIndex - minIndex} points in range; ${points.length} checked`);
+
+  return points
+    .sort((a, b) => a[4] < b[4] ? -1 : 1) // sort by distance
+    .map((p) => p[3]) // map to plot index
+    .slice(0, findTally || undefined); // slice to target number
 }

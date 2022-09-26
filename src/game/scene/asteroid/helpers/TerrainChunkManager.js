@@ -21,10 +21,11 @@ setInterval(() => {
 }, 5000);
 
 class TerrainChunkManager {
-  constructor(i, config, textureSize, workerPool) {
+  constructor(i, config, textureSize, workerPool, materialOverrides = {}) {
     this.asteroidId = i;
     this.config = config;
     this.workerPool = workerPool;
+    this.materialOverrides = materialOverrides;
     
     const {
       ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
@@ -72,7 +73,7 @@ class TerrainChunkManager {
   }
 
   isReadyToFinish() {
-    // TODO: ">=" should be "===" but occasionally on initial asteroid load, extra 6 (initial sides) get put in _new
+    // TODO (enhancement): ">=" should be "===" but occasionally on initial asteroid load, extra 6 (initial sides) get put in _new
     //  (should track down at some point)
     return this.waitingOn > 0 && (this._new.length >= this.waitingOn);
   }
@@ -94,6 +95,7 @@ class TerrainChunkManager {
         this.config,
         {
           csmManager: this.csmManager,
+          materialOverrides: this.materialOverrides,
           resolution: this.textureSize,
           shadowsEnabled: this.shadowsEnabled,
         },

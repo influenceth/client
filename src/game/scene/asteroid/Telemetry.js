@@ -208,7 +208,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
   const shipTime = useRef();
   
   const circleRadius = useMemo(() => defaultTelemetryRadius * radius, [radius]);
-  const circleAttenuation = useMemo(() => 1.6 * radius, [radius]);
+  const circleAttenuation = useMemo(() => 1.4 * radius, [radius]);
   const trajectoryAttenuation = useMemo(() => 10 * radius, [radius]);
   const shipAngularVelocity = useMemo(() => {
     const shipHeight = defaultTelemetryRadius * config.shipCircle.scale;

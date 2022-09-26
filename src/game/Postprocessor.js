@@ -60,6 +60,11 @@ const Postprocessor = () => {
       });
     } else if (obj.isLensflare) {
       obj.visible = false;
+    } else if (obj.material && obj.material.opacity === 0) {
+      obj.visible = false;
+      // TODO (enhancement): support translucent materials by dynamically
+      //  generating darkMaterial as needed for each opacity (i.e. darkMaterials[opacity])
+      //  ... will only need to generate on first pass
     } else if (obj.material && !obj.userData.bloom) {
       // TODO: is double-traversing some nodes, that's why these if's are here
       //  why is this happening?
@@ -84,6 +89,8 @@ const Postprocessor = () => {
         restoreMaterial(child);
       });
     } else if (obj.isLensflare) {
+      obj.visible = true;
+    } else if (obj.material && obj.material.opacity === 0) {
       obj.visible = true;
     } else if (obj.material) {
       if (obj.material.displacementMap && Object.keys(colors).includes(obj.uuid)) {

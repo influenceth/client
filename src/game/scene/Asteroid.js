@@ -33,6 +33,7 @@ const {
   UPDATE_QUADTREE_EVERY,
   ENABLE_CSM
 } = constants;
+
 const UPDATE_DISTANCE_MULT = CHUNK_SPLIT_DISTANCE * UPDATE_QUADTREE_EVERY;
 
 const MAP_RENDER_TIME_PER_CYCLE = 8;
@@ -41,6 +42,7 @@ const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 4;
 const DEBUG_CSM = false;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
+const MOUSE_THROTTLE = 1000 / 30; // ms
 
 // TODO: remove debug
 // let totalRuns = 0;
@@ -117,6 +119,7 @@ const Asteroid = (props) => {
 
   const [config, setConfig] = useState();
   const [terrainInitialized, setTerrainInitialized] = useState();
+  const [mousableTerrainInitialized, setMousableTerrainInitialized] = useState();
   const [terrainUpdateNeeded, setTerrainUpdateNeeded] = useState();
 
   const debug = useRef(); // TODO: remove
@@ -133,6 +136,10 @@ const Asteroid = (props) => {
   const csmHelperFloor = useRef(); // TODO: remove
   const aspectRatio = useRef();
   const settingCameraPosition = useRef();
+  const mouseGeometry = useRef();
+  const mouseableRef = useRef();
+  const mouseIntersect = useRef(new Vector3());
+  const lastMouseUpdate = useRef(0);
 
   const maxStretch = useMemo(
     () => config?.stretch ? Math.max(config.stretch.x, config.stretch.y, config.stretch.z) : 1,
@@ -154,6 +161,11 @@ const Asteroid = (props) => {
         quadtreeRef.current.remove(g);
       });
     }
+    if (mouseGeometry.current && mouseableRef.current) {
+      mouseGeometry.current.groups.forEach((g) => {
+        mouseableRef.current.remove(g);
+      });
+    }
     if (geometry.current?.csm) {
       geometry.current.csm.remove();
       geometry.current.csm.dispose();
@@ -164,6 +176,10 @@ const Asteroid = (props) => {
     }
     if (group.current && csmHelperFloor.current) {
       group.current.remove(csmHelperFloor.current);
+    }
+    if (mouseGeometry.current) {
+      mouseGeometry.current.dispose();
+      mouseGeometry.current = null;
     }
     if (geometry.current) {
       geometry.current.dispose();
@@ -220,6 +236,21 @@ const Asteroid = (props) => {
       geometry.current = new QuadtreeTerrainCube(origin, c, textureSize, webWorkerPool);
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.add(g);
+      });
+
+      if (mouseGeometry.current) disposeGeometry();
+      mouseGeometry.current = new QuadtreeTerrainCube(
+        origin,
+        c,
+        null, // textureSize defaults to heightSampling resolution
+        webWorkerPool,
+        {
+          opacity: 0,
+          transparent: true
+        }
+      );
+      mouseGeometry.current.groups.forEach((g) => {
+        mouseableRef.current.add(g);
       });
 
     // cleanup if no data
@@ -498,8 +529,29 @@ const Asteroid = (props) => {
     }
   }, [terrainUpdateNeeded]);
 
+  // once terrain is loaded, load the mouse-interactive terrain
+  // TODO (enhancement): re-use the heightSample buffer from the primary terrain cube
+  useEffect(() => {
+    if (mouseGeometry.current && terrainInitialized) {
+      // if terrain initialized, make exportable
+      // TODO (enhancement): ideally would do this in webworker, but just doing once,
+      //  so hopefully is not noticeable
+      if (mousableTerrainInitialized) {
+        // const scale = Math.min(1.02, (config.radius + 100) / config.radius);
+        Object.values(mouseGeometry.current.chunks).forEach(({ chunk }) => {
+          chunk.makeExportable();
+          // chunk._geometry.scale(scale, scale, scale);
+        });
+
+      // kick off initialization (from a far away distance so only one chunk per side)
+      } else {
+        mouseGeometry.current.setCameraPosition(new Vector3(0, 0, constants.AU));
+      }
+    }
+  }, [terrainInitialized, mousableTerrainInitialized]);
+
   // Positions the asteroid in space based on time changes
-  useFrame(() => {
+  useFrame((state) => {
     if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
 
@@ -543,6 +595,10 @@ const Asteroid = (props) => {
       // updatedRotation = 0; // TODO: remove
       if (updatedRotation !== rotation.current) {
         quadtreeRef.current.setRotationFromAxisAngle(
+          rotationAxis.current,
+          updatedRotation
+        );
+        mouseableRef.current.setRotationFromAxisAngle(
           rotationAxis.current,
           updatedRotation
         );
@@ -606,6 +662,14 @@ const Asteroid = (props) => {
         // ^^^
       }
     }
+    if (mouseGeometry.current && mouseGeometry.current.builder.isPreparingUpdate()) {
+      if (mouseGeometry.current.builder.isReadyToFinish()) {
+        mouseGeometry.current.builder.update();
+        if (!mousableTerrainInitialized) setMousableTerrainInitialized(true);
+      } else {
+        mouseGeometry.current.builder.updateMaps(Date.now() + MAP_RENDER_TIME_PER_CYCLE);
+      }
+    }
 
     // if zoomed out, let run once to prerender, but then don't run the rest of the frame
     if (geometry.current.cameraPosition && (zoomStatus === 'out' || zoomStatus === 'zooming-out')) return;
@@ -660,6 +724,31 @@ const Asteroid = (props) => {
       }
     }
 
+    // raycast
+    // TODO: would definitely be cheaper to use single prerendered mesh for this
+    //  (but would need to overlay geometry, be transparent)
+    // TODO (enhancement): probably don't need to do this every frame
+    if (mousableTerrainInitialized && mouseableRef.current.children) {
+      const now = Date.now();
+      if (now - lastMouseUpdate.current >= MOUSE_THROTTLE) {
+        lastMouseUpdate.current = now;
+        try {
+          const intersections = state.raycaster.intersectObjects(mouseableRef.current.children);
+          if (intersections.length) {
+            mouseIntersect.current.copy(intersections[0].point);
+            mouseIntersect.current.applyAxisAngle(rotationAxis.current, -1 * rotation.current);
+            mouseIntersect.current.divide(config.stretch);
+            mouseIntersect.current.normalize();
+          } else {
+            // console.log('no intersection');
+            mouseIntersect.current.setLength(0);
+          }
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+    }
+
     // TODO: remove debug
     // setTimeout(() => {
     //   const debugInfo = document.getElementById('debug_info');
@@ -674,11 +763,13 @@ const Asteroid = (props) => {
   return (
     <group ref={group}>
       <group ref={quadtreeRef} />
+      <group ref={mouseableRef} />
 
       {config && terrainInitialized && (
         <Plots
           attachTo={quadtreeRef.current}
           config={config}
+          mouseIntersect={mouseIntersect.current}
           surface={geometry.current} />
       )}
 

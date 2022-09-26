@@ -33,30 +33,6 @@ export const cubeTransforms = [
   (new Matrix4()).makeRotationY(Math.PI),      // -Z
 ];
 
-export const getSamplingResolution = (radius, minChunkSize = MIN_CHUNK_SIZE) => {
-  const targetResolution = 2 * radius / minChunkSize;
-  if (targetResolution < 32) return 16;
-  if (targetResolution < 64) return 32;
-  if (targetResolution < 128) return 64;
-  if (targetResolution < 256) return 128;
-  if (targetResolution < 512) return 256;
-  if (targetResolution < 1024) return 512;
-  if (targetResolution < 2048) return 1024;
-  // TODO: these probably are excessive
-  if (targetResolution < 4096) return 2048;
-  // if (targetResolution < 8192) return 4096;
-  return 4096;
-};
-
-// set up texture renderer (ideally w/ offscreen canvas)
-let _textureRenderer;
-function getTextureRenderer() {
-  if (!_textureRenderer) {
-    _textureRenderer = new TextureRenderer();
-  }
-  return _textureRenderer;
-}
-
 // TODO: remove this debug vvv
 // let first = true;
 // let totalRuns = 0;
@@ -96,6 +72,15 @@ function getTextureRenderer() {
 // ^^^
 
 
+// set up texture renderer (ideally w/ offscreen canvas)
+let _textureRenderer;
+function getTextureRenderer() {
+  if (!_textureRenderer) {
+    _textureRenderer = new TextureRenderer();
+  }
+  return _textureRenderer;
+}
+
 // load ramps
 let ramps;
 export async function initChunkTextures(preloadedBitmap) {
@@ -119,6 +104,17 @@ export async function initChunkTextures(preloadedBitmap) {
     }
   }
 }
+
+export const getSamplingResolution = (radius, minChunkSize = MIN_CHUNK_SIZE) => {
+  const targetResolution = 2 * radius / minChunkSize;
+  if (targetResolution < 32) return 16;
+  if (targetResolution < 64) return 32;
+  if (targetResolution < 128) return 64;
+  if (targetResolution < 256) return 128;
+  if (targetResolution < 512) return 256;
+  if (targetResolution < 1024) return 512;
+  return 1024;
+};
 
 export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, edgeStrides, extraPasses, extraPassesMax, oversample, config, returnType = 'bitmap') {
   const material = new ShaderMaterial({
@@ -401,7 +397,7 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
   };
 }
 
-export function applyDisplacementToGeometry(geometry, resolution, radius, displacementMap, displacementBias, displacementScale, stretch) {
+export function applyDisplacementToGeometry(geometry, resolution, radius, stretch, { displacementMap, displacementBias, displacementScale }) {
   const resolutionPlusOne = resolution + 1;
   const positions = geometry.getAttribute('position').array;
 
@@ -418,9 +414,15 @@ export function applyDisplacementToGeometry(geometry, resolution, radius, displa
       
       const displacementTextureValue = (displacementData[textureIndex + 0] + displacementData[textureIndex + 1] / 255) / 256;
       
-      _P.x = positions[positionIndex + 0];
-      _P.y = positions[positionIndex + 1];
-      _P.z = positions[positionIndex + 2];
+      _P.set(
+        positions[positionIndex + 0],
+        positions[positionIndex + 1],
+        positions[positionIndex + 2],
+      );
+
+      // TODO (enhancement): stretch is applied when geometry initialized, in displacement map, and here
+      //  (that's why this divide is necessary)... does the geometry initialization require it?
+      _P.divide(stretch);
       _P.setLength(radius + displacementTextureValue * displacementScale + displacementBias);
       _P.multiply(stretch);
 
@@ -435,6 +437,61 @@ export function applyDisplacementToGeometry(geometry, resolution, radius, displa
   geometry.attributes.position.needsUpdate = true;
 }
 
+export function transformStretch(stretch, side) {
+  if ([0,1].includes(side)) {
+    return new Vector3(stretch.x, stretch.z, stretch.y);
+  } else if ([2,3].includes(side)) {
+    return new Vector3(stretch.z, stretch.y, stretch.x);
+  }
+  return stretch.clone();
+}
+
+const GEO_ATTR_CACHE = {};
+export function getCachedGeometryAttributes(resolution) {
+  // using cache since these should be same for every chunk
+  if (!GEO_ATTR_CACHE[resolution]) {
+    const resolutionPlusOne = resolution + 1;
+
+    // init uv's
+    // NOTE: could probably flip y in these UVs instead of in every shader
+    const uvs = new Float32Array(resolutionPlusOne * resolutionPlusOne * 2);
+    for (let x = 0; x < resolutionPlusOne; x++) {
+      for (let y = 0; y < resolutionPlusOne; y++) {
+        const outputIndex = (resolutionPlusOne * x + y) * 2;
+        if (OVERSAMPLE_CHUNK_TEXTURES) {
+          uvs[outputIndex + 0] = (x + 1.5) / (resolutionPlusOne + 2);
+          uvs[outputIndex + 1] = (y + 1.5) / (resolutionPlusOne + 2);
+          // (alternative):
+          // uvs[outputIndex + 0] = (x + 1.0) / (resolution + 2);
+          // uvs[outputIndex + 1] = (y + 1.0) / (resolution + 2);
+        } else {
+          uvs[outputIndex + 0] = (x + 0.5) / resolutionPlusOne;
+          uvs[outputIndex + 1] = (y + 0.5) / resolutionPlusOne;
+          // (alternative):
+          // uvs[outputIndex + 0] = x / resolution;
+          // uvs[outputIndex + 1] = y / resolution;
+        }
+      }
+    }
+  
+    // init indices
+    const indices = new Uint32Array(resolution * resolution * 3 * 2);
+    for (let i = 0; i < resolution; i++) {
+      for (let j = 0; j < resolution; j++) {
+        const outputIndex = (resolution * i + j) * 6;
+        indices[outputIndex + 0] = i * resolutionPlusOne + j;
+        indices[outputIndex + 1] = (i + 1) * resolutionPlusOne + j + 1;
+        indices[outputIndex + 2] = i * resolutionPlusOne + j + 1;
+        indices[outputIndex + 3] = (i + 1) * resolutionPlusOne + j;
+        indices[outputIndex + 4] = (i + 1) * resolutionPlusOne + j + 1;
+        indices[outputIndex + 5] = i * resolutionPlusOne + j;
+      }
+    }
+
+    GEO_ATTR_CACHE[resolution] = { uvs, indices };
+  }
+  return GEO_ATTR_CACHE[resolution];
+}
 
 
 /* DEBUGGING HELPERS (drop into rebuildChunkMaps):

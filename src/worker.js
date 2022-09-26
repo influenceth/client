@@ -3,7 +3,7 @@ import { Vector3 } from 'three';
 import constants from '~/lib/constants';
 import * as utils from '~/lib/geometryUtils';
 import { rebuildChunkGeometry, rebuildChunkMaps, initChunkTextures } from '~/game/scene/asteroid/helpers/TerrainChunkUtils';
-import { getPlotGeometry } from '~/game/scene/asteroid/helpers/PlotGeometry';
+import { getPlotGeometry, getClosestPlots } from '~/game/scene/asteroid/helpers/PlotGeometry';
 
 const {
   DISABLE_BACKGROUND_TERRAIN_MAPS
@@ -37,6 +37,9 @@ onmessage = function(event) {
       break;
     case 'buildPlotGeometry':
       buildPlotGeometry(event.data.data);
+      break;
+    case 'findClosestPlots':
+      findClosestPlots(event.data.data);
       break;
     // used if want to just update cache values (but do no work)
     case 'updateParamCache': {
@@ -128,4 +131,9 @@ const buildPlotGeometry = function({ config, aboveSurface }) {
     positions.buffer,
     orientations.buffer
   ]);
+}
+
+const findClosestPlots = function(data) {
+  const plots = getClosestPlots(data);
+  postMessage({ topic: 'foundClosestPlots', plots });
 }

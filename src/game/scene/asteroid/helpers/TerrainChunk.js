@@ -2,20 +2,23 @@ import {
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
+  // DoubleSide,
   Float32BufferAttribute,
-  FrontSide,
   LessDepth,
   Mesh,
   MeshDepthMaterial,
   MeshStandardMaterial,
   NearestFilter,
   RGBADepthPacking,
-  Vector2,
-  Vector3
+  Vector2
 } from 'three';
 
 import constants from '~/lib/constants';
-import { applyDisplacementToGeometry } from './TerrainChunkUtils';
+import {
+  applyDisplacementToGeometry,
+  getCachedGeometryAttributes,
+  transformStretch
+} from './TerrainChunkUtils';
 
 const {
   OVERSAMPLE_CHUNK_TEXTURES,
@@ -35,10 +38,8 @@ const {
 //   first = true;
 // }, 5000);
 
-const GEO_ATTR_CACHE = {};
-
 class TerrainChunk {
-  constructor(params, config, { csmManager, shadowsEnabled, resolution }) {
+  constructor(params, config, { csmManager, materialOverrides, shadowsEnabled, resolution }) {
     this._params = params;
     this._config = config;
     this._csmManager = csmManager;
@@ -62,7 +63,7 @@ class TerrainChunk {
       extraMaterialProps.alphaTest = 0.5; // TODO: this may not be needed
     }
 
-    this._material = new MeshStandardMaterial({
+    const materialProps = {
       color: 0xffffff,
       depthFunc: LessDepth,
       displacementBias: -1 * this._config.radius * this._config.dispWeight,
@@ -70,11 +71,15 @@ class TerrainChunk {
       dithering: true,
       metalness: 0,
       roughness: 1,
-      side: FrontSide,
       // wireframe: true,
       // transparent: true, opacity: 0.9,
       ...extraMaterialProps
-    });
+    }
+    if (materialOverrides) {
+      Object.keys(materialOverrides).forEach((k) => materialProps[k] = materialOverrides[k]);
+    }
+
+    this._material = new MeshStandardMaterial(materialProps);
 
     // apply onBeforeCompile to primary material
     const onBeforeCompile = this.getOnBeforeCompile(
@@ -124,7 +129,7 @@ class TerrainChunk {
           '#include <displacementmap_vertex>',
           `#ifdef USE_DISPLACEMENTMAP
             vec2 disp16 = texture2D(displacementMap, vUv).xy;
-            float disp = (disp16.x * 255.0 + disp16.y) / 255.0;
+            float disp = (disp16.x * 255.0 + disp16.y) / 256.0;
             // set height along normal (which is set to spherical position)
             transformed = normalize(objectNormal) * (uRadius + disp * displacementScale + displacementBias);
             // stretch according to config
@@ -150,15 +155,7 @@ class TerrainChunk {
   // NOTE: if limit resource pooling to by side, these updates aren't necessary BUT uniforms
   //  are sent either way, so it probably doesn't matter
   updateDerived() {
-
-    // transform stretch per side
-    if ([0,1].includes(this._params.side)) {
-      this._stretch = new Vector3(this._config.stretch.x, this._config.stretch.z, this._config.stretch.y);
-    } else if ([2,3].includes(this._params.side)) {
-      this._stretch = new Vector3(this._config.stretch.z, this._config.stretch.y, this._config.stretch.x);
-    } else {
-      this._stretch = this._config.stretch.clone();
-    }
+    this._stretch = transformStretch(this._config.stretch, this._params.side);
 
     // according to https://threejs.org/docs/#manual/en/introduction/How-to-update-things,
     // uniform values are sent to shader every frame automatically (so no need for needsUpdate)
@@ -202,53 +199,10 @@ class TerrainChunk {
   }
 
   initGeometry() {
-    const resolution = this._resolution;
-    // using cache since these should be same for every chunk
-    if (!GEO_ATTR_CACHE[resolution]) {
-      const resolutionPlusOne = resolution + 1;
-  
-      // init uv's
-      // NOTE: could probably flip y in these UVs instead of in every shader
-      const uvs = new Float32Array(resolutionPlusOne * resolutionPlusOne * 2);
-      for (let x = 0; x < resolutionPlusOne; x++) {
-        for (let y = 0; y < resolutionPlusOne; y++) {
-          const outputIndex = (resolutionPlusOne * x + y) * 2;
-          if (OVERSAMPLE_CHUNK_TEXTURES) {
-            uvs[outputIndex + 0] = (x + 1.5) / (resolutionPlusOne + 2);
-            uvs[outputIndex + 1] = (y + 1.5) / (resolutionPlusOne + 2);
-            // (alternative):
-            // uvs[outputIndex + 0] = (x + 1.0) / (resolution + 2);
-            // uvs[outputIndex + 1] = (y + 1.0) / (resolution + 2);
-          } else {
-            uvs[outputIndex + 0] = (x + 0.5) / resolutionPlusOne;
-            uvs[outputIndex + 1] = (y + 0.5) / resolutionPlusOne;
-            // (alternative):
-            // uvs[outputIndex + 0] = x / resolution;
-            // uvs[outputIndex + 1] = y / resolution;
-          }
-        }
-      }
-    
-      // init indices
-      const indices = new Uint32Array(resolution * resolution * 3 * 2);
-      for (let i = 0; i < resolution; i++) {
-        for (let j = 0; j < resolution; j++) {
-          const outputIndex = (resolution * i + j) * 6;
-          indices[outputIndex + 0] = i * resolutionPlusOne + j;
-          indices[outputIndex + 1] = (i + 1) * resolutionPlusOne + j + 1;
-          indices[outputIndex + 2] = i * resolutionPlusOne + j + 1;
-          indices[outputIndex + 3] = (i + 1) * resolutionPlusOne + j;
-          indices[outputIndex + 4] = (i + 1) * resolutionPlusOne + j + 1;
-          indices[outputIndex + 5] = i * resolutionPlusOne + j;
-        }
-      }
-
-      GEO_ATTR_CACHE[resolution] = { uvs, indices };
-    }
-
     // update geometry
-    this._geometry.setIndex(new BufferAttribute(GEO_ATTR_CACHE[resolution].indices, 1));
-    this._geometry.setAttribute('uv', new Float32BufferAttribute(GEO_ATTR_CACHE[resolution].uvs, 2));
+    const attr = getCachedGeometryAttributes(this._resolution);
+    this._geometry.setIndex(new BufferAttribute(attr.indices, 1));
+    this._geometry.setAttribute('uv', new Float32BufferAttribute(attr.uvs, 2));
     this._geometry.attributes.uv.needsUpdate = true;
   }
 
@@ -289,10 +243,12 @@ class TerrainChunk {
       this._geometry,
       this._resolution,
       this._config.radius,
-      this._material.displacementMap,
-      this._material.displacementBias,
-      this._material.displacementScale,
-      this._stretch
+      this._stretch,
+      {
+        displacementMap: this._material.displacementMap,
+        displacementBias: this._material.displacementBias,
+        displacementScale: this._material.displacementScale,
+      }
     );
 
     // compute accurate normals since displacement now in geometry data
