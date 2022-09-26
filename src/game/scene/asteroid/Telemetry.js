@@ -1,16 +1,12 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { KeplerianOrbit } from 'influence-utils';
 import {
-  AxesHelper,
+  // AxesHelper,
   BufferAttribute,
   BufferGeometry,
-  CircleGeometry,
   Color,
   DoubleSide,
   Float32BufferAttribute,
-  Float64BufferAttribute,
   Group,
-  LineBasicMaterial,
   LineDashedMaterial,
   Line,
   LineLoop,
@@ -18,16 +14,13 @@ import {
   PointsMaterial,
   Mesh,
   MeshBasicMaterial,
-  MeshStandardMaterial,
   RingGeometry,
   ShaderMaterial,
-  Sprite,
-  SpriteMaterial,
   Vector3,
   TextureLoader,
   PlaneGeometry,
 } from 'three';
-import * as THREE from 'three';
+// import * as THREE from 'three';
 
 import useGetTime from '~/hooks/useGetTime';
 import constants from '~/lib/constants';
@@ -214,7 +207,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
     const shipHeight = defaultTelemetryRadius * config.shipCircle.scale;
     const period = Math.sqrt(3 * Math.PI * shipHeight ** 3 / (densityByType[spectralType] * GRAV));
     return 2 * Math.PI / period;
-  }, [radius]);
+  }, [spectralType]);
 
   useEffect(() => {
     const circleSegments = 360;
@@ -511,7 +504,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
     return () => {
       if (accessGroup.current) scene.remove(accessGroup.current);
       if (equatorCircle.current) scene.remove(equatorCircle.current);
-      if (helper.current) scene.remove(helper.current);
+      if (helper.current) scene.remove(helper.current); // eslint-disable-line react-hooks/exhaustive-deps
       if (inclinationCircle.current) scene.remove(inclinationCircle.current);
       if (rotationalMarkersGroup.current) scene.remove(rotationalMarkersGroup.current);
       if (planarCircle.current) scene.remove(planarCircle.current);
@@ -519,7 +512,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
       if (shipGroup.current) scene.remove(shipGroup.current);
       if (trajectory.current) scene.remove(trajectory.current);
     };
-  }, []);
+  });
 
   const lastRotation = useRef();
   useFrame(() => {

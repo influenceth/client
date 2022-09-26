@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import * as THREE from 'three'; // TODO: don't import all
 import {
   MeshBasicMaterial,
   ShaderMaterial,
@@ -152,7 +151,7 @@ const Postprocessor = () => {
     finalComposer.current.addPass( renderScene );
     finalComposer.current.addPass( selectiveBloomPass );
     finalComposer.current.addPass( fxaaPass.current );
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (bloomComposer.current) {
@@ -169,7 +168,7 @@ const Postprocessor = () => {
       fxaaPass.current.material.uniforms['resolution'].value.x = 1 / ( size.width * pixelRatio );
       fxaaPass.current.material.uniforms['resolution'].value.y = 1 / ( size.height * pixelRatio );
     }
-  }, [size.height, size.width])
+  }, [size.height, size.width]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useFrame(({ scene }) => {
     if (!(bloomComposer.current && finalComposer.current)) return;

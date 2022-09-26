@@ -20,10 +20,7 @@ import {
   transformStretch
 } from './TerrainChunkUtils';
 
-const {
-  OVERSAMPLE_CHUNK_TEXTURES,
-  SHADOWLESS_NORMAL_SCALE,
-} = constants;
+const { SHADOWLESS_NORMAL_SCALE } = constants;
 
 // TODO: remove debug
 // let first = true;

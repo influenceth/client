@@ -99,7 +99,7 @@ const Plots = ({ attachTo, config, mouseIntersect, surface }) => {
         }
       }
     }
-  }, [config?.radius, surface]);
+  }, [config?.radius, surface]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const highlighted = useRef();
   const highlightPlot = (i) => {
