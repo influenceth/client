@@ -8,7 +8,7 @@ import useCreateStorySession from '~/hooks/useCreateStorySession';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStore from '~/hooks/useStore';
 import CrewCard from '~/components/CrewCard';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import TitleWithUnderline from '~/components/TitleWithUnderline';
@@ -480,7 +480,7 @@ const CrewAssignments = (props) => {
 
   const { title, parts } = book || {};
   return (
-    <Details title="Crew Assignments" maxWidth="2200px">
+    <Details title="Crew Assignments" maxWidth="2200px" width="max">
       <div style={{
         display: 'flex',
         flexDirection: 'row',

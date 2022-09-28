@@ -10,7 +10,7 @@ import BarLoader from 'react-spinners/BarLoader';
 import styled, { css } from 'styled-components';
 
 import Button from '~/components/Button';
-import Details from '~/components/FullsizeWrapper';
+import Details from '~/components/DetailsFullsize';
 import Dropdown from '~/components/Dropdown';
 import NumberInput from '~/components/NumberInput';
 import useAssets from '~/hooks/useAssets';

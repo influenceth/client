@@ -11,7 +11,7 @@ import Button from '~/components/Button';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import { ArvadIcon, BackIcon } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
@@ -368,7 +368,10 @@ const CrewAssignment = (props) => {
   return (
     <>
       <Details
-        title={headerTitle} edgeToEdge onCloseDestination={onCloseDestination}>
+        edgeToEdge
+        onCloseDestination={onCloseDestination}
+        title={headerTitle}
+        width="max">
         {!contentReady && <Loader />}
         {contentReady && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

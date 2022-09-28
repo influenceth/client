@@ -4,13 +4,23 @@ import { useHistory } from 'react-router-dom';
 import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
 
+const defaultMaxWidth = '1400px';
+
 const Wrapper = styled.div`
-  flex: 1 1 0;
-  max-width: ${p => p.fullWidth ? 'none' : (p.maxWidth || '1400px')};
-  padding: 25px 25px 0;
-  position: relative;
+  align-items: center;
+  backdrop-filter: blur(2px);
+  bottom: 0;
+  display: flex;
+  left: 0;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
   overflow: hidden;
-  width: 100%;
+  padding: 50px 25px 75px;
+  pointer-events: all;
+  position: absolute;
+  right: 0;
+  top: 0;
   z-index: 2;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
@@ -20,8 +30,8 @@ const Wrapper = styled.div`
 `;
 
 const StyledDetails = styled.div`
-  background-color: ${p => p.theme.colors.contentBackdrop};
-  backdrop-filter: blur(4px);
+  background-color: black;
+  border: 1px solid #555;
   clip-path: polygon(
     0 0,
     100% 0,
@@ -32,8 +42,11 @@ const StyledDetails = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-width: ${p => p.maxWidth || defaultMaxWidth};
   overflow: hidden;
   pointer-events: auto;
+  position: relative;
+  width: auto;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     background-color: ${p => p.theme.colors.mobileBackground};
@@ -70,7 +83,6 @@ const Content = styled.div`
     }
     return 'margin: 25px 35px 35px 25px;';
   }}
-  min-width: 0;
   overflow-y: auto;
   position: relative;
   scrollbar-width: thin;
@@ -79,6 +91,12 @@ const Content = styled.div`
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     margin: ${p => p.edgeToEdge && p.hasTitle ? '-60px 0 0' : '0'};
   }
+`;
+
+const ContentWrapper = styled.div`
+  height: 100%;
+  max-width: 100%;
+  width: ${p => p.width === 'max' ? (p.maxWidth || defaultMaxWidth) : (p.width || 'auto')};
 `;
 
 const CloseButton = styled(IconButton)`
@@ -94,7 +112,7 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Details = (props) => {
-  const { title, contentProps = {}, edgeToEdge, onCloseDestination, ...restProps } = props;
+  const { title, contentProps = {}, edgeToEdge, onCloseDestination, width, ...restProps } = props;
   const history = useHistory();
 
   return (
@@ -108,7 +126,9 @@ const Details = (props) => {
           <CloseIcon />
         </CloseButton>
         <Content edgeToEdge={edgeToEdge} hasTitle={!!title} {...contentProps}>
-          {props.children}
+          <ContentWrapper width={width}>
+            {props.children}
+          </ContentWrapper>
         </Content>
       </StyledDetails>
     </Wrapper>

@@ -18,7 +18,7 @@ import constants from '~/lib/constants';
 import formatters from '~/lib/formatters';
 import exportGLTF from '~/lib/graphics/exportGLTF';
 
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import Form from '~/components/Form';
 import Text from '~/components/Text';
 import Button from '~/components/Button';

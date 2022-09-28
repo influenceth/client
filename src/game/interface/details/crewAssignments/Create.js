@@ -13,7 +13,7 @@ import CopyReferralLink from '~/components/CopyReferralLink';
 import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import Dialog from '~/components/Dialog';
 import Ether from '~/components/Ether';
 import { AdalianIcon, LinkIcon, TwitterIcon } from '~/components/Icons';
@@ -634,7 +634,8 @@ const CrewAssignmentCreate = (props) => {
       onCloseDestination={onCloseDestination}
       contentProps={{ style: { display: 'flex', flexDirection: 'column', } }}
       edgeToEdge
-      title="Crew Assignments">
+      title="Crew Assignments"
+      width="max">
       <ImageryContainer src={storyState.completionImage || storyState.image}>
         <div />
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>

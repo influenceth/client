@@ -8,11 +8,13 @@ import LoadingAnimation from 'react-spinners/BarLoader';
 import useSale from '~/hooks/useSale';
 import useScreenSize from '~/hooks/useScreenSize';
 import Alerts from './interface/Alerts';
+import AvatarMenu from './interface/AvatarMenu';
 import Draggables from './interface/Draggables';
 import MainMenu from './interface/MainMenu';
 import ModelViewer from './interface/ModelViewer';
 import Outliner from './interface/Outliner';
 import SaleNotifier from './interface/SaleNotifier';
+import SceneMenu from './interface/SceneMenu';
 import AsteroidDetails from './interface/details/AsteroidDetails';
 import AsteroidsTable from './interface/details/AsteroidsTable';
 import CrewAssignment from './interface/details/crewAssignments/Assignment';
@@ -109,46 +111,52 @@ const Interface = () => {
           <Route exact path="/asteroids">
             <AsteroidsTable />
           </Route>
-          <Redirect from="/:i(\d+)" to="/asteroids/:i" />
-          <Route path="/asteroids/:i(\d+)">
-            <AsteroidDetails />
-          </Route>
           <Route path="/model-viewer">
             <ModelViewer />
-          </Route>
-          <Route path="/owned-asteroids">
-            <OwnedAsteroidsTable />
-          </Route>
-          <Route path="/owned-crew">
-            <OwnedCrew />
-          </Route>
-          <Route exact path="/crew-assignments/:id([a-z0-9]+)/:selected?">
-            <CrewAssignments />
-          </Route>
-          <Route exact path="/crew-assignment/:id([a-z0-9]+)">
-            <CrewAssignment />
-          </Route>
-          <Route path="/crew-assignment/:id([a-z0-9]+)/complete">
-            <CrewAssignmentComplete />
-          </Route>
-          <Route path="/crew-assignment/:id([a-z0-9]+)/create">
-            <CrewCreation />
           </Route>
           <Route path="/crew/:i(\d+)">
             <CrewMemberDetails />
           </Route>
-          <Route path="/watchlist">
-            <WatchlistTable />
+          <Route path="/owned-asteroids">
+            <OwnedAsteroidsTable />
           </Route>
           <Route path="/route">
             <RouteDetails />
           </Route>
-          <Route path="/settings">
-            <Settings />
+          <Route path="/watchlist">
+            <WatchlistTable />
           </Route>
         </Switch>
+
+        <AvatarMenu />
+        <SceneMenu />
         <MainMenu />
       </MainContainer>
+
+      <Switch>
+        <Redirect from="/:i(\d+)" to="/asteroids/:i" />
+        <Route path="/asteroids/:i(\d+)">
+          <AsteroidDetails />
+        </Route>
+        <Route path="/owned-crew">
+          <OwnedCrew />
+        </Route>
+        <Route exact path="/crew-assignments/:id([a-z0-9]+)/:selected?">
+          <CrewAssignments />
+        </Route>
+        <Route exact path="/crew-assignment/:id([a-z0-9]+)">
+          <CrewAssignment />
+        </Route>
+        <Route path="/crew-assignment/:id([a-z0-9]+)/complete">
+          <CrewAssignmentComplete />
+        </Route>
+        <Route path="/crew-assignment/:id([a-z0-9]+)/create">
+          <CrewCreation />
+        </Route>
+        <Route path="/settings">
+          <Settings />
+        </Route>
+      </Switch>
       <Outliner />
       <Draggables />
     </StyledInterface>
