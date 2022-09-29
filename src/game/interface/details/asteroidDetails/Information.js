@@ -69,7 +69,7 @@ const Wrapper = styled.div`
   }
 `;
 const BasicPane = styled.div`
-  flex: 0 1 450px;
+  flex: 0 1 540px;
   padding-top: 30px;
 `;
 const DetailPane = styled.div`
@@ -85,7 +85,13 @@ const DetailPane = styled.div`
 `;
 const GraphicSection = styled.div`
   flex: 1;
-  justify-contents: center;
+  min-height: 150px;
+`;
+const GraphicWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
 `;
 const Graphic = styled.div`
   padding-top: 100%;
@@ -97,6 +103,7 @@ const Graphic = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
+    z-index: -1;
   }
 `;
 const Composition = styled.div`
@@ -122,6 +129,7 @@ const GraphicData = styled.div`
     text-transform: uppercase;
   }
 `;
+
 const AsteroidName = styled.div`
   background: black;
   border: 1px solid ${p => p.theme.colors.borderBottom};
@@ -132,6 +140,37 @@ const AsteroidName = styled.div`
   text-align: center;
   text-transform: none !important;
   min-width: 60%;
+`;
+
+const Attributes = styled.div`
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: -12px;
+  & > div {
+    align-items: center;
+    display: flex;
+    border-bottom: 1px solid ${p => p.theme.colors.borderBottomAlt};
+    margin-bottom: 12px;
+    max-width: 48%;
+    padding: 6px 0;
+    width: 360px;
+    & > svg {
+      color: ${p => p.theme.colors.main};
+      font-size: 150%;
+      margin-right: 10px;
+    }
+    & > label {
+      flex: 1;
+      white-space: nowrap;
+    }
+    & > span {
+      color: white;
+      white-space: nowrap;
+    }
+  }
 `;
 
 const SectionHeader = styled.div`
@@ -152,7 +191,8 @@ const HighlightOwnership = styled.div`
   font-size: 115%;
   font-weight: bold;
   color: ${p => p.theme.colors.main};
-  margin-bottom: 1.5em;
+  margin-top: 0.25em;
+  margin-bottom: 1.25em;
 `;
 
 const ButtonRow = styled.div`
@@ -161,6 +201,7 @@ const ButtonRow = styled.div`
   flex-wrap: wrap;
   & > * {
     flex: 1;
+    max-width: 250px;
     white-space: nowrap;
     &:not(:first-child) {
       margin-left: 6px;
@@ -219,33 +260,6 @@ const EmptyLogEntry = styled.li`
   text-align: center;
 `;
 
-const Attributes = styled.div`
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin-bottom: -12px;
-  & > div {
-    align-items: center;
-    display: flex;
-    border-bottom: 1px solid ${p => p.theme.colors.borderBottomAlt};
-    margin-bottom: 12px;
-    max-width: 50%;
-    padding: 6px 0;
-    width: 360px;
-    & > svg {
-      color: ${p => p.theme.colors.main};
-      font-size: 150%;
-      margin-right: 10px;
-    }
-    & > label {
-      flex: 1;
-    }
-    & > span {
-      color: white;
-    }
-  }
-`;
 
 const AsteroidInformation = ({ asteroid }) => {
   const { account } = useAuth();
@@ -282,39 +296,106 @@ const AsteroidInformation = ({ asteroid }) => {
           <AddressLink address={asteroid.owner} chain={asteroid.chain} />
         </DataReadout>
         <GraphicSection>
-          <Graphic>
-            <Composition>
-              <svg xmlns="http://www.w3.org/2000/svg" width="285" height="249.929" viewBox="0 0 285 249.929">
-                <g id="Ci-type" transform="translate(-0.051 15)">
-                  <g id="Group_347" data-name="Group 347" transform="translate(35.598 0)">
-                    <g id="Group_343" data-name="Group 343" transform="translate(0)">
-                      <path id="Path_271" data-name="Path 271" d="M268.385,468.428a3.826,3.826,0,0,0-3.561-3.813,102.584,102.584,0,0,1,0-204.636,3.826,3.826,0,0,0,3.561-3.812h0a3.828,3.828,0,0,0-4.087-3.824,110.239,110.239,0,0,0,0,219.909,3.828,3.828,0,0,0,4.087-3.824Z" transform="translate(-161.968 -252.333)" fill="#5bc0f5"/>
-                      <path id="Path_272" data-name="Path 272" d="M311,256.167h0a3.826,3.826,0,0,0,3.561,3.813,102.584,102.584,0,0,1,0,204.636A3.826,3.826,0,0,0,311,468.428h0a3.828,3.828,0,0,0,4.087,3.824,110.239,110.239,0,0,0,0-219.909A3.828,3.828,0,0,0,311,256.167Z" transform="translate(-196.929 -252.333)" fill="#78d356"/>
-                      <path id="Path_288" data-name="Path 288" d="M268.385,468.428a3.826,3.826,0,0,0-3.561-3.813,102.584,102.584,0,0,1,0-204.636,3.826,3.826,0,0,0,3.561-3.812h0a3.828,3.828,0,0,0-4.087-3.824,110.239,110.239,0,0,0,0,219.909,3.828,3.828,0,0,0,4.087-3.824Z" transform="translate(-161.968 -252.333)" fill="#5bc0f5" opacity="0.5"/>
-                      <path id="Path_289" data-name="Path 289" d="M311,256.167h0a3.826,3.826,0,0,0,3.561,3.813,102.584,102.584,0,0,1,0,204.636A3.826,3.826,0,0,0,311,468.428h0a3.828,3.828,0,0,0,4.087,3.824,110.239,110.239,0,0,0,0-219.909A3.828,3.828,0,0,0,311,256.167Z" transform="translate(-196.929 -252.333)" fill="#78d356" opacity="0.5"/>
+          <GraphicWrapper>
+            <Graphic>
+              {/* TODO: replace this placeholder */}
+              <Composition>
+                <svg xmlns="http://www.w3.org/2000/svg" width="285" height="249.929" viewBox="0 0 285 249.929">
+                  <g id="Ci-type" transform="translate(-0.051 15)">
+                    <g id="Group_347" data-name="Group 347" transform="translate(35.598 0)">
+                      <g id="Group_343" data-name="Group 343" transform="translate(0)">
+                        <path id="Path_271" data-name="Path 271" d="M268.385,468.428a3.826,3.826,0,0,0-3.561-3.813,102.584,102.584,0,0,1,0-204.636,3.826,3.826,0,0,0,3.561-3.812h0a3.828,3.828,0,0,0-4.087-3.824,110.239,110.239,0,0,0,0,219.909,3.828,3.828,0,0,0,4.087-3.824Z" transform="translate(-161.968 -252.333)" fill="#5bc0f5"/>
+                        <path id="Path_272" data-name="Path 272" d="M311,256.167h0a3.826,3.826,0,0,0,3.561,3.813,102.584,102.584,0,0,1,0,204.636A3.826,3.826,0,0,0,311,468.428h0a3.828,3.828,0,0,0,4.087,3.824,110.239,110.239,0,0,0,0-219.909A3.828,3.828,0,0,0,311,256.167Z" transform="translate(-196.929 -252.333)" fill="#78d356"/>
+                        <path id="Path_288" data-name="Path 288" d="M268.385,468.428a3.826,3.826,0,0,0-3.561-3.813,102.584,102.584,0,0,1,0-204.636,3.826,3.826,0,0,0,3.561-3.812h0a3.828,3.828,0,0,0-4.087-3.824,110.239,110.239,0,0,0,0,219.909,3.828,3.828,0,0,0,4.087-3.824Z" transform="translate(-161.968 -252.333)" fill="#5bc0f5" opacity="0.5"/>
+                        <path id="Path_289" data-name="Path 289" d="M311,256.167h0a3.826,3.826,0,0,0,3.561,3.813,102.584,102.584,0,0,1,0,204.636A3.826,3.826,0,0,0,311,468.428h0a3.828,3.828,0,0,0,4.087,3.824,110.239,110.239,0,0,0,0-219.909A3.828,3.828,0,0,0,311,256.167Z" transform="translate(-196.929 -252.333)" fill="#78d356" opacity="0.5"/>
+                      </g>
                     </g>
                   </g>
-                </g>
-              </svg>
-            </Composition>
-            <div>
-              <Canvas antialias frameloop="demand" style={{ width: 450, height: 450 }}>
-                <RenderedAsteroid asteroid={asteroid} webWorkerPool={webWorkerPool} />
-              </Canvas>
-            </div>
-            <GraphicData>
+                </svg>
+              </Composition>
               <div>
-                {utils.toSize(asteroid.radius)} <b>{utils.toSpectralType(asteroid.spectralType)}-type</b>
+                <Canvas antialias frameloop="demand" style={{ width: '100%', height: '100%' }}>
+                  <RenderedAsteroid asteroid={asteroid} webWorkerPool={webWorkerPool} />
+                </Canvas>
               </div>
-              <AsteroidName>
-                {asteroid.customName ? `\`${asteroid.customName}\`` : asteroid.baseName}
-              </AsteroidName>
-              <div>
-                {Number(Math.floor(4 * Math.PI * Math.pow(asteroid.radius / 1000, 2))).toLocaleString()} lots
-              </div>
-            </GraphicData>
-          </Graphic>
+              <GraphicData>
+                <div>
+                  {utils.toSize(asteroid.radius)} <b>{utils.toSpectralType(asteroid.spectralType)}-type</b>
+                </div>
+                <AsteroidName>
+                  {asteroid.customName ? `\`${asteroid.customName}\`` : asteroid.baseName}
+                </AsteroidName>
+                <div>
+                  {Number(Math.floor(4 * Math.PI * Math.pow(asteroid.radius / 1000, 2))).toLocaleString()} lots
+                </div>
+              </GraphicData>
+            </Graphic>
+          </GraphicWrapper>
         </GraphicSection>
+
+        <SectionBody>
+          <Attributes>
+            <div>
+              <OrbitalPeriodIcon />
+              <label>Orbital Period</label>
+              <span>{formatters.period(asteroid.orbital.a)}</span>
+            </div>
+            <div>
+              <InclinationIcon />
+              <label>Inclination</label>
+              <span>{formatters.inclination(asteroid.orbital.i)}</span>
+            </div>
+            <div>
+              <SemiMajorAxisIcon />
+              <label>Semi-Major Axis</label>
+              <span>{formatters.axis(asteroid.orbital.a)}</span>
+            </div>
+            <div>
+              <EccentricityIcon />
+              <label>Eccentricity</label>
+              <span>{asteroid.orbital.e}</span>
+            </div>
+            <div>
+              <RadiusIcon />
+              <label>Radius</label>
+              <span>{formatters.radius(asteroid.radius)}</span>
+            </div>
+            <div>
+              <SurfaceAreaIcon />
+              <label>Surface Area</label>
+              <span>{formatters.surfaceArea(asteroid.radius)}</span>
+            </div>
+          </Attributes>
+        </SectionBody>
+      </BasicPane>
+
+      <DetailPane>
+        <div>
+          <SectionHeader>Asteroid Log</SectionHeader>
+          <SectionBody>
+            <Log>
+              <LogHeader>
+                <LogEntry isHeaderRow isTabular css={{ fontSize: '14px' }} />
+              </LogHeader>
+              <div>
+                <ul>
+                  {asteroid.events.length > 0
+                    ? asteroid.events.map(e => (
+                      <LogEntry
+                        key={`${e.transactionHash}_${e.logIndex}`}
+                        css={{ fontSize: '13px', fontWeight: 'bold', padding: '6px 4px' }}
+                        data={{ ...e, i: asteroid.i }}
+                        type={`Asteroid_${e.event}`}
+                        isTabular />
+                    ))
+                    : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
+                  }
+                </ul>
+              </div>
+            </Log>
+          </SectionBody>
+        </div>
+
         <div>
           <SectionHeader>Management</SectionHeader>
           <SectionBody>
@@ -326,12 +407,10 @@ const AsteroidInformation = ({ asteroid }) => {
 
               {userIsOwner && (
                 <Button
-                  data-tip="Download 3d Model"
-                  data-for="global"
                   disabled={exportingModel}
                   loading={exportingModel}
                   onClick={download3dModel}>
-                  Download Model
+                  Download 3D Model
                 </Button>
               )}
 
@@ -361,71 +440,6 @@ const AsteroidInformation = ({ asteroid }) => {
                 </MarketplaceLink>
               )}
             </ButtonRow>
-          </SectionBody>
-        </div>
-      </BasicPane>
-
-      <DetailPane>
-        <div>
-          <SectionHeader>Asteroid Log</SectionHeader>
-          <SectionBody>
-            <Log>
-              <LogHeader>
-                <LogEntry isHeaderRow isTabular css={{ fontSize: '14px' }} />
-              </LogHeader>
-              <div>
-                <ul>
-                  {asteroid.events.length > 0
-                    ? asteroid.events.map(e => (
-                      <LogEntry
-                        key={`${e.transactionHash}_${e.logIndex}`}
-                        css={{ fontSize: '13px', fontWeight: 'bold', padding: '6px 4px' }}
-                        data={{ ...e, i: asteroid.i }}
-                        type={`Asteroid_${e.event}`}
-                        isTabular />
-                    ))
-                    : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
-                  }
-                </ul>
-              </div>
-            </Log>
-          </SectionBody>
-        </div>
-        <div>
-          <SectionHeader>Attributes</SectionHeader>
-          <SectionBody>
-            <Attributes>
-              <div>
-                <OrbitalPeriodIcon />
-                <label>Orbital Period</label>
-                <span>{formatters.period(asteroid.orbital.a)}</span>
-              </div>
-              <div>
-                <InclinationIcon />
-                <label>Inclination</label>
-                <span>{formatters.inclination(asteroid.orbital.i)}</span>
-              </div>
-              <div>
-                <SemiMajorAxisIcon />
-                <label>Semi-Major Axis</label>
-                <span>{formatters.axis(asteroid.orbital.a)}</span>
-              </div>
-              <div>
-                <EccentricityIcon />
-                <label>Eccentricity</label>
-                <span>{asteroid.orbital.e}</span>
-              </div>
-              <div>
-                <RadiusIcon />
-                <label>Radius</label>
-                <span>{formatters.radius(asteroid.radius)}</span>
-              </div>
-              <div>
-                <SurfaceAreaIcon />
-                <label>Surface Area</label>
-                <span>{formatters.surfaceArea(asteroid.radius)}</span>
-              </div>
-            </Attributes>
           </SectionBody>
         </div>
       </DetailPane>

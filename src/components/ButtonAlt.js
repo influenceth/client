@@ -19,7 +19,7 @@ const StyledButton = styled.button`
   );
   display: flex;
   font-family: 'Jura', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   padding: 3px;
   pointer-events: auto;
   position: relative;

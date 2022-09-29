@@ -5,6 +5,7 @@ import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
 
 const defaultMaxWidth = '1400px';
+const cornerWidth = '35px';
 
 const Wrapper = styled.div`
   align-items: center;
@@ -31,12 +32,12 @@ const Wrapper = styled.div`
 
 const StyledDetails = styled.div`
   background-color: black;
-  border: 1px solid #555;
+  border: 1px solid ${p => p.theme.colors.borderBottom};
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(100% - 35px),
-    calc(100% - 35px) 100%,
+    100% calc(100% - ${cornerWidth}),
+    calc(100% - ${cornerWidth}) 100%,
     0 100%
   );
   display: flex;
@@ -53,6 +54,17 @@ const StyledDetails = styled.div`
     backdrop-filter: none;
     clip-path: none;
   }
+`;
+
+const Corner = styled.svg`
+  bottom: -1px;
+  height: ${cornerWidth};
+  margin-right: 0;
+  position: absolute;
+  right: -1px;
+  stroke: ${p => p.theme.colors.borderBottom};
+  stroke-width: 1px;
+  width: ${cornerWidth};
 `;
 
 const headerHeight = 60;
@@ -130,6 +142,9 @@ const Details = (props) => {
             {props.children}
           </ContentWrapper>
         </Content>
+        <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg" color={props.color}>
+          <line x1="0" y1="10" x2="10" y2="0" />
+        </Corner>
       </StyledDetails>
     </Wrapper>
   );
