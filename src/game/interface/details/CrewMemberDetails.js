@@ -133,7 +133,10 @@ const Management = styled.div`
 `;
 
 const tabContainerCss = css`
+  color: white;
   flex: 0 0 330px;
+  font-size: 15px;
+  text-transform: uppercase;
   @media (min-height: 950px) {
     flex-basis: 45%;
     max-height: 500px;
@@ -363,6 +366,10 @@ const Log = styled.div`
     margin: 0 -10px;
   }
 `;
+const EmptyLogEntry = styled.li`
+  padding-top: 50px;
+  text-align: center;
+`;
 
 const MIN_TRAIT_SLOTS = 12;
 
@@ -484,7 +491,10 @@ const CrewMemberDetails = (props) => {
           </CrewBasics>
           <CrewDetails>
             <TabContainer
-              css={tabContainerCss}
+              containerCss={tabContainerCss}
+              iconCss={{}}
+              labelCss={{ minWidth: '50px', textAlign: 'center' }}
+              tabCss={{ width: '116px' }}
               tabs={[
                 {
                   icon: <HexagonIcon />,
@@ -576,19 +586,21 @@ const CrewMemberDetails = (props) => {
                 </LogHeader>
                 <div>
                   <ul>
-                    {crew?.events.map(e => (
-                      <LogEntry
-                        key={`${e.transactionHash}_${e.logIndex}`}
-                        data={{ ...e, i: crew.i }}
-                        type={`CrewMember_${e.event}`}
-                        isTabular />
-                    ))}
+                    {crew?.events?.length > 0
+                      ? crew.events.map(e => (
+                        <LogEntry
+                          key={`${e.transactionHash}_${e.logIndex}`}
+                          data={{ ...e, i: crew.i }}
+                          type={`CrewMember_${e.event}`}
+                          isTabular />
+                      ))
+                      : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
+                    }
                   </ul>
                 </div>
               </Log>
             </History>
           </CrewDetails>
-
         </Content>
       )}
     </Details>

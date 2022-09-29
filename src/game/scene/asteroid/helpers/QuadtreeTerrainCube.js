@@ -21,6 +21,7 @@ const cubeTransforms = [
 
 const getPrerenderResolution = (radius, minChunkSize = MIN_CHUNK_SIZE) => {
   const targetResolution = 2 * radius / minChunkSize;
+  if (targetResolution === 1) return 1;
   if (targetResolution < 32) return 16;
   if (targetResolution < 64) return 32;
   if (targetResolution < 128) return 64;
@@ -42,7 +43,7 @@ const getPrerenderResolution = (radius, minChunkSize = MIN_CHUNK_SIZE) => {
 // }, 5000);
 
 class QuadtreeTerrainCube {
-  constructor(i, config, textureSize, workerPool) {
+  constructor(i, config, textureSize, workerPool, disableChunking = false) {
     this.radius = config.radius;
     this.cameraPosition = null;
     this.smallestActiveChunkSize = 2 * this.radius;
@@ -54,7 +55,7 @@ class QuadtreeTerrainCube {
     // adjust min chunk size for this asteroid (this is mostly to provide higher resolution for
     // smallest asteroids because user can zoom in proportionally farther)
     // if >30km, x1; if >3k, x0.5; else, x0.33
-    this.minChunkSize = getMinChunkSize(this.radius);
+    this.minChunkSize = disableChunking ? 2 * this.radius : getMinChunkSize(this.radius);
 
     // build the sides of the cube (each a quadtreeplane)
     this.sides = [];

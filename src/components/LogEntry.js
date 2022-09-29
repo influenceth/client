@@ -19,12 +19,14 @@ const LogEntryItem = styled.li`
       padding: 0;
     }
   }
+
+  ${p => p.css || ''}
 `;
 
 const Icon = styled.div`
   color: ${p => p.theme.colors.main};
   flex: 0 0 16px;
-  font-size: ${p => p.theme.fontSizes.detailText};
+  font-size: 130%;
   margin-left: 5px;
   margin-right: 5px;
 `;
@@ -42,7 +44,7 @@ const Description = styled.div`
   }
 `;
 
-const timestampWidth = 160;
+const timestampWidth = 175;
 const Timestamp = styled.div`
   text-align: right;
   white-space: nowrap;
@@ -65,7 +67,7 @@ const Ago = styled.div`
 
 const TransactionLink = styled.a`
   flex: 0 0 28px;
-  font-size: ${p => p.theme.fontSizes.mainText};
+  font-size: 116%;
   height: 20px;
   margin-left: auto;
   padding-left: 8px;
@@ -85,9 +87,11 @@ const TransactionLink = styled.a`
 
 const LogEntryHeader = styled(LogEntryItem)`
   color: white;
-  font-size: 11px;
+  font-size: ${p => p.theme.fontSizes[p.isTabular ? 'smallText' : 'mainText']};
   font-weight: bold;
   margin: 2px 0;
+
+  ${p => p.css || ''}
 `;
 const EventLabel = styled.div`
   flex: 1;
@@ -103,7 +107,7 @@ const LinkLabel = styled.div`
   flex: 0 0 28px;
 `;
 
-const LogEntry = ({ data = {}, isHeaderRow, isTabular, type }) => {
+const LogEntry = ({ data = {}, css = {}, isHeaderRow, isTabular, type }) => {
   const m = useMemo(() => {
     if (isTabular) {
       return moment(new Date(data.timestamp * 1000));
@@ -113,7 +117,7 @@ const LogEntry = ({ data = {}, isHeaderRow, isTabular, type }) => {
 
   if (isHeaderRow) {
     return (
-      <LogEntryHeader isTabular={isTabular}>
+      <LogEntryHeader isTabular={isTabular} css={css}>
         <EventLabel>Event</EventLabel>
         {isTabular && <DetailsLabel>▾ Timestamp</DetailsLabel>}
         <LinkLabel>Link</LinkLabel>
@@ -129,7 +133,7 @@ const LogEntry = ({ data = {}, isHeaderRow, isTabular, type }) => {
 
   if (content) {
     return (
-      <LogEntryItem isTabular={isTabular}>
+      <LogEntryItem isTabular={isTabular} css={css}>
         <Icon>
           {icon}
         </Icon>

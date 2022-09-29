@@ -8,7 +8,7 @@ import useAuth from '~/hooks/useAuth';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 
 const bgColor = '#000';
-const cardWidth = `80px`;
+const cardWidth = 80;
 
 const Avatar = styled.div`
   background: ${bgColor};
@@ -16,9 +16,9 @@ const Avatar = styled.div`
   overflow: hidden;
   pointer-events: auto;
   position: absolute;
-  top: 1px;
-  left: 1px;
-  width: ${cardWidth};
+  top: 5px;
+  left: 5px;
+  width: ${cardWidth}px;
 
   & > div {
     margin-top: -8px;
@@ -30,10 +30,17 @@ const SwayContainer = styled.div`
   margin-left: 1px;
   pointer-events: auto;
   position: absolute;
-  top: 1px;
-  left: ${p => p.noCaptain ? '0' : cardWidth};
-  padding: 3px 4px;
-  width: 100px;
+  top: 0;
+  left: 0;
+  padding: 6px 12px 6px ${p => 12 + (p.noCaptain ? 0 : cardWidth)}px;
+  min-width: ${p => 100 + (p.noCaptain ? 0 : cardWidth)}px;
+
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    calc(100% - 10px) 100%,
+    0 100%
+  );
 `;
 
 const AvatarMenu = (props) => {
@@ -45,6 +52,7 @@ const AvatarMenu = (props) => {
   if (!token) return;
   return (
     <>
+      <SwayContainer noCaptain={!captain}><SwayIcon /> 0</SwayContainer>
       {captain && (
         <Avatar>
           <CrewCard
@@ -56,7 +64,6 @@ const AvatarMenu = (props) => {
             onClick={() => history.push('/owned-crew')} />
         </Avatar>
       )}
-      <SwayContainer noCaptain={!captain}><SwayIcon /> 0</SwayContainer>
     </>
   );
 };

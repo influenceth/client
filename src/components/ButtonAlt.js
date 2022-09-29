@@ -68,7 +68,7 @@ const InnerContainer = styled.div`
   color: white;
   display: flex;
   justify-content: center;
-  min-height: 26px;
+  min-height: 32px;
   transition: background-color 300ms ease;
   width: 100%;
 

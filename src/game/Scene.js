@@ -17,6 +17,7 @@ import SettingsManager from './scene/SettingsManager';
 import constants from '~/lib/constants';
 
 const glConfig = {
+  antialias: true,
   shadows: true,
   camera: {
     fov: 75,

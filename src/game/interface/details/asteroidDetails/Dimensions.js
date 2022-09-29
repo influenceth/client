@@ -37,6 +37,8 @@ const StyledDimensionMetric = styled(DimensionMetric)`
 const Dimensions = (props) => {
   const { asteroid } = props;
 
+  console.log(asteroid)
+
   return (
     <StyledDimensions>
       <StyledDimensionMetric
