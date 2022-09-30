@@ -456,8 +456,9 @@ const CrewMemberDetails = (props) => {
                     </Text>
                     <NameForm>
                       <TextInput
-                        pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
                         initialValue=""
+                        maxlength={31}
+                        pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
                         disabled={naming}
                         resetOnChange={i}
                         onChange={(v) => setNewName(v)} />

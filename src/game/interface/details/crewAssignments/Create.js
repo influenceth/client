@@ -756,7 +756,13 @@ const CrewAssignmentCreate = (props) => {
 
             {!finalized && (
               <NameSection>
-                <TextInput disabled={finalizing} onChange={handleNameChange} placeholder="Enter Name" initialValue={name} />
+                <TextInput
+                  disabled={finalizing}
+                  initialValue={name}
+                  maxlength={31}
+                  onChange={handleNameChange}
+                  pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                  placeholder="Enter Name" />
                 <RerollContainer>
                   <IconButton
                     onClick={rollBack}

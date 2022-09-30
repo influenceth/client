@@ -20,7 +20,7 @@ const StyledButton = styled.button`
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: 16px;
-  padding: 3px;
+  padding: 3px; /* must match loadingCss.top */
   pointer-events: auto;
   position: relative;
   text-transform: uppercase;
@@ -34,19 +34,23 @@ const StyledButton = styled.button`
 
   ${p => p.disabled
     ? `
-      color: ${p => p.theme.colors.disabledText};
-      border-color: ${p => p.theme.colors.disabledText};
-      &:active, &:hover {
-        color: ${p => p.theme.colors.disabledText};
-        border-color: ${p => p.theme.colors.disabledText};
+      color: rgba(255, 255, 255, 0.7);
+      cursor: ${p.theme.cursors.default};
+      border-color: ${p.theme.colors.disabledText};
+      & > div {
+        background-color: ${p.disabledColor || '#222'};
       }
       & > svg {
-        stroke: ${p => p.theme.colors.disabledText};
+        stroke: ${p.theme.colors.disabledText};
       }
     `
     : `
+      color: white;
+      & > div {
+        background-color: ${p.color || '#1a404f'};
+      }
       &:active > div {
-        background-color: ${p => p.theme.colors.main};
+        background-color: ${p.theme.colors.main};
       }
       &:hover > div {
         background-color: rgba(54, 167, 205, 0.25);
@@ -57,7 +61,6 @@ const StyledButton = styled.button`
 
 const InnerContainer = styled.div`
   align-items: center;
-  background: ${p => p.color || '#1a404f'};
   clip-path: polygon(
     0 0,
     100% 0,
@@ -65,7 +68,6 @@ const InnerContainer = styled.div`
     calc(100% - 6.5px) 100%,
     0 100%
   );
-  color: white;
   display: flex;
   justify-content: center;
   min-height: 32px;
@@ -98,7 +100,7 @@ const loadingCss = css`
   left: 0;
   position: absolute;
   right: 0;
-  top: 0;
+  top: 3px;
   width: 100%;
 `;
 
@@ -127,7 +129,7 @@ const Button = (props) => {
       data-place={dataPlace || "right"}
       {...restProps}>
       <InnerContainer>
-        {loading && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
+        {loading && <LoadingAnimation height={1} color={theme.colors.main} css={loadingCss} />}
         {props.children}
         {props.badge && <StyledBadge value={props.badge} />}
       </InnerContainer>

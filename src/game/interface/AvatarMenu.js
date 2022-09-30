@@ -49,7 +49,7 @@ const AvatarMenu = (props) => {
   const { data: crew } = useOwnedCrew();
   const captain = useMemo(() => (crew || []).find((c) => c.activeSlot === 0), [crew]);
 
-  if (!token) return;
+  if (!token) return null;
   return (
     <>
       <SwayContainer noCaptain={!captain}><SwayIcon /> 0</SwayContainer>

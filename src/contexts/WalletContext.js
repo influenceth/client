@@ -19,11 +19,11 @@ const isAllowedNetwork = (network) => {
 
 const getAllowedNetworkLabel = (wallet) => {
   if (process.env.REACT_APP_STARKNET_NETWORK.includes('mainnet')) {
-    return wallet === 'Braavos' ? 'Mainnet-Alpha' : 'Ethereum Mainnet';
+    return wallet === 'Braavos' ? 'Mainnet-Alpha' : 'Mainnet';
   } else if (process.env.REACT_APP_STARKNET_NETWORK.includes('localhost')) {
     return wallet === 'Braavos' ? 'Devnet' : 'Localhost';
   }
-  return wallet === 'Braavos' ? 'Goerli-Alpha' : 'Goerli Testnet';
+  return wallet === 'Braavos' ? 'Goerli-Alpha' : 'Testnet';
 }
 
 const WalletContext = createContext();

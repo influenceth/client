@@ -31,7 +31,7 @@ import formatters from '~/lib/formatters';
 import exportGLTF from '~/lib/graphics/exportGLTF';
 
 import Details from '~/components/DetailsModal';
-import Form from '~/components/Form';
+import StaticForm from '~/components/StaticForm';
 import Text from '~/components/Text';
 import Button from '~/components/ButtonAlt';
 import TextInput from '~/components/TextInput';
@@ -42,13 +42,14 @@ import MarketplaceLink from '~/components/MarketplaceLink';
 import Ether from '~/components/Ether';
 import AddressLink from '~/components/AddressLink';
 import {
-  EccentricityIcon, 
+  CheckCircleIcon,
+  EccentricityIcon,
+  EditIcon,
   InclinationIcon, 
   OrbitalPeriodIcon,
   RadiusIcon,
   SemiMajorAxisIcon,
-  SurfaceAreaIcon,
-  ScanIcon
+  SurfaceAreaIcon
 } from '~/components/Icons';
 import { cleanupScene, renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import ResourceMix from './ResourceMix';
@@ -70,6 +71,7 @@ const Wrapper = styled.div`
 `;
 const BasicPane = styled.div`
   flex: 0 1 540px;
+  overflow: hidden;
   padding-top: 30px;
 `;
 const DetailPane = styled.div`
@@ -185,6 +187,7 @@ const SectionBody = styled.div`
   flex-direction: column;
   padding: 12px 0;
   overflow: hidden;
+  position: relative;
 `;
 
 const HighlightOwnership = styled.div`
@@ -199,7 +202,7 @@ const ButtonRow = styled.div`
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  & > * {
+  & > button {
     flex: 1;
     max-width: 250px;
     white-space: nowrap;
@@ -261,23 +264,33 @@ const EmptyLogEntry = styled.li`
 `;
 
 
+const NameForm = styled.div`
+  display: flex;
+  & input {
+    margin-right: 10px;
+  }
+`;
+
+
 const AsteroidInformation = ({ asteroid }) => {
   const { account } = useAuth();
   const { data: sale } = useSale();
   const createReferral = useCreateReferral(Number(asteroid.i));
   const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.i));
   const { nameAsteroid, naming } = useNameAsteroid(Number(asteroid.i));
-  const { /*startAsteroidScan, finalizeAsteroidScan,*/ scanStatus } = useScanAsteroid(asteroid);
   const webWorkerPool = useWebWorker();
 
   const saleIsActive = useStore(s => s.sale);
 
-  const userIsOwner = account && asteroid.owner && Address.areEqual(account, asteroid.owner);
-
   const [exportingModel, setExportingModel] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [openNameChangeForm, setOpenNameChangeForm] = useState(false);
+
+  const userIsOwner = account && asteroid.owner && Address.areEqual(account, asteroid.owner);
 
   const download3dModel = useCallback(() => {
     if (exportingModel || !asteroid) return;
+    setExportingModel(true);
     renderDummyAsteroid(asteroid, constants.MODEL_EXPORT_RESOLUTION, webWorkerPool, (asteroidModel, dispose) => {
       exportGLTF(asteroidModel, `asteroid_${asteroid.asteroidId}`, () => {
         try {
@@ -287,6 +300,18 @@ const AsteroidInformation = ({ asteroid }) => {
       });
     });
   }, [asteroid, exportingModel]);
+
+  // on asteroid change, reset name input field on asteroid change
+  useEffect(() => {
+    setNewName('');
+    setOpenNameChangeForm(false);
+  }, [asteroid.customName]);
+
+  const updateAsteroidName = useCallback(() => {
+    if (newName) {
+      nameAsteroid(newName);
+    }
+  }, [nameAsteroid, newName]);
 
   return (
     <Wrapper>
@@ -402,7 +427,45 @@ const AsteroidInformation = ({ asteroid }) => {
             {userIsOwner && <HighlightOwnership>You own this asteriod.</HighlightOwnership>}
             <ButtonRow>
               {userIsOwner && (
-                <Button>Re-Name</Button>
+                <>
+                  <StaticForm
+                    css={{
+                      bottom: 0,
+                      height: openNameChangeForm ? 'calc(100% - 10px)' : 0,
+                      left: 0,
+                      opacity: openNameChangeForm ? 1 : 0,
+                      position: 'absolute',
+                      width: openNameChangeForm ? '100%' : 0,
+                      transition: 'height 300ms ease, opacity 300ms ease, width 300ms ease',
+                      zIndex: 1
+                    }}
+                    onClose={() => setOpenNameChangeForm(false)}
+                    title={<><EditIcon /><span>Change Name</span></>}
+                    loading={naming}>
+                    <Text>Names must be unique, and can only include letters, numbers, and single spaces.</Text>
+                    <NameForm>
+                      <TextInput
+                        disabled={naming}
+                        initialValue=""
+                        maxlength={31}
+                        pattern="^(([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+){1,31}$"
+                        onChange={(v) => setNewName(v)} />
+                      <IconButton
+                        data-tip="Submit"
+                        data-for="global"
+                        disabled={naming}
+                        onClick={updateAsteroidName}>
+                        <CheckCircleIcon />
+                      </IconButton>
+                    </NameForm>
+                  </StaticForm>
+                  <Button
+                    disabled={naming}
+                    loading={naming}
+                    onClick={() => setOpenNameChangeForm(true)}>
+                    Re-Name
+                  </Button>
+                </>
               )}
 
               {userIsOwner && (
