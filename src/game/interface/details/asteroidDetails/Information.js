@@ -491,7 +491,6 @@ const AsteroidInformation = ({ asteroid }) => {
                       height: openNameChangeForm ? 'calc(100% - 10px)' : 0,
                       left: 0,
                       opacity: openNameChangeForm ? 1 : 0,
-                      overflow: openNameChangeForm ? 'auto' : 'hidden',
                       position: 'absolute',
                       width: openNameChangeForm ? '100%' : 0,
                       transition: 'height 300ms ease, opacity 300ms ease, width 300ms ease',
