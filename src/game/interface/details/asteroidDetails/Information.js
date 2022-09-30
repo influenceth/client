@@ -58,6 +58,8 @@ import Dimensions from './Dimensions';
 import theme from '~/theme';
 import RenderedAsteroid from './RenderedAsteroid';
 
+const paneStackBreakpoint = 720;
+
 const Wrapper = styled.div`
   display: flex;
   flex-direction: row;
@@ -68,11 +70,22 @@ const Wrapper = styled.div`
     flex-direction: column;
     height: 100%;
   }
+
+  @media (max-width: ${paneStackBreakpoint}px) {
+    display: block;
+    height: auto;
+    & > div {
+      height: auto;
+    }
+  }
 `;
 const BasicPane = styled.div`
   flex: 0 1 540px;
   overflow: hidden;
   padding-top: 30px;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    flex: 1;
+  }
 `;
 const DetailPane = styled.div`
   flex: 2;
@@ -84,10 +97,24 @@ const DetailPane = styled.div`
     flex-direction: column;
     overflow: hidden;
   }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    flex: 1;
+  }
+
+  @media (max-width: ${p => paneStackBreakpoint}px) {
+    margin-left: 0;
+    & > div:first-child {
+      flex: 0;
+    }
+  }
 `;
 const GraphicSection = styled.div`
   flex: 1;
   min-height: 150px;
+  @media (max-width: ${paneStackBreakpoint}px) {
+    min-height: unset;
+  }
 `;
 const GraphicWrapper = styled.div`
   display: flex;
@@ -173,6 +200,28 @@ const Attributes = styled.div`
       white-space: nowrap;
     }
   }
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    background: transparent;
+  }
+  @media (min-width: 800px) and (max-width: 1140px) {
+    & > div {
+      & > label { display: none; }
+      & > span { flex: 1; text-align: center; }
+    }
+  }
+  @media (min-width: ${paneStackBreakpoint + 1}px) and (max-width: 799px) {
+    & > div {
+      max-width: none;
+      width: 100%;
+    }
+  }
+  @media (max-width: 520px) {
+    & > div {
+      max-width: none;
+      width: 100%;
+    }
+  }
 `;
 
 const SectionHeader = styled.div`
@@ -188,6 +237,15 @@ const SectionBody = styled.div`
   padding: 12px 0;
   overflow: hidden;
   position: relative;
+  @media (max-width: ${paneStackBreakpoint}px) {
+    overflow: visible;
+  }
+`;
+
+const ModelButton = styled(Button)`
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: none;
+  }
 `;
 
 const HighlightOwnership = styled.div`
@@ -263,7 +321,6 @@ const EmptyLogEntry = styled.li`
   text-align: center;
 `;
 
-
 const NameForm = styled.div`
   display: flex;
   & input {
@@ -323,7 +380,6 @@ const AsteroidInformation = ({ asteroid }) => {
         <GraphicSection>
           <GraphicWrapper>
             <Graphic>
-              {/* TODO: replace this placeholder */}
               <Composition>
                 <svg xmlns="http://www.w3.org/2000/svg" width="285" height="249.929" viewBox="0 0 285 249.929">
                   <g id="Ci-type" transform="translate(-0.051 15)">
@@ -410,6 +466,7 @@ const AsteroidInformation = ({ asteroid }) => {
                         key={`${e.transactionHash}_${e.logIndex}`}
                         css={{ fontSize: '13px', fontWeight: 'bold', padding: '6px 4px' }}
                         data={{ ...e, i: asteroid.i }}
+                        timestampBreakpoint="1400px"
                         type={`Asteroid_${e.event}`}
                         isTabular />
                     ))
@@ -430,10 +487,11 @@ const AsteroidInformation = ({ asteroid }) => {
                 <>
                   <StaticForm
                     css={{
-                      bottom: 0,
+                      bottom: 1,
                       height: openNameChangeForm ? 'calc(100% - 10px)' : 0,
                       left: 0,
                       opacity: openNameChangeForm ? 1 : 0,
+                      overflow: openNameChangeForm ? 'auto' : 'hidden',
                       position: 'absolute',
                       width: openNameChangeForm ? '100%' : 0,
                       transition: 'height 300ms ease, opacity 300ms ease, width 300ms ease',
@@ -469,12 +527,12 @@ const AsteroidInformation = ({ asteroid }) => {
               )}
 
               {userIsOwner && (
-                <Button
+                <ModelButton
                   disabled={exportingModel}
                   loading={exportingModel}
                   onClick={download3dModel}>
                   Download 3D Model
-                </Button>
+                </ModelButton>
               )}
 
               {sale && !asteroid.owner && (

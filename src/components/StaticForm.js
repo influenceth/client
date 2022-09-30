@@ -39,6 +39,10 @@ const Title = styled.div`
   & svg {
     margin-right: 5px;
   }
+
+  @media (max-width: 380px) {
+    display: none;
+  }
 `;
 
 const Corner = styled.svg`

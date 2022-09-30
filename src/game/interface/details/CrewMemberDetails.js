@@ -136,7 +136,6 @@ const tabContainerCss = css`
   color: white;
   flex: 0 0 330px;
   font-size: 15px;
-  text-transform: uppercase;
   @media (min-height: 950px) {
     flex-basis: 45%;
     max-height: 500px;
@@ -494,7 +493,11 @@ const CrewMemberDetails = (props) => {
             <TabContainer
               containerCss={tabContainerCss}
               iconCss={{}}
-              labelCss={{ minWidth: '50px', textAlign: 'center' }}
+              labelCss={{
+                minWidth: '50px',
+                textAlign: 'center',
+                textTransform: 'uppercase'
+              }}
               tabCss={{ width: '116px' }}
               tabs={[
                 {
@@ -592,6 +595,7 @@ const CrewMemberDetails = (props) => {
                         <LogEntry
                           key={`${e.transactionHash}_${e.logIndex}`}
                           data={{ ...e, i: crew.i }}
+                          timestampBreakpoint="1500px"
                           type={`CrewMember_${e.event}`}
                           isTabular />
                       ))

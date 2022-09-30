@@ -24,6 +24,7 @@ const tabContainerCss = css`
     border-left: none;
     border-right: none;
     box-shadow: -4px 0 8px rgba(${p => p.theme.colors.mainRGB}, 0.25);
+    padding: 0 20px;
     margin-top: 0;
   }
 `;
@@ -37,11 +38,6 @@ const AsteroidDetails = (props) => {
   useEffect(() => {
     if (i) dispatchOriginSelected(Number(i));
   }, [ i, dispatchOriginSelected ]);
-
-
-  // TODO: tabContainer
-  //  left-aligned
-  //  underline is centered under word
 
   return (
     <Details

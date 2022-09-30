@@ -25,10 +25,11 @@ const LogEntryItem = styled.li`
 
 const Icon = styled.div`
   color: ${p => p.theme.colors.main};
-  flex: 0 0 16px;
+  flex: 0 0 26px;
   font-size: 130%;
-  margin-left: 5px;
-  margin-right: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+
 `;
 
 const Description = styled.div`
@@ -45,6 +46,8 @@ const Description = styled.div`
 `;
 
 const timestampWidth = 175;
+const agoWidth = 90;
+
 const Timestamp = styled.div`
   text-align: right;
   white-space: nowrap;
@@ -54,14 +57,31 @@ const Timestamp = styled.div`
   }
 `;
 
-const agoWidth = 90;
 const Ago = styled.div`
   opacity: 0.6;
+  padding-left: 6px;
   text-align: left;
   white-space: nowrap;
   width: ${agoWidth}px;
+`;
+
+const FullTimestamp = styled.div`
+  align-items: center;
+  flex: 0 1 ${timestampWidth + agoWidth}px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  ${p => p.timestampBreakpoint && `
+    @media (max-width: ${p.timestampBreakpoint}) {
+      flex: 0 1 ${timestampWidth}px;
+      flex-wrap: wrap;
+      ${Timestamp} {
+        text-align: center;
+      }
+    }
+  `}
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    display: none;
+    flex: 0 1 ${agoWidth}px;
   }
 `;
 
@@ -72,7 +92,6 @@ const TransactionLink = styled.a`
   margin-left: auto;
   padding-left: 8px;
   text-align: center;
-  width: 20px;
 
   & > svg {
     color: ${p => p.theme.colors.main};
@@ -107,7 +126,7 @@ const LinkLabel = styled.div`
   flex: 0 0 28px;
 `;
 
-const LogEntry = ({ data = {}, css = {}, isHeaderRow, isTabular, type }) => {
+const LogEntry = ({ data = {}, css = {}, isHeaderRow, isTabular, timestampBreakpoint, type }) => {
   const m = useMemo(() => {
     if (isTabular) {
       return moment(new Date(data.timestamp * 1000));
@@ -141,14 +160,14 @@ const LogEntry = ({ data = {}, css = {}, isHeaderRow, isTabular, type }) => {
           {content}
         </Description>
         {isTabular && (
-          <>
+          <FullTimestamp timestampBreakpoint={timestampBreakpoint}>
             <Timestamp>
               {m.format('MMM-DD-YYYY hh:mm:ss A')}
             </Timestamp>
             <Ago>
               {m.fromNow()}
             </Ago>
-          </>
+          </FullTimestamp>
         )}
         {txLink && (
           <TransactionLink href={txLink} rel="noreferrer" target="_blank">
