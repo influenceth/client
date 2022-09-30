@@ -124,7 +124,7 @@ const SceneMenu = (props) => {
             }
           ]}
         />
-        {asteroid.scanWindowStatus !== 'AFTER' && asteroid.owner && Address.areEqual(asteroid.owner, account) && (
+        {asteroid.scanWindowStatus !== 'AFTER' && asteroid.owner && account && Address.areEqual(asteroid.owner, account) && (
           <ExtraInfo>
             <b>You own this asteroid.</b> Scan it to determine its<br/>
             final resource composition and bonuses.
