@@ -79,7 +79,7 @@ const Wrapper = styled.div`
     }
   }
 `;
-const BasicPane = styled.div`
+const LeftPane = styled.div`
   flex: 0 1 540px;
   overflow: hidden;
   padding-top: 30px;
@@ -87,7 +87,7 @@ const BasicPane = styled.div`
     flex: 1;
   }
 `;
-const DetailPane = styled.div`
+const RightPane = styled.div`
   flex: 2;
   margin-left: 30px;
   padding-top: 40px;
@@ -109,6 +109,25 @@ const DetailPane = styled.div`
     }
   }
 `;
+
+const SectionHeader = styled.div`
+  border-bottom: 1px solid ${p => p.theme.colors.borderBottom};
+  color: white;
+  font-size: 125%;
+  padding-bottom: 4px;
+`;
+
+const SectionBody = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: 12px 0;
+  overflow: hidden;
+  position: relative;
+  @media (max-width: ${paneStackBreakpoint}px) {
+    overflow: visible;
+  }
+`;
+
 const GraphicSection = styled.div`
   flex: 1;
   min-height: 150px;
@@ -221,24 +240,6 @@ const Attributes = styled.div`
       max-width: none;
       width: 100%;
     }
-  }
-`;
-
-const SectionHeader = styled.div`
-  border-bottom: 1px solid ${p => p.theme.colors.borderBottom};
-  color: white;
-  font-size: 125%;
-  padding-bottom: 4px;
-`;
-
-const SectionBody = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: 12px 0;
-  overflow: hidden;
-  position: relative;
-  @media (max-width: ${paneStackBreakpoint}px) {
-    overflow: visible;
   }
 `;
 
@@ -372,7 +373,7 @@ const AsteroidInformation = ({ asteroid }) => {
 
   return (
     <Wrapper>
-      <BasicPane>
+      <LeftPane>
         <DataReadout style={{ fontSize: '18px', padding: '0 0 5px' }} label="Asteroid ID#">{asteroid.i}</DataReadout>
         <DataReadout style={{ fontSize: '18px', padding: '0 0 5px' }} label="Owner">
           <AddressLink address={asteroid.owner} chain={asteroid.chain} />
@@ -438,8 +439,8 @@ const AsteroidInformation = ({ asteroid }) => {
             </div>
             <div>
               <RadiusIcon />
-              <label>Radius</label>
-              <span>{formatters.radius(asteroid.radius)}</span>
+              <label>Diameter</label>
+              <span>{formatters.radius(asteroid.radius * 2)}</span>
             </div>
             <div>
               <SurfaceAreaIcon />
@@ -448,9 +449,9 @@ const AsteroidInformation = ({ asteroid }) => {
             </div>
           </Attributes>
         </SectionBody>
-      </BasicPane>
+      </LeftPane>
 
-      <DetailPane>
+      <RightPane>
         <div>
           <SectionHeader>Asteroid Log</SectionHeader>
           <SectionBody>
@@ -562,7 +563,7 @@ const AsteroidInformation = ({ asteroid }) => {
             </ButtonRow>
           </SectionBody>
         </div>
-      </DetailPane>
+      </RightPane>
     </Wrapper>
   );
 };

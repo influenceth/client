@@ -135,7 +135,7 @@ const Interface = () => {
 
       <Switch>
         <Redirect from="/:i(\d+)" to="/asteroids/:i" />
-        <Route path="/asteroids/:i(\d+)">
+        <Route path="/asteroids/:i(\d+)/:tab?">
           <AsteroidDetails />
         </Route>
         <Route path="/owned-crew">

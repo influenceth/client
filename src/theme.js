@@ -1,13 +1,18 @@
 import cursor from '~/assets/images/cursor.png';
 import cursorActive from '~/assets/images/cursor-active.png';
 
-const hexToRGB = (hex) => {
+export const hexToRGB = (hex) => {
   const hexParts = hex.toLowerCase().replace(/[^a-z0-9]/g, '').match(/.{1,2}/g);
   return [
     parseInt(hexParts[0], 16),
     parseInt(hexParts[1], 16),
     parseInt(hexParts[2], 16)
   ].join(',');
+};
+
+export const hexToGLSL = (hex) => {
+  const hexParts = hex.toLowerCase().replace(/[^a-z0-9]/g, '').match(/.{1,2}/g);
+  return hexParts.map((p) => `${parseInt(p, 16).toFixed(1)}/255.0`).join(',');
 };
 
 const gray = '#bbbbbb';
@@ -49,6 +54,13 @@ const theme = {
       Superior: purple,
       Exceptional: orange,
       Incomparable: yellow
+    },
+    resources: {
+      Fissile: '#8a1aff',
+      Metal: '#f8852c',
+      Organic: '#68d346',
+      RareEarth: '#f63637',
+      Volatiles: '#5bc0f5',
     },
     classes: {
       Pilot: purple,

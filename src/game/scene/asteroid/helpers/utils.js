@@ -18,9 +18,6 @@ const cleanupMaterial = material => {
 };
 export const cleanupScene = (scene) => {
   scene.traverse(object => {
-    if (object.isDirectionalLight || object.isAmbientLight || object.isPointLight) {
-      scene.remove(object);
-    }
     if (object.isMesh) {
       object.geometry.dispose();
 
@@ -30,7 +27,7 @@ export const cleanupScene = (scene) => {
         for (const material of object.material) cleanupMaterial(material);
       }
     }
-    // TODO: don't we need to traverse into groups?
+    scene.remove(object);
   });
 }
 

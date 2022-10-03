@@ -8,8 +8,8 @@ import useStore from '~/hooks/useStore';
 import Details from '~/components/DetailsModal';
 import { InfoIcon, CompositionIcon } from '~/components/Icons';
 import TabContainer from '~/components/TabContainer';
-import AsteroidComposition from './asteroidDetails/Composition';
 import AsteroidInformation from './asteroidDetails/Information';
+import AsteroidResources from './asteroidDetails/Resources';
 
 const breakpoint = 1375;
 const tabContainerCss = css`
@@ -30,7 +30,7 @@ const tabContainerCss = css`
 `;
 
 const AsteroidDetails = (props) => {
-  const { i } = useParams();
+  const { i, tab } = useParams();
   const { data: asteroid } = useAsteroid(Number(i));
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
 
@@ -46,6 +46,7 @@ const AsteroidDetails = (props) => {
       {asteroid && (
         <TabContainer
           containerCss={tabContainerCss}
+          initialActive={tab === 'resources' ? 1 : 0}
           tabCss={{ textTransform: 'uppercase', width: '200px' }}
           tabs={[
             {
@@ -59,7 +60,7 @@ const AsteroidDetails = (props) => {
           ]}
           panes={[
             <AsteroidInformation asteroid={asteroid} />,
-            <AsteroidComposition asteroid={asteroid} />
+            <AsteroidResources asteroid={asteroid} />
           ]}
           
         />
