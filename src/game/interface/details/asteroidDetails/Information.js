@@ -396,7 +396,7 @@ const AsteroidInformation = ({ asteroid }) => {
                 </svg>
               </Composition>
               <div>
-                <Canvas antialias frameloop="demand" style={{ width: '100%', height: '100%' }}>
+                <Canvas antialias frameloop="never" style={{ width: '100%', height: '100%' }}>
                   <RenderedAsteroid asteroid={asteroid} webWorkerPool={webWorkerPool} />
                 </Canvas>
               </div>

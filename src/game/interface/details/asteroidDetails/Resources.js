@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AmbientLight,
   Color,
@@ -34,6 +34,7 @@ import constants from '~/lib/constants';
 import formatters from '~/lib/formatters';
 import exportGLTF from '~/lib/graphics/exportGLTF';
 
+import ButtonPill from '~/components/ButtonPill';
 import Details from '~/components/DetailsModal';
 import StaticForm from '~/components/StaticForm';
 import Text from '~/components/Text';
@@ -101,7 +102,7 @@ const RightPane = styled.div`
     display: flex;
     flex: 1;
     flex-direction: column;
-    overflow: hidden;
+    height: 100%;
   }
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
@@ -215,11 +216,14 @@ const AsteroidType = styled.div`
 
 const ResourceGroupIcon = styled.div`
   align-items: center;
+  background: rgba(${p => hexToRGB(p.theme.colors.resources[p.category])}, 0.2);
   border-radius: 6px;
+  color: ${p => p.theme.colors.resources[p.category]};
   display: flex;
   justify-content: center;
   height: 50px;
   width: 50px;
+
   & > svg {
     fill: currentColor;
     height: 40px;
@@ -240,16 +244,27 @@ const ResourceGroupLabel = styled.div`
   }
 `;
 const BarChart = styled.div`
-  align-items: center;
   display: flex;
-  flex-direction: row;
-  width: 100%;
+  ${p => p.twoLine
+    ? `
+      align-items: flex-start;
+      flex-direction: column;
+      & > div {
+        padding: 6px 0;
+      }
+    `
+    : `
+      align-items: center;
+      flex-direction: row;
+    `}
   & > label {
     font-size: 90%;
-    width: 40px;
+    margin-right: 6px;
+    width: 48px;
   }
   & > div {
     flex: 1;
+    width: 100%;
     &:before {
       background-color: currentColor;
       border-radius: 3px;
@@ -280,29 +295,29 @@ const ResourceGroupItems = styled.div`
     }
   }
 `;
-const ResourceGroup = styled.div`
-  align-items: center;
-  background: transparent;
-  display: flex;
-  flex-direction: row;
-  padding: 10px 5px;
-  & ${ResourceGroupIcon} {
-    background: rgba(${p => hexToRGB(p.color)}, 0.2);
-    color: ${p => p.color};
-  }
-  & ${ResourceGroupLabel} {
-    color: ${p => p.color};
-  }
-  &:hover {
-    background: rgba(${p => hexToRGB(p.color)}, 0.2);
-  }
-`;
-
 const NextLabel = styled.div`
   color: white;
   font-size: 22px;
   text-align: right;
+  transition: color 250ms ease;
   width: 40px;
+`;
+const ResourceGroup = styled.div`
+  align-items: center;
+  background-color: transparent;
+  display: flex;
+  flex-direction: row;
+  padding: 10px 5px;
+  transition: background-color 250ms ease;
+  & ${ResourceGroupLabel} {
+    color: ${p => p.color};
+  }
+  &:hover {
+    background-color: rgba(${p => hexToRGB(p.color)}, 0.2);
+    & ${NextLabel} {
+      color: ${p => p.color};
+    }
+  }
 `;
 
 const Bonuses = styled.div`
@@ -311,14 +326,14 @@ const Bonuses = styled.div`
   flex-wrap: wrap;
   justify-content: space-between;
   & > div {
-    align-items: center;
-    display: flex;
     width: 48%;
-    padding: 6px 0;
   }
 `;
 
 const BonusItem = styled.div`
+  align-items: center;
+  display: flex;
+  padding: 6px 0;
   color: ${p => p.theme.colors.resources[p.category] || 'white'};
   & > label {
     font-size: 90%;
@@ -344,68 +359,114 @@ const Bonus = styled.div`
   }
 `;
 
+const SelectedCategoryTitle = styled.div`
+  border-bottom: 1px solid ${p => p.theme.colors.resources[p.category]};
+  color: ${p => p.theme.colors.resources[p.category]};
+  display: flex;
+  font-size: 40px;
+  font-weight: bold;
+  padding-bottom: 10px;
+  position: relative;
+  text-transform: uppercase;
+  & > *:first-child {
+    margin-right: 12px;
+  }
+  &:before {
+    content: '';
+    border-bottom: 1px solid ${p => p.theme.colors.resources[p.category]};
+    bottom: -1px;
+    left: -35px;
+    position: absolute;
+    transform: rotate(-45deg);
+    transform-origin: right;
+    width: 35px;
+  }
+`;
+
+const ResourceRow = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.resources[p.category]};
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 15px;
+`;
+const ResourceIcon = styled.div`
+  border: 1px solid ${p => p.theme.colors.borderBottomAlt};
+  height: 85px;
+  width: 85px;
+`;
+const ResourceInfo = styled.div`
+  flex: 1;
+  padding: 0 8px;
+  & > label {
+    color: white;
+    font-size: 120%;
+  }
+  & > div {
+    margin-top: 8px;
+  }
+`;
+const ResourceAction = styled.div`
+  padding-right: 6px;
+`;
 
 
 
 
+const resourceDefs = [
+  'Ammonia',
+  'Carbon Dioxide',
+  'Carbon Monoxide',
+  'Hydrogen',
+  'Methane',
+  'Nitrogen',
+  'Surfur Dioxide',
+  'Water',
+  'Bitumen',
+  'Calcite',
+  'Magnesite',
+  'Graphite',
+  'Rhabdite',
+  'Taenite',
+  'Troilite',
+  'Merrillite',
+  'Xenotime',
+  'Coffinite',
+  'Uranite'
+];
 
-
-
-
-const categories = {
+const categoryDefs = {
   'Volatiles': {
     label: 'Volatiles',
-    resources: [
-      'Ammonia',
-      'Carbon Dioxide',
-      'Carbon Monoxide',
-      'Hydrogen',
-      'Methan',
-      'Nitrogen',
-      'Surfur Dioxide',
-      'Water',
-    ]
+    resources: [0, 1, 2, 3, 4, 5, 6, 7,]
   },
   'Organic': {
     label: 'Organic',
-    resources: [
-      'Bitumen',
-      'Calcite',
-      'Magnesite'
-    ]
+    resources: [8, 9, 10]
   },
   'Metal': {
     label: 'Metal',
-    resources: [
-      'Graphite',
-      'Rhabdite',
-      'Taenite',
-      'Troilite',
-    ]
+    resources: [11, 12, 13, 14]
   },
   'RareEarth': {
     label: 'Rare-Earth',
-    resources: [
-      'Merrillite',
-      'Xenotime',
-    ]
+    resources: [15, 16]
   },
   'Fissile': {
     label: 'Fissile',
-    resources: [
-      'Coffinite',
-      'Uranite'
-    ]
+    resources: [17, 18]
   },
 };
 
-const inputResources = [
-  { category: 'Volatiles', value: 0.4 },
-  { category: 'Organic', value: 0.2 },
-  { category: 'Metal', value: 0.2 },
-  { category: 'RareEarth', value: 0.15 },
-  { category: 'Fissile', value: 0.05 },
-];
+// generate random abundances
+let remaining = 1;
+const abundances = resourceDefs.map(() => {
+  const abundance = remaining * (Math.random() / 7);
+  remaining -= abundance;
+  return abundance;
+});
+const extra = remaining / resourceDefs.length;
+abundances.forEach((a, i) => abundances[i] = a + extra);
 
 const spectralLabels = {
   c: 'Carbonaceous',
@@ -424,46 +485,62 @@ const BonusBar = ({ bonus }) => (
 
 const ResourceDetails = ({ asteroid }) => {
   const [frameloop, setFrameloop] = useState();
-  const [focus, setFocus] = useState();
+  const [selected, setSelected] = useState();
   const [highlight, setHighlight] = useState();
-  const onStatic = () => {
-    setFrameloop('demand');
+
+  const inputResourceGroups = useMemo(() => {
+    const x = [];
+    Object.keys(categoryDefs).map((k) => {
+      const { label, resources } = categoryDefs[k];
+      x.push({
+        category: k,
+        label,
+        resources: resources.map((resource) => ({ resource, abundance: abundances[resource] })).sort((a, b) => b.abundance - a.abundance),
+        abundance: resources.reduce((acc, i) => acc + abundances[i], 0),
+      });
+    });
+    x.sort((a, b) => b.abundance - a.abundance);
+    return x;
+  }, [abundances]);
+
+  console.log('inputResourceGroups', inputResourceGroups);
+
+  const onAnimationChange = (which) => {
+    setFrameloop(which ? 'always' : 'never');
   };
 
-  const handleClick = (category) => () => {
-    setFrameloop();
-    setFocus(category);
+  const handleClick = (categoryIndex) => () => {
+    setSelected(categoryIndex >= 0 ? inputResourceGroups[categoryIndex] : null);
   };
 
   const handleHover = (category, isHovering) => () => {
-    setFrameloop();
     setHighlight(isHovering ? category : null);
   };
 
-  useEffect(() => ReactTooltip.rebuild(), []);
+  useEffect(() => ReactTooltip.rebuild(), [selected]);
 
   return (
     <Wrapper>
       <LeftPane>
-      <SpectralLegend>
-        {utils.toSpectralType(asteroid.spectralType).split('').map((l) => (
-          <div key={l}>
-            <span>{l}</span>
-            <span>{spectralLabels[l.toLowerCase()]}</span>
-          </div>
-        ))}
-      </SpectralLegend>
-      <GraphicSection>
+        <SpectralLegend>
+          {utils.toSpectralType(asteroid.spectralType).toLowerCase().split('').map((l) => (
+            <div key={l}>
+              <span>{l}</span>
+              <span>{spectralLabels[l]}</span>
+            </div>
+          ))}
+        </SpectralLegend>
+        <GraphicSection>
           <GraphicWrapper>
             <Graphic>
               <div>
                 <Canvas antialias frameloop={frameloop} outputEncoding={sRGBEncoding}>
                   <AsteroidComposition
                     asteroid={asteroid}
-                    focus={focus}
+                    focus={selected?.category}
                     highlight={highlight}
-                    inputResources={inputResources}
-                    onReady={onStatic} />
+                    inputResourceGroups={inputResourceGroups}
+                    onAnimationChange={onAnimationChange} />
                 </Canvas>
               </div>
               <GraphicData>
@@ -471,7 +548,7 @@ const ResourceDetails = ({ asteroid }) => {
                   {utils.toSize(asteroid.radius)}
                 </div>
                 <AsteroidType>
-                  {utils.toSpectralType(asteroid.spectralType)}-type
+                  {utils.toSpectralType(asteroid.spectralType).toUpperCase()}-type
                 </AsteroidType>
                 <div style={{ color: 'white' }}>
                   {utils.toRarity(asteroid.bonuses)}
@@ -482,61 +559,102 @@ const ResourceDetails = ({ asteroid }) => {
         </GraphicSection>
       </LeftPane>
       <RightPane>
-        <div>
-          <SectionHeader>Resource Groups</SectionHeader>
-          <SectionBody style={{ overflowY: 'auto' }}>
-            {inputResources.map(({ category, value }) => (
-              <ResourceGroup
-                key={category}
-                color={theme.colors.resources[category]}
-                onClick={handleClick(category)}
-                onMouseEnter={handleHover(category, true)}
-                onMouseLeave={handleHover(category, false)}>
-                <ResourceGroupIcon>
-                  {ResourceGroupIcons[category.toLowerCase()]}
-                </ResourceGroupIcon>
-                <ResourceGroupLabel>
-                  <label>{categories[category].label}</label>
-                  <BarChart value={value} maxValue={inputResources[0].value}>
-                    <label>
-                      {value * 100}%
-                    </label>
-                    <div />
-                  </BarChart>
-                </ResourceGroupLabel>
-                <ResourceGroupItems>
-                  <label>{categories[category].resources.length} Resources</label>
-                  <div>
-                    {/* TODO: will be thumbnail */}
-                    {categories[category].resources.map((resource) => (
-                      <div data-place="left" data-tip={resource} data-for="global" />
-                    ))}
-                  </div>
-                </ResourceGroupItems>
-                <NextLabel>
-                  <NextIcon />
-                </NextLabel>
-              </ResourceGroup>
-            ))}
-          </SectionBody>
-        </div>
-        <div>
-          <SectionHeader>Yield Bonuses</SectionHeader>
-          <SectionBody>
-            <Bonuses>
-              <BonusItem>
+        {selected && (
+          <div>
+            <SelectedCategoryTitle category={selected.category} onClick={handleClick(-1)}>
+              <ResourceGroupIcon category={selected.category}>
+                {ResourceGroupIcons[selected.category.toLowerCase()]}
+              </ResourceGroupIcon>
+              {selected.label}
+            </SelectedCategoryTitle>
+            <SectionBody style={{ overflowY: 'auto', paddingLeft: 65 }}>
+              <BonusItem category={selected.category} style={{ marginBottom: 15, padding: 0 }}>
                 <BonusBar bonus={1} />
-                <label>Overall Yield: +3%</label>
+                <label>Bonus Yield: +3%</label>
               </BonusItem>
-              {inputResources.map(({ category }) => (
-                <BonusItem category={category}>
-                  <BonusBar bonus={1} />
-                  <label>{categories[category].label} Yield: +3%</label>
-                </BonusItem>
+              {selected.resources.map(({ resource, abundance }, i) => (
+                <ResourceRow key={resource} category={selected.category}>
+                  <ResourceIcon>
+
+                  </ResourceIcon>
+                  <ResourceInfo>
+                    <label>{resourceDefs[resource]}</label> 
+                    <BarChart value={abundance} maxValue={selected.resources[0].abundance} twoLine>
+                      <label>
+                        {(abundance * 100).toFixed(1)}%
+                      </label>
+                      <div />
+                    </BarChart>
+                  </ResourceInfo>
+                  <ResourceAction>
+                    <ButtonPill>
+                      Resource Map
+                    </ButtonPill>
+                  </ResourceAction>
+                </ResourceRow>
               ))}
-            </Bonuses>
-          </SectionBody>
-        </div>
+            </SectionBody>
+          </div>
+        )}
+        {!selected && (
+          <>
+            <div>
+              <SectionHeader>Resource Groups</SectionHeader>
+              <SectionBody>
+                {inputResourceGroups.map(({ category, label, resources, abundance }, i) => (
+                  <ResourceGroup
+                    key={category}
+                    color={theme.colors.resources[category]}
+                    onClick={handleClick(i)}
+                    onMouseEnter={handleHover(category, true)}
+                    onMouseLeave={handleHover(category, false)}>
+                    <ResourceGroupIcon category={category}>
+                      {ResourceGroupIcons[category.toLowerCase()]}
+                    </ResourceGroupIcon>
+                    <ResourceGroupLabel>
+                      <label>{label}</label>
+                      <BarChart value={abundance} maxValue={inputResourceGroups[0].abundance}>
+                        <label>
+                          {Math.round(abundance * 100).toFixed(1)}%
+                        </label>
+                        <div />
+                      </BarChart>
+                    </ResourceGroupLabel>
+                    <ResourceGroupItems>
+                      <label>{resources.length} Resources</label>
+                      <div>
+                        {/* TODO: will be thumbnail */}
+                        {resources.map(({ resource }) => (
+                          <div key={resource} data-place="left" data-tip={resourceDefs[resource]} data-for="global" />
+                        ))}
+                      </div>
+                    </ResourceGroupItems>
+                    <NextLabel>
+                      <NextIcon />
+                    </NextLabel>
+                  </ResourceGroup>
+                ))}
+              </SectionBody>
+            </div>
+            <div>
+              <SectionHeader>Yield Bonuses</SectionHeader>
+              <SectionBody>
+                <Bonuses>
+                  <BonusItem>
+                    <BonusBar bonus={1} />
+                    <label>Overall Yield: +3%</label>
+                  </BonusItem>
+                  {inputResourceGroups.map(({ category, label }) => (
+                    <BonusItem key={category} category={category}>
+                      <BonusBar bonus={1} />
+                      <label>{label} Yield: +3%</label>
+                    </BonusItem>
+                  ))}
+                </Bonuses>
+              </SectionBody>
+            </div>
+          </>
+        )}
       </RightPane>
     </Wrapper>
   );

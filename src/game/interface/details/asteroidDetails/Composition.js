@@ -22,9 +22,9 @@ const hexToLinear = (hex) => new Color(hex).convertSRGBToLinear();
 
 const segments = 100;
 
-const rotationPerFrame = 0.08;
+const rotationPerFrame = 0.1; // TODO: ease function would probably look better
 
-const AsteroidComposition = ({ asteroid, focus, highlight, inputResources, onReady }) => {
+const AsteroidComposition = ({ asteroid, focus, highlight, inputResourceGroups, onAnimationChange }) => {
   const { camera, gl, scene } = useThree();
 
   const groupRef = useRef();
@@ -38,11 +38,11 @@ const AsteroidComposition = ({ asteroid, focus, highlight, inputResources, onRea
   
   useEffect(() => {
     if (asteroid && groupRef.current) {
-      resources.current = [...inputResources].sort((a, b) => a.portion - b.portion);
+      resources.current = [...inputResourceGroups].sort((a, b) => a.portion - b.portion);
 
       let totalTheta = 0;
-      resources.current.forEach(({ category, value }, i) => {
-        const sliceTheta = 2 * Math.PI * value;
+      resources.current.forEach(({ category, abundance }, i) => {
+        const sliceTheta = 2 * Math.PI * abundance;
         const geometry = new CircleGeometry(1.0, segments, totalTheta, sliceTheta);
         const material = new MeshBasicMaterial({
           color: hexToLinear(theme.colors.resources[category]),
@@ -100,6 +100,7 @@ const AsteroidComposition = ({ asteroid, focus, highlight, inputResources, onRea
       camera.updateProjectionMatrix();
 
       gl.render(scene, camera);
+      onAnimationChange(true);
 
       return () => {
         try {
@@ -114,14 +115,18 @@ const AsteroidComposition = ({ asteroid, focus, highlight, inputResources, onRea
   useEffect(() => {
     if (highlighted.current) {
       const unhighlight = groupRef.current.children.find((g) => g.userData.resource === highlighted.current);
-      unhighlight.material.userData.shader.uniforms.uHighlight.value = false;
+      if (unhighlight) {
+        unhighlight.material.userData.shader.uniforms.uHighlight.value = false;
+      }
     }
     if (highlight) {
-      groupRef.current.children
-        .find((g) => g.userData.resource === highlight)
-        .material.userData.shader.uniforms.uHighlight.value = true;
+      const toHighlight = groupRef.current.children.find((g) => g.userData.resource === highlight);
+      if (toHighlight) {
+        toHighlight.material.userData.shader.uniforms.uHighlight.value = true;
+      }
       highlighted.current = highlight;
     }
+    onAnimationChange(true);
   }, [highlight]);
 
   useEffect(() => {
@@ -136,12 +141,19 @@ const AsteroidComposition = ({ asteroid, focus, highlight, inputResources, onRea
         rotation.current -= 2 * Math.PI;
       }
     }
+    onAnimationChange(true);
   }, [focus]);
 
   useFrame(() => {
     if (!groupRef.current) return;
 
-    console.log('animating...');
+    // TODO: could use gsap to set a "totalRotation" ref, keep as "previousRotation" ref, then call rotateZ on the difference every frame
+    //  (to implement easing)
+
+    // TODO: same for hover animations on a uniform value (even easier)
+    // - Separate each wedge to manage its own animations. For animations to be over, cycle through all. 
+    // - on focus, stop highlighting (rotate and add sub-wedges)
+
     if (rotation.current < targetRotation.current) {
       const stepSize = Math.min(targetRotation.current - rotation.current, rotationPerFrame);
       rotation.current += stepSize;
@@ -153,7 +165,7 @@ const AsteroidComposition = ({ asteroid, focus, highlight, inputResources, onRea
       groupRef.current.rotateZ(stepSize);
     }
     if (rotation.current === targetRotation.current) {
-      onReady();
+      onAnimationChange(false);
     }
   });
   
