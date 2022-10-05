@@ -1,20 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { AmbientLight,
-  Color,
-  DirectionalLight,
-  Group,
-  LinearFilter,
-  LinearMipMapLinearFilter,
-  PerspectiveCamera,
-  Scene,
-  Vector3,
-  WebGLRenderer,
-  WebGLRenderTarget
-} from 'three';
+import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import utils from 'influence-utils';
-import { Canvas, useThree } from '@react-three/fiber';
 
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
@@ -22,13 +7,11 @@ import useSale from '~/hooks/useSale';
 import useWebWorker from '~/hooks/useWebWorker';
 import useBuyAsteroid from '~/hooks/useBuyAsteroid';
 import useCreateReferral from '~/hooks/useCreateReferral';
-import useScanAsteroid from '~/hooks/useScanAsteroid';
 import useNameAsteroid from '~/hooks/useNameAsteroid';
 import constants from '~/lib/constants';
 import formatters from '~/lib/formatters';
 import exportGLTF from '~/lib/graphics/exportGLTF';
 
-import Details from '~/components/DetailsModal';
 import StaticForm from '~/components/StaticForm';
 import Text from '~/components/Text';
 import Button from '~/components/ButtonAlt';
@@ -37,7 +20,6 @@ import IconButton from '~/components/IconButton';
 import DataReadout from '~/components/DataReadout';
 import LogEntry from '~/components/LogEntry';
 import MarketplaceLink from '~/components/MarketplaceLink';
-import Ether from '~/components/Ether';
 import AddressLink from '~/components/AddressLink';
 import {
   CheckCircleIcon,
@@ -49,12 +31,8 @@ import {
   SemiMajorAxisIcon,
   SurfaceAreaIcon
 } from '~/components/Icons';
-import { cleanupScene, renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
+import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import AsteroidGraphic from './AsteroidGraphic';
-import ResourceMix from './ResourceMix';
-import ResourceBonuses from './ResourceBonuses';
-import Dimensions from './Dimensions';
-import theme from '~/theme';
 
 const paneStackBreakpoint = 720;
 
@@ -305,7 +283,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
         setExportingModel(false);
       });
     });
-  }, [asteroid, exportingModel]);
+  }, [asteroid, exportingModel, webWorkerPool]);
 
   // on asteroid change, reset name input field on asteroid change
   useEffect(() => {

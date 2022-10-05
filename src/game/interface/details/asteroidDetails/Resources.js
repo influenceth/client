@@ -1,72 +1,19 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { AmbientLight,
-  Color,
-  DirectionalLight,
-  Group,
-  LinearFilter,
-  LinearMipMapLinearFilter,
-  PerspectiveCamera,
-  Scene,
-  sRGBEncoding,
-  Vector3,
-  WebGLRenderer,
-  WebGLRenderTarget
-} from 'three';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import utils from 'influence-utils';
-import { Canvas, useThree } from '@react-three/fiber';
-import { Address } from 'influence-utils';
 import { BsChevronRight as NextIcon } from 'react-icons/bs';
 import { RiVipDiamondFill as BonusIcon } from 'react-icons/ri';
 import LoadingIcon from 'react-spinners/PulseLoader';
 
-import useAuth from '~/hooks/useAuth';
-import useStore from '~/hooks/useStore';
-import useSale from '~/hooks/useSale';
-import useAsteroid from '~/hooks/useAsteroid';
-import useBuyAsteroid from '~/hooks/useBuyAsteroid';
-import useCreateReferral from '~/hooks/useCreateReferral';
-import useScanAsteroid from '~/hooks/useScanAsteroid';
-import useNameAsteroid from '~/hooks/useNameAsteroid';
-import useWebWorker from '~/hooks/useWebWorker';
-import constants from '~/lib/constants';
-import formatters from '~/lib/formatters';
-import exportGLTF from '~/lib/graphics/exportGLTF';
-
 import ButtonPill from '~/components/ButtonPill';
-import Details from '~/components/DetailsModal';
-import StaticForm from '~/components/StaticForm';
-import Text from '~/components/Text';
 import Button from '~/components/ButtonAlt';
-import TextInput from '~/components/TextInput';
-import IconButton from '~/components/IconButton';
-import DataReadout from '~/components/DataReadout';
-import LogEntry from '~/components/LogEntry';
-import MarketplaceLink from '~/components/MarketplaceLink';
-import Ether from '~/components/Ether';
-import AddressLink from '~/components/AddressLink';
 import {
-  CheckCircleIcon,
-  EccentricityIcon,
-  EditIcon,
-  InclinationIcon, 
-  OrbitalPeriodIcon,
-  RadiusIcon,
   ResourceGroupIcons,
-  SemiMajorAxisIcon,
-  SurfaceAreaIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
-import { cleanupScene, renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
-import { categoryDefs, resourceDefs } from '../AsteroidDetails';
-import ResourceMix from './ResourceMix';
-import ResourceBonuses from './ResourceBonuses';
-import Dimensions from './Dimensions';
+import { resourceDefs } from '../AsteroidDetails';
 import theme, { hexToRGB } from '~/theme';
-import AsteroidComposition from './AsteroidComposition';
-import AsteroidSpinner from './AsteroidSpinner';
 import AsteroidGraphic from './AsteroidGraphic';
 
 // TODO: if these stay the same, then should just export from Information or extract to shared component vvv
@@ -176,47 +123,6 @@ const GraphicWrapper = styled.div`
   flex-direction: column;
   height: 100%;
   justify-content: center;
-`;
-const Graphic = styled.div`
-  padding-top: 100%;
-  position: relative;
-  width: 100%;
-  & > * {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-  }
-`;
-const GraphicData = styled.div`
-  align-items: center;
-  color: rgba(255, 255, 255, 0.5);
-  display: flex;
-  flex-direction: column;
-  font-size: 20px;
-  justify-content: center;
-  & b {
-    color: white;
-  }
-  & div {
-    margin: 8px 0;
-  }
-  & div {
-    text-transform: uppercase;
-  }
-`;
-
-const AsteroidType = styled.div`
-  border: 1px solid ${p => p.theme.colors.borderBottom};
-  border-radius: 1em;
-  color: white;
-  font-size: 28px;
-  padding: 4px 12px;
-  text-align: center;
-  text-transform: none !important;
-  min-width: 40%;
 `;
 
 const ResourceGroupIcon = styled.div`

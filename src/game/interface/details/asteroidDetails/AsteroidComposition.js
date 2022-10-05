@@ -1,15 +1,11 @@
 import { useEffect, useRef } from 'react';
 import {
-  AmbientLight,
   BackSide,
   CircleGeometry,
   Color,
-  DirectionalLight,
-  Group,
   Mesh,
   MeshBasicMaterial,
   RingGeometry,
-  ShaderMaterial,
   Texture,
   Vector3,
 } from 'three';
@@ -17,16 +13,18 @@ import { useFrame, useThree } from '@react-three/fiber';
 
 import { cleanupScene } from '~/game/scene/asteroid/helpers/utils';
 
-import theme, { hexToGLSL } from '~/theme';
+import theme from '~/theme';
 
 const hexToLinear = (hex) => new Color(hex).convertSRGBToLinear();
 
-const segments = 100;
-
-const rotationPerFrame = 0.1; // TODO (enhancement): ease function would probably look better
-
 const margin = 0.001 * 2 * Math.PI;
+const rotationPerFrame = 0.1; // TODO (enhancement): ease function would probably look better
+const segmentsPerCircle = 120; // target 1 segment per 3 degrees
 const dummyCategory = { abundance: 0.2, category: 'unscanned', resources: [] };
+
+const getSegments = (centralAngle) => {
+  return Math.max(2, Math.ceil(segmentsPerCircle * centralAngle / 2 * Math.PI));
+};
 
 const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient, hover, onAnimationChange, ready }) => {
   const { camera, gl, scene } = useThree();
@@ -50,7 +48,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
       let totalTheta = 0;
       resources.current.forEach(({ category, abundance }, i) => {
         const sliceTheta = 2 * Math.PI * abundance;
-        const geometry = new CircleGeometry(1.0, segments, totalTheta + margin, sliceTheta - 2 * margin);
+        const geometry = new CircleGeometry(1.0, getSegments(sliceTheta), totalTheta + margin, sliceTheta - 2 * margin);
         const material = new MeshBasicMaterial({
           color: noColor ? hexToLinear('#333333') : hexToLinear(theme.colors.resources[category]),
           alphaMap: new Texture(),  // include so vUv is set
@@ -101,7 +99,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
       );
 
       const coverInner = new Mesh(
-        new CircleGeometry(0.70, segments),
+        new CircleGeometry(0.70, segmentsPerCircle),
         new MeshBasicMaterial({
           color: hexToLinear('#202b2f')
         })
@@ -113,7 +111,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
       camera.updateProjectionMatrix();
 
       obscurer.current = new Mesh(
-        new CircleGeometry(1.2, 360, 0, 2 * Math.PI),
+        new CircleGeometry(1.2, segmentsPerCircle, 0, 2 * Math.PI),
         new MeshBasicMaterial({ color: 0x000000 })
       );
       obscurer.current.position.add(new Vector3(0, 0, 0.001));
@@ -131,12 +129,12 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         }
       }
     }
-  }, [!!asteroid]);
+  }, [!!asteroid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     hovered.current = hover;
     onAnimationChange(true);
-  }, [hover]);
+  }, [hover]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const target = resources.current.find((c) => c.category === focus);
@@ -153,8 +151,6 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
       let thetaStart = target.start;
       let useWidth = target.resources.length;
       const widthTotal = target.resources.reduce((acc, cur, i) => acc + i + 1, 0);
-
-      const targetTotal = Math.sqrt(target.abundance);
       target.resources.forEach((r) => {
         // (technically shouldn't add to more than 1, but this seems to be the largest possible without clipping)
         const height = 0.8 + 0.27 * r.abundance / target.resources[0].abundance;
@@ -170,7 +166,6 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         subSliceMaterial.onBeforeCompile = (shader) => {
           shader.uniforms.uOpacity = { type: 'f', value: 0.2 + 0.7 * (1 - r.abundance / target.resources[0].abundance) };
           shader.uniforms.uReveal = { type: 'f', value: 0.0 };
-          console.log(shader.uniforms);
           shader.fragmentShader = shader.fragmentShader
             .replace(
               '#include <alphamap_pars_fragment>',
@@ -189,7 +184,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         };
 
         const subSlice = new Mesh(
-          new RingGeometry(0.79, height, 100, 1, thetaStart + margin, thetaWidth - 2 * margin),
+          new RingGeometry(0.79, height, getSegments(thetaWidth), 1, thetaStart + margin, thetaWidth - 2 * margin),
           subSliceMaterial
         );
         subSlice.userData.parentGroup = focus;
@@ -204,14 +199,14 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
     }
 
     onAnimationChange(true);
-  }, [focus]);
+  }, [focus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // this triggers the intro effect (i.e. removing the obscurer layer)
   useEffect(() => {
     if (ready) {
       onAnimationChange(true);
     }
-  }, [ready]);
+  }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useFrame(() => {
     if (!groupRef.current) return;
@@ -220,7 +215,8 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
     if (ready) {
       if (obscurer.current && obscurerTheta.current < 2 * Math.PI) {
         obscurerTheta.current += 0.1;
-        obscurer.current.geometry = new CircleGeometry(1.2, 100, 0, 2 * Math.PI - obscurerTheta.current);
+        const centralAngle = 2 * Math.PI - obscurerTheta.current;
+        obscurer.current.geometry = new CircleGeometry(1.2, getSegments(centralAngle), 0, centralAngle);
       } else if (obscurer.current) {
         scene.remove(obscurer.current);
         obscurer.current = null;

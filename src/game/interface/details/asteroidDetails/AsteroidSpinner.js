@@ -1,99 +1,13 @@
 import { useEffect, useRef } from 'react';
 import {
-  AmbientLight,
-  BackSide,
   CircleGeometry,
-  Color,
-  DirectionalLight,
-  DoubleSide,
-  Group,
   Mesh,
-  MeshBasicMaterial,
-  RingGeometry,
   ShaderMaterial,
-  Texture,
   Vector2,
-  Vector3,
 } from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 
 import { cleanupScene } from '~/game/scene/asteroid/helpers/utils';
-
-import theme, { hexToGLSL } from '~/theme';
-
-const hexToLinear = (hex) => new Color(hex).convertSRGBToLinear();
-
-const segments = 100;
-
-const rotationPerFrame = 0.1; // TODO: ease function would probably look better
-
-
-// #define PI 3.1415926535897932384626433832795
-
-// float spinner(float r, float theta, float timeOffset, float radius, float width) {
-//     float time = iTime + timeOffset;
-//     float thetaOnStart = mod(-time * 2.0, 2.0 * PI);
-//     float thetaOnEnd = thetaOnStart + sin(time * 2.0 - PI);
-    
-//     float tStepOn = step(min(thetaOnStart, thetaOnEnd), theta);
-//     float tStepOff = 1.0 - step(max(thetaOnStart, thetaOnEnd), theta);
-    
-//     float rStepOn = step(radius, r);
-//     float rStepOff = 1.0 - step(radius + width, r);
-//     return tStepOn * tStepOff * rStepOn * rStepOff;
-// }
-
-// void mainImage( out vec4 fragColor, in vec2 fragCoord )
-// {
-//     // Normalized pixel coordinates (from -1 to 1)
-//     vec2 uv = 2.0*fragCoord/iResolution.xy - 1.0;
-//     float r = length(uv);
-//     float theta = 2.0 * atan(uv.y/uv.x) + PI;
-    
-//     vec3 col = vec3(1.0,0.0,0.0);
-//     col.g = spinner(r, theta, 0.0, 0.5, 0.1);
-//     col.g += spinner(r, theta, 1.0, 0.7, 0.1);
-//     fragColor = vec4(col, 1.0);
-// }
-
-////////////////////////////////////
-
-// #define PI 3.1415926535897932384626433832795
-
-// float spinner(float r, float theta, float radius, float width, float timeOffset, float thetaOffset) {
-//     float time = iTime - timeOffset;
-//     float thetaOnStart = mod(-time * 2.0, 2.0 * PI);
-//     float thetaOnEnd = thetaOnStart + sin(time * 2.0 - PI);
-    
-//     float tStepOn = step(min(thetaOnStart, thetaOnEnd), theta - thetaOffset);
-//     float tStepOff = 1.0 - step(max(thetaOnStart, thetaOnEnd), theta - thetaOffset);
-    
-//     float rStepOn = step(radius, r);
-//     float rStepOff = 1.0 - step(radius + width, r);
-//     return tStepOn * tStepOff * rStepOn * rStepOff;
-// }
-
-// void mainImage( out vec4 fragColor, in vec2 fragCoord )
-// {
-//     // Normalized pixel coordinates (from -1 to 1)
-//     vec2 uv = 2.0*fragCoord/iResolution.xy - 1.0;
-//     float r = length(uv);
-//     float theta = 2.0 * atan(uv.y/uv.x) + PI;
-    
-//     vec3 blue = vec3(0.20784313725490197, 0.5176470588235295, 0.6313725490196078);
-//     vec3 col = (1.0 - step(0.5, r)) * vec3(0.058823529411764705, 0.1568627450980392, 0.19215686274509805);
-    
-//     float white = 0.1 * step(0.3, r) * (1.0 - step(0.6, r)) / ((r - 0.3) / 0.3);
-//     col.r += white;
-//     col.g += white;
-//     col.b += white;
-    
-//     col += blue * spinner(r, theta, 0.475, 0.025, 0.0, 0.0);
-//     col += blue * spinner(r, theta, 0.55, 0.025, 1.0, -0.25 * PI);
-//     fragColor = vec4(col, 1.0);
-// }
-
-const noGradient = false;
 
 const AsteroidSpinner = (props) => {
   const { camera, gl, scene, size } = useThree();
@@ -102,12 +16,8 @@ const AsteroidSpinner = (props) => {
   const initialTime = useRef(Date.now());
 
   useEffect(() => {
-    console.log([size.width, size.height]);
-
-    // TODO: ring geometry?
-    const geometry = new CircleGeometry(1.2, 100);
+    const geometry = new CircleGeometry(1.2, 120);
     const material = new ShaderMaterial({
-      side: DoubleSide, // TODO: this can be front probably
       transparent: true,
       uniforms: {
         uResolution: { type: 'v2', value: new Vector2(size.width, size.height) },
@@ -122,8 +32,8 @@ const AsteroidSpinner = (props) => {
 
         float spinner(float r, float theta, float radius, float width, float timeOffset, float thetaOffset) {
           float time = uTime - timeOffset;
-          float thetaOnStart = mod(-time * 2.0, PI2);
-          float thetaOnEnd = thetaOnStart + sin(time * 2.0 - PI);
+          float thetaOnStart = mod(-2.0 * time, PI2);
+          float thetaOnEnd = thetaOnStart + sin(2.0 * time - PI);
           
           float tStepOn = step(min(thetaOnStart, thetaOnEnd), theta - thetaOffset);
           float tStepOff = 1.0 - step(max(thetaOnStart, thetaOnEnd), theta - thetaOffset);
@@ -136,7 +46,7 @@ const AsteroidSpinner = (props) => {
         void main() {
           vec2 vUv = 2.0 * gl_FragCoord.xy / uResolution.xy - 1.0;
           float r = length(vUv);
-          float theta = 2.0 * atan(vUv.y/vUv.x) + PI;
+          float theta = 2.0 * atan(vUv.y / vUv.x) + PI;
           
           vec3 blue = vec3(0.20784313725490197, 0.5176470588235295, 0.6313725490196078);
           vec3 col = (1.0 - step(0.7, r)) * vec3(0.058823529411764705, 0.1568627450980392, 0.19215686274509805);
@@ -172,7 +82,7 @@ const AsteroidSpinner = (props) => {
         console.warn(e);
       }
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useFrame(() => {
     if (meshRef.current?.material?.uniforms) {

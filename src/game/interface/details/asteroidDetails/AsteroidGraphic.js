@@ -1,20 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import styled from 'styled-components';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas } from '@react-three/fiber';
 import utils from 'influence-utils';
-import { AmbientLight,
-  Color,
-  DirectionalLight,
-  Group,
-  LinearFilter,
-  LinearMipMapLinearFilter,
-  PerspectiveCamera,
-  Scene,
-  sRGBEncoding,
-  Vector3,
-  WebGLRenderer,
-  WebGLRenderTarget
-} from 'three';
+import { sRGBEncoding } from 'three';
 
 import useWebWorker from '~/hooks/useWebWorker';
 import AsteroidComposition from './AsteroidComposition';
@@ -78,18 +66,17 @@ const AsteroidGraphic = ({ asteroid, ...compositionProps }) => {
   const [ready, setReady] = useState();
   const [delayedReady, setDelayedReady] = useState();
 
-  const onAnimationChange = (which) => {
+  const onAnimationChange = useCallback((which) => {
     setFrameloop(which ? 'always' : 'never');
-  };
+  }, []);
 
-  const onReady = () => {
+  const onReady = useCallback(() => {
     setReady(true);
     setTimeout(() => {
       setDelayedReady(true);
     }, OPACITY_ANIMATION);
-  };
+  }, []);
 
-  const test = false;
   return (
     <Graphic>
       <OpacityContainer ready={ready ? 1 : 0}>

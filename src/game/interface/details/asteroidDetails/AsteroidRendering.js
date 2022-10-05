@@ -51,7 +51,6 @@ const RenderedAsteroid = ({ asteroid, onReady, webWorkerPool }) => {
         camera.updateProjectionMatrix();
 
         gl.render(scene, camera);
-        console.log('here');
         onReady();
 
         disposeFunc.current = dispose;
@@ -68,7 +67,7 @@ const RenderedAsteroid = ({ asteroid, onReady, webWorkerPool }) => {
         }
       }
     }
-  }, [!!asteroid, !!webWorkerPool]);
+  }, [!!asteroid, !!webWorkerPool]);  // eslint-disable-line react-hooks/exhaustive-deps
   
   return null;
 };
