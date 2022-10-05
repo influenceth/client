@@ -65,7 +65,8 @@ import ResourceMix from './ResourceMix';
 import ResourceBonuses from './ResourceBonuses';
 import Dimensions from './Dimensions';
 import theme, { hexToRGB } from '~/theme';
-import AsteroidComposition from './Composition';
+import AsteroidComposition from './AsteroidComposition';
+import AsteroidSpinner from './AsteroidSpinner';
 import AsteroidGraphic from './AsteroidGraphic';
 
 // TODO: if these stay the same, then should just export from Information or extract to shared component vvv

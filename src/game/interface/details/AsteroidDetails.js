@@ -112,18 +112,20 @@ const AsteroidDetails = (props) => {
 
   const groupAbundances = useMemo(() => {
     const x = [];
-    Object.keys(categoryDefs).map((k) => {
-      const { label, resources } = categoryDefs[k];
-      x.push({
-        category: k,
-        label,
-        resources: resources.map((resource) => ({ resource, abundance: abundances[resource] || 0 })).sort((a, b) => b.abundance - a.abundance),
-        abundance: resources.reduce((acc, i) => acc + (abundances[i] || 0), 0),
+    if (asteroid?.scanned) {
+      Object.keys(categoryDefs).map((k) => {
+        const { label, resources } = categoryDefs[k];
+        x.push({
+          category: k,
+          label,
+          resources: resources.map((resource) => ({ resource, abundance: abundances[resource] || 0 })).sort((a, b) => b.abundance - a.abundance),
+          abundance: resources.reduce((acc, i) => acc + (abundances[i] || 0), 0),
+        });
       });
-    });
-    x.sort((a, b) => b.abundance - a.abundance);
+      x.sort((a, b) => b.abundance - a.abundance);
+    }
     return x;
-  }, []);
+  }, [asteroid?.scanned]);
 
   return (
     <Details

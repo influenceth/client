@@ -17,8 +17,9 @@ import { AmbientLight,
 } from 'three';
 
 import useWebWorker from '~/hooks/useWebWorker';
-import AsteroidComposition from './Composition';
-import AsteroidRendering from './RenderedAsteroid';
+import AsteroidComposition from './AsteroidComposition';
+import AsteroidRendering from './AsteroidRendering';
+import AsteroidSpinner from './AsteroidSpinner';
 
 const OPACITY_ANIMATION = 400;
 
@@ -88,15 +89,22 @@ const AsteroidGraphic = ({ asteroid, ...compositionProps }) => {
     }, OPACITY_ANIMATION);
   };
 
+  const test = false;
   return (
     <Graphic>
       <OpacityContainer ready={ready ? 1 : 0}>
-        <Canvas antialias frameloop={frameloop} outputEncoding={sRGBEncoding}>
-          <AsteroidComposition
-            asteroid={asteroid}
-            onAnimationChange={onAnimationChange}
-            ready={delayedReady ? 1 : 0}
-            {...compositionProps} />
+        <Canvas
+          antialias
+          frameloop={asteroid.scanStatus === 'SCANNING' ? 'always' : frameloop}
+          outputEncoding={sRGBEncoding}>
+          {asteroid.scanStatus === 'SCANNING'
+            ? <AsteroidSpinner />
+            : <AsteroidComposition
+                asteroid={asteroid}
+                onAnimationChange={onAnimationChange}
+                ready={delayedReady ? 1 : 0}
+                {...compositionProps} />
+          }
         </Canvas>
       </OpacityContainer>
       <OpacityContainer ready={ready ? 1 : 0}>

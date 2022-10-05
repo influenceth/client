@@ -23,76 +23,10 @@ const hexToLinear = (hex) => new Color(hex).convertSRGBToLinear();
 
 const segments = 100;
 
-const rotationPerFrame = 0.1; // TODO: ease function would probably look better
-
-
-// #define PI 3.1415926535897932384626433832795
-
-// float spinner(float r, float theta, float timeOffset, float radius, float width) {
-//     float time = iTime + timeOffset;
-//     float thetaOnStart = mod(-time * 2.0, 2.0 * PI);
-//     float thetaOnEnd = thetaOnStart + sin(time * 2.0 - PI);
-    
-//     float tStepOn = step(min(thetaOnStart, thetaOnEnd), theta);
-//     float tStepOff = 1.0 - step(max(thetaOnStart, thetaOnEnd), theta);
-    
-//     float rStepOn = step(radius, r);
-//     float rStepOff = 1.0 - step(radius + width, r);
-//     return tStepOn * tStepOff * rStepOn * rStepOff;
-// }
-
-// void mainImage( out vec4 fragColor, in vec2 fragCoord )
-// {
-//     // Normalized pixel coordinates (from -1 to 1)
-//     vec2 uv = 2.0*fragCoord/iResolution.xy - 1.0;
-//     float r = length(uv);
-//     float theta = 2.0 * atan(uv.y/uv.x) + PI;
-    
-//     vec3 col = vec3(1.0,0.0,0.0);
-//     col.g = spinner(r, theta, 0.0, 0.5, 0.1);
-//     col.g += spinner(r, theta, 1.0, 0.7, 0.1);
-//     fragColor = vec4(col, 1.0);
-// }
-
-////////////////////////////////////
-
-// #define PI 3.1415926535897932384626433832795
-
-// float spinner(float r, float theta, float radius, float width, float timeOffset, float thetaOffset) {
-//     float time = iTime - timeOffset;
-//     float thetaOnStart = mod(-time * 2.0, 2.0 * PI);
-//     float thetaOnEnd = thetaOnStart + sin(time * 2.0 - PI);
-    
-//     float tStepOn = step(min(thetaOnStart, thetaOnEnd), theta - thetaOffset);
-//     float tStepOff = 1.0 - step(max(thetaOnStart, thetaOnEnd), theta - thetaOffset);
-    
-//     float rStepOn = step(radius, r);
-//     float rStepOff = 1.0 - step(radius + width, r);
-//     return tStepOn * tStepOff * rStepOn * rStepOff;
-// }
-
-// void mainImage( out vec4 fragColor, in vec2 fragCoord )
-// {
-//     // Normalized pixel coordinates (from -1 to 1)
-//     vec2 uv = 2.0*fragCoord/iResolution.xy - 1.0;
-//     float r = length(uv);
-//     float theta = 2.0 * atan(uv.y/uv.x) + PI;
-    
-//     vec3 blue = vec3(0.20784313725490197, 0.5176470588235295, 0.6313725490196078);
-//     vec3 col = (1.0 - step(0.5, r)) * vec3(0.058823529411764705, 0.1568627450980392, 0.19215686274509805);
-    
-//     float white = 0.1 * step(0.3, r) * (1.0 - step(0.6, r)) / ((r - 0.3) / 0.3);
-//     col.r += white;
-//     col.g += white;
-//     col.b += white;
-    
-//     col += blue * spinner(r, theta, 0.475, 0.025, 0.0, 0.0);
-//     col += blue * spinner(r, theta, 0.55, 0.025, 1.0, -0.25 * PI);
-//     fragColor = vec4(col, 1.0);
-// }
+const rotationPerFrame = 0.1; // TODO (enhancement): ease function would probably look better
 
 const margin = 0.001 * 2 * Math.PI;
-const dummyCategory = { category: '', abundance: 0.2 };
+const dummyCategory = { abundance: 0.2, category: 'unscanned', resources: [] };
 
 const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient, hover, onAnimationChange, ready }) => {
   const { camera, gl, scene } = useThree();
@@ -110,7 +44,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
   
   useEffect(() => {
     if (asteroid && groupRef.current) {
-      const slices = abundances ? [...abundances] : [dummyCategory, dummyCategory, dummyCategory, dummyCategory, dummyCategory];
+      const slices = abundances.length > 0 ? [...abundances] : [dummyCategory, dummyCategory, dummyCategory, dummyCategory, dummyCategory];
       resources.current = slices.sort((a, b) => b.abundance - a.abundance);
 
       let totalTheta = 0;
@@ -221,9 +155,9 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
       const widthTotal = target.resources.reduce((acc, cur, i) => acc + i + 1, 0);
 
       const targetTotal = Math.sqrt(target.abundance);
-      // TODO: how do we calculate width (i.e. is it portion of my sqrt / total sqrt?)
       target.resources.forEach((r) => {
-        const height = 0.8 + 0.35 * r.abundance / target.resources[0].abundance;  // TODO: if over 0.2, need to resize entire object
+        // (technically shouldn't add to more than 1, but this seems to be the largest possible without clipping)
+        const height = 0.8 + 0.27 * r.abundance / target.resources[0].abundance;
         const thetaWidth = target.thetaWidth * useWidth / widthTotal;
         useWidth--;
 
@@ -234,7 +168,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
           transparent: true
         });
         subSliceMaterial.onBeforeCompile = (shader) => {
-          shader.uniforms.uOpacity = { type: 'f', value: 0.15 + 0.65 * (1 - r.abundance / target.resources[0].abundance) };
+          shader.uniforms.uOpacity = { type: 'f', value: 0.2 + 0.7 * (1 - r.abundance / target.resources[0].abundance) };
           shader.uniforms.uReveal = { type: 'f', value: 0.0 };
           console.log(shader.uniforms);
           shader.fragmentShader = shader.fragmentShader
@@ -260,7 +194,6 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         );
         subSlice.userData.parentGroup = focus;
         subSlice.position.add(new Vector3(0, 0, 0.001));
-        console.log('subSlice', subSlice);
         groupRef.current.add(subSlice);
 
         thetaStart += thetaWidth;
@@ -322,13 +255,17 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
     // hover growths
     const hoversComplete = groupRef.current.children.reduce((acc, mesh) => {
       if (mesh.userData.resource) {
-        if (mesh.userData.resource === hovered.current) {
-          if (mesh.material.userData.shader.uniforms.uHover.value < 1.0) {
-            mesh.material.userData.shader.uniforms.uHover.value += 0.05;
+        if (mesh.material.userData.shader) {
+          if (mesh.userData.resource === hovered.current) {
+            if (mesh.material.userData.shader.uniforms.uHover.value < 1.0) {
+              mesh.material.userData.shader.uniforms.uHover.value += 0.05;
+              return false;
+            }
+          } else if (mesh.material.userData.shader.uniforms.uHover.value > 0.0) {
+            mesh.material.userData.shader.uniforms.uHover.value -= 0.05;
             return false;
           }
-        } else if (mesh.material.userData.shader.uniforms.uHover.value > 0.0) {
-          mesh.material.userData.shader.uniforms.uHover.value -= 0.05;
+        } else {
           return false;
         }
       }
@@ -363,8 +300,6 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
       </group>
     </>
   );
-
-  return null;
 };
 
 export default AsteroidComposition;
