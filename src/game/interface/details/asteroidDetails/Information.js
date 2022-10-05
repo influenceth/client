@@ -15,17 +15,15 @@ import { AmbientLight,
 import styled from 'styled-components';
 import utils from 'influence-utils';
 import { Canvas, useThree } from '@react-three/fiber';
-import { Address } from 'influence-utils';
 
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import useSale from '~/hooks/useSale';
-import useAsteroid from '~/hooks/useAsteroid';
+import useWebWorker from '~/hooks/useWebWorker';
 import useBuyAsteroid from '~/hooks/useBuyAsteroid';
 import useCreateReferral from '~/hooks/useCreateReferral';
 import useScanAsteroid from '~/hooks/useScanAsteroid';
 import useNameAsteroid from '~/hooks/useNameAsteroid';
-import useWebWorker from '~/hooks/useWebWorker';
 import constants from '~/lib/constants';
 import formatters from '~/lib/formatters';
 import exportGLTF from '~/lib/graphics/exportGLTF';
@@ -52,11 +50,11 @@ import {
   SurfaceAreaIcon
 } from '~/components/Icons';
 import { cleanupScene, renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
+import AsteroidGraphic from './AsteroidGraphic';
 import ResourceMix from './ResourceMix';
 import ResourceBonuses from './ResourceBonuses';
 import Dimensions from './Dimensions';
 import theme from '~/theme';
-import RenderedAsteroid from './RenderedAsteroid';
 
 const paneStackBreakpoint = 720;
 
@@ -140,54 +138,6 @@ const GraphicWrapper = styled.div`
   flex-direction: column;
   height: 100%;
   justify-content: center;
-`;
-const Graphic = styled.div`
-  padding-top: 100%;
-  position: relative;
-  width: 100%;
-  & > * {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-  }
-`;
-const Composition = styled.div`
-  & > svg {
-    height: 100%;
-    width: 100%;
-  }
-`;
-const GraphicData = styled.div`
-  align-items: center;
-  color: rgba(255, 255, 255, 0.5);
-  display: flex;
-  flex-direction: column;
-  font-size: 20px;
-  justify-content: center;
-  & b {
-    color: white;
-  }
-  & div {
-    margin: 8px 0;
-  }
-  & div {
-    text-transform: uppercase;
-  }
-`;
-
-const AsteroidName = styled.div`
-  background: black;
-  border: 1px solid ${p => p.theme.colors.borderBottom};
-  border-radius: 1em;
-  color: white;
-  font-size: 28px;
-  padding: 4px 12px;
-  text-align: center;
-  text-transform: none !important;
-  min-width: 60%;
 `;
 
 const Attributes = styled.div`
@@ -330,7 +280,7 @@ const NameForm = styled.div`
 `;
 
 
-const AsteroidInformation = ({ asteroid }) => {
+const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
   const { account } = useAuth();
   const { data: sale } = useSale();
   const createReferral = useCreateReferral(Number(asteroid.i));
@@ -343,8 +293,6 @@ const AsteroidInformation = ({ asteroid }) => {
   const [exportingModel, setExportingModel] = useState(false);
   const [newName, setNewName] = useState('');
   const [openNameChangeForm, setOpenNameChangeForm] = useState(false);
-
-  const userIsOwner = account && asteroid.owner && Address.areEqual(account, asteroid.owner);
 
   const download3dModel = useCallback(() => {
     if (exportingModel || !asteroid) return;
@@ -380,38 +328,11 @@ const AsteroidInformation = ({ asteroid }) => {
         </DataReadout>
         <GraphicSection>
           <GraphicWrapper>
-            <Graphic>
-              <Composition>
-                <svg xmlns="http://www.w3.org/2000/svg" width="285" height="249.929" viewBox="0 0 285 249.929">
-                  <g id="Ci-type" transform="translate(-0.051 15)">
-                    <g id="Group_347" data-name="Group 347" transform="translate(35.598 0)">
-                      <g id="Group_343" data-name="Group 343" transform="translate(0)">
-                        <path id="Path_271" data-name="Path 271" d="M268.385,468.428a3.826,3.826,0,0,0-3.561-3.813,102.584,102.584,0,0,1,0-204.636,3.826,3.826,0,0,0,3.561-3.812h0a3.828,3.828,0,0,0-4.087-3.824,110.239,110.239,0,0,0,0,219.909,3.828,3.828,0,0,0,4.087-3.824Z" transform="translate(-161.968 -252.333)" fill="#5bc0f5"/>
-                        <path id="Path_272" data-name="Path 272" d="M311,256.167h0a3.826,3.826,0,0,0,3.561,3.813,102.584,102.584,0,0,1,0,204.636A3.826,3.826,0,0,0,311,468.428h0a3.828,3.828,0,0,0,4.087,3.824,110.239,110.239,0,0,0,0-219.909A3.828,3.828,0,0,0,311,256.167Z" transform="translate(-196.929 -252.333)" fill="#78d356"/>
-                        <path id="Path_288" data-name="Path 288" d="M268.385,468.428a3.826,3.826,0,0,0-3.561-3.813,102.584,102.584,0,0,1,0-204.636,3.826,3.826,0,0,0,3.561-3.812h0a3.828,3.828,0,0,0-4.087-3.824,110.239,110.239,0,0,0,0,219.909,3.828,3.828,0,0,0,4.087-3.824Z" transform="translate(-161.968 -252.333)" fill="#5bc0f5" opacity="0.5"/>
-                        <path id="Path_289" data-name="Path 289" d="M311,256.167h0a3.826,3.826,0,0,0,3.561,3.813,102.584,102.584,0,0,1,0,204.636A3.826,3.826,0,0,0,311,468.428h0a3.828,3.828,0,0,0,4.087,3.824,110.239,110.239,0,0,0,0-219.909A3.828,3.828,0,0,0,311,256.167Z" transform="translate(-196.929 -252.333)" fill="#78d356" opacity="0.5"/>
-                      </g>
-                    </g>
-                  </g>
-                </svg>
-              </Composition>
-              <div>
-                <Canvas antialias frameloop="never" style={{ width: '100%', height: '100%' }}>
-                  <RenderedAsteroid asteroid={asteroid} webWorkerPool={webWorkerPool} />
-                </Canvas>
-              </div>
-              <GraphicData>
-                <div>
-                  {utils.toSize(asteroid.radius)} <b>{utils.toSpectralType(asteroid.spectralType)}-type</b>
-                </div>
-                <AsteroidName>
-                  {asteroid.customName ? `\`${asteroid.customName}\`` : asteroid.baseName}
-                </AsteroidName>
-                <div>
-                  {Number(Math.floor(4 * Math.PI * Math.pow(asteroid.radius / 1000, 2))).toLocaleString()} lots
-                </div>
-              </GraphicData>
-            </Graphic>
+            <AsteroidGraphic
+              abundances={abundances}
+              asteroid={asteroid}
+              noColor={!asteroid.scanned}
+              noGradient />
           </GraphicWrapper>
         </GraphicSection>
 
@@ -482,9 +403,9 @@ const AsteroidInformation = ({ asteroid }) => {
         <div>
           <SectionHeader>Management</SectionHeader>
           <SectionBody>
-            {userIsOwner && <HighlightOwnership>You own this asteriod.</HighlightOwnership>}
+            {isOwner && <HighlightOwnership>You own this asteriod.</HighlightOwnership>}
             <ButtonRow>
-              {userIsOwner && (
+              {isOwner && (
                 <>
                   <StaticForm
                     css={{
@@ -526,7 +447,7 @@ const AsteroidInformation = ({ asteroid }) => {
                 </>
               )}
 
-              {userIsOwner && (
+              {isOwner && (
                 <ModelButton
                   disabled={exportingModel}
                   loading={exportingModel}
@@ -555,7 +476,7 @@ const AsteroidInformation = ({ asteroid }) => {
                   id={asteroid.i}>
                   {(onClick, setRefEl) => (
                     <Button setRef={setRefEl} onClick={onClick}>
-                      {userIsOwner ? 'List for Sale' : 'Purchase'}
+                      {isOwner ? 'List for Sale' : 'Purchase'}
                     </Button>  
                   )}
                 </MarketplaceLink>

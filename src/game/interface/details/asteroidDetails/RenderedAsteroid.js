@@ -9,7 +9,7 @@ import { useThree } from '@react-three/fiber';
 import { cleanupScene, renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import theme from '~/theme';
 
-const RenderedAsteroid = ({ asteroid, webWorkerPool }) => {
+const RenderedAsteroid = ({ asteroid, onReady, webWorkerPool }) => {
   const { camera, gl, scene } = useThree();
 
   const disposeFunc = useRef();
@@ -26,9 +26,9 @@ const RenderedAsteroid = ({ asteroid, webWorkerPool }) => {
         scene.add(asteroidModel);
 
         const lightColor = new Color(theme.colors.main);
-        const lightIntensity = 0.3;
+        const lightIntensity = 0.35;
 
-        const ambientLight = new AmbientLight(lightColor, 0.1 * lightIntensity);
+        const ambientLight = new AmbientLight(lightColor, 0.05 * lightIntensity);
         scene.add(ambientLight);
 
         const light = new DirectionalLight(lightColor, lightIntensity);
@@ -51,6 +51,8 @@ const RenderedAsteroid = ({ asteroid, webWorkerPool }) => {
         camera.updateProjectionMatrix();
 
         gl.render(scene, camera);
+        console.log('here');
+        onReady();
 
         disposeFunc.current = dispose;
       });

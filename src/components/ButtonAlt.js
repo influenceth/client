@@ -9,7 +9,7 @@ import theme from '~/theme';
 
 const StyledButton = styled.button`
   background: transparent;
-  border: 1px solid ${p => p.color || p.theme.colors.main};
+  border: 1px solid ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)};
   clip-path: polygon(
     0 0,
     100% 0,
@@ -47,13 +47,13 @@ const StyledButton = styled.button`
     : `
       color: white;
       & > div {
-        background-color: ${p.color || '#1a404f'};
+        background-color: ${p.color || (p.isTransaction ? '#232d64' : '#1a404f')};
       }
       &:active > div {
-        background-color: ${p.theme.colors.main};
+        background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main};
       }
       &:hover > div {
-        background-color: rgba(54, 167, 205, 0.25);
+        background-color: ${p.isTransaction ? 'rgba(53, 80, 228, 0.75)' : 'rgba(54, 167, 205, 0.25)'};
       }
     `
   }
@@ -85,7 +85,7 @@ const Corner = styled.svg`
   margin-right: 0;
   position: absolute;
   right: -1px;
-  stroke: ${p => p.color || p.theme.colors.main};
+  stroke: ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)};
   stroke-width: 1.5px;
   width: 10px;
 `;
@@ -133,7 +133,7 @@ const Button = (props) => {
         {props.children}
         {props.badge && <StyledBadge value={props.badge} />}
       </InnerContainer>
-      <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg" color={props.color}>
+      <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg" color={props.color} isTransaction={props.isTransaction}>
         <line x1="0" y1="10" x2="10" y2="0" />
       </Corner>
     </StyledButton>

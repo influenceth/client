@@ -20,6 +20,7 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { Address } from 'influence-utils';
 import { BsChevronRight as NextIcon } from 'react-icons/bs';
 import { RiVipDiamondFill as BonusIcon } from 'react-icons/ri';
+import LoadingIcon from 'react-spinners/PulseLoader';
 
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
@@ -55,14 +56,17 @@ import {
   RadiusIcon,
   ResourceGroupIcons,
   SemiMajorAxisIcon,
-  SurfaceAreaIcon
+  SurfaceAreaIcon,
+  WarningOutlineIcon
 } from '~/components/Icons';
 import { cleanupScene, renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
+import { categoryDefs, resourceDefs } from '../AsteroidDetails';
 import ResourceMix from './ResourceMix';
 import ResourceBonuses from './ResourceBonuses';
 import Dimensions from './Dimensions';
 import theme, { hexToRGB } from '~/theme';
 import AsteroidComposition from './Composition';
+import AsteroidGraphic from './AsteroidGraphic';
 
 // TODO: if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
@@ -410,63 +414,57 @@ const ResourceAction = styled.div`
   padding-right: 6px;
 `;
 
+const UnscannedWrapper = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
+`;
+const UnscannedContainer = styled.div`
+  max-width: 540px;
+  width: 100%;
+`;
+const UnscannedHeader = styled.div`
+  background: ${p => p.isOwner ? p.theme.colors.main : '#3d3d3d'};
+  color: ${p => p.isOwner ? 'black' : 'white'};
+  font-size: 20px;
+  line-height: 1.8em;
+  position: relative;
+  text-align: center;
+  text-transform: uppercase;
+  & > svg {
+    font-size: 24px;
+    left: 6px;
+    position: absolute;
+    top: 6px;
+  }
+`;
+const UnscannedBody = styled.div`
+  border: solid ${p => p.theme.colors.borderBottom};
+  border-width: 1px 0;
+  color: #ccc;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-top: 10px;
+  min-height: 150px;
+  padding: 25px 20px;
+  text-align: center;
+  & h3 {
+    margin: 0 0 12px;
+  }
+  & p {
+    margin: 0;
+  }
+  & b {
+    color: ${p => p.theme.colors.main};
+  }
+  & button {
+    margin: 20px auto 0;
+  }
+`;
 
-
-
-const resourceDefs = [
-  'Ammonia',
-  'Carbon Dioxide',
-  'Carbon Monoxide',
-  'Hydrogen',
-  'Methane',
-  'Nitrogen',
-  'Surfur Dioxide',
-  'Water',
-  'Bitumen',
-  'Calcite',
-  'Magnesite',
-  'Graphite',
-  'Rhabdite',
-  'Taenite',
-  'Troilite',
-  'Merrillite',
-  'Xenotime',
-  'Coffinite',
-  'Uranite'
-];
-
-const categoryDefs = {
-  'Volatiles': {
-    label: 'Volatiles',
-    resources: [0, 1, 2, 3, 4, 5, 6, 7,]
-  },
-  'Organic': {
-    label: 'Organic',
-    resources: [8, 9, 10]
-  },
-  'Metal': {
-    label: 'Metal',
-    resources: [11, 12, 13, 14]
-  },
-  'RareEarth': {
-    label: 'Rare-Earth',
-    resources: [15, 16]
-  },
-  'Fissile': {
-    label: 'Fissile',
-    resources: [17, 18]
-  },
-};
-
-// generate random abundances
-let remaining = 1;
-const abundances = resourceDefs.map(() => {
-  const abundance = remaining * (Math.random() / 7);
-  remaining -= abundance;
-  return abundance;
-});
-const extra = remaining / resourceDefs.length;
-abundances.forEach((a, i) => abundances[i] = a + extra);
 
 const spectralLabels = {
   c: 'Carbonaceous',
@@ -483,38 +481,17 @@ const BonusBar = ({ bonus }) => (
   </Bonus>
 );
 
-const ResourceDetails = ({ asteroid }) => {
-  const [frameloop, setFrameloop] = useState();
+const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
   const [selected, setSelected] = useState();
-  const [highlight, setHighlight] = useState();
-
-  const inputResourceGroups = useMemo(() => {
-    const x = [];
-    Object.keys(categoryDefs).map((k) => {
-      const { label, resources } = categoryDefs[k];
-      x.push({
-        category: k,
-        label,
-        resources: resources.map((resource) => ({ resource, abundance: abundances[resource] })).sort((a, b) => b.abundance - a.abundance),
-        abundance: resources.reduce((acc, i) => acc + abundances[i], 0),
-      });
-    });
-    x.sort((a, b) => b.abundance - a.abundance);
-    return x;
-  }, [abundances]);
-
-  console.log('inputResourceGroups', inputResourceGroups);
-
-  const onAnimationChange = (which) => {
-    setFrameloop(which ? 'always' : 'never');
-  };
+  const [hover, setHover] = useState();
 
   const handleClick = (categoryIndex) => () => {
-    setSelected(categoryIndex >= 0 ? inputResourceGroups[categoryIndex] : null);
+    setSelected(categoryIndex >= 0 ? abundances[categoryIndex] : null);
+    setHover(null);
   };
 
   const handleHover = (category, isHovering) => () => {
-    setHighlight(isHovering ? category : null);
+    setHover(isHovering ? category : null);
   };
 
   useEffect(() => ReactTooltip.rebuild(), [selected]);
@@ -532,12 +509,20 @@ const ResourceDetails = ({ asteroid }) => {
         </SpectralLegend>
         <GraphicSection>
           <GraphicWrapper>
+            <AsteroidGraphic
+              abundances={abundances}
+              asteroid={asteroid}
+              focus={selected?.category}
+              hover={hover}
+              noColor={!asteroid.scanned} />
+            {/* 
             <Graphic>
               <div>
                 <Canvas antialias frameloop={frameloop} outputEncoding={sRGBEncoding}>
                   <AsteroidComposition
                     asteroid={asteroid}
                     focus={selected?.category}
+                    grayscale
                     highlight={highlight}
                     inputResourceGroups={inputResourceGroups}
                     onAnimationChange={onAnimationChange} />
@@ -555,11 +540,57 @@ const ResourceDetails = ({ asteroid }) => {
                 </div>
               </GraphicData>
             </Graphic>
+            */}
           </GraphicWrapper>
         </GraphicSection>
       </LeftPane>
       <RightPane>
-        {selected && (
+        {!asteroid.scanned && (
+          <UnscannedWrapper>
+            {isOwner && (
+              <UnscannedContainer>
+                {asteroid.scanStatus === 'SCAN_READY' && (
+                  <UnscannedHeader isOwner>
+                    <WarningOutlineIcon />
+                    Un-Scanned Asteroid
+                  </UnscannedHeader>
+                )}
+                <UnscannedBody>
+                  {asteroid.scanStatus === 'UNSCANNED' && (
+                    <>
+                      <p><b>You own this asteroid.</b> Perform a scan to determine its final resource composition and bonuses.</p>
+                      <Button isTransaction>Start Scan</Button>
+                    </>
+                  )}
+                  {asteroid.scanStatus === 'SCANNING' && (
+                    <>
+                      <h3>SCANNING</h3>
+                      <LoadingIcon color="white" size={12} />
+                    </>
+                  )}
+                  {asteroid.scanStatus === 'SCAN_READY' && (
+                    <>
+                      <p>Asteroid scan is complete. Ready to finalize.</p>
+                      <Button isTransaction>Finalize</Button>
+                    </>
+                  )}
+                </UnscannedBody>
+              </UnscannedContainer>
+            )}
+            {!isOwner && (
+              <UnscannedContainer>
+                <UnscannedHeader>
+                  <WarningOutlineIcon />
+                  Un-Scanned Asteroid
+                </UnscannedHeader>
+                <UnscannedBody isOwner={isOwner}>
+                  You do not own this asteroid. The owner must complete a scan to determine its final resource composition and bonuses.
+                </UnscannedBody>
+              </UnscannedContainer>
+            )}
+          </UnscannedWrapper>
+        )}
+        {asteroid.scanned && selected && (
           <div>
             <SelectedCategoryTitle category={selected.category} onClick={handleClick(-1)}>
               <ResourceGroupIcon category={selected.category}>
@@ -596,12 +627,12 @@ const ResourceDetails = ({ asteroid }) => {
             </SectionBody>
           </div>
         )}
-        {!selected && (
+        {asteroid.scanned && !selected && (
           <>
             <div>
               <SectionHeader>Resource Groups</SectionHeader>
               <SectionBody>
-                {inputResourceGroups.map(({ category, label, resources, abundance }, i) => (
+                {abundances.map(({ category, label, resources, abundance }, i) => (
                   <ResourceGroup
                     key={category}
                     color={theme.colors.resources[category]}
@@ -613,7 +644,7 @@ const ResourceDetails = ({ asteroid }) => {
                     </ResourceGroupIcon>
                     <ResourceGroupLabel>
                       <label>{label}</label>
-                      <BarChart value={abundance} maxValue={inputResourceGroups[0].abundance}>
+                      <BarChart value={abundance} maxValue={abundances[0].abundance}>
                         <label>
                           {Math.round(abundance * 100).toFixed(1)}%
                         </label>
@@ -636,6 +667,8 @@ const ResourceDetails = ({ asteroid }) => {
                 ))}
               </SectionBody>
             </div>
+
+            {/* TODO: for L1-scanned asteroids, these bonuses will already be set even though "unscanned" */}
             <div>
               <SectionHeader>Yield Bonuses</SectionHeader>
               <SectionBody>
@@ -644,7 +677,7 @@ const ResourceDetails = ({ asteroid }) => {
                     <BonusBar bonus={1} />
                     <label>Overall Yield: +3%</label>
                   </BonusItem>
-                  {inputResourceGroups.map(({ category, label }) => (
+                  {abundances.map(({ category, label }) => (
                     <BonusItem key={category} category={category}>
                       <BonusBar bonus={1} />
                       <label>{label} Yield: +3%</label>
