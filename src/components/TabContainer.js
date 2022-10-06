@@ -93,6 +93,7 @@ const TabContainer = ({
   initialActive,
   labelCss,
   negativeTopMargin,
+  onChange,
   panes,
   tabs,
   tabCss
@@ -107,6 +108,7 @@ const TabContainer = ({
     } else {
       playSound('effects.click');
       setActive(i);
+      if (onChange) onChange(i);
     }
   }, [playSound, tabs]);
 

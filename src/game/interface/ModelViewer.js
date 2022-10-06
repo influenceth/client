@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box3, DirectionalLight, EquirectangularReflectionMapping, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
 // import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -7,6 +7,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { useFrame, useThree, Canvas } from '@react-three/fiber';
 import BarLoader from 'react-spinners/BarLoader';
+import ReactTooltip from 'react-tooltip';
 import styled, { css } from 'styled-components';
 
 import Button from '~/components/Button';
@@ -14,6 +15,7 @@ import Details from '~/components/DetailsFullsize';
 import Dropdown from '~/components/Dropdown';
 import NumberInput from '~/components/NumberInput';
 import useAssets from '~/hooks/useAssets';
+import { useLocation, useParams } from 'react-router-dom';
 
 // TODO: connect to gpu-graphics settings
 const ENABLE_SHADOWS = true;
@@ -302,8 +304,8 @@ const Skybox = ({ onLoaded, overrideBackground, overrideEnvironment }) => {
   useEffect(() => {
     let cleanupTextures = [];
 
-    let background = overrideBackground || 'textures/model-viewer/resource_skybox.hdr';
-    let env = overrideEnvironment || 'textures/model-viewer/resource_envmap.hdr';
+    let background = overrideBackground || '/textures/model-viewer/resource_skybox.hdr';
+    let env = overrideEnvironment || '/textures/model-viewer/resource_envmap.hdr';
 
     let waitingOn = background === env ? 1 : 2;
     new RGBELoader().load(background, function (texture) {
@@ -384,6 +386,8 @@ const Lighting = () => {
 const reader = new FileReader();
 const ModelViewer = (props) => {
   const { data: assets, isLoading: loadingAssets } = useAssets();
+  const { model: singleModel } = useParams();
+  const { search } = useLocation();
 
   const [devtoolsEnabled, setDevtoolsEnabled] = useState();
   const [model, setModel] = useState();
@@ -466,16 +470,27 @@ const ModelViewer = (props) => {
   const [bucketModels, setBucketModels] = useState();
   useEffect(() => {
     if (!!assets) {
+      if (singleModel) {
+        const asset = assets.find((a) => a.label === singleModel);
+        if (asset) {
+          setModel(asset);
+          return;
+        }
+      }
+      
+      // this is default if no singleModel or can't find singleModel
       const bucketSet = new Set(assets.map((a) => a.bucket));
       const bucketArr = Array.from(bucketSet).sort();
       setBuckets(bucketArr);
     }
-  }, [!!assets]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [!!assets, singleModel]); // eslint-disable-line react-hooks/exhaustive-deps
+  
   useEffect(() => {
     if (!!buckets) {
       setBucket(buckets[0]);
     }
   }, [!!buckets]); // eslint-disable-line react-hooks/exhaustive-deps
+  
   useEffect(() => {
     if (!!assets && bucket) {
       const bAssets = assets
@@ -498,12 +513,19 @@ const ModelViewer = (props) => {
     }
   }, []);
 
+  // useEffect(() => ReactTooltip.rebuild(), []);
+
+  const onCloseDestination = useMemo(() => new URLSearchParams(search).get('back'), [search]);
+
   const isLoading = loadingAssets || loadingModel || loadingSkybox;
   return (
-    <Details edgeToEdge title="Resource Details">
+    <Details
+      edgeToEdge
+      onCloseDestination={onCloseDestination}
+      title={singleModel ? `${model?.bucket} — ${model?.label}` : `Resource Details`}>
       <BarLoader color="#AAA" height={3} loading={isLoading} css={loadingCss} />
 
-      {buckets && bucketModels && (
+      {!singleModel && buckets && bucketModels && (
         <Dropdowns>
           <Dropdown
             disabled={isLoading}

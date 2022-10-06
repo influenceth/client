@@ -61,7 +61,7 @@ const theme = {
       Metal: '#f8852c',
       Organic: '#68d346',
       RareEarth: '#f63637',
-      Volatiles: '#5bc0f5',
+      Volatile: '#5bc0f5',
     },
     classes: {
       Pilot: purple,

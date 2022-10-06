@@ -1,15 +1,15 @@
 import { useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import { css } from 'styled-components';
-import { Address } from 'influence-utils';
-
-import useAsteroid from '~/hooks/useAsteroid';
-import useAuth from '~/hooks/useAuth';
-import useStore from '~/hooks/useStore';
+import { Address, RESOURCES, toResources } from 'influence-utils';
 
 import Details from '~/components/DetailsModal';
 import { InfoIcon, CompositionIcon } from '~/components/Icons';
 import TabContainer from '~/components/TabContainer';
+import useAssets from '~/hooks/useAssets';
+import useAsteroid from '~/hooks/useAsteroid';
+import useAuth from '~/hooks/useAuth';
+import useStore from '~/hooks/useStore';
 import AsteroidInformation from './asteroidDetails/Information';
 import AsteroidResources from './asteroidDetails/Resources';
 
@@ -31,71 +31,16 @@ const tabContainerCss = css`
   }
 `;
 
-
-export const resourceDefs = [
-  'Ammonia',
-  'Carbon Dioxide',
-  'Carbon Monoxide',
-  'Hydrogen',
-  'Methane',
-  'Nitrogen',
-  'Surfur Dioxide',
-  'Water',
-  'Bitumen',
-  'Calcite',
-  'Magnesite',
-  'Graphite',
-  'Rhabdite',
-  'Taenite',
-  'Troilite',
-  'Merrillite',
-  'Xenotime',
-  'Coffinite',
-  'Uranite'
-];
-
-export const categoryDefs = {
-  'Volatiles': {
-    label: 'Volatiles',
-    resources: [0, 1, 2, 3, 4, 5, 6, 7,]
-  },
-  'Organic': {
-    label: 'Organic',
-    resources: [8, 9, 10]
-  },
-  'Metal': {
-    label: 'Metal',
-    resources: [11, 12, 13, 14]
-  },
-  'RareEarth': {
-    label: 'Rare-Earth',
-    resources: [15, 16]
-  },
-  'Fissile': {
-    label: 'Fissile',
-    resources: [17, 18]
-  },
-};
-
-// generate random abundances
-let remaining = 1;
-let abundances = resourceDefs.map(() => {
-  const abundance = remaining * (Math.random() / 7);
-  remaining -= abundance;
-  return abundance;
-});
-const extra = remaining / resourceDefs.length;
-abundances.forEach((a, i) => abundances[i] = a + extra);
-// abundances = [];
-
+// TODO: RESOURCES are one-indexed
+const resourceDefs = Object.values(RESOURCES);
 
 // TODO (enhancement): would be nice if at least the asteroid render was shared between the tabs
-
-
 const AsteroidDetails = (props) => {
   const { account } = useAuth();
+  const history = useHistory();
   const { i, tab } = useParams();
   const { data: asteroid } = useAsteroid(Number(i));
+  const { data: assets } = useAssets();
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
 
   // Force the asteroid to load into the origin if coming direct from URL
@@ -105,27 +50,76 @@ const AsteroidDetails = (props) => {
 
   const isOwner = account && asteroid?.owner && Address.areEqual(account, asteroid.owner);
 
-  // TODO: this is mock data
-  if (asteroid && abundances.length > 0) {
-    asteroid.scanned = true;
-  }
+  // TODO: remove this mock data vvv
+  useEffect(() => {
+    if (asteroid && true) {
+      asteroid.scanned = true;
+  
+      let remaining = 1;
+      asteroid.abundances = resourceDefs.map(() => {
+        const abundance = remaining * (Math.random() / 7);
+        remaining -= abundance;
+        return abundance;
+      });
+      const extra = remaining / resourceDefs.length;
+      asteroid.abundances.forEach((a, i) => asteroid.abundances[i] += extra);
+    }
+    // if (asteroid) {
+    //   asteroid.scanned = false;
+    //   asteroid.scanStatus = 'SCANNING';
+    // }
+  }, [asteroid]);
+  // ^^^
 
   const groupAbundances = useMemo(() => {
-    if (asteroid?.scanned) {
-      return Object.keys(categoryDefs)
-        .map((k) => {
-          const { label, resources } = categoryDefs[k];
-          return {
-            category: k,
-            label,
-            resources: resources.map((resource) => ({ resource, abundance: abundances[resource] || 0 })).sort((a, b) => b.abundance - a.abundance),
-            abundance: resources.reduce((acc, i) => acc + (abundances[i] || 0), 0),
-          };
-        })
+    if (assets?.length > 0 && asteroid?.scanned) {
+      const asteroidAbundances = toResources(asteroid.abundances || []);
+
+      const categories = {};
+      assets
+        .map((a) => ({
+          ...a,
+          i: resourceDefs.findIndex((r) => r.name === a.label) + 1
+        }))
+        .filter((a) => a.i > 0)
+        .forEach((a) => {
+          if (!categories[a.bucket]) {
+            categories[a.bucket] = {
+              category: a.bucket.replace(/[^a-zA-Z]/g, ''),
+              label: a.bucket,
+              resources: [],
+              abundance: 0
+            };
+          }
+          categories[a.bucket].abundance += asteroidAbundances[a.label];
+          categories[a.bucket].resources.push({
+            i: a.i,
+            label: a.label,
+            bucket: a.bucket,
+            iconUrl: a.iconUrl,
+            abundance: asteroidAbundances[a.label],
+          });
+        });
+      console.log('assets', resourceDefs.length, categories);
+
+      // sort resources in each category and sort each category
+      return Object.values(categories)
+        .map((category) => ({
+          ...category,
+          resources: category.resources.sort((a, b) => b.abundance - a.abundance)
+        }))
         .sort((a, b) => b.abundance - a.abundance);
     }
     return [];
-  }, [asteroid?.scanned]);
+  }, [!!assets, asteroid?.scanned, asteroid?.abundances]);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onTabChange = (tabIndex) => {
+    if (tabIndex === 1) {
+      history.replace(`/asteroids/${asteroid.i}/resources`);
+    } else {
+      history.replace(`/asteroids/${asteroid.i}`);
+    }
+  };
 
   return (
     <Details
@@ -135,6 +129,7 @@ const AsteroidDetails = (props) => {
         <TabContainer
           containerCss={tabContainerCss}
           initialActive={tab === 'resources' ? 1 : 0}
+          onChange={onTabChange}
           tabCss={{ textTransform: 'uppercase', width: '200px' }}
           tabs={[
             {

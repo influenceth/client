@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import utils from 'influence-utils';
@@ -12,9 +12,9 @@ import {
   ResourceGroupIcons,
   WarningOutlineIcon
 } from '~/components/Icons';
-import { resourceDefs } from '../AsteroidDetails';
 import theme, { hexToRGB } from '~/theme';
 import AsteroidGraphic from './AsteroidGraphic';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 
 // TODO: if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
@@ -196,6 +196,8 @@ const ResourceGroupItems = styled.div`
     margin-top: 3px;
     white-space: nowrap;
     & > div {
+      background-position: center center;
+      background-size: contain;
       border: 1px solid ${p => p.theme.colors.borderBottom};
       height: 24px;
       display: inline-block;
@@ -294,17 +296,31 @@ const SelectedCategoryTitle = styled.div`
   }
 `;
 
-const ResourceRow = styled.div`
-  align-items: center;
-  color: ${p => p.theme.colors.resources[p.category]};
-  display: flex;
-  flex-direction: row;
-  margin-bottom: 15px;
-`;
 const ResourceIcon = styled.div`
+  background-color: black;
+  background-position: center center;
+  background-size: contain;
   border: 1px solid ${p => p.theme.colors.borderBottomAlt};
   height: 85px;
   width: 85px;
+  transition: border-color 250ms ease;
+`;
+const ResourceRow = styled.div`
+  align-items: center;
+  background-color: transparent;
+  color: ${p => p.theme.colors.resources[p.category]};
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  flex-direction: row;
+  margin-left: -8px;
+  padding: 8px;
+  transition: background-color 250ms ease;
+  &:hover {
+    background-color: rgba(${p => hexToRGB(p.theme.colors.resources[p.category])}, 0.2);
+    & ${ResourceIcon} {
+      border-color: rgba(${p => hexToRGB(p.theme.colors.resources[p.category])}, 0.6);
+    }
+  }
 `;
 const ResourceInfo = styled.div`
   flex: 1;
@@ -389,19 +405,45 @@ const BonusBar = ({ bonus }) => (
 );
 
 const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
+  const history = useHistory();
+  const { category: initialCategory } = useParams();
+
   const [selected, setSelected] = useState();
   const [hover, setHover] = useState();
 
-  const handleClick = (categoryIndex) => () => {
-    setSelected(categoryIndex >= 0 ? abundances[categoryIndex] : null);
+  const handleClick = useCallback((categoryIndex) => () => {
+    const toBeSelected = categoryIndex >= 0 ? abundances[categoryIndex] : null;
+    setSelected(toBeSelected);
     setHover(null);
-  };
 
-  const handleHover = (category, isHovering) => () => {
+    history.replace(`/asteroids/${asteroid.i}/resources${toBeSelected ? `/${toBeSelected.category}` : ``}`);
+  }, []);
+
+  const handleHover = useCallback((category, isHovering) => () => {
     setHover(isHovering ? category : null);
-  };
+  }, []);
 
   useEffect(() => ReactTooltip.rebuild(), [selected]);
+
+  const goToModelViewer = useCallback((resource) => (e) => {
+    e.stopPropagation();
+    ReactTooltip.hide();
+    history.push(`/model-viewer/${resource.label}?back=${encodeURIComponent(history.location.pathname)}`)
+    return false;
+  }, []);
+
+  const goToResourceMap = useCallback((resource) => () => {
+    
+  }, []);
+
+  useEffect(() => {
+    if (abundances?.length > 0 && initialCategory) {
+      const a = abundances.find((a) => a.category === initialCategory);
+      if (a) {
+        setSelected(a);
+      }
+    }
+  }, [abundances?.length, initialCategory]);
 
   return (
     <Wrapper>
@@ -419,35 +461,10 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             <AsteroidGraphic
               abundances={abundances}
               asteroid={asteroid}
+              defaultLastRow={utils.toRarity(asteroid.bonuses)}
               focus={selected?.category}
               hover={hover}
               noColor={!asteroid.scanned} />
-            {/* 
-            <Graphic>
-              <div>
-                <Canvas antialias frameloop={frameloop} outputEncoding={sRGBEncoding}>
-                  <AsteroidComposition
-                    asteroid={asteroid}
-                    focus={selected?.category}
-                    grayscale
-                    highlight={highlight}
-                    inputResourceGroups={inputResourceGroups}
-                    onAnimationChange={onAnimationChange} />
-                </Canvas>
-              </div>
-              <GraphicData>
-                <div>
-                  {utils.toSize(asteroid.radius)}
-                </div>
-                <AsteroidType>
-                  {utils.toSpectralType(asteroid.spectralType).toUpperCase()}-type
-                </AsteroidType>
-                <div style={{ color: 'white' }}>
-                  {utils.toRarity(asteroid.bonuses)}
-                </div>
-              </GraphicData>
-            </Graphic>
-            */}
           </GraphicWrapper>
         </GraphicSection>
       </LeftPane>
@@ -508,24 +525,22 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             <SectionBody style={{ overflowY: 'auto', paddingLeft: 65 }}>
               <BonusItem category={selected.category} style={{ marginBottom: 15, padding: 0 }}>
                 <BonusBar bonus={1} />
-                <label>Bonus Yield: +3%</label>
+                <label>Bonus Yield: +3%</label>{/* TODO: ... */}
               </BonusItem>
-              {selected.resources.map(({ resource, abundance }, i) => (
-                <ResourceRow key={resource} category={selected.category}>
-                  <ResourceIcon>
-
-                  </ResourceIcon>
+              {selected.resources.map((resource) => (
+                <ResourceRow key={resource.label} category={selected.category} onClick={goToModelViewer(resource)}>
+                  <ResourceIcon style={{ backgroundImage: `url(${resource.iconUrl})` }} />
                   <ResourceInfo>
-                    <label>{resourceDefs[resource]}</label> 
-                    <BarChart value={abundance} maxValue={selected.resources[0].abundance} twoLine>
+                    <label>{resource.label}</label> 
+                    <BarChart value={resource.abundance} maxValue={selected.resources[0].abundance} twoLine>
                       <label>
-                        {(abundance * 100).toFixed(1)}%
+                        {(resource.abundance * 100).toFixed(1)}%
                       </label>
                       <div />
                     </BarChart>
                   </ResourceInfo>
                   <ResourceAction>
-                    <ButtonPill>
+                    <ButtonPill onClick={goToResourceMap(resource)}>
                       Resource Map
                     </ButtonPill>
                   </ResourceAction>
@@ -561,9 +576,14 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                     <ResourceGroupItems>
                       <label>{resources.length} Resources</label>
                       <div>
-                        {/* TODO: will be thumbnail */}
-                        {resources.map(({ resource }) => (
-                          <div key={resource} data-place="left" data-tip={resourceDefs[resource]} data-for="global" />
+                        {resources.map((resource) => (
+                          <div
+                            key={resource.label}
+                            data-place="left"
+                            data-tip={resource.label}
+                            data-for="global"
+                            onClick={goToModelViewer(resource)}
+                            style={{ backgroundImage: `url(${resource.iconUrl})` }} />
                         ))}
                       </div>
                     </ResourceGroupItems>
@@ -576,6 +596,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             </div>
 
             {/* TODO: for L1-scanned asteroids, these bonuses will already be set even though "unscanned" */}
+            {/* TODO: use real values */}
             <div>
               <SectionHeader>Yield Bonuses</SectionHeader>
               <SectionBody>

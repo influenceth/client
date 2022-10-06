@@ -111,7 +111,7 @@ const Interface = () => {
           <Route exact path="/asteroids">
             <AsteroidsTable />
           </Route>
-          <Route path="/model-viewer">
+          <Route path="/model-viewer/:model?">
             <ModelViewer />
           </Route>
           <Route path="/crew/:i(\d+)">
@@ -135,7 +135,7 @@ const Interface = () => {
 
       <Switch>
         <Redirect from="/:i(\d+)" to="/asteroids/:i" />
-        <Route path="/asteroids/:i(\d+)/:tab?">
+        <Route path="/asteroids/:i(\d+)/:tab?/:category?">
           <AsteroidDetails />
         </Route>
         <Route path="/owned-crew">

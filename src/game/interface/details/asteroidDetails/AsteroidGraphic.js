@@ -86,7 +86,7 @@ const LastRow = styled.div`
   }
 `;
 
-const AsteroidGraphic = ({ asteroid, ...compositionProps }) => {
+const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
   const webWorkerPool = useWebWorker();
 
   const saleIsActive = useStore(s => s.sale);
@@ -137,7 +137,7 @@ const AsteroidGraphic = ({ asteroid, ...compositionProps }) => {
         </AsteroidName>
         {asteroid.scanned && (
           <LastRow style={{ color: 'white' }}>
-            {Number(Math.floor(4 * Math.PI * Math.pow(asteroid.radius / 1000, 2))).toLocaleString()} lots
+            {defaultLastRow || `${Number(Math.floor(4 * Math.PI * Math.pow(asteroid.radius / 1000, 2))).toLocaleString()} lots`}
           </LastRow>
         )}
         {!asteroid.scanned && asteroid.scanStatus === 'SCANNING' && (
