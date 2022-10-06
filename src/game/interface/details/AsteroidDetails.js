@@ -100,7 +100,6 @@ const AsteroidDetails = (props) => {
             abundance: asteroidAbundances[a.label],
           });
         });
-      console.log('assets', resourceDefs.length, categories);
 
       // sort resources in each category and sort each category
       return Object.values(categories)
