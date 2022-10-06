@@ -13,7 +13,7 @@ import {
   WarningOutlineIcon
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
-import AsteroidGraphic from './AsteroidGraphic';
+import AsteroidGraphic from './components/AsteroidGraphic';
 import { useHistory, useParams } from 'react-router-dom';
 
 // TODO: if these stay the same, then should just export from Information or extract to shared component vvv
@@ -596,7 +596,33 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             </div>
 
             {/* TODO: for L1-scanned asteroids, these bonuses will already be set even though "unscanned" */}
-            {/* TODO: use real values */}
+            {/* TODO: use real values -- below was old method:
+              {utils.BONUS_MAPS.map(b => {
+                let bonus = b.base;
+                const hasResourceType = b.spectralTypes.includes(asteroid.spectralType);
+
+                if (hasResourceType) {
+                  const found = asteroid.bonuses.find(f => f.type === b.base.type);
+                  if (found) bonus = found;
+                }
+
+                return (
+                  <Bonus key={b.base.type}>
+                    <BonusBars visible={hasResourceType}>
+                      <BonusBar shown={bonus.level >= 3} level={bonus.level} />
+                      <BonusBar shown={bonus.level >= 2} level={bonus.level} />
+                      <BonusBar shown={bonus.level >= 1} level={bonus.level} />
+                    </BonusBars>
+                    <StyledBonusBadge visible={hasResourceType} bonus={bonus} />
+                    <BonusDesc>
+                      <span>{resourceNames[bonus.type]}</span>
+                      {hasResourceType && <span>{`+${bonus.modifier}%`}</span>}
+                      {!hasResourceType && <span>Not present</span>}
+                    </BonusDesc>
+                  </Bonus>
+                );
+              })}
+            */}
             <div>
               <SectionHeader>Yield Bonuses</SectionHeader>
               <SectionBody>

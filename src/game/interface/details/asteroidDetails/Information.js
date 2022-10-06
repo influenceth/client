@@ -32,7 +32,7 @@ import {
   SurfaceAreaIcon
 } from '~/components/Icons';
 import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
-import AsteroidGraphic from './AsteroidGraphic';
+import AsteroidGraphic from './components/AsteroidGraphic';
 
 const paneStackBreakpoint = 720;
 
