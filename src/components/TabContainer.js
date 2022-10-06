@@ -110,7 +110,7 @@ const TabContainer = ({
       setActive(i);
       if (onChange) onChange(i);
     }
-  }, [playSound, tabs]);
+  }, [playSound, tabs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const tabHeight = containerHeight || '40px';
   return (

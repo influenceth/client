@@ -7,7 +7,6 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { useFrame, useThree, Canvas } from '@react-three/fiber';
 import BarLoader from 'react-spinners/BarLoader';
-import ReactTooltip from 'react-tooltip';
 import styled, { css } from 'styled-components';
 
 import Button from '~/components/Button';
@@ -512,8 +511,6 @@ const ModelViewer = (props) => {
       document.removeEventListener('keydown', onKeydown);
     }
   }, []);
-
-  // useEffect(() => ReactTooltip.rebuild(), []);
 
   const onCloseDestination = useMemo(() => new URLSearchParams(search).get('back'), [search]);
 

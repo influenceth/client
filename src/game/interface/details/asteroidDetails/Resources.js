@@ -14,7 +14,7 @@ import {
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import AsteroidGraphic from './AsteroidGraphic';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 
 // TODO: if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
@@ -417,20 +417,18 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     setHover(null);
 
     history.replace(`/asteroids/${asteroid.i}/resources${toBeSelected ? `/${toBeSelected.category}` : ``}`);
-  }, []);
+  }, [abundances, asteroid.i]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleHover = useCallback((category, isHovering) => () => {
     setHover(isHovering ? category : null);
   }, []);
-
-  useEffect(() => ReactTooltip.rebuild(), [selected]);
 
   const goToModelViewer = useCallback((resource) => (e) => {
     e.stopPropagation();
     ReactTooltip.hide();
     history.push(`/model-viewer/${resource.label}?back=${encodeURIComponent(history.location.pathname)}`)
     return false;
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const goToResourceMap = useCallback((resource) => () => {
     
@@ -443,7 +441,9 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
         setSelected(a);
       }
     }
-  }, [abundances?.length, initialCategory]);
+  }, [abundances?.length, initialCategory]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => ReactTooltip.rebuild(), [selected]);
 
   return (
     <Wrapper>
