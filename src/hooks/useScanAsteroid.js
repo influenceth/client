@@ -6,10 +6,22 @@ const useScanAsteroid = (asteroid) => {
   const { execute, getStatus } = useContext(ChainTransactionContext);
 
   const i = asteroid ? Number(asteroid.i) : null;
+  
+  const startScanPayload = useMemo(() => {
+    if (asteroid) {
+      return {
+        i,
+        boost: asteroid.boost,
+        _packed: asteroid._packed,
+        _proofs: asteroid._proofs
+      };
+    }
+    return null;
+  }, [asteroid, i]);
 
   const startAsteroidScan = useCallback(
-    () => execute('START_ASTEROID_SCAN', { i }),
-    [execute, i]
+    () => execute('START_ASTEROID_SCAN', startScanPayload),
+    [execute, startScanPayload]
   );
 
   const finalizeAsteroidScan = useCallback(
@@ -18,8 +30,8 @@ const useScanAsteroid = (asteroid) => {
   );
 
   const startingScan = useMemo(
-    () => getStatus('START_ASTEROID_SCAN', { i }),
-    [getStatus, i]
+    () => getStatus('START_ASTEROID_SCAN', startScanPayload),
+    [getStatus, startScanPayload]
   );
 
   const finalizingScan = useMemo(

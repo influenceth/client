@@ -908,7 +908,7 @@ const CrewAssignmentCreate = (props) => {
           body={(
             <PromptBody>
               The Crewmate you are about to create will be minted as a new unique
-              Non-fungible Token (NFT)! Once minted, the character can never be deleted
+              Player-Owned Game Asset (POGA)! Once minted, the character can never be deleted
               or unmade, and is yours to keep or trade forever. All of their stats,
               actions, skills, and attributes will be appended to their unique history
               and stored as independent on-chain events.

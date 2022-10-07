@@ -27,8 +27,8 @@ export const cleanupScene = (scene) => {
         for (const material of object.material) cleanupMaterial(material);
       }
     }
-    scene.remove(object);
   });
+  scene.children.forEach((c) => scene.remove(c));
 }
 
 export const renderDummyAsteroid = (asteroid, resolution, webWorkerPool, callback) => {

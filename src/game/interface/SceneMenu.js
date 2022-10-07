@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import utils, { Address } from 'influence-utils';
@@ -95,9 +96,25 @@ const SceneMenu = (props) => {
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const history = useHistory();
 
+  const [activeTab, setActiveTab] = useState(0);
+
   const { data: asteroid } = useAsteroid(origin);
 
   // TODO: back button
+
+  const onSetTab = (tabIndex) => {
+    if (tabIndex === 0) {
+      setActiveTab(0);
+      history.push(`/asteroids/${asteroid.i}`);
+    } else if (tabIndex === 1) {
+      if (asteroid.scanned) {
+        setActiveTab(1);
+        // TODO: heatmaps
+      } else {
+        history.push(`/asteroids/${asteroid.i}/resources`);
+      }
+    }
+  };
 
   if (!asteroid) return null;
   return (
@@ -110,31 +127,38 @@ const SceneMenu = (props) => {
         <TabContainer
           containerHeight={'50px'}
           containerCss={{ color: '#777' }}
+          controller={{
+            active: activeTab,
+            setActive: onSetTab
+          }}
           tabCss={{ fontSize: '15px', width: '50%' }}
           tabs={[
             {
               icon: <InfoIcon />,
               label: 'Asteroid Details',
-              onClick: () => history.push(`/asteroids/${asteroid.i}`)
             },
             {
               icon: <CompositionIcon />,
               label: 'Resource Map',
-              onClick: () => history.push(`/asteroids/${asteroid.i}/resources`)
             }
           ]}
         />
-        {asteroid.scanWindowStatus !== 'AFTER' && asteroid.owner && account && Address.areEqual(asteroid.owner, account) && (
+        {!asteroid.scanned && asteroid.owner && account && Address.areEqual(asteroid.owner, account) && (
           <ExtraInfo>
             <b>You own this asteroid.</b> Scan it to determine its<br/>
             final resource composition and bonuses.
 
             <Button
-              onClick={() => history.push(`/asteroids/${asteroid.i}`)}
+              onClick={() => history.push(`/asteroids/${asteroid.i}/resources`)}
               style={{ marginTop: 10 }}>
               Scan Asteroid
             </Button>
           </ExtraInfo>
+        )}
+
+        {/* TODO: grow to show */}
+        {asteroid.scanned && activeTab === 1 && (
+          <div>TODO</div>
         )}
       </Pane>
     </>

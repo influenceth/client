@@ -13,11 +13,6 @@ const getInvalidations = (asset, event, data) => {
   try {
     const map = {
       Asteroid: {
-        AsteroidScanned: [
-          ['asteroids', data.asteroidId],
-          ['asteroids', 'search'],
-          ['watchlist']
-        ],
         AsteroidUsed: [
           ['asteroids', 'mintableCrew'],
         ],
@@ -27,8 +22,13 @@ const getInvalidations = (asset, event, data) => {
           ['events'], // (to update name in already-fetched events)
           ['watchlist']
         ],
-        ScanStarted: [
+        Asteroid_ScanStarted: [
           ['asteroids', data.asteroidId],
+        ],
+        Asteroid_ScanFinished: [
+          ['asteroids', data.asteroidId],
+          ['asteroids', 'search'],
+          ['watchlist']
         ],
         Transfer: [
           ['asteroids', data.asteroidId],
@@ -111,7 +111,7 @@ export function EventsProvider({ children }) {
       }
 
       const newEvents = eventsQuery.data.events.slice().concat(events);
-      setEvents(uniq(newEvents, (x) => `${x.transactionHash}.${x.logIndex}.${x.i}`));
+      setEvents(uniq(newEvents, '_id'));
 
       const latestEvent = newEvents.sort((a, b) => b.timestamp - a.timestamp)[0];
       setLatest(latestEvent?.timestamp ? latestEvent.timestamp + 1 : 0);

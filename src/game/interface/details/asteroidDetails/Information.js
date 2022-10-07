@@ -363,7 +363,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                   {asteroid.events.length > 0
                     ? asteroid.events.map(e => (
                       <LogEntry
-                        key={`${e.transactionHash}_${e.logIndex}`}
+                        key={e._id}
                         css={{ fontSize: '13px', fontWeight: 'bold', padding: '6px 4px' }}
                         data={{ ...e, i: asteroid.i }}
                         timestampBreakpoint="1400px"

@@ -109,19 +109,26 @@ const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
   return (
     <Graphic>
       <OpacityContainer ready={ready ? 1 : 0}>
-        <Canvas
-          antialias
-          frameloop={asteroid.scanStatus === 'SCANNING' ? 'always' : frameloop}
-          outputEncoding={sRGBEncoding}>
-          {asteroid.scanStatus === 'SCANNING'
-            ? <AsteroidSpinner />
-            : <AsteroidComposition
-                asteroid={asteroid}
-                onAnimationChange={onAnimationChange}
-                ready={delayedReady ? 1 : 0}
-                {...compositionProps} />
-          }
-        </Canvas>
+        {asteroid.scanStatus === 'SCANNING' && (
+          <Canvas
+            antialias
+            frameloop="always"
+            outputEncoding={sRGBEncoding}>
+            <AsteroidSpinner />
+          </Canvas>
+        )}
+        {asteroid.scanStatus !== 'SCANNING' && (
+          <Canvas
+            antialias
+            frameloop={frameloop}
+            outputEncoding={sRGBEncoding}>
+            <AsteroidComposition
+              asteroid={asteroid}
+              onAnimationChange={onAnimationChange}
+              ready={delayedReady ? 1 : 0}
+              {...compositionProps} />
+          </Canvas>
+        )}
       </OpacityContainer>
       <OpacityContainer ready={ready ? 1 : 0}>
         <Canvas antialias frameloop="never" style={{ width: '100%', height: '100%' }}>

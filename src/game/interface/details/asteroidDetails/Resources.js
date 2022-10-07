@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import utils from 'influence-utils';
@@ -12,9 +13,10 @@ import {
   ResourceGroupIcons,
   WarningOutlineIcon
 } from '~/components/Icons';
+import useAsteroid from '~/hooks/useAsteroid';
+import useScanAsteroid from '~/hooks/useScanAsteroid';
 import theme, { hexToRGB } from '~/theme';
 import AsteroidGraphic from './components/AsteroidGraphic';
-import { useHistory, useParams } from 'react-router-dom';
 
 // TODO: if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
@@ -388,12 +390,20 @@ const UnscannedBody = styled.div`
   }
 `;
 
-
 const spectralLabels = {
   c: 'Carbonaceous',
   i: 'Icy',
   s: 'Silicaceous',
   m: 'Metallic'
+};
+
+const bonusLabels = {
+  yield: 'Overall',
+  fissile: 'Fissile',
+  metal: 'Metal',
+  organic: 'Organic',
+  rareearth: 'Rare-Earth',
+  volatile: 'Volatile',
 };
 
 const BonusBar = ({ bonus }) => (
@@ -404,7 +414,22 @@ const BonusBar = ({ bonus }) => (
   </Bonus>
 );
 
+const StartScanButton = ({ i }) => {
+  const { data: extendedAsteroid, isLoading } = useAsteroid(Number(i), true);
+  const { startAsteroidScan } = useScanAsteroid(extendedAsteroid);
+  return (
+    <Button
+      disabled={!extendedAsteroid}
+      loading={isLoading}
+      onClick={startAsteroidScan}
+      isTransaction>
+      Start Scan
+    </Button>
+  );
+};
+
 const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
+  const { finalizeAsteroidScan, scanStatus } = useScanAsteroid(asteroid);
   const history = useHistory();
   const { category: initialCategory } = useParams();
 
@@ -431,8 +456,10 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const goToResourceMap = useCallback((resource) => () => {
-    
+    // TODO: ...
   }, []);
+
+  const nonzeroBonuses = useMemo(() => (asteroid?.bonuses || []).filter((b) => b.level > 0), [asteroid?.bonuses]);
 
   useEffect(() => {
     if (abundances?.length > 0 && initialCategory) {
@@ -460,7 +487,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
           <GraphicWrapper>
             <AsteroidGraphic
               abundances={abundances}
-              asteroid={asteroid}
+              asteroid={{ ...asteroid, scanStatus }}
               defaultLastRow={utils.toRarity(asteroid.bonuses)}
               focus={selected?.category}
               hover={hover}
@@ -473,29 +500,35 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
           <UnscannedWrapper>
             {isOwner && (
               <UnscannedContainer>
-                {asteroid.scanStatus === 'SCAN_READY' && (
+                {scanStatus === 'SCAN_READY' && (
                   <UnscannedHeader isOwner>
                     <WarningOutlineIcon />
                     Un-Scanned Asteroid
                   </UnscannedHeader>
                 )}
                 <UnscannedBody>
-                  {asteroid.scanStatus === 'UNSCANNED' && (
+                  {scanStatus === 'UNSCANNED' && (
                     <>
                       <p><b>You own this asteroid.</b> Perform a scan to determine its final resource composition and bonuses.</p>
-                      <Button isTransaction>Start Scan</Button>
+                      <StartScanButton i={asteroid?.i} />
                     </>
                   )}
-                  {asteroid.scanStatus === 'SCANNING' && (
+                  {scanStatus === 'SCANNING' && (
                     <>
                       <h3>SCANNING</h3>
                       <LoadingIcon color="white" size={12} />
                     </>
                   )}
-                  {asteroid.scanStatus === 'SCAN_READY' && (
+                  {(scanStatus === 'SCAN_READY' || scanStatus === 'RETRIEVING') && (
                     <>
                       <p>Asteroid scan is complete. Ready to finalize.</p>
-                      <Button isTransaction>Finalize</Button>
+                      <Button
+                        disabled={scanStatus === 'RETRIEVING'}
+                        loading={scanStatus === 'RETRIEVING'}
+                        onClick={finalizeAsteroidScan}
+                        isTransaction>
+                        Finalize
+                      </Button>
                     </>
                   )}
                 </UnscannedBody>
@@ -514,19 +547,21 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             )}
           </UnscannedWrapper>
         )}
-        {asteroid.scanned && selected && (
+        {selected && (
           <div>
             <SelectedCategoryTitle category={selected.category} onClick={handleClick(-1)}>
-              <ResourceGroupIcon category={selected.category}>
+              <ResourceGroupIcon category={selected.category}>{/* TODO: resize icons */}
                 {ResourceGroupIcons[selected.category.toLowerCase()]}
               </ResourceGroupIcon>
               {selected.label}
             </SelectedCategoryTitle>
             <SectionBody style={{ overflowY: 'auto', paddingLeft: 65 }}>
-              <BonusItem category={selected.category} style={{ marginBottom: 15, padding: 0 }}>
-                <BonusBar bonus={1} />
-                <label>Bonus Yield: +3%</label>{/* TODO: ... */}
-              </BonusItem>
+              {selected.bonus && (
+                <BonusItem category={selected.category} style={{ marginBottom: 15, padding: 0 }}>
+                  <BonusBar bonus={selected.bonus.level} />
+                  <label>Bonus Yield: +{selected.bonus.modifier}%</label>
+                </BonusItem>
+              )}
               {selected.resources.map((resource) => (
                 <ResourceRow key={resource.label} category={selected.category} onClick={goToModelViewer(resource)}>
                   <ResourceIcon style={{ backgroundImage: `url(${resource.iconUrl})` }} />
@@ -549,97 +584,70 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             </SectionBody>
           </div>
         )}
-        {asteroid.scanned && !selected && (
+        {!selected && (
           <>
-            <div>
-              <SectionHeader>Resource Groups</SectionHeader>
-              <SectionBody>
-                {abundances.map(({ category, label, resources, abundance }, i) => (
-                  <ResourceGroup
-                    key={category}
-                    color={theme.colors.resources[category]}
-                    onClick={handleClick(i)}
-                    onMouseEnter={handleHover(category, true)}
-                    onMouseLeave={handleHover(category, false)}>
-                    <ResourceGroupIcon category={category}>
-                      {ResourceGroupIcons[category.toLowerCase()]}
-                    </ResourceGroupIcon>
-                    <ResourceGroupLabel>
-                      <label>{label}</label>
-                      <BarChart value={abundance} maxValue={abundances[0].abundance}>
-                        <label>
-                          {Math.round(abundance * 100).toFixed(1)}%
-                        </label>
-                        <div />
-                      </BarChart>
-                    </ResourceGroupLabel>
-                    <ResourceGroupItems>
-                      <label>{resources.length} Resources</label>
-                      <div>
-                        {resources.map((resource) => (
-                          <div
-                            key={resource.label}
-                            data-place="left"
-                            data-tip={resource.label}
-                            data-for="global"
-                            onClick={goToModelViewer(resource)}
-                            style={{ backgroundImage: `url(${resource.iconUrl})` }} />
-                        ))}
-                      </div>
-                    </ResourceGroupItems>
-                    <NextLabel>
-                      <NextIcon />
-                    </NextLabel>
-                  </ResourceGroup>
-                ))}
-              </SectionBody>
-            </div>
-
-            {/* TODO: for L1-scanned asteroids, these bonuses will already be set even though "unscanned" */}
-            {/* TODO: use real values -- below was old method:
-              {utils.BONUS_MAPS.map(b => {
-                let bonus = b.base;
-                const hasResourceType = b.spectralTypes.includes(asteroid.spectralType);
-
-                if (hasResourceType) {
-                  const found = asteroid.bonuses.find(f => f.type === b.base.type);
-                  if (found) bonus = found;
-                }
-
-                return (
-                  <Bonus key={b.base.type}>
-                    <BonusBars visible={hasResourceType}>
-                      <BonusBar shown={bonus.level >= 3} level={bonus.level} />
-                      <BonusBar shown={bonus.level >= 2} level={bonus.level} />
-                      <BonusBar shown={bonus.level >= 1} level={bonus.level} />
-                    </BonusBars>
-                    <StyledBonusBadge visible={hasResourceType} bonus={bonus} />
-                    <BonusDesc>
-                      <span>{resourceNames[bonus.type]}</span>
-                      {hasResourceType && <span>{`+${bonus.modifier}%`}</span>}
-                      {!hasResourceType && <span>Not present</span>}
-                    </BonusDesc>
-                  </Bonus>
-                );
-              })}
-            */}
-            <div>
-              <SectionHeader>Yield Bonuses</SectionHeader>
-              <SectionBody>
-                <Bonuses>
-                  <BonusItem>
-                    <BonusBar bonus={1} />
-                    <label>Overall Yield: +3%</label>
-                  </BonusItem>
-                  {abundances.map(({ category, label }) => (
-                    <BonusItem key={category} category={category}>
-                      <BonusBar bonus={1} />
-                      <label>{label} Yield: +3%</label>
-                    </BonusItem>
+            {asteroid.scanned && (
+              <div>
+                <SectionHeader>Resource Groups</SectionHeader>
+                <SectionBody>
+                  {abundances.map(({ category, label, resources, abundance }, i) => (
+                    <ResourceGroup
+                      key={category}
+                      color={theme.colors.resources[category]}
+                      onClick={handleClick(i)}
+                      onMouseEnter={handleHover(category, true)}
+                      onMouseLeave={handleHover(category, false)}>
+                      <ResourceGroupIcon category={category}>{/* TODO: resize icons */}
+                        {ResourceGroupIcons[category.toLowerCase()]}
+                      </ResourceGroupIcon>
+                      <ResourceGroupLabel>
+                        <label>{label}</label>
+                        <BarChart value={abundance} maxValue={abundances[0].abundance}>
+                          <label>
+                            {Math.round(abundance * 100).toFixed(1)}%
+                          </label>
+                          <div />
+                        </BarChart>
+                      </ResourceGroupLabel>
+                      <ResourceGroupItems>
+                        <label>{resources.length} Resources</label>
+                        <div>
+                          {resources.map((resource) => (
+                            <div
+                              key={resource.label}
+                              data-place="left"
+                              data-tip={resource.label}
+                              data-for="global"
+                              onClick={goToModelViewer(resource)}
+                              style={{ backgroundImage: `url(${resource.iconUrl})` }} />
+                          ))}
+                        </div>
+                      </ResourceGroupItems>
+                      <NextLabel>
+                        <NextIcon />
+                      </NextLabel>
+                    </ResourceGroup>
                   ))}
-                </Bonuses>
-              </SectionBody>
-            </div>
+                </SectionBody>
+              </div>
+            )}
+
+            {/* NOTE: for L1-scanned asteroids, these bonuses will already be set even though "unscanned" */}
+            {nonzeroBonuses?.length > 0 && (
+              <div>
+                <SectionHeader>Yield Bonuses</SectionHeader>
+                <SectionBody>
+                  <Bonuses>
+                    {nonzeroBonuses.map((bonus) => (
+                      <BonusItem key={bonus.name} category={bonusLabels[bonus.type]}>
+                        <BonusBar bonus={bonus.level} />
+                        <label>{bonusLabels[bonus.type]} Yield: +{bonus.modifier}%</label>
+                      </BonusItem>
+                    ))}
+                  </Bonuses>
+                </SectionBody>
+              </div>
+            )}
           </>
         )}
       </RightPane>

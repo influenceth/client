@@ -3,6 +3,7 @@ import {
   BackSide,
   CircleGeometry,
   Color,
+  Group,
   Mesh,
   MeshBasicMaterial,
   RingGeometry,
@@ -31,8 +32,8 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
 
   const groupRef = useRef();
   const obscurer = useRef();
-  const obscurerTheta = useRef(0);
 
+  const obscurerTheta = useRef(0);
   const rotation = useRef(0);
   const targetRotation = useRef(0);
 
@@ -41,9 +42,17 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
   const resources = useRef();
   
   useEffect(() => {
-    if (asteroid && groupRef.current) {
+    if (asteroid && abundances) {
+      hovered.current = null;
+      obscurerTheta.current = 0;
+      rotation.current = 0;
+      targetRotation.current = 0;
+
       const slices = abundances.length > 0 ? [...abundances] : [dummyCategory, dummyCategory, dummyCategory, dummyCategory, dummyCategory];
       resources.current = slices.sort((a, b) => b.abundance - a.abundance);
+
+      groupRef.current = new Group();
+      scene.add(groupRef.current);
 
       let totalTheta = 0;
       resources.current.forEach(({ category, abundance }, i) => {
@@ -81,9 +90,9 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
           ;
           material.userData.shader = shader;
         };
-        groupRef.current.children[i].userData.resource = category;
-        groupRef.current.children[i].geometry = geometry;
-        groupRef.current.children[i].material = material;
+        const mesh = new Mesh(geometry, material);
+        mesh.userData.resource = category;
+        groupRef.current.add(mesh);
 
         resources.current[i].start = totalTheta;
         if (resources.current[i].start >= 2 * Math.PI) {
@@ -129,7 +138,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         }
       }
     }
-  }, [!!asteroid]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [!!asteroid, abundances]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     hovered.current = hover;
@@ -285,17 +294,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
     }
   });
   
-  return (
-    <>
-      <group ref={groupRef}>
-        <mesh />
-        <mesh />
-        <mesh />
-        <mesh />
-        <mesh />
-      </group>
-    </>
-  );
+  return null;
 };
 
 export default AsteroidComposition;

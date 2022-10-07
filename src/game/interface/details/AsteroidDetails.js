@@ -50,30 +50,9 @@ const AsteroidDetails = (props) => {
 
   const isOwner = account && asteroid?.owner && Address.areEqual(account, asteroid.owner);
 
-  // TODO: remove this mock data vvv
-  useEffect(() => {
-    if (asteroid && true) {
-      asteroid.scanned = true;
-  
-      let remaining = 1;
-      asteroid.abundances = resourceDefs.map(() => {
-        const abundance = remaining * (Math.random() / 7);
-        remaining -= abundance;
-        return abundance;
-      });
-      const extra = remaining / resourceDefs.length;
-      asteroid.abundances.forEach((a, i) => asteroid.abundances[i] += extra);
-    }
-    // if (asteroid) {
-    //   asteroid.scanned = false;
-    //   asteroid.scanStatus = 'SCANNING';
-    // }
-  }, [asteroid]);
-  // ^^^
-
   const groupAbundances = useMemo(() => {
     if (assets?.length > 0 && asteroid?.scanned) {
-      const asteroidAbundances = toResources(asteroid.abundances || []);
+      const asteroidAbundances = toResources(asteroid.resources || []);
 
       const categories = {};
       assets
@@ -81,14 +60,17 @@ const AsteroidDetails = (props) => {
           ...a,
           i: resourceDefs.findIndex((r) => r.name === a.label) + 1
         }))
-        .filter((a) => a.i > 0)
+        .filter((a) => a.i > 0 && asteroidAbundances[a.label] > 0)
+        .map((a) => { console.log(a.label); return a; })
         .forEach((a) => {
           if (!categories[a.bucket]) {
+            const categoryKey = a.bucket.replace(/[^a-zA-Z]/g, '');
             categories[a.bucket] = {
-              category: a.bucket.replace(/[^a-zA-Z]/g, ''),
+              category: categoryKey,
               label: a.bucket,
+              bonus: asteroid.bonuses.find((b) => b.type === categoryKey.toLowerCase()),
               resources: [],
-              abundance: 0
+              abundance: 0,
             };
           }
           categories[a.bucket].abundance += asteroidAbundances[a.label];

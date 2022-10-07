@@ -89,6 +89,7 @@ const Pane = styled.div`
 const TabContainer = ({ 
   containerCss,
   containerHeight,
+  controller,
   iconCss,
   initialActive,
   labelCss,
@@ -100,7 +101,11 @@ const TabContainer = ({
 }) => {
   const playSound = useStore(s => s.dispatchSoundRequested);
 
-  const [active, setActive] = useState(initialActive || 0);
+  const [_active, _setActive] = useState(initialActive || 0);
+
+  // if want to control externally, pass in controller
+  const active = controller?.active || _active;
+  const setActive = controller?.setActive || _setActive;
 
   const onClick = useCallback((i) => () => {
     if (tabs[i].disabled) {
