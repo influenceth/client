@@ -127,8 +127,6 @@ const ResourceMapSelector = ({ asteroid, onClose }) => {
             if (r.label === sceneMod.params.resource) {
               setCategory(c);
               setResource(r);
-              console.log('setCAtegory', c.label);
-              console.log('setResource', r.label);
             }
           });
         });
