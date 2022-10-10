@@ -1,12 +1,12 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { css } from 'styled-components';
-import { Address, RESOURCES, toResources } from 'influence-utils';
+import { Address } from 'influence-utils';
 
 import Details from '~/components/DetailsModal';
 import { InfoIcon, CompositionIcon } from '~/components/Icons';
 import TabContainer from '~/components/TabContainer';
-import useAssets from '~/hooks/useAssets';
+import useAsteroidAssets from '~/hooks/useAsteroidAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
@@ -31,16 +31,13 @@ const tabContainerCss = css`
   }
 `;
 
-// TODO: RESOURCES are one-indexed
-const resourceDefs = Object.values(RESOURCES);
-
 // TODO (enhancement): would be nice if at least the asteroid render was shared between the tabs
 const AsteroidDetails = (props) => {
   const { account } = useAuth();
   const history = useHistory();
   const { i, tab } = useParams();
   const { data: asteroid } = useAsteroid(Number(i));
-  const { data: assets } = useAssets();
+  const { data: groupAbundances } = useAsteroidAssets(asteroid);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
 
   // Force the asteroid to load into the origin if coming direct from URL
@@ -49,50 +46,6 @@ const AsteroidDetails = (props) => {
   }, [ i, dispatchOriginSelected ]);
 
   const isOwner = account && asteroid?.owner && Address.areEqual(account, asteroid.owner);
-
-  const groupAbundances = useMemo(() => {
-    if (assets?.length > 0 && asteroid?.scanned) {
-      const asteroidAbundances = toResources(asteroid.resources || []);
-
-      const categories = {};
-      assets
-        .map((a) => ({
-          ...a,
-          i: resourceDefs.findIndex((r) => r.name === a.label) + 1
-        }))
-        .filter((a) => a.i > 0 && asteroidAbundances[a.label] > 0)
-        .map((a) => { console.log(a.label); return a; })
-        .forEach((a) => {
-          if (!categories[a.bucket]) {
-            const categoryKey = a.bucket.replace(/[^a-zA-Z]/g, '');
-            categories[a.bucket] = {
-              category: categoryKey,
-              label: a.bucket,
-              bonus: asteroid.bonuses.find((b) => b.type === categoryKey.toLowerCase()),
-              resources: [],
-              abundance: 0,
-            };
-          }
-          categories[a.bucket].abundance += asteroidAbundances[a.label];
-          categories[a.bucket].resources.push({
-            i: a.i,
-            label: a.label,
-            bucket: a.bucket,
-            iconUrl: a.iconUrl,
-            abundance: asteroidAbundances[a.label],
-          });
-        });
-
-      // sort resources in each category and sort each category
-      return Object.values(categories)
-        .map((category) => ({
-          ...category,
-          resources: category.resources.sort((a, b) => b.abundance - a.abundance)
-        }))
-        .sort((a, b) => b.abundance - a.abundance);
-    }
-    return [];
-  }, [!!assets, asteroid?.scanned, asteroid?.abundances]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const onTabChange = (tabIndex) => {
     if (tabIndex === 1) {

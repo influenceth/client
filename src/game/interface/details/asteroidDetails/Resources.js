@@ -17,6 +17,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useScanAsteroid from '~/hooks/useScanAsteroid';
 import theme, { hexToRGB } from '~/theme';
 import AsteroidGraphic from './components/AsteroidGraphic';
+import useStore from '~/hooks/useStore';
 
 // TODO: if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
@@ -429,9 +430,13 @@ const StartScanButton = ({ i }) => {
 };
 
 const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
-  const { finalizeAsteroidScan, scanStatus } = useScanAsteroid(asteroid);
   const history = useHistory();
   const { category: initialCategory } = useParams();
+  const selectOrigin = useStore(s => s.dispatchOriginSelected);
+  const dispatchSceneMod = useStore(s => s.dispatchSceneMod);
+  const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const { finalizeAsteroidScan, scanStatus } = useScanAsteroid(asteroid);
 
   const [selected, setSelected] = useState();
   const [hover, setHover] = useState();
@@ -455,9 +460,16 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     return false;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const goToResourceMap = useCallback((resource) => () => {
-    // TODO: ...
-  }, []);
+  const goToResourceMap = useCallback((resource) => (e) => {
+    e.stopPropagation();
+    selectOrigin(asteroid.i);
+    if (zoomStatus !== 'in') {
+      updateZoomStatus('zooming-in');
+    }
+    dispatchSceneMod('resourceMaps', { resource: resource.label });
+    history.push('/');
+    return false;
+  }, [asteroid?.i, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const nonzeroBonuses = useMemo(() => (asteroid?.bonuses || []).filter((b) => b.level > 0), [asteroid?.bonuses]);
 

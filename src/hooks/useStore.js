@@ -35,6 +35,7 @@ const useStore = create(persist((set, get) => ({
       hovered: null,
       filters: {},
       highlight: null,
+      sceneMod: null,
       owned: {
         mapped: false,
         filtered: false,
@@ -240,10 +241,12 @@ const useStore = create(persist((set, get) => ({
 
     dispatchOriginSelected: (i) => set(produce(state => {
       if (Number(i) > 0 && Number(i) <= 250000) state.asteroids.origin = Number(i);
+      state.asteroids.sceneMod = null;
     })),
 
     dispatchOriginCleared: () => set(produce(state => {
       state.asteroids.origin = null;
+      state.asteroids.sceneMod = null;
     })),
 
     dispatchDestinationSelected: (i) => set(produce(state => {
@@ -344,6 +347,10 @@ const useStore = create(persist((set, get) => ({
 
     dispatchReferrerSet: (refCode) => set(produce(state => {
       state.referrer = refCode;
+    })),
+
+    dispatchSceneMod: (type, params) => set(produce(state => {
+      state.asteroids.sceneMod = type ? { type, params } : null;
     })),
 
     //

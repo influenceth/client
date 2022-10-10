@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import utils, { Address } from 'influence-utils';
@@ -9,6 +9,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import TabContainer from '~/components/TabContainer';
+import ResourceMapSelector from './sceneMenu/ResourceMapSelector';
 
 const Pane = styled.div`
   opacity: ${p => p.visible ? 1 : 0};
@@ -37,49 +38,6 @@ const Subtitle = styled.div`
     color: white;
   }
 `;
-// const Tabs = styled.div`
-//   border-bottom: 1px solid #555;
-//   display: flex;
-//   flex-direction: row;
-//   width: 100%;
-// `;
-// const TabIcon = styled.div``;
-// const TabLabel = styled.div``;
-// const Tab = styled.div`
-//   align-items: center;
-//   display: flex;
-//   margin-bottom: -1px;
-//   pointer-events: auto;
-//   transition: color 250ms ease;
-//   width: 50%;
-
-//   ${p => p.disabled
-//     ? `color: #555;`
-//     : `
-//       color: ${p.theme.colors.main};
-//       cursor: ${p.theme.cursors.active};
-//       &:hover { color: white; }
-//   `}
-
-//   & > ${TabIcon} {
-//     font-size: 18px;
-//     padding-right: 8px;
-//   }
-//   & > ${TabLabel} {
-//     font-size: 15px;
-//     padding: 16px 0;
-//     position: relative;
-//     &:after {
-//       bottom: 0;
-//       content: "";
-//       position: absolute;
-//       left: 50%;
-//       margin-left: -16px;
-//       width: 32px;
-//       border-bottom: 5px solid currentColor;
-//     }
-//   }
-// `;
 const ExtraInfo = styled.div`
   color: #AAA;
   font-size: 15px;
@@ -93,16 +51,18 @@ const ExtraInfo = styled.div`
 const SceneMenu = (props) => {
   const { account } = useAuth();
   const origin = useStore(s => s.asteroids.origin);
+  const sceneMod = useStore(s => s.asteroids.sceneMod);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const history = useHistory();
 
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(sceneMod?.type === 'resourceMap' ? 1 : 0);
 
   const { data: asteroid } = useAsteroid(origin);
 
   // TODO: back button
+  // TODO: on heatmap selection, update store so back button works as expected?
 
-  const onSetTab = (tabIndex) => {
+  const onSetTab = useCallback((tabIndex) => {
     if (tabIndex === 0) {
       setActiveTab(0);
       history.push(`/asteroids/${asteroid.i}`);
@@ -114,7 +74,15 @@ const SceneMenu = (props) => {
         history.push(`/asteroids/${asteroid.i}/resources`);
       }
     }
-  };
+  }, [asteroid?.i, asteroid?.scanned]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (sceneMod?.type) {
+      setActiveTab(1);
+    } else {
+      setActiveTab(0);
+    }
+  }, [sceneMod?.type, sceneMod?.params])
 
   if (!asteroid) return null;
   return (
@@ -158,7 +126,7 @@ const SceneMenu = (props) => {
 
         {/* TODO: grow to show */}
         {asteroid.scanned && activeTab === 1 && (
-          <div>TODO</div>
+          <ResourceMapSelector asteroid={asteroid} onClose={() => setActiveTab(0)} />
         )}
       </Pane>
     </>

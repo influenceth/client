@@ -293,7 +293,6 @@ export function ChainTransactionProvider({ children }) {
         const { key, vars, txHash, txEvent } = tx;
 
         // if event had previously been received, just waiting for confirms
-        console.log(JSON.stringify({ txEvent, currentBlockNumber, target: txEvent ? (txEvent.blockNumber + contracts[key].confirms) : null }));
         if (txEvent && currentBlockNumber >= txEvent.blockNumber + contracts[key].confirms) {
           contracts[key].onConfirmed(txEvent, vars);
           dispatchPendingTransactionComplete(txHash);
@@ -307,7 +306,6 @@ export function ChainTransactionProvider({ children }) {
             contracts[key].onEventReceived(txEvent, vars);
 
             // if this event has already been confirmed, trigger completion too; else, just update status
-            console.log('inner', JSON.stringify({ txEvent, currentBlockNumber, target: txEvent ? (txEvent.blockNumber + contracts[key].confirms) : null }));
             if (currentBlockNumber >= txEvent.blockNumber + contracts[key].confirms) {
               contracts[key].onConfirmed(txEvent, vars);
               dispatchPendingTransactionComplete(txHash);
