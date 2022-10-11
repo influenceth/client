@@ -3,18 +3,21 @@ import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import utils, { Address } from 'influence-utils';
 
+import beltImageSrc from '~/assets/images/belt.jpg';
 import Button from '~/components/ButtonAlt';
-import { InfoIcon, CompositionIcon } from '~/components/Icons';
+import { BackIcon, InfoIcon, CompositionIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import TabContainer from '~/components/TabContainer';
 import ResourceMapSelector from './sceneMenu/ResourceMapSelector';
 
+const leftPadding = `52px`;
+
 const Pane = styled.div`
   opacity: ${p => p.visible ? 1 : 0};
   overflow: hidden;
-  padding: 0 0 140px 80px;
+  padding: 0 0 140px ${leftPadding};
   position: absolute;
   bottom: 0;
   left: 0;
@@ -48,10 +51,65 @@ const ExtraInfo = styled.div`
   }
 `;
 
+const backButtonImageDim = 75;
+const backButtonPadding = 5;
+const BeltImage = styled.img`
+  margin: ${backButtonPadding}px;
+  border: 1px solid ${p => p.theme.colors.borderBottomAlt};
+  background: black url('${beltImageSrc}');
+  background-position: center center;
+  background-size: contain;
+  width: ${backButtonImageDim}px;
+  height: ${backButtonImageDim}px;
+  transition: border 250ms ease, outline 250ms ease;
+`;
+
+const BackButton = styled.div`
+  align-items: center;
+  border-left: 4px solid ${p => p.theme.colors.main};
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  flex-direction: row;
+  height: ${backButtonImageDim + 2 * backButtonPadding}px;
+  margin-left: -${leftPadding};
+  margin-bottom: 75px;
+  pointer-events: all;
+  transition: color 250ms ease;
+  width: 240px;
+  & > div {
+    align-items: center;
+    background-color: #111;
+    display: flex;
+    flex-direction: row;
+    font-size: 24px;
+    transition: background-color 150ms ease;
+    & > span {
+      padding: 0 10px 0 5px;
+    }
+  }
+  & > span:last-child {
+    font-weight: bold;
+    padding-left: 10px;
+  }
+
+  &:hover {
+    color: white;
+    & > div {
+      background-color: #222;
+    }
+    & ${BeltImage} {
+      border-color: white;
+      outline: 1px solid white;
+    }
+  }
+`;
+
+
 const SceneMenu = (props) => {
   const { account } = useAuth();
   const origin = useStore(s => s.asteroids.origin);
   const sceneMod = useStore(s => s.asteroids.sceneMod);
+  const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const history = useHistory();
 
@@ -59,7 +117,6 @@ const SceneMenu = (props) => {
 
   const { data: asteroid } = useAsteroid(origin);
 
-  // TODO: back button
   // TODO: on heatmap selection, update store so back button works as expected?
 
   const onSetTab = useCallback((tabIndex) => {
@@ -69,7 +126,6 @@ const SceneMenu = (props) => {
     } else if (tabIndex === 1) {
       if (asteroid.scanned) {
         setActiveTab(1);
-        // TODO: heatmaps
       } else {
         history.push(`/asteroids/${asteroid.i}/resources`);
       }
@@ -88,6 +144,13 @@ const SceneMenu = (props) => {
   return (
     <>
       <Pane visible={zoomStatus === 'in'}>
+        <BackButton onClick={() => updateZoomStatus('zooming-out')}>
+          <div>
+            <span><BackIcon /></span>
+            <BeltImage />
+          </div>
+          <span>Back to Belt</span>
+        </BackButton>
         <Title>{asteroid.customName || asteroid.baseName}</Title>
         <Subtitle>
           {utils.toSize(asteroid.radius)} <b>{utils.toSpectralType(asteroid.spectralType)}-type</b>
@@ -124,7 +187,7 @@ const SceneMenu = (props) => {
           </ExtraInfo>
         )}
 
-        {/* TODO: grow to show */}
+        {/* TODO (enhancement): animate in */}
         {asteroid.scanned && activeTab === 1 && (
           <ResourceMapSelector asteroid={asteroid} onClose={() => setActiveTab(0)} />
         )}
