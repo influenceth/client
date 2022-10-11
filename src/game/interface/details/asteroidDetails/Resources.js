@@ -4,9 +4,9 @@ import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import utils from 'influence-utils';
 import { BsChevronRight as NextIcon } from 'react-icons/bs';
-import { RiVipDiamondFill as BonusIcon } from 'react-icons/ri';
 import LoadingIcon from 'react-spinners/PulseLoader';
 
+import BonusBar from '~/components/BonusBar';
 import ButtonPill from '~/components/ButtonPill';
 import Button from '~/components/ButtonAlt';
 import {
@@ -18,6 +18,7 @@ import useScanAsteroid from '~/hooks/useScanAsteroid';
 import theme, { hexToRGB } from '~/theme';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import useStore from '~/hooks/useStore';
+import BonusInfoPane from '~/components/BonusInfoPane';
 
 // TODO: if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
@@ -258,23 +259,6 @@ const BonusItem = styled.div`
   }
 `;
 
-const Bonus = styled.div`
-  & > * {
-    margin-right: 3px;
-    opacity: 0.2;
-    vertical-align: middle;
-  }
-  & > *:nth-child(1) {
-    ${p => p.bonus >= 1 && 'opacity: 1;'}
-  }
-  & > *:nth-child(2) {
-    ${p => p.bonus >= 2 && 'opacity: 1;'}
-  }
-  & > *:nth-child(3) {
-    ${p => p.bonus >= 3 && 'opacity: 1;'}
-  }
-`;
-
 const SelectedCategoryTitle = styled.div`
   border-bottom: 1px solid ${p => p.theme.colors.resources[p.category]};
   color: ${p => p.theme.colors.resources[p.category]};
@@ -407,14 +391,6 @@ const bonusLabels = {
   volatile: 'Volatile',
 };
 
-const BonusBar = ({ bonus }) => (
-  <Bonus bonus={bonus}>
-    <BonusIcon />
-    <BonusIcon />
-    <BonusIcon />
-  </Bonus>
-);
-
 const StartScanButton = ({ i }) => {
   const { data: extendedAsteroid, isLoading } = useAsteroid(Number(i), true);
   const { startAsteroidScan } = useScanAsteroid(extendedAsteroid);
@@ -472,6 +448,11 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
   }, [asteroid?.i, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const nonzeroBonuses = useMemo(() => (asteroid?.bonuses || []).filter((b) => b.level > 0), [asteroid?.bonuses]);
+
+  const [infoPaneAnchor, setInfoPaneAnchor] = useState();
+  const setInfoPaneRef = (which) => (e) => {
+    setInfoPaneAnchor(which ? e.target : null);
+  };
 
   useEffect(() => {
     if (abundances?.length > 0 && initialCategory) {
@@ -568,8 +549,12 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
               {selected.label}
             </SelectedCategoryTitle>
             <SectionBody style={{ overflowY: 'auto', paddingLeft: 65 }}>
-              {selected.bonus && (
-                <BonusItem category={selected.category} style={{ marginBottom: 15, padding: 0 }}>
+              {selected.bonus?.level > 0 && (
+                <BonusItem
+                  category={selected.category}
+                  onMouseEnter={setInfoPaneRef(true)}
+                  onMouseLeave={setInfoPaneRef(false)}
+                  style={{ marginBottom: 15, padding: 0, width: 225 }}>
                   <BonusBar bonus={selected.bonus.level} />
                   <label>Bonus Yield: +{selected.bonus.modifier}%</label>
                 </BonusItem>
@@ -651,7 +636,10 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                 <SectionBody>
                   <Bonuses>
                     {nonzeroBonuses.map((bonus) => (
-                      <BonusItem key={bonus.name} category={bonusLabels[bonus.type]}>
+                      <BonusItem key={bonus.name}
+                        category={bonusLabels[bonus.type]}
+                        onMouseEnter={setInfoPaneRef(true)}
+                        onMouseLeave={setInfoPaneRef(false)}>
                         <BonusBar bonus={bonus.level} />
                         <label>{bonusLabels[bonus.type]} Yield: +{bonus.modifier}%</label>
                       </BonusItem>
@@ -662,6 +650,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             )}
           </>
         )}
+        <BonusInfoPane referenceEl={infoPaneAnchor} visible={!!infoPaneAnchor} />
       </RightPane>
     </Wrapper>
   );
