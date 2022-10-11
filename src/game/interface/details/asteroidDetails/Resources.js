@@ -10,6 +10,7 @@ import BonusBar from '~/components/BonusBar';
 import ButtonPill from '~/components/ButtonPill';
 import Button from '~/components/ButtonAlt';
 import {
+  CaretIcon,
   ResourceGroupIcons,
   WarningOutlineIcon
 } from '~/components/Icons';
@@ -262,6 +263,7 @@ const BonusItem = styled.div`
 const SelectedCategoryTitle = styled.div`
   border-bottom: 1px solid ${p => p.theme.colors.resources[p.category]};
   color: ${p => p.theme.colors.resources[p.category]};
+  cursor: ${p => p.theme.cursors.active};
   display: flex;
   font-size: 40px;
   font-weight: bold;
@@ -270,6 +272,9 @@ const SelectedCategoryTitle = styled.div`
   text-transform: uppercase;
   & > *:first-child {
     margin-right: 12px;
+  }
+  & > *:last-child {
+    color: white;
   }
   &:before {
     content: '';
@@ -546,7 +551,8 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
               <ResourceGroupIcon category={selected.category}>{/* TODO: resize icons */}
                 {ResourceGroupIcons[selected.category.toLowerCase()]}
               </ResourceGroupIcon>
-              {selected.label}
+              <span style={{ flex: 1 }}>{selected.label}</span>
+              <CaretIcon />
             </SelectedCategoryTitle>
             <SectionBody style={{ overflowY: 'auto', paddingLeft: 65 }}>
               {selected.bonus?.level > 0 && (
