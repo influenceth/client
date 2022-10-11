@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box3, DirectionalLight, EquirectangularReflectionMapping, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
+import { AnimationMixer, Box3, DirectionalLight, EquirectangularReflectionMapping, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
 // import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -127,9 +127,10 @@ const loadingCss = css`
   z-index: 10;
 `;
 
-const Model = ({ url, onLoaded, overrideEnvStrength }) => {
+const Model = ({ url, onLoaded, overrideEnvStrength, rotationEnabled, zoomLimitsEnabled }) => {
   const { camera, gl, scene } = useThree();
 
+  const animationMixer = useRef();
   const controls = useRef();
   const model = useRef();
 
@@ -150,15 +151,23 @@ const Model = ({ url, onLoaded, overrideEnvStrength }) => {
   // init orbitcontrols
   useEffect(() => {
     controls.current = new OrbitControls(camera, gl.domElement);
-
-    controls.current.minDistance = 0.85;
-    controls.current.maxDistance = 5;
+    controls.current.near = 0.00001;
     controls.current.target.set(0, 0, 0);
 
     return () => {
       controls.current.dispose();
     };
   }, [camera, gl]);
+
+  useEffect(() => {
+    if (zoomLimitsEnabled) {
+      controls.current.minDistance = 0.85;
+      controls.current.maxDistance = 5;
+    } else {
+      controls.current.minDistance = 0;
+      controls.current.maxDistance = Infinity;
+    }
+  }, [zoomLimitsEnabled]);
 
   // init axeshelper
   // useEffect(() => {
@@ -241,6 +250,15 @@ const Model = ({ url, onLoaded, overrideEnvStrength }) => {
 
         // add to scene and report as loaded
         scene.add(model.current);
+
+        // init animation mixer
+        if (gltf.animations?.length > 0) {
+          animationMixer.current = new AnimationMixer(model.current);
+          gltf.animations.forEach((clip) => {
+            animationMixer.current.clipAction(clip).play();
+          });
+        }
+
         onLoaded(true);
       },
 
@@ -278,13 +296,16 @@ const Model = ({ url, onLoaded, overrideEnvStrength }) => {
     });
   }, [overrideEnvStrength]);
 
-  useFrame(() => {
-    if (model.current) {
+  useFrame((state, delta) => {
+    if (model.current && rotationEnabled) {
       model.current.rotation.y += 0.0025;
     }
     // if (box3h.current) {
     //   box3h.current.rotation.y += 0.0025;
     // }
+    if (animationMixer.current) {
+      animationMixer.current.update(delta);
+    }
   });
 
   return null;
@@ -398,6 +419,8 @@ const ModelViewer = (props) => {
   const [lightsEnabled, setLightsEnabled] = useState(true);
   const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState();
+  const [rotationEnabled, setRotationEnabled] = useState(true);
+  const [zoomLimitsEnabled, setZoomLimitsEnabled] = useState(true);
 
   const [uploadType, setUploadType] = useState();
   const fileInput = useRef();
@@ -459,6 +482,14 @@ const ModelViewer = (props) => {
 
   const toggleLights = useCallback(() => {
     setLightsEnabled((e) => !e);
+  }, []);
+
+  const toggleRotation = useCallback(() => {
+    setRotationEnabled((e) => !e);
+  }, []);
+
+  const toggleZoomLimits = useCallback(() => {
+    setZoomLimitsEnabled((e) => !e);
   }, []);
 
   const [bucket, setBucket] = useState();
@@ -553,6 +584,22 @@ const ModelViewer = (props) => {
             </Button>
             {!lightsEnabled && <span onClick={toggleLights}>Off</span>}
           </div>
+          <div>
+            <Button
+              disabled={isLoading}
+              onClick={toggleRotation}>
+              Toggle Rotation
+            </Button>
+            {!rotationEnabled && <span onClick={toggleRotation}>Off</span>}
+          </div>
+          <div>
+            <Button
+              disabled={isLoading}
+              onClick={toggleZoomLimits}>
+              Toggle Zoom Limits
+            </Button>
+            {!zoomLimitsEnabled && <span onClick={toggleZoomLimits}>Off</span>}
+          </div>
 
           <Miniform>
             <label>Env Map Strength</label>
@@ -573,7 +620,7 @@ const ModelViewer = (props) => {
         </Devtools>
       )}
 
-      {model?.iconUrl && (
+      {!modelOverride && model?.iconUrl && (
         <IconContainer>
           <img src={model.iconUrl} alt={`${model.label} icon`} />
         </IconContainer>
@@ -592,6 +639,8 @@ const ModelViewer = (props) => {
             <Model
               onLoaded={handleLoaded}
               overrideEnvStrength={envStrengthOverride}
+              rotationEnabled={rotationEnabled}
+              zoomLimitsEnabled={zoomLimitsEnabled}
               url={modelOverride || model.modelUrl} />
           )}
           {lightsEnabled && <Lighting />}
