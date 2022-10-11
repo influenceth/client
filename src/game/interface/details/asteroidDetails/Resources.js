@@ -52,7 +52,7 @@ const LeftPane = styled.div`
   }
 `;
 const RightPane = styled.div`
-  flex: 1;
+  flex: 1 1 640px;
   margin-left: 30px;
   padding-top: 40px;
   & > div:first-child {
@@ -288,6 +288,14 @@ const SelectedCategoryTitle = styled.div`
   }
 `;
 
+const ResourceSectionBody = styled(SectionBody)`
+  overflow-y: auto;
+  padding-left: 65px;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    overflow-y: visible;
+    padding-left: 0;
+  }
+`;
 const ResourceIcon = styled.div`
   background-color: black;
   background-position: center center;
@@ -327,6 +335,9 @@ const ResourceInfo = styled.div`
 `;
 const ResourceAction = styled.div`
   padding-right: 6px;
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: none;
+  }
 `;
 
 const UnscannedWrapper = styled.div`
@@ -554,7 +565,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
               <span style={{ flex: 1 }}>{selected.label}</span>
               <CaretIcon />
             </SelectedCategoryTitle>
-            <SectionBody style={{ overflowY: 'auto', paddingLeft: 65 }}>
+            <ResourceSectionBody>
               {selected.bonus?.level > 0 && (
                 <BonusItem
                   category={selected.category}
@@ -584,7 +595,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                   </ResourceAction>
                 </ResourceRow>
               ))}
-            </SectionBody>
+            </ResourceSectionBody>
           </div>
         )}
         {!selected && (

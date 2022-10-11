@@ -257,6 +257,13 @@ const NameForm = styled.div`
   }
 `;
 
+const SmHidden = styled.span`
+  display: inline;
+  @media (max-width: 1300px) {
+    display: none;
+  }
+`;
+
 
 const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
   const { account } = useAuth();
@@ -430,7 +437,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                   disabled={exportingModel}
                   loading={exportingModel}
                   onClick={download3dModel}>
-                  Download 3D Model
+                  <SmHidden>Download</SmHidden> 3D Model
                 </ModelButton>
               )}
 
@@ -454,7 +461,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                   id={asteroid.i}>
                   {(onClick, setRefEl) => (
                     <Button setRef={setRefEl} onClick={onClick}>
-                      {isOwner ? 'List for Sale' : 'Purchase'}
+                      {isOwner ? <><span>List</span><SmHidden>{' '}for Sale</SmHidden></> : 'Purchase'}
                     </Button>  
                   )}
                 </MarketplaceLink>
