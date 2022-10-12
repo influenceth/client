@@ -10,11 +10,6 @@ export const hexToRGB = (hex) => {
   ].join(',');
 };
 
-export const hexToGLSL = (hex) => {
-  const hexParts = hex.toLowerCase().replace(/[^a-z0-9]/g, '').match(/.{1,2}/g);
-  return hexParts.map((p) => `${parseInt(p, 16).toFixed(1)}/255.0`).join(',');
-};
-
 const gray = '#bbbbbb';
 const teal = '#69ebf4';
 const blue = '#4f90ff';

@@ -46,8 +46,15 @@ void main() {
   float abundance = recursiveSNoise(1.5 * (point + uResource), 0.3, defaultPasses + uExtraPasses, defaultPasses + uExtraPassesMax);
   // [0, 1]
   abundance = pow((abundance + 1.0) / 2.0, 3.0);
-  // [0, 1, 2, 3, 4] -> [0, 0.25, 0.5, 0.75, 1.0]
-  abundance = floor(abundance * 5.0) / 4.0;
+  // [0, 4]
+  // TODO: the smooth size should be smaller the more zoomed in to avoid "blurry" look
+  //  (i.e. could relate to chunksize)
+  abundance = smoothstep(0.19, 0.2, abundance)
+    + smoothstep(0.39, 0.4, abundance)
+    + smoothstep(0.59, 0.6, abundance)
+    + smoothstep(0.79, 0.8, abundance);
+  // [0, 1]
+  abundance /= 4.0;
 
-  gl_FragColor = vec4(abundance, abundance, abundance, 1.0);
+  gl_FragColor = vec4(abundance, abundance, abundance, 0.5);
 }

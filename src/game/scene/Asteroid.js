@@ -4,6 +4,7 @@ import {
   // BufferAttribute,
   AxesHelper,
   CameraHelper,
+  Color,
   DirectionalLight,
   DirectionalLightHelper,
   Mesh,
@@ -473,8 +474,11 @@ const Asteroid = (props) => {
 
   useEffect(() => {
     if (sceneMod?.type === 'resourceMaps') {
+      const color = new Color(theme.colors.resources[sceneMod.params.resource.category]);
+      color.offsetHSL(0, 10, -0.22);
+
       geometry.current.setEmissiveParams({
-        color: theme.colors.resources[sceneMod.params.resource.category],
+        color: color.getHex(),
         resource: sceneMod.params.resource.i
       });
       forceUpdate.current = Date.now();
