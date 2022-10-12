@@ -109,16 +109,16 @@ const ResourceMapSelector = ({ asteroid, onClose }) => {
     if (selected.category !== category?.category) {
       dispatchSceneMod('resourceMaps', { resource: selected.resources[0] });
     }
-  }, [category?.category]);
+  }, [category?.category, dispatchSceneMod]);
 
   const selectResource = useCallback((selected) => {
     dispatchSceneMod('resourceMaps', { resource: selected });
-  }, []);
+  }, [dispatchSceneMod]);
 
   const handleClose = useCallback(() => {
     dispatchSceneMod();
     if (onClose) onClose();
-  }, [onClose]);
+  }, [dispatchSceneMod, onClose]);
 
   const resourceTally = useMemo(() => {
     return Object.values(asteroidAssets).reduce((acc, cur) => acc + cur.resources.length, 0);
