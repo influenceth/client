@@ -12,6 +12,7 @@ const useAsteroidAssets = (asteroid) => {
       const resourceDefs = Object.values(RESOURCES);
       const asteroidAbundances = toResources(asteroid.resources || []);
 
+      // TODO (enhancement): might be nice to change "bucket" to "category" in asset collection model
       const categories = {};
       assets
         .map((a) => ({
@@ -20,8 +21,8 @@ const useAsteroidAssets = (asteroid) => {
         }))
         .filter((a) => a.i > 0 && asteroidAbundances[a.label] > 0)
         .forEach((a) => {
+          const categoryKey = a.bucket.replace(/[^a-zA-Z]/g, '');
           if (!categories[a.bucket]) {
-            const categoryKey = a.bucket.replace(/[^a-zA-Z]/g, '');
             categories[a.bucket] = {
               category: categoryKey,
               label: a.bucket,
@@ -33,8 +34,9 @@ const useAsteroidAssets = (asteroid) => {
           categories[a.bucket].abundance += asteroidAbundances[a.label];
           categories[a.bucket].resources.push({
             i: a.i,
+            category: categoryKey,
+            categoryLabel: a.bucket,
             label: a.label,
-            bucket: a.bucket,
             iconUrl: a.iconUrl,
             abundance: asteroidAbundances[a.label],
           });

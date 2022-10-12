@@ -51,6 +51,7 @@ class QuadtreeTerrainCube {
     this.builder = new TerrainChunkManager(i, config, textureSize, workerPool);
     this.groups = [...new Array(6)].map(_ => new Group());
     this.chunks = {};
+    this.emissiveParams = null;
 
     // adjust min chunk size for this asteroid (this is mostly to provide higher resolution for
     // smallest asteroids because user can zoom in proportionally farther)
@@ -122,6 +123,10 @@ class QuadtreeTerrainCube {
     this.builder.csmManager = this.csm;
   }
 
+  setEmissiveParams(params) {
+    this.emissiveParams = params;
+  }
+
   setShadowsEnabled(state) {
     this.builder.shadowsEnabled = !!state;
   }
@@ -157,7 +162,7 @@ class QuadtreeTerrainCube {
         Object.keys(node.neighbors).forEach((orientation) => {
           stitchingStrides[orientation] = Math.max(1, (node.neighbors[orientation]?.size?.x || 0) / node.size.x);
         });
-        const key = `${node.center.x}/${node.center.y} [${node.size.x}] [${Object.values(stitchingStrides).join('')}] [${i}]`;
+        const key = `${node.center.x}/${node.center.y} [${node.size.x}] [${Object.values(stitchingStrides).join('')}] [${Object.values(this.emissiveParams || {}).join(',')}] [${i}]`;
 
         // if this chunk already exists, add to updatedChunks as-is (just update distanceToCamera)
         if (this.chunks[key]) {
@@ -170,6 +175,7 @@ class QuadtreeTerrainCube {
             sphereCenter: node.sphereCenter,
             sphereCenterHeight: node.sphereCenterHeight,
             chunk: this.builder.allocateChunk({
+              emissiveParams: this.emissiveParams,
               group: this.groups[i],
               minHeight: node.unstretchedMin,
               offset: new Vector3(node.center.x, node.center.y, node.center.z),

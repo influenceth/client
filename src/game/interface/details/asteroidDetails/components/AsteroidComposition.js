@@ -19,7 +19,7 @@ import theme from '~/theme';
 const hexToLinear = (hex) => new Color(hex).convertSRGBToLinear();
 
 const margin = 0.001 * 2 * Math.PI;
-const rotationPerFrame = 0.1; // TODO (enhancement): ease function would probably look better
+const rotationPerFrame = 0.1;
 const segmentsPerCircle = 120; // target 1 segment per 3 degrees
 const dummyCategory = { abundance: 0.2, category: 'unscanned', resources: [] };
 

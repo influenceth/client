@@ -464,9 +464,9 @@ const ModelViewer = (props) => {
     setLightsEnabled((e) => !e);
   }, []);
 
-  const [bucket, setBucket] = useState();
-  const [buckets, setBuckets] = useState();
-  const [bucketModels, setBucketModels] = useState();
+  const [category, setCategory] = useState();
+  const [categories, setCategories] = useState();
+  const [categoryModels, setCategoryModels] = useState();
   useEffect(() => {
     if (!!assets) {
       if (singleModel) {
@@ -478,27 +478,27 @@ const ModelViewer = (props) => {
       }
       
       // this is default if no singleModel or can't find singleModel
-      const bucketSet = new Set(assets.map((a) => a.bucket));
-      const bucketArr = Array.from(bucketSet).sort();
-      setBuckets(bucketArr);
+      const categorySet = new Set(assets.map((a) => a.category));
+      const categoryArr = Array.from(categorySet).sort();
+      setCategories(categoryArr);
     }
   }, [!!assets, singleModel]); // eslint-disable-line react-hooks/exhaustive-deps
   
   useEffect(() => {
-    if (!!buckets) {
-      setBucket(buckets[0]);
+    if (!!categories) {
+      setCategory(categories[0]);
     }
-  }, [!!buckets]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [!!categories]); // eslint-disable-line react-hooks/exhaustive-deps
   
   useEffect(() => {
-    if (!!assets && bucket) {
+    if (!!assets && category) {
       const bAssets = assets
-        .filter((a) => a.bucket === bucket)
+        .filter((a) => a.category === category)
         .sort((a, b) => a.label < b.label ? -1 : 1);
-      setBucketModels(bAssets);
+      setCategoryModels(bAssets);
       selectModel(bAssets[0]);
     }
-  }, [bucket]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const onKeydown = (e) => {
@@ -519,22 +519,22 @@ const ModelViewer = (props) => {
     <Details
       edgeToEdge
       onCloseDestination={onCloseDestination}
-      title={singleModel ? `${model?.bucket} — ${model?.label}` : `Resource Details`}>
+      title={singleModel ? `${model?.category} — ${model?.label}` : `Resource Details`}>
       <BarLoader color="#AAA" height={3} loading={isLoading} css={loadingCss} />
 
-      {!singleModel && buckets && bucketModels && (
+      {!singleModel && categories && categoryModels && (
         <Dropdowns>
           <Dropdown
             disabled={isLoading}
-            options={buckets}
-            onChange={(b) => setBucket(b)}
+            options={categories}
+            onChange={(b) => setCategory(b)}
             width="200px" />
           <Dropdown
             disabled={isLoading}
             labelKey="label"
-            options={bucketModels}
+            options={categoryModels}
             onChange={(a) => selectModel(a)}
-            resetOn={bucket}
+            resetOn={category}
             width="200px" />
         </Dropdowns>
       )}

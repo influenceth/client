@@ -114,6 +114,7 @@ class TerrainChunkManager {
         },
         chunk: {
           edgeStrides: chunk._params.stitchingStrides,
+          emissiveParams: chunk._params.emissiveParams,
           offset: chunk._params.offset.toArray(),
           width: chunk._params.width,
           groupMatrix: chunk._params.group.matrix.clone(),
@@ -151,15 +152,18 @@ class TerrainChunkManager {
     let chunk;
     while (chunk = this._queued.pop()) { // eslint-disable-line
       chunk.updateMaps(
-        rebuildChunkMaps({
-          config: this.config,
-          edgeStrides: chunk._params.stitchingStrides,
-          groupMatrix: chunk._params.group.matrix.clone(),
-          offset: chunk._params.offset.clone(),
-          resolution: chunk._resolution,
-          side: chunk._params.side,
-          width: chunk._params.width
-        })
+        rebuildChunkMaps(
+          {
+            config: this.config,
+            edgeStrides: chunk._params.stitchingStrides,
+            emissiveParams: chunk._params.emissiveParams,
+            groupMatrix: chunk._params.group.matrix.clone(),
+            offset: chunk._params.offset.clone(),
+            resolution: chunk._resolution,
+            side: chunk._params.side,
+            width: chunk._params.width
+          },
+        )
       );
       this._new.push(chunk);
 

@@ -7,6 +7,7 @@ import { BsChevronRight as NextIcon } from 'react-icons/bs';
 import LoadingIcon from 'react-spinners/PulseLoader';
 
 import BonusBar from '~/components/BonusBar';
+import BonusInfoPane from '~/components/BonusInfoPane';
 import ButtonPill from '~/components/ButtonPill';
 import Button from '~/components/ButtonAlt';
 import {
@@ -16,12 +17,11 @@ import {
 } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useScanAsteroid from '~/hooks/useScanAsteroid';
-import theme, { hexToRGB } from '~/theme';
-import AsteroidGraphic from './components/AsteroidGraphic';
 import useStore from '~/hooks/useStore';
-import BonusInfoPane from '~/components/BonusInfoPane';
+import AsteroidGraphic from './components/AsteroidGraphic';
+import theme, { hexToRGB } from '~/theme';
 
-// TODO: if these stay the same, then should just export from Information or extract to shared component vvv
+// TODO (enhancement): if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
 
 const Wrapper = styled.div`
@@ -458,7 +458,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     if (zoomStatus !== 'in') {
       updateZoomStatus('zooming-in');
     }
-    dispatchSceneMod('resourceMaps', { resource: resource.label });
+    dispatchSceneMod('resourceMaps', { resource });
     history.push('/');
     return false;
   }, [asteroid?.i, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps

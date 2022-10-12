@@ -29,10 +29,12 @@ onmessage = function(event) {
       break;
     case 'rebuildTerrainGeometry':
       if (event.data.asteroid) cache.asteroid = event.data.asteroid;
-      rebuildTerrainGeometry({
-        ...cache.asteroid,
-        ...event.data.chunk
-      });
+      rebuildTerrainGeometry(
+        {
+          ...cache.asteroid,
+          ...event.data.chunk
+        }
+      );
       break;
     // used if want to just update cache values (but do no work)
     case 'updateParamCache': {
@@ -95,18 +97,20 @@ const rebuildTerrainGeometry = function (chunk) {
   } else {
     initChunkTextures().then(() => {
       const maps = rebuildChunkMaps(chunk);
-      postMessage({
-        topic: 'rebuiltTerrainChunk',
-        positions,
-        normals,
-        maps
-      }, [
+      const transferable = [
         positions.buffer,
         normals.buffer,
         maps.colorBitmap,
         maps.heightBitmap,
         maps.normalBitmap,
-      ]);
+      ];
+      if (maps.emissiveBitmap) transferable.push(maps.emissiveBitmap);
+      postMessage({
+        topic: 'rebuiltTerrainChunk',
+        positions,
+        normals,
+        maps
+      }, transferable);
     });
   }
 }

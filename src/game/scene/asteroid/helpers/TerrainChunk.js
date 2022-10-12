@@ -38,10 +38,11 @@ const {
 const GEO_ATTR_CACHE = {};
 
 class TerrainChunk {
-  constructor(params, config, { csmManager, shadowsEnabled, resolution }) {
+  constructor(params, config, { csmManager, emissiveParams, shadowsEnabled, resolution }) {
     this._params = params;
     this._config = config;
     this._csmManager = csmManager;
+    this._emissiveParams = emissiveParams;
     this._shadowsEnabled = shadowsEnabled;
     this._resolution = resolution;
     this.updateDerived();
@@ -269,6 +270,7 @@ class TerrainChunk {
   updateMaps(data) {
     // (dispose of all previous material maps)
     if (this._material.displacementMap) this._material.displacementMap.dispose();
+    if (this._material.emissiveMap) this._material.emissiveMap.dispose();
     if (this._material.map) this._material.map.dispose();
     if (this._material.normalMap) this._material.normalMap.dispose();
 
@@ -278,8 +280,17 @@ class TerrainChunk {
     this._material.setValues({
       displacementMap: data.heightBitmap.image ? data.heightBitmap : new CanvasTexture(data.heightBitmap, undefined, undefined, undefined, NearestFilter),
       map: data.colorBitmap.image ? data.colorBitmap : new CanvasTexture(data.colorBitmap),
-      normalMap: data.normalBitmap.image ? data.normalBitmap : new CanvasTexture(data.normalBitmap)
+      normalMap: data.normalBitmap.image ? data.normalBitmap : new CanvasTexture(data.normalBitmap),
+      color: 0xffffff,
+      emissive: 0x000000
     });
+    if (this._params.emissiveParams && data.emissiveBitmap) {
+      this._material.setValues({
+        color: 0x111111, // darker modulation for color map so light doesn't wash out emissivity map
+        emissive: this._params.emissiveParams.color,
+        emissiveMap: data.emissiveBitmap.image ? data.emissiveBitmap : new CanvasTexture(data.emissiveBitmap),
+      });
+    }
     this._material.needsUpdate = true;
   }
 

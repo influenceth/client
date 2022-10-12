@@ -95,6 +95,7 @@ const CategoryButton = styled.div`
 const ResourceMapSelector = ({ asteroid, onClose }) => {
   const history = useHistory();
   const { data: asteroidAssets, isLoading } = useAsteroidAssets(asteroid);
+  const dispatchSceneMod = useStore(s => s.dispatchSceneMod);
   const sceneMod = useStore(s => s.asteroids.sceneMod);
 
   const [category, setCategory] = useState();
@@ -106,14 +107,18 @@ const ResourceMapSelector = ({ asteroid, onClose }) => {
 
   const selectCategory = useCallback((selected) => () => {
     if (selected.category !== category?.category) {
-      setCategory(selected);
-      setResource(selected.resources[0]);
+      dispatchSceneMod('resourceMaps', { resource: selected.resources[0] });
     }
   }, [category?.category]);
 
   const selectResource = useCallback((selected) => {
-    setResource(selected);
+    dispatchSceneMod('resourceMaps', { resource: selected });
   }, []);
+
+  const handleClose = useCallback(() => {
+    dispatchSceneMod();
+    if (onClose) onClose();
+  }, [onClose]);
 
   const resourceTally = useMemo(() => {
     return Object.values(asteroidAssets).reduce((acc, cur) => acc + cur.resources.length, 0);
@@ -124,7 +129,7 @@ const ResourceMapSelector = ({ asteroid, onClose }) => {
       if (sceneMod?.params?.resource) {
         asteroidAssets.forEach((c) => {
           c.resources.forEach((r) => {
-            if (r.label === sceneMod.params.resource) {
+            if (r.label === sceneMod.params.resource.label) {
               setCategory(c);
               setResource(r);
             }
@@ -142,7 +147,7 @@ const ResourceMapSelector = ({ asteroid, onClose }) => {
   if (!category) return null;
   return (
     <Wrapper>
-      <CloseButton onClick={onClose}><CloseIcon /></CloseButton>
+      <CloseButton onClick={handleClose}><CloseIcon /></CloseButton>
       <ResourceIcon
         onClick={goToModelViewer}
         style={{ backgroundImage: `url(${resource.iconUrl})` }} />

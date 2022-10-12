@@ -22,6 +22,7 @@ import useGetTime from '~/hooks/useGetTime';
 import useWebWorker from '~/hooks/useWebWorker';
 import Config from '~/lib/asteroidConfig';
 import constants from '~/lib/constants';
+import theme from '~/theme';
 import QuadtreeTerrainCube from './asteroid/helpers/QuadtreeTerrainCube';
 import Rings from './asteroid/Rings';
 
@@ -108,6 +109,8 @@ const Asteroid = (props) => {
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
+  const sceneMod = useStore(s => s.asteroids.sceneMod);
+
   const { data: asteroidData } = useAsteroid(origin);
 
   const getTime = useGetTime();
@@ -129,6 +132,8 @@ const Asteroid = (props) => {
   const csmHelperFloor = useRef(); // TODO: remove
   const aspectRatio = useRef();
   const settingCameraPosition = useRef();
+  const forceUpdate = useRef(0);
+  const lastUpdateStart = useRef(0);
 
   const maxStretch = useMemo(
     () => config?.stretch ? Math.max(config.stretch.x, config.stretch.y, config.stretch.z) : 1,
@@ -467,8 +472,22 @@ const Asteroid = (props) => {
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
 
   useEffect(() => {
+    if (sceneMod?.type === 'resourceMaps') {
+      geometry.current.setEmissiveParams({
+        color: theme.colors.resources[sceneMod.params.resource.category],
+        resource: sceneMod.params.resource.i
+      });
+      forceUpdate.current = Date.now();
+    } else if (geometry.current.emissiveParams) {
+      geometry.current.setEmissiveParams();
+      forceUpdate.current = Date.now();
+    }
+  }, [sceneMod]);
+
+  useEffect(() => {
     if (geometry.current && terrainUpdateNeeded) {
       // vvv BENCHMARK 2ms (zoomed-out), 7-20ms+ (zoomed-in)
+      lastUpdateStart.current = Date.now();
       geometry.current.setCameraPosition(terrainUpdateNeeded);
       settingCameraPosition.current = false;
       // ^^^
@@ -601,7 +620,8 @@ const Asteroid = (props) => {
       // vvv BENCHMARK <1ms
       const cameraHeight = rotatedCameraPosition.length();
       const updateQuadtreeEvery = geometry.current.smallestActiveChunkSize * UPDATE_DISTANCE_MULT;
-      const updateQuadCube = !geometry.current.cameraPosition
+      const updateQuadCube = forceUpdate.current > lastUpdateStart.current
+        || !geometry.current.cameraPosition
         || Math.abs(geometry.current.cameraPosition.length() - cameraHeight) > updateQuadtreeEvery
         || geometry.current.cameraPosition.distanceTo(rotatedCameraPosition) > updateQuadtreeEvery * cameraHeight / (config.radius * maxStretch)
       ;
@@ -670,7 +690,7 @@ const Asteroid = (props) => {
       ))}
       {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
       {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
-      {false && <ambientLight intensity={0.3} />}
+      {false && <ambientLight intensity={0.07} />}
     </group>
   );
 }

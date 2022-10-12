@@ -13,6 +13,7 @@ import colorShader from '~/game/scene/asteroid/shaders/color.glsl';
 import heightShader from '~/game/scene/asteroid/shaders/height.glsl';
 import heightShaderWithStitching from '~/game/scene/asteroid/shaders/height_w_stitching.glsl';
 import normalShader from '~/game/scene/asteroid/shaders/normal.glsl';
+import resourceShader from '~/game/scene/asteroid/shaders/resource.glsl';
 import rampsDataUri from '~/game/scene/asteroid/helpers/_ramps.png.datauri';
 import constants from '~/lib/constants';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
@@ -208,6 +209,36 @@ export function generateNormalMap(heightMap, chunkResolution, chunkWidth, oversa
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
+export function generateEmissiveMap(resource, cubeTransform, chunkSize, chunkOffset, chunkResolution, extraPasses, extraPassesMax, oversample, config, returnType = 'bitmap') {
+  const material = new ShaderMaterial({
+    fragmentShader: resourceShader,
+    uniforms: {
+      uChunkOffset: { type: 'v2', value: chunkOffset },
+      uChunkSize: { type: 'f', value: chunkSize },
+      uExtraPasses: { type: 'i', value: extraPasses },
+      uExtraPassesMax: { type: 'i', value: extraPassesMax },
+      uOversampling: { type: 'b', value: oversample },
+      uResolution: { type: 'f', value: chunkResolution },
+      uResource: { type: 'f', value: resource },
+      uSeed: { type: 'v3', value: config.seed },
+      uTransform: { type: 'mat4', value: cubeTransform },
+    }
+  });
+
+  const textureRenderer = getTextureRenderer();
+  if (returnType === 'texture') {
+    const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
+    texture.options = {
+      generateMipmaps: true,
+      minFilter: LinearMipMapLinearFilter,
+      magFilter: LinearFilter,
+      needsUpdate: true
+    };
+    return texture;
+  }
+  return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material, { magFilter: NearestFilter });
+}
+
 export function rebuildChunkGeometry({ config, edgeStrides, minHeight, offset, resolution, stretch, width }) {
   const radius = config.radius;
   const undisplacedHeight = minHeight;
@@ -324,7 +355,7 @@ export function getExtraPasses(chunkSize, resolution) {
   return Math.ceil(Math.log2(1 / chunkSize) + (resolution / CHUNK_RESOLUTION) - 1)
 };
 
-export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, resolution, width }) {
+export function rebuildChunkMaps({ config, edgeStrides, emissiveParams, groupMatrix, offset, resolution, width }) {
   const localToWorld = groupMatrix;
   const chunkSize = width / (2 * config.radius);
   const chunkOffset = offset.clone().multiplyScalar(1 / config.radius);
@@ -366,13 +397,28 @@ export function rebuildChunkMaps({ config, edgeStrides, groupMatrix, offset, res
     config
   );
 
+  // conditionally add emissive bitmap
+  // TODO: emissiveParams should include which resource we are looking at
+  const emissiveBitmap = emissiveParams && generateEmissiveMap(
+    emissiveParams.resource,
+    localToWorld,
+    textureSize,
+    chunkOffset,
+    textureResolution,
+    extraPasses,
+    extraPassesMax,
+    OVERSAMPLE_CHUNK_TEXTURES,
+    config
+  );
+
   // done with interim data textures
   heightTexture.dispose();
   
   return {
     heightBitmap,
     colorBitmap,
-    normalBitmap
+    normalBitmap,
+    emissiveBitmap
   };
 }
 
