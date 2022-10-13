@@ -59,9 +59,10 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         const sliceTheta = 2 * Math.PI * abundance;
         const geometry = new CircleGeometry(1.0, getSegments(sliceTheta), totalTheta + margin, sliceTheta - 2 * margin);
         const material = new MeshBasicMaterial({
-          color: noColor ? hexToLinear('#333333') : hexToLinear(theme.colors.resources[category]),
+          color: noColor ? hexToLinear('#222222') : hexToLinear(theme.colors.resources[category]),
           alphaMap: new Texture(),  // include so vUv is set
           side: BackSide, // (to make angles work as designed)
+          toneMapped: false,
           transparent: true
         });
         material.onBeforeCompile = (shader) => {
@@ -110,7 +111,8 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
       const coverInner = new Mesh(
         new CircleGeometry(0.70, segmentsPerCircle),
         new MeshBasicMaterial({
-          color: hexToLinear('#202b2f')
+          color: hexToLinear('#061317'),
+          toneMapped: false,
         })
       );
       coverInner.position.add(new Vector3(0, 0, 0.002));
@@ -169,7 +171,8 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         const subSliceMaterial = new MeshBasicMaterial({
           color: hexToLinear(theme.colors.resources[target.category]),
           alphaMap: new Texture(),  // include so vUv is set
-          side: BackSide, // (to make angles work as designed)
+          side: BackSide, // (to make angles work as designed),
+          toneMapped: false,
           transparent: true
         });
         subSliceMaterial.onBeforeCompile = (shader) => {
