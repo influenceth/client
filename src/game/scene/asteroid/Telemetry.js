@@ -29,12 +29,8 @@ import { useFrame, useThree } from '@react-three/fiber';
 
 
 const hexToGLSL = (hex) => {
-  const aRgbHex = hex.substr(1).match(/.{1,2}/g);
-  return [
-    parseInt(aRgbHex[0], 16) / 255,
-    parseInt(aRgbHex[1], 16) / 255,
-    parseInt(aRgbHex[2], 16) / 255
-  ];
+  const color = new Color().setStyle(hex);
+  return color.convertSRGBToLinear().toArray();
 };
 const BLUE = hexToGLSL(theme.colors.main);
 const GREEN = hexToGLSL(theme.colors.success);
@@ -312,6 +308,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
           color: theme.colors.main,
           map: new TextureLoader().load('/textures/asteroid/marker_pole_n.png'),
           side: DoubleSide,
+          toneMapped: false,
           transparent: true
         })
       );
@@ -331,6 +328,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
           color: theme.colors.main,
           map: new TextureLoader().load('/textures/asteroid/marker_pole_s.png'),
           side: DoubleSide,
+          toneMapped: false,
           transparent: true
         })
       );
@@ -413,6 +411,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
           color: new Color(hasAccess ? theme.colors.success : theme.colors.main).convertSRGBToLinear(),
           opacity: 0.25,
           side: DoubleSide,
+          toneMapped: false,
           transparent: true
         })
       );
@@ -451,6 +450,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
           color: theme.colors.main,
           map: hGateSprite,
           side: DoubleSide,
+          toneMapped: false,
           transparent: true
         })
       );
@@ -465,6 +465,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
           color: theme.colors.main,
           map: vGateSprite,
           side: DoubleSide,
+          toneMapped: false,
           transparent: true
         })
       );
@@ -512,7 +513,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
       if (shipGroup.current) scene.remove(shipGroup.current);
       if (trajectory.current) scene.remove(trajectory.current);
     };
-  });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const lastRotation = useRef();
   useFrame(() => {
