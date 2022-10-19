@@ -359,9 +359,9 @@ const useStore = create(persist((set, get) => ({
 
     getTerrainQuality: () => {
       const q = get().graphics?.textureQuality;
-      if (q === 2) return { textureSize: 2 * CHUNK_RESOLUTION };
-      if (q === 3) return { textureSize: 4 * CHUNK_RESOLUTION };
-      return { textureSize: 1 * CHUNK_RESOLUTION };
+      if (q === 2) return { textureSize: 2 * CHUNK_RESOLUTION - 3 };
+      if (q === 3) return { textureSize: 4 * CHUNK_RESOLUTION - 3 };
+      return { textureSize: 1 * CHUNK_RESOLUTION - 3 };
     },
 
     dispatchPendingTransaction: ({ key, vars, txHash }) => set(produce(state => {
