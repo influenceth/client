@@ -33,7 +33,7 @@ const {
 } = constants;
 const UPDATE_DISTANCE_MULT = CHUNK_SPLIT_DISTANCE * UPDATE_QUADTREE_EVERY;
 
-const MAP_RENDER_TIME_PER_CYCLE = 8;
+const MAP_RENDER_TIME_PER_CYCLE = 4;
 const INITIAL_ZOOM = 2;
 const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 4;
@@ -611,6 +611,9 @@ const Asteroid = (props) => {
       if (updateQuadCube) {
         terrainUpdateStart = Date.now();
         settingCameraPosition.current = true;
+        // TODO: setting state in useFrame is an antipattern, BUT this should
+        //  only set state rarely, so it's prob ok to move the resulting calculations
+        //  outside the render loop (could instead just wrap in setTimeout 0)
         setTerrainUpdateNeeded(rotatedCameraPosition.clone());
       }
     }

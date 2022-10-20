@@ -101,9 +101,11 @@ class TerrainChunkManager {
       );
     }
 
+    // hide chunk
     chunk.hide();
     chunk.attachToGroup();
 
+    // trigger geometry and map updates (will queue for display when complete)
     const scope = this;
     this.workerPool.gpuProcessInBackground(
       {
