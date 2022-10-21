@@ -12,7 +12,6 @@ module.exports = {
   },
   output: {
     filename: 'server.built.js',
-    hashFunction: 'xxhash64',
     path: __dirname,
   },
   target: 'node'
