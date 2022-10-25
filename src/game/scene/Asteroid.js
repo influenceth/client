@@ -97,8 +97,6 @@ if (BENCHMARK_TERRAIN_UPDATES) {
   }, 5000);
 }
 
-let terrainUpdateStart; // TODO: remove
-
 const Asteroid = (props) => {
   const { camera, controls } = useThree();
   const origin = useStore(s => s.asteroids.origin);
@@ -479,6 +477,7 @@ const Asteroid = (props) => {
   useFrame(() => {
     if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
+    console.log('useframe');
 
     // vvv BENCHMARK <1ms
     // update asteroid position
@@ -530,28 +529,24 @@ const Asteroid = (props) => {
 
     // (if currently zooming in, we'll want to setCameraPosition for camera's destination so doesn't
     //  re-render as soon as it arrives)
-    const rotatedCameraPosition = zoomStatus === 'in' || !config?.radius
+    const rotatedCameraPosition = (zoomStatus === 'in' || !config?.radius)
       ? controls.object.position.clone()
       : controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM);
     rotatedCameraPosition.applyAxisAngle(rotationAxis.current, -rotation.current);
     // ^^^
 
-    // if builder is not busy, make sure we are showing most recent chunks
-    if (geometry.current.builder.isPreparingUpdate()) {
-      if (geometry.current.builder.isReadyToFinish()) {
-        // vvv BENCHMARK 1ms
+    // if builder is working on an update, manage within frame rate
+    if (geometry.current.builder.isUpdating()) {
+      // keep building maps until maps are ready (some per frame)
+      if (geometry.current.builder.isWaitingOnMaps()) {
+        // TODO: (redo) vvv BENCHMARK (MAP_RENDER_TIME_PER_CYCLEms)
+        geometry.current.builder.updateMaps(Date.now() + MAP_RENDER_TIME_PER_CYCLE);
+        // ^^^
+
+      // when ready to finish, actually run chunk swap
+      } else {
+        // TODO: (redo) vvv BENCHMARK 1ms
         geometry.current.builder.update();
-        
-        // TODO: remove below
-        if (BENCHMARK_TERRAIN_UPDATES) {
-          if (taskTally < 5) {  // overwrite first load since so long for workers
-            taskTotal = 5 * (Date.now() - terrainUpdateStart);
-          } else {
-            taskTotal += Date.now() - terrainUpdateStart;
-          }
-          taskTally++;
-          terrainUpdateStart = null;
-        }
         // ^^^
 
         // if (debug.current) {
@@ -567,12 +562,6 @@ const Asteroid = (props) => {
         //   debug.current.geometry.setAttribute('position', new BufferAttribute( new Float32Array(vertices), 3 ) );
         //   debug.current.geometry.attributes.position.needsUpdate = true;
         // }
-
-      // (this is used if maps are generated on main thread instead of worker)
-      } else {
-        // vvv BENCHMARK 8ms (matches MAP_RENDER_TIME_PER_CYCLE)
-        geometry.current.builder.updateMaps(Date.now() + MAP_RENDER_TIME_PER_CYCLE);
-        // ^^^
       }
     }
 
@@ -597,7 +586,7 @@ const Asteroid = (props) => {
     // update quads if not already updating AND one of these is true...
     //  a) camera height changes by UPDATE_DISTANCE_MULT
     //  b) camera position changes by rotational equivalent of UPDATE_DISTANCE_MULT at maxStretch surface
-    if (!settingCameraPosition.current && !geometry.current.builder.isBusy() && !geometry.current.builder.isPreparingUpdate()) {
+    if (!settingCameraPosition.current && !geometry.current.builder.isBusy() && !geometry.current.builder.isUpdating()) {
       // vvv BENCHMARK <1ms
       const cameraHeight = rotatedCameraPosition.length();
       const updateQuadtreeEvery = geometry.current.smallestActiveChunkSize * UPDATE_DISTANCE_MULT;
@@ -609,13 +598,17 @@ const Asteroid = (props) => {
 
       // initiate update of quads (based on camera position)
       if (updateQuadCube) {
-        terrainUpdateStart = Date.now();
         settingCameraPosition.current = true;
         // TODO: setting state in useFrame is an antipattern, BUT this should
         //  only set state rarely, so it's prob ok to move the resulting calculations
         //  outside the render loop (could instead just wrap in setTimeout 0)
         setTerrainUpdateNeeded(rotatedCameraPosition.clone());
       }
+    }
+
+    // if not processing an update already, and camera is not currently moving, process next change for cube
+    if (!geometry.current.builder.isUpdating() && !settingCameraPosition.current) {
+      geometry.current.processNextQueuedChange();
     }
 
     if (geometry.current?.csm) {

@@ -205,6 +205,7 @@ class Config {
   // Vector to stretch the asteroid along
   _stretch() {
     const mod = 0.45 * (1 - this._radiusMod(2));
+    // return new Vector3(1, 1, 1);
     return new Vector3(1, 1, 1).sub(this.seedGen.getVector3().multiplyScalar(mod));
   }
 

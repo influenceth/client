@@ -28,7 +28,6 @@ const constants = {
   // (performance)
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: true,
   USE_DEDICATED_GPU_WORKER: true,
-  DISABLE_BACKGROUND_TERRAIN_MAPS: typeof OffscreenCanvas === 'undefined',  // force terrain textures to be rendered on main thread
   UPDATE_QUADTREE_EVERY: 0.33, // (multiplied by CHUNK_SPLIT_DISTANCE)
 
   // Default performance settings
