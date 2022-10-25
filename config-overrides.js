@@ -1,4 +1,4 @@
-const { addBabelPlugin, override, tap } = require('customize-cra');
+const { addBabelPlugin, override, setWebpackTarget } = require('customize-cra');
 
 // Custom loader for GLSL shaders
 const addGlslifyLoader = () => config => {
@@ -37,9 +37,12 @@ const addSVGR = () => config => {
       loader: '@svgr/webpack',
       options: {
         svgoConfig: {
-          plugins: {
-            removeViewBox: false
-          }
+          plugins: [
+            {
+              name: 'removeViewBox',
+              active: false
+            }
+          ]
         }
       }
     }]
@@ -52,35 +55,22 @@ patchNpmModules = () => config => {
   const loaders = config.module.rules.find(rule => Array.isArray(rule.oneOf)).oneOf;
   
   // NOTE: this is entirely for three's GLTFExporter
-  loaders.unshift({
-    test: /\.js$/,
-    include: /node_modules\/three/,
-    use: [{
-      loader: 'babel-loader',
-      options: {
-        plugins: ['@babel/plugin-proposal-optional-chaining']
-      }
-    }]
-  });
-
-  loaders.unshift({
-    test: /\.js$/,
-    include: /node_modules\/@starknet-react/,
-    use: [{
-      loader: 'babel-loader',
-      options: {
-        plugins: [
-          '@babel/plugin-proposal-nullish-coalescing-operator',
-          '@babel/plugin-proposal-optional-chaining'
-        ]
-      }
-    }]
-  });
+  // loaders.unshift({
+  //   test: /\.js$/,
+  //   include: /node_modules\/three/,
+  //   use: [{
+  //     loader: 'babel-loader',
+  //     options: {
+  //       plugins: ['@babel/plugin-proposal-optional-chaining']
+  //     }
+  //   }]
+  // });
 
   return config;
 };
 
 module.exports = override(
+  setWebpackTarget('web'),
   addBabelPlugin([
     'babel-plugin-root-import',
     {
