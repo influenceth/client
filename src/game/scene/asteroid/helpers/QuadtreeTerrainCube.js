@@ -258,7 +258,7 @@ class QuadtreeTerrainCube {
       // console.log('FINISHED!');
       return;
     }
-    console.log('queue length', this.queuedChanges.length);
+    // console.log('queue length', this.queuedChanges.length);
     
     const { add, remove, removeByKey } = this.queuedChanges.shift();
     

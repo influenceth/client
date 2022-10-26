@@ -1,14 +1,11 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
   // BufferAttribute,
   AxesHelper,
   CameraHelper,
   DirectionalLight,
-  DirectionalLightHelper,
-  Mesh,
-  MeshPhongMaterial,
-  PlaneGeometry,
+  // Mesh,
   Vector3
 } from 'three';
 import gsap from 'gsap';
@@ -22,6 +19,7 @@ import Config from '~/lib/asteroidConfig';
 import constants from '~/lib/constants';
 import QuadtreeTerrainCube from './asteroid/helpers/QuadtreeTerrainCube';
 import Rings from './asteroid/Rings';
+import useInterval from '~/hooks/useInterval';
 
 const {
   MIN_FRUSTUM_AT_SURFACE,
@@ -30,11 +28,16 @@ const {
 } = constants;
 const UPDATE_DISTANCE_MULT = CHUNK_SPLIT_DISTANCE * UPDATE_QUADTREE_EVERY;
 
-const MAP_RENDER_TIME_PER_CYCLE = 4;
 const INITIAL_ZOOM = 2;
 const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 4;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
+
+const FRAME_SAFETY_MULT = 0.8;  // "usable frame" (i.e. to leave safety factor)
+const EST_RENDER_TIME = 6;  // (https://web.dev/rendering-performance/)
+const EST_CHUNK_SWAP_TIME = 2;
+const TARGET_FRAME_TIME = FRAME_SAFETY_MULT * (1e3 / 60 - EST_RENDER_TIME);
+console.log('TARGET_FRAME_TIME', TARGET_FRAME_TIME);
 
 // TODO: remove debug
 // let totalRuns = 0;
@@ -93,8 +96,24 @@ if (BENCHMARK_TERRAIN_UPDATES) {
   }, 5000);
 }
 
+const getNow = () => (performance || new Date()).now();
+const frameTimeLeft = (start, chunkSwapPending) => TARGET_FRAME_TIME - (chunkSwapPending ? EST_CHUNK_SWAP_TIME : 0) - (getNow() - start);
+
+const consolelog = (...args) => false && console.log(...args);
+
+
+let chunkSwapThisCycle = false;
+const _dbg = {};
+const dbg = (label, start) => {
+  if (!_dbg[label]) _dbg[label] = { times: 0, frames: 0, max: 0 };
+  const elapsed = getNow() - start;
+  _dbg[label].times += elapsed;
+  if (elapsed > _dbg[label].max) _dbg[label].max = elapsed;
+  _dbg[label].frames++;
+};
+
 const Asteroid = (props) => {
-  const { camera, controls } = useThree();
+  const { controls } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const { textureSize } = useStore(s => s.getTerrainQuality());
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
@@ -399,6 +418,11 @@ const Asteroid = (props) => {
     if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
     // console.log('useframe');
+    
+    const frameStart = getNow();
+
+    let updatedMapsThisCycle = false;
+    chunkSwapThisCycle = false;
 
     // vvv BENCHMARK <1ms
     // update asteroid position
@@ -457,28 +481,39 @@ const Asteroid = (props) => {
       // keep building maps until maps are ready (some per frame)
       if (geometry.current.builder.isWaitingOnMaps()) {
         // TODO: (redo) vvv BENCHMARK (MAP_RENDER_TIME_PER_CYCLEms)
-        geometry.current.builder.updateMaps(Date.now() + MAP_RENDER_TIME_PER_CYCLE);
+        consolelog('frametime for maps', frameTimeLeft(frameStart, false));
+        geometry.current.builder.updateMaps(Date.now() + frameTimeLeft(frameStart, false));  // TODO: ...
         // ^^^
+
+        updatedMapsThisCycle = true;
+      }
 
       // when ready to finish, actually run chunk swap
-      } else {
-        // TODO: (redo) vvv BENCHMARK 1ms
-        geometry.current.builder.update();
-        // ^^^
+      if (!geometry.current.builder.isWaitingOnMaps()) {
 
-        // if (debug.current) {
-        //   const vertices = Object.values(geometry.current.chunks)
-        //     .map((c) => c.sphereCenter.clone().addScalar(1))
-        //     .reduce((acc, cur) => {
-        //       acc.push(cur.x);
-        //       acc.push(cur.y);
-        //       acc.push(cur.z);
-        //       return acc;
-        //     }, [])
-        //   ;
-        //   debug.current.geometry.setAttribute('position', new BufferAttribute( new Float32Array(vertices), 3 ) );
-        //   debug.current.geometry.attributes.position.needsUpdate = true;
-        // }
+        // if this is the only thing doing this cycle, have to always do it (even if not enough time)
+        // if this was also processing maps this cycle, can bump chunk swap to next loop if helpful
+        if (!updatedMapsThisCycle || frameTimeLeft(frameStart, true) > 0) {
+
+          // TODO: (redo) vvv BENCHMARK 1ms
+          geometry.current.builder.update();
+          chunkSwapThisCycle = true;
+          // ^^^
+
+          // if (debug.current) {
+          //   const vertices = Object.values(geometry.current.chunks)
+          //     .map((c) => c.sphereCenter.clone().addScalar(1))
+          //     .reduce((acc, cur) => {
+          //       acc.push(cur.x);
+          //       acc.push(cur.y);
+          //       acc.push(cur.z);
+          //       return acc;
+          //     }, [])
+          //   ;
+          //   debug.current.geometry.setAttribute('position', new BufferAttribute( new Float32Array(vertices), 3 ) );
+          //   debug.current.geometry.attributes.position.needsUpdate = true;
+          // }
+        }
       }
     }
 
@@ -486,6 +521,7 @@ const Asteroid = (props) => {
     if (geometry.current.cameraPosition && (zoomStatus === 'out' || zoomStatus === 'zooming-out')) return;
     
     // control dynamic zoom limit (zoom out if too low... else, just update boundary)
+    if (frameTimeLeft(frameStart, chunkSwapThisCycle) <= 0) return;
     if (controls && Object.values(geometry.current?.chunks).length) {
       if (applyingZoomLimits.current) {
         if (applyingZoomLimits.current !== true) {
@@ -503,6 +539,7 @@ const Asteroid = (props) => {
     // update quads if not already updating AND one of these is true...
     //  a) camera height changes by UPDATE_DISTANCE_MULT
     //  b) camera position changes by rotational equivalent of UPDATE_DISTANCE_MULT at maxStretch surface
+    if (frameTimeLeft(frameStart, chunkSwapThisCycle) <= 0) return;
     if (!settingCameraPosition.current && !geometry.current.builder.isBusy() && !geometry.current.builder.isUpdating()) {
       // vvv BENCHMARK <1ms
       const cameraHeight = rotatedCameraPosition.length();
@@ -524,10 +561,13 @@ const Asteroid = (props) => {
     }
 
     // if not processing an update already, and camera is not currently moving, process next change for cube
+    if (frameTimeLeft(frameStart, chunkSwapThisCycle) <= 0) return;
     if (!geometry.current.builder.isUpdating() && !settingCameraPosition.current) {
       geometry.current.processNextQueuedChange();
     }
 
+
+    dbg('frame loop', frameStart);
     // TODO: remove debug
     // setTimeout(() => {
     //   const debugInfo = document.getElementById('debug_info');
@@ -537,7 +577,33 @@ const Asteroid = (props) => {
     //     console.log('#debug_info not found!');
     //   }
     // });
-  });
+  }, 0);
+
+  useFrame(({ gl, scene, camera }) => {
+    const x = getNow();
+    gl.render(scene, camera);
+    if (chunkSwapThisCycle) {
+      dbg('render w/ swap', x);
+    } else {
+      dbg('render w/o swap', x);
+    }
+  }, 1);
+
+  useInterval(() => {
+    console.log('- - - - - - - -');
+    console.group();
+    Object.keys(_dbg).forEach((label) => {
+      console.log(
+        `${label} (${_dbg[label].frames})
+        [AVG] ${(_dbg[label].times / _dbg[label].frames).toFixed(2)}
+        [MAX] ${_dbg[label].max.toFixed(2)}`,
+      );
+      _dbg[label].frames = 0;
+      _dbg[label].max = 0;
+      _dbg[label].times = 0;
+    });
+    console.groupEnd();
+  }, 5000);
 
   return (
     <group ref={group}>
