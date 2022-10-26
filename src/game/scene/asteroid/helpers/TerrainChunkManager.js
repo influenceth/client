@@ -139,6 +139,8 @@ class TerrainChunkManager {
 
   updateMaps(until) {
     let chunk;
+
+    // NOTE: deliberately always do at least one
     while (chunk = this._queued.pop()) { // eslint-disable-line
       chunk.updateMaps(
         rebuildChunkMaps({

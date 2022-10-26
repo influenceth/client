@@ -19,7 +19,6 @@ import Config from '~/lib/asteroidConfig';
 import constants from '~/lib/constants';
 import QuadtreeTerrainCube from './asteroid/helpers/QuadtreeTerrainCube';
 import Rings from './asteroid/Rings';
-import useInterval from '~/hooks/useInterval';
 
 const {
   MIN_FRUSTUM_AT_SURFACE,
@@ -33,84 +32,64 @@ const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 4;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
 
-const FRAME_SAFETY_MULT = 0.8;  // "usable frame" (i.e. to leave safety factor)
-const EST_RENDER_TIME = 6;  // (https://web.dev/rendering-performance/)
-const EST_CHUNK_SWAP_TIME = 2;
-const TARGET_FRAME_TIME = FRAME_SAFETY_MULT * (1e3 / 60 - EST_RENDER_TIME);
-console.log('TARGET_FRAME_TIME', TARGET_FRAME_TIME);
+// some numbers estimated from https://web.dev/rendering-performance/
+const TARGET_FPS = 60;
+const USABLE_FRAME = 0.6; // leave time for GPU housekeeping, etc
+const INITIAL_RENDER_WO_SWAP_EST = 2;
+const INITIAL_RENDER_W_SWAP_EST = 2.5;
+const TARGET_LOOP_TIME = 1e3 * USABLE_FRAME / TARGET_FPS;
 
-// TODO: remove debug
-// let totalRuns = 0;
-// let totals = {};
-// let startTime;
-// let first = true;
-// function benchmark(tag) {
-//   if (!tag) {
-//     startTime = Date.now();
-//     totalRuns++;
-//   }
-//   else {
-//     if (!totals[tag]) totals[tag] = { total: 0, max: 0 };
-//     const t = Date.now() - startTime;
+const AVG_RENDER_TIMES = {
+  W_SWAP: INITIAL_RENDER_W_SWAP_EST,
+  WO_SWAP: INITIAL_RENDER_WO_SWAP_EST
+};
 
-//     totals[tag].total += t;
-//     if (t > totals[tag].max) totals[tag].max = t;
-//   }
-// }
+const RENDER_TIMES = { W_SWAP: [], WO_SWAP: [] };
+const RENDER_SAMPLES = { W_SWAP: 100, WO_SWAP: 25 };
+const RENDER_TALLIES = { W_SWAP: 0, WO_SWAP: 0 };
 
-// TODO: remove debug
-// setInterval(() => {
-//   if (first) {
-//     first = false;
-//     totalRuns = 0;
-//     totals = {};
-//     return;
-//   }
-//   const b = {};
-//   let prevTime = 0;
-//   Object.keys(totals).forEach((k) => {
-//     const thisTime = Math.round(totals[k].total / totalRuns);
-//     const thisMax = totals[k].max;
-//     if (k === '_') {
-//       b['TOTAL'] = thisTime;
-//     } else {
-//       b[k] = thisTime - prevTime;
-//       prevTime = thisTime;
-//       // b[`${k}_MAX`] = thisMax;
-//     }
-//   });
-//   console.log(`b ${totalRuns}`, b);
-// }, 5000);
-
-// for terrain benchmarking...
-const BENCHMARK_TERRAIN_UPDATES = false;
-let taskTotal = 0;
-let taskTally = 0;
-if (BENCHMARK_TERRAIN_UPDATES) {
-  setInterval(() => {
-    if (taskTally > 0) {
-      console.log(
-        `avg update time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
-      );
-    }
-  }, 5000);
-}
+const reportRenderTime = (type, time) => {
+  RENDER_TIMES[type][RENDER_TALLIES[type]] = time;
+  RENDER_TALLIES[type]++;
+  if (RENDER_TALLIES[type] === RENDER_SAMPLES[type]) {
+    const avg = RENDER_TIMES[type].reduce((acc, cur) => acc + cur, 0) / RENDER_TALLIES[type];
+    const stddev = Math.sqrt(RENDER_TIMES[type].reduce((acc, cur) => acc + (cur - avg) ** 2, 0) / RENDER_TALLIES[type]);
+    AVG_RENDER_TIMES[type] = avg + stddev;
+    RENDER_TALLIES[type] = 0;
+  }
+};
 
 const getNow = () => (performance || new Date()).now();
-const frameTimeLeft = (start, chunkSwapPending) => TARGET_FRAME_TIME - (chunkSwapPending ? EST_CHUNK_SWAP_TIME : 0) - (getNow() - start);
-
-const consolelog = (...args) => false && console.log(...args);
-
+const frameTimeLeft = (start, chunkSwapPending) => {
+  return TARGET_LOOP_TIME
+    - AVG_RENDER_TIMES[chunkSwapPending ? 'W_SWAP' : 'WO_SWAP']
+    - (getNow() - start);
+}
 
 let chunkSwapThisCycle = false;
-const _dbg = {};
-const dbg = (label, start) => {
-  if (!_dbg[label]) _dbg[label] = { times: 0, frames: 0, max: 0 };
-  const elapsed = getNow() - start;
-  _dbg[label].times += elapsed;
-  if (elapsed > _dbg[label].max) _dbg[label].max = elapsed;
-  _dbg[label].frames++;
-};
+// const _dbg = {};
+// const dbg = (label, start) => {
+//   if (!_dbg[label]) _dbg[label] = { times: 0, frames: 0, max: 0 };
+//   const elapsed = getNow() - start;
+//   _dbg[label].times += elapsed;
+//   if (elapsed > _dbg[label].max) _dbg[label].max = elapsed;
+//   _dbg[label].frames++;
+// };
+// setInterval(() => {
+//   console.log('- - - - - - - -');
+//   console.group();
+//   Object.keys(_dbg).forEach((label) => {
+//     console.log(
+//       `${label} (${_dbg[label].frames})
+//       [AVG] ${(_dbg[label].times / _dbg[label].frames).toFixed(2)}
+//       [MAX] ${_dbg[label].max.toFixed(2)}`,
+//     );
+//     _dbg[label].frames = 0;
+//     _dbg[label].max = 0;
+//     _dbg[label].times = 0;
+//   });
+//   console.groupEnd();
+// }, 5000);
 
 const Asteroid = (props) => {
   const { controls } = useThree();
@@ -417,7 +396,6 @@ const Asteroid = (props) => {
   useFrame(() => {
     if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
-    // console.log('useframe');
     
     const frameStart = getNow();
 
@@ -480,9 +458,8 @@ const Asteroid = (props) => {
     if (geometry.current.builder.isUpdating()) {
       // keep building maps until maps are ready (some per frame)
       if (geometry.current.builder.isWaitingOnMaps()) {
-        // TODO: (redo) vvv BENCHMARK (MAP_RENDER_TIME_PER_CYCLEms)
-        consolelog('frametime for maps', frameTimeLeft(frameStart, false));
-        geometry.current.builder.updateMaps(Date.now() + frameTimeLeft(frameStart, false));  // TODO: ...
+        // TODO: (redo) vvv BENCHMARK (frameTimeLeftms)
+        geometry.current.builder.updateMaps(Date.now() + frameTimeLeft(frameStart, false));
         // ^^^
 
         updatedMapsThisCycle = true;
@@ -566,8 +543,8 @@ const Asteroid = (props) => {
       geometry.current.processNextQueuedChange();
     }
 
+    // dbg('frame loop', frameStart);
 
-    dbg('frame loop', frameStart);
     // TODO: remove debug
     // setTimeout(() => {
     //   const debugInfo = document.getElementById('debug_info');
@@ -583,27 +560,11 @@ const Asteroid = (props) => {
     const x = getNow();
     gl.render(scene, camera);
     if (chunkSwapThisCycle) {
-      dbg('render w/ swap', x);
+      reportRenderTime('W_SWAP', getNow() - x);
     } else {
-      dbg('render w/o swap', x);
+      reportRenderTime('WO_SWAP', getNow() - x);
     }
   }, 1);
-
-  useInterval(() => {
-    console.log('- - - - - - - -');
-    console.group();
-    Object.keys(_dbg).forEach((label) => {
-      console.log(
-        `${label} (${_dbg[label].frames})
-        [AVG] ${(_dbg[label].times / _dbg[label].frames).toFixed(2)}
-        [MAX] ${_dbg[label].max.toFixed(2)}`,
-      );
-      _dbg[label].frames = 0;
-      _dbg[label].max = 0;
-      _dbg[label].times = 0;
-    });
-    console.groupEnd();
-  }, 5000);
 
   return (
     <group ref={group}>
