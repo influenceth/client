@@ -60,6 +60,7 @@ const Game = (props) => {
     setIntroEnabled(false);
   }, []);
 
+  const autodetectNeedsInit = graphics?.autodetect === undefined;
   useEffect(() => {
     if (!gpuInfo) return;
 
@@ -67,10 +68,9 @@ const Game = (props) => {
       setShowScene(true);
 
       // init autodetect (since it was recently added to store)
-      if (graphics.autodetect === undefined) {
-        console.log('autodetect undefined');
+      if (autodetectNeedsInit) {
         setAutodetect(
-          graphics.textureQuality === GRAPHICS_DEFAULTS[gpuInfo.tier].textureQuality,
+          graphics?.textureQuality === GRAPHICS_DEFAULTS[gpuInfo.tier].textureQuality,
           gpuInfo
         );
       }
@@ -84,7 +84,7 @@ const Game = (props) => {
         });
       }
     }
-  }, [ gpuInfo, createAlert, dispatchGpuInfo ]);
+  }, [ gpuInfo, createAlert, dispatchGpuInfo, autodetectNeedsInit ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (updateNeeded) {

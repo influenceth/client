@@ -224,6 +224,8 @@ const AsteroidDetails = (props) => {
           manager.builder.update();
           callback();
         }
+      } else {
+        manager.processNextQueuedChange();
       }
       setTimeout(waitUntilReady, 100, callback);
     };
