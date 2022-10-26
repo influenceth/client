@@ -157,7 +157,7 @@ class TerrainChunkManager {
 
       // limit processing time (i.e. for FPS)
       if (until && Date.now() > until) {
-        console.log('truncate processing', this._new.length);
+        // console.log('truncate processing', this._new.length);
         break;
       }
     }
