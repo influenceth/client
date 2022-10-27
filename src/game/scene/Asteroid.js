@@ -371,8 +371,10 @@ const Asteroid = (props) => {
         closestChunk.sphereCenterHeight + surfaceDistance
       );
       
-      // too close, so should animate camera out (jump to surface immediately though)
-      if (minDistance > controls?.minDistance && closestDistance < surfaceDistance) {
+      // too close, so should animate camera out
+      //  TODO (enhancement): jump to surface immediately if somehow ended up inside asteroid
+      //    (might need to use raycasting to do accurately though)
+      if (minDistance > controls?.minDistance) {
         controls.minDistance = Math.max(cameraPosition.length(), closestChunk.sphereCenterHeight);
         applyingZoomLimits.current = minDistance - controls?.minDistance;
 
