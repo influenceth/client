@@ -133,7 +133,6 @@ const Asteroid = (props) => {
     [controls?.object?.fov]
   );
 
-  const initialAltitude = useMemo(() => config?.radius * (INITIAL_ZOOM - 1), [config?.radius]);
   const frustumHeightMult = useMemo(() => 2 * Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)), [controls?.object?.fov]);
 
   const disposeGeometry = useCallback(() => {
@@ -306,6 +305,9 @@ const Asteroid = (props) => {
     controls.minDistance = config.radius * MIN_ZOOM_DEFAULT;
     controls.maxDistance = config.radius * MAX_ZOOM;
 
+    // set zoom speed for this scale
+    controls.zoomSpeed = 1.2 * Math.pow(0.4, Math.log(config?.radiusNominal / 1000) / Math.log(9));
+
     const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
@@ -389,10 +391,6 @@ const Asteroid = (props) => {
       const frustumWidth = altitude * frustumHeightMult * window.innerWidth / window.innerHeight;
       const thetaAcrossScreen = frustumWidth / cameraPosition.length();
       controls.rotateSpeed = Math.min(1.5, 1.5 * thetaAcrossScreen / 2);
-      if (initialAltitude) {
-        const absoluteZoom = Math.max(0, initialAltitude - altitude);
-        controls.zoomSpeed = Math.max(0.02, 1.2 * ((constants.MAX_ASTEROID_RADIUS - absoluteZoom) / constants.MAX_ASTEROID_RADIUS) ** 2);
-      }
     }, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
