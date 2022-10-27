@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
   // BufferAttribute,
@@ -6,9 +6,6 @@ import {
   CameraHelper,
   DirectionalLight,
   DirectionalLightHelper,
-  Mesh,
-  MeshPhongMaterial,
-  PlaneGeometry,
   Vector3
 } from 'three';
 import gsap from 'gsap';
@@ -100,7 +97,7 @@ if (BENCHMARK_TERRAIN_UPDATES) {
 let terrainUpdateStart; // TODO: remove
 
 const Asteroid = (props) => {
-  const { camera, controls } = useThree();
+  const { controls } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const { textureSize } = useStore(s => s.getTerrainQuality());
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
@@ -128,7 +125,6 @@ const Asteroid = (props) => {
   const rotationAxis = useRef();
   const position = useRef();
   const rotation = useRef(0);
-  const aspectRatio = useRef();
   const settingCameraPosition = useRef();
   const mouseGeometry = useRef();
   const mouseableRef = useRef();
