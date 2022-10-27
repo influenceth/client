@@ -22,11 +22,20 @@ const Controls = styled.div`
 const Info = styled.div`
   align-items: center;
   display: flex;
+  width: 100%;
 
-  & span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  & > div {
+    flex: 1;
+    & > div {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+    }
+    & > span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 `;
 
@@ -37,9 +46,29 @@ const Indicator = styled.span`
     if (p.status === 'logged-in') return '#2BCC80';
   }};
 
-  flex: 0 0 20px;
+  flex: 0 0 22px;
   font-size: 25px;
   margin-bottom: 2px;
+
+  & > img {
+    height: 16px;
+    width: 16px;
+  }
+`;
+
+const Account = styled.span`
+  background: #333;
+  border-radius: 8px;
+  font-weight: bold;
+  padding: 2px 6px;
+  color: white;
+  
+  &:before {
+    content: "${p => p.account.substr(0, 6)}"
+  }
+  &:after {
+    content: "...${p => p.account.substr(p.wallet === 'Braavos' ? -7 : -4)}"
+  }
 `;
 
 const Error = styled.div`
@@ -69,7 +98,7 @@ const Wallet = () => {
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
 
   const { token, login, wallet } = useAuth();
-  const { account, connectionOptions, disconnect, error } = wallet;
+  const { account, connectionOptions, disconnect, error, walletIcon, walletName } = wallet;
 
   const [bridgeModalOpen, setBridgeModalOpen] = useState(false);
 
@@ -100,10 +129,16 @@ const Wallet = () => {
       icon={<WalletIcon />}
       action={(<Link onClick={openBridgeModal}>Assets on L1?</Link>)}>
       <Info>
-        <Indicator status={status}>●</Indicator>
-        {status === 'disconnected' && <span>Wallet is disconnected. Connect with...</span>}
-        {status === 'connected' && <span>Connected as {account}</span>}
-        {status === 'logged-in' && <span>Logged in as {account}</span>}
+        <Indicator status={status}>{walletIcon || '●'}</Indicator>
+        {status === 'disconnected' && (
+          <span>Wallet is disconnected. Connect with...</span>
+        )}
+        {status === 'connected' && (
+          <span>Ready to login with <Account account={account} wallet={walletName} /></span>
+        )}
+        {status === 'logged-in' && (
+          <span>Logged in as <Account account={account} wallet={walletName} /></span>
+        )}
       </Info>
       {error && (
         <Error>
@@ -123,24 +158,31 @@ const Wallet = () => {
             </Button>
           );
         })}
-        {status === 'connected' && (
-          <Button
-            data-tip="Login with Wallet"
-            data-for="global"
-            data-place="left"
-            onClick={login}>
-            <LoginIcon /> Login
-          </Button>
-        )}
-        {status === 'logged-in' && (
-          <Button
-            data-tip="Disconnect Wallet"
-            data-for="global"
-            data-place="left"
-            onClick={disconnectWallet}>
-            <DisconnectIcon /> Disconnect
-          </Button>
-        )}
+        <div style={{ display: 'flex' }}>
+          {status === 'connected' && (
+            <>
+              <Button
+                data-tip="Login with Wallet"
+                data-for="global"
+                data-place="bottom"
+                lessTransparent
+                onClick={login}>
+                <LoginIcon /> Login
+              </Button>
+              <span style={{ width: 8 }} />
+            </>
+          )}
+          {status !== 'disconnected' && (
+            <Button
+              data-tip="Disconnect Wallet"
+              data-for="global"
+              data-place="bottom"
+              color="#286e86"
+              onClick={disconnectWallet}>
+              <DisconnectIcon /> Disconnect
+            </Button>
+          )}
+        </div>
       </Controls>
       {bridgeModalOpen && (
         <BridgeModalDialog onClose={() => setBridgeModalOpen(false)} />

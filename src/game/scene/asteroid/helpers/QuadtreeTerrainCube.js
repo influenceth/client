@@ -103,11 +103,6 @@ class QuadtreeTerrainCube {
     return heightSamples;
   }
 
-  setCSM(csmManager) {
-    this.csm = csmManager;
-    this.builder.csmManager = this.csm;
-  }
-
   setShadowsEnabled(state) {
     this.builder.shadowsEnabled = !!state;
   }

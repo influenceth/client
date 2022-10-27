@@ -137,7 +137,7 @@ const traitBackground = 'rgba(15,15,15,0.95)';
 const traitBorder = '#444';
 
 const CardWrapper = styled.div`
-  align-items: center;  
+  align-items: center;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -397,7 +397,7 @@ const LinkWithIcon = styled.a`
     transition: color 100ms ease;
   }
   & > span {
-    margin-left: 4px; 
+    margin-left: 4px;
   }
   &:hover > * {
     color: #EEE;
@@ -507,7 +507,7 @@ const CrewAssignmentCreate = (props) => {
     });
     window.open(`https://twitter.com/intent/tweet?${params.toString()}`);
   }, [account, sessionId]);
-  
+
   const handleFinish = useCallback(() => {
     history.push(onCloseDestination);
   }, [history]);
@@ -530,7 +530,7 @@ const CrewAssignmentCreate = (props) => {
       body: (sex - 1) * 6 + Math.ceil(Math.random() * 6),
       crewClass,
       title: 0,
-      outfit: 18 + (crewClass - 1) * 2 + Math.ceil(Math.random() * 2),
+      outfit: 31 + (crewClass - 1) * 2 + Math.ceil(Math.random() * 2),
       hair: hair[Math.floor(Math.random() * hair.length)],
       facialFeature: facialFeature[Math.floor(Math.random() * facialFeature.length)],
       hairColor: Math.ceil(Math.random() * 5),
@@ -674,7 +674,7 @@ const CrewAssignmentCreate = (props) => {
                       </Trait>
 
                       <TraitSpacer />
-                      
+
                       <Trait side="right" isCrewClass>
                         <div>
                           <AdalianIcon />
@@ -705,7 +705,7 @@ const CrewAssignmentCreate = (props) => {
                     </Trait>
 
                     <TraitSpacer />
-                    
+
                     <Trait side="right">
                       <div>
                         <CrewTraitIcon trait={rewards[traitDispOrder[1]].id} type={rewards[traitDispOrder[1]].type} />
@@ -763,12 +763,12 @@ const CrewAssignmentCreate = (props) => {
                     style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
                     <UndoIcon />
                   </IconButton>
-                  
+
                   <Button
                     disabled={finalizing}
                     lessTransparent
                     onClick={rerollAppearance}>Randomize Appearance</Button>
-                  
+
                   <IconButton
                     onClick={rollForward}
                     disabled={finalizing || featureSelection === featureOptions.length - 1}
@@ -827,7 +827,7 @@ const CrewAssignmentCreate = (props) => {
           </>
          )}
       </FinishContainer>
-      
+
       {traitDetailsOpen && (
         <MobileDialogContainer>
           <Dialog>
@@ -840,7 +840,7 @@ const CrewAssignmentCreate = (props) => {
                 <div>{toCrewClassDescription(crewmate.crewClass)}</div>
               </article>
             </Trait>
-            
+
             <Trait isCrewClass>
               <div>
                 <AdalianIcon />
@@ -850,7 +850,7 @@ const CrewAssignmentCreate = (props) => {
                 <div>Completed secondary education and entered adulthood in the Adalian System, after the dismantling of the Arvad.</div>
               </article>
             </Trait>
-              
+
             <Trait>
               <div>
                 <CrewTraitIcon trait={rewards[traitDispOrder[0]].id} type={rewards[traitDispOrder[0]].type} />
@@ -860,7 +860,7 @@ const CrewAssignmentCreate = (props) => {
                 <div>{rewards[traitDispOrder[0]].description}</div>
               </article>
             </Trait>
-            
+
             <Trait>
               <div>
                 <CrewTraitIcon trait={rewards[traitDispOrder[1]].id} type={rewards[traitDispOrder[1]].type} />
@@ -870,7 +870,7 @@ const CrewAssignmentCreate = (props) => {
                 <div>{rewards[traitDispOrder[1]].description}</div>
               </article>
             </Trait>
-            
+
             <Trait>
               <div>
                 <CrewTraitIcon trait={rewards[traitDispOrder[2]].id} type={rewards[traitDispOrder[2]].type} />

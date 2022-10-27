@@ -11,8 +11,6 @@ import {
   PlaneGeometry,
   Vector3
 } from 'three';
-import { CSM } from 'three/examples/jsm/csm/CSM';
-import { CSMHelper } from 'three/examples/jsm/csm/CSMHelper';
 import gsap from 'gsap';
 import { KeplerianOrbit, toSpectralType } from 'influence-utils';
 
@@ -31,7 +29,6 @@ const {
   MIN_FRUSTUM_AT_SURFACE,
   CHUNK_SPLIT_DISTANCE,
   UPDATE_QUADTREE_EVERY,
-  ENABLE_CSM
 } = constants;
 
 const UPDATE_DISTANCE_MULT = CHUNK_SPLIT_DISTANCE * UPDATE_QUADTREE_EVERY;
@@ -40,7 +37,6 @@ const MAP_RENDER_TIME_PER_CYCLE = 8;
 const INITIAL_ZOOM = 2;
 const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 4;
-const DEBUG_CSM = false;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
 const MOUSE_THROTTLE = 1000 / 30; // ms
 
@@ -132,8 +128,6 @@ const Asteroid = (props) => {
   const rotationAxis = useRef();
   const position = useRef();
   const rotation = useRef(0);
-  const csmHelper = useRef(); // TODO: remove
-  const csmHelperFloor = useRef(); // TODO: remove
   const aspectRatio = useRef();
   const settingCameraPosition = useRef();
   const mouseGeometry = useRef();
@@ -165,17 +159,6 @@ const Asteroid = (props) => {
       mouseGeometry.current.groups.forEach((g) => {
         mouseableRef.current.remove(g);
       });
-    }
-    if (geometry.current?.csm) {
-      geometry.current.csm.remove();
-      geometry.current.csm.dispose();
-      geometry.current.csm = undefined;
-    }
-    if (group.current && csmHelper.current) {
-      group.current.remove(csmHelper.current);
-    }
-    if (group.current && csmHelperFloor.current) {
-      group.current.remove(csmHelperFloor.current);
     }
     if (mouseGeometry.current) {
       mouseGeometry.current.dispose();
@@ -270,9 +253,7 @@ const Asteroid = (props) => {
 
     // calculate intended shadow mode
     let intendedShadowMode = `${textureSize}`;
-    if (ENABLE_CSM && shadowMode === 2) {
-      intendedShadowMode = `${textureSize}_CSM${shadowSize}`;
-    } else if (shadowMode > 0) {
+    if (shadowMode > 0) {
       intendedShadowMode = `${textureSize}_${shadowSize}`;
     }
 
@@ -308,84 +289,25 @@ const Asteroid = (props) => {
       ? config.radius * 1.5
       : config.radius * maxStretch;
 
-    //
-    // CSM setup
-    //
-    if (ENABLE_CSM && shadowMode === 2) {
-      // TODO: could potentially add higher multiple to smallest distance
-      // TODO: does number of cascades impact performance? if not, we should definitely add more
+    // create light
+    light.current = new DirectionalLight(lightColor, lightIntensity);
+    light.current.position.copy(lightDirection.negate().multiplyScalar(lightDistance));
+    group.current.add(light.current);
 
-      // setup cascades
-      const cascadeConfig = [];
-      cascadeConfig.unshift(MAX_ZOOM);
-      // const minSurfaceDistance = Math.min(surfaceDistance, (MIN_ZOOM_DEFAULT - 1) * config.radius);
-      // cascadeConfig.unshift(INITIAL_ZOOM - minStretch);
-      // const midCascade = 8 * minSurfaceDistance / config.radius;
-      // if (midCascade < cascadeConfig[0]) cascadeConfig.unshift(midCascade);
-      // cascadeConfig.unshift(2 * minSurfaceDistance / config.radius);
-
-      // init CSM
-      const csm = new CSM({
-        fade: true,
-        maxFar: config.radius * MAX_ZOOM,
-        cascades: cascadeConfig.length,
-        mode: 'custom',
-        customSplitsCallback: (cascades, near, far, target) => {
-          cascadeConfig.forEach((r) => target.push(r / MAX_ZOOM));
-        },
-        shadowMapSize: shadowSize,
-        lightColor,
-        lightDirection,
-        lightIntensity,
-        lightNear: 1,
-        lightFar: 10 * config.radius,
-        camera,
-        parent: group.current
-      });
-      geometry.current.setCSM(csm);
+    // if traditional shadows, update shadow camera
+    if (shadowMode > 0) {
+      light.current.castShadow = true;
+      light.current.shadow.mapSize.width = shadowSize;
+      light.current.shadow.mapSize.height = shadowSize;
+      // light.current.shadow.bias = 1 / shadowSize;
+      light.current.shadow.camera.near = lightDistance - maxRadius;
+      light.current.shadow.camera.far = lightDistance + maxRadius;
+      light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius;
+      light.current.shadow.camera.right = light.current.shadow.camera.top = maxRadius;
+      light.current.shadow.camera.updateProjectionMatrix();
       geometry.current.setShadowsEnabled(true);
-
-      // TODO: remove this
-      if (DEBUG_CSM) {
-        csmHelper.current = new CSMHelper(csm);
-        csmHelper.current.displayFrustum = true;
-        csmHelper.current.displayPlanes = true;
-        csmHelper.current.displayShadowBounds = true;
-        group.current.add(csmHelper.current);
-  
-        const floorMaterial = new MeshPhongMaterial( { color: '#252a34' } );
-        csm.setupMaterial( floorMaterial );
-        csmHelperFloor.current = new Mesh(new PlaneGeometry( 100000, 100000, 8, 8 ), floorMaterial );
-        csmHelperFloor.current.castShadow = true;
-        csmHelperFloor.current.receiveShadow = true;
-        group.current.add( csmHelperFloor.current );
-      }
-
-    //
-    // Non-CSM setup
-    //
     } else {
-      
-      // create light
-      light.current = new DirectionalLight(lightColor, lightIntensity);
-      light.current.position.copy(lightDirection.negate().multiplyScalar(lightDistance));
-      group.current.add(light.current);
-
-      // if traditional shadows, update shadow camera
-      if (shadowMode > 0) {
-        light.current.castShadow = true;
-        light.current.shadow.mapSize.width = shadowSize;
-        light.current.shadow.mapSize.height = shadowSize;
-        // light.current.shadow.bias = 1 / shadowSize;
-        light.current.shadow.camera.near = lightDistance - maxRadius;
-        light.current.shadow.camera.far = lightDistance + maxRadius;
-        light.current.shadow.camera.bottom = light.current.shadow.camera.left = -maxRadius;
-        light.current.shadow.camera.right = light.current.shadow.camera.top = maxRadius;
-        light.current.shadow.camera.updateProjectionMatrix();
-        geometry.current.setShadowsEnabled(true);
-      } else {
-        geometry.current.setShadowsEnabled(false);
-      }
+      geometry.current.setShadowsEnabled(false);
     }
 
     // create "dark light"
@@ -571,11 +493,7 @@ const Asteroid = (props) => {
 
       // update light position (since asteroid has moved around star)
       if (zoomStatus !== 'out') {
-        if (geometry.current.csm) {
-          geometry.current.csm.lightDirection.copy(
-            new Vector3(...position.current).normalize()
-          )
-        } else if (light.current) {
+        if (light.current) {
           light.current.position.copy(
             new Vector3(...position.current).normalize().negate().multiplyScalar(config.radius * DIRECTIONAL_LIGHT_DISTANCE)
           );
@@ -710,20 +628,6 @@ const Asteroid = (props) => {
       }
     }
 
-    if (geometry.current?.csm) {
-      // vvv BENCHMARK <1ms
-      geometry.current.csm.update();
-      const updatedAspect = window.innerWidth / window.innerHeight;
-      if (aspectRatio.current !== updatedAspect) {
-        aspectRatio.current = updatedAspect;
-        geometry.current.csm.updateFrustums();
-      }
-      // ^^^
-      if (csmHelper.current) {
-        csmHelper.current.update();
-      }
-    }
-
     // raycast
     // TODO: would definitely be cheaper to use single prerendered mesh for this
     //  (but would need to overlay geometry, be transparent)
@@ -784,7 +688,6 @@ const Asteroid = (props) => {
         />
       )}
 
-      {/* TODO: need to pass in CSM to rings probably */}
       {config?.ringsPresent && geometry.current && (
         <Rings
           receiveShadow={shadowMode > 0}
@@ -803,12 +706,6 @@ const Asteroid = (props) => {
           <pointsMaterial attach="material" size={500} sizeAttenuation={true} color={0xff0000} />
         </points>
       )}
-      {false && geometry.current?.csm && geometry.current.csm.lights.map((light, i) => (
-        <Fragment key={`helper_${i}`}>
-          {false && <primitive object={new DirectionalLightHelper(light, 2 * config?.radius)} />}
-          {true && light?.shadow?.camera && <primitive object={new CameraHelper(light.shadow.camera)} />}
-        </Fragment>
-      ))}
       {false && darkLight.current && (
         <primitive object={new DirectionalLightHelper(darkLight.current, 2 * config?.radius)} />
       )}

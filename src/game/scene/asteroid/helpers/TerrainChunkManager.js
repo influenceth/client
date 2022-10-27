@@ -45,7 +45,6 @@ class TerrainChunkManager {
       });
     }
 
-    this.csmManager = null;
     this.shadowsEnabled = false;
     this.textureSize = textureSize;
     this.pool = [];
@@ -94,7 +93,6 @@ class TerrainChunkManager {
         params,
         this.config,
         {
-          csmManager: this.csmManager,
           materialOverrides: this.materialOverrides,
           resolution: this.textureSize,
           shadowsEnabled: this.shadowsEnabled,

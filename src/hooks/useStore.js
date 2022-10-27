@@ -50,7 +50,8 @@ const useStore = create(persist((set, get) => ({
     },
 
     auth: {
-      token: null
+      token: null,
+      lastWallet: null
     },
 
     hasSeenIntroVideo: false,
@@ -325,6 +326,10 @@ const useStore = create(persist((set, get) => ({
       state.auth.token = token;
     })),
 
+    dispatchWalletConnected: (walletId) => set(produce(state => {
+      state.auth.lastWallet = walletId;
+    })),
+
     dispatchCutscenePlaying: (which) => set(produce(state => {
       state.cutscenePlaying = which;
     })),
@@ -345,6 +350,8 @@ const useStore = create(persist((set, get) => ({
     // SPECIAL GETTERS
 
     getShadowQuality: () => {
+      // NOTE: 0 is no shadows, 1 is single-light shadows, 2 is CSMs
+      //       (support for CSMs has been removed because it was non-performant and didn't look great)
       const q = ENABLE_SHADOWS ? get().graphics?.shadowQuality : 0;
       if (q === 1) return { shadowMode: 1, shadowSize: 1024 };
       if (q === 2) return { shadowMode: 2, shadowSize: 2048 };

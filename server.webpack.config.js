@@ -7,7 +7,8 @@ module.exports = {
     __dirname: false
   },
   optimization: {
-    minimizer: [new TerserPlugin({ extractComments: false })]
+    minimizer: [new TerserPlugin({ extractComments: false })],
+    nodeEnv: false
   },
   output: {
     filename: 'server.built.js',

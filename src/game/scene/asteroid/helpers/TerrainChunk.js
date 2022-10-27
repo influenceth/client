@@ -36,10 +36,9 @@ const { SHADOWLESS_NORMAL_SCALE } = constants;
 // }, 5000);
 
 class TerrainChunk {
-  constructor(params, config, { csmManager, materialOverrides, shadowsEnabled, resolution }) {
+  constructor(params, config, { materialOverrides, shadowsEnabled, resolution }) {
     this._params = params;
     this._config = config;
-    this._csmManager = csmManager;
     this._shadowsEnabled = shadowsEnabled;
     this._resolution = resolution;
     this.updateDerived();
@@ -52,9 +51,6 @@ class TerrainChunk {
     const extraMaterialProps = {};
     if (!shadowsEnabled) {
       extraMaterialProps.normalScale = new Vector2(SHADOWLESS_NORMAL_SCALE, SHADOWLESS_NORMAL_SCALE);
-    } else if (csmManager) {
-      // extraMaterialProps.shadowSide = DoubleSide;
-      extraMaterialProps.alphaTest = 0.5; // TODO: this may not be needed
     } else {
       // extraMaterialProps.shadowSide = DoubleSide;
       extraMaterialProps.alphaTest = 0.5; // TODO: this may not be needed
@@ -84,16 +80,12 @@ class TerrainChunk {
       this._config.radius,
       this._stretch
     );
-    if (shadowsEnabled && csmManager) {
-      csmManager.setupMaterial(this._material, onBeforeCompile);
-    } else {
-      this._material.onBeforeCompile = onBeforeCompile;
-    }
+    this._material.onBeforeCompile = onBeforeCompile;
 
     // initialize mesh
     this._plane = new Mesh(this._geometry, this._material);
 
-    // add customDepthMaterial (with CSM or not)
+    // add customDepthMaterial
     if (shadowsEnabled) {
       this._plane.castShadow = true;
       this._plane.receiveShadow = true;
@@ -107,11 +99,7 @@ class TerrainChunk {
         false
       );
 
-      if (csmManager) {
-        csmManager.setupMaterial(this._plane.customDepthMaterial, onBeforeCompileDepth);
-      } else {
-        this._plane.customDepthMaterial.onBeforeCompile = onBeforeCompileDepth;
-      }
+      this._plane.customDepthMaterial.onBeforeCompile = onBeforeCompileDepth;
     }
   }
 

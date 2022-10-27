@@ -56,6 +56,11 @@ const api = {
     return response.status;
   },
 
+  getAssets: async (i) => {
+    const response = await instance.get(`/v1/assets`);
+    return response.data;
+  },
+
   getAsteroid: async (i) => {
     const response = await instance.get(`/v1/asteroids/${i}`);
     return response.data;
