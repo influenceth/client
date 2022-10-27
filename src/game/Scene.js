@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQueryClient, QueryClientProvider } from 'react-query';
 import { Object3D, Vector3 } from 'three';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { useContextBridge, Stats } from '@react-three/drei';
 import styled from 'styled-components';
 
@@ -41,6 +41,30 @@ const StyledContainer = styled.div`
   width: 100%;
 `;
 
+const WrappedScene = (props) => {
+  const { controls } = useThree();
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+
+  // reset to "zoomed out" control settings if zoomed out to belt view
+  useEffect(() => {
+    if (!!controls && (zoomStatus === 'zooming-out' || zoomStatus === 'out')) {
+      controls.maxDistance = 10 * constants.AU;
+      controls.minDistance = 0.3 * constants.AU;
+      controls.zoomSpeed = 1.2;
+      controls.rotateSpeed = 1.0;
+    }
+  }, [!!controls, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <>
+      <Star />
+      <Planets />
+      <Asteroids />
+      <Asteroid />
+    </>
+  );
+}
+
 const Scene = (props) => {
   /**
    * Grab reference to queryClient to recreate QueryClientProvider within Canvas element
@@ -79,11 +103,8 @@ const Scene = (props) => {
         <ContextBridge>
           <SettingsManager />
           <QueryClientProvider client={queryClient} contextSharing={true}>
-            <TrackballModControls maxDistance={10 * constants.AU}>
-              <Star />
-              <Planets />
-              <Asteroids />
-              <Asteroid />
+            <TrackballModControls>
+              <WrappedScene />
             </TrackballModControls>
           </QueryClientProvider>
         </ContextBridge>

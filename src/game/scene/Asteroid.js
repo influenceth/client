@@ -29,7 +29,7 @@ const UPDATE_DISTANCE_MULT = CHUNK_SPLIT_DISTANCE * UPDATE_QUADTREE_EVERY;
 
 const INITIAL_ZOOM = 2;
 const MIN_ZOOM_DEFAULT = 1.2;
-const MAX_ZOOM = 4;
+const MAX_ZOOM = 20;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
 
 // some numbers estimated from https://web.dev/rendering-performance/
@@ -132,6 +132,9 @@ const Asteroid = (props) => {
     () => (MIN_FRUSTUM_AT_SURFACE / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
     [controls?.object?.fov]
   );
+
+  const initialAltitude = useMemo(() => config?.radius * (INITIAL_ZOOM - 1), [config?.radius]);
+  const frustumHeightMult = useMemo(() => 2 * Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)), [controls?.object?.fov]);
 
   const disposeGeometry = useCallback(() => {
     if (geometry.current && quadtreeRef.current) {
@@ -378,7 +381,16 @@ const Asteroid = (props) => {
         controls.minDistance = minDistance;
         applyingZoomLimits.current = false;
       }
-      // ^^^
+
+      // adjust rotation speed
+      const altitude = cameraPosition.length() - closestChunk.sphereCenterHeight;
+      const frustumWidth = altitude * frustumHeightMult * window.innerWidth / window.innerHeight;
+      const thetaAcrossScreen = frustumWidth / cameraPosition.length();
+      controls.rotateSpeed = Math.min(1.5, 1.5 * thetaAcrossScreen / 2);
+      if (initialAltitude) {
+        const absoluteZoom = Math.max(0, initialAltitude - altitude);
+        controls.zoomSpeed = Math.max(0.02, 1.2 * ((constants.MAX_ASTEROID_RADIUS - absoluteZoom) / constants.MAX_ASTEROID_RADIUS) ** 2);
+      }
     }, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
@@ -589,7 +601,7 @@ const Asteroid = (props) => {
       )}
       {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
       {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
-      {false && <ambientLight intensity={0.3} />}
+      {false && <ambientLight intensity={0.1} />}
     </group>
   );
 }
