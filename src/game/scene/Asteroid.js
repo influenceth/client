@@ -1,14 +1,11 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
   // BufferAttribute,
   AxesHelper,
   CameraHelper,
   DirectionalLight,
-  DirectionalLightHelper,
-  Mesh,
-  MeshPhongMaterial,
-  PlaneGeometry,
+  // Mesh,
   Vector3
 } from 'three';
 import gsap from 'gsap';
@@ -30,73 +27,72 @@ const {
 } = constants;
 const UPDATE_DISTANCE_MULT = CHUNK_SPLIT_DISTANCE * UPDATE_QUADTREE_EVERY;
 
-const MAP_RENDER_TIME_PER_CYCLE = 8;
 const INITIAL_ZOOM = 2;
 const MIN_ZOOM_DEFAULT = 1.2;
-const MAX_ZOOM = 4;
+const MAX_ZOOM = 20;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
 
-// TODO: remove debug
-// let totalRuns = 0;
-// let totals = {};
-// let startTime;
-// let first = true;
-// function benchmark(tag) {
-//   if (!tag) {
-//     startTime = Date.now();
-//     totalRuns++;
-//   }
-//   else {
-//     if (!totals[tag]) totals[tag] = { total: 0, max: 0 };
-//     const t = Date.now() - startTime;
+// some numbers estimated from https://web.dev/rendering-performance/
+const TARGET_FPS = 60;
+const USABLE_FRAME = 0.6; // leave time for GPU housekeeping, etc
+const INITIAL_RENDER_WO_SWAP_EST = 2;
+const INITIAL_RENDER_W_SWAP_EST = 2.5;
+const TARGET_LOOP_TIME = 1e3 * USABLE_FRAME / TARGET_FPS;
 
-//     totals[tag].total += t;
-//     if (t > totals[tag].max) totals[tag].max = t;
-//   }
-// }
+const AVG_RENDER_TIMES = {
+  W_SWAP: INITIAL_RENDER_W_SWAP_EST,
+  WO_SWAP: INITIAL_RENDER_WO_SWAP_EST
+};
 
-// TODO: remove debug
-// setInterval(() => {
-//   if (first) {
-//     first = false;
-//     totalRuns = 0;
-//     totals = {};
-//     return;
-//   }
-//   const b = {};
-//   let prevTime = 0;
-//   Object.keys(totals).forEach((k) => {
-//     const thisTime = Math.round(totals[k].total / totalRuns);
-//     const thisMax = totals[k].max;
-//     if (k === '_') {
-//       b['TOTAL'] = thisTime;
-//     } else {
-//       b[k] = thisTime - prevTime;
-//       prevTime = thisTime;
-//       // b[`${k}_MAX`] = thisMax;
-//     }
-//   });
-//   console.log(`b ${totalRuns}`, b);
-// }, 5000);
+const RENDER_TIMES = { W_SWAP: [], WO_SWAP: [] };
+const RENDER_SAMPLES = { W_SWAP: 100, WO_SWAP: 25 };
+const RENDER_TALLIES = { W_SWAP: 0, WO_SWAP: 0 };
 
-// for terrain benchmarking...
-const BENCHMARK_TERRAIN_UPDATES = false;
-let taskTotal = 0;
-let taskTally = 0;
-if (BENCHMARK_TERRAIN_UPDATES) {
-  setInterval(() => {
-    if (taskTally > 0) {
-      console.log(
-        `avg update time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
-      );
-    }
-  }, 5000);
+const reportRenderTime = (type, time) => {
+  RENDER_TIMES[type][RENDER_TALLIES[type]] = time;
+  RENDER_TALLIES[type]++;
+  if (RENDER_TALLIES[type] === RENDER_SAMPLES[type]) {
+    const avg = RENDER_TIMES[type].reduce((acc, cur) => acc + cur, 0) / RENDER_TALLIES[type];
+    const stddev = Math.sqrt(RENDER_TIMES[type].reduce((acc, cur) => acc + (cur - avg) ** 2, 0) / RENDER_TALLIES[type]);
+    AVG_RENDER_TIMES[type] = avg + stddev;
+    RENDER_TALLIES[type] = 0;
+  }
+};
+
+const getNow = () => (performance || new Date()).now();
+const frameTimeLeft = (start, chunkSwapPending) => {
+  return TARGET_LOOP_TIME
+    - AVG_RENDER_TIMES[chunkSwapPending ? 'W_SWAP' : 'WO_SWAP']
+    - (getNow() - start);
 }
 
-let terrainUpdateStart; // TODO: remove
+let chunkSwapThisCycle = false;
+// const _dbg = {};
+// const dbg = (label, start) => {
+//   if (!_dbg[label]) _dbg[label] = { times: 0, frames: 0, max: 0 };
+//   const elapsed = getNow() - start;
+//   _dbg[label].times += elapsed;
+//   if (elapsed > _dbg[label].max) _dbg[label].max = elapsed;
+//   _dbg[label].frames++;
+// };
+// setInterval(() => {
+//   console.log('- - - - - - - -');
+//   console.group();
+//   Object.keys(_dbg).forEach((label) => {
+//     console.log(
+//       `${label} (${_dbg[label].frames})
+//       [AVG] ${(_dbg[label].times / _dbg[label].frames).toFixed(2)}
+//       [MAX] ${_dbg[label].max.toFixed(2)}`,
+//     );
+//     _dbg[label].frames = 0;
+//     _dbg[label].max = 0;
+//     _dbg[label].times = 0;
+//   });
+//   console.groupEnd();
+// }, 5000);
 
 const Asteroid = (props) => {
-  const { camera, controls } = useThree();
+  const { controls } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const { textureSize } = useStore(s => s.getTerrainQuality());
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
@@ -121,7 +117,6 @@ const Asteroid = (props) => {
   const rotationAxis = useRef();
   const position = useRef();
   const rotation = useRef(0);
-  const aspectRatio = useRef();
   const settingCameraPosition = useRef();
 
   const maxStretch = useMemo(
@@ -137,6 +132,8 @@ const Asteroid = (props) => {
     () => (MIN_FRUSTUM_AT_SURFACE / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
     [controls?.object?.fov]
   );
+
+  const frustumHeightMult = useMemo(() => 2 * Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)), [controls?.object?.fov]);
 
   const disposeGeometry = useCallback(() => {
     if (geometry.current && quadtreeRef.current) {
@@ -308,6 +305,9 @@ const Asteroid = (props) => {
     controls.minDistance = config.radius * MIN_ZOOM_DEFAULT;
     controls.maxDistance = config.radius * MAX_ZOOM;
 
+    // set zoom speed for this scale
+    controls.zoomSpeed = 1.2 * Math.pow(0.4, Math.log(config?.radiusNominal / 1000) / Math.log(9));
+
     const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
@@ -363,7 +363,7 @@ const Asteroid = (props) => {
     applyingZoomLimits.current = true;
     setTimeout(() => {
       // vvv BENCHMARK <1ms (even zoomed-in on huge)
-      const [closestChunk, closestDistance] = chunks.reduce((acc, c) => {
+      const [closestChunk, closestDistance] = chunks.reduce((acc, c) => { // eslint-disable-line no-unused-vars
         const distance = c.sphereCenter.distanceTo(cameraPosition);
         return (!acc || distance < acc[1]) ? [c, distance] : acc;
       }, null);
@@ -373,8 +373,10 @@ const Asteroid = (props) => {
         closestChunk.sphereCenterHeight + surfaceDistance
       );
       
-      // too close, so should animate camera out (jump to surface immediately though)
-      if (minDistance > controls?.minDistance && closestDistance < surfaceDistance) {
+      // too close, so should animate camera out
+      //  TODO (enhancement): jump to surface immediately if somehow ended up inside asteroid
+      //    (might need to use raycasting to do accurately though)
+      if (minDistance > controls?.minDistance) {
         controls.minDistance = Math.max(cameraPosition.length(), closestChunk.sphereCenterHeight);
         applyingZoomLimits.current = minDistance - controls?.minDistance;
 
@@ -383,7 +385,12 @@ const Asteroid = (props) => {
         controls.minDistance = minDistance;
         applyingZoomLimits.current = false;
       }
-      // ^^^
+
+      // adjust rotation speed
+      const altitude = cameraPosition.length() - closestChunk.sphereCenterHeight;
+      const frustumWidth = altitude * frustumHeightMult * window.innerWidth / window.innerHeight;
+      const thetaAcrossScreen = frustumWidth / cameraPosition.length();
+      controls.rotateSpeed = Math.min(1.5, 1.5 * thetaAcrossScreen / 2);
     }, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
@@ -401,6 +408,11 @@ const Asteroid = (props) => {
   useFrame(() => {
     if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
+    
+    const frameStart = getNow();
+
+    let updatedMapsThisCycle = false;
+    chunkSwapThisCycle = false;
 
     // vvv BENCHMARK <1ms
     // update asteroid position
@@ -448,49 +460,49 @@ const Asteroid = (props) => {
 
     // (if currently zooming in, we'll want to setCameraPosition for camera's destination so doesn't
     //  re-render as soon as it arrives)
-    const rotatedCameraPosition = zoomStatus === 'in' || !config?.radius
+    const rotatedCameraPosition = (zoomStatus === 'in' || !config?.radius)
       ? controls.object.position.clone()
       : controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM);
     rotatedCameraPosition.applyAxisAngle(rotationAxis.current, -rotation.current);
     // ^^^
 
-    // if builder is not busy, make sure we are showing most recent chunks
-    if (geometry.current.builder.isPreparingUpdate()) {
-      if (geometry.current.builder.isReadyToFinish()) {
-        // vvv BENCHMARK 1ms
-        geometry.current.builder.update();
-        
-        // TODO: remove below
-        if (BENCHMARK_TERRAIN_UPDATES) {
-          if (taskTally < 5) {  // overwrite first load since so long for workers
-            taskTotal = 5 * (Date.now() - terrainUpdateStart);
-          } else {
-            taskTotal += Date.now() - terrainUpdateStart;
-          }
-          taskTally++;
-          terrainUpdateStart = null;
+    // if builder is working on an update, manage within frame rate
+    if (geometry.current.builder.isUpdating()) {
+      // keep building maps until maps are ready (some per frame)
+      if (geometry.current.builder.isWaitingOnMaps()) {
+        // TODO: (redo) vvv BENCHMARK (frameTimeLeftms)
+        geometry.current.builder.updateMaps(Date.now() + frameTimeLeft(frameStart, false));
+        // ^^^
+
+        updatedMapsThisCycle = true;
+      }
+
+      // when ready to finish, actually run chunk swap
+      if (!geometry.current.builder.isWaitingOnMaps()) {
+
+        // if this is the only thing doing this cycle, have to always do it (even if not enough time)
+        // if this was also processing maps this cycle, can bump chunk swap to next loop if helpful
+        if (!updatedMapsThisCycle || frameTimeLeft(frameStart, true) > 0) {
+
+          // TODO: (redo) vvv BENCHMARK 1ms
+          geometry.current.builder.update();
+          chunkSwapThisCycle = true;
+          // ^^^
+
+          // if (debug.current) {
+          //   const vertices = Object.values(geometry.current.chunks)
+          //     .map((c) => c.sphereCenter.clone().addScalar(1))
+          //     .reduce((acc, cur) => {
+          //       acc.push(cur.x);
+          //       acc.push(cur.y);
+          //       acc.push(cur.z);
+          //       return acc;
+          //     }, [])
+          //   ;
+          //   debug.current.geometry.setAttribute('position', new BufferAttribute( new Float32Array(vertices), 3 ) );
+          //   debug.current.geometry.attributes.position.needsUpdate = true;
+          // }
         }
-        // ^^^
-
-        // if (debug.current) {
-        //   const vertices = Object.values(geometry.current.chunks)
-        //     .map((c) => c.sphereCenter.clone().addScalar(1))
-        //     .reduce((acc, cur) => {
-        //       acc.push(cur.x);
-        //       acc.push(cur.y);
-        //       acc.push(cur.z);
-        //       return acc;
-        //     }, [])
-        //   ;
-        //   debug.current.geometry.setAttribute('position', new BufferAttribute( new Float32Array(vertices), 3 ) );
-        //   debug.current.geometry.attributes.position.needsUpdate = true;
-        // }
-
-      // (this is used if maps are generated on main thread instead of worker)
-      } else {
-        // vvv BENCHMARK 8ms (matches MAP_RENDER_TIME_PER_CYCLE)
-        geometry.current.builder.updateMaps(Date.now() + MAP_RENDER_TIME_PER_CYCLE);
-        // ^^^
       }
     }
 
@@ -498,6 +510,7 @@ const Asteroid = (props) => {
     if (geometry.current.cameraPosition && (zoomStatus === 'out' || zoomStatus === 'zooming-out')) return;
     
     // control dynamic zoom limit (zoom out if too low... else, just update boundary)
+    if (frameTimeLeft(frameStart, chunkSwapThisCycle) <= 0) return;
     if (controls && Object.values(geometry.current?.chunks).length) {
       if (applyingZoomLimits.current) {
         if (applyingZoomLimits.current !== true) {
@@ -515,7 +528,8 @@ const Asteroid = (props) => {
     // update quads if not already updating AND one of these is true...
     //  a) camera height changes by UPDATE_DISTANCE_MULT
     //  b) camera position changes by rotational equivalent of UPDATE_DISTANCE_MULT at maxStretch surface
-    if (!settingCameraPosition.current && !geometry.current.builder.isBusy() && !geometry.current.builder.isPreparingUpdate()) {
+    if (frameTimeLeft(frameStart, chunkSwapThisCycle) <= 0) return;
+    if (!settingCameraPosition.current && !geometry.current.builder.isBusy() && !geometry.current.builder.isUpdating()) {
       // vvv BENCHMARK <1ms
       const cameraHeight = rotatedCameraPosition.length();
       const updateQuadtreeEvery = geometry.current.smallestActiveChunkSize * UPDATE_DISTANCE_MULT;
@@ -527,11 +541,21 @@ const Asteroid = (props) => {
 
       // initiate update of quads (based on camera position)
       if (updateQuadCube) {
-        terrainUpdateStart = Date.now();
         settingCameraPosition.current = true;
+        // TODO: setting state in useFrame is an antipattern, BUT this should
+        //  only set state rarely, so it's prob ok to move the resulting calculations
+        //  outside the render loop (could instead just wrap in setTimeout 0)
         setTerrainUpdateNeeded(rotatedCameraPosition.clone());
       }
     }
+
+    // if not processing an update already, and camera is not currently moving, process next change for cube
+    if (frameTimeLeft(frameStart, chunkSwapThisCycle) <= 0) return;
+    if (!geometry.current.builder.isUpdating() && !settingCameraPosition.current) {
+      geometry.current.processNextQueuedChange();
+    }
+
+    // dbg('frame loop', frameStart);
 
     // TODO: remove debug
     // setTimeout(() => {
@@ -542,7 +566,17 @@ const Asteroid = (props) => {
     //     console.log('#debug_info not found!');
     //   }
     // });
-  });
+  }, 0);
+
+  useFrame(({ gl, scene, camera }) => {
+    const x = getNow();
+    gl.render(scene, camera);
+    if (chunkSwapThisCycle) {
+      reportRenderTime('W_SWAP', getNow() - x);
+    } else {
+      reportRenderTime('WO_SWAP', getNow() - x);
+    }
+  }, 1);
 
   return (
     <group ref={group}>
@@ -567,7 +601,7 @@ const Asteroid = (props) => {
       )}
       {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
       {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
-      {false && <ambientLight intensity={0.3} />}
+      {false && <ambientLight intensity={0.1} />}
     </group>
   );
 }

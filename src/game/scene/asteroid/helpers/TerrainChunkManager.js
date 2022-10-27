@@ -5,7 +5,6 @@ import constants from '~/lib/constants';
 
 const {
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL,
-  DISABLE_BACKGROUND_TERRAIN_MAPS,
   USE_DEDICATED_GPU_WORKER
 } = constants;
 
@@ -49,12 +48,8 @@ class TerrainChunkManager {
     this.pool = [];
     this.reset();
 
-    if (DISABLE_BACKGROUND_TERRAIN_MAPS) {
-      this.ready = false;
-      initChunkTextures().then(() => { this.ready = true; });
-    } else {
-      this.ready = true;
-    }
+    this.ready = false;
+    initChunkTextures().then(() => { this.ready = true; });
   }
 
   dispose() {
@@ -66,14 +61,14 @@ class TerrainChunkManager {
     return !this.ready || this.waitingOn > this._new.length;
   }
 
-  isPreparingUpdate() {
+  isUpdating() {
     return this.waitingOn > 0;
   }
 
-  isReadyToFinish() {
+  isWaitingOnMaps() {
     // TODO: ">=" should be "===" but occasionally on initial asteroid load, extra 6 (initial sides) get put in _new
     //  (should track down at some point)
-    return this.waitingOn > 0 && (this._new.length >= this.waitingOn);
+    return this.waitingOn > 0 && (this._new.length < this.waitingOn);
   }
 
   reset() {
@@ -99,11 +94,13 @@ class TerrainChunkManager {
       );
     }
 
+    // hide chunk
     chunk.hide();
     chunk.attachToGroup();
 
+    // trigger geometry and map updates (will queue for display when complete)
     const scope = this;
-    this.workerPool.gpuProcessInBackground(
+    this.workerPool.processInBackground(
       {
         topic: 'rebuildTerrainGeometry',
         asteroid: {
@@ -122,14 +119,9 @@ class TerrainChunkManager {
         },
         _cacheable: 'asteroid'
       },
-      ({ positions, normals, maps }) => {
+      ({ positions, normals }) => {
         chunk.updateGeometry(positions, normals);
-        if (DISABLE_BACKGROUND_TERRAIN_MAPS) {
-          scope._queued.push(chunk);
-        } else {
-          chunk.updateMaps(maps);
-          scope._new.push(chunk);
-        }
+        scope._queued.push(chunk);
       }
     );
 
@@ -147,6 +139,8 @@ class TerrainChunkManager {
 
   updateMaps(until) {
     let chunk;
+
+    // NOTE: deliberately always do at least one
     while (chunk = this._queued.pop()) { // eslint-disable-line
       chunk.updateMaps(
         rebuildChunkMaps({
@@ -163,7 +157,7 @@ class TerrainChunkManager {
 
       // limit processing time (i.e. for FPS)
       if (until && Date.now() > until) {
-        console.log('truncate processing', this._new.length);
+        // console.log('truncate processing', this._new.length);
         break;
       }
     }

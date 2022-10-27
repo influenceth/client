@@ -12,7 +12,12 @@ const StyledButton = styled.button`
   border: 1px solid ${p => p.color || p.theme.colors.main};
   background-color: ${p => {
     const inactiveColor = p.lessTransparent ? `rgba(0,0,0,0.33)` : 'transparent';
-    return p.active ? p.theme.colors.main : inactiveColor;
+    if (p.active && p.disabled) {
+      return `rgba(${p.theme.colors.mainRGB}, 0.2)`;
+    } else if (p.active) {
+      return p.theme.colors.main;
+    }
+    return inactiveColor;
   }};
   clip-path: polygon(
     0 0,
@@ -40,6 +45,7 @@ const StyledButton = styled.button`
 
   &:disabled {
     color: ${p => p.theme.colors.disabledText};
+    cursor: ${p => p.theme.cursors.default};
     border-color: ${p => p.theme.colors.disabledText};
 
     & > svg {
@@ -47,21 +53,15 @@ const StyledButton = styled.button`
     }
   }
 
-  &:hover {
+  &:hover:not(:disabled) {
     /*background-image: linear-gradient(120deg, rgba(54, 167, 205, 0.1), rgba(54, 167, 205, 0.25));*/
     background-color: rgba(54, 167, 205, 0.25);
     color: white;
   }
 
-  &:active {
+  &:active:not(:disabled) {
     background-color: ${p => p.theme.colors.main};
     color: white;
-  }
-
-  &:disabled:hover {
-    /*background-image: none;*/
-    background-color: transparent;
-    color: ${p => p.theme.colors.disabledText};
   }
 
   & > * {

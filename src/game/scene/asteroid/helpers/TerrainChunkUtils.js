@@ -410,8 +410,6 @@ export function applyDisplacementToGeometry(geometry, resolution, radius, displa
   geometry.attributes.position.needsUpdate = true;
 }
 
-
-
 /* DEBUGGING HELPERS (drop into rebuildChunkMaps):
   // (output data)
   if (debug) {
@@ -439,7 +437,7 @@ export function applyDisplacementToGeometry(geometry, resolution, radius, displa
     console.log(tx.map((xx) => xx.join('\t')).join('\n'));
   }
 
-  // (draw texture) -- NOTE: DISABLE_BACKGROUND_TERRAIN_MAPS must be true
+  // (draw texture)
   if (debug) {
     const debugBitmap = generateNormalMap(
       heightTexture,

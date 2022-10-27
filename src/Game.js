@@ -18,7 +18,10 @@ import Referral from '~/game/Referral';
 import Scene from '~/game/Scene';
 import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
+import constants from '~/lib/constants';
 import theme from '~/theme';
+
+const { GRAPHICS_DEFAULTS } = constants;
 
 const StyledMain = styled.main`
   bottom: 0;
@@ -48,6 +51,8 @@ const Game = (props) => {
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchGpuInfo = useStore(s => s.dispatchGpuInfo);
+  const setAutodetect = useStore(s => s.dispatchGraphicsAutodetectSet);
+  const graphics = useStore(s => s.graphics);
   const [ showScene, setShowScene ] = useState(false);
   const [ introEnabled, setIntroEnabled ] = useState(!DISABLE_INTRO);
 
@@ -55,11 +60,21 @@ const Game = (props) => {
     setIntroEnabled(false);
   }, []);
 
+  const autodetectNeedsInit = graphics?.autodetect === undefined;
   useEffect(() => {
     if (!gpuInfo) return;
 
     if (!gpuInfo.isMobile) {
       setShowScene(true);
+
+      // init autodetect (since it was recently added to store)
+      if (autodetectNeedsInit) {
+        setAutodetect(
+          graphics?.textureQuality === GRAPHICS_DEFAULTS[gpuInfo.tier].textureQuality,
+          gpuInfo
+        );
+      }
+
       dispatchGpuInfo(gpuInfo);
 
       if (gpuInfo.tier === 0) {
@@ -69,7 +84,7 @@ const Game = (props) => {
         });
       }
     }
-  }, [ gpuInfo, createAlert, dispatchGpuInfo ]);
+  }, [ gpuInfo, createAlert, dispatchGpuInfo, autodetectNeedsInit ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (updateNeeded) {
