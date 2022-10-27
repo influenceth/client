@@ -361,7 +361,7 @@ const Asteroid = (props) => {
     applyingZoomLimits.current = true;
     setTimeout(() => {
       // vvv BENCHMARK <1ms (even zoomed-in on huge)
-      const [closestChunk, closestDistance] = chunks.reduce((acc, c) => {
+      const [closestChunk, closestDistance] = chunks.reduce((acc, c) => { // eslint-disable-line no-unused-vars
         const distance = c.sphereCenter.distanceTo(cameraPosition);
         return (!acc || distance < acc[1]) ? [c, distance] : acc;
       }, null);
