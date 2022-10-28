@@ -118,18 +118,21 @@ const rebuildTerrainGeometry = function (chunk) {
   }
 }
 
-const buildPlotGeometry = function({ config, aboveSurface }) {
-  const { positions, orientations } = getPlotGeometry(
+const buildPlotGeometry = function({ config, regionTally, aboveSurface }) {
+  const { positions, orientations, regions } = getPlotGeometry(
     config,
+    regionTally,
     aboveSurface
   );
   postMessage({
     topic: 'builtPlotGeometry',
     positions,
-    orientations
+    orientations,
+    regions
   }, [
     positions.buffer,
-    orientations.buffer
+    orientations.buffer,
+    regions.buffer
   ]);
 }
 

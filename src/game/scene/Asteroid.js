@@ -110,9 +110,10 @@ const Asteroid = (props) => {
   const getTime = useGetTime();
   const webWorkerPool = useWebWorker();
 
+  const [cameraNormalized, setCameraNormalized] = useState();
   const [config, setConfig] = useState();
-  const [terrainInitialized, setTerrainInitialized] = useState();
   const [mousableTerrainInitialized, setMousableTerrainInitialized] = useState();
+  const [terrainInitialized, setTerrainInitialized] = useState();
   const [terrainUpdateNeeded, setTerrainUpdateNeeded] = useState();
 
   const debug = useRef(); // TODO: remove
@@ -621,6 +622,13 @@ const Asteroid = (props) => {
         terrainUpdateStart = Date.now();
         settingCameraPosition.current = true;
         setTerrainUpdateNeeded(rotatedCameraPosition.clone());
+
+        const normalized = rotatedCameraPosition.clone().normalize();
+        setCameraNormalized({
+          // toFixed allows accuracy without float precision weirdness causing unnecessary re-renders
+          string: Object.values(normalized).map((v) => v.toFixed(6)).join(','),
+          vector: normalized,
+        });
       }
     }
 
@@ -660,20 +668,23 @@ const Asteroid = (props) => {
     // });
   });
 
+  console.log('show plots', config && terrainInitialized && zoomStatus === 'in');
   return (
     <group ref={group}>
       <group ref={quadtreeRef} />
       <group ref={mouseableRef} />
 
-      {config && terrainInitialized && (
+      {config && terrainInitialized && zoomStatus === 'in' && (
         <Plots
           attachTo={quadtreeRef.current}
+          axis={rotationAxis.current}
+          cameraNormalized={cameraNormalized}
           config={config}
           mouseIntersect={mouseIntersect.current}
           surface={geometry.current} />
       )}
 
-      {config?.radius && (
+      {config?.radius && zoomStatus !== 'out' && (
         <Telemetry
           axis={rotationAxis.current}
           getPosition={() => position.current}
@@ -684,12 +695,13 @@ const Asteroid = (props) => {
         />
       )}
 
-      {config?.ringsPresent && geometry.current && (
+      {config?.ringsPresent && geometry.current && zoomStatus !== 'out' && (
         <Rings
           receiveShadow={shadowMode > 0}
           config={config}
           onUpdate={(m) => m.lookAt(rotationAxis?.current)} />
       )}
+
       {/* TODO: remove all helpers */}
       {false && (
         <mesh>
