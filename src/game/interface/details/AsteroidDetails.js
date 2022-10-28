@@ -217,13 +217,15 @@ const AsteroidDetails = (props) => {
     manager.setCameraPosition(new Vector3(0, 0, constants.AU));  // make sure one quad per side
 
     const waitUntilReady = (callback) => {
-      if (manager.builder.isPreparingUpdate()) {
-        if (!manager.builder.isReadyToFinish()) {
+      if (manager.builder.isUpdating()) {
+        if (manager.builder.isWaitingOnMaps()) {
           manager.builder.updateMaps();
         } else {
           manager.builder.update();
           callback();
         }
+      } else {
+        manager.processNextQueuedChange();
       }
       setTimeout(waitUntilReady, 100, callback);
     };

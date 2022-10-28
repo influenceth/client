@@ -180,7 +180,7 @@ const Postprocessor = () => {
 
     // render the entire scene, then render bloom scene on top
     finalComposer.current.render();
-  }, 1);
+  }, 2);
 
   return null;
 };

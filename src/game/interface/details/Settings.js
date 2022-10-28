@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import screenfull from 'screenfull';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
+import { useDetectGPU } from '@react-three/drei';
 
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
@@ -53,8 +54,17 @@ const StyledDataReadout = styled(DataReadout)`
   }
 `;
 
+const AutodetectButton = styled(Button)`
+  border: 0;
+  & > svg: {
+    display: none;
+  }
+`;
+
 
 const Settings = (props) => {
+  const gpuInfo = useDetectGPU();
+
   const { account } = useAuth();
   const { isMobile } = useScreenSize();
   const { data: referralsCount } = useReferralsCount();
@@ -64,6 +74,7 @@ const Settings = (props) => {
   const turnOffSkybox = useStore(s => s.dispatchSkyboxHidden);
   const turnOnLensflare = useStore(s => s.dispatchLensflareUnhidden);
   const turnOffLensflare = useStore(s => s.dispatchLensflareHidden);
+  const setAutodetect = useStore(s => s.dispatchGraphicsAutodetectSet);
   const setShadowQuality = useStore(s => s.dispatchShadowQualitySet);
   const setTextureQuality = useStore(s => s.dispatchTextureQualitySet);
   const setFOV = useStore(s => s.dispatchFOVSet);
@@ -83,6 +94,10 @@ const Settings = (props) => {
     }
   }, []);
 
+  const toggleAutodetectGraphics = () => {
+    setAutodetect(!graphics.autodetect, gpuInfo);
+  };
+
   return (
     <Details title="Settings">
       <StyledSettings>
@@ -93,21 +108,31 @@ const Settings = (props) => {
               <ControlGroup>
                 <Button
                   active={!graphics.textureQuality || graphics.textureQuality === 1}
+                  disabled={graphics.autodetect}
                   onClick={() => setTextureQuality(1)}>
                   Low
                 </Button>
                 <Button
                   active={graphics.textureQuality === 2}
+                  disabled={graphics.autodetect}
                   onClick={() => setTextureQuality(2)}>
                   Medium
                 </Button>
                 <Button
                   active={graphics.textureQuality === 3}
+                  disabled={graphics.autodetect}
                   onClick={() => setTextureQuality(3)}>
                   High
                 </Button>
+                <AutodetectButton
+                  active={graphics.autodetect}
+                  onClick={toggleAutodetectGraphics}>
+                  {graphics.autodetect ? <CheckedIcon /> : <UncheckedIcon />}
+                  Autodetect
+                </AutodetectButton>
               </ControlGroup>
             </StyledDataReadout>
+
             {ENABLE_SHADOWS && (
               <>
                 <StyledDataReadout label="Dynamic Shadows">

@@ -1,13 +1,8 @@
 import { Vector3 } from 'three';
 
-import constants from '~/lib/constants';
 import * as utils from '~/lib/geometryUtils';
 import { rebuildChunkGeometry, rebuildChunkMaps, initChunkTextures } from '~/game/scene/asteroid/helpers/TerrainChunkUtils';
 import { getPlotGeometry, getClosestPlots } from '~/game/scene/asteroid/helpers/PlotGeometry';
-
-const {
-  DISABLE_BACKGROUND_TERRAIN_MAPS
-} = constants;
 
 let cache = {
   asteroid: {},
@@ -31,6 +26,13 @@ onmessage = function(event) {
     case 'rebuildTerrainGeometry':
       if (event.data.asteroid) cache.asteroid = event.data.asteroid;
       rebuildTerrainGeometry({
+        ...cache.asteroid,
+        ...event.data.chunk
+      });
+      break;
+    case 'rebuildTerrainMaps':
+      if (event.data.asteroid) cache.asteroid = event.data.asteroid;
+      rebuildTerrainMaps({
         ...cache.asteroid,
         ...event.data.chunk
       });
@@ -90,32 +92,30 @@ const rebuildTerrainGeometry = function (chunk) {
   chunk.offset = new Vector3(chunk.offset[0], chunk.offset[1], chunk.offset[2]);
   chunk.stretch = new Vector3(chunk.stretch[0], chunk.stretch[1], chunk.stretch[2]);
   const { positions, normals } = rebuildChunkGeometry(chunk);
-  if (DISABLE_BACKGROUND_TERRAIN_MAPS) {
+  postMessage({
+    topic: 'rebuiltTerrainChunkGeometry',
+    positions,
+    normals
+  }, [
+    positions.buffer,
+    normals.buffer
+  ]);
+}
+
+const rebuildTerrainMaps = function (chunk) {
+  chunk.offset = new Vector3(chunk.offset[0], chunk.offset[1], chunk.offset[2]);
+  chunk.stretch = new Vector3(chunk.stretch[0], chunk.stretch[1], chunk.stretch[2]);
+  initChunkTextures().then(() => {
+    const maps = rebuildChunkMaps(chunk);
     postMessage({
-      topic: 'rebuiltTerrainChunk',
-      positions,
-      normals
+      topic: 'rebuiltTerrainChunkMaps',
+      maps
     }, [
-      positions.buffer,
-      normals.buffer
+      maps.colorBitmap,
+      maps.heightBitmap,
+      maps.normalBitmap,
     ]);
-  } else {
-    initChunkTextures().then(() => {
-      const maps = rebuildChunkMaps(chunk);
-      postMessage({
-        topic: 'rebuiltTerrainChunk',
-        positions,
-        normals,
-        maps
-      }, [
-        positions.buffer,
-        normals.buffer,
-        maps.colorBitmap,
-        maps.heightBitmap,
-        maps.normalBitmap,
-      ]);
-    });
-  }
+  });
 }
 
 const buildPlotGeometry = function({ config, regionTally, aboveSurface }) {

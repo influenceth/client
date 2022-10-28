@@ -521,7 +521,7 @@ export function getCachedGeometryAttributes(resolution) {
     console.log(tx.map((xx) => xx.join('\t')).join('\n'));
   }
 
-  // (draw texture) -- NOTE: DISABLE_BACKGROUND_TERRAIN_MAPS must be true
+  // (draw texture)
   if (debug) {
     const debugBitmap = generateNormalMap(
       heightTexture,

@@ -71,6 +71,7 @@ const useStore = create(persist((set, get) => ({
     },
 
     graphics: {
+      autodetect: true,
       fov: 75,
       lensflare: true,
       skybox: true,
@@ -198,6 +199,16 @@ const useStore = create(persist((set, get) => ({
     dispatchOutlinerSectionCollapsed: (section) => set(produce(state => {
       if (!state.outliner[section]) state.outliner[section] = { ...outlinerSectionDefaults[section] };
       state.outliner[section].expanded = false;
+    })),
+
+    dispatchGraphicsAutodetectSet: (which, gpuInfo) => set(produce(state => {
+      state.graphics.autodetect = which;
+      if (state.graphics.autodetect) {
+        const defaults = GRAPHICS_DEFAULTS[gpuInfo.tier] || {};
+        Object.keys(defaults).forEach((k) => {
+          state.graphics[k] = defaults[k];
+        });
+      }
     })),
 
     dispatchTextureQualitySet: (quality) => set(produce(state => {
@@ -361,9 +372,9 @@ const useStore = create(persist((set, get) => ({
 
     getTerrainQuality: () => {
       const q = get().graphics?.textureQuality;
-      if (q === 2) return { textureSize: 2 * CHUNK_RESOLUTION };
-      if (q === 3) return { textureSize: 4 * CHUNK_RESOLUTION };
-      return { textureSize: 1 * CHUNK_RESOLUTION };
+      if (q === 2) return { textureSize: 2 * CHUNK_RESOLUTION - 3 };
+      if (q === 3) return { textureSize: 4 * CHUNK_RESOLUTION - 3 };
+      return { textureSize: 1 * CHUNK_RESOLUTION - 3 };
     },
 
     dispatchPendingTransaction: ({ key, vars, txHash }) => set(produce(state => {
