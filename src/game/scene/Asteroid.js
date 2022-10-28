@@ -605,15 +605,18 @@ const Asteroid = (props) => {
     if (geometry.current.cameraPosition && (zoomStatus === 'out' || zoomStatus === 'zooming-out')) return;
 
     // TODO: this has not been benchmarked... might be excessive
-    // if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
-    // if (mouseGeometry.current && mouseGeometry.current.builder.isUpdating()) {
-    //   if (mouseGeometry.current.builder.isWaitingOnMaps()) {
-    //     mouseGeometry.current.builder.updateMaps(Date.now() + frameTimeLeft(frameStart, false));
-    //     if (!mousableTerrainInitialized) setMousableTerrainInitialized(true);
-    //   } else {
-    //     mouseGeometry.current.builder.update();
-    //   }
-    // }
+    if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
+    if (mouseGeometry.current && mouseGeometry.current.builder.isUpdating()) {
+      if (mouseGeometry.current.builder.isWaitingOnMaps()) {
+        mouseGeometry.current.builder.updateMaps(Date.now() + frameTimeLeft(frameStart, false));
+        if (!mousableTerrainInitialized) setMousableTerrainInitialized(true);
+      } else {
+        mouseGeometry.current.builder.update();
+        if (!mousableTerrainInitialized) {
+          setMousableTerrainInitialized(true);
+        }
+      }
+    }
     
     // control dynamic zoom limit (zoom out if too low... else, just update boundary)
     if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
