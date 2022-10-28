@@ -579,6 +579,11 @@ const Asteroid = (props) => {
           chunkSwapThisCycle.current = true;
           // ^^^
 
+          // terrain is initialized once run first update
+          if (!terrainInitialized) {
+            setTerrainInitialized(true);
+          }
+
           // if (debug.current) {
           //   const vertices = Object.values(geometry.current.chunks)
           //     .map((c) => c.sphereCenter.clone().addScalar(1))
