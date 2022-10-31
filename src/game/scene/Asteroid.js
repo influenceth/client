@@ -49,6 +49,7 @@ const AVG_RENDER_TIMES = {
 };
 
 const RENDER_TIMES = { W_SWAP: [], WO_SWAP: [] };
+const RENDER_TIME_CAPS = { W_SWAP: TARGET_LOOP_TIME, WO_SWAP: TARGET_LOOP_TIME * 0.8 };
 const RENDER_SAMPLES = { W_SWAP: 100, WO_SWAP: 25 };
 const RENDER_TALLIES = { W_SWAP: 0, WO_SWAP: 0 };
 
@@ -58,7 +59,7 @@ const reportRenderTime = (type, time) => {
   if (RENDER_TALLIES[type] === RENDER_SAMPLES[type]) {
     const avg = RENDER_TIMES[type].reduce((acc, cur) => acc + cur, 0) / RENDER_TALLIES[type];
     const stddev = Math.sqrt(RENDER_TIMES[type].reduce((acc, cur) => acc + (cur - avg) ** 2, 0) / RENDER_TALLIES[type]);
-    AVG_RENDER_TIMES[type] = avg + stddev;
+    AVG_RENDER_TIMES[type] = Math.min(RENDER_TIME_CAPS[type], avg + stddev);
     RENDER_TALLIES[type] = 0;
   }
 };
@@ -112,6 +113,7 @@ const Asteroid = (props) => {
   const getTime = useGetTime();
   const webWorkerPool = useWebWorker();
 
+  const [cameraAltitude, setCameraAltitude] = useState();
   const [cameraNormalized, setCameraNormalized] = useState();
   const [config, setConfig] = useState();
   const [mousableTerrainInitialized, setMousableTerrainInitialized] = useState();
@@ -411,6 +413,13 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomOut ]);
 
+  useEffect(() => {
+    if (!cameraAltitude || !frustumHeightMult) return;
+    const frustumWidth = cameraAltitude * frustumHeightMult * window.innerWidth / window.innerHeight;
+    const thetaAcrossScreen = frustumWidth / controls.object.position.length();
+    controls.rotateSpeed = Math.min(1.5, 1.5 * thetaAcrossScreen / 2);
+  }, [cameraAltitude]);
+
   // NOTE: in theory, all distances between sphereCenter's to camera are calculated
   //       in quadtree calculation and could be passed back here, so would be more
   //       performant to re-use that BUT that is also outdated as the camera moves
@@ -439,6 +448,7 @@ const Asteroid = (props) => {
       if (minDistance > controls?.minDistance) {
         controls.minDistance = Math.max(cameraPosition.length(), closestChunk.sphereCenterHeight);
         applyingZoomLimits.current = minDistance - controls?.minDistance;
+        console.log('IN POSTIVIE', applyingZoomLimits.current);
 
       // else, can just set
       } else {
@@ -447,10 +457,7 @@ const Asteroid = (props) => {
       }
 
       // adjust rotation speed
-      const altitude = cameraPosition.length() - closestChunk.sphereCenterHeight;
-      const frustumWidth = altitude * frustumHeightMult * window.innerWidth / window.innerHeight;
-      const thetaAcrossScreen = frustumWidth / cameraPosition.length();
-      controls.rotateSpeed = Math.min(1.5, 1.5 * thetaAcrossScreen / 2);
+      setCameraAltitude(cameraPosition.length() - closestChunk.sphereCenterHeight);
     }, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
@@ -484,6 +491,8 @@ const Asteroid = (props) => {
       }
     }
   }, [terrainInitialized, mousableTerrainInitialized]);
+
+  const cameraRotation = useRef();
 
   // Positions the asteroid in space based on time changes
   useFrame((state) => {
@@ -544,6 +553,14 @@ const Asteroid = (props) => {
         //     updatedRotation
         //   );
         // }
+
+        // lock to surface if within "lock" radius
+        if (controls.object.position.length() < 1.1 * config.radius) {
+          controls.object.up.applyAxisAngle(rotationAxis.current, updatedRotation - rotation.current);
+          controls.object.position.applyAxisAngle(rotationAxis.current, updatedRotation - rotation.current);
+          controls.object.updateProjectionMatrix();
+        }
+
         rotation.current = updatedRotation;
       }
     }
@@ -729,6 +746,7 @@ const Asteroid = (props) => {
         <Plots
           attachTo={quadtreeRef.current}
           axis={rotationAxis.current}
+          cameraAltitude={cameraAltitude}
           cameraNormalized={cameraNormalized}
           config={config}
           mouseIntersect={mouseIntersect.current}

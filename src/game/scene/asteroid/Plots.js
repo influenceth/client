@@ -13,26 +13,37 @@ import {
   Vector3
 } from 'three';
 
+import useAsteroidPlots from '~/hooks/useAsteroidPlots';
+import useAuth from '~/hooks/useAuth';
 import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
 
-const DEFAULT_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
+const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
+const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
 const RED_COLOR = new Color().setHex(0xff0000).convertSRGBToLinear();
 const HIGHLIGHT_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
 
-const Plots = ({ attachTo, cameraNormalized, config, mouseIntersect, surface }) => {
+const MAX_MESH_INSTANCES = 5000;
+
+const BUILDING_RADIUS = 75; // (at surface)
+const PIP_RADIUS = 50; // (at surface)
+
+const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseIntersect, surface }) => {
+  const { account } = useAuth();
   const { scene } = useThree();
   const { gpuProcessInBackground, processInBackground } = useWebWorker();
 
   const [positionsReady, setPositionsReady] = useState(false);
-  const [visibleRegions, setVisibleRegions] = useState([]);
+  const [regionsByDistance, setRegionsByDistance] = useState([]);
 
   const positions = useRef();
   const orientations = useRef();
   const regions = useRef();
   const plotsByRegion = useRef([]);
 
+  const pipMesh = useRef();
   const buildingMesh = useRef();
+
   const plotStrokeMesh = useRef();
   const plotFillMesh = useRef();
   const lastMouseIntersect = useRef(new Vector3());
@@ -48,81 +59,95 @@ const Plots = ({ attachTo, cameraNormalized, config, mouseIntersect, surface }) 
 
   const regionTally = 5000;  // TODO: make dynamic
   const plotTally = useMemo(() => Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2), [config?.radiusNominal]);
-  const visiblePlotTally = useMemo(() => Math.min(10000, plotTally), [plotTally]);
 
-  const showRegions = useMemo(() => Math.ceil(visiblePlotTally / (plotTally / regionTally)), [visiblePlotTally, plotTally, regionTally]);
+  // TODO: when this is real, only needs origin, and can move back to top
+  const { data: plotData } = useAsteroidPlots(origin, plotTally);
+
+  const visiblePlotTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, plotTally), [plotTally]);
+
+  const buildingTally = useMemo(() => plotData?.plots && Object.values(plotData?.plots).reduce((acc, cur) => acc + (cur && cur[1] > 0 ? 1 : 0), 0), [plotData?.plots]);
+  const visibleBuildingTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, buildingTally), [buildingTally]);
 
   // TODO: handle single-region asteroids
 
-  // TODO (add): cull by absolute distance as well
-
+  // instantiate pips mesh
   useEffect(() => {
     if (!visiblePlotTally) return;
 
-    // TODO: if blooming buildings, could probably get same effect with circle geometry
-    // const buildingGeometry = new CylinderGeometry(PLOT_WIDTH / 5.5, PLOT_WIDTH / 5.5, PLOT_WIDTH / 5.5, 6, 1);
-    const buildingGeometry = new CircleGeometry(PLOT_WIDTH / 5.5, 6);
+    const pipGeometry = new CircleGeometry(PIP_RADIUS, 6);
+    const pipMaterial = new MeshBasicMaterial({
+      color: new Color('#777777'),
+      side: DoubleSide,
+      toneMapped: false,
+      transparent: false
+    });
+
+    pipMesh.current = new InstancedMesh(pipGeometry, pipMaterial, visiblePlotTally);
+    (attachTo || scene).add(pipMesh.current);
+
+    return () => {
+      if (pipMesh.current) {
+        (attachTo || scene).remove(pipMesh.current);
+      }
+    };
+
+  }, [visiblePlotTally]);
+
+  // instantiate buildings mesh
+  useEffect(() => {
+    if (!visibleBuildingTally) return;
+
+    const buildingGeometry = new CircleGeometry(BUILDING_RADIUS, 6);
     // buildingGeometry.rotateX(-Math.PI / 2);
     const buildingMaterial = new MeshBasicMaterial({
-      color: DEFAULT_COLOR,//new Color('#ffffff'),
+      color: new Color().setHex(0xffffff),
       side: DoubleSide,
       toneMapped: false,
       transparent: false
     });
 
-    // const strokeGeometry = new TorusGeometry(PLOT_WIDTH, 5, 3, 6);
-    const strokeGeometry = new RingGeometry(PLOT_WIDTH, PLOT_WIDTH + PLOT_STROKE_MARGIN, 6, 1);
-    const strokeMaterial = new MeshBasicMaterial({
-      color: new Color('#ffffff'),
-      side: DoubleSide,
-      toneMapped: false,
-      transparent: false
-    });
-
-    const fillGeometry = new CircleGeometry(PLOT_WIDTH - PLOT_STROKE_MARGIN, 6);
-    const fillMaterial = new MeshBasicMaterial({
-      color: new Color('#ffffff'),
-      opacity: 0.25,
-      side: DoubleSide,
-      toneMapped: false,
-      transparent: true
-    });
-
-    buildingMesh.current = new InstancedMesh(buildingGeometry, buildingMaterial, visiblePlotTally);
+    buildingMesh.current = new InstancedMesh(buildingGeometry, buildingMaterial, visibleBuildingTally);
+    buildingMesh.current.userData.bloom = true;
     (attachTo || scene).add(buildingMesh.current);
-
-    plotStrokeMesh.current = new InstancedMesh(strokeGeometry, strokeMaterial, visiblePlotTally);
-    (attachTo || scene).add(plotStrokeMesh.current);
-
-    plotFillMesh.current = new InstancedMesh(fillGeometry, fillMaterial, visiblePlotTally);
-    // (attachTo || scene).add(plotFillMesh.current);
 
     return () => {
       if (buildingMesh.current) {
         (attachTo || scene).remove(buildingMesh.current);
       }
-      if (plotStrokeMesh.current) {
-        (attachTo || scene).remove(plotStrokeMesh.current);
-      }
-      if (plotFillMesh.current) {
-        (attachTo || scene).remove(plotFillMesh.current);
-      }
-    }
-  }, [visiblePlotTally]);
+    };
+
+  }, [visibleBuildingTally]);
 
 
   useEffect(() => {
-    console.log('buildPlotGeometry i');
+    if (!visiblePlotTally) return;
+
+  //   // const strokeGeometry = new TorusGeometry(PLOT_WIDTH, 5, 3, 6);
+    //   const strokeGeometry = new RingGeometry(PLOT_WIDTH, PLOT_WIDTH + PLOT_STROKE_MARGIN, 6, 1);
+    //   const strokeMaterial = new MeshBasicMaterial({
+    //     color: new Color('#ffffff'),
+    //     side: DoubleSide,
+    //     toneMapped: false,
+    //     transparent: false
+    //   });
+
+    //   const fillGeometry = new CircleGeometry(PLOT_WIDTH - PLOT_STROKE_MARGIN, 6);
+    //   const fillMaterial = new MeshBasicMaterial({
+    //     color: new Color('#ffffff'),
+    //     opacity: 0.25,
+    //     side: DoubleSide,
+    //     toneMapped: false,
+    //     transparent: true
+    //   });
+
+  }, [visiblePlotTally]);
+
+  useEffect(() => {
     if (!surface?.sides) return;
     const {
       ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
       ...prunedConfig
     } = config;
-    console.log('buildPlotGeometry in', {
-      config: prunedConfig,
-      regionTally,
-      aboveSurface: ABOVE_SURFACE
-    });
     // TODO: need to support DISABLE_BACKGROUND_TERRAIN_MAPS here (i.e. if OffscreenCanvas is not allowed, must generate textures on main thread)
     gpuProcessInBackground(
       {
@@ -134,7 +159,6 @@ const Plots = ({ attachTo, cameraNormalized, config, mouseIntersect, surface }) 
         }
       },
       (data) => {
-        console.log('buildPlotGeometry out');
         positions.current = data.positions;
         orientations.current = data.orientations;
         regions.current = data.regions;
@@ -151,70 +175,85 @@ const Plots = ({ attachTo, cameraNormalized, config, mouseIntersect, surface }) 
     );
   }, [!surface?.sides]); // eslint-disable-line react-hooks/exhaustive-deps
 
-
-  // TODO: only need to update closestLots on angle change
-  // TODO: can update scale / visibility on distance change (or can pass surface altitude from <Asteroid />)
-
+  const chunkyAltitude = useMemo(() => Math.round(cameraAltitude / 500) * 500, [cameraAltitude]);
 
   const updateVisiblePlots = useCallback(() => {
-    // console.log('updateVisiblePlots in', positions.current, visibleRegions?.length);
     if (!positions.current) return;
-    if (!visibleRegions?.length) return;
+    if (!regionsByDistance?.length) return;
     if (!plotsByRegion.current?.length) return;
+
+    const dummy = new Object3D();
+
+    // buildings
+    // TODO: if total buildings < total allowable buildings, only have to do this loop once (and not every render)
+    //  (although setScaleAt may need to be run in setAltitude loop)
 
     // TODO (enhancement): investigate if any benefit to only updating the matrix of instances that actually changed
     //  (i.e. don't necessarily need to update plots that were in visible regions in last cycle and are still visible)
+    let buildingsRendered = 0;
+    let pipsRendered = 0;
+    let breakLoop = false;
+
+    const scale = Math.max(1, Math.min(300 / BUILDING_RADIUS, cameraAltitude / 15000));
+
+    regionsByDistance.every((plotRegion) => {
+      (plotsByRegion.current[plotRegion] || []).every((plotId) => {
+        const hasBuilding = plotData.plots[plotId] && plotData.plots[plotId][1];
+        const hasPip = pipsRendered < visiblePlotTally;
+        if (hasBuilding || hasPip) {
+          dummy.position.set(
+            positions.current[plotId * 3 + 0],
+            positions.current[plotId * 3 + 1],
+            positions.current[plotId * 3 + 2]
+          );
     
-    const dummy = new Object3D();
-    let i = 0;
-    visibleRegions.forEach((plotRegion) => {
-      (plotsByRegion.current[plotRegion] || []).forEach((plotId) => {
-        if (i > visiblePlotTally) return;
+          dummy.lookAt(
+            orientations.current[plotId * 3 + 0],
+            orientations.current[plotId * 3 + 1],
+            orientations.current[plotId * 3 + 2]
+          );
 
-        dummy.position.set(
-          positions.current[plotId * 3 + 0],
-          positions.current[plotId * 3 + 1],
-          positions.current[plotId * 3 + 2]
-        );
-  
-        dummy.lookAt(
-          orientations.current[plotId * 3 + 0],
-          orientations.current[plotId * 3 + 1],
-          orientations.current[plotId * 3 + 2]
-        );
-  
-        dummy.updateMatrix();
-  
-        // buildingMesh.current.setColorAt(i, DEFAULT_COLOR);
-        buildingMesh.current.setMatrixAt(i, dummy.matrix);
-  
-        plotStrokeMesh.current.setColorAt(i, RED_COLOR);
-        plotStrokeMesh.current.setMatrixAt(i, dummy.matrix);
-  
-        // TODO: fill mesh should be elevated to top of stroke mesh (i.e. + tube radius)
-        // plotFillMesh.current.setColorAt(i, DEFAULT_COLOR);
-        plotFillMesh.current.setMatrixAt(i, dummy.matrix);
+          if (hasBuilding) {
+            dummy.scale.set(scale, scale, scale);
+          } else {
+            dummy.scale.set(1, 1, 1);
+          }
+          dummy.updateMatrix();
 
-        i++;
+          // TODO: because dummy is shared, buildings should scale down to 1
+          //       at the same time that other iconography becomes visible (or sooner)
+          //       so the different objects sharing the dummy don't get funky
+          if (hasBuilding) {
+            // white if rented by me OR i am the owner and !rented by other; else, blue
+            const useColor = (
+              (plotData.owner === `${account}` && plotData.plots[plotId][0] !== 2)  // owned by me and not rented out
+              || plotData.plots[plotId][0] === 1                               // OR rented by me
+            ) ? WHITE_COLOR : MAIN_COLOR;
+            buildingMesh.current.setColorAt(buildingsRendered, useColor);
+            buildingMesh.current.setMatrixAt(buildingsRendered, dummy.matrix);
+            buildingsRendered++;
+
+          } else if (hasPip) {
+            pipMesh.current.setMatrixAt(pipsRendered, dummy.matrix);
+            pipsRendered++;
+          }
+
+          breakLoop = (buildingsRendered >= visibleBuildingTally && pipsRendered >= visiblePlotTally);
+        }
+        if (breakLoop) return false;
+        return true;
       });
+      if (breakLoop) return false;
+      return true;
     });
+    pipMesh.current.count = cameraAltitude > 25000 ? 0 : visiblePlotTally;
 
-    // hide any instances that weren't used
-    buildingMesh.current.count = Math.min(i, visiblePlotTally);
-    plotStrokeMesh.current.count = Math.min(i, visiblePlotTally);
-    plotFillMesh.current.count = Math.min(i, visiblePlotTally);
-    
-    // buildingMesh.current.instanceColor.needsUpdate = true;
+    // TODO: these should be conditional
+    buildingMesh.current.instanceColor.needsUpdate = true;
     buildingMesh.current.instanceMatrix.needsUpdate = true;
-    buildingMesh.current.userData.bloom = true;
+    buildingMesh.current.material.needsUpdate = true;
 
-    plotStrokeMesh.current.instanceColor.needsUpdate = true;
-    plotStrokeMesh.current.instanceMatrix.needsUpdate = true;
-    // plotStrokeMesh.current.userData.bloom = true;
-
-    // plotFillMesh.current.instanceColor.needsUpdate = true;
-    plotFillMesh.current.instanceMatrix.needsUpdate = true;
-    // plotFillMesh.current.userData.bloom = true;
+    pipMesh.current.instanceMatrix.needsUpdate = true;
 
     // console.log('data', data.debugs);
     // if (data.debugs) {
@@ -231,14 +270,14 @@ const Plots = ({ attachTo, cameraNormalized, config, mouseIntersect, surface }) 
     //   plotMesh.current.userData.bloom = true;
     // }
     // scene.add(plotMesh.current);
-  }, [visibleRegions]);
+  }, [cameraAltitude, regionsByDistance]);
 
-  useEffect(updateVisiblePlots, [positionsReady, visibleRegions]);
+  useEffect(updateVisiblePlots, [chunkyAltitude, positionsReady, regionsByDistance]);
 
   const highlightPlot = (i) => {
     // if (highlighted.current === i) return;
     // if (highlighted.current !== undefined) {
-    //   plotStrokeMesh.current.setColorAt( highlighted.current, DEFAULT_COLOR );
+    //   plotStrokeMesh.current.setColorAt( highlighted.current, MAIN_COLOR );
     // }
     // if (i !== undefined) {  // TODO: is there a plot #0?
     //   plotStrokeMesh.current.setColorAt( i, HIGHLIGHT_COLOR );
@@ -260,12 +299,12 @@ const Plots = ({ attachTo, cameraNormalized, config, mouseIntersect, surface }) 
           topic: 'findClosestPlots',
           data: {
             center: cameraNormalized.vector,
-            findTally: showRegions,
+            // findTally: showRegions,
             plotTally: regionTally,
           }
         },
         (data) => {
-          setVisibleRegions(data.plots);
+          setRegionsByDistance(data.plots);
         }
       );
     }

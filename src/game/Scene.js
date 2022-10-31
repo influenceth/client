@@ -103,7 +103,7 @@ const Scene = (props) => {
       <Canvas {...glConfig}>
         <ContextBridge>
           <SettingsManager />
-          {true && <Postprocessor />}
+          <Postprocessor enabled={true} />
           <QueryClientProvider client={queryClient} contextSharing={true}>
             <TrackballModControls>
               <WrappedScene />

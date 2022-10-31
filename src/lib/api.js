@@ -71,6 +71,11 @@ const api = {
     return response.data;
   },
 
+  getAsteroidPlots: async (i) => {
+    const response = await instance.get(`/v1/asteroids/${i}`);
+    return response.data;
+  },
+
   getOwnedAsteroidsCount: async () => {
     const response = await instance.get('/v1/asteroids/ownedCount');
     return response.data;

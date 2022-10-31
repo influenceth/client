@@ -40,7 +40,7 @@ const materials = {};
 
 // TODO: rather than ambient light on asteroid, potentially use a darker and bluer light directly opposite the star
 
-const Postprocessor = () => {
+const Postprocessor = ({ enabled }) => {
   const { gl: renderer, camera, scene, size } = useThree();
 
   const bloomPass = useRef();
@@ -170,7 +170,8 @@ const Postprocessor = () => {
     }
   }, [size.height, size.width]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useFrame(({ scene }) => {
+  useFrame(({ camera, gl, scene }) => {
+    if (!enabled) return gl.render(scene, camera);
     if (!(bloomComposer.current && finalComposer.current)) return;
 
     // render scene with bloom
