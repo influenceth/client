@@ -5,6 +5,7 @@ import {
   Color,
   CylinderGeometry,
   DoubleSide,
+  FrontSide,
   Group,
   InstancedMesh,
   Mesh,
@@ -54,12 +55,6 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
   const lastMouseIntersect = useRef(new Vector3());
   const highlighted = useRef();
 
-  // TODO: this should relate to absolute displacement range for the asteroid (rather than radius)
-  //        (potentially just fine displacement even)
-  const ABOVE_SURFACE = useMemo(() => {
-    return (0.15 * config?.fineDispFraction * config?.dispWeight * config?.radius) || 0;
-  }, [config?.fineDispFraction, config?.dispWeight, config?.radius]);
-
   // const PLOT_WIDTH = useMemo(() => 125, [config?.radius]);
   const PLOT_WIDTH = useMemo(() => Math.min(150, config?.radius / 25), [config?.radius]);
   const PLOT_STROKE_MARGIN = useMemo(() => 0.125 * PLOT_WIDTH, [PLOT_WIDTH]);
@@ -86,13 +81,15 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
     const pipGeometry = new CircleGeometry(PIP_RADIUS, 6);
     const pipMaterial = new MeshBasicMaterial({
       color: WHITE_COLOR,
+      depthTest: false,
+      depthWrite: false,
       opacity: 0.2,
-      side: DoubleSide,
       toneMapped: false,
-      transparent: true
+      transparent: true,
     });
 
     pipMesh.current = new InstancedMesh(pipGeometry, pipMaterial, visiblePlotTally);
+    pipMesh.current.renderOrder = 999;
     (attachTo || scene).add(pipMesh.current);
 
     return () => {
@@ -111,12 +108,14 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
     // buildingGeometry.rotateX(-Math.PI / 2);
     const buildingMaterial = new MeshBasicMaterial({
       color: new Color().setHex(0xffffff),
-      side: DoubleSide,
+      depthTest: false,
+      depthWrite: false,
       toneMapped: false,
-      transparent: false
+      transparent: false,
     });
 
     buildingMesh.current = new InstancedMesh(buildingGeometry, buildingMaterial, visibleBuildingTally);
+    buildingMesh.current.renderOrder = 999;
     buildingMesh.current.userData.bloom = true;
     (attachTo || scene).add(buildingMesh.current);
 
@@ -136,13 +135,15 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
     const strokeGeometry = new RingGeometry(PLOT_WIDTH, PLOT_WIDTH + PLOT_STROKE_MARGIN, 6, 1);
     const strokeMaterial = new MeshBasicMaterial({
       color: new Color('#ffffff'),
-      side: DoubleSide,
+      depthTest: false,
+      depthWrite: false,
       toneMapped: false,
-      transparent: false
+      transparent: false,
     });
 
     // TODO: since this is on buildings and pips, should potentially limit to total
     plotStrokeMesh.current = new InstancedMesh(strokeGeometry, strokeMaterial, visiblePlotTally);
+    plotStrokeMesh.current.renderOrder = 999;
     (attachTo || scene).add(plotStrokeMesh.current);
 
     return () => {
@@ -174,13 +175,14 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
       geometry,
       new MeshBasicMaterial({
         color: WHITE_COLOR,
-        side: DoubleSide,
+        depthTest: false,
+        depthWrite: false,
         toneMapped: false,
-        transparent: true
+        transparent: true,
       })
     );
+    mouseMesh.current.renderOrder = 999;
     mouseMesh.current.userData.bloom = true;
-    
     (attachTo || scene).add(mouseMesh.current);
     return () => {
       if (mouseMesh.current) {
@@ -202,7 +204,7 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
         data: {
           config: prunedConfig,
           regionTally,
-          aboveSurface: ABOVE_SURFACE
+          aboveSurface: 0
         }
       },
       (data) => {
@@ -228,106 +230,111 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
     if (!positions.current) return;
     if (!regionsByDistance?.length) return;
     if (!plotsByRegion.current?.length) return;
+    try {
+      const dummy = new Object3D();
 
-    const dummy = new Object3D();
+      // buildings
+      // TODO: if total buildings < total allowable buildings, only have to do this loop once (and not every render)
+      //  (although setScaleAt may need to be run in setAltitude loop)
 
-    // buildings
-    // TODO: if total buildings < total allowable buildings, only have to do this loop once (and not every render)
-    //  (although setScaleAt may need to be run in setAltitude loop)
+      // TODO (enhancement): investigate if any benefit to only updating the matrix of instances that actually changed
+      //  (i.e. don't necessarily need to update plots that were in visible regions in last cycle and are still visible)
+      let buildingsRendered = 0;
+      let pipsRendered = 0;
+      let breakLoop = false;
 
-    // TODO (enhancement): investigate if any benefit to only updating the matrix of instances that actually changed
-    //  (i.e. don't necessarily need to update plots that were in visible regions in last cycle and are still visible)
-    let buildingsRendered = 0;
-    let pipsRendered = 0;
-    let breakLoop = false;
+      const scale = Math.max(1, Math.min(250 / BUILDING_RADIUS, cameraAltitude / 15000));
 
-    const scale = Math.max(1, Math.min(250 / BUILDING_RADIUS, cameraAltitude / 15000));
+      regionsByDistance.every((plotRegion) => {
+        (plotsByRegion.current[plotRegion] || []).every((plotId) => {
+          const hasBuilding = plotData.plots[plotId] && plotData.plots[plotId][1];
+          const hasPip = pipsRendered < visiblePlotTally;
+          if (hasBuilding || hasPip) {
+            dummy.position.set(
+              positions.current[plotId * 3 + 0],
+              positions.current[plotId * 3 + 1],
+              positions.current[plotId * 3 + 2]
+            );
+      
+            dummy.lookAt(
+              orientations.current[plotId * 3 + 0],
+              orientations.current[plotId * 3 + 1],
+              orientations.current[plotId * 3 + 2]
+            );
 
-    regionsByDistance.every((plotRegion) => {
-      (plotsByRegion.current[plotRegion] || []).every((plotId) => {
-        const hasBuilding = plotData.plots[plotId] && plotData.plots[plotId][1];
-        const hasPip = pipsRendered < visiblePlotTally;
-        if (hasBuilding || hasPip) {
-          dummy.position.set(
-            positions.current[plotId * 3 + 0],
-            positions.current[plotId * 3 + 1],
-            positions.current[plotId * 3 + 2]
-          );
-    
-          dummy.lookAt(
-            orientations.current[plotId * 3 + 0],
-            orientations.current[plotId * 3 + 1],
-            orientations.current[plotId * 3 + 2]
-          );
+            if (hasBuilding) {
+              dummy.scale.set(scale, scale, scale);
+            } else {
+              dummy.scale.set(1, 1, 1);
+            }
+            dummy.updateMatrix();
 
-          if (hasBuilding) {
-            dummy.scale.set(scale, scale, scale);
-          } else {
-            dummy.scale.set(1, 1, 1);
+            let useColor = PIP_COLOR;
+
+            // TODO: because dummy is shared, buildings should scale down to 1
+            //       at the same time that other iconography becomes visible (or sooner)
+            //       so the different objects sharing the dummy don't get funky
+            if (hasBuilding) {
+              // white if rented by me OR i am the owner and !rented by other; else, blue
+              useColor = (
+                (plotData.owner === `${account}` && plotData.plots[plotId][0] !== 2)  // owned by me and not rented out
+                || plotData.plots[plotId][0] === 1                               // OR rented by me
+              ) ? WHITE_COLOR : MAIN_COLOR;
+              buildingMesh.current.setColorAt(buildingsRendered, useColor);
+              buildingMesh.current.setMatrixAt(buildingsRendered, dummy.matrix);
+              buildingsRendered++;
+
+            } else if (hasPip) {
+              pipMesh.current.setMatrixAt(pipsRendered, dummy.matrix);
+              pipsRendered++;
+            }
+
+            // TODO: just use an i instead of the addition?
+            plotStrokeMesh.current.setColorAt(pipsRendered + buildingsRendered, useColor);
+            plotStrokeMesh.current.setMatrixAt(pipsRendered + buildingsRendered, dummy.matrix);
+
+            breakLoop = (buildingsRendered >= visibleBuildingTally && pipsRendered >= visiblePlotTally);
           }
-          dummy.updateMatrix();
-
-          let useColor = PIP_COLOR;
-
-          // TODO: because dummy is shared, buildings should scale down to 1
-          //       at the same time that other iconography becomes visible (or sooner)
-          //       so the different objects sharing the dummy don't get funky
-          if (hasBuilding) {
-            // white if rented by me OR i am the owner and !rented by other; else, blue
-            useColor = (
-              (plotData.owner === `${account}` && plotData.plots[plotId][0] !== 2)  // owned by me and not rented out
-              || plotData.plots[plotId][0] === 1                               // OR rented by me
-            ) ? WHITE_COLOR : MAIN_COLOR;
-            buildingMesh.current.setColorAt(buildingsRendered, useColor);
-            buildingMesh.current.setMatrixAt(buildingsRendered, dummy.matrix);
-            buildingsRendered++;
-
-          } else if (hasPip) {
-            pipMesh.current.setMatrixAt(pipsRendered, dummy.matrix);
-            pipsRendered++;
-          }
-
-          // TODO: just use an i instead of the addition?
-          plotStrokeMesh.current.setColorAt(pipsRendered + buildingsRendered, useColor);
-          plotStrokeMesh.current.setMatrixAt(pipsRendered + buildingsRendered, dummy.matrix);
-
-          breakLoop = (buildingsRendered >= visibleBuildingTally && pipsRendered >= visiblePlotTally);
-        }
+          if (breakLoop) return false;
+          return true;
+        });
         if (breakLoop) return false;
         return true;
       });
-      if (breakLoop) return false;
-      return true;
-    });
-    pipMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
-    plotStrokeMesh.current.count = cameraAltitude > OUTLINE_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
+      pipMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
+      plotStrokeMesh.current.count = cameraAltitude > OUTLINE_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
 
-    // TODO: these should be conditional
-    buildingMesh.current.instanceColor.needsUpdate = true;
-    buildingMesh.current.instanceMatrix.needsUpdate = true;
-    buildingMesh.current.material.needsUpdate = true; // TODO: unclear if just needs this first time color is set?
+      // TODO: these should be conditional
+      buildingMesh.current.instanceColor.needsUpdate = true;
+      buildingMesh.current.instanceMatrix.needsUpdate = true;
+      buildingMesh.current.material.needsUpdate = true; // TODO: unclear if just needs this first time color is set?
 
-    pipMesh.current.instanceMatrix.needsUpdate = true;
+      pipMesh.current.instanceMatrix.needsUpdate = true;
 
-    plotStrokeMesh.current.instanceColor.needsUpdate = true;
-    plotStrokeMesh.current.instanceMatrix.needsUpdate = true;
-    plotStrokeMesh.current.material.needsUpdate = true; // TODO: unclear if just needs this first time color is set?
+      plotStrokeMesh.current.instanceColor.needsUpdate = true;
+      plotStrokeMesh.current.instanceMatrix.needsUpdate = true;
+      plotStrokeMesh.current.material.needsUpdate = true; // TODO: unclear if just needs this first time color is set?
 
-    // console.log('data', data.debugs);
-    // if (data.debugs) {
-    //   const pointsGeometry = new BufferGeometry();
-    //   pointsGeometry.setAttribute('position', new BufferAttribute(data.debugs, 3));
-    //   plotMesh.current = new Points(
-    //     pointsGeometry,
-    //     new PointsMaterial({
-    //       color: 'white',
-    //       size: 20,
-    //       sizeAttenuation: true
-    //     })
-    //   );
-    //   plotMesh.current.userData.bloom = true;
-    // }
-    // scene.add(plotMesh.current);
+      // console.log('data', data.debugs);
+      // if (data.debugs) {
+      //   const pointsGeometry = new BufferGeometry();
+      //   pointsGeometry.setAttribute('position', new BufferAttribute(data.debugs, 3));
+      //   plotMesh.current = new Points(
+      //     pointsGeometry,
+      //     new PointsMaterial({
+      //       color: 'white',
+      //       size: 20,
+      //       sizeAttenuation: true
+      //     })
+      //   );
+      //   plotMesh.current.userData.bloom = true;
+      // }
+      // scene.add(plotMesh.current);
+
+    } catch (e) {
+      // non-insignificant chance of this being mid-process when the asteroid is
+      // changed, so needs to fail gracefully (i.e. if buildingMesh.current is unset)
+    }
   }, [cameraAltitude, regionsByDistance]);
 
   useEffect(updateVisiblePlots, [chunkyAltitude, positionsReady, regionsByDistance]);
