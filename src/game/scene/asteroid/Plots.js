@@ -5,7 +5,9 @@ import {
   Color,
   CylinderGeometry,
   DoubleSide,
+  Group,
   InstancedMesh,
+  Mesh,
   MeshBasicMaterial,
   Object3D,
   RingGeometry,
@@ -19,14 +21,17 @@ import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
 
 const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
+const PIP_COLOR = new Color().setHex(0x888888).convertSRGBToLinear();
 const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
 const RED_COLOR = new Color().setHex(0xff0000).convertSRGBToLinear();
-const HIGHLIGHT_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
+const HIGHLIGHT_COLOR = RED_COLOR;
 
 const MAX_MESH_INSTANCES = 5000;
+const PIP_VISIBILITY_ALTITUDE = 25000;
+const OUTLINE_VISIBILITY_ALTITUDE = 10000;
+const MOUSE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE;
 
-const BUILDING_RADIUS = 75; // (at surface)
-const PIP_RADIUS = 50; // (at surface)
+const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
 
 const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseIntersect, surface }) => {
   const { account } = useAuth();
@@ -54,8 +59,12 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
   const ABOVE_SURFACE = useMemo(() => {
     return (0.15 * config?.fineDispFraction * config?.dispWeight * config?.radius) || 0;
   }, [config?.fineDispFraction, config?.dispWeight, config?.radius]);
-  const PLOT_WIDTH = useMemo(() => 125, [config?.radius]);
-  const PLOT_STROKE_MARGIN = useMemo(() => PLOT_WIDTH / 5, [PLOT_WIDTH]);
+
+  // const PLOT_WIDTH = useMemo(() => 125, [config?.radius]);
+  const PLOT_WIDTH = useMemo(() => Math.min(200, config?.radius / 25), [config?.radius]);
+  const PLOT_STROKE_MARGIN = useMemo(() => 0.125 * PLOT_WIDTH, [PLOT_WIDTH]);
+  const BUILDING_RADIUS = useMemo(() => 0.375 * PLOT_WIDTH, [PLOT_WIDTH]);
+  const PIP_RADIUS = useMemo(() => 0.25 * PLOT_WIDTH, [PLOT_WIDTH]);
 
   const regionTally = 5000;  // TODO: make dynamic
   const plotTally = useMemo(() => Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2), [config?.radiusNominal]);
@@ -76,10 +85,11 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
 
     const pipGeometry = new CircleGeometry(PIP_RADIUS, 6);
     const pipMaterial = new MeshBasicMaterial({
-      color: new Color('#777777'),
+      color: WHITE_COLOR,
+      opacity: 0.2,
       side: DoubleSide,
       toneMapped: false,
-      transparent: false
+      transparent: true
     });
 
     pipMesh.current = new InstancedMesh(pipGeometry, pipMaterial, visiblePlotTally);
@@ -118,18 +128,29 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
 
   }, [visibleBuildingTally]);
 
-
+  // instantiate plot outline mesh
   useEffect(() => {
     if (!visiblePlotTally) return;
 
-  //   // const strokeGeometry = new TorusGeometry(PLOT_WIDTH, 5, 3, 6);
-    //   const strokeGeometry = new RingGeometry(PLOT_WIDTH, PLOT_WIDTH + PLOT_STROKE_MARGIN, 6, 1);
-    //   const strokeMaterial = new MeshBasicMaterial({
-    //     color: new Color('#ffffff'),
-    //     side: DoubleSide,
-    //     toneMapped: false,
-    //     transparent: false
-    //   });
+    // const strokeGeometry = new TorusGeometry(PLOT_WIDTH, 5, 3, 6);
+    const strokeGeometry = new RingGeometry(PLOT_WIDTH, PLOT_WIDTH + PLOT_STROKE_MARGIN, 6, 1);
+    const strokeMaterial = new MeshBasicMaterial({
+      color: new Color('#ffffff'),
+      side: DoubleSide,
+      toneMapped: false,
+      transparent: false
+    });
+
+    // TODO: since this is on buildings and pips, should potentially limit to total
+    plotStrokeMesh.current = new InstancedMesh(strokeGeometry, strokeMaterial, visiblePlotTally);
+    (attachTo || scene).add(plotStrokeMesh.current);
+
+    return () => {
+      if (plotStrokeMesh.current) {
+        (attachTo || scene).remove(plotStrokeMesh.current);
+      }
+    };
+    
 
     //   const fillGeometry = new CircleGeometry(PLOT_WIDTH - PLOT_STROKE_MARGIN, 6);
     //   const fillMaterial = new MeshBasicMaterial({
@@ -141,6 +162,32 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
     //   });
 
   }, [visiblePlotTally]);
+
+  // instantiate mouse mesh
+  useEffect(() => {
+    // const geometry = new RingGeometry(2 * PLOT_WIDTH, 2 * PLOT_WIDTH + PLOT_STROKE_MARGIN, 16, 1);
+    const geometry = new TorusGeometry(1.5 * PLOT_WIDTH, 0.75 * PLOT_STROKE_MARGIN, 10, 32);
+    // const geometry = new CircleGeometry(2 * PLOT_WIDTH, 6);
+    // geometry.rotateX(-Math.PI / 2);
+
+    mouseMesh.current = new Mesh(
+      geometry,
+      new MeshBasicMaterial({
+        color: WHITE_COLOR,
+        side: DoubleSide,
+        toneMapped: false,
+        transparent: true
+      })
+    );
+    mouseMesh.current.userData.bloom = true;
+    
+    (attachTo || scene).add(mouseMesh.current);
+    return () => {
+      if (mouseMesh.current) {
+        (attachTo || scene).remove(mouseMesh.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!surface?.sides) return;
@@ -177,6 +224,7 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
 
   const chunkyAltitude = useMemo(() => Math.round(cameraAltitude / 500) * 500, [cameraAltitude]);
 
+  const plotToInstance = useRef([]);
   const updateVisiblePlots = useCallback(() => {
     if (!positions.current) return;
     if (!regionsByDistance?.length) return;
@@ -194,7 +242,7 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
     let pipsRendered = 0;
     let breakLoop = false;
 
-    const scale = Math.max(1, Math.min(300 / BUILDING_RADIUS, cameraAltitude / 15000));
+    const scale = Math.max(1, Math.min(250 / BUILDING_RADIUS, cameraAltitude / 15000));
 
     regionsByDistance.every((plotRegion) => {
       (plotsByRegion.current[plotRegion] || []).every((plotId) => {
@@ -220,12 +268,14 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
           }
           dummy.updateMatrix();
 
+          let useColor = PIP_COLOR;
+
           // TODO: because dummy is shared, buildings should scale down to 1
           //       at the same time that other iconography becomes visible (or sooner)
           //       so the different objects sharing the dummy don't get funky
           if (hasBuilding) {
             // white if rented by me OR i am the owner and !rented by other; else, blue
-            const useColor = (
+            useColor = (
               (plotData.owner === `${account}` && plotData.plots[plotId][0] !== 2)  // owned by me and not rented out
               || plotData.plots[plotId][0] === 1                               // OR rented by me
             ) ? WHITE_COLOR : MAIN_COLOR;
@@ -238,6 +288,10 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
             pipsRendered++;
           }
 
+          // TODO: just use an i instead of the addition?
+          plotStrokeMesh.current.setColorAt(pipsRendered + buildingsRendered, useColor);
+          plotStrokeMesh.current.setMatrixAt(pipsRendered + buildingsRendered, dummy.matrix);
+
           breakLoop = (buildingsRendered >= visibleBuildingTally && pipsRendered >= visiblePlotTally);
         }
         if (breakLoop) return false;
@@ -246,14 +300,19 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
       if (breakLoop) return false;
       return true;
     });
-    pipMesh.current.count = cameraAltitude > 25000 ? 0 : visiblePlotTally;
+    pipMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
+    plotStrokeMesh.current.count = cameraAltitude > OUTLINE_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
 
     // TODO: these should be conditional
     buildingMesh.current.instanceColor.needsUpdate = true;
     buildingMesh.current.instanceMatrix.needsUpdate = true;
-    buildingMesh.current.material.needsUpdate = true;
+    buildingMesh.current.material.needsUpdate = true; // TODO: unclear if just needs this first time color is set?
 
     pipMesh.current.instanceMatrix.needsUpdate = true;
+
+    plotStrokeMesh.current.instanceColor.needsUpdate = true;
+    plotStrokeMesh.current.instanceMatrix.needsUpdate = true;
+    plotStrokeMesh.current.material.needsUpdate = true; // TODO: unclear if just needs this first time color is set?
 
     // console.log('data', data.debugs);
     // if (data.debugs) {
@@ -274,17 +333,35 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
 
   useEffect(updateVisiblePlots, [chunkyAltitude, positionsReady, regionsByDistance]);
 
-  const highlightPlot = (i) => {
-    // if (highlighted.current === i) return;
-    // if (highlighted.current !== undefined) {
-    //   plotStrokeMesh.current.setColorAt( highlighted.current, MAIN_COLOR );
-    // }
-    // if (i !== undefined) {  // TODO: is there a plot #0?
-    //   plotStrokeMesh.current.setColorAt( i, HIGHLIGHT_COLOR );
-    //   highlighted.current = i;
-    // }
-    // plotStrokeMesh.current.instanceColor.needsUpdate = true;
-  };
+
+  const mouseMesh = useRef();
+  const highlightPlot = useCallback((plotId) => {
+    if (highlighted.current === plotId) return;
+    if (highlighted.current !== undefined) {
+      // mouseMesh.current.material.opacity = 0;
+    }
+    if (plotId !== undefined) {  // TODO: is there a plot #0?
+      if (!positions.current) return;
+      mouseMesh.current.position.set(
+        positions.current[plotId * 3 + 0],
+        positions.current[plotId * 3 + 1],
+        positions.current[plotId * 3 + 2]
+      );
+
+      const orientation = new Vector3(
+        orientations.current[plotId * 3 + 0],
+        orientations.current[plotId * 3 + 1],
+        orientations.current[plotId * 3 + 2]
+      );
+      orientation.applyQuaternion(attachTo.quaternion);
+      mouseMesh.current.lookAt(orientation);
+
+      // mouseMesh.current.material.opacity = 1;
+      // mouseMesh.current.updateMatrix();
+
+      highlighted.current = plotId;
+    }
+  }, []);
 
   // TODO: benchmark everything
   //  throttle what helps and move stuff to webworker where possible
@@ -293,7 +370,6 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
   // TODO: throttle this?
   useEffect(() => {
     if (cameraNormalized?.string) {
-      console.log('cameraNormalized?.string', cameraNormalized?.string);
       processInBackground(
         {
           topic: 'findClosestPlots',
@@ -310,41 +386,29 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
     }
   }, [cameraNormalized?.string]);
 
-  // TODO: restore mouse interactions
+  useFrame(() => {
+    if (!plotTally) return;
+    if (!lastMouseIntersect.current) return;
+    if (cameraAltitude > MOUSE_VISIBILITY_ALTITUDE) { highlightPlot(); return; }
+    if (!mouseIntersect || mouseIntersect.length() === 0) { highlightPlot(); return; }
+    if (mouseIntersect.distanceToSquared(lastMouseIntersect.current) < MOUSE_THROTTLE_DISTANCE) return;
 
-  // useFrame(() => {
-  //   if (!plotTally.current) return;
-  //   if (!lastMouseIntersect.current) return;
-  //   if (!mouseIntersect || mouseIntersect.length() === 0) { highlightPlot(); return; }
-  //   // TODO (enhancement): throttle this by distance
-  //   if (mouseIntersect.equals(lastMouseIntersect.current)) return;
-
-  //   // TODO: potential performance improvements
-  //   //  - can we do this with raycasting more simply?
-  //   //  - could we handle this in vertex shader?
-
-  //   lastMouseIntersect.current = null;
-  //   const {
-  //     ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
-  //     ...prunedConfig
-  //   } = config;
-  //   processInBackground(
-  //     {
-  //       topic: 'findClosestPlots',
-  //       data: {
-  //         center: mouseIntersect,
-  //         findTally: 1,
-  //         plotTally: plotTally.current,
-  //         //config: prunedConfig,
-  //         //aboveSurface: ABOVE_SURFACE
-  //       }
-  //     },
-  //     (data) => {
-  //       highlightPlot(data.plots[0]);
-  //       lastMouseIntersect.current = mouseIntersect.clone();
-  //     }
-  //   )
-  // });
+    lastMouseIntersect.current = null;
+    processInBackground(
+      {
+        topic: 'findClosestPlots',
+        data: {
+          center: mouseIntersect.clone().normalize(),
+          findTally: 1,
+          plotTally
+        }
+      },
+      (data) => {
+        highlightPlot(data.plots[0]);
+        lastMouseIntersect.current = mouseIntersect.clone();
+      }
+    )
+  }, 0.5);
 
   return null;
 };

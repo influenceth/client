@@ -6,6 +6,7 @@ import {
   CameraHelper,
   DirectionalLight,
   DirectionalLightHelper,
+  Vector2,
   Vector3
 } from 'three';
 import gsap from 'gsap';
@@ -31,6 +32,7 @@ const {
 const UPDATE_DISTANCE_MULT = CHUNK_SPLIT_DISTANCE * UPDATE_QUADTREE_EVERY;
 
 const INITIAL_ZOOM = 2;
+const INITIAL_ZOOM_MIN = 6000;
 const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 20;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
@@ -126,8 +128,10 @@ const Asteroid = (props) => {
   const chunkSwapThisCycle = useRef();
   const geometry = useRef();
   const group = useRef();
-  const lastMouseUpdate = useRef(0);
+  const lastMouseUpdatePosition = useRef(new Vector2());
+  const lastMouseUpdateTime = useRef(0);
   const light = useRef();
+  const lockToSurface = useRef();
   const mouseableRef = useRef();
   const mouseGeometry = useRef();
   const mouseIntersect = useRef(new Vector3());
@@ -146,6 +150,12 @@ const Asteroid = (props) => {
   //   () => config?.stretch ? Math.min(config.stretch.x, config.stretch.y, config.stretch.z) : 1,
   //   [config?.stretch]
   // );
+
+  const initialZoom = useMemo(
+    () => Math.max(INITIAL_ZOOM_MIN, INITIAL_ZOOM * config?.radius),
+    [config?.radius]
+  );
+
   const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent]);
   const surfaceDistance = useMemo(
     () => (MIN_FRUSTUM_AT_SURFACE / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
@@ -340,7 +350,7 @@ const Asteroid = (props) => {
     const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
-    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM);
+    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(initialZoom);
 
     const timeline = gsap.timeline({
       defaults: { duration: 2, ease: 'power4.out' },
@@ -373,7 +383,7 @@ const Asteroid = (props) => {
     const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
-    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM);
+    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(initialZoom);
     controls.targetScene.position.copy(panTo);
     controls.object.position.copy(zoomTo);
     controls.object.near = 100;
@@ -448,7 +458,6 @@ const Asteroid = (props) => {
       if (minDistance > controls?.minDistance) {
         controls.minDistance = Math.max(cameraPosition.length(), closestChunk.sphereCenterHeight);
         applyingZoomLimits.current = minDistance - controls?.minDistance;
-        console.log('IN POSTIVIE', applyingZoomLimits.current);
 
       // else, can just set
       } else {
@@ -555,7 +564,8 @@ const Asteroid = (props) => {
         // }
 
         // lock to surface if within "lock" radius
-        if (controls.object.position.length() < 1.1 * config.radius) {
+        lockToSurface.current = controls.object.position.length() < 1.1 * config.radius;
+        if (lockToSurface.current) {
           controls.object.up.applyAxisAngle(rotationAxis.current, updatedRotation - rotation.current);
           controls.object.position.applyAxisAngle(rotationAxis.current, updatedRotation - rotation.current);
           controls.object.updateProjectionMatrix();
@@ -569,7 +579,7 @@ const Asteroid = (props) => {
     //  re-render as soon as it arrives)
     const rotatedCameraPosition = (zoomStatus === 'in' || !config?.radius)
       ? controls.object.position.clone()
-      : controls.object.position.clone().normalize().multiplyScalar(config.radius * INITIAL_ZOOM);
+      : controls.object.position.clone().normalize().multiplyScalar(initialZoom);
     rotatedCameraPosition.applyAxisAngle(rotationAxis.current, -rotation.current);
     // ^^^
 
@@ -626,7 +636,6 @@ const Asteroid = (props) => {
     if (mouseGeometry.current && mouseGeometry.current.builder.isUpdating()) {
       if (mouseGeometry.current.builder.isWaitingOnMaps()) {
         mouseGeometry.current.builder.updateMaps(Date.now() + frameTimeLeft(frameStart, false));
-        if (!mousableTerrainInitialized) setMousableTerrainInitialized(true);
       } else {
         mouseGeometry.current.builder.update();
         if (!mousableTerrainInitialized) {
@@ -686,6 +695,9 @@ const Asteroid = (props) => {
     if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
     if (!geometry.current.builder.isUpdating() && !settingCameraPosition.current) {
       geometry.current.processNextQueuedChange();
+      if (terrainInitialized && !mousableTerrainInitialized) {
+        mouseGeometry.current.processNextQueuedChange();
+      }
     }
 
     // raycast
@@ -694,22 +706,27 @@ const Asteroid = (props) => {
     // TODO (enhancement): probably don't need to do this every frame
     if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
     if (mousableTerrainInitialized && mouseableRef.current.children) {
-      const now = Date.now();
-      if (now - lastMouseUpdate.current >= MOUSE_THROTTLE) {
-        lastMouseUpdate.current = now;
-        try {
-          const intersections = state.raycaster.intersectObjects(mouseableRef.current.children);
-          if (intersections.length) {
-            mouseIntersect.current.copy(intersections[0].point);
-            mouseIntersect.current.applyAxisAngle(rotationAxis.current, -1 * rotation.current);
-            mouseIntersect.current.divide(config.stretch);
-            mouseIntersect.current.normalize();
-          } else {
-            // console.log('no intersection');
-            mouseIntersect.current.setLength(0);
+      // if lockedToSurface mode, state.mouse must have changed to be worth re-evaluating
+      const mouseVector = state.pointer || state.mouse;
+      if (!lockToSurface.current || !lastMouseUpdatePosition.current.equals(mouseVector)) {
+        const now = Date.now();
+        if (now - lastMouseUpdateTime.current >= MOUSE_THROTTLE) {
+          lastMouseUpdatePosition.current = mouseVector.clone();
+          lastMouseUpdateTime.current = now;
+          try {
+            const intersections = state.raycaster.intersectObjects(mouseableRef.current.children);
+            if (intersections.length) {
+              mouseIntersect.current.copy(intersections[0].point);
+              mouseIntersect.current.applyAxisAngle(rotationAxis.current, -1 * rotation.current);
+              mouseIntersect.current.divide(config.stretch);
+              // mouseIntersect.current.normalize();
+            } else {
+              // console.log('no intersection');
+              mouseIntersect.current.setLength(0);
+            }
+          } catch (e) {
+            console.warn(e);
           }
-        } catch (e) {
-          console.warn(e);
         }
       }
     }
@@ -745,7 +762,6 @@ const Asteroid = (props) => {
       {config && terrainInitialized && zoomStatus === 'in' && (
         <Plots
           attachTo={quadtreeRef.current}
-          axis={rotationAxis.current}
           cameraAltitude={cameraAltitude}
           cameraNormalized={cameraNormalized}
           config={config}
