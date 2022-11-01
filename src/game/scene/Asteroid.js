@@ -205,6 +205,8 @@ const Asteroid = (props) => {
 
   const onUnload = useCallback(() => {
     setConfig();
+    setTerrainInitialized();
+    setMousableTerrainInitialized();
     asteroidOrbit.current = null;
     rotationAxis.current = null;
     position.current = null;

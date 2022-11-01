@@ -28,7 +28,7 @@ const HIGHLIGHT_COLOR = RED_COLOR;
 
 const MAX_MESH_INSTANCES = 5000;
 const PIP_VISIBILITY_ALTITUDE = 25000;
-const OUTLINE_VISIBILITY_ALTITUDE = 10000;
+const OUTLINE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE * 0.5;
 const MOUSE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE;
 
 const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
@@ -61,7 +61,7 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
   }, [config?.fineDispFraction, config?.dispWeight, config?.radius]);
 
   // const PLOT_WIDTH = useMemo(() => 125, [config?.radius]);
-  const PLOT_WIDTH = useMemo(() => Math.min(200, config?.radius / 25), [config?.radius]);
+  const PLOT_WIDTH = useMemo(() => Math.min(150, config?.radius / 25), [config?.radius]);
   const PLOT_STROKE_MARGIN = useMemo(() => 0.125 * PLOT_WIDTH, [PLOT_WIDTH]);
   const BUILDING_RADIUS = useMemo(() => 0.375 * PLOT_WIDTH, [PLOT_WIDTH]);
   const PIP_RADIUS = useMemo(() => 0.25 * PLOT_WIDTH, [PLOT_WIDTH]);
@@ -224,7 +224,6 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
 
   const chunkyAltitude = useMemo(() => Math.round(cameraAltitude / 500) * 500, [cameraAltitude]);
 
-  const plotToInstance = useRef([]);
   const updateVisiblePlots = useCallback(() => {
     if (!positions.current) return;
     if (!regionsByDistance?.length) return;
