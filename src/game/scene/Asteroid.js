@@ -127,6 +127,7 @@ const Asteroid = (props) => {
   const [terrainUpdateNeeded, setTerrainUpdateNeeded] = useState();
 
   const asteroidOrbit = useRef();
+  const asteroidId = useRef();
   const darkLight = useRef();
   const debug = useRef(); // TODO: remove
   const chunkSwapThisCycle = useRef();
@@ -221,6 +222,16 @@ const Asteroid = (props) => {
     disposeGeometry();
   }, [disposeLight, disposeGeometry]);
 
+  useEffect(() => {
+    // if origin changed, always unload and zoom out (even if asteroidData has already been fetched)
+    if (asteroidId.current && asteroidId.current !== origin) {
+      if (zoomStatus === 'in') {
+        updateZoomStatus('zooming-out');
+      }
+    }
+    asteroidId.current = origin;
+  }, [origin]);
+
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
     // when asteroidData is loaded for selected asteroid...
@@ -258,11 +269,6 @@ const Asteroid = (props) => {
       mouseGeometry.current.groups.forEach((g) => {
         mouseableRef.current.add(g);
       });
-
-    // cleanup if no data
-    } else {
-      onUnload();
-      if (zoomStatus === 'in') updateZoomStatus('zooming-out');
     }
 
     // return cleanup
