@@ -501,11 +501,27 @@ const Asteroid = (props) => {
     if (geometry.current && terrainUpdateNeeded) {
       // vvv BENCHMARK 2ms (zoomed-out), 7-20ms+ (zoomed-in)
       lastUpdateStart.current = Date.now();
+      // if (!disableChunks.current)
       geometry.current.setCameraPosition(terrainUpdateNeeded);
       settingCameraPosition.current = false;
       // ^^^
     }
   }, [terrainUpdateNeeded]);
+
+  // NOTE: to stop / start chunk splitting with shift+space, can
+  //  uncomment below and the "disableChunks" line above
+  // const disableChunks = useRef();
+  // useEffect(() => {
+  //   const onKeydown = (e) => {
+  //     if (e.shiftKey && e.which === 32) {
+  //       disableChunks.current = !disableChunks.current;
+  //     }
+  //   };
+  //   document.addEventListener('keydown', onKeydown);
+  //   return () => {
+  //     document.removeEventListener('keydown', onKeydown);
+  //   }
+  // }, []);
 
   // once terrain is loaded, load the mouse-interactive terrain
   // TODO (enhancement): re-use the heightSample buffer from the primary terrain cube

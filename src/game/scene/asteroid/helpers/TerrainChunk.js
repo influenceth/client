@@ -132,10 +132,12 @@ class TerrainChunk {
     }
   }
 
-  // it's possible (or at least at one point it was) in a race-condition that a chunk is
-  // constructed but never rendered...
+  // it's possible in a race-condition that a chunk is constructed but never rendered
+  // and is thus somehow compiled without onBeforeCompile ever running... these chunks
+  // are not reusable and should be disposed
   isReusable() {
-    return true;
+    return !!this._material?.userData?.shader
+      && (!this._shadowsEnabled || !!this._plane?.customDepthMaterial?.userData?.shader);
   }
 
   // NOTE: if limit resource pooling to by side, these updates aren't necessary BUT uniforms
@@ -157,9 +159,6 @@ class TerrainChunk {
 
   reconfigure(newParams) {
     this._params = newParams;
-    if (!this._material?.userData?.shader) {
-      this.applyOnBeforeCompile();
-    }
     this.updateDerived();
   }
 
