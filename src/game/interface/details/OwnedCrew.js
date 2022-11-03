@@ -8,7 +8,7 @@ import Button from '~/components/Button';
 import CrewCard from '~/components/CrewCard';
 import CrewInfoPane from '~/components/CrewInfoPane';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import IconButton from '~/components/IconButton';
 import {
   CaptainIcon,
@@ -645,7 +645,7 @@ const OwnedCrew = (props) => {
 
   if (isDataLoading) return null;
   return (
-    <Details title="Owned Crew">
+    <Details title="Owned Crew" width="max">
       {!(crew && crewRecruitmentStoryId) && <Loader />}
       {crew && crewRecruitmentStoryId && (
         <Container>

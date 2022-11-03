@@ -18,6 +18,7 @@ import SettingsManager from './scene/SettingsManager';
 import Postprocessor from './Postprocessor';
 
 const glConfig = {
+  antialias: true,
   shadows: true,
   camera: {
     fov: 75,

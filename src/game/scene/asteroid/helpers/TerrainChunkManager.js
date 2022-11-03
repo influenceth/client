@@ -47,6 +47,7 @@ class TerrainChunkManager {
     this.shadowsEnabled = false;
     this.textureSize = textureSize;
     this.pool = [];
+    this.emissivePool = [];
     this.reset();
 
     this.ready = false;
@@ -56,6 +57,7 @@ class TerrainChunkManager {
   dispose() {
     let chunk;
     while(chunk = this.pool.pop()) chunk.dispose(); // eslint-disable-line no-cond-assign
+    while(chunk = this.emissivePool.pop()) chunk.dispose(); // eslint-disable-line no-cond-assign
   }
 
   isBusy() {
@@ -80,7 +82,8 @@ class TerrainChunkManager {
   }
 
   allocateChunk(params) {
-    let chunk = this.pool.pop();
+    const poolToUse = !!params.emissiveParams?.color ? this.emissivePool : this.pool;
+    let chunk = poolToUse.pop();
     if (chunk) { // console.log('reuse');
       chunk.reconfigure(params);
     } else {  // console.log('create');
@@ -111,6 +114,7 @@ class TerrainChunkManager {
         },
         chunk: {
           edgeStrides: chunk._params.stitchingStrides,
+          emissiveParams: chunk._params.emissiveParams,
           offset: chunk._params.offset.toArray(),
           width: chunk._params.width,
           groupMatrix: chunk._params.group.matrix.clone(),
@@ -145,15 +149,18 @@ class TerrainChunkManager {
     // NOTE: deliberately always do at least one
     while (chunk = this._queued.pop()) { // eslint-disable-line
       chunk.updateMaps(
-        rebuildChunkMaps({
-          config: this.config,
-          edgeStrides: chunk._params.stitchingStrides,
-          groupMatrix: chunk._params.group.matrix.clone(),
-          offset: chunk._params.offset.clone(),
-          resolution: chunk._resolution,
-          side: chunk._params.side,
-          width: chunk._params.width
-        })
+        rebuildChunkMaps(
+          {
+            config: this.config,
+            edgeStrides: chunk._params.stitchingStrides,
+            emissiveParams: chunk._params.emissiveParams,
+            groupMatrix: chunk._params.group.matrix.clone(),
+            offset: chunk._params.offset.clone(),
+            resolution: chunk._resolution,
+            side: chunk._params.side,
+            width: chunk._params.width
+          },
+        )
       );
       this._new.push(chunk);
 
@@ -174,7 +181,8 @@ class TerrainChunkManager {
     while (node = this._old.pop()) { // eslint-disable-line
       if (ENABLE_TERRAIN_CHUNK_RESOURCE_POOL && node.chunk.isReusable()) {
         node.chunk.detachFromGroup();
-        this.pool.push(node.chunk);
+        const poolToUse = !!node.chunk._params.emissiveParams?.color ? this.emissivePool : this.pool;
+        poolToUse.push(node.chunk);
       } else {
         node.chunk.dispose();
       }

@@ -177,6 +177,7 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
         color: WHITE_COLOR,
         depthTest: false,
         depthWrite: false,
+        opacity: 0,
         toneMapped: false,
         transparent: true,
       })
@@ -344,7 +345,7 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
   const highlightPlot = useCallback((plotId) => {
     if (highlighted.current === plotId) return;
     if (highlighted.current !== undefined) {
-      // mouseMesh.current.material.opacity = 0;
+      mouseMesh.current.material.opacity = 0;
     }
     if (plotId !== undefined) {  // TODO: is there a plot #0?
       if (!positions.current) return;
@@ -362,8 +363,8 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
       orientation.applyQuaternion(attachTo.quaternion);
       mouseMesh.current.lookAt(orientation);
 
-      // mouseMesh.current.material.opacity = 1;
-      // mouseMesh.current.updateMatrix();
+      mouseMesh.current.material.opacity = 1;
+      // mouseMesh.current.updateMatrix(); // TODO: is this needed?
 
       highlighted.current = plotId;
     }

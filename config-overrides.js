@@ -66,6 +66,19 @@ patchNpmModules = () => config => {
   //   }]
   // });
 
+  loaders.unshift({
+    test: /\.js$/,
+    include: /node_modules\/influence-utils/,
+    use: [{
+      loader: 'babel-loader',
+      options: {
+        plugins: [
+          '@babel/plugin-proposal-private-methods'
+        ]
+      }
+    }]
+  });
+
   return config;
 };
 

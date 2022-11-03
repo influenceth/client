@@ -38,6 +38,7 @@ const StyledMainMenu = styled.div`
   pointer-events: auto;
   position: relative;
   width: 100%;
+  z-index: 2;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     background-color: black;

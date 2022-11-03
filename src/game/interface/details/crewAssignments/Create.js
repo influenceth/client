@@ -13,7 +13,7 @@ import CopyReferralLink from '~/components/CopyReferralLink';
 import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import Dialog from '~/components/Dialog';
 import Ether from '~/components/Ether';
 import { AdalianIcon, LinkIcon, TwitterIcon } from '~/components/Icons';
@@ -634,7 +634,8 @@ const CrewAssignmentCreate = (props) => {
       onCloseDestination={onCloseDestination}
       contentProps={{ style: { display: 'flex', flexDirection: 'column', } }}
       edgeToEdge
-      title="Crew Assignments">
+      title="Crew Assignments"
+      width="max">
       <ImageryContainer src={storyState.completionImage || storyState.image}>
         <div />
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
@@ -755,7 +756,13 @@ const CrewAssignmentCreate = (props) => {
 
             {!finalized && (
               <NameSection>
-                <TextInput disabled={finalizing} onChange={handleNameChange} placeholder="Enter Name" initialValue={name} />
+                <TextInput
+                  disabled={finalizing}
+                  initialValue={name}
+                  maxlength={31}
+                  onChange={handleNameChange}
+                  pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                  placeholder="Enter Name" />
                 <RerollContainer>
                   <IconButton
                     onClick={rollBack}
@@ -901,7 +908,7 @@ const CrewAssignmentCreate = (props) => {
           body={(
             <PromptBody>
               The Crewmate you are about to create will be minted as a new unique
-              Non-fungible Token (NFT)! Once minted, the character can never be deleted
+              Player-Owned Game Asset (POGA)! Once minted, the character can never be deleted
               or unmade, and is yours to keep or trade forever. All of their stats,
               actions, skills, and attributes will be appended to their unique history
               and stored as independent on-chain events.

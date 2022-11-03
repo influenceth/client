@@ -1,4 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useQueryClient } from 'react-query';
 import { starknetContracts as configs } from 'influence-utils';
 import { Contract, shortString } from 'starknet';
 
@@ -10,7 +11,7 @@ const RETRY_INTERVAL = 5e3; // 5 seconds
 
 const ChainTransactionContext = createContext();
 
-const getContracts = (account) => ({
+const getContracts = (account, queryClient) => ({
   'PURCHASE_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
@@ -59,48 +60,46 @@ const getContracts = (account) => ({
       timestamp: Math.round(Date.now() / 1000)
     }),
   },
-  // 'START_ASTEROID_SCAN': {
-  //   address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
-  //   config: configs.AsteroidScans,
-  //   confirms: 3,
-  //   transact: (contract) => ({ i }) => contract.startScan(i),
-  //   getErrorAlert: ({ i }) => ({
-  //     type: 'Asteroid_ScanningError',
-  //     level: 'warning',
-  //     i,
-  //     timestamp: Math.round(Date.now() / 1000)
-  //   }),
-  //   getConfirmedAlert: ({ i }) => ({
-  //     type: 'Asteroid_ReadyToFinalizeScan',
-  //     i,
-  //     timestamp: Math.round(Date.now() / 1000)
-  //   }),
-  //   onConfirmed: (event, { i }) => {
-  //     queryClient.invalidateQueries('asteroids', i);
-  //   }
-  // },
-  // 'FINALIZE_ASTEROID_SCAN': {
-  //   address: process.env.REACT_APP_CONTRACT_ASTEROID_SCANS,
-  //   config: configs.AsteroidScans,
-  //   transact: (contract) => ({ i }) => contract.finalizeScan(i),
-  //   getErrorAlert: ({ i }) => ({
-  //     type: 'Asteroid_FinalizeScanError',
-  //     level: 'warning',
-  //     i,
-  //     timestamp: Math.round(Date.now() / 1000)
-  //   })
-  // },
-  // 'SETTLE_CREW': {
-  //   address: process.env.REACT_APP_CONTRACT_ARVAD_CREW_SALE,
-  //   config: configs.ArvadCrewSale,
-  //   transact: (contract) => ({ i }) => contract.mintCrewWithAsteroid(i),
-  //   getErrorAlert: ({ i }) => ({
-  //     type: 'CrewMember_SettlingError',
-  //     level: 'warning',
-  //     i,
-  //     timestamp: Math.round(Date.now() / 1000)
-  //   })
-  // },
+  'START_ASTEROID_SCAN': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    // TODO (enhancement): would potentially be safer to use committedRound in returnValues rather than `confirms`
+    confirms: 2,
+    transact: (contract) => ({ i, boost, _packed, _proofs }) => contract.invoke('Asteroid_startScan', [
+      i,
+      _packed.features,
+      _proofs.features,
+      boost,
+      _packed.bonuses,
+      _proofs.boostBonus,
+    ]),
+    getErrorAlert: ({ i }) => ({
+      type: 'Asteroid_ScanningError',
+      level: 'warning',
+      i,
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    // TODO: may not need these anymore since confirms is only 1 on starknet
+    getConfirmedAlert: ({ i }) => ({
+      type: 'Asteroid_ReadyToFinalizeScan',
+      i,
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    onConfirmed: (event, { i }) => {
+      queryClient.invalidateQueries(['asteroids', i]);
+    }
+  },
+  'FINALIZE_ASTEROID_SCAN': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ i }) => contract.invoke('Asteroid_finishScan', [i]),
+    getErrorAlert: ({ i }) => ({
+      type: 'Asteroid_FinalizeScanError',
+      level: 'warning',
+      i,
+      timestamp: Math.round(Date.now() / 1000)
+    })
+  },
   'SET_ACTIVE_CREW': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
@@ -194,6 +193,7 @@ const getContracts = (account) => ({
 export function ChainTransactionProvider({ children }) {
   const { wallet: { starknet } } = useAuth();
   const { events, lastBlockNumber } = useEvents();
+  const queryClient = useQueryClient();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchPendingTransaction = useStore(s => s.dispatchPendingTransaction);
@@ -204,7 +204,7 @@ export function ChainTransactionProvider({ children }) {
   const contracts = useMemo(() => {
     if (!!starknet?.account) {
       const processedContracts = {};
-      const contractConfig = getContracts(starknet?.account);
+      const contractConfig = getContracts(starknet?.account, queryClient);
       Object.keys(contractConfig).forEach((k) => {
         const {
           address,

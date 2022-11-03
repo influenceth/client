@@ -1,7 +1,7 @@
 import cursor from '~/assets/images/cursor.png';
 import cursorActive from '~/assets/images/cursor-active.png';
 
-const hexToRGB = (hex) => {
+export const hexToRGB = (hex) => {
   const hexParts = hex.toLowerCase().replace(/[^a-z0-9]/g, '').match(/.{1,2}/g);
   return [
     parseInt(hexParts[0], 16),
@@ -31,8 +31,11 @@ const theme = {
     mainText: '#cccccc',
     secondaryText: '#999999',
     disabledText: '#666666',
+    borderBottom: '#555555',
+    borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
     success: '#54de94',
     successRGB: '84, 222, 148', // NOTE: this should be rgb of `success`
+    txButton: '#283e78',
     error: red,
     bonus: {
       level0: '#999999',
@@ -47,6 +50,13 @@ const theme = {
       Superior: purple,
       Exceptional: orange,
       Incomparable: yellow
+    },
+    resources: {
+      Fissile: '#8a1aff',
+      Metal: '#f8852c',
+      Organic: '#68d346',
+      RareEarth: '#f63637',
+      Volatile: '#5bc0f5',
     },
     classes: {
       Pilot: purple,

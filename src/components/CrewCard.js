@@ -162,7 +162,7 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
       classLabel={classLabel}
       {...props}>
       <LoadingAnimation color={'white'} css={loadingCss} loading={!imageLoaded} />
-      <CardImage visible={imageLoaded} applyMask={!overlay}>
+      <CardImage visible={imageLoaded} applyMask={!overlay && !props.hideMask}>
         <img
           alt={useName}
           src={imageUrl}

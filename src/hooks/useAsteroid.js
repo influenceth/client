@@ -2,10 +2,10 @@ import { useQuery } from 'react-query';
 
 import api from '~/lib/api';
 
-const useAsteroid = (i) => {
+const useAsteroid = (i, extended = false) => {
   return useQuery(
-    [ 'asteroids', i ],
-    () => api.getAsteroid(i),
+    [ 'asteroids', i, extended || undefined ],
+    () => api.getAsteroid(i, extended),
     { enabled: !!i }
   );
 };

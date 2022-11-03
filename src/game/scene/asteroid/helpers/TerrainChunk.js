@@ -39,6 +39,7 @@ class TerrainChunk {
   constructor(params, config, { materialOverrides, shadowsEnabled, resolution }) {
     this._params = params;
     this._config = config;
+    this._materialOverrides = materialOverrides;
     this._shadowsEnabled = shadowsEnabled;
     this._resolution = resolution;
     this.updateDerived();
@@ -68,19 +69,11 @@ class TerrainChunk {
       // transparent: true, opacity: 0.9,
       ...extraMaterialProps
     }
-    if (materialOverrides) {
-      Object.keys(materialOverrides).forEach((k) => materialProps[k] = materialOverrides[k]);
+    if (this._materialOverrides) {
+      Object.keys(this._materialOverrides).forEach((k) => materialProps[k] = this._materialOverrides[k]);
     }
 
     this._material = new MeshStandardMaterial(materialProps);
-
-    // apply onBeforeCompile to primary material
-    const onBeforeCompile = this.getOnBeforeCompile(
-      this._material,
-      this._config.radius,
-      this._stretch
-    );
-    this._material.onBeforeCompile = onBeforeCompile;
 
     // initialize mesh
     this._plane = new Mesh(this._geometry, this._material);
@@ -92,15 +85,10 @@ class TerrainChunk {
 
       // TODO: this looks better without depthPacking, but might be because not visible at all
       this._plane.customDepthMaterial = new MeshDepthMaterial({ depthPacking: RGBADepthPacking });
-      const onBeforeCompileDepth = this.getOnBeforeCompile(
-        this._plane.customDepthMaterial,
-        this._config.radius,
-        this._stretch,
-        false
-      );
-
-      this._plane.customDepthMaterial.onBeforeCompile = onBeforeCompileDepth;
     }
+
+    // add onBeforeCompile's
+    this.applyOnBeforeCompile();
   }
 
   getOnBeforeCompile(material, radius, stretch, updateVNormal = true) {
@@ -128,13 +116,26 @@ class TerrainChunk {
     };
   }
 
-  // it's possible in a race-condition that a chunk is constructed but never rendered...
-  // in this case, onBeforeCompile is never run, so material's shader is never set...
-  // these chunks are disposed of rather than reused (in theory, could instead reapply
-  // onBeforeCompile, etc, but gets a little tricky with CSM setup)
+  applyOnBeforeCompile() {
+    this._material.onBeforeCompile = this.getOnBeforeCompile(
+      this._material,
+      this._config.radius,
+      this._stretch
+    );
+    if (this._plane.customDepthMaterial) {
+      this._plane.customDepthMaterial.onBeforeCompile = this.getOnBeforeCompile(
+        this._plane.customDepthMaterial,
+        this._config.radius,
+        this._stretch,
+        false
+      );
+    }
+  }
+
+  // it's possible (or at least at one point it was) in a race-condition that a chunk is
+  // constructed but never rendered...
   isReusable() {
-    return !!this._material?.userData?.shader
-      && (!this._shadowsEnabled || !!this._plane?.customDepthMaterial?.userData?.shader);
+    return true;
   }
 
   // NOTE: if limit resource pooling to by side, these updates aren't necessary BUT uniforms
@@ -156,6 +157,9 @@ class TerrainChunk {
 
   reconfigure(newParams) {
     this._params = newParams;
+    if (!this._material?.userData?.shader) {
+      this.applyOnBeforeCompile();
+    }
     this.updateDerived();
   }
 
@@ -209,16 +213,30 @@ class TerrainChunk {
   updateMaps(data) {
     // (dispose of all previous material maps)
     if (this._material.displacementMap) this._material.displacementMap.dispose();
+    if (this._material.emissiveMap) this._material.emissiveMap.dispose();
     if (this._material.map) this._material.map.dispose();
     if (this._material.normalMap) this._material.normalMap.dispose();
 
     // (set new values)
     // NOTE: the ternaries below are b/c there is different format for data generated
     //  on offscreen canvas vs normal canvas (i.e. if offscreencanvas not supported)
-    this._material.setValues({
+    const materialUpdates = {
       displacementMap: data.heightBitmap.image ? data.heightBitmap : new CanvasTexture(data.heightBitmap, undefined, undefined, undefined, NearestFilter),
       map: data.colorBitmap.image ? data.colorBitmap : new CanvasTexture(data.colorBitmap),
-      normalMap: data.normalBitmap.image ? data.normalBitmap : new CanvasTexture(data.normalBitmap)
+      normalMap: data.normalBitmap.image ? data.normalBitmap : new CanvasTexture(data.normalBitmap),
+      color: 0xffffff,
+      emissive: 0x000000,
+      emissiveIntensity: 0.7,
+      emissiveMap: null,
+    };
+    if (this._params.emissiveParams && data.emissiveBitmap) {
+      materialUpdates.color = 0x222222; // darker modulation for color map so light doesn't wash out emissivity map
+      materialUpdates.emissive = this._params.emissiveParams.color;
+      materialUpdates.emissiveMap = data.emissiveBitmap.image ? data.emissiveBitmap : new CanvasTexture(data.emissiveBitmap);
+    }
+    this._material.setValues({
+      ...materialUpdates,
+      ...(this._materialOverrides || {})
     });
     this._material.needsUpdate = true;
   }

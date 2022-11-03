@@ -61,7 +61,7 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  Asteroid_ScanStarted: (e) => ({
+  Asteroid_Asteroid_ScanStarted: (e) => ({
     icon: <ScanIcon />,
     content: (
       <>
@@ -74,6 +74,7 @@ const entries = {
 
   Asteroid_ReadyToFinalizeScan: (e) => ({
     icon: <ScanIcon />,
+    // TODO: may want to review language here (depending on what expiration is on starknet)
     content: (
       <>
         <span>Ready to finalize scan on </span>
@@ -83,7 +84,7 @@ const entries = {
     ),
   }),
 
-  Asteroid_AsteroidScanned: (e) => ({
+  Asteroid_Asteroid_ScanFinished: (e) => ({
     icon: <ScanIcon />,
     content: (
       <>

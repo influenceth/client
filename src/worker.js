@@ -107,14 +107,16 @@ const rebuildTerrainMaps = function (chunk) {
   chunk.stretch = new Vector3(chunk.stretch[0], chunk.stretch[1], chunk.stretch[2]);
   initChunkTextures().then(() => {
     const maps = rebuildChunkMaps(chunk);
-    postMessage({
-      topic: 'rebuiltTerrainChunkMaps',
-      maps
-    }, [
+    const transferable = [
       maps.colorBitmap,
       maps.heightBitmap,
       maps.normalBitmap,
-    ]);
+    ];
+    if (maps.emissiveBitmap) transferable.push(maps.emissiveBitmap);
+    postMessage({
+      topic: 'rebuiltTerrainChunkMaps',
+      maps
+    }, transferable);
   });
 }
 

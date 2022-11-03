@@ -133,7 +133,9 @@ const Management = styled.div`
 `;
 
 const tabContainerCss = css`
+  color: white;
   flex: 0 0 330px;
+  font-size: 15px;
   @media (min-height: 950px) {
     flex-basis: 45%;
     max-height: 500px;
@@ -363,6 +365,10 @@ const Log = styled.div`
     margin: 0 -10px;
   }
 `;
+const EmptyLogEntry = styled.li`
+  padding-top: 50px;
+  text-align: center;
+`;
 
 const MIN_TRAIT_SLOTS = 12;
 
@@ -449,8 +455,9 @@ const CrewMemberDetails = (props) => {
                     </Text>
                     <NameForm>
                       <TextInput
-                        pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
                         initialValue=""
+                        maxlength={31}
+                        pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
                         disabled={naming}
                         resetOnChange={i}
                         onChange={(v) => setNewName(v)} />
@@ -484,7 +491,14 @@ const CrewMemberDetails = (props) => {
           </CrewBasics>
           <CrewDetails>
             <TabContainer
-              css={tabContainerCss}
+              containerCss={tabContainerCss}
+              iconCss={{}}
+              labelCss={{
+                minWidth: '50px',
+                textAlign: 'center',
+                textTransform: 'uppercase'
+              }}
+              tabCss={{ width: '116px' }}
               tabs={[
                 {
                   icon: <HexagonIcon />,
@@ -576,19 +590,22 @@ const CrewMemberDetails = (props) => {
                 </LogHeader>
                 <div>
                   <ul>
-                    {crew?.events.map(e => (
-                      <LogEntry
-                        key={`${e.transactionHash}_${e.logIndex}`}
-                        data={{ ...e, i: crew.i }}
-                        type={`CrewMember_${e.event}`}
-                        isTabular />
-                    ))}
+                    {crew?.events?.length > 0
+                      ? crew.events.map(e => (
+                        <LogEntry
+                          key={e._id}
+                          data={{ ...e, i: crew.i }}
+                          timestampBreakpoint="1500px"
+                          type={`CrewMember_${e.event}`}
+                          isTabular />
+                      ))
+                      : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
+                    }
                   </ul>
                 </div>
               </Log>
             </History>
           </CrewDetails>
-
         </Content>
       )}
     </Details>

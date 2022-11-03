@@ -8,7 +8,7 @@ import Button from '~/components/Button';
 import CopyReferralLink from '~/components/CopyReferralLink';
 import CrewCard from '~/components/CrewCard';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import { LinkIcon, TwitterIcon } from '~/components/Icons';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStorySession from '~/hooks/useStorySession';
@@ -358,7 +358,8 @@ const CrewAssignmentComplete = (props) => {
       onCloseDestination={onCloseDestination}
       contentProps={{ style: { display: 'flex', flexDirection: 'column', } }}
       edgeToEdge
-      style={{ color: '#999', textAlign: 'center' }}>
+      style={{ color: '#999', textAlign: 'center' }}
+      width="max">
       <ImageryContainer src={storyState.image}>
         <div />
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimationMixer, Box3, DirectionalLight, EquirectangularReflectionMapping, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
 // import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -10,10 +10,11 @@ import BarLoader from 'react-spinners/BarLoader';
 import styled, { css } from 'styled-components';
 
 import Button from '~/components/Button';
-import Details from '~/components/FullsizeWrapper';
+import Details from '~/components/DetailsFullsize';
 import Dropdown from '~/components/Dropdown';
 import NumberInput from '~/components/NumberInput';
 import useAssets from '~/hooks/useAssets';
+import { useLocation, useParams } from 'react-router-dom';
 
 // TODO: connect to gpu-graphics settings
 const ENABLE_SHADOWS = true;
@@ -323,8 +324,8 @@ const Skybox = ({ onLoaded, overrideBackground, overrideEnvironment }) => {
   useEffect(() => {
     let cleanupTextures = [];
 
-    let background = overrideBackground || 'textures/model-viewer/resource_skybox.hdr';
-    let env = overrideEnvironment || 'textures/model-viewer/resource_envmap.hdr';
+    let background = overrideBackground || '/textures/model-viewer/resource_skybox.hdr';
+    let env = overrideEnvironment || '/textures/model-viewer/resource_envmap.hdr';
 
     let waitingOn = background === env ? 1 : 2;
     new RGBELoader().load(background, function (texture) {
@@ -405,6 +406,8 @@ const Lighting = () => {
 const reader = new FileReader();
 const ModelViewer = (props) => {
   const { data: assets, isLoading: loadingAssets } = useAssets();
+  const { model: singleModel } = useParams();
+  const { search } = useLocation();
 
   const [devtoolsEnabled, setDevtoolsEnabled] = useState();
   const [model, setModel] = useState();
@@ -492,30 +495,41 @@ const ModelViewer = (props) => {
     setZoomLimitsEnabled((e) => !e);
   }, []);
 
-  const [bucket, setBucket] = useState();
-  const [buckets, setBuckets] = useState();
-  const [bucketModels, setBucketModels] = useState();
+  const [category, setCategory] = useState();
+  const [categories, setCategories] = useState();
+  const [categoryModels, setCategoryModels] = useState();
   useEffect(() => {
     if (!!assets) {
-      const bucketSet = new Set(assets.map((a) => a.bucket));
-      const bucketArr = Array.from(bucketSet).sort();
-      setBuckets(bucketArr);
+      if (singleModel) {
+        const asset = assets.find((a) => a.label === singleModel);
+        if (asset) {
+          setModel(asset);
+          return;
+        }
+      }
+      
+      // this is default if no singleModel or can't find singleModel
+      const categorySet = new Set(assets.map((a) => a.category));
+      const categoryArr = Array.from(categorySet).sort();
+      setCategories(categoryArr);
     }
-  }, [!!assets]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [!!assets, singleModel]); // eslint-disable-line react-hooks/exhaustive-deps
+  
   useEffect(() => {
-    if (!!buckets) {
-      setBucket(buckets[0]);
+    if (!!categories) {
+      setCategory(categories[0]);
     }
-  }, [!!buckets]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [!!categories]); // eslint-disable-line react-hooks/exhaustive-deps
+  
   useEffect(() => {
-    if (!!assets && bucket) {
+    if (!!assets && category) {
       const bAssets = assets
-        .filter((a) => a.bucket === bucket)
+        .filter((a) => a.category === category)
         .sort((a, b) => a.label < b.label ? -1 : 1);
-      setBucketModels(bAssets);
+      setCategoryModels(bAssets);
       selectModel(bAssets[0]);
     }
-  }, [bucket]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const onKeydown = (e) => {
@@ -529,24 +543,29 @@ const ModelViewer = (props) => {
     }
   }, []);
 
+  const onCloseDestination = useMemo(() => new URLSearchParams(search).get('back'), [search]);
+
   const isLoading = loadingAssets || loadingModel || loadingSkybox;
   return (
-    <Details edgeToEdge title="Resource Details">
+    <Details
+      edgeToEdge
+      onCloseDestination={onCloseDestination}
+      title={singleModel ? `${model?.category} — ${model?.label}` : `Resource Details`}>
       <BarLoader color="#AAA" height={3} loading={isLoading} css={loadingCss} />
 
-      {buckets && bucketModels && (
+      {!singleModel && categories && categoryModels && (
         <Dropdowns>
           <Dropdown
             disabled={isLoading}
-            options={buckets}
-            onChange={(b) => setBucket(b)}
+            options={categories}
+            onChange={(b) => setCategory(b)}
             width="200px" />
           <Dropdown
             disabled={isLoading}
             labelKey="label"
-            options={bucketModels}
+            options={categoryModels}
             onChange={(a) => selectModel(a)}
-            resetOn={bucket}
+            resetOn={category}
             width="200px" />
         </Dropdowns>
       )}
