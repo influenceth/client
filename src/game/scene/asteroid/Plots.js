@@ -3,10 +3,6 @@ import { useFrame, useThree } from '@react-three/fiber';
 import {
   CircleGeometry,
   Color,
-  CylinderGeometry,
-  DoubleSide,
-  FrontSide,
-  Group,
   InstancedMesh,
   Mesh,
   MeshBasicMaterial,
@@ -24,8 +20,6 @@ import theme from '~/theme';
 const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
 const PIP_COLOR = new Color().setHex(0x888888).convertSRGBToLinear();
 const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
-const RED_COLOR = new Color().setHex(0xff0000).convertSRGBToLinear();
-const HIGHLIGHT_COLOR = RED_COLOR;
 
 const MAX_MESH_INSTANCES = 5000;
 const PIP_VISIBILITY_ALTITUDE = 25000;
@@ -34,7 +28,7 @@ const MOUSE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE;
 
 const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
 
-const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseIntersect, surface }) => {
+const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config, mouseIntersect, surface }) => {
   const { account } = useAuth();
   const { scene } = useThree();
   const { gpuProcessInBackground, processInBackground } = useWebWorker();
@@ -65,7 +59,7 @@ const Plots = ({ attachTo, cameraAltitude, cameraNormalized, config, mouseInters
   const plotTally = useMemo(() => Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2), [config?.radiusNominal]);
 
   // TODO: when this is real, only needs origin, and can move back to top
-  const { data: plotData } = useAsteroidPlots(origin, plotTally);
+  const { data: plotData } = useAsteroidPlots(asteroidId, plotTally);
 
   const visiblePlotTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, plotTally), [plotTally]);
 

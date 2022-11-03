@@ -6,7 +6,7 @@ const population = 0.1;
 
 const useAsteroidPlots = (i, tally) => {
   return useQuery(
-    [ 'asteroidPlots', i ],
+    [ 'asteroidPlots', i, tally ],  // TODO: tally may be unnecessary once api connected
     // () => api.getAsteroidPlots(i),
     () => {
       // TODO: replace mock data

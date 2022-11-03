@@ -784,6 +784,7 @@ const Asteroid = (props) => {
       {config && terrainInitialized && zoomStatus === 'in' && (
         <Plots
           attachTo={quadtreeRef.current}
+          asteroidId={origin}
           cameraAltitude={cameraAltitude}
           cameraNormalized={cameraNormalized}
           config={config}
