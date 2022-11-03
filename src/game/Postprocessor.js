@@ -36,9 +36,23 @@ const backgrounds = {};
 const colors = {};
 const materials = {};
 
-// TODO: can we use traverseVisible? is it more efficient?
-
-// TODO: rather than ambient light on asteroid, potentially use a darker and bluer light directly opposite the star
+// let taskTotal = 0;
+// let taskTally = 0;
+// setInterval(() => {
+//   if (taskTally > 0) {
+//     console.log(
+//       `avg children time (over ${taskTally}): ${Math.round(1000 * taskTotal / taskTally) / 1000}ms`,
+//     );
+//   }
+// }, 5000);
+// setTimeout(() => {
+//   taskTally = 0;
+//   taskTotal = 0;
+// }, 4000);
+// const debug = (start) => {
+//   taskTally++;
+//   taskTotal += performance.now() - start;
+// };
 
 const Postprocessor = ({ enabled }) => {
   const { gl: renderer, camera, scene, size } = useThree();
@@ -53,11 +67,13 @@ const Postprocessor = ({ enabled }) => {
       backgrounds[obj.uuid] = obj.background;
       obj.background = null;
     }
+    /* NOTE: traverse is apparently recursive already, so this is seemingly unnecessary
     if (obj.isScene || obj.isGroup) {
       obj.children.forEach((child) => {
         darkenNonBloomed(child);
       });
-    } else if (obj.isLensflare) {
+    } else*/
+    if (obj.isLensflare) {
       obj.visible = false;
     } else if (obj.material && obj.material.opacity === 0) {
       obj.visible = false;
@@ -83,11 +99,13 @@ const Postprocessor = ({ enabled }) => {
     if (obj.isScene && backgrounds[obj.uuid]) {
       obj.background = backgrounds[obj.uuid];
     }
+    /* NOTE: traverse is apparently recursive already, so this is seemingly unnecessary
     if (obj.isScene || obj.isGroup) {
       obj.children.forEach((child) => {
         restoreMaterial(child);
       });
-    } else if (obj.isLensflare) {
+    } else*/
+    if (obj.isLensflare) {
       obj.visible = true;
     } else if (obj.material && obj.material.opacity === 0) {
       obj.visible = true;

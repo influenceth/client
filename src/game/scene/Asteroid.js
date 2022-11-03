@@ -54,7 +54,7 @@ const AVG_RENDER_TIMES = {
 
 const RENDER_TIMES = { W_SWAP: [], WO_SWAP: [] };
 const RENDER_TIME_CAPS = { W_SWAP: TARGET_LOOP_TIME, WO_SWAP: TARGET_LOOP_TIME * 0.8 };
-const RENDER_SAMPLES = { W_SWAP: 100, WO_SWAP: 25 };
+const RENDER_SAMPLES = { W_SWAP: 100, WO_SWAP: 50 };
 const RENDER_TALLIES = { W_SWAP: 0, WO_SWAP: 0 };
 
 const reportRenderTime = (type, time) => {
