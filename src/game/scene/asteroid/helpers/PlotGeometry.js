@@ -117,15 +117,21 @@ export const getPlotPointGeometry = (index, pointTally, resolution, heightMaps, 
   );
   position.setLength(position.length() + aboveSurface);
 
-  // normal to surface is cross product of two perpendicular vectors along surface
+  // trying to avoid seeing plots through ridges...
+  // for small asteroids, seems best to always use radial orientation because plots are far enough apart relative to displacement
+  // for medium asteroids, seems like it helps to take surface orientation into account somewhat
+  // this "averages" radial direction and surface normal direction
   const orientation = (new Vector3());
-  if (false) {  // orient to surface
+  if (config.radiusNominal > 7500) {
+    // NOTE: normal to surface is cross product of two perpendicular vectors along surface
     orientation.crossVectors(
       s1t0.clone().sub(s0t0),
       s0t1.clone().sub(s0t0),
     );
-    orientation.normalize();
-    orientation.add(position);
+    orientation
+      .normalize()
+      .add(position)
+      .add(position.clone().normalize()); // if this were length 0, would be oriented to surface
   } else {      // orient to position (i.e. radially)
     orientation.copy(position).multiplyScalar(2);
   }
