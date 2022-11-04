@@ -486,6 +486,7 @@ const Asteroid = (props) => {
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
 
   useEffect(() => {
+    if (!geometry.current) return;
     if (sceneMod?.type === 'resourceMaps') {
       const color = new Color(theme.colors.resources[sceneMod.params.resource.category]);
       color.convertSRGBToLinear();
