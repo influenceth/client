@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimationMixer, Box3, DirectionalLight, EquirectangularReflectionMapping, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
+import { AnimationMixer, Box3, DirectionalLight, EquirectangularReflectionMapping, LoopPingPong, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
 // import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -255,8 +255,10 @@ const Model = ({ url, onLoaded, overrideEnvStrength, rotationEnabled, zoomLimits
         // init animation mixer
         if (gltf.animations?.length > 0) {
           animationMixer.current = new AnimationMixer(model.current);
-          gltf.animations.forEach((clip) => {
-            animationMixer.current.clipAction(clip).play();
+          gltf.animations.forEach((action) => {
+            const clip = animationMixer.current.clipAction(action);
+            clip.setLoop(LoopPingPong);
+            clip.play();
           });
         }
 
@@ -509,12 +511,12 @@ const ModelViewer = (props) => {
       }
       
       // this is default if no singleModel or can't find singleModel
-      const categorySet = new Set(assets.map((a) => a.category));
+      const categorySet = new Set(assets.map((a) => a.bucket));
       const categoryArr = Array.from(categorySet).sort();
       setCategories(categoryArr);
     }
   }, [!!assets, singleModel]); // eslint-disable-line react-hooks/exhaustive-deps
-  
+
   useEffect(() => {
     if (!!categories) {
       setCategory(categories[0]);
@@ -524,7 +526,7 @@ const ModelViewer = (props) => {
   useEffect(() => {
     if (!!assets && category) {
       const bAssets = assets
-        .filter((a) => a.category === category)
+        .filter((a) => a.bucket === category)
         .sort((a, b) => a.label < b.label ? -1 : 1);
       setCategoryModels(bAssets);
       selectModel(bAssets[0]);
@@ -550,7 +552,7 @@ const ModelViewer = (props) => {
     <Details
       edgeToEdge
       onCloseDestination={onCloseDestination}
-      title={singleModel ? `${model?.category} — ${model?.label}` : `Resource Details`}>
+      title={singleModel ? `${model?.bucket} — ${model?.label}` : `Resource Details`}>
       <BarLoader color="#AAA" height={3} loading={isLoading} css={loadingCss} />
 
       {!singleModel && categories && categoryModels && (
