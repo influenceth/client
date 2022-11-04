@@ -214,6 +214,11 @@ const Model = ({ url, onLoaded, overrideEnvStrength, rotationEnabled, zoomLimits
             // (from https://github.com/donmccurdy/three-gltf-viewer/blob/main/src/viewer.js)
             node.material.depthWrite = !node.material.transparent;
           }
+
+          // disable frustum culling because several of the models have some issues with the
+          // animated parts getting culled even when still visible
+          // TODO (enhancement): could potentially try applying this just to animated objects?
+          node.frustumCulled = false;
         });
 
         // resize
@@ -260,6 +265,7 @@ const Model = ({ url, onLoaded, overrideEnvStrength, rotationEnabled, zoomLimits
             clip.setLoop(LoopPingPong);
             clip.play();
           });
+          console.log(gltf);
         }
 
         onLoaded(true);
