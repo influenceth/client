@@ -28,7 +28,7 @@ const MOUSE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE;
 
 const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
 
-const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config, mouseIntersect, surface }) => {
+const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config, mouseIntersect }) => {
   const { account } = useAuth();
   const { scene } = useThree();
   const { gpuProcessInBackground, processInBackground } = useWebWorker();
@@ -38,7 +38,6 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
   const positions = useRef();
   const orientations = useRef();
-  const regions = useRef();
   const plotsByRegion = useRef([]);
 
   const pipMesh = useRef();
@@ -69,7 +68,59 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const buildingTally = useMemo(() => plotData?.plots && Object.values(plotData?.plots).reduce((acc, cur) => acc + (cur && cur[1] > 0 ? 1 : 0), 0), [plotData?.plots]);
   const visibleBuildingTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, buildingTally), [buildingTally]);
 
-  // TODO: handle single-region asteroids
+  // position plots and bucket into regions (as needed)
+  // BATCHED region bucketing is really only helpful for largest couple asteroids
+  useEffect(() => {
+    const {
+      ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
+      ...prunedConfig
+    } = config;
+    const batchSize = 25000;
+    const expectedBatches = Math.ceil(plotTally / batchSize);
+
+    // TODO: need to support DISABLE_BACKGROUND_TERRAIN_MAPS here (i.e. if OffscreenCanvas is not allowed, must generate textures on main thread)
+    // vvv BENCHMARK: 1400ms on AP, 250ms on 8, 40ms on 800
+    gpuProcessInBackground(
+      {
+        topic: 'buildPlotGeometry',
+        data: {
+          config: prunedConfig,
+          aboveSurface: 0
+        }
+      },
+      (data) => {
+        // ^^^
+        // vvv BENCHMARK: 1400ms on AP, 150ms on 8, 19ms on 800
+        positions.current = data.positions;
+        orientations.current = data.orientations;
+        plotsByRegion.current = [];
+
+        let batchesProcessed = 0;
+        for (let batchStart = 0; batchStart < plotTally; batchStart += batchSize) {
+          const batchPositions = data.positions.slice(batchStart * 3, (batchStart + batchSize) * 3);
+          processInBackground({
+            topic: 'buildPlotRegions',
+            data: {
+              positions: batchPositions,
+              regionTally
+            }
+          }, ({ regions }) => {
+            regions.forEach((region, i) => {
+              if (!plotsByRegion.current[region]) plotsByRegion.current[region] = [];
+              plotsByRegion.current[region].push(batchStart + i);
+            });
+            batchesProcessed++;
+            if (batchesProcessed === expectedBatches) {
+              // ^^^
+              setPositionsReady(true);
+            }
+          }, [
+            batchPositions.buffer
+          ]);
+        }
+      }
+    );
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // instantiate pips mesh
   useEffect(() => {
@@ -188,39 +239,6 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (!surface?.sides) return;
-    const {
-      ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
-      ...prunedConfig
-    } = config;
-    // TODO: need to support DISABLE_BACKGROUND_TERRAIN_MAPS here (i.e. if OffscreenCanvas is not allowed, must generate textures on main thread)
-    gpuProcessInBackground(
-      {
-        topic: 'buildPlotGeometry',
-        data: {
-          config: prunedConfig,
-          regionTally,
-          aboveSurface: 0
-        }
-      },
-      (data) => {
-        positions.current = data.positions;
-        orientations.current = data.orientations;
-        regions.current = data.regions;
-        
-        plotsByRegion.current = [];
-        for (let i = 0; i < plotTally; i++) {
-          const region = regions.current[i];
-          if (!plotsByRegion.current[region]) plotsByRegion.current[region] = [];
-          plotsByRegion.current[region].push(i);
-        }
-
-        setPositionsReady(true);
-      }
-    );
-  }, [!surface?.sides]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const chunkyAltitude = useMemo(() => Math.round(cameraAltitude / 500) * 500, [cameraAltitude]);
 

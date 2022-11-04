@@ -2,7 +2,7 @@ import { Vector3 } from 'three';
 
 import * as utils from '~/lib/geometryUtils';
 import { rebuildChunkGeometry, rebuildChunkMaps, initChunkTextures } from '~/game/scene/asteroid/helpers/TerrainChunkUtils';
-import { getPlotGeometry, getClosestPlots } from '~/game/scene/asteroid/helpers/PlotGeometry';
+import { getPlotGeometry, getPlotRegions, getClosestPlots } from '~/game/scene/asteroid/helpers/PlotGeometry';
 
 let cache = {
   asteroid: {},
@@ -39,6 +39,9 @@ onmessage = function(event) {
       break;
     case 'buildPlotGeometry':
       buildPlotGeometry(event.data.data);
+      break;
+    case 'buildPlotRegions':
+      buildPlotRegions(event.data.data);
       break;
     case 'findClosestPlots':
       findClosestPlots(event.data.data);
@@ -120,23 +123,30 @@ const rebuildTerrainMaps = function (chunk) {
   });
 }
 
-const buildPlotGeometry = function({ config, regionTally, aboveSurface }) {
-  const { positions, orientations, regions } = getPlotGeometry(
+const buildPlotGeometry = function({ config, aboveSurface }) {
+  const { positions, orientations } = getPlotGeometry(
     config,
-    regionTally,
     aboveSurface
   );
   postMessage({
     topic: 'builtPlotGeometry',
     positions,
-    orientations,
-    regions
+    orientations
   }, [
     positions.buffer,
-    orientations.buffer,
-    regions.buffer
+    orientations.buffer
   ]);
 }
+
+const buildPlotRegions = function ({ positions, regionTally }) {
+  const regions = getPlotRegions(positions, regionTally);
+  postMessage({
+    topic: 'gotPlotRegions',
+    regions
+  }, [
+    regions.buffer
+  ])
+};
 
 const findClosestPlots = function(data) {
   const plots = getClosestPlots(data);

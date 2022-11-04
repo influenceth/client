@@ -808,8 +808,7 @@ const Asteroid = (props) => {
           cameraAltitude={cameraAltitude}
           cameraNormalized={cameraNormalized}
           config={config}
-          mouseIntersect={mouseIntersect.current}
-          surface={geometry.current} />
+          mouseIntersect={mouseIntersect.current} />
       )}
 
       {config?.radius && zoomStatus !== 'out' && (

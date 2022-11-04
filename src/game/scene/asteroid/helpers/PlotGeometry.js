@@ -142,7 +142,7 @@ export const getPlotPointGeometry = (index, pointTally, resolution, heightMaps, 
   };
 };
 
-export const getPlotGeometry = (config, regionTally, aboveSurface = 0.0) => {
+export const getPlotGeometry = (config, aboveSurface = 0.0) => {
   const pointTally = Math.floor(4 * Math.PI * (config.radiusNominal / 1000) ** 2);
   const resolution = getSamplingResolution(config.radius, 250);
   // console.log('plot sampling resolution', resolution); // TODO: remove
@@ -168,7 +168,6 @@ export const getPlotGeometry = (config, regionTally, aboveSurface = 0.0) => {
 
   const positions = new Float32Array(pointTally * 3);
   const orientations = new Float32Array(pointTally * 3);
-  const regions = new Float32Array(pointTally);
   for (let index = 0; index < pointTally; index++) {
     const { position, orientation } = getPlotPointGeometry(
       index,
@@ -179,27 +178,6 @@ export const getPlotGeometry = (config, regionTally, aboveSurface = 0.0) => {
       aboveSurface
     );
 
-    // const regionPositions = [];
-    // for (let index = 0; index < regionTally; index++) {
-    //   const { position } = getPlotPointGeometry(
-    //     index,
-    //     regionTally,
-    //     resolution,
-    //     heightMaps,
-    //     config,
-    //     0
-    //   );
-    //   regionPositions.push(position);
-    // }
-
-    // TODO: benchmark this against loop to check all (i.e. above, prepopulating region positions)
-    // TODO: since this adds significant time to this task, it may be worth letting the first pass at this return
-    //  and then use multiple webworkers to handle the "closest" checking
-    // TODO: does this position need to be shifted per asteroid stretch / deformations?
-    regions[index] = getClosestPlots({ center: position.clone().normalize(), plotTally: regionTally, findTally: 1 })[0];
-    if (index % 1000 === 0) console.log(`to ${index}`);
-    if (regions[index] === undefined) regions[index] = -1;
-
     positions[3 * index + 0] = position.x;
     positions[3 * index + 1] = position.y;
     positions[3 * index + 2] = position.z;
@@ -209,7 +187,22 @@ export const getPlotGeometry = (config, regionTally, aboveSurface = 0.0) => {
     orientations[3 * index + 2] = orientation.z;
   }
 
-  return { positions, orientations, regions };
+  return { positions, orientations };
+}
+
+export const getPlotRegions = (positions, regionTally) => {
+  // TODO: benchmark this against loop to check all (i.e. above, prepopulating region positions)
+  // TODO: does this position need to be shifted per asteroid stretch / deformations?
+  const batchSize = positions.length / 3;
+  const regions = new Int16Array(batchSize);
+  for (let i = 0; i < batchSize; i++) {
+    const positionIndex = i * 3;
+    const center = new Vector3(positions[positionIndex], positions[positionIndex + 1], positions[positionIndex + 2]).normalize();
+    regions[i] = getClosestPlots({ center, plotTally: regionTally, findTally: 1 })[0];
+    // if (i % 1000 === 0) console.log(`to ${i}`);
+    if (regions[i] === undefined) regions[i] = -1;
+  }
+  return regions;
 }
 
 export const getAngleDiff = (angle1, angle2) => {

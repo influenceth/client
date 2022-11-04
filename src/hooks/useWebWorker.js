@@ -153,8 +153,8 @@ const useWebWorker = () => {
       cpuWorkerThreadPool.broadcast(message);
       if (gpuWorkerThreadPool) gpuWorkerThreadPool.broadcast(message);
     },
-    processInBackground: (message, callback) => cpuWorkerThreadPool.addToQueue(message, callback),
-    gpuProcessInBackground: (message, callback) => (gpuWorkerThreadPool || cpuWorkerThreadPool).addToQueue(message, callback),
+    processInBackground: (message, callback, transfer) => cpuWorkerThreadPool.addToQueue(message, callback, transfer),
+    gpuProcessInBackground: (message, callback, transfer) => (gpuWorkerThreadPool || cpuWorkerThreadPool).addToQueue(message, callback, transfer),
   }), []);
 };
 
