@@ -55,10 +55,12 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const BUILDING_RADIUS = useMemo(() => 0.375 * PLOT_WIDTH, [PLOT_WIDTH]);
   const PIP_RADIUS = useMemo(() => 0.25 * PLOT_WIDTH, [PLOT_WIDTH]);
 
-  const regionTally = 5000;  // TODO: make dynamic
-
   const plotTally = useMemo(() => Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2), [config?.radiusNominal]);
   const visiblePlotTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, plotTally), [plotTally]);
+  const regionTally = useMemo(() => {
+    if (plotTally < MAX_MESH_INSTANCES) return 1;
+    return Math.min(5000, Math.max(Math.ceil(plotTally / 100), 100));
+  }, [plotTally]);
 
   // TODO: when this is real, only needs origin, and can move back to top
   const { data: plotData } = useAsteroidPlots(asteroidId, plotTally);
@@ -372,15 +374,16 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   //  throttle what helps and move stuff to webworker where possible
   //  (i.e. could set asteroid region buckets in cache for workers)
 
-  // TODO: throttle this?
+  // when camera angle changes, sort all regions by closest, then display
+  // up to max plots (ordered by region proximity)
   useEffect(() => {
-    if (cameraNormalized?.string) {
+    // TODO: throttle this?
+    if (cameraNormalized?.string && regionTally > 1) {
       processInBackground(
         {
           topic: 'findClosestPlots',
           data: {
             center: cameraNormalized.vector,
-            // findTally: showRegions,
             plotTally: regionTally,
           }
         },
@@ -388,8 +391,10 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
           setRegionsByDistance(data.plots);
         }
       );
+    } else if (!regionsByDistance?.length) {
+      setRegionsByDistance([0]);
     }
-  }, [cameraNormalized?.string]);
+  }, [cameraNormalized?.string, regionsByDistance?.length, regionTally]);
 
   useFrame(() => {
     if (!plotTally) return;
