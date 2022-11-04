@@ -230,7 +230,7 @@ const Asteroid = (props) => {
       }
     }
     asteroidId.current = origin;
-  }, [origin]);
+  }, [origin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
@@ -442,7 +442,7 @@ const Asteroid = (props) => {
     const frustumWidth = cameraAltitude * frustumHeightMult * window.innerWidth / window.innerHeight;
     const thetaAcrossScreen = frustumWidth / controls.object.position.length();
     controls.rotateSpeed = Math.min(1.5, 1.5 * thetaAcrossScreen / 2);
-  }, [cameraAltitude]);
+  }, [cameraAltitude, frustumHeightMult]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // NOTE: in theory, all distances between sphereCenter's to camera are calculated
   //       in quadtree calculation and could be passed back here, so would be more
@@ -543,8 +543,6 @@ const Asteroid = (props) => {
       }
     }
   }, [terrainInitialized, mousableTerrainInitialized]);
-
-  const cameraRotation = useRef();
 
   // Positions the asteroid in space based on time changes
   useFrame((state) => {
