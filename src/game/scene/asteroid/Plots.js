@@ -21,7 +21,7 @@ const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
 const PIP_COLOR = new Color().setHex(0x888888).convertSRGBToLinear();
 const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
 
-const MAX_MESH_INSTANCES = 5000;
+const MAX_MESH_INSTANCES = 8000;  // TODO: maybe GPU dependent
 const PIP_VISIBILITY_ALTITUDE = 25000;
 const OUTLINE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE * 0.5;
 const MOUSE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE;

@@ -219,8 +219,13 @@ export const getAngleDiff = (angle1, angle2) => {
   return diff > Math.PI ? (2 * Math.PI - diff) : diff;
 }
 
-export const getClosestPlots = ({ center, plotTally, findTally }) => {
+export const getClosestPlots = ({ center, centerPlot, plotTally, findTally }) => {
   const returnAllPoints = !findTally; // if no findTally attached, return all (sorted)
+
+  // if pass centerPlot instead of center, set center from centerPlot
+  if (centerPlot && !center) {
+    center = new Vector3(...unitFiboPoint(centerPlot, plotTally));
+  }
 
   let arcToSearch, yToSearch, maxIndex, minIndex, centerTheta, thetaTolerance;
   if (returnAllPoints || plotTally < 100) {
