@@ -135,7 +135,7 @@ const ResourceMapSelector = ({ asteroid, onClose }) => {
             }
           });
         });
-      } else {
+      } else if (asteroidAssets?.length) {
         selectCategory(asteroidAssets[0])();
       }
     }
