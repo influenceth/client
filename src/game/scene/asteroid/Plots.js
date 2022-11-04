@@ -56,12 +56,13 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const PIP_RADIUS = useMemo(() => 0.25 * PLOT_WIDTH, [PLOT_WIDTH]);
 
   const regionTally = 5000;  // TODO: make dynamic
+
   const plotTally = useMemo(() => Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2), [config?.radiusNominal]);
+  const visiblePlotTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, plotTally), [plotTally]);
 
   // TODO: when this is real, only needs origin, and can move back to top
   const { data: plotData } = useAsteroidPlots(asteroidId, plotTally);
-
-  const visiblePlotTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, plotTally), [plotTally]);
+  // ^^^
 
   const buildingTally = useMemo(() => plotData?.plots && Object.values(plotData?.plots).reduce((acc, cur) => acc + (cur && cur[1] > 0 ? 1 : 0), 0), [plotData?.plots]);
   const visibleBuildingTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, buildingTally), [buildingTally]);
@@ -299,11 +300,14 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       pipMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
       plotStrokeMesh.current.count = cameraAltitude > OUTLINE_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
 
-      // TODO: these should be conditional
-      buildingMesh.current.instanceColor.needsUpdate = true;
-      buildingMesh.current.instanceMatrix.needsUpdate = true;
-      buildingMesh.current.material.needsUpdate = true; // TODO: unclear if just needs this first time color is set?
+      // TODO: the below should be conditional
 
+      // (building mesh isn't created if no buildings)
+      if (buildingMesh.current) {
+        buildingMesh.current.instanceColor.needsUpdate = true;
+        buildingMesh.current.instanceMatrix.needsUpdate = true;
+        buildingMesh.current.material.needsUpdate = true; // TODO: unclear if just needs this first time color is set?
+      }
       pipMesh.current.instanceMatrix.needsUpdate = true;
 
       plotStrokeMesh.current.instanceColor.needsUpdate = true;
