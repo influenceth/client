@@ -189,7 +189,6 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       transparent: false,
     });
 
-    // TODO: since this is on buildings and pips, should potentially limit to total
     plotStrokeMesh.current = new InstancedMesh(strokeGeometry, strokeMaterial, visiblePlotTally);
     plotStrokeMesh.current.renderOrder = 999;
     (attachTo || scene).add(plotStrokeMesh.current);
@@ -199,7 +198,6 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
         (attachTo || scene).remove(plotStrokeMesh.current);
       }
     };
-    
 
     //   const fillGeometry = new CircleGeometry(PLOT_WIDTH - PLOT_STROKE_MARGIN, 6);
     //   const fillMaterial = new MeshBasicMaterial({
@@ -242,6 +240,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
   const chunkyAltitude = useMemo(() => Math.round(cameraAltitude / 500) * 500, [cameraAltitude]);
 
+  const plotsInitialized = useRef();
   const updateVisiblePlots = useCallback(() => {
     if (!positions.current) return;
     if (!regionsByDistance?.length) return;
@@ -249,90 +248,125 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     try {
       const dummy = new Object3D();
 
-      // buildings
-      // TODO: if total buildings < total allowable buildings, only have to do this loop once (and not every render)
-      //  (although setScaleAt may need to be run in setAltitude loop)
-
       // TODO (enhancement): investigate if any benefit to only updating the matrix of instances that actually changed
       //  (i.e. don't necessarily need to update plots that were in visible regions in last cycle and are still visible)
       let buildingsRendered = 0;
       let pipsRendered = 0;
       let breakLoop = false;
 
-      const scale = Math.max(1, Math.min(250 / BUILDING_RADIUS, cameraAltitude / 15000));
+      let updateBuildingMatrix = false;
+      let updatePipMatrix = false;
+      let updateStrokeMatrix = false;
+      let updateBuildingColor = false;
+      let updateStrokeColor = false;
 
+      const buildingScale = Math.max(1, Math.min(250 / BUILDING_RADIUS, cameraAltitude / 15000));
+
+      let i = 0;
       regionsByDistance.every((plotRegion) => {
         (plotsByRegion.current[plotRegion] || []).every((plotId) => {
-          const hasBuilding = plotData.plots[plotId] && plotData.plots[plotId][1];
-          const hasPip = pipsRendered < visiblePlotTally;
+          const hasBuilding = plotData.plots[plotId] && plotData.plots[plotId][1] && buildingsRendered < visibleBuildingTally;
+          const hasPip = pipsRendered + buildingsRendered < visiblePlotTally;
           if (hasBuilding || hasPip) {
-            dummy.position.set(
-              positions.current[plotId * 3 + 0],
-              positions.current[plotId * 3 + 1],
-              positions.current[plotId * 3 + 2]
-            );
-      
-            dummy.lookAt(
-              orientations.current[plotId * 3 + 0],
-              orientations.current[plotId * 3 + 1],
-              orientations.current[plotId * 3 + 2]
-            );
 
-            if (hasBuilding) {
-              dummy.scale.set(scale, scale, scale);
-            } else {
-              dummy.scale.set(1, 1, 1);
+            // MATRIX
+            // > if have a building, always need to rebuild entire matrix (to update scale with altitude)
+            // > if have a pip, only need to rebuild matrix if plot visibility is dynamic (i.e. plotTally > visiblePlotTally)
+            // > stroke matrix will not change unless pip matrix does (but will need to change around buildings and pips)
+            if (hasBuilding || plotTally > visiblePlotTally || !plotsInitialized.current) {
+              dummy.position.set(
+                positions.current[plotId * 3 + 0],
+                positions.current[plotId * 3 + 1],
+                positions.current[plotId * 3 + 2]
+              );
+        
+              dummy.lookAt(
+                orientations.current[plotId * 3 + 0],
+                orientations.current[plotId * 3 + 1],
+                orientations.current[plotId * 3 + 2]
+              );
+
+              if (hasBuilding) {
+                dummy.scale.set(buildingScale, buildingScale, buildingScale);
+              } else {
+                dummy.scale.set(1, 1, 1);
+              }
+              dummy.updateMatrix();
+
+              // update building matrix or pipm atrix
+              if (hasBuilding) {
+                buildingMesh.current.setMatrixAt(buildingsRendered, dummy.matrix);
+                updateBuildingMatrix = true;
+              } else {
+                pipMesh.current.setMatrixAt(pipsRendered, dummy.matrix);
+                updatePipMatrix = true;
+              }
+
+              // update stroke matrix
+              if (plotTally > visiblePlotTally || !plotsInitialized.current) {
+                plotStrokeMesh.current.setMatrixAt(i, dummy.matrix);
+                updateStrokeMatrix = true;
+              }
             }
-            dummy.updateMatrix();
 
-            let useColor = PIP_COLOR;
-
-            // TODO: because dummy is shared, buildings should scale down to 1
-            //       at the same time that other iconography becomes visible (or sooner)
-            //       so the different objects sharing the dummy don't get funky
-            if (hasBuilding) {
+            // COLOR
+            // > if have a building, only need to update color after initialization if buildingTally > visibleBuildingTally
+            // > pips never need color updated
+            // > strokes use building color (if building) else pip color (only need to be updated after initialization if dynamic)
+            let buildingColor;
+            if (hasBuilding && (buildingTally > visibleBuildingTally || !plotsInitialized.current)) {
               // white if rented by me OR i am the owner and !rented by other; else, blue
-              useColor = (
+              // TODO: need to re-evaluate this on auth change
+              buildingColor = (
                 (plotData.owner === `${account}` && plotData.plots[plotId][0] !== 2)  // owned by me and not rented out
-                || plotData.plots[plotId][0] === 1                               // OR rented by me
+                || plotData.plots[plotId][0] === 1                                    // OR rented by me
               ) ? WHITE_COLOR : MAIN_COLOR;
-              buildingMesh.current.setColorAt(buildingsRendered, useColor);
-              buildingMesh.current.setMatrixAt(buildingsRendered, dummy.matrix);
-              buildingsRendered++;
 
-            } else if (hasPip) {
-              pipMesh.current.setMatrixAt(pipsRendered, dummy.matrix);
-              pipsRendered++;
+              // if this is first color change to instance, need to let material know
+              if (!buildingMesh.current.instanceColor && !buildingMesh.current.material.needsUpdate) {
+                buildingMesh.current.material.needsUpdate = true;
+              }
+              buildingMesh.current.setColorAt(buildingsRendered, buildingColor);
+              updateBuildingColor = true;
             }
-
-            // TODO: just use an i instead of the addition?
-            plotStrokeMesh.current.setColorAt(pipsRendered + buildingsRendered, useColor);
-            plotStrokeMesh.current.setMatrixAt(pipsRendered + buildingsRendered, dummy.matrix);
-
-            breakLoop = (buildingsRendered >= visibleBuildingTally && pipsRendered >= visiblePlotTally);
+            if (plotTally > visiblePlotTally || !plotsInitialized.current) {
+              // if this is first color change to instance, need to let material know
+              if (!plotStrokeMesh.current.instanceColor && !plotStrokeMesh.current.material.needsUpdate) {
+                plotStrokeMesh.current.material.needsUpdate = true;
+              }
+              plotStrokeMesh.current.setColorAt(i, buildingColor || PIP_COLOR);
+              updateStrokeColor = true;
+            }
           }
+
+          if (hasBuilding) {
+            buildingsRendered++;
+          } else if (hasPip) {
+            pipsRendered++;
+          }
+          i++;
+
+          // break loop if all visible buildings are rendered AND *something* is rendered on closest visiblePlots
+          breakLoop = (buildingsRendered >= visibleBuildingTally && (pipsRendered + buildingsRendered) >= visiblePlotTally);
+
           if (breakLoop) return false;
           return true;
         });
         if (breakLoop) return false;
         return true;
       });
-      pipMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
+      pipMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : Math.min(pipsRendered, visiblePlotTally);
+      console.log('i', i, buildingsRendered, pipsRendered, pipMesh.current.count);
       plotStrokeMesh.current.count = cameraAltitude > OUTLINE_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
 
-      // TODO: the below should be conditional
-
       // (building mesh isn't created if no buildings)
-      if (buildingMesh.current) {
-        buildingMesh.current.instanceColor.needsUpdate = true;
-        buildingMesh.current.instanceMatrix.needsUpdate = true;
-        buildingMesh.current.material.needsUpdate = true; // TODO: unclear if just needs this first time color is set?
-      }
-      pipMesh.current.instanceMatrix.needsUpdate = true;
+      if (buildingMesh.current && updateBuildingColor) buildingMesh.current.instanceColor.needsUpdate = true;
+      if (buildingMesh.current && updateBuildingMatrix) buildingMesh.current.instanceMatrix.needsUpdate = true;
+      if (pipMesh.current && updatePipMatrix) pipMesh.current.instanceMatrix.needsUpdate = true;
+      if (plotStrokeMesh.current && updateStrokeColor) plotStrokeMesh.current.instanceColor.needsUpdate = true;
+      if (plotStrokeMesh.current && updateStrokeMatrix) plotStrokeMesh.current.instanceMatrix.needsUpdate = true;
 
-      plotStrokeMesh.current.instanceColor.needsUpdate = true;
-      plotStrokeMesh.current.instanceMatrix.needsUpdate = true;
-      plotStrokeMesh.current.material.needsUpdate = true; // TODO: unclear if just needs this first time color is set?
+      plotsInitialized.current = true;
 
       // console.log('data', data.debugs);
       // if (data.debugs) {
@@ -349,7 +383,6 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       //   plotMesh.current.userData.bloom = true;
       // }
       // scene.add(plotMesh.current);
-
     } catch (e) {
       // non-insignificant chance of this being mid-process when the asteroid is
       // changed, so needs to fail gracefully (i.e. if buildingMesh.current is unset)
@@ -382,20 +415,15 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       mouseMesh.current.lookAt(orientation);
 
       mouseMesh.current.material.opacity = 1;
-      // mouseMesh.current.updateMatrix(); // TODO: is this needed?
 
       highlighted.current = plotId;
     }
   }, []);
 
-  // TODO: benchmark everything
-  //  throttle what helps and move stuff to webworker where possible
-  //  (i.e. could set asteroid region buckets in cache for workers)
-
   // when camera angle changes, sort all regions by closest, then display
   // up to max plots (ordered by region proximity)
+  //  NOTE: attempted to throttle this and wasn't catching any calculations even on huge, so pulled it out
   useEffect(() => {
-    // TODO: throttle this?
     if (cameraNormalized?.string && regionTally > 1) {
       processInBackground(
         {
