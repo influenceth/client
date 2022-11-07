@@ -102,8 +102,7 @@ class WorkerThreadPool {
   }
 }
 
-// TODO: uncomment next line
-const totalWorkers = 1;//(navigator?.hardwareConcurrency || 4) - 1; // CPUs minus 1
+const totalWorkers = (navigator?.hardwareConcurrency || 4) - 1; // CPUs minus 1
 const workerThreadPool = new WorkerThreadPool(totalWorkers);
 
 const useWebWorker = () => {

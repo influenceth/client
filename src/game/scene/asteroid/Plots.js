@@ -91,7 +91,8 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       transfer = heightMaps.map((m) => m.buffer.buffer);
     }
 
-    // vvv BENCHMARK: 1400ms on AP, 250ms on 8, 40ms on 800
+    // vvv BENCHMARK: 1400ms on AP, 350ms on 8, 200ms on 800
+    //                1200, 170, 40 if maps already generated
     processInBackground(
       {
         topic: 'buildPlotGeometry',
