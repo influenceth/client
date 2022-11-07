@@ -3,10 +3,7 @@ import TerrainChunk from './TerrainChunk';
 import { initChunkTextures, rebuildChunkMaps } from './TerrainChunkUtils';
 import constants from '~/lib/constants';
 
-const {
-  ENABLE_TERRAIN_CHUNK_RESOURCE_POOL,
-  USE_DEDICATED_GPU_WORKER
-} = constants;
+const { ENABLE_TERRAIN_CHUNK_RESOURCE_POOL } = constants;
 
 // TODO: remove
 let taskTotal = 0;
@@ -31,18 +28,6 @@ class TerrainChunkManager {
       ...prunedConfig
     } = this.config;
     this.prunedConfig = prunedConfig; // for passing to webworker
-
-    // if not using dedicated gpu worker, broadcast the asteroid data
-    // to all workers up front to avoid clunky zooming on warm-up
-    if (!USE_DEDICATED_GPU_WORKER) {
-      this.workerPool.broadcast({
-        topic: 'updateParamCache',
-        asteroid: {
-          key: this.asteroidId,
-          config: this.prunedConfig,
-        }
-      });
-    }
 
     this.shadowsEnabled = false;
     this.textureSize = textureSize;

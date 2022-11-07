@@ -31,7 +31,7 @@ const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
 const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config, mouseIntersect }) => {
   const { account } = useAuth();
   const { scene } = useThree();
-  const { gpuProcessInBackground, processInBackground } = useWebWorker();
+  const { processInBackground } = useWebWorker();
 
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
@@ -83,13 +83,15 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
     // TODO: need to support DISABLE_BACKGROUND_TERRAIN_MAPS here (i.e. if OffscreenCanvas is not allowed, must generate textures on main thread)
     // vvv BENCHMARK: 1400ms on AP, 250ms on 8, 40ms on 800
-    gpuProcessInBackground(
+    processInBackground(
       {
         topic: 'buildPlotGeometry',
-        data: {
+        asteroid: {
+          key: asteroidId,
           config: prunedConfig,
-          aboveSurface: 0
-        }
+        },
+        aboveSurface: 0,
+        _cacheable: 'asteroid'
       },
       (data) => {
         // ^^^
@@ -382,8 +384,8 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
         return true;
       });
       pipMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : Math.min(pipsRendered, visiblePlotTally);
-      console.log('i', i, buildingsRendered, pipsRendered, pipMesh.current.count);
       plotStrokeMesh.current.count = cameraAltitude > OUTLINE_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
+      // console.log('i', i, buildingsRendered, pipsRendered, pipMesh.current.count);
 
       // (building mesh isn't created if no buildings)
       if (buildingMesh.current && updateBuildingColor) buildingMesh.current.instanceColor.needsUpdate = true;
