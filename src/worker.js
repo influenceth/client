@@ -38,6 +38,7 @@ onmessage = function(event) {
       if (event.data.asteroid) cache.asteroid = event.data.asteroid;
       buildPlotGeometry({
         aboveSurface: event.data.aboveSurface,
+        heightMaps: event.data.heightMaps,
         ...cache.asteroid,
       });
       break;
@@ -111,11 +112,12 @@ const rebuildTerrainGeometry = function (chunk) {
 //   });
 // }
 
-const buildPlotGeometry = function({ config, aboveSurface }) {
-  const { positions, orientations } = getPlotGeometry(
+const buildPlotGeometry = function({ aboveSurface, config, heightMaps }) {
+  const { positions, orientations } = getPlotGeometry({
     config,
-    aboveSurface
-  );
+    aboveSurface,
+    prebuiltHeightMaps: heightMaps
+  });
   postMessage({
     topic: 'builtPlotGeometry',
     positions,

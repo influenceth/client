@@ -16,6 +16,7 @@ import useAsteroidPlots from '~/hooks/useAsteroidPlots';
 import useAuth from '~/hooks/useAuth';
 import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
+import { getPlotGeometryHeightMaps } from './helpers/PlotGeometry';
 
 const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
 const PIP_COLOR = new Color().setHex(0x888888).convertSRGBToLinear();
@@ -81,7 +82,14 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     const batchSize = 25000;
     const expectedBatches = Math.ceil(plotTally / batchSize);
 
-    // TODO: need to support DISABLE_BACKGROUND_TERRAIN_MAPS here (i.e. if OffscreenCanvas is not allowed, must generate textures on main thread)
+    // (if no offscreencanvas, need to render heightmaps before sending to webworker)
+    let heightMaps = null;
+    let transfer = [];
+    if (typeof OffscreenCanvas === 'undefined') {
+      heightMaps = getPlotGeometryHeightMaps(prunedConfig);
+      transfer = heightMaps.map((m) => m.buffer.buffer);
+    }
+
     // vvv BENCHMARK: 1400ms on AP, 250ms on 8, 40ms on 800
     processInBackground(
       {
@@ -91,6 +99,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
           config: prunedConfig,
         },
         aboveSurface: 0,
+        heightMaps,
         _cacheable: 'asteroid'
       },
       (data) => {
@@ -132,7 +141,8 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
             batchPositions.buffer
           ]);
         }
-      }
+      },
+      transfer
     );
   }, [plotData?.plots]); // eslint-disable-line react-hooks/exhaustive-deps
 

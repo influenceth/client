@@ -143,16 +143,15 @@ export const getPlotPointGeometry = (index, pointTally, resolution, heightMaps, 
   };
 };
 
-export const getPlotGeometry = (config, aboveSurface = 0.0) => {
-  const pointTally = Math.floor(4 * Math.PI * (config.radiusNominal / 1000) ** 2);
-  const resolution = getSamplingResolution(config.radius, 250);
-  // console.log('plot sampling resolution', resolution); // TODO: remove
+export const getPlotGeometryHeightMapResolution = (config) => {
+  return getSamplingResolution(config.radius, 250);
+};
 
+export const getPlotGeometryHeightMaps = (config) => {
   const heightMaps = [];
+  const resolution = getPlotGeometryHeightMapResolution(config);
   for (let i = 0; i < 6; i++) {
     const sideTransform = cubeTransforms[i].clone();
-
-    // generate heightMapBitmap
     heightMaps[i] = generateHeightMap(
       sideTransform,
       1,
@@ -166,6 +165,13 @@ export const getPlotGeometry = (config, aboveSurface = 0.0) => {
       'texture',
     );
   }
+  return heightMaps;
+};
+
+export const getPlotGeometry = ({ config, aboveSurface = 0.0, prebuiltHeightMaps }) => {
+  const pointTally = Math.floor(4 * Math.PI * (config.radiusNominal / 1000) ** 2);
+  const resolution = getPlotGeometryHeightMapResolution(config);
+  const heightMaps = prebuiltHeightMaps || getPlotGeometryHeightMaps(config);
 
   const positions = new Float32Array(pointTally * 3);
   const orientations = new Float32Array(pointTally * 3);
