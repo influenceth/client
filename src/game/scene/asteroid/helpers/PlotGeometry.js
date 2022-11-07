@@ -23,6 +23,7 @@ const getSamplePoint = (side, resolution, s, t) => {
   const u = s / (resolution - 1);
   const v = t / (resolution - 1);
   switch(side) {
+    default:
     case 0:
       x = 2 * u - 1;
       y = 1;

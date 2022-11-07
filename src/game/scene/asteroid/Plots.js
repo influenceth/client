@@ -39,12 +39,13 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const positions = useRef();
   const orientations = useRef();
   const plotsByRegion = useRef([]);
+  const buildingsByRegion = useRef([]);
 
   const pipMesh = useRef();
   const buildingMesh = useRef();
 
   const plotStrokeMesh = useRef();
-  const plotFillMesh = useRef();
+  // const plotFillMesh = useRef();
   const lastMouseIntersect = useRef(new Vector3());
   const highlighted = useRef();
 
@@ -71,6 +72,8 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   // position plots and bucket into regions (as needed)
   // BATCHED region bucketing is really only helpful for largest couple asteroids
   useEffect(() => {
+    if (!plotData?.plots) return;
+
     const {
       ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
       ...prunedConfig
@@ -104,10 +107,19 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
               positions: batchPositions,
               regionTally
             }
-          }, ({ regions }) => {
+          }, ({ regions }) => { // eslint-disable-line no-loop-func
             regions.forEach((region, i) => {
+              const plotId = batchStart + i;
               if (!plotsByRegion.current[region]) plotsByRegion.current[region] = [];
-              plotsByRegion.current[region].push(batchStart + i);
+              plotsByRegion.current[region].push(plotId);
+
+              // (if there is building data) if there is a building, also add to building region records
+              if (plotData?.plots) {
+                if (plotData.plots[plotId] && plotData.plots[plotId][1]) {
+                  if (!buildingsByRegion.current[region]) buildingsByRegion.current[region] = [];
+                  buildingsByRegion.current[region].push(plotId);
+                }
+              }
             });
             batchesProcessed++;
             if (batchesProcessed === expectedBatches) {
@@ -120,7 +132,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
         }
       }
     );
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [plotData?.plots]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // instantiate pips mesh
   useEffect(() => {
@@ -146,7 +158,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       }
     };
 
-  }, [visiblePlotTally]);
+  }, [visiblePlotTally]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // instantiate buildings mesh
   useEffect(() => {
@@ -173,7 +185,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       }
     };
 
-  }, [visibleBuildingTally]);
+  }, [visibleBuildingTally]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // instantiate plot outline mesh
   useEffect(() => {
@@ -208,7 +220,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     //     transparent: true
     //   });
 
-  }, [visiblePlotTally]);
+  }, [visiblePlotTally]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // instantiate mouse mesh
   useEffect(() => {
@@ -236,7 +248,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
         (attachTo || scene).remove(mouseMesh.current);
       }
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const chunkyAltitude = useMemo(() => Math.round(cameraAltitude / 500) * 500, [cameraAltitude]);
 
@@ -245,11 +257,10 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     if (!positions.current) return;
     if (!regionsByDistance?.length) return;
     if (!plotsByRegion.current?.length) return;
+    if (!buildingsByRegion.current) return;
     try {
       const dummy = new Object3D();
 
-      // TODO (enhancement): investigate if any benefit to only updating the matrix of instances that actually changed
-      //  (i.e. don't necessarily need to update plots that were in visible regions in last cycle and are still visible)
       let buildingsRendered = 0;
       let pipsRendered = 0;
       let breakLoop = false;
@@ -264,7 +275,17 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
       let i = 0;
       regionsByDistance.every((plotRegion) => {
-        (plotsByRegion.current[plotRegion] || []).every((plotId) => {
+        // use plotsByRegion on first pass even if zoomed out so single-render asteroids are ready
+        // else, use buildings-only source once have been through closest X plots (i.e. rendered all pips needed for this altitude)
+        // (without this, imagine all the unnecessary loops if there were a single building on AP)
+        const plotSource = i < visiblePlotTally && (cameraAltitude <= PIP_VISIBILITY_ALTITUDE || !plotsInitialized.current)
+          ? plotsByRegion.current
+          : buildingsByRegion.current;
+        if (!plotSource[plotRegion]) return true;
+
+        // TODO (enhancement): on altitude change (where rotation has not changed), don't need to recalculate pip matrixes, etc
+        //  (i.e. even when plotTally > visiblePlotTally)... just would need to update building matrixes (to update scale)
+        plotSource[plotRegion].every((plotId) => {
           const hasBuilding = plotData.plots[plotId] && plotData.plots[plotId][1] && buildingsRendered < visibleBuildingTally;
           const hasPip = pipsRendered + buildingsRendered < visiblePlotTally;
           if (hasBuilding || hasPip) {
@@ -293,7 +314,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
               }
               dummy.updateMatrix();
 
-              // update building matrix or pipm atrix
+              // update building matrix or pip matrix
               if (hasBuilding) {
                 buildingMesh.current.setMatrixAt(buildingsRendered, dummy.matrix);
                 updateBuildingMatrix = true;
@@ -304,6 +325,10 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
               // update stroke matrix
               if (plotTally > visiblePlotTally || !plotsInitialized.current) {
+                if (hasBuilding) {
+                  dummy.scale.set(1, 1, 1);
+                  dummy.updateMatrix();
+                }
                 plotStrokeMesh.current.setMatrixAt(i, dummy.matrix);
                 updateStrokeMatrix = true;
               }
@@ -313,20 +338,21 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
             // > if have a building, only need to update color after initialization if buildingTally > visibleBuildingTally
             // > pips never need color updated
             // > strokes use building color (if building) else pip color (only need to be updated after initialization if dynamic)
-            let buildingColor;
-            if (hasBuilding && (buildingTally > visibleBuildingTally || !plotsInitialized.current)) {
+            let plotColor = PIP_COLOR;
+            if (hasBuilding) {
               // white if rented by me OR i am the owner and !rented by other; else, blue
               // TODO: need to re-evaluate this on auth change
-              buildingColor = (
+              plotColor = (
                 (plotData.owner === `${account}` && plotData.plots[plotId][0] !== 2)  // owned by me and not rented out
                 || plotData.plots[plotId][0] === 1                                    // OR rented by me
               ) ? WHITE_COLOR : MAIN_COLOR;
-
+            }
+            if (hasBuilding && (buildingTally > visibleBuildingTally || !plotsInitialized.current)) {
               // if this is first color change to instance, need to let material know
               if (!buildingMesh.current.instanceColor && !buildingMesh.current.material.needsUpdate) {
                 buildingMesh.current.material.needsUpdate = true;
               }
-              buildingMesh.current.setColorAt(buildingsRendered, buildingColor);
+              buildingMesh.current.setColorAt(buildingsRendered, plotColor);
               updateBuildingColor = true;
             }
             if (plotTally > visiblePlotTally || !plotsInitialized.current) {
@@ -334,7 +360,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
               if (!plotStrokeMesh.current.instanceColor && !plotStrokeMesh.current.material.needsUpdate) {
                 plotStrokeMesh.current.material.needsUpdate = true;
               }
-              plotStrokeMesh.current.setColorAt(i, buildingColor || PIP_COLOR);
+              plotStrokeMesh.current.setColorAt(i, plotColor);
               updateStrokeColor = true;
             }
           }
@@ -387,9 +413,13 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       // non-insignificant chance of this being mid-process when the asteroid is
       // changed, so needs to fail gracefully (i.e. if buildingMesh.current is unset)
     }
-  }, [cameraAltitude, regionsByDistance]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account, cameraAltitude, plotData, regionsByDistance]);
 
-  useEffect(updateVisiblePlots, [chunkyAltitude, positionsReady, regionsByDistance]);
+  useEffect(
+    () => updateVisiblePlots(),
+    [chunkyAltitude, positionsReady, regionsByDistance] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
 
   const mouseMesh = useRef();
@@ -418,7 +448,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
       highlighted.current = plotId;
     }
-  }, []);
+  }, [attachTo.quaternion]);
 
   // when camera angle changes, sort all regions by closest, then display
   // up to max plots (ordered by region proximity)
@@ -440,6 +470,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     } else if (!regionsByDistance?.length) {
       setRegionsByDistance([0]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cameraNormalized?.string, regionsByDistance?.length, regionTally]);
 
   useFrame(() => {
