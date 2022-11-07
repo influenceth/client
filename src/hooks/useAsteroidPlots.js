@@ -11,7 +11,7 @@ const useAsteroidPlots = (i, tally) => {
       const plots = [];
       const mockBuildingType = 25;
       for (let x = 0; x < tally; x++) {
-        plots[x] = [-1, 0, 0];
+        plots[x] = [-1, 0, 0];  // [rental status (-1 not for rent, 0 for rent, 1 rented by me, 2 rented by other), building type, under construction]
       }
 
       let townsEvery = Math.max(5, Math.ceil(tally / 20));
@@ -42,6 +42,7 @@ const useAsteroidPlots = (i, tally) => {
       }
 
       return {
+        // owner: '0x002caa6a6a0658c063fa71fa3ae941121ac3d4222852c5b6c8839552b80c974d',
         owner: '___',
         leaseStatus: -1,
         plots // TODO: is this cheaper as a (U)Int8Array or something?

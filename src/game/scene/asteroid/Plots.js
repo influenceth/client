@@ -56,6 +56,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const BUILDING_RADIUS = useMemo(() => 0.375 * PLOT_WIDTH, [PLOT_WIDTH]);
   const PIP_RADIUS = useMemo(() => 0.25 * PLOT_WIDTH, [PLOT_WIDTH]);
 
+  const chunkyAltitude = useMemo(() => Math.round(cameraAltitude / 500) * 500, [cameraAltitude]);
   const plotTally = useMemo(() => Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2), [config?.radiusNominal]);
   const visiblePlotTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, plotTally), [plotTally]);
   const regionTally = useMemo(() => {
@@ -262,8 +263,6 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const chunkyAltitude = useMemo(() => Math.round(cameraAltitude / 500) * 500, [cameraAltitude]);
-
   const plotsInitialized = useRef();
   const updateVisiblePlots = useCallback(() => {
     if (!positions.current) return;
@@ -347,20 +346,21 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
             }
 
             // COLOR
-            // > if have a building, only need to update color after initialization if buildingTally > visibleBuildingTally
+            // > if have a building, must always update color (because matrix always updated, so instance indexes will change position)
+            //  (if logged in -- otherwise, can't be white anyway so just color once on initialization)
             // > pips never need color updated
             // > strokes use building color (if building) else pip color (only need to be updated after initialization if dynamic)
-            let plotColor = PIP_COLOR;
+            let plotColor;
             if (hasBuilding) {
               // white if rented by me OR i am the owner and !rented by other; else, blue
-              // TODO: need to re-evaluate this on auth change
-              plotColor = (
+              plotColor = account && (
                 (plotData.owner === `${account}` && plotData.plots[plotId][0] !== 2)  // owned by me and not rented out
                 || plotData.plots[plotId][0] === 1                                    // OR rented by me
               ) ? WHITE_COLOR : MAIN_COLOR;
             }
-            if (hasBuilding && (buildingTally > visibleBuildingTally || !plotsInitialized.current)) {
+            if (hasBuilding && (!!account || !plotsInitialized.current)) {
               // if this is first color change to instance, need to let material know
+              // TODO (enhancement): could check if there is a color change against existing buildingMesh instanceColor before setting updateBuildingColor
               if (!buildingMesh.current.instanceColor && !buildingMesh.current.material.needsUpdate) {
                 buildingMesh.current.material.needsUpdate = true;
               }
@@ -372,7 +372,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
               if (!plotStrokeMesh.current.instanceColor && !plotStrokeMesh.current.material.needsUpdate) {
                 plotStrokeMesh.current.material.needsUpdate = true;
               }
-              plotStrokeMesh.current.setColorAt(i, plotColor);
+              plotStrokeMesh.current.setColorAt(i, plotColor || PIP_COLOR);
               updateStrokeColor = true;
             }
           }
@@ -433,6 +433,10 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     [chunkyAltitude, positionsReady, regionsByDistance] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  useEffect(() => {
+    plotsInitialized.current = false;
+    updateVisiblePlots();
+  }, [account]);
 
   const mouseMesh = useRef();
   const highlightPlot = useCallback((plotId) => {
