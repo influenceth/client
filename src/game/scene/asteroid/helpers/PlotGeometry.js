@@ -270,9 +270,7 @@ export const getClosestPlots = ({ center, centerPlot, plotTally, findTally }) =>
       y,
       z,
       index,
-      // (this is approximation for below)
-      Math.abs(center.x - x) + Math.abs(center.y - y) + Math.abs(center.z - z),
-      // Math.pow(center.x - x, 2) + Math.pow(center.y - y, 2) + Math.pow(center.z - z, 2),
+      Math.pow(center.x - x, 2) + Math.pow(center.y - y, 2) + Math.pow(center.z - z, 2),
     ]);
   }
   //console.log(`${maxIndex - minIndex} points in range; ${points.length} checked`);

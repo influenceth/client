@@ -27,6 +27,8 @@ const PIP_VISIBILITY_ALTITUDE = 25000;
 const OUTLINE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE * 0.5;
 const MOUSE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE;
 
+const MAX_REGIONS = 5000;
+
 const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
 
 const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config, mouseIntersect }) => {
@@ -61,7 +63,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const visiblePlotTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, plotTally), [plotTally]);
   const regionTally = useMemo(() => {
     if (plotTally < MAX_MESH_INSTANCES) return 1;
-    return Math.min(5000, Math.max(Math.ceil(plotTally / 100), 100));
+    return Math.min(MAX_REGIONS, Math.max(Math.ceil(plotTally / 100), 100));
   }, [plotTally]);
 
   // TODO: when this is real, only needs origin, and can move back to top
