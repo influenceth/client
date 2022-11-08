@@ -452,7 +452,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   useEffect(() => {
     plotsInitialized.current = false;
     updateVisiblePlots();
-  }, [account]);
+  }, [account]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const mouseMesh = useRef();
   const highlightPlot = useCallback((plotId) => {
