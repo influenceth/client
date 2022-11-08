@@ -20,6 +20,7 @@ import theme from '~/theme';
 import { getPlotGeometryHeightMaps } from './helpers/PlotGeometry';
 
 const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
+const SELECTION_COLOR = new Color('#ff4d00').convertSRGBToLinear();
 const PIP_COLOR = new Color().setHex(0x888888).convertSRGBToLinear();
 const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
 
@@ -34,11 +35,13 @@ const MAX_REGIONS = 5000;
 
 const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
 
-const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config, mouseIntersect }) => {
+const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config, lastClick, mouseIntersect }) => {
   const { account } = useAuth();
   const { scene } = useThree();
   const { processInBackground } = useWebWorker();
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
+  const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
+  const selectedPlot = useStore(s => s.selectedPlot);
 
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
@@ -56,6 +59,10 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const lastMouseIntersect = useRef(new Vector3());
   const highlighted = useRef();
   const plotLoaderInterval = useRef();
+
+  const mouseMesh = useRef();
+  const selectionMesh = useRef();
+  const plotsInitialized = useRef();
 
   // const PLOT_WIDTH = useMemo(() => 125, [config?.radius]);
   const PLOT_WIDTH = useMemo(() => Math.min(150, config?.radius / 25), [config?.radius]);
@@ -279,7 +286,31 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const plotsInitialized = useRef();
+  // instantiate selection mesh
+  useEffect(() => {
+    const geometry = new TorusGeometry(1.5 * PLOT_WIDTH, 0.75 * PLOT_STROKE_MARGIN, 10, 32);
+
+    selectionMesh.current = new Mesh(
+      geometry,
+      new MeshBasicMaterial({
+        color: SELECTION_COLOR,
+        depthTest: false,
+        depthWrite: false,
+        opacity: 0,
+        toneMapped: false,
+        transparent: true,
+      })
+    );
+    selectionMesh.current.renderOrder = 999;
+    selectionMesh.current.userData.bloom = true;
+    (attachTo || scene).add(selectionMesh.current);
+    return () => {
+      if (selectionMesh.current) {
+        (attachTo || scene).remove(selectionMesh.current);
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const updateVisiblePlots = useCallback(() => {
     if (!positions.current) return;
     if (!regionsByDistance?.length) return;
@@ -454,12 +485,15 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     updateVisiblePlots();
   }, [account]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mouseMesh = useRef();
   const highlightPlot = useCallback((plotId) => {
+    highlighted.current = null;
+    // return if it's already highlighted
     if (highlighted.current === plotId) return;
+    // if there is currently a highlight, hide it
     if (highlighted.current !== undefined) {
       mouseMesh.current.material.opacity = 0;
     }
+    // if a new plotId was passed to highlight, do it
     if (plotId !== undefined) {  // TODO: is there a plot #0?
       if (!positions.current) return;
       mouseMesh.current.position.set(
@@ -481,6 +515,34 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       highlighted.current = plotId;
     }
   }, [attachTo.quaternion]);
+
+  useEffect(() => {
+    if (selectedPlot) {
+      selectionMesh.current.position.set(
+        positions.current[selectedPlot * 3 + 0],
+        positions.current[selectedPlot * 3 + 1],
+        positions.current[selectedPlot * 3 + 2]
+      );
+
+      const orientation = new Vector3(
+        orientations.current[selectedPlot * 3 + 0],
+        orientations.current[selectedPlot * 3 + 1],
+        orientations.current[selectedPlot * 3 + 2]
+      );
+      orientation.applyQuaternion(attachTo.quaternion);
+      selectionMesh.current.lookAt(orientation);
+
+      selectionMesh.current.material.opacity = 1;
+    } else {
+      selectionMesh.current.material.opacity = 0;
+    }
+  }, [attachTo.quaternion, selectedPlot]);
+  
+  useEffect(() => {
+    return () => {
+      dispatchPlotSelected();
+    };
+  }, []);
 
   // when camera angle changes, sort all regions by closest, then display
   // up to max plots (ordered by region proximity)
@@ -504,6 +566,10 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cameraNormalized?.string, regionsByDistance?.length, regionTally]);
+
+  useEffect(() => {
+    dispatchPlotSelected(highlighted.current);
+  }, [lastClick]);
 
   useFrame(() => {
     if (!plotTally) return;

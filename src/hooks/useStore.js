@@ -377,6 +377,11 @@ const useStore = create(persist((set, get) => ({
       }
     })),
 
+    selectedPlot: null,
+    dispatchPlotSelected: (plotId) => set(produce(state => {
+      state.selectedPlot = plotId;
+    })),
+
     //
     // SPECIAL GETTERS
 

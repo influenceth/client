@@ -8,17 +8,16 @@ const StyledTime = styled.div`
   max-height: 44px;
   overflow: hidden;
   transition: all 0.6s ease;
-  width: 180px;
+  width: 140px;
 `;
 
 const DaysSince = styled.div`
   border-bottom: 4px solid rgb(255, 255, 255, 0.25);
-  color: rgb(255, 255, 255, 0.6);
-  font-size: 13px;
-  font-weight: bold;
+  color: white;
+  font-size: 20px;
   height: 40px;
-  letter-spacing: 3px;
-  line-height: 53px;
+  line-height: 40px;
+  padding-bottom: 3px;
   text-align: center;
   text-transform: uppercase;
   text-shadow: 0 0 3px black;
@@ -28,6 +27,14 @@ const DaysSince = styled.div`
     border-bottom: 4px solid ${p => p.theme.colors.main};
     color: white;
   }
+
+  &:after {
+    content: 'DAYS';
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 60%;
+    letter-spacing: 1px;
+    margin-left: 4px;
+  }
 `;
 
 const Time = (props) => {
@@ -36,7 +43,7 @@ const Time = (props) => {
   return (
     <StyledTime {...props}>
       <DaysSince>
-        <span>{displayTime} days</span>
+        {displayTime}
       </DaysSince>
     </StyledTime>
   );

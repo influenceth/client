@@ -548,6 +548,18 @@ const Asteroid = (props) => {
     }
   }, [terrainInitialized, mousableTerrainInitialized]);
 
+  // listen for click events
+  const clickStatus = useRef();
+  const [lastClick, setLastClick] = useState();
+  // NOTE: if just use onclick, then fires on drag events too :(
+  const logClick = useCallback((e) => {
+    if (e.type === 'pointerdown') clickStatus.current = true;
+    else if (e.type === 'pointermove') clickStatus.current = false;
+    else if (e.type === 'pointerup' && clickStatus.current) {
+      setLastClick(Date.now());
+    }
+  }, []);
+
   // Positions the asteroid in space based on time changes
   useFrame((state) => {
     if (!asteroidData) return;
@@ -803,7 +815,10 @@ const Asteroid = (props) => {
   return (
     <group ref={group}>
       <group ref={quadtreeRef} />
-      <group ref={mouseableRef} />
+      <group ref={mouseableRef}
+        onPointerDown={logClick}
+        onPointerMove={logClick}
+        onPointerUp={logClick} />
 
       {config && terrainInitialized && zoomStatus === 'in' && (
         <Plots
@@ -811,6 +826,7 @@ const Asteroid = (props) => {
           asteroidId={origin}
           cameraAltitude={cameraAltitude}
           cameraNormalized={cameraNormalized}
+          lastClick={lastClick}
           config={config}
           mouseIntersect={mouseIntersect.current} />
       )}
