@@ -110,6 +110,7 @@ const Asteroid = (props) => {
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
+  const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const sceneMod = useStore(s => s.asteroids.sceneMod);
@@ -230,6 +231,8 @@ const Asteroid = (props) => {
       }
     }
     asteroidId.current = origin;
+
+    dispatchPlotsLoading(origin); // initialize plot loader
   }, [origin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update texture generation config when new asteroid data is available

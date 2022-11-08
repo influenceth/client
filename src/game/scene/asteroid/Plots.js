@@ -14,6 +14,7 @@ import {
 
 import useAsteroidPlots from '~/hooks/useAsteroidPlots';
 import useAuth from '~/hooks/useAuth';
+import useStore from '~/hooks/useStore';
 import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
 import { getPlotGeometryHeightMaps } from './helpers/PlotGeometry';
@@ -21,6 +22,8 @@ import { getPlotGeometryHeightMaps } from './helpers/PlotGeometry';
 const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
 const PIP_COLOR = new Color().setHex(0x888888).convertSRGBToLinear();
 const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
+
+const PLOT_LOADER_GEOMETRY_PCT = 0.25;
 
 const MAX_MESH_INSTANCES = 8000;  // TODO: maybe GPU dependent
 const PIP_VISIBILITY_ALTITUDE = 25000;
@@ -35,6 +38,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const { account } = useAuth();
   const { scene } = useThree();
   const { processInBackground } = useWebWorker();
+  const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
 
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
@@ -51,6 +55,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   // const plotFillMesh = useRef();
   const lastMouseIntersect = useRef(new Vector3());
   const highlighted = useRef();
+  const plotLoaderInterval = useRef();
 
   // const PLOT_WIDTH = useMemo(() => 125, [config?.radius]);
   const PLOT_WIDTH = useMemo(() => Math.min(150, config?.radius / 25), [config?.radius]);
@@ -93,6 +98,11 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       transfer = heightMaps.map((m) => m.buffer.buffer);
     }
 
+    if (plotLoaderInterval.current) clearInterval(plotLoaderInterval.current);
+    plotLoaderInterval.current = setInterval(() => {
+      dispatchPlotsLoading(asteroidId, 0, PLOT_LOADER_GEOMETRY_PCT)
+    }, 250);
+
     // vvv BENCHMARK: 1400ms on AP, 350ms on 8, 200ms on 800
     //                1200, 170, 40 if maps already generated
     processInBackground(
@@ -108,6 +118,8 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       },
       (data) => {
         // ^^^
+        if (plotLoaderInterval.current) clearInterval(plotLoaderInterval.current);
+
         // vvv BENCHMARK: 1400ms on AP, 150ms on 8, 19ms on 800
         positions.current = data.positions;
         orientations.current = data.orientations;
@@ -141,6 +153,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
               // ^^^
               setPositionsReady(true);
             }
+            dispatchPlotsLoading(asteroidId, PLOT_LOADER_GEOMETRY_PCT + (1 - PLOT_LOADER_GEOMETRY_PCT) * batchesProcessed / expectedBatches);
           }, [
             batchPositions.buffer
           ]);

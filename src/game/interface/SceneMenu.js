@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import utils, { Address } from 'influence-utils';
 
 import beltImageSrc from '~/assets/images/belt.jpg';
@@ -41,6 +41,45 @@ const Subtitle = styled.div`
     color: white;
   }
 `;
+
+const opacityAnimation = keyframes`
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+`;
+const SubtitleLoader = styled.span`
+  ${p => p.animated && `animation: ${opacityAnimation} 1000ms linear infinite;`}
+  display: inline-block;
+  font-size: 12px;
+  line-height: 21.5px;
+  margin-left: 10px;
+  vertical-align: middle;
+  width: 125px;
+  & > span {
+    border-radius: 10px;
+    display: block;
+  }
+`;
+const ProgressBar = styled.div`
+  ${p => p.progress === 0 ? css`animation: ${opacityAnimation} 1250ms ease infinite;` : ``}
+  background: #333;
+  border-radius: 10px;
+  height: 4px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  &:before {
+    content: ' ';
+    background: ${p => p.theme.colors.main};
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transition: width 200ms ease;
+    width: ${p => 100 * p.progress}%;
+  }
+`;
+
 const ExtraInfo = styled.div`
   color: #AAA;
   font-size: 15px;
@@ -111,6 +150,7 @@ const SceneMenu = (props) => {
   const sceneMod = useStore(s => s.asteroids.sceneMod);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const plotLoader = useStore(s => s.plotLoader);
   const history = useHistory();
 
   const [activeTab, setActiveTab] = useState(sceneMod?.type === 'resourceMap' ? 1 : 0);
@@ -138,7 +178,7 @@ const SceneMenu = (props) => {
     } else {
       setActiveTab(0);
     }
-  }, [sceneMod?.type, sceneMod?.params])
+  }, [sceneMod?.type, sceneMod?.params]);
 
   if (!asteroid) return null;
   return (
@@ -153,7 +193,14 @@ const SceneMenu = (props) => {
         </BackButton>
         <Title>{asteroid.customName || asteroid.baseName}</Title>
         <Subtitle>
-          {utils.toSize(asteroid.radius)} <b>{utils.toSpectralType(asteroid.spectralType)}-type</b>
+          <span>
+            {utils.toSize(asteroid.radius)} <b>{utils.toSpectralType(asteroid.spectralType)}-type</b>
+          </span>
+          <SubtitleLoader>
+            {!(plotLoader.i === origin && plotLoader.progress === 1) && (
+              <ProgressBar progress={plotLoader.i === origin ? plotLoader.progress : 0} />
+            )}
+          </SubtitleLoader>
         </Subtitle>
         <TabContainer
           containerHeight={'50px'}

@@ -83,6 +83,11 @@ const useStore = create(persist((set, get) => ({
 
     pendingTransactions: [],
 
+    plotLoader: {
+      i: null,
+      progress: 0
+    },
+
     sounds: {
       music: 100,
       effects: 100,
@@ -362,6 +367,14 @@ const useStore = create(persist((set, get) => ({
 
     dispatchSceneMod: (type, params) => set(produce(state => {
       state.asteroids.sceneMod = type ? { type, params } : null;
+    })),
+
+    dispatchPlotsLoading: (i, progress = 0, simulateTarget = 0) => set(produce(state => {
+      if (simulateTarget) {
+        state.plotLoader = { i, progress: state.plotLoader.progress + (simulateTarget - state.plotLoader.progress) / 3 };
+      } else {
+        state.plotLoader = { i, progress: progress > 0.99 ? 1 : progress };
+      }
     })),
 
     //
