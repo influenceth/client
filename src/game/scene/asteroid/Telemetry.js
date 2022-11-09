@@ -121,7 +121,7 @@ const config = {
     // dashed: true
   },
   equatorCircle: {
-    enabled: true,
+    enabled: false,
     bloom: true
   },
   inclinationCircle: {
@@ -176,6 +176,14 @@ const densityByType = {
 const GRAV = 6.6743E-11;
 
 const defaultTelemetryRadius = 1.1;
+
+// TODO:
+//  - ship circle to equator (hide equator)
+//  - access control oriented to equator
+//  - access control scaled to updated scale mocks (see Discord thread w/ Sergey and Chris)
+//  - initial zoom to outside access control, oriented with N/S up/down
+//  - (update attenuation?)
+// TODO: test radial gradient on access disc (so looks like territory)
 
 const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectralType }) => {
   const { scene, controls } = useThree();
