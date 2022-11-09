@@ -290,6 +290,8 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   useEffect(() => {
     const geometry = new TorusGeometry(1.5 * PLOT_WIDTH, 0.75 * PLOT_STROKE_MARGIN, 10, 32);
 
+    // TODO (enhancement): can currently see selection through the surface
+    //                     ... we may want to elevate and turn depth testing back on for this mesh
     selectionMesh.current = new Mesh(
       geometry,
       new MeshBasicMaterial({

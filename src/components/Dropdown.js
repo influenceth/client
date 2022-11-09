@@ -6,8 +6,8 @@ const Wrapper = styled.div`
 `;
 
 const Button = styled.button`
-  background-color: transparent;
-  border: 1px solid ${p => p.disabled ? '#444' : p.theme.colors.main};
+  background-color: ${p => p.buttonBackground ? `rgba(${p.theme.colors.mainRGB}, 0.4)` : 'transparent'};
+  border: ${p => p.buttonBorderless ? 'none' : `1px solid ${p.disabled ? '#444' : p.theme.colors.main}`};
   color: white;
   cursor: ${p => p.theme.cursors[p.disabled ? 'default' : 'active']};
   font-family: 'Jura', sans-serif;
@@ -15,7 +15,7 @@ const Button = styled.button`
   opacity: ${p => p.disabled ? 0.7 : 1};
   outline: 0;
   overflow: hidden;
-  padding: 5px;
+  padding: 4px 5px;
   text-align: left;
   text-overflow: ellipsis;
   transition: background-color 200ms ease;
@@ -26,12 +26,18 @@ const Button = styled.button`
     float: right;
     font-size: 80%;
     line-height: 1.44em;
-    padding-left: 5px;
+    margin-left: 5px;
+    ${p => p.buttonBackground && `
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      line-height: 1.44em;
+      padding: 0 6px;
+    `}
   }
   ${p => p.footnote && `
     &:after {
       content: "${p.footnote}";
-      color: ${p.disabled ? '#444' : p.theme.colors.main};
+      color: ${p.disabled ? '#444' : 'white'};
       float: right;
       font-size: 80%;
       line-height: 145%;
@@ -59,7 +65,7 @@ const Options = styled.div`
 const Option = styled.div`
   background-color: transparent;
   cursor: ${p => p.theme.cursors.active};
-  padding: 5px;
+  padding: 8px;
   transition: background-color 200ms ease;
   width: 100%;
   &:hover {

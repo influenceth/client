@@ -429,7 +429,11 @@ const useStore = create(persist((set, get) => ({
 }), {
   name: 'influence',
   version: 0,
-  blacklist: [ 'timeOverride' ]
+  blacklist: [
+    'plotLoader',
+    'selectedPlot',
+    'timeOverride'
+  ]
 }));
 
 export default useStore;

@@ -11,66 +11,66 @@ import useStore from '~/hooks/useStore';
 import { hexToRGB } from '~/theme';
 
 const Wrapper = styled.div`
+  width: 100%;
+  padding-bottom: 4px;
+  padding-top: 4px;
+`;
+
+const Container = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
-  margin-top: 20px;
-  position: relative;
 `;
-const CloseButton = styled(IconButton)`
-  border: 0px;
-  margin-right: 0;
-  padding: 2px;
-  pointer-events: all;
-  position: absolute;
-  height: 24px;
-  right: 0;
-  top: -8px;
-  width: 24px;
+
+const Label = styled.div`
+  font-size: 15px;
+  padding-bottom: 6px;
 `;
+
 const ResourceIcon = styled.div`
   background-color: black;
   background-position: center center;
   background-size: contain;
-  border: 1px solid #333;
+  border: 1px solid #777;
   cursor: ${p => p.theme.cursors.active};
-  height: 125px;
+  height: 80px;
   pointer-events: all;
   transition: border-color 250ms ease;
-  width: 125px;
+  width: 80px;
   &:hover {
     border-color: #777;
   }
 `;
+
 const ResourceDetails = styled.div`
-  color: #999;
   flex: 1;
-  font-size: 15px;
-  padding-left: 20px;
-  & > h3 {
-    font-size: inherit;
-    font-weight: normal;
-    margin: 0 0 12px;
-    & b {
-      color: white;
-    }
-  }
-  & > label {
-    margin-bottom: 8px;
-  }
+  padding-left: 12px;
 `;
 const DropdownContainer = styled.div`
+  background: #111;
+  border: 1px solid ${p => p.theme.colors.main};
+  border-radius: 8px;
   margin-top: 4px;
+  padding: 3px;
   pointer-events: all;
   & > div > button {
-    font-size: 110%;
+    border-radius: 4px;
+    font-size: 100%;
+    &:after {
+      content: '●';
+      color: ${p => p.theme.colors.resources[p.selectedCategory]};
+      float: left;
+      margin-left: 2px;
+      margin-right: 6px;
+      transform: scale(1.5);
+    }
   }
 `;
 const CategoryButtons = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
-  margin-top: 16px;
+  margin-top: 6px;
 `;
 const CategoryButton = styled.div`
   ${p => p.selected && `
@@ -79,16 +79,19 @@ const CategoryButton = styled.div`
   border-radius: 6px;
   color: ${p => p.theme.colors.resources[p.category]};
   cursor: ${p => p.theme.cursors.active};
+  line-height: 24px;
   margin-right: 4px;
+  padding: 4px;
   pointer-events: all;
 
   &:hover {
     background: rgba(${p => hexToRGB(p.theme.colors.resources[p.category])}, 0.3);
   }
   & > svg {
+    display: block;
     fill: currentColor;
-    height: 28px;
-    width: 28px;
+    height: 24px;
+    width: 24px;
   }
 `;
 
@@ -114,11 +117,6 @@ const ResourceMapSelector = ({ asteroid, onClose }) => {
   const selectResource = useCallback((selected) => {
     dispatchSceneMod('resourceMaps', { resource: selected });
   }, [dispatchSceneMod]);
-
-  const handleClose = useCallback(() => {
-    dispatchSceneMod();
-    if (onClose) onClose();
-  }, [dispatchSceneMod, onClose]);
 
   const resourceTally = useMemo(() => {
     return Object.values(asteroidAssets).reduce((acc, cur) => acc + cur.resources.length, 0);
@@ -147,37 +145,39 @@ const ResourceMapSelector = ({ asteroid, onClose }) => {
   if (!category) return null;
   return (
     <Wrapper>
-      <CloseButton onClick={handleClose}><CloseIcon /></CloseButton>
-      <ResourceIcon
-        onClick={goToModelViewer}
-        style={{ backgroundImage: `url(${resource.iconUrl})` }} />
-      <ResourceDetails>
-        <h3><b>{resourceTally} Raw Material{resourceTally === 1 ? '' : 's'}</b> Present</h3>
-        <label>Density Map Target:</label>
-        <DropdownContainer>
-          <Dropdown
-            dropUp
-            initialSelection={category.resources.findIndex((r) => r.label === resource.label)}
-            onChange={selectResource}
-            options={category.resources}
-            footnote={(r) => `${(100 * r.abundance).toFixed(1)}%`}
-            width="100%" />
-        </DropdownContainer>
-        <CategoryButtons>
-          {asteroidAssets.map((c) => (
-            <CategoryButton
-              key={c.category}
-              category={c.category}
-              onClick={selectCategory(c)}
-              selected={c.category === category.category}
-              data-tip={c.label}
-              data-place="right"
-              data-for="global">
-              {ResourceGroupIcons[c.category.toLowerCase()]}
-            </CategoryButton>
-          ))}
-        </CategoryButtons>
-      </ResourceDetails>
+      <Label>Resource Map:</Label>
+      <Container>
+        <ResourceIcon
+          onClick={goToModelViewer}
+          style={{ backgroundImage: `url(${resource.iconUrl})` }} />
+        <ResourceDetails>
+          <DropdownContainer selectedCategory={sceneMod?.params?.resource?.category}>
+            <Dropdown
+              buttonBackground
+              buttonBorderless
+              dropUp
+              footnote={(r) => `${(100 * r.abundance).toFixed(1)}%`}
+              initialSelection={category.resources.findIndex((r) => r.label === resource.label)}
+              onChange={selectResource}
+              options={category.resources}
+              width="100%" />
+          </DropdownContainer>
+          <CategoryButtons>
+            {asteroidAssets.map((c) => (
+              <CategoryButton
+                key={c.category}
+                category={c.category}
+                onClick={selectCategory(c)}
+                selected={c.category === category.category}
+                data-tip={c.label}
+                data-place="right"
+                data-for="global">
+                {ResourceGroupIcons[c.category.toLowerCase()]}
+              </CategoryButton>
+            ))}
+          </CategoryButtons>
+        </ResourceDetails>
+      </Container>
     </Wrapper>
   );
 };
