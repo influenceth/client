@@ -95,7 +95,7 @@ const CategoryButton = styled.div`
   }
 `;
 
-const ResourceMapSelector = ({ asteroid, onClose }) => {
+const ResourceMapSelector = ({ active, asteroid }) => {
   const history = useHistory();
   const { data: asteroidAssets, isLoading } = useAsteroidAssets(asteroid);
   const dispatchSceneMod = useStore(s => s.dispatchSceneMod);
@@ -108,8 +108,8 @@ const ResourceMapSelector = ({ asteroid, onClose }) => {
     history.push(`/model-viewer/${resource.label}`)
   }, [resource?.label]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectCategory = useCallback((selected) => () => {
-    if (selected.category !== category?.category) {
+  const selectCategory = useCallback((selected, forceReset) => () => {
+    if (forceReset || selected.category !== category?.category) {
       dispatchSceneMod('resourceMaps', { resource: selected.resources[0] });
     }
   }, [category?.category, dispatchSceneMod]);
@@ -118,11 +118,8 @@ const ResourceMapSelector = ({ asteroid, onClose }) => {
     dispatchSceneMod('resourceMaps', { resource: selected });
   }, [dispatchSceneMod]);
 
-  const resourceTally = useMemo(() => {
-    return Object.values(asteroidAssets).reduce((acc, cur) => acc + cur.resources.length, 0);
-  }, [asteroidAssets]);
-
   useEffect(() => {
+    if (!active) return;
     if (!isLoading) {
       if (sceneMod?.params?.resource) {
         asteroidAssets.forEach((c) => {
@@ -134,10 +131,10 @@ const ResourceMapSelector = ({ asteroid, onClose }) => {
           });
         });
       } else if (asteroidAssets?.length) {
-        selectCategory(asteroidAssets[0])();
+        selectCategory(asteroidAssets[0], true)();
       }
     }
-  }, [isLoading, sceneMod]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [active, isLoading, sceneMod]); // eslint-disable-line react-hooks/exhaustive-deps
   
   useEffect(() => ReactTooltip.rebuild(), []);
 

@@ -17,6 +17,8 @@ import useStore from '~/hooks/useStore';
 import TabContainer from '~/components/TabContainer';
 import ResourceMapSelector from './sceneMenu/ResourceMapSelector';
 
+const rightModuleWidth = 375;
+
 const Wrapper = styled.div`
   align-items: flex-start;
   display: flex;
@@ -75,6 +77,8 @@ const LeftActionButton = styled(IconHolder)`
 
 const Rule = styled.div`
   border-bottom: 1px solid rgba(255,255,255,0.25);
+  opacity: ${p => p.visible ? 1 : 0};
+  transition: opacity 350ms ease;
   width: 100%;
 `;
 
@@ -183,13 +187,16 @@ const RightWrapper = styled(Wrapper)`
   right: -23px;
   & > * {
     margin-bottom: 12px;
-    width: 375px;
+    width: ${rightModuleWidth}px;
   }
 `;
 
 const ActionModule = styled.div`
   border-right: 3px solid ${p => p.theme.colors.main};
+  opacity: ${p => p.visible ? 1 : 0};
   padding-right: 32px;
+  transition: opacity 350ms ease, transform 350ms ease;
+  transform: translateX(${p => p.visible ? 0 : `${rightModuleWidth + 5}px`});
 `;
 
 const RightActions = styled(ActionModule)`
@@ -325,13 +332,15 @@ const SceneMenu = (props) => {
       </LeftWrapper>
 
       <RightWrapper>
-        {resourceMode && (
-          <ActionModule>
-            <ResourceMapSelector asteroid={asteroid} onClose={() => { console.log('MAY NEED TO UNSET SCENE_MOD'); }} />
-          </ActionModule>
-        )}
-        <Rule />
-        <RightActions>
+        <ActionModule visible={resourceMode}>
+          <ResourceMapSelector
+            active={resourceMode}
+            asteroid={asteroid} />
+        </ActionModule>
+
+        <Rule visible={resourceMode} />
+
+        <RightActions visible>
           <ActionButton
             data-arrow-color="transparent"
             data-for="global"
