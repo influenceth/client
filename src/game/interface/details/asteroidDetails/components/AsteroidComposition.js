@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   BackSide,
   CircleGeometry,
@@ -9,8 +9,9 @@ import {
   RingGeometry,
   Texture,
   Vector3,
+  sRGBEncoding,
 } from 'three';
-import { useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
 import { cleanupScene } from '~/game/scene/asteroid/helpers/utils';
 
@@ -300,4 +301,33 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
   return null;
 };
 
-export default AsteroidComposition;
+const AsteroidCompositionInCanvas = ({ animationDelay, ready, ...props }) => {
+  const [delayedReady, setDelayedReady] = useState();
+  const [frameloop, setFrameloop] = useState();
+
+  const onAnimationChange = useCallback((which) => {
+    setFrameloop(which ? 'always' : 'never');
+  }, []);
+
+  useEffect(() => {
+    if (ready) {
+      setTimeout(() => {
+        setDelayedReady(true);
+      }, animationDelay || 0);
+    }
+  }, [ready]);
+
+  return (
+    <Canvas
+      antialias
+      frameloop={frameloop}
+      outputEncoding={sRGBEncoding}>
+      <AsteroidComposition
+        onAnimationChange={onAnimationChange}
+        ready={delayedReady ? 1 : 0}
+        {...props} />
+    </Canvas>
+  );
+};
+
+export default AsteroidCompositionInCanvas;

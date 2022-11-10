@@ -5,16 +5,18 @@ import utils, { Address } from 'influence-utils';
 import ReactTooltip from 'react-tooltip';
 import {
   FaCubes as InfrastructureIcon,
-  FaGem as ResourceIcon
+  FaGem as ResourceIcon,
+  FaSearchPlus as DetailsIcon
 } from 'react-icons/fa';
 
 
 import Button from '~/components/ButtonAlt';
-import { BackIcon, InfoIcon } from '~/components/Icons';
+import IconButton from '~/components/IconButton';
+import { BackIcon, CloseIcon, InfoIcon } from '~/components/Icons';
+import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
-import TabContainer from '~/components/TabContainer';
 import ResourceMapSelector from './sceneMenu/ResourceMapSelector';
 
 const rightModuleWidth = 375;
@@ -80,39 +82,6 @@ const Rule = styled.div`
   opacity: ${p => p.visible ? 1 : 0};
   transition: opacity 350ms ease;
   width: 100%;
-`;
-
-const PaneContent = styled.span``;
-const PaneHoverContent = styled.span`
-  color: white;
-  display: none;
-`;
-const Pane = styled.div`
-  align-items: center;
-  cursor: ${p => p.theme.cursors.active};
-  display: flex;
-  flex-direction: row;
-  opacity: ${p => p.visible ? 1 : 0};
-  overflow: hidden;
-  pointer-events: all;
-  transition: opacity 750ms ease;
-  width: 500px;
-
-  & ${IconHolder} {
-    border-left: 3px solid ${p => p.theme.colors.main};
-  }
-  &:hover {
-    & ${IconHolder} {
-      background: #333;
-      color: white;
-    }
-    & ${PaneContent} {
-      display: none;
-    }
-    & ${PaneHoverContent} {
-      display: inline;
-    }
-  }
 `;
 
 const IconColumn = styled.div`
@@ -243,59 +212,215 @@ const ActionButton = styled.div`
   }
 `;
 
+const CloseButton = styled(IconButton)`
+  font-size: 70%;
+  margin-right: 0;
+  position: absolute !important;
+  top: 2px;
+  right: 6px;
+  z-index: 2;
+`;
+
+const ThumbPreview = styled.div`
+  background: black;
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #999;
+  font-size: 14px;
+  height: 200px;
+  padding: 10px 12px;
+  position: relative;
+  transition: border-color 250ms ease;
+  width: 320px;
+
+  & b {
+    color: white;
+    font-weight: normal;
+  }
+
+  transition: opacity 250ms ease;
+  opacity: ${p => p.visible ? 1 : 0};
+`;
+
+const ThumbBackground = styled.div`
+  position: absolute;
+  top: 0;
+  height: 100%;
+  left: 0;
+  width: 100%;
+  z-index: 0;
+`;
+
+const ThumbMain = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  width: 100%;
+  z-index: 1;
+`;
+
+const ThumbTitle = styled.div`
+  color: white;
+  font-size: 22px;
+  line-height: 22px;
+`;
+const ThumbSubtitle = styled.div`
+  line-height: 18px;
+`;
+const ThumbFootnote = styled.div`
+  & > div {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+`;
+
+const Rarity = styled.div`
+  font-weight: bold;
+  &:before {
+    content: "${p => p.rarity}";
+  }
+
+  ${p => p.rarity
+    ? `color: ${p.theme.colors.rarity[p.rarity]};`
+    : 'display: none;'
+  }
+`;
+
+const PaneContent = styled.span``;
+const PaneHoverContent = styled.span`
+  color: white;
+  display: none;
+`;
+const Pane = styled.div`
+  align-items: center;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  flex-direction: row;
+  opacity: ${p => p.visible ? 1 : 0};
+  overflow: hidden;
+  pointer-events: all;
+  transition: opacity 750ms ease;
+
+  & ${IconHolder} {
+    border-left: 3px solid ${p => p.theme.colors.main};
+  }
+  &:hover {
+    & ${IconHolder} {
+      background: #333;
+      color: white;
+    }
+    & ${PaneContent} {
+      display: none;
+    }
+    & ${PaneHoverContent} {
+      display: inline;
+    }
+    & ${ThumbPreview} {
+      border-color: white;
+    }
+  }
+`;
+
 const SceneMenu = (props) => {
   const { account } = useAuth();
-  const origin = useStore(s => s.asteroids.origin);
-  const sceneMod = useStore(s => s.asteroids.sceneMod);
-  const dispatchSceneMod = useStore(s => s.dispatchSceneMod);
-  const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
+  const asteroidId = useStore(s => s.asteroids.origin);
+  const plotId = useStore(s => s.asteroids.plot);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+
+  const showResourceMap = useStore(s => s.asteroids.showResourceMap);
+  const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
+  const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
+  const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
+  const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
+  
   const plotLoader = useStore(s => s.plotLoader);
   const history = useHistory();
 
-  const [resourceMode, setResourceMode] = useState(sceneMod?.type === 'resourceMaps');
+  const { data: asteroid } = useAsteroid(asteroidId);
 
-  const { data: asteroid } = useAsteroid(origin);
+  const [renderReady, setRenderReady] = useState(false);
+  const [resourceMode, setResourceMode] = useState();
 
   useEffect(() => ReactTooltip.rebuild(), []);
 
   const onClickPane = useCallback(() => {
-    if (zoomStatus === 'in' && asteroid?.i) {
-      history.push(`/asteroids/${asteroid.i}`);
+    // open plot
+    if (asteroidId && plotId && zoomStatus === 'in') {
+      // TODO: ...
+
+    // open asteroid details
+    } else if (asteroidId && zoomStatus === 'in') {
+      history.push(`/asteroids/${asteroidId}`);
+
+    // zoom in to asteriod
+    } else if (asteroidId && zoomStatus === 'out') {
+      updateZoomStatus('zooming-in');
     }
-  }, [asteroid?.i]);
+  }, [asteroidId, plotId, zoomStatus]);
+
+  const onClosePane = useCallback((e) => {
+    e.stopPropagation();
+
+    // deselect plot
+    if (asteroidId && plotId && zoomStatus === 'in') {
+      dispatchPlotSelected();
+
+    // deselect asteroid
+    } else if (asteroidId && zoomStatus === 'out') {
+      dispatchOriginSelected();
+    }
+    
+    return false;
+  }, [asteroidId, plotId, zoomStatus]);
 
   const toggleResourceMode = useCallback((which) => {
     setResourceMode(which);
-    if (!which && sceneMod?.type === 'resourceMaps') {
-      dispatchSceneMod();
+    if (!which && !!showResourceMap) {
+      dispatchResourceMap();
     }
+  }, [!!showResourceMap]);
+
+  useEffect(() => {
+    setResourceMode(!!showResourceMap);
+  }, [!!showResourceMap]);
+
+  const onRenderReady = useCallback(() => {
+    setRenderReady(true);
   }, []);
+
+  useEffect(() => {
+    setRenderReady(false);
+  }, [asteroidId]);
 
   if (!asteroid) return null;
   return (
     <>
       <LeftWrapper>
         <LeftActions visible={zoomStatus === 'in'}>
-          <LeftActionButton
-            active={resourceMode}
-            data-arrow-color="transparent"
-            data-for="global"
-            data-place="right"
-            data-tip="Resource View"
-            onClick={() => toggleResourceMode(true)}>
-            <ResourceIcon />
-          </LeftActionButton>
-          <LeftActionButton
-            active={!resourceMode}
-            data-arrow-color="transparent"
-            data-for="global"
-            data-place="right"
-            data-tip="Infrastructure View"
-            onClick={() => toggleResourceMode(false)}>
-            <InfrastructureIcon />
-          </LeftActionButton>
-          <Rule />
+          {asteroid?.scanned && (
+            <>
+              <LeftActionButton
+                active={resourceMode}
+                data-arrow-color="transparent"
+                data-for="global"
+                data-place="right"
+                data-tip="Resource View"
+                onClick={() => toggleResourceMode(true)}>
+                <ResourceIcon />
+              </LeftActionButton>
+              <LeftActionButton
+                active={!resourceMode}
+                data-arrow-color="transparent"
+                data-for="global"
+                data-place="right"
+                data-tip="Infrastructure View"
+                onClick={() => toggleResourceMode(false)}>
+                <InfrastructureIcon />
+              </LeftActionButton>
+              <Rule />
+            </>
+          )}
           <LeftActionButton
             data-arrow-color="transparent"
             data-for="global"
@@ -306,29 +431,91 @@ const SceneMenu = (props) => {
           </LeftActionButton>
         </LeftActions>
 
-        <Pane onClick={onClickPane} visible={zoomStatus === 'in'}>
+        <Pane onClick={onClickPane} visible={asteroidId && ['out','in'].includes(zoomStatus)}>
           <IconColumn>
             <IconHolder>
-              <InfoIcon />
+              {zoomStatus === 'in' && !plotId && <InfoIcon />}
+              {(zoomStatus === 'out' || plotId) && <DetailsIcon />}
             </IconHolder>
           </IconColumn>
           <InfoColumn>
-            <Title>{asteroid.customName || asteroid.baseName}</Title>
-            <Subtitle>
-              <PaneContent>
-                {utils.toSize(asteroid.radius)} <b>{utils.toSpectralType(asteroid.spectralType)}-type</b>
-              </PaneContent>
-              <PaneHoverContent>
-                Asteroid Details
-              </PaneHoverContent>
-              <SubtitleLoader>
-                {!(plotLoader.i === origin && plotLoader.progress === 1) && (
-                  <ProgressBar progress={plotLoader.i === origin ? plotLoader.progress : 0} />
-                )}
-              </SubtitleLoader>
-            </Subtitle>
+            {zoomStatus === 'in' && !plotId && (
+              <>
+                <Title>{asteroid.customName || asteroid.baseName}</Title>
+                <Subtitle>
+                  <PaneContent>
+                    {utils.toSize(asteroid.radius)} <b>{utils.toSpectralType(asteroid.spectralType)}-type</b>
+                  </PaneContent>
+                  <PaneHoverContent>
+                    Asteroid Details
+                  </PaneHoverContent>
+                  <SubtitleLoader>
+                    {!(plotLoader.i === asteroidId && plotLoader.progress === 1) && (
+                      <ProgressBar progress={plotLoader.i === asteroidId ? plotLoader.progress : 0} />
+                    )}
+                  </SubtitleLoader>
+                </Subtitle>
+              </>
+            )}
+            {zoomStatus === 'in' && plotId && (
+              <div>
+                <ThumbPreview visible>
+                  <CloseButton borderless onClick={onClosePane}>
+                    <CloseIcon />
+                  </CloseButton>
+                  <ThumbBackground>
+                  </ThumbBackground>
+                  <ThumbMain>
+                    <ThumbTitle>Empty Lot</ThumbTitle>
+                    <ThumbSubtitle>
+                      <PaneContent>
+                        Lot #{plotId.toLocaleString()}
+                      </PaneContent>
+                      <PaneHoverContent>
+                        Zoom to Lot
+                      </PaneHoverContent>
+                    </ThumbSubtitle>
+                    <div style={{ flex: 1 }} />
+                    <ThumbFootnote>Uncontrolled</ThumbFootnote>
+                  </ThumbMain>
+                </ThumbPreview>
+              </div>
+            )}
+            {zoomStatus === 'out' && asteroid && (
+              <div>
+                <ThumbPreview visible={renderReady}>
+                  <CloseButton borderless onClick={onClosePane}>
+                    <CloseIcon />
+                  </CloseButton>
+                  <ThumbBackground>
+                    <AsteroidRendering asteroid={asteroid} onReady={onRenderReady} />
+                  </ThumbBackground>
+                  <ThumbMain>
+                    <ThumbTitle>{asteroid.customName || asteroid.baseName}</ThumbTitle>
+                    <ThumbSubtitle>
+                      <PaneContent>
+                        {utils.toSize(asteroid.r)}{' '}
+                        <b>{utils.toSpectralType(asteroid.spectralType)}{'-type'}</b>
+                        {asteroid.scanned && <Rarity rarity={utils.toRarity(asteroid.bonuses)} />}
+                      </PaneContent>
+                      <PaneHoverContent>
+                        Zoom to Asteroid
+                      </PaneHoverContent>
+                    </ThumbSubtitle>
+                    <div style={{ flex: 1 }} />
+                    <ThumbFootnote>
+                      <div>
+                        <span><b>{Number(Math.floor(4 * Math.PI * Math.pow(asteroid.radius / 1000, 2))).toLocaleString()}</b> Lots</span>
+                        <span><b>{Number(0).toFixed(2)/* TODO: make real */}%</b> Developed</span>
+                      </div>
+                    </ThumbFootnote>
+                  </ThumbMain>
+                </ThumbPreview>
+              </div>
+            )}
           </InfoColumn>
         </Pane>
+
       </LeftWrapper>
 
       <RightWrapper>

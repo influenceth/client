@@ -4,9 +4,10 @@ import {
   Color,
   DirectionalLight
 } from 'three';
-import { useThree } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 
 import { cleanupScene, renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
+import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
 
 const RenderedAsteroid = ({ asteroid, onReady, webWorkerPool }) => {
@@ -15,7 +16,7 @@ const RenderedAsteroid = ({ asteroid, onReady, webWorkerPool }) => {
   const disposeFunc = useRef();
 
   useEffect(() => {
-    if (asteroid && webWorkerPool) {
+    if (asteroid?.i && webWorkerPool) {
       renderDummyAsteroid(asteroid, asteroid.i < 25 ? 64 : 32, webWorkerPool, (asteroidModel, dispose) => {
         asteroidModel.traverse(function (node) {
           if (node.isMesh) {
@@ -67,9 +68,21 @@ const RenderedAsteroid = ({ asteroid, onReady, webWorkerPool }) => {
         }
       }
     }
-  }, [!!asteroid, !!webWorkerPool]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [asteroid?.i, !!webWorkerPool]);  // eslint-disable-line react-hooks/exhaustive-deps
   
   return null;
 };
 
-export default RenderedAsteroid;
+const RenderedAsteroidInCanvas = (props) => {
+  const webWorkerPool = useWebWorker();
+  return (
+    <Canvas
+      antialias
+      frameloop="never"
+      style={{ width: '100%', height: '100%' }}>
+      <RenderedAsteroid {...props} webWorkerPool={webWorkerPool} />
+    </Canvas>
+  );
+};
+
+export default RenderedAsteroidInCanvas;

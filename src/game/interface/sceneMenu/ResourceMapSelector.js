@@ -98,8 +98,8 @@ const CategoryButton = styled.div`
 const ResourceMapSelector = ({ active, asteroid }) => {
   const history = useHistory();
   const { data: asteroidAssets, isLoading } = useAsteroidAssets(asteroid);
-  const dispatchSceneMod = useStore(s => s.dispatchSceneMod);
-  const sceneMod = useStore(s => s.asteroids.sceneMod);
+  const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
+  const showResourceMap = useStore(s => s.asteroids.showResourceMap);
 
   const [category, setCategory] = useState();
   const [resource, setResource] = useState();
@@ -110,21 +110,21 @@ const ResourceMapSelector = ({ active, asteroid }) => {
 
   const selectCategory = useCallback((selected, forceReset) => () => {
     if (forceReset || selected.category !== category?.category) {
-      dispatchSceneMod('resourceMaps', { resource: selected.resources[0] });
+      dispatchResourceMap(selected.resources[0]);
     }
-  }, [category?.category, dispatchSceneMod]);
+  }, [category?.category, dispatchResourceMap]);
 
   const selectResource = useCallback((selected) => {
-    dispatchSceneMod('resourceMaps', { resource: selected });
-  }, [dispatchSceneMod]);
+    dispatchResourceMap(selected);
+  }, [dispatchResourceMap]);
 
   useEffect(() => {
     if (!active) return;
     if (!isLoading) {
-      if (sceneMod?.params?.resource) {
+      if (showResourceMap) {
         asteroidAssets.forEach((c) => {
           c.resources.forEach((r) => {
-            if (r.label === sceneMod.params.resource.label) {
+            if (r.label === showResourceMap.label) {
               setCategory(c);
               setResource(r);
             }
@@ -134,7 +134,7 @@ const ResourceMapSelector = ({ active, asteroid }) => {
         selectCategory(asteroidAssets[0], true)();
       }
     }
-  }, [active, isLoading, sceneMod]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [active, isLoading, showResourceMap]); // eslint-disable-line react-hooks/exhaustive-deps
   
   useEffect(() => ReactTooltip.rebuild(), []);
 
@@ -148,7 +148,7 @@ const ResourceMapSelector = ({ active, asteroid }) => {
           onClick={goToModelViewer}
           style={{ backgroundImage: `url(${resource.iconUrl})` }} />
         <ResourceDetails>
-          <DropdownContainer selectedCategory={sceneMod?.params?.resource?.category}>
+          <DropdownContainer selectedCategory={showResourceMap?.category}>
             <Dropdown
               buttonBackground
               buttonBorderless

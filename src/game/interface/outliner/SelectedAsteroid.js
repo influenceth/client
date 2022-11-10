@@ -38,7 +38,7 @@ const SelectedAsteroid = (props) => {
 
   const watchlistActive = useStore(s => s.outliner.watchlist.active);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const clearOrigin = useStore(s => s.dispatchOriginCleared);
+  const selectOrigin = useStore(s => s.dispatchOriginSelected);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const [ inWatchlist, setInWatchlist ] = useState(false);
@@ -62,7 +62,7 @@ const SelectedAsteroid = (props) => {
       name="selectedAsteroid"
       title={title()}
       icon={<IoIosPin />}
-      onClose={() => clearOrigin()}>
+      onClose={() => selectOrigin()}>
       {asteroid && (
         <Controls>
           <IconButton

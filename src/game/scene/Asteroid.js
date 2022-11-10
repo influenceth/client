@@ -113,7 +113,7 @@ const Asteroid = (props) => {
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
-  const sceneMod = useStore(s => s.asteroids.sceneMod);
+  const showResourceMap = useStore(s => s.asteroids.showResourceMap);
 
   const { data: asteroidData } = useAsteroid(origin);
 
@@ -490,16 +490,16 @@ const Asteroid = (props) => {
 
   useEffect(() => {
     if (!geometry.current) return;
-    if (sceneMod?.type === 'resourceMaps') {
-      const color = new Color(theme.colors.resources[sceneMod.params.resource.category]);
+    if (showResourceMap) {
+      const color = new Color(theme.colors.resources[showResourceMap.category]);
       color.convertSRGBToLinear();
-      geometry.current.setEmissiveParams({ color, resource: sceneMod.params.resource.i });
+      geometry.current.setEmissiveParams({ color, resource: showResourceMap.i });
       forceUpdate.current = Date.now();
     } else if (geometry.current.emissiveParams) {
       geometry.current.setEmissiveParams();
       forceUpdate.current = Date.now();
     }
-  }, [sceneMod]);
+  }, [showResourceMap]);
 
   useEffect(() => {
     if (geometry.current && terrainUpdateNeeded) {
@@ -837,6 +837,7 @@ const Asteroid = (props) => {
           getPosition={() => position.current}
           getRotation={() => rotation.current}
           hasAccess={false}
+          isScanned={asteroidData?.scanned}
           radius={config.radius}
           spectralType={toSpectralType(config.spectralType)}
         />

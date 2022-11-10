@@ -35,7 +35,9 @@ const useStore = create(persist((set, get) => ({
       hovered: null,
       filters: {},
       highlight: null,
-      sceneMod: null,
+      plot: null,
+      plotDestination: null,
+      showResourceMap: null,
       owned: {
         mapped: false,
         filtered: false,
@@ -256,21 +258,20 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchOriginSelected: (i) => set(produce(state => {
-      if (Number(i) > 0 && Number(i) <= 250000) state.asteroids.origin = Number(i);
-      state.asteroids.sceneMod = null;
-    })),
-
-    dispatchOriginCleared: () => set(produce(state => {
       state.asteroids.origin = null;
-      state.asteroids.sceneMod = null;
+      if (i && Number(i) > 0 && Number(i) <= 250000) {
+        state.asteroids.origin = Number(i);
+      }
+      state.asteroids.showResourceMap = null;
+      state.asteroids.plot = null;
+      state.asteroids.plotDestination = null;
     })),
 
     dispatchDestinationSelected: (i) => set(produce(state => {
-      if (Number(i) > 0 && Number(i) <= 250000) state.asteroids.destination = Number(i);
-    })),
-
-    dispatchDestinationCleared: () => set(produce(state => {
       state.asteroids.destination = null;
+      if (i && Number(i) > 0 && Number(i) <= 250000) {
+        state.asteroids.destination = Number(i);
+      }
     })),
 
     dispatchAsteroidHovered: (i) => set(produce(state => {
@@ -283,6 +284,8 @@ const useStore = create(persist((set, get) => ({
 
     dispatchZoomStatusChanged: (status) => set(produce(state => {
       state.asteroids.zoomStatus = status;
+      state.asteroids.plot = null;
+      state.asteroids.plotDestination = null;
     })),
 
     dispatchAsteroidZoomedFrom: (from) => set(produce(state => {
@@ -365,8 +368,8 @@ const useStore = create(persist((set, get) => ({
       state.referrer = refCode;
     })),
 
-    dispatchSceneMod: (type, params) => set(produce(state => {
-      state.asteroids.sceneMod = type ? { type, params } : null;
+    dispatchResourceMap: (resource) => set(produce(state => {
+      state.asteroids.showResourceMap = resource;
     })),
 
     dispatchPlotsLoading: (i, progress = 0, simulateTarget = 0) => set(produce(state => {
@@ -377,9 +380,8 @@ const useStore = create(persist((set, get) => ({
       }
     })),
 
-    selectedPlot: null,
     dispatchPlotSelected: (plotId) => set(produce(state => {
-      state.selectedPlot = plotId;
+      state.asteroids.plot = plotId;
     })),
 
     //
@@ -429,10 +431,13 @@ const useStore = create(persist((set, get) => ({
 }), {
   name: 'influence',
   version: 0,
-  blacklist: [
+  blacklist: [  // TODO: should these be stored elsewhere if ephemeral?
+    'asteroids.hovered',
+    'cutscenePlaying',
+    'draggables',
     'plotLoader',
     'selectedPlot',
-    'timeOverride'
+    'timeOverride'  // should this be in ClockContext?
   ]
 }));
 

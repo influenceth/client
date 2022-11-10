@@ -11,8 +11,8 @@ const StyledIconButton = styled.button`
   color: ${p => p.theme.colors.main};
   font-family: 'Jura', sans-serif;
   font-size: 15px;
-  height: 30px;
-  width: 30px;
+  height: 2em;
+  width: 2em;
   padding: ${p => p.borderless ? '5px' : '4px'};
   transition: all 300ms ease;
   ${p => p.scale && `transform: scale(${p.scale});`}
@@ -40,8 +40,8 @@ const StyledIconButton = styled.button`
   }
 
   & > svg {
-    height: 20px;
-    width: 20px;
+    height: 1.33em;
+    width: 1.33em;
   }
 `;
 

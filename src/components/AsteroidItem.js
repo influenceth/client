@@ -58,11 +58,9 @@ const AsteroidItem = (props) => {
   const dispatchAsteroidUnhovered = useStore(s => s.dispatchAsteroidUnhovered);
   const origin = useStore(s => s.asteroids.origin);
   const selectOrigin = useStore(s => s.dispatchOriginSelected);
-  const clearOrigin = useStore(s => s.dispatchOriginCleared);
   const routePlannerActive = useStore(s => s.outliner.routePlanner.active);
   const destination = useStore(s => s.asteroids.destination);
   const selectDestination = useStore(s => s.dispatchDestinationSelected);
-  const clearDestination = useStore(s => s.dispatchDestinationCleared);
   const unWatchAsteroid = useUnWatchAsteroid();
 
   return (
@@ -80,14 +78,14 @@ const AsteroidItem = (props) => {
       <Controls>
         <IconButton
           data-tip={origin === asteroid.i ? 'Deselect Asteroid' : 'Select Asteroid'}
-          onClick={() => origin === asteroid.i ? clearOrigin() : selectOrigin(asteroid.i)}
+          onClick={() => selectOrigin(origin === asteroid.i ? null : asteroid.i)}
           active={origin === asteroid.i}>
           <IoIosPin />
         </IconButton>
         {routePlannerActive && (
           <IconButton
             data-tip={destination === asteroid.i ? 'Clear Destination' : 'Set as Destination'}
-            onClick={() => destination === asteroid.i ? clearDestination() : selectDestination(asteroid.i)}
+            onClick={() => selectDestination(destination === asteroid.i ? null : asteroid.i)}
             active={destination === asteroid.i}>
             <BiTargetLock />
           </IconButton>

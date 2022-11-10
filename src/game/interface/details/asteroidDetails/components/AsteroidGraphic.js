@@ -1,11 +1,8 @@
 import { useCallback, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
-import { Canvas } from '@react-three/fiber';
 import utils from 'influence-utils';
-import { sRGBEncoding } from 'three';
 
 import useStore from '~/hooks/useStore';
-import useWebWorker from '~/hooks/useWebWorker';
 import AsteroidComposition from './AsteroidComposition';
 import AsteroidRendering from './AsteroidRendering';
 import AsteroidSpinner from './AsteroidSpinner';
@@ -87,53 +84,31 @@ const LastRow = styled.div`
 `;
 
 const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
-  const webWorkerPool = useWebWorker();
-
   const saleIsActive = useStore(s => s.sale);
 
-  const [frameloop, setFrameloop] = useState();
   const [ready, setReady] = useState();
-  const [delayedReady, setDelayedReady] = useState();
-
-  const onAnimationChange = useCallback((which) => {
-    setFrameloop(which ? 'always' : 'never');
-  }, []);
 
   const onReady = useCallback(() => {
     setReady(true);
-    setTimeout(() => {
-      setDelayedReady(true);
-    }, OPACITY_ANIMATION);
   }, []);
 
   return (
     <Graphic>
       <OpacityContainer ready={ready ? 1 : 0}>
         {asteroid.scanStatus === 'SCANNING' && (
-          <Canvas
-            antialias
-            frameloop="always"
-            outputEncoding={sRGBEncoding}>
-            <AsteroidSpinner />
-          </Canvas>
+          <AsteroidSpinner />
         )}
         {asteroid.scanStatus !== 'SCANNING' && (
-          <Canvas
-            antialias
-            frameloop={frameloop}
-            outputEncoding={sRGBEncoding}>
-            <AsteroidComposition
-              asteroid={asteroid}
-              onAnimationChange={onAnimationChange}
-              ready={delayedReady ? 1 : 0}
-              {...compositionProps} />
-          </Canvas>
+          <AsteroidComposition
+            animationDelay={OPACITY_ANIMATION}
+            asteroid={asteroid}
+            ready={ready}
+            {...compositionProps}
+          />
         )}
       </OpacityContainer>
       <OpacityContainer ready={ready ? 1 : 0}>
-        <Canvas antialias frameloop="never" style={{ width: '100%', height: '100%' }}>
-          <AsteroidRendering asteroid={asteroid} onReady={onReady} webWorkerPool={webWorkerPool} />
-        </Canvas>
+        <AsteroidRendering asteroid={asteroid} onReady={onReady} />
       </OpacityContainer>
       <GraphicData>
         <div>

@@ -41,7 +41,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const { processInBackground } = useWebWorker();
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
-  const selectedPlot = useStore(s => s.selectedPlot);
+  const selectedPlot = useStore(s => s.asteroids.plot);
 
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
@@ -519,7 +519,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   }, [attachTo.quaternion]);
 
   useEffect(() => {
-    if (selectedPlot) {
+    if (selectionMesh.current && selectedPlot) {
       selectionMesh.current.position.set(
         positions.current[selectedPlot * 3 + 0],
         positions.current[selectedPlot * 3 + 1],

@@ -425,7 +425,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
   const history = useHistory();
   const { category: initialCategory } = useParams();
   const selectOrigin = useStore(s => s.dispatchOriginSelected);
-  const dispatchSceneMod = useStore(s => s.dispatchSceneMod);
+  const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const { finalizeAsteroidScan, scanStatus } = useScanAsteroid(asteroid);
@@ -458,7 +458,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     if (zoomStatus !== 'in') {
       updateZoomStatus('zooming-in');
     }
-    dispatchSceneMod('resourceMaps', { resource });
+    dispatchResourceMap(resource);
     history.push('/');
     return false;
   }, [asteroid?.i, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps

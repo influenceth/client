@@ -4,8 +4,9 @@ import {
   Mesh,
   ShaderMaterial,
   Vector2,
+  sRGBEncoding
 } from 'three';
-import { useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
 import { cleanupScene } from '~/game/scene/asteroid/helpers/utils';
 
@@ -95,4 +96,13 @@ const AsteroidSpinner = (props) => {
   return null;
 };
 
-export default AsteroidSpinner;
+const AsteroidSpinnerInCanvas = (props) => (
+  <Canvas
+    antialias
+    frameloop="always"
+    outputEncoding={sRGBEncoding}>
+    <AsteroidSpinner />
+  </Canvas>
+);
+
+export default AsteroidSpinnerInCanvas;

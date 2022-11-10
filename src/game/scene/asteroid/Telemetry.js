@@ -32,6 +32,8 @@ const hexToGLSL = (hex) => {
   const color = new Color().setStyle(hex);
   return color.convertSRGBToLinear().toArray();
 };
+const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
+const DISABLED_COLOR = MAIN_COLOR;  // TODO: ...
 const BLUE = hexToGLSL(theme.colors.main);
 const GREEN = hexToGLSL(theme.colors.success);
 const RED = BLUE;//hexToGLSL('#777777');//hexToGLSL(theme.colors.error);
@@ -185,7 +187,7 @@ const defaultTelemetryRadius = 1.1;
 //  - (update attenuation?)
 // TODO: test radial gradient on access disc (so looks like territory)
 
-const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectralType }) => {
+const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radius, spectralType }) => {
   const { scene, controls } = useThree();
   const getTime = useGetTime();
 
@@ -455,7 +457,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
         new PlaneGeometry(dockingGateSize, dockingGateSize, 1, 1),
         new MeshBasicMaterial({
           alphaTest: 0.1,
-          color: theme.colors.main,
+          color: isScanned ? MAIN_COLOR : DISABLED_COLOR,
           map: hGateSprite,
           side: DoubleSide,
           toneMapped: false,
@@ -470,7 +472,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, radius, spectral
         new PlaneGeometry(dockingGateSize, dockingGateSize, 1, 1),
         new MeshBasicMaterial({
           alphaTest: 0.1,
-          color: theme.colors.main,
+          color: isScanned ? MAIN_COLOR : DISABLED_COLOR,
           map: vGateSprite,
           side: DoubleSide,
           toneMapped: false,
