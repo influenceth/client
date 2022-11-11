@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimationMixer, Box3, DirectionalLight, EquirectangularReflectionMapping, LoopPingPong, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
+import { AnimationMixer, Box3, DirectionalLight, EquirectangularReflectionMapping, LoopRepeat, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
 // import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -273,7 +273,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
           animationMixer.current = new AnimationMixer(model.current);
           gltf.animations.forEach((action) => {
             const clip = animationMixer.current.clipAction(action);
-            clip.setLoop(LoopPingPong);
+            clip.setLoop(LoopRepeat);
             clip.play();
           });
           console.log(gltf);
