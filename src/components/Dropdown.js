@@ -119,7 +119,7 @@ const Dropdown = ({ disabled, footnote, initialSelection, labelKey = 'label', on
     const i = initialSelection || 0;
     setSelectedIndex(i);
     setSelectedLabel(isObjArr ? options[i][labelKey] : options[i]);
-  }, [options]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialSelection, options]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setSelectedLabel(isObjArr ? options[selectedIndex][labelKey] : options[selectedIndex]);

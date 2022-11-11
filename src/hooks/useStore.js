@@ -284,6 +284,7 @@ const useStore = create(persist((set, get) => ({
 
     dispatchZoomStatusChanged: (status) => set(produce(state => {
       state.asteroids.zoomStatus = status;
+      state.asteroids.showResourceMap = null;
       state.asteroids.plot = null;
       state.asteroids.plotDestination = null;
     })),

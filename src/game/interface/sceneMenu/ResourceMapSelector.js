@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { useHistory } from 'react-router-dom';
 
 import Dropdown from '~/components/Dropdown';
-import { CloseIcon, ResourceGroupIcons } from '~/components/Icons';
-import IconButton from '~/components/IconButton';
+import { ResourceGroupIcons } from '~/components/Icons';
 import useAsteroidAssets from '~/hooks/useAsteroidAssets';
 import useStore from '~/hooks/useStore';
 import { hexToRGB } from '~/theme';
@@ -119,8 +118,7 @@ const ResourceMapSelector = ({ active, asteroid }) => {
   }, [dispatchResourceMap]);
 
   useEffect(() => {
-    if (!active) return;
-    if (!isLoading) {
+    if (active && !isLoading) {
       if (showResourceMap) {
         asteroidAssets.forEach((c) => {
           c.resources.forEach((r) => {

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 64 64">
+  <defs>
+    <style>.cls-7{opacity:0.75;}</style>
+  </defs>
+  <g>
+    <path d="M34.42,14.28c7.93,1.08,14.21,7.36,15.29,15.29h2.02c-1.1-9.04-8.28-16.21-17.31-17.31v2.02Z"/>
+    <path d="M14.28,29.58c1.08-7.93,7.36-14.21,15.29-15.29v-2.02c-9.04,1.1-16.21,8.28-17.31,17.31h2.02Z"/>
+    <path d="M29.58,49.72c-7.93-1.08-14.21-7.36-15.29-15.29h-2.02c1.1,9.04,8.28,16.21,17.31,17.31v-2.02Z"/>
+    <path d="M49.72,34.42c-1.08,7.93-7.36,14.21-15.29,15.29v2.02c9.04-1.1,16.21-8.28,17.31-17.31h-2.02Z"/>
+  </g>
+  <g class="cls-7">
+    <image width="33" height="32" transform="translate(15.16 16.06)" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAgCAYAAACcuBHKAAAACXBIWXMAAAsSAAALEgHS3X78AAADkElEQVRYhaWYLY8UQRCGq+Zjdw/uCIGcQGJxCBQhOBKC4YcgERgEjgSF5CcgMRgEeByKBEEQGHKHAe5ud2a6yCzVw3O1s8temKSvZ/qjPt56q7r3VM7wmNkVESm8qTfxnmOVqn7cVvJWRpjZZSjvWxUMUBhSoi9V9cN/G2Fmuy5wBm+LoDwakQ2Z+HhvzPt1OooNymsz6xWbDzUi0opIJyJpg0PZoBJ9aWY3z4SEmXXuReVCKp+qw1jeT4Q43/dTN7r0/aqq76ivGjHgxDc1LsC85bWGFhEoYACNrBGiFcfHwkHY54A/+XgaCYeGnogUCE3hobmz1ggz++5edmgtlix8Xn1+2DpC2AREMooDV8zs7ko4zOxbENiAlMfOkdrH6+B59jRzZhJ4UYYUPwUAkTBX0Ht4AtjNw9JAaRPCop7CGohZMENiipvZ/QEJM/vqyssAcwvP+/6nr9lxYRPEv/b3Gghn5RLQoOPD4g6TXWBwjfdj934PGZIQwh3IIRnrIJMF7s8fM/sCixOsTohv5yk78bYvIud83XkRuQTPK1+/E+pHGuHTqdxnGDqMGeKc5G/GHPRVB3t6Z26DoDUUzwIHOzg9IPEZ3xbynimXK2Ctqhdl5DGzex4u8moavYc8qWCAICXZK75T4M/Ysx9kTNesG5AoVPXqBoEC4hlCdLhh/QVvTFnWE9aJ5XjmRILlAvjpUQ/rUTg3xp49lPv8zEL5r73vDWmzVdFbng3Jlc/9e1nMzOxtNMDMnrjgmWfMrvf5KUIVXaKTifkJXvP+QMMWXknzudF43ThwQw993hy1XIEX4JKMOcliJdhcYPHcx0vAyfD1nv7wvgFxOxSqBgYodCZVfUFOxDrRho1HwbgWIcpr+zD8wnlB7hj0ZEeXIVlyQlWvwZgGd4rcTmBch/EOx3s2ZIIyXeO8UJwxFVOUNyteWBTpyCxpMD53QXPAPsTZv9twl0hAsy+4z4VFR1WvA64O8W3xnvBdINbxtl2HTKgwV4TsOF35VPVGQKAFV5jnJDG5NIgaqaq8X/QoPBsLB8NiQEGDsowUy3kBImZuaKiOQ4qq6lMqXDkDVPUWvOZ9M0FBgoFlqCfxIlOGUKw4vvYXmJm9CcRsQ3Z08G4Rxjrwa+hV9fGYrm1+Br4OfIh8aQOhx957Ax6t07HtD+JXgDtnSo7/JuWdqj78l/wz/WvADXo5AnVU/GBrgSLyG89ZpbY5XrFwAAAAAElFTkSuQmCC"/>
+  </g>
+  <path d="M32,33c-.26,0-.51-.1-.71-.29l-10.81-10.81c-.39-.39-.39-1.02,0-1.41s1.02-.39,1.41,0l10.81,10.81c.39,.39,.39,1.02,0,1.41-.2,.2-.45,.29-.71,.29Z"/>
+</svg>

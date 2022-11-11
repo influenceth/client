@@ -50,6 +50,8 @@ void main() {
   // TODO: the smooth size should be smaller the more zoomed in to avoid "blurry" look
   //  (i.e. could relate to chunksize)
   abundance = smoothstep(0.19, 0.2, abundance)
+    // NOTE: can simulate lines around outer edge with something like this:
+    // + 0.25 * (smoothstep(0.19, 0.205, abundance) - smoothstep(0.2, 0.21, abundance))
     + smoothstep(0.39, 0.4, abundance)
     + smoothstep(0.59, 0.6, abundance)
     + smoothstep(0.79, 0.8, abundance);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import utils, { Address } from 'influence-utils';
@@ -8,18 +8,44 @@ import {
   FaGem as ResourceIcon,
   FaSearchPlus as DetailsIcon
 } from 'react-icons/fa';
+import LoadingAnimation from 'react-spinners/BarLoader';
 
 
 import Button from '~/components/ButtonAlt';
 import IconButton from '~/components/IconButton';
-import { BackIcon, CloseIcon, InfoIcon } from '~/components/Icons';
+import {
+  BackIcon,
+  CloseIcon,
+  InfoIcon,
+  CancelBlueprintIcon,
+  CoreSampleIcon,
+  DeconstructIcon,
+  ImproveCoreSampleIcon,
+  LayBlueprintIcon,
+  PurchaseAsteroidIcon,
+  ScanAsteroidIcon,
+  // SurfaceTransferIcon // TODO: ...
+} from '~/components/Icons';
 import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
 import useAsteroid from '~/hooks/useAsteroid';
+import useScanAsteroid from '~/hooks/useScanAsteroid';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import ResourceMapSelector from './sceneMenu/ResourceMapSelector';
 
 const rightModuleWidth = 375;
+
+
+const opacityAnimation = keyframes`
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+`;
+const outlineAnimation = keyframes`
+  0% { outline-width: 0; }
+  50% { outline-width: 3px; }
+  100% { outline-width: 0; }
+`;
 
 const Wrapper = styled.div`
   align-items: flex-start;
@@ -114,13 +140,8 @@ const Subtitle = styled.div`
   }
 `;
 
-const opacityAnimation = keyframes`
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
-`;
 const SubtitleLoader = styled.span`
-  ${p => p.animated && `animation: ${opacityAnimation} 1000ms linear infinite;`}
+  ${p => p.animated && css`animation: ${opacityAnimation} 1000ms linear infinite;`}
   display: inline-block;
   font-size: 12px;
   line-height: 21.5px;
@@ -154,7 +175,7 @@ const ProgressBar = styled.div`
 
 const RightWrapper = styled(Wrapper)`
   right: -23px;
-  & > * {
+  & > *:not(:last-child) {
     margin-bottom: 12px;
     width: ${rightModuleWidth}px;
   }
@@ -165,7 +186,7 @@ const ActionModule = styled.div`
   opacity: ${p => p.visible ? 1 : 0};
   padding-right: 32px;
   transition: opacity 350ms ease, transform 350ms ease;
-  transform: translateX(${p => p.visible ? 0 : `${rightModuleWidth + 5}px`});
+  transform: translate(${p => p.visible ? 0 : `${rightModuleWidth + 5}px`}, ${p => p.lower ? `52px` : 0});
 `;
 
 const RightActions = styled(ActionModule)`
@@ -187,6 +208,7 @@ const ActionButton = styled.div`
   margin-left: 8px;
   padding: 3px;
   pointer-events: all;
+  position: relative;
   transition: color 250ms ease;
   width: 64px;
   &:first-child {
@@ -197,19 +219,76 @@ const ActionButton = styled.div`
     background-color: rgba(${p => p.theme.colors.mainRGB}, 0.2);
     border-radius: 3px;
     display: flex;
-    font-size: 36px;
+    font-size: 55px;
     height: 100%;
     justify-content: center;
+    overflow: hidden;
+    position: relative;
     transition: background-color 250ms ease;
     width: 100%;
-  }
-
-  &:hover {
-    color: white;
-    & > div {
-      background-color: rgba(${p => p.theme.colors.mainRGB}, 0.4);
+    & > span {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
     }
   }
+
+  ${p => p?.badge && `
+    &:before {
+      background-color: ${p.theme.colors.main};
+      content: "${p.badge}";
+      color: white;
+      border-radius: 2em;
+      font-size: 12px;
+      font-weight: bold;
+      line-height: 20px;
+      position: absolute;
+      text-align: center;
+      top: -8px;
+      right: -8px;
+      height: 20px;
+      width: 20px;
+      z-index: 1;
+    }
+  `}
+
+  ${p => p.attention && css`
+    animation: ${outlineAnimation} 800ms ease-out infinite;
+    border-color: ${p.theme.colors.success};
+    color: ${p.theme.colors.success};
+    outline: 0 solid ${p.theme.colors.success};
+    & > div {
+      background-color: rgba(${p.theme.colors.successRGB}, 0.2);
+    }
+    &:before {
+      background-color: ${p => p.theme.colors.success};
+    }
+  `}
+
+  ${p => p.disabled
+    ? `
+      border-color: #777;
+      color: #777;
+      cursor: ${p.theme.cursors.default};
+      opacity: 0.75;
+      & > div {
+        background-color: rgba(50, 50, 50, 0.2);
+      }
+      &:before {
+        background-color: #777;
+      }
+    `
+    : `
+      &:hover {
+        color: white;
+        & > div {
+          background-color: rgba(${p.theme.colors.mainRGB}, 0.4);
+        }
+      }
+    `
+  }
+
 `;
 
 const CloseButton = styled(IconButton)`
@@ -326,6 +405,7 @@ const SceneMenu = (props) => {
   const { account } = useAuth();
   const asteroidId = useStore(s => s.asteroids.origin);
   const plotId = useStore(s => s.asteroids.plot);
+  const saleIsActive = useStore(s => s.sale);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
   const showResourceMap = useStore(s => s.asteroids.showResourceMap);
@@ -338,11 +418,12 @@ const SceneMenu = (props) => {
   const history = useHistory();
 
   const { data: asteroid } = useAsteroid(asteroidId);
+  const { scanStatus } = useScanAsteroid(asteroid);
 
   const [renderReady, setRenderReady] = useState(false);
   const [resourceMode, setResourceMode] = useState();
 
-  useEffect(() => ReactTooltip.rebuild(), []);
+  const plotTally = useMemo(() => Math.floor(4 * Math.PI * Math.pow(asteroid?.radius / 1000, 2)), [asteroid?.radius]);
 
   const onClickPane = useCallback(() => {
     // open plot
@@ -381,17 +462,106 @@ const SceneMenu = (props) => {
     }
   }, [!!showResourceMap]);
 
-  useEffect(() => {
-    setResourceMode(!!showResourceMap);
-  }, [!!showResourceMap]);
-
   const onRenderReady = useCallback(() => {
     setRenderReady(true);
   }, []);
 
   useEffect(() => {
+    setResourceMode(!!showResourceMap);
+  }, [!!showResourceMap]);
+
+  useEffect(() => {
     setRenderReady(false);
   }, [asteroidId]);
+
+  // TODO: this is mock data
+  const plot = useMemo(() => {
+    if (!plotId) return null;
+    return {
+      building: plotId % 4 === 1,
+      blueprint: plotId % 3 === 1,
+      coreSamplesExist: plotId % 2 === 1,
+    };
+  }, [plotId]);
+
+  // TODO: need stages for multi-step things (i.e. scanning)
+  // TODO: need badge support
+  const actions = useMemo(() => {
+    const a = [];
+    if (asteroid) {
+      if (!asteroid.owner) {
+        if (saleIsActive) {
+          a.push({
+            label: 'Purchase Asteroid',
+            Icon: PurchaseAsteroidIcon
+          });
+        } else {
+          a.push({
+            label: 'Asteroid can be purchased once next sale begins.',
+            Icon: PurchaseAsteroidIcon,
+            disabled: true
+          });
+        }
+      }
+      if (account && asteroid.owner && Address.areEqual(account, asteroid.owner)) {
+        if (!asteroid.scanned) {
+          if (scanStatus === 'UNSCANNED' || scanStatus === 'SCAN_READY') {
+            a.push({
+              label: scanStatus === 'UNSCANNED' ? 'Scan Asteroid' : 'Retrieve Scan Results',
+              Icon: ScanAsteroidIcon,
+              attention: true
+            });
+          } else if (scanStatus === 'SCANNING' || scanStatus === 'RETRIEVING') {
+            a.push({
+              label: 'Scan Pending',
+              Icon: ScanAsteroidIcon,
+              loading: true
+            });
+          }
+        }
+      }
+    }
+    if (asteroid?.scanned && plot) {
+      if (resourceMode) {
+        a.push({
+          label: 'New Core Sample',
+          Icon: CoreSampleIcon,
+          badge: '12'
+        });
+        if (plot.coreSamplesExist) {
+          a.push({
+            label: 'Improve Core Sample',
+            Icon: ImproveCoreSampleIcon,
+          });
+        }
+      }
+      if (plot.building) {
+        a.push({
+          label: 'Deconstruct Building',
+          Icon: DeconstructIcon
+        });
+      } else if (plot.blueprint) {
+        a.push({
+          label: 'Cancel Blueprint',
+          Icon: CancelBlueprintIcon
+        });
+      } else {
+        a.push({
+          label: 'Lay Blueprint',
+          Icon: LayBlueprintIcon
+        });
+      }
+    }
+
+    // TODO: SurfaceTransferIcon?
+
+    return a;
+  }, [asteroid, plot, resourceMode]);
+
+  // TODO: componentize ActionButtons
+  // TODO: componentize each type of ThumbPreview
+
+  useEffect(() => ReactTooltip.rebuild(), [actions]);
 
   if (!asteroid) return null;
   return (
@@ -505,8 +675,8 @@ const SceneMenu = (props) => {
                     <div style={{ flex: 1 }} />
                     <ThumbFootnote>
                       <div>
-                        <span><b>{Number(Math.floor(4 * Math.PI * Math.pow(asteroid.radius / 1000, 2))).toLocaleString()}</b> Lots</span>
-                        <span><b>{Number(0).toFixed(2)/* TODO: make real */}%</b> Developed</span>
+                        <span><b>{plotTally.toLocaleString()}</b> Lots</span>
+                        <span><b>{((asteroid.buildingTally || 0) / plotTally).toFixed(2)}%</b> Developed</span>
                       </div>
                     </ThumbFootnote>
                   </ThumbMain>
@@ -519,42 +689,29 @@ const SceneMenu = (props) => {
       </LeftWrapper>
 
       <RightWrapper>
-        <ActionModule visible={resourceMode}>
+        <ActionModule visible={zoomStatus === 'in' && resourceMode} lower={!actions?.length}>
           <ResourceMapSelector
-            active={resourceMode}
+            active={zoomStatus === 'in' && resourceMode}
             asteroid={asteroid} />
         </ActionModule>
 
-        <Rule visible={resourceMode} />
+        <Rule visible={resourceMode && actions?.length} />
 
-        <RightActions visible>
-          <ActionButton
-            data-arrow-color="transparent"
-            data-for="global"
-            data-place="top"
-            data-tip="Action #1">
-            <div>
-              <ResourceIcon />
-            </div>
-          </ActionButton>
-          <ActionButton
-            data-arrow-color="transparent"
-            data-for="global"
-            data-place="top"
-            data-tip="Action #2">
-            <div>
-              <ResourceIcon />
-            </div>
-          </ActionButton>
-          <ActionButton
-            data-arrow-color="transparent"
-            data-for="global"
-            data-place="top"
-            data-tip="Action #3">
-            <div>
-              <ResourceIcon />
-            </div>
-          </ActionButton>
+        <RightActions visible={actions?.length > 0}>
+          {actions.map(({ label, Icon, ...flags }) => (
+            <ActionButton
+              key={label}
+              data-arrow-color="transparent"
+              data-for="global"
+              data-place="top"
+              data-tip={label}
+              {...flags}>
+              <div>
+                <Icon />
+                {flags.loading && <LoadingAnimation color="white" height="1" />}
+              </div>
+            </ActionButton>
+          ))}
         </RightActions>
       </RightWrapper>
     </>
