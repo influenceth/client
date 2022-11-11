@@ -445,10 +445,10 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     setHover(isHovering ? category : null);
   }, []);
 
-  const goToModelViewer = useCallback((resource) => (e) => {
+  const goToResourceViewer = useCallback((resource) => (e) => {
     e.stopPropagation();
     ReactTooltip.hide();
-    history.push(`/model-viewer/${resource.label}?back=${encodeURIComponent(history.location.pathname)}`)
+    history.push(`/resource-viewer/${resource.label}?back=${encodeURIComponent(history.location.pathname)}`)
     return false;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -577,7 +577,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                 </BonusItem>
               )}
               {selected.resources.map((resource) => (
-                <ResourceRow key={resource.label} category={selected.category} onClick={goToModelViewer(resource)}>
+                <ResourceRow key={resource.label} category={selected.category} onClick={goToResourceViewer(resource)}>
                   <ResourceIcon style={{ backgroundImage: `url(${resource.iconUrls.w85})` }} />
                   <ResourceInfo>
                     <label>{resource.label}</label> 
@@ -632,7 +632,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                               data-place="left"
                               data-tip={resource.label}
                               data-for="global"
-                              onClick={goToModelViewer(resource)}
+                              onClick={goToResourceViewer(resource)}
                               style={{ backgroundImage: `url(${resource.iconUrls.w25})` }} />
                           ))}
                         </div>

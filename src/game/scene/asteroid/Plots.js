@@ -41,6 +41,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const { processInBackground } = useWebWorker();
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
+  const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
   const selectedPlot = useStore(s => s.asteroids.plot);
 
   const [positionsReady, setPositionsReady] = useState(false);
@@ -540,9 +541,12 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     }
   }, [attachTo.quaternion, selectedPlot]);
   
-  useEffect(() => {
+  useEffect(() => { // shouldn't be zoomed to plot when plots first loaded or unloaded
+    dispatchPlotSelected();
+    dispatchZoomToPlot();
     return () => {
       dispatchPlotSelected();
+      dispatchZoomToPlot();
     };
   }, []);
 

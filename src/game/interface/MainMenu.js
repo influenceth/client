@@ -5,6 +5,7 @@ import { MdWorkspacesOutline as ResourcesIcon } from 'react-icons/md';
 
 import IconButton from '~/components/IconButton';
 import {
+  LayBlueprintIcon as BuildingsIcon,
   CloseIcon,
   CrewIcon,
   EyeIcon,
@@ -38,7 +39,7 @@ const StyledMainMenu = styled.div`
   pointer-events: auto;
   position: relative;
   width: 100%;
-  z-index: 2;
+  z-index: 3;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     background-color: black;
@@ -193,9 +194,13 @@ const MainMenu = (props) => {
         </Menu>
         <Menu title="Viewer">
           <MenuItem
+            name="Buildings"
+            icon={<BuildingsIcon />}
+            onClick={() => history.push('/building-viewer')} />
+          <MenuItem
             name="Resources"
             icon={<ResourcesIcon />}
-            onClick={() => history.push('/model-viewer')} />
+            onClick={() => history.push('/resource-viewer')} />
         </Menu>
         {!!account && hasGenesisCrewmate && (
           <Menu title="Activities" badge={totalAssignments}>

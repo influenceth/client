@@ -7,6 +7,7 @@ import LoadingAnimation from 'react-spinners/BarLoader';
 
 import useSale from '~/hooks/useSale';
 import useScreenSize from '~/hooks/useScreenSize';
+import useStore from '~/hooks/useStore';
 import Alerts from './interface/Alerts';
 import AvatarMenu from './interface/AvatarMenu';
 import Draggables from './interface/Draggables';
@@ -82,6 +83,7 @@ const Interface = () => {
   const { isMobile } = useScreenSize();
   const { data: sale } = useSale();
   const isFetching = useIsFetching();
+  const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
 
   const [hideInterface, setHideInterface] = useState(false);
 
@@ -111,8 +113,11 @@ const Interface = () => {
           <Route exact path="/asteroids">
             <AsteroidsTable />
           </Route>
-          <Route path="/model-viewer/:model?">
-            <ModelViewer />
+          <Route path="/building-viewer/:model?">
+            <ModelViewer assetType="Building" />
+          </Route>
+          <Route path="/resource-viewer/:model?">
+            <ModelViewer assetType="Resource" />
           </Route>
           <Route path="/crew/:i(\d+)">
             <CrewMemberDetails />
@@ -128,6 +133,7 @@ const Interface = () => {
           </Route>
         </Switch>
 
+        {zoomToPlot && <ModelViewer assetType="Building" plotZoomMode={zoomToPlot} />}
         <AvatarMenu />
         <SceneMenu />
         <MainMenu />

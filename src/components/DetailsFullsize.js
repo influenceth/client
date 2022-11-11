@@ -6,12 +6,12 @@ import { CloseIcon } from '~/components/Icons';
 
 const Wrapper = styled.div`
   flex: 1 1 0;
-  margin-bottom: -46px;
+  margin-bottom: -75px;
   position: relative;
   right: -11px;
   overflow: hidden;
   width: calc(100% + 24px);
-  z-index: 2;
+  z-index: ${p => 3 - (p.lowerZIndex ? 1 : 0)};
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     margin: 0;
@@ -28,7 +28,8 @@ const StyledDetails = styled.div`
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(100% - 22px),
+    100% calc(100% - 50px),
+    calc(100% - 22px) calc(100% - 28px),
     calc(100% - 22px) 100%,
     0 100%
   );
@@ -101,19 +102,21 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Details = (props) => {
-  const { title, contentProps = {}, edgeToEdge, onCloseDestination, ...restProps } = props;
+  const { title, contentProps = {}, edgeToEdge, hideClose, onCloseDestination, ...restProps } = props;
   const history = useHistory();
 
   return (
     <Wrapper {...restProps}>
       <StyledDetails {...restProps}>
         {title && <Header>{title}</Header>}
-        <CloseButton
-          onClick={() => history.push(onCloseDestination || '/')}
-          hasBackground={edgeToEdge}
-          borderless>
-          <CloseIcon />
-        </CloseButton>
+        {!hideClose && (
+          <CloseButton
+            onClick={() => history.push(onCloseDestination || '/')}
+            hasBackground={edgeToEdge}
+            borderless>
+            <CloseIcon />
+          </CloseButton>
+        )}
         <Content edgeToEdge={edgeToEdge} hasTitle={!!title} {...contentProps}>
           {props.children}
         </Content>

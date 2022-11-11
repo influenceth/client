@@ -114,6 +114,7 @@ const Asteroid = (props) => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const showResourceMap = useStore(s => s.asteroids.showResourceMap);
+  const selectedPlot = useStore(s => s.asteroids.plot);
 
   const { data: asteroidData } = useAsteroid(origin);
 
@@ -620,8 +621,9 @@ const Asteroid = (props) => {
         //   );
         // }
 
-        // lock to surface if within "lock" radius
-        lockToSurface.current = controls.object.position.length() < 1.1 * config.radius;
+        // lock to surface if within "lock" radius OR plot is selected
+        // TODO: consider automatically deselecting plot if zoom out enough
+        lockToSurface.current = controls.object.position.length() < 1.1 * config.radius || selectedPlot;
         if (lockToSurface.current) {
           controls.object.up.applyAxisAngle(rotationAxis.current, updatedRotation - rotation.current);
           controls.object.position.applyAxisAngle(rotationAxis.current, updatedRotation - rotation.current);

@@ -8,7 +8,7 @@ const getCloudfrontUrl = (key, { w, h, f } = {}) => {
   if (w || h) {
     slug = window.btoa(
       JSON.stringify({
-        key,
+        key: slug,
         bucket: process.env.REACT_APP_CLOUDFRONT_BUCKET,
         edits: {
           resize: {

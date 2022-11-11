@@ -103,8 +103,8 @@ const ResourceMapSelector = ({ active, asteroid }) => {
   const [category, setCategory] = useState();
   const [resource, setResource] = useState();
 
-  const goToModelViewer = useCallback(() => {
-    history.push(`/model-viewer/${resource.label}`)
+  const goToResourceViewer = useCallback(() => {
+    history.push(`/resource-viewer/${resource.label}`)
   }, [resource?.label]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectCategory = useCallback((selected, forceReset) => () => {
@@ -143,7 +143,7 @@ const ResourceMapSelector = ({ active, asteroid }) => {
       <Label>Resource Map:</Label>
       <Container>
         <ResourceIcon
-          onClick={goToModelViewer}
+          onClick={goToResourceViewer}
           style={{ backgroundImage: `url(${resource.iconUrls.w85})` }} />
         <ResourceDetails>
           <DropdownContainer selectedCategory={showResourceMap?.category}>

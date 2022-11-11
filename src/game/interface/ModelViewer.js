@@ -16,7 +16,7 @@ import NumberInput from '~/components/NumberInput';
 import useAssets from '~/hooks/useAssets';
 import { useLocation, useParams } from 'react-router-dom';
 
-// TODO: connect to gpu-graphics settings
+// TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
 const ENV_MAP_STRENGTH = 4.5;
 
@@ -104,7 +104,7 @@ const Dropdowns = styled.div`
 const IconContainer = styled.div`
   background: black;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  bottom: 60px;
+  bottom: 105px;
   left: 32px;
   height: 115px;
   position: absolute;
@@ -128,7 +128,18 @@ const loadingCss = css`
   z-index: 10;
 `;
 
-const Model = ({ url, onLoaded, overrideEnvStrength, rotationEnabled, zoomLimitsEnabled }) => {
+const skyboxDefaults = {
+  'Resource': {
+    background: '/textures/model-viewer/resource_skybox.hdr',
+    envmap: '/textures/model-viewer/resource_envmap.hdr',
+  },
+  'Building': {
+    background: '/textures/model-viewer/building_skybox.hdr',
+    envmap: '/textures/model-viewer/resource_envmap.hdr',
+  }
+};
+
+const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled, zoomLimitsEnabled }) => {
   const { camera, gl, scene } = useThree();
 
   const animationMixer = useRef();
@@ -326,14 +337,14 @@ const Model = ({ url, onLoaded, overrideEnvStrength, rotationEnabled, zoomLimits
   // );
 }
 
-const Skybox = ({ onLoaded, overrideBackground, overrideEnvironment }) => {
+const Skybox = ({ assetType, onLoaded, overrideBackground, overrideEnvironment }) => {
   const { scene } = useThree();
 
   useEffect(() => {
     let cleanupTextures = [];
 
-    let background = overrideBackground || '/textures/model-viewer/resource_skybox.hdr';
-    let env = overrideEnvironment || '/textures/model-viewer/resource_envmap.hdr';
+    let background = overrideBackground || skyboxDefaults[assetType].background;
+    let env = overrideEnvironment || skyboxDefaults[assetType].envmap;
 
     let waitingOn = background === env ? 1 : 2;
     new RGBELoader().load(background, function (texture) {
@@ -361,12 +372,12 @@ const Skybox = ({ onLoaded, overrideBackground, overrideEnvironment }) => {
     return () => {
       cleanupTextures.forEach((t) => t.dispose());
     };
-  }, [overrideBackground, overrideEnvironment]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [assetType, overrideBackground, overrideEnvironment]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 };
 
-const Lighting = () => {
+const Lighting = ({ assetType }) => {
   const { gl, scene } = useThree();
 
   useEffect(() => {
@@ -412,10 +423,11 @@ const Lighting = () => {
 };
 
 const reader = new FileReader();
-const ModelViewer = (props) => {
+const ModelViewer = ({ assetType, plotZoomMode }) => {
   const { data: assets, isLoading: loadingAssets } = useAssets();
-  const { model: singleModel } = useParams();
+  const { model: paramModel } = useParams();
   const { search } = useLocation();
+  const singleModel = plotZoomMode || paramModel;
 
   const [devtoolsEnabled, setDevtoolsEnabled] = useState();
   const [model, setModel] = useState();
@@ -508,6 +520,7 @@ const ModelViewer = (props) => {
   const [categoryModels, setCategoryModels] = useState();
   useEffect(() => {
     if (!!assets) {
+      setCategories();
       if (singleModel) {
         const asset = assets.find((a) => a.label === singleModel);
         if (asset) {
@@ -517,20 +530,15 @@ const ModelViewer = (props) => {
       }
       
       // this is default if no singleModel or can't find singleModel
-      const categorySet = new Set(assets.filter((a) => a.assetType === 'Resource').map((a) => a.bucket));
+      const categorySet = new Set(assets.filter((a) => a.assetType === assetType).map((a) => a.bucket));
       const categoryArr = Array.from(categorySet).sort();
       setCategories(categoryArr);
+      setCategory(categoryArr[0]);
     }
-  }, [!!assets, singleModel]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!!categories) {
-      setCategory(categories[0]);
-    }
-  }, [!!categories]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [!!assets, assetType, singleModel]);
   
   useEffect(() => {
-    if (!!assets && category) {
+    if (!!assets && category !== undefined) {
       const bAssets = assets
         .filter((a) => a.bucket === category)
         .sort((a, b) => a.label < b.label ? -1 : 1);
@@ -553,21 +561,33 @@ const ModelViewer = (props) => {
 
   const onCloseDestination = useMemo(() => new URLSearchParams(search).get('back'), [search]);
 
+  const title = useMemo(() => {
+    if (plotZoomMode) return '';
+    if (singleModel && model) {
+      return `${assetType === 'Resource' ? model.bucket : 'Infrastructure'} — ${model.label}`;
+    }
+    return `${assetType} Details`;
+  }, [singleModel, model, assetType, plotZoomMode]);
+
   const isLoading = loadingAssets || loadingModel || loadingSkybox;
   return (
     <Details
       edgeToEdge
+      hideClose={plotZoomMode}
+      lowerZIndex={!!plotZoomMode}
       onCloseDestination={onCloseDestination}
-      title={singleModel ? `${model?.bucket} — ${model?.label}` : `Resource Details`}>
+      title={title}>
       <BarLoader color="#AAA" height={3} loading={isLoading} css={loadingCss} />
 
       {!singleModel && categories && categoryModels && (
         <Dropdowns>
-          <Dropdown
-            disabled={isLoading}
-            options={categories}
-            onChange={(b) => setCategory(b)}
-            width="200px" />
+          {categories.length > 1 && (
+            <Dropdown
+              disabled={isLoading}
+              options={categories}
+              onChange={(b) => setCategory(b)}
+              width="200px" />
+          )}
           <Dropdown
             disabled={isLoading}
             labelKey="label"
@@ -658,19 +678,21 @@ const ModelViewer = (props) => {
           resize={{ debounce: 5, scroll: false }}
           style={{ height: '100%', width: '100%' }}>
           <Skybox
+            assetType={assetType}
             onLoaded={() => setLoadingSkybox(false)}
             overrideBackground={bgOverride}
             overrideEnvironment={envOverride}
           />
           {model?.modelUrl && !loadingSkybox && (
             <Model
+              assetType={assetType}
               onLoaded={handleLoaded}
               overrideEnvStrength={envStrengthOverride}
               rotationEnabled={rotationEnabled}
               zoomLimitsEnabled={zoomLimitsEnabled}
               url={modelOverride || model.modelUrl} />
           )}
-          {lightsEnabled && <Lighting />}
+          {lightsEnabled && <Lighting assetType={assetType} />}
         </Canvas>
       </CanvasContainer>
     </Details>

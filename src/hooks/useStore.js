@@ -37,6 +37,7 @@ const useStore = create(persist((set, get) => ({
       highlight: null,
       plot: null,
       plotDestination: null,
+      zoomToPlot: null,
       showResourceMap: null,
       owned: {
         mapped: false,
@@ -265,6 +266,7 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.showResourceMap = null;
       state.asteroids.plot = null;
       state.asteroids.plotDestination = null;
+      state.asteroids.zoomToPlot = null;
     })),
 
     dispatchDestinationSelected: (i) => set(produce(state => {
@@ -287,6 +289,7 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.showResourceMap = null;
       state.asteroids.plot = null;
       state.asteroids.plotDestination = null;
+      state.asteroids.zoomToPlot = null;
     })),
 
     dispatchAsteroidZoomedFrom: (from) => set(produce(state => {
@@ -429,15 +432,23 @@ const useStore = create(persist((set, get) => ({
       state.pendingTransactions = state.pendingTransactions.filter((tx) => tx.txHash !== txHash);
     })),
 
+    dispatchZoomToPlot: (buildingLabel) => set(produce(state => {
+      state.asteroids.zoomToPlot = buildingLabel;
+    }))
+
 }), {
   name: 'influence',
   version: 0,
-  blacklist: [  // TODO: should these be stored elsewhere if ephemeral?
+  blacklist: [
+    // TODO: should these be stored elsewhere if ephemeral?
+    // TODO: the nested values are not supported by zustand
     'asteroids.hovered',
+    'asteroids.plot',
+    'asteroids.plotDestination',
+    'asteroids.zoomToPlot',
     'cutscenePlaying',
     'draggables',
     'plotLoader',
-    'selectedPlot',
     'timeOverride'  // should this be in ClockContext?
   ]
 }));

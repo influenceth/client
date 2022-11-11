@@ -8,10 +8,7 @@ import {
   FaGem as ResourceIcon,
   FaSearchPlus as DetailsIcon
 } from 'react-icons/fa';
-import LoadingAnimation from 'react-spinners/BarLoader';
 
-
-import Button from '~/components/ButtonAlt';
 import IconButton from '~/components/IconButton';
 import {
   BackIcon,
@@ -42,6 +39,7 @@ const Wrapper = styled.div`
   pointer-events: none;
   position: absolute;
   bottom: 100px;
+  z-index: 2;
 `;
 
 const LeftWrapper = styled(Wrapper)`
@@ -308,11 +306,13 @@ const SceneMenu = (props) => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const plotId = useStore(s => s.asteroids.plot);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
 
   const showResourceMap = useStore(s => s.asteroids.showResourceMap);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
   const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
+  const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   
   const plotLoader = useStore(s => s.plotLoader);
@@ -329,10 +329,37 @@ const SceneMenu = (props) => {
     plotTally
   );
 
+  // TODO: this is mock data
+  const buildings = useMemo(() => {
+    if (assets) return assets.filter((a) => a.assetType === 'Building');
+    return [];
+  }, [assets]);
+  const plot = useMemo(() => {
+    if (!plotId) return null;
+    return {
+      building: plotData?.plots?.length && plotData.plots[plotId][1] ? buildings[1] : null,
+      blueprint: plotId % 3 === 1,
+      coreSamplesExist: plotId % 2 === 1 ? (plotId % 10) : 0,
+    };
+  }, [plotId, !plotData?.plots]);
+
+  const { backLabel, onClickBack } = useMemo(() => {
+    if (zoomToPlot) {
+      return {
+        backLabel: 'Back to Asteroid',
+        onClickBack: () => dispatchZoomToPlot()
+      }
+    }
+    return {
+      backLabel: 'Back to Belt',
+      onClickBack: () => updateZoomStatus('zooming-out')
+    }
+  }, [zoomToPlot]);
+
   const onClickPane = useCallback(() => {
     // open plot
     if (asteroidId && plotId && zoomStatus === 'in') {
-      // TODO: ...
+      dispatchZoomToPlot((plot.building || buildings[0]).label);
 
     // open asteroid details
     } else if (asteroidId && zoomStatus === 'in') {
@@ -378,20 +405,6 @@ const SceneMenu = (props) => {
     setRenderReady(false);
   }, [asteroidId]);
 
-  // TODO: this is mock data
-  const buildings = useMemo(() => {
-    if (assets) return assets.filter((a) => a.assetType === 'Building');
-    return [];
-  }, [assets]);
-  const plot = useMemo(() => {
-    if (!plotId) return null;
-    return {
-      building: plotData?.plots?.length && plotData.plots[plotId][1] ? buildings[1] : null,
-      blueprint: plotId % 3 === 1,
-      coreSamplesExist: plotId % 2 === 1 ? (plotId % 10) : 0,
-    };
-  }, [plotId, !plotData?.plots]);
-
   const actions = useMemo(() => {
     const a = [];
     if (asteroid) {
@@ -425,7 +438,7 @@ const SceneMenu = (props) => {
     <>
       <LeftWrapper>
         <LeftActions visible={zoomStatus === 'in'}>
-          {asteroid?.scanned && (
+          {asteroid?.scanned && !zoomToPlot && (
             <>
               <LeftActionButton
                 active={resourceMode}
@@ -445,15 +458,15 @@ const SceneMenu = (props) => {
                 onClick={() => toggleResourceMode(false)}>
                 <InfrastructureIcon />
               </LeftActionButton>
-              <Rule />
+              <Rule visible />
             </>
           )}
           <LeftActionButton
             data-arrow-color="transparent"
             data-for="global"
             data-place="right"
-            data-tip="Back to Belt"
-            onClick={() => updateZoomStatus('zooming-out')}>
+            data-tip={backLabel}
+            onClick={onClickBack}>
             <BackIcon />
           </LeftActionButton>
         </LeftActions>
@@ -484,7 +497,20 @@ const SceneMenu = (props) => {
                 </Subtitle>
               </>
             )}
-            {zoomStatus === 'in' && plotId && (
+            {zoomStatus === 'in' && plotId && zoomToPlot && (
+              <>
+                <Title>{(plot.building || buildings[0])?.label}</Title>
+                <Subtitle>
+                  <PaneContent>
+                    Lot #{plotId.toLocaleString()}
+                  </PaneContent>
+                  <PaneHoverContent>
+                    Lot Details
+                  </PaneHoverContent>
+                </Subtitle>
+              </>
+            )}
+            {zoomStatus === 'in' && plotId && !zoomToPlot && (
               <div>
                 <ThumbPreview visible>
                   <CloseButton borderless onClick={onClosePane}>
@@ -545,13 +571,13 @@ const SceneMenu = (props) => {
       </LeftWrapper>
 
       <RightWrapper>
-        <ActionModule visible={zoomStatus === 'in' && resourceMode} lower={!actions?.length}>
+        <ActionModule visible={zoomStatus === 'in' && !zoomToPlot && resourceMode} lower={!actions?.length}>
           <ResourceMapSelector
-            active={zoomStatus === 'in' && resourceMode}
+            active={zoomStatus === 'in' && !zoomToPlot && resourceMode}
             asteroid={asteroid} />
         </ActionModule>
 
-        <Rule visible={resourceMode && actions?.length} />
+        <Rule visible={resourceMode && !zoomToPlot && actions?.length} />
 
         <RightActions visible={actions?.length > 0}>
           {actions.map((ActionButton, i) => (
