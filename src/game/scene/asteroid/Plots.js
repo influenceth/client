@@ -519,7 +519,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   }, [attachTo.quaternion]);
 
   useEffect(() => {
-    if (selectionMesh.current && selectedPlot) {
+    if (selectionMesh.current && positions.current && selectedPlot) {
       selectionMesh.current.position.set(
         positions.current[selectedPlot * 3 + 0],
         positions.current[selectedPlot * 3 + 1],

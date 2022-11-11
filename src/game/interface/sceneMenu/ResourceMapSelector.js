@@ -144,7 +144,7 @@ const ResourceMapSelector = ({ active, asteroid }) => {
       <Container>
         <ResourceIcon
           onClick={goToModelViewer}
-          style={{ backgroundImage: `url(${resource.iconUrl})` }} />
+          style={{ backgroundImage: `url(${resource.iconUrls.w85})` }} />
         <ResourceDetails>
           <DropdownContainer selectedCategory={showResourceMap?.category}>
             <Dropdown

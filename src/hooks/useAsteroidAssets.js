@@ -37,7 +37,7 @@ const useAsteroidAssets = (asteroid) => {
             category: categoryKey,
             categoryLabel: a.bucket,
             label: a.label,
-            iconUrl: a.iconUrl,
+            iconUrls: a.iconUrls,
             abundance: asteroidAbundances[a.label],
           });
         });

@@ -73,6 +73,15 @@
     },
     "REACT_APP_HIDE_SOCIAL": {
       "required": false
+    },
+    "REACT_APP_CLOUDFRONT_IMAGE_URL": {
+      "required": true
+    },
+    "REACT_APP_CLOUDFRONT_OTHER_URL": {
+      "required": true
+    },
+    "REACT_APP_CLOUDFRONT_BUCKET": {
+      "required": true
     }
   }
 }

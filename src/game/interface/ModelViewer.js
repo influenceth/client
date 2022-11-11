@@ -517,7 +517,7 @@ const ModelViewer = (props) => {
       }
       
       // this is default if no singleModel or can't find singleModel
-      const categorySet = new Set(assets.map((a) => a.bucket));
+      const categorySet = new Set(assets.filter((a) => a.assetType === 'Resource').map((a) => a.bucket));
       const categoryArr = Array.from(categorySet).sort();
       setCategories(categoryArr);
     }
@@ -647,9 +647,9 @@ const ModelViewer = (props) => {
         </Devtools>
       )}
 
-      {!modelOverride && model?.iconUrl && (
+      {!modelOverride && model?.iconUrls?.w125 && (
         <IconContainer>
-          <img src={model.iconUrl} alt={`${model.label} icon`} />
+          <img src={model.iconUrls.w125} alt={`${model.label} icon`} />
         </IconContainer>
       )}
 

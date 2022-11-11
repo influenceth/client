@@ -578,7 +578,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
               )}
               {selected.resources.map((resource) => (
                 <ResourceRow key={resource.label} category={selected.category} onClick={goToModelViewer(resource)}>
-                  <ResourceIcon style={{ backgroundImage: `url(${resource.iconUrl})` }} />
+                  <ResourceIcon style={{ backgroundImage: `url(${resource.iconUrls.w85})` }} />
                   <ResourceInfo>
                     <label>{resource.label}</label> 
                     <BarChart value={resource.abundance} maxValue={selected.resources[0].abundance} twoLine>
@@ -611,7 +611,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                       onClick={handleClick(i)}
                       onMouseEnter={handleHover(category, true)}
                       onMouseLeave={handleHover(category, false)}>
-                      <ResourceGroupIcon category={category}>{/* TODO: resize icons */}
+                      <ResourceGroupIcon category={category}>
                         {ResourceGroupIcons[category.toLowerCase()]}
                       </ResourceGroupIcon>
                       <ResourceGroupLabel>
@@ -633,7 +633,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                               data-tip={resource.label}
                               data-for="global"
                               onClick={goToModelViewer(resource)}
-                              style={{ backgroundImage: `url(${resource.iconUrl})` }} />
+                              style={{ backgroundImage: `url(${resource.iconUrls.w25})` }} />
                           ))}
                         </div>
                       </ResourceGroupItems>
