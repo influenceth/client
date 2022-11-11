@@ -3,8 +3,8 @@ import { useQuery } from 'react-query';
 import api from '~/lib/api';
 
 const getCloudfrontUrl = (key, { w, h, f } = {}) => {
-  // TODO: (the "replace" is temporarily necessary while the Goerli data has not yet been migrated)
-  let slug = key.replace(`${process.env.REACT_APP_CLOUDFRONT_IMAGE_URL}/`, '');
+  // TODO: (the "replace" is temporarily necessary until the Goerli data has been migrated)
+  let slug = key.replace(`${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/`, '');
   if (w || h) {
     slug = window.btoa(
       JSON.stringify({
@@ -42,7 +42,8 @@ const useAssets = () => {
           }
           return {
             ...a,
-            modelUrl: `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/${a.modelUrl}`,
+            // TODO: (the "replace" is temporarily necessary until the Goerli data has been migrated)
+            modelUrl: `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/${a.modelUrl.replace(`${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/`, '')}`,
             iconUrl: getCloudfrontUrl(a.iconUrl),
             iconUrls
           }
