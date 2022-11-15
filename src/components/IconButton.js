@@ -6,7 +6,7 @@ import useStore from '~/hooks/useStore';
 
 const StyledIconButton = styled.button`
   border: ${p => p.borderless ? '0px' : '1px'} solid ${p => p.theme.colors.main};
-  background-color: transparent;
+  background-color: ${p => p.backgroundColor || 'transparent'};
   border-radius: 2px;
   color: ${p => p.theme.colors.main};
   font-family: 'Jura', sans-serif;

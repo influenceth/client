@@ -1,6 +1,6 @@
 import { AiFillEdit, AiFillEye, AiFillStar } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle, BsChevronLeft, BsPieChartFill } from 'react-icons/bs';
-import { FaEthereum, FaMapMarkedAlt, FaCopy } from 'react-icons/fa';
+import { FaEthereum, FaMapMarkedAlt, FaCopy, FaGem } from 'react-icons/fa';
 import { FiMenu } from 'react-icons/fi';
 import { HiClock } from 'react-icons/hi';
 import {
@@ -131,6 +131,7 @@ export {
   BsFillPersonFill as CrewMemberIcon,
   BsPieChartFill as CompositionIcon,
   FaCopy as CopyIcon,
+  FaGem as ResourceIcon,
   FaEthereum as ConnectIcon,
   RiPagesFill as DetailIcon,
   FaMapMarkedAlt as MapIcon,
@@ -140,6 +141,7 @@ export {
   MdAccountBalanceWallet as WalletIcon,
   MdBlurOff as ScanIcon,
   MdKeyboardArrowDown as CaretIcon,
+  MdChevronRight as ChevronRightIcon,
   MdChevronRight as CollapsedIcon,
   MdClose as CloseIcon,
   MdExpandMore as ExpandedIcon,

@@ -36,6 +36,7 @@ const useAssets = () => {
             iconUrls.w125 = getCloudfrontUrl(a.iconUrl, { w: 125 });
             iconUrls.w400 = getCloudfrontUrl(a.iconUrl, { w: 400 });
           } else if (a.assetType === 'Building') {
+            iconUrls.w150 = getCloudfrontUrl(a.iconUrl, { w: 150 });
             iconUrls.w400 = getCloudfrontUrl(a.iconUrl, { w: 400 });
           } else {
             console.error(`${a.assetType} ASSET TYPE does not have any icon sizes set!`);

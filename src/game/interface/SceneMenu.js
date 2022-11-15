@@ -5,7 +5,6 @@ import utils, { Address } from 'influence-utils';
 import ReactTooltip from 'react-tooltip';
 import {
   FaCubes as InfrastructureIcon,
-  FaGem as ResourceIcon,
   FaSearchPlus as DetailsIcon
 } from 'react-icons/fa';
 
@@ -14,6 +13,7 @@ import {
   BackIcon,
   CloseIcon,
   InfoIcon,
+  ResourceIcon,
 } from '~/components/Icons';
 import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
 import useAssets from '~/hooks/useAssets';
@@ -22,6 +22,7 @@ import useAsteroidPlots from '~/hooks/useAsteroidPlots';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import actionButtons from './sceneMenu/actionButtons';
+import ActionDialog from './sceneMenu/ActionDialog';
 import ResourceMapSelector from './sceneMenu/ResourceMapSelector';
 
 const rightModuleWidth = 375;
@@ -337,6 +338,7 @@ const SceneMenu = (props) => {
   const plot = useMemo(() => {
     if (!plotId) return null;
     return {
+      i: plotId,
       building: plotData?.plots?.length && plotData.plots[plotId][1] ? buildings[1] : null,
       blueprint: plotId % 3 === 1,
       coreSamplesExist: plotId % 2 === 1 ? (plotId % 10) : 0,
@@ -585,6 +587,8 @@ const SceneMenu = (props) => {
           ))}
         </RightActions>
       </RightWrapper>
+
+      {false && <ActionDialog asteroid={asteroid} plot={plot} />}
     </>
   );
 };

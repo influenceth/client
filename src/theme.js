@@ -35,7 +35,7 @@ const theme = {
     borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
     success: '#54de94',
     successRGB: '84, 222, 148', // NOTE: this should be rgb of `success`
-    txButton: '#283e78',
+    txButton: '#4444b8',
     error: red,
     bonus: {
       level0: '#999999',
