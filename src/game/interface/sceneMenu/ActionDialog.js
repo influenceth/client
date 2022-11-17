@@ -12,16 +12,23 @@ import CrewCard from '~/components/CrewCard';
 import Dialog from '~/components/Dialog';
 import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
-import { ChevronRightIcon, CloseIcon, CoreSampleIcon, ResourceIcon } from '~/components/Icons';
+import {
+  CheckIcon,
+  ChevronRightIcon,
+  CloseIcon,
+  CoreSampleIcon,
+  LayBlueprintIcon,
+  ResourceIcon
+} from '~/components/Icons';
 import Poppable from '~/components/Popper';
 import SliderInput from '~/components/SliderInput';
 import useAssets from '~/hooks/useAssets';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 
 
 const borderColor = '#333';
-
 
 const CloseButton = styled(IconButton)`
   opacity: 0.6;
@@ -41,15 +48,15 @@ const Spacer = styled.div`
 const Section = styled.div`
   color: #777;
   min-height: 100px;
-  padding: 0 15px;
-  width: 675px;
+  padding: 0 20px;
+  width: 750px;
 `;
 const SectionTitle = styled.div`
   align-items: center;
   border-bottom: 1px solid ${borderColor};
   display: flex;
   flex-direction: row;
-  font-size: 85%;
+  font-size: 90%;
   line-height: 1.5em;
   padding: 0 5px 10px;
   text-transform: uppercase;
@@ -59,21 +66,20 @@ const SectionTitle = styled.div`
   }
 `;
 const SectionBody = styled.div`
+  align-items: center;
   display: flex;
   flex-direction: row;
-`;
-const SectionBodyWithSelector = styled(SectionBody)`
-  align-items: center;
   padding: 15px 0;
+  ${p => p.highlight && `
+    margin: 10px 0;
+    background: rgba(${p.theme.colors.mainRGB}, 0.2);
+    border-radius: 10px;
+  `}
 `;
-const Stretcher = styled.div`
-  display: flex;
-  flex: 1;
-  justify-content: center;
-`;
+
 const Header = styled(Section)`
-  padding-bottom: 15px;
-  padding-top: 15px;
+  padding-bottom: 20px;
+  padding-top: 20px;
   position: relative;
   ${p => p.backgroundSrc && `
     &:before {
@@ -81,7 +87,7 @@ const Header = styled(Section)`
       background: url("${p.backgroundSrc}") center center;
       background-size: cover;
       bottom: 0;
-      mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+      mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
       
       position: absolute;
       left: 0;
@@ -91,9 +97,14 @@ const Header = styled(Section)`
     }
   `}
 `;
+const HeaderSectionBody = styled(SectionBody)`
+  align-items: stretch;
+  padding: 0;
+  position: static;
+`;
 const HeaderThumbnail = styled.div`
-  height: 115px;
-  width: 115px;
+  height: 125px;
+  width: 125px;
   border: 1px solid #555;
   padding: 3px;
   position: relative;
@@ -106,6 +117,16 @@ const HeaderThumbnail = styled.div`
     height: 100%;
     width: 100%;
   }
+  ${p => p.badge && `
+    &:after {
+      content: "${p.badge.toLocaleString()}";
+      bottom: 5px;
+      color: white;
+      left: 6px;
+      line-height: 1em;
+      position: absolute;
+    }
+  `}
 `;
 const HeaderThumbnailOverlay = styled.div`
   align-items: center;
@@ -145,7 +166,7 @@ const HeaderInfo = styled.div`
   flex-direction: column;
   font-size: 90%;
   justify-content: center;
-  padding-left: 20px;
+  padding-left: 10px;
   position: relative;
   & b {
     color: white;
@@ -155,7 +176,7 @@ const HeaderInfo = styled.div`
 const Title = styled.div`
   color: white;
   font-size: 32px;
-  line-height: 32px;
+  line-height: 40px;
 `;
 const Subtitle = styled.div`
 
@@ -163,9 +184,10 @@ const Subtitle = styled.div`
 const Footnote = styled.div`
   
 `;
+const CrewRequirement = styled.div``;
 const CrewInfo = styled.div`
   align-items: flex-end;
-  display: flex;
+  display: ${p => (p.status === 'BEFORE' || (p.requirement === 'duration' && p.status !== 'AFTER')) ? 'flex' : 'none'};
   flex-direction: row;
   position: absolute;
   right: 0;
@@ -177,7 +199,35 @@ const CrewInfo = styled.div`
       font-weight: bold;
     }
   }
+  ${CrewRequirement} {
+    &:before {
+      content: "Crew: ";
+    }
+    &:after {
+      display: block;
+      font-weight: bold;
+      ${p => {
+        if (p.requirement === 'duration') {
+          if (p.status === 'DURING') {
+            return `
+              content: "Performing Action";
+              color: ${p.theme.colors.main};
+            `;
+          }
+          return `
+            content: "Required for Duration";
+            color: ${p.theme.colors.orange};
+          `;
+        }
+        return `
+          content: "Required to Start";
+          color: ${p.theme.colors.main};
+        `;
+      }}
+    }
+  }
 `;
+
 const CardContainer = styled.div`
   border: 1px solid #555;
   margin-left: 8px;
@@ -187,7 +237,31 @@ const CardContainer = styled.div`
     background: #111;
   }
 `;
+const StatRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 40px 5px 15px;
+  & > label {
+    
+  }
+  & > span {
+    color: ${p => p.theme.colors.main};
+    font-weight: bold;
+    &:after {
+      display: none;
+      ${p => p.direction >= 0 && `
+        content: " ▲";
+        color: ${p.direction > 0 ? p.theme.colors.success : 'transparent'};
+      `}
+      ${p => p.direction < 0 && `
+        content: " ▼";
+        color: ${p.theme.colors.error};
+      `}
+    }
+  }
+`;
 const StatSection = styled(Section)`
+  min-height: 0;
   & ${SectionBody} {
     border-top: 1px solid ${borderColor};
     display: flex;
@@ -199,21 +273,18 @@ const StatSection = styled(Section)`
       }
     }
   }
-`;
-const StatRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  padding: 5px 15px;
-  & > label {
-    
-  }
-  & > span {
-    color: white;
-    &:after {
-      content: " ▴";
-      color: ${p => p.theme.colors.success};
+
+  ${p => p.status === 'BEFORE' && `
+    ${StatRow} > span {
+      color: white;
+      &:after {
+        display: inline;
+        font-size: 50%;
+        padding-left: 2px;
+        vertical-align: middle;
+      }
     }
-  }
+  `}
 `;
 const Footer = styled(Section)`
   min-height: 0;
@@ -228,45 +299,57 @@ const Footer = styled(Section)`
   }
 `;
 
-const RawMaterial = styled.div`
+const ThumbnailWithData = styled.div`
+  flex: 1;
   align-items: center;
   display: flex;
+  padding-left: 15px;
   & > label {
     padding-left: 15px;
     & > h3 {
       color: white;
+      font-size: 25px;
       font-weight: normal;
       margin: 0;
     }
+  }
+`;
+const RawMaterial = styled(ThumbnailWithData)`
+  & > label {
+    ${p => p.complete && `
+      & > h3:after {
+        content: " Deposit";
+      }
+    `}
     & > div {
       & > b {
         color: ${p => p.theme.colors.main};
+        font-size: 25px;
         font-weight: bold;
         & > svg {
           vertical-align: middle;
         }
       }
     }
-    & > h3, 
-    & > div > b {
-      font-size: 25px;
+  }
+`;
+
+const Destination = styled(ThumbnailWithData)`
+  & > label {
+    & b {
+      color: white;
+      font-weight: normal;
+    }
+    & > *:last-child {
+      margin-top: 1em;
     }
   }
 `;
 
-const Destination = styled.div`
-  & > h3 {
-    color: white;
-    font-size: 25px;
-    font-weight: normal;
-    margin: 0;
-  }
+const BuildingPlan = styled(ThumbnailWithData)`
   & b {
-    color: white;
+    color: ${p => p.theme.colors.main};
     font-weight: normal;
-  }
-  & > *:last-child {
-    margin-top: 1em;
   }
 `;
 
@@ -396,7 +479,7 @@ const SliderInfoRow = styled.div`
 `;
 
 const LoadingBar = styled.div`
-  background: ${p => p.theme.colors.main};
+  background: #26718c;
   color: white;
   font-size: 18px;
   padding: 9px 15px;
@@ -427,14 +510,152 @@ const BuildingImage = ({ building, progress, secondaryProgress }) => {
   );
 };
 
+const RawMaterialSection = ({ resource, tonnage, status }) => {
+  // TODO: empty state
+  // TODO: default resource to current emissive settings (if none, then show empty state)
+  return (
+    <Section>
+      <SectionTitle><ChevronRightIcon /> Raw Material</SectionTitle>
+      <SectionBody highlight={status === 'AFTER'}>
+        {resource && (
+          <RawMaterial complete={status === 'AFTER'}>
+            <ResourceImage resource={resource} />
+            <label>
+              <h3>{resource.label}</h3>
+              {tonnage /* TODO: ... */
+                ? <div><b><ResourceIcon /> {tonnage.toLocaleString()}</b> tonnes</div>
+                : <div><b>43%</b> Abundance at lot</div>
+              }
+            </label>
+          </RawMaterial>
+        )}
+        {/* TODO: drop select here, doesn't make sense... however, we do need a screen to select source of core sampler (eventually, currently they are free) */}
+        {status === 'BEFORE' && (
+          <div>
+            <Poppable label="Select" buttonWidth="135px">
+              {/* TODO: ... */}
+            </Poppable>
+          </div>
+        )}
+      </SectionBody>
+    </Section>
+  );
+}
+
+const DestinationPlotSection = ({ asteroid, destinationPlot }) => {
+  return (
+    <Section>
+      <SectionTitle><ChevronRightIcon /> Destination</SectionTitle>
+      <SectionBody>
+        <Destination>
+          <BuildingImage building={destinationPlot.building} progress={0.3} secondaryProgress={0.7} />
+          <label>
+            <h3>{destinationPlot.building.label}</h3>
+            <div>{asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {destinationPlot.i.toLocaleString()}</b></div>
+            <div />
+            <div><b>650,000</b> / 1,000,000 m<sup>3</sup></div> {/* TODO: ... */}
+          </label>
+        </Destination>
+        <div style={{ display: 'flex' }}>
+          <IconButtonRounded style={{ marginRight: 6 }}>{/* TODO: ... */}
+            <TargetIcon />
+          </IconButtonRounded>
+          <Poppable label="Select" buttonWidth="135px">
+            {/* TODO: ... */}
+          </Poppable>
+        </div>
+      </SectionBody>
+    </Section>
+  );
+}
+
+const BuildingPlanSection = ({ building, status }) => {
+  return (
+    <Section>
+      <SectionTitle><ChevronRightIcon /> Building Plan</SectionTitle>
+      <SectionBody highlight={status === 'AFTER'}>
+        <BuildingPlan>
+          <BuildingImage building={building} />
+          <label>
+            <h3>{building.label}</h3>
+            <b>Site Plan</b>
+          </label>
+        </BuildingPlan>
+        {status === 'BEFORE' && (
+          <div style={{ display: 'flex' }}>
+            <Poppable label="Select" buttonWidth="135px">
+              {/* TODO: ... */}
+            </Poppable>
+          </div>
+        )}
+      </SectionBody>
+    </Section>
+  );
+}
+
+const ingredients = [[700, 5], [700, 19], [400, 22]];
+const IngredientsList = styled.div`
+  display: flex;
+  padding: 0 15px;
+  & > * {
+    outline: 1px dashed #666;
+    margin-right: 10px;
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+`;
+const BuildingRequirementsSection = ({ label, building, resources }) => {
+  return (
+    <Section>
+      <SectionTitle><ChevronRightIcon /> {label}</SectionTitle>
+      <SectionBody>
+        <IngredientsList>
+          {ingredients.map(([tally, i]) => (
+            <ResourceImage key={i} badge={tally} resource={resources[i]} />
+          ))}
+        </IngredientsList>
+      </SectionBody>
+    </Section>
+  );
+};
+
+const ExtractionAmountSection = ({ min, max, amount, setAmount }) => {
+  return (
+    <Section>
+      <SectionTitle><ChevronRightIcon /> Slider</SectionTitle>
+      <SectionBody>
+        <div>
+          <SliderLabel>
+            <b>{Math.round(amount).toLocaleString()}</b> tonnes
+          </SliderLabel>
+        </div>
+        <SliderWrapper>
+          <SliderInfoRow>
+            <ButtonRounded disabled={amount === min} onClick={() => setAmount(min)}>Min</ButtonRounded>
+            <ButtonRounded disabled={amount === max} onClick={() => setAmount(max)}>Max</ButtonRounded>
+          </SliderInfoRow>
+          <SliderInput min={min} max={max} value={amount} onChange={setAmount} />
+          <SliderInfoRow>
+            <div>{min.toLocaleString()} m<sup>3</sup><br/>({(min/2).toLocaleString()} tonnes)</div>{/* TODO: tonnage */}
+            <div>{max.toLocaleString()} m<sup>3</sup><br/>({(max/2).toLocaleString()} tonnes)</div>{/* TODO: tonnage */}
+          </SliderInfoRow>
+        </SliderWrapper>
+      </SectionBody>
+    </Section>
+  );
+}
+
 // TODO: componentize
 
-const ActionDialog = ({ asteroid/*, plot*/ }) => {
+const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
   const { data: assets } = useAssets();
   const { data: crew } = useOwnedCrew();
+  const activeResourceMap = useStore(s => s.asteroids.showResourceMap);
 
-  const [amount, setAmount] = useState(74990);
-  const onClose = useCallback(() => {}, []);  // TODO: ...
+  const [amount, setAmount] = useState(11000);
+  const [status, setStatus] = useState('BEFORE');
+  const [resource, setResource] = useState(activeResourceMap);
   
   // TODO: ...
   // const captain = useMemo(() => (crew || []).find((c) => c.activeSlot === 0), [crew]);
@@ -444,68 +665,118 @@ const ActionDialog = ({ asteroid/*, plot*/ }) => {
 
   const resources = (assets || []).filter((a) => a.assetType === 'Resource');
   const buildings = (assets || []).filter((a) => a.assetType === 'Building');
-  const plot = {  // TODO: use plot above
-    i: 12332,
-    building: buildings[0]
-  };
+  // const plot = {  // TODO: use plot above
+  //   i: 12332,
+  //   building: buildings[0]
+  // };
   const destinationPlot = {
     i: 23441,
     building: buildings[1]
   };
 
-  const action = {
-    resource: resources[0]
+  const actions = {
+    'NEW_CORE_SAMPLE': {
+      actionIcon: <CoreSampleIcon />,
+      headerBackground: coreSampleBackground,
+      headerThumbnail: '/maskable-logo-192x192.png', // TODO: ...
+      headerThumbnailBadge: '∞',
+      label: 'Core Sample',
+      completeLabel: 'Sample',
+      consumes: {
+        tally: 1,
+        resource: {
+          label: 'Core Sampler'
+          /* TODO: ... */
+        }
+      },
+      crewRequirement: 'duration',
+      goButtonLabel: 'Take Sample',
+      stats: [
+        { label: 'Discovery Minimum', value: '0 tonnes', direction: -1 },
+        { label: 'Discovery Maximum', value: '10,000 tonnes', direction: 1 },
+        { label: 'Discovery Average', value: '5,000 tonnes', direction: 1 },
+        { label: 'Sample Time', value: '47m 30s', direction: 1 },
+      ]
+    },
+    'EXTRACTION': {
+      // TODO: ...
+    },
+    'IMPROVE_CORE_SAMPLE': {
+      // TODO: ...
+    },
+    'BLUEPRINT': {
+      actionIcon: <LayBlueprintIcon />,
+      headerBackground: extractionBackground, // TODO: ...
+      headerThumbnail: '/maskable-logo-192x192.png', // TODO: ...
+      label: 'Plan Building',
+      completeLabel: 'Building Plan',
+      crewRequirement: 'start',
+      goButtonLabel: 'Plan Building',
+      stats: [
+        { label: 'Planning Time', value: '47m 30s', direction: 1 },
+        { label: 'Grace Period', value: '2d' },
+      ]
+    },
+    'CONSTRUCT': {
+      actionIcon: <LayBlueprintIcon />, // TODO: ...
+      headerBackground: extractionBackground, // TODO: ...
+      headerThumbnail: '/maskable-logo-192x192.png', // TODO: ...
+      label: 'Construct Building',
+      completeLabel: 'Construction',
+      crewRequirement: 'start',
+      goButtonLabel: 'Construct Building',
+      stats: [
+        { label: 'Construction Time', value: '47m 30s', direction: 1 },
+      ]
+    },
+    'DECONSTRUCT': {
+      // TODO: ...
+    }
   };
 
-  const inProgress = false;
+  const action = actions[actionType];
+
+  const beforeStart = status === 'BEFORE';
+  const inProgress = status === 'DURING';
+  const complete = status === 'AFTER';
   // console.log({ asteroid, plot });
   return (
-    <Dialog>
+    <Dialog backdrop="rgba(30, 30, 35, 0.5)" opaque>
       <div style={{ position: 'relative' }}>
-        {inProgress && (
-          <LoadingBar>Core Sample: 15.4%</LoadingBar>
+        {inProgress /* TODO: ... */ && (
+          <LoadingBar>{action.label}: 15.4%</LoadingBar>
         )}
-        <CloseButton backgroundColor={inProgress && 'black'} onClick={onClose} borderless>
+        {complete && (
+          <LoadingBar>Finalize {action.completeLabel}</LoadingBar>
+        )}
+        <CloseButton backgroundColor={!beforeStart && 'black'} onClick={onClose} borderless>
           <CloseIcon />
         </CloseButton>
-        <Header backgroundSrc={coreSampleBackground}>
-          <SectionBody>
-            <HeaderThumbnail src="/maskable-logo-192x192.png">
-              {inProgress && <HeaderThumbnailOverlay><CoreSampleIcon /></HeaderThumbnailOverlay>}
+        <Header backgroundSrc={action.headerBackground}>
+          <HeaderSectionBody>
+            <HeaderThumbnail src={action.headerThumbnail} badge={beforeStart && action.headerThumbnailBadge}>
+              {inProgress && <HeaderThumbnailOverlay>{action.actionIcon}</HeaderThumbnailOverlay>}
+              {complete && <HeaderThumbnailOverlay><CheckIcon /></HeaderThumbnailOverlay>}
             </HeaderThumbnail>
             <HeaderInfo>
-              {!inProgress && (
-                <>
-                  <Title style={{ textTransform: 'uppercase' }}>
-                    <CoreSampleIcon /> Core Sample
-                  </Title>
-                  <Subtitle>
-                    {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {plot.i.toLocaleString()} ({plot.building.label})</b>
-                  </Subtitle>
-                  <Spacer />
-                  <Footnote>
-                    Consumes:<br/>
-                    <b>1 Core Sampler</b>
-                  </Footnote>
-                </>
+              <Title>
+                {status === 'BEFORE' && <>{action.actionIcon} {action.label.toUpperCase()}</>}
+                {status === 'DURING' && <><RingLoader color={theme.colors.main} size="1em" /> <span style={{ marginLeft: 40 }}>31m 25s</span></>/* TODO: tick */}
+                {status === 'AFTER' && `${action.completeLabel.toUpperCase()} COMPLETE`}
+              </Title>
+              <Subtitle>
+                {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {plot.i.toLocaleString()} ({plot.building?.label || buildings[0].label})</b>
+              </Subtitle>
+              {beforeStart && <Spacer />}
+              {beforeStart && action.consumes && (
+                <Footnote>
+                  Consumes:<br/>
+                  <b>{action.consumes.tally} {action.consumes.resource.label}</b>
+                </Footnote>
               )}
-              {inProgress && (
-                <>
-                  <Title>
-                    {/* TODO: tick */}
-                    <RingLoader color={theme.colors.main} size="1em" /> <span style={{ marginLeft: 40 }}>31m 25s</span>
-                  </Title>
-                  <Subtitle>
-                    {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {plot.i.toLocaleString()} ({plot.building.label})</b>
-                  </Subtitle>
-                </>
-              )}
-              {captain && (
-                <CrewInfo>
-                  <div>
-                    Crew:<br/>
-                    <b>Required for Duration</b>
-                  </div>
+              {captain && action.crewRequirement && (
+                <CrewInfo requirement={action.crewRequirement} status={status}>
+                  <CrewRequirement />
                   <CardContainer>
                     <CrewCard
                       crew={captain}
@@ -516,105 +787,65 @@ const ActionDialog = ({ asteroid/*, plot*/ }) => {
                 </CrewInfo>
               )}
             </HeaderInfo>
-          </SectionBody>
+          </HeaderSectionBody>
         </Header>
 
-        <Section>
-          <SectionTitle><ChevronRightIcon /> Raw Material</SectionTitle>
-          <SectionBodyWithSelector>
-            <Stretcher>
-              {action?.resource && (
-                <RawMaterial>
-                  <ResourceImage badge={12} progress={0.5} resource={action.resource} />
-                  <label>
-                    <h3>{action.resource.label}</h3>
-                    <div><b>43%</b> Abundance at lot</div>
-                    {/*<div><b><ResourceIcon /> 2,435</b> tonnes</div>*/}
-                  </label>
-                </RawMaterial>
-              )}
-            </Stretcher>
-            <div>
-              <Poppable label="Select" buttonWidth="135px">
-                
-              </Poppable>
-            </div>
-          </SectionBodyWithSelector>
-        </Section>
+        {actionType === 'NEW_CORE_SAMPLE' && (
+          <RawMaterialSection resource={resource} status={status} tonnage={complete && 2345} />
+        )}
 
-        <Section>
-          <SectionTitle><ChevronRightIcon /> Destination</SectionTitle>
-          <SectionBodyWithSelector>
-            <Destination>
-              <h3>{destinationPlot.building.label}</h3>
-              <div>{asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {plot.i.toLocaleString()}</b></div>
-              <div> </div>
-              <div><b>650,000</b> / 1,000,000 m<sup>3</sup></div>
-            </Destination>
-            <Stretcher>
-              <BuildingImage building={destinationPlot.building} progress={0.3} secondaryProgress={0.7} />
-            </Stretcher>
-            <div style={{ display: 'flex' }}>
-              <IconButtonRounded style={{ marginRight: 6 }}>
-                <TargetIcon />
-              </IconButtonRounded>
-              <Poppable label="Select" buttonWidth="135px">
-                
-              </Poppable>
-            </div>
-          </SectionBodyWithSelector>
-        </Section>
+        {actionType === 'SURFACE_TRANSFER' && (
+          <DestinationPlotSection asteroid={asteroid} destinationPlot={destinationPlot} status={status} />
+        )}
 
-        <Section>
-          <SectionTitle><ChevronRightIcon /> Slider</SectionTitle>
-          <SectionBody style={{ padding: '15px 0'}}>
-            <div>
-              <SliderLabel>
-                <b>{Math.round(amount).toLocaleString()}</b> tonnes
-              </SliderLabel>
-            </div>
-            <SliderWrapper>
-              <SliderInfoRow>
-                <ButtonRounded disabled={amount === 4200} onClick={() => setAmount(4200)}>Min</ButtonRounded>
-                <ButtonRounded disabled={amount === 120000} onClick={() => setAmount(120000)}>Max</ButtonRounded>
-              </SliderInfoRow>
-              <SliderInput min={4200} max={120000} value={amount} onChange={setAmount} />
-              <SliderInfoRow>
-                <div>4,200 m<sup>3</sup><br/>(100 tonnes)</div>
-                <div>120,000 m<sup>3</sup><br/>(3,200 tonnes)</div>
-              </SliderInfoRow>
-            </SliderWrapper>
-          </SectionBody>
-        </Section>
+        {actionType === 'BLUEPRINT' && (
+          <BuildingPlanSection building={buildings[1]} status={status} />
+        )}
+        {actionType === 'BLUEPRINT' && beforeStart && (
+          <BuildingRequirementsSection label="Required for Construction" resources={resources} />
+        )}
 
-        <StatSection>
-          <SectionBody>
-            <div>
-              <StatRow>
-                <label>Discovery Minimum:</label>
-                <span>0 tonnes</span>
-              </StatRow>
-              <StatRow>
-                <label>Discovery Minimum:</label>
-                <span>10,000 tonnes</span>
-              </StatRow>
-            </div>
-            <div>
-              <StatRow>
-                <label>Discovery Average:</label>
-                <span>5,000 tonnes</span>
-              </StatRow>
-              <StatRow>
-                <label>Sample Time:</label>
-                <span>47m 30s</span>
-              </StatRow>
-            </div>
-          </SectionBody>
-        </StatSection>
+        {actionType === 'CONSTRUCT' && (
+          <BuildingPlanSection />
+        )}
+
+        {actionType === 'EXTRACT' && (
+          <ExtractionAmountSection amount={amount} min={4200} max={12000} setAmount={setAmount} status={status} />
+        )}
+        
+        {action.stats?.length > 0 && (
+          <StatSection status={status}>
+            <SectionBody>
+              <div>
+                {action.stats.slice(0, Math.ceil(action.stats.length / 2)).map(({ label, value, direction }) => (
+                  <StatRow key={label} direction={direction}>
+                    <label>{label}</label>
+                    <span>{value}</span>
+                  </StatRow>
+                ))}
+              </div>
+              <div>
+                {action.stats.slice(Math.ceil(action.stats.length / 2)).map(({ label, value, direction }) => (
+                  <StatRow key={label} direction={direction}>
+                    <label>{label}</label>
+                    <span>{value}</span>
+                  </StatRow>
+                ))}
+              </div>
+            </SectionBody>
+          </StatSection>
+        )}
         <Footer>
           <SectionBody>
-            <Button>Cancel</Button>
-            <Button isTransaction>Take Sample</Button>
+            {beforeStart
+              ? (
+                <>
+                  <Button onClick={onClose}>Cancel</Button>
+                  <Button isTransaction onClick={() => setStatus('DURING')}>{action.goButtonLabel}</Button>
+                </>
+              ) : (
+                <Button onClick={() => setStatus('AFTER')}>Close</Button>
+              )}
           </SectionBody>
         </Footer>
       </div>

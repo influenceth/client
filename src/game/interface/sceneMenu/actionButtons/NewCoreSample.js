@@ -3,11 +3,11 @@ import { useCallback } from 'react';
 import { CoreSampleIcon } from '~/components/Icons';
 import ActionButton from './ActionButton';
 
-const NewCoreSample = ({ plot }) => {
+const NewCoreSample = ({ onSetAction }) => {
   const sampling = false;
   const handleClick = useCallback(() => {
-    console.log('not yet supported');
-  }, [plot]);
+    onSetAction('NEW_CORE_SAMPLE');
+  }, [onSetAction]);
 
   return (
     <ActionButton

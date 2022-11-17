@@ -3,11 +3,11 @@ import { useCallback } from 'react';
 import { ImproveCoreSampleIcon } from '~/components/Icons';
 import ActionButton from './ActionButton';
 
-const ImproveCoreSample = ({ plot }) => {
+const ImproveCoreSample = ({ onSetAction, plot }) => {
   const improving = false;
   const handleClick = useCallback(() => {
-    console.log('not yet supported');
-  }, [plot]);
+    onSetAction('IMPROVE_CORE_SAMPLE');
+  }, [onSetAction]);
 
   return (
     <ActionButton

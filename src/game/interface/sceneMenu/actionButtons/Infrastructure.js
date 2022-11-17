@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { CancelBlueprintIcon, DeconstructIcon, LayBlueprintIcon } from '~/components/Icons';
 import ActionButton from './ActionButton';
 
-const Infrastructure = ({ plot }) => {
+const Infrastructure = ({ plot, onSetAction }) => {
   const { label, flags, handleClick, Icon } = useMemo(() => {
     if (plot.building) {
       return {
@@ -11,7 +11,7 @@ const Infrastructure = ({ plot }) => {
         Icon: DeconstructIcon,
         flags: {},
         handleClick: () => {
-          console.log('not yet supported');
+          onSetAction('DECONSTRUCT');
         }
       };
     } else if (plot.blueprint) {
@@ -20,7 +20,7 @@ const Infrastructure = ({ plot }) => {
         Icon: CancelBlueprintIcon,
         flags: {},
         handleClick: () => {
-          console.log('not yet supported');
+          onSetAction('CANCEL_BLUEPRINT');
         }
       };
     }
@@ -29,7 +29,7 @@ const Infrastructure = ({ plot }) => {
       Icon: LayBlueprintIcon,
       flags: {},
       handleClick: () => {
-        console.log('not yet supported');
+        onSetAction('BLUEPRINT');
       }
     };
   }, [plot]);

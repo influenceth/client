@@ -37,6 +37,7 @@ const theme = {
     successRGB: '84, 222, 148', // NOTE: this should be rgb of `success`
     txButton: '#4444b8',
     error: red,
+    teal, blue, purple, orange, yellow, red,
     bonus: {
       level0: '#999999',
       level1: 'rgb(105, 235, 244)',

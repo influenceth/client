@@ -321,6 +321,7 @@ const SceneMenu = (props) => {
 
   const { data: asteroid } = useAsteroid(asteroidId);
 
+  const [action, setAction] = useState();
   const [renderReady, setRenderReady] = useState(false);
   const [resourceMode, setResourceMode] = useState();
 
@@ -583,12 +584,17 @@ const SceneMenu = (props) => {
 
         <RightActions visible={actions?.length > 0}>
           {actions.map((ActionButton, i) => (
-            <ActionButton key={i} asteroid={asteroid} plot={plot} />
+            <ActionButton
+              key={i}
+              asteroid={asteroid}
+              plot={plot}
+              onSetAction={setAction} />
           ))}
         </RightActions>
       </RightWrapper>
 
-      {false && <ActionDialog asteroid={asteroid} plot={plot} />}
+      {/* TODO: *might* end up making sense to instead put this with each action button that needs it? */}
+      {action && <ActionDialog actionType={action} asteroid={asteroid} plot={plot} onClose={() => setAction()} />}
     </>
   );
 };
