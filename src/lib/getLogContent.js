@@ -61,7 +61,7 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  Asteroid_Asteroid_ScanStarted: (e) => ({
+  Asteroid_ScanStarted: (e) => ({
     icon: <ScanIcon />,
     content: (
       <>
@@ -84,7 +84,7 @@ const entries = {
     ),
   }),
 
-  Asteroid_Asteroid_ScanFinished: (e) => ({
+  Asteroid_ScanFinished: (e) => ({
     icon: <ScanIcon />,
     content: (
       <>
@@ -95,7 +95,7 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  Asteroid_Asteroid_NameChanged: (e) => ({
+  Asteroid_NameChanged: (e) => ({
     icon: <NameIcon />,
     content: (
       <>
@@ -160,7 +160,7 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  CrewMember_Crew_CompositionChanged: (e) => {
+  Crew_CompositionChanged: (e) => {
     let action = null;
     let icon = <CrewIcon />;
     const { newCrew, oldCrew } = e.returnValues;
@@ -190,7 +190,7 @@ const entries = {
     }
   },
 
-  CrewMember_Transfer: (e) => ({
+  Crewmate_Transfer: (e) => ({
     icon: <TransferIcon />,
     content: (
       <>
@@ -221,7 +221,7 @@ const entries = {
     ),
   }),
 
-  CrewMember_Crewmate_NameChanged: (e) => ({
+  Crewmate_NameChanged: (e) => ({
     icon: <NameIcon />,
     content: (
       <>

@@ -35,7 +35,7 @@ const Log = () => {
           <EmptyMessage>No log events recorded.</EmptyMessage>
         )}
         {events && events.map(e => {
-          const type = e.type || `${e.assetType}_${e.event}`;
+          const type = e.type || e.event;
           return <LogEntry key={e._id} type={type} data={e} />;
         })}
       </LogList>

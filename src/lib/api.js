@@ -27,7 +27,7 @@ const api = {
     return {
       events: response.data,
       blockNumber: parseInt(response.headers['starknet-block-number']),
-      ethBlockNumber: parseInt(response.headers['eth-block-number'])  // NOTE: probably not needed anymore
+      // ethBlockNumber: parseInt(response.headers['eth-block-number'])  // NOTE: probably not needed anymore
     };
   },
 
