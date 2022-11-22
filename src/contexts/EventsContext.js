@@ -90,7 +90,6 @@ export function EventsProvider({ children }) {
       }
       return { ...e, event: eventName };
     });
-    console.log(transformedEvents);
 
     transformedEvents.forEach(e => {
       if (!skipInvalidations) {

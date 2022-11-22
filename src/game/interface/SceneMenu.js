@@ -414,7 +414,7 @@ const SceneMenu = (props) => {
       if (!asteroid.owner) {
         a.push(actionButtons.PurchaseAsteroid);
       }
-      if (!asteroid.scanned) {
+      if (false && !asteroid.scanned) {
         if (account && asteroid.owner && Address.areEqual(account, asteroid.owner)) {
           a.push(actionButtons.ScanAsteroid);
         }
@@ -424,6 +424,10 @@ const SceneMenu = (props) => {
           if (plot.coreSamplesExist) {
             a.push(actionButtons.ImproveCoreSample);
           }
+        }
+        if (plot.coreSamplesExist && plot.building?.label === 'Warehouse') { // TODO: should use key rather than label
+          a.push(actionButtons.Extract);
+          a.push(actionButtons.SurfaceTransfer);
         }
         a.push(actionButtons.Infrastructure);
       }

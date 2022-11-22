@@ -14,6 +14,7 @@ const getErrorMessage = (error) => {
 };
 
 const isAllowedNetwork = (network) => {
+  // return true;  // TODO: remove this
   return network === `${process.env.REACT_APP_STARKNET_NETWORK}`;
 }
 

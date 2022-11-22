@@ -1,15 +1,16 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useHistory } from 'react-router';
 
 import { ScanAsteroidIcon } from '~/components/Icons';
+import useAsteroid from '~/hooks/useAsteroid';
 import useScanAsteroid from '~/hooks/useScanAsteroid';
-import useStore from '~/hooks/useStore';
 
 import ActionButton from './ActionButton';
 
 const ScanAsteroid = ({ asteroid }) => {
   const history = useHistory();
-  const { startAsteroidScan, finalizeAsteroidScan, scanStatus } = useScanAsteroid(asteroid);
+  const { data: extendedAsteroid, isLoading } = useAsteroid(asteroid.i, true);
+  const { startAsteroidScan, finalizeAsteroidScan, scanStatus } = useScanAsteroid(extendedAsteroid);
 
   const { label, flags, handleClick } = useMemo(() => {
     switch (scanStatus) {
@@ -17,7 +18,7 @@ const ScanAsteroid = ({ asteroid }) => {
       case 'UNSCANNED':
         return {
           label: 'Scan Asteroid',
-          flags: { attention: true },
+          flags: { attention: !isLoading, disabled: isLoading },
           handleClick: startAsteroidScan
         };
       case 'SCAN_READY':
@@ -46,7 +47,7 @@ const ScanAsteroid = ({ asteroid }) => {
           }
         };
     }
-  }, [asteroid.i, scanStatus]);
+  }, [asteroid.i, isLoading, scanStatus]);
 
   return (
     <ActionButton

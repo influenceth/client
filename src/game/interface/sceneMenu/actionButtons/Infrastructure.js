@@ -5,6 +5,7 @@ import ActionButton from './ActionButton';
 
 const Infrastructure = ({ plot, onSetAction }) => {
   const { label, flags, handleClick, Icon } = useMemo(() => {
+    if (!plot) return {};
     if (plot.building) {
       return {
         label: 'Deconstruct Building',
@@ -34,6 +35,7 @@ const Infrastructure = ({ plot, onSetAction }) => {
     };
   }, [plot]);
 
+  if (!label) return null;
   return (
     <ActionButton
       label={label}

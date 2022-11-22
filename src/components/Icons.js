@@ -5,6 +5,7 @@ import { FiMenu } from 'react-icons/fi';
 import { HiClock } from 'react-icons/hi';
 import {
   MdAccountBalanceWallet,
+  MdAdd,
   MdFlag,
   MdBlurOff,
   MdKeyboardArrowDown,
@@ -13,6 +14,7 @@ import {
   MdExpandMore,
   MdFastRewind,
   MdFastForward,
+  MdLocationPin,
   MdPlayArrow,
   MdPause,
   MdStop,
@@ -107,6 +109,7 @@ export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
 export const CancelBlueprintIcon = () => <CancelBlueprintSVG className="icon" />;
 export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
 export const DeconstructIcon = () => <DeconstructSVG className="icon" />;
+export const ExtractionIcon = () => <CoreSampleSVG className="icon" />; // TODO: ...
 export const ImproveCoreSampleIcon = () => <ImproveCoreSampleSVG className="icon" />;
 export const LayBlueprintIcon = () => <LayBlueprintSVG className="icon" />;
 export const PurchaseAsteroidIcon = () => <PurchaseAsteroidSVG className="icon" />;
@@ -139,6 +142,7 @@ export {
   HiClock as TimeIcon,
   // HiUserGroup as CrewIcon,
   MdAccountBalanceWallet as WalletIcon,
+  MdAdd as PlusIcon,
   MdBlurOff as ScanIcon,
   MdKeyboardArrowDown as CaretIcon,
   MdChevronRight as ChevronRightIcon,
@@ -149,6 +153,7 @@ export {
   MdFastForward as FastForwardIcon,
   MdFirstPage as BeginningIcon,
   MdFlag as ClaimIcon,
+  MdLocationPin as LocationPinIcon,
   MdNavigateBefore as PreviousIcon,
   MdNavigateNext as NextIcon,
   MdPause as PauseIcon,

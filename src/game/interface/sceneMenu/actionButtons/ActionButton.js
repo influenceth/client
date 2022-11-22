@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import LoadingAnimation from 'react-spinners/BarLoader';
 
@@ -104,20 +105,24 @@ const ActionButton = styled.div`
   }
 `;
 
-const noop = () => { console.log('no onClick event handler set'); };
-const ActionButtonComponent = ({ label, flags, icon, onClick }) => (
-  <ActionButton
-    data-arrow-color="transparent"
-    data-for="global"
-    data-place="top"
-    data-tip={label}
-    onClick={onClick || noop}
-    {...flags}>
-    <div>
-      {icon}
-      {flags.loading && <LoadingAnimation color="white" height="1" />}
-    </div>
-  </ActionButton>
-);
+const ActionButtonComponent = ({ label, flags = {}, icon, onClick }) => {
+  const _onClick = useCallback(() => {
+    if (!flags?.disabled && onClick) onClick();
+  }, [flags, onClick]);
+  return (
+    <ActionButton
+      data-arrow-color="transparent"
+      data-for="global"
+      data-place="top"
+      data-tip={label}
+      onClick={_onClick}
+      {...flags}>
+      <div>
+        {icon}
+        {flags.loading && <LoadingAnimation color="white" height="1" />}
+      </div>
+    </ActionButton>
+  );
+}
 
 export default ActionButtonComponent;

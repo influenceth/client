@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 
-import { MdAdd as PlusIcon } from 'react-icons/md';
-
 import Button from '~/components/Button';
 import CrewCard from '~/components/CrewCard';
 import CrewInfoPane from '~/components/CrewInfoPane';
@@ -15,6 +13,7 @@ import {
   CrewIcon,
   ChevronDoubleDownIcon as DeactivateIcon,
   ChevronDoubleUpIcon as ActivateIcon,
+  PlusIcon,
   PromoteIcon,
   ChevronDoubleDownIcon
 } from '~/components/Icons';

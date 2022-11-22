@@ -14,7 +14,7 @@ const Slider = styled.div`
   align-items: center;
   color: white;
   display: flex;
-  height: 48px;
+  height: 36px;
   position: relative;
   width: 100%;
   & * {
