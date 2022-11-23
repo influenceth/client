@@ -429,7 +429,14 @@ const SceneMenu = (props) => {
           a.push(actionButtons.Extract);
           a.push(actionButtons.SurfaceTransfer);
         }
-        a.push(actionButtons.Infrastructure);
+        if (plot.building) {
+          a.push(actionButtons.Deconstruct);
+        } else if (plot.blueprint) {
+          a.push(actionButtons.Construct);
+          a.push(actionButtons.CancelBlueprint);
+        } else {
+          a.push(actionButtons.NewBlueprint);
+        }
       }
     }
 

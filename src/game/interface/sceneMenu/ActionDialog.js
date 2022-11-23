@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import {
   FiCrosshair as TargetIcon,
@@ -17,18 +17,21 @@ import Dialog from '~/components/Dialog';
 import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
 import {
+  CancelBlueprintIcon,
   CheckIcon,
   ChevronRightIcon,
   CloseIcon,
+  ConstructIcon,
   CoreSampleIcon,
+  DeconstructIcon,
   ExtractionIcon,
   ImproveCoreSampleIcon,
   LayBlueprintIcon,
   LocationPinIcon,
-  MapIcon,
   PlusIcon,
   ResourceIcon,
-  SurfaceTransferIcon
+  SurfaceTransferIcon,
+  WarningOutlineIcon
 } from '~/components/Icons';
 import Poppable from '~/components/Popper';
 import SliderInput from '~/components/SliderInput';
@@ -36,6 +39,7 @@ import useAssets from '~/hooks/useAssets';
 import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
+import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 
 
 const borderColor = '#333';
@@ -188,13 +192,17 @@ const CardContainer = styled.div`
   }
 `;
 const StatRow = styled.div`
+  align-items: center;
   display: flex;
   justify-content: space-between;
   padding: 5px 0;
-  & > label {}
+  & > label {
+    flex: 1;
+  }
   & > span {
     color: ${p => p.theme.colors.main};
     font-weight: bold;
+    white-space: nowrap;
     &:after {
       display: none;
       ${p => p.direction >= 0 && `
@@ -217,10 +225,10 @@ const StatSection = styled(Section)`
     padding: 20px 0;
     & > div {
       flex: 1;
-      &:first-child {
-        border-right: 1px solid ${borderColor};
-        margin-right: 15px;
-        padding-right: 15px;
+      &:last-child {
+        border-left: 1px solid ${borderColor};
+        margin-left: 15px;
+        padding-left: 15px;
       }
     }
   }
@@ -351,12 +359,49 @@ const EmptyThumbnail = styled.div`
     left: 5px;
   }
 `;
+const ResourceBadge = styled.div`
+  position: absolute;
+  bottom: 5px;
+  color: white;
+  font-size: 80%;
+  left: 5px;
+  line-height: 1em;
+  &:before {
+    content: "${p => p.badge !== undefined ? p.badge.toLocaleString() : ''}";
+    position: relative;
+    z-index: 3;
+  }
+  &:after {
+    content: "${p => p.badgeDenominator ? `/ ${p.badgeDenominator.toLocaleString()}` : ''}";
+    display: block;
+  }
+`;
 const ResourceThumbnailWrapper = styled.div`
   border: 2px solid transparent;
   outline: 1px solid ${borderColor};
   height: 115px;
   position: relative;
   width: 115px;
+  ${p => `
+    ${p.outlineColor ? `outline-color: ${p.outlineColor} !important;` : ''}
+    ${p.outlineStyle ? `outline-style: ${p.outlineStyle} !important;` : ''}
+    ${p.badgeColor && p.hasDenominator ? `${ResourceBadge} { &:after { color: ${p.badgeColor} !important; } }` : ''}
+    ${p.badgeColor && !p.hasDenominator ? `${ResourceBadge} { &:before { color: ${p.badgeColor} !important; } }` : ''}
+  `}
+`;
+const ThumbnailIconOverlay = styled.div`
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: ${p => p.theme.colors.main};
+  font-size: 40px;
+  display: flex;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
 `;
 const BuildingThumbnailWrapper = styled(ResourceThumbnailWrapper)`
   height: 92px;
@@ -379,17 +424,6 @@ const ResourceThumbnail = styled.div`
   left: 0;
   right: 0;
   z-index: 0;
-`;
-const ResourceBadge = styled.div`
-  position: absolute;
-  bottom: 5px;
-  color: white;
-  font-size: 80%;
-  left: 5px;
-  line-height: 1em;
-  &:before {
-    content: "${p => p.badge.toLocaleString()}";
-  }
 `;
 const ResourceProgress = styled.div`
   background: #333;
@@ -564,13 +598,29 @@ const ItemsList = styled.div`
 `;
 const IngredientsList = styled(ItemsList)`
   & > div {
-    outline: 1px dashed #666;
+    outline: 1px dashed ${p => p.theme.colors.main};
+  }
+`;
+
+const AbandonmentTimer = styled.div`
+  text-align: right;
+  & > div {
+    color: ${p => p.theme.colors.error};
+    font-size: 17px;
+  }
+  & > h3 {
+    color: white;
+    font-size: 28px;
+    margin: 5px 0 0;
+    & > svg {
+      color: ${p => p.theme.colors.error};
+    }
   }
 `;
 
 const ingredients = [
-  [700, 5], [700, 19], [400, 22],
-  // [700, 5], [700, 19], [400, 22], [700, 5], [700, 19], [400, 22]
+  [700, 5, 700], [700, 19, 500], [400, 22, 0],
+  // [700, 5, 0], [700, 19, 0], [400, 22, 0], [700, 5, 0], [700, 19, 0], [400, 22, 0],
 ];
 
 const formatTimer = (seconds) => {
@@ -603,17 +653,24 @@ const EmptyImage = ({ children }) => (
     {children}
   </EmptyThumbnail>
 );
-const ResourceImage = ({ resource, badge, progress }) => {
+
+// TODO: this component is functionally overloaded... create more components so not trying to use in so many different ways
+const ResourceImage = ({ resource, badge, badgeColor, badgeDenominator, outlineColor, outlineStyle, overlayIcon, progress }) => {
   return (
-    <ResourceThumbnailWrapper>
+    <ResourceThumbnailWrapper
+      badgeColor={badgeColor}
+      hasDenominator={!!badgeDenominator}
+      outlineColor={outlineColor}
+      outlineStyle={outlineStyle}>
       <ResourceThumbnail src={resource.iconUrls.w125} />
-      {badge !== undefined && <ResourceBadge badge={badge} />}
+      {badge !== undefined && <ResourceBadge badge={badge} badgeDenominator={badgeDenominator} />}
       {progress !== undefined && <ResourceProgress progress={progress} />}
+      {overlayIcon && <ThumbnailIconOverlay>{overlayIcon}</ThumbnailIconOverlay>}
     </ResourceThumbnailWrapper>
   );
 };
-const EmptyResourceImage = () => (
-  <ResourceThumbnailWrapper><EmptyImage><PlusIcon /></EmptyImage></ResourceThumbnailWrapper>
+const EmptyResourceImage = ({ iconOverride }) => (
+  <ResourceThumbnailWrapper><EmptyImage>{iconOverride || <PlusIcon />}</EmptyImage></ResourceThumbnailWrapper>
 );
 
 const BuildingImage = ({ building, progress, secondaryProgress }) => {
@@ -629,8 +686,8 @@ const BuildingImage = ({ building, progress, secondaryProgress }) => {
     </BuildingThumbnailWrapper>
   );
 };
-const EmptyBuildingImage = () => (
-  <BuildingThumbnailWrapper><EmptyImage><LocationPinIcon /></EmptyImage></BuildingThumbnailWrapper>
+const EmptyBuildingImage = ({ iconOverride }) => (
+  <BuildingThumbnailWrapper><EmptyImage>{iconOverride || <LocationPinIcon />}</EmptyImage></BuildingThumbnailWrapper>
 );
 
 const CompletedHighlight = () => <CompletedIconWrapper><CheckIcon /></CompletedIconWrapper>;
@@ -840,42 +897,165 @@ const DestinationPlotSection = ({ asteroid, destinationPlot, status }) => {
       </SectionBody>
     </Section>
   );
-}
+};
 
-const BuildingPlanSection = ({ building, status }) => {
+const BuildingPlanSection = ({ abandonedIn, building, cancelling, status }) => {
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Building Plan</SectionTitle>
       <SectionBody highlight={status === 'AFTER'}>
-        <BuildingPlan>
-          <BuildingImage building={building} />
-          <label>
-            <h3>{building.label}</h3>
-            <b>Site Plan</b>
-          </label>
-        </BuildingPlan>
+        {!building && (
+          <EmptyResourceWithData>
+            <EmptyBuildingImage iconOverride={<LayBlueprintIcon />} />
+            <label>
+              <div>Site Plan:</div>
+              <h3>Select</h3>
+            </label>
+          </EmptyResourceWithData>
+        )}
+        {building && (
+          <BuildingPlan>
+            <BuildingImage building={building} />
+            <label>
+              <h3>{building.label}</h3>
+              <b>Site Plan</b>
+            </label>
+          </BuildingPlan>
+        )}
         {status === 'BEFORE' && (
-          <div style={{ display: 'flex' }}>
-            <Poppable label="Select" buttonWidth="135px">
-              {/* TODO: ... */}
-            </Poppable>
-          </div>
+          <>
+            {cancelling && (
+              <>
+                <span style={{ color: theme.colors.error }}>Any materials left on lot will be abandoned.</span>
+                <span style={{ color: theme.colors.error, fontSize: '125%', lineHeight: '1em', marginLeft: 8 }}><WarningOutlineIcon /></span>
+              </>
+            )}
+            {abandonedIn && !cancelling && (
+              <AbandonmentTimer>
+                <div>Abandonment Timer:</div>
+                <h3>{formatTimer(abandonedIn)} <WarningOutlineIcon /></h3>
+              </AbandonmentTimer>
+            )}
+            {!abandonedIn && !cancelling && (
+              <div style={{ display: 'flex' }}>
+                <Poppable label="Select" buttonWidth="135px">
+                  {/* TODO: ... */}
+                </Poppable>
+              </div>
+            )}
+          </>
+        )}
+        {status === 'AFTER' && (
+          <CompletedHighlight />
         )}
       </SectionBody>
     </Section>
   );
 }
 
-const BuildingRequirementsSection = ({ label, building, resources }) => {
+const MouseoverContent = styled.div`
+  & b {
+    color: ${p => p.highlightColor || 'white'};
+  }
+  color: #999;
+  font-size: 90%;
+  padding-bottom: 15px;
+`;
+
+const MouseoverIcon = ({ children, icon, iconStyle = {}, themeColor }) => {
+  const refEl = useRef();
+  const [hovered, setHovered] = useState();
+  return (
+    <>
+      <span
+        ref={refEl}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={themeColor ? { ...iconStyle, color: themeColor } : iconStyle}>
+        {icon}
+      </span>
+      <MouseoverInfoPane referenceEl={refEl.current} visible={hovered}>
+        <MouseoverContent highlightColor={themeColor}>
+          {children}
+        </MouseoverContent>
+      </MouseoverInfoPane>
+    </>
+  );
+};
+
+const ResourceRequirement = ({ resource, hasTally, isGathering, needsTally }) => {
+  const props = { resource };
+  if (isGathering) {
+    props.badge = hasTally;
+    if (hasTally >= needsTally) {
+      props.badgeColor = theme.colors.main;
+      props.overlayIcon = <CheckIcon />;
+    } else {
+      props.badgeDenominator = needsTally;
+      props.badgeColor = theme.colors.yellow;
+      props.outlineColor = theme.colors.yellow;
+      props.outlineStyle = 'dashed';
+    }
+  } else {
+    props.badge = needsTally;
+    props.badgeDenominator = null;
+  }
+  return (
+    <ResourceImage {...props} />
+  );
+};
+
+const BuildingRequirementsSection = ({ isGathering, label, building, resources }) => {
+  const gatheringComplete = isGathering && !ingredients.find(([tally, i, hasTally]) => hasTally < tally);
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> {label}</SectionTitle>
       <SectionBody>
         <IngredientsList>
-          {ingredients.map(([tally, i]) => (
-            <ResourceImage key={i} badge={tally} resource={resources[i]} />
+          {building && (
+            <>
+              {ingredients.map(([tally, i, hasTally]) => (
+                <ResourceRequirement
+                  key={i}
+                  isGathering={isGathering}
+                  hasTally={hasTally}
+                  needsTally={tally}
+                  resource={resources[i]} />
+              ))}
+              {!gatheringComplete && (
+                <MouseoverIcon
+                  icon={(<WarningOutlineIcon />)}
+                  iconStyle={{ alignSelf: 'center', fontSize: '150%', marginLeft: 5 }}
+                  themeColor={isGathering ? theme.colors.yellow : theme.colors.main}>
+                  After placing a site, the required construction materials must be transfered to the location before construction can begin.
+                </MouseoverIcon>
+              )}
+            </>
+          )}
+          {!building && [0,1,2].map((i) => (
+            <EmptyResourceImage key={i} iconOverride={<ConstructIcon />} />
           ))}
         </IngredientsList>
+      </SectionBody>
+    </Section>
+  );
+};
+
+const DeconstructionMaterialsSection = ({ label, resources, status }) => {
+  return (
+    <Section>
+      <SectionTitle><ChevronRightIcon /> {label}</SectionTitle>
+      <SectionBody highlight={status === 'AFTER'}>
+        <IngredientsList>
+          {ingredients.map(([tally, i, hasTally]) => (
+            <ResourceImage key={i}
+              badge={`+${tally}`}
+              badgeColor={theme.colors.main}
+              outlineColor={borderColor}
+              resource={resources[i]} />
+          ))}
+        </IngredientsList>
+        {status === 'AFTER' && <><Spacer /><CompletedHighlight /></>}
       </SectionBody>
     </Section>
   );
@@ -1005,28 +1185,55 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
     'BLUEPRINT': {
       actionIcon: <LayBlueprintIcon />,
       headerBackground: extractionBackground, // TODO: ...
-      label: 'Plan Building',
-      completeLabel: 'Building Plan',
-      crewRequirement: 'start',
-      goButtonLabel: 'Plan Building',
+      label: 'Place Building Site',
+      completeLabel: 'Building Site',
+      completeStatus: 'Ready',
+      goButtonLabel: 'Place Site',
       stats: [
-        { label: 'Planning Time', value: '47m 30s', direction: 1 },
-        { label: 'Grace Period', value: '2d' },
+        { label: 'Abandonment Timer', value: '48h', warning: (
+          <>
+            Building sites become <b>Abandoned</b> if they have not started construction by the time the <b>Abandonment Timer</b> expires.
+            <br/><br/>
+            Any items left on an <b>Abandoned Site</b> may be claimed by other players!
+          </>
+        ) },
       ]
     },
+    'CANCEL_BLUEPRINT': {
+      actionIcon: <CancelBlueprintIcon />,
+      headerBackground: extractionBackground, // TODO: ...
+      label: 'Cancel Building Site',
+      goButtonLabel: 'Remove Site',
+    },
     'CONSTRUCT': {
-      actionIcon: <LayBlueprintIcon />, // TODO: ...
+      actionIcon: <ConstructIcon />,
       headerBackground: extractionBackground, // TODO: ...
       label: 'Construct Building',
       completeLabel: 'Construction',
+      completeStatus: 'Complete',
       crewRequirement: 'start',
       goButtonLabel: 'Construct Building',
       stats: [
+        { label: 'Crew Travel', value: '6m 0s', direction: 0 },
         { label: 'Construction Time', value: '47m 30s', direction: 1 },
       ]
     },
     'DECONSTRUCT': {
-      // TODO: ...
+      actionIcon: <DeconstructIcon />,
+      headerBackground: extractionBackground, // TODO: ...
+      label: 'Deconstruct Building',
+      completeLabel: 'Deconstruction',
+      completeStatus: 'Complete',
+      crewRequirement: 'start',
+      goButtonLabel: 'Deconstruct',
+      stats: [
+        { label: 'Total Volume', value: '4,200 m³', direction: 1 },
+        { label: 'Total Mass', value: '120,500 tonnes', direction: 1 },
+        { label: 'Transfer Distance', value: '18 km', direction: 0 },
+        { label: 'Crew Travel', value: '6m 00s', direction: 1 },
+        { label: 'Deconstruction Time', value: '1h 10m 15s', direction: 0 },
+        { label: 'Transport Time', value: '24m 30s', direction: 0 },
+      ]
     }
   };
 
@@ -1109,35 +1316,56 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
         )}
 
         {actionType === 'BLUEPRINT' && (
-          <BuildingPlanSection building={buildings[1]} status={status} />
+          <>
+            <BuildingPlanSection building={buildings[1]} status={status} />
+            {beforeStart && <BuildingRequirementsSection building={buildings[1]} label="Required for Construction" resources={resources} />}
+          </>
         )}
-        {actionType === 'BLUEPRINT' && beforeStart && (
-          <BuildingRequirementsSection label="Required for Construction" resources={resources} />
+
+        {actionType === 'CANCEL_BLUEPRINT' && (
+          <>
+            <BuildingPlanSection building={buildings[1]} status={status} cancelling />
+          </>
         )}
 
         {actionType === 'CONSTRUCT' && (
-          <BuildingPlanSection />
+          <>
+            <BuildingPlanSection building={buildings[1]} status={status} abandonedIn={45678} />
+            {beforeStart && <BuildingRequirementsSection isGathering building={buildings[1]} label="Construction Materials" resources={resources} />}
+          </>
+        )}
+
+        {actionType === 'DECONSTRUCT' && (
+          <>
+            <DeconstructionMaterialsSection label="Recovered Materials" resources={resources} status={status} />
+            {status !== 'AFTER' && <DestinationPlotSection asteroid={asteroid} destinationPlot={destinationPlot} status={status} />}
+          </>
         )}
         
         {action.stats?.length > 0 && (
           <StatSection status={status}>
             <SectionBody>
-              <div>
-                {action.stats.slice(0, Math.ceil(action.stats.length / 2)).map(({ label, value, direction }) => (
-                  <StatRow key={label} direction={direction}>
-                    <label>{label}</label>
-                    <span>{value}</span>
-                  </StatRow>
-                ))}
-              </div>
-              <div>
-                {action.stats.slice(Math.ceil(action.stats.length / 2)).map(({ label, value, direction }) => (
-                  <StatRow key={label} direction={direction}>
-                    <label>{label}</label>
-                    <span>{value}</span>
-                  </StatRow>
-                ))}
-              </div>
+              {[0,1].map((statGroup) => (
+                <div key={statGroup}>
+                  {(
+                    statGroup === 0
+                      ? action.stats.slice(0, Math.ceil(action.stats.length / 2))
+                      : action.stats.slice(Math.ceil(action.stats.length / 2))
+                    ).map(({ label, value, direction, warning }) => (
+                      <StatRow key={label} direction={direction}>
+                        <label>{label}</label>
+                        <span>
+                          {value}
+                        </span>
+                        {warning && (
+                          <MouseoverIcon icon={<WarningOutlineIcon />} iconStyle={{ fontSize: '125%', marginLeft: 5 }} themeColor={theme.colors.error}>
+                            {warning}
+                          </MouseoverIcon>
+                        )}
+                      </StatRow>
+                    ))}
+                </div>
+              ))}
             </SectionBody>
           </StatSection>
         )}

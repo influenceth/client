@@ -107,6 +107,7 @@ export const TwitterIcon = () => <TwitterSVG className="icon" />;
 export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
 
 export const CancelBlueprintIcon = () => <CancelBlueprintSVG className="icon" />;
+export const ConstructIcon = () => <LayBlueprintSVG className="icon" />; // TODO: ...
 export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
 export const DeconstructIcon = () => <DeconstructSVG className="icon" />;
 export const ExtractionIcon = () => <CoreSampleSVG className="icon" />; // TODO: ...
