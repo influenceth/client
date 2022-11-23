@@ -21,6 +21,5 @@ const ActionsButtons = {
   ScanAsteroid,
   SurfaceTransfer
 };
-console.log(ActionsButtons);
 
 export default ActionsButtons;
