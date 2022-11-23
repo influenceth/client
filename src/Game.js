@@ -35,6 +35,9 @@ const StyledMain = styled.main`
 
 // for starknet modals
 const GlobalStyle = createGlobalStyle`
+  label {
+    cursor: inherit;
+  }
   .s-dialog {
     z-index: 1010 !important;
   }

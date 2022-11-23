@@ -139,7 +139,6 @@ const Attributes = styled.div`
       margin-right: 10px;
     }
     & > label {
-      cursor: inherit;
       flex: 1;
       white-space: nowrap;
     }

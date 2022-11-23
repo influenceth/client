@@ -8,9 +8,26 @@ const Wrapper = styled.div`
   position: relative;
 `;
 
-const Content = styled.div``;
+const Content = styled.div`
+  background: black;
+  margin-left: -100px;
+  position: fixed;
+  width: 540px;
+  z-index: 5;
+`;
 
-const Poppable = ({ children, disabled, label, ...styleProps }) => {
+const Title = styled.div`
+  border-left: 3px solid ${p => p.theme.colors.main};
+  color: white;
+  font-size: 20px;
+  padding: 10px 15px;
+  text-transform: uppercase;
+`;
+const Body = styled.div`
+  height: 300px;
+`;
+
+const Poppable = ({ children, closeOnChange, disabled, label, title, ...styleProps }) => {
   const [open, setOpen] = useState(false);
 
   const handleToggle = useCallback(() => {
@@ -22,6 +39,10 @@ const Poppable = ({ children, disabled, label, ...styleProps }) => {
     setOpen(false);
   }, [disabled]);
 
+  useEffect(() => {
+    if (open) setOpen(false);
+  }, [closeOnChange]);
+
   return (
     <Wrapper>
       <Button
@@ -32,7 +53,10 @@ const Poppable = ({ children, disabled, label, ...styleProps }) => {
       </Button>
       {open && (
         <Content {...styleProps}>
-          {children}
+          <Title>{title}</Title>
+          <Body>
+            {children}
+          </Body>
         </Content>
       )}
     </Wrapper>

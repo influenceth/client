@@ -343,6 +343,7 @@ const SceneMenu = (props) => {
       building: plotData?.plots?.length && plotData.plots[plotId][1] ? buildings[1] : null,
       blueprint: plotId % 3 === 1,
       coreSamplesExist: plotId % 2 === 1 ? (plotId % 10) : 0,
+      inventory: [[5, 700], [19, 500]],
     };
   }, [plotId, !plotData?.plots]);
 
@@ -419,24 +420,34 @@ const SceneMenu = (props) => {
           a.push(actionButtons.ScanAsteroid);
         }
       } else if (plot) {
-        if (resourceMode) {
+        if (true || resourceMode) {
           a.push(actionButtons.NewCoreSample);
           if (plot.coreSamplesExist) {
             a.push(actionButtons.ImproveCoreSample);
           }
         }
-        if (plot.coreSamplesExist && plot.building?.label === 'Warehouse') { // TODO: should use key rather than label
-          a.push(actionButtons.Extract);
-          a.push(actionButtons.SurfaceTransfer);
-        }
+
         if (plot.building) {
-          a.push(actionButtons.Deconstruct);
+          // if (plot.building?.label === 'Extractor' && plot.coreSamplesExist) { // TODO: should use key rather than label
+          if (true) {
+            a.push(actionButtons.Extract);
+          }
         } else if (plot.blueprint) {
           a.push(actionButtons.Construct);
-          a.push(actionButtons.CancelBlueprint);
         } else {
           a.push(actionButtons.NewBlueprint);
         }
+
+        if (plot.inventory?.length > 0) {
+          a.push(actionButtons.SurfaceTransfer);
+        }
+
+        if (plot.blueprint) {
+          a.push(actionButtons.CancelBlueprint);
+        }
+        if (plot.building) {
+          a.push(actionButtons.Deconstruct);
+        } 
       }
     }
 

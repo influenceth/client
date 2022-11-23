@@ -6,6 +6,7 @@ import {
   FiCheckSquare as CheckedIcon
 } from 'react-icons/fi';
 import { RingLoader } from 'react-spinners';
+import DataTable, { createTheme } from 'react-data-table-component';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
@@ -717,7 +718,161 @@ const RawMaterialSection = ({ resource, tonnage, status }) => {
   );
 }
 
-const ExistingSampleSection = ({ resource, tonnage, overrideTonnage, status }) => {
+const PopperBody = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px;
+`;
+const PoppableTitle = styled.div`
+  align-items: flex-end;
+  color: white;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  & > h3 {
+    font-size: 30px;
+    font-weight: normal;
+    margin: 0;
+  }
+`;
+const PoppableTableWrapper = styled.div`
+  border: solid ${borderColor};
+  border-width: 1px 0;
+  flex: 1;
+  overflow: auto;
+  & > table {
+    border-spacing: 0;
+    border-collapse: separate;
+    width: 100%;
+
+    & td {
+      padding: 4px 8px 6px;
+      text-align: right;
+      vertical-align: middle;
+      &:first-child {
+        text-align: left;
+      }
+    }
+
+    & thead {
+      & > tr > td {
+        border-bottom: 1px solid ${borderColor};
+      }
+    }
+
+    & tbody {
+      color: white;
+      & > tr {
+        cursor: ${p => p.theme.cursors.active};
+        &:hover > td {
+          background: #444;
+        }
+      }
+    }
+  }
+`;
+const ResourceColorIcon = styled.div`
+  background-color: ${p => p.theme.colors.resources[p.category]};
+  border-radius: 2px;
+  display: inline-block;
+  height: 10px;
+  margin-right: 4px;
+  width: 10px;
+`;
+
+const CoreSampleSelection = ({ onClick, resources, sampleTally }) => {
+  const existingSamples = useMemo(() => {
+    return [...Array(sampleTally).keys()]
+      .map((i) => ({
+        resource: resources[140 + i],
+        deposit: 1000 * (sampleTally - i) + Math.round(Math.random() * 999)
+      }));
+  }, [sampleTally]);
+  return (
+    <PopperBody>
+      <PoppableTitle>
+        <h3>Lot #23,234</h3>
+        <div>{sampleTally.toLocaleString()} Samples at lot</div>
+      </PoppableTitle>
+      {/* TODO: replace with DataTable? */}
+      <PoppableTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>Resource</td>
+              <td>Deposit Amount</td>
+            </tr>
+          </thead>
+          <tbody>
+            {existingSamples.map((sample, i) => (
+              <tr key={i} onClick={onClick(i)}>
+                <td><ResourceColorIcon category={sample.resource.bucket} /> {sample.resource.label}</td>
+                <td>{sample.deposit.toLocaleString()} tonnes</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </PoppableTableWrapper>
+    </PopperBody>
+  );
+}
+
+const DestinationSelection = ({ asteroid, onClick }) => {
+  const inventories = [
+    { plot: 12, distance: 7, type: 'Warehouse', fullness: 0.94, remaining: 4932 },
+    { plot: 2312, distance: 27, type: 'Warehouse', fullness: 0.74, remaining: 8932 },
+    { plot: 452, distance: 57, type: 'Warehouse', fullness: 0.32, remaining: 17932 },
+    { plot: 2345, distance: 437, type: 'Ship', fullness: 0.94, remaining: 932 },
+    { plot: 7328, distance: 1027, type: 'Warehouse', fullness: 0.04, remaining: 24302 },
+  ];
+  return (
+    <PopperBody>
+      <PoppableTitle>
+        <h3>{asteroid.customName || asteroid.baseName}</h3>
+        <div>12 inventories available</div>
+      </PoppableTitle>
+      {/* TODO: replace with DataTable? */}
+      <PoppableTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>Location</td>
+              <td>Distance</td>
+              <td>Type</td>
+              <td>% Full</td>
+              <td>Rem. Volume</td>
+            </tr>
+          </thead>
+          <tbody>
+            {inventories.map((inventory, i) => {
+              const warningColor = inventory.fullness > 0.8
+                ? theme.colors.error
+                : (inventory.fullness > 0.5 ? theme.colors.yellow : theme.colors.success);
+              return (
+                <tr key={i} onClick={onClick(i)}>
+                  <td>Lot #{inventory.plot}</td>
+                  <td>{inventory.distance.toLocaleString()} km</td>
+                  <td>{inventory.type}</td>
+                  <td style={{ color: warningColor }}>{(100 * inventory.fullness).toFixed(1)}%</td>
+                  <td style={{ color: warningColor }}>{inventory.remaining.toLocaleString()} m<sup>3</sup></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </PoppableTableWrapper>
+    </PopperBody>
+  );
+};
+
+const ExistingSampleSection = ({ resources, resource, tonnage, onSelectSample, overrideTonnage, sampleTally, status }) => {
+  const [clicked, setClicked] = useState(0);
+  const onClick = useCallback((id) => () => {
+    setClicked((x) => x + 1);
+    if (onSelectSample) onSelectSample(id);
+  }, []);
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Core Sample</SectionTitle>
@@ -735,8 +890,8 @@ const ExistingSampleSection = ({ resource, tonnage, overrideTonnage, status }) =
         )}
         {status === 'BEFORE' && (
           <div>
-            <Poppable label="Select" buttonWidth="135px">
-              {/* TODO: ... */}
+            <Poppable label="Select" buttonWidth="135px" closeOnChange={clicked} title="Select Improvable Sample">
+              <CoreSampleSelection onClick={onClick} resources={resources} sampleTally={sampleTally} />
             </Poppable>
           </div>
         )}
@@ -748,7 +903,12 @@ const ExistingSampleSection = ({ resource, tonnage, overrideTonnage, status }) =
   );
 };
 
-const ExtractSampleSection = ({ resource, tonnage, overrideTonnage, remainingAfterExtraction, status }) => {
+const ExtractSampleSection = ({ resource, resources, tonnage, onSelectSample, overrideTonnage, remainingAfterExtraction, status }) => {
+  const [clicked, setClicked] = useState(0);
+  const onClick = useCallback((id) => () => {
+    setClicked((x) => x + 1);
+    if (onSelectSample) onSelectSample(id);
+  }, []);
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Core Sample</SectionTitle>
@@ -773,8 +933,8 @@ const ExtractSampleSection = ({ resource, tonnage, overrideTonnage, remainingAft
         )}
         {status === 'BEFORE' && (
           <div>
-            <Poppable label="Select" buttonWidth="135px">
-              {/* TODO: ... */}
+            <Poppable label="Select" buttonWidth="135px" closeOnChange={clicked} title="Select Core Sample">
+              <CoreSampleSelection onClick={onClick} resources={resources} sampleTally={8} />
             </Poppable>
           </div>
         )}
@@ -794,7 +954,7 @@ const ToolSection = ({ resource, sourcePlot }) => {
       <SectionBody>
         {resource && (
           <ResourceWithData>
-            <ResourceImage badge={1} resource={resource} />
+            <ResourceImage badge="∞" resource={resource} />
             <label>
               <h3>{resource.label}</h3>
               <div>{sourcePlot.building.label} (Lot {sourcePlot.i.toLocaleString()})</div>
@@ -802,11 +962,13 @@ const ToolSection = ({ resource, sourcePlot }) => {
             </label>
           </ResourceWithData>
         )}
+        {/* 
         <div>
           <Poppable label="Source" buttonWidth="135px">
-            {/* TODO: ... */}
+            TODO: select where to get the tool from
           </Poppable>
         </div>
+        */}
       </SectionBody>
     </Section>
   );
@@ -857,7 +1019,12 @@ const ItemSelectionSection = ({ items, resources, status }) => {
   );
 };
 
-const DestinationPlotSection = ({ asteroid, destinationPlot, status }) => {
+const DestinationPlotSection = ({ asteroid, destinationPlot, onDestinationSelect, status }) => {
+  const [clicked, setClicked] = useState(0);
+  const onClick = useCallback((id) => () => {
+    setClicked((x) => x + 1);
+    if (onDestinationSelect) onDestinationSelect(id);
+  }, []);
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Destination</SectionTitle>
@@ -889,8 +1056,8 @@ const DestinationPlotSection = ({ asteroid, destinationPlot, status }) => {
             <IconButtonRounded style={{ marginRight: 6 }}>{/* TODO: ... */}
               <TargetIcon />
             </IconButtonRounded>
-            <Poppable label="Select" buttonWidth="135px">
-              {/* TODO: ... */}
+            <Poppable label="Select" buttonWidth="135px" title="Select Destination" closeOnChange={clicked}>
+              <DestinationSelection asteroid={asteroid} onClick={onClick} />
             </Poppable>
           </div>
         )}
@@ -1132,7 +1299,7 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
       stats: [
         { label: 'Discovery Minimum', value: '0 tonnes', direction: -1 },
         { label: 'Discovery Maximum', value: '10,000 tonnes', direction: 1 },
-        { label: 'Discovery Average', value: '5,000 tonnes', direction: 1 },
+        { label: 'Crew Travel', value: '4m 0s', direction: 1 },
         { label: 'Sample Time', value: '47m 30s', direction: 1 },
       ]
     },
@@ -1147,7 +1314,7 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
       stats: [
         { label: 'Discovery Minimum', value: '0 tonnes', direction: -1 },
         { label: 'Discovery Maximum', value: '10,000 tonnes', direction: 1 },
-        { label: 'Discovery Average', value: '5,000 tonnes', direction: 1 },
+        { label: 'Crew Travel', value: '4m 0s', direction: 1 },
         { label: 'Sample Time', value: '47m 30s', direction: 1 },
       ]
     },
@@ -1288,21 +1455,28 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
 
         {actionType === 'NEW_CORE_SAMPLE' && (
           <>
-            <RawMaterialSection resource={resource} status={status} tonnage={complete && 2345} />
+            <RawMaterialSection resource={resource || resources[8]} status={status} tonnage={complete && 2345} />
             {beforeStart && <ToolSection resource={resources[2]} sourcePlot={destinationPlot} />}
           </>
         )}
 
         {actionType === 'IMPROVE_CORE_SAMPLE' && (
           <>
-            <ExistingSampleSection resource={resource} status={status} tonnage={2345} overrideTonnage={complete && 3456} />
+            <ExistingSampleSection
+              sampleTally={plot.coreSamplesExist}
+              resources={resources}
+              resource={resource || resources[8]}
+              status={status}
+              tonnage={2345}
+              overrideTonnage={complete && 3456}
+            />
             {beforeStart && <ToolSection resource={resources[2]} sourcePlot={destinationPlot} />}
           </>
         )}
 
         {actionType === 'EXTRACT_RESOURCE' && (
           <>
-            <ExtractSampleSection resource={resource} status={status} tonnage={12000} overrideTonnage={status !== 'BEFORE' && amount} remainingAfterExtraction={12000 - amount} />
+            <ExtractSampleSection resource={resource} resources={resources} status={status} tonnage={12000} overrideTonnage={status !== 'BEFORE' && amount} remainingAfterExtraction={12000 - amount} />
             <DestinationPlotSection asteroid={asteroid} destinationPlot={destinationPlot} status={status} />
             {beforeStart && <ExtractionAmountSection amount={amount} min={4200} max={12000} setAmount={setAmount} />}
           </>
