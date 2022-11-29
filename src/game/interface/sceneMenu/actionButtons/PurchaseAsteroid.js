@@ -21,8 +21,8 @@ const PurchaseAsteroid = ({ asteroid }) => {
     <ActionButton
       label={saleIsActive ? 'Purchase Asteroid' : 'Asteroid can be purchased once next sale begins.'}
       flags={{
-        disabled: !saleIsActive || buying,
-        loading: buying
+        disabled: !saleIsActive || buying || undefined,
+        loading: buying || undefined
       }}
       icon={<PurchaseAsteroidIcon />}
       onClick={handleClick} />

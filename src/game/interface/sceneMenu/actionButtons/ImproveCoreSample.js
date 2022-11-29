@@ -13,7 +13,7 @@ const ImproveCoreSample = ({ onSetAction, plot }) => {
     <ActionButton
       label={'Improve Core Sample'}
       flags={{
-        loading: improving,
+        loading: improving || undefined,
         badge: plot.coreSamplesExist
       }}
       icon={<ImproveCoreSampleIcon />}

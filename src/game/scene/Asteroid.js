@@ -24,16 +24,16 @@ import QuadtreeTerrainCube from './asteroid/helpers/QuadtreeTerrainCube';
 import Plots from './asteroid/Plots';
 import Rings from './asteroid/Rings';
 import Telemetry from './asteroid/Telemetry';
+import { pointCircleClosest } from '~/lib/geometryUtils';
 
 const {
-  MIN_FRUSTUM_AT_SURFACE,
   CHUNK_SPLIT_DISTANCE,
+  MIN_FRUSTUM_AT_SURFACE,
   UPDATE_QUADTREE_EVERY,
 } = constants;
 
 const UPDATE_DISTANCE_MULT = CHUNK_SPLIT_DISTANCE * UPDATE_QUADTREE_EVERY;
 
-const INITIAL_ZOOM = 2;
 const INITIAL_ZOOM_MIN = 6000;
 const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 20;
@@ -160,10 +160,46 @@ const Asteroid = (props) => {
   //   [config?.stretch]
   // );
 
-  const initialZoom = useMemo(
-    () => Math.max(INITIAL_ZOOM_MIN, INITIAL_ZOOM * config?.radius),
-    [config?.radius]
-  );
+  // scaleHelper helps define outmost telemetry lines and initial zoom
+  // to help convey relative scale of asteroids
+  const SCALE_HELPER = useMemo(() => {
+    return 360000 * Math.sqrt(config?.radius / 376000) / config?.radius;
+  }, [config?.radius]);
+
+  const INITIAL_ZOOM = useMemo(() => {
+    return Math.max(INITIAL_ZOOM_MIN, 1.5 * SCALE_HELPER * config?.radius);
+  }, [config?.radius, SCALE_HELPER]);
+
+  const initialOrientation = useMemo(() => {
+    if (!(controls && config?.radius && zoomedFrom?.position)) return null;
+
+    // zoom to the point on the equator closest to the camera
+    // (plus a slight angle above equator)
+    let fromPosition = zoomedFrom?.position || controls.object.position;
+    // if fromPosition comes from saved state (i.e. on refresh), will be object but not vector3
+    if (!fromPosition.isVector3) fromPosition = new Vector3(fromPosition.x, fromPosition.y, fromPosition.z);
+    const objectPosition = pointCircleClosest(
+      fromPosition,
+      new Vector3(...position.current),
+      rotationAxis.current,
+      INITIAL_ZOOM,
+      true
+    );
+    objectPosition.add(rotationAxis.current.clone().multiplyScalar(0.07 * INITIAL_ZOOM));
+    // (legacy) zoom in directly from zoomed-out camera
+    // const objectPosition = controls.object.position.clone().normalize().multiplyScalar(initialZoom);
+
+    // Orient the N/S axis to up/down
+    const objectUp = rotationAxis.current.clone();
+
+    // Pan the target scene to center the asteroid
+    const targetScenePosition = new Vector3(...position.current).negate();
+    return {
+      objectPosition,
+      objectUp,
+      targetScenePosition
+    };
+  }, [!controls, config?.radius, zoomedFrom?.position]);
 
   const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent]);
   const surfaceDistance = useMemo(
@@ -364,52 +400,62 @@ const Asteroid = (props) => {
       position: controls.object.position.clone(),
       up: controls.object.up.clone()
     });
+  }, [shouldZoomIn]);
 
-    const panTo = new Vector3(...position.current);
-    group.current?.position.copy(panTo);
-    panTo.negate();
-    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(initialZoom);
+  useEffect(() => {
+    if (!shouldZoomIn || !initialOrientation) return;
 
+    group.current?.position.copy(new Vector3(...position.current));
+    
+    const zoomingDuration = 3;
     const timeline = gsap.timeline({
-      defaults: { duration: 2, ease: 'power4.out' },
-      onComplete: () => updateZoomStatus('in')
+      defaults: { duration: zoomingDuration, ease: 'power4.out' },
+      onComplete: () => {
+        updateZoomStatus('in');
+      }
     });
 
     // Pan the target scene to center the asteroid
-    timeline.to(controls.targetScene.position, { ...panTo }, 0);
+    // (not full duration because we want scene to beat camera to place)
+    timeline.to(controls.targetScene.position, { ...initialOrientation.targetScenePosition, duration: zoomingDuration - 0.25 }, 0);
 
     // Zoom in the camera to the asteroid
-    timeline.to(controls.object.position, { ...zoomTo }, 0);
+    timeline.to(controls.object.position, { ...initialOrientation.objectPosition }, 0);
+
+    // Set Up
+    timeline.to(controls.object.up, { ...initialOrientation.objectUp, ease: 'slow.out' }, 0);
 
     // make sure can see asteroid as zoom
     controls.object.near = 100;
     controls.object.updateProjectionMatrix();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ shouldZoomIn ]);
+  }, [ shouldZoomIn, initialOrientation ]);
 
   const shouldFinishZoomIn = zoomStatus === 'in' && controls && config?.radius;
   useEffect(() => {
-    if (!shouldFinishZoomIn) return;
-
-    // Update distances to maximize precision
-    controls.minDistance = config.radius * MIN_ZOOM_DEFAULT;
-    controls.maxDistance = config.radius * MAX_ZOOM;
-
-    // set zoom speed for this scale
-    controls.zoomSpeed = 1.2 * Math.pow(0.4, Math.log(config?.radiusNominal / 1000) / Math.log(9));
+    if (!shouldFinishZoomIn || !initialOrientation) return;
 
     const panTo = new Vector3(...position.current);
     group.current?.position.copy(panTo);
     panTo.negate();
-    const zoomTo = controls.object.position.clone().normalize().multiplyScalar(initialZoom);
-    controls.targetScene.position.copy(panTo);
-    controls.object.position.copy(zoomTo);
+
+    controls.targetScene.position.copy(initialOrientation.targetScenePosition);
+    controls.object.position.copy(initialOrientation.objectPosition);
+    controls.object.up.copy(initialOrientation.objectUp);
+
+    // Update distances to maximize precision
+    controls.minDistance = config.radius * MIN_ZOOM_DEFAULT;
+    controls.maxDistance = Math.max(config.radius * MAX_ZOOM, INITIAL_ZOOM * 1.2);
+
+    // set zoom speed for this scale
+    controls.zoomSpeed = 1.2 * Math.pow(0.4, Math.log(config?.radiusNominal / 1000) / Math.log(9));
     controls.object.near = 100;
+
     controls.object.updateProjectionMatrix();
     controls.noPan = true;
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ shouldFinishZoomIn ]);
+  }, [ initialOrientation, shouldFinishZoomIn, INITIAL_ZOOM ]);
 
   // Handle zooming back out
   const shouldZoomOut = zoomStatus === 'zooming-out' && zoomedFrom && controls;
@@ -604,7 +650,7 @@ const Asteroid = (props) => {
     let updatedRotation = rotation.current;
     if (config?.rotationSpeed && time) {
       updatedRotation = time * config.rotationSpeed * 2 * Math.PI
-      // updatedRotation = 0; // TODO: remove
+      updatedRotation = 0; // TODO: remove
       if (updatedRotation !== rotation.current) {
         quadtreeRef.current.setRotationFromAxisAngle(
           rotationAxis.current,
@@ -638,7 +684,7 @@ const Asteroid = (props) => {
     //  re-render as soon as it arrives)
     const rotatedCameraPosition = (zoomStatus === 'in' || !config?.radius)
       ? controls.object.position.clone()
-      : controls.object.position.clone().normalize().multiplyScalar(initialZoom);
+      : controls.object.position.clone().normalize().multiplyScalar(INITIAL_ZOOM);
     rotatedCameraPosition.applyAxisAngle(rotationAxis.current, -rotation.current);
     // ^^^
 
@@ -822,7 +868,7 @@ const Asteroid = (props) => {
         onPointerMove={logClick}
         onPointerUp={logClick} />
 
-      {config && terrainInitialized && zoomStatus === 'in' && (
+      {false && config && terrainInitialized && zoomStatus === 'in' && (
         <Plots
           attachTo={quadtreeRef.current}
           asteroidId={origin}
@@ -839,8 +885,10 @@ const Asteroid = (props) => {
           getPosition={() => position.current}
           getRotation={() => rotation.current}
           hasAccess={false}
+          initialCameraPosition={initialOrientation?.objectPosition}
           isScanned={asteroidData?.scanned}
           radius={config.radius}
+          scaleHelper={SCALE_HELPER}
           spectralType={toSpectralType(config.spectralType)}
         />
       )}

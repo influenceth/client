@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import {
   // AxesHelper,
+  // BoxHelper,
   BufferAttribute,
   BufferGeometry,
   Color,
@@ -20,24 +21,26 @@ import {
   TextureLoader,
   PlaneGeometry,
 } from 'three';
-// import * as THREE from 'three';
 
 import useGetTime from '~/hooks/useGetTime';
 import constants from '~/lib/constants';
 import theme from '~/theme';
 import { useFrame, useThree } from '@react-three/fiber';
 
+const { AU, TELEMETRY_SCALE } = constants;
 
 const hexToGLSL = (hex) => {
   const color = new Color().setStyle(hex);
   return color.convertSRGBToLinear().toArray();
 };
 const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
+const SUCCESS_COLOR = new Color(theme.colors.success).convertSRGBToLinear();
 const DISABLED_COLOR = MAIN_COLOR;  // TODO: ...
-const BLUE = hexToGLSL(theme.colors.main);
-const GREEN = hexToGLSL(theme.colors.success);
-const RED = BLUE;//hexToGLSL('#777777');//hexToGLSL(theme.colors.error);
-const SIGNAGE_THETA = 0.05;
+
+const BLUE_GLSL = hexToGLSL(theme.colors.main);
+const GREEN_GLSL = hexToGLSL(theme.colors.success);
+const RED_GLSL = BLUE_GLSL;//hexToGLSL('#777777');//hexToGLSL(theme.colors.error);
+
 
 const getLineMaterial = (rgb, fogDistance, maxAlpha = 1) => {
   return new ShaderMaterial({
@@ -145,19 +148,18 @@ const config = {
   },
   accessControl: {
     enabled: true,
-    orientation: 'planar',  // equator, planar // TODO: equator does not support camera following
-    scale: 1.1, // null | 1.0,
+    orientation: 'equator',  // equator, planar // TODO: equator does not support camera following
     bloom: { disc: false, circle: true, sign: true }
   },
   shipCircle: {
     enabled: true,
     dashed: false,
     hideCircle: false,
-    onEmpty: 'hide', // dash, hide
+    onEmpty: 'show', // dash, hide
     orientation: 'equator', // equator, inclination, planar
-    bloom: { circle: true, ship: true },
-    scale: 1.2,
-    shipsPerLot: 0.02
+    bloom: { circle: false, ship: true },
+    scale: 1.0,//0.8,//1.2,
+    shipsPerLot: 0.0001
   }
 };
 
@@ -177,17 +179,7 @@ const densityByType = {
 
 const GRAV = 6.6743E-11;
 
-const defaultTelemetryRadius = 1.1;
-
-// TODO:
-//  - ship circle to equator (hide equator)
-//  - access control oriented to equator
-//  - access control scaled to updated scale mocks (see Discord thread w/ Sergey and Chris)
-//  - initial zoom to outside access control, oriented with N/S up/down
-//  - (update attenuation?)
-// TODO: test radial gradient on access disc (so looks like territory)
-
-const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radius, spectralType }) => {
+const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPosition, isScanned, radius, scaleHelper, spectralType }) => {
   const { scene, controls } = useThree();
   const getTime = useGetTime();
 
@@ -206,11 +198,11 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
   const helper = useRef();
   const shipTime = useRef();
   
-  const circleRadius = useMemo(() => defaultTelemetryRadius * radius, [radius]);
-  const circleAttenuation = useMemo(() => 1.4 * radius, [radius]);
-  const trajectoryAttenuation = useMemo(() => 10 * radius, [radius]);
+  const circleRadius = useMemo(() => TELEMETRY_SCALE * radius, [radius]);
+  const circleAttenuation = useMemo(() => Math.max(1.4, 0.75 * scaleHelper) * radius, [radius]);
+  const trajectoryAttenuation = useMemo(() => Math.max(10, 2 * scaleHelper) * radius, [radius]);
   const shipAngularVelocity = useMemo(() => {
-    const shipHeight = defaultTelemetryRadius * config.shipCircle.scale;
+    const shipHeight = TELEMETRY_SCALE * config.shipCircle.scale;
     const period = Math.sqrt(3 * Math.PI * shipHeight ** 3 / (densityByType[spectralType] * GRAV));
     return 2 * Math.PI / period;
   }, [spectralType]);
@@ -218,10 +210,10 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
   useEffect(() => {
     const circleSegments = 360;
 
-    const material = getLineMaterial(BLUE, circleAttenuation, 0.7);
+    const material = getLineMaterial(BLUE_GLSL, circleAttenuation, 0.7);
     // (can't clone dashed material because doesn't clone onBeforeCompile)
     const getDashedMaterial = () => getDashedLineMaterial(
-      theme.colors.main,
+      MAIN_COLOR,
       hexToGLSL(theme.colors.main),
       circleAttenuation,
       radius,
@@ -286,7 +278,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
     if (config.rotationalAxis.enabled) {
       rotationalAxis.current = new Line(
         new BufferGeometry(),
-        config.rotationalAxis.dashed ? getDashedMaterial() : getLineMaterial(BLUE, circleAttenuation)
+        config.rotationalAxis.dashed ? getDashedMaterial() : getLineMaterial(BLUE_GLSL, circleAttenuation)
       );
       rotationalAxis.current.userData.bloom = config.rotationalAxis.bloom;
 
@@ -305,17 +297,17 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
     if (config.trajectoryLine.enabled) {
       trajectory.current = new Line(
         new BufferGeometry(),
-        getLineMaterial(BLUE, trajectoryAttenuation)
+        getLineMaterial(BLUE_GLSL, trajectoryAttenuation)
       );
       trajectory.current.userData.bloom = config.trajectoryLine.bloom;
     }
 
     if (config.northPole.enabled) {
-      const poleMarkerSize = circleRadius / 10;
+      const poleMarkerSize = circleRadius / 8;
       const northPole = new Mesh(
         new PlaneGeometry(poleMarkerSize, poleMarkerSize, 1, 1),
         new MeshBasicMaterial({
-          color: theme.colors.main,
+          color: MAIN_COLOR,
           map: new TextureLoader().load('/textures/asteroid/marker_pole_n.png'),
           side: DoubleSide,
           toneMapped: false,
@@ -331,11 +323,11 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
     }
 
     if (config.southPole.enabled) {
-      const poleMarkerSize = circleRadius / 10;
+      const poleMarkerSize = circleRadius / 8;
       const southPole = new Mesh(
         new PlaneGeometry(poleMarkerSize, poleMarkerSize, 1, 1),
         new MeshBasicMaterial({
-          color: theme.colors.main,
+          color: MAIN_COLOR,
           map: new TextureLoader().load('/textures/asteroid/marker_pole_s.png'),
           side: DoubleSide,
           toneMapped: false,
@@ -368,7 +360,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
         shipCircle.userData.bloom = config.shipCircle.bloom.circle;
 
         const shipVertices = [];
-        const shipRadius = defaultTelemetryRadius * config.shipCircle.scale * radius;
+        const shipRadius = TELEMETRY_SCALE * config.shipCircle.scale * radius;
         for (let i = 0; i < shipTally; i++) {
           const angle = 2 * Math.PI * Math.random();
           const x = shipRadius * Math.cos(angle);
@@ -382,10 +374,10 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
         const shipCirclePoints = new Points(
           shipPointGeometry,
           new PointsMaterial({
-            color: `rgb(${theme.colors.mainRGB})`,
+            color: MAIN_COLOR,
             map: shipSprite,
             alphaTest: 0.7,
-            size: Math.round(radius / 50),
+            size: Math.min(2000, Math.max(100, Math.round(radius / 50))),
             sizeAttenuation: true
           })
         );
@@ -403,13 +395,19 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
 
     // TODO (enhancement): accessGroup is lots of extra code (and more when text added), might be nice to put in separate file
     if (config.accessControl.enabled) {
-      // disc
-      const discMargin = radius * 0.005;
-      const discWidth = radius * 0.03;
 
-      const innerDiscRadius = config.accessControl.scale
-        ? circleRadius * config.accessControl.scale
-        : circleRadius + discMargin + discWidth;
+      const discMarginMult = 0.012;
+      const discWidthMult = 0.045;
+
+      const discRadiusScale = Math.max(
+        config.shipCircle.scale + discMarginMult * 2,
+        scaleHelper
+      );
+
+      const innerDiscRadius = circleRadius * discRadiusScale;
+      const discMargin = innerDiscRadius * discMarginMult;
+      const discWidth = innerDiscRadius * discWidthMult;
+
       const outerDiscRadius = innerDiscRadius + discWidth;
       accessDisc.current = new Mesh(
         new RingGeometry(
@@ -418,7 +416,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
           circleSegments
         ),
         new MeshBasicMaterial({
-          color: new Color(hasAccess ? theme.colors.success : theme.colors.main).convertSRGBToLinear(),
+          color: hasAccess ? SUCCESS_COLOR : MAIN_COLOR,
           opacity: 0.25,
           side: DoubleSide,
           toneMapped: false,
@@ -430,6 +428,13 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
       // circle
       const accessCircleVertices = [];
       const accessCircleRadius = outerDiscRadius + discMargin;
+
+      const maxSignageWidth = 1000;
+      const SIGNAGE_THETA = Math.min(
+        0.02, 
+        maxSignageWidth / accessCircleRadius * 2 * Math.PI
+      );
+
       for (let i = 0; i < circleSegments; i++) {
         const theta = i * (1 - SIGNAGE_THETA) * (2 * Math.PI) / circleSegments + SIGNAGE_THETA * Math.PI;
         accessCircleVertices.push(accessCircleRadius * Math.cos(theta));
@@ -440,7 +445,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
       accessCircleGeometry.setAttribute('position', new BufferAttribute(new Float32Array(accessCircleVertices), 3));
 
       const accessLineMaterial = getLineMaterial(
-        hasAccess ? GREEN : RED,
+        hasAccess ? GREEN_GLSL : RED_GLSL,
         circleAttenuation,
         1.0
       );
@@ -448,7 +453,8 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
         accessCircleGeometry,
         accessLineMaterial.clone()
       );
-      accessCircle.current.userData.bloom = config.accessControl.bloom.circle;
+      accessCircle.current.material.userData.bloom = config.accessControl.bloom.circle;
+      accessCircle.current.material.needsUpdate = true;
 
       // "gate"
       const hGateSprite = new TextureLoader().load('/textures/asteroid/docking_gate_h.png');
@@ -497,10 +503,19 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
 
       if (config.accessControl.orientation === 'equator') {
         accessGroup.current.lookAt(axis.clone().normalize());
+        if (controls) {
+          // get initialCameraPosition in equatorial plane
+          // then rotate accessGroup so sign is facing camera
+          const adjustedCameraPosition = initialCameraPosition.clone().applyQuaternion(accessGroup.current.quaternion.clone().invert());
+          let signRotation = Math.atan(adjustedCameraPosition.y / adjustedCameraPosition.x);
+          if (adjustedCameraPosition.x < 0) signRotation += Math.PI;
+          accessGroup.current.rotateZ(signRotation + 0.05);
+        }
       }
     }
 
     // helper.current = new AxesHelper(2 * radius);
+    // helper.current = new BoxHelper(accessGroup.current);
 
     if (accessGroup.current) scene.add(accessGroup.current);
     if (equatorCircle.current) scene.add(equatorCircle.current);
@@ -544,7 +559,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
       if (trajectory.current) {
         const vertices = [];
         for (let i = -1; i <= 1; i++) {
-          const p = orbit.clone().multiplyScalar(i * constants.AU);
+          const p = orbit.clone().multiplyScalar(i * AU);
           vertices.push(p.x);
           vertices.push(p.y);
           vertices.push(p.z);
@@ -577,11 +592,15 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, isScanned, radiu
         shipTime.current = now;
       }
 
-      if (accessGroup.current && config.accessControl.orientation === 'planar') {
-        if (controls.object.position.x !== 0) {
-          let rot = Math.atan(controls.object.position.y / controls.object.position.x);
-          if (controls.object.position.x < 0) rot += Math.PI;
-          accessGroup.current.setRotationFromAxisAngle(new Vector3(0, 0, 1), rot);
+      if (accessGroup.current) {
+        if (config.accessControl.orientation === 'planar') {
+          if (controls.object.position.x !== 0) {
+            let rot = Math.atan(controls.object.position.y / controls.object.position.x);
+            if (controls.object.position.x < 0) rot += Math.PI;
+            accessGroup.current.setRotationFromAxisAngle(new Vector3(0, 0, 1), rot);
+          }
+        } else if (config.accessControl.orientation === 'equator') {
+          accessGroup.current.rotateZ(-0.00002);
         }
       }
     }

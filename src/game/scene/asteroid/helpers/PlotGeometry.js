@@ -7,6 +7,7 @@ import {
 } from './TerrainChunkUtils';
 
 const phi = Math.PI * (3 - Math.sqrt(5));
+const twoPI = 2 * Math.PI;
 
 export const unitFiboPoint = (index, pointTally) => {
   const y = 1 - (index / (pointTally - 1)) * 2; // y goes from 1 to -1
@@ -213,10 +214,10 @@ export const getPlotRegions = (positions, regionTally) => {
 }
 
 export const getAngleDiff = (angle1, angle2) => {
-  const a1 = angle1 >= 0 ? angle1 : (angle1 + 2 * Math.PI);
-  const a2 = angle2 >= 0 ? angle2 : (angle2 + 2 * Math.PI);
-  const diff = Math.abs(a1 - a2) % (2 * Math.PI);
-  return diff > Math.PI ? (2 * Math.PI - diff) : diff;
+  const a1 = angle1 >= 0 ? angle1 : (angle1 + twoPI);
+  const a2 = angle2 >= 0 ? angle2 : (angle2 + twoPI);
+  const diff = Math.abs(a1 - a2) % twoPI;
+  return diff > Math.PI ? (twoPI - diff) : diff;
 }
 
 export const getClosestPlots = ({ center, centerPlot, plotTally, findTally }) => {

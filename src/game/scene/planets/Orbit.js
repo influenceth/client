@@ -3,8 +3,10 @@ import { KeplerianOrbit } from 'influence-utils';
 
 import constants from '~/lib/constants';
 import theme from '~/theme';
+import useStore from '~/hooks/useStore';
 
 const Orbit = (props) => {
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const geometry = useRef();
 
   const positions = useMemo(() => {
@@ -32,7 +34,7 @@ const Orbit = (props) => {
       <lineBasicMaterial
         color={theme.colors.main}
         depthWrite={false}
-        opacity={0.3}
+        opacity={zoomStatus === 'out' ? 0.3 : 0.15}
         transparent={true} />
     </lineLoop>
   );

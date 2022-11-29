@@ -28,6 +28,8 @@ const constants = {
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: true,
   UPDATE_QUADTREE_EVERY: 0.33, // (multiplied by CHUNK_SPLIT_DISTANCE)
 
+  TELEMETRY_SCALE: 1.15,
+
   // Default performance settings
   // (corresponding to GPU tiers 0-3)
   // TODO: don't want to defauly shadowQuality to a value until actually implemented

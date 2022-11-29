@@ -13,7 +13,7 @@ const Extract = ({ onSetAction }) => {
     <ActionButton
       label={'Extract Resource'}
       flags={{
-        loading: extracting
+        loading: extracting || undefined
       }}
       icon={<ExtractionIcon />}
       onClick={handleClick} />
