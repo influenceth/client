@@ -16,8 +16,7 @@ const getContracts = (account, queryClient) => ({
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => async ({ i }) => {
-      // const { price } = await contract.call('AsteroidSale_getPrice', [i]);
-      const price = [0x0, 0x0234];
+      const { price } = await contract.call('AsteroidSale_getPrice', [i]);
       const priceParts = Object.values(price).map((part) => BigInt(part).toString());
       const calls = [
         {

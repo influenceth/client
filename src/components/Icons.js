@@ -60,6 +60,7 @@ import TwitterSVG from '~/assets/icons/TwitterIcon.svg';
 import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
 
 import CancelBlueprintSVG from '~/assets/icons/action_buttons/CancelBlueprint.svg';
+import ConstructSVG from '~/assets/icons/action_buttons/Construct.svg';
 import CoreSampleSVG from '~/assets/icons/action_buttons/CoreSample.svg';
 import DeconstructSVG from '~/assets/icons/action_buttons/Deconstruct.svg';
 import ExtractResourceSVG from '~/assets/icons/action_buttons/ExtractResource.svg';
@@ -110,7 +111,7 @@ export const TwitterIcon = () => <TwitterSVG className="icon" />;
 export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
 
 export const CancelBlueprintIcon = () => <CancelBlueprintSVG className="icon" />;
-export const ConstructIcon = () => <LayBlueprintSVG className="icon" />; // TODO: ...
+export const ConstructIcon = () => <ConstructSVG className="icon" />;
 export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
 export const DeconstructIcon = () => <DeconstructSVG className="icon" />;
 export const ExtractionIcon = () => <ExtractResourceSVG className="icon" />;
