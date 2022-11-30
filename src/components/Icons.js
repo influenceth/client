@@ -62,11 +62,14 @@ import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
 import CancelBlueprintSVG from '~/assets/icons/action_buttons/CancelBlueprint.svg';
 import CoreSampleSVG from '~/assets/icons/action_buttons/CoreSample.svg';
 import DeconstructSVG from '~/assets/icons/action_buttons/Deconstruct.svg';
+import ExtractResourceSVG from '~/assets/icons/action_buttons/ExtractResource.svg';
 import ImproveCoreSampleSVG from '~/assets/icons/action_buttons/ImproveCoreSample.svg';
 import LayBlueprintSVG from '~/assets/icons/action_buttons/LayBlueprint.svg';
 import PurchaseAsteroidSVG from '~/assets/icons/action_buttons/PurchaseAsteroid.svg';
 import ScanAsteroidSVG from '~/assets/icons/action_buttons/ScanAsteroid.svg';
 import SurfaceTransferSVG from '~/assets/icons/action_buttons/SurfaceTransfer.svg';
+import TravelingFromSVG from '~/assets/icons/action_buttons/TravelingFrom.svg';
+import TravelingToSVG from '~/assets/icons/action_buttons/TravelingTo.svg';
 
 /*
   A note on importing custom icons...
@@ -110,12 +113,14 @@ export const CancelBlueprintIcon = () => <CancelBlueprintSVG className="icon" />
 export const ConstructIcon = () => <LayBlueprintSVG className="icon" />; // TODO: ...
 export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
 export const DeconstructIcon = () => <DeconstructSVG className="icon" />;
-export const ExtractionIcon = () => <CoreSampleSVG className="icon" />; // TODO: ...
+export const ExtractionIcon = () => <ExtractResourceSVG className="icon" />;
 export const ImproveCoreSampleIcon = () => <ImproveCoreSampleSVG className="icon" />;
 export const LayBlueprintIcon = () => <LayBlueprintSVG className="icon" />;
 export const PurchaseAsteroidIcon = () => <PurchaseAsteroidSVG className="icon" />;
 export const ScanAsteroidIcon = () => <ScanAsteroidSVG className="icon" />;
 export const SurfaceTransferIcon = () => <SurfaceTransferSVG className="icon" />;
+export const TravelingFromIcon = () => <TravelingFromSVG className="icon" />;
+export const TravelingToIcon = () => <TravelingToSVG className="icon" />;
 
 export const ResourceGroupIcons = {
   rareearth: (<svg viewBox="0 0 24 24"><path d="M16.67,4H15V2H9V4H7.33A1.33,1.33 0 0,0 6,5.33V20.66C6,21.4 6.6,22 7.33,22H16.66C17.4,22 18,21.4 18,20.67V5.33C18,4.6 17.4,4 16.67,4M11,20V14.5H9L13,7V12.5H15" /></svg>),

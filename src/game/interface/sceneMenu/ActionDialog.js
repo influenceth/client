@@ -8,6 +8,7 @@ import {
 import { RingLoader } from 'react-spinners';
 import DataTable, { createTheme } from 'react-data-table-component';
 
+import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
@@ -1351,7 +1352,7 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
     },
     'BLUEPRINT': {
       actionIcon: <LayBlueprintIcon />,
-      headerBackground: extractionBackground, // TODO: ...
+      headerBackground: constructionBackground,
       label: 'Place Building Site',
       completeLabel: 'Building Site',
       completeStatus: 'Ready',
@@ -1368,13 +1369,13 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
     },
     'CANCEL_BLUEPRINT': {
       actionIcon: <CancelBlueprintIcon />,
-      headerBackground: extractionBackground, // TODO: ...
+      headerBackground: constructionBackground,
       label: 'Cancel Building Site',
       goButtonLabel: 'Remove Site',
     },
     'CONSTRUCT': {
       actionIcon: <ConstructIcon />,
-      headerBackground: extractionBackground, // TODO: ...
+      headerBackground: constructionBackground,
       label: 'Construct Building',
       completeLabel: 'Construction',
       completeStatus: 'Complete',
@@ -1387,7 +1388,7 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
     },
     'DECONSTRUCT': {
       actionIcon: <DeconstructIcon />,
-      headerBackground: extractionBackground, // TODO: ...
+      headerBackground: constructionBackground,
       label: 'Deconstruct Building',
       completeLabel: 'Deconstruction',
       completeStatus: 'Complete',
