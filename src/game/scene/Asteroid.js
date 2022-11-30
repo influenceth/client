@@ -562,8 +562,8 @@ const Asteroid = (props) => {
     if (geometry.current && terrainUpdateNeeded) {
       // vvv BENCHMARK 2ms (zoomed-out), 4-20ms+ (zoomed-in)
       lastUpdateStart.current = Date.now();
-      if (!disableChunks.current)
-        geometry.current.setCameraPosition(terrainUpdateNeeded);
+      // if (!disableChunks.current)
+      geometry.current.setCameraPosition(terrainUpdateNeeded);
       settingCameraPosition.current = false;
       // ^^^
     }
