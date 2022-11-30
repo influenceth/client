@@ -481,12 +481,10 @@ const CrewAssignmentCreate = (props) => {
   const rewards = useMemo(() => {
     if (storyState?.accruedTraits) {
       const traits = (storyState?.accruedTraits || []).map((id) => {
-        console.log('trait', id, Crewmate.getTrait(id))
         return {
         id,
         ...Crewmate.getTrait(id)
       }});
-      console.log('traits', traits)
       return {
         drive: traits.find((t) => driveTraits.includes(t.id)),
         classImpactful: traits.find((t) => t.type === 'impactful'),
@@ -628,8 +626,6 @@ const CrewAssignmentCreate = (props) => {
   // hide until loaded
   if (!storyState || !featureOptions || !rewards) return null;
   if (featureOptions.length === 0) return null;
-
-  console.log(rewards);
 
   // draft crew
   const crewmate = { ...featureOptions[featureSelection] };

@@ -459,7 +459,6 @@ const SceneMenu = (props) => {
   useEffect(() => ReactTooltip.rebuild(), [actions]);
 
   if (!asteroid) return null;
-  console.log('asteroid', asteroid, toSpectralType);
   return (
     <>
       <LeftWrapper>

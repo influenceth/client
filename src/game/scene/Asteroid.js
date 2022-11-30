@@ -73,7 +73,17 @@ const frameTimeLeft = (start, chunkSwapPending) => {
   return TARGET_LOOP_TIME
     - AVG_RENDER_TIMES[chunkSwapPending ? 'W_SWAP' : 'WO_SWAP']
     - (getNow() - start);
-}
+};
+
+// let taskTally = 0;
+// let taskTotal = 0;
+// const benchmark = (start) => {
+//   taskTally++;
+//   taskTotal += performance.now() - start;
+// }
+// setInterval(() => {
+//   console.log(`benchmark (${taskTally})`, taskTotal / taskTally);
+// }, 5000);
 
 // const _dbg = {};
 // const dbg = (label, start) => {
@@ -104,7 +114,7 @@ const frameTimeLeft = (start, chunkSwapPending) => {
 // }, 5000);
 
 const Asteroid = (props) => {
-  const { controls } = useThree();
+  const { controls, gl } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const { textureSize } = useStore(s => s.getTerrainQuality());
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
@@ -550,10 +560,10 @@ const Asteroid = (props) => {
 
   useEffect(() => {
     if (geometry.current && terrainUpdateNeeded) {
-      // vvv BENCHMARK 2ms (zoomed-out), 7-20ms+ (zoomed-in)
+      // vvv BENCHMARK 2ms (zoomed-out), 4-20ms+ (zoomed-in)
       lastUpdateStart.current = Date.now();
-      // if (!disableChunks.current)
-      geometry.current.setCameraPosition(terrainUpdateNeeded);
+      if (!disableChunks.current)
+        geometry.current.setCameraPosition(terrainUpdateNeeded);
       settingCameraPosition.current = false;
       // ^^^
     }
@@ -596,15 +606,27 @@ const Asteroid = (props) => {
   }, [terrainInitialized, mousableTerrainInitialized]);
 
   // listen for click events
+  // NOTE: if just use onclick, then fires on drag events too :(
   const clickStatus = useRef();
   const [lastClick, setLastClick] = useState();
-  // NOTE: if just use onclick, then fires on drag events too :(
-  const logClick = useCallback((e) => {
-    if (e.type === 'pointerdown') clickStatus.current = true;
-    else if (e.type === 'pointermove') clickStatus.current = false;
-    else if (e.type === 'pointerup' && clickStatus.current) {
-      setLastClick(Date.now());
-    }
+  useEffect(() => {
+    const onMouseEvent = function (e) {
+      if (e.type === 'pointerdown') {
+        clickStatus.current = new Vector2(e.clientX, e.clientY);
+      }
+      else if (e.type === 'pointerup' && clickStatus.current) {
+        const distance = clickStatus.current.distanceTo(new Vector2(e.clientX, e.clientY));
+        if (distance < 3) {
+          setLastClick(Date.now());
+        }
+      }
+    };
+    gl.domElement.addEventListener('pointerdown', onMouseEvent, true);
+    gl.domElement.addEventListener('pointerup', onMouseEvent, true);
+    return () => {
+      gl.domElement.removeEventListener('pointerdown', onMouseEvent, true);
+      gl.domElement.removeEventListener('pointerup', onMouseEvent, true);
+    };
   }, []);
 
   // Positions the asteroid in space based on time changes
@@ -617,7 +639,7 @@ const Asteroid = (props) => {
     let updatedMapsThisCycle = false;
     chunkSwapThisCycle.current = false;
 
-    // vvv BENCHMARK <1ms
+    // vvv BENCHMARK <0.1ms
     // update asteroid position
     const time = getTime();
     if (asteroidOrbit.current && time) {
@@ -650,7 +672,7 @@ const Asteroid = (props) => {
     let updatedRotation = rotation.current;
     if (config?.rotationSpeed && time) {
       updatedRotation = time * config.rotationSpeed * 2 * Math.PI
-      updatedRotation = 0; // TODO: remove
+      // updatedRotation = 0; // TODO: remove
       if (updatedRotation !== rotation.current) {
         quadtreeRef.current.setRotationFromAxisAngle(
           rotationAxis.current,
@@ -692,7 +714,7 @@ const Asteroid = (props) => {
     if (geometry.current.builder.isUpdating()) {
       // keep building maps until maps are ready (some per frame)
       if (geometry.current.builder.isWaitingOnMaps()) {
-        // TODO: (redo) vvv BENCHMARK (frameTimeLeftms)
+        // TODO: (redo) vvv BENCHMARK (~1ms / max frameTimeLeftms)
         geometry.current.builder.updateMaps(Date.now() + frameTimeLeft(frameStart, false));
         // ^^^
 
@@ -706,7 +728,7 @@ const Asteroid = (props) => {
         // if this was also processing maps this cycle, can bump chunk swap to next loop if helpful
         if (!updatedMapsThisCycle || frameTimeLeft(frameStart, true) > 0) {
 
-          // TODO: (redo) vvv BENCHMARK 1ms
+          // TODO: (redo) vvv BENCHMARK <0.1ms
           geometry.current.builder.update();
           chunkSwapThisCycle.current = true;
           // ^^^
@@ -736,13 +758,17 @@ const Asteroid = (props) => {
     // if zoomed out, let run once to prerender, but then don't run the rest of the frame
     if (geometry.current.cameraPosition && (zoomStatus === 'out' || zoomStatus === 'zooming-out')) return;
 
-    // TODO: this has not been benchmarked... might be excessive
+    // TODO: since this is just done once, should we remove from useFrame loop?
     if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
     if (mouseGeometry.current && mouseGeometry.current.builder.isUpdating()) {
       if (mouseGeometry.current.builder.isWaitingOnMaps()) {
+        // vvv BENCHMARK ~10ms (but mouseterrain only initialized once)
         mouseGeometry.current.builder.updateMaps(Date.now() + frameTimeLeft(frameStart, false));
+        // ^^^
       } else {
+        // vvv BENCHMARK ~0.1ms (only run once)
         mouseGeometry.current.builder.update();
+        // ^^^
         if (!mousableTerrainInitialized) {
           setMousableTerrainInitialized(true);
         }
@@ -759,7 +785,7 @@ const Asteroid = (props) => {
           controls.minDistance += amount;
         }
       } else {
-        // vvv BENCHMARK <1ms
+        // vvv BENCHMARK <0.1ms
         applyZoomLimits(rotatedCameraPosition, Object.values(geometry.current.chunks));
         // ^^^
       }
@@ -770,7 +796,7 @@ const Asteroid = (props) => {
     //  b) camera position changes by rotational equivalent of UPDATE_DISTANCE_MULT at maxStretch surface
     if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
     if (!settingCameraPosition.current && !geometry.current.builder.isBusy() && !geometry.current.builder.isUpdating()) {
-      // vvv BENCHMARK <1ms
+      // vvv BENCHMARK <0.01ms
       const cameraHeight = rotatedCameraPosition.length();
       const updateQuadtreeEvery = geometry.current.smallestActiveChunkSize * UPDATE_DISTANCE_MULT;
       const updateQuadCube = forceUpdate.current > lastUpdateStart.current
@@ -800,15 +826,17 @@ const Asteroid = (props) => {
     // if not processing an update already, and camera is not currently moving, process next change for cube
     if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
     if (!geometry.current.builder.isUpdating() && !settingCameraPosition.current) {
+      // vvv BENCHMARK <0.1ms
       geometry.current.processNextQueuedChange();
+      // ^^^
       if (terrainInitialized && !mousableTerrainInitialized) {
+        // vvv BENCHMARK <1ms (just called once)
         mouseGeometry.current.processNextQueuedChange();
+        // ^^^
       }
     }
 
     // raycast
-    // TODO: would definitely be cheaper to use single prerendered mesh for this
-    //  (but would need to overlay geometry, be transparent)
     // TODO (enhancement): probably don't need to do this every frame
     if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
     if (mousableTerrainInitialized && mouseableRef.current.children) {
@@ -820,7 +848,11 @@ const Asteroid = (props) => {
           lastMouseUpdatePosition.current = mouseVector.clone();
           lastMouseUpdateTime.current = now;
           try {
+            // TODO: try to improve this...
+            //  - could try merging this mousableRef into a single object and seeing if that helps? it's already 6 though
+            // vvv BENCHMARK 13ms
             const intersections = state.raycaster.intersectObjects(mouseableRef.current.children);
+            // ^^^
             if (intersections.length) {
               mouseIntersect.current.copy(intersections[0].point);
               mouseIntersect.current.applyAxisAngle(rotationAxis.current, -1 * rotation.current);
@@ -863,12 +895,9 @@ const Asteroid = (props) => {
   return (
     <group ref={group}>
       <group ref={quadtreeRef} />
-      <group ref={mouseableRef}
-        onPointerDown={logClick}
-        onPointerMove={logClick}
-        onPointerUp={logClick} />
+      <group ref={mouseableRef} />
 
-      {false && config && terrainInitialized && zoomStatus === 'in' && (
+      {config && terrainInitialized && zoomStatus === 'in' && (
         <Plots
           attachTo={quadtreeRef.current}
           asteroidId={origin}
