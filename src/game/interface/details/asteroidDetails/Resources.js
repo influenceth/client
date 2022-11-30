@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
-import utils from 'influence-utils';
+import { toRarity, toSpectralType } from '@influenceth/sdk';
 import { BsChevronRight as NextIcon } from 'react-icons/bs';
 import LoadingIcon from 'react-spinners/PulseLoader';
 
@@ -485,7 +485,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     <Wrapper>
       <LeftPane>
         <SpectralLegend>
-          {utils.toSpectralType(asteroid.spectralType).toLowerCase().split('').map((l) => (
+          {toSpectralType(asteroid.spectralType).toLowerCase().split('').map((l) => (
             <div key={l}>
               <span>{l}</span>
               <span>{spectralLabels[l]}</span>
@@ -497,7 +497,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             <AsteroidGraphic
               abundances={abundances}
               asteroid={{ ...asteroid, scanStatus }}
-              defaultLastRow={utils.toRarity(asteroid.bonuses)}
+              defaultLastRow={toRarity(asteroid.bonuses)}
               focus={selected?.category}
               hover={hover}
               noColor={!asteroid.scanned} />

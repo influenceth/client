@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useQueryClient } from 'react-query';
-import { starknetContracts as configs } from 'influence-utils';
+import { starknetContracts as configs } from '@influenceth/sdk';
 import { Contract, shortString } from 'starknet';
 
 import useAuth from '~/hooks/useAuth';

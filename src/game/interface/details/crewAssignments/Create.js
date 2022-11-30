@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { toCrewClass, toCrewClassDescription, toCrewTrait } from 'influence-utils';
+import { Crewmate } from '@influenceth/sdk';
 import {
   BiUndo as UndoIcon,
   BiRedo as RedoIcon
@@ -480,10 +480,13 @@ const CrewAssignmentCreate = (props) => {
 
   const rewards = useMemo(() => {
     if (storyState?.accruedTraits) {
-      const traits = (storyState?.accruedTraits || []).map((id) => ({
+      const traits = (storyState?.accruedTraits || []).map((id) => {
+        console.log('trait', id, Crewmate.getTrait(id))
+        return {
         id,
-        ...toCrewTrait(id)
-      }));
+        ...Crewmate.getTrait(id)
+      }});
+      console.log('traits', traits)
       return {
         drive: traits.find((t) => driveTraits.includes(t.id)),
         classImpactful: traits.find((t) => t.type === 'impactful'),
@@ -626,6 +629,8 @@ const CrewAssignmentCreate = (props) => {
   if (!storyState || !featureOptions || !rewards) return null;
   if (featureOptions.length === 0) return null;
 
+  console.log(rewards);
+
   // draft crew
   const crewmate = { ...featureOptions[featureSelection] };
   if (finalized) crewmate.name = name;
@@ -666,8 +671,8 @@ const CrewAssignmentCreate = (props) => {
                           <CrewClassIcon crewClass={crewmate.crewClass} overrideColor="inherit" />
                         </div>
                         <article>
-                          <h4>{toCrewClass(crewmate.crewClass)}</h4>
-                          <div>{toCrewClassDescription(crewmate.crewClass)}</div>
+                          <h4>{Crewmate.getClass(crewmate.crewClass).name}</h4>
+                          <div>{Crewmate.getClass(crewmate.crewClass).description}</div>
                         </article>
                         <TipHolder>
                           <TriangleTip strokeWidth="1" rotate="90" />
@@ -843,8 +848,8 @@ const CrewAssignmentCreate = (props) => {
                 <CrewClassIcon crewClass={crewmate.crewClass} overrideColor="inherit" />
               </div>
               <article>
-                <h4>{toCrewClass(crewmate.crewClass)}</h4>
-                <div>{toCrewClassDescription(crewmate.crewClass)}</div>
+                <h4>{Crewmate.getClass(crewmate.crewClass).name}</h4>
+                <div>{Crewmate.getClass(crewmate.crewClass).description}</div>
               </article>
             </Trait>
 

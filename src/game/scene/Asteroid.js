@@ -11,7 +11,7 @@ import {
   Vector3
 } from 'three';
 import gsap from 'gsap';
-import { KeplerianOrbit, toSpectralType } from 'influence-utils';
+import { KeplerianOrbit, toSpectralType } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';

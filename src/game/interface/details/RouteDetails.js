@@ -11,7 +11,7 @@ import {
 import { Vector3 } from 'three';
 import numeral from 'numeral';
 import styled from 'styled-components';
-import { KeplerianOrbit } from 'influence-utils';
+import { KeplerianOrbit } from '@influenceth/sdk';
 
 import ClockContext from '~/contexts/ClockContext';
 import useAsteroid from '~/hooks/useAsteroid';

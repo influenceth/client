@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { SPECTRAL_TYPES } from 'influence-utils';
+import { SPECTRAL_TYPES } from '@influenceth/sdk';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 
 import useStore from '~/hooks/useStore';

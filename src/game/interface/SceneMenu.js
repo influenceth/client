@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import utils, { Address } from 'influence-utils';
+import { Address, toRarity, toSize, toSpectralType } from '@influenceth/sdk';
 import ReactTooltip from 'react-tooltip';
 import {
   FaCubes as InfrastructureIcon,
@@ -415,12 +415,12 @@ const SceneMenu = (props) => {
       if (!asteroid.owner) {
         a.push(actionButtons.PurchaseAsteroid);
       }
-      if (false && !asteroid.scanned) {
+      if (!asteroid.scanned) {
         if (account && asteroid.owner && Address.areEqual(account, asteroid.owner)) {
           a.push(actionButtons.ScanAsteroid);
         }
       } else if (plot) {
-        if (true || resourceMode) {
+        if (resourceMode) {
           a.push(actionButtons.NewCoreSample);
           if (plot.coreSamplesExist) {
             a.push(actionButtons.ImproveCoreSample);
@@ -428,7 +428,7 @@ const SceneMenu = (props) => {
         }
 
         if (plot.building) {
-          // if (plot.building?.label === 'Extractor' && plot.coreSamplesExist) { // TODO: should use key rather than label
+          // if (plot.building?.label === 'Extractor' && plot.coreSamplesExist) { // TODO: should use building key rather than label
           if (true) {
             a.push(actionButtons.Extract);
           }
@@ -459,6 +459,7 @@ const SceneMenu = (props) => {
   useEffect(() => ReactTooltip.rebuild(), [actions]);
 
   if (!asteroid) return null;
+  console.log('asteroid', asteroid, toSpectralType);
   return (
     <>
       <LeftWrapper>
@@ -509,7 +510,7 @@ const SceneMenu = (props) => {
                 <Title>{asteroid.customName || asteroid.baseName}</Title>
                 <Subtitle>
                   <PaneContent>
-                    {utils.toSize(asteroid.radius)} <b>{utils.toSpectralType(asteroid.spectralType)}-type</b>
+                    {toSize(asteroid.radius)} <b>{toSpectralType(asteroid.spectralType)}-type</b>
                   </PaneContent>
                   <PaneHoverContent>
                     Asteroid Details
@@ -571,9 +572,9 @@ const SceneMenu = (props) => {
                     <ThumbTitle>{asteroid.customName || asteroid.baseName}</ThumbTitle>
                     <ThumbSubtitle>
                       <PaneContent>
-                        {utils.toSize(asteroid.r)}{' '}
-                        <b>{utils.toSpectralType(asteroid.spectralType)}{'-type'}</b>
-                        {asteroid.scanned && <Rarity rarity={utils.toRarity(asteroid.bonuses)} />}
+                        {toSize(asteroid.r)}{' '}
+                        <b>{toSpectralType(asteroid.spectralType)}{'-type'}</b>
+                        {asteroid.scanned && <Rarity rarity={toRarity(asteroid.bonuses)} />}
                       </PaneContent>
                       <PaneHoverContent>
                         Zoom to Asteroid

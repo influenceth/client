@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { RESOURCES, toResources } from 'influence-utils';
+import { RESOURCES, toResources } from '@influenceth/sdk';
 
 import useAssets from './useAssets';
 

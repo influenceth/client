@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { toCrewClass, toCrewCollection, toCrewTitle, toCrewTrait } from 'influence-utils';
+import { toCrewClass, toCrewCollection, toCrewTitle, toCrewTrait } from '@influenceth/sdk';
 
 import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { toCrewClass } from 'influence-utils';
+import { toCrewClass } from '@influenceth/sdk';
 
 import useBook from '~/hooks/useBook';
 import useOwnedCrew from '~/hooks/useOwnedCrew';

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { toCrewClass, toCrewCollection, toCrewTitle, toCrewTrait } from 'influence-utils';
+import { toCrewClass, toCrewCollection, toCrewTitle, toCrewTrait } from '@influenceth/sdk';
 import { FaBookOpen as BioIcon } from 'react-icons/fa';
 import { RiBarChart2Fill as StatsIcon } from 'react-icons/ri';
 

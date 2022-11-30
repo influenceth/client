@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 import styled, { css } from 'styled-components';
 import pick from 'lodash/pick';
-import { toCrewClass, toCrewCollection, toCrewTitle } from 'influence-utils';
+import { toCrewClass, toCrewCollection, toCrewTitle } from '@influenceth/sdk';
 
 import silhouette from '~/assets/images/silhouette.png';
 import CrewCardOverlay, { cardTransitionSpeed, cardTransitionFunction } from '~/components/CrewCardOverlay';

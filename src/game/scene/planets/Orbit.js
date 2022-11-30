@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { KeplerianOrbit } from 'influence-utils';
+import { KeplerianOrbit } from '@influenceth/sdk';
 
 import constants from '~/lib/constants';
 import theme from '~/theme';

@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
-import { KeplerianOrbit } from 'influence-utils';
+import { KeplerianOrbit } from '@influenceth/sdk';
 import { RiRouteFill } from 'react-icons/ri';
 import { MdRemoveCircle } from 'react-icons/md';
 import { GiHorizontalFlip } from 'react-icons/gi';

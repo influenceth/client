@@ -1,4 +1,4 @@
-import { toCrewClass } from 'influence-utils';
+import { toCrewClass } from '@influenceth/sdk';
 
 import Svg1 from '~/assets/icons/crew_classes/1.svg';
 import Svg2 from '~/assets/icons/crew_classes/2.svg';

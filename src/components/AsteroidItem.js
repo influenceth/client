@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import utils from 'influence-utils';
+import { toRarity, toSize, toSpectralType } from '@influenceth/sdk';
 import { IoIosPin } from 'react-icons/io';
 import { BiTargetLock } from 'react-icons/bi';
 import { AiFillEye as WatchIcon } from 'react-icons/ai';
@@ -71,9 +71,9 @@ const AsteroidItem = (props) => {
       {...restProps}>
       <Description>
         {asteroid.customName || asteroid.baseName}{' - '}
-        {utils.toSize(asteroid.r)}{' '}
-        {utils.toSpectralType(asteroid.spectralType)}{'-type'}
-        {asteroid.scanned && <RarityBadge rarity={utils.toRarity(asteroid.bonuses)}> &#9679;</RarityBadge>}
+        {toSize(asteroid.r)}{' '}
+        {toSpectralType(asteroid.spectralType)}{'-type'}
+        {asteroid.scanned && <RarityBadge rarity={toRarity(asteroid.bonuses)}> &#9679;</RarityBadge>}
       </Description>
       <Controls>
         <IconButton

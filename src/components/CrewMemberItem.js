@@ -1,5 +1,5 @@
 import { useHistory } from 'react-router-dom';
-import { toCrewClass } from 'influence-utils';
+import { toCrewClass } from '@influenceth/sdk';
 
 import ListHoverItem from './ListHoverItem';
 import CrewClassIcon from '~/components/CrewClassIcon';

@@ -1,4 +1,4 @@
-import { KeplerianOrbit } from 'influence-utils';
+import { KeplerianOrbit } from '@influenceth/sdk';
 import { Vector3 } from 'three';
 
 import constants from '~/lib/constants';

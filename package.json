@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "@influenceth/sdk": "^2.0.0-beta.3",
     "@popperjs/core": "^2.11.6",
     "@react-hook/throttle": "^2.2.0",
     "@react-three/drei": "^8.8.1",
@@ -22,7 +23,6 @@
     "howler": "^2.2.3",
     "immer": "^9.0.16",
     "import": "^0.0.6",
-    "influence-utils": "^1.10.4",
     "isbot-fast": "^1.2.0",
     "lodash.uniqby": "^4.7.0",
     "md5": "^2.3.0",

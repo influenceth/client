@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { css } from 'styled-components';
-import { Address } from 'influence-utils';
+import { Address } from '@influenceth/sdk';
 
 import Details from '~/components/DetailsModal';
 import { InfoIcon, CompositionIcon } from '~/components/Icons';

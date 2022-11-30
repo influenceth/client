@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { START_TIMESTAMP } from 'influence-utils';
+import { START_TIMESTAMP } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 
