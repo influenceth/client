@@ -922,7 +922,7 @@ const Asteroid = (props) => {
         />
       )}
 
-      {config?.ringsPresent && geometry.current && zoomStatus !== 'out' && (
+      {ringsPresent && geometry.current && zoomStatus !== 'out' && (
         <Rings
           receiveShadow={shadowMode > 0}
           config={config}
