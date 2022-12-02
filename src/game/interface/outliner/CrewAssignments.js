@@ -7,7 +7,7 @@ import Button from '~/components/Button';
 import IconButton from '~/components/IconButton';
 import { ChapterIcon, DetailIcon, RocketIcon } from '~/components/Icons';
 import Section from '~/components/Section';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useCrew from '~/hooks/useCrew';
 
 const Controls = styled.div`
   display: flex;
@@ -83,10 +83,10 @@ const CrewAssignments = (props) => {
   }, [actionableBooks, assignmentsByBook, history]);
 
   // TODO: genesis book deprecation vvv
-  const { data: crew } = useOwnedCrew();
+  const { crew, crewMemberMap } = useCrew();
   const hasGenesisCrewmate = useMemo(() => {
-    return crew && !!crew.find((c) => [1,2,3].includes(c.crewCollection))
-  }, [crew?.length]); // eslint-disable-line react-hooks/exhaustive-deps
+    return crew && crew?.crewMembers && crewMemberMap && crew.crewMembers.find((i) => [1,2,3].includes(crewMemberMap[i]?.crewCollection));
+  }, [crew?.crewMembers, crewMemberMap]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!hasGenesisCrewmate) return null;
   // ^^^
 

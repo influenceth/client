@@ -10,7 +10,7 @@ import CrewCard from '~/components/CrewCard';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/DetailsModal';
 import { LinkIcon, TwitterIcon } from '~/components/Icons';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useCrew from '~/hooks/useCrew';
 import useStorySession from '~/hooks/useStorySession';
 
 const slideOutTransition = keyframes`
@@ -287,7 +287,7 @@ const CrewAssignmentComplete = (props) => {
   const { account } = useAuth();
   const { id: sessionId } = useParams();
   const history = useHistory();
-  const { data: allCrew } = useOwnedCrew();
+  const { crewMemberMap } = useCrew();
   const { storyState } = useStorySession(sessionId);
 
   const onCloseDestination = useMemo(
@@ -295,9 +295,10 @@ const CrewAssignmentComplete = (props) => {
     [storyState?.book, storyState?.story]
   );
 
-  const crew = useMemo(() => {
-    return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
-  }, [storyState, allCrew]);
+  const crew = useMemo(
+    () => crewMemberMap && storyState && crewMemberMap[storyState.owner],
+    [storyState, crewMemberMap]
+  );
 
   const rewards = useMemo(() => {
     return (storyState?.accruedTraits || []).map((id) => ({

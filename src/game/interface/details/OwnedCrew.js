@@ -21,9 +21,9 @@ import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import useAuth from '~/hooks/useAuth';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
+import useCrew from '~/hooks/useCrew';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewManager from '~/hooks/useCrewManager';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme.js';
@@ -444,7 +444,7 @@ const OwnedCrew = (props) => {
   const createStorySession = useCreateStorySession();
   const { data: crewAssignmentData, isLoading: assignmentsAreLoading } = useCrewAssignments();
   const queryClient = useQueryClient();
-  const { data: crew, isLoading: crewIsLoading } = useOwnedCrew();
+  const { crew: selectedCrew, crews: allCrews, crewMemberMap, loading: crewIsLoading } = useCrew();
   const { changeActiveCrew, getPendingActiveCrewChange } = useCrewManager();
   const history = useHistory();
   const { height, width } = useScreenSize();
@@ -468,6 +468,16 @@ const OwnedCrew = (props) => {
 
   const isDataLoading = !token || assignmentsAreLoading || crewIsLoading;
 
+  const crew = useMemo(() => {
+    if (crewIsLoading) return [];
+    const activeCrew = (selectedCrew?.crewMembers || []).map((i, index) => ({ ...crewMemberMap[i], activeSlot: index + 1 }));
+    const activeInAnyCrewIds = (allCrews || []).reduce((acc, c) => [...acc, ...c.crewMembers], []);
+    const inactiveCrew = Object.values(crewMemberMap || {})
+      .filter((crewMember) => !activeInAnyCrewIds.includes(crewMember.i))
+      .map((c) => ({ ...c, activeSlot: -1 }));
+    return [...activeCrew, ...inactiveCrew];
+  }, [selectedCrew, allCrews, crewMemberMap, crewIsLoading]);
+  
   const isDirty = useMemo(() => {
     return pristine !== activeCrew.map((c) => c.i).join(',');
   }, [activeCrew, pristine]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -562,8 +572,8 @@ const OwnedCrew = (props) => {
   }, [crew]);
 
   const handleSave = useCallback(() => {
-    changeActiveCrew({ crew: activeCrew.map((c) => c.i) });
-  }, [activeCrew, changeActiveCrew]);
+    changeActiveCrew({ crewId: selectedCrew?.i, crewMembers: activeCrew.map((c) => c.i) });
+  }, [activeCrew, changeActiveCrew, selectedCrew]);
 
   const handleActiveCrewHeight = useCallback(() => {
     if (activeCrewContainer.current) {
@@ -588,7 +598,7 @@ const OwnedCrew = (props) => {
           type: 'INITIALIZE',
           crew: crew.map((c) => ({
             ...c,
-            activeSlot: pendingChange.vars.crew.indexOf(c.i)
+            activeSlot: (pendingChange.vars.crewMembers || []).indexOf(c.i)
           })),
           pristine: false
         });
@@ -645,8 +655,8 @@ const OwnedCrew = (props) => {
   if (isDataLoading) return null;
   return (
     <Details title="Owned Crew" width="max">
-      {!(crew && crewRecruitmentStoryId) && <Loader />}
-      {crew && crewRecruitmentStoryId && (
+      {!(crew?.length && crewRecruitmentStoryId) && <Loader />}
+      {crew?.length && crewRecruitmentStoryId && (
         <Container>
           <Title>
             <h3>

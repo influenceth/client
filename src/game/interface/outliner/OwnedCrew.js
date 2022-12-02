@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 import { BiTransfer as TradeIcon } from 'react-icons/bi';
 
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useCrew from '~/hooks/useCrew';
 import useMintableCrew from '~/hooks/useMintableCrew';
 import CrewMemberItem from '~/components/CrewMemberItem';
 import IconButton from '~/components/IconButton';
@@ -30,8 +30,13 @@ const CrewList = styled.ul`
 
 const OwnedCrew = (props) => {
   const history = useHistory();
-  const { data: crew } = useOwnedCrew();
+  const { crew, crewMemberMap } = useCrew();
   const { data: mintable } = useMintableCrew();
+
+  console.log({
+    crew: { ...crew },
+    crewMemberMap: { ...crewMemberMap },
+  });
 
   return (
     <Section
@@ -58,15 +63,15 @@ const OwnedCrew = (props) => {
         </MarketplaceLink>
       </Controls>
       <CrewList>
-        {crew?.length === 0 && mintable?.length === 0 && (
+        {crew?.crewMembers?.length === 0 && mintable?.length === 0 && (
           <ListEmptyMessage><span>No owned crew</span></ListEmptyMessage>
         )}
-        {crew?.length === 0 && mintable?.length > 0 && (
+        {crew?.crewMembers?.length === 0 && mintable?.length > 0 && (
             <ListEmptyMessage>
               <span>No owned crew. {mintable.length} crew members available to be minted.</span>
             </ListEmptyMessage>
         )}
-        {crew?.length > 0 && crew.map(c => <CrewMemberItem key={c.i} crew={c} />)}
+        {crew?.crewMembers?.length > 0 && crew.crewMembers.map((i) => <CrewMemberItem key={i} crew={crewMemberMap[i]} />)}
       </CrewList>
     </Section>
   );

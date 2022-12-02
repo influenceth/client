@@ -19,7 +19,7 @@ import {
 } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useCrew from '~/hooks/useCrew';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import Menu from './mainMenu/Menu';
@@ -123,10 +123,10 @@ const MainMenu = (props) => {
   const { totalAssignments } = crewAssignmentData || {};
   
   // TODO: genesis book deprecation vvv
-  const { data: crew } = useOwnedCrew();
+  const { crew, crewMemberMap } = useCrew();
   const hasGenesisCrewmate = useMemo(() => {
-    return crew && !!crew.find((c) => [1,2,3].includes(c.crewCollection))
-  }, [crew?.length]); // eslint-disable-line react-hooks/exhaustive-deps
+    return crew && crew?.crewMembers && crewMemberMap && crew.crewMembers.find((i) => [1,2,3].includes(crewMemberMap[i]?.crewCollection));
+  }, [crew?.crewMembers, crewMemberMap]); // eslint-disable-line react-hooks/exhaustive-deps
   // ^^^
 
   const [ showMenu, setShowMenu ] = useState(!isMobile);

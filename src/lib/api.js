@@ -7,9 +7,12 @@ const config = { baseURL: process.env.REACT_APP_API_URL };
 if (initialToken) config.headers = { Authorization: `Bearer ${initialToken}`};
 const instance = axios.create(config);
 
-useStore.subscribe(newToken => {
-  instance.defaults.headers = { Authorization: `Bearer ${newToken}`}
-}, s => s.auth.token);
+useStore.subscribe(([newToken, crewId]) => {
+  instance.defaults.headers = {
+    Authorization: `Bearer ${newToken}`,
+    'X-Crew-Id': crewId
+  };
+}, s => [s.auth.token, s.selectedCrewId]);
 
 const api = {
   getUser: async () => {
@@ -79,6 +82,11 @@ const api = {
 
   getOwnedAsteroidsCount: async () => {
     const response = await instance.get('/v1/asteroids/ownedCount');
+    return response.data;
+  },
+
+  getCrews: async () => {
+    const response = await instance.get(`/v1/crews`);
     return response.data;
   },
 

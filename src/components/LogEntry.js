@@ -143,7 +143,7 @@ const LogEntry = ({ data = {}, css = {}, isHeaderRow, isTabular, timestampBreakp
       </LogEntryHeader>
     );
   }
-
+  
   const {
     icon,
     content,

@@ -1,21 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useCrew from '~/hooks/useCrew';
 
 const CrewLink = (props) => {
   const { id, name: initialName } = props;
-  const { data: owned } = useOwnedCrew();
+  const { crewMemberMap } = useCrew();
   const [ name, setName ] = useState(initialName);
 
   useEffect(() => {
-    if (owned) {
-      const match = owned.find(a => a.i === Number(id));
+    if (crewMemberMap) {
+      const match = crewMemberMap[id];
       if (match) setName(match.name || `#${id}`);
     } else {
       setName(initialName || `#${id}`);
     }
-  }, [ owned, id, initialName ]);
+  }, [ crewMemberMap, id, initialName ]);
 
   return <Link to={`/crew/${id}`}>{name}</Link>;
 };

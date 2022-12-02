@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
 import { AuthProvider } from '~/contexts/AuthContext';
+import { CrewProvider } from './contexts/CrewContext';
 import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
 import { ClockProvider } from '~/contexts/ClockContext';
 import { EventsProvider } from '~/contexts/EventsContext';
@@ -104,32 +105,34 @@ const Game = (props) => {
   return (
     <WalletProvider>
       <AuthProvider>
-        <EventsProvider>
-          <ChainTransactionProvider>
-            <ThemeProvider theme={theme}>
-              <GlobalStyle />
-              <Router>
-                <Redirector />
-                <Referral />
-                <Switch>
-                  <Route path="/play">
-                    <LandingPage />
-                  </Route>
-                  <Route>
-                    {introEnabled && <Intro onComplete={onIntroComplete} />}
-                    <ClockProvider>
-                      <StyledMain>
-                        <Interface />
-                        {showScene && <Scene />}
-                        <Audio />
-                      </StyledMain>
-                    </ClockProvider>
-                  </Route>
-                </Switch>
-              </Router>
-            </ThemeProvider>
-          </ChainTransactionProvider>
-        </EventsProvider>
+        <CrewProvider>
+          <EventsProvider>
+            <ChainTransactionProvider>
+              <ThemeProvider theme={theme}>
+                <GlobalStyle />
+                <Router>
+                  <Redirector />
+                  <Referral />
+                  <Switch>
+                    <Route path="/play">
+                      <LandingPage />
+                    </Route>
+                    <Route>
+                      {introEnabled && <Intro onComplete={onIntroComplete} />}
+                      <ClockProvider>
+                        <StyledMain>
+                          <Interface />
+                          {showScene && <Scene />}
+                          <Audio />
+                        </StyledMain>
+                      </ClockProvider>
+                    </Route>
+                  </Switch>
+                </Router>
+              </ThemeProvider>
+            </ChainTransactionProvider>
+          </EventsProvider>
+        </CrewProvider>
       </AuthProvider>
     </WalletProvider>
   );

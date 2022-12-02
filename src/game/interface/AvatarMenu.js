@@ -5,7 +5,7 @@ import CrewCard from '~/components/CrewCard';
 
 import { SwayIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useCrew from '~/hooks/useCrew';
 
 const bgColor = '#000';
 const cardWidth = 80;
@@ -44,12 +44,11 @@ const SwayContainer = styled.div`
 `;
 
 const AvatarMenu = (props) => {
-  const { token } = useAuth();
+  const { account } = useAuth();
+  const { captain } = useCrew();
   const history = useHistory();
-  const { data: crew } = useOwnedCrew();
-  const captain = useMemo(() => (crew || []).find((c) => c.activeSlot === 0), [crew]);
 
-  if (!token) return null;
+  if (!account) return null;
   return (
     <>
       <SwayContainer noCaptain={!captain}><SwayIcon /> 0</SwayContainer>

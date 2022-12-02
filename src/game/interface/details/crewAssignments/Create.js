@@ -22,7 +22,7 @@ import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCrewManager from '~/hooks/useCrewManager';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useCrew from '~/hooks/useCrew';
 import useSale from '~/hooks/useSale';
 import useStore from '~/hooks/useStore';
 import useStorySession from '~/hooks/useStorySession';
@@ -466,7 +466,7 @@ const CrewAssignmentCreate = (props) => {
   const history = useHistory();
   const { storyState } = useStorySession(sessionId);
   const { purchaseAndInitializeCrew, getPendingPurchase } = useCrewManager();
-  const { data: crew } = useOwnedCrew();
+  const { crew, crewMemberMap } = useCrew();
   const { data: crewSale } = useSale('Crewmate');
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -583,11 +583,12 @@ const CrewAssignmentCreate = (props) => {
       name,
       features: featureOptions[featureSelection],
       traits: rewards,
+      crewId: crew?.i || 0,
       sessionId // used to tag the pendingTransaction
     };
     purchaseAndInitializeCrew(input);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, featureOptions?.length, featureSelection, purchaseAndInitializeCrew, !!rewards, sessionId]);
+  }, [name, featureOptions?.length, featureSelection, purchaseAndInitializeCrew, !!rewards, sessionId, crew?.i]);
 
   // show "complete" page (instead of "create") for non-recruitment assignments
   useEffect(() => {
@@ -605,7 +606,7 @@ const CrewAssignmentCreate = (props) => {
       setName(pendingPurchase.vars.name);
       setFinalizing(true);
     } else if (finalizing) {
-      if ((crew || []).find((c) => c.name === name)) {
+      if (Object.values(crewMemberMap).find((c) => c.name === name)) {
         setFinalizing(false);
         setFinalized(true);
       }
@@ -614,7 +615,7 @@ const CrewAssignmentCreate = (props) => {
       rerollAppearance();
     }
   }, [ // eslint-disable-line react-hooks/exhaustive-deps
-    crew?.length,
+    crewMemberMap,
     finalizing,
     getPendingPurchase,
     name,

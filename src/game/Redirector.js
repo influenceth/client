@@ -1,26 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
-import useOwnedCrew from '~/hooks/useOwnedCrew';
-import useStore from '~/hooks/useStore';
+import useAuth from '~/hooks/useAuth';
+import useCrew from '~/hooks/useCrew';
 
 const Redirector = () => {
   const history = useHistory();
-  const { data: crew, isLoading: crewIsLoading } = useOwnedCrew();
-
-  const token = useStore(s => s.auth.token);
+  const { token } = useAuth();
+  const { crew, loading } = useCrew();
 
   const [loggedOut, setLoggedOut] = useState(!token);
 
   useEffect(() => {
-    // if just logged in and crew is ready, send to owned-crew if no crew yet
-    if (loggedOut && !!token && !crewIsLoading && !!crew) {
+    // if just logged in, send to /owned-crew if no crew yet OR selected crew has no members
+    if (loggedOut && token && !loading) {
       setLoggedOut(false);
-      if (!crew.find((c) => parseInt(c.activeSlot) > -1)) {
+      if (!(crew?.crewMembers?.length > 0)) {
         history.push('/owned-crew');
       }
     }
-  }, [ loggedOut, !!token, crewIsLoading, !!crew ]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ loggedOut, token, crew, loading ]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   // logout if have logged out
   useEffect(() => {

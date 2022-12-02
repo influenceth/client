@@ -11,6 +11,8 @@ const RETRY_INTERVAL = 5e3; // 5 seconds
 
 const ChainTransactionContext = createContext();
 
+console.log('configs', configs);
+
 const getContracts = (account, queryClient) => ({
   'PURCHASE_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -102,10 +104,13 @@ const getContracts = (account, queryClient) => ({
   'SET_ACTIVE_CREW': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ crew }) => {
+    transact: (contract) => ({ crewId, crewMembers }) => {
       return contract.invoke(
-        'Crewmate_setCrewComposition',
-        [[...crew]]
+        'Crew_setComposition',
+        [
+          crewId,
+          [...crewMembers]
+        ]
       );
     },
     isEqual: () => true,
@@ -118,7 +123,7 @@ const getContracts = (account, queryClient) => ({
   'PURCHASE_AND_INITIALIZE_CREW': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => async ({ name, features, traits }) => {
+    transact: (contract) => async ({ name, features, traits, crewId }) => {
       const { price } = await contract.call('CrewmateSale_getPrice');
       const priceParts = Object.values(price).map((part) => part.toNumber());
       const calls = [
@@ -157,6 +162,7 @@ const getContracts = (account, queryClient) => ({
               traits.driveCosmetic,
               traits.cosmetic,
             ].map((t) => t.id.toString()),
+            crewId.toString()
           ]
         },
       ];
@@ -184,6 +190,32 @@ const getContracts = (account, queryClient) => ({
       type: 'CrewMember_NamingError',
       level: 'warning',
       i,
+      timestamp: Math.round(Date.now() / 1000)
+    })
+  },
+  'START_CORE_SAMPLE': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, plotId, resourceId, crewId, sampleId = 0 }) => contract.invoke(
+      'CoreSample_startSampling',
+      [asteroidId, plotId, resourceId, sampleId, crewId]
+    ),
+    getErrorAlert: ({ i }) => ({
+      type: 'GenericAlert',
+      content: 'Core sample failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    })
+  },
+  'FINALIZE_CORE_SAMPLE': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, plotId, resourceId, crewId, sampleId }) => contract.invoke(
+      'CoreSample_finishSampling',
+      [asteroidId, plotId, resourceId, sampleId, crewId]
+    ),
+    getErrorAlert: ({ i }) => ({
+      type: 'GenericAlert',
+      content: 'Core sample retrieval failed.',
       timestamp: Math.round(Date.now() / 1000)
     })
   },

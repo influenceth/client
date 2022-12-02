@@ -37,6 +37,7 @@ const getInvalidations = (event, data) => {
         ['asteroids', 'search'],
       ],
       Crew_CompositionChanged: [
+        ['crews'],
         ['crew', 'search'],
         [...(data.oldCrew || []), ...(data.newCrew || [])]
           .filter((v, i, a) => a.indexOf(v) === i)  // (unique)
@@ -77,6 +78,9 @@ export function EventsProvider({ children }) {
   const [ lastBlockNumber, setLastBlockNumber ] = useState(0);
   const [ events, setEvents ] = useState([]);
 
+  const pendingBlock = useRef();
+  const pendingBlockEvents = useRef([]);
+  const pendingTimeout = useRef();
   const socket = useRef();
   const wsShouldBeOpen = useRef();
 
@@ -84,7 +88,8 @@ export function EventsProvider({ children }) {
     const transformedEvents = newEvents.map((e) => {
       let eventName = e.event;
       if (e.event === 'Transfer') {
-        if (!!e.linked.find((l) => l.type === 'CrewMember')) eventName = 'Crewmate_Transfer';
+        if (!!e.linked.find((l) => l.type === 'Crew')) eventName = 'Crew_Transfer';
+        else if (!!e.linked.find((l) => l.type === 'CrewMember')) eventName = 'Crewmate_Transfer';
         else if (!!e.linked.find((l) => l.type === 'Asteroid')) eventName = 'Asteroid_Transfer';
         else console.error('unhandled transfer type', e);
       }
@@ -93,6 +98,7 @@ export function EventsProvider({ children }) {
 
     transformedEvents.forEach(e => {
       if (!skipInvalidations) {
+        console.log('e.event', e.event);
         const invalidations = getInvalidations(e.event, e.returnValues);
         invalidations.forEach((i) => {
           queryClient.invalidateQueries(...i);
@@ -112,13 +118,32 @@ export function EventsProvider({ children }) {
     ], '_id'));
   }, []);
 
+  // try to process WS events grouped by block
+  const processPendingWSBlock = useCallback(() => {
+    if (pendingTimeout.current) clearTimeout(pendingTimeout.current);
+    if (pendingBlockEvents.current.length > 0) {
+      handleEvents([...pendingBlockEvents.current]);
+      setLastBlockNumber((previousLast) => Math.max(pendingBlock.current, previousLast));
+    }
+    pendingBlockEvents.current = [];
+  }, []);
+
   const onWSMessage = useCallback(({ type, body }) => {
     if (ignoreEventTypes.includes(type)) return;
     if (type === 'CURRENT_STARKNET_BLOCK_NUMBER') {
       setLastBlockNumber(body.blockNumber || 0);
     } else {
-      handleEvents([{ ...body, event: type }]);
-      setLastBlockNumber(Math.max(body.blockNumber, lastBlockNumber));
+      // if this is a new block, process pending and schedule next processing block
+      if (pendingBlock.current !== body.blockNumber) {
+        pendingBlock.current = body.blockNumber || 0;
+
+        processPendingWSBlock();
+        pendingTimeout.current = setTimeout(() => {
+          processPendingWSBlock();
+        }, 1000);
+      }
+      // (queue the current event for processing)
+      pendingBlockEvents.current.push({ ...body, event: type });
     }
   }, []);
 

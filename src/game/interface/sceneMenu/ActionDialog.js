@@ -38,7 +38,7 @@ import {
 import Poppable from '~/components/Popper';
 import SliderInput from '~/components/SliderInput';
 import useAssets from '~/hooks/useAssets';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useCrew from '~/hooks/useCrew';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -1262,7 +1262,7 @@ const ExtractionAmountSection = ({ min, max, amount, setAmount }) => {
 
 const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
   const { data: assets } = useAssets();
-  const { data: crew } = useOwnedCrew();
+  const { captain } = useCrew();
   const activeResourceMap = useStore(s => s.asteroids.showResourceMap);
 
   const [amount, setAmount] = useState(11000);
@@ -1274,8 +1274,6 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
   const enableNotifications = useCallback(async () => {
     setNotificationsEnabled((x) => !x);
   }, []);
-  
-  const captain = useMemo(() => (crew || []).find((c) => c.activeSlot === 0) || {}, [crew]);
 
   const resources = (assets || []).filter((a) => a.assetType === 'Resource');
   const buildings = (assets || []).filter((a) => a.assetType === 'Building');
