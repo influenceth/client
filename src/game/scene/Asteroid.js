@@ -21,6 +21,7 @@ import Config from '~/lib/asteroidConfig';
 import constants from '~/lib/constants';
 import theme from '~/theme';
 import QuadtreeTerrainCube from './asteroid/helpers/QuadtreeTerrainCube';
+import { generateResourceSampler, pickSample } from './asteroid/helpers/SamplerUtils';
 import Plots from './asteroid/Plots';
 import Rings from './asteroid/Rings';
 import Telemetry from './asteroid/Telemetry';
@@ -545,18 +546,36 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
 
+  const abundanceBitmap = useRef();
+  const abundanceBitmapId = useRef();
   useEffect(() => {
-    if (!geometry.current) return;
+    if (!geometry.current || !config?.radiusNominal) return;
     if (showResourceMap) {
       const color = new Color(theme.colors.resources[showResourceMap.category]);
       color.convertSRGBToLinear();
       geometry.current.setEmissiveParams({ color, resource: showResourceMap.i });
       forceUpdate.current = Date.now();
+
+      // if not already generated, generate abundance bitmap
+      if (!(abundanceBitmap.current && abundanceBitmapId.current === showResourceMap.i)) {
+        abundanceBitmap.current = generateResourceSampler(
+          showResourceMap.i,
+          Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2),
+          config
+        );
+      }
     } else if (geometry.current.emissiveParams) {
       geometry.current.setEmissiveParams();
       forceUpdate.current = Date.now();
     }
   }, [showResourceMap]);
+
+  useEffect(() => {
+    if (selectedPlot && showResourceMap && abundanceBitmap.current) {
+      const abundance = pickSample(abundanceBitmap.current, selectedPlot);
+      console.log(`plot #${selectedPlot}`, abundance);
+    }
+  }, [selectedPlot, showResourceMap]);
 
   useEffect(() => {
     if (geometry.current && terrainUpdateNeeded) {
@@ -903,8 +922,8 @@ const Asteroid = (props) => {
           asteroidId={origin}
           cameraAltitude={cameraAltitude}
           cameraNormalized={cameraNormalized}
-          lastClick={lastClick}
           config={config}
+          lastClick={lastClick}
           mouseIntersect={mouseIntersect.current} />
       )}
 

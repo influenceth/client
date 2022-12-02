@@ -33,10 +33,10 @@ const OwnedCrew = (props) => {
   const { crew, crewMemberMap } = useCrew();
   const { data: mintable } = useMintableCrew();
 
-  console.log({
-    crew: { ...crew },
-    crewMemberMap: { ...crewMemberMap },
-  });
+  // console.log({
+  //   crew: { ...crew },
+  //   crewMemberMap: { ...crewMemberMap },
+  // });
 
   return (
     <Section
