@@ -24,6 +24,7 @@ import useStore from '~/hooks/useStore';
 import actionButtons from './sceneMenu/actionButtons';
 import ActionDialog from './sceneMenu/ActionDialog';
 import ResourceMapSelector from './sceneMenu/ResourceMapSelector';
+import useCrew from '~/hooks/useCrew';
 
 const rightModuleWidth = 375;
 
@@ -320,6 +321,7 @@ const SceneMenu = (props) => {
   const history = useHistory();
 
   const { data: asteroid } = useAsteroid(asteroidId);
+  const { crew } = useCrew();
 
   const [action, setAction] = useState();
   const [renderReady, setRenderReady] = useState(false);
@@ -419,7 +421,7 @@ const SceneMenu = (props) => {
         if (account && asteroid.owner && Address.areEqual(account, asteroid.owner)) {
           a.push(actionButtons.ScanAsteroid);
         }
-      } else if (plot) {
+      } else if (plot && crew) {
         if (resourceMode) {
           a.push(actionButtons.NewCoreSample);
           if (plot.coreSamplesExist) {
@@ -451,10 +453,8 @@ const SceneMenu = (props) => {
       }
     }
 
-    // TODO: SurfaceTransfer?
-
     return a;
-  }, [asteroid, plot, resourceMode]);
+  }, [asteroid, crew, plot, resourceMode]);
 
   useEffect(() => ReactTooltip.rebuild(), [actions]);
 
