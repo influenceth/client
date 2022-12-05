@@ -85,23 +85,28 @@ const api = {
     return response.data;
   },
 
-  getCrews: async () => {
-    const response = await instance.get(`/v1/crews`);
+  getOwnedCrews: async () => {
+    const response = await instance.get(`/v1/crews/owned`);
     return response.data;
   },
 
   getCrewMember: async (i) => {
-    const response = await instance.get(`/v1/crew/${i}`);
+    const response = await instance.get(`/v1/crewmates/${i}`);
+    return response.data;
+  },
+
+  getOwnedCrewMembers: async () => {
+    const response = await instance.get('/v1/crewmates/owned');
     return response.data;
   },
 
   getCrewMembers: async (query) => {
-    const response = await instance.get('/v1/crew', { params: query });
+    const response = await instance.get('/v1/crewmates', { params: query });
     return response.data;
   },
 
   getMintableCrew: async (query) => {
-    const response = await instance.get('/v1/crew/mintable', { params: query });
+    const response = await instance.get('/v1/crewmates/mintable', { params: query });
     return response.data;
   },
 

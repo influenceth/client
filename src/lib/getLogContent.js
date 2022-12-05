@@ -164,11 +164,12 @@ const entries = {
     let action = null;
     let icon = <CrewIcon />;
     const { newCrew, oldCrew } = e.returnValues;
-    if (newCrew[0] === e.i) {
+
+    if (newCrew[0] === e.i && oldCrew[0] !== e.i) {
       action = `promoted to Captain`;
       icon = <PromoteIcon />;
     }
-    else if (oldCrew[0] === e.i && newCrew.includes(e.i)) {
+    else if (oldCrew[0] === e.i && newCrew[0] !== e.i && newCrew.includes(e.i)) {
       action = `relieved of command`;
     }
     else if (newCrew.includes(e.i) && !oldCrew.includes(e.i)) action = `assigned to active duty`;

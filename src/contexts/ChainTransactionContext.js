@@ -11,7 +11,7 @@ const RETRY_INTERVAL = 5e3; // 5 seconds
 
 const ChainTransactionContext = createContext();
 
-console.log('configs', configs);
+// console.log('configs', configs);
 
 const getContracts = (account, queryClient) => ({
   'PURCHASE_ASTEROID': {

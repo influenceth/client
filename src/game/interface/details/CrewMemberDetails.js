@@ -593,7 +593,7 @@ const CrewMemberDetails = (props) => {
                     {crew?.events?.length > 0
                       ? crew.events.map(e => (
                         <LogEntry
-                          key={e._id}
+                          key={e.key}
                           data={{ ...e, i: crew.i }}
                           timestampBreakpoint="1500px"
                           type={`CrewMember_${e.event}`}

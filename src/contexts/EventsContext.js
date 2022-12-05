@@ -37,28 +37,29 @@ const getInvalidations = (event, data) => {
         ['asteroids', 'search'],
       ],
       Crew_CompositionChanged: [
-        ['crews'],
-        ['crew', 'search'],
-        [...(data.oldCrew || []), ...(data.newCrew || [])]
-          .filter((v, i, a) => a.indexOf(v) === i)  // (unique)
-          .map((i) => ['crew', i])
+        ['crews', 'owned'],
+        // TODO: the following invalidations are probably now unnecessary since activeSlot was deprecated:
+        // ['crewmembers', 'owned'],
+        // [...(data.oldCrew || []), ...(data.newCrew || [])]
+        //   .filter((v, i, a) => a.indexOf(v) === i)  // (unique)
+        //   .map((i) => ['crew', i])
       ], 
       Crewmate_FeaturesSet: [
-        ['crew', data.crewId],
-        ['crew', 'search'],
+        ['crewmembers', data.crewId],
+        ['crewmembers', 'owned'],
       ],
       Crewmate_TraitsSet: [
-        ['crew', data.crewId],
-        ['crew', 'search'],
+        ['crewmembers', data.crewId],
+        ['crewmembers', 'owned'],
       ],
       Crewmate_NameChanged: [
-        ['crew', data.crewId],
-        ['crew', 'search'],
+        ['crewmembers', data.crewId],
+        ['crewmembers', 'owned'],
         ['events'], // (to update name in already-fetched events)
       ],
       Crewmate_Transfer: [
         ['assignments'],
-        ['crew', 'search'],
+        ['crewmembers', 'owned'],
       ],
     }
     return map[event] || [];
@@ -85,7 +86,9 @@ export function EventsProvider({ children }) {
   const wsShouldBeOpen = useRef();
 
   const handleEvents = useCallback((newEvents, skipAlerts, skipInvalidations) => {
-    const transformedEvents = newEvents.map((e) => {
+    const transformedEvents = [];
+    newEvents.forEach((e) => {
+      // rewrite eventNames as necessary (probably only ever needed for `Transfer`)
       let eventName = e.event;
       if (e.event === 'Transfer') {
         if (!!e.linked.find((l) => l.type === 'Crew')) eventName = 'Crew_Transfer';
@@ -93,12 +96,20 @@ export function EventsProvider({ children }) {
         else if (!!e.linked.find((l) => l.type === 'Asteroid')) eventName = 'Asteroid_Transfer';
         else console.error('unhandled transfer type', e);
       }
-      return { ...e, event: eventName };
+
+      // generate log events from events
+      if (e.event === 'Crew_CompositionChanged') {
+        new Set([...e.returnValues.oldCrew, ...e.returnValues.newCrew]).forEach((i) => {
+          transformedEvents.push({ ...e, event: eventName, i, key: `${e._id}_${i}` });
+        });
+      } else {
+        transformedEvents.push({ ...e, event: eventName, key: e._id });
+      }
     });
 
     transformedEvents.forEach(e => {
       if (!skipInvalidations) {
-        console.log('e.event', e.event);
+        // console.log('e.event', e.event);
         const invalidations = getInvalidations(e.event, e.returnValues);
         invalidations.forEach((i) => {
           queryClient.invalidateQueries(...i);
@@ -115,7 +126,7 @@ export function EventsProvider({ children }) {
     setEvents((prevEvents) => uniq([
       ...transformedEvents,
       ...prevEvents
-    ], '_id'));
+    ], 'key'));
   }, []);
 
   // try to process WS events grouped by block
