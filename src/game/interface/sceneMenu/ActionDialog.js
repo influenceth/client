@@ -37,7 +37,7 @@ import {
 } from '~/components/Icons';
 import Poppable from '~/components/Popper';
 import SliderInput from '~/components/SliderInput';
-import useAssets from '~/hooks/useAssets';
+import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useCrew from '~/hooks/useCrew';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
@@ -703,7 +703,7 @@ const RawMaterialSection = ({ resource, tonnage, status }) => {
           <ResourceWithData>
             <ResourceImage resource={resource} />
             <label>
-              <h3>{resource.label}{status === 'AFTER' ? ' Deposit' : ''}</h3>
+              <h3>{resource.name}{status === 'AFTER' ? ' Deposit' : ''}</h3>
               {tonnage /* TODO: ... */
                 ? <div><b><ResourceIcon /> {tonnage.toLocaleString()}</b> tonnes</div>
                 : <div><b>43%</b> Abundance at lot</div>
@@ -809,7 +809,7 @@ const CoreSampleSelection = ({ onClick, resources, sampleTally }) => {
           <tbody>
             {existingSamples.map((sample, i) => (
               <tr key={i} onClick={onClick(i)}>
-                <td><ResourceColorIcon category={sample.resource.bucket} /> {sample.resource.label}</td>
+                <td><ResourceColorIcon category={sample.resource.bucket} /> {sample.resource.name}</td>
                 <td>{sample.deposit.toLocaleString()} tonnes</td>
               </tr>
             ))}
@@ -882,7 +882,7 @@ const ExistingSampleSection = ({ resources, resource, tonnage, onSelectSample, o
           <ResourceWithData>
             <ResourceImage resource={resource} />
             <label>
-              <h3>{resource.label} Deposit</h3>
+              <h3>{resource.name} Deposit</h3>
               <div>
                 <b><ResourceIcon /> {(overrideTonnage || tonnage).toLocaleString()}</b> tonnes
               </div>
@@ -918,7 +918,7 @@ const ExtractSampleSection = ({ resource, resources, tonnage, onSelectSample, ov
           <ResourceWithData>
             <ResourceImage resource={resource} />
             <label>
-              <h3>{resource.label} Deposit</h3>
+              <h3>{resource.name} Deposit</h3>
               <div>
                 <b style={status === 'BEFORE' ? { color: 'white', fontWeight: 'normal' } : {}}><ResourceIcon /> {(overrideTonnage || tonnage).toLocaleString()}</b> tonnes
               </div>
@@ -957,8 +957,8 @@ const ToolSection = ({ resource, sourcePlot }) => {
           <ResourceWithData>
             <ResourceImage badge="∞" resource={resource} />
             <label>
-              <h3>{resource.label}</h3>
-              <div>{sourcePlot.building.label} (Lot {sourcePlot.i.toLocaleString()})</div>
+              <h3>{resource.name}</h3>
+              <div>{sourcePlot.building.name} (Lot {sourcePlot.i.toLocaleString()})</div>
               <footer>NOTE: This item will be consumed.</footer>
             </label>
           </ResourceWithData>
@@ -1035,7 +1035,7 @@ const DestinationPlotSection = ({ asteroid, destinationPlot, onDestinationSelect
             <Destination status={status}>
               <BuildingImage building={destinationPlot.building} progress={0.3} secondaryProgress={0.7} />{/* TODO: ... */}
               <label>
-                <h3>{destinationPlot.building.label}</h3>
+                <h3>{destinationPlot.building.name}</h3>
                 <div>{asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {destinationPlot.i.toLocaleString()}</b></div>
                 <div />
                 {status === 'BEFORE' && (<div><b>650,000</b> / 1,000,000 m<sup>3</sup></div>)}{/* TODO: ... */}
@@ -1085,7 +1085,7 @@ const BuildingPlanSection = ({ abandonedIn, building, cancelling, status }) => {
           <BuildingPlan>
             <BuildingImage building={building} />
             <label>
-              <h3>{building.label}</h3>
+              <h3>{building.name}</h3>
               <b>Site Plan</b>
             </label>
           </BuildingPlan>
@@ -1261,7 +1261,8 @@ const ExtractionAmountSection = ({ min, max, amount, setAmount }) => {
 // TODO: componentize
 
 const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
-  const { data: assets } = useAssets();
+  const buildings = useBuildingAssets();
+  const resources = useResourceAssets();
   const { captain } = useCrew();
   const activeResourceMap = useStore(s => s.asteroids.showResourceMap);
 
@@ -1275,8 +1276,6 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
     setNotificationsEnabled((x) => !x);
   }, []);
 
-  const resources = (assets || []).filter((a) => a.assetType === 'Resource');
-  const buildings = (assets || []).filter((a) => a.assetType === 'Building');
   // const plot = {  // TODO: use plot above
   //   i: 12332,
   //   building: buildings[0]
@@ -1434,7 +1433,7 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
                 {status === 'AFTER' && `${action.completeLabel.toUpperCase()} ${action.completeStatus.toUpperCase()}`}
               </Title>
               <Subtitle>
-                {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {plot.i.toLocaleString()} ({plot.building?.label || buildings[0].label})</b>
+                {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {plot.i.toLocaleString()} ({plot.building?.name || buildings[0].name})</b>
               </Subtitle>
               {captain && action.crewRequirement && (
                 <CrewInfo requirement={action.crewRequirement} status={status}>

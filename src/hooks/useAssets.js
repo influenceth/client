@@ -1,10 +1,12 @@
-import { useQuery } from 'react-query';
+import { useMemo } from 'react';
+import { Capable, Inventory } from '@influenceth/sdk';
 
-import api from '~/lib/api';
+const getSlug = (asset) => {
+  return asset.name.replace(/[^a-z]/ig, '');
+}
 
-const getCloudfrontUrl = (key, { w, h, f } = {}) => {
-  // TODO: (the "replace" is temporarily necessary until the Goerli data has been migrated)
-  let slug = key.replace(`${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/`, '');
+const getIconUrl = (asset, type, { append, w, h, f } = {}) => {
+  let slug = `influence/goerli/images/icons/${type}/${getSlug(asset)}${append || ''}.v${asset.iconVersion || '1'}.png`;
   if (w || h) {
     slug = window.btoa(
       JSON.stringify({
@@ -23,37 +25,58 @@ const getCloudfrontUrl = (key, { w, h, f } = {}) => {
   return `${process.env.REACT_APP_CLOUDFRONT_IMAGE_URL}/${slug}`;
 }
 
-const useAssets = () => {
-  return useQuery(
-    [ 'assets' ],
-    () => new Promise((resolve) => {
-      api.getAssets().then((assets) => {
-        const transformed = assets.map((a) => {
-          const iconUrls = {};
-          if (a.assetType === 'Resource') {
-            iconUrls.w25 = getCloudfrontUrl(a.iconUrl, { w: 25 });
-            iconUrls.w85 = getCloudfrontUrl(a.iconUrl, { w: 85 });
-            iconUrls.w125 = getCloudfrontUrl(a.iconUrl, { w: 125 });
-            iconUrls.w400 = getCloudfrontUrl(a.iconUrl, { w: 400 });
-          } else if (a.assetType === 'Building') {
-            iconUrls.w150 = getCloudfrontUrl(a.iconUrl, { w: 150 });
-            iconUrls.w400 = getCloudfrontUrl(a.iconUrl, { w: 400 });
-          } else {
-            console.error(`${a.assetType} ASSET TYPE does not have any icon sizes set!`);
-          }
-          return {
-            ...a,
-            // TODO: (the "replace" is temporarily necessary until the Goerli data has been migrated)
-            modelUrl: `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/${a.modelUrl.replace(`${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/`, '')}`,
-            iconUrl: getCloudfrontUrl(a.iconUrl),
-            iconUrls
-          }
-        });
-        resolve(transformed);
-      });
-    }),
-    {}
-  );
+const getModelUrl = (asset, type) => {
+  const slug = `influence/goerli/models/${type}/${getSlug(asset)}.v${asset.modelVersion || '1'}.glb`;
+  return `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/${slug}`;
+}
+
+export const useBuildingAssets = () => {
+  return useMemo(() => Object.keys(Capable.TYPES)
+  .filter((i) => Capable.TYPES[i].category === 'Building')
+  .map((i) => {
+    const asset = {
+      ...Capable.TYPES[i],
+      i,
+
+      // TODO: remove these once sdk updated:
+      iconVersion: 1,
+      modelVersion: 1
+    };
+
+    asset.iconUrl = getIconUrl(asset, 'buildings');
+    asset.iconUrls = {
+      w150: getIconUrl(asset, 'buildings', { w: 150 }),
+      w400: getIconUrl(asset, 'buildings', { w: 400 }),
+    };
+
+    asset.siteIconUrls = {
+      w150: getIconUrl(asset, 'buildings', { w: 150, append: '_site' }),
+      w400: getIconUrl(asset, 'buildings', { w: 400, append: '_site' }),
+    };
+
+    asset.modelUrl = getModelUrl(asset, 'buildings');
+
+    return asset;
+  }), []);
 };
 
-export default useAssets;
+export const useResourceAssets = () => {
+  return useMemo(() => Object.keys(Inventory.RESOURCES).map((i) => {
+    const asset = {
+      ...Inventory.RESOURCES[i],
+      i,
+    };
+
+    asset.iconUrl = getIconUrl(asset, 'resources');
+    asset.iconUrls = {
+      w25: getIconUrl(asset, 'resources', { w: 25 }),
+      w85: getIconUrl(asset, 'resources', { w: 85 }),
+      w125: getIconUrl(asset, 'resources', { w: 125 }),
+      w400: getIconUrl(asset, 'resources', { w: 400 }),
+    };
+
+    asset.modelUrl = getModelUrl(asset, 'resources');
+
+    return asset;
+  }), []);
+};

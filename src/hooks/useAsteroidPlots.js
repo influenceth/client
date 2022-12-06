@@ -9,7 +9,7 @@ const useAsteroidPlots = (i, tally) => {
     // () => api.getAsteroidPlots(i),
     () => {
       const plots = [];
-      const mockBuildingType = 25;
+      const mockBuildingType = 1;
       for (let x = 0; x < tally; x++) {
         plots[x] = [-1, 0, 0];  // [rental status (-1 not for rent, 0 for rent, 1 rented by me, 2 rented by other), building type, under construction]
       }

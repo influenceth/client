@@ -96,7 +96,7 @@ const CategoryButton = styled.div`
 
 const ResourceMapSelector = ({ active, asteroid }) => {
   const history = useHistory();
-  const { data: asteroidAssets, isLoading } = useAsteroidAssets(asteroid);
+  const asteroidAssets = useAsteroidAssets(asteroid);
   const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
   const showResourceMap = useStore(s => s.asteroids.showResourceMap);
 
@@ -104,8 +104,8 @@ const ResourceMapSelector = ({ active, asteroid }) => {
   const [resource, setResource] = useState();
 
   const goToResourceViewer = useCallback(() => {
-    history.push(`/resource-viewer/${resource.label}`)
-  }, [resource?.label]); // eslint-disable-line react-hooks/exhaustive-deps
+    history.push(`/resource-viewer/${resource.i}`)
+  }, [resource?.i]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectCategory = useCallback((selected, forceReset) => () => {
     if (forceReset || selected.category !== category?.category) {
@@ -118,11 +118,11 @@ const ResourceMapSelector = ({ active, asteroid }) => {
   }, [dispatchResourceMap]);
 
   useEffect(() => {
-    if (active && !isLoading) {
+    if (active) {
       if (showResourceMap) {
         asteroidAssets.forEach((c) => {
           c.resources.forEach((r) => {
-            if (r.label === showResourceMap.label) {
+            if (r.name === showResourceMap.name) {
               setCategory(c);
               setResource(r);
             }
@@ -132,7 +132,7 @@ const ResourceMapSelector = ({ active, asteroid }) => {
         selectCategory(asteroidAssets[0], true)();
       }
     }
-  }, [active, isLoading, showResourceMap]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [active, showResourceMap]); // eslint-disable-line react-hooks/exhaustive-deps
   
   useEffect(() => ReactTooltip.rebuild(), []);
 
@@ -152,7 +152,8 @@ const ResourceMapSelector = ({ active, asteroid }) => {
               buttonBorderless
               dropUp
               footnote={(r) => `${(100 * r.abundance).toFixed(1)}%`}
-              initialSelection={category.resources.findIndex((r) => r.label === resource.label)}
+              initialSelection={category.resources.findIndex((r) => r.name === resource.name)}
+              labelKey="name"
               onChange={selectResource}
               options={category.resources}
               width="100%" />
@@ -164,7 +165,7 @@ const ResourceMapSelector = ({ active, asteroid }) => {
                 category={c.category}
                 onClick={selectCategory(c)}
                 selected={c.category === category.category}
-                data-tip={c.label}
+                data-tip={c.categoryLabel}
                 data-place="right"
                 data-for="global">
                 {ResourceGroupIcons[c.category.toLowerCase()]}

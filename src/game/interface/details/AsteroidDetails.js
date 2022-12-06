@@ -37,7 +37,7 @@ const AsteroidDetails = (props) => {
   const history = useHistory();
   const { i, tab } = useParams();
   const { data: asteroid } = useAsteroid(Number(i));
-  const { data: groupAbundances } = useAsteroidAssets(asteroid);
+  const groupAbundances = useAsteroidAssets(asteroid);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
 
   // Force the asteroid to load into the origin if coming direct from URL

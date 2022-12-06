@@ -6,15 +6,15 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { useFrame, useThree, Canvas } from '@react-three/fiber';
+import { useLocation, useParams } from 'react-router-dom';
 import BarLoader from 'react-spinners/BarLoader';
 import styled, { css } from 'styled-components';
 
+import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import Button from '~/components/Button';
 import Details from '~/components/DetailsFullsize';
 import Dropdown from '~/components/Dropdown';
 import NumberInput from '~/components/NumberInput';
-import useAssets from '~/hooks/useAssets';
-import { useLocation, useParams } from 'react-router-dom';
 
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
@@ -424,9 +424,10 @@ const Lighting = ({ assetType }) => {
 
 const reader = new FileReader();
 const ModelViewer = ({ assetType, plotZoomMode }) => {
-  const { data: assets, isLoading: loadingAssets } = useAssets();
   const { model: paramModel } = useParams();
   const { search } = useLocation();
+  // TODO: linting appropriately doesn't like below line... consider reworking once building viewer is more finalized
+  const assets = assetType === 'Resource' ? useResourceAssets() : useBuildingAssets(); // eslint-disable-line react-hooks/rules-of-hooks
   const singleModel = plotZoomMode || paramModel;
 
   const [devtoolsEnabled, setDevtoolsEnabled] = useState();
@@ -522,7 +523,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
     if (!!assets) {
       setCategories();
       if (singleModel) {
-        const asset = assets.find((a) => a.label === singleModel);
+        const asset = assets.find((a) => a.i === singleModel);
         if (asset) {
           setModel(asset);
           return;
@@ -530,7 +531,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
       }
       
       // this is default if no singleModel or can't find singleModel
-      const categorySet = new Set(assets.filter((a) => a.assetType === assetType).map((a) => a.bucket));
+      const categorySet = new Set(assets.map((a) => a.category));
       const categoryArr = Array.from(categorySet).sort();
       setCategories(categoryArr);
       setCategory(categoryArr[0]);
@@ -540,8 +541,8 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   useEffect(() => {
     if (!!assets && category !== undefined) {
       const bAssets = assets
-        .filter((a) => a.bucket === category)
-        .sort((a, b) => a.label < b.label ? -1 : 1);
+        .filter((a) => a.category === category)
+        .sort((a, b) => a.name < b.name ? -1 : 1);
       setCategoryModels(bAssets);
       selectModel(bAssets[0]);
     }
@@ -564,12 +565,12 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   const title = useMemo(() => {
     if (plotZoomMode) return '';
     if (singleModel && model) {
-      return `${assetType === 'Resource' ? model.bucket : 'Infrastructure'} — ${model.label}`;
+      return `${assetType === 'Resource' ? model.category : 'Infrastructure'} — ${model.name}`;
     }
     return `${assetType} Details`;
   }, [singleModel, model, assetType, plotZoomMode]);
 
-  const isLoading = loadingAssets || loadingModel || loadingSkybox;
+  const isLoading = loadingModel || loadingSkybox;
   return (
     <Details
       edgeToEdge
@@ -590,7 +591,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
           )}
           <Dropdown
             disabled={isLoading}
-            labelKey="label"
+            labelKey="name"
             options={categoryModels}
             onChange={(a) => selectModel(a)}
             resetOn={category}
@@ -669,7 +670,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
 
       {!modelOverride && model?.iconUrls?.w125 && (
         <IconContainer>
-          <img src={model.iconUrls.w125} alt={`${model.label} icon`} />
+          <img src={model.iconUrls.w125} alt={`${model.name} icon`} />
         </IconContainer>
       )}
 

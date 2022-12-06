@@ -16,7 +16,7 @@ import {
   ResourceIcon,
 } from '~/components/Icons';
 import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
-import useAssets from '~/hooks/useAssets';
+import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidPlots from '~/hooks/useAsteroidPlots';
 import useAuth from '~/hooks/useAuth';
@@ -304,7 +304,7 @@ const Pane = styled.div`
 
 const SceneMenu = (props) => {
   const { account } = useAuth();
-  const { data: assets } = useAssets();
+  const buildings = useBuildingAssets();
   const asteroidId = useStore(s => s.asteroids.origin);
   const plotId = useStore(s => s.asteroids.plot);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
@@ -334,15 +334,12 @@ const SceneMenu = (props) => {
   );
 
   // TODO: this is mock data
-  const buildings = useMemo(() => {
-    if (assets) return assets.filter((a) => a.assetType === 'Building');
-    return [];
-  }, [assets]);
   const plot = useMemo(() => {
     if (!plotId) return null;
+    if (!plotData?.plots?.length) return null;
     return {
       i: plotId,
-      building: plotData?.plots?.length && plotData.plots[plotId][1] ? buildings[1] : null,
+      building: buildings[plotData.plots[plotId][1]] || null,
       blueprint: plotId % 3 === 1,
       coreSamplesExist: plotId % 2 === 1 ? (plotId % 10) : 0,
       inventory: [[5, 700], [19, 500]],
@@ -365,7 +362,7 @@ const SceneMenu = (props) => {
   const onClickPane = useCallback(() => {
     // open plot
     if (asteroidId && plotId && zoomStatus === 'in') {
-      dispatchZoomToPlot((plot.building || buildings[0]).label);
+      dispatchZoomToPlot((plot.building || buildings[0]).name);
 
     // open asteroid details
     } else if (asteroidId && zoomStatus === 'in') {
@@ -430,8 +427,7 @@ const SceneMenu = (props) => {
         }
 
         if (plot.building) {
-          // if (plot.building?.label === 'Extractor' && plot.coreSamplesExist) { // TODO: should use building key rather than label
-          if (true) {
+          if (plot.building.capabilities.includes('extraction') && plot.coreSamplesExist) {
             a.push(actionButtons.Extract);
           }
         } else if (plot.blueprint) {
@@ -524,7 +520,7 @@ const SceneMenu = (props) => {
             )}
             {zoomStatus === 'in' && plotId && zoomToPlot && (
               <>
-                <Title>{(plot.building || buildings[0])?.label}</Title>
+                <Title>{(plot.building || buildings[0])?.name}</Title>
                 <Subtitle>
                   <PaneContent>
                     Lot #{plotId.toLocaleString()}
@@ -535,7 +531,7 @@ const SceneMenu = (props) => {
                 </Subtitle>
               </>
             )}
-            {zoomStatus === 'in' && plotId && !zoomToPlot && (
+            {zoomStatus === 'in' && plot && !zoomToPlot && (
               <div>
                 <ThumbPreview visible>
                   <CloseButton borderless onClick={onClosePane}>
@@ -543,7 +539,7 @@ const SceneMenu = (props) => {
                   </CloseButton>
                   <ThumbBackground image={(plot.building || buildings[0])?.iconUrls?.w400} />
                   <ThumbMain>
-                    <ThumbTitle>{(plot.building || buildings[0])?.label}</ThumbTitle>
+                    <ThumbTitle>{(plot.building || buildings[0])?.name}</ThumbTitle>
                     <ThumbSubtitle>
                       <PaneContent>
                         Lot #{plotId.toLocaleString()}

@@ -448,7 +448,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
   const goToResourceViewer = useCallback((resource) => (e) => {
     e.stopPropagation();
     ReactTooltip.hide();
-    history.push(`/resource-viewer/${resource.label}?back=${encodeURIComponent(history.location.pathname)}`)
+    history.push(`/resource-viewer/${resource.i}?back=${encodeURIComponent(history.location.pathname)}`)
     return false;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -562,7 +562,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
               <ResourceGroupIcon category={selected.category}>{/* TODO: resize icons */}
                 {ResourceGroupIcons[selected.category.toLowerCase()]}
               </ResourceGroupIcon>
-              <span style={{ flex: 1 }}>{selected.label}</span>
+              <span style={{ flex: 1 }}>{selected.categoryLabel}</span>
               <CaretIcon />
             </SelectedCategoryTitle>
             <ResourceSectionBody>
@@ -577,10 +577,10 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                 </BonusItem>
               )}
               {selected.resources.map((resource) => (
-                <ResourceRow key={resource.label} category={selected.category} onClick={goToResourceViewer(resource)}>
+                <ResourceRow key={resource.i} category={selected.category} onClick={goToResourceViewer(resource)}>
                   <ResourceIcon style={{ backgroundImage: `url(${resource.iconUrls.w85})` }} />
                   <ResourceInfo>
-                    <label>{resource.label}</label> 
+                    <label>{resource.name}</label> 
                     <BarChart value={resource.abundance} maxValue={selected.resources[0].abundance} twoLine>
                       <label>
                         {(resource.abundance * 100).toFixed(1)}%
@@ -604,7 +604,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
               <div>
                 <SectionHeader>Resource Groups</SectionHeader>
                 <SectionBody>
-                  {abundances.map(({ category, label, resources, abundance }, i) => (
+                  {abundances.map(({ category, categoryLabel, resources, abundance }, i) => (
                     <ResourceGroup
                       key={category}
                       color={theme.colors.resources[category]}
@@ -615,7 +615,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                         {ResourceGroupIcons[category.toLowerCase()]}
                       </ResourceGroupIcon>
                       <ResourceGroupLabel>
-                        <label>{label}</label>
+                        <label>{categoryLabel}</label>
                         <BarChart value={abundance} maxValue={abundances[0].abundance}>
                           <label>
                             {Math.round(abundance * 100).toFixed(1)}%
@@ -628,9 +628,9 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                         <div>
                           {resources.map((resource) => (
                             <div
-                              key={resource.label}
+                              key={resource.i}
                               data-place="left"
-                              data-tip={resource.label}
+                              data-tip={resource.name}
                               data-for="global"
                               onClick={goToResourceViewer(resource)}
                               style={{ backgroundImage: `url(${resource.iconUrls.w25})` }} />

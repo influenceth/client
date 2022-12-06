@@ -1,46 +1,40 @@
 import { useMemo } from 'react';
-import { RESOURCES, toResources } from '@influenceth/sdk';
 
-import useAssets from './useAssets';
+import { useResourceAssets } from './useAssets';
 
 const useAsteroidAssets = (asteroid) => {
-  const { data: assets, isLoading } = useAssets();
+  const assets = useResourceAssets();
 
   const data = useMemo(() => {
     if (assets?.length > 0 && asteroid?.scanned) {
-      // TODO: RESOURCES are one-indexed, are we handling that as needed here?
-      const resourceDefs = Object.values(RESOURCES);
-      const asteroidAbundances = toResources(asteroid.resources || []);
-
-      // TODO (enhancement): might be nice to change "bucket" to "category" in asset collection model
       const categories = {};
-      assets
-        .map((a) => ({
-          ...a,
-          i: resourceDefs.findIndex((r) => r.name === a.label) + 1
-        }))
-        .filter((a) => a.i > 0 && asteroidAbundances[a.label] > 0)
-        .forEach((a) => {
-          const categoryKey = a.bucket.replace(/[^a-zA-Z]/g, '');
-          if (!categories[a.bucket]) {
-            categories[a.bucket] = {
+      (asteroid.resources || []).forEach((abundance, iMinusOne) => {
+        if (abundance > 0) {
+          const i = iMinusOne + 1;
+          const { category, name, iconUrls } = (assets.find((a) => a.i === i.toString()) || {});
+
+          const categoryKey = (category || '').replace(/[^a-zA-Z]/g, '');
+          if (!categories[category]) {
+            categories[category] = {
               category: categoryKey,
-              label: a.bucket,
+              categoryLabel: category,
               bonus: asteroid.bonuses.find((b) => b.type === categoryKey.toLowerCase()),
               resources: [],
               abundance: 0,
             };
           }
-          categories[a.bucket].abundance += asteroidAbundances[a.label];
-          categories[a.bucket].resources.push({
-            i: a.i,
+
+          categories[category].abundance += abundance;
+          categories[category].resources.push({
+            i,
             category: categoryKey,
-            categoryLabel: a.bucket,
-            label: a.label,
-            iconUrls: a.iconUrls,
-            abundance: asteroidAbundances[a.label],
+            categoryLabel: category,
+            name,
+            iconUrls,
+            abundance
           });
-        });
+        }
+      });
 
       // sort resources in each category and sort each category
       return Object.values(categories)
@@ -53,10 +47,7 @@ const useAsteroidAssets = (asteroid) => {
     return [];
   }, [!!assets, asteroid?.scanned, asteroid?.abundances]);  // eslint-disable-line react-hooks/exhaustive-deps
 
-  return {
-    isLoading,
-    data
-  }
+  return data;
 };
 
 export default useAsteroidAssets;
