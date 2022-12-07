@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import {
   FiCrosshair as TargetIcon,
@@ -37,6 +37,7 @@ import {
 } from '~/components/Icons';
 import Poppable from '~/components/Popper';
 import SliderInput from '~/components/SliderInput';
+import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useCrew from '~/hooks/useCrew';
 import useStore from '~/hooks/useStore';
@@ -1263,7 +1264,7 @@ const ExtractionAmountSection = ({ min, max, amount, setAmount }) => {
 const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
   const buildings = useBuildingAssets();
   const resources = useResourceAssets();
-  const { captain } = useCrew();
+  const { captain, crew } = useCrew();
   const activeResourceMap = useStore(s => s.asteroids.showResourceMap);
 
   const [amount, setAmount] = useState(11000);
@@ -1407,6 +1408,23 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
   useEffect(() => {
     setResource(resources[0])
   }, []);
+
+  // TODO: usecallback
+  const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
+  const onSubmit = () => {
+    // setStatus('DURING');
+    execute(
+      'PLAN_CONSTRUCTION',
+      // 'START_CONSTRUCTION',
+      {
+        capableId: 2,
+        asteroidId: asteroid.i,
+        plotId: plot.i,
+        crewId: crew.i
+      }
+    )
+  };
+
 
   const beforeStart = status === 'BEFORE';
   const inProgress = status === 'DURING';
@@ -1552,7 +1570,7 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
                   </NotificationEnabler>
                   <Spacer />
                   <Button onClick={onClose}>Cancel</Button>
-                  <Button isTransaction onClick={() => setStatus('DURING')}>{action.goButtonLabel}</Button>
+                  <Button isTransaction onClick={onSubmit}>{action.goButtonLabel}</Button>
                 </>
               ) : (
                 <Button onClick={() => setStatus('AFTER')}>Accept</Button>

@@ -199,6 +199,7 @@ class Config {
 
   // Seed transformed into a 3D vector
   _seed() {
+    // return new Vector3(0, 1, 0);
     return this.seedGen.getVector3();
   }
 

@@ -8,10 +8,10 @@ const useAsteroidAssets = (asteroid) => {
   const data = useMemo(() => {
     if (assets?.length > 0 && asteroid?.scanned) {
       const categories = {};
-      (asteroid.resources || []).forEach((abundance, iMinusOne) => {
+      Object.keys(asteroid.resources || {}).forEach((i) => {
+        const abundance = asteroid.resources[i];
         if (abundance > 0) {
-          const i = iMinusOne + 1;
-          const { category, name, iconUrls } = (assets.find((a) => a.i === i.toString()) || {});
+          const { category, name, iconUrls } = (assets.find((a) => a.i === i) || {});
 
           const categoryKey = (category || '').replace(/[^a-zA-Z]/g, '');
           if (!categories[category]) {

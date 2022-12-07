@@ -18,8 +18,8 @@ import {
 import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAsteroidPlots from '~/hooks/useAsteroidPlots';
 import useAuth from '~/hooks/useAuth';
+import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import actionButtons from './sceneMenu/actionButtons';
 import ActionDialog from './sceneMenu/ActionDialog';
@@ -321,6 +321,8 @@ const SceneMenu = (props) => {
   const history = useHistory();
 
   const { data: asteroid } = useAsteroid(asteroidId);
+  // TODO: use plotIsLoading
+  const { data: plot, isLoading: plotIsLoading } = usePlot(asteroidId, plotId);
   const { crew } = useCrew();
 
   const [action, setAction] = useState();
@@ -328,23 +330,6 @@ const SceneMenu = (props) => {
   const [resourceMode, setResourceMode] = useState();
 
   const plotTally = useMemo(() => Math.floor(4 * Math.PI * Math.pow(asteroid?.radius / 1000, 2)), [asteroid?.radius]);
-  const { data: plotData } = useAsteroidPlots(
-    zoomStatus === 'in' ? asteroidId : null,
-    plotTally
-  );
-
-  // TODO: this is mock data
-  const plot = useMemo(() => {
-    if (!plotId) return null;
-    if (!plotData?.plots?.length) return null;
-    return {
-      i: plotId,
-      building: buildings[plotData.plots[plotId][1]] || null,
-      blueprint: plotId % 3 === 1,
-      coreSamplesExist: plotId % 2 === 1 ? (plotId % 10) : 0,
-      inventory: [[5, 700], [19, 500]],
-    };
-  }, [plotId, !plotData?.plots]);
 
   const { backLabel, onClickBack } = useMemo(() => {
     if (zoomToPlot) {
@@ -426,8 +411,9 @@ const SceneMenu = (props) => {
           }
         }
 
-        if (plot.building) {
-          if (plot.building.capabilities.includes('extraction') && plot.coreSamplesExist) {
+        if (plot.building?.assetId) {
+          const buildingAsset = buildings[plot.building.assetId];
+          if (buildingAsset.capabilities.includes('extraction') && plot.coreSamplesExist) {
             a.push(actionButtons.Extract);
           }
         } else if (plot.blueprint) {
@@ -537,19 +523,19 @@ const SceneMenu = (props) => {
                   <CloseButton borderless onClick={onClosePane}>
                     <CloseIcon />
                   </CloseButton>
-                  <ThumbBackground image={(plot.building || buildings[0])?.iconUrls?.w400} />
+                  <ThumbBackground image={buildings[plot.building?.assetId || 0]?.iconUrls?.w400} />
                   <ThumbMain>
-                    <ThumbTitle>{(plot.building || buildings[0])?.name}</ThumbTitle>
+                    <ThumbTitle>{buildings[plot.building?.assetId || 0]?.name}</ThumbTitle>
                     <ThumbSubtitle>
                       <PaneContent>
-                        Lot #{plotId.toLocaleString()}
+                        Lot #{plot.i.toLocaleString()}
                       </PaneContent>
                       <PaneHoverContent>
                         Zoom to Lot
                       </PaneHoverContent>
                     </ThumbSubtitle>
                     <div style={{ flex: 1 }} />
-                    <ThumbFootnote>Uncontrolled</ThumbFootnote>
+                    <ThumbFootnote>{plot.occupier ? `Controlled${plot.occupier === crew?.i ? ' by Me' : ''}` : 'Uncontrolled'}</ThumbFootnote>
                   </ThumbMain>
                 </ThumbPreview>
               </div>

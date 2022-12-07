@@ -94,7 +94,7 @@ export function EventsProvider({ children }) {
         if (!!e.linked.find((l) => l.type === 'Crew')) eventName = 'Crew_Transfer';
         else if (!!e.linked.find((l) => l.type === 'CrewMember')) eventName = 'Crewmate_Transfer';
         else if (!!e.linked.find((l) => l.type === 'Asteroid')) eventName = 'Asteroid_Transfer';
-        else console.error('unhandled transfer type', e);
+        else console.warn('unhandled transfer type', e);
       }
 
       // generate log events from events
