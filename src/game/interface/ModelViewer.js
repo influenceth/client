@@ -184,14 +184,14 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
     }
   }, [zoomLimitsEnabled]);
 
-  // init axeshelper
-  useEffect(() => {
-    const axesHelper = new THREE.AxesHelper(5);
-    scene.add(axesHelper);
-    return () => {
-      scene.remove(axesHelper);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // // init axeshelper
+  // useEffect(() => {
+  //   const axesHelper = new THREE.AxesHelper(5);
+  //   scene.add(axesHelper);
+  //   return () => {
+  //     scene.remove(axesHelper);
+  //   };
+  // }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // const box3h = useRef();
 
@@ -231,10 +231,10 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
             if (node.material?.emissiveMap) {
               node.material.emissiveIntensity = 0.7;
             } else {
-              node.material.emissive = new Color(0x0);
-              node.material.emissiveIntensity = 0;
+              // node.material.emissive = new Color(0x0);
+              // node.material.emissiveIntensity = 0;
             }
-            node.material.emissiveIntensity = 0;
+            // node.material.emissiveIntensity = 0;
 
             // only worry about depth on non-transparent materials
             // (from https://github.com/donmccurdy/three-gltf-viewer/blob/main/src/viewer.js)
@@ -437,23 +437,23 @@ const Lighting = ({ assetType }) => {
     // scene.add(helper1);
     // const helper2 = new THREE.DirectionalLightHelper(keyLight);
     // scene.add(helper2);
-    const helper3 = new THREE.CameraHelper(keyLight.shadow.camera);
-    scene.add(helper3);
-    const helper4 = new THREE.Mesh(
-      new THREE.BoxGeometry(0.005, 0.005, 0.005),
-      new THREE.MeshPhysicalMaterial({ color: 0xff0000 })
-    )
-    helper4.position.set(0, 0.1, 0);
-    helper4.castShadow = true;
-    scene.add(helper4);
-    const helper5 = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.02, 0.02),
-      new THREE.MeshPhysicalMaterial({ color: 0x00ff00 })
-    )
-    helper5.position.set(0, 0.08, 0);
-    helper4.receiveShadow = true;
-    helper5.lookAt(new Vector3(0, 2, 0));
-    scene.add(helper5);
+    // const helper3 = new THREE.CameraHelper(keyLight.shadow.camera);
+    // scene.add(helper3);
+    // const helper4 = new THREE.Mesh(
+    //   new THREE.BoxGeometry(0.005, 0.005, 0.005),
+    //   new THREE.MeshPhysicalMaterial({ color: 0xff0000 })
+    // )
+    // helper4.position.set(0, 0.1, 0);
+    // helper4.castShadow = true;
+    // scene.add(helper4);
+    // const helper5 = new THREE.Mesh(
+    //   new THREE.PlaneGeometry(0.02, 0.02),
+    //   new THREE.MeshPhysicalMaterial({ color: 0x00ff00 })
+    // )
+    // helper5.position.set(0, 0.08, 0);
+    // helper4.receiveShadow = true;
+    // helper5.lookAt(new Vector3(0, 2, 0));
+    // scene.add(helper5);
 
     return () => {
       // if (sunLight) scene.remove(sunLight);
@@ -461,8 +461,9 @@ const Lighting = ({ assetType }) => {
       if (rimLight) scene.remove(rimLight);
       // if (helper1) scene.remove(helper1);
       // if (helper2) scene.remove(helper2);
-      if (helper4) scene.remove(helper4);
-      if (helper5) scene.remove(helper5);
+      // if (helper3) scene.remove(helper3);
+      // if (helper4) scene.remove(helper4);
+      // if (helper5) scene.remove(helper5);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -589,7 +590,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
     if (!!assets && category !== undefined) {
       const bAssets = assets
         .filter((a) => a.category === category)
-        .map((a) => ({ ...a, modelUrl: '/Warehouse_Emissive_Test.glb' }))
+        // .map((a) => ({ ...a, modelUrl: '/Warehouse_Emissive_Test.glb' }))
         .sort((a, b) => a.name < b.name ? -1 : 1);
       setCategoryModels(bAssets);
       selectModel(bAssets[0]);
