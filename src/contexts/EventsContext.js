@@ -2,6 +2,7 @@ import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import uniq from 'lodash.uniqby';
 import { io } from 'socket.io-client';
+import { Capable } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import useAuth from '~/hooks/useAuth';
@@ -61,6 +62,17 @@ const getInvalidations = (event, data) => {
         ['assignments'],
         ['crewmembers', 'owned'],
       ],
+
+      Construction_Planned: [
+        ['plots', data.asteroidId, data.lotId],
+        ['asteroidPlots', data.asteroidId]
+      ],
+      Construction_Started: [
+        ['plots', data.asteroidId, data.lotId],
+      ],
+      Construction_Finished: [
+        ['plots', data.asteroidId, data.lotId],
+      ],
     }
     return map[event] || [];
   } catch (e) {/* no-op */}
@@ -83,7 +95,6 @@ export function EventsProvider({ children }) {
   const pendingBlockEvents = useRef([]);
   const pendingTimeout = useRef();
   const socket = useRef();
-  const wsShouldBeOpen = useRef();
 
   const handleEvents = useCallback((newEvents, skipAlerts, skipInvalidations) => {
     const transformedEvents = [];
@@ -100,10 +111,12 @@ export function EventsProvider({ children }) {
       // generate log events from events
       if (e.event === 'Crew_CompositionChanged') {
         new Set([...e.returnValues.oldCrew, ...e.returnValues.newCrew]).forEach((i) => {
-          transformedEvents.push({ ...e, event: eventName, i, key: `${e._id}_${i}` });
+          transformedEvents.push({ ...e, event: eventName, i, key: `${e.id}_${i}` });
         });
+      } else if (e.event === 'Lot_Used' && Capable.TYPES[e.returnValues.capableType].category === 'Building') {
+        transformedEvents.push({ ...e, event: 'Construction_Planned', key: e.id });
       } else {
-        transformedEvents.push({ ...e, event: eventName, key: e._id });
+        transformedEvents.push({ ...e, event: eventName, key: e.id });
       }
     });
 
@@ -154,6 +167,7 @@ export function EventsProvider({ children }) {
         }, 1000);
       }
       // (queue the current event for processing)
+      console.log({ ...body, event: type });
       pendingBlockEvents.current.push({ ...body, event: type });
     }
   }, []);
@@ -177,13 +191,20 @@ export function EventsProvider({ children }) {
       setEvents([]);
       setLastBlockNumber(0);
 
-      wsShouldBeOpen.current = false;
       if (socket.current) {
         socket.current.off(); // removes all listeners for all events
         socket.current.disconnect();
       }
     }
   }, [token]);
+
+  const subscribeToAsteroid = useCallback(() => {
+    // TODO: ...
+  }, []);
+
+  const unsubscribeToAsteroid = useCallback(() => {
+    // TODO: ...
+  }, []);
 
   return (
     <EventsContext.Provider value={{

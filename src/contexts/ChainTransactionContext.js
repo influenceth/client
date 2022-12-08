@@ -232,7 +232,12 @@ const getContracts = (account, queryClient) => ({
       type: 'GenericAlert',
       content: 'Site planning failed.',
       timestamp: Math.round(Date.now() / 1000)
-    })
+    }),
+    isEqual: (txVars, vars) => (
+      txVars.asteroidId === vars.asteroidId
+      && txVars.plotId === vars.plotId
+      && txVars.crewId === vars.crewId
+    )
   },
   'UNPLAN_CONSTRUCTION': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -261,7 +266,7 @@ const getContracts = (account, queryClient) => ({
       timestamp: Math.round(Date.now() / 1000)
     })
   },
-  'FINALIZE_CONSTRUCTION': {
+  'FINISH_CONSTRUCTION': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
@@ -271,6 +276,19 @@ const getContracts = (account, queryClient) => ({
     getErrorAlert: ({ i }) => ({
       type: 'GenericAlert',
       content: 'Construction finalization failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    })
+  },
+  'DECONSTRUCT': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
+      'Construction_deconstruct',
+      [asteroidId, plotId, crewId]
+    ),
+    getErrorAlert: ({ i }) => ({
+      type: 'GenericAlert',
+      content: 'Deconstruction failed.',
       timestamp: Math.round(Date.now() / 1000)
     })
   },

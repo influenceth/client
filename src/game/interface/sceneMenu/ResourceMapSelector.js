@@ -5,7 +5,7 @@ import { useHistory } from 'react-router-dom';
 
 import Dropdown from '~/components/Dropdown';
 import { ResourceGroupIcons } from '~/components/Icons';
-import useAsteroidAssets from '~/hooks/useAsteroidAssets';
+import useAsteroidAbundances from '~/hooks/useAsteroidAbundances';
 import useStore from '~/hooks/useStore';
 import { hexToRGB } from '~/theme';
 
@@ -96,7 +96,7 @@ const CategoryButton = styled.div`
 
 const ResourceMapSelector = ({ active, asteroid }) => {
   const history = useHistory();
-  const asteroidAssets = useAsteroidAssets(asteroid);
+  const asteroidAssets = useAsteroidAbundances(asteroid);
   const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
   const showResourceMap = useStore(s => s.asteroids.showResourceMap);
 

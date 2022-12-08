@@ -20,12 +20,12 @@ import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
 import useConstructionManager from '~/hooks/useConstructionManager';
+import useCrew from '~/hooks/useCrew';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import actionButtons from './sceneMenu/actionButtons';
 import ActionDialog from './sceneMenu/ActionDialog';
 import ResourceMapSelector from './sceneMenu/ResourceMapSelector';
-import useCrew from '~/hooks/useCrew';
 
 const rightModuleWidth = 375;
 
@@ -415,7 +415,6 @@ const SceneMenu = (props) => {
           }
         }
 
-        console.log('plot', plot, constructionStatus);
         if (constructionStatus === 'OPERATIONAL' && plot.building?.assetId) {
           const buildingAsset = buildings[plot.building.assetId];
           if (buildingAsset.capabilities.includes('extraction') && plot.coreSamplesExist) {

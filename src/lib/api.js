@@ -84,14 +84,7 @@ const api = {
     if (response.data) {
       const occupied = '1';
       const padding = '0';
-      // return (new Uint32Array(await response.data.arrayBuffer())).reduce((acc, byte, i) => {
-      //   const x = Number(byte).toString(2).padStart(32, padding);
-      //   for (let j = 0; j < 32; j++) {
-      //     acc[i * 32 + j] = x[j] === occupied;
-      //   }
-      //   return acc;
-      // }, {});
-      return (new Uint32Array(await response.data.arrayBuffer())).reverse().reduce((acc, byte, i) => {
+      return (new Uint32Array(await response.data.arrayBuffer())).reduce((acc, byte, i) => {
         const x = Number(byte).toString(2).padStart(32, padding);
         for (let j = 1; j <= 32; j++) {
           const index = i * 32 + j;

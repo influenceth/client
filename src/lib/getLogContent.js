@@ -1,14 +1,17 @@
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 import { MdBlurOff as ScanIcon } from 'react-icons/md';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
+import { Capable } from '@influenceth/sdk';
+
+import AddressLink from '~/components/AddressLink';
+import AsteroidLink from '~/components/AsteroidLink';
+import CrewLink from '~/components/CrewLink';
+import PlotLink from '~/components/PlotLink';
 import {
+  ConstructIcon,
   CrewIcon,
   PromoteIcon
 } from '~/components/Icons';
-
-import AsteroidLink from '~/components/AsteroidLink';
-import CrewLink from '~/components/CrewLink';
-import AddressLink from '~/components/AddressLink';
 
 const getTxLink = (event) => {
   if (event.__t === 'Ethereum') {
@@ -155,6 +158,38 @@ const entries = {
         <CrewLink id={e.returnValues.crewId} />
         <span> minted with </span>
         <AsteroidLink id={e.returnValues.asteroidId} />
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  Construction_Planned: (e) => ({
+    icon: <ConstructIcon />,
+    // TODO: which building, which lot, link to lot
+    content: (
+      <>
+        <span>{Capable.TYPES[e.returnValues.capableType]?.name} plan completed on </span>
+        <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  Construction_Started: (e) => ({
+    icon: <ConstructIcon />,
+    content: (
+      <>
+        <span>Construction started. {JSON.stringify(e.returnValues)}</span>
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  Construction_Finished: (e) => ({
+    icon: <ConstructIcon />,
+    content: (
+      <>
+        <span>Construction finished. {JSON.stringify(e.returnValues)}</span>
       </>
     ),
     txLink: getTxLink(e),
