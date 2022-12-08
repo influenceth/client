@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimationMixer, Box3, DirectionalLight, EquirectangularReflectionMapping, LoopRepeat, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
-// import * as THREE from 'three';
+import { AnimationMixer, Box3, Color, DirectionalLight, EquirectangularReflectionMapping, LoopRepeat, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
+import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
@@ -163,8 +163,11 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   // init orbitcontrols
   useEffect(() => {
     controls.current = new OrbitControls(camera, gl.domElement);
-    controls.current.near = 0.00001;
     controls.current.target.set(0, 0, 0);
+    controls.current.zoomSpeed = 0.33;
+
+    controls.current.object.near = 0.01;
+    controls.current.object.updateProjectionMatrix();
 
     return () => {
       controls.current.dispose();
@@ -182,13 +185,13 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   }, [zoomLimitsEnabled]);
 
   // init axeshelper
-  // useEffect(() => {
-  //   const axesHelper = new THREE.AxesHelper(5);
-  //   scene.add(axesHelper);
-  //   return () => {
-  //     scene.remove(axesHelper);
-  //   };
-  // }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+    return () => {
+      scene.remove(axesHelper);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // const box3h = useRef();
 
@@ -209,6 +212,11 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
       function (gltf) {
         model.current = gltf.scene || gltf.scenes[0];
         model.current.traverse(function (node) {
+          if (node.name === 'Armature_HopperVehicle03') {
+            console.log(node);
+          }
+
+          node.receiveShadow = true;
           if (node.isMesh) {
             // self-shadowing 
             if (ENABLE_SHADOWS) {
@@ -220,10 +228,20 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
             if (node.material?.envMapIntensity) {
               node.material.envMapIntensity = ENV_MAP_STRENGTH;
             }
+            if (node.material?.emissiveMap) {
+              node.material.emissiveIntensity = 0.7;
+            } else {
+              node.material.emissive = new Color(0x0);
+              node.material.emissiveIntensity = 0;
+            }
+            node.material.emissiveIntensity = 0;
 
             // only worry about depth on non-transparent materials
             // (from https://github.com/donmccurdy/three-gltf-viewer/blob/main/src/viewer.js)
             node.material.depthWrite = !node.material.transparent;
+          } else if (node.isLight) {
+            // console.log('NODE', node);
+            // node.intensity /= 50000;
           }
 
           // disable frustum culling because several of the models have some issues with the
@@ -272,6 +290,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
         if (gltf.animations?.length > 0) {
           animationMixer.current = new AnimationMixer(model.current);
           gltf.animations.forEach((action) => {
+            console.log('actiom', action);
             const clip = animationMixer.current.clipAction(action);
             clip.setLoop(LoopRepeat);
             clip.play();
@@ -381,9 +400,12 @@ const Lighting = ({ assetType }) => {
   const { gl, scene } = useThree();
 
   useEffect(() => {
+
     const keyLight = new DirectionalLight(0xFFFFFF);
+    keyLight.castShadow = true;
     keyLight.intensity = 1.0;
-    keyLight.position.set(-2, 2, 2);
+    // keyLight.position.set(-2, 2, 2);
+    keyLight.position.set(0, 2, 0);
     scene.add(keyLight);
 
     const rimLight = new DirectionalLight(0x9ECFFF);
@@ -393,22 +415,45 @@ const Lighting = ({ assetType }) => {
 
     if (ENABLE_SHADOWS) {
       gl.shadowMap.enabled = true;
-      gl.shadowMap.type = PCFSoftShadowMap;
+      // gl.shadowMap.type = PCFSoftShadowMap;
 
       keyLight.castShadow = true;
-      keyLight.shadow.camera.near = 2.75;
-      keyLight.shadow.camera.far = 4.25;
-      keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.75;
-      keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.75;
+      // keyLight.shadow.camera.near = 2.75;
+      // keyLight.shadow.camera.far = 4.25;
+      // keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.75;
+      // keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.75;
+      keyLight.shadow.camera.near = 1.75;
+      keyLight.shadow.camera.far = 2.25;
+      keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.15;
+      keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.15;
       keyLight.shadow.camera.updateProjectionMatrix();
-      keyLight.shadow.mapSize = new Vector2(1024, 1024);
-      keyLight.shadow.bias = -0.02;
+      keyLight.shadow.mapSize.height = 1024;
+      keyLight.shadow.mapSize.width = 1024;// = new Vector2(1024, 1024);
+      // keyLight.shadow.bias = -0.02;
     }
+    console.log(keyLight);
 
     // const helper1 = new THREE.CameraHelper( keyLight.shadow.camera );
     // scene.add(helper1);
     // const helper2 = new THREE.DirectionalLightHelper(keyLight);
     // scene.add(helper2);
+    const helper3 = new THREE.CameraHelper(keyLight.shadow.camera);
+    scene.add(helper3);
+    const helper4 = new THREE.Mesh(
+      new THREE.BoxGeometry(0.005, 0.005, 0.005),
+      new THREE.MeshPhysicalMaterial({ color: 0xff0000 })
+    )
+    helper4.position.set(0, 0.1, 0);
+    helper4.castShadow = true;
+    scene.add(helper4);
+    const helper5 = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.02, 0.02),
+      new THREE.MeshPhysicalMaterial({ color: 0x00ff00 })
+    )
+    helper5.position.set(0, 0.08, 0);
+    helper4.receiveShadow = true;
+    helper5.lookAt(new Vector3(0, 2, 0));
+    scene.add(helper5);
 
     return () => {
       // if (sunLight) scene.remove(sunLight);
@@ -416,6 +461,8 @@ const Lighting = ({ assetType }) => {
       if (rimLight) scene.remove(rimLight);
       // if (helper1) scene.remove(helper1);
       // if (helper2) scene.remove(helper2);
+      if (helper4) scene.remove(helper4);
+      if (helper5) scene.remove(helper5);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -436,15 +483,15 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   const [bgOverrideName, setBgOverrideName] = useState();
   const [envOverride, setEnvOverride] = useState();
   const [envOverrideName, setEnvOverrideName] = useState();
-  const [envStrengthOverride, setEnvStrengthOverride] = useState();
+  const [envStrengthOverride, setEnvStrengthOverride] = useState(assetType === 'Building' ? 0.01 : null);
   const [modelOverride, setModelOverride] = useState();
   const [modelOverrideName, setModelOverrideName] = useState();
 
   const [lightsEnabled, setLightsEnabled] = useState(true);
   const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState();
-  const [rotationEnabled, setRotationEnabled] = useState(true);
-  const [zoomLimitsEnabled, setZoomLimitsEnabled] = useState(true);
+  const [rotationEnabled, setRotationEnabled] = useState(assetType === 'Resource');
+  const [zoomLimitsEnabled, setZoomLimitsEnabled] = useState(assetType === 'Resource');
 
   const [uploadType, setUploadType] = useState();
   const fileInput = useRef();
@@ -542,6 +589,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
     if (!!assets && category !== undefined) {
       const bAssets = assets
         .filter((a) => a.category === category)
+        .map((a) => ({ ...a, modelUrl: '/Warehouse_Emissive_Test.glb' }))
         .sort((a, b) => a.name < b.name ? -1 : 1);
       setCategoryModels(bAssets);
       selectModel(bAssets[0]);
@@ -676,6 +724,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
 
       <CanvasContainer>
         <Canvas
+          shadows
           resize={{ debounce: 5, scroll: false }}
           style={{ height: '100%', width: '100%' }}>
           <Skybox
