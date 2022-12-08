@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import { Address, toRarity, toSize, toSpectralType } from '@influenceth/sdk';
+import { Address, toRarity, toSize, toSpectralType, Construction } from '@influenceth/sdk';
 import ReactTooltip from 'react-tooltip';
 import {
   FaCubes as InfrastructureIcon,
@@ -19,6 +19,7 @@ import AsteroidRendering from '~/game/interface/details/asteroidDetails/componen
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
+import useConstructionManager from '~/hooks/useConstructionManager';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import actionButtons from './sceneMenu/actionButtons';
@@ -321,6 +322,7 @@ const SceneMenu = (props) => {
   const history = useHistory();
 
   const { data: asteroid } = useAsteroid(asteroidId);
+  const { constructionStatus } = useConstructionManager(asteroidId, plotId);
   // TODO: use plotIsLoading
   const { data: plot, isLoading: plotIsLoading } = usePlot(asteroidId, plotId);
   const { crew } = useCrew();
@@ -393,6 +395,8 @@ const SceneMenu = (props) => {
     setRenderReady(false);
   }, [asteroidId]);
 
+  // TODO: could reasonably have buttons determine own visibility and remove some redundant logic here
+  // (the only problem is parent wouldn't know how many visible buttons there were)
   const actions = useMemo(() => {
     const a = [];
     if (asteroid) {
@@ -411,14 +415,15 @@ const SceneMenu = (props) => {
           }
         }
 
-        if (plot.building?.assetId) {
+        console.log('plot', plot, constructionStatus);
+        if (constructionStatus === 'OPERATIONAL' && plot.building?.assetId) {
           const buildingAsset = buildings[plot.building.assetId];
           if (buildingAsset.capabilities.includes('extraction') && plot.coreSamplesExist) {
             a.push(actionButtons.Extract);
           }
-        } else if (plot.blueprint) {
+        } else if (['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus)) {
           a.push(actionButtons.Construct);
-        } else {
+        } else if (['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
           a.push(actionButtons.NewBlueprint);
         }
 
@@ -426,10 +431,10 @@ const SceneMenu = (props) => {
           a.push(actionButtons.SurfaceTransfer);
         }
 
-        if (plot.blueprint) {
+        if (['PLANNED', 'CANCELING'].includes(constructionStatus)) {
           a.push(actionButtons.CancelBlueprint);
         }
-        if (plot.building) {
+        if (['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
           a.push(actionButtons.Deconstruct);
         } 
       }

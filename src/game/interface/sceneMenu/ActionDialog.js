@@ -43,6 +43,7 @@ import useCrew from '~/hooks/useCrew';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
+import useConstructionManager from '~/hooks/useConstructionManager';
 
 
 const borderColor = '#333';
@@ -959,7 +960,7 @@ const ToolSection = ({ resource, sourcePlot }) => {
             <ResourceImage badge="∞" resource={resource} />
             <label>
               <h3>{resource.name}</h3>
-              <div>{sourcePlot.building.name} (Lot {sourcePlot.i.toLocaleString()})</div>
+              <div>{sourcePlot.building.__t} (Lot {sourcePlot.i.toLocaleString()})</div>
               <footer>NOTE: This item will be consumed.</footer>
             </label>
           </ResourceWithData>
@@ -1036,7 +1037,7 @@ const DestinationPlotSection = ({ asteroid, destinationPlot, onDestinationSelect
             <Destination status={status}>
               <BuildingImage building={destinationPlot.building} progress={0.3} secondaryProgress={0.7} />{/* TODO: ... */}
               <label>
-                <h3>{destinationPlot.building.name}</h3>
+                <h3>{destinationPlot.building.__t}</h3>
                 <div>{asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {destinationPlot.i.toLocaleString()}</b></div>
                 <div />
                 {status === 'BEFORE' && (<div><b>650,000</b> / 1,000,000 m<sup>3</sup></div>)}{/* TODO: ... */}
@@ -1261,9 +1262,252 @@ const ExtractionAmountSection = ({ min, max, amount, setAmount }) => {
 
 // TODO: componentize
 
-const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
+const ActionDialogHeader = ({ action, asteroid, onClose, plot, status }) => {
+  const { captain } = useCrew();
+  return (
+    <>
+      {status === 'DURING' /* TODO: ... */ && (
+        <LoadingBar>{action.label}: 15.4%</LoadingBar>
+      )}
+      {status === 'AFTER' && (
+        <LoadingBar>Finalize {action.completeLabel}</LoadingBar>
+      )}
+      <CloseButton backgroundColor={status !== 'BEFORE' && 'black'} onClick={onClose} borderless>
+        <CloseIcon />
+      </CloseButton>
+      <Header backgroundSrc={action.headerBackground}>
+        <HeaderSectionBody>
+          <HeaderInfo>
+            <Title>
+              {status === 'BEFORE' && <>{action.actionIcon} {action.label.toUpperCase()}</>}
+              {status === 'DURING' && <><RingLoader color={theme.colors.main} size="1em" /> <span style={{ marginLeft: 40 }}>31m 25s</span></>/* TODO: tick */}
+              {status === 'AFTER' && `${action.completeLabel.toUpperCase()} ${action.completeStatus.toUpperCase()}`}
+            </Title>
+            <Subtitle>
+              {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {plot.i.toLocaleString()} ({plot.building?.name || 'Empty Lot'})</b>
+            </Subtitle>
+            {captain && action.crewRequirement && (
+              <CrewInfo requirement={action.crewRequirement} status={status}>
+                <CrewRequirement />
+                <CardContainer>
+                  <CrewCard
+                    crew={captain}
+                    hideHeader
+                    hideFooter
+                    hideMask />
+                </CardContainer>
+              </CrewInfo>
+            )}
+          </HeaderInfo>
+        </HeaderSectionBody>
+      </Header>
+    </>
+  );
+
+};
+
+const ActionDialogStats = ({ stats, status }) => (
+  <>
+    {stats?.length > 0 && (
+      <StatSection status={status}>
+        <SectionBody>
+          {[0,1].map((statGroup) => (
+            <div key={statGroup}>
+              {(
+                statGroup === 0
+                  ? stats.slice(0, Math.ceil(stats.length / 2))
+                  : stats.slice(Math.ceil(stats.length / 2))
+                ).map(({ label, value, direction, warning }) => (
+                  <StatRow key={label} direction={direction}>
+                    <label>{label}</label>
+                    <span>
+                      {value}
+                    </span>
+                    {warning && (
+                      <MouseoverIcon icon={<WarningOutlineIcon />} iconStyle={{ fontSize: '125%', marginLeft: 5 }} themeColor={theme.colors.error}>
+                        {warning}
+                      </MouseoverIcon>
+                    )}
+                  </StatRow>
+                ))}
+            </div>
+          ))}
+        </SectionBody>
+      </StatSection>
+    )}
+  </>
+);
+
+const ActionDialogFooter = ({ finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
+  // show unless already enabled
+  const enableNotifications = useCallback(async () => {
+    setNotificationsEnabled((x) => !x);
+  }, []);
+
+  return (
+    <Footer>
+      <SectionBody>
+        {status === 'BEFORE'
+          ? (
+            <>
+              <NotificationEnabler onClick={enableNotifications}>
+                {notificationsEnabled ? <CheckedIcon /> : <UncheckedIcon />}
+                Notify on Completion
+              </NotificationEnabler>
+              <Spacer />
+              <Button onClick={onClose}>Cancel</Button>
+              <Button isTransaction onClick={onGo}>{goLabel}</Button>
+            </>
+          ) : (
+            <Button onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
+          )}
+      </SectionBody>
+    </Footer>
+  );
+};
+
+const ActionDialog_Blueprint = (props) => {
+  const { asteroid, onClose, plot } = props;
   const buildings = useBuildingAssets();
+  const { constructionStatus, planConstruction } = useConstructionManager(asteroid?.i, plot?.i);
   const resources = useResourceAssets();
+
+  const [capableType, setCapableType] = useState(1);
+  
+  const stats = useMemo(() => [
+    { label: 'Abandonment Timer', value: '48h', warning: (
+      <>
+        Building sites become <b>Abandoned</b> if they have not started construction by the time the <b>Abandonment Timer</b> expires.
+        <br/><br/>
+        Any items left on an <b>Abandoned Site</b> may be claimed by other players!
+      </>
+    ) },
+  ], []);
+
+  const status = useMemo(() => {
+    if (constructionStatus === 'READY_TO_PLAN') {
+      return 'BEFORE';
+    } else if (constructionStatus === 'PLANNING') {
+      return 'DURING';
+    }
+  }, [constructionStatus]);
+
+  useEffect(() => {
+    if (!['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
+      // TODO: automatically open "construction" actionDialog
+      console.log('automatically open "construction" actionDialog');
+      onClose();
+    }
+  }, [constructionStatus]);
+
+  return (
+    <>
+      <ActionDialogHeader
+        {...props}
+        action={{
+          actionIcon: <LayBlueprintIcon />,
+          headerBackground: constructionBackground,
+          label: 'Place Building Site',
+          completeLabel: 'Building Site',
+          completeStatus: 'Ready',
+        }}
+        status={status} />
+
+      <BuildingPlanSection building={buildings[capableType]} status={status} />
+      {status === 'BEFORE' && (
+        <BuildingRequirementsSection
+          building={buildings[capableType]}
+          label="Required for Construction"
+          resources={resources} />
+      )}
+
+      <ActionDialogStats stats={stats} status={status} />
+
+      <ActionDialogFooter
+        {...props}
+        goLabel="Place Site"
+        onGo={() => planConstruction(capableType)}
+        status={status} />
+    </>
+  );
+};
+
+const ActionDialog_Construct = (props) => {
+  const { asteroid, onClose, plot } = props;
+  const { constructionStatus, startConstruction, finishConstruction } = useConstructionManager(asteroid?.i, plot?.i);
+
+  const stats = [
+    { label: 'Crew Travel', value: '6m 0s', direction: 0 },
+    { label: 'Construction Time', value: '47m 30s', direction: 1 },
+  ];
+
+  const status = useMemo(() => {
+    if (constructionStatus === 'PLANNED') {
+      return 'BEFORE';
+    } else if (constructionStatus === 'UNDER_CONSTRUCTION') {
+      return 'DURING';
+    }
+    return 'AFTER';
+  }, [constructionStatus]);
+
+  useEffect(() => {
+    if (constructionStatus === 'FINISHING' || constructionStatus === 'OPERATIONAL') {
+      onClose();
+    }
+  }, [constructionStatus]);
+
+  return (
+    <>
+      <ActionDialogHeader
+        {...props}
+        action={{
+          actionIcon: <ConstructIcon />,
+          headerBackground: constructionBackground,
+          label: 'Construct Building',
+          completeLabel: 'Construction',
+          completeStatus: 'Complete',
+          crewRequirement: 'start',
+        }}
+        status={status} />
+
+        <ActionDialogStats stats={stats} status={status} />
+
+        <ActionDialogFooter
+          {...props}
+          finalizeLabel="Complete"
+          goLabel="Construct Building"
+          onFinalize={finishConstruction}
+          onGo={startConstruction}
+          status={status} />
+    </>
+  );
+};
+
+const ActionDialog = ({ actionType, ...props }) => {
+  return (
+    <Dialog backdrop="rgba(30, 30, 35, 0.5)" opaque>
+      <div style={{ position: 'relative' }}>
+        {actionType === 'BLUEPRINT' && <ActionDialog_Blueprint {...props} />}
+        {actionType === 'CONSTRUCT' && <ActionDialog_Construct {...props} />}
+      </div>
+    </Dialog>
+  );
+}
+
+const ActionDialogz = ({ actionType, asteroid, plot, onClose }) => {
+  const buildings = useBuildingAssets();
+  const {
+    planConstruction,
+    unplanConstruction,
+    startConstruction,
+    finishConstruction,
+    deconstruct,
+    constructionStatus
+  } = useConstructionManager(asteroid?.i, plot?.i);
+  const resources = useResourceAssets();
+
   const { captain, crew } = useCrew();
   const activeResourceMap = useStore(s => s.asteroids.showResourceMap);
 
@@ -1286,6 +1530,7 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
     building: buildings[1]
   };
 
+  // TODO: memoize or move outside?
   const actions = {
     'NEW_CORE_SAMPLE': {
       actionIcon: <CoreSampleIcon />,
@@ -1355,6 +1600,7 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
       completeLabel: 'Building Site',
       completeStatus: 'Ready',
       goButtonLabel: 'Place Site',
+      goButtonAction: () => planConstruction(), // TODO: pass capableType
       stats: [
         { label: 'Abandonment Timer', value: '48h', warning: (
           <>
@@ -1365,11 +1611,13 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
         ) },
       ]
     },
+
     'CANCEL_BLUEPRINT': {
       actionIcon: <CancelBlueprintIcon />,
       headerBackground: constructionBackground,
       label: 'Cancel Building Site',
       goButtonLabel: 'Remove Site',
+      goButtonAction: unplanConstruction,
     },
     'CONSTRUCT': {
       actionIcon: <ConstructIcon />,
@@ -1379,10 +1627,13 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
       completeStatus: 'Complete',
       crewRequirement: 'start',
       goButtonLabel: 'Construct Building',
+      goButtonAction: startConstruction,
+      finishButtonLabel: '',
+      finishButtonAction: finishConstruction,
       stats: [
         { label: 'Crew Travel', value: '6m 0s', direction: 0 },
         { label: 'Construction Time', value: '47m 30s', direction: 1 },
-      ]
+      ],
     },
     'DECONSTRUCT': {
       actionIcon: <DeconstructIcon />,
@@ -1392,6 +1643,7 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
       completeStatus: 'Complete',
       crewRequirement: 'start',
       goButtonLabel: 'Deconstruct',
+      goButtonAction: deconstruct,
       stats: [
         { label: 'Total Volume', value: '4,200 m³', direction: 1 },
         { label: 'Total Mass', value: '120,500 tonnes', direction: 1 },
@@ -1409,22 +1661,6 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
     setResource(resources[0])
   }, []);
 
-  // TODO: usecallback
-  const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
-  const onSubmit = () => {
-    // setStatus('DURING');
-    execute(
-      'PLAN_CONSTRUCTION',
-      // 'START_CONSTRUCTION',
-      {
-        capableId: 2,
-        asteroidId: asteroid.i,
-        plotId: plot.i,
-        crewId: crew.i
-      }
-    )
-  };
-
 
   const beforeStart = status === 'BEFORE';
   const inProgress = status === 'DURING';
@@ -1433,41 +1669,7 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
   return (
     <Dialog backdrop="rgba(30, 30, 35, 0.5)" opaque>
       <div style={{ position: 'relative' }}>
-        {inProgress /* TODO: ... */ && (
-          <LoadingBar>{action.label}: 15.4%</LoadingBar>
-        )}
-        {complete && (
-          <LoadingBar>Finalize {action.completeLabel}</LoadingBar>
-        )}
-        <CloseButton backgroundColor={!beforeStart && 'black'} onClick={onClose} borderless>
-          <CloseIcon />
-        </CloseButton>
-        <Header backgroundSrc={action.headerBackground}>
-          <HeaderSectionBody>
-            <HeaderInfo>
-              <Title>
-                {status === 'BEFORE' && <>{action.actionIcon} {action.label.toUpperCase()}</>}
-                {status === 'DURING' && <><RingLoader color={theme.colors.main} size="1em" /> <span style={{ marginLeft: 40 }}>31m 25s</span></>/* TODO: tick */}
-                {status === 'AFTER' && `${action.completeLabel.toUpperCase()} ${action.completeStatus.toUpperCase()}`}
-              </Title>
-              <Subtitle>
-                {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {plot.i.toLocaleString()} ({plot.building?.name || buildings[0].name})</b>
-              </Subtitle>
-              {captain && action.crewRequirement && (
-                <CrewInfo requirement={action.crewRequirement} status={status}>
-                  <CrewRequirement />
-                  <CardContainer>
-                    <CrewCard
-                      crew={captain}
-                      hideHeader
-                      hideFooter
-                      hideMask />
-                  </CardContainer>
-                </CrewInfo>
-              )}
-            </HeaderInfo>
-          </HeaderSectionBody>
-        </Header>
+        
 
         {actionType === 'NEW_CORE_SAMPLE' && (
           <>
@@ -1570,7 +1772,7 @@ const ActionDialog = ({ actionType, asteroid, plot, onClose }) => {
                   </NotificationEnabler>
                   <Spacer />
                   <Button onClick={onClose}>Cancel</Button>
-                  <Button isTransaction onClick={onSubmit}>{action.goButtonLabel}</Button>
+                  <Button isTransaction onClick={action.goButtonAction}>{action.goButtonLabel}</Button>
                 </>
               ) : (
                 <Button onClick={() => setStatus('AFTER')}>Accept</Button>

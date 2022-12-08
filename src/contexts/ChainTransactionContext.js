@@ -224,9 +224,9 @@ const getContracts = (account, queryClient) => ({
   'PLAN_CONSTRUCTION': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ capableId, asteroidId, plotId, crewId }) => contract.invoke(
+    transact: (contract) => ({ capableType, asteroidId, plotId, crewId }) => contract.invoke(
       'Construction_plan',
-      [capableId, asteroidId, plotId, crewId]
+      [capableType, asteroidId, plotId, crewId]
     ),
     getErrorAlert: ({ i }) => ({
       type: 'GenericAlert',
