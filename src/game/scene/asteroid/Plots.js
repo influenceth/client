@@ -479,7 +479,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
   useEffect(
     () => updateVisiblePlots(),
-    [chunkyAltitude, positionsReady, regionsByDistance] // eslint-disable-line react-hooks/exhaustive-deps
+    [chunkyAltitude, positionsReady, regionsByDistance, plots] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   useEffect(() => {

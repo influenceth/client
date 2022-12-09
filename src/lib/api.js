@@ -92,7 +92,6 @@ const api = {
             acc[index + 1] = x[j] === occupied; // (adjust for one-index of plot ids)
           }
         }
-        console.log(acc);
         return acc;
       }, {});
     }

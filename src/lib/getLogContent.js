@@ -165,7 +165,6 @@ const entries = {
 
   Construction_Planned: (e) => ({
     icon: <ConstructIcon />,
-    // TODO: which building, which lot, link to lot
     content: (
       <>
         <span>{Capable.TYPES[e.returnValues.capableType]?.name} plan completed on </span>
@@ -177,9 +176,10 @@ const entries = {
 
   Construction_Started: (e) => ({
     icon: <ConstructIcon />,
+    // TODO: return values only include capableId (NOT capableType), committedTime, committedRound
     content: (
       <>
-        <span>Construction started. {JSON.stringify(e.returnValues)}</span>
+        <span>Construction started.</span>
       </>
     ),
     txLink: getTxLink(e),

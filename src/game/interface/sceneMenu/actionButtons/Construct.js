@@ -10,6 +10,8 @@ const Construct = ({ asteroid, plot, onSetAction }) => {
     onSetAction('CONSTRUCT');
   }, [onSetAction]);
 
+  console.log(plot?.building?.constructionStatus, constructionStatus);
+
   const attention = constructionStatus === 'PLANNED' || constructionStatus === 'READY_TO_FINISH';
   const loading = constructionStatus === 'UNDER_CONSTRUCTION' || constructionStatus === 'FINISHING';
   return (
@@ -17,7 +19,6 @@ const Construct = ({ asteroid, plot, onSetAction }) => {
       label={constructionStatus === 'READY_TO_FINISH' ? 'Finish Construction' : 'Start Construction'}
       flags={{
         attention: attention || undefined,
-        disabled: loading || undefined,
         loading: loading || undefined
       }}
       icon={<ConstructIcon />}

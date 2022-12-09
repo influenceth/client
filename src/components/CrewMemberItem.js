@@ -1,5 +1,5 @@
 import { useHistory } from 'react-router-dom';
-import { toCrewClass } from '@influenceth/sdk';
+import { Crewmate } from '@influenceth/sdk';
 
 import ListHoverItem from './ListHoverItem';
 import CrewClassIcon from '~/components/CrewClassIcon';
@@ -15,7 +15,7 @@ const CrewMemberItem = ({ crew, selected }) => {
         <>
           {crew.name || `Crew Member #${crew.i}`}
           {' - '}
-          {toCrewClass(crew.crewClass) || 'Unknown Class'}
+          {Crewmate.getClass(crew.crewClass)?.name || 'Unknown Class'}
           {' '}
           <CrewClassIcon crewClass={crew.crewClass} />
         </>

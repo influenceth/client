@@ -527,7 +527,10 @@ const SceneMenu = (props) => {
                   <CloseButton borderless onClick={onClosePane}>
                     <CloseIcon />
                   </CloseButton>
-                  <ThumbBackground image={buildings[plot.building?.assetId || 0]?.iconUrls?.w400} />
+                  {['OPERATIONAL', 'DECONSTRUCTING', 'READY_TO_PLAN'].includes(constructionStatus)
+                    ? <ThumbBackground image={buildings[plot.building?.assetId || 0]?.iconUrls?.w400} />
+                    : <ThumbBackground image={buildings[plot.building?.assetId || 0]?.siteIconUrls?.w400} />
+                  }
                   <ThumbMain>
                     <ThumbTitle>{buildings[plot.building?.assetId || 0]?.name}</ThumbTitle>
                     <ThumbSubtitle>
@@ -602,7 +605,14 @@ const SceneMenu = (props) => {
       </RightWrapper>
 
       {/* TODO: *might* end up making sense to instead put this with each action button that needs it? */}
-      {action && <ActionDialog actionType={action} asteroid={asteroid} plot={plot} onClose={() => setAction()} />}
+      {action && (
+        <ActionDialog
+          actionType={action}
+          asteroid={asteroid}
+          plot={plot}
+          onClose={() => setAction()}
+          onSetAction={setAction} />
+      )}
     </>
   );
 };

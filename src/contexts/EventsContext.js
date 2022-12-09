@@ -115,6 +115,8 @@ export function EventsProvider({ children }) {
         });
       } else if (e.event === 'Lot_Used' && Capable.TYPES[e.returnValues.capableType].category === 'Building') {
         transformedEvents.push({ ...e, event: 'Construction_Planned', key: e.id });
+      } else if (e.event === 'Lot_Used' && e.returnValues.capableType === 0) {
+        transformedEvents.push({ ...e, event: 'Construction_Unplanned', key: e.id });
       } else {
         transformedEvents.push({ ...e, event: eventName, key: e.id });
       }
@@ -124,6 +126,7 @@ export function EventsProvider({ children }) {
       if (!skipInvalidations) {
         // console.log('e.event', e.event);
         const invalidations = getInvalidations(e.event, e.returnValues);
+        console.log(e.event, e.returnValues, invalidations);
         invalidations.forEach((i) => {
           queryClient.invalidateQueries(...i);
         });

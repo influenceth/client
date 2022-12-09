@@ -50,8 +50,8 @@ export const useBuildingAssets = () => {
     };
 
     asset.siteIconUrls = {
-      w150: getIconUrl(asset, 'buildings', { w: 150, append: '_site' }),
-      w400: getIconUrl(asset, 'buildings', { w: 400, append: '_site' }),
+      w150: getIconUrl(asset, 'buildings', { w: 150, append: '_Site' }),
+      w400: getIconUrl(asset, 'buildings', { w: 400, append: '_Site' }),
     };
 
     asset.modelUrl = getModelUrl(asset, 'buildings');

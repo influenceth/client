@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fi';
 import { RingLoader } from 'react-spinners';
 import DataTable, { createTheme } from 'react-data-table-component';
+import { Crew, Asteroid, Construction, Lot } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
@@ -25,6 +26,7 @@ import {
   CloseIcon,
   ConstructIcon,
   CoreSampleIcon,
+  CrewIcon,
   DeconstructIcon,
   ExtractionIcon,
   ImproveCoreSampleIcon,
@@ -33,6 +35,7 @@ import {
   PlusIcon,
   ResourceIcon,
   SurfaceTransferIcon,
+  TimerIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
 import Poppable from '~/components/Popper';
@@ -44,6 +47,30 @@ import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useConstructionManager from '~/hooks/useConstructionManager';
+import useInterval from '~/hooks/useInterval';
+import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
+
+
+
+// TODO: move this to utility?
+const timerIncrements = {
+  d: 86400,
+  h: 3600,
+  m: 60,
+  s: 1
+};
+const formatTimer = (secondsRemaining) => {
+  let remainder = secondsRemaining;
+  const parts = Object.keys(timerIncrements).reduce((acc, k) => {
+    if (acc.length > 0 || remainder >= timerIncrements[k] || timerIncrements[k] === 1) {
+      const unit = Math.floor(remainder / timerIncrements[k]);
+      remainder = remainder % timerIncrements[k];
+      acc.push(`${unit}${k}`);
+    }
+    return acc;
+  }, []);
+  return parts.join(' ');
+};
 
 
 const borderColor = '#333';
@@ -126,8 +153,10 @@ const HeaderInfo = styled.div`
   display: flex;
   flex-direction: column;
   font-size: 90%;
-  height: 125px;
   justify-content: center;
+  ${p => p.padTop
+    ? `height: 140px; padding-top: 15px;`
+    : 'height: 125px;'}
   position: relative;
   & b {
     color: white;
@@ -226,7 +255,8 @@ const StatSection = styled(Section)`
     align-items: flex-start;
     border-top: 1px solid ${borderColor};
     display: flex;
-    padding: 20px 0;
+    font-size: 15px;
+    padding: 10px 0;
     & > div {
       flex: 1;
       &:last-child {
@@ -249,6 +279,36 @@ const StatSection = styled(Section)`
     }
   `}
 `;
+
+const TimerRow = styled.div`
+  align-items: center;
+  border: none !important;
+  display: flex;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  justify-content: space-between;
+  padding: 5px 0;
+  & > div {
+    flex: 1;
+    text-align: left;
+    &:last-child {
+      padding-left: 30px;
+    }
+    & > h6 {
+      align-items: center;
+      color: white;
+      font-size: 24px;
+      font-weight: normal;
+      display: flex;
+      margin: 8px 0 0;
+      & > svg {
+        color: ${p => p.theme.colors.main};
+        margin-right: 10px;
+      }
+    }
+  }
+`;
+
 const Footer = styled(Section)`
   min-height: 0;
   & > div {
@@ -517,11 +577,26 @@ const SliderInfoRow = styled.div`
 `;
 
 const LoadingBar = styled.div`
-  background: #26718c;
+  background: rgba(${p => p.theme.colors.mainRGB}, 0.4);
   color: white;
   font-size: 18px;
+  left: 0;
   padding: 9px 15px;
+  position: absolute;
+  right: 0;
   text-transform: uppercase;
+  top: 0;
+  z-index: 1;
+  &:before {
+    content: "";
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.7);
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: ${p => Math.min(100, Math.max(0.02, p.progress))}%;
+    z-index: -1;
+  }
 `;
 
 const NotificationEnabler = styled.div`
@@ -602,7 +677,7 @@ const ItemsList = styled.div`
 `;
 const IngredientsList = styled(ItemsList)`
   & > div {
-    outline: 1px dashed ${p => p.theme.colors.main};
+    outline: 1px dashed ${p => p.empty ? borderColor : p.theme.colors.main};
   }
 `;
 
@@ -626,27 +701,6 @@ const ingredients = [
   [700, 5, 700], [700, 19, 500], [400, 22, 0],
   // [700, 5, 0], [700, 19, 0], [400, 22, 0], [700, 5, 0], [700, 19, 0], [400, 22, 0],
 ];
-
-const formatTimer = (seconds) => {
-  let remaining = seconds;
-  const out = [];
-
-  let days = Math.floor(remaining / 86400);
-  remaining -= days * 86400;
-  if (days > 0) out.push(`${days}d`);
-  
-  let hours = Math.floor(remaining / 3600);
-  remaining -= hours * 3600;
-  if (out.length > 0 || hours > 0) out.push(`${hours}h`);
-
-  let minutes = Math.floor(remaining / 60);
-  remaining -= minutes * 60;
-  if (out.length > 0 || minutes > 0) out.push(`${minutes}m`);
-
-  out.push(`${Math.round(remaining)}s`);
-
-  return out.join(' ');
-};
 
 const EmptyImage = ({ children }) => (
   <EmptyThumbnail>
@@ -680,7 +734,7 @@ const EmptyResourceImage = ({ iconOverride }) => (
 const BuildingImage = ({ building, progress, secondaryProgress }) => {
   return (
     <BuildingThumbnailWrapper>
-      <ResourceThumbnail src={building.iconUrls.w150} />
+      <ResourceThumbnail src={building.siteIconUrls.w150} />
       {progress !== undefined && (
         <ResourceProgress
           progress={progress}
@@ -726,6 +780,21 @@ const PopperBody = styled.div`
   flex-direction: column;
   height: 100%;
   padding: 20px;
+`;
+const PopperList = styled.div`
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin-left: -20px;
+  width: calc(100% + 40px);
+`;
+const PopperListItem = styled.div`
+  cursor: ${p => p.theme.cursors.active};
+  margin: 0 8px;
+  padding: 8px 12px;
+  &:hover {
+    background: rgba(255,255,255,0.1);
+  }
 `;
 const PoppableTitle = styled.div`
   align-items: flex-end;
@@ -784,6 +853,27 @@ const ResourceColorIcon = styled.div`
   margin-right: 4px;
   width: 10px;
 `;
+
+const BlueprintSelection = ({ onBuildingSelected }) => {
+  const buildings = useBuildingAssets();
+  return (
+    <PopperBody style={{ paddingBottom: 5, paddingTop: 5 }}>
+      <PopperList>
+        {buildings.filter(({i}) => i > 0).filter(({i}) => ['1','2'].includes(i)).map((building) => (
+          <PopperListItem key={building.i} onClick={onBuildingSelected(building.i)}>
+            <BuildingPlan>
+              <BuildingImage building={building} />
+              <label>
+                <h3>{building.name}</h3>
+                <b>Site Plan</b>
+              </label>
+            </BuildingPlan>
+          </PopperListItem>
+        ))}
+      </PopperList>
+    </PopperBody>
+  );
+};
 
 const CoreSampleSelection = ({ onClick, resources, sampleTally }) => {
   const existingSamples = useMemo(() => {
@@ -1069,7 +1159,22 @@ const DestinationPlotSection = ({ asteroid, destinationPlot, onDestinationSelect
   );
 };
 
-const BuildingPlanSection = ({ abandonedIn, building, cancelling, status }) => {
+const getTimeRemaining = (target) => Math.max(0, target - getAdjustedNow());
+const LiveTimer = ({ target }) => {
+  const [remaining, setRemaining] = useState(getTimeRemaining(target));
+  useInterval(() => {
+    setRemaining(getTimeRemaining(target));
+  }, 1000);
+  return isNaN(remaining) ? 'Initializing...' : <>{formatTimer(remaining)}</>;
+};
+
+const BuildingPlanSection = ({ building, cancelling, gracePeriodEnd, onBuildingSelected, status }) => {
+  const [clicked, setClicked] = useState(0);
+  const _onBuildingSelected = useCallback((id) => () => {
+    setClicked((x) => x + 1);
+    if (onBuildingSelected) onBuildingSelected(id);
+  }, []);
+
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Building Plan</SectionTitle>
@@ -1096,22 +1201,20 @@ const BuildingPlanSection = ({ abandonedIn, building, cancelling, status }) => {
           <>
             {cancelling && (
               <>
-                <span style={{ color: theme.colors.error }}>Any materials left on lot will be abandoned.</span>
-                <span style={{ color: theme.colors.error, fontSize: '125%', lineHeight: '1em', marginLeft: 8 }}><WarningOutlineIcon /></span>
+                <span style={{ color: theme.colors.error, textAlign: 'right' }}>On-site materials<br/>will be abandoned.</span>
+                <span style={{ color: theme.colors.error, fontSize: '175%', lineHeight: '1em', marginLeft: 8, marginRight: 8 }}><WarningOutlineIcon /></span>
               </>
             )}
-            {abandonedIn && !cancelling && (
+            {gracePeriodEnd && !cancelling && (
               <AbandonmentTimer>
                 <div>Abandonment Timer:</div>
-                <h3>{formatTimer(abandonedIn)} <WarningOutlineIcon /></h3>
+                <h3><LiveTimer target={gracePeriodEnd} /> <WarningOutlineIcon /></h3>
               </AbandonmentTimer>
             )}
-            {!abandonedIn && !cancelling && (
-              <div style={{ display: 'flex' }}>
-                <Poppable label="Select" buttonWidth="135px">
-                  {/* TODO: ... */}
-                </Poppable>
-              </div>
+            {!gracePeriodEnd && !cancelling && (
+              <Poppable label="Select" closeOnChange={clicked} buttonWidth="135px" title="Site Plan">
+                <BlueprintSelection onBuildingSelected={_onBuildingSelected} />
+              </Poppable>
             )}
           </>
         )}
@@ -1181,7 +1284,7 @@ const BuildingRequirementsSection = ({ isGathering, label, building, resources }
     <Section>
       <SectionTitle><ChevronRightIcon /> {label}</SectionTitle>
       <SectionBody>
-        <IngredientsList>
+        <IngredientsList empty={!building}>
           {building && (
             <>
               {ingredients.map(([tally, i, hasTally]) => (
@@ -1260,27 +1363,27 @@ const ExtractionAmountSection = ({ min, max, amount, setAmount }) => {
   );
 }
 
-// TODO: componentize
-
-const ActionDialogHeader = ({ action, asteroid, onClose, plot, status }) => {
+const ActionDialogHeader = ({ action, asteroid, onClose, plot, status, startTime, targetTime }) => {
   const { captain } = useCrew();
+  const progress = 100 * (getAdjustedNow() - startTime) / (targetTime - startTime);
+  // TODO: useInterval to update progress in state every 1/1000th of (targetTime - startTime)
   return (
     <>
-      {status === 'DURING' /* TODO: ... */ && (
-        <LoadingBar>{action.label}: 15.4%</LoadingBar>
+      {status === 'DURING' && (
+        <LoadingBar progress={progress}>{action.label}: {(progress || 0).toFixed(1)}%</LoadingBar>
       )}
       {status === 'AFTER' && (
-        <LoadingBar>Finalize {action.completeLabel}</LoadingBar>
+        <LoadingBar progress={progress}>Finalize {action.completeLabel}</LoadingBar>
       )}
       <CloseButton backgroundColor={status !== 'BEFORE' && 'black'} onClick={onClose} borderless>
         <CloseIcon />
       </CloseButton>
       <Header backgroundSrc={action.headerBackground}>
         <HeaderSectionBody>
-          <HeaderInfo>
+          <HeaderInfo padTop={status !== 'BEFORE'}>
             <Title>
               {status === 'BEFORE' && <>{action.actionIcon} {action.label.toUpperCase()}</>}
-              {status === 'DURING' && <><RingLoader color={theme.colors.main} size="1em" /> <span style={{ marginLeft: 40 }}>31m 25s</span></>/* TODO: tick */}
+              {status === 'DURING' && <><RingLoader color={theme.colors.main} size="1em" /> <span style={{ marginLeft: 40 }}><LiveTimer target={targetTime} /></span></>}
               {status === 'AFTER' && `${action.completeLabel.toUpperCase()} ${action.completeStatus.toUpperCase()}`}
             </Title>
             <Subtitle>
@@ -1338,7 +1441,31 @@ const ActionDialogStats = ({ stats, status }) => (
   </>
 );
 
-const ActionDialogFooter = ({ finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
+
+const ActionDialogTimers = ({ actionReadyIn, crewAvailableIn }) => (
+  <StatSection status="BEFORE">
+    <SectionBody>
+      <TimerRow>
+        <div>
+          <label>Crew Available In:</label>
+          <h6>
+            <CrewIcon />
+            <span>{crewAvailableIn > 0 ? formatTimer(crewAvailableIn) : 'Immediately'}</span>
+          </h6>
+        </div>
+        <div>
+          <label>Action Ready In:</label>
+          <h6>
+            <TimerIcon />
+            <span>{actionReadyIn > 0 ? formatTimer(actionReadyIn) : 'Immediately'}</span>
+          </h6>
+        </div>
+      </TimerRow>
+    </SectionBody>
+  </StatSection>
+);
+
+const ActionDialogFooter = ({ buttonsLoading, finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // show unless already enabled
@@ -1349,35 +1476,43 @@ const ActionDialogFooter = ({ finalizeLabel, goLabel, onClose, onFinalize, onGo,
   return (
     <Footer>
       <SectionBody>
-        {status === 'BEFORE'
-          ? (
+        {status === 'BEFORE' && (
             <>
               <NotificationEnabler onClick={enableNotifications}>
                 {notificationsEnabled ? <CheckedIcon /> : <UncheckedIcon />}
                 Notify on Completion
               </NotificationEnabler>
               <Spacer />
-              <Button onClick={onClose}>Cancel</Button>
-              <Button isTransaction onClick={onGo}>{goLabel}</Button>
+              <Button loading={buttonsLoading} onClick={onClose}>Cancel</Button>
+              <Button loading={buttonsLoading} isTransaction onClick={onGo}>{goLabel}</Button>
             </>
-          ) : (
-            <Button onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
           )}
+        {status === 'DURING' && (
+          <Button loading={buttonsLoading} onClick={onClose}>{'Close'}</Button>
+        )}
+        {status === 'AFTER' && (
+          <Button loading={buttonsLoading} onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
+        )}
       </SectionBody>
     </Footer>
   );
 };
 
+const getBonusDirection = ({ totalBonus }, biggerIsBetter = true) => {
+  if (totalBonus === 1) return 0;
+  return biggerIsBetter && totalBonus > 1 ? 1 : -1;
+};
+
 const ActionDialog_Blueprint = (props) => {
-  const { asteroid, onClose, plot } = props;
+  const { asteroid, plot } = props;
   const buildings = useBuildingAssets();
   const { constructionStatus, planConstruction } = useConstructionManager(asteroid?.i, plot?.i);
   const resources = useResourceAssets();
 
-  const [capableType, setCapableType] = useState(1);
+  const [capableType, setCapableType] = useState();
   
   const stats = useMemo(() => [
-    { label: 'Abandonment Timer', value: '48h', warning: (
+    { label: 'Abandonment Timer', value: formatTimer(Lot.GRACE_PERIOD), warning: (
       <>
         Building sites become <b>Abandoned</b> if they have not started construction by the time the <b>Abandonment Timer</b> expires.
         <br/><br/>
@@ -1386,19 +1521,9 @@ const ActionDialog_Blueprint = (props) => {
     ) },
   ], []);
 
-  const status = useMemo(() => {
-    if (constructionStatus === 'READY_TO_PLAN') {
-      return 'BEFORE';
-    } else if (constructionStatus === 'PLANNING') {
-      return 'DURING';
-    }
-  }, [constructionStatus]);
-
   useEffect(() => {
     if (!['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
-      // TODO: automatically open "construction" actionDialog
-      console.log('automatically open "construction" actionDialog');
-      onClose();
+      props.onSetAction('CONSTRUCT');
     }
   }, [constructionStatus]);
 
@@ -1413,34 +1538,93 @@ const ActionDialog_Blueprint = (props) => {
           completeLabel: 'Building Site',
           completeStatus: 'Ready',
         }}
-        status={status} />
+        status="BEFORE" />
 
-      <BuildingPlanSection building={buildings[capableType]} status={status} />
-      {status === 'BEFORE' && (
-        <BuildingRequirementsSection
-          building={buildings[capableType]}
-          label="Required for Construction"
-          resources={resources} />
-      )}
+      <BuildingPlanSection building={buildings[capableType]} onBuildingSelected={setCapableType} status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
+      <BuildingRequirementsSection
+        building={buildings[capableType]}
+        label="Required for Construction"
+        resources={resources} />
 
-      <ActionDialogStats stats={stats} status={status} />
+      <ActionDialogStats stats={stats} status="BEFORE" />
+      <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />
+      <ActionDialogFooter
+        {...props}
+        buttonsLoading={constructionStatus === 'PLANNING'}
+        goLabel="Place Site"
+        onGo={() => planConstruction(capableType)}
+        status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
+    </>
+  );
+};
+
+const ActionDialog_CancelBlueprint = (props) => {
+  const { asteroid, plot } = props;
+  const buildings = useBuildingAssets();
+  const { constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, plot?.i);
+
+  const [capableType, setCapableType] = useState();
+
+  useEffect(() => {
+    if (constructionStatus === 'READY_TO_PLAN') {
+      props.onClose();
+    }
+  }, [constructionStatus]);
+
+  return (
+    <>
+      <ActionDialogHeader
+        {...props}
+        action={{
+          actionIcon: <CancelBlueprintIcon />,
+          headerBackground: constructionBackground,
+          label: 'Cancel Building Site',
+        }}
+        status="BEFORE" />
+
+      <BuildingPlanSection
+        building={buildings[plot?.building?.assetId]}
+        cancelling
+        status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
+
+      <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />
 
       <ActionDialogFooter
         {...props}
-        goLabel="Place Site"
-        onGo={() => planConstruction(capableType)}
-        status={status} />
+        buttonsLoading={constructionStatus === 'CANCELING'}
+        goLabel="Abandon Site Plan"
+        onGo={unplanConstruction}
+        status={constructionStatus === 'CANCELING' ? 'DURING' : 'BEFORE'} />
     </>
   );
 };
 
 const ActionDialog_Construct = (props) => {
   const { asteroid, onClose, plot } = props;
+  const buildings = useBuildingAssets();
+  const resources = useResourceAssets();
   const { constructionStatus, startConstruction, finishConstruction } = useConstructionManager(asteroid?.i, plot?.i);
+  const { crew, crewMemberMap } = useCrew();
+  
+  const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
+  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+  const constructionBonus = getCrewAbilityBonus(5, crewMembers);
+
+  const crewTravelTime = Asteroid.getLotTravelTime(asteroid.i, 1, plot.i, crewTravelBonus.totalBonus);
+  const constructionTime = Construction.getConstructionTime(plot.building.assetId, constructionBonus.totalBonus);
+  console.log([plot.building.assetId, constructionBonus, constructionTime]);
 
   const stats = [
-    { label: 'Crew Travel', value: '6m 0s', direction: 0 },
-    { label: 'Construction Time', value: '47m 30s', direction: 1 },
+    {
+      label: 'Crew Travel',
+      value: formatTimer(crewTravelTime),
+      direction: getBonusDirection(crewTravelBonus)
+    },
+    {
+      label: 'Construction Time',
+      value: formatTimer(constructionTime),
+      direction: getBonusDirection(constructionBonus)
+    },
   ];
 
   const status = useMemo(() => {
@@ -1470,17 +1654,39 @@ const ActionDialog_Construct = (props) => {
           completeStatus: 'Complete',
           crewRequirement: 'start',
         }}
+        status={status}
+        startTime={plot?.building?.startTime}
+        targetTime={plot?.building?.committedTime} />
+
+      <BuildingPlanSection
+        building={buildings[plot.building?.assetId]}
+        status={status}
+        gracePeriodEnd={plot?.gracePeriodEnd} />
+
+      {status === 'BEFORE' && (
+        <BuildingRequirementsSection
+          isGathering
+          building={buildings[plot.building?.assetId]}
+          label="Construction Materials"
+          resources={resources} />
+      )}
+
+      <ActionDialogStats stats={stats} status={status} />
+
+      {status === 'BEFORE' && (
+        <ActionDialogTimers
+          crewAvailableIn={2 * crewTravelTime}
+          actionReadyIn={crewTravelTime + constructionTime} />
+      )}
+
+      <ActionDialogFooter
+        {...props}
+        disabled={false}
+        finalizeLabel="Complete"
+        goLabel="Construct Building"
+        onFinalize={finishConstruction}
+        onGo={startConstruction}
         status={status} />
-
-        <ActionDialogStats stats={stats} status={status} />
-
-        <ActionDialogFooter
-          {...props}
-          finalizeLabel="Complete"
-          goLabel="Construct Building"
-          onFinalize={finishConstruction}
-          onGo={startConstruction}
-          status={status} />
     </>
   );
 };
@@ -1490,6 +1696,7 @@ const ActionDialog = ({ actionType, ...props }) => {
     <Dialog backdrop="rgba(30, 30, 35, 0.5)" opaque>
       <div style={{ position: 'relative' }}>
         {actionType === 'BLUEPRINT' && <ActionDialog_Blueprint {...props} />}
+        {actionType === 'CANCEL_BLUEPRINT' && <ActionDialog_CancelBlueprint {...props} />}
         {actionType === 'CONSTRUCT' && <ActionDialog_Construct {...props} />}
       </div>
     </Dialog>
