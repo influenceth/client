@@ -166,7 +166,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
     controls.current.target.set(0, 0, 0);
     controls.current.zoomSpeed = 0.33;
 
-    controls.current.object.near = 0.01;
+    controls.current.object.near = 0.001;
     controls.current.object.updateProjectionMatrix();
 
     return () => {
@@ -212,10 +212,6 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
       function (gltf) {
         model.current = gltf.scene || gltf.scenes[0];
         model.current.traverse(function (node) {
-          if (node.name === 'Armature_HopperVehicle03') {
-            console.log(node);
-          }
-
           node.receiveShadow = true;
           if (node.isMesh) {
             // self-shadowing 
@@ -228,11 +224,15 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
             if (node.material?.envMapIntensity) {
               node.material.envMapIntensity = ENV_MAP_STRENGTH;
             }
-            if (node.material?.emissiveMap) {
-              node.material.emissiveIntensity = 0.7;
-            } else {
-              // node.material.emissive = new Color(0x0);
-              // node.material.emissiveIntensity = 0;
+            if (assetType === 'Building') {
+              if (node.material?.emissiveMap) {
+                if (node.material.lightMap) console.log('LIGHTMAP', node);
+                node.material.lightMap = node.material.emissiveMap;
+                node.material.emissive = new Color(0x0);
+                node.material.emissiveMap = null;
+                // node.material.emissiveIntensity = 0;
+                // node.material.emissiveIntensity = 0.7;
+              }
             }
             // node.material.emissiveIntensity = 0;
 
@@ -290,7 +290,6 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
         if (gltf.animations?.length > 0) {
           animationMixer.current = new AnimationMixer(model.current);
           gltf.animations.forEach((action) => {
-            console.log('actiom', action);
             const clip = animationMixer.current.clipAction(action);
             clip.setLoop(LoopRepeat);
             clip.play();
