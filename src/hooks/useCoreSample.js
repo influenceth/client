@@ -17,7 +17,7 @@ const useCoreSample = (asteroidId, plotId, resourceId, crewId) => {
   );
 
   const finalizeCoreSample = useCallback(
-    () => execute('FINALIZE_CORE_SAMPLE', { i }),
+    () => execute('FINISH_CORE_SAMPLE', { i }),
     [execute, i]
   );
 
@@ -27,7 +27,7 @@ const useCoreSample = (asteroidId, plotId, resourceId, crewId) => {
   );
 
   const finalizingSample = useMemo(
-    () => getStatus('FINALIZE_CORE_SAMPLE', { i }),
+    () => getStatus('FINISH_CORE_SAMPLE', { i }),
     [getStatus, i]
   );
 

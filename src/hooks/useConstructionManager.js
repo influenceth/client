@@ -5,14 +5,14 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrew from './useCrew';
 import usePlot from './usePlot';
 import { getAdjustedNow } from '~/lib/utils';
+import useActionItems from './useActionItems';
 
 const useConstructionManager = (asteroidId, plotId) => {
-  const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
+  const actionItems = useActionItems();
+  const { execute, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrew();
   const { data: plot } = usePlot(asteroidId, plotId);
 
-  const committedTimeout = useRef();
-  const [shouldBeCommitted, setShouldBeCommitted] = useState();
   const payload = useMemo(() => ({ asteroidId, plotId, crewId: crew?.i }), [asteroidId, plotId, crew?.i]);
 
   const planConstruction = useCallback((capableType) => {
@@ -40,20 +40,6 @@ const useConstructionManager = (asteroidId, plotId) => {
   const deconstruct = useCallback(() => {
     execute('DECONSTRUCT', payload)
   }, [payload]);
-
-  useEffect(() => {
-    const now = getAdjustedNow();
-    if (plot?.building?.committedTime > now) {
-      committedTimeout.current = setTimeout(() => {
-        setShouldBeCommitted(true);
-      }, (plot?.building?.committedTime - now) * 1000);
-    } else {
-      setShouldBeCommitted(true);
-    }
-    return () => {
-      if (committedTimeout.current) clearTimeout(committedTimeout.current);
-    }
-  }, [plot?.building?.committedTime]);
 
   // status flow
   // NONE > PLANNING > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
@@ -83,12 +69,15 @@ const useConstructionManager = (asteroidId, plotId) => {
       }
     }
     const planStatus = getStatus('PLAN_CONSTRUCTION', payload);
-    console.log(planStatus, payload);
     if (planStatus === 'pending') {
       return 'PLANNING';
     }
     return 'READY_TO_PLAN';
-  }, [plot?.building?.constructionStatus, getStatus, payload, shouldBeCommitted]);
+
+  // NOTE: actionItems is not used in this function, but it being updated suggests
+  //  that something might have just gone from UNDER_CONSTRUCTION to READY_TO_FINISH
+  //  so it is a good time to re-evaluate the status
+  }, [plot?.building?.constructionStatus, getStatus, payload, actionItems]);
 
 
   return {

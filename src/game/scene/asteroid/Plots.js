@@ -20,7 +20,7 @@ import theme from '~/theme';
 import { getPlotGeometryHeightMaps } from './helpers/PlotGeometry';
 
 const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
-const SELECTION_COLOR = new Color('#ff4d00').convertSRGBToLinear();
+const SELECTION_COLOR = new Color('#3652cd').convertSRGBToLinear();
 const PIP_COLOR = new Color().setHex(0x888888).convertSRGBToLinear();
 const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
 

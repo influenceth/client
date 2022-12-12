@@ -90,7 +90,7 @@ const getContracts = (account, queryClient) => ({
       queryClient.invalidateQueries(['asteroids', i]);
     }
   },
-  'FINALIZE_ASTEROID_SCAN': {
+  'FINISH_ASTEROID_SCAN': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => ({ i }) => contract.invoke('Asteroid_finishScan', [i]),
@@ -213,7 +213,7 @@ const getContracts = (account, queryClient) => ({
       && txVars.crewId === vars.crewId
     )
   },
-  'FINALIZE_CORE_SAMPLE': {
+  'FINISH_CORE_SAMPLE': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => ({ asteroidId, plotId, resourceId, crewId, sampleId }) => contract.invoke(

@@ -24,9 +24,11 @@ const getInvalidations = (event, data) => {
         ['watchlist']
       ],
       Asteroid_ScanStarted: [
+        ['actionItems'],
         ['asteroids', data.asteroidId],
       ],
       Asteroid_ScanFinished: [
+        // TODO: 'actionItems' here?
         ['asteroids', data.asteroidId],
         ['asteroids', 'search'],
         ['watchlist']
@@ -68,9 +70,11 @@ const getInvalidations = (event, data) => {
         ['asteroidPlots', data.asteroidId]
       ],
       Construction_Started: [
+        ['actionItems'],
         ['plots', data.asteroidId, data.lotId],
       ],
       Construction_Finished: [
+        // TODO: 'actionItems' here?
         ['plots', data.asteroidId, data.lotId],
       ],
     }
@@ -113,10 +117,10 @@ export function EventsProvider({ children }) {
         new Set([...e.returnValues.oldCrew, ...e.returnValues.newCrew]).forEach((i) => {
           transformedEvents.push({ ...e, event: eventName, i, key: `${e.id}_${i}` });
         });
-      } else if (e.event === 'Lot_Used' && Capable.TYPES[e.returnValues.capableType].category === 'Building') {
-        transformedEvents.push({ ...e, event: 'Construction_Planned', key: e.id });
       } else if (e.event === 'Lot_Used' && e.returnValues.capableType === 0) {
         transformedEvents.push({ ...e, event: 'Construction_Unplanned', key: e.id });
+      } else if (e.event === 'Lot_Used' && Capable.TYPES[e.returnValues.capableType].category === 'Building') {
+        transformedEvents.push({ ...e, event: 'Construction_Planned', key: e.id });
       } else {
         transformedEvents.push({ ...e, event: eventName, key: e.id });
       }

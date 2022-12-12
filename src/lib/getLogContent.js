@@ -174,9 +174,9 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
+  // TODO: flesh these out by hydrating with asteroid name, plot i, and building type
   Construction_Started: (e) => ({
     icon: <ConstructIcon />,
-    // TODO: return values only include capableId (NOT capableType), committedTime, committedRound
     content: (
       <>
         <span>Construction started.</span>
@@ -184,12 +184,11 @@ const entries = {
     ),
     txLink: getTxLink(e),
   }),
-
   Construction_Finished: (e) => ({
     icon: <ConstructIcon />,
     content: (
       <>
-        <span>Construction finished. {JSON.stringify(e.returnValues)}</span>
+        <span>Construction finished.</span>
       </>
     ),
     txLink: getTxLink(e),
