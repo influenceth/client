@@ -226,14 +226,21 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
             }
             if (assetType === 'Building') {
               if (node.material?.emissiveMap) {
-                if (node.material.lightMap) console.log('LIGHTMAP', node);
+                if (node.material.lightMap) console.warn('LIGHTMAP overwritten on', node);
+
                 node.material.lightMap = node.material.emissiveMap;
                 node.material.emissive = new Color(0x0);
                 node.material.emissiveMap = null;
                 // node.material.emissiveIntensity = 0;
                 // node.material.emissiveIntensity = 0.7;
               }
+
+              // TODO: should tag this surface in the userData rather than matching by name
+              if (node.name === 'Asteroid001') {
+                node.castShadow = false;
+              }
             }
+            
             // node.material.emissiveIntensity = 0;
 
             // only worry about depth on non-transparent materials
@@ -430,7 +437,6 @@ const Lighting = ({ assetType }) => {
       keyLight.shadow.mapSize.width = 1024;// = new Vector2(1024, 1024);
       // keyLight.shadow.bias = -0.02;
     }
-    console.log(keyLight);
 
     // const helper1 = new THREE.CameraHelper( keyLight.shadow.camera );
     // scene.add(helper1);
