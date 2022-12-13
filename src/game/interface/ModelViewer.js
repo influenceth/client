@@ -410,8 +410,11 @@ const Lighting = ({ assetType }) => {
     const keyLight = new DirectionalLight(0xFFFFFF);
     keyLight.castShadow = true;
     keyLight.intensity = 1.0;
-    // keyLight.position.set(-2, 2, 2);
-    keyLight.position.set(0, 2, 0);
+    if (assetType === 'Building') {
+      keyLight.intensity = 0.1;
+    }
+    keyLight.position.set(-2, 2, 2);
+    // keyLight.position.set(0, 2, 0);
     scene.add(keyLight);
 
     const rimLight = new DirectionalLight(0x9ECFFF);
@@ -424,14 +427,18 @@ const Lighting = ({ assetType }) => {
       // gl.shadowMap.type = PCFSoftShadowMap;
 
       keyLight.castShadow = true;
-      // keyLight.shadow.camera.near = 2.75;
-      // keyLight.shadow.camera.far = 4.25;
-      // keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.75;
-      // keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.75;
-      keyLight.shadow.camera.near = 1.75;
-      keyLight.shadow.camera.far = 2.25;
-      keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.15;
-      keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.15;
+      keyLight.shadow.camera.near = 2.75;
+      keyLight.shadow.camera.far = 4.25;
+      keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.75;
+      keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.75;
+      if (assetType === 'Building') {
+        keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.075;
+        keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.075;
+      }
+      // keyLight.shadow.camera.near = 1.75;
+      // keyLight.shadow.camera.far = 2.25;
+      // keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.15;
+      // keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.15;
       keyLight.shadow.camera.updateProjectionMatrix();
       keyLight.shadow.mapSize.height = 1024;
       keyLight.shadow.mapSize.width = 1024;// = new Vector2(1024, 1024);
