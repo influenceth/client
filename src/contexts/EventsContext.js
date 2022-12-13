@@ -69,6 +69,10 @@ const getInvalidations = (event, data) => {
         ['plots', data.asteroidId, data.lotId],
         ['asteroidPlots', data.asteroidId]
       ],
+      Construction_Unplanned: [
+        ['plots', data.asteroidId, data.lotId],
+        ['asteroidPlots', data.asteroidId]
+      ],
       Construction_Started: [
         ['actionItems'],
         ['plots', data.asteroidId, data.lotId],
@@ -76,6 +80,10 @@ const getInvalidations = (event, data) => {
       Construction_Finished: [
         // TODO: 'actionItems' here?
         ['plots', data.asteroidId, data.lotId],
+      ],
+      Construction_Deconstructed: [
+        ['plots', data.asteroidId, data.lotId],
+        ['asteroidPlots', data.asteroidId]
       ],
     }
     return map[event] || [];
