@@ -54,7 +54,7 @@ const materials = {};
 //   taskTotal += performance.now() - start;
 // };
 
-const Postprocessor = ({ enabled }) => {
+const Postprocessor = ({ enabled, bloomByName }) => {
   const { gl: renderer, camera, scene, size } = useThree();
 
   const bloomPass = useRef();
@@ -80,17 +80,19 @@ const Postprocessor = ({ enabled }) => {
       // TODO (enhancement): support translucent materials by dynamically
       //  generating darkMaterial as needed for each opacity (i.e. darkMaterials[opacity])
       //  ... will only need to generate on first pass
-    } else if (obj.material && !obj.userData.bloom) {
-      // TODO: is double-traversing some nodes, that's why these if's are here
-      //  why is this happening?
-      if (obj.material.displacementMap) {
-        if (!Object.keys(colors).includes(obj.uuid)) {
-          colors[obj.uuid] = obj.material.color;
-          obj.material.setValues({ color: 0x000000 });
+    } else if (obj.material) {
+      if (!(obj.userData.bloom || (bloomByName && bloomByName(obj.name)))) {
+        // TODO: is double-traversing some nodes, that's why these if's are here
+        //  why is this happening?
+        if (obj.material.displacementMap) {
+          if (!Object.keys(colors).includes(obj.uuid)) {
+            colors[obj.uuid] = obj.material.color;
+            obj.material.setValues({ color: 0x000000 });
+          }
+        } else if (obj.material.uuid !== darkMaterial.uuid) {
+          materials[obj.uuid] = obj.material;
+          obj.material = darkMaterial;
         }
-      } else if (obj.material.uuid !== darkMaterial.uuid) {
-        materials[obj.uuid] = obj.material;
-        obj.material = darkMaterial;
       }
     }
   }
@@ -131,12 +133,7 @@ const Postprocessor = ({ enabled }) => {
 
     const renderScene = new RenderPass( scene, camera );
 
-    bloomPass.current = new UnrealBloomPass(
-      new Vector2( size.width, size.height ),
-      1.5,
-      0.4,
-      0.85
-    );
+    bloomPass.current = new UnrealBloomPass(new Vector2( size.width, size.height ));
     bloomPass.current.threshold = 0;
     bloomPass.current.strength = 2;
     bloomPass.current.radius = 0.25;

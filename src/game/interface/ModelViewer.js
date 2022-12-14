@@ -15,6 +15,7 @@ import Button from '~/components/Button';
 import Details from '~/components/DetailsFullsize';
 import Dropdown from '~/components/Dropdown';
 import NumberInput from '~/components/NumberInput';
+import Postprocessor from '../Postprocessor';
 
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
@@ -225,8 +226,9 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
               node.material.envMapIntensity = ENV_MAP_STRENGTH;
             }
             if (assetType === 'Building') {
+              node.material.envMapIntensity = 0;
               if (node.material?.emissiveMap) {
-                if (node.material.lightMap) console.warn('LIGHTMAP overwritten on', node);
+                if (node.material.lightMap) console.warn('LIGHTMAP overwritten by emissiveMap', node);
 
                 node.material.lightMap = node.material.emissiveMap;
                 node.material.emissive = new Color(0x0);
@@ -234,6 +236,13 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
                 // node.material.emissiveIntensity = 0;
                 // node.material.emissiveIntensity = 0.7;
               }
+
+              // lighten hoppers
+              // if (node.material?.aoMap) {
+              //   console.log('node', node.name);
+              //   if (node.material.lightMap) console.warn('LIGHTMAP overwritten by aoMap', node);
+              //   node.material.lightMap = node.material.aoMap;
+              // }
 
               // TODO: should tag this surface in the userData rather than matching by name
               if (node.name === 'Asteroid001') {
@@ -406,12 +415,11 @@ const Lighting = ({ assetType }) => {
   const { gl, scene } = useThree();
 
   useEffect(() => {
-
     const keyLight = new DirectionalLight(0xFFFFFF);
     keyLight.castShadow = true;
     keyLight.intensity = 1.0;
     if (assetType === 'Building') {
-      keyLight.intensity = 0.1;
+      keyLight.intensity = 0;//0.1;
     }
     keyLight.position.set(-2, 2, 2);
     // keyLight.position.set(0, 2, 0);
@@ -445,6 +453,54 @@ const Lighting = ({ assetType }) => {
       // keyLight.shadow.bias = -0.02;
     }
 
+    const spotlights = [];
+    const spotlightHelpers = [];
+    if (assetType === 'Building') {
+      [0, 1].forEach((i) => {
+        const fov = 5 / 12;
+        const spotlight = new THREE.SpotLight(
+          0xffffff,
+          1,  // intensity
+          1, // distance,
+          fov * Math.PI,  // angle (radians)
+          1, // penumbra
+          0, // decay
+        );
+        // const xOffset = -0.007;
+        // const yOffset = 0.077;
+        // const zOffset = -0.0225;
+        const xOffset = i === 0 ? -0.007 : -0.028;
+        const yOffset = 0.0777;//i === 0 ?  0.078 : 0.078;
+        const zOffset = i === 0 ? -0.0175 : -0.0175;
+        spotlight.position.set(xOffset, yOffset, zOffset);
+        spotlight.target.position.x = xOffset;
+        spotlight.target.position.y = 0;
+        spotlight.target.position.z = zOffset;
+        spotlight.target.updateMatrixWorld();
+  
+        spotlight.castShadow = true;
+        spotlight.shadow.mapSize.width = 1024;
+        spotlight.shadow.mapSize.height = 1024;
+  
+        spotlight.shadow.camera.near = 0.001;//yOffset / 2;
+        spotlight.shadow.camera.far = yOffset * 1.5;
+        spotlight.shadow.camera.fov = 2.5 * fov * 180; // why 2.5?
+  
+        const h1 = new THREE.SpotLightHelper(spotlight);
+        const h2 = new THREE.CameraHelper(spotlight.shadow.camera);
+  
+        scene.add(spotlight);
+        scene.add(spotlight.target);
+        // scene.add(h1);
+        // scene.add(h2);
+  
+        spotlights.push(spotlight);
+        spotlightHelpers.push(spotlight.target);
+        spotlightHelpers.push(h1);
+        spotlightHelpers.push(h2);
+      });
+    }
+
     // const helper1 = new THREE.CameraHelper( keyLight.shadow.camera );
     // scene.add(helper1);
     // const helper2 = new THREE.DirectionalLightHelper(keyLight);
@@ -476,6 +532,8 @@ const Lighting = ({ assetType }) => {
       // if (helper3) scene.remove(helper3);
       // if (helper4) scene.remove(helper4);
       // if (helper5) scene.remove(helper5);
+      spotlights.forEach((s) => scene.remove(s));
+      spotlightHelpers.forEach((s) => scene.remove(s));
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -749,6 +807,13 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
             overrideBackground={bgOverride}
             overrideEnvironment={envOverride}
           />
+          {/* disabled because this darkens scene too much */}
+          {false && assetType === 'Building' && (
+            <>
+              <ambientLight intensity={0.4} />
+              <Postprocessor enabled={true} bloomByName={(n) => !!n.match(/(light|fire)/i)} />
+            </>
+          )}
           {model?.modelUrl && !loadingSkybox && (
             <Model
               assetType={assetType}
