@@ -134,9 +134,11 @@ const Asteroid = (props) => {
   const [cameraAltitude, setCameraAltitude] = useState();
   const [cameraNormalized, setCameraNormalized] = useState();
   const [config, setConfig] = useState();
+  const [lastClick, setLastClick] = useState();
   const [mousableTerrainInitialized, setMousableTerrainInitialized] = useState();
   const [terrainInitialized, setTerrainInitialized] = useState();
   const [terrainUpdateNeeded, setTerrainUpdateNeeded] = useState();
+  const [prevAsteroidPosition, setPrevAsteroidPosition] = useState();
 
   const asteroidOrbit = useRef();
   const asteroidId = useRef();
@@ -153,6 +155,7 @@ const Asteroid = (props) => {
   const mouseGeometry = useRef();
   const mouseIntersect = useRef(new Vector3());
   const position = useRef();
+  const unloadedPosition = useRef();
   const quadtreeRef = useRef();
   const renderTimer = useRef(0);
   const rotationAxis = useRef();
@@ -185,7 +188,7 @@ const Asteroid = (props) => {
 
     // zoom to the point on the equator closest to the camera
     // (plus a slight angle above equator)
-    let fromPosition = zoomedFrom?.position || controls.object.position;
+    let fromPosition = prevAsteroidPosition || zoomedFrom?.position || controls.object.position;
     // if fromPosition comes from saved state (i.e. on refresh), will be object but not vector3
     if (!fromPosition.isVector3) fromPosition = new Vector3(fromPosition.x, fromPosition.y, fromPosition.z);
     const objectPosition = pointCircleClosest(
@@ -204,12 +207,13 @@ const Asteroid = (props) => {
 
     // Pan the target scene to center the asteroid
     const targetScenePosition = new Vector3(...position.current).negate();
+
     return {
       objectPosition,
       objectUp,
       targetScenePosition
     };
-  }, [!controls, config?.radius, zoomedFrom?.position]);
+  }, [!controls, config?.radius, prevAsteroidPosition, zoomedFrom?.position]);
 
   const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent]);
   const surfaceDistance = useMemo(
@@ -264,20 +268,23 @@ const Asteroid = (props) => {
     setMousableTerrainInitialized();
     asteroidOrbit.current = null;
     rotationAxis.current = null;
+    if (position.current) unloadedPosition.current = [...position.current];
     position.current = null;
     rotation.current = null;
     disposeLight();
     disposeGeometry();
   }, [disposeLight, disposeGeometry]);
-
+  
   useEffect(() => {
     // if origin changed, always unload and zoom out (even if asteroidData has already been fetched)
     if (asteroidId.current && asteroidId.current !== origin) {
       if (zoomStatus === 'in') {
-        updateZoomStatus('zooming-out');
+        setPrevAsteroidPosition(new Vector3(...(unloadedPosition.current || position.current)));
+        updateZoomStatus('zooming-in');
       }
     }
     asteroidId.current = origin;
+    unloadedPosition.current = null;
 
     dispatchPlotsLoading(origin); // initialize plot loader
   }, [origin]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -404,16 +411,19 @@ const Asteroid = (props) => {
   const shouldZoomIn = zoomStatus === 'zooming-in' && controls && config?.radius;
   useEffect(() => {
     if (!shouldZoomIn) return;
-
-    setZoomedFrom({
-      scene: controls.targetScene.position.clone(),
-      position: controls.object.position.clone(),
-      up: controls.object.up.clone()
-    });
+    if (!prevAsteroidPosition) {
+      setZoomedFrom({
+        scene: controls.targetScene.position.clone(),
+        position: controls.object.position.clone(),
+        up: controls.object.up.clone()
+      });
+    }
   }, [shouldZoomIn]);
 
   useEffect(() => {
     if (!shouldZoomIn || !initialOrientation) return;
+
+    controls.maxDistance = Infinity;
 
     group.current?.position.copy(new Vector3(...position.current));
     
@@ -584,6 +594,53 @@ const Asteroid = (props) => {
   //   }
   // }, []);
 
+  // const ddd = useRef();
+  // useEffect(() => {
+  //   if (!config?.radius) return;
+  //   const onKeydown = (e) => {
+  //     if (e.shiftKey && e.which === 32) {
+  //       if (!ddd.current) {
+  //         ddd.current = [
+  //           controls.targetScene.position.clone(),
+  //           controls.object.position.clone(),
+  //           controls.target.clone()
+  //         ];
+  //         console.log('store', ddd.current);
+
+  //         const l = 2 * config.radius;
+  
+  //         controls.maxDistance = Infinity;
+  //         // controls.targetScene.position
+  //         //   .add(controls.object.position.clone().negate().setLength(l))
+  //         //   .add(new Vector3(50000, 0, 0));
+  //         controls.targetScene.position.copy(new Vector3(0, 0, 0));
+  //         // controls.object.position.setLength(
+  //         //   controls.object.position.length() + l
+  //         // );
+  //         // controls.target.add(
+  //         //   controls.object.position.clone().negate().setLength(l)
+  //         // );
+  //         // controls.target.setLength(controls.target.length() * 0.4);
+  //         controls.object.updateProjectionMatrix();
+  //         controls.update();
+
+  //       } else {
+  //         console.log('restore', ddd.current);
+  //         controls.targetScene.position.copy(ddd.current[0]);
+  //         // controls.object.position.copy(ddd.current[1]);
+  //         // controls.target.copy(ddd.current[2]);
+  //         controls.object.updateProjectionMatrix();
+  //         controls.update();
+  //         ddd.current = null;
+  //       }
+  //     }
+  //   };
+  //   document.addEventListener('keydown', onKeydown);
+  //   return () => {
+  //     document.removeEventListener('keydown', onKeydown);
+  //   }
+  // }, [controls, config?.radius]);
+
   // once terrain is loaded, load the mouse-interactive terrain
   // TODO (enhancement): re-use the heightSample buffer from the primary terrain cube
   useEffect(() => {
@@ -608,7 +665,6 @@ const Asteroid = (props) => {
   // listen for click events
   // NOTE: if just use onclick, then fires on drag events too :(
   const clickStatus = useRef();
-  const [lastClick, setLastClick] = useState();
   useEffect(() => {
     const onMouseEvent = function (e) {
       if (e.type === 'pointerdown') {
@@ -649,8 +705,7 @@ const Asteroid = (props) => {
       if (zoomStatus === 'in') {
         const positionVec3 = new Vector3(...position.current);
         group.current.position.copy(positionVec3);
-        positionVec3.negate();
-        controls.targetScene.position.copy(positionVec3);
+        controls.targetScene.position.copy(positionVec3.negate());
       }
 
       // update light position (since asteroid has moved around star)
@@ -900,7 +955,7 @@ const Asteroid = (props) => {
       {config && terrainInitialized && zoomStatus === 'in' && (
         <Plots
           attachTo={quadtreeRef.current}
-          asteroidId={origin}
+          asteroidId={asteroidId.current}
           cameraAltitude={cameraAltitude}
           cameraNormalized={cameraNormalized}
           lastClick={lastClick}
@@ -908,8 +963,9 @@ const Asteroid = (props) => {
           mouseIntersect={mouseIntersect.current} />
       )}
 
-      {config?.radius && zoomStatus !== 'out' && (
+      {config?.radius && zoomStatus !== 'out' && initialOrientation?.objectPosition && (
         <Telemetry
+          attachTo={group.current}
           axis={rotationAxis.current}
           getPosition={() => position.current}
           getRotation={() => rotation.current}

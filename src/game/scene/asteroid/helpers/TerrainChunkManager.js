@@ -43,6 +43,7 @@ class TerrainChunkManager {
     let chunk;
     while(chunk = this.pool.pop()) chunk.dispose(); // eslint-disable-line no-cond-assign
     while(chunk = this.emissivePool.pop()) chunk.dispose(); // eslint-disable-line no-cond-assign
+    this.reset(); // (not sure if this is necessary)
   }
 
   isBusy() {
