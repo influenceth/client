@@ -604,6 +604,9 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
         .filter((a) => a.category === category)
         // .map((a) => ({ ...a, modelUrl: '/Warehouse_Emissive_Test.glb' }))
         .sort((a, b) => a.name < b.name ? -1 : 1);
+      if (assetType === 'Building') {
+        bAssets.forEach((a) => a.modelUrl = '/Warehouse_Emissive_Test.glb' );
+      }
       setCategoryModels(bAssets);
       selectModel(bAssets[0]);
     }
