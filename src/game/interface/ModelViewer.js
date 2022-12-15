@@ -198,13 +198,13 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
 
   // load the model on url change
   useEffect(() => {
-    if (model.current) {
-      model.current.removeFromParent();
-    }
+    if (model.current) scene.remove(model.current);
     // if (box3h.current) {
     //   box3h.current.removeFromParent();
     // }
     
+    const helpers = [];
+
     // load the model
     loader.load(
       url,
@@ -233,31 +233,23 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
                 node.material.lightMap = node.material.emissiveMap;
                 node.material.emissive = new Color(0x0);
                 node.material.emissiveMap = null;
-                // node.material.emissiveIntensity = 0;
-                // node.material.emissiveIntensity = 0.7;
               }
-
-              // lighten hoppers
-              // if (node.material?.aoMap) {
-              //   console.log('node', node.name);
-              //   if (node.material.lightMap) console.warn('LIGHTMAP overwritten by aoMap', node);
-              //   node.material.lightMap = node.material.aoMap;
-              // }
 
               // TODO: should tag this surface in the userData rather than matching by name
               if (node.name === 'Asteroid001') {
                 node.castShadow = false;
               }
             }
-            
-            // node.material.emissiveIntensity = 0;
 
             // only worry about depth on non-transparent materials
             // (from https://github.com/donmccurdy/three-gltf-viewer/blob/main/src/viewer.js)
             node.material.depthWrite = !node.material.transparent;
+          } else if (assetType === 'Building' && node.isSpotLight) {
+            // node.castShadow = true;
+            node.intensity /= 4;
+            // node.penumbra = 1;
           } else if (node.isLight) {
-            // console.log('NODE', node);
-            // node.intensity /= 50000;
+            console.warn('unexpected light', node);
           }
 
           // disable frustum culling because several of the models have some issues with the
@@ -284,6 +276,21 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
         );
         model.current.scale.set(scaleValue, scaleValue, scaleValue);
 
+        // resize shadow cameras (these don't automatically resize with the rest of the model)
+        model.current.traverse(function (node) {
+          if (node.isSpotLight) {
+            node.shadow.camera.near *= scaleValue;
+            node.shadow.camera.far *= scaleValue;
+            // node.shadow.camera.fov = 180 * (2 * node.angle / Math.PI);
+            node.shadow.mapSize.height = 1024;
+            node.shadow.mapSize.width = 1024;
+            node.shadow.camera.updateProjectionMatrix();
+            
+            // const cameraHelper = new THREE.CameraHelper(node.shadow.camera);
+            // helpers.push(cameraHelper);
+          }
+        });
+
         // reposition (to put center at origin)
         bbox.setFromObject(model.current);
         const center = bbox.getCenter(new Vector3());
@@ -298,9 +305,10 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
         // initial rotation simulates initial camera position in blender
         // (halfway between the x and z axis)
         // model.current.rotation.y = -Math.PI / 4;
-
+      
         // add to scene and report as loaded
         scene.add(model.current);
+        helpers.forEach((helper) => scene.add(helper));
 
         // init animation mixer
         if (gltf.animations?.length > 0) {
@@ -331,9 +339,8 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
 
     // (clean-up)
     return () => {
-      if (model.current) {
-        model.current.removeFromParent();
-      }
+      if (model.current) scene.remove(model.current);
+      (helpers || []).forEach((helper) => scene.add(helper));
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -449,56 +456,8 @@ const Lighting = ({ assetType }) => {
       // keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.15;
       keyLight.shadow.camera.updateProjectionMatrix();
       keyLight.shadow.mapSize.height = 1024;
-      keyLight.shadow.mapSize.width = 1024;// = new Vector2(1024, 1024);
+      keyLight.shadow.mapSize.width = 1024;
       // keyLight.shadow.bias = -0.02;
-    }
-
-    const spotlights = [];
-    const spotlightHelpers = [];
-    if (assetType === 'Building') {
-      [0, 1].forEach((i) => {
-        const fov = 5 / 12;
-        const spotlight = new THREE.SpotLight(
-          0xffffff,
-          1,  // intensity
-          1, // distance,
-          fov * Math.PI,  // angle (radians)
-          1, // penumbra
-          0, // decay
-        );
-        // const xOffset = -0.007;
-        // const yOffset = 0.077;
-        // const zOffset = -0.0225;
-        const xOffset = i === 0 ? -0.007 : -0.028;
-        const yOffset = 0.0777;//i === 0 ?  0.078 : 0.078;
-        const zOffset = i === 0 ? -0.0175 : -0.0175;
-        spotlight.position.set(xOffset, yOffset, zOffset);
-        spotlight.target.position.x = xOffset;
-        spotlight.target.position.y = 0;
-        spotlight.target.position.z = zOffset;
-        spotlight.target.updateMatrixWorld();
-  
-        spotlight.castShadow = true;
-        spotlight.shadow.mapSize.width = 1024;
-        spotlight.shadow.mapSize.height = 1024;
-  
-        spotlight.shadow.camera.near = 0.001;//yOffset / 2;
-        spotlight.shadow.camera.far = yOffset * 1.5;
-        spotlight.shadow.camera.fov = 2.5 * fov * 180; // why 2.5?
-  
-        const h1 = new THREE.SpotLightHelper(spotlight);
-        const h2 = new THREE.CameraHelper(spotlight.shadow.camera);
-  
-        scene.add(spotlight);
-        scene.add(spotlight.target);
-        // scene.add(h1);
-        // scene.add(h2);
-  
-        spotlights.push(spotlight);
-        spotlightHelpers.push(spotlight.target);
-        spotlightHelpers.push(h1);
-        spotlightHelpers.push(h2);
-      });
     }
 
     // const helper1 = new THREE.CameraHelper( keyLight.shadow.camera );
@@ -532,8 +491,6 @@ const Lighting = ({ assetType }) => {
       // if (helper3) scene.remove(helper3);
       // if (helper4) scene.remove(helper4);
       // if (helper5) scene.remove(helper5);
-      spotlights.forEach((s) => scene.remove(s));
-      spotlightHelpers.forEach((s) => scene.remove(s));
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
