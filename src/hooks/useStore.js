@@ -286,12 +286,14 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.hovered = null;
     })),
 
-    dispatchZoomStatusChanged: (status) => set(produce(state => {
+    dispatchZoomStatusChanged: (status, maintainPlot) => set(produce(state => {
       state.asteroids.zoomStatus = status;
       state.asteroids.showResourceMap = null;
-      state.asteroids.plot = null;
       state.asteroids.plotDestination = null;
-      state.asteroids.zoomToPlot = null;
+      if (!maintainPlot) {
+        state.asteroids.plot = null;
+        state.asteroids.zoomToPlot = null;
+      }
     })),
 
     dispatchAsteroidZoomedFrom: (from) => set(produce(state => {
@@ -390,8 +392,9 @@ const useStore = create(persist((set, get) => ({
       }
     })),
 
-    dispatchPlotSelected: (plotId) => set(produce(state => {
-      state.asteroids.plot = plotId;
+    dispatchPlotSelected: (asteroidId, plotId) => set(produce(state => {
+      state.asteroids.plot = asteroidId && plotId ? { asteroidId, plotId } : null;
+      state.asteroids.zoomToPlot = null;
     })),
 
     //

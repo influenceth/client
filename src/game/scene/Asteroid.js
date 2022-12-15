@@ -25,6 +25,7 @@ import Plots from './asteroid/Plots';
 import Rings from './asteroid/Rings';
 import Telemetry from './asteroid/Telemetry';
 import { pointCircleClosest } from '~/lib/geometryUtils';
+import { unitFiboPoint } from './asteroid/helpers/PlotGeometry';
 
 const {
   CHUNK_SPLIT_DISTANCE,
@@ -123,6 +124,7 @@ const Asteroid = (props) => {
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
+  const selectPlot = useStore(s => s.dispatchPlotSelected);
   const showResourceMap = useStore(s => s.asteroids.showResourceMap);
   const selectedPlot = useStore(s => s.asteroids.plot);
 
@@ -139,6 +141,7 @@ const Asteroid = (props) => {
   const [terrainInitialized, setTerrainInitialized] = useState();
   const [terrainUpdateNeeded, setTerrainUpdateNeeded] = useState();
   const [prevAsteroidPosition, setPrevAsteroidPosition] = useState();
+  const [zoomedIntoAsteroidId, setZoomedIntoAsteroidId] = useState();
 
   const asteroidOrbit = useRef();
   const asteroidId = useRef();
@@ -280,6 +283,7 @@ const Asteroid = (props) => {
     if (asteroidId.current && asteroidId.current !== origin) {
       if (zoomStatus === 'in') {
         setPrevAsteroidPosition(new Vector3(...(unloadedPosition.current || position.current)));
+        console.log('here1');
         updateZoomStatus('zooming-in');
       }
     }
@@ -288,6 +292,10 @@ const Asteroid = (props) => {
 
     dispatchPlotsLoading(origin); // initialize plot loader
   }, [origin]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (zoomStatus !== 'in') setZoomedIntoAsteroidId();
+  }, [zoomStatus]);
 
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
@@ -427,11 +435,13 @@ const Asteroid = (props) => {
 
     group.current?.position.copy(new Vector3(...position.current));
     
+    // TODO: zoomingDuration should probably be distance-dependent
     const zoomingDuration = 3;
     const timeline = gsap.timeline({
       defaults: { duration: zoomingDuration, ease: 'power4.out' },
       onComplete: () => {
-        updateZoomStatus('in');
+        console.log('on complete');
+        updateZoomStatus('in', true);
       }
     });
 
@@ -474,6 +484,8 @@ const Asteroid = (props) => {
     controls.object.updateProjectionMatrix();
     controls.noPan = true;
 
+    console.log('asteroidId.current', asteroidId.current);
+    setZoomedIntoAsteroidId(asteroidId.current);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ initialOrientation, shouldFinishZoomIn, INITIAL_ZOOM ]);
 
@@ -684,6 +696,24 @@ const Asteroid = (props) => {
       gl.domElement.removeEventListener('pointerup', onMouseEvent, true);
     };
   }, []);
+
+  useEffect(() => {
+    if (selectedPlot && zoomedIntoAsteroidId === selectedPlot?.asteroidId && config?.radiusNominal && zoomStatus === 'in') {
+      const plotTally = Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2);
+      if (plotTally < selectedPlot.plotId) { selectPlot(); return; }
+      const plotPosition = new Vector3(...unitFiboPoint(selectedPlot.plotId - 1, plotTally));
+      plotPosition.multiply(config.stretch);
+      plotPosition.setLength(Math.min(1.5 * config?.radius, controls.object.position.length()));
+      plotPosition.applyAxisAngle(
+        rotationAxis.current,
+        rotation.current
+      );
+
+      gsap
+        .timeline({ defaults: { duration: 0.7, ease: 'power4.out' } })
+        .to(controls.object.position, { ...plotPosition });
+    }
+  }, [zoomedIntoAsteroidId, origin, selectedPlot, config?.radiusNominal, zoomStatus])
 
   // Positions the asteroid in space based on time changes
   useFrame((state) => {

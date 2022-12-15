@@ -42,7 +42,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
   const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
-  const selectedPlot = useStore(s => s.asteroids.plot);
+  const { asteroidId: plotAsteroidId, plotId } = useStore(s => s.asteroids.plot || {});
 
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
@@ -521,8 +521,8 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   }, [attachTo.quaternion]);
 
   useEffect(() => {
-    if (selectionMesh.current && positions.current && selectedPlot) {
-      const plotIndex = selectedPlot - 1;
+    if (selectionMesh.current && positions.current && plotId) {
+      const plotIndex = plotId - 1;
 
       selectionMesh.current.position.set(
         positions.current[plotIndex * 3 + 0],
@@ -542,16 +542,16 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     } else {
       selectionMesh.current.material.opacity = 0;
     }
-  }, [attachTo.quaternion, selectedPlot]);
+  }, [attachTo.quaternion, plotId]);
   
-  useEffect(() => { // shouldn't be zoomed to plot when plots first loaded or unloaded
-    dispatchPlotSelected();
-    dispatchZoomToPlot();
-    return () => {
-      dispatchPlotSelected();
-      dispatchZoomToPlot();
-    };
-  }, []);
+  // useEffect(() => { // shouldn't be zoomed to plot when plots first loaded or unloaded
+  //   dispatchPlotSelected();
+  //   dispatchZoomToPlot();
+  //   return () => {
+  //     dispatchPlotSelected();
+  //     dispatchZoomToPlot();
+  //   };
+  // }, []);
 
   // when camera angle changes, sort all regions by closest, then display
   // up to max plots (ordered by region proximity)
@@ -577,7 +577,8 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   }, [cameraNormalized?.string, regionsByDistance?.length, regionTally]);
 
   useEffect(() => {
-    dispatchPlotSelected(highlighted.current);
+    if (!lastClick) return;
+    dispatchPlotSelected(asteroidId, highlighted.current);
   }, [lastClick]);
 
   useFrame(() => {

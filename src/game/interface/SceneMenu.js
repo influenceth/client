@@ -307,7 +307,7 @@ const SceneMenu = (props) => {
   const { account } = useAuth();
   const buildings = useBuildingAssets();
   const asteroidId = useStore(s => s.asteroids.origin);
-  const plotId = useStore(s => s.asteroids.plot);
+  const { asteroidId: plotAsteroidId, plotId } = useStore(s => s.asteroids.plot || {});
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
 
