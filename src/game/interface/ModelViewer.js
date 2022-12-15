@@ -245,9 +245,8 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
             // (from https://github.com/donmccurdy/three-gltf-viewer/blob/main/src/viewer.js)
             node.material.depthWrite = !node.material.transparent;
           } else if (assetType === 'Building' && node.isSpotLight) {
-            // node.castShadow = true;
-            node.intensity /= 4;
-            // node.penumbra = 1;
+            node.castShadow = true;
+            node.intensity /= 8;
           } else if (node.isLight) {
             console.warn('unexpected light', node);
           }
@@ -279,11 +278,12 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
         // resize shadow cameras (these don't automatically resize with the rest of the model)
         model.current.traverse(function (node) {
           if (node.isSpotLight) {
-            node.shadow.camera.near *= scaleValue;
-            node.shadow.camera.far *= scaleValue;
-            // node.shadow.camera.fov = 180 * (2 * node.angle / Math.PI);
-            node.shadow.mapSize.height = 1024;
-            node.shadow.mapSize.width = 1024;
+            // NOTE: if near and far are able to be set by blender / exported into the glb (it seems they are not)
+            //  we would *= the near and far by scaleValue here instead
+            node.shadow.camera.near = 0.00001;
+            node.shadow.camera.far = 1;
+            node.shadow.camera.fov = 180 * (2 * node.angle / Math.PI);
+            node.shadow.mapSize = new Vector2(1024, 1024);
             node.shadow.camera.updateProjectionMatrix();
             
             // const cameraHelper = new THREE.CameraHelper(node.shadow.camera);
