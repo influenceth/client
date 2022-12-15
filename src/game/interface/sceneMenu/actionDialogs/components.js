@@ -1355,7 +1355,6 @@ export const ActionDialogHeader = ({ action, asteroid, onClose, plot, status, st
   const timer = useRef();
   const [progress, setProgress] = useState(0);
   const updateProgress = () => {
-    console.log('int here')
     const newProgress = Math.min(100, 100 * (getAdjustedNow() - startTime) / (targetTime - startTime));
     setProgress(newProgress);
 

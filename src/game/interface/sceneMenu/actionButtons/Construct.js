@@ -10,8 +10,6 @@ const Construct = ({ asteroid, plot, onSetAction }) => {
     onSetAction('CONSTRUCT');
   }, [onSetAction]);
 
-  console.log(plot?.building?.constructionStatus, constructionStatus);
-
   const attention = constructionStatus === 'PLANNED' || constructionStatus === 'READY_TO_FINISH';
   const loading = constructionStatus === 'UNDER_CONSTRUCTION' || constructionStatus === 'FINISHING';
   return (

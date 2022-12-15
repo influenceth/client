@@ -279,11 +279,11 @@ const Asteroid = (props) => {
   }, [disposeLight, disposeGeometry]);
   
   useEffect(() => {
-    // if origin changed, always unload and zoom out (even if asteroidData has already been fetched)
+    // if origin changed, zoom into new asteroid
     if (asteroidId.current && asteroidId.current !== origin) {
       if (zoomStatus === 'in') {
+        console.log('initiate intra-asteroid zoom (i.e. set prevAsteroidPosition)');
         setPrevAsteroidPosition(new Vector3(...(unloadedPosition.current || position.current)));
-        console.log('here1');
         updateZoomStatus('zooming-in');
       }
     }
@@ -294,7 +294,10 @@ const Asteroid = (props) => {
   }, [origin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (zoomStatus !== 'in') setZoomedIntoAsteroidId();
+    if (zoomStatus !== 'in') {
+      setLastClick();
+      setZoomedIntoAsteroidId();
+    }
   }, [zoomStatus]);
 
   // Update texture generation config when new asteroid data is available
@@ -416,24 +419,25 @@ const Asteroid = (props) => {
   }, [config, ringsPresent, shadowMode, shadowSize, textureSize, surfaceDistance]);
 
   // Zooms the camera to the correct location
-  const shouldZoomIn = zoomStatus === 'zooming-in' && controls && config?.radius;
   useEffect(() => {
-    if (!shouldZoomIn) return;
-    if (!prevAsteroidPosition) {
+    if (zoomStatus === 'zooming-in' && !prevAsteroidPosition) {
+      console.log('set zoomedfrom');
       setZoomedFrom({
         scene: controls.targetScene.position.clone(),
         position: controls.object.position.clone(),
         up: controls.object.up.clone()
       });
     }
-  }, [shouldZoomIn]);
+  }, [zoomStatus]);
 
+  const shouldZoomIn = zoomStatus === 'zooming-in' && controls && config?.radius;
   useEffect(() => {
-    if (!shouldZoomIn || !initialOrientation) return;
+    if (!shouldZoomIn || !initialOrientation || !config) return;
+    if (!group.current || !position.current) return;
 
     controls.maxDistance = Infinity;
 
-    group.current?.position.copy(new Vector3(...position.current));
+    group.current.position.copy(new Vector3(...position.current));
     
     // TODO: zoomingDuration should probably be distance-dependent
     const zoomingDuration = 3;
@@ -484,10 +488,11 @@ const Asteroid = (props) => {
     controls.object.updateProjectionMatrix();
     controls.noPan = true;
 
-    console.log('asteroidId.current', asteroidId.current);
+    console.log('asteroidId.current', `${asteroidId.current}`);
     setZoomedIntoAsteroidId(asteroidId.current);
+    setPrevAsteroidPosition();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ initialOrientation, shouldFinishZoomIn, INITIAL_ZOOM ]);
+  }, [ shouldFinishZoomIn, INITIAL_ZOOM ]);
 
   // Handle zooming back out
   const shouldZoomOut = zoomStatus === 'zooming-out' && zoomedFrom && controls;

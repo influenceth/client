@@ -276,7 +276,6 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
             clip.setLoop(LoopRepeat);
             clip.play();
           });
-          console.log(gltf);
         }
 
         onLoaded(true);

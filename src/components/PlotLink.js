@@ -26,7 +26,7 @@ const PlotLink = (props) => {
   }, [ owned, asteroidId ])
 
   const onClick = useCallback(() => {
-    if (asteroidId === origin) {
+    if (asteroidId === origin && zoomStatus === 'in') {
       dispatchPlotSelected(asteroidId, plotId);
     } else {
       dispatchOriginSelected(asteroidId);
@@ -42,7 +42,7 @@ const PlotLink = (props) => {
     }
   }, [asteroidId, destination, plotId, zoomStatus]);
 
-  return <OnClickLink onClick={onClick}>{asteroidName || `Asteroid #${asteroidId}`}, Lot {plotId}</OnClickLink>;
+  return <OnClickLink onClick={onClick}>{asteroidName || `Asteroid #${asteroidId}`} #{plotId.toLocaleString()}</OnClickLink>;
 };
 
 export default PlotLink;
