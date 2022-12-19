@@ -93,6 +93,7 @@ const SectionBody = styled.div`
   display: flex;
   flex-direction: row;
   padding: 15px 0px;
+  position: relative;
   ${p => p.highlight && `
     background: rgba(${p.theme.colors.mainRGB}, 0.2);
     border-radius: 10px;
@@ -762,6 +763,31 @@ const MouseoverContent = styled.div`
   padding-bottom: 15px;
 `;
 
+const FutureSectionOverlay = styled.div`
+  align-items: center;
+  background: rgba(150, 150, 150, 0.1);
+  backdrop-filter: blur(5px);
+  border-radius: 2px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: -3px;
+  right: -3px;
+  z-index: 30;
+  &:before {
+    background: black;
+    border: 1px solid #665600;
+    border-radius: 4px;
+    content: 'This section will be enabled in a future release.';
+    display: block;
+    padding: 10px 20px;
+    text-align: center;
+  }
+`;
+
 const ingredients = [
   [700, 5, 700], [700, 19, 500], [400, 22, 0],
   // [700, 5, 0], [700, 19, 0], [400, 22, 0], [700, 5, 0], [700, 19, 0], [400, 22, 0],
@@ -892,19 +918,12 @@ const BlueprintSelection = ({ onBuildingSelected }) => {
   );
 };
 
-const CoreSampleSelection = ({ onClick, resources, sampleTally }) => {
-  const existingSamples = useMemo(() => {
-    return [...Array(sampleTally).keys()]
-      .map((i) => ({
-        resource: resources[140 + i],
-        deposit: 1000 * (sampleTally - i) + Math.round(Math.random() * 999)
-      }));
-  }, [sampleTally]);
+const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
   return (
     <PopperBody>
       <PoppableTitle>
-        <h3>Lot #23,234</h3>
-        <div>{sampleTally.toLocaleString()} Samples at lot</div>
+        <h3>Lot #{(plot?.i || 0).toLocaleString()}</h3>
+        <div>{(options.length || 0).toLocaleString()} Samples at lot</div>
       </PoppableTitle>
       {/* TODO: replace with DataTable? */}
       <PoppableTableWrapper>
@@ -916,10 +935,10 @@ const CoreSampleSelection = ({ onClick, resources, sampleTally }) => {
             </tr>
           </thead>
           <tbody>
-            {existingSamples.map((sample, i) => (
-              <tr key={i} onClick={onClick(i)}>
-                <td><ResourceColorIcon category={sample.resource.bucket} /> {sample.resource.name}</td>
-                <td>{sample.deposit.toLocaleString()} tonnes</td>
+            {options.map((sample, i) => (
+              <tr key={sample.id} onClick={onClick(sample)}>
+                <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name}</td>
+                <td>{formatSampleValue(sample.tonnage)} tonnes</td>
               </tr>
             ))}
           </tbody>
@@ -982,31 +1001,32 @@ const DestinationSelection = ({ asteroid, onClick }) => {
 // Sections
 //
 
-export const ExistingSampleSection = ({ resources, resource, tonnage, onSelectSample, overrideTonnage, sampleTally, status }) => {
+export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample, selectedSample, resources, overrideTonnage, status }) => {
   const [clicked, setClicked] = useState(0);
   const onClick = useCallback((id) => () => {
     setClicked((x) => x + 1);
     if (onSelectSample) onSelectSample(id);
   }, []);
+  const resource = useMemo(() => resources[selectedSample?.resourceId], [selectedSample]);
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Core Sample</SectionTitle>
       <SectionBody highlight={status === 'AFTER'}>
-        {resource && (
+        {selectedSample && (
           <ResourceWithData>
             <ResourceImage resource={resource} />
             <label>
-              <h3>{resource.name} Deposit</h3>
+              <h3>{resource?.name} Deposit{overrideTonnage ? ' (Improved)' : ''}</h3>
               <div>
-                <b><ResourceIcon /> {(overrideTonnage || tonnage).toLocaleString()}</b> tonnes
+                <b><ResourceIcon /> {formatSampleValue(overrideTonnage || selectedSample?.tonnage)}</b> tonnes
               </div>
             </label>
           </ResourceWithData>
         )}
-        {status === 'BEFORE' && (
+        {status === 'BEFORE' && improvableSamples?.length > 1 && (
           <div>
             <Poppable label="Select" buttonWidth="135px" closeOnChange={clicked} title="Select Improvable Sample">
-              <CoreSampleSelection onClick={onClick} resources={resources} sampleTally={sampleTally} />
+              <CoreSampleSelection plot={plot} onClick={onClick} options={improvableSamples} resources={resources} />
             </Poppable>
           </div>
         )}
@@ -1061,7 +1081,7 @@ export const ExtractSampleSection = ({ resource, resources, tonnage, onSelectSam
   );
 };
 
-export const RawMaterialSection = ({ resource, tonnage, status }) => {
+export const RawMaterialSection = ({ abundance, resource, tonnage, status }) => {
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Target Resource</SectionTitle>
@@ -1070,10 +1090,10 @@ export const RawMaterialSection = ({ resource, tonnage, status }) => {
           <ResourceWithData>
             <ResourceImage resource={resource} />
             <label>
-              <h3>{resource.name}{status === 'AFTER' ? ' Deposit' : ''}</h3>
-              {tonnage /* TODO: ... */
-                ? <div><b><ResourceIcon /> {tonnage.toLocaleString()}</b> tonnes</div>
-                : <div><b>43%</b> Abundance at lot</div>
+              <h3>{resource.name}{tonnage !== undefined ? ' Deposit Discovered' : ''}</h3>
+              {tonnage !== undefined
+                ? <div><b><ResourceIcon /> {formatSampleValue(tonnage)}</b> tonnes</div>
+                : <div><b>{100 * abundance}%</b> Abundance at lot</div>
               }
             </label>
           </ResourceWithData>
@@ -1097,7 +1117,9 @@ export const ToolSection = ({ resource, sourcePlot }) => {
             <ResourceImage badge="∞" resource={resource} />
             <label>
               <h3>{resource.name}</h3>
-              <div>{sourcePlot.building.__t} (Lot {sourcePlot.i.toLocaleString()})</div>
+              {sourcePlot && sourcePlot.building && (
+                <div>{sourcePlot.building.__t} (Lot {sourcePlot.i.toLocaleString()})</div>
+              )}
               <footer>NOTE: This item will be consumed.</footer>
             </label>
           </ResourceWithData>
@@ -1169,6 +1191,7 @@ export const DestinationPlotSection = ({ asteroid, destinationPlot, onDestinatio
     <Section>
       <SectionTitle><ChevronRightIcon /> Destination</SectionTitle>
       <SectionBody>
+        <FutureSectionOverlay />
         {destinationPlot
           ? (
             <Destination status={status}>
@@ -1305,6 +1328,7 @@ export const DeconstructionMaterialsSection = ({ label, resources, status }) => 
     <Section>
       <SectionTitle><ChevronRightIcon /> {label}</SectionTitle>
       <SectionBody highlight={status === 'AFTER'}>
+        <FutureSectionOverlay />
         <IngredientsList>
           {ingredients.map(([tally, i, hasTally]) => (
             <ResourceImage key={i}
@@ -1354,7 +1378,7 @@ export const ActionDialogHeader = ({ action, asteroid, onClose, plot, status, st
 
   const timer = useRef();
   const [progress, setProgress] = useState(0);
-  const updateProgress = () => {
+  const updateProgress = useCallback(() => {
     const newProgress = Math.min(100, 100 * (getAdjustedNow() - startTime) / (targetTime - startTime));
     setProgress(newProgress);
 
@@ -1363,13 +1387,13 @@ export const ActionDialogHeader = ({ action, asteroid, onClose, plot, status, st
     if (startTime && targetTime && newProgress < 100) {
       timer.current = setTimeout(updateProgress, Math.max(10, Math.ceil(targetTime - startTime)));
     }
-  };
+  }, [startTime, targetTime]);
   useEffect(() => {
     updateProgress();
     return () => {
       if (timer.current) clearTimeout(timer.current);
     }
-  }, []);
+  }, [updateProgress]);
   
   return (
     <>
@@ -1468,7 +1492,7 @@ export const ActionDialogTimers = ({ actionReadyIn, crewAvailableIn }) => (
   </StatSection>
 );
 
-export const ActionDialogFooter = ({ buttonsLoading, finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
+export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOverride, finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // TODO: connect notifications to top-level state
@@ -1483,23 +1507,32 @@ export const ActionDialogFooter = ({ buttonsLoading, finalizeLabel, goLabel, onC
   return (
     <Footer>
       <SectionBody>
-        {status === 'BEFORE' && (
+        {buttonsOverride
+          ? buttonsOverride.map(({ label, onClick }) => (
+            <Button key={label} disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClick}>{label}</Button>
+          ))
+          : (
             <>
-              <NotificationEnabler onClick={enableNotifications}>
-                {notificationsEnabled ? <CheckedIcon /> : <UncheckedIcon />}
-                Notify on Completion
-              </NotificationEnabler>
-              <Spacer />
-              <Button loading={buttonsLoading} onClick={onClose}>Cancel</Button>
-              <Button loading={buttonsLoading} isTransaction onClick={onGo}>{goLabel}</Button>
+              {status === 'BEFORE' && (
+                  <>
+                    <NotificationEnabler onClick={enableNotifications}>
+                      {notificationsEnabled ? <CheckedIcon /> : <UncheckedIcon />}
+                      Notify on Completion
+                    </NotificationEnabler>
+                    <Spacer />
+                    <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClose}>Cancel</Button>
+                    <Button disabled={buttonsDisabled} loading={buttonsLoading} isTransaction onClick={onGo}>{goLabel}</Button>
+                  </>
+                )}
+              {status === 'DURING' && (
+                <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClose}>{'Close'}</Button>
+              )}
+              {status === 'AFTER' && (
+                <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
+              )}
             </>
           )}
-        {status === 'DURING' && (
-          <Button loading={buttonsLoading} onClick={onClose}>{'Close'}</Button>
-        )}
-        {status === 'AFTER' && (
-          <Button loading={buttonsLoading} onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
-        )}
+        
       </SectionBody>
     </Footer>
   );
@@ -1526,6 +1559,10 @@ export const formatTimer = (secondsRemaining) => {
     return acc;
   }, []);
   return parts.join(' ');
+};
+
+export const formatSampleValue = (tonnage) => {
+  return (Math.round(tonnage * 10) / 10).toLocaleString();
 };
 
 export const getBonusDirection = ({ totalBonus }, biggerIsBetter = true) => {

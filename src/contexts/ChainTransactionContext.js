@@ -209,7 +209,7 @@ const getContracts = (account, queryClient) => ({
     isEqual: (txVars, vars) => (
       txVars.asteroidId === vars.asteroidId
       && txVars.plotId === vars.plotId
-      && txVars.resourceId === vars.resourceId
+      // && txVars.resourceId === vars.resourceId
       && txVars.crewId === vars.crewId
     )
   },
@@ -225,7 +225,13 @@ const getContracts = (account, queryClient) => ({
       content: 'Core sample retrieval failed.',
       timestamp: Math.round(Date.now() / 1000)
     }),
-    isEqual: 'ALL'
+    isEqual: (txVars, vars) => (
+      txVars.asteroidId === vars.asteroidId
+      && txVars.plotId === vars.plotId
+      // && txVars.resourceId === vars.resourceId
+      // && txVars.sampleId === vars.sampleId
+      && txVars.crewId === vars.crewId
+    )
   },
 
   'PLAN_CONSTRUCTION': {

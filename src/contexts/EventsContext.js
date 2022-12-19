@@ -85,6 +85,16 @@ const getInvalidations = (event, data) => {
         ['plots', data.asteroidId, data.lotId],
         ['asteroidPlots', data.asteroidId]
       ],
+
+      CoreSample_SamplingStarted: [
+        ['plots', data.asteroidId, data.lotId],
+      ],
+      CoreSample_SamplingFinished: [
+        ['plots', data.asteroidId, data.lotId],
+      ],
+      CoreSample_Used: [
+        // TODO: ...
+      ],
     }
     return map[event] || [];
   } catch (e) {/* no-op */}
@@ -111,12 +121,15 @@ export function EventsProvider({ children }) {
   const handleEvents = useCallback((newEvents, skipAlerts, skipInvalidations) => {
     const transformedEvents = [];
     newEvents.forEach((e) => {
+      // TODO: ws-emitted events seem to have _id set instead of id
+      if (e._id && !e.id) e.id = e._id;
+      
       // rewrite eventNames as necessary (probably only ever needed for `Transfer`)
       let eventName = e.event;
       if (e.event === 'Transfer') {
-        if (!!e.linked.find((l) => l.type === 'Crew')) eventName = 'Crew_Transfer';
+        if (!!e.linked.find((l) => l.type === 'Asteroid')) eventName = 'Asteroid_Transfer';
         else if (!!e.linked.find((l) => l.type === 'CrewMember')) eventName = 'Crewmate_Transfer';
-        else if (!!e.linked.find((l) => l.type === 'Asteroid')) eventName = 'Asteroid_Transfer';
+        else if (!!e.linked.find((l) => l.type === 'Crew')) eventName = 'Crew_Transfer';
         else console.warn('unhandled transfer type', e);
       }
 
@@ -138,7 +151,7 @@ export function EventsProvider({ children }) {
       if (!skipInvalidations) {
         // console.log('e.event', e.event);
         const invalidations = getInvalidations(e.event, e.returnValues);
-        console.log(e.event, e.returnValues, invalidations);
+        // console.log(e.event, e.returnValues, invalidations);
         invalidations.forEach((i) => {
           queryClient.invalidateQueries(...i);
         });
