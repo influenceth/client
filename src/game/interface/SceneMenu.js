@@ -383,6 +383,14 @@ const SceneMenu = (props) => {
     }
   }, [!!showResourceMap]);
 
+  // clear emissive map "on" setting if asteroid is not scanned
+  // (this only really happens in dev with chain rebuild, but worth the sanity check)
+  useEffect(() => {
+    if (asteroid && !asteroid.scanned && showResourceMap) {
+      dispatchResourceMap();
+    }
+  }, [asteroid, showResourceMap]);
+
   const onRenderReady = useCallback(() => {
     setRenderReady(true);
   }, []);
@@ -410,7 +418,7 @@ const SceneMenu = (props) => {
       } else if (plot && crew) {
         if (resourceMode) {
           a.push(actionButtons.NewCoreSample);
-          if (plot.coreSamplesExist) {
+          if (!!(plot.coreSamples || []).find((c) => c.resourceId === Number(showResourceMap?.i) && c.status === 2)) {
             a.push(actionButtons.ImproveCoreSample);
           }
         }
@@ -598,6 +606,7 @@ const SceneMenu = (props) => {
             <ActionButton
               key={i}
               asteroid={asteroid}
+              crew={crew}
               plot={plot}
               onSetAction={setAction} />
           ))}

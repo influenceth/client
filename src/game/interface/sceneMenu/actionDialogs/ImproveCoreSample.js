@@ -77,88 +77,89 @@ import {
 } from './components';
 
 const ImproveCoreSample = (props) => {
-  const { asteroid, onClose, plot } = props;
-  const buildings = useBuildingAssets();
-  const resources = useResourceAssets();
-  const { constructionStatus, startConstruction, finishConstruction } = useConstructionManager(asteroid?.i, plot?.i);
-  const { crew, crewMemberMap } = useCrew();
+  return null;
+  // const { asteroid, onClose, plot } = props;
+  // const buildings = useBuildingAssets();
+  // const resources = useResourceAssets();
+  // const { constructionStatus, startConstruction, finishConstruction } = useConstructionManager(asteroid?.i, plot?.i);
+  // const { crew, crewMemberMap } = useCrew();
   
-  const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
-  const constructionBonus = getCrewAbilityBonus(5, crewMembers);
+  // const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
+  // const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+  // const constructionBonus = getCrewAbilityBonus(5, crewMembers);
 
-  const crewTravelTime = Asteroid.getLotTravelTime(asteroid.i, 1, plot.i, crewTravelBonus.totalBonus);
-  const constructionTime = Construction.getConstructionTime(plot.building.assetId, constructionBonus.totalBonus);
-  console.log([plot.building.assetId, constructionBonus, constructionTime]);
+  // const crewTravelTime = Asteroid.getLotTravelTime(asteroid.i, 1, plot.i, crewTravelBonus.totalBonus);
+  // const constructionTime = Construction.getConstructionTime(plot.building.assetId, constructionBonus.totalBonus);
+  // console.log([plot.building.assetId, constructionBonus, constructionTime]);
 
-  const stats = [
-    { label: 'Discovery Minimum', value: '0 tonnes', direction: -1 },
-    { label: 'Discovery Maximum', value: '10,000 tonnes', direction: 1 },
-    { label: 'Crew Travel', value: '4m 0s', direction: 1 },
-    { label: 'Sample Time', value: '47m 30s', direction: 1 },
-  ];
+  // const stats = [
+  //   { label: 'Discovery Minimum', value: '0 tonnes', direction: -1 },
+  //   { label: 'Discovery Maximum', value: '10,000 tonnes', direction: 1 },
+  //   { label: 'Crew Travel', value: '4m 0s', direction: 1 },
+  //   { label: 'Sample Time', value: '47m 30s', direction: 1 },
+  // ];
 
-  const status = useMemo(() => {
-    if (constructionStatus === 'PLANNED') {
-      return 'BEFORE';
-    } else if (constructionStatus === 'UNDER_CONSTRUCTION') {
-      return 'DURING';
-    }
-    return 'AFTER';
-  }, [constructionStatus]);
+  // const status = useMemo(() => {
+  //   if (constructionStatus === 'PLANNED') {
+  //     return 'BEFORE';
+  //   } else if (constructionStatus === 'UNDER_CONSTRUCTION') {
+  //     return 'DURING';
+  //   }
+  //   return 'AFTER';
+  // }, [constructionStatus]);
 
-  useEffect(() => {
-    if (constructionStatus === 'FINISHING' || constructionStatus === 'OPERATIONAL') {
-      onClose();
-    }
-  }, [constructionStatus]);
+  // useEffect(() => {
+  //   if (constructionStatus === 'FINISHING' || constructionStatus === 'OPERATIONAL') {
+  //     onClose();
+  //   }
+  // }, [constructionStatus]);
 
-  return (
-    <>
-      <ActionDialogHeader
-        {...props}
-        action={{
-          actionIcon: <ImproveCoreSampleIcon />,
-          headerBackground: coreSampleBackground,
-          label: 'Improve Core Sample',
-          completeLabel: 'Sample',
-          completeStatus: 'Improved',
-          crewRequirement: 'duration',
-        }}
-        status={status}
-        startTime={plot?.building?.startTime}
-        targetTime={plot?.building?.committedTime} />
+  // return (
+  //   <>
+  //     <ActionDialogHeader
+  //       {...props}
+  //       action={{
+  //         actionIcon: <ImproveCoreSampleIcon />,
+  //         headerBackground: coreSampleBackground,
+  //         label: 'Improve Core Sample',
+  //         completeLabel: 'Sample',
+  //         completeStatus: 'Improved',
+  //         crewRequirement: 'duration',
+  //       }}
+  //       status={status}
+  //       startTime={plot?.building?.startTime}
+  //       targetTime={plot?.building?.committedTime} />
 
-      <ExistingSampleSection
-        sampleTally={plot.coreSamplesExist}
-        resources={resources}
-        resource={resource || resources[8]}
-        status={status}
-        tonnage={2345}
-        overrideTonnage={complete && 3456} />
+  //     <ExistingSampleSection
+  //       sampleTally={plot.coreSamplesExist}
+  //       resources={resources}
+  //       resource={resource || resources[8]}
+  //       status={status}
+  //       tonnage={2345}
+  //       overrideTonnage={complete && 3456} />
 
-      {status === 'BEFORE' && (
-        <ToolSection resource={resources[2]} sourcePlot={destinationPlot} />
-      )}
+  //     {status === 'BEFORE' && (
+  //       <ToolSection resource={resources[2]} sourcePlot={destinationPlot} />
+  //     )}
 
-      <ActionDialogStats stats={stats} status={status} />
+  //     <ActionDialogStats stats={stats} status={status} />
 
-      {status === 'BEFORE' && (
-        <ActionDialogTimers
-          crewAvailableIn={2 * crewTravelTime}
-          actionReadyIn={crewTravelTime + constructionTime} />
-      )}
+  //     {status === 'BEFORE' && (
+  //       <ActionDialogTimers
+  //         crewAvailableIn={2 * crewTravelTime}
+  //         actionReadyIn={crewTravelTime + constructionTime} />
+  //     )}
 
-      <ActionDialogFooter
-        {...props}
-        disabled={false}
-        finalizeLabel="Complete"
-        goLabel="Improve Sample"
-        onFinalize={finishConstruction}
-        onGo={startConstruction}
-        status={status} />
-    </>
-  );
+  //     <ActionDialogFooter
+  //       {...props}
+  //       disabled={false}
+  //       finalizeLabel="Complete"
+  //       goLabel="Improve Sample"
+  //       onFinalize={finishConstruction}
+  //       onGo={startConstruction}
+  //       status={status} />
+  //   </>
+  // );
 };
 
 export default ImproveCoreSample;

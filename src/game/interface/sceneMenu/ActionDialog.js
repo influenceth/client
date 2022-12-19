@@ -1,6 +1,8 @@
 import Dialog from '~/components/Dialog';
 import Construction from './actionDialogs/Construction';
+import CoreSample from './actionDialogs/CoreSample';
 import Deconstruct from './actionDialogs/Deconstruct';
+import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
 import PlanConstruction from './actionDialogs/PlanConstruction';
 import UnplanConstruction from './actionDialogs/UnplanConstruction';
 
@@ -12,6 +14,8 @@ const ActionDialog = ({ actionType, ...props }) => {
         {actionType === 'CANCEL_BLUEPRINT' && <UnplanConstruction {...props} />}
         {actionType === 'CONSTRUCT' && <Construction {...props} />}
         {actionType === 'DECONSTRUCT' && <Deconstruct {...props} />}
+        {actionType === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...props} />}
+        {actionType === 'NEW_CORE_SAMPLE' && <CoreSample {...props} />}
       </div>
     </Dialog>
   );

@@ -79,24 +79,55 @@ import {
 const Deconstruct = (props) => {
   const { asteroid, plot } = props;
   const buildings = useBuildingAssets();
-  const { constructionStatus, deconstruct } = useConstructionManager(asteroid?.i, plot?.i);
   const resources = useResourceAssets();
-
-  // TODO: hide sections and status for now... deconstruct only needs capable_id
+  const { constructionStatus, deconstruct } = useConstructionManager(asteroid?.i, plot?.i);
+  const { crew, crewMemberMap } = useCrew();
 
   const destinationPlot = {
-    i: 23441,
+    i: 1,
     building: buildings[1]
   };
   
+  const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
+  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+  const constructionBonus = getCrewAbilityBonus(5, crewMembers);
+  const transportBonus = crewTravelBonus;
+
+  const crewTravelTime = Asteroid.getLotTravelTime(asteroid.i, 1, plot.i, crewTravelBonus.totalBonus); // TODO: ...
+  const lotDistance = Asteroid.getLotDistance(asteroid.i, plot.i, 1); // TODO: ...
+  const constructionTime = Construction.getConstructionTime(plot.building.assetId, constructionBonus.totalBonus);
+  const transportTime = Asteroid.getLotTravelTime(asteroid.i, plot.i, 1, crewTravelBonus.totalBonus); // TODO: ...
+
   const stats = useMemo(() => [
-    { label: 'Returned Volume', value: '4,200 m³', direction: 1 },
-    { label: 'Returned Mass', value: '120,500 tonnes', direction: 1 },
-    { label: 'Transfer Distance', value: '18 km', direction: 0 },
-    { label: 'Crew Travel', value: '6m 00s', direction: 1 },
-    { label: 'Deconstruction Time', value: '1h 10m 15s', direction: 0 },
-    { label: 'Transport Time', value: '24m 30s', direction: 0 },
+    { label: 'Returned Volume', value: '0 m³', direction: 0 },    // TODO: ...
+    { label: 'Returned Mass', value: '0 tonnes', direction: 0 },   // TODO: ...
+    {
+      label: 'Transfer Distance',
+      value: `${Math.ceil(lotDistance)} km`,
+      direction: 0
+    },
+    { 
+      label: 'Crew Travel',
+      value: formatTimer(crewTravelTime),
+      direction: getBonusDirection(crewTravelBonus)
+    },
+    {
+      label: 'Deconstruction Time',
+      value: formatTimer(constructionTime),
+      direction: getBonusDirection(constructionBonus)
+    },
+    {
+      label: 'Transport Time',
+      value: formatTimer(transportTime),
+      direction: getBonusDirection(transportBonus)
+    },
   ], []);
+
+  useEffect(() => {
+    if (constructionStatus === 'READY_TO_PLAN') {
+      props.onClose();
+    }
+  }, [constructionStatus]);
 
   const status = 'BEFORE';
 
@@ -121,10 +152,10 @@ const Deconstruct = (props) => {
       <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />
       <ActionDialogFooter
         {...props}
-        buttonsLoading={constructionStatus === 'PLANNING'}
+        buttonsLoading={constructionStatus === 'DECONSTRUCTING'}
         goLabel="Deconstruct"
         onGo={deconstruct}
-        status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
+        status={constructionStatus === 'DECONSTRUCTING' ? 'DURING' : 'BEFORE'} />
     </>
   );
 };

@@ -61,22 +61,26 @@ export const useBuildingAssets = () => {
 };
 
 export const useResourceAssets = () => {
-  return useMemo(() => Object.keys(Inventory.RESOURCES).map((i) => {
-    const asset = {
-      ...Inventory.RESOURCES[i],
-      i,
-    };
+  return useMemo(() => {
+    const resourcesById = [];
+    Object.keys(Inventory.RESOURCES).forEach((i) => {
+      const asset = {
+        ...Inventory.RESOURCES[i],
+        i,
+      };
 
-    asset.iconUrl = getIconUrl(asset, 'resources');
-    asset.iconUrls = {
-      w25: getIconUrl(asset, 'resources', { w: 25 }),
-      w85: getIconUrl(asset, 'resources', { w: 85 }),
-      w125: getIconUrl(asset, 'resources', { w: 125 }),
-      w400: getIconUrl(asset, 'resources', { w: 400 }),
-    };
+      asset.iconUrl = getIconUrl(asset, 'resources');
+      asset.iconUrls = {
+        w25: getIconUrl(asset, 'resources', { w: 25 }),
+        w85: getIconUrl(asset, 'resources', { w: 85 }),
+        w125: getIconUrl(asset, 'resources', { w: 125 }),
+        w400: getIconUrl(asset, 'resources', { w: 400 }),
+      };
 
-    asset.modelUrl = getModelUrl(asset, 'resources');
+      asset.modelUrl = getModelUrl(asset, 'resources');
 
-    return asset;
-  }), []);
+      resourcesById[i] = asset;
+    });
+    return resourcesById;
+  }, []);
 };
