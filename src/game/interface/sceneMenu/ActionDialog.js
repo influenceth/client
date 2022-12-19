@@ -1,6 +1,6 @@
 import Dialog from '~/components/Dialog';
 import Construction from './actionDialogs/Construction';
-import CoreSample from './actionDialogs/CoreSample';
+import NewCoreSample from './actionDialogs/NewCoreSample';
 import Deconstruct from './actionDialogs/Deconstruct';
 import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
 import PlanConstruction from './actionDialogs/PlanConstruction';
@@ -15,7 +15,7 @@ const ActionDialog = ({ actionType, ...props }) => {
         {actionType === 'CONSTRUCT' && <Construction {...props} />}
         {actionType === 'DECONSTRUCT' && <Deconstruct {...props} />}
         {actionType === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...props} />}
-        {actionType === 'NEW_CORE_SAMPLE' && <CoreSample {...props} />}
+        {actionType === 'NEW_CORE_SAMPLE' && <NewCoreSample {...props} />}
       </div>
     </Dialog>
   );
