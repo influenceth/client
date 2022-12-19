@@ -918,19 +918,12 @@ const BlueprintSelection = ({ onBuildingSelected }) => {
   );
 };
 
-const CoreSampleSelection = ({ onClick, resources, sampleTally }) => {
-  const existingSamples = useMemo(() => {
-    return [...Array(sampleTally).keys()]
-      .map((i) => ({
-        resource: resources[140 + i],
-        deposit: 1000 * (sampleTally - i) + Math.round(Math.random() * 999)
-      }));
-  }, [sampleTally]);
+const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
   return (
     <PopperBody>
       <PoppableTitle>
-        <h3>Lot #23,234</h3>
-        <div>{sampleTally.toLocaleString()} Samples at lot</div>
+        <h3>Lot #{(plot?.i || 0).toLocaleString()}</h3>
+        <div>{(options.length || 0).toLocaleString()} Samples at lot</div>
       </PoppableTitle>
       {/* TODO: replace with DataTable? */}
       <PoppableTableWrapper>
@@ -942,10 +935,10 @@ const CoreSampleSelection = ({ onClick, resources, sampleTally }) => {
             </tr>
           </thead>
           <tbody>
-            {existingSamples.map((sample, i) => (
-              <tr key={i} onClick={onClick(i)}>
-                <td><ResourceColorIcon category={sample.resource.bucket} /> {sample.resource.name}</td>
-                <td>{sample.deposit.toLocaleString()} tonnes</td>
+            {options.map((sample, i) => (
+              <tr key={sample.id} onClick={onClick(sample)}>
+                <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name}</td>
+                <td>{formatSampleValue(sample.tonnage)} tonnes</td>
               </tr>
             ))}
           </tbody>
@@ -1008,31 +1001,32 @@ const DestinationSelection = ({ asteroid, onClick }) => {
 // Sections
 //
 
-export const ExistingSampleSection = ({ resources, resource, tonnage, onSelectSample, overrideTonnage, sampleTally, status }) => {
+export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample, selectedSample, resources, overrideTonnage, status }) => {
   const [clicked, setClicked] = useState(0);
   const onClick = useCallback((id) => () => {
     setClicked((x) => x + 1);
     if (onSelectSample) onSelectSample(id);
   }, []);
+  const resource = useMemo(() => resources[selectedSample?.resourceId], [selectedSample]);
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Core Sample</SectionTitle>
       <SectionBody highlight={status === 'AFTER'}>
-        {resource && (
+        {selectedSample && (
           <ResourceWithData>
             <ResourceImage resource={resource} />
             <label>
-              <h3>{resource.name} Deposit</h3>
+              <h3>{resource?.name} Deposit{overrideTonnage ? ' (Improved)' : ''}</h3>
               <div>
-                <b><ResourceIcon /> {(overrideTonnage || tonnage).toLocaleString()}</b> tonnes
+                <b><ResourceIcon /> {formatSampleValue(overrideTonnage || selectedSample?.tonnage)}</b> tonnes
               </div>
             </label>
           </ResourceWithData>
         )}
-        {status === 'BEFORE' && (
+        {status === 'BEFORE' && improvableSamples?.length > 1 && (
           <div>
             <Poppable label="Select" buttonWidth="135px" closeOnChange={clicked} title="Select Improvable Sample">
-              <CoreSampleSelection onClick={onClick} resources={resources} sampleTally={sampleTally} />
+              <CoreSampleSelection plot={plot} onClick={onClick} options={improvableSamples} resources={resources} />
             </Poppable>
           </div>
         )}
@@ -1096,7 +1090,7 @@ export const RawMaterialSection = ({ abundance, resource, tonnage, status }) => 
           <ResourceWithData>
             <ResourceImage resource={resource} />
             <label>
-              <h3>{resource.name}{status === 'AFTER' ? ' Deposit' : ''}</h3>
+              <h3>{resource.name}{tonnage !== undefined ? ' Deposit Discovered' : ''}</h3>
               {tonnage !== undefined
                 ? <div><b><ResourceIcon /> {formatSampleValue(tonnage)}</b> tonnes</div>
                 : <div><b>{100 * abundance}%</b> Abundance at lot</div>

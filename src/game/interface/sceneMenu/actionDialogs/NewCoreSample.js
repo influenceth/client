@@ -99,7 +99,6 @@ const NewCoreSample = (props) => {
   const [newSampleId, setNewSampleId] = useState();
   useEffect(() => {
     if (currentSamplingProcess) {
-      console.log('currentSamplingProcess?.id', currentSamplingProcess?.id);
       setNewSampleId(currentSamplingProcess?.id);
     }
   }, [currentSamplingProcess]);
@@ -146,17 +145,6 @@ const NewCoreSample = (props) => {
     return 'AFTER';
   }, [coreYield, newSampleId, samplingStatus]);
 
-  useEffect(() => {
-
-    // TODO: when click from log, set resource map
-    //  - if crew has a core sample, should we only show improve button (but allow to link from that dialog to new?)
-    // TODO: "post completion" --> "Close" or "Improve"
-
-    // TODO: 
-
-
-  }, [samplingStatus]);
-
   return (
     <>
       <ActionDialogHeader
@@ -166,7 +154,7 @@ const NewCoreSample = (props) => {
           headerBackground: coreSampleBackground,
           label: 'Core Sample',
           completeLabel: 'Sample',
-          completeStatus: coreYield === undefined ? 'Ready for Analysis' : 'Retrieved',
+          completeStatus: coreYield === undefined ? 'Ready for Analysis' : 'Analyzed',
           crewRequirement: 'duration',
         }}
         status={status}

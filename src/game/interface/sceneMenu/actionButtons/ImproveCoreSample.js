@@ -13,7 +13,7 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
 
   // TODO: filter by resource id
   // badge shows full count of *improveable* core samples of *selected* resource on lot (owned by anyone)
-  const improveableSamples = useMemo(() => (plot?.coreSamples || []).filter((c) => c.status === CoreSample.STATUS_FINISHED), [plot?.coreSamples]);
+  const improvableSamples = useMemo(() => (plot?.coreSamples || []).filter((c) => c.status === CoreSample.STATUS_FINISHED), [plot?.coreSamples]);
 
   // TODO: need to separate this from states on "new core sample" button
   // (potentially by hiding one or the other OR collapsing dialogs into single)
@@ -24,7 +24,7 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
       label={samplingStatus === 'READY_TO_FINISH' ? 'Analyze Core Sample' : 'Improve Core Sample'}
       flags={{
         attention: attention || undefined,
-        badge: improveableSamples?.length,
+        badge: improvableSamples?.length,
         loading: loading || undefined
       }}
       icon={<ImproveCoreSampleIcon />}
