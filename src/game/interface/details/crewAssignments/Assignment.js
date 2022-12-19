@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { toCrewClass } from '@influenceth/sdk';
+import { Crewmate } from '@influenceth/sdk';
 
 import useBook from '~/hooks/useBook';
 import useCrew from '~/hooks/useCrew';
@@ -398,7 +398,7 @@ const CrewAssignment = (props) => {
                     <b>{crew.name || `Crew Member #${crew.i}`}</b>
                     {' '}<CrewClassIcon crewClass={crew.crewClass} />
                   </div>
-                  <div>{toCrewClass(crew.crewClass) || 'Unknown Class'}</div>
+                  <div>{Crewmate.toClass(crew.crewClass)?.name || 'Unknown Class'}</div>
                 </MobileCrewContainer>
               )}
             </AboveFold>

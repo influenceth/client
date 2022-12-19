@@ -15,14 +15,14 @@ export function CrewProvider({ children }) {
   const [selectedCrew, setSelectedCrew] = useState();
 
   const { data: allCrewMembers, isLoading: crewMembersLoading } = useQuery(
-    [ 'crew', 'search', { owner: account } ],
-    () => api.getCrewMembers({ owner: account }),
+    [ 'crewmembers', 'owned', account ],
+    () => api.getOwnedCrewMembers(),
     { enabled: !!account }
   );
 
   const { data: crews, isLoading: crewsLoading } = useQuery(
-    [ 'crews', account ],
-    () => api.getCrews(),
+    [ 'crews', 'owned', account ],
+    () => api.getOwnedCrews(),
     { enabled: !!account }
   );
 

@@ -1,14 +1,18 @@
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 import { MdBlurOff as ScanIcon } from 'react-icons/md';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
+import { Capable, Inventory } from '@influenceth/sdk';
+
+import AddressLink from '~/components/AddressLink';
+import AsteroidLink from '~/components/AsteroidLink';
+import CrewLink from '~/components/CrewLink';
+import PlotLink from '~/components/PlotLink';
 import {
+  ConstructIcon,
+  CoreSampleIcon,
   CrewIcon,
   PromoteIcon
 } from '~/components/Icons';
-
-import AsteroidLink from '~/components/AsteroidLink';
-import CrewLink from '~/components/CrewLink';
-import AddressLink from '~/components/AddressLink';
 
 const getTxLink = (event) => {
   if (event.__t === 'Ethereum') {
@@ -160,15 +164,69 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
+  Construction_Planned: (e) => ({
+    icon: <ConstructIcon />,
+    content: (
+      <>
+        <span>{Capable.TYPES[e.returnValues.capableType]?.name} plan completed on </span>
+        <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  // TODO: flesh these out by hydrating with asteroid name, plot i, and building type
+  Construction_Started: (e) => ({
+    icon: <ConstructIcon />,
+    content: (
+      <>
+        <span>Construction started.</span>
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+  Construction_Finished: (e) => ({
+    icon: <ConstructIcon />,
+    content: (
+      <>
+        <span>Construction finished.</span>
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  CoreSample_SamplingStarted: (e) => ({
+    icon: <CoreSampleIcon />,
+    content: (
+      <>
+        <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample started at </span>
+        <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  CoreSample_SamplingFinished: (e) => ({
+    icon: <CoreSampleIcon />,
+    content: (
+      <>
+        <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample analyzed at </span>
+        <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
   Crew_CompositionChanged: (e) => {
     let action = null;
     let icon = <CrewIcon />;
     const { newCrew, oldCrew } = e.returnValues;
-    if (newCrew[0] === e.i) {
+
+    if (newCrew[0] === e.i && oldCrew[0] !== e.i) {
       action = `promoted to Captain`;
       icon = <PromoteIcon />;
     }
-    else if (oldCrew[0] === e.i && newCrew.includes(e.i)) {
+    else if (oldCrew[0] === e.i && newCrew[0] !== e.i && newCrew.includes(e.i)) {
       action = `relieved of command`;
     }
     else if (newCrew.includes(e.i) && !oldCrew.includes(e.i)) action = `assigned to active duty`;
@@ -274,6 +332,7 @@ const entries = {
 };
 
 const getLogContent = ({ type, data }) => {
+  // if (type === 'CoreSample_SamplingStarted') console.log(type, data);
   try {
     return entries[type](data);
   } catch (e) {

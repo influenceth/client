@@ -36,7 +36,7 @@ const Log = () => {
         )}
         {events && events.map(e => {
           const type = e.type || e.event;
-          return <LogEntry key={e._id} type={type} data={e} />;
+          return <LogEntry key={e.key} type={type} data={e} />;
         })}
       </LogList>
     </Section>

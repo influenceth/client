@@ -90,7 +90,7 @@ const getContracts = (account, queryClient) => ({
       queryClient.invalidateQueries(['asteroids', i]);
     }
   },
-  'FINALIZE_ASTEROID_SCAN': {
+  'FINISH_ASTEROID_SCAN': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => ({ i }) => contract.invoke('Asteroid_finishScan', [i]),
@@ -193,6 +193,7 @@ const getContracts = (account, queryClient) => ({
       timestamp: Math.round(Date.now() / 1000)
     })
   },
+
   'START_CORE_SAMPLE': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
@@ -204,9 +205,15 @@ const getContracts = (account, queryClient) => ({
       type: 'GenericAlert',
       content: 'Core sample failed.',
       timestamp: Math.round(Date.now() / 1000)
-    })
+    }),
+    isEqual: (txVars, vars) => (
+      txVars.asteroidId === vars.asteroidId
+      && txVars.plotId === vars.plotId
+      // && txVars.resourceId === vars.resourceId
+      && txVars.crewId === vars.crewId
+    )
   },
-  'FINALIZE_CORE_SAMPLE': {
+  'FINISH_CORE_SAMPLE': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => ({ asteroidId, plotId, resourceId, crewId, sampleId }) => contract.invoke(
@@ -217,7 +224,90 @@ const getContracts = (account, queryClient) => ({
       type: 'GenericAlert',
       content: 'Core sample retrieval failed.',
       timestamp: Math.round(Date.now() / 1000)
-    })
+    }),
+    isEqual: (txVars, vars) => (
+      txVars.asteroidId === vars.asteroidId
+      && txVars.plotId === vars.plotId
+      // && txVars.resourceId === vars.resourceId
+      // && txVars.sampleId === vars.sampleId
+      && txVars.crewId === vars.crewId
+    )
+  },
+
+  'PLAN_CONSTRUCTION': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ capableType, asteroidId, plotId, crewId }) => contract.invoke(
+      'Construction_plan',
+      [capableType, asteroidId, plotId, crewId]
+    ),
+    getErrorAlert: ({ i }) => ({
+      type: 'GenericAlert',
+      content: 'Site planning failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: (txVars, vars) => (
+      txVars.asteroidId === vars.asteroidId
+      && txVars.plotId === vars.plotId
+      && txVars.crewId === vars.crewId
+    )
+  },
+  'UNPLAN_CONSTRUCTION': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
+      'Construction_unplan',
+      [asteroidId, plotId, crewId]
+    ),
+    getErrorAlert: ({ i }) => ({
+      type: 'GenericAlert',
+      content: 'Site unplanning failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: 'ALL'
+  },
+
+  'START_CONSTRUCTION': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
+      'Construction_start',
+      [asteroidId, plotId, crewId]
+    ),
+    getErrorAlert: ({ i }) => ({
+      type: 'GenericAlert',
+      content: 'Construction failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: 'ALL'
+  },
+  'FINISH_CONSTRUCTION': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
+      'Construction_finish',
+      [asteroidId, plotId, crewId]
+    ),
+    getErrorAlert: ({ i }) => ({
+      type: 'GenericAlert',
+      content: 'Construction finalization failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: 'ALL'
+  },
+  'DECONSTRUCT': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
+      'Construction_deconstruct',
+      [asteroidId, plotId, crewId]
+    ),
+    getErrorAlert: ({ i }) => ({
+      type: 'GenericAlert',
+      content: 'Deconstruction failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: 'ALL'
   },
 });
 
@@ -376,10 +466,12 @@ export function ChainTransactionProvider({ children }) {
     if (contracts && contracts[key]) {
       return pendingTransactions.find((tx) => {
         if (tx.key === key) {
-          if (contracts[key].isEqual) {
+          if (contracts[key].isEqual === 'ALL') {
+            return Object.keys(tx.vars).reduce((acc, k) => acc && tx.vars[k] === vars[k], true);
+          } else if (contracts[key].isEqual) {
             return contracts[key].isEqual(tx.vars, vars);
           }
-          return tx.vars.i === vars.i;
+          return tx.vars?.i === vars?.i;
         }
         return false;
       });

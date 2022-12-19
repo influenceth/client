@@ -105,6 +105,10 @@ const ActionButton = styled.div`
   }
 `;
 
+// TODO: consider a booleanProp wrapper so could wrap boolean props in
+// {...booleanProps({ a, b, c })} where booleanProps(props) would either include
+// or not rather than true/false OR would pass 1/0 instead
+
 const ActionButtonComponent = ({ label, flags = {}, icon, onClick }) => {
   const _onClick = useCallback(() => {
     if (!flags?.disabled && onClick) onClick();

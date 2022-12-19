@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { toCrewClass, toCrewCollection, toCrewTitle, toCrewTrait } from '@influenceth/sdk';
+import { Crewmate } from '@influenceth/sdk';
 import { FaBookOpen as BioIcon } from 'react-icons/fa';
 import { RiBarChart2Fill as StatsIcon } from 'react-icons/ri';
 
@@ -399,7 +399,7 @@ const CrewMemberDetails = (props) => {
 
   const selectTrait = useCallback((trait, mute) => () => {
     setSelectedTrait({
-      ...(toCrewTrait(trait) || {}),
+      ...(Crewmate.getTrait(trait) || {}),
       id: trait
     });
     if (!mute) {
@@ -437,9 +437,9 @@ const CrewMemberDetails = (props) => {
                     {startDate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SA
                   </DataReadout>
                 )}
-                <DataReadout label="Class" slim inheritFontSize>{toCrewClass(crew.crewClass)}</DataReadout>
-                <DataReadout label="Title" slim inheritFontSize>{crew.title > 0 ? toCrewTitle(crew.title) : '(n/a)'}</DataReadout>
-                <DataReadout label="Collection" slim inheritFontSize>{toCrewCollection(crew.crewCollection)}</DataReadout>
+                <DataReadout label="Class" slim inheritFontSize>{Crewmate.getClass(crew.crewClass)?.name || '(n/a)'}</DataReadout>
+                <DataReadout label="Title" slim inheritFontSize>{Crewmate.getTitle(crew.title)?.name || '(n/a)'}</DataReadout>
+                <DataReadout label="Collection" slim inheritFontSize>{Crewmate.getCollection(crew.crewCollection)?.name || '(n/a)'}</DataReadout>
               </CrewLabels>
               <Management>
                 <ManagementSubtitle>Management</ManagementSubtitle>
@@ -522,7 +522,7 @@ const CrewMemberDetails = (props) => {
                       <>
                         <AllTraits>
                           {crew.traits.map((trait) => {
-                            const { name, type } = toCrewTrait(trait) || {};
+                            const { name, type } = Crewmate.getTrait(trait) || {};
                             if (name) {
                               return (
                                 <Trait
@@ -593,7 +593,7 @@ const CrewMemberDetails = (props) => {
                     {crew?.events?.length > 0
                       ? crew.events.map(e => (
                         <LogEntry
-                          key={e._id}
+                          key={e.key}
                           data={{ ...e, i: crew.i }}
                           timestampBreakpoint="1500px"
                           type={`CrewMember_${e.event}`}

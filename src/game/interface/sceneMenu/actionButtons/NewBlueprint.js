@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
 
 import { LayBlueprintIcon } from '~/components/Icons';
+import useConstructionManager from '~/hooks/useConstructionManager';
 import ActionButton from './ActionButton';
 
-const NewBlueprint = ({ onSetAction }) => {
-  const loading = false;
+const NewBlueprint = ({ asteroid, plot, onSetAction }) => {
+  const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
     onSetAction('BLUEPRINT');
   }, [onSetAction]);
@@ -13,7 +14,7 @@ const NewBlueprint = ({ onSetAction }) => {
     <ActionButton
       label={'Lay Blueprint'}
       flags={{
-        loading: loading || undefined
+        loading: constructionStatus === 'PLANNING' || undefined
       }}
       icon={<LayBlueprintIcon />}
       onClick={handleClick} />

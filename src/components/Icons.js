@@ -1,5 +1,5 @@
 import { AiFillEdit, AiFillEye, AiFillStar } from 'react-icons/ai';
-import { BsFillPersonFill, BsCheckCircle, BsChevronLeft, BsPieChartFill } from 'react-icons/bs';
+import { BsFillPersonFill, BsCheckCircle, BsChevronLeft, BsPieChartFill, BsStopwatch } from 'react-icons/bs';
 import { FaEthereum, FaMapMarkedAlt, FaCopy, FaGem } from 'react-icons/fa';
 import { FiMenu } from 'react-icons/fi';
 import { HiClock } from 'react-icons/hi';
@@ -140,6 +140,7 @@ export {
   BsChevronLeft as BackIcon,
   BsFillPersonFill as CrewMemberIcon,
   BsPieChartFill as CompositionIcon,
+  BsStopwatch as TimerIcon,
   FaCopy as CopyIcon,
   FaGem as ResourceIcon,
   FaEthereum as ConnectIcon,

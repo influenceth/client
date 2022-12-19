@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import { Address, toRarity, toSize, toSpectralType } from '@influenceth/sdk';
+import { Address, toRarity, toSize, toSpectralType, Construction } from '@influenceth/sdk';
 import ReactTooltip from 'react-tooltip';
 import {
   FaCubes as InfrastructureIcon,
@@ -16,10 +16,12 @@ import {
   ResourceIcon,
 } from '~/components/Icons';
 import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
-import useAssets from '~/hooks/useAssets';
+import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAsteroidPlots from '~/hooks/useAsteroidPlots';
 import useAuth from '~/hooks/useAuth';
+import useConstructionManager from '~/hooks/useConstructionManager';
+import useCrew from '~/hooks/useCrew';
+import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import actionButtons from './sceneMenu/actionButtons';
 import ActionDialog from './sceneMenu/ActionDialog';
@@ -303,9 +305,9 @@ const Pane = styled.div`
 
 const SceneMenu = (props) => {
   const { account } = useAuth();
-  const { data: assets } = useAssets();
+  const buildings = useBuildingAssets();
   const asteroidId = useStore(s => s.asteroids.origin);
-  const plotId = useStore(s => s.asteroids.plot);
+  const { asteroidId: plotAsteroidId, plotId } = useStore(s => s.asteroids.plot || {});
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
 
@@ -320,32 +322,16 @@ const SceneMenu = (props) => {
   const history = useHistory();
 
   const { data: asteroid } = useAsteroid(asteroidId);
+  const { constructionStatus } = useConstructionManager(asteroidId, plotId);
+  // TODO: use plotIsLoading
+  const { data: plot, isLoading: plotIsLoading } = usePlot(asteroidId, plotId);
+  const { crew } = useCrew();
 
   const [action, setAction] = useState();
   const [renderReady, setRenderReady] = useState(false);
   const [resourceMode, setResourceMode] = useState();
 
   const plotTally = useMemo(() => Math.floor(4 * Math.PI * Math.pow(asteroid?.radius / 1000, 2)), [asteroid?.radius]);
-  const { data: plotData } = useAsteroidPlots(
-    zoomStatus === 'in' ? asteroidId : null,
-    plotTally
-  );
-
-  // TODO: this is mock data
-  const buildings = useMemo(() => {
-    if (assets) return assets.filter((a) => a.assetType === 'Building');
-    return [];
-  }, [assets]);
-  const plot = useMemo(() => {
-    if (!plotId) return null;
-    return {
-      i: plotId,
-      building: plotData?.plots?.length && plotData.plots[plotId][1] ? buildings[1] : null,
-      blueprint: plotId % 3 === 1,
-      coreSamplesExist: plotId % 2 === 1 ? (plotId % 10) : 0,
-      inventory: [[5, 700], [19, 500]],
-    };
-  }, [plotId, !plotData?.plots]);
 
   const { backLabel, onClickBack } = useMemo(() => {
     if (zoomToPlot) {
@@ -363,7 +349,7 @@ const SceneMenu = (props) => {
   const onClickPane = useCallback(() => {
     // open plot
     if (asteroidId && plotId && zoomStatus === 'in') {
-      dispatchZoomToPlot((plot.building || buildings[0]).label);
+      dispatchZoomToPlot((plot.building || buildings[0]).name);
 
     // open asteroid details
     } else if (asteroidId && zoomStatus === 'in') {
@@ -397,6 +383,14 @@ const SceneMenu = (props) => {
     }
   }, [!!showResourceMap]);
 
+  // clear emissive map "on" setting if asteroid is not scanned
+  // (this only really happens in dev with chain rebuild, but worth the sanity check)
+  useEffect(() => {
+    if (asteroid && !asteroid.scanned && showResourceMap) {
+      dispatchResourceMap();
+    }
+  }, [asteroid, showResourceMap]);
+
   const onRenderReady = useCallback(() => {
     setRenderReady(true);
   }, []);
@@ -409,6 +403,8 @@ const SceneMenu = (props) => {
     setRenderReady(false);
   }, [asteroidId]);
 
+  // TODO: could reasonably have buttons determine own visibility and remove some redundant logic here
+  // (the only problem is parent wouldn't know how many visible buttons there were)
   const actions = useMemo(() => {
     const a = [];
     if (asteroid) {
@@ -419,22 +415,22 @@ const SceneMenu = (props) => {
         if (account && asteroid.owner && Address.areEqual(account, asteroid.owner)) {
           a.push(actionButtons.ScanAsteroid);
         }
-      } else if (plot) {
+      } else if (plot && crew) {
         if (resourceMode) {
           a.push(actionButtons.NewCoreSample);
-          if (plot.coreSamplesExist) {
+          if (!!(plot.coreSamples || []).find((c) => c.resourceId === Number(showResourceMap?.i) && c.status === 2)) {
             a.push(actionButtons.ImproveCoreSample);
           }
         }
 
-        if (plot.building) {
-          // if (plot.building?.label === 'Extractor' && plot.coreSamplesExist) { // TODO: should use building key rather than label
-          if (true) {
+        if (constructionStatus === 'OPERATIONAL' && plot.building?.assetId) {
+          const buildingAsset = buildings[plot.building.assetId];
+          if (buildingAsset.capabilities.includes('extraction') && plot.coreSamplesExist) {
             a.push(actionButtons.Extract);
           }
-        } else if (plot.blueprint) {
+        } else if (['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus)) {
           a.push(actionButtons.Construct);
-        } else {
+        } else if (['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
           a.push(actionButtons.NewBlueprint);
         }
 
@@ -442,19 +438,17 @@ const SceneMenu = (props) => {
           a.push(actionButtons.SurfaceTransfer);
         }
 
-        if (plot.blueprint) {
+        if (['PLANNED', 'CANCELING'].includes(constructionStatus)) {
           a.push(actionButtons.CancelBlueprint);
         }
-        if (plot.building) {
+        if (['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
           a.push(actionButtons.Deconstruct);
         } 
       }
     }
 
-    // TODO: SurfaceTransfer?
-
     return a;
-  }, [asteroid, plot, resourceMode]);
+  }, [asteroid, crew, plot, resourceMode]);
 
   useEffect(() => ReactTooltip.rebuild(), [actions]);
 
@@ -524,7 +518,7 @@ const SceneMenu = (props) => {
             )}
             {zoomStatus === 'in' && plotId && zoomToPlot && (
               <>
-                <Title>{(plot.building || buildings[0])?.label}</Title>
+                <Title>{(plot.building || buildings[0])?.name}</Title>
                 <Subtitle>
                   <PaneContent>
                     Lot #{plotId.toLocaleString()}
@@ -535,25 +529,28 @@ const SceneMenu = (props) => {
                 </Subtitle>
               </>
             )}
-            {zoomStatus === 'in' && plotId && !zoomToPlot && (
+            {zoomStatus === 'in' && plot && !zoomToPlot && (
               <div>
                 <ThumbPreview visible>
                   <CloseButton borderless onClick={onClosePane}>
                     <CloseIcon />
                   </CloseButton>
-                  <ThumbBackground image={(plot.building || buildings[0])?.iconUrls?.w400} />
+                  {['OPERATIONAL', 'DECONSTRUCTING', 'READY_TO_PLAN'].includes(constructionStatus)
+                    ? <ThumbBackground image={buildings[plot.building?.assetId || 0]?.iconUrls?.w400} />
+                    : <ThumbBackground image={buildings[plot.building?.assetId || 0]?.siteIconUrls?.w400} />
+                  }
                   <ThumbMain>
-                    <ThumbTitle>{(plot.building || buildings[0])?.label}</ThumbTitle>
+                    <ThumbTitle>{buildings[plot.building?.assetId || 0]?.name}</ThumbTitle>
                     <ThumbSubtitle>
                       <PaneContent>
-                        Lot #{plotId.toLocaleString()}
+                        Lot #{plot.i.toLocaleString()}
                       </PaneContent>
                       <PaneHoverContent>
                         Zoom to Lot
                       </PaneHoverContent>
                     </ThumbSubtitle>
                     <div style={{ flex: 1 }} />
-                    <ThumbFootnote>Uncontrolled</ThumbFootnote>
+                    <ThumbFootnote>{plot.occupier ? `Controlled${plot.occupier === crew?.i ? ' by Me' : ''}` : 'Uncontrolled'}</ThumbFootnote>
                   </ThumbMain>
                 </ThumbPreview>
               </div>
@@ -609,6 +606,7 @@ const SceneMenu = (props) => {
             <ActionButton
               key={i}
               asteroid={asteroid}
+              crew={crew}
               plot={plot}
               onSetAction={setAction} />
           ))}
@@ -616,7 +614,14 @@ const SceneMenu = (props) => {
       </RightWrapper>
 
       {/* TODO: *might* end up making sense to instead put this with each action button that needs it? */}
-      {action && <ActionDialog actionType={action} asteroid={asteroid} plot={plot} onClose={() => setAction()} />}
+      {action && (
+        <ActionDialog
+          actionType={action}
+          asteroid={asteroid}
+          plot={plot}
+          onClose={() => setAction()}
+          onSetAction={setAction} />
+      )}
     </>
   );
 };

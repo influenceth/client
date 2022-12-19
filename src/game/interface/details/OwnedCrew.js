@@ -655,8 +655,8 @@ const OwnedCrew = (props) => {
   if (isDataLoading) return null;
   return (
     <Details title="Owned Crew" width="max">
-      {!(crew?.length && crewRecruitmentStoryId) && <Loader />}
-      {crew?.length && crewRecruitmentStoryId && (
+      {!(crew?.length > 0 && crewRecruitmentStoryId) && <Loader />}
+      {crew?.length > 0 && crewRecruitmentStoryId && (
         <Container>
           <Title>
             <h3>

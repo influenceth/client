@@ -2,11 +2,15 @@ import axios from 'axios';
 
 import useStore from '~/hooks/useStore';
 
+// pass initial config to axios
+const config = { baseURL: process.env.REACT_APP_API_URL, headers: {} };
 const initialToken = useStore.getState().auth.token;
-const config = { baseURL: process.env.REACT_APP_API_URL };
 if (initialToken) config.headers = { Authorization: `Bearer ${initialToken}`};
+const initialCrew = useStore.getState().selectedCrewId;
+if (initialCrew) config.headers['X-Crew-Id'] = initialCrew;
 const instance = axios.create(config);
 
+// subscribe to changes relevant to the config
 useStore.subscribe(([newToken, crewId]) => {
   instance.defaults.headers = {
     Authorization: `Bearer ${newToken}`,
@@ -75,8 +79,27 @@ const api = {
     return response.data;
   },
 
-  getAsteroidPlots: async (i) => {
-    const response = await instance.get(`/v1/asteroids/${i}`);
+  getOccupiedPlots: async (i, plotTally) => {
+    const response = await instance.get(`/v1/asteroids/${i}/lots/occupied`, { responseType: 'blob' });
+    if (response.data) {
+      const occupied = '1';
+      const padding = '0';
+      return (new Uint32Array(await response.data.arrayBuffer())).reduce((acc, byte, i) => {
+        const x = Number(byte).toString(2).padStart(32, padding);
+        for (let j = 0; j < 32; j++) {
+          const index = i * 32 + j;
+          if (index < plotTally) {
+            acc[index + 1] = x[j] === occupied; // (adjust for one-index of plot ids)
+          }
+        }
+        return acc;
+      }, {});
+    }
+    return null;
+  },
+
+  getPlot: async (asteroidId, plotId) => {
+    const response = await instance.get(`/v1/asteroids/${asteroidId}/lots/${plotId}`);
     return response.data;
   },
 
@@ -85,23 +108,28 @@ const api = {
     return response.data;
   },
 
-  getCrews: async () => {
-    const response = await instance.get(`/v1/crews`);
+  getOwnedCrews: async () => {
+    const response = await instance.get(`/v1/crews/owned`);
     return response.data;
   },
 
   getCrewMember: async (i) => {
-    const response = await instance.get(`/v1/crew/${i}`);
+    const response = await instance.get(`/v1/crewmates/${i}`);
+    return response.data;
+  },
+
+  getOwnedCrewMembers: async () => {
+    const response = await instance.get('/v1/crewmates/owned');
     return response.data;
   },
 
   getCrewMembers: async (query) => {
-    const response = await instance.get('/v1/crew', { params: query });
+    const response = await instance.get('/v1/crewmates', { params: query });
     return response.data;
   },
 
   getMintableCrew: async (query) => {
-    const response = await instance.get('/v1/crew/mintable', { params: query });
+    const response = await instance.get('/v1/crewmates/mintable', { params: query });
     return response.data;
   },
 

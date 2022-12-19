@@ -24,11 +24,6 @@ float recursiveCNoise(vec3 p, int octaves) {
   return cnoise(p * scale + displace);
 }
 
-// Generates overall topography, hills, cliffs, etc.
-float getTopography(vec3 p, int octaves) {
-  return recursiveCNoise(p * uTopoFreq + uSeed, octaves);
-}
-
 float recursiveSNoise(vec3 p, float pers, int octaves, int maxOctaves) {
   float total = 0.0;
   float frequency = 1.0;
@@ -47,6 +42,14 @@ float recursiveSNoise(vec3 p, float pers, int octaves, int maxOctaves) {
   }
 
   return total / maxValue;
+}
+
+// Generates overall topography, hills, cliffs, etc.
+float getTopography(vec3 p, int octaves) {
+  vec3 point = p * uTopoFreq + uSeed;
+  float base = clamp(recursiveCNoise(point, octaves), -0.5, 1.0);
+  float mountains = smoothstep(0.0, 1.0, clamp(recursiveSNoise(point * 2.0, 0.5, octaves, 5), -0.1, 1.0));
+  return (base + mountains) / 2.0;
 }
 
 // Generates coarse displacement to shape the asteroid
@@ -80,7 +83,7 @@ float getFeatures(vec3 p, int octaves) {
 
   float craters;
   float totalCraters = 0.0;
-  
+
   float rims;
   float totalRims = 0.0;
 
@@ -97,17 +100,17 @@ float getFeatures(vec3 p, int octaves) {
   float craterDepth = 0.0;
   float craterPersist = 1.0;
   float passCraters = 0.0;
-  float lastDistanceFromRim = uLandscapeWidth;
-  float lastDistanceFromOuterRim = uLandscapeWidth;
+  // float lastDistanceFromRim = uLandscapeWidth;
+  // float lastDistanceFromOuterRim = uLandscapeWidth;
   float lastCraterWidth = 0.0;
-  float log10 = log(10.0);
   float fadeIn = 1.0;
-  bool isSafeInternalCrater = false;
+  // bool isSafeInternalCrater = false;
+
   for (int i = 0; i < octaves; i++) {
-    craterFreq = pow(uCraterFalloff, float(i));
-    craterWidth = 2.0 * 0.3 * uLandscapeWidth / (craterFreq * 2.0 + 1.0);
-    depthToDiameter = 0.2 * exp(-pow((log(craterWidth)/log10 - 2.25) / 1.4, 2.0) / 2.0);
-    
+    craterFreq = 0.5 * pow(uCraterFalloff, float(i));
+    craterWidth = 0.6 * uLandscapeWidth / (craterFreq * 2.0 + 1.0);
+    depthToDiameter = clamp(0.2 * smoothstep(0.0, 1.0, 1.0 - log(craterWidth) / 13.0), 0.05, 0.2);
+
     // fade in last two octaves (to minimize "popping")
     fadeIn = pow(0.6, 3.0 - min(3.0, float(octaves - i)));
 
@@ -118,60 +121,54 @@ float getFeatures(vec3 p, int octaves) {
     rimWeight = uRimWeight * ageMults[age];
     rimWidth = uCraterCut * uRimWidth * ageMults[2 - age];
     rimVariation = uRimVariation * ageMults[2 - age];
-    craterDepth = depthToDiameter * craterWidth * ((ageMults[age] + 1.0) / 2.5) * craterPersist;
-    // steep should be ~1 for simple craters (else, age-specific)
-    steep = craterWidth < 10000.0 ? 1.5 : uCraterSteep * ageMults[age];
+    craterDepth = depthToDiameter * craterWidth * ((ageMults[age] + 1.0) / 3.5) * craterPersist;
+    steep = uCraterSteep * ageMults[age];
 
     // noise processing
     varNoise = snoise(craterFreq * 8.0 * (p + uSeed));
     cellNoise = cellular(craterFreq * (p + uSeed)) + varNoise * rimVariation;
 
     // calculate craters and rims from noise functions
-    craters = pow((clamp(cellNoise.x, 0.0, uCraterCut) / uCraterCut), steep) - 1.0; // [-1,0]
+    craters = pow(smoothstep(0.0, uCraterCut, cellNoise.x), steep) - 1.0;
     craters *= craterDepth * fadeIn;
 
     rims = (1.0 - smoothstep(uCraterCut, uCraterCut + rimWidth, cellNoise.x)) * rimWeight; // [0,rimWeight]
     rims *= craterDepth * fadeIn;
-    
+
     // TODO: would it be possible to allow all inner craters BUT scale down their height
     //  so that height is 100% normal at craterWidth from rim (and 0% at 3/4 of way to rim)
 
-    // apply craters and rims, being thoughtful of overlap
-    isSafeInternalCrater = (
-      totalCraters < 0.0
-      // && lastDistanceFromRim > craterWidth
-      // (the below tries to eliminate truncated-internal-craters by only displaying
-      // internal craters that do not overlap with the craterWidth-wide space just
-      // inside the previous rim (+25%)... if this gets dodgy, the above line is
-      // simpler, but does result in the occasional visual artifact... but what doesn't?)
-      && lastDistanceFromRim > craterWidth * (uCraterCut + cellNoise.x + 1.25)
-    );
+    // // apply craters and rims, being thoughtful of overlap
+    // isSafeInternalCrater = (
+    //   totalCraters < 0.0
+    //   // && lastDistanceFromRim > craterWidth
+    //   // (the below tries to eliminate truncated-internal-craters by only displaying
+    //   // internal craters that do not overlap with the craterWidth-wide space just
+    //   // inside the previous rim (+25%)... if this gets dodgy, the above line is
+    //   // simpler, but does result in the occasional visual artifact... but what doesn't?)
+    //   && lastDistanceFromRim > craterWidth * (uCraterCut + cellNoise.x + 1.25)
+    // );
 
-    // update totals
-    passCraters = isSafeInternalCrater
-      ? craters
-      : min(0.0, craters - totalCraters);
+    // // update totals
+    // passCraters = isSafeInternalCrater
+    //   ? craters
+    //   : min(0.0, craters - totalCraters);
 
-    totalCraters += passCraters;
-    totalRims = isSafeInternalCrater
-      ? totalRims + rims
-      : max(totalRims, rims);
+    // totalCraters += passCraters;
+    // totalRims = isSafeInternalCrater
+    //   ? totalRims + rims
+    //   : max(totalRims, rims);
 
-    // update lastDistanceFromRim only if added craters this pass
-    lastDistanceFromRim = passCraters < 0.0
-      ? craterWidth * (uCraterCut - cellNoise.x) / uCraterCut
-      : lastDistanceFromRim;
+    // // update lastDistanceFromRim only if added craters this pass
+    // lastDistanceFromRim = passCraters < 0.0
+    //   ? craterWidth * (uCraterCut - cellNoise.x) / uCraterCut
+    //   : lastDistanceFromRim;
+
+    totalCraters += craters;
+    totalRims += rims;
   }
 
-  // combine craters and rims
-  totalCraters += totalRims;
-
-  // generate some linear features that look like rock cleavage
-  float totalCleave = clamp(snoise(p * uSeed * 50.0) * snoise(p), -1.0, uCleaveCut) - uCleaveCut; // [-1.0 - uCleaveCut, 0.0]
-  totalCleave *= uCleaveWeight * uMaxCraterDepth;
-
-  // return final
-  return (totalCleave < 0.0 ? min(totalCraters, totalCleave) : totalCraters) / uMaxCraterDepth;
+  return (totalCraters + totalRims) / uMaxCraterDepth;
 }
 
 // NOTE: point must be a point on unit sphere
@@ -192,7 +189,7 @@ vec4 getHeight(vec3 point, int skipPasses) {
   float features = getFeatures(point, uCraterPasses + modPasses - 1); // -1 to 1
 
   // Define fine displacement
-  float fine = (topo * uTopoWeight + features * 2.0) / (uTopoWeight + 2.0); // -1 to 1
+  float fine = (topo * uTopoWeight + features * 2.5) / (uTopoWeight + 2.5); // -1 to 1
 
   // Get total displacement
   float height = normalizeNoise(uCoarseDispFraction * disp + uFineDispFraction * fine);

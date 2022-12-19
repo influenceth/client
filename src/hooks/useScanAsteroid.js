@@ -25,7 +25,7 @@ const useScanAsteroid = (asteroid) => {
   );
 
   const finalizeAsteroidScan = useCallback(
-    () => execute('FINALIZE_ASTEROID_SCAN', { i }),
+    () => execute('FINISH_ASTEROID_SCAN', { i }),
     [execute, i]
   );
 
@@ -35,7 +35,7 @@ const useScanAsteroid = (asteroid) => {
   );
 
   const finalizingScan = useMemo(
-    () => getStatus('FINALIZE_ASTEROID_SCAN', { i }),
+    () => getStatus('FINISH_ASTEROID_SCAN', { i }),
     [getStatus, i]
   );
 

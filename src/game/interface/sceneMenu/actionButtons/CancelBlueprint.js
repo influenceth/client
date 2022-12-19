@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
 
 import { CancelBlueprintIcon } from '~/components/Icons';
+import useConstructionManager from '~/hooks/useConstructionManager';
 import ActionButton from './ActionButton';
 
-const CancelBlueprint = ({ onSetAction }) => {
-  const loading = false;
+const CancelBlueprint = ({ asteroid, plot, onSetAction }) => {
+  const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
     onSetAction('CANCEL_BLUEPRINT');
   }, [onSetAction]);
@@ -13,7 +14,7 @@ const CancelBlueprint = ({ onSetAction }) => {
     <ActionButton
       label={'Cancel Blueprint'}
       flags={{
-        loading: loading || undefined
+        loading: constructionStatus === 'CANCELING' || undefined
       }}
       icon={<CancelBlueprintIcon />}
       onClick={handleClick} />

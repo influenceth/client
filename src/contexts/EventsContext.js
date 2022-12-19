@@ -2,6 +2,7 @@ import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import uniq from 'lodash.uniqby';
 import { io } from 'socket.io-client';
+import { Capable } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import useAuth from '~/hooks/useAuth';
@@ -23,9 +24,11 @@ const getInvalidations = (event, data) => {
         ['watchlist']
       ],
       Asteroid_ScanStarted: [
+        ['actionItems'],
         ['asteroids', data.asteroidId],
       ],
       Asteroid_ScanFinished: [
+        // TODO: 'actionItems' here?
         ['asteroids', data.asteroidId],
         ['asteroids', 'search'],
         ['watchlist']
@@ -37,28 +40,60 @@ const getInvalidations = (event, data) => {
         ['asteroids', 'search'],
       ],
       Crew_CompositionChanged: [
-        ['crews'],
-        ['crew', 'search'],
-        [...(data.oldCrew || []), ...(data.newCrew || [])]
-          .filter((v, i, a) => a.indexOf(v) === i)  // (unique)
-          .map((i) => ['crew', i])
+        ['crews', 'owned'],
+        // TODO: the following invalidations are probably now unnecessary since activeSlot was deprecated:
+        // ['crewmembers', 'owned'],
+        // [...(data.oldCrew || []), ...(data.newCrew || [])]
+        //   .filter((v, i, a) => a.indexOf(v) === i)  // (unique)
+        //   .map((i) => ['crew', i])
       ], 
       Crewmate_FeaturesSet: [
-        ['crew', data.crewId],
-        ['crew', 'search'],
+        ['crewmembers', data.crewId],
+        ['crewmembers', 'owned'],
       ],
       Crewmate_TraitsSet: [
-        ['crew', data.crewId],
-        ['crew', 'search'],
+        ['crewmembers', data.crewId],
+        ['crewmembers', 'owned'],
       ],
       Crewmate_NameChanged: [
-        ['crew', data.crewId],
-        ['crew', 'search'],
+        ['crewmembers', data.crewId],
+        ['crewmembers', 'owned'],
         ['events'], // (to update name in already-fetched events)
       ],
       Crewmate_Transfer: [
         ['assignments'],
-        ['crew', 'search'],
+        ['crewmembers', 'owned'],
+      ],
+
+      Construction_Planned: [
+        ['plots', data.asteroidId, data.lotId],
+        ['asteroidPlots', data.asteroidId]
+      ],
+      Construction_Unplanned: [
+        ['plots', data.asteroidId, data.lotId],
+        ['asteroidPlots', data.asteroidId]
+      ],
+      Construction_Started: [
+        ['actionItems'],
+        ['plots', data.asteroidId, data.lotId],
+      ],
+      Construction_Finished: [
+        // TODO: 'actionItems' here?
+        ['plots', data.asteroidId, data.lotId],
+      ],
+      Construction_Deconstructed: [
+        ['plots', data.asteroidId, data.lotId],
+        ['asteroidPlots', data.asteroidId]
+      ],
+
+      CoreSample_SamplingStarted: [
+        ['plots', data.asteroidId, data.lotId],
+      ],
+      CoreSample_SamplingFinished: [
+        ['plots', data.asteroidId, data.lotId],
+      ],
+      CoreSample_Used: [
+        // TODO: ...
       ],
     }
     return map[event] || [];
@@ -82,24 +117,41 @@ export function EventsProvider({ children }) {
   const pendingBlockEvents = useRef([]);
   const pendingTimeout = useRef();
   const socket = useRef();
-  const wsShouldBeOpen = useRef();
 
   const handleEvents = useCallback((newEvents, skipAlerts, skipInvalidations) => {
-    const transformedEvents = newEvents.map((e) => {
+    const transformedEvents = [];
+    newEvents.forEach((e) => {
+      // TODO: ws-emitted events seem to have _id set instead of id
+      if (e._id && !e.id) e.id = e._id;
+      
+      // rewrite eventNames as necessary (probably only ever needed for `Transfer`)
       let eventName = e.event;
       if (e.event === 'Transfer') {
-        if (!!e.linked.find((l) => l.type === 'Crew')) eventName = 'Crew_Transfer';
+        if (!!e.linked.find((l) => l.type === 'Asteroid')) eventName = 'Asteroid_Transfer';
         else if (!!e.linked.find((l) => l.type === 'CrewMember')) eventName = 'Crewmate_Transfer';
-        else if (!!e.linked.find((l) => l.type === 'Asteroid')) eventName = 'Asteroid_Transfer';
-        else console.error('unhandled transfer type', e);
+        else if (!!e.linked.find((l) => l.type === 'Crew')) eventName = 'Crew_Transfer';
+        else console.warn('unhandled transfer type', e);
       }
-      return { ...e, event: eventName };
+
+      // generate log events from events
+      if (e.event === 'Crew_CompositionChanged') {
+        new Set([...e.returnValues.oldCrew, ...e.returnValues.newCrew]).forEach((i) => {
+          transformedEvents.push({ ...e, event: eventName, i, key: `${e.id}_${i}` });
+        });
+      } else if (e.event === 'Lot_Used' && e.returnValues.capableType === 0) {
+        transformedEvents.push({ ...e, event: 'Construction_Unplanned', key: e.id });
+      } else if (e.event === 'Lot_Used' && Capable.TYPES[e.returnValues.capableType].category === 'Building') {
+        transformedEvents.push({ ...e, event: 'Construction_Planned', key: e.id });
+      } else {
+        transformedEvents.push({ ...e, event: eventName, key: e.id });
+      }
     });
 
     transformedEvents.forEach(e => {
       if (!skipInvalidations) {
-        console.log('e.event', e.event);
+        // console.log('e.event', e.event);
         const invalidations = getInvalidations(e.event, e.returnValues);
+        // console.log(e.event, e.returnValues, invalidations);
         invalidations.forEach((i) => {
           queryClient.invalidateQueries(...i);
         });
@@ -115,7 +167,7 @@ export function EventsProvider({ children }) {
     setEvents((prevEvents) => uniq([
       ...transformedEvents,
       ...prevEvents
-    ], '_id'));
+    ], 'key'));
   }, []);
 
   // try to process WS events grouped by block
@@ -143,6 +195,7 @@ export function EventsProvider({ children }) {
         }, 1000);
       }
       // (queue the current event for processing)
+      console.log({ ...body, event: type });
       pendingBlockEvents.current.push({ ...body, event: type });
     }
   }, []);
@@ -166,13 +219,20 @@ export function EventsProvider({ children }) {
       setEvents([]);
       setLastBlockNumber(0);
 
-      wsShouldBeOpen.current = false;
       if (socket.current) {
         socket.current.off(); // removes all listeners for all events
         socket.current.disconnect();
       }
     }
   }, [token]);
+
+  const subscribeToAsteroid = useCallback(() => {
+    // TODO: ...
+  }, []);
+
+  const unsubscribeToAsteroid = useCallback(() => {
+    // TODO: ...
+  }, []);
 
   return (
     <EventsContext.Provider value={{

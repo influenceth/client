@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 import styled, { css } from 'styled-components';
 import pick from 'lodash/pick';
-import { toCrewClass, toCrewCollection, toCrewTitle } from '@influenceth/sdk';
+import { Crewmate } from '@influenceth/sdk';
 
 import silhouette from '~/assets/images/silhouette.png';
 import CrewCardOverlay, { cardTransitionSpeed, cardTransitionFunction } from '~/components/CrewCardOverlay';
@@ -137,7 +137,7 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
   const [ imageLoaded, setImageLoaded ] = useState(false);
 
   const useName = crew.name || (crew.i && `Crew Member #${crew.i}`) || '';
-  const classLabel = toCrewClass(crew.crewClass);
+  const classLabel = Crewmate.getClass(crew.crewClass)?.name;
   
   let imageUrl = silhouette;
   if (crew.i) {
@@ -184,10 +184,10 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
               : {}
             )
             }}>
-            {toCrewCollection(crew.crewCollection)}
+            {Crewmate.getCollection(crew.crewCollection)?.name}
           </DataReadout>
         )}
-        {props.showClassInHeader && <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>{toCrewClass(crew.crewClass)}</DataReadout>}
+        {props.showClassInHeader && <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>{Crewmate.getClass(crew.crewClass)?.name}</DataReadout>}
       </CardHeader>
       {!overlay && (
         <CardFooter>
@@ -197,8 +197,8 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
               style={{ width: '100%' }} />
           </EmblemContainer>
           <FooterStats>
-            <div>{toCrewClass(crew.crewClass)}</div>
-            <div>{toCrewTitle(crew.title)}</div>
+            <div>{Crewmate.getClass(crew.crewClass)?.name}</div>
+            <div>{Crewmate.getTitle(crew.title)?.name}</div>
           </FooterStats>
         </CardFooter>
       )}

@@ -9,10 +9,10 @@ import {
 const phi = Math.PI * (3 - Math.sqrt(5));
 const twoPI = 2 * Math.PI;
 
-export const unitFiboPoint = (index, pointTally) => {
-  const y = 1 - (index / (pointTally - 1)) * 2; // y goes from 1 to -1
+export const unitFiboPoint = (indexFromZero, pointTally) => {
+  const y = 1 - (indexFromZero / (pointTally - 1)) * 2; // y goes from 1 to -1
   const radius = Math.sqrt(1 - y * y); // radius at y
-  const theta = phi * index; // golden angle increment
+  const theta = phi * indexFromZero; // golden angle increment
 
   const x = Math.cos(theta) * radius;
   const z = Math.sin(theta) * radius;
@@ -66,8 +66,8 @@ const getSamplePosition = (side, s, t, heightMap, config, resolution) => {
   return getSamplePoint(side, resolution, s, t).setLength(displacement).multiply(config.stretch);
 }
 
-export const getPlotPointGeometry = (index, pointTally, resolution, heightMaps, config, aboveSurface) => {
-  const fibo = (new Vector3()).fromArray(unitFiboPoint(index, pointTally));
+export const getPlotPointGeometry = (indexFromZero, pointTally, resolution, heightMaps, config, aboveSurface) => {
+  const fibo = (new Vector3()).fromArray(unitFiboPoint(indexFromZero, pointTally));
   
   const xAbs = Math.abs(fibo.x);
   const yAbs = Math.abs(fibo.y);
@@ -224,8 +224,9 @@ export const getClosestPlots = ({ center, centerPlot, plotTally, findTally }) =>
   const returnAllPoints = !findTally; // if no findTally attached, return all (sorted)
 
   // if pass centerPlot instead of center, set center from centerPlot
+  // NOTE: assume centerPlot is nominal plot id
   if (centerPlot && !center) {
-    center = new Vector3(...unitFiboPoint(centerPlot, plotTally));
+    center = new Vector3(...unitFiboPoint(centerPlot - 1, plotTally));
   }
 
   let arcToSearch, yToSearch, maxIndex, minIndex, centerTheta, thetaTolerance;
@@ -270,7 +271,7 @@ export const getClosestPlots = ({ center, centerPlot, plotTally, findTally }) =>
       x,
       y,
       z,
-      index,
+      index + 1,  // nominalIndex
       Math.pow(center.x - x, 2) + Math.pow(center.y - y, 2) + Math.pow(center.z - z, 2),
     ]);
   }
