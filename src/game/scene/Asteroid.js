@@ -277,7 +277,7 @@ const Asteroid = (props) => {
     disposeLight();
     disposeGeometry();
   }, [disposeLight, disposeGeometry]);
-  
+
   useEffect(() => {
     // if origin changed, zoom into new asteroid
     if (asteroidId.current && asteroidId.current !== origin) {
@@ -381,7 +381,7 @@ const Asteroid = (props) => {
     const darkLightDistance = config.radius * DIRECTIONAL_LIGHT_DISTANCE;
     const darkLightDirection = posVec.negate().clone().normalize();
     const darkLightIntensity = lightIntensity * 0.25;
-    
+
     const maxRadius = ringsPresent
       ? config.radius * 1.5
       : config.radius * maxStretch;
@@ -438,7 +438,7 @@ const Asteroid = (props) => {
     controls.maxDistance = Infinity;
 
     group.current.position.copy(new Vector3(...position.current));
-    
+
     // TODO: zoomingDuration should probably be distance-dependent
     const zoomingDuration = 3;
     const timeline = gsap.timeline({
@@ -552,7 +552,7 @@ const Asteroid = (props) => {
         config?.radius * MIN_ZOOM_DEFAULT,  // for smallest asteroids to match legacy (where this > min surface distance)
         closestChunk.sphereCenterHeight + surfaceDistance
       );
-      
+
       // too close, so should animate camera out
       //  TODO (enhancement): jump to surface immediately if somehow ended up inside asteroid
       //    (might need to use raycasting to do accurately though)
@@ -625,7 +625,7 @@ const Asteroid = (props) => {
   //         console.log('store', ddd.current);
 
   //         const l = 2 * config.radius;
-  
+
   //         controls.maxDistance = Infinity;
   //         // controls.targetScene.position
   //         //   .add(controls.object.position.clone().negate().setLength(l))
@@ -724,7 +724,7 @@ const Asteroid = (props) => {
   useFrame((state) => {
     if (!asteroidData) return;
     if (!geometry.current?.builder?.ready) return;
-    
+
     const frameStart = getNow();
 
     let updatedMapsThisCycle = false;
@@ -864,7 +864,7 @@ const Asteroid = (props) => {
         }
       }
     }
-    
+
     // control dynamic zoom limit (zoom out if too low... else, just update boundary)
     if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
     if (controls && Object.values(geometry.current?.chunks).length) {
@@ -880,7 +880,7 @@ const Asteroid = (props) => {
         // ^^^
       }
     }
-    
+
     // update quads if not already updating AND one of these is true...
     //  a) camera height changes by UPDATE_DISTANCE_MULT
     //  b) camera position changes by rotational equivalent of UPDATE_DISTANCE_MULT at maxStretch surface

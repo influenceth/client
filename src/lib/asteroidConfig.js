@@ -3,8 +3,6 @@ import Seed from '~/lib/math/Seed';
 import OctaveNoise from '~/lib/graphics/OctaveNoise';
 import constants from '~/lib/constants';
 
-// TODO: this should probably be elsewhere in the dir tree since it's not only used by scene
-
 // Responsible for generating a config for any asteroid to be generated
 class Config {
   constructor(asteroid) {
@@ -51,7 +49,7 @@ class Config {
   _radiusMod(pow = 1) {
     return Math.pow(this.radius / constants.MAX_ASTEROID_RADIUS, pow);
   }
-  
+
   // Returns the radius of a sphere, which if stretched into an ellipsoid by
   // _stretch, would have the same surface area as the nominal radius
   _adjustedRadius() {
@@ -81,7 +79,7 @@ class Config {
    * Larger values will create more / larger craters at each pass
    */
   _craterCut() { // [0.15,0.20]
-    return 0.20 - 0.05 * this._radiusMod(2);
+    return 0.25 - 0.05 * this._radiusMod(2);
   }
 
   // Determines how much smaller each crater pass is. The higher the number the smaller on each pass
@@ -101,7 +99,7 @@ class Config {
    * craters more visible.
    */
   _craterPersist() {  // [0.45, 0.65]
-    return 0.65 - 0.2 * this._radiusMod(2);
+    return 0.65 - 0.25 * this._radiusMod(2);
   }
 
   // Determines how steep the walls of the craters are. Higher numbers are steeper
@@ -135,10 +133,8 @@ class Config {
   }
 
   // How much weight for fine-displacement features
-  // NOTE: Earth's deepest crater is 0.3% radius, Moon's is 0.7% radius, so if assuming depth doubles with
-  //       quartering radius, AP should be ~1.4% and lasteroid should be ~22.4%
   _dispWeightFine() {
-    return 0.014 / this._radiusMod(0.45); // [0.014,0.200]
+    return 0.225 - 0.100 * this._radiusMod(); // [0.125, 0.225]
   }
 
   // Baseline frequency for features like craters and lines. Higher values make noise "noiser"
@@ -212,7 +208,7 @@ class Config {
 
   // Recursive noise passes to determine detail of topography. Higher numbers have finer detail.
   _topoDetail() {
-    return 8;
+    return 5;
   }
 
   /**
