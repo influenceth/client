@@ -82,10 +82,10 @@ const NewCoreSample = (props) => {
   const resources = useResourceAssets();
   const resourceMap = useStore(s => s.asteroids.showResourceMap);
 
-  const { currentSamplingProcess, startSampling, finishSampling, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i, resourceMap?.i);
+  const { currentSample, startSampling, finishSampling, getTonnage, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i, resourceMap?.i);
   const { crew, crewMemberMap } = useCrew();
 
-  const abundance = 0.5; // TODO: abundance (NOTE: should be from currentSamplingProcess resource if there is one)
+  const abundance = 0.5; // TODO: abundance (NOTE: should be from selectedSample resource if there is one)
   
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
   const sampleTimeBonus = getCrewAbilityBonus(1, crewMembers);
@@ -95,21 +95,6 @@ const NewCoreSample = (props) => {
   const crewTravelTime = Asteroid.getLotTravelTime(asteroid.i, 1, plot.i, crewTravelBonus.totalBonus);
   const sampleBounds = CoreSample.getSampleBounds(abundance, 0, sampleQualityBonus.totalBonus);
   const sampleTime = CoreSample.getSampleTime(sampleTimeBonus.totalBonus);
-
-  const [newSampleId, setNewSampleId] = useState();
-  useEffect(() => {
-    if (currentSamplingProcess) {
-      setNewSampleId(currentSamplingProcess?.id);
-    }
-  }, [currentSamplingProcess]);
-
-  const coreYield = useMemo(() => {
-    const sample = (plot?.coreSamples || []).find((c) => c.id === newSampleId);
-    if (sample && Object.keys(sample).includes('yield')) {
-      return sample.yield * resources[sample.resourceId].massPerUnit;
-    }
-    return undefined;
-  }, [newSampleId, plot?.coreSamples]);
   
   const stats = [
     {
@@ -135,7 +120,7 @@ const NewCoreSample = (props) => {
   ];
 
   const status = useMemo(() => {
-    if (coreYield !== undefined) {
+    if (currentSample?.yield !== undefined) {
       return 'AFTER';
     } else if (samplingStatus === 'READY') {
       return 'BEFORE';
@@ -143,7 +128,7 @@ const NewCoreSample = (props) => {
       return 'DURING';
     }
     return 'AFTER';
-  }, [coreYield, newSampleId, samplingStatus]);
+  }, [currentSample, samplingStatus]);
 
   return (
     <>
@@ -154,18 +139,18 @@ const NewCoreSample = (props) => {
           headerBackground: coreSampleBackground,
           label: 'Core Sample',
           completeLabel: 'Sample',
-          completeStatus: coreYield === undefined ? 'Ready for Analysis' : 'Analyzed',
+          completeStatus: currentSample?.yield === undefined ? 'Ready for Analysis' : 'Analyzed',
           crewRequirement: 'duration',
         }}
         status={status}
-        startTime={currentSamplingProcess?.startTime}
-        targetTime={currentSamplingProcess?.committedTime} />
+        startTime={currentSample?.startTime}
+        targetTime={currentSample?.committedTime} />
 
       <RawMaterialSection
         abundance={abundance}
-        resource={resources[currentSamplingProcess?.resourceId || resourceMap.i]}
+        resource={resources[resourceMap.i]}
         status={status}
-        tonnage={status === 'AFTER' && coreYield !== undefined ? coreYield : undefined} />
+        tonnage={status === 'AFTER' ? getTonnage(currentSample) : undefined} />
 
       {status === 'BEFORE' && (
         <ToolSection resource={resources[175]} sourcePlot={plot} />
@@ -181,7 +166,7 @@ const NewCoreSample = (props) => {
 
       <ActionDialogFooter
         {...props}
-        buttonsOverride={coreYield !== undefined && [
+        buttonsOverride={currentSample?.yield !== undefined && [
           { label: 'Close', onClick: onClose },
           { label: 'Improve Sample', onClick: () => { onSetAction('IMPROVE_CORE_SAMPLE'); } },
         ]}

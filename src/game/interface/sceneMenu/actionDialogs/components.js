@@ -935,7 +935,7 @@ const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
             </tr>
           </thead>
           <tbody>
-            {options.map((sample, i) => (
+            {options.sort((a, b) => b.yield - a.yield).map((sample, i) => (
               <tr key={sample.id} onClick={onClick(sample)}>
                 <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name}</td>
                 <td>{formatSampleValue(sample.tonnage)} tonnes</td>
@@ -1012,16 +1012,24 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
     <Section>
       <SectionTitle><ChevronRightIcon /> Core Sample</SectionTitle>
       <SectionBody highlight={status === 'AFTER'}>
-        {selectedSample && (
+        {selectedSample ? (
           <ResourceWithData>
             <ResourceImage resource={resource} />
             <label>
               <h3>{resource?.name} Deposit{overrideTonnage ? ' (Improved)' : ''}</h3>
               <div>
-                <b><ResourceIcon /> {formatSampleValue(overrideTonnage || selectedSample?.tonnage)}</b> tonnes
+                <b><ResourceIcon /> {formatSampleValue(overrideTonnage || (selectedSample?.yield * resource.massPerUnit))}</b> tonnes
               </div>
             </label>
           </ResourceWithData>
+        ) : (
+          <EmptyResourceWithData>
+            <EmptyResourceImage />
+            <label>
+              <div>Existing Deposit</div>
+              <h3>Select</h3>
+            </label>
+          </EmptyResourceWithData>
         )}
         {status === 'BEFORE' && improvableSamples?.length > 1 && (
           <div>
@@ -1293,6 +1301,7 @@ export const BuildingRequirementsSection = ({ isGathering, label, building, reso
     <Section>
       <SectionTitle><ChevronRightIcon /> {label}</SectionTitle>
       <SectionBody>
+        <FutureSectionOverlay />
         <IngredientsList empty={!building}>
           {building && (
             <>
@@ -1379,13 +1388,17 @@ export const ActionDialogHeader = ({ action, asteroid, onClose, plot, status, st
   const timer = useRef();
   const [progress, setProgress] = useState(0);
   const updateProgress = useCallback(() => {
-    const newProgress = Math.min(100, 100 * (getAdjustedNow() - startTime) / (targetTime - startTime));
-    setProgress(newProgress);
+    if (startTime && targetTime) {
+      const newProgress = Math.min(100, 100 * (getAdjustedNow() - startTime) / (targetTime - startTime));
+      setProgress(newProgress);
 
-    // NOTE: targetTime, startTime are in seconds, so below is already 1/1000th of progress interval
-    // (which is appropriate since displayed in 0.1% increments)
-    if (startTime && targetTime && newProgress < 100) {
-      timer.current = setTimeout(updateProgress, Math.max(10, Math.ceil(targetTime - startTime)));
+      // NOTE: targetTime, startTime are in seconds, so below is already 1/1000th of progress interval
+      // (which is appropriate since displayed in 0.1% increments)
+      if (newProgress < 100) {
+        timer.current = setTimeout(updateProgress, Math.max(10, Math.ceil(targetTime - startTime)));
+      }
+    } else {
+      setProgress(0);
     }
   }, [startTime, targetTime]);
   useEffect(() => {

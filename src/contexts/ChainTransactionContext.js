@@ -206,12 +206,7 @@ const getContracts = (account, queryClient) => ({
       content: 'Core sample failed.',
       timestamp: Math.round(Date.now() / 1000)
     }),
-    isEqual: (txVars, vars) => (
-      txVars.asteroidId === vars.asteroidId
-      && txVars.plotId === vars.plotId
-      // && txVars.resourceId === vars.resourceId
-      && txVars.crewId === vars.crewId
-    )
+    isEqual: 'ALL'
   },
   'FINISH_CORE_SAMPLE': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -225,13 +220,7 @@ const getContracts = (account, queryClient) => ({
       content: 'Core sample retrieval failed.',
       timestamp: Math.round(Date.now() / 1000)
     }),
-    isEqual: (txVars, vars) => (
-      txVars.asteroidId === vars.asteroidId
-      && txVars.plotId === vars.plotId
-      // && txVars.resourceId === vars.resourceId
-      // && txVars.sampleId === vars.sampleId
-      && txVars.crewId === vars.crewId
-    )
+    isEqual: 'ALL'
   },
 
   'PLAN_CONSTRUCTION': {

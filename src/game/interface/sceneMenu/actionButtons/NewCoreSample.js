@@ -2,19 +2,21 @@ import { useCallback } from 'react';
 
 import { CoreSampleIcon } from '~/components/Icons';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
+import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
 
 const NewCoreSample = ({ asteroid, plot, onSetAction }) => {
-  const { samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i);
+  const resourceMap = useStore(s => s.asteroids.showResourceMap);
+  const { lotStatus } = useCoreSampleManager(asteroid?.i, plot?.i, resourceMap?.i);
   const handleClick = useCallback(() => {
     onSetAction('NEW_CORE_SAMPLE');
   }, [onSetAction]);
 
-  const attention = samplingStatus === 'READY_TO_FINISH';
-  const loading = samplingStatus === 'SAMPLING' || samplingStatus === 'FINISHING';
+  const attention = lotStatus === 'READY_TO_FINISH';
+  const loading = (lotStatus === 'SAMPLING' || lotStatus === 'FINISHING');
   return (
     <ActionButton
-      label={samplingStatus === 'READY_TO_FINISH' ? 'Analyze Core Sample' : 'New Core Sample'}
+      label={lotStatus === 'READY_TO_FINISH' ? 'Analyze Core Sample' : 'New Core Sample'}
       flags={{
         attention: attention || undefined,
         loading: loading || undefined
