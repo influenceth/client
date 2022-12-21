@@ -74,7 +74,7 @@ import {
 
   formatTimer,
   getBonusDirection,
-  formatSampleValue,
+  formatSampleMass,
 } from './components';
 
 const ImproveCoreSample = (props) => {
@@ -125,12 +125,12 @@ const ImproveCoreSample = (props) => {
   const stats = [
     {
       label: 'Discovery Minimum',
-      value: `${formatSampleValue(sampleBounds.lower)} tonnes`,
+      value: `${formatSampleMass(sampleBounds.lower)} tonnes`,
       direction: getBonusDirection(sampleQualityBonus)
     },
     {
       label: 'Discovery Maximum',
-      value: `${formatSampleValue(sampleBounds.upper)} tonnes`,
+      value: `${formatSampleMass(sampleBounds.upper)} tonnes`,
       direction: getBonusDirection(sampleQualityBonus)
     },
     {

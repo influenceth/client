@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fi';
 import { RingLoader } from 'react-spinners';
 import DataTable, { createTheme } from 'react-data-table-component';
-import { Crew, Asteroid, Construction, Lot } from '@influenceth/sdk';
+import { Crew, Asteroid, Extraction, Lot, Inventory } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
@@ -46,7 +46,7 @@ import useCrew from '~/hooks/useCrew';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
-import useConstructionManager from '~/hooks/useConstructionManager';
+import useExtractionManager from '~/hooks/useExtractionManager';
 import useInterval from '~/hooks/useInterval';
 import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
 
@@ -74,44 +74,106 @@ import {
 
   formatTimer,
   getBonusDirection,
+  formatSampleMass,
+  formatSampleVolume
 } from './components';
+import usePlot from '~/hooks/usePlot';
 
-const Extraction = (props) => {
+console.log('Extraction', Extraction)
+
+const ExtractionDialog = (props) => {
   const { asteroid, onClose, plot } = props;
-  const buildings = useBuildingAssets();
   const resources = useResourceAssets();
-  const { constructionStatus, startConstruction, finishConstruction } = useConstructionManager(asteroid?.i, plot?.i);
+  const { extractionStatus, startExtraction, finishExtraction } = useExtractionManager(asteroid?.i, plot?.i);
+
   const { crew, crewMemberMap } = useCrew();
+
+  // const [destinationPlot, setDestinationPlot] = useState();
+  const { data: destinationPlot } = usePlot(asteroid.i, 3);
+  const [selectedCoreSample, setSelectedCoreSample] = useState();
+
+  // TODO: remove this
+  if (selectedCoreSample && !Object.keys(selectedCoreSample).includes('remainingYield')) {
+    selectedCoreSample.remainingYield = selectedCoreSample.yield;
+  }
   
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
-  const constructionBonus = getCrewAbilityBonus(5, crewMembers);
+  const extractionBonus = getCrewAbilityBonus(4, crewMembers);
 
   const crewTravelTime = Asteroid.getLotTravelTime(asteroid.i, 1, plot.i, crewTravelBonus.totalBonus);
-  const constructionTime = Construction.getConstructionTime(plot.building.assetId, constructionBonus.totalBonus);
-  console.log([plot.building.assetId, constructionBonus, constructionTime]);
 
-  const stats = [
-    { label: 'Extraction Mass', value: '120,500 tonnes', direction: 1 },
-    { label: 'Extraction Volume', value: '4,200 m³', direction: 1 },
-    { label: 'Crew Travel', value: '6m 00s', direction: 1 },
-    { label: 'Extraction Time', value: '2d 14h 24m 30s', direction: 0 },
-  ];
+  const [amount, setAmount] = useState(0);
+  useEffect(() => {
+    if (selectedCoreSample) {
+      setAmount(selectedCoreSample.remainingYield);
+    } else {
+      setAmount(0);
+    }
+  }, [selectedCoreSample]);
+
+  const resource = useMemo(() => {
+    if (selectedCoreSample) return resources[selectedCoreSample.resourceId];
+    return null;
+  }, [selectedCoreSample]);
+  
+  const extractionTime = useMemo(() => {
+    if (selectedCoreSample) {
+      return Extraction.getExtractionTime(
+        amount,
+        selectedCoreSample?.remainingYield || 0,
+        selectedCoreSample?.yield || 0,
+        extractionBonus.totalBonus
+      )
+    }
+    return 0;
+  }, [amount, selectedCoreSample]);
+
+  const stats = useMemo(() => ([
+    {
+      label: 'Extraction Mass',
+      value: `${formatSampleMass(amount * resource?.massPerUnit || 0)} tonnes`,
+      direction: 0
+    },
+    {
+      label: 'Extraction Volume',
+      value: `${formatSampleVolume(amount * resource?.volumePerUnit || 0)} m³`,
+      direction: 0
+    },
+    {
+      label: 'Crew Travel',
+      value: formatTimer(crewTravelTime),
+      direction: getBonusDirection(crewTravelBonus)
+    },
+    {
+      label: 'Extraction Time',
+      value: formatTimer(extractionTime),
+      direction: getBonusDirection(extractionBonus)
+    },
+  ]), [amount, extractionTime, resource]);
 
   const status = useMemo(() => {
-    if (constructionStatus === 'PLANNED') {
+    if (extractionStatus === 'READY') {
       return 'BEFORE';
-    } else if (constructionStatus === 'UNDER_CONSTRUCTION') {
+    } else if (extractionStatus === 'EXTRACTING') {
       return 'DURING';
     }
     return 'AFTER';
-  }, [constructionStatus]);
+  }, [extractionStatus]);
 
-  useEffect(() => {
-    if (constructionStatus === 'FINISHING' || constructionStatus === 'OPERATIONAL') {
-      onClose();
-    }
-  }, [constructionStatus]);
+  // useEffect(() => {
+  //   if (extractionStatus === 'FINISHING') {
+  //     onClose();
+  //   }
+  // }, [extractionStatus]);
+
+  const usableSamples = useMemo(() => {
+    return (plot?.coreSamples || []).filter((c) => c.yield > 0); // TODO: ...
+  }, [plot?.coreSamples]);
+
+  const onStartExtraction = useCallback(() => {
+    startExtraction(amount, selectedCoreSample, destinationPlot);
+  }, [amount, selectedCoreSample, destinationPlot]);
 
   return (
     <>
@@ -129,11 +191,24 @@ const Extraction = (props) => {
         startTime={plot?.building?.startTime}
         targetTime={plot?.building?.committedTime} />
 
-      <ExtractSampleSection resource={resource} resources={resources} status={status} tonnage={12000} overrideTonnage={status !== 'BEFORE' && amount} remainingAfterExtraction={12000 - amount} />
+      <ExtractSampleSection
+        amount={amount}
+        plot={plot}
+        resources={resources}
+        onSelectSample={setSelectedCoreSample}
+        selectedSample={selectedCoreSample}
+        status={status}
+        usableSamples={usableSamples} />
       <DestinationPlotSection asteroid={asteroid} destinationPlot={destinationPlot} status={status} />
 
       {status === 'BEFORE' && (
-        <ExtractionAmountSection amount={amount} min={4200} max={12000} setAmount={setAmount} />
+        <ExtractionAmountSection
+          amount={amount}
+          extractionTime={extractionTime}
+          min={0}
+          max={selectedCoreSample?.remainingYield || 0}
+          resource={resource}
+          setAmount={setAmount} />
       )}
 
       <ActionDialogStats stats={stats} status={status} />
@@ -141,19 +216,20 @@ const Extraction = (props) => {
       {status === 'BEFORE' && (
         <ActionDialogTimers
           crewAvailableIn={2 * crewTravelTime}
-          actionReadyIn={crewTravelTime + constructionTime} />
+          actionReadyIn={crewTravelTime + extractionTime} />
       )}
 
       <ActionDialogFooter
         {...props}
-        disabled={false}
+        buttonsLoading={extractionStatus === 'FINISHING' || undefined}
+        disabled={amount === 0}
         finalizeLabel="Complete"
-        goButtonLabel="Begin Extraction"
-        onFinalize={finishConstruction}
-        onGo={startConstruction}
+        goLabel="Begin Extraction"
+        onFinalize={finishExtraction}
+        onGo={onStartExtraction}
         status={status} />
     </>
   );
 };
 
-export default Extraction;
+export default ExtractionDialog;

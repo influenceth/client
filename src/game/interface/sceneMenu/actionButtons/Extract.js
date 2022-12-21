@@ -17,10 +17,11 @@ const Extract = ({ onSetAction, crew, plot }) => {
 
   return (
     <ActionButton
-      label={'Extract Resource'}
+      label={`Extract ${usableSamples?.length === 0 ? '(Core Samples Required)' : 'Resource'}`}
       flags={{
         badge: usableSamples?.length,
         attention: ((myUsableSamples?.length > 0) && !extracting) || undefined,
+        disabled: usableSamples?.length === 0,
         loading: extracting || undefined,
       }}
       icon={<ExtractionIcon />}

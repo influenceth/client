@@ -146,7 +146,14 @@ const Deconstruct = (props) => {
         status="BEFORE" />
 
       <DeconstructionMaterialsSection label="Recovered Materials" resources={resources} status={status} />
-      {status !== 'AFTER' && <DestinationPlotSection asteroid={asteroid} destinationPlot={destinationPlot} status={status} />}
+
+      {status !== 'AFTER' && (
+        <DestinationPlotSection
+          asteroid={asteroid}
+          destinationPlot={destinationPlot}
+          futureFlag
+          status={status} />
+      )}
 
       <ActionDialogStats stats={stats} status="BEFORE" />
       <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />

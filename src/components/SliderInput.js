@@ -49,7 +49,7 @@ const Handle = styled.div.attrs(p => ({
   margin-left: -8px;
 `;
 
-const SliderInput = ({ min = 0, max = 1, value, onChange }) => {
+const SliderInput = ({ min = 0, max = 1, increment = 1, value, onChange }) => {
   const sliderRef = useRef();
   const updating = useRef(false);
 
@@ -65,13 +65,12 @@ const SliderInput = ({ min = 0, max = 1, value, onChange }) => {
     if (updating.current && e.offsetX !== undefined) {
       onChange(min + (e.offsetX / sliderRef.current.offsetWidth) * (max - min));
     }
-  }, []);
+  }, [min, max]);
 
   const keyHandler = useCallback((e) => {
-    console.log('e', e)
     let incr = 0;
-    if (e.code === 'ArrowLeft') incr = -1;
-    if (e.code === 'ArrowRight') incr = 1;
+    if (e.code === 'ArrowLeft') incr = -increment;
+    if (e.code === 'ArrowRight') incr = increment;
     if (incr !== 0) {
       if (max - min === 1) incr *= 0.01;
       onChange((v) => v + incr);
@@ -93,7 +92,7 @@ const SliderInput = ({ min = 0, max = 1, value, onChange }) => {
       }
       window.removeEventListener('keydown', keyHandler);
     }
-  }, []);
+  }, [keyHandler, mouseHandler]);
 
   return (
     <Wrapper>

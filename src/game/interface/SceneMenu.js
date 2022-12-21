@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import { Address, toRarity, toSize, toSpectralType, Construction } from '@influenceth/sdk';
+import { Address, toRarity, toSize, toSpectralType, CoreSample } from '@influenceth/sdk';
 import ReactTooltip from 'react-tooltip';
 import {
   FaCubes as InfrastructureIcon,
@@ -418,14 +418,14 @@ const SceneMenu = (props) => {
       } else if (plot && crew) {
         if (resourceMode) {
           a.push(actionButtons.NewCoreSample);
-          if (!!(plot.coreSamples || []).find((c) => c.resourceId === Number(showResourceMap?.i) && c.status === 2)) {
+          if (!!(plot.coreSamples || []).find((c) => c.resourceId === Number(showResourceMap?.i) && c.yield > 0 && c.status !== CoreSample.STATUS_USED)) {
             a.push(actionButtons.ImproveCoreSample);
           }
         }
 
         if (constructionStatus === 'OPERATIONAL' && plot.building?.assetId) {
           const buildingAsset = buildings[plot.building.assetId];
-          if (buildingAsset.capabilities.includes('extraction') && plot.coreSamplesExist) {
+          if (buildingAsset.capabilities.includes('extraction')) {
             a.push(actionButtons.Extract);
           }
         } else if (['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus)) {

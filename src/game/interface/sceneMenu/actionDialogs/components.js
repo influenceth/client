@@ -823,10 +823,10 @@ const EmptyResourceImage = ({ iconOverride }) => (
   <ResourceThumbnailWrapper><EmptyImage>{iconOverride || <PlusIcon />}</EmptyImage></ResourceThumbnailWrapper>
 );
 
-const BuildingImage = ({ building, progress, secondaryProgress }) => {
+const BuildingImage = ({ building, progress, secondaryProgress, unfinished }) => {
   return (
     <BuildingThumbnailWrapper>
-      <ResourceThumbnail src={building.siteIconUrls.w150} />
+      <ResourceThumbnail src={building[unfinished ? 'siteIconUrls' : 'iconUrls']?.w150} />
       {progress !== undefined && (
         <ResourceProgress
           progress={progress}
@@ -905,7 +905,7 @@ const BlueprintSelection = ({ onBuildingSelected }) => {
         {buildings.filter(({i}) => i > 0).filter(({i}) => ['1','2'].includes(i)).map((building) => (
           <PopperListItem key={building.i} onClick={onBuildingSelected(building.i)}>
             <BuildingPlan>
-              <BuildingImage building={building} />
+              <BuildingImage building={building} unfinished />
               <label>
                 <h3>{building.name}</h3>
                 <b>Site Plan</b>
@@ -938,7 +938,7 @@ const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
             {options.sort((a, b) => b.yield - a.yield).map((sample, i) => (
               <tr key={sample.id} onClick={onClick(sample)}>
                 <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name}</td>
-                <td>{formatSampleValue(sample.tonnage)} tonnes</td>
+                <td>{formatSampleMass(sample.yield * resources[sample.resourceId].massPerUnit)} tonnes</td>
               </tr>
             ))}
           </tbody>
@@ -1018,7 +1018,7 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
             <label>
               <h3>{resource?.name} Deposit{overrideTonnage ? ' (Improved)' : ''}</h3>
               <div>
-                <b><ResourceIcon /> {formatSampleValue(overrideTonnage || (selectedSample?.yield * resource.massPerUnit))}</b> tonnes
+                <b><ResourceIcon /> {formatSampleMass(overrideTonnage || (selectedSample?.yield * resource.massPerUnit))}</b> tonnes
               </div>
             </label>
           </ResourceWithData>
@@ -1046,38 +1046,54 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
   );
 };
 
-export const ExtractSampleSection = ({ resource, resources, tonnage, onSelectSample, overrideTonnage, remainingAfterExtraction, status }) => {
+export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, selectedSample, status, usableSamples }) => {
+
+  const remainingAfterExtraction = useMemo(() => selectedSample
+    ? (selectedSample.remainingYield || selectedSample.yield) - amount
+    : null
+  , [amount, selectedSample]);
+  const getTonnage = useCallback((y) => y * resources[selectedSample.resourceId].massPerUnit, [selectedSample?.resourceId]);
+
   const [clicked, setClicked] = useState(0);
   const onClick = useCallback((id) => () => {
     setClicked((x) => x + 1);
     if (onSelectSample) onSelectSample(id);
   }, []);
+  
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Core Sample</SectionTitle>
       <SectionBody highlight={status === 'AFTER'}>
-        {resource && (
+        {selectedSample ? (
           <ResourceWithData>
-            <ResourceImage resource={resource} />
+            <ResourceImage resource={resources[selectedSample.resourceId]} />
             <label>
-              <h3>{resource.name} Deposit</h3>
+              <h3>{resources[selectedSample.resourceId].name} Deposit</h3>
               <div>
-                <b style={status === 'BEFORE' ? { color: 'white', fontWeight: 'normal' } : {}}><ResourceIcon /> {(overrideTonnage || tonnage).toLocaleString()}</b> tonnes
+                <b style={status === 'BEFORE' ? { color: 'white', fontWeight: 'normal' } : {}}><ResourceIcon /> {formatSampleMass(getTonnage(amount))}</b> tonnes
               </div>
               {status === 'BEFORE' && (
                 <footer>
                   {remainingAfterExtraction === 0
                       ? 'Deposit will be depleted after Extraction'
-                      : `${Math.floor(remainingAfterExtraction).toLocaleString()} tonnes will remain after Extraction`}
+                      : `${formatSampleMass(getTonnage(remainingAfterExtraction))} tonnes will remain after Extraction`}
                 </footer>
               )}
             </label>
           </ResourceWithData>
+        ) : (
+          <EmptyResourceWithData>
+            <EmptyResourceImage />
+            <label>
+              <div>Extract from Deposit</div>
+              <h3>Select</h3>
+            </label>
+          </EmptyResourceWithData>
         )}
         {status === 'BEFORE' && (
           <div>
             <Poppable label="Select" buttonWidth="135px" closeOnChange={clicked} title="Select Core Sample">
-              <CoreSampleSelection onClick={onClick} resources={resources} sampleTally={8} />
+              <CoreSampleSelection plot={plot} onClick={onClick} options={usableSamples} resources={resources} />
             </Poppable>
           </div>
         )}
@@ -1100,7 +1116,7 @@ export const RawMaterialSection = ({ abundance, resource, tonnage, status }) => 
             <label>
               <h3>{resource.name}{tonnage !== undefined ? ' Deposit Discovered' : ''}</h3>
               {tonnage !== undefined
-                ? <div><b><ResourceIcon /> {formatSampleValue(tonnage)}</b> tonnes</div>
+                ? <div><b><ResourceIcon /> {formatSampleMass(tonnage)}</b> tonnes</div>
                 : <div><b>{100 * abundance}%</b> Abundance at lot</div>
               }
             </label>
@@ -1189,23 +1205,33 @@ export const ItemSelectionSection = ({ items, resources, status }) => {
   );
 };
 
-export const DestinationPlotSection = ({ asteroid, destinationPlot, onDestinationSelect, status }) => {
+export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, onDestinationSelect, status }) => {
+  const buildings = useBuildingAssets();  // TODO: probably more consistent to move this up a level
   const [clicked, setClicked] = useState(0);
   const onClick = useCallback((id) => () => {
     setClicked((x) => x + 1);
     if (onDestinationSelect) onDestinationSelect(id);
   }, []);
+
+  const destinationBuilding = useMemo(() => {
+    console.log('desitnation', destinationPlot);
+    if (destinationPlot?.building) {
+      console.log('destinationPlot?.building', destinationPlot?.building, buildings[destinationPlot.building?.assetId]);
+      return buildings[destinationPlot.building?.assetId];
+    }
+    return null;
+  }, [destinationPlot?.building]);
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Destination</SectionTitle>
       <SectionBody>
-        <FutureSectionOverlay />
+        {futureFlag && <FutureSectionOverlay />}
         {destinationPlot
           ? (
             <Destination status={status}>
-              <BuildingImage building={destinationPlot.building} progress={0.3} secondaryProgress={0.7} />{/* TODO: ... */}
+              <BuildingImage building={destinationBuilding} progress={0.3} secondaryProgress={0.7} />{/* TODO: ... */}
               <label>
-                <h3>{destinationPlot.building.__t}</h3>
+                <h3>{destinationBuilding?.name}</h3>
                 <div>{asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {destinationPlot.i.toLocaleString()}</b></div>
                 <div />
                 {status === 'BEFORE' && (<div><b>650,000</b> / 1,000,000 m<sup>3</sup></div>)}{/* TODO: ... */}
@@ -1259,7 +1285,7 @@ export const BuildingPlanSection = ({ building, cancelling, gracePeriodEnd, onBu
         )}
         {building && (
           <BuildingPlan>
-            <BuildingImage building={building} />
+            <BuildingImage building={building} unfinished />
             <label>
               <h3>{building.name}</h3>
               <b>Site Plan</b>
@@ -1353,13 +1379,9 @@ export const DeconstructionMaterialsSection = ({ label, resources, status }) => 
   );
 };
 
-export const ExtractionAmountSection = ({ min, max, amount, setAmount }) => {
-  const tonnageToVolume = (tonnage) => {
-    return tonnage * 2.5;  // TODO: ...
-  };
-  const tonnageToExtractionTime = (tonnage) => {
-    return tonnage * 1.64;  // TODO: ...
-  };
+export const ExtractionAmountSection = ({ extractionTime, min, max, amount, resource, setAmount }) => {
+  const tonnage = useMemo(() => amount * resource?.massPerUnit || 0, [amount, resource]);
+  const volume = useMemo(() => amount * resource?.volumePerUnit || 0, [amount, resource]);
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Slider</SectionTitle>
@@ -1367,14 +1389,19 @@ export const ExtractionAmountSection = ({ min, max, amount, setAmount }) => {
         <SliderWrapper>
           <SliderInfoRow>
             <SliderLabel>
-              <b>{Math.round(amount).toLocaleString()}</b> tonnes
+              <b>{formatSampleMass(tonnage)}</b> tonnes
             </SliderLabel>
             <ButtonRounded disabled={amount === max} onClick={() => setAmount(max)}>Max</ButtonRounded>
           </SliderInfoRow>
-          <SliderInput min={min} max={max} value={amount} onChange={setAmount} />
+          <SliderInput
+            min={min}
+            max={max}
+            increment={resource ? (0.1 / resource?.massPerUnit) : 1}
+            onChange={setAmount}
+            value={amount} />
           <SliderInfoRow style={{ marginTop: -5 }}>
-            <div>{Math.round(tonnageToVolume(amount)).toLocaleString()} m<sup>3</sup></div>
-            <div>{formatTimer(tonnageToExtractionTime(amount))}</div>
+            <div>{formatSampleVolume(volume)} m<sup>3</sup></div>
+            <div>{formatTimer(extractionTime)}</div>
           </SliderInfoRow>
         </SliderWrapper>
       </SectionBody>
@@ -1574,8 +1601,12 @@ export const formatTimer = (secondsRemaining) => {
   return parts.join(' ');
 };
 
-export const formatSampleValue = (tonnage) => {
-  return (Math.round(tonnage * 10) / 10).toLocaleString();
+export const formatSampleMass = (tonnage) => {
+  return (Math.round((tonnage || 0) * 10) / 10).toLocaleString();
+};
+
+export const formatSampleVolume = (volume) => {
+  return (Math.round((volume || 0) * 10) / 10).toLocaleString();
 };
 
 export const getBonusDirection = ({ totalBonus }, biggerIsBetter = true) => {
