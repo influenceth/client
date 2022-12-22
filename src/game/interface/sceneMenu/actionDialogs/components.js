@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fi';
 import { RingLoader } from 'react-spinners';
 import DataTable, { createTheme } from 'react-data-table-component';
-import { Crew, Asteroid, Construction, Lot } from '@influenceth/sdk';
+import { Crew, Asteroid, Construction, Crewmate, Lot } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
@@ -824,6 +824,7 @@ const EmptyResourceImage = ({ iconOverride }) => (
 );
 
 const BuildingImage = ({ building, progress, secondaryProgress, unfinished }) => {
+  if (!building) return null;
   return (
     <BuildingThumbnailWrapper>
       <ResourceThumbnail src={building[unfinished ? 'siteIconUrls' : 'iconUrls']?.w150} />
@@ -1221,12 +1222,13 @@ export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, 
     }
     return null;
   }, [destinationPlot?.building]);
+  
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Destination</SectionTitle>
       <SectionBody>
         {futureFlag && <FutureSectionOverlay />}
-        {destinationPlot
+        {destinationBuilding
           ? (
             <Destination status={status}>
               <BuildingImage building={destinationBuilding} progress={0.3} secondaryProgress={0.7} />{/* TODO: ... */}
@@ -1476,6 +1478,36 @@ export const ActionDialogHeader = ({ action, asteroid, onClose, plot, status, st
   );
 };
 
+const ActionDialogStat = ({ stat: { label, value, direction, tooltip, warning }}) => {
+  const refEl = useRef();
+  const [hovered, setHovered] = useState();
+  return (
+    <StatRow
+      key={label}
+      direction={direction}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      ref={refEl}>
+      <label>{label}</label>
+      <span>
+        {value}
+      </span>
+      {tooltip && (
+        <MouseoverInfoPane referenceEl={refEl.current} visible={hovered}>
+          <MouseoverContent>
+            {tooltip}
+          </MouseoverContent>
+        </MouseoverInfoPane>
+      )}
+      {warning && (
+        <MouseoverIcon icon={<WarningOutlineIcon />} iconStyle={{ fontSize: '125%', marginLeft: 5 }} themeColor={theme.colors.error}>
+          {warning}
+        </MouseoverIcon>
+      )}
+    </StatRow>
+  );
+};
+
 export const ActionDialogStats = ({ stats, status }) => (
   <>
     {stats?.length > 0 && (
@@ -1483,23 +1515,10 @@ export const ActionDialogStats = ({ stats, status }) => (
         <SectionBody>
           {[0,1].map((statGroup) => (
             <div key={statGroup}>
-              {(
-                statGroup === 0
-                  ? stats.slice(0, Math.ceil(stats.length / 2))
-                  : stats.slice(Math.ceil(stats.length / 2))
-                ).map(({ label, value, direction, warning }) => (
-                  <StatRow key={label} direction={direction}>
-                    <label>{label}</label>
-                    <span>
-                      {value}
-                    </span>
-                    {warning && (
-                      <MouseoverIcon icon={<WarningOutlineIcon />} iconStyle={{ fontSize: '125%', marginLeft: 5 }} themeColor={theme.colors.error}>
-                        {warning}
-                      </MouseoverIcon>
-                    )}
-                  </StatRow>
-                ))}
+              {(statGroup === 0
+                ? stats.slice(0, Math.ceil(stats.length / 2))
+                : stats.slice(Math.ceil(stats.length / 2))
+              ).map((stat) => <ActionDialogStat key={stat.label} stat={stat} />)}
             </div>
           ))}
         </SectionBody>
@@ -1579,6 +1598,195 @@ export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOve
 };
 
 //
+// bonus tooltips
+//
+
+const Bonuses = styled.div`
+  font-size: 95%;
+  padding: 0px 15px;
+`;
+const BonusesHeader = styled.div`
+  border-bottom: 1px solid ${borderColor};
+  color: white;
+  font-weight: bold;
+  padding-bottom: 12px;
+  text-transform: uppercase;
+`;
+const BonusesSection = styled.div`
+  margin: 0 0 20px;
+  &:last-child {
+    margin-bottom: 0;
+  }
+  & table {
+    border-collapse: collapse;
+    width: 100%;
+    & th {
+      font-weight: normal;
+      text-align: left;
+    }
+    & td {
+      color: white;
+      text-align: right;
+      &:last-child {
+        padding-right: 0;
+      }
+    }
+    & th, & td {
+      padding: 5px 10px 5px 0;
+      white-space: nowrap;
+    }
+  }
+`;
+const BonusItem = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 5px 0;
+
+  & > span {
+    font-weight: bold;
+    white-space: nowrap;
+
+    ${p => p.direction !== 0 && `
+      color: ${p.direction > 0 ? p.theme.colors.success : p.theme.colors.error};
+      ${!p.noIcon && `
+        &:after {
+          content: "${p.direction > 0 ? '▲' : '▼'}";
+          display: inline-block;
+          font-size: 7px;
+          padding-left: 3px;
+          vertical-align: middle;
+        }
+      `}
+    `}
+  }
+`;
+const BonusesSectionHeader = styled(BonusItem)`
+  border-bottom: 1px solid ${borderColor};
+  color: white;
+`;
+
+const BonusesFootnote = styled.div`
+  color: ${p => p.warning ? p.theme.colors.orange : p.theme.colors.main};
+  font-size: 95%;
+  margin-top: -5px;
+`;
+
+const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleValue }) => {
+  const { titles, traits, totalBonus } = bonus;
+  const titleDirection = getBonusDirection({ totalBonus });
+
+  const bonuses = useMemo(() => {
+    const x = [];
+    if (bonus.class?.classId) {
+      const { matches, multiplier, classId } = bonus.class;
+      x.push({
+        text: `${Crewmate.getClass(classId)?.name} on Crew (x${matches})`,
+        multiplier,
+        direction: 1
+      });
+    }
+    Object.keys(titles || {}).map((titleId) => {
+      const { matches, bonus, /* bonusPerMatch */ } = titles[titleId];
+      x.push({
+        text: `${Crewmate.getTitle(titleId)?.name} on Crew (x${matches})`,
+        bonus,
+        direction: getBonusDirection({ totalBonus: 1 - bonus }, false)
+      });
+    });
+    Object.keys(traits || {}).map((traitId) => {
+      const { matches, bonus, /* bonusPerMatch */ } = traits[traitId];
+      x.push({
+        text: `${Crewmate.getTrait(traitId)?.name} (x${matches})`,
+        bonus,
+        direction: getBonusDirection({ totalBonus: 1 - bonus }, false)
+      });
+    });
+    return x.sort((a, b) => b.bonus - a.bonus);
+  }, [titles, traits]);
+
+  return (
+    <Bonuses>
+      {(bonus !== 1 || !details) && (
+        <>
+          <BonusesHeader>Bonuses</BonusesHeader>
+          <BonusesSection>
+            <BonusesSectionHeader direction={titleDirection}>
+              <label>{title}</label>
+              <span>{titleValue}</span>
+            </BonusesSectionHeader>
+            {bonuses.map(({ text, bonus, multiplier, direction }) => (
+              <BonusItem key={text} direction={direction} noIcon>
+                <label>{text}</label>
+                <span>{multiplier ? `x${multiplier}` : `${-100 * bonus}%`}</span>
+              </BonusItem>
+            ))}
+          </BonusesSection>
+        </>
+      )}
+      {details && (
+        <>
+          <BonusesHeader>{details.title}</BonusesHeader>
+          <BonusesSection>
+            <table>
+              <tbody>
+                {details.rows.map(([label, ...items]) => (
+                  <tr key={label}>
+                    <th>{label}</th>
+                    {items.map((item) => <td key={item}>{item}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </BonusesSection>
+        </>
+      )}
+      {crewRequired === 'duration' && (
+        <BonusesFootnote warning>
+          NOTE: Actions requiring a crew for the duration begin as soon as your crew reaches its destination and end once the crew has finished the task.
+        </BonusesFootnote>
+      )}
+      {crewRequired === 'start' && (
+        <BonusesFootnote>
+          NOTE: Actions requiring a crew to start will begin as soon as your crew reaches its destination.
+        </BonusesFootnote>
+      )}
+    </Bonuses>
+  );
+};
+
+export const MaterialBonusTooltip = ({ bonus, title, titleValue, ...props }) => (
+  <BonusTooltip
+    {...props}
+    bonus={bonus}
+    title={title}
+    titleValue={titleValue}
+  />
+);
+
+export const TimeBonusTooltip = ({ bonus, title, totalTime, ...props }) => (
+  <BonusTooltip
+    {...props}
+    bonus={bonus}
+    title={title}
+    titleValue={formatTimer(totalTime)}
+  />
+);
+
+export const TravelBonusTooltip = ({ bonus, totalTime, tripDetails, ...props }) => {
+  return (
+    <BonusTooltip
+      {...props}
+      bonus={bonus}
+      details={{ title: "Trip Details", rows: tripDetails }}
+      title="Crew Travel Time"
+      titleValue={formatTimer(totalTime)}
+    />
+  );
+};
+
+
+//
 // utils
 // 
 
@@ -1588,7 +1796,7 @@ const timerIncrements = {
   m: 60,
   s: 1
 };
-export const formatTimer = (secondsRemaining) => {
+export const formatTimer = (secondsRemaining, maxPrecision = null) => {
   let remainder = secondsRemaining;
   const parts = Object.keys(timerIncrements).reduce((acc, k) => {
     if (acc.length > 0 || remainder >= timerIncrements[k] || timerIncrements[k] === 1) {
@@ -1598,6 +1806,7 @@ export const formatTimer = (secondsRemaining) => {
     }
     return acc;
   }, []);
+  if (maxPrecision) return parts.slice(0, maxPrecision).join(' ');
   return parts.join(' ');
 };
 
@@ -1610,6 +1819,34 @@ export const formatSampleVolume = (volume) => {
 };
 
 export const getBonusDirection = ({ totalBonus }, biggerIsBetter = true) => {
+  if (!biggerIsBetter) {
+    console.log({ totalBonus });
+  }
   if (totalBonus === 1) return 0;
-  return biggerIsBetter && totalBonus > 1 ? 1 : -1;
+  return (biggerIsBetter === totalBonus > 1) ? 1 : -1;
+};
+
+export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps) => {
+  let currentLocation = startingLotId;
+  let totalDistance = 0;
+  let totalTime = 0;
+
+  const tripDetails = steps.map(({ label, plot }) => {
+    
+    const stepDistance = Asteroid.getLotDistance(asteroidId, currentLocation, plot);
+    const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLocation, plot, crewTravelBonus);
+    currentLocation = plot;
+
+    // agg
+    totalDistance += stepDistance;
+    totalTime += stepTime;
+
+    // format
+    return [
+      `${label}:`,
+      `${Math.round(stepDistance)}km`,
+      formatTimer(stepTime)
+    ];
+  });
+  return { totalDistance, totalTime, tripDetails };
 };

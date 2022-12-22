@@ -72,9 +72,15 @@ import {
   ActionDialogStats,
   ActionDialogTimers,
 
+  ConstructionBonusTooltip,
+  TravelBonusTooltip,
+  
   formatTimer,
   getBonusDirection,
+  getTripDetails,
+  TimeBonusTooltip,
 } from './components';
+
 
 const Construct = (props) => {
   const { asteroid, onClose, plot } = props;
@@ -87,19 +93,38 @@ const Construct = (props) => {
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
   const constructionBonus = getCrewAbilityBonus(5, crewMembers);
 
-  const crewTravelTime = Asteroid.getLotTravelTime(asteroid.i, 1, plot.i, crewTravelBonus.totalBonus);
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => 
+    getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
+      { label: 'Travel to destination', plot: plot.i },
+      { label: 'Return from destination', plot: 1 },
+    ])
+  , [asteroid.i, crewTravelBonus, plot.i]);
   const constructionTime = Construction.getConstructionTime(plot.building.assetId, constructionBonus.totalBonus);
 
   const stats = [
     {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
-      direction: getBonusDirection(crewTravelBonus)
+      direction: getBonusDirection(crewTravelBonus),
+      tooltip: (
+        <TravelBonusTooltip
+          bonus={crewTravelBonus}
+          totalTime={crewTravelTime}
+          tripDetails={tripDetails}
+          crewRequired="start" />
+      )
     },
     {
       label: 'Construction Time',
       value: formatTimer(constructionTime),
-      direction: getBonusDirection(constructionBonus)
+      direction: getBonusDirection(constructionBonus),
+      tooltip: constructionBonus.totalBonus !== 1 && (
+        <TimeBonusTooltip
+          bonus={constructionBonus}
+          title="Construction Time"
+          totalTime={constructionTime}
+          crewRequired="start" />
+      )
     },
   ];
 
@@ -151,7 +176,7 @@ const Construct = (props) => {
 
       {status === 'BEFORE' && (
         <ActionDialogTimers
-          crewAvailableIn={2 * crewTravelTime}
+          crewAvailableIn={crewTravelTime}
           actionReadyIn={crewTravelTime + constructionTime} />
       )}
 

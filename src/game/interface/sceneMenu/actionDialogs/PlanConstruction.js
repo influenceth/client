@@ -85,13 +85,17 @@ const PlanConstruction = (props) => {
   const [capableType, setCapableType] = useState();
   
   const stats = useMemo(() => [
-    { label: 'Abandonment Timer', value: formatTimer(Lot.GRACE_PERIOD), warning: (
-      <>
-        Building sites become <b>Abandoned</b> if they have not started construction by the time the <b>Abandonment Timer</b> expires.
-        <br/><br/>
-        Any items left on an <b>Abandoned Site</b> may be claimed by other players!
-      </>
-    ) },
+    {
+      label: 'Abandonment Timer',
+      value: formatTimer(Lot.GRACE_PERIOD),
+      warning: (
+        <>
+          Building sites become <b>Abandoned</b> if they have not started construction by the time the <b>Abandonment Timer</b> expires.
+          <br/><br/>
+          Any items left on an <b>Abandoned Site</b> may be claimed by other players!
+        </>
+      )
+    },
   ], []);
 
   useEffect(() => {

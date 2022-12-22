@@ -75,7 +75,11 @@ import {
   formatTimer,
   getBonusDirection,
   formatSampleMass,
-  formatSampleVolume
+  formatSampleVolume,
+  getTripDetails,
+  TravelBonusTooltip,
+  TimeBonusTooltip,
+  MaterialBonusTooltip,
 } from './components';
 import usePlot from '~/hooks/usePlot';
 
@@ -101,7 +105,13 @@ const ExtractionDialog = (props) => {
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
   const extractionBonus = getCrewAbilityBonus(4, crewMembers);
 
-  const crewTravelTime = Asteroid.getLotTravelTime(asteroid.i, 1, plot.i, crewTravelBonus.totalBonus);
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(
+    () => getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
+      { label: 'Travel to destination', plot: plot.i },
+      { label: 'Return from destination', plot: 1 },
+    ]),
+    [asteroid.i, crewTravelBonus, plot.i]
+  );
 
   const [amount, setAmount] = useState(0);
   useEffect(() => {
@@ -143,12 +153,26 @@ const ExtractionDialog = (props) => {
     {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
-      direction: getBonusDirection(crewTravelBonus)
+      direction: getBonusDirection(crewTravelBonus),
+      tooltip: (
+        <TravelBonusTooltip
+          bonus={crewTravelBonus}
+          totalTime={crewTravelTime}
+          tripDetails={tripDetails}
+          crewRequired="start" />
+      )
     },
     {
       label: 'Extraction Time',
       value: formatTimer(extractionTime),
-      direction: getBonusDirection(extractionBonus)
+      direction: getBonusDirection(extractionBonus),
+      tooltip: extractionBonus.totalBonus !== 1 && extractionTime > 0 && (
+        <TimeBonusTooltip
+          bonus={extractionBonus}
+          title="Extraction Time"
+          totalTime={extractionTime}
+          crewRequired="start" />
+      )
     },
   ]), [amount, extractionTime, resource]);
 
@@ -215,7 +239,7 @@ const ExtractionDialog = (props) => {
 
       {status === 'BEFORE' && (
         <ActionDialogTimers
-          crewAvailableIn={2 * crewTravelTime}
+          crewAvailableIn={crewTravelTime}
           actionReadyIn={crewTravelTime + extractionTime} />
       )}
 

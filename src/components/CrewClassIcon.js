@@ -13,7 +13,7 @@ const indexedIcons = [
 ];
 
 const CrewClassIcon = ({ crewClass, overrideColor }) => {
-  const classLabel = Crewmate.getClass(crewClass)?.name;
+  const classLabel = Crewmate.getClass(crewClass)?.name || '';
   const ClassIcon = indexedIcons[Number(crewClass)];
   if (ClassIcon) {
     return (

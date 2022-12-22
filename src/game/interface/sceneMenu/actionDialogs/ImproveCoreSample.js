@@ -75,6 +75,10 @@ import {
   formatTimer,
   getBonusDirection,
   formatSampleMass,
+  getTripDetails,
+  TravelBonusTooltip,
+  TimeBonusTooltip,
+  MaterialBonusTooltip,
 } from './components';
 
 const ImproveCoreSample = (props) => {
@@ -103,7 +107,15 @@ const ImproveCoreSample = (props) => {
   const sampleQualityBonus = getCrewAbilityBonus(2, crewMembers);
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
 
-  const crewTravelTime = Asteroid.getLotTravelTime(asteroid.i, 1, plot.i, crewTravelBonus.totalBonus);
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(
+    () => getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
+      { label: 'Retrieve Core Sampler', plot: 1 },  // TODO
+      { label: 'Travel to destination', plot: plot.i },
+      { label: 'Return from destination', plot: 1 },
+    ]),
+    [asteroid.i, crewTravelBonus, plot.i]
+  );
+
   const sampleBounds = CoreSample.getSampleBounds(abundance, originalTonnage, sampleQualityBonus.totalBonus);
   const sampleTime = CoreSample.getSampleTime(sampleTimeBonus.totalBonus);
 
@@ -126,22 +138,48 @@ const ImproveCoreSample = (props) => {
     {
       label: 'Discovery Minimum',
       value: `${formatSampleMass(sampleBounds.lower)} tonnes`,
-      direction: getBonusDirection(sampleQualityBonus)
+      direction: getBonusDirection(sampleQualityBonus),
+      tooltip: sampleQualityBonus.totalBonus !== 1 && (
+        <MaterialBonusTooltip
+          bonus={sampleQualityBonus}
+          title="Minimum Yield"
+          titleValue={`${formatSampleMass(sampleBounds.lower)} tonnes`} />
+      )
     },
     {
       label: 'Discovery Maximum',
       value: `${formatSampleMass(sampleBounds.upper)} tonnes`,
-      direction: getBonusDirection(sampleQualityBonus)
+      direction: getBonusDirection(sampleQualityBonus),
+      tooltip: sampleQualityBonus.totalBonus !== 1 && (
+        <MaterialBonusTooltip
+          bonus={sampleQualityBonus}
+          title="Maximum Yield"
+          titleValue={`${formatSampleMass(sampleBounds.upper)} tonnes`} />
+      )
     },
     {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
-      direction: getBonusDirection(crewTravelBonus)
+      direction: getBonusDirection(crewTravelBonus),
+      tooltip: (
+        <TravelBonusTooltip
+          bonus={crewTravelBonus}
+          totalTime={crewTravelTime}
+          tripDetails={tripDetails}
+          crewRequired="duration" />
+      )
     },
     {
       label: 'Sample Time',
       value: formatTimer(sampleTime),
-      direction: getBonusDirection(sampleTimeBonus)
+      direction: getBonusDirection(sampleTimeBonus),
+      tooltip: sampleTimeBonus.totalBonus !== 1 && (
+        <TimeBonusTooltip
+          bonus={sampleTimeBonus}
+          title="Sample Time"
+          totalTime={sampleTime}
+          crewRequired="duration" />
+      )
     },
   ];
 
@@ -190,7 +228,7 @@ const ImproveCoreSample = (props) => {
 
       {status === 'BEFORE' && (
         <ActionDialogTimers
-          crewAvailableIn={2 * crewTravelTime}
+          crewAvailableIn={crewTravelTime + sampleTime}
           actionReadyIn={crewTravelTime + sampleTime} />
       )}
 

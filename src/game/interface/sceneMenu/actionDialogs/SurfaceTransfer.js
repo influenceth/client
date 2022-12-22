@@ -141,7 +141,7 @@ const Construct = (props) => {
 
       {status === 'BEFORE' && (
         <ActionDialogTimers
-          crewAvailableIn={2 * crewTravelTime}
+          crewAvailableIn={crewTravelTime}
           actionReadyIn={crewTravelTime + constructionTime} />
       )}
 
