@@ -936,10 +936,10 @@ const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
             </tr>
           </thead>
           <tbody>
-            {options.sort((a, b) => b.yield - a.yield).map((sample, i) => (
+            {options.sort((a, b) => b.remainingYield - a.remainingYield).map((sample, i) => (
               <tr key={sample.id} onClick={onClick(sample)}>
                 <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name}</td>
-                <td>{formatSampleMass(sample.yield * resources[sample.resourceId].massPerUnit)} tonnes</td>
+                <td>{formatSampleMass(sample.remainingYield * resources[sample.resourceId].massPerUnit)} tonnes</td>
               </tr>
             ))}
           </tbody>
@@ -1019,7 +1019,7 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
             <label>
               <h3>{resource?.name} Deposit{overrideTonnage ? ' (Improved)' : ''}</h3>
               <div>
-                <b><ResourceIcon /> {formatSampleMass(overrideTonnage || (selectedSample?.yield * resource.massPerUnit))}</b> tonnes
+                <b><ResourceIcon /> {formatSampleMass(overrideTonnage || (selectedSample?.remainingYield * resource.massPerUnit))}</b> tonnes
               </div>
             </label>
           </ResourceWithData>
@@ -1050,7 +1050,7 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
 export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, selectedSample, status, usableSamples }) => {
 
   const remainingAfterExtraction = useMemo(() => selectedSample
-    ? (selectedSample.remainingYield || selectedSample.yield) - amount
+    ? selectedSample.remainingYield - amount
     : null
   , [amount, selectedSample]);
   const getTonnage = useCallback((y) => y * resources[selectedSample.resourceId].massPerUnit, [selectedSample?.resourceId]);

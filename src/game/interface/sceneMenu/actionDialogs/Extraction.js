@@ -93,13 +93,8 @@ const ExtractionDialog = (props) => {
   const { crew, crewMemberMap } = useCrew();
 
   // const [destinationPlot, setDestinationPlot] = useState();
-  const { data: destinationPlot } = usePlot(asteroid.i, 3);
+  const { data: destinationPlot } = usePlot(asteroid.i, 1239);
   const [selectedCoreSample, setSelectedCoreSample] = useState();
-
-  // TODO: remove this
-  if (selectedCoreSample && !Object.keys(selectedCoreSample).includes('remainingYield')) {
-    selectedCoreSample.remainingYield = selectedCoreSample.yield;
-  }
   
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
@@ -132,7 +127,7 @@ const ExtractionDialog = (props) => {
       return Extraction.getExtractionTime(
         amount,
         selectedCoreSample?.remainingYield || 0,
-        selectedCoreSample?.yield || 0,
+        selectedCoreSample?.initialYield || 0,
         extractionBonus.totalBonus
       )
     }
@@ -192,12 +187,24 @@ const ExtractionDialog = (props) => {
   // }, [extractionStatus]);
 
   const usableSamples = useMemo(() => {
-    return (plot?.coreSamples || []).filter((c) => c.yield > 0); // TODO: ...
+    return (plot?.coreSamples || []).filter((c) => c.remainingYield > 0);
   }, [plot?.coreSamples]);
+
+  useEffect(() => {
+    if (usableSamples.length === 1 && !selectedCoreSample) {
+      setSelectedCoreSample(usableSamples[0]);
+    }
+  }, [!selectedCoreSample, usableSamples]);
 
   const onStartExtraction = useCallback(() => {
     startExtraction(amount, selectedCoreSample, destinationPlot);
   }, [amount, selectedCoreSample, destinationPlot]);
+
+  useEffect(() => {
+    if (extractionStatus === 'FINISHING') {
+      onClose();
+    }
+  }, [extractionStatus]);
 
   return (
     <>
@@ -212,8 +219,8 @@ const ExtractionDialog = (props) => {
           crewRequirement: 'start',
         }}
         status={status}
-        startTime={plot?.building?.startTime}
-        targetTime={plot?.building?.committedTime} />
+        startTime={plot?.building?.extraction?.startTime}
+        targetTime={plot?.building?.extraction?.committedTime} />
 
       <ExtractSampleSection
         amount={amount}

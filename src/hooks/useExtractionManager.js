@@ -22,7 +22,7 @@ const useExtractionManager = (asteroidId, plotId) => {
   const startExtraction = useCallback((amount, coreSample, destinationPlot) => {
     execute('START_EXTRACTION', {
       ...payload,
-      amount: amount * 0.001,
+      amount,
       resourceId: coreSample.resourceId,
       sampleId: coreSample.sampleId,
       destinationLotId: destinationPlot.i,
@@ -37,12 +37,11 @@ const useExtractionManager = (asteroidId, plotId) => {
   // status flow
   // READY > EXTRACTING > READY_TO_FINISH > FINISHING
   const extractionStatus = useMemo(() => {
-    if (plot?.building) {
-      if (plot.building.extractionStatus === Extraction.STATUS_EXTRACTING) {
+    if (plot?.building?.extraction) {
+      if (plot.building.extraction.status === Extraction.STATUS_EXTRACTING) {
         if(getStatus('FINISH_EXTRACTION', payload) === 'pending') {
           return 'FINISHING';
-        // TODO: this should be extraction committed time
-        } else if (plot.building.committedTime && (plot.building.committedTime < getAdjustedNow())) {
+        } else if (plot.building.extraction.committedTime && plot.building.extraction.committedTime < getAdjustedNow()) {
           return 'READY_TO_FINISH';
         }
         return 'EXTRACTING';

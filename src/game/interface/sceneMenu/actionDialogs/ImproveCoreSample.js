@@ -87,20 +87,20 @@ const ImproveCoreSample = (props) => {
   const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
   const resourceMap = useStore(s => s.asteroids.showResourceMap);
 
-  const { currentSample, startSampling, finishSampling, getTonnage, selectSampleToImprove, samplingStatus, lotStatus } = useCoreSampleManager(asteroid?.i, plot?.i, resourceMap?.i, true);
+  const { currentSample, startSampling, finishSampling, getInitialTonnage, selectSampleToImprove, samplingStatus, lotStatus } = useCoreSampleManager(asteroid?.i, plot?.i, resourceMap?.i, true);
   const { crew, crewMemberMap } = useCrew();
 
   const abundance = 0.5; // TODO: abundance (NOTE: should be from currentSample resource if there is one)
 
   const improvableSamples = useMemo(() =>
     (plot?.coreSamples || [])
-      .filter((c) => c.yield && c.status !== CoreSample.STATUS_USED)
-      .map((c) => ({ ...c, tonnage: c.yield * resources[c.resourceId].massPerUnit }))
+      .filter((c) => c.initialYield && c.status !== CoreSample.STATUS_USED)
+      .map((c) => ({ ...c, tonnage: c.initialYield * resources[c.resourceId].massPerUnit }))
   , [plot?.coreSamples]);
 
-  const originalYield = useMemo(() => currentSample?.yield, [currentSample?.id]); // only update on id change
+  const originalYield = useMemo(() => currentSample?.initialYield, [currentSample?.id]); // only update on id change
   const originalTonnage = useMemo(() => originalYield ? originalYield * resources[currentSample.resourceId].massPerUnit : 0, [currentSample, originalYield]);
-  const isImproved = useMemo(() => originalYield ? (currentSample?.status === CoreSample.STATUS_FINISHED && currentSample.yield > originalYield) : false, [currentSample, originalYield]);
+  const isImproved = useMemo(() => originalYield ? (currentSample?.status === CoreSample.STATUS_FINISHED && currentSample.initialYield > originalYield) : false, [currentSample, originalYield]);
 
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
   const sampleTimeBonus = getCrewAbilityBonus(1, crewMembers);
@@ -218,7 +218,7 @@ const ImproveCoreSample = (props) => {
         resource={resources[resourceMap.i]}
         resources={resources}
         status={status}
-        overrideTonnage={status === 'AFTER' ? getTonnage(currentSample) : undefined} />
+        overrideTonnage={status === 'AFTER' ? getInitialTonnage(currentSample) : undefined} />
 
       {status === 'BEFORE' && (
         <ToolSection resource={resources[175]} sourcePlot={plot} />

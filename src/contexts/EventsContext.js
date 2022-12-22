@@ -142,7 +142,7 @@ export function EventsProvider({ children }) {
         transformedEvents.push({ ...e, event: 'Construction_Unplanned', key: e.id });
       } else if (e.event === 'Lot_Used' && Capable.TYPES[e.returnValues.capableType].category === 'Building') {
         transformedEvents.push({ ...e, event: 'Construction_Planned', key: e.id });
-      } else {
+      } else if(!['Construction_Planned', 'Construction_Unplanned'].includes(e.event)) {
         transformedEvents.push({ ...e, event: eventName, key: e.id });
       }
     });

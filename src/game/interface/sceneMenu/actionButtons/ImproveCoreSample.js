@@ -15,7 +15,7 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
 
   // badge shows full count of *improveable* core samples of *selected* resource on lot (owned by anyone)
   const improvableSamples = useMemo(() => (plot?.coreSamples || []).filter((c) => {
-    return c.resourceId === Number(resourceMap?.i) && c.yield > 0 && c.status !== CoreSample.STATUS_USED;
+    return c.resourceId === Number(resourceMap?.i) && c.initialYield > 0 && c.status !== CoreSample.STATUS_USED;
   }), [plot?.coreSamples]);
 
   const attention = lotStatus === 'READY_TO_FINISH';

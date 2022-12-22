@@ -51,7 +51,7 @@ const useCoreSampleManager = (asteroidId, plotId, resourceId, isImprovement = fa
   const lotStatus = useMemo(() => {
     return (plot?.coreSamples || [])
       .filter((c) => c.resourceId === Number(resourceId) && c.owner === Number(crew?.i) && c.status !== CoreSample.STATUS_USED)
-      .filter((sample) => !isImprovement === !Object.keys(sample).includes('yield'))
+      .filter((sample) => !isImprovement === !Object.keys(sample).includes('initialYield'))
       .reduce((acc, sample) => {
         const status = getSampleStatus(sample);
         if (status === 'SAMPLING' || status === 'FINISHING') {
@@ -75,7 +75,7 @@ const useCoreSampleManager = (asteroidId, plotId, resourceId, isImprovement = fa
     if (!currentSampleId) {
       const eligibleSamples = (plot?.coreSamples || [])
         .filter((c) => c.resourceId === Number(resourceId) && c.owner === Number(crew?.i) && c.status !== CoreSample.STATUS_USED)
-        .filter((c) => !isImprovement === !Object.keys(c).includes('yield'));
+        .filter((c) => !isImprovement === !Object.keys(c).includes('initialYield'));
 
       // default to an in-process sample if there is one
       const activeSample = eligibleSamples.find((c) => ['SAMPLING', 'FINISHING', 'READY_TO_FINISH'].includes(getSampleStatus(c)));
@@ -100,9 +100,9 @@ const useCoreSampleManager = (asteroidId, plotId, resourceId, isImprovement = fa
     execute('FINISH_CORE_SAMPLE', getPayload(currentSample))
   }, [currentSample, getPayload]);
 
-  const getTonnage = useCallback((sample) => {
-    return Object.keys(sample).includes('yield')
-      ? sample.yield * Inventory.RESOURCES[sample.resourceId].massPerUnit
+  const getInitialTonnage = useCallback((sample) => {
+    return Object.keys(sample).includes('initialYield')
+      ? sample.initialYield * Inventory.RESOURCES[sample.resourceId].massPerUnit
       : undefined;
   }, []);
 
@@ -115,7 +115,7 @@ const useCoreSampleManager = (asteroidId, plotId, resourceId, isImprovement = fa
     selectSampleToImprove,
     startSampling,
     finishSampling,
-    getTonnage,
+    getInitialTonnage,
     lotStatus,
     samplingStatus,
   };

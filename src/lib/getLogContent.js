@@ -11,6 +11,7 @@ import {
   ConstructIcon,
   CoreSampleIcon,
   CrewIcon,
+  ExtractionIcon,
   PromoteIcon
 } from '~/components/Icons';
 
@@ -83,7 +84,6 @@ const entries = {
       <>
         <span>Ready to finalize scan on </span>
         <AsteroidLink id={e.i} />
-        <span>. Scan *must* be submitted and mined within 256 blocks (~45 min)</span>
       </>
     ),
   }),
@@ -168,7 +168,7 @@ const entries = {
     icon: <ConstructIcon />,
     content: (
       <>
-        <span>{Capable.TYPES[e.returnValues.capableType]?.name} plan completed on </span>
+        <span>{Capable.TYPES[e.returnValues.capableType]?.name} plan completed on ({e.returnValues.lotId}) </span>
         <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
       </>
     ),
@@ -199,7 +199,7 @@ const entries = {
     icon: <CoreSampleIcon />,
     content: (
       <>
-        <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample started at </span>
+        <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample started at ({e.returnValues.lotId}) </span>
         <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
       </>
     ),
@@ -210,8 +210,28 @@ const entries = {
     icon: <CoreSampleIcon />,
     content: (
       <>
-        <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample analyzed at </span>
+        <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample analyzed at ({e.returnValues.lotId}) </span>
         <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  Extraction_Started: (e) => ({
+    icon: <ExtractionIcon />,
+    content: (
+      <>
+        <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} extraction #{e.returnValues.runId} started.</span>
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  Extraction_Finished: (e) => ({
+    icon: <ExtractionIcon />,
+    content: (
+      <>
+        <span>Extraction #{e.returnValues.runId} completed.</span>
       </>
     ),
     txLink: getTxLink(e),

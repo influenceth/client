@@ -418,7 +418,7 @@ const SceneMenu = (props) => {
       } else if (plot && crew) {
         if (resourceMode) {
           a.push(actionButtons.NewCoreSample);
-          if (!!(plot.coreSamples || []).find((c) => c.resourceId === Number(showResourceMap?.i) && c.yield > 0 && c.status !== CoreSample.STATUS_USED)) {
+          if (!!(plot.coreSamples || []).find((c) => c.resourceId === Number(showResourceMap?.i) && c.initialYield > 0 && c.status !== CoreSample.STATUS_USED)) {
             a.push(actionButtons.ImproveCoreSample);
           }
         }

@@ -86,7 +86,7 @@ const NewCoreSample = (props) => {
   const resources = useResourceAssets();
   const resourceMap = useStore(s => s.asteroids.showResourceMap);
 
-  const { currentSample, startSampling, finishSampling, getTonnage, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i, resourceMap?.i);
+  const { currentSample, startSampling, finishSampling, getInitialTonnage, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i, resourceMap?.i);
   const { crew, crewMemberMap } = useCrew();
 
   const abundance = 0.5; // TODO: abundance (NOTE: should be from selectedSample resource if there is one)
@@ -158,7 +158,7 @@ const NewCoreSample = (props) => {
   ];
 
   const status = useMemo(() => {
-    if (currentSample?.yield !== undefined) {
+    if (currentSample?.initialYield !== undefined) {
       return 'AFTER';
     } else if (samplingStatus === 'READY') {
       return 'BEFORE';
@@ -177,7 +177,7 @@ const NewCoreSample = (props) => {
           headerBackground: coreSampleBackground,
           label: 'Core Sample',
           completeLabel: 'Sample',
-          completeStatus: currentSample?.yield === undefined ? 'Ready for Analysis' : 'Analyzed',
+          completeStatus: currentSample?.initialYield === undefined ? 'Ready for Analysis' : 'Analyzed',
           crewRequirement: 'duration',
         }}
         status={status}
@@ -188,7 +188,7 @@ const NewCoreSample = (props) => {
         abundance={abundance}
         resource={resources[resourceMap.i]}
         status={status}
-        tonnage={status === 'AFTER' ? getTonnage(currentSample) : undefined} />
+        tonnage={status === 'AFTER' ? getInitialTonnage(currentSample) : undefined} />
 
       {status === 'BEFORE' && (
         <ToolSection resource={resources[175]} sourcePlot={plot} />
@@ -204,7 +204,7 @@ const NewCoreSample = (props) => {
 
       <ActionDialogFooter
         {...props}
-        buttonsOverride={currentSample?.yield !== undefined && [
+        buttonsOverride={currentSample?.initialYield !== undefined && [
           { label: 'Close', onClick: onClose },
           { label: 'Improve Sample', onClick: () => { onSetAction('IMPROVE_CORE_SAMPLE'); } },
         ]}
