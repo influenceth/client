@@ -68,8 +68,7 @@ const useConstructionManager = (asteroidId, plotId) => {
         return 'OPERATIONAL';
       }
     }
-    const planStatus = getStatus('PLAN_CONSTRUCTION', payload);
-    if (planStatus === 'pending') {
+    if (getStatus('PLAN_CONSTRUCTION', payload) === 'pending') {
       return 'PLANNING';
     }
     return 'READY_TO_PLAN';

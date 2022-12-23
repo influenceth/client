@@ -74,7 +74,11 @@ import {
 
   formatTimer,
   getBonusDirection,
-  formatSampleValue,
+  getTripDetails,
+  formatSampleMass,
+  TravelBonusTooltip,
+  TimeBonusTooltip,
+  MaterialBonusTooltip,
 } from './components';
 
 const NewCoreSample = (props) => {
@@ -82,60 +86,79 @@ const NewCoreSample = (props) => {
   const resources = useResourceAssets();
   const resourceMap = useStore(s => s.asteroids.showResourceMap);
 
-  const { currentSamplingProcess, startSampling, finishSampling, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i, resourceMap?.i);
+  const { currentSample, startSampling, finishSampling, getInitialTonnage, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i, resourceMap?.i);
   const { crew, crewMemberMap } = useCrew();
 
-  const abundance = 0.5; // TODO: abundance (NOTE: should be from currentSamplingProcess resource if there is one)
+  const abundance = 0.5; // TODO: abundance (NOTE: should be from selectedSample resource if there is one)
   
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
   const sampleTimeBonus = getCrewAbilityBonus(1, crewMembers);
   const sampleQualityBonus = getCrewAbilityBonus(2, crewMembers);
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
 
-  const crewTravelTime = Asteroid.getLotTravelTime(asteroid.i, 1, plot.i, crewTravelBonus.totalBonus);
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(
+    () => getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
+      { label: 'Retrieve Core Sampler', plot: 1 },  // TODO
+      { label: 'Travel to destination', plot: plot.i },
+      { label: 'Return from destination', plot: 1 },
+    ]),
+    [asteroid.i, crewTravelBonus, plot.i]
+  );
+
   const sampleBounds = CoreSample.getSampleBounds(abundance, 0, sampleQualityBonus.totalBonus);
   const sampleTime = CoreSample.getSampleTime(sampleTimeBonus.totalBonus);
-
-  const [newSampleId, setNewSampleId] = useState();
-  useEffect(() => {
-    if (currentSamplingProcess) {
-      setNewSampleId(currentSamplingProcess?.id);
-    }
-  }, [currentSamplingProcess]);
-
-  const coreYield = useMemo(() => {
-    const sample = (plot?.coreSamples || []).find((c) => c.id === newSampleId);
-    if (sample && Object.keys(sample).includes('yield')) {
-      return sample.yield * resources[sample.resourceId].massPerUnit;
-    }
-    return undefined;
-  }, [newSampleId, plot?.coreSamples]);
   
   const stats = [
     {
       label: 'Discovery Minimum',
-      value: `${formatSampleValue(sampleBounds.lower)} tonnes`,
-      direction: getBonusDirection(sampleQualityBonus)
+      value: `${formatSampleMass(sampleBounds.lower)} tonnes`,
+      direction: getBonusDirection(sampleQualityBonus),
+      tooltip: sampleQualityBonus.totalBonus !== 1 && (
+        <MaterialBonusTooltip
+          bonus={sampleQualityBonus}
+          title="Minimum Yield"
+          titleValue={`${formatSampleMass(sampleBounds.lower)} tonnes`} />
+      )
     },
     {
       label: 'Discovery Maximum',
-      value: `${formatSampleValue(sampleBounds.upper)} tonnes`,
-      direction: getBonusDirection(sampleQualityBonus)
+      value: `${formatSampleMass(sampleBounds.upper)} tonnes`,
+      direction: getBonusDirection(sampleQualityBonus),
+      tooltip: sampleQualityBonus.totalBonus !== 1 && (
+        <MaterialBonusTooltip
+          bonus={sampleQualityBonus}
+          title="Maximum Yield"
+          titleValue={`${formatSampleMass(sampleBounds.upper)} tonnes`} />
+      )
     },
     {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
-      direction: getBonusDirection(crewTravelBonus)
+      direction: getBonusDirection(crewTravelBonus),
+      tooltip: (
+        <TravelBonusTooltip
+          bonus={crewTravelBonus}
+          totalTime={crewTravelTime}
+          tripDetails={tripDetails}
+          crewRequired="duration" />
+      )
     },
     {
       label: 'Sample Time',
       value: formatTimer(sampleTime),
-      direction: getBonusDirection(sampleTimeBonus)
+      direction: getBonusDirection(sampleTimeBonus),
+      tooltip: sampleTimeBonus.totalBonus !== 1 && (
+        <TimeBonusTooltip
+          bonus={sampleTimeBonus}
+          title="Sample Time"
+          totalTime={sampleTime}
+          crewRequired="duration" />
+      )
     },
   ];
 
   const status = useMemo(() => {
-    if (coreYield !== undefined) {
+    if (currentSample?.initialYield !== undefined) {
       return 'AFTER';
     } else if (samplingStatus === 'READY') {
       return 'BEFORE';
@@ -143,7 +166,7 @@ const NewCoreSample = (props) => {
       return 'DURING';
     }
     return 'AFTER';
-  }, [coreYield, newSampleId, samplingStatus]);
+  }, [currentSample, samplingStatus]);
 
   return (
     <>
@@ -154,18 +177,18 @@ const NewCoreSample = (props) => {
           headerBackground: coreSampleBackground,
           label: 'Core Sample',
           completeLabel: 'Sample',
-          completeStatus: coreYield === undefined ? 'Ready for Analysis' : 'Analyzed',
+          completeStatus: currentSample?.initialYield === undefined ? 'Ready for Analysis' : 'Analyzed',
           crewRequirement: 'duration',
         }}
         status={status}
-        startTime={currentSamplingProcess?.startTime}
-        targetTime={currentSamplingProcess?.committedTime} />
+        startTime={currentSample?.startTime}
+        targetTime={currentSample?.committedTime} />
 
       <RawMaterialSection
         abundance={abundance}
-        resource={resources[currentSamplingProcess?.resourceId || resourceMap.i]}
+        resource={resources[resourceMap.i]}
         status={status}
-        tonnage={status === 'AFTER' && coreYield !== undefined ? coreYield : undefined} />
+        tonnage={status === 'AFTER' ? getInitialTonnage(currentSample) : undefined} />
 
       {status === 'BEFORE' && (
         <ToolSection resource={resources[175]} sourcePlot={plot} />
@@ -175,13 +198,13 @@ const NewCoreSample = (props) => {
 
       {status === 'BEFORE' && (
         <ActionDialogTimers
-          crewAvailableIn={2 * crewTravelTime}
+          crewAvailableIn={crewTravelTime + sampleTime}
           actionReadyIn={crewTravelTime + sampleTime} />
       )}
 
       <ActionDialogFooter
         {...props}
-        buttonsOverride={coreYield !== undefined && [
+        buttonsOverride={currentSample?.initialYield !== undefined && [
           { label: 'Close', onClick: onClose },
           { label: 'Improve Sample', onClick: () => { onSetAction('IMPROVE_CORE_SAMPLE'); } },
         ]}

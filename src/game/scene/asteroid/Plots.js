@@ -3,12 +3,14 @@ import { useFrame, useThree } from '@react-three/fiber';
 import {
   CircleGeometry,
   Color,
+  FrontSide,
   InstancedMesh,
   Mesh,
   MeshBasicMaterial,
   Object3D,
+  PlaneGeometry,
   RingGeometry,
-  TorusGeometry,
+  TextureLoader,
   Vector3
 } from 'three';
 
@@ -42,7 +44,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
   const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
-  const { asteroidId: plotAsteroidId, plotId } = useStore(s => s.asteroids.plot || {});
+  const { asteroidId: plotAsteroidId, plotId: selectedPlotId } = useStore(s => s.asteroids.plot || {});
 
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
@@ -70,6 +72,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const PLOT_STROKE_MARGIN = useMemo(() => 0.125 * PLOT_WIDTH, [PLOT_WIDTH]);
   const BUILDING_RADIUS = useMemo(() => 0.375 * PLOT_WIDTH, [PLOT_WIDTH]);
   const PIP_RADIUS = useMemo(() => 0.25 * PLOT_WIDTH, [PLOT_WIDTH]);
+  const RETICULE_WIDTH = 5 * PLOT_WIDTH;
 
   const chunkyAltitude = useMemo(() => Math.round(cameraAltitude / 500) * 500, [cameraAltitude]);
   const plotTally = useMemo(() => Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2), [config?.radiusNominal]);
@@ -257,24 +260,19 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
   // instantiate mouse mesh
   useEffect(() => {
-    // const geometry = new RingGeometry(2 * PLOT_WIDTH, 2 * PLOT_WIDTH + PLOT_STROKE_MARGIN, 16, 1);
-    const geometry = new TorusGeometry(1.5 * PLOT_WIDTH, 0.75 * PLOT_STROKE_MARGIN, 10, 32);
-    // const geometry = new CircleGeometry(2 * PLOT_WIDTH, 6);
-    // geometry.rotateX(-Math.PI / 2);
-
     mouseMesh.current = new Mesh(
-      geometry,
+      new PlaneGeometry(RETICULE_WIDTH, RETICULE_WIDTH),
       new MeshBasicMaterial({
         color: WHITE_COLOR,
         depthTest: false,
-        depthWrite: false,
-        opacity: 0,
+        map: new TextureLoader().load('/textures/asteroid/reticule.png'),
+        opacity: 0.9,
+        side: FrontSide,
         toneMapped: false,
-        transparent: true,
+        transparent: true
       })
     );
     mouseMesh.current.renderOrder = 999;
-    mouseMesh.current.userData.bloom = true;
     (attachTo || scene).add(mouseMesh.current);
     return () => {
       if (mouseMesh.current) {
@@ -285,19 +283,15 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
   // instantiate selection mesh
   useEffect(() => {
-    const geometry = new TorusGeometry(1.5 * PLOT_WIDTH, 0.75 * PLOT_STROKE_MARGIN, 10, 32);
-
-    // TODO (enhancement): can currently see selection through the surface
-    //                     ... we may want to elevate and turn depth testing back on for this mesh
     selectionMesh.current = new Mesh(
-      geometry,
+      new PlaneGeometry(RETICULE_WIDTH, RETICULE_WIDTH),
       new MeshBasicMaterial({
-        color: SELECTION_COLOR,
+        color: WHITE_COLOR,
         depthTest: false,
-        depthWrite: false,
-        opacity: 0,
+        map: new TextureLoader().load('/textures/asteroid/reticule.png'),
+        side: FrontSide,
         toneMapped: false,
-        transparent: true,
+        transparent: true
       })
     );
     selectionMesh.current.renderOrder = 999;
@@ -489,14 +483,8 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
   const highlightPlot = useCallback((plotId) => {
     highlighted.current = null;
-    // return if it's already highlighted
-    if (highlighted.current === plotId) return;
-    // if there is currently a highlight, hide it
-    if (highlighted.current !== undefined) {
-      mouseMesh.current.material.opacity = 0;
-    }
     // if a new plotId was passed to highlight, do it
-    if (plotId !== undefined) {  // TODO: is there a plot #0?
+    if (plotId !== undefined && plotId !== selectedPlotId) {
       if (!positions.current) return;
       const plotIndex = plotId - 1;
 
@@ -517,12 +505,15 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       mouseMesh.current.material.opacity = 1;
 
       highlighted.current = plotId;
+    } else {
+      mouseMesh.current.material.opacity = 0;
     }
-  }, [attachTo.quaternion]);
+  }, [attachTo.quaternion, selectedPlotId]);
 
+  const selectionAnimationTime = useRef();
   useEffect(() => {
-    if (selectionMesh.current && positions.current && plotId) {
-      const plotIndex = plotId - 1;
+    if (selectionMesh.current && positions.current && selectedPlotId) {
+      const plotIndex = selectedPlotId - 1;
 
       selectionMesh.current.position.set(
         positions.current[plotIndex * 3 + 0],
@@ -538,11 +529,13 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       orientation.applyQuaternion(attachTo.quaternion);
       selectionMesh.current.lookAt(orientation);
 
+      selectionAnimationTime.current = 0;
       selectionMesh.current.material.opacity = 1;
+      mouseMesh.current.material.opacity = 0;
     } else {
       selectionMesh.current.material.opacity = 0;
     }
-  }, [attachTo.quaternion, plotId]);
+  }, [attachTo.quaternion, selectedPlotId]);
   
   // useEffect(() => { // shouldn't be zoomed to plot when plots first loaded or unloaded
   //   dispatchPlotSelected();
@@ -581,8 +574,13 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     dispatchPlotSelected(asteroidId, highlighted.current);
   }, [lastClick]);
 
-  useFrame(() => {
+  useFrame((state, delta) => {
+    selectionAnimationTime.current += delta;
     if (!plotTally) return;
+    if (selectionMesh.current && positions.current && selectedPlotId) {
+      selectionMesh.current.scale.x = 1 + 0.1 * Math.sin(7.5 * selectionAnimationTime.current);
+      selectionMesh.current.scale.y = selectionMesh.current.scale.x;
+    }
     if (!lastMouseIntersect.current) return;
     if (cameraAltitude > MOUSE_VISIBILITY_ALTITUDE) { highlightPlot(); return; }
     if (!mouseIntersect || mouseIntersect.length() === 0) { highlightPlot(); return; }

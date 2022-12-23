@@ -54,7 +54,7 @@ const PlotLink = (props) => {
     }
   }, [asteroidId, destination, plotId, selectResourceMapAsNeeded, zoomStatus]);
 
-  return <OnClickLink onClick={onClick}>{asteroidName || `Asteroid #${asteroidId}`} #{plotId.toLocaleString()}</OnClickLink>;
+  return <OnClickLink onClick={onClick}>{asteroidName || `Asteroid #${asteroidId}`} #{plotId ? plotId.toLocaleString() : '?'}</OnClickLink>;
 };
 
 export default PlotLink;

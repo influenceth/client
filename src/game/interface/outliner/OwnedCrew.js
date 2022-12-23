@@ -66,7 +66,9 @@ const OwnedCrew = (props) => {
               <span>No owned crew. {mintable.length} crew members available to be minted.</span>
             </ListEmptyMessage>
         )}
-        {crew?.crewMembers?.length > 0 && crew.crewMembers.map((i) => <CrewMemberItem key={i} crew={crewMemberMap[i]} />)}
+        {crew?.crewMembers?.length > 0 && crew.crewMembers
+          .filter((i) => !!crewMemberMap[i])
+          .map((i) => <CrewMemberItem key={i} crew={crewMemberMap[i]} />)}
       </CrewList>
     </Section>
   );

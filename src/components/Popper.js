@@ -13,7 +13,7 @@ const Content = styled.div`
   margin-left: -100px;
   position: fixed;
   width: 540px;
-  z-index: 5;
+  z-index: 31;
 `;
 
 const Title = styled.div`

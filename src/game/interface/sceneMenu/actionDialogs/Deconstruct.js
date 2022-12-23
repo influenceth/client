@@ -74,6 +74,11 @@ import {
 
   formatTimer,
   getBonusDirection,
+  TravelBonusTooltip,
+  getTravelStep,
+  getTripDetails,
+  TransportBonusTooltip,
+  TimeBonusTooltip,
 } from './components';
 
 const Deconstruct = (props) => {
@@ -84,18 +89,24 @@ const Deconstruct = (props) => {
   const { crew, crewMemberMap } = useCrew();
 
   const destinationPlot = {
-    i: 1,
+    i: 10,
     building: buildings[1]
   };
   
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
-  const constructionBonus = getCrewAbilityBonus(5, crewMembers);
   const transportBonus = crewTravelBonus;
 
-  const crewTravelTime = Asteroid.getLotTravelTime(asteroid.i, 1, plot.i, crewTravelBonus.totalBonus); // TODO: ...
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => 
+    getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
+      { label: 'Travel to destination', plot: plot.i },
+      { label: 'Inventory Transport', plot: destinationPlot.i },
+      { label: 'Return from destination', plot: 1 },
+    ])
+  , [asteroid.i, crewTravelBonus, plot.i]);
+
   const lotDistance = Asteroid.getLotDistance(asteroid.i, plot.i, 1); // TODO: ...
-  const constructionTime = Construction.getConstructionTime(plot.building.assetId, constructionBonus.totalBonus);
+  const constructionTime = Construction.getConstructionTime(plot.building.assetId, 1);
   const transportTime = Asteroid.getLotTravelTime(asteroid.i, plot.i, 1, crewTravelBonus.totalBonus); // TODO: ...
 
   const stats = useMemo(() => [
@@ -109,17 +120,31 @@ const Deconstruct = (props) => {
     { 
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
-      direction: getBonusDirection(crewTravelBonus)
+      direction: getBonusDirection(crewTravelBonus),
+      tooltip: (
+        <TravelBonusTooltip
+          bonus={crewTravelBonus}
+          totalTime={crewTravelTime}
+          tripDetails={tripDetails}
+          crewRequired="start" />
+      )
     },
     {
       label: 'Deconstruction Time',
       value: formatTimer(constructionTime),
-      direction: getBonusDirection(constructionBonus)
+      direction: 0
     },
     {
       label: 'Transport Time',
       value: formatTimer(transportTime),
-      direction: getBonusDirection(transportBonus)
+      direction: getBonusDirection(transportBonus),
+      tooltip: crewTravelBonus.totalBonus !== 1 && (
+        <TimeBonusTooltip
+          bonus={crewTravelBonus}
+          title="Transport Time"
+          totalTime={transportTime}
+          crewRequired="start" />
+      )
     },
   ], []);
 
@@ -146,7 +171,14 @@ const Deconstruct = (props) => {
         status="BEFORE" />
 
       <DeconstructionMaterialsSection label="Recovered Materials" resources={resources} status={status} />
-      {status !== 'AFTER' && <DestinationPlotSection asteroid={asteroid} destinationPlot={destinationPlot} status={status} />}
+
+      {status !== 'AFTER' && (
+        <DestinationPlotSection
+          asteroid={asteroid}
+          destinationPlot={destinationPlot}
+          futureFlag
+          status={status} />
+      )}
 
       <ActionDialogStats stats={stats} status="BEFORE" />
       <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />

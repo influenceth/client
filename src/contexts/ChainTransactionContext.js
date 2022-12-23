@@ -206,12 +206,7 @@ const getContracts = (account, queryClient) => ({
       content: 'Core sample failed.',
       timestamp: Math.round(Date.now() / 1000)
     }),
-    isEqual: (txVars, vars) => (
-      txVars.asteroidId === vars.asteroidId
-      && txVars.plotId === vars.plotId
-      // && txVars.resourceId === vars.resourceId
-      && txVars.crewId === vars.crewId
-    )
+    isEqual: 'ALL'
   },
   'FINISH_CORE_SAMPLE': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -225,13 +220,7 @@ const getContracts = (account, queryClient) => ({
       content: 'Core sample retrieval failed.',
       timestamp: Math.round(Date.now() / 1000)
     }),
-    isEqual: (txVars, vars) => (
-      txVars.asteroidId === vars.asteroidId
-      && txVars.plotId === vars.plotId
-      // && txVars.resourceId === vars.resourceId
-      // && txVars.sampleId === vars.sampleId
-      && txVars.crewId === vars.crewId
-    )
+    isEqual: 'ALL'
   },
 
   'PLAN_CONSTRUCTION': {
@@ -305,6 +294,39 @@ const getContracts = (account, queryClient) => ({
     getErrorAlert: ({ i }) => ({
       type: 'GenericAlert',
       content: 'Deconstruction failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: 'ALL'
+  },
+
+  'START_EXTRACTION': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, plotId, crewId, resourceId, sampleId, amount, destinationLotId, destinationInventoryId }) => contract.invoke(
+      'Extraction_start',
+      [asteroidId, plotId, resourceId, sampleId, amount, destinationLotId, destinationInventoryId, crewId]
+    ),
+    getErrorAlert: ({ i }) => ({
+      type: 'GenericAlert',
+      content: 'Extraction failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: (txVars, vars) => (
+      txVars.asteroidId === vars.asteroidId
+      && txVars.plotId === vars.plotId
+      && txVars.crewId === vars.crewId
+    )
+  },
+  'FINISH_EXTRACTION': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
+      'Extraction_finish',
+      [asteroidId, plotId, crewId]
+    ),
+    getErrorAlert: ({ i }) => ({
+      type: 'GenericAlert',
+      content: 'Extraction finalization failed.',
       timestamp: Math.round(Date.now() / 1000)
     }),
     isEqual: 'ALL'
