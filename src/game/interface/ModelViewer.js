@@ -151,7 +151,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   useEffect(() => {
     // TODO (enhancement): on mobile, aspect ratio is such that zoomed out to 1 may not have
     //  view of full width of 1.0 at 0,0,0... so on mobile, should probably set this to 1.5+
-    const zoom = 1.75;
+    const zoom = assetType === 'Building' ? 0.2 : 1.75;
     camera.position.set(0, 0.75 * zoom, 1.25 * zoom);
     camera.up.set(0, 1, 0);
     camera.fov = 50;
@@ -246,6 +246,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
             node.material.depthWrite = !node.material.transparent;
           } else if (assetType === 'Building' && node.isSpotLight) {
             node.castShadow = true;
+            node.shadow.bias = -0.0001;
             node.intensity /= 8;
           } else if (node.isLight) {
             console.warn('unexpected light', node);
@@ -460,6 +461,59 @@ const Lighting = ({ assetType }) => {
       // keyLight.shadow.bias = -0.02;
     }
 
+    // const spotlightFOV = Math.PI / 2.3;
+    // const spotlightTilt = 0.006;
+    // const spotlights = [
+    //   new THREE.SpotLight(0xffffff, 0, 1, spotlightFOV, 1.0),
+    //   new THREE.SpotLight(0xffffff, 1, 1, spotlightFOV, 1.0)
+    // ];
+    // if (spotlights[0]) {
+    //   spotlights[0].position.set(-0.0095, 0.0535, 0.005);
+    //   spotlights[0].target.position.set(spotlights[0].position.x, spotlights[0].position.y - 0.01, spotlights[0].position.z);
+
+    //   // spotlights[0].position.set(-0.007, 0.055, 0.005);
+    //   // spotlights[0].target.position.set(spotlights[0].position.x - spotlightTilt, spotlights[0].position.y - 0.01, spotlights[0].position.z);
+
+    //   // spotlights[0].position.set(-0.0095, 0.055, 0.0075);
+    //   // spotlights[0].target.position.set(spotlights[0].position.x, spotlights[0].position.y - 0.01, spotlights[0].position.z - spotlightTilt);
+    // }
+    // if (spotlights[1]) {
+    //   spotlights[1].position.set(-0.012, 0.055, 0.005);
+    //   spotlights[1].target.position.set(spotlights[1].position.x + spotlightTilt, spotlights[1].position.y - 0.01, spotlights[1].position.z);
+
+    //   // spotlights[1].position.set(-0.0095, 0.055, 0.0025);
+    //   // spotlights[1].target.position.set(spotlights[1].position.x, spotlights[1].position.y - 0.01, spotlights[1].position.z + spotlightTilt);
+
+    //   spotlights[1].position.set(-0.0012, 0.045, 0.005);
+    //   spotlights[1].target.position.set(-0.01, 0.040, 0.005);
+    // }
+
+    // const helpers = [];
+
+    // spotlights.forEach((spotlight, i) => {
+    //   spotlight.castShadow = true;
+
+    //   scene.add(spotlight);
+    //   scene.add(spotlight.target);
+
+    //   spotlight.shadow.bias = -0.01;
+    //   spotlight.shadow.mapSize.height = 1024;
+    //   spotlight.shadow.mapSize.width = 1024;
+
+    //   spotlight.shadow.camera.near = 0.0025;
+    //   spotlight.shadow.camera.far = 0.01;
+    //   spotlight.shadow.camera.fov = 180 * (2 * spotlightFOV);
+    //   spotlight.shadow.camera.updateProjectionMatrix();
+      
+    //   if (i === 1) {
+    //     // helpers.push(new THREE.SpotLightHelper(spotlight));
+    //     helpers.push(new THREE.CameraHelper(spotlight.shadow.camera));
+    //   }
+    // })
+    // helpers.forEach((helper) => {
+    //   scene.add(helper);
+    // });
+
     // const helper1 = new THREE.CameraHelper( keyLight.shadow.camera );
     // scene.add(helper1);
     // const helper2 = new THREE.DirectionalLightHelper(keyLight);
@@ -486,6 +540,8 @@ const Lighting = ({ assetType }) => {
       // if (sunLight) scene.remove(sunLight);
       if (keyLight) scene.remove(keyLight);
       if (rimLight) scene.remove(rimLight);
+      // if (spotlights) spotlights.forEach((spotlight) => { scene.remove(spotlight.target); scene.remove(spotlight); });
+      // if (helpers) helpers.forEach((helper) => scene.remove(helper));
       // if (helper1) scene.remove(helper1);
       // if (helper2) scene.remove(helper2);
       // if (helper3) scene.remove(helper3);
@@ -621,6 +677,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
         .sort((a, b) => a.name < b.name ? -1 : 1);
       if (assetType === 'Building') {
         bAssets.forEach((a) => a.modelUrl = '/Warehouse_Emissive_Test.glb' );
+        bAssets.find((a) => a.name === 'Extractor').modelUrl = '/Extractor_Test.glb';
       }
       setCategoryModels(bAssets);
       selectModel(bAssets[0]);
