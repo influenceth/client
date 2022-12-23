@@ -20,9 +20,9 @@ import constants from '~/lib/constants';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 
 const { CHUNK_RESOLUTION, MIN_CHUNK_SIZE, OVERSAMPLE_CHUNK_TEXTURES } = constants;
-const textureOptsDefault = {
+const textureOptsDefault = Object.freeze({
   generateMipmaps: true, minFilter: LinearMipMapLinearFilter, magFilter: LinearFilter, needsUpdate: true
-};
+});
 
 export const cubeTransforms = [
   (new Matrix4()).makeRotationX(-Math.PI / 2), // +Y
@@ -164,7 +164,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
 
   if (returnType === 'texture') {
     const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-    texture.options = textureOptsDefault;
+    texture.options = { ...textureOptsDefault };
     return texture;
   }
 
@@ -189,7 +189,7 @@ export function generateColorMap(heightMap, chunkResolution, oversample, config,
   const textureRenderer = getTextureRenderer();
   if (returnType === 'texture') {
     const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-    texture.options = textureOptsDefault;
+    texture.options = { ...textureOptsDefault };
     return texture;
   }
 
@@ -212,7 +212,7 @@ export function generateNormalMap(heightMap, chunkResolution, chunkWidth, oversa
   const textureRenderer = getTextureRenderer();
   if (returnType === 'texture') {
     const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-    texture.options = textureOptsDefault;
+    texture.options = { ...textureOptsDefault };
     return texture;
   }
 
@@ -243,7 +243,7 @@ export function generateEmissiveMap(chunkParams, emissiveParams, returnType = 'b
 
   if (returnType === 'texture') {
     const texture = textureRenderer.render(chunkParams.chunkResolution, chunkParams.chunkResolution, material);
-    texture.options = textureOptsDefault;
+    texture.options = { ...textureOptsDefault };
     return texture;
   }
 
