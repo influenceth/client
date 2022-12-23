@@ -1,7 +1,7 @@
 #pragma glslify: snoise = require('glsl-noise/simplex/3d')
 
 float normalizeNoise(float n) {
-  return 0.5 * n + 0.5;
+  return (n + 1.0) / 2.0;
 }
 
 float recursiveSNoise(vec3 p, float pers, int octaves) {
@@ -21,13 +21,14 @@ float recursiveSNoise(vec3 p, float pers, int octaves) {
 }
 
 float getAbundance(vec3 point) {
-  int defaultPasses = 3;
+  point = point * uPointScale + uPointShift;
+  float noise = normalizeNoise(recursiveSNoise(point, 0.5, uOctaves));
 
-  // [-1,1]
-  float abundance = recursiveSNoise(1.5 * (point + uResource), 0.3, defaultPasses);
-
-  // [0, 1]
-  return pow((abundance + 1.0) / 2.0, 3.0);
+  // Scale noise value between cutoff and the upper cutoff and return
+  float above_cutoff = step(uLowerCutoff, noise);
+  float scaled = (noise - uLowerCutoff) / (uUpperCutoff - uLowerCutoff);
+  float abundance = min(scaled * above_cutoff, 1.0); // clamp to a max of 1.0
+  return abundance;
 }
 
 #pragma glslify: export(getAbundance)

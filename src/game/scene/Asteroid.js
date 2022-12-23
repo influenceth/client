@@ -11,7 +11,7 @@ import {
   Vector3
 } from 'three';
 import gsap from 'gsap';
-import { KeplerianOrbit, toSpectralType } from '@influenceth/sdk';
+import { KeplerianOrbit, toSpectralType, Asteroid as AsteroidLib } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -21,12 +21,10 @@ import Config from '~/lib/asteroidConfig';
 import constants from '~/lib/constants';
 import theme from '~/theme';
 import QuadtreeTerrainCube from './asteroid/helpers/QuadtreeTerrainCube';
-import { generateResourceSampler, pickSample } from './asteroid/helpers/SamplerUtils';
 import Plots from './asteroid/Plots';
 import Rings from './asteroid/Rings';
 import Telemetry from './asteroid/Telemetry';
 import { pointCircleClosest } from '~/lib/geometryUtils';
-import { unitFiboPoint } from './asteroid/helpers/PlotGeometry';
 
 const {
   CHUNK_SPLIT_DISTANCE,
@@ -421,7 +419,7 @@ const Asteroid = (props) => {
 
   // Zooms the camera to the correct location
   useEffect(() => {
-    if (zoomStatus === 'zooming-in' && !prevAsteroidPosition) {
+    if (zoomStatus === 'zooming-in' && !prevAsteroidPosition && controls) {
       console.log('set zoomedfrom');
       setZoomedFrom({
         scene: controls.targetScene.position.clone(),
@@ -573,24 +571,18 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
 
-  const abundanceBitmap = useRef();
-  const abundanceBitmapId = useRef();
   useEffect(() => {
     if (!geometry.current || !config?.radiusNominal) return;
     if (showResourceMap) {
       const color = new Color(theme.colors.resources[showResourceMap.category]);
       color.convertSRGBToLinear();
-      geometry.current.setEmissiveParams({ color, resource: showResourceMap.i });
-      forceUpdate.current = Date.now();
 
-      // if not already generated, generate abundance bitmap
-      if (!(abundanceBitmap.current && abundanceBitmapId.current === showResourceMap.i)) {
-        abundanceBitmap.current = generateResourceSampler(
-          showResourceMap.i,
-          Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2),
-          config
-        );
-      }
+      // Collect relevant settings for generating procedural resource map
+      const { asteroidId, resourceSeed } = asteroidData;
+      const { i: resourceId, abundance } = showResourceMap;
+      const settings = AsteroidLib.getAbundanceMapSettings(asteroidId, resourceSeed, resourceId, abundance);
+      geometry.current.setEmissiveParams({ asteroidId: asteroidId, color, resource: Number(resourceId), ...settings });
+      forceUpdate.current = Date.now();
     } else if (geometry.current.emissiveParams) {
       geometry.current.setEmissiveParams();
       forceUpdate.current = Date.now();
@@ -598,9 +590,16 @@ const Asteroid = (props) => {
   }, [showResourceMap]);
 
   useEffect(() => {
-    if (selectedPlot && showResourceMap && abundanceBitmap.current) {
-      const abundance = pickSample(abundanceBitmap.current, selectedPlot);
-      console.log(`plot #${selectedPlot}`, abundance);
+    if (selectedPlot && showResourceMap) {
+      const { i: resourceId, abundance: overallAbundance } = showResourceMap;
+      const { i: asteroidId, resourceSeed } = asteroidData;
+      const { plotId: lotId } = selectedPlot;
+      let abundance = AsteroidLib.getAbundanceAtLot(
+        asteroidId, BigInt(resourceSeed), lotId, Number(resourceId), overallAbundance
+      );
+
+      // TODO: remove once this is reflecte within the UI
+      console.log('resourceId:', resourceId, 'lotId:', selectedPlot.plotId, 'abundance:', abundance);
     }
   }, [selectedPlot, showResourceMap]);
 
@@ -725,13 +724,11 @@ const Asteroid = (props) => {
     if (selectedPlot && zoomedIntoAsteroidId === selectedPlot?.asteroidId && config?.radiusNominal && zoomStatus === 'in') {
       const plotTally = Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2);
       if (plotTally < selectedPlot.plotId) { selectPlot(); return; }
-      const plotPosition = new Vector3(...unitFiboPoint(selectedPlot.plotId - 1, plotTally));
+      let plotPosition = AsteroidLib.getLotPosition(selectedPlot.asteroidId, selectedPlot.plotId, plotTally);
+      plotPosition = new Vector3(...plotPosition);
       plotPosition.multiply(config.stretch);
       plotPosition.setLength(Math.min(1.5 * config?.radius, controls.object.position.length()));
-      plotPosition.applyAxisAngle(
-        rotationAxis.current,
-        rotation.current
-      );
+      plotPosition.applyAxisAngle(rotationAxis.current, rotation.current);
 
       gsap
         .timeline({ defaults: { duration: 0.7, ease: 'power4.out' } })
