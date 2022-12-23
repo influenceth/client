@@ -266,13 +266,14 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
         color: WHITE_COLOR,
         depthTest: false,
         map: new TextureLoader().load('/textures/asteroid/reticule.png'),
-        opacity: 0.9,
+        opacity: 0.5,
         side: FrontSide,
         toneMapped: false,
         transparent: true
       })
     );
     mouseMesh.current.renderOrder = 999;
+    mouseMesh.current.userData.bloom = true;
     (attachTo || scene).add(mouseMesh.current);
     return () => {
       if (mouseMesh.current) {
@@ -353,7 +354,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
                 positions.current[plotIndex * 3 + 1],
                 positions.current[plotIndex * 3 + 2]
               );
-        
+
               dummy.lookAt(
                 orientations.current[plotIndex * 3 + 0],
                 orientations.current[plotIndex * 3 + 1],
@@ -499,11 +500,10 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
         orientations.current[plotIndex * 3 + 1],
         orientations.current[plotIndex * 3 + 2]
       );
+
       orientation.applyQuaternion(attachTo.quaternion);
       mouseMesh.current.lookAt(orientation);
-
-      mouseMesh.current.material.opacity = 1;
-
+      mouseMesh.current.material.opacity = 0.5;
       highlighted.current = plotId;
     } else {
       mouseMesh.current.material.opacity = 0;
@@ -536,7 +536,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       selectionMesh.current.material.opacity = 0;
     }
   }, [attachTo.quaternion, selectedPlotId]);
-  
+
   // useEffect(() => { // shouldn't be zoomed to plot when plots first loaded or unloaded
   //   dispatchPlotSelected();
   //   dispatchZoomToPlot();
