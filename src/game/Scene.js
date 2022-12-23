@@ -113,7 +113,7 @@ const Scene = (props) => {
         </ContextBridge>
       </Canvas>
       {false && /* TODO: remove debug */(
-        <div style={{ position: 'fixed', bottom: 72, left: 0, }}>
+        <div style={{ position: 'fixed', bottom: 72, left: 0, zIndex: 10000 }}>
           <div style={{ border: '1px solid white', padding: 4, background: '#222' }}>
             <canvas id="test_canvas" style={{ width: 0, height: 0, verticalAlign: 'bottom' }} />
           </div>
