@@ -141,6 +141,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uExtraPasses: { type: 'i', value: extraPasses },
       uExtraPassesMax: { type: 'i', value: extraPassesMax },
       uFeaturesFreq: { type: 'f', value: config.featuresFreq },
+      uFeaturesSharpness: { type: 'f', value: config.featuresSharpness },
       uFineDispFraction: { type: 'f', value: config.fineDispFraction },
       uLandscapeWidth: { type: 'f', value: 2 * config.radius },
       uMaxCraterDepth: { type: 'f', value: config.radius * config.dispWeight * config.fineDispFraction },

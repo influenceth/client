@@ -25,6 +25,7 @@ class Config {
       dispPersist: this._dispPersist(),
       dispWeight: dispWeightCoarse + dispWeightFine,
       featuresFreq: this._featuresFreq(),
+      featuresSharpness: this._featuresSharpness(),
       fineDispFraction: dispWeightFine / (dispWeightCoarse + dispWeightFine),
       radius: this._adjustedRadius(),
       radiusNominal: this.radius,
@@ -67,12 +68,12 @@ class Config {
    * Defines the cutoff below which craters will be created from cellular noise (less than 1)
    * Larger values will create more / larger craters at each pass
    */
-  _craterCut() { // [0.15,0.20]
+  _craterCut() { // [0.15, 0.20]
     return 0.15 + 0.20 * this._radiusMod(0.5);
   }
 
   // Determines how much smaller each crater pass is. The higher the number the smaller on each pass
-  _craterFalloff() { // [1.5,2.0]
+  _craterFalloff() { // [1.5, 2.0]
     return 1.5 + 0.5 * this.seedGen.getFloat('craterFalloff');
   }
 
@@ -86,23 +87,23 @@ class Config {
    * Determines how much impact smaller craters have in the landscape. Higher values make smaller
    * craters more visible.
    */
-  _craterPersist() {  // [0.45, 0.65]
+  _craterPersist() { // [0.45, 0.65]
     return 0.50 - 0.25 * this._radiusMod(2);
   }
 
   // Determines how steep the walls of the craters are. Higher numbers are steeper
   // (larger asteroids have more gravity, so less steep walls)
-  _craterSteep() {
+  _craterSteep() { // [4.0, 6.0]
     return 6.0 - 2.0 * this._radiusMod(2);
   }
 
   // Baseline frequency for displacement of the asteroid. Higher values makes it noisier.
-  _dispFreq() {
+  _dispFreq() { // [0.4, 0.6]
     return 0.4 + 0.2 * this.seedGen.getFloat('dispFreq');
   }
 
   // How many noise passes make related to overall displacement. Higher values should be noisier.
-  _dispPasses() {
+  _dispPasses() { // [4, 6]
     return 4 + 2 * this._radiusMod(0.5);
   }
 
@@ -110,38 +111,44 @@ class Config {
    * Persistence of recursive noise that generates displacement. Larger values will result in
    * bumpier asteroids.
    */
-  _dispPersist() {
+  _dispPersist() { // [0.25, 0.45]
     return 0.45 - 0.20 * this._radiusMod(0.5);
   }
 
   // How much an asteroid should displace out of spherical towards displacement
-  _dispWeightCoarse() {
-    // [0.0138,0.3926]
+  _dispWeightCoarse() { // [0.0138, 0.3926]
     return (0.275 + this.seedGen.getFloat('dispWeight') / 10) * (1.05 - this._radiusMod())
   }
 
   // How much weight for fine-displacement features
-  _dispWeightFine() {
-    return 0.225 - 0.100 * this._radiusMod(); // [0.125, 0.225]
+  _dispWeightFine() { // [0.125, 0.225]
+    return 0.225 - 0.100 * this._radiusMod();
   }
 
   // Baseline frequency for features like craters and lines. Higher values make noise "noiser"
-  _featuresFreq() {
+  _featuresFreq() { // [2.0, 2.5]
     return 0.5 * this._radiusMod(2) + 2.0;
   }
 
+  // Makes features like craters, rims, etc. sharper
+  _featuresSharpness() {
+    //                   C     Cm   Ci     Cs    Cms   Cis   S     Sm    Si    M     I
+    const sharpness = [ 1.00, 0.90, 1.00, 0.95, 0.90, 0.95, 0.90, 0.80, 1.00, 0.75, 1.00 ];
+    return sharpness[this.type];
+  }
+
   // How prominent ridge features appear in proportion to base terrain
-  _ridgeWeight() {
+  _ridgeWeight() { // [0.75, 1.25]
     return 0.75 + 0.5 * this.seedGen.getFloat('ridgeWeight');
   }
 
   // How much to take the rims of craters out of round. Larger numbers make them less round.
-  _rimVariation() {
+  _rimVariation() { // [0.0075, 0.0125]
     return 0.0075 + 0.005 * this.seedGen.getFloat('rimVariation');
   }
 
   // How high the rim of the crater should rise above level ground.
-  _rimWeight() {
+  _rimWeight() { // [0.02, 0.03]
     return 0.03 - 0.01 * this._radiusMod(2);
   }
 
@@ -182,20 +189,18 @@ class Config {
   }
 
   // Returns the number of rotations per day (1 real-time hour)
-  _rotationSpeed() {
+  _rotationSpeed() { // [1, 10]
     return 1 + this.seedGen.getFloat('rotationSpeed') * 9 * (1 - this._radiusMod());
   }
 
   // Seed transformed into a 3D vector
   _seed() {
-    // return new Vector3(0, 1, 0);
     return this.seedGen.getVector3();
   }
 
   // Vector to stretch the asteroid along
   _stretch() {
     const mod = 0.45 * (1 - this._radiusMod(2));
-    // return new Vector3(1, 1, 1);
     return new Vector3(1, 1, 1).sub(this.seedGen.getVector3().multiplyScalar(mod));
   }
 
@@ -208,12 +213,12 @@ class Config {
    * Baseline frequency for topography. Higher values makes it noisier.
    * Effects color as well
    */
-  _topoFreq() {
+  _topoFreq() { // [1.0, 2.0]
     return 1.0 + this.seedGen.getFloat('topoFreq');
   }
 
   // How prominent general topography should be on the asteroid as a whole
-  _topoWeight() { // [0.2,0.4]
+  _topoWeight() { // [0.2, 0.4]
     return 0.4 - 0.1 * this._radiusMod(2) - 0.1 * this.seedGen.getFloat('topoWeight');
   }
 }

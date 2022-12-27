@@ -186,7 +186,7 @@ float getFeatures(vec3 p, int octaves) {
   }
 
   float totalFeatures = (totalCraters + totalRims) / uMaxCraterDepth;
-  totalFeatures = sign(totalFeatures) * pow(totalFeatures, 1.0);
+  totalFeatures = sign(totalFeatures) * pow(abs(totalFeatures), uFeaturesSharpness);
   return totalFeatures;
 }
 
