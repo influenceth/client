@@ -125,8 +125,6 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
     uniforms: {
       uChunkOffset: { type: 'v2', value: chunkOffset },
       uChunkSize: { type: 'f', value: chunkSize },
-      uCleaveCut: { type: 'f', value: config.cleaveCut },
-      uCleaveWeight: { type: 'f', value: config.cleaveWeight },
       uCraterCut: { type: 'f', value: config.craterCut },
       uCraterFalloff: { type: 'f', value: config.craterFalloff },
       uCraterPasses: { type: 'i', value: config.craterPasses },
@@ -148,6 +146,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uMaxCraterDepth: { type: 'f', value: config.radius * config.dispWeight * config.fineDispFraction },
       uOversampling: { type: 'b', value: oversample },
       uResolution: { type: 'f', value: chunkResolution },
+      uRidgeWeight: { type: 'f', value: config.ridgeWeight },
       uRimVariation: { type: 'f', value: config.rimVariation },
       uRimWeight: { type: 'f', value: config.rimWeight },
       uRimWidth: { type: 'f', value: config.rimWidth },

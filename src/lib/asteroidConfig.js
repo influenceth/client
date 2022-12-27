@@ -13,9 +13,8 @@ class Config {
 
     const dispWeightCoarse = this._dispWeightCoarse();
     const dispWeightFine = this._dispWeightFine();
+
     return {
-      cleaveCut: this._cleaveCut(),
-      cleaveWeight: this._cleaveWeight(),
       craterCut: this._craterCut(),
       craterFalloff: this._craterFalloff(),
       craterPasses: this._craterPasses(),
@@ -29,6 +28,7 @@ class Config {
       fineDispFraction: dispWeightFine / (dispWeightCoarse + dispWeightFine),
       radius: this._adjustedRadius(),
       radiusNominal: this.radius,
+      ridgeWeight: this._ridgeWeight(),
       ringsMinMax: this._ringsMinMax(),
       ringsPresent: this._ringsPresent(),
       ringsVariation: this._ringsVariation(),
@@ -63,23 +63,12 @@ class Config {
     );
   }
 
-  // Defines the upper cutoff (starts at -1.0) for cleavage lines. Must be less than 0
-  _cleaveCut() {
-    return -0.15 - 0.2 * this.seedGen.getFloat('cleaveCut');
-  }
-
-  // How prominent the cleavage line features appear (can range from 0 to 1)
-  // (as a proportion of maxCraterDepth)
-  _cleaveWeight() {
-    return 0.25 * this.seedGen.getFloat('cleaveWeight');
-  }
-
   /**
    * Defines the cutoff below which craters will be created from cellular noise (less than 1)
    * Larger values will create more / larger craters at each pass
    */
   _craterCut() { // [0.15,0.20]
-    return 0.25 - 0.05 * this._radiusMod(2);
+    return 0.15 + 0.20 * this._radiusMod(0.5);
   }
 
   // Determines how much smaller each crater pass is. The higher the number the smaller on each pass
@@ -90,8 +79,7 @@ class Config {
   // Number of different sizes of crater passes (at max zoom)
   // (this is static now because increases as zoom in)
   _craterPasses() {
-    return 6;
-    // return Math.round(4 + 3 * this._radiusMod(2));
+    return 5;
   }
 
   /**
@@ -99,7 +87,7 @@ class Config {
    * craters more visible.
    */
   _craterPersist() {  // [0.45, 0.65]
-    return 0.65 - 0.25 * this._radiusMod(2);
+    return 0.50 - 0.25 * this._radiusMod(2);
   }
 
   // Determines how steep the walls of the craters are. Higher numbers are steeper
@@ -140,6 +128,11 @@ class Config {
   // Baseline frequency for features like craters and lines. Higher values make noise "noiser"
   _featuresFreq() {
     return 0.5 * this._radiusMod(2) + 2.0;
+  }
+
+  // How prominent ridge features appear in proportion to base terrain
+  _ridgeWeight() {
+    return 0.75 + 0.5 * this.seedGen.getFloat('ridgeWeight');
   }
 
   // How much to take the rims of craters out of round. Larger numbers make them less round.

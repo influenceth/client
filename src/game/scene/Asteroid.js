@@ -1014,6 +1014,7 @@ const Asteroid = (props) => {
           mouseIntersect={mouseIntersect.current} />
       )}
 
+      {/* TODO: fade telemetry out at higher zooms */}
       {config?.radius && zoomStatus !== 'out' && initialOrientation?.objectPosition && (
         <Telemetry
           attachTo={group.current}
