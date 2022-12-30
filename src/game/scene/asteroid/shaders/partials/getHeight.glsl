@@ -7,24 +7,52 @@ float normalizeNoise(float n) {
   return 0.5 * n + 0.5;
 }
 
-float recursiveCNoise(vec3 p, int octaves) {
+float getBase(vec3 p, float pers, int octaves) {
   float scale = pow(2.0, float(octaves));
   vec3 displace;
 
   for (int i = 0; i < octaves; i ++) {
     displace = vec3(
-      normalizeNoise(cnoise(p.xyz * scale + displace)),
-      normalizeNoise(cnoise(p.yzx * scale + displace)),
-      normalizeNoise(cnoise(p.zxy * scale + displace))
+      normalizeNoise(snoise(p.xyz * scale + displace)) * pers,
+      normalizeNoise(snoise(p.yzx * scale + displace)) * pers,
+      normalizeNoise(snoise(p.zxy * scale + displace)) * pers
     );
 
     scale *= 0.5;
   }
 
-  return cnoise(p * scale + displace);
+  return normalizeNoise(snoise(p * scale + displace));
 }
 
-float recursiveSNoise(vec3 p, float pers, int octaves, int maxOctaves) {
+float getRidges(vec3 p, float pers, int octaves) {
+  float total = 0.0;
+  float frequency = 1.0;
+  float amplitude = 1.0;
+  float maxValue = 0.0;
+
+  for (int i = 0; i < octaves; i++) {
+    total += abs(snoise(p * frequency) * amplitude);
+    maxValue += amplitude;
+    amplitude *= pers;
+    frequency *= 2.0;
+  }
+
+  return 1.0 - sqrt(total / maxValue);
+}
+
+// Generates overall topography, hills, cliffs, etc.
+float getTopography(vec3 p, int octaves) {
+  vec3 point = p * uTopoFreq + uSeed;
+  float base = getBase(p, 0.45, octaves);
+  float ridges = getRidges(p, 0.5, octaves);
+  return (base + ridges * uRidgeWeight) - uRidgeWeight; // [-1,1]
+}
+
+// Generates coarse displacement to shape the asteroid
+float getDisplacement(vec3 p, int octaves, int maxOctaves) {
+  p.y *= -1.0;  // (to match original noise sampling)
+  p = p * uDispFreq + uSeed;
+
   float total = 0.0;
   float frequency = 1.0;
   float amplitude = 1.0;
@@ -33,34 +61,21 @@ float recursiveSNoise(vec3 p, float pers, int octaves, int maxOctaves) {
   for (int i = 0; i < octaves; i++) {
     total += snoise(p * frequency) * amplitude;
     maxValue += amplitude;
-    amplitude *= pers;
+    amplitude *= uDispPersist;
     frequency *= 2.0;
   }
+
   for (int i = octaves; i < maxOctaves; i++) {
     maxValue += amplitude;
-    amplitude *= pers;
+    amplitude *= uDispPersist;
   }
 
   return total / maxValue;
 }
 
-// Generates overall topography, hills, cliffs, etc.
-float getTopography(vec3 p, int octaves) {
-  vec3 point = p * uTopoFreq + uSeed;
-  float base = clamp(recursiveCNoise(point, octaves), -0.5, 1.0);
-  float mountains = smoothstep(0.0, 1.0, clamp(recursiveSNoise(point * 2.0, 0.5, octaves, 5), -0.1, 1.0));
-  return (base + mountains) / 2.0;
-}
-
-// Generates coarse displacement to shape the asteroid
-float getDisplacement(vec3 p, int octaves, int maxOctaves) {
-  p.y *= -1.0;  // (to match original noise sampling)
-  return recursiveSNoise(p * uDispFreq + uSeed, uDispPersist, octaves, maxOctaves);
-}
-
 // Generates craters and combines with topography
 /* TODO (enhancement): ejecta
-  can throw ejecta from uuCraterCut to 3x beyond rim
+  can throw ejecta from uCraterCut to 3x beyond rim
   exponentially decreasing snoise would probably be fine, but would be nice if could make look like linear streaks
   new craters should clear existing ejecta
 */
@@ -94,12 +109,13 @@ float getFeatures(vec3 p, int octaves) {
   float rimWidth = 0.0;
   float rimVariation = 0.0;
   float depthToDiameter = 0.0;
+  float craterCut = 0.0;
   float craterFreq = 0.0;
   float craterAndRimWidth = 0.0;
   float craterWidth = 0.0;
   float craterDepth = 0.0;
   float craterPersist = 1.0;
-  float passCraters = 0.0;
+  // float passCraters = 0.0;
   // float lastDistanceFromRim = uLandscapeWidth;
   // float lastDistanceFromOuterRim = uLandscapeWidth;
   float lastCraterWidth = 0.0;
@@ -107,9 +123,10 @@ float getFeatures(vec3 p, int octaves) {
   // bool isSafeInternalCrater = false;
 
   for (int i = 0; i < octaves; i++) {
-    craterFreq = 0.5 * pow(uCraterFalloff, float(i));
-    craterWidth = 0.6 * uLandscapeWidth / (craterFreq * 2.0 + 1.0);
-    depthToDiameter = clamp(0.2 * smoothstep(0.0, 1.0, 1.0 - log(craterWidth) / 13.0), 0.05, 0.2);
+    craterFreq = pow(uCraterFalloff, float(i));
+    craterCut = uCraterCut - 0.075 * (1.0 - 1.0 / craterFreq);
+    craterWidth = 0.25 * uLandscapeWidth / craterFreq;
+    depthToDiameter = clamp(0.4 * smoothstep(0.0, 1.0, 1.0 - log(craterWidth) / 13.0), 0.05, 0.4);
 
     // fade in last two octaves (to minimize "popping")
     fadeIn = pow(0.6, 3.0 - min(3.0, float(octaves - i)));
@@ -119,20 +136,20 @@ float getFeatures(vec3 p, int octaves) {
 
     // age-specific tweaks
     rimWeight = uRimWeight * ageMults[age];
-    rimWidth = uCraterCut * uRimWidth * ageMults[2 - age];
+    rimWidth = craterCut * uRimWidth * ageMults[2 - age];
     rimVariation = uRimVariation * ageMults[2 - age];
     craterDepth = depthToDiameter * craterWidth * ((ageMults[age] + 1.0) / 3.5) * craterPersist;
     steep = uCraterSteep * ageMults[age];
 
     // noise processing
-    varNoise = snoise(craterFreq * 8.0 * (p + uSeed));
-    cellNoise = cellular(craterFreq * (p + uSeed)) + varNoise * rimVariation;
+    varNoise = snoise(craterFreq * 4.0 * (p + uSeed));
+    cellNoise = cellular(craterFreq * 0.5 * (p + uSeed)) + varNoise * rimVariation;
 
     // calculate craters and rims from noise functions
-    craters = pow(smoothstep(0.0, uCraterCut, cellNoise.x), steep) - 1.0;
+    craters = pow(smoothstep(0.0, craterCut, cellNoise.x), steep) - 1.0;
     craters *= craterDepth * fadeIn;
 
-    rims = (1.0 - smoothstep(uCraterCut, uCraterCut + rimWidth, cellNoise.x)) * rimWeight; // [0,rimWeight]
+    rims = (1.0 - smoothstep(craterCut, craterCut + rimWidth, cellNoise.x)) * rimWeight; // [0,rimWeight]
     rims *= craterDepth * fadeIn;
 
     // TODO: would it be possible to allow all inner craters BUT scale down their height
@@ -168,7 +185,9 @@ float getFeatures(vec3 p, int octaves) {
     totalRims += rims;
   }
 
-  return (totalCraters + totalRims) / uMaxCraterDepth;
+  float totalFeatures = (totalCraters + totalRims) / uMaxCraterDepth;
+  totalFeatures = sign(totalFeatures) * pow(abs(totalFeatures), uFeaturesSharpness);
+  return totalFeatures;
 }
 
 // NOTE: point must be a point on unit sphere
@@ -189,7 +208,7 @@ vec4 getHeight(vec3 point, int skipPasses) {
   float features = getFeatures(point, uCraterPasses + modPasses - 1); // -1 to 1
 
   // Define fine displacement
-  float fine = (topo * uTopoWeight + features * 2.5) / (uTopoWeight + 2.5); // -1 to 1
+  float fine = (topo * uTopoWeight + features * 2.0) / (uTopoWeight + 1.5); // -1 to 1
 
   // Get total displacement
   float height = normalizeNoise(uCoarseDispFraction * disp + uFineDispFraction * fine);
