@@ -1906,11 +1906,11 @@ export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps
   let totalDistance = 0;
   let totalTime = 0;
 
-  const tripDetails = steps.map(({ label, plot }) => {
+  const tripDetails = steps.map(({ label, plot, skipTo }) => {
     
     const stepDistance = Asteroid.getLotDistance(asteroidId, currentLocation, plot);
     const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLocation, plot, crewTravelBonus);
-    currentLocation = plot;
+    currentLocation = skipTo || plot;
 
     // agg
     totalDistance += stepDistance;

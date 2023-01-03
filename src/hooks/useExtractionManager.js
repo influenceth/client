@@ -26,7 +26,7 @@ const useExtractionManager = (asteroidId, plotId) => {
       resourceId: coreSample.resourceId,
       sampleId: coreSample.sampleId,
       destinationLotId: destinationPlot.i,
-      destinationInventoryId: destinationPlot.building?.i
+      destinationInventoryId: 1 // TODO: probably should not hard-code this
     })
   }, [payload]);
 

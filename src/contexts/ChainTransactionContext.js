@@ -13,6 +13,8 @@ const ChainTransactionContext = createContext();
 
 console.log('configs', configs);
 
+// TODO: now that all are on dispatcher, could probably collapse a lot of redundant code in getContracts
+
 const getContracts = (account, queryClient) => ({
   'PURCHASE_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -331,6 +333,35 @@ const getContracts = (account, queryClient) => ({
     }),
     isEqual: 'ALL'
   },
+
+  'START_DELIVERY': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, originPlotId, originInvId, destPlotId, destInvId, resources, crewId }) => contract.invoke(
+      'Inventory_transferStart',
+      [asteroidId, originPlotId, originInvId, destPlotId, destInvId, Object.keys(resources), Object.values(resources), crewId]
+    ),
+    getErrorAlert: ({}) => ({
+      type: 'GenericAlert',
+      content: 'Delivery initialization failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: 'ALL'  // TODO: ?
+  },
+  'FINISH_DELIVERY': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, destPlotId, destInvId, deliveryId, crewId }) => contract.invoke(
+      'Inventory_transferFinish',
+      [asteroidId, destPlotId, destInvId, deliveryId, crewId]
+    ),
+    getErrorAlert: ({}) => ({
+      type: 'GenericAlert',
+      content: 'Delivery finalization failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: 'ALL'  // TODO: ?
+  }
 });
 
 export function ChainTransactionProvider({ children }) {
