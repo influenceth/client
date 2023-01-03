@@ -92,9 +92,9 @@ const getInvalidations = (event, data) => {
       CoreSample_SamplingFinished: [
         ['plots', data.asteroidId, data.lotId],
       ],
-      CoreSample_Used: [
-        // TODO: ...
-      ],
+      CoreSample_Used: [],
+      Extraction_Started: [/* constructed when event processed */],
+      Extraction_Finished: [/* constructed when event processed */],
     }
     return map[event] || [];
   } catch (e) {/* no-op */}
@@ -109,6 +109,7 @@ const ignoreEventTypes = ['CURRENT_ETHEREUM_BLOCK_NUMBER'];
 export function EventsProvider({ children }) {
   const { token } = useAuth();
   const queryClient = useQueryClient();
+  const queryCache = queryClient.getQueryCache();
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const [ lastBlockNumber, setLastBlockNumber ] = useState(0);
   const [ events, setEvents ] = useState([]);
@@ -142,6 +143,14 @@ export function EventsProvider({ children }) {
         transformedEvents.push({ ...e, event: 'Construction_Unplanned', key: e.id });
       } else if (e.event === 'Lot_Used' && Capable.TYPES[e.returnValues.capableType].category === 'Building') {
         transformedEvents.push({ ...e, event: 'Construction_Planned', key: e.id });
+
+      // extraction started and finished only include capableId, so use that to look up which plot should be invalidated
+      } else if(['Extraction_Started', 'Extraction_Finished'].includes(e.event)) {
+        const invalidations = queryCache.findAll({ queryKey: ['plots'] })
+          .filter((q) => q.state?.data?.building?.__t === 'Extractor' && q.state?.data?.building?.i === e.returnValues.capableId)
+          .map((q) => q.queryKey);
+        transformedEvents.push({ ...e, event: eventName, key: e.id, invalidations });
+
       } else if(!['Construction_Planned', 'Construction_Unplanned'].includes(e.event)) {
         transformedEvents.push({ ...e, event: eventName, key: e.id });
       }
@@ -150,7 +159,10 @@ export function EventsProvider({ children }) {
     transformedEvents.forEach(e => {
       if (!skipInvalidations) {
         // console.log('e.event', e.event);
-        const invalidations = getInvalidations(e.event, e.returnValues);
+        const invalidations = [
+          ...getInvalidations(e.event, e.returnValues),
+          ...(e.invalidations || [])
+        ];
         // console.log(e.event, e.returnValues, invalidations);
         invalidations.forEach((i) => {
           queryClient.invalidateQueries(...i);

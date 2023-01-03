@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fi';
 import { RingLoader } from 'react-spinners';
 import DataTable, { createTheme } from 'react-data-table-component';
-import { Crew, Asteroid, Construction, CoreSample, Inventory, Lot } from '@influenceth/sdk';
+import { Crew, Asteroid as AsteroidLib, Construction, CoreSample, Inventory, Lot } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
@@ -90,7 +90,13 @@ const ImproveCoreSample = (props) => {
   const { currentSample, startSampling, finishSampling, getInitialTonnage, selectSampleToImprove, samplingStatus, lotStatus } = useCoreSampleManager(asteroid?.i, plot?.i, resourceMap?.i, true);
   const { crew, crewMemberMap } = useCrew();
 
-  const abundance = 0.5; // TODO: abundance (NOTE: should be from currentSample resource if there is one)
+  const abundance = AsteroidLib.getAbundanceAtLot(
+    asteroid.i,
+    BigInt(asteroid.resourceSeed),
+    Number(plot.i),
+    Number(resourceMap.i),
+    resourceMap.abundance
+  );
 
   const improvableSamples = useMemo(() =>
     (plot?.coreSamples || [])
@@ -218,7 +224,7 @@ const ImproveCoreSample = (props) => {
         resource={resources[resourceMap.i]}
         resources={resources}
         status={status}
-        overrideTonnage={status === 'AFTER' ? getInitialTonnage(currentSample) : undefined} />
+        overrideTonnage={isImproved && status === 'AFTER' ? getInitialTonnage(currentSample) : undefined} />
 
       {status === 'BEFORE' && (
         <ToolSection resource={resources[175]} sourcePlot={plot} />

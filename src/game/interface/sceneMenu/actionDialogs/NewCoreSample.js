@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fi';
 import { RingLoader } from 'react-spinners';
 import DataTable, { createTheme } from 'react-data-table-component';
-import { Crew, Asteroid, Construction, CoreSample, Inventory, Lot } from '@influenceth/sdk';
+import { Crew, Asteroid as AsteroidLib, Construction, CoreSample, Inventory, Lot } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
@@ -89,7 +89,13 @@ const NewCoreSample = (props) => {
   const { currentSample, startSampling, finishSampling, getInitialTonnage, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i, resourceMap?.i);
   const { crew, crewMemberMap } = useCrew();
 
-  const abundance = 0.5; // TODO: abundance (NOTE: should be from selectedSample resource if there is one)
+  const abundance = AsteroidLib.getAbundanceAtLot(
+    asteroid.i,
+    BigInt(asteroid.resourceSeed),
+    Number(plot.i),
+    Number(resourceMap.i),
+    resourceMap.abundance
+  );
   
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
   const sampleTimeBonus = getCrewAbilityBonus(1, crewMembers);

@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import {
   FiCrosshair as TargetIcon,
@@ -7,17 +7,11 @@ import {
 } from 'react-icons/fi';
 import { RingLoader } from 'react-spinners';
 import DataTable, { createTheme } from 'react-data-table-component';
-import { Crew, Asteroid, Construction, Crewmate, Lot } from '@influenceth/sdk';
+import { Crew, Asteroid, Construction, Crewmate, Inventory, Lot } from '@influenceth/sdk';
 
-import constructionBackground from '~/assets/images/modal_headers/Construction.png';
-import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
-import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
-import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
 import Button from '~/components/ButtonAlt';
 import ButtonRounded from '~/components/ButtonRounded';
 import CrewCard from '~/components/CrewCard';
-import Dialog from '~/components/Dialog';
-import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
 import {
   CancelBlueprintIcon,
@@ -50,6 +44,37 @@ import useConstructionManager from '~/hooks/useConstructionManager';
 import useInterval from '~/hooks/useInterval';
 import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
 
+// TODO: remove this after sdk updated
+Inventory.CAPACITIES = {
+  1: {
+    0: { name: 'Construction Site', mass: 0, volume: 0 },
+    1: { name: 'Storage', mass: 1500000, volume: 75000 }
+  },
+  2: {
+    0: { name: 'Construction Site', mass: 0, volume: 0 }
+  },
+  3: {
+    0: { name: 'Construction Site', mass: 0, volume: 0 }
+  },
+  4: {
+    0: { name: 'Construction Site', mass: 0, volume: 0 }
+  },
+  5: {
+    0: { name: 'Construction Site', mass: 0, volume: 0 }
+  },
+  6: {
+    0: { name: 'Construction Site', mass: 0, volume: 0 }
+  },
+  7: {
+    0: { name: 'Construction Site', mass: 0, volume: 0 }
+  },
+  8: {
+    0: { name: 'Construction Site', mass: 0, volume: 0 }
+  },
+  9: {
+    0: { name: 'Construction Site', mass: 0, volume: 0 }
+  }
+};
 
 const borderColor = '#333';
 
@@ -353,6 +378,7 @@ const Destination = styled(ThumbnailWithData)`
       font-weight: normal;
     }
     & > *:last-child {
+      font-size: 85%;
       margin-top: 1em;
     }
   }
@@ -493,11 +519,11 @@ const ResourceProgress = styled.div`
       ? `
         left: 0;
         height: 100%;
-        width: ${p.progress * 100}%;
+        width: ${Math.min(1, p.progress) * 100}%;
       `
       : `
         bottom: 0;
-        height: ${p.progress * 100}%;
+        height: ${Math.min(1, p.progress) * 100}%;
         width: 100%;
       `
     }
@@ -512,16 +538,22 @@ const ResourceProgress = styled.div`
         ? `
           left: 0;
           height: 100%;
-          width: ${p.secondaryProgress * 100}%;
+          width: ${Math.min(1, p.secondaryProgress) * 100}%;
         `
         : `
           bottom: 0;
-          height: ${p.secondaryProgress * 100}%;
+          height: ${Math.min(1, p.secondaryProgress) * 100}%;
           width: 100%;
         `
       }
     }
   `}
+`;
+const InventoryUtilization = styled(ResourceProgress)`
+  bottom: 8px;
+  &:last-child {
+    bottom: 3px;
+  }
 `;
 
 const IconButtonRounded = styled(ButtonRounded)`
@@ -823,16 +855,45 @@ const EmptyResourceImage = ({ iconOverride }) => (
   <ResourceThumbnailWrapper><EmptyImage>{iconOverride || <PlusIcon />}</EmptyImage></ResourceThumbnailWrapper>
 );
 
-const BuildingImage = ({ building, progress, secondaryProgress, unfinished }) => {
+const getCapacityUsage = (building, inventories, type) => {
+  const capacity = {
+    mass: { max: 0, used: 0, reserved: 0 },
+    volume: { max: 0, used: 0, reserved: 0 },
+  }
+  if (building && inventories && type !== undefined) {
+    let { mass: maxMass, volume: maxVolume } = Inventory.CAPACITIES[building.i][type];
+    capacity.mass.max = maxMass * 1e6; // TODO: it seems like this mult should be handled in CAPACITIES
+    capacity.volume.max = maxVolume * 1e6;
+
+    const { reservedMass, reservedVolume, mass, volume } = inventories.find((i) => i.type === type) || {};
+    capacity.mass.used = (mass || 0);
+    capacity.mass.reserved = (reservedMass || 0);
+    capacity.volume.used = (volume || 0);
+    capacity.volume.reserved = (reservedVolume || 0);
+  }
+  return capacity;
+}
+const formatCapacity = (value) => {
+  return formatFixed(value / 1e6, 1);
+}
+
+const BuildingImage = ({ building, inventories, showInventoryStatusForType, unfinished }) => {
   if (!building) return null;
+  const capacity = getCapacityUsage(building, inventories, showInventoryStatusForType);
   return (
     <BuildingThumbnailWrapper>
       <ResourceThumbnail src={building[unfinished ? 'siteIconUrls' : 'iconUrls']?.w150} />
-      {progress !== undefined && (
-        <ResourceProgress
-          progress={progress}
-          secondaryProgress={secondaryProgress}
-          horizontal />
+      {showInventoryStatusForType !== undefined && (
+        <>
+          <InventoryUtilization
+            progress={capacity.volume.used / capacity.volume.max}
+            secondaryProgress={(capacity.volume.reserved + capacity.volume.used) / capacity.volume.max}
+            horizontal />
+          <InventoryUtilization
+            progress={capacity.mass.used / capacity.mass.max}
+            secondaryProgress={(capacity.mass.reserved + capacity.mass.used) / capacity.mass.max}
+            horizontal />
+        </>
       )}
     </BuildingThumbnailWrapper>
   );
@@ -903,7 +964,7 @@ const BlueprintSelection = ({ onBuildingSelected }) => {
   return (
     <PopperBody style={{ paddingBottom: 5, paddingTop: 5 }}>
       <PopperList>
-        {buildings.filter(({i}) => i > 0).filter(({i}) => ['1','2'].includes(i)).map((building) => (
+        {buildings.filter(({i}) => i > 0).filter(({i}) => [1, 2].includes(i)).map((building) => (
           <PopperListItem key={building.i} onClick={onBuildingSelected(building.i)}>
             <BuildingPlan>
               <BuildingImage building={building} unfinished />
@@ -950,6 +1011,10 @@ const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
 };
 
 const DestinationSelection = ({ asteroid, onClick }) => {
+  // TODO: (for extraction):
+  //  - has inventory of type 1
+  //  - constructionStatus is complete
+
   const inventories = [
     { plot: 12, distance: 7, type: 'Warehouse', fullness: 0.94, remaining: 4932 },
     { plot: 2312, distance: 27, type: 'Warehouse', fullness: 0.74, remaining: 8932 },
@@ -1118,7 +1183,7 @@ export const RawMaterialSection = ({ abundance, resource, tonnage, status }) => 
               <h3>{resource.name}{tonnage !== undefined ? ' Deposit Discovered' : ''}</h3>
               {tonnage !== undefined
                 ? <div><b><ResourceIcon /> {formatSampleMass(tonnage)}</b> tonnes</div>
-                : <div><b>{100 * abundance}%</b> Abundance at lot</div>
+                : <div><b>{formatFixed(100 * abundance, 1)}%</b> Abundance at lot</div>
               }
             </label>
           </ResourceWithData>
@@ -1215,14 +1280,13 @@ export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, 
   }, []);
 
   const destinationBuilding = useMemo(() => {
-    console.log('desitnation', destinationPlot);
     if (destinationPlot?.building) {
-      console.log('destinationPlot?.building', destinationPlot?.building, buildings[destinationPlot.building?.assetId]);
       return buildings[destinationPlot.building?.assetId];
     }
     return null;
   }, [destinationPlot?.building]);
-  
+
+  const capacity = getCapacityUsage(destinationBuilding, destinationPlot?.building?.inventories, 1);
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Destination</SectionTitle>
@@ -1231,12 +1295,21 @@ export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, 
         {destinationBuilding
           ? (
             <Destination status={status}>
-              <BuildingImage building={destinationBuilding} progress={0.3} secondaryProgress={0.7} />{/* TODO: ... */}
+              <BuildingImage
+                building={destinationBuilding}
+                inventories={destinationPlot?.building?.inventories}
+                showInventoryStatusForType={1} />
               <label>
                 <h3>{destinationBuilding?.name}</h3>
                 <div>{asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {destinationPlot.i.toLocaleString()}</b></div>
                 <div />
-                {status === 'BEFORE' && (<div><b>650,000</b> / 1,000,000 m<sup>3</sup></div>)}{/* TODO: ... */}
+                {status === 'BEFORE' && (
+                  <div>
+                    <b>{formatCapacity(capacity.volume.reserved + capacity.volume.used)}</b> / {formatCapacity(capacity.volume.max)} m<sup>3</sup>
+                    <br/>
+                    <b>{formatCapacity(capacity.mass.reserved + capacity.mass.used)}</b> / {formatCapacity(capacity.mass.max)} tonnes
+                  </div>
+                )}
               </label>
             </Destination>
           )
@@ -1810,18 +1883,20 @@ export const formatTimer = (secondsRemaining, maxPrecision = null) => {
   return parts.join(' ');
 };
 
+export const formatFixed = (value, maxPrecision) => {
+  const div = 10 ** maxPrecision;
+  return (Math.round((value || 0) * div) / div).toLocaleString();
+};
+
 export const formatSampleMass = (tonnage) => {
-  return (Math.round((tonnage || 0) * 10) / 10).toLocaleString();
+  return formatFixed(tonnage, 1);
 };
 
 export const formatSampleVolume = (volume) => {
-  return (Math.round((volume || 0) * 10) / 10).toLocaleString();
+  return formatFixed(volume, 1);
 };
 
 export const getBonusDirection = ({ totalBonus }, biggerIsBetter = true) => {
-  if (!biggerIsBetter) {
-    console.log({ totalBonus });
-  }
   if (totalBonus === 1) return 0;
   return (biggerIsBetter === totalBonus > 1) ? 1 : -1;
 };

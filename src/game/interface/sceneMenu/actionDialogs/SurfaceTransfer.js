@@ -76,7 +76,7 @@ import {
   getBonusDirection,
 } from './components';
 
-const Construct = (props) => {
+const SurfaceTransfer = (props) => {
   const { asteroid, onClose, plot } = props;
   const buildings = useBuildingAssets();
   const resources = useResourceAssets();
@@ -114,7 +114,7 @@ const Construct = (props) => {
 
   useEffect(() => {
     if (constructionStatus === 'FINISHING' || constructionStatus === 'OPERATIONAL') {
-      onClose();
+      
     }
   }, [constructionStatus]);
 
@@ -134,7 +134,7 @@ const Construct = (props) => {
         startTime={plot?.building?.startTime}
         targetTime={plot?.building?.committedTime} />
 
-      <ItemSelectionSection items={ingredients} resources={resources} status={status} />
+      <ItemSelectionSection items={[]} resources={resources} status={status} />
       <DestinationPlotSection asteroid={asteroid} destinationPlot={destinationPlot} status={status} />
 
       <ActionDialogStats stats={stats} status={status} />
@@ -157,4 +157,4 @@ const Construct = (props) => {
   );
 };
 
-export default Construct;
+export default SurfaceTransfer;

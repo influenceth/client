@@ -93,7 +93,7 @@ const ExtractionDialog = (props) => {
   const { crew, crewMemberMap } = useCrew();
 
   // const [destinationPlot, setDestinationPlot] = useState();
-  const { data: destinationPlot } = usePlot(asteroid.i, 1239);
+  const { data: destinationPlot } = usePlot(asteroid.i, 2002);
   const [selectedCoreSample, setSelectedCoreSample] = useState();
   
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);

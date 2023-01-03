@@ -423,6 +423,7 @@ const SceneMenu = (props) => {
           }
         }
 
+        console.log('constructionStatus', constructionStatus);
         if (constructionStatus === 'OPERATIONAL' && plot.building?.assetId) {
           const buildingAsset = buildings[plot.building.assetId];
           if (buildingAsset.capabilities.includes('extraction')) {
@@ -434,7 +435,8 @@ const SceneMenu = (props) => {
           a.push(actionButtons.NewBlueprint);
         }
 
-        if (plot.inventory?.length > 0) {
+        // TODO: prob should require an inventory with non-zero contents?
+        if (plot?.building?.inventories?.length > 0) {
           a.push(actionButtons.SurfaceTransfer);
         }
 
@@ -448,7 +450,7 @@ const SceneMenu = (props) => {
     }
 
     return a;
-  }, [asteroid, crew, plot, resourceMode]);
+  }, [asteroid, constructionStatus, crew, plot, resourceMode]);
 
   useEffect(() => ReactTooltip.rebuild(), [actions]);
 

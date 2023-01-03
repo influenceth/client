@@ -5,6 +5,7 @@ import NewCoreSample from './actionDialogs/NewCoreSample';
 import Deconstruct from './actionDialogs/Deconstruct';
 import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
 import PlanConstruction from './actionDialogs/PlanConstruction';
+import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import UnplanConstruction from './actionDialogs/UnplanConstruction';
 
 const ActionDialog = ({ actionType, ...props }) => {
@@ -18,6 +19,7 @@ const ActionDialog = ({ actionType, ...props }) => {
         {actionType === 'EXTRACT_RESOURCE' && <Extraction {...props} />}
         {actionType === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...props} />}
         {actionType === 'NEW_CORE_SAMPLE' && <NewCoreSample {...props} />}
+        {actionType === 'SURFACE_TRANSFER' && <SurfaceTransfer {...props} />}
       </div>
     </Dialog>
   );

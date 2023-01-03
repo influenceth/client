@@ -54,7 +54,7 @@ const useExtractionManager = (asteroidId, plotId) => {
   // NOTE: actionItems is not used in this function, but it being updated suggests
   //  that something might have just gone from UNDER_CONSTRUCTION to READY_TO_FINISH
   //  so it is a good time to re-evaluate the status
-  }, [plot?.building?.extractionStatus, getStatus, payload, actionItems]);
+  }, [plot?.building?.extraction?.status, getStatus, payload, actionItems]);
 
 
   return {

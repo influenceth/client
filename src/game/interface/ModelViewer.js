@@ -522,7 +522,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
     if (!!assets) {
       setCategories();
       if (singleModel) {
-        const asset = assets.find((a) => a.i === singleModel);
+        const asset = assets.find((a) => a?.i === singleModel);
         if (asset) {
           setModel(asset);
           return;

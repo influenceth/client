@@ -12,7 +12,7 @@ const Extract = ({ onSetAction, asteroid, crew, plot }) => {
   }, [onSetAction]);
 
   // badge shows full count of *useable* core samples of *any* resource on lot, owned by *anyone*
-  const usableSamples = useMemo(() => (plot?.coreSamples || []).filter((c) => c.yieldRemaining > 0), [plot?.coreSamples]);
+  const usableSamples = useMemo(() => (plot?.coreSamples || []).filter((c) => c.remainingYield > 0), [plot?.coreSamples]);
   // add attention flag if any of those ^ are mine
   const myUsableSamples = useMemo(() => usableSamples.filter((c) => c.owner === crew?.i), [crew?.i, usableSamples]);
 

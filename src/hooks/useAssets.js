@@ -36,7 +36,7 @@ export const useBuildingAssets = () => {
   .map((i) => {
     const asset = {
       ...Capable.TYPES[i],
-      i,
+      i: Number(i),
 
       // TODO: remove these once sdk updated:
       iconVersion: 1,
