@@ -175,6 +175,7 @@ const Deconstruct = (props) => {
       {status !== 'AFTER' && (
         <DestinationPlotSection
           asteroid={asteroid}
+          originPlot={plot}
           destinationPlot={destinationPlot}
           futureFlag
           status={status} />

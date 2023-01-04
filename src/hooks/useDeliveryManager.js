@@ -12,7 +12,6 @@ const useDeliveryManager = (asteroidId, originPlotId, originInvId, destPlotId, d
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrew();
   const { data: originPlot } = usePlot(asteroidId, originPlotId);
-  const { data: destinationPlot } = usePlot(asteroidId, destPlotId);
 
   const payload = useMemo(() => ({
     asteroidId,

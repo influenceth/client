@@ -5,6 +5,10 @@ import {
   FiSquare as UncheckedIcon,
   FiCheckSquare as CheckedIcon
 } from 'react-icons/fi';
+import {
+  BsChevronDoubleDown as ChevronDoubleDownIcon,
+  BsChevronDoubleUp as ChevronDoubleUpIcon,
+} from 'react-icons/bs';
 import { RingLoader } from 'react-spinners';
 import DataTable, { createTheme } from 'react-data-table-component';
 import { Crew, Asteroid, Construction, Crewmate, Inventory, Lot } from '@influenceth/sdk';
@@ -43,6 +47,7 @@ import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useInterval from '~/hooks/useInterval';
 import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
+import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
 
 // TODO: remove this after sdk updated
 Inventory.CAPACITIES = {
@@ -751,6 +756,10 @@ const PoppableTableWrapper = styled.div`
     border-collapse: separate;
     width: 100%;
 
+    & td, & th {
+      white-space: nowrap;
+    }
+
     & td {
       padding: 4px 8px 6px;
       text-align: right;
@@ -761,6 +770,7 @@ const PoppableTableWrapper = styled.div`
     }
 
     & thead {
+      font-size: 12px;
       & > tr > td {
         border-bottom: 1px solid ${borderColor};
       }
@@ -768,10 +778,11 @@ const PoppableTableWrapper = styled.div`
 
     & tbody {
       color: white;
+      font-size: 14px;
       & > tr {
         cursor: ${p => p.theme.cursors.active};
         &:hover > td {
-          background: #444;
+          background: #222;
         }
       }
     }
@@ -1010,23 +1021,51 @@ const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
   );
 };
 
-const DestinationSelection = ({ asteroid, onClick }) => {
-  // TODO: (for extraction):
-  //  - has inventory of type 1
-  //  - constructionStatus is complete
+const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlotId }) => {
+  const { data: crewPlots, isLoading } = useAsteroidCrewPlots(asteroid.i);
 
-  const inventories = [
-    { plot: 12, distance: 7, type: 'Warehouse', fullness: 0.94, remaining: 4932 },
-    { plot: 2312, distance: 27, type: 'Warehouse', fullness: 0.74, remaining: 8932 },
-    { plot: 452, distance: 57, type: 'Warehouse', fullness: 0.32, remaining: 17932 },
-    { plot: 2345, distance: 437, type: 'Ship', fullness: 0.94, remaining: 932 },
-    { plot: 7328, distance: 1027, type: 'Warehouse', fullness: 0.04, remaining: 24302 },
-  ];
+  const inventories = useMemo(() => {
+    return (crewPlots || [])
+      .filter((plot) => (
+        plot.building
+        && plot.i !== originPlotId // not the origin
+        && Inventory.CAPACITIES[plot.building.assetId][inventoryType] // building has inventoryType
+        && ( // building is built (or this is construction inventory and building is planned)
+          (inventoryType === 0 && plot.building.constructionStatus === Construction.STATUS_PLANNED)
+          || (inventoryType !== 0 && plot.building.constructionStatus === Construction.STATUS_OPERATIONAL)
+        )
+      ))
+      .map((plot) => {
+        const capacity = Inventory.CAPACITIES[plot.building.assetId][inventoryType];
+
+        const inventory = plot.building?.inventories.find((i) => i.type === inventoryType);
+        const usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0)) / 1e6;
+        const usedVolume = ((inventory?.volume || 0) + (inventory?.reservedVolume || 0)) / 1e6;
+
+        const availMass = capacity.mass - usedMass;
+        const availVolume = capacity.volume - usedVolume;
+        const fullness = Math.max(
+          1 - availMass / capacity.mass,
+          1 - availVolume / capacity.volume,
+        );
+
+        return {
+          plot,
+          distance: Asteroid.getLotDistance(asteroid.i, originPlotId, plot.i),
+          type: plot.building?.__t || 'Empty Lot',
+          fullness,
+          availMass,
+          availVolume
+        };
+      })
+  }, [crewPlots]);
+
+  // TODO: use isLoading
   return (
     <PopperBody>
-      <PoppableTitle>
+      <PoppableTitle style={{ marginTop: -10 }}>
         <h3>{asteroid.customName || asteroid.baseName}</h3>
-        <div>12 inventories available</div>
+        <div>{inventories.length.toLocaleString()} Inventor{inventories.length === 1 ? 'y': 'ies'} Available</div>
       </PoppableTitle>
       {/* TODO: replace with DataTable? */}
       <PoppableTableWrapper>
@@ -1037,7 +1076,8 @@ const DestinationSelection = ({ asteroid, onClick }) => {
               <td>Distance</td>
               <td>Type</td>
               <td>% Full</td>
-              <td>Rem. Volume</td>
+              <td>Avail. Mass</td>
+              <td>Avail. Volume</td>
             </tr>
           </thead>
           <tbody>
@@ -1046,12 +1086,13 @@ const DestinationSelection = ({ asteroid, onClick }) => {
                 ? theme.colors.error
                 : (inventory.fullness > 0.5 ? theme.colors.yellow : theme.colors.success);
               return (
-                <tr key={i} onClick={onClick(i)}>
-                  <td>Lot #{inventory.plot}</td>
-                  <td>{inventory.distance.toLocaleString()} km</td>
+                <tr key={inventory.plot.i} onClick={onClick(inventory.plot)}>
+                  <td>Lot #{inventory.plot.i}</td>
+                  <td>{formatFixed(inventory.distance, 1)} km</td>
                   <td>{inventory.type}</td>
                   <td style={{ color: warningColor }}>{(100 * inventory.fullness).toFixed(1)}%</td>
-                  <td style={{ color: warningColor }}>{inventory.remaining.toLocaleString()} m<sup>3</sup></td>
+                  <td style={{ color: warningColor }}>{formatFixed(inventory.availMass)} t</td>
+                  <td style={{ color: warningColor }}>{formatFixed(inventory.availVolume)} m<sup>3</sup></td>
                 </tr>
               );
             })}
@@ -1062,6 +1103,84 @@ const DestinationSelection = ({ asteroid, onClick }) => {
   );
 };
 
+const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) => {
+  const unselected = useMemo(() => {
+    return Object.keys(inventory).reduce((acc, cur) => {
+      acc[cur] -= selectedItems[cur] || 0;
+      return acc;
+    }, { ...inventory });
+  }, [inventory, selectedItems]);
+  return (
+    <PopperBody>
+      {/* TODO: see mockup for title area */}
+      <div style={{ display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'space-between' }}>
+        <PoppableTableWrapper>
+          <table>
+            <thead>
+              <tr>
+                <td>Item</td>
+                <td>Category</td>
+                <td>Volume</td>
+                <td>Mass</td>
+                <td>Quanta</td>
+                <td width="48"></td>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.keys(unselected).map((resourceId) => {
+                console.log();
+                const quanta = unselected[resourceId] / resources[resourceId].massPerUnit;
+                const mass = unselected[resourceId];
+                const volume = quanta * resources[resourceId].volumePerUnit;
+                return (
+                  <tr key={resourceId}>
+                    <td>{resources[resourceId].name}</td>
+                    <td>{resources[resourceId].category}</td>
+                    <td>{formatSampleVolume(volume)} m<sup>3</sup></td>
+                    <td>{formatSampleVolume(mass)} t</td>
+                    <td>{formatSampleVolume(mass)} t</td>
+                    <td><ButtonRounded style={{ padding: '5px 16px' }}><ChevronDoubleDownIcon style={{ marginRight: 0 }} /></ButtonRounded></td>
+                  </tr>
+                );
+              })}
+
+              <tr>
+                <td colspan="6" style={{ height: 24 }}></td>
+              </tr>
+              <tr>
+                <td colspan="6" style={{ borderTop: '1px solid #444', padding: 0, height: 6 }}></td>
+              </tr>
+              <tr>
+                <td colspan="6" style={{ backgroundColor: 'rgba(100, 100, 100, 0.2)'}}>
+                  Selected
+                </td>
+              </tr>
+
+              {Object.keys(unselected).map((resourceId) => {
+                const quanta = unselected[resourceId] / resources[resourceId].massPerUnit;
+                const mass = unselected[resourceId];
+                const volume = quanta * resources[resourceId].volumePerUnit;
+                return (
+                  <tr key={resourceId}>
+                    <td>{resources[resourceId].name}</td>
+                    <td>{resources[resourceId].category}</td>
+                    <td>{formatSampleVolume(volume)} m<sup>3</sup></td>
+                    <td>{formatSampleVolume(mass)} t</td>
+                    <td>{formatSampleVolume(mass)} t</td>
+                    <td><ButtonRounded style={{ padding: '5px 16px' }}><ChevronDoubleUpIcon style={{ marginRight: 0 }} /></ButtonRounded></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </PoppableTableWrapper>
+        <div>
+          <Button onClick={onComplete}>Done</Button>
+        </div>
+      </div>
+    </PopperBody>
+  );
+};
 
 // 
 // Sections
@@ -1226,12 +1345,29 @@ export const ToolSection = ({ resource, sourcePlot }) => {
   );
 }
 
-export const ItemSelectionSection = ({ items, resources, status }) => {
+export const ItemSelectionSection = ({ inventory, onSelectItems, resources, selectedItems, status }) => {
+  const selectedItemKeys = Object.keys(selectedItems || {});
+
+  const [completed, setCompleted] = useState(0);
+  const onSelectionCompleted = useCallback((items) => () => {
+    setCompleted((x) => x + 1);
+    if (onSelectItems) onSelectItems(items);
+  }, []);
+
+  const SelectionPopper = () => (
+    <Poppable label="Select" buttonWidth="135px" title="Items to Transfer" closeOnChange={completed}>
+      <TransferSelection
+        inventory={inventory}
+        onComplete={onSelectionCompleted}
+        resources={resources}
+        selectedItems={selectedItems} />
+    </Poppable>
+  );
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Items</SectionTitle>
       <SectionBody highlight={status === 'AFTER'}>
-        {items.length === 0 && (
+        {selectedItemKeys.length === 0 && (
           <>
             <EmptyResourceWithData>
               <EmptyResourceImage />
@@ -1241,28 +1377,26 @@ export const ItemSelectionSection = ({ items, resources, status }) => {
               </label>
             </EmptyResourceWithData>
             <div>
-              <Poppable label="Select" buttonWidth="135px">
-                {/* TODO: ... */}
-              </Poppable>
+              <SelectionPopper />
             </div>
           </>
         )}
-        {items.length > 0 && (
+        {selectedItemKeys.length > 0 && (
           <ItemSelectionWrapper>
             <div>
               <ItemsList>
-                {items.map(([tally, i], x) => (
-                  <ResourceImage key={i} badge={tally} resource={resources[i]} progress={(x + 1) / (items.length + 1)} />
+                {selectedItemKeys.map((resourceId, x) => (
+                  <ResourceImage
+                    key={resourceId}
+                    badge={`${selectedItems[resourceId].toLocaleString()} t`}
+                    resource={resources[resourceId]}
+                    progress={selectedItems[resourceId] / inventory[resourceId]} />
                 ))}
               </ItemsList>
             </div>
             <div>
-              <div>{items.length} item{items.length === 1 ? '' : 's'}</div>
-              {status === 'BEFORE' && (
-                <Poppable label="Select" buttonWidth="135px">
-                  {/* TODO: ... */}
-                </Poppable>
-              )}
+              <div>{selectedItemKeys.length} item{selectedItemKeys.length === 1 ? '' : 's'}</div>
+              {status === 'BEFORE' && <SelectionPopper />}
             </div>
           </ItemSelectionWrapper>
         )}
@@ -1271,12 +1405,12 @@ export const ItemSelectionSection = ({ items, resources, status }) => {
   );
 };
 
-export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, onDestinationSelect, status }) => {
+export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, onDestinationSelect, originPlot, status }) => {
   const buildings = useBuildingAssets();  // TODO: probably more consistent to move this up a level
   const [clicked, setClicked] = useState(0);
-  const onClick = useCallback((id) => () => {
+  const onClick = useCallback((plot) => () => {
     setClicked((x) => x + 1);
-    if (onDestinationSelect) onDestinationSelect(id);
+    if (onDestinationSelect) onDestinationSelect(plot);
   }, []);
 
   const destinationBuilding = useMemo(() => {
@@ -1325,11 +1459,13 @@ export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, 
         }
         {status === 'BEFORE' && (
           <div style={{ display: 'flex' }}>
-            <IconButtonRounded style={{ marginRight: 6 }}>{/* TODO: ... */}
-              <TargetIcon />
-            </IconButtonRounded>
+            {/* TODO: (select on map)
+              <IconButtonRounded style={{ marginRight: 6 }}>
+                <TargetIcon />
+              </IconButtonRounded>
+            */}
             <Poppable label="Select" buttonWidth="135px" title="Select Destination" closeOnChange={clicked}>
-              <DestinationSelection asteroid={asteroid} onClick={onClick} />
+              <DestinationSelection asteroid={asteroid} onClick={onClick} originPlotId={originPlot.i} />
             </Poppable>
           </div>
         )}
@@ -1883,7 +2019,7 @@ export const formatTimer = (secondsRemaining, maxPrecision = null) => {
   return parts.join(' ');
 };
 
-export const formatFixed = (value, maxPrecision) => {
+export const formatFixed = (value, maxPrecision = 0) => {
   const div = 10 ** maxPrecision;
   return (Math.round((value || 0) * div) / div).toLocaleString();
 };
@@ -1907,7 +2043,6 @@ export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps
   let totalTime = 0;
 
   const tripDetails = steps.map(({ label, plot, skipTo }) => {
-    
     const stepDistance = Asteroid.getLotDistance(asteroidId, currentLocation, plot);
     const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLocation, plot, crewTravelBonus);
     currentLocation = skipTo || plot;

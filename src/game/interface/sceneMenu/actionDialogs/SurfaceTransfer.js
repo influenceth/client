@@ -96,6 +96,8 @@ const SurfaceTransfer = (props) => {
   // TODO: 1's probably should not be hard-coded
   const { deliveryStatus, startDelivery, finishDelivery } = useDeliveryManager(asteroid?.i, plot?.i, 1, destinationPlot?.i, 1);
 
+  const [selectedItems, setSelectedItems] = useState({});
+
   // TODO: select resource(s)
   //  aggregate into stat totals
   // resource?.massPerUnit, resource?.volumePerUnit
@@ -108,50 +110,58 @@ const SurfaceTransfer = (props) => {
     [asteroid.i, crewTravelBonus, plot.i]
   );
 
-  const transportDistance = Asteroid.getLotTravelTime(asteroid?.i, plot?.i, destinationPlot?.i);
+  const transportDistance = Asteroid.getLotDistance(asteroid?.i, plot?.i, destinationPlot?.i);
   const transportTime = Asteroid.getLotTravelTime(asteroid?.i, plot?.i, destinationPlot?.i, crewTravelBonus) || 0;
 
-  const stats = useMemo(() => ([
-    {
-      label: 'Total Volume',
-      value: `${formatSampleMass(0 || 0)} tonnes`, // TODO
-      direction: 0
-    },
-    {
-      label: 'Total Mass',
-      value: `${formatSampleVolume(0 || 0)} m³`,  // TODO
-      direction: 0
-    },
-    {
-      label: 'Transfer Distance',
-      value: `${Math.round(transportDistance)} km`,
-      direction: 0
-    },
-    {
-      label: 'Crew Travel',
-      value: formatTimer(crewTravelTime),
-      direction: getBonusDirection(crewTravelBonus),
-      tooltip: (
-        <TravelBonusTooltip
-          bonus={crewTravelBonus}
-          totalTime={crewTravelTime}
-          tripDetails={tripDetails}
-          crewRequired="start" />
-      )
-    },
-    {
-      label: 'Transport Time',
-      value: formatTimer(transportTime),
-      direction: getBonusDirection(crewTravelBonus),
-      tooltip: (
-        <TimeBonusTooltip
-          bonus={crewTravelBonus}
-          title="Transport Time"
-          totalTime={transportTime}
-          crewRequired="start" />
-      )
-    },
-  ]), [resources, transportTime]);
+  const stats = useMemo(() => {
+    const { totalMass, totalVolume } = Object.keys(selectedItems).reduce((acc, cur) => {
+      acc.totalMass += selectedItems[cur] * resources[cur].massPerUnit;
+      acc.totalVolume += selectedItems[cur] * resources[cur].volumePerUnit;
+      return acc;
+    }, { totalMass: 0, totalVolume: 0 })
+
+    return [
+      {
+        label: 'Total Volume',
+        value: `${formatSampleMass(totalMass)} tonnes`,
+        direction: 0
+      },
+      {
+        label: 'Total Mass',
+        value: `${formatSampleVolume(totalVolume)} m³`,
+        direction: 0
+      },
+      {
+        label: 'Transfer Distance',
+        value: `${Math.round(transportDistance)} km`,
+        direction: 0
+      },
+      {
+        label: 'Crew Travel',
+        value: formatTimer(crewTravelTime),
+        direction: getBonusDirection(crewTravelBonus),
+        tooltip: (
+          <TravelBonusTooltip
+            bonus={crewTravelBonus}
+            totalTime={crewTravelTime}
+            tripDetails={tripDetails}
+            crewRequired="start" />
+        )
+      },
+      {
+        label: 'Transport Time',
+        value: formatTimer(transportTime),
+        direction: getBonusDirection(crewTravelBonus),
+        tooltip: (
+          <TimeBonusTooltip
+            bonus={crewTravelBonus}
+            title="Transport Time"
+            totalTime={transportTime}
+            crewRequired="start" />
+        )
+      },
+    ];
+  }, [selectedItems, transportTime]);
 
   const status = useMemo(() => {
     if (deliveryStatus === 'READY') {
@@ -164,10 +174,19 @@ const SurfaceTransfer = (props) => {
 
   useEffect(() => {
     if (deliveryStatus === 'FINISHING') {
-      // TODO: link to new lot?
+      // TODO: link to destination lot?
       onClose();
     }
   }, [deliveryStatus]);
+
+  const originInventory = useMemo(() => {
+    if (plot?.building?.constructionStatus === Construction.STATUS_OPERATIONAL) {
+      return plot?.building?.inventories.find((i) => i.type === 1);
+    } else if (plot?.building?.constructionStatus === Construction.STATUS_PLANNED) {
+      return plot?.building?.inventories.find((i) => i.type === 0);
+    }
+    return null;
+  }, [plot?.building?.constructionStatus, plot?.building?.inventories]);
 
   return (
     <>
@@ -185,8 +204,18 @@ const SurfaceTransfer = (props) => {
         startTime={plot?.building?.startTime}
         targetTime={plot?.building?.committedTime} />
 
-      <ItemSelectionSection items={[]} resources={resources} status={status} />
-      <DestinationPlotSection asteroid={asteroid} destinationPlot={destinationPlot} status={status} />
+      <ItemSelectionSection
+        inventory={originInventory?.resources || {}}
+        onSelectItems={setSelectedItems}
+        resources={resources}
+        selectedItems={selectedItems}
+        status={status} />
+
+      <DestinationPlotSection
+        asteroid={asteroid}
+        originPlot={plot}
+        destinationPlot={destinationPlot}
+        status={status} />
 
       <ActionDialogStats stats={stats} status={status} />
 

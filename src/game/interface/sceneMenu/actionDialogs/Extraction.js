@@ -83,8 +83,6 @@ import {
 } from './components';
 import usePlot from '~/hooks/usePlot';
 
-console.log('Extraction', Extraction)
-
 const ExtractionDialog = (props) => {
   const { asteroid, onClose, plot } = props;
   const resources = useResourceAssets();
@@ -92,8 +90,7 @@ const ExtractionDialog = (props) => {
 
   const { crew, crewMemberMap } = useCrew();
 
-  // const [destinationPlot, setDestinationPlot] = useState();
-  const { data: destinationPlot } = usePlot(asteroid.i, 1820);
+  const [destinationPlot, setDestinationPlot] = useState();
   const [selectedCoreSample, setSelectedCoreSample] = useState();
   
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
@@ -230,7 +227,13 @@ const ExtractionDialog = (props) => {
         selectedSample={selectedCoreSample}
         status={status}
         usableSamples={usableSamples} />
-      <DestinationPlotSection asteroid={asteroid} destinationPlot={destinationPlot} status={status} />
+
+      <DestinationPlotSection
+        asteroid={asteroid}
+        destinationPlot={destinationPlot}
+        originPlot={plot}
+        onDestinationSelect={setDestinationPlot}
+        status={status} />
 
       {status === 'BEFORE' && (
         <ExtractionAmountSection
