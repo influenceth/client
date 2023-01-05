@@ -99,7 +99,7 @@ const api = {
   },
 
   getCrewOccupiedPlots: async (a, c) => {
-    const response = await instance.get(`/v1/asteroids/${a}/lots/crew/${c}`);
+    const response = await instance.get(`/v1/asteroids/${a}/lots/occupier/${c}`);
     return response.data;
   },
 

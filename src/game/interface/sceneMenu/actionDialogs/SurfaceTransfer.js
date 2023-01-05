@@ -92,7 +92,7 @@ const SurfaceTransfer = (props) => {
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
 
-  const { data: destinationPlot } = usePlot(asteroid.i, 1951);
+  const [destinationPlot, setDestinationPlot] = useState();
   // TODO: 1's probably should not be hard-coded
   const { deliveryStatus, startDelivery, finishDelivery } = useDeliveryManager(asteroid?.i, plot?.i, 1, destinationPlot?.i, 1);
 
@@ -215,6 +215,7 @@ const SurfaceTransfer = (props) => {
         asteroid={asteroid}
         originPlot={plot}
         destinationPlot={destinationPlot}
+        onDestinationSelect={setDestinationPlot}
         status={status} />
 
       <ActionDialogStats stats={stats} status={status} />
@@ -230,8 +231,8 @@ const SurfaceTransfer = (props) => {
         disabled={false}
         finalizeLabel="Complete"
         goLabel="Transfer"
-        onFinalize={finishDelivery}
-        onGo={startDelivery}
+        onFinalize={() => finishDelivery()}
+        onGo={() => startDelivery(selectedItems)}
         status={status} />
     </>
   );

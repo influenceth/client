@@ -562,9 +562,9 @@ const InventoryUtilization = styled(ResourceProgress)`
 `;
 
 const IconButtonRounded = styled(ButtonRounded)`
-  padding: 10px;
+  padding: ${p => p.flatter ? '4px 16px' : '10px'};
   & > svg {
-    font-size: 20px;
+    font-size: ${p => p.flatter ? 'initial' : '20px'};
     margin-right: 0;
   }
 `;
@@ -718,6 +718,13 @@ const PopperBody = styled.div`
   height: 100%;
   padding: 20px;
 `;
+const PopperFooter = styled.div`
+  border-top: 1px solid ${borderColor};
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  padding-top: 6px;
+`;
 const PopperList = styled.div`
   height: 100%;
   overflow-x: hidden;
@@ -785,6 +792,56 @@ const PoppableTableWrapper = styled.div`
           background: #222;
         }
       }
+    }
+  }
+`;
+const TitleCell = styled.td`
+  &:after {
+    content: '${p => p.title}';
+  }
+`;
+const TransferSelectionTableWrapper = styled(PoppableTableWrapper)`
+  border-width: 0;
+  flex: 1 0 auto;
+  max-height: 200px;
+
+  &:first-child {
+    border-top-width: 1px;
+    flex: 0 1 100%;
+    max-height: 100%;
+  }
+  &:not(:first-child) tbody {
+    color: ${p => p.theme.colors.main};
+  }
+
+  td:nth-child(2) { width: 100px; }
+  td:nth-child(3) { width: 112px; }
+  td:nth-child(4) { width: 98px; }
+  td:nth-child(5) { width: 98px; }
+  td:nth-child(6) { width: 48px; }
+
+  td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  & > table > thead > tr > ${TitleCell} {
+    border-bottom: 0;
+    padding: 0;
+    &:before {
+      content: '';
+      border-top: 1px solid ${borderColor};
+      display: block;
+      height: 4px;
+      margin-top: 24px;
+    }
+    &:after {
+      background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+      color: ${p => p.theme.colors.main};
+      display: block;
+      margin-bottom: 4px;
+      padding: 4px 6px;
     }
   }
 `;
@@ -1058,6 +1115,7 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
           availVolume
         };
       })
+      .sort((a, b) => a.distance - b.distance)
   }, [crewPlots]);
 
   // TODO: use isLoading
@@ -1104,17 +1162,38 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
 };
 
 const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) => {
-  const unselected = useMemo(() => {
+  const [newSelectedItems, setNewSelectedItems] = useState(selectedItems);
+
+  const onUpdate = (resourceId, amount, isSelected) => {
+    const makeUpdate = { ...newSelectedItems };
+    if (isSelected) {
+      if (!makeUpdate[resourceId]) makeUpdate[resourceId] = 0;
+      makeUpdate[resourceId] += amount;
+    } else {
+      makeUpdate[resourceId] -= amount;
+      if (makeUpdate[resourceId] <= 0) delete makeUpdate[resourceId];
+    }
+    console.log({ makeUpdate });
+    setNewSelectedItems(makeUpdate);
+  };
+
+  const unselectedItems = useMemo(() => {
     return Object.keys(inventory).reduce((acc, cur) => {
-      acc[cur] -= selectedItems[cur] || 0;
+      acc[cur] -= newSelectedItems[cur] || 0;
+      if (acc[cur] <= 0) delete acc[cur];
       return acc;
     }, { ...inventory });
-  }, [inventory, selectedItems]);
+  }, [inventory, newSelectedItems]);
+
+  useEffect(() => {
+    console.log('newSelectedItems', newSelectedItems, unselectedItems);
+  }, [newSelectedItems, unselectedItems]);
+
   return (
     <PopperBody>
       {/* TODO: see mockup for title area */}
-      <div style={{ display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'space-between' }}>
-        <PoppableTableWrapper>
+      <div style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+        <TransferSelectionTableWrapper>
           <table>
             <thead>
               <tr>
@@ -1123,61 +1202,66 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
                 <td>Volume</td>
                 <td>Mass</td>
                 <td>Quanta</td>
-                <td width="48"></td>
+                <td></td>
               </tr>
             </thead>
             <tbody>
-              {Object.keys(unselected).map((resourceId) => {
-                console.log();
-                const quanta = unselected[resourceId] / resources[resourceId].massPerUnit;
-                const mass = unselected[resourceId];
+              {Object.keys(unselectedItems).map((resourceId) => {
+                const quanta = unselectedItems[resourceId];
+                const mass = quanta * resources[resourceId].massPerUnit;
                 const volume = quanta * resources[resourceId].volumePerUnit;
                 return (
                   <tr key={resourceId}>
                     <td>{resources[resourceId].name}</td>
                     <td>{resources[resourceId].category}</td>
                     <td>{formatSampleVolume(volume)} m<sup>3</sup></td>
-                    <td>{formatSampleVolume(mass)} t</td>
-                    <td>{formatSampleVolume(mass)} t</td>
-                    <td><ButtonRounded style={{ padding: '5px 16px' }}><ChevronDoubleDownIcon style={{ marginRight: 0 }} /></ButtonRounded></td>
-                  </tr>
-                );
-              })}
-
-              <tr>
-                <td colspan="6" style={{ height: 24 }}></td>
-              </tr>
-              <tr>
-                <td colspan="6" style={{ borderTop: '1px solid #444', padding: 0, height: 6 }}></td>
-              </tr>
-              <tr>
-                <td colspan="6" style={{ backgroundColor: 'rgba(100, 100, 100, 0.2)'}}>
-                  Selected
-                </td>
-              </tr>
-
-              {Object.keys(unselected).map((resourceId) => {
-                const quanta = unselected[resourceId] / resources[resourceId].massPerUnit;
-                const mass = unselected[resourceId];
-                const volume = quanta * resources[resourceId].volumePerUnit;
-                return (
-                  <tr key={resourceId}>
-                    <td>{resources[resourceId].name}</td>
-                    <td>{resources[resourceId].category}</td>
-                    <td>{formatSampleVolume(volume)} m<sup>3</sup></td>
-                    <td>{formatSampleVolume(mass)} t</td>
-                    <td>{formatSampleVolume(mass)} t</td>
-                    <td><ButtonRounded style={{ padding: '5px 16px' }}><ChevronDoubleUpIcon style={{ marginRight: 0 }} /></ButtonRounded></td>
+                    <td>{formatSampleMass(mass)} t</td>
+                    <td>{formatSampleMass(mass)} t</td>
+                    <td>
+                      <IconButtonRounded flatter onClick={() => onUpdate(resourceId, quanta, true)}>
+                        <ChevronDoubleDownIcon />
+                      </IconButtonRounded>
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-        </PoppableTableWrapper>
-        <div>
-          <Button onClick={onComplete}>Done</Button>
-        </div>
+        </TransferSelectionTableWrapper>
+        {Object.keys(newSelectedItems).length > 0 && (
+          <TransferSelectionTableWrapper>
+            <table>
+              <thead>
+                <tr><TitleCell colSpan="6" title="Selected" /></tr>
+              </thead>
+              <tbody>
+                {Object.keys(newSelectedItems).map((resourceId) => {
+                  const quanta = newSelectedItems[resourceId];
+                  const mass = quanta * resources[resourceId].massPerUnit;
+                  const volume = quanta * resources[resourceId].volumePerUnit;
+                  return (
+                    <tr key={resourceId}>
+                      <td>{resources[resourceId].name}</td>
+                      <td>{resources[resourceId].category}</td>
+                      <td>{formatSampleVolume(volume)} m<sup>3</sup></td>
+                      <td>{formatSampleMass(mass)} t</td>
+                      <td>{formatSampleMass(mass)} t</td>
+                      <td>
+                        <IconButtonRounded flatter onClick={() => onUpdate(resourceId, quanta, false)}>
+                          <ChevronDoubleUpIcon />
+                        </IconButtonRounded>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </TransferSelectionTableWrapper>
+        )}
       </div>
+      <PopperFooter>
+        <Button onClick={() => onComplete(newSelectedItems)}>Done</Button>
+      </PopperFooter>
     </PopperBody>
   );
 };
@@ -1349,13 +1433,13 @@ export const ItemSelectionSection = ({ inventory, onSelectItems, resources, sele
   const selectedItemKeys = Object.keys(selectedItems || {});
 
   const [completed, setCompleted] = useState(0);
-  const onSelectionCompleted = useCallback((items) => () => {
+  const onSelectionCompleted = useCallback((items) => {
     setCompleted((x) => x + 1);
     if (onSelectItems) onSelectItems(items);
   }, []);
 
   const SelectionPopper = () => (
-    <Poppable label="Select" buttonWidth="135px" title="Items to Transfer" closeOnChange={completed}>
+    <Poppable label="Select" buttonWidth="135px" title="Items to Transfer" closeOnChange={completed} contentHeight={360} contentWidth={700}>
       <TransferSelection
         inventory={inventory}
         onComplete={onSelectionCompleted}
@@ -1388,7 +1472,7 @@ export const ItemSelectionSection = ({ inventory, onSelectItems, resources, sele
                 {selectedItemKeys.map((resourceId, x) => (
                   <ResourceImage
                     key={resourceId}
-                    badge={`${selectedItems[resourceId].toLocaleString()} t`}
+                    badge={formatResourceAmount(selectedItems[resourceId], resourceId)}
                     resource={resources[resourceId]}
                     progress={selectedItems[resourceId] / inventory[resourceId]} />
                 ))}
@@ -2019,8 +2103,8 @@ export const formatTimer = (secondsRemaining, maxPrecision = null) => {
   return parts.join(' ');
 };
 
-export const formatFixed = (value, maxPrecision = 0) => {
-  const div = 10 ** maxPrecision;
+export const formatFixed = (value, maximumFractionDigits = 0) => {
+  const div = 10 ** maximumFractionDigits;
   return (Math.round((value || 0) * div) / div).toLocaleString();
 };
 
@@ -2059,4 +2143,39 @@ export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps
     ];
   });
   return { totalDistance, totalTime, tripDetails };
+};
+
+export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrecision = 3 } = {}) => {
+  const { massPerUnit } = Inventory.RESOURCES[resourceId];
+
+  if (massPerUnit === 0.001) {
+    let unitLabel;
+    let scale;
+    if (units >= 1e9) {
+      scale = 1e9;
+      unitLabel = abbrev ? 'Mt' : 'megatonnes';
+    } else if (units >= 1e6) {
+      scale = 1e6;
+      unitLabel = abbrev ? 'kt' : 'kilotonnes';
+    } else if (units >= 1e3) {
+      scale = 1e3;
+      unitLabel = abbrev ? 't' : 'tonnes';
+    } else {
+      scale = 1;
+      unitLabel = abbrev ? 'kg' : 'kilograms';
+    }
+    
+    const workingUnits = (units / scale);
+    console.log('workingUnits', workingUnits);
+
+    let fixedPlaces = 0;
+    while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
+      console.log('x', workingUnits * 10 ** fixedPlaces, 10 ** minPrecision);
+      fixedPlaces++;
+    }
+    return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+  }
+
+  // granular units
+  return units.toLocaleString();
 };

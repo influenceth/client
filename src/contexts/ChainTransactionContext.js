@@ -337,10 +337,13 @@ const getContracts = (account, queryClient) => ({
   'START_DELIVERY': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, originPlotId, originInvId, destPlotId, destInvId, resources, crewId }) => contract.invoke(
-      'Inventory_transferStart',
-      [asteroidId, originPlotId, originInvId, destPlotId, destInvId, Object.keys(resources), Object.values(resources), crewId]
-    ),
+    transact: (contract) => ({ asteroidId, originPlotId, originInvId, destPlotId, destInvId, resources, crewId }) => {
+      console.log([asteroidId, originPlotId, originInvId, destPlotId, destInvId, Object.keys(resources), Object.values(resources), crewId]);
+      return contract.invoke(
+        'Inventory_transferStart',
+        [asteroidId, originPlotId, originInvId, destPlotId, destInvId, Object.keys(resources), Object.values(resources), crewId]
+      );
+    },
     getErrorAlert: ({}) => ({
       type: 'GenericAlert',
       content: 'Delivery initialization failed.',

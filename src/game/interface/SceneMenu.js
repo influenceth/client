@@ -423,7 +423,6 @@ const SceneMenu = (props) => {
           }
         }
 
-        console.log('constructionStatus', constructionStatus);
         if (constructionStatus === 'OPERATIONAL' && plot.building?.assetId) {
           const buildingAsset = buildings[plot.building.assetId];
           if (buildingAsset.capabilities.includes('extraction')) {
