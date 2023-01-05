@@ -157,7 +157,7 @@ const Construct = (props) => {
         }}
         status={status}
         startTime={plot?.building?.startTime}
-        targetTime={plot?.building?.committedTime} />
+        targetTime={plot?.building?.completionTime} />
 
       <BuildingPlanSection
         building={buildings[plot.building?.assetId]}

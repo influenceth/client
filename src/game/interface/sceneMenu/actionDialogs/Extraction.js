@@ -105,6 +105,10 @@ const ExtractionDialog = (props) => {
     [asteroid.i, crewTravelBonus, plot.i]
   );
 
+  useEffect(() => {
+    console.log(plot.i, '2053', Asteroid.getLotDistance(asteroid.i, plot.i, 2053), Asteroid.getLotTravelTime(asteroid.i, plot.i, 2053));
+  }, []);
+
   const [amount, setAmount] = useState(0);
   useEffect(() => {
     if (selectedCoreSample) {
@@ -217,7 +221,7 @@ const ExtractionDialog = (props) => {
         }}
         status={status}
         startTime={plot?.building?.extraction?.startTime}
-        targetTime={plot?.building?.extraction?.committedTime} />
+        targetTime={plot?.building?.extraction?.completionTime} />
 
       <ExtractSampleSection
         amount={amount}

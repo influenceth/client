@@ -19,7 +19,7 @@ export function ActionItemProvider({ children }) {
 
     const openItems = [];
     events.forEach((event) => {
-      if (event.returnValues?.committedTime) {
+      if (event.returnValues?.completionTime) {
         const waitingOn = {};
         if (event.event === 'Asteroid_ScanStarted') {
           waitingOn.event = 'Asteroid_ScanFinished';
@@ -35,7 +35,7 @@ export function ActionItemProvider({ children }) {
         // }
         openItems.push({
           ...event,
-          isReady: getAdjustedNow() >= event.returnValues.committedTime,
+          isReady: getAdjustedNow() >= event.returnValues.completionTime,
           waitingOn
         });
       }
@@ -59,7 +59,7 @@ export function ActionItemProvider({ children }) {
   useEffect(() => {
     actionItems.forEach((ai) => {
       if (!ai.isReady && !nextTimer.current) {
-        const readyIn = (ai.returnValues.committedTime - getAdjustedNow()) + 5;
+        const readyIn = (ai.returnValues.completionTime - getAdjustedNow()) + 5;
         nextTimer.current = setTimeout(() => {
           console.log('Something is ready.');
           setReadyTally((i) => i + 1);

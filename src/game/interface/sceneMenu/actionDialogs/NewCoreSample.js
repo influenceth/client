@@ -188,7 +188,7 @@ const NewCoreSample = (props) => {
         }}
         status={status}
         startTime={currentSample?.startTime}
-        targetTime={currentSample?.committedTime} />
+        targetTime={currentSample?.completionTime} />
 
       <RawMaterialSection
         abundance={abundance}

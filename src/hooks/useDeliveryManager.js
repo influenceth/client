@@ -12,6 +12,7 @@ const useDeliveryManager = (asteroidId, originPlotId, originInvId, destPlotId, d
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrew();
   const { data: originPlot } = usePlot(asteroidId, originPlotId);
+  const { data: destinationPlot } = usePlot(asteroidId, destPlotId);
 
   const payload = useMemo(() => ({
     asteroidId,
@@ -29,21 +30,25 @@ const useDeliveryManager = (asteroidId, originPlotId, originInvId, destPlotId, d
     })
   }, [payload]);
 
-  const finishDelivery = useCallback((deliveryId) => {
-    execute('FINISH_DELIVERY', { ...payload, deliveryId })
-  }, [payload]);
+  const unfinishedCrewDelivery = useMemo(() => 
+    destinationPlot?.building?.deliveries?.length > 0
+      ? destinationPlot.building.deliveries[destinationPlot.building.deliveries.length - 1]
+      : null,
+    [destinationPlot?.building?.deliveries]
+  );
+
+  const finishDelivery = useCallback(() => {
+    execute('FINISH_DELIVERY', { ...payload, deliveryId: unfinishedCrewDelivery?.deliveryId })
+  }, [payload, unfinishedCrewDelivery]);
 
   // status flow
   // READY > IN_TRANSIT > READY_TO_FINISH > FINISHING
   const deliveryStatus = useMemo(() => {
     // TODO: this needs a status filter
-    const unfinishedCrewDelivery = originPlot?.building?.deliveries?.length > 0
-      ? originPlot.building.deliveries[originPlot.building.deliveries.length - 1]
-      : null;
     if (unfinishedCrewDelivery) {
       if (getStatus('FINISH_DELIVERY', payload) === 'pending') {
         return 'FINISHING';
-      } else if (unfinishedCrewDelivery.committedTime < getAdjustedNow()) {
+      } else if (unfinishedCrewDelivery.completionTime < getAdjustedNow()) {
         return 'READY_TO_FINISH';
       }
       return 'IN_TRANSIT';
@@ -55,7 +60,7 @@ const useDeliveryManager = (asteroidId, originPlotId, originInvId, destPlotId, d
   // NOTE: actionItems is not used in this function, but it being updated suggests
   //  that something might have just gone from UNDER_CONSTRUCTION to READY_TO_FINISH
   //  so it is a good time to re-evaluate the status
-  }, [originPlot?.building?.deliveries, getStatus, payload, actionItems]);
+  }, [unfinishedCrewDelivery, getStatus, payload, actionItems]);
 
   return {
     deliveryStatus,

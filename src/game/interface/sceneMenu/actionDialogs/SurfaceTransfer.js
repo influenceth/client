@@ -161,7 +161,7 @@ const SurfaceTransfer = (props) => {
         )
       },
     ];
-  }, [selectedItems, transportTime]);
+  }, [selectedItems, transportDistance, transportTime]);
 
   const status = useMemo(() => {
     if (deliveryStatus === 'READY') {
@@ -202,7 +202,7 @@ const SurfaceTransfer = (props) => {
         }}
         status={status}
         startTime={plot?.building?.startTime}
-        targetTime={plot?.building?.committedTime} />
+        targetTime={plot?.building?.completionTime} />
 
       <ItemSelectionSection
         inventory={originInventory?.resources || {}}

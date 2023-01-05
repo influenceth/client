@@ -1,4 +1,5 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useEffect, useMemo } from 'react';
+import { useQueryClient } from 'react-query';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import { getAdjustedNow } from '~/lib/utils';
@@ -26,6 +27,19 @@ const useScanManager = (asteroid) => {
     () => execute('FINISH_ASTEROID_SCAN', payload),
     [execute, payload]
   );
+
+  // TODO: vvv remove this once actionItems are working
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (asteroid?.scanCompletionTime > getAdjustedNow()) {
+      setTimeout(() => {
+        queryClient.invalidateQueries([
+          ['asteroids', asteroid.i]
+        ]);
+      }, (asteroid.scanCompletionTime - getAdjustedNow() + 5) * 1e3);
+    }
+  }, [asteroid?.scanCompletionTime]);
+  // ^^^
 
   const scanStatus = useMemo(() => {
     if (asteroid) {

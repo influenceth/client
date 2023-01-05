@@ -35,7 +35,7 @@ const useCoreSampleManager = (asteroidId, plotId, resourceId, isImprovement = fa
       if (sample.status === CoreSample.STATUS_USED) {
         return 'USED';
       } else if (sample.status === CoreSample.STATUS_STARTED) {
-        if (sample.committedTime < getAdjustedNow()) {
+        if (sample.completionTime < getAdjustedNow()) {
           return 'READY_TO_FINISH';
         }
         return 'SAMPLING';

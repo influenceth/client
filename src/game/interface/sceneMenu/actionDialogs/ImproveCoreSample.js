@@ -214,7 +214,7 @@ const ImproveCoreSample = (props) => {
         }}
         status={status}
         startTime={currentSample?.status === CoreSample.STATUS_FINISHED ? undefined : currentSample?.startTime}
-        targetTime={currentSample?.status === CoreSample.STATUS_FINISHED ? undefined : currentSample?.committedTime} />
+        targetTime={currentSample?.status === CoreSample.STATUS_FINISHED ? undefined : currentSample?.completionTime} />
 
       <ExistingSampleSection
         plot={plot}

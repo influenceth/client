@@ -20,6 +20,10 @@ import useScanManager from '~/hooks/useScanManager';
 import useStore from '~/hooks/useStore';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import theme, { hexToRGB } from '~/theme';
+import { LiveTimer } from '../../sceneMenu/actionDialogs/components';
+import { getAdjustedNow } from '~/lib/utils';
+import { useQueryClient } from 'react-query';
+import { RingLoader } from 'react-spinners';
 
 // TODO (enhancement): if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
@@ -525,7 +529,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                   {scanStatus === 'SCANNING' && (
                     <>
                       <h3>SCANNING</h3>
-                      <LoadingIcon color="white" size={12} />
+                      <LiveTimer target={asteroid.scanCompletionTime} />
                     </>
                   )}
                   {(scanStatus === 'READY_TO_FINISH' || scanStatus === 'FINISHING') && (
