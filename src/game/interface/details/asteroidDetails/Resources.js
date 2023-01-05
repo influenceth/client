@@ -16,7 +16,7 @@ import {
   WarningOutlineIcon
 } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
-import useScanAsteroid from '~/hooks/useScanAsteroid';
+import useScanManager from '~/hooks/useScanManager';
 import useStore from '~/hooks/useStore';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import theme, { hexToRGB } from '~/theme';
@@ -409,7 +409,7 @@ const bonusLabels = {
 
 const StartScanButton = ({ i }) => {
   const { data: extendedAsteroid, isLoading } = useAsteroid(Number(i), true);
-  const { startAsteroidScan } = useScanAsteroid(extendedAsteroid);
+  const { startAsteroidScan } = useScanManager(extendedAsteroid);
   return (
     <Button
       disabled={!extendedAsteroid}
@@ -428,7 +428,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
   const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const { finalizeAsteroidScan, scanStatus } = useScanAsteroid(asteroid);
+  const { finalizeAsteroidScan, scanStatus } = useScanManager(asteroid);
 
   const [selected, setSelected] = useState();
   const [hover, setHover] = useState();
@@ -496,7 +496,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
           <GraphicWrapper>
             <AsteroidGraphic
               abundances={abundances}
-              asteroid={{ ...asteroid, scanStatus }}
+              asteroid={asteroid}
               defaultLastRow={toRarity(asteroid.bonuses)}
               focus={selected?.category}
               hover={hover}
@@ -509,7 +509,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
           <UnscannedWrapper>
             {isOwner && (
               <UnscannedContainer>
-                {scanStatus === 'SCAN_READY' && (
+                {scanStatus === 'READY_TO_FINISH' && (
                   <UnscannedHeader isOwner>
                     <WarningOutlineIcon />
                     Un-Scanned Asteroid
@@ -528,12 +528,12 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                       <LoadingIcon color="white" size={12} />
                     </>
                   )}
-                  {(scanStatus === 'SCAN_READY' || scanStatus === 'RETRIEVING') && (
+                  {(scanStatus === 'READY_TO_FINISH' || scanStatus === 'FINISHING') && (
                     <>
                       <p>Asteroid scan is complete. Ready to finalize.</p>
                       <Button
-                        disabled={scanStatus === 'RETRIEVING'}
-                        loading={scanStatus === 'RETRIEVING'}
+                        disabled={scanStatus === 'FINISHING'}
+                        loading={scanStatus === 'FINISHING'}
                         onClick={finalizeAsteroidScan}
                         isTransaction>
                         Finalize

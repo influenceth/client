@@ -76,6 +76,7 @@ const getContracts = (account, queryClient) => ({
       _packed.bonuses,
       _proofs.boostBonus,
     ]),
+    isEqual: (txVars, vars) => txVars.i === vars.i,
     getErrorAlert: ({ i }) => ({
       type: 'Asteroid_ScanningError',
       level: 'warning',
