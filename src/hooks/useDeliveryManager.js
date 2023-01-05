@@ -46,7 +46,7 @@ const useDeliveryManager = (asteroidId, originPlotId, originInvId, destPlotId, d
   const deliveryStatus = useMemo(() => {
     // TODO: this needs a status filter
     if (unfinishedCrewDelivery) {
-      if (getStatus('FINISH_DELIVERY', payload) === 'pending') {
+      if (getStatus('FINISH_DELIVERY', { ...payload, deliveryId: unfinishedCrewDelivery?.deliveryId }) === 'pending') {
         return 'FINISHING';
       } else if (unfinishedCrewDelivery.completionTime < getAdjustedNow()) {
         return 'READY_TO_FINISH';

@@ -2166,11 +2166,11 @@ export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrec
     }
     
     const workingUnits = (units / scale);
-    console.log('workingUnits', workingUnits);
+    // console.log('workingUnits', workingUnits);
 
     let fixedPlaces = 0;
     while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
-      console.log('x', workingUnits * 10 ** fixedPlaces, 10 ** minPrecision);
+      // console.log('x', workingUnits * 10 ** fixedPlaces, 10 ** minPrecision);
       fixedPlaces++;
     }
     return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;

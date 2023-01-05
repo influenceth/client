@@ -9,54 +9,53 @@ import useAuth from '~/hooks/useAuth';
 import api from '~/lib/api';
 import getLogContent from '~/lib/getLogContent';
 
+const getLinkedAsset = (linked, type) => {
+  return linked.find((l) => l.type === type) || {};
+};
+
 // TODO (enhancement): rather than invalidating, make optimistic updates to cache value directly
 // (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)
-const getInvalidations = (event, data) => {
+const getInvalidations = (event, returnValues, linked) => {
   try {
     const map = {
       AsteroidUsed: [
         ['asteroids', 'mintableCrew'],
       ],
       Asteroid_NameChanged: [
-        ['asteroids', data.asteroidId],
+        ['asteroids', returnValues.asteroidId],
         ['asteroids', 'search'],
         ['events'], // (to update name in already-fetched events)
         ['watchlist']
       ],
       Asteroid_ScanStarted: [
         ['actionItems'],
-        ['asteroids', data.asteroidId],
+        ['asteroids', returnValues.asteroidId],
       ],
       Asteroid_ScanFinished: [
         // TODO: 'actionItems' here?
-        ['asteroids', data.asteroidId],
+        ['asteroids', returnValues.asteroidId],
         ['asteroids', 'search'],
         ['watchlist']
       ],
       Asteroid_Transfer: [
-        ['asteroids', data.asteroidId],
+        ['asteroids', returnValues.asteroidId],
         ['asteroids', 'mintableCrew'],
         ['asteroids', 'ownedCount'],
         ['asteroids', 'search'],
       ],
       Crew_CompositionChanged: [
         ['crews', 'owned'],
-        // TODO: the following invalidations are probably now unnecessary since activeSlot was deprecated:
-        // ['crewmembers', 'owned'],
-        // [...(data.oldCrew || []), ...(data.newCrew || [])]
-        //   .filter((v, i, a) => a.indexOf(v) === i)  // (unique)
-        //   .map((i) => ['crew', i])
       ], 
       Crewmate_FeaturesSet: [
-        ['crewmembers', data.crewId],
+        ['crewmembers', returnValues.crewId],
         ['crewmembers', 'owned'],
       ],
       Crewmate_TraitsSet: [
-        ['crewmembers', data.crewId],
+        ['crewmembers', returnValues.crewId],
         ['crewmembers', 'owned'],
       ],
       Crewmate_NameChanged: [
-        ['crewmembers', data.crewId],
+        ['crewmembers', returnValues.crewId],
         ['crewmembers', 'owned'],
         ['events'], // (to update name in already-fetched events)
       ],
@@ -66,35 +65,57 @@ const getInvalidations = (event, data) => {
       ],
 
       Construction_Planned: [
-        ['plots', data.asteroidId, data.lotId],
-        ['asteroidPlots', data.asteroidId]
+        ['plots', returnValues.asteroidId, returnValues.lotId],
+        ['asteroidPlots', returnValues.asteroidId]
       ],
       Construction_Unplanned: [
-        ['plots', data.asteroidId, data.lotId],
-        ['asteroidPlots', data.asteroidId]
+        ['plots', returnValues.asteroidId, returnValues.lotId],
+        ['asteroidPlots', returnValues.asteroidId]
       ],
       Construction_Started: [
         ['actionItems'],
-        ['plots', data.asteroidId, data.lotId],
+        ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       Construction_Finished: [
         // TODO: 'actionItems' here?
-        ['plots', data.asteroidId, data.lotId],
+        ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       Construction_Deconstructed: [
-        ['plots', data.asteroidId, data.lotId],
-        ['asteroidPlots', data.asteroidId]
+        ['plots', returnValues.asteroidId, returnValues.lotId],
+        ['asteroidPlots', returnValues.asteroidId]
       ],
 
       CoreSample_SamplingStarted: [
-        ['plots', data.asteroidId, data.lotId],
+        ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       CoreSample_SamplingFinished: [
-        ['plots', data.asteroidId, data.lotId],
+        ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
-      CoreSample_Used: [],
-      Extraction_Started: [/* constructed when event processed */],
-      Extraction_Finished: [/* constructed when event processed */],
+      CoreSample_Used: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+      Extraction_Started: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+      Extraction_Finished: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+
+      Inventory_DeliveryStarted: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+      Inventory_DeliveryFinished: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+      Inventory_ReservedChanged: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+      Inventory_Changed: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+      // TODO: add this in: [ 'asteroidCrewPlots', asteroidId, crewId ],
+      // TODO: would be nice if ^ was a collection of ['plots', asteroid.i, plot.i], so when we invalidate the relevant lot, the "collection" is updated
+      // TODO: would be nice to replace the query results using the linked asset we've already been passed (where that is possible)
     }
     return map[event] || [];
   } catch (e) {/* no-op */}
@@ -139,18 +160,12 @@ export function EventsProvider({ children }) {
         new Set([...e.returnValues.oldCrew, ...e.returnValues.newCrew]).forEach((i) => {
           transformedEvents.push({ ...e, event: eventName, i, key: `${e.id}_${i}` });
         });
+
+      // TODO: the reason we had to override these may no longer be relevant... review this:
       } else if (e.event === 'Lot_Used' && e.returnValues.capableType === 0) {
         transformedEvents.push({ ...e, event: 'Construction_Unplanned', key: e.id });
       } else if (e.event === 'Lot_Used' && Capable.TYPES[e.returnValues.capableType].category === 'Building') {
         transformedEvents.push({ ...e, event: 'Construction_Planned', key: e.id });
-
-      // extraction started and finished only include capableId, so use that to look up which plot should be invalidated
-      } else if(['Extraction_Started', 'Extraction_Finished'].includes(e.event)) {
-        const invalidations = queryCache.findAll({ queryKey: ['plots'] })
-          .filter((q) => q.state?.data?.building?.__t === 'Extractor' && q.state?.data?.building?.i === e.returnValues.capableId)
-          .map((q) => q.queryKey);
-        transformedEvents.push({ ...e, event: eventName, key: e.id, invalidations });
-
       } else if(!['Construction_Planned', 'Construction_Unplanned'].includes(e.event)) {
         transformedEvents.push({ ...e, event: eventName, key: e.id });
       }
@@ -160,7 +175,7 @@ export function EventsProvider({ children }) {
       if (!skipInvalidations) {
         // console.log('e.event', e.event);
         const invalidations = [
-          ...getInvalidations(e.event, e.returnValues),
+          ...getInvalidations(e.event, e.returnValues, e.linked),
           ...(e.invalidations || [])
         ];
         // console.log(e.event, e.returnValues, invalidations);

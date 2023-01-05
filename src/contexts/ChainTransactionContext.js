@@ -350,7 +350,12 @@ const getContracts = (account, queryClient) => ({
       content: 'Delivery initialization failed.',
       timestamp: Math.round(Date.now() / 1000)
     }),
-    isEqual: 'ALL'  // TODO: ?
+    isEqual: (txVars, vars) => (
+      txVars.asteroidId === vars.asteroidId
+      && txVars.destPlotId === vars.destPlotId
+      && txVars.destInvId === vars.destInvId
+      && txVars.crewId === vars.crewId
+    )
   },
   'FINISH_DELIVERY': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -364,7 +369,7 @@ const getContracts = (account, queryClient) => ({
       content: 'Delivery finalization failed.',
       timestamp: Math.round(Date.now() / 1000)
     }),
-    isEqual: 'ALL'  // TODO: ?
+    isEqual: 'ALL'
   }
 });
 
