@@ -125,7 +125,7 @@ const getInvalidations = (event, returnValues, linked) => {
 
 const EventsContext = createContext();
 
-const ignoreEventTypes = ['CURRENT_ETHEREUM_BLOCK_NUMBER'];
+const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
 
 export function EventsProvider({ children }) {
   const { token } = useAuth();
