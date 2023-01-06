@@ -108,13 +108,22 @@ const getContracts = (account, queryClient) => ({
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => ({ crewId, crewMembers }) => {
-      return contract.invoke(
-        'Crew_setComposition',
-        [
-          crewId,
-          [...crewMembers]
-        ]
-      );
+      if (crewId) {
+        return contract.invoke(
+          'Crew_setComposition',
+          [
+            crewId,
+            [...crewMembers]
+          ]
+        );
+      } else {
+        return contract.invoke(
+          'Crew_mint',
+          [
+            [...crewMembers]
+          ]
+        );
+      }
     },
     isEqual: () => true,
     getErrorAlert: () => ({
