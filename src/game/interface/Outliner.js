@@ -8,7 +8,6 @@ import Filters from './outliner/Filters';
 import Log from './outliner/Log';
 import MappedAsteroids from './outliner/MappedAsteroids';
 import OwnedAsteroids from './outliner/OwnedAsteroids';
-import OwnedCrew from './outliner/OwnedCrew';
 import RoutePlanner from './outliner/RoutePlanner';
 import SelectedAsteroid from './outliner/SelectedAsteroid';
 import SystemControls from './outliner/SystemControls';
@@ -123,7 +122,6 @@ const Outliner = (props) => {
           {outliner.ownedAsteroids?.active && !!account && <OwnedAsteroids />}
           {outliner.watchlist?.active && !!account && <Watchlist />}
           {outliner.routePlanner?.active && <RoutePlanner />}
-          {outliner.ownedCrew?.active && !!account && <OwnedCrew />}
           {outliner.crewAssignments?.active && !!account && <CrewAssignments />}
           {outliner.timeControl?.active && <TimeControl />}
         </StyledOutliner>

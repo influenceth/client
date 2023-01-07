@@ -121,7 +121,7 @@ const MainMenu = (props) => {
   const { account } = useAuth();
   const { data: crewAssignmentData } = useCrewAssignments();
   const { totalAssignments } = crewAssignmentData || {};
-  
+
   // TODO: genesis book deprecation vvv
   const { crew, crewMemberMap } = useCrew();
   const hasGenesisCrewmate = useMemo(() => {
@@ -169,9 +169,9 @@ const MainMenu = (props) => {
               icon={<StarIcon />}
               onClick={() => openSection('ownedAsteroids')} />
             <MenuItem
-              name="Crew Members"
+              name="Crew"
               icon={<CrewIcon />}
-              onClick={() => openSection('ownedCrew')} />
+              onClick={() => history.push('/owned-crew')} />
           </Menu>
         )}
         <Menu title="Map">
