@@ -67,8 +67,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const selectionMesh = useRef();
   const plotsInitialized = useRef();
 
-  // const PLOT_WIDTH = useMemo(() => 125, [config?.radius]);
-  const PLOT_WIDTH = useMemo(() => Math.min(150, config?.radius / 25), [config?.radius]);
+  const PLOT_WIDTH = useMemo(() => Math.min(125, config?.radius / 25), [config?.radius]);
   const PLOT_STROKE_MARGIN = useMemo(() => 0.125 * PLOT_WIDTH, [PLOT_WIDTH]);
   const BUILDING_RADIUS = useMemo(() => 0.375 * PLOT_WIDTH, [PLOT_WIDTH]);
   const PIP_RADIUS = useMemo(() => 0.25 * PLOT_WIDTH, [PLOT_WIDTH]);
