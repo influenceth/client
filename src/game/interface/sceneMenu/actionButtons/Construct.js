@@ -4,6 +4,13 @@ import { ConstructIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import ActionButton from './ActionButton';
 
+const labelDict = {
+  PLANNED: 'Start Construction',
+  UNDER_CONSTRUCTION: 'Constructing...',
+  READY_TO_FINISH: 'Finish Construction',
+  FINISHING: 'Finishing Construction...'
+};
+
 const Construct = ({ asteroid, plot, onSetAction }) => {
   const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
@@ -14,7 +21,7 @@ const Construct = ({ asteroid, plot, onSetAction }) => {
   const loading = constructionStatus === 'UNDER_CONSTRUCTION' || constructionStatus === 'FINISHING';
   return (
     <ActionButton
-      label={constructionStatus === 'READY_TO_FINISH' ? 'Finish Construction' : 'Start Construction'}
+      label={labelDict[constructionStatus] || undefined}
       flags={{
         attention: attention || undefined,
         loading: loading || undefined

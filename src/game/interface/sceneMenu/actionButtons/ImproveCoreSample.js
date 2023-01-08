@@ -6,6 +6,13 @@ import useCoreSampleManager from '~/hooks/useCoreSampleManager';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
 
+const labelDict = {
+  READY: 'Improve Core Sample',
+  SAMPLING: 'Sampling...',
+  READY_TO_FINISH: 'Analyze Sample',
+  FINISHING: 'Analyzing...'
+};
+
 const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
   const resourceMap = useStore(s => s.asteroids.showResourceMap);
   const { lotStatus } = useCoreSampleManager(asteroid?.i, plot?.i, resourceMap?.i, true);
@@ -22,7 +29,7 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
   const loading = (lotStatus === 'SAMPLING' || lotStatus === 'FINISHING');
   return (
     <ActionButton
-      label={lotStatus === 'READY_TO_FINISH' ? 'Analyze Improved Sample' : 'Improve Core Sample'}
+      label={labelDict[lotStatus] || undefined}
       flags={{
         attention: attention || undefined,
         badge: improvableSamples?.length,
