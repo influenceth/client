@@ -5,7 +5,7 @@ import useConstructionManager from '~/hooks/useConstructionManager';
 import ActionButton from './ActionButton';
 
 const labelDict = {
-  DECONSTRUCT: 'Deconstruct Building',
+  OPERATIONAL: 'Deconstruct Building',
   DECONSTRUCTING: 'Deconstructing...'
 };
 

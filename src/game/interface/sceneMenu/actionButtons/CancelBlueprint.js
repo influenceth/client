@@ -5,7 +5,7 @@ import useConstructionManager from '~/hooks/useConstructionManager';
 import ActionButton from './ActionButton';
 
 const labelDict = {
-  OPERATIONAL: 'Cancel Blueprint',
+  PLANNED: 'Cancel Blueprint',
   CANCELING: 'Canceling...'
 };
 
