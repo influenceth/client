@@ -672,12 +672,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
     if (!!assets && category !== undefined) {
       const bAssets = assets
         .filter((a) => a.category === category)
-        // .map((a) => ({ ...a, modelUrl: '/Warehouse_Emissive_Test.glb' }))
         .sort((a, b) => a.name < b.name ? -1 : 1);
-      if (assetType === 'Building') {
-        bAssets.forEach((a) => a.modelUrl = '/Warehouse_Emissive_Test.glb' );
-        bAssets.find((a) => a.name === 'Extractor').modelUrl = '/Extractor_Test.glb';
-      }
       setCategoryModels(bAssets);
       selectModel(bAssets[0]);
     }
