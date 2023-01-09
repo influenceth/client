@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
 import { AuthProvider } from '~/contexts/AuthContext';
+import { CrewProvider } from './contexts/CrewContext';
 import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
 import { ClockProvider } from '~/contexts/ClockContext';
 import { EventsProvider } from '~/contexts/EventsContext';
@@ -20,6 +21,7 @@ import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import theme from '~/theme';
+import { ActionItemProvider } from './contexts/ActionItemContext';
 
 const { GRAPHICS_DEFAULTS } = constants;
 
@@ -35,6 +37,9 @@ const StyledMain = styled.main`
 
 // for starknet modals
 const GlobalStyle = createGlobalStyle`
+  label {
+    cursor: inherit;
+  }
   .s-dialog {
     z-index: 1010 !important;
   }
@@ -101,32 +106,36 @@ const Game = (props) => {
   return (
     <WalletProvider>
       <AuthProvider>
-        <EventsProvider>
-          <ChainTransactionProvider>
-            <ThemeProvider theme={theme}>
-              <GlobalStyle />
-              <Router>
-                <Redirector />
-                <Referral />
-                <Switch>
-                  <Route path="/play">
-                    <LandingPage />
-                  </Route>
-                  <Route>
-                    {introEnabled && <Intro onComplete={onIntroComplete} />}
-                    <ClockProvider>
-                      <StyledMain>
-                        <Interface />
-                        {showScene && <Scene />}
-                        <Audio />
-                      </StyledMain>
-                    </ClockProvider>
-                  </Route>
-                </Switch>
-              </Router>
-            </ThemeProvider>
-          </ChainTransactionProvider>
-        </EventsProvider>
+        <CrewProvider>
+          <EventsProvider>
+            <ChainTransactionProvider>
+              <ActionItemProvider>
+                <ThemeProvider theme={theme}>
+                  <GlobalStyle />
+                  <Router>
+                    <Redirector />
+                    <Referral />
+                    <Switch>
+                      <Route path="/play">
+                        <LandingPage />
+                      </Route>
+                      <Route>
+                        {introEnabled && <Intro onComplete={onIntroComplete} />}
+                        <ClockProvider>
+                          <StyledMain>
+                            <Interface />
+                            {showScene && <Scene />}
+                            <Audio />
+                          </StyledMain>
+                        </ClockProvider>
+                      </Route>
+                    </Switch>
+                  </Router>
+                </ThemeProvider>
+              </ActionItemProvider>
+            </ChainTransactionProvider>
+          </EventsProvider>
+        </CrewProvider>
       </AuthProvider>
     </WalletProvider>
   );

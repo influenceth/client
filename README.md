@@ -16,8 +16,8 @@ The browser game client for Influence.
     REACT_APP_MINTSQUARE_URL=https://mintsquare.io
     REACT_APP_MINTSQUARE_MODIFIER=starknet-testnet/
 
-    # (this is the devnet token address)
-    REACT_APP_ERC20_TOKEN_ADDRESS=0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488
+    # (this is the devnet >0.4 token address)
+    REACT_APP_ERC20_TOKEN_ADDRESS=0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
     REACT_APP_STARKNET_DISPATCHER=
 
     REACT_APP_HIDE_SOCIAL=false

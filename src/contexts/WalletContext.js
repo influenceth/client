@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, createContext } from 'react';
 import { connect, getInstalledWallets } from 'get-starknet';
 
-import { Address } from 'influence-utils';
+import { Address } from '@influenceth/sdk';
 
 import starknetLogo from '~/assets/images/starknet-icon.png';
 import useStore from '~/hooks/useStore';
@@ -14,16 +14,17 @@ const getErrorMessage = (error) => {
 };
 
 const isAllowedNetwork = (network) => {
+  // return true;  // TODO: remove this
   return network === `${process.env.REACT_APP_STARKNET_NETWORK}`;
 }
 
 const getAllowedNetworkLabel = (wallet) => {
   if (process.env.REACT_APP_STARKNET_NETWORK.includes('mainnet')) {
-    return wallet === 'Braavos' ? 'Mainnet-Alpha' : 'Ethereum Mainnet';
+    return wallet === 'Braavos' ? 'Mainnet-Alpha' : 'Mainnet';
   } else if (process.env.REACT_APP_STARKNET_NETWORK.includes('localhost')) {
     return wallet === 'Braavos' ? 'Devnet' : 'Localhost';
   }
-  return wallet === 'Braavos' ? 'Goerli-Alpha' : 'Goerli Testnet';
+  return wallet === 'Braavos' ? 'Goerli-Alpha' : 'Testnet';
 }
 
 const WalletContext = createContext();

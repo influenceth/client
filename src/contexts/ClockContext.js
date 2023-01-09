@@ -26,7 +26,7 @@ export function ClockProvider({ children }) {
       setTimeout(() => { // setter gets slow at fast intervals, so return setInterval function before setting
         setContextValue({
           coarseTime,
-          displayTime: `${gameTime >= 0 ? '+' : '-'}${gameTime.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+          displayTime: `${gameTime >= 0 ? '' : ''}${gameTime.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
           realWorldTime: orbitTimeToRealDate(coarseTime)
         });
       }, 0);

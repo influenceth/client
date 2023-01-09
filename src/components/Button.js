@@ -32,10 +32,11 @@ const StyledButton = styled.button`
   font-size: 15px;
   margin-top: 15px;
   min-height: 35px;
-  transition: all 300ms ease;
   padding: 0 15px 0 10px;
+  pointer-events: auto;
   position: relative;
   min-width: 75px;
+  transition: all 300ms ease;
   width: 175px;
 
   & > svg {

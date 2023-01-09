@@ -1,4 +1,4 @@
-import { toCrewClass } from 'influence-utils';
+import { Crewmate } from '@influenceth/sdk';
 
 import Svg1 from '~/assets/icons/crew_classes/1.svg';
 import Svg2 from '~/assets/icons/crew_classes/2.svg';
@@ -13,7 +13,7 @@ const indexedIcons = [
 ];
 
 const CrewClassIcon = ({ crewClass, overrideColor }) => {
-  const classLabel = toCrewClass(crewClass);
+  const classLabel = Crewmate.getClass(crewClass)?.name || '';
   const ClassIcon = indexedIcons[Number(crewClass)];
   if (ClassIcon) {
     return (

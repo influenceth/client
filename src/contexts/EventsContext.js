@@ -1,69 +1,123 @@
-import { createContext, useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from 'react-query';
+import { createContext, useCallback, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import uniq from 'lodash.uniqby';
+import { io } from 'socket.io-client';
+import { Capable } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import useAuth from '~/hooks/useAuth';
 import api from '~/lib/api';
 import getLogContent from '~/lib/getLogContent';
 
+const getLinkedAsset = (linked, type) => {
+  return linked.find((l) => l.type === type) || {};
+};
+
 // TODO (enhancement): rather than invalidating, make optimistic updates to cache value directly
 // (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)
-const getInvalidations = (asset, event, data) => {
+const getInvalidations = (event, returnValues, linked) => {
   try {
     const map = {
-      Asteroid: {
-        AsteroidScanned: [
-          ['asteroids', data.asteroidId],
-          ['asteroids', 'search'],
-          ['watchlist']
-        ],
-        AsteroidUsed: [
-          ['asteroids', 'mintableCrew'],
-        ],
-        Asteroid_NameChanged: [
-          ['asteroids', data.asteroidId],
-          ['asteroids', 'search'],
-          ['events'], // (to update name in already-fetched events)
-          ['watchlist']
-        ],
-        ScanStarted: [
-          ['asteroids', data.asteroidId],
-        ],
-        Transfer: [
-          ['asteroids', data.asteroidId],
-          ['asteroids', 'mintableCrew'],
-          ['asteroids', 'ownedCount'],
-          ['asteroids', 'search'],
-        ],
-      },
-      CrewMember: {
-        Crew_CompositionChanged: [
-          ['crew', 'search'],
-          [...(data.oldCrew || []), ...(data.newCrew || [])]
-            .filter((v, i, a) => a.indexOf(v) === i)  // (unique)
-            .map((i) => ['crew', i])
-        ], 
-        Crewmate_FeaturesSet: [
-          ['crew', data.crewId],
-          ['crew', 'search'],
-        ],
-        Crewmate_TraitsSet: [
-          ['crew', data.crewId],
-          ['crew', 'search'],
-        ],
-        Crewmate_NameChanged: [
-          ['crew', data.crewId],
-          ['crew', 'search'],
-          ['events'], // (to update name in already-fetched events)
-        ],
-        Transfer: [
-          ['assignments'],
-          ['crew', 'search'],
-        ],
-      }
+      AsteroidUsed: [
+        ['asteroids', 'mintableCrew'],
+      ],
+      Asteroid_NameChanged: [
+        ['asteroids', returnValues.asteroidId],
+        ['asteroids', 'search'],
+        ['events'], // (to update name in already-fetched events)
+        ['watchlist']
+      ],
+      Asteroid_ScanStarted: [
+        ['actionItems'],
+        ['asteroids', returnValues.asteroidId],
+      ],
+      Asteroid_ScanFinished: [
+        // TODO: 'actionItems' here?
+        ['asteroids', returnValues.asteroidId],
+        ['asteroids', 'search'],
+        ['watchlist']
+      ],
+      Asteroid_Transfer: [
+        ['asteroids', returnValues.asteroidId],
+        ['asteroids', 'mintableCrew'],
+        ['asteroids', 'ownedCount'],
+        ['asteroids', 'search'],
+      ],
+      Crew_CompositionChanged: [
+        ['crews', 'owned'],
+      ], 
+      Crewmate_FeaturesSet: [
+        ['crewmembers', returnValues.crewId],
+        ['crewmembers', 'owned'],
+      ],
+      Crewmate_TraitsSet: [
+        ['crewmembers', returnValues.crewId],
+        ['crewmembers', 'owned'],
+      ],
+      Crewmate_NameChanged: [
+        ['crewmembers', returnValues.crewId],
+        ['crewmembers', 'owned'],
+        ['events'], // (to update name in already-fetched events)
+      ],
+      Crewmate_Transfer: [
+        ['assignments'],
+        ['crewmembers', 'owned'],
+      ],
+
+      Construction_Planned: [
+        ['plots', returnValues.asteroidId, returnValues.lotId],
+        ['asteroidPlots', returnValues.asteroidId]
+      ],
+      Construction_Unplanned: [
+        ['plots', returnValues.asteroidId, returnValues.lotId],
+        ['asteroidPlots', returnValues.asteroidId]
+      ],
+      Construction_Started: [
+        ['actionItems'],
+        ['plots', returnValues.asteroidId, returnValues.lotId],
+      ],
+      Construction_Finished: [
+        // TODO: 'actionItems' here?
+        ['plots', returnValues.asteroidId, returnValues.lotId],
+      ],
+      Construction_Deconstructed: [
+        ['plots', returnValues.asteroidId, returnValues.lotId],
+        ['asteroidPlots', returnValues.asteroidId]
+      ],
+
+      CoreSample_SamplingStarted: [
+        ['plots', returnValues.asteroidId, returnValues.lotId],
+      ],
+      CoreSample_SamplingFinished: [
+        ['plots', returnValues.asteroidId, returnValues.lotId],
+      ],
+      CoreSample_Used: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+      Extraction_Started: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+      Extraction_Finished: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+
+      Inventory_DeliveryStarted: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+      Inventory_DeliveryFinished: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+      Inventory_ReservedChanged: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+      Inventory_Changed: [
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+      ],
+      // TODO: add this in: [ 'asteroidCrewPlots', asteroidId, crewId ],
+      // TODO: would be nice if ^ was a collection of ['plots', asteroid.i, plot.i], so when we invalidate the relevant lot, the "collection" is updated
+      // TODO: would be nice to replace the query results using the linked asset we've already been passed (where that is possible)
     }
-    return map[asset][event] || [];
+    return map[event] || [];
   } catch (e) {/* no-op */}
   
   return [];
@@ -71,63 +125,141 @@ const getInvalidations = (asset, event, data) => {
 
 const EventsContext = createContext();
 
+const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
+
 export function EventsProvider({ children }) {
   const { token } = useAuth();
   const queryClient = useQueryClient();
+  const queryCache = queryClient.getQueryCache();
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const [ latest, setLatest ] = useState(-1);
   const [ lastBlockNumber, setLastBlockNumber ] = useState(0);
   const [ events, setEvents ] = useState([]);
 
-  const eventsQuery = useQuery(
-    [ 'events', token ],
-    () => api.getEvents(Math.max(latest, 0)),
-    {
-      enabled: !!token,
-      refetchInterval: 12500,
-      refetchIntervalInBackground: true
-    }
-  );
+  const pendingBlock = useRef();
+  const pendingBlockEvents = useRef([]);
+  const pendingTimeout = useRef();
+  const socket = useRef();
 
-  // Update for new incoming events
-  useEffect(() => {
-    if (eventsQuery.data) {
-
-      // If not the initial query send off alerts for new events
-      // and invalidate related data that should now be updated
-      if (latest > -1) {
-        eventsQuery.data.events.forEach(e => {
-          const invalidations = getInvalidations(e.assetType, e.event, e.returnValues);
-          // console.log('e.event', e.event, invalidations);
-          invalidations.forEach((i) => {
-            queryClient.invalidateQueries(...i);
-          });
-          
-          // alert
-          const type = e.type || `${e.assetType}_${e.event}`;
-          const alert = Object.assign({}, e, { type: type, duration: 5000 });
-          if (!!getLogContent({ type, data: alert })) createAlert(alert);
-        });
+  const handleEvents = useCallback((newEvents, skipAlerts, skipInvalidations) => {
+    const transformedEvents = [];
+    newEvents.forEach((e) => {
+      // TODO: ws-emitted events seem to have _id set instead of id
+      if (e._id && !e.id) e.id = e._id;
+      
+      // rewrite eventNames as necessary (probably only ever needed for `Transfer`)
+      let eventName = e.event;
+      if (e.event === 'Transfer') {
+        if (!!e.linked.find((l) => l.type === 'Asteroid')) eventName = 'Asteroid_Transfer';
+        else if (!!e.linked.find((l) => l.type === 'CrewMember')) eventName = 'Crewmate_Transfer';
+        else if (!!e.linked.find((l) => l.type === 'Crew')) eventName = 'Crew_Transfer';
+        else console.warn('unhandled transfer type', e);
       }
 
-      const newEvents = eventsQuery.data.events.slice().concat(events);
-      setEvents(uniq(newEvents, (x) => `${x.transactionHash}.${x.logIndex}.${x.i}`));
+      // generate log events from events
+      if (e.event === 'Crew_CompositionChanged') {
+        new Set([...e.returnValues.oldCrew, ...e.returnValues.newCrew]).forEach((i) => {
+          transformedEvents.push({ ...e, event: eventName, i, key: `${e.id}_${i}` });
+        });
 
-      const latestEvent = newEvents.sort((a, b) => b.timestamp - a.timestamp)[0];
-      setLatest(latestEvent?.timestamp ? latestEvent.timestamp + 1 : 0);
-      setLastBlockNumber(eventsQuery.data.blockNumber);
+      // TODO: the reason we had to override these may no longer be relevant... review this:
+      } else if (e.event === 'Lot_Used' && e.returnValues.capableType === 0) {
+        transformedEvents.push({ ...e, event: 'Construction_Unplanned', key: e.id });
+      } else if (e.event === 'Lot_Used' && Capable.TYPES[e.returnValues.capableType].category === 'Building') {
+        transformedEvents.push({ ...e, event: 'Construction_Planned', key: e.id });
+      } else if(!['Construction_Planned', 'Construction_Unplanned'].includes(e.event)) {
+        transformedEvents.push({ ...e, event: eventName, key: e.id });
+      }
+    });
+
+    transformedEvents.forEach(e => {
+      if (!skipInvalidations) {
+        // console.log('e.event', e.event);
+        const invalidations = [
+          ...getInvalidations(e.event, e.returnValues, e.linked),
+          ...(e.invalidations || [])
+        ];
+        // console.log(e.event, e.returnValues, invalidations);
+        invalidations.forEach((i) => {
+          queryClient.invalidateQueries(...i);
+        });
+      }
+      
+      if (!skipAlerts) {
+        const type = e.type || e.event;
+        const alert = Object.assign({}, e, { type: type, duration: 5000 });
+        if (!!getLogContent({ type, data: alert })) createAlert(alert);
+      }
+    });
+
+    setEvents((prevEvents) => uniq([
+      ...transformedEvents,
+      ...prevEvents
+    ], 'key'));
+  }, []);
+
+  // try to process WS events grouped by block
+  const processPendingWSBlock = useCallback(() => {
+    if (pendingTimeout.current) clearTimeout(pendingTimeout.current);
+    if (pendingBlockEvents.current.length > 0) {
+      handleEvents([...pendingBlockEvents.current]);
+      setLastBlockNumber((previousLast) => Math.max(pendingBlock.current, previousLast));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ eventsQuery.data ]);
+    pendingBlockEvents.current = [];
+  }, []);
 
-  // Reset on logout / disconnect
+  const onWSMessage = useCallback(({ type, body }) => {
+    if (ignoreEventTypes.includes(type)) return;
+    if (type === 'CURRENT_STARKNET_BLOCK_NUMBER') {
+      setLastBlockNumber(body.blockNumber || 0);
+    } else {
+      // if this is a new block, process pending and schedule next processing block
+      if (pendingBlock.current !== body.blockNumber) {
+        pendingBlock.current = body.blockNumber || 0;
+
+        processPendingWSBlock();
+        pendingTimeout.current = setTimeout(() => {
+          processPendingWSBlock();
+        }, 1000);
+      }
+      // (queue the current event for processing)
+      console.log({ ...body, event: type });
+      pendingBlockEvents.current.push({ ...body, event: type });
+    }
+  }, []);
+
   useEffect(() => {
-    if (!token) {
+    // if authed, populate existing events and start listening to user websocket
+    if (token) {
+      api.getEvents(0).then((eventData) => {
+        handleEvents(eventData.events, true, true);
+        setLastBlockNumber(eventData.blockNumber);
+      });
+
+      socket.current = new io(process.env.REACT_APP_API_URL, {
+        extraHeaders: { Authorization: `Bearer ${token}` }
+      });
+      socket.current.on('event', onWSMessage);
+    }
+
+    // reset on logout / disconnect
+    return () => {
       setEvents([]);
       setLastBlockNumber(0);
-      setLatest(-1);
+
+      if (socket.current) {
+        socket.current.off(); // removes all listeners for all events
+        socket.current.disconnect();
+      }
     }
-  }, [ token ]);
+  }, [token]);
+
+  const subscribeToAsteroid = useCallback(() => {
+    // TODO: ...
+  }, []);
+
+  const unsubscribeToAsteroid = useCallback(() => {
+    // TODO: ...
+  }, []);
 
   return (
     <EventsContext.Provider value={{

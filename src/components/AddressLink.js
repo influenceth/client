@@ -16,7 +16,7 @@ const AddressLink = (props) => {
   if (address) {
     return (
       <MarketplaceLink
-        chain={chain.toUpperCase()}
+        chain={(chain || 'STARKNET').toUpperCase()}
         assetType="account"
         id={address}>
         {(onClick, setRefEl) => (

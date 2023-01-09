@@ -35,6 +35,10 @@ const useStore = create(persist((set, get) => ({
       hovered: null,
       filters: {},
       highlight: null,
+      plot: null,
+      plotDestination: null,
+      zoomToPlot: null,
+      showResourceMap: null,
       owned: {
         mapped: false,
         filtered: false,
@@ -53,6 +57,8 @@ const useStore = create(persist((set, get) => ({
       token: null,
       lastWallet: null
     },
+
+    selectedCrewId: null,
 
     hasSeenIntroVideo: false,
     cutscenePlaying: false,
@@ -81,6 +87,11 @@ const useStore = create(persist((set, get) => ({
     },
 
     pendingTransactions: [],
+
+    plotLoader: {
+      i: null,
+      progress: 0
+    },
 
     sounds: {
       music: 100,
@@ -250,19 +261,21 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchOriginSelected: (i) => set(produce(state => {
-      if (Number(i) > 0 && Number(i) <= 250000) state.asteroids.origin = Number(i);
-    })),
-
-    dispatchOriginCleared: () => set(produce(state => {
       state.asteroids.origin = null;
+      if (i && Number(i) > 0 && Number(i) <= 250000) {
+        state.asteroids.origin = Number(i);
+      }
+      state.asteroids.showResourceMap = null;
+      state.asteroids.plot = null;
+      state.asteroids.plotDestination = null;
+      state.asteroids.zoomToPlot = null;
     })),
 
     dispatchDestinationSelected: (i) => set(produce(state => {
-      if (Number(i) > 0 && Number(i) <= 250000) state.asteroids.destination = Number(i);
-    })),
-
-    dispatchDestinationCleared: () => set(produce(state => {
       state.asteroids.destination = null;
+      if (i && Number(i) > 0 && Number(i) <= 250000) {
+        state.asteroids.destination = Number(i);
+      }
     })),
 
     dispatchAsteroidHovered: (i) => set(produce(state => {
@@ -273,8 +286,14 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.hovered = null;
     })),
 
-    dispatchZoomStatusChanged: (status) => set(produce(state => {
+    dispatchZoomStatusChanged: (status, maintainPlot) => set(produce(state => {
       state.asteroids.zoomStatus = status;
+      state.asteroids.showResourceMap = null;
+      state.asteroids.plotDestination = null;
+      if (!maintainPlot) {
+        state.asteroids.plot = null;
+        state.asteroids.zoomToPlot = null;
+      }
     })),
 
     dispatchAsteroidZoomedFrom: (from) => set(produce(state => {
@@ -341,6 +360,10 @@ const useStore = create(persist((set, get) => ({
       state.auth.lastWallet = walletId;
     })),
 
+    dispatchCrewSelected: (crewId) => set(produce(state => {
+      state.selectedCrewId = crewId;
+    })),
+
     dispatchCutscenePlaying: (which) => set(produce(state => {
       state.cutscenePlaying = which;
     })),
@@ -355,6 +378,23 @@ const useStore = create(persist((set, get) => ({
 
     dispatchReferrerSet: (refCode) => set(produce(state => {
       state.referrer = refCode;
+    })),
+
+    dispatchResourceMap: (resource) => set(produce(state => {
+      state.asteroids.showResourceMap = resource;
+    })),
+
+    dispatchPlotsLoading: (i, progress = 0, simulateTarget = 0) => set(produce(state => {
+      if (simulateTarget) {
+        state.plotLoader = { i, progress: state.plotLoader.progress + (simulateTarget - state.plotLoader.progress) / 3 };
+      } else {
+        state.plotLoader = { i, progress: progress > 0.99 ? 1 : progress };
+      }
+    })),
+
+    dispatchPlotSelected: (asteroidId, plotId) => set(produce(state => {
+      state.asteroids.plot = asteroidId && plotId ? { asteroidId, plotId } : null;
+      state.asteroids.zoomToPlot = null;
     })),
 
     //
@@ -401,10 +441,25 @@ const useStore = create(persist((set, get) => ({
       state.pendingTransactions = state.pendingTransactions.filter((tx) => tx.txHash !== txHash);
     })),
 
+    dispatchZoomToPlot: (buildingLabel) => set(produce(state => {
+      state.asteroids.zoomToPlot = buildingLabel;
+    }))
+
 }), {
   name: 'influence',
   version: 0,
-  blacklist: [ 'timeOverride' ]
+  blacklist: [
+    // TODO: should these be stored elsewhere if ephemeral?
+    // TODO: the nested values are not supported by zustand
+    'asteroids.hovered',
+    'asteroids.plot',
+    'asteroids.plotDestination',
+    'asteroids.zoomToPlot',
+    'cutscenePlaying',
+    'draggables',
+    'plotLoader',
+    'timeOverride'  // should this be in ClockContext?
+  ]
 }));
 
 export default useStore;

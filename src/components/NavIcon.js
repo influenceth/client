@@ -1,8 +1,9 @@
 import React from 'react';
 import styled, { css, keyframes } from 'styled-components';
 
-const innerDiamondDimension = 20;
+const innerDiamondDimensionDefault = 20;
 const outerDiamondDimension = 47;
+const outerDiamondStrokeDefault = 2;
 const rounding = 2;
 
 const Wrapper = styled.div`
@@ -61,7 +62,7 @@ const SelectionDiamond = styled.rect`
     }
     return 'transparent';
   }};
-  stroke-width: ${p => p.animate ? 3.5 : 2};
+  stroke-width: ${p => (p.animate ? 1.75 : 1) * p.strokeWidth};
   transform-origin: center;
 
   ${p => p.background ? `background: ${p.background};` : ''}
@@ -95,7 +96,9 @@ const HighlightDiamond = styled(SelectionDiamond)`
   stroke: ${p => p.theme.colors.main};
 `;
 
-const NavIcon = ({ size, ...props }) => {
+const NavIcon = ({ thicker, size, ...props }) => {
+  const innerDiamondDimension = (thicker ? 1.5 : 1) * innerDiamondDimensionDefault;
+  const outerDiamondStroke = (thicker ? 1.5 : 1) * outerDiamondStrokeDefault;
   const standardSize = Number.isInteger(size) ? `${size}px` : (size || '1em');
   return (
     <Wrapper size={standardSize} {...props}>
@@ -116,6 +119,7 @@ const NavIcon = ({ size, ...props }) => {
             x={50 - outerDiamondDimension / 2}
             y={50 - outerDiamondDimension / 2}
             rx={rounding}
+            strokeWidth={outerDiamondStroke}
             />
           {props.selected && props.animate && (
             <HighlightDiamond

@@ -59,7 +59,8 @@ const Rings = (props) => {
       {geometry && <primitive attach="geometry" object={geometry} />}
       <meshPhongMaterial
         emissive={0xffffff}
-        emissiveIntensity={0.05}
+        emissiveIntensity={0.25}
+        opacity={0.5}
         map={texture}
         side={DoubleSide}
         transparent />

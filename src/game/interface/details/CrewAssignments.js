@@ -5,10 +5,10 @@ import styled from 'styled-components';
 import useAuth from '~/hooks/useAuth';
 import useBook from '~/hooks/useBook';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useCrew from '~/hooks/useCrew';
 import useStore from '~/hooks/useStore';
 import CrewCard from '~/components/CrewCard';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import TitleWithUnderline from '~/components/TitleWithUnderline';
@@ -320,7 +320,7 @@ const CrewAssignments = (props) => {
   const { account } = useAuth();
 
   const createStorySession = useCreateStorySession();
-  const { data: allCrew/* crew */ } = useOwnedCrew();
+  const { crew, crewMemberMap } = useCrew();
   const { data: book, isError } = useBook(bookId);
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
@@ -331,14 +331,16 @@ const CrewAssignments = (props) => {
   const [selectedStory, setSelectedStory] = useState();
   
   // TODO: genesis book deprecation vvv
-  const crew = useMemo(() => {
-    if (!!allCrew) {
-      const eligibleCrew = allCrew.filter((c) => [1,2,3].includes(c.crewCollection));
-      if (eligibleCrew.length === 0) history.push('/owned-crew');
-      return eligibleCrew;
+  const eligibleCrew = useMemo(() => {
+    if (crew && crewMemberMap) {
+      const eligible = crew.crewMembers
+        .filter((i) => [1,2,3].includes(crewMemberMap[i]?.crewCollection))
+        .map((i) => crewMemberMap[i]);
+      if (eligible.length === 0) history.push('/owned-crew');
+      return eligible;
     }
     return null;
-  }, [!!allCrew]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [crew, crewMemberMap]); // eslint-disable-line react-hooks/exhaustive-deps
   // ^^^
 
   const selectStory = useCallback((story) => () => {
@@ -384,11 +386,11 @@ const CrewAssignments = (props) => {
   }, [bookId, bookReady, createStorySession, history, playSound, selectedStory]);
 
   useEffect(() => {
-    if (book && crew) {
+    if (book && eligibleCrew) {
       let firstIncompleteStory = null;
       let initialSelectedStory = null;
       let lastStory = null;
-      let crewReadyForNext = crew.map(({ i }) => i);
+      let crewReadyForNext = eligibleCrew.map(({ i }) => i);
       book.parts.forEach(({ stories }) => {
         stories.forEach((item, i) => {
           if (!item.story) item.story = { id: `placeholder_${i}` };
@@ -406,7 +408,7 @@ const CrewAssignments = (props) => {
             story.complete = 0;
 
             const crewCompleted = [];
-            crew.forEach(({ i }) => {
+            eligibleCrew.forEach(({ i }) => {
               if (crewReadyForNext.includes(i)) {
                 const crewSession = (story.sessions || []).find((s) => s.owner === i);
                 if (crewSession && crewSession.isComplete) {
@@ -428,12 +430,12 @@ const CrewAssignments = (props) => {
 
             // set story status
             story.status = 'notReady';
-            if (crew?.length > 0) {
-              if (story.complete === crew.length) {
+            if (eligibleCrew?.length > 0) {
+              if (story.complete === eligibleCrew.length) {
                 story.status = 'complete';
-              } else if (story.ready + story.partial === crew.length) {
+              } else if (story.ready + story.partial === eligibleCrew.length) {
                 story.status = 'full';
-              } else if (story.ready + story.partial + story.complete === crew.length) {
+              } else if (story.ready + story.partial + story.complete === eligibleCrew.length) {
                 story.status = 'partial';
               }
             }
@@ -453,7 +455,7 @@ const CrewAssignments = (props) => {
       setSelectedStory(initialSelectedStory || firstIncompleteStory || lastStory);
       setBookReady(true);
     }
-  }, [book, crew, initialSelectedId]);
+  }, [book, eligibleCrew, initialSelectedId]);
 
   const togglePart = useCallback((partId) => () => {
     playSound('effects.click');
@@ -480,7 +482,7 @@ const CrewAssignments = (props) => {
 
   const { title, parts } = book || {};
   return (
-    <Details title="Crew Assignments" maxWidth="2200px">
+    <Details title="Crew Assignments" maxWidth="2200px" width="max">
       <div style={{
         display: 'flex',
         flexDirection: 'row',
@@ -551,11 +553,11 @@ const CrewAssignments = (props) => {
         <SectionSpacer />
         
         <SectionContainer visible={mobileView === 'crew'}>
-          {account && !crew && <Loader />}
-          {!(account && !crew) && (
+          {account && !eligibleCrew && <Loader />}
+          {!(account && !eligibleCrew) && (
             <>
               <CrewHeader>
-                <SectionTitle>Owned Crew ({crew?.length || 0})</SectionTitle>
+                <SectionTitle>Owned Crew ({eligibleCrew?.length || 0})</SectionTitle>
                 <SectionSubtitle>Select a Crew Member to begin the assignment with:</SectionSubtitle>
               </CrewHeader>
 
@@ -569,11 +571,11 @@ const CrewAssignments = (props) => {
                 </CrewHeader>
               </MobileCrewHeaderContainer>
 
-              {crew && crew.length > 0
+              {eligibleCrew && eligibleCrew.length > 0
                 ? (
                   <CrewSection>
                     <div>
-                      {crew.map((c) => {
+                      {eligibleCrew.map((c) => {
                         const crewStatus = bookReady ? selectedStory?.crewStatuses[c.i] : 'loading';
                         const uiConfig = crewStates[crewStatus || 'notReady'] || {};
                         return (

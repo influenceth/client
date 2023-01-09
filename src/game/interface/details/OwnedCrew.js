@@ -2,19 +2,18 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 
-import { MdAdd as PlusIcon } from 'react-icons/md';
-
 import Button from '~/components/Button';
 import CrewCard from '~/components/CrewCard';
 import CrewInfoPane from '~/components/CrewInfoPane';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import IconButton from '~/components/IconButton';
 import {
   CaptainIcon,
   CrewIcon,
   ChevronDoubleDownIcon as DeactivateIcon,
   ChevronDoubleUpIcon as ActivateIcon,
+  PlusIcon,
   PromoteIcon,
   ChevronDoubleDownIcon
 } from '~/components/Icons';
@@ -22,9 +21,9 @@ import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 import useAuth from '~/hooks/useAuth';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
+import useCrew from '~/hooks/useCrew';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewManager from '~/hooks/useCrewManager';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme.js';
@@ -237,7 +236,7 @@ const InactiveCardContainer = styled.div`
       opacity: 1;
     }
   }
-  
+
   @media (max-width: 1023px) {
     & ${InnerButtonHolder} {
       opacity: 1;
@@ -445,11 +444,11 @@ const OwnedCrew = (props) => {
   const createStorySession = useCreateStorySession();
   const { data: crewAssignmentData, isLoading: assignmentsAreLoading } = useCrewAssignments();
   const queryClient = useQueryClient();
-  const { data: crew, isLoading: crewIsLoading } = useOwnedCrew();
+  const { crew: selectedCrew, crews: allCrews, crewMemberMap, loading: crewIsLoading } = useCrew();
   const { changeActiveCrew, getPendingActiveCrewChange } = useCrewManager();
   const history = useHistory();
   const { height, width } = useScreenSize();
-  
+
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
 
@@ -468,6 +467,16 @@ const OwnedCrew = (props) => {
   const [saving, setSaving] = useState(false);
 
   const isDataLoading = !token || assignmentsAreLoading || crewIsLoading;
+
+  const crew = useMemo(() => {
+    if (crewIsLoading) return [];
+    const activeCrew = (selectedCrew?.crewMembers || []).map((i, index) => ({ ...crewMemberMap[i], activeSlot: index + 1 }));
+    const activeInAnyCrewIds = (allCrews || []).reduce((acc, c) => [...acc, ...c.crewMembers], []);
+    const inactiveCrew = Object.values(crewMemberMap || {})
+      .filter((crewMember) => !activeInAnyCrewIds.includes(crewMember.i))
+      .map((c) => ({ ...c, activeSlot: -1 }));
+    return [...activeCrew, ...inactiveCrew];
+  }, [selectedCrew, allCrews, crewMemberMap, crewIsLoading]);
 
   const isDirty = useMemo(() => {
     return pristine !== activeCrew.map((c) => c.i).join(',');
@@ -563,8 +572,8 @@ const OwnedCrew = (props) => {
   }, [crew]);
 
   const handleSave = useCallback(() => {
-    changeActiveCrew({ crew: activeCrew.map((c) => c.i) });
-  }, [activeCrew, changeActiveCrew]);
+    changeActiveCrew({ crewId: selectedCrew?.i, crewMembers: activeCrew.map((c) => c.i) });
+  }, [activeCrew, changeActiveCrew, selectedCrew]);
 
   const handleActiveCrewHeight = useCallback(() => {
     if (activeCrewContainer.current) {
@@ -589,7 +598,7 @@ const OwnedCrew = (props) => {
           type: 'INITIALIZE',
           crew: crew.map((c) => ({
             ...c,
-            activeSlot: pendingChange.vars.crew.indexOf(c.i)
+            activeSlot: (pendingChange.vars.crewMembers || []).indexOf(c.i)
           })),
           pristine: false
         });
@@ -645,9 +654,9 @@ const OwnedCrew = (props) => {
 
   if (isDataLoading) return null;
   return (
-    <Details title="Owned Crew">
-      {!(crew && crewRecruitmentStoryId) && <Loader />}
-      {crew && crewRecruitmentStoryId && (
+    <Details title="Owned Crew" width="max">
+      {!(crew?.length > 0 && crewRecruitmentStoryId) && <Loader />}
+      {crew?.length > 0 && crewRecruitmentStoryId && (
         <Container>
           <Title>
             <h3>
@@ -683,7 +692,11 @@ const OwnedCrew = (props) => {
                               <CrewContainer>
                                 <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
                                   {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
-                                  {!isEmpty && <CrewCard crew={crew} fontSize="95%" noWrapName />}
+                                  {!isEmpty && <CrewCard
+                                    crew={crew}
+                                    fontSize="95%"
+                                    noWrapName
+                                    onClick={() => history.push(`/crew/${crew.i}`)} />}
                                 </CardContainer>
                                 {!isEmpty && (
                                   <ButtonHolder isCaptain>
@@ -708,7 +721,11 @@ const OwnedCrew = (props) => {
                               <TopFlourish />
                               <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
                                 {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
-                                {!isEmpty && <CrewCard crew={crew} fontSize="75%" noWrapName />}
+                                {!isEmpty && <CrewCard
+                                  crew={crew}
+                                  fontSize="75%"
+                                  noWrapName
+                                  onClick={() => history.push(`/crew/${crew.i}`)} />}
                               </CardContainer>
                               {!isEmpty && (
                                 <ButtonHolder>
@@ -795,7 +812,8 @@ const OwnedCrew = (props) => {
                             hideCollectionInHeader
                             showClassInHeader
                             hideFooter
-                            noWrapName />
+                            noWrapName
+                            onClick={() => history.push(`/crew/${crew.i}`)} />
                           <InnerButtonHolder>
                             <IconButton
                               disabled={saving || activeCrew?.length === 5}

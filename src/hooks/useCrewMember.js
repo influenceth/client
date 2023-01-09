@@ -4,7 +4,7 @@ import api from '~/lib/api';
 
 const useCrewMember = (i) => {
   return useQuery(
-    [ 'crew', i ],
+    [ 'crewmembers', i ],
     () => api.getCrewMember(i),
     { enabled: !!i }
   );

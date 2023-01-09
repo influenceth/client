@@ -31,7 +31,8 @@
       "required": true
     },
     "REACT_APP_MINTSQUARE_MODIFIER": {
-      "description": "Optional URL modifier to reference Mintsquare's testnet assets (or not if empty) -- i.e. `starknet-testnet/`"
+      "description": "Optional URL modifier to reference Mintsquare's testnet assets (or not if empty) -- i.e. `starknet-testnet/`",
+      "required": false
     },
     "REACT_APP_STARKNET_NETWORK": {
       "description": "Base URL for Starknet network.",
@@ -72,6 +73,15 @@
     },
     "REACT_APP_HIDE_SOCIAL": {
       "required": false
+    },
+    "REACT_APP_CLOUDFRONT_IMAGE_URL": {
+      "required": true
+    },
+    "REACT_APP_CLOUDFRONT_OTHER_URL": {
+      "required": true
+    },
+    "REACT_APP_CLOUDFRONT_BUCKET": {
+      "required": true
     }
   }
 }

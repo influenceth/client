@@ -1,17 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { toCrewClass } from 'influence-utils';
+import { Crewmate } from '@influenceth/sdk';
 
 import useBook from '~/hooks/useBook';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useCrew from '~/hooks/useCrew';
 import useStorySession from '~/hooks/useStorySession';
 import useStore from '~/hooks/useStore';
 import Button from '~/components/Button';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import { ArvadIcon, BackIcon } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
@@ -291,7 +291,7 @@ const PromptDetails = styled.div`
 const CrewAssignment = (props) => {
   const { id: sessionId } = useParams();
   const history = useHistory();
-  const { data: allCrew } = useOwnedCrew();
+  const { crewMemberMap} = useCrew();
   const { currentStep, storyState, commitPath, loadingPath } = useStorySession(sessionId);
   const { data: book } = useBook(storyState?.book)
   const playSound = useStore(s => s.dispatchSoundRequested);
@@ -308,7 +308,7 @@ const CrewAssignment = (props) => {
   if (storyState?.book) {
     onCloseDestination = `/crew-assignments/${storyState?.book}/${storyState?.story}`;
     onCloseDestinationLabel = book?.title;
-  } else if (allCrew?.length > 0) {
+  } else if (Object.keys(crewMemberMap || {}).length > 0) {
     onCloseDestination = '/owned-crew';
     onCloseDestinationLabel = 'Crew Management';
   } else {
@@ -359,16 +359,20 @@ const CrewAssignment = (props) => {
     );
   }, [history, playSound, sessionId, isMintingStory]);
 
-  const crew = useMemo(() => {
-    return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
-  }, [storyState, allCrew]);
+  const crew = useMemo(
+    () => crewMemberMap && storyState && crewMemberMap[storyState.owner],
+    [storyState, crewMemberMap]
+  );
 
   const contentReady = storyState && (crew || storyState.ownerType !== 'CREW_MEMBER');
   const pathIsReady = contentReady && storyState.image === coverImageLoaded && !loadingPath;
   return (
     <>
       <Details
-        title={headerTitle} edgeToEdge onCloseDestination={onCloseDestination}>
+        edgeToEdge
+        onCloseDestination={onCloseDestination}
+        title={headerTitle}
+        width="max">
         {!contentReady && <Loader />}
         {contentReady && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -394,7 +398,7 @@ const CrewAssignment = (props) => {
                     <b>{crew.name || `Crew Member #${crew.i}`}</b>
                     {' '}<CrewClassIcon crewClass={crew.crewClass} />
                   </div>
-                  <div>{toCrewClass(crew.crewClass) || 'Unknown Class'}</div>
+                  <div>{Crewmate.toClass(crew.crewClass)?.name || 'Unknown Class'}</div>
                 </MobileCrewContainer>
               )}
             </AboveFold>

@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
-import { KeplerianOrbit } from 'influence-utils';
+import { KeplerianOrbit } from '@influenceth/sdk';
 import { RiRouteFill } from 'react-icons/ri';
 import { MdRemoveCircle } from 'react-icons/md';
 import { GiHorizontalFlip } from 'react-icons/gi';
@@ -70,8 +70,6 @@ const RoutePlanner = (props) => {
   const history = useHistory();
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
-  const dispatchOriginCleared = useStore(s => s.dispatchOriginCleared);
-  const dispatchDestinationCleared = useStore(s => s.dispatchDestinationCleared);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchDestinationSelected = useStore(s => s.dispatchDestinationSelected);
 
@@ -96,8 +94,8 @@ const RoutePlanner = (props) => {
   }, [ origin, destination, time ]);
 
   useEffect(() => {
-    return () => dispatchDestinationCleared();
-  }, [ dispatchDestinationCleared ]);
+    return () => dispatchDestinationSelected();
+  }, [ dispatchDestinationSelected ]);
 
   return (
     <Section
@@ -123,8 +121,8 @@ const RoutePlanner = (props) => {
         <IconButton
           data-tip="Clear Route"
           onClick={() => {
-            dispatchOriginCleared();
-            dispatchDestinationCleared();
+            dispatchOriginSelected();
+            dispatchDestinationSelected();
           }}
           disabled={!originId && !destinationId}>
           <MdRemoveCircle />

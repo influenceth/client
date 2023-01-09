@@ -26,8 +26,9 @@ const constants = {
 
   // (performance)
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: true,
-  USE_DEDICATED_GPU_WORKER: true,
   UPDATE_QUADTREE_EVERY: 0.33, // (multiplied by CHUNK_SPLIT_DISTANCE)
+
+  TELEMETRY_SCALE: 1.15,
 
   // Default performance settings
   // (corresponding to GPU tiers 0-3)

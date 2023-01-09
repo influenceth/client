@@ -1,14 +1,19 @@
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 import { MdBlurOff as ScanIcon } from 'react-icons/md';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
-import {
-  CrewIcon,
-  PromoteIcon
-} from '~/components/Icons';
+import { Capable, Inventory } from '@influenceth/sdk';
 
+import AddressLink from '~/components/AddressLink';
 import AsteroidLink from '~/components/AsteroidLink';
 import CrewLink from '~/components/CrewLink';
-import AddressLink from '~/components/AddressLink';
+import PlotLink from '~/components/PlotLink';
+import {
+  ConstructIcon,
+  CoreSampleIcon,
+  CrewIcon,
+  ExtractionIcon,
+  PromoteIcon
+} from '~/components/Icons';
 
 const getTxLink = (event) => {
   if (event.__t === 'Ethereum') {
@@ -74,16 +79,16 @@ const entries = {
 
   Asteroid_ReadyToFinalizeScan: (e) => ({
     icon: <ScanIcon />,
+    // TODO: may want to review language here (depending on what expiration is on starknet)
     content: (
       <>
         <span>Ready to finalize scan on </span>
         <AsteroidLink id={e.i} />
-        <span>. Scan *must* be submitted and mined within 256 blocks (~45 min)</span>
       </>
     ),
   }),
 
-  Asteroid_AsteroidScanned: (e) => ({
+  Asteroid_ScanFinished: (e) => ({
     icon: <ScanIcon />,
     content: (
       <>
@@ -94,7 +99,7 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  Asteroid_Asteroid_NameChanged: (e) => ({
+  Asteroid_NameChanged: (e) => ({
     icon: <NameIcon />,
     content: (
       <>
@@ -159,15 +164,89 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  CrewMember_Crew_CompositionChanged: (e) => {
+  Construction_Planned: (e) => ({
+    icon: <ConstructIcon />,
+    content: (
+      <>
+        <span>{Capable.TYPES[e.returnValues.capableType]?.name} plan completed on </span>
+        <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  // TODO: flesh these out by hydrating with asteroid name, plot i, and building type
+  Construction_Started: (e) => ({
+    icon: <ConstructIcon />,
+    content: (
+      <>
+        <span>Construction started.</span>
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+  Construction_Finished: (e) => ({
+    icon: <ConstructIcon />,
+    content: (
+      <>
+        <span>Construction finished.</span>
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  CoreSample_SamplingStarted: (e) => ({
+    icon: <CoreSampleIcon />,
+    content: (
+      <>
+        <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample started at ({e.returnValues.lotId}) </span>
+        <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  CoreSample_SamplingFinished: (e) => ({
+    icon: <CoreSampleIcon />,
+    content: (
+      <>
+        <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample analyzed at ({e.returnValues.lotId}) </span>
+        <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  Extraction_Started: (e) => ({
+    icon: <ExtractionIcon />,
+    content: (
+      <>
+        <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} extraction #{e.returnValues.runId} started.</span>
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  Extraction_Finished: (e) => ({
+    icon: <ExtractionIcon />,
+    content: (
+      <>
+        <span>Extraction #{e.returnValues.runId} completed.</span>
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  Crew_CompositionChanged: (e) => {
     let action = null;
     let icon = <CrewIcon />;
     const { newCrew, oldCrew } = e.returnValues;
-    if (newCrew[0] === e.i) {
+
+    if (newCrew[0] === e.i && oldCrew[0] !== e.i) {
       action = `promoted to Captain`;
       icon = <PromoteIcon />;
     }
-    else if (oldCrew[0] === e.i && newCrew.includes(e.i)) {
+    else if (oldCrew[0] === e.i && newCrew[0] !== e.i && newCrew.includes(e.i)) {
       action = `relieved of command`;
     }
     else if (newCrew.includes(e.i) && !oldCrew.includes(e.i)) action = `assigned to active duty`;
@@ -189,7 +268,7 @@ const entries = {
     }
   },
 
-  CrewMember_Transfer: (e) => ({
+  Crewmate_Transfer: (e) => ({
     icon: <TransferIcon />,
     content: (
       <>
@@ -220,7 +299,7 @@ const entries = {
     ),
   }),
 
-  CrewMember_Crewmate_NameChanged: (e) => ({
+  Crewmate_NameChanged: (e) => ({
     icon: <NameIcon />,
     content: (
       <>
@@ -273,6 +352,7 @@ const entries = {
 };
 
 const getLogContent = ({ type, data }) => {
+  // if (type === 'CoreSample_SamplingStarted') console.log(type, data);
   try {
     return entries[type](data);
   } catch (e) {

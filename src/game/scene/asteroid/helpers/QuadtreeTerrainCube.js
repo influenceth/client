@@ -1,34 +1,15 @@
 import {
   Group,
-  Matrix4,
   Vector3
 } from 'three';
 import QuadtreeTerrainPlane from './QuadtreeTerrainPlane';
 import TerrainChunkManager from './TerrainChunkManager';
-import { generateHeightMap, getMinChunkSize } from './TerrainChunkUtils';
-import constants from '~/lib/constants';
-
-const { MIN_CHUNK_SIZE } = constants;
-
-const cubeTransforms = [
-  (new Matrix4()).makeRotationX(-Math.PI / 2), // +Y
-  (new Matrix4()).makeRotationX(Math.PI / 2),  // -Y
-  (new Matrix4()).makeRotationY(Math.PI / 2),  // +X
-  (new Matrix4()).makeRotationY(-Math.PI / 2), // -X
-  new Matrix4(),                               // +Z
-  (new Matrix4()).makeRotationY(Math.PI),      // -Z
-];
-
-const getPrerenderResolution = (radius, minChunkSize = MIN_CHUNK_SIZE) => {
-  const targetResolution = 2 * radius / minChunkSize;
-  if (targetResolution < 32) return 16;
-  if (targetResolution < 64) return 32;
-  if (targetResolution < 128) return 64;
-  if (targetResolution < 256) return 128;
-  if (targetResolution < 512) return 256;
-  if (targetResolution < 1024) return 512;
-  return 1024;
-};
+import {
+  cubeTransforms,
+  generateHeightMap,
+  getMinChunkSize,
+  getSamplingResolution
+} from './TerrainChunkUtils';
 
 // TODO: remove
 // let taskTotal = 0;
@@ -50,23 +31,30 @@ const getPrerenderResolution = (radius, minChunkSize = MIN_CHUNK_SIZE) => {
 // setTimeout(() => active = true, 5000);
 
 class QuadtreeTerrainCube {
-  constructor(i, config, textureSize, workerPool) {
+  constructor(i, config, textureSize, workerPool, materialOverrides = {}) {
     this.radius = config.radius;
     this.cameraPosition = null;
     this.smallestActiveChunkSize = 2 * this.radius;
-
-    this.builder = new TerrainChunkManager(i, config, textureSize, workerPool);
-    this.groups = [...new Array(6)].map(_ => new Group());
-    this.chunks = {};
 
     // adjust min chunk size for this asteroid (this is mostly to provide higher resolution for
     // smallest asteroids because user can zoom in proportionally farther)
     // if >30km, x1; if >3k, x0.5; else, x0.33
     this.minChunkSize = getMinChunkSize(this.radius);
+    const prerenderResolution = getSamplingResolution(this.radius, this.minChunkSize);
+
+    this.builder = new TerrainChunkManager(
+      i,
+      config,
+      textureSize || prerenderResolution,
+      workerPool,
+      materialOverrides
+    );
+    this.groups = [...new Array(6)].map(_ => new Group());
+    this.chunks = {};
+    this.emissiveParams = null;
 
     // build the sides of the cube (each a quadtreeplane)
     this.sides = [];
-    const prerenderResolution = getPrerenderResolution(this.radius, this.minChunkSize);
     for (let i in cubeTransforms) {
       const transform = cubeTransforms[i];
       const sideIndex = parseInt(i);
@@ -122,11 +110,15 @@ class QuadtreeTerrainCube {
     for (let y = 0; y < resolution; y++) {
       for (let x = 0; x < resolution; x++) {
         const bi = (resolution * (resolution - y - 1) + x) * 4; // (flip y)
-        const disp = -1 + (heightMap.buffer[bi] + heightMap.buffer[bi + 1] / 255) / 127.5;
+        const disp = -1 + (heightMap.buffer[bi] + heightMap.buffer[bi + 1] / 255) / 127.5; // (seems like this should be 128)
         heightSamples.push(config.radius * (1 + disp * config.dispWeight));
       }
     }
     return heightSamples;
+  }
+
+  setEmissiveParams(params) {
+    this.emissiveParams = params;
   }
 
   setShadowsEnabled(state) {
@@ -160,70 +152,84 @@ class QuadtreeTerrainCube {
     // create a list of changes to make, sorted by closest to farthest
     const queuedChangesObj = {};
 
+    const updatedChunks = {};
+    this.sides.forEach((side) => {
+      const sideChunks = side.quadtree.getChildren();
+      Object.keys(sideChunks).forEach((k) => {
+        const node = sideChunks[k];
+        const stitchingStrides = {};
+        Object.keys(node.neighbors).forEach((orientation) => {
+          stitchingStrides[orientation] = Math.max(1, (node.neighbors[orientation]?.size?.x || 0) / node.size.x);
+        });
+        node.stitchingStrides = stitchingStrides;
+        node.emissiveParams = this.emissiveParams && { ...this.emissiveParams, k };
+        node.renderSig = `${node.key} [${Object.values(node.stitchingStrides).join('')}] [${node.emissiveParams?.resource || ''}]`;
+        updatedChunks[k] = node;
+      });
+    });
+
     // if no chunks, then single update with all children
     if (Object.keys(this.chunks).length === 0) {
       queuedChangesObj.initial = {
         _distance: 0,
-        remove: [],
-        add: this.sides.reduce((acc, side) => [...acc, ...Object.values(side.quadtree.getChildren())], [])
+        add: Object.values(updatedChunks)
       };
+
+    // else, walk through existing chunks...
     } else {
-      this.sides.forEach((side) => {
-        const newQuads = side.quadtree.getChildren();
+      Object.keys(this.chunks).forEach((renderSig) => {
+        const chunk = this.chunks[renderSig];
 
-        Object.keys(this.chunks).forEach((renderKey) => {
-          const chunk = this.chunks[renderKey];
+        // if this existing chunk still exists in updatedChunks, will either need to update
+        // due to stitching or emissive change, or don't need to do anything
+        if (updatedChunks[chunk.key]) {
 
-          // if no changes to this quad's split, may still need to rebuild if stitching changed
-          if (newQuads[chunk.key]) {
-            const newChunk = newQuads[chunk.key];
-            this.populateNodeStridesAndRenderKey(newChunk);
-
-            // calculate "renderKey"... if not same as old chunk, needs rebuild
-            // TODO: since this group can get big, might be good to break up by side
-            if (newChunk.renderKey !== renderKey) {
-              if (!queuedChangesObj.rebuild) {
-                queuedChangesObj.rebuild = { add: [], removeByKey: [] };
-              }
-              queuedChangesObj.rebuild.add.push(newChunk);
-              queuedChangesObj.rebuild.removeByKey.push(renderKey);
+          // calculate "renderSig"... if not same as old chunk, needs rebuild
+          // TODO: since this group can get big, might be good to break up by side before swap
+          if (updatedChunks[chunk.key].renderSig !== renderSig) {
+            if (!queuedChangesObj.rebuild) {
+              queuedChangesObj.rebuild = { add: [], removeByKey: [] };
             }
-          } else {
-            // if zooming in, removing current and adding sub-quads
-            const descendents = Object.keys(newQuads).reduce((acc, cur) => {
-              if (cur.indexOf(`${chunk.key}.`) === 0) acc.push(newQuads[cur]);
-              return acc;
-            }, []);
-            if (descendents.length > 0) {
-              queuedChangesObj[chunk.key] = {
-                _distance: descendents.reduce((acc, cur) => Math.min(acc, cur.distanceToCamera), Infinity),
-                remove: [chunk],
-                add: descendents,
-              };
+            queuedChangesObj.rebuild.add.push(updatedChunks[chunk.key]);
+            queuedChangesObj.rebuild.removeByKey.push(renderSig);
+          }
 
-            // else, zooming out, adding ancestor and removing current (w/ siblings)
-            } else {
-              const closestAncestorKey = Object.keys(newQuads)
-                .filter((k) => chunk.key.indexOf(`${k}.`) === 0)
-                .sort((a, b) => b.length - a.length)
-                .shift();
-              if (closestAncestorKey) {
-                if (!queuedChangesObj[closestAncestorKey]) {
-                  queuedChangesObj[closestAncestorKey] = {
-                    _distance: newQuads[closestAncestorKey].distanceToCamera,
-                    add: [newQuads[closestAncestorKey]],
-                    remove: []
-                  }
+        // else, this existing chunk is gone (either splitting into smaller or collapsing into larger)
+        } else {
+
+          // if splitting (i.e. zooming in), removing current and adding sub-quads (sub-quads will have a key that extends this one)
+          const descendents = Object.keys(updatedChunks).reduce((acc, cur) => {
+            if (cur.indexOf(`${chunk.key}.`) === 0) acc.push(updatedChunks[cur]);
+            return acc;
+          }, []);
+          if (descendents.length > 0) {
+            queuedChangesObj[chunk.key] = {
+              _distance: descendents.reduce((acc, cur) => Math.min(acc, cur.distanceToCamera), Infinity),
+              removeByKey: [renderSig],
+              add: descendents,
+            };
+
+          // else, collapsing (i.e. zooming out), adding ancestor and removing current (w/ siblings)
+          } else {
+            const closestAncestorKey = Object.keys(updatedChunks)
+              .filter((k) => chunk.key === `${k}` || (chunk.key.indexOf(`${k}.`) === 0))
+              .sort((a, b) => b.length - a.length)
+              .shift();
+            if (closestAncestorKey) {
+              if (!queuedChangesObj[closestAncestorKey]) {
+                queuedChangesObj[closestAncestorKey] = {
+                  _distance: updatedChunks[closestAncestorKey].distanceToCamera,
+                  add: [updatedChunks[closestAncestorKey]],
+                  removeByKey: []
                 }
-                queuedChangesObj[closestAncestorKey].remove.push(chunk);
               }
+              queuedChangesObj[closestAncestorKey].removeByKey.push(renderSig);
             }
           }
-        });
+        }
       });
+
       if (queuedChangesObj.rebuild) {
-        // TODO: should filter by those that actually have stride changes, otherwise
-        //  unchanged quad might be closest to camera
         queuedChangesObj.rebuild._distance = queuedChangesObj.rebuild.add.reduce((acc, cur) => Math.min(acc, cur.distanceToCamera), Infinity);
       }
     }
@@ -235,23 +241,6 @@ class QuadtreeTerrainCube {
     // ^^^
   }
 
-  populateNodeStridesAndRenderKey(node) {
-    if (!node.stitchingStrides) {
-      if (node.chunk?._params?.stitchingStrides) {
-        node.stitchingStrides = node.chunk?._params?.stitchingStrides;
-      } else if (node.neighbors) {
-        const stitchingStrides = {};
-        Object.keys(node.neighbors).forEach((orientation) => {
-          stitchingStrides[orientation] = Math.max(1, (node.neighbors[orientation]?.size?.x || 0) / node.size.x);
-        });
-        node.stitchingStrides = stitchingStrides;
-      }
-    }
-    if (!node.renderKey) {
-      node.renderKey = `${node.key} [${Object.values(node.stitchingStrides).join('')}]`;
-    }
-  }
-
   // TODO (enhancement): could pre-populate the pool more
   processNextQueuedChange() {
     if (this.queuedChanges.length === 0) {
@@ -260,21 +249,22 @@ class QuadtreeTerrainCube {
     }
     // console.log('queue length', this.queuedChanges.length);
     
-    const { add, remove, removeByKey } = this.queuedChanges.shift();
+    const { add, removeByKey } = this.queuedChanges.shift();
     
     // TODO: (redo) vvv BENCHMARK trends to <0.6ms as chunk pool is established
     // TODO (enhancement): could pre-build more chunks for pool?
 
     // kick-off chunks to rebuild
     add.forEach((node) => {
-      this.populateNodeStridesAndRenderKey(node);
-      this.chunks[node.renderKey] = {
+      this.chunks[node.renderSig] = {
         key: node.key,
         position: [node.center.x, node.center.z],
+        renderSig: node.renderSig,
         size: node.size.x,
         sphereCenter: node.sphereCenter,
         sphereCenterHeight: node.sphereCenterHeight,
         chunk: this.builder.allocateChunk({
+          emissiveParams: node.emissiveParams,
           group: this.groups[node.side],
           minHeight: node.unstretchedMin,
           offset: new Vector3(node.center.x, node.center.y, node.center.z),
@@ -289,18 +279,15 @@ class QuadtreeTerrainCube {
     this.builder.waitForChunks(add.length);
 
     // kick-off chunks to recycle
-    const removeChunks = [
-      ...(remove || []),
-      ...(removeByKey || []).map((k) => this.chunks[k])
-    ];
+    const removeChunks = (removeByKey || []).map((k) => this.chunks[k]);
     this.builder.queueForRecycling(removeChunks);
 
     // remove references to recycled chunks
     // TODO: make sure this doesn't delete the removeChunks records
     removeChunks.forEach((c) => {
-      this.populateNodeStridesAndRenderKey(c);
-      delete this.chunks[c.renderKey];
-    })
+      delete this.chunks[c.renderSig];
+    });
+    // console.log('now chunks', Object.keys(this.chunks));
 
     // recalculate smallest active chunk
     this.smallestActiveChunkSize = Object.values(this.chunks).reduce((acc, node) => {

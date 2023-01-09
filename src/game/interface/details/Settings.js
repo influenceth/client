@@ -9,7 +9,7 @@ import useStore from '~/hooks/useStore';
 import useReferralsCount from '~/hooks/useReferralsCount';
 import useScreenSize from '~/hooks/useScreenSize';
 import CopyReferralLink from '~/components/CopyReferralLink';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import DataReadout from '~/components/DataReadout';
 import Button from '~/components/Button';
 import IconButton from '~/components/IconButton';
@@ -99,7 +99,7 @@ const Settings = (props) => {
   };
 
   return (
-    <Details title="Settings">
+    <Details title="Settings" width="750px">
       <StyledSettings>
         {!isMobile && (
           <>

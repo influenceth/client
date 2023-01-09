@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { toCrewClass, toCrewClassDescription, toCrewTrait } from 'influence-utils';
+import { Crewmate } from '@influenceth/sdk';
 import {
   BiUndo as UndoIcon,
   BiRedo as RedoIcon
@@ -13,7 +13,7 @@ import CopyReferralLink from '~/components/CopyReferralLink';
 import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import Dialog from '~/components/Dialog';
 import Ether from '~/components/Ether';
 import { AdalianIcon, LinkIcon, TwitterIcon } from '~/components/Icons';
@@ -22,7 +22,7 @@ import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCrewManager from '~/hooks/useCrewManager';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useCrew from '~/hooks/useCrew';
 import useSale from '~/hooks/useSale';
 import useStore from '~/hooks/useStore';
 import useStorySession from '~/hooks/useStorySession';
@@ -466,7 +466,7 @@ const CrewAssignmentCreate = (props) => {
   const history = useHistory();
   const { storyState } = useStorySession(sessionId);
   const { purchaseAndInitializeCrew, getPendingPurchase } = useCrewManager();
-  const { data: crew } = useOwnedCrew();
+  const { crew, crewMemberMap } = useCrew();
   const { data: crewSale } = useSale('Crewmate');
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -480,10 +480,11 @@ const CrewAssignmentCreate = (props) => {
 
   const rewards = useMemo(() => {
     if (storyState?.accruedTraits) {
-      const traits = (storyState?.accruedTraits || []).map((id) => ({
+      const traits = (storyState?.accruedTraits || []).map((id) => {
+        return {
         id,
-        ...toCrewTrait(id)
-      }));
+        ...Crewmate.getTrait(id)
+      }});
       return {
         drive: traits.find((t) => driveTraits.includes(t.id)),
         classImpactful: traits.find((t) => t.type === 'impactful'),
@@ -582,11 +583,12 @@ const CrewAssignmentCreate = (props) => {
       name,
       features: featureOptions[featureSelection],
       traits: rewards,
+      crewId: crew?.i || 0,
       sessionId // used to tag the pendingTransaction
     };
     purchaseAndInitializeCrew(input);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, featureOptions?.length, featureSelection, purchaseAndInitializeCrew, !!rewards, sessionId]);
+  }, [name, featureOptions?.length, featureSelection, purchaseAndInitializeCrew, !!rewards, sessionId, crew?.i]);
 
   // show "complete" page (instead of "create") for non-recruitment assignments
   useEffect(() => {
@@ -604,7 +606,7 @@ const CrewAssignmentCreate = (props) => {
       setName(pendingPurchase.vars.name);
       setFinalizing(true);
     } else if (finalizing) {
-      if ((crew || []).find((c) => c.name === name)) {
+      if (Object.values(crewMemberMap).find((c) => c.name === name)) {
         setFinalizing(false);
         setFinalized(true);
       }
@@ -613,7 +615,7 @@ const CrewAssignmentCreate = (props) => {
       rerollAppearance();
     }
   }, [ // eslint-disable-line react-hooks/exhaustive-deps
-    crew?.length,
+    crewMemberMap,
     finalizing,
     getPendingPurchase,
     name,
@@ -634,7 +636,8 @@ const CrewAssignmentCreate = (props) => {
       onCloseDestination={onCloseDestination}
       contentProps={{ style: { display: 'flex', flexDirection: 'column', } }}
       edgeToEdge
-      title="Crew Assignments">
+      title="Crew Assignments"
+      width="max">
       <ImageryContainer src={storyState.completionImage || storyState.image}>
         <div />
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
@@ -665,8 +668,8 @@ const CrewAssignmentCreate = (props) => {
                           <CrewClassIcon crewClass={crewmate.crewClass} overrideColor="inherit" />
                         </div>
                         <article>
-                          <h4>{toCrewClass(crewmate.crewClass)}</h4>
-                          <div>{toCrewClassDescription(crewmate.crewClass)}</div>
+                          <h4>{Crewmate.getClass(crewmate.crewClass).name}</h4>
+                          <div>{Crewmate.getClass(crewmate.crewClass).description}</div>
                         </article>
                         <TipHolder>
                           <TriangleTip strokeWidth="1" rotate="90" />
@@ -755,7 +758,13 @@ const CrewAssignmentCreate = (props) => {
 
             {!finalized && (
               <NameSection>
-                <TextInput disabled={finalizing} onChange={handleNameChange} placeholder="Enter Name" initialValue={name} />
+                <TextInput
+                  disabled={finalizing}
+                  initialValue={name}
+                  maxlength={31}
+                  onChange={handleNameChange}
+                  pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                  placeholder="Enter Name" />
                 <RerollContainer>
                   <IconButton
                     onClick={rollBack}
@@ -836,8 +845,8 @@ const CrewAssignmentCreate = (props) => {
                 <CrewClassIcon crewClass={crewmate.crewClass} overrideColor="inherit" />
               </div>
               <article>
-                <h4>{toCrewClass(crewmate.crewClass)}</h4>
-                <div>{toCrewClassDescription(crewmate.crewClass)}</div>
+                <h4>{Crewmate.getClass(crewmate.crewClass).name}</h4>
+                <div>{Crewmate.getClass(crewmate.crewClass).description}</div>
               </article>
             </Trait>
 
@@ -901,7 +910,7 @@ const CrewAssignmentCreate = (props) => {
           body={(
             <PromptBody>
               The Crewmate you are about to create will be minted as a new unique
-              Non-fungible Token (NFT)! Once minted, the character can never be deleted
+              Player-Owned Game Asset (POGA)! Once minted, the character can never be deleted
               or unmade, and is yours to keep or trade forever. All of their stats,
               actions, skills, and attributes will be appended to their unique history
               and stored as independent on-chain events.

@@ -35,12 +35,8 @@ const Log = () => {
           <EmptyMessage>No log events recorded.</EmptyMessage>
         )}
         {events && events.map(e => {
-          const type = e.type || `${e.assetType}_${e.event}`;
-          let key = `${type}.${e.timestamp}`;
-          if (e.transactionHash) key += `.${e.transactionHash}`;
-          if (e.logIndex) key += `.${e.logIndex}`;
-          if (e.i) key += `.${e.i}`;
-          return <LogEntry key={key} type={type} data={e} />;
+          const type = e.type || e.event;
+          return <LogEntry key={e.key} type={type} data={e} />;
         })}
       </LogList>
     </Section>

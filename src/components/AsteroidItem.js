@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import utils from 'influence-utils';
+import { toRarity, toSize, toSpectralType } from '@influenceth/sdk';
 import { IoIosPin } from 'react-icons/io';
 import { BiTargetLock } from 'react-icons/bi';
 import { AiFillEye as WatchIcon } from 'react-icons/ai';
@@ -58,11 +58,9 @@ const AsteroidItem = (props) => {
   const dispatchAsteroidUnhovered = useStore(s => s.dispatchAsteroidUnhovered);
   const origin = useStore(s => s.asteroids.origin);
   const selectOrigin = useStore(s => s.dispatchOriginSelected);
-  const clearOrigin = useStore(s => s.dispatchOriginCleared);
   const routePlannerActive = useStore(s => s.outliner.routePlanner.active);
   const destination = useStore(s => s.asteroids.destination);
   const selectDestination = useStore(s => s.dispatchDestinationSelected);
-  const clearDestination = useStore(s => s.dispatchDestinationCleared);
   const unWatchAsteroid = useUnWatchAsteroid();
 
   return (
@@ -73,21 +71,21 @@ const AsteroidItem = (props) => {
       {...restProps}>
       <Description>
         {asteroid.customName || asteroid.baseName}{' - '}
-        {utils.toSize(asteroid.r)}{' '}
-        {utils.toSpectralType(asteroid.spectralType)}{'-type'}
-        {asteroid.scanned && <RarityBadge rarity={utils.toRarity(asteroid.bonuses)}> &#9679;</RarityBadge>}
+        {toSize(asteroid.r)}{' '}
+        {toSpectralType(asteroid.spectralType)}{'-type'}
+        {asteroid.scanned && <RarityBadge rarity={toRarity(asteroid.bonuses)}> &#9679;</RarityBadge>}
       </Description>
       <Controls>
         <IconButton
           data-tip={origin === asteroid.i ? 'Deselect Asteroid' : 'Select Asteroid'}
-          onClick={() => origin === asteroid.i ? clearOrigin() : selectOrigin(asteroid.i)}
+          onClick={() => selectOrigin(origin === asteroid.i ? null : asteroid.i)}
           active={origin === asteroid.i}>
           <IoIosPin />
         </IconButton>
         {routePlannerActive && (
           <IconButton
             data-tip={destination === asteroid.i ? 'Clear Destination' : 'Set as Destination'}
-            onClick={() => destination === asteroid.i ? clearDestination() : selectDestination(asteroid.i)}
+            onClick={() => selectDestination(destination === asteroid.i ? null : asteroid.i)}
             active={destination === asteroid.i}>
             <BiTargetLock />
           </IconButton>

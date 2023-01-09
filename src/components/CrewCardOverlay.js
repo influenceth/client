@@ -44,9 +44,9 @@ const OverlayIcon = styled.div`
   top: calc(50% - 30px);
 `;
 
-const CardOverlayHoverCss = css`
-  border: 1px solid rgba(${(p) => p.rgbHover || p.rgb});
-  outline: 3px solid rgba(${(p) => p.rgbHover || p.rgb}, 0.5);
+const CardOverlayHoverCss = (p) => `
+  border: 1px solid rgba(${p.rgbHover || p.rgb});
+  outline: 3px solid rgba(${p.rgbHover || p.rgb}, 0.5);
   ${OverlayButton},
   ${OverlayCaption},
   ${OverlayFlourish},
@@ -54,7 +54,7 @@ const CardOverlayHoverCss = css`
     opacity: 1;
   }
 
-  ${p => p.rgbHover && `
+  ${p.rgbHover && `
     color: rgb(${p.rgbHover});
     ${OverlayButton} {
       background-color: rgba(${p.rgbHover}, 0.3);
@@ -65,6 +65,28 @@ const CardOverlayHoverCss = css`
     }
   `}
 `;
+
+// const CardOverlayHoverCss = css`
+//   border: 1px solid rgba(${(p) => p.rgbHover || p.rgb});
+//   outline: 3px solid rgba(${(p) => p.rgbHover || p.rgb}, 0.5);
+//   ${OverlayButton},
+//   ${OverlayCaption},
+//   ${OverlayFlourish},
+//   ${OverlayIcon} {
+//     opacity: 1;
+//   }
+
+//   ${p => p.rgbHover && `
+//     color: rgb(${p.rgbHover});
+//     ${OverlayButton} {
+//       background-color: rgba(${p.rgbHover}, 0.3);
+//       color: rgb(${p.rgbHover});
+//     }
+//     ${OverlayFlourish} {
+//       border-bottom-color: rgb(${p.rgbHover});
+//     }
+//   `}
+// `;
 
 const buttonKeyframes = (rgb) => keyframes`
   0% {
@@ -142,11 +164,12 @@ const CardOverlay = styled.div`
 
   ${p => !p.disableHover && `
     &:hover {
-      ${CardOverlayHoverCss}
+      ${CardOverlayHoverCss(p)}
+      
       ${OverlayButton} {
         animation: none;
         &:after {
-          content: "${p => p.buttonHover || p.button}";
+          content: "${p.buttonHover || p.button}";
         }
         ${AttentionIcon} {
           display: none;
@@ -156,7 +179,7 @@ const CardOverlay = styled.div`
   `}
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    ${(p) => p.rgb && CardOverlayHoverCss}
+    ${(p) => p.rgb && CardOverlayHoverCss(p)}
   }
 `;
 
