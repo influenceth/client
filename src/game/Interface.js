@@ -26,7 +26,6 @@ import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
 import RouteDetails from './interface/details/RouteDetails';
-import Settings from './interface/details/Settings';
 import WatchlistTable from './interface/details/WatchlistTable';
 import theme from '~/theme';
 
@@ -158,9 +157,6 @@ const Interface = () => {
         </Route>
         <Route path="/crew-assignment/:id([a-z0-9]+)/create">
           <CrewCreation />
-        </Route>
-        <Route path="/settings">
-          <Settings />
         </Route>
       </Switch>
       <Outliner />

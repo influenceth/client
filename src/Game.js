@@ -12,6 +12,7 @@ import { EventsProvider } from '~/contexts/EventsContext';
 import { WalletProvider } from '~/contexts/WalletContext';
 import Audio from '~/game/Audio';
 import Intro from '~/game/Intro';
+import Launcher from '~/game/Launcher';
 import Interface from '~/game/Interface';
 import LandingPage from '~/game/Landing';
 import Redirector from '~/game/Redirector';
@@ -48,7 +49,7 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const DISABLE_INTRO = process.env.NODE_ENV === 'development';
+const DISABLE_INTRO = false; // process.env.NODE_ENV === 'development';
 
 const Game = (props) => {
   const gpuInfo = useDetectGPU();
@@ -62,7 +63,7 @@ const Game = (props) => {
   const [ introEnabled, setIntroEnabled ] = useState(!DISABLE_INTRO);
 
   const onIntroComplete = useCallback(() => {
-    setIntroEnabled(false);
+    // setIntroEnabled(false);
   }, []);
 
   const autodetectNeedsInit = graphics?.autodetect === undefined;
@@ -120,7 +121,8 @@ const Game = (props) => {
                         <LandingPage />
                       </Route>
                       <Route>
-                        {introEnabled && <Intro onComplete={onIntroComplete} />}
+                        <Launcher />
+                        {/* {introEnabled && <Intro onComplete={onIntroComplete} />} */}
                         <ClockProvider>
                           <StyledMain>
                             <Interface />
