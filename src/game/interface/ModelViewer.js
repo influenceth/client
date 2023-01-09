@@ -135,7 +135,7 @@ const skyboxDefaults = {
     envmap: '/textures/model-viewer/resource_envmap.hdr',
   },
   'Building': {
-    background: '/textures/model-viewer/building_skybox.hdr',
+    background: '/textures/model-viewer/building_skybox.jpg',
     envmap: '/textures/model-viewer/resource_envmap.hdr',
   }
 };
@@ -378,7 +378,17 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   // );
 }
 
-const Skybox = ({ assetType, onLoaded, overrideBackground, overrideEnvironment }) => {
+const loadTexture = (file, filename = '') => {
+  return new Promise((resolve) => {
+    if (/\.hdr$/i.test(filename || file || '')) {
+      new RGBELoader().load(file, resolve);
+    } else {
+      new THREE.TextureLoader().load(file, resolve);
+    }
+  })
+};
+
+const Skybox = ({ assetType, onLoaded, overrideBackground, overrideBackgroundName, overrideEnvironment, overrideEnvironmentName }) => {
   const { scene } = useThree();
 
   useEffect(() => {
@@ -388,7 +398,7 @@ const Skybox = ({ assetType, onLoaded, overrideBackground, overrideEnvironment }
     let env = overrideEnvironment || skyboxDefaults[assetType].envmap;
 
     let waitingOn = background === env ? 1 : 2;
-    new RGBELoader().load(background, function (texture) {
+    loadTexture(background, overrideBackgroundName).then(function (texture) {
       cleanupTextures.push(texture);
       texture.mapping = EquirectangularReflectionMapping;
       scene.background = texture;
@@ -400,7 +410,7 @@ const Skybox = ({ assetType, onLoaded, overrideBackground, overrideEnvironment }
       if (waitingOn === 0) onLoaded();
     });
     if (background !== env) {
-      new RGBELoader().load(env, function (texture) {
+      loadTexture(env, overrideEnvironmentName).then(function (texture) {
         cleanupTextures.push(texture);
         texture.mapping = EquirectangularReflectionMapping;
         scene.environment = texture;
@@ -622,11 +632,11 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
       reader.readAsDataURL(file);
       reader.onload = () => {
         if (uploadType === 'bg') {
-          setBgOverride(reader.result);
           setBgOverrideName(file.name);
+          setBgOverride(reader.result);
         } else if (uploadType === 'env') {
-          setEnvOverride(reader.result);
           setEnvOverrideName(file.name);
+          setEnvOverride(reader.result);
         }
       };
     } else {
@@ -813,7 +823,9 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
             assetType={assetType}
             onLoaded={() => setLoadingSkybox(false)}
             overrideBackground={bgOverride}
+            overrideBackgroundName={bgOverrideName}
             overrideEnvironment={envOverride}
+            overrideEnvironmentName={envOverrideName}
           />
           {/* disabled because this darkens scene too much */}
           {false && assetType === 'Building' && (
