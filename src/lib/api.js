@@ -84,25 +84,23 @@ const api = {
     if (response.data) {
       const occupied = '1';
       const padding = '0';
-      // return (new Uint32Array(await response.data.arrayBuffer())).reduce((acc, byte, i) => {
-      //   const x = Number(byte).toString(2).padStart(32, padding);
-      //   for (let j = 0; j < 32; j++) {
-      //     acc[i * 32 + j] = x[j] === occupied;
-      //   }
-      //   return acc;
-      // }, {});
-      return (new Uint32Array(await response.data.arrayBuffer())).reverse().reduce((acc, byte, i) => {
+      return (new Uint32Array(await response.data.arrayBuffer())).reduce((acc, byte, i) => {
         const x = Number(byte).toString(2).padStart(32, padding);
-        for (let j = 1; j <= 32; j++) {
+        for (let j = 0; j < 32; j++) {
           const index = i * 32 + j;
-          if (index <= plotTally) {
-            acc[index] = x[32 - j] === occupied;
+          if (index < plotTally) {
+            acc[index + 1] = x[j] === occupied; // (adjust for one-index of plot ids)
           }
         }
         return acc;
       }, {});
     }
     return null;
+  },
+
+  getCrewOccupiedPlots: async (a, c) => {
+    const response = await instance.get(`/v1/asteroids/${a}/lots/occupier/${c}`);
+    return response.data;
   },
 
   getPlot: async (asteroidId, plotId) => {

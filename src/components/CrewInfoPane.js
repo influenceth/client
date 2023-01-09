@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { toCrewClass, toCrewCollection, toCrewTitle, toCrewTrait } from '@influenceth/sdk';
+import { Crewmate } from '@influenceth/sdk';
 
 import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
@@ -61,15 +61,15 @@ const CrewInfoPane = ({ crew, cssWhenVisible, referenceEl, visible }) => {
             <CrewClassIcon crewClass={crew.crewClass} />
           </div>
           <div style={{ lineHeight: '1.6em' }}>
-            <DataReadout label="Class" slim inheritFontSize>{toCrewClass(crew.crewClass)}</DataReadout>
-            {crew.title > 0 && <DataReadout label="Title" slim inheritFontSize>{toCrewTitle(crew.title)}</DataReadout>}
-            <DataReadout label="Collection" slim inheritFontSize>{toCrewCollection(crew.crewCollection)}</DataReadout>
+            <DataReadout label="Class" slim inheritFontSize>{Crewmate.getClass(crew.crewClass)?.name}</DataReadout>
+            {crew.title > 0 && <DataReadout label="Title" slim inheritFontSize>{Crewmate.getTitle(crew.title)?.name}</DataReadout>}
+            <DataReadout label="Collection" slim inheritFontSize>{Crewmate.getCollection(crew.crewCollection)?.name}</DataReadout>
           </div>
         </article>
         {crew.traits.length > 0 && (
           <div>
             {crew.traits.map((trait) => {
-              const { name } = toCrewTrait(trait) || {};
+              const { name } = Crewmate.getTrait(trait) || {};
               if (name) {
                 return (
                   <Trait key={trait}>

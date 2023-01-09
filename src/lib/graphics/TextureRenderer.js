@@ -16,7 +16,7 @@ import {
 class TextureRenderer {
   constructor() {
     this.isOffscreen = (typeof OffscreenCanvas !== 'undefined');
-    
+
     let canvas;
     if (this.isOffscreen) {
       canvas = new OffscreenCanvas(0, 0);

@@ -19,11 +19,10 @@ import rampsDataUri from '~/game/scene/asteroid/helpers/_ramps.png.datauri';
 import constants from '~/lib/constants';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 
-const {
-  CHUNK_RESOLUTION,
-  MIN_CHUNK_SIZE,
-  OVERSAMPLE_CHUNK_TEXTURES
-} = constants;
+const { CHUNK_RESOLUTION, MIN_CHUNK_SIZE, OVERSAMPLE_CHUNK_TEXTURES } = constants;
+const textureOptsDefault = Object.freeze({
+  generateMipmaps: true, minFilter: LinearMipMapLinearFilter, magFilter: LinearFilter, needsUpdate: true
+});
 
 export const cubeTransforms = [
   (new Matrix4()).makeRotationX(-Math.PI / 2), // +Y
@@ -76,9 +75,7 @@ export const cubeTransforms = [
 // set up texture renderer (ideally w/ offscreen canvas)
 let _textureRenderer;
 function getTextureRenderer() {
-  if (!_textureRenderer) {
-    _textureRenderer = new TextureRenderer();
-  }
+  if (!_textureRenderer) _textureRenderer = new TextureRenderer();
   return _textureRenderer;
 }
 
@@ -91,6 +88,7 @@ export async function initChunkTextures(preloadedBitmap) {
       ramps.generateMipmaps = false;
     } else {
       let loader;
+
       try {
         loader = new TextureLoader();
         ramps = await loader.loadAsync(rampsDataUri);
@@ -100,6 +98,7 @@ export async function initChunkTextures(preloadedBitmap) {
         ramps = new CanvasTexture(await loader.loadAsync(rampsDataUri));
         ramps.generateMipmaps = false;
       }
+
       ramps.minFilter = NearestFilter;
       ramps.magFilter = NearestFilter;
     }
@@ -126,8 +125,6 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
     uniforms: {
       uChunkOffset: { type: 'v2', value: chunkOffset },
       uChunkSize: { type: 'f', value: chunkSize },
-      uCleaveCut: { type: 'f', value: config.cleaveCut },
-      uCleaveWeight: { type: 'f', value: config.cleaveWeight },
       uCraterCut: { type: 'f', value: config.craterCut },
       uCraterFalloff: { type: 'f', value: config.craterFalloff },
       uCraterPasses: { type: 'i', value: config.craterPasses },
@@ -144,11 +141,13 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uExtraPasses: { type: 'i', value: extraPasses },
       uExtraPassesMax: { type: 'i', value: extraPassesMax },
       uFeaturesFreq: { type: 'f', value: config.featuresFreq },
+      uFeaturesSharpness: { type: 'f', value: config.featuresSharpness },
       uFineDispFraction: { type: 'f', value: config.fineDispFraction },
       uLandscapeWidth: { type: 'f', value: 2 * config.radius },
       uMaxCraterDepth: { type: 'f', value: config.radius * config.dispWeight * config.fineDispFraction },
       uOversampling: { type: 'b', value: oversample },
       uResolution: { type: 'f', value: chunkResolution },
+      uRidgeWeight: { type: 'f', value: config.ridgeWeight },
       uRimVariation: { type: 'f', value: config.rimVariation },
       uRimWeight: { type: 'f', value: config.rimWeight },
       uRimWidth: { type: 'f', value: config.rimWidth },
@@ -162,16 +161,13 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
   });
 
   const textureRenderer = getTextureRenderer();
+
   if (returnType === 'texture') {
     const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-    texture.options = {
-      generateMipmaps: true,
-      minFilter: LinearMipMapLinearFilter,
-      magFilter: LinearFilter,
-      needsUpdate: true
-    };
+    texture.options = { ...textureOptsDefault };
     return texture;
   }
+
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material, { magFilter: NearestFilter });
 }
 
@@ -193,14 +189,10 @@ export function generateColorMap(heightMap, chunkResolution, oversample, config,
   const textureRenderer = getTextureRenderer();
   if (returnType === 'texture') {
     const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-    texture.options = {
-      generateMipmaps: true,
-      minFilter: LinearMipMapLinearFilter,
-      magFilter: LinearFilter,
-      needsUpdate: true
-    };
+    texture.options = { ...textureOptsDefault };
     return texture;
   }
+
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
@@ -216,49 +208,48 @@ export function generateNormalMap(heightMap, chunkResolution, chunkWidth, oversa
       uResolution: { type: 'f', value: chunkResolution },
     }
   });
-  
+
   const textureRenderer = getTextureRenderer();
   if (returnType === 'texture') {
     const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-    texture.options = {
-      generateMipmaps: true,
-      minFilter: LinearMipMapLinearFilter,
-      magFilter: LinearFilter,
-      needsUpdate: true
-    };
+    texture.options = { ...textureOptsDefault };
     return texture;
   }
+
   return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material);
 }
 
-export function generateEmissiveMap(resource, cubeTransform, chunkSize, chunkOffset, chunkResolution, extraPasses, extraPassesMax, oversample, config, returnType = 'bitmap') {
+export function generateEmissiveMap(chunkParams, emissiveParams, returnType = 'bitmap') {
   const material = new ShaderMaterial({
     fragmentShader: resourceShader,
     uniforms: {
-      uChunkOffset: { type: 'v2', value: chunkOffset },
-      uChunkSize: { type: 'f', value: chunkSize },
-      uExtraPasses: { type: 'i', value: extraPasses },
-      uExtraPassesMax: { type: 'i', value: extraPassesMax },
-      uOversampling: { type: 'b', value: oversample },
-      uResolution: { type: 'f', value: chunkResolution },
-      uResource: { type: 'f', value: resource },
-      uSeed: { type: 'v3', value: config.seed },
-      uTransform: { type: 'mat4', value: cubeTransform },
+      uChunkOffset: { type: 'v2', value: chunkParams.chunkOffset },
+      uChunkSize: { type: 'f', value: chunkParams.chunkSize },
+      uExtraPasses: { type: 'i', value: chunkParams.extraPasses },
+      uExtraPassesMax: { type: 'i', value: chunkParams.extraPassesMax },
+      uOversampling: { type: 'b', value: chunkParams.oversample },
+      uResolution: { type: 'f', value: chunkParams.chunkResolution },
+      uTransform: { type: 'mat4', value: chunkParams.cubeTransform },
+      uLowerCutoff: { type: 'f', value: emissiveParams.lowerCutoff },
+      uUpperCutoff: { type: 'f', value: emissiveParams.upperCutoff },
+      uOctaves: { type: 'i', value: emissiveParams.octaves },
+      uPers: { type: 'f', value: emissiveParams.persistence },
+      uPointScale: { type: 'f', value: emissiveParams.pointScale },
+      uPointShift: { type: 'v3', value: emissiveParams.pointShift }
     }
   });
 
   const textureRenderer = getTextureRenderer();
+
   if (returnType === 'texture') {
-    const texture = textureRenderer.render(chunkResolution, chunkResolution, material);
-    texture.options = {
-      generateMipmaps: true,
-      minFilter: LinearMipMapLinearFilter,
-      magFilter: LinearFilter,
-      needsUpdate: true
-    };
+    const texture = textureRenderer.render(chunkParams.chunkResolution, chunkParams.chunkResolution, material);
+    texture.options = { ...textureOptsDefault };
     return texture;
   }
-  return textureRenderer.renderBitmap(chunkResolution, chunkResolution, material, { magFilter: NearestFilter });
+
+  return textureRenderer.renderBitmap(
+    chunkParams.chunkResolution, chunkParams.chunkResolution, material, { magFilter: NearestFilter }
+  );
 }
 
 export function rebuildChunkGeometry({ config, edgeStrides, minHeight, offset, resolution, stretch, width }) {
@@ -279,7 +270,7 @@ export function rebuildChunkGeometry({ config, edgeStrides, minHeight, offset, r
     const xp = width * x / resolution - half;
     for (let y = 0; y < resolutionPlusOne; y++) {
       const yp = width * y / resolution - half;
-      
+
       let midStride = false;
       const strideEW = (x === resolution && edgeStrides.E > 1) ? edgeStrides.E : (
         (x === 0 && edgeStrides.W > 1) ? edgeStrides.W : 1
@@ -319,6 +310,7 @@ export function rebuildChunkGeometry({ config, edgeStrides, minHeight, offset, r
       } else if (strideNS > 1) {
         const stride = strideNS;
         const strideMod = x % stride;
+
         if (strideMod > 0) {
           midStride = true;
 
@@ -343,14 +335,14 @@ export function rebuildChunkGeometry({ config, edgeStrides, minHeight, offset, r
           _P.lerp(_S, strideMod / stride);
         }
       }
-      
+
       // handle all other points
       if (!midStride) {
         _P.set(xp, yp, radius);
         _P.add(offset);
         _P.setLength(undisplacedHeight);
       }
-      
+
       const outputIndex = 3 * (resolutionPlusOne * x + y);
       normals[outputIndex + 0] = _P.x;
       normals[outputIndex + 1] = _P.y;
@@ -400,48 +392,33 @@ export function rebuildChunkMaps({ config, edgeStrides, emissiveParams, groupMat
     OVERSAMPLE_CHUNK_TEXTURES,
     config
   );
+
   const heightTexture = heightBitmap.image ? heightBitmap : new CanvasTexture(heightBitmap);
 
   // (both color and normal maps are built from height map data, so do not need to separately
   //  stitch color and normal maps since they are built from the stitched height map values)
-  const colorBitmap = generateColorMap(
-    heightTexture,
-    textureResolution,
-    OVERSAMPLE_CHUNK_TEXTURES,
-    config
-  );
-
+  const colorBitmap = generateColorMap(heightTexture, textureResolution, OVERSAMPLE_CHUNK_TEXTURES, config);
   const normalBitmap = generateNormalMap(
-    heightTexture,
-    textureResolution,
-    textureSize * (2 * config.radius),
-    OVERSAMPLE_CHUNK_TEXTURES,
-    config
+    heightTexture, textureResolution, textureSize * (2 * config.radius), OVERSAMPLE_CHUNK_TEXTURES, config
   );
 
   // conditionally add emissive bitmap
-  // TODO: emissiveParams should include which resource we are looking at
-  const emissiveBitmap = emissiveParams && generateEmissiveMap(
-    emissiveParams.resource,
-    localToWorld,
-    textureSize,
+  const chunkParams = {
+    cubeTransform: localToWorld,
+    chunkSize: textureSize,
     chunkOffset,
-    textureResolution,
+    chunkResolution: textureResolution,
     extraPasses,
     extraPassesMax,
-    OVERSAMPLE_CHUNK_TEXTURES,
-    config
-  );
+    oversample: OVERSAMPLE_CHUNK_TEXTURES
+  };
+
+  const emissiveBitmap = emissiveParams && generateEmissiveMap(chunkParams, emissiveParams);
 
   // done with interim data textures
   heightTexture.dispose();
-  
-  return {
-    heightBitmap,
-    colorBitmap,
-    normalBitmap,
-    emissiveBitmap
-  };
+
+  return { heightBitmap, colorBitmap, normalBitmap, emissiveBitmap };
 }
 
 export function applyDisplacementToGeometry(geometry, resolution, radius, stretch, { displacementMap, displacementBias, displacementScale }) {
@@ -458,9 +435,8 @@ export function applyDisplacementToGeometry(geometry, resolution, radius, stretc
     for (let y = 0; y < resolutionPlusOne; y++) {
       const positionIndex = 3 * (resolutionPlusOne * x + y);
       const textureIndex = 4 * (osResolution * (y + osAdd) + (x + osAdd));
-      
       const displacementTextureValue = (displacementData[textureIndex + 0] + displacementData[textureIndex + 1] / 255) / 256;
-      
+
       _P.set(
         positions[positionIndex + 0],
         positions[positionIndex + 1],
@@ -520,7 +496,7 @@ export function getCachedGeometryAttributes(resolution) {
         }
       }
     }
-  
+
     // init indices
     const indices = new Uint32Array(resolution * resolution * 3 * 2);
     for (let i = 0; i < resolution; i++) {

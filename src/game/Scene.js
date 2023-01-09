@@ -8,6 +8,7 @@ import styled from 'styled-components';
 import { TrackballModControls } from '~/components/TrackballModControls';
 import AuthContext from '~/contexts/AuthContext';
 import ClockContext from '~/contexts/ClockContext';
+import CrewContext from '~/contexts/CrewContext';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import Star from './scene/Star';
@@ -77,7 +78,8 @@ const Scene = (props) => {
   // Use ContextBridge to make wallet available within canvas
   const ContextBridge = useContextBridge(
     AuthContext,
-    ClockContext
+    ClockContext,
+    CrewContext
   );
 
   // Orient such that z is up, perpindicular to the stellar plane
@@ -113,7 +115,7 @@ const Scene = (props) => {
         </ContextBridge>
       </Canvas>
       {false && /* TODO: remove debug */(
-        <div style={{ position: 'fixed', bottom: 72, left: 0, }}>
+        <div style={{ position: 'fixed', bottom: 72, left: 0, zIndex: 10000 }}>
           <div style={{ border: '1px solid white', padding: 4, background: '#222' }}>
             <canvas id="test_canvas" style={{ width: 0, height: 0, verticalAlign: 'bottom' }} />
           </div>

@@ -120,11 +120,6 @@ const config = {
     enabled: true,
     bloom: true
   },
-  meridianCircle: {
-    enabled: true,
-    bloom: true,
-    // dashed: true
-  },
   equatorCircle: {
     enabled: false,
     bloom: true
@@ -179,8 +174,8 @@ const densityByType = {
 
 const GRAV = 6.6743E-11;
 
-const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPosition, isScanned, radius, scaleHelper, spectralType }) => {
-  const { scene, controls } = useThree();
+const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPosition, isScanned, attachTo, radius, scaleHelper, spectralType }) => {
+  const { controls } = useThree();
   const getTime = useGetTime();
 
   const rotationalAxis = useRef();
@@ -197,7 +192,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
 
   const helper = useRef();
   const shipTime = useRef();
-  
+
   const circleRadius = useMemo(() => TELEMETRY_SCALE * radius, [radius]);
   const circleAttenuation = useMemo(() => Math.max(1.4, 0.75 * scaleHelper) * radius, [radius]);
   const trajectoryAttenuation = useMemo(() => Math.max(10, 2 * scaleHelper) * radius, [radius]);
@@ -208,6 +203,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
   }, [spectralType]);
 
   useEffect(() => {
+    if (!attachTo) return;
     const circleSegments = 360;
 
     const material = getLineMaterial(BLUE_GLSL, circleAttenuation, 0.7);
@@ -254,14 +250,6 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
     rotationalMarkersGroup.current = new Group();
     rotationalMarkersGroup.current.lookAt(axis.clone().normalize());
     rotationalMarkersGroup.current.updateMatrixWorld();
-
-    if (config.meridianCircle.enabled) {
-      const meridianCircle = new LineLoop(vertGeometry.clone(), config.meridianCircle.dashed ? getDashedMaterial() : material.clone());
-      if (config.meridianCircle.dashed) meridianCircle.computeLineDistances();
-      meridianCircle.userData.bloom = config.meridianCircle.bloom;
-
-      rotationalMarkersGroup.current.add(meridianCircle);
-    }
 
     if (config.planarCircle.enabled) {
       planarCircle.current = new LineLoop(geometry.clone(), config.planarCircle.dashed ? getDashedMaterial() : material.clone());
@@ -368,7 +356,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           const z = 0;
           shipVertices.push(x, y, z);
         }
-        
+
         const shipPointGeometry = new BufferGeometry();
         shipPointGeometry.setAttribute('position', new Float32BufferAttribute( shipVertices, 3 ));
         const shipCirclePoints = new Points(
@@ -431,7 +419,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
 
       const maxSignageWidth = 1000;
       const SIGNAGE_THETA = Math.min(
-        0.02, 
+        0.02,
         maxSignageWidth / accessCircleRadius * 2 * Math.PI
       );
 
@@ -517,28 +505,28 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
     // helper.current = new AxesHelper(2 * radius);
     // helper.current = new BoxHelper(accessGroup.current);
 
-    if (accessGroup.current) scene.add(accessGroup.current);
-    if (equatorCircle.current) scene.add(equatorCircle.current);
-    if (helper.current) scene.add(helper.current);
-    if (inclinationCircle.current) scene.add(inclinationCircle.current);
-    if (rotationalMarkersGroup.current) scene.add(rotationalMarkersGroup.current);
-    if (planarCircle.current) scene.add(planarCircle.current);
-    if (rotationalAxis.current) scene.add(rotationalAxis.current);
-    if (shipGroup.current) scene.add(shipGroup.current);
-    if (trajectory.current) scene.add(trajectory.current);
+    if (accessGroup.current) attachTo.add(accessGroup.current);
+    if (equatorCircle.current) attachTo.add(equatorCircle.current);
+    if (helper.current) attachTo.add(helper.current);
+    if (inclinationCircle.current) attachTo.add(inclinationCircle.current);
+    if (rotationalMarkersGroup.current) attachTo.add(rotationalMarkersGroup.current);
+    if (planarCircle.current) attachTo.add(planarCircle.current);
+    if (rotationalAxis.current) attachTo.add(rotationalAxis.current);
+    if (shipGroup.current) attachTo.add(shipGroup.current);
+    if (trajectory.current) attachTo.add(trajectory.current);
 
     return () => {
-      if (accessGroup.current) scene.remove(accessGroup.current);
-      if (equatorCircle.current) scene.remove(equatorCircle.current);
-      if (helper.current) scene.remove(helper.current); // eslint-disable-line react-hooks/exhaustive-deps
-      if (inclinationCircle.current) scene.remove(inclinationCircle.current);
-      if (rotationalMarkersGroup.current) scene.remove(rotationalMarkersGroup.current);
-      if (planarCircle.current) scene.remove(planarCircle.current);
-      if (rotationalAxis.current) scene.remove(rotationalAxis.current);
-      if (shipGroup.current) scene.remove(shipGroup.current);
-      if (trajectory.current) scene.remove(trajectory.current);
+      if (accessGroup.current) attachTo.remove(accessGroup.current);
+      if (equatorCircle.current) attachTo.remove(equatorCircle.current);
+      if (helper.current) attachTo.remove(helper.current); // eslint-disable-line react-hooks/exhaustive-deps
+      if (inclinationCircle.current) attachTo.remove(inclinationCircle.current);
+      if (rotationalMarkersGroup.current) attachTo.remove(rotationalMarkersGroup.current);
+      if (planarCircle.current) attachTo.remove(planarCircle.current);
+      if (rotationalAxis.current) attachTo.remove(rotationalAxis.current);
+      if (shipGroup.current) attachTo.remove(shipGroup.current);
+      if (trajectory.current) attachTo.remove(trajectory.current);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [!attachTo, radius]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const lastRotation = useRef();
   useFrame(() => {
@@ -547,7 +535,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
     if (position) {
       // TODO (enhancement): depending on what is displayed, not all these pre-calculations may be necessary
       const pos = new Vector3(...position).normalize();
-      
+
       // vector pointing along approx. orbit (perpendicular to position, within xy)
       const orbit = pos.clone()
         .setZ(0)

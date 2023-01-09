@@ -6,7 +6,7 @@ import { Address } from '@influenceth/sdk';
 import Details from '~/components/DetailsModal';
 import { InfoIcon, CompositionIcon } from '~/components/Icons';
 import TabContainer from '~/components/TabContainer';
-import useAsteroidAssets from '~/hooks/useAsteroidAssets';
+import useAsteroidAbundances from '~/hooks/useAsteroidAbundances';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
@@ -37,7 +37,7 @@ const AsteroidDetails = (props) => {
   const history = useHistory();
   const { i, tab } = useParams();
   const { data: asteroid } = useAsteroid(Number(i));
-  const groupAbundances = useAsteroidAssets(asteroid);
+  const groupAbundances = useAsteroidAbundances(asteroid);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
 
   // Force the asteroid to load into the origin if coming direct from URL

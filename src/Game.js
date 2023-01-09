@@ -21,6 +21,7 @@ import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import theme from '~/theme';
+import { ActionItemProvider } from './contexts/ActionItemContext';
 
 const { GRAPHICS_DEFAULTS } = constants;
 
@@ -108,28 +109,30 @@ const Game = (props) => {
         <CrewProvider>
           <EventsProvider>
             <ChainTransactionProvider>
-              <ThemeProvider theme={theme}>
-                <GlobalStyle />
-                <Router>
-                  <Redirector />
-                  <Referral />
-                  <Switch>
-                    <Route path="/play">
-                      <LandingPage />
-                    </Route>
-                    <Route>
-                      {introEnabled && <Intro onComplete={onIntroComplete} />}
-                      <ClockProvider>
-                        <StyledMain>
-                          <Interface />
-                          {showScene && <Scene />}
-                          <Audio />
-                        </StyledMain>
-                      </ClockProvider>
-                    </Route>
-                  </Switch>
-                </Router>
-              </ThemeProvider>
+              <ActionItemProvider>
+                <ThemeProvider theme={theme}>
+                  <GlobalStyle />
+                  <Router>
+                    <Redirector />
+                    <Referral />
+                    <Switch>
+                      <Route path="/play">
+                        <LandingPage />
+                      </Route>
+                      <Route>
+                        {introEnabled && <Intro onComplete={onIntroComplete} />}
+                        <ClockProvider>
+                          <StyledMain>
+                            <Interface />
+                            {showScene && <Scene />}
+                            <Audio />
+                          </StyledMain>
+                        </ClockProvider>
+                      </Route>
+                    </Switch>
+                  </Router>
+                </ThemeProvider>
+              </ActionItemProvider>
             </ChainTransactionProvider>
           </EventsProvider>
         </CrewProvider>

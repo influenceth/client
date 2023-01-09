@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { useResourceAssets } from './useAssets';
 
-const useAsteroidAssets = (asteroid) => {
+const useAsteroidAbundances = (asteroid) => {
   const assets = useResourceAssets();
 
   const data = useMemo(() => {
@@ -11,7 +11,7 @@ const useAsteroidAssets = (asteroid) => {
       Object.keys(asteroid.resources || {}).forEach((i) => {
         const abundance = asteroid.resources[i];
         if (abundance > 0) {
-          const { category, name, iconUrls } = (assets.find((a) => a.i === i) || {});
+          const { category, name, iconUrls } = (assets.find((a) => a?.i === i) || {});
 
           const categoryKey = (category || '').replace(/[^a-zA-Z]/g, '');
           if (!categories[category]) {
@@ -50,4 +50,4 @@ const useAsteroidAssets = (asteroid) => {
   return data;
 };
 
-export default useAsteroidAssets;
+export default useAsteroidAbundances;

@@ -215,7 +215,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
         model.current.traverse(function (node) {
           node.receiveShadow = true;
           if (node.isMesh) {
-            // self-shadowing 
+            // self-shadowing
             if (ENABLE_SHADOWS) {
               node.castShadow = true;
               node.receiveShadow = true;
@@ -319,7 +319,6 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
             clip.setLoop(LoopRepeat);
             clip.play();
           });
-          console.log(gltf);
         }
 
         onLoaded(true);
@@ -405,7 +404,7 @@ const Skybox = ({ assetType, onLoaded, overrideBackground, overrideEnvironment }
         cleanupTextures.push(texture);
         texture.mapping = EquirectangularReflectionMapping;
         scene.environment = texture;
-        
+
         waitingOn--;
         if (waitingOn === 0) onLoaded();
       });
@@ -618,7 +617,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
         setModelOverride(reader.result);
         setModelOverrideName(file.name);
       };
-    } else if (file.name.match(/\.(hdr)$/i)) {
+    } else if (file.name.match(/\.(hdr|jpg)$/i)) {
       setLoadingSkybox(true);
       reader.readAsDataURL(file);
       reader.onload = () => {
@@ -654,13 +653,13 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
     if (!!assets) {
       setCategories();
       if (singleModel) {
-        const asset = assets.find((a) => a.i === singleModel);
+        const asset = assets.find((a) => a?.i === singleModel);
         if (asset) {
           setModel(asset);
           return;
         }
       }
-      
+
       // this is default if no singleModel or can't find singleModel
       const categorySet = new Set(assets.map((a) => a.category));
       const categoryArr = Array.from(categorySet).sort();
@@ -668,7 +667,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
       setCategory(categoryArr[0]);
     }
   }, [!!assets, assetType, singleModel]);
-  
+
   useEffect(() => {
     if (!!assets && category !== undefined) {
       const bAssets = assets

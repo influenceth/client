@@ -1,19 +1,25 @@
 import { useCallback } from 'react';
 
 import { DeconstructIcon } from '~/components/Icons';
+import useConstructionManager from '~/hooks/useConstructionManager';
 import ActionButton from './ActionButton';
 
-const Deconstruct = ({ onSetAction }) => {
-  const loading = false;
+const labelDict = {
+  OPERATIONAL: 'Deconstruct Building',
+  DECONSTRUCTING: 'Deconstructing...'
+};
+
+const Deconstruct = ({ asteroid, plot, onSetAction }) => {
+  const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
     onSetAction('DECONSTRUCT');
   }, [onSetAction]);
 
   return (
     <ActionButton
-      label={'Deconstruct Building'}
+      label={labelDict[constructionStatus] || undefined}
       flags={{
-        loading: loading || undefined
+        loading: constructionStatus === 'DECONSTRUCTING' || undefined
       }}
       icon={<DeconstructIcon />}
       onClick={handleClick} />

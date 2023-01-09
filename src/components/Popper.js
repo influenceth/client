@@ -8,12 +8,14 @@ const Wrapper = styled.div`
   position: relative;
 `;
 
+const defaultWidth = 540;
 const Content = styled.div`
   background: black;
-  margin-left: -100px;
+  margin-left: -${p => (p.contentWidth || defaultWidth) * 0.2}px;
   position: fixed;
-  width: 540px;
-  z-index: 5;
+  max-width: 100vw;
+  width: ${p => p.contentWidth || defaultWidth}px;
+  z-index: 31;
 `;
 
 const Title = styled.div`
@@ -24,7 +26,7 @@ const Title = styled.div`
   text-transform: uppercase;
 `;
 const Body = styled.div`
-  height: 300px;
+  height: ${p => `${p.contentHeight || 400}px`};
 `;
 
 const Poppable = ({ children, closeOnChange, disabled, label, title, ...styleProps }) => {
@@ -54,7 +56,7 @@ const Poppable = ({ children, closeOnChange, disabled, label, title, ...stylePro
       {open && (
         <Content {...styleProps}>
           <Title>{title}</Title>
-          <Body>
+          <Body {...styleProps}>
             {children}
           </Body>
         </Content>

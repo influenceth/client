@@ -47,7 +47,7 @@ class TerrainChunk {
     // init geometry
     this._geometry = new BufferGeometry();
     this.initGeometry();
-  
+
     // init material
     const extraMaterialProps = {};
     if (!shadowsEnabled) {
@@ -169,7 +169,7 @@ class TerrainChunk {
   detachFromGroup() {
     this._params.group.remove(this._plane);
   }
-  
+
   dispose() {
     this.detachFromGroup();
     this._geometry.dispose();
@@ -199,7 +199,7 @@ class TerrainChunk {
     // update positions (these are already stretched so not culled inappropriately)
     this._geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
     this._geometry.attributes.position.needsUpdate = true;
-    
+
     // update normals (these are unstretched so displacement map can displace, then stretch)
     this._geometry.setAttribute('normal', new Float32BufferAttribute(normals, 3));
     this._geometry.attributes.normal.needsUpdate = true;

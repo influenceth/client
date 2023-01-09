@@ -13,6 +13,8 @@ const ChainTransactionContext = createContext();
 
 console.log('configs', configs);
 
+// TODO: now that all are on dispatcher, could probably collapse a lot of redundant code in getContracts
+
 const getContracts = (account, queryClient) => ({
   'PURCHASE_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -74,6 +76,7 @@ const getContracts = (account, queryClient) => ({
       _packed.bonuses,
       _proofs.boostBonus,
     ]),
+    isEqual: (txVars, vars) => txVars.i === vars.i,
     getErrorAlert: ({ i }) => ({
       type: 'Asteroid_ScanningError',
       level: 'warning',
@@ -90,7 +93,7 @@ const getContracts = (account, queryClient) => ({
       queryClient.invalidateQueries(['asteroids', i]);
     }
   },
-  'FINALIZE_ASTEROID_SCAN': {
+  'FINISH_ASTEROID_SCAN': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => ({ i }) => contract.invoke('Asteroid_finishScan', [i]),
@@ -105,13 +108,22 @@ const getContracts = (account, queryClient) => ({
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => ({ crewId, crewMembers }) => {
-      return contract.invoke(
-        'Crew_setComposition',
-        [
-          crewId,
-          [...crewMembers]
-        ]
-      );
+      if (crewId) {
+        return contract.invoke(
+          'Crew_setComposition',
+          [
+            crewId,
+            [...crewMembers]
+          ]
+        );
+      } else {
+        return contract.invoke(
+          'Crew_mint',
+          [
+            [...crewMembers]
+          ]
+        );
+      }
     },
     isEqual: () => true,
     getErrorAlert: () => ({
@@ -205,9 +217,10 @@ const getContracts = (account, queryClient) => ({
       type: 'GenericAlert',
       content: 'Core sample failed.',
       timestamp: Math.round(Date.now() / 1000)
-    })
+    }),
+    isEqual: 'ALL'
   },
-  'FINALIZE_CORE_SAMPLE': {
+  'FINISH_CORE_SAMPLE': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => ({ asteroidId, plotId, resourceId, crewId, sampleId }) => contract.invoke(
@@ -218,21 +231,27 @@ const getContracts = (account, queryClient) => ({
       type: 'GenericAlert',
       content: 'Core sample retrieval failed.',
       timestamp: Math.round(Date.now() / 1000)
-    })
+    }),
+    isEqual: 'ALL'
   },
 
   'PLAN_CONSTRUCTION': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ capableId, asteroidId, plotId, crewId }) => contract.invoke(
+    transact: (contract) => ({ capableType, asteroidId, plotId, crewId }) => contract.invoke(
       'Construction_plan',
-      [capableId, asteroidId, plotId, crewId]
+      [capableType, asteroidId, plotId, crewId]
     ),
     getErrorAlert: ({ i }) => ({
       type: 'GenericAlert',
       content: 'Site planning failed.',
       timestamp: Math.round(Date.now() / 1000)
-    })
+    }),
+    isEqual: (txVars, vars) => (
+      txVars.asteroidId === vars.asteroidId
+      && txVars.plotId === vars.plotId
+      && txVars.crewId === vars.crewId
+    )
   },
   'UNPLAN_CONSTRUCTION': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -245,7 +264,8 @@ const getContracts = (account, queryClient) => ({
       type: 'GenericAlert',
       content: 'Site unplanning failed.',
       timestamp: Math.round(Date.now() / 1000)
-    })
+    }),
+    isEqual: 'ALL'
   },
 
   'START_CONSTRUCTION': {
@@ -259,9 +279,10 @@ const getContracts = (account, queryClient) => ({
       type: 'GenericAlert',
       content: 'Construction failed.',
       timestamp: Math.round(Date.now() / 1000)
-    })
+    }),
+    isEqual: 'ALL'
   },
-  'FINALIZE_CONSTRUCTION': {
+  'FINISH_CONSTRUCTION': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
@@ -272,8 +293,93 @@ const getContracts = (account, queryClient) => ({
       type: 'GenericAlert',
       content: 'Construction finalization failed.',
       timestamp: Math.round(Date.now() / 1000)
-    })
+    }),
+    isEqual: 'ALL'
   },
+  'DECONSTRUCT': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
+      'Construction_deconstruct',
+      [asteroidId, plotId, crewId]
+    ),
+    getErrorAlert: ({ i }) => ({
+      type: 'GenericAlert',
+      content: 'Deconstruction failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: 'ALL'
+  },
+
+  'START_EXTRACTION': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, plotId, crewId, resourceId, sampleId, amount, destinationLotId, destinationInventoryId }) => contract.invoke(
+      'Extraction_start',
+      [asteroidId, plotId, resourceId, sampleId, amount, destinationLotId, destinationInventoryId, crewId]
+    ),
+    getErrorAlert: ({ i }) => ({
+      type: 'GenericAlert',
+      content: 'Extraction failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: (txVars, vars) => (
+      txVars.asteroidId === vars.asteroidId
+      && txVars.plotId === vars.plotId
+      && txVars.crewId === vars.crewId
+    )
+  },
+  'FINISH_EXTRACTION': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
+      'Extraction_finish',
+      [asteroidId, plotId, crewId]
+    ),
+    getErrorAlert: ({ i }) => ({
+      type: 'GenericAlert',
+      content: 'Extraction finalization failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: 'ALL'
+  },
+
+  'START_DELIVERY': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, originPlotId, originInvId, destPlotId, destInvId, resources, crewId }) => {
+      console.log([asteroidId, originPlotId, originInvId, destPlotId, destInvId, Object.keys(resources), Object.values(resources), crewId]);
+      return contract.invoke(
+        'Inventory_transferStart',
+        [asteroidId, originPlotId, originInvId, destPlotId, destInvId, Object.keys(resources), Object.values(resources), crewId]
+      );
+    },
+    getErrorAlert: ({}) => ({
+      type: 'GenericAlert',
+      content: 'Delivery initialization failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: (txVars, vars) => (
+      txVars.asteroidId === vars.asteroidId
+      && txVars.destPlotId === vars.destPlotId
+      && txVars.destInvId === vars.destInvId
+      && txVars.crewId === vars.crewId
+    )
+  },
+  'FINISH_DELIVERY': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => ({ asteroidId, destPlotId, destInvId, deliveryId, crewId }) => contract.invoke(
+      'Inventory_transferFinish',
+      [asteroidId, destPlotId, destInvId, deliveryId, crewId]
+    ),
+    getErrorAlert: ({}) => ({
+      type: 'GenericAlert',
+      content: 'Delivery finalization failed.',
+      timestamp: Math.round(Date.now() / 1000)
+    }),
+    isEqual: 'ALL'
+  }
 });
 
 export function ChainTransactionProvider({ children }) {
@@ -431,7 +537,9 @@ export function ChainTransactionProvider({ children }) {
     if (contracts && contracts[key]) {
       return pendingTransactions.find((tx) => {
         if (tx.key === key) {
-          if (contracts[key].isEqual) {
+          if (contracts[key].isEqual === 'ALL') {
+            return Object.keys(tx.vars).reduce((acc, k) => acc && tx.vars[k] === vars[k], true);
+          } else if (contracts[key].isEqual) {
             return contracts[key].isEqual(tx.vars, vars);
           }
           return tx.vars?.i === vars?.i;
