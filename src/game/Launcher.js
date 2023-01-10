@@ -1,32 +1,37 @@
-import { useCallback, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Switch, Route, Redirect, NavLink as Link } from 'react-router-dom';
+import { useContext, useCallback } from 'react';
+import { Switch, Route, NavLink as Link } from 'react-router-dom';
 import styled from 'styled-components';
-import gsap from 'gsap';
 
-import Button from '~/components/ButtonAlt';
-import ButtonPill from '~/components/ButtonPill';
-import OnClickLink from '../components/OnClickLink';
+import ClockContext from '~/contexts/ClockContext';
+import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
-
+import ButtonPill from '~/components/ButtonPill';
+import Time from '~/components/Time';
+import Account from './launcher/Account';
+import Landing from './launcher/Landing';
 import Settings from './launcher/Settings';
 
+const headerFooterHeight = '100px';
+
 const StyledLauncher = styled.div`
-  background-color: black;
+  align-items: center;
+  backdrop-filter: blur(4px) brightness(75%);
   display: flex;
+  flex-direction: column;
   height: 100%;
-  justify-content: center;
+  justify-content: space-between;
   opacity: 1;
-  padding: 125px 0;
+  padding: ${headerFooterHeight} 0;
   position: absolute;
   width: 100%;
   z-index: 9000;
 `;
 
-const MenuBar = styled.ul`
+const Header = styled.ul`
+  background-color: black;
   border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
   display: flex;
-  height: 125px;
+  height: ${headerFooterHeight};
   justify-content: center;
   left: 0;
   margin: 0;
@@ -34,6 +39,14 @@ const MenuBar = styled.ul`
   position: absolute;
   right: 0;
   top: 0;
+`;
+
+const Close = styled.div`
+  height: 10px;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 10px;
 `;
 
 const MenuItem = styled.li`
@@ -65,6 +78,58 @@ const MenuItem = styled.li`
   }
 `;
 
+const LogoutButton = styled(ButtonPill)`
+`;
+
+const AccountName = styled.span`
+  color: white;
+  font-weight: bold;
+  padding: 2px 6px;
+
+  &:before {
+    content: "${p => p.account.substr(0, 6)}"
+  }
+  &:after {
+    content: "...${p => p.account.substr(-4)}"
+  }
+`;
+
+const WalletLogo = styled.div`
+  background-color: ${p => p.theme.colors.contentDark};
+  border-radius: 50%;
+  height: 35px;
+  margin-right: 5px;
+  padding: 7px;
+  width: 35px;
+
+  & img {
+    height: 100%;
+    object-fit: contain;
+    width: 100%;
+  }
+`;
+
+const CurrentAccount = styled.div`
+  align-items: center;
+  display: flex;
+  height: ${headerFooterHeight};
+  position: absolute;
+  right: 40px;
+  top: 0;
+
+  & ${LogoutButton} {
+    display: none;
+  }
+
+  &:hover ${LogoutButton} {
+    display: block;
+  }
+
+  &:hover ${WalletLogo}, &:hover ${AccountName} {
+    display: none;
+  }
+`;
+
 const StyledLink = styled(Link)`
   align-items: flex-end;
   color: inherit;
@@ -79,18 +144,20 @@ const StyledLink = styled(Link)`
 `;
 
 const MainContent = styled.div`
-  background-color: black;
-  border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
-  border-top: 1px solid ${p => p.theme.colors.mainBorder};
   margin-top: 50px;
   overflow-y: scroll;
 `;
 
+const StyledTime = styled(Time)`
+  margin: 20px 0;
+`;
+
 const Footer = styled.div`
+  background-color: black;
   border-top: 1px solid ${p => p.theme.colors.mainBorder};
   bottom: 0;
   display: flex;
-  height: 125px;
+  height: ${headerFooterHeight};
   justify-content: center;
   left: 0;
   position: absolute;
@@ -128,30 +195,60 @@ const InfoBar = styled.ul`
     padding: 5px 20px;
   }
 
+  & a:hover {
+    color: ${p => p.theme.colors.mainText};
+    text-decoration: none;
+  }
+
   & a:last-child {
     border: 0;
   }
 `;
 
 const Launcher = (props) => {
+  const { displayTime } = useContext(ClockContext);
+  const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
+  const forgetWallet = useStore(s => s.dispatchWalletDisconnected);
+  const { wallet, token } = useAuth();
+  const { account, disconnect, error, walletIcon, walletName } = wallet;
+  const loggedIn = account && token;
+
+  const disconnectWallet = useCallback(() => {
+    invalidateToken();
+    forgetWallet();
+    disconnect();
+  }, [disconnect, invalidateToken, token]);
+
   return (
     <StyledLauncher {...props}>
-      <MenuBar>
-        <MenuItem><StyledLink activeClassName="current" to="/account"><span>Account</span></StyledLink></MenuItem>
-        <MenuItem><StyledLink activeClassName="current" to="/settings"><span>Settings</span></StyledLink></MenuItem>
-        <MenuItem><StyledLink activeClassName="current" to="/store"><span>Store</span></StyledLink></MenuItem>
-      </MenuBar>
+      <Header>
+        <Close><Link to="/game">Close</Link></Close>
+        <MenuItem><StyledLink activeClassName="current" to="/launcher/account"><span>Account</span></StyledLink></MenuItem>
+        <MenuItem><StyledLink activeClassName="current" to="/launcher/settings"><span>Settings</span></StyledLink></MenuItem>
+        <MenuItem><StyledLink activeClassName="current" to="/launcher/store"><span>Store</span></StyledLink></MenuItem>
+        {loggedIn &&
+          <CurrentAccount onClick={disconnectWallet}>
+            <WalletLogo>{walletIcon}</WalletLogo>
+            <AccountName account={account} wallet={walletName} />
+            <LogoutButton>Logout</LogoutButton>
+          </CurrentAccount>
+        }
+      </Header>
       <MainContent>
         <Switch>
-          <Route path="/settings">
-            <Settings />
-          </Route>
+          <Route exact path="/launcher"><Landing /></Route>
+          <Route path="/launcher/settings"><Settings /></Route>
+          <Route path="/launcher/account"><Account /></Route>
         </Switch>
       </MainContent>
+      <StyledTime displayTime={displayTime} />
       <Footer>
         <Diamond><div /></Diamond>
         <InfoBar>
           <a href="https://influenceth.io" target="_blank" rel="noopener noreferrer">About</a>
+          {process.env.REACT_APP_BRIDGE_URL &&
+            <a href={process.env.REACT_APP_BRIDGE_URL} target="_blank" rel="noopener noreferrer">Bridge</a>
+          }
           <a href="https://discord.gg/influenceth" target="_blank" rel="noopener noreferrer">Discord</a>
           <a href="https://wiki.influenceth.io" target="_blank" rel="noopener noreferrer">Wiki</a>
         </InfoBar>

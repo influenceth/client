@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { ThemeProvider, createGlobalStyle } from 'styled-components';
-import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Redirect, Switch, Route } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
 import { AuthProvider } from '~/contexts/AuthContext';
@@ -11,11 +11,9 @@ import { ClockProvider } from '~/contexts/ClockContext';
 import { EventsProvider } from '~/contexts/EventsContext';
 import { WalletProvider } from '~/contexts/WalletContext';
 import Audio from '~/game/Audio';
-import Intro from '~/game/Intro';
 import Launcher from '~/game/Launcher';
 import Interface from '~/game/Interface';
 import LandingPage from '~/game/Landing';
-import Redirector from '~/game/Redirector';
 import Referral from '~/game/Referral';
 import Scene from '~/game/Scene';
 import useServiceWorker from '~/hooks/useServiceWorker';
@@ -114,24 +112,23 @@ const Game = (props) => {
                 <ThemeProvider theme={theme}>
                   <GlobalStyle />
                   <Router>
-                    <Redirector />
                     <Referral />
-                    <Switch>
-                      <Route path="/play">
-                        <LandingPage />
-                      </Route>
-                      <Route>
-                        <Launcher />
-                        {/* {introEnabled && <Intro onComplete={onIntroComplete} />} */}
-                        <ClockProvider>
-                          <StyledMain>
-                            <Interface />
-                            {showScene && <Scene />}
-                            <Audio />
-                          </StyledMain>
-                        </ClockProvider>
-                      </Route>
-                    </Switch>
+                    <ClockProvider>
+                      <Redirect exact from="/" to="/launcher" />
+                      <Switch>
+                        <Route path="/play">
+                          <LandingPage />
+                        </Route>
+                        <Route path="/launcher">
+                          <Launcher />
+                        </Route>
+                      </Switch>
+                      <StyledMain>
+                        <Interface />
+                        {showScene && <Scene />}
+                        <Audio />
+                      </StyledMain>
+                    </ClockProvider>
                   </Router>
                 </ThemeProvider>
               </ActionItemProvider>

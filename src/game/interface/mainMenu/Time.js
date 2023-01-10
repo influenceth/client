@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import styled from 'styled-components';
 
 import ClockContext from '~/contexts/ClockContext';
+import TimeComponent from '~/components/Time';
 
 const StyledTime = styled.div`
   cursor: ${p => p.theme.cursors.active};
@@ -11,29 +12,13 @@ const StyledTime = styled.div`
   width: 140px;
 `;
 
-const DaysSince = styled.div`
+const DaysSince = styled(TimeComponent)`
   border-bottom: 4px solid rgb(255, 255, 255, 0.25);
-  color: white;
-  font-size: 20px;
-  height: 40px;
-  line-height: 40px;
-  padding-bottom: 3px;
-  text-align: center;
-  text-transform: uppercase;
-  text-shadow: 0 0 3px black;
   transition: all 0.4s ease;
 
   ${StyledTime}:hover & {
     border-bottom: 4px solid ${p => p.theme.colors.main};
     color: white;
-  }
-
-  &:after {
-    content: 'DAYS';
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 60%;
-    letter-spacing: 1px;
-    margin-left: 4px;
   }
 `;
 
@@ -42,9 +27,7 @@ const Time = (props) => {
 
   return (
     <StyledTime {...props}>
-      <DaysSince>
-        {displayTime}
-      </DaysSince>
+      <DaysSince displayTime={displayTime} />
     </StyledTime>
   );
 };

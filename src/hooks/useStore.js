@@ -360,6 +360,10 @@ const useStore = create(persist((set, get) => ({
       state.auth.lastWallet = walletId;
     })),
 
+    dispatchWalletDisconnected: () => set(produce(state => {
+      state.auth.lastWallet = null;
+    })),
+
     dispatchCrewSelected: (crewId) => set(produce(state => {
       state.selectedCrewId = crewId;
     })),

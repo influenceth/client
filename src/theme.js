@@ -72,6 +72,9 @@ const theme = {
         Merchant: hexToRGB(yellow),
         Scientist: hexToRGB(blue),
       }
+    },
+    partners: {
+      cartridge: '#FBCB4A'
     }
   },
   fontSizes: {

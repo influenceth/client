@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, createContext } from 'react';
 import { connect, getInstalledWallets } from 'get-starknet';
+import { injectController } from '@cartridge/controller';
 
 import { Address } from '@influenceth/sdk';
 
 import starknetLogo from '~/assets/images/starknet-icon.png';
 import useStore from '~/hooks/useStore';
+
+// Add Cartridge wallet to get-starknet set
+injectController();
 
 const getErrorMessage = (error) => {
   console.error(error);
@@ -13,12 +17,11 @@ const getErrorMessage = (error) => {
   return 'An unknown error occurred, please check the console for details.';
 };
 
-const isAllowedNetwork = (network) => {
-  // return true;  // TODO: remove this
-  return network === `${process.env.REACT_APP_STARKNET_NETWORK}`;
+const isAllowedChain = (chainId) => {
+  return chainId == process.env.REACT_APP_CHAIN_ID;
 }
 
-const getAllowedNetworkLabel = (wallet) => {
+const getAllowedChainLabel = (wallet) => {
   if (process.env.REACT_APP_STARKNET_NETWORK.includes('mainnet')) {
     return wallet === 'Braavos' ? 'Mainnet-Alpha' : 'Mainnet';
   } else if (process.env.REACT_APP_STARKNET_NETWORK.includes('localhost')) {
@@ -42,7 +45,7 @@ export function WalletProvider({ children }) {
   const [starknetReady, setStarknetReady] = useState(false);
 
   const active = useMemo(() => {
-    return starknet?.isConnected && starknet?.account?.address && isAllowedNetwork(starknet?.account?.baseUrl);
+    return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.account?.chainId);
   }, [starknet?.isConnected, starknet?.account?.address, starknet?.account?.baseUrl]);
 
   const account = useMemo(() => {
@@ -84,12 +87,12 @@ export function WalletProvider({ children }) {
         connect({ showList: false });
       }
       if (wallet.isConnected && wallet.account?.address) {
-        if (isAllowedNetwork(wallet.account?.baseUrl)) {
+        if (isAllowedChain(wallet.account?.chainId)) {
           onConnectionResult(wallet);
         } else {
           onConnectionResult(null);
           // eslint-disable-next-line no-throw-literal
-          throw `Network unsupported, please connect to "${getAllowedNetworkLabel(wallet?.name)}" in your wallet manager's network dropdown.`;
+          throw `Chain unsupported, please connect your wallet to "${getAllowedChainLabel(wallet?.name)}".`;
         }
       } else {
         onConnectionResult(null);
@@ -175,7 +178,7 @@ export function WalletProvider({ children }) {
     }
     return stopListening;
   }, [starknet?.name, attemptConnection, disconnect]); // eslint-disable-line react-hooks/exhaustive-deps
-  
+
   // autoconnect as possible
   useEffect(() => {
     getInstalledWallets()

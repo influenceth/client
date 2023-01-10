@@ -19,13 +19,18 @@ import constants from '~/lib/constants';
 const { ENABLE_SHADOWS } = constants;
 
 const StyledSettings = styled.div`
-  padding-left: 15px;
-  width: 750px;
+  background-color: black;
+  border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
+  border-top: 1px solid ${p => p.theme.colors.mainBorder};
+  padding: 0 15px 25px 0px;
+  height: 100%;
+  width: 700px;
 
   & h3 {
     border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
     font-size: 14px;
     padding: 20px 0 10px 0;
+    margin-left: 15px;
     text-transform: uppercase;
   }
 `;
@@ -48,7 +53,7 @@ const StyledDataReadout = styled(DataReadout)`
   padding: 7px 0 7px 15px;
 
   & label {
-    width: 250px;
+    width: 175px;
   }
 
   & span {
