@@ -1,5 +1,5 @@
 import { useContext, useCallback } from 'react';
-import { Switch, Route, NavLink as Link } from 'react-router-dom';
+import { Switch, Route, NavLink as Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 
 import ClockContext from '~/contexts/ClockContext';
@@ -15,7 +15,7 @@ const headerFooterHeight = '100px';
 
 const StyledLauncher = styled.div`
   align-items: center;
-  backdrop-filter: blur(4px) brightness(75%);
+  background-color: black;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -41,45 +41,57 @@ const Header = styled.ul`
   top: 0;
 `;
 
-const Close = styled.div`
-  height: 10px;
-  left: 0;
-  position: absolute;
-  top: 0;
-  width: 10px;
+const StyledLink = styled(Link)`
+  align-items: flex-end;
+  color: inherit;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  padding-bottom: 12px;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  width: 100%;
 `;
 
 const MenuItem = styled.li`
   color: ${p => p.theme.colors.secondaryText};
   list-style-type: none;
   position: relative;
-  width: 200px;
 
-  &:hover, .current {
-    color: ${p => p.theme.colors.mainText};
-  }
+  & ${StyledLink} {
+    transition: all 0.15s ease;
+    width: 165px;
 
-  &:hover:after, .current:after {
-    background-clip: padding-box;
-    background-color: ${p => p.theme.colors.main};
-    border: 2px solid rgba(${p => p.theme.colors.mainRGB}, 0.5);
-    bottom: -5.5px;
-    content: "";
-    height: 6px;
-    left: 50%;
-    margin-left: -5.5px;
-    position: absolute;
-    transform: rotate(45deg);
-    width: 6px;
-  }
+    &:after {
+      background-clip: padding-box;
+      background-color: ${p => p.theme.colors.main};
+      border: 2px solid rgba(${p => p.theme.colors.mainRGB}, 0.5);
+      bottom: -5.5px;
+      content: "";
+      height: 6px;
+      margin-left -8.4px;
+      opacity: 0;
+      position: absolute;
+      transform: translateX(50%) rotate(45deg);
+      transition: opacity 0.15s ease;
+      width: 6px;
+    }
 
-  .current:hover:after {
-    display: none;
+    &:hover:after, &.current:after {
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+
+    &:hover, &.current {
+      color: ${p => p.theme.colors.mainText};
+      font-size: 20px;
+      transition: all 0.3s ease;
+    }
   }
 `;
 
-const LogoutButton = styled(ButtonPill)`
-`;
+const LogoutButton = styled(ButtonPill)``;
 
 const AccountName = styled.span`
   color: white;
@@ -113,9 +125,11 @@ const CurrentAccount = styled.div`
   align-items: center;
   display: flex;
   height: ${headerFooterHeight};
+  justify-content: flex-end;
   position: absolute;
   right: 40px;
   top: 0;
+  width: 200px;
 
   & ${LogoutButton} {
     display: none;
@@ -128,19 +142,6 @@ const CurrentAccount = styled.div`
   &:hover ${WalletLogo}, &:hover ${AccountName} {
     display: none;
   }
-`;
-
-const StyledLink = styled(Link)`
-  align-items: flex-end;
-  color: inherit;
-  display: flex;
-  height: 100%;
-  justify-content: center;
-  padding-bottom: 12px;
-  text-align: center;
-  text-decoration: none;
-  text-transform: uppercase;
-  width: 100%;
 `;
 
 const MainContent = styled.div`
@@ -206,6 +207,7 @@ const InfoBar = styled.ul`
 `;
 
 const Launcher = (props) => {
+  const location = useLocation();
   const { displayTime } = useContext(ClockContext);
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
   const forgetWallet = useStore(s => s.dispatchWalletDisconnected);
@@ -222,10 +224,26 @@ const Launcher = (props) => {
   return (
     <StyledLauncher {...props}>
       <Header>
-        <Close><Link to="/game">Close</Link></Close>
-        <MenuItem><StyledLink activeClassName="current" to="/launcher/account"><span>Account</span></StyledLink></MenuItem>
-        <MenuItem><StyledLink activeClassName="current" to="/launcher/settings"><span>Settings</span></StyledLink></MenuItem>
-        <MenuItem><StyledLink activeClassName="current" to="/launcher/store"><span>Store</span></StyledLink></MenuItem>
+        <MenuItem>
+          <StyledLink activeClassName="current" to="/launcher/start">
+            <span>{location.pathname !== "/launcher/start" ? "‹ Back" : "Play"}</span>
+          </StyledLink>
+        </MenuItem>
+        <MenuItem>
+          <StyledLink activeClassName="current" to="/launcher/account">
+            <span>Account</span>
+          </StyledLink>
+        </MenuItem>
+        <MenuItem>
+          <StyledLink activeClassName="current" to="/launcher/settings">
+            <span>Settings</span>
+          </StyledLink>
+        </MenuItem>
+        <MenuItem>
+          <StyledLink activeClassName="current" to="/launcher/store">
+            <span>Store</span>
+          </StyledLink>
+        </MenuItem>
         {loggedIn &&
           <CurrentAccount onClick={disconnectWallet}>
             <WalletLogo>{walletIcon}</WalletLogo>
@@ -236,7 +254,7 @@ const Launcher = (props) => {
       </Header>
       <MainContent>
         <Switch>
-          <Route exact path="/launcher"><Landing /></Route>
+          <Route path="/launcher/start"><Landing /></Route>
           <Route path="/launcher/settings"><Settings /></Route>
           <Route path="/launcher/account"><Account /></Route>
         </Switch>
