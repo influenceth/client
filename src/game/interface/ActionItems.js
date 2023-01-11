@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { AiOutlineExclamation as FailureIcon } from 'react-icons/ai';
 import { MdClear as DismissIcon } from 'react-icons/md';
 import BarLoader from 'react-spinners/BarLoader';
 import { Capable, Inventory } from '@influenceth/sdk';
+import moment from 'moment';
 
 import {
   CancelBlueprintIcon,
@@ -20,16 +22,13 @@ import {
   SurfaceTransferIcon,
 } from '~/components/Icons';
 import NavIcon from '~/components/NavIcon';
-import { hexToRGB } from '~/theme';
-import useActionItems from '~/hooks/useActionItems';
-import useStore from '~/hooks/useStore';
-import moment from 'moment';
-import { LiveTimer } from './sceneMenu/actionDialogs/components';
-import theme from '~/theme';
 import { usePlotLink } from '~/components/PlotLink';
+import useActionItems from '~/hooks/useActionItems';
 import useAsteroid from '~/hooks/useAsteroid';
-import { useHistory } from 'react-router-dom';
 import usePlot from '~/hooks/usePlot';
+import useStore from '~/hooks/useStore';
+import theme, { hexToRGB } from '~/theme';
+import { LiveTimer } from './sceneMenu/actionDialogs/components';
 
 const iconWidth = 30;
 
@@ -42,6 +41,7 @@ const ActionItemContainer = styled.div`
   left: 0;
   top: 120px;
   height: 275px;
+  overflow-x: hidden;
   overflow-y: auto;
   width: ${ITEM_WIDTH};
 `;
@@ -206,7 +206,7 @@ const formatItem = (item) => {
     case 'CoreSample_SamplingStarted':
       const isImprovement = item.assets?.initialYield > 0;
       formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <CoreSampleIcon />;
-      formatted.label = `${Capable.TYPES[item.event.returnValues?.resourceId]?.name || ''} Core ${isImprovement ? 'Improvement' : 'Sample'}`;
+      formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
       formatted.asteroidId = item.event.returnValues?.asteroidId;
       formatted.plotId = item.event.returnValues?.lotId;
       formatted.resourceId = item.event.returnValues?.resourceId;
@@ -344,7 +344,7 @@ const formatTx = (item) => {
     case 'START_CORE_SAMPLE':
       const isImprovement = item.vars.sampleId > 0;
       formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <CoreSampleIcon />;
-      formatted.label = `${Capable.TYPES[item.vars.resourceId]?.name || ''} Core ${isImprovement ? 'Improvement' : 'Sample'}`;
+      formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;
       formatted.resourceId = item.vars.resourceId;
@@ -356,7 +356,7 @@ const formatTx = (item) => {
       break;
     case 'FINISH_CORE_SAMPLE':
       formatted.icon = <CoreSampleIcon />;
-      formatted.label = `${Capable.TYPES[item.vars.resourceId]?.name || ''} Core Analysis`;
+      formatted.label = `Core Analysis`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;
       formatted.resourceId = item.vars.resourceId;
@@ -420,7 +420,7 @@ const formatTx = (item) => {
 
     case 'START_EXTRACTION':
       formatted.icon = <ExtractionIcon />;
-      formatted.label = `${Capable.TYPES[item.vars.resourceId]?.name || 'Resource'} Extraction`;
+      formatted.label = `${Inventory.RESOURCES[item.vars.resourceId]?.name || 'Resource'} Extraction`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;
       formatted.resourceId = item.vars.resourceId;
@@ -485,6 +485,7 @@ const statuses = {
 
 const ActionItem = ({ data, type }) => {
   const history = useHistory();
+  const currentAsteroid = useStore(s => s.asteroids);
   const dispatchActionDialog = useStore(s => s.dispatchActionDialog);
   const dismissFailedTx = useStore(s => s.dispatchFailedTransactionDismissed);
 
@@ -508,18 +509,33 @@ const ActionItem = ({ data, type }) => {
     if (item.asteroidId) {
       goToAction();
     }
-    // TODO: if asteroid change (or zoom out > in change), delay 3000 + buffer
-    // TODO: if on same asteroid but different plot, delay 700 + buffer
-    // TODO: if no change, no delay
+    
     if (item.onClick) {
-      item.onClick({
-        openDialog: dispatchActionDialog,
-        history,
-        asteroid,
-        plot
-      });
+      // delay dialog opening based on how far camera needs to fly to get there
+      let dialogDelay = 0;
+      if (currentAsteroid.origin !== item.asteroidId || currentAsteroid.zoomStatus !== 'in') {
+        dialogDelay = 4000;
+      } else if (currentAsteroid.plot.plotId !== item.plotId) {
+        dialogDelay = 400;
+      }
+      setTimeout(() => {
+        item.onClick({
+          openDialog: (dialog, vars) => dispatchActionDialog(dialog, { asteroidId: item.asteroidId, plotId: item.plotId, ...vars }),
+          history,
+          asteroid,
+          plot
+        });
+      }, dialogDelay)
     }
-  }, [goToAction, item.onClick]);
+  }, [
+    goToAction,
+    currentAsteroid?.origin,
+    currentAsteroid?.plot?.plotId,
+    currentAsteroid?.zoomStatus,
+    item.asteroidId,
+    item.plotId,
+    item.onClick
+  ]);
 
   const onDismiss = useCallback((e) => {
     e.stopPropagation();

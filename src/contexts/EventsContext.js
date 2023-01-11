@@ -150,7 +150,7 @@ export function EventsProvider({ children }) {
   const pendingTimeout = useRef();
   const socket = useRef();
 
-  const handleEvents = useCallback((newEvents, skipAlerts, skipInvalidations) => {
+  const handleEvents = useCallback((newEvents, skipInvalidations) => {
     const transformedEvents = [];
     newEvents.forEach((e) => {
       // TODO: ws-emitted events seem to have _id set instead of id
@@ -194,12 +194,6 @@ export function EventsProvider({ children }) {
           queryClient.invalidateQueries(...i);
         });
       }
-      
-      if (!skipAlerts) {
-        const type = e.type || e.event;
-        const alert = Object.assign({}, e, { type: type, duration: 5000 });
-        if (!!getLogContent({ type, data: alert })) createAlert(alert);
-      }
     });
 
     setEvents((prevEvents) => uniq([
@@ -242,7 +236,7 @@ export function EventsProvider({ children }) {
     // if authed, populate existing events and start listening to user websocket
     if (token) {
       api.getEvents(0).then((eventData) => {
-        handleEvents(eventData.events, true, true);
+        handleEvents(eventData.events, true);
         setLastBlockNumber(eventData.blockNumber);
       });
 

@@ -77,10 +77,8 @@ import {
   getBonusDirection,
 } from './components';
 import useAsteroid from '~/hooks/useAsteroid';
-import { useAsteroidAndPlot } from '../ActionDialog';
 
-const PlanConstruction = (props) => {
-  const { asteroid, plot, isLoading } = useAsteroidAndPlot(props);
+const PlanConstruction = ({ asteroid, plot, ...props }) => {
   const buildings = useBuildingAssets();
   const resources = useResourceAssets();
   const { currentConstruction, constructionStatus, planConstruction } = useConstructionManager(asteroid?.i, plot?.i);
@@ -103,11 +101,10 @@ const PlanConstruction = (props) => {
   ], []);
 
   useEffect(() => {
-    if (isLoading) return;
     if (!['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
       props.onSetAction('CONSTRUCT');
     }
-  }, [constructionStatus, isLoading]);
+  }, [constructionStatus]);
 
   useEffect(() => {
     if (constructionStatus === 'PLANNING' && !capableType) {
@@ -115,7 +112,6 @@ const PlanConstruction = (props) => {
     }
   }, [currentConstruction?.capableType]);
 
-  if (isLoading) return <ActionDialogLoader />;
   return (
     <>
       <ActionDialogHeader

@@ -81,10 +81,8 @@ import {
   MaterialBonusTooltip,
   ActionDialogLoader,
 } from './components';
-import { useAsteroidAndPlot } from '../ActionDialog';
 
-const NewCoreSample = (props) => {
-  const { asteroid, plot, isLoading } = useAsteroidAndPlot(props);
+const NewCoreSample = ({ asteroid, plot, ...props }) => {
   const resources = useResourceAssets();
   const { startSampling, finishSampling, samplingStatus, ...coreSampleManager } = useCoreSampleManager(asteroid?.i, plot?.i);
   const { crew, crewMemberMap } = useCrew();
@@ -92,7 +90,11 @@ const NewCoreSample = (props) => {
   const resourceMap = useStore(s => s.asteroids.showResourceMap);
 
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
-  const [resourceId, setResourceId] = useState(Number(resourceMap.i));
+  const [resourceId, setResourceId] = useState();
+  useEffect(() => {
+    if (resourceMap?.i && !resourceId) setResourceId(Number(resourceMap?.i));
+  }, [resourceMap?.i])
+
   const [sampleId, setSampleId] = useState();
   useEffect(() => {
     if (coreSampleManager.currentSample) {
@@ -115,13 +117,16 @@ const NewCoreSample = (props) => {
   }, [plot?.coreSamples, sampleId, resourceId]);
 
   // get lot abundance
-  const lotAbundance = useMemo(() => AsteroidLib.getAbundanceAtLot(
-    asteroid?.i,
-    BigInt(asteroid?.resourceSeed),
-    Number(plot?.i),
-    resourceId,
-    asteroid.resources[resourceId]
-  ), [asteroid, plot, resourceId]);
+  const lotAbundance = useMemo(() => {
+    if (!resourceId) return 0;
+    return AsteroidLib.getAbundanceAtLot(
+      asteroid?.i,
+      BigInt(asteroid?.resourceSeed),
+      Number(plot?.i),
+      resourceId,
+      asteroid.resources[resourceId]
+    );
+}, [asteroid, plot, resourceId]);
   
   const crewMembers = coreSampleManager.currentSample?._crewmates
     || ((crew?.crewMembers || []).map((i) => crewMemberMap[i]));
@@ -203,7 +208,6 @@ const NewCoreSample = (props) => {
     return 'AFTER';
   }, [sample, samplingStatus]);
 
-  if (isLoading) return <ActionDialogLoader />;
   return (
     <>
       <ActionDialogHeader

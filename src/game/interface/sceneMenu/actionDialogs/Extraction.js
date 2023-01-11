@@ -83,10 +83,8 @@ import {
   ActionDialogLoader,
 } from './components';
 import usePlot from '~/hooks/usePlot';
-import { useAsteroidAndPlot } from '../ActionDialog';
 
-const ExtractionDialog = (props) => {
-  const { asteroid, plot, isLoading } = useAsteroidAndPlot(props);
+const ExtractionDialog = ({ asteroid, plot, ...props }) => {
   const resources = useResourceAssets();
   const { extractionStatus, startExtraction, finishExtraction } = useExtractionManager(asteroid?.i, plot?.i);
 
@@ -194,13 +192,11 @@ const ExtractionDialog = (props) => {
   }, [amount, selectedCoreSample, destinationPlot]);
 
   useEffect(() => {
-    if (isLoading) return;
     if (extractionStatus === 'FINISHING') {
       props.onClose();
     }
-  }, [extractionStatus, isLoading]);
+  }, [extractionStatus]);
 
-  if (isLoading) return <ActionDialogLoader />;
   return (
     <>
       <ActionDialogHeader

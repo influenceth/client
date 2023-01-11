@@ -81,11 +81,8 @@ import {
   TimeBonusTooltip,
   ActionDialogLoader,
 } from './components';
-import { useAsteroidAndPlot } from '../ActionDialog';
 
-
-const Construct = (props) => {
-  const { asteroid, plot, isLoading } = useAsteroidAndPlot(props);
+const Construct = ({ asteroid, plot, ...props }) => {
   const buildings = useBuildingAssets();
   const resources = useResourceAssets();
   const { currentConstruction, constructionStatus, startConstruction, finishConstruction } = useConstructionManager(asteroid?.i, plot?.i);
@@ -146,13 +143,11 @@ const Construct = (props) => {
   }, [constructionStatus]);
 
   useEffect(() => {
-    if (isLoading) return;
     if (constructionStatus === 'OPERATIONAL') {
       props.onClose();
     }
-  }, [constructionStatus, isLoading]);
+  }, [constructionStatus]);
 
-  if (isLoading) return <ActionDialogLoader />;
   return (
     <>
       <ActionDialogHeader

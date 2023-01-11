@@ -64,12 +64,6 @@ const getContracts = (account, queryClient) => ({
       _proofs.boostBonus,
     ]),
     isEqual: (txVars, vars) => txVars.i === vars.i,
-    // TODO: may not need these anymore since confirms is only 1 on starknet
-    getConfirmedAlert: ({ i }) => ({
-      type: 'Asteroid_ReadyToFinalizeScan',
-      i,
-      timestamp: Math.round(Date.now() / 1000)
-    }),
     onConfirmed: (event, { i }) => {
       queryClient.invalidateQueries(['asteroids', i]);
     }

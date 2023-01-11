@@ -81,10 +81,8 @@ import {
   TimeBonusTooltip,
   ActionDialogLoader,
 } from './components';
-import { useAsteroidAndPlot } from '../ActionDialog';
 
-const Deconstruct = (props) => {
-  const { asteroid, plot, isLoading } = useAsteroidAndPlot(props);
+const Deconstruct = ({ asteroid, plot, ...props }) => {
   const resources = useResourceAssets();
   const { constructionStatus, deconstruct } = useConstructionManager(asteroid?.i, plot?.i);
   const { crew, crewMemberMap } = useCrew();
@@ -125,7 +123,6 @@ const Deconstruct = (props) => {
   ], []);
 
   useEffect(() => {
-    if (isLoading) return;
     if (constructionStatus === 'PLANNED') {
       props.onClose();
       // TODO: 
@@ -133,11 +130,10 @@ const Deconstruct = (props) => {
       // else, open "unplan" dialog
       // props.onSetAction('CONSTRUCT');
     }
-  }, [constructionStatus, isLoading]);
+  }, [constructionStatus]);
 
   const status = 'BEFORE';
 
-  if (isLoading) return <ActionDialogLoader />;
   return (
     <>
       <ActionDialogHeader

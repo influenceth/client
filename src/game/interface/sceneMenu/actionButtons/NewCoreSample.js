@@ -9,7 +9,6 @@ import ActionButton from './ActionButton';
 const NewCoreSample = ({ asteroid, plot, onSetAction }) => {
   const resourceMap = useStore(s => s.asteroids.showResourceMap);
   const { currentSample, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i);
-  console.log('currentSample', currentSample)
   const handleClick = useCallback(() => {
     onSetAction('NEW_CORE_SAMPLE', { resourceId: resourceMap?.i });
   }, [onSetAction, resourceMap?.i]);
@@ -20,7 +19,7 @@ const NewCoreSample = ({ asteroid, plot, onSetAction }) => {
   let loading = undefined;
   if (currentSample) {
     // if current sample applies to this button ("new" and matching resource id)
-    if (currentSample.isNew && currentSample.resourceId === Number(resourceMap.i)) {
+    if (currentSample.isNew && currentSample.resourceId === Number(resourceMap?.i)) {
       if (samplingStatus === 'READY_TO_FINISH') {
         label = 'Analyze Core Sample';
         attention = true;
@@ -29,7 +28,7 @@ const NewCoreSample = ({ asteroid, plot, onSetAction }) => {
     // else, disable button (can still note which other resource)
     } else {
       disabled = true;
-      if (currentSample.resourceId !==  Number(resourceMap.i)) {
+      if (currentSample.resourceId !==  Number(resourceMap?.i)) {
         label = samplingStatus === 'READY_TO_FINISH' ? 'Core Sample Ready' : 'Already Sampling';
         label += ` (${Inventory.RESOURCES[currentSample.resourceId].name})`;
       }

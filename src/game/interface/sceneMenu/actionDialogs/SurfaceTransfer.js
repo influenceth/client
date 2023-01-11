@@ -83,10 +83,8 @@ import {
 } from './components';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import usePlot from '~/hooks/usePlot';
-import { useAsteroidAndPlot } from '../ActionDialog';
 
-const SurfaceTransfer = (props) => {
-  const { asteroid, plot, isLoading } = useAsteroidAndPlot(props);
+const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
   const resources = useResourceAssets();
   
   const { crew, crewMemberMap } = useCrew();
@@ -184,14 +182,12 @@ const SurfaceTransfer = (props) => {
   }, [plot?.building?.constructionStatus, plot?.building?.inventories]);
 
   useEffect(() => {
-    if (isLoading) return;
     if (deliveryStatus === 'FINISHING') {
       // TODO: link to destination lot?
       props.onClose();
     }
-  }, [deliveryStatus, isLoading]);
+  }, [deliveryStatus]);
 
-  if (isLoading) return <ActionDialogLoader />;
   return (
     <>
       <ActionDialogHeader

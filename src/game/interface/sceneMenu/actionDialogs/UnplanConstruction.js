@@ -76,22 +76,18 @@ import {
   getBonusDirection,
   ActionDialogLoader,
 } from './components';
-import { useAsteroidAndPlot } from '../ActionDialog';
 
-const UnplanConstruction = (props) => {
-  const { asteroid, plot, isLoading } = useAsteroidAndPlot(props);
+const UnplanConstruction = ({ asteroid, plot, ...props }) => {
   const buildings = useBuildingAssets();
   const { constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, plot?.i);
   const { captain } = useCrew();
 
   useEffect(() => {
-    if (isLoading) return;
     if (constructionStatus === 'READY_TO_PLAN') {
       props.onClose();
     }
-  }, [constructionStatus, isLoading]);
+  }, [constructionStatus]);
 
-  if (isLoading) return <ActionDialogLoader />;
   return (
     <>
       <ActionDialogHeader

@@ -30,7 +30,7 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
   let loading = undefined;
   if (currentSample) {
     // if current sample applies to this button ("improving" and matching resource id)
-    if (!currentSample.isNew && currentSample.resourceId === Number(resourceMap.i)) {
+    if (!currentSample.isNew && currentSample.resourceId === Number(resourceMap?.i)) {
       if (samplingStatus === 'READY_TO_FINISH') {
         label = 'Analyze Improved Sample';
         attention = true;
@@ -39,7 +39,7 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
     // else, disable button (can still note which other resource)
     } else {
       disabled = true;
-      if (currentSample.resourceId !==  Number(resourceMap.i)) {
+      if (currentSample.resourceId !==  Number(resourceMap?.i)) {
         label = samplingStatus === 'READY_TO_FINISH' ? 'Core Sample Ready' : 'Already Sampling';
         label += ` (${Inventory.RESOURCES[currentSample.resourceId].name})`;
       }

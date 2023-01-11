@@ -30,20 +30,20 @@ export function ActionItemProvider({ children }) {
   const [readyItems, setReadyItems] = useState([]);
   const [unreadyItems, setUnreadyItems] = useState([]);
 
-  const refreshItems = useCallback(() => {
+  const refreshItems = useCallback((nowTime) => {
     setReadyItems(
       (actionItems || [])
-        .filter((i) => i.event?.returnValues?.completionTime < chainTime)
+        .filter((i) => i.event?.returnValues?.completionTime < nowTime)
     );
 
     const unreadyActionItems = (actionItems || [])
-      .filter((i) => i.event?.returnValues?.completionTime >= chainTime)
+      .filter((i) => i.event?.returnValues?.completionTime >= nowTime)
       .map((e) => ({
         ...e,
         _sortTime: e.event?.returnValues?.completionTime
       }));
     const unstartedPlans = (plannedLots || [])
-      .filter((i) => i.gracePeriodEnd >= chainTime)
+      .filter((i) => i.gracePeriodEnd >= nowTime)
       .map((e) => ({
         ...e,
         _sortTime: e.gracePeriodEnd,
@@ -52,7 +52,7 @@ export function ActionItemProvider({ children }) {
 
     setUnreadyItems([...unreadyActionItems, ...unstartedPlans].sort((a, b) => a._sortTime - b._sortTime));
   }, [actionItems, plannedLots]);
-  useEffect(refreshItems, [refreshItems]);
+  useEffect(() => refreshItems(chainTime), [refreshItems]);
 
   const nextCompletionTime = useMemo(() => unreadyItems.reduce((acc, cur) => {
       return (acc === null || cur._sortTime < acc)
@@ -63,10 +63,12 @@ export function ActionItemProvider({ children }) {
 
   useEffect(() => {
     if (nextCompletionTime) {
-      console.log('setting timeout in ' + 1000 * (nextCompletionTime - chainTime));
+      const nextRefreshTime = (nextCompletionTime + 1);
+      console.log('setting timeout in ' + (nextRefreshTime - chainTime), { nextCompletionTime, chainTime });
       const to = setTimeout(() => {
-        refreshItems();
-      }, 1000 * (nextCompletionTime - chainTime + 1));
+        console.log('running refreesh');
+        refreshItems(nextRefreshTime);
+      }, Math.max(0, 1000 * (nextRefreshTime - chainTime)));
       return () => {
         if (to) clearTimeout(to);
       }
