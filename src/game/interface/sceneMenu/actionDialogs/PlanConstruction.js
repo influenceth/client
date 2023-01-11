@@ -48,7 +48,7 @@ import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useInterval from '~/hooks/useInterval';
-import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
+import { getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   LiveTimer,
@@ -69,18 +69,22 @@ import {
 
   ActionDialogFooter,
   ActionDialogHeader,
+  ActionDialogLoader,
   ActionDialogStats,
   ActionDialogTimers,
 
   formatTimer,
   getBonusDirection,
 } from './components';
+import useAsteroid from '~/hooks/useAsteroid';
+import { useAsteroidAndPlot } from '../ActionDialog';
 
 const PlanConstruction = (props) => {
-  const { asteroid, plot } = props;
+  const { asteroid, plot, isLoading } = useAsteroidAndPlot(props);
   const buildings = useBuildingAssets();
-  const { constructionStatus, planConstruction } = useConstructionManager(asteroid?.i, plot?.i);
   const resources = useResourceAssets();
+  const { currentConstruction, constructionStatus, planConstruction } = useConstructionManager(asteroid?.i, plot?.i);
+  const { captain } = useCrew();
 
   const [capableType, setCapableType] = useState();
   
@@ -99,15 +103,25 @@ const PlanConstruction = (props) => {
   ], []);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
       props.onSetAction('CONSTRUCT');
     }
-  }, [constructionStatus]);
+  }, [constructionStatus, isLoading]);
 
+  useEffect(() => {
+    if (constructionStatus === 'PLANNING' && !capableType) {
+      if (currentConstruction?.capableType) setCapableType(currentConstruction.capableType)
+    }
+  }, [currentConstruction?.capableType]);
+
+  if (isLoading) return <ActionDialogLoader />;
   return (
     <>
       <ActionDialogHeader
-        {...props}
+        asteroid={asteroid}
+        captain={captain}
+        plot={plot}
         action={{
           actionIcon: <LayBlueprintIcon />,
           headerBackground: constructionBackground,
@@ -115,7 +129,8 @@ const PlanConstruction = (props) => {
           completeLabel: 'Building Site',
           completeStatus: 'Ready',
         }}
-        status="BEFORE" />
+        status="BEFORE"
+        {...props} />
 
       <BuildingPlanSection building={buildings[capableType]} onBuildingSelected={setCapableType} status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
       <BuildingRequirementsSection
@@ -126,11 +141,12 @@ const PlanConstruction = (props) => {
       <ActionDialogStats stats={stats} status="BEFORE" />
       <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />
       <ActionDialogFooter
-        {...props}
         buttonsLoading={constructionStatus === 'PLANNING'}
+        disableGo={!capableType}
         goLabel="Place Site"
         onGo={() => planConstruction(capableType)}
-        status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
+        status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'}
+        {...props} />
     </>
   );
 };

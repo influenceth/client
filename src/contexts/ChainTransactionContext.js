@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { starknetContracts as configs } from '@influenceth/sdk';
 import { Contract, shortString } from 'starknet';
@@ -6,6 +6,7 @@ import { Contract, shortString } from 'starknet';
 import useAuth from '~/hooks/useAuth';
 import useEvents from '~/hooks/useEvents';
 import useStore from '~/hooks/useStore';
+import useInterval from '~/hooks/useInterval';
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
 
@@ -41,13 +42,7 @@ const getContracts = (account, queryClient) => ({
         },
       ];
       return account.execute(calls);
-    },
-    getErrorAlert: ({ i }) => ({
-      type: 'Asteroid_BuyingError',
-      level: 'warning',
-      i,
-      timestamp: Math.round(Date.now() / 1000)
-    })
+    }
   },
   'NAME_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -55,19 +50,11 @@ const getContracts = (account, queryClient) => ({
     transact: (contract) => ({ i, name }) => contract.invoke('Asteroid_setName', [
       i,
       shortString.encodeShortString(name)
-    ]),
-    getErrorAlert: ({ i }) => ({
-      type: 'Asteroid_NamingError',
-      level: 'warning',
-      i,
-      timestamp: Math.round(Date.now() / 1000)
-    }),
+    ])
   },
   'START_ASTEROID_SCAN': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    // TODO (enhancement): would potentially be safer to use committedRound in returnValues rather than `confirms`
-    confirms: 2,
     transact: (contract) => ({ i, boost, _packed, _proofs }) => contract.invoke('Asteroid_startScan', [
       i,
       _packed.features,
@@ -77,12 +64,6 @@ const getContracts = (account, queryClient) => ({
       _proofs.boostBonus,
     ]),
     isEqual: (txVars, vars) => txVars.i === vars.i,
-    getErrorAlert: ({ i }) => ({
-      type: 'Asteroid_ScanningError',
-      level: 'warning',
-      i,
-      timestamp: Math.round(Date.now() / 1000)
-    }),
     // TODO: may not need these anymore since confirms is only 1 on starknet
     getConfirmedAlert: ({ i }) => ({
       type: 'Asteroid_ReadyToFinalizeScan',
@@ -97,12 +78,6 @@ const getContracts = (account, queryClient) => ({
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => ({ i }) => contract.invoke('Asteroid_finishScan', [i]),
-    getErrorAlert: ({ i }) => ({
-      type: 'Asteroid_FinalizeScanError',
-      level: 'warning',
-      i,
-      timestamp: Math.round(Date.now() / 1000)
-    })
   },
   'SET_ACTIVE_CREW': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -117,11 +92,6 @@ const getContracts = (account, queryClient) => ({
       );
     },
     isEqual: () => true,
-    getErrorAlert: () => ({
-      type: 'GenericAlert',
-      content: 'Crew reassignments failed.',
-      level: 'warning',
-    })
   },
   'PURCHASE_AND_INITIALIZE_CREW': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -173,11 +143,6 @@ const getContracts = (account, queryClient) => ({
       return account.execute(calls);
     },
     isEqual: (txVars, vars) => txVars.sessionId === vars.sessionId,
-    getErrorAlert: () => ({
-      type: 'CrewMember_SettlingError',
-      level: 'warning',
-      timestamp: Math.round(Date.now() / 1000)
-    })
   },
   'NAME_CREW': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -189,12 +154,6 @@ const getContracts = (account, queryClient) => ({
         shortString.encodeShortString(name)
       ]
     ),
-    getErrorAlert: ({ i }) => ({
-      type: 'CrewMember_NamingError',
-      level: 'warning',
-      i,
-      timestamp: Math.round(Date.now() / 1000)
-    })
   },
 
   'START_CORE_SAMPLE': {
@@ -204,12 +163,11 @@ const getContracts = (account, queryClient) => ({
       'CoreSample_startSampling',
       [asteroidId, plotId, resourceId, sampleId, crewId]
     ),
-    getErrorAlert: ({ i }) => ({
-      type: 'GenericAlert',
-      content: 'Core sample failed.',
-      timestamp: Math.round(Date.now() / 1000)
-    }),
-    isEqual: 'ALL'
+    isEqual: (txVars, vars) => (
+      txVars.asteroidId === vars.asteroidId
+      && txVars.plotId === vars.plotId
+      && txVars.crewId === vars.crewId
+    ),
   },
   'FINISH_CORE_SAMPLE': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -218,12 +176,11 @@ const getContracts = (account, queryClient) => ({
       'CoreSample_finishSampling',
       [asteroidId, plotId, resourceId, sampleId, crewId]
     ),
-    getErrorAlert: ({ i }) => ({
-      type: 'GenericAlert',
-      content: 'Core sample retrieval failed.',
-      timestamp: Math.round(Date.now() / 1000)
-    }),
-    isEqual: 'ALL'
+    isEqual: (txVars, vars) => (
+      txVars.asteroidId === vars.asteroidId
+      && txVars.plotId === vars.plotId
+      && txVars.crewId === vars.crewId
+    ),
   },
 
   'PLAN_CONSTRUCTION': {
@@ -233,11 +190,6 @@ const getContracts = (account, queryClient) => ({
       'Construction_plan',
       [capableType, asteroidId, plotId, crewId]
     ),
-    getErrorAlert: ({ i }) => ({
-      type: 'GenericAlert',
-      content: 'Site planning failed.',
-      timestamp: Math.round(Date.now() / 1000)
-    }),
     isEqual: (txVars, vars) => (
       txVars.asteroidId === vars.asteroidId
       && txVars.plotId === vars.plotId
@@ -251,11 +203,6 @@ const getContracts = (account, queryClient) => ({
       'Construction_unplan',
       [asteroidId, plotId, crewId]
     ),
-    getErrorAlert: ({ i }) => ({
-      type: 'GenericAlert',
-      content: 'Site unplanning failed.',
-      timestamp: Math.round(Date.now() / 1000)
-    }),
     isEqual: 'ALL'
   },
 
@@ -266,11 +213,6 @@ const getContracts = (account, queryClient) => ({
       'Construction_start',
       [asteroidId, plotId, crewId]
     ),
-    getErrorAlert: ({ i }) => ({
-      type: 'GenericAlert',
-      content: 'Construction failed.',
-      timestamp: Math.round(Date.now() / 1000)
-    }),
     isEqual: 'ALL'
   },
   'FINISH_CONSTRUCTION': {
@@ -280,11 +222,6 @@ const getContracts = (account, queryClient) => ({
       'Construction_finish',
       [asteroidId, plotId, crewId]
     ),
-    getErrorAlert: ({ i }) => ({
-      type: 'GenericAlert',
-      content: 'Construction finalization failed.',
-      timestamp: Math.round(Date.now() / 1000)
-    }),
     isEqual: 'ALL'
   },
   'DECONSTRUCT': {
@@ -294,11 +231,6 @@ const getContracts = (account, queryClient) => ({
       'Construction_deconstruct',
       [asteroidId, plotId, crewId]
     ),
-    getErrorAlert: ({ i }) => ({
-      type: 'GenericAlert',
-      content: 'Deconstruction failed.',
-      timestamp: Math.round(Date.now() / 1000)
-    }),
     isEqual: 'ALL'
   },
 
@@ -309,11 +241,6 @@ const getContracts = (account, queryClient) => ({
       'Extraction_start',
       [asteroidId, plotId, resourceId, sampleId, amount, destinationLotId, destinationInventoryId, crewId]
     ),
-    getErrorAlert: ({ i }) => ({
-      type: 'GenericAlert',
-      content: 'Extraction failed.',
-      timestamp: Math.round(Date.now() / 1000)
-    }),
     isEqual: (txVars, vars) => (
       txVars.asteroidId === vars.asteroidId
       && txVars.plotId === vars.plotId
@@ -327,29 +254,16 @@ const getContracts = (account, queryClient) => ({
       'Extraction_finish',
       [asteroidId, plotId, crewId]
     ),
-    getErrorAlert: ({ i }) => ({
-      type: 'GenericAlert',
-      content: 'Extraction finalization failed.',
-      timestamp: Math.round(Date.now() / 1000)
-    }),
     isEqual: 'ALL'
   },
 
   'START_DELIVERY': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, originPlotId, originInvId, destPlotId, destInvId, resources, crewId }) => {
-      console.log([asteroidId, originPlotId, originInvId, destPlotId, destInvId, Object.keys(resources), Object.values(resources), crewId]);
-      return contract.invoke(
-        'Inventory_transferStart',
-        [asteroidId, originPlotId, originInvId, destPlotId, destInvId, Object.keys(resources), Object.values(resources), crewId]
-      );
-    },
-    getErrorAlert: ({}) => ({
-      type: 'GenericAlert',
-      content: 'Delivery initialization failed.',
-      timestamp: Math.round(Date.now() / 1000)
-    }),
+    transact: (contract) => ({ asteroidId, originPlotId, originInvId, destPlotId, destInvId, resources, crewId }) => contract.invoke(
+      'Inventory_transferStart',
+      [asteroidId, originPlotId, originInvId, destPlotId, destInvId, Object.keys(resources), Object.values(resources), crewId]
+    ),
     isEqual: (txVars, vars) => (
       txVars.asteroidId === vars.asteroidId
       && txVars.destPlotId === vars.destPlotId
@@ -364,14 +278,13 @@ const getContracts = (account, queryClient) => ({
       'Inventory_transferFinish',
       [asteroidId, destPlotId, destInvId, deliveryId, crewId]
     ),
-    getErrorAlert: ({}) => ({
-      type: 'GenericAlert',
-      content: 'Delivery finalization failed.',
-      timestamp: Math.round(Date.now() / 1000)
-    }),
     isEqual: 'ALL'
   }
 });
+
+const getNow = () => {
+  return Math.floor(Date.now() / 1000);
+}
 
 export function ChainTransactionProvider({ children }) {
   const { wallet: { starknet } } = useAuth();
@@ -379,6 +292,7 @@ export function ChainTransactionProvider({ children }) {
   const queryClient = useQueryClient();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
+  const dispatchFailedTransaction = useStore(s => s.dispatchFailedTransaction);
   const dispatchPendingTransaction = useStore(s => s.dispatchPendingTransaction);
   const dispatchPendingTransactionUpdate = useStore(s => s.dispatchPendingTransactionUpdate);
   const dispatchPendingTransactionComplete = useStore(s => s.dispatchPendingTransactionComplete);
@@ -396,7 +310,6 @@ export function ChainTransactionProvider({ children }) {
           onConfirmed,
           onEventReceived,
           getConfirmedAlert,
-          getErrorAlert,
           getEventAlert,
           confirms,
           isEqual
@@ -405,9 +318,6 @@ export function ChainTransactionProvider({ children }) {
           execute: transact(new Contract(config, address, starknet.account)),
           onTransactionError: (err, vars) => {
             console.error(err, vars);
-            if (getErrorAlert) {
-              createAlert(getErrorAlert(vars));
-            }
           },
           onEventReceived: (event, vars) => {
             if (getEventAlert) {
@@ -431,6 +341,11 @@ export function ChainTransactionProvider({ children }) {
   }, [createAlert, starknet?.account?.address, starknet?.account?.baseUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionWaiters = useRef([]);
+
+  // TODO: in the future, may want to accomodate for user's clocks being wrong by
+  //  passing back server time occasionally in websocket (maybe in headers?) and storing an offset
+  const [chainTime, setChainTime] = useState(getNow());
+  useInterval(() => setChainTime(getNow()), 1000);
 
   // on initial load, set provider.waitForTransaction for any pendingTransactions
   // so that we can throw any extension-related or timeout errors needed
@@ -513,6 +428,14 @@ export function ChainTransactionProvider({ children }) {
           waitingOn: 'TRANSACTION'
         });
       } catch (e) {
+        // TODO: remove this true, this is just to test
+        if (true || e?.message !== 'User abort') {
+          dispatchFailedTransaction({
+            key,
+            vars,
+            err: e?.message || e
+          });
+        }
         onTransactionError(e, vars);
       }
     } else {
@@ -547,6 +470,7 @@ export function ChainTransactionProvider({ children }) {
 
   return (
     <ChainTransactionContext.Provider value={{
+      chainTime,
       execute,
       getStatus,
       getPendingTx

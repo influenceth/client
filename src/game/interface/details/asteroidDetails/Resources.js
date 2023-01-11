@@ -21,7 +21,6 @@ import useStore from '~/hooks/useStore';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import theme, { hexToRGB } from '~/theme';
 import { LiveTimer } from '../../sceneMenu/actionDialogs/components';
-import { getAdjustedNow } from '~/lib/utils';
 import { useQueryClient } from 'react-query';
 import { RingLoader } from 'react-spinners';
 

@@ -56,7 +56,7 @@ export function CrewProvider({ children }) {
   }, [account, crews, crewsLoading, crewMembersLoading, selectCrew, selectedCrewId]);
 
   const captain = useMemo(() => {
-    if (selectedCrew?.crewMembers?.length) {
+    if (crewMemberMap && selectedCrew?.crewMembers?.length) {
       return crewMemberMap[selectedCrew.crewMembers[0]];
     }
     return null;

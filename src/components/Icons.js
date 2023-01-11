@@ -151,7 +151,6 @@ export {
   // HiUserGroup as CrewIcon,
   MdAccountBalanceWallet as WalletIcon,
   MdAdd as PlusIcon,
-  MdBlurOff as ScanIcon,
   MdKeyboardArrowDown as CaretIcon,
   MdChevronRight as ChevronRightIcon,
   MdChevronRight as CollapsedIcon,

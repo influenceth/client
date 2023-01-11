@@ -48,7 +48,7 @@ import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useInterval from '~/hooks/useInterval';
-import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
+import { getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   LiveTimer,
@@ -79,12 +79,14 @@ import {
   formatSampleVolume,
   TravelBonusTooltip,
   TimeBonusTooltip,
+  ActionDialogLoader,
 } from './components';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import usePlot from '~/hooks/usePlot';
+import { useAsteroidAndPlot } from '../ActionDialog';
 
 const SurfaceTransfer = (props) => {
-  const { asteroid, onClose, plot } = props;
+  const { asteroid, plot, isLoading } = useAsteroidAndPlot(props);
   const resources = useResourceAssets();
   
   const { crew, crewMemberMap } = useCrew();
@@ -102,13 +104,13 @@ const SurfaceTransfer = (props) => {
   //  aggregate into stat totals
   // resource?.massPerUnit, resource?.volumePerUnit
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(
-    () => getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
-      { label: 'Travel to Origin', plot: plot?.i, skipTo: destinationPlot?.i },
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+    if (!asteroid?.i || !plot?.i) return {};
+    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
+      { label: 'Travel to Origin', plot: plot.i, skipTo: destinationPlot?.i },
       { label: 'Return from Destination', plot: 1 },
-    ]),
-    [asteroid.i, crewTravelBonus, plot.i]
-  );
+    ])
+  }, [asteroid?.i, plot?.i, crewTravelBonus]);
 
   const transportDistance = Asteroid.getLotDistance(asteroid?.i, plot?.i, destinationPlot?.i);
   const transportTime = Asteroid.getLotTravelTime(asteroid?.i, plot?.i, destinationPlot?.i, crewTravelBonus) || 0;
@@ -172,13 +174,6 @@ const SurfaceTransfer = (props) => {
     return 'AFTER';
   }, [deliveryStatus]);
 
-  useEffect(() => {
-    if (deliveryStatus === 'FINISHING') {
-      // TODO: link to destination lot?
-      onClose();
-    }
-  }, [deliveryStatus]);
-
   const originInventory = useMemo(() => {
     if (plot?.building?.constructionStatus === Construction.STATUS_OPERATIONAL) {
       return plot?.building?.inventories.find((i) => i.type === 1);
@@ -188,10 +183,20 @@ const SurfaceTransfer = (props) => {
     return null;
   }, [plot?.building?.constructionStatus, plot?.building?.inventories]);
 
+  useEffect(() => {
+    if (isLoading) return;
+    if (deliveryStatus === 'FINISHING') {
+      // TODO: link to destination lot?
+      props.onClose();
+    }
+  }, [deliveryStatus, isLoading]);
+
+  if (isLoading) return <ActionDialogLoader />;
   return (
     <>
       <ActionDialogHeader
-        {...props}
+        asteroid={asteroid}
+        plot={plot}
         action={{
           actionIcon: <SurfaceTransferIcon />,
           headerBackground: surfaceTransferBackground,
@@ -202,7 +207,8 @@ const SurfaceTransfer = (props) => {
         }}
         status={status}
         startTime={plot?.building?.startTime}
-        targetTime={plot?.building?.completionTime} />
+        targetTime={plot?.building?.completionTime}
+        {...props} />
 
       <ItemSelectionSection
         inventory={originInventory?.resources || {}}

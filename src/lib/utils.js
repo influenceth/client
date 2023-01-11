@@ -1,4 +1,4 @@
-import { Crew, START_TIMESTAMP } from '@influenceth/sdk';
+import { Capable, Crew, START_TIMESTAMP } from '@influenceth/sdk';
 
 // The difference in game days between the start timestamp and the lore start time
 // TODO: should 1618668000 instead live in influence-utils?
@@ -25,8 +25,6 @@ export const getCrewAbilityBonus = (abilityId, crewmates) => {
   })));
 }
 
-export const getAdjustedNow = () => {
-  // TODO: may want to accomodate for user's clocks being wrong by passing back server time
-  //  and storing an offset
-  return Math.floor(Date.now() / 1000);
+export const capableTypeNameToId = (name) => {
+  return Object.keys(Capable.TYPES).find((i) => Capable.TYPES[i].name === name);
 }

@@ -48,7 +48,7 @@ import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useInterval from '~/hooks/useInterval';
-import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
+import { getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   LiveTimer,
@@ -79,29 +79,37 @@ import {
   getBonusDirection,
   getTripDetails,
   TimeBonusTooltip,
+  ActionDialogLoader,
 } from './components';
+import { useAsteroidAndPlot } from '../ActionDialog';
 
 
 const Construct = (props) => {
-  const { asteroid, onClose, plot } = props;
+  const { asteroid, plot, isLoading } = useAsteroidAndPlot(props);
   const buildings = useBuildingAssets();
   const resources = useResourceAssets();
-  const { constructionStatus, startConstruction, finishConstruction } = useConstructionManager(asteroid?.i, plot?.i);
+  const { currentConstruction, constructionStatus, startConstruction, finishConstruction } = useConstructionManager(asteroid?.i, plot?.i);
   const { crew, crewMemberMap } = useCrew();
   
-  const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
+  const crewMembers = currentConstruction?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
+  const captain = crewMembers[0];
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
   const constructionBonus = getCrewAbilityBonus(5, crewMembers);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => 
-    getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+    if (!asteroid?.i || !plot?.i) return {};
+    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
       { label: 'Travel to destination', plot: plot.i },
       { label: 'Return from destination', plot: 1 },
     ])
-  , [asteroid.i, crewTravelBonus, plot.i]);
-  const constructionTime = Construction.getConstructionTime(plot.building.assetId, constructionBonus.totalBonus);
+  }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  
+  const constructionTime = useMemo(() => 
+    Construction.getConstructionTime(plot?.building?.assetId, constructionBonus.totalBonus),
+    [plot?.building?.assetId, constructionBonus.totalBonus]
+  );
 
-  const stats = [
+  const stats = useMemo(() => ([
     {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
@@ -126,7 +134,7 @@ const Construct = (props) => {
           crewRequired="start" />
       )
     },
-  ];
+  ]), [constructionBonus, constructionTime, crewTravelTime, crewTravelBonus, tripDetails]);
 
   const status = useMemo(() => {
     if (constructionStatus === 'PLANNED') {
@@ -138,15 +146,19 @@ const Construct = (props) => {
   }, [constructionStatus]);
 
   useEffect(() => {
+    if (isLoading) return;
     if (constructionStatus === 'OPERATIONAL') {
-      onClose();
+      props.onClose();
     }
-  }, [constructionStatus]);
+  }, [constructionStatus, isLoading]);
 
+  if (isLoading) return <ActionDialogLoader />;
   return (
     <>
       <ActionDialogHeader
-        {...props}
+        asteroid={asteroid}
+        captain={captain}
+        plot={plot}
         action={{
           actionIcon: <ConstructIcon />,
           headerBackground: constructionBackground,
@@ -157,7 +169,8 @@ const Construct = (props) => {
         }}
         status={status}
         startTime={plot?.building?.startTime}
-        targetTime={plot?.building?.completionTime} />
+        targetTime={plot?.building?.completionTime}
+        {...props} />
 
       <BuildingPlanSection
         building={buildings[plot.building?.assetId]}

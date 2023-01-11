@@ -1,5 +1,4 @@
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
-import { MdBlurOff as ScanIcon } from 'react-icons/md';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
 import { Capable, Inventory } from '@influenceth/sdk';
 
@@ -12,7 +11,8 @@ import {
   CoreSampleIcon,
   CrewIcon,
   ExtractionIcon,
-  PromoteIcon
+  PromoteIcon,
+  ScanAsteroidIcon,
 } from '~/components/Icons';
 
 const getTxLink = (event) => {
@@ -67,7 +67,7 @@ const entries = {
   }),
 
   Asteroid_ScanStarted: (e) => ({
-    icon: <ScanIcon />,
+    icon: <ScanAsteroidIcon />,
     content: (
       <>
         <span>Resource scan initiated on asteroid </span>
@@ -78,7 +78,7 @@ const entries = {
   }),
 
   Asteroid_ReadyToFinalizeScan: (e) => ({
-    icon: <ScanIcon />,
+    icon: <ScanAsteroidIcon />,
     // TODO: may want to review language here (depending on what expiration is on starknet)
     content: (
       <>
@@ -89,7 +89,7 @@ const entries = {
   }),
 
   Asteroid_ScanFinished: (e) => ({
-    icon: <ScanIcon />,
+    icon: <ScanAsteroidIcon />,
     content: (
       <>
         <span>Resource scan completed on asteroid </span>
@@ -199,7 +199,7 @@ const entries = {
     icon: <CoreSampleIcon />,
     content: (
       <>
-        <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample started at ({e.returnValues.lotId}) </span>
+        <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample started at </span>
         <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
       </>
     ),

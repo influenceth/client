@@ -2,12 +2,11 @@ import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import { getAdjustedNow } from '~/lib/utils';
 import useActionItems from './useActionItems';
 
 const useScanManager = (asteroid) => {
   const actionItems = useActionItems();
-  const { execute, getStatus } = useContext(ChainTransactionContext);
+  const { chainTime, execute, getStatus } = useContext(ChainTransactionContext);
 
   const payload = useMemo(() => ({
     i: asteroid ? Number(asteroid.i) : null
@@ -31,12 +30,12 @@ const useScanManager = (asteroid) => {
   // TODO: vvv remove this once actionItems are working
   const queryClient = useQueryClient();
   useEffect(() => {
-    if (asteroid?.scanCompletionTime > getAdjustedNow()) {
+    if (asteroid?.scanCompletionTime > chainTime) {
       setTimeout(() => {
         queryClient.invalidateQueries([
           ['asteroids', asteroid.i]
         ]);
-      }, (asteroid.scanCompletionTime - getAdjustedNow() + 5) * 1e3);
+      }, (asteroid.scanCompletionTime - chainTime + 5) * 1e3);
     }
   }, [asteroid?.scanCompletionTime]);
   // ^^^
@@ -48,7 +47,7 @@ const useScanManager = (asteroid) => {
       } else if(asteroid.scanCompletionTime > 0) {
         if(getStatus('FINISH_ASTEROID_SCAN', payload) === 'pending') {
           return 'FINISHING';
-        } else if (asteroid.scanCompletionTime < getAdjustedNow()) {
+        } else if (asteroid.scanCompletionTime < chainTime) {
           return 'READY_TO_FINISH';
         }
         return 'SCANNING';

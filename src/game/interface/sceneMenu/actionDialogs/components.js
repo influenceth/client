@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import {
-  FiCrosshair as TargetIcon,
+  // FiCrosshair as TargetIcon,
   FiSquare as UncheckedIcon,
   FiCheckSquare as CheckedIcon
 } from 'react-icons/fi';
@@ -9,45 +9,34 @@ import {
   BsChevronDoubleDown as ChevronDoubleDownIcon,
   BsChevronDoubleUp as ChevronDoubleUpIcon,
 } from 'react-icons/bs';
-import { RingLoader } from 'react-spinners';
-import DataTable, { createTheme } from 'react-data-table-component';
-import { Crew, Asteroid, Construction, Crewmate, Inventory, Lot } from '@influenceth/sdk';
+import { RingLoader, PuffLoader } from 'react-spinners';
+import { Asteroid, Construction, Crewmate, Inventory, Lot } from '@influenceth/sdk';
 
 import Button from '~/components/ButtonAlt';
 import ButtonRounded from '~/components/ButtonRounded';
 import CrewCard from '~/components/CrewCard';
 import IconButton from '~/components/IconButton';
 import {
-  CancelBlueprintIcon,
   CheckIcon,
   ChevronRightIcon,
   CloseIcon,
   ConstructIcon,
-  CoreSampleIcon,
   CrewIcon,
-  DeconstructIcon,
-  ExtractionIcon,
-  ImproveCoreSampleIcon,
   LayBlueprintIcon,
   LocationPinIcon,
   PlusIcon,
   ResourceIcon,
-  SurfaceTransferIcon,
   TimerIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
+import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import Poppable from '~/components/Popper';
 import SliderInput from '~/components/SliderInput';
-import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
-import useCrew from '~/hooks/useCrew';
-import useStore from '~/hooks/useStore';
-import theme from '~/theme';
-import MouseoverInfoPane from '~/components/MouseoverInfoPane';
-import useConstructionManager from '~/hooks/useConstructionManager';
-import useInterval from '~/hooks/useInterval';
-import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
+import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
+import useInterval from '~/hooks/useInterval';
+import theme from '~/theme';
+import useChainTime from '~/hooks/useChainTime';
 
 // TODO: remove this after sdk updated
 Inventory.CAPACITIES = {
@@ -1015,13 +1004,12 @@ const ResourceRequirement = ({ resource, hasTally, isGathering, needsTally }) =>
   );
 };
 
-const getTimeRemaining = (target) => Math.max(0, target - getAdjustedNow());
-export const LiveTimer = ({ target }) => {
-  const [remaining, setRemaining] = useState(getTimeRemaining(target));
-  useInterval(() => {
-    setRemaining(getTimeRemaining(target));
-  }, 1000);
-  return isNaN(remaining) ? 'Initializing...' : <>{formatTimer(remaining)}</>;
+export const LiveTimer = ({ target, maxPrecision }) => {
+  const chainTime = useChainTime();
+  return useMemo(() => {
+    const remaining = Math.max(0, target - chainTime);
+    return isNaN(remaining) ? 'Initializing...' : <>{formatTimer(remaining, maxPrecision)}</>;
+  }, [chainTime, maxPrecision, target]);
 };
 
 // 
@@ -1066,7 +1054,7 @@ const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
           </thead>
           <tbody>
             {options.sort((a, b) => b.remainingYield - a.remainingYield).map((sample, i) => (
-              <tr key={sample.id} onClick={onClick(sample)}>
+              <tr key={`${sample.resourceId}_${sample.sampleId}`} onClick={onClick(sample)}>
                 <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name}</td>
                 <td>{formatSampleMass(sample.remainingYield * resources[sample.resourceId].massPerUnit)} tonnes</td>
               </tr>
@@ -1704,14 +1692,21 @@ export const ExtractionAmountSection = ({ extractionTime, min, max, amount, reso
   );
 }
 
-export const ActionDialogHeader = ({ action, asteroid, onClose, plot, status, startTime, targetTime }) => {
-  const { captain } = useCrew();
+export const ActionDialogLoader = () => {
+  return (
+    <PuffLoader />
+  );
+};
+
+export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, status, startTime, targetTime }) => {
+  const buildings = useBuildingAssets();
+  const chainTime = useChainTime();
 
   const timer = useRef();
   const [progress, setProgress] = useState(0);
   const updateProgress = useCallback(() => {
     if (startTime && targetTime) {
-      const newProgress = Math.min(100, 100 * (getAdjustedNow() - startTime) / (targetTime - startTime));
+      const newProgress = Math.min(100, 100 * (chainTime - startTime) / (targetTime - startTime));
       setProgress(newProgress);
 
       // NOTE: targetTime, startTime are in seconds, so below is already 1/1000th of progress interval
@@ -1750,7 +1745,16 @@ export const ActionDialogHeader = ({ action, asteroid, onClose, plot, status, st
               {status === 'AFTER' && `${action.completeLabel.toUpperCase()} ${action.completeStatus.toUpperCase()}`}
             </Title>
             <Subtitle>
-              {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {plot.i.toLocaleString()} ({plot.building?.name || 'Empty Lot'})</b>
+              {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName}
+              {' > '}
+              <b>
+                Lot {plot.i.toLocaleString()}{' '}
+                (
+                  {buildings[plot.building?.assetId]?.name || 'Empty Lot'}
+                  {plot.building?.constructionStatus === Construction.STATUS_PLANNED && ' - Planned'}
+                  {plot.building?.constructionStatus === Construction.STATUS_UNDER_CONSTRUCTION && ' - Under Construction'}
+                )
+              </b>
             </Subtitle>
             {captain && action.crewRequirement && (
               <CrewInfo requirement={action.crewRequirement} status={status}>
@@ -1844,7 +1848,7 @@ export const ActionDialogTimers = ({ actionReadyIn, crewAvailableIn }) => (
   </StatSection>
 );
 
-export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOverride, finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
+export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOverride, disableGo, finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // TODO: connect notifications to top-level state
@@ -1873,7 +1877,7 @@ export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOve
                     </NotificationEnabler>
                     <Spacer />
                     <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClose}>Cancel</Button>
-                    <Button disabled={buttonsDisabled} loading={buttonsLoading} isTransaction onClick={onGo}>{goLabel}</Button>
+                    <Button disabled={buttonsDisabled || disableGo} loading={buttonsLoading} isTransaction onClick={onGo}>{goLabel}</Button>
                   </>
                 )}
               {status === 'DURING' && (

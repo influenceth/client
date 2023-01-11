@@ -31,8 +31,9 @@ const getInvalidations = (event, returnValues, linked) => {
         ['actionItems'],
         ['asteroids', returnValues.asteroidId],
       ],
-      Asteroid_ScanFinished: [
-        // TODO: 'actionItems' here?
+      // Asteroid_ScanFinished: [
+      Asteroid_BonusesSet: [
+        ['actionItems'],
         ['asteroids', returnValues.asteroidId],
         ['asteroids', 'search'],
         ['watchlist']
@@ -65,19 +66,22 @@ const getInvalidations = (event, returnValues, linked) => {
       ],
 
       Construction_Planned: [
+        ['planned'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
         ['asteroidPlots', returnValues.asteroidId]
       ],
       Construction_Unplanned: [
+        ['planned'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
         ['asteroidPlots', returnValues.asteroidId]
       ],
       Construction_Started: [
+        ['planned'],
         ['actionItems'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       Construction_Finished: [
-        // TODO: 'actionItems' here?
+        ['actionItems'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       Construction_Deconstructed: [
@@ -86,25 +90,31 @@ const getInvalidations = (event, returnValues, linked) => {
       ],
 
       CoreSample_SamplingStarted: [
+        ['actionItems'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       CoreSample_SamplingFinished: [
+        ['actionItems'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       CoreSample_Used: [
         ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
       Extraction_Started: [
+        ['actionItems'],
         ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
       Extraction_Finished: [
+        ['actionItems'],
         ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
 
       Inventory_DeliveryStarted: [
+        ['actionItems'],
         ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
       Inventory_DeliveryFinished: [
+        ['actionItems'],
         ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
       Inventory_ReservedChanged: [
@@ -157,7 +167,8 @@ export function EventsProvider({ children }) {
 
       // generate log events from events
       if (e.event === 'Crew_CompositionChanged') {
-        new Set([...e.returnValues.oldCrew, ...e.returnValues.newCrew]).forEach((i) => {
+        // the extra '' is in case both crews are empty
+        new Set([...e.returnValues.oldCrew, ...e.returnValues.newCrew, '']).forEach((i) => {
           transformedEvents.push({ ...e, event: eventName, i, key: `${e.id}_${i}` });
         });
 

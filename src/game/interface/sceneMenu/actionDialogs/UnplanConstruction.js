@@ -48,7 +48,7 @@ import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useInterval from '~/hooks/useInterval';
-import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
+import { getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   LiveTimer,
@@ -74,29 +74,37 @@ import {
 
   formatTimer,
   getBonusDirection,
+  ActionDialogLoader,
 } from './components';
+import { useAsteroidAndPlot } from '../ActionDialog';
 
 const UnplanConstruction = (props) => {
-  const { asteroid, plot } = props;
+  const { asteroid, plot, isLoading } = useAsteroidAndPlot(props);
   const buildings = useBuildingAssets();
   const { constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, plot?.i);
+  const { captain } = useCrew();
 
   useEffect(() => {
+    if (isLoading) return;
     if (constructionStatus === 'READY_TO_PLAN') {
       props.onClose();
     }
-  }, [constructionStatus]);
+  }, [constructionStatus, isLoading]);
 
+  if (isLoading) return <ActionDialogLoader />;
   return (
     <>
       <ActionDialogHeader
-        {...props}
+        asteroid={asteroid}
+        captain={captain}
+        plot={plot}
         action={{
           actionIcon: <CancelBlueprintIcon />,
           headerBackground: constructionBackground,
           label: 'Cancel Building Site',
         }}
-        status="BEFORE" />
+        status="BEFORE"
+        {...props} />
 
       <BuildingPlanSection
         building={buildings[plot?.building?.assetId]}

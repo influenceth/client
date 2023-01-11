@@ -24,6 +24,16 @@ const api = {
     return response.data;
   },
 
+  getCrewActionItems: async () => {
+    const response = await instance.get('/v1/user/actionitems');
+    return response.data;
+  },
+
+  getCrewPlannedLots: async () => {
+    const response = await instance.get('/v1/user/plans');
+    return response.data;
+  },
+
   getUserAssignments: async () => {
     const response = await instance.get('/v1/user/assignments');
     return response.data;

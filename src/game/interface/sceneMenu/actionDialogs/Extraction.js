@@ -48,7 +48,7 @@ import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useExtractionManager from '~/hooks/useExtractionManager';
 import useInterval from '~/hooks/useInterval';
-import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
+import { getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   LiveTimer,
@@ -80,11 +80,13 @@ import {
   TravelBonusTooltip,
   TimeBonusTooltip,
   MaterialBonusTooltip,
+  ActionDialogLoader,
 } from './components';
 import usePlot from '~/hooks/usePlot';
+import { useAsteroidAndPlot } from '../ActionDialog';
 
 const ExtractionDialog = (props) => {
-  const { asteroid, onClose, plot } = props;
+  const { asteroid, plot, isLoading } = useAsteroidAndPlot(props);
   const resources = useResourceAssets();
   const { extractionStatus, startExtraction, finishExtraction } = useExtractionManager(asteroid?.i, plot?.i);
 
@@ -97,17 +99,13 @@ const ExtractionDialog = (props) => {
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
   const extractionBonus = getCrewAbilityBonus(4, crewMembers);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(
-    () => getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+    if (!asteroid?.i || !plot?.i) return {};
+    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
       { label: 'Travel to destination', plot: plot.i },
       { label: 'Return from destination', plot: 1 },
-    ]),
-    [asteroid.i, crewTravelBonus, plot.i]
-  );
-
-  useEffect(() => {
-    console.log(plot.i, '2053', Asteroid.getLotDistance(asteroid.i, plot.i, 2053), Asteroid.getLotTravelTime(asteroid.i, plot.i, 2053));
-  }, []);
+    ]);
+  }, [asteroid?.i, plot?.i, crewTravelBonus]);
 
   const [amount, setAmount] = useState(0);
   useEffect(() => {
@@ -181,12 +179,6 @@ const ExtractionDialog = (props) => {
     return 'AFTER';
   }, [extractionStatus]);
 
-  // useEffect(() => {
-  //   if (extractionStatus === 'FINISHING') {
-  //     onClose();
-  //   }
-  // }, [extractionStatus]);
-
   const usableSamples = useMemo(() => {
     return (plot?.coreSamples || []).filter((c) => c.remainingYield > 0);
   }, [plot?.coreSamples]);
@@ -202,15 +194,18 @@ const ExtractionDialog = (props) => {
   }, [amount, selectedCoreSample, destinationPlot]);
 
   useEffect(() => {
+    if (isLoading) return;
     if (extractionStatus === 'FINISHING') {
-      onClose();
+      props.onClose();
     }
-  }, [extractionStatus]);
+  }, [extractionStatus, isLoading]);
 
+  if (isLoading) return <ActionDialogLoader />;
   return (
     <>
       <ActionDialogHeader
-        {...props}
+        asteroid={asteroid}
+        plot={plot}
         action={{
           actionIcon: <ExtractionIcon />,
           headerBackground: extractionBackground,
@@ -221,7 +216,8 @@ const ExtractionDialog = (props) => {
         }}
         status={status}
         startTime={plot?.building?.extraction?.startTime}
-        targetTime={plot?.building?.extraction?.completionTime} />
+        targetTime={plot?.building?.extraction?.completionTime}
+        {...props} />
 
       <ExtractSampleSection
         amount={amount}
