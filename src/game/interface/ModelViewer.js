@@ -211,10 +211,18 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
 
       // onload
       function (gltf) {
+        let predefinedCenter;
+        let predefinedCamera;
+
+        const removeNodes = [];
         model.current = gltf.scene || gltf.scenes[0];
         model.current.traverse(function (node) {
           node.receiveShadow = true;
-          if (node.isMesh) {
+          if (node.name === 'Center') {
+            predefinedCenter = node.position.clone();
+          } else if (node.name === 'Camera') {
+            predefinedCamera = node.position.clone();
+          } else if (node.isMesh) {
             // self-shadowing
             if (ENABLE_SHADOWS) {
               node.castShadow = true;
@@ -249,7 +257,8 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
             node.shadow.bias = -0.0001;
             node.intensity /= 8;
           } else if (node.isLight) {
-            console.warn('unexpected light', node);
+            console.warn(`unexpected light (${node.type}) removed: `, node.name);
+            removeNodes.push(node);
           }
 
           // disable frustum culling because several of the models have some issues with the
@@ -257,6 +266,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
           // TODO (enhancement): could potentially try applying this just to animated objects?
           node.frustumCulled = false;
         });
+        removeNodes.forEach((node) => node.removeFromParent());
 
         // resize
         //  (assuming rotating around y, then make sure max x-z dimensions
@@ -292,12 +302,28 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
           }
         });
 
-        // reposition (to put center at origin)
-        bbox.setFromObject(model.current);
-        const center = bbox.getCenter(new Vector3());
+        // reposition (to put center at origin or predefined point)
+        let center;
+        if (predefinedCenter) {
+          center = predefinedCenter.clone().setLength(predefinedCenter.length() * scaleValue);
+        } else {
+          bbox.setFromObject(model.current);
+          center = bbox.getCenter(new Vector3());
+        }
         model.current.position.x += model.current.position.x - center.x;
         model.current.position.y += model.current.position.y - center.y;
         model.current.position.z += model.current.position.z - center.z;
+
+        // if camera is predefined, position camera accordingly
+        if (predefinedCamera) {
+          const cam = predefinedCamera.clone().setLength(predefinedCamera.length() * scaleValue);
+          controls.current.object.position.set(
+            cam.x + model.current.position.x,
+            cam.y + model.current.position.y,
+            cam.z + model.current.position.z
+          );
+          controls.current.update();
+        }
 
         // bbox.setFromObject(model.current);
         // box3h.current = new THREE.Box3Helper(bbox);
@@ -580,7 +606,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   const [modelOverride, setModelOverride] = useState();
   const [modelOverrideName, setModelOverrideName] = useState();
 
-  const [lightsEnabled, setLightsEnabled] = useState(true);
+  const [lightsEnabled, setLightsEnabled] = useState(assetType === 'Building' ? false : true);
   const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState();
   const [rotationEnabled, setRotationEnabled] = useState(assetType === 'Resource');
