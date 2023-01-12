@@ -34,7 +34,7 @@ const useConstructionManager = (asteroidId, plotId) => {
     let status = 'READY_TO_PLAN';
     if (plot?.building) {
       let actionItem = (actionItems || []).find((item) => (
-        item.event.name === 'Construction_Started'
+        item.event.name === 'Dispatcher_ConstructionStart'
         && item.assets.asteroid?.i === asteroidId
         && item.assets.lot?.i === plotId
       ));

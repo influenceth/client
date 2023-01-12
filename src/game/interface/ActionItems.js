@@ -204,7 +204,7 @@ const formatItem = (item) => {
       break;
 
     case 'Dispatcher_CoreSampleStartSampling':
-      const isImprovement = item.assets?.initialYield > 0;
+      const isImprovement = item.assets?.coreSample?.initialYield > 0;
       formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <CoreSampleIcon />;
       formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
       formatted.asteroidId = item.event.returnValues?.asteroidId;
@@ -228,9 +228,9 @@ const formatItem = (item) => {
 
     case 'Dispatcher_ExtractionStart':
       formatted.icon = <ExtractionIcon />;
-      formatted.label = `${Capable.TYPES[item.event.returnValues?.resourceId]?.name || 'Resource'} Extraction`;
-      formatted.asteroidId = item.assets.asteroid.i;
-      formatted.plotId = item.assets.lot.i;
+      formatted.label = `${Inventory.RESOURCES[item.event.returnValues?.resourceId]?.name || 'Resource'} Extraction`;
+      formatted.asteroidId = item.event.returnValues?.asteroidId;
+      formatted.plotId = item.event.returnValues?.lotId;
       formatted.resourceId = item.event.returnValues?.resourceId;
       formatted.onClick = ({ openDialog }) => {
         openDialog('EXTRACT_RESOURCE');
@@ -623,8 +623,8 @@ const ActionItems = () => {
           case 'Dispatcher_ExtractionStart':
             return !pendingTransactions.find((tx) => (
               tx.key === 'FINISH_EXTRACTION'
-              && tx.vars.asteroidId === item.assets.asteroid.i
-              && tx.vars.plotId === item.assets.lot.i
+              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+              && tx.vars.plotId === item.event.returnValues?.lotId
             ));
           case 'Dispatcher_InventoryTransferStart': // TODO: review this
             return !pendingTransactions.find((tx) => (

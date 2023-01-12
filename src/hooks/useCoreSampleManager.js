@@ -36,7 +36,7 @@ const useCoreSampleManager = (asteroidId, plotId) => {
     const activeSample = plot?.coreSamples.find((c) => c.owner === crew?.i && c.status < CoreSample.STATUS_FINISHED);
     if (activeSample) {
       let actionItem = (actionItems || []).find((item) => (
-        item.event.name === 'CoreSample_SamplingStarted'
+        item.event.name === 'Dispatcher_CoreSampleStartSampling'
         && item.event.returnValues.asteroidId === asteroidId
         && item.event.returnValues.lotId === plotId
         && item.event.returnValues.resourceId === activeSample.resourceId

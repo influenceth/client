@@ -835,7 +835,7 @@ const TransferSelectionTableWrapper = styled(PoppableTableWrapper)`
   }
 `;
 const ResourceColorIcon = styled.div`
-  background-color: ${p => p.theme.colors.resources[p.category]};
+  background-color: ${p => p.theme.colors.resources[p.category.replace(/[^a-zA-Z0-9]/g, '')]};
   border-radius: 2px;
   display: inline-block;
   height: 10px;
@@ -917,12 +917,12 @@ const getCapacityUsage = (building, inventories, type) => {
     mass: { max: 0, used: 0, reserved: 0 },
     volume: { max: 0, used: 0, reserved: 0 },
   }
-  if (building && inventories && type !== undefined) {
+  if (building && type !== undefined) {
     let { mass: maxMass, volume: maxVolume } = Inventory.CAPACITIES[building.i][type];
     capacity.mass.max = maxMass * 1e6; // TODO: it seems like this mult should be handled in CAPACITIES
     capacity.volume.max = maxVolume * 1e6;
 
-    const { reservedMass, reservedVolume, mass, volume } = inventories.find((i) => i.type === type) || {};
+    const { reservedMass, reservedVolume, mass, volume } = (inventories || {})[type];
     capacity.mass.used = (mass || 0);
     capacity.mass.reserved = (reservedMass || 0);
     capacity.volume.used = (volume || 0);
@@ -1041,7 +1041,7 @@ const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
     <PopperBody>
       <PoppableTitle>
         <h3>Lot #{(plot?.i || 0).toLocaleString()}</h3>
-        <div>{(options.length || 0).toLocaleString()} Samples at lot</div>
+        <div>{(options.length || 0).toLocaleString()} Available Sample{options.length === 1 ? '' : 's'}</div>
       </PoppableTitle>
       {/* TODO: replace with DataTable? */}
       <PoppableTableWrapper>
@@ -1083,7 +1083,7 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
       .map((plot) => {
         const capacity = Inventory.CAPACITIES[plot.building.assetId][inventoryType];
 
-        const inventory = plot.building?.inventories.find((i) => i.type === inventoryType);
+        const inventory = (plot.building?.inventories || {})[inventoryType];
         const usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0)) / 1e6;
         const usedVolume = ((inventory?.volume || 0) + (inventory?.reservedVolume || 0)) / 1e6;
 
@@ -1667,7 +1667,7 @@ export const ExtractionAmountSection = ({ extractionTime, min, max, amount, reso
   const volume = useMemo(() => amount * resource?.volumePerUnit || 0, [amount, resource]);
   return (
     <Section>
-      <SectionTitle><ChevronRightIcon /> Slider</SectionTitle>
+      <SectionTitle><ChevronRightIcon /> Extraction Amount</SectionTitle>
       <SectionBody>
         <SliderWrapper>
           <SliderInfoRow>

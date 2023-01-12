@@ -174,9 +174,9 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
 
   const originInventory = useMemo(() => {
     if (plot?.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
-      return plot?.building?.inventories.find((i) => i.type === 1);
+      return (plot?.building?.inventories || {})[1];
     } else if (plot?.building?.construction?.status === Construction.STATUS_PLANNED) {
-      return plot?.building?.inventories.find((i) => i.type === 0);
+      return (plot?.building?.inventories || {})[0];
     }
     return null;
   }, [plot?.building?.construction?.status, plot?.building?.inventories]);

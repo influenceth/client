@@ -16,7 +16,8 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
   }, [onSetAction]);
 
   // badge shows full count of *improveable* core samples of *selected* resource on lot (owned by me)
-  // TODO: eventually, this should maybe be owned by anyone
+  // TODO: this should ideally also check for pending use of samples (i.e. by extractor)
+  // TODO (later): eventually, this should maybe be owned by anyone
   const improvableSamples = useMemo(() => (plot?.coreSamples || []).filter((c) => {
     return c.resourceId === Number(resourceMap?.i)
       && (!crew?.i || c.owner === crew?.i)

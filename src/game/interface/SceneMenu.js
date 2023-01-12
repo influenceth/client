@@ -437,7 +437,8 @@ const SceneMenu = (props) => {
           }
   
           // TODO: prob should require an inventory with non-zero contents?
-          if (plot?.building?.inventories?.length > 0) {
+          // (OR be the destination of a delivery)
+          if (plot?.building?.inventories) {
             a.push(actionButtons.SurfaceTransfer);
           }
   

@@ -73,7 +73,7 @@ const SliderInput = ({ min = 0, max = 1, increment = 1, value, onChange }) => {
     if (e.code === 'ArrowRight') incr = increment;
     if (incr !== 0) {
       if (max - min === 1) incr *= 0.01;
-      onChange((v) => v + incr);
+      onChange((v) => Math.min(Math.max(min, v + incr), max));
     }
   }, [value]);
 

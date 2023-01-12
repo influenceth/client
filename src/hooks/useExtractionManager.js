@@ -24,24 +24,27 @@ const useExtractionManager = (asteroidId, plotId) => {
     let current = {
       _crewmates: null,
       completionTime: null,
-      resourceId: null,
-      startTime: null,
-      yield: null,
-
-      // TODO: ...
-      sampleId: null,
       destinationLotId: null,
       destinationInventoryId: null,
+      resourceId: null,
+      sampleId: null,
+      startTime: null,
+      yield: null,
     };
   
     let status = 'READY';
     if (plot?.building?.extraction) {
       let actionItem = (actionItems || []).find((item) => (
-        item.event.name === 'Extraction_Started'
-        && item.assets.asteroid?.i === asteroidId
-        && item.assets.lot?.i === plotId
+        item.event.name === 'Dispatcher_ExtractionStart'
+        && item.event.returnValues.asteroidId === asteroidId
+        && item.event.returnValues.lotId === plotId
       ));
-      if (actionItem) current._crewmates = actionItem.assets.crew.crewmates;
+      if (actionItem) {
+        current._crewmates = actionItem.assets.crew.crewmates;
+        current.destinationLotId = actionItem.event.returnValues.destinationLotId;
+        current.destinationInventoryId = actionItem.event.returnValues.destinationInventoryId;
+        current.sampleId = actionItem.event.returnValues.sampleId;
+      }
       current.completionTime = plot.building.extraction.completionTime;
       current.resourceId = plot.building.extraction.resourceId;
       current.startTime = plot.building.extraction.startTime;
@@ -59,11 +62,11 @@ const useExtractionManager = (asteroidId, plotId) => {
         const startTx = getPendingTx('START_EXTRACTION', payload);
         if (startTx) {
           console.log('START_EXTRACTION', startTx);
+          current.destinationLotId = startTx.vars.destinationLotId;
+          current.destinationInventoryId = startTx.vars.destinationInventoryId;
           current.resourceId = startTx.vars.resourceId;
           current.sampleId = startTx.vars.sampleId;
           current.yield = startTx.vars.amount;
-          current.destinationLotId = startTx.vars.destinationLotId;
-          current.destinationInventoryId = startTx.vars.destinationInventoryId;
           status = 'EXTRACTING';
         }
       }
