@@ -187,14 +187,14 @@ const formatItem = (item) => {
     plotId: null,
     resourceId: null,
     locationDetail: '',
-    completionTime: item.event?.returnValues?.completionTime || 0,
-    ago: (new moment(new Date(1000 * (item.event?.returnValues?.completionTime || 0)))).fromNow(),
+    completionTime: item.data?.completionTime || 0,
+    ago: (new moment(new Date(1000 * (item.data?.completionTime || 0)))).fromNow(),
     onClick: null,
     _item: item
   };
 
   switch(item.event.name) {
-    case 'Asteroid_ScanStarted':
+    case 'Dispatcher_AsteroidStartScan':
       formatted.icon = <ScanAsteroidIcon />;
       formatted.label = 'Asteroid Scan';
       formatted.asteroidId = item.event.returnValues?.asteroidId;
@@ -203,7 +203,7 @@ const formatItem = (item) => {
       };
       break;
 
-    case 'CoreSample_SamplingStarted':
+    case 'Dispatcher_CoreSampleStartSampling':
       const isImprovement = item.assets?.initialYield > 0;
       formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <CoreSampleIcon />;
       formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
@@ -216,7 +216,7 @@ const formatItem = (item) => {
       };
       break;
 
-    case 'Construction_Started':
+    case 'Dispatcher_ConstructionStart':
       formatted.icon = <ConstructIcon />;
       formatted.label = `${Capable.TYPES[item.assets.building.type]?.name || 'Building'} Construction`;
       formatted.asteroidId = item.assets.asteroid.i;
@@ -226,7 +226,7 @@ const formatItem = (item) => {
       };
       break;
 
-    case 'Extraction_Started':
+    case 'Dispatcher_ExtractionStart':
       formatted.icon = <ExtractionIcon />;
       formatted.label = `${Capable.TYPES[item.event.returnValues?.resourceId]?.name || 'Resource'} Extraction`;
       formatted.asteroidId = item.assets.asteroid.i;
@@ -237,7 +237,7 @@ const formatItem = (item) => {
       };
       break;
 
-    case 'Inventory_DeliveryStarted':
+    case 'Dispatcher_InventoryTransferStart':
       formatted.icon = <SurfaceTransferIcon />;
       formatted.label = 'Surface Transfer';
       formatted.asteroidId = item.assets.asteroid.i;
@@ -514,7 +514,8 @@ const ActionItem = ({ data, type }) => {
       // delay dialog opening based on how far camera needs to fly to get there
       let dialogDelay = 0;
       if (currentAsteroid.origin !== item.asteroidId || currentAsteroid.zoomStatus !== 'in') {
-        dialogDelay = 4000;
+        dialogDelay = 3250;
+        if (item.plotId) dialogDelay += 750;
       } else if (currentAsteroid.plot.plotId !== item.plotId) {
         dialogDelay = 400;
       }
@@ -598,30 +599,30 @@ const ActionItems = () => {
     return allReadyItems.filter((item) => {
       if (pendingTransactions) {
         switch (item.event.name) {
-          case 'Asteroid_ScanStarted':
+          case 'Dispatcher_AsteroidStartScan':
             return !pendingTransactions.find((tx) => (
               tx.key === 'FINISH_ASTEROID_SCAN'
               && tx.vars.i === item.event.returnValues?.asteroidId
             ));
-          case 'CoreSample_SamplingStarted':
+          case 'Dispatcher_CoreSampleStartSampling':
             return !pendingTransactions.find((tx) => (
               tx.key === 'FINISH_CORE_SAMPLE'
               && tx.vars.asteroidId === item.event.returnValues?.asteroidId
               && tx.vars.plotId === item.event.returnValues?.lotId
             ));
-          case 'Construction_Started':
+          case 'Dispatcher_ConstructionStart':
             return !pendingTransactions.find((tx) => (
               tx.key === 'FINISH_CONSTRUCTION'
               && tx.vars.asteroidId === item.assets.asteroid.i
               && tx.vars.plotId === item.assets.lot.i
             ));
-          case 'Extraction_Started':
+          case 'Dispatcher_ExtractionStart':
             return !pendingTransactions.find((tx) => (
               tx.key === 'FINISH_EXTRACTION'
               && tx.vars.asteroidId === item.assets.asteroid.i
               && tx.vars.plotId === item.assets.lot.i
             ));
-          case 'Inventory_DeliveryStarted': // TODO: review this
+          case 'Dispatcher_InventoryTransferStart': // TODO: review this
             return !pendingTransactions.find((tx) => (
               tx.key === 'FINISH_DELIVERY'
               && tx.vars.asteroidId === item.assets.asteroid.i

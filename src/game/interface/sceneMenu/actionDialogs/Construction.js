@@ -163,8 +163,8 @@ const Construct = ({ asteroid, plot, ...props }) => {
           crewRequirement: 'start',
         }}
         status={status}
-        startTime={plot?.building?.startTime}
-        targetTime={plot?.building?.completionTime}
+        startTime={plot?.building?.construction?.startTime}
+        targetTime={plot?.building?.construction?.completionTime}
         {...props} />
 
       <BuildingPlanSection

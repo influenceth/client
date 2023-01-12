@@ -33,14 +33,14 @@ export function ActionItemProvider({ children }) {
   const refreshItems = useCallback((nowTime) => {
     setReadyItems(
       (actionItems || [])
-        .filter((i) => i.event?.returnValues?.completionTime < nowTime)
+        .filter((i) => i.data?.completionTime < nowTime)
     );
 
     const unreadyActionItems = (actionItems || [])
-      .filter((i) => i.event?.returnValues?.completionTime >= nowTime)
+      .filter((i) => i.data?.completionTime >= nowTime)
       .map((e) => ({
         ...e,
-        _sortTime: e.event?.returnValues?.completionTime
+        _sortTime: e.data?.completionTime
       }));
     const unstartedPlans = (plannedLots || [])
       .filter((i) => i.gracePeriodEnd >= nowTime)
@@ -75,17 +75,8 @@ export function ActionItemProvider({ children }) {
     }
   }, [nextCompletionTime, refreshItems]);
 
-  // TODO: set timeout to re-eval ready items at next scheduled completionTime
-
-
-  // TODO: split actionitems into ready-to-finish and not
-  // const readyToFinish
-
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining
-
-
-
 
   // TODO: pending and failed transactions are already in context
   //  - ready/unready are only relevant in UI

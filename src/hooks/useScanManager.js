@@ -5,7 +5,7 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from './useActionItems';
 
 const useScanManager = (asteroid) => {
-  const actionItems = useActionItems();
+  const { readyItems } = useActionItems();
   const { chainTime, execute, getStatus } = useContext(ChainTransactionContext);
 
   const payload = useMemo(() => ({
@@ -27,19 +27,6 @@ const useScanManager = (asteroid) => {
     [execute, payload]
   );
 
-  // TODO: vvv remove this once actionItems are working
-  const queryClient = useQueryClient();
-  useEffect(() => {
-    if (asteroid?.scanCompletionTime > chainTime) {
-      setTimeout(() => {
-        queryClient.invalidateQueries([
-          ['asteroids', asteroid.i]
-        ]);
-      }, (asteroid.scanCompletionTime - chainTime + 5) * 1e3);
-    }
-  }, [asteroid?.scanCompletionTime]);
-  // ^^^
-
   const scanStatus = useMemo(() => {
     if (asteroid) {
       if (asteroid.scanned) {
@@ -60,7 +47,7 @@ const useScanManager = (asteroid) => {
   // NOTE: actionItems is not used in this function, but it being updated suggests
   //  that something might have just gone from UNDER_CONSTRUCTION to READY_TO_FINISH
   //  so it is a good time to re-evaluate the status
-  }, [ asteroid, getStatus, payload, actionItems ]);
+  }, [ asteroid, getStatus, payload, readyItems ]);
 
   return {
     startAsteroidScan,

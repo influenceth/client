@@ -173,13 +173,13 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
   }, [deliveryStatus]);
 
   const originInventory = useMemo(() => {
-    if (plot?.building?.constructionStatus === Construction.STATUS_OPERATIONAL) {
+    if (plot?.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
       return plot?.building?.inventories.find((i) => i.type === 1);
-    } else if (plot?.building?.constructionStatus === Construction.STATUS_PLANNED) {
+    } else if (plot?.building?.construction?.status === Construction.STATUS_PLANNED) {
       return plot?.building?.inventories.find((i) => i.type === 0);
     }
     return null;
-  }, [plot?.building?.constructionStatus, plot?.building?.inventories]);
+  }, [plot?.building?.construction?.status, plot?.building?.inventories]);
 
   useEffect(() => {
     if (deliveryStatus === 'FINISHING') {
@@ -202,8 +202,8 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
           crewRequirement: 'start',
         }}
         status={status}
-        startTime={plot?.building?.startTime}
-        targetTime={plot?.building?.completionTime}
+        startTime={plot?.building?.construction?.startTime}
+        targetTime={plot?.building?.construction?.completionTime}
         {...props} />
 
       <ItemSelectionSection

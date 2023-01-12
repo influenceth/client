@@ -41,11 +41,11 @@ const useConstructionManager = (asteroidId, plotId) => {
       if (actionItem) current._crewmates = actionItem.assets.crew.crewmates;
       current.capableId = plot.building.i;
       current.capableType = plot.building.capableType;
-      current.completionTime = plot.building.completionTime;
+      current.completionTime = plot.building.construction?.completionTime;
       current.crewId = plot.occupier;
-      current.startTime = plot.building.startTime;
+      current.startTime = plot.building.construction?.startTime;
 
-      if (plot.building.constructionStatus === Construction.STATUS_PLANNED) {
+      if (plot.building.construction?.status === Construction.STATUS_PLANNED) {
         if (getStatus('START_CONSTRUCTION', payload) === 'pending') {
           status = 'UNDER_CONSTRUCTION';
         } else if (getStatus('UNPLAN_CONSTRUCTION', payload) === 'pending') {
@@ -54,16 +54,16 @@ const useConstructionManager = (asteroidId, plotId) => {
           status = 'PLANNED';
         }
 
-      } else if (plot.building.constructionStatus === Construction.STATUS_UNDER_CONSTRUCTION) {
+      } else if (plot.building.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION) {
         if (getStatus('FINISH_CONSTRUCTION', payload) === 'pending') {
           status = 'FINISHING';
-        } else if (plot.building.completionTime && (plot.building.completionTime < chainTime)) {
+        } else if (plot.building.construction?.completionTime && (plot.building.construction.completionTime < chainTime)) {
           status = 'READY_TO_FINISH';
         } else {
           status = 'UNDER_CONSTRUCTION';
         }
 
-      } else if (plot.building.constructionStatus === Construction.STATUS_OPERATIONAL) {
+      } else if (plot.building.construction?.status === Construction.STATUS_OPERATIONAL) {
         if (getStatus('DECONSTRUCT', payload) === 'pending') {
           status = 'DECONSTRUCTING';
         } else {

@@ -1076,8 +1076,8 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
         && plot.i !== originPlotId // not the origin
         && Inventory.CAPACITIES[plot.building.assetId][inventoryType] // building has inventoryType
         && ( // building is built (or this is construction inventory and building is planned)
-          (inventoryType === 0 && plot.building.constructionStatus === Construction.STATUS_PLANNED)
-          || (inventoryType !== 0 && plot.building.constructionStatus === Construction.STATUS_OPERATIONAL)
+          (inventoryType === 0 && plot.building.construction?.status === Construction.STATUS_PLANNED)
+          || (inventoryType !== 0 && plot.building.construction?.status === Construction.STATUS_OPERATIONAL)
         )
       ))
       .map((plot) => {
@@ -1751,8 +1751,8 @@ export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, s
                 Lot {plot.i.toLocaleString()}{' '}
                 (
                   {buildings[plot.building?.assetId]?.name || 'Empty Lot'}
-                  {plot.building?.constructionStatus === Construction.STATUS_PLANNED && ' - Planned'}
-                  {plot.building?.constructionStatus === Construction.STATUS_UNDER_CONSTRUCTION && ' - Under Construction'}
+                  {plot.building?.construction?.status === Construction.STATUS_PLANNED && ' - Planned'}
+                  {plot.building?.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION && ' - Under Construction'}
                 )
               </b>
             </Subtitle>
