@@ -1,4 +1,4 @@
-import { useContext, useCallback } from 'react';
+import { useContext, useCallback, useEffect } from 'react';
 import { Switch, Route, NavLink as Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -8,14 +8,14 @@ import useStore from '~/hooks/useStore';
 import ButtonPill from '~/components/ButtonPill';
 import Time from '~/components/Time';
 import Account from './launcher/Account';
-import Landing from './launcher/Landing';
 import Settings from './launcher/Settings';
+import Wallets from './launcher/Wallets';
 
 const headerFooterHeight = '100px';
 
 const StyledLauncher = styled.div`
   align-items: center;
-  background-color: black;
+  backdrop-filter: blur(4px);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -211,6 +211,8 @@ const Launcher = (props) => {
   const { displayTime } = useContext(ClockContext);
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
   const forgetWallet = useStore(s => s.dispatchWalletDisconnected);
+  const hideInterface = useStore(s => s.dispatchHideInterface);
+  const showInterface = useStore(s => s.dispatchShowInterface);
   const { wallet, token } = useAuth();
   const { account, disconnect, error, walletIcon, walletName } = wallet;
   const loggedIn = account && token;
@@ -221,27 +223,22 @@ const Launcher = (props) => {
     disconnect();
   }, [disconnect, invalidateToken, token]);
 
+  useEffect(() => {
+    hideInterface();
+    return () => showInterface();
+  }, []);
+
   return (
     <StyledLauncher {...props}>
       <Header>
         <MenuItem>
-          <StyledLink activeClassName="current" to="/launcher/start">
-            <span>{location.pathname !== "/launcher/start" ? "‹ Back" : "Play"}</span>
-          </StyledLink>
-        </MenuItem>
-        <MenuItem>
           <StyledLink activeClassName="current" to="/launcher/account">
-            <span>Account</span>
+            <span>{location.pathname === '/launcher/account' ? "Account" : "‹ Back"}</span>
           </StyledLink>
         </MenuItem>
         <MenuItem>
           <StyledLink activeClassName="current" to="/launcher/settings">
             <span>Settings</span>
-          </StyledLink>
-        </MenuItem>
-        <MenuItem>
-          <StyledLink activeClassName="current" to="/launcher/store">
-            <span>Store</span>
           </StyledLink>
         </MenuItem>
         {loggedIn &&
@@ -254,9 +251,9 @@ const Launcher = (props) => {
       </Header>
       <MainContent>
         <Switch>
-          <Route path="/launcher/start"><Landing /></Route>
-          <Route path="/launcher/settings"><Settings /></Route>
           <Route path="/launcher/account"><Account /></Route>
+          <Route path="/launcher/wallets"><Wallets /></Route>
+          <Route path="/launcher/settings"><Settings /></Route>
         </Switch>
       </MainContent>
       <StyledTime displayTime={displayTime} />

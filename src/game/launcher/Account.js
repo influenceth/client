@@ -1,150 +1,89 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 
 import useAuth from '~/hooks/useAuth';
-import useStore from '~/hooks/useStore';
+import useCrew from '~/hooks/useCrew';
+import ButtonAlt from '~/components/ButtonAlt';
 import ButtonPill from '~/components/ButtonPill';
-import ArgentXLogo from '~/assets/images/wallets/argentx-logo.svg';
-import BraavosLogo from '~/assets/images/wallets/braavos-logo.webp';
-import CartridgeLogo from '~/assets/images/wallets/cartridge-logo.svg';
+import CrewCard from '~/components/CrewCard';
+import InfluenceLogo from '~/assets/images/logo.svg';
+import theme from '~/theme';
 
 const StyledAccount = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px 20px;
+  width: 700px;
+`;
+
+const StyledLogo = styled(InfluenceLogo)`
+  width: 500px;
+`;
+
+const MainContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+`;
+
+const AccountCTA = styled.div`
+  align-items: center;
   background-color: black;
   border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
   border-top: 1px solid ${p => p.theme.colors.mainBorder};
   display: flex;
-  flex-direction: column;
-  padding: 40px;
-  width: 700px;
-
-  & h2 {
-    margin: 0 0 10px 15px;
-  }
-
-  & h3 {
-    border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
-    font-size: 14px;
-    padding: 20px 0 10px 0;
-    text-transform: uppercase;
-  }
-`;
-
-const Cartridge = styled.div`
-  display: flex;
-`;
-
-const External = styled.div`
-  display: flex;
-  justify-content: space-between;
-`;
-
-const WalletOption = styled.div`
-  align-items: center;
-  background-color: ${p => p.theme.colors.contentHighlight};
-  display: flex;
-  flex: 1 1 0;
-  flex-direction: column;
+  font-size: 15px;
+  height: ${p => p.height || 0}px;
   justify-content: space-around;
-  margin: 10px;
-  padding: 25px 20px;
-  position: relative;
-  text-align: center;
-  transition: all 0.3s ease;
+  margin-top: ${p => p.margin || 0}px;
+  padding: 25px 150px;
+`;
 
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 25px),
-    calc(100% - 25px) 100%,
-    0 100%
-  );
+const PlayCTA = styled.div`
+  align-items: center;
+  display: flex;
+  justify-content: space-around;
+  padding-top: 25px;
+`;
+
+const MainButton = styled(ButtonAlt)`
+  color: black;
 
   &:hover {
-    background-color: ${p => p.theme.colors.contentDark};
-    cursor: ${p => p.theme.cursors.active};
+    color: white;
   }
-
-  & span {
-    font-size: 14px;
-    line-height: 20px;
-    margin: 10px 30px 0;
-  }
-
-  & h3 {
-    padding: 10px 0;
-  }
-`;
-
-const StyledArgentXLogo = styled(ArgentXLogo)`
-  height: 55px;
-  margin-top: 10px;
-  width: 55px;
-`;
-
-const StyledBraavosLogo = styled.img`
-  height: 50px;
-  margin-top: 10px;
-  object-fit: contain;
-  width: 50px;
-`;
-
-const StyledCartridgeLogo = styled(CartridgeLogo)`
-  fill: ${p => p.theme.colors.partners.cartridge};
-  height: 65px;
-  margin: 20px;
-`;
-
-const BackButton = styled.div`
-  display: flex;
-  justify-content: center;
-  padding-top: 25px;
 `;
 
 const Account = (props) => {
   const history = useHistory();
-  const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
-  const forgetWallet = useStore(s => s.dispatchWalletDisconnected);
-  const { token, login, wallet } = useAuth();
-  const { account, connectionOptions, disconnect, error, walletIcon, walletName } = wallet;
+  const { token, wallet } = useAuth();
+  const { account } = wallet;
   const loggedIn = account && token;
-
-  const disconnectWallet = useCallback(() => {
-    invalidateToken();
-    forgetWallet();
-    disconnect();
-  }, [disconnect, invalidateToken, token]);
-
-  const loginWith = useCallback(async (withWalletLabel) => {
-    disconnectWallet();
-    const withWallet = connectionOptions.find(v => v.label === withWalletLabel);
-    await withWallet.onClick();
-    login();
-  }, [ wallet ]);
+  const crew = useCrew();
 
   return (
     <StyledAccount>
-      <h2>Login to Influence:</h2>
-      <Cartridge>
-        <WalletOption onClick={() => loginWith('Cartridge')}>
-          <StyledCartridgeLogo />
-          <h3>Cartridge</h3>
-          <span>The premiere Starknet gaming console connecting multiple games with a single login.</span>
-        </WalletOption>
-      </Cartridge>
-      <External>
-        <WalletOption onClick={() => loginWith('Argent X')}>
-          <StyledArgentXLogo />
-          <h3>Argent X</h3>
-        </WalletOption>
-        <WalletOption onClick={() => loginWith('Braavos')}>
-          <StyledBraavosLogo src={BraavosLogo} />
-          <h3>Braavos</h3>
-        </WalletOption>
-      </External>
-      <BackButton>
-        <ButtonPill onClick={() => history.push('/launcher')}>Back</ButtonPill>
-      </BackButton>
+      <StyledLogo />
+      <MainContent>
+        {!loggedIn &&
+          <AccountCTA margin={250}>
+            <span>Account Not Connected</span>
+            <ButtonPill onClick={() => history.push('/launcher/wallets')}>Login</ButtonPill>
+          </AccountCTA>
+        }
+        {loggedIn &&
+          <AccountCTA margin={50} height={250}>
+            {/* {!crew.loading && crew.captain && <CrewCard crew={crew.captain} overlay={false} />} */}
+          </AccountCTA>
+        }
+        <PlayCTA>
+          <MainButton color={theme.colors.main} onClick={() => history.push('/game')}>{loggedIn ? "Play" : "Explore"}</MainButton>
+        </PlayCTA>
+      </MainContent>
     </StyledAccount>
   );
 };

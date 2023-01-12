@@ -35,18 +35,13 @@ export function AuthProvider({ children }) {
   }, [ token, account, dispatchTokenInvalidated ]);
 
   const initiateLogin = useCallback(async () => {
-    console.log('account', account);
-    console.log('token', token);
-    console.log(!!account, !token);
     if (account && !token) {
       try {
         const loginMessage = await api.requestLogin(account);
-        console.log('loginMessage', loginMessage);
         const signature = await wallet.starknet.account.signMessage(loginMessage);
-        console.log('signature', signature);
         const newToken = await api.verifyLogin(account, { signature: signature.join(',') });
-        console.log('newToken', newToken);
         dispatchAuthenticated(newToken);
+        return true;
       } catch (e) {
         console.error(e);
         createAlert({

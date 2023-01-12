@@ -114,7 +114,7 @@ const Game = (props) => {
                   <Router>
                     <Referral />
                     <ClockProvider>
-                      <Redirect exact from="/" to="/launcher/start" />
+                      <Redirect exact from="/" to="/launcher/account" />
                       <Switch>
                         <Route path="/play">
                           <LandingPage />
