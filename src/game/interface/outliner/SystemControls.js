@@ -95,7 +95,7 @@ const SystemControls = (props) => {
       )}
       <IconButton
         data-tip="Settings"
-        onClick={() => history.push('/settings')}
+        onClick={() => history.push('/launcher/settings')}
         borderless>
         <AiOutlineSetting />
       </IconButton>

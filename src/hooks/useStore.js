@@ -222,6 +222,16 @@ const useStore = create(persist((set, get) => ({
       }
     })),
 
+    dispatchHideInterface: () => set(produce(state => {
+      console.log('hiding');
+      state.graphics.hideInterface = true;
+    })),
+
+    dispatchShowInterface: () => set(produce(state => {
+      console.log('showing');
+      state.graphics.hideInterface = false;
+    })),
+
     dispatchTextureQualitySet: (quality) => set(produce(state => {
       state.graphics.textureQuality = quality;
     })),
@@ -358,6 +368,10 @@ const useStore = create(persist((set, get) => ({
 
     dispatchWalletConnected: (walletId) => set(produce(state => {
       state.auth.lastWallet = walletId;
+    })),
+
+    dispatchWalletDisconnected: () => set(produce(state => {
+      state.auth.lastWallet = null;
     })),
 
     dispatchCrewSelected: (crewId) => set(produce(state => {

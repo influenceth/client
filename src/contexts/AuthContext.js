@@ -41,6 +41,7 @@ export function AuthProvider({ children }) {
         const signature = await wallet.starknet.account.signMessage(loginMessage);
         const newToken = await api.verifyLogin(account, { signature: signature.join(',') });
         dispatchAuthenticated(newToken);
+        return true;
       } catch (e) {
         console.error(e);
         createAlert({
@@ -51,7 +52,7 @@ export function AuthProvider({ children }) {
         });
       }
     }
-  }, [account, !token, dispatchAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [account, token, dispatchAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <AuthContext.Provider value={{

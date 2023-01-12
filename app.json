@@ -34,6 +34,10 @@
       "description": "Optional URL modifier to reference Mintsquare's testnet assets (or not if empty) -- i.e. `starknet-testnet/`",
       "required": false
     },
+    "REACT_APP_CHAIN_ID": {
+      "description": "Chain ID for Starknet (i.e. 0x534e5f474f45524c49 for Testnet)",
+      "required": true
+    },
     "REACT_APP_STARKNET_NETWORK": {
       "description": "Base URL for Starknet network.",
       "required": true

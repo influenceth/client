@@ -138,7 +138,7 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
 
   const useName = crew.name || (crew.i && `Crew Member #${crew.i}`) || '';
   const classLabel = Crewmate.getClass(crew.crewClass)?.name;
-  
+
   let imageUrl = silhouette;
   if (crew.i) {
     imageUrl = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crew.i}/image.svg?bustOnly=true`;

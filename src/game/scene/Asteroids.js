@@ -179,7 +179,7 @@ const Asteroids = (props) => {
       if (asteroids[index]) {
         return hoverAsteroid(asteroids[index].i);
       }
-    } 
+    }
     unhoverAsteroid();
   }, 30);  // eslint-disable-line react-hooks/exhaustive-deps
 
