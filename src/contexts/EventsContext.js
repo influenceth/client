@@ -7,22 +7,26 @@ import { Capable } from '@influenceth/sdk';
 import useStore from '~/hooks/useStore';
 import useAuth from '~/hooks/useAuth';
 import api from '~/lib/api';
-import getLogContent from '~/lib/getLogContent';
 
 const getLinkedAsset = (linked, type) => {
-  return linked.find((l) => l.type === type) || {};
+  return linked.find((l) => l.type === type)?.asset || {};
 };
 
 // TODO (enhancement): rather than invalidating, make optimistic updates to cache value directly
 // (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)
 const getInvalidations = (event, returnValues, linked) => {
+  let rewriteEvent;
+  if (event === 'Nameable_NameChanged') {
+    if (getLinkedAsset(linked, 'Asteroid').i) rewriteEvent = 'Asteroid_NameChanged';
+    else rewriteEvent = 'Crewmate_NameChanged';
+  }
   try {
     const map = {
       AsteroidUsed: [
         ['asteroids', 'mintableCrew'],
       ],
       Asteroid_NameChanged: [
-        ['asteroids', returnValues.asteroidId],
+        ['asteroids', returnValues.tokenId],
         ['asteroids', 'search'],
         ['events'], // (to update name in already-fetched events)
         ['watchlist']
@@ -56,7 +60,7 @@ const getInvalidations = (event, returnValues, linked) => {
         ['crewmembers', 'owned'],
       ],
       Crewmate_NameChanged: [
-        ['crewmembers', returnValues.crewId],
+        ['crewmembers', returnValues.tokenId],
         ['crewmembers', 'owned'],
         ['events'], // (to update name in already-fetched events)
       ],
@@ -127,7 +131,8 @@ const getInvalidations = (event, returnValues, linked) => {
       // TODO: would be nice if ^ was a collection of ['plots', asteroid.i, plot.i], so when we invalidate the relevant lot, the "collection" is updated
       // TODO: would be nice to replace the query results using the linked asset we've already been passed (where that is possible)
     }
-    return map[event] || [];
+
+    return map[rewriteEvent || event] || [];
   } catch (e) {/* no-op */}
   
   return [];
