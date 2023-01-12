@@ -135,7 +135,7 @@ const skyboxDefaults = {
     envmap: '/textures/model-viewer/resource_envmap.hdr',
   },
   'Building': {
-    background: '/textures/model-viewer/building_skybox.hdr',
+    background: '/textures/model-viewer/building_skybox.jpg',
     envmap: '/textures/model-viewer/resource_envmap.hdr',
   }
 };
@@ -211,10 +211,18 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
 
       // onload
       function (gltf) {
+        let predefinedCenter;
+        let predefinedCamera;
+
+        const removeNodes = [];
         model.current = gltf.scene || gltf.scenes[0];
         model.current.traverse(function (node) {
           node.receiveShadow = true;
-          if (node.isMesh) {
+          if (node.name === 'Center') {
+            predefinedCenter = node.position.clone();
+          } else if (node.name === 'Camera') {
+            predefinedCamera = node.position.clone();
+          } else if (node.isMesh) {
             // self-shadowing
             if (ENABLE_SHADOWS) {
               node.castShadow = true;
@@ -236,9 +244,9 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
               }
 
               // TODO: should tag this surface in the userData rather than matching by name
-              if (node.name === 'Asteroid001') {
-                node.castShadow = false;
-              }
+              // if (node.name === 'Asteroid001') {
+              //   node.castShadow = false;
+              // }
             }
 
             // only worry about depth on non-transparent materials
@@ -249,7 +257,8 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
             node.shadow.bias = -0.0001;
             node.intensity /= 8;
           } else if (node.isLight) {
-            console.warn('unexpected light', node);
+            console.warn(`unexpected light (${node.type}) removed: `, node.name);
+            removeNodes.push(node);
           }
 
           // disable frustum culling because several of the models have some issues with the
@@ -257,6 +266,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
           // TODO (enhancement): could potentially try applying this just to animated objects?
           node.frustumCulled = false;
         });
+        removeNodes.forEach((node) => node.removeFromParent());
 
         // resize
         //  (assuming rotating around y, then make sure max x-z dimensions
@@ -292,12 +302,28 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
           }
         });
 
-        // reposition (to put center at origin)
-        bbox.setFromObject(model.current);
-        const center = bbox.getCenter(new Vector3());
+        // reposition (to put center at origin or predefined point)
+        let center;
+        if (predefinedCenter) {
+          center = predefinedCenter.clone().setLength(predefinedCenter.length() * scaleValue);
+        } else {
+          bbox.setFromObject(model.current);
+          center = bbox.getCenter(new Vector3());
+        }
         model.current.position.x += model.current.position.x - center.x;
         model.current.position.y += model.current.position.y - center.y;
         model.current.position.z += model.current.position.z - center.z;
+
+        // if camera is predefined, position camera accordingly
+        if (predefinedCamera) {
+          const cam = predefinedCamera.clone().setLength(predefinedCamera.length() * scaleValue);
+          controls.current.object.position.set(
+            cam.x + model.current.position.x,
+            cam.y + model.current.position.y,
+            cam.z + model.current.position.z
+          );
+          controls.current.update();
+        }
 
         // bbox.setFromObject(model.current);
         // box3h.current = new THREE.Box3Helper(bbox);
@@ -378,7 +404,17 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   // );
 }
 
-const Skybox = ({ assetType, onLoaded, overrideBackground, overrideEnvironment }) => {
+const loadTexture = (file, filename = '') => {
+  return new Promise((resolve) => {
+    if (/\.hdr$/i.test(filename || file || '')) {
+      new RGBELoader().load(file, resolve);
+    } else {
+      new THREE.TextureLoader().load(file, resolve);
+    }
+  })
+};
+
+const Skybox = ({ assetType, onLoaded, overrideBackground, overrideBackgroundName, overrideEnvironment, overrideEnvironmentName }) => {
   const { scene } = useThree();
 
   useEffect(() => {
@@ -388,7 +424,7 @@ const Skybox = ({ assetType, onLoaded, overrideBackground, overrideEnvironment }
     let env = overrideEnvironment || skyboxDefaults[assetType].envmap;
 
     let waitingOn = background === env ? 1 : 2;
-    new RGBELoader().load(background, function (texture) {
+    loadTexture(background, overrideBackgroundName).then(function (texture) {
       cleanupTextures.push(texture);
       texture.mapping = EquirectangularReflectionMapping;
       scene.background = texture;
@@ -400,7 +436,7 @@ const Skybox = ({ assetType, onLoaded, overrideBackground, overrideEnvironment }
       if (waitingOn === 0) onLoaded();
     });
     if (background !== env) {
-      new RGBELoader().load(env, function (texture) {
+      loadTexture(env, overrideEnvironmentName).then(function (texture) {
         cleanupTextures.push(texture);
         texture.mapping = EquirectangularReflectionMapping;
         scene.environment = texture;
@@ -570,7 +606,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   const [modelOverride, setModelOverride] = useState();
   const [modelOverrideName, setModelOverrideName] = useState();
 
-  const [lightsEnabled, setLightsEnabled] = useState(true);
+  const [lightsEnabled, setLightsEnabled] = useState(assetType === 'Building' ? false : true);
   const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState();
   const [rotationEnabled, setRotationEnabled] = useState(assetType === 'Resource');
@@ -622,11 +658,11 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
       reader.readAsDataURL(file);
       reader.onload = () => {
         if (uploadType === 'bg') {
-          setBgOverride(reader.result);
           setBgOverrideName(file.name);
+          setBgOverride(reader.result);
         } else if (uploadType === 'env') {
-          setEnvOverride(reader.result);
           setEnvOverrideName(file.name);
+          setEnvOverride(reader.result);
         }
       };
     } else {
@@ -813,7 +849,9 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
             assetType={assetType}
             onLoaded={() => setLoadingSkybox(false)}
             overrideBackground={bgOverride}
+            overrideBackgroundName={bgOverrideName}
             overrideEnvironment={envOverride}
+            overrideEnvironmentName={envOverrideName}
           />
           {/* disabled because this darkens scene too much */}
           {false && assetType === 'Building' && (
