@@ -445,7 +445,7 @@ const OwnedCrew = (props) => {
   const { data: crewAssignmentData, isLoading: assignmentsAreLoading } = useCrewAssignments();
   const queryClient = useQueryClient();
   const { crew: selectedCrew, crews: allCrews, crewMemberMap, loading: crewIsLoading } = useCrew();
-  const { changeActiveCrew, getPendingActiveCrewChange } = useCrewManager();
+  const { changeActiveCrew, getPendingActiveCrewChange, getPendingPurchase } = useCrewManager();
   const history = useHistory();
   const { height, width } = useScreenSize();
   
@@ -585,13 +585,30 @@ const OwnedCrew = (props) => {
     if (width > collapsibleWidth) setInactiveCrewCollapsed(false);
   }, [width]);
 
-  // TODO (enhancement): also show as saving if pending purchase or initialization (that will result in a slot being taken)
-  //  probably not high priority b/c user would have had to navigate back here mid-transaction to create an issue
   useEffect(() => {
     if (!token || isDataLoading) return;
 
+    console.log(crew);
+
+    const pendingPurchase = getPendingPurchase();
     const pendingChange = getPendingActiveCrewChange();
-    if (pendingChange) {
+    if (pendingPurchase) {
+      console.log('pendingPurchase', pendingPurchase);
+      setSaving(true);
+      dispatch({
+        type: 'INITIALIZE',
+        crew: [
+          ...(crew || []),
+          {
+            ...(pendingPurchase.vars.features || {}),
+            name: pendingPurchase.vars.name,
+            traits: Object.values(pendingPurchase.vars.traits || {}).map((t) => t.i),
+            activeSlot: activeCrew?.length || 0
+          }
+        ],
+        pristine: false
+      });
+    } else if (pendingChange) {
       setSaving(true);
       if (crew?.length > 0) {
         dispatch({
@@ -622,12 +639,15 @@ const OwnedCrew = (props) => {
         pristine: true
       });
     }
-  }, [isDataLoading, crew?.length, getPendingActiveCrewChange, saving]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isDataLoading, crew?.length, getPendingActiveCrewChange, getPendingPurchase, saving]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // if crew is loaded but there is new crew, jump straight into recruitment
+  // if crew is loaded but there is new crew (and no pending tx), jump straight into recruitment
   useEffect(() => {
     if (!isDataLoading && crew.length === 0) {
-      handleRecruit();
+      console.log(getPendingActiveCrewChange(), getPendingPurchase());
+      if (!(getPendingActiveCrewChange() || getPendingPurchase())) {
+        handleRecruit();
+      }
     }
   }, [isDataLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 

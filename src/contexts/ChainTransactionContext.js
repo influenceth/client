@@ -136,7 +136,7 @@ const getContracts = (account, queryClient) => ({
 
       return account.execute(calls);
     },
-    isEqual: (txVars, vars) => txVars.sessionId === vars.sessionId,
+    isEqual: () => true,
   },
   'NAME_CREW': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
