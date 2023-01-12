@@ -1702,28 +1702,9 @@ export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, s
   const buildings = useBuildingAssets();
   const chainTime = useChainTime();
 
-  const timer = useRef();
-  const [progress, setProgress] = useState(0);
-  const updateProgress = useCallback(() => {
-    if (startTime && targetTime) {
-      const newProgress = Math.min(100, 100 * (chainTime - startTime) / (targetTime - startTime));
-      setProgress(newProgress);
-
-      // NOTE: targetTime, startTime are in seconds, so below is already 1/1000th of progress interval
-      // (which is appropriate since displayed in 0.1% increments)
-      if (newProgress < 100) {
-        timer.current = setTimeout(updateProgress, Math.max(10, Math.ceil(targetTime - startTime)));
-      }
-    } else {
-      setProgress(0);
-    }
-  }, [startTime, targetTime]);
-  useEffect(() => {
-    updateProgress();
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
-    }
-  }, [updateProgress]);
+  const progress = useMemo(() => {
+    return startTime && targetTime ? Math.min(100, 100 * (chainTime - startTime) / (targetTime - startTime)) : 0;
+  }, [chainTime, startTime, targetTime]);
   
   return (
     <>

@@ -337,7 +337,11 @@ const formatTx = (item) => {
       formatted.icon = <CrewIcon />;
       formatted.label = 'Mint Crewmate';
       formatted.onClick = ({ history }) => {
-        history.push(`/owned-crew`);
+        if (item.vars.sessionId) {
+          history.push(`/crew-assignment/${item.vars.sessionId}/create`);
+        } else {
+          history.push(`/owned-crew`);
+        }
       };
       break;
     
@@ -513,10 +517,10 @@ const ActionItem = ({ data, type }) => {
     if (item.onClick) {
       // delay dialog opening based on how far camera needs to fly to get there
       let dialogDelay = 0;
-      if (currentAsteroid.origin !== item.asteroidId || currentAsteroid.zoomStatus !== 'in') {
+      if (item.asteroidId && (currentAsteroid.origin !== item.asteroidId || currentAsteroid.zoomStatus !== 'in')) {
         dialogDelay = 3250;
         if (item.plotId) dialogDelay += 750;
-      } else if (currentAsteroid.plot.plotId !== item.plotId) {
+      } else if (item.plotId && currentAsteroid.plot?.plotId !== item.plotId) {
         dialogDelay = 400;
       }
       setTimeout(() => {
@@ -687,7 +691,9 @@ const ActionItems = () => {
   {/* TODO: the whole left side of the hud should potentially be in the same container so less absolute positioning */}
   return (
     <ActionItemContainer>
-      {(displayItems || []).map(({ transition, type, ...item }) => <ActionItem key={item.key} data={item} type={type} />)}
+      {(displayItems || []).map(({ transition, type, ...item }) => (
+        <ActionItem key={`${type}_${item.key}`} data={item} type={type} />
+      ))}
     </ActionItemContainer>
   );
 };
