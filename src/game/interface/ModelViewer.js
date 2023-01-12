@@ -244,9 +244,9 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
               }
 
               // TODO: should tag this surface in the userData rather than matching by name
-              if (node.name === 'Asteroid001') {
-                node.castShadow = false;
-              }
+              // if (node.name === 'Asteroid001') {
+              //   node.castShadow = false;
+              // }
             }
 
             // only worry about depth on non-transparent materials
