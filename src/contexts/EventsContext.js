@@ -187,19 +187,24 @@ export function EventsProvider({ children }) {
       }
     });
 
-    transformedEvents.forEach(e => {
-      if (!skipInvalidations) {
-        // console.log('e.event', e.event);
-        const invalidations = [
-          ...getInvalidations(e.event, e.returnValues, e.linked),
-          ...(e.invalidations || [])
-        ];
-        // console.log(e.event, e.returnValues, invalidations);
-        invalidations.forEach((i) => {
-          queryClient.invalidateQueries(...i);
-        });
-      }
-    });
+    // TODO: this timeout can be removed if/when we start optimistically updating query cache from
+    //        the event's linked assets
+    // (hopefully cure any race conditions)
+    setTimeout(() => {
+      transformedEvents.forEach(e => {
+        if (!skipInvalidations) {
+          // console.log('e.event', e.event);
+          const invalidations = [
+            ...getInvalidations(e.event, e.returnValues, e.linked),
+            ...(e.invalidations || [])
+          ];
+          // console.log(e.event, e.returnValues, invalidations);
+          invalidations.forEach((i) => {
+            queryClient.invalidateQueries(...i);
+          });
+        }
+      });
+    }, 1000);
 
     setEvents((prevEvents) => uniq([
       ...transformedEvents,
