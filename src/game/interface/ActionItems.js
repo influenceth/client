@@ -36,7 +36,7 @@ const TRANSITION_TIME = 400;
 const ITEM_WIDTH = `400px`;
 
 const ActionItemContainer = styled.div`
-  pointer-events: all;
+  pointer-events: none;
   position: absolute;
   left: 0;
   top: 120px;
@@ -90,6 +90,7 @@ const Dismissal = styled.div`
 const Progress = styled.div``;
 const ActionItemRow = styled.div`
   align-items: center;
+  pointer-events: all;
   ${p => {
     if (p.transitionOut === 'right') {
       return `
