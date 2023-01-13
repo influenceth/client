@@ -48,7 +48,7 @@ import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useInterval from '~/hooks/useInterval';
-import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
+import { getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   LiveTimer,
@@ -79,44 +79,31 @@ import {
   getTripDetails,
   TransportBonusTooltip,
   TimeBonusTooltip,
+  ActionDialogLoader,
 } from './components';
 
-const Deconstruct = (props) => {
-  const { asteroid, plot } = props;
-  const buildings = useBuildingAssets();
+const Deconstruct = ({ asteroid, plot, ...props }) => {
   const resources = useResourceAssets();
   const { constructionStatus, deconstruct } = useConstructionManager(asteroid?.i, plot?.i);
   const { crew, crewMemberMap } = useCrew();
-
-  const destinationPlot = {
-    i: 10,
-    building: buildings[1]
-  };
   
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
+  const captain = crewMembers[0];
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
-  const transportBonus = crewTravelBonus;
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => 
-    getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+    if (!asteroid?.i || !plot?.i) return {};
+    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
       { label: 'Travel to destination', plot: plot.i },
-      { label: 'Inventory Transport', plot: destinationPlot.i },
       { label: 'Return from destination', plot: 1 },
     ])
-  , [asteroid.i, crewTravelBonus, plot.i]);
+  }, [asteroid?.i, plot?.i, crewTravelBonus]);
 
-  const lotDistance = Asteroid.getLotDistance(asteroid.i, plot.i, 1); // TODO: ...
-  const constructionTime = Construction.getConstructionTime(plot.building.assetId, 1);
-  const transportTime = Asteroid.getLotTravelTime(asteroid.i, plot.i, 1, crewTravelBonus.totalBonus); // TODO: ...
+  const constructionTime = Construction.getConstructionTime(plot?.building?.assetId, 1);
 
   const stats = useMemo(() => [
     { label: 'Returned Volume', value: '0 m³', direction: 0 },    // TODO: ...
     { label: 'Returned Mass', value: '0 tonnes', direction: 0 },   // TODO: ...
-    {
-      label: 'Transfer Distance',
-      value: `${Math.ceil(lotDistance)} km`,
-      direction: 0
-    },
     { 
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
@@ -133,24 +120,16 @@ const Deconstruct = (props) => {
       label: 'Deconstruction Time',
       value: formatTimer(constructionTime),
       direction: 0
-    },
-    {
-      label: 'Transport Time',
-      value: formatTimer(transportTime),
-      direction: getBonusDirection(transportBonus),
-      tooltip: crewTravelBonus.totalBonus !== 1 && (
-        <TimeBonusTooltip
-          bonus={crewTravelBonus}
-          title="Transport Time"
-          totalTime={transportTime}
-          crewRequired="start" />
-      )
-    },
+    }
   ], []);
 
   useEffect(() => {
-    if (constructionStatus === 'READY_TO_PLAN') {
+    if (constructionStatus === 'PLANNED') {
       props.onClose();
+      // TODO: 
+      // if materials are recovered, open surface transport dialog w/ all materials selected
+      // else, open "unplan" dialog
+      // props.onSetAction('CONSTRUCT');
     }
   }, [constructionStatus]);
 
@@ -159,7 +138,9 @@ const Deconstruct = (props) => {
   return (
     <>
       <ActionDialogHeader
-        {...props}
+        asteroid={asteroid}
+        captain={captain}
+        plot={plot}
         action={{
           actionIcon: <DeconstructIcon />,
           headerBackground: constructionBackground,
@@ -168,18 +149,10 @@ const Deconstruct = (props) => {
           completeStatus: 'Complete',
           crewRequirement: 'start',
         }}
-        status="BEFORE" />
+        status="BEFORE"
+        {...props} />
 
       <DeconstructionMaterialsSection label="Recovered Materials" resources={resources} status={status} />
-
-      {status !== 'AFTER' && (
-        <DestinationPlotSection
-          asteroid={asteroid}
-          originPlot={plot}
-          destinationPlot={destinationPlot}
-          futureFlag
-          status={status} />
-      )}
 
       <ActionDialogStats stats={stats} status="BEFORE" />
       <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />

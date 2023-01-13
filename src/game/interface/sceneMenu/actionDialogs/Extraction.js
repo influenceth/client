@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fi';
 import { RingLoader } from 'react-spinners';
 import DataTable, { createTheme } from 'react-data-table-component';
-import { Crew, Asteroid, Extraction, Lot, Inventory } from '@influenceth/sdk';
+import { CoreSample, Crew, Asteroid, Extraction, Lot, Inventory } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
@@ -48,7 +48,7 @@ import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useExtractionManager from '~/hooks/useExtractionManager';
 import useInterval from '~/hooks/useInterval';
-import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
+import { getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   LiveTimer,
@@ -80,43 +80,58 @@ import {
   TravelBonusTooltip,
   TimeBonusTooltip,
   MaterialBonusTooltip,
+  ActionDialogLoader,
 } from './components';
 import usePlot from '~/hooks/usePlot';
 
-const ExtractionDialog = (props) => {
-  const { asteroid, onClose, plot } = props;
+const ExtractionDialog = ({ asteroid, plot, ...props }) => {
   const resources = useResourceAssets();
-  const { extractionStatus, startExtraction, finishExtraction } = useExtractionManager(asteroid?.i, plot?.i);
-
+  const { currentExtraction, extractionStatus, startExtraction, finishExtraction } = useExtractionManager(asteroid?.i, plot?.i);
   const { crew, crewMemberMap } = useCrew();
+  const { data: currentExtractionDestinationPlot } = usePlot(asteroid.i, currentExtraction?.destinationLotId);
 
+  const [amount, setAmount] = useState(0);
   const [destinationPlot, setDestinationPlot] = useState();
   const [selectedCoreSample, setSelectedCoreSample] = useState();
   
-  const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
+  const crewMembers = currentExtraction?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
+  const captain = crewMembers[0];
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
   const extractionBonus = getCrewAbilityBonus(4, crewMembers);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(
-    () => getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
-      { label: 'Travel to destination', plot: plot.i },
-      { label: 'Return from destination', plot: 1 },
-    ]),
-    [asteroid.i, crewTravelBonus, plot.i]
-  );
+  const usableSamples = useMemo(() => {
+    return (plot?.coreSamples || []).filter((c) => c.remainingYield > 0 && c.status >= CoreSample.STATUS_FINISHED);
+  }, [plot?.coreSamples]);
 
-  useEffect(() => {
-    console.log(plot.i, '2053', Asteroid.getLotDistance(asteroid.i, plot.i, 2053), Asteroid.getLotTravelTime(asteroid.i, plot.i, 2053));
+  const selectCoreSample = useCallback((sample) => {
+    setSelectedCoreSample(sample);
+    setAmount(sample.remainingYield);
   }, []);
 
-  const [amount, setAmount] = useState(0);
   useEffect(() => {
-    if (selectedCoreSample) {
-      setAmount(selectedCoreSample.remainingYield);
-    } else {
-      setAmount(0);
+    if (usableSamples.length === 1 && !selectedCoreSample && !currentExtraction) {
+      selectCoreSample(usableSamples[0]);
     }
-  }, [selectedCoreSample]);
+  }, [!selectedCoreSample, usableSamples]);
+
+  // handle "currentExtraction" state
+  useEffect(() => {
+    if (currentExtraction) {
+      if (plot?.coreSamples) {
+        const currentSample = plot.coreSamples.find((c) => c.resourceId === currentExtraction.resourceId && c.sampleId === currentExtraction.sampleId);
+        if (currentSample) {
+          setSelectedCoreSample(currentSample);
+          setAmount(currentExtraction.yield);
+        }
+      }
+    }
+  }, [currentExtraction, plot?.coreSamples]);
+
+  useEffect(() => {
+    if (currentExtractionDestinationPlot) {
+      setDestinationPlot(currentExtractionDestinationPlot);
+    }
+  }, [currentExtractionDestinationPlot]);
 
   const resource = useMemo(() => {
     if (selectedCoreSample) return resources[selectedCoreSample.resourceId];
@@ -134,6 +149,14 @@ const ExtractionDialog = (props) => {
     }
     return 0;
   }, [amount, selectedCoreSample]);
+
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+    if (!asteroid?.i || !plot?.i) return {};
+    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
+      { label: 'Travel to destination', plot: plot.i },
+      { label: 'Return from destination', plot: 1 },
+    ]);
+  }, [asteroid?.i, plot?.i, crewTravelBonus]);
 
   const stats = useMemo(() => ([
     {
@@ -181,36 +204,23 @@ const ExtractionDialog = (props) => {
     return 'AFTER';
   }, [extractionStatus]);
 
-  // useEffect(() => {
-  //   if (extractionStatus === 'FINISHING') {
-  //     onClose();
-  //   }
-  // }, [extractionStatus]);
-
-  const usableSamples = useMemo(() => {
-    return (plot?.coreSamples || []).filter((c) => c.remainingYield > 0);
-  }, [plot?.coreSamples]);
-
-  useEffect(() => {
-    if (usableSamples.length === 1 && !selectedCoreSample) {
-      setSelectedCoreSample(usableSamples[0]);
-    }
-  }, [!selectedCoreSample, usableSamples]);
-
   const onStartExtraction = useCallback(() => {
     startExtraction(amount, selectedCoreSample, destinationPlot);
   }, [amount, selectedCoreSample, destinationPlot]);
 
   useEffect(() => {
     if (extractionStatus === 'FINISHING') {
-      onClose();
+      props.onClose();
     }
   }, [extractionStatus]);
 
+  console.log();
   return (
     <>
       <ActionDialogHeader
-        {...props}
+        asteroid={asteroid}
+        captain={captain}
+        plot={plot}
         action={{
           actionIcon: <ExtractionIcon />,
           headerBackground: extractionBackground,
@@ -221,13 +231,14 @@ const ExtractionDialog = (props) => {
         }}
         status={status}
         startTime={plot?.building?.extraction?.startTime}
-        targetTime={plot?.building?.extraction?.completionTime} />
+        targetTime={plot?.building?.extraction?.completionTime}
+        {...props} />
 
       <ExtractSampleSection
         amount={amount}
         plot={plot}
         resources={resources}
-        onSelectSample={setSelectedCoreSample}
+        onSelectSample={selectCoreSample}
         selectedSample={selectedCoreSample}
         status={status}
         usableSamples={usableSamples} />
@@ -260,7 +271,7 @@ const ExtractionDialog = (props) => {
       <ActionDialogFooter
         {...props}
         buttonsLoading={extractionStatus === 'FINISHING' || undefined}
-        disabled={amount === 0}
+        goDisabled={!destinationPlot || !selectedCoreSample || amount === 0}
         finalizeLabel="Complete"
         goLabel="Begin Extraction"
         onFinalize={finishExtraction}

@@ -6,6 +6,7 @@ import {
   BiUndo as UndoIcon,
   BiRedo as RedoIcon
 } from 'react-icons/bi';
+import LoadingAnimation from 'react-spinners/PuffLoader';
 
 import Button from '~/components/Button';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
@@ -625,8 +626,7 @@ const CrewAssignmentCreate = (props) => {
   ]);
 
   // hide until loaded
-  if (!storyState || !featureOptions || !rewards) return null;
-  if (featureOptions.length === 0) return null;
+  const loading = (!storyState || !featureOptions || !rewards || featureOptions.length === 0);
 
   // draft crew
   const crewmate = { ...featureOptions[featureSelection] };
@@ -638,295 +638,304 @@ const CrewAssignmentCreate = (props) => {
       edgeToEdge
       title="Crew Assignments"
       width="max">
-      <ImageryContainer src={storyState.completionImage || storyState.image}>
-        <div />
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
-          {finalized && (
-            <TitleBox>
-              <Title>Crewmate Created</Title>
-            </TitleBox>
-          )}
-          <div>
-            <CardWrapper>
-              <CardContainer>
-                <div>
-                  <CrewCard
-                    crew={crewmate}
-                    fontSize="25px"
-                    hideCollectionInHeader
-                    hideFooter
-                    noWrapName={finalized}
-                    showClassInHeader={finalized} />
-                </div>
-              </CardContainer>
-              {!finalized && (
-                <Traits>
-                  {crewmate.crewClass && (
-                    <TraitRow>
-                      <Trait side="left" isCrewClass>
-                        <div>
-                          <CrewClassIcon crewClass={crewmate.crewClass} overrideColor="inherit" />
-                        </div>
-                        <article>
-                          <h4>{Crewmate.getClass(crewmate.crewClass).name}</h4>
-                          <div>{Crewmate.getClass(crewmate.crewClass).description}</div>
-                        </article>
-                        <TipHolder>
-                          <TriangleTip strokeWidth="1" rotate="90" />
-                        </TipHolder>
-                      </Trait>
-
-                      <TraitSpacer />
-
-                      <Trait side="right" isCrewClass>
-                        <div>
-                          <AdalianIcon />
-                        </div>
-                        <article>
-                          <h4>Adalian Citizen</h4>
-                          <div>Completed secondary education and entered adulthood in the Adalian System, after the dismantling of the Arvad.</div>
-                        </article>
-                        <TipHolder>
-                          <TriangleTip strokeWidth="1" rotate="-90" />
-                        </TipHolder>
-                      </Trait>
-                    </TraitRow>
-                  )}
-
-                  <TraitRow>
-                    <Trait side="left">
-                      <div>
-                        <CrewTraitIcon trait={rewards[traitDispOrder[0]].id} type={rewards[traitDispOrder[0]].type} />
-                      </div>
-                      <article>
-                        <h4>{rewards[traitDispOrder[0]].name}</h4>
-                        <div>{rewards[traitDispOrder[0]].description}</div>
-                      </article>
-                      <TipHolder>
-                        <TriangleTip strokeWidth="1" rotate="90" />
-                      </TipHolder>
-                    </Trait>
-
-                    <TraitSpacer />
-
-                    <Trait side="right">
-                      <div>
-                        <CrewTraitIcon trait={rewards[traitDispOrder[1]].id} type={rewards[traitDispOrder[1]].type} />
-                      </div>
-                      <article>
-                        <h4>{rewards[traitDispOrder[1]].name}</h4>
-                        <div>{rewards[traitDispOrder[1]].description}</div>
-                      </article>
-                      <TipHolder>
-                        <TriangleTip strokeWidth="1" rotate="-90" />
-                      </TipHolder>
-                    </Trait>
-                  </TraitRow>
-
-                  <TraitRow>
-                    <Trait side="left">
-                      <div>
-                        <CrewTraitIcon trait={rewards[traitDispOrder[2]].id} type={rewards[traitDispOrder[2]].type} />
-                      </div>
-                      <article>
-                        <h4>{rewards[traitDispOrder[2]].name}</h4>
-                        <div>{rewards[traitDispOrder[2]].description}</div>
-                      </article>
-                      <TipHolder side="left">
-                        <TriangleTip strokeWidth="1" rotate="90" />
-                      </TipHolder>
-                    </Trait>
-
-                    <TraitSpacer />
-
-                    <Trait side="right">
-                      <div>
-                        <CrewTraitIcon trait={rewards[traitDispOrder[3]].id} type={rewards[traitDispOrder[3]].type} />
-                      </div>
-                      <article>
-                        <h4>{rewards[traitDispOrder[3]].name}</h4>
-                        <div>{rewards[traitDispOrder[3]].description}</div>
-                      </article>
-                      <TipHolder side="right">
-                        <TriangleTip strokeWidth="1" rotate="-90" />
-                      </TipHolder>
-                    </Trait>
-                  </TraitRow>
-                </Traits>
+      {loading && (
+        <div style={{ position: 'absolute', left: 'calc(50% - 30px)', top: 'calc(50% - 30px)' }}>
+          <LoadingAnimation color="white" loading />
+        </div>
+      )}
+      {!loading && (
+        <>
+          <ImageryContainer src={storyState.completionImage || storyState.image}>
+            <div />
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
+              {finalized && (
+                <TitleBox>
+                  <Title>Crewmate Created</Title>
+                </TitleBox>
               )}
-            </CardWrapper>
+              <div>
+                <CardWrapper>
+                  <CardContainer>
+                    <div>
+                      <CrewCard
+                        crew={crewmate}
+                        fontSize="25px"
+                        hideCollectionInHeader
+                        hideFooter
+                        noWrapName={finalized}
+                        showClassInHeader={finalized} />
+                    </div>
+                  </CardContainer>
+                  {!finalized && (
+                    <Traits>
+                      {crewmate.crewClass && (
+                        <TraitRow>
+                          <Trait side="left" isCrewClass>
+                            <div>
+                              <CrewClassIcon crewClass={crewmate.crewClass} overrideColor="inherit" />
+                            </div>
+                            <article>
+                              <h4>{Crewmate.getClass(crewmate.crewClass).name}</h4>
+                              <div>{Crewmate.getClass(crewmate.crewClass).description}</div>
+                            </article>
+                            <TipHolder>
+                              <TriangleTip strokeWidth="1" rotate="90" />
+                            </TipHolder>
+                          </Trait>
 
+                          <TraitSpacer />
+
+                          <Trait side="right" isCrewClass>
+                            <div>
+                              <AdalianIcon />
+                            </div>
+                            <article>
+                              <h4>Adalian Citizen</h4>
+                              <div>Completed secondary education and entered adulthood in the Adalian System, after the dismantling of the Arvad.</div>
+                            </article>
+                            <TipHolder>
+                              <TriangleTip strokeWidth="1" rotate="-90" />
+                            </TipHolder>
+                          </Trait>
+                        </TraitRow>
+                      )}
+
+                      <TraitRow>
+                        <Trait side="left">
+                          <div>
+                            <CrewTraitIcon trait={rewards[traitDispOrder[0]].id} type={rewards[traitDispOrder[0]].type} />
+                          </div>
+                          <article>
+                            <h4>{rewards[traitDispOrder[0]].name}</h4>
+                            <div>{rewards[traitDispOrder[0]].description}</div>
+                          </article>
+                          <TipHolder>
+                            <TriangleTip strokeWidth="1" rotate="90" />
+                          </TipHolder>
+                        </Trait>
+
+                        <TraitSpacer />
+
+                        <Trait side="right">
+                          <div>
+                            <CrewTraitIcon trait={rewards[traitDispOrder[1]].id} type={rewards[traitDispOrder[1]].type} />
+                          </div>
+                          <article>
+                            <h4>{rewards[traitDispOrder[1]].name}</h4>
+                            <div>{rewards[traitDispOrder[1]].description}</div>
+                          </article>
+                          <TipHolder>
+                            <TriangleTip strokeWidth="1" rotate="-90" />
+                          </TipHolder>
+                        </Trait>
+                      </TraitRow>
+
+                      <TraitRow>
+                        <Trait side="left">
+                          <div>
+                            <CrewTraitIcon trait={rewards[traitDispOrder[2]].id} type={rewards[traitDispOrder[2]].type} />
+                          </div>
+                          <article>
+                            <h4>{rewards[traitDispOrder[2]].name}</h4>
+                            <div>{rewards[traitDispOrder[2]].description}</div>
+                          </article>
+                          <TipHolder side="left">
+                            <TriangleTip strokeWidth="1" rotate="90" />
+                          </TipHolder>
+                        </Trait>
+
+                        <TraitSpacer />
+
+                        <Trait side="right">
+                          <div>
+                            <CrewTraitIcon trait={rewards[traitDispOrder[3]].id} type={rewards[traitDispOrder[3]].type} />
+                          </div>
+                          <article>
+                            <h4>{rewards[traitDispOrder[3]].name}</h4>
+                            <div>{rewards[traitDispOrder[3]].description}</div>
+                          </article>
+                          <TipHolder side="right">
+                            <TriangleTip strokeWidth="1" rotate="-90" />
+                          </TipHolder>
+                        </Trait>
+                      </TraitRow>
+                    </Traits>
+                  )}
+                </CardWrapper>
+
+                {!finalized && (
+                  <NameSection>
+                    <TextInput
+                      disabled={finalizing}
+                      initialValue={name}
+                      maxlength={31}
+                      onChange={handleNameChange}
+                      pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                      placeholder="Enter Name" />
+                    <RerollContainer>
+                      <IconButton
+                        onClick={rollBack}
+                        disabled={finalizing || featureSelection === 0}
+                        style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
+                        <UndoIcon />
+                      </IconButton>
+
+                      <Button
+                        disabled={finalizing}
+                        lessTransparent
+                        onClick={rerollAppearance}>Randomize Appearance</Button>
+
+                      <IconButton
+                        onClick={rollForward}
+                        disabled={finalizing || featureSelection === featureOptions.length - 1}
+                        style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
+                        <RedoIcon />
+                      </IconButton>
+                    </RerollContainer>
+                  </NameSection>
+                )}
+                {finalized && (
+                  <RecruitSection>
+                    {!process.env.REACT_APP_HIDE_SOCIAL && (
+                      <TwitterButton onClick={shareOnTwitter}>
+                        <span>Share on Twitter</span>
+                        <TwitterIcon />
+                      </TwitterButton>
+                    )}
+                    <CopyReferralLink>
+                      <LinkWithIcon>
+                        <LinkIcon />
+                        <span>Copy Recruitment Link</span>
+                      </LinkWithIcon>
+                    </CopyReferralLink>
+                  </RecruitSection>
+                )}
+              </div>
+              {/* NOTE: the below empty div's are to help with flex spacing on tall screens */}
+              <div />
+              <div />
+            </div>
+          </ImageryContainer>
+
+          <FinishContainer>
             {!finalized && (
-              <NameSection>
-                <TextInput
-                  disabled={finalizing}
-                  initialValue={name}
-                  maxlength={31}
-                  onChange={handleNameChange}
-                  pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
-                  placeholder="Enter Name" />
-                <RerollContainer>
-                  <IconButton
-                    onClick={rollBack}
-                    disabled={finalizing || featureSelection === 0}
-                    style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
-                    <UndoIcon />
-                  </IconButton>
-
-                  <Button
-                    disabled={finalizing}
-                    lessTransparent
-                    onClick={rerollAppearance}>Randomize Appearance</Button>
-
-                  <IconButton
-                    onClick={rollForward}
-                    disabled={finalizing || featureSelection === featureOptions.length - 1}
-                    style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
-                    <RedoIcon />
-                  </IconButton>
-                </RerollContainer>
-              </NameSection>
+              <>
+                <Button
+                  onClick={() => setTraitDetailsOpen(true)}
+                  style={{ width: 'auto' }}>
+                  Review Traits
+                </Button>
+                <Button
+                  disabled={finalizing || !name}
+                  loading={finalizing}
+                  onClick={confirmFinalize}>
+                  Finalize
+                </Button>
+              </>
             )}
             {finalized && (
-              <RecruitSection>
-                {!process.env.REACT_APP_HIDE_SOCIAL && (
-                  <TwitterButton onClick={shareOnTwitter}>
-                    <span>Share on Twitter</span>
-                    <TwitterIcon />
-                  </TwitterButton>
-                )}
-                <CopyReferralLink>
-                  <LinkWithIcon>
-                    <LinkIcon />
-                    <span>Copy Recruitment Link</span>
-                  </LinkWithIcon>
-                </CopyReferralLink>
-              </RecruitSection>
+              <>
+                <span />
+                <Button
+                  onClick={handleFinish}>
+                  Finish
+                </Button>
+              </>
             )}
-          </div>
-          {/* NOTE: the below empty div's are to help with flex spacing on tall screens */}
-          <div />
-          <div />
-        </div>
-      </ImageryContainer>
+          </FinishContainer>
 
-      <FinishContainer>
-        {!finalized && (
-          <>
-            <Button
-              onClick={() => setTraitDetailsOpen(true)}
-              style={{ width: 'auto' }}>
-              Review Traits
-            </Button>
-            <Button
-              disabled={finalizing || !name}
-              loading={finalizing}
-              onClick={confirmFinalize}>
-              Finalize
-            </Button>
-          </>
-        )}
-        {finalized && (
-          <>
-            <span />
-            <Button
-              onClick={handleFinish}>
-              Finish
-            </Button>
-          </>
-         )}
-      </FinishContainer>
+          {traitDetailsOpen && (
+            <MobileDialogContainer>
+              <Dialog>
+                <Trait isCrewClass>
+                  <div>
+                    <CrewClassIcon crewClass={crewmate.crewClass} overrideColor="inherit" />
+                  </div>
+                  <article>
+                    <h4>{Crewmate.getClass(crewmate.crewClass).name}</h4>
+                    <div>{Crewmate.getClass(crewmate.crewClass).description}</div>
+                  </article>
+                </Trait>
 
-      {traitDetailsOpen && (
-        <MobileDialogContainer>
-          <Dialog>
-            <Trait isCrewClass>
-              <div>
-                <CrewClassIcon crewClass={crewmate.crewClass} overrideColor="inherit" />
-              </div>
-              <article>
-                <h4>{Crewmate.getClass(crewmate.crewClass).name}</h4>
-                <div>{Crewmate.getClass(crewmate.crewClass).description}</div>
-              </article>
-            </Trait>
+                <Trait isCrewClass>
+                  <div>
+                    <AdalianIcon />
+                  </div>
+                  <article>
+                    <h4>Adalian Citizen</h4>
+                    <div>Completed secondary education and entered adulthood in the Adalian System, after the dismantling of the Arvad.</div>
+                  </article>
+                </Trait>
 
-            <Trait isCrewClass>
-              <div>
-                <AdalianIcon />
-              </div>
-              <article>
-                <h4>Adalian Citizen</h4>
-                <div>Completed secondary education and entered adulthood in the Adalian System, after the dismantling of the Arvad.</div>
-              </article>
-            </Trait>
+                <Trait>
+                  <div>
+                    <CrewTraitIcon trait={rewards[traitDispOrder[0]].id} type={rewards[traitDispOrder[0]].type} />
+                  </div>
+                  <article>
+                    <h4>{rewards[traitDispOrder[0]].name}</h4>
+                    <div>{rewards[traitDispOrder[0]].description}</div>
+                  </article>
+                </Trait>
 
-            <Trait>
-              <div>
-                <CrewTraitIcon trait={rewards[traitDispOrder[0]].id} type={rewards[traitDispOrder[0]].type} />
-              </div>
-              <article>
-                <h4>{rewards[traitDispOrder[0]].name}</h4>
-                <div>{rewards[traitDispOrder[0]].description}</div>
-              </article>
-            </Trait>
+                <Trait>
+                  <div>
+                    <CrewTraitIcon trait={rewards[traitDispOrder[1]].id} type={rewards[traitDispOrder[1]].type} />
+                  </div>
+                  <article>
+                    <h4>{rewards[traitDispOrder[1]].name}</h4>
+                    <div>{rewards[traitDispOrder[1]].description}</div>
+                  </article>
+                </Trait>
 
-            <Trait>
-              <div>
-                <CrewTraitIcon trait={rewards[traitDispOrder[1]].id} type={rewards[traitDispOrder[1]].type} />
-              </div>
-              <article>
-                <h4>{rewards[traitDispOrder[1]].name}</h4>
-                <div>{rewards[traitDispOrder[1]].description}</div>
-              </article>
-            </Trait>
+                <Trait>
+                  <div>
+                    <CrewTraitIcon trait={rewards[traitDispOrder[2]].id} type={rewards[traitDispOrder[2]].type} />
+                  </div>
+                  <article>
+                    <h4>{rewards[traitDispOrder[2]].name}</h4>
+                    <div>{rewards[traitDispOrder[2]].description}</div>
+                  </article>
+                </Trait>
 
-            <Trait>
-              <div>
-                <CrewTraitIcon trait={rewards[traitDispOrder[2]].id} type={rewards[traitDispOrder[2]].type} />
-              </div>
-              <article>
-                <h4>{rewards[traitDispOrder[2]].name}</h4>
-                <div>{rewards[traitDispOrder[2]].description}</div>
-              </article>
-            </Trait>
+                <Trait>
+                  <div>
+                    <CrewTraitIcon trait={rewards[traitDispOrder[3]].id} type={rewards[traitDispOrder[3]].type} />
+                  </div>
+                  <article>
+                    <h4>{rewards[traitDispOrder[3]].name}</h4>
+                    <div>{rewards[traitDispOrder[3]].description}</div>
+                  </article>
+                </Trait>
 
-            <Trait>
-              <div>
-                <CrewTraitIcon trait={rewards[traitDispOrder[3]].id} type={rewards[traitDispOrder[3]].type} />
-              </div>
-              <article>
-                <h4>{rewards[traitDispOrder[3]].name}</h4>
-                <div>{rewards[traitDispOrder[3]].description}</div>
-              </article>
-            </Trait>
-
-            <Button onClick={() => setTraitDetailsOpen(false)}>Close</Button>
-          </Dialog>
-        </MobileDialogContainer>
-      )}
-      {confirming && (
-        <ConfirmationDialog
-          title="Confirm Character Minting"
-          body={(
-            <PromptBody>
-              The Crewmate you are about to create will be minted as a new unique
-              Player-Owned Game Asset (POGA)! Once minted, the character can never be deleted
-              or unmade, and is yours to keep or trade forever. All of their stats,
-              actions, skills, and attributes will be appended to their unique history
-              and stored as independent on-chain events.
-            </PromptBody>
+                <Button onClick={() => setTraitDetailsOpen(false)}>Close</Button>
+              </Dialog>
+            </MobileDialogContainer>
           )}
-          onConfirm={finalize}
-          confirmText={<>
-            Confirm
-            {crewSale && (
-              <span style={{ flex: 1, fontSize: '90%', textAlign: 'right' }}>
-                <Ether>{formatters.crewPrice(crewSale)}</Ether>
-              </span>
-            )}
-          </>}
-          onReject={() => setConfirming(false)}
-        />
+          {confirming && (
+            <ConfirmationDialog
+              title="Confirm Character Minting"
+              body={(
+                <PromptBody>
+                  The Crewmate you are about to create will be minted as a new unique
+                  Player-Owned Game Asset (POGA)! Once minted, the character can never be deleted
+                  or unmade, and is yours to keep or trade forever. All of their stats,
+                  actions, skills, and attributes will be appended to their unique history
+                  and stored as independent on-chain events.
+                </PromptBody>
+              )}
+              onConfirm={finalize}
+              confirmText={<>
+                Confirm
+                {crewSale && (
+                  <span style={{ flex: 1, fontSize: '90%', textAlign: 'right' }}>
+                    <Ether>{formatters.crewPrice(crewSale)}</Ether>
+                  </span>
+                )}
+              </>}
+              onReject={() => setConfirming(false)}
+            />
+          )}
+        </>
       )}
     </Details>
   );

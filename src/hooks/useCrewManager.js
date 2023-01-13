@@ -19,7 +19,7 @@ const useCrewManager = () => {
     [execute]
   );
   const getPendingPurchase = useCallback(
-    (sessionId) => getPendingTx('PURCHASE_AND_INITIALIZE_CREW', { sessionId }),
+    () => getPendingTx('PURCHASE_AND_INITIALIZE_CREW', {}),
     [getPendingTx]
   );
 

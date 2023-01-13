@@ -27,6 +27,8 @@ const outlinerSectionDefaults = {
 };
 
 const useStore = create(persist((set, get) => ({
+    actionDialog: {},
+
     asteroids: {
       origin: null,
       zoomStatus: 'out', // out -> zooming-in -> in -> zooming-out -> out
@@ -86,6 +88,7 @@ const useStore = create(persist((set, get) => ({
       textureQuality: undefined,
     },
 
+    failedTransactions: [],
     pendingTransactions: [],
 
     plotLoader: {
@@ -142,6 +145,10 @@ const useStore = create(persist((set, get) => ({
 
     dispatchAlertLogged: (alert) => set(produce(state => {
       state.logs.alerts.unshift(alert);
+    })),
+
+    dispatchActionDialog: (type, vars = {}) => set(produce(state => {
+      state.actionDialog = { type, vars };
     })),
 
     dispatchAlertNotified: (alert) => set(produce(state => {
@@ -431,6 +438,21 @@ const useStore = create(persist((set, get) => ({
       return { textureSize: 1 * CHUNK_RESOLUTION - 3 };
     },
 
+    dispatchFailedTransaction: ({ key, vars, err }) => set(produce(state => {
+      if (!state.failedTransactions) state.failedTransactions = [];
+      state.failedTransactions.push({
+        key,
+        vars,
+        err,
+        timestamp: Date.now()
+      });
+    })),
+
+    dispatchFailedTransactionDismissed: (timestamp) => set(produce(state => {
+      if (!state.failedTransactions) state.failedTransactions = [];
+      state.failedTransactions = state.failedTransactions.filter((tx) => tx.timestamp !== timestamp);
+    })),
+
     dispatchPendingTransaction: ({ key, vars, txHash }) => set(produce(state => {
       if (!state.pendingTransactions) state.pendingTransactions = [];
       state.pendingTransactions.push({
@@ -465,12 +487,14 @@ const useStore = create(persist((set, get) => ({
   blacklist: [
     // TODO: should these be stored elsewhere if ephemeral?
     // TODO: the nested values are not supported by zustand
+    'actionDialog',
     'asteroids.hovered',
     'asteroids.plot',
     'asteroids.plotDestination',
     'asteroids.zoomToPlot',
     'cutscenePlaying',
     'draggables',
+    'failedTransactions',
     'plotLoader',
     'timeOverride'  // should this be in ClockContext?
   ]

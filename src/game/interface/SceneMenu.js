@@ -26,6 +26,7 @@ import useStore from '~/hooks/useStore';
 import actionButtons from './sceneMenu/actionButtons';
 import ActionDialog from './sceneMenu/ActionDialog';
 import ResourceMapSelector from './sceneMenu/ResourceMapSelector';
+import useChainTime from '~/hooks/useChainTime';
 
 const rightModuleWidth = 375;
 
@@ -306,12 +307,15 @@ const Pane = styled.div`
 const SceneMenu = (props) => {
   const { account } = useAuth();
   const buildings = useBuildingAssets();
+  const chainTime = useChainTime();
   const asteroidId = useStore(s => s.asteroids.origin);
   const { asteroidId: plotAsteroidId, plotId } = useStore(s => s.asteroids.plot || {});
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
 
+  const actionDialog = useStore(s => s.actionDialog);
   const showResourceMap = useStore(s => s.asteroids.showResourceMap);
+  const setAction = useStore(s => s.dispatchActionDialog);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
   const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
@@ -327,7 +331,6 @@ const SceneMenu = (props) => {
   const { data: plot, isLoading: plotIsLoading } = usePlot(asteroidId, plotId);
   const { crew } = useCrew();
 
-  const [action, setAction] = useState();
   const [renderReady, setRenderReady] = useState(false);
   const [resourceMode, setResourceMode] = useState();
 
@@ -349,7 +352,7 @@ const SceneMenu = (props) => {
   const onClickPane = useCallback(() => {
     // open plot
     if (asteroidId && plotId && zoomStatus === 'in') {
-      dispatchZoomToPlot((plot.building || buildings[0]).name);
+      dispatchZoomToPlot((plot?.building || buildings[0]).name);
 
     // open asteroid details
     } else if (asteroidId && zoomStatus === 'in') {
@@ -359,7 +362,7 @@ const SceneMenu = (props) => {
     } else if (asteroidId && zoomStatus === 'out') {
       updateZoomStatus('zooming-in');
     }
-  }, [asteroidId, plotId, zoomStatus]);
+  }, [asteroidId, plotId, zoomStatus, plot?.building]);
 
   const onClosePane = useCallback((e) => {
     e.stopPropagation();
@@ -418,32 +421,35 @@ const SceneMenu = (props) => {
       } else if (plot && crew) {
         if (resourceMode) {
           a.push(actionButtons.NewCoreSample);
-          if (!!(plot.coreSamples || []).find((c) => c.resourceId === Number(showResourceMap?.i) && c.initialYield > 0 && c.status !== CoreSample.STATUS_USED)) {
-            a.push(actionButtons.ImproveCoreSample);
-          }
+          a.push(actionButtons.ImproveCoreSample);
         }
 
-        if (constructionStatus === 'OPERATIONAL' && plot.building?.assetId) {
-          const buildingAsset = buildings[plot.building.assetId];
-          if (buildingAsset.capabilities.includes('extraction')) {
-            a.push(actionButtons.Extract);
+        if (plot.occupier === crew.i) {
+          if (constructionStatus === 'OPERATIONAL' && plot.building?.assetId) {
+            const buildingAsset = buildings[plot.building.assetId];
+            if (buildingAsset.capabilities.includes('extraction')) {
+              a.push(actionButtons.Extract);
+            }
+          } else if (['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus)) {
+            a.push(actionButtons.Construct);
+          } else if (['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
+            a.push(actionButtons.NewBlueprint);
           }
-        } else if (['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus)) {
-          a.push(actionButtons.Construct);
-        } else if (['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
+  
+          // TODO: prob should require an inventory with non-zero contents?
+          // (OR be the destination of a delivery)
+          if (plot?.building?.inventories) {
+            a.push(actionButtons.SurfaceTransfer);
+          }
+  
+          if (['PLANNED', 'CANCELING'].includes(constructionStatus)) {
+            a.push(actionButtons.CancelBlueprint);
+          }
+          if (['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
+            a.push(actionButtons.Deconstruct);
+          } 
+        } else if (!plot.occupier || (plot.gracePeriodEnd < chainTime && constructionStatus === 'PLANNED')) {
           a.push(actionButtons.NewBlueprint);
-        }
-
-        // TODO: prob should require an inventory with non-zero contents?
-        if (plot?.building?.inventories?.length > 0) {
-          a.push(actionButtons.SurfaceTransfer);
-        }
-
-        if (['PLANNED', 'CANCELING'].includes(constructionStatus)) {
-          a.push(actionButtons.CancelBlueprint);
-        }
-        if (['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
-          a.push(actionButtons.Deconstruct);
         }
       }
     }
@@ -614,12 +620,10 @@ const SceneMenu = (props) => {
         </RightActions>
       </RightWrapper>
 
-      {/* TODO: *might* end up making sense to instead put this with each action button that needs it? */}
-      {action && (
+      {actionDialog?.type && (
         <ActionDialog
-          actionType={action}
-          asteroid={asteroid}
-          plot={plot}
+          actionType={actionDialog.type}
+          {...actionDialog.vars}
           onClose={() => setAction()}
           onSetAction={setAction} />
       )}

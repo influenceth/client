@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import {
-  FiCrosshair as TargetIcon,
+  // FiCrosshair as TargetIcon,
   FiSquare as UncheckedIcon,
   FiCheckSquare as CheckedIcon
 } from 'react-icons/fi';
@@ -9,45 +9,34 @@ import {
   BsChevronDoubleDown as ChevronDoubleDownIcon,
   BsChevronDoubleUp as ChevronDoubleUpIcon,
 } from 'react-icons/bs';
-import { RingLoader } from 'react-spinners';
-import DataTable, { createTheme } from 'react-data-table-component';
-import { Crew, Asteroid, Construction, Crewmate, Inventory, Lot } from '@influenceth/sdk';
+import { RingLoader, PuffLoader } from 'react-spinners';
+import { Asteroid, Construction, Crewmate, Inventory, Lot } from '@influenceth/sdk';
 
 import Button from '~/components/ButtonAlt';
 import ButtonRounded from '~/components/ButtonRounded';
 import CrewCard from '~/components/CrewCard';
 import IconButton from '~/components/IconButton';
 import {
-  CancelBlueprintIcon,
   CheckIcon,
   ChevronRightIcon,
   CloseIcon,
   ConstructIcon,
-  CoreSampleIcon,
   CrewIcon,
-  DeconstructIcon,
-  ExtractionIcon,
-  ImproveCoreSampleIcon,
   LayBlueprintIcon,
   LocationPinIcon,
   PlusIcon,
   ResourceIcon,
-  SurfaceTransferIcon,
   TimerIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
+import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import Poppable from '~/components/Popper';
 import SliderInput from '~/components/SliderInput';
-import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
-import useCrew from '~/hooks/useCrew';
-import useStore from '~/hooks/useStore';
-import theme from '~/theme';
-import MouseoverInfoPane from '~/components/MouseoverInfoPane';
-import useConstructionManager from '~/hooks/useConstructionManager';
-import useInterval from '~/hooks/useInterval';
-import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
+import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
+import useInterval from '~/hooks/useInterval';
+import theme from '~/theme';
+import useChainTime from '~/hooks/useChainTime';
 
 // TODO: remove this after sdk updated
 Inventory.CAPACITIES = {
@@ -846,7 +835,7 @@ const TransferSelectionTableWrapper = styled(PoppableTableWrapper)`
   }
 `;
 const ResourceColorIcon = styled.div`
-  background-color: ${p => p.theme.colors.resources[p.category]};
+  background-color: ${p => p.theme.colors.resources[p.category.replace(/[^a-zA-Z0-9]/g, '')]};
   border-radius: 2px;
   display: inline-block;
   height: 10px;
@@ -928,12 +917,12 @@ const getCapacityUsage = (building, inventories, type) => {
     mass: { max: 0, used: 0, reserved: 0 },
     volume: { max: 0, used: 0, reserved: 0 },
   }
-  if (building && inventories && type !== undefined) {
+  if (building && type !== undefined) {
     let { mass: maxMass, volume: maxVolume } = Inventory.CAPACITIES[building.i][type];
     capacity.mass.max = maxMass * 1e6; // TODO: it seems like this mult should be handled in CAPACITIES
     capacity.volume.max = maxVolume * 1e6;
 
-    const { reservedMass, reservedVolume, mass, volume } = inventories.find((i) => i.type === type) || {};
+    const { reservedMass, reservedVolume, mass, volume } = (inventories || {})[type] || {};
     capacity.mass.used = (mass || 0);
     capacity.mass.reserved = (reservedMass || 0);
     capacity.volume.used = (volume || 0);
@@ -1015,13 +1004,12 @@ const ResourceRequirement = ({ resource, hasTally, isGathering, needsTally }) =>
   );
 };
 
-const getTimeRemaining = (target) => Math.max(0, target - getAdjustedNow());
-export const LiveTimer = ({ target }) => {
-  const [remaining, setRemaining] = useState(getTimeRemaining(target));
-  useInterval(() => {
-    setRemaining(getTimeRemaining(target));
-  }, 1000);
-  return isNaN(remaining) ? 'Initializing...' : <>{formatTimer(remaining)}</>;
+export const LiveTimer = ({ target, maxPrecision }) => {
+  const chainTime = useChainTime();
+  return useMemo(() => {
+    const remaining = Math.max(0, target - chainTime);
+    return isNaN(remaining) ? 'Initializing...' : <>{formatTimer(remaining, maxPrecision)}</>;
+  }, [chainTime, maxPrecision, target]);
 };
 
 //
@@ -1053,7 +1041,7 @@ const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
     <PopperBody>
       <PoppableTitle>
         <h3>Lot #{(plot?.i || 0).toLocaleString()}</h3>
-        <div>{(options.length || 0).toLocaleString()} Samples at lot</div>
+        <div>{(options.length || 0).toLocaleString()} Available Sample{options.length === 1 ? '' : 's'}</div>
       </PoppableTitle>
       {/* TODO: replace with DataTable? */}
       <PoppableTableWrapper>
@@ -1066,7 +1054,7 @@ const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
           </thead>
           <tbody>
             {options.sort((a, b) => b.remainingYield - a.remainingYield).map((sample, i) => (
-              <tr key={sample.id} onClick={onClick(sample)}>
+              <tr key={`${sample.resourceId}_${sample.sampleId}`} onClick={onClick(sample)}>
                 <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name}</td>
                 <td>{formatSampleMass(sample.remainingYield * resources[sample.resourceId].massPerUnit)} tonnes</td>
               </tr>
@@ -1088,14 +1076,14 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
         && plot.i !== originPlotId // not the origin
         && Inventory.CAPACITIES[plot.building.assetId][inventoryType] // building has inventoryType
         && ( // building is built (or this is construction inventory and building is planned)
-          (inventoryType === 0 && plot.building.constructionStatus === Construction.STATUS_PLANNED)
-          || (inventoryType !== 0 && plot.building.constructionStatus === Construction.STATUS_OPERATIONAL)
+          (inventoryType === 0 && plot.building.construction?.status === Construction.STATUS_PLANNED)
+          || (inventoryType !== 0 && plot.building.construction?.status === Construction.STATUS_OPERATIONAL)
         )
       ))
       .map((plot) => {
         const capacity = Inventory.CAPACITIES[plot.building.assetId][inventoryType];
 
-        const inventory = plot.building?.inventories.find((i) => i.type === inventoryType);
+        const inventory = (plot.building?.inventories || {})[inventoryType];
         const usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0)) / 1e6;
         const usedVolume = ((inventory?.volume || 0) + (inventory?.reservedVolume || 0)) / 1e6;
 
@@ -1108,7 +1096,7 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
 
         return {
           plot,
-          distance: Asteroid.getLotDistance(asteroid.i, originPlotId, plot.i),
+          distance: Asteroid.getLotDistance(asteroid.i, originPlotId, plot.i) || 0,
           type: plot.building?.__t || 'Empty Lot',
           fullness,
           availMass,
@@ -1164,7 +1152,8 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
 const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) => {
   const [newSelectedItems, setNewSelectedItems] = useState(selectedItems);
 
-  const onUpdate = (resourceId, amount, isSelected) => {
+  const onUpdate = useCallback((resourceId, amount, isSelected) => {
+    console.log('onUpdate');
     const makeUpdate = { ...newSelectedItems };
     if (isSelected) {
       if (!makeUpdate[resourceId]) makeUpdate[resourceId] = 0;
@@ -1175,7 +1164,7 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
     }
     console.log({ makeUpdate });
     setNewSelectedItems(makeUpdate);
-  };
+  }, [newSelectedItems]);
 
   const unselectedItems = useMemo(() => {
     return Object.keys(inventory).reduce((acc, cur) => {
@@ -1405,9 +1394,10 @@ export const ToolSection = ({ resource, sourcePlot }) => {
     <Section>
       <SectionTitle><ChevronRightIcon /> Tool</SectionTitle>
       <SectionBody>
+        <FutureSectionOverlay />
         {resource && (
           <ResourceWithData>
-            <ResourceImage badge="∞" resource={resource} />
+            <ResourceImage badge="∞" resource={resource} />{/* TODO: badge */}
             <label>
               <h3>{resource.name}</h3>
               {sourcePlot && sourcePlot.building && (
@@ -1429,6 +1419,16 @@ export const ToolSection = ({ resource, sourcePlot }) => {
   );
 }
 
+const SelectionPopper = ({ closeOnChange, inventory, onSelectionCompleted, resources, selectedItems }) => (
+  <Poppable label="Select" title="Items to Transfer" closeOnChange={closeOnChange} buttonWidth="135px" contentHeight={360} contentWidth={700}>
+    <TransferSelection
+      inventory={inventory}
+      onComplete={onSelectionCompleted}
+      resources={resources}
+      selectedItems={selectedItems} />
+  </Poppable>
+);
+
 export const ItemSelectionSection = ({ inventory, onSelectItems, resources, selectedItems, status }) => {
   const selectedItemKeys = Object.keys(selectedItems || {});
 
@@ -1436,17 +1436,8 @@ export const ItemSelectionSection = ({ inventory, onSelectItems, resources, sele
   const onSelectionCompleted = useCallback((items) => {
     setCompleted((x) => x + 1);
     if (onSelectItems) onSelectItems(items);
-  }, []);
+  }, [onSelectItems]);
 
-  const SelectionPopper = () => (
-    <Poppable label="Select" buttonWidth="135px" title="Items to Transfer" closeOnChange={completed} contentHeight={360} contentWidth={700}>
-      <TransferSelection
-        inventory={inventory}
-        onComplete={onSelectionCompleted}
-        resources={resources}
-        selectedItems={selectedItems} />
-    </Poppable>
-  );
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Items</SectionTitle>
@@ -1461,7 +1452,12 @@ export const ItemSelectionSection = ({ inventory, onSelectItems, resources, sele
               </label>
             </EmptyResourceWithData>
             <div>
-              <SelectionPopper />
+              <SelectionPopper
+                closeOnChange={completed}
+                inventory={inventory}
+                onSelectionCompleted={onSelectionCompleted}
+                resources={resources}
+                selectedItems={selectedItems} />
             </div>
           </>
         )}
@@ -1480,7 +1476,14 @@ export const ItemSelectionSection = ({ inventory, onSelectItems, resources, sele
             </div>
             <div>
               <div>{selectedItemKeys.length} item{selectedItemKeys.length === 1 ? '' : 's'}</div>
-              {status === 'BEFORE' && <SelectionPopper />}
+              {status === 'BEFORE' && (
+                <SelectionPopper
+                  closeOnChange={completed}
+                  inventory={inventory}
+                  onSelectionCompleted={onSelectionCompleted}
+                  resources={resources}
+                  selectedItems={selectedItems} />
+              )}
             </div>
           </ItemSelectionWrapper>
         )}
@@ -1679,7 +1682,7 @@ export const ExtractionAmountSection = ({ extractionTime, min, max, amount, reso
   const volume = useMemo(() => amount * resource?.volumePerUnit || 0, [amount, resource]);
   return (
     <Section>
-      <SectionTitle><ChevronRightIcon /> Slider</SectionTitle>
+      <SectionTitle><ChevronRightIcon /> Extraction Amount</SectionTitle>
       <SectionBody>
         <SliderWrapper>
           <SliderInfoRow>
@@ -1704,32 +1707,20 @@ export const ExtractionAmountSection = ({ extractionTime, min, max, amount, reso
   );
 }
 
-export const ActionDialogHeader = ({ action, asteroid, onClose, plot, status, startTime, targetTime }) => {
-  const { captain } = useCrew();
+export const ActionDialogLoader = () => {
+  return (
+    <PuffLoader />
+  );
+};
 
-  const timer = useRef();
-  const [progress, setProgress] = useState(0);
-  const updateProgress = useCallback(() => {
-    if (startTime && targetTime) {
-      const newProgress = Math.min(100, 100 * (getAdjustedNow() - startTime) / (targetTime - startTime));
-      setProgress(newProgress);
+export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, status, startTime, targetTime }) => {
+  const buildings = useBuildingAssets();
+  const chainTime = useChainTime();
 
-      // NOTE: targetTime, startTime are in seconds, so below is already 1/1000th of progress interval
-      // (which is appropriate since displayed in 0.1% increments)
-      if (newProgress < 100) {
-        timer.current = setTimeout(updateProgress, Math.max(10, Math.ceil(targetTime - startTime)));
-      }
-    } else {
-      setProgress(0);
-    }
-  }, [startTime, targetTime]);
-  useEffect(() => {
-    updateProgress();
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
-    }
-  }, [updateProgress]);
-
+  const progress = useMemo(() => {
+    return startTime && targetTime ? Math.min(100, 100 * (chainTime - startTime) / (targetTime - startTime)) : 0;
+  }, [chainTime, startTime, targetTime]);
+  
   return (
     <>
       {status === 'DURING' && (
@@ -1750,9 +1741,18 @@ export const ActionDialogHeader = ({ action, asteroid, onClose, plot, status, st
               {status === 'AFTER' && `${action.completeLabel.toUpperCase()} ${action.completeStatus.toUpperCase()}`}
             </Title>
             <Subtitle>
-              {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {plot.i.toLocaleString()} ({plot.building?.name || 'Empty Lot'})</b>
+              {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName}
+              {' > '}
+              <b>
+                Lot {(plot.i || '').toLocaleString()}{' '}
+                (
+                  {buildings[plot.building?.assetId]?.name || 'Empty Lot'}
+                  {plot.building?.construction?.status === Construction.STATUS_PLANNED && ' - Planned'}
+                  {plot.building?.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION && ' - Under Construction'}
+                )
+              </b>
             </Subtitle>
-            {captain && action.crewRequirement && (
+            {captain && action.crewRequirement && status === 'BEFORE' && (
               <CrewInfo requirement={action.crewRequirement} status={status}>
                 <CrewRequirement />
                 <CardContainer>
@@ -1844,7 +1844,7 @@ export const ActionDialogTimers = ({ actionReadyIn, crewAvailableIn }) => (
   </StatSection>
 );
 
-export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOverride, finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
+export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOverride, goDisabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // TODO: connect notifications to top-level state
@@ -1873,7 +1873,7 @@ export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOve
                     </NotificationEnabler>
                     <Spacer />
                     <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClose}>Cancel</Button>
-                    <Button disabled={buttonsDisabled} loading={buttonsLoading} isTransaction onClick={onGo}>{goLabel}</Button>
+                    <Button disabled={buttonsDisabled || goDisabled} loading={buttonsLoading} isTransaction onClick={onGo}>{goLabel}</Button>
                   </>
                 )}
               {status === 'DURING' && (
@@ -2023,7 +2023,7 @@ const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleVa
           <BonusesSection>
             <table>
               <tbody>
-                {details.rows.map(([label, ...items]) => (
+                {(details.rows || []).map(([label, ...items]) => (
                   <tr key={label}>
                     <th>{label}</th>
                     {items.map((item) => <td key={item}>{item}</td>)}
@@ -2127,8 +2127,8 @@ export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps
   let totalTime = 0;
 
   const tripDetails = steps.map(({ label, plot, skipTo }) => {
-    const stepDistance = Asteroid.getLotDistance(asteroidId, currentLocation, plot);
-    const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLocation, plot, crewTravelBonus);
+    const stepDistance = Asteroid.getLotDistance(asteroidId, currentLocation, plot) || 0;
+    const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLocation, plot, crewTravelBonus) || 0;
     currentLocation = skipTo || plot;
 
     // agg

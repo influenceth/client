@@ -7,22 +7,26 @@ import { Capable } from '@influenceth/sdk';
 import useStore from '~/hooks/useStore';
 import useAuth from '~/hooks/useAuth';
 import api from '~/lib/api';
-import getLogContent from '~/lib/getLogContent';
 
 const getLinkedAsset = (linked, type) => {
-  return linked.find((l) => l.type === type) || {};
+  return linked.find((l) => l.type === type)?.asset || {};
 };
 
 // TODO (enhancement): rather than invalidating, make optimistic updates to cache value directly
 // (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)
 const getInvalidations = (event, returnValues, linked) => {
+  let rewriteEvent;
+  if (event === 'Nameable_NameChanged') {
+    if (getLinkedAsset(linked, 'Asteroid').i) rewriteEvent = 'Asteroid_NameChanged';
+    else rewriteEvent = 'Crewmate_NameChanged';
+  }
   try {
     const map = {
       AsteroidUsed: [
         ['asteroids', 'mintableCrew'],
       ],
       Asteroid_NameChanged: [
-        ['asteroids', returnValues.asteroidId],
+        ['asteroids', returnValues.tokenId],
         ['asteroids', 'search'],
         ['events'], // (to update name in already-fetched events)
         ['watchlist']
@@ -31,8 +35,9 @@ const getInvalidations = (event, returnValues, linked) => {
         ['actionItems'],
         ['asteroids', returnValues.asteroidId],
       ],
-      Asteroid_ScanFinished: [
-        // TODO: 'actionItems' here?
+      // Asteroid_ScanFinished: [
+      Asteroid_BonusesSet: [
+        ['actionItems'],
         ['asteroids', returnValues.asteroidId],
         ['asteroids', 'search'],
         ['watchlist']
@@ -55,7 +60,7 @@ const getInvalidations = (event, returnValues, linked) => {
         ['crewmembers', 'owned'],
       ],
       Crewmate_NameChanged: [
-        ['crewmembers', returnValues.crewId],
+        ['crewmembers', returnValues.tokenId],
         ['crewmembers', 'owned'],
         ['events'], // (to update name in already-fetched events)
       ],
@@ -65,19 +70,22 @@ const getInvalidations = (event, returnValues, linked) => {
       ],
 
       Construction_Planned: [
+        ['planned'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
         ['asteroidPlots', returnValues.asteroidId]
       ],
       Construction_Unplanned: [
+        ['planned'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
         ['asteroidPlots', returnValues.asteroidId]
       ],
       Construction_Started: [
+        ['planned'],
         ['actionItems'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       Construction_Finished: [
-        // TODO: 'actionItems' here?
+        ['actionItems'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       Construction_Deconstructed: [
@@ -86,25 +94,31 @@ const getInvalidations = (event, returnValues, linked) => {
       ],
 
       CoreSample_SamplingStarted: [
+        ['actionItems'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       CoreSample_SamplingFinished: [
+        ['actionItems'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       CoreSample_Used: [
         ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
       Extraction_Started: [
+        ['actionItems'],
         ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
       Extraction_Finished: [
+        ['actionItems'],
         ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
 
       Inventory_DeliveryStarted: [
+        ['actionItems'],
         ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
       Inventory_DeliveryFinished: [
+        ['actionItems'],
         ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
       Inventory_ReservedChanged: [
@@ -117,7 +131,8 @@ const getInvalidations = (event, returnValues, linked) => {
       // TODO: would be nice if ^ was a collection of ['plots', asteroid.i, plot.i], so when we invalidate the relevant lot, the "collection" is updated
       // TODO: would be nice to replace the query results using the linked asset we've already been passed (where that is possible)
     }
-    return map[event] || [];
+
+    return map[rewriteEvent || event] || [];
   } catch (e) {/* no-op */}
   
   return [];
@@ -140,7 +155,7 @@ export function EventsProvider({ children }) {
   const pendingTimeout = useRef();
   const socket = useRef();
 
-  const handleEvents = useCallback((newEvents, skipAlerts, skipInvalidations) => {
+  const handleEvents = useCallback((newEvents, skipInvalidations) => {
     const transformedEvents = [];
     newEvents.forEach((e) => {
       // TODO: ws-emitted events seem to have _id set instead of id
@@ -157,7 +172,8 @@ export function EventsProvider({ children }) {
 
       // generate log events from events
       if (e.event === 'Crew_CompositionChanged') {
-        new Set([...e.returnValues.oldCrew, ...e.returnValues.newCrew]).forEach((i) => {
+        // the extra '' is in case both crews are empty
+        new Set([...e.returnValues.oldCrew, ...e.returnValues.newCrew, '']).forEach((i) => {
           transformedEvents.push({ ...e, event: eventName, i, key: `${e.id}_${i}` });
         });
 
@@ -182,12 +198,6 @@ export function EventsProvider({ children }) {
         invalidations.forEach((i) => {
           queryClient.invalidateQueries(...i);
         });
-      }
-      
-      if (!skipAlerts) {
-        const type = e.type || e.event;
-        const alert = Object.assign({}, e, { type: type, duration: 5000 });
-        if (!!getLogContent({ type, data: alert })) createAlert(alert);
       }
     });
 
@@ -231,7 +241,7 @@ export function EventsProvider({ children }) {
     // if authed, populate existing events and start listening to user websocket
     if (token) {
       api.getEvents(0).then((eventData) => {
-        handleEvents(eventData.events, true, true);
+        handleEvents(eventData.events, true);
         setLastBlockNumber(eventData.blockNumber);
       });
 

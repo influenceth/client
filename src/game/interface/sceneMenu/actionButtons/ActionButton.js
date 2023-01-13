@@ -44,7 +44,7 @@ const ActionButton = styled.div`
     }
   }
 
-  ${p => p?.badge && `
+  ${p => p?.badge ? `
     &:before {
       background-color: ${p.theme.colors.main};
       content: "${p.badge}";
@@ -61,9 +61,9 @@ const ActionButton = styled.div`
       width: 20px;
       z-index: 1;
     }
-  `}
+  ` : ''}
 
-  ${p => p.attention && css`
+  ${p => p.attention ? css`
     animation: ${outlineAnimation} 800ms ease-out infinite;
     border-color: ${p.theme.colors.success};
     color: ${p.theme.colors.success};
@@ -79,7 +79,7 @@ const ActionButton = styled.div`
         background-color: rgba(${p.theme.colors.successRGB}, 0.4) !important;
       }
     }
-  `}
+  ` : ''}
 
   ${p => p.disabled
     ? `

@@ -2,12 +2,11 @@ import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import { getAdjustedNow } from '~/lib/utils';
 import useActionItems from './useActionItems';
 
 const useScanManager = (asteroid) => {
-  const actionItems = useActionItems();
-  const { execute, getStatus } = useContext(ChainTransactionContext);
+  const { readyItems } = useActionItems();
+  const { chainTime, execute, getStatus } = useContext(ChainTransactionContext);
 
   const payload = useMemo(() => ({
     i: asteroid ? Number(asteroid.i) : null
@@ -28,19 +27,6 @@ const useScanManager = (asteroid) => {
     [execute, payload]
   );
 
-  // TODO: vvv remove this once actionItems are working
-  const queryClient = useQueryClient();
-  useEffect(() => {
-    if (asteroid?.scanCompletionTime > getAdjustedNow()) {
-      setTimeout(() => {
-        queryClient.invalidateQueries([
-          ['asteroids', asteroid.i]
-        ]);
-      }, (asteroid.scanCompletionTime - getAdjustedNow() + 5) * 1e3);
-    }
-  }, [asteroid?.scanCompletionTime]);
-  // ^^^
-
   const scanStatus = useMemo(() => {
     if (asteroid) {
       if (asteroid.scanned) {
@@ -48,7 +34,7 @@ const useScanManager = (asteroid) => {
       } else if(asteroid.scanCompletionTime > 0) {
         if(getStatus('FINISH_ASTEROID_SCAN', payload) === 'pending') {
           return 'FINISHING';
-        } else if (asteroid.scanCompletionTime < getAdjustedNow()) {
+        } else if (asteroid.scanCompletionTime < chainTime) {
           return 'READY_TO_FINISH';
         }
         return 'SCANNING';
@@ -61,7 +47,7 @@ const useScanManager = (asteroid) => {
   // NOTE: actionItems is not used in this function, but it being updated suggests
   //  that something might have just gone from UNDER_CONSTRUCTION to READY_TO_FINISH
   //  so it is a good time to re-evaluate the status
-  }, [ asteroid, getStatus, payload, actionItems ]);
+  }, [ asteroid, getStatus, payload, readyItems ]);
 
   return {
     startAsteroidScan,

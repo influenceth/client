@@ -4,121 +4,100 @@ import { Construction, CoreSample, Inventory } from '@influenceth/sdk';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrew from './useCrew';
 import usePlot from './usePlot';
-import { getAdjustedNow } from '~/lib/utils';
 import useActionItems from './useActionItems';
 
-const useCoreSampleManager = (asteroidId, plotId, resourceId, isImprovement = false) => {
-  const actionItems = useActionItems();
-  const { execute, getStatus } = useContext(ChainTransactionContext);
+const useCoreSampleManager = (asteroidId, plotId) => {
+  const { actionItems, readyItems } = useActionItems();
+  const { chainTime, execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrew();
   const { data: plot } = usePlot(asteroidId, plotId);
 
-  const [currentSampleId, setCurrentSampleId] = useState();
+  const payload = useMemo(() => ({
+    asteroidId,
+    plotId,
+    crewId: crew?.i
+  }), [asteroidId, plotId, crew?.i]);
 
-  const getPayload = useCallback((sample) => {
-    return ({
-      asteroidId,
-      plotId,
+  // status flow
+  // READY > SAMPLING > READY_TO_FINISH > FINISHING
+  const [currentSample, samplingStatus] = useMemo(() => {
+    let current = {
+      _crewmates: null,
+      completionTime: null,
+      isNew: null,
+      owner: null,
+      resourceId: null,
+      sampleId: null,
+      startTime: null,
+      active: false
+    };
+
+    let status = 'READY';
+    const activeSample = plot?.coreSamples.find((c) => c.owner === crew?.i && c.status < CoreSample.STATUS_FINISHED);
+    if (activeSample) {
+      let actionItem = (actionItems || []).find((item) => (
+        item.event.name === 'Dispatcher_CoreSampleStartSampling'
+        && item.event.returnValues.asteroidId === asteroidId
+        && item.event.returnValues.lotId === plotId
+        && item.event.returnValues.resourceId === activeSample.resourceId
+        && item.event.returnValues.sampleId === activeSample.sampleId
+      ));
+      if (actionItem) current._crewmates = actionItem.assets.crew.crewmates;
+      current.completionTime = activeSample.completionTime;
+      current.isNew = !(activeSample.initialYield > 0);
+      current.owner = activeSample.owner;
+      current.resourceId = activeSample.resourceId;
+      current.sampleId = activeSample.sampleId;
+      current.startTime = activeSample.startTime;
+
+      if (activeSample.completionTime < chainTime) {
+        if (getStatus('FINISH_CORE_SAMPLE', payload) === 'pending') {
+          status = 'FINISHING';
+        } else {
+          status = 'READY_TO_FINISH';
+        }
+      } else {
+        status = 'SAMPLING';
+      }
+    } else {
+      const sampleTx = getPendingTx('START_CORE_SAMPLE', payload);
+      if (sampleTx) {
+        current.isNew = sampleTx.vars.sampleId === 0;
+        current.owner = sampleTx.vars.crewId;
+        current.resourceId = sampleTx.vars.resourceId;
+        current.sampleId = sampleTx.vars.sampleId;
+        status = 'SAMPLING';
+      }
+    }
+
+    return [
+      status === 'READY' ? null : current,
+      status
+    ];
+  }, [actionItems, readyItems, getPendingTx, getStatus, payload, plot?.coreSamples]);
+
+  const startSampling = useCallback((resourceId, sampleId = 0) => {
+    execute('START_CORE_SAMPLE', {
       resourceId,
-      sampleId: sample?.sampleId || 0,
-      crewId: crew?.i
-    });
-  }, [asteroidId, plotId, resourceId, crew?.i]);
-
-  const getSampleStatus = useCallback((sample) => {
-    const payload = getPayload(sample);
-    if (getStatus('START_CORE_SAMPLE', payload) === 'pending') {
-      return 'SAMPLING';
-    } else if (getStatus('FINISH_CORE_SAMPLE', payload) === 'pending') {
-      return 'FINISHING';
-    } else if (sample) {
-      if (sample.status === CoreSample.STATUS_USED) {
-        return 'USED';
-      } else if (sample.status === CoreSample.STATUS_STARTED) {
-        if (sample.completionTime < getAdjustedNow()) {
-          return 'READY_TO_FINISH';
-        }
-        return 'SAMPLING';
-      }
-    }
-    return 'READY';
-
-  // NOTE: actionItems is not used in this function, but it being updated suggests
-  //  that something might have just gone from SAMPLING to READY_TO_FINISH
-  //  so it is a good time to re-evaluate the status
-  }, [actionItems, getStatus, getPayload]);
-
-  const lotStatus = useMemo(() => {
-    return (plot?.coreSamples || [])
-      .filter((c) => c.resourceId === Number(resourceId) && c.owner === Number(crew?.i) && c.status !== CoreSample.STATUS_USED)
-      .filter((sample) => !isImprovement === !Object.keys(sample).includes('initialYield'))
-      .reduce((acc, sample) => {
-        const status = getSampleStatus(sample);
-        if (status === 'SAMPLING' || status === 'FINISHING') {
-          return status;
-        } else if (status === 'READY_TO_FINISH' && acc === 'READY') {
-          return status;
-        }
-        return acc;
-      }, 'READY');
-  }, [plot?.coreSamples, isImprovement, getSampleStatus]);
-
-  const currentSample = useMemo(() => {
-    return (plot?.coreSamples || []).find((c) => c.id === currentSampleId);
-  }, [currentSampleId, plot?.coreSamples]);
-
-  const samplingStatus = useMemo(() => {
-    return getSampleStatus(currentSample);
-  }, [currentSample, getSampleStatus]);
-
-  useEffect(() => {
-    if (!currentSampleId) {
-      const eligibleSamples = (plot?.coreSamples || [])
-        .filter((c) => c.resourceId === Number(resourceId) && c.owner === Number(crew?.i) && c.status !== CoreSample.STATUS_USED)
-        .filter((c) => !isImprovement === !Object.keys(c).includes('initialYield'));
-
-      // default to an in-process sample if there is one
-      const activeSample = eligibleSamples.find((c) => ['SAMPLING', 'FINISHING', 'READY_TO_FINISH'].includes(getSampleStatus(c)));
-      if (activeSample) {
-        setCurrentSampleId(activeSample.id);
-
-      // else, if this is improvement mode and there is only one option that I own, default to that
-      } else if (isImprovement) {
-        const mySamples = eligibleSamples.filter((s) => s.owner === Number(crew?.i));
-        if (mySamples.length === 1) {
-          setCurrentSampleId(mySamples[0].id);
-        }
-      }
-    }
-  }, [currentSampleId, getSampleStatus, plot?.coreSamples]);
-
-  const startSampling = useCallback(() => {
-    execute('START_CORE_SAMPLE', getPayload(currentSample))
-  }, [currentSampleId, getPayload]);
+      sampleId: sampleId,
+      ...payload
+    })
+  }, [payload]);
 
   const finishSampling = useCallback(() => {
-    execute('FINISH_CORE_SAMPLE', getPayload(currentSample))
-  }, [currentSample, getPayload]);
+    execute('FINISH_CORE_SAMPLE', {
+      sampleId: currentSample.sampleId,
+      resourceId: currentSample.resourceId,
+      ...payload
+    })
+  }, [currentSample, payload]);
 
-  const getInitialTonnage = useCallback((sample) => {
-    return Object.keys(sample).includes('initialYield')
-      ? sample.initialYield * Inventory.RESOURCES[sample.resourceId].massPerUnit
-      : undefined;
-  }, []);
-
-  const selectSampleToImprove = useCallback((sample) => {
-    return setCurrentSampleId(sample?.id);
-  }, []);
-  
   return {
-    currentSample,
-    selectSampleToImprove,
     startSampling,
     finishSampling,
-    getInitialTonnage,
-    lotStatus,
     samplingStatus,
-  };
+    currentSample,
+  }
 };
 
 export default useCoreSampleManager;

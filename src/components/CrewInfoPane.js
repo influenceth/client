@@ -66,7 +66,7 @@ const CrewInfoPane = ({ crew, cssWhenVisible, referenceEl, visible }) => {
             <DataReadout label="Collection" slim inheritFontSize>{Crewmate.getCollection(crew.crewCollection)?.name}</DataReadout>
           </div>
         </article>
-        {crew.traits.length > 0 && (
+        {(crew.traits || []).length > 0 && (
           <div>
             {crew.traits.map((trait) => {
               const { name } = Crewmate.getTrait(trait) || {};

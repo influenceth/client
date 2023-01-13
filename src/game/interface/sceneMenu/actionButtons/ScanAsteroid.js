@@ -10,7 +10,7 @@ import ActionButton from './ActionButton';
 const ScanAsteroid = ({ asteroid }) => {
   const history = useHistory();
   const { data: extendedAsteroid, isLoading } = useAsteroid(asteroid.i, true);
-  const { startAsteroidScan, finalizeAsteroidScan, scanStatus } = useScanManager(extendedAsteroid);
+  const { scanStatus } = useScanManager(extendedAsteroid);
 
   const { label, flags, handleClick } = useMemo(() => {
     switch (scanStatus) {
@@ -19,7 +19,10 @@ const ScanAsteroid = ({ asteroid }) => {
         return {
           label: 'Scan Asteroid',
           flags: { attention: !isLoading, disabled: isLoading },
-          handleClick: startAsteroidScan
+          handleClick: () => {
+            // startAsteroidScan();
+            history.push(`/asteroids/${asteroid.i}/resources`);
+          },
         };
       case 'SCANNING':
         return {
@@ -32,9 +35,9 @@ const ScanAsteroid = ({ asteroid }) => {
       case 'READY_TO_FINISH':
         return {
           label: 'Retrieve Scan Results',
-          flags: { attention: true },
+          flags: { attention: true, badge: '✓' },
           handleClick: () => {
-            finalizeAsteroidScan();
+            // finalizeAsteroidScan();
             history.push(`/asteroids/${asteroid.i}/resources`);
           }
         };

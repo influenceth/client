@@ -48,7 +48,7 @@ import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
 import useInterval from '~/hooks/useInterval';
-import { getAdjustedNow, getCrewAbilityBonus } from '~/lib/utils';
+import { getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   LiveTimer,
@@ -79,42 +79,77 @@ import {
   TravelBonusTooltip,
   TimeBonusTooltip,
   MaterialBonusTooltip,
+  ActionDialogLoader,
 } from './components';
 
-const NewCoreSample = (props) => {
-  const { asteroid, onClose, onSetAction, plot } = props;
+const NewCoreSample = ({ asteroid, plot, ...props }) => {
   const resources = useResourceAssets();
-  const resourceMap = useStore(s => s.asteroids.showResourceMap);
-
-  const { currentSample, startSampling, finishSampling, getInitialTonnage, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i, resourceMap?.i);
+  const { startSampling, finishSampling, samplingStatus, ...coreSampleManager } = useCoreSampleManager(asteroid?.i, plot?.i);
   const { crew, crewMemberMap } = useCrew();
 
-  const abundance = AsteroidLib.getAbundanceAtLot(
-    asteroid.i,
-    BigInt(asteroid.resourceSeed),
-    Number(plot.i),
-    Number(resourceMap.i),
-    resourceMap.abundance
-  );
+  const resourceMap = useStore(s => s.asteroids.showResourceMap);
+
+  // if an active sample is detected, set "sample" for remainder of dialog's lifespan
+  const [resourceId, setResourceId] = useState();
+  useEffect(() => {
+    if (resourceMap?.i && !resourceId) setResourceId(Number(resourceMap?.i));
+  }, [resourceMap?.i])
+
+  const [sampleId, setSampleId] = useState();
+  useEffect(() => {
+    if (coreSampleManager.currentSample) {
+      setSampleId(coreSampleManager.currentSample.sampleId);
+      setResourceId(Number(coreSampleManager.currentSample.resourceId));
+    }
+  }, [coreSampleManager.currentSample]);
+
+  const sample = useMemo(() => {
+    if (plot?.coreSamples && resourceId && sampleId) {
+      const thisSample = plot.coreSamples.find((s) => s.sampleId === sampleId && s.resourceId === resourceId);
+      if (thisSample) {
+        thisSample.initialYieldTonnage = Object.keys(thisSample).includes('initialYield')
+          ? thisSample.initialYield * Inventory.RESOURCES[resourceId].massPerUnit
+          : undefined;
+        return thisSample;
+      }
+    }
+    return null;
+  }, [plot?.coreSamples, sampleId, resourceId]);
+
+  // get lot abundance
+  const lotAbundance = useMemo(() => {
+    if (!resourceId) return 0;
+    return AsteroidLib.getAbundanceAtLot(
+      asteroid?.i,
+      BigInt(asteroid?.resourceSeed),
+      Number(plot?.i),
+      resourceId,
+      asteroid.resources[resourceId]
+    );
+}, [asteroid, plot, resourceId]);
   
-  const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
+  const crewMembers = coreSampleManager.currentSample?._crewmates
+    || ((crew?.crewMembers || []).map((i) => crewMemberMap[i]));
+  const captain = crewMembers[0];
   const sampleTimeBonus = getCrewAbilityBonus(1, crewMembers);
   const sampleQualityBonus = getCrewAbilityBonus(2, crewMembers);
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(
-    () => getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
-      { label: 'Retrieve Core Sampler', plot: 1 },  // TODO
+  // TODO: the crew origin and destination lots are currently set to 1, and when
+  //  that is updated, it will need to be persisted in the actionItem
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+    if (!asteroid?.i || !plot?.i) return {};
+    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
+      { label: 'Retrieve Core Sampler', plot: 1 },
       { label: 'Travel to destination', plot: plot.i },
       { label: 'Return from destination', plot: 1 },
-    ]),
-    [asteroid.i, crewTravelBonus, plot.i]
-  );
+    ]);
+  }, [asteroid?.i, plot?.i, crewTravelBonus]);
 
-  const sampleBounds = CoreSample.getSampleBounds(abundance, 0, sampleQualityBonus.totalBonus);
+  const sampleBounds = CoreSample.getSampleBounds(lotAbundance, 0, sampleQualityBonus.totalBonus);
   const sampleTime = CoreSample.getSampleTime(sampleTimeBonus.totalBonus);
   
-  const stats = [
+  const stats = useMemo(() => ([
     {
       label: 'Discovery Minimum',
       value: `${formatSampleMass(sampleBounds.lower)} tonnes`,
@@ -161,10 +196,10 @@ const NewCoreSample = (props) => {
           crewRequired="duration" />
       )
     },
-  ];
+  ]), [crewTravelBonus, crewTravelTime, sampleBounds, sampleQualityBonus, sampleTime, tripDetails]);
 
   const status = useMemo(() => {
-    if (currentSample?.initialYield !== undefined) {
+    if (sample?.initialYield !== undefined) {
       return 'AFTER';
     } else if (samplingStatus === 'READY') {
       return 'BEFORE';
@@ -172,29 +207,32 @@ const NewCoreSample = (props) => {
       return 'DURING';
     }
     return 'AFTER';
-  }, [currentSample, samplingStatus]);
+  }, [sample, samplingStatus]);
 
   return (
     <>
       <ActionDialogHeader
-        {...props}
+        asteroid={asteroid}
+        captain={captain}
+        plot={plot}
         action={{
           actionIcon: <CoreSampleIcon />,
           headerBackground: coreSampleBackground,
           label: 'Core Sample',
           completeLabel: 'Sample',
-          completeStatus: currentSample?.initialYield === undefined ? 'Ready for Analysis' : 'Analyzed',
+          completeStatus: sample?.initialYield === undefined ? 'Ready for Analysis' : 'Analyzed',
           crewRequirement: 'duration',
         }}
         status={status}
-        startTime={currentSample?.startTime}
-        targetTime={currentSample?.completionTime} />
+        startTime={sample?.startTime}
+        targetTime={sample?.completionTime}
+        {...props} />
 
       <RawMaterialSection
-        abundance={abundance}
-        resource={resources[resourceMap.i]}
+        abundance={lotAbundance}
+        resource={resources[resourceId]}
         status={status}
-        tonnage={status === 'AFTER' ? getInitialTonnage(currentSample) : undefined} />
+        tonnage={status === 'AFTER' ? sample?.initialYieldTonnage : undefined} />
 
       {status === 'BEFORE' && (
         <ToolSection resource={resources[175]} sourcePlot={plot} />
@@ -210,16 +248,17 @@ const NewCoreSample = (props) => {
 
       <ActionDialogFooter
         {...props}
-        buttonsOverride={currentSample?.initialYield !== undefined && [
-          { label: 'Close', onClick: onClose },
-          { label: 'Improve Sample', onClick: () => { onSetAction('IMPROVE_CORE_SAMPLE'); } },
+        buttonsOverride={sample?.initialYield !== undefined && [
+          { label: 'Close', onClick: props.onClose },
+          // TODO: this should pass in selected sample
+          { label: 'Improve Sample', onClick: () => { props.onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...sample } }); } },
         ]}
-        buttonsDisabled={samplingStatus === 'READY' && abundance === 0}
+        buttonsDisabled={samplingStatus === 'READY' && lotAbundance === 0}
         buttonsLoading={samplingStatus === 'FINISHING' || undefined}
         finalizeLabel="Analyze"
         goLabel="Begin Sample"
         onFinalize={finishSampling}
-        onGo={startSampling}
+        onGo={() => startSampling(resourceId)}
         status={samplingStatus === 'FINISHING' ? 'DURING' : status} />
     </>
   );
