@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { ThemeProvider, createGlobalStyle } from 'styled-components';
-import { BrowserRouter as Router, Redirect, Switch, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
 import { AuthProvider } from '~/contexts/AuthContext';
@@ -21,6 +21,7 @@ import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import theme from '~/theme';
 import { ActionItemProvider } from './contexts/ActionItemContext';
+import useAuth from './hooks/useAuth';
 
 const { GRAPHICS_DEFAULTS } = constants;
 
@@ -48,6 +49,24 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const DISABLE_INTRO = false; // process.env.NODE_ENV === 'development';
+const DISABLE_LAUNCHER_LANDING = process.env.NODE_ENV === 'development';
+
+const LauncherRedirect = () => {
+  const { account } = useAuth();
+  const history = useHistory();
+  const showInterface = useStore(s => s.dispatchShowInterface);
+
+  // on initial load, redirect to launcher if at "/" (and not in skip-mode for dev)
+  useEffect(() => {
+    if (DISABLE_LAUNCHER_LANDING && account) {
+      showInterface();
+    } else if (history.location.pathname === '/') {
+      history.push('/launcher/account');
+    }
+  }, []);
+
+  return null;
+};
 
 const Game = (props) => {
   const gpuInfo = useDetectGPU();
@@ -114,7 +133,7 @@ const Game = (props) => {
                   <Router>
                     <Referral />
                     <ClockProvider>
-                      <Redirect exact from="/" to="/launcher/account" />
+                      <LauncherRedirect />
                       <Switch>
                         <Route path="/play">
                           <LandingPage />
