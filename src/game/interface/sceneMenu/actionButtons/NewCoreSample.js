@@ -45,9 +45,6 @@ const NewCoreSample = ({ asteroid, plot, onSetAction }) => {
   if (currentSample) {
     // if current sample applies to this button ("new" and matching resource id)
     if (currentSample.isNew && currentSample.resourceId === Number(resourceMap?.i)) {
-      if (samplingStatus === 'READY') {
-        label += ` (${formatFixed(100 * lotAbundance, 1)}%)`;
-      }
       if (samplingStatus === 'READY_TO_FINISH') {
         attention = true;
       }
@@ -65,6 +62,8 @@ const NewCoreSample = ({ asteroid, plot, onSetAction }) => {
     if (currentSample.isNew) {
       loading = (samplingStatus === 'SAMPLING' || samplingStatus === 'FINISHING');
     }
+  } else if (samplingStatus === 'READY') {
+    label += ` (${formatFixed(100 * lotAbundance, 1)}%)`;
   }
 
   return (

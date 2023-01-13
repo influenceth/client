@@ -435,8 +435,7 @@ export function ChainTransactionProvider({ children }) {
           waitingOn: 'TRANSACTION'
         });
       } catch (e) {
-        // TODO: remove this true, this is just to test
-        if (true || e?.message !== 'User abort') {
+        if (e?.message !== 'User abort') {
           dispatchFailedTransaction({
             key,
             vars,
