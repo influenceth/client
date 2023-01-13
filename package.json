@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@influenceth/sdk": "^2.0.0-beta.22",
+    "@cartridge/controller": "^0.2.14",
+    "@influenceth/sdk": "^2.0.0-beta.23",
     "@popperjs/core": "^2.11.6",
     "@react-hook/throttle": "^2.2.0",
     "@react-three/drei": "^8.8.1",

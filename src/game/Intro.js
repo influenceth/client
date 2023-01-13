@@ -123,15 +123,7 @@ const Intro = (props) => {
       });
     }
 
-    // if only one option, just "click" it automatically
-    // (only if seen intro video; otherwise, we need the interaction to start the video)
-    if (options.length === 1 && hasSeenIntroVideo) {
-      options[0].onLaunch();
-
-    // else, set launch options for user selection
-    } else {
-      setLaunchOptions(options);
-    }
+    setLaunchOptions(options);
   }, [hasSeenIntroVideo, onLaunch]);
 
   return (
@@ -145,7 +137,7 @@ const Intro = (props) => {
         playing={true}
         onError={onVideoEnded}
         onEnded={onVideoEnded} />
-      <Launcher hiding={closing || launchOptions?.length < 2}>
+      <Launcher hiding={closing}>
         <ButtonContainer>
           {launchOptions.map(({ label, onClick }) => (
             <Button key={label} onClick={onClick}>

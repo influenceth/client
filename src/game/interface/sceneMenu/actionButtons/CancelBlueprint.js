@@ -4,6 +4,11 @@ import { CancelBlueprintIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import ActionButton from './ActionButton';
 
+const labelDict = {
+  PLANNED: 'Cancel Blueprint',
+  CANCELING: 'Canceling...'
+};
+
 const CancelBlueprint = ({ asteroid, plot, onSetAction }) => {
   const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
@@ -12,7 +17,7 @@ const CancelBlueprint = ({ asteroid, plot, onSetAction }) => {
 
   return (
     <ActionButton
-      label={'Cancel Blueprint'}
+      label={labelDict[constructionStatus] || undefined}
       flags={{
         loading: constructionStatus === 'CANCELING' || undefined
       }}

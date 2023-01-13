@@ -3,13 +3,30 @@ import 'rc-slider/assets/index.css';
 import styled from 'styled-components';
 
 const StyledSlider = styled(Slider)`
+  height: 26px !important;
   margin: 0 20px;
   max-width: 360px;
+  overflow-y: visible;
+  padding: 13px 0 !important;
 
   & .rc-slider-handle {
-    background-color: black;
-    border: 2px solid ${props => props.theme.colors.main};
+    background-color: transparent;
+    border: 1px solid rgba(${props => props.theme.colors.mainRGB}, 0.5);
+    border-radius: 0px;
     cursor: ${props => props.theme.cursors.active};
+    height: 18px;
+    transform: rotate(45deg) translateX(-50%) translateY(25%) !important;
+    width: 18px;
+
+    &:before {
+      background-color: ${p => p.theme.colors.mainText};
+      border-radius: 50%;
+      content: "";
+      height: 8px;
+      margin: 4px;
+      position: absolute;
+      width: 8px;
+    }
   }
 
   & .rc-slider-tooltip {

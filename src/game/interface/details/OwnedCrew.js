@@ -236,7 +236,7 @@ const InactiveCardContainer = styled.div`
       opacity: 1;
     }
   }
-  
+
   @media (max-width: 1023px) {
     & ${InnerButtonHolder} {
       opacity: 1;
@@ -448,7 +448,7 @@ const OwnedCrew = (props) => {
   const { changeActiveCrew, getPendingActiveCrewChange, getPendingPurchase } = useCrewManager();
   const history = useHistory();
   const { height, width } = useScreenSize();
-  
+
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
 
@@ -477,7 +477,7 @@ const OwnedCrew = (props) => {
       .map((c) => ({ ...c, activeSlot: -1 }));
     return [...activeCrew, ...inactiveCrew];
   }, [selectedCrew, allCrews, crewMemberMap, crewIsLoading]);
-  
+
   const isDirty = useMemo(() => {
     return pristine !== activeCrew.map((c) => c.i).join(',');
   }, [activeCrew, pristine]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -712,7 +712,11 @@ const OwnedCrew = (props) => {
                               <CrewContainer>
                                 <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
                                   {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
-                                  {!isEmpty && <CrewCard crew={crew} fontSize="95%" noWrapName />}
+                                  {!isEmpty && <CrewCard
+                                    crew={crew}
+                                    fontSize="95%"
+                                    noWrapName
+                                    onClick={() => history.push(`/crew/${crew.i}`)} />}
                                 </CardContainer>
                                 {!isEmpty && (
                                   <ButtonHolder isCaptain>
@@ -737,7 +741,11 @@ const OwnedCrew = (props) => {
                               <TopFlourish />
                               <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
                                 {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
-                                {!isEmpty && <CrewCard crew={crew} fontSize="75%" noWrapName />}
+                                {!isEmpty && <CrewCard
+                                  crew={crew}
+                                  fontSize="75%"
+                                  noWrapName
+                                  onClick={() => history.push(`/crew/${crew.i}`)} />}
                               </CardContainer>
                               {!isEmpty && (
                                 <ButtonHolder>
@@ -824,7 +832,8 @@ const OwnedCrew = (props) => {
                             hideCollectionInHeader
                             showClassInHeader
                             hideFooter
-                            noWrapName />
+                            noWrapName
+                            onClick={() => history.push(`/crew/${crew.i}`)} />
                           <InnerButtonHolder>
                             <IconButton
                               disabled={saving || activeCrew?.length === 5}

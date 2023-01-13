@@ -19,8 +19,8 @@ const useConstructionManager = (asteroidId, plotId) => {
     crewId: crew?.i
   }), [asteroidId, plotId, crew?.i]);
 
-  // NONE > PLANNING > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
-  //      < CANCELING <  
+  // NONE > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
+  //      < CANCELING <         <                  DECONSTRUCTING                  <
   const [currentConstruction, constructionStatus] = useMemo(() => {
     let current = {
       _crewmates: null,
@@ -80,7 +80,7 @@ const useConstructionManager = (asteroidId, plotId) => {
     }
 
     return [
-      status === 'READY' ? null : current,
+      status === 'READY_TO_PLAN' ? null : current,
       status
     ];
   }, [actionItems, readyItems, getPendingTx, getStatus, payload, plot?.building]);

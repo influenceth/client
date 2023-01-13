@@ -133,7 +133,7 @@ const Header = styled(Section)`
       background-size: cover;
       bottom: 0;
       mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
-      
+
       position: absolute;
       left: 0;
       right: 0;
@@ -1012,7 +1012,7 @@ export const LiveTimer = ({ target, maxPrecision }) => {
   }, [chainTime, maxPrecision, target]);
 };
 
-// 
+//
 // Selectors
 //
 const BlueprintSelection = ({ onBuildingSelected }) => {
@@ -1255,7 +1255,7 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
   );
 };
 
-// 
+//
 // Sections
 //
 
@@ -1317,7 +1317,7 @@ export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, 
     setClicked((x) => x + 1);
     if (onSelectSample) onSelectSample(id);
   }, []);
-  
+
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Core Sample</SectionTitle>
@@ -1407,7 +1407,7 @@ export const ToolSection = ({ resource, sourcePlot }) => {
             </label>
           </ResourceWithData>
         )}
-        {/* 
+        {/*
         <div>
           <Poppable label="Source" buttonWidth="135px">
             TODO: select where to get the tool from
@@ -1561,7 +1561,7 @@ export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, 
   );
 };
 
-export const BuildingPlanSection = ({ building, cancelling, gracePeriodEnd, onBuildingSelected, status }) => {
+export const BuildingPlanSection = ({ building, canceling, gracePeriodEnd, onBuildingSelected, status }) => {
   const [clicked, setClicked] = useState(0);
   const _onBuildingSelected = useCallback((id) => () => {
     setClicked((x) => x + 1);
@@ -1592,19 +1592,19 @@ export const BuildingPlanSection = ({ building, cancelling, gracePeriodEnd, onBu
         )}
         {status === 'BEFORE' && (
           <>
-            {cancelling && (
+            {canceling && (
               <>
                 <span style={{ color: theme.colors.error, textAlign: 'right' }}>On-site materials<br/>will be abandoned</span>
                 <span style={{ color: theme.colors.error, fontSize: '175%', lineHeight: '1em', marginLeft: 8, marginRight: 8 }}><WarningOutlineIcon /></span>
               </>
             )}
-            {gracePeriodEnd && !cancelling && (
+            {gracePeriodEnd && !canceling && (
               <AbandonmentTimer>
                 <div>Abandonment Timer:</div>
                 <h3><LiveTimer target={gracePeriodEnd} /> <WarningOutlineIcon /></h3>
               </AbandonmentTimer>
             )}
-            {!gracePeriodEnd && !cancelling && (
+            {!gracePeriodEnd && !canceling && (
               <Poppable label="Select" closeOnChange={clicked} buttonWidth="135px" title="Site Plan">
                 <BlueprintSelection onBuildingSelected={_onBuildingSelected} />
               </Poppable>
@@ -1884,7 +1884,7 @@ export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOve
               )}
             </>
           )}
-        
+
       </SectionBody>
     </Footer>
   );
@@ -2081,7 +2081,7 @@ export const TravelBonusTooltip = ({ bonus, totalTime, tripDetails, ...props }) 
 
 //
 // utils
-// 
+//
 
 const timerIncrements = {
   d: 86400,
@@ -2164,7 +2164,7 @@ export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrec
       scale = 1;
       unitLabel = abbrev ? 'kg' : 'kilograms';
     }
-    
+
     const workingUnits = (units / scale);
     // console.log('workingUnits', workingUnits);
 

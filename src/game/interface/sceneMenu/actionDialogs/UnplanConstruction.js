@@ -104,7 +104,7 @@ const UnplanConstruction = ({ asteroid, plot, ...props }) => {
 
       <BuildingPlanSection
         building={buildings[plot?.building?.assetId]}
-        cancelling
+        canceling
         status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
 
       <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />

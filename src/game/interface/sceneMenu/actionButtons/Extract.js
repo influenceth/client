@@ -5,6 +5,13 @@ import { ExtractionIcon } from '~/components/Icons';
 import useExtractionManager from '~/hooks/useExtractionManager';
 import ActionButton from './ActionButton';
 
+const labelDict = {
+  READY: 'Extract Resource',
+  EXTRACTING: 'Extracting...',
+  READY_TO_FINISH: 'Finish Extraction',
+  FINISHING: 'Finishing Extraction...'
+};
+
 const Extract = ({ onSetAction, asteroid, crew, plot }) => {
   const { extractionStatus } = useExtractionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
@@ -19,14 +26,14 @@ const Extract = ({ onSetAction, asteroid, crew, plot }) => {
 
   const attention = extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY';
   const badge = extractionStatus === 'READY_TO_FINISH' ? '✓' : (extractionStatus === 'READY' ? usableSamples?.length : 0);
-  const disabled = (myUsableSamples?.length === 0) || undefined;
+  const disabled = extractionStatus === 'READY' && (myUsableSamples?.length === 0);
   const loading = ['EXTRACTING', 'FINISHING'].includes(extractionStatus);
   return (
     <ActionButton
-      label={`Extract Resource${disabled ? ' (requires core sample)' : ''}`}
+      label={`${labelDict[extractionStatus]}${disabled ? ' (requires core sample)' : ''}`}
       flags={{
         badge,
-        disabled,
+        disabled: disabled || undefined,
         attention: attention || undefined,
         loading: loading || undefined,
       }}

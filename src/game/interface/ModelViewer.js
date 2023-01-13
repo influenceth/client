@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimationMixer, Box3, DirectionalLight, EquirectangularReflectionMapping, LoopRepeat, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
-// import * as THREE from 'three';
+import { AnimationMixer, Box3, Color, DirectionalLight, EquirectangularReflectionMapping, LoopRepeat, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
+import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
@@ -15,6 +15,7 @@ import Button from '~/components/Button';
 import Details from '~/components/DetailsFullsize';
 import Dropdown from '~/components/Dropdown';
 import NumberInput from '~/components/NumberInput';
+import Postprocessor from '../Postprocessor';
 
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
@@ -134,7 +135,7 @@ const skyboxDefaults = {
     envmap: '/textures/model-viewer/resource_envmap.hdr',
   },
   'Building': {
-    background: '/textures/model-viewer/building_skybox.hdr',
+    background: '/textures/model-viewer/building_skybox.jpg',
     envmap: '/textures/model-viewer/resource_envmap.hdr',
   }
 };
@@ -150,7 +151,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   useEffect(() => {
     // TODO (enhancement): on mobile, aspect ratio is such that zoomed out to 1 may not have
     //  view of full width of 1.0 at 0,0,0... so on mobile, should probably set this to 1.5+
-    const zoom = 1.75;
+    const zoom = assetType === 'Building' ? 0.2 : 1.75;
     camera.position.set(0, 0.75 * zoom, 1.25 * zoom);
     camera.up.set(0, 1, 0);
     camera.fov = 50;
@@ -163,8 +164,11 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   // init orbitcontrols
   useEffect(() => {
     controls.current = new OrbitControls(camera, gl.domElement);
-    controls.current.near = 0.00001;
     controls.current.target.set(0, 0, 0);
+    controls.current.zoomSpeed = 0.33;
+
+    controls.current.object.near = 0.001;
+    controls.current.object.updateProjectionMatrix();
 
     return () => {
       controls.current.dispose();
@@ -181,7 +185,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
     }
   }, [zoomLimitsEnabled]);
 
-  // init axeshelper
+  // // init axeshelper
   // useEffect(() => {
   //   const axesHelper = new THREE.AxesHelper(5);
   //   scene.add(axesHelper);
@@ -194,23 +198,32 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
 
   // load the model on url change
   useEffect(() => {
-    if (model.current) {
-      model.current.removeFromParent();
-    }
+    if (model.current) scene.remove(model.current);
     // if (box3h.current) {
     //   box3h.current.removeFromParent();
     // }
     
+    const helpers = [];
+
     // load the model
     loader.load(
       url,
 
       // onload
       function (gltf) {
+        let predefinedCenter;
+        let predefinedCamera;
+
+        const removeNodes = [];
         model.current = gltf.scene || gltf.scenes[0];
         model.current.traverse(function (node) {
-          if (node.isMesh) {
-            // self-shadowing 
+          node.receiveShadow = true;
+          if (node.name === 'Center') {
+            predefinedCenter = node.position.clone();
+          } else if (node.name === 'Camera') {
+            predefinedCamera = node.position.clone();
+          } else if (node.isMesh) {
+            // self-shadowing
             if (ENABLE_SHADOWS) {
               node.castShadow = true;
               node.receiveShadow = true;
@@ -220,10 +233,32 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
             if (node.material?.envMapIntensity) {
               node.material.envMapIntensity = ENV_MAP_STRENGTH;
             }
+            if (assetType === 'Building') {
+              node.material.envMapIntensity = 0;
+              if (node.material?.emissiveMap) {
+                if (node.material.lightMap) console.warn('LIGHTMAP overwritten by emissiveMap', node);
+
+                node.material.lightMap = node.material.emissiveMap;
+                node.material.emissive = new Color(0x0);
+                node.material.emissiveMap = null;
+              }
+
+              // TODO: should tag this surface in the userData rather than matching by name
+              // if (node.name === 'Asteroid001') {
+              //   node.castShadow = false;
+              // }
+            }
 
             // only worry about depth on non-transparent materials
             // (from https://github.com/donmccurdy/three-gltf-viewer/blob/main/src/viewer.js)
             node.material.depthWrite = !node.material.transparent;
+          } else if (assetType === 'Building' && node.isSpotLight) {
+            node.castShadow = true;
+            node.shadow.bias = -0.0001;
+            node.intensity /= 8;
+          } else if (node.isLight) {
+            console.warn(`unexpected light (${node.type}) removed: `, node.name);
+            removeNodes.push(node);
           }
 
           // disable frustum culling because several of the models have some issues with the
@@ -231,6 +266,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
           // TODO (enhancement): could potentially try applying this just to animated objects?
           node.frustumCulled = false;
         });
+        removeNodes.forEach((node) => node.removeFromParent());
 
         // resize
         //  (assuming rotating around y, then make sure max x-z dimensions
@@ -250,12 +286,44 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
         );
         model.current.scale.set(scaleValue, scaleValue, scaleValue);
 
-        // reposition (to put center at origin)
-        bbox.setFromObject(model.current);
-        const center = bbox.getCenter(new Vector3());
+        // resize shadow cameras (these don't automatically resize with the rest of the model)
+        model.current.traverse(function (node) {
+          if (node.isSpotLight) {
+            // NOTE: if near and far are able to be set by blender / exported into the glb (it seems they are not)
+            //  we would *= the near and far by scaleValue here instead
+            node.shadow.camera.near = 0.00001;
+            node.shadow.camera.far = 1;
+            node.shadow.camera.fov = 180 * (2 * node.angle / Math.PI);
+            node.shadow.mapSize = new Vector2(1024, 1024);
+            node.shadow.camera.updateProjectionMatrix();
+            
+            // const cameraHelper = new THREE.CameraHelper(node.shadow.camera);
+            // helpers.push(cameraHelper);
+          }
+        });
+
+        // reposition (to put center at origin or predefined point)
+        let center;
+        if (predefinedCenter) {
+          center = predefinedCenter.clone().setLength(predefinedCenter.length() * scaleValue);
+        } else {
+          bbox.setFromObject(model.current);
+          center = bbox.getCenter(new Vector3());
+        }
         model.current.position.x += model.current.position.x - center.x;
         model.current.position.y += model.current.position.y - center.y;
         model.current.position.z += model.current.position.z - center.z;
+
+        // if camera is predefined, position camera accordingly
+        if (predefinedCamera) {
+          const cam = predefinedCamera.clone().setLength(predefinedCamera.length() * scaleValue);
+          controls.current.object.position.set(
+            cam.x + model.current.position.x,
+            cam.y + model.current.position.y,
+            cam.z + model.current.position.z
+          );
+          controls.current.update();
+        }
 
         // bbox.setFromObject(model.current);
         // box3h.current = new THREE.Box3Helper(bbox);
@@ -264,9 +332,10 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
         // initial rotation simulates initial camera position in blender
         // (halfway between the x and z axis)
         // model.current.rotation.y = -Math.PI / 4;
-
+      
         // add to scene and report as loaded
         scene.add(model.current);
+        helpers.forEach((helper) => scene.add(helper));
 
         // init animation mixer
         if (gltf.animations?.length > 0) {
@@ -296,9 +365,8 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
 
     // (clean-up)
     return () => {
-      if (model.current) {
-        model.current.removeFromParent();
-      }
+      if (model.current) scene.remove(model.current);
+      (helpers || []).forEach((helper) => scene.add(helper));
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -336,7 +404,17 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   // );
 }
 
-const Skybox = ({ assetType, onLoaded, overrideBackground, overrideEnvironment }) => {
+const loadTexture = (file, filename = '') => {
+  return new Promise((resolve) => {
+    if (/\.hdr$/i.test(filename || file || '')) {
+      new RGBELoader().load(file, resolve);
+    } else {
+      new THREE.TextureLoader().load(file, resolve);
+    }
+  })
+};
+
+const Skybox = ({ assetType, onLoaded, overrideBackground, overrideBackgroundName, overrideEnvironment, overrideEnvironmentName }) => {
   const { scene } = useThree();
 
   useEffect(() => {
@@ -346,7 +424,7 @@ const Skybox = ({ assetType, onLoaded, overrideBackground, overrideEnvironment }
     let env = overrideEnvironment || skyboxDefaults[assetType].envmap;
 
     let waitingOn = background === env ? 1 : 2;
-    new RGBELoader().load(background, function (texture) {
+    loadTexture(background, overrideBackgroundName).then(function (texture) {
       cleanupTextures.push(texture);
       texture.mapping = EquirectangularReflectionMapping;
       scene.background = texture;
@@ -358,11 +436,11 @@ const Skybox = ({ assetType, onLoaded, overrideBackground, overrideEnvironment }
       if (waitingOn === 0) onLoaded();
     });
     if (background !== env) {
-      new RGBELoader().load(env, function (texture) {
+      loadTexture(env, overrideEnvironmentName).then(function (texture) {
         cleanupTextures.push(texture);
         texture.mapping = EquirectangularReflectionMapping;
         scene.environment = texture;
-        
+
         waitingOn--;
         if (waitingOn === 0) onLoaded();
       });
@@ -381,8 +459,13 @@ const Lighting = ({ assetType }) => {
 
   useEffect(() => {
     const keyLight = new DirectionalLight(0xFFFFFF);
+    keyLight.castShadow = true;
     keyLight.intensity = 1.0;
+    if (assetType === 'Building') {
+      keyLight.intensity = 0;//0.1;
+    }
     keyLight.position.set(-2, 2, 2);
+    // keyLight.position.set(0, 2, 0);
     scene.add(keyLight);
 
     const rimLight = new DirectionalLight(0x9ECFFF);
@@ -392,29 +475,113 @@ const Lighting = ({ assetType }) => {
 
     if (ENABLE_SHADOWS) {
       gl.shadowMap.enabled = true;
-      gl.shadowMap.type = PCFSoftShadowMap;
+      // gl.shadowMap.type = PCFSoftShadowMap;
 
       keyLight.castShadow = true;
       keyLight.shadow.camera.near = 2.75;
       keyLight.shadow.camera.far = 4.25;
       keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.75;
       keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.75;
+      if (assetType === 'Building') {
+        keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.075;
+        keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.075;
+      }
+      // keyLight.shadow.camera.near = 1.75;
+      // keyLight.shadow.camera.far = 2.25;
+      // keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.15;
+      // keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.15;
       keyLight.shadow.camera.updateProjectionMatrix();
-      keyLight.shadow.mapSize = new Vector2(1024, 1024);
-      keyLight.shadow.bias = -0.02;
+      keyLight.shadow.mapSize.height = 1024;
+      keyLight.shadow.mapSize.width = 1024;
+      // keyLight.shadow.bias = -0.02;
     }
+
+    // const spotlightFOV = Math.PI / 2.3;
+    // const spotlightTilt = 0.006;
+    // const spotlights = [
+    //   new THREE.SpotLight(0xffffff, 0, 1, spotlightFOV, 1.0),
+    //   new THREE.SpotLight(0xffffff, 1, 1, spotlightFOV, 1.0)
+    // ];
+    // if (spotlights[0]) {
+    //   spotlights[0].position.set(-0.0095, 0.0535, 0.005);
+    //   spotlights[0].target.position.set(spotlights[0].position.x, spotlights[0].position.y - 0.01, spotlights[0].position.z);
+
+    //   // spotlights[0].position.set(-0.007, 0.055, 0.005);
+    //   // spotlights[0].target.position.set(spotlights[0].position.x - spotlightTilt, spotlights[0].position.y - 0.01, spotlights[0].position.z);
+
+    //   // spotlights[0].position.set(-0.0095, 0.055, 0.0075);
+    //   // spotlights[0].target.position.set(spotlights[0].position.x, spotlights[0].position.y - 0.01, spotlights[0].position.z - spotlightTilt);
+    // }
+    // if (spotlights[1]) {
+    //   spotlights[1].position.set(-0.012, 0.055, 0.005);
+    //   spotlights[1].target.position.set(spotlights[1].position.x + spotlightTilt, spotlights[1].position.y - 0.01, spotlights[1].position.z);
+
+    //   // spotlights[1].position.set(-0.0095, 0.055, 0.0025);
+    //   // spotlights[1].target.position.set(spotlights[1].position.x, spotlights[1].position.y - 0.01, spotlights[1].position.z + spotlightTilt);
+
+    //   spotlights[1].position.set(-0.0012, 0.045, 0.005);
+    //   spotlights[1].target.position.set(-0.01, 0.040, 0.005);
+    // }
+
+    // const helpers = [];
+
+    // spotlights.forEach((spotlight, i) => {
+    //   spotlight.castShadow = true;
+
+    //   scene.add(spotlight);
+    //   scene.add(spotlight.target);
+
+    //   spotlight.shadow.bias = -0.01;
+    //   spotlight.shadow.mapSize.height = 1024;
+    //   spotlight.shadow.mapSize.width = 1024;
+
+    //   spotlight.shadow.camera.near = 0.0025;
+    //   spotlight.shadow.camera.far = 0.01;
+    //   spotlight.shadow.camera.fov = 180 * (2 * spotlightFOV);
+    //   spotlight.shadow.camera.updateProjectionMatrix();
+      
+    //   if (i === 1) {
+    //     // helpers.push(new THREE.SpotLightHelper(spotlight));
+    //     helpers.push(new THREE.CameraHelper(spotlight.shadow.camera));
+    //   }
+    // })
+    // helpers.forEach((helper) => {
+    //   scene.add(helper);
+    // });
 
     // const helper1 = new THREE.CameraHelper( keyLight.shadow.camera );
     // scene.add(helper1);
     // const helper2 = new THREE.DirectionalLightHelper(keyLight);
     // scene.add(helper2);
+    // const helper3 = new THREE.CameraHelper(keyLight.shadow.camera);
+    // scene.add(helper3);
+    // const helper4 = new THREE.Mesh(
+    //   new THREE.BoxGeometry(0.005, 0.005, 0.005),
+    //   new THREE.MeshPhysicalMaterial({ color: 0xff0000 })
+    // )
+    // helper4.position.set(0, 0.1, 0);
+    // helper4.castShadow = true;
+    // scene.add(helper4);
+    // const helper5 = new THREE.Mesh(
+    //   new THREE.PlaneGeometry(0.02, 0.02),
+    //   new THREE.MeshPhysicalMaterial({ color: 0x00ff00 })
+    // )
+    // helper5.position.set(0, 0.08, 0);
+    // helper4.receiveShadow = true;
+    // helper5.lookAt(new Vector3(0, 2, 0));
+    // scene.add(helper5);
 
     return () => {
       // if (sunLight) scene.remove(sunLight);
       if (keyLight) scene.remove(keyLight);
       if (rimLight) scene.remove(rimLight);
+      // if (spotlights) spotlights.forEach((spotlight) => { scene.remove(spotlight.target); scene.remove(spotlight); });
+      // if (helpers) helpers.forEach((helper) => scene.remove(helper));
       // if (helper1) scene.remove(helper1);
       // if (helper2) scene.remove(helper2);
+      // if (helper3) scene.remove(helper3);
+      // if (helper4) scene.remove(helper4);
+      // if (helper5) scene.remove(helper5);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -435,15 +602,15 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   const [bgOverrideName, setBgOverrideName] = useState();
   const [envOverride, setEnvOverride] = useState();
   const [envOverrideName, setEnvOverrideName] = useState();
-  const [envStrengthOverride, setEnvStrengthOverride] = useState();
+  const [envStrengthOverride, setEnvStrengthOverride] = useState(assetType === 'Building' ? 0.01 : null);
   const [modelOverride, setModelOverride] = useState();
   const [modelOverrideName, setModelOverrideName] = useState();
 
-  const [lightsEnabled, setLightsEnabled] = useState(true);
+  const [lightsEnabled, setLightsEnabled] = useState(assetType === 'Building' ? false : true);
   const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState();
-  const [rotationEnabled, setRotationEnabled] = useState(true);
-  const [zoomLimitsEnabled, setZoomLimitsEnabled] = useState(true);
+  const [rotationEnabled, setRotationEnabled] = useState(assetType === 'Resource');
+  const [zoomLimitsEnabled, setZoomLimitsEnabled] = useState(assetType === 'Resource');
 
   const [uploadType, setUploadType] = useState();
   const fileInput = useRef();
@@ -486,16 +653,16 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
         setModelOverride(reader.result);
         setModelOverrideName(file.name);
       };
-    } else if (file.name.match(/\.(hdr)$/i)) {
+    } else if (file.name.match(/\.(hdr|jpg)$/i)) {
       setLoadingSkybox(true);
       reader.readAsDataURL(file);
       reader.onload = () => {
         if (uploadType === 'bg') {
-          setBgOverride(reader.result);
           setBgOverrideName(file.name);
+          setBgOverride(reader.result);
         } else if (uploadType === 'env') {
-          setEnvOverride(reader.result);
           setEnvOverrideName(file.name);
+          setEnvOverride(reader.result);
         }
       };
     } else {
@@ -528,7 +695,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
           return;
         }
       }
-      
+
       // this is default if no singleModel or can't find singleModel
       const categorySet = new Set(assets.map((a) => a.category));
       const categoryArr = Array.from(categorySet).sort();
@@ -536,7 +703,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
       setCategory(categoryArr[0]);
     }
   }, [!!assets, assetType, singleModel]);
-  
+
   useEffect(() => {
     if (!!assets && category !== undefined) {
       const bAssets = assets
@@ -675,14 +842,24 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
 
       <CanvasContainer>
         <Canvas
+          shadows
           resize={{ debounce: 5, scroll: false }}
           style={{ height: '100%', width: '100%' }}>
           <Skybox
             assetType={assetType}
             onLoaded={() => setLoadingSkybox(false)}
             overrideBackground={bgOverride}
+            overrideBackgroundName={bgOverrideName}
             overrideEnvironment={envOverride}
+            overrideEnvironmentName={envOverrideName}
           />
+          {/* disabled because this darkens scene too much */}
+          {false && assetType === 'Building' && (
+            <>
+              <ambientLight intensity={0.4} />
+              <Postprocessor enabled={true} bloomByName={(n) => !!n.match(/(light|fire)/i)} />
+            </>
+          )}
           {model?.modelUrl && !loadingSkybox && (
             <Model
               assetType={assetType}

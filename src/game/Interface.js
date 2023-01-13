@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import styled, { css } from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { Switch, Route, Redirect } from 'react-router-dom';
@@ -26,7 +26,6 @@ import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
 import RouteDetails from './interface/details/RouteDetails';
-import Settings from './interface/details/Settings';
 import WatchlistTable from './interface/details/WatchlistTable';
 import theme from '~/theme';
 
@@ -84,26 +83,24 @@ const Interface = () => {
   const { data: sale } = useSale();
   const isFetching = useIsFetching();
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
+  const interfaceHidden = useStore(s => s.graphics.hideInterface);
+  const hideInterface = useStore(s => s.dispatchHideInterface);
+  const showInterface = useStore(s => s.dispatchShowInterface);
 
-  const [hideInterface, setHideInterface] = useState(false);
-
-  // NOTE: requested by art team for easier screenshots vvv
-  const toggleInterface = useCallback((e) => {
-    if (e.ctrlKey && e.which === 120) { // ctrl+f9
-      setHideInterface(!hideInterface);
-    }
-  }, [hideInterface]);
+  const handleInterfaceShortcut = useCallback((e) => {
+    // ctrl+f9
+    if (e.ctrlKey && e.which === 120) interfaceHidden ? showInterface() : hideInterface();
+  }, [interfaceHidden]);
 
   useEffect(() => {
-    document.addEventListener('keyup', toggleInterface);
+    document.addEventListener('keyup', handleInterfaceShortcut);
     return () => {
-      document.removeEventListener('keyup', toggleInterface);
+      document.removeEventListener('keyup', handleInterfaceShortcut);
     }
-  }, [toggleInterface]);
-  // ^^^
+  }, [handleInterfaceShortcut]);
 
   return (
-    <StyledInterface hide={hideInterface}>
+    <StyledInterface hide={interfaceHidden}>
       {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
       {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
       <Alerts />
@@ -158,9 +155,6 @@ const Interface = () => {
         </Route>
         <Route path="/crew-assignment/:id([a-z0-9]+)/create">
           <CrewCreation />
-        </Route>
-        <Route path="/settings">
-          <Settings />
         </Route>
       </Switch>
       <Outliner />

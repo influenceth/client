@@ -7,6 +7,16 @@ import useCrew from '~/hooks/useCrew';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
 
+const labelDict = {
+  READY: 'Improve Core Sample',
+  SAMPLING: 'Sampling...',
+  READY_TO_FINISH: 'Analyze Improved Sample',
+  FINISHING: 'Analyzing...',
+
+  OTHER_SAMPLE_READY: 'Sample Ready',
+  OTHER_SAMPLE_SAMPLING: 'Sampling...'
+};
+
 const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
   const resourceMap = useStore(s => s.asteroids.showResourceMap);
   const { currentSample, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i);
@@ -29,7 +39,7 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
     ? '✓'
     : (samplingStatus === 'READY' ? improvableSamples?.length : 0);
 
-  let label = 'Improve Core Sample';
+  let label = labelDict[samplingStatus];
   let attention = undefined;
   let disabled = undefined;
   let loading = undefined;
@@ -37,7 +47,6 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
     // if current sample applies to this button ("improving" and matching resource id)
     if (!currentSample.isNew && currentSample.resourceId === Number(resourceMap?.i)) {
       if (samplingStatus === 'READY_TO_FINISH') {
-        label = 'Analyze Improved Sample';
         attention = true;
       }
     
@@ -45,7 +54,7 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
     } else {
       disabled = true;
       if (currentSample.resourceId !==  Number(resourceMap?.i)) {
-        label = samplingStatus === 'READY_TO_FINISH' ? 'Core Sample Ready' : 'Already Sampling';
+        label = samplingStatus === 'READY_TO_FINISH' ? labelDict.OTHER_SAMPLE_READY : labelDict.OTHER_SAMPLE_SAMPLING;
         label += ` (${Inventory.RESOURCES[currentSample.resourceId].name})`;
       }
     }

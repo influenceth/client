@@ -120,11 +120,6 @@ const config = {
     enabled: true,
     bloom: true
   },
-  meridianCircle: {
-    enabled: true,
-    bloom: true,
-    // dashed: true
-  },
   equatorCircle: {
     enabled: false,
     bloom: true
@@ -197,7 +192,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
 
   const helper = useRef();
   const shipTime = useRef();
-  
+
   const circleRadius = useMemo(() => TELEMETRY_SCALE * radius, [radius]);
   const circleAttenuation = useMemo(() => Math.max(1.4, 0.75 * scaleHelper) * radius, [radius]);
   const trajectoryAttenuation = useMemo(() => Math.max(10, 2 * scaleHelper) * radius, [radius]);
@@ -255,14 +250,6 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
     rotationalMarkersGroup.current = new Group();
     rotationalMarkersGroup.current.lookAt(axis.clone().normalize());
     rotationalMarkersGroup.current.updateMatrixWorld();
-
-    if (config.meridianCircle.enabled) {
-      const meridianCircle = new LineLoop(vertGeometry.clone(), config.meridianCircle.dashed ? getDashedMaterial() : material.clone());
-      if (config.meridianCircle.dashed) meridianCircle.computeLineDistances();
-      meridianCircle.userData.bloom = config.meridianCircle.bloom;
-
-      rotationalMarkersGroup.current.add(meridianCircle);
-    }
 
     if (config.planarCircle.enabled) {
       planarCircle.current = new LineLoop(geometry.clone(), config.planarCircle.dashed ? getDashedMaterial() : material.clone());
@@ -369,7 +356,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           const z = 0;
           shipVertices.push(x, y, z);
         }
-        
+
         const shipPointGeometry = new BufferGeometry();
         shipPointGeometry.setAttribute('position', new Float32BufferAttribute( shipVertices, 3 ));
         const shipCirclePoints = new Points(
@@ -432,7 +419,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
 
       const maxSignageWidth = 1000;
       const SIGNAGE_THETA = Math.min(
-        0.02, 
+        0.02,
         maxSignageWidth / accessCircleRadius * 2 * Math.PI
       );
 
@@ -548,7 +535,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
     if (position) {
       // TODO (enhancement): depending on what is displayed, not all these pre-calculations may be necessary
       const pos = new Vector3(...position).normalize();
-      
+
       // vector pointing along approx. orbit (perpendicular to position, within xy)
       const orbit = pos.clone()
         .setZ(0)

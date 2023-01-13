@@ -321,7 +321,7 @@ const SceneMenu = (props) => {
   const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
   const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
-  
+
   const plotLoader = useStore(s => s.plotLoader);
   const history = useHistory();
 
@@ -375,7 +375,7 @@ const SceneMenu = (props) => {
     } else if (asteroidId && zoomStatus === 'out') {
       dispatchOriginSelected();
     }
-    
+
     return false;
   }, [asteroidId, plotId, zoomStatus]);
 
