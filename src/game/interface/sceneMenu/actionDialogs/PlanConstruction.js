@@ -138,7 +138,7 @@ const PlanConstruction = ({ asteroid, plot, ...props }) => {
       <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />
       <ActionDialogFooter
         buttonsLoading={constructionStatus === 'PLANNING'}
-        disableGo={!capableType}
+        goDisabled={!capableType}
         goLabel="Place Site"
         onGo={() => planConstruction(capableType)}
         status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'}

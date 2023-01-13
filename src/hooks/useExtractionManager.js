@@ -61,7 +61,6 @@ const useExtractionManager = (asteroidId, plotId) => {
       } else {
         const startTx = getPendingTx('START_EXTRACTION', payload);
         if (startTx) {
-          console.log('START_EXTRACTION', startTx);
           current.destinationLotId = startTx.vars.destinationLotId;
           current.destinationInventoryId = startTx.vars.destinationInventoryId;
           current.resourceId = startTx.vars.resourceId;

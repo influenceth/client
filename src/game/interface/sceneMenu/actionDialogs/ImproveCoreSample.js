@@ -174,6 +174,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
 
   const crewMembers = coreSampleManager.currentSample?._crewmates
     || ((crew?.crewMembers || []).map((i) => crewMemberMap[i]));
+  const captain = crewMembers[0];
   const sampleTimeBonus = getCrewAbilityBonus(1, crewMembers);
   const sampleQualityBonus = getCrewAbilityBonus(2, crewMembers);
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
@@ -254,6 +255,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
     <>
       <ActionDialogHeader
         asteroid={asteroid}
+        captain={captain}
         plot={plot}
         action={{
           actionIcon: <ImproveCoreSampleIcon />,
@@ -296,7 +298,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
           { label: 'Close', onClick: props.onClose },
           { label: 'Improve Again', onClick: onReset },
         ]}
-        buttonsDisabled={samplingStatus === 'READY' && lotAbundance === 0}
+        goDisabled={!currentSample}
         buttonsLoading={samplingStatus === 'FINISHING' || undefined}
         finalizeLabel="Analyze"
         goLabel="Begin Sample"

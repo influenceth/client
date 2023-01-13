@@ -18,12 +18,15 @@ const Extract = ({ onSetAction, asteroid, crew, plot }) => {
   const myUsableSamples = useMemo(() => usableSamples.filter((c) => c.owner === crew?.i), [crew?.i, usableSamples]);
 
   const attention = extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY';
+  const badge = extractionStatus === 'READY_TO_FINISH' ? '✓' : (extractionStatus === 'READY' ? usableSamples?.length : 0);
+  const disabled = (myUsableSamples?.length === 0) || undefined;
   const loading = ['EXTRACTING', 'FINISHING'].includes(extractionStatus);
   return (
     <ActionButton
-      label="Extract Resource"
+      label={`Extract Resource${disabled ? ' (requires core sample)' : ''}`}
       flags={{
-        badge: usableSamples?.length,
+        badge,
+        disabled,
         attention: attention || undefined,
         loading: loading || undefined,
       }}

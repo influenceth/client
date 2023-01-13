@@ -260,9 +260,8 @@ const getContracts = (account, queryClient) => ({
     ),
     isEqual: (txVars, vars) => (
       txVars.asteroidId === vars.asteroidId
-      && txVars.destPlotId === vars.destPlotId
-      && txVars.destInvId === vars.destInvId
       && txVars.crewId === vars.crewId
+      && txVars.originPlotId === vars.originPlotId
     )
   },
   'FINISH_DELIVERY': {
@@ -272,7 +271,12 @@ const getContracts = (account, queryClient) => ({
       'Inventory_transferFinish',
       [asteroidId, destPlotId, destInvId, deliveryId, crewId]
     ),
-    isEqual: 'ALL'
+    isEqual: (txVars, vars) => (
+      txVars.asteroidId === vars.asteroidId
+      && txVars.crewId === vars.crewId
+      && txVars.destPlotId === vars.destPlotId
+      && txVars.deliveryId === vars.deliveryId
+    )
   }
 });
 

@@ -6,19 +6,20 @@ import useCrew from './useCrew';
 import usePlot from './usePlot';
 import useActionItems from './useActionItems';
 
-const useDeliveryManager = (asteroidId, originPlotId, originInvId, destPlotId, destInvId) => {
-  const actionItems = useActionItems();
-  const { chainTime, execute, getStatus } = useContext(ChainTransactionContext);
+const useDeliveryManager = (asteroidId, plotId, deliveryId = 0) => {
+  const { actionItems, readyItems } = useActionItems();
+  const { chainTime, execute, getStatus, getPendingTx } = useContext(ChainTransactionContext);
   const { crew } = useCrew();
-  const { data: originPlot } = usePlot(asteroidId, originPlotId);
-  const { data: destinationPlot } = usePlot(asteroidId, destPlotId);
+  const { data: plot } = usePlot(asteroidId, plotId);
 
   const payload = useMemo(() => ({
     asteroidId,
-    destPlotId,
-    destInvId,
     crewId: crew?.i
-  }), [asteroidId, destPlotId, destInvId, crew?.i]);
+  }), [asteroidId, crew?.i]);
+
+
+  // if deliveryId is 0, treat plotId as origin
+  // else, treat as destination
 
   // start delivery:
   //  - button loading
@@ -30,56 +31,99 @@ const useDeliveryManager = (asteroidId, originPlotId, originInvId, destPlotId, d
   
 
 
-
-
-
-
   // status flow
-  // READY > IN_TRANSIT > READY_TO_FINISH > FINISHING
-  const [currentConstruction, constructionStatus] = useMemo(() => {
-    // TODO: this needs a status filter
-    if (unfinishedCrewDelivery) {
-      if (getStatus('FINISH_DELIVERY', { ...payload, deliveryId: unfinishedCrewDelivery?.deliveryId }) === 'pending') {
-        return 'FINISHING';
-      } else if (unfinishedCrewDelivery.completionTime < chainTime) {
-        return 'READY_TO_FINISH';
+  // READY > DEPARTING > IN_TRANSIT > READY_TO_FINISH > FINISHING > FINISHED
+  const [currentDelivery, deliveryStatus] = useMemo(() => {
+    let current = {
+      _crewmates: null,
+      completionTime: null,
+      destPlotId: null,
+      destPlotInvId: null,
+      originPlotId: null,
+      originPlotInvId: null,
+      resources: null,
+      startTime: null
+    };
+
+    let status = 'READY';
+
+    // if deliveryId, treat plot as destination and asssume in progress or done
+    const delivery = deliveryId > 0 && (plot?.building?.deliveries || []).find((d) => d.deliveryId === deliveryId);
+    if (delivery) {
+      let actionItem = (actionItems || []).find((item) => (
+        item.event.name === 'Dispatcher_InventoryTransferStart'
+        && item.event.returnValues.asteroidId === asteroidId
+        && item.event.returnValues.destinationLotId === plotId
+        && item.assets.delivery?.deliveryId === deliveryId
+      ));
+      if (actionItem) {
+        current._crewmates = actionItem.assets.crew.crewmates;
+        current.originPlotId = actionItem.event.returnValues.originLotId;
+        current.originPlotInvId = actionItem.event.returnValues.originInventoryId;
       }
-      return 'IN_TRANSIT';
-    } else if (getStatus('START_DELIVERY', payload) === 'pending') {
-      return 'IN_TRANSIT';
+      current.completionTime = delivery.completionTime;
+      current.destPlotId = plot.i;
+      current.destPlotInvId = delivery.inventoryType;
+      current.resources = delivery.resources;
+      current.startTime = delivery.startTime;
+
+      if (delivery.status === 'COMPLETE') {
+        status = 'FINISHED';
+      } else {
+        if(getStatus('FINISH_DELIVERY', { ...payload, destPlotId: plotId, deliveryId }) === 'pending') {
+          status = 'FINISHING';
+        } else if (delivery.completionTime && delivery.completionTime < chainTime) {
+          status = 'READY_TO_FINISH';
+        } else {
+          status = 'IN_TRANSIT';
+        }
+      }
+
+    // if no deliveryId (or no delivery), treat plot as origin (and assume delivery not yet started or in new tx)
+    } else {
+      const startTx = getPendingTx('START_DELIVERY', { ...payload, originPlotId: plotId, });
+      if (startTx) {
+        current.destPlotId = startTx.vars.destPlotId;
+        current.destPlotInvId = startTx.vars.destInvId;
+        current.originPlotId = startTx.vars.originPlotId;
+        current.originPlotInvId = startTx.vars.originInvId;
+        current.resources = startTx.vars.resources;
+        status = 'DEPARTING';
+      }
     }
-    return 'READY';
 
-  // NOTE: actionItems is not used in this function, but it being updated suggests
-  //  that something might have just gone from UNDER_CONSTRUCTION to READY_TO_FINISH
-  //  so it is a good time to re-evaluate the status
-  }, [unfinishedCrewDelivery, getStatus, payload, actionItems]);
+    return [
+      status === 'READY' ? null : current,
+      status
+    ];
+  }, [actionItems, readyItems, getPendingTx, getStatus, payload, deliveryId]);
 
 
-  const startDelivery = useCallback((resources) => {
+  const startDelivery = useCallback(({ originInvId, destPlotId, destInvId, resources }) => {
     execute('START_DELIVERY', {
       ...payload,
-      originPlotId,
+      originPlotId: plotId,
       originInvId,
+      destPlotId,
+      destInvId,
       resources
     })
   }, [payload]);
 
-  const unfinishedCrewDelivery = useMemo(() => 
-    destinationPlot?.building?.deliveries?.length > 0
-      ? destinationPlot.building.deliveries[destinationPlot.building.deliveries.length - 1]
-      : null,
-    [destinationPlot?.building?.deliveries]
-  );
-
   const finishDelivery = useCallback(() => {
-    execute('FINISH_DELIVERY', { ...payload, deliveryId: unfinishedCrewDelivery?.deliveryId })
-  }, [payload, unfinishedCrewDelivery]);
+    execute('FINISH_DELIVERY', {
+      ...payload,
+      destPlotId: currentDelivery?.destPlotId,
+      destInvId: currentDelivery?.destPlotInvId,
+      deliveryId
+    })
+  }, [payload, currentDelivery]);
 
   return {
-    deliveryStatus: 'READY',
     startDelivery,
-    finishDelivery
+    finishDelivery,
+    deliveryStatus,
+    currentDelivery,
   };
 };
 

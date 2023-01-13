@@ -270,13 +270,13 @@ const entries = {
     };
   },
 
-  Inventory_DeliveryFinished: (e) => { // TODO: ...
-    console.log('Inventory_DeliveryFinished', e);
+  Dispatcher_InventoryTransferFinish: (e) => {
     return {
       icon: <SurfaceTransferIcon />,
       content: (
         <>
-          <span>Delivery completed.</span>
+          <span>Delivery completed to </span>
+          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.destinationLotId} />
         </>
       ),
       txLink: getTxLink(e),

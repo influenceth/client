@@ -11,11 +11,13 @@ const Construct = ({ asteroid, plot, onSetAction }) => {
   }, [onSetAction]);
 
   const attention = constructionStatus === 'PLANNED' || constructionStatus === 'READY_TO_FINISH';
+  const badge = constructionStatus === 'READY_TO_FINISH' ? '✓' : 0;
   const loading = constructionStatus === 'UNDER_CONSTRUCTION' || constructionStatus === 'FINISHING';
   return (
     <ActionButton
       label={constructionStatus === 'READY_TO_FINISH' ? 'Finish Construction' : 'Start Construction'}
       flags={{
+        badge,
         attention: attention || undefined,
         loading: loading || undefined
       }}

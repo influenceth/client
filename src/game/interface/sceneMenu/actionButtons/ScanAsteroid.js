@@ -35,7 +35,7 @@ const ScanAsteroid = ({ asteroid }) => {
       case 'READY_TO_FINISH':
         return {
           label: 'Retrieve Scan Results',
-          flags: { attention: true },
+          flags: { attention: true, badge: '✓' },
           handleClick: () => {
             // finalizeAsteroidScan();
             history.push(`/asteroids/${asteroid.i}/resources`);

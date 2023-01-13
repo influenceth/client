@@ -130,6 +130,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
   
   const crewMembers = coreSampleManager.currentSample?._crewmates
     || ((crew?.crewMembers || []).map((i) => crewMemberMap[i]));
+  const captain = crewMembers[0];
   const sampleTimeBonus = getCrewAbilityBonus(1, crewMembers);
   const sampleQualityBonus = getCrewAbilityBonus(2, crewMembers);
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
@@ -212,6 +213,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
     <>
       <ActionDialogHeader
         asteroid={asteroid}
+        captain={captain}
         plot={plot}
         action={{
           actionIcon: <CoreSampleIcon />,

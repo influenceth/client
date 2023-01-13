@@ -189,8 +189,7 @@ const formatItem = (item) => {
     locationDetail: '',
     completionTime: item.data?.completionTime || 0,
     ago: (new moment(new Date(1000 * (item.data?.completionTime || 0)))).fromNow(),
-    onClick: null,
-    _item: item
+    onClick: null
   };
 
   switch(item.event.name) {
@@ -240,11 +239,10 @@ const formatItem = (item) => {
     case 'Dispatcher_InventoryTransferStart':
       formatted.icon = <SurfaceTransferIcon />;
       formatted.label = 'Surface Transfer';
-      formatted.asteroidId = item.assets.asteroid.i;
-      // TODO: investigate if this lot is the origin or destination
-      formatted.plotId = item.assets.lot.i;  // after start, link to destination
+      formatted.asteroidId = item.event.returnValues?.asteroidId;
+      formatted.plotId = item.event.returnValues?.destinationLotId;  // after start, link to destination
       formatted.onClick = ({ openDialog }) => {
-        openDialog('SURFACE_TRANSFER', { deliveryId: item.event.returnValues?.deliveryId });
+        openDialog('SURFACE_TRANSFER', { deliveryId: item.assets.delivery?.deliveryId });
       };
       break;
     default:
@@ -282,8 +280,7 @@ const formatTx = (item) => {
     resourceId: null,
     locationDetail: '',
     completionTime: null,
-    onClick: null,
-    _item: item
+    onClick: null
   };
   switch(item.event?.event || item.key) {
     case 'PURCHASE_ASTEROID':
@@ -449,6 +446,7 @@ const formatTx = (item) => {
       formatted.label = 'Start Transfer';
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.originPlotId;  // at start, link to origin (in case of failure)
+      console.log({ formatted });
       formatted.onClick = ({ openDialog }) => {
         // TODO: in case of failure, should link with selected resource and destination
         // (low priority b/c would have to fail and would have to have closed dialog)
@@ -626,12 +624,12 @@ const ActionItems = () => {
               && tx.vars.asteroidId === item.event.returnValues?.asteroidId
               && tx.vars.plotId === item.event.returnValues?.lotId
             ));
-          case 'Dispatcher_InventoryTransferStart': // TODO: review this
+          case 'Dispatcher_InventoryTransferStart':
             return !pendingTransactions.find((tx) => (
               tx.key === 'FINISH_DELIVERY'
-              && tx.vars.asteroidId === item.assets.asteroid.i
-              && tx.vars.plotId === item.assets.lot.i
-              && tx.vars.deliveryId === item.assets.deliveryId
+              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+              && tx.vars.destPlotId === item.event.returnValues?.destinationLotId
+              && tx.vars.deliveryId === item.assets.delivery?.deliveryId
             ));
         }
       }
@@ -692,7 +690,7 @@ const ActionItems = () => {
   return (
     <ActionItemContainer>
       {(displayItems || []).map(({ transition, type, ...item }) => (
-        <ActionItem key={`${type}_${item.key}`} data={item} type={type} />
+        <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
       ))}
     </ActionItemContainer>
   );

@@ -1,16 +1,28 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { SurfaceTransferIcon } from '~/components/Icons';
+import useDeliveryManager from '~/hooks/useDeliveryManager';
 import ActionButton from './ActionButton';
 
-const SurfaceTransfer = ({ onSetAction }) => {
+const SurfaceTransfer = ({ asteroid, plot, onSetAction }) => {
+  const { deliveryStatus } = useDeliveryManager(asteroid.i, plot.i);
+
   const handleClick = useCallback(() => {
-    onSetAction('SURFACE_TRANSFER');
+    onSetAction('SURFACE_TRANSFER', { deliveryId: 0 });
   }, [onSetAction]);
+
+  const disabled = useMemo(() => {
+    const hasMass = Object.values(plot?.building?.inventories || {}).find((i) => i.mass > 0);
+    return !hasMass;
+  }, [plot?.building?.inventories]);
 
   return (
     <ActionButton
-      label={'Surface Transfer'}
+      label={`Surface Transfer${disabled && ' (inventory empty)'}`}
+      flags={{
+        disabled: disabled || undefined,
+        loading: (deliveryStatus === 'DEPARTING') || undefined
+      }}
       icon={<SurfaceTransferIcon />}
       onClick={handleClick} />
   );

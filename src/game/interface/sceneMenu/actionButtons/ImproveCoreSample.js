@@ -25,6 +25,10 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
       && c.status !== CoreSample.STATUS_USED;
   }), [plot?.coreSamples, resourceMap?.i]);
 
+  const badge = (!currentSample?.isNew && samplingStatus === 'READY_TO_FINISH')
+    ? '✓'
+    : (samplingStatus === 'READY' ? improvableSamples?.length : 0);
+
   let label = 'Improve Core Sample';
   let attention = undefined;
   let disabled = undefined;
@@ -58,7 +62,7 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
       label={label}
       flags={{
         attention: attention || undefined,
-        badge: improvableSamples?.length,
+        badge,
         disabled,
         loading: loading || undefined
       }}

@@ -88,6 +88,7 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
   const { crew, crewMemberMap } = useCrew();
   
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
+  const captain = crewMembers[0];
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
@@ -138,6 +139,7 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
     <>
       <ActionDialogHeader
         asteroid={asteroid}
+        captain={captain}
         plot={plot}
         action={{
           actionIcon: <DeconstructIcon />,

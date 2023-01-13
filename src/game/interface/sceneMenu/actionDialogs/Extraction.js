@@ -131,7 +131,7 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
     if (currentExtractionDestinationPlot) {
       setDestinationPlot(currentExtractionDestinationPlot);
     }
-  }, [currentExtractionDestinationPlot])
+  }, [currentExtractionDestinationPlot]);
 
   const resource = useMemo(() => {
     if (selectedCoreSample) return resources[selectedCoreSample.resourceId];
@@ -214,10 +214,12 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
     }
   }, [extractionStatus]);
 
+  console.log();
   return (
     <>
       <ActionDialogHeader
         asteroid={asteroid}
+        captain={captain}
         plot={plot}
         action={{
           actionIcon: <ExtractionIcon />,
@@ -269,7 +271,7 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
       <ActionDialogFooter
         {...props}
         buttonsLoading={extractionStatus === 'FINISHING' || undefined}
-        disabled={amount === 0}
+        goDisabled={!destinationPlot || !selectedCoreSample || amount === 0}
         finalizeLabel="Complete"
         goLabel="Begin Extraction"
         onFinalize={finishExtraction}
