@@ -19,8 +19,8 @@ const useConstructionManager = (asteroidId, plotId) => {
     crewId: crew?.i
   }), [asteroidId, plotId, crew?.i]);
 
-  // NONE > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
-  //      < CANCELING <         <                  DECONSTRUCTING                  <
+  // READY_TO_PLAN > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
+  //               < CANCELING <         <                  DECONSTRUCTING                  <
   const [currentConstruction, constructionStatus] = useMemo(() => {
     let current = {
       _crewmates: null,

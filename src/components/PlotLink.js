@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useResourceAssets } from '~/hooks/useAssets';
+import useAsteroid from '~/hooks/useAsteroid';
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useStore from '~/hooks/useStore';
 import OnClickLink from './OnClickLink';
@@ -42,10 +43,19 @@ export const usePlotLink = ({ asteroidId, plotId, resourceId }) => {
   }, [asteroidId, plotId, selectResourceMapAsNeeded, zoomStatus]);
 }
 
+const AsteroidName = ({ asteroidId }) => {
+  const { data: asteroid } = useAsteroid(asteroidId);
+  return (
+    <>
+      {asteroid?.customName || asteroid?.baseName || `Asteroid #${asteroidId.toLocaleString()}`}
+    </>
+  );
+};
+
 export const PlotLink = ({ asteroidId, plotId, resourceId }) => {
   const onClick = usePlotLink({ asteroidId, plotId, resourceId });
 
-  const { data: owned } = useOwnedAsteroids();
+  const { data: owned, isLoading: ownedAreLoading } = useOwnedAsteroids();
   const asteroidName = useMemo(() => {
     if (owned) {
       const match = owned.find(a => a.i === Number(asteroidId));
@@ -58,7 +68,10 @@ export const PlotLink = ({ asteroidId, plotId, resourceId }) => {
 
   return (
     <OnClickLink onClick={onClick}>
-      {asteroidName || `Asteroid #${asteroidId}`} #{plotId ? plotId.toLocaleString() : '?'}
+      {ownedAreLoading
+        ? `Asteroid #${asteroidId.toLocaleString()}`
+        : (asteroidName || <AsteroidName asteroidId={asteroidId} />)}
+      {' '}#{plotId ? plotId.toLocaleString() : '?'}
     </OnClickLink>
   );
 };
