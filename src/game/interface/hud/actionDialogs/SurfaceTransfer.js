@@ -48,10 +48,9 @@ import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useInterval from '~/hooks/useInterval';
-import { getCrewAbilityBonus } from '~/lib/utils';
+import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  LiveTimer,
   BlueprintSelection,
   CoreSampleSelection,
   DestinationSelection,
@@ -72,7 +71,6 @@ import {
   ActionDialogStats,
   ActionDialogTimers,
 
-  formatTimer,
   getBonusDirection,
   getTripDetails,
   formatSampleMass,

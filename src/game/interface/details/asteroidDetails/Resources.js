@@ -20,7 +20,7 @@ import useScanManager from '~/hooks/useScanManager';
 import useStore from '~/hooks/useStore';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import theme, { hexToRGB } from '~/theme';
-import { LiveTimer } from '../../sceneMenu/actionDialogs/components';
+import LiveTimer from '~/components/LiveTimer';
 import { useQueryClient } from 'react-query';
 import { RingLoader } from 'react-spinners';
 

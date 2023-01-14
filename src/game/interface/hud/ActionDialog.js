@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { PuffLoader } from 'react-spinners';
 
 import Dialog from '~/components/Dialog';
@@ -15,7 +15,7 @@ import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import UnplanConstruction from './actionDialogs/UnplanConstruction';
 import { ActionDialogLoader } from './actionDialogs/components';
 
-export const useAsteroidAndPlot = (props) => {
+export const useAsteroidAndPlot = (props = {}) => {
   const selectedPlot = useStore(s => s.asteroids.plot);
   const { asteroidId: defaultAsteroidId, plotId: defaultPlotId } = selectedPlot || {};
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(props.asteroidId || defaultAsteroidId);
@@ -40,8 +40,24 @@ export const useAsteroidAndPlot = (props) => {
   }
 };
 
-const ActionDialog = ({ actionType, ...props }) => {
-  const { isLoading, ...locProps } = useAsteroidAndPlot(props);
+const ActionDialogWrapper = () => {
+  const actionDialog = useStore(s => s.actionDialog);
+  console.log('actionDialog', actionDialog)
+  return actionDialog?.type ? <ActionDialog {...actionDialog} /> : null;
+};
+
+const ActionDialog = ({ type, params }) => {
+  const setAction = useStore(s => s.dispatchActionDialog);
+  const { isLoading, ...locParams } = useAsteroidAndPlot(params);
+
+  const allProps = useMemo(() => ({
+    ...params,
+    ...locParams, 
+    onSetAction: setAction,
+    onClose: () => setAction(),
+  }), [params, locParams, setAction]);
+
+
   return (
     <Dialog backdrop="rgba(30, 30, 35, 0.5)" opaque>
       {isLoading && (
@@ -51,18 +67,18 @@ const ActionDialog = ({ actionType, ...props }) => {
       )}
       {!isLoading && (
         <div style={{ position: 'relative' }}>
-          {actionType === 'BLUEPRINT' && <PlanConstruction {...locProps} {...props} />}
-          {actionType === 'CANCEL_BLUEPRINT' && <UnplanConstruction {...locProps} {...props} />}
-          {actionType === 'CONSTRUCT' && <Construction {...locProps} {...props} />}
-          {actionType === 'DECONSTRUCT' && <Deconstruct {...locProps} {...props} />}
-          {actionType === 'EXTRACT_RESOURCE' && <Extraction {...locProps} {...props} />}
-          {actionType === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...locProps} {...props} />}
-          {actionType === 'NEW_CORE_SAMPLE' && <NewCoreSample {...locProps} {...props} />}
-          {actionType === 'SURFACE_TRANSFER' && <SurfaceTransfer {...locProps} {...props} />}
+          {type === 'BLUEPRINT' && <PlanConstruction {...allProps} />}
+          {type === 'CANCEL_BLUEPRINT' && <UnplanConstruction {...allProps} />}
+          {type === 'CONSTRUCT' && <Construction {...allProps} />}
+          {type === 'DECONSTRUCT' && <Deconstruct {...allProps} />}
+          {type === 'EXTRACT_RESOURCE' && <Extraction {...allProps} />}
+          {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}
+          {type === 'NEW_CORE_SAMPLE' && <NewCoreSample {...allProps} />}
+          {type === 'SURFACE_TRANSFER' && <SurfaceTransfer {...allProps} />}
         </div>
       )}
     </Dialog>
   );
 }
 
-export default ActionDialog;
+export default ActionDialogWrapper;

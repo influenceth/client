@@ -9,13 +9,12 @@ import useSale from '~/hooks/useSale';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import Alerts from './interface/Alerts';
-import AvatarMenu from './interface/AvatarMenu';
 import Draggables from './interface/Draggables';
+import HUD from './interface/HUD';
 import MainMenu from './interface/MainMenu';
 import ModelViewer from './interface/ModelViewer';
 import Outliner from './interface/Outliner';
 import SaleNotifier from './interface/SaleNotifier';
-import SceneMenu from './interface/SceneMenu';
 import AsteroidDetails from './interface/details/AsteroidDetails';
 import AsteroidsTable from './interface/details/AsteroidsTable';
 import CrewAssignment from './interface/details/crewAssignments/Assignment';
@@ -131,8 +130,7 @@ const Interface = () => {
         </Switch>
 
         {zoomToPlot && <ModelViewer assetType="Building" plotZoomMode={zoomToPlot} />}
-        <AvatarMenu />
-        <SceneMenu />
+        <HUD />
         <MainMenu />
       </MainContainer>
 

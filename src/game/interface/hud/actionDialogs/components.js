@@ -37,6 +37,8 @@ import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
 import useInterval from '~/hooks/useInterval';
 import theme from '~/theme';
 import useChainTime from '~/hooks/useChainTime';
+import { formatFixed, formatTimer } from '~/lib/utils';
+import LiveTimer from '~/components/LiveTimer';
 
 // TODO: remove this after sdk updated
 Inventory.CAPACITIES = {
@@ -1002,14 +1004,6 @@ const ResourceRequirement = ({ resource, hasTally, isGathering, needsTally }) =>
   return (
     <ResourceImage {...props} />
   );
-};
-
-export const LiveTimer = ({ target, maxPrecision }) => {
-  const chainTime = useChainTime();
-  return useMemo(() => {
-    const remaining = Math.max(0, target - chainTime);
-    return isNaN(remaining) ? 'Initializing...' : <>{formatTimer(remaining, maxPrecision)}</>;
-  }, [chainTime, maxPrecision, target]);
 };
 
 //
@@ -2082,31 +2076,6 @@ export const TravelBonusTooltip = ({ bonus, totalTime, tripDetails, ...props }) 
 //
 // utils
 //
-
-const timerIncrements = {
-  d: 86400,
-  h: 3600,
-  m: 60,
-  s: 1
-};
-export const formatTimer = (secondsRemaining, maxPrecision = null) => {
-  let remainder = secondsRemaining;
-  const parts = Object.keys(timerIncrements).reduce((acc, k) => {
-    if (acc.length > 0 || remainder >= timerIncrements[k] || timerIncrements[k] === 1) {
-      const unit = Math.floor(remainder / timerIncrements[k]);
-      remainder = remainder % timerIncrements[k];
-      acc.push(`${unit}${k}`);
-    }
-    return acc;
-  }, []);
-  if (maxPrecision) return parts.slice(0, maxPrecision).join(' ');
-  return parts.join(' ');
-};
-
-export const formatFixed = (value, maximumFractionDigits = 0) => {
-  const div = 10 ** maximumFractionDigits;
-  return (Math.round((value || 0) * div) / div).toLocaleString();
-};
 
 export const formatSampleMass = (tonnage) => {
   return formatFixed(tonnage, 1);

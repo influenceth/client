@@ -5,7 +5,7 @@ import { CoreSampleIcon } from '~/components/Icons';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
-import { formatFixed } from '../actionDialogs/components';
+import { formatFixed } from '~/lib/utils';
 
 const labelDict = {
   READY: 'Start Core Sample',

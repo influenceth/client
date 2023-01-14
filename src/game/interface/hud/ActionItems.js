@@ -35,14 +35,18 @@ const iconWidth = 30;
 const TRANSITION_TIME = 400;
 const ITEM_WIDTH = `400px`;
 
-const ActionItemContainer = styled.div`
+const ActionItemWrapper = styled.div`
+  flex: 1;
+  overflow: hidden;
   pointer-events: none;
-  position: absolute;
-  left: 0;
-  top: 120px;
-  height: 275px;
+`;
+
+const ActionItemContainer = styled.div`
+  max-height: 275px;
+  height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
+  pointer-events: auto;
   width: ${ITEM_WIDTH};
 `;
 
@@ -564,9 +568,9 @@ const ActionItem = ({ data, type }) => {
         <Timing>
           {type === 'pending' && 'Just Now'}
           {(type === 'ready' || type === 'failed') && item.ago}
-          {type === 'unready' && item.completionTime && <>in <LiveTimer target={item.completionTime} maxPrecision={1} /></>}
+          {type === 'unready' && item.completionTime && <>in <LiveTimer target={item.completionTime} maxPrecision={2} /></>}
           {/* TODO: would be nice for this to have different level warning intensity based on time-left and/or presence of inventory on the lot */}
-          {type === 'plans' && item.completionTime && <Warning>remaining <LiveTimer target={item.completionTime} maxPrecision={1} /></Warning>}
+          {type === 'plans' && item.completionTime && <Warning>expires <LiveTimer target={item.completionTime} maxPrecision={2} /></Warning>}
         </Timing>
         {type === 'failed' && (
           <Dismissal onClick={onDismiss}>
@@ -689,11 +693,37 @@ const ActionItems = () => {
   {/* TODO: collapsible */}
   {/* TODO: the whole left side of the hud should potentially be in the same container so less absolute positioning */}
   return (
-    <ActionItemContainer>
-      {(displayItems || []).map(({ transition, type, ...item }) => (
-        <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
-      ))}
-    </ActionItemContainer>
+    <ActionItemWrapper>
+      <ActionItemContainer>
+        {(displayItems || []).map(({ transition, type, ...item }) => (
+          <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
+        ))}
+
+{(displayItems || []).map(({ transition, type, ...item }) => (
+          <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
+        ))}
+
+{(displayItems || []).map(({ transition, type, ...item }) => (
+          <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
+        ))}
+
+{(displayItems || []).map(({ transition, type, ...item }) => (
+          <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
+        ))}
+
+{(displayItems || []).map(({ transition, type, ...item }) => (
+          <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
+        ))}
+
+{(displayItems || []).map(({ transition, type, ...item }) => (
+          <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
+        ))}
+
+{(displayItems || []).map(({ transition, type, ...item }) => (
+          <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
+        ))}
+      </ActionItemContainer>
+    </ActionItemWrapper>
   );
 };
 

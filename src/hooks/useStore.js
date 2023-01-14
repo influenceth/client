@@ -147,8 +147,8 @@ const useStore = create(persist((set, get) => ({
       state.logs.alerts.unshift(alert);
     })),
 
-    dispatchActionDialog: (type, vars = {}) => set(produce(state => {
-      state.actionDialog = { type, vars };
+    dispatchActionDialog: (type, params = {}) => set(produce(state => {
+      state.actionDialog = { type, params };
     })),
 
     dispatchAlertNotified: (alert) => set(produce(state => {

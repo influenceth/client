@@ -107,16 +107,17 @@ const ResourceMapSelector = ({ active, asteroid }) => {
     history.push(`/resource-viewer/${resource.i}`)
   }, [resource?.i]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectCategory = useCallback((selected, forceReset) => () => {
-    if (forceReset || selected.category !== category?.category) {
-      dispatchResourceMap(selected.resources[0]);
-    }
-  }, [category?.category, dispatchResourceMap]);
-
   const selectResource = useCallback((selected) => {
     dispatchResourceMap(selected);
   }, [dispatchResourceMap]);
 
+  const selectCategory = useCallback((selected) => () => {
+    if (selected.category !== category?.category) {
+      selectResource(selected.resources[0]);
+    }
+  }, [category?.category, selectResource]);
+
+  // if resource map specified, initialize the local state
   useEffect(() => {
     if (active) {
       if (showResourceMap) {
@@ -128,8 +129,6 @@ const ResourceMapSelector = ({ active, asteroid }) => {
             }
           });
         });
-      } else if (asteroidAssets?.length) {
-        selectCategory(asteroidAssets[0], true)();
       }
     }
   }, [active, showResourceMap]); // eslint-disable-line react-hooks/exhaustive-deps
