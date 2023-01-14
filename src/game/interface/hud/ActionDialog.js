@@ -57,7 +57,6 @@ const ActionDialog = ({ type, params }) => {
     onClose: () => setAction(),
   }), [params, locParams, setAction]);
 
-
   return (
     <Dialog backdrop="rgba(30, 30, 35, 0.5)" opaque>
       {isLoading && (

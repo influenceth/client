@@ -698,30 +698,6 @@ const ActionItems = () => {
         {(displayItems || []).map(({ transition, type, ...item }) => (
           <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
         ))}
-
-{(displayItems || []).map(({ transition, type, ...item }) => (
-          <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
-        ))}
-
-{(displayItems || []).map(({ transition, type, ...item }) => (
-          <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
-        ))}
-
-{(displayItems || []).map(({ transition, type, ...item }) => (
-          <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
-        ))}
-
-{(displayItems || []).map(({ transition, type, ...item }) => (
-          <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
-        ))}
-
-{(displayItems || []).map(({ transition, type, ...item }) => (
-          <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
-        ))}
-
-{(displayItems || []).map(({ transition, type, ...item }) => (
-          <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
-        ))}
       </ActionItemContainer>
     </ActionItemWrapper>
   );

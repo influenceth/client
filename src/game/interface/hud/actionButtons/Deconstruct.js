@@ -9,7 +9,7 @@ const labelDict = {
   DECONSTRUCTING: 'Deconstructing...'
 };
 
-const Deconstruct = ({ asteroid, plot, onSetAction }) => {
+const Deconstruct = ({ asteroid, plot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
     onSetAction('DECONSTRUCT');
@@ -19,6 +19,7 @@ const Deconstruct = ({ asteroid, plot, onSetAction }) => {
     <ActionButton
       label={labelDict[constructionStatus] || undefined}
       flags={{
+        disabled: _disabled || undefined,
         loading: constructionStatus === 'DECONSTRUCTING' || undefined
       }}
       icon={<DeconstructIcon />}

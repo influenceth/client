@@ -12,7 +12,7 @@ const labelDict = {
   FINISHING: 'Finishing Extraction...'
 };
 
-const Extract = ({ onSetAction, asteroid, crew, plot }) => {
+const Extract = ({ onSetAction, asteroid, crew, plot, _disabled }) => {
   const { extractionStatus } = useExtractionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
     onSetAction('EXTRACT_RESOURCE');
@@ -33,7 +33,7 @@ const Extract = ({ onSetAction, asteroid, crew, plot }) => {
       label={`${labelDict[extractionStatus]}${disabled ? ' (requires core sample)' : ''}`}
       flags={{
         badge,
-        disabled: disabled || undefined,
+        disabled: _disabled || disabled || undefined,
         attention: attention || undefined,
         loading: loading || undefined,
       }}

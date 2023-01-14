@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
+import PuffLoader from 'react-spinners/PuffLoader';
 import { toRarity, toSize, toSpectralType } from '@influenceth/sdk';
 import {
   FaSearchPlus as DetailsIcon
@@ -129,6 +130,14 @@ const ThumbPreview = styled.div`
   opacity: ${p => p.visible ? 1 : 0};
 `;
 
+const ThumbLoading = styled.div`
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+`;
+
 const ThumbBackground = styled.div`
   position: absolute;
   top: 0;
@@ -234,8 +243,7 @@ const InfoPane = () => {
   const buildings = useBuildingAssets();
   const { constructionStatus } = useConstructionManager(asteroidId, plotId);
   const { crew } = useCrew();
-  // TODO: use plotIsLoading
-  const { data: plot, isLoading: plotIsLoading } = usePlot(asteroidId, plotId);
+  const { data: plot } = usePlot(asteroidId, plotId);
 
   const [renderReady, setRenderReady] = useState(false);
   const onRenderReady = useCallback(() => {
@@ -314,29 +322,40 @@ const InfoPane = () => {
             </Subtitle>
           </>
         )}
-        {zoomStatus === 'in' && plot && !zoomToPlot && (
+        {zoomStatus === 'in' && plotId && !zoomToPlot && (
           <div>
             <ThumbPreview visible>
               <CloseButton borderless onClick={onClosePane}>
                 <CloseIcon />
               </CloseButton>
-              {['OPERATIONAL', 'DECONSTRUCTING', 'READY_TO_PLAN'].includes(constructionStatus)
-                ? <ThumbBackground image={buildings[plot.building?.assetId || 0]?.iconUrls?.w400} />
-                : <ThumbBackground image={buildings[plot.building?.assetId || 0]?.siteIconUrls?.w400} />
-              }
-              <ThumbMain>
-                <ThumbTitle>{buildings[plot.building?.assetId || 0]?.name}</ThumbTitle>
-                <ThumbSubtitle>
-                  <PaneContent>
-                    Lot #{plot.i.toLocaleString()}
-                  </PaneContent>
-                  <PaneHoverContent>
-                    Zoom to Lot
-                  </PaneHoverContent>
-                </ThumbSubtitle>
-                <div style={{ flex: 1 }} />
-                <ThumbFootnote>{plot.occupier ? `Controlled${plot.occupier === crew?.i ? ' by Me' : ''}` : 'Uncontrolled'}</ThumbFootnote>
-              </ThumbMain>
+              {!plot && (
+                <ThumbLoading>
+                  <PuffLoader color="white" />
+                </ThumbLoading>
+              )}
+              {plot && (
+                <>
+                  {
+                    // TODO: if planning, could use the currentConstruction object to go ahead and put hologram image
+                    ['OPERATIONAL', 'DECONSTRUCTING', 'READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)
+                    ? <ThumbBackground image={buildings[plot.building?.assetId || 0]?.iconUrls?.w400} />
+                    : <ThumbBackground image={buildings[plot.building?.assetId || 0]?.siteIconUrls?.w400} />
+                  }
+                  <ThumbMain>
+                    <ThumbTitle>{buildings[plot.building?.assetId || 0]?.name}</ThumbTitle>
+                    <ThumbSubtitle>
+                      <PaneContent>
+                        Lot #{plot.i.toLocaleString()}
+                      </PaneContent>
+                      <PaneHoverContent>
+                        Zoom to Lot
+                      </PaneHoverContent>
+                    </ThumbSubtitle>
+                    <div style={{ flex: 1 }} />
+                    <ThumbFootnote>{plot.occupier ? `Controlled${plot.occupier === crew?.i ? ' by Me' : ''}` : 'Uncontrolled'}</ThumbFootnote>
+                  </ThumbMain>
+                </>
+              )}
             </ThumbPreview>
           </div>
         )}

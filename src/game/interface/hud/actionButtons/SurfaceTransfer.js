@@ -4,7 +4,7 @@ import { SurfaceTransferIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import ActionButton from './ActionButton';
 
-const SurfaceTransfer = ({ asteroid, plot, onSetAction }) => {
+const SurfaceTransfer = ({ asteroid, plot, onSetAction, _disabled }) => {
   const { deliveryStatus } = useDeliveryManager(asteroid.i, plot.i);
 
   const handleClick = useCallback(() => {
@@ -20,7 +20,7 @@ const SurfaceTransfer = ({ asteroid, plot, onSetAction }) => {
     <ActionButton
       label={`Surface Transfer${disabled && ' (inventory empty)'}`}
       flags={{
-        disabled: disabled || undefined,
+        disabled: _disabled || disabled || undefined,
         loading: (deliveryStatus === 'DEPARTING') || undefined
       }}
       icon={<SurfaceTransferIcon />}

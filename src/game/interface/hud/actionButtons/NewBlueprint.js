@@ -9,7 +9,7 @@ const labelDict = {
   PLANNING: 'Planning Site...'
 };
 
-const NewBlueprint = ({ asteroid, plot, onSetAction }) => {
+const NewBlueprint = ({ asteroid, plot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
     onSetAction('BLUEPRINT');
@@ -19,6 +19,7 @@ const NewBlueprint = ({ asteroid, plot, onSetAction }) => {
     <ActionButton
       label={labelDict[constructionStatus] || undefined}
       flags={{
+        disabled: _disabled || undefined,
         loading: constructionStatus === 'PLANNING' || undefined
       }}
       icon={<LayBlueprintIcon />}

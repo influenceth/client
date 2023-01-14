@@ -17,7 +17,7 @@ const labelDict = {
   OTHER_SAMPLE_SAMPLING: 'Sampling...'
 };
 
-const NewCoreSample = ({ asteroid, plot, onSetAction }) => {
+const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
   const resourceMap = useStore(s => s.asteroids.showResourceMap);
   const { currentSample, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
@@ -39,7 +39,7 @@ const NewCoreSample = ({ asteroid, plot, onSetAction }) => {
 
   let label = labelDict[samplingStatus];
   let attention = undefined;
-  let disabled = !(lotAbundance > 0) || undefined;
+  let disabled = _disabled || !(lotAbundance > 0) || undefined;
   let loading = undefined;
   const badge = (currentSample?.isNew && samplingStatus === 'READY_TO_FINISH') ? '✓' : 0;
   if (currentSample) {

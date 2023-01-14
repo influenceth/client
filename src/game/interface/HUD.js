@@ -1,27 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
-import styled, { css, keyframes } from 'styled-components';
-import { Address } from '@influenceth/sdk';
+import { useEffect, useMemo } from 'react';
+import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 
-import IconButton from '~/components/IconButton';
 import { BackIcon } from '~/components/Icons';
-import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAuth from '~/hooks/useAuth';
-import useChainTime from '~/hooks/useChainTime';
-import useConstructionManager from '~/hooks/useConstructionManager';
-import useCrew from '~/hooks/useCrew';
-import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
-import actionButtons from './hud/actionButtons';
 import ActionDialog from './hud/ActionDialog';
 import ResourceMapSelector from './hud/ResourceMapSelector';
 import ActionItems from './hud/ActionItems';
 import AvatarMenu from './hud/AvatarMenu';
 import InfoPane from './hud/InfoPane';
 import ResourceMapToggle from './hud/ResourceMapToggle';
+import useActionButtons from './hud/useActionButtons';
 
-
+const bottomMargin = 90;
 const rightModuleWidth = 375;
 
 const Wrapper = styled.div`
@@ -30,20 +22,25 @@ const Wrapper = styled.div`
   flex-direction: column;
   pointer-events: none;
   position: absolute;
-  bottom: 100px;
+  bottom: ${bottomMargin}px;
   z-index: 2;
+
+  & > * {
+    margin-bottom: 12px;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 `;
 
 const LeftWrapper = styled(Wrapper)`
   left: 0;
-  height: 100%;
+  height: calc(100% - ${bottomMargin}px);
   top: 0;
-  & > * {
-    margin-bottom: 12px;
-    &:last-child {
-      margin-bottom: 90px;
-    }
-  }
+`;
+
+const RightWrapper = styled(Wrapper)`
+  right: -23px;
 `;
 
 const LeftActions = styled.div`
@@ -99,12 +96,10 @@ export const Rule = styled.div`
   width: 100%;
 `;
 
-const RightWrapper = styled(Wrapper)`
-  right: -23px;
-  & > *:not(:last-child) {
-    margin-bottom: 12px;
-    width: ${rightModuleWidth}px;
-  }
+const ActionModuleContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: ${rightModuleWidth}px;
 `;
 
 const ActionModule = styled.div`
@@ -115,7 +110,7 @@ const ActionModule = styled.div`
   transform: translate(${p => p.visible ? 0 : `${rightModuleWidth + 5}px`}, ${p => p.lower ? `52px` : 0});
 `;
 
-const ActionButtons = styled(ActionModule)`
+const ActionButtonContainer = styled(ActionModule)`
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
@@ -124,101 +119,27 @@ const ActionButtons = styled(ActionModule)`
   width: 100%;
 `;
 
-
-// TODO: also split this up
-const ActionMenu = () => {
-  const { account } = useAuth();
-  const buildings = useBuildingAssets();
-  const chainTime = useChainTime();
-
-  const asteroidId = useStore(s => s.asteroids.origin);
-  const { plotId } = useStore(s => s.asteroids.plot || {});
+const useActionModuleVisbility = () => {
+  const showResourceMap = useStore(s => s.asteroids.showResourceMap);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
-  const showResourceMap = useStore(s => s.asteroids.showResourceMap);
-  const setAction = useStore(s => s.dispatchActionDialog);
 
+  return {
+    resourceMapSelector: zoomStatus === 'in' && !zoomToPlot && !!showResourceMap
+  };
+}
+
+const ActionModules = () => {
+  const visibleModules = useActionModuleVisbility();
+
+  const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
-  const { constructionStatus } = useConstructionManager(asteroidId, plotId);
-  const { data: plot } = usePlot(asteroidId, plotId);
-  const { crew } = useCrew();
-
-  const resourceMode = !!showResourceMap;
-
-  // TODO: could reasonably have buttons determine own visibility and remove some redundant logic here
-  // (the only problem is parent wouldn't know how many visible buttons there were)
-  const actions = useMemo(() => {
-    const a = [];
-    if (asteroid) {
-      if (!asteroid.owner) {
-        a.push(actionButtons.PurchaseAsteroid);
-      }
-      if (!asteroid.scanned) {
-        if (account && asteroid.owner && Address.areEqual(account, asteroid.owner)) {
-          a.push(actionButtons.ScanAsteroid);
-        }
-      } else if (plot && crew) {
-        if (resourceMode) {
-          a.push(actionButtons.NewCoreSample);
-          a.push(actionButtons.ImproveCoreSample);
-        }
-
-        if (plot.occupier === crew.i) {
-          if (constructionStatus === 'OPERATIONAL' && plot.building?.assetId) {
-            const buildingAsset = buildings[plot.building.assetId];
-            if (buildingAsset.capabilities.includes('extraction')) {
-              a.push(actionButtons.Extract);
-            }
-          } else if (['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus)) {
-            a.push(actionButtons.Construct);
-          } else if (['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
-            a.push(actionButtons.NewBlueprint);
-          }
-  
-          // TODO: prob should require an inventory with non-zero contents?
-          // (OR be the destination of a delivery)
-          if (plot?.building?.inventories) {
-            a.push(actionButtons.SurfaceTransfer);
-          }
-  
-          if (['PLANNED', 'CANCELING'].includes(constructionStatus)) {
-            a.push(actionButtons.CancelBlueprint);
-          }
-          if (['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
-            a.push(actionButtons.Deconstruct);
-          } 
-        } else if (!plot.occupier || (plot.gracePeriodEnd < chainTime && constructionStatus === 'PLANNED')) {
-          a.push(actionButtons.NewBlueprint);
-        }
-      }
-    }
-
-    return a;
-  }, [asteroid, constructionStatus, crew, plot, resourceMode]);
-
-  useEffect(() => ReactTooltip.rebuild(), [actions]);
-  
   return (
-    <>
-      <ActionModule visible={zoomStatus === 'in' && !zoomToPlot && resourceMode} lower={!actions?.length}>
-        <ResourceMapSelector
-          active={zoomStatus === 'in' && !zoomToPlot && resourceMode}
-          asteroid={asteroid} />
-      </ActionModule>
-
-      <Rule visible={resourceMode && !zoomToPlot && actions?.length} />
-
-      <ActionButtons visible={actions?.length > 0}>
-        {actions.map((ActionButton, i) => (
-          <ActionButton
-            key={i}
-            asteroid={asteroid}
-            crew={crew}
-            plot={plot}
-            onSetAction={setAction} />
-        ))}
-      </ActionButtons>
-    </>
+    <ActionModule visible={visibleModules.resourceMapSelector}>
+      <ResourceMapSelector
+        active={visibleModules.resourceMapSelector}
+        asteroid={asteroid} />
+    </ActionModule>
   );
 };
 
@@ -227,6 +148,10 @@ const HUD = () => {
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
   const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
+
+  const { actions, props: actionProps } = useActionButtons();
+  const actionModuleVisible = useActionModuleVisbility();
+  const anyActionModulesVisible = useMemo(() => Object.values(actionModuleVisible).find((v) => !!v), [actionModuleVisible]);
 
   const { backLabel, onClickBack } = useMemo(() => {
     if (zoomToPlot) {
@@ -240,6 +165,8 @@ const HUD = () => {
       onClickBack: () => updateZoomStatus('zooming-out')
     }
   }, [zoomToPlot]);
+
+  useEffect(() => ReactTooltip.rebuild(), [actions]);
 
   return (
     <>
@@ -264,7 +191,17 @@ const HUD = () => {
       </LeftWrapper>
 
       <RightWrapper>
-        <ActionMenu />
+        <ActionModuleContainer lower={!actions?.length}>
+          <ActionModules />
+        </ActionModuleContainer>
+
+        <Rule visible={anyActionModulesVisible && actions?.length > 0} />
+
+        <ActionButtonContainer visible={actions?.length > 0}>
+          {actions.map((ActionButton, i) => (
+            <ActionButton key={i} {...actionProps} />
+          ))}
+        </ActionButtonContainer>
       </RightWrapper>
 
       <ActionDialog />

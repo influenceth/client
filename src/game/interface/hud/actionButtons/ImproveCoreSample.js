@@ -17,7 +17,7 @@ const labelDict = {
   OTHER_SAMPLE_SAMPLING: 'Sampling...'
 };
 
-const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
+const ImproveCoreSample = ({ onSetAction, asteroid, plot, _disabled }) => {
   const resourceMap = useStore(s => s.asteroids.showResourceMap);
   const { currentSample, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i);
   const { crew } = useCrew();
@@ -41,7 +41,7 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot }) => {
 
   let label = labelDict[samplingStatus];
   let attention = undefined;
-  let disabled = undefined;
+  let disabled = _disabled || undefined;
   let loading = undefined;
   if (currentSample) {
     // if current sample applies to this button ("improving" and matching resource id)

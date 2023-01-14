@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import CrewCard from '~/components/CrewCard';
@@ -6,7 +5,6 @@ import CrewCard from '~/components/CrewCard';
 import { SwayIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useCrew from '~/hooks/useCrew';
-import ActionItems from './ActionItems';
 
 const bgColor = '#000';
 const cardWidth = 80;
