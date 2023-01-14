@@ -99,6 +99,8 @@ export const Rule = styled.div`
 const ActionModuleContainer = styled.div`
   display: flex;
   flex-direction: column;
+  transform: translateY(${p => p.lower ? `52px` : 0});
+  transition: transform 350ms ease;
   width: ${rightModuleWidth}px;
 `;
 
@@ -107,7 +109,7 @@ const ActionModule = styled.div`
   opacity: ${p => p.visible ? 1 : 0};
   padding-right: 32px;
   transition: opacity 350ms ease, transform 350ms ease;
-  transform: translate(${p => p.visible ? 0 : `${rightModuleWidth + 5}px`}, ${p => p.lower ? `52px` : 0});
+  transform: translateX(${p => p.visible ? 0 : `${rightModuleWidth + 5}px`});
 `;
 
 const ActionButtonContainer = styled(ActionModule)`

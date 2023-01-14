@@ -291,7 +291,7 @@ const InfoPane = () => {
         </IconHolder>
       </IconColumn>
       <InfoColumn>
-        {zoomStatus === 'in' && !plotId && (
+        {zoomStatus === 'in' && asteroid && !plotId && (
           <>
             <Title>{asteroid.customName || asteroid.baseName}</Title>
             <Subtitle>
@@ -311,7 +311,7 @@ const InfoPane = () => {
         )}
         {zoomStatus === 'in' && plotId && zoomToPlot && (
           <>
-            <Title>{(plot.building || buildings[0])?.name}</Title>
+            <Title>{(plot?.building || buildings[0])?.name}</Title>
             <Subtitle>
               <PaneContent>
                 Lot #{plotId.toLocaleString()}

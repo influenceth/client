@@ -1,10 +1,9 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useMemo } from 'react';
 import { Construction } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrew from './useCrew';
 import usePlot from './usePlot';
-import { capableTypeNameToId } from '~/lib/utils';
 import useActionItems from './useActionItems';
 
 const useConstructionManager = (asteroidId, plotId) => {
