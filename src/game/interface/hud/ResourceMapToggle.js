@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import {
   FaCubes as InfrastructureIcon
@@ -29,14 +29,29 @@ const ResourceMapToggle = () => {
 
   // clear emissive map "on" setting if asteroid is not scanned
   // (this only really happens in dev with chain rebuild, but worth the sanity check)
+  // const lastAsteroid = useRef(asteroidId);
+  // useEffect(() => {
+  //   if (asteroid) {
+  //     if (!asteroid.scanned && showResourceMap) {
+  //       console.log('AST NOT SCANNED');
+  //       dispatchResourceMap();
+  //     }
+  //   }
+  // }, [asteroid?.scanned, showResourceMap]);
   useEffect(() => {
     if (asteroid) {
-      if (!asteroid.scanned && showResourceMap) {
-        console.log('AST NOT SCANNED');
+      // if asteroid is loaded and resourceMap is on, make sure it is a valid selection
+      // if asteroid is not actually scanned OR if asteroid has zero abundance for selection
+      if (showResourceMap) {
+        if (asteroid.scanned) {
+          if ((asteroidAssets.find((a) => a.categoryLabel === showResourceMap.category)?.resources || []).find((r) => r.i === showResourceMap.i)) {
+            return;
+          }
+        }
         dispatchResourceMap();
       }
     }
-  }, [asteroid?.scanned, showResourceMap]);
+  }, [asteroidAssets, showResourceMap?.i]);
 
   if (!(asteroid?.scanned && !zoomToPlot)) return null;
   return (

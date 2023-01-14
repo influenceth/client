@@ -42,7 +42,6 @@ export const useAsteroidAndPlot = (props = {}) => {
 
 const ActionDialogWrapper = () => {
   const actionDialog = useStore(s => s.actionDialog);
-  console.log('actionDialog', actionDialog)
   return actionDialog?.type ? <ActionDialog {...actionDialog} /> : null;
 };
 

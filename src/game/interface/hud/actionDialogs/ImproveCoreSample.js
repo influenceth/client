@@ -119,7 +119,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
 
   // get lot abundance
   const lotAbundance = useMemo(() => {
-    if (!resourceId) return 0;
+    if (!resourceId || !asteroid?.resourceSeed || !asteroid.resources) return 0;
     return AsteroidLib.getAbundanceAtLot(
       asteroid?.i,
       BigInt(asteroid?.resourceSeed),

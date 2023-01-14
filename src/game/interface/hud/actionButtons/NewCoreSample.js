@@ -27,7 +27,7 @@ const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
   // get lot abundance
   const lotAbundance = useMemo(() => {
     const resourceId = Number(resourceMap?.i);
-    if (!resourceId) return 0;
+    if (!resourceId || !asteroid?.resourceSeed || !asteroid.resources) return 0;
     return Asteroid.getAbundanceAtLot(
       asteroid?.i,
       BigInt(asteroid?.resourceSeed),

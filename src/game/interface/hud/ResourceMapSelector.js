@@ -120,7 +120,7 @@ const ResourceMapSelector = ({ active, asteroid }) => {
   // if resource map specified, initialize the local state
   useEffect(() => {
     if (active) {
-      if (showResourceMap) {
+      if (showResourceMap && asteroidAssets) {
         asteroidAssets.forEach((c) => {
           c.resources.forEach((r) => {
             if (r.name === showResourceMap.name) {
@@ -131,7 +131,7 @@ const ResourceMapSelector = ({ active, asteroid }) => {
         });
       }
     }
-  }, [active, showResourceMap]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [active, showResourceMap, asteroidAssets]); // eslint-disable-line react-hooks/exhaustive-deps
   
   useEffect(() => ReactTooltip.rebuild(), []);
 

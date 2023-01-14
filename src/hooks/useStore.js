@@ -282,7 +282,7 @@ const useStore = create(persist((set, get) => ({
       if (i && Number(i) > 0 && Number(i) <= 250000) {
         state.asteroids.origin = Number(i);
       }
-      state.asteroids.showResourceMap = null;
+      // state.asteroids.showResourceMap = null;
       state.asteroids.plot = null;
       state.asteroids.plotDestination = null;
       state.asteroids.zoomToPlot = null;
@@ -305,7 +305,7 @@ const useStore = create(persist((set, get) => ({
 
     dispatchZoomStatusChanged: (status, maintainPlot) => set(produce(state => {
       state.asteroids.zoomStatus = status;
-      state.asteroids.showResourceMap = null;
+      // state.asteroids.showResourceMap = null;
       state.asteroids.plotDestination = null;
       if (!maintainPlot) {
         state.asteroids.plot = null;

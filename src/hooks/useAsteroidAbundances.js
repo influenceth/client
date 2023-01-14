@@ -45,7 +45,7 @@ const useAsteroidAbundances = (asteroid) => {
         .sort((a, b) => b.abundance - a.abundance);
     }
     return [];
-  }, [!!assets, asteroid?.scanned, asteroid?.abundances]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [!!assets, asteroid?.scanned, asteroid?.resources]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   return data;
 };

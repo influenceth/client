@@ -247,8 +247,9 @@ const formatItem = (item) => {
         openDialog('SURFACE_TRANSFER', { deliveryId: item.assets.delivery?.deliveryId });
       };
       break;
+
     default:
-      console.warn('Unhandled action item', item);
+      console.log('Unhandled ActionItem', item);
       break;
   }
   return formatted;
@@ -448,7 +449,6 @@ const formatTx = (item) => {
       formatted.label = 'Start Transfer';
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.originPlotId;  // at start, link to origin (in case of failure)
-      console.log({ formatted });
       formatted.onClick = ({ openDialog }) => {
         // TODO: in case of failure, should link with selected resource and destination
         // (low priority b/c would have to fail and would have to have closed dialog)
@@ -465,7 +465,7 @@ const formatTx = (item) => {
       };
       break;
     default:
-      console.log(item);
+      console.log('Unhandled ActionItems tx', item);
       break;
   }
   return formatted;
@@ -662,8 +662,6 @@ const ActionItems = () => {
       ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready' }))
     ];
   }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems])
-
-  console.log('allItems', allItems);
 
   const [displayItems, setDisplayItems] = useState();
   useEffect(() => {

@@ -595,7 +595,7 @@ const Asteroid = (props) => {
       const { i: asteroidId, resourceSeed } = asteroidData;
       const { plotId: lotId } = selectedPlot;
       let abundance = AsteroidLib.getAbundanceAtLot(
-        asteroidId, BigInt(resourceSeed), lotId, Number(resourceId), overallAbundance
+        asteroidId, BigInt(resourceSeed || 0), lotId, Number(resourceId), overallAbundance
       );
 
       // TODO: remove once this is reflecte within the UI
