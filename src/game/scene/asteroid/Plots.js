@@ -15,7 +15,7 @@ import {
 } from 'three';
 
 import useAsteroidPlots from '~/hooks/useAsteroidPlots';
-import useAuth from '~/hooks/useAuth';
+import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
 import useStore from '~/hooks/useStore';
 import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
@@ -38,13 +38,22 @@ const MAX_REGIONS = 5000;
 const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
 
 const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config, lastClick, mouseIntersect }) => {
-  const { account } = useAuth();
   const { scene } = useThree();
   const { processInBackground } = useWebWorker();
+
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
   const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
   const { asteroidId: plotAsteroidId, plotId: selectedPlotId } = useStore(s => s.asteroids.plot || {});
+
+  const { data: crewPlots, isLoading: crewPlotsLoading } = useAsteroidCrewPlots(asteroidId);
+  const crewPlotMap = useMemo(() => {
+    if (crewPlotsLoading) return null;
+    return crewPlots.reduce((acc, p) => {
+      acc[p.i] = p.building?.capableType;
+      return acc;
+    }, {});
+  }, [crewPlots, crewPlotsLoading]);
 
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
@@ -394,14 +403,10 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
             // > strokes use building color (if building) else pip color (only need to be updated after initialization if dynamic)
             let plotColor;
             if (hasBuilding) {
-              // white if rented by me OR i am the owner and !rented by other; else, blue
-              plotColor = account && (
-                false // TODO: ...
-                // (defaultOwner === `${account}` && plots[plotId][0] !== 2)  // owned by me and not rented out
-                // || plots[plotId][0] === 1                                    // OR rented by me
-              ) ? WHITE_COLOR : MAIN_COLOR;
+              // white if occupied by me; else, blue
+              plotColor = crewPlotMap && crewPlotMap[plotId] ? WHITE_COLOR : MAIN_COLOR;
             }
-            if (hasBuilding && (!!account || !plotsInitialized.current)) {
+            if (hasBuilding && (crewPlotMap || !plotsInitialized.current)) {
               // if this is first color change to instance, need to let material know
               // TODO (enhancement): could check if there is a color change against existing buildingMesh instanceColor before setting updateBuildingColor
               if (!buildingMesh.current.instanceColor && !buildingMesh.current.material.needsUpdate) {
@@ -469,7 +474,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       // changed, so needs to fail gracefully (i.e. if buildingMesh.current is unset)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, cameraAltitude, plots, regionsByDistance]);
+  }, [crewPlotMap, cameraAltitude, plots, regionsByDistance]);
 
   useEffect(
     () => updateVisiblePlots(),
@@ -479,7 +484,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   useEffect(() => {
     plotsInitialized.current = false;
     updateVisiblePlots();
-  }, [account]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [crewPlotMap]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const highlightPlot = useCallback((plotId) => {
     highlighted.current = null;

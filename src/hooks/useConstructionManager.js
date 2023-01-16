@@ -49,7 +49,7 @@ const useConstructionManager = (asteroidId, plotId) => {
           status = 'UNDER_CONSTRUCTION';
         } else if (getStatus('UNPLAN_CONSTRUCTION', payload) === 'pending') {
           status = 'CANCELING';
-        } else {
+        } else if (plot.gracePeriodEnd >= chainTime) {
           status = 'PLANNED';
         }
 

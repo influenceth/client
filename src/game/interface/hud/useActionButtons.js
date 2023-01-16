@@ -74,7 +74,7 @@ const useActionButtons = () => {
           if (['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
             a.push(actionButtons.Deconstruct);
           } 
-        } else if (!plot.occupier || (plot.gracePeriodEnd < chainTime && constructionStatus === 'PLANNED')) {
+        } else if (!plot.occupier || constructionStatus === 'READY_TO_PLAN') {
           a.push(actionButtons.NewBlueprint);
         }
       }

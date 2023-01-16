@@ -145,6 +145,7 @@ const ThumbBackground = styled.div`
   left: 0;
   width: 100%;
   z-index: 0;
+  ${p => p.backgroundColor && `background-color: ${p.backgroundColor};`}
   ${p => p.image && `
     background-image: url('${p.image}');
     background-position: center center;
@@ -175,6 +176,11 @@ const ThumbFootnote = styled.div`
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+  }
+  & > b {
+    color: ${p => p.theme.colors.error};
+    font-size: 18px;
+    text-transform: uppercase;
   }
 `;
 
@@ -335,12 +341,21 @@ const InfoPane = () => {
               )}
               {plot && (
                 <>
-                  {
-                    // TODO: if planning, could use the currentConstruction object to go ahead and put hologram image
-                    ['OPERATIONAL', 'DECONSTRUCTING', 'READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)
-                    ? <ThumbBackground image={buildings[plot.building?.assetId || 0]?.iconUrls?.w400} />
-                    : <ThumbBackground image={buildings[plot.building?.assetId || 0]?.siteIconUrls?.w400} />
-                  }
+                  {!(plot.building?.assetId > 0) && <ThumbBackground image={buildings[0]?.iconUrls?.w400} />}
+                  {plot.building?.assetId > 0 && (
+                    <>
+                      {
+                        // TODO: if planning, could use the currentConstruction object to go ahead and put hologram image
+                        ['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus)
+                          ? <ThumbBackground image={buildings[plot.building?.assetId || 0]?.iconUrls?.w400} />
+                          : (
+                            <ThumbBackground
+                              backgroundColor={plot.occupier && constructionStatus === 'READY_TO_PLAN' && '#2b0000'}
+                              image={buildings[plot.building?.assetId || 0]?.siteIconUrls?.w400} />
+                          )
+                      }
+                    </>
+                  )}
                   <ThumbMain>
                     <ThumbTitle>{buildings[plot.building?.assetId || 0]?.name}</ThumbTitle>
                     <ThumbSubtitle>
@@ -352,7 +367,11 @@ const InfoPane = () => {
                       </PaneHoverContent>
                     </ThumbSubtitle>
                     <div style={{ flex: 1 }} />
-                    <ThumbFootnote>{plot.occupier ? `Controlled${plot.occupier === crew?.i ? ' by Me' : ''}` : 'Uncontrolled'}</ThumbFootnote>
+                    <ThumbFootnote>
+                      {plot.occupier && constructionStatus === 'READY_TO_PLAN' ? <b>Abandoned</b> : ''}
+                      {plot.occupier && constructionStatus !== 'READY_TO_PLAN' ? `Controlled by ${plot.occupier === crew?.i ? 'Me' : `#${plot.occupier}`}` : ''}
+                      {!plot.occupier ? 'Uncontrolled' : ''}
+                    </ThumbFootnote>
                   </ThumbMain>
                 </>
               )}
