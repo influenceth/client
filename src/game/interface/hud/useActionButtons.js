@@ -18,8 +18,9 @@ const useActionButtons = () => {
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const { plotId } = useStore(s => s.asteroids.plot || {});
-  const showResourceMap = useStore(s => s.asteroids.showResourceMap);
+  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
   const setAction = useStore(s => s.dispatchActionDialog);
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
   const { constructionStatus } = useConstructionManager(asteroidId, plotId);
@@ -43,8 +44,8 @@ const useActionButtons = () => {
         if (account && asteroid.owner && Address.areEqual(account, asteroid.owner)) {
           a.push(actionButtons.ScanAsteroid);
         }
-      } else if (plot && crew) {
-        if (!!showResourceMap) {
+      } else if (plot && crew && zoomStatus === 'in') {
+        if (!!mapResourceId) {
           a.push(actionButtons.NewCoreSample);
           a.push(actionButtons.ImproveCoreSample);
         }
@@ -80,7 +81,7 @@ const useActionButtons = () => {
     }
 
     setActions(a);
-  }, [asteroid, constructionStatus, crew, plot, !!showResourceMap]);
+  }, [asteroid, constructionStatus, crew, plot, !!mapResourceId, zoomStatus]);
 
   return {
     actions,

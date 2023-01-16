@@ -54,3 +54,5 @@ export const formatFixed = (value, maximumFractionDigits = 0) => {
   const div = 10 ** maximumFractionDigits;
   return (Math.round((value || 0) * div) / div).toLocaleString();
 };
+
+export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');

@@ -18,7 +18,7 @@ const labelDict = {
 };
 
 const ImproveCoreSample = ({ onSetAction, asteroid, plot, _disabled }) => {
-  const resourceMap = useStore(s => s.asteroids.showResourceMap);
+  const resourceId = useStore(s => s.asteroids.mapResourceId);
   const { currentSample, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i);
   const { crew } = useCrew();
   const handleClick = useCallback(() => {
@@ -29,11 +29,11 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot, _disabled }) => {
   // TODO: this should ideally also check for pending use of samples (i.e. by extractor)
   // TODO (later): eventually, this should maybe be owned by anyone
   const improvableSamples = useMemo(() => (plot?.coreSamples || []).filter((c) => {
-    return c.resourceId === Number(resourceMap?.i)
+    return c.resourceId === resourceId
       && (!crew?.i || c.owner === crew?.i)
       && c.initialYield > 0
       && c.status !== CoreSample.STATUS_USED;
-  }), [plot?.coreSamples, resourceMap?.i]);
+  }), [plot?.coreSamples, resourceId]);
 
   const badge = (!currentSample?.isNew && samplingStatus === 'READY_TO_FINISH')
     ? '✓'
@@ -45,7 +45,7 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot, _disabled }) => {
   let loading = undefined;
   if (currentSample) {
     // if current sample applies to this button ("improving" and matching resource id)
-    if (!currentSample.isNew && currentSample.resourceId === Number(resourceMap?.i)) {
+    if (!currentSample.isNew && currentSample.resourceId === resourceId) {
       if (samplingStatus === 'READY_TO_FINISH') {
         attention = true;
       }
@@ -53,7 +53,7 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot, _disabled }) => {
     // else, disable button (can still note which other resource)
     } else {
       disabled = true;
-      if (currentSample.resourceId !==  Number(resourceMap?.i)) {
+      if (currentSample.resourceId !== resourceId) {
         label = samplingStatus === 'READY_TO_FINISH' ? labelDict.OTHER_SAMPLE_READY : labelDict.OTHER_SAMPLE_SAMPLING;
         label += ` (${Inventory.RESOURCES[currentSample.resourceId].name})`;
       }

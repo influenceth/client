@@ -11,7 +11,7 @@ import {
   Vector3
 } from 'three';
 import gsap from 'gsap';
-import { KeplerianOrbit, toSpectralType, Asteroid as AsteroidLib } from '@influenceth/sdk';
+import { KeplerianOrbit, toSpectralType, Asteroid as AsteroidLib, Inventory } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -25,6 +25,7 @@ import Plots from './asteroid/Plots';
 import Rings from './asteroid/Rings';
 import Telemetry from './asteroid/Telemetry';
 import { pointCircleClosest } from '~/lib/geometryUtils';
+import { keyify } from '~/lib/utils';
 
 const {
   CHUNK_SPLIT_DISTANCE,
@@ -124,7 +125,7 @@ const Asteroid = (props) => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const selectPlot = useStore(s => s.dispatchPlotSelected);
-  const showResourceMap = useStore(s => s.asteroids.showResourceMap);
+  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
   const selectedPlot = useStore(s => s.asteroids.plot);
 
   const { data: asteroidData } = useAsteroid(origin);
@@ -573,35 +574,48 @@ const Asteroid = (props) => {
 
   useEffect(() => {
     if (!geometry.current || !config?.radiusNominal) return;
-    if (showResourceMap) {
-      const color = new Color(theme.colors.resources[showResourceMap.category]);
+    if (mapResourceId && terrainInitialized) { 
+      const categoryKey = keyify(Inventory.RESOURCES[mapResourceId]?.category);
+      const color = new Color(theme.colors.resources[categoryKey]);
       color.convertSRGBToLinear();
 
       // Collect relevant settings for generating procedural resource map
       const { asteroidId, resourceSeed } = asteroidData;
-      const { i: resourceId, abundance } = showResourceMap;
-      const settings = AsteroidLib.getAbundanceMapSettings(asteroidId, resourceSeed, resourceId, abundance);
-      geometry.current.setEmissiveParams({ asteroidId: asteroidId, color, resource: Number(resourceId), ...settings });
+      const settings = AsteroidLib.getAbundanceMapSettings(
+        asteroidId,
+        resourceSeed,
+        mapResourceId,
+        asteroidData.resources[mapResourceId]
+      );
+      geometry.current.setEmissiveParams({
+        asteroidId: asteroidId,
+        color,
+        resource: mapResourceId,
+        ...settings
+      });
       forceUpdate.current = Date.now();
     } else if (geometry.current.emissiveParams) {
       geometry.current.setEmissiveParams();
       forceUpdate.current = Date.now();
     }
-  }, [showResourceMap]);
+  }, [mapResourceId, terrainInitialized]);
 
   useEffect(() => {
-    if (selectedPlot && showResourceMap) {
-      const { i: resourceId, abundance: overallAbundance } = showResourceMap;
+    if (selectedPlot && mapResourceId) {
       const { i: asteroidId, resourceSeed } = asteroidData;
       const { plotId: lotId } = selectedPlot;
       let abundance = AsteroidLib.getAbundanceAtLot(
-        asteroidId, BigInt(resourceSeed || 0), lotId, Number(resourceId), overallAbundance
+        asteroidId,
+        BigInt(resourceSeed || 0),
+        lotId,
+        mapResourceId,
+        asteroidData.resources[mapResourceId]
       );
 
       // TODO: remove once this is reflecte within the UI
-      console.log('resourceId:', resourceId, 'lotId:', selectedPlot.plotId, 'abundance:', abundance);
+      console.log('resourceId:', mapResourceId, 'lotId:', selectedPlot.plotId, 'abundance:', abundance);
     }
-  }, [selectedPlot, showResourceMap]);
+  }, [selectedPlot, mapResourceId]);
 
   useEffect(() => {
     if (geometry.current && terrainUpdateNeeded) {

@@ -61,7 +61,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
           }
         };
     }
-  }, [asteroid.i, isLoading, scanStatus, _disabled]);
+  }, [asteroid?.i, isLoading, scanStatus, _disabled]);
 
   return (
     <ActionButton

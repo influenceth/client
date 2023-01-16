@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { keyify } from '~/lib/utils';
 
 import { useResourceAssets } from './useAssets';
 
@@ -13,11 +14,11 @@ const useAsteroidAbundances = (asteroid) => {
         if (abundance > 0) {
           const { category, name, iconUrls } = (assets.find((a) => a?.i === i) || {});
 
-          const categoryKey = (category || '').replace(/[^a-zA-Z]/g, '');
+          const categoryKey = keyify(category);
           if (!categories[category]) {
             categories[category] = {
-              category: categoryKey,
-              categoryLabel: category,
+              categoryKey,
+              category,
               bonus: asteroid.bonuses.find((b) => b.type === categoryKey.toLowerCase()),
               resources: [],
               abundance: 0,
@@ -27,8 +28,8 @@ const useAsteroidAbundances = (asteroid) => {
           categories[category].abundance += abundance;
           categories[category].resources.push({
             i,
-            category: categoryKey,
-            categoryLabel: category,
+            categoryKey,
+            category,
             name,
             iconUrls,
             abundance

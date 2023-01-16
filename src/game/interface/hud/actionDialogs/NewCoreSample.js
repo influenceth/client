@@ -85,19 +85,17 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
   const { startSampling, finishSampling, samplingStatus, ...coreSampleManager } = useCoreSampleManager(asteroid?.i, plot?.i);
   const { crew, crewMemberMap } = useCrew();
 
-  const resourceMap = useStore(s => s.asteroids.showResourceMap);
+  const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
+  const resourceId = useStore(s => s.asteroids.mapResourceId);
 
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
-  const [resourceId, setResourceId] = useState();
-  useEffect(() => {
-    if (resourceMap?.i && !resourceId) setResourceId(Number(resourceMap?.i));
-  }, [resourceMap?.i])
-
   const [sampleId, setSampleId] = useState();
   useEffect(() => {
     if (coreSampleManager.currentSample) {
       setSampleId(coreSampleManager.currentSample.sampleId);
-      setResourceId(Number(coreSampleManager.currentSample.resourceId));
+      if (coreSampleManager.currentSample.resourceId !== resourceId) {
+        dispatchResourceMap(coreSampleManager.currentSample.resourceId);
+      }
     }
   }, [coreSampleManager.currentSample]);
 

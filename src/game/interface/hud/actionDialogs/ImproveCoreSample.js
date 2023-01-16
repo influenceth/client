@@ -86,19 +86,16 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
   const { crew, crewMemberMap } = useCrew();
 
   const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
-  const resourceMap = useStore(s => s.asteroids.showResourceMap);
+  const resourceId = useStore(s => s.asteroids.mapResourceId);
 
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
-  const [resourceId, setResourceId] = useState();
-  useEffect(() => {
-    if (resourceMap?.i && !resourceId) setResourceId(Number(resourceMap?.i));
-  }, [resourceMap?.i])
-
   const [sampleId, setSampleId] = useState();
   useEffect(() => {
     if (coreSampleManager.currentSample) {
       setSampleId(coreSampleManager.currentSample.sampleId);
-      setResourceId(Number(coreSampleManager.currentSample.resourceId));
+      if (coreSampleManager.currentSample.resourceId !== resourceId) {
+        dispatchResourceMap(coreSampleManager.currentSample.resourceId);
+      }
     }
   }, [coreSampleManager.currentSample]);
 
@@ -147,11 +144,11 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
   }, [sample]);
 
   const onSampleSelection = useCallback((sample) => {
-    if (sample.resourceId !== resourceMap?.i) {
-      dispatchResourceMap(resources[sample.resourceId]);
+    if (sample.resourceId !== resourceId) {
+      dispatchResourceMap(sample.resourceId);
     }
     setSelectedSample(sample);
-  }, [resourceMap?.i]);
+  }, [resourceId]);
 
   useEffect(() => {
     let defaultSelection;

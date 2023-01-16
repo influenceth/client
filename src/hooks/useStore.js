@@ -40,7 +40,7 @@ const useStore = create(persist((set, get) => ({
       plot: null,
       plotDestination: null,
       zoomToPlot: null,
-      showResourceMap: null,
+      mapResourceId: null,
       owned: {
         mapped: false,
         filtered: false,
@@ -282,7 +282,6 @@ const useStore = create(persist((set, get) => ({
       if (i && Number(i) > 0 && Number(i) <= 250000) {
         state.asteroids.origin = Number(i);
       }
-      // state.asteroids.showResourceMap = null;
       state.asteroids.plot = null;
       state.asteroids.plotDestination = null;
       state.asteroids.zoomToPlot = null;
@@ -305,7 +304,6 @@ const useStore = create(persist((set, get) => ({
 
     dispatchZoomStatusChanged: (status, maintainPlot) => set(produce(state => {
       state.asteroids.zoomStatus = status;
-      // state.asteroids.showResourceMap = null;
       state.asteroids.plotDestination = null;
       if (!maintainPlot) {
         state.asteroids.plot = null;
@@ -401,8 +399,8 @@ const useStore = create(persist((set, get) => ({
       state.referrer = refCode;
     })),
 
-    dispatchResourceMap: (resource) => set(produce(state => {
-      state.asteroids.showResourceMap = resource;
+    dispatchResourceMap: (resourceId) => set(produce(state => {
+      state.asteroids.mapResourceId = Number(resourceId);
     })),
 
     dispatchPlotsLoading: (i, progress = 0, simulateTarget = 0) => set(produce(state => {

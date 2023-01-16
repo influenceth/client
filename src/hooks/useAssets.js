@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Capable, Inventory } from '@influenceth/sdk';
+import { keyify } from '~/lib/utils';
 
 const getSlug = (asset) => {
   return asset.name.replace(/[^a-z]/ig, '');
@@ -68,6 +69,7 @@ export const useResourceAssets = () => {
         ...Inventory.RESOURCES[i],
         i,
       };
+      asset.categoryKey = keyify(asset.category);
 
       asset.iconUrl = getIconUrl(asset, 'resources');
       asset.iconUrls = {

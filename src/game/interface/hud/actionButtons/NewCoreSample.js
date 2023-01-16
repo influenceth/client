@@ -18,15 +18,14 @@ const labelDict = {
 };
 
 const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
-  const resourceMap = useStore(s => s.asteroids.showResourceMap);
+  const resourceId = useStore(s => s.asteroids.mapResourceId);
   const { currentSample, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
-    onSetAction('NEW_CORE_SAMPLE', { resourceId: resourceMap?.i });
-  }, [onSetAction, resourceMap?.i]);
+    onSetAction('NEW_CORE_SAMPLE', { resourceId: resourceId });
+  }, [onSetAction, resourceId]);
 
   // get lot abundance
   const lotAbundance = useMemo(() => {
-    const resourceId = Number(resourceMap?.i);
     if (!resourceId || !asteroid?.resourceSeed || !asteroid.resources) return 0;
     return Asteroid.getAbundanceAtLot(
       asteroid?.i,
@@ -35,7 +34,7 @@ const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
       resourceId,
       asteroid.resources[resourceId]
     );
-  }, [asteroid, plot, resourceMap?.i]);
+  }, [asteroid, plot, resourceId]);
 
   let label = labelDict[samplingStatus];
   let attention = undefined;
@@ -44,7 +43,7 @@ const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
   const badge = (currentSample?.isNew && samplingStatus === 'READY_TO_FINISH') ? '✓' : 0;
   if (currentSample) {
     // if current sample applies to this button ("new" and matching resource id)
-    if (currentSample.isNew && currentSample.resourceId === Number(resourceMap?.i)) {
+    if (currentSample.isNew && currentSample.resourceId === resourceId) {
       if (samplingStatus === 'READY_TO_FINISH') {
         attention = true;
       }
@@ -52,7 +51,7 @@ const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
     // else, disable button (can still note which other resource)
     } else {
       disabled = true;
-      if (currentSample.resourceId !==  Number(resourceMap?.i)) {
+      if (currentSample.resourceId !==  resourceId) {
         label = samplingStatus === 'READY_TO_FINISH' ? labelDict.OTHER_SAMPLE_READY : labelDict.OTHER_SAMPLE_SAMPLING;
         label += ` (${Inventory.RESOURCES[currentSample.resourceId].name})`;
       }

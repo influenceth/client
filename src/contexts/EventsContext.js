@@ -204,12 +204,12 @@ export function EventsProvider({ children }) {
           });
         }
       });
-    }, 1000);
 
-    setEvents((prevEvents) => uniq([
-      ...transformedEvents,
-      ...prevEvents
-    ], 'key'));
+      setEvents((prevEvents) => uniq([
+        ...transformedEvents,
+        ...prevEvents
+      ], 'key'));
+    }, 1000);
   }, []);
 
   // try to process WS events grouped by block

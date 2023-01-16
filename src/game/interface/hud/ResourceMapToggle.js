@@ -12,7 +12,7 @@ import { LeftActionButton, Rule } from '../HUD';
 
 const ResourceMapToggle = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
-  const showResourceMap = useStore(s => s.asteroids.showResourceMap);
+  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
   const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
 
@@ -21,43 +21,32 @@ const ResourceMapToggle = () => {
 
   const toggleResourceMode = useCallback((which) => {
     if (which) {
-      dispatchResourceMap(asteroidAssets[0]?.resources[0]);
+      dispatchResourceMap(asteroidAssets[0]?.resources[0]?.i);
     } else {
       dispatchResourceMap();
     }
   }, [asteroidAssets, dispatchResourceMap]);
 
-  // clear emissive map "on" setting if asteroid is not scanned
-  // (this only really happens in dev with chain rebuild, but worth the sanity check)
-  // const lastAsteroid = useRef(asteroidId);
-  // useEffect(() => {
-  //   if (asteroid) {
-  //     if (!asteroid.scanned && showResourceMap) {
-  //       console.log('AST NOT SCANNED');
-  //       dispatchResourceMap();
-  //     }
-  //   }
-  // }, [asteroid?.scanned, showResourceMap]);
   useEffect(() => {
     if (asteroid) {
       // if asteroid is loaded and resourceMap is on, make sure it is a valid selection
       // if asteroid is not actually scanned OR if asteroid has zero abundance for selection
-      if (showResourceMap) {
+      if (mapResourceId) {
         if (asteroid.scanned) {
-          if ((asteroidAssets.find((a) => a.categoryLabel === showResourceMap.category)?.resources || []).find((r) => r.i === showResourceMap.i)) {
+          if (asteroidAssets.find((a) => a.resources.find((r) => Number(r.i) === mapResourceId))) {
             return;
           }
         }
         dispatchResourceMap();
       }
     }
-  }, [asteroidAssets, showResourceMap?.i]);
+  }, [asteroidAssets, mapResourceId]);
 
   if (!(asteroid?.scanned && !zoomToPlot)) return null;
   return (
     <>
       <LeftActionButton
-        active={!!showResourceMap}
+        active={!!mapResourceId}
         data-arrow-color="transparent"
         data-for="global"
         data-place="right"
@@ -66,7 +55,7 @@ const ResourceMapToggle = () => {
         <ResourceIcon />
       </LeftActionButton>
       <LeftActionButton
-        active={!showResourceMap}
+        active={!mapResourceId}
         data-arrow-color="transparent"
         data-for="global"
         data-place="right"

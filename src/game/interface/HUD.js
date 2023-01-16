@@ -122,12 +122,12 @@ const ActionButtonContainer = styled(ActionModule)`
 `;
 
 const useActionModuleVisbility = () => {
-  const showResourceMap = useStore(s => s.asteroids.showResourceMap);
+  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
 
   return {
-    resourceMapSelector: zoomStatus === 'in' && !zoomToPlot && !!showResourceMap
+    resourceMapSelector: zoomStatus === 'in' && !zoomToPlot && !!mapResourceId
   };
 }
 
