@@ -49,7 +49,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const { data: crewPlots, isLoading: crewPlotsLoading } = useAsteroidCrewPlots(asteroidId);
   const crewPlotMap = useMemo(() => {
     if (crewPlotsLoading) return null;
-    return crewPlots.reduce((acc, p) => {
+    return (crewPlots || []).reduce((acc, p) => {
       acc[p.i] = p.building?.capableType;
       return acc;
     }, {});
