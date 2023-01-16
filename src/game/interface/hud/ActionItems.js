@@ -28,21 +28,25 @@ import useAsteroid from '~/hooks/useAsteroid';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import theme, { hexToRGB } from '~/theme';
-import { LiveTimer } from './sceneMenu/actionDialogs/components';
+import LiveTimer from '~/components/LiveTimer';
 
 const iconWidth = 30;
 
 const TRANSITION_TIME = 400;
 const ITEM_WIDTH = `400px`;
 
-const ActionItemContainer = styled.div`
+const ActionItemWrapper = styled.div`
+  flex: 1;
+  overflow: hidden;
   pointer-events: none;
-  position: absolute;
-  left: 0;
-  top: 120px;
-  height: 275px;
+`;
+
+const ActionItemContainer = styled.div`
+  max-height: 275px;
+  height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
+  pointer-events: auto;
   width: ${ITEM_WIDTH};
 `;
 
@@ -51,9 +55,6 @@ const Status = styled.div``;
 const Label = styled.div``;
 const Details = styled.div``;
 const Timing = styled.div``;
-const Warning = styled.span`
-  color: ${p => p.theme.colors.error};
-`;
 const Location = styled.div`
   color: rgba(255, 255, 255, 0.6);
   b {
@@ -246,8 +247,9 @@ const formatItem = (item) => {
         openDialog('SURFACE_TRANSFER', { deliveryId: item.assets.delivery?.deliveryId });
       };
       break;
+
     default:
-      console.warn('Unhandled action item', item);
+      console.log('Unhandled ActionItem', item);
       break;
   }
   return formatted;
@@ -447,7 +449,6 @@ const formatTx = (item) => {
       formatted.label = 'Start Transfer';
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.originPlotId;  // at start, link to origin (in case of failure)
-      console.log({ formatted });
       formatted.onClick = ({ openDialog }) => {
         // TODO: in case of failure, should link with selected resource and destination
         // (low priority b/c would have to fail and would have to have closed dialog)
@@ -464,7 +465,7 @@ const formatTx = (item) => {
       };
       break;
     default:
-      console.log(item);
+      console.log('Unhandled ActionItems tx', item);
       break;
   }
   return formatted;
@@ -475,7 +476,7 @@ const itemColors = {
   failed: hexToRGB(theme.colors.error),
   ready: theme.colors.mainRGB,
   unready: '90, 90, 90',
-  plans: '90, 90, 90',
+  plans: '248, 133, 44',
 };
 
 const statuses = {
@@ -566,7 +567,7 @@ const ActionItem = ({ data, type }) => {
           {(type === 'ready' || type === 'failed') && item.ago}
           {type === 'unready' && item.completionTime && <>in <LiveTimer target={item.completionTime} maxPrecision={2} /></>}
           {/* TODO: would be nice for this to have different level warning intensity based on time-left and/or presence of inventory on the lot */}
-          {type === 'plans' && item.completionTime && <Warning>expires <LiveTimer target={item.completionTime} maxPrecision={2} /></Warning>}
+          {type === 'plans' && item.completionTime && <>remaining <LiveTimer target={item.completionTime} maxPrecision={2} /></>}
         </Timing>
         {type === 'failed' && (
           <Dismissal onClick={onDismiss}>
@@ -594,7 +595,8 @@ const ActionItems = () => {
     pendingTransactions,
     failedTransactions,
     readyItems: allReadyItems,
-    unreadyItems: allUnreadyItems,
+    unreadyItems,
+    plannedItems: allPlannedItems
   } = useActionItems() || {};
 
   // hide readyItems that have a pending transaction
@@ -638,9 +640,9 @@ const ActionItems = () => {
     });
   }, [pendingTransactions, allReadyItems]);
 
-  const unreadyItems = useMemo(() => {
-    return allUnreadyItems.filter((item) => {
-      if (pendingTransactions && item.__t === 'plans') {
+  const plannedItems = useMemo(() => {
+    return allPlannedItems.filter((item) => {
+      if (pendingTransactions) {
         return !pendingTransactions.find((tx) => (
           ['START_CONSTRUCTION', 'UNPLAN_CONSTRUCTION'].includes(tx.key)
           && tx.vars.asteroidId === item.asteroid
@@ -649,19 +651,17 @@ const ActionItems = () => {
       }
       return true;
     });
-  }, [pendingTransactions, allUnreadyItems]);
+  }, [pendingTransactions, allPlannedItems]);
 
   const allItems = useMemo(() => {
     return [
       ...(pendingTransactions || []).map((item) => ({ ...item, type: 'pending' })),
       ...(failedTransactions || []).map((item) => ({ ...item, type: 'failed' })),
       ...(readyItems || []).map((item) => ({ ...item, type: 'ready' })),
-      ...(unreadyItems || []).map((item) => {
-        if (item.__t === 'plans') return { ...item, key: `plans_${item.gracePeriodEnd}`, type: 'plans' };
-        return { ...item, type: 'unready' };
-      }),
+      ...(plannedItems || []).map((item) => ({ ...item, type: 'plans' })),
+      ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready' }))
     ];
-  }, [pendingTransactions, failedTransactions, readyItems, unreadyItems])
+  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems])
 
   const [displayItems, setDisplayItems] = useState();
   useEffect(() => {
@@ -689,11 +689,13 @@ const ActionItems = () => {
   {/* TODO: collapsible */}
   {/* TODO: the whole left side of the hud should potentially be in the same container so less absolute positioning */}
   return (
-    <ActionItemContainer>
-      {(displayItems || []).map(({ transition, type, ...item }) => (
-        <ActionItem key={`${type}_${item.key}_${item.timestamp}`} data={item} type={type} />
-      ))}
-    </ActionItemContainer>
+    <ActionItemWrapper>
+      <ActionItemContainer>
+        {(displayItems || []).map(({ transition, type, ...item }) => (
+          <ActionItem key={`${type}_${item.key || item.i}_${item.timestamp || item.gracePeriodEnd}`} data={item} type={type} />
+        ))}
+      </ActionItemContainer>
+    </ActionItemWrapper>
   );
 };
 

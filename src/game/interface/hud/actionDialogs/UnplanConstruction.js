@@ -51,7 +51,6 @@ import useInterval from '~/hooks/useInterval';
 import { getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  LiveTimer,
   BlueprintSelection,
   CoreSampleSelection,
   DestinationSelection,
@@ -72,68 +71,20 @@ import {
   ActionDialogStats,
   ActionDialogTimers,
 
-  formatTimer,
   getBonusDirection,
-  TravelBonusTooltip,
-  getTravelStep,
-  getTripDetails,
-  TransportBonusTooltip,
-  TimeBonusTooltip,
   ActionDialogLoader,
 } from './components';
 
-const Deconstruct = ({ asteroid, plot, ...props }) => {
-  const resources = useResourceAssets();
-  const { constructionStatus, deconstruct } = useConstructionManager(asteroid?.i, plot?.i);
-  const { crew, crewMemberMap } = useCrew();
-  
-  const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
-  const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
-
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-    if (!asteroid?.i || !plot?.i) return {};
-    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
-      { label: 'Travel to destination', plot: plot.i },
-      { label: 'Return from destination', plot: 1 },
-    ])
-  }, [asteroid?.i, plot?.i, crewTravelBonus]);
-
-  const constructionTime = Construction.getConstructionTime(plot?.building?.assetId, 1);
-
-  const stats = useMemo(() => [
-    { label: 'Returned Volume', value: '0 m³', direction: 0 },    // TODO: ...
-    { label: 'Returned Mass', value: '0 tonnes', direction: 0 },   // TODO: ...
-    { 
-      label: 'Crew Travel',
-      value: formatTimer(crewTravelTime),
-      direction: getBonusDirection(crewTravelBonus),
-      tooltip: (
-        <TravelBonusTooltip
-          bonus={crewTravelBonus}
-          totalTime={crewTravelTime}
-          tripDetails={tripDetails}
-          crewRequired="start" />
-      )
-    },
-    {
-      label: 'Deconstruction Time',
-      value: formatTimer(constructionTime),
-      direction: 0
-    }
-  ], []);
+const UnplanConstruction = ({ asteroid, plot, ...props }) => {
+  const buildings = useBuildingAssets();
+  const { constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, plot?.i);
+  const { captain } = useCrew();
 
   useEffect(() => {
-    if (constructionStatus === 'PLANNED') {
+    if (constructionStatus === 'READY_TO_PLAN') {
       props.onClose();
-      // TODO: 
-      // if materials are recovered, open surface transport dialog w/ all materials selected
-      // else, open "unplan" dialog
-      // props.onSetAction('CONSTRUCT');
     }
   }, [constructionStatus]);
-
-  const status = 'BEFORE';
 
   return (
     <>
@@ -142,28 +93,28 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
         captain={captain}
         plot={plot}
         action={{
-          actionIcon: <DeconstructIcon />,
+          actionIcon: <CancelBlueprintIcon />,
           headerBackground: constructionBackground,
-          label: 'Deconstruct Building',
-          completeLabel: 'Deconstruction',
-          completeStatus: 'Complete',
-          crewRequirement: 'start',
+          label: 'Cancel Building Site',
         }}
         status="BEFORE"
         {...props} />
 
-      <DeconstructionMaterialsSection label="Recovered Materials" resources={resources} status={status} />
+      <BuildingPlanSection
+        building={buildings[plot?.building?.assetId]}
+        canceling
+        status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
 
-      <ActionDialogStats stats={stats} status="BEFORE" />
       <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />
+
       <ActionDialogFooter
         {...props}
-        buttonsLoading={constructionStatus === 'DECONSTRUCTING'}
-        goLabel="Deconstruct"
-        onGo={deconstruct}
-        status={constructionStatus === 'DECONSTRUCTING' ? 'DURING' : 'BEFORE'} />
+        buttonsLoading={constructionStatus === 'CANCELING'}
+        goLabel="Abandon Site Plan"
+        onGo={unplanConstruction}
+        status={constructionStatus === 'CANCELING' ? 'DURING' : 'BEFORE'} />
     </>
   );
 };
 
-export default Deconstruct;
+export default UnplanConstruction;

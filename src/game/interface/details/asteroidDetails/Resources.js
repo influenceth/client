@@ -20,7 +20,7 @@ import useScanManager from '~/hooks/useScanManager';
 import useStore from '~/hooks/useStore';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import theme, { hexToRGB } from '~/theme';
-import { LiveTimer } from '../../sceneMenu/actionDialogs/components';
+import LiveTimer from '~/components/LiveTimer';
 import { useQueryClient } from 'react-query';
 import { RingLoader } from 'react-spinners';
 
@@ -461,7 +461,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     if (zoomStatus !== 'in') {
       updateZoomStatus('zooming-in');
     }
-    dispatchResourceMap(resource);
+    dispatchResourceMap(resource.i);
     history.push('/');
     return false;
   }, [asteroid?.i, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -561,11 +561,11 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
         )}
         {selected && (
           <div>
-            <SelectedCategoryTitle category={selected.category} onClick={handleClick(-1)}>
-              <ResourceGroupIcon category={selected.category}>{/* TODO: resize icons */}
-                {ResourceGroupIcons[selected.category.toLowerCase()]}
+            <SelectedCategoryTitle category={selected.categoryKey} onClick={handleClick(-1)}>
+              <ResourceGroupIcon category={selected.categoryKey}>{/* TODO: resize icons */}
+                {ResourceGroupIcons[selected.categoryKey.toLowerCase()]}
               </ResourceGroupIcon>
-              <span style={{ flex: 1 }}>{selected.categoryLabel}</span>
+              <span style={{ flex: 1 }}>{selected.category}</span>
               <CaretIcon />
             </SelectedCategoryTitle>
             <ResourceSectionBody>
@@ -607,18 +607,18 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
               <div>
                 <SectionHeader>Resource Groups</SectionHeader>
                 <SectionBody>
-                  {abundances.map(({ category, categoryLabel, resources, abundance }, i) => (
+                  {abundances.map(({ categoryKey, category, resources, abundance }, i) => (
                     <ResourceGroup
-                      key={category}
-                      color={theme.colors.resources[category]}
+                      key={categoryKey}
+                      color={theme.colors.resources[categoryKey]}
                       onClick={handleClick(i)}
-                      onMouseEnter={handleHover(category, true)}
-                      onMouseLeave={handleHover(category, false)}>
-                      <ResourceGroupIcon category={category}>
-                        {ResourceGroupIcons[category.toLowerCase()]}
+                      onMouseEnter={handleHover(categoryKey, true)}
+                      onMouseLeave={handleHover(categoryKey, false)}>
+                      <ResourceGroupIcon category={categoryKey}>
+                        {ResourceGroupIcons[categoryKey.toLowerCase()]}
                       </ResourceGroupIcon>
                       <ResourceGroupLabel>
-                        <label>{categoryLabel}</label>
+                        <label>{category}</label>
                         <BarChart value={abundance} maxValue={abundances[0].abundance}>
                           <label>
                             {Math.round(abundance * 100).toFixed(1)}%

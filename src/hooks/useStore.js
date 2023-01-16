@@ -40,7 +40,7 @@ const useStore = create(persist((set, get) => ({
       plot: null,
       plotDestination: null,
       zoomToPlot: null,
-      showResourceMap: null,
+      mapResourceId: null,
       owned: {
         mapped: false,
         filtered: false,
@@ -147,8 +147,8 @@ const useStore = create(persist((set, get) => ({
       state.logs.alerts.unshift(alert);
     })),
 
-    dispatchActionDialog: (type, vars = {}) => set(produce(state => {
-      state.actionDialog = { type, vars };
+    dispatchActionDialog: (type, params = {}) => set(produce(state => {
+      state.actionDialog = { type, params };
     })),
 
     dispatchAlertNotified: (alert) => set(produce(state => {
@@ -278,14 +278,18 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchOriginSelected: (i) => set(produce(state => {
-      state.asteroids.origin = null;
-      if (i && Number(i) > 0 && Number(i) <= 250000) {
-        state.asteroids.origin = Number(i);
+      if (state.asteroids.zoomStatus !== 'zooming-in') {  // probably a more graceful way to handle this in <Asteroid />
+        state.asteroids.origin = null;
+        if (i && Number(i) > 0 && Number(i) <= 250000) {
+          state.asteroids.origin = Number(i);
+        }
+        state.asteroids.plot = null;
+        state.asteroids.plotDestination = null;
+        state.asteroids.zoomToPlot = null;
+        if (state.asteroids.zoomStatus === 'in') {
+          state.asteroids.zoomStatus = 'zooming-out';
+        }
       }
-      state.asteroids.showResourceMap = null;
-      state.asteroids.plot = null;
-      state.asteroids.plotDestination = null;
-      state.asteroids.zoomToPlot = null;
     })),
 
     dispatchDestinationSelected: (i) => set(produce(state => {
@@ -305,7 +309,6 @@ const useStore = create(persist((set, get) => ({
 
     dispatchZoomStatusChanged: (status, maintainPlot) => set(produce(state => {
       state.asteroids.zoomStatus = status;
-      state.asteroids.showResourceMap = null;
       state.asteroids.plotDestination = null;
       if (!maintainPlot) {
         state.asteroids.plot = null;
@@ -401,8 +404,8 @@ const useStore = create(persist((set, get) => ({
       state.referrer = refCode;
     })),
 
-    dispatchResourceMap: (resource) => set(produce(state => {
-      state.asteroids.showResourceMap = resource;
+    dispatchResourceMap: (resourceId) => set(produce(state => {
+      state.asteroids.mapResourceId = Number(resourceId);
     })),
 
     dispatchPlotsLoading: (i, progress = 0, simulateTarget = 0) => set(produce(state => {

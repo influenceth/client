@@ -19,6 +19,8 @@ export function ActionItemProvider({ children }) {
     () => api.getCrewActionItems(),
     { enabled: !!crew?.i }
   );
+
+  // TODO: probably could move planned lots into actionitems component
   const { data: plannedLots } = useQuery(
     [ 'planned', crew?.i ],
     () => api.getCrewPlannedLots(),
@@ -29,6 +31,7 @@ export function ActionItemProvider({ children }) {
   const failedTransactions = useStore(s => s.failedTransactions);
   const [readyItems, setReadyItems] = useState([]);
   const [unreadyItems, setUnreadyItems] = useState([]);
+  const [plannedItems, setPlannedItems] = useState([]);
 
   const refreshItems = useCallback((nowTime) => {
     setReadyItems(
@@ -36,30 +39,27 @@ export function ActionItemProvider({ children }) {
         .filter((i) => i.data?.completionTime < nowTime)
     );
 
-    const unreadyActionItems = (actionItems || [])
-      .filter((i) => i.data?.completionTime >= nowTime)
-      .map((e) => ({
-        ...e,
-        _sortTime: e.data?.completionTime
-      }));
-    const unstartedPlans = (plannedLots || [])
-      .filter((i) => i.gracePeriodEnd >= nowTime)
-      .map((e) => ({
-        ...e,
-        _sortTime: e.gracePeriodEnd,
-        __t: 'plans'
-      }));
+    setUnreadyItems(
+      (actionItems || [])
+        .filter((i) => i.data?.completionTime >= nowTime)
+    );
 
-    setUnreadyItems([...unreadyActionItems, ...unstartedPlans].sort((a, b) => a._sortTime - b._sortTime));
+    setPlannedItems(
+      (plannedLots || [])
+        .filter((i) => i.gracePeriodEnd >= nowTime)
+    );
   }, [actionItems, plannedLots]);
   useEffect(() => refreshItems(chainTime), [refreshItems]);
 
-  const nextCompletionTime = useMemo(() => unreadyItems.reduce((acc, cur) => {
-      return (acc === null || cur._sortTime < acc)
-        ? cur._sortTime
-        : acc;
-    }, null)
-  , [unreadyItems]);
+  const nextCompletionTime = useMemo(() => {
+    return [...plannedItems, ...unreadyItems].reduce((acc, cur) => {
+      const relevantTime = cur.gracePeriodEnd || cur.data?.completionTime;
+      if (relevantTime && (acc === null || relevantTime < acc)) {
+        return relevantTime;
+      }
+      return acc;
+    }, null);
+  }, [plannedItems, unreadyItems]);
 
   useEffect(() => {
     if (nextCompletionTime) {
@@ -87,6 +87,7 @@ export function ActionItemProvider({ children }) {
       pendingTransactions,
       failedTransactions,
       readyItems,
+      plannedItems,
       unreadyItems,
       actionItems
     }}>

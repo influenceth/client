@@ -1,29 +1,30 @@
 import { useCallback } from 'react';
 
-import { LayBlueprintIcon } from '~/components/Icons';
+import { DeconstructIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import ActionButton from './ActionButton';
 
 const labelDict = {
-  READY_TO_PLAN: 'Plan Building Site',
-  PLANNING: 'Planning Site...'
+  OPERATIONAL: 'Deconstruct Building',
+  DECONSTRUCTING: 'Deconstructing...'
 };
 
-const NewBlueprint = ({ asteroid, plot, onSetAction }) => {
+const Deconstruct = ({ asteroid, plot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
-    onSetAction('BLUEPRINT');
+    onSetAction('DECONSTRUCT');
   }, [onSetAction]);
 
   return (
     <ActionButton
       label={labelDict[constructionStatus] || undefined}
       flags={{
-        loading: constructionStatus === 'PLANNING' || undefined
+        disabled: _disabled || undefined,
+        loading: constructionStatus === 'DECONSTRUCTING' || undefined
       }}
-      icon={<LayBlueprintIcon />}
+      icon={<DeconstructIcon />}
       onClick={handleClick} />
   );
 };
 
-export default NewBlueprint;
+export default Deconstruct;

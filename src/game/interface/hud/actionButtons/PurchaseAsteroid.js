@@ -6,9 +6,9 @@ import useCreateReferral from '~/hooks/useCreateReferral';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
 
-const PurchaseAsteroid = ({ asteroid }) => {
-  const createReferral = useCreateReferral(Number(asteroid.i));
-  const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.i));
+const PurchaseAsteroid = ({ asteroid, _disabled }) => {
+  const createReferral = useCreateReferral(Number(asteroid?.i));
+  const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid?.i));
   const saleIsActive = useStore(s => s.sale);
 
   const handleClick = useCallback(() => {
@@ -21,7 +21,7 @@ const PurchaseAsteroid = ({ asteroid }) => {
     <ActionButton
       label={saleIsActive ? 'Purchase Asteroid' : 'Asteroid can be purchased once next sale begins.'}
       flags={{
-        disabled: !saleIsActive || buying || undefined,
+        disabled: _disabled || !saleIsActive || buying || undefined,
         loading: buying || undefined
       }}
       icon={<PurchaseAsteroidIcon />}

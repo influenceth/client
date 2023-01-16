@@ -11,7 +11,7 @@ const labelDict = {
   FINISHING: 'Finishing Construction...'
 };
 
-const Construct = ({ asteroid, plot, onSetAction }) => {
+const Construct = ({ asteroid, plot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
     onSetAction('CONSTRUCT');
@@ -25,6 +25,7 @@ const Construct = ({ asteroid, plot, onSetAction }) => {
       label={labelDict[constructionStatus] || undefined}
       flags={{
         badge,
+        disabled: _disabled || undefined,
         attention: attention || undefined,
         loading: loading || undefined
       }}

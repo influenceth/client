@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useResourceAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useStore from '~/hooks/useStore';
@@ -13,15 +12,12 @@ export const usePlotLink = ({ asteroidId, plotId, resourceId }) => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const origin = useStore(s => s.asteroids.origin);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const resources = useResourceAssets();
 
   const [destination, setDestination] = useState();
 
   const selectResourceMapAsNeeded = useCallback(() => {
-    if (resourceId && resources[resourceId]) {
-      dispatchResourceMap(resources[resourceId]);
-    }
-  }, [resourceId, resources]);
+    if (resourceId) dispatchResourceMap(resourceId);
+  }, [resourceId]);
 
   useEffect(() => {
     if (destination && zoomStatus === 'zooming-in') {

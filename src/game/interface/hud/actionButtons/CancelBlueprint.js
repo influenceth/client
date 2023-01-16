@@ -9,7 +9,7 @@ const labelDict = {
   CANCELING: 'Canceling...'
 };
 
-const CancelBlueprint = ({ asteroid, plot, onSetAction }) => {
+const CancelBlueprint = ({ asteroid, plot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
     onSetAction('CANCEL_BLUEPRINT');
@@ -19,6 +19,7 @@ const CancelBlueprint = ({ asteroid, plot, onSetAction }) => {
     <ActionButton
       label={labelDict[constructionStatus] || undefined}
       flags={{
+        disabled: _disabled || undefined,
         loading: constructionStatus === 'CANCELING' || undefined
       }}
       icon={<CancelBlueprintIcon />}

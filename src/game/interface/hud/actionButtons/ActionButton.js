@@ -1,6 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import LoadingAnimation from 'react-spinners/BarLoader';
+import ReactTooltip from 'react-tooltip';
 
 const outlineAnimation = keyframes`
   0% { outline-width: 0; }
@@ -113,6 +114,7 @@ const ActionButtonComponent = ({ label, flags = {}, icon, onClick }) => {
   const _onClick = useCallback(() => {
     if (!flags?.disabled && onClick) onClick();
   }, [flags, onClick]);
+  useEffect(() => ReactTooltip.rebuild(), []);
   return (
     <ActionButton
       data-arrow-color="transparent"

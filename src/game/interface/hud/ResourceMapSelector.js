@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { useHistory } from 'react-router-dom';
+import { Inventory } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
 import { ResourceGroupIcons } from '~/components/Icons';
 import useAsteroidAbundances from '~/hooks/useAsteroidAbundances';
 import useStore from '~/hooks/useStore';
 import { hexToRGB } from '~/theme';
+import { keyify } from '~/lib/utils';
 
 const Wrapper = styled.div`
   width: 100%;
@@ -98,7 +100,7 @@ const ResourceMapSelector = ({ active, asteroid }) => {
   const history = useHistory();
   const asteroidAssets = useAsteroidAbundances(asteroid);
   const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
-  const showResourceMap = useStore(s => s.asteroids.showResourceMap);
+  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
 
   const [category, setCategory] = useState();
   const [resource, setResource] = useState();
@@ -107,32 +109,31 @@ const ResourceMapSelector = ({ active, asteroid }) => {
     history.push(`/resource-viewer/${resource.i}`)
   }, [resource?.i]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectCategory = useCallback((selected, forceReset) => () => {
-    if (forceReset || selected.category !== category?.category) {
-      dispatchResourceMap(selected.resources[0]);
-    }
-  }, [category?.category, dispatchResourceMap]);
-
   const selectResource = useCallback((selected) => {
-    dispatchResourceMap(selected);
+    dispatchResourceMap(selected.i);
   }, [dispatchResourceMap]);
 
+  const selectCategory = useCallback((selected) => () => {
+    if (selected.categoryKey !== category?.categoryKey) {
+      selectResource(selected.resources[0]);
+    }
+  }, [category?.categoryKey, selectResource]);
+
+  // if resource map specified, initialize the local state
   useEffect(() => {
     if (active) {
-      if (showResourceMap) {
+      if (mapResourceId && asteroidAssets) {
         asteroidAssets.forEach((c) => {
           c.resources.forEach((r) => {
-            if (r.name === showResourceMap.name) {
+            if (Number(r.i) === mapResourceId) {
               setCategory(c);
               setResource(r);
             }
           });
         });
-      } else if (asteroidAssets?.length) {
-        selectCategory(asteroidAssets[0], true)();
       }
     }
-  }, [active, showResourceMap]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [active, mapResourceId, asteroidAssets]); // eslint-disable-line react-hooks/exhaustive-deps
   
   useEffect(() => ReactTooltip.rebuild(), []);
 
@@ -146,7 +147,7 @@ const ResourceMapSelector = ({ active, asteroid }) => {
           onClick={goToResourceViewer}
           style={{ backgroundImage: `url(${resource.iconUrls.w85})` }} />
         <ResourceDetails>
-          <DropdownContainer selectedCategory={showResourceMap?.category}>
+          <DropdownContainer selectedCategory={keyify(Inventory.RESOURCES[mapResourceId]?.category)}>
             <Dropdown
               buttonBackground
               buttonBorderless
@@ -161,14 +162,14 @@ const ResourceMapSelector = ({ active, asteroid }) => {
           <CategoryButtons>
             {asteroidAssets.map((c) => (
               <CategoryButton
-                key={c.category}
-                category={c.category}
+                key={c.categoryKey}
+                category={c.categoryKey}
                 onClick={selectCategory(c)}
-                selected={c.category === category.category}
-                data-tip={c.categoryLabel}
+                selected={c.categoryKey === category.categoryKey}
+                data-tip={c.category}
                 data-place="right"
                 data-for="global">
-                {ResourceGroupIcons[c.category.toLowerCase()]}
+                {ResourceGroupIcons[c.categoryKey.toLowerCase()]}
               </CategoryButton>
             ))}
           </CategoryButtons>
