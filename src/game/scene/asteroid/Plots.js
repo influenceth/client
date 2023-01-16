@@ -511,7 +511,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
   const selectionAnimationTime = useRef();
   useEffect(() => {
-    if (selectionMesh.current && positions.current && selectedPlotId) {
+    if (selectionMesh.current && positions.current && positionsReady && selectedPlotId) {
       const plotIndex = selectedPlotId - 1;
 
       selectionMesh.current.position.set(
@@ -534,7 +534,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     } else {
       selectionMesh.current.material.opacity = 0;
     }
-  }, [attachTo.quaternion, selectedPlotId]);
+  }, [attachTo.quaternion, selectedPlotId, positionsReady]);
 
   // useEffect(() => { // shouldn't be zoomed to plot when plots first loaded or unloaded
   //   dispatchPlotSelected();
