@@ -121,7 +121,6 @@ const PlanConstruction = ({ asteroid, plot, ...props }) => {
           headerBackground: constructionBackground,
           label: 'Place Building Site',
           completeLabel: 'Building Site',
-          completeStatus: 'Ready',
         }}
         status="BEFORE"
         {...props} />

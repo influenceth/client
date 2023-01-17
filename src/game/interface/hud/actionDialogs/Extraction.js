@@ -212,7 +212,6 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
     }
   }, [extractionStatus]);
 
-  console.log();
   return (
     <>
       <ActionDialogHeader
@@ -224,7 +223,6 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
           headerBackground: extractionBackground,
           label: 'Extract Resource',
           completeLabel: 'Extraction',
-          completeStatus: 'Complete',
           crewRequirement: 'start',
         }}
         status={status}

@@ -215,8 +215,6 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
           actionIcon: <CoreSampleIcon />,
           headerBackground: coreSampleBackground,
           label: 'Core Sample',
-          completeLabel: 'Sample',
-          completeStatus: sample?.initialYield === undefined ? 'Ready for Analysis' : 'Analyzed',
           crewRequirement: 'duration',
         }}
         status={status}

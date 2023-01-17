@@ -256,8 +256,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
           actionIcon: <ImproveCoreSampleIcon />,
           headerBackground: coreSampleBackground,
           label: 'Improve Core Sample',
-          completeLabel: 'Sample',
-          completeStatus: !isImproved ? 'Ready for Analysis' : 'Analyzed',
+          completeLabel: 'Improved Sample',
           crewRequirement: 'duration',
         }}
         status={status}

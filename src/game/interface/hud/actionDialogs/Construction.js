@@ -141,7 +141,7 @@ const Construct = ({ asteroid, plot, ...props }) => {
   }, [constructionStatus]);
 
   useEffect(() => {
-    if (constructionStatus === 'OPERATIONAL') {
+    if (constructionStatus === 'FINISHING' || constructionStatus === 'OPERATIONAL') {
       props.onClose();
     }
   }, [constructionStatus]);
@@ -157,7 +157,6 @@ const Construct = ({ asteroid, plot, ...props }) => {
           headerBackground: constructionBackground,
           label: 'Construct Building',
           completeLabel: 'Construction',
-          completeStatus: 'Complete',
           crewRequirement: 'start',
         }}
         status={status}

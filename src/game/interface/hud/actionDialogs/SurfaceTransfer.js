@@ -222,8 +222,6 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
           actionIcon: <SurfaceTransferIcon />,
           headerBackground: surfaceTransferBackground,
           label: 'Surface Transfer',
-          completeLabel: 'Transfer',
-          completeStatus: 'Complete',
           crewRequirement: 'start',
         }}
         status={status}

@@ -39,6 +39,7 @@ import theme from '~/theme';
 import useChainTime from '~/hooks/useChainTime';
 import { formatFixed, formatTimer } from '~/lib/utils';
 import LiveTimer from '~/components/LiveTimer';
+import NavIcon from '~/components/NavIcon';
 
 // TODO: remove this after sdk updated
 Inventory.CAPACITIES = {
@@ -621,16 +622,20 @@ const NotificationEnabler = styled.div`
   }
 `;
 
-const CompletedIconWrapper = styled.div`
+const ReadyIconWrapper = styled.div`
   align-self: stretch;
   color: ${p => p.theme.colors.main};
   display: flex;
   flex-direction: column;
-  font-size: 36px;
+  font-size: 30px;
+  justify-content: center;
   margin-bottom: -15px;
   margin-top: -15px;
   margin-right: 20px;
   position: relative;
+`;
+const CompletedIconWrapper = styled(ReadyIconWrapper)`
+  font-size: 36px;
   & > svg {
     flex: 1;
   }
@@ -961,6 +966,8 @@ const EmptyBuildingImage = ({ iconOverride }) => (
   <BuildingThumbnailWrapper><EmptyImage>{iconOverride || <LocationPinIcon />}</EmptyImage></BuildingThumbnailWrapper>
 );
 
+const ReadyHighlight = () => <ReadyIconWrapper><div><NavIcon animate selected /></div></ReadyIconWrapper>;
+
 const CompletedHighlight = () => <CompletedIconWrapper><CheckIcon /></CompletedIconWrapper>;
 
 const MouseoverIcon = ({ children, icon, iconStyle = {}, themeColor }) => {
@@ -1268,7 +1275,7 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
           <ResourceWithData>
             <ResourceImage resource={resource} />
             <label>
-              <h3>{resource?.name} Deposit{overrideTonnage ? ' (Improved)' : ''}</h3>
+              <h3>{resource?.name} Deposit{status !== 'BEFORE' ? (overrideTonnage ? ' (Improved)' : ' (Original)') : ''}</h3>
               <div>
                 <b><ResourceIcon /> {formatSampleMass(overrideTonnage || (selectedSample?.remainingYield * resource.massPerUnit))}</b> tonnes
               </div>
@@ -1290,9 +1297,9 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
             </Poppable>
           </div>
         )}
-        {status === 'AFTER' && (
-          <CompletedHighlight />
-        )}
+
+        {status === 'AFTER' && !overrideTonnage && <ReadyHighlight />}
+        {status === 'AFTER' && overrideTonnage && <CompletedHighlight />}
       </SectionBody>
     </Section>
   );
@@ -1350,7 +1357,7 @@ export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, 
           </div>
         )}
         {status === 'AFTER' && (
-          <CompletedHighlight />
+          <ReadyHighlight />
         )}
       </SectionBody>
     </Section>
@@ -1374,9 +1381,8 @@ export const RawMaterialSection = ({ abundance, resource, tonnage, status }) => 
             </label>
           </ResourceWithData>
         )}
-        {status === 'AFTER' && (
-          <CompletedHighlight />
-        )}
+        {status === 'AFTER' && tonnage === undefined && <ReadyHighlight />}
+        {status === 'AFTER' && tonnage !== undefined && <CompletedHighlight />}
       </SectionBody>
     </Section>
   );
@@ -1606,7 +1612,7 @@ export const BuildingPlanSection = ({ building, canceling, gracePeriodEnd, onBui
           </>
         )}
         {status === 'AFTER' && (
-          <CompletedHighlight />
+          <ReadyHighlight />
         )}
       </SectionBody>
     </Section>
@@ -1721,7 +1727,7 @@ export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, s
         <LoadingBar progress={progress}>{action.label}: {(progress || 0).toFixed(1)}%</LoadingBar>
       )}
       {status === 'AFTER' && (
-        <LoadingBar progress={progress}>Finalize {action.completeLabel}</LoadingBar>
+        <LoadingBar progress={progress}>{action.completeLabel || action.label} Ready</LoadingBar>
       )}
       <CloseButton backgroundColor={status !== 'BEFORE' && 'black'} onClick={onClose} borderless>
         <CloseIcon />
@@ -1730,9 +1736,8 @@ export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, s
         <HeaderSectionBody>
           <HeaderInfo padTop={status !== 'BEFORE'}>
             <Title>
-              {status === 'BEFORE' && <>{action.actionIcon} {action.label.toUpperCase()}</>}
+              {status !== 'DURING' && <>{action.actionIcon} {action.label.toUpperCase()}</>}
               {status === 'DURING' && <><RingLoader color={theme.colors.main} size="1em" /> <span style={{ marginLeft: 40 }}><LiveTimer target={targetTime} /></span></>}
-              {status === 'AFTER' && `${action.completeLabel.toUpperCase()} ${action.completeStatus.toUpperCase()}`}
             </Title>
             <Subtitle>
               {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName}
@@ -1867,14 +1872,22 @@ export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOve
                     </NotificationEnabler>
                     <Spacer />
                     <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClose}>Cancel</Button>
-                    <Button disabled={buttonsDisabled || goDisabled} loading={buttonsLoading} isTransaction onClick={onGo}>{goLabel}</Button>
+                    <Button
+                      disabled={buttonsDisabled || goDisabled}
+                      loading={buttonsLoading}
+                      isTransaction
+                      onClick={onGo}>{goLabel}</Button>
                   </>
                 )}
               {status === 'DURING' && (
                 <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClose}>{'Close'}</Button>
               )}
               {status === 'AFTER' && (
-                <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
+                <Button
+                  disabled={buttonsDisabled}
+                  isTransaction
+                  loading={buttonsLoading}
+                  onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
               )}
             </>
           )}

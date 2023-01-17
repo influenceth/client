@@ -144,7 +144,6 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
           headerBackground: constructionBackground,
           label: 'Deconstruct Building',
           completeLabel: 'Deconstruction',
-          completeStatus: 'Complete',
           crewRequirement: 'start',
         }}
         status="BEFORE"
