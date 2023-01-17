@@ -15,7 +15,6 @@ import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
 import Button from '~/components/ButtonAlt';
 import ButtonRounded from '~/components/ButtonRounded';
-import CrewCard from '~/components/CrewCard';
 import Dialog from '~/components/Dialog';
 import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
@@ -84,7 +83,7 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
   const resources = useResourceAssets();
   const { constructionStatus, deconstruct } = useConstructionManager(asteroid?.i, plot?.i);
   const { crew, crewMemberMap } = useCrew();
-  
+
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
@@ -102,7 +101,7 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
   const stats = useMemo(() => [
     { label: 'Returned Volume', value: '0 m³', direction: 0 },    // TODO: ...
     { label: 'Returned Mass', value: '0 tonnes', direction: 0 },   // TODO: ...
-    { 
+    {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
       direction: getBonusDirection(crewTravelBonus),
@@ -124,7 +123,7 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
   useEffect(() => {
     if (constructionStatus === 'PLANNED') {
       props.onClose();
-      // TODO: 
+      // TODO:
       // if materials are recovered, open surface transport dialog w/ all materials selected
       // else, open "unplan" dialog
       // props.onSetAction('CONSTRUCT');

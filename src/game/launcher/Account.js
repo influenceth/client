@@ -37,10 +37,49 @@ const AccountCTA = styled.div`
   border-top: 1px solid ${p => p.theme.colors.mainBorder};
   display: flex;
   font-size: 15px;
-  height: ${p => p.height || 0}px;
-  justify-content: space-around;
+  justify-content: center;
   margin-top: ${p => p.margin || 0}px;
-  padding: 25px 150px;
+  width: 100%;
+`;
+
+const NotConnectedMessage = styled.span`
+  padding: 35px 50px 35px 0;
+`;
+
+const LogoutButton = styled
+
+const CrewContainer = styled.div`
+  align-items: flex-start;
+  display: flex;
+  padding: 35px 50px;
+  position: relative;
+  width: 100%;
+`;
+
+const CaptainTitle = styled.span`
+  color: ${p => p.theme.colors.secondaryText};
+  font-size: 14px;
+  left: 220px;
+  position: absolute;
+`;
+
+const CaptainName = styled.h2`
+  left: 220px;
+  padding-top: 3px;
+  position: absolute;
+`;
+
+const CaptainContain = styled.div`
+  border: 1px solid #888;
+  margin-right: 20px;
+  padding: 10px;
+  width: 150px;
+`;
+
+const CrewContain = styled.div`
+  border: 1px solid #888;
+  margin: 60px 10px 0 0;
+  width: 90px;
 `;
 
 const PlayCTA = styled.div`
@@ -63,25 +102,43 @@ const Account = (props) => {
   const { token, wallet } = useAuth();
   const { account } = wallet;
   const loggedIn = account && token;
-  const crew = useCrew();
+  const { captain, loading: crewLoading, crew, crewMemberMap } = useCrew();
 
   return (
     <StyledAccount>
       <StyledLogo />
       <MainContent>
         {!loggedIn &&
-          <AccountCTA margin={250}>
-            <span>Account Not Connected</span>
+          <AccountCTA margin={225} height={100}>
+            <NotConnectedMessage>Account Not Connected</NotConnectedMessage>
             <ButtonPill onClick={() => history.push('/launcher/wallets')}>Login</ButtonPill>
           </AccountCTA>
         }
         {loggedIn &&
-          <AccountCTA margin={50} height={250}>
-            {/* {!crew.loading && crew.captain && <CrewCard crew={crew.captain} overlay={false} />} */}
+          <AccountCTA margin={50}>
+            {!crewLoading && crew?.crewMembers && crew?.crewMembers.length > 0 &&
+              <CrewContainer>
+                <CaptainTitle>Captain</CaptainTitle>
+                <CaptainName>{captain.name}</CaptainName>
+                <CaptainContain>
+                  <CrewCard crew={captain} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
+                </CaptainContain>
+                {crew.crewMembers.slice(1).map(function(crewmateId) {
+                  const crewmate = crewMemberMap[crewmateId];
+                  return (
+                    <CrewContain key={crewmate.i}>
+                      <CrewCard crew={crewmate} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
+                    </CrewContain>
+                  );
+                })}
+              </CrewContainer>
+            }
           </AccountCTA>
         }
         <PlayCTA>
-          <MainButton color={theme.colors.main} onClick={() => history.push('/game')}>{loggedIn ? "Play" : "Explore"}</MainButton>
+          <MainButton color={theme.colors.main} size='large' onClick={() => history.push('/game')}>
+            {loggedIn ? "Play" : "Explore"}
+          </MainButton>
         </PlayCTA>
       </MainContent>
     </StyledAccount>

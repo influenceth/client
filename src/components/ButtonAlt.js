@@ -5,7 +5,28 @@ import LoadingAnimation from 'react-spinners/BarLoader';
 
 import useStore from '~/hooks/useStore';
 import Badge from '~/components/Badge';
-import theme from '~/theme';
+import theme, { getContrastText } from '~/theme';
+
+const loadingCssTop = '3px';
+
+const InnerContainer = styled.div`
+  align-items: center;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - ${p => p.sizeParams.line - 3.5}px),
+    calc(100% - ${p => p.sizeParams.line - 3.5}px) 100%,
+    0 100%
+  );
+  display: flex;
+  justify-content: center;
+  transition: background-color 300ms ease;
+  width: 100%;
+
+  & > * {
+    margin-right: 5px;
+  }
+`;
 
 const StyledButton = styled.button`
   background: transparent;
@@ -13,23 +34,27 @@ const StyledButton = styled.button`
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(100% - 9.5px),
-    calc(100% - 9.5px) 100%,
+    100% calc(100% - ${p => p.sizeParams.line - 0.5}px),
+    calc(100% - ${p => p.sizeParams.line - 0.5}px) 100%,
     0 100%
   );
   display: flex;
   font-family: 'Jura', sans-serif;
-  font-size: 16px;
-  padding: 3px; /* must match loadingCss.top */
+  font-size: ${p => p.sizeParams.font}px;
+  padding: ${loadingCssTop};
   pointer-events: auto;
   position: relative;
   text-transform: uppercase;
   transition: all 300ms ease;
-  width: 185px;
+  width: ${p => p.sizeParams.width}px;
 
   & > svg {
     max-height: 24px;
     max-width: 24px;
+  }
+
+  & ${InnerContainer} {
+    min-height: ${p => p.sizeParams.height}px;
   }
 
   ${p => p.disabled
@@ -45,7 +70,7 @@ const StyledButton = styled.button`
       }
     `
     : `
-      color: white;
+      color: ${p => getContrastText(p.color)};
       & > div {
         background-color: ${p.color || (p.isTransaction ? '#232d64' : '#1a404f')};
       }
@@ -59,35 +84,15 @@ const StyledButton = styled.button`
   }
 `;
 
-const InnerContainer = styled.div`
-  align-items: center;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 6.5px),
-    calc(100% - 6.5px) 100%,
-    0 100%
-  );
-  display: flex;
-  justify-content: center;
-  min-height: 32px;
-  transition: background-color 300ms ease;
-  width: 100%;
-
-  & > * {
-    margin-right: 5px;
-  }
-`;
-
 const Corner = styled.svg`
   bottom: -1px;
-  height: 10px;
+  height: ${p => p.sizeParams.line}px;
   margin-right: 0;
   position: absolute;
   right: -1px;
   stroke: ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)};
   stroke-width: 1.5px;
-  width: 10px;
+  width: ${p => p.sizeParams.line}px;
 `;
 
 const StyledBadge = styled(Badge)`
@@ -100,19 +105,26 @@ const loadingCss = css`
   left: 0;
   position: absolute;
   right: 0;
-  top: 3px;
+  top: ${loadingCssTop};
   width: 100%;
 `;
 
+const sizes = {
+  medium: { font: 16, height: 32, width: 185, line: 10 },
+  large: { font: 20, height: 50, width: 250, line: 15 }
+};
+
 const Button = (props) => {
   const {
-    onClick,
-    'data-tip': dataTip,
     'data-place': dataPlace,
+    'data-tip': dataTip,
     loading,
+    onClick,
     setRef,
     ...restProps } = props;
+
   const playSound = useStore(s => s.dispatchSoundRequested);
+  const sizeParams = sizes[props.size] || sizes.medium;
 
   const _onClick = (e) => {
     playSound('effects.click');
@@ -122,19 +134,26 @@ const Button = (props) => {
   useEffect(() => ReactTooltip.rebuild(), []);
 
   if (setRef) restProps.ref = setRef;
+
   return (
     <StyledButton
       onClick={_onClick}
       data-tip={dataTip}
       data-place={dataPlace || "right"}
+      sizeParams={sizeParams}
       {...restProps}>
-      <InnerContainer>
-        {loading && <LoadingAnimation height={1} color={theme.colors.main} css={loadingCss} />}
+      <InnerContainer sizeParams={sizeParams}>
+        {loading && <LoadingAnimation height={1} color={props.color} css={loadingCss} />}
         {props.children}
         {props.badge && <StyledBadge value={props.badge} />}
       </InnerContainer>
-      <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg" color={props.color} isTransaction={props.isTransaction}>
-        <line x1="0" y1="10" x2="10" y2="0" />
+      <Corner
+        color={props.color}
+        isTransaction={props.isTransaction}
+        sizeParams={sizeParams}
+        viewBox={`0 0 ${sizeParams.line} ${sizeParams.line}`}
+        xmlns="http://www.w3.org/2000/svg">
+        <line x1="0" y1={sizeParams.line} x2={sizeParams.line} y2="0" />
       </Corner>
     </StyledButton>
   );

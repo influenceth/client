@@ -245,7 +245,7 @@ const Launcher = (props) => {
           <CurrentAccount onClick={disconnectWallet}>
             <WalletLogo>{walletIcon}</WalletLogo>
             <AccountName account={account} wallet={walletName} />
-            <LogoutButton>Logout</LogoutButton>
+            <LogoutButton size='large'>Logout</LogoutButton>
           </CurrentAccount>
         }
       </Header>
