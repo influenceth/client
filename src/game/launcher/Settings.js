@@ -70,7 +70,6 @@ const AutodetectButton = styled(Button)`
   }
 `;
 
-
 const Settings = (props) => {
   const gpuInfo = useDetectGPU();
 

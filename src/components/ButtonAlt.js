@@ -5,9 +5,12 @@ import LoadingAnimation from 'react-spinners/BarLoader';
 
 import useStore from '~/hooks/useStore';
 import Badge from '~/components/Badge';
-import theme, { getContrastText } from '~/theme';
+import { getContrastText } from '~/theme';
 
-const loadingCssTop = '3px';
+const getColor = () => {
+  console.log('getting color');
+  return 'white';
+};
 
 const InnerContainer = styled.div`
   align-items: center;
@@ -41,7 +44,7 @@ const StyledButton = styled.button`
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: ${p => p.sizeParams.font}px;
-  padding: ${loadingCssTop};
+  padding: 3px; /* must match loadingCss.top */
   pointer-events: auto;
   position: relative;
   text-transform: uppercase;
@@ -70,7 +73,7 @@ const StyledButton = styled.button`
       }
     `
     : `
-      color: ${p => getContrastText(p.color)};
+      color: ${p.color ? getContrastText(p.color) : 'white'};
       & > div {
         background-color: ${p.color || (p.isTransaction ? '#232d64' : '#1a404f')};
       }
@@ -105,7 +108,7 @@ const loadingCss = css`
   left: 0;
   position: absolute;
   right: 0;
-  top: ${loadingCssTop};
+  top: 3px;
   width: 100%;
 `;
 

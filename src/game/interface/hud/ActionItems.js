@@ -39,6 +39,7 @@ const ActionItemWrapper = styled.div`
   flex: 1;
   overflow: hidden;
   pointer-events: none;
+  user-select: none;
 `;
 
 const ActionItemContainer = styled.div`
@@ -344,7 +345,7 @@ const formatTx = (item) => {
         }
       };
       break;
-    
+
     case 'START_CORE_SAMPLE':
       const isImprovement = item.vars.sampleId > 0;
       formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <CoreSampleIcon />;
@@ -513,7 +514,7 @@ const ActionItem = ({ data, type }) => {
     if (item.asteroidId) {
       goToAction();
     }
-    
+
     if (item.onClick) {
       // delay dialog opening based on how far camera needs to fly to get there
       let dialogDelay = 0;
