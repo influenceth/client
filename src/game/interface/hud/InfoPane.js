@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import PuffLoader from 'react-spinners/PuffLoader';
-import { toRarity, toSize, toSpectralType } from '@influenceth/sdk';
+import { toRarity, toSize, toSpectralType, Asteroid as AsteroidLib, Capable, Construction, Inventory } from '@influenceth/sdk';
 import {
   FaSearchPlus as DetailsIcon
 } from 'react-icons/fa';
@@ -19,11 +19,19 @@ import useConstructionManager from '~/hooks/useConstructionManager';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import useCrew from '~/hooks/useCrew';
+import { formatFixed, keyify } from '~/lib/utils';
+import { hexToRGB } from '~/theme';
 
 const opacityAnimation = keyframes`
   0% { opacity: 1; }
   50% { opacity: 0.6; }
   100% { opacity: 1; }
+`;
+
+const IconlessDetail = styled.div`
+  border-left: 3px solid ${p => p.theme.colors.main};
+  height: 100%;
+  width: 32px;
 `;
 
 const IconHolder = styled.div`
@@ -231,6 +239,46 @@ const Pane = styled.div`
   }
 `;
 
+const LotConstructionWarning = styled.span`
+  color: ${p => p.theme.colors.error};
+  display: inline-block;
+  margin-left: 6px;
+`;
+const PlotDetails = styled.div`
+  border-left: 1px solid #444;
+  margin-bottom: 12px;
+  padding-left: 15px;
+  width: 300px;
+`;
+const DetailRow = styled.div`
+  color: white;  
+  display: flex;
+  flex-direction: row;
+  font-size: 90%;
+  padding: 4px 0;
+  width: 100%;
+  & > label {
+    flex: 1;
+    opacity: 0.5;
+  }
+  & > div {
+    text-align: right;
+  }
+`;
+const ResourceRow = styled.div`
+  & > span {
+    background: rgba(${p => hexToRGB(p.theme.colors.resources[p.category])}, 0.5);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.9);
+    display: inline-block;
+    font-size: 12px;
+    line-height: 18.4px;
+    margin-right: 4px;
+    text-align: center;
+    width: 40px;
+  }
+`;
+
 const InfoPane = () => {
   const history = useHistory();
 
@@ -288,14 +336,39 @@ const InfoPane = () => {
     return false;
   }, [asteroidId, plotId, zoomStatus]);
 
+  const topResources = useMemo(() => {
+    const resources = [];
+    if (plotId && zoomToPlot && asteroid?.scanned) {
+      Object.keys((asteroid.resources || {})).forEach((resourceId) => {
+        const abundance = AsteroidLib.getAbundanceAtLot(
+          asteroid.i,
+          BigInt(asteroid.resourceSeed),
+          plotId,
+          resourceId,
+          asteroid.resources[resourceId]
+        );
+        if (abundance > 0) {
+          resources.push(({ resourceId, abundance }));
+        }
+      });
+    }
+    return resources.sort((a, b) => b.abundance - a.abundance).slice(0, 1);
+  }, [asteroid?.scanned, plotId, zoomToPlot]);
+
   return (
     <Pane onClick={onClickPane} visible={asteroidId && ['out','in'].includes(zoomStatus)}>
-      <IconColumn>
-        <IconHolder>
-          {zoomStatus === 'in' && !plotId && <InfoIcon />}
-          {(zoomStatus === 'out' || plotId) && <DetailsIcon />}
-        </IconHolder>
-      </IconColumn>
+      {zoomToPlot && (
+        <IconlessDetail />
+      )}
+      {!zoomToPlot && (
+        <IconColumn>
+          <IconHolder>
+            {zoomStatus === 'in' && !plotId && <InfoIcon />}
+            {(zoomStatus === 'out' || plotId) && <DetailsIcon />}
+          </IconHolder>
+        </IconColumn>
+      )}
+
       <InfoColumn>
         {zoomStatus === 'in' && asteroid && !plotId && (
           <>
@@ -317,15 +390,58 @@ const InfoPane = () => {
         )}
         {zoomStatus === 'in' && plotId && zoomToPlot && (
           <>
-            <Title>{(plot?.building || buildings[0])?.name}</Title>
+            <Title>{Capable.TYPES[plot?.building?.capableType || 0]?.name}</Title>
             <Subtitle>
-              <PaneContent>
-                Lot #{plotId.toLocaleString()}
-              </PaneContent>
-              <PaneHoverContent>
-                Lot Details
-              </PaneHoverContent>
+              Lot {plotId.toLocaleString()}
+              {plot?.building?.capableType > 0 && plot?.building?.construction?.status !== Construction.STATUS_OPERATIONAL && (
+                <LotConstructionWarning>{Construction.STATUSES[plot?.building?.construction?.status]}</LotConstructionWarning>
+              )}
+              {/* TODO: construction status! */}
             </Subtitle>
+            <PlotDetails>
+              <DetailRow>
+                <label>Controlled by</label>
+                {plot?.occupier && <div>{plot.occupier === crew?.i ? 'Me' : `Crew #${plot.occupier}`}</div>}
+                {!plot?.occupier && <div>Uncontrolled</div>}
+              </DetailRow>
+              {plot?.building?.capableType === 1 && (
+                <>
+                  <DetailRow>
+                    <label>Max Storage Volume</label>
+                    <div>{Inventory.CAPACITIES[1][1].volume.toLocaleString()} m<sup>3</sup></div>
+                  </DetailRow>
+                  <DetailRow>
+                    <label>Max Storage Mass</label>
+                    <div>{Inventory.CAPACITIES[1][1].mass.toLocaleString()} kg</div>
+                  </DetailRow>
+                  <DetailRow>
+                    <label>Available Capacity</label>
+                    <div>
+                      {formatFixed(
+                        100 * (1 - Math.max(
+                          1E-3 * (plot.building.inventories[1]?.mass + plot.building.inventories[1]?.reservedMass) / Inventory.CAPACITIES[1][1].mass,
+                          1E-3 * (plot.building.inventories[1]?.volume + plot.building.inventories[1]?.reservedVolume) / Inventory.CAPACITIES[1][1].volume,
+                        )),
+                        1
+                      )}%
+                    </div>
+                  </DetailRow>
+                </>
+              )}
+              {topResources?.length > 0 && (!plot?.building?.capableType || plot?.building?.capableType === 2) && (
+                <DetailRow>
+                  <label>Highest Abundance</label>
+                  <div>
+                    {topResources.map((r) => (
+                      <ResourceRow key={r.resourceId} category={keyify(Inventory.RESOURCES[r.resourceId].category)}>
+                        <span>{formatFixed(100 * r.abundance, 1)}%</span>
+                        {Inventory.RESOURCES[r.resourceId].name}
+                      </ResourceRow>
+                    ))}
+                  </div>
+                </DetailRow>
+              )}
+            </PlotDetails>
           </>
         )}
         {zoomStatus === 'in' && plotId && !zoomToPlot && (
