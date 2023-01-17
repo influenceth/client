@@ -10,6 +10,12 @@ export const hexToRGB = (hex) => {
   ].join(',');
 };
 
+export const getContrastText = (rgb) => {
+  if (typeof rgb === 'string') rgb = hexToRGB(rgb);
+  rgb = rgb.split(',');
+  return (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000 > 125 ? 'black' : 'white';
+}
+
 const gray = '#bbbbbb';
 const teal = '#69ebf4';
 const blue = '#4f90ff';

@@ -15,7 +15,6 @@ import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
 import Button from '~/components/ButtonAlt';
 import ButtonRounded from '~/components/ButtonRounded';
-import CrewCard from '~/components/CrewCard';
 import Dialog from '~/components/Dialog';
 import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
@@ -73,7 +72,7 @@ import {
 
   ConstructionBonusTooltip,
   TravelBonusTooltip,
-  
+
   getBonusDirection,
   getTripDetails,
   TimeBonusTooltip,
@@ -85,7 +84,7 @@ const Construct = ({ asteroid, plot, ...props }) => {
   const resources = useResourceAssets();
   const { currentConstruction, constructionStatus, startConstruction, finishConstruction } = useConstructionManager(asteroid?.i, plot?.i);
   const { crew, crewMemberMap } = useCrew();
-  
+
   const crewMembers = currentConstruction?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
@@ -98,8 +97,8 @@ const Construct = ({ asteroid, plot, ...props }) => {
       { label: 'Return from destination', plot: 1 },
     ])
   }, [asteroid?.i, plot?.i, crewTravelBonus]);
-  
-  const constructionTime = useMemo(() => 
+
+  const constructionTime = useMemo(() =>
     Construction.getConstructionTime(plot?.building?.assetId, constructionBonus.totalBonus),
     [plot?.building?.assetId, constructionBonus.totalBonus]
   );

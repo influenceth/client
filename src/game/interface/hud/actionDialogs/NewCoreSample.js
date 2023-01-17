@@ -15,7 +15,6 @@ import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
 import Button from '~/components/ButtonAlt';
 import ButtonRounded from '~/components/ButtonRounded';
-import CrewCard from '~/components/CrewCard';
 import Dialog from '~/components/Dialog';
 import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
@@ -123,7 +122,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
       asteroid.resources[resourceId]
     );
 }, [asteroid, plot, resourceId]);
-  
+
   const crewMembers = coreSampleManager.currentSample?._crewmates
     || ((crew?.crewMembers || []).map((i) => crewMemberMap[i]));
   const captain = crewMembers[0];
@@ -144,7 +143,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
 
   const sampleBounds = CoreSample.getSampleBounds(lotAbundance, 0, sampleQualityBonus.totalBonus);
   const sampleTime = CoreSample.getSampleTime(sampleTimeBonus.totalBonus);
-  
+
   const stats = useMemo(() => ([
     {
       label: 'Discovery Minimum',

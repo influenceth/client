@@ -62,7 +62,7 @@ const Card = styled.div`
   font-size: ${p => p.fontSize || p.theme.fontSizes.detailText};
   padding-top: 137.5%;
   position: relative;
-  width: 100%;
+  width: ${p => p.width || '100%'};
 
   ${p => p.fade ? `
     & ${CardHeader},
@@ -171,7 +171,7 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
       <CardHeader>
         <CrewName {...props}>
           <CrewClassIcon crewClass={crew.crewClass} />{' '}
-          {useName}
+          {!props.hideNameInHeader && useName}
         </CrewName>
         {!props.hideCollectionInHeader && (
           <DataReadout style={{

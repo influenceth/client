@@ -15,7 +15,6 @@ import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
 import Button from '~/components/ButtonAlt';
 import ButtonRounded from '~/components/ButtonRounded';
-import CrewCard from '~/components/CrewCard';
 import Dialog from '~/components/Dialog';
 import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
@@ -91,7 +90,7 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
   const [amount, setAmount] = useState(0);
   const [destinationPlot, setDestinationPlot] = useState();
   const [selectedCoreSample, setSelectedCoreSample] = useState();
-  
+
   const crewMembers = currentExtraction?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
@@ -135,7 +134,7 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
     if (selectedCoreSample) return resources[selectedCoreSample.resourceId];
     return null;
   }, [selectedCoreSample]);
-  
+
   const extractionTime = useMemo(() => {
     if (selectedCoreSample) {
       return Extraction.getExtractionTime(
