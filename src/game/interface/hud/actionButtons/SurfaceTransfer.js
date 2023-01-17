@@ -5,7 +5,7 @@ import useDeliveryManager from '~/hooks/useDeliveryManager';
 import ActionButton from './ActionButton';
 
 const SurfaceTransfer = ({ asteroid, plot, onSetAction, _disabled }) => {
-  const { deliveryStatus } = useDeliveryManager(asteroid.i, plot.i);
+  const { deliveryStatus } = useDeliveryManager(asteroid?.i, plot?.i);
 
   const handleClick = useCallback(() => {
     onSetAction('SURFACE_TRANSFER', { deliveryId: 0 });
@@ -18,7 +18,7 @@ const SurfaceTransfer = ({ asteroid, plot, onSetAction, _disabled }) => {
 
   return (
     <ActionButton
-      label={`Surface Transfer${disabled && ' (inventory empty)'}`}
+      label={`Surface Transfer${disabled ? ' (inventory empty)' : ''}`}
       flags={{
         disabled: _disabled || disabled || undefined,
         loading: (deliveryStatus === 'DEPARTING') || undefined
