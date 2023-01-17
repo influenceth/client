@@ -261,7 +261,7 @@ const InfoPane = () => {
   const onClickPane = useCallback(() => {
     // open plot
     if (asteroidId && plotId && zoomStatus === 'in') {
-      dispatchZoomToPlot((plot?.building || buildings[0]).name);
+      dispatchZoomToPlot((buildings[plot?.building?.capableType || 0]).name);
 
     // open asteroid details
     } else if (asteroidId && zoomStatus === 'in') {

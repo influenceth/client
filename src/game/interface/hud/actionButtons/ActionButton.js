@@ -84,12 +84,12 @@ const ActionButton = styled.div`
 
   ${p => p.disabled
     ? `
-      border-color: #777;
-      color: #777;
+      border-color: #444;
+      color: #aaa;
       cursor: ${p.theme.cursors.default};
       opacity: 0.75;
       & > div {
-        background-color: rgba(50, 50, 50, 0.2);
+        background-color: rgba(0, 0, 0, 0.5);
       }
       &:before {
         background-color: #777;

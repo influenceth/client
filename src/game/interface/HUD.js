@@ -121,7 +121,7 @@ const ActionButtonContainer = styled(ActionModule)`
   width: 100%;
 `;
 
-const useActionModuleVisbility = () => {
+const useActionModuleVisibility = () => {
   const mapResourceId = useStore(s => s.asteroids.mapResourceId);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
@@ -132,7 +132,7 @@ const useActionModuleVisbility = () => {
 }
 
 const ActionModules = () => {
-  const visibleModules = useActionModuleVisbility();
+  const visibleModules = useActionModuleVisibility();
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
@@ -152,7 +152,7 @@ const HUD = () => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const { actions, props: actionProps } = useActionButtons();
-  const actionModuleVisible = useActionModuleVisbility();
+  const actionModuleVisible = useActionModuleVisibility();
   const anyActionModulesVisible = useMemo(() => Object.values(actionModuleVisible).find((v) => !!v), [actionModuleVisible]);
 
   const { backLabel, onClickBack } = useMemo(() => {
