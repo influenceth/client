@@ -72,25 +72,30 @@ const getInvalidations = (event, returnValues, linked) => {
       Construction_Planned: [
         ['planned'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
-        ['asteroidPlots', returnValues.asteroidId]
+        ['asteroidPlots', returnValues.asteroidId],
+        ['asteroidCrewPlots', returnValues.asteroidId],
       ],
       Construction_Unplanned: [
         ['planned'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
-        ['asteroidPlots', returnValues.asteroidId]
+        ['asteroidPlots', returnValues.asteroidId],
+        ['asteroidCrewPlots', returnValues.asteroidId],
       ],
       Construction_Started: [
         ['planned'],
         ['actionItems'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
+        ['asteroidCrewPlots', returnValues.asteroidId],
       ],
       Construction_Finished: [
         ['actionItems'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
+        ['asteroidCrewPlots', returnValues.asteroidId],
       ],
       Construction_Deconstructed: [
         ['plots', returnValues.asteroidId, returnValues.lotId],
-        ['asteroidPlots', returnValues.asteroidId]
+        ['asteroidPlots', returnValues.asteroidId],
+        ['asteroidCrewPlots', returnValues.asteroidId],
       ],
 
       CoreSample_SamplingStarted: [
@@ -106,10 +111,12 @@ const getInvalidations = (event, returnValues, linked) => {
       ],
       Extraction_Started: [
         ['actionItems'],
+        ['asteroidCrewPlots', getLinkedAsset(linked, 'Asteroid').i],
         ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
       Extraction_Finished: [
         ['actionItems'],
+        ['asteroidCrewPlots', getLinkedAsset(linked, 'Asteroid').i],
         ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
 

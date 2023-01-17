@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { IoIosPin } from 'react-icons/io';
@@ -11,14 +11,18 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useWatchAsteroid from '~/hooks/useWatchAsteroid';
 import useUnWatchAsteroid from '~/hooks/useUnWatchAsteroid';
 import useWatchlist from '~/hooks/useWatchlist';
+import AsteroidCrewPlotsCard from '~/components/AsteroidCrewPlotsCard';
 import AsteroidDataCard from '~/components/AsteroidDataCard';
 import IconButton from '~/components/IconButton';
-import { DetailIcon } from '~/components/Icons';
+import { ConstructIcon, DetailIcon } from '~/components/Icons';
 import Section from '~/components/Section';
 
 const Controls = styled.div`
   flex: 0 0 auto;
   padding-bottom: 15px;
+  & svg {
+    vertical-align: baseline;
+  }
 `;
 
 const StyledAsteroidDataCard = styled(AsteroidDataCard)`
@@ -42,6 +46,7 @@ const SelectedAsteroid = (props) => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const [ inWatchlist, setInWatchlist ] = useState(false);
+  const [ showBuildings, setShowBuildings ] = useState(false);
 
   useEffect(() => {
     if (watchlistIds && asteroid) {
@@ -50,6 +55,21 @@ const SelectedAsteroid = (props) => {
       setInWatchlist(false);
     }
   }, [ watchlistIds, asteroid ]);
+
+  useEffect(() => {
+    if (zoomStatus !== 'in' && showBuildings) {
+      setShowBuildings(false);
+    }
+  }, [showBuildings, zoomStatus])
+
+  const onClose = useCallback(() => {
+    if (zoomStatus !== 'zooming-in') {
+      selectOrigin();
+      if (zoomStatus === 'in') {
+        updateZoomStatus('zooming-out');
+      }
+    }
+  }, [zoomStatus]);
 
   const title = () => {
     if (asteroid && asteroid.customName) return asteroid.customName;
@@ -62,9 +82,17 @@ const SelectedAsteroid = (props) => {
       name="selectedAsteroid"
       title={title()}
       icon={<IoIosPin />}
-      onClose={() => selectOrigin()}>
+      onClose={onClose}>
       {asteroid && (
         <Controls>
+          {zoomStatus === 'in' && (
+            <IconButton
+              data-tip={`${showBuildings ? 'Close' : 'List'} My Buildings`}
+              active={showBuildings}
+              onClick={() => setShowBuildings(!showBuildings)}>
+              <ConstructIcon height="1em" width="1em" />
+            </IconButton>
+          )}
           <IconButton
             data-tip="Details"
             onClick={() => history.push(`/asteroids/${asteroid.i}`)}>
@@ -94,7 +122,8 @@ const SelectedAsteroid = (props) => {
           )}
         </Controls>
       )}
-      {asteroid && <StyledAsteroidDataCard asteroid={asteroid} />}
+      {asteroid && !showBuildings && <StyledAsteroidDataCard asteroid={asteroid} />}
+      {showBuildings && <AsteroidCrewPlotsCard asteroid={asteroid} />}
     </Section>
   );
 };

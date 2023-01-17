@@ -278,18 +278,13 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchOriginSelected: (i) => set(produce(state => {
-      if (state.asteroids.zoomStatus !== 'zooming-in') {  // probably a more graceful way to handle this in <Asteroid />
-        state.asteroids.origin = null;
-        if (i && Number(i) > 0 && Number(i) <= 250000) {
-          state.asteroids.origin = Number(i);
-        }
-        state.asteroids.plot = null;
-        state.asteroids.plotDestination = null;
-        state.asteroids.zoomToPlot = null;
-        if (state.asteroids.zoomStatus === 'in') {
-          state.asteroids.zoomStatus = 'zooming-out';
-        }
+      state.asteroids.origin = null;
+      if (i && Number(i) > 0 && Number(i) <= 250000) {
+        state.asteroids.origin = Number(i);
       }
+      state.asteroids.plot = null;
+      state.asteroids.plotDestination = null;
+      state.asteroids.zoomToPlot = null;
     })),
 
     dispatchDestinationSelected: (i) => set(produce(state => {

@@ -573,7 +573,7 @@ const Asteroid = (props) => {
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
 
   useEffect(() => {
-    if (!geometry.current || !config?.radiusNominal) return;
+    if (!geometry.current || !config?.radiusNominal || !asteroidData?.resources) return;
     if (mapResourceId && terrainInitialized) { 
       const categoryKey = keyify(Inventory.RESOURCES[mapResourceId]?.category);
       const color = new Color(theme.colors.resources[categoryKey]);
@@ -598,22 +598,24 @@ const Asteroid = (props) => {
       geometry.current.setEmissiveParams();
       forceUpdate.current = Date.now();
     }
-  }, [mapResourceId, terrainInitialized]);
+  }, [mapResourceId, terrainInitialized, !asteroidData?.resources]);
 
   useEffect(() => {
     if (selectedPlot && mapResourceId) {
       const { i: asteroidId, resourceSeed } = asteroidData;
       const { plotId: lotId } = selectedPlot;
-      let abundance = AsteroidLib.getAbundanceAtLot(
-        asteroidId,
-        BigInt(resourceSeed || 0),
-        lotId,
-        mapResourceId,
-        asteroidData.resources[mapResourceId]
-      );
-
-      // TODO: remove once this is reflecte within the UI
-      console.log('resourceId:', mapResourceId, 'lotId:', selectedPlot.plotId, 'abundance:', abundance);
+      if (asteroidData.resources) {
+        let abundance = AsteroidLib.getAbundanceAtLot(
+          asteroidId,
+          BigInt(resourceSeed || 0),
+          lotId,
+          mapResourceId,
+          asteroidData.resources[mapResourceId]
+        );
+  
+        // TODO: remove once this is reflecte within the UI
+        console.log('resourceId:', mapResourceId, 'lotId:', selectedPlot.plotId, 'abundance:', abundance);
+      }
     }
   }, [selectedPlot, mapResourceId]);
 
