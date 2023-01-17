@@ -87,6 +87,8 @@ const StyledOutliner = styled.div`
   overflow-y: auto;
   scrollbar-width: thin;
   width: 385px;
+  position: relative;
+  z-index: 2;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     width: 100%;

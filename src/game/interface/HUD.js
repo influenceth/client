@@ -1,11 +1,14 @@
 import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
+import { Construction } from '@influenceth/sdk';
 
 import { BackIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
+import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import ActionDialog from './hud/ActionDialog';
+import PlotInventory from './hud/PlotInventory';
 import ResourceMapSelector from './hud/ResourceMapSelector';
 import ActionItems from './hud/ActionItems';
 import AvatarMenu from './hud/AvatarMenu';
@@ -99,6 +102,7 @@ export const Rule = styled.div`
 const ActionModuleContainer = styled.div`
   display: flex;
   flex-direction: column;
+  position: relative;
   transform: translateY(${p => p.lower ? `52px` : 0});
   transition: transform 350ms ease;
   width: ${rightModuleWidth}px;
@@ -106,10 +110,14 @@ const ActionModuleContainer = styled.div`
 
 const ActionModule = styled.div`
   border-right: 3px solid ${p => p.theme.colors.main};
+  bottom: 0;
   opacity: ${p => p.visible ? 1 : 0};
   padding-right: 32px;
+  position: absolute;
+  right: 0;
   transition: opacity 350ms ease, transform 350ms ease;
   transform: translateX(${p => p.visible ? 0 : `${rightModuleWidth + 5}px`});
+  width: 100%;
 `;
 
 const ActionButtonContainer = styled(ActionModule)`
@@ -118,6 +126,7 @@ const ActionButtonContainer = styled(ActionModule)`
   justify-content: flex-end;
   padding-bottom: 8px;
   padding-top: 8px;
+  position: static;
   width: 100%;
 `;
 
@@ -125,9 +134,12 @@ const useActionModuleVisibility = () => {
   const mapResourceId = useStore(s => s.asteroids.mapResourceId);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
+  const { asteroidId, plotId } = useStore(s => s.asteroids.plot) || {};
+  const { data: plot } = usePlot(asteroidId, zoomToPlot ? plotId : null);
 
   return {
-    resourceMapSelector: zoomStatus === 'in' && !zoomToPlot && !!mapResourceId
+    resourceMapSelector: zoomStatus === 'in' && !zoomToPlot && !!mapResourceId,
+    plotInventory: zoomStatus === 'in' && zoomToPlot && plot?.building?.capableType === 1 && plot?.building?.construction?.status === Construction.STATUS_OPERATIONAL
   };
 }
 
@@ -137,11 +149,16 @@ const ActionModules = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
   return (
-    <ActionModule visible={visibleModules.resourceMapSelector}>
-      <ResourceMapSelector
-        active={visibleModules.resourceMapSelector}
-        asteroid={asteroid} />
-    </ActionModule>
+    <>
+      <ActionModule visible={visibleModules.resourceMapSelector}>
+        <ResourceMapSelector
+          active={visibleModules.resourceMapSelector}
+          asteroid={asteroid} />
+      </ActionModule>
+      <ActionModule visible={visibleModules.plotInventory}>
+        <PlotInventory active={visibleModules.plotInventory} asteroid={asteroid} />
+      </ActionModule>
+    </>
   );
 };
 

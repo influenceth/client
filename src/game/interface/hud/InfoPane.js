@@ -396,7 +396,6 @@ const InfoPane = () => {
               {plot?.building?.capableType > 0 && plot?.building?.construction?.status !== Construction.STATUS_OPERATIONAL && (
                 <LotConstructionWarning>{Construction.STATUSES[plot?.building?.construction?.status]}</LotConstructionWarning>
               )}
-              {/* TODO: construction status! */}
             </Subtitle>
             <PlotDetails>
               <DetailRow>
@@ -412,16 +411,21 @@ const InfoPane = () => {
                   </DetailRow>
                   <DetailRow>
                     <label>Max Storage Mass</label>
-                    <div>{Inventory.CAPACITIES[1][1].mass.toLocaleString()} kg</div>
+                    <div>{Inventory.CAPACITIES[1][1].mass.toLocaleString()} tonnes</div>
                   </DetailRow>
                   <DetailRow>
                     <label>Available Capacity</label>
                     <div>
                       {formatFixed(
-                        100 * (1 - Math.max(
-                          1E-3 * (plot.building.inventories[1]?.mass + plot.building.inventories[1]?.reservedMass) / Inventory.CAPACITIES[1][1].mass,
-                          1E-3 * (plot.building.inventories[1]?.volume + plot.building.inventories[1]?.reservedVolume) / Inventory.CAPACITIES[1][1].volume,
-                        )),
+                        (100 - 100 * (
+                          (plot.building.inventories && plot.building.inventories[1])
+                            ? Math.max(
+                              1E-6 * ((plot.building.inventories[1]?.mass || 0) + (plot.building.inventories[1]?.reservedMass || 0)) / Inventory.CAPACITIES[1][1].mass,
+                              1E-6 * ((plot.building.inventories[1]?.volume || 0) + (plot.building.inventories[1]?.reservedVolume || 0)) / Inventory.CAPACITIES[1][1].volume,
+                            )
+                            : 0
+                          )
+                        ),
                         1
                       )}%
                     </div>

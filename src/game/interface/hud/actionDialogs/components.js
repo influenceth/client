@@ -900,13 +900,18 @@ const EmptyImage = ({ children }) => (
 );
 
 // TODO: this component is functionally overloaded... create more components so not trying to use in so many different ways
-const ResourceImage = ({ resource, badge, badgeColor, badgeDenominator, outlineColor, outlineStyle, overlayIcon, progress }) => {
+export const ResourceImage = ({ resource, badge, badgeColor, badgeDenominator, outlineColor, outlineStyle, overlayIcon, progress, showTooltip }) => {
+  const tooltipProps = showTooltip ? {
+    'data-tip': resource.name,
+    'data-for': 'global'
+  } : {}
   return (
     <ResourceThumbnailWrapper
       badgeColor={badgeColor}
       hasDenominator={!!badgeDenominator}
       outlineColor={outlineColor}
-      outlineStyle={outlineStyle}>
+      outlineStyle={outlineStyle}
+      {...tooltipProps}>
       <ResourceThumbnail src={resource.iconUrls.w125} />
       {badge !== undefined && <ResourceBadge badge={badge} badgeDenominator={badgeDenominator} />}
       {progress !== undefined && <ResourceProgress progress={progress} />}
@@ -915,7 +920,7 @@ const ResourceImage = ({ resource, badge, badgeColor, badgeDenominator, outlineC
   );
 };
 
-const EmptyResourceImage = ({ iconOverride }) => (
+export const EmptyResourceImage = ({ iconOverride }) => (
   <ResourceThumbnailWrapper><EmptyImage>{iconOverride || <PlusIcon />}</EmptyImage></ResourceThumbnailWrapper>
 );
 
