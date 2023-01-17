@@ -37,16 +37,19 @@ export function ActionItemProvider({ children }) {
     setReadyItems(
       (actionItems || [])
         .filter((i) => i.data?.completionTime < nowTime)
+        .sort((a, b) => a.data?.completionTime - b.data?.completionTime)
     );
 
     setUnreadyItems(
       (actionItems || [])
         .filter((i) => i.data?.completionTime >= nowTime)
+        .sort((a, b) => a.data?.completionTime - b.data?.completionTime)
     );
 
     setPlannedItems(
       (plannedLots || [])
         .filter((i) => i.gracePeriodEnd >= nowTime)
+        .sort((a, b) => a.gracePeriodEnd - b.gracePeriodEnd)
     );
   }, [actionItems, plannedLots]);
   useEffect(() => refreshItems(chainTime), [refreshItems]);
