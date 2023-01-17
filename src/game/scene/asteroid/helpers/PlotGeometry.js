@@ -227,7 +227,7 @@ export const getClosestPlots = ({ center, centerPlot, plotTally, findTally }) =>
     // angle of arclen == arclen / radius (radius is 1)
     // y of angle == sin(angle) * radius (radius is 1)
     yToSearch = Math.sin(arcToSearch);
-    maxIndex = Math.min(plotTally - 1, Math.ceil((1 - center.y + yToSearch) * (plotTally - 1) / 2));
+    maxIndex = Math.min(plotTally, Math.ceil((1 - center.y + yToSearch) * (plotTally - 1) / 2));
     minIndex = Math.max(0, Math.floor((1 - center.y - yToSearch) * (plotTally - 1) / 2));
 
     centerTheta = Math.atan2(center.z, center.x);
