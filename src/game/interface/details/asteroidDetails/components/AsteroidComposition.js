@@ -14,7 +14,7 @@ import {
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
 import { cleanupScene } from '~/game/scene/asteroid/helpers/utils';
-
+import { keyify } from '~/lib/utils';
 import theme from '~/theme';
 
 const hexToLinear = (hex) => new Color(hex).convertSRGBToLinear();
@@ -60,7 +60,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         const sliceTheta = 2 * Math.PI * abundance;
         const geometry = new CircleGeometry(1.0, getSegments(sliceTheta), totalTheta + margin, sliceTheta - 2 * margin);
         const material = new MeshBasicMaterial({
-          color: noColor ? hexToLinear('#222222') : hexToLinear(theme.colors.resources[category]),
+          color: noColor ? hexToLinear('#222222') : hexToLinear(theme.colors.resources[keyify(category)]),
           alphaMap: new Texture(),  // include so vUv is set
           side: BackSide, // (to make angles work as designed)
           toneMapped: false,
