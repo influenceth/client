@@ -588,8 +588,6 @@ const OwnedCrew = (props) => {
   useEffect(() => {
     if (!token || isDataLoading) return;
 
-    console.log(crew);
-
     const pendingPurchase = getPendingPurchase();
     const pendingChange = getPendingActiveCrewChange();
     if (pendingPurchase) {
