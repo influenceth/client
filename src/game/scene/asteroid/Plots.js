@@ -87,7 +87,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     return Math.min(MAX_REGIONS, Math.max(Math.ceil(plotTally / 100), 100));
   }, [plotTally]);
 
-  const { data: plots, isLoading: allPlotsLoading } = useAsteroidPlots(asteroidId, plotTally);
+  const { data: plots, isLoading: allPlotsLoading, refetch: refetchPlots } = useAsteroidPlots(asteroidId, plotTally);
   const { data: crewPlots, isLoading: crewPlotsLoading } = useAsteroidCrewPlots(asteroidId);
 
   const combinedPlotMap = useMemo(() => {
@@ -100,6 +100,12 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
   const buildingTally = useMemo(() => plots && Object.values(plots).reduce((acc, cur) => acc + (cur > 0 ? 1 : 0), 0), [plots]);
   const visibleBuildingTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, buildingTally), [buildingTally]);
+
+  // if just navigated to asteroid and plots already loaded, refetch
+  // (b/c might have missed ws updates while on a different asteroid)
+  useEffect(() => {
+    if (plots) refetchPlots();
+  }, []);
 
   // position plots and bucket into regions (as needed)
   // BATCHED region bucketing is really only helpful for largest couple asteroids
