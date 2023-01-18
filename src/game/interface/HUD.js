@@ -163,8 +163,11 @@ const ActionModules = () => {
 };
 
 const HUD = () => {
+  const { plotId } = useStore(s => s.asteroids.plot) || {};
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
+
+  const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
   const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
@@ -179,11 +182,17 @@ const HUD = () => {
         onClickBack: () => dispatchZoomToPlot()
       }
     }
+    if (plotId) {
+      return {
+        backLabel: 'Deselect Lot',
+        onClickBack: () => dispatchPlotSelected()
+      }
+    }
     return {
       backLabel: 'Back to Belt',
       onClickBack: () => updateZoomStatus('zooming-out')
     }
-  }, [zoomToPlot]);
+  }, [plotId, zoomToPlot]);
 
   useEffect(() => ReactTooltip.rebuild(), [actions]);
 
