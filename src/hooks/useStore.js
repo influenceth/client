@@ -64,6 +64,7 @@ const useStore = create(persist((set, get) => ({
 
     hasSeenIntroVideo: false,
     cutscenePlaying: false,
+    canvasStack: [],
 
     logs: {
       alerts: []
@@ -475,6 +476,16 @@ const useStore = create(persist((set, get) => ({
 
     dispatchZoomToPlot: (buildingLabel) => set(produce(state => {
       state.asteroids.zoomToPlot = buildingLabel;
+    })),
+
+    dispatchCanvasStacked: (id) => set(produce(state => {
+      if (!state.canvasStack) state.canvasStack = [];
+      state.canvasStack.unshift(id);
+    })),
+
+    dispatchCanvasUnstacked: (id) => set(produce(state => {
+      if (!state.canvasStack) state.canvasStack = [];
+      state.canvasStack = state.canvasStack.filter((s) => s !== id);
     }))
 
 }), {
@@ -488,6 +499,7 @@ const useStore = create(persist((set, get) => ({
     'asteroids.plot',
     'asteroids.plotDestination',
     'asteroids.zoomToPlot',
+    'canvasStack',
     'cutscenePlaying',
     'draggables',
     'failedTransactions',

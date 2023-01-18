@@ -527,7 +527,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     }
   }, [attachTo.quaternion, selectedPlotId]);
 
-  const selectionAnimationTime = useRef();
+  const selectionAnimationTime = useRef(0);
   useEffect(() => {
     if (selectionMesh.current && positions.current && positionsReady && selectedPlotId) {
       const plotIndex = selectedPlotId - 1;
@@ -592,7 +592,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   }, [lastClick]);
 
   useFrame((state, delta) => {
-    selectionAnimationTime.current += delta;
+    selectionAnimationTime.current = (selectionAnimationTime.current || 0) + delta;
     if (!plotTally) return;
     if (selectionMesh.current && positions.current && selectedPlotId) {
       selectionMesh.current.scale.x = 1 + 0.1 * Math.sin(7.5 * selectionAnimationTime.current);

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQueryClient, QueryClientProvider } from 'react-query';
 import { Object3D, Vector3 } from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
@@ -85,6 +85,7 @@ const Scene = (props) => {
   // Orient such that z is up, perpindicular to the stellar plane
   Object3D.DefaultUp = new Vector3(0, 0, 1);
 
+  const canvasStack = useStore(s => s.canvasStack);
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const statsOn = useStore(s => s.graphics.stats);
@@ -100,10 +101,13 @@ const Scene = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const frameloop = useMemo(() => canvasStack?.length === 0 ? 'always' : 'never', [canvasStack]);
+  console.log(frameloop);
+
   return (
     <StyledContainer>
       {statsOn && (<Stats />)}
-      <Canvas {...glConfig}>
+      <Canvas {...glConfig} frameloop={frameloop}>
         <ContextBridge>
           <SettingsManager />
           <Postprocessor enabled={true} />

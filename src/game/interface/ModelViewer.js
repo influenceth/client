@@ -16,6 +16,7 @@ import Details from '~/components/DetailsFullsize';
 import Dropdown from '~/components/Dropdown';
 import NumberInput from '~/components/NumberInput';
 import Postprocessor from '../Postprocessor';
+import useStore from '~/hooks/useStore';
 
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
@@ -598,6 +599,10 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   const assets = assetType === 'Resource' ? useResourceAssets() : useBuildingAssets(); // eslint-disable-line react-hooks/rules-of-hooks
   const singleModel = plotZoomMode || paramModel;
 
+  const canvasStack = useStore(s => s.canvasStack);
+  const dispatchCanvasStacked = useStore(s => s.dispatchCanvasStacked);
+  const dispatchCanvasUnstacked = useStore(s => s.dispatchCanvasUnstacked);
+
   const [devtoolsEnabled, setDevtoolsEnabled] = useState();
   const [model, setModel] = useState();
   const [bgOverride, setBgOverride] = useState();
@@ -616,6 +621,13 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
 
   const [uploadType, setUploadType] = useState();
   const fileInput = useRef();
+
+  useEffect(() => {
+    dispatchCanvasStacked(assetType);
+    return () => {
+      dispatchCanvasUnstacked(assetType);
+    }
+  }, []);
 
   const removeOverride = useCallback((which) => () => {
     if (which === 'model') {
@@ -847,6 +859,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
 
       <CanvasContainer ready={!isLoading}>
         <Canvas
+          frameloop={canvasStack[0] === assetType ? 'always' : 'never'}
           shadows
           resize={{ debounce: 5, scroll: false }}
           style={{ height: '100%', width: '100%' }}>
