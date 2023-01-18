@@ -16,10 +16,13 @@ import {
 
 import useAsteroidPlots from '~/hooks/useAsteroidPlots';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
+import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
+import useWebsocket from '~/hooks/useWebsocket';
 import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
 import { getPlotGeometryHeightMaps } from './helpers/PlotGeometry';
+import { useQueryClient } from 'react-query';
 
 const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
 const SELECTION_COLOR = new Color('#3652cd').convertSRGBToLinear();
@@ -38,7 +41,10 @@ const MAX_REGIONS = 5000;
 const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
 
 const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config, lastClick, mouseIntersect }) => {
+  const { token } = useAuth();
   const { scene } = useThree();
+  const queryClient = useQueryClient();
+  const { registerWSHandler, unregisterWSHandler } = useWebsocket();
   const { processInBackground } = useWebWorker();
 
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
@@ -89,7 +95,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     return (crewPlots || []).reduce((acc, p) => {
       acc[p.i] = 2; // 2 indicates "me" (in the future, could potentially include capableType or something)
       return acc;
-    }, plots);
+    }, { ...plots });
   }, [crewPlots, crewPlotsLoading, plots, allPlotsLoading]);
 
   const buildingTally = useMemo(() => plots && Object.values(plots).reduce((acc, cur) => acc + (cur > 0 ? 1 : 0), 0), [plots]);
@@ -183,12 +189,38 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   // run this when plots changes (after its initial run through the effect that follows this one)
   useEffect(() => {
     if (plots && plotsByRegion.current?.length) {
-      // console.log('in changer');
+      console.log('in changer');
       Object.keys(plotsByRegion.current).forEach((region) => {
         buildingsByRegion.current[region] = plotsByRegion.current[region].filter((plotId) => plots[plotId] > 0);
       });
     }
   }, [plots]);
+
+  const handleWSMessage = useCallback(({ type, body }) => {
+    // if lot occupied or lot unoccupied, update plots by updating querycache
+    switch (type) {
+      case 'Lot_Occupied': {
+        const plotsKey = [ 'asteroidPlots', body.returnValues.asteroidId ];
+        const currentPlotsValue = queryClient.getQueryData(plotsKey);
+        if (currentPlotsValue) {
+          queryClient.setQueryData(plotsKey, {
+            ...currentPlotsValue,
+            [body.returnValues.lotId]: (body.returnValues.crewId > 0)
+          });
+        }
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      let roomName = `Asteroid::${asteroidId}`;
+      registerWSHandler(handleWSMessage, roomName)
+      return () => {
+        unregisterWSHandler(roomName)
+      }
+    }
+  }, [token]);
 
   // instantiate pips mesh
   useEffect(() => {

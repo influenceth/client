@@ -10,6 +10,7 @@ import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
 import { ClockProvider } from '~/contexts/ClockContext';
 import { EventsProvider } from '~/contexts/EventsContext';
 import { WalletProvider } from '~/contexts/WalletContext';
+import { WebsocketProvider } from '~/contexts/WebsocketContext';
 import Audio from '~/game/Audio';
 import Launcher from '~/game/Launcher';
 import Interface from '~/game/Interface';
@@ -125,34 +126,36 @@ const Game = (props) => {
     <WalletProvider>
       <AuthProvider>
         <CrewProvider>
-          <EventsProvider>
-            <ChainTransactionProvider>
-              <ActionItemProvider>
-                <ThemeProvider theme={theme}>
-                  <GlobalStyle />
-                  <Router>
-                    <Referral />
-                    <ClockProvider>
-                      <LauncherRedirect />
-                      <Switch>
-                        <Route path="/play">
-                          <LandingPage />
-                        </Route>
-                        <Route path="/launcher/*">
-                          <Launcher />
-                        </Route>
-                      </Switch>
-                      <StyledMain>
-                        <Interface />
-                        {showScene && <Scene />}
-                        <Audio />
-                      </StyledMain>
-                    </ClockProvider>
-                  </Router>
-                </ThemeProvider>
-              </ActionItemProvider>
-            </ChainTransactionProvider>
-          </EventsProvider>
+          <WebsocketProvider>
+            <EventsProvider>
+              <ChainTransactionProvider>
+                <ActionItemProvider>
+                  <ThemeProvider theme={theme}>
+                    <GlobalStyle />
+                    <Router>
+                      <Referral />
+                      <ClockProvider>
+                        <LauncherRedirect />
+                        <Switch>
+                          <Route path="/play">
+                            <LandingPage />
+                          </Route>
+                          <Route path="/launcher/*">
+                            <Launcher />
+                          </Route>
+                        </Switch>
+                        <StyledMain>
+                          <Interface />
+                          {showScene && <Scene />}
+                          <Audio />
+                        </StyledMain>
+                      </ClockProvider>
+                    </Router>
+                  </ThemeProvider>
+                </ActionItemProvider>
+              </ChainTransactionProvider>
+            </EventsProvider>
+          </WebsocketProvider>
         </CrewProvider>
       </AuthProvider>
     </WalletProvider>

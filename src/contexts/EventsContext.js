@@ -1,12 +1,11 @@
 import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import uniq from 'lodash.uniqby';
-import { io } from 'socket.io-client';
 import { Capable } from '@influenceth/sdk';
 
-import useStore from '~/hooks/useStore';
 import useAuth from '~/hooks/useAuth';
 import api from '~/lib/api';
+import useWebsocket from '~/hooks/useWebsocket';
 
 const getLinkedAsset = (linked, type) => {
   return linked.find((l) => l.type === type)?.asset || {};
@@ -73,13 +72,13 @@ const getInvalidations = (event, returnValues, linked) => {
       Construction_Planned: [
         ['planned'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
-        ['asteroidPlots', returnValues.asteroidId],
+        // ['asteroidPlots', returnValues.asteroidId], (handled by asteroid room connection now)
         ['asteroidCrewPlots', returnValues.asteroidId],
       ],
       Construction_Unplanned: [
         ['planned'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
-        ['asteroidPlots', returnValues.asteroidId],
+        // ['asteroidPlots', returnValues.asteroidId], (handled by asteroid room connection now)
         ['asteroidCrewPlots', returnValues.asteroidId],
       ],
       Construction_Started: [
@@ -95,7 +94,6 @@ const getInvalidations = (event, returnValues, linked) => {
       ],
       Construction_Deconstructed: [
         ['plots', returnValues.asteroidId, returnValues.lotId],
-        ['asteroidPlots', returnValues.asteroidId],
         ['asteroidCrewPlots', returnValues.asteroidId],
       ],
 
@@ -153,15 +151,13 @@ const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
 export function EventsProvider({ children }) {
   const { token } = useAuth();
   const queryClient = useQueryClient();
-  const queryCache = queryClient.getQueryCache();
-  const createAlert = useStore(s => s.dispatchAlertLogged);
+  const { registerWSHandler, unregisterWSHandler } = useWebsocket();
   const [ lastBlockNumber, setLastBlockNumber ] = useState(0);
   const [ events, setEvents ] = useState([]);
 
   const pendingBlock = useRef();
   const pendingBlockEvents = useRef([]);
   const pendingTimeout = useRef();
-  const socket = useRef();
 
   const handleEvents = useCallback((newEvents, skipInvalidations) => {
     const transformedEvents = [];
@@ -256,32 +252,16 @@ export function EventsProvider({ children }) {
         handleEvents(eventData.events, true);
         setLastBlockNumber(eventData.blockNumber);
       });
-
-      socket.current = new io(process.env.REACT_APP_API_URL, {
-        extraHeaders: { Authorization: `Bearer ${token}` }
-      });
-      socket.current.on('event', onWSMessage);
+      registerWSHandler(onWSMessage);
     }
 
     // reset on logout / disconnect
     return () => {
       setEvents([]);
       setLastBlockNumber(0);
-
-      if (socket.current) {
-        socket.current.off(); // removes all listeners for all events
-        socket.current.disconnect();
-      }
+      unregisterWSHandler();
     }
-  }, [token]);
-
-  const subscribeToAsteroid = useCallback(() => {
-    // TODO: ...
-  }, []);
-
-  const unsubscribeToAsteroid = useCallback(() => {
-    // TODO: ...
-  }, []);
+  }, [onWSMessage, token]);
 
   return (
     <EventsContext.Provider value={{

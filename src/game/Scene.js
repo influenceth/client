@@ -17,6 +17,7 @@ import Asteroids from './scene/Asteroids';
 import Asteroid from './scene/Asteroid';
 import SettingsManager from './scene/SettingsManager';
 import Postprocessor from './Postprocessor';
+import WebsocketContext from '~/contexts/WebsocketContext';
 
 const glConfig = {
   antialias: true,
@@ -79,7 +80,8 @@ const Scene = (props) => {
   const ContextBridge = useContextBridge(
     AuthContext,
     ClockContext,
-    CrewContext
+    CrewContext,
+    WebsocketContext
   );
 
   // Orient such that z is up, perpindicular to the stellar plane
