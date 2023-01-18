@@ -38,7 +38,7 @@ export function CrewProvider({ children }) {
   const selectCrew = useCallback((crewId) => {
     dispatchCrewSelected(crewId);
   }, []);
-  
+
   useEffect(() => {
     if (account && !crewsLoading && !crewMembersLoading && crews?.length) {
       if (selectedCrewId) {

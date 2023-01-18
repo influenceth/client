@@ -20,6 +20,7 @@ const StyledAccount = styled.div`
 `;
 
 const StyledLogo = styled(InfluenceLogo)`
+  filter: drop-shadow(2px 2px 2px #222);
   width: 500px;
 `;
 
@@ -31,27 +32,38 @@ const MainContent = styled.div`
 `;
 
 const AccountCTA = styled.div`
-  align-items: center;
   background-color: black;
   border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
   border-top: 1px solid ${p => p.theme.colors.mainBorder};
   display: flex;
+  flex-direction: column;
   font-size: 15px;
+  height: 300px;
   justify-content: center;
-  margin-top: ${p => p.margin || 0}px;
+  margin-top: 50px;
   width: 100%;
+
+  & h3 {
+    font-size: 14px;
+    margin: 25px 50px;
+    text-transform: uppercase;
+  }
 `;
 
-const NotConnectedMessage = styled.span`
-  padding: 35px 50px 35px 0;
-`;
+const NotConnected = styled.div`
+  align-items: center;
+  display: flex;
+  justify-content: center;
 
-const LogoutButton = styled
+  & span {
+    padding: 35px 50px;
+  }
+`;
 
 const CrewContainer = styled.div`
   align-items: flex-start;
   display: flex;
-  padding: 35px 50px;
+  padding: 0 50px 35px 50px;
   position: relative;
   width: 100%;
 `;
@@ -109,13 +121,16 @@ const Account = (props) => {
       <StyledLogo />
       <MainContent>
         {!loggedIn &&
-          <AccountCTA margin={225} height={100}>
-            <NotConnectedMessage>Account Not Connected</NotConnectedMessage>
-            <ButtonPill onClick={() => history.push('/launcher/wallets')}>Login</ButtonPill>
+          <AccountCTA>
+            <NotConnected>
+              <span>Account Not Connected</span>
+              <ButtonPill onClick={() => history.push('/launcher/wallets')}>Login</ButtonPill>
+            </NotConnected>
           </AccountCTA>
         }
         {loggedIn &&
-          <AccountCTA margin={50}>
+          <AccountCTA>
+            <h3>Active Crew</h3>
             {!crewLoading && crew?.crewMembers && crew?.crewMembers.length > 0 &&
               <CrewContainer>
                 <CaptainTitle>Captain</CaptainTitle>

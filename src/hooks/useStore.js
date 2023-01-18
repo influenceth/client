@@ -369,12 +369,22 @@ const useStore = create(persist((set, get) => ({
       state.auth.token = token;
     })),
 
+    dispatchTokenInvalidated: () => set(produce(state => {
+      state.auth.token = null;
+    })),
+
     dispatchWalletConnected: (walletId) => set(produce(state => {
       state.auth.lastWallet = walletId;
     })),
 
     dispatchWalletDisconnected: () => set(produce(state => {
       state.auth.lastWallet = null;
+    })),
+
+    dispatchLoggedOut: () => set(produce(state => {
+      state.selectedCrewId = null;
+      state.failedTransactions = [];
+      state.pendingTransactions = [];
     })),
 
     dispatchCrewSelected: (crewId) => set(produce(state => {
@@ -387,10 +397,6 @@ const useStore = create(persist((set, get) => ({
 
     dispatchSeenIntroVideo: (which) => set(produce(state => {
       state.hasSeenIntroVideo = which;
-    })),
-
-    dispatchTokenInvalidated: () => set(produce(state => {
-      state.auth.token = null;
     })),
 
     dispatchReferrerSet: (refCode) => set(produce(state => {

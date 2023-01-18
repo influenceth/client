@@ -12,6 +12,8 @@ export function AuthProvider({ children }) {
   const token = useStore(s => s.auth.token);
   const dispatchTokenInvalidated = useStore(s => s.dispatchTokenInvalidated);
   const dispatchAuthenticated = useStore(s => s.dispatchAuthenticated);
+  const dispatchForgetWallet = useStore(s => s.dispatchWalletDisconnected);
+  const dispatchLogout = useStore(s => s.dispatchLoggedOut);
   const wallet = useContext(WalletContext);
 
   const account = wallet?.account;
@@ -54,9 +56,17 @@ export function AuthProvider({ children }) {
     }
   }, [account, token, dispatchAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const initiateLogout = useCallback(() => {
+    wallet.disconnect()
+    dispatchForgetWallet();
+    dispatchTokenInvalidated();
+    dispatchLogout();
+  }, [ dispatchTokenInvalidated, dispatchTokenInvalidated, dispatchLogout, wallet ]);
+
   return (
     <AuthContext.Provider value={{
       login: initiateLogin,
+      logout: initiateLogout,
       token,
       account: token && wallet?.account,
       provider: token && wallet?.account,
