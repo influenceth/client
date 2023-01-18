@@ -30,6 +30,8 @@ loader.setDRACOLoader(dracoLoader);
 
 const CanvasContainer = styled.div`
   height: 100%;
+  opacity: ${p => p.ready ? 1 : 0};
+  transition: opacity 250ms ease;
   width: 100%;
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     height: 100%;
@@ -693,6 +695,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
           ? assets.find((a) => a?.name === singleModel)
           : assets.find((a) => a?.i === singleModel);
         if (asset) {
+          setLoadingModel(true);
           setModel(asset);
           return;
         }
@@ -842,7 +845,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
         </IconContainer>
       )}
 
-      <CanvasContainer>
+      <CanvasContainer ready={!isLoading}>
         <Canvas
           shadows
           resize={{ debounce: 5, scroll: false }}
