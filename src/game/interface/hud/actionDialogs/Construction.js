@@ -99,7 +99,7 @@ const Construct = ({ asteroid, plot, ...props }) => {
   }, [asteroid?.i, plot?.i, crewTravelBonus]);
 
   const constructionTime = useMemo(() =>
-    Construction.getConstructionTime(plot?.building?.assetId, constructionBonus.totalBonus),
+    plot?.building?.assetId ? Construction.getConstructionTime(plot?.building?.assetId, constructionBonus.totalBonus) : 0,
     [plot?.building?.assetId, constructionBonus.totalBonus]
   );
 

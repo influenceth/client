@@ -69,6 +69,7 @@ const getInvalidations = (event, returnValues, linked) => {
         ['crewmembers', 'owned'],
       ],
 
+      // TODO: for some reason, both of these are causing refetch of all 'plots', * records... investigate
       Construction_Planned: [
         ['planned'],
         ['plots', returnValues.asteroidId, returnValues.lotId],
@@ -244,7 +245,6 @@ export function EventsProvider({ children }) {
         }, 1000);
       }
       // (queue the current event for processing)
-      console.log({ ...body, event: type });
       pendingBlockEvents.current.push({ ...body, event: type });
     }
   }, []);

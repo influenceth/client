@@ -33,6 +33,7 @@ const Status = styled.td`
   }};
   text-align: right;
   text-transform: uppercase;
+  white-space: nowrap;
 `;
 
 const BuildingRow = ({ plot }) => {
@@ -64,7 +65,7 @@ const AsteroidCrewPlotsCard = (props) => {
   const { asteroid, ...restProps } = props;
   const { data: plots, isLoading } = useAsteroidCrewPlots(asteroid?.i);
   return (
-    <div {...restProps}>
+    <div {...restProps} style={{ overflowY: 'auto' }}>
       {asteroid && !isLoading && (
         <>
           {plots.length === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied on lots on this asteroid yet.</div>}

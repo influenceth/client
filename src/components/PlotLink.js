@@ -43,7 +43,7 @@ const AsteroidName = ({ asteroidId }) => {
   const { data: asteroid } = useAsteroid(asteroidId);
   return (
     <>
-      {asteroid?.customName || asteroid?.baseName || `Asteroid #${asteroidId.toLocaleString()}`}
+      {asteroid?.customName || asteroid?.baseName || `Asteroid #${(asteroidId || 0).toLocaleString()}`}
     </>
   );
 };

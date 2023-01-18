@@ -46,15 +46,6 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
   const { asteroidId: plotAsteroidId, plotId: selectedPlotId } = useStore(s => s.asteroids.plot || {});
 
-  const { data: crewPlots, isLoading: crewPlotsLoading } = useAsteroidCrewPlots(asteroidId);
-  const crewPlotMap = useMemo(() => {
-    if (crewPlotsLoading) return null;
-    return (crewPlots || []).reduce((acc, p) => {
-      acc[p.i] = p.building?.capableType;
-      return acc;
-    }, {});
-  }, [crewPlots, crewPlotsLoading]);
-
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
 
@@ -90,13 +81,23 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     return Math.min(MAX_REGIONS, Math.max(Math.ceil(plotTally / 100), 100));
   }, [plotTally]);
 
-  const { data: plots } = useAsteroidPlots(asteroidId, plotTally);
+  const { data: plots, isLoading: allPlotsLoading } = useAsteroidPlots(asteroidId, plotTally);
+  const { data: crewPlots, isLoading: crewPlotsLoading } = useAsteroidCrewPlots(asteroidId);
+
+  const combinedPlotMap = useMemo(() => {
+    if (allPlotsLoading || crewPlotsLoading) return null;
+    return (crewPlots || []).reduce((acc, p) => {
+      acc[p.i] = 2; // 2 indicates "me" (in the future, could potentially include capableType or something)
+      return acc;
+    }, plots);
+  }, [crewPlots, crewPlotsLoading, plots, allPlotsLoading]);
 
   const buildingTally = useMemo(() => plots && Object.values(plots).reduce((acc, cur) => acc + (cur > 0 ? 1 : 0), 0), [plots]);
   const visibleBuildingTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, buildingTally), [buildingTally]);
 
   // position plots and bucket into regions (as needed)
   // BATCHED region bucketing is really only helpful for largest couple asteroids
+  // NOTE: this just runs once when plots is initial populated
   useEffect(() => {
     if (!plots) return;
 
@@ -158,13 +159,14 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
               plotsByRegion.current[region].push(plotId);
 
               // (if there is building data) if there is a building, also add to building region records
-              if (plots && plots[plotId]) {
+              if (plots[plotId]) {
                 if (!buildingsByRegion.current[region]) buildingsByRegion.current[region] = [];
                 buildingsByRegion.current[region].push(plotId);
               }
             });
             batchesProcessed++;
             if (batchesProcessed === expectedBatches) {
+              // console.log('positionsready');
               // ^^^
               setPositionsReady(true);
             }
@@ -176,7 +178,17 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       },
       transfer
     );
-  }, [plots]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [!plots]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // run this when plots changes (after its initial run through the effect that follows this one)
+  useEffect(() => {
+    if (plots && plotsByRegion.current?.length) {
+      // console.log('in changer');
+      Object.keys(plotsByRegion.current).forEach((region) => {
+        buildingsByRegion.current[region] = plotsByRegion.current[region].filter((plotId) => plots[plotId] > 0);
+      });
+    }
+  }, [plots]);
 
   // instantiate pips mesh
   useEffect(() => {
@@ -346,7 +358,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
         // TODO (enhancement): on altitude change (where rotation has not changed), don't need to recalculate pip matrixes, etc
         //  (i.e. even when plotTally > visiblePlotTally)... just would need to update building matrixes (to update scale)
         plotSource[plotRegion].every((plotId) => {
-          const hasBuilding = plots[plotId] && (buildingsRendered < visibleBuildingTally);
+          const hasBuilding = combinedPlotMap[plotId] && (buildingsRendered < visibleBuildingTally);
           const hasPip = (pipsRendered + buildingsRendered) < visiblePlotTally;
           if (hasBuilding || hasPip) {
 
@@ -404,9 +416,9 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
             let plotColor;
             if (hasBuilding) {
               // white if occupied by me; else, blue
-              plotColor = crewPlotMap && crewPlotMap[plotId] ? WHITE_COLOR : MAIN_COLOR;
+              plotColor = combinedPlotMap[plotId] === 2 ? WHITE_COLOR : MAIN_COLOR;
             }
-            if (hasBuilding && (crewPlotMap || !plotsInitialized.current)) {
+            if (hasBuilding && (!!crewPlots || !plotsInitialized.current)) {
               // if this is first color change to instance, need to let material know
               // TODO (enhancement): could check if there is a color change against existing buildingMesh instanceColor before setting updateBuildingColor
               if (!buildingMesh.current.instanceColor && !buildingMesh.current.material.needsUpdate) {
@@ -474,17 +486,18 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       // changed, so needs to fail gracefully (i.e. if buildingMesh.current is unset)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [crewPlotMap, cameraAltitude, plots, regionsByDistance]);
+  }, [cameraAltitude, combinedPlotMap, regionsByDistance]);
 
   useEffect(
     () => updateVisiblePlots(),
-    [chunkyAltitude, positionsReady, regionsByDistance, plots] // eslint-disable-line react-hooks/exhaustive-deps
+    [chunkyAltitude, positionsReady, regionsByDistance] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   useEffect(() => {
+    if (!combinedPlotMap) return;
     plotsInitialized.current = false;
     updateVisiblePlots();
-  }, [crewPlotMap]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [combinedPlotMap]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const highlightPlot = useCallback((plotId) => {
     highlighted.current = null;

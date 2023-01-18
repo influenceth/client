@@ -406,7 +406,7 @@ export function ChainTransactionProvider({ children }) {
         // TODO (enhancement): only need to check new events
         } else {
           const txHashBInt = BigInt(txHash);
-          const txEvent = (events || []).find((e) => BigInt(e.transactionHash) === txHashBInt);
+          const txEvent = (events || []).find((e) => e.transactionHash && BigInt(e.transactionHash) === txHashBInt);
           if (txEvent) {
             contracts[key].onEventReceived(txEvent, vars);
 
