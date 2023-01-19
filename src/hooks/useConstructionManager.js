@@ -20,7 +20,7 @@ const useConstructionManager = (asteroidId, plotId) => {
 
   // READY_TO_PLAN > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
   //               < CANCELING <         <                  DECONSTRUCTING                  <
-  const [currentConstruction, constructionStatus] = useMemo(() => {
+  const [currentConstruction, constructionStatus, isAtRisk] = useMemo(() => {
     let current = {
       _crewmates: null,
       capableId: null,
@@ -31,6 +31,7 @@ const useConstructionManager = (asteroidId, plotId) => {
     };
 
     let status = 'READY_TO_PLAN';
+    let isAtRisk = false;
     if (plot?.building) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_ConstructionStart'
@@ -51,6 +52,22 @@ const useConstructionManager = (asteroidId, plotId) => {
           status = 'CANCELING';
         } else if (plot.gracePeriodEnd >= chainTime) {
           status = 'PLANNED';
+        } else {
+          isAtRisk = true;
+
+          // if at-risk is being rebuilt on, check transaction to see if a new occupier is re-planning
+          const planTx = getPendingTx('PLAN_CONSTRUCTION', payload);
+          if (planTx) {
+            current.capableType = planTx.vars.capableType;
+            current.crewId = planTx.vars.crewId;
+            current.completionTime = null;
+            current.startTime = null;
+            status = 'PLANNING';
+
+          // if at risk, but i was the occupier, still treat as "planned" (will go back to "ready to plan" for other crews)
+          } else if (plot.occupier === crew?.i) {
+            status = 'PLANNED';
+          }
         }
 
       } else if (plot.building.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION) {
@@ -80,7 +97,8 @@ const useConstructionManager = (asteroidId, plotId) => {
 
     return [
       status === 'READY_TO_PLAN' ? null : current,
-      status
+      status,
+      isAtRisk
     ];
   }, [actionItems, readyItems, getPendingTx, getStatus, payload, plot?.building]);
 
@@ -117,7 +135,8 @@ const useConstructionManager = (asteroidId, plotId) => {
     finishConstruction,
     deconstruct,
     constructionStatus,
-    currentConstruction
+    currentConstruction,
+    isAtRisk
   };
 };
 

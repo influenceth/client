@@ -55,7 +55,12 @@ const Icon = styled.div``;
 const Status = styled.div``;
 const Label = styled.div``;
 const Details = styled.div``;
-const Timing = styled.div``;
+const Timing = styled.div`
+  b {
+    font-weight: normal;
+    text-transform: uppercase;
+  }
+`;
 const Location = styled.div`
   color: rgba(255, 255, 255, 0.6);
   b {
@@ -266,7 +271,7 @@ const formatPlans = (item) => {
     plotId: item.i,
     resourceId: null,
     locationDetail: '',
-    completionTime: item.gracePeriodEnd,
+    completionTime: item.waitingFor,
     onClick: ({ openDialog }) => {
       openDialog('CONSTRUCT');
     }
@@ -568,7 +573,11 @@ const ActionItem = ({ data, type }) => {
           {(type === 'ready' || type === 'failed') && item.ago}
           {type === 'unready' && item.completionTime && <>in <LiveTimer target={item.completionTime} maxPrecision={2} /></>}
           {/* TODO: would be nice for this to have different level warning intensity based on time-left and/or presence of inventory on the lot */}
-          {type === 'plans' && item.completionTime && <>remaining <LiveTimer target={item.completionTime} maxPrecision={2} /></>}
+          {type === 'plans' && (
+            item.completionTime
+              ? <>remaining <LiveTimer target={item.completionTime} maxPrecision={2} /></>
+              : <b>at risk</b>
+          )}
         </Timing>
         {type === 'failed' && (
           <Dismissal onClick={onDismiss}>

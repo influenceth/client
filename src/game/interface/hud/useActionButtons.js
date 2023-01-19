@@ -62,9 +62,7 @@ const useActionButtons = () => {
             a.push(actionButtons.NewBlueprint);
           }
   
-          // TODO: prob should require an inventory with non-zero contents?
-          // (OR be the destination of a delivery)
-          if (plot?.building?.inventories) {
+          if (constructionStatus === 'OPERATIONAL' && plot?.building?.inventories) {
             a.push(actionButtons.SurfaceTransfer);
           }
   

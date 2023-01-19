@@ -4,7 +4,7 @@ import { Capable, Construction } from '@influenceth/sdk';
 
 import { usePlotLink } from '~/components/PlotLink';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
-
+import useChainTime from '~/hooks/useChainTime';
 
 const PlotTable = styled.table`
   border-collapse: collapse;
@@ -29,6 +29,7 @@ const Status = styled.td`
   color: ${p => {
     if (p.status === 'Extracting') return p.theme.colors.success;
     else if (p.status === 'Ready') return p.theme.colors.main;
+    else if (p.status === 'At Risk') return 'rgb(248, 133, 44)';
     return '#777';
   }};
   text-align: right;
@@ -37,6 +38,7 @@ const Status = styled.td`
 `;
 
 const BuildingRow = ({ plot }) => {
+  const chainTime = useChainTime();
   const onClick = usePlotLink({
     asteroidId: plot.asteroid,
     plotId: plot.i,
@@ -48,6 +50,9 @@ const BuildingRow = ({ plot }) => {
         return 'Extracting';
       }
       return 'Ready';
+    }
+    if (plot.building?.construction?.status === Construction.STATUS_PLANNED && plot.gracePeriodEnd < chainTime) {
+      return 'At Risk';
     }
     return Construction.STATUSES[plot.building?.construction?.status || 0];
   }, [plot.building]);

@@ -186,7 +186,7 @@ const ThumbFootnote = styled.div`
     justify-content: space-between;
   }
   & > b {
-    color: ${p => p.theme.colors.error};
+    color: rgb(248,133,44);
     font-size: 18px;
     text-transform: uppercase;
   }
@@ -295,7 +295,7 @@ const InfoPane = () => {
 
   const { data: asteroid } = useAsteroid(asteroidId);
   const buildings = useBuildingAssets();
-  const { constructionStatus } = useConstructionManager(asteroidId, plotId);
+  const { constructionStatus, isAtRisk } = useConstructionManager(asteroidId, plotId);
   const { crew } = useCrew();
   const { data: plot } = usePlot(asteroidId, plotId);
 
@@ -466,11 +466,11 @@ const InfoPane = () => {
                     <>
                       {
                         // TODO: if planning, could use the currentConstruction object to go ahead and put hologram image
-                        ['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus)
+                        (['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus) && !isAtRisk)
                           ? <ThumbBackground image={buildings[plot.building?.assetId || 0]?.iconUrls?.w400} />
                           : (
                             <ThumbBackground
-                              backgroundColor={plot.occupier && constructionStatus === 'READY_TO_PLAN' && '#2b0000'}
+                              backgroundColor={isAtRisk && '#2e1400'}
                               image={buildings[plot.building?.assetId || 0]?.siteIconUrls?.w400} />
                           )
                       }
@@ -488,9 +488,9 @@ const InfoPane = () => {
                     </ThumbSubtitle>
                     <div style={{ flex: 1 }} />
                     <ThumbFootnote>
-                      {plot.occupier && constructionStatus === 'READY_TO_PLAN' ? <b>Abandoned</b> : ''}
-                      {plot.occupier && constructionStatus !== 'READY_TO_PLAN' ? `Controlled by ${plot.occupier === crew?.i ? 'Me' : `#${plot.occupier}`}` : ''}
-                      {!plot.occupier ? 'Uncontrolled' : ''}
+                      {isAtRisk ? <b>{plot.occupier === crew?.i ? 'At Risk' : `Abandoned by #${plot.occupier}`}</b> : ''}
+                      {!isAtRisk && plot.occupier ? `Controlled by ${plot.occupier === crew?.i ? 'Me' : `#${plot.occupier}`}` : ''}
+                      {!plot.occupier && 'Uncontrolled'}
                     </ThumbFootnote>
                   </ThumbMain>
                 </>

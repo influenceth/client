@@ -48,7 +48,8 @@ export function ActionItemProvider({ children }) {
 
     setPlannedItems(
       (plannedLots || [])
-        .filter((i) => i.gracePeriodEnd >= nowTime)
+        // .filter((i) => i.gracePeriodEnd >= nowTime)
+        .map((a) => ({ ...a, waitingFor: a.gracePeriodEnd > nowTime ? a.gracePeriodEnd : null }))
         .sort((a, b) => a.gracePeriodEnd - b.gracePeriodEnd)
     );
   }, [actionItems, plannedLots]);
@@ -56,8 +57,8 @@ export function ActionItemProvider({ children }) {
 
   const nextCompletionTime = useMemo(() => {
     return [...plannedItems, ...unreadyItems].reduce((acc, cur) => {
-      const relevantTime = cur.gracePeriodEnd || cur.data?.completionTime;
-      if (relevantTime && (acc === null || relevantTime < acc)) {
+      const relevantTime = cur.waitingFor || cur.data?.completionTime;
+      if (relevantTime && relevantTime && (acc === null || relevantTime < acc)) {
         return relevantTime;
       }
       return acc;
