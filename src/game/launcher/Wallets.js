@@ -1,9 +1,7 @@
-import { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 
 import useAuth from '~/hooks/useAuth';
-import useStore from '~/hooks/useStore';
 import Button from '~/components/Button';
 import ArgentXLogo from '~/assets/images/wallets/argentx-logo.svg';
 import BraavosLogo from '~/assets/images/wallets/braavos-logo.webp';
@@ -111,17 +109,8 @@ const StyledCartridgeLogo = styled(CartridgeLogo)`
 
 const Wallets = (props) => {
   const history = useHistory();
-  const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
-  const forgetWallet = useStore(s => s.dispatchWalletDisconnected);
-  const { token, login, wallet } = useAuth();
-  const { account, connectionOptions, disconnect, error, walletIcon, walletName } = wallet;
-  const loggedIn = account && token;
-
-  const disconnectWallet = useCallback(() => {
-    invalidateToken();
-    forgetWallet();
-    disconnect();
-  }, [disconnect, invalidateToken, token]);
+  const { login, wallet } = useAuth();
+  const { connectionOptions } = wallet;
 
   const downloadWallet = (withWalletLabel) => {
     const links = {
@@ -141,7 +130,6 @@ const Wallets = (props) => {
     const withWallet = getWallet(withWalletLabel);
 
     if (!!withWallet) {
-      disconnectWallet();
       await withWallet.onClick();
       const loggedIn = await login();
       if (loggedIn) history.push('/launcher/account');

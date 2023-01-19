@@ -4,7 +4,6 @@ import { useQuery } from 'react-query';
 import useAuth from '~/hooks/useAuth';
 import useChainTime from '~/hooks/useChainTime';
 import useCrew from '~/hooks/useCrew';
-import useEvents from '~/hooks/useEvents';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
 

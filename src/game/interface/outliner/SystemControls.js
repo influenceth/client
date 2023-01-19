@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import screenfull from 'screenfull';
-import { AiOutlineSetting, AiOutlinePushpin, AiFillPushpin } from 'react-icons/ai';
+import { AiOutlineMenu, AiOutlinePushpin, AiFillPushpin } from 'react-icons/ai';
 import { MdFullscreen, MdFullscreenExit } from 'react-icons/md';
 import { BsEyeSlash, BsEye } from 'react-icons/bs';
 
@@ -94,10 +94,10 @@ const SystemControls = (props) => {
         </IconButton>
       )}
       <IconButton
-        data-tip="Settings"
-        onClick={() => history.push('/launcher/settings')}
+        data-tip="Main Menu"
+        onClick={() => history.push('/launcher/account')}
         borderless>
-        <AiOutlineSetting />
+        <AiOutlineMenu />
       </IconButton>
     </StyledSystemControls>
   );
