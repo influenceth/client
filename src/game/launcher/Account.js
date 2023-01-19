@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useHistory, Link } from 'react-router-dom';
 import styled from 'styled-components';
 
 import useAuth from '~/hooks/useAuth';
@@ -7,7 +6,6 @@ import useCrew from '~/hooks/useCrew';
 import ButtonAlt from '~/components/ButtonAlt';
 import ButtonPill from '~/components/ButtonPill';
 import CrewCard from '~/components/CrewCard';
-import InfluenceLogo from '~/assets/images/logo.svg';
 import theme from '~/theme';
 
 const StyledAccount = styled.div`
@@ -15,13 +13,7 @@ const StyledAccount = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 40px 20px;
   width: 700px;
-`;
-
-const StyledLogo = styled(InfluenceLogo)`
-  filter: drop-shadow(2px 2px 2px #222);
-  width: 500px;
 `;
 
 const MainContent = styled.div`
@@ -38,9 +30,8 @@ const AccountCTA = styled.div`
   display: flex;
   flex-direction: column;
   font-size: 15px;
-  height: 300px;
   justify-content: center;
-  margin-top: 50px;
+  position: relative;
   width: 100%;
 
   & h3 {
@@ -57,6 +48,28 @@ const NotConnected = styled.div`
 
   & span {
     padding: 35px 50px;
+  }
+
+  & span:before {
+    background-color: ${p => p.theme.colors.red};
+    border-radius: 50%;
+    content: "";
+    display: inline-block;
+    height: 10px;
+    margin-right: 7px;
+    width: 10px;
+  }
+`;
+
+const LogoutLink = styled(Link)`
+  color: ${p => p.theme.colors.main};
+  position: absolute;
+  right: 10px;
+  text-decoration: none;
+  top: 10px;
+
+  &:hover {
+    text-decoration: underline;
   }
 `;
 
@@ -98,7 +111,7 @@ const PlayCTA = styled.div`
   align-items: center;
   display: flex;
   justify-content: space-around;
-  padding-top: 25px;
+  padding-top: 35px;
 `;
 
 const MainButton = styled(ButtonAlt)`
@@ -111,14 +124,13 @@ const MainButton = styled(ButtonAlt)`
 
 const Account = (props) => {
   const history = useHistory();
-  const { token, wallet } = useAuth();
+  const { token, logout, wallet } = useAuth();
   const { account } = wallet;
   const loggedIn = account && token;
   const { captain, loading: crewLoading, crew, crewMemberMap } = useCrew();
 
   return (
     <StyledAccount>
-      <StyledLogo />
       <MainContent>
         {!loggedIn &&
           <AccountCTA>
@@ -131,6 +143,7 @@ const Account = (props) => {
         {loggedIn &&
           <AccountCTA>
             <h3>Active Crew</h3>
+            <LogoutLink onClick={logout}>Log Out</LogoutLink>
             {!crewLoading && crew?.crewMembers && crew?.crewMembers.length > 0 &&
               <CrewContainer>
                 <CaptainTitle>Captain</CaptainTitle>

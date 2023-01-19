@@ -109,7 +109,7 @@ const StyledCartridgeLogo = styled(CartridgeLogo)`
 
 const Wallets = (props) => {
   const history = useHistory();
-  const { login, logout, wallet } = useAuth();
+  const { login, wallet } = useAuth();
   const { connectionOptions } = wallet;
 
   const downloadWallet = (withWalletLabel) => {
@@ -130,7 +130,6 @@ const Wallets = (props) => {
     const withWallet = getWallet(withWalletLabel);
 
     if (!!withWallet) {
-      logout();
       await withWallet.onClick();
       const loggedIn = await login();
       if (loggedIn) history.push('/launcher/account');
