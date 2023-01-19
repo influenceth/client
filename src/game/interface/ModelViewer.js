@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimationMixer, Box3, Color, DirectionalLight, EquirectangularReflectionMapping, LoopRepeat, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
+import { AnimationMixer, Box3, Color, DirectionalLight, EquirectangularReflectionMapping, LoopRepeat, PCFSoftShadowMap, Raycaster, Vector2, Vector3 } from 'three';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -20,6 +20,7 @@ import Postprocessor from '../Postprocessor';
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
 const ENV_MAP_STRENGTH = 4.5;
+const DOWN = new Vector3(0, -1, 0);
 
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderConfig({ type: 'js' });
@@ -146,12 +147,12 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   const { camera, gl, scene } = useThree();
 
   const animationMixer = useRef();
-  const cameraConstraints = useRef({
-    floor: null,
-    distance: null
-  });
+  const maxCameraDistance = useRef();
   const controls = useRef();
   const model = useRef();
+
+  const asteroidTerrain = useRef();
+  const raycaster = useRef(new Raycaster());
 
   // init the camera (reset when url changes)
   useEffect(() => {
@@ -182,14 +183,14 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   }, [camera, gl]);
 
   useEffect(() => {
-    if (zoomLimitsEnabled) {
+    if (assetType === 'Resource' && zoomLimitsEnabled) {
       controls.current.minDistance = 0.85;
       controls.current.maxDistance = 5;
     } else {
       controls.current.minDistance = 0;
       controls.current.maxDistance = Infinity;
     }
-  }, [zoomLimitsEnabled]);
+  }, [assetType, zoomLimitsEnabled]);
 
   // // init axeshelper
   // useEffect(() => {
@@ -229,6 +230,10 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
           } else if (node.name === 'Camera') {
             predefinedCamera = node.position.clone();
           } else if (node.isMesh) {
+            if (node.name === 'Asteroid_Terrain') {
+              asteroidTerrain.current = node;
+            }
+
             // self-shadowing
             if (ENABLE_SHADOWS) {
               node.castShadow = true;
@@ -332,14 +337,12 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
         }
 
         if (assetType === 'Building') {
-          cameraConstraints.current.distance = 3 * controls.current.object.position.length();
-          cameraConstraints.current.floor = 0.05 * controls.current.object.position.y;
-          console.log(cameraConstraints);
+          // maxCameraDistance.current = 2 * controls.current.object.position.length();
+          maxCameraDistance.current = 0.1;
         }
 
         // bbox.setFromObject(model.current);
-        // box3h.current = new THREE.Box3Helper(bbox);
-        // scene.add(box3h.current);
+        // helpers.push(new THREE.Box3Helper(bbox));
 
         // initial rotation simulates initial camera position in blender
         // (halfway between the x and z axis)
@@ -395,57 +398,60 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
     });
   }, [overrideEnvStrength]);
 
-  useFrame(({ camera }, delta) => {
+  useFrame((state, delta) => {
     if (model.current && rotationEnabled) {
       model.current.rotation.y += 0.0025;
+      // if (box3h.current) {
+      //   box3h.current.rotation.y += 0.0025;
+      // }
     }
-    // if (box3h.current) {
-    //   box3h.current.rotation.y += 0.0025;
-    // }
     if (animationMixer.current) {
       animationMixer.current.update(delta);
     }
 
-    // apply camera constraints
-    if (controls.current.object && controls.current.target) {
-      let updateControls = false;
+    // apply camera constraints to building scene
+    if (assetType === 'Building') {
+      if (controls.current.object && controls.current.target) {
+        let updateControls = false;
 
-      if (cameraConstraints.current.floor !== null) {
-        // don't let camera below floor
-        if (controls.current.object.position.y < cameraConstraints.current.floor) {
-          controls.current.object.position.set(
-            controls.current.object.position.x,
-            cameraConstraints.current.floor,
-            controls.current.object.position.z,
+        // collision detection on asteroid terrain
+        if (asteroidTerrain.current) {
+          raycaster.current.set(
+            new Vector3(
+              controls.current.object.position.x,
+              1,
+              controls.current.object.position.z,
+            ),
+            DOWN
           );
-          updateControls = true;
+          const intercepts = raycaster.current.intersectObject(asteroidTerrain.current, false);
+          if (intercepts.length > 0) {
+            if (intercepts[0].point.y + 0.001 > controls.current.object.position.y) {
+              controls.current.object.position.set(
+                controls.current.object.position.x,
+                intercepts[0].point.y + 0.001001,
+                controls.current.object.position.z,
+              );
+              updateControls = true;
+            }
+          }
         }
-        // don't let target below floor
-        // NOTE: this may not be worth it since makes the camera feel a little less predictable
-        if (controls.current.target.y < cameraConstraints.current.floor) {
-          controls.current.target.set(
-            controls.current.target.x,
-            cameraConstraints.current.floor,
-            controls.current.target.z,
-          );
-          updateControls = true;
-        }
-      } 
 
-      if (cameraConstraints.current.distance !== null) {
-        // don't let camera beyond distance (if defined)
-        if (controls.current.object.position.length() > cameraConstraints.current.distance) {
-          controls.current.object.position.setLength(cameraConstraints.current.distance);
-          updateControls = true;
+        if (zoomLimitsEnabled && maxCameraDistance.current !== null) {
+          // don't let camera beyond distance (if defined)
+          if (controls.current.object.position.length() > maxCameraDistance.current) {
+            controls.current.object.position.setLength(maxCameraDistance.current);
+            updateControls = true;
+          }
+          // don't let target beyond third of distance (to make sure generally stay facing model)
+          if (controls.current.target.length() > maxCameraDistance.current * 0.33) {
+            controls.current.target.setLength(maxCameraDistance.current * 0.33);
+            updateControls = true;
+          }
         }
-        // don't let target beyond third of distance (to make sure generally stay facing model)
-        if (controls.current.target.length() > cameraConstraints.current.distance * 0.33) {
-          controls.current.target.setLength(cameraConstraints.current.distance * 0.33);
-          updateControls = true;
+        if (updateControls) {
+          controls.current.update();
         }
-      } 
-      if (updateControls) {
-        controls.current.update();
       }
     }
   });
@@ -665,7 +671,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState();
   const [rotationEnabled, setRotationEnabled] = useState(assetType === 'Resource');
-  const [zoomLimitsEnabled, setZoomLimitsEnabled] = useState(assetType === 'Resource');
+  const [zoomLimitsEnabled, setZoomLimitsEnabled] = useState(true);
 
   const [uploadType, setUploadType] = useState();
   const fileInput = useRef();
