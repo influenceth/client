@@ -121,7 +121,9 @@ const Asteroid = (props) => {
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
+  const cameraNeedsReorientation = useStore(s => s.cameraNeedsReorientation);
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
+  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const selectPlot = useStore(s => s.dispatchPlotSelected);
@@ -283,7 +285,7 @@ const Asteroid = (props) => {
     // if origin changed, zoom into new asteroid
     if (asteroidId.current && asteroidId.current !== origin) {
       if (zoomStatus === 'in') {
-        console.log('initiate intra-asteroid zoom (i.e. set prevAsteroidPosition)');
+        // console.log('initiate intra-asteroid zoom (i.e. set prevAsteroidPosition)');
         setPrevAsteroidPosition(new Vector3(...(unloadedPosition.current || position.current)));
         updateZoomStatus('zooming-in');
       }
@@ -759,7 +761,13 @@ const Asteroid = (props) => {
         .timeline({ defaults: { duration: 0.7, ease: 'power4.out' } })
         .to(controls.object.position, { ...plotPosition });
     }
-  }, [zoomedIntoAsteroidId, origin, selectedPlot, config?.radiusNominal, zoomStatus])
+  }, [zoomedIntoAsteroidId, origin, selectedPlot, config?.radiusNominal, zoomStatus]);
+
+  useEffect(() => {
+    if (!cameraNeedsReorientation) return;
+    dispatchReorientCamera();
+    gsap.timeline().to(controls.object.up, { ...rotationAxis.current.clone(), ease: 'slow.out' });
+  }, [cameraNeedsReorientation]);
 
   // Positions the asteroid in space based on time changes
   useFrame((state) => {
