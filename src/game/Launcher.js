@@ -10,8 +10,9 @@ import Time from '~/components/Time';
 import Account from './launcher/Account';
 import Settings from './launcher/Settings';
 import Wallets from './launcher/Wallets';
+import InfluenceLogo from '~/assets/images/logo.svg';
 
-const headerFooterHeight = '100px';
+const headerFooterHeight = 100;
 
 const StyledLauncher = styled.div`
   align-items: center;
@@ -21,7 +22,7 @@ const StyledLauncher = styled.div`
   height: 100%;
   justify-content: space-between;
   opacity: 1;
-  padding: ${headerFooterHeight} 0;
+  padding: ${headerFooterHeight}px 0;
   position: absolute;
   width: 100%;
   z-index: 9000;
@@ -31,7 +32,7 @@ const Header = styled.ul`
   background-color: black;
   border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
   display: flex;
-  height: ${headerFooterHeight};
+  height: ${headerFooterHeight}px;
   justify-content: center;
   left: 0;
   margin: 0;
@@ -39,6 +40,13 @@ const Header = styled.ul`
   position: absolute;
   right: 0;
   top: 0;
+`;
+
+const StyledLogo = styled(InfluenceLogo)`
+  left: 25px;
+  height: ${headerFooterHeight - 50}px;
+  position: absolute;
+  top: 25px;
 `;
 
 const StyledLink = styled(Link)`
@@ -124,7 +132,7 @@ const WalletLogo = styled.div`
 const CurrentAccount = styled.div`
   align-items: center;
   display: flex;
-  height: ${headerFooterHeight};
+  height: ${headerFooterHeight}px;
   justify-content: flex-end;
   position: absolute;
   right: 40px;
@@ -145,6 +153,11 @@ const CurrentAccount = styled.div`
 `;
 
 const MainContent = styled.div`
+  align-items: center;
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  justify-content: center;
   margin-top: 50px;
   overflow-y: scroll;
 `;
@@ -158,7 +171,7 @@ const Footer = styled.div`
   border-top: 1px solid ${p => p.theme.colors.mainBorder};
   bottom: 0;
   display: flex;
-  height: ${headerFooterHeight};
+  height: ${headerFooterHeight}px;
   justify-content: center;
   left: 0;
   position: absolute;
@@ -213,15 +226,9 @@ const Launcher = (props) => {
   const forgetWallet = useStore(s => s.dispatchWalletDisconnected);
   const hideInterface = useStore(s => s.dispatchHideInterface);
   const showInterface = useStore(s => s.dispatchShowInterface);
-  const { wallet, token } = useAuth();
-  const { account, disconnect, error, walletIcon, walletName } = wallet;
+  const { wallet, logout, token } = useAuth();
+  const { account, walletIcon, walletName } = wallet;
   const loggedIn = account && token;
-
-  const disconnectWallet = useCallback(() => {
-    invalidateToken();
-    forgetWallet();
-    disconnect();
-  }, [disconnect, invalidateToken, token]);
 
   useEffect(() => {
     hideInterface();
@@ -231,6 +238,7 @@ const Launcher = (props) => {
   return (
     <StyledLauncher {...props}>
       <Header>
+        <StyledLogo />
         <MenuItem>
           <StyledLink activeClassName="current" to="/launcher/account">
             <span>{location.pathname === '/launcher/account' ? "Account" : "‹ Back"}</span>
@@ -242,7 +250,7 @@ const Launcher = (props) => {
           </StyledLink>
         </MenuItem>
         {loggedIn &&
-          <CurrentAccount onClick={disconnectWallet}>
+          <CurrentAccount onClick={logout}>
             <WalletLogo>{walletIcon}</WalletLogo>
             <AccountName account={account} wallet={walletName} />
             <LogoutButton size='large'>Logout</LogoutButton>

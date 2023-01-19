@@ -25,6 +25,7 @@ import NavIcon from '~/components/NavIcon';
 import { usePlotLink } from '~/components/PlotLink';
 import useActionItems from '~/hooks/useActionItems';
 import useAsteroid from '~/hooks/useAsteroid';
+import useAuth from '~/hooks/useAuth';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import theme, { hexToRGB } from '~/theme';
@@ -600,6 +601,8 @@ const ActionItems = () => {
     plannedItems: allPlannedItems
   } = useActionItems() || {};
 
+  const { token, account } = useAuth();
+
   // hide readyItems that have a pending transaction
   const readyItems = useMemo(() => {
     return allReadyItems.filter((item) => {
@@ -655,6 +658,8 @@ const ActionItems = () => {
   }, [pendingTransactions, allPlannedItems]);
 
   const allItems = useMemo(() => {
+    if (!account || !token) return [];
+
     return [
       ...(pendingTransactions || []).map((item) => ({ ...item, type: 'pending' })),
       ...(failedTransactions || []).map((item) => ({ ...item, type: 'failed' })),
@@ -662,7 +667,7 @@ const ActionItems = () => {
       ...(plannedItems || []).map((item) => ({ ...item, type: 'plans' })),
       ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready' }))
     ];
-  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems])
+  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems, account, token])
 
   const [displayItems, setDisplayItems] = useState();
   useEffect(() => {

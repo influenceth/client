@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useHistory, Link } from 'react-router-dom';
 import styled from 'styled-components';
 
 import useAuth from '~/hooks/useAuth';
@@ -7,7 +6,6 @@ import useCrew from '~/hooks/useCrew';
 import ButtonAlt from '~/components/ButtonAlt';
 import ButtonPill from '~/components/ButtonPill';
 import CrewCard from '~/components/CrewCard';
-import InfluenceLogo from '~/assets/images/logo.svg';
 import theme from '~/theme';
 
 const StyledAccount = styled.div`
@@ -15,12 +13,7 @@ const StyledAccount = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 40px 20px;
   width: 700px;
-`;
-
-const StyledLogo = styled(InfluenceLogo)`
-  width: 500px;
 `;
 
 const MainContent = styled.div`
@@ -31,27 +24,59 @@ const MainContent = styled.div`
 `;
 
 const AccountCTA = styled.div`
-  align-items: center;
   background-color: black;
   border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
   border-top: 1px solid ${p => p.theme.colors.mainBorder};
   display: flex;
+  flex-direction: column;
   font-size: 15px;
   justify-content: center;
-  margin-top: ${p => p.margin || 0}px;
+  position: relative;
   width: 100%;
+
+  & h3 {
+    font-size: 14px;
+    margin: 25px 50px;
+    text-transform: uppercase;
+  }
 `;
 
-const NotConnectedMessage = styled.span`
-  padding: 35px 50px 35px 0;
+const NotConnected = styled.div`
+  align-items: center;
+  display: flex;
+  justify-content: center;
+
+  & span {
+    padding: 35px 50px;
+  }
+
+  & span:before {
+    background-color: ${p => p.theme.colors.red};
+    border-radius: 50%;
+    content: "";
+    display: inline-block;
+    height: 10px;
+    margin-right: 7px;
+    width: 10px;
+  }
 `;
 
-const LogoutButton = styled
+const LogoutLink = styled(Link)`
+  color: ${p => p.theme.colors.main};
+  position: absolute;
+  right: 10px;
+  text-decoration: none;
+  top: 10px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
 
 const CrewContainer = styled.div`
   align-items: flex-start;
   display: flex;
-  padding: 35px 50px;
+  padding: 0 50px 35px 50px;
   position: relative;
   width: 100%;
 `;
@@ -86,7 +111,7 @@ const PlayCTA = styled.div`
   align-items: center;
   display: flex;
   justify-content: space-around;
-  padding-top: 25px;
+  padding-top: 35px;
 `;
 
 const MainButton = styled(ButtonAlt)`
@@ -99,23 +124,26 @@ const MainButton = styled(ButtonAlt)`
 
 const Account = (props) => {
   const history = useHistory();
-  const { token, wallet } = useAuth();
+  const { token, logout, wallet } = useAuth();
   const { account } = wallet;
   const loggedIn = account && token;
   const { captain, loading: crewLoading, crew, crewMemberMap } = useCrew();
 
   return (
     <StyledAccount>
-      <StyledLogo />
       <MainContent>
         {!loggedIn &&
-          <AccountCTA margin={225} height={100}>
-            <NotConnectedMessage>Account Not Connected</NotConnectedMessage>
-            <ButtonPill onClick={() => history.push('/launcher/wallets')}>Login</ButtonPill>
+          <AccountCTA>
+            <NotConnected>
+              <span>Account Not Connected</span>
+              <ButtonPill onClick={() => history.push('/launcher/wallets')}>Login</ButtonPill>
+            </NotConnected>
           </AccountCTA>
         }
         {loggedIn &&
-          <AccountCTA margin={50}>
+          <AccountCTA>
+            <h3>Active Crew</h3>
+            <LogoutLink onClick={logout}>Log Out</LogoutLink>
             {!crewLoading && crew?.crewMembers && crew?.crewMembers.length > 0 &&
               <CrewContainer>
                 <CaptainTitle>Captain</CaptainTitle>
