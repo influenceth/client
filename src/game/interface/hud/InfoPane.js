@@ -416,7 +416,7 @@ const InfoPane = () => {
                   <DetailRow>
                     <label>Available Capacity</label>
                     <div>
-                      {formatFixed(
+                      {constructionStatus === 'OPERATIONAL' ? formatFixed(
                         (100 - 100 * (
                           (plot.building.inventories && plot.building.inventories[1])
                             ? Math.max(
@@ -427,7 +427,7 @@ const InfoPane = () => {
                           )
                         ),
                         1
-                      )}%
+                      ) : 0}%
                     </div>
                   </DetailRow>
                 </>
