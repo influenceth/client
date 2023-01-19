@@ -38,10 +38,6 @@ export const useBuildingAssets = () => {
     const asset = {
       ...Capable.TYPES[i],
       i: Number(i),
-
-      // TODO: remove these once sdk updated:
-      iconVersion: 1,
-      modelVersion: 1
     };
 
     asset.iconUrl = getIconUrl(asset, 'buildings');
