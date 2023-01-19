@@ -1871,10 +1871,12 @@ export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOve
             <>
               {status === 'BEFORE' && (
                   <>
+                    {/* TODO: ...
                     <NotificationEnabler onClick={enableNotifications}>
                       {notificationsEnabled ? <CheckedIcon /> : <UncheckedIcon />}
                       Notify on Completion
                     </NotificationEnabler>
+                    */}
                     <Spacer />
                     <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClose}>Cancel</Button>
                     <Button

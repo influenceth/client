@@ -146,11 +146,13 @@ const Account = (props) => {
             <LogoutLink onClick={logout}>Log Out</LogoutLink>
             {!crewLoading && crew?.crewMembers && crew?.crewMembers.length > 0 &&
               <CrewContainer>
-                <CaptainTitle>Captain</CaptainTitle>
-                <CaptainName>{captain.name}</CaptainName>
-                <CaptainContain>
-                  <CrewCard crew={captain} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
-                </CaptainContain>
+                {captain && <>
+                  <CaptainTitle>Captain</CaptainTitle>
+                  <CaptainName>{captain.name}</CaptainName>
+                  <CaptainContain>
+                    <CrewCard crew={captain} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
+                  </CaptainContain>
+                </>}
                 {crew.crewMembers.slice(1).map(function(crewmateId) {
                   const crewmate = crewMemberMap[crewmateId];
                   return (

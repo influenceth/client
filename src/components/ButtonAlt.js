@@ -5,7 +5,7 @@ import LoadingAnimation from 'react-spinners/BarLoader';
 
 import useStore from '~/hooks/useStore';
 import Badge from '~/components/Badge';
-import { getContrastText } from '~/theme';
+import theme, { getContrastText } from '~/theme';
 
 const getColor = () => {
   console.log('getting color');
@@ -146,7 +146,14 @@ const Button = (props) => {
       sizeParams={sizeParams}
       {...restProps}>
       <InnerContainer sizeParams={sizeParams}>
-        {loading && <LoadingAnimation height={1} color={props.color} css={loadingCss} />}
+        {loading && (
+          <LoadingAnimation
+            color={props.color
+              ? getContrastText(props.color)
+              : (props.isTransaction ? 'rgb(73, 100, 248)' : theme.colors.main)}
+            css={loadingCss}
+            height={1} />
+        )}
         {props.children}
         {props.badge && <StyledBadge value={props.badge} />}
       </InnerContainer>
