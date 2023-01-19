@@ -146,6 +146,10 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   const { camera, gl, scene } = useThree();
 
   const animationMixer = useRef();
+  const cameraConstraints = useRef({
+    floor: null,
+    distance: null
+  });
   const controls = useRef();
   const model = useRef();
 
@@ -327,6 +331,12 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
           controls.current.update();
         }
 
+        if (assetType === 'Building') {
+          cameraConstraints.current.distance = 3 * controls.current.object.position.length();
+          cameraConstraints.current.floor = 0.05 * controls.current.object.position.y;
+          console.log(cameraConstraints);
+        }
+
         // bbox.setFromObject(model.current);
         // box3h.current = new THREE.Box3Helper(bbox);
         // scene.add(box3h.current);
@@ -385,7 +395,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
     });
   }, [overrideEnvStrength]);
 
-  useFrame((state, delta) => {
+  useFrame(({ camera }, delta) => {
     if (model.current && rotationEnabled) {
       model.current.rotation.y += 0.0025;
     }
@@ -394,6 +404,49 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
     // }
     if (animationMixer.current) {
       animationMixer.current.update(delta);
+    }
+
+    // apply camera constraints
+    if (controls.current.object && controls.current.target) {
+      let updateControls = false;
+
+      if (cameraConstraints.current.floor !== null) {
+        // don't let camera below floor
+        if (controls.current.object.position.y < cameraConstraints.current.floor) {
+          controls.current.object.position.set(
+            controls.current.object.position.x,
+            cameraConstraints.current.floor,
+            controls.current.object.position.z,
+          );
+          updateControls = true;
+        }
+        // don't let target below floor
+        // NOTE: this may not be worth it since makes the camera feel a little less predictable
+        if (controls.current.target.y < cameraConstraints.current.floor) {
+          controls.current.target.set(
+            controls.current.target.x,
+            cameraConstraints.current.floor,
+            controls.current.target.z,
+          );
+          updateControls = true;
+        }
+      } 
+
+      if (cameraConstraints.current.distance !== null) {
+        // don't let camera beyond distance (if defined)
+        if (controls.current.object.position.length() > cameraConstraints.current.distance) {
+          controls.current.object.position.setLength(cameraConstraints.current.distance);
+          updateControls = true;
+        }
+        // don't let target beyond third of distance (to make sure generally stay facing model)
+        if (controls.current.target.length() > cameraConstraints.current.distance * 0.33) {
+          controls.current.target.setLength(cameraConstraints.current.distance * 0.33);
+          updateControls = true;
+        }
+      } 
+      if (updateControls) {
+        controls.current.update();
+      }
     }
   });
 
