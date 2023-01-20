@@ -121,7 +121,9 @@ const Asteroid = (props) => {
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
+  const cameraNeedsReorientation = useStore(s => s.cameraNeedsReorientation);
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
+  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const selectPlot = useStore(s => s.dispatchPlotSelected);
@@ -157,6 +159,7 @@ const Asteroid = (props) => {
   const mouseableRef = useRef();
   const mouseGeometry = useRef();
   const mouseIntersect = useRef(new Vector3());
+  const mouseIsOut = useRef(false);
   const position = useRef();
   const unloadedPosition = useRef();
   const quadtreeRef = useRef();
@@ -282,7 +285,7 @@ const Asteroid = (props) => {
     // if origin changed, zoom into new asteroid
     if (asteroidId.current && asteroidId.current !== origin) {
       if (zoomStatus === 'in') {
-        console.log('initiate intra-asteroid zoom (i.e. set prevAsteroidPosition)');
+        // console.log('initiate intra-asteroid zoom (i.e. set prevAsteroidPosition)');
         setPrevAsteroidPosition(new Vector3(...(unloadedPosition.current || position.current)));
         updateZoomStatus('zooming-in');
       }
@@ -726,12 +729,20 @@ const Asteroid = (props) => {
         if (distance < 3) {
           setLastClick(Date.now());
         }
+      } else if (e.type === 'pointerenter') {
+        mouseIsOut.current = false;
+      } else if (e.type === 'pointerleave') {
+        mouseIsOut.current = true;
       }
     };
     gl.domElement.addEventListener('pointerdown', onMouseEvent, true);
+    gl.domElement.addEventListener('pointerenter', onMouseEvent, true);
+    gl.domElement.addEventListener('pointerleave', onMouseEvent, true);
     gl.domElement.addEventListener('pointerup', onMouseEvent, true);
     return () => {
       gl.domElement.removeEventListener('pointerdown', onMouseEvent, true);
+      gl.domElement.removeEventListener('pointerenter', onMouseEvent, true);
+      gl.domElement.removeEventListener('pointerleave', onMouseEvent, true);
       gl.domElement.removeEventListener('pointerup', onMouseEvent, true);
     };
   }, []);
@@ -750,7 +761,13 @@ const Asteroid = (props) => {
         .timeline({ defaults: { duration: 0.7, ease: 'power4.out' } })
         .to(controls.object.position, { ...plotPosition });
     }
-  }, [zoomedIntoAsteroidId, origin, selectedPlot, config?.radiusNominal, zoomStatus])
+  }, [zoomedIntoAsteroidId, origin, selectedPlot, config?.radiusNominal, zoomStatus]);
+
+  useEffect(() => {
+    if (!cameraNeedsReorientation) return;
+    dispatchReorientCamera();
+    gsap.timeline().to(controls.object.up, { ...rotationAxis.current.clone(), ease: 'slow.out' });
+  }, [cameraNeedsReorientation]);
 
   // Positions the asteroid in space based on time changes
   useFrame((state) => {
@@ -961,7 +978,7 @@ const Asteroid = (props) => {
     // raycast
     // TODO (enhancement): probably don't need to do this every frame
     if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
-    if (mousableTerrainInitialized && mouseableRef.current.children) {
+    if (mousableTerrainInitialized && mouseableRef.current.children && !mouseIsOut.current) {
       // if lockedToSurface mode, state.mouse must have changed to be worth re-evaluating
       const mouseVector = state.pointer || state.mouse;
       if (!lockToSurface.current || !lastMouseUpdatePosition.current.equals(mouseVector)) {
@@ -1027,7 +1044,7 @@ const Asteroid = (props) => {
           cameraNormalized={cameraNormalized}
           config={config}
           lastClick={lastClick}
-          mouseIntersect={mouseIntersect.current} />
+          mouseIntersect={!mouseIsOut.current && mouseIntersect.current} />
       )}
 
       {/* TODO: fade telemetry out at higher zooms */}

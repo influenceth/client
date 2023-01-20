@@ -99,6 +99,7 @@ const getInvalidations = (event, returnValues, linked) => {
 
       CoreSample_SamplingStarted: [
         ['actionItems'],
+        ['asteroidCrewSampledPlots', returnValues.asteroidId, returnValues.resourceId],
         ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       CoreSample_SamplingFinished: [
@@ -106,7 +107,8 @@ const getInvalidations = (event, returnValues, linked) => {
         ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       CoreSample_Used: [
-        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+        ['asteroidCrewSampledPlots', returnValues.asteroidId, returnValues.resourceId],
+        ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       Extraction_Started: [
         ['actionItems'],

@@ -61,6 +61,8 @@ const useStore = create(persist((set, get) => ({
 
     selectedCrewId: null,
 
+    cameraNeedsReorientation: false,
+
     hasSeenIntroVideo: false,
     cutscenePlaying: false,
 
@@ -411,6 +413,10 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.zoomToPlot = null;
     })),
 
+    dispatchReorientCamera: (needsReorienting) => set(produce(state => {
+      state.cameraNeedsReorientation = !!needsReorienting;
+    })),
+
     //
     // SPECIAL GETTERS
 
@@ -485,6 +491,7 @@ const useStore = create(persist((set, get) => ({
     'asteroids.plot',
     'asteroids.plotDestination',
     'asteroids.zoomToPlot',
+    'cameraNeedsReorientation',
     'cutscenePlaying',
     'draggables',
     'failedTransactions',

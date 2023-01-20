@@ -23,11 +23,19 @@ import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
 import { getPlotGeometryHeightMaps } from './helpers/PlotGeometry';
 import { useQueryClient } from 'react-query';
+import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 
 const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
 const SELECTION_COLOR = new Color('#3652cd').convertSRGBToLinear();
 const PIP_COLOR = new Color().setHex(0x888888).convertSRGBToLinear();
 const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
+
+// Fissile: 0x8a1aff',
+// Metal: 0xf8852c',
+// Organic: 0x68d346',
+// RareEarth: 0xf63637',
+// Volatile: 0x5bc0f5',
+const FILL_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
 
 const PLOT_LOADER_GEOMETRY_PCT = 0.25;
 
@@ -47,6 +55,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const { registerWSHandler, unregisterWSHandler } = useWebsocket();
   const { processInBackground } = useWebWorker();
 
+  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
   const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
@@ -64,7 +73,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const buildingMesh = useRef();
 
   const plotStrokeMesh = useRef();
-  // const plotFillMesh = useRef();
+  const plotFillMesh = useRef();
   const lastMouseIntersect = useRef(new Vector3());
   const highlighted = useRef();
   const plotLoaderInterval = useRef();
@@ -89,6 +98,15 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
   const { data: plots, isLoading: allPlotsLoading, refetch: refetchPlots } = useAsteroidPlots(asteroidId, plotTally);
   const { data: crewPlots, isLoading: crewPlotsLoading } = useAsteroidCrewPlots(asteroidId);
+  const { data: sampledPlots, isLoading: sampledPlotsLoading } = useAsteroidCrewSamples(asteroidId, mapResourceId);
+  const sampledPlotMap = useMemo(() => {
+    if (sampledPlots) {
+      return sampledPlots.reduce((acc, i) => { acc[i] = true; return acc; }, {});
+    } else if (sampledPlotsLoading) {
+      return {};
+    }
+    return null;
+  }, [sampledPlots]);
 
   const combinedPlotMap = useMemo(() => {
     if (allPlotsLoading || crewPlotsLoading) return null;
@@ -195,7 +213,6 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   // run this when plots changes (after its initial run through the effect that follows this one)
   useEffect(() => {
     if (plots && plotsByRegion.current?.length) {
-      console.log('in changer');
       Object.keys(plotsByRegion.current).forEach((region) => {
         buildingsByRegion.current[region] = plotsByRegion.current[region].filter((plotId) => plots[plotId] > 0);
       });
@@ -304,17 +321,35 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
         (attachTo || scene).remove(plotStrokeMesh.current);
       }
     };
-
-    //   const fillGeometry = new CircleGeometry(PLOT_WIDTH - PLOT_STROKE_MARGIN, 6);
-    //   const fillMaterial = new MeshBasicMaterial({
-    //     color: new Color('#ffffff'),
-    //     opacity: 0.25,
-    //     side: DoubleSide,
-    //     toneMapped: false,
-    //     transparent: true
-    //   });
-
   }, [visiblePlotTally]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // instantiate plot fill mesh
+  // TODO: instantiate only in resource mode? 
+  useEffect(() => {
+    if (!visiblePlotTally) return;
+
+    // const fillGeometry = new CircleGeometry(PLOT_WIDTH - PLOT_STROKE_MARGIN, 6);
+    const fillGeometry = new CircleGeometry(PLOT_WIDTH - PLOT_STROKE_MARGIN, 6);
+    const fillMaterial = new MeshBasicMaterial({
+      color: FILL_COLOR,
+      depthTest: false,
+      depthWrite: false,
+      opacity: 0.5,
+      side: FrontSide,
+      toneMapped: false,
+      transparent: true
+    });
+
+    plotFillMesh.current = new InstancedMesh(fillGeometry, fillMaterial, visiblePlotTally);
+    plotFillMesh.current.renderOrder = 998;
+    (attachTo || scene).add(plotFillMesh.current);
+
+    return () => {
+      if (plotFillMesh.current) {
+        (attachTo || scene).remove(plotFillMesh.current);
+      }
+    };
+  }, [visiblePlotTally]);
 
   // instantiate mouse mesh
   useEffect(() => {
@@ -372,16 +407,20 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       const dummy = new Object3D();
 
       let buildingsRendered = 0;
+      let fillsRendered = 0;
       let pipsRendered = 0;
       let breakLoop = false;
 
       let updateBuildingMatrix = false;
+      let updateFillMatrix = false;
       let updatePipMatrix = false;
       let updateStrokeMatrix = false;
       let updateBuildingColor = false;
       let updateStrokeColor = false;
 
-      const buildingScale = Math.max(1, Math.min(250 / BUILDING_RADIUS, cameraAltitude / 15000));
+      // scale down buildings if in fill-mode and zoomed in pretty close (so can see fill)
+      const buildingScale = ((cameraAltitude < OUTLINE_VISIBILITY_ALTITUDE && sampledPlotMap) ? 0.5 : 1)
+        * Math.max(1, Math.min(250 / BUILDING_RADIUS, cameraAltitude / 15000));
 
       let i = 0;
       regionsByDistance.every((plotRegion) => {
@@ -398,12 +437,15 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
         plotSource[plotRegion].every((plotId) => {
           const hasBuilding = combinedPlotMap[plotId] && (buildingsRendered < visibleBuildingTally);
           const hasPip = (pipsRendered + buildingsRendered) < visiblePlotTally;
-          if (hasBuilding || hasPip) {
+          const hasFill = sampledPlotMap && sampledPlotMap[plotId] && (fillsRendered < visibleBuildingTally);
+          const hasStroke = plotTally > visiblePlotTally || !plotsInitialized.current;
+          if (hasBuilding || hasFill || hasPip) {
 
             // MATRIX
             // > if have a building, always need to rebuild entire matrix (to update scale with altitude)
             // > if have a pip, only need to rebuild matrix if plot visibility is dynamic (i.e. plotTally > visiblePlotTally)
-            // > stroke matrix will not change unless pip matrix does (but will need to change around buildings and pips)
+            // > if have fill, only need to rebuild if fill source has changed (listen to plotsInitialized)
+            // > stroke and fill matrix will not change unless pip matrix does (but will need to change around buildings and pips)
             if (hasBuilding || plotTally > visiblePlotTally || !plotsInitialized.current) {
               const plotIndex = plotId - 1;
 
@@ -419,28 +461,33 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
                 orientations.current[plotIndex * 3 + 2]
               );
 
-              if (hasBuilding) {
-                dummy.scale.set(buildingScale, buildingScale, buildingScale);
-              } else {
-                dummy.scale.set(1, 1, 1);
-              }
-              dummy.updateMatrix();
-
               // update building matrix or pip matrix
               if (hasBuilding) {
+                dummy.scale.set(buildingScale, buildingScale, buildingScale);
+                dummy.updateMatrix();
+
                 buildingMesh.current.setMatrixAt(buildingsRendered, dummy.matrix);
                 updateBuildingMatrix = true;
-              } else {
+              }
+              
+              // everything but buildings should be scaled to 1
+              dummy.scale.set(1, 1, 1);
+              dummy.updateMatrix();
+
+              // if no building, show pip
+              if (!hasBuilding) {
                 pipMesh.current.setMatrixAt(pipsRendered, dummy.matrix);
                 updatePipMatrix = true;
               }
 
+              // update fill matrix
+              if (hasFill) {
+                plotFillMesh.current.setMatrixAt(fillsRendered, dummy.matrix);
+                updateFillMatrix = true;
+              }
+
               // update stroke matrix
-              if (plotTally > visiblePlotTally || !plotsInitialized.current) {
-                if (hasBuilding) {
-                  dummy.scale.set(1, 1, 1);
-                  dummy.updateMatrix();
-                }
+              if (hasStroke) {
                 plotStrokeMesh.current.setMatrixAt(i, dummy.matrix);
                 updateStrokeMatrix = true;
               }
@@ -470,6 +517,9 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
               if (!plotStrokeMesh.current.instanceColor && !plotStrokeMesh.current.material.needsUpdate) {
                 plotStrokeMesh.current.material.needsUpdate = true;
               }
+              // if (hasFill) {
+              //   plotStrokeMesh.current.setColorAt(i, FILL_COLOR);
+              // } else 
               plotStrokeMesh.current.setColorAt(i, plotColor || PIP_COLOR);
               updateStrokeColor = true;
             }
@@ -479,6 +529,9 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
             buildingsRendered++;
           } else if (hasPip) {
             pipsRendered++;
+          }
+          if (hasFill) {
+            fillsRendered++;
           }
           i++;
 
@@ -492,6 +545,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
         return true;
       });
       pipMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : Math.min(pipsRendered, visiblePlotTally);
+      plotFillMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : Math.min(fillsRendered, visiblePlotTally);
       plotStrokeMesh.current.count = cameraAltitude > OUTLINE_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
       // console.log('i', i, buildingsRendered, pipsRendered, pipMesh.current.count);
 
@@ -499,6 +553,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       if (buildingMesh.current && updateBuildingColor) buildingMesh.current.instanceColor.needsUpdate = true;
       if (buildingMesh.current && updateBuildingMatrix) buildingMesh.current.instanceMatrix.needsUpdate = true;
       if (pipMesh.current && updatePipMatrix) pipMesh.current.instanceMatrix.needsUpdate = true;
+      if (plotFillMesh.current && updateFillMatrix) plotFillMesh.current.instanceMatrix.needsUpdate = true;
       if (plotStrokeMesh.current && updateStrokeColor) plotStrokeMesh.current.instanceColor.needsUpdate = true;
       if (plotStrokeMesh.current && updateStrokeMatrix) plotStrokeMesh.current.instanceMatrix.needsUpdate = true;
 
@@ -524,7 +579,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       // changed, so needs to fail gracefully (i.e. if buildingMesh.current is unset)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cameraAltitude, combinedPlotMap, regionsByDistance]);
+  }, [cameraAltitude, combinedPlotMap, sampledPlotMap, regionsByDistance]);
 
   useEffect(
     () => updateVisiblePlots(),
@@ -536,6 +591,12 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     plotsInitialized.current = false;
     updateVisiblePlots();
   }, [combinedPlotMap]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!sampledPlotMap) return;
+    plotsInitialized.current = false;
+    updateVisiblePlots();
+  }, [sampledPlotMap]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const highlightPlot = useCallback((plotId) => {
     highlighted.current = null;

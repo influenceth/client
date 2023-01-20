@@ -1,20 +1,18 @@
 import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
-import { Construction } from '@influenceth/sdk';
+import { MdScreenRotation as ReorientCameraIcon } from 'react-icons/md';
 
 import { BackIcon } from '~/components/Icons';
-import useAsteroid from '~/hooks/useAsteroid';
-import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import ActionDialog from './hud/ActionDialog';
-import PlotInventory from './hud/PlotInventory';
-import ResourceMapSelector from './hud/ResourceMapSelector';
 import ActionItems from './hud/ActionItems';
 import AvatarMenu from './hud/AvatarMenu';
 import InfoPane from './hud/InfoPane';
 import ResourceMapToggle from './hud/ResourceMapToggle';
 import useActionButtons from './hud/useActionButtons';
+import useActionModules from './hud/useActionModules';
+import ActionModules, { ActionModule } from './hud/ActionModules';
 
 const bottomMargin = 90;
 const rightModuleWidth = 375;
@@ -108,18 +106,6 @@ const ActionModuleContainer = styled.div`
   width: ${rightModuleWidth}px;
 `;
 
-const ActionModule = styled.div`
-  border-right: 3px solid ${p => p.theme.colors.main};
-  bottom: 0;
-  opacity: ${p => p.visible ? 1 : 0};
-  padding-right: 32px;
-  position: absolute;
-  right: 0;
-  transition: opacity 350ms ease, transform 350ms ease;
-  transform: translateX(${p => p.visible ? 0 : `${rightModuleWidth + 5}px`});
-  width: 100%;
-`;
-
 const ActionButtonContainer = styled(ActionModule)`
   display: flex;
   flex-direction: row;
@@ -130,37 +116,27 @@ const ActionButtonContainer = styled(ActionModule)`
   width: 100%;
 `;
 
-const useActionModuleVisibility = () => {
-  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
-  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
-  const { asteroidId, plotId } = useStore(s => s.asteroids.plot) || {};
-  const { data: plot } = usePlot(asteroidId, zoomToPlot ? plotId : null);
-
-  return {
-    resourceMapSelector: zoomStatus === 'in' && !zoomToPlot && !!mapResourceId,
-    plotInventory: zoomStatus === 'in' && zoomToPlot && plot?.building?.capableType === 1 && plot?.building?.construction?.status === Construction.STATUS_OPERATIONAL
-  };
-}
-
-const ActionModules = () => {
-  const visibleModules = useActionModuleVisibility();
-
-  const asteroidId = useStore(s => s.asteroids.origin);
-  const { data: asteroid } = useAsteroid(asteroidId);
-  return (
-    <>
-      <ActionModule visible={visibleModules.resourceMapSelector}>
-        <ResourceMapSelector
-          active={visibleModules.resourceMapSelector}
-          asteroid={asteroid} />
-      </ActionModule>
-      <ActionModule visible={visibleModules.plotInventory}>
-        <PlotInventory active={visibleModules.plotInventory} asteroid={asteroid} />
-      </ActionModule>
-    </>
-  );
-};
+const CameraControls = styled.div`
+  align-items: center;
+  background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+  border: 1px solid ${p => p.theme.colors.main};
+  border-radius: 6px;
+  color: ${p => p.theme.colors.main};
+  display: flex;
+  font-size: 28px;
+  height: 40px;
+  justify-content: center;
+  opacity: ${p => p.visible ? 0.7 : 0};
+  pointer-events: ${p => p.visible ? 'all' : 'none'};
+  position: absolute;
+  right: -10px;
+  top: 10px;
+  transition: opacity 250ms ease;
+  width: 40px;
+  &:hover {
+    opacity: 1;
+  }
+`;
 
 const HUD = () => {
   const { plotId } = useStore(s => s.asteroids.plot) || {};
@@ -168,11 +144,12 @@ const HUD = () => {
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
 
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
+  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const { actions, props: actionProps } = useActionButtons();
-  const actionModuleVisible = useActionModuleVisibility();
+  const actionModuleVisible = useActionModules();
   const anyActionModulesVisible = useMemo(() => Object.values(actionModuleVisible).find((v) => !!v), [actionModuleVisible]);
 
   const { backLabel, onClickBack } = useMemo(() => {
@@ -220,7 +197,7 @@ const HUD = () => {
 
       <RightWrapper>
         <ActionModuleContainer lower={!actions?.length}>
-          <ActionModules />
+          <ActionModules containerWidth={rightModuleWidth} />
         </ActionModuleContainer>
 
         <Rule visible={anyActionModulesVisible && actions?.length > 0} />
@@ -231,6 +208,15 @@ const HUD = () => {
           ))}
         </ActionButtonContainer>
       </RightWrapper>
+
+      <CameraControls
+        data-tip="Reorient to Poles"
+        data-for="global"
+        data-place="left"
+        onClick={dispatchReorientCamera}
+        visible={zoomStatus === 'in'}>
+        <ReorientCameraIcon />
+      </CameraControls>
 
       <ActionDialog />
     </>
