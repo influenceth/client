@@ -134,6 +134,7 @@ const loadingCss = css`
 `;
 
 const CrewCard = ({ crew, onClick, overlay, ...props }) => {
+  const [ imageFailed, setImageFailed ] = useState(false);
   const [ imageLoaded, setImageLoaded ] = useState(false);
 
   const useName = crew.name || (crew.i && `Crew Member #${crew.i}`) || '';
@@ -152,8 +153,13 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
   }
 
   useEffect(() => {
+    setImageFailed(false);
     setImageLoaded(false);
   }, [imageUrl]);
+
+  useEffect(() => {
+    if (imageFailed) setImageLoaded(true)
+  }, [imageFailed]);
 
   return (
     <Card
@@ -165,7 +171,8 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
       <CardImage visible={imageLoaded} applyMask={!overlay && !props.hideMask}>
         <img
           alt={useName}
-          src={imageUrl}
+          src={imageFailed ? silhouette : imageUrl}
+          onError={() => setImageFailed(true)}
           onLoad={() => setImageLoaded(true)} />
       </CardImage>
       <CardHeader>

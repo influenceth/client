@@ -41,6 +41,7 @@ const CoverImage = styled.div`
   }
 
   &:before {
+    background-color: #111;
     background-image: url(${p => p.src});
     background-repeat: no-repeat;
     background-position: ${p => p.center || 'center center'};
@@ -376,7 +377,7 @@ const CrewAssignment = (props) => {
         {!contentReady && <Loader />}
         {contentReady && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <InvisibleImage src={storyState.image} onLoad={onCoverImageLoad} />
+            <InvisibleImage src={storyState.image} onError={onCoverImageLoad} onLoad={onCoverImageLoad} />
             <CoverImage
               src={coverImageLoaded}
               center={storyState.imageCenter}
