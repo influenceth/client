@@ -40,7 +40,7 @@ const api = {
   },
 
   getEvents: async (since) => {
-    const response = await instance.get(`/v1/user/events?since=${since}`);
+    const response = await instance.get(`/v1/user/events${since ? `?since=${since}` : ''}`);
     return {
       events: response.data,
       blockNumber: parseInt(response.headers['starknet-block-number']),

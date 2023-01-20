@@ -5,6 +5,7 @@ import { Capable } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import api from '~/lib/api';
+import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
 
 const getLinkedAsset = (linked, type) => {
@@ -157,6 +158,8 @@ export function EventsProvider({ children }) {
   const [ lastBlockNumber, setLastBlockNumber ] = useState(0);
   const [ events, setEvents ] = useState([]);
 
+  const pendingTransactions = useStore(s => s.pendingTransactions);
+
   const pendingBlock = useRef();
   const pendingBlockEvents = useRef([]);
   const pendingTimeout = useRef();
@@ -249,8 +252,21 @@ export function EventsProvider({ children }) {
 
   useEffect(() => {
     // if authed, populate existing events and start listening to user websocket
+    // if have pending transactions, load back to the oldest one in case it missed the event;
+    // else, will just pull most recent X (limit set on server)
     if (token) {
-      api.getEvents(0).then((eventData) => {
+      let since = null;
+      if (pendingTransactions) {
+        since = pendingTransactions.reduce((acc, cur) => {
+          if (acc === null || cur.timestamp < acc) {
+            return cur.timestamp;
+          }
+          return acc;
+        }, null);
+        if (since) since = Math.floor(since / 1000);
+      }
+
+      api.getEvents(since).then((eventData) => {
         handleEvents(eventData.events, true);
         setLastBlockNumber(eventData.blockNumber);
       });
