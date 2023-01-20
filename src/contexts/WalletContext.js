@@ -4,7 +4,7 @@ import { injectController } from '@cartridge/controller';
 import { Address } from '@influenceth/sdk';
 
 // Add Cartridge wallet to get-starknet set
-injectController();
+injectController(undefined, { url: "https://keychain-git-removenextrouting.preview.cartridge.gg/" });
 
 const { disconnect, enable, getAvailableWallets, getLastConnectedWallet } = getStarknet;
 

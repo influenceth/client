@@ -138,7 +138,7 @@ const CrewContainer = styled.div`
     left: 50%;
     margin-left: -46px;
     position: absolute;
-    bottom: -16px;
+    bottom: -20px;
   }
 `;
 
