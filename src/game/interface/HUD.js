@@ -210,7 +210,7 @@ const HUD = () => {
       </RightWrapper>
 
       <CameraControls
-        data-tip="Reorient to Poles"
+        data-tip="Realign camera to poles"
         data-for="global"
         data-place="left"
         onClick={dispatchReorientCamera}
