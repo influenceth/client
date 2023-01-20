@@ -109,34 +109,35 @@ const StyledCartridgeLogo = styled(CartridgeLogo)`
 
 const Wallets = (props) => {
   const history = useHistory();
-  const { login, wallet } = useAuth();
-  const { connectionOptions } = wallet;
+  const { login, walletContext } = useAuth();
+  const { getAvailableWallets } = walletContext;
 
-  const downloadWallet = (withWalletLabel) => {
+  const downloadWallet = (withWalletId) => {
     const links = {
-      'Argent X': 'https://www.argent.xyz/argent-x/',
-      'Braavos': 'https://braavos.app/',
+      'argentX': 'https://www.argent.xyz/argent-x/',
+      'braavos': 'https://braavos.app/',
       'Cartridge': 'https://cartridge.gg/'
     };
 
-    window.open(links[withWalletLabel], '_blank', 'noreferrer');
+    window.open(links[withWalletId], '_blank', 'noreferrer');
   };
 
-  const getWallet = (withWalletLabel) => {
-    return connectionOptions.find(v => v.label === withWalletLabel);
+  const getWallet = async (withWalletId) => {
+    const wallets = await getAvailableWallets();
+    return wallets.find(v => v.id === withWalletId);
   };
 
-  const handleWalletClick = async (withWalletLabel) => {
-    const withWallet = getWallet(withWalletLabel);
+  const handleWalletClick = async (withWalletId) => {
+    const withWallet = await getWallet(withWalletId);
 
     if (!!withWallet) {
-      await withWallet.onClick();
-      const loggedIn = await login();
+      await withWallet.enable();
+      const loggedIn = await login(withWallet);
       if (loggedIn) history.push('/launcher/account');
       return;
     }
 
-    downloadWallet(withWalletLabel);
+    downloadWallet(withWalletId);
   }
 
   return (
@@ -150,14 +151,14 @@ const Wallets = (props) => {
         </WalletOption>
       </Cartridge>
       <External>
-        <WalletOption onClick={() => handleWalletClick('Argent X')}>
+        <WalletOption onClick={() => handleWalletClick('argentX')}>
           <StyledArgentXLogo />
           <h3>Argent X</h3>
           <Button backgroundColor={"rgba(231,140,100, 0.33)"} color={'rgb(231,140,100)'}>
             {!!getWallet('Argent X') ? 'Login with Argent X' : 'Download Argent X'}
           </Button>
         </WalletOption>
-        <WalletOption onClick={() => handleWalletClick('Braavos')}>
+        <WalletOption onClick={() => handleWalletClick('braavos')}>
           <StyledBraavosLogo src={BraavosLogo} />
           <h3>Braavos</h3>
           <Button backgroundColor={'rgba(233,161,61, 0.33)'} color={'rgb(233,161,61)'}>

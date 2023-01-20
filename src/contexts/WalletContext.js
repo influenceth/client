@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, createContext } from 'react';
-import { connect, getInstalledWallets } from 'get-starknet';
+import getStarknet from 'get-starknet-core';
 import { injectController } from '@cartridge/controller';
-
 import { Address } from '@influenceth/sdk';
-
-import starknetLogo from '~/assets/images/starknet-icon.png';
-import useStore from '~/hooks/useStore';
 
 // Add Cartridge wallet to get-starknet set
 injectController();
+
+const { disconnect, enable, getAvailableWallets, getLastConnectedWallet } = getStarknet;
 
 const getErrorMessage = (error) => {
   console.error(error);
@@ -33,14 +31,10 @@ const getAllowedChainLabel = (wallet) => {
 const WalletContext = createContext();
 
 export function WalletProvider({ children }) {
-  const lastWalletConnected = useStore(s => s.auth.lastWallet);
-  const dispatchWalletConnected = useStore(s => s.dispatchWalletConnected);
-
   const onConnectCallback = useRef();
 
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState();
-  const [installedWallets, setInstalledWallets] = useState([]);
   const [starknet, setStarknet] = useState(false);
   const [starknetReady, setStarknetReady] = useState(false);
 
@@ -56,11 +50,6 @@ export function WalletProvider({ children }) {
     setConnecting(false);
     setStarknet(wallet);
 
-    // remember last extension connected so that is the one we retry automatically next time
-    if (wallet?.account?.address) {
-      dispatchWalletConnected(wallet.name);
-    }
-
     if (onConnectCallback.current) {
       onConnectCallback.current(wallet?.account?.address && Address.toStandard(wallet?.account?.address));
       onConnectCallback.current = null;
@@ -75,17 +64,15 @@ export function WalletProvider({ children }) {
     }
 
     setError();
+
     try {
       setConnecting(true);
-      await wallet.enable();
+      await enable(wallet);
 
       // TODO (enhancement): if get here, could technically set starknet so start listening to changes
       //  (i.e. so that if change network or change to a connected account on the same wallet, updates
       //  the connection without them having to push the button again)
 
-      if (!wallet.isConnected) {
-        connect({ showList: false });
-      }
       if (wallet.isConnected && wallet.account?.address) {
         if (isAllowedChain(wallet.account?.chainId)) {
           onConnectionResult(wallet);
@@ -102,10 +89,6 @@ export function WalletProvider({ children }) {
       onConnectionResult(null);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const disconnect = useCallback(() => {
-    onConnectionResult(null);
-  }, [onConnectionResult]);
 
   const restorePreviousConnection = useCallback((wallet, callback) => {
     if (!wallet) return;
@@ -127,36 +110,10 @@ export function WalletProvider({ children }) {
     }
   }, [attemptConnection]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const connectionOptions = useMemo(() => {
-    if (installedWallets?.length) {
-      return installedWallets
-        .sort((a, b) => a.name < b.name ? -1 : 1)
-        .map((wallet) => ({
-          label: wallet.name,
-          logo: wallet.icon ? <img src={wallet.icon} alt={`${wallet.name} icon`} width={18} height={18} /> : <span />,
-          dataTip: wallet.name,
-          onClick: () => {
-            restorePreviousConnection(wallet, (success) => {
-              if (!success) attemptConnection(wallet);
-            });
-          }
-        }));
-    }
-    return [{
-      label: 'Install...',
-      logo: <img src={starknetLogo} width={18} height={18} alt="Starknet Logo" />,
-      dataTip: 'Select a Starknet Wallet to Install',
-      showCaret: true,
-      onClick: () => {
-        connect({ showList: true, order: ['argentX', 'braavos'], modalOptions: { theme: 'dark' } });
-      }
-    }];
-  }, [installedWallets?.length]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // while connecting or connected, listen for network changes from extension
   useEffect(() => {
     const onConnectionChange = (e) => {
-      disconnect(); // disconnect first in case does not complete connection
+      disconnect({ clearLastWallet: true }); // disconnect first in case does not complete connection
       if (starknet) {
         attemptConnection(starknet);
       }
@@ -180,14 +137,10 @@ export function WalletProvider({ children }) {
   }, [starknet?.name, attemptConnection, disconnect]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // autoconnect as possible
-  useEffect(() => {
-    getInstalledWallets()
-    .then((wallets) => {
-      setInstalledWallets(wallets);
+  useEffect(async () => {
+    try {
+      const autoconnectWallet = await getLastConnectedWallet();
 
-      const autoconnectWallet = wallets.length === 1
-        ? wallets[0]
-        : wallets.find((w) => w.name === lastWalletConnected);
       if (autoconnectWallet) {
         restorePreviousConnection(
           autoconnectWallet,
@@ -196,17 +149,17 @@ export function WalletProvider({ children }) {
       } else {
         setStarknetReady(true);
       }
-    })
-    .catch((e) => {
+    } catch (e) {
       console.error(e);
       setStarknetReady(true);
-    });
+    }
   }, [restorePreviousConnection]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <WalletContext.Provider value={{
       account: starknet?.isConnected && account,
-      connectionOptions,
+      attemptConnection,
+      getAvailableWallets,
       disconnect,
       error: useMemo(() => error && getErrorMessage(error), [error]),
       isConnecting: connecting,

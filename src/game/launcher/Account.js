@@ -1,4 +1,4 @@
-import { useHistory, Link } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 
 import useAuth from '~/hooks/useAuth';
@@ -61,7 +61,7 @@ const NotConnected = styled.div`
   }
 `;
 
-const LogoutLink = styled(Link)`
+const LogoutLink = styled.a`
   color: ${p => p.theme.colors.main};
   position: absolute;
   right: 10px;
@@ -124,8 +124,8 @@ const MainButton = styled(ButtonAlt)`
 
 const Account = (props) => {
   const history = useHistory();
-  const { token, logout, wallet } = useAuth();
-  const { account } = wallet;
+  const { token, logout, walletContext } = useAuth();
+  const { account } = walletContext;
   const loggedIn = account && token;
   const { captain, loading: crewLoading, crew, crewMemberMap } = useCrew();
 

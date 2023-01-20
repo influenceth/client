@@ -9,13 +9,9 @@ import useStore from '~/hooks/useStore';
 import useInterval from '~/hooks/useInterval';
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
-
 const ChainTransactionContext = createContext();
 
-console.log('configs', configs);
-
 // TODO: now that all are on dispatcher, could probably collapse a lot of redundant code in getContracts
-
 const getContracts = (account, queryClient) => ({
   'PURCHASE_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -294,7 +290,7 @@ const getNow = () => {
 }
 
 export function ChainTransactionProvider({ children }) {
-  const { wallet: { starknet } } = useAuth();
+  const { walletContext: { starknet } } = useAuth();
   const { events, lastBlockNumber } = useEvents();
   const queryClient = useQueryClient();
 

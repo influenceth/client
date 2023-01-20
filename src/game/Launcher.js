@@ -223,11 +223,10 @@ const Launcher = (props) => {
   const location = useLocation();
   const { displayTime } = useContext(ClockContext);
   const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
-  const forgetWallet = useStore(s => s.dispatchWalletDisconnected);
   const hideInterface = useStore(s => s.dispatchHideInterface);
   const showInterface = useStore(s => s.dispatchShowInterface);
-  const { wallet, logout, token } = useAuth();
-  const { account, walletIcon, walletName } = wallet;
+  const { walletContext, logout, token } = useAuth();
+  const { account, walletIcon, walletName } = walletContext;
   const loggedIn = account && token;
 
   useEffect(() => {

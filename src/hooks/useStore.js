@@ -56,8 +56,7 @@ const useStore = create(persist((set, get) => ({
     },
 
     auth: {
-      token: null,
-      lastWallet: null
+      token: null
     },
 
     selectedCrewId: null,
@@ -371,14 +370,6 @@ const useStore = create(persist((set, get) => ({
 
     dispatchTokenInvalidated: () => set(produce(state => {
       state.auth.token = null;
-    })),
-
-    dispatchWalletConnected: (walletId) => set(produce(state => {
-      state.auth.lastWallet = walletId;
-    })),
-
-    dispatchWalletDisconnected: () => set(produce(state => {
-      state.auth.lastWallet = null;
     })),
 
     dispatchLoggedOut: () => set(produce(state => {

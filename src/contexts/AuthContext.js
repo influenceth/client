@@ -12,11 +12,9 @@ export function AuthProvider({ children }) {
   const token = useStore(s => s.auth.token);
   const dispatchTokenInvalidated = useStore(s => s.dispatchTokenInvalidated);
   const dispatchAuthenticated = useStore(s => s.dispatchAuthenticated);
-  const dispatchForgetWallet = useStore(s => s.dispatchWalletDisconnected);
   const dispatchLogout = useStore(s => s.dispatchLoggedOut);
-  const wallet = useContext(WalletContext);
-
-  const account = wallet?.account;
+  const walletContext = useContext(WalletContext);
+  const account = walletContext?.account;
 
   // Invalidate token if the token has expired
   useEffect(() => {
@@ -27,24 +25,30 @@ export function AuthProvider({ children }) {
 
   // Invalidate the token if the token doesn't match the current account
   useEffect(() => {
+    const account = walletContext?.account;
     const decoded = decodeToken(token);
+
     if (!account) {
       dispatchTokenInvalidated();
     }
     else if (decoded?.sub && account !== decoded?.sub) {
       dispatchTokenInvalidated();
     }
-  }, [ token, account, dispatchTokenInvalidated ]);
+  }, [ token, walletContext, dispatchTokenInvalidated ]);
 
-  const initiateLogin = useCallback(async () => {
-    if (account && !token) {
+  const initiateLogin = useCallback(async (wallet) => {
+    await walletContext.attemptConnection(wallet);
+    const address = wallet?.account?.address;
+
+    if (address && !token) {
       try {
-        const loginMessage = await api.requestLogin(account);
-        const signature = await wallet.starknet.account.signMessage(loginMessage);
-        const newToken = await api.verifyLogin(account, { signature: signature.join(',') });
+        const loginMessage = await api.requestLogin(address);
+        const signature = await wallet.account.signMessage(loginMessage);
+        const newToken = await api.verifyLogin(address, { signature: signature.join(',') });
         dispatchAuthenticated(newToken);
         return true;
       } catch (e) {
+        initiateLogout();
         console.error(e);
         createAlert({
           type: 'GenericAlert',
@@ -54,23 +58,22 @@ export function AuthProvider({ children }) {
         });
       }
     }
-  }, [account, token, dispatchAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ walletContext, token, dispatchAuthenticated ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const initiateLogout = useCallback(() => {
-    wallet.disconnect()
-    dispatchForgetWallet();
+    walletContext.disconnect({ clearLastWallet: true });
     dispatchTokenInvalidated();
     dispatchLogout();
-  }, [ dispatchTokenInvalidated, dispatchTokenInvalidated, dispatchLogout, wallet ]);
+  }, [ walletContext.disconnect, dispatchTokenInvalidated, dispatchLogout ]);
 
   return (
     <AuthContext.Provider value={{
       login: initiateLogin,
       logout: initiateLogout,
       token,
-      account: token && wallet?.account,
-      provider: token && wallet?.account,
-      wallet
+      account: token && account,
+      provider: token && account,
+      walletContext
     }}>
       {children}
     </AuthContext.Provider>
