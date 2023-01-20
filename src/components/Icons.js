@@ -7,7 +7,6 @@ import {
   MdAccountBalanceWallet,
   MdAdd,
   MdFlag,
-  MdBlurOff,
   MdKeyboardArrowDown,
   MdChevronRight,
   MdClose,
@@ -87,7 +86,7 @@ import TravelingToSVG from '~/assets/icons/action_buttons/TravelingTo.svg';
 */
 export const AdalianIcon = () => <AdalianSVG className="icon" />;
 export const ArvadIcon = () => <ArvadSVG className="icon" style={{ width: '1.94em' }} />;
-export const CaptainIcon = () => <CaptainSVG className="icon" style={{ width: '3.05em' }} />;
+export const CaptainIcon = (props) => <CaptainSVG className={`icon ${props?.className}`} style={{ width: '3.05em' }} />;
 export const ChapterIcon = () => <ChapterSVG className="icon" />;
 export const CheckIcon = () => <CheckSVG className="icon" style={{ width: '1.314em' }} />;
 export const ChevronDoubleDownIcon = () => <ChevronDoubleDownSVG className="icon" />;

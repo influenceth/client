@@ -6,6 +6,8 @@ import useCrew from '~/hooks/useCrew';
 import ButtonAlt from '~/components/ButtonAlt';
 import ButtonPill from '~/components/ButtonPill';
 import CrewCard from '~/components/CrewCard';
+import TriangleTip from '~/components/TriangleTip';
+import { CaptainIcon } from '~/components/Icons';
 import theme from '~/theme';
 
 const StyledAccount = styled.div`
@@ -64,7 +66,7 @@ const NotConnected = styled.div`
 const LogoutLink = styled.a`
   color: ${p => p.theme.colors.main};
   position: absolute;
-  right: 10px;
+  right: 15px;
   text-decoration: none;
   top: 10px;
 
@@ -76,7 +78,7 @@ const LogoutLink = styled.a`
 const CrewContainer = styled.div`
   align-items: flex-start;
   display: flex;
-  padding: 0 50px 35px 50px;
+  padding: 0 50px 50px 50px;
   position: relative;
   width: 100%;
 `;
@@ -94,10 +96,29 @@ const CaptainName = styled.h2`
   position: absolute;
 `;
 
+const StyledCaptainIcon = styled(CaptainIcon)`
+  bottom: -20px;
+  height: 25px !important;
+  left: 30px;
+  position: absolute;
+  width: auto !important;
+`;
+
+const StyledTriangleTip = styled(TriangleTip)`
+  color: ${p => p.theme.colors.secondaryText};
+  height: 30px;
+  left: 0;
+  position: absolute;
+  top: 194px;
+  width: 100%;
+`;
+
 const CaptainContain = styled.div`
-  border: 1px solid #888;
+  border: 1px solid ${p => p.theme.colors.secondaryText};
+  border-bottom: none;
   margin-right: 20px;
   padding: 10px;
+  position: relative;
   width: 150px;
 `;
 
@@ -151,6 +172,8 @@ const Account = (props) => {
                   <CaptainName>{captain.name}</CaptainName>
                   <CaptainContain>
                     <CrewCard crew={captain} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
+                    <StyledTriangleTip extendStroke strokeColor="currentColor" strokeWidth="1.5" />
+                    <StyledCaptainIcon />
                   </CaptainContain>
                 </>}
                 {crew.crewMembers.slice(1).map(function(crewmateId) {

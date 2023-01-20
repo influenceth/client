@@ -1,10 +1,11 @@
-const TriangleTip = ({ extendStroke, fillColor, strokeColor, strokeWidth, rotate }) => (
+const TriangleTip = ({ className, extendStroke, fillColor, strokeColor, strokeWidth, rotate }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"
     focusable="false"
     viewBox={`0 0 100 ${50 + strokeWidth / 2}`}
     preserveAspectRatio="none"
+    className={className}
     style={rotate ? { transform: `rotate(${rotate}deg)` } : {}}>
     <polygon
       fill={fillColor}
