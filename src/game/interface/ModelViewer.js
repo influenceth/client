@@ -653,8 +653,10 @@ const reader = new FileReader();
 const ModelViewer = ({ assetType, plotZoomMode }) => {
   const { model: paramModel } = useParams();
   const { search } = useLocation();
-  // TODO: linting appropriately doesn't like below line... consider reworking once building viewer is more finalized
-  const assets = assetType === 'Resource' ? useResourceAssets() : useBuildingAssets(); // eslint-disable-line react-hooks/rules-of-hooks
+  const resources = useResourceAssets();
+  const buildings = useBuildingAssets();
+
+  const assets = assetType === 'Building' ? buildings.filter((b, i) => i < 3) : resources;
   const singleModel = plotZoomMode || paramModel;
 
   const [devtoolsEnabled, setDevtoolsEnabled] = useState();
