@@ -13,7 +13,6 @@ import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
 import PlanConstruction from './actionDialogs/PlanConstruction';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import UnplanConstruction from './actionDialogs/UnplanConstruction';
-import { ActionDialogLoader } from './actionDialogs/components';
 
 export const useAsteroidAndPlot = (props = {}) => {
   const selectedPlot = useStore(s => s.asteroids.plot);

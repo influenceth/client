@@ -813,7 +813,7 @@ const TransferSelectionTableWrapper = styled(PoppableTableWrapper)`
   td:nth-child(2) { width: 100px; }
   td:nth-child(3) { width: 112px; }
   td:nth-child(4) { width: 98px; }
-  td:nth-child(5) { width: 98px; }
+  td:nth-child(5) { width: 135px; }
   td:nth-child(6) { width: 48px; }
 
   td {
@@ -840,6 +840,14 @@ const TransferSelectionTableWrapper = styled(PoppableTableWrapper)`
       padding: 4px 6px;
     }
   }
+`;
+const QuantaInput = styled.input`
+  background: transparent;
+  border: 1px solid white;
+  color: white;
+  font-family: inherit;
+  text-align: right;
+  width: 100px;
 `;
 const ResourceColorIcon = styled.div`
   background-color: ${p => p.theme.colors.resources[p.category.replace(/[^a-zA-Z0-9]/g, '')]};
@@ -1155,6 +1163,80 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
   );
 };
 
+const TransferSelectionRow = ({ onUpdate, quanta, resource, selecting }) => {
+  const [focusOn, setFocusOn] = useState();
+  const [mouseIn, setMouseIn] = useState(false);
+  const [amount, setAmount] = useState(quanta);
+
+  const resourceId = Number(resource.i);
+
+  useEffect(() => {
+    setAmount(quanta);
+  }, [quanta]);
+
+  const onFocusEvent = useCallback((e) => {
+    if (e.type === 'focus') {
+      setFocusOn(true);
+      setAmount(quanta);
+      e.target.select();
+    } else {
+      setFocusOn(false);
+    }
+  }, [quanta]);
+
+  const onMouseEvent = useCallback((e) => {
+    setMouseIn(e.type === 'mouseenter')
+  }, []);
+
+  const onChange = useCallback((e) => {
+    let newValue = parseInt(e.target.value.replace(/^0+/g, '').replace(/[^0-9]/g, ''));
+    if (!(newValue > -1)) newValue = 0;
+    if (newValue > quanta) newValue = quanta;
+    setAmount(newValue);
+  }, [quanta]);
+
+  const onSubmit = useCallback(() => {
+    const nAmount = parseInt(amount);
+    if (nAmount > 0 && nAmount <= quanta) {
+      onUpdate(resourceId, nAmount, selecting);
+    }
+  }, [amount, quanta, resourceId]);
+
+  const volume = useMemo(() => quanta * resource.volumePerUnit, [quanta]);
+  return (
+    <tr key={resourceId} onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent}>
+      <td>{resource.name}</td>
+      <td>{resource.category}</td>
+      <td>{formatSampleVolume(volume)} m<sup>3</sup></td>
+      <td>{formatResourceAmount(quanta, resourceId)}</td>
+      <td>
+        {!(mouseIn || focusOn) && (
+          <>
+            {quanta.toLocaleString()}
+          </>
+        )}
+        {(mouseIn || focusOn) && (
+          <QuantaInput
+            type="number"
+            max={quanta}
+            min={0}
+            onBlur={onFocusEvent}
+            onChange={onChange}
+            onFocus={onFocusEvent}
+            step={1}
+            value={amount} />
+        )}
+        {resource.massPerUnit === 0.001 ? ' kg' : ''}
+      </td>
+      <td>
+        <IconButtonRounded flatter onClick={onSubmit}>
+          {selecting ? <ChevronDoubleDownIcon /> : <ChevronDoubleUpIcon />}
+        </IconButtonRounded>
+      </td>
+    </tr>
+  );
+};
+
 const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) => {
   const [newSelectedItems, setNewSelectedItems] = useState(selectedItems);
 
@@ -1201,25 +1283,15 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
               </tr>
             </thead>
             <tbody>
-              {Object.keys(unselectedItems).map((resourceId) => {
-                const quanta = unselectedItems[resourceId];
-                const mass = quanta * resources[resourceId].massPerUnit;
-                const volume = quanta * resources[resourceId].volumePerUnit;
-                return (
-                  <tr key={resourceId}>
-                    <td>{resources[resourceId].name}</td>
-                    <td>{resources[resourceId].category}</td>
-                    <td>{formatSampleVolume(volume)} m<sup>3</sup></td>
-                    <td>{formatSampleMass(mass)} t</td>
-                    <td>{formatSampleMass(mass)} t</td>
-                    <td>
-                      <IconButtonRounded flatter onClick={() => onUpdate(resourceId, quanta, true)}>
-                        <ChevronDoubleDownIcon />
-                      </IconButtonRounded>
-                    </td>
-                  </tr>
-                );
-              })}
+              {Object.keys(unselectedItems).map((resourceId) => (
+                <TransferSelectionRow
+                  key={resourceId}
+                  onUpdate={onUpdate}
+                  quanta={unselectedItems[resourceId]}
+                  resource={resources[resourceId]}
+                  selecting={true}
+                  />
+              ))}
             </tbody>
           </table>
         </TransferSelectionTableWrapper>
@@ -1230,25 +1302,15 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
                 <tr><TitleCell colSpan="6" title="Selected" /></tr>
               </thead>
               <tbody>
-                {Object.keys(newSelectedItems).map((resourceId) => {
-                  const quanta = newSelectedItems[resourceId];
-                  const mass = quanta * resources[resourceId].massPerUnit;
-                  const volume = quanta * resources[resourceId].volumePerUnit;
-                  return (
-                    <tr key={resourceId}>
-                      <td>{resources[resourceId].name}</td>
-                      <td>{resources[resourceId].category}</td>
-                      <td>{formatSampleVolume(volume)} m<sup>3</sup></td>
-                      <td>{formatSampleMass(mass)} t</td>
-                      <td>{formatSampleMass(mass)} t</td>
-                      <td>
-                        <IconButtonRounded flatter onClick={() => onUpdate(resourceId, quanta, false)}>
-                          <ChevronDoubleUpIcon />
-                        </IconButtonRounded>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {Object.keys(newSelectedItems).map((resourceId) => (
+                  <TransferSelectionRow
+                    key={resourceId}
+                    onUpdate={onUpdate}
+                    quanta={newSelectedItems[resourceId]}
+                    resource={resources[resourceId]}
+                    selecting={false}
+                    />
+                ))}
               </tbody>
             </table>
           </TransferSelectionTableWrapper>

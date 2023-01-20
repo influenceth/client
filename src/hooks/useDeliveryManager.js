@@ -57,7 +57,7 @@ const useDeliveryManager = (asteroidId, plotId, deliveryId = 0) => {
         && item.assets.delivery?.deliveryId === deliveryId
       ));
       if (actionItem) {
-        current._crewmates = actionItem.assets.crew.crewmates;
+        current._crewmates = actionItem.assets.crew?.crewmates;
         current.originPlotId = actionItem.event.returnValues.originLotId;
         current.originPlotInvId = actionItem.event.returnValues.originInventoryId;
       }
