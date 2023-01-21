@@ -19,6 +19,7 @@ import {
 } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
+import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
 import useCrew from '~/hooks/useCrew';
@@ -28,7 +29,6 @@ import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme.js';
 import { useHistory } from 'react-router-dom';
-import TriangleTip from '~/components/TriangleTip';
 
 const Container = styled.div`
   display: flex;

@@ -702,7 +702,6 @@ const ActionItems = () => {
   }, [allItems]);
 
   {/* TODO: collapsible */}
-  {/* TODO: the whole left side of the hud should potentially be in the same container so less absolute positioning */}
   return (
     <ActionItemWrapper>
       <ActionItemContainer>

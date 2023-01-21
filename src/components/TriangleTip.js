@@ -1,4 +1,4 @@
-const TriangleTip = ({ className, extendStroke, fillColor, strokeColor, strokeWidth, rotate }) => (
+const TriangleTip = ({ className, extendStroke, fillColor, strokeColor, strokeWidth = 0, rotate }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"

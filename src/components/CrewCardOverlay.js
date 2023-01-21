@@ -40,8 +40,8 @@ const OverlayFlourish = styled.div`
 
 const OverlayIcon = styled.div`
   position: absolute;
-  font-size: 60px;
-  top: calc(50% - 30px);
+  font-size: ${p => p.iconSize ? p.iconSize : '60'}px;
+  top: calc(50% - ${p => p.iconSize ? p.iconSize / 2 : '30'}px);
 `;
 
 const CardOverlayHoverCss = (p) => `
@@ -185,7 +185,7 @@ const CardOverlay = styled.div`
 
 const CrewCardOverlay = (config) => (
   <CardOverlay {...config} alwaysOn={config.alwaysOn || []}>
-    {config.icon && <OverlayIcon>{config.icon}</OverlayIcon>}
+    {config.icon && <OverlayIcon iconSize={config.iconSize}>{config.icon}</OverlayIcon>}
     <div style={{ flex: 1 }} />
     {config.caption && <OverlayCaption>{config.caption}</OverlayCaption>}
     {config.button && (
