@@ -52,6 +52,8 @@ export function CrewProvider({ children }) {
       // if get here, select default crew
       const defaultCrew = crews.find((crew) => crew.crewMembers.length > 0);
       selectCrew(defaultCrew?.i || crews[0].i);
+    } else if (!account) {
+      selectCrew();
     }
   }, [account, crews, crewsLoading, crewMembersLoading, selectCrew, selectedCrewId]);
 
