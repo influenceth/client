@@ -121,7 +121,7 @@ const SwayContainer = styled.div`
 
 const AvatarMenu = (props) => {
   const { account } = useAuth();
-  const { captain } = useCrew();
+  const { captain, loading: crewIsLoading } = useCrew();
   const history = useHistory();
 
   const silhouetteOverlay = useMemo(() => {
@@ -154,6 +154,7 @@ const AvatarMenu = (props) => {
   
   useEffect(() => ReactTooltip.rebuild(), [tooltip]);
 
+  if (crewIsLoading) return null;
   return (
     <Wrapper>
       <SwayContainer noCaptain={!captain}><SwayIcon /> 0</SwayContainer>
