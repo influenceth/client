@@ -476,8 +476,8 @@ const useStore = create(persist((set, get) => ({
       state.pendingTransactions = state.pendingTransactions.filter((tx) => tx.txHash !== txHash);
     })),
 
-    dispatchZoomToPlot: (buildingLabel) => set(produce(state => {
-      state.asteroids.zoomToPlot = buildingLabel;
+    dispatchZoomToPlot: (isZoomed) => set(produce(state => {
+      state.asteroids.zoomToPlot = isZoomed;
     }))
 
 }), {

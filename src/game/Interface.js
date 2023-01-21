@@ -24,6 +24,7 @@ import CrewAssignments from './interface/details/CrewAssignments';
 import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
+import PlotViewer from './interface/PlotViewer';
 import RouteDetails from './interface/details/RouteDetails';
 import WatchlistTable from './interface/details/WatchlistTable';
 import theme from '~/theme';
@@ -81,7 +82,6 @@ const Interface = () => {
   const { isMobile } = useScreenSize();
   const { data: sale } = useSale();
   const isFetching = useIsFetching();
-  const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const hideInterface = useStore(s => s.dispatchHideInterface);
   const showInterface = useStore(s => s.dispatchShowInterface);
@@ -129,7 +129,7 @@ const Interface = () => {
           </Route>
         </Switch>
 
-        {zoomToPlot && <ModelViewer assetType="Building" plotZoomMode={zoomToPlot} />}
+        <PlotViewer />
         <HUD />
         <MainMenu />
       </MainContainer>
