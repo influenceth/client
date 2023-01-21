@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" viewBox="0 0 128 128">
   <title>Merchant</title>
   <defs>
-    <style>.cls-11{opacity:0.66;}</style>
+    <style>.MerchantCrewClass-1{opacity:0.66;}</style>
   </defs>
   <path d="M52.37,104.33l-23.49,11h71.54L76.76,104.31A31.06,31.06,0,0,0,52.37,104.33Z"/>
   <rect x="61.42" y="38.96" width="6.3" height="56.39"/>
-  <g class="cls-11">
+  <g class="MerchantCrewClass-1">
     <path d="M47.14,68.5H11.53L6.79,79.2a2.84,2.84,0,0,0,2.6,4H49.28a2.84,2.84,0,0,0,2.6-4Z"/>
     <path d="M116.55,68.5H80.94L76.21,79.2a2.83,2.83,0,0,0,2.6,4h39.88a2.79,2.79,0,0,0,2.38-1.29,2.82,2.82,0,0,0,.22-2.7Z"/>
   </g>
