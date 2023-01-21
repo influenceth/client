@@ -178,11 +178,13 @@ const Account = (props) => {
                 </>}
                 {crew.crewMembers.slice(1).map(function(crewmateId) {
                   const crewmate = crewMemberMap[crewmateId];
-                  return (
-                    <CrewContain key={crewmate.i}>
-                      <CrewCard crew={crewmate} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
-                    </CrewContain>
-                  );
+                  if (crewmate) {
+                    return (
+                      <CrewContain key={crewmate.i}>
+                        <CrewCard crew={crewmate} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
+                      </CrewContain>
+                    );
+                  }
                 })}
               </CrewContainer>
             }
