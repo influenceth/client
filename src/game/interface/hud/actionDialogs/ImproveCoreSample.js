@@ -120,13 +120,16 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
   const sampleQualityBonus = getCrewAbilityBonus(2, crewMembers);
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-    if (!asteroid?.i || !plot?.i) return {};
-    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
-      { label: 'Travel to destination', plot: plot.i },
-      { label: 'Return from destination', plot: 1 },
-    ]);
-  }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  // TODO: ...
+  // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  //   if (!asteroid?.i || !plot?.i) return {};
+  //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
+  //     { label: 'Travel to destination', plot: plot.i },
+  //     { label: 'Return from destination', plot: 1 },
+  //   ]);
+  // }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  const crewTravelTime = 0;
+  const tripDetails = null;
 
   const sampleBounds = CoreSample.getSampleBounds(lotAbundance, originalTonnage, sampleQualityBonus.totalBonus);
   const sampleTime = CoreSample.getSampleTime(sampleTimeBonus.totalBonus);

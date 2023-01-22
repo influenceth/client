@@ -77,15 +77,18 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
   const sampleQualityBonus = getCrewAbilityBonus(2, crewMembers);
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
 
+  // TODO: ...
   // TODO: the crew origin and destination lots are currently set to 1, and when
   //  that is updated, it will need to be persisted in the actionItem
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-    if (!asteroid?.i || !plot?.i) return {};
-    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
-      { label: 'Travel to destination', plot: plot.i },
-      { label: 'Return from destination', plot: 1 },
-    ]);
-  }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  //   if (!asteroid?.i || !plot?.i) return {};
+  //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
+  //     { label: 'Travel to destination', plot: plot.i },
+  //     { label: 'Return from destination', plot: 1 },
+  //   ]);
+  // }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  const crewTravelTime = 0;
+  const tripDetails = null;
 
   const sampleBounds = CoreSample.getSampleBounds(lotAbundance, 0, sampleQualityBonus.totalBonus);
   const sampleTime = CoreSample.getSampleTime(sampleTimeBonus.totalBonus);

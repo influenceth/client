@@ -47,7 +47,7 @@ import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useExtractionManager from '~/hooks/useExtractionManager';
 import useInterval from '~/hooks/useInterval';
-import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   BlueprintSelection,
@@ -148,13 +148,30 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
     return 0;
   }, [amount, extractionBonus, selectedCoreSample]);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-    if (!asteroid?.i || !plot?.i) return {};
-    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
-      { label: 'Travel to destination', plot: plot.i },
-      { label: 'Return from destination', plot: 1 },
-    ]);
-  }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  // TODO: ...
+  // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  //   if (!asteroid?.i || !plot?.i) return {};
+  //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
+  //     { label: 'Travel to destination', plot: plot.i },
+  //     { label: 'Return from destination', plot: 1 },
+  //   ]);
+  // }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  const crewTravelTime = 0;
+  const tripDetails = null;
+
+  const transportDistance = useMemo(() => {
+    if (destinationPlot) {
+      return Asteroid.getLotDistance(asteroid?.i, plot?.i, destinationPlot?.i) || 0;
+    }
+    return 0;
+  }, [asteroid?.i, plot?.i, destinationPlot?.i]);
+
+  const transportTime = useMemo(() => {
+    if (destinationPlot) {
+      return Asteroid.getLotTravelTime(asteroid?.i, plot?.i, destinationPlot?.i, crewTravelBonus.totalBonus) || 0;
+    }
+    return 0;
+  }, [asteroid?.i, plot?.i, destinationPlot?.i, crewTravelBonus]);
 
   const stats = useMemo(() => ([
     {
@@ -165,6 +182,11 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
     {
       label: 'Extraction Volume',
       value: `${formatResourceVolume(amount, resource?.i)}`,
+      direction: 0
+    },
+    {
+      label: 'Transport Distance',
+      value: `${formatFixed(transportDistance, 1)} km`,
       direction: 0
     },
     {
@@ -190,6 +212,19 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
           bonus={extractionBonus}
           title="Extraction Time"
           totalTime={extractionTime}
+          crewRequired="start" />
+      )
+    },
+    {
+      label: 'Transport Time',
+      value: formatTimer(transportTime),
+      direction: getBonusDirection(crewTravelBonus),
+      isTimeStat: true,
+      tooltip: (
+        <TimeBonusTooltip
+          bonus={crewTravelBonus}
+          title="Transport Time"
+          totalTime={transportTime}
           crewRequired="start" />
       )
     },

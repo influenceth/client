@@ -2120,7 +2120,7 @@ const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleVa
           </BonusesSection>
         </>
       )}
-      {details && (
+      {details && details.rows && (
         <>
           <BonusesHeader>{details.title}</BonusesHeader>
           <BonusesSection>

@@ -90,13 +90,16 @@ const Construct = ({ asteroid, plot, ...props }) => {
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
   const constructionBonus = getCrewAbilityBonus(5, crewMembers);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-    if (!asteroid?.i || !plot?.i) return {};
-    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
-      { label: 'Travel to destination', plot: plot.i },
-      { label: 'Return from destination', plot: 1 },
-    ])
-  }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  // TODO: ...
+  // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  //   if (!asteroid?.i || !plot?.i) return {};
+  //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
+  //     { label: 'Travel to destination', plot: plot.i },
+  //     { label: 'Return from destination', plot: 1 },
+  //   ])
+  // }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  const crewTravelTime = 0;
+  const tripDetails = null;
 
   const constructionTime = useMemo(() =>
     plot?.building?.assetId ? Construction.getConstructionTime(plot?.building?.assetId, constructionBonus.totalBonus) : 0,
