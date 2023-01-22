@@ -56,14 +56,14 @@ const SliderInput = ({ min = 0, max = 1, increment = 1, value, onChange }) => {
   const percentage = useMemo(() => (value - min) / (max - min), [value, min, max]);
 
   const mouseHandler = useCallback((e) => {
-    if (e.type === 'mouseup' || e.type === 'mouseleave') {
-      updating.current = false;
-      return;
-    } else if (e.type === 'mousedown') {
+    if (e.type === 'mousedown') {
       updating.current = true;
     }
     if (updating.current && e.offsetX !== undefined) {
-      onChange(min + (e.offsetX / sliderRef.current.offsetWidth) * (max - min));
+      onChange(Math.min(Math.max(min, min + (e.offsetX / sliderRef.current.offsetWidth) * (max - min)), max));
+    }
+    if (e.type === 'mouseup' || e.type === 'mouseleave') {
+      updating.current = false;
     }
   }, [min, max]);
 

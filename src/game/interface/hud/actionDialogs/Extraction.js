@@ -145,7 +145,7 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
       )
     }
     return 0;
-  }, [amount, selectedCoreSample]);
+  }, [amount, extractionBonus, selectedCoreSample]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.i || !plot?.i) return {};
@@ -190,7 +190,7 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
           crewRequired="start" />
       )
     },
-  ]), [amount, extractionTime, resource]);
+  ]), [amount, crewTravelBonus, crewTravelTime, extractionBonus, extractionTime, resource]);
 
   const status = useMemo(() => {
     if (extractionStatus === 'READY') {

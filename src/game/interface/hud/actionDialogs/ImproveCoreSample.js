@@ -123,7 +123,6 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.i || !plot?.i) return {};
     return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
-      { label: 'Retrieve Core Sampler', plot: 1 },  // TODO
       { label: 'Travel to destination', plot: plot.i },
       { label: 'Return from destination', plot: 1 },
     ]);

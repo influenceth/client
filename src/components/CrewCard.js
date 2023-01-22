@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 import styled, { css } from 'styled-components';
 import pick from 'lodash/pick';
@@ -133,28 +133,34 @@ const loadingCss = css`
   top: 50%;
 `;
 
-const CrewCard = ({ crew, onClick, overlay, ...props }) => {
+const CrewCard = ({ crew: crewmate, onClick, overlay, ...props }) => {
   const [ imageFailed, setImageFailed ] = useState(false);
   const [ imageLoaded, setImageLoaded ] = useState(false);
 
-  const useName = crew.name || (crew.i && `Crew Member #${crew.i}`) || '';
-  const classLabel = Crewmate.getClass(crew.crewClass)?.name;
+  const useName = crewmate.name || (crewmate.i && `Crew Member #${crewmate.i}`) || '';
+  const classLabel = Crewmate.getClass(crewmate.crewClass)?.name;
 
-  let imageUrl = silhouette;
-  if (crew.i) {
-    imageUrl = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crew.i}/image.svg?bustOnly=true`;
-  } else if (crew.crewClass) {
-    imageUrl = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
-      pick(crew, [
-        'crewCollection', 'sex', 'body', 'crewClass', 'outfit', 'title',
-        'hair', 'facialFeature', 'hairColor', 'headPiece', 'bonusItem'
-      ])
-    )}`;
-  }
+  let imageUrl = useMemo(() => {
+    let url = silhouette;
+    if (crewmate.i) {
+      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crewmate.i}/image.svg?bustOnly=true`;
+    } else if (crewmate.crewClass) {
+      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
+        pick(crewmate, [
+          'crewCollection', 'sex', 'body', 'crewClass', 'outfit', 'title',
+          'hair', 'facialFeature', 'hairColor', 'headPiece', 'bonusItem'
+        ])
+      )}`;
+    }
+    return url;
+  }, [crewmate]);
 
+  // make sure onLoad and onError get called by making sure they are reset to false on imageUrl change
+  const [ readyToLoadUrl, setReadyToLoadUrl ] = useState(imageUrl);
   useEffect(() => {
     setImageFailed(false);
     setImageLoaded(false);
+    setReadyToLoadUrl(imageUrl);
   }, [imageUrl]);
 
   useEffect(() => {
@@ -171,13 +177,13 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
       <CardImage visible={imageLoaded} applyMask={!overlay && !props.hideMask}>
         <img
           alt={useName}
-          src={imageFailed ? silhouette : imageUrl}
+          src={imageFailed ? silhouette : readyToLoadUrl}
           onError={() => setImageFailed(true)}
           onLoad={() => setImageLoaded(true)} />
       </CardImage>
       <CardHeader>
         <CrewName {...props}>
-          <CrewClassIcon crewClass={crew.crewClass} />{' '}
+          <CrewClassIcon crewClass={crewmate.crewClass} />{' '}
           {!props.hideNameInHeader && useName}
         </CrewName>
         {!props.hideCollectionInHeader && (
@@ -191,21 +197,21 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
               : {}
             )
             }}>
-            {Crewmate.getCollection(crew.crewCollection)?.name}
+            {Crewmate.getCollection(crewmate.crewCollection)?.name}
           </DataReadout>
         )}
-        {props.showClassInHeader && <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>{Crewmate.getClass(crew.crewClass)?.name}</DataReadout>}
+        {props.showClassInHeader && <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>{Crewmate.getClass(crewmate.crewClass)?.name}</DataReadout>}
       </CardHeader>
       {!overlay && (
         <CardFooter>
           <EmblemContainer>
             <CrewCollectionEmblem
-              collection={crew.crewCollection}
+              collection={crewmate.crewCollection}
               style={{ width: '100%' }} />
           </EmblemContainer>
           <FooterStats>
-            <div>{Crewmate.getClass(crew.crewClass)?.name}</div>
-            <div>{Crewmate.getTitle(crew.title)?.name}</div>
+            <div>{Crewmate.getClass(crewmate.crewClass)?.name}</div>
+            <div>{Crewmate.getTitle(crewmate.title)?.name}</div>
           </FooterStats>
         </CardFooter>
       )}
