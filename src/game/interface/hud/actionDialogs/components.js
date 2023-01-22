@@ -239,14 +239,24 @@ const StatRow = styled.div`
     white-space: nowrap;
     &:after {
       display: none;
-      ${p => p.direction >= 0 && `
-        content: " ▲";
-        color: ${p.direction > 0 ? p.theme.colors.success : 'transparent'};
-      `}
-      ${p => p.direction < 0 && `
-        content: " ▼";
-        color: ${p.theme.colors.error};
-      `}
+      ${p => {
+        if (p.direction === 0) {
+          return `
+            content: " ▲";
+            color: transparent;
+          `;
+        }
+        else if ((p.isTimeStat ? -1 : 1) * p.direction > 0) {
+          return `
+            content: " ▲";
+            color: ${p.isTimeStat ? p.theme.colors.error : p.theme.colors.success};
+          `;
+        }
+        return `
+          content: " ▼";
+          color: ${!p.isTimeStat ? p.theme.colors.error : p.theme.colors.success};
+        `;
+      }}
     }
   }
 `;
@@ -1373,7 +1383,6 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
 };
 
 export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, selectedSample, status, usableSamples }) => {
-
   const remainingAfterExtraction = useMemo(() => selectedSample
     ? selectedSample.remainingYield - amount
     : null
@@ -1388,23 +1397,34 @@ export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, 
 
   return (
     <Section>
-      <SectionTitle><ChevronRightIcon /> Core Sample</SectionTitle>
+      <SectionTitle><ChevronRightIcon /> Extraction Target</SectionTitle>
       <SectionBody highlight={status === 'AFTER'}>
         {selectedSample ? (
           <ResourceWithData>
             <ResourceImage resource={resources[selectedSample.resourceId]} />
             <label>
-              <h3>{resources[selectedSample.resourceId].name} Deposit</h3>
+              <h3>
+                {resources[selectedSample.resourceId].name} Deposit #{selectedSample.sampleId.toLocaleString()}
+              </h3>
               <div>
-                <b style={status === 'BEFORE' ? { color: 'white', fontWeight: 'normal' } : {}}><ResourceIcon /> {formatSampleMass(getTonnage(amount))}</b> tonnes
+                {status === 'BEFORE' && (
+                  <>
+                    <b style={{ color: 'white', fontWeight: 'normal' }}>
+                      <ResourceIcon /> {formatSampleMass(getTonnage(selectedSample.remainingYield))}
+                    </b> tonnes {selectedSample.remainingYield < selectedSample.initialYield ? 'remaining' : ''}
+                  </>
+                )}
+                {status !== 'BEFORE' && (
+                  <>
+                    <b><ResourceIcon /> {formatSampleMass(getTonnage(amount))}</b> tonnes
+                  </>
+                )}
               </div>
-              {status === 'BEFORE' && (
-                <footer>
-                  {remainingAfterExtraction === 0
-                      ? 'Deposit will be depleted after Extraction'
-                      : `${formatSampleMass(getTonnage(remainingAfterExtraction))} tonnes will remain after Extraction`}
-                </footer>
-              )}
+              <footer style={status === 'BEFORE' ? {} : { color: '#777' }}>
+                {remainingAfterExtraction === 0
+                    ? 'Deposit will be depleted following this Extraction'
+                    : `${formatSampleMass(getTonnage(remainingAfterExtraction))} tonnes will remain following this Extraction`}
+              </footer>
             </label>
           </ResourceWithData>
         ) : (
@@ -1837,13 +1857,14 @@ export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, s
   );
 };
 
-const ActionDialogStat = ({ stat: { label, value, direction, tooltip, warning }}) => {
+const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip, warning }}) => {
   const refEl = useRef();
   const [hovered, setHovered] = useState();
   return (
     <StatRow
       key={label}
       direction={direction}
+      isTimeStat={isTimeStat || undefined}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       ref={refEl}>
@@ -2020,7 +2041,7 @@ const BonusItem = styled.div`
       color: ${p.direction > 0 ? p.theme.colors.success : p.theme.colors.error};
       ${!p.noIcon && `
         &:after {
-          content: "${p.direction > 0 ? '▲' : '▼'}";
+          content: "${(p.flip ? -1 : 1) * p.direction > 0 ? '▲' : '▼'}";
           display: inline-block;
           font-size: 7px;
           padding-left: 3px;
@@ -2041,8 +2062,9 @@ const BonusesFootnote = styled.div`
   margin-top: -5px;
 `;
 
-const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleValue }) => {
+const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleValue, isTimeStat }) => {
   const { titles, traits, totalBonus } = bonus;
+  const timeMult = isTimeStat ? -1 : 1;
   const titleDirection = getBonusDirection({ totalBonus });
 
   const bonuses = useMemo(() => {
@@ -2052,7 +2074,7 @@ const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleVa
       x.push({
         text: `${Crewmate.getClass(classId)?.name} on Crew (x${matches})`,
         multiplier,
-        direction: 1
+        direction: multiplier > 1
       });
     }
     Object.keys(titles || {}).map((titleId) => {
@@ -2060,7 +2082,7 @@ const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleVa
       x.push({
         text: `${Crewmate.getTitle(titleId)?.name} on Crew (x${matches})`,
         bonus,
-        direction: getBonusDirection({ totalBonus: 1 - bonus }, false)
+        direction: getBonusDirection({ totalBonus: 1 + timeMult * bonus }, !isTimeStat)
       });
     });
     Object.keys(traits || {}).map((traitId) => {
@@ -2068,7 +2090,7 @@ const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleVa
       x.push({
         text: `${Crewmate.getTrait(traitId)?.name} (x${matches})`,
         bonus,
-        direction: getBonusDirection({ totalBonus: 1 - bonus }, false)
+        direction: getBonusDirection({ totalBonus: 1 + timeMult * bonus }, !isTimeStat)
       });
     });
     return x.sort((a, b) => b.bonus - a.bonus);
@@ -2080,16 +2102,24 @@ const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleVa
         <>
           <BonusesHeader>Bonuses</BonusesHeader>
           <BonusesSection>
-            <BonusesSectionHeader direction={titleDirection}>
+            <BonusesSectionHeader direction={titleDirection} flip={isTimeStat}>
               <label>{title}</label>
               <span>{titleValue}</span>
             </BonusesSectionHeader>
-            {bonuses.map(({ text, bonus, multiplier, direction }) => (
-              <BonusItem key={text} direction={direction} noIcon>
-                <label>{text}</label>
-                <span>{multiplier ? `x${multiplier}` : `${-100 * bonus}%`}</span>
-              </BonusItem>
-            ))}
+            {bonuses.map(({ text, bonus, multiplier, direction }) => {
+              let bonusLabel;
+              if (multiplier) {
+                bonusLabel = `x${isTimeStat ? (Math.round(1000 / multiplier) / 1000) : multiplier}`;
+              } else {
+                bonusLabel = `${timeMult > 0 ? '+' : '-'}${100 * bonus}%`;
+              }
+              return (
+                <BonusItem key={text} direction={direction} noIcon>
+                  <label>{text}</label>
+                  <span>{bonusLabel}</span>
+                </BonusItem>
+              );
+            })}
           </BonusesSection>
         </>
       )}
@@ -2137,6 +2167,7 @@ export const TimeBonusTooltip = ({ bonus, title, totalTime, ...props }) => (
   <BonusTooltip
     {...props}
     bonus={bonus}
+    isTimeStat
     title={title}
     titleValue={formatTimer(totalTime)}
   />
@@ -2148,6 +2179,7 @@ export const TravelBonusTooltip = ({ bonus, totalTime, tripDetails, ...props }) 
       {...props}
       bonus={bonus}
       details={{ title: "Trip Details", rows: tripDetails }}
+      isTimeStat
       title="Crew Travel Time"
       titleValue={formatTimer(totalTime)}
     />

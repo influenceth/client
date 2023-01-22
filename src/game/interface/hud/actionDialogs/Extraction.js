@@ -170,6 +170,7 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
       direction: getBonusDirection(crewTravelBonus),
+      isTimeStat: true,
       tooltip: (
         <TravelBonusTooltip
           bonus={crewTravelBonus}
@@ -182,6 +183,7 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
       label: 'Extraction Time',
       value: formatTimer(extractionTime),
       direction: getBonusDirection(extractionBonus),
+      isTimeStat: true,
       tooltip: extractionBonus.totalBonus !== 1 && extractionTime > 0 && (
         <TimeBonusTooltip
           bonus={extractionBonus}

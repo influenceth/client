@@ -87,6 +87,7 @@ const PlanConstruction = ({ asteroid, plot, ...props }) => {
     {
       label: 'Abandonment Timer',
       value: formatTimer(Lot.GRACE_PERIOD),
+      isTimeStat: true,
       warning: (
         <>
           Building sites become <b>Abandoned</b> if they have not started construction by the time the <b>Abandonment Timer</b> expires.

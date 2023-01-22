@@ -105,6 +105,7 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
       direction: getBonusDirection(crewTravelBonus),
+      isTimeStat: true,
       tooltip: (
         <TravelBonusTooltip
           bonus={crewTravelBonus}
@@ -116,7 +117,8 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
     {
       label: 'Deconstruction Time',
       value: formatTimer(constructionTime),
-      direction: 0
+      direction: 0,
+      isTimeStat: true,
     }
   ], []);
 

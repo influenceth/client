@@ -158,6 +158,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
       direction: getBonusDirection(crewTravelBonus),
+      isTimeStat: true,
       tooltip: (
         <TravelBonusTooltip
           bonus={crewTravelBonus}
@@ -170,6 +171,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
       label: 'Sample Time',
       value: formatTimer(sampleTime),
       direction: getBonusDirection(sampleTimeBonus),
+      isTimeStat: true,
       tooltip: sampleTimeBonus.totalBonus !== 1 && (
         <TimeBonusTooltip
           bonus={sampleTimeBonus}

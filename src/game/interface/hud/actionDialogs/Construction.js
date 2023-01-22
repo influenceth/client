@@ -107,6 +107,7 @@ const Construct = ({ asteroid, plot, ...props }) => {
     {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
+      isTimeStat: true,
       direction: getBonusDirection(crewTravelBonus),
       tooltip: (
         <TravelBonusTooltip
@@ -119,6 +120,7 @@ const Construct = ({ asteroid, plot, ...props }) => {
     {
       label: 'Construction Time',
       value: formatTimer(constructionTime),
+      isTimeStat: true,
       direction: getBonusDirection(constructionBonus),
       tooltip: constructionBonus.totalBonus !== 1 && (
         <TimeBonusTooltip

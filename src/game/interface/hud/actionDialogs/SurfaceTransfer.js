@@ -152,6 +152,7 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
       direction: getBonusDirection(crewTravelBonus),
+      isTimeStat: true,
       tooltip: (
         <TravelBonusTooltip
           bonus={crewTravelBonus}
@@ -164,6 +165,7 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
       label: 'Transport Time',
       value: formatTimer(transportTime),
       direction: getBonusDirection(crewTravelBonus),
+      isTimeStat: true,
       tooltip: (
         <TimeBonusTooltip
           bonus={crewTravelBonus}
