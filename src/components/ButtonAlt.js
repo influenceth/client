@@ -39,12 +39,12 @@ const StyledButton = styled.button`
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: ${p => p.sizeParams.font}px;
+  min-width: ${p => p.sizeParams.width}px;
   padding: 3px; /* must match loadingCss.top */
   pointer-events: auto;
   position: relative;
   text-transform: uppercase;
   transition: all 300ms ease;
-  width: ${p => p.sizeParams.width}px;
 
   & > svg {
     max-height: 24px;

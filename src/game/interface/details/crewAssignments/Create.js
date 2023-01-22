@@ -336,7 +336,6 @@ const RandomizeControls = styled(IconButton)`
 
 const RandomizeButton = styled(Button)`
   margin: 0 8px;
-  width: auto;
 `;
 
 const RerollContainer = styled.div`
