@@ -7,6 +7,7 @@ import useStore from '~/hooks/useStore';
 import usePlot from '~/hooks/usePlot';
 import { formatResourceAmount, ResourceImage } from './actionDialogs/components';
 import { useResourceAssets } from '~/hooks/useAssets';
+import { formatFixed } from '~/lib/utils';
 
 const Wrapper = styled.div`
   display: flex;
@@ -144,7 +145,7 @@ const PlotInventory = ({ active }) => {
           <StorageTotal>
             <label>In Use:</label>
             <span>
-              <b>{Math.ceil(activeUse).toLocaleString()}</b> / {Inventory.CAPACITIES[1][1][massOrVolume || 'mass'].toLocaleString()}{' '}
+              <b>{activeUse > 0 && activeUse < 0.05 ? '> ' : ''}{formatFixed(activeUse, 1)}</b> / {Inventory.CAPACITIES[1][1][massOrVolume || 'mass'].toLocaleString()}{' '}
               {massOrVolume === 'volume' ? <>m<sup>3</sup></> : 'tonnes'}
             </span>
           </StorageTotal>
@@ -152,7 +153,7 @@ const PlotInventory = ({ active }) => {
             <StorageTotal>
               <label>Reserved:</label>
               <span>
-                <b>{Math.ceil(reservedUse).toLocaleString()}</b> / {Inventory.CAPACITIES[1][1][massOrVolume || 'mass'].toLocaleString()}{' '}
+                <b>{reservedUse > 0 && reservedUse < 0.05 ? '> ' : ''}{formatFixed(reservedUse, 1)}</b> / {Inventory.CAPACITIES[1][1][massOrVolume || 'mass'].toLocaleString()}{' '}
                 {massOrVolume === 'volume' ? <>m<sup>3</sup></> : 'tonnes'}
               </span>
             </StorageTotal>
