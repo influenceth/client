@@ -150,8 +150,8 @@ const AvatarMenu = (props) => {
     if (!account) return ['Login', '/launcher/account'];
     else if (!captain) return ['Start Your Crew', '/owned-crew'];
     else return [null, '/owned-crew'];
-  }, []);
-  
+  }, [ account, captain ]);
+
   useEffect(() => ReactTooltip.rebuild(), [tooltip]);
 
   if (crewIsLoading) return null;
@@ -161,7 +161,7 @@ const AvatarMenu = (props) => {
       <AvatarWrapper
         data-tip={tooltip}
         data-for="global"
-        data-place="right" 
+        data-place="right"
         onClick={() => history.push(destination)}>
         <Avatar captainless={!captain}>
           {captain && (
