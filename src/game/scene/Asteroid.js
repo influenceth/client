@@ -611,7 +611,7 @@ const Asteroid = (props) => {
   }, [mapResourceId, terrainInitialized, !asteroidData?.resources]);
 
   useEffect(() => {
-    if (selectedPlot && mapResourceId) {
+    if (asteroidData && selectedPlot && mapResourceId) {
       const { i: asteroidId, resourceSeed } = asteroidData;
       const { plotId: lotId } = selectedPlot;
       if (asteroidData.resources) {
@@ -627,7 +627,7 @@ const Asteroid = (props) => {
         console.log('resourceId:', mapResourceId, 'lotId:', selectedPlot.plotId, 'abundance:', abundance);
       }
     }
-  }, [selectedPlot, mapResourceId]);
+  }, [asteroidData && selectedPlot, mapResourceId]);
 
   useEffect(() => {
     if (geometry.current && terrainUpdateNeeded) {

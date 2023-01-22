@@ -39,7 +39,19 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
   const crewMembers = currentExtraction?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
-  const extractionBonus = getCrewAbilityBonus(4, crewMembers);
+  const extractionBonus = useMemo(() => {
+    const bonus = getCrewAbilityBonus(4, crewMembers);
+    const asteroidBonus = Asteroid.getBonusByResource(asteroid?.bonuses, selectedCoreSample?.resourceId);
+    if (asteroidBonus.totalBonus !== 1) {
+      bonus.totalBonus *= asteroidBonus.totalBonus;
+      bonus.others = [{
+        text: `${resources[selectedCoreSample?.resourceId].category} Yield Bonus`,
+        bonus: asteroidBonus.totalBonus - 1,
+        direction: 1
+      }];
+    }
+    return bonus;
+  }, [asteroid?.bonuses, crewMembers, selectedCoreSample?.resourceId]);
 
   const usableSamples = useMemo(() => {
     return (plot?.coreSamples || []).filter((c) => c.remainingYield > 0 && c.status >= CoreSample.STATUS_FINISHED);
@@ -80,20 +92,15 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
     return resources[selectedCoreSample.resourceId];
   }, [selectedCoreSample]);
 
-  // TODO: extract asteroid bonuses to a useMemo and use asteroidBonus.bonuses for display in bonus explanations
   const extractionTime = useMemo(() => {
     if (!selectedCoreSample) return 0;
-    let totalBonus = extractionBonus.totalBonus;
-    const asteroidBonus = Asteroid.getBonusByResource(asteroid.bonuses, selectedCoreSample?.resourceId);
-    totalBonus *= asteroidBonus?.totalBonus;
-
     return Extraction.getExtractionTime(
       amount,
-      selectedCoreSample?.remainingYield || 0,
-      selectedCoreSample?.initialYield || 0,
-      totalBonus
+      selectedCoreSample.remainingYield || 0,
+      selectedCoreSample.initialYield || 0,
+      extractionBonus.totalBonus
     );
-  }, [asteroid?.bonuses, amount, extractionBonus, selectedCoreSample]);
+  }, [amount, extractionBonus, selectedCoreSample]);
 
   // TODO: ...
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {

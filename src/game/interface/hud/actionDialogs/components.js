@@ -1258,7 +1258,6 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
       makeUpdate[resourceId] -= amount;
       if (makeUpdate[resourceId] <= 0) delete makeUpdate[resourceId];
     }
-    console.log({ makeUpdate });
     setNewSelectedItems(makeUpdate);
   }, [newSelectedItems]);
 
@@ -1274,7 +1273,7 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
   }, [newSelectedItems, unselectedItems]);
 
   return (
-    <PopperBody onBlur={(e) => console.log('onBLUR')}>
+    <PopperBody>
       {/* TODO: see mockup for title area */}
       <div style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
         <TransferSelectionTableWrapper>
@@ -2062,7 +2061,7 @@ const BonusesFootnote = styled.div`
 `;
 
 const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleValue, isTimeStat }) => {
-  const { titles, traits, totalBonus } = bonus;
+  const { titles, traits, others, totalBonus } = bonus;
   const timeMult = isTimeStat ? -1 : 1;
   const titleDirection = getBonusDirection({ totalBonus });
 
@@ -2092,6 +2091,10 @@ const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleVa
         direction: getBonusDirection({ totalBonus: 1 + timeMult * bonus }, !isTimeStat)
       });
     });
+    (others || []).forEach(({ text, bonus, direction }) => {
+      x.push({ text, bonus, direction });
+    });
+
     return x.sort((a, b) => b.bonus - a.bonus);
   }, [titles, traits]);
 
@@ -2110,7 +2113,7 @@ const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleVa
               if (multiplier) {
                 bonusLabel = `x${isTimeStat ? (Math.round(1000 / multiplier) / 1000) : multiplier}`;
               } else {
-                bonusLabel = `${timeMult > 0 ? '+' : '-'}${100 * bonus}%`;
+                bonusLabel = `${timeMult > 0 ? '+' : '-'}${formatFixed(100 * bonus, 1)}%`;
               }
               return (
                 <BonusItem key={text} direction={direction} noIcon>
