@@ -1274,7 +1274,7 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
   }, [newSelectedItems, unselectedItems]);
 
   return (
-    <PopperBody>
+    <PopperBody onBlur={(e) => console.log('onBLUR')}>
       {/* TODO: see mockup for title area */}
       <div style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
         <TransferSelectionTableWrapper>
@@ -1366,7 +1366,7 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
         )}
         {status === 'BEFORE' && improvableSamples?.length > 1 && (
           <div>
-            <Poppable label="Select" buttonWidth="135px" closeOnChange={clicked} title="Select Improvable Sample">
+            <Poppable label="Select" closeOnChange={clicked} title="Select Improvable Sample">
               <CoreSampleSelection plot={plot} onClick={onClick} options={improvableSamples} resources={resources} />
             </Poppable>
           </div>
@@ -1435,7 +1435,7 @@ export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, 
         )}
         {status === 'BEFORE' && (
           <div>
-            <Poppable label="Select" buttonWidth="135px" closeOnChange={clicked} title="Select Core Sample">
+            <Poppable label="Select" closeOnChange={clicked} title="Select Core Sample">
               <CoreSampleSelection plot={plot} onClick={onClick} options={usableSamples} resources={resources} />
             </Poppable>
           </div>
@@ -1493,7 +1493,7 @@ export const ToolSection = ({ resource, sourcePlot }) => {
         )}
         {/*
         <div>
-          <Poppable label="Source" buttonWidth="135px">
+          <Poppable label="Source">
             TODO: select where to get the tool from
           </Poppable>
         </div>
@@ -1504,7 +1504,7 @@ export const ToolSection = ({ resource, sourcePlot }) => {
 }
 
 const SelectionPopper = ({ closeOnChange, inventory, onSelectionCompleted, resources, selectedItems }) => (
-  <Poppable label="Select" title="Items to Transfer" closeOnChange={closeOnChange} buttonWidth="135px" contentHeight={360} contentWidth={700}>
+  <Poppable label="Select" title="Items to Transfer" closeOnChange={closeOnChange} contentHeight={360} contentWidth={700}>
     <TransferSelection
       inventory={inventory}
       onComplete={onSelectionCompleted}
@@ -1635,7 +1635,7 @@ export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, 
                 <TargetIcon />
               </IconButtonRounded>
             */}
-            <Poppable label="Select" buttonWidth="135px" title="Select Destination" closeOnChange={clicked}>
+            <Poppable label="Select" title="Select Destination" closeOnChange={clicked}>
               <DestinationSelection asteroid={asteroid} onClick={onClick} originPlotId={originPlot.i} />
             </Poppable>
           </div>
@@ -1689,7 +1689,7 @@ export const BuildingPlanSection = ({ building, canceling, gracePeriodEnd, onBui
               </AbandonmentTimer>
             )}
             {!gracePeriodEnd && !canceling && (
-              <Poppable label="Select" closeOnChange={clicked} buttonWidth="135px" title="Site Plan">
+              <Poppable label="Select" closeOnChange={clicked} title="Site Plan">
                 <BlueprintSelection onBuildingSelected={_onBuildingSelected} />
               </Poppable>
             )}
