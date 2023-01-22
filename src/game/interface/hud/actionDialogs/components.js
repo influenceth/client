@@ -1349,9 +1349,10 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
           <ResourceWithData>
             <ResourceImage resource={resource} />
             <label>
-              <h3>{resource?.name} Deposit{status !== 'BEFORE' ? (overrideTonnage ? ' (Improved)' : ' (Original)') : ''}</h3>
+              <h3>{resource?.name} Deposit #{selectedSample.sampleId.toLocaleString()}{(status === 'AFTER' && overrideTonnage) ? ' (Improved)' : ''}</h3>
               <div>
-                <b><ResourceIcon /> {formatSampleMass(overrideTonnage || (selectedSample?.remainingYield * resource.massPerUnit))}</b> tonnes
+                <b><ResourceIcon /> {formatSampleMass(overrideTonnage || (selectedSample?.remainingYield * resource.massPerUnit))}</b>
+                {' '}tonnes {status !== 'BEFORE' && !overrideTonnage ? ' (before improvement)' : ''}
               </div>
             </label>
           </ResourceWithData>
@@ -1457,6 +1458,7 @@ export const RawMaterialSection = ({ abundance, resource, tonnage, status }) => 
           <ResourceWithData>
             <ResourceImage resource={resource} />
             <label>
+              {/* TODO: adding sampleId here might be most consistent with other dialogs */}
               <h3>{resource.name}{tonnage !== undefined ? ' Deposit Discovered' : ''}</h3>
               {tonnage !== undefined
                 ? <div><b><ResourceIcon /> {formatSampleMass(tonnage)}</b> tonnes</div>
