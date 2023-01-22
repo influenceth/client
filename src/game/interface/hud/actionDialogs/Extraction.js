@@ -1,69 +1,17 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
-import {
-  FiCrosshair as TargetIcon,
-  FiSquare as UncheckedIcon,
-  FiCheckSquare as CheckedIcon
-} from 'react-icons/fi';
-import { RingLoader } from 'react-spinners';
-import DataTable, { createTheme } from 'react-data-table-component';
-import { CoreSample, Crew, Asteroid, Extraction, Lot, Inventory } from '@influenceth/sdk';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { CoreSample, Asteroid, Extraction } from '@influenceth/sdk';
 
-import constructionBackground from '~/assets/images/modal_headers/Construction.png';
-import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
-import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
-import Button from '~/components/ButtonAlt';
-import ButtonRounded from '~/components/ButtonRounded';
-import Dialog from '~/components/Dialog';
-import Dropdown from '~/components/Dropdown';
-import IconButton from '~/components/IconButton';
-import {
-  CancelBlueprintIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  CloseIcon,
-  ConstructIcon,
-  CoreSampleIcon,
-  CrewIcon,
-  DeconstructIcon,
-  ExtractionIcon,
-  ImproveCoreSampleIcon,
-  LayBlueprintIcon,
-  LocationPinIcon,
-  PlusIcon,
-  ResourceIcon,
-  SurfaceTransferIcon,
-  TimerIcon,
-  WarningOutlineIcon
-} from '~/components/Icons';
-import Poppable from '~/components/Popper';
-import SliderInput from '~/components/SliderInput';
-import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
+import { ExtractionIcon } from '~/components/Icons';
+import { useResourceAssets } from '~/hooks/useAssets';
 import useCrew from '~/hooks/useCrew';
-import useStore from '~/hooks/useStore';
-import theme from '~/theme';
-import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useExtractionManager from '~/hooks/useExtractionManager';
-import useInterval from '~/hooks/useInterval';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  BlueprintSelection,
-  CoreSampleSelection,
-  DestinationSelection,
-
-  BuildingPlanSection,
-  BuildingRequirementsSection,
-  DeconstructionMaterialsSection,
   DestinationPlotSection,
-  ExistingSampleSection,
   ExtractionAmountSection,
   ExtractSampleSection,
-  ItemSelectionSection,
-  RawMaterialSection,
-  ToolSection,
 
   ActionDialogFooter,
   ActionDialogHeader,
@@ -72,13 +20,9 @@ import {
 
   getBonusDirection,
   formatSampleMass,
-  formatSampleVolume,
   formatResourceVolume,
-  getTripDetails,
   TravelBonusTooltip,
   TimeBonusTooltip,
-  MaterialBonusTooltip,
-  ActionDialogLoader,
 } from './components';
 import usePlot from '~/hooks/usePlot';
 
@@ -132,21 +76,24 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
   }, [currentExtractionDestinationPlot]);
 
   const resource = useMemo(() => {
-    if (selectedCoreSample) return resources[selectedCoreSample.resourceId];
-    return null;
+    if (!selectedCoreSample) return null;
+    return resources[selectedCoreSample.resourceId];
   }, [selectedCoreSample]);
 
+  // TODO: extract asteroid bonuses to a useMemo and use asteroidBonus.bonuses for display in bonus explanations
   const extractionTime = useMemo(() => {
-    if (selectedCoreSample) {
-      return Extraction.getExtractionTime(
-        amount,
-        selectedCoreSample?.remainingYield || 0,
-        selectedCoreSample?.initialYield || 0,
-        extractionBonus.totalBonus
-      )
-    }
-    return 0;
-  }, [amount, extractionBonus, selectedCoreSample]);
+    if (!selectedCoreSample) return 0;
+    let totalBonus = extractionBonus.totalBonus;
+    const asteroidBonus = Asteroid.getBonusByResource(asteroid.bonuses, selectedCoreSample?.resourceId);
+    totalBonus *= asteroidBonus?.totalBonus;
+
+    return Extraction.getExtractionTime(
+      amount,
+      selectedCoreSample?.remainingYield || 0,
+      selectedCoreSample?.initialYield || 0,
+      totalBonus
+    );
+  }, [asteroid?.bonuses, amount, extractionBonus, selectedCoreSample]);
 
   // TODO: ...
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
@@ -167,10 +114,8 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
   }, [asteroid?.i, plot?.i, destinationPlot?.i]);
 
   const transportTime = useMemo(() => {
-    if (destinationPlot) {
-      return Asteroid.getLotTravelTime(asteroid?.i, plot?.i, destinationPlot?.i, crewTravelBonus.totalBonus) || 0;
-    }
-    return 0;
+    if (!destinationPlot) return 0;
+    return Asteroid.getLotTravelTime(asteroid?.i, plot?.i, destinationPlot?.i, crewTravelBonus.totalBonus) || 0;
   }, [asteroid?.i, plot?.i, destinationPlot?.i, crewTravelBonus]);
 
   const stats = useMemo(() => ([
@@ -285,8 +230,8 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
 
       {status === 'BEFORE' && (
         <ExtractionAmountSection
-          amount={amount}
-          extractionTime={extractionTime}
+          amount={amount || 0}
+          extractionTime={extractionTime || 0}
           min={0}
           max={selectedCoreSample?.remainingYield || 0}
           resource={resource}

@@ -7,7 +7,7 @@ import useBook from '~/hooks/useBook';
 import useCrew from '~/hooks/useCrew';
 import useStorySession from '~/hooks/useStorySession';
 import useStore from '~/hooks/useStore';
-import Button from '~/components/Button';
+import Button from '~/components/ButtonAlt';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
@@ -399,7 +399,7 @@ const CrewAssignment = (props) => {
                     <b>{crew.name || `Crew Member #${crew.i}`}</b>
                     {' '}<CrewClassIcon crewClass={crew.crewClass} />
                   </div>
-                  <div>{Crewmate.toClass(crew.crewClass)?.name || 'Unknown Class'}</div>
+                  <div>{Crewmate.getClass(crew.crewClass)?.name || 'Unknown Class'}</div>
                 </MobileCrewContainer>
               )}
             </AboveFold>

@@ -8,7 +8,7 @@ import {
 } from 'react-icons/bi';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 
-import Button from '~/components/Button';
+import Button from '~/components/ButtonAlt';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CopyReferralLink from '~/components/CopyReferralLink';
 import CrewCard from '~/components/CrewCard';
@@ -329,25 +329,20 @@ const NameSection = styled.div`
   }
 `;
 
+const RandomizeControls = styled(IconButton)`
+  margin-right: 0;
+  border: 0;
+`;
+
+const RandomizeButton = styled(Button)`
+  margin: 0 8px;
+`;
+
 const RerollContainer = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
   margin-top: 10px;
-
-  & > button {
-    margin-right: 0;
-    &:nth-child(odd) {
-      border: 0;
-    }
-    &:nth-child(2) {
-      margin: 0 8px;
-      padding-left: 20px;
-      padding-right: 20px;
-      text-transform: uppercase;
-      width: auto;
-    }
-  }
 `;
 
 const RecruitSection = styled.div`
@@ -773,24 +768,24 @@ const CrewAssignmentCreate = (props) => {
                       pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
                       placeholder="Enter Name" />
                     <RerollContainer>
-                      <IconButton
+                      <RandomizeControls
                         onClick={rollBack}
                         disabled={finalizing || featureSelection === 0}
                         style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
                         <UndoIcon />
-                      </IconButton>
+                      </RandomizeControls>
 
-                      <Button
+                      <RandomizeButton
                         disabled={finalizing}
                         lessTransparent
-                        onClick={rerollAppearance}>Randomize Appearance</Button>
+                        onClick={rerollAppearance}>Randomize Appearance</RandomizeButton>
 
-                      <IconButton
+                      <RandomizeControls
                         onClick={rollForward}
                         disabled={finalizing || featureSelection === featureOptions.length - 1}
                         style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
                         <RedoIcon />
-                      </IconButton>
+                      </RandomizeControls>
                     </RerollContainer>
                   </NameSection>
                 )}

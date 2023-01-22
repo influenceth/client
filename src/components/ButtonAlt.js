@@ -7,11 +7,6 @@ import useStore from '~/hooks/useStore';
 import Badge from '~/components/Badge';
 import theme, { getContrastText } from '~/theme';
 
-const getColor = () => {
-  console.log('getting color');
-  return 'white';
-};
-
 const InnerContainer = styled.div`
   align-items: center;
   clip-path: polygon(
@@ -44,12 +39,12 @@ const StyledButton = styled.button`
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: ${p => p.sizeParams.font}px;
+  min-width: ${p => p.sizeParams.width}px;
   padding: 3px; /* must match loadingCss.top */
   pointer-events: auto;
   position: relative;
   text-transform: uppercase;
   transition: all 300ms ease;
-  width: ${p => p.sizeParams.width}px;
 
   & > svg {
     max-height: 24px;
@@ -58,6 +53,7 @@ const StyledButton = styled.button`
 
   & ${InnerContainer} {
     min-height: ${p => p.sizeParams.height}px;
+    padding: 0 10px;
   }
 
   ${p => p.disabled
