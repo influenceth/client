@@ -1804,7 +1804,7 @@ export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, s
   const progress = useMemo(() => {
     return startTime && targetTime ? Math.min(100, 100 * (chainTime - startTime) / (targetTime - startTime)) : 0;
   }, [chainTime, startTime, targetTime]);
-  
+
   return (
     <>
       {status === 'DURING' && (
@@ -2071,7 +2071,7 @@ const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleVa
       x.push({
         text: `${Crewmate.getClass(classId)?.name} on Crew (x${matches})`,
         multiplier,
-        direction: multiplier > 1
+        direction: getBonusDirection({ totalBonus: multiplier })
       });
     }
     Object.keys(titles || {}).map((titleId) => {

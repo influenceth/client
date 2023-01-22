@@ -7,11 +7,6 @@ import useStore from '~/hooks/useStore';
 import Badge from '~/components/Badge';
 import theme, { getContrastText } from '~/theme';
 
-const getColor = () => {
-  console.log('getting color');
-  return 'white';
-};
-
 const InnerContainer = styled.div`
   align-items: center;
   clip-path: polygon(
@@ -58,6 +53,7 @@ const StyledButton = styled.button`
 
   & ${InnerContainer} {
     min-height: ${p => p.sizeParams.height}px;
+    padding: 0 10px;
   }
 
   ${p => p.disabled

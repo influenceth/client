@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 
-import Button from '~/components/Button';
+import Button from '~/components/ButtonAlt';
 import CrewCard from '~/components/CrewCard';
 import CrewInfoPane from '~/components/CrewInfoPane';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';

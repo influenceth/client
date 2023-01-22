@@ -50,7 +50,7 @@ const getInvalidations = (event, returnValues, linked) => {
       ],
       Crew_CompositionChanged: [
         ['crews', 'owned'],
-      ], 
+      ],
       Crewmate_FeaturesSet: [
         ['crewmembers', returnValues.crewId],
         ['crewmembers', 'owned'],
@@ -143,12 +143,11 @@ const getInvalidations = (event, returnValues, linked) => {
 
     return map[rewriteEvent || event] || [];
   } catch (e) {/* no-op */}
-  
+
   return [];
 };
 
 const EventsContext = createContext();
-
 const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
 
 export function EventsProvider({ children }) {
@@ -169,7 +168,7 @@ export function EventsProvider({ children }) {
     newEvents.forEach((e) => {
       // TODO: ws-emitted events seem to have _id set instead of id
       if (e._id && !e.id) e.id = e._id;
-      
+
       // rewrite eventNames as necessary (probably only ever needed for `Transfer`)
       let eventName = e.event;
       if (e.event === 'Transfer') {
