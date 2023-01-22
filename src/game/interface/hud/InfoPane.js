@@ -417,14 +417,14 @@ const InfoPane = () => {
                     <label>Available Capacity</label>
                     <div>
                       {constructionStatus === 'OPERATIONAL' ? formatFixed(
-                        (100 - 100 * (
+                        (100 - Math.ceil(1000 * (
                           (plot.building.inventories && plot.building.inventories[1])
                             ? Math.max(
                               1E-6 * ((plot.building.inventories[1]?.mass || 0) + (plot.building.inventories[1]?.reservedMass || 0)) / Inventory.CAPACITIES[1][1].mass,
                               1E-6 * ((plot.building.inventories[1]?.volume || 0) + (plot.building.inventories[1]?.reservedVolume || 0)) / Inventory.CAPACITIES[1][1].volume,
                             )
                             : 0
-                          )
+                          )) / 10
                         ),
                         1
                       ) : 0}%
