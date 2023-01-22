@@ -94,7 +94,7 @@ const UnplanConstruction = ({ asteroid, plot, ...props }) => {
         action={{
           actionIcon: <CancelBlueprintIcon />,
           headerBackground: constructionBackground,
-          label: 'Cancel Building Site',
+          label: 'Unplan Building Site',
         }}
         status="BEFORE"
         {...props} />
@@ -109,7 +109,7 @@ const UnplanConstruction = ({ asteroid, plot, ...props }) => {
       <ActionDialogFooter
         {...props}
         buttonsLoading={constructionStatus === 'CANCELING'}
-        goLabel="Abandon Site Plan"
+        goLabel="Unplan Site"
         onGo={unplanConstruction}
         status={constructionStatus === 'CANCELING' ? 'DURING' : 'BEFORE'} />
     </>

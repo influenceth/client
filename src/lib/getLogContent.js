@@ -153,7 +153,7 @@ const entries = {
     icon: <ConstructIcon />,
     content: (
       <>
-        <span>{Capable.TYPES[e.returnValues.capableType]?.name} plan completed on </span>
+        <span>{Capable.TYPES[e.returnValues.capableType]?.name} site plan completed on </span>
         <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
       </>
     ),

@@ -119,7 +119,7 @@ const PlanConstruction = ({ asteroid, plot, ...props }) => {
         action={{
           actionIcon: <LayBlueprintIcon />,
           headerBackground: constructionBackground,
-          label: 'Place Building Site',
+          label: 'Plan Building Site',
           completeLabel: 'Building Site',
         }}
         status="BEFORE"
@@ -136,7 +136,7 @@ const PlanConstruction = ({ asteroid, plot, ...props }) => {
       <ActionDialogFooter
         buttonsLoading={constructionStatus === 'PLANNING'}
         goDisabled={!capableType}
-        goLabel="Place Site"
+        goLabel="Plan Site"
         onGo={() => planConstruction(capableType)}
         status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'}
         {...props} />

@@ -394,7 +394,7 @@ const formatTx = (item) => {
       break;
     case 'UNPLAN_CONSTRUCTION':
       formatted.icon = <CancelBlueprintIcon />;
-      formatted.label = 'Cancel Building Plans';
+      formatted.label = 'Unplan Building Site';
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;
       formatted.onClick = ({ openDialog }) => {

@@ -5,8 +5,8 @@ import useConstructionManager from '~/hooks/useConstructionManager';
 import ActionButton from './ActionButton';
 
 const labelDict = {
-  PLANNED: 'Cancel Blueprint',
-  CANCELING: 'Canceling...'
+  PLANNED: 'Unplan Building Site',
+  CANCELING: 'Unplanning...'
 };
 
 const CancelBlueprint = ({ asteroid, plot, onSetAction, _disabled }) => {
