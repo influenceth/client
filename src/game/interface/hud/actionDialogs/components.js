@@ -240,7 +240,7 @@ const StatRow = styled.div`
     &:after {
       display: none;
       ${p => {
-        if (p.direction === 0) {
+        if (!p.direction) {
           return `
             content: " ▲";
             color: transparent;
@@ -1079,7 +1079,7 @@ const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
           <tbody>
             {options.sort((a, b) => b.remainingYield - a.remainingYield).map((sample, i) => (
               <tr key={`${sample.resourceId}_${sample.sampleId}`} onClick={onClick(sample)}>
-                <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name}</td>
+                <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name} #{sample.sampleId.toLocaleString()}</td>
                 <td>{formatSampleMass(sample.remainingYield * resources[sample.resourceId].massPerUnit)} tonnes</td>
               </tr>
             ))}
@@ -1212,13 +1212,12 @@ const TransferSelectionRow = ({ onUpdate, quanta, resource, selecting }) => {
     }
   }, [amount, quanta, resourceId]);
 
-  const volume = useMemo(() => quanta * resource.volumePerUnit, [quanta]);
   return (
     <tr key={resourceId} onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent}>
       <td>{resource.name}</td>
       <td>{resource.category}</td>
-      <td>{formatSampleVolume(volume)} m<sup>3</sup></td>
-      <td>{formatResourceAmount(quanta, resourceId)}</td>
+      <td>{formatResourceVolume(quanta, resourceId)}</td>
+      <td>{formatResourceMass(quanta, resourceId)}</td>
       <td>
         {!(mouseIn || focusOn) && (
           <>
@@ -1251,7 +1250,6 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
   const [newSelectedItems, setNewSelectedItems] = useState(selectedItems);
 
   const onUpdate = useCallback((resourceId, amount, isSelected) => {
-    console.log('onUpdate');
     const makeUpdate = { ...newSelectedItems };
     if (isSelected) {
       if (!makeUpdate[resourceId]) makeUpdate[resourceId] = 0;
@@ -1273,7 +1271,6 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
   }, [inventory, newSelectedItems]);
 
   useEffect(() => {
-    console.log('newSelectedItems', newSelectedItems, unselectedItems);
   }, [newSelectedItems, unselectedItems]);
 
   return (
@@ -1785,7 +1782,7 @@ export const ExtractionAmountSection = ({ extractionTime, min, max, amount, reso
             onChange={setAmount}
             value={amount} />
           <SliderInfoRow style={{ marginTop: -5 }}>
-            <div>{formatSampleVolume(volume)} m<sup>3</sup></div>
+            <div>{resource ? formatResourceVolume(amount, resource?.i, { fixedPrecision: 1 }) : `0 L`}</div>
             <div>{formatTimer(extractionTime)}</div>
           </SliderInfoRow>
         </SliderWrapper>
@@ -2228,37 +2225,90 @@ export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps
   return { totalDistance, totalTime, tripDetails };
 };
 
-export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrecision = 3 } = {}) => {
+export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   const { massPerUnit } = Inventory.RESOURCES[resourceId];
 
   if (massPerUnit === 0.001) {
-    let unitLabel;
-    let scale;
-    if (units >= 1e9) {
-      scale = 1e9;
-      unitLabel = abbrev ? 'Mt' : 'megatonnes';
-    } else if (units >= 1e6) {
-      scale = 1e6;
-      unitLabel = abbrev ? 'kt' : 'kilotonnes';
-    } else if (units >= 1e3) {
-      scale = 1e3;
-      unitLabel = abbrev ? 't' : 'tonnes';
-    } else {
-      scale = 1;
-      unitLabel = abbrev ? 'kg' : 'kilograms';
-    }
+    return formatResourceMass(units, resourceId, { abbrev, minPrecision, fixedPrecision });
+  }
+  // granular units
+  return units.toLocaleString();
+};
 
-    const workingUnits = (units / scale);
-    // console.log('workingUnits', workingUnits);
+export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  return formatMass(
+    resourceId
+      ? units * Inventory.RESOURCES[resourceId].massPerUnit * 1e6
+      : 0,
+    { abbrev, minPrecision, fixedPrecision }
+  );
+}
 
-    let fixedPlaces = 0;
+export const formatMass = (grams, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  let unitLabel;
+  let scale;
+  if (grams >= 1e12) {
+    scale = 1e12;
+    unitLabel = abbrev ? 'Mt' : 'megatonnes';
+  } else if (grams >= 1e9) {
+    scale = 1e9;
+    unitLabel = abbrev ? 'kt' : 'kilotonnes';
+  } else if (grams >= 1e6 || grams === 0) {
+    scale = 1e6;
+    unitLabel = abbrev ? 't' : 'tonnes';
+  } else if (grams >= 1e3) {
+    scale = 1e3;
+    unitLabel = abbrev ? 'kg' : 'kilograms';
+  } else {
+    scale = 1;
+    unitLabel = abbrev ? 'g' : 'grams';
+  }
+
+  const workingUnits = (grams / scale);
+  // console.log('workingUnits', workingUnits);
+
+  let fixedPlaces = fixedPrecision || 0;
+  if (fixedPrecision === undefined) {
     while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
       // console.log('x', workingUnits * 10 ** fixedPlaces, 10 ** minPrecision);
       fixedPlaces++;
     }
-    return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+  }
+  return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+};
+
+export const formatResourceVolume = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  return formatVolume(
+    resourceId
+      ? units * Inventory.RESOURCES[resourceId].volumePerUnit * 1e6
+      : 0,
+    { abbrev, minPrecision, fixedPrecision }
+  );
+}
+
+export const formatVolume = (ml, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  let unitLabel;
+  let scale;
+  if (ml >= 1e6 || ml === 0) {
+    scale = 1e6;
+    unitLabel = abbrev ? 'm³' : 'cubic meters';
+  } else if (ml >= 1e3) {
+    scale = 1e3;
+    unitLabel = abbrev ? 'L' : 'liters';
+  } else {
+    scale = 1;
+    unitLabel = abbrev ? 'mL' : 'milliliters';
   }
 
-  // granular units
-  return units.toLocaleString();
+  const workingUnits = (ml / scale);
+  // console.log('workingUnits', workingUnits);
+
+  let fixedPlaces = fixedPrecision || 0;
+  if (fixedPrecision === undefined) {
+    while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
+      // console.log('x', workingUnits * 10 ** fixedPlaces, 10 ** minPrecision);
+      fixedPlaces++;
+    }
+  }
+  return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
 };

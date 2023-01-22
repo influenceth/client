@@ -73,6 +73,7 @@ import {
   getBonusDirection,
   formatSampleMass,
   formatSampleVolume,
+  formatResourceVolume,
   getTripDetails,
   TravelBonusTooltip,
   TimeBonusTooltip,
@@ -163,7 +164,7 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
     },
     {
       label: 'Extraction Volume',
-      value: `${formatSampleVolume(amount * resource?.volumePerUnit || 0)} m³`,
+      value: `${formatResourceVolume(amount, resource?.i)}`,
       direction: 0
     },
     {

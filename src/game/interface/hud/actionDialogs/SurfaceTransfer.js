@@ -77,6 +77,8 @@ import {
   TravelBonusTooltip,
   TimeBonusTooltip,
   ActionDialogLoader,
+  formatMass,
+  formatVolume,
 } from './components';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import usePlot from '~/hooks/usePlot';
@@ -113,14 +115,6 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
     }
   }, [currentDeliveryDestinationPlot]);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-    if (!asteroid?.i || !originPlot?.i) return {};
-    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
-      { label: 'Travel to Origin', plot: originPlot.i, skipTo: destinationPlot?.i },
-      { label: 'Return from Destination', plot: 1 },
-    ])
-  }, [asteroid?.i, originPlot?.i, crewTravelBonus]);
-
   const transportDistance = Asteroid.getLotDistance(asteroid?.i, originPlot?.i, destinationPlot?.i) || 0;
   const transportTime = Asteroid.getLotTravelTime(asteroid?.i, originPlot?.i, destinationPlot?.i, crewTravelBonus.totalBonus) || 0;
 
@@ -134,32 +128,19 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
 
   const stats = useMemo(() => ([
     {
-      label: 'Total Volume',
-      value: `${formatSampleMass(totalMass)} tonnes`,
+      label: 'Total Mass',
+      value: `${formatMass(totalMass * 1e6)}`,
       direction: 0
     },
     {
-      label: 'Total Mass',
-      value: `${formatSampleVolume(totalVolume)} m³`,
+      label: 'Total Volume',
+      value: `${formatVolume(totalVolume * 1e6)}`,
       direction: 0
     },
     {
       label: 'Transfer Distance',
       value: `${Math.round(transportDistance)} km`,
       direction: 0
-    },
-    {
-      label: 'Crew Travel',
-      value: formatTimer(crewTravelTime),
-      direction: getBonusDirection(crewTravelBonus),
-      isTimeStat: true,
-      tooltip: (
-        <TravelBonusTooltip
-          bonus={crewTravelBonus}
-          totalTime={crewTravelTime}
-          tripDetails={tripDetails}
-          crewRequired="start" />
-      )
     },
     {
       label: 'Transport Time',
@@ -247,9 +228,7 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
       <ActionDialogStats stats={stats} status={status} />
 
       {status === 'BEFORE' && (
-        <ActionDialogTimers
-          crewAvailableIn={crewTravelTime + transportTime}
-          actionReadyIn={crewTravelTime + transportTime} />
+        <ActionDialogTimers crewAvailableIn={0} actionReadyIn={transportTime} />
       )}
 
       <ActionDialogFooter
