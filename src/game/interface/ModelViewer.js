@@ -657,7 +657,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   const buildings = useBuildingAssets();
 
   const assets = assetType === 'Building' ? buildings.filter((b, i) => i < 3) : resources;
-  const singleModel = plotZoomMode || paramModel;
+  const singleModel = plotZoomMode || Number(paramModel);
 
   const [devtoolsEnabled, setDevtoolsEnabled] = useState();
   const [model, setModel] = useState();
@@ -754,7 +754,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
       if (singleModel) {
         const asset = typeof singleModel === 'string'
           ? assets.find((a) => a?.name === singleModel)
-          : assets.find((a) => a?.i === singleModel);
+          : assets.find((a) => Number(a?.i) === singleModel);
         if (asset) {
           setLoadingModel(true);
           setModel(asset);
