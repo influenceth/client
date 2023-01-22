@@ -229,20 +229,27 @@ const Asteroid = (props) => {
 
   const frustumHeightMult = useMemo(() => 2 * Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)), [controls?.object?.fov]);
 
-  const disposeGeometry = useCallback(() => {
+  const disposeGeometry = useCallback((saveMousable = false) => {
     if (geometry.current && quadtreeRef.current) {
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.remove(g);
       });
     }
-    if (mouseGeometry.current && mouseableRef.current) {
-      mouseGeometry.current.groups.forEach((g) => {
-        mouseableRef.current.remove(g);
-      });
-    }
-    if (mouseGeometry.current) {
-      mouseGeometry.current.dispose();
-      mouseGeometry.current = null;
+    // TODO: rather than something hackyish like this, we should probably
+    //  reload entire component once start rebuilding the geometries
+    // (i.e. probably set the textureSize, shadowMode, etc as a key on the
+    //  <Asteroid /> component, so the whole thing is rebuilt on settings
+    //  changes that crucial)
+    if (!saveMousable) {
+      if (mouseGeometry.current && mouseableRef.current) {
+        mouseGeometry.current.groups.forEach((g) => {
+          mouseableRef.current.remove(g);
+        });
+      }
+      if (mouseGeometry.current) {
+        mouseGeometry.current.dispose();
+        mouseGeometry.current = null;
+      }
     }
     if (geometry.current) {
       geometry.current.dispose();
@@ -364,7 +371,7 @@ const Asteroid = (props) => {
 
     // must reinit geometry and lights entirely if already a shadow mode set
     if (geometry.current.shadowMode) {
-      disposeGeometry();
+      disposeGeometry(true);
       disposeLight();
 
       geometry.current = new QuadtreeTerrainCube(origin, config, textureSize, webWorkerPool);
