@@ -2,12 +2,17 @@ import cursor from '~/assets/images/cursor.png';
 import cursorActive from '~/assets/images/cursor-active.png';
 
 export const hexToRGB = (hex) => {
-  const hexParts = hex.toLowerCase().replace(/[^a-z0-9]/g, '').match(/.{1,2}/g);
-  return [
-    parseInt(hexParts[0], 16),
-    parseInt(hexParts[1], 16),
-    parseInt(hexParts[2], 16)
-  ].join(',');
+  try {
+    const hexParts = hex.toLowerCase().replace(/[^a-z0-9]/g, '').match(/.{1,2}/g);
+    return [
+      parseInt(hexParts[0], 16),
+      parseInt(hexParts[1], 16),
+      parseInt(hexParts[2], 16)
+    ].join(',');
+  } catch (e) {
+    console.error(e);
+    return '255,0,0';
+  }
 };
 
 export const getContrastText = (rgb) => {

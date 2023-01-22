@@ -170,7 +170,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         useWidth--;
 
         const subSliceMaterial = new MeshBasicMaterial({
-          color: hexToLinear(theme.colors.resources[target.category]),
+          color: hexToLinear(theme.colors.resources[keyify(target.category)]),
           alphaMap: new Texture(),  // include so vUv is set
           side: BackSide, // (to make angles work as designed),
           toneMapped: false,

@@ -441,7 +441,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     setSelected(toBeSelected);
     setHover(null);
 
-    history.replace(`/asteroids/${asteroid.i}/resources${toBeSelected ? `/${toBeSelected.category}` : ``}`);
+    history.replace(`/asteroids/${asteroid.i}/resources${toBeSelected ? `/${toBeSelected.categoryKey}` : ``}`);
   }, [abundances, asteroid.i]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleHover = useCallback((category, isHovering) => () => {
@@ -475,9 +475,10 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
 
   useEffect(() => {
     if (abundances?.length > 0 && initialCategory) {
-      const a = abundances.find((a) => a.category === initialCategory);
+      const a = abundances.find((a) => a.categoryKey === initialCategory);
       if (a) {
         setSelected(a);
+
       }
     }
   }, [abundances?.length, initialCategory]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -579,8 +580,8 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                   <label>Bonus Yield: +{selected.bonus.modifier}%</label>
                 </BonusItem>
               )}
-              {selected.resources.map((resource) => (
-                <ResourceRow key={resource.i} category={selected.category} onClick={goToResourceViewer(resource)}>
+              {selected.resources.map((resource) => { return (
+                <ResourceRow key={resource.i} category={selected.categoryKey} onClick={goToResourceViewer(resource)}>
                   <ResourceIcon style={{ backgroundImage: `url(${resource.iconUrls.w85})` }} />
                   <ResourceInfo>
                     <label>{resource.name}</label> 
@@ -597,7 +598,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                     </ButtonPill>
                   </ResourceAction>
                 </ResourceRow>
-              ))}
+              )})}
             </ResourceSectionBody>
           </div>
         )}
