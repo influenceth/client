@@ -399,7 +399,7 @@ const CrewAssignment = (props) => {
                     <b>{crew.name || `Crew Member #${crew.i}`}</b>
                     {' '}<CrewClassIcon crewClass={crew.crewClass} />
                   </div>
-                  <div>{Crewmate.toClass(crew.crewClass)?.name || 'Unknown Class'}</div>
+                  <div>{Crewmate.getClass(crew.crewClass)?.name || 'Unknown Class'}</div>
                 </MobileCrewContainer>
               )}
             </AboveFold>
