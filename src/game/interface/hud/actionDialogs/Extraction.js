@@ -298,7 +298,7 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
       {status === 'BEFORE' && (
         <ActionDialogTimers
           crewAvailableIn={crewTravelTime}
-          actionReadyIn={crewTravelTime + extractionTime} />
+          actionReadyIn={crewTravelTime + extractionTime + transportTime} />
       )}
 
       <ActionDialogFooter
