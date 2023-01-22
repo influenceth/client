@@ -248,7 +248,7 @@ const PlotDetails = styled.div`
   border-left: 1px solid #444;
   margin-bottom: 12px;
   padding-left: 15px;
-  width: 300px;
+  width: 325px;
 `;
 const DetailRow = styled.div`
   color: white;  
@@ -403,6 +403,19 @@ const InfoPane = () => {
                 {plot?.occupier && <div>{plot.occupier === crew?.i ? 'Me' : `Crew #${plot.occupier}`}</div>}
                 {!plot?.occupier && <div>Uncontrolled</div>}
               </DetailRow>
+              {topResources?.length > 0 && (
+                <DetailRow>
+                  <label>Highest Abundance</label>
+                  <div>
+                    {topResources.map((r) => (
+                      <ResourceRow key={r.resourceId} category={keyify(Inventory.RESOURCES[r.resourceId].category)}>
+                        <span>{formatFixed(100 * r.abundance, 1)}%</span>
+                        {Inventory.RESOURCES[r.resourceId].name}
+                      </ResourceRow>
+                    ))}
+                  </div>
+                </DetailRow>
+              )}
               {plot?.building?.capableType === 1 && (
                 <>
                   <DetailRow>
@@ -431,19 +444,6 @@ const InfoPane = () => {
                     </div>
                   </DetailRow>
                 </>
-              )}
-              {topResources?.length > 0 && (!plot?.building?.capableType || plot?.building?.capableType === 2) && (
-                <DetailRow>
-                  <label>Highest Abundance</label>
-                  <div>
-                    {topResources.map((r) => (
-                      <ResourceRow key={r.resourceId} category={keyify(Inventory.RESOURCES[r.resourceId].category)}>
-                        <span>{formatFixed(100 * r.abundance, 1)}%</span>
-                        {Inventory.RESOURCES[r.resourceId].name}
-                      </ResourceRow>
-                    ))}
-                  </div>
-                </DetailRow>
               )}
             </PlotDetails>
           </>
