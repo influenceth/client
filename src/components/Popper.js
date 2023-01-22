@@ -8,6 +8,16 @@ const Wrapper = styled.div`
   position: relative;
 `;
 
+const ClickAwayListener = styled.div`
+  background: transparent;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+`;
+
 const defaultWidth = 540;
 const Content = styled.div`
   background: black;
@@ -29,7 +39,7 @@ const Body = styled.div`
   height: ${p => `${p.contentHeight || 400}px`};
 `;
 
-const Poppable = ({ children, closeOnChange, disabled, label, title, ...styleProps }) => {
+const Poppable = ({ children, closeOnChange, closeOnClickAway = true, disabled, label, title, ...styleProps }) => {
   const [open, setOpen] = useState(false);
 
   const handleToggle = useCallback(() => {
@@ -50,16 +60,20 @@ const Poppable = ({ children, closeOnChange, disabled, label, title, ...stylePro
       <Button
         disabled={disabled}
         onClick={handleToggle}
+        buttonWidth="135px"
         {...styleProps}>
         <PopperIcon /> <span>{label}</span>
       </Button>
       {open && (
-        <Content {...styleProps}>
-          <Title>{title}</Title>
-          <Body {...styleProps}>
-            {children}
-          </Body>
-        </Content>
+        <>
+          {closeOnClickAway && <ClickAwayListener onClick={() => setOpen(false)} />}
+          <Content {...styleProps}>
+            <Title>{title}</Title>
+            <Body {...styleProps}>
+              {children}
+            </Body>
+          </Content>
+        </>
       )}
     </Wrapper>
   );
