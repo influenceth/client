@@ -92,7 +92,68 @@ const getContracts = (account, queryClient) => ({
     },
     isEqual: () => true,
   },
-  'PURCHASE_AND_INITIALIZE_CREW': {
+  // // NOTE: this is just for debugging vvv
+  // 'PURCHASE_UNINITIALIZED_CREWMATE': {
+  //   address: process.env.REACT_APP_STARKNET_DISPATCHER,
+  //   config: configs.Dispatcher,
+  //   transact: (contract) => async () => {
+  //     const { price } = await contract.call('CrewmateSale_getPrice');
+  //     const priceParts = Object.values(price).map((part) => part.toNumber());
+  //     const calls = [
+  //       {
+  //         contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+  //         entrypoint: 'approve',
+  //         calldata: [
+  //           process.env.REACT_APP_STARKNET_DISPATCHER,
+  //           ...priceParts
+  //         ]
+  //       },
+  //       {
+  //         contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+  //         entrypoint: 'Crewmate_purchaseAdalian',
+  //         calldata: [
+  //           ...priceParts,
+  //         ]
+  //       },
+  //     ];
+
+  //     return account.execute(calls);
+  //   },
+  //   isEqual: () => true,
+  // },
+  // // ^^^
+  'INITIALIZE_CREWMATE': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => async ({ i, name, features, traits, crewId = 0 }) => {
+      return contract.invoke('Crewmate_initializeAdalian', [
+        i,
+        shortString.encodeShortString(name),
+        [
+          features.crewCollection,
+          features.sex,
+          features.body,
+          features.crewClass,
+          features.title,
+          features.outfit,
+          features.hair,
+          features.facialFeature,
+          features.hairColor,
+          features.headPiece,
+          features.bonusItem,
+        ].map((x) => x.toString()),
+        [
+          traits.drive,
+          traits.classImpactful,
+          traits.driveCosmetic,
+          traits.cosmetic,
+        ].map((t) => t.id.toString()),
+        crewId
+      ]);
+    },
+    isEqual: (vars, txVars) => vars.i === txVars.i,
+  },
+  'PURCHASE_AND_INITIALIZE_CREWMATE': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => async ({ name, features, traits, crewId }) => {

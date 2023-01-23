@@ -58,7 +58,7 @@ const Confirmation = styled.div`
   }
 `;
 
-const ConfirmationDialog = ({ loading, onConfirm, onReject, ...props }) => (
+const ConfirmationDialog = ({ loading, onConfirm, onReject, isTransaction, ...props }) => (
   <Dialog>
     <Confirmation {...props}>
       <ConfirmationTitle>
@@ -74,7 +74,7 @@ const ConfirmationDialog = ({ loading, onConfirm, onReject, ...props }) => (
       </ConfirmationBody>
       <ConfirmationButtons>
         <Button onClick={onReject} disabled={loading}>{props.rejectText || 'Back'}</Button>
-        <Button onClick={onConfirm} disabled={loading}>{props.confirmText || 'Confirm'}</Button>
+        <Button onClick={onConfirm} disabled={loading} isTransaction={isTransaction}>{props.confirmText || 'Confirm'}</Button>
       </ConfirmationButtons>
     </Confirmation>
   </Dialog>

@@ -15,7 +15,8 @@ import {
   ChevronDoubleUpIcon as ActivateIcon,
   PlusIcon,
   PromoteIcon,
-  ChevronDoubleDownIcon
+  ChevronDoubleDownIcon,
+  CheckIcon
 } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
@@ -62,7 +63,9 @@ const IconHR = styled.div`
   }
 `;
 
+const CrewCredits = styled.div``;
 const Title = styled.div`
+  position: relative;
   & > h3 {
     align-items: center;
     ${p => !p.hideBorder && `border-bottom: 1px solid #2b2b2b;`}
@@ -77,6 +80,11 @@ const Title = styled.div`
       font-size: 150%;
       margin-right: 6px;
     }
+  }
+  & ${CrewCredits} {
+    color: ${p => p.theme.colors.success};
+    position: absolute;
+    right: 0;
   }
   & ${IconHR} {
     margin-top: -7px;
@@ -445,7 +453,7 @@ const OwnedCrew = (props) => {
   const { data: crewAssignmentData, isLoading: assignmentsAreLoading } = useCrewAssignments();
   const queryClient = useQueryClient();
   const { crew: selectedCrew, crews: allCrews, crewMemberMap, loading: crewIsLoading } = useCrew();
-  const { changeActiveCrew, getPendingActiveCrewChange, getPendingPurchase } = useCrewManager();
+  const { changeActiveCrew, getPendingActiveCrewChange, getPendingCrewmate, crewCredits } = useCrewManager();
   const history = useHistory();
   const { height, width } = useScreenSize();
 
@@ -473,7 +481,7 @@ const OwnedCrew = (props) => {
     const activeCrew = (selectedCrew?.crewMembers || []).map((i, index) => ({ ...crewMemberMap[i], activeSlot: index + 1 }));
     const activeInAnyCrewIds = (allCrews || []).reduce((acc, c) => [...acc, ...c.crewMembers], []);
     const inactiveCrew = Object.values(crewMemberMap || {})
-      .filter((crewMember) => !activeInAnyCrewIds.includes(crewMember.i))
+      .filter((crewMember) => crewMember.crewClass && !activeInAnyCrewIds.includes(crewMember.i))
       .map((c) => ({ ...c, activeSlot: -1 }));
     return [...activeCrew, ...inactiveCrew];
   }, [selectedCrew, allCrews, crewMemberMap, crewIsLoading]);
@@ -588,7 +596,7 @@ const OwnedCrew = (props) => {
   useEffect(() => {
     if (!token || isDataLoading) return;
 
-    const pendingPurchase = getPendingPurchase();
+    const pendingPurchase = getPendingCrewmate();
     const pendingChange = getPendingActiveCrewChange();
     if (pendingPurchase) {
       console.log('pendingPurchase', pendingPurchase);
@@ -637,13 +645,13 @@ const OwnedCrew = (props) => {
         pristine: true
       });
     }
-  }, [isDataLoading, crew?.length, getPendingActiveCrewChange, getPendingPurchase, saving]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isDataLoading, crew?.length, getPendingActiveCrewChange, getPendingCrewmate, saving]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // if crew is loaded but there is new crew (and no pending tx), jump straight into recruitment
   useEffect(() => {
     if (!isDataLoading && crew.length === 0) {
-      console.log(getPendingActiveCrewChange(), getPendingPurchase());
-      if (!(getPendingActiveCrewChange() || getPendingPurchase())) {
+      console.log(getPendingActiveCrewChange(), getPendingCrewmate());
+      if (!(getPendingActiveCrewChange() || getPendingCrewmate())) {
         handleRecruit();
       }
     }
@@ -677,6 +685,7 @@ const OwnedCrew = (props) => {
       {crew?.length > 0 && crewRecruitmentStoryId && (
         <Container>
           <Title>
+            {crewCredits?.length > 0 && <CrewCredits><CheckIcon /> {crewCredits?.length} credit{crewCredits?.length === 1 ? '' : 's'} remaining</CrewCredits>}
             <h3>
               My Active Crew: {activeCrew.length} / 5
             </h3>

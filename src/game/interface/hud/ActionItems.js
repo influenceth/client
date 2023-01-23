@@ -340,7 +340,18 @@ const formatTx = (item) => {
         history.push(`/crew/${item.vars.i}`);
       };
       break;
-    case 'PURCHASE_AND_INITIALIZE_CREW':
+    case 'INITIALIZE_CREWMATE':
+      formatted.icon = <CrewIcon />;
+      formatted.label = 'Initialize Crewmate';
+      formatted.onClick = ({ history }) => {
+        if (item.vars.sessionId) {
+          history.push(`/crew-assignment/${item.vars.sessionId}/create`);
+        } else {
+          history.push(`/owned-crew`);
+        }
+      };
+      break;
+    case 'PURCHASE_AND_INITIALIZE_CREWMATE':
       formatted.icon = <CrewIcon />;
       formatted.label = 'Mint Crewmate';
       formatted.onClick = ({ history }) => {
