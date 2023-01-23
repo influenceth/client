@@ -121,11 +121,12 @@ const SwayContainer = styled.div`
 
 const AvatarMenu = (props) => {
   const { account } = useAuth();
-  const { captain, loading: crewIsLoading } = useCrew();
+  const { captain, crewMemberMap, loading: crewIsLoading } = useCrew();
   const history = useHistory();
 
   const silhouetteOverlay = useMemo(() => {
-    if (!account) {
+    // if no account or no crew members, show "+" to start their crew
+    if (!account || Object.keys(crewMemberMap).length === 0) {
       return {
         alwaysOn: ['icon'],
         disableHover: true,
@@ -134,6 +135,7 @@ const AvatarMenu = (props) => {
         rgb: theme.colors.mainRGB,
       };
     }
+    // if account and crew members, but no captain, show "warning sign" and link to move crewmates to crew
     else if (!captain) {
       return {
         alwaysOn: ['icon'],
