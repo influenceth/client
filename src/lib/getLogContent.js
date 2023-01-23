@@ -10,10 +10,13 @@ import {
   ConstructIcon,
   CoreSampleIcon,
   CrewIcon,
+  DeconstructIcon,
   ExtractionIcon,
+  PlanBuildingIcon,
   PromoteIcon,
   ScanAsteroidIcon,
   SurfaceTransferIcon,
+  UnplanBuildingIcon,
 } from '~/components/Icons';
 
 const getTxLink = (event) => {
@@ -150,7 +153,7 @@ const entries = {
   // }),
 
   Construction_Planned: (e) => ({
-    icon: <ConstructIcon />,
+    icon: <PlanBuildingIcon />,
     content: (
       <>
         <span>{Capable.TYPES[e.returnValues.capableType]?.name} site plan completed on </span>
@@ -161,7 +164,7 @@ const entries = {
   }),
 
   Construction_Unplanned: (e) => ({
-    icon: <ConstructIcon />,
+    icon: <UnplanBuildingIcon />,
     content: (
       <>
         <span>Construction plans canceled on </span>
@@ -204,7 +207,7 @@ const entries = {
     const lotId = lot?.i;
     const capableName = lot?.building?.type;
     return {
-      icon: <ConstructIcon />,
+      icon: <DeconstructIcon />,
       content: (
         <>
           <span>{capableName ? `${capableName} ` : 'Building'} deconstructed on </span>
