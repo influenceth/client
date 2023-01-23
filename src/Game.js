@@ -50,7 +50,7 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 const DISABLE_INTRO = false; // process.env.NODE_ENV === 'development';
-const DISABLE_LAUNCHER_LANDING = process.env.NODE_ENV === 'development';
+const DISABLE_LAUNCHER_LANDING = false; //process.env.NODE_ENV === 'development';
 
 const LauncherRedirect = () => {
   const { account } = useAuth();

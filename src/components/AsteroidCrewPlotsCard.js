@@ -71,7 +71,7 @@ const AsteroidCrewPlotsCard = (props) => {
   const { data: plots, isLoading } = useAsteroidCrewPlots(asteroid?.i);
   return (
     <div {...restProps} style={{ overflowY: 'auto' }}>
-      {asteroid && !isLoading && (
+      {asteroid && plots && !isLoading && (
         <>
           {plots.length === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied on lots on this asteroid yet.</div>}
           {plots.length > 0 && (

@@ -1,28 +1,65 @@
 import { useHistory } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 
 import useAuth from '~/hooks/useAuth';
 import useCrew from '~/hooks/useCrew';
 import ButtonAlt from '~/components/ButtonAlt';
 import ButtonPill from '~/components/ButtonPill';
 import CrewCard from '~/components/CrewCard';
+import InfluenceLogo from '~/components/InfluenceLogo';
 import TriangleTip from '~/components/TriangleTip';
 import { CaptainIcon } from '~/components/Icons';
 import theme from '~/theme';
+import Button from '~/components/Button';
 
-const StyledAccount = styled.div`
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 700px;
+export const logoDisplacementHeight = 900;
+
+const opacityKeyframes = keyframes`
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+`;
+const opacityAnimation = css`
+  animation: ${opacityKeyframes} 1200ms ease-in-out infinite;
+  transition: opacity 250ms ease;
+  &:hover {
+    animation: none;
+    opacity: 1;
+  }
 `;
 
 const MainContent = styled.div`
+  align-items: center;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  max-height: 640px;
+  padding: ${p => p.loggedIn ? '40px 0' : '100px 0 60px'};
   justify-content: center;
+  width: 700px;
+
+  @media (max-height: 700px) {
+    overflow: auto;
+  }
+`;
+
+const LogoContainer = styled.div`
+  ${p => p.loggedIn ? 'padding: 0 0 40px;' : 'flex: 1;'}
+  text-align: center;
   width: 100%;
+  & > svg {
+    max-width: 540px;
+  }
+
+  @media (max-height: ${logoDisplacementHeight}px) {
+    display: none;
+  }
 `;
 
 const AccountCTA = styled.div`
@@ -33,17 +70,25 @@ const AccountCTA = styled.div`
   flex-direction: column;
   font-size: 15px;
   justify-content: center;
-  position: relative;
   width: 100%;
+`;
+
+const CrewCTA = styled(AccountCTA)`
+  padding: 50px 50px 70px;
+  position: relative;
 
   & h3 {
     font-size: 14px;
-    margin: 25px 50px;
+    margin: 0 0 25px;
     text-transform: uppercase;
   }
 `;
 
 const NotConnected = styled.div`
+  & > button {
+    ${opacityAnimation};
+  }
+
   align-items: center;
   display: flex;
   justify-content: center;
@@ -78,22 +123,23 @@ const LogoutLink = styled.a`
 const CrewContainer = styled.div`
   align-items: flex-start;
   display: flex;
-  padding: 0 50px 50px 50px;
   position: relative;
   width: 100%;
+`;
+
+const CaptainDetails = styled.div`
+  left: 170px;
+  position: absolute;
 `;
 
 const CaptainTitle = styled.span`
   color: ${p => p.theme.colors.secondaryText};
   font-size: 14px;
-  left: 220px;
-  position: absolute;
 `;
 
 const CaptainName = styled.h2`
-  left: 220px;
+  margin: 0;
   padding-top: 3px;
-  position: absolute;
 `;
 
 const StyledCaptainIcon = styled(CaptainIcon)`
@@ -113,7 +159,7 @@ const StyledTriangleTip = styled(TriangleTip)`
   width: 100%;
 `;
 
-const CaptainContain = styled.div`
+const CaptainCardContainer = styled.div`
   border: 1px solid ${p => p.theme.colors.secondaryText};
   border-bottom: none;
   margin-right: 20px;
@@ -122,22 +168,22 @@ const CaptainContain = styled.div`
   width: 150px;
 `;
 
-const CrewContain = styled.div`
+const CrewCardContainer = styled.div`
   border: 1px solid #888;
   margin: 60px 10px 0 0;
   width: 90px;
 `;
 
 const PlayCTA = styled.div`
+  ${p => p.loggedIn && opacityAnimation};
   align-items: center;
   display: flex;
   justify-content: space-around;
-  padding-top: 35px;
+  padding-top: 20px;
 `;
 
 const MainButton = styled(ButtonAlt)`
   color: black;
-
   &:hover {
     color: white;
   }
@@ -151,52 +197,57 @@ const Account = (props) => {
   const { captain, loading: crewLoading, crew, crewMemberMap } = useCrew();
 
   return (
-    <StyledAccount>
-      <MainContent>
-        {!loggedIn &&
-          <AccountCTA>
-            <NotConnected>
-              <span>Account Not Connected</span>
-              <ButtonPill onClick={() => history.push('/launcher/wallets')}>Login</ButtonPill>
-            </NotConnected>
-          </AccountCTA>
-        }
-        {loggedIn &&
-          <AccountCTA>
-            <h3>Active Crew</h3>
-            <LogoutLink onClick={logout}>Log Out</LogoutLink>
-            {!crewLoading && crew?.crewMembers && crew?.crewMembers.length > 0 &&
-              <CrewContainer>
-                {captain && <>
+    <MainContent loggedIn={loggedIn}>
+      <LogoContainer loggedIn={loggedIn}>
+        <InfluenceLogo />
+      </LogoContainer>
+      {!loggedIn &&
+        <AccountCTA>
+          <NotConnected>
+            <span>Account Not Connected</span>
+            <ButtonPill onClick={() => history.push('/launcher/wallets')}>Login</ButtonPill>
+          </NotConnected>
+        </AccountCTA>
+      }
+      {loggedIn &&
+        <CrewCTA>
+          <LogoutLink onClick={logout}>Log Out</LogoutLink>
+          {!crewLoading && crew?.crewMembers && crew?.crewMembers.length > 0 &&
+            <CrewContainer>
+              {captain && <>
+                <CaptainDetails>
                   <CaptainTitle>Captain</CaptainTitle>
                   <CaptainName>{captain.name}</CaptainName>
-                  <CaptainContain>
-                    <CrewCard crew={captain} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
-                    <StyledTriangleTip extendStroke strokeColor="currentColor" strokeWidth="1.5" />
-                    <StyledCaptainIcon />
-                  </CaptainContain>
-                </>}
-                {crew.crewMembers.slice(1).map(function(crewmateId) {
-                  const crewmate = crewMemberMap[crewmateId];
-                  if (crewmate) {
-                    return (
-                      <CrewContain key={crewmate.i}>
-                        <CrewCard crew={crewmate} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
-                      </CrewContain>
-                    );
-                  }
-                })}
-              </CrewContainer>
-            }
-          </AccountCTA>
-        }
-        <PlayCTA>
-          <MainButton color={theme.colors.main} size='large' onClick={() => history.push('/game')}>
-            {loggedIn ? "Play" : "Explore"}
-          </MainButton>
-        </PlayCTA>
-      </MainContent>
-    </StyledAccount>
+                </CaptainDetails>
+                <CaptainCardContainer>
+                  <CrewCard crew={captain} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
+                  <StyledTriangleTip extendStroke strokeColor="currentColor" strokeWidth="1.5" />
+                  <StyledCaptainIcon />
+                </CaptainCardContainer>
+              </>}
+              {crew.crewMembers.slice(1).map(function(crewmateId) {
+                const crewmate = crewMemberMap[crewmateId];
+                if (crewmate) {
+                  return (
+                    <CrewCardContainer key={crewmate.i}>
+                      <CrewCard crew={crewmate} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
+                    </CrewCardContainer>
+                  );
+                }
+              })}
+            </CrewContainer>
+          }
+        </CrewCTA>
+      }
+      <PlayCTA loggedIn={loggedIn}>
+        <MainButton
+          color={theme.colors.main}
+          size="huge"
+          onClick={() => history.push('/game')}>
+          {loggedIn ? "Play" : "Explore"}
+        </MainButton>
+      </PlayCTA>
+    </MainContent>
   );
 };
 

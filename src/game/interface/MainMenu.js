@@ -3,6 +3,7 @@ import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { MdWorkspacesOutline as ResourcesIcon } from 'react-icons/md';
 
+import LogoLong from '~/assets/images/logo.png';
 import IconButton from '~/components/IconButton';
 import {
   ConstructIcon as BuildingsIcon,
@@ -26,7 +27,6 @@ import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
 import Time from './mainMenu/Time';
 import Logo from './mainMenu/menu-logo.svg';
-import LogoLong from '~/assets/images/logo.svg';
 
 const StyledMainMenu = styled.div`
   align-items: flex-end;

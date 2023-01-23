@@ -6,17 +6,17 @@ import ClockContext from '~/contexts/ClockContext';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import ButtonPill from '~/components/ButtonPill';
+import InfluenceLogo from '~/components/InfluenceLogo';
 import Time from '~/components/Time';
-import Account from './launcher/Account';
+import Account, { logoDisplacementHeight } from './launcher/Account';
 import Settings from './launcher/Settings';
 import Wallets from './launcher/Wallets';
-import InfluenceLogo from '~/assets/images/logo.svg';
 
 const headerFooterHeight = 100;
 
 const StyledLauncher = styled.div`
   align-items: center;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(0.75px) saturate(70%) brightness(70%);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -42,11 +42,20 @@ const Header = styled.ul`
   top: 0;
 `;
 
-const StyledLogo = styled(InfluenceLogo)`
+const LogoWrapper = styled.div`
   left: 25px;
   height: ${headerFooterHeight - 50}px;
   position: absolute;
   top: 25px;
+  & > svg {
+    height: 100%;
+  }
+
+  ${p => p.hideHeader && `
+    @media (min-height: ${p.hideHeader}px) {
+      display: none;
+    }
+  `}
 `;
 
 const StyledLink = styled(Link)`
@@ -154,12 +163,12 @@ const CurrentAccount = styled.div`
 
 const MainContent = styled.div`
   align-items: center;
-  display: flex;
+  display: flex;  
   flex: 1 0 0;
   flex-direction: column;
   justify-content: center;
-  margin-top: 50px;
-  overflow-y: scroll;
+  overflow: hidden;
+  // height: calc(100vh - 2 * ${headerFooterHeight}px);
 `;
 
 const StyledTime = styled(Time)`
@@ -237,7 +246,9 @@ const Launcher = (props) => {
   return (
     <StyledLauncher {...props}>
       <Header>
-        <StyledLogo />
+        <LogoWrapper hideHeader={location.pathname === '/launcher/account' ? logoDisplacementHeight : 0}>
+          <InfluenceLogo />
+        </LogoWrapper>
         <MenuItem>
           <StyledLink activeClassName="current" to="/launcher/account">
             <span>{location.pathname === '/launcher/account' ? "Account" : "‹ Back"}</span>

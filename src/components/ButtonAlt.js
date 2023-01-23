@@ -28,7 +28,7 @@ const InnerContainer = styled.div`
 
 const StyledButton = styled.button`
   background: transparent;
-  border: 1px solid ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)};
+  border: ${p => p.sizeParams.borderWidth}px solid ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)};
   clip-path: polygon(
     0 0,
     100% 0,
@@ -85,13 +85,13 @@ const StyledButton = styled.button`
 
 const Corner = styled.svg`
   bottom: -1px;
-  height: ${p => p.sizeParams.line}px;
+  height: ${p => p.sizeParams.line - (p.sizeParams.borderWidth === 1 ? 0 : p.sizeParams.borderWidth - 1)}px;
   margin-right: 0;
   position: absolute;
   right: -1px;
   stroke: ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)};
-  stroke-width: 1.5px;
-  width: ${p => p.sizeParams.line}px;
+  stroke-width: ${p => p.sizeParams.borderWidth + 0.5}px;
+  width: ${p => p.sizeParams.line - (p.sizeParams.borderWidth === 1 ? 0 : p.sizeParams.borderWidth - 1)}px;
 `;
 
 const StyledBadge = styled(Badge)`
@@ -109,8 +109,9 @@ const loadingCss = css`
 `;
 
 const sizes = {
-  medium: { font: 16, height: 32, width: 185, line: 10 },
-  large: { font: 20, height: 50, width: 250, line: 15 }
+  medium: { font: 16, height: 32, width: 185, line: 10, borderWidth: 1 },
+  large: { font: 20, height: 50, width: 250, line: 15, borderWidth: 1 },
+  huge: { font: 32, height: 52, width: 275, line: 18, borderWidth: 2 }
 };
 
 const Button = (props) => {

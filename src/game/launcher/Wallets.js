@@ -32,11 +32,6 @@ const Cartridge = styled.div`
   display: flex;
 `;
 
-const External = styled.div`
-  display: flex;
-  justify-content: space-between;
-`;
-
 const WalletOption = styled.div`
   align-items: center;
   background-color: ${p => p.theme.colors.contentHighlight};
@@ -80,7 +75,10 @@ const WalletOption = styled.div`
   & span {
     font-size: 14px;
     line-height: 20px;
-    margin: 10px 30px 0;
+    margin: 10px 45px 0;
+    @media (max-height: 800px) {
+      display: none;
+    }
   }
 
   & h3 {
@@ -105,6 +103,21 @@ const StyledCartridgeLogo = styled(CartridgeLogo)`
   fill: rgb(251,203,74);
   height: 65px;
   margin: 20px;
+
+  @media (max-height: 750px) {
+    display: none;
+  }
+`;
+
+const External = styled.div`
+  display: flex;
+  justify-content: space-between;
+
+  @media (max-height: 880px) {
+    ${StyledArgentXLogo}, ${StyledBraavosLogo} {
+      display: none;
+    }
+  }
 `;
 
 const Wallets = (props) => {
@@ -145,8 +158,10 @@ const Wallets = (props) => {
       <Cartridge>
         <WalletOption onClick={() => handleWalletClick('Cartridge')}>
           <StyledCartridgeLogo />
-          <h3>Cartridge</h3>
-          <span>The premiere Starknet gaming console connecting multiple games with a single login.</span>
+          <h3>Login with Cartridge</h3>
+          <span>
+            The premiere Starknet gaming console connecting multiple games with a single login.
+          </span>
           <Button backgroundColor={"rgba(251,203,74, 0.33)"} color={"rgb(251,203,74)"}>Login with Cartridge</Button>
         </WalletOption>
       </Cartridge>
