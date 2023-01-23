@@ -186,7 +186,7 @@ export function EventsProvider({ children }) {
         });
 
       // TODO: the reason we had to override these may no longer be relevant... review this:
-      } else if (e.event === 'Lot_Used' && e.returnValues.capableType === 0) {
+      } else if (e.event === 'Dispatcher_ConstructionUnplan') {
         transformedEvents.push({ ...e, event: 'Construction_Unplanned', key: e.id });
       } else if (e.event === 'Lot_Used' && Capable.TYPES[e.returnValues.capableType].category === 'Building') {
         transformedEvents.push({ ...e, event: 'Construction_Planned', key: e.id });
@@ -231,6 +231,7 @@ export function EventsProvider({ children }) {
   }, []);
 
   const onWSMessage = useCallback(({ type, body }) => {
+    // console.log('onWSMessage', type, body);
     if (ignoreEventTypes.includes(type)) return;
     if (type === 'CURRENT_STARKNET_BLOCK_NUMBER') {
       setLastBlockNumber(body.blockNumber || 0);
