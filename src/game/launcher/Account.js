@@ -57,7 +57,7 @@ const LogoContainer = styled.div`
     max-width: 540px;
   }
 
-  @media (max-height: ${logoDisplacementHeight}px) {
+  @media (max-height: ${logoDisplacementHeight - 1}px) {
     display: none;
   }
 `;

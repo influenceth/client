@@ -32,6 +32,25 @@ const Cartridge = styled.div`
   display: flex;
 `;
 
+const StyledArgentXLogo = styled(ArgentXLogo)`
+  height: 55px;
+  margin-top: 10px;
+  width: 55px;
+`;
+
+const StyledBraavosLogo = styled.img`
+  height: 50px;
+  margin-top: 10px;
+  object-fit: contain;
+  width: 50px;
+`;
+
+const StyledCartridgeLogo = styled(CartridgeLogo)`
+  fill: rgb(251,203,74);
+  height: 65px;
+  margin: 20px;
+`;
+
 const WalletOption = styled.div`
   align-items: center;
   background-color: ${p => p.theme.colors.contentHighlight};
@@ -76,36 +95,25 @@ const WalletOption = styled.div`
     font-size: 14px;
     line-height: 20px;
     margin: 10px 45px 0;
-    @media (max-height: 800px) {
-      display: none;
-    }
   }
 
   & h3 {
     padding: 10px 0;
   }
-`;
-
-const StyledArgentXLogo = styled(ArgentXLogo)`
-  height: 55px;
-  margin-top: 10px;
-  width: 55px;
-`;
-
-const StyledBraavosLogo = styled.img`
-  height: 50px;
-  margin-top: 10px;
-  object-fit: contain;
-  width: 50px;
-`;
-
-const StyledCartridgeLogo = styled(CartridgeLogo)`
-  fill: rgb(251,203,74);
-  height: 65px;
-  margin: 20px;
 
   @media (max-height: 750px) {
-    display: none;
+    ${StyledCartridgeLogo} {
+      display: none;
+    }
+    button {
+      bottom: 50%;
+      margin-bottom: -17.5px;
+    }
+  }
+  @media (max-height: 800px) {
+    & span {
+      display: none;
+    }
   }
 `;
 
@@ -116,6 +124,10 @@ const External = styled.div`
   @media (max-height: 880px) {
     ${StyledArgentXLogo}, ${StyledBraavosLogo} {
       display: none;
+    }
+    ${WalletOption} button {
+      bottom: 50%;
+      margin-bottom: -17.5px;
     }
   }
 `;
