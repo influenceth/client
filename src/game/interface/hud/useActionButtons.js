@@ -59,7 +59,7 @@ const useActionButtons = () => {
           } else if (['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus)) {
             a.push(actionButtons.Construct);
           } else if (['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
-            a.push(actionButtons.NewBlueprint);
+            a.push(actionButtons.PlanBuilding);
           }
   
           if (constructionStatus === 'OPERATIONAL' && plot?.building?.inventories) {
@@ -67,13 +67,13 @@ const useActionButtons = () => {
           }
   
           if (['PLANNED', 'CANCELING'].includes(constructionStatus)) {
-            a.push(actionButtons.CancelBlueprint);
+            a.push(actionButtons.UnplanBuilding);
           }
           if (['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
             a.push(actionButtons.Deconstruct);
           } 
         } else if (!plot.occupier || constructionStatus === 'READY_TO_PLAN') {
-          a.push(actionButtons.NewBlueprint);
+          a.push(actionButtons.PlanBuilding);
         }
       }
     }

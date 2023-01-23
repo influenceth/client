@@ -19,7 +19,7 @@ import Dialog from '~/components/Dialog';
 import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
 import {
-  CancelBlueprintIcon,
+  UnplanBuildingIcon,
   CheckIcon,
   ChevronRightIcon,
   CloseIcon,
@@ -29,7 +29,7 @@ import {
   DeconstructIcon,
   ExtractionIcon,
   ImproveCoreSampleIcon,
-  LayBlueprintIcon,
+  PlanBuildingIcon,
   LocationPinIcon,
   PlusIcon,
   ResourceIcon,
@@ -50,7 +50,6 @@ import useInterval from '~/hooks/useInterval';
 import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  BlueprintSelection,
   CoreSampleSelection,
   DestinationSelection,
 
@@ -75,7 +74,7 @@ import {
 } from './components';
 import useAsteroid from '~/hooks/useAsteroid';
 
-const PlanConstruction = ({ asteroid, plot, ...props }) => {
+const PlanBuilding = ({ asteroid, plot, ...props }) => {
   const buildings = useBuildingAssets();
   const resources = useResourceAssets();
   const { currentConstruction, constructionStatus, planConstruction } = useConstructionManager(asteroid?.i, plot?.i);
@@ -117,7 +116,7 @@ const PlanConstruction = ({ asteroid, plot, ...props }) => {
         captain={captain}
         plot={plot}
         action={{
-          actionIcon: <LayBlueprintIcon />,
+          actionIcon: <PlanBuildingIcon />,
           headerBackground: constructionBackground,
           label: 'Plan Building Site',
           completeLabel: 'Building Site',
@@ -144,4 +143,4 @@ const PlanConstruction = ({ asteroid, plot, ...props }) => {
   );
 };
 
-export default PlanConstruction;
+export default PlanBuilding;

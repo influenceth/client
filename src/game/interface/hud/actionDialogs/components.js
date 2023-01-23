@@ -22,7 +22,7 @@ import {
   CloseIcon,
   ConstructIcon,
   CrewIcon,
-  LayBlueprintIcon,
+  PlanBuildingIcon,
   LocationPinIcon,
   PlusIcon,
   ResourceIcon,
@@ -1039,7 +1039,7 @@ const ResourceRequirement = ({ resource, hasTally, isGathering, needsTally }) =>
 //
 // Selectors
 //
-const BlueprintSelection = ({ onBuildingSelected }) => {
+const BuildingPlanSelection = ({ onBuildingSelected }) => {
   const buildings = useBuildingAssets();
   return (
     <PopperBody style={{ paddingBottom: 5, paddingTop: 5 }}>
@@ -1659,7 +1659,7 @@ export const BuildingPlanSection = ({ building, canceling, gracePeriodEnd, onBui
       <SectionBody highlight={status === 'AFTER'}>
         {!building && (
           <EmptyResourceWithData>
-            <EmptyBuildingImage iconOverride={<LayBlueprintIcon />} />
+            <EmptyBuildingImage iconOverride={<PlanBuildingIcon />} />
             <label>
               <div>Site Plan:</div>
               <h3>Select</h3>
@@ -1691,7 +1691,7 @@ export const BuildingPlanSection = ({ building, canceling, gracePeriodEnd, onBui
             )}
             {!gracePeriodEnd && !canceling && (
               <Poppable label="Select" closeOnChange={clicked} title="Site Plan">
-                <BlueprintSelection onBuildingSelected={_onBuildingSelected} />
+                <BuildingPlanSelection onBuildingSelected={_onBuildingSelected} />
               </Poppable>
             )}
           </>

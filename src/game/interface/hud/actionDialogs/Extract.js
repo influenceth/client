@@ -26,7 +26,7 @@ import {
 } from './components';
 import usePlot from '~/hooks/usePlot';
 
-const ExtractionDialog = ({ asteroid, plot, ...props }) => {
+const Extract = ({ asteroid, plot, ...props }) => {
   const resources = useResourceAssets();
   const { currentExtraction, extractionStatus, startExtraction, finishExtraction } = useExtractionManager(asteroid?.i, plot?.i);
   const { crew, crewMemberMap } = useCrew();
@@ -266,4 +266,4 @@ const ExtractionDialog = ({ asteroid, plot, ...props }) => {
   );
 };
 
-export default ExtractionDialog;
+export default Extract;

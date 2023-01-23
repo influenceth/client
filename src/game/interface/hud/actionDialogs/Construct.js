@@ -19,7 +19,7 @@ import Dialog from '~/components/Dialog';
 import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
 import {
-  CancelBlueprintIcon,
+  UnplanBuildingIcon,
   CheckIcon,
   ChevronRightIcon,
   CloseIcon,
@@ -29,7 +29,7 @@ import {
   DeconstructIcon,
   ExtractionIcon,
   ImproveCoreSampleIcon,
-  LayBlueprintIcon,
+  PlanBuildingIcon,
   LocationPinIcon,
   PlusIcon,
   ResourceIcon,
@@ -50,7 +50,6 @@ import useInterval from '~/hooks/useInterval';
 import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  BlueprintSelection,
   CoreSampleSelection,
   DestinationSelection,
 

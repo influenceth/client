@@ -1,25 +1,25 @@
-import CancelBlueprint from './CancelBlueprint';
 import Construct from './Construct';
 import Deconstruct from './Deconstruct';
 import Extract from './Extract';
 import ImproveCoreSample from './ImproveCoreSample';
-import NewBlueprint from './NewBlueprint';
 import NewCoreSample from './NewCoreSample';
+import PlanBuilding from './PlanBuilding';
 import PurchaseAsteroid from './PurchaseAsteroid';
 import ScanAsteroid from './ScanAsteroid';
 import SurfaceTransfer from './SurfaceTransfer';
+import UnplanBuilding from './UnplanBuilding';
 
 const ActionsButtons = {
-  CancelBlueprint,
   Construct,
   Deconstruct,
   Extract,
   ImproveCoreSample,
-  NewBlueprint,
   NewCoreSample,
+  PlanBuilding,
   PurchaseAsteroid,
   ScanAsteroid,
-  SurfaceTransfer
+  SurfaceTransfer,
+  UnplanBuilding,
 };
 
 export default ActionsButtons;

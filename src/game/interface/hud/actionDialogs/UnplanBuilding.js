@@ -19,7 +19,7 @@ import Dialog from '~/components/Dialog';
 import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
 import {
-  CancelBlueprintIcon,
+  UnplanBuildingIcon,
   CheckIcon,
   ChevronRightIcon,
   CloseIcon,
@@ -29,7 +29,7 @@ import {
   DeconstructIcon,
   ExtractionIcon,
   ImproveCoreSampleIcon,
-  LayBlueprintIcon,
+  PlanBuildingIcon,
   LocationPinIcon,
   PlusIcon,
   ResourceIcon,
@@ -50,7 +50,6 @@ import useInterval from '~/hooks/useInterval';
 import { getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  BlueprintSelection,
   CoreSampleSelection,
   DestinationSelection,
 
@@ -74,7 +73,7 @@ import {
   ActionDialogLoader,
 } from './components';
 
-const UnplanConstruction = ({ asteroid, plot, ...props }) => {
+const UnplanBuilding = ({ asteroid, plot, ...props }) => {
   const buildings = useBuildingAssets();
   const { constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, plot?.i);
   const { captain } = useCrew();
@@ -92,7 +91,7 @@ const UnplanConstruction = ({ asteroid, plot, ...props }) => {
         captain={captain}
         plot={plot}
         action={{
-          actionIcon: <CancelBlueprintIcon />,
+          actionIcon: <UnplanBuildingIcon />,
           headerBackground: constructionBackground,
           label: 'Unplan Building Site',
         }}
@@ -116,4 +115,4 @@ const UnplanConstruction = ({ asteroid, plot, ...props }) => {
   );
 };
 
-export default UnplanConstruction;
+export default UnplanBuilding;

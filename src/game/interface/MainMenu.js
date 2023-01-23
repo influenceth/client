@@ -5,7 +5,7 @@ import { MdWorkspacesOutline as ResourcesIcon } from 'react-icons/md';
 
 import IconButton from '~/components/IconButton';
 import {
-  LayBlueprintIcon as BuildingsIcon,
+  ConstructIcon as BuildingsIcon,
   CloseIcon,
   CrewIcon,
   EyeIcon,

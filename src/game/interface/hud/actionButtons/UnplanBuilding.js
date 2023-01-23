@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { CancelBlueprintIcon } from '~/components/Icons';
+import { UnplanBuildingIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import ActionButton from './ActionButton';
 
@@ -9,10 +9,10 @@ const labelDict = {
   CANCELING: 'Unplanning...'
 };
 
-const CancelBlueprint = ({ asteroid, plot, onSetAction, _disabled }) => {
+const UnplanBuilding = ({ asteroid, plot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
-    onSetAction('CANCEL_BLUEPRINT');
+    onSetAction('UNPLAN_BUILDING');
   }, [onSetAction]);
 
   return (
@@ -22,9 +22,9 @@ const CancelBlueprint = ({ asteroid, plot, onSetAction, _disabled }) => {
         disabled: _disabled || undefined,
         loading: constructionStatus === 'CANCELING' || undefined
       }}
-      icon={<CancelBlueprintIcon />}
+      icon={<UnplanBuildingIcon />}
       onClick={handleClick} />
   );
 };
 
-export default CancelBlueprint;
+export default UnplanBuilding;

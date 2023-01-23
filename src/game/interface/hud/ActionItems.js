@@ -8,7 +8,7 @@ import { Capable, Inventory } from '@influenceth/sdk';
 import moment from 'moment';
 
 import {
-  CancelBlueprintIcon,
+  UnplanBuildingIcon,
   ConstructIcon,
   CoreSampleIcon,
   CrewIcon,
@@ -16,7 +16,7 @@ import {
   DeconstructIcon,
   ExtractionIcon,
   ImproveCoreSampleIcon,
-  LayBlueprintIcon,
+  PlanBuildingIcon,
   PurchaseAsteroidIcon,
   ScanAsteroidIcon,
   SurfaceTransferIcon,
@@ -265,7 +265,7 @@ const formatItem = (item) => {
 const formatPlans = (item) => {
   return {
     key: `plans_${item.gracePeriodEnd}`,
-    icon: <LayBlueprintIcon />,
+    icon: <PlanBuildingIcon />,
     label: `${item.building.type} Site Plan`,
     crewId: item.occupier,
     asteroidId: item.asteroid,
@@ -382,23 +382,23 @@ const formatTx = (item) => {
       break;
 
     case 'PLAN_CONSTRUCTION':
-      formatted.icon = <LayBlueprintIcon />;
+      formatted.icon = <PlanBuildingIcon />;
       formatted.label = `Plan ${Capable.TYPES[item.vars.capableType]?.name || 'Building'} Site`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;
       formatted.onClick = ({ openDialog }) => {
         // TODO: in case of failure, should link with selected building type
         // (low priority b/c would have to fail and would have to have closed dialog)
-        openDialog('BLUEPRINT');
+        openDialog('PLAN_BUILDING');
       };
       break;
     case 'UNPLAN_CONSTRUCTION':
-      formatted.icon = <CancelBlueprintIcon />;
+      formatted.icon = <UnplanBuildingIcon />;
       formatted.label = 'Unplan Building Site';
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;
       formatted.onClick = ({ openDialog }) => {
-        openDialog('CANCEL_BLUEPRINT');
+        openDialog('UNPLAN_BUILDING');
       };
       break;
     case 'START_CONSTRUCTION':
