@@ -599,7 +599,7 @@ const OwnedCrew = (props) => {
     const pendingPurchase = getPendingCrewmate();
     const pendingChange = getPendingActiveCrewChange();
     if (pendingPurchase) {
-      console.log('pendingPurchase', pendingPurchase);
+      // console.log('pendingPurchase', pendingPurchase);
       setSaving(true);
       dispatch({
         type: 'INITIALIZE',
@@ -650,7 +650,7 @@ const OwnedCrew = (props) => {
   // if crew is loaded but there is new crew (and no pending tx), jump straight into recruitment
   useEffect(() => {
     if (!isDataLoading && crew.length === 0) {
-      console.log(getPendingActiveCrewChange(), getPendingCrewmate());
+      // console.log(getPendingActiveCrewChange(), getPendingCrewmate());
       if (!(getPendingActiveCrewChange() || getPendingCrewmate())) {
         handleRecruit();
       }

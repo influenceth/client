@@ -22,6 +22,7 @@ const StyledSettings = styled.div`
   background-color: black;
   border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
   border-top: 1px solid ${p => p.theme.colors.mainBorder};
+  overflow: auto;
   padding: 0 15px 25px 0px;
   height: 100%;
   width: 700px;

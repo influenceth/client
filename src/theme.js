@@ -41,7 +41,7 @@ const theme = {
     contentDark: 'rgb(40, 40, 40)',
     mainText: '#cccccc',
     secondaryText: '#999999',
-    disabledText: '#666666',
+    disabledText: 'rgba(255,255,255,0.4)',
     borderBottom: '#555555',
     borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
     success: '#54de94',

@@ -431,7 +431,7 @@ const Asteroid = (props) => {
   // Zooms the camera to the correct location
   useEffect(() => {
     if (zoomStatus === 'zooming-in' && !prevAsteroidPosition && controls) {
-      console.log('set zoomedfrom');
+      // console.log('set zoomedfrom');
       setZoomedFrom({
         scene: controls.targetScene.position.clone(),
         position: controls.object.position.clone(),
@@ -454,7 +454,7 @@ const Asteroid = (props) => {
     const timeline = gsap.timeline({
       defaults: { duration: zoomingDuration, ease: 'power4.out' },
       onComplete: () => {
-        console.log('on complete');
+        // console.log('on complete');
         updateZoomStatus('in', true);
       }
     });
@@ -498,7 +498,7 @@ const Asteroid = (props) => {
     controls.object.updateProjectionMatrix();
     controls.noPan = true;
 
-    console.log('asteroidId.current', `${asteroidId.current}`);
+    // console.log('asteroidId.current', `${asteroidId.current}`);
     setZoomedIntoAsteroidId(asteroidId.current);
     setPrevAsteroidPosition();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -609,25 +609,6 @@ const Asteroid = (props) => {
       forceUpdate.current = Date.now();
     }
   }, [mapResourceId, terrainInitialized, !asteroidData?.resources]);
-
-  useEffect(() => {
-    if (asteroidData && selectedPlot && mapResourceId) {
-      const { i: asteroidId, resourceSeed } = asteroidData;
-      const { plotId: lotId } = selectedPlot;
-      if (asteroidData.resources) {
-        let abundance = AsteroidLib.getAbundanceAtLot(
-          asteroidId,
-          BigInt(resourceSeed || 0),
-          lotId,
-          mapResourceId,
-          asteroidData.resources[mapResourceId]
-        );
-  
-        // TODO: remove once this is reflecte within the UI
-        console.log('resourceId:', mapResourceId, 'lotId:', selectedPlot.plotId, 'abundance:', abundance);
-      }
-    }
-  }, [asteroidData && selectedPlot, mapResourceId]);
 
   useEffect(() => {
     if (geometry.current && terrainUpdateNeeded) {

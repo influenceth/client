@@ -16,7 +16,7 @@ export function WebsocketProvider({ children }) {
 
   const handleMessage = useCallback(({ room, ...message }) => {
     const roomKey = (room || '').includes('::') ? room : DEFAULT_ROOM;
-    console.log(room, roomKey, message);
+    // console.log(room, roomKey, message);
     if (registeredHandlers.current[roomKey]) {
       registeredHandlers.current[roomKey](message);
     }

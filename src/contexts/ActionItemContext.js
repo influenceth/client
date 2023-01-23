@@ -67,9 +67,9 @@ export function ActionItemProvider({ children }) {
   useEffect(() => {
     if (nextCompletionTime) {
       const nextRefreshTime = (nextCompletionTime + 1);
-      console.log('setting timeout in ' + (nextRefreshTime - chainTime), { nextCompletionTime, chainTime });
+      // console.log('setting timeout in ' + (nextRefreshTime - chainTime), { nextCompletionTime, chainTime });
       const to = setTimeout(() => {
-        console.log('running refreesh');
+        // console.log('running refreesh');
         refreshItems(nextRefreshTime);
       }, Math.max(0, 1000 * (nextRefreshTime - chainTime)));
       return () => {

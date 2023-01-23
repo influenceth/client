@@ -5,16 +5,16 @@ import constants from '~/lib/constants';
 
 const { ENABLE_TERRAIN_CHUNK_RESOURCE_POOL } = constants;
 
-// TODO: remove
-let taskTotal = 0;
-let taskTally = 0;
-setInterval(() => {
-  if (taskTally > 0) {
-    console.log(
-      `avg new chunk time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
-    );
-  }
-}, 5000);
+// // TODO: remove
+// let taskTotal = 0;
+// let taskTally = 0;
+// setInterval(() => {
+//   if (taskTally > 0) {
+//     console.log(
+//       `avg new chunk time (over ${taskTally}): ${Math.round(taskTotal / taskTally)}ms`,
+//     );
+//   }
+// }, 5000);
 
 class TerrainChunkManager {
   constructor(i, config, textureSize, workerPool, materialOverrides = {}) {

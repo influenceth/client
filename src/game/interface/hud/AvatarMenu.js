@@ -126,7 +126,7 @@ const AvatarMenu = (props) => {
 
   const silhouetteOverlay = useMemo(() => {
     // if no account or no crew members, show "+" to start their crew
-    if (!account || Object.keys(crewMemberMap).length === 0) {
+    if (!account || Object.keys(crewMemberMap || {}).length === 0) {
       return {
         alwaysOn: ['icon'],
         disableHover: true,
