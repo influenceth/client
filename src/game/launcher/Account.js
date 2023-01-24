@@ -8,12 +8,14 @@ import ButtonPill from '~/components/ButtonPill';
 import CrewCard from '~/components/CrewCard';
 import InfluenceLogo from '~/components/InfluenceLogo';
 import TriangleTip from '~/components/TriangleTip';
-import { CaptainIcon } from '~/components/Icons';
+import { CaptainIcon, PlusIcon } from '~/components/Icons';
 import theme from '~/theme';
-import Button from '~/components/Button';
 import useStore from '~/hooks/useStore';
+import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
+import { useCallback } from 'react';
 
 export const logoDisplacementHeight = 900;
+const hoverBgColor = '#07171e';
 
 const opacityKeyframes = keyframes`
   0% {
@@ -124,13 +126,6 @@ const LogoutLink = styled.a`
   }
 `;
 
-const CrewContainer = styled.div`
-  align-items: flex-start;
-  display: flex;
-  position: relative;
-  width: 100%;
-`;
-
 const CaptainDetails = styled.div`
   left: 170px;
   position: absolute;
@@ -178,6 +173,48 @@ const CrewCardContainer = styled.div`
   width: 90px;
 `;
 
+const CrewContainer = styled.div`
+  align-items: flex-start;
+  display: flex;
+  position: relative;
+  width: 100%;
+  ${p => p.noCrew && css`
+    ${CaptainCardContainer} {
+      border-color: #555;
+      cursor: ${p.theme.cursors.active};
+      transition: background-color 250ms ease;
+
+      ${StyledTriangleTip} path {
+        stroke: #555;
+      }
+      &:not(:hover) {
+        ${StyledCaptainIcon} {
+          & * {
+            fill: rgba(255, 255, 255, 0.25) !important;
+          }
+        }
+      }
+      &:hover {
+        background-color: ${hoverBgColor};
+        border-color: ${p => p.theme.colors.main};
+        ${StyledTriangleTip} {
+          polygon {
+            fill: ${hoverBgColor};
+          }
+          path {
+            stroke: ${p => p.theme.colors.main};
+          }
+        }
+      }
+    }
+    ${CrewCardContainer} {
+      border-color: #555;
+      opacity: 0.5;
+      padding: 3px;
+    }
+  `}
+`;
+
 const PlayCTA = styled.div`
   ${p => p.loggedIn && opacityAnimation};
   align-items: center;
@@ -194,12 +231,21 @@ const MainButton = styled(ButtonAlt)`
 `;
 
 const Account = (props) => {
+  const history = useHistory();
   const { token, logout, walletContext } = useAuth();
   const { account } = walletContext;
   const loggedIn = account && token;
   const { captain, loading: crewLoading, crew, crewMemberMap } = useCrew();
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+
+  const onClickPlay = useCallback(() => {
+    // if crew is done loading and there are no crew members, send to owned-crew first
+    if (!crewLoading && !(crew?.crewMembers?.length > 0)) {
+      history.push('/owned-crew');
+    }
+    dispatchLauncherPage();
+  }, [crewLoading, crew?.crewMembers, dispatchLauncherPage]);
 
   return (
     <MainContent loggedIn={loggedIn}>
@@ -217,7 +263,7 @@ const Account = (props) => {
       {loggedIn &&
         <CrewCTA>
           <LogoutLink onClick={logout}>Log Out</LogoutLink>
-          {!crewLoading && crew?.crewMembers && crew?.crewMembers.length > 0 &&
+          {!crewLoading && crew?.crewMembers?.length > 0 && (
             <CrewContainer>
               {captain && <>
                 <CaptainDetails>
@@ -230,7 +276,7 @@ const Account = (props) => {
                   <StyledCaptainIcon />
                 </CaptainCardContainer>
               </>}
-              {crew.crewMembers.slice(1).map(function(crewmateId) {
+              {crew.crewMembers.slice(1).map((crewmateId) => {
                 const crewmate = crewMemberMap[crewmateId];
                 if (crewmate) {
                   return (
@@ -241,14 +287,40 @@ const Account = (props) => {
                 }
               })}
             </CrewContainer>
-          }
+          )}
+          {!crewLoading && !(crew?.crewMembers?.length > 0) && (
+            <CrewContainer noCrew>
+              <>
+                <CaptainDetails>
+                  <CaptainTitle>Get Started</CaptainTitle>
+                  <CaptainName>Crew is Waiting to be Assigned</CaptainName>
+                </CaptainDetails>
+                <CaptainCardContainer onClick={onClickPlay}>
+                  <CrewSilhouetteCard overlay={{
+                    alwaysOn: ['icon'],
+                    disableHover: true,
+                    icon: <PlusIcon />,
+                    iconSize: 70,
+                    rgb: theme.colors.mainRGB,
+                  }} />
+                  <StyledTriangleTip extendStroke strokeColor="currentColor" strokeWidth="1.5" />
+                  <StyledCaptainIcon />
+                </CaptainCardContainer>
+              </>
+              {[1,2,3,4].map((i) => (
+                <CrewCardContainer key={i}>
+                  <CrewSilhouetteCard />
+                </CrewCardContainer>
+              ))}
+            </CrewContainer>
+          )}
         </CrewCTA>
       }
       <PlayCTA loggedIn={loggedIn}>
         <MainButton
           color={theme.colors.main}
           size="huge"
-          onClick={() => dispatchLauncherPage()}>
+          onClick={onClickPlay}>
           {loggedIn ? "Play" : "Explore"}
         </MainButton>
       </PlayCTA>
