@@ -808,6 +808,7 @@ const OwnedCrew = (props) => {
             <Button
               onClick={handleSave}
               disabled={saving || !isDirty}
+              isTransaction
               loading={saving}>
               Save Changes
             </Button>
