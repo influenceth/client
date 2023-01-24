@@ -353,7 +353,7 @@ const CrewAssignments = (props) => {
     }
   }, [playSound]);
 
-  const selectCrew = useCallback((crewId) => async () => {
+  const selectCrewmate = useCallback((crewId) => async () => {
     if (bookReady && selectedStory) {
       const crewStatus = selectedStory.crewStatuses[crewId];
       if (crewStatus && !['notReady', 'loading'].includes(crewStatus)) {
@@ -585,7 +585,7 @@ const CrewAssignments = (props) => {
                               clickable={uiConfig.clickable}
                               fade={uiConfig.fade}
                               overlay={uiConfig}
-                              onClick={selectCrew(c.i)} />
+                              onClick={selectCrewmate(c.i)} />
                           </div>
                         );
                       })}

@@ -1,5 +1,5 @@
 import create from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, subscribeWithSelector } from 'zustand/middleware';
 import produce from 'immer';
 
 import constants from '~/lib/constants';
@@ -26,8 +26,9 @@ const outlinerSectionDefaults = {
   timeControl: { ...sectionDefault }
 };
 
-const useStore = create(persist((set, get) => ({
+const useStore = create(persist(subscribeWithSelector((set, get) => ({
     actionDialog: {},
+    launcherPage: null,
 
     asteroids: {
       origin: null,
@@ -150,6 +151,12 @@ const useStore = create(persist((set, get) => ({
 
     dispatchActionDialog: (type, params = {}) => set(produce(state => {
       state.actionDialog = { type, params };
+    })),
+
+    dispatchLauncherPage: (page) => set(produce(state => {
+      if (page === 'store' || page === 'wallets' || page === 'settings') state.launcherPage = page;
+      else if (page) state.launcherPage = 'account';
+      else state.launcherPage = null;
     })),
 
     dispatchAlertNotified: (alert) => set(produce(state => {
@@ -374,12 +381,6 @@ const useStore = create(persist((set, get) => ({
       state.auth.token = null;
     })),
 
-    dispatchLoggedOut: () => set(produce(state => {
-      state.selectedCrewId = null;
-      state.failedTransactions = [];
-      state.pendingTransactions = [];
-    })),
-
     dispatchCrewSelected: (crewId) => set(produce(state => {
       state.selectedCrewId = crewId;
     })),
@@ -476,6 +477,11 @@ const useStore = create(persist((set, get) => ({
       state.pendingTransactions = state.pendingTransactions.filter((tx) => tx.txHash !== txHash);
     })),
 
+    dispatchClearTransactionHistory: () => set(produce(state => {
+      state.pendingTransactions = [];
+      state.failedTransactions = [];
+    })),
+
     dispatchZoomToPlot: (isZoomed) => set(produce(state => {
       state.asteroids.zoomToPlot = isZoomed;
     }))
@@ -498,6 +504,6 @@ const useStore = create(persist((set, get) => ({
     'plotLoader',
     'timeOverride'  // should this be in ClockContext?
   ]
-}));
+})));
 
 export default useStore;

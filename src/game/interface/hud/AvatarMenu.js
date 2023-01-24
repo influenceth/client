@@ -9,6 +9,7 @@ import { CaptainIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/component
 import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCrew from '~/hooks/useCrew';
+import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 
 const bgColor = '#000';
@@ -124,6 +125,8 @@ const AvatarMenu = (props) => {
   const { captain, crewMemberMap, loading: crewIsLoading } = useCrew();
   const history = useHistory();
 
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+
   const silhouetteOverlay = useMemo(() => {
     // if no account or no crew members, show "+" to start their crew
     if (!account || Object.keys(crewMemberMap || {}).length === 0) {
@@ -148,10 +151,10 @@ const AvatarMenu = (props) => {
     return null;
   }, [account, captain]);
 
-  const [tooltip, destination] = useMemo(() => {
-    if (!account) return ['Login', '/launcher/account'];
-    else if (!captain) return ['Start Your Crew', '/owned-crew'];
-    else return [null, '/owned-crew'];
+  const [tooltip, onClick] = useMemo(() => {
+    if (!account) return ['Login', () => dispatchLauncherPage('wallets')];
+    else if (!captain) return ['Start Your Crew', () => history.push('/owned-crew')];
+    else return [null, () => history.push('/owned-crew')];
   }, [ account, captain ]);
 
   useEffect(() => ReactTooltip.rebuild(), [tooltip]);
@@ -164,7 +167,7 @@ const AvatarMenu = (props) => {
         data-tip={tooltip}
         data-for="global"
         data-place="right"
-        onClick={() => history.push(destination)}>
+        onClick={onClick}>
         <Avatar captainless={!captain}>
           {captain && (
             <CrewCard

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
@@ -12,7 +12,6 @@ import { EventsProvider } from '~/contexts/EventsContext';
 import { WalletProvider } from '~/contexts/WalletContext';
 import { WebsocketProvider } from '~/contexts/WebsocketContext';
 import Audio from '~/game/Audio';
-import Launcher from '~/game/Launcher';
 import Interface from '~/game/Interface';
 import LandingPage from '~/game/Landing';
 import Referral from '~/game/Referral';
@@ -55,16 +54,34 @@ const DISABLE_LAUNCHER_LANDING = false; //process.env.NODE_ENV === 'development'
 const LauncherRedirect = () => {
   const { account } = useAuth();
   const history = useHistory();
-  const showInterface = useStore(s => s.dispatchShowInterface);
 
-  // on initial load, redirect to launcher if at "/" (and not in skip-mode for dev)
+  const launcherPage = useStore(s => s.launcherPage);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+
+  // redirect to launcher if initial load and not already open
   useEffect(() => {
-    if (DISABLE_LAUNCHER_LANDING && account) {
-      showInterface();
-    } else if (history.location.pathname === '/') {
-      history.push('/launcher/account');
+    if (!launcherPage) {
+      const parts = history.location.pathname.split('/').slice(1);
+      const deeplink = parts[0] === 'launcher';
+      dispatchLauncherPage((deeplink && parts[1]) ? parts[1] : true);
+      if (deeplink) {
+        history.replace('/');
+      }
     }
   }, []);
+
+  // redirect to launcher if was logged in and is now logged out (and not already on launcher)
+  const wasLoggedIn = useRef(false);
+  useEffect(() => {
+    if (account) {
+      wasLoggedIn.current = true;
+    } else {
+      if (wasLoggedIn.current && !launcherPage) {
+        dispatchLauncherPage(true);
+      }
+      wasLoggedIn.current = false;
+    }
+  }, [!account]);
 
   return null;
 };
@@ -134,22 +151,23 @@ const Game = (props) => {
                     <GlobalStyle />
                     <Router>
                       <Referral />
-                      <ClockProvider>
-                        <LauncherRedirect />
-                        <Switch>
-                          <Route path="/play">
-                            <LandingPage />
-                          </Route>
-                          <Route path="/launcher/*">
-                            <Launcher />
-                          </Route>
-                        </Switch>
-                        <StyledMain>
-                          <Interface />
-                          {showScene && <Scene />}
-                          <Audio />
-                        </StyledMain>
-                      </ClockProvider>
+                      <Switch>
+                        {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
+                        <Route path="/play">
+                          <LandingPage />
+                        </Route>
+                        {/* for everything else */}
+                        <Route>
+                          <LauncherRedirect />
+                          <ClockProvider>
+                            <StyledMain>
+                              <Interface />
+                              {showScene && <Scene />}
+                              <Audio />
+                            </StyledMain>
+                          </ClockProvider>
+                        </Route>
+                      </Switch>
                     </Router>
                   </ThemeProvider>
                 </ActionItemProvider>

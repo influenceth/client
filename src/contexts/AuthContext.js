@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useContext } from 'react';
+import { createContext, useCallback, useEffect, useContext, useRef } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
 
 import WalletContext from '~/contexts/WalletContext';
@@ -7,34 +7,50 @@ import useStore from '~/hooks/useStore';
 
 const AuthContext = createContext();
 
+const getAccountFromToken = (token) => {
+  const decoded = decodeToken(token);
+  if (decoded) return decoded?.sub;
+  return null;
+};
+
 export function AuthProvider({ children }) {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const token = useStore(s => s.auth.token);
   const dispatchTokenInvalidated = useStore(s => s.dispatchTokenInvalidated);
   const dispatchAuthenticated = useStore(s => s.dispatchAuthenticated);
-  const dispatchLogout = useStore(s => s.dispatchLoggedOut);
   const walletContext = useContext(WalletContext);
   const account = walletContext?.account;
 
-  // Invalidate token if the token has expired
-  useEffect(() => {
-    if (!!token && isExpired(token)) {
-      dispatchTokenInvalidated();
-    }
-  }, [ token, dispatchTokenInvalidated ]);
+  const authenticatedAccount = useRef(getAccountFromToken(token));
 
-  // Invalidate the token if the token doesn't match the current account
+  const invalidateTokenImmediately = useCallback(() => {
+    authenticatedAccount.current = null;
+    dispatchTokenInvalidated();
+  }, []);
+
+  useEffect(() => {
+    if (walletContext?.error) {
+      createAlert({
+        type: 'GenericAlert',
+        level: 'warning',
+        content: walletContext?.error || 'Please try again.',
+        duration: 10000
+      });
+    }
+  }, [walletContext?.error])
+
+  // Invalidate token if...
+  //  - the token has expired
+  //  - the token doesn't match the current account
   useEffect(() => {
     const account = walletContext?.account;
-    const decoded = decodeToken(token);
-
-    if (!account) {
-      dispatchTokenInvalidated();
+    if (token && !isExpired(token)) {
+      if (account && account === getAccountFromToken(token)) {
+        return;
+      }
     }
-    else if (decoded?.sub && account !== decoded?.sub) {
-      dispatchTokenInvalidated();
-    }
-  }, [ token, walletContext, dispatchTokenInvalidated ]);
+    invalidateTokenImmediately();
+  }, [ token, walletContext, invalidateTokenImmediately ]);
 
   const initiateLogin = useCallback(async (wallet) => {
     await walletContext.attemptConnection(wallet);
@@ -45,6 +61,7 @@ export function AuthProvider({ children }) {
         const loginMessage = await api.requestLogin(address);
         const signature = await wallet.account.signMessage(loginMessage);
         const newToken = await api.verifyLogin(address, { signature: signature.join(',') });
+        authenticatedAccount.current = walletContext?.account;
         dispatchAuthenticated(newToken);
         return true;
       } catch (e) {
@@ -62,17 +79,22 @@ export function AuthProvider({ children }) {
 
   const initiateLogout = useCallback(() => {
     walletContext.disconnect({ clearLastWallet: true });
-    dispatchTokenInvalidated();
-    dispatchLogout();
-  }, [ walletContext.disconnect, dispatchTokenInvalidated, dispatchLogout ]);
+    invalidateTokenImmediately();
+  }, [ walletContext.disconnect, invalidateTokenImmediately ]);
 
+  // NOTE: in the rendering loop, if the account changes, we will fire dispatch
+  //  to clear the app-level state's token value, but that will not be here until
+  //  the NEXT render (at which point all children could potentially have been
+  //  rendered with a new account value BUT the token on the api requests tied
+  //  to the PREVIOUSLY AUTHED account -- not good)... this fixes that:
+  const authenticationIsValid = account === authenticatedAccount.current;
   return (
     <AuthContext.Provider value={{
       login: initiateLogin,
       logout: initiateLogout,
-      token,
-      account: token && account,
-      provider: token && account,
+      token: authenticationIsValid && token,
+      account: authenticationIsValid && token && account,
+      provider: authenticationIsValid && token && account,  // TODO: this is probably deprecated
       walletContext
     }}>
       {children}

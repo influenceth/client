@@ -351,7 +351,7 @@ const getNow = () => {
 }
 
 export function ChainTransactionProvider({ children }) {
-  const { walletContext: { starknet } } = useAuth();
+  const { account, walletContext: { starknet } } = useAuth();
   const { events, lastBlockNumber } = useEvents();
   const queryClient = useQueryClient();
 
@@ -360,6 +360,7 @@ export function ChainTransactionProvider({ children }) {
   const dispatchPendingTransaction = useStore(s => s.dispatchPendingTransaction);
   const dispatchPendingTransactionUpdate = useStore(s => s.dispatchPendingTransactionUpdate);
   const dispatchPendingTransactionComplete = useStore(s => s.dispatchPendingTransactionComplete);
+  const dispatchClearTransactionHistory = useStore(s => s.dispatchClearTransactionHistory);
   const pendingTransactions = useStore(s => s.pendingTransactions);
 
   const contracts = useMemo(() => {
@@ -410,6 +411,11 @@ export function ChainTransactionProvider({ children }) {
   //  passing back server time occasionally in websocket (maybe in headers?) and storing an offset
   const [chainTime, setChainTime] = useState(getNow());
   useInterval(() => setChainTime(getNow()), 1000);
+
+  // on logout, clear pending (and failed) transactions
+  useEffect(() => {
+    if (!account) dispatchClearTransactionHistory();
+  }, [!account, dispatchClearTransactionHistory]);
 
   // on initial load, set provider.waitForTransaction for any pendingTransactions
   // so that we can throw any extension-related or timeout errors needed

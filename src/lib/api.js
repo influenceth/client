@@ -11,12 +11,15 @@ if (initialCrew) config.headers['X-Crew-Id'] = initialCrew;
 const instance = axios.create(config);
 
 // subscribe to changes relevant to the config
-useStore.subscribe(([newToken, crewId]) => {
-  instance.defaults.headers = {
-    Authorization: `Bearer ${newToken}`,
-    'X-Crew-Id': crewId
-  };
-}, s => [s.auth.token, s.selectedCrewId]);
+useStore.subscribe(
+  s => [s.auth.token, s.selectedCrewId],
+  ([newToken, crewId]) => {
+    instance.defaults.headers = {
+      Authorization: `Bearer ${newToken}`,
+      'X-Crew-Id': crewId
+    };
+  }
+);
 
 const api = {
   getUser: async () => {

@@ -100,7 +100,7 @@ const getInvalidations = (event, returnValues, linked) => {
 
       CoreSample_SamplingStarted: [
         ['actionItems'],
-        ['asteroidCrewSampledPlots', returnValues.asteroidId, returnValues.resourceId],
+        ['asteroidCrewSampledPlots', returnValues.asteroidId, returnValues.resourceId, returnValues.owner],
         ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       CoreSample_SamplingFinished: [
@@ -108,7 +108,7 @@ const getInvalidations = (event, returnValues, linked) => {
         ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       CoreSample_Used: [
-        ['asteroidCrewSampledPlots', returnValues.asteroidId, returnValues.resourceId],
+        ['asteroidCrewSampledPlots', returnValues.asteroidId, returnValues.resourceId, getLinkedAsset(linked, 'Crew').i],
         ['plots', returnValues.asteroidId, returnValues.lotId],
       ],
       Extraction_Started: [
@@ -206,7 +206,7 @@ export function EventsProvider({ children }) {
             ...getInvalidations(e.event, e.returnValues, e.linked),
             ...(e.invalidations || [])
           ];
-          // console.log(e.event, e.returnValues, invalidations);
+          console.log(e.event, e.returnValues, invalidations);
           invalidations.forEach((i) => {
             queryClient.invalidateQueries(...i);
           });

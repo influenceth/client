@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
 
 import api from '~/lib/api';
@@ -11,8 +11,6 @@ export function CrewProvider({ children }) {
   const { account } = useAuth();
   const selectedCrewId = useStore(s => s.selectedCrewId);
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
-
-  const [selectedCrew, setSelectedCrew] = useState();
 
   const { data: allCrewMembers, isLoading: crewMembersLoading } = useQuery(
     [ 'crewmembers', 'owned', account ],
@@ -35,27 +33,24 @@ export function CrewProvider({ children }) {
     return null;
   }, [allCrewMembers, crewMembersLoading]);
 
-  const selectCrew = useCallback((crewId) => {
-    dispatchCrewSelected(crewId);
-  }, []);
+  const selectedCrew = useMemo(() => {
+    return selectedCrewId && (crews || []).find((crew) => crew.i === selectedCrewId);
+  }, [crews, selectedCrewId]);
 
   useEffect(() => {
-    if (account && !crewsLoading && !crewMembersLoading && crews?.length) {
-      if (selectedCrewId) {
-        const select = crews.find((crew) => crew.i === selectedCrewId);
-        if (select) {
-          setSelectedCrew(select);
-          return;
+    // if logged in and done loading and there are crews
+    if (!crewsLoading && !crewMembersLoading) {
+      if (account && crews?.length) {
+        // if there is no selected crew, select default crew
+        if (!selectedCrew) {
+          const defaultCrew = crews.find((crew) => crew.crewMembers.length > 0);
+          dispatchCrewSelected(defaultCrew?.i || crews[0].i);
         }
+      } else {
+        dispatchCrewSelected();
       }
-
-      // if get here, select default crew
-      const defaultCrew = crews.find((crew) => crew.crewMembers.length > 0);
-      selectCrew(defaultCrew?.i || crews[0].i);
-    } else if (!account) {
-      selectCrew();
     }
-  }, [account, crews, crewsLoading, crewMembersLoading, selectCrew, selectedCrewId]);
+  }, [account, crews, crewsLoading, crewMembersLoading, dispatchCrewSelected, selectedCrew]);
 
   const captain = useMemo(() => {
     if (crewMemberMap && selectedCrew?.crewMembers?.length) {
@@ -71,7 +66,7 @@ export function CrewProvider({ children }) {
       crews,
       crewMemberMap,
       loading: crewsLoading || crewMembersLoading,
-      selectCrew
+      selectCrew: dispatchCrewSelected  // TODO: this might be redundant
     }}>
       {children}
     </CrewContext.Provider>

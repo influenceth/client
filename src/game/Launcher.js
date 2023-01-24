@@ -1,5 +1,4 @@
 import { useContext, useCallback, useEffect } from 'react';
-import { Switch, Route, NavLink as Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 
 import ClockContext from '~/contexts/ClockContext';
@@ -7,6 +6,7 @@ import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import ButtonPill from '~/components/ButtonPill';
 import InfluenceLogo from '~/components/InfluenceLogo';
+import OnClickLink from '~/components/OnClickLink';
 import Time from '~/components/Time';
 import Account, { logoDisplacementHeight } from './launcher/Account';
 import Settings from './launcher/Settings';
@@ -25,7 +25,7 @@ const StyledLauncher = styled.div`
   padding: ${headerFooterHeight}px 0;
   position: absolute;
   width: 100%;
-  z-index: 9000;
+  z-index: 8999;
 `;
 
 const Header = styled.ul`
@@ -58,7 +58,7 @@ const LogoWrapper = styled.div`
   `}
 `;
 
-const StyledLink = styled(Link)`
+const StyledLink = styled(OnClickLink)`
   align-items: flex-end;
   color: inherit;
   display: flex;
@@ -229,9 +229,9 @@ const InfoBar = styled.ul`
 `;
 
 const Launcher = (props) => {
-  const location = useLocation();
   const { displayTime } = useContext(ClockContext);
-  const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
+  const launcherPage = useStore(s => s.launcherPage);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const hideInterface = useStore(s => s.dispatchHideInterface);
   const showInterface = useStore(s => s.dispatchShowInterface);
   const { walletContext, logout, token } = useAuth();
@@ -246,16 +246,16 @@ const Launcher = (props) => {
   return (
     <StyledLauncher {...props}>
       <Header>
-        <LogoWrapper hideHeader={location.pathname === '/launcher/account' ? logoDisplacementHeight : 0}>
+        <LogoWrapper hideHeader={launcherPage === 'account' ? logoDisplacementHeight : 0}>
           <InfluenceLogo />
         </LogoWrapper>
         <MenuItem>
-          <StyledLink activeClassName="current" to="/launcher/account">
-            <span>{location.pathname === '/launcher/account' ? "Account" : "‹ Back"}</span>
+          <StyledLink activeClassName="current" onClick={() => dispatchLauncherPage('account')}>
+            <span>{launcherPage === 'account' ? "Account" : "‹ Back"}</span>
           </StyledLink>
         </MenuItem>
         <MenuItem>
-          <StyledLink activeClassName="current" to="/launcher/settings">
+          <StyledLink activeClassName="current" onClick={() => dispatchLauncherPage('settings')}>
             <span>Settings</span>
           </StyledLink>
         </MenuItem>
@@ -268,11 +268,9 @@ const Launcher = (props) => {
         }
       </Header>
       <MainContent>
-        <Switch>
-          <Route path="/launcher/account"><Account /></Route>
-          <Route path="/launcher/wallets"><Wallets /></Route>
-          <Route path="/launcher/settings"><Settings /></Route>
-        </Switch>
+        {launcherPage === 'account' && <Account />}
+        {launcherPage === 'wallets' && <Wallets />}
+        {launcherPage === 'settings' && <Settings />}
       </MainContent>
       <StyledTime displayTime={displayTime} />
       <Footer>

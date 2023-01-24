@@ -15,7 +15,7 @@ const StyledIntro = styled.div`
   height: 100%;
   opacity: 1;
   width: 100%;
-  z-index: 9000;
+  z-index: 8999;
 `;
 
 const Launcher = styled.div`

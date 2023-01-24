@@ -33,6 +33,7 @@ const SystemControls = (props) => {
   const skyboxVisible = useStore(s => s.graphics.skybox);
   const dispatchSkyboxHidden = useStore(s => s.dispatchSkyboxHidden);
   const dispatchSkyboxUnhidden = useStore(s => s.dispatchSkyboxUnhidden);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
   useEffect(() => {
@@ -95,7 +96,7 @@ const SystemControls = (props) => {
       )}
       <IconButton
         data-tip="Main Menu"
-        onClick={() => history.push('/launcher/account')}
+        onClick={() => dispatchLauncherPage(true)}
         borderless>
         <AiOutlineMenu />
       </IconButton>

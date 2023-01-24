@@ -6,6 +6,7 @@ import Button from '~/components/Button';
 import ArgentXLogo from '~/assets/images/wallets/argentx-logo.svg';
 import BraavosLogo from '~/assets/images/wallets/braavos-logo.webp';
 import CartridgeLogo from '~/assets/images/wallets/cartridge-logo.svg';
+import useStore from '~/hooks/useStore';
 
 const StyledWallets = styled.div`
   background-color: black;
@@ -133,9 +134,10 @@ const External = styled.div`
 `;
 
 const Wallets = (props) => {
-  const history = useHistory();
   const { login, walletContext } = useAuth();
   const { getAvailableWallets } = walletContext;
+
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
   const downloadWallet = (withWalletId) => {
     const links = {
@@ -158,7 +160,7 @@ const Wallets = (props) => {
     if (!!withWallet) {
       await withWallet.enable();
       const loggedIn = await login(withWallet);
-      if (loggedIn) history.push('/launcher/account');
+      if (loggedIn) dispatchLauncherPage('account');
       return;
     }
 

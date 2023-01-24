@@ -11,6 +11,7 @@ import TriangleTip from '~/components/TriangleTip';
 import { CaptainIcon } from '~/components/Icons';
 import theme from '~/theme';
 import Button from '~/components/Button';
+import useStore from '~/hooks/useStore';
 
 export const logoDisplacementHeight = 900;
 
@@ -45,7 +46,10 @@ const MainContent = styled.div`
   width: 700px;
 
   @media (max-height: 700px) {
+    justify-content: flex-start;
     overflow: auto;
+    margin: 20px 0;
+    padding: 0;
   }
 `;
 
@@ -190,11 +194,12 @@ const MainButton = styled(ButtonAlt)`
 `;
 
 const Account = (props) => {
-  const history = useHistory();
   const { token, logout, walletContext } = useAuth();
   const { account } = walletContext;
   const loggedIn = account && token;
   const { captain, loading: crewLoading, crew, crewMemberMap } = useCrew();
+
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
   return (
     <MainContent loggedIn={loggedIn}>
@@ -205,7 +210,7 @@ const Account = (props) => {
         <AccountCTA>
           <NotConnected>
             <span>Account Not Connected</span>
-            <ButtonPill onClick={() => history.push('/launcher/wallets')}>Login</ButtonPill>
+            <ButtonPill onClick={() => dispatchLauncherPage('wallets')}>Login</ButtonPill>
           </NotConnected>
         </AccountCTA>
       }
@@ -243,7 +248,7 @@ const Account = (props) => {
         <MainButton
           color={theme.colors.main}
           size="huge"
-          onClick={() => history.push('/game')}>
+          onClick={() => dispatchLauncherPage()}>
           {loggedIn ? "Play" : "Explore"}
         </MainButton>
       </PlayCTA>
