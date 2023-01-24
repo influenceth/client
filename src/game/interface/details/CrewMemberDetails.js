@@ -13,7 +13,7 @@ import useStore from '~/hooks/useStore';
 import Button from '~/components/Button';
 import CrewCard from '~/components/CrewCard';
 import DataReadout from '~/components/DataReadout';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import Form from '~/components/Form';
 import IconButton from '~/components/IconButton';
 import {
@@ -422,8 +422,9 @@ const CrewMemberDetails = (props) => {
 
   return (
     <Details
-      contentProps={{ style: { margin: 0 } }}
-      title="Crewmate Profile">
+      onCloseDestination="/owned-crew"
+      title="Crewmate Profile"
+      width="max">
       {crew && (
         <Content>
           <CrewBasics>
