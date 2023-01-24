@@ -1,7 +1,10 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
-import { MdScreenRotation as ReorientCameraIcon } from 'react-icons/md';
+import {
+  MdScreenRotation as ReorientCameraIcon,
+  MdBugReport as BugIcon
+} from 'react-icons/md';
 
 import { BackIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
@@ -122,6 +125,7 @@ const CameraControls = styled.div`
   border: 1px solid ${p => p.theme.colors.main};
   border-radius: 6px;
   color: ${p => p.theme.colors.main};
+  cursor: ${p => p.theme.cursors.active};
   display: flex;
   font-size: 28px;
   height: 40px;
@@ -131,11 +135,18 @@ const CameraControls = styled.div`
   position: absolute;
   right: -10px;
   top: 10px;
-  transition: opacity 250ms ease;
+  transition: opacity 250ms ease, top 250ms ease;
   width: 40px;
   &:hover {
     opacity: 1;
   }
+`;
+
+const HelpButton = styled(CameraControls)`
+  background: rgba(255, 152, 79, 0.2);
+  border: 1px solid ${p => p.theme.colors.orange};
+  color: ${p => p.theme.colors.orange};
+  ${p => p.lower && 'top: 60px;'}
 `;
 
 const HUD = () => {
@@ -170,6 +181,10 @@ const HUD = () => {
       onClickBack: () => updateZoomStatus('zooming-out')
     }
   }, [plotId, zoomToPlot]);
+
+  const openHelpChannel = useCallback(() => {
+    window.open(process.env.REACT_APP_HELP_URL);
+  }, []);
 
   useEffect(() => ReactTooltip.rebuild(), [actions]);
 
@@ -217,6 +232,18 @@ const HUD = () => {
         visible={zoomStatus === 'in'}>
         <ReorientCameraIcon />
       </CameraControls>
+
+      {process.env.REACT_APP_HELP_URL && (
+        <HelpButton
+          data-tip="Report a Testnet Bug"
+          data-for="global"
+          data-place="left"
+          onClick={openHelpChannel}
+          lower={zoomStatus === 'in'}
+          visible>
+          <BugIcon />
+        </HelpButton>
+      )}
 
       <ActionDialog />
     </>

@@ -86,6 +86,9 @@
     },
     "REACT_APP_CLOUDFRONT_BUCKET": {
       "required": true
+    },
+    "REACT_APP_HELP_URL": {
+      "required": false
     }
   }
 }
