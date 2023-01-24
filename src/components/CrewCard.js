@@ -211,7 +211,7 @@ const CrewCard = ({ crew: crewmate, onClick, overlay, ...props }) => {
           </EmblemContainer>
           <FooterStats>
             <div>{Crewmate.getClass(crewmate.crewClass)?.name}</div>
-            <div>{Crewmate.getTitle(crewmate.title)?.name}</div>
+            {crewmate.title > 0 && <div>{Crewmate.getTitle(crewmate.title)?.name}</div>}
           </FooterStats>
         </CardFooter>
       )}
