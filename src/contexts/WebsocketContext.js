@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
 import useAuth from '~/hooks/useAuth';
@@ -14,6 +14,8 @@ export function WebsocketProvider({ children }) {
   const socket = useRef();
   const registeredHandlers = useRef({});
 
+  const [wsReady, setWsReady] = useState(false);
+
   const handleMessage = useCallback(({ room, ...message }) => {
     const roomKey = (room || '').includes('::') ? room : DEFAULT_ROOM;
     // console.log(room, roomKey, message);
@@ -22,8 +24,8 @@ export function WebsocketProvider({ children }) {
     }
   }, []);
   
-  // NOTE: this is currently limited to one registrant per room b/c that's all we need
-  //  but it could definitely be increased later
+  // NOTE: this is currently limited to one callback registered per room b/c that's
+  //  all we need, but it could always be switched to an array of listeners if needed
   const registerWSHandler = useCallback((callback, room = null) => {
     if (!socket.current) return;
     if (room) {
@@ -60,19 +62,22 @@ export function WebsocketProvider({ children }) {
         extraHeaders: { Authorization: `Bearer ${token}` }
       });
       socket.current.on('event', handleMessage);
+      setWsReady(true);
     }
     return () => {
       if (socket.current) {
         socket.current.off(); // removes all listeners for all events
         socket.current.disconnect();
       }
+      setWsReady(false);
     }
   }, [token]);
 
   return (
     <WebsocketContext.Provider value={{
       registerWSHandler,
-      unregisterWSHandler
+      unregisterWSHandler,
+      wsReady
     }}>
       {children}
     </WebsocketContext.Provider>

@@ -52,7 +52,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const { token } = useAuth();
   const { scene } = useThree();
   const queryClient = useQueryClient();
-  const { registerWSHandler, unregisterWSHandler } = useWebsocket();
+  const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
   const { processInBackground } = useWebWorker();
 
   const mapResourceId = useStore(s => s.asteroids.mapResourceId);
@@ -236,14 +236,14 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   }, []);
 
   useEffect(() => {
-    if (token) {
+    if (token && wsReady) {
       let roomName = `Asteroid::${asteroidId}`;
       registerWSHandler(handleWSMessage, roomName)
       return () => {
         unregisterWSHandler(roomName)
       }
     }
-  }, [token]);
+  }, [token, wsReady]);
 
   // instantiate pips mesh
   useEffect(() => {

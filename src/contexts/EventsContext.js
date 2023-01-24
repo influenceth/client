@@ -153,7 +153,7 @@ const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
 export function EventsProvider({ children }) {
   const { token } = useAuth();
   const queryClient = useQueryClient();
-  const { registerWSHandler, unregisterWSHandler } = useWebsocket();
+  const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
   const [ lastBlockNumber, setLastBlockNumber ] = useState(0);
   const [ events, setEvents ] = useState([]);
 
@@ -251,6 +251,8 @@ export function EventsProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    if (!wsReady) return;
+
     // if authed, populate existing events and start listening to user websocket
     // if have pending transactions, load back to the oldest one in case it missed the event;
     // else, will just pull most recent X (limit set on server)
@@ -279,7 +281,7 @@ export function EventsProvider({ children }) {
       setLastBlockNumber(0);
       unregisterWSHandler();
     }
-  }, [onWSMessage, token]);
+  }, [onWSMessage, token, wsReady]);
 
   return (
     <EventsContext.Provider value={{
