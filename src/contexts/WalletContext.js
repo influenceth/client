@@ -4,7 +4,31 @@ import { injectController } from '@cartridge/controller';
 import { Address } from '@influenceth/sdk';
 
 // Add Cartridge wallet to get-starknet set
-injectController(undefined, { url: "https://keychain-git-removenextrouting.preview.cartridge.gg/" });
+const dispatcherMethods = [
+  'Asteroid_startScan',
+  'Asteroid_finishScan',
+  'Asteroid_setName',
+  'Construction_finish',
+  'Construction_start',
+  'Construction_deconstruct',
+  'Construction_plan',
+  'Construction_unplan',
+  'CoreSample_startSampling',
+  'CoreSample_finishSampling',
+  'Crewmate_setName',
+  'Crew_setComposition',
+  'Extraction_finish',
+  'Extraction_start',
+  'Inventory_transferStart',
+  'Inventory_transferFinish',
+  'Lot_occupy'
+];
+
+const sessionWhitelist = dispatcherMethods.map(method => {
+  return { target: process.env.REACT_APP_STARKNET_DISPATCHER, method };
+});
+
+injectController(sessionWhitelist, { url: "https://keychain-git-removenextrouting.preview.cartridge.gg/" });
 
 const { disconnect, enable, getAvailableWallets, getLastConnectedWallet } = getStarknet;
 
