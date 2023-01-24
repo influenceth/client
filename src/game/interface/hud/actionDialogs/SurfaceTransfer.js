@@ -187,10 +187,16 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
     return (originPlot?.building?.inventories || {})[originInvId];
   }, [originInvId, originPlot?.building?.inventories]);
 
+  // handle auto-closing
+  const lastStatus = useRef();
   useEffect(() => {
-    if (deliveryStatus === 'DEPARTING' || deliveryStatus === 'FINISHING' || deliveryStatus === 'FINISHED') {
-      props.onClose();
+    // (close on status change from)
+    if (['READY', 'READY_TO_FINISH'].includes(lastStatus.current)) {
+      if (deliveryStatus !== lastStatus.current) {
+        props.onClose();
+      }
     }
+    lastStatus.current = deliveryStatus;
   }, [deliveryStatus]);
 
   return (

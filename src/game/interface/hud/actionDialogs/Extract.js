@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CoreSample, Asteroid, Extraction } from '@influenceth/sdk';
 
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
@@ -195,10 +195,16 @@ const Extract = ({ asteroid, plot, ...props }) => {
     startExtraction(amount, selectedCoreSample, destinationPlot);
   }, [amount, selectedCoreSample, destinationPlot]);
 
+  // handle auto-closing
+  const lastStatus = useRef();
   useEffect(() => {
-    if (extractionStatus === 'FINISHING') {
-      props.onClose();
+    // (close on status change from)
+    if (['READY', 'READY_TO_FINISH'].includes(lastStatus.current)) {
+      if (extractionStatus !== lastStatus.current) {
+        props.onClose();
+      }
     }
+    lastStatus.current = extractionStatus;
   }, [extractionStatus]);
 
   return (

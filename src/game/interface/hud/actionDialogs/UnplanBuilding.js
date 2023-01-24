@@ -84,6 +84,22 @@ const UnplanBuilding = ({ asteroid, plot, ...props }) => {
     }
   }, [constructionStatus]);
 
+  // handle auto-closing
+  const lastStatus = useRef();
+  useEffect(() => {
+    // (always close if not)
+    if (!['PLANNED', 'CANCELING'].includes(constructionStatus)) {
+      props.onClose();
+    }
+    // (close on status change from)
+    else if (['PLANNED'].includes(lastStatus.current)) {
+      if (constructionStatus !== lastStatus.current) {
+        props.onClose();
+      }
+    }
+    lastStatus.current = constructionStatus;
+  }, [constructionStatus]);
+
   return (
     <>
       <ActionDialogHeader

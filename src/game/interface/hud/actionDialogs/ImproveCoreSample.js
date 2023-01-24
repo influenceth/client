@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid as AsteroidLib, CoreSample, Inventory } from '@influenceth/sdk';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
@@ -195,6 +195,18 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
     }
     return 'AFTER';
   }, [isImproved, samplingStatus]);
+
+  // handle auto-closing
+  const lastStatus = useRef();
+  useEffect(() => {
+    // (close on status change from)
+    if (['READY'].includes(lastStatus.current)) {
+      if (samplingStatus !== lastStatus.current) {
+        props.onClose();
+      }
+    }
+    lastStatus.current = samplingStatus;
+  }, [samplingStatus]);
 
   return (
     <>

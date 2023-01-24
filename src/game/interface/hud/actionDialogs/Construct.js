@@ -143,10 +143,20 @@ const Construct = ({ asteroid, plot, ...props }) => {
     return 'AFTER';
   }, [constructionStatus]);
 
+  // handle auto-closing
+  const lastStatus = useRef();
   useEffect(() => {
-    if (constructionStatus === 'FINISHING' || constructionStatus === 'OPERATIONAL') {
+    // (always close on)
+    if (['OPERATIONAL'].includes(constructionStatus)) {
       props.onClose();
     }
+    // (close on status change from)
+    else if (['PLANNED', 'READY_TO_FINISH'].includes(lastStatus.current)) {
+      if (constructionStatus !== lastStatus.current) {
+        props.onClose();
+      }
+    }
+    lastStatus.current = constructionStatus;
   }, [constructionStatus]);
 
   return (

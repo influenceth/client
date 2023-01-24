@@ -124,13 +124,12 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
     }
   ], []);
 
+  // stay in this window until PLANNED, then swap to UNPLAN / SURFACE_TRANSFER
   useEffect(() => {
-    if (constructionStatus === 'PLANNED') {
-      props.onClose();
-      // TODO:
-      // if materials are recovered, open surface transport dialog w/ all materials selected
+    if (!['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
+      // TODO: if materials are recovered, open surface transport dialog w/ all materials selected
       // else, open "unplan" dialog
-      // props.onSetAction('CONSTRUCT');
+      props.onSetAction('UNPLAN_BUILDING');
     }
   }, [constructionStatus]);
 

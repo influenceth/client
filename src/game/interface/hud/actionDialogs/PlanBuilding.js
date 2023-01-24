@@ -98,16 +98,17 @@ const PlanBuilding = ({ asteroid, plot, ...props }) => {
   ], []);
 
   useEffect(() => {
-    if (!['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
-      props.onSetAction('CONSTRUCT');
-    }
-  }, [constructionStatus]);
-
-  useEffect(() => {
     if (constructionStatus === 'PLANNING' && !capableType) {
       if (currentConstruction?.capableType) setCapableType(currentConstruction.capableType)
     }
   }, [currentConstruction?.capableType]);
+
+  // stay in this window until PLANNED, then swap to CONSTRUCT
+  useEffect(() => {
+    if (!['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
+      props.onSetAction('CONSTRUCT');
+    }
+  }, [constructionStatus]);
 
   return (
     <>
