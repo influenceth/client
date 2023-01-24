@@ -461,23 +461,23 @@ const InfoPane = () => {
               )}
               {plot && (
                 <>
-                  {!(plot.building?.assetId > 0) && <ThumbBackground image={buildings[0]?.iconUrls?.w400} />}
-                  {plot.building?.assetId > 0 && (
+                  {!(plot.building?.capableType > 0) && <ThumbBackground image={buildings[0]?.iconUrls?.w400} />}
+                  {plot.building?.capableType > 0 && (
                     <>
                       {
                         // TODO: if planning, could use the currentConstruction object to go ahead and put hologram image
                         (['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus) && !isAtRisk)
-                          ? <ThumbBackground image={buildings[plot.building?.assetId || 0]?.iconUrls?.w400} />
+                          ? <ThumbBackground image={buildings[plot.building?.capableType || 0]?.iconUrls?.w400} />
                           : (
                             <ThumbBackground
                               backgroundColor={isAtRisk && '#2e1400'}
-                              image={buildings[plot.building?.assetId || 0]?.siteIconUrls?.w400} />
+                              image={buildings[plot.building?.capableType || 0]?.siteIconUrls?.w400} />
                           )
                       }
                     </>
                   )}
                   <ThumbMain>
-                    <ThumbTitle>{buildings[plot.building?.assetId || 0]?.name}</ThumbTitle>
+                    <ThumbTitle>{buildings[plot.building?.capableType || 0]?.name}</ThumbTitle>
                     <ThumbSubtitle>
                       <PaneContent>
                         Lot #{plot.i.toLocaleString()}

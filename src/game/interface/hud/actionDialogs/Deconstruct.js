@@ -98,7 +98,7 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
   const crewTravelTime = 0;
   const tripDetails = null;
 
-  const constructionTime = Construction.getConstructionTime(plot?.building?.assetId ? plot?.building?.assetId : 0, 1);
+  const constructionTime = Construction.getConstructionTime(plot?.building?.capableType || 0, 1);
 
   const stats = useMemo(() => [
     { label: 'Returned Volume', value: '0 m³', direction: 0 },    // TODO: ...

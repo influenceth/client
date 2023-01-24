@@ -1098,14 +1098,14 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
       .filter((plot) => (
         plot.building
         && plot.i !== originPlotId // not the origin
-        && Inventory.CAPACITIES[plot.building.assetId][inventoryType] // building has inventoryType
+        && Inventory.CAPACITIES[plot.building.capableType][inventoryType] // building has inventoryType
         && ( // building is built (or this is construction inventory and building is planned)
           (inventoryType === 0 && plot.building.construction?.status === Construction.STATUS_PLANNED)
           || (inventoryType !== 0 && plot.building.construction?.status === Construction.STATUS_OPERATIONAL)
         )
       ))
       .map((plot) => {
-        const capacity = Inventory.CAPACITIES[plot.building.assetId][inventoryType];
+        const capacity = Inventory.CAPACITIES[plot.building.capableType][inventoryType];
 
         const inventory = (plot.building?.inventories || {})[inventoryType];
         const usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0)) / 1e6;
@@ -1587,7 +1587,7 @@ export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, 
 
   const destinationBuilding = useMemo(() => {
     if (destinationPlot?.building) {
-      return buildings[destinationPlot.building?.assetId];
+      return buildings[destinationPlot.building?.capableType];
     }
     return null;
   }, [destinationPlot?.building]);
@@ -1830,7 +1830,7 @@ export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, s
               <b>
                 Lot {(plot.i || '').toLocaleString()}{' '}
                 (
-                  {buildings[plot.building?.assetId]?.name || 'Empty Lot'}
+                  {buildings[plot.building?.capableType]?.name || 'Empty Lot'}
                   {plot.building?.construction?.status === Construction.STATUS_PLANNED && ' - Planned'}
                   {plot.building?.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION && ' - Under Construction'}
                 )

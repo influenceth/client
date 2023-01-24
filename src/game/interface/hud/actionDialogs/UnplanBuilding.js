@@ -115,7 +115,7 @@ const UnplanBuilding = ({ asteroid, plot, ...props }) => {
         {...props} />
 
       <BuildingPlanSection
-        building={buildings[plot?.building?.assetId]}
+        building={buildings[plot?.building?.capableType]}
         canceling
         status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
 

@@ -51,8 +51,8 @@ const useActionButtons = () => {
         }
 
         if (plot.occupier === crew.i) {
-          if (constructionStatus === 'OPERATIONAL' && plot.building?.assetId) {
-            const buildingAsset = buildings[plot.building.assetId];
+          if (constructionStatus === 'OPERATIONAL' && plot.building?.capableType) {
+            const buildingAsset = buildings[plot.building.capableType];
             if (buildingAsset.capabilities.includes('extraction')) {
               a.push(actionButtons.Extract);
             }
