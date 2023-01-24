@@ -1,5 +1,7 @@
+import { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
+import LoadingSpinner from 'react-spinners/PuffLoader';
 
 import useAuth from '~/hooks/useAuth';
 import useCrew from '~/hooks/useCrew';
@@ -9,10 +11,9 @@ import CrewCard from '~/components/CrewCard';
 import InfluenceLogo from '~/components/InfluenceLogo';
 import TriangleTip from '~/components/TriangleTip';
 import { CaptainIcon, PlusIcon } from '~/components/Icons';
-import theme from '~/theme';
 import useStore from '~/hooks/useStore';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
-import { useCallback } from 'react';
+import theme from '~/theme';
 
 export const logoDisplacementHeight = 900;
 const hoverBgColor = '#07171e';
@@ -65,6 +66,21 @@ const LogoContainer = styled.div`
 
   @media (max-height: ${logoDisplacementHeight - 1}px) {
     display: none;
+  }
+`;
+
+const Loading = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin-top: 20px;
+  & > div {
+    height: 60px;
+    width: 60px;
+  }
+  & > h4 {
+    margin: 0 0 0 8px;
   }
 `;
 
@@ -170,7 +186,7 @@ const CaptainCardContainer = styled.div`
 const CrewCardContainer = styled.div`
   border: 1px solid #888;
   margin: 60px 10px 0 0;
-  width: 90px;
+  width: 96px;
 `;
 
 const CrewContainer = styled.div`
@@ -263,6 +279,12 @@ const Account = (props) => {
       {loggedIn &&
         <CrewCTA>
           <LogoutLink onClick={logout}>Log Out</LogoutLink>
+          {crewLoading && (
+            <Loading>
+              <div><LoadingSpinner color={theme.colors.main} /></div>
+              <h4>Loading Crew...</h4>
+            </Loading>
+          )}
           {!crewLoading && crew?.crewMembers?.length > 0 && (
             <CrewContainer>
               {captain && <>

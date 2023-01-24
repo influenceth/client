@@ -1,4 +1,4 @@
-import { useHistory } from 'react-router-dom';
+import { useEffect } from 'react';
 import styled from 'styled-components';
 import LoadingSpinner from 'react-spinners/PuffLoader';
 
@@ -8,7 +8,7 @@ import ArgentXLogo from '~/assets/images/wallets/argentx-logo.svg';
 import BraavosLogo from '~/assets/images/wallets/braavos-logo.webp';
 import CartridgeLogo from '~/assets/images/wallets/cartridge-logo.svg';
 import useStore from '~/hooks/useStore';
-import { useEffect } from 'react';
+import theme from '~/theme';
 
 const StyledWallets = styled.div`
   background-color: black;
@@ -189,7 +189,7 @@ const Wallets = (props) => {
     <StyledWallets>
       {authenticating && (
         <Loading>
-          <div><LoadingSpinner color="#36a7cd" /></div>
+          <div><LoadingSpinner color={theme.colors.main} /></div>
           <h4>Authenticating...</h4>
         </Loading>
       )}
