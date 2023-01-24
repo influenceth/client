@@ -5,7 +5,7 @@ import useStore from '~/hooks/useStore';
 
 const SaleNotifier = (props) => {
   const { sale } = props;
-  const { wallet } = useAuth();
+  const { walletContext: { starknet } } = useAuth();
   const dispatchSaleStarted = useStore(s => s.dispatchSaleStarted);
   const dispatchSaleEnded = useStore(s => s.dispatchSaleEnded);
   // const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -59,10 +59,10 @@ const SaleNotifier = (props) => {
     if (poller.current) clearInterval(poller.current);
     
     if (status === 'starting') {
-      if (wallet?.starknet?.provider) {
+      if (starknet?.provider) {
         const pollFunc = () => {
           try {
-            wallet.starknet.provider.getBlock('latest').then((block) => {
+            starknet.provider.getBlock('latest').then((block) => {
               if (block.timestamp > sale.saleStartTime) {
                 setStatus('started'); // will trigger another run of this effect, clearing interval
               }
