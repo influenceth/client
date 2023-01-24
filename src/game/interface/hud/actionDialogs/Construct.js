@@ -101,8 +101,8 @@ const Construct = ({ asteroid, plot, ...props }) => {
   const tripDetails = null;
 
   const constructionTime = useMemo(() =>
-    plot?.building?.assetId ? Construction.getConstructionTime(plot?.building?.assetId, constructionBonus.totalBonus) : 0,
-    [plot?.building?.assetId, constructionBonus.totalBonus]
+    plot?.building?.capableType ? Construction.getConstructionTime(plot?.building?.capableType, constructionBonus.totalBonus) : 0,
+    [plot?.building?.capableType, constructionBonus.totalBonus]
   );
 
   const stats = useMemo(() => ([
@@ -178,14 +178,14 @@ const Construct = ({ asteroid, plot, ...props }) => {
         {...props} />
 
       <BuildingPlanSection
-        building={buildings[plot.building?.assetId]}
+        building={buildings[plot.building?.capableType]}
         status={status}
         gracePeriodEnd={plot?.gracePeriodEnd} />
 
       {status === 'BEFORE' && (
         <BuildingRequirementsSection
           isGathering
-          building={buildings[plot.building?.assetId]}
+          building={buildings[plot.building?.capableType]}
           label="Construction Materials"
           resources={resources} />
       )}

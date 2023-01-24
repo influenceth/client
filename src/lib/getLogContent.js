@@ -152,7 +152,7 @@ const entries = {
   //   txLink: getTxLink(e),
   // }),
 
-  Construction_Planned: (e) => ({
+  Dispatcher_ConstructionPlan: (e) => ({
     icon: <PlanBuildingIcon />,
     content: (
       <>
@@ -163,7 +163,7 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  Construction_Unplanned: (e) => ({
+  Dispatcher_ConstructionUnplan: (e) => ({
     icon: <UnplanBuildingIcon />,
     content: (
       <>
@@ -174,7 +174,7 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  // Construction_Started: (e) => ({
+  // Dispatcher_ConstructionStart: (e) => ({
   //   icon: <ConstructIcon />,
   //   content: (
   //     <>
@@ -184,10 +184,10 @@ const entries = {
   //   txLink: getTxLink(e),
   // }),
 
-  Construction_Finished: (e) => {
-    const asteroidId = e.linked.find((l) => l.type === 'Asteroid')?.asset?.asteroidId;
+  Dispatcher_ConstructionFinish: (e) => {
+    const asteroidId = e.returnValues.asteroidId;
+    const lotId = e.returnValues.lotId;
     const lot = e.linked.find((l) => l.type === 'Lot')?.asset;
-    const lotId = lot?.i;
     const capableName = lot?.building?.type;
     return {
       icon: <ConstructIcon />,
@@ -201,10 +201,10 @@ const entries = {
     };
   },
 
-  Construction_Deconstructed: (e) => {
-    const asteroidId = e.linked.find((l) => l.type === 'Asteroid')?.asset?.asteroidId;
+  Dispatcher_ConstructionDeconstruct: (e) => {
+    const asteroidId = e.returnValues.asteroidId;
+    const lotId = e.returnValues.lotId;
     const lot = e.linked.find((l) => l.type === 'Lot')?.asset;
-    const lotId = lot?.i;
     const capableName = lot?.building?.type;
     return {
       icon: <DeconstructIcon />,
@@ -218,7 +218,7 @@ const entries = {
     };
   },
 
-  // CoreSample_SamplingStarted: (e) => ({
+  // Dispatcher_CoreSampleStartSampling: (e) => ({
   //   icon: <CoreSampleIcon />,
   //   content: (
   //     <>
@@ -230,7 +230,7 @@ const entries = {
   // }),
 
   // TODO: add data from server that this was an improvement?
-  CoreSample_SamplingFinished: (e) => {
+  Dispatcher_CoreSampleFinishSampling: (e) => {
     return {
       icon: <CoreSampleIcon />,
       content: (
@@ -243,30 +243,26 @@ const entries = {
     };
   },
 
-  Extraction_Started: (e) => {
-    const asteroidId = e.linked.find((l) => l.type === 'Asteroid')?.asset?.asteroidId;
-    const lotId = e.linked.find((l) => l.type === 'Lot')?.asset?.i;
+  Dispatcher_ExtractionStart: (e) => {
     return {
       icon: <ExtractionIcon />,
       content: (
         <>
           <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} extraction started at </span>
-          <PlotLink asteroidId={asteroidId} plotId={lotId} resourceId={e.returnValues.resourceId} />
+          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
         </>
       ),
       txLink: getTxLink(e),
     };
   },
 
-  Extraction_Finished: (e) => {
-    const asteroidId = e.linked.find((l) => l.type === 'Asteroid')?.asset?.asteroidId;
-    const lotId = e.linked.find((l) => l.type === 'Lot')?.asset?.i;
+  Dispatcher_ExtractionFinish: (e) => {
     return {
       icon: <ExtractionIcon />,
       content: (
         <>
           <span>Extraction completed at </span>
-          <PlotLink asteroidId={asteroidId} plotId={lotId} resourceId={e.returnValues.resourceId} />
+          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
         </>
       ),
       txLink: getTxLink(e),

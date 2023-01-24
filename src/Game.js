@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
@@ -48,8 +48,7 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const DISABLE_INTRO = false; // process.env.NODE_ENV === 'development';
-const DISABLE_LAUNCHER_LANDING = false; //process.env.NODE_ENV === 'development';
+const DISABLE_LAUNCHER_LANDING = process.env.NODE_ENV === 'development';
 
 const LauncherRedirect = () => {
   const { account } = useAuth();
@@ -98,11 +97,6 @@ const Game = (props) => {
   const setAutodetect = useStore(s => s.dispatchGraphicsAutodetectSet);
   const graphics = useStore(s => s.graphics);
   const [ showScene, setShowScene ] = useState(false);
-  const [ introEnabled, setIntroEnabled ] = useState(!DISABLE_INTRO);
-
-  const onIntroComplete = useCallback(() => {
-    // setIntroEnabled(false);
-  }, []);
 
   const autodetectNeedsInit = graphics?.autodetect === undefined;
   useEffect(() => {

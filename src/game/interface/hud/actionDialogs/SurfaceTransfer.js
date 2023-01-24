@@ -190,12 +190,16 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
   // handle auto-closing
   const lastStatus = useRef();
   useEffect(() => {
-    // (close on status change from)
-    if (['READY', 'READY_TO_FINISH'].includes(lastStatus.current)) {
-      if (deliveryStatus !== lastStatus.current) {
-        props.onClose();
-      }
+    // (close unless ready or in transit)
+    if (!['READY', 'READY_TO_FINISH'].includes(deliveryStatus)) {
+      props.onClose();
     }
+    // TODO: would be nice to have a version can open in other states (like construction)
+    // if (['READY', 'READY_TO_FINISH'].includes(lastStatus.current)) {
+    //   if (deliveryStatus !== lastStatus.current) {
+    //     props.onClose();
+    //   }
+    // }
     lastStatus.current = deliveryStatus;
   }, [deliveryStatus]);
 
