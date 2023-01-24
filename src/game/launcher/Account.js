@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import LoadingSpinner from 'react-spinners/PuffLoader';
@@ -251,7 +251,10 @@ const Account = (props) => {
   const { account, logout } = useAuth();
   const { captain, loading: crewLoading, crew, crewMemberMap } = useCrew();
 
+  const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
+  const dispatchCutscene = useStore(s => s.dispatchCutscene);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+  const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
 
   const loggedIn = !!account;
 
@@ -261,7 +264,16 @@ const Account = (props) => {
       history.push('/owned-crew');
     }
     dispatchLauncherPage();
-  }, [crewLoading, crew?.crewMembers, dispatchLauncherPage]);
+
+    // if have not seen trailer, mark it as seen and play it now
+    if (!hasSeenIntroVideo) {
+      dispatchSeenIntroVideo(true);
+      dispatchCutscene(
+        `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/influence/goerli/videos/intro.m3u8`,
+        true
+      );
+    }
+  }, [crewLoading, crew?.crewMembers, dispatchLauncherPage, dispatchCutscene, dispatchSeenIntroVideo, hasSeenIntroVideo]);
 
   return (
     <MainContent loggedIn={loggedIn}>

@@ -35,30 +35,34 @@ const Container = styled.div`
 
 const noop = () => {};
 
-const Cutscene = (props) => {
-  const { allowSkip, source, onComplete } = props;
-  const dispatchCutscenePlaying = useStore(s => s.dispatchCutscenePlaying);
+const Cutscene = () => {
+  const { source, allowSkip } = useStore(s => s.cutscene) || {};
+  const dispatchCutscene = useStore(s => s.dispatchCutscene);
 
   const [highlightButtons, setHighlightButtons] = useState(true);
 
-  const timeout = useRef();
-  useEffect(() => {
-    dispatchCutscenePlaying(true);
-    timeout.current = setTimeout(() => {
-      setHighlightButtons(false);
-    }, 8000);
-    return () => {
-      dispatchCutscenePlaying(false);
-      if (timeout.current) clearTimeout(timeout.current);
-    }
-  }, [dispatchCutscenePlaying]);
-
-  const handleSkip = onComplete;
+  const onComplete = useCallback(() => {
+    dispatchCutscene();
+  }, [dispatchCutscene]);
 
   const onError = useCallback((err) => {
     console.error(err);
     onComplete();
   }, [onComplete]);
+
+  const onSkip = useCallback(() => {
+    onComplete();
+  }, [onComplete]);
+
+  // onload, set buttons to show up in 8 seconds
+  useEffect(() => {
+    const to = setTimeout(() => {
+      setHighlightButtons(false);
+    }, 8000);
+    return () => {
+      if (to) clearTimeout(to);
+    }
+  }, []);
 
   return (
     <Container>
@@ -76,7 +80,7 @@ const Cutscene = (props) => {
         }} />
       {allowSkip && (
         <ButtonHolder highlight={highlightButtons}>
-          <Button onClick={handleSkip}>Skip Intro</Button>
+          <Button onClick={onSkip}>Skip Intro</Button>
         </ButtonHolder>
       )}
     </Container>

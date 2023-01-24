@@ -65,7 +65,7 @@ const useStore = create(persist(subscribeWithSelector((set, get) => ({
     cameraNeedsReorientation: false,
 
     hasSeenIntroVideo: false,
-    cutscenePlaying: false,
+    cutscene: null,
 
     logs: {
       alerts: []
@@ -385,8 +385,8 @@ const useStore = create(persist(subscribeWithSelector((set, get) => ({
       state.selectedCrewId = crewId;
     })),
 
-    dispatchCutscenePlaying: (which) => set(produce(state => {
-      state.cutscenePlaying = which;
+    dispatchCutscene: (source, allowSkip) => set(produce(state => {
+      state.cutscene = source ? { source, allowSkip: allowSkip || false } : null;
     })),
 
     dispatchSeenIntroVideo: (which) => set(produce(state => {
@@ -498,7 +498,7 @@ const useStore = create(persist(subscribeWithSelector((set, get) => ({
     'asteroids.plotDestination',
     'asteroids.zoomToPlot',
     'cameraNeedsReorientation',
-    'cutscenePlaying',
+    'cutscene',
     'draggables',
     'failedTransactions',
     'plotLoader',

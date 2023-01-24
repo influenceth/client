@@ -6,8 +6,10 @@ import gsap from 'gsap';
 
 import IntroVideo from '~/assets/influence-load.webm';
 import Button from '~/components/Button';
-import Cutscene from '~/components/Cutscene';
+import Cutscene from '~/game/Cutscene';
 import useStore from '~/hooks/useStore';
+
+// TODO: this file is deprecated now that the Launcher exists
 
 const StyledIntro = styled.div`
   background-color: black;

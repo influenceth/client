@@ -28,6 +28,7 @@ import PlotViewer from './interface/PlotViewer';
 import RouteDetails from './interface/details/RouteDetails';
 import WatchlistTable from './interface/details/WatchlistTable';
 import theme from '~/theme';
+import Cutscene from './Cutscene';
 import Launcher from './Launcher';
 
 const StyledInterface = styled.div`
@@ -83,6 +84,7 @@ const Interface = () => {
   const { isMobile } = useScreenSize();
   const { data: sale } = useSale();
   const isFetching = useIsFetching();
+  const cutscene = useStore(s => s.cutscene);
   const launcherPage = useStore(s => s.launcherPage);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const hideInterface = useStore(s => s.dispatchHideInterface);
@@ -104,6 +106,7 @@ const Interface = () => {
     <>
       <Alerts />
       {launcherPage && <Launcher />}
+      {cutscene && <Cutscene />}
       <StyledInterface hide={interfaceHidden}>
         {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
         {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
