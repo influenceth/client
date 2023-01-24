@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
 import useAuth from '~/hooks/useAuth';
 
-const WebsocketContext = React.createContext();
+const WebsocketContext = createContext();
 
 const DEFAULT_ROOM = '_';
 

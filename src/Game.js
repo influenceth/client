@@ -58,12 +58,15 @@ const LauncherRedirect = () => {
   const launcherPage = useStore(s => s.launcherPage);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
-  // redirect to launcher if initial load and not already open
+  // redirect to launcher if initial load and trying to link to /launcher/*
   useEffect(() => {
-    if (!launcherPage) {
-      const parts = history.location.pathname.split('/').slice(1);
-      const deeplink = parts[0] === 'launcher';
-      dispatchLauncherPage((deeplink && parts[1]) ? parts[1] : true);
+    const parts = history.location.pathname.split('/').slice(1);
+    const deeplink = parts[0] === 'launcher';
+    if (deeplink || !DISABLE_LAUNCHER_LANDING) {
+      const destinationPage = (deeplink && parts[1]) ? parts[1] : true;
+      if (launcherPage !== destinationPage) {
+        dispatchLauncherPage(destinationPage);
+      }
       if (deeplink) {
         history.replace('/');
       }

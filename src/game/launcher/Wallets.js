@@ -1,5 +1,6 @@
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
+import LoadingSpinner from 'react-spinners/PuffLoader';
 
 import useAuth from '~/hooks/useAuth';
 import Button from '~/components/Button';
@@ -27,6 +28,20 @@ const StyledWallets = styled.div`
     font-size: 14px;
     padding: 20px 0 10px 0;
     text-transform: uppercase;
+  }
+`;
+
+const Loading = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  & > div {
+    height: 60px;
+    width: 60px;
+  }
+  & > h4 {
+    margin: 0 0 0 8px;
   }
 `;
 
@@ -135,7 +150,7 @@ const External = styled.div`
 `;
 
 const Wallets = (props) => {
-  const { account, login, walletContext } = useAuth();
+  const { account, login, walletContext, authenticating } = useAuth();
   const { getAvailableWallets } = walletContext;
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
@@ -169,34 +184,45 @@ const Wallets = (props) => {
     if (account) dispatchLauncherPage('account');
   }, [account]);
 
+
   return (
     <StyledWallets>
-      <Cartridge>
-        <WalletOption onClick={() => handleWalletClick('Cartridge')}>
-          <StyledCartridgeLogo />
-          <h3>Login with Cartridge</h3>
-          <span>
-            The premiere Starknet gaming console connecting multiple games with a single login.
-          </span>
-          <Button backgroundColor={"rgba(251,203,74, 0.33)"} color={"rgb(251,203,74)"}>Login with Cartridge</Button>
-        </WalletOption>
-      </Cartridge>
-      <External>
-        <WalletOption onClick={() => handleWalletClick('argentX')}>
-          <StyledArgentXLogo />
-          <h3>Argent X</h3>
-          <Button backgroundColor={"rgba(231,140,100, 0.33)"} color={'rgb(231,140,100)'}>
-            {!!getWallet('Argent X') ? 'Login with Argent X' : 'Download Argent X'}
-          </Button>
-        </WalletOption>
-        <WalletOption onClick={() => handleWalletClick('braavos')}>
-          <StyledBraavosLogo src={BraavosLogo} />
-          <h3>Braavos</h3>
-          <Button backgroundColor={'rgba(233,161,61, 0.33)'} color={'rgb(233,161,61)'}>
-          {!!getWallet('Braavos') ? 'Login with Braavos' : 'Download Braavos'}
-          </Button>
-        </WalletOption>
-      </External>
+      {authenticating && (
+        <Loading>
+          <div><LoadingSpinner color="#36a7cd" /></div>
+          <h4>Authenticating...</h4>
+        </Loading>
+      )}
+      {!authenticating && (
+        <>
+          <Cartridge>
+            <WalletOption onClick={() => handleWalletClick('Cartridge')}>
+              <StyledCartridgeLogo />
+              <h3>Login with Cartridge</h3>
+              <span>
+                The premiere Starknet gaming console connecting multiple games with a single login.
+              </span>
+              <Button backgroundColor={"rgba(251,203,74, 0.33)"} color={"rgb(251,203,74)"}>Login with Cartridge</Button>
+            </WalletOption>
+          </Cartridge>
+          <External>
+            <WalletOption onClick={() => handleWalletClick('argentX')}>
+              <StyledArgentXLogo />
+              <h3>Argent X</h3>
+              <Button backgroundColor={"rgba(231,140,100, 0.33)"} color={'rgb(231,140,100)'}>
+                {!!getWallet('Argent X') ? 'Login with Argent X' : 'Download Argent X'}
+              </Button>
+            </WalletOption>
+            <WalletOption onClick={() => handleWalletClick('braavos')}>
+              <StyledBraavosLogo src={BraavosLogo} />
+              <h3>Braavos</h3>
+              <Button backgroundColor={'rgba(233,161,61, 0.33)'} color={'rgb(233,161,61)'}>
+              {!!getWallet('Braavos') ? 'Login with Braavos' : 'Download Braavos'}
+              </Button>
+            </WalletOption>
+          </External>
+        </>
+      )}
     </StyledWallets>
   );
 };

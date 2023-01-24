@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useContext, useRef, useMemo } from 'react';
+import { createContext, useCallback, useEffect, useContext, useMemo, useState } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
 
 import WalletContext from '~/contexts/WalletContext';
@@ -21,6 +21,8 @@ export function AuthProvider({ children }) {
   const walletContext = useContext(WalletContext);
   const walletAccount = walletContext?.account;
 
+  const [authenticating, setAuthenticating] = useState(false);
+
   useEffect(() => {
     if (walletContext?.error) {
       createAlert({
@@ -30,7 +32,12 @@ export function AuthProvider({ children }) {
         duration: 10000
       });
     }
-  }, [walletContext?.error])
+  }, [walletContext?.error]);
+
+  // clear "authenticating" state (i.e. if stuck)
+  useEffect(() => {
+    if (authenticating && token) setAuthenticating(false);
+  }, [token, authenticating]);
 
   // Invalidate token if...
   //  - the token has expired
@@ -54,11 +61,14 @@ export function AuthProvider({ children }) {
       try {
         const loginMessage = await api.requestLogin(address);
         const signature = await withWallet.account.signMessage(loginMessage);
-        const newToken = await api.verifyLogin(address, { signature: signature.join(',') });
-        dispatchAuthenticated(newToken);
+        if (signature) {
+          setAuthenticating(true);
+          const newToken = await api.verifyLogin(address, { signature: signature.join(',') });
+          dispatchAuthenticated(newToken);
+        }
       } catch (e) {
-        initiateLogout();
         console.error(e);
+        initiateLogout();
         createAlert({
           type: 'GenericAlert',
           level: 'warning',
@@ -66,6 +76,7 @@ export function AuthProvider({ children }) {
           duration: 10000
         });
       }
+      setAuthenticating(false);
     }
   }, [ walletContext, token, dispatchAuthenticated ]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -80,6 +91,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       login: initiateLogin,
       logout: initiateLogout,
+      authenticating,
       token,
       account: tokenAccount,
       walletContext
