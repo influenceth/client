@@ -108,8 +108,6 @@ const MenuItem = styled.li`
   }
 `;
 
-const LogoutButton = styled(ButtonPill)``;
-
 const AccountName = styled.span`
   color: white;
   font-weight: bold;
@@ -140,6 +138,7 @@ const WalletLogo = styled.div`
 
 const CurrentAccount = styled.div`
   align-items: center;
+  cursor: ${p => p.theme.cursors.active};
   display: flex;
   height: ${headerFooterHeight}px;
   justify-content: flex-end;
@@ -148,22 +147,18 @@ const CurrentAccount = styled.div`
   top: 0;
   width: 200px;
 
-  & ${LogoutButton} {
-    display: none;
+  & ${AccountName} {
+    color: ${p => p.theme.colors.secondaryText};
   }
 
-  &:hover ${LogoutButton} {
-    display: block;
-  }
-
-  &:hover ${WalletLogo}, &:hover ${AccountName} {
-    display: none;
+  &:hover ${AccountName} {
+    color: inherit;
   }
 `;
 
 const MainContent = styled.div`
   align-items: center;
-  display: flex;  
+  display: flex;
   flex: 1 0 0;
   flex-direction: column;
   justify-content: center;
@@ -234,9 +229,13 @@ const Launcher = (props) => {
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const hideInterface = useStore(s => s.dispatchHideInterface);
   const showInterface = useStore(s => s.dispatchShowInterface);
-  const { walletContext, logout, token } = useAuth();
+  const { walletContext, token } = useAuth();
   const { account, walletIcon, walletName } = walletContext;
   const loggedIn = account && token;
+
+  const goToWallet = useCallback(() => {
+    if (walletContext?.starknet?.id === 'Cartridge') window.open('https://cartridge.gg', '_blank');
+  }, [ walletContext ]);
 
   useEffect(() => {
     hideInterface();
@@ -260,10 +259,9 @@ const Launcher = (props) => {
           </StyledLink>
         </MenuItem>
         {loggedIn &&
-          <CurrentAccount onClick={logout}>
+          <CurrentAccount onClick={goToWallet}>
             <WalletLogo>{walletIcon}</WalletLogo>
             <AccountName account={account} wallet={walletName} />
-            <LogoutButton size='large'>Logout</LogoutButton>
           </CurrentAccount>
         }
       </Header>
