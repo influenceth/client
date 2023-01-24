@@ -25,6 +25,7 @@ export function WebsocketProvider({ children }) {
   // NOTE: this is currently limited to one registrant per room b/c that's all we need
   //  but it could definitely be increased later
   const registerWSHandler = useCallback((callback, room = null) => {
+    if (!socket.current) return;
     if (room) {
       const [type, id] = room.split('::');
       if (type && id) {
@@ -39,6 +40,7 @@ export function WebsocketProvider({ children }) {
   }, []);
 
   const unregisterWSHandler = useCallback((room) => {
+    if (!socket.current) return;
     if (room) {
       const [type, id] = room.split('::');
       if (type && id) {

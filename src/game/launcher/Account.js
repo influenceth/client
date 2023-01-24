@@ -232,12 +232,12 @@ const MainButton = styled(ButtonAlt)`
 
 const Account = (props) => {
   const history = useHistory();
-  const { token, logout, walletContext } = useAuth();
-  const { account } = walletContext;
-  const loggedIn = account && token;
+  const { account, logout } = useAuth();
   const { captain, loading: crewLoading, crew, crewMemberMap } = useCrew();
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+
+  const loggedIn = !!account;
 
   const onClickPlay = useCallback(() => {
     // if crew is done loading and there are no crew members, send to owned-crew first

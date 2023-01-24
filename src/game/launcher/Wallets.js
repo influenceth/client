@@ -7,6 +7,7 @@ import ArgentXLogo from '~/assets/images/wallets/argentx-logo.svg';
 import BraavosLogo from '~/assets/images/wallets/braavos-logo.webp';
 import CartridgeLogo from '~/assets/images/wallets/cartridge-logo.svg';
 import useStore from '~/hooks/useStore';
+import { useEffect } from 'react';
 
 const StyledWallets = styled.div`
   background-color: black;
@@ -134,7 +135,7 @@ const External = styled.div`
 `;
 
 const Wallets = (props) => {
-  const { login, walletContext } = useAuth();
+  const { account, login, walletContext } = useAuth();
   const { getAvailableWallets } = walletContext;
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
@@ -156,16 +157,17 @@ const Wallets = (props) => {
 
   const handleWalletClick = async (withWalletId) => {
     const withWallet = await getWallet(withWalletId);
-
     if (!!withWallet) {
       await withWallet.enable();
-      const loggedIn = await login(withWallet);
-      if (loggedIn) dispatchLauncherPage('account');
-      return;
+      login(withWallet);
+    } else {
+      downloadWallet(withWalletId);
     }
-
-    downloadWallet(withWalletId);
   }
+
+  useEffect(() => {
+    if (account) dispatchLauncherPage('account');
+  }, [account]);
 
   return (
     <StyledWallets>
