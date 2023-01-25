@@ -455,6 +455,7 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [contracts, pendingTransactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const lastBlockNumberHandled = useRef(lastBlockNumber);
   useEffect(() => {
     if (contracts && pendingTransactions?.length) {
       const currentBlockNumber = lastBlockNumber + 1;
@@ -482,10 +483,27 @@ export function ChainTransactionProvider({ children }) {
             } else {
               dispatchPendingTransactionUpdate(txHash, { txEvent });
             }
+
+          // if pending transaction has not turned into an event within 30 seconds
+          // check every call to this effect
+          } else if (lastBlockNumber > lastBlockNumberHandled.current) {
+            if (chainTime > Math.floor(tx.timestamp / 1000) + 30) {
+              starknet.provider.getTransactionReceipt(txHash).then((receipt) => {
+                if (receipt && receipt.status === 'REJECTED') {
+                  dispatchPendingTransactionComplete(txHash);
+                  dispatchFailedTransaction({
+                    key,
+                    vars,
+                    err: receipt.status_data || 'Transaction rejected.'
+                  });
+                }
+              })
+            }
           }
         }
       });
     }
+    lastBlockNumberHandled.current = lastBlockNumber;
   }, [events?.length, lastBlockNumber]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const execute = useCallback(async (key, vars) => {
