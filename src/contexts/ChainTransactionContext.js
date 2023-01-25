@@ -485,13 +485,12 @@ export function ChainTransactionProvider({ children }) {
             }
 
           // if pending transaction has not turned into an event within 45 seconds
-          // check every call to this effect
+          // check every useEffect loop if tx is rejected (or missing)
           } else if (lastBlockNumber > lastBlockNumberHandled.current) {
-            if (chainTime > Math.floor(tx.timestamp / 1000) + 4) {
-              console.log('CHECKING ON OLD TX', txHash);  // TODO: remove this
+            if (chainTime > Math.floor(tx.timestamp / 1000) + 45) {
               starknet.provider.getTransactionReceipt(txHash)
                 .then((receipt) => {
-                  console.log('RECEIPT', receipt);  // TODO: remove this
+                  console.info(`RECEIPT for tx ${txHash}`, receipt);  // TODO: remove this
                   if (receipt && receipt.status === 'REJECTED') {
                     dispatchPendingTransactionComplete(txHash);
                     dispatchFailedTransaction({
@@ -501,23 +500,16 @@ export function ChainTransactionProvider({ children }) {
                     });
                   }
                 })
-                .catch((err1) => {
-                  console.log('RECEIPT ERR', txHash, err1);  // TODO: remove this
-                  starknet.provider.getTransactionStatus(txHash)
-                    .then((response) => {
-                      console.log('STATUS', response);  // TODO: remove this
-                      if (response && response.tx_status === 'REJECTED') {
-                        dispatchPendingTransactionComplete(txHash);
-                        dispatchFailedTransaction({
-                          key,
-                          vars,
-                          err: 'Transaction was rejected.'
-                        });
-                      }
-                    })
-                    .catch((err2) => {
-                      console.log('STATUS ERR', txHash, err2);  // TODO: remove this
+                .catch((err) => {
+                  console.warn(err);
+                  if (err?.message.includes('Transaction hash not found')) {
+                    dispatchPendingTransactionComplete(txHash);
+                    dispatchFailedTransaction({
+                      key,
+                      vars,
+                      err: 'Transaction was rejected.'
                     });
+                  }
                 });
             }
           }
