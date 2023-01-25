@@ -438,19 +438,20 @@ const useStore = create(persist(subscribeWithSelector((set, get) => ({
       return { textureSize: 1 * CHUNK_RESOLUTION - 3 };
     },
 
-    dispatchFailedTransaction: ({ key, vars, err }) => set(produce(state => {
+    dispatchFailedTransaction: ({ key, vars, txHash, err }) => set(produce(state => {
       if (!state.failedTransactions) state.failedTransactions = [];
       state.failedTransactions.push({
         key,
         vars,
         err,
+        txHash,
         timestamp: Date.now()
       });
     })),
 
-    dispatchFailedTransactionDismissed: (timestamp) => set(produce(state => {
+    dispatchFailedTransactionDismissed: (txHashOrTimestamp) => set(produce(state => {
       if (!state.failedTransactions) state.failedTransactions = [];
-      state.failedTransactions = state.failedTransactions.filter((tx) => tx.timestamp !== timestamp);
+      state.failedTransactions = state.failedTransactions.filter((tx) => tx.txHash !== txHashOrTimestamp && tx.timestamp !== txHashOrTimestamp);
     })),
 
     dispatchPendingTransaction: ({ key, vars, txHash }) => set(produce(state => {

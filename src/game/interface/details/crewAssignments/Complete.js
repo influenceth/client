@@ -318,7 +318,7 @@ const CrewAssignmentComplete = (props) => {
       url: `${document.location.origin}/play/crew-assignment/${sessionId}?r=${account}`,
       //via: 'influenceth'
     });
-    window.open(`https://twitter.com/intent/tweet?${params.toString()}`);
+    window.open(`https://twitter.com/intent/tweet?${params.toString()}`, '_blank');
   }, [account, sessionId, storyState]);
   
   const handleFinish = useCallback(() => {

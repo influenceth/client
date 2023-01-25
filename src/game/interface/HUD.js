@@ -183,7 +183,7 @@ const HUD = () => {
   }, [plotId, zoomToPlot]);
 
   const openHelpChannel = useCallback(() => {
-    window.open(process.env.REACT_APP_HELP_URL);
+    window.open(process.env.REACT_APP_HELP_URL, '_blank');
   }, []);
 
   useEffect(() => ReactTooltip.rebuild(), [actions]);

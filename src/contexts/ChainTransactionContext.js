@@ -363,6 +363,8 @@ export function ChainTransactionProvider({ children }) {
   const dispatchClearTransactionHistory = useStore(s => s.dispatchClearTransactionHistory);
   const pendingTransactions = useStore(s => s.pendingTransactions);
 
+  const [promptingTransaction, setPromptingTransaction] = useState(false);
+
   const contracts = useMemo(() => {
     if (!!starknet?.account) {
       const processedContracts = {};
@@ -453,6 +455,7 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [contracts, pendingTransactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const lastBlockNumberHandled = useRef(lastBlockNumber);
   useEffect(() => {
     if (contracts && pendingTransactions?.length) {
       const currentBlockNumber = lastBlockNumber + 1;
@@ -480,15 +483,53 @@ export function ChainTransactionProvider({ children }) {
             } else {
               dispatchPendingTransactionUpdate(txHash, { txEvent });
             }
+
+          // if pending transaction has not turned into an event within 45 seconds
+          // check every useEffect loop if tx is rejected (or missing)
+          } else if (lastBlockNumber > lastBlockNumberHandled.current) {
+            if (chainTime > Math.floor(tx.timestamp / 1000) + 45) {
+              starknet.provider.getTransactionReceipt(txHash)
+                .then((receipt) => {
+                  console.info(`RECEIPT for tx ${txHash}`, receipt);  // TODO: remove this
+                  if (receipt && receipt.status === 'REJECTED') {
+                    dispatchPendingTransactionComplete(txHash);
+                    dispatchFailedTransaction({
+                      key,
+                      vars,
+                      txHash,
+                      err: receipt.status_data || 'Transaction was rejected.'
+                    });
+                  }
+                })
+                .catch((err) => {
+                  console.warn(err);
+                  if (err?.message.includes('Transaction hash not found')) {
+                    dispatchPendingTransactionComplete(txHash);
+                    dispatchFailedTransaction({
+                      key,
+                      vars,
+                      txHash,
+                      err: 'Transaction was rejected.'
+                    });
+                  }
+                });
+            }
           }
         }
       });
     }
+    lastBlockNumberHandled.current = lastBlockNumber;
   }, [events?.length, lastBlockNumber]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const execute = useCallback(async (key, vars) => {
     if (contracts && contracts[key]) {
       const { execute, onTransactionError } = contracts[key];
+
+      // TODO: will need to sort this out when argentX implements session wallets, but
+      //  currently in non-session wallet, argentX does not return from the `await execute`
+      //  below when their user prompt is closed instead of rejected (the user has to
+      //  reopen the prompt and reject it to get out of here)
+      if (starknet?.id !== 'argentX') setPromptingTransaction(true);
       try {
         const tx = await execute(vars);
         dispatchPendingTransaction({
@@ -498,15 +539,19 @@ export function ChainTransactionProvider({ children }) {
           waitingOn: 'TRANSACTION'
         });
       } catch (e) {
-        if (e?.message !== 'User abort') {
+        // TODO: in Braavos, get "Execute failed" when decline (but it's unclear if that is just their generic error)
+        // ("User abort" is argent, "Canceled" is Cartridge)
+        if (!['User abort', 'Canceled'].includes(e?.message)) {
           dispatchFailedTransaction({
             key,
             vars,
+            txHash: null,
             err: e?.message || e
           });
         }
         onTransactionError(e, vars);
       }
+      setPromptingTransaction(false);
     } else {
       createAlert({
         type: 'GenericAlert',
@@ -542,7 +587,8 @@ export function ChainTransactionProvider({ children }) {
       chainTime,
       execute,
       getStatus,
-      getPendingTx
+      getPendingTx,
+      promptingTransaction
     }}>
       {children}
     </ChainTransactionContext.Provider>
