@@ -484,6 +484,11 @@ export function ChainTransactionProvider({ children }) {
               dispatchPendingTransactionUpdate(txHash, { txEvent });
             }
 
+          // TODO: fix below
+          //  - cartridge needs to respond to getTransactionReceipt more appropriately
+          //    (seems like always returning "Transaction hash not found"; at most should do that for REJECTED txs)
+          //  - move this into its own effect dependent only on block number changes so not running getTransactionReceipt so often
+
           // // if pending transaction has not turned into an event within 45 seconds
           // // check every useEffect loop if tx is rejected (or missing)
           // } else if (lastBlockNumber > lastBlockNumberHandled.current) {

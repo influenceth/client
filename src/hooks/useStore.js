@@ -26,7 +26,7 @@ const outlinerSectionDefaults = {
   timeControl: { ...sectionDefault }
 };
 
-const useStore = create(persist(subscribeWithSelector((set, get) => ({
+const useStore = create(subscribeWithSelector(persist((set, get) => ({
     actionDialog: {},
     launcherPage: null,
 
