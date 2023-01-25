@@ -40,7 +40,7 @@ const getErrorMessage = (error) => {
 };
 
 const isAllowedChain = (chainId) => {
-  return chainId == process.env.REACT_APP_CHAIN_ID;
+  return chainId === process.env.REACT_APP_CHAIN_ID;
 }
 
 const getAllowedChainLabel = (wallet) => {
@@ -64,7 +64,7 @@ export function WalletProvider({ children }) {
 
   const active = useMemo(() => {
     return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.account?.chainId);
-  }, [starknet?.isConnected, starknet?.account?.address, starknet?.account?.baseUrl]);
+  }, [starknet?.isConnected, starknet?.account ]);
 
   const account = useMemo(() => {
     return active && Address.toStandard(starknet.account.address);
@@ -161,22 +161,26 @@ export function WalletProvider({ children }) {
   }, [starknet?.name, attemptConnection, disconnect]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // autoconnect as possible
-  useEffect(async () => {
-    try {
-      const autoconnectWallet = await getLastConnectedWallet();
+  useEffect(() => {
+    async function attemptAutoconnect() {
+      try {
+        const autoconnectWallet = await getLastConnectedWallet();
 
-      if (autoconnectWallet) {
-        restorePreviousConnection(
-          autoconnectWallet,
-          () => setStarknetReady(true)
-        );
-      } else {
+        if (autoconnectWallet) {
+          restorePreviousConnection(
+            autoconnectWallet,
+            () => setStarknetReady(true)
+          );
+        } else {
+          setStarknetReady(true);
+        }
+      } catch (e) {
+        console.error(e);
         setStarknetReady(true);
       }
-    } catch (e) {
-      console.error(e);
-      setStarknetReady(true);
     }
+
+    attemptAutoconnect();
   }, [restorePreviousConnection]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
