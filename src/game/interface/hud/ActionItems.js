@@ -282,6 +282,7 @@ const formatPlans = (item) => {
 const formatTx = (item) => {
   const formatted = {
     key: item.txHash || item.timestamp,
+    txHash: item.txHash,
     icon: null,
     label: '',
     crewId: null,
@@ -549,6 +550,10 @@ const ActionItem = ({ data, type }) => {
           plot
         });
       }, dialogDelay)
+    }
+
+    if (type === 'failed' && item.txHash && process.env.REACT_APP_STARKNET_EXPLORER_URL) {
+      window.open(`${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${item.txHash}`, '_blank');
     }
   }, [
     goToAction,

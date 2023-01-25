@@ -496,6 +496,7 @@ export function ChainTransactionProvider({ children }) {
                     dispatchFailedTransaction({
                       key,
                       vars,
+                      txHash,
                       err: receipt.status_data || 'Transaction was rejected.'
                     });
                   }
@@ -507,6 +508,7 @@ export function ChainTransactionProvider({ children }) {
                     dispatchFailedTransaction({
                       key,
                       vars,
+                      txHash,
                       err: 'Transaction was rejected.'
                     });
                   }
@@ -543,6 +545,7 @@ export function ChainTransactionProvider({ children }) {
           dispatchFailedTransaction({
             key,
             vars,
+            txHash: null,
             err: e?.message || e
           });
         }
