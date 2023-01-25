@@ -3,7 +3,6 @@ import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { MdWorkspacesOutline as ResourcesIcon } from 'react-icons/md';
 
-import LogoLong from '~/assets/images/logo.png';
 import IconButton from '~/components/IconButton';
 import {
   ConstructIcon as BuildingsIcon,
@@ -18,6 +17,7 @@ import {
   StarIcon,
   TimeIcon
 } from '~/components/Icons';
+import InfluenceLogo from '~/components/InfluenceLogo';
 import useAuth from '~/hooks/useAuth';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrew from '~/hooks/useCrew';
@@ -74,7 +74,7 @@ const StyledLogo = styled(Logo)`
   width: auto;
 `;
 
-const StyledLogoLong = styled(LogoLong)`
+const StyledLogoLong = styled(InfluenceLogo)`
   height: 40px;
   min-width: 100%;
   padding-right: 20px;

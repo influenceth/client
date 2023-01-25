@@ -9,6 +9,17 @@ import { BsEyeSlash, BsEye } from 'react-icons/bs';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import IconButton from '~/components/IconButton';
+import { WarningIcon } from '~/components/Icons';
+
+const MobileWarning = styled.div`
+  align-items: center;
+  color: orangered;
+  display: flex;
+  font-size: 13px;
+  @media (min-width: ${p => p.theme.breakpoints.mobile + 1}px) {
+    display: none;
+  }
+`;
 
 const StyledSystemControls = styled.div`
   align-items: center;
@@ -94,6 +105,10 @@ const SystemControls = (props) => {
           <BsEye />
         </IconButton>
       )}
+      <MobileWarning>
+        <WarningIcon />
+        <span>Mobile is not well supported in Testnet.</span>
+      </MobileWarning>
       <IconButton
         data-tip="Main Menu"
         onClick={() => dispatchLauncherPage(true)}
