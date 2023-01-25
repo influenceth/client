@@ -1,14 +1,25 @@
 import cursor from '~/assets/images/cursor.png';
 import cursorActive from '~/assets/images/cursor-active.png';
 
-const hexToRGB = (hex) => {
-  const hexParts = hex.toLowerCase().replace(/[^a-z0-9]/g, '').match(/.{1,2}/g);
-  return [
-    parseInt(hexParts[0], 16),
-    parseInt(hexParts[1], 16),
-    parseInt(hexParts[2], 16)
-  ].join(',');
+export const hexToRGB = (hex) => {
+  try {
+    const hexParts = hex.toLowerCase().replace(/[^a-z0-9]/g, '').match(/.{1,2}/g);
+    return [
+      parseInt(hexParts[0], 16),
+      parseInt(hexParts[1], 16),
+      parseInt(hexParts[2], 16)
+    ].join(',');
+  } catch (e) {
+    console.error(e);
+    return '255,0,0';
+  }
 };
+
+export const getContrastText = (rgb) => {
+  if (typeof rgb === 'string') rgb = hexToRGB(rgb);
+  rgb = rgb.split(',');
+  return (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000 > 125 ? 'black' : 'white';
+}
 
 const gray = '#bbbbbb';
 const teal = '#69ebf4';
@@ -30,10 +41,14 @@ const theme = {
     contentDark: 'rgb(40, 40, 40)',
     mainText: '#cccccc',
     secondaryText: '#999999',
-    disabledText: '#666666',
+    disabledText: 'rgba(255,255,255,0.4)',
+    borderBottom: '#555555',
+    borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
     success: '#54de94',
     successRGB: '84, 222, 148', // NOTE: this should be rgb of `success`
+    txButton: '#4444b8',
     error: red,
+    teal, blue, purple, orange, yellow, red,
     bonus: {
       level0: '#999999',
       level1: 'rgb(105, 235, 244)',
@@ -47,6 +62,13 @@ const theme = {
       Superior: purple,
       Exceptional: orange,
       Incomparable: yellow
+    },
+    resources: {
+      Fissile: '#8a1aff',
+      Metal: '#f8852c',
+      Organic: '#68d346',
+      RareEarth: '#f63637',
+      Volatile: '#5bc0f5',
     },
     classes: {
       Pilot: purple,

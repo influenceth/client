@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 
 import MarketplaceLink from '~/components/MarketplaceLink';
 import OnClickLink from '~/components/OnClickLink';
@@ -7,16 +7,15 @@ import useAuth from '~/hooks/useAuth';
 const AddressLink = (props) => {
   const { address, chain } = props;
   const { account } = useAuth();
-  const [ text, setText ] = useState(address);
 
-  useEffect(() => {
-    if (account && account === address) setText('you');
-  }, [ account, address ]);
+  const label = useMemo(() => {
+    return (account && account === address) ? 'you' : address;
+  }, [account, address]);
 
   if (address) {
     return (
       <MarketplaceLink
-        chain={chain.toUpperCase()}
+        chain={(chain || 'STARKNET').toUpperCase()}
         assetType="account"
         id={address}>
         {(onClick, setRefEl) => (
@@ -24,7 +23,7 @@ const AddressLink = (props) => {
             ref={setRefEl}
             maxWidth={props.maxWidth}
             onClick={onClick}>
-            {text}
+            {label}
           </OnClickLink>
         )}
       </MarketplaceLink>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import styled, { css } from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { Switch, Route, Redirect } from 'react-router-dom';
@@ -7,8 +7,10 @@ import LoadingAnimation from 'react-spinners/BarLoader';
 
 import useSale from '~/hooks/useSale';
 import useScreenSize from '~/hooks/useScreenSize';
+import useStore from '~/hooks/useStore';
 import Alerts from './interface/Alerts';
 import Draggables from './interface/Draggables';
+import HUD from './interface/HUD';
 import MainMenu from './interface/MainMenu';
 import ModelViewer from './interface/ModelViewer';
 import Outliner from './interface/Outliner';
@@ -22,10 +24,12 @@ import CrewAssignments from './interface/details/CrewAssignments';
 import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
+import PlotViewer from './interface/PlotViewer';
 import RouteDetails from './interface/details/RouteDetails';
-import Settings from './interface/details/Settings';
 import WatchlistTable from './interface/details/WatchlistTable';
 import theme from '~/theme';
+import Cutscene from './Cutscene';
+import Launcher from './Launcher';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -80,44 +84,67 @@ const Interface = () => {
   const { isMobile } = useScreenSize();
   const { data: sale } = useSale();
   const isFetching = useIsFetching();
+  const cutscene = useStore(s => s.cutscene);
+  const launcherPage = useStore(s => s.launcherPage);
+  const interfaceHidden = useStore(s => s.graphics.hideInterface);
+  const hideInterface = useStore(s => s.dispatchHideInterface);
+  const showInterface = useStore(s => s.dispatchShowInterface);
 
-  const [hideInterface, setHideInterface] = useState(false);
-
-  // NOTE: requested by art team for easier screenshots vvv
-  const toggleInterface = useCallback((e) => {
-    if (e.ctrlKey && e.which === 120) { // ctrl+f9
-      setHideInterface(!hideInterface);
-    }
-  }, [hideInterface]);
+  const handleInterfaceShortcut = useCallback((e) => {
+    // ctrl+f9
+    if (e.ctrlKey && e.which === 120) interfaceHidden ? showInterface() : hideInterface();
+  }, [interfaceHidden]);
 
   useEffect(() => {
-    document.addEventListener('keyup', toggleInterface);
+    document.addEventListener('keyup', handleInterfaceShortcut);
     return () => {
-      document.removeEventListener('keyup', toggleInterface);
+      document.removeEventListener('keyup', handleInterfaceShortcut);
     }
-  }, [toggleInterface]);
-  // ^^^
+  }, [handleInterfaceShortcut]);
 
   return (
-    <StyledInterface hide={hideInterface}>
-      {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
-      {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
+    <>
       <Alerts />
-      {sale && <SaleNotifier sale={sale} />}
-      <MainContainer>
+      {launcherPage && <Launcher />}
+      {cutscene && <Cutscene />}
+      <StyledInterface hide={interfaceHidden}>
+        {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
+        {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
+        {sale && <SaleNotifier sale={sale} />}
+        <MainContainer>
+          <Switch>
+            <Route exact path="/asteroids">
+              <AsteroidsTable />
+            </Route>
+            <Route path="/building-viewer/:model?">
+              <ModelViewer assetType="Building" />
+            </Route>
+            <Route path="/resource-viewer/:model?">
+              <ModelViewer assetType="Resource" />
+            </Route>
+            <Route path="/crew/:i(\d+)">
+              <CrewMemberDetails />
+            </Route>
+            <Route path="/owned-asteroids">
+              <OwnedAsteroidsTable />
+            </Route>
+            <Route path="/route">
+              <RouteDetails />
+            </Route>
+            <Route path="/watchlist">
+              <WatchlistTable />
+            </Route>
+          </Switch>
+
+          <PlotViewer />
+          <HUD />
+          <MainMenu />
+        </MainContainer>
+
         <Switch>
-          <Route exact path="/asteroids">
-            <AsteroidsTable />
-          </Route>
           <Redirect from="/:i(\d+)" to="/asteroids/:i" />
-          <Route path="/asteroids/:i(\d+)">
+          <Route path="/asteroids/:i(\d+)/:tab?/:category?">
             <AsteroidDetails />
-          </Route>
-          <Route path="/model-viewer">
-            <ModelViewer />
-          </Route>
-          <Route path="/owned-asteroids">
-            <OwnedAsteroidsTable />
           </Route>
           <Route path="/owned-crew">
             <OwnedCrew />
@@ -134,24 +161,11 @@ const Interface = () => {
           <Route path="/crew-assignment/:id([a-z0-9]+)/create">
             <CrewCreation />
           </Route>
-          <Route path="/crew/:i(\d+)">
-            <CrewMemberDetails />
-          </Route>
-          <Route path="/watchlist">
-            <WatchlistTable />
-          </Route>
-          <Route path="/route">
-            <RouteDetails />
-          </Route>
-          <Route path="/settings">
-            <Settings />
-          </Route>
         </Switch>
-        <MainMenu />
-      </MainContainer>
-      <Outliner />
-      <Draggables />
-    </StyledInterface>
+        <Outliner />
+        <Draggables />
+      </StyledInterface>
+    </>
   );
 };
 

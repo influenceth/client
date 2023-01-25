@@ -36,7 +36,7 @@ const Audio = (props) => {
   const toPlay = useStore(s => s.sounds.toPlay);
   const musicVolume = useStore(s => s.sounds.music);
   const effectsVolume = useStore(s => s.sounds.effects);
-  const cutscenePlaying = useStore(s => s.cutscenePlaying);
+  const cutscenePlaying = !!useStore(s => s.cutscene);
   const endSound = useStore(s => s.dispatchSoundPlayed);
 
   const [ soundEnabled, setSoundEnabled ] = useState(null);

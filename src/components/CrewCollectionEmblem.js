@@ -1,4 +1,4 @@
-import { toCrewCollection } from 'influence-utils';
+import { toCrewCollection } from '@influenceth/sdk';
 
 import Image1 from '~/assets/images/crew_collections/1.png';
 import Image2 from '~/assets/images/crew_collections/2.png';

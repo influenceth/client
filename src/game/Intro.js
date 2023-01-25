@@ -6,8 +6,10 @@ import gsap from 'gsap';
 
 import IntroVideo from '~/assets/influence-load.webm';
 import Button from '~/components/Button';
-import Cutscene from '~/components/Cutscene';
+import Cutscene from '~/game/Cutscene';
 import useStore from '~/hooks/useStore';
+
+// TODO: this file is deprecated now that the Launcher exists
 
 const StyledIntro = styled.div`
   background-color: black;
@@ -15,7 +17,7 @@ const StyledIntro = styled.div`
   height: 100%;
   opacity: 1;
   width: 100%;
-  z-index: 9000;
+  z-index: 8999;
 `;
 
 const Launcher = styled.div`
@@ -123,15 +125,7 @@ const Intro = (props) => {
       });
     }
 
-    // if only one option, just "click" it automatically
-    // (only if seen intro video; otherwise, we need the interaction to start the video)
-    if (options.length === 1 && hasSeenIntroVideo) {
-      options[0].onLaunch();
-
-    // else, set launch options for user selection
-    } else {
-      setLaunchOptions(options);
-    }
+    setLaunchOptions(options);
   }, [hasSeenIntroVideo, onLaunch]);
 
   return (
@@ -145,7 +139,7 @@ const Intro = (props) => {
         playing={true}
         onError={onVideoEnded}
         onEnded={onVideoEnded} />
-      <Launcher hiding={closing || launchOptions?.length < 2}>
+      <Launcher hiding={closing}>
         <ButtonContainer>
           {launchOptions.map(({ label, onClick }) => (
             <Button key={label} onClick={onClick}>
@@ -157,7 +151,7 @@ const Intro = (props) => {
 
       {showingTrailer && createPortal(
         <Cutscene
-          source="https://d1c1daundk1ax0.cloudfront.net/influence/goerli/videos/intro.m3u8"
+          source={`${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/influence/goerli/videos/intro.m3u8`}
           allowSkip
           onComplete={onTrailerComplete}
         />,

@@ -11,6 +11,7 @@ const Wrapper = styled.div`
   position: relative;
   overflow: hidden;
   width: 100%;
+  z-index: 3;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding: 0 0 50px 0;

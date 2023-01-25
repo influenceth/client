@@ -5,18 +5,22 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { useContextBridge, Stats } from '@react-three/drei';
 import styled from 'styled-components';
 
+import { TrackballModControls } from '~/components/TrackballModControls';
 import AuthContext from '~/contexts/AuthContext';
 import ClockContext from '~/contexts/ClockContext';
+import CrewContext from '~/contexts/CrewContext';
 import useStore from '~/hooks/useStore';
-import { TrackballModControls } from '~/components/TrackballModControls';
+import constants from '~/lib/constants';
 import Star from './scene/Star';
 import Planets from './scene/Planets';
 import Asteroids from './scene/Asteroids';
 import Asteroid from './scene/Asteroid';
 import SettingsManager from './scene/SettingsManager';
-import constants from '~/lib/constants';
+import Postprocessor from './Postprocessor';
+import WebsocketContext from '~/contexts/WebsocketContext';
 
 const glConfig = {
+  antialias: true,
   shadows: true,
   camera: {
     fov: 75,
@@ -75,7 +79,9 @@ const Scene = (props) => {
   // Use ContextBridge to make wallet available within canvas
   const ContextBridge = useContextBridge(
     AuthContext,
-    ClockContext
+    ClockContext,
+    CrewContext,
+    WebsocketContext
   );
 
   // Orient such that z is up, perpindicular to the stellar plane
@@ -99,9 +105,10 @@ const Scene = (props) => {
   return (
     <StyledContainer>
       {statsOn && (<Stats />)}
-      <Canvas {...glConfig} >
+      <Canvas {...glConfig}>
         <ContextBridge>
           <SettingsManager />
+          <Postprocessor enabled={true} />
           <QueryClientProvider client={queryClient} contextSharing={true}>
             <TrackballModControls>
               <WrappedScene />
@@ -110,7 +117,7 @@ const Scene = (props) => {
         </ContextBridge>
       </Canvas>
       {false && /* TODO: remove debug */(
-        <div style={{ position: 'fixed', bottom: 72, left: 0, }}>
+        <div style={{ position: 'fixed', bottom: 72, left: 0, zIndex: 10000 }}>
           <div style={{ border: '1px solid white', padding: 4, background: '#222' }}>
             <canvas id="test_canvas" style={{ width: 0, height: 0, verticalAlign: 'bottom' }} />
           </div>

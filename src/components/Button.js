@@ -15,7 +15,7 @@ const StyledButton = styled.button`
     if (p.active && p.disabled) {
       return `rgba(${p.theme.colors.mainRGB}, 0.2)`;
     } else if (p.active) {
-      return p.theme.colors.main;
+      return p.backgroundColor || p.theme.colors.main;
     }
     return inactiveColor;
   }};
@@ -32,10 +32,11 @@ const StyledButton = styled.button`
   font-size: 15px;
   margin-top: 15px;
   min-height: 35px;
-  transition: all 300ms ease;
   padding: 0 15px 0 10px;
+  pointer-events: auto;
   position: relative;
   min-width: 75px;
+  transition: all 300ms ease;
   width: 175px;
 
   & > svg {
@@ -55,12 +56,12 @@ const StyledButton = styled.button`
 
   &:hover:not(:disabled) {
     /*background-image: linear-gradient(120deg, rgba(54, 167, 205, 0.1), rgba(54, 167, 205, 0.25));*/
-    background-color: rgba(54, 167, 205, 0.25);
+    background-color: ${p => p.backgroundColor || 'rgba(54, 167, 205, 0.25)'};
     color: white;
   }
 
   &:active:not(:disabled) {
-    background-color: ${p => p.theme.colors.main};
+    background-color: ${p => p.backgroundColor || p.theme.colors.main};
     color: white;
   }
 

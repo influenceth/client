@@ -5,6 +5,7 @@ import { MdWorkspacesOutline as ResourcesIcon } from 'react-icons/md';
 
 import IconButton from '~/components/IconButton';
 import {
+  ConstructIcon as BuildingsIcon,
   CloseIcon,
   CrewIcon,
   EyeIcon,
@@ -16,16 +17,16 @@ import {
   StarIcon,
   TimeIcon
 } from '~/components/Icons';
+import InfluenceLogo from '~/components/InfluenceLogo';
 import useAuth from '~/hooks/useAuth';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useCrew from '~/hooks/useCrew';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
 import Time from './mainMenu/Time';
 import Logo from './mainMenu/menu-logo.svg';
-import LogoLong from '~/assets/images/logo.svg';
 
 const StyledMainMenu = styled.div`
   align-items: flex-end;
@@ -38,6 +39,7 @@ const StyledMainMenu = styled.div`
   pointer-events: auto;
   position: relative;
   width: 100%;
+  z-index: 3;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     background-color: black;
@@ -72,7 +74,7 @@ const StyledLogo = styled(Logo)`
   width: auto;
 `;
 
-const StyledLogoLong = styled(LogoLong)`
+const StyledLogoLong = styled(InfluenceLogo)`
   height: 40px;
   min-width: 100%;
   padding-right: 20px;
@@ -119,12 +121,12 @@ const MainMenu = (props) => {
   const { account } = useAuth();
   const { data: crewAssignmentData } = useCrewAssignments();
   const { totalAssignments } = crewAssignmentData || {};
-  
+
   // TODO: genesis book deprecation vvv
-  const { data: crew } = useOwnedCrew();
+  const { crew, crewMemberMap } = useCrew();
   const hasGenesisCrewmate = useMemo(() => {
-    return crew && !!crew.find((c) => [1,2,3].includes(c.crewCollection))
-  }, [crew?.length]); // eslint-disable-line react-hooks/exhaustive-deps
+    return crew && crew?.crewMembers && crewMemberMap && crew.crewMembers.find((i) => [1,2,3].includes(crewMemberMap[i]?.crewCollection));
+  }, [crew?.crewMembers, crewMemberMap]); // eslint-disable-line react-hooks/exhaustive-deps
   // ^^^
 
   const [ showMenu, setShowMenu ] = useState(!isMobile);
@@ -167,9 +169,9 @@ const MainMenu = (props) => {
               icon={<StarIcon />}
               onClick={() => openSection('ownedAsteroids')} />
             <MenuItem
-              name="Crew Members"
+              name="Crew"
               icon={<CrewIcon />}
-              onClick={() => openSection('ownedCrew')} />
+              onClick={() => history.push('/owned-crew')} />
           </Menu>
         )}
         <Menu title="Map">
@@ -192,9 +194,13 @@ const MainMenu = (props) => {
         </Menu>
         <Menu title="Viewer">
           <MenuItem
+            name="Buildings"
+            icon={<BuildingsIcon />}
+            onClick={() => history.push('/building-viewer')} />
+          <MenuItem
             name="Resources"
             icon={<ResourcesIcon />}
-            onClick={() => history.push('/model-viewer')} />
+            onClick={() => history.push('/resource-viewer')} />
         </Menu>
         {!!account && hasGenesisCrewmate && (
           <Menu title="Activities" badge={totalAssignments}>

@@ -2,18 +2,38 @@ import axios from 'axios';
 
 import useStore from '~/hooks/useStore';
 
+// pass initial config to axios
+const config = { baseURL: process.env.REACT_APP_API_URL, headers: {} };
 const initialToken = useStore.getState().auth.token;
-const config = { baseURL: process.env.REACT_APP_API_URL };
 if (initialToken) config.headers = { Authorization: `Bearer ${initialToken}`};
+const initialCrew = useStore.getState().selectedCrewId;
+if (initialCrew) config.headers['X-Crew-Id'] = initialCrew;
 const instance = axios.create(config);
 
-useStore.subscribe(newToken => {
-  instance.defaults.headers = { Authorization: `Bearer ${newToken}`}
-}, s => s.auth.token);
+// subscribe to changes relevant to the config
+useStore.subscribe(
+  s => [s.auth.token, s.selectedCrewId],
+  ([newToken, crewId]) => {
+    instance.defaults.headers = {
+      Authorization: `Bearer ${newToken}`,
+      'X-Crew-Id': crewId
+    };
+  }
+);
 
 const api = {
   getUser: async () => {
     const response = await instance.get('/v1/user');
+    return response.data;
+  },
+
+  getCrewActionItems: async () => {
+    const response = await instance.get('/v1/user/actionitems');
+    return response.data;
+  },
+
+  getCrewPlannedLots: async () => {
+    const response = await instance.get('/v1/user/plans');
     return response.data;
   },
 
@@ -23,10 +43,11 @@ const api = {
   },
 
   getEvents: async (since) => {
-    const response = await instance.get(`/v1/user/events?since=${since}`);
+    const response = await instance.get(`/v1/user/events${since ? `?since=${since}` : ''}`);
     return {
       events: response.data,
-      blockNumber: parseInt(response.headers['eth-block-number'])
+      blockNumber: parseInt(response.headers['starknet-block-number']),
+      // ethBlockNumber: parseInt(response.headers['eth-block-number'])  // NOTE: probably not needed anymore
     };
   },
 
@@ -61,8 +82,8 @@ const api = {
     return response.data;
   },
 
-  getAsteroid: async (i) => {
-    const response = await instance.get(`/v1/asteroids/${i}`);
+  getAsteroid: async (i, extended = false) => {
+    const response = await instance.get(`/v1/asteroids/${i}${extended ? '?extended=1' : ''}`);
     return response.data;
   },
 
@@ -71,23 +92,67 @@ const api = {
     return response.data;
   },
 
+  getOccupiedPlots: async (i, plotTally) => {
+    const response = await instance.get(`/v1/asteroids/${i}/lots/occupied`, { responseType: 'blob' });
+    if (response.data) {
+      const occupied = '1';
+      const padding = '0';
+      return (new Uint32Array(await response.data.arrayBuffer())).reduce((acc, byte, i) => {
+        const x = Number(byte).toString(2).padStart(32, padding);
+        for (let j = 0; j < 32; j++) {
+          const index = i * 32 + j;
+          if (index < plotTally) {
+            acc[index + 1] = x[j] === occupied; // (adjust for one-index of plot ids)
+          }
+        }
+        return acc;
+      }, {});
+    }
+    return null;
+  },
+
+  getCrewOccupiedPlots: async (a, c) => {
+    const response = await instance.get(`/v1/asteroids/${a}/lots/occupier/${c}`);
+    return response.data;
+  },
+
+  getCrewSampledPlots: async (a, c, r) => {
+    const response = await instance.get(`/v1/asteroids/${a}/lots/sampled/${c}/${r}`);
+    return response.data;
+  },
+
+  getPlot: async (asteroidId, plotId) => {
+    const response = await instance.get(`/v1/asteroids/${asteroidId}/lots/${plotId}`);
+    return response.data;
+  },
+
   getOwnedAsteroidsCount: async () => {
     const response = await instance.get('/v1/asteroids/ownedCount');
     return response.data;
   },
 
+  getOwnedCrews: async () => {
+    const response = await instance.get(`/v1/crews/owned`);
+    return response.data;
+  },
+
   getCrewMember: async (i) => {
-    const response = await instance.get(`/v1/crew/${i}`);
+    const response = await instance.get(`/v1/crewmates/${i}`);
+    return response.data;
+  },
+
+  getOwnedCrewMembers: async () => {
+    const response = await instance.get('/v1/crewmates/owned');
     return response.data;
   },
 
   getCrewMembers: async (query) => {
-    const response = await instance.get('/v1/crew', { params: query });
+    const response = await instance.get('/v1/crewmates', { params: query });
     return response.data;
   },
 
   getMintableCrew: async (query) => {
-    const response = await instance.get('/v1/crew/mintable', { params: query });
+    const response = await instance.get('/v1/crewmates/mintable', { params: query });
     return response.data;
   },
 

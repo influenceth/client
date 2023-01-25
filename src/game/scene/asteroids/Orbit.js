@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Color } from 'three';
-import { KeplerianOrbit } from 'influence-utils';
+import { KeplerianOrbit } from '@influenceth/sdk';
 
 import frag from './orbit/orbit.frag';
 import vert from './orbit/orbit.vert';

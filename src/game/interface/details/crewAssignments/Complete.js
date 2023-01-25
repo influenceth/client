@@ -1,16 +1,16 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { toCrewTrait } from 'influence-utils';
+import { toCrewTrait } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import Button from '~/components/Button';
 import CopyReferralLink from '~/components/CopyReferralLink';
 import CrewCard from '~/components/CrewCard';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import { LinkIcon, TwitterIcon } from '~/components/Icons';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
+import useCrew from '~/hooks/useCrew';
 import useStorySession from '~/hooks/useStorySession';
 
 const slideOutTransition = keyframes`
@@ -287,7 +287,7 @@ const CrewAssignmentComplete = (props) => {
   const { account } = useAuth();
   const { id: sessionId } = useParams();
   const history = useHistory();
-  const { data: allCrew } = useOwnedCrew();
+  const { crewMemberMap } = useCrew();
   const { storyState } = useStorySession(sessionId);
 
   const onCloseDestination = useMemo(
@@ -295,9 +295,10 @@ const CrewAssignmentComplete = (props) => {
     [storyState?.book, storyState?.story]
   );
 
-  const crew = useMemo(() => {
-    return allCrew && storyState && allCrew.find(({ i }) => i === storyState.owner);
-  }, [storyState, allCrew]);
+  const crew = useMemo(
+    () => crewMemberMap && storyState && crewMemberMap[storyState.owner],
+    [storyState, crewMemberMap]
+  );
 
   const rewards = useMemo(() => {
     return (storyState?.accruedTraits || []).map((id) => ({
@@ -317,7 +318,7 @@ const CrewAssignmentComplete = (props) => {
       url: `${document.location.origin}/play/crew-assignment/${sessionId}?r=${account}`,
       //via: 'influenceth'
     });
-    window.open(`https://twitter.com/intent/tweet?${params.toString()}`);
+    window.open(`https://twitter.com/intent/tweet?${params.toString()}`, '_blank');
   }, [account, sessionId, storyState]);
   
   const handleFinish = useCallback(() => {
@@ -358,7 +359,8 @@ const CrewAssignmentComplete = (props) => {
       onCloseDestination={onCloseDestination}
       contentProps={{ style: { display: 'flex', flexDirection: 'column', } }}
       edgeToEdge
-      style={{ color: '#999', textAlign: 'center' }}>
+      style={{ color: '#999', textAlign: 'center' }}
+      width="max">
       <ImageryContainer src={storyState.image}>
         <div />
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>

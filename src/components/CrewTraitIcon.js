@@ -66,9 +66,7 @@ const indexedIcons = [ // 1-indexed
 ];
 
 const HexagonInnerHighlight = styled(HexagonInnerHighlightSVG)`
-  & > path {
-    color: rgba(${p => p.theme.colors.mainRGB}, 0.15);
-  }
+  color: rgba(${p => p.theme.colors.mainRGB}, 0.15);
 `;
 
 const CrewTraitIcon = ({ hideHexagon, trait, type }) => {

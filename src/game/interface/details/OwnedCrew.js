@@ -2,34 +2,34 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 
-import { MdAdd as PlusIcon } from 'react-icons/md';
-
-import Button from '~/components/Button';
+import Button from '~/components/ButtonAlt';
 import CrewCard from '~/components/CrewCard';
 import CrewInfoPane from '~/components/CrewInfoPane';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import IconButton from '~/components/IconButton';
 import {
   CaptainIcon,
   CrewIcon,
   ChevronDoubleDownIcon as DeactivateIcon,
   ChevronDoubleUpIcon as ActivateIcon,
+  PlusIcon,
   PromoteIcon,
-  ChevronDoubleDownIcon
+  ChevronDoubleDownIcon,
+  CheckIcon
 } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
+import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
+import useCrew from '~/hooks/useCrew';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewManager from '~/hooks/useCrewManager';
-import useOwnedCrew from '~/hooks/useOwnedCrew';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme.js';
 import { useHistory } from 'react-router-dom';
-import TriangleTip from '~/components/TriangleTip';
 
 const Container = styled.div`
   display: flex;
@@ -63,7 +63,9 @@ const IconHR = styled.div`
   }
 `;
 
+const CrewCredits = styled.div``;
 const Title = styled.div`
+  position: relative;
   & > h3 {
     align-items: center;
     ${p => !p.hideBorder && `border-bottom: 1px solid #2b2b2b;`}
@@ -78,6 +80,11 @@ const Title = styled.div`
       font-size: 150%;
       margin-right: 6px;
     }
+  }
+  & ${CrewCredits} {
+    color: ${p => p.theme.colors.success};
+    position: absolute;
+    right: 0;
   }
   & ${IconHR} {
     margin-top: -7px;
@@ -139,7 +146,7 @@ const CrewContainer = styled.div`
     left: 50%;
     margin-left: -46px;
     position: absolute;
-    bottom: -16px;
+    bottom: -20px;
   }
 `;
 
@@ -237,7 +244,7 @@ const InactiveCardContainer = styled.div`
       opacity: 1;
     }
   }
-  
+
   @media (max-width: 1023px) {
     & ${InnerButtonHolder} {
       opacity: 1;
@@ -445,11 +452,11 @@ const OwnedCrew = (props) => {
   const createStorySession = useCreateStorySession();
   const { data: crewAssignmentData, isLoading: assignmentsAreLoading } = useCrewAssignments();
   const queryClient = useQueryClient();
-  const { data: crew, isLoading: crewIsLoading } = useOwnedCrew();
-  const { changeActiveCrew, getPendingActiveCrewChange } = useCrewManager();
+  const { crew: selectedCrew, crews: allCrews, crewMemberMap, loading: crewIsLoading } = useCrew();
+  const { changeActiveCrew, getPendingActiveCrewChange, getPendingCrewmate, crewCredits } = useCrewManager();
   const history = useHistory();
   const { height, width } = useScreenSize();
-  
+
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
 
@@ -468,6 +475,16 @@ const OwnedCrew = (props) => {
   const [saving, setSaving] = useState(false);
 
   const isDataLoading = !token || assignmentsAreLoading || crewIsLoading;
+
+  const crew = useMemo(() => {
+    if (crewIsLoading) return [];
+    const activeCrew = (selectedCrew?.crewMembers || []).map((i, index) => ({ ...crewMemberMap[i], activeSlot: index + 1 }));
+    const activeInAnyCrewIds = (allCrews || []).reduce((acc, c) => [...acc, ...c.crewMembers], []);
+    const inactiveCrew = Object.values(crewMemberMap || {})
+      .filter((crewMember) => crewMember.crewClass && !activeInAnyCrewIds.includes(crewMember.i))
+      .map((c) => ({ ...c, activeSlot: -1 }));
+    return [...activeCrew, ...inactiveCrew];
+  }, [selectedCrew, allCrews, crewMemberMap, crewIsLoading]);
 
   const isDirty = useMemo(() => {
     return pristine !== activeCrew.map((c) => c.i).join(',');
@@ -563,8 +580,8 @@ const OwnedCrew = (props) => {
   }, [crew]);
 
   const handleSave = useCallback(() => {
-    changeActiveCrew({ crew: activeCrew.map((c) => c.i) });
-  }, [activeCrew, changeActiveCrew]);
+    changeActiveCrew({ crewId: selectedCrew?.i, crewMembers: activeCrew.map((c) => c.i) });
+  }, [activeCrew, changeActiveCrew, selectedCrew]);
 
   const handleActiveCrewHeight = useCallback(() => {
     if (activeCrewContainer.current) {
@@ -576,20 +593,35 @@ const OwnedCrew = (props) => {
     if (width > collapsibleWidth) setInactiveCrewCollapsed(false);
   }, [width]);
 
-  // TODO (enhancement): also show as saving if pending purchase or initialization (that will result in a slot being taken)
-  //  probably not high priority b/c user would have had to navigate back here mid-transaction to create an issue
   useEffect(() => {
     if (!token || isDataLoading) return;
 
+    const pendingPurchase = getPendingCrewmate();
     const pendingChange = getPendingActiveCrewChange();
-    if (pendingChange) {
+    if (pendingPurchase) {
+      // console.log('pendingPurchase', pendingPurchase);
+      setSaving(true);
+      dispatch({
+        type: 'INITIALIZE',
+        crew: [
+          ...(crew || []),
+          {
+            ...(pendingPurchase.vars.features || {}),
+            name: pendingPurchase.vars.name,
+            traits: Object.values(pendingPurchase.vars.traits || {}).map((t) => t.i),
+            activeSlot: activeCrew?.length || 0
+          }
+        ],
+        pristine: false
+      });
+    } else if (pendingChange) {
       setSaving(true);
       if (crew?.length > 0) {
         dispatch({
           type: 'INITIALIZE',
           crew: crew.map((c) => ({
             ...c,
-            activeSlot: pendingChange.vars.crew.indexOf(c.i)
+            activeSlot: (pendingChange.vars.crewMembers || []).indexOf(c.i)
           })),
           pristine: false
         });
@@ -613,12 +645,15 @@ const OwnedCrew = (props) => {
         pristine: true
       });
     }
-  }, [isDataLoading, crew?.length, getPendingActiveCrewChange, saving]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isDataLoading, crew?.length, getPendingActiveCrewChange, getPendingCrewmate, saving]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // if crew is loaded but there is new crew, jump straight into recruitment
+  // if crew is loaded but there is new crew (and no pending tx), jump straight into recruitment
   useEffect(() => {
     if (!isDataLoading && crew.length === 0) {
-      handleRecruit();
+      // console.log(getPendingActiveCrewChange(), getPendingCrewmate());
+      if (!(getPendingActiveCrewChange() || getPendingCrewmate())) {
+        handleRecruit();
+      }
     }
   }, [isDataLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -645,11 +680,12 @@ const OwnedCrew = (props) => {
 
   if (isDataLoading) return null;
   return (
-    <Details title="Owned Crew">
-      {!(crew && crewRecruitmentStoryId) && <Loader />}
-      {crew && crewRecruitmentStoryId && (
+    <Details title="Owned Crew" width="max">
+      {!(crew?.length > 0 && crewRecruitmentStoryId) && <Loader />}
+      {crew?.length > 0 && crewRecruitmentStoryId && (
         <Container>
           <Title>
+            {crewCredits?.length > 0 && <CrewCredits><CheckIcon /> {crewCredits?.length} credit{crewCredits?.length === 1 ? '' : 's'} remaining</CrewCredits>}
             <h3>
               My Active Crew: {activeCrew.length} / 5
             </h3>
@@ -683,7 +719,11 @@ const OwnedCrew = (props) => {
                               <CrewContainer>
                                 <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
                                   {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
-                                  {!isEmpty && <CrewCard crew={crew} fontSize="95%" noWrapName />}
+                                  {!isEmpty && <CrewCard
+                                    crew={crew}
+                                    fontSize="95%"
+                                    noWrapName
+                                    onClick={() => history.push(`/crew/${crew.i}`)} />}
                                 </CardContainer>
                                 {!isEmpty && (
                                   <ButtonHolder isCaptain>
@@ -708,7 +748,11 @@ const OwnedCrew = (props) => {
                               <TopFlourish />
                               <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
                                 {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
-                                {!isEmpty && <CrewCard crew={crew} fontSize="75%" noWrapName />}
+                                {!isEmpty && <CrewCard
+                                  crew={crew}
+                                  fontSize="75%"
+                                  noWrapName
+                                  onClick={() => history.push(`/crew/${crew.i}`)} />}
                               </CardContainer>
                               {!isEmpty && (
                                 <ButtonHolder>
@@ -764,6 +808,7 @@ const OwnedCrew = (props) => {
             <Button
               onClick={handleSave}
               disabled={saving || !isDirty}
+              isTransaction
               loading={saving}>
               Save Changes
             </Button>
@@ -795,7 +840,8 @@ const OwnedCrew = (props) => {
                             hideCollectionInHeader
                             showClassInHeader
                             hideFooter
-                            noWrapName />
+                            noWrapName
+                            onClick={() => history.push(`/crew/${crew.i}`)} />
                           <InnerButtonHolder>
                             <IconButton
                               disabled={saving || activeCrew?.length === 5}

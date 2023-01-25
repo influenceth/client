@@ -161,9 +161,9 @@ const Section = (props) => {
   useEffect(() => {
     if (!content?.current) return;
     if (sectionSettings?.expanded) {
-      gsap.to(content.current, {  maxHeight: '350px', paddingBottom: '20px', duration: 0.25, ease: 'power1.in' });
+      gsap.to(content.current, { maxHeight: '365px', paddingBottom: '20px', duration: 0.25, ease: 'power1.in' });
     } else {
-      gsap.to(content.current, {  maxHeight: '0px', paddingBottom: '0px', duration: 0.25, ease: 'power1.out' });
+      gsap.to(content.current, { maxHeight: '0px', paddingBottom: '0px', duration: 0.25, ease: 'power1.out' });
     }
   }, [ sectionSettings?.expanded ]);
 

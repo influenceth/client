@@ -14,7 +14,7 @@ const Backdrop = styled.div`
   right: 0;
   left: 0;
   bottom: 0;
-  background-color: ${p => p.theme.colors.contentBackdrop};
+  background-color: ${p => p.backdrop || p.theme.colors.contentBackdrop};
   z-index: 10001;
   display: flex;
   align-items: center;
@@ -22,7 +22,7 @@ const Backdrop = styled.div`
 `;
 
 const Modal = styled.div`
-  background: rgba(0, 0, 0, 0.9);
+  background: ${p => p.opaque ? 'black' : 'rgba(0, 0, 0, 0.9)'};
   color: white;
   min-width: 300px;
   min-height: 200px;
@@ -31,10 +31,10 @@ const Modal = styled.div`
   overflow: auto;
 `;
 
-const Dialog = (props) => (
-  <Backdrop>
-    <Modal>
-      {props.children}
+const Dialog = ({ children, ...props }) => (
+  <Backdrop {...props}>
+    <Modal {...props}>
+      {children}
     </Modal>
   </Backdrop>
 );

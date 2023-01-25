@@ -5,10 +5,10 @@ import useStore from '~/hooks/useStore';
 
 const SaleNotifier = (props) => {
   const { sale } = props;
-  const { wallet } = useAuth();
+  const { walletContext: { starknet } } = useAuth();
   const dispatchSaleStarted = useStore(s => s.dispatchSaleStarted);
   const dispatchSaleEnded = useStore(s => s.dispatchSaleEnded);
-  const createAlert = useStore(s => s.dispatchAlertLogged);
+  // const createAlert = useStore(s => s.dispatchAlertLogged);
   const [ status, setStatus ] = useState();
 
   const poller = useRef();
@@ -59,10 +59,10 @@ const SaleNotifier = (props) => {
     if (poller.current) clearInterval(poller.current);
     
     if (status === 'starting') {
-      if (wallet?.starknet?.provider) {
+      if (starknet?.provider) {
         const pollFunc = () => {
           try {
-            wallet.starknet.provider.getBlock('latest').then((block) => {
+            starknet.provider.getBlock('latest').then((block) => {
               if (block.timestamp > sale.saleStartTime) {
                 setStatus('started'); // will trigger another run of this effect, clearing interval
               }
@@ -79,28 +79,28 @@ const SaleNotifier = (props) => {
     else if (status === 'started') {
       // Use original sale value to support testnet usage
       dispatchSaleStarted();
-      createAlert({
-        type: 'Sale_Started',
-        asset: sale.assetType,
-        available: sale.saleLimit - (sale.saleCount || 0)
-      });
+      // createAlert({
+      //   type: 'Sale_Started',
+      //   asset: sale.assetType,
+      //   available: sale.saleLimit - (sale.saleCount || 0)
+      // });
     }
 
     else if (status === 'unstarted') {
       dispatchSaleEnded();
-      createAlert({
-        type: 'Sale_TimeToStart',
-        asset: sale.assetType,
-        start: sale.saleStartTime * 1000
-      });
+      // createAlert({
+      //   type: 'Sale_TimeToStart',
+      //   asset: sale.assetType,
+      //   start: sale.saleStartTime * 1000
+      // });
     }
 
     else if (status === 'ended') {
       dispatchSaleEnded();
-      createAlert({
-        type: 'Sale_Ended',
-        asset: sale.assetType
-      });
+      // createAlert({
+      //   type: 'Sale_Ended',
+      //   asset: sale.assetType
+      // });
     }
 
     return () => {

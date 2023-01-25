@@ -1,25 +1,27 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { ThemeProvider, createGlobalStyle } from 'styled-components';
-import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
 import { AuthProvider } from '~/contexts/AuthContext';
+import { CrewProvider } from './contexts/CrewContext';
 import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
 import { ClockProvider } from '~/contexts/ClockContext';
 import { EventsProvider } from '~/contexts/EventsContext';
 import { WalletProvider } from '~/contexts/WalletContext';
+import { WebsocketProvider } from '~/contexts/WebsocketContext';
 import Audio from '~/game/Audio';
-import Intro from '~/game/Intro';
 import Interface from '~/game/Interface';
 import LandingPage from '~/game/Landing';
-import Redirector from '~/game/Redirector';
 import Referral from '~/game/Referral';
 import Scene from '~/game/Scene';
 import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import theme from '~/theme';
+import { ActionItemProvider } from './contexts/ActionItemContext';
+import useAuth from './hooks/useAuth';
 
 const { GRAPHICS_DEFAULTS } = constants;
 
@@ -35,6 +37,9 @@ const StyledMain = styled.main`
 
 // for starknet modals
 const GlobalStyle = createGlobalStyle`
+  label {
+    cursor: inherit;
+  }
   .s-dialog {
     z-index: 1010 !important;
   }
@@ -43,7 +48,45 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const DISABLE_INTRO = process.env.NODE_ENV === 'development';
+const DISABLE_LAUNCHER_LANDING = process.env.NODE_ENV === 'development';
+
+const LauncherRedirect = () => {
+  const { account } = useAuth();
+  const history = useHistory();
+
+  const launcherPage = useStore(s => s.launcherPage);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+
+  // redirect to launcher if initial load and trying to link to /launcher/*
+  useEffect(() => {
+    const parts = history.location.pathname.split('/').slice(1);
+    const deeplink = parts[0] === 'launcher';
+    if (deeplink || !DISABLE_LAUNCHER_LANDING) {
+      const destinationPage = (deeplink && parts[1]) ? parts[1] : true;
+      if (launcherPage !== destinationPage) {
+        dispatchLauncherPage(destinationPage);
+      }
+      if (deeplink) {
+        history.replace('/');
+      }
+    }
+  }, []);
+
+  // redirect to launcher if was logged in and is now logged out (and not already on launcher)
+  const wasLoggedIn = useRef(false);
+  useEffect(() => {
+    if (account) {
+      wasLoggedIn.current = true;
+    } else {
+      if (wasLoggedIn.current && !launcherPage) {
+        dispatchLauncherPage(true);
+      }
+      wasLoggedIn.current = false;
+    }
+  }, [!account]);
+
+  return null;
+};
 
 const Game = (props) => {
   const gpuInfo = useDetectGPU();
@@ -54,11 +97,6 @@ const Game = (props) => {
   const setAutodetect = useStore(s => s.dispatchGraphicsAutodetectSet);
   const graphics = useStore(s => s.graphics);
   const [ showScene, setShowScene ] = useState(false);
-  const [ introEnabled, setIntroEnabled ] = useState(!DISABLE_INTRO);
-
-  const onIntroComplete = useCallback(() => {
-    setIntroEnabled(false);
-  }, []);
 
   const autodetectNeedsInit = graphics?.autodetect === undefined;
   useEffect(() => {
@@ -101,32 +139,39 @@ const Game = (props) => {
   return (
     <WalletProvider>
       <AuthProvider>
-        <EventsProvider>
-          <ChainTransactionProvider>
-            <ThemeProvider theme={theme}>
-              <GlobalStyle />
-              <Router>
-                <Redirector />
-                <Referral />
-                <Switch>
-                  <Route path="/play">
-                    <LandingPage />
-                  </Route>
-                  <Route>
-                    {introEnabled && <Intro onComplete={onIntroComplete} />}
-                    <ClockProvider>
-                      <StyledMain>
-                        <Interface />
-                        {showScene && <Scene />}
-                        <Audio />
-                      </StyledMain>
-                    </ClockProvider>
-                  </Route>
-                </Switch>
-              </Router>
-            </ThemeProvider>
-          </ChainTransactionProvider>
-        </EventsProvider>
+        <CrewProvider>
+          <WebsocketProvider>
+            <EventsProvider>
+              <ChainTransactionProvider>
+                <ActionItemProvider>
+                  <ThemeProvider theme={theme}>
+                    <GlobalStyle />
+                    <Router>
+                      <Referral />
+                      <Switch>
+                        {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
+                        <Route path="/play">
+                          <LandingPage />
+                        </Route>
+                        {/* for everything else */}
+                        <Route>
+                          <LauncherRedirect />
+                          <ClockProvider>
+                            <StyledMain>
+                              <Interface />
+                              {showScene && <Scene />}
+                              <Audio />
+                            </StyledMain>
+                          </ClockProvider>
+                        </Route>
+                      </Switch>
+                    </Router>
+                  </ThemeProvider>
+                </ActionItemProvider>
+              </ChainTransactionProvider>
+            </EventsProvider>
+          </WebsocketProvider>
+        </CrewProvider>
       </AuthProvider>
     </WalletProvider>
   );

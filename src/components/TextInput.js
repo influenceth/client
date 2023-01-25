@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 const StyledInput = styled.input`
@@ -21,13 +21,26 @@ const StyledInput = styled.input`
   }
 `;
 
-const TextInput = forwardRef((props, ref) => {
+const TextInput = forwardRef((props, forwardedRef) => {
   const { initialValue, onChange, resetOnChange, ...restProps } = props;
   const [ value, setValue ] = useState(initialValue || '');
+
+  const localRef = useRef();
+  const ref = forwardedRef || localRef;
 
   const _onChange = (e) => {
     setValue(e.target.value);
     if (onChange) onChange(e.target.value);
+
+    // pattern takes precedence over maxlength, so this will apply maxlength
+    // explicitly if both properties are set
+    if (ref.current && props.pattern && props.maxlength) {
+      if ((e.target.value || '').length > props.maxlength) {
+        ref.current.setCustomValidity('Too long.');
+      } else {
+        ref.current.setCustomValidity('');
+      }
+    }
   };
 
   useEffect(() => {

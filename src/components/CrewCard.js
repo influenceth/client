@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 import styled, { css } from 'styled-components';
 import pick from 'lodash/pick';
-import { toCrewClass, toCrewCollection, toCrewTitle } from 'influence-utils';
+import { Crewmate } from '@influenceth/sdk';
 
 import silhouette from '~/assets/images/silhouette.png';
 import CrewCardOverlay, { cardTransitionSpeed, cardTransitionFunction } from '~/components/CrewCardOverlay';
@@ -62,7 +62,7 @@ const Card = styled.div`
   font-size: ${p => p.fontSize || p.theme.fontSizes.detailText};
   padding-top: 137.5%;
   position: relative;
-  width: 100%;
+  width: ${p => p.width || '100%'};
 
   ${p => p.fade ? `
     & ${CardHeader},
@@ -133,27 +133,39 @@ const loadingCss = css`
   top: 50%;
 `;
 
-const CrewCard = ({ crew, onClick, overlay, ...props }) => {
+const CrewCard = ({ crew: crewmate, onClick, overlay, ...props }) => {
+  const [ imageFailed, setImageFailed ] = useState(false);
   const [ imageLoaded, setImageLoaded ] = useState(false);
 
-  const useName = crew.name || (crew.i && `Crew Member #${crew.i}`) || '';
-  const classLabel = toCrewClass(crew.crewClass);
-  
-  let imageUrl = silhouette;
-  if (crew.i) {
-    imageUrl = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crew.i}/image.svg?bustOnly=true`;
-  } else if (crew.crewClass) {
-    imageUrl = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
-      pick(crew, [
-        'crewCollection', 'sex', 'body', 'crewClass', 'outfit', 'title',
-        'hair', 'facialFeature', 'hairColor', 'headPiece', 'bonusItem'
-      ])
-    )}`;
-  }
+  const useName = crewmate.name || (crewmate.i && `Crew Member #${crewmate.i}`) || '';
+  const classLabel = Crewmate.getClass(crewmate.crewClass)?.name;
+
+  let imageUrl = useMemo(() => {
+    let url = silhouette;
+    if (crewmate.i) {
+      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crewmate.i}/image.svg?bustOnly=true`;
+    } else if (crewmate.crewClass) {
+      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
+        pick(crewmate, [
+          'crewCollection', 'sex', 'body', 'crewClass', 'outfit', 'title',
+          'hair', 'facialFeature', 'hairColor', 'headPiece', 'bonusItem'
+        ])
+      )}`;
+    }
+    return url;
+  }, [crewmate]);
+
+  // make sure onLoad and onError get called by making sure they are reset to false on imageUrl change
+  const [ readyToLoadUrl, setReadyToLoadUrl ] = useState(imageUrl);
+  useEffect(() => {
+    setImageFailed(false);
+    setImageLoaded(false);
+    setReadyToLoadUrl(imageUrl);
+  }, [imageUrl]);
 
   useEffect(() => {
-    setImageLoaded(false);
-  }, [imageUrl]);
+    if (imageFailed) setImageLoaded(true)
+  }, [imageFailed]);
 
   return (
     <Card
@@ -162,16 +174,17 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
       classLabel={classLabel}
       {...props}>
       <LoadingAnimation color={'white'} css={loadingCss} loading={!imageLoaded} />
-      <CardImage visible={imageLoaded} applyMask={!overlay}>
+      <CardImage visible={imageLoaded} applyMask={!overlay && !props.hideMask}>
         <img
           alt={useName}
-          src={imageUrl}
+          src={imageFailed ? silhouette : readyToLoadUrl}
+          onError={() => setImageFailed(true)}
           onLoad={() => setImageLoaded(true)} />
       </CardImage>
       <CardHeader>
         <CrewName {...props}>
-          <CrewClassIcon crewClass={crew.crewClass} />{' '}
-          {useName}
+          <CrewClassIcon crewClass={crewmate.crewClass} />{' '}
+          {!props.hideNameInHeader && useName}
         </CrewName>
         {!props.hideCollectionInHeader && (
           <DataReadout style={{
@@ -184,21 +197,21 @@ const CrewCard = ({ crew, onClick, overlay, ...props }) => {
               : {}
             )
             }}>
-            {toCrewCollection(crew.crewCollection)}
+            {Crewmate.getCollection(crewmate.crewCollection)?.name}
           </DataReadout>
         )}
-        {props.showClassInHeader && <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>{toCrewClass(crew.crewClass)}</DataReadout>}
+        {props.showClassInHeader && <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>{Crewmate.getClass(crewmate.crewClass)?.name}</DataReadout>}
       </CardHeader>
       {!overlay && (
         <CardFooter>
           <EmblemContainer>
             <CrewCollectionEmblem
-              collection={crew.crewCollection}
+              collection={crewmate.crewCollection}
               style={{ width: '100%' }} />
           </EmblemContainer>
           <FooterStats>
-            <div>{toCrewClass(crew.crewClass)}</div>
-            <div>{toCrewTitle(crew.title)}</div>
+            <div>{Crewmate.getClass(crewmate.crewClass)?.name}</div>
+            {crewmate.title > 0 && <div>{Crewmate.getTitle(crewmate.title)?.name}</div>}
           </FooterStats>
         </CardFooter>
       )}

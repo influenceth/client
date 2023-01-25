@@ -1,14 +1,23 @@
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
-import { MdBlurOff as ScanIcon } from 'react-icons/md';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
-import {
-  CrewIcon,
-  PromoteIcon
-} from '~/components/Icons';
+import { Capable, Inventory } from '@influenceth/sdk';
 
+import AddressLink from '~/components/AddressLink';
 import AsteroidLink from '~/components/AsteroidLink';
 import CrewLink from '~/components/CrewLink';
-import AddressLink from '~/components/AddressLink';
+import PlotLink from '~/components/PlotLink';
+import {
+  ConstructIcon,
+  CoreSampleIcon,
+  CrewIcon,
+  DeconstructIcon,
+  ExtractionIcon,
+  PlanBuildingIcon,
+  PromoteIcon,
+  ScanAsteroidIcon,
+  SurfaceTransferIcon,
+  UnplanBuildingIcon,
+} from '~/components/Icons';
 
 const getTxLink = (event) => {
   if (event.__t === 'Ethereum') {
@@ -17,14 +26,32 @@ const getTxLink = (event) => {
   return `${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${event.transactionHash}`;
 }
 
-const saleLabels = {
-  Asteroid: 'asteroid development rights',
-  Crewmate: 'crewmate recruitment'
-};
+// const saleLabels = {
+//   Asteroid: 'asteroid development rights',
+//   Crewmate: 'crewmate recruitment'
+// };
 
 const addressMaxWidth = "100px";
 
 const entries = {
+  //
+  // Generic
+  //
+
+  GenericAlert: (e) => ({
+    content: <span>{e.content}</span>
+  }),
+
+  GenericLoadingError: (e) => ({
+    content: (
+      <span>Error loading {e.label || 'data'}. Please refresh and try again.</span>
+    ),
+  }),
+
+  //
+  // App-level
+  //
+
   App_Updated: (e) => ({
     content: (
       <>
@@ -46,6 +73,11 @@ const entries = {
     ),
   }),
 
+
+  //
+  // Events
+  //
+
   Asteroid_Transfer: (e) => ({
     icon: <TransferIcon />,
     content: (
@@ -61,30 +93,30 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  Asteroid_ScanStarted: (e) => ({
-    icon: <ScanIcon />,
-    content: (
-      <>
-        <span>Resource scan initiated on asteroid </span>
-        <AsteroidLink id={e.returnValues.asteroidId} />
-      </>
-    ),
-    txLink: getTxLink(e),
-  }),
+  // Asteroid_ScanStarted: (e) => ({
+  //   icon: <ScanAsteroidIcon />,
+  //   content: (
+  //     <>
+  //       <span>Resource scan initiated on asteroid </span>
+  //       <AsteroidLink id={e.returnValues.asteroidId} />
+  //     </>
+  //   ),
+  //   txLink: getTxLink(e),
+  // }),
 
-  Asteroid_ReadyToFinalizeScan: (e) => ({
-    icon: <ScanIcon />,
-    content: (
-      <>
-        <span>Ready to finalize scan on </span>
-        <AsteroidLink id={e.i} />
-        <span>. Scan *must* be submitted and mined within 256 blocks (~45 min)</span>
-      </>
-    ),
-  }),
+  // Asteroid_ReadyToFinalizeScan: (e) => ({
+  //   icon: <ScanAsteroidIcon />,
+  //   // TODO: may want to review language here (depending on what expiration is on starknet)
+  //   content: (
+  //     <>
+  //       <span>Ready to finalize scan on </span>
+  //       <AsteroidLink id={e.i} />
+  //     </>
+  //   ),
+  // }),
 
-  Asteroid_AsteroidScanned: (e) => ({
-    icon: <ScanIcon />,
+  Asteroid_ScanFinished: (e) => ({
+    icon: <ScanAsteroidIcon />,
     content: (
       <>
         <span>Resource scan completed on asteroid </span>
@@ -94,7 +126,7 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  Asteroid_Asteroid_NameChanged: (e) => ({
+  Asteroid_NameChanged: (e) => ({
     icon: <NameIcon />,
     content: (
       <>
@@ -106,68 +138,160 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  Asteroid_BuyingError: (e) => ({
-    content: (
-      <>
-        <span>Error purchasing development rights on asteroid </span>
-        <AsteroidLink id={e.i} />
-        <span>. Please check your transaction and try again.</span>
-      </>
-    ),
-  }),
+  // (deprecated, but there may be some old events in log that want to display?)
+  // Asteroid_AsteroidUsed: (e) => ({
+  //   icon: <CrewIcon />,
+  //   content: (
+  //     <>
+  //       <span>Crew member </span>
+  //       <CrewLink id={e.returnValues.crewId} />
+  //       <span> minted with </span>
+  //       <AsteroidLink id={e.returnValues.asteroidId} />
+  //     </>
+  //   ),
+  //   txLink: getTxLink(e),
+  // }),
 
-  Asteroid_NamingError: (e) => ({
+  Dispatcher_ConstructionPlan: (e) => ({
+    icon: <PlanBuildingIcon />,
     content: (
       <>
-        <span>Error naming asteroid </span>
-        <AsteroidLink id={e.i} />
-        <span>. Please try a different name and ensure no symbols or extra spaces are included.</span>
-      </>
-    ),
-  }),
-
-  Asteroid_ScanningError: (e) => ({
-    content: (
-      <>
-        <span>Error starting resource scan on asteroid </span>
-        <AsteroidLink id={e.i} />
-        <span>. Please check your transaction and try again.</span>
-      </>
-    ),
-  }),
-
-  Asteroid_FinalizeScanError: (e) => ({
-    content: (
-      <>
-        <span>Error starting resource scan on asteroid </span>
-        <AsteroidLink id={e.i} />
-        <span>. Please check your transaction and try again.</span>
-      </>
-    ),
-  }),
-
-  Asteroid_AsteroidUsed: (e) => ({
-    icon: <CrewIcon />,
-    content: (
-      <>
-        <span>Crew member </span>
-        <CrewLink id={e.returnValues.crewId} />
-        <span> minted with </span>
-        <AsteroidLink id={e.returnValues.asteroidId} />
+        <span>{Capable.TYPES[e.returnValues.capableType]?.name} site plan completed on </span>
+        <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
       </>
     ),
     txLink: getTxLink(e),
   }),
 
-  CrewMember_Crew_CompositionChanged: (e) => {
+  Dispatcher_ConstructionUnplan: (e) => ({
+    icon: <UnplanBuildingIcon />,
+    content: (
+      <>
+        <span>Construction plans canceled on </span>
+        <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
+      </>
+    ),
+    txLink: getTxLink(e),
+  }),
+
+  // Dispatcher_ConstructionStart: (e) => ({
+  //   icon: <ConstructIcon />,
+  //   content: (
+  //     <>
+  //       <span>Construction started.</span>
+  //     </>
+  //   ),
+  //   txLink: getTxLink(e),
+  // }),
+
+  Dispatcher_ConstructionFinish: (e) => {
+    const asteroidId = e.returnValues.asteroidId;
+    const lotId = e.returnValues.lotId;
+    const lot = e.linked.find((l) => l.type === 'Lot')?.asset;
+    const capableName = lot?.building?.type;
+    return {
+      icon: <ConstructIcon />,
+      content: (
+        <>
+          <span>{capableName ? `${capableName} construction` : 'Construction'} finished on </span>
+          <PlotLink asteroidId={asteroidId} plotId={lotId} />
+        </>
+      ),
+      txLink: getTxLink(e),
+    };
+  },
+
+  Dispatcher_ConstructionDeconstruct: (e) => {
+    const asteroidId = e.returnValues.asteroidId;
+    const lotId = e.returnValues.lotId;
+    const lot = e.linked.find((l) => l.type === 'Lot')?.asset;
+    const capableName = lot?.building?.type;
+    return {
+      icon: <DeconstructIcon />,
+      content: (
+        <>
+          <span>{capableName ? `${capableName} ` : 'Building'} deconstructed on </span>
+          <PlotLink asteroidId={asteroidId} plotId={lotId} />
+        </>
+      ),
+      txLink: getTxLink(e),
+    };
+  },
+
+  // Dispatcher_CoreSampleStartSampling: (e) => ({
+  //   icon: <CoreSampleIcon />,
+  //   content: (
+  //     <>
+  //       <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample started at </span>
+  //       <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+  //     </>
+  //   ),
+  //   txLink: getTxLink(e),
+  // }),
+
+  // TODO: add data from server that this was an improvement?
+  Dispatcher_CoreSampleFinishSampling: (e) => {
+    return {
+      icon: <CoreSampleIcon />,
+      content: (
+        <>
+          <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample completed at </span>
+          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+        </>
+      ),
+      txLink: getTxLink(e),
+    };
+  },
+
+  Dispatcher_ExtractionStart: (e) => {
+    return {
+      icon: <ExtractionIcon />,
+      content: (
+        <>
+          <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} extraction started at </span>
+          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+        </>
+      ),
+      txLink: getTxLink(e),
+    };
+  },
+
+  Dispatcher_ExtractionFinish: (e) => {
+    return {
+      icon: <ExtractionIcon />,
+      content: (
+        <>
+          <span>Extraction completed at </span>
+          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
+        </>
+      ),
+      txLink: getTxLink(e),
+    };
+  },
+
+  Dispatcher_InventoryTransferFinish: (e) => {
+    return {
+      icon: <SurfaceTransferIcon />,
+      content: (
+        <>
+          <span>Delivery completed to </span>
+          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.destinationLotId} />
+        </>
+      ),
+      txLink: getTxLink(e),
+    };
+  },
+
+  Crew_CompositionChanged: (e) => {
     let action = null;
     let icon = <CrewIcon />;
     const { newCrew, oldCrew } = e.returnValues;
-    if (newCrew[0] === e.i) {
+
+    if (newCrew[0] === e.i && oldCrew[0] !== e.i) {
       action = `promoted to Captain`;
       icon = <PromoteIcon />;
     }
-    else if (oldCrew[0] === e.i && newCrew.includes(e.i)) {
+    else if (oldCrew[0] === e.i && newCrew[0] !== e.i && newCrew.includes(e.i)) {
       action = `relieved of command`;
     }
     else if (newCrew.includes(e.i) && !oldCrew.includes(e.i)) action = `assigned to active duty`;
@@ -189,7 +313,7 @@ const entries = {
     }
   },
 
-  CrewMember_Transfer: (e) => ({
+  Crewmate_Transfer: (e) => ({
     icon: <TransferIcon />,
     content: (
       <>
@@ -204,23 +328,7 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  CrewMember_SettlingError: (e) => ({
-    content: (
-      <span>Error minting crew member, please check your transaction and try again.</span>
-    ),
-  }),
-
-  CrewMember_NamingError: (e) => ({
-    content: (
-      <>
-        <span>Error naming crew member </span>
-        <CrewLink id={e.i} />
-        <span>. Please try a different name and ensure no symbols or extra spaces are included.</span>
-      </>
-    ),
-  }),
-
-  CrewMember_Crewmate_NameChanged: (e) => ({
+  Crewmate_NameChanged: (e) => ({
     icon: <NameIcon />,
     content: (
       <>
@@ -232,44 +340,34 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  GenericAlert: (e) => ({
-    content: <span>{e.content}</span>
-  }),
+  // Sale_TimeToStart: (e) => ({
+  //   content: (
+  //     <span>
+  //       The next {saleLabels[e.asset]} sale will start at
+  //       {` ${(new Date(e.start)).toLocaleString()}`}
+  //     </span>
+  //   ),
+  // }),
 
-  GenericLoadingError: (e) => ({
-    content: (
-      <span>Error loading {e.label || 'data'}. Please refresh and try again.</span>
-    ),
-  }),
+  // Sale_Started: (e) => {
+  //   const singular = e.available === 1;
+  //   return {
+  //     content: (
+  //       <span>
+  //         An {saleLabels[e.asset]} sale is now open!
+  //         There {singular ? 'is' : 'are'} {e.available.toLocaleString()} remaining asteroid{singular ? '' : 's'} available.
+  //       </span>
+  //     ),
+  //   }
+  // },
 
-  Sale_TimeToStart: (e) => ({
-    content: (
-      <span>
-        The next {saleLabels[e.asset]} sale will start at
-        {` ${(new Date(e.start)).toLocaleString()}`}
-      </span>
-    ),
-  }),
-
-  Sale_Started: (e) => {
-    const singular = e.available === 1;
-    return {
-      content: (
-        <span>
-          An {saleLabels[e.asset]} sale is now open!
-          There {singular ? 'is' : 'are'} {e.available.toLocaleString()} remaining asteroid{singular ? '' : 's'} available.
-        </span>
-      ),
-    }
-  },
-
-  Sale_Ended: (e) => ({
-    content: (
-      <span>
-        The {saleLabels[e.asset]} sale has completed.
-      </span>
-    ),
-  })
+  // Sale_Ended: (e) => ({
+  //   content: (
+  //     <span>
+  //       The {saleLabels[e.asset]} sale has completed.
+  //     </span>
+  //   ),
+  // })
 };
 
 const getLogContent = ({ type, data }) => {

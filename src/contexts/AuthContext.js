@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useContext } from 'react';
+import { createContext, useCallback, useEffect, useContext, useMemo, useState } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
 
 import WalletContext from '~/contexts/WalletContext';
@@ -7,42 +7,68 @@ import useStore from '~/hooks/useStore';
 
 const AuthContext = createContext();
 
+const getAccountFromToken = (token) => {
+  const decoded = decodeToken(token);
+  if (decoded) return decoded?.sub;
+  return null;
+};
+
 export function AuthProvider({ children }) {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const token = useStore(s => s.auth.token);
   const dispatchTokenInvalidated = useStore(s => s.dispatchTokenInvalidated);
   const dispatchAuthenticated = useStore(s => s.dispatchAuthenticated);
-  const wallet = useContext(WalletContext);
+  const walletContext = useContext(WalletContext);
+  const walletAccount = walletContext?.account;
 
-  const account = wallet?.account;
+  const [authenticating, setAuthenticating] = useState(false);
 
-  // Invalidate token if the token has expired
   useEffect(() => {
-    if (!!token && isExpired(token)) {
-      dispatchTokenInvalidated();
+    if (walletContext?.error) {
+      createAlert({
+        type: 'GenericAlert',
+        level: 'warning',
+        content: walletContext?.error || 'Please try again.',
+        duration: 10000
+      });
     }
-  }, [ token, dispatchTokenInvalidated ]);
+  }, [walletContext?.error]);
 
-  // Invalidate the token if the token doesn't match the current account
+  // clear "authenticating" state (i.e. if stuck)
   useEffect(() => {
-    const decoded = decodeToken(token);
-    if (!account) {
-      dispatchTokenInvalidated();
-    }
-    else if (decoded?.sub && account !== decoded?.sub) {
-      dispatchTokenInvalidated();
-    }
-  }, [ token, account, dispatchTokenInvalidated ]);
+    if (authenticating && token) setAuthenticating(false);
+  }, [token, authenticating]);
 
-  const initiateLogin = useCallback(async () => {
-    if (account && !token) {
+  // Invalidate token if...
+  //  - the token has expired
+  //  - the token's account doesn't match the current walletAccount
+  useEffect(() => {
+    if (token) {
+      if (!isExpired(token)) {
+        if (walletAccount && walletAccount === getAccountFromToken(token)) {
+          return;
+        }
+      }
+      dispatchTokenInvalidated();
+    }
+  }, [ token, walletAccount, dispatchTokenInvalidated ]);
+
+  const initiateLogin = useCallback(async (withWallet) => {
+    await walletContext.attemptConnection(withWallet);
+    const address = withWallet?.account?.address;
+
+    if (address && !token) {
       try {
-        const loginMessage = await api.requestLogin(account);
-        const signature = await wallet.starknet.account.signMessage(loginMessage);
-        const newToken = await api.verifyLogin(account, { signature: signature.join(',') });
-        dispatchAuthenticated(newToken);
+        const loginMessage = await api.requestLogin(address);
+        const signature = await withWallet.account.signMessage(loginMessage);
+        if (signature) {
+          setAuthenticating(true);
+          const newToken = await api.verifyLogin(address, { signature: signature.join(',') });
+          dispatchAuthenticated(newToken);
+        }
       } catch (e) {
         console.error(e);
+        initiateLogout();
         createAlert({
           type: 'GenericAlert',
           level: 'warning',
@@ -50,16 +76,25 @@ export function AuthProvider({ children }) {
           duration: 10000
         });
       }
+      setAuthenticating(false);
     }
-  }, [account, !token, dispatchAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ walletContext, token, dispatchAuthenticated ]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const initiateLogout = useCallback(() => {
+    walletContext.disconnect({ clearLastWallet: true });
+    dispatchTokenInvalidated();
+  }, [ walletContext.disconnect, dispatchTokenInvalidated ]);
+
+  // `account` will always correspond to current token value)
+  const tokenAccount = useMemo(() => getAccountFromToken(token), [token]);
   return (
     <AuthContext.Provider value={{
       login: initiateLogin,
+      logout: initiateLogout,
+      authenticating,
       token,
-      account: token && wallet?.account,
-      provider: token && wallet?.account,
-      wallet
+      account: tokenAccount,
+      walletContext
     }}>
       {children}
     </AuthContext.Provider>

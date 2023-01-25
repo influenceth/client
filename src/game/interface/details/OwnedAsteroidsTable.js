@@ -1,4 +1,4 @@
-import utils from 'influence-utils';
+import { toRarity, toSpectralType } from '@influenceth/sdk';
 import DataTable, { createTheme } from 'react-data-table-component';
 
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
@@ -22,12 +22,12 @@ const columns = [
     name: 'Spectral Type',
     selector: row => row.spectralType,
     sortable: true,
-    format: row => `${utils.toSpectralType(row.spectralType)}-type`
+    format: row => `${toSpectralType(row.spectralType)}-type`
   },
   {
     name: 'Rarity',
     selector: row => row.bonuses,
-    format: row => utils.toRarity(row.bonuses)
+    format: row => toRarity(row.bonuses)
   },
   {
     name: 'Semi-major Axis',

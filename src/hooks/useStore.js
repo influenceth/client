@@ -1,5 +1,5 @@
 import create from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, subscribeWithSelector } from 'zustand/middleware';
 import produce from 'immer';
 
 import constants from '~/lib/constants';
@@ -26,7 +26,10 @@ const outlinerSectionDefaults = {
   timeControl: { ...sectionDefault }
 };
 
-const useStore = create(persist((set, get) => ({
+const useStore = create(persist(subscribeWithSelector((set, get) => ({
+    actionDialog: {},
+    launcherPage: null,
+
     asteroids: {
       origin: null,
       zoomStatus: 'out', // out -> zooming-in -> in -> zooming-out -> out
@@ -35,6 +38,10 @@ const useStore = create(persist((set, get) => ({
       hovered: null,
       filters: {},
       highlight: null,
+      plot: null,
+      plotDestination: null,
+      zoomToPlot: null,
+      mapResourceId: null,
       owned: {
         mapped: false,
         filtered: false,
@@ -50,12 +57,15 @@ const useStore = create(persist((set, get) => ({
     },
 
     auth: {
-      token: null,
-      lastWallet: null
+      token: null
     },
 
+    selectedCrewId: null,
+
+    cameraNeedsReorientation: false,
+
     hasSeenIntroVideo: false,
-    cutscenePlaying: false,
+    cutscene: null,
 
     logs: {
       alerts: []
@@ -80,7 +90,13 @@ const useStore = create(persist((set, get) => ({
       textureQuality: undefined,
     },
 
+    failedTransactions: [],
     pendingTransactions: [],
+
+    plotLoader: {
+      i: null,
+      progress: 0
+    },
 
     sounds: {
       music: 100,
@@ -131,6 +147,16 @@ const useStore = create(persist((set, get) => ({
 
     dispatchAlertLogged: (alert) => set(produce(state => {
       state.logs.alerts.unshift(alert);
+    })),
+
+    dispatchActionDialog: (type, params = {}) => set(produce(state => {
+      state.actionDialog = { type, params };
+    })),
+
+    dispatchLauncherPage: (page) => set(produce(state => {
+      if (page === 'store' || page === 'wallets' || page === 'settings') state.launcherPage = page;
+      else if (page) state.launcherPage = 'account';
+      else state.launcherPage = null;
     })),
 
     dispatchAlertNotified: (alert) => set(produce(state => {
@@ -211,6 +237,14 @@ const useStore = create(persist((set, get) => ({
       }
     })),
 
+    dispatchHideInterface: () => set(produce(state => {
+      state.graphics.hideInterface = true;
+    })),
+
+    dispatchShowInterface: () => set(produce(state => {
+      state.graphics.hideInterface = false;
+    })),
+
     dispatchTextureQualitySet: (quality) => set(produce(state => {
       state.graphics.textureQuality = quality;
     })),
@@ -250,19 +284,20 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchOriginSelected: (i) => set(produce(state => {
-      if (Number(i) > 0 && Number(i) <= 250000) state.asteroids.origin = Number(i);
-    })),
-
-    dispatchOriginCleared: () => set(produce(state => {
       state.asteroids.origin = null;
+      if (i && Number(i) > 0 && Number(i) <= 250000) {
+        state.asteroids.origin = Number(i);
+      }
+      state.asteroids.plot = null;
+      state.asteroids.plotDestination = null;
+      state.asteroids.zoomToPlot = null;
     })),
 
     dispatchDestinationSelected: (i) => set(produce(state => {
-      if (Number(i) > 0 && Number(i) <= 250000) state.asteroids.destination = Number(i);
-    })),
-
-    dispatchDestinationCleared: () => set(produce(state => {
       state.asteroids.destination = null;
+      if (i && Number(i) > 0 && Number(i) <= 250000) {
+        state.asteroids.destination = Number(i);
+      }
     })),
 
     dispatchAsteroidHovered: (i) => set(produce(state => {
@@ -273,8 +308,13 @@ const useStore = create(persist((set, get) => ({
       state.asteroids.hovered = null;
     })),
 
-    dispatchZoomStatusChanged: (status) => set(produce(state => {
+    dispatchZoomStatusChanged: (status, maintainPlot) => set(produce(state => {
       state.asteroids.zoomStatus = status;
+      state.asteroids.plotDestination = null;
+      if (!maintainPlot) {
+        state.asteroids.plot = null;
+        state.asteroids.zoomToPlot = null;
+      }
     })),
 
     dispatchAsteroidZoomedFrom: (from) => set(produce(state => {
@@ -337,24 +377,45 @@ const useStore = create(persist((set, get) => ({
       state.auth.token = token;
     })),
 
-    dispatchWalletConnected: (walletId) => set(produce(state => {
-      state.auth.lastWallet = walletId;
+    dispatchTokenInvalidated: () => set(produce(state => {
+      state.auth.token = null;
     })),
 
-    dispatchCutscenePlaying: (which) => set(produce(state => {
-      state.cutscenePlaying = which;
+    dispatchCrewSelected: (crewId) => set(produce(state => {
+      state.selectedCrewId = crewId;
+    })),
+
+    dispatchCutscene: (source, allowSkip) => set(produce(state => {
+      state.cutscene = source ? { source, allowSkip: allowSkip || false } : null;
     })),
 
     dispatchSeenIntroVideo: (which) => set(produce(state => {
       state.hasSeenIntroVideo = which;
     })),
 
-    dispatchTokenInvalidated: () => set(produce(state => {
-      state.auth.token = null;
-    })),
-
     dispatchReferrerSet: (refCode) => set(produce(state => {
       state.referrer = refCode;
+    })),
+
+    dispatchResourceMap: (resourceId) => set(produce(state => {
+      state.asteroids.mapResourceId = Number(resourceId);
+    })),
+
+    dispatchPlotsLoading: (i, progress = 0, simulateTarget = 0) => set(produce(state => {
+      if (simulateTarget) {
+        state.plotLoader = { i, progress: state.plotLoader.progress + (simulateTarget - state.plotLoader.progress) / 3 };
+      } else {
+        state.plotLoader = { i, progress: progress > 0.99 ? 1 : progress };
+      }
+    })),
+
+    dispatchPlotSelected: (asteroidId, plotId) => set(produce(state => {
+      state.asteroids.plot = asteroidId && plotId ? { asteroidId, plotId } : null;
+      state.asteroids.zoomToPlot = null;
+    })),
+
+    dispatchReorientCamera: (needsReorienting) => set(produce(state => {
+      state.cameraNeedsReorientation = !!needsReorienting;
     })),
 
     //
@@ -376,6 +437,22 @@ const useStore = create(persist((set, get) => ({
       if (q === 3) return { textureSize: 4 * CHUNK_RESOLUTION - 3 };
       return { textureSize: 1 * CHUNK_RESOLUTION - 3 };
     },
+
+    dispatchFailedTransaction: ({ key, vars, txHash, err }) => set(produce(state => {
+      if (!state.failedTransactions) state.failedTransactions = [];
+      state.failedTransactions.push({
+        key,
+        vars,
+        err,
+        txHash,
+        timestamp: Date.now()
+      });
+    })),
+
+    dispatchFailedTransactionDismissed: (txHashOrTimestamp) => set(produce(state => {
+      if (!state.failedTransactions) state.failedTransactions = [];
+      state.failedTransactions = state.failedTransactions.filter((tx) => tx.txHash !== txHashOrTimestamp && tx.timestamp !== txHashOrTimestamp);
+    })),
 
     dispatchPendingTransaction: ({ key, vars, txHash }) => set(produce(state => {
       if (!state.pendingTransactions) state.pendingTransactions = [];
@@ -401,10 +478,33 @@ const useStore = create(persist((set, get) => ({
       state.pendingTransactions = state.pendingTransactions.filter((tx) => tx.txHash !== txHash);
     })),
 
+    dispatchClearTransactionHistory: () => set(produce(state => {
+      state.pendingTransactions = [];
+      state.failedTransactions = [];
+    })),
+
+    dispatchZoomToPlot: (isZoomed) => set(produce(state => {
+      state.asteroids.zoomToPlot = isZoomed;
+    }))
+
 }), {
   name: 'influence',
   version: 0,
-  blacklist: [ 'timeOverride' ]
-}));
+  blacklist: [
+    // TODO: should these be stored elsewhere if ephemeral?
+    // TODO: the nested values are not supported by zustand
+    'actionDialog',
+    'asteroids.hovered',
+    'asteroids.plot',
+    'asteroids.plotDestination',
+    'asteroids.zoomToPlot',
+    'cameraNeedsReorientation',
+    'cutscene',
+    'draggables',
+    'failedTransactions',
+    'plotLoader',
+    'timeOverride'  // should this be in ClockContext?
+  ]
+})));
 
 export default useStore;

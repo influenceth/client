@@ -3,6 +3,7 @@ uniform sampler2D tRamps;
 uniform bool uOversampling;
 uniform float uResolution;
 uniform float uSpectral;
+// uniform int uSide;
 
 void main() {
   vec2 flipY = uOversampling
@@ -16,5 +17,8 @@ void main() {
   float topo = texture2D(tHeightMap, flipY / uResolution).z;
 
   // Convert topo to color from ramp
-  gl_FragColor = texture2D(tRamps, vec2((uSpectral + 0.5) / 11.0, 1.0 - topo));
+  gl_FragColor = texture2D(tRamps, vec2((uSpectral + 0.5) / 11.0, smoothstep(0.0, 1.0, topo)));
+  // if (uSide > 1) gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  // if (flipY.x < 5.0) gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  // if (flipY.y < 5.0) gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
 }

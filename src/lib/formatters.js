@@ -1,4 +1,4 @@
-import utils from 'influence-utils';
+import { KeplerianOrbit, toSpectralType } from '@influenceth/sdk';
 import { utils as ethersUtils } from 'ethers';
 
 const formatters = {
@@ -9,14 +9,14 @@ const formatters = {
   inclination: (i) => (i * 180 / Math.PI).toLocaleString() + '°',
 
   period: (a) => {
-    const orbit = new utils.KeplerianOrbit({ a });
+    const orbit = new KeplerianOrbit({ a });
     return orbit.getPeriod().toFixed(0).toLocaleString() + ' days';
   },
 
   // Asteroid attribute formatters
   radius: (r) => r.toLocaleString() + ' m',
 
-  spectralType: (t) => utils.toSpectralType(t) + '-type',
+  spectralType: (t) => toSpectralType(t) + '-type',
 
   surfaceArea: (r) => {
     const area = (4 * Math.PI * Math.pow(r / 1000, 2)).toFixed(1);
