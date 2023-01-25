@@ -10,7 +10,7 @@ const DEFAULT_ROOM = '_';
 // NOTE: could maybe roll this back into EventsContext if there was a reason to combine them
 export function WebsocketProvider({ children }) {
   const { token, account } = useAuth();
-  
+
   const socket = useRef();
   const registeredHandlers = useRef({});
 
@@ -23,7 +23,7 @@ export function WebsocketProvider({ children }) {
       registeredHandlers.current[roomKey](message);
     }
   }, []);
-  
+
   // NOTE: this is currently limited to one callback registered per room b/c that's
   //  all we need, but it could always be switched to an array of listeners if needed
   const registerWSHandler = useCallback((callback, room = null) => {
@@ -59,7 +59,8 @@ export function WebsocketProvider({ children }) {
   useEffect(() => {
     if (token) {
       socket.current = new io(process.env.REACT_APP_API_URL, {
-        extraHeaders: { Authorization: `Bearer ${token}` }
+        extraHeaders: { Authorization: `Bearer ${token}` },
+        transports: [ 'websocket' ]
       });
       socket.current.on('event', handleMessage);
       setWsReady(true);
