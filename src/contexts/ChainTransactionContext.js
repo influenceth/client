@@ -487,7 +487,7 @@ export function ChainTransactionProvider({ children }) {
           // if pending transaction has not turned into an event within 45 seconds
           // check every useEffect loop if tx is rejected (or missing)
           } else if (lastBlockNumber > lastBlockNumberHandled.current) {
-            if (chainTime > Math.floor(tx.timestamp / 1000) + 45) {
+            if (chainTime > Math.floor(tx.timestamp / 1000) + 180) {
               starknet.provider.getTransactionReceipt(txHash)
                 .then((receipt) => {
                   console.info(`RECEIPT for tx ${txHash}`, receipt);  // TODO: remove this
