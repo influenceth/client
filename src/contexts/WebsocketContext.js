@@ -59,8 +59,8 @@ export function WebsocketProvider({ children }) {
   useEffect(() => {
     if (token) {
       socket.current = new io(process.env.REACT_APP_API_URL, {
-        extraHeaders: { Authorization: `Bearer ${token}` },
-        transports: [ 'websocket' ]
+        transports: [ 'websocket' ],
+        query: `token=${token}`
       });
       socket.current.on('event', handleMessage);
       setWsReady(true);
