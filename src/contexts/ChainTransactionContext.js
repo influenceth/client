@@ -491,7 +491,12 @@ export function ChainTransactionProvider({ children }) {
   const execute = useCallback(async (key, vars) => {
     if (contracts && contracts[key]) {
       const { execute, onTransactionError } = contracts[key];
-      setPromptingTransaction(true);
+
+      // TODO: will need to sort this out when argentX implements session wallets, but
+      //  currently in non-session wallet, argentX does not return from the `await execute`
+      //  below when their user prompt is closed instead of rejected (the user has to
+      //  reopen the prompt and reject it to get out of here)
+      if (starknet?.id !== 'argentX') setPromptingTransaction(true);
       try {
         const tx = await execute(vars);
         dispatchPendingTransaction({
