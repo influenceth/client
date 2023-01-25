@@ -484,20 +484,41 @@ export function ChainTransactionProvider({ children }) {
               dispatchPendingTransactionUpdate(txHash, { txEvent });
             }
 
-          // if pending transaction has not turned into an event within 30 seconds
+          // if pending transaction has not turned into an event within 45 seconds
           // check every call to this effect
           } else if (lastBlockNumber > lastBlockNumberHandled.current) {
-            if (chainTime > Math.floor(tx.timestamp / 1000) + 30) {
-              starknet.provider.getTransactionReceipt(txHash).then((receipt) => {
-                if (receipt && receipt.status === 'REJECTED') {
-                  dispatchPendingTransactionComplete(txHash);
-                  dispatchFailedTransaction({
-                    key,
-                    vars,
-                    err: receipt.status_data || 'Transaction rejected.'
-                  });
-                }
-              })
+            if (chainTime > Math.floor(tx.timestamp / 1000) + 4) {
+              console.log('CHECKING ON OLD TX', txHash);  // TODO: remove this
+              starknet.provider.getTransactionReceipt(txHash)
+                .then((receipt) => {
+                  console.log('RECEIPT', receipt);  // TODO: remove this
+                  if (receipt && receipt.status === 'REJECTED') {
+                    dispatchPendingTransactionComplete(txHash);
+                    dispatchFailedTransaction({
+                      key,
+                      vars,
+                      err: receipt.status_data || 'Transaction was rejected.'
+                    });
+                  }
+                })
+                .catch((err1) => {
+                  console.log('RECEIPT ERR', txHash, err1);  // TODO: remove this
+                  starknet.provider.getTransactionStatus(txHash)
+                    .then((response) => {
+                      console.log('STATUS', response);  // TODO: remove this
+                      if (response && response.tx_status === 'REJECTED') {
+                        dispatchPendingTransactionComplete(txHash);
+                        dispatchFailedTransaction({
+                          key,
+                          vars,
+                          err: 'Transaction was rejected.'
+                        });
+                      }
+                    })
+                    .catch((err2) => {
+                      console.log('STATUS ERR', txHash, err2);  // TODO: remove this
+                    });
+                });
             }
           }
         }
