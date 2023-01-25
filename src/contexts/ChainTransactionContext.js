@@ -484,36 +484,36 @@ export function ChainTransactionProvider({ children }) {
               dispatchPendingTransactionUpdate(txHash, { txEvent });
             }
 
-          // if pending transaction has not turned into an event within 45 seconds
-          // check every useEffect loop if tx is rejected (or missing)
-          } else if (lastBlockNumber > lastBlockNumberHandled.current) {
-            if (chainTime > Math.floor(tx.timestamp / 1000) + 180) {
-              starknet.provider.getTransactionReceipt(txHash)
-                .then((receipt) => {
-                  console.info(`RECEIPT for tx ${txHash}`, receipt);  // TODO: remove this
-                  if (receipt && receipt.status === 'REJECTED') {
-                    dispatchPendingTransactionComplete(txHash);
-                    dispatchFailedTransaction({
-                      key,
-                      vars,
-                      txHash,
-                      err: receipt.status_data || 'Transaction was rejected.'
-                    });
-                  }
-                })
-                .catch((err) => {
-                  console.warn(err);
-                  if (err?.message.includes('Transaction hash not found')) {
-                    dispatchPendingTransactionComplete(txHash);
-                    dispatchFailedTransaction({
-                      key,
-                      vars,
-                      txHash,
-                      err: 'Transaction was rejected.'
-                    });
-                  }
-                });
-            }
+          // // if pending transaction has not turned into an event within 45 seconds
+          // // check every useEffect loop if tx is rejected (or missing)
+          // } else if (lastBlockNumber > lastBlockNumberHandled.current) {
+          //   if (chainTime > Math.floor(tx.timestamp / 1000) + 180) { // TODO: lower this
+          //     starknet.provider.getTransactionReceipt(txHash)
+          //       .then((receipt) => {
+          //         console.info(`RECEIPT for tx ${txHash}`, receipt);  // TODO: remove this
+          //         if (receipt && receipt.status === 'REJECTED') {
+          //           dispatchPendingTransactionComplete(txHash);
+          //           dispatchFailedTransaction({
+          //             key,
+          //             vars,
+          //             txHash,
+          //             err: receipt.status_data || 'Transaction was rejected.'
+          //           });
+          //         }
+          //       })
+          //       .catch((err) => {
+          //         console.warn(err);
+          //         if (err?.message.includes('Transaction hash not found')) {
+          //           dispatchPendingTransactionComplete(txHash);
+          //           dispatchFailedTransaction({
+          //             key,
+          //             vars,
+          //             txHash,
+          //             err: 'Transaction was rejected.'
+          //           });
+          //         }
+          //       });
+          //   }
           }
         }
       });
