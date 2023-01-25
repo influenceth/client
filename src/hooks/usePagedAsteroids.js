@@ -7,9 +7,7 @@ import useStore from '~/hooks/useStore';
 
 const usePagedAsteroids = () => {
   const { account } = useAuth();
-  const includeOwned = useStore(s => s.asteroids.owned.mapped);
   const filterOwned = useStore(s => s.asteroids.owned.filtered);
-  const includeWatched = useStore(s => s.asteroids.watched.mapped);
   const filterWatched = useStore(s => s.asteroids.watched.filtered);
   const filters = useStore(s => s.asteroids.filters);
   const [ params, setParams ] = useState({ page: 1, perPage: 25 });
@@ -35,13 +33,11 @@ const usePagedAsteroids = () => {
     newParams.page = page || 1;
     newParams.perPage = perPage || 25;
     if (sort) newParams.sort = sort;
-    if (!!account && includeOwned) newParams.includeOwned = account;
-    if (!!account && includeWatched) newParams.includeWatched = true;
     if (!!account && filterOwned) newParams.filterOwned = true;
     if (!!account && filterWatched) newParams.filterWatched = true;
     setParams(newParams);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ account, includeOwned, includeWatched, filterOwned, filterWatched, filters ]);
+  }, [ account, filterOwned, filterWatched, filters ]);
 
   const query = useQuery(
     [ 'asteroids', 'search', params ],
