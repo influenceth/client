@@ -99,6 +99,11 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const { data: plots, isLoading: allPlotsLoading, refetch: refetchPlots } = useAsteroidPlots(asteroidId, plotTally);
   const { data: crewPlots, isLoading: crewPlotsLoading } = useAsteroidCrewPlots(asteroidId);
   const { data: sampledPlots, isLoading: sampledPlotsLoading } = useAsteroidCrewSamples(asteroidId, mapResourceId);
+
+  // NOTE: for every dependency on `plots`, should also include `lastPlotUpdate` so react triggers it
+  //  (it seems react does not handle sparse arrays very well for equality checks)
+  const [lastPlotUpdate, setLastPlotUpdate] = useState();
+
   const sampledPlotMap = useMemo(() => {
     if (sampledPlots) {
       return sampledPlots.reduce((acc, i) => { acc[i] = true; return acc; }, {});
@@ -108,16 +113,15 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     return null;
   }, [sampledPlots]);
 
-  // TODO: this is not necessary, don't combine!
-  const combinedPlotMap = useMemo(() => {
-    if (allPlotsLoading || crewPlotsLoading) return null;
+  const crewPlotMap = useMemo(() => {
+    if (crewPlotsLoading) return null;
     return (crewPlots || []).reduce((acc, p) => {
-      acc[p.i] = 2; // 2 indicates "me" (in the future, could potentially include capableType or something)
+      acc[p.i] = true;
       return acc;
-    }, { ...plots });
-  }, [crewPlots, crewPlotsLoading, plots, allPlotsLoading]);
-
-  const buildingTally = useMemo(() => plots && Object.values(plots).reduce((acc, cur) => acc + (cur > 0 ? 1 : 0), 0), [plots]);
+    }, {});
+  }, [crewPlots, crewPlotsLoading]);
+  const plotsReady = !allPlotsLoading && !crewPlotsLoading && crewPlotMap;
+  const buildingTally = useMemo(() => plots && Object.values(plots).reduce((acc, cur) => acc + (cur > 0 ? 1 : 0), 0), [plots, lastPlotUpdate]);
   const visibleBuildingTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, buildingTally), [buildingTally]);
 
   // if just navigated to asteroid and plots already loaded, refetch
@@ -218,24 +222,21 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
         buildingsByRegion.current[region] = plotsByRegion.current[region].filter((plotId) => plots[plotId] > 0);
       });
     }
-  }, [plots]);
+  }, [plots, lastPlotUpdate]);
 
   const handleWSMessage = useCallback(({ type, body }) => {
     // if lot occupied or lot unoccupied, update plots by updating querycache
     switch (type) {
       case 'Lot_Occupied': {
-        // NOTE: this is mutating the getQueryData response and reusing it, so this
-        //  is probably not technical advisable... but it seems to work (and quickly)
-        const plotsKey = [ 'asteroidPlots', body.returnValues.asteroidId ];
-        const currentPlotsValue = queryClient.getQueryData(plotsKey);
-        if (currentPlotsValue) {
+        queryClient.setQueryData([ 'asteroidPlots', body.returnValues.asteroidId ], (currentPlotsValue) => {
           if (body.returnValues.crewId > 0) {
             currentPlotsValue[body.returnValues.lotId] = true;
           } else {
             delete currentPlotsValue[body.returnValues.lotId];
           }
-          queryClient.setQueryData(plotsKey, currentPlotsValue);
-        }
+          return currentPlotsValue;
+        });
+        setLastPlotUpdate(Date.now());
       }
     }
   }, []);
@@ -440,7 +441,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
         // TODO (enhancement): on altitude change (where rotation has not changed), don't need to recalculate pip matrixes, etc
         //  (i.e. even when plotTally > visiblePlotTally)... just would need to update building matrixes (to update scale)
         plotSource[plotRegion].every((plotId) => {
-          const hasBuilding = combinedPlotMap[plotId] && (buildingsRendered < visibleBuildingTally);
+          const hasBuilding = (plots[plotId] || crewPlotMap[plotId]) && (buildingsRendered < visibleBuildingTally);
           const hasPip = (pipsRendered + buildingsRendered) < visiblePlotTally;
           const hasFill = sampledPlotMap && sampledPlotMap[plotId] && (fillsRendered < visibleBuildingTally);
           const hasStroke = plotTally > visiblePlotTally || !plotsInitialized.current;
@@ -506,9 +507,9 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
             let plotColor;
             if (hasBuilding) {
               // white if occupied by me; else, blue
-              plotColor = combinedPlotMap[plotId] === 2 ? WHITE_COLOR : MAIN_COLOR;
+              plotColor = crewPlotMap[plotId] ? WHITE_COLOR : MAIN_COLOR;
             }
-            if (hasBuilding && (!!crewPlots || !plotsInitialized.current)) {
+            if (hasBuilding && (!!crewPlotMap || !plotsInitialized.current)) {
               // if this is first color change to instance, need to let material know
               // TODO (enhancement): could check if there is a color change against existing buildingMesh instanceColor before setting updateBuildingColor
               if (!buildingMesh.current.instanceColor && !buildingMesh.current.material.needsUpdate) {
@@ -584,7 +585,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       // changed, so needs to fail gracefully (i.e. if buildingMesh.current is unset)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cameraAltitude, combinedPlotMap, sampledPlotMap, regionsByDistance]);
+  }, [cameraAltitude, plots, lastPlotUpdate, crewPlotMap, sampledPlotMap, regionsByDistance]);
 
   useEffect(
     () => updateVisiblePlots(),
@@ -592,10 +593,10 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   );
 
   useEffect(() => {
-    if (!combinedPlotMap) return;
+    if (!plotsReady) return;
     plotsInitialized.current = false;
     updateVisiblePlots();
-  }, [combinedPlotMap]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [plotsReady, plots, lastPlotUpdate, crewPlotMap]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!sampledPlotMap) return;
