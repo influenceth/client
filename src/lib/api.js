@@ -97,16 +97,19 @@ const api = {
     if (response.data) {
       const occupied = '1';
       const padding = '0';
+      
       return (new Uint32Array(await response.data.arrayBuffer())).reduce((acc, byte, i) => {
         const x = Number(byte).toString(2).padStart(32, padding);
         for (let j = 0; j < 32; j++) {
           const index = i * 32 + j;
           if (index < plotTally) {
-            acc[index + 1] = x[j] === occupied; // (adjust for one-index of plot ids)
+            if (x[j] === occupied) {
+              acc[index + 1] = true; // (adjust for one-index of plot ids)
+            }
           }
         }
         return acc;
-      }, {});
+      }, []);
     }
     return null;
   },

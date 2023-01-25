@@ -178,7 +178,7 @@ const Construct = ({ asteroid, plot, ...props }) => {
         {...props} />
 
       <BuildingPlanSection
-        building={buildings[plot.building?.capableType]}
+        building={buildings[plot?.building?.capableType]}
         status={status}
         gracePeriodEnd={plot?.gracePeriodEnd} />
 

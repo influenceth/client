@@ -108,6 +108,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     return null;
   }, [sampledPlots]);
 
+  // TODO: this is not necessary, don't combine!
   const combinedPlotMap = useMemo(() => {
     if (allPlotsLoading || crewPlotsLoading) return null;
     return (crewPlots || []).reduce((acc, p) => {
@@ -223,13 +224,17 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     // if lot occupied or lot unoccupied, update plots by updating querycache
     switch (type) {
       case 'Lot_Occupied': {
+        // NOTE: this is mutating the getQueryData response and reusing it, so this
+        //  is probably not technical advisable... but it seems to work (and quickly)
         const plotsKey = [ 'asteroidPlots', body.returnValues.asteroidId ];
         const currentPlotsValue = queryClient.getQueryData(plotsKey);
         if (currentPlotsValue) {
-          queryClient.setQueryData(plotsKey, {
-            ...currentPlotsValue,
-            [body.returnValues.lotId]: (body.returnValues.crewId > 0)
-          });
+          if (body.returnValues.crewId > 0) {
+            currentPlotsValue[body.returnValues.lotId] = true;
+          } else {
+            delete currentPlotsValue[body.returnValues.lotId];
+          }
+          queryClient.setQueryData(plotsKey, currentPlotsValue);
         }
       }
     }
