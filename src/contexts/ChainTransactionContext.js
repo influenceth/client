@@ -363,6 +363,8 @@ export function ChainTransactionProvider({ children }) {
   const dispatchClearTransactionHistory = useStore(s => s.dispatchClearTransactionHistory);
   const pendingTransactions = useStore(s => s.pendingTransactions);
 
+  const [promptingTransaction, setPromptingTransaction] = useState(false);
+
   const contracts = useMemo(() => {
     if (!!starknet?.account) {
       const processedContracts = {};
@@ -489,6 +491,7 @@ export function ChainTransactionProvider({ children }) {
   const execute = useCallback(async (key, vars) => {
     if (contracts && contracts[key]) {
       const { execute, onTransactionError } = contracts[key];
+      setPromptingTransaction(true);
       try {
         const tx = await execute(vars);
         dispatchPendingTransaction({
@@ -498,7 +501,9 @@ export function ChainTransactionProvider({ children }) {
           waitingOn: 'TRANSACTION'
         });
       } catch (e) {
-        if (e?.message !== 'User abort') {
+        // TODO: in Braavos, get "Execute failed" when decline (but it's unclear if that is just their generic error)
+        // ("User abort" is argent, "Canceled" is Cartridge)
+        if (!['User abort', 'Canceled'].includes(e?.message)) {
           dispatchFailedTransaction({
             key,
             vars,
@@ -507,6 +512,7 @@ export function ChainTransactionProvider({ children }) {
         }
         onTransactionError(e, vars);
       }
+      setPromptingTransaction(false);
     } else {
       createAlert({
         type: 'GenericAlert',
@@ -542,7 +548,8 @@ export function ChainTransactionProvider({ children }) {
       chainTime,
       execute,
       getStatus,
-      getPendingTx
+      getPendingTx,
+      promptingTransaction
     }}>
       {children}
     </ChainTransactionContext.Provider>

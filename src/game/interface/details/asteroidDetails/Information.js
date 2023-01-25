@@ -425,6 +425,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                   </StaticForm>
                   <Button
                     disabled={naming}
+                    isTransaction
                     loading={naming}
                     onClick={() => setOpenNameChangeForm(true)}>
                     Re-Name
@@ -446,6 +447,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                   data-tip="Purchase development rights"
                   data-for="global"
                   disabled={!account || !saleIsActive || buying}
+                  isTransaction
                   loading={buying}
                   onClick={() => {
                     buyAsteroid();

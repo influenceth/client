@@ -830,6 +830,7 @@ const CrewAssignmentCreate = (props) => {
                 <Button
                   disabled={finalizing || !name}
                   loading={finalizing}
+                  isTransaction
                   onClick={confirmFinalize}>
                   Finalize
                 </Button>
