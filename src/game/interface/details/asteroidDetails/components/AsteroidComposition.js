@@ -14,7 +14,6 @@ import {
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
 import { cleanupScene } from '~/game/scene/asteroid/helpers/utils';
-import { keyify } from '~/lib/utils';
 import theme from '~/theme';
 
 const hexToLinear = (hex) => new Color(hex).convertSRGBToLinear();
@@ -22,7 +21,7 @@ const hexToLinear = (hex) => new Color(hex).convertSRGBToLinear();
 const margin = 0.001 * 2 * Math.PI;
 const rotationPerFrame = 0.1;
 const segmentsPerCircle = 120; // target 1 segment per 3 degrees
-const dummyCategory = { abundance: 0.2, category: 'unscanned', resources: [] };
+const dummyCategory = { abundance: 0.2, categoryKey: 'unscanned', resources: [] };
 
 const getSegments = (centralAngle) => {
   return Math.max(2, Math.ceil(segmentsPerCircle * centralAngle / 2 * Math.PI));
@@ -41,7 +40,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
   const hovered = useRef();
 
   const resources = useRef();
-  
+
   useEffect(() => {
     if (asteroid && abundances) {
       hovered.current = null;
@@ -49,18 +48,18 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
       rotation.current = 0;
       targetRotation.current = 0;
 
-      const slices = abundances.length > 0 ? [...abundances] : [dummyCategory, dummyCategory, dummyCategory, dummyCategory, dummyCategory];
+      const slices = abundances.length > 0 ? [...abundances] : Array(5).fill(dummyCategory);
       resources.current = slices.sort((a, b) => b.abundance - a.abundance);
 
       groupRef.current = new Group();
       scene.add(groupRef.current);
 
       let totalTheta = 0;
-      resources.current.forEach(({ category, abundance }, i) => {
+      resources.current.forEach(({ categoryKey, abundance }, i) => {
         const sliceTheta = 2 * Math.PI * abundance;
         const geometry = new CircleGeometry(1.0, getSegments(sliceTheta), totalTheta + margin, sliceTheta - 2 * margin);
         const material = new MeshBasicMaterial({
-          color: noColor ? hexToLinear('#222222') : hexToLinear(theme.colors.resources[keyify(category)]),
+          color: noColor ? hexToLinear('#222222') : hexToLinear(theme.colors.resources[categoryKey]),
           alphaMap: new Texture(),  // include so vUv is set
           side: BackSide, // (to make angles work as designed)
           toneMapped: false,
@@ -93,7 +92,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
           material.userData.shader = shader;
         };
         const mesh = new Mesh(geometry, material);
-        mesh.userData.resource = category;
+        mesh.userData.resource = categoryKey;
         groupRef.current.add(mesh);
 
         resources.current[i].start = totalTheta;
@@ -102,7 +101,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         }
         resources.current[i].thetaWidth = sliceTheta;
 
-        totalTheta += sliceTheta;        
+        totalTheta += sliceTheta;
       });
       groupRef.current.setRotationFromAxisAngle(
         new Vector3(0, 1, 0),
@@ -149,7 +148,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
   }, [hover]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const target = resources.current.find((c) => c.category === focus);
+    const target = resources.current.find((c) => c.categoryKey === focus);
     if (target) {
       targetRotation.current = -1 * target.start;
       const distance = Math.abs(targetRotation.current - rotation.current);
@@ -170,7 +169,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         useWidth--;
 
         const subSliceMaterial = new MeshBasicMaterial({
-          color: hexToLinear(theme.colors.resources[keyify(target.category)]),
+          color: hexToLinear(theme.colors.resources[target.categoryKey]),
           alphaMap: new Texture(),  // include so vUv is set
           side: BackSide, // (to make angles work as designed),
           toneMapped: false,
@@ -297,7 +296,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
       onAnimationChange(false);
     }
   });
-  
+
   return null;
 };
 
