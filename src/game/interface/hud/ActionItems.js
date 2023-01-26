@@ -31,16 +31,22 @@ import useStore from '~/hooks/useStore';
 import theme, { hexToRGB } from '~/theme';
 import LiveTimer from '~/components/LiveTimer';
 
-const iconWidth = 30;
-
+const ICON_WIDTH = 34;
+const ITEM_WIDTH = 400;
+const ITEM_HEIGHT = 36;
 const TRANSITION_TIME = 400;
-const ITEM_WIDTH = `400px`;
 
 const ActionItemWrapper = styled.div`
-  flex: 1;
+  height: ${p => p.rows * ITEM_HEIGHT}px;
   overflow: hidden;
   pointer-events: none;
+  transition: width 0.15s ease;
   user-select: none;
+  width: ${ICON_WIDTH}px;
+
+  &:hover {
+    width: ${ITEM_WIDTH}px;
+  }
 `;
 
 const ActionItemContainer = styled.div`
@@ -49,7 +55,7 @@ const ActionItemContainer = styled.div`
   overflow-x: hidden;
   overflow-y: auto;
   pointer-events: auto;
-  width: ${ITEM_WIDTH};
+  width: ${ITEM_WIDTH}px;
 `;
 
 const Icon = styled.div``;
@@ -152,7 +158,7 @@ const ActionItemRow = styled.div`
     justify-content: center;
     margin-right: 8px;
     height: 100%;
-    width: ${iconWidth}px;
+    width: ${ICON_WIDTH}px;
   }
   ${Status} {
     margin-right: 8px;
@@ -177,7 +183,7 @@ const ActionItemRow = styled.div`
   ${Progress} {
     position: absolute;
     bottom: 0;
-    left: ${iconWidth}px;
+    left: ${ICON_WIDTH}px;
     height: 4px;
     right: 0;
     & > * {
@@ -717,9 +723,8 @@ const ActionItems = () => {
     }
   }, [allItems]);
 
-  {/* TODO: collapsible */}
   return (
-    <ActionItemWrapper>
+    <ActionItemWrapper rows={displayItems?.length || 0}>
       <ActionItemContainer>
         {(displayItems || []).map(({ transition, type, ...item }) => (
           <ActionItem key={`${type}_${item.key || item.i}_${item.timestamp || item.gracePeriodEnd}`} data={item} type={type} />

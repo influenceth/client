@@ -28,19 +28,23 @@ const Wrapper = styled.div`
   position: absolute;
   bottom: ${bottomMargin}px;
   z-index: 2;
-
-  & > * {
-    margin-bottom: 12px;
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
 `;
 
+const TopLeft = styled.div``;
+const BottomLeft = styled.div``;
+
 const LeftWrapper = styled(Wrapper)`
-  left: 0;
+  display: flex;
   height: calc(100% - ${bottomMargin}px);
+  justify-content: space-between;
+  left: 0;
   top: 0;
+
+  & ${TopLeft}, & ${BottomLeft} {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+  }
 `;
 
 const RightWrapper = styled(Wrapper)`
@@ -191,23 +195,24 @@ const HUD = () => {
   return (
     <>
       <LeftWrapper>
-        <AvatarMenu />
-
-        <ActionItems />
-
-        <LeftActions visible={zoomStatus === 'in'}>
-          <ResourceMapToggle />
-          <LeftActionButton
-            data-arrow-color="transparent"
-            data-for="global"
-            data-place="right"
-            data-tip={backLabel}
-            onClick={onClickBack}>
-            <BackIcon />
-          </LeftActionButton>
-        </LeftActions>
-
-        <InfoPane />
+        <TopLeft>
+          <AvatarMenu />
+          <ActionItems />
+        </TopLeft>
+        <BottomLeft>
+          <LeftActions visible={zoomStatus === 'in'}>
+            <ResourceMapToggle />
+            <LeftActionButton
+              data-arrow-color="transparent"
+              data-for="global"
+              data-place="right"
+              data-tip={backLabel}
+              onClick={onClickBack}>
+              <BackIcon />
+            </LeftActionButton>
+          </LeftActions>
+          <InfoPane />
+        </BottomLeft>
       </LeftWrapper>
 
       <RightWrapper>
