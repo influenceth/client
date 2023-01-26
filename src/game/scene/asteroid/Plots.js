@@ -57,7 +57,7 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
   const { processInBackground } = useWebWorker();
 
-  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
+  const mapResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
   const { plotId: selectedPlotId } = useStore(s => s.asteroids.plot || {});
@@ -356,7 +356,7 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
   }, [visiblePlotTally]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // instantiate plot fill mesh
-  // TODO: instantiate only in resource mode? 
+  // TODO: instantiate only in resource mode?
   useEffect(() => {
     if (!visiblePlotTally) return;
 
@@ -533,7 +533,7 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
                 buildingMesh.current.setMatrixAt(buildingsRendered, dummy.matrix);
                 updateBuildingMatrix = true;
               }
-              
+
               // everything but buildings should be scaled to 1
               dummy.scale.set(1, 1, 1);
               dummy.updateMatrix();
@@ -590,7 +590,7 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
               }
               // if (hasFill) {
               //   plotStrokeMesh.current.setColorAt(i, FILL_COLOR);
-              // } else 
+              // } else
               plotStrokeMesh.current.setColorAt(i, plotColor || PIP_COLOR);
               updateStrokeColor = true;
             }
@@ -791,7 +791,7 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
     // throttle by time as well
     const now = Date.now();
     if (now - lastMouseUpdateTime.current < MOUSE_THROTTLE_TIME) return;
-    
+
     // FINALLY, find the closest intersection
     lastMouseUpdatePosition.current = mouseVector.clone();
     lastMouseUpdateTime.current = now;

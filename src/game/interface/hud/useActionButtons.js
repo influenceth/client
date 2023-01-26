@@ -4,7 +4,6 @@ import { Address } from '@influenceth/sdk';
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
-import useChainTime from '~/hooks/useChainTime';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useCrew from '~/hooks/useCrew';
 import usePlot from '~/hooks/usePlot';
@@ -14,11 +13,10 @@ import actionButtons from './actionButtons';
 const useActionButtons = () => {
   const { account } = useAuth();
   const buildings = useBuildingAssets();
-  const chainTime = useChainTime();
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const { plotId } = useStore(s => s.asteroids.plot || {});
-  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
+  const resourceMap = useStore(s => s.asteroids.resourceMap);
   const setAction = useStore(s => s.dispatchActionDialog);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
@@ -45,7 +43,7 @@ const useActionButtons = () => {
           a.push(actionButtons.ScanAsteroid);
         }
       } else if (plot && crew && zoomStatus === 'in') {
-        if (!!mapResourceId) {
+        if (resourceMap?.active && resourceMap?.selected) {
           a.push(actionButtons.NewCoreSample);
           a.push(actionButtons.ImproveCoreSample);
         }
@@ -61,17 +59,17 @@ const useActionButtons = () => {
           } else if (['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
             a.push(actionButtons.PlanBuilding);
           }
-  
+
           if (constructionStatus === 'OPERATIONAL' && plot?.building?.inventories) {
             a.push(actionButtons.SurfaceTransfer);
           }
-  
+
           if (['PLANNED', 'CANCELING'].includes(constructionStatus)) {
             a.push(actionButtons.UnplanBuilding);
           }
           if (['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
             a.push(actionButtons.Deconstruct);
-          } 
+          }
         } else if (!plot.occupier || constructionStatus === 'READY_TO_PLAN') {
           a.push(actionButtons.PlanBuilding);
         }
@@ -79,7 +77,7 @@ const useActionButtons = () => {
     }
 
     setActions(a);
-  }, [asteroid, constructionStatus, crew, plot, !!mapResourceId, zoomStatus]);
+  }, [asteroid, constructionStatus, crew, plot, resourceMap, zoomStatus]);
 
   return {
     actions,

@@ -19,7 +19,6 @@ import {
   ActionDialogTimers,
 
   getBonusDirection,
-  getTripDetails,
   formatSampleMass,
   TravelBonusTooltip,
   TimeBonusTooltip,
@@ -31,8 +30,9 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
   const { startSampling, finishSampling, samplingStatus, ...coreSampleManager } = useCoreSampleManager(asteroid?.i, plot?.i);
   const { crew, crewMemberMap } = useCrew();
 
-  const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
-  const resourceId = useStore(s => s.asteroids.mapResourceId);
+  const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
+  const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
+  const resourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
 
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
   const [sampleId, setSampleId] = useState();
@@ -40,7 +40,8 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
     if (coreSampleManager.currentSample) {
       setSampleId(coreSampleManager.currentSample.sampleId);
       if (coreSampleManager.currentSample.resourceId !== resourceId) {
-        dispatchResourceMap(coreSampleManager.currentSample.resourceId);
+        dispatchResourceMapSelect(coreSampleManager.currentSample.resourceId);
+        dispatchResourceMapToggle(true);
       }
     }
   }, [coreSampleManager.currentSample]);
