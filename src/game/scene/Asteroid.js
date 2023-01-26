@@ -1,15 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import {
-  // BufferAttribute,
-  AxesHelper,
-  CameraHelper,
-  Color,
-  DirectionalLight,
-  DirectionalLightHelper,
-  Vector2,
-  Vector3
-} from 'three';
+import { AxesHelper, CameraHelper, Color, DirectionalLight, DirectionalLightHelper, Vector3 } from 'three';
 import gsap from 'gsap';
 import { KeplerianOrbit, toSpectralType, Asteroid as AsteroidLib, Inventory } from '@influenceth/sdk';
 
@@ -122,7 +113,7 @@ const EMISSIVE_INTENSITY = {
 };
 
 const Asteroid = (props) => {
-  const { controls, gl } = useThree();
+  const { controls } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const { textureSize } = useStore(s => s.getTerrainQuality());
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
@@ -134,7 +125,7 @@ const Asteroid = (props) => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const selectPlot = useStore(s => s.dispatchPlotSelected);
-  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
+  const resourceMap = useStore(s => s.asteroids.resourceMap);
   const selectedPlot = useStore(s => s.asteroids.plot);
 
   const { data: asteroidData } = useAsteroid(origin);
@@ -327,9 +318,8 @@ const Asteroid = (props) => {
 
   // turn down the sun while in resource mode
   const currentLightIntensity = useMemo(() => {
-    return mapResourceId ? Math.min(0.175, defaultLightIntensity) : defaultLightIntensity;
-  }, [defaultLightIntensity, mapResourceId]);
-
+    return (resourceMap?.active && resourceMap?.selected) ? Math.min(0.175, defaultLightIntensity) : defaultLightIntensity;
+  }, [defaultLightIntensity, resourceMap]);
   useEffect(() => {
     if (light.current) {
       light.current.intensity = currentLightIntensity;
@@ -564,9 +554,12 @@ const Asteroid = (props) => {
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
 
   useEffect(() => {
+    const resourceMapActive = resourceMap?.active;
+    const resourceMapId = resourceMap?.selected;
+
     if (!geometry.current || !config?.radiusNominal || !asteroidData?.resources) return;
-    if (mapResourceId && terrainInitialized) { 
-      const categoryKey = keyify(Inventory.RESOURCES[mapResourceId]?.category);
+    if (resourceMapActive && resourceMapId && terrainInitialized) {
+      const categoryKey = keyify(Inventory.RESOURCES[resourceMapId]?.category);
       const color = new Color(theme.colors.resources[categoryKey]);
       color.convertSRGBToLinear();
 
@@ -575,13 +568,13 @@ const Asteroid = (props) => {
       const settings = AsteroidLib.getAbundanceMapSettings(
         asteroidId,
         resourceSeed,
-        mapResourceId,
-        asteroidData.resources[mapResourceId]
+        resourceMapId,
+        asteroidData.resources[resourceMapId]
       );
       geometry.current.setEmissiveParams({
         asteroidId: asteroidId,
         color,
-        resource: mapResourceId,
+        resource: resourceMapId,
         intensityMult: EMISSIVE_INTENSITY[categoryKey],
         ...settings
       });
@@ -590,7 +583,7 @@ const Asteroid = (props) => {
       geometry.current.setEmissiveParams();
       forceUpdate.current = Date.now();
     }
-  }, [mapResourceId, terrainInitialized, !asteroidData?.resources]);
+  }, [resourceMap, terrainInitialized, !asteroidData?.resources]);
 
   useEffect(() => {
     if (geometry.current && terrainUpdateNeeded) {

@@ -4,25 +4,18 @@ import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { toRarity, toSpectralType } from '@influenceth/sdk';
 import { BsChevronRight as NextIcon } from 'react-icons/bs';
-import LoadingIcon from 'react-spinners/PulseLoader';
 
 import BonusBar from '~/components/BonusBar';
 import BonusInfoPane from '~/components/BonusInfoPane';
 import ButtonPill from '~/components/ButtonPill';
 import Button from '~/components/ButtonAlt';
-import {
-  CaretIcon,
-  ResourceGroupIcons,
-  WarningOutlineIcon
-} from '~/components/Icons';
+import { CaretIcon, ResourceGroupIcons, WarningOutlineIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useScanManager from '~/hooks/useScanManager';
 import useStore from '~/hooks/useStore';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import theme, { hexToRGB } from '~/theme';
 import LiveTimer from '~/components/LiveTimer';
-import { useQueryClient } from 'react-query';
-import { RingLoader } from 'react-spinners';
 
 // TODO (enhancement): if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
@@ -428,7 +421,8 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
   const history = useHistory();
   const { category: initialCategory } = useParams();
   const selectOrigin = useStore(s => s.dispatchOriginSelected);
-  const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
+  const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
+  const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const { finalizeAsteroidScan, scanStatus } = useScanManager(asteroid);
@@ -458,10 +452,9 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
   const goToResourceMap = useCallback((resource) => (e) => {
     e.stopPropagation();
     selectOrigin(asteroid.i);
-    if (zoomStatus !== 'in') {
-      updateZoomStatus('zooming-in');
-    }
-    dispatchResourceMap(resource.i);
+    if (zoomStatus !== 'in') updateZoomStatus('zooming-in');
+    dispatchResourceMapSelect(resource.i);
+    dispatchResourceMapToggle(true);
     history.push('/');
     return false;
   }, [asteroid?.i, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -584,7 +577,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                 <ResourceRow key={resource.i} category={selected.categoryKey} onClick={goToResourceViewer(resource)}>
                   <ResourceIcon style={{ backgroundImage: `url(${resource.iconUrls.w85})` }} />
                   <ResourceInfo>
-                    <label>{resource.name}</label> 
+                    <label>{resource.name}</label>
                     <BarChart value={resource.abundance} maxValue={selected.resources[0].abundance} twoLine>
                       <label>
                         {(resource.abundance * 100).toFixed(1)}%

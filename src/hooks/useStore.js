@@ -40,8 +40,11 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       highlight: null,
       plot: null,
       plotDestination: null,
+      resourceMap: {
+        active: false,
+        selected: null
+      },
       zoomToPlot: null,
-      mapResourceId: null,
       owned: {
         mapped: false,
         filtered: false,
@@ -397,8 +400,13 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.referrer = refCode;
     })),
 
-    dispatchResourceMap: (resourceId) => set(produce(state => {
-      state.asteroids.mapResourceId = Number(resourceId);
+    dispatchResourceMapToggle: (which) => set(produce(state => {
+      state.asteroids.resourceMap.active = which;
+    })),
+
+    dispatchResourceMapSelect: (resourceId) => set(produce(state => {
+      state.asteroids.resourceMap.selected = Number(resourceId);
+      if (!resourceId) state.asteroids.resourceMap.active = false;
     })),
 
     dispatchPlotsLoading: (i, progress = 0, simulateTarget = 0) => set(produce(state => {
@@ -489,7 +497,24 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
 }), {
   name: 'influence',
-  version: 0,
+  version: 1,
+  migrate: (persistedState, oldVersion) => {
+    const migrations = [
+      (state, version) => {
+        if (version >= 1) return;
+        const active = state.asteroids.mapResourceId ? true : false;
+        const selected = state.asteroids.mapResourceId || null;
+        state.asteroids.resourceMap = { active, selected };
+        return state;
+      }
+    ];
+
+    for (let i = 0; i < migrations.length; i++) {
+      persistedState = migrations[i](persistedState, oldVersion);
+    }
+
+    return persistedState;
+  },
   blacklist: [
     // TODO: should these be stored elsewhere if ephemeral?
     // TODO: the nested values are not supported by zustand

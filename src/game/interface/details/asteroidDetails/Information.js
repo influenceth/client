@@ -12,20 +12,21 @@ import constants from '~/lib/constants';
 import formatters from '~/lib/formatters';
 import exportGLTF from '~/lib/graphics/exportGLTF';
 
-import StaticForm from '~/components/StaticForm';
-import Text from '~/components/Text';
+import AddressLink from '~/components/AddressLink';
 import Button from '~/components/ButtonAlt';
-import TextInput from '~/components/TextInput';
-import IconButton from '~/components/IconButton';
 import DataReadout from '~/components/DataReadout';
+import Ether from '~/components/Ether';
+import IconButton from '~/components/IconButton';
 import LogEntry from '~/components/LogEntry';
 import MarketplaceLink from '~/components/MarketplaceLink';
-import AddressLink from '~/components/AddressLink';
+import StaticForm from '~/components/StaticForm';
+import Text from '~/components/Text';
+import TextInput from '~/components/TextInput';
 import {
   CheckCircleIcon,
   EccentricityIcon,
   EditIcon,
-  InclinationIcon, 
+  InclinationIcon,
   OrbitalPeriodIcon,
   RadiusIcon,
   SemiMajorAxisIcon,
@@ -453,7 +454,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                     buyAsteroid();
                     createReferral.mutate();
                   }}>
-                  Purchase
+                  Purchase -&nbsp;<Ether>{formatters.asteroidPrice(asteroid.r, sale)}</Ether>
                 </Button>
               )}
               {asteroid.owner && (
@@ -464,7 +465,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                   {(onClick, setRefEl) => (
                     <Button setRef={setRefEl} onClick={onClick}>
                       {isOwner ? <><span>List</span><SmHidden>{' '}for Sale</SmHidden></> : 'Purchase'}
-                    </Button>  
+                    </Button>
                   )}
                 </MarketplaceLink>
               )}
