@@ -4,7 +4,6 @@ import { Address } from '@influenceth/sdk';
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
-import useChainTime from '~/hooks/useChainTime';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useCrew from '~/hooks/useCrew';
 import usePlot from '~/hooks/usePlot';
@@ -14,7 +13,6 @@ import actionButtons from './actionButtons';
 const useActionButtons = () => {
   const { account } = useAuth();
   const buildings = useBuildingAssets();
-  const chainTime = useChainTime();
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const { plotId } = useStore(s => s.asteroids.plot || {});

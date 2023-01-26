@@ -1,8 +1,5 @@
-import { useCallback, useEffect, useRef } from 'react';
-import styled from 'styled-components';
-import {
-  FaCubes as InfrastructureIcon
-} from 'react-icons/fa';
+import { useCallback, useEffect } from 'react';
+import {FaCubes as InfrastructureIcon } from 'react-icons/fa';
 
 import { ResourceIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';

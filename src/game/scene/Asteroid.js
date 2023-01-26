@@ -1,15 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import {
-  // BufferAttribute,
-  AxesHelper,
-  CameraHelper,
-  Color,
-  DirectionalLight,
-  DirectionalLightHelper,
-  Vector2,
-  Vector3
-} from 'three';
+import { AxesHelper, CameraHelper, Color, DirectionalLight, DirectionalLightHelper, Vector3 } from 'three';
 import gsap from 'gsap';
 import { KeplerianOrbit, toSpectralType, Asteroid as AsteroidLib, Inventory } from '@influenceth/sdk';
 
@@ -114,7 +105,7 @@ const frameTimeLeft = (start, chunkSwapPending) => {
 // }, 5000);
 
 const Asteroid = (props) => {
-  const { controls, gl } = useThree();
+  const { controls } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const { textureSize } = useStore(s => s.getTerrainQuality());
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());

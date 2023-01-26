@@ -20,7 +20,6 @@ import {
 
   getBonusDirection,
   formatSampleMass,
-  getTripDetails,
   TravelBonusTooltip,
   TimeBonusTooltip,
   MaterialBonusTooltip

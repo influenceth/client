@@ -19,7 +19,6 @@ import {
   ActionDialogTimers,
 
   getBonusDirection,
-  getTripDetails,
   formatSampleMass,
   TravelBonusTooltip,
   TimeBonusTooltip,

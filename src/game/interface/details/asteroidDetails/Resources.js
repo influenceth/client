@@ -4,25 +4,18 @@ import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { toRarity, toSpectralType } from '@influenceth/sdk';
 import { BsChevronRight as NextIcon } from 'react-icons/bs';
-import LoadingIcon from 'react-spinners/PulseLoader';
 
 import BonusBar from '~/components/BonusBar';
 import BonusInfoPane from '~/components/BonusInfoPane';
 import ButtonPill from '~/components/ButtonPill';
 import Button from '~/components/ButtonAlt';
-import {
-  CaretIcon,
-  ResourceGroupIcons,
-  WarningOutlineIcon
-} from '~/components/Icons';
+import { CaretIcon, ResourceGroupIcons, WarningOutlineIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useScanManager from '~/hooks/useScanManager';
 import useStore from '~/hooks/useStore';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import theme, { hexToRGB } from '~/theme';
 import LiveTimer from '~/components/LiveTimer';
-import { useQueryClient } from 'react-query';
-import { RingLoader } from 'react-spinners';
 
 // TODO (enhancement): if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
