@@ -11,6 +11,7 @@ import {
   PlaneGeometry,
   RingGeometry,
   TextureLoader,
+  Vector2,
   Vector3
 } from 'three';
 
@@ -26,7 +27,6 @@ import { useQueryClient } from 'react-query';
 import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 
 const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
-const SELECTION_COLOR = new Color('#3652cd').convertSRGBToLinear();
 const PIP_COLOR = new Color().setHex(0x888888).convertSRGBToLinear();
 const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
 
@@ -39,6 +39,7 @@ const FILL_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
 
 const PLOT_LOADER_GEOMETRY_PCT = 0.25;
 
+const MOUSEABLE_WIDTH = 800;
 const MAX_MESH_INSTANCES = 8000;  // TODO: maybe GPU dependent
 const PIP_VISIBILITY_ALTITUDE = 25000;
 const OUTLINE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE * 0.5;
@@ -47,10 +48,11 @@ const MOUSE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE;
 const MAX_REGIONS = 5000;
 
 const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
+const MOUSE_THROTTLE_TIME = 1000 / 30; // ms
 
-const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config, lastClick, mouseIntersect }) => {
+const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
   const { token } = useAuth();
-  const { scene } = useThree();
+  const { gl, scene } = useThree();
   const queryClient = useQueryClient();
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
   const { processInBackground } = useWebWorker();
@@ -58,11 +60,11 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const mapResourceId = useStore(s => s.asteroids.mapResourceId);
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
-  const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
-  const { asteroidId: plotAsteroidId, plotId: selectedPlotId } = useStore(s => s.asteroids.plot || {});
+  const { plotId: selectedPlotId } = useStore(s => s.asteroids.plot || {});
 
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
+  const [lastClick, setLastClick] = useState();
 
   const positions = useRef();
   const orientations = useRef();
@@ -70,6 +72,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const buildingsByRegion = useRef([]);
 
   const pipMesh = useRef();
+  const mouseableMesh = useRef();
   const buildingMesh = useRef();
 
   const plotStrokeMesh = useRef();
@@ -78,9 +81,14 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
   const highlighted = useRef();
   const plotLoaderInterval = useRef();
 
-  const mouseMesh = useRef();
+  const mouseHoverMesh = useRef();
   const selectionMesh = useRef();
   const plotsInitialized = useRef();
+
+  const lastMouseUpdatePosition = useRef(new Vector2());
+  const lastMouseUpdateTime = useRef(0);
+  const mouseIsOut = useRef(false);
+  const clickStatus = useRef();
 
   const PLOT_WIDTH = useMemo(() => Math.min(125, config?.radius / 25), [config?.radius]);
   const PLOT_STROKE_MARGIN = useMemo(() => 0.125 * PLOT_WIDTH, [PLOT_WIDTH]);
@@ -120,12 +128,13 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       return acc;
     }, {});
   }, [crewPlots, crewPlotsLoading]);
-  const plotsReady = !allPlotsLoading && !crewPlotsLoading && crewPlotMap;
+  const plotsReady = (!allPlotsLoading && !crewPlotsLoading && !!crewPlotMap);
   const buildingTally = useMemo(() => plots && Object.values(plots).reduce((acc, cur) => acc + (cur > 0 ? 1 : 0), 0), [plots, lastPlotUpdate]);
   const visibleBuildingTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, buildingTally), [buildingTally]);
 
   // if just navigated to asteroid and plots already loaded, refetch
   // (b/c might have missed ws updates while on a different asteroid)
+  // TODO: probably technically need to capture allPlotsReloading / plotsReady alongside lastPlotUpdate in dependency arrays
   useEffect(() => {
     if (plots) refetchPlots();
   }, []);
@@ -269,9 +278,26 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     pipMesh.current.renderOrder = 999;
     (attachTo || scene).add(pipMesh.current);
 
+    const mouseableGeometry = new CircleGeometry(MOUSEABLE_WIDTH, 6);
+    const mouseableMaterial = new MeshBasicMaterial({
+      // color: 0x00ff00, opacity: 0.5, // for debugging
+      opacity: 0,
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+      transparent: true,
+    });
+
+    mouseableMesh.current = new InstancedMesh(mouseableGeometry, mouseableMaterial, visiblePlotTally);
+    mouseableMesh.current.renderOrder = 999;
+    (attachTo || scene).add(mouseableMesh.current);
+
     return () => {
       if (pipMesh.current) {
         (attachTo || scene).remove(pipMesh.current);
+      }
+      if (mouseableMesh.current) {
+        (attachTo || scene).remove(mouseableMesh.current);
       }
     };
 
@@ -357,9 +383,39 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     };
   }, [visiblePlotTally]);
 
+  // listen for click events
+  // NOTE: if just use onclick, then fires on drag events too :(
+  useEffect(() => {
+    const onMouseEvent = function (e) {
+      if (e.type === 'pointerdown') {
+        clickStatus.current = new Vector2(e.clientX, e.clientY);
+      }
+      else if (e.type === 'pointerup' && clickStatus.current) {
+        const distance = clickStatus.current.distanceTo(new Vector2(e.clientX, e.clientY));
+        if (distance < 3) {
+          setLastClick(Date.now());
+        }
+      } else if (e.type === 'pointerenter') {
+        mouseIsOut.current = false;
+      } else if (e.type === 'pointerleave') {
+        mouseIsOut.current = true;
+      }
+    };
+    gl.domElement.addEventListener('pointerdown', onMouseEvent, true);
+    gl.domElement.addEventListener('pointerenter', onMouseEvent, true);
+    gl.domElement.addEventListener('pointerleave', onMouseEvent, true);
+    gl.domElement.addEventListener('pointerup', onMouseEvent, true);
+    return () => {
+      gl.domElement.removeEventListener('pointerdown', onMouseEvent, true);
+      gl.domElement.removeEventListener('pointerenter', onMouseEvent, true);
+      gl.domElement.removeEventListener('pointerleave', onMouseEvent, true);
+      gl.domElement.removeEventListener('pointerup', onMouseEvent, true);
+    };
+  }, []);
+
   // instantiate mouse mesh
   useEffect(() => {
-    mouseMesh.current = new Mesh(
+    mouseHoverMesh.current = new Mesh(
       new PlaneGeometry(RETICULE_WIDTH, RETICULE_WIDTH),
       new MeshBasicMaterial({
         color: WHITE_COLOR,
@@ -371,12 +427,12 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
         transparent: true
       })
     );
-    mouseMesh.current.renderOrder = 999;
-    mouseMesh.current.userData.bloom = true;
-    (attachTo || scene).add(mouseMesh.current);
+    mouseHoverMesh.current.renderOrder = 999;
+    mouseHoverMesh.current.userData.bloom = true;
+    (attachTo || scene).add(mouseHoverMesh.current);
     return () => {
-      if (mouseMesh.current) {
-        (attachTo || scene).remove(mouseMesh.current);
+      if (mouseHoverMesh.current) {
+        (attachTo || scene).remove(mouseHoverMesh.current);
       }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -420,6 +476,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       let updateBuildingMatrix = false;
       let updateFillMatrix = false;
       let updatePipMatrix = false;
+      let updateMouseableMatrix = false;
       let updateStrokeMatrix = false;
       let updateBuildingColor = false;
       let updateStrokeColor = false;
@@ -444,14 +501,15 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
           const hasBuilding = (plots[plotId] || crewPlotMap[plotId]) && (buildingsRendered < visibleBuildingTally);
           const hasPip = (pipsRendered + buildingsRendered) < visiblePlotTally;
           const hasFill = sampledPlotMap && sampledPlotMap[plotId] && (fillsRendered < visibleBuildingTally);
+          const hasMouseable = plotTally > visiblePlotTally || !plotsInitialized.current;
           const hasStroke = plotTally > visiblePlotTally || !plotsInitialized.current;
-          if (hasBuilding || hasFill || hasPip) {
+          if (hasBuilding || hasPip || hasMouseable || hasFill) {
 
             // MATRIX
             // > if have a building, always need to rebuild entire matrix (to update scale with altitude)
             // > if have a pip, only need to rebuild matrix if plot visibility is dynamic (i.e. plotTally > visiblePlotTally)
             // > if have fill, only need to rebuild if fill source has changed (listen to plotsInitialized)
-            // > stroke and fill matrix will not change unless pip matrix does (but will need to change around buildings and pips)
+            // > mouseable, stroke, and fill matrix will not change unless pip matrix does (but will need to change around buildings and pips)
             if (hasBuilding || plotTally > visiblePlotTally || !plotsInitialized.current) {
               const plotIndex = plotId - 1;
 
@@ -496,6 +554,13 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
               if (hasStroke) {
                 plotStrokeMesh.current.setMatrixAt(i, dummy.matrix);
                 updateStrokeMatrix = true;
+              }
+
+              // update mouseable matrix
+              // TODO: should these always face the camera? or have a slight bias towards camera at least?
+              if (hasMouseable) {
+                mouseableMesh.current.setMatrixAt(i, dummy.matrix);
+                updateMouseableMatrix = true;
               }
             }
 
@@ -552,6 +617,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       });
       pipMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : Math.min(pipsRendered, visiblePlotTally);
       plotFillMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : Math.min(fillsRendered, visiblePlotTally);
+      mouseableMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
       plotStrokeMesh.current.count = cameraAltitude > OUTLINE_VISIBILITY_ALTITUDE ? 0 : visiblePlotTally;
       // console.log('i', i, buildingsRendered, pipsRendered, pipMesh.current.count);
 
@@ -559,6 +625,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       if (buildingMesh.current && updateBuildingColor) buildingMesh.current.instanceColor.needsUpdate = true;
       if (buildingMesh.current && updateBuildingMatrix) buildingMesh.current.instanceMatrix.needsUpdate = true;
       if (pipMesh.current && updatePipMatrix) pipMesh.current.instanceMatrix.needsUpdate = true;
+      if (mouseableMesh.current && updateMouseableMatrix) mouseableMesh.current.instanceMatrix.needsUpdate = true;
       if (plotFillMesh.current && updateFillMatrix) plotFillMesh.current.instanceMatrix.needsUpdate = true;
       if (plotStrokeMesh.current && updateStrokeColor) plotStrokeMesh.current.instanceColor.needsUpdate = true;
       if (plotStrokeMesh.current && updateStrokeMatrix) plotStrokeMesh.current.instanceMatrix.needsUpdate = true;
@@ -611,7 +678,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       if (!positions.current) return;
       const plotIndex = plotId - 1;
 
-      mouseMesh.current.position.set(
+      mouseHoverMesh.current.position.set(
         positions.current[plotIndex * 3 + 0],
         positions.current[plotIndex * 3 + 1],
         positions.current[plotIndex * 3 + 2]
@@ -624,11 +691,11 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
       );
 
       orientation.applyQuaternion(attachTo.quaternion);
-      mouseMesh.current.lookAt(orientation);
-      mouseMesh.current.material.opacity = 0.5;
+      mouseHoverMesh.current.lookAt(orientation);
+      mouseHoverMesh.current.material.opacity = 0.5;
       highlighted.current = plotId;
     } else {
-      mouseMesh.current.material.opacity = 0;
+      mouseHoverMesh.current.material.opacity = 0;
     }
   }, [attachTo.quaternion, selectedPlotId]);
 
@@ -653,7 +720,7 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
 
       selectionAnimationTime.current = 0;
       selectionMesh.current.material.opacity = 1;
-      mouseMesh.current.material.opacity = 0;
+      mouseHoverMesh.current.material.opacity = 0;
     } else {
       selectionMesh.current.material.opacity = 0;
     }
@@ -696,31 +763,66 @@ const Plots = ({ attachTo, asteroidId, cameraAltitude, cameraNormalized, config,
     dispatchPlotSelected(asteroidId, highlighted.current);
   }, [lastClick]);
 
+
   useFrame((state, delta) => {
     selectionAnimationTime.current += delta;
+
+    // if no plots, nothing to do
     if (!plotTally) return;
+
+    // pulse the size of the selection reticule
     if (selectionMesh.current && positions.current && selectedPlotId) {
       selectionMesh.current.scale.x = 1 + 0.1 * Math.sin(7.5 * selectionAnimationTime.current);
       selectionMesh.current.scale.y = selectionMesh.current.scale.x;
     }
-    if (!lastMouseIntersect.current) return;
-    if (cameraAltitude > MOUSE_VISIBILITY_ALTITUDE) { highlightPlot(); return; }
-    if (!mouseIntersect || mouseIntersect.length() === 0) { highlightPlot(); return; }
-    if (mouseIntersect.distanceToSquared(lastMouseIntersect.current) < MOUSE_THROTTLE_DISTANCE) return;
 
+    // MOUSE STUFF
+
+    // if mouse is out OR camera altitude is above MOUSE_VISIBILITY_ALTITUDE, clear any highlights
+    if (mouseIsOut.current || cameraAltitude > MOUSE_VISIBILITY_ALTITUDE) { highlightPlot(); return; }
+
+    // if lastMouseIntersect.current is null, it is in the middle of finding the closest point, so return
+    if (!lastMouseIntersect.current) return;
+
+    // if lockedToSurface mode, state.mouse must have changed to be worth re-evaluating
+    const mouseVector = state.pointer || state.mouse;
+    if (getLockToSurface() && lastMouseUpdatePosition.current.equals(mouseVector)) return;
+
+    // throttle by time as well
+    const now = Date.now();
+    if (now - lastMouseUpdateTime.current < MOUSE_THROTTLE_TIME) return;
+    
+    // FINALLY, find the closest intersection
+    lastMouseUpdatePosition.current = mouseVector.clone();
+    lastMouseUpdateTime.current = now;
+    const intersections = state.raycaster.intersectObject(mouseableMesh.current);
+
+    // if no intersections, clear any highlights
+    if (!intersections || intersections.length === 0) { highlightPlot(); return; }
+
+    // find actual intersection location in space
+    const intersection = intersections[0].point.clone();
+    intersection.applyAxisAngle(axis, -1 * getRotation());
+    intersection.divide(config.stretch);
+
+    // if intersection is too close to last intersection, return without updating highlight
+    // (distance-based throttling)
+    if (intersection.distanceToSquared(lastMouseIntersect.current) < MOUSE_THROTTLE_DISTANCE) return;
+
+    // if get here, find the closest fibo point to the intersection point, then highlight it
     lastMouseIntersect.current = null;
     processInBackground(
       {
         topic: 'findClosestPlots',
         data: {
-          center: mouseIntersect.clone().normalize(),
+          center: intersection.clone().normalize(),
           findTally: 1,
           plotTally
         }
       },
       (data) => {
         highlightPlot(data.plots[0]);
-        lastMouseIntersect.current = mouseIntersect.clone();
+        lastMouseIntersect.current = intersection.clone();
       }
     )
   }, 0.5);

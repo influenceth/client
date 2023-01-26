@@ -39,7 +39,6 @@ const INITIAL_ZOOM_MIN = 6000;
 const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 20;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
-const MOUSE_THROTTLE = 1000 / 30; // ms
 
 // some numbers estimated from https://web.dev/rendering-performance/
 const TARGET_FPS = 60;
@@ -138,8 +137,6 @@ const Asteroid = (props) => {
   const [cameraAltitude, setCameraAltitude] = useState();
   const [cameraNormalized, setCameraNormalized] = useState();
   const [config, setConfig] = useState();
-  const [lastClick, setLastClick] = useState();
-  const [mousableTerrainInitialized, setMousableTerrainInitialized] = useState();
   const [terrainInitialized, setTerrainInitialized] = useState();
   const [terrainUpdateNeeded, setTerrainUpdateNeeded] = useState();
   const [prevAsteroidPosition, setPrevAsteroidPosition] = useState();
@@ -152,14 +149,8 @@ const Asteroid = (props) => {
   const chunkSwapThisCycle = useRef();
   const geometry = useRef();
   const group = useRef();
-  const lastMouseUpdatePosition = useRef(new Vector2());
-  const lastMouseUpdateTime = useRef(0);
   const light = useRef();
   const lockToSurface = useRef();
-  const mouseableRef = useRef();
-  const mouseGeometry = useRef();
-  const mouseIntersect = useRef(new Vector3());
-  const mouseIsOut = useRef(false);
   const position = useRef();
   const unloadedPosition = useRef();
   const quadtreeRef = useRef();
@@ -229,27 +220,11 @@ const Asteroid = (props) => {
 
   const frustumHeightMult = useMemo(() => 2 * Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)), [controls?.object?.fov]);
 
-  const disposeGeometry = useCallback((saveMousable = false) => {
+  const disposeGeometry = useCallback(() => {
     if (geometry.current && quadtreeRef.current) {
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.remove(g);
       });
-    }
-    // TODO: rather than something hackyish like this, we should probably
-    //  reload entire component once start rebuilding the geometries
-    // (i.e. probably set the textureSize, shadowMode, etc as a key on the
-    //  <Asteroid /> component, so the whole thing is rebuilt on settings
-    //  changes that crucial)
-    if (!saveMousable) {
-      if (mouseGeometry.current && mouseableRef.current) {
-        mouseGeometry.current.groups.forEach((g) => {
-          mouseableRef.current.remove(g);
-        });
-      }
-      if (mouseGeometry.current) {
-        mouseGeometry.current.dispose();
-        mouseGeometry.current = null;
-      }
     }
     if (geometry.current) {
       geometry.current.dispose();
@@ -278,7 +253,6 @@ const Asteroid = (props) => {
   const onUnload = useCallback(() => {
     setConfig();
     setTerrainInitialized();
-    setMousableTerrainInitialized();
     asteroidOrbit.current = null;
     rotationAxis.current = null;
     if (position.current) unloadedPosition.current = [...position.current];
@@ -305,7 +279,6 @@ const Asteroid = (props) => {
 
   useEffect(() => {
     if (zoomStatus !== 'in') {
-      setLastClick();
       setZoomedIntoAsteroidId();
     }
   }, [zoomStatus]);
@@ -331,21 +304,6 @@ const Asteroid = (props) => {
       geometry.current = new QuadtreeTerrainCube(origin, c, textureSize, webWorkerPool);
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.add(g);
-      });
-
-      if (mouseGeometry.current) disposeGeometry();
-      mouseGeometry.current = new QuadtreeTerrainCube(
-        origin,
-        c,
-        null, // textureSize defaults to heightSampling resolution
-        webWorkerPool,
-        {
-          opacity: 0,
-          transparent: true
-        }
-      );
-      mouseGeometry.current.groups.forEach((g) => {
-        mouseableRef.current.add(g);
       });
     }
 
@@ -683,58 +641,6 @@ const Asteroid = (props) => {
   //   }
   // }, [controls, config?.radius]);
 
-  // once terrain is loaded, load the mouse-interactive terrain
-  // TODO (enhancement): re-use the heightSample buffer from the primary terrain cube
-  useEffect(() => {
-    if (mouseGeometry.current && terrainInitialized) {
-      // if terrain initialized, make exportable
-      // TODO (enhancement): ideally would do this in webworker, but just doing once,
-      //  so hopefully is not noticeable
-      if (mousableTerrainInitialized) {
-        // const scale = Math.min(1.02, (config.radius + 100) / config.radius);
-        Object.values(mouseGeometry.current.chunks).forEach(({ chunk }) => {
-          chunk.makeExportable();
-          // chunk._geometry.scale(scale, scale, scale);
-        });
-
-      // kick off initialization (from a far away distance so only one chunk per side)
-      } else {
-        mouseGeometry.current.setCameraPosition(new Vector3(0, 0, constants.AU));
-      }
-    }
-  }, [terrainInitialized, mousableTerrainInitialized]);
-
-  // listen for click events
-  // NOTE: if just use onclick, then fires on drag events too :(
-  const clickStatus = useRef();
-  useEffect(() => {
-    const onMouseEvent = function (e) {
-      if (e.type === 'pointerdown') {
-        clickStatus.current = new Vector2(e.clientX, e.clientY);
-      }
-      else if (e.type === 'pointerup' && clickStatus.current) {
-        const distance = clickStatus.current.distanceTo(new Vector2(e.clientX, e.clientY));
-        if (distance < 3) {
-          setLastClick(Date.now());
-        }
-      } else if (e.type === 'pointerenter') {
-        mouseIsOut.current = false;
-      } else if (e.type === 'pointerleave') {
-        mouseIsOut.current = true;
-      }
-    };
-    gl.domElement.addEventListener('pointerdown', onMouseEvent, true);
-    gl.domElement.addEventListener('pointerenter', onMouseEvent, true);
-    gl.domElement.addEventListener('pointerleave', onMouseEvent, true);
-    gl.domElement.addEventListener('pointerup', onMouseEvent, true);
-    return () => {
-      gl.domElement.removeEventListener('pointerdown', onMouseEvent, true);
-      gl.domElement.removeEventListener('pointerenter', onMouseEvent, true);
-      gl.domElement.removeEventListener('pointerleave', onMouseEvent, true);
-      gl.domElement.removeEventListener('pointerup', onMouseEvent, true);
-    };
-  }, []);
-
   useEffect(() => {
     if (selectedPlot && zoomedIntoAsteroidId === selectedPlot?.asteroidId && config?.radiusNominal && zoomStatus === 'in') {
       const plotTally = Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2);
@@ -802,10 +708,6 @@ const Asteroid = (props) => {
       // updatedRotation = 0; // TODO: remove
       if (updatedRotation !== rotation.current) {
         quadtreeRef.current.setRotationFromAxisAngle(
-          rotationAxis.current,
-          updatedRotation
-        );
-        mouseableRef.current.setRotationFromAxisAngle(
           rotationAxis.current,
           updatedRotation
         );
@@ -885,23 +787,6 @@ const Asteroid = (props) => {
     // if zoomed out, let run once to prerender, but then don't run the rest of the frame
     if (geometry.current.cameraPosition && (zoomStatus === 'out' || zoomStatus === 'zooming-out')) return;
 
-    // TODO: since this is just done once, should we remove from useFrame loop?
-    if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
-    if (mouseGeometry.current && mouseGeometry.current.builder.isUpdating()) {
-      if (mouseGeometry.current.builder.isWaitingOnMaps()) {
-        // vvv BENCHMARK ~10ms (but mouseterrain only initialized once)
-        mouseGeometry.current.builder.updateMaps(Date.now() + frameTimeLeft(frameStart, false));
-        // ^^^
-      } else {
-        // vvv BENCHMARK ~0.1ms (only run once)
-        mouseGeometry.current.builder.update();
-        // ^^^
-        if (!mousableTerrainInitialized) {
-          setMousableTerrainInitialized(true);
-        }
-      }
-    }
-
     // control dynamic zoom limit (zoom out if too low... else, just update boundary)
     if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
     if (controls && Object.values(geometry.current?.chunks).length) {
@@ -956,44 +841,6 @@ const Asteroid = (props) => {
       // vvv BENCHMARK <0.1ms
       geometry.current.processNextQueuedChange();
       // ^^^
-      if (terrainInitialized && !mousableTerrainInitialized) {
-        // vvv BENCHMARK <1ms (just called once)
-        mouseGeometry.current.processNextQueuedChange();
-        // ^^^
-      }
-    }
-
-    // raycast
-    // TODO (enhancement): probably don't need to do this every frame
-    if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
-    if (mousableTerrainInitialized && mouseableRef.current.children && !mouseIsOut.current) {
-      // if lockedToSurface mode, state.mouse must have changed to be worth re-evaluating
-      const mouseVector = state.pointer || state.mouse;
-      if (!lockToSurface.current || !lastMouseUpdatePosition.current.equals(mouseVector)) {
-        const now = Date.now();
-        if (now - lastMouseUpdateTime.current >= MOUSE_THROTTLE) {
-          lastMouseUpdatePosition.current = mouseVector.clone();
-          lastMouseUpdateTime.current = now;
-          try {
-            // TODO: try to improve this...
-            //  - could try merging this mousableRef into a single object and seeing if that helps? it's already 6 though
-            // vvv BENCHMARK 13ms
-            const intersections = state.raycaster.intersectObjects(mouseableRef.current.children);
-            // ^^^
-            if (intersections.length) {
-              mouseIntersect.current.copy(intersections[0].point);
-              mouseIntersect.current.applyAxisAngle(rotationAxis.current, -1 * rotation.current);
-              mouseIntersect.current.divide(config.stretch);
-              // mouseIntersect.current.normalize();
-            } else {
-              // console.log('no intersection');
-              mouseIntersect.current.setLength(0);
-            }
-          } catch (e) {
-            console.warn(e);
-          }
-        }
-      }
     }
 
     // dbg('frame loop', frameStart);
@@ -1022,17 +869,17 @@ const Asteroid = (props) => {
   return (
     <group ref={group}>
       <group ref={quadtreeRef} />
-      <group ref={mouseableRef} />
 
       {config && terrainInitialized && zoomStatus === 'in' && (
         <Plots
           attachTo={quadtreeRef.current}
           asteroidId={asteroidId.current}
+          axis={rotationAxis.current}
           cameraAltitude={cameraAltitude}
           cameraNormalized={cameraNormalized}
           config={config}
-          lastClick={lastClick}
-          mouseIntersect={!mouseIsOut.current && mouseIntersect.current} />
+          getRotation={() => rotation.current}
+          getLockToSurface={() => lockToSurface.current} />
       )}
 
       {/* TODO: fade telemetry out at higher zooms */}
