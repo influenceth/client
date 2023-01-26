@@ -58,7 +58,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
       }
     }
     return null;
-  }, [plot.coreSamples, sampleId, resourceId]);
+  }, [plot?.coreSamples, sampleId, resourceId]);
 
   // get lot abundance
   const lotAbundance = useMemo(() => {
