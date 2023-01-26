@@ -15,6 +15,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
 import { cleanupScene } from '~/game/scene/asteroid/helpers/utils';
 import theme from '~/theme';
+import { keyify } from '~/lib/utils';
 
 const hexToLinear = (hex) => new Color(hex).convertSRGBToLinear();
 
@@ -40,6 +41,8 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
   const hovered = useRef();
 
   const resources = useRef();
+
+  const focusKey = keyify(focus);
 
   useEffect(() => {
     if (asteroid && abundances) {
@@ -148,7 +151,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
   }, [hover]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const target = resources.current.find((c) => c.categoryKey === focus);
+    const target = resources.current.find((c) => c.categoryKey === focusKey);
     if (target) {
       targetRotation.current = -1 * target.start;
       const distance = Math.abs(targetRotation.current - rotation.current);
@@ -199,7 +202,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
           new RingGeometry(0.79, height, getSegments(thetaWidth), 1, thetaStart + margin, thetaWidth - 2 * margin),
           subSliceMaterial
         );
-        subSlice.userData.parentGroup = focus;
+        subSlice.userData.parentGroup = focusKey;
         subSlice.position.add(new Vector3(0, 0, 0.001));
         groupRef.current.add(subSlice);
 
@@ -211,7 +214,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
     }
 
     onAnimationChange(true);
-  }, [focus]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [focusKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // this triggers the intro effect (i.e. removing the obscurer layer)
   useEffect(() => {
@@ -239,7 +242,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
     const focusComplete = groupRef.current.children.reduce((acc, mesh) => {
       if (mesh.userData.parentGroup) {
         if (mesh.material.userData.shader) {
-          if (mesh.userData.parentGroup === focus) {
+          if (mesh.userData.parentGroup === focusKey) {
             if (mesh.material.userData.shader.uniforms.uReveal.value < 1.0) {
               mesh.material.userData.shader.uniforms.uReveal.value += 0.025;
               return false;
@@ -254,7 +257,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
       }
       return acc;
     }, true);
-    if (!focus && focusComplete) {
+    if (!focusKey && focusComplete) {
       groupRef.current.children
         .filter((mesh) => mesh.userData.parentGroup)
         .forEach((mesh) => groupRef.current.remove(mesh));
