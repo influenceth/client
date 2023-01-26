@@ -428,7 +428,8 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
   const history = useHistory();
   const { category: initialCategory } = useParams();
   const selectOrigin = useStore(s => s.dispatchOriginSelected);
-  const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
+  const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
+  const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const { finalizeAsteroidScan, scanStatus } = useScanManager(asteroid);
@@ -458,10 +459,9 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
   const goToResourceMap = useCallback((resource) => (e) => {
     e.stopPropagation();
     selectOrigin(asteroid.i);
-    if (zoomStatus !== 'in') {
-      updateZoomStatus('zooming-in');
-    }
-    dispatchResourceMap(resource.i);
+    if (zoomStatus !== 'in') updateZoomStatus('zooming-in');
+    dispatchResourceMapSelect(resource.i);
+    dispatchResourceMapToggle(true);
     history.push('/');
     return false;
   }, [asteroid?.i, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -584,7 +584,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                 <ResourceRow key={resource.i} category={selected.categoryKey} onClick={goToResourceViewer(resource)}>
                   <ResourceIcon style={{ backgroundImage: `url(${resource.iconUrls.w85})` }} />
                   <ResourceInfo>
-                    <label>{resource.name}</label> 
+                    <label>{resource.name}</label>
                     <BarChart value={resource.abundance} maxValue={selected.resources[0].abundance} twoLine>
                       <label>
                         {(resource.abundance * 100).toFixed(1)}%

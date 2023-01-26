@@ -99,8 +99,8 @@ const CategoryButton = styled.div`
 const ResourceMapSelector = ({ active, asteroid }) => {
   const history = useHistory();
   const asteroidAssets = useAsteroidAbundances(asteroid);
-  const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
-  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
+  const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
+  const resourceMap = useStore(s => s.asteroids.resourceMap);
 
   const [category, setCategory] = useState();
   const [resource, setResource] = useState();
@@ -110,8 +110,8 @@ const ResourceMapSelector = ({ active, asteroid }) => {
   }, [resource?.i]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectResource = useCallback((selected) => {
-    dispatchResourceMap(selected.i);
-  }, [dispatchResourceMap]);
+    dispatchResourceMapSelect(selected.i);
+  }, [dispatchResourceMapSelect]);
 
   const selectCategory = useCallback((selected) => () => {
     if (selected.categoryKey !== category?.categoryKey) {
@@ -122,10 +122,10 @@ const ResourceMapSelector = ({ active, asteroid }) => {
   // if resource map specified, initialize the local state
   useEffect(() => {
     if (active) {
-      if (mapResourceId && asteroidAssets) {
+      if (resourceMap?.active && asteroidAssets) {
         asteroidAssets.forEach((c) => {
           c.resources.forEach((r) => {
-            if (Number(r.i) === mapResourceId) {
+            if (Number(r.i) === resourceMap?.selected) {
               setCategory(c);
               setResource(r);
             }
@@ -133,8 +133,8 @@ const ResourceMapSelector = ({ active, asteroid }) => {
         });
       }
     }
-  }, [active, mapResourceId, asteroidAssets]); // eslint-disable-line react-hooks/exhaustive-deps
-  
+  }, [active, resourceMap, asteroidAssets]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => ReactTooltip.rebuild(), []);
 
   if (asteroidAssets?.length === 0) return null;
@@ -147,7 +147,7 @@ const ResourceMapSelector = ({ active, asteroid }) => {
           onClick={goToResourceViewer}
           style={{ backgroundImage: `url(${resource.iconUrls.w85})` }} />
         <ResourceDetails>
-          <DropdownContainer selectedCategory={keyify(Inventory.RESOURCES[mapResourceId]?.category)}>
+          <DropdownContainer selectedCategory={keyify(Inventory.RESOURCES[resourceMap?.selected]?.category)}>
             <Dropdown
               buttonBackground
               buttonBorderless

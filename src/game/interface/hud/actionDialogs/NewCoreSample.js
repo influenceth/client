@@ -32,7 +32,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
   const { crew, crewMemberMap } = useCrew();
 
   const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
-  const resourceId = useStore(s => s.asteroids.mapResourceId);
+  const resourceId = useStore(s => s.asteroids.resourceMap.selected);
 
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
   const [sampleId, setSampleId] = useState();

@@ -8,7 +8,8 @@ import OnClickLink from './OnClickLink';
 export const usePlotLink = ({ asteroidId, plotId, resourceId }) => {
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
-  const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
+  const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
+  const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const origin = useStore(s => s.asteroids.origin);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
@@ -16,8 +17,11 @@ export const usePlotLink = ({ asteroidId, plotId, resourceId }) => {
   const [destination, setDestination] = useState();
 
   const selectResourceMapAsNeeded = useCallback(() => {
-    if (resourceId) dispatchResourceMap(resourceId);
-  }, [resourceId]);
+    if (resourceId) {
+      dispatchResourceMapSelect(resourceId);
+      dispatchResourceMapToggle(true);
+    }
+  }, [resourceId, dispatchResourceMapSelect, dispatchResourceMapToggle]);
 
   useEffect(() => {
     if (destination && zoomStatus === 'zooming-in') {

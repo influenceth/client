@@ -18,7 +18,7 @@ const labelDict = {
 };
 
 const ImproveCoreSample = ({ onSetAction, asteroid, plot, _disabled }) => {
-  const resourceId = useStore(s => s.asteroids.mapResourceId);
+  const resourceId = useStore(s => s.asteroids.resourceMap.selected);
   const { currentSample, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i);
   const { crew } = useCrew();
   const handleClick = useCallback(() => {
@@ -49,7 +49,7 @@ const ImproveCoreSample = ({ onSetAction, asteroid, plot, _disabled }) => {
       if (samplingStatus === 'READY_TO_FINISH') {
         attention = true;
       }
-    
+
     // else, disable button (can still note which other resource)
     } else {
       disabled = true;
