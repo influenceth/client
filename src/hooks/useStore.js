@@ -406,6 +406,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchResourceMapSelect: (resourceId) => set(produce(state => {
       state.asteroids.resourceMap.selected = Number(resourceId);
+      if (!resourceId) state.asteroids.resourceMap.active = false;
     })),
 
     dispatchPlotsLoading: (i, progress = 0, simulateTarget = 0) => set(produce(state => {

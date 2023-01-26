@@ -57,7 +57,7 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
   const { processInBackground } = useWebWorker();
 
-  const mapResourceId = useStore(s => s.asteroids.resourceMap.selected);
+  const mapResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
   const { plotId: selectedPlotId } = useStore(s => s.asteroids.plot || {});

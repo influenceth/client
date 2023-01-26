@@ -43,7 +43,7 @@ const useActionButtons = () => {
           a.push(actionButtons.ScanAsteroid);
         }
       } else if (plot && crew && zoomStatus === 'in') {
-        if (resourceMap?.active) {
+        if (resourceMap?.active && resourceMap?.selected) {
           a.push(actionButtons.NewCoreSample);
           a.push(actionButtons.ImproveCoreSample);
         }
@@ -77,7 +77,7 @@ const useActionButtons = () => {
     }
 
     setActions(a);
-  }, [asteroid, constructionStatus, crew, plot, resourceMap?.active, zoomStatus]);
+  }, [asteroid, constructionStatus, crew, plot, resourceMap, zoomStatus]);
 
   return {
     actions,

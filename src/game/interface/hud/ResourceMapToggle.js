@@ -19,8 +19,7 @@ const ResourceMapToggle = () => {
 
   const toggleResourceMode = useCallback((which) => {
     if (which) {
-      const selected = resourceMap.selected || asteroidAssets[0]?.resources[0]?.i;
-      dispatchResourceMapSelect(selected);
+      dispatchResourceMapSelect(resourceMap?.selected || asteroidAssets[0]?.resources[0]?.i);
       dispatchResourceMapToggle(true);
     } else {
       dispatchResourceMapToggle(false);
@@ -29,10 +28,17 @@ const ResourceMapToggle = () => {
 
   useEffect(() => {
     if (asteroid) {
-      if (!asteroid?.scanned) dispatchResourceMapToggle(false);
-      // if asteroid is loaded and resourceMap is on, make sure it is a valid selection
-      const hasAbundance = !!asteroidAssets.find((a) => a.resources.find((r) => Number(r.i) === resourceMap.selected));
-      if (asteroid?.scanned && !hasAbundance) dispatchResourceMapSelect(asteroidAssets[0]?.resources[0]?.i);
+      // if scanned but current resourcemap resource has zero abundance on this asteroid, switch to a present resource
+      if (asteroid.scanned) {
+        if (!(asteroidAssets || []).find((a) => a.resources.find((r) => Number(r.i) === resourceMap?.selected))) {
+          dispatchResourceMapSelect(asteroidAssets[0]?.resources[0]?.i);
+        };
+
+      // else if not scanned but resourceMap is active, deselect (and deactivate)
+      } else if(resourceMap?.active) {
+        dispatchResourceMapSelect();
+        dispatchResourceMapToggle(false);
+      }
     }
   }, [asteroidAssets, resourceMap]);
 

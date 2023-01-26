@@ -536,7 +536,7 @@ const Asteroid = (props) => {
     const resourceMapId = resourceMap?.selected;
 
     if (!geometry.current || !config?.radiusNominal || !asteroidData?.resources) return;
-    if (resourceMapActive && terrainInitialized) {
+    if (resourceMapActive && resourceMapId && terrainInitialized) {
       const categoryKey = keyify(Inventory.RESOURCES[resourceMapId]?.category);
       const color = new Color(theme.colors.resources[categoryKey]);
       color.convertSRGBToLinear();

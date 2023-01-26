@@ -18,7 +18,7 @@ const labelDict = {
 };
 
 const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
-  const resourceId = useStore(s => s.asteroids.resourceMap.selected);
+  const resourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
   const { currentSample, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
     onSetAction('NEW_CORE_SAMPLE', { resourceId: resourceId });
