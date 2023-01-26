@@ -332,7 +332,7 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
     // const strokeGeometry = new TorusGeometry(PLOT_WIDTH, 5, 3, 6);
     const strokeGeometry = new RingGeometry(PLOT_WIDTH, PLOT_WIDTH + PLOT_STROKE_MARGIN, 6, 1);
     const strokeMaterial = new MeshBasicMaterial({
-      color: STROKE_COLOR,
+      color: 0xffffff,
       depthTest: false,
       depthWrite: false,
       toneMapped: false,
