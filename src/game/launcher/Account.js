@@ -260,7 +260,7 @@ const Account = (props) => {
 
   const onClickPlay = useCallback(() => {
     // if crew is done loading and there are no crew members, send to owned-crew first
-    if (!crewLoading && !(crew?.crewMembers?.length > 0)) {
+    if (loggedIn && !crewLoading && !(crew?.crewMembers?.length > 0)) {
       history.push('/owned-crew');
     }
     dispatchLauncherPage();
