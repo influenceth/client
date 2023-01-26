@@ -27,14 +27,9 @@ import { useQueryClient } from 'react-query';
 import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 
 const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
-const PIP_COLOR = new Color().setHex(0x888888).convertSRGBToLinear();
+const STROKE_COLOR = new Color().setHex(0xbbbbbb).convertSRGBToLinear();
 const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
 
-// Fissile: 0x8a1aff',
-// Metal: 0xf8852c',
-// Organic: 0x68d346',
-// RareEarth: 0xf63637',
-// Volatile: 0x5bc0f5',
 const FILL_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
 
 const PLOT_LOADER_GEOMETRY_PCT = 0.25;
@@ -269,7 +264,7 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
       color: WHITE_COLOR,
       depthTest: false,
       depthWrite: false,
-      opacity: 0.2,
+      opacity: 0.6,
       toneMapped: false,
       transparent: true,
     });
@@ -337,7 +332,7 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
     // const strokeGeometry = new TorusGeometry(PLOT_WIDTH, 5, 3, 6);
     const strokeGeometry = new RingGeometry(PLOT_WIDTH, PLOT_WIDTH + PLOT_STROKE_MARGIN, 6, 1);
     const strokeMaterial = new MeshBasicMaterial({
-      color: new Color('#ffffff'),
+      color: STROKE_COLOR,
       depthTest: false,
       depthWrite: false,
       toneMapped: false,
@@ -591,7 +586,7 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
               // if (hasFill) {
               //   plotStrokeMesh.current.setColorAt(i, FILL_COLOR);
               // } else 
-              plotStrokeMesh.current.setColorAt(i, plotColor || PIP_COLOR);
+              plotStrokeMesh.current.setColorAt(i, plotColor || STROKE_COLOR);
               updateStrokeColor = true;
             }
           }

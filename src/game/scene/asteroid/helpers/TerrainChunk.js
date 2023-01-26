@@ -225,13 +225,14 @@ class TerrainChunk {
       normalMap: data.normalBitmap.image ? data.normalBitmap : new CanvasTexture(data.normalBitmap),
       color: 0xffffff,
       emissive: 0x000000,
-      emissiveIntensity: 0.33,
+      emissiveIntensity: 0,
       emissiveMap: null,
     };
     if (this._params.emissiveParams && data.emissiveBitmap) {
       materialUpdates.color = 0x222222; // darker modulation for color map so light doesn't wash out emissivity map
       materialUpdates.emissive = this._params.emissiveParams.color;
       materialUpdates.emissiveMap = data.emissiveBitmap.image ? data.emissiveBitmap : new CanvasTexture(data.emissiveBitmap);
+      materialUpdates.emissiveIntensity = 0.135 * (this._params.emissiveParams.intensityMult || 1);
     }
     this._material.setValues({
       ...materialUpdates,

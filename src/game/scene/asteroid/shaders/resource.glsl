@@ -18,11 +18,15 @@ void main() {
   vec3 point = getUnitSphereCoords(flipY);
   float abundance = getAbundance(point);
   float transitionWidth = clamp(uChunkSize / 2000000.0, 0.001, 0.02);
-  abundance = smoothstep(0.0, 0.02, abundance)
-    + smoothstep(0.2 - transitionWidth, 0.2, abundance)
-    + smoothstep(0.4 - transitionWidth, 0.4, abundance)
+
+  // NOTE: if want to add "border":
+  // /4.0 * (smoothstep(0.0, transitionWidth, abundance) - smoothstep(transitionWidth, 3.0 * transitionWidth, abundance))
+  abundance = 
+    1.5 * smoothstep(0.0001, transitionWidth, abundance)
+    + 0.75 * smoothstep(0.2 - transitionWidth, 0.2, abundance)
+    + 0.75 * smoothstep(0.4 - transitionWidth, 0.4, abundance)
     + smoothstep(0.6 - transitionWidth, 0.6, abundance)
-    + smoothstep(0.8 - transitionWidth, 0.8, abundance);
-  abundance /= 8.0; // tones down the brightest spots some (max 0.625)
-  gl_FragColor = vec4(abundance, abundance, abundance, 0.5);
+    + 1.5 * smoothstep(0.8 - transitionWidth, 0.8, abundance);
+  abundance /= 5.5; // scale to [0,1] range
+  gl_FragColor = vec4(abundance, abundance, abundance, 1.0);
 }

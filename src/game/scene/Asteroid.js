@@ -113,6 +113,14 @@ const frameTimeLeft = (start, chunkSwapPending) => {
 //   console.log(AVG_RENDER_TIMES);
 // }, 5000);
 
+const EMISSIVE_INTENSITY = {
+  Fissile: 1,
+  Metal: 1,
+  Organic: 1.2,
+  RareEarth: 1,
+  Volatile: 1.25
+};
+
 const Asteroid = (props) => {
   const { controls, gl } = useThree();
   const origin = useStore(s => s.asteroids.origin);
@@ -312,6 +320,22 @@ const Asteroid = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ asteroidData ]);
 
+  const defaultLightIntensity = useMemo(() => {
+    if (!position.current || !config?.radius) return 0;
+    return constants.STAR_INTENSITY / (new Vector3(...position.current).length() / constants.AU);
+  }, [config?.radius]);
+
+  // turn down the sun while in resource mode
+  const currentLightIntensity = useMemo(() => {
+    return mapResourceId ? Math.min(0.175, defaultLightIntensity) : defaultLightIntensity;
+  }, [defaultLightIntensity, mapResourceId]);
+
+  useEffect(() => {
+    if (light.current) {
+      light.current.intensity = currentLightIntensity;
+    }
+  }, [currentLightIntensity]);
+
   // Configures the light component once the geometry is created
   useEffect(() => {
     if (!(config?.radius && config?.stretch && geometry.current && quadtreeRef.current && position.current)) return;
@@ -343,19 +367,18 @@ const Asteroid = (props) => {
     const lightColor = 0xffeedd;
     const lightDistance = config.radius * DIRECTIONAL_LIGHT_DISTANCE;
     const lightDirection = posVec.clone().normalize();
-    const lightIntensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
 
     const darkLightColor = 0xd8ddff;
     const darkLightDistance = config.radius * DIRECTIONAL_LIGHT_DISTANCE;
     const darkLightDirection = posVec.negate().clone().normalize();
-    const darkLightIntensity = lightIntensity * 0.25;
+    const darkLightIntensity = defaultLightIntensity * 0.25;
 
     const maxRadius = ringsPresent
       ? config.radius * 1.5
       : config.radius * maxStretch;
 
     // create light
-    light.current = new DirectionalLight(lightColor, lightIntensity);
+    light.current = new DirectionalLight(lightColor, currentLightIntensity);
     light.current.position.copy(lightDirection.negate().multiplyScalar(lightDistance));
     group.current.add(light.current);
 
@@ -385,7 +408,7 @@ const Asteroid = (props) => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, ringsPresent, shadowMode, shadowSize, textureSize, surfaceDistance]);
-
+  
   // Zooms the camera to the correct location
   useEffect(() => {
     if (zoomStatus === 'zooming-in' && !prevAsteroidPosition && controls) {
@@ -559,6 +582,7 @@ const Asteroid = (props) => {
         asteroidId: asteroidId,
         color,
         resource: mapResourceId,
+        intensityMult: EMISSIVE_INTENSITY[categoryKey],
         ...settings
       });
       forceUpdate.current = Date.now();
