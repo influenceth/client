@@ -322,7 +322,7 @@ const Asteroid = (props) => {
   }, [defaultLightIntensity, resourceMap]);
   useEffect(() => {
     if (light.current && light.current.intensity !== currentLightIntensity) {
-      gsap.timeline().to(light.current, { intensity: currentLightIntensity, ease: 'power4.out', duration: 0.25 });
+      gsap.timeline().to(light.current, { intensity: currentLightIntensity, ease: 'power4.out', duration: 0.5 });
     }
   }, [currentLightIntensity]);
 
