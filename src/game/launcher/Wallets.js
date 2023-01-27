@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import styled from 'styled-components';
 import LoadingSpinner from 'react-spinners/PuffLoader';
 
@@ -151,7 +151,8 @@ const External = styled.div`
 
 const Wallets = (props) => {
   const { account, login, walletContext, authenticating } = useAuth();
-  const { getAvailableWallets } = walletContext;
+  const [ waiting, setWaiting ] = useState(false);
+  const { getAvailableWallets, walletName } = walletContext;
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
@@ -170,30 +171,34 @@ const Wallets = (props) => {
     return wallets.find(v => v.id === withWalletId);
   };
 
-  const handleWalletClick = async (withWalletId) => {
+  const handleWalletClick = useCallback(async (withWalletId) => {
+    if (waiting) return;
+    setWaiting(true);
     const withWallet = await getWallet(withWalletId);
+
     if (!!withWallet) {
       await withWallet.enable();
-      login(withWallet);
+      await login(withWallet);
     } else {
       downloadWallet(withWalletId);
     }
-  }
+
+    setWaiting(false);
+  }, [ waiting ]);
 
   useEffect(() => {
     if (account) dispatchLauncherPage('account');
   }, [account]);
 
-
   return (
     <StyledWallets>
-      {authenticating && (
+      {(authenticating || waiting) && (
         <Loading>
           <div><LoadingSpinner color={theme.colors.main} /></div>
-          <h4>Authenticating...</h4>
+          <h4>{authenticating ? 'Authenticating...' : `Waiting for ${walletName}...`}</h4>
         </Loading>
       )}
-      {!authenticating && (
+      {!authenticating && !waiting && (
         <>
           <Cartridge>
             <WalletOption onClick={() => handleWalletClick('Cartridge')}>

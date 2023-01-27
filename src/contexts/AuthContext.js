@@ -61,19 +61,19 @@ export function AuthProvider({ children }) {
       try {
         const loginMessage = await api.requestLogin(address);
         const signature = await withWallet.account.signMessage(loginMessage);
+        if (signature?.code === 'CANCELED') throw new Error('User abort');
+
         if (signature) {
           setAuthenticating(true);
           const newToken = await api.verifyLogin(address, { signature: signature.join(',') });
           dispatchAuthenticated(newToken);
         }
       } catch (e) {
-        console.error(e);
         initiateLogout();
+        if (e.message === 'User abort') return;
+        console.error(e);
         createAlert({
-          type: 'GenericAlert',
-          level: 'warning',
-          content: 'Signature verification failed.',
-          duration: 10000
+          type: 'GenericAlert', level: 'warning', content: 'Signature verification failed.', duration: 10000
         });
       }
       setAuthenticating(false);
