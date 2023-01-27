@@ -77,7 +77,7 @@ const useActionButtons = () => {
     }
 
     setActions(a);
-  }, [asteroid, constructionStatus, crew, plot, resourceMap, zoomStatus]);
+  }, [asteroid, constructionStatus, crew, plot, resourceMap?.active, !!resourceMap?.selected, zoomStatus]);
 
   return {
     actions,
