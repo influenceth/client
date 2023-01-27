@@ -207,8 +207,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
         {...props}
         buttonsOverride={sample?.initialYield !== undefined && [
           { label: 'Close', onClick: props.onClose },
-          // TODO: this should pass in selected sample
-          { label: 'Improve Sample', onClick: () => { props.onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...sample } }); } },
+          // { label: 'Improve Sample', onClick: () => { props.onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...sample } }); } },
         ]}
         buttonsDisabled={samplingStatus === 'READY' && lotAbundance === 0}
         buttonsLoading={samplingStatus === 'FINISHING' || undefined}
