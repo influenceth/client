@@ -195,7 +195,7 @@ const Wallets = (props) => {
       {(authenticating || waiting) && (
         <Loading>
           <div><LoadingSpinner color={theme.colors.main} /></div>
-          <h4>{authenticating ? 'Authenticating...' : `Waiting for ${walletName}...`}</h4>
+          <h4>{authenticating ? 'Authenticating...' : `Waiting for ${walletName || 'wallet'}...`}</h4>
         </Loading>
       )}
       {!authenticating && !waiting && (
