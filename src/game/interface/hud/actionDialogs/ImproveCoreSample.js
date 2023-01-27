@@ -253,7 +253,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
         {...props}
         buttonsOverride={isImproved && [
           { label: 'Close', onClick: props.onClose },
-          { label: 'Improve Again', onClick: onReset },
+          // { label: 'Improve Again', onClick: onReset },
         ]}
         goDisabled={!currentSample}
         buttonsLoading={samplingStatus === 'FINISHING' || undefined}
