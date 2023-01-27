@@ -186,16 +186,20 @@ const Postprocessor = ({ enabled, bloomByName }) => {
   }, [size.height, size.width]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useFrame(({ camera, gl, scene }) => {
-    if (!enabled) return gl.render(scene, camera);
-    if (!(bloomComposer.current && finalComposer.current)) return;
+    try {
+      if (!enabled) return gl.render(scene, camera);
+      if (!(bloomComposer.current && finalComposer.current)) return;
 
-    // render scene with bloom
-    scene.traverse(darkenNonBloomed);
-    bloomComposer.current.render();
-    scene.traverse(restoreMaterial);
+      // render scene with bloom
+      scene.traverse(darkenNonBloomed);
+      bloomComposer.current.render();
+      scene.traverse(restoreMaterial);
 
-    // render the entire scene, then render bloom scene on top
-    finalComposer.current.render();
+      // render the entire scene, then render bloom scene on top
+      finalComposer.current.render();
+    } catch(e) {
+      console.warn('Caught rendering error', e);
+    }
   }, 2);
 
   return null;
