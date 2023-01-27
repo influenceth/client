@@ -192,6 +192,7 @@ const MainMenu = (props) => {
             icon={<TimeIcon />}
             onClick={() => openSection('timeControl')} />
         </Menu>
+        {/* 
         <Menu title="Viewer">
           <MenuItem
             name="Buildings"
@@ -202,6 +203,7 @@ const MainMenu = (props) => {
             icon={<ResourcesIcon />}
             onClick={() => history.push('/resource-viewer')} />
         </Menu>
+        */}
         {!!account && hasGenesisCrewmate && (
           <Menu title="Activities" badge={totalAssignments}>
             <MenuItem
