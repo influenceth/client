@@ -152,7 +152,7 @@ const External = styled.div`
 const Wallets = (props) => {
   const { account, login, walletContext, authenticating } = useAuth();
   const [ waiting, setWaiting ] = useState(false);
-  const { getAvailableWallets } = walletContext;
+  const { getAvailableWallets, walletName } = walletContext;
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
@@ -190,16 +190,15 @@ const Wallets = (props) => {
     if (account) dispatchLauncherPage('account');
   }, [account]);
 
-
   return (
     <StyledWallets>
-      {authenticating && (
+      {(authenticating || waiting) && (
         <Loading>
           <div><LoadingSpinner color={theme.colors.main} /></div>
-          <h4>Authenticating...</h4>
+          <h4>{authenticating ? 'Authenticating...' : `Waiting for ${walletName}...`}</h4>
         </Loading>
       )}
-      {!authenticating && (
+      {!authenticating && !waiting && (
         <>
           <Cartridge>
             <WalletOption onClick={() => handleWalletClick('Cartridge')}>

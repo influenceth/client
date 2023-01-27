@@ -13,7 +13,7 @@ const PurchaseAsteroid = ({ asteroid, _disabled }) => {
 
   const handleClick = useCallback(() => {
     history.push(`/asteroids/${asteroid?.i}`);
-  }, [asteroid?.i, saleIsActive]);
+  }, [asteroid?.i]);
 
   return (
     <ActionButton
