@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient, QueryClientProvider } from 'react-query';
 import { Object3D, Vector3 } from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
@@ -18,6 +18,7 @@ import Asteroid from './scene/Asteroid';
 import SettingsManager from './scene/SettingsManager';
 import Postprocessor from './Postprocessor';
 import WebsocketContext from '~/contexts/WebsocketContext';
+import { GpuContextLostMessage, GpuContextLostReporter } from './GpuContextLost';
 
 const glConfig = {
   antialias: true,
@@ -91,6 +92,9 @@ const Scene = (props) => {
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const statsOn = useStore(s => s.graphics.stats);
 
+  const [contextLost, setContextLost] = useState(false);
+  const canvasStyle = useMemo(() => (contextLost ? { opacity: 0, pointerEvents: 'none' } : {}), [contextLost]);
+
   useEffect(() => {
     if (!zoomedFrom) {
       setZoomedFrom({
@@ -105,7 +109,9 @@ const Scene = (props) => {
   return (
     <StyledContainer>
       {statsOn && (<Stats />)}
-      <Canvas {...glConfig}>
+      {contextLost && <GpuContextLostMessage />}
+      <Canvas {...glConfig} style={canvasStyle}>
+        <GpuContextLostReporter setContextLost={setContextLost} />
         <ContextBridge>
           <SettingsManager />
           <Postprocessor enabled={true} />

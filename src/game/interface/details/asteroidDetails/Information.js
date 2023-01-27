@@ -34,6 +34,7 @@ import {
 } from '~/components/Icons';
 import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import AsteroidGraphic from './components/AsteroidGraphic';
+import useNameAvailability from '~/hooks/useNameAvailability';
 
 const paneStackBreakpoint = 720;
 
@@ -270,6 +271,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
   const { account } = useAuth();
   const { data: sale } = useSale();
   const createReferral = useCreateReferral(Number(asteroid.i));
+  const { getAsteroidNameAvailability } = useNameAvailability();
   const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.i));
   const { nameAsteroid, naming } = useNameAsteroid(Number(asteroid.i));
   const webWorkerPool = useWebWorker();
@@ -299,11 +301,11 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
     setOpenNameChangeForm(false);
   }, [asteroid.customName]);
 
-  const updateAsteroidName = useCallback(() => {
-    if (newName) {
+  const attemptUpdateAsteroidName = useCallback(async () => {
+    if (await getAsteroidNameAvailability(newName)) {
       nameAsteroid(newName);
     }
-  }, [nameAsteroid, newName]);
+  }, [nameAsteroid, getAsteroidNameAvailability, newName]);
 
   return (
     <Wrapper>
@@ -419,7 +421,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                         data-tip="Submit"
                         data-for="global"
                         disabled={naming}
-                        onClick={updateAsteroidName}>
+                        onClick={attemptUpdateAsteroidName}>
                         <CheckCircleIcon />
                       </IconButton>
                     </NameForm>

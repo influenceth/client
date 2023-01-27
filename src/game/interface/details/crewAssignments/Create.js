@@ -25,9 +25,9 @@ import useAuth from '~/hooks/useAuth';
 import useCrewManager from '~/hooks/useCrewManager';
 import useCrew from '~/hooks/useCrew';
 import useSale from '~/hooks/useSale';
-import useStore from '~/hooks/useStore';
 import useStorySession from '~/hooks/useStorySession';
 import formatters from '~/lib/formatters';
+import useNameAvailability from '~/hooks/useNameAvailability';
 
 const blinkingBackground = (p) => keyframes`
   0% {
@@ -468,10 +468,10 @@ const CrewAssignmentCreate = (props) => {
   const { id: sessionId } = useParams();
   const history = useHistory();
   const { storyState } = useStorySession(sessionId);
+  const { getCrewNameAvailability } = useNameAvailability();
   const { purchaseAndOrInitializeCrew, getPendingCrewmate, crewCredits } = useCrewManager();
   const { crew, crewMemberMap } = useCrew();
   const { data: crewSale } = useSale('Crewmate');
-  const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const [confirming, setConfirming] = useState();
   const [featureOptions, setFeatureOptions] = useState([]);
@@ -556,29 +556,11 @@ const CrewAssignmentCreate = (props) => {
     setFeatureSelection(Math.min(featureOptions.length - 1, featureSelection + 1));
   }, [featureOptions.length, featureSelection]);
 
-  const validateName = useCallback(() => {
-    let err = '';
-    if (name.length === 0) err = 'Name field cannot be empty.';
-    else if (name.length > 31) err = 'Name is too long.';
-    else if (/^ /.test(name) || / $/.test(name)) err = 'Name cannot have leading or trailing spaces.';
-    else if (/ {2,}/.test(name)) err = 'Name cannot have adjoining spaces.';
-    else if (/[^a-zA-Z0-9 ]/.test(name)) err = 'Name can only contain letters and numbers.';
-    if (err) {
-      createAlert({
-        type: 'GenericAlert',
-        content: err,
-        level: 'warning',
-        duration: 4000
-      });
-      return false;
+  const confirmFinalize = useCallback(async () => {
+    if (await getCrewNameAvailability(name)) {
+      setConfirming(true);
     }
-    return true;
-  }, [createAlert, name]);
-
-  const confirmFinalize = useCallback(() => {
-    if (!validateName()) return;
-    setConfirming(true);
-  }, [validateName]);
+  }, [getCrewNameAvailability, name]);
 
   const finalize = useCallback(() => {
     setConfirming(false);

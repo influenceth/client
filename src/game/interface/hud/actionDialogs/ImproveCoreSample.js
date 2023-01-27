@@ -78,7 +78,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
 
   const improvableSamples = useMemo(() =>
     (plot?.coreSamples || [])
-      .filter((c) => c.initialYield && c.status !== CoreSample.STATUS_USED)
+      .filter((c) => (c.owner === crew?.i && c.initialYield > 0 && c.status !== CoreSample.STATUS_USED))
       .map((c) => ({ ...c, tonnage: c.initialYield * resources[c.resourceId].massPerUnit }))
   , [plot?.coreSamples]);
 
@@ -253,7 +253,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
         {...props}
         buttonsOverride={isImproved && [
           { label: 'Close', onClick: props.onClose },
-          { label: 'Improve Again', onClick: onReset },
+          // { label: 'Improve Again', onClick: onReset },
         ]}
         goDisabled={!currentSample}
         buttonsLoading={samplingStatus === 'FINISHING' || undefined}

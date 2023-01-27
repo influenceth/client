@@ -11,7 +11,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { cleanupScene } from '~/game/scene/asteroid/helpers/utils';
 
 const AsteroidSpinner = (props) => {
-  const { camera, gl, scene, size } = useThree();
+  const { camera, scene, size } = useThree();
   
   const meshRef = useRef();
   const initialTime = useRef(Date.now());
@@ -73,8 +73,6 @@ const AsteroidSpinner = (props) => {
 
     camera.position.set(0, 0, 1.4);
     camera.updateProjectionMatrix();
-
-    gl.render(scene, camera);
 
     return () => {
       try {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
+import LoadingIcon from 'react-spinners/PuffLoader';
 
 import Button from '~/components/ButtonAlt';
 import CrewCard from '~/components/CrewCard';
@@ -470,6 +471,7 @@ const OwnedCrew = (props) => {
     pristine: ''
   });
   const [activeCrewHeight, setActiveCrewHeight] = useState(null);
+  const [creatingSession, setCreatingSession] = useState();
   const [hovered, setHovered] = useState();
   const [inactiveCrewCollapsed, setInactiveCrewCollapsed] = useState(width < collapsibleWidth);
   const [saving, setSaving] = useState(false);
@@ -491,7 +493,7 @@ const OwnedCrew = (props) => {
   }, [activeCrew, pristine]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRecruit = useCallback(() => {
-    if (isDataLoading) return;
+    if (isDataLoading || creatingSession) return;
 
     if (isDirty) {
       createAlert({
@@ -510,6 +512,7 @@ const OwnedCrew = (props) => {
 
     // create new session...
     } else if (crewRecruitmentStoryId) {
+      setCreatingSession(true);
       createStorySession.mutate({
         storyId: crewRecruitmentStoryId,
         account
@@ -527,6 +530,7 @@ const OwnedCrew = (props) => {
               }
             );
           }
+          setCreatingSession(false);
 
           // go to assignment
           playSound('effects.success');
@@ -534,6 +538,7 @@ const OwnedCrew = (props) => {
         },
         onError: (err) => {
           console.error(err);
+          setCreatingSession(false);
         }
       });
     }
@@ -671,12 +676,12 @@ const OwnedCrew = (props) => {
   const clickOverlay = useMemo(() => ({
     alwaysOn: ['button','icon'],
     button: 'Recruit',
-    buttonAttention: true,
+    buttonAttention: !creatingSession,
     buttonStyle: activeCrewHeight < 320 && (activeCrewHeight < 275 ? { display: 'none' } : { fontSize: '10px' }),
     disableHover: true,
-    icon: <PlusIcon />,
+    icon: creatingSession ? <div style={{ height: 60, width: 60 }}><LoadingIcon color={theme.colors.main} /></div> : <PlusIcon />,
     rgb: theme.colors.mainRGB,
-  }), [activeCrewHeight]);
+  }), [activeCrewHeight, creatingSession]);
 
   if (isDataLoading) return null;
   return (
@@ -717,7 +722,7 @@ const OwnedCrew = (props) => {
                                 <div>Captain</div>
                               </CaptainTopFlourish>
                               <CrewContainer>
-                                <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
+                                <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty && !creatingSession ? handleRecruit : noop}>
                                   {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
                                   {!isEmpty && <CrewCard
                                     crew={crew}
@@ -746,7 +751,7 @@ const OwnedCrew = (props) => {
                           {slot !== 0 && (
                             <CrewContainer slot={slot}>
                               <TopFlourish />
-                              <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
+                              <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty && !creatingSession ? handleRecruit : noop}>
                                 {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
                                 {!isEmpty && <CrewCard
                                   crew={crew}
