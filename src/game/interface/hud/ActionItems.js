@@ -58,7 +58,12 @@ const ActionItemContainer = styled.div`
   width: ${ITEM_WIDTH}px;
 `;
 
-const Icon = styled.div``;
+const Icon = styled.div`
+  & svg {
+    filter: drop-shadow(1px 1px 1px #333);
+  }
+`;
+
 const Status = styled.div``;
 const Label = styled.div``;
 const Details = styled.div``;
@@ -105,6 +110,8 @@ const Progress = styled.div``;
 const ActionItemRow = styled.div`
   align-items: center;
   pointer-events: all;
+  text-shadow: 1px 1px 2px black;
+
   ${p => {
     if (p.transitionOut === 'right') {
       return `
