@@ -53,9 +53,11 @@ const Extract = ({ asteroid, plot, ...props }) => {
     return bonus;
   }, [asteroid?.bonuses, crewMembers, selectedCoreSample?.resourceId]);
 
-  const usableSamples = useMemo(() => {
-    return (plot?.coreSamples || []).filter((c) => c.remainingYield > 0 && c.status >= CoreSample.STATUS_FINISHED);
-  }, [plot?.coreSamples]);
+  const usableSamples = useMemo(() => (plot?.coreSamples || []).filter((c) => (
+    c.owner === crew?.i
+    && c.remainingYield > 0
+    && c.status >= CoreSample.STATUS_FINISHED
+  )), [plot?.coreSample, crew?.i]);
 
   const selectCoreSample = useCallback((sample) => {
     setSelectedCoreSample(sample);
