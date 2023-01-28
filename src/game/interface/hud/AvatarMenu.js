@@ -25,6 +25,7 @@ const silhouetteAnimation = keyframes`
 `;
 
 const Wrapper = styled.div`
+  margin-bottom: 12px;
   pointer-events: none;
 `;
 

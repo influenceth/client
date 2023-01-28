@@ -48,6 +48,7 @@ const getInvalidations = (event, returnValues, linked) => {
         ['crews', 'owned'],
       ],
       Crewmate_FeaturesSet: [
+        ['assignments'],
         ['crewmembers', returnValues.crewId],
         ['crewmembers', 'owned'],
       ],

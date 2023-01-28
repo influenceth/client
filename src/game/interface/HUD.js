@@ -38,8 +38,9 @@ const Wrapper = styled.div`
 `;
 
 const LeftWrapper = styled(Wrapper)`
-  left: 0;
+  display: flex;
   height: calc(100% - ${bottomMargin}px);
+  left: 0;
   top: 0;
 `;
 
@@ -48,6 +49,7 @@ const RightWrapper = styled(Wrapper)`
 `;
 
 const LeftActions = styled.div`
+  flex-shrink: 0;
   transform: ${p => p.visible ? 'translateX(0)' : 'translateX(-64px)'};
   transition: transform 250ms ease ${p => p.visible ? '750ms' : '0ms'};
   & > * {
@@ -194,7 +196,7 @@ const HUD = () => {
         <AvatarMenu />
 
         <ActionItems />
-
+        
         <LeftActions visible={zoomStatus === 'in'}>
           <ResourceMapToggle />
           <LeftActionButton
