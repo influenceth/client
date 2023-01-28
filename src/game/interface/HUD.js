@@ -28,23 +28,20 @@ const Wrapper = styled.div`
   position: absolute;
   bottom: ${bottomMargin}px;
   z-index: 2;
-`;
 
-const TopLeft = styled.div``;
-const BottomLeft = styled.div``;
+  & > * {
+    margin-bottom: 12px;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+`;
 
 const LeftWrapper = styled(Wrapper)`
   display: flex;
   height: calc(100% - ${bottomMargin}px);
-  justify-content: space-between;
   left: 0;
   top: 0;
-
-  & ${TopLeft}, & ${BottomLeft} {
-    align-items: flex-start;
-    display: flex;
-    flex-direction: column;
-  }
 `;
 
 const RightWrapper = styled(Wrapper)`
@@ -52,6 +49,7 @@ const RightWrapper = styled(Wrapper)`
 `;
 
 const LeftActions = styled.div`
+  flex-shrink: 0;
   transform: ${p => p.visible ? 'translateX(0)' : 'translateX(-64px)'};
   transition: transform 250ms ease ${p => p.visible ? '750ms' : '0ms'};
   & > * {
@@ -195,24 +193,23 @@ const HUD = () => {
   return (
     <>
       <LeftWrapper>
-        <TopLeft>
-          <AvatarMenu />
-          <ActionItems />
-        </TopLeft>
-        <BottomLeft>
-          <LeftActions visible={zoomStatus === 'in'}>
-            <ResourceMapToggle />
-            <LeftActionButton
-              data-arrow-color="transparent"
-              data-for="global"
-              data-place="right"
-              data-tip={backLabel}
-              onClick={onClickBack}>
-              <BackIcon />
-            </LeftActionButton>
-          </LeftActions>
-          <InfoPane />
-        </BottomLeft>
+        <AvatarMenu />
+
+        <ActionItems />
+        
+        <LeftActions visible={zoomStatus === 'in'}>
+          <ResourceMapToggle />
+          <LeftActionButton
+            data-arrow-color="transparent"
+            data-for="global"
+            data-place="right"
+            data-tip={backLabel}
+            onClick={onClickBack}>
+            <BackIcon />
+          </LeftActionButton>
+        </LeftActions>
+
+        <InfoPane />
       </LeftWrapper>
 
       <RightWrapper>

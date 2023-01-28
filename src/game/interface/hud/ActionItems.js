@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import styled from 'styled-components';
-import { AiOutlineExclamation as FailureIcon } from 'react-icons/ai';
+import styled, { css, keyframes } from 'styled-components';
+import { AiOutlineExclamation as FailureIcon, AiFillPushpin as UnpinIcon, AiOutlinePushpin as PinIcon } from 'react-icons/ai';
 import { MdClear as DismissIcon } from 'react-icons/md';
 import BarLoader from 'react-spinners/BarLoader';
 import { Capable, Inventory } from '@influenceth/sdk';
@@ -33,34 +33,91 @@ import LiveTimer from '~/components/LiveTimer';
 
 const ICON_WIDTH = 34;
 const ITEM_WIDTH = 400;
-const ITEM_HEIGHT = 36;
 const TRANSITION_TIME = 400;
 
 const ActionItemWrapper = styled.div`
-  height: ${p => p.rows * ITEM_HEIGHT}px;
   overflow: hidden;
-  pointer-events: none;
+  height: 100%;
   transition: width 0.15s ease;
   user-select: none;
-  width: ${ICON_WIDTH}px;
+  width: ${ITEM_WIDTH}px;
+`;
 
+const Pinner = styled.div`
+  align-items: center;
+  border-bottom: 2px solid black;
+  color: #CCC;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  font-size: 14px;
+  height: 28px;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: all;
+  position: absolute;
+  right: 8px;
+  top: -28px;
+  width: 100px;
+  transition: opacity 0.25s ease 0.15s;
+  & > svg { margin-right: 2px; }
+`;
+
+const OuterWrapper = styled.div`
+  flex: 1;
+  height: 0;
+  pointer-events: none;
+  position: relative;
+  ${p => !p.pinned && `
+    ${ActionItemWrapper} {
+      width: ${ICON_WIDTH}px;
+    }
+  `}
+  ${p => p.forceOpen && `
+    ${ActionItemWrapper} {
+      width: ${ITEM_WIDTH}px;
+    }
+  `}
   &:hover {
-    width: ${ITEM_WIDTH}px;
+    ${p => !p.pinned && `
+      ${ActionItemWrapper} {
+        width: ${ITEM_WIDTH}px;
+      }
+    `}
+    ${Pinner} {
+      opacity: 0.33;
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+        opacity: 1;
+      }
+    }
   }
 `;
 
 const ActionItemContainer = styled.div`
   max-height: 275px;
-  height: 100%;
-  overflow-x: hidden;
   overflow-y: auto;
+  overflow-x: hidden;
   pointer-events: auto;
   width: ${ITEM_WIDTH}px;
 `;
 
+const opacityKeyframes = keyframes`
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+`;
 const Icon = styled.div`
   & svg {
     filter: drop-shadow(1px 1px 1px #333);
+    ${p => p.animate && css`
+      animation: ${opacityKeyframes} 1000ms ease infinite;
+    `}
   }
 `;
 
@@ -109,6 +166,7 @@ const Dismissal = styled.div`
 const Progress = styled.div``;
 const ActionItemRow = styled.div`
   align-items: center;
+  overflow: hidden;
   pointer-events: all;
   text-shadow: 1px 1px 2px black;
 
@@ -590,7 +648,7 @@ const ActionItem = ({ data, type }) => {
       onClick={onClick}
       oneRow={type !== 'failed' && !asteroid}
       transitionOut={data.transitionOut ? (type === 'failed' ? 'left' : 'right') : undefined}>
-      <Icon>
+      <Icon animate={type === 'pending'}>
         {type === 'failed' && <FailureIcon />}
         {type === 'ready' && <NavIcon animate selected size="16px" />}
         {(type === 'pending' || type === 'unready' || type === 'plans') && item.icon}
@@ -640,6 +698,9 @@ const ActionItems = () => {
   } = useActionItems() || {};
 
   const { token, account } = useAuth();
+
+  const actionItemsPinned = useStore(s => s.actionItemsPinned);
+  const dispatchActionItemsPinned = useStore(s => s.dispatchActionItemsPinned);
 
   // hide readyItems that have a pending transaction
   const readyItems = useMemo(() => {
@@ -730,14 +791,51 @@ const ActionItems = () => {
     }
   }, [allItems]);
 
+
+  const watching = [
+    failedTransactions.length,
+    allReadyItems.length,
+    allPlannedItems.length,
+    unreadyItems.length
+  ];
+  const previousState = useRef(watching);
+
+  const [forceOpen, setForceOpen] = useState(false);
+  useEffect(() => {
+    console.log(watching, previousState.current);
+    // don't force open for pending transactions, but do for increase in any of the others (excluding suppressions)
+    if (!!watching.find((x, i) => x > previousState.current[i])) {
+      setForceOpen(true);
+    }
+    previousState.current = [...watching];
+    
+  }, [...watching]);
+
+  useEffect(() => {
+    if (forceOpen) {
+      const closeTimeout = setTimeout(() => {
+        setForceOpen(false);
+      }, 4000);
+      return () => {
+        if (closeTimeout) clearTimeout(closeTimeout);
+      }
+    }
+  }, [forceOpen]);
+
   return (
-    <ActionItemWrapper rows={displayItems?.length || 0}>
-      <ActionItemContainer>
-        {(displayItems || []).map(({ transition, type, ...item }) => (
-          <ActionItem key={`${type}_${item.key || item.i}_${item.timestamp || item.gracePeriodEnd}`} data={item} type={type} />
-        ))}
-      </ActionItemContainer>
-    </ActionItemWrapper>
+    <OuterWrapper pinned={actionItemsPinned || undefined} forceOpen={forceOpen || undefined}>
+      <Pinner onClick={() => dispatchActionItemsPinned(!actionItemsPinned)}>
+        {actionItemsPinned && <><UnpinIcon /> Unpin</>}
+        {!actionItemsPinned && <><PinIcon /> Pin Open</>}
+      </Pinner>
+      <ActionItemWrapper>
+        <ActionItemContainer>
+          {(displayItems || []).map(({ transition, type, ...item }) => (
+            <ActionItem key={`${type}_${item.key || item.i}_${item.timestamp || item.gracePeriodEnd}`} data={item} type={type} />
+          ))}
+        </ActionItemContainer>
+      </ActionItemWrapper>
+    </OuterWrapper>
   );
 };
 

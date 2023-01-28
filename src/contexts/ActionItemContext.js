@@ -81,19 +81,29 @@ export function ActionItemProvider({ children }) {
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining
 
+  // without memoizing, triggers as if new value on every chainTime update
+  const contextValue = useMemo(() => ({
+    pendingTransactions,
+    failedTransactions,
+    readyItems,
+    plannedItems,
+    unreadyItems,
+    actionItems
+  }), [
+    pendingTransactions,
+    failedTransactions,
+    readyItems,
+    plannedItems,
+    unreadyItems,
+    actionItems
+  ]);
+
   // TODO: pending and failed transactions are already in context
   //  - ready/unready are only relevant in UI
   //  - probably only need to return actionItems here
   //  - this may even be overkill as a context (although will have to see once implement browser notifications)
   return (
-    <ActionItemContext.Provider value={{
-      pendingTransactions,
-      failedTransactions,
-      readyItems,
-      plannedItems,
-      unreadyItems,
-      actionItems
-    }}>
+    <ActionItemContext.Provider value={contextValue}>
       {children}
     </ActionItemContext.Provider>
   );
