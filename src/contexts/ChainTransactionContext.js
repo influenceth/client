@@ -534,7 +534,7 @@ export function ChainTransactionProvider({ children }) {
       //  currently in non-session wallet, argentX does not return from the `await execute`
       //  below when their user prompt is closed instead of rejected (the user has to
       //  reopen the prompt and reject it to get out of here)
-      if (starknet?.id !== 'argentX') setPromptingTransaction(true);
+      setPromptingTransaction(true);
       try {
         const tx = await execute(vars);
         dispatchPendingTransaction({
