@@ -94,6 +94,7 @@ const OuterWrapper = styled.div`
 `;
 
 const ActionItemContainer = styled.div`
+  height: 100%;
   max-height: 275px;
   overflow-y: auto;
   overflow-x: hidden;
