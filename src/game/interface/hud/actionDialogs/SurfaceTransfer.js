@@ -1,88 +1,31 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
-import {
-  FiCrosshair as TargetIcon,
-  FiSquare as UncheckedIcon,
-  FiCheckSquare as CheckedIcon
-} from 'react-icons/fi';
-import { RingLoader } from 'react-spinners';
-import DataTable, { createTheme } from 'react-data-table-component';
-import { Crew, Asteroid, Construction, Lot } from '@influenceth/sdk';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Asteroid, Construction, Inventory } from '@influenceth/sdk';
 
-import constructionBackground from '~/assets/images/modal_headers/Construction.png';
-import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
-import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
-import Button from '~/components/ButtonAlt';
-import ButtonRounded from '~/components/ButtonRounded';
-import Dialog from '~/components/Dialog';
-import Dropdown from '~/components/Dropdown';
-import IconButton from '~/components/IconButton';
-import {
-  UnplanBuildingIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  CloseIcon,
-  ConstructIcon,
-  CoreSampleIcon,
-  CrewIcon,
-  DeconstructIcon,
-  ExtractionIcon,
-  ImproveCoreSampleIcon,
-  PlanBuildingIcon,
-  LocationPinIcon,
-  PlusIcon,
-  ResourceIcon,
-  SurfaceTransferIcon,
-  TimerIcon,
-  WarningOutlineIcon
-} from '~/components/Icons';
-import Poppable from '~/components/Popper';
-import SliderInput from '~/components/SliderInput';
-import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
+import { SurfaceTransferIcon } from '~/components/Icons';
+import { useResourceAssets } from '~/hooks/useAssets';
 import useCrew from '~/hooks/useCrew';
+import useDeliveryManager from '~/hooks/useDeliveryManager';
+import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
-import theme from '~/theme';
-import MouseoverInfoPane from '~/components/MouseoverInfoPane';
-import useConstructionManager from '~/hooks/useConstructionManager';
-import useInterval from '~/hooks/useInterval';
 import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
-
 import {
-  CoreSampleSelection,
-  DestinationSelection,
-
-  BuildingPlanSection,
-  BuildingRequirementsSection,
-  DeconstructionMaterialsSection,
   DestinationPlotSection,
-  ExistingSampleSection,
-  ExtractionAmountSection,
-  ExtractSampleSection,
   ItemSelectionSection,
-  RawMaterialSection,
-  ToolSection,
-
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
   ActionDialogTimers,
-
   getBonusDirection,
-  getTripDetails,
   formatSampleMass,
   formatSampleVolume,
-  TravelBonusTooltip,
   TimeBonusTooltip,
-  ActionDialogLoader,
   formatMass,
   formatVolume,
 } from './components';
-import useDeliveryManager from '~/hooks/useDeliveryManager';
-import usePlot from '~/hooks/usePlot';
 
 const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const resources = useResourceAssets();
   // NOTE: plot should be destination if deliveryId > 0
   const { currentDelivery, deliveryStatus, startDelivery, finishDelivery } = useDeliveryManager(asteroid?.i, plot?.i, props.deliveryId);
@@ -187,6 +130,31 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
     return (originPlot?.building?.inventories || {})[originInvId];
   }, [originInvId, originPlot?.building?.inventories]);
 
+  const onStartDelivery = useCallback(() => {
+    let destCapacityRemaining = Inventory.CAPACITIES[destinationPlot?.building?.capableType][destInvId];
+    if (destinationPlot?.building?.inventories && destinationPlot?.building?.inventories[destInvId]) {
+      // Capacities are in tonnes and cubic meters, Inventories are in grams and mLs
+      destCapacityRemaining.mass -= 1e-6 * ((destinationPlot.building.inventories[destInvId].mass || 0) + (destinationPlot.building.inventories[destInvId].reservedMass || 0));
+      destCapacityRemaining.volume -= 1e-6 * ((destinationPlot.building.inventories[destInvId].volume || 0) + (destinationPlot.building.inventories[destInvId].reservedVolume || 0));
+    }
+    if (destCapacityRemaining.mass < totalMass || destCapacityRemaining.volume < totalVolume) {
+      createAlert({
+        type: 'GenericAlert',
+        level: 'warning',
+        content: `Insufficient capacity remaining at selected destination: ${formatSampleMass(destCapacityRemaining.mass)} tonnes or ${formatSampleVolume(destCapacityRemaining.volume)} m³`,
+        duration: 10000
+      });
+      return;
+    }
+
+    startDelivery({
+      originInvId: originInvId,
+      destPlotId: destinationPlot?.i,
+      destInvId,
+      resources: selectedItems
+    });
+  }, [originInvId, destinationPlot?.i, destInvId, selectedItems]);
+
   // handle auto-closing
   const lastStatus = useRef();
   useEffect(() => {
@@ -246,12 +214,7 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
         goDisabled={!destinationPlot?.i || totalMass === 0}
         goLabel="Transfer"
         onFinalize={() => finishDelivery()}
-        onGo={() => startDelivery({
-          originInvId: originInvId,
-          destPlotId: destinationPlot?.i,
-          destInvId,
-          resources: selectedItems
-        })}
+        onGo={onStartDelivery}
         status={status} />
     </>
   );

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CoreSample, Asteroid, Extraction } from '@influenceth/sdk';
+import { CoreSample, Asteroid, Extraction, Inventory } from '@influenceth/sdk';
 
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import { ExtractionIcon } from '~/components/Icons';
@@ -19,14 +19,17 @@ import {
   ActionDialogTimers,
 
   getBonusDirection,
-  formatSampleMass,
   formatResourceVolume,
+  formatSampleMass,
+  formatSampleVolume,
   TravelBonusTooltip,
   TimeBonusTooltip,
 } from './components';
 import usePlot from '~/hooks/usePlot';
+import useStore from '~/hooks/useStore';
 
 const Extract = ({ asteroid, plot, ...props }) => {
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const resources = useResourceAssets();
   const { currentExtraction, extractionStatus, startExtraction, finishExtraction } = useExtractionManager(asteroid?.i, plot?.i);
   const { crew, crewMemberMap } = useCrew();
@@ -194,8 +197,29 @@ const Extract = ({ asteroid, plot, ...props }) => {
   }, [extractionStatus]);
 
   const onStartExtraction = useCallback(() => {
+    const destInvId = 1;
+    let destCapacityRemaining = Inventory.CAPACITIES[destinationPlot?.building?.capableType][destInvId];
+    if (destinationPlot?.building?.inventories && destinationPlot?.building?.inventories[destInvId]) {
+      // Capacities are in tonnes and cubic meters, Inventories are in grams and mLs
+      destCapacityRemaining.mass -= 1e-6 * ((destinationPlot.building.inventories[destInvId].mass || 0) + (destinationPlot.building.inventories[destInvId].reservedMass || 0));
+      destCapacityRemaining.volume -= 1e-6 * ((destinationPlot.building.inventories[destInvId].volume || 0) + (destinationPlot.building.inventories[destInvId].reservedVolume || 0));
+    }
+    const neededCapacity = {
+      mass: amount * resource?.massPerUnit,
+      volume: amount * resource?.volumePerUnit
+    }
+    if (destCapacityRemaining.mass < neededCapacity.mass || destCapacityRemaining.volume < neededCapacity.volume) {
+      createAlert({
+        type: 'GenericAlert',
+        level: 'warning',
+        content: `Insufficient capacity remaining at selected destination: ${formatSampleMass(destCapacityRemaining.mass)} tonnes or ${formatSampleVolume(destCapacityRemaining.volume)} m³`,
+        duration: 10000
+      });
+      return;
+    }
+
     startExtraction(amount, selectedCoreSample, destinationPlot);
-  }, [amount, selectedCoreSample, destinationPlot]);
+  }, [amount, selectedCoreSample, destinationPlot, resource]);
 
   // handle auto-closing
   const lastStatus = useRef();
