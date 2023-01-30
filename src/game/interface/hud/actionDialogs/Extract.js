@@ -79,7 +79,10 @@ const Extract = ({ asteroid, plot, ...props }) => {
       if (plot?.coreSamples) {
         const currentSample = plot.coreSamples.find((c) => c.resourceId === currentExtraction.resourceId && c.sampleId === currentExtraction.sampleId);
         if (currentSample) {
-          setSelectedCoreSample(currentSample);
+          setSelectedCoreSample({
+            ...currentSample,
+            remainingYield: currentSample.remainingYield + (currentExtraction.isCoreSampleUpdated ? currentExtraction.yield : 0)
+          });
           setAmount(currentExtraction.yield);
         }
       }
@@ -103,7 +106,7 @@ const Extract = ({ asteroid, plot, ...props }) => {
       amount,
       selectedCoreSample.remainingYield || 0,
       selectedCoreSample.initialYield || 0,
-      extractionBonus.totalBonus
+      extractionBonus.totalBonus || 1
     );
   }, [amount, extractionBonus, selectedCoreSample]);
 
@@ -225,7 +228,7 @@ const Extract = ({ asteroid, plot, ...props }) => {
   const lastStatus = useRef();
   useEffect(() => {
     // (close on status change from)
-    if (['READY', 'READY_TO_FINISH'].includes(lastStatus.current)) {
+    if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
       if (extractionStatus !== lastStatus.current) {
         props.onClose();
       }
