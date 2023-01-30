@@ -36,6 +36,8 @@ const ITEM_WIDTH = 400;
 const TRANSITION_TIME = 400;
 
 const ActionItemWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   height: 100%;
   transition: width 0.15s ease;
@@ -94,7 +96,6 @@ const OuterWrapper = styled.div`
 `;
 
 const ActionItemContainer = styled.div`
-  height: 100%;
   max-height: 275px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -803,7 +804,6 @@ const ActionItems = () => {
 
   const [forceOpen, setForceOpen] = useState(false);
   useEffect(() => {
-    console.log(watching, previousState.current);
     // don't force open for pending transactions, but do for increase in any of the others (excluding suppressions)
     if (!!watching.find((x, i) => x > previousState.current[i])) {
       setForceOpen(true);
