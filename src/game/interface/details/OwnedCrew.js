@@ -37,6 +37,7 @@ const Container = styled.div`
   flex-direction: column;
   height: 100%;
   padding: 0 30px;
+  transition: opacity 250ms ease;
 
   @media (min-width: 1024px) and (max-width: 1600px) {
     padding: 0;
@@ -460,6 +461,7 @@ const OwnedCrew = (props) => {
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
+  const interfaceHidden = useStore(s => s.graphics.hideInterface);
 
   const { crewRecruitmentStoryId, crewRecruitmentSessionId } = crewAssignmentData || {};
 
@@ -590,7 +592,7 @@ const OwnedCrew = (props) => {
 
   const handleActiveCrewHeight = useCallback(() => {
     if (activeCrewContainer.current) {
-      setActiveCrewHeight(activeCrewContainer.current.clientHeight);
+      setActiveCrewHeight(activeCrewContainer.current.clientHeight || 0);
     }
   }, []);
 
@@ -667,11 +669,11 @@ const OwnedCrew = (props) => {
   }, [width]);
 
   useEffect(() => {
-    if (isDataLoading) return;
+    if (isDataLoading || interfaceHidden) return;
     setTimeout(handleActiveCrewHeight, 0);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [height, handleActiveCrewHeight, isDataLoading, inactiveCrew?.length > 0]);
+  }, [height, handleActiveCrewHeight, isDataLoading, inactiveCrew?.length > 0, interfaceHidden]);
 
   const clickOverlay = useMemo(() => ({
     alwaysOn: ['button','icon'],
@@ -688,7 +690,7 @@ const OwnedCrew = (props) => {
     <Details title="Owned Crew" width="max">
       {!(crew?.length > 0 && crewRecruitmentStoryId) && <Loader />}
       {crew?.length > 0 && crewRecruitmentStoryId && (
-        <Container>
+        <Container style={{ opacity: activeCrewHeight > 0 ? 1 : 0 }}>
           <Title>
             {crewCredits?.length > 0 && <CrewCredits><CheckIcon /> {crewCredits?.length} credit{crewCredits?.length === 1 ? '' : 's'} remaining</CrewCredits>}
             <h3>
