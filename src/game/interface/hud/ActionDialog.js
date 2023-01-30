@@ -55,6 +55,18 @@ const ActionDialog = ({ type, params }) => {
     onClose: () => setAction(),
   }), [params, locParams, setAction]);
 
+  useEffect(() => {
+    const onKeyUp = (e) => {
+      if (e.key === 'Escape' || e.which === 32) {
+        setAction();
+      }
+    };
+    document.addEventListener('keyup', onKeyUp);
+    return () => {
+      document.removeEventListener('keyup', onKeyUp);
+    }
+  }, []);
+
   return (
     <Dialog backdrop="rgba(30, 30, 35, 0.5)" opaque>
       {isLoading && (
