@@ -130,10 +130,12 @@ const getInvalidations = (event, returnValues, linked) => {
         ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
       Inventory_ReservedChanged: [
-        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
+        ['asteroidCrewPlots',  getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Crew').i],
       ],
       Inventory_Changed: [
-        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
+        ['asteroidCrewPlots',  getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Crew').i],
       ],
       // TODO: update crew and asteroid events to use Dispatcher_* events where possible
       // TODO: would be nice if the cached plot collections was somehow a collection of ['plots', asteroid.i, plot.i], so when we invalidate the relevant lot, the "collection" is updated
@@ -197,11 +199,11 @@ export function EventsProvider({ children }) {
     setTimeout(() => {
       transformedEvents.forEach(e => {
         if (!skipInvalidations) {
-          // console.log('e.event', e.event);
           const invalidations = [
             ...getInvalidations(e.event, e.returnValues, e.linked),
             ...(e.invalidations || [])
           ];
+          // console.log('e.event', e.event, invalidations);
 
           // console.log(e.event, e.returnValues, invalidations);
           invalidations.forEach((queryKey) => {
