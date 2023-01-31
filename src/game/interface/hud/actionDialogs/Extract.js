@@ -105,7 +105,6 @@ const Extract = ({ asteroid, plot, ...props }) => {
     return Extraction.getExtractionTime(
       amount,
       selectedCoreSample.remainingYield || 0,
-      selectedCoreSample.initialYield || 0,
       extractionBonus.totalBonus || 1
     );
   }, [amount, extractionBonus, selectedCoreSample]);
@@ -118,6 +117,7 @@ const Extract = ({ asteroid, plot, ...props }) => {
   //     { label: 'Return from destination', plot: 1 },
   //   ]);
   // }, [asteroid?.i, plot?.i, crewTravelBonus]);
+
   const crewTravelTime = 0;
   const tripDetails = null;
 

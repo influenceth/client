@@ -230,9 +230,9 @@ export function generateEmissiveMap(chunkParams, emissiveParams, returnType = 'b
       uOversampling: { type: 'b', value: chunkParams.oversample },
       uResolution: { type: 'f', value: chunkParams.chunkResolution },
       uTransform: { type: 'mat4', value: chunkParams.cubeTransform },
-      uLowerCutoff: { type: 'f', value: emissiveParams.lowerCutoff },
-      uUpperCutoff: { type: 'f', value: emissiveParams.upperCutoff },
+      uAbundance: { type: 'f', value: emissiveParams.abundance },
       uOctaves: { type: 'i', value: emissiveParams.octaves },
+      uPolyParams: { type: 'fv1', value: emissiveParams.polyParams },
       uPers: { type: 'f', value: emissiveParams.persistence },
       uPointScale: { type: 'f', value: emissiveParams.pointScale },
       uPointShift: { type: 'v3', value: emissiveParams.pointShift }

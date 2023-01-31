@@ -20,14 +20,35 @@ float recursiveSNoise(vec3 p, float pers, int octaves) {
   return total / maxValue;
 }
 
+float polyFit(float noise) {
+  float x = noise;
+  float y = uPolyParams[0];
+  y += uPolyParams[1] * x;
+  x = x * noise;
+  y += uPolyParams[2] * x;
+  x = x * noise;
+  y += uPolyParams[3] * x;
+  x = x * noise;
+  y += uPolyParams[4] * x;
+  x = x * noise;
+  y += uPolyParams[5] * x;
+  x = x * noise;
+  y += uPolyParams[6] * x;
+  x = x * noise;
+  y += uPolyParams[7] * x;
+  return clamp(y, 0.0, 1.0);
+}
+
 float getAbundance(vec3 point) {
   point = point * uPointScale + uPointShift;
   float noise = normalizeNoise(recursiveSNoise(point, 0.5, uOctaves));
 
-  // Scale noise value between cutoff and the upper cutoff and return
-  float above_cutoff = step(uLowerCutoff, noise);
-  float scaled = (noise - uLowerCutoff) / (uUpperCutoff - uLowerCutoff);
-  float abundance = min(scaled * above_cutoff, 1.0); // clamp to a max of 1.0
+  // Get percentile of noise, scale and clamp to [0,1] and adjust by floor abundance
+  float percentile = noise = polyFit(noise);
+  float abundance = clamp((percentile + uAbundance - 1.0) / uAbundance, 0.0, 1.0);
+  float floorAbundance = uAbundance / 2.0;
+  abundance = abundance * (1.0 - floorAbundance) + floorAbundance;
+
   return abundance;
 }
 
