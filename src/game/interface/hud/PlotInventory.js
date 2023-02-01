@@ -143,7 +143,7 @@ const PlotInventory = ({ active }) => {
       <InnerWrapper>
         <div style={{ paddingBottom: 10 }}>
           <StorageTotal>
-            <label>In Use:</label>
+            <label>Stored:</label>
             <span>
               <b>{activeUse > 0 && activeUse < 0.05 ? '> ' : ''}{formatFixed(activeUse, 1)}</b> / {Inventory.CAPACITIES[1][1][massOrVolume || 'mass'].toLocaleString()}{' '}
               {massOrVolume === 'volume' ? <>m<sup>3</sup></> : 'tonnes'}
