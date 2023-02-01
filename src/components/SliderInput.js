@@ -53,31 +53,31 @@ const SliderInput = ({ min = 0, max = 1, increment = 1, value, onChange }) => {
   const sliderRef = useRef();
   const updating = useRef(false);
 
-  const percentage = useMemo(() => (value - min) / (max - min), [value, min, max]);
-
-  const mouseHandler = useCallback((e) => {
-    if (e.type === 'mousedown') {
-      updating.current = true;
-    }
-    if (updating.current && e.offsetX !== undefined) {
-      onChange(Math.min(Math.max(min, min + (e.offsetX / sliderRef.current.offsetWidth) * (max - min)), max));
-    }
-    if (e.type === 'mouseup' || e.type === 'mouseleave') {
-      updating.current = false;
-    }
-  }, [min, max]);
-
-  const keyHandler = useCallback((e) => {
-    let incr = 0;
-    if (e.code === 'ArrowLeft') incr = -increment;
-    if (e.code === 'ArrowRight') incr = increment;
-    if (incr !== 0) {
-      if (max - min === 1) incr *= 0.01;
-      onChange((v) => Math.min(Math.max(min, v + incr), max));
-    }
-  }, [value]);
+  const percentage = useMemo(() => (value - min) / (max - min), [value, min, max]) || 0;
 
   useEffect(() => {
+    const mouseHandler = (e) => {
+      if (e.type === 'mousedown') {
+        updating.current = true;
+      }
+      if (updating.current && e.offsetX !== undefined) {
+        onChange(Math.min(Math.max(min, min + (e.offsetX / sliderRef.current.offsetWidth) * (max - min)), max));
+      }
+      if (e.type === 'mouseup' || e.type === 'mouseleave') {
+        updating.current = false;
+      }
+    };
+
+    const keyHandler = (e) => {
+      let incr = 0;
+      if (e.code === 'ArrowLeft') incr = -increment;
+      if (e.code === 'ArrowRight') incr = increment;
+      if (incr !== 0) {
+        if (max - min === 1) incr *= 0.01;
+        onChange((v) => Math.min(Math.max(min, v + incr), max));
+      }
+    };
+
     sliderRef.current.addEventListener('mousedown', mouseHandler);
     sliderRef.current.addEventListener('mouseleave', mouseHandler);
     sliderRef.current.addEventListener('mousemove', mouseHandler);
@@ -92,7 +92,7 @@ const SliderInput = ({ min = 0, max = 1, increment = 1, value, onChange }) => {
       }
       window.removeEventListener('keydown', keyHandler);
     }
-  }, [keyHandler, mouseHandler]);
+  }, [increment, min, max]);
 
   return (
     <Wrapper>
