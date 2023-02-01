@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import { Capable, Construction, CoreSample, Extraction, Inventory } from '@influenceth/sdk';
 
@@ -85,71 +85,82 @@ const CoreSampleMouseover = ({ building, children, coreSamples }) => {
     setOpen((o) => !o);
   });
 
+  // this is to accomodate initial transitions in the HUD so that we know the popper position is onscreen/valid
+  // (b/c otherwise, it will default to top-left corner of screen, i.e. if refresh page with lot already selected)
+  const [display, setDisplay] = useState(false);
+  useEffect(() => {
+    setTimeout(() => {
+      setDisplay(true);
+    }, 250);
+  }, [])
+
   return (
     <>
-      <MouseoverInfoPane css={mouseoverCss} referenceEl={refEl.current} visible={open}>
-        <ReactTooltip id="coreSampleMouseover" effect="solid" />
-        <CoreSampleTable
-          style={open ? {} : { display: 'none' }}
-          onClick={(e) => { e.stopPropagation(); return false; }}
-          onMouseLeave={() => setOpen(false)}>
-          <thead>
-            <tr>
-              <th>Core Samples</th>
-              <td>Deposit Yield</td>
-              <td>Remaining</td>
-              <td>Status</td>
-              <td></td>
-            </tr>
-          </thead>
-          <tbody>
-            {coreSamples.map((cs) => {
-              return (
-                <tr key={`${cs.resourceId}_${cs.sampleId}`}>
-                  <td>
-                    <ResourceColorIcon category={Inventory.RESOURCES[cs.resourceId].category} />
-                    {Inventory.RESOURCES[cs.resourceId].name} #{cs.sampleId.toLocaleString()}
-                  </td>
-                  <td>{cs.initialYield ? `${formatFixed(cs.initialYield * 1e-3, 1)} tonnes` : 'Not yet known'}</td>
-                  <td>{(cs.initialYield ? (100 * cs.remainingYield / cs.initialYield) : 100).toFixed(1)}%</td>
-                  <StatusCell status={
-                    cs.status === CoreSample.STATUS_USED
-                      ? (cs.remainingYield > 0 ? 'Utilized' : 'Depleted')
-                      : (cs.status === CoreSample.STATUS_FINISHED ? 'Ready' : 'Sampling')
-                  } />
-                  <td>
-                    <div style={{ display: 'flex'}}>
-                      <IconButtonRounded
-                        data-for="coreSampleMouseover"
-                        data-place="left"
-                        data-tip="Improve Sample"
-                        disabled={cs.status !== CoreSample.STATUS_FINISHED}
-                        onClick={onClickImprove(cs)}
-                        style={{ padding: 4, marginRight: 4 }}>
-                        <ImproveCoreSampleIcon />
-                      </IconButtonRounded>
-                      {Capable.TYPES[building?.capableType]?.name === 'Extractor'
-                        && building?.construction?.status === Construction.STATUS_OPERATIONAL
-                        && (
-                          <IconButtonRounded
-                            data-for="coreSampleMouseover"
-                            data-place="left"
-                            data-tip="Use for Extraction"
-                            disabled={building.extraction?.status === Extraction.STATUS_EXTRACTING || cs.status < CoreSample.STATUS_FINISHED || cs.remainingYield === 0}
-                            onClick={onClickExtract(cs)}
-                            style={{ padding: 4 }}>
-                            <ExtractionIcon />
-                          </IconButtonRounded>
-                        )
-                      }
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}  
-          </tbody>
-        </CoreSampleTable>
-      </MouseoverInfoPane>
+      {display && (
+        <MouseoverInfoPane css={mouseoverCss} referenceEl={refEl.current} visible={open}>
+          <ReactTooltip id="coreSampleMouseover" effect="solid" />
+          <CoreSampleTable
+            style={open ? {} : { display: 'none' }}
+            onClick={(e) => { e.stopPropagation(); return false; }}
+            onMouseLeave={() => setOpen(false)}>
+            <thead>
+              <tr>
+                <th>Core Samples</th>
+                <td>Deposit Yield</td>
+                <td>Remaining</td>
+                <td>Status</td>
+                <td></td>
+              </tr>
+            </thead>
+            <tbody>
+              {coreSamples.map((cs) => {
+                return (
+                  <tr key={`${cs.resourceId}_${cs.sampleId}`}>
+                    <td>
+                      <ResourceColorIcon category={Inventory.RESOURCES[cs.resourceId].category} />
+                      {Inventory.RESOURCES[cs.resourceId].name} #{cs.sampleId.toLocaleString()}
+                    </td>
+                    <td>{cs.initialYield ? `${formatFixed(cs.initialYield * 1e-3, 1)} tonnes` : 'Not yet known'}</td>
+                    <td>{(cs.initialYield ? (100 * cs.remainingYield / cs.initialYield) : 100).toFixed(1)}%</td>
+                    <StatusCell status={
+                      cs.status === CoreSample.STATUS_USED
+                        ? (cs.remainingYield > 0 ? 'Utilized' : 'Depleted')
+                        : (cs.status === CoreSample.STATUS_FINISHED ? 'Ready' : 'Sampling')
+                    } />
+                    <td>
+                      <div style={{ display: 'flex'}}>
+                        <IconButtonRounded
+                          data-for="coreSampleMouseover"
+                          data-place="left"
+                          data-tip="Improve Sample"
+                          disabled={cs.status !== CoreSample.STATUS_FINISHED}
+                          onClick={onClickImprove(cs)}
+                          style={{ padding: 4, marginRight: 4 }}>
+                          <ImproveCoreSampleIcon />
+                        </IconButtonRounded>
+                        {Capable.TYPES[building?.capableType]?.name === 'Extractor'
+                          && building?.construction?.status === Construction.STATUS_OPERATIONAL
+                          && (
+                            <IconButtonRounded
+                              data-for="coreSampleMouseover"
+                              data-place="left"
+                              data-tip="Use for Extraction"
+                              disabled={building.extraction?.status === Extraction.STATUS_EXTRACTING || cs.status < CoreSample.STATUS_FINISHED || cs.remainingYield === 0}
+                              onClick={onClickExtract(cs)}
+                              style={{ padding: 4 }}>
+                              <ExtractionIcon />
+                            </IconButtonRounded>
+                          )
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}  
+            </tbody>
+          </CoreSampleTable>
+        </MouseoverInfoPane>
+      )}
       {children({ refEl, onToggle })}
     </>
   );

@@ -58,9 +58,12 @@ const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
     }
   }
 
-  // TODO: sometimes the improve dialog
   const handleClick = useCallback(() => {
-    onSetAction('NEW_CORE_SAMPLE', resourceId ? { resourceId } : undefined);
+    if (currentSample && !currentSample.isNew) {
+      onSetAction('IMPROVE_CORE_SAMPLE');
+    } else {
+      onSetAction('NEW_CORE_SAMPLE', resourceId ? { resourceId } : undefined);
+    }
   }, [currentSample, onSetAction, resourceId]);
 
   // const badge = (currentSample?.isNew && samplingStatus === 'READY_TO_FINISH') ? '✓' : 0;
