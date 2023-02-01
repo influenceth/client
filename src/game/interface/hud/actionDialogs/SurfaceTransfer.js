@@ -131,7 +131,7 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
   }, [originInvId, originPlot?.building?.inventories]);
 
   const onStartDelivery = useCallback(() => {
-    let destCapacityRemaining = Inventory.CAPACITIES[destinationPlot?.building?.capableType][destInvId];
+    let destCapacityRemaining = { ...Inventory.CAPACITIES[destinationPlot?.building?.capableType][destInvId] };
     if (destinationPlot?.building?.inventories && destinationPlot?.building?.inventories[destInvId]) {
       // Capacities are in tonnes and cubic meters, Inventories are in grams and mLs
       destCapacityRemaining.mass -= 1e-6 * ((destinationPlot.building.inventories[destInvId].mass || 0) + (destinationPlot.building.inventories[destInvId].reservedMass || 0));
