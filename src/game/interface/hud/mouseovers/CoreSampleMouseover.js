@@ -110,8 +110,8 @@ const CoreSampleMouseover = ({ building, children, coreSamples }) => {
                     <ResourceColorIcon category={Inventory.RESOURCES[cs.resourceId].category} />
                     {Inventory.RESOURCES[cs.resourceId].name} #{cs.sampleId.toLocaleString()}
                   </td>
-                  <td>{formatFixed(cs.initialYield * 1e-3, 1)} tonnes</td>
-                  <td>{(100 * cs.remainingYield / cs.initialYield).toFixed(1)}%</td>
+                  <td>{cs.initialYield ? `${formatFixed(cs.initialYield * 1e-3, 1)} tonnes` : 'Not yet known'}</td>
+                  <td>{(cs.initialYield ? (100 * cs.remainingYield / cs.initialYield) : 100).toFixed(1)}%</td>
                   <StatusCell status={
                     cs.status === CoreSample.STATUS_USED
                       ? (cs.remainingYield > 0 ? 'Utilized' : 'Depleted')
