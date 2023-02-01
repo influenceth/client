@@ -197,11 +197,11 @@ export function EventsProvider({ children }) {
     setTimeout(() => {
       transformedEvents.forEach(e => {
         if (!skipInvalidations) {
-          // console.log('e.event', e.event);
           const invalidations = [
             ...getInvalidations(e.event, e.returnValues, e.linked),
             ...(e.invalidations || [])
           ];
+          // console.log('e.event', e.event, invalidations, e);
 
           // console.log(e.event, e.returnValues, invalidations);
           invalidations.forEach((queryKey) => {
@@ -232,7 +232,7 @@ export function EventsProvider({ children }) {
             // // // // //
 
             if (!optimisticUpdate) {
-              queryClient.invalidateQueries(...queryKey);
+              queryClient.invalidateQueries([...queryKey]);
             }
           });
         }

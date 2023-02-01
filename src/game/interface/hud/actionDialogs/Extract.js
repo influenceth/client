@@ -68,10 +68,18 @@ const Extract = ({ asteroid, plot, ...props }) => {
   }, []);
 
   useEffect(() => {
-    if (usableSamples.length === 1 && !selectedCoreSample && !currentExtraction) {
-      selectCoreSample(usableSamples[0]);
+    let defaultSelection;
+    if (!currentExtraction && !selectedCoreSample) {
+      if (props.preselect) {
+        defaultSelection = usableSamples.find((s) => s.resourceId === props.preselect.resourceId && s.sampleId === props.preselect.sampleId);
+      } else if (usableSamples.length === 1) {
+        defaultSelection = usableSamples[0];
+      }
+      if (defaultSelection) {
+        selectCoreSample(defaultSelection);
+      }
     }
-  }, [!selectedCoreSample, usableSamples]);
+  }, [!currentExtraction, !selectedCoreSample, usableSamples]);
 
   // handle "currentExtraction" state
   useEffect(() => {
