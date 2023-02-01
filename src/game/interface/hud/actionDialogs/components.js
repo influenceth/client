@@ -10,7 +10,7 @@ import {
   BsChevronDoubleUp as ChevronDoubleUpIcon,
 } from 'react-icons/bs';
 import { RingLoader, PuffLoader } from 'react-spinners';
-import { Asteroid, Construction, Crewmate, Inventory, Lot } from '@influenceth/sdk';
+import { Asteroid, Construction, Crewmate, Inventory } from '@influenceth/sdk';
 
 import Button from '~/components/ButtonAlt';
 import ButtonRounded from '~/components/ButtonRounded';
@@ -34,44 +34,11 @@ import Poppable from '~/components/Popper';
 import SliderInput from '~/components/SliderInput';
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
-import useInterval from '~/hooks/useInterval';
 import theme from '~/theme';
 import useChainTime from '~/hooks/useChainTime';
 import { formatFixed, formatTimer } from '~/lib/utils';
 import LiveTimer from '~/components/LiveTimer';
 import NavIcon from '~/components/NavIcon';
-
-// TODO: remove this after sdk updated
-Inventory.CAPACITIES = {
-  1: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 },
-    1: { name: 'Storage', mass: 1500000, volume: 75000 }
-  },
-  2: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  3: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  4: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  5: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  6: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  7: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  8: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  9: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  }
-};
 
 const borderColor = '#333';
 
@@ -1105,7 +1072,7 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
         )
       ))
       .map((plot) => {
-        const capacity = Inventory.CAPACITIES[plot.building.capableType][inventoryType];
+        const capacity = { ...Inventory.CAPACITIES[plot.building.capableType][inventoryType] };
 
         const inventory = (plot.building?.inventories || {})[inventoryType];
         const usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0)) / 1e6;
