@@ -659,7 +659,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   const assets = assetType === 'Building' ? buildings.filter((b, i) => i < 3) : resources;
   const singleModel = plotZoomMode || Number(paramModel);
 
-  const [devtoolsEnabled, setDevtoolsEnabled] = useState();
+  const [devtoolsEnabled, setDevtoolsEnabled] = useState(true);
   const [model, setModel] = useState();
   const [bgOverride, setBgOverride] = useState();
   const [bgOverrideName, setBgOverrideName] = useState();
