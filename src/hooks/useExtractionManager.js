@@ -30,10 +30,11 @@ const useExtractionManager = (asteroidId, plotId) => {
       sampleId: null,
       startTime: null,
       yield: null,
+      isCoreSampleUpdated: false
     };
   
     let status = 'READY';
-    if (plot?.building?.extraction) {
+    if (plot?.building?.extraction?.status === Extraction.STATUS_EXTRACTING) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_ExtractionStart'
         && item.event.returnValues.asteroidId === asteroidId
@@ -49,25 +50,24 @@ const useExtractionManager = (asteroidId, plotId) => {
       current.resourceId = plot.building.extraction.resourceId;
       current.startTime = plot.building.extraction.startTime;
       current.yield = plot.building.extraction.yield;
-
-      if (plot.building.extraction.status === Extraction.STATUS_EXTRACTING) {
-        if(getStatus('FINISH_EXTRACTION', payload) === 'pending') {
-          status = 'FINISHING';
-        } else if (plot.building.extraction.completionTime && plot.building.extraction.completionTime < chainTime) {
-          status = 'READY_TO_FINISH';
-        } else {
-          status = 'EXTRACTING';
-        }
+      current.isCoreSampleUpdated = true;
+      
+      if(getStatus('FINISH_EXTRACTION', payload) === 'pending') {
+        status = 'FINISHING';
+      } else if (plot.building.extraction.completionTime && plot.building.extraction.completionTime < chainTime) {
+        status = 'READY_TO_FINISH';
       } else {
-        const startTx = getPendingTx('START_EXTRACTION', payload);
-        if (startTx) {
-          current.destinationLotId = startTx.vars.destinationLotId;
-          current.destinationInventoryId = startTx.vars.destinationInventoryId;
-          current.resourceId = startTx.vars.resourceId;
-          current.sampleId = startTx.vars.sampleId;
-          current.yield = startTx.vars.amount;
-          status = 'EXTRACTING';
-        }
+        status = 'EXTRACTING';
+      }
+    } else {
+      const startTx = getPendingTx('START_EXTRACTION', payload);
+      if (startTx) {
+        current.destinationLotId = startTx.vars.destinationLotId;
+        current.destinationInventoryId = startTx.vars.destinationInventoryId;
+        current.resourceId = startTx.vars.resourceId;
+        current.sampleId = startTx.vars.sampleId;
+        current.yield = startTx.vars.amount;
+        status = 'EXTRACTING';
       }
     }
 

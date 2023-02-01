@@ -1059,7 +1059,7 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
         )
       ))
       .map((plot) => {
-        const capacity = Inventory.CAPACITIES[plot.building.capableType][inventoryType];
+        const capacity = { ...Inventory.CAPACITIES[plot.building.capableType][inventoryType] };
 
         const inventory = (plot.building?.inventories || {})[inventoryType];
         const usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0)) / 1e6;

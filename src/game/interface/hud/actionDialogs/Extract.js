@@ -87,7 +87,10 @@ const Extract = ({ asteroid, plot, ...props }) => {
       if (plot?.coreSamples) {
         const currentSample = plot.coreSamples.find((c) => c.resourceId === currentExtraction.resourceId && c.sampleId === currentExtraction.sampleId);
         if (currentSample) {
-          setSelectedCoreSample(currentSample);
+          setSelectedCoreSample({
+            ...currentSample,
+            remainingYield: currentSample.remainingYield + (currentExtraction.isCoreSampleUpdated ? currentExtraction.yield : 0)
+          });
           setAmount(currentExtraction.yield);
         }
       }
@@ -110,8 +113,7 @@ const Extract = ({ asteroid, plot, ...props }) => {
     return Extraction.getExtractionTime(
       amount,
       selectedCoreSample.remainingYield || 0,
-      selectedCoreSample.initialYield || 0,
-      extractionBonus.totalBonus
+      extractionBonus.totalBonus || 1
     );
   }, [amount, extractionBonus, selectedCoreSample]);
 
@@ -123,6 +125,7 @@ const Extract = ({ asteroid, plot, ...props }) => {
   //     { label: 'Return from destination', plot: 1 },
   //   ]);
   // }, [asteroid?.i, plot?.i, crewTravelBonus]);
+
   const crewTravelTime = 0;
   const tripDetails = null;
 
@@ -206,7 +209,7 @@ const Extract = ({ asteroid, plot, ...props }) => {
 
   const onStartExtraction = useCallback(() => {
     const destInvId = 1;
-    let destCapacityRemaining = Inventory.CAPACITIES[destinationPlot?.building?.capableType][destInvId];
+    let destCapacityRemaining = { ...Inventory.CAPACITIES[destinationPlot?.building?.capableType][destInvId] };
     if (destinationPlot?.building?.inventories && destinationPlot?.building?.inventories[destInvId]) {
       // Capacities are in tonnes and cubic meters, Inventories are in grams and mLs
       destCapacityRemaining.mass -= 1e-6 * ((destinationPlot.building.inventories[destInvId].mass || 0) + (destinationPlot.building.inventories[destInvId].reservedMass || 0));
@@ -233,7 +236,7 @@ const Extract = ({ asteroid, plot, ...props }) => {
   const lastStatus = useRef();
   useEffect(() => {
     // (close on status change from)
-    if (['READY', 'READY_TO_FINISH'].includes(lastStatus.current)) {
+    if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
       if (extractionStatus !== lastStatus.current) {
         props.onClose();
       }
