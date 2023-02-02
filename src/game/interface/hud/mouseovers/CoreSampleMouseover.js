@@ -91,7 +91,7 @@ const CoreSampleMouseover = ({ building, children, coreSamples }) => {
   useEffect(() => {
     setTimeout(() => {
       setDisplay(true);
-    }, 250);
+    }, 500);
   }, [])
 
   return (
