@@ -282,9 +282,16 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
   useEffect(() => {
     if (token && wsReady) {
       let roomName = `Asteroid::${asteroidId}`;
-      registerWSHandler(handleWSMessage, roomName)
+      registerWSHandler(handleWSMessage, roomName);
       return () => {
-        unregisterWSHandler(roomName)
+        unregisterWSHandler(roomName);
+
+        // since will not be listening to asteroid room when zoomed away, remove ['asteroidPlots', asteroidId]
+        // and all ['plots', asteroidId, *] that are not occupied by me when I navigate away from the asteroid
+        queryClient.removeQueries({ queryKey: [ 'asteroidPlots', asteroidId ] });
+        queryClient.getQueriesData(['plots', asteroidId])
+          .filter(([ queryKey, data ]) => data && data.occupier !== crew?.i)
+          .forEach(([ queryKey ]) => { queryClient.removeQueries({ queryKey }); });
       }
     }
   }, [token, handleWSMessage, wsReady]);
