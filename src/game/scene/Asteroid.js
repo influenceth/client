@@ -107,7 +107,7 @@ const frameTimeLeft = (start, chunkSwapPending) => {
 const EMISSIVE_INTENSITY = {
   Fissile: 1,
   Metal: 1,
-  Organic: 1.2,
+  Organic: 1.05,
   RareEarth: 1,
   Volatile: 1.25
 };
@@ -512,6 +512,15 @@ const Asteroid = (props) => {
     controls.rotateSpeed = Math.min(1.5, 1.5 * thetaAcrossScreen / 2);
   }, [cameraAltitude, frustumHeightMult]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const getClosestChunk = useCallback((cameraPosition) => {
+    if (!geometry.current?.chunks) return null;
+    const [closestChunk] = Object.values(geometry.current.chunks).reduce((acc, c) => {
+      const distance = c.sphereCenter.distanceTo(cameraPosition);
+      return (acc.length === 0 || distance < acc[1]) ? [c, distance] : acc;
+    }, []);
+    return closestChunk;
+  }, []);
+
   // NOTE: in theory, all distances between sphereCenter's to camera are calculated
   //       in quadtree calculation and could be passed back here, so would be more
   //       performant to re-use that BUT that is also outdated as the camera moves
@@ -519,15 +528,12 @@ const Asteroid = (props) => {
   // NOTE: raycasting technically *might* be more accurate here, but it's way less performant
   //       (3ms+ for just closest mesh... if all quadtree children, closer to 20ms)
   const applyingZoomLimits = useRef(0);
-  const applyZoomLimits = useCallback((cameraPosition, chunks) => {
+  const applyZoomLimits = useCallback((cameraPosition) => {
     if (!config?.radius) return;
     applyingZoomLimits.current = true;
     setTimeout(() => {
-      // vvv BENCHMARK <1ms (even zoomed-in on huge)
-      const [closestChunk, closestDistance] = chunks.reduce((acc, c) => { // eslint-disable-line no-unused-vars
-        const distance = c.sphereCenter.distanceTo(cameraPosition);
-        return (!acc || distance < acc[1]) ? [c, distance] : acc;
-      }, null);
+      const closestChunk = getClosestChunk(cameraPosition);
+      if (!closestChunk) return;
 
       const minDistance = Math.min(
         config?.radius * MIN_ZOOM_DEFAULT,  // for smallest asteroids to match legacy (where this > min surface distance)
@@ -659,20 +665,36 @@ const Asteroid = (props) => {
   // }, [controls, config?.radius]);
 
   useEffect(() => {
-    if (selectedPlot && zoomedIntoAsteroidId === selectedPlot?.asteroidId && config?.radiusNominal && zoomStatus === 'in') {
+    if (selectedPlot && zoomedIntoAsteroidId === selectedPlot?.asteroidId && config?.radiusNominal && zoomStatus === 'in' && terrainInitialized) {
       const plotTally = Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2);
       if (plotTally < selectedPlot.plotId) { selectPlot(); return; }
+
+      const currentCameraHeight = controls.object.position.length();
+
       let plotPosition = AsteroidLib.getLotPosition(selectedPlot.asteroidId, selectedPlot.plotId, plotTally);
       plotPosition = new Vector3(...plotPosition);
       plotPosition.multiply(config.stretch);
-      plotPosition.setLength(Math.min(1.5 * config?.radius, controls.object.position.length()));
+      plotPosition.setLength(currentCameraHeight);
       plotPosition.applyAxisAngle(rotationAxis.current, rotation.current);
+
+      // if farther than 12500 out, adjust in to altitude of 5000
+      // if closer than surfaceDistance, adjust out to altitude of surfaceDistance
+      // else, will just reuse camera height
+      const closestChunk = getClosestChunk(plotPosition);
+      if (closestChunk) {
+        const predictedAltitude = currentCameraHeight - closestChunk.sphereCenterHeight;
+        if (predictedAltitude > 12500) {
+          plotPosition.setLength(closestChunk.sphereCenterHeight + 5000);
+        } else if(predictedAltitude < surfaceDistance) {
+          plotPosition.setLength(closestChunk.sphereCenterHeight + 1.25 * surfaceDistance);
+        }
+      }
 
       gsap
         .timeline({ defaults: { duration: 0.7, ease: 'power4.out' } })
         .to(controls.object.position, { ...plotPosition });
     }
-  }, [zoomedIntoAsteroidId, origin, selectedPlot, config?.radiusNominal, zoomStatus]);
+  }, [zoomedIntoAsteroidId, origin, selectedPlot, config?.radiusNominal, terrainInitialized, zoomStatus]);
 
   useEffect(() => {
     if (!cameraNeedsReorientation) return;
@@ -815,7 +837,7 @@ const Asteroid = (props) => {
         }
       } else {
         // vvv BENCHMARK <0.1ms
-        applyZoomLimits(rotatedCameraPosition, Object.values(geometry.current.chunks));
+        applyZoomLimits(rotatedCameraPosition);
         // ^^^
       }
     }
