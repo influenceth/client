@@ -64,7 +64,10 @@ const Extract = ({ asteroid, plot, ...props }) => {
 
   const selectCoreSample = useCallback((sample) => {
     setSelectedCoreSample(sample);
-    setAmount(sample.remainingYield);
+    setAmount(0);
+    setTimeout(() => {
+      setAmount(sample.remainingYield);
+    }, 0);
   }, []);
 
   useEffect(() => {

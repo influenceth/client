@@ -1785,7 +1785,7 @@ export const DeconstructionMaterialsSection = ({ label, resources, status }) => 
   );
 };
 
-export const ExtractionAmountSection = ({ extractionTime, min, max, amount, resource, setAmount }) => {
+export const ExtractionAmountSection = ({ amount, extractionTime, min, max, resource, setAmount }) => {
   const tonnage = useMemo(() => amount * resource?.massPerUnit || 0, [amount, resource]);
   return (
     <Section>
@@ -2225,7 +2225,7 @@ export const formatSampleVolume = (volume) => {
 
 export const getBonusDirection = ({ totalBonus }, biggerIsBetter = true) => {
   if (totalBonus === 1) return 0;
-  return (biggerIsBetter === totalBonus > 1) ? 1 : -1;
+  return (biggerIsBetter === (totalBonus > 1)) ? 1 : -1;
 };
 
 export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps) => {
