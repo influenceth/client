@@ -1,10 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import {
-  // FiCrosshair as TargetIcon,
-  FiSquare as UncheckedIcon,
-  FiCheckSquare as CheckedIcon
-} from 'react-icons/fi';
+import { FiCrosshair as TargetIcon } from 'react-icons/fi';
 import {
   BsChevronDoubleDown as ChevronDoubleDownIcon,
   BsChevronDoubleUp as ChevronDoubleUpIcon,
@@ -13,7 +9,7 @@ import { RingLoader, PuffLoader } from 'react-spinners';
 import { Asteroid, Construction, Crewmate, Inventory } from '@influenceth/sdk';
 
 import Button from '~/components/ButtonAlt';
-import ButtonRounded from '~/components/ButtonRounded';
+import ButtonRounded, { IconButtonRounded } from '~/components/ButtonRounded';
 import CrewCard from '~/components/CrewCard';
 import IconButton from '~/components/IconButton';
 import {
@@ -31,12 +27,13 @@ import {
 } from '~/components/Icons';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import Poppable from '~/components/Popper';
+import ResourceColorIcon from '~/components/ResourceColorIcon';
 import SliderInput from '~/components/SliderInput';
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
 import theme from '~/theme';
 import useChainTime from '~/hooks/useChainTime';
-import { formatFixed, formatTimer } from '~/lib/utils';
+import { formatFixed, formatTimer, keyify } from '~/lib/utils';
 import LiveTimer from '~/components/LiveTimer';
 import NavIcon from '~/components/NavIcon';
 
@@ -530,14 +527,6 @@ const InventoryUtilization = styled(ResourceProgress)`
   }
 `;
 
-const IconButtonRounded = styled(ButtonRounded)`
-  padding: ${p => p.flatter ? '4px 16px' : '10px'};
-  & > svg {
-    font-size: ${p => p.flatter ? 'initial' : '20px'};
-    margin-right: 0;
-  }
-`;
-
 const SliderLabel = styled.div`
   margin-bottom: -4px;
   & > b {
@@ -726,6 +715,12 @@ const PoppableTitle = styled.div`
     margin: 0;
   }
 `;
+const PoppableTableRow = styled.tr`
+  ${p => p.disabledRow && `
+    opacity: 0.33;
+    pointer-events: none;
+  `}
+`;
 const PoppableTableWrapper = styled.div`
   border: solid ${borderColor};
   border-width: 1px 0;
@@ -825,14 +820,6 @@ const QuantaInput = styled.input`
   font-family: inherit;
   text-align: right;
   width: 100px;
-`;
-const ResourceColorIcon = styled.div`
-  background-color: ${p => p.theme.colors.resources[p.category.replace(/[^a-zA-Z0-9]/g, '')]};
-  border-radius: 2px;
-  display: inline-block;
-  height: 10px;
-  margin-right: 4px;
-  width: 10px;
 `;
 
 const MouseoverContent = styled.div`
@@ -1123,7 +1110,7 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
                 ? theme.colors.error
                 : (inventory.fullness > 0.5 ? theme.colors.yellow : theme.colors.success);
               return (
-                <tr key={inventory.plot.i} onClick={onClick(inventory.plot)}>
+                <tr key={`${asteroid.i}_${inventory.plot.i}`} onClick={onClick(inventory.plot)}>
                   <td>Lot #{inventory.plot.i}</td>
                   <td>{formatFixed(inventory.distance, 1)} km</td>
                   <td>{inventory.type}</td>
@@ -1133,6 +1120,39 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
                 </tr>
               );
             })}
+          </tbody>
+        </table>
+      </PoppableTableWrapper>
+    </PopperBody>
+  );
+};
+
+const ResourceSelection = ({ abundances, onSelect, plotId, resources }) => {
+  const nonzeroAbundances = useMemo(() => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
+  return (
+    <PopperBody>
+      <PoppableTitle>
+        <h3>Lot #{(plotId || 0).toLocaleString()}</h3>
+        <div>{(nonzeroAbundances || 0).toLocaleString()} Available Resource{nonzeroAbundances === 1 ? '' : 's'}</div>
+      </PoppableTitle>
+      {/* TODO: replace with DataTable? */}
+      <PoppableTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>Resource</td>
+              <td>Abundance at Lot</td>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(abundances)
+              .sort((a, b) => abundances[b] - abundances[a])
+              .map((resourceId) => (
+              <PoppableTableRow key={`${resourceId}`} disabledRow={abundances[resourceId] === 0} onClick={onSelect(resourceId)}>
+                <td><ResourceColorIcon category={resources[resourceId].category} /> {resources[resourceId].name}</td>
+                <td>{(100 * abundances[resourceId]).toFixed(1)}%</td>
+              </PoppableTableRow>
+            ))}
           </tbody>
         </table>
       </PoppableTableWrapper>
@@ -1415,23 +1435,59 @@ export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, 
   );
 };
 
-export const RawMaterialSection = ({ abundance, resource, tonnage, status }) => {
+export const RawMaterialSection = ({ abundances, goToResourceMap, plotId, resourceId, resources, onSelectResource, tonnage, status }) => {
+  const [clicked, setClicked] = useState(0);
+  const onClick = useCallback((resourceId) => () => {
+    setClicked((x) => x + 1);
+    if (onSelectResource) onSelectResource(resourceId);
+  }, []);
+  const resource = resources[resourceId] || null;
+  const abundance = abundances[resourceId] || 0;
+
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Target Resource</SectionTitle>
       <SectionBody highlight={status === 'AFTER'}>
-        {resource && (
-          <ResourceWithData>
-            <ResourceImage resource={resource} />
-            <label>
-              {/* TODO: adding sampleId here might be most consistent with other dialogs */}
-              <h3>{resource.name}{tonnage !== undefined ? ' Deposit Discovered' : ''}</h3>
-              {tonnage !== undefined
-                ? <div><b><ResourceIcon /> {formatSampleMass(tonnage)}</b> tonnes</div>
-                : <div><b>{formatFixed(100 * abundance, 1)}%</b> Abundance at lot</div>
-              }
-            </label>
-          </ResourceWithData>
+        {resource
+          ? (
+            <ResourceWithData>
+              <ResourceImage resource={resource} />
+              <label>
+                {/* TODO: adding sampleId here might be most consistent with other dialogs */}
+                <h3>{resource.name}{tonnage !== undefined ? ' Deposit Discovered' : ''}</h3>
+                {tonnage !== undefined
+                  ? <div><b><ResourceIcon /> {formatSampleMass(tonnage)}</b> tonnes</div>
+                  : <div><b>{formatFixed(100 * abundance, 1)}%</b> Abundance at lot</div>
+                }
+              </label>
+            </ResourceWithData>
+          )
+          : (
+            <EmptyResourceWithData>
+              <EmptyResourceImage />
+              <label>
+                <div>Sample Resource</div>
+                <h3>Select</h3>
+              </label>
+            </EmptyResourceWithData>
+          )
+        }
+        {status === 'BEFORE' && (
+          <div style={{ display: 'flex' }}>
+            {goToResourceMap && (
+              <IconButtonRounded
+                data-for="actionDialog"
+                data-place="left"
+                data-tip="View Resource Map"
+                onClick={goToResourceMap}
+                style={{ marginRight: 6 }}>
+                <TargetIcon />
+              </IconButtonRounded>
+            )}
+            <Poppable label="Select" title="Select Target Resource" closeOnChange={clicked} contentHeight={360}>
+              <ResourceSelection abundances={abundances} onSelect={onClick} plotId={plotId} resources={resources} />
+            </Poppable>
+          </div>
         )}
         {status === 'AFTER' && tonnage === undefined && <ReadyHighlight />}
         {status === 'AFTER' && tonnage !== undefined && <CompletedHighlight />}
@@ -1747,7 +1803,7 @@ export const ExtractionAmountSection = ({ amount, extractionTime, min, max, reso
             max={max}
             increment={resource ? (0.1 / resource?.massPerUnit) : 1}
             onChange={setAmount}
-            value={amount} />
+            value={amount || 0} />
           <SliderInfoRow style={{ marginTop: -5 }}>
             <div>{resource ? formatResourceVolume(amount, resource?.i, { fixedPrecision: 1 }) : `0 L`}</div>
             <div>{formatTimer(extractionTime)}</div>

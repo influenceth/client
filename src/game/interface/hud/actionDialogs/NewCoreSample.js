@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid as AsteroidLib, CoreSample, Inventory, } from '@influenceth/sdk';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
@@ -32,19 +32,38 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
-  const resourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
+  const resourceMap = useStore(s => s.asteroids.resourceMap);
 
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
   const [sampleId, setSampleId] = useState();
+  const [resourceId, setResourceId] = useState(resourceMap?.active && resourceMap?.selected || undefined);
   useEffect(() => {
     if (coreSampleManager.currentSample) {
       setSampleId(coreSampleManager.currentSample.sampleId);
       if (coreSampleManager.currentSample.resourceId !== resourceId) {
+        setResourceId(coreSampleManager.currentSample.resourceId)
+      }
+      if (resourceMap?.active && coreSampleManager.currentSample.resourceId !== resourceMap?.selected) {
         dispatchResourceMapSelect(coreSampleManager.currentSample.resourceId);
         dispatchResourceMapToggle(true);
       }
     }
   }, [coreSampleManager.currentSample]);
+
+  const onSelectResource = useCallback((r) => {
+    setResourceId(r);
+
+    // if open to a different resource map, switch... if a resource map is not open, don't open one
+    if (resourceMap?.active && resourceMap.selected !== r) {
+      dispatchResourceMapSelect(r);
+    }
+  }, [resourceMap?.active]);
+
+  const goToResourceMap = useCallback(() => {
+    if (resourceId) dispatchResourceMapSelect(resourceId);
+    dispatchResourceMapToggle(true);
+    props.onClose();
+  }, [dispatchResourceMapSelect, dispatchResourceMapToggle, props.onClose, resourceId]);
 
   const sample = useMemo(() => {
     if (plot?.coreSamples && resourceId && sampleId) {
@@ -60,16 +79,22 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
   }, [plot?.coreSamples, sampleId, resourceId]);
 
   // get lot abundance
-  const lotAbundance = useMemo(() => {
-    if (!resourceId || !asteroid?.resourceSeed || !asteroid.resources) return 0;
-    return AsteroidLib.getAbundanceAtLot(
-      asteroid?.i,
-      BigInt(asteroid?.resourceSeed),
-      Number(plot?.i),
-      resourceId,
-      asteroid.resources[resourceId]
-    );
-}, [asteroid, plot, resourceId]);
+  const lotAbundances = useMemo(() => {
+    // TODO: do this in worker? takes about 200ms on decent cpu
+    return Object.keys(asteroid.resources).reduce((acc, r) => {
+      if (asteroid.resources[r] > 0) {
+        acc[r] = AsteroidLib.getAbundanceAtLot(
+          asteroid?.i,
+          BigInt(asteroid?.resourceSeed),
+          Number(plot?.i),
+          r,
+          asteroid.resources[r]
+        )
+      }
+      return acc;
+    }, {});
+  }, [asteroid, plot]);
+  const lotAbundance = resourceId ? lotAbundances[resourceId] : 0;
 
   const crewMembers = coreSampleManager.currentSample?._crewmates
     || ((crew?.crewMembers || []).map((i) => crewMemberMap[i]));
@@ -186,8 +211,12 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
         {...props} />
 
       <RawMaterialSection
-        abundance={lotAbundance}
-        resource={resources[resourceId]}
+        abundances={lotAbundances}
+        goToResourceMap={goToResourceMap}
+        onSelectResource={onSelectResource}
+        plotId={plot?.i}
+        resourceId={resourceId}
+        resources={resources}
         status={status}
         tonnage={status === 'AFTER' ? sample?.initialYieldTonnage : undefined} />
 

@@ -43,10 +43,7 @@ const useActionButtons = () => {
           a.push(actionButtons.ScanAsteroid);
         }
       } else if (plot && crew && zoomStatus === 'in') {
-        if (resourceMap?.active && resourceMap?.selected) {
-          a.push(actionButtons.NewCoreSample);
-          a.push(actionButtons.ImproveCoreSample);
-        }
+        a.push(actionButtons.CoreSample);
 
         if (plot.occupier === crew.i) {
           if (constructionStatus === 'OPERATIONAL' && plot.building?.capableType) {
