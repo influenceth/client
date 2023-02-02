@@ -9,7 +9,7 @@ const DEFAULT_ROOM = '_';
 
 // NOTE: could maybe roll this back into EventsContext if there was a reason to combine them
 export function WebsocketProvider({ children }) {
-  const { token, account } = useAuth();
+  const { token } = useAuth();
 
   const socket = useRef();
   const registeredHandlers = useRef({});
@@ -54,7 +54,7 @@ export function WebsocketProvider({ children }) {
     } else {
       delete registeredHandlers.current[DEFAULT_ROOM];
     }
-  });
+  }, []);
 
   useEffect(() => {
     if (token) {

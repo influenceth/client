@@ -39,7 +39,7 @@ const getInvalidations = (event, returnValues, linked) => {
         ['watchlist']
       ],
       Asteroid_Transfer: [
-        ['asteroids', returnValues.asteroidId],
+        ['asteroids', returnValues.tokenId],
         ['asteroids', 'mintableCrew'],
         ['asteroids', 'ownedCount'],
         ['asteroids', 'search'],
@@ -64,6 +64,7 @@ const getInvalidations = (event, returnValues, linked) => {
       Crewmate_Transfer: [
         ['assignments'],
         ['crewmembers', 'owned'],
+        ['crewmembers', returnValues.tokenId],
       ],
 
       Dispatcher_ConstructionPlan: [
@@ -233,7 +234,7 @@ export function EventsProvider({ children }) {
             // // // // //
 
             if (!optimisticUpdate) {
-              queryClient.invalidateQueries([...queryKey]);
+              queryClient.invalidateQueries({ queryKey });
             }
           });
         }
