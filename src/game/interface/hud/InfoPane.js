@@ -1,15 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import PuffLoader from 'react-spinners/PuffLoader';
-import { toRarity, toSize, toSpectralType, Asteroid as AsteroidLib, Capable, Construction, Inventory } from '@influenceth/sdk';
-import {
-  FaSearchPlus as DetailsIcon
-} from 'react-icons/fa';
+import { toRarity, toSize, toSpectralType, Asteroid as AsteroidLib, Capable, Construction, CoreSample, Inventory } from '@influenceth/sdk';
+import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
+import ReactTooltip from 'react-tooltip';
 
 import IconButton from '~/components/IconButton';
 import {
   CloseIcon,
+  CoreSampleIcon,
   InfoIcon,
 } from '~/components/Icons';
 import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
@@ -21,6 +21,7 @@ import useStore from '~/hooks/useStore';
 import useCrew from '~/hooks/useCrew';
 import { formatFixed, keyify } from '~/lib/utils';
 import { hexToRGB } from '~/theme';
+import CoreSampleMouseover from './mouseovers/CoreSampleMouseover';
 
 const opacityAnimation = keyframes`
   0% { opacity: 1; }
@@ -279,6 +280,54 @@ const ResourceRow = styled.div`
   }
 `;
 
+const ThumbFootButtons = styled.div``;
+const ThumbFootButton = styled.div`
+  align-items: center;
+  border: 1px solid currentColor;
+  border-radius: 18px;
+  color: white;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  font-size: 28px;
+  height: 36px;
+  justify-content: center;
+  opacity: 0.5;
+  position: relative;
+  transition-property: color, opacity;
+  transition-duration: 250ms;
+  width: 36px;
+
+  ${p => p.badge && `
+    &:before {
+      align-items: center;
+      background-color: white;
+      border-radius: 8px;
+      color: black;
+      content: "${p.badge}";
+      display: flex;
+      font-size: 14px;
+      font-weight: bold;
+      justify-content: center;
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 16px;
+      height: 16px;
+      transition-property: color, background-color;
+      transition-duration: 250ms;
+    }
+  `}
+
+  &:hover {
+    color: ${p => p.theme.colors.main};
+    opacity: 1;
+    &:before {
+      background-color: ${p => p.theme.colors.main};
+      color: white;
+    }
+  }
+`;
+
 const InfoPane = () => {
   const history = useHistory();
 
@@ -305,6 +354,10 @@ const InfoPane = () => {
   }, []);
 
   const plotTally = useMemo(() => Math.floor(4 * Math.PI * Math.pow(asteroid?.radius / 1000, 2)), [asteroid?.radius]);
+
+  const myPlotCoreSamples = useMemo(() => {
+    return (plot?.coreSamples || []).filter((c) => c.owner === crew?.i)
+  }, [crew?.i, plot]);
 
   const onClickPane = useCallback(() => {
     // open plot
@@ -370,6 +423,38 @@ const InfoPane = () => {
       )}
 
       <InfoColumn>
+        {zoomStatus === 'out' && asteroid && (
+          <div>
+            <ThumbPreview visible={renderReady}>
+              <CloseButton borderless onClick={onClosePane}>
+                <CloseIcon />
+              </CloseButton>
+              <ThumbBackground>
+                <AsteroidRendering asteroid={asteroid} onReady={onRenderReady} />
+              </ThumbBackground>
+              <ThumbMain>
+                <ThumbTitle>{asteroid.customName || asteroid.baseName}</ThumbTitle>
+                <ThumbSubtitle>
+                  <PaneContent>
+                    {toSize(asteroid.r)}{' '}
+                    <b>{toSpectralType(asteroid.spectralType)}{'-type'}</b>
+                    {asteroid.scanned && <Rarity rarity={toRarity(asteroid.bonuses)} />}
+                  </PaneContent>
+                  <PaneHoverContent>
+                    Zoom to Asteroid
+                  </PaneHoverContent>
+                </ThumbSubtitle>
+                <div style={{ flex: 1 }} />
+                <ThumbFootnote>
+                  <div>
+                    <span><b>{plotTally.toLocaleString()}</b> Lots</span>
+                    <span><b>{((asteroid.buildingTally || 0) / plotTally).toFixed(2)}%</b> Developed</span>
+                  </div>
+                </ThumbFootnote>
+              </ThumbMain>
+            </ThumbPreview>
+          </div>
+        )}
         {zoomStatus === 'in' && asteroid && !plotId && (
           <>
             <Title>{asteroid.customName || asteroid.baseName}</Title>
@@ -387,6 +472,80 @@ const InfoPane = () => {
               </SubtitleLoader>
             </Subtitle>
           </>
+        )}
+        {zoomStatus === 'in' && plotId && !zoomToPlot && (
+          <div>
+            <ReactTooltip id="infoPane" effect="solid" />
+            <ThumbPreview visible>
+              <CloseButton borderless onClick={onClosePane}>
+                <CloseIcon />
+              </CloseButton>
+              {!plot && (
+                <ThumbLoading>
+                  <PuffLoader color="white" />
+                </ThumbLoading>
+              )}
+              {plot && (
+                <>
+                  {!(plot.building?.capableType > 0) && <ThumbBackground image={buildings[0]?.iconUrls?.w400} />}
+                  {plot.building?.capableType > 0 && (
+                    <>
+                      {
+                        // TODO: if planning, could use the currentConstruction object to go ahead and put hologram image
+                        (['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus) && !isAtRisk)
+                          ? <ThumbBackground image={buildings[plot.building?.capableType || 0]?.iconUrls?.w400} />
+                          : (
+                            <ThumbBackground
+                              backgroundColor={isAtRisk && '#2e1400'}
+                              image={buildings[plot.building?.capableType || 0]?.siteIconUrls?.w400} />
+                          )
+                      }
+                    </>
+                  )}
+                  <ThumbMain>
+                    <ThumbTitle>{buildings[plot.building?.capableType || 0]?.name}</ThumbTitle>
+                    <ThumbSubtitle>
+                      <PaneContent>
+                        Lot #{plot.i.toLocaleString()}
+                      </PaneContent>
+                      <PaneHoverContent>
+                        Zoom to Lot
+                      </PaneHoverContent>
+                    </ThumbSubtitle>
+                    <div style={{ flex: 1 }} />
+                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                      <ThumbFootnote>
+                        {isAtRisk ? <b>{plot.occupier === crew?.i ? 'At Risk' : `Abandoned by #${plot.occupier}`}</b> : ''}
+                        {!isAtRisk && plot.occupier ? `Controlled by ${plot.occupier === crew?.i ? 'Me' : `#${plot.occupier}`}` : ''}
+                        {!plot.occupier && 'Uncontrolled'}
+                      </ThumbFootnote>
+                      <ThumbFootButtons>
+                        {myPlotCoreSamples.length > 0 && (
+                          <>
+                            <CoreSampleMouseover
+                              building={plot?.building}
+                              coreSamples={myPlotCoreSamples}>
+                              {({ refEl, onToggle }) => (
+                                <ThumbFootButton
+                                  ref={refEl}
+                                  badge={myPlotCoreSamples.length}
+                                  data-tip="Toggle Core Sample List"
+                                  data-for="infoPane"
+                                  data-place="right"
+                                  onClick={onToggle}>
+                                  <CoreSampleIcon />
+                                </ThumbFootButton>
+                              )}
+                            </CoreSampleMouseover>
+                          </>
+                        )}
+                      </ThumbFootButtons>
+                    </div>
+                  </ThumbMain>
+                </>
+              )}
+            </ThumbPreview>
+          </div>
         )}
         {zoomStatus === 'in' && plotId && zoomToPlot && (
           <>
@@ -447,88 +606,6 @@ const InfoPane = () => {
               )}
             </PlotDetails>
           </>
-        )}
-        {zoomStatus === 'in' && plotId && !zoomToPlot && (
-          <div>
-            <ThumbPreview visible>
-              <CloseButton borderless onClick={onClosePane}>
-                <CloseIcon />
-              </CloseButton>
-              {!plot && (
-                <ThumbLoading>
-                  <PuffLoader color="white" />
-                </ThumbLoading>
-              )}
-              {plot && (
-                <>
-                  {!(plot.building?.capableType > 0) && <ThumbBackground image={buildings[0]?.iconUrls?.w400} />}
-                  {plot.building?.capableType > 0 && (
-                    <>
-                      {
-                        // TODO: if planning, could use the currentConstruction object to go ahead and put hologram image
-                        (['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus) && !isAtRisk)
-                          ? <ThumbBackground image={buildings[plot.building?.capableType || 0]?.iconUrls?.w400} />
-                          : (
-                            <ThumbBackground
-                              backgroundColor={isAtRisk && '#2e1400'}
-                              image={buildings[plot.building?.capableType || 0]?.siteIconUrls?.w400} />
-                          )
-                      }
-                    </>
-                  )}
-                  <ThumbMain>
-                    <ThumbTitle>{buildings[plot.building?.capableType || 0]?.name}</ThumbTitle>
-                    <ThumbSubtitle>
-                      <PaneContent>
-                        Lot #{plot.i.toLocaleString()}
-                      </PaneContent>
-                      <PaneHoverContent>
-                        Zoom to Lot
-                      </PaneHoverContent>
-                    </ThumbSubtitle>
-                    <div style={{ flex: 1 }} />
-                    <ThumbFootnote>
-                      {isAtRisk ? <b>{plot.occupier === crew?.i ? 'At Risk' : `Abandoned by #${plot.occupier}`}</b> : ''}
-                      {!isAtRisk && plot.occupier ? `Controlled by ${plot.occupier === crew?.i ? 'Me' : `#${plot.occupier}`}` : ''}
-                      {!plot.occupier && 'Uncontrolled'}
-                    </ThumbFootnote>
-                  </ThumbMain>
-                </>
-              )}
-            </ThumbPreview>
-          </div>
-        )}
-        {zoomStatus === 'out' && asteroid && (
-          <div>
-            <ThumbPreview visible={renderReady}>
-              <CloseButton borderless onClick={onClosePane}>
-                <CloseIcon />
-              </CloseButton>
-              <ThumbBackground>
-                <AsteroidRendering asteroid={asteroid} onReady={onRenderReady} />
-              </ThumbBackground>
-              <ThumbMain>
-                <ThumbTitle>{asteroid.customName || asteroid.baseName}</ThumbTitle>
-                <ThumbSubtitle>
-                  <PaneContent>
-                    {toSize(asteroid.r)}{' '}
-                    <b>{toSpectralType(asteroid.spectralType)}{'-type'}</b>
-                    {asteroid.scanned && <Rarity rarity={toRarity(asteroid.bonuses)} />}
-                  </PaneContent>
-                  <PaneHoverContent>
-                    Zoom to Asteroid
-                  </PaneHoverContent>
-                </ThumbSubtitle>
-                <div style={{ flex: 1 }} />
-                <ThumbFootnote>
-                  <div>
-                    <span><b>{plotTally.toLocaleString()}</b> Lots</span>
-                    <span><b>{((asteroid.buildingTally || 0) / plotTally).toFixed(2)}%</b> Developed</span>
-                  </div>
-                </ThumbFootnote>
-              </ThumbMain>
-            </ThumbPreview>
-          </div>
         )}
       </InfoColumn>
     </Pane>

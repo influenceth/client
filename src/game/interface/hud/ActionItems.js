@@ -443,7 +443,7 @@ const formatTx = (item) => {
       formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;
-      formatted.resourceId = item.vars.resourceId;
+      formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
       formatted.onClick = ({ openDialog }) => {
         // TODO: in case of failure (and improvement mode), should link with selected sampleId
         // (low priority b/c would have to fail and would have to have closed dialog)
@@ -455,7 +455,7 @@ const formatTx = (item) => {
       formatted.label = `Core Analysis`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;
-      formatted.resourceId = item.vars.resourceId;
+      formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
       formatted.onClick = ({ openDialog, plot }) => {
         const isImprovement = item.vars.sampleId && plot?.coreSamples?.length > 0 && !!plot.coreSamples.find((s) => (
           s.sampleId === item.vars.sampleId

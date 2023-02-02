@@ -13,6 +13,7 @@ import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
 import PlanBuilding from './actionDialogs/PlanBuilding';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import UnplanBuilding from './actionDialogs/UnplanBuilding';
+import ReactTooltip from 'react-tooltip';
 
 export const useAsteroidAndPlot = (props = {}) => {
   const selectedPlot = useStore(s => s.asteroids.plot);
@@ -86,6 +87,7 @@ const ActionDialog = ({ type, params }) => {
           {type === 'SURFACE_TRANSFER' && <SurfaceTransfer {...allProps} />}
         </div>
       )}
+      <ReactTooltip id="actionDialog" place="left" effect="solid" />
     </Dialog>
   );
 }
