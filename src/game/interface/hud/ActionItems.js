@@ -262,7 +262,7 @@ const ActionItemRow = styled.div`
 
 const formatItem = (item) => {
   const formatted = {
-    key: item.id,
+    key: item.key,
     icon: null,
     label: '',
     asteroidId: null,
@@ -337,7 +337,7 @@ const formatItem = (item) => {
 
 const formatPlans = (item) => {
   return {
-    key: `plans_${item.gracePeriodEnd}`,
+    key: item.key,
     icon: <PlanBuildingIcon />,
     label: `${item.building.type} Site Plan`,
     crewId: item.occupier,
@@ -354,7 +354,7 @@ const formatPlans = (item) => {
 
 const formatTx = (item) => {
   const formatted = {
-    key: item.txHash || item.timestamp,
+    key: item.key,
     txHash: item.txHash,
     icon: null,
     label: '',
@@ -767,8 +767,11 @@ const ActionItems = () => {
       ...(readyItems || []).map((item) => ({ ...item, type: 'ready' })),
       ...(plannedItems || []).map((item) => ({ ...item, type: 'plans' })),
       ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready' }))
-    ];
-  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems, account, token])
+    ].map((x) => {  // make sure everything has a key
+      if (!x.key) x.key = `${x.type}_${x.txHash || x.id || x.timestamp || x.gracePeriodEnd}`;
+      return x;
+    });
+  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems, account, token]);
 
   const [displayItems, setDisplayItems] = useState();
   useEffect(() => {

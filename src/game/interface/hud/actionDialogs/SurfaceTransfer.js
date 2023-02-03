@@ -102,7 +102,7 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
   const status = useMemo(() => {
     if (deliveryStatus === 'READY') {
       return 'BEFORE';
-    } else if (deliveryStatus === 'IN_TRANSIT') {
+    } else if (deliveryStatus === 'DEPARTING' || deliveryStatus === 'IN_TRANSIT') {
       return 'DURING';
     }
     return 'AFTER';
@@ -158,16 +158,9 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
   // handle auto-closing
   const lastStatus = useRef();
   useEffect(() => {
-    // (close unless ready or in transit)
-    if (!['READY', 'READY_TO_FINISH'].includes(deliveryStatus)) {
+    if (lastStatus.current && deliveryStatus !== lastStatus.current) {
       props.onClose();
     }
-    // TODO: would be nice to have a version can open in other states (like construction)
-    // if (['READY', 'READY_TO_FINISH'].includes(lastStatus.current)) {
-    //   if (deliveryStatus !== lastStatus.current) {
-    //     props.onClose();
-    //   }
-    // }
     lastStatus.current = deliveryStatus;
   }, [deliveryStatus]);
 
@@ -210,12 +203,13 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
 
       <ActionDialogFooter
         {...props}
+        buttonsLoading={deliveryStatus === 'FINISHING' || undefined}
         finalizeLabel="Complete"
         goDisabled={!destinationPlot?.i || totalMass === 0}
         goLabel="Transfer"
         onFinalize={() => finishDelivery()}
         onGo={onStartDelivery}
-        status={status} />
+        status={deliveryStatus === 'FINISHING' ? 'DURING' : status} />
     </>
   );
 };

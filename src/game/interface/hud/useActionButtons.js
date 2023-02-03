@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Address } from '@influenceth/sdk';
+import { Address, Inventory } from '@influenceth/sdk';
 
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -57,7 +57,10 @@ const useActionButtons = () => {
             a.push(actionButtons.PlanBuilding);
           }
 
-          if (constructionStatus === 'OPERATIONAL' && plot?.building?.inventories) {
+          // NOTE: this will need to change once using contruction inventories, and when that happens, it
+          //  is worth nothing that plot?.building?.inventories is undefined until it is used (this is
+          //  probably worth addressing on the server)
+          if (constructionStatus === 'OPERATIONAL' && Inventory.CAPACITIES[plot?.building?.capableType || 0][1]) {
             a.push(actionButtons.SurfaceTransfer);
           }
 
