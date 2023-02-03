@@ -26,17 +26,17 @@ const Content = styled.div.attrs(p => {
   };
   if (p.overrides?.top !== undefined) {
     style.top = `${p.overrides?.top}px`;
+    style.marginTop = 0;
   }
   if (p.overrides?.left !== undefined) {
     style.left = `${p.overrides?.left}px`;
-  } else {
-    style.marginLeft = `-${(p.contentWidth || defaultWidth) * 0.2}px`;
+    style.marginLeft = 0;
   }
   return { style };
 })`
   background: black;
+  margin-left: ${p => -0.2 * (p.contentWidth || defaultWidth)}px;
   position: fixed;
-  max-width: 100vw;
   z-index: 31;
 `;
 
@@ -78,11 +78,10 @@ const Poppable = ({ children, closeOnChange, closeOnClickAway = true, disabled, 
   useEffect(() => {
     if (contentRef.current && open) {
       if (!initialPosition.current) {
-        var style = contentRef.current.currentStyle || window.getComputedStyle(contentRef.current);
         initialPosition.current = {
-          top: contentRef.current.offsetTop + (parseInt(style.marginTop) || 0),
+          top: contentRef.current.offsetTop,
           height: contentRef.current.offsetHeight,
-          left: contentRef.current.offsetLeft + (parseInt(style.marginLeft) || 0),
+          left: contentRef.current.offsetLeft,
           width: contentRef.current.offsetWidth
         };
       }
