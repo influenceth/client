@@ -14,17 +14,18 @@ import {
   Vector2,
   Vector3
 } from 'three';
+import { useQueryClient } from 'react-query';
 
 import useAsteroidPlots from '~/hooks/useAsteroidPlots';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
+import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 import useAuth from '~/hooks/useAuth';
+import useCrew from '~/hooks/useCrew';
 import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
 import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
 import { getPlotGeometryHeightMaps } from './helpers/PlotGeometry';
-import { useQueryClient } from 'react-query';
-import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 
 const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
 const STROKE_COLOR = new Color().setHex(0xbbbbbb).convertSRGBToLinear();
@@ -47,6 +48,7 @@ const MOUSE_THROTTLE_TIME = 1000 / 30; // ms
 
 const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
   const { token } = useAuth();
+  const { crew } = useCrew();
   const { gl, scene } = useThree();
   const queryClient = useQueryClient();
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
@@ -228,9 +230,12 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
     }
   }, [plots, lastPlotUpdate]);
 
-  const handleWSMessage = useCallback(({ type, body }) => {
+  const handleWSMessage = useCallback(({ type: eventType, body }) => {
+    // TODO: these events could/should technically go through the same invalidation process as primary events
+    //  (it's just that these events won't match as much data b/c most may not be relevant to my crew)
+
     // if lot occupied or lot unoccupied, update plots by updating querycache
-    switch (type) {
+    switch (eventType) {
       case 'Lot_Occupied': {
         queryClient.setQueryData([ 'asteroidPlots', body.returnValues.asteroidId ], (currentPlotsValue) => {
           if (body.returnValues.crewId > 0) {
@@ -243,17 +248,53 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
         setLastPlotUpdate(Date.now());
       }
     }
+
+    // // // // //
+    // TODO: vvv maybe remove this when updating more systematically from linked data
+
+    // try to minimize redundant updates by just listening to Dispatcher_* events
+    if (eventType.match(/^Dispatcher_/)) {
+      // myCrew will handle their own invalidations through the default ws room
+      const isMyCrew = crew?.i && body.linked.find(({ type, asset }) => type === 'Crew' && asset?.i === crew.i);
+      if (!isMyCrew) {
+        // find any plot data on this asteroid... if it is complete and in my cache, replace my cache value
+        const optimisticPlots = body.linked.filter(({ type, asset }) => type === 'Lot' && asset?.asteroid === asteroidId);
+        optimisticPlots.forEach(({ asset: optimisticPlot }) => {
+          const queryKey = ['plots', asteroidId, optimisticPlot.i];
+          if (!!queryClient.getQueryData(queryKey)) {
+            const needsBuilding = !!optimisticPlot.building;
+            optimisticPlot.building = body.linked
+              .find(({ type, asset }) => type === optimisticPlot.building?.type && asset?.i === optimisticPlot.building?.i)
+              ?.asset;
+            if (!needsBuilding || !!optimisticPlot.building) {
+              queryClient.setQueryData(queryKey, optimisticPlot);
+            }
+          }
+        });
+      }
+    }
+
+    // ^^^
+    // // // // //
+
   }, []);
 
   useEffect(() => {
     if (token && wsReady) {
       let roomName = `Asteroid::${asteroidId}`;
-      registerWSHandler(handleWSMessage, roomName)
+      registerWSHandler(handleWSMessage, roomName);
       return () => {
-        unregisterWSHandler(roomName)
+        unregisterWSHandler(roomName);
+
+        // since will not be listening to asteroid room when zoomed away, remove ['asteroidPlots', asteroidId]
+        // and all ['plots', asteroidId, *] that are not occupied by me when I navigate away from the asteroid
+        queryClient.removeQueries({ queryKey: [ 'asteroidPlots', asteroidId ] });
+        queryClient.getQueriesData(['plots', asteroidId])
+          .filter(([ queryKey, data ]) => data && data.occupier !== crew?.i)
+          .forEach(([ queryKey ]) => { queryClient.removeQueries({ queryKey }); });
       }
     }
-  }, [token, wsReady]);
+  }, [token, handleWSMessage, wsReady]);
 
   // instantiate pips mesh
   useEffect(() => {

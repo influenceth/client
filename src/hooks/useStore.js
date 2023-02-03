@@ -7,7 +7,9 @@ import constants from '~/lib/constants';
 const {
   CHUNK_RESOLUTION,
   GRAPHICS_DEFAULTS,
-  ENABLE_SHADOWS
+  ENABLE_SHADOWS,
+  MIN_FOV,
+  MAX_FOV
 } = constants;
 
 // (keep these out of state so can change)
@@ -275,7 +277,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     })),
 
     dispatchFOVSet: (fov) => set(produce(state => {
-      if (fov < 45 || fov > 175) return;
+      if (fov < MIN_FOV || fov > MAX_FOV) return;
       state.graphics.fov = fov;
     })),
 

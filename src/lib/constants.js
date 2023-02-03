@@ -24,6 +24,9 @@ const constants = {
   MIN_FRUSTUM_AT_SURFACE: 4000, // closest zoom so that X meters visible w/i frustum height
   SHADOWLESS_NORMAL_SCALE: 1.2, // exaggerate normals when shadows are disabled
 
+  MIN_FOV: 30,
+  MAX_FOV: 105,
+
   // (performance)
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: true,
   UPDATE_QUADTREE_EVERY: 0.33, // (multiplied by CHUNK_SPLIT_DISTANCE)

@@ -1,5 +1,4 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from 'react-query';
 import { starknetContracts as configs } from '@influenceth/sdk';
 import { Contract, shortString } from 'starknet';
 
@@ -12,7 +11,7 @@ const RETRY_INTERVAL = 5e3; // 5 seconds
 const ChainTransactionContext = createContext();
 
 // TODO: now that all are on dispatcher, could probably collapse a lot of redundant code in getContracts
-const getContracts = (account, queryClient) => ({
+const getContracts = (account) => ({
   'PURCHASE_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
@@ -59,10 +58,7 @@ const getContracts = (account, queryClient) => ({
       _packed.bonuses,
       _proofs.boostBonus,
     ]),
-    isEqual: (txVars, vars) => txVars.i === vars.i,
-    onConfirmed: (event, { i }) => {
-      queryClient.invalidateQueries(['asteroids', i]);
-    }
+    isEqual: (txVars, vars) => txVars.i === vars.i
   },
   'FINISH_ASTEROID_SCAN': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -353,7 +349,6 @@ const getNow = () => {
 export function ChainTransactionProvider({ children }) {
   const { account, walletContext: { starknet } } = useAuth();
   const { events, lastBlockNumber } = useEvents();
-  const queryClient = useQueryClient();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchFailedTransaction = useStore(s => s.dispatchFailedTransaction);
@@ -368,7 +363,7 @@ export function ChainTransactionProvider({ children }) {
   const contracts = useMemo(() => {
     if (!!starknet?.account) {
       const processedContracts = {};
-      const contractConfig = getContracts(starknet?.account, queryClient);
+      const contractConfig = getContracts(starknet?.account);
       Object.keys(contractConfig).forEach((k) => {
         const {
           address,
