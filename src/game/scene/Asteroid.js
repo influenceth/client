@@ -521,6 +521,13 @@ const Asteroid = (props) => {
     return closestChunk;
   }, []);
 
+  const getMinDistance = useCallback((closestChunk) => {
+    return Math.min(
+      config?.radius * MIN_ZOOM_DEFAULT,  // for smallest asteroids to match legacy (where this > min surface distance)
+      closestChunk.sphereCenterHeight + surfaceDistance
+    );
+  }, [config?.radius, surfaceDistance]);
+
   // NOTE: in theory, all distances between sphereCenter's to camera are calculated
   //       in quadtree calculation and could be passed back here, so would be more
   //       performant to re-use that BUT that is also outdated as the camera moves
@@ -538,12 +545,10 @@ const Asteroid = (props) => {
         return;
       }
 
-      const minDistance = Math.min(
-        config?.radius * MIN_ZOOM_DEFAULT,  // for smallest asteroids to match legacy (where this > min surface distance)
-        closestChunk.sphereCenterHeight + surfaceDistance
-      );
+      const minDistance = getMinDistance(closestChunk);
 
       // too close, so should animate camera out
+      // TODO: use gsap for this instead of this weird animatin
       //  TODO (enhancement): jump to surface immediately if somehow ended up inside asteroid
       //    (might need to use raycasting to do accurately though)
       if (minDistance > controls?.minDistance) {
@@ -680,17 +685,22 @@ const Asteroid = (props) => {
       plotPosition.setLength(currentCameraHeight);
       plotPosition.applyAxisAngle(rotationAxis.current, rotation.current);
 
-      // if farther than 12500 out, adjust in to altitude of 5000
+      // if farther than 10000 out, adjust in to altitude of 5000
       // if closer than surfaceDistance, adjust out to altitude of surfaceDistance
       // else, will just reuse camera height
       const closestChunk = getClosestChunk(plotPosition);
       if (closestChunk) {
+        // console.log(currentCameraHeight, closestChunk.sphereCenterHeight);
         const predictedAltitude = currentCameraHeight - closestChunk.sphereCenterHeight;
-        if (predictedAltitude > 12500) {
+        if (predictedAltitude > 10000) {
           plotPosition.setLength(closestChunk.sphereCenterHeight + 5000);
-        } else if(predictedAltitude < surfaceDistance) {
-          plotPosition.setLength(closestChunk.sphereCenterHeight + 1.25 * surfaceDistance);
-        }
+        } else {
+          const minDistance = getMinDistance(closestChunk);
+          if(currentCameraHeight + predictedAltitude < minDistance) {
+            // console.log('zoom out', currentCameraHeight + predictedAltitude, minDistance)
+            plotPosition.setLength(minDistance + 100);
+          }
+        } 
       }
 
       gsap
