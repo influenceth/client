@@ -249,31 +249,38 @@ export function EventsProvider({ children }) {
 
   // try to process WS events grouped by block
   const processPendingWSBlock = useCallback(() => {
-    if (pendingTimeout.current) clearTimeout(pendingTimeout.current);
-    if (pendingBlockEvents.current.length > 0) {
-      handleEvents([...pendingBlockEvents.current]);
+    if (pendingTimeout.current) {
+      clearTimeout(pendingTimeout.current);
+      pendingTimeout.current = null;
+    }
+
+    const eventsToProcess = (pendingBlockEvents.current || []).slice(0);
+    pendingBlockEvents.current = [];
+    
+    if (eventsToProcess.length > 0) {
+      handleEvents(eventsToProcess);
       setLastBlockNumber((previousLast) => Math.max(pendingBlock.current, previousLast));
     }
-    pendingBlockEvents.current = [];
   }, []);
 
   const onWSMessage = useCallback(({ type, body }) => {
-    // console.log('onWSMessage', type, body);
     if (ignoreEventTypes.includes(type)) return;
     if (type === 'CURRENT_STARKNET_BLOCK_NUMBER') {
       setLastBlockNumber(body.blockNumber || 0);
     } else {
-      // if this is a new block, process pending and schedule next processing block
+      // if this is a new block, go ahead and process pending block first
       if (pendingBlock.current !== body.blockNumber) {
         pendingBlock.current = body.blockNumber || 0;
-
         processPendingWSBlock();
-        pendingTimeout.current = setTimeout(() => {
-          processPendingWSBlock();
-        }, 1000);
       }
-      // (queue the current event for processing)
+
+      // queue the current event for processing
       pendingBlockEvents.current.push({ ...body, event: type });
+
+      // schedule processing for now + 1s (in case more events are coming from this block)
+      // NOTE: if we ever limit the number of events emitted per action, we can remove this batching
+      if (pendingTimeout.current) clearTimeout(pendingTimeout.current);
+      pendingTimeout.current = setTimeout(processPendingWSBlock, 1000);
     }
   }, []);
 
