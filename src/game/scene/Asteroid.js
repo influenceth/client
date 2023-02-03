@@ -533,7 +533,10 @@ const Asteroid = (props) => {
     applyingZoomLimits.current = true;
     setTimeout(() => {
       const closestChunk = getClosestChunk(cameraPosition);
-      if (!closestChunk) return;
+      if (!closestChunk) {
+        applyingZoomLimits.current = false;
+        return;
+      }
 
       const minDistance = Math.min(
         config?.radius * MIN_ZOOM_DEFAULT,  // for smallest asteroids to match legacy (where this > min surface distance)
