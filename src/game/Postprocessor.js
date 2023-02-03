@@ -54,7 +54,7 @@ const materials = {};
 //   taskTotal += performance.now() - start;
 // };
 
-const Postprocessor = ({ enabled, bloomByName }) => {
+const Postprocessor = ({ enabled }) => {
   const { gl: renderer, camera, scene, size } = useThree();
 
   const bloomPass = useRef();
@@ -81,7 +81,7 @@ const Postprocessor = ({ enabled, bloomByName }) => {
       //  generating darkMaterial as needed for each opacity (i.e. darkMaterials[opacity])
       //  ... will only need to generate on first pass
     } else if (obj.material) {
-      if (!(obj.userData.bloom || (bloomByName && bloomByName(obj.name)))) {
+      if (!obj.userData.bloom) {
         // TODO: is double-traversing some nodes, that's why these if's are here
         //  why is this happening?
         if (obj.material.displacementMap) {
