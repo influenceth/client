@@ -243,7 +243,7 @@ class QuadtreeTerrainCube {
 
   // TODO (enhancement): could pre-populate the pool more
   processNextQueuedChange() {
-    if (this.queuedChanges.length === 0) {
+    if (!this.queuedChanges || this.queuedChanges.length === 0) {
       // console.log('FINISHED!');
       return;
     }

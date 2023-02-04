@@ -257,6 +257,7 @@ const Asteroid = (props) => {
     if (position.current) unloadedPosition.current = [...position.current];
     position.current = null;
     rotation.current = null;
+    automatingCamera.current = false;
     disposeLight();
     disposeGeometry();
   }, [disposeLight, disposeGeometry]);
@@ -415,6 +416,16 @@ const Asteroid = (props) => {
   useEffect(() => {
     if (!shouldZoomIn || !initialOrientation || !config) return;
     if (!group.current || !position.current) return;
+    
+    // if have rotation info and geometry is loaded, can calculate the initial chunks, then set automatingCamera
+    // to pause additional chunk calculations while zooming in
+    if (geometry.current && rotationAxis.current && rotation.current) {
+      automatingCamera.current = true;
+
+      const geometryFramedPosition = initialOrientation.objectPosition.clone();
+      geometryFramedPosition.applyAxisAngle(rotationAxis.current, -rotation.current);
+      geometry.current.setCameraPosition(geometryFramedPosition);
+    }
 
     controls.maxDistance = Infinity;
 
@@ -444,7 +455,7 @@ const Asteroid = (props) => {
     controls.object.near = 100;
     controls.object.updateProjectionMatrix();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ shouldZoomIn, initialOrientation ]);
+  }, [ shouldZoomIn, !initialOrientation ]);
 
   const shouldFinishZoomIn = zoomStatus === 'in' && controls && config?.radius;
   useEffect(() => {
@@ -468,6 +479,8 @@ const Asteroid = (props) => {
 
     controls.object.updateProjectionMatrix();
     controls.noPan = true;
+
+    automatingCamera.current = false;
 
     // console.log('asteroidId.current', `${asteroidId.current}`);
     setZoomedIntoAsteroidId(asteroidId.current);
@@ -672,10 +685,13 @@ const Asteroid = (props) => {
   //   }
   // }, [controls, config?.radius]);
 
+  const automatingCamera = useRef();
   useEffect(() => {
     if (selectedPlot && zoomedIntoAsteroidId === selectedPlot?.asteroidId && config?.radiusNominal && zoomStatus === 'in') {
       const plotTally = Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2);
       if (plotTally < selectedPlot.plotId) { selectPlot(); return; }
+
+      automatingCamera.current = true;
 
       const currentCameraHeight = controls.object.position.length();
 
@@ -702,9 +718,6 @@ const Asteroid = (props) => {
         closestChunk = getClosestChunk(unrotatedPlotPosition);
       }
 
-      // TODO: should follow this same strategy on zoom in
-      // TODO: lock re-chunking until arrived
-      //  (can unlock in the `complete`)
 
       // if farther than 10000 out, adjust in to altitude of 5000
       // if closer than surfaceDistance, adjust out to altitude of surfaceDistance
@@ -730,9 +743,10 @@ const Asteroid = (props) => {
       gsap
       .timeline({
         defaults: { duration: 0.7, ease: 'power4.out' },
-        // onComplete: () => {
-        //   setTimeout(() => { console.log('final is', controls.object.position.length(), 'of', plotPosition.length()); console.groupEnd(); }, 3500)
-        // }
+        onComplete: () => {
+          // setTimeout(() => { console.log('final is', controls.object.position.length(), 'of', plotPosition.length()); console.groupEnd(); }, 3500)
+          automatingCamera.current = false;
+        }
       })
       .to(controls.object.position, { ...plotPosition });
     }
@@ -786,7 +800,7 @@ const Asteroid = (props) => {
     let updatedRotation = rotation.current;
     if (config?.rotationSpeed && time) {
       updatedRotation = time * config.rotationSpeed * 2 * Math.PI
-      updatedRotation = 0; // TODO: remove
+      // updatedRotation = 0; // TODO: remove
       if (updatedRotation !== rotation.current) {
         quadtreeRef.current.setRotationFromAxisAngle(
           rotationAxis.current,
@@ -900,7 +914,8 @@ const Asteroid = (props) => {
       // ^^^
 
       // initiate update of quads (based on camera position)
-      if (updateQuadCube) {
+      // if camera is not currently moving
+      if (updateQuadCube && !automatingCamera.current) {
         settingCameraPosition.current = true;
         // TODO: setting state in useFrame is an antipattern, BUT this should
         //  only set state rarely, so it's prob ok to move the resulting calculations
