@@ -679,16 +679,16 @@ const Asteroid = (props) => {
 
       const currentCameraHeight = controls.object.position.length();
 
-      let plotPosition = AsteroidLib.getLotPosition(selectedPlot.asteroidId, selectedPlot.plotId, plotTally);
-      plotPosition = new Vector3(...plotPosition);
+      const plotPosition = new Vector3(...AsteroidLib.getLotPosition(selectedPlot.asteroidId, selectedPlot.plotId, plotTally));
       plotPosition.multiply(config.stretch);
       plotPosition.setLength(currentCameraHeight);
+      const unrotatedPlotPosition = plotPosition.clone();
       plotPosition.applyAxisAngle(rotationAxis.current, rotation.current);
 
       // if farther than 10000 out, adjust in to altitude of 5000
       // if closer than surfaceDistance, adjust out to altitude of surfaceDistance
       // else, will just reuse camera height
-      const closestChunk = getClosestChunk(plotPosition);
+      const closestChunk = getClosestChunk(unrotatedPlotPosition);
       if (closestChunk) {
         // console.log(currentCameraHeight, closestChunk.sphereCenterHeight);
         const predictedAltitude = currentCameraHeight - closestChunk.sphereCenterHeight;
@@ -697,10 +697,9 @@ const Asteroid = (props) => {
         } else {
           const minDistance = getMinDistance(closestChunk);
           if(currentCameraHeight + predictedAltitude < minDistance) {
-            // console.log('zoom out', currentCameraHeight + predictedAltitude, minDistance)
             plotPosition.setLength(minDistance + 100);
           }
-        } 
+        }
       }
 
       gsap
