@@ -768,6 +768,12 @@ const TitleCell = styled.td`
     content: '${p => p.title}';
   }
 `;
+const TransferSelectionBody = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  max-height: calc(100% - 47px);
+`;
 const TransferSelectionTableWrapper = styled(PoppableTableWrapper)`
   border-width: 0;
   flex: 1 0 auto;
@@ -1262,7 +1268,7 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
   return (
     <PopperBody>
       {/* TODO: see mockup for title area */}
-      <div style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+      <TransferSelectionBody>
         <TransferSelectionTableWrapper>
           <table>
             <thead>
@@ -1308,7 +1314,7 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
             </table>
           </TransferSelectionTableWrapper>
         )}
-      </div>
+      </TransferSelectionBody>
       <PopperFooter>
         <Button onClick={() => onComplete(newSelectedItems)}>Done</Button>
       </PopperFooter>
