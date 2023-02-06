@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimationMixer, Box3, Color, DirectionalLight, EquirectangularReflectionMapping, LoopRepeat, PCFSoftShadowMap, Vector2, Vector3 } from 'three';
+import { AnimationMixer, Box3, Color, DirectionalLight, EquirectangularReflectionMapping, LoopRepeat, PCFSoftShadowMap, Raycaster, Vector2, Vector3 } from 'three';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -21,6 +21,7 @@ import useStore from '~/hooks/useStore';
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
 const ENV_MAP_STRENGTH = 4.5;
+const DOWN = new Vector3(0, -1, 0);
 
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderConfig({ type: 'js' });
@@ -147,8 +148,12 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   const { camera, gl, scene } = useThree();
 
   const animationMixer = useRef();
+  const maxCameraDistance = useRef();
   const controls = useRef();
   const model = useRef();
+
+  const asteroidTerrain = useRef();
+  const raycaster = useRef(new Raycaster());
 
   // init the camera (reset when url changes)
   useEffect(() => {
@@ -179,14 +184,14 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   }, [camera, gl]);
 
   useEffect(() => {
-    if (zoomLimitsEnabled) {
+    if (assetType === 'Resource' && zoomLimitsEnabled) {
       controls.current.minDistance = 0.85;
       controls.current.maxDistance = 5;
     } else {
       controls.current.minDistance = 0;
       controls.current.maxDistance = Infinity;
     }
-  }, [zoomLimitsEnabled]);
+  }, [assetType, zoomLimitsEnabled]);
 
   // // init axeshelper
   // useEffect(() => {
@@ -226,6 +231,10 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
           } else if (node.name === 'Camera') {
             predefinedCamera = node.position.clone();
           } else if (node.isMesh) {
+            if (node.name === 'Asteroid_Terrain') {
+              asteroidTerrain.current = node;
+            }
+
             // self-shadowing
             if (ENABLE_SHADOWS) {
               node.castShadow = true;
@@ -328,9 +337,13 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
           controls.current.update();
         }
 
+        if (assetType === 'Building') {
+          // maxCameraDistance.current = 2 * controls.current.object.position.length();
+          maxCameraDistance.current = 0.1;
+        }
+
         // bbox.setFromObject(model.current);
-        // box3h.current = new THREE.Box3Helper(bbox);
-        // scene.add(box3h.current);
+        // helpers.push(new THREE.Box3Helper(bbox));
 
         // initial rotation simulates initial camera position in blender
         // (halfway between the x and z axis)
@@ -389,12 +402,58 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
   useFrame((state, delta) => {
     if (model.current && rotationEnabled) {
       model.current.rotation.y += 0.0025;
+      // if (box3h.current) {
+      //   box3h.current.rotation.y += 0.0025;
+      // }
     }
-    // if (box3h.current) {
-    //   box3h.current.rotation.y += 0.0025;
-    // }
     if (animationMixer.current) {
       animationMixer.current.update(delta);
+    }
+
+    // apply camera constraints to building scene
+    if (assetType === 'Building') {
+      if (controls.current.object && controls.current.target) {
+        let updateControls = false;
+
+        // collision detection on asteroid terrain
+        if (asteroidTerrain.current) {
+          raycaster.current.set(
+            new Vector3(
+              controls.current.object.position.x,
+              1,
+              controls.current.object.position.z,
+            ),
+            DOWN
+          );
+          const intercepts = raycaster.current.intersectObject(asteroidTerrain.current, false);
+          if (intercepts.length > 0) {
+            if (intercepts[0].point.y + 0.001 > controls.current.object.position.y) {
+              controls.current.object.position.set(
+                controls.current.object.position.x,
+                intercepts[0].point.y + 0.001001,
+                controls.current.object.position.z,
+              );
+              updateControls = true;
+            }
+          }
+        }
+
+        if (zoomLimitsEnabled && maxCameraDistance.current !== null) {
+          // don't let camera beyond distance (if defined)
+          if (controls.current.object.position.length() > maxCameraDistance.current) {
+            controls.current.object.position.setLength(maxCameraDistance.current);
+            updateControls = true;
+          }
+          // don't let target beyond third of distance (to make sure generally stay facing model)
+          if (controls.current.target.length() > maxCameraDistance.current * 0.33) {
+            controls.current.target.setLength(maxCameraDistance.current * 0.33);
+            updateControls = true;
+          }
+        }
+        if (updateControls) {
+          controls.current.update();
+        }
+      }
     }
   });
 
@@ -595,15 +654,17 @@ const reader = new FileReader();
 const ModelViewer = ({ assetType, plotZoomMode }) => {
   const { model: paramModel } = useParams();
   const { search } = useLocation();
-  // TODO: linting appropriately doesn't like below line... consider reworking once building viewer is more finalized
-  const assets = assetType === 'Resource' ? useResourceAssets() : useBuildingAssets(); // eslint-disable-line react-hooks/rules-of-hooks
-  const singleModel = plotZoomMode || paramModel;
+  const resources = useResourceAssets();
+  const buildings = useBuildingAssets();
 
   const canvasStack = useStore(s => s.canvasStack);
   const dispatchCanvasStacked = useStore(s => s.dispatchCanvasStacked);
   const dispatchCanvasUnstacked = useStore(s => s.dispatchCanvasUnstacked);
 
-  const [devtoolsEnabled, setDevtoolsEnabled] = useState();
+  const assets = assetType === 'Building' ? buildings.filter((b, i) => i < 3) : resources;
+  const singleModel = plotZoomMode || Number(paramModel);
+  
+  const [devtoolsEnabled, setDevtoolsEnabled] = useState(!singleModel);
   const [model, setModel] = useState();
   const [bgOverride, setBgOverride] = useState();
   const [bgOverrideName, setBgOverrideName] = useState();
@@ -617,7 +678,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState();
   const [rotationEnabled, setRotationEnabled] = useState(assetType === 'Resource');
-  const [zoomLimitsEnabled, setZoomLimitsEnabled] = useState(assetType === 'Resource');
+  const [zoomLimitsEnabled, setZoomLimitsEnabled] = useState(true);
 
   const [uploadType, setUploadType] = useState();
   const fileInput = useRef();
@@ -705,7 +766,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
       if (singleModel) {
         const asset = typeof singleModel === 'string'
           ? assets.find((a) => a?.name === singleModel)
-          : assets.find((a) => a?.i === singleModel);
+          : assets.find((a) => Number(a?.i) === singleModel);
         if (asset) {
           setLoadingModel(true);
           setModel(asset);
@@ -875,7 +936,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
           {false && assetType === 'Building' && (
             <>
               <ambientLight intensity={0.4} />
-              <Postprocessor enabled={true} bloomByName={(n) => !!n.match(/(light|fire)/i)} />
+              <Postprocessor enabled={true} />
             </>
           )}
           {model?.modelUrl && !loadingSkybox && (

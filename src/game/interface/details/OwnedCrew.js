@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
+import LoadingIcon from 'react-spinners/PuffLoader';
 
-import Button from '~/components/Button';
+import Button from '~/components/ButtonAlt';
 import CrewCard from '~/components/CrewCard';
 import CrewInfoPane from '~/components/CrewInfoPane';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
@@ -15,10 +16,12 @@ import {
   ChevronDoubleUpIcon as ActivateIcon,
   PlusIcon,
   PromoteIcon,
-  ChevronDoubleDownIcon
+  ChevronDoubleDownIcon,
+  CheckIcon
 } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
+import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
 import useCrew from '~/hooks/useCrew';
@@ -28,13 +31,13 @@ import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme.js';
 import { useHistory } from 'react-router-dom';
-import TriangleTip from '~/components/TriangleTip';
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 0 30px;
+  transition: opacity 250ms ease;
 
   @media (min-width: 1024px) and (max-width: 1600px) {
     padding: 0;
@@ -62,7 +65,9 @@ const IconHR = styled.div`
   }
 `;
 
+const CrewCredits = styled.div``;
 const Title = styled.div`
+  position: relative;
   & > h3 {
     align-items: center;
     ${p => !p.hideBorder && `border-bottom: 1px solid #2b2b2b;`}
@@ -77,6 +82,11 @@ const Title = styled.div`
       font-size: 150%;
       margin-right: 6px;
     }
+  }
+  & ${CrewCredits} {
+    color: ${p => p.theme.colors.success};
+    position: absolute;
+    right: 0;
   }
   & ${IconHR} {
     margin-top: -7px;
@@ -138,7 +148,7 @@ const CrewContainer = styled.div`
     left: 50%;
     margin-left: -46px;
     position: absolute;
-    bottom: -16px;
+    bottom: -20px;
   }
 `;
 
@@ -445,12 +455,13 @@ const OwnedCrew = (props) => {
   const { data: crewAssignmentData, isLoading: assignmentsAreLoading } = useCrewAssignments();
   const queryClient = useQueryClient();
   const { crew: selectedCrew, crews: allCrews, crewMemberMap, loading: crewIsLoading } = useCrew();
-  const { changeActiveCrew, getPendingActiveCrewChange, getPendingPurchase } = useCrewManager();
+  const { changeActiveCrew, getPendingActiveCrewChange, getPendingCrewmate, crewCredits } = useCrewManager();
   const history = useHistory();
   const { height, width } = useScreenSize();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
+  const interfaceHidden = useStore(s => s.graphics.hideInterface);
 
   const { crewRecruitmentStoryId, crewRecruitmentSessionId } = crewAssignmentData || {};
 
@@ -462,6 +473,7 @@ const OwnedCrew = (props) => {
     pristine: ''
   });
   const [activeCrewHeight, setActiveCrewHeight] = useState(null);
+  const [creatingSession, setCreatingSession] = useState();
   const [hovered, setHovered] = useState();
   const [inactiveCrewCollapsed, setInactiveCrewCollapsed] = useState(width < collapsibleWidth);
   const [saving, setSaving] = useState(false);
@@ -473,7 +485,7 @@ const OwnedCrew = (props) => {
     const activeCrew = (selectedCrew?.crewMembers || []).map((i, index) => ({ ...crewMemberMap[i], activeSlot: index + 1 }));
     const activeInAnyCrewIds = (allCrews || []).reduce((acc, c) => [...acc, ...c.crewMembers], []);
     const inactiveCrew = Object.values(crewMemberMap || {})
-      .filter((crewMember) => !activeInAnyCrewIds.includes(crewMember.i))
+      .filter((crewMember) => crewMember.crewClass && !activeInAnyCrewIds.includes(crewMember.i))
       .map((c) => ({ ...c, activeSlot: -1 }));
     return [...activeCrew, ...inactiveCrew];
   }, [selectedCrew, allCrews, crewMemberMap, crewIsLoading]);
@@ -483,7 +495,7 @@ const OwnedCrew = (props) => {
   }, [activeCrew, pristine]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRecruit = useCallback(() => {
-    if (isDataLoading) return;
+    if (isDataLoading || creatingSession) return;
 
     if (isDirty) {
       createAlert({
@@ -502,6 +514,7 @@ const OwnedCrew = (props) => {
 
     // create new session...
     } else if (crewRecruitmentStoryId) {
+      setCreatingSession(true);
       createStorySession.mutate({
         storyId: crewRecruitmentStoryId,
         account
@@ -519,6 +532,7 @@ const OwnedCrew = (props) => {
               }
             );
           }
+          setCreatingSession(false);
 
           // go to assignment
           playSound('effects.success');
@@ -526,6 +540,7 @@ const OwnedCrew = (props) => {
         },
         onError: (err) => {
           console.error(err);
+          setCreatingSession(false);
         }
       });
     }
@@ -577,7 +592,7 @@ const OwnedCrew = (props) => {
 
   const handleActiveCrewHeight = useCallback(() => {
     if (activeCrewContainer.current) {
-      setActiveCrewHeight(activeCrewContainer.current.clientHeight);
+      setActiveCrewHeight(activeCrewContainer.current.clientHeight || 0);
     }
   }, []);
 
@@ -588,12 +603,10 @@ const OwnedCrew = (props) => {
   useEffect(() => {
     if (!token || isDataLoading) return;
 
-    console.log(crew);
-
-    const pendingPurchase = getPendingPurchase();
+    const pendingPurchase = getPendingCrewmate();
     const pendingChange = getPendingActiveCrewChange();
     if (pendingPurchase) {
-      console.log('pendingPurchase', pendingPurchase);
+      // console.log('pendingPurchase', pendingPurchase);
       setSaving(true);
       dispatch({
         type: 'INITIALIZE',
@@ -639,13 +652,13 @@ const OwnedCrew = (props) => {
         pristine: true
       });
     }
-  }, [isDataLoading, crew?.length, getPendingActiveCrewChange, getPendingPurchase, saving]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isDataLoading, crew?.length, getPendingActiveCrewChange, getPendingCrewmate, saving]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // if crew is loaded but there is new crew (and no pending tx), jump straight into recruitment
   useEffect(() => {
     if (!isDataLoading && crew.length === 0) {
-      console.log(getPendingActiveCrewChange(), getPendingPurchase());
-      if (!(getPendingActiveCrewChange() || getPendingPurchase())) {
+      // console.log(getPendingActiveCrewChange(), getPendingCrewmate());
+      if (!(getPendingActiveCrewChange() || getPendingCrewmate())) {
         handleRecruit();
       }
     }
@@ -656,29 +669,30 @@ const OwnedCrew = (props) => {
   }, [width]);
 
   useEffect(() => {
-    if (isDataLoading) return;
+    if (isDataLoading || interfaceHidden) return;
     setTimeout(handleActiveCrewHeight, 0);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [height, handleActiveCrewHeight, isDataLoading, inactiveCrew?.length > 0]);
+  }, [height, handleActiveCrewHeight, isDataLoading, inactiveCrew?.length > 0, interfaceHidden]);
 
   const clickOverlay = useMemo(() => ({
     alwaysOn: ['button','icon'],
     button: 'Recruit',
-    buttonAttention: true,
+    buttonAttention: !creatingSession,
     buttonStyle: activeCrewHeight < 320 && (activeCrewHeight < 275 ? { display: 'none' } : { fontSize: '10px' }),
     disableHover: true,
-    icon: <PlusIcon />,
+    icon: creatingSession ? <div style={{ height: 60, width: 60 }}><LoadingIcon color={theme.colors.main} /></div> : <PlusIcon />,
     rgb: theme.colors.mainRGB,
-  }), [activeCrewHeight]);
+  }), [activeCrewHeight, creatingSession]);
 
   if (isDataLoading) return null;
   return (
     <Details title="Owned Crew" width="max">
       {!(crew?.length > 0 && crewRecruitmentStoryId) && <Loader />}
       {crew?.length > 0 && crewRecruitmentStoryId && (
-        <Container>
+        <Container style={{ opacity: activeCrewHeight > 0 ? 1 : 0 }}>
           <Title>
+            {crewCredits?.length > 0 && <CrewCredits><CheckIcon /> {crewCredits?.length} credit{crewCredits?.length === 1 ? '' : 's'} remaining</CrewCredits>}
             <h3>
               My Active Crew: {activeCrew.length} / 5
             </h3>
@@ -710,7 +724,7 @@ const OwnedCrew = (props) => {
                                 <div>Captain</div>
                               </CaptainTopFlourish>
                               <CrewContainer>
-                                <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
+                                <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty && !creatingSession ? handleRecruit : noop}>
                                   {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
                                   {!isEmpty && <CrewCard
                                     crew={crew}
@@ -739,7 +753,7 @@ const OwnedCrew = (props) => {
                           {slot !== 0 && (
                             <CrewContainer slot={slot}>
                               <TopFlourish />
-                              <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
+                              <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty && !creatingSession ? handleRecruit : noop}>
                                 {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
                                 {!isEmpty && <CrewCard
                                   crew={crew}
@@ -801,6 +815,7 @@ const OwnedCrew = (props) => {
             <Button
               onClick={handleSave}
               disabled={saving || !isDirty}
+              isTransaction
               loading={saving}>
               Save Changes
             </Button>

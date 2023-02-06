@@ -1,5 +1,5 @@
 import create from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, subscribeWithSelector } from 'zustand/middleware';
 import produce from 'immer';
 
 import constants from '~/lib/constants';
@@ -7,7 +7,9 @@ import constants from '~/lib/constants';
 const {
   CHUNK_RESOLUTION,
   GRAPHICS_DEFAULTS,
-  ENABLE_SHADOWS
+  ENABLE_SHADOWS,
+  MIN_FOV,
+  MAX_FOV
 } = constants;
 
 // (keep these out of state so can change)
@@ -26,8 +28,10 @@ const outlinerSectionDefaults = {
   timeControl: { ...sectionDefault }
 };
 
-const useStore = create(persist((set, get) => ({
+const useStore = create(subscribeWithSelector(persist((set, get) => ({
     actionDialog: {},
+    actionItemsPinned: true,
+    launcherPage: null,
 
     asteroids: {
       origin: null,
@@ -39,8 +43,11 @@ const useStore = create(persist((set, get) => ({
       highlight: null,
       plot: null,
       plotDestination: null,
+      resourceMap: {
+        active: false,
+        selected: null
+      },
       zoomToPlot: null,
-      mapResourceId: null,
       owned: {
         mapped: false,
         filtered: false,
@@ -56,11 +63,12 @@ const useStore = create(persist((set, get) => ({
     },
 
     auth: {
-      token: null,
-      lastWallet: null
+      token: null
     },
 
     selectedCrewId: null,
+
+    cameraNeedsReorientation: false,
 
     hasSeenIntroVideo: false,
     cutscenePlaying: false,
@@ -150,6 +158,12 @@ const useStore = create(persist((set, get) => ({
 
     dispatchActionDialog: (type, params = {}) => set(produce(state => {
       state.actionDialog = { type, params };
+    })),
+
+    dispatchLauncherPage: (page) => set(produce(state => {
+      if (page === 'store' || page === 'wallets' || page === 'settings') state.launcherPage = page;
+      else if (page) state.launcherPage = 'account';
+      else state.launcherPage = null;
     })),
 
     dispatchAlertNotified: (alert) => set(produce(state => {
@@ -264,7 +278,7 @@ const useStore = create(persist((set, get) => ({
     })),
 
     dispatchFOVSet: (fov) => set(produce(state => {
-      if (fov < 45 || fov > 175) return;
+      if (fov < MIN_FOV || fov > MAX_FOV) return;
       state.graphics.fov = fov;
     })),
 
@@ -366,40 +380,41 @@ const useStore = create(persist((set, get) => ({
       state.timeOverride = anchor ? { anchor, speed, ts: Date.now() } : null;
     }))),
 
+    dispatchActionItemsPinned: (which) => set(produce(state => {
+      state.actionItemsPinned = which;
+    })),
+
     dispatchAuthenticated: (token) => set(produce(state => {
       state.auth.token = token;
-    })),
-
-    dispatchWalletConnected: (walletId) => set(produce(state => {
-      state.auth.lastWallet = walletId;
-    })),
-
-    dispatchWalletDisconnected: () => set(produce(state => {
-      state.auth.lastWallet = null;
-    })),
-
-    dispatchCrewSelected: (crewId) => set(produce(state => {
-      state.selectedCrewId = crewId;
-    })),
-
-    dispatchCutscenePlaying: (which) => set(produce(state => {
-      state.cutscenePlaying = which;
-    })),
-
-    dispatchSeenIntroVideo: (which) => set(produce(state => {
-      state.hasSeenIntroVideo = which;
     })),
 
     dispatchTokenInvalidated: () => set(produce(state => {
       state.auth.token = null;
     })),
 
+    dispatchCrewSelected: (crewId) => set(produce(state => {
+      state.selectedCrewId = crewId;
+    })),
+
+    dispatchCutscene: (source, allowSkip) => set(produce(state => {
+      state.cutscene = source ? { source, allowSkip: allowSkip || false } : null;
+    })),
+
+    dispatchSeenIntroVideo: (which) => set(produce(state => {
+      state.hasSeenIntroVideo = which;
+    })),
+
     dispatchReferrerSet: (refCode) => set(produce(state => {
       state.referrer = refCode;
     })),
 
-    dispatchResourceMap: (resourceId) => set(produce(state => {
-      state.asteroids.mapResourceId = Number(resourceId);
+    dispatchResourceMapToggle: (which) => set(produce(state => {
+      state.asteroids.resourceMap.active = which;
+    })),
+
+    dispatchResourceMapSelect: (resourceId) => set(produce(state => {
+      state.asteroids.resourceMap.selected = Number(resourceId);
+      if (!resourceId) state.asteroids.resourceMap.active = false;
     })),
 
     dispatchPlotsLoading: (i, progress = 0, simulateTarget = 0) => set(produce(state => {
@@ -413,6 +428,10 @@ const useStore = create(persist((set, get) => ({
     dispatchPlotSelected: (asteroidId, plotId) => set(produce(state => {
       state.asteroids.plot = asteroidId && plotId ? { asteroidId, plotId } : null;
       state.asteroids.zoomToPlot = null;
+    })),
+
+    dispatchReorientCamera: (needsReorienting) => set(produce(state => {
+      state.cameraNeedsReorientation = !!needsReorienting;
     })),
 
     //
@@ -435,19 +454,20 @@ const useStore = create(persist((set, get) => ({
       return { textureSize: 1 * CHUNK_RESOLUTION - 3 };
     },
 
-    dispatchFailedTransaction: ({ key, vars, err }) => set(produce(state => {
+    dispatchFailedTransaction: ({ key, vars, txHash, err }) => set(produce(state => {
       if (!state.failedTransactions) state.failedTransactions = [];
       state.failedTransactions.push({
         key,
         vars,
         err,
+        txHash,
         timestamp: Date.now()
       });
     })),
 
-    dispatchFailedTransactionDismissed: (timestamp) => set(produce(state => {
+    dispatchFailedTransactionDismissed: (txHashOrTimestamp) => set(produce(state => {
       if (!state.failedTransactions) state.failedTransactions = [];
-      state.failedTransactions = state.failedTransactions.filter((tx) => tx.timestamp !== timestamp);
+      state.failedTransactions = state.failedTransactions.filter((tx) => tx.txHash !== txHashOrTimestamp && tx.timestamp !== txHashOrTimestamp);
     })),
 
     dispatchPendingTransaction: ({ key, vars, txHash }) => set(produce(state => {
@@ -474,10 +494,6 @@ const useStore = create(persist((set, get) => ({
       state.pendingTransactions = state.pendingTransactions.filter((tx) => tx.txHash !== txHash);
     })),
 
-    dispatchZoomToPlot: (buildingLabel) => set(produce(state => {
-      state.asteroids.zoomToPlot = buildingLabel;
-    })),
-
     dispatchCanvasStacked: (id) => set(produce(state => {
       if (!state.canvasStack) state.canvasStack = [];
       state.canvasStack.unshift(id);
@@ -486,11 +502,37 @@ const useStore = create(persist((set, get) => ({
     dispatchCanvasUnstacked: (id) => set(produce(state => {
       if (!state.canvasStack) state.canvasStack = [];
       state.canvasStack = state.canvasStack.filter((s) => s !== id);
+    })),
+
+    dispatchClearTransactionHistory: () => set(produce(state => {
+      state.pendingTransactions = [];
+      state.failedTransactions = [];
+    })),
+
+    dispatchZoomToPlot: (isZoomed) => set(produce(state => {
+      state.asteroids.zoomToPlot = isZoomed;
     }))
 
 }), {
   name: 'influence',
-  version: 0,
+  version: 1,
+  migrate: (persistedState, oldVersion) => {
+    const migrations = [
+      (state, version) => {
+        if (version >= 1) return;
+        const active = state.asteroids.mapResourceId ? true : false;
+        const selected = state.asteroids.mapResourceId || null;
+        state.asteroids.resourceMap = { active, selected };
+        return state;
+      }
+    ];
+
+    for (let i = 0; i < migrations.length; i++) {
+      persistedState = migrations[i](persistedState, oldVersion);
+    }
+
+    return persistedState;
+  },
   blacklist: [
     // TODO: should these be stored elsewhere if ephemeral?
     // TODO: the nested values are not supported by zustand
@@ -501,11 +543,12 @@ const useStore = create(persist((set, get) => ({
     'asteroids.zoomToPlot',
     'canvasStack',
     'cutscenePlaying',
+    'cameraNeedsReorientation',
     'draggables',
     'failedTransactions',
     'plotLoader',
     'timeOverride'  // should this be in ClockContext?
   ]
-}));
+})));
 
 export default useStore;

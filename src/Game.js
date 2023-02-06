@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
@@ -10,8 +10,8 @@ import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
 import { ClockProvider } from '~/contexts/ClockContext';
 import { EventsProvider } from '~/contexts/EventsContext';
 import { WalletProvider } from '~/contexts/WalletContext';
+import { WebsocketProvider } from '~/contexts/WebsocketContext';
 import Audio from '~/game/Audio';
-import Launcher from '~/game/Launcher';
 import Interface from '~/game/Interface';
 import LandingPage from '~/game/Landing';
 import Referral from '~/game/Referral';
@@ -48,22 +48,42 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const DISABLE_INTRO = false; // process.env.NODE_ENV === 'development';
 const DISABLE_LAUNCHER_LANDING = process.env.NODE_ENV === 'development';
 
 const LauncherRedirect = () => {
   const { account } = useAuth();
   const history = useHistory();
-  const showInterface = useStore(s => s.dispatchShowInterface);
 
-  // on initial load, redirect to launcher if at "/" (and not in skip-mode for dev)
+  const launcherPage = useStore(s => s.launcherPage);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+
+  // redirect to launcher if initial load and trying to link to /launcher/*
   useEffect(() => {
-    if (DISABLE_LAUNCHER_LANDING && account) {
-      showInterface();
-    } else if (history.location.pathname === '/') {
-      history.push('/launcher/account');
+    const parts = history.location.pathname.split('/').slice(1);
+    const deeplink = parts[0] === 'launcher';
+    if (deeplink || !DISABLE_LAUNCHER_LANDING) {
+      const destinationPage = (deeplink && parts[1]) ? parts[1] : true;
+      if (launcherPage !== destinationPage) {
+        dispatchLauncherPage(destinationPage);
+      }
+      if (deeplink) {
+        history.replace('/');
+      }
     }
   }, []);
+
+  // redirect to launcher if was logged in and is now logged out (and not already on launcher)
+  const wasLoggedIn = useRef(false);
+  useEffect(() => {
+    if (account) {
+      wasLoggedIn.current = true;
+    } else {
+      if (wasLoggedIn.current && !launcherPage) {
+        dispatchLauncherPage(true);
+      }
+      wasLoggedIn.current = false;
+    }
+  }, [!account]);
 
   return null;
 };
@@ -77,11 +97,6 @@ const Game = (props) => {
   const setAutodetect = useStore(s => s.dispatchGraphicsAutodetectSet);
   const graphics = useStore(s => s.graphics);
   const [ showScene, setShowScene ] = useState(false);
-  const [ introEnabled, setIntroEnabled ] = useState(!DISABLE_INTRO);
-
-  const onIntroComplete = useCallback(() => {
-    // setIntroEnabled(false);
-  }, []);
 
   const autodetectNeedsInit = graphics?.autodetect === undefined;
   useEffect(() => {
@@ -125,34 +140,37 @@ const Game = (props) => {
     <WalletProvider>
       <AuthProvider>
         <CrewProvider>
-          <EventsProvider>
-            <ChainTransactionProvider>
-              <ActionItemProvider>
-                <ThemeProvider theme={theme}>
-                  <GlobalStyle />
-                  <Router>
-                    <Referral />
-                    <ClockProvider>
-                      <LauncherRedirect />
+          <WebsocketProvider>
+            <EventsProvider>
+              <ChainTransactionProvider>
+                <ActionItemProvider>
+                  <ThemeProvider theme={theme}>
+                    <GlobalStyle />
+                    <Router>
+                      <Referral />
                       <Switch>
+                        {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
                         <Route path="/play">
                           <LandingPage />
                         </Route>
-                        <Route path="/launcher/*">
-                          <Launcher />
+                        {/* for everything else */}
+                        <Route>
+                          <LauncherRedirect />
+                          <ClockProvider>
+                            <StyledMain>
+                              <Interface />
+                              {showScene && <Scene />}
+                              <Audio />
+                            </StyledMain>
+                          </ClockProvider>
                         </Route>
                       </Switch>
-                      <StyledMain>
-                        <Interface />
-                        {showScene && <Scene />}
-                        <Audio />
-                      </StyledMain>
-                    </ClockProvider>
-                  </Router>
-                </ThemeProvider>
-              </ActionItemProvider>
-            </ChainTransactionProvider>
-          </EventsProvider>
+                    </Router>
+                  </ThemeProvider>
+                </ActionItemProvider>
+              </ChainTransactionProvider>
+            </EventsProvider>
+          </WebsocketProvider>
         </CrewProvider>
       </AuthProvider>
     </WalletProvider>

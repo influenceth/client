@@ -6,6 +6,14 @@ import useCrew from './useCrew';
 import usePlot from './usePlot';
 import useActionItems from './useActionItems';
 
+// start delivery:
+//  - button loading
+//  - actionItem (transaction) links back to origin and opens delivery
+
+// once started, only accessible via actionItem
+//  - no buttons loading
+//  - actionItem links to destination and opens delivery
+
 const useDeliveryManager = (asteroidId, plotId, deliveryId = 0) => {
   const { actionItems, readyItems } = useActionItems();
   const { chainTime, execute, getStatus, getPendingTx } = useContext(ChainTransactionContext);
@@ -16,20 +24,6 @@ const useDeliveryManager = (asteroidId, plotId, deliveryId = 0) => {
     asteroidId,
     crewId: crew?.i
   }), [asteroidId, crew?.i]);
-
-
-  // if deliveryId is 0, treat plotId as origin
-  // else, treat as destination
-
-  // start delivery:
-  //  - button loading
-  //  - actionItem (transaction) links back to origin and opens delivery
-
-  // once started, only accessible via actionItem
-  //  - no buttons loading
-  //  - actionItem links to destination and opens delivery
-  
-
 
   // status flow
   // READY > DEPARTING > IN_TRANSIT > READY_TO_FINISH > FINISHING > FINISHED
@@ -47,7 +41,7 @@ const useDeliveryManager = (asteroidId, plotId, deliveryId = 0) => {
 
     let status = 'READY';
 
-    // if deliveryId, treat plot as destination and asssume in progress or done
+    // if deliveryId, treat plot as destination and assume in progress or done
     const delivery = deliveryId > 0 && (plot?.building?.deliveries || []).find((d) => d.deliveryId === deliveryId);
     if (delivery) {
       let actionItem = (actionItems || []).find((item) => (
@@ -57,7 +51,7 @@ const useDeliveryManager = (asteroidId, plotId, deliveryId = 0) => {
         && item.assets.delivery?.deliveryId === deliveryId
       ));
       if (actionItem) {
-        current._crewmates = actionItem.assets.crew.crewmates;
+        current._crewmates = actionItem.assets.crew?.crewmates;
         current.originPlotId = actionItem.event.returnValues.originLotId;
         current.originPlotInvId = actionItem.event.returnValues.originInventoryId;
       }

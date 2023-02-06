@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import { useCubeTexture } from '@react-three/drei';
+import { Color } from 'three';
 
 import useStore from '~/hooks/useStore';
 
@@ -16,10 +17,10 @@ const SettingsManager = (props) => {
 
   // toggle background on / off per settings
   useEffect(() => {
-    if (skyboxVisible && !scene.background && skybox) {
+    if (skyboxVisible && (!scene.background || scene.background.isColor) && skybox) {
       scene.background = skybox;
     } else if (!skyboxVisible && scene.background) {
-      scene.background = null;
+      scene.background = new Color(0x000000);
     }
   }, [ scene, skyboxVisible, skybox ]);
 

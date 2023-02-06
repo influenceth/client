@@ -1,15 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import {
-  // BufferAttribute,
-  AxesHelper,
-  CameraHelper,
-  Color,
-  DirectionalLight,
-  DirectionalLightHelper,
-  Vector2,
-  Vector3
-} from 'three';
+import { AxesHelper, CameraHelper, Color, DirectionalLight, DirectionalLightHelper, Vector3 } from 'three';
 import gsap from 'gsap';
 import { KeplerianOrbit, toSpectralType, Asteroid as AsteroidLib, Inventory } from '@influenceth/sdk';
 
@@ -39,7 +30,6 @@ const INITIAL_ZOOM_MIN = 6000;
 const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 20;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
-const MOUSE_THROTTLE = 1000 / 30; // ms
 
 // some numbers estimated from https://web.dev/rendering-performance/
 const TARGET_FPS = 60;
@@ -114,18 +104,28 @@ const frameTimeLeft = (start, chunkSwapPending) => {
 //   console.log(AVG_RENDER_TIMES);
 // }, 5000);
 
+const EMISSIVE_INTENSITY = {
+  Fissile: 1,
+  Metal: 1,
+  Organic: 1.05,
+  RareEarth: 1,
+  Volatile: 1.25
+};
+
 const Asteroid = (props) => {
-  const { controls, gl } = useThree();
+  const { controls } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const { textureSize } = useStore(s => s.getTerrainQuality());
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
+  const cameraNeedsReorientation = useStore(s => s.cameraNeedsReorientation);
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
+  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const selectPlot = useStore(s => s.dispatchPlotSelected);
-  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
+  const resourceMap = useStore(s => s.asteroids.resourceMap);
   const selectedPlot = useStore(s => s.asteroids.plot);
 
   const { data: asteroidData } = useAsteroid(origin);
@@ -136,8 +136,6 @@ const Asteroid = (props) => {
   const [cameraAltitude, setCameraAltitude] = useState();
   const [cameraNormalized, setCameraNormalized] = useState();
   const [config, setConfig] = useState();
-  const [lastClick, setLastClick] = useState();
-  const [mousableTerrainInitialized, setMousableTerrainInitialized] = useState();
   const [terrainInitialized, setTerrainInitialized] = useState();
   const [terrainUpdateNeeded, setTerrainUpdateNeeded] = useState();
   const [prevAsteroidPosition, setPrevAsteroidPosition] = useState();
@@ -150,13 +148,8 @@ const Asteroid = (props) => {
   const chunkSwapThisCycle = useRef();
   const geometry = useRef();
   const group = useRef();
-  const lastMouseUpdatePosition = useRef(new Vector2());
-  const lastMouseUpdateTime = useRef(0);
   const light = useRef();
   const lockToSurface = useRef();
-  const mouseableRef = useRef();
-  const mouseGeometry = useRef();
-  const mouseIntersect = useRef(new Vector3());
   const position = useRef();
   const unloadedPosition = useRef();
   const quadtreeRef = useRef();
@@ -232,15 +225,6 @@ const Asteroid = (props) => {
         quadtreeRef.current.remove(g);
       });
     }
-    if (mouseGeometry.current && mouseableRef.current) {
-      mouseGeometry.current.groups.forEach((g) => {
-        mouseableRef.current.remove(g);
-      });
-    }
-    if (mouseGeometry.current) {
-      mouseGeometry.current.dispose();
-      mouseGeometry.current = null;
-    }
     if (geometry.current) {
       geometry.current.dispose();
       geometry.current = null;
@@ -268,12 +252,12 @@ const Asteroid = (props) => {
   const onUnload = useCallback(() => {
     setConfig();
     setTerrainInitialized();
-    setMousableTerrainInitialized();
     asteroidOrbit.current = null;
     rotationAxis.current = null;
     if (position.current) unloadedPosition.current = [...position.current];
     position.current = null;
     rotation.current = null;
+    automatingCamera.current = false;
     disposeLight();
     disposeGeometry();
   }, [disposeLight, disposeGeometry]);
@@ -282,7 +266,7 @@ const Asteroid = (props) => {
     // if origin changed, zoom into new asteroid
     if (asteroidId.current && asteroidId.current !== origin) {
       if (zoomStatus === 'in') {
-        console.log('initiate intra-asteroid zoom (i.e. set prevAsteroidPosition)');
+        // console.log('initiate intra-asteroid zoom (i.e. set prevAsteroidPosition)');
         setPrevAsteroidPosition(new Vector3(...(unloadedPosition.current || position.current)));
         updateZoomStatus('zooming-in');
       }
@@ -295,7 +279,6 @@ const Asteroid = (props) => {
 
   useEffect(() => {
     if (zoomStatus !== 'in') {
-      setLastClick();
       setZoomedIntoAsteroidId();
     }
   }, [zoomStatus]);
@@ -322,27 +305,27 @@ const Asteroid = (props) => {
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.add(g);
       });
-
-      if (mouseGeometry.current) disposeGeometry();
-      mouseGeometry.current = new QuadtreeTerrainCube(
-        origin,
-        c,
-        null, // textureSize defaults to heightSampling resolution
-        webWorkerPool,
-        {
-          opacity: 0,
-          transparent: true
-        }
-      );
-      mouseGeometry.current.groups.forEach((g) => {
-        mouseableRef.current.add(g);
-      });
     }
 
     // return cleanup
     return onUnload;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ asteroidData ]);
+
+  const defaultLightIntensity = useMemo(() => {
+    if (!position.current || !config?.radius) return 0;
+    return constants.STAR_INTENSITY / (new Vector3(...position.current).length() / constants.AU);
+  }, [config?.radius]);
+
+  // turn down the sun while in resource mode
+  const currentLightIntensity = useMemo(() => {
+    return (resourceMap?.active && resourceMap?.selected) ? Math.min(0.175, defaultLightIntensity) : defaultLightIntensity;
+  }, [defaultLightIntensity, resourceMap]);
+  useEffect(() => {
+    if (light.current && light.current.intensity !== currentLightIntensity) {
+      gsap.timeline().to(light.current, { intensity: currentLightIntensity, ease: 'power4.out', duration: 0.5 });
+    }
+  }, [currentLightIntensity]);
 
   // Configures the light component once the geometry is created
   useEffect(() => {
@@ -361,7 +344,7 @@ const Asteroid = (props) => {
 
     // must reinit geometry and lights entirely if already a shadow mode set
     if (geometry.current.shadowMode) {
-      disposeGeometry();
+      disposeGeometry(true);
       disposeLight();
 
       geometry.current = new QuadtreeTerrainCube(origin, config, textureSize, webWorkerPool);
@@ -375,19 +358,18 @@ const Asteroid = (props) => {
     const lightColor = 0xffeedd;
     const lightDistance = config.radius * DIRECTIONAL_LIGHT_DISTANCE;
     const lightDirection = posVec.clone().normalize();
-    const lightIntensity = constants.STAR_INTENSITY / (posVec.length() / constants.AU);
 
     const darkLightColor = 0xd8ddff;
     const darkLightDistance = config.radius * DIRECTIONAL_LIGHT_DISTANCE;
     const darkLightDirection = posVec.negate().clone().normalize();
-    const darkLightIntensity = lightIntensity * 0.25;
+    const darkLightIntensity = defaultLightIntensity * 0.25;
 
     const maxRadius = ringsPresent
       ? config.radius * 1.5
       : config.radius * maxStretch;
 
     // create light
-    light.current = new DirectionalLight(lightColor, lightIntensity);
+    light.current = new DirectionalLight(lightColor, currentLightIntensity);
     light.current.position.copy(lightDirection.negate().multiplyScalar(lightDistance));
     group.current.add(light.current);
 
@@ -417,11 +399,11 @@ const Asteroid = (props) => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, ringsPresent, shadowMode, shadowSize, textureSize, surfaceDistance]);
-
+  
   // Zooms the camera to the correct location
   useEffect(() => {
     if (zoomStatus === 'zooming-in' && !prevAsteroidPosition && controls) {
-      console.log('set zoomedfrom');
+      // console.log('set zoomedfrom');
       setZoomedFrom({
         scene: controls.targetScene.position.clone(),
         position: controls.object.position.clone(),
@@ -434,6 +416,16 @@ const Asteroid = (props) => {
   useEffect(() => {
     if (!shouldZoomIn || !initialOrientation || !config) return;
     if (!group.current || !position.current) return;
+    
+    // if have rotation info and geometry is loaded, can calculate the initial chunks, then set automatingCamera
+    // to pause additional chunk calculations while zooming in
+    if (geometry.current && rotationAxis.current && rotation.current) {
+      automatingCamera.current = true;
+
+      const geometryFramedPosition = initialOrientation.objectPosition.clone();
+      geometryFramedPosition.applyAxisAngle(rotationAxis.current, -rotation.current);
+      geometry.current.setCameraPosition(geometryFramedPosition);
+    }
 
     controls.maxDistance = Infinity;
 
@@ -444,7 +436,7 @@ const Asteroid = (props) => {
     const timeline = gsap.timeline({
       defaults: { duration: zoomingDuration, ease: 'power4.out' },
       onComplete: () => {
-        console.log('on complete');
+        // console.log('on complete');
         updateZoomStatus('in', true);
       }
     });
@@ -463,7 +455,7 @@ const Asteroid = (props) => {
     controls.object.near = 100;
     controls.object.updateProjectionMatrix();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ shouldZoomIn, initialOrientation ]);
+  }, [ shouldZoomIn, !initialOrientation ]);
 
   const shouldFinishZoomIn = zoomStatus === 'in' && controls && config?.radius;
   useEffect(() => {
@@ -488,7 +480,9 @@ const Asteroid = (props) => {
     controls.object.updateProjectionMatrix();
     controls.noPan = true;
 
-    console.log('asteroidId.current', `${asteroidId.current}`);
+    automatingCamera.current = false;
+
+    // console.log('asteroidId.current', `${asteroidId.current}`);
     setZoomedIntoAsteroidId(asteroidId.current);
     setPrevAsteroidPosition();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -531,6 +525,22 @@ const Asteroid = (props) => {
     controls.rotateSpeed = Math.min(1.5, 1.5 * thetaAcrossScreen / 2);
   }, [cameraAltitude, frustumHeightMult]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const getClosestChunk = useCallback((cameraPosition) => {
+    if (!geometry.current?.chunks) return null;
+    const [closestChunk] = Object.values(geometry.current.chunks).reduce((acc, c) => {
+      const distance = c.sphereCenter.distanceTo(cameraPosition);
+      return (acc.length === 0 || distance < acc[1]) ? [c, distance] : acc;
+    }, []);
+    return closestChunk;
+  }, []);
+
+  const getMinDistance = useCallback((closestChunk) => {
+    return Math.min(
+      config?.radius * MIN_ZOOM_DEFAULT,  // for smallest asteroids to match legacy (where this > min surface distance)
+      closestChunk.sphereCenterHeight + surfaceDistance
+    );
+  }, [config?.radius, surfaceDistance]);
+
   // NOTE: in theory, all distances between sphereCenter's to camera are calculated
   //       in quadtree calculation and could be passed back here, so would be more
   //       performant to re-use that BUT that is also outdated as the camera moves
@@ -538,22 +548,20 @@ const Asteroid = (props) => {
   // NOTE: raycasting technically *might* be more accurate here, but it's way less performant
   //       (3ms+ for just closest mesh... if all quadtree children, closer to 20ms)
   const applyingZoomLimits = useRef(0);
-  const applyZoomLimits = useCallback((cameraPosition, chunks) => {
+  const applyZoomLimits = useCallback((cameraPosition) => {
     if (!config?.radius) return;
     applyingZoomLimits.current = true;
     setTimeout(() => {
-      // vvv BENCHMARK <1ms (even zoomed-in on huge)
-      const [closestChunk, closestDistance] = chunks.reduce((acc, c) => { // eslint-disable-line no-unused-vars
-        const distance = c.sphereCenter.distanceTo(cameraPosition);
-        return (!acc || distance < acc[1]) ? [c, distance] : acc;
-      }, null);
+      const closestChunk = getClosestChunk(cameraPosition);
+      if (!closestChunk) {
+        applyingZoomLimits.current = false;
+        return;
+      }
 
-      const minDistance = Math.min(
-        config?.radius * MIN_ZOOM_DEFAULT,  // for smallest asteroids to match legacy (where this > min surface distance)
-        closestChunk.sphereCenterHeight + surfaceDistance
-      );
+      const minDistance = getMinDistance(closestChunk);
 
       // too close, so should animate camera out
+      // TODO: use gsap for this instead of this weird animatin
       //  TODO (enhancement): jump to surface immediately if somehow ended up inside asteroid
       //    (might need to use raycasting to do accurately though)
       if (minDistance > controls?.minDistance) {
@@ -573,9 +581,12 @@ const Asteroid = (props) => {
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
 
   useEffect(() => {
+    const resourceMapActive = resourceMap?.active;
+    const resourceMapId = resourceMap?.selected;
+
     if (!geometry.current || !config?.radiusNominal || !asteroidData?.resources) return;
-    if (mapResourceId && terrainInitialized) { 
-      const categoryKey = keyify(Inventory.RESOURCES[mapResourceId]?.category);
+    if (resourceMapActive && resourceMapId && terrainInitialized) {
+      const categoryKey = keyify(Inventory.RESOURCES[resourceMapId]?.category);
       const color = new Color(theme.colors.resources[categoryKey]);
       color.convertSRGBToLinear();
 
@@ -584,13 +595,14 @@ const Asteroid = (props) => {
       const settings = AsteroidLib.getAbundanceMapSettings(
         asteroidId,
         resourceSeed,
-        mapResourceId,
-        asteroidData.resources[mapResourceId]
+        resourceMapId,
+        asteroidData.resources[resourceMapId]
       );
       geometry.current.setEmissiveParams({
         asteroidId: asteroidId,
         color,
-        resource: mapResourceId,
+        resource: resourceMapId,
+        intensityMult: EMISSIVE_INTENSITY[categoryKey],
         ...settings
       });
       forceUpdate.current = Date.now();
@@ -598,26 +610,7 @@ const Asteroid = (props) => {
       geometry.current.setEmissiveParams();
       forceUpdate.current = Date.now();
     }
-  }, [mapResourceId, terrainInitialized, !asteroidData?.resources]);
-
-  useEffect(() => {
-    if (selectedPlot && mapResourceId) {
-      const { i: asteroidId, resourceSeed } = asteroidData;
-      const { plotId: lotId } = selectedPlot;
-      if (asteroidData.resources) {
-        let abundance = AsteroidLib.getAbundanceAtLot(
-          asteroidId,
-          BigInt(resourceSeed || 0),
-          lotId,
-          mapResourceId,
-          asteroidData.resources[mapResourceId]
-        );
-  
-        // TODO: remove once this is reflecte within the UI
-        console.log('resourceId:', mapResourceId, 'lotId:', selectedPlot.plotId, 'abundance:', abundance);
-      }
-    }
-  }, [selectedPlot, mapResourceId]);
+  }, [resourceMap, terrainInitialized, !asteroidData?.resources]);
 
   useEffect(() => {
     if (geometry.current && terrainUpdateNeeded) {
@@ -692,65 +685,92 @@ const Asteroid = (props) => {
   //   }
   // }, [controls, config?.radius]);
 
-  // once terrain is loaded, load the mouse-interactive terrain
-  // TODO (enhancement): re-use the heightSample buffer from the primary terrain cube
-  useEffect(() => {
-    if (mouseGeometry.current && terrainInitialized) {
-      // if terrain initialized, make exportable
-      // TODO (enhancement): ideally would do this in webworker, but just doing once,
-      //  so hopefully is not noticeable
-      if (mousableTerrainInitialized) {
-        // const scale = Math.min(1.02, (config.radius + 100) / config.radius);
-        Object.values(mouseGeometry.current.chunks).forEach(({ chunk }) => {
-          chunk.makeExportable();
-          // chunk._geometry.scale(scale, scale, scale);
-        });
-
-      // kick off initialization (from a far away distance so only one chunk per side)
-      } else {
-        mouseGeometry.current.setCameraPosition(new Vector3(0, 0, constants.AU));
-      }
-    }
-  }, [terrainInitialized, mousableTerrainInitialized]);
-
-  // listen for click events
-  // NOTE: if just use onclick, then fires on drag events too :(
-  const clickStatus = useRef();
-  useEffect(() => {
-    const onMouseEvent = function (e) {
-      if (e.type === 'pointerdown') {
-        clickStatus.current = new Vector2(e.clientX, e.clientY);
-      }
-      else if (e.type === 'pointerup' && clickStatus.current) {
-        const distance = clickStatus.current.distanceTo(new Vector2(e.clientX, e.clientY));
-        if (distance < 3) {
-          setLastClick(Date.now());
-        }
-      }
-    };
-    gl.domElement.addEventListener('pointerdown', onMouseEvent, true);
-    gl.domElement.addEventListener('pointerup', onMouseEvent, true);
-    return () => {
-      gl.domElement.removeEventListener('pointerdown', onMouseEvent, true);
-      gl.domElement.removeEventListener('pointerup', onMouseEvent, true);
-    };
-  }, []);
-
+  const automatingCamera = useRef();
   useEffect(() => {
     if (selectedPlot && zoomedIntoAsteroidId === selectedPlot?.asteroidId && config?.radiusNominal && zoomStatus === 'in') {
       const plotTally = Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2);
       if (plotTally < selectedPlot.plotId) { selectPlot(); return; }
-      let plotPosition = AsteroidLib.getLotPosition(selectedPlot.asteroidId, selectedPlot.plotId, plotTally);
-      plotPosition = new Vector3(...plotPosition);
-      plotPosition.multiply(config.stretch);
-      plotPosition.setLength(Math.min(1.5 * config?.radius, controls.object.position.length()));
+
+      automatingCamera.current = true;
+
+      const currentCameraHeight = controls.object.position.length();
+      const targetAltitude = (cameraAltitude && cameraAltitude < 5000) ? cameraAltitude : 5000;
+
+      const plotPosition = new Vector3(...AsteroidLib.getLotPosition(selectedPlot.asteroidId, selectedPlot.plotId, plotTally));
+      plotPosition.setLength(config.radius).multiply(config.stretch); // best guess of plot position
+      plotPosition.setLength(plotPosition.length() + targetAltitude); // best guess of final camera position
+
+      // regenerate chunks for the destination, then get closest
+      // (then iterate because depending on how far away starting from and the size of the asteroid,
+      //  the first guess may be pretty far off... the 2nd should be very close though)
+      // TODO (enhancement): move this to webworker
+      // TODO: experiment with skipping 2nd iteration if asteroid below certain size
+      let closestChunk;
+      for (let i = 0; i < 2; i++) {
+        // vvv BENCHMARK 3.5 - 7ms
+        geometry.current.setCameraPosition(plotPosition);
+        if (geometry.current.queuedChanges.length > 0) {
+          const x = geometry.current.queuedChanges.reduce((acc, changeSet) => {
+            return changeSet.add.reduce((acc, c) => {
+              const distance = c.sphereCenter.distanceTo(plotPosition);
+              return (acc.length === 0 || distance < acc[1]) ? [c, distance] : acc;
+            }, acc);
+          }, []);
+          closestChunk = x[0];
+  
+          // 2nd pass will be more accurate now that first pass gives us an accurate guess for altitude
+          // TODO (enhancement): if this is close to original location, this is probably not necessary
+          if (closestChunk) {
+            plotPosition.setLength(closestChunk.sphereCenterHeight + targetAltitude);
+          }
+        }
+        // ^^^
+      }
+      if (!closestChunk) {
+        closestChunk = getClosestChunk(plotPosition);
+      }
+
+      // apply rotation to plotPosition
       plotPosition.applyAxisAngle(rotationAxis.current, rotation.current);
 
+      // if farther than 10000 out, adjust in to altitude of 5000
+      // if closer than surfaceDistance, adjust out to altitude of surfaceDistance
+      // else, will just reuse camera height
+      if (closestChunk) {
+        const predictedAltitude = currentCameraHeight - closestChunk.sphereCenterHeight;
+        // console.group();
+        // console.log(`predictedAltitude ${predictedAltitude} at height ${closestChunk.sphereCenterHeight + predictedAltitude}`);
+        if (predictedAltitude > 10000) {
+          // console.log(`zoom IN to ${closestChunk.sphereCenterHeight} + 5000`, closestChunk.sphereCenterHeight + 5000);
+          plotPosition.setLength(closestChunk.sphereCenterHeight + 5000);
+        } else {
+          const minDistance = getMinDistance(closestChunk);
+          if(currentCameraHeight + predictedAltitude < minDistance) {
+            // console.log(`zoom OUT to ${minDistance} + Math.min(${cameraAltitude} || Infinity, 5000)`, minDistance + Math.min(cameraAltitude || Infinity, 5000));
+            plotPosition.setLength(minDistance + Math.min(cameraAltitude || Infinity, 5000));
+          } else {
+            plotPosition.setLength(currentCameraHeight);
+          }
+        }
+      }
+
       gsap
-        .timeline({ defaults: { duration: 0.7, ease: 'power4.out' } })
-        .to(controls.object.position, { ...plotPosition });
+      .timeline({
+        defaults: { duration: 0.7, ease: 'power4.out' },
+        onComplete: () => {
+          // setTimeout(() => { console.log('final is', controls.object.position.length(), 'of', plotPosition.length()); console.groupEnd(); }, 3500)
+          automatingCamera.current = false;
+        }
+      })
+      .to(controls.object.position, { ...plotPosition });
     }
-  }, [zoomedIntoAsteroidId, origin, selectedPlot, config?.radiusNominal, zoomStatus])
+  }, [zoomedIntoAsteroidId, origin, selectedPlot, config?.radiusNominal, zoomStatus]);
+
+  useEffect(() => {
+    if (!cameraNeedsReorientation) return;
+    dispatchReorientCamera();
+    gsap.timeline().to(controls.object.up, { ...rotationAxis.current.clone(), ease: 'slow.out' });
+  }, [cameraNeedsReorientation]);
 
   // Positions the asteroid in space based on time changes
   useFrame((state) => {
@@ -797,10 +817,6 @@ const Asteroid = (props) => {
       // updatedRotation = 0; // TODO: remove
       if (updatedRotation !== rotation.current) {
         quadtreeRef.current.setRotationFromAxisAngle(
-          rotationAxis.current,
-          updatedRotation
-        );
-        mouseableRef.current.setRotationFromAxisAngle(
           rotationAxis.current,
           updatedRotation
         );
@@ -880,23 +896,6 @@ const Asteroid = (props) => {
     // if zoomed out, let run once to prerender, but then don't run the rest of the frame
     if (geometry.current.cameraPosition && (zoomStatus === 'out' || zoomStatus === 'zooming-out')) return;
 
-    // TODO: since this is just done once, should we remove from useFrame loop?
-    if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
-    if (mouseGeometry.current && mouseGeometry.current.builder.isUpdating()) {
-      if (mouseGeometry.current.builder.isWaitingOnMaps()) {
-        // vvv BENCHMARK ~10ms (but mouseterrain only initialized once)
-        mouseGeometry.current.builder.updateMaps(Date.now() + frameTimeLeft(frameStart, false));
-        // ^^^
-      } else {
-        // vvv BENCHMARK ~0.1ms (only run once)
-        mouseGeometry.current.builder.update();
-        // ^^^
-        if (!mousableTerrainInitialized) {
-          setMousableTerrainInitialized(true);
-        }
-      }
-    }
-
     // control dynamic zoom limit (zoom out if too low... else, just update boundary)
     if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
     if (controls && Object.values(geometry.current?.chunks).length) {
@@ -908,7 +907,7 @@ const Asteroid = (props) => {
         }
       } else {
         // vvv BENCHMARK <0.1ms
-        applyZoomLimits(rotatedCameraPosition, Object.values(geometry.current.chunks));
+        applyZoomLimits(rotatedCameraPosition);
         // ^^^
       }
     }
@@ -929,7 +928,8 @@ const Asteroid = (props) => {
       // ^^^
 
       // initiate update of quads (based on camera position)
-      if (updateQuadCube) {
+      // if camera is not currently moving
+      if (updateQuadCube && !automatingCamera.current) {
         settingCameraPosition.current = true;
         // TODO: setting state in useFrame is an antipattern, BUT this should
         //  only set state rarely, so it's prob ok to move the resulting calculations
@@ -951,44 +951,6 @@ const Asteroid = (props) => {
       // vvv BENCHMARK <0.1ms
       geometry.current.processNextQueuedChange();
       // ^^^
-      if (terrainInitialized && !mousableTerrainInitialized) {
-        // vvv BENCHMARK <1ms (just called once)
-        mouseGeometry.current.processNextQueuedChange();
-        // ^^^
-      }
-    }
-
-    // raycast
-    // TODO (enhancement): probably don't need to do this every frame
-    if (frameTimeLeft(frameStart, chunkSwapThisCycle.current) <= 0) return;
-    if (mousableTerrainInitialized && mouseableRef.current.children) {
-      // if lockedToSurface mode, state.mouse must have changed to be worth re-evaluating
-      const mouseVector = state.pointer || state.mouse;
-      if (!lockToSurface.current || !lastMouseUpdatePosition.current.equals(mouseVector)) {
-        const now = Date.now();
-        if (now - lastMouseUpdateTime.current >= MOUSE_THROTTLE) {
-          lastMouseUpdatePosition.current = mouseVector.clone();
-          lastMouseUpdateTime.current = now;
-          try {
-            // TODO: try to improve this...
-            //  - could try merging this mousableRef into a single object and seeing if that helps? it's already 6 though
-            // vvv BENCHMARK 13ms
-            const intersections = state.raycaster.intersectObjects(mouseableRef.current.children);
-            // ^^^
-            if (intersections.length) {
-              mouseIntersect.current.copy(intersections[0].point);
-              mouseIntersect.current.applyAxisAngle(rotationAxis.current, -1 * rotation.current);
-              mouseIntersect.current.divide(config.stretch);
-              // mouseIntersect.current.normalize();
-            } else {
-              // console.log('no intersection');
-              mouseIntersect.current.setLength(0);
-            }
-          } catch (e) {
-            console.warn(e);
-          }
-        }
-      }
     }
 
     // dbg('frame loop', frameStart);
@@ -1017,17 +979,17 @@ const Asteroid = (props) => {
   return (
     <group ref={group}>
       <group ref={quadtreeRef} />
-      <group ref={mouseableRef} />
 
       {config && terrainInitialized && zoomStatus === 'in' && (
         <Plots
           attachTo={quadtreeRef.current}
           asteroidId={asteroidId.current}
+          axis={rotationAxis.current}
           cameraAltitude={cameraAltitude}
           cameraNormalized={cameraNormalized}
           config={config}
-          lastClick={lastClick}
-          mouseIntersect={mouseIntersect.current} />
+          getRotation={() => rotation.current}
+          getLockToSurface={() => lockToSurface.current} />
       )}
 
       {/* TODO: fade telemetry out at higher zooms */}

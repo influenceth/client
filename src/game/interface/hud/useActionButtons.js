@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Address } from '@influenceth/sdk';
+import { Address, Inventory } from '@influenceth/sdk';
 
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
-import useChainTime from '~/hooks/useChainTime';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useCrew from '~/hooks/useCrew';
 import usePlot from '~/hooks/usePlot';
@@ -14,11 +13,10 @@ import actionButtons from './actionButtons';
 const useActionButtons = () => {
   const { account } = useAuth();
   const buildings = useBuildingAssets();
-  const chainTime = useChainTime();
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const { plotId } = useStore(s => s.asteroids.plot || {});
-  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
+  const resourceMap = useStore(s => s.asteroids.resourceMap);
   const setAction = useStore(s => s.dispatchActionDialog);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
@@ -45,43 +43,41 @@ const useActionButtons = () => {
           a.push(actionButtons.ScanAsteroid);
         }
       } else if (plot && crew && zoomStatus === 'in') {
-        if (!!mapResourceId) {
-          a.push(actionButtons.NewCoreSample);
-          a.push(actionButtons.ImproveCoreSample);
-        }
+        a.push(actionButtons.CoreSample);
 
         if (plot.occupier === crew.i) {
-          if (constructionStatus === 'OPERATIONAL' && plot.building?.assetId) {
-            const buildingAsset = buildings[plot.building.assetId];
+          if (constructionStatus === 'OPERATIONAL' && plot.building?.capableType) {
+            const buildingAsset = buildings[plot.building.capableType];
             if (buildingAsset.capabilities.includes('extraction')) {
               a.push(actionButtons.Extract);
             }
           } else if (['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus)) {
             a.push(actionButtons.Construct);
           } else if (['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
-            a.push(actionButtons.NewBlueprint);
+            a.push(actionButtons.PlanBuilding);
           }
-  
-          // TODO: prob should require an inventory with non-zero contents?
-          // (OR be the destination of a delivery)
-          if (plot?.building?.inventories) {
+
+          // NOTE: this will need to change once using contruction inventories, and when that happens, it
+          //  is worth nothing that plot?.building?.inventories is undefined until it is used (this is
+          //  probably worth addressing on the server)
+          if (constructionStatus === 'OPERATIONAL' && Inventory.CAPACITIES[plot?.building?.capableType || 0][1]) {
             a.push(actionButtons.SurfaceTransfer);
           }
-  
+
           if (['PLANNED', 'CANCELING'].includes(constructionStatus)) {
-            a.push(actionButtons.CancelBlueprint);
+            a.push(actionButtons.UnplanBuilding);
           }
           if (['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
             a.push(actionButtons.Deconstruct);
-          } 
+          }
         } else if (!plot.occupier || constructionStatus === 'READY_TO_PLAN') {
-          a.push(actionButtons.NewBlueprint);
+          a.push(actionButtons.PlanBuilding);
         }
       }
     }
 
     setActions(a);
-  }, [asteroid, constructionStatus, crew, plot, !!mapResourceId, zoomStatus]);
+  }, [asteroid, constructionStatus, crew, plot, resourceMap?.active, !!resourceMap?.selected, zoomStatus]);
 
   return {
     actions,

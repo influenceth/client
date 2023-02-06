@@ -16,11 +16,14 @@ const Deconstruct = ({ asteroid, plot, onSetAction, _disabled }) => {
   }, [onSetAction]);
 
   const disabledReason = useMemo(() => {
-    if (Object.values(plot?.building?.inventories || {}).find((i) => i.mass > 0 || i.reservedMass > 0)) {
-      return 'Not Empty';
+    if (Object.values(plot?.building?.inventories || {}).find((i) => i.mass > 0)) {
+      return 'not empty';
     }
-    if (plot?.building?.extraction?.status > 0) {
-      return 'Busy';
+    else if (Object.values(plot?.building?.inventories || {}).find((i) => i.reservedMass > 0)) {
+      return 'pending deliveries';
+    }
+    else if (plot?.building?.extraction?.status > 0) {
+      return 'busy';
     }
     return null;
   }, [plot?.building]);

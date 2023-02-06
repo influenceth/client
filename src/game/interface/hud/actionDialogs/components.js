@@ -1,19 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import {
-  // FiCrosshair as TargetIcon,
-  FiSquare as UncheckedIcon,
-  FiCheckSquare as CheckedIcon
-} from 'react-icons/fi';
+import { FiCrosshair as TargetIcon } from 'react-icons/fi';
 import {
   BsChevronDoubleDown as ChevronDoubleDownIcon,
   BsChevronDoubleUp as ChevronDoubleUpIcon,
 } from 'react-icons/bs';
 import { RingLoader, PuffLoader } from 'react-spinners';
-import { Asteroid, Construction, Crewmate, Inventory, Lot } from '@influenceth/sdk';
+import { Asteroid, Construction, Crewmate, Inventory } from '@influenceth/sdk';
 
 import Button from '~/components/ButtonAlt';
-import ButtonRounded from '~/components/ButtonRounded';
+import ButtonRounded, { IconButtonRounded } from '~/components/ButtonRounded';
 import CrewCard from '~/components/CrewCard';
 import IconButton from '~/components/IconButton';
 import {
@@ -22,7 +18,7 @@ import {
   CloseIcon,
   ConstructIcon,
   CrewIcon,
-  LayBlueprintIcon,
+  PlanBuildingIcon,
   LocationPinIcon,
   PlusIcon,
   ResourceIcon,
@@ -31,47 +27,15 @@ import {
 } from '~/components/Icons';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import Poppable from '~/components/Popper';
+import ResourceColorIcon from '~/components/ResourceColorIcon';
 import SliderInput from '~/components/SliderInput';
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
-import useInterval from '~/hooks/useInterval';
 import theme from '~/theme';
 import useChainTime from '~/hooks/useChainTime';
-import { formatFixed, formatTimer } from '~/lib/utils';
+import { formatFixed, formatTimer, keyify } from '~/lib/utils';
 import LiveTimer from '~/components/LiveTimer';
 import NavIcon from '~/components/NavIcon';
-
-// TODO: remove this after sdk updated
-Inventory.CAPACITIES = {
-  1: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 },
-    1: { name: 'Storage', mass: 1500000, volume: 75000 }
-  },
-  2: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  3: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  4: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  5: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  6: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  7: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  8: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  },
-  9: {
-    0: { name: 'Construction Site', mass: 0, volume: 0 }
-  }
-};
 
 const borderColor = '#333';
 
@@ -239,14 +203,24 @@ const StatRow = styled.div`
     white-space: nowrap;
     &:after {
       display: none;
-      ${p => p.direction >= 0 && `
-        content: " ▲";
-        color: ${p.direction > 0 ? p.theme.colors.success : 'transparent'};
-      `}
-      ${p => p.direction < 0 && `
-        content: " ▼";
-        color: ${p.theme.colors.error};
-      `}
+      ${p => {
+        if (!p.direction) {
+          return `
+            content: " ▲";
+            color: transparent;
+          `;
+        }
+        else if ((p.isTimeStat ? -1 : 1) * p.direction > 0) {
+          return `
+            content: " ▲";
+            color: ${p.isTimeStat ? p.theme.colors.error : p.theme.colors.success};
+          `;
+        }
+        return `
+          content: " ▼";
+          color: ${!p.isTimeStat ? p.theme.colors.error : p.theme.colors.success};
+        `;
+      }}
     }
   }
 `;
@@ -553,14 +527,6 @@ const InventoryUtilization = styled(ResourceProgress)`
   }
 `;
 
-const IconButtonRounded = styled(ButtonRounded)`
-  padding: ${p => p.flatter ? '4px 16px' : '10px'};
-  & > svg {
-    font-size: ${p => p.flatter ? 'initial' : '20px'};
-    margin-right: 0;
-  }
-`;
-
 const SliderLabel = styled.div`
   margin-bottom: -4px;
   & > b {
@@ -749,6 +715,12 @@ const PoppableTitle = styled.div`
     margin: 0;
   }
 `;
+const PoppableTableRow = styled.tr`
+  ${p => p.disabledRow && `
+    opacity: 0.33;
+    pointer-events: none;
+  `}
+`;
 const PoppableTableWrapper = styled.div`
   border: solid ${borderColor};
   border-width: 1px 0;
@@ -813,7 +785,7 @@ const TransferSelectionTableWrapper = styled(PoppableTableWrapper)`
   td:nth-child(2) { width: 100px; }
   td:nth-child(3) { width: 112px; }
   td:nth-child(4) { width: 98px; }
-  td:nth-child(5) { width: 98px; }
+  td:nth-child(5) { width: 135px; }
   td:nth-child(6) { width: 48px; }
 
   td {
@@ -841,13 +813,13 @@ const TransferSelectionTableWrapper = styled(PoppableTableWrapper)`
     }
   }
 `;
-const ResourceColorIcon = styled.div`
-  background-color: ${p => p.theme.colors.resources[p.category.replace(/[^a-zA-Z0-9]/g, '')]};
-  border-radius: 2px;
-  display: inline-block;
-  height: 10px;
-  margin-right: 4px;
-  width: 10px;
+const QuantaInput = styled.input`
+  background: transparent;
+  border: 1px solid white;
+  color: white;
+  font-family: inherit;
+  text-align: right;
+  width: 100px;
 `;
 
 const MouseoverContent = styled.div`
@@ -1021,7 +993,7 @@ const ResourceRequirement = ({ resource, hasTally, isGathering, needsTally }) =>
 //
 // Selectors
 //
-const BlueprintSelection = ({ onBuildingSelected }) => {
+const BuildingPlanSelection = ({ onBuildingSelected }) => {
   const buildings = useBuildingAssets();
   return (
     <PopperBody style={{ paddingBottom: 5, paddingTop: 5 }}>
@@ -1061,7 +1033,7 @@ const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
           <tbody>
             {options.sort((a, b) => b.remainingYield - a.remainingYield).map((sample, i) => (
               <tr key={`${sample.resourceId}_${sample.sampleId}`} onClick={onClick(sample)}>
-                <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name}</td>
+                <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name} #{sample.sampleId.toLocaleString()}</td>
                 <td>{formatSampleMass(sample.remainingYield * resources[sample.resourceId].massPerUnit)} tonnes</td>
               </tr>
             ))}
@@ -1080,14 +1052,14 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
       .filter((plot) => (
         plot.building
         && plot.i !== originPlotId // not the origin
-        && Inventory.CAPACITIES[plot.building.assetId][inventoryType] // building has inventoryType
+        && Inventory.CAPACITIES[plot.building.capableType][inventoryType] // building has inventoryType
         && ( // building is built (or this is construction inventory and building is planned)
           (inventoryType === 0 && plot.building.construction?.status === Construction.STATUS_PLANNED)
           || (inventoryType !== 0 && plot.building.construction?.status === Construction.STATUS_OPERATIONAL)
         )
       ))
       .map((plot) => {
-        const capacity = Inventory.CAPACITIES[plot.building.assetId][inventoryType];
+        const capacity = { ...Inventory.CAPACITIES[plot.building.capableType][inventoryType] };
 
         const inventory = (plot.building?.inventories || {})[inventoryType];
         const usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0)) / 1e6;
@@ -1138,7 +1110,7 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
                 ? theme.colors.error
                 : (inventory.fullness > 0.5 ? theme.colors.yellow : theme.colors.success);
               return (
-                <tr key={inventory.plot.i} onClick={onClick(inventory.plot)}>
+                <tr key={`${asteroid.i}_${inventory.plot.i}`} onClick={onClick(inventory.plot)}>
                   <td>Lot #{inventory.plot.i}</td>
                   <td>{formatFixed(inventory.distance, 1)} km</td>
                   <td>{inventory.type}</td>
@@ -1155,11 +1127,116 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
   );
 };
 
+const ResourceSelection = ({ abundances, onSelect, plotId, resources }) => {
+  const nonzeroAbundances = useMemo(() => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
+  return (
+    <PopperBody>
+      <PoppableTitle>
+        <h3>Lot #{(plotId || 0).toLocaleString()}</h3>
+        <div>{(nonzeroAbundances || 0).toLocaleString()} Available Resource{nonzeroAbundances === 1 ? '' : 's'}</div>
+      </PoppableTitle>
+      {/* TODO: replace with DataTable? */}
+      <PoppableTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>Resource</td>
+              <td>Abundance at Lot</td>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(abundances)
+              .sort((a, b) => abundances[b] - abundances[a])
+              .map((resourceId) => (
+              <PoppableTableRow key={`${resourceId}`} disabledRow={abundances[resourceId] === 0} onClick={onSelect(resourceId)}>
+                <td><ResourceColorIcon category={resources[resourceId].category} /> {resources[resourceId].name}</td>
+                <td>{(100 * abundances[resourceId]).toFixed(1)}%</td>
+              </PoppableTableRow>
+            ))}
+          </tbody>
+        </table>
+      </PoppableTableWrapper>
+    </PopperBody>
+  );
+};
+
+const TransferSelectionRow = ({ onUpdate, quanta, resource, selecting }) => {
+  const [focusOn, setFocusOn] = useState();
+  const [mouseIn, setMouseIn] = useState(false);
+  const [amount, setAmount] = useState(quanta);
+
+  const resourceId = Number(resource.i);
+
+  useEffect(() => {
+    setAmount(quanta);
+  }, [quanta]);
+
+  const onFocusEvent = useCallback((e) => {
+    if (e.type === 'focus') {
+      setFocusOn(true);
+      setAmount(quanta);
+      e.target.select();
+    } else {
+      setFocusOn(false);
+    }
+  }, [quanta]);
+
+  const onMouseEvent = useCallback((e) => {
+    setMouseIn(e.type === 'mouseenter')
+  }, []);
+
+  const onChange = useCallback((e) => {
+    let newValue = parseInt(e.target.value.replace(/^0+/g, '').replace(/[^0-9]/g, ''));
+    if (!(newValue > -1)) newValue = 0;
+    if (newValue > quanta) newValue = quanta;
+    setAmount(newValue);
+  }, [quanta]);
+
+  const onSubmit = useCallback(() => {
+    const nAmount = parseInt(amount);
+    if (nAmount > 0 && nAmount <= quanta) {
+      onUpdate(resourceId, nAmount, selecting);
+    }
+  }, [amount, quanta, resourceId]);
+
+  return (
+    <tr key={resourceId} onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent}>
+      <td>{resource.name}</td>
+      <td>{resource.category}</td>
+      <td>{formatResourceVolume(quanta, resourceId)}</td>
+      <td>{formatResourceMass(quanta, resourceId)}</td>
+      <td>
+        {!(mouseIn || focusOn) && (
+          <>
+            {quanta.toLocaleString()}
+          </>
+        )}
+        {(mouseIn || focusOn) && (
+          <QuantaInput
+            type="number"
+            max={quanta}
+            min={0}
+            onBlur={onFocusEvent}
+            onChange={onChange}
+            onFocus={onFocusEvent}
+            step={1}
+            value={amount} />
+        )}
+        {resource.massPerUnit === 0.001 ? ' kg' : ''}
+      </td>
+      <td>
+        <IconButtonRounded flatter onClick={onSubmit}>
+          {selecting ? <ChevronDoubleDownIcon /> : <ChevronDoubleUpIcon />}
+        </IconButtonRounded>
+      </td>
+    </tr>
+  );
+};
+
 const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) => {
   const [newSelectedItems, setNewSelectedItems] = useState(selectedItems);
 
   const onUpdate = useCallback((resourceId, amount, isSelected) => {
-    console.log('onUpdate');
     const makeUpdate = { ...newSelectedItems };
     if (isSelected) {
       if (!makeUpdate[resourceId]) makeUpdate[resourceId] = 0;
@@ -1168,7 +1245,6 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
       makeUpdate[resourceId] -= amount;
       if (makeUpdate[resourceId] <= 0) delete makeUpdate[resourceId];
     }
-    console.log({ makeUpdate });
     setNewSelectedItems(makeUpdate);
   }, [newSelectedItems]);
 
@@ -1181,7 +1257,6 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
   }, [inventory, newSelectedItems]);
 
   useEffect(() => {
-    console.log('newSelectedItems', newSelectedItems, unselectedItems);
   }, [newSelectedItems, unselectedItems]);
 
   return (
@@ -1201,25 +1276,15 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
               </tr>
             </thead>
             <tbody>
-              {Object.keys(unselectedItems).map((resourceId) => {
-                const quanta = unselectedItems[resourceId];
-                const mass = quanta * resources[resourceId].massPerUnit;
-                const volume = quanta * resources[resourceId].volumePerUnit;
-                return (
-                  <tr key={resourceId}>
-                    <td>{resources[resourceId].name}</td>
-                    <td>{resources[resourceId].category}</td>
-                    <td>{formatSampleVolume(volume)} m<sup>3</sup></td>
-                    <td>{formatSampleMass(mass)} t</td>
-                    <td>{formatSampleMass(mass)} t</td>
-                    <td>
-                      <IconButtonRounded flatter onClick={() => onUpdate(resourceId, quanta, true)}>
-                        <ChevronDoubleDownIcon />
-                      </IconButtonRounded>
-                    </td>
-                  </tr>
-                );
-              })}
+              {Object.keys(unselectedItems).map((resourceId) => (
+                <TransferSelectionRow
+                  key={resourceId}
+                  onUpdate={onUpdate}
+                  quanta={unselectedItems[resourceId]}
+                  resource={resources[resourceId]}
+                  selecting={true}
+                  />
+              ))}
             </tbody>
           </table>
         </TransferSelectionTableWrapper>
@@ -1230,25 +1295,15 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
                 <tr><TitleCell colSpan="6" title="Selected" /></tr>
               </thead>
               <tbody>
-                {Object.keys(newSelectedItems).map((resourceId) => {
-                  const quanta = newSelectedItems[resourceId];
-                  const mass = quanta * resources[resourceId].massPerUnit;
-                  const volume = quanta * resources[resourceId].volumePerUnit;
-                  return (
-                    <tr key={resourceId}>
-                      <td>{resources[resourceId].name}</td>
-                      <td>{resources[resourceId].category}</td>
-                      <td>{formatSampleVolume(volume)} m<sup>3</sup></td>
-                      <td>{formatSampleMass(mass)} t</td>
-                      <td>{formatSampleMass(mass)} t</td>
-                      <td>
-                        <IconButtonRounded flatter onClick={() => onUpdate(resourceId, quanta, false)}>
-                          <ChevronDoubleUpIcon />
-                        </IconButtonRounded>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {Object.keys(newSelectedItems).map((resourceId) => (
+                  <TransferSelectionRow
+                    key={resourceId}
+                    onUpdate={onUpdate}
+                    quanta={newSelectedItems[resourceId]}
+                    resource={resources[resourceId]}
+                    selecting={false}
+                    />
+                ))}
               </tbody>
             </table>
           </TransferSelectionTableWrapper>
@@ -1280,9 +1335,10 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
           <ResourceWithData>
             <ResourceImage resource={resource} />
             <label>
-              <h3>{resource?.name} Deposit{status !== 'BEFORE' ? (overrideTonnage ? ' (Improved)' : ' (Original)') : ''}</h3>
+              <h3>{resource?.name} Deposit #{selectedSample.sampleId.toLocaleString()}{(status === 'AFTER' && overrideTonnage) ? ' (Improved)' : ''}</h3>
               <div>
-                <b><ResourceIcon /> {formatSampleMass(overrideTonnage || (selectedSample?.remainingYield * resource.massPerUnit))}</b> tonnes
+                <b><ResourceIcon /> {formatSampleMass(overrideTonnage || (selectedSample?.remainingYield * resource.massPerUnit))}</b>
+                {' '}tonnes {status !== 'BEFORE' && !overrideTonnage ? ' (before improvement)' : ''}
               </div>
             </label>
           </ResourceWithData>
@@ -1297,7 +1353,7 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
         )}
         {status === 'BEFORE' && improvableSamples?.length > 1 && (
           <div>
-            <Poppable label="Select" buttonWidth="135px" closeOnChange={clicked} title="Select Improvable Sample">
+            <Poppable label="Select" closeOnChange={clicked} title="Select Improvable Sample">
               <CoreSampleSelection plot={plot} onClick={onClick} options={improvableSamples} resources={resources} />
             </Poppable>
           </div>
@@ -1311,7 +1367,6 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
 };
 
 export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, selectedSample, status, usableSamples }) => {
-
   const remainingAfterExtraction = useMemo(() => selectedSample
     ? selectedSample.remainingYield - amount
     : null
@@ -1326,23 +1381,34 @@ export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, 
 
   return (
     <Section>
-      <SectionTitle><ChevronRightIcon /> Core Sample</SectionTitle>
+      <SectionTitle><ChevronRightIcon /> Extraction Target</SectionTitle>
       <SectionBody highlight={status === 'AFTER'}>
         {selectedSample ? (
           <ResourceWithData>
             <ResourceImage resource={resources[selectedSample.resourceId]} />
             <label>
-              <h3>{resources[selectedSample.resourceId].name} Deposit</h3>
+              <h3>
+                {resources[selectedSample.resourceId].name} Deposit #{selectedSample.sampleId.toLocaleString()}
+              </h3>
               <div>
-                <b style={status === 'BEFORE' ? { color: 'white', fontWeight: 'normal' } : {}}><ResourceIcon /> {formatSampleMass(getTonnage(amount))}</b> tonnes
+                {status === 'BEFORE' && (
+                  <>
+                    <b style={{ color: 'white', fontWeight: 'normal' }}>
+                      <ResourceIcon /> {formatSampleMass(getTonnage(selectedSample.remainingYield))}
+                    </b> tonnes {selectedSample.remainingYield < selectedSample.initialYield ? 'remaining' : ''}
+                  </>
+                )}
+                {status !== 'BEFORE' && (
+                  <>
+                    <b><ResourceIcon /> {formatSampleMass(getTonnage(amount))}</b> tonnes
+                  </>
+                )}
               </div>
-              {status === 'BEFORE' && (
-                <footer>
-                  {remainingAfterExtraction === 0
-                      ? 'Deposit will be depleted after Extraction'
-                      : `${formatSampleMass(getTonnage(remainingAfterExtraction))} tonnes will remain after Extraction`}
-                </footer>
-              )}
+              <footer style={status === 'BEFORE' ? {} : { color: '#777' }}>
+                {remainingAfterExtraction === 0
+                    ? 'Deposit will be depleted following this Extraction'
+                    : `${formatSampleMass(getTonnage(remainingAfterExtraction))} tonnes will remain following this Extraction`}
+              </footer>
             </label>
           </ResourceWithData>
         ) : (
@@ -1356,7 +1422,7 @@ export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, 
         )}
         {status === 'BEFORE' && (
           <div>
-            <Poppable label="Select" buttonWidth="135px" closeOnChange={clicked} title="Select Core Sample">
+            <Poppable label="Select" closeOnChange={clicked} title="Select Core Sample">
               <CoreSampleSelection plot={plot} onClick={onClick} options={usableSamples} resources={resources} />
             </Poppable>
           </div>
@@ -1369,22 +1435,59 @@ export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, 
   );
 };
 
-export const RawMaterialSection = ({ abundance, resource, tonnage, status }) => {
+export const RawMaterialSection = ({ abundances, goToResourceMap, plotId, resourceId, resources, onSelectResource, tonnage, status }) => {
+  const [clicked, setClicked] = useState(0);
+  const onClick = useCallback((resourceId) => () => {
+    setClicked((x) => x + 1);
+    if (onSelectResource) onSelectResource(resourceId);
+  }, []);
+  const resource = resources[resourceId] || null;
+  const abundance = abundances[resourceId] || 0;
+
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Target Resource</SectionTitle>
       <SectionBody highlight={status === 'AFTER'}>
-        {resource && (
-          <ResourceWithData>
-            <ResourceImage resource={resource} />
-            <label>
-              <h3>{resource.name}{tonnage !== undefined ? ' Deposit Discovered' : ''}</h3>
-              {tonnage !== undefined
-                ? <div><b><ResourceIcon /> {formatSampleMass(tonnage)}</b> tonnes</div>
-                : <div><b>{formatFixed(100 * abundance, 1)}%</b> Abundance at lot</div>
-              }
-            </label>
-          </ResourceWithData>
+        {resource
+          ? (
+            <ResourceWithData>
+              <ResourceImage resource={resource} />
+              <label>
+                {/* TODO: adding sampleId here might be most consistent with other dialogs */}
+                <h3>{resource.name}{tonnage !== undefined ? ' Deposit Discovered' : ''}</h3>
+                {tonnage !== undefined
+                  ? <div><b><ResourceIcon /> {formatSampleMass(tonnage)}</b> tonnes</div>
+                  : <div><b>{formatFixed(100 * abundance, 1)}%</b> Abundance at lot</div>
+                }
+              </label>
+            </ResourceWithData>
+          )
+          : (
+            <EmptyResourceWithData>
+              <EmptyResourceImage />
+              <label>
+                <div>Sample Resource</div>
+                <h3>Select</h3>
+              </label>
+            </EmptyResourceWithData>
+          )
+        }
+        {status === 'BEFORE' && (
+          <div style={{ display: 'flex' }}>
+            {goToResourceMap && (
+              <IconButtonRounded
+                data-for="actionDialog"
+                data-place="left"
+                data-tip="View Resource Map"
+                onClick={goToResourceMap}
+                style={{ marginRight: 6 }}>
+                <TargetIcon />
+              </IconButtonRounded>
+            )}
+            <Poppable label="Select" title="Select Target Resource" closeOnChange={clicked} contentHeight={360}>
+              <ResourceSelection abundances={abundances} onSelect={onClick} plotId={plotId} resources={resources} />
+            </Poppable>
+          </div>
         )}
         {status === 'AFTER' && tonnage === undefined && <ReadyHighlight />}
         {status === 'AFTER' && tonnage !== undefined && <CompletedHighlight />}
@@ -1414,7 +1517,7 @@ export const ToolSection = ({ resource, sourcePlot }) => {
         )}
         {/*
         <div>
-          <Poppable label="Source" buttonWidth="135px">
+          <Poppable label="Source">
             TODO: select where to get the tool from
           </Poppable>
         </div>
@@ -1425,7 +1528,7 @@ export const ToolSection = ({ resource, sourcePlot }) => {
 }
 
 const SelectionPopper = ({ closeOnChange, inventory, onSelectionCompleted, resources, selectedItems }) => (
-  <Poppable label="Select" title="Items to Transfer" closeOnChange={closeOnChange} buttonWidth="135px" contentHeight={360} contentWidth={700}>
+  <Poppable label="Select" title="Items to Transfer" closeOnChange={closeOnChange} contentHeight={360} contentWidth={700}>
     <TransferSelection
       inventory={inventory}
       onComplete={onSelectionCompleted}
@@ -1507,7 +1610,7 @@ export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, 
 
   const destinationBuilding = useMemo(() => {
     if (destinationPlot?.building) {
-      return buildings[destinationPlot.building?.assetId];
+      return buildings[destinationPlot.building?.capableType];
     }
     return null;
   }, [destinationPlot?.building]);
@@ -1556,7 +1659,7 @@ export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, 
                 <TargetIcon />
               </IconButtonRounded>
             */}
-            <Poppable label="Select" buttonWidth="135px" title="Select Destination" closeOnChange={clicked}>
+            <Poppable label="Select" title="Select Destination" closeOnChange={clicked}>
               <DestinationSelection asteroid={asteroid} onClick={onClick} originPlotId={originPlot.i} />
             </Poppable>
           </div>
@@ -1579,7 +1682,7 @@ export const BuildingPlanSection = ({ building, canceling, gracePeriodEnd, onBui
       <SectionBody highlight={status === 'AFTER'}>
         {!building && (
           <EmptyResourceWithData>
-            <EmptyBuildingImage iconOverride={<LayBlueprintIcon />} />
+            <EmptyBuildingImage iconOverride={<PlanBuildingIcon />} />
             <label>
               <div>Site Plan:</div>
               <h3>Select</h3>
@@ -1610,8 +1713,8 @@ export const BuildingPlanSection = ({ building, canceling, gracePeriodEnd, onBui
               </AbandonmentTimer>
             )}
             {!gracePeriodEnd && !canceling && (
-              <Poppable label="Select" closeOnChange={clicked} buttonWidth="135px" title="Site Plan">
-                <BlueprintSelection onBuildingSelected={_onBuildingSelected} />
+              <Poppable label="Select" closeOnChange={clicked} title="Site Plan">
+                <BuildingPlanSelection onBuildingSelected={_onBuildingSelected} />
               </Poppable>
             )}
           </>
@@ -1682,9 +1785,8 @@ export const DeconstructionMaterialsSection = ({ label, resources, status }) => 
   );
 };
 
-export const ExtractionAmountSection = ({ extractionTime, min, max, amount, resource, setAmount }) => {
+export const ExtractionAmountSection = ({ amount, extractionTime, min, max, resource, setAmount }) => {
   const tonnage = useMemo(() => amount * resource?.massPerUnit || 0, [amount, resource]);
-  const volume = useMemo(() => amount * resource?.volumePerUnit || 0, [amount, resource]);
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Extraction Amount</SectionTitle>
@@ -1701,9 +1803,9 @@ export const ExtractionAmountSection = ({ extractionTime, min, max, amount, reso
             max={max}
             increment={resource ? (0.1 / resource?.massPerUnit) : 1}
             onChange={setAmount}
-            value={amount} />
+            value={amount || 0} />
           <SliderInfoRow style={{ marginTop: -5 }}>
-            <div>{formatSampleVolume(volume)} m<sup>3</sup></div>
+            <div>{resource ? formatResourceVolume(amount, resource?.i, { fixedPrecision: 1 }) : `0 L`}</div>
             <div>{formatTimer(extractionTime)}</div>
           </SliderInfoRow>
         </SliderWrapper>
@@ -1725,7 +1827,7 @@ export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, s
   const progress = useMemo(() => {
     return startTime && targetTime ? Math.min(100, 100 * (chainTime - startTime) / (targetTime - startTime)) : 0;
   }, [chainTime, startTime, targetTime]);
-  
+
   return (
     <>
       {status === 'DURING' && (
@@ -1750,7 +1852,7 @@ export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, s
               <b>
                 Lot {(plot.i || '').toLocaleString()}{' '}
                 (
-                  {buildings[plot.building?.assetId]?.name || 'Empty Lot'}
+                  {buildings[plot.building?.capableType]?.name || 'Empty Lot'}
                   {plot.building?.construction?.status === Construction.STATUS_PLANNED && ' - Planned'}
                   {plot.building?.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION && ' - Under Construction'}
                 )
@@ -1775,13 +1877,14 @@ export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, s
   );
 };
 
-const ActionDialogStat = ({ stat: { label, value, direction, tooltip, warning }}) => {
+const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip, warning }}) => {
   const refEl = useRef();
   const [hovered, setHovered] = useState();
   return (
     <StatRow
       key={label}
       direction={direction}
+      isTimeStat={isTimeStat || undefined}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       ref={refEl}>
@@ -1871,10 +1974,12 @@ export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOve
             <>
               {status === 'BEFORE' && (
                   <>
+                    {/* TODO: ...
                     <NotificationEnabler onClick={enableNotifications}>
                       {notificationsEnabled ? <CheckedIcon /> : <UncheckedIcon />}
                       Notify on Completion
                     </NotificationEnabler>
+                    */}
                     <Spacer />
                     <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClose}>Cancel</Button>
                     <Button
@@ -1956,7 +2061,7 @@ const BonusItem = styled.div`
       color: ${p.direction > 0 ? p.theme.colors.success : p.theme.colors.error};
       ${!p.noIcon && `
         &:after {
-          content: "${p.direction > 0 ? '▲' : '▼'}";
+          content: "${(p.flip ? -1 : 1) * p.direction > 0 ? '▲' : '▼'}";
           display: inline-block;
           font-size: 7px;
           padding-left: 3px;
@@ -1977,8 +2082,9 @@ const BonusesFootnote = styled.div`
   margin-top: -5px;
 `;
 
-const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleValue }) => {
-  const { titles, traits, totalBonus } = bonus;
+const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleValue, isTimeStat }) => {
+  const { titles, traits, others, totalBonus } = bonus;
+  const timeMult = isTimeStat ? -1 : 1;
   const titleDirection = getBonusDirection({ totalBonus });
 
   const bonuses = useMemo(() => {
@@ -1988,7 +2094,7 @@ const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleVa
       x.push({
         text: `${Crewmate.getClass(classId)?.name} on Crew (x${matches})`,
         multiplier,
-        direction: 1
+        direction: getBonusDirection({ totalBonus: multiplier })
       });
     }
     Object.keys(titles || {}).map((titleId) => {
@@ -1996,7 +2102,7 @@ const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleVa
       x.push({
         text: `${Crewmate.getTitle(titleId)?.name} on Crew (x${matches})`,
         bonus,
-        direction: getBonusDirection({ totalBonus: 1 - bonus }, false)
+        direction: getBonusDirection({ totalBonus: 1 + timeMult * bonus }, !isTimeStat)
       });
     });
     Object.keys(traits || {}).map((traitId) => {
@@ -2004,9 +2110,13 @@ const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleVa
       x.push({
         text: `${Crewmate.getTrait(traitId)?.name} (x${matches})`,
         bonus,
-        direction: getBonusDirection({ totalBonus: 1 - bonus }, false)
+        direction: getBonusDirection({ totalBonus: 1 + timeMult * bonus }, !isTimeStat)
       });
     });
+    (others || []).forEach(({ text, bonus, direction }) => {
+      x.push({ text, bonus, direction });
+    });
+
     return x.sort((a, b) => b.bonus - a.bonus);
   }, [titles, traits]);
 
@@ -2016,20 +2126,28 @@ const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleVa
         <>
           <BonusesHeader>Bonuses</BonusesHeader>
           <BonusesSection>
-            <BonusesSectionHeader direction={titleDirection}>
+            <BonusesSectionHeader direction={titleDirection} flip={isTimeStat}>
               <label>{title}</label>
               <span>{titleValue}</span>
             </BonusesSectionHeader>
-            {bonuses.map(({ text, bonus, multiplier, direction }) => (
-              <BonusItem key={text} direction={direction} noIcon>
-                <label>{text}</label>
-                <span>{multiplier ? `x${multiplier}` : `${-100 * bonus}%`}</span>
-              </BonusItem>
-            ))}
+            {bonuses.map(({ text, bonus, multiplier, direction }) => {
+              let bonusLabel;
+              if (multiplier) {
+                bonusLabel = `x${isTimeStat ? (Math.round(1000 / multiplier) / 1000) : multiplier}`;
+              } else {
+                bonusLabel = `${timeMult > 0 ? '+' : '-'}${formatFixed(100 * bonus, 1)}%`;
+              }
+              return (
+                <BonusItem key={text} direction={direction} noIcon>
+                  <label>{text}</label>
+                  <span>{bonusLabel}</span>
+                </BonusItem>
+              );
+            })}
           </BonusesSection>
         </>
       )}
-      {details && (
+      {details && details.rows && (
         <>
           <BonusesHeader>{details.title}</BonusesHeader>
           <BonusesSection>
@@ -2073,6 +2191,7 @@ export const TimeBonusTooltip = ({ bonus, title, totalTime, ...props }) => (
   <BonusTooltip
     {...props}
     bonus={bonus}
+    isTimeStat
     title={title}
     titleValue={formatTimer(totalTime)}
   />
@@ -2084,6 +2203,7 @@ export const TravelBonusTooltip = ({ bonus, totalTime, tripDetails, ...props }) 
       {...props}
       bonus={bonus}
       details={{ title: "Trip Details", rows: tripDetails }}
+      isTimeStat
       title="Crew Travel Time"
       titleValue={formatTimer(totalTime)}
     />
@@ -2105,7 +2225,7 @@ export const formatSampleVolume = (volume) => {
 
 export const getBonusDirection = ({ totalBonus }, biggerIsBetter = true) => {
   if (totalBonus === 1) return 0;
-  return (biggerIsBetter === totalBonus > 1) ? 1 : -1;
+  return (biggerIsBetter === (totalBonus > 1)) ? 1 : -1;
 };
 
 export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps) => {
@@ -2132,37 +2252,90 @@ export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps
   return { totalDistance, totalTime, tripDetails };
 };
 
-export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrecision = 3 } = {}) => {
+export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   const { massPerUnit } = Inventory.RESOURCES[resourceId];
 
   if (massPerUnit === 0.001) {
-    let unitLabel;
-    let scale;
-    if (units >= 1e9) {
-      scale = 1e9;
-      unitLabel = abbrev ? 'Mt' : 'megatonnes';
-    } else if (units >= 1e6) {
-      scale = 1e6;
-      unitLabel = abbrev ? 'kt' : 'kilotonnes';
-    } else if (units >= 1e3) {
-      scale = 1e3;
-      unitLabel = abbrev ? 't' : 'tonnes';
-    } else {
-      scale = 1;
-      unitLabel = abbrev ? 'kg' : 'kilograms';
-    }
+    return formatResourceMass(units, resourceId, { abbrev, minPrecision, fixedPrecision });
+  }
+  // granular units
+  return units.toLocaleString();
+};
 
-    const workingUnits = (units / scale);
-    // console.log('workingUnits', workingUnits);
+export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  return formatMass(
+    resourceId
+      ? units * Inventory.RESOURCES[resourceId].massPerUnit * 1e6
+      : 0,
+    { abbrev, minPrecision, fixedPrecision }
+  );
+}
 
-    let fixedPlaces = 0;
+export const formatMass = (grams, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  let unitLabel;
+  let scale;
+  if (grams >= 1e12) {
+    scale = 1e12;
+    unitLabel = abbrev ? 'Mt' : 'megatonnes';
+  } else if (grams >= 1e9) {
+    scale = 1e9;
+    unitLabel = abbrev ? 'kt' : 'kilotonnes';
+  } else if (grams >= 1e6 || grams === 0) {
+    scale = 1e6;
+    unitLabel = abbrev ? 't' : 'tonnes';
+  } else if (grams >= 1e3) {
+    scale = 1e3;
+    unitLabel = abbrev ? 'kg' : 'kilograms';
+  } else {
+    scale = 1;
+    unitLabel = abbrev ? 'g' : 'grams';
+  }
+
+  const workingUnits = (grams / scale);
+  // console.log('workingUnits', workingUnits);
+
+  let fixedPlaces = fixedPrecision || 0;
+  if (fixedPrecision === undefined) {
     while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
       // console.log('x', workingUnits * 10 ** fixedPlaces, 10 ** minPrecision);
       fixedPlaces++;
     }
-    return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+  }
+  return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+};
+
+export const formatResourceVolume = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  return formatVolume(
+    resourceId
+      ? units * Inventory.RESOURCES[resourceId].volumePerUnit * 1e6
+      : 0,
+    { abbrev, minPrecision, fixedPrecision }
+  );
+}
+
+export const formatVolume = (ml, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  let unitLabel;
+  let scale;
+  if (ml >= 1e6 || ml === 0) {
+    scale = 1e6;
+    unitLabel = abbrev ? 'm³' : 'cubic meters';
+  } else if (ml >= 1e3) {
+    scale = 1e3;
+    unitLabel = abbrev ? 'L' : 'liters';
+  } else {
+    scale = 1;
+    unitLabel = abbrev ? 'mL' : 'milliliters';
   }
 
-  // granular units
-  return units.toLocaleString();
+  const workingUnits = (ml / scale);
+  // console.log('workingUnits', workingUnits);
+
+  let fixedPlaces = fixedPrecision || 0;
+  if (fixedPrecision === undefined) {
+    while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
+      // console.log('x', workingUnits * 10 ** fixedPlaces, 10 ** minPrecision);
+      fixedPlaces++;
+    }
+  }
+  return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
 };

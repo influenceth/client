@@ -8,7 +8,7 @@ import {
 } from 'react-icons/bi';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 
-import Button from '~/components/Button';
+import Button from '~/components/ButtonAlt';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CopyReferralLink from '~/components/CopyReferralLink';
 import CrewCard from '~/components/CrewCard';
@@ -17,7 +17,7 @@ import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/DetailsModal';
 import Dialog from '~/components/Dialog';
 import Ether from '~/components/Ether';
-import { AdalianIcon, LinkIcon, TwitterIcon } from '~/components/Icons';
+import { AdalianIcon, CheckIcon, LinkIcon, TwitterIcon } from '~/components/Icons';
 import IconButton from '~/components/IconButton';
 import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
@@ -25,9 +25,9 @@ import useAuth from '~/hooks/useAuth';
 import useCrewManager from '~/hooks/useCrewManager';
 import useCrew from '~/hooks/useCrew';
 import useSale from '~/hooks/useSale';
-import useStore from '~/hooks/useStore';
 import useStorySession from '~/hooks/useStorySession';
 import formatters from '~/lib/formatters';
+import useNameAvailability from '~/hooks/useNameAvailability';
 
 const blinkingBackground = (p) => keyframes`
   0% {
@@ -329,25 +329,20 @@ const NameSection = styled.div`
   }
 `;
 
+const RandomizeControls = styled(IconButton)`
+  margin-right: 0;
+  border: 0;
+`;
+
+const RandomizeButton = styled(Button)`
+  margin: 0 8px;
+`;
+
 const RerollContainer = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
   margin-top: 10px;
-
-  & > button {
-    margin-right: 0;
-    &:nth-child(odd) {
-      border: 0;
-    }
-    &:nth-child(2) {
-      margin: 0 8px;
-      padding-left: 20px;
-      padding-right: 20px;
-      text-transform: uppercase;
-      width: auto;
-    }
-  }
 `;
 
 const RecruitSection = styled.div`
@@ -438,6 +433,13 @@ const PromptBody = styled.div`
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding: 12px;
   }
+
+  & h4 {
+    color: ${p => p.theme.colors.success};
+    font-weight: normal;
+    margin-bottom: 0;
+    text-align: right;
+  }
 `;
 
 const MobileDialogContainer = styled.div`
@@ -466,10 +468,10 @@ const CrewAssignmentCreate = (props) => {
   const { id: sessionId } = useParams();
   const history = useHistory();
   const { storyState } = useStorySession(sessionId);
-  const { purchaseAndInitializeCrew, getPendingPurchase } = useCrewManager();
+  const { getCrewNameAvailability } = useNameAvailability();
+  const { purchaseAndOrInitializeCrew, getPendingCrewmate, crewCredits } = useCrewManager();
   const { crew, crewMemberMap } = useCrew();
   const { data: crewSale } = useSale('Crewmate');
-  const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const [confirming, setConfirming] = useState();
   const [featureOptions, setFeatureOptions] = useState([]);
@@ -507,7 +509,7 @@ const CrewAssignmentCreate = (props) => {
       url: `${document.location.origin}/play/crew-assignment/${sessionId}?r=${account}`,
       //via: 'influenceth'
     });
-    window.open(`https://twitter.com/intent/tweet?${params.toString()}`);
+    window.open(`https://twitter.com/intent/tweet?${params.toString()}`, '_blank');
   }, [account, sessionId]);
 
   const handleFinish = useCallback(() => {
@@ -554,29 +556,11 @@ const CrewAssignmentCreate = (props) => {
     setFeatureSelection(Math.min(featureOptions.length - 1, featureSelection + 1));
   }, [featureOptions.length, featureSelection]);
 
-  const validateName = useCallback(() => {
-    let err = '';
-    if (name.length === 0) err = 'Name field cannot be empty.';
-    else if (name.length > 31) err = 'Name is too long.';
-    else if (/^ /.test(name) || / $/.test(name)) err = 'Name cannot have leading or trailing spaces.';
-    else if (/ {2,}/.test(name)) err = 'Name cannot have adjoining spaces.';
-    else if (/[^a-zA-Z0-9 ]/.test(name)) err = 'Name can only contain letters and numbers.';
-    if (err) {
-      createAlert({
-        type: 'GenericAlert',
-        content: err,
-        level: 'warning',
-        duration: 4000
-      });
-      return false;
+  const confirmFinalize = useCallback(async () => {
+    if (await getCrewNameAvailability(name)) {
+      setConfirming(true);
     }
-    return true;
-  }, [createAlert, name]);
-
-  const confirmFinalize = useCallback(() => {
-    if (!validateName()) return;
-    setConfirming(true);
-  }, [validateName]);
+  }, [getCrewNameAvailability, name]);
 
   const finalize = useCallback(() => {
     setConfirming(false);
@@ -587,9 +571,9 @@ const CrewAssignmentCreate = (props) => {
       crewId: crew?.i || 0,
       sessionId // used to tag the pendingTransaction
     };
-    purchaseAndInitializeCrew(input);
+    purchaseAndOrInitializeCrew(input);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, featureOptions?.length, featureSelection, purchaseAndInitializeCrew, !!rewards, sessionId, crew?.i]);
+  }, [name, featureOptions?.length, featureSelection, purchaseAndOrInitializeCrew, !!rewards, sessionId, crew?.i]);
 
   // show "complete" page (instead of "create") for non-recruitment assignments
   useEffect(() => {
@@ -600,7 +584,7 @@ const CrewAssignmentCreate = (props) => {
 
   // initialize appearance & state
   useEffect(() => {
-    const pendingPurchase = getPendingPurchase(sessionId);
+    const pendingPurchase = getPendingCrewmate();
     if (pendingPurchase) {
       setFeatureOptions([ pendingPurchase.vars.features ]);
       setFeatureSelection(0);
@@ -618,7 +602,7 @@ const CrewAssignmentCreate = (props) => {
   }, [ // eslint-disable-line react-hooks/exhaustive-deps
     crewMemberMap,
     finalizing,
-    getPendingPurchase,
+    getPendingCrewmate,
     name,
     rerollAppearance,
     sessionId,
@@ -773,24 +757,24 @@ const CrewAssignmentCreate = (props) => {
                       pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
                       placeholder="Enter Name" />
                     <RerollContainer>
-                      <IconButton
+                      <RandomizeControls
                         onClick={rollBack}
                         disabled={finalizing || featureSelection === 0}
                         style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
                         <UndoIcon />
-                      </IconButton>
+                      </RandomizeControls>
 
-                      <Button
+                      <RandomizeButton
                         disabled={finalizing}
                         lessTransparent
-                        onClick={rerollAppearance}>Randomize Appearance</Button>
+                        onClick={rerollAppearance}>Randomize Appearance</RandomizeButton>
 
-                      <IconButton
+                      <RandomizeControls
                         onClick={rollForward}
                         disabled={finalizing || featureSelection === featureOptions.length - 1}
                         style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
                         <RedoIcon />
-                      </IconButton>
+                      </RandomizeControls>
                     </RerollContainer>
                   </NameSection>
                 )}
@@ -828,6 +812,7 @@ const CrewAssignmentCreate = (props) => {
                 <Button
                   disabled={finalizing || !name}
                   loading={finalizing}
+                  isTransaction
                   onClick={confirmFinalize}>
                   Finalize
                 </Button>
@@ -913,26 +898,30 @@ const CrewAssignmentCreate = (props) => {
           )}
           {confirming && (
             <ConfirmationDialog
-              title="Confirm Character Minting"
+              title={`Confirm Character ${crewCredits.length > 0 ? 'Details' : 'Minting'}`}
               body={(
                 <PromptBody>
-                  The Crewmate you are about to create will be minted as a new unique
-                  Player-Owned Game Asset (POGA)! Once minted, the character can never be deleted
+                  The Crewmate you are about to create will be {crewCredits.length > 0 ? 'initialized' : 'minted'} as a new unique
+                  Player-Owned Game Asset (POGA)! {crewCredits.length > 0 ? 'The ' : 'Once minted, the '}character can never be deleted
                   or unmade, and is yours to keep or trade forever. All of their stats,
                   actions, skills, and attributes will be appended to their unique history
                   and stored as independent on-chain events.
+                  {crewCredits.length > 0 && (
+                    <h4><CheckIcon /> {crewCredits.length} crew credit{crewCredits.length === 1 ? '' : 's'} remaining</h4>
+                  )}
                 </PromptBody>
               )}
               onConfirm={finalize}
               confirmText={<>
                 Confirm
-                {crewSale && (
+                {crewCredits.length === 0 && crewSale && (
                   <span style={{ flex: 1, fontSize: '90%', textAlign: 'right' }}>
                     <Ether>{formatters.crewPrice(crewSale)}</Ether>
                   </span>
                 )}
               </>}
               onReject={() => setConfirming(false)}
+              isTransaction
             />
           )}
         </>

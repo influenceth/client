@@ -1,15 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import PuffLoader from 'react-spinners/PuffLoader';
-import { toRarity, toSize, toSpectralType, Asteroid as AsteroidLib, Capable, Construction, Inventory } from '@influenceth/sdk';
-import {
-  FaSearchPlus as DetailsIcon
-} from 'react-icons/fa';
+import { toRarity, toSize, toSpectralType, Asteroid as AsteroidLib, Capable, Construction, CoreSample, Inventory } from '@influenceth/sdk';
+import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
+import ReactTooltip from 'react-tooltip';
 
 import IconButton from '~/components/IconButton';
 import {
   CloseIcon,
+  CoreSampleIcon,
   InfoIcon,
 } from '~/components/Icons';
 import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
@@ -21,6 +21,7 @@ import useStore from '~/hooks/useStore';
 import useCrew from '~/hooks/useCrew';
 import { formatFixed, keyify } from '~/lib/utils';
 import { hexToRGB } from '~/theme';
+import CoreSampleMouseover from './mouseovers/CoreSampleMouseover';
 
 const opacityAnimation = keyframes`
   0% { opacity: 1; }
@@ -186,7 +187,7 @@ const ThumbFootnote = styled.div`
     justify-content: space-between;
   }
   & > b {
-    color: ${p => p.theme.colors.error};
+    color: rgb(248,133,44);
     font-size: 18px;
     text-transform: uppercase;
   }
@@ -248,7 +249,7 @@ const PlotDetails = styled.div`
   border-left: 1px solid #444;
   margin-bottom: 12px;
   padding-left: 15px;
-  width: 300px;
+  width: 325px;
 `;
 const DetailRow = styled.div`
   color: white;  
@@ -279,6 +280,54 @@ const ResourceRow = styled.div`
   }
 `;
 
+const ThumbFootButtons = styled.div``;
+const ThumbFootButton = styled.div`
+  align-items: center;
+  border: 1px solid currentColor;
+  border-radius: 18px;
+  color: white;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  font-size: 28px;
+  height: 36px;
+  justify-content: center;
+  opacity: 0.5;
+  position: relative;
+  transition-property: color, opacity;
+  transition-duration: 250ms;
+  width: 36px;
+
+  ${p => p.badge && `
+    &:before {
+      align-items: center;
+      background-color: white;
+      border-radius: 8px;
+      color: black;
+      content: "${p.badge}";
+      display: flex;
+      font-size: 14px;
+      font-weight: bold;
+      justify-content: center;
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 16px;
+      height: 16px;
+      transition-property: color, background-color;
+      transition-duration: 250ms;
+    }
+  `}
+
+  &:hover {
+    color: ${p => p.theme.colors.main};
+    opacity: 1;
+    &:before {
+      background-color: ${p => p.theme.colors.main};
+      color: white;
+    }
+  }
+`;
+
 const InfoPane = () => {
   const history = useHistory();
 
@@ -295,7 +344,7 @@ const InfoPane = () => {
 
   const { data: asteroid } = useAsteroid(asteroidId);
   const buildings = useBuildingAssets();
-  const { constructionStatus } = useConstructionManager(asteroidId, plotId);
+  const { constructionStatus, isAtRisk } = useConstructionManager(asteroidId, plotId);
   const { crew } = useCrew();
   const { data: plot } = usePlot(asteroidId, plotId);
 
@@ -306,10 +355,14 @@ const InfoPane = () => {
 
   const plotTally = useMemo(() => Math.floor(4 * Math.PI * Math.pow(asteroid?.radius / 1000, 2)), [asteroid?.radius]);
 
+  const myPlotCoreSamples = useMemo(() => {
+    return (plot?.coreSamples || []).filter((c) => c.owner === crew?.i)
+  }, [crew?.i, plot]);
+
   const onClickPane = useCallback(() => {
     // open plot
     if (asteroidId && plotId && zoomStatus === 'in') {
-      dispatchZoomToPlot((buildings[plot?.building?.capableType || 0]).name);
+      dispatchZoomToPlot(true);
 
     // open asteroid details
     } else if (asteroidId && zoomStatus === 'in') {
@@ -370,134 +423,6 @@ const InfoPane = () => {
       )}
 
       <InfoColumn>
-        {zoomStatus === 'in' && asteroid && !plotId && (
-          <>
-            <Title>{asteroid.customName || asteroid.baseName}</Title>
-            <Subtitle>
-              <PaneContent>
-                {toSize(asteroid.radius)} <b>{toSpectralType(asteroid.spectralType)}-type</b>
-              </PaneContent>
-              <PaneHoverContent>
-                Asteroid Details
-              </PaneHoverContent>
-              <SubtitleLoader>
-                {!(plotLoader.i === asteroidId && plotLoader.progress === 1) && (
-                  <ProgressBar progress={plotLoader.i === asteroidId ? plotLoader.progress : 0} />
-                )}
-              </SubtitleLoader>
-            </Subtitle>
-          </>
-        )}
-        {zoomStatus === 'in' && plotId && zoomToPlot && (
-          <>
-            <Title>{Capable.TYPES[plot?.building?.capableType || 0]?.name}</Title>
-            <Subtitle>
-              Lot {plotId.toLocaleString()}
-              {plot?.building?.capableType > 0 && plot?.building?.construction?.status !== Construction.STATUS_OPERATIONAL && (
-                <LotConstructionWarning>{Construction.STATUSES[plot?.building?.construction?.status]}</LotConstructionWarning>
-              )}
-            </Subtitle>
-            <PlotDetails>
-              <DetailRow>
-                <label>Controlled by</label>
-                {plot?.occupier && <div>{plot.occupier === crew?.i ? 'Me' : `Crew #${plot.occupier}`}</div>}
-                {!plot?.occupier && <div>Uncontrolled</div>}
-              </DetailRow>
-              {plot?.building?.capableType === 1 && (
-                <>
-                  <DetailRow>
-                    <label>Max Storage Volume</label>
-                    <div>{Inventory.CAPACITIES[1][1].volume.toLocaleString()} m<sup>3</sup></div>
-                  </DetailRow>
-                  <DetailRow>
-                    <label>Max Storage Mass</label>
-                    <div>{Inventory.CAPACITIES[1][1].mass.toLocaleString()} tonnes</div>
-                  </DetailRow>
-                  <DetailRow>
-                    <label>Available Capacity</label>
-                    <div>
-                      {formatFixed(
-                        (100 - 100 * (
-                          (plot.building.inventories && plot.building.inventories[1])
-                            ? Math.max(
-                              1E-6 * ((plot.building.inventories[1]?.mass || 0) + (plot.building.inventories[1]?.reservedMass || 0)) / Inventory.CAPACITIES[1][1].mass,
-                              1E-6 * ((plot.building.inventories[1]?.volume || 0) + (plot.building.inventories[1]?.reservedVolume || 0)) / Inventory.CAPACITIES[1][1].volume,
-                            )
-                            : 0
-                          )
-                        ),
-                        1
-                      )}%
-                    </div>
-                  </DetailRow>
-                </>
-              )}
-              {topResources?.length > 0 && (!plot?.building?.capableType || plot?.building?.capableType === 2) && (
-                <DetailRow>
-                  <label>Highest Abundance</label>
-                  <div>
-                    {topResources.map((r) => (
-                      <ResourceRow key={r.resourceId} category={keyify(Inventory.RESOURCES[r.resourceId].category)}>
-                        <span>{formatFixed(100 * r.abundance, 1)}%</span>
-                        {Inventory.RESOURCES[r.resourceId].name}
-                      </ResourceRow>
-                    ))}
-                  </div>
-                </DetailRow>
-              )}
-            </PlotDetails>
-          </>
-        )}
-        {zoomStatus === 'in' && plotId && !zoomToPlot && (
-          <div>
-            <ThumbPreview visible>
-              <CloseButton borderless onClick={onClosePane}>
-                <CloseIcon />
-              </CloseButton>
-              {!plot && (
-                <ThumbLoading>
-                  <PuffLoader color="white" />
-                </ThumbLoading>
-              )}
-              {plot && (
-                <>
-                  {!(plot.building?.assetId > 0) && <ThumbBackground image={buildings[0]?.iconUrls?.w400} />}
-                  {plot.building?.assetId > 0 && (
-                    <>
-                      {
-                        // TODO: if planning, could use the currentConstruction object to go ahead and put hologram image
-                        ['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus)
-                          ? <ThumbBackground image={buildings[plot.building?.assetId || 0]?.iconUrls?.w400} />
-                          : (
-                            <ThumbBackground
-                              backgroundColor={plot.occupier && constructionStatus === 'READY_TO_PLAN' && '#2b0000'}
-                              image={buildings[plot.building?.assetId || 0]?.siteIconUrls?.w400} />
-                          )
-                      }
-                    </>
-                  )}
-                  <ThumbMain>
-                    <ThumbTitle>{buildings[plot.building?.assetId || 0]?.name}</ThumbTitle>
-                    <ThumbSubtitle>
-                      <PaneContent>
-                        Lot #{plot.i.toLocaleString()}
-                      </PaneContent>
-                      <PaneHoverContent>
-                        Zoom to Lot
-                      </PaneHoverContent>
-                    </ThumbSubtitle>
-                    <div style={{ flex: 1 }} />
-                    <ThumbFootnote>
-                      {plot.occupier && constructionStatus === 'READY_TO_PLAN' ? <b>Abandoned</b> : ''}
-                      {plot.occupier && constructionStatus !== 'READY_TO_PLAN' ? `Controlled by ${plot.occupier === crew?.i ? 'Me' : `#${plot.occupier}`}` : ''}
-                      {!plot.occupier ? 'Uncontrolled' : ''}
-                    </ThumbFootnote>
-                  </ThumbMain>
-                </>
-              )}
-            </ThumbPreview>
-          </div>
-        )}
         {zoomStatus === 'out' && asteroid && (
           <div>
             <ThumbPreview visible={renderReady}>
@@ -529,6 +454,158 @@ const InfoPane = () => {
               </ThumbMain>
             </ThumbPreview>
           </div>
+        )}
+        {zoomStatus === 'in' && asteroid && !plotId && (
+          <>
+            <Title>{asteroid.customName || asteroid.baseName}</Title>
+            <Subtitle>
+              <PaneContent>
+                {toSize(asteroid.radius)} <b>{toSpectralType(asteroid.spectralType)}-type</b>
+              </PaneContent>
+              <PaneHoverContent>
+                Asteroid Details
+              </PaneHoverContent>
+              <SubtitleLoader>
+                {!(plotLoader.i === asteroidId && plotLoader.progress === 1) && (
+                  <ProgressBar progress={plotLoader.i === asteroidId ? plotLoader.progress : 0} />
+                )}
+              </SubtitleLoader>
+            </Subtitle>
+          </>
+        )}
+        {zoomStatus === 'in' && plotId && !zoomToPlot && (
+          <div>
+            <ReactTooltip id="infoPane" effect="solid" />
+            <ThumbPreview visible>
+              <CloseButton borderless onClick={onClosePane}>
+                <CloseIcon />
+              </CloseButton>
+              {!plot && (
+                <ThumbLoading>
+                  <PuffLoader color="white" />
+                </ThumbLoading>
+              )}
+              {plot && (
+                <>
+                  {!(plot.building?.capableType > 0) && <ThumbBackground image={buildings[0]?.iconUrls?.w400} />}
+                  {plot.building?.capableType > 0 && (
+                    <>
+                      {
+                        // TODO: if planning, could use the currentConstruction object to go ahead and put hologram image
+                        (['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus) && !isAtRisk)
+                          ? <ThumbBackground image={buildings[plot.building?.capableType || 0]?.iconUrls?.w400} />
+                          : (
+                            <ThumbBackground
+                              backgroundColor={isAtRisk && '#2e1400'}
+                              image={buildings[plot.building?.capableType || 0]?.siteIconUrls?.w400} />
+                          )
+                      }
+                    </>
+                  )}
+                  <ThumbMain>
+                    <ThumbTitle>{buildings[plot.building?.capableType || 0]?.name}</ThumbTitle>
+                    <ThumbSubtitle>
+                      <PaneContent>
+                        Lot #{plot.i.toLocaleString()}
+                      </PaneContent>
+                      <PaneHoverContent>
+                        Zoom to Lot
+                      </PaneHoverContent>
+                    </ThumbSubtitle>
+                    <div style={{ flex: 1 }} />
+                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                      <ThumbFootnote>
+                        {isAtRisk ? <b>{plot.occupier === crew?.i ? 'At Risk' : `Abandoned by #${plot.occupier}`}</b> : ''}
+                        {!isAtRisk && plot.occupier ? `Controlled by ${plot.occupier === crew?.i ? 'Me' : `#${plot.occupier}`}` : ''}
+                        {!plot.occupier && 'Uncontrolled'}
+                      </ThumbFootnote>
+                      <ThumbFootButtons>
+                        {myPlotCoreSamples.length > 0 && (
+                          <>
+                            <CoreSampleMouseover
+                              building={plot?.building}
+                              coreSamples={myPlotCoreSamples}>
+                              {({ refEl, onToggle }) => (
+                                <ThumbFootButton
+                                  ref={refEl}
+                                  badge={myPlotCoreSamples.length}
+                                  data-tip="Toggle Core Sample List"
+                                  data-for="infoPane"
+                                  data-place="right"
+                                  onClick={onToggle}>
+                                  <CoreSampleIcon />
+                                </ThumbFootButton>
+                              )}
+                            </CoreSampleMouseover>
+                          </>
+                        )}
+                      </ThumbFootButtons>
+                    </div>
+                  </ThumbMain>
+                </>
+              )}
+            </ThumbPreview>
+          </div>
+        )}
+        {zoomStatus === 'in' && plotId && zoomToPlot && (
+          <>
+            <Title>{Capable.TYPES[plot?.building?.capableType || 0]?.name}</Title>
+            <Subtitle>
+              Lot {plotId.toLocaleString()}
+              {plot?.building?.capableType > 0 && plot?.building?.construction?.status !== Construction.STATUS_OPERATIONAL && (
+                <LotConstructionWarning>{Construction.STATUSES[plot?.building?.construction?.status]}</LotConstructionWarning>
+              )}
+            </Subtitle>
+            <PlotDetails>
+              <DetailRow>
+                <label>Controlled by</label>
+                {plot?.occupier && <div>{plot.occupier === crew?.i ? 'Me' : `Crew #${plot.occupier}`}</div>}
+                {!plot?.occupier && <div>Uncontrolled</div>}
+              </DetailRow>
+              {topResources?.length > 0 && (
+                <DetailRow>
+                  <label>Highest Abundance</label>
+                  <div>
+                    {topResources.map((r) => (
+                      <ResourceRow key={r.resourceId} category={keyify(Inventory.RESOURCES[r.resourceId].category)}>
+                        <span>{formatFixed(100 * r.abundance, 1)}%</span>
+                        {Inventory.RESOURCES[r.resourceId].name}
+                      </ResourceRow>
+                    ))}
+                  </div>
+                </DetailRow>
+              )}
+              {plot?.building?.capableType === 1 && (
+                <>
+                  <DetailRow>
+                    <label>Max Storage Volume</label>
+                    <div>{Inventory.CAPACITIES[1][1].volume.toLocaleString()} m<sup>3</sup></div>
+                  </DetailRow>
+                  <DetailRow>
+                    <label>Max Storage Mass</label>
+                    <div>{Inventory.CAPACITIES[1][1].mass.toLocaleString()} tonnes</div>
+                  </DetailRow>
+                  <DetailRow>
+                    <label>Available Capacity</label>
+                    <div>
+                      {constructionStatus === 'OPERATIONAL' ? formatFixed(
+                        (100 - Math.ceil(1000 * (
+                          (plot.building.inventories && plot.building.inventories[1])
+                            ? Math.max(
+                              1E-6 * ((plot.building.inventories[1]?.mass || 0) + (plot.building.inventories[1]?.reservedMass || 0)) / Inventory.CAPACITIES[1][1].mass,
+                              1E-6 * ((plot.building.inventories[1]?.volume || 0) + (plot.building.inventories[1]?.reservedVolume || 0)) / Inventory.CAPACITIES[1][1].volume,
+                            )
+                            : 0
+                          )) / 10
+                        ),
+                        1
+                      ) : 0}%
+                    </div>
+                  </DetailRow>
+                </>
+              )}
+            </PlotDetails>
+          </>
         )}
       </InfoColumn>
     </Pane>

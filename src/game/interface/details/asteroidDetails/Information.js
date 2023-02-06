@@ -12,20 +12,21 @@ import constants from '~/lib/constants';
 import formatters from '~/lib/formatters';
 import exportGLTF from '~/lib/graphics/exportGLTF';
 
-import StaticForm from '~/components/StaticForm';
-import Text from '~/components/Text';
+import AddressLink from '~/components/AddressLink';
 import Button from '~/components/ButtonAlt';
-import TextInput from '~/components/TextInput';
-import IconButton from '~/components/IconButton';
 import DataReadout from '~/components/DataReadout';
+import Ether from '~/components/Ether';
+import IconButton from '~/components/IconButton';
 import LogEntry from '~/components/LogEntry';
 import MarketplaceLink from '~/components/MarketplaceLink';
-import AddressLink from '~/components/AddressLink';
+import StaticForm from '~/components/StaticForm';
+import Text from '~/components/Text';
+import TextInput from '~/components/TextInput';
 import {
   CheckCircleIcon,
   EccentricityIcon,
   EditIcon,
-  InclinationIcon, 
+  InclinationIcon,
   OrbitalPeriodIcon,
   RadiusIcon,
   SemiMajorAxisIcon,
@@ -33,6 +34,7 @@ import {
 } from '~/components/Icons';
 import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import AsteroidGraphic from './components/AsteroidGraphic';
+import useNameAvailability from '~/hooks/useNameAvailability';
 
 const paneStackBreakpoint = 720;
 
@@ -269,6 +271,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
   const { account } = useAuth();
   const { data: sale } = useSale();
   const createReferral = useCreateReferral(Number(asteroid.i));
+  const { getAsteroidNameAvailability } = useNameAvailability();
   const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.i));
   const { nameAsteroid, naming } = useNameAsteroid(Number(asteroid.i));
   const webWorkerPool = useWebWorker();
@@ -298,11 +301,11 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
     setOpenNameChangeForm(false);
   }, [asteroid.customName]);
 
-  const updateAsteroidName = useCallback(() => {
-    if (newName) {
+  const attemptUpdateAsteroidName = useCallback(async () => {
+    if (await getAsteroidNameAvailability(newName)) {
       nameAsteroid(newName);
     }
-  }, [nameAsteroid, newName]);
+  }, [nameAsteroid, getAsteroidNameAvailability, newName]);
 
   return (
     <Wrapper>
@@ -370,7 +373,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                   {asteroid.events.length > 0
                     ? asteroid.events.map(e => (
                       <LogEntry
-                        key={e.key}
+                        key={e.id}
                         css={{ fontSize: '13px', fontWeight: 'bold', padding: '6px 4px' }}
                         data={{ ...e, i: asteroid.i }}
                         timestampBreakpoint="1400px"
@@ -418,13 +421,14 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                         data-tip="Submit"
                         data-for="global"
                         disabled={naming}
-                        onClick={updateAsteroidName}>
+                        onClick={attemptUpdateAsteroidName}>
                         <CheckCircleIcon />
                       </IconButton>
                     </NameForm>
                   </StaticForm>
                   <Button
                     disabled={naming}
+                    isTransaction
                     loading={naming}
                     onClick={() => setOpenNameChangeForm(true)}>
                     Re-Name
@@ -446,12 +450,13 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                   data-tip="Purchase development rights"
                   data-for="global"
                   disabled={!account || !saleIsActive || buying}
+                  isTransaction
                   loading={buying}
                   onClick={() => {
                     buyAsteroid();
                     createReferral.mutate();
                   }}>
-                  Purchase
+                  Purchase -&nbsp;<Ether>{formatters.asteroidPrice(asteroid.r, sale)}</Ether>
                 </Button>
               )}
               {asteroid.owner && (
@@ -462,7 +467,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                   {(onClick, setRefEl) => (
                     <Button setRef={setRefEl} onClick={onClick}>
                       {isOwner ? <><span>List</span><SmHidden>{' '}for Sale</SmHidden></> : 'Purchase'}
-                    </Button>  
+                    </Button>
                   )}
                 </MarketplaceLink>
               )}

@@ -1,37 +1,38 @@
 import { useContext, useCallback, useEffect } from 'react';
-import { Switch, Route, NavLink as Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 
 import ClockContext from '~/contexts/ClockContext';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import ButtonPill from '~/components/ButtonPill';
+import InfluenceLogo from '~/components/InfluenceLogo';
+import OnClickLink from '~/components/OnClickLink';
 import Time from '~/components/Time';
-import Account from './launcher/Account';
+import Account, { logoDisplacementHeight } from './launcher/Account';
 import Settings from './launcher/Settings';
 import Wallets from './launcher/Wallets';
 
-const headerFooterHeight = '100px';
+const headerFooterHeight = 100;
 
 const StyledLauncher = styled.div`
   align-items: center;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(0.75px) saturate(70%) brightness(70%);
   display: flex;
   flex-direction: column;
   height: 100%;
   justify-content: space-between;
   opacity: 1;
-  padding: ${headerFooterHeight} 0;
+  padding: ${headerFooterHeight}px 0;
   position: absolute;
   width: 100%;
-  z-index: 9000;
+  z-index: 8999;
 `;
 
 const Header = styled.ul`
   background-color: black;
   border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
   display: flex;
-  height: ${headerFooterHeight};
+  height: ${headerFooterHeight}px;
   justify-content: center;
   left: 0;
   margin: 0;
@@ -41,7 +42,23 @@ const Header = styled.ul`
   top: 0;
 `;
 
-const StyledLink = styled(Link)`
+const LogoWrapper = styled.div`
+  left: 25px;
+  height: ${headerFooterHeight - 50}px;
+  position: absolute;
+  top: 25px;
+  & > svg {
+    height: 100%;
+  }
+
+  ${p => p.hideHeader && `
+    @media (min-height: ${p.hideHeader}px) {
+      display: none;
+    }
+  `}
+`;
+
+const StyledLink = styled(OnClickLink)`
   align-items: flex-end;
   color: inherit;
   display: flex;
@@ -91,8 +108,6 @@ const MenuItem = styled.li`
   }
 `;
 
-const LogoutButton = styled(ButtonPill)``;
-
 const AccountName = styled.span`
   color: white;
   font-weight: bold;
@@ -123,30 +138,32 @@ const WalletLogo = styled.div`
 
 const CurrentAccount = styled.div`
   align-items: center;
+  cursor: ${p => p.theme.cursors.active};
   display: flex;
-  height: ${headerFooterHeight};
+  height: ${headerFooterHeight}px;
   justify-content: flex-end;
   position: absolute;
   right: 40px;
   top: 0;
   width: 200px;
 
-  & ${LogoutButton} {
-    display: none;
+  & ${AccountName} {
+    color: ${p => p.theme.colors.secondaryText};
   }
 
-  &:hover ${LogoutButton} {
-    display: block;
-  }
-
-  &:hover ${WalletLogo}, &:hover ${AccountName} {
-    display: none;
+  &:hover ${AccountName} {
+    color: inherit;
   }
 `;
 
 const MainContent = styled.div`
-  margin-top: 50px;
-  overflow-y: scroll;
+  align-items: center;
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  // height: calc(100vh - 2 * ${headerFooterHeight}px);
 `;
 
 const StyledTime = styled(Time)`
@@ -158,7 +175,7 @@ const Footer = styled.div`
   border-top: 1px solid ${p => p.theme.colors.mainBorder};
   bottom: 0;
   display: flex;
-  height: ${headerFooterHeight};
+  height: ${headerFooterHeight}px;
   justify-content: center;
   left: 0;
   position: absolute;
@@ -207,21 +224,18 @@ const InfoBar = styled.ul`
 `;
 
 const Launcher = (props) => {
-  const location = useLocation();
   const { displayTime } = useContext(ClockContext);
-  const invalidateToken = useStore(s => s.dispatchTokenInvalidated);
-  const forgetWallet = useStore(s => s.dispatchWalletDisconnected);
+  const launcherPage = useStore(s => s.launcherPage);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const hideInterface = useStore(s => s.dispatchHideInterface);
   const showInterface = useStore(s => s.dispatchShowInterface);
-  const { wallet, token } = useAuth();
-  const { account, disconnect, error, walletIcon, walletName } = wallet;
+  const { walletContext, token } = useAuth();
+  const { account, walletIcon, walletName } = walletContext;
   const loggedIn = account && token;
 
-  const disconnectWallet = useCallback(() => {
-    invalidateToken();
-    forgetWallet();
-    disconnect();
-  }, [disconnect, invalidateToken, token]);
+  const goToWallet = useCallback(() => {
+    if (walletContext?.starknet?.id === 'Cartridge') window.open('https://cartridge.gg', '_blank');
+  }, [ walletContext ]);
 
   useEffect(() => {
     hideInterface();
@@ -231,30 +245,30 @@ const Launcher = (props) => {
   return (
     <StyledLauncher {...props}>
       <Header>
+        <LogoWrapper hideHeader={launcherPage === 'account' ? logoDisplacementHeight : 0}>
+          <InfluenceLogo />
+        </LogoWrapper>
         <MenuItem>
-          <StyledLink activeClassName="current" to="/launcher/account">
-            <span>{location.pathname === '/launcher/account' ? "Account" : "‹ Back"}</span>
+          <StyledLink activeClassName="current" onClick={() => dispatchLauncherPage('account')}>
+            <span>{launcherPage === 'account' ? "Account" : "‹ Back"}</span>
           </StyledLink>
         </MenuItem>
         <MenuItem>
-          <StyledLink activeClassName="current" to="/launcher/settings">
+          <StyledLink activeClassName="current" onClick={() => dispatchLauncherPage('settings')}>
             <span>Settings</span>
           </StyledLink>
         </MenuItem>
         {loggedIn &&
-          <CurrentAccount onClick={disconnectWallet}>
+          <CurrentAccount onClick={goToWallet}>
             <WalletLogo>{walletIcon}</WalletLogo>
             <AccountName account={account} wallet={walletName} />
-            <LogoutButton size='large'>Logout</LogoutButton>
           </CurrentAccount>
         }
       </Header>
       <MainContent>
-        <Switch>
-          <Route path="/launcher/account"><Account /></Route>
-          <Route path="/launcher/wallets"><Wallets /></Route>
-          <Route path="/launcher/settings"><Settings /></Route>
-        </Switch>
+        {launcherPage === 'account' && <Account />}
+        {launcherPage === 'wallets' && <Wallets />}
+        {launcherPage === 'settings' && <Settings />}
       </MainContent>
       <StyledTime displayTime={displayTime} />
       <Footer>

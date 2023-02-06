@@ -5,15 +5,11 @@ import { Crewmate } from '@influenceth/sdk';
 import { FaBookOpen as BioIcon } from 'react-icons/fa';
 import { RiBarChart2Fill as StatsIcon } from 'react-icons/ri';
 
-import useAuth from '~/hooks/useAuth';
-import useCrewAssignments from '~/hooks/useCrewAssignments';
-import useCrewMember from '~/hooks/useCrewMember';
-import useNameCrew from '~/hooks/useNameCrew';
-import useStore from '~/hooks/useStore';
 import Button from '~/components/Button';
 import CrewCard from '~/components/CrewCard';
+import CrewTraitIcon from '~/components/CrewTraitIcon';
 import DataReadout from '~/components/DataReadout';
-import Details from '~/components/Details';
+import Details from '~/components/DetailsModal';
 import Form from '~/components/Form';
 import IconButton from '~/components/IconButton';
 import {
@@ -28,9 +24,13 @@ import MarketplaceLink from '~/components/MarketplaceLink';
 import TabContainer from '~/components/TabContainer';
 import Text from '~/components/Text';
 import TextInput from '~/components/TextInput';
-
+import useAuth from '~/hooks/useAuth';
+import useCrewAssignments from '~/hooks/useCrewAssignments';
+import useCrewMember from '~/hooks/useCrewMember';
+import useNameAvailability from '~/hooks/useNameAvailability';
+import useNameCrew from '~/hooks/useNameCrew';
+import useStore from '~/hooks/useStore';
 import { unixTimeToGameTime } from '~/lib/utils';
-import CrewTraitIcon from '~/components/CrewTraitIcon';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -378,6 +378,7 @@ const CrewMemberDetails = (props) => {
   const { account } = useAuth();
   const { data: assignmentData } = useCrewAssignments();
   const { data: crew } = useCrewMember(i);
+  const { getCrewNameAvailability } = useNameAvailability();
   const { nameCrew, naming } = useNameCrew(Number(i));
   const playSound = useStore(s => s.dispatchSoundRequested);
 
@@ -420,10 +421,17 @@ const CrewMemberDetails = (props) => {
     }
   }, [crew?.traits, selectTrait]);
 
+  const attemptNameCrew = useCallback(async (name) => {
+    if (await getCrewNameAvailability(name)) {
+      nameCrew(name);
+    }
+  }, [getCrewNameAvailability]);
+
   return (
     <Details
-      contentProps={{ style: { margin: 0 } }}
-      title="Crewmate Profile">
+      onCloseDestination="/owned-crew"
+      title="Crewmate Profile"
+      width="max">
       {crew && (
         <Content>
           <CrewBasics>
@@ -465,7 +473,7 @@ const CrewMemberDetails = (props) => {
                         data-tip="Submit"
                         data-for="global"
                         disabled={naming}
-                        onClick={() => nameCrew(newName)}>
+                        onClick={() => attemptNameCrew(newName)}>
                         <CheckCircleIcon />
                       </IconButton>
                     </NameForm>

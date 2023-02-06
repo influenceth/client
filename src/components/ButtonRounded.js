@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 
 import useStore from '~/hooks/useStore';
 
-const ButtonRounded = styled.button`
+const Button = styled.button`
   align-items: center;
-  background-color: rgba(${p => p.theme.colors.mainRGB}, 0.3);
+  background-color: rgba(${p => p.disabled ? '90, 90, 90' : p.theme.colors.mainRGB}, 0.3);
   border: ${p => p.buttonBorderless ? 'none' : `1px solid ${p.disabled ? '#444' : p.theme.colors.main}`};
   border-radius: 6px;
   color: ${p => p.theme.colors.main};
@@ -40,7 +40,7 @@ const ButtonRounded = styled.button`
   `}
 `;
 
-const Button = (props) => {
+const ButtonRounded = (props) => {
   const {
     onClick,
     'data-tip': dataTip,
@@ -58,15 +58,23 @@ const Button = (props) => {
 
   if (setRef) restProps.ref = setRef;
   return (
-    <ButtonRounded
+    <Button
       onClick={_onClick}
       data-tip={dataTip}
       data-place={dataPlace || "right"}
       key={dataTip}
       {...restProps}>
       {props.children}
-    </ButtonRounded>
+    </Button>
   );
 };
 
-export default Button;
+export const IconButtonRounded = styled(ButtonRounded)`
+  padding: ${p => p.flatter ? '4px 16px' : '10px'};
+  & > svg {
+    font-size: ${p => p.flatter ? 'initial' : '20px'};
+    margin-right: 0;
+  }
+`;
+
+export default ButtonRounded;

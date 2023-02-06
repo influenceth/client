@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import styled from 'styled-components';
-import { AiOutlineExclamation as FailureIcon } from 'react-icons/ai';
+import styled, { css, keyframes } from 'styled-components';
+import { AiOutlineExclamation as FailureIcon, AiFillPushpin as UnpinIcon, AiOutlinePushpin as PinIcon } from 'react-icons/ai';
 import { MdClear as DismissIcon } from 'react-icons/md';
 import BarLoader from 'react-spinners/BarLoader';
 import { Capable, Inventory } from '@influenceth/sdk';
 import moment from 'moment';
 
 import {
-  CancelBlueprintIcon,
+  UnplanBuildingIcon,
   ConstructIcon,
   CoreSampleIcon,
   CrewIcon,
@@ -16,7 +16,7 @@ import {
   DeconstructIcon,
   ExtractionIcon,
   ImproveCoreSampleIcon,
-  LayBlueprintIcon,
+  PlanBuildingIcon,
   PurchaseAsteroidIcon,
   ScanAsteroidIcon,
   SurfaceTransferIcon,
@@ -25,37 +25,113 @@ import NavIcon from '~/components/NavIcon';
 import { usePlotLink } from '~/components/PlotLink';
 import useActionItems from '~/hooks/useActionItems';
 import useAsteroid from '~/hooks/useAsteroid';
+import useAuth from '~/hooks/useAuth';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import theme, { hexToRGB } from '~/theme';
 import LiveTimer from '~/components/LiveTimer';
 
-const iconWidth = 30;
-
+const ICON_WIDTH = 34;
+const ITEM_WIDTH = 400;
 const TRANSITION_TIME = 400;
-const ITEM_WIDTH = `400px`;
 
 const ActionItemWrapper = styled.div`
-  flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  pointer-events: none;
+  height: 100%;
+  transition: width 0.15s ease;
   user-select: none;
+  width: ${ITEM_WIDTH}px;
+`;
+
+const Pinner = styled.div`
+  align-items: center;
+  border-bottom: 2px solid black;
+  color: #CCC;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  font-size: 14px;
+  height: 28px;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: all;
+  position: absolute;
+  right: 8px;
+  top: -28px;
+  width: 100px;
+  transition: opacity 0.25s ease 0.15s;
+  & > svg { margin-right: 2px; }
+`;
+
+const OuterWrapper = styled.div`
+  flex: 1;
+  height: 0;
+  pointer-events: none;
+  position: relative;
+  ${p => !p.pinned && `
+    ${ActionItemWrapper} {
+      width: ${ICON_WIDTH}px;
+    }
+  `}
+  ${p => p.forceOpen && `
+    ${ActionItemWrapper} {
+      width: ${ITEM_WIDTH}px;
+    }
+  `}
+  &:hover {
+    ${p => !p.pinned && `
+      ${ActionItemWrapper} {
+        width: ${ITEM_WIDTH}px;
+      }
+    `}
+    ${Pinner} {
+      opacity: 0.33;
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+        opacity: 1;
+      }
+    }
+  }
 `;
 
 const ActionItemContainer = styled.div`
   max-height: 275px;
-  height: 100%;
-  overflow-x: hidden;
   overflow-y: auto;
+  overflow-x: hidden;
   pointer-events: auto;
-  width: ${ITEM_WIDTH};
+  width: ${ITEM_WIDTH}px;
 `;
 
-const Icon = styled.div``;
+const opacityKeyframes = keyframes`
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+`;
+const Icon = styled.div`
+  & svg {
+    filter: drop-shadow(1px 1px 1px #333);
+    ${p => p.animate && css`
+      animation: ${opacityKeyframes} 1000ms ease infinite;
+    `}
+  }
+`;
+
 const Status = styled.div``;
 const Label = styled.div``;
 const Details = styled.div``;
-const Timing = styled.div``;
+const Timing = styled.div`
+  b {
+    font-weight: normal;
+    text-transform: uppercase;
+  }
+`;
 const Location = styled.div`
   color: rgba(255, 255, 255, 0.6);
   b {
@@ -92,7 +168,10 @@ const Dismissal = styled.div`
 const Progress = styled.div``;
 const ActionItemRow = styled.div`
   align-items: center;
+  overflow: hidden;
   pointer-events: all;
+  text-shadow: 1px 1px 2px black;
+
   ${p => {
     if (p.transitionOut === 'right') {
       return `
@@ -146,7 +225,7 @@ const ActionItemRow = styled.div`
     justify-content: center;
     margin-right: 8px;
     height: 100%;
-    width: ${iconWidth}px;
+    width: ${ICON_WIDTH}px;
   }
   ${Status} {
     margin-right: 8px;
@@ -171,7 +250,7 @@ const ActionItemRow = styled.div`
   ${Progress} {
     position: absolute;
     bottom: 0;
-    left: ${iconWidth}px;
+    left: ${ICON_WIDTH}px;
     height: 4px;
     right: 0;
     & > * {
@@ -183,7 +262,7 @@ const ActionItemRow = styled.div`
 
 const formatItem = (item) => {
   const formatted = {
-    key: item.id,
+    key: item.key,
     icon: null,
     label: '',
     asteroidId: null,
@@ -258,15 +337,15 @@ const formatItem = (item) => {
 
 const formatPlans = (item) => {
   return {
-    key: `plans_${item.gracePeriodEnd}`,
-    icon: <LayBlueprintIcon />,
+    key: item.key,
+    icon: <PlanBuildingIcon />,
     label: `${item.building.type} Site Plan`,
     crewId: item.occupier,
     asteroidId: item.asteroid,
     plotId: item.i,
     resourceId: null,
     locationDetail: '',
-    completionTime: item.gracePeriodEnd,
+    completionTime: item.waitingFor,
     onClick: ({ openDialog }) => {
       openDialog('CONSTRUCT');
     }
@@ -275,7 +354,8 @@ const formatPlans = (item) => {
 
 const formatTx = (item) => {
   const formatted = {
-    key: item.txHash || item.timestamp,
+    key: item.key,
+    txHash: item.txHash,
     icon: null,
     label: '',
     crewId: null,
@@ -334,7 +414,18 @@ const formatTx = (item) => {
         history.push(`/crew/${item.vars.i}`);
       };
       break;
-    case 'PURCHASE_AND_INITIALIZE_CREW':
+    case 'INITIALIZE_CREWMATE':
+      formatted.icon = <CrewIcon />;
+      formatted.label = 'Initialize Crewmate';
+      formatted.onClick = ({ history }) => {
+        if (item.vars.sessionId) {
+          history.push(`/crew-assignment/${item.vars.sessionId}/create`);
+        } else {
+          history.push(`/owned-crew`);
+        }
+      };
+      break;
+    case 'PURCHASE_AND_INITIALIZE_CREWMATE':
       formatted.icon = <CrewIcon />;
       formatted.label = 'Mint Crewmate';
       formatted.onClick = ({ history }) => {
@@ -352,7 +443,7 @@ const formatTx = (item) => {
       formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;
-      formatted.resourceId = item.vars.resourceId;
+      formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
       formatted.onClick = ({ openDialog }) => {
         // TODO: in case of failure (and improvement mode), should link with selected sampleId
         // (low priority b/c would have to fail and would have to have closed dialog)
@@ -364,7 +455,7 @@ const formatTx = (item) => {
       formatted.label = `Core Analysis`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;
-      formatted.resourceId = item.vars.resourceId;
+      formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
       formatted.onClick = ({ openDialog, plot }) => {
         const isImprovement = item.vars.sampleId && plot?.coreSamples?.length > 0 && !!plot.coreSamples.find((s) => (
           s.sampleId === item.vars.sampleId
@@ -376,23 +467,23 @@ const formatTx = (item) => {
       break;
 
     case 'PLAN_CONSTRUCTION':
-      formatted.icon = <LayBlueprintIcon />;
+      formatted.icon = <PlanBuildingIcon />;
       formatted.label = `Plan ${Capable.TYPES[item.vars.capableType]?.name || 'Building'} Site`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;
       formatted.onClick = ({ openDialog }) => {
         // TODO: in case of failure, should link with selected building type
         // (low priority b/c would have to fail and would have to have closed dialog)
-        openDialog('BLUEPRINT');
+        openDialog('PLAN_BUILDING');
       };
       break;
     case 'UNPLAN_CONSTRUCTION':
-      formatted.icon = <CancelBlueprintIcon />;
-      formatted.label = 'Cancel Building Plans';
+      formatted.icon = <UnplanBuildingIcon />;
+      formatted.label = 'Unplan Building Site';
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;
       formatted.onClick = ({ openDialog }) => {
-        openDialog('CANCEL_BLUEPRINT');
+        openDialog('UNPLAN_BUILDING');
       };
       break;
     case 'START_CONSTRUCTION':
@@ -514,6 +605,7 @@ const ActionItem = ({ data, type }) => {
     if (item.asteroidId) {
       goToAction();
     }
+    // return;
 
     if (item.onClick) {
       // delay dialog opening based on how far camera needs to fly to get there
@@ -532,6 +624,10 @@ const ActionItem = ({ data, type }) => {
           plot
         });
       }, dialogDelay)
+    }
+
+    if (type === 'failed' && item.txHash && process.env.REACT_APP_STARKNET_EXPLORER_URL) {
+      window.open(`${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${item.txHash}`, '_blank');
     }
   }, [
     goToAction,
@@ -555,7 +651,7 @@ const ActionItem = ({ data, type }) => {
       onClick={onClick}
       oneRow={type !== 'failed' && !asteroid}
       transitionOut={data.transitionOut ? (type === 'failed' ? 'left' : 'right') : undefined}>
-      <Icon>
+      <Icon animate={type === 'pending'}>
         {type === 'failed' && <FailureIcon />}
         {type === 'ready' && <NavIcon animate selected size="16px" />}
         {(type === 'pending' || type === 'unready' || type === 'plans') && item.icon}
@@ -568,7 +664,11 @@ const ActionItem = ({ data, type }) => {
           {(type === 'ready' || type === 'failed') && item.ago}
           {type === 'unready' && item.completionTime && <>in <LiveTimer target={item.completionTime} maxPrecision={2} /></>}
           {/* TODO: would be nice for this to have different level warning intensity based on time-left and/or presence of inventory on the lot */}
-          {type === 'plans' && item.completionTime && <>remaining <LiveTimer target={item.completionTime} maxPrecision={2} /></>}
+          {type === 'plans' && (
+            item.completionTime
+              ? <>remaining <LiveTimer target={item.completionTime} maxPrecision={2} /></>
+              : <b>at risk</b>
+          )}
         </Timing>
         {type === 'failed' && (
           <Dismissal onClick={onDismiss}>
@@ -599,6 +699,11 @@ const ActionItems = () => {
     unreadyItems,
     plannedItems: allPlannedItems
   } = useActionItems() || {};
+
+  const { token, account } = useAuth();
+
+  const actionItemsPinned = useStore(s => s.actionItemsPinned);
+  const dispatchActionItemsPinned = useStore(s => s.dispatchActionItemsPinned);
 
   // hide readyItems that have a pending transaction
   const readyItems = useMemo(() => {
@@ -655,14 +760,19 @@ const ActionItems = () => {
   }, [pendingTransactions, allPlannedItems]);
 
   const allItems = useMemo(() => {
+    if (!account || !token) return [];
+
     return [
       ...(pendingTransactions || []).map((item) => ({ ...item, type: 'pending' })),
       ...(failedTransactions || []).map((item) => ({ ...item, type: 'failed' })),
       ...(readyItems || []).map((item) => ({ ...item, type: 'ready' })),
       ...(plannedItems || []).map((item) => ({ ...item, type: 'plans' })),
       ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready' }))
-    ];
-  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems])
+    ].map((x) => {  // make sure everything has a key
+      if (!x.key) x.key = `${x.type}_${x.txHash || x.id || x.timestamp || x.gracePeriodEnd}`;
+      return x;
+    });
+  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems, account, token]);
 
   const [displayItems, setDisplayItems] = useState();
   useEffect(() => {
@@ -687,16 +797,50 @@ const ActionItems = () => {
     }
   }, [allItems]);
 
-  {/* TODO: collapsible */}
-  {/* TODO: the whole left side of the hud should potentially be in the same container so less absolute positioning */}
+
+  const watching = [
+    failedTransactions.length,
+    allReadyItems.length,
+    allPlannedItems.length,
+    unreadyItems.length
+  ];
+  const previousState = useRef(watching);
+
+  const [forceOpen, setForceOpen] = useState(false);
+  useEffect(() => {
+    // don't force open for pending transactions, but do for increase in any of the others (excluding suppressions)
+    if (!!watching.find((x, i) => x > previousState.current[i])) {
+      setForceOpen(true);
+    }
+    previousState.current = [...watching];
+    
+  }, [...watching]);
+
+  useEffect(() => {
+    if (forceOpen) {
+      const closeTimeout = setTimeout(() => {
+        setForceOpen(false);
+      }, 4000);
+      return () => {
+        if (closeTimeout) clearTimeout(closeTimeout);
+      }
+    }
+  }, [forceOpen]);
+
   return (
-    <ActionItemWrapper>
-      <ActionItemContainer>
-        {(displayItems || []).map(({ transition, type, ...item }) => (
-          <ActionItem key={`${type}_${item.key || item.i}_${item.timestamp || item.gracePeriodEnd}`} data={item} type={type} />
-        ))}
-      </ActionItemContainer>
-    </ActionItemWrapper>
+    <OuterWrapper pinned={actionItemsPinned || undefined} forceOpen={forceOpen || undefined}>
+      <Pinner onClick={() => dispatchActionItemsPinned(!actionItemsPinned)}>
+        {actionItemsPinned && <><UnpinIcon /> Unpin</>}
+        {!actionItemsPinned && <><PinIcon /> Pin Open</>}
+      </Pinner>
+      <ActionItemWrapper>
+        <ActionItemContainer>
+          {(displayItems || []).map(({ transition, type, ...item }) => (
+            <ActionItem key={`${type}_${item.key || item.i}_${item.timestamp || item.gracePeriodEnd}`} data={item} type={type} />
+          ))}
+        </ActionItemContainer>
+      </ActionItemWrapper>
+    </OuterWrapper>
   );
 };
 

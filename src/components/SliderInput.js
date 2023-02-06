@@ -1,25 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 import NavIcon from './NavIcon';
+
+const ANIMATION_TIME = 750;
 
 const Wrapper = styled.div`
   margin: 0 -12px;
   overflow: hidden;
   padding: 0 12px;
   width: calc(100% + 24px);
-`;
-
-const Slider = styled.div`
-  align-items: center;
-  color: white;
-  display: flex;
-  height: 36px;
-  position: relative;
-  width: 100%;
-  & * {
-    pointer-events: none;
-  }
 `;
 
 const Bar = styled.div`
@@ -49,35 +39,59 @@ const Handle = styled.div.attrs(p => ({
   margin-left: -8px;
 `;
 
+const Slider = styled.div`
+  align-items: center;
+  color: white;
+  display: flex;
+  height: 36px;
+  position: relative;
+  width: 100%;
+  & * {
+    pointer-events: none;
+  }
+  ${p => p.animating && `
+    ${InnerBar} {
+      transition: width ${ANIMATION_TIME}ms ease;
+    }
+    ${Handle} {
+      transition: left ${ANIMATION_TIME}ms ease;
+    }
+  `}
+`;
+
 const SliderInput = ({ min = 0, max = 1, increment = 1, value, onChange }) => {
   const sliderRef = useRef();
   const updating = useRef(false);
+  const expectedChange = useRef();
 
-  const percentage = useMemo(() => (value - min) / (max - min), [value, min, max]);
-
-  const mouseHandler = useCallback((e) => {
-    if (e.type === 'mouseup' || e.type === 'mouseleave') {
-      updating.current = false;
-      return;
-    } else if (e.type === 'mousedown') {
-      updating.current = true;
-    }
-    if (updating.current && e.offsetX !== undefined) {
-      onChange(min + (e.offsetX / sliderRef.current.offsetWidth) * (max - min));
-    }
-  }, [min, max]);
-
-  const keyHandler = useCallback((e) => {
-    let incr = 0;
-    if (e.code === 'ArrowLeft') incr = -increment;
-    if (e.code === 'ArrowRight') incr = increment;
-    if (incr !== 0) {
-      if (max - min === 1) incr *= 0.01;
-      onChange((v) => Math.min(Math.max(min, v + incr), max));
-    }
-  }, [value]);
+  const handleChange = (newValue) => {
+    expectedChange.current = newValue;
+    onChange(newValue);
+  }
 
   useEffect(() => {
+    const mouseHandler = (e) => {
+      if (e.type === 'mousedown') {
+        updating.current = true;
+      }
+      if (updating.current && e.offsetX !== undefined) {
+        handleChange(Math.min(Math.max(min, min + (e.offsetX / sliderRef.current.offsetWidth) * (max - min)), max));
+      }
+      if (e.type === 'mouseup' || e.type === 'mouseleave') {
+        updating.current = false;
+      }
+    };
+
+    const keyHandler = (e) => {
+      let incr = 0;
+      if (e.code === 'ArrowLeft') incr = -increment;
+      if (e.code === 'ArrowRight') incr = increment;
+      if (incr !== 0) {
+        if (max - min === 1) incr *= 0.01;
+        handleChange((v) => Math.min(Math.max(min, v + incr), max));
+      }
+    };
+
     sliderRef.current.addEventListener('mousedown', mouseHandler);
     sliderRef.current.addEventListener('mouseleave', mouseHandler);
     sliderRef.current.addEventListener('mousemove', mouseHandler);
@@ -92,11 +106,12 @@ const SliderInput = ({ min = 0, max = 1, increment = 1, value, onChange }) => {
       }
       window.removeEventListener('keydown', keyHandler);
     }
-  }, [keyHandler, mouseHandler]);
+  }, [increment, min, max, handleChange]);
 
+  const percentage = useMemo(() => (value - min) / (max - min), [value, min, max]) || 0;
   return (
     <Wrapper>
-      <Slider ref={sliderRef}>
+      <Slider ref={sliderRef} animating={expectedChange.current !== value}>
         <Bar><InnerBar value={percentage} /></Bar>
         <Handle value={percentage}><NavIcon thicker selected selectedColor="white" /></Handle>
       </Slider>

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { LayBlueprintIcon } from '~/components/Icons';
+import { PlanBuildingIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import ActionButton from './ActionButton';
 
@@ -9,10 +9,10 @@ const labelDict = {
   PLANNING: 'Planning Site...'
 };
 
-const NewBlueprint = ({ asteroid, plot, onSetAction, _disabled }) => {
+const PlanBuilding = ({ asteroid, plot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
   const handleClick = useCallback(() => {
-    onSetAction('BLUEPRINT');
+    onSetAction('PLAN_BUILDING');
   }, [onSetAction]);
 
   return (
@@ -22,9 +22,9 @@ const NewBlueprint = ({ asteroid, plot, onSetAction, _disabled }) => {
         disabled: _disabled || undefined,
         loading: constructionStatus === 'PLANNING' || undefined
       }}
-      icon={<LayBlueprintIcon />}
+      icon={<PlanBuildingIcon />}
       onClick={handleClick} />
   );
 };
 
-export default NewBlueprint;
+export default PlanBuilding;

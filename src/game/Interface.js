@@ -24,9 +24,12 @@ import CrewAssignments from './interface/details/CrewAssignments';
 import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
+import PlotViewer from './interface/PlotViewer';
 import RouteDetails from './interface/details/RouteDetails';
 import WatchlistTable from './interface/details/WatchlistTable';
 import theme from '~/theme';
+import Cutscene from './Cutscene';
+import Launcher from './Launcher';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -81,7 +84,8 @@ const Interface = () => {
   const { isMobile } = useScreenSize();
   const { data: sale } = useSale();
   const isFetching = useIsFetching();
-  const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
+  const cutscene = useStore(s => s.cutscene);
+  const launcherPage = useStore(s => s.launcherPage);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const hideInterface = useStore(s => s.dispatchHideInterface);
   const showInterface = useStore(s => s.dispatchShowInterface);
@@ -99,65 +103,69 @@ const Interface = () => {
   }, [handleInterfaceShortcut]);
 
   return (
-    <StyledInterface hide={interfaceHidden}>
-      {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
-      {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
+    <>
       <Alerts />
-      {sale && <SaleNotifier sale={sale} />}
-      <MainContainer>
+      {launcherPage && <Launcher />}
+      {cutscene && <Cutscene />}
+      <StyledInterface hide={interfaceHidden}>
+        {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
+        {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
+        {sale && <SaleNotifier sale={sale} />}
+        <MainContainer>
+          <Switch>
+            <Route exact path="/asteroids">
+              <AsteroidsTable />
+            </Route>
+            <Route path="/building-viewer/:model?">
+              <ModelViewer assetType="Building" />
+            </Route>
+            <Route path="/resource-viewer/:model?">
+              <ModelViewer assetType="Resource" />
+            </Route>
+            <Route path="/crew/:i(\d+)">
+              <CrewMemberDetails />
+            </Route>
+            <Route path="/owned-asteroids">
+              <OwnedAsteroidsTable />
+            </Route>
+            <Route path="/route">
+              <RouteDetails />
+            </Route>
+            <Route path="/watchlist">
+              <WatchlistTable />
+            </Route>
+          </Switch>
+
+          <PlotViewer />
+          <HUD />
+          <MainMenu />
+        </MainContainer>
+
         <Switch>
-          <Route exact path="/asteroids">
-            <AsteroidsTable />
+          <Redirect from="/:i(\d+)" to="/asteroids/:i" />
+          <Route path="/asteroids/:i(\d+)/:tab?/:category?">
+            <AsteroidDetails />
           </Route>
-          <Route path="/building-viewer/:model?">
-            <ModelViewer assetType="Building" />
+          <Route path="/owned-crew">
+            <OwnedCrew />
           </Route>
-          <Route path="/resource-viewer/:model?">
-            <ModelViewer assetType="Resource" />
+          <Route exact path="/crew-assignments/:id([a-z0-9]+)/:selected?">
+            <CrewAssignments />
           </Route>
-          <Route path="/crew/:i(\d+)">
-            <CrewMemberDetails />
+          <Route exact path="/crew-assignment/:id([a-z0-9]+)">
+            <CrewAssignment />
           </Route>
-          <Route path="/owned-asteroids">
-            <OwnedAsteroidsTable />
+          <Route path="/crew-assignment/:id([a-z0-9]+)/complete">
+            <CrewAssignmentComplete />
           </Route>
-          <Route path="/route">
-            <RouteDetails />
-          </Route>
-          <Route path="/watchlist">
-            <WatchlistTable />
+          <Route path="/crew-assignment/:id([a-z0-9]+)/create">
+            <CrewCreation />
           </Route>
         </Switch>
-
-        {zoomToPlot && <ModelViewer assetType="Building" plotZoomMode={zoomToPlot} />}
-        <HUD />
-        <MainMenu />
-      </MainContainer>
-
-      <Switch>
-        <Redirect from="/:i(\d+)" to="/asteroids/:i" />
-        <Route path="/asteroids/:i(\d+)/:tab?/:category?">
-          <AsteroidDetails />
-        </Route>
-        <Route path="/owned-crew">
-          <OwnedCrew />
-        </Route>
-        <Route exact path="/crew-assignments/:id([a-z0-9]+)/:selected?">
-          <CrewAssignments />
-        </Route>
-        <Route exact path="/crew-assignment/:id([a-z0-9]+)">
-          <CrewAssignment />
-        </Route>
-        <Route path="/crew-assignment/:id([a-z0-9]+)/complete">
-          <CrewAssignmentComplete />
-        </Route>
-        <Route path="/crew-assignment/:id([a-z0-9]+)/create">
-          <CrewCreation />
-        </Route>
-      </Switch>
-      <Outliner />
-      <Draggables />
-    </StyledInterface>
+        <Outliner />
+        <Draggables />
+      </StyledInterface>
+    </>
   );
 };
 

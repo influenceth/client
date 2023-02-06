@@ -16,12 +16,13 @@ import NumberInput from '~/components/NumberInput';
 import Range from '~/components/Range';
 import constants from '~/lib/constants';
 
-const { ENABLE_SHADOWS } = constants;
+const { ENABLE_SHADOWS, MIN_FOV, MAX_FOV } = constants;
 
 const StyledSettings = styled.div`
   background-color: black;
   border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
   border-top: 1px solid ${p => p.theme.colors.mainBorder};
+  overflow: auto;
   padding: 0 15px 25px 0px;
   height: 100%;
   width: 700px;
@@ -179,8 +180,8 @@ const Settings = (props) => {
               <NumberInput
                 initialValue={graphics.fov}
                 onChange={v => setLocalFOV(v)}
-                min={45}
-                max={175} />
+                min={MIN_FOV}
+                max={MAX_FOV} />
               <Button
                 onClick={() => setFOV(localFOV)}
                 disabled={localFOV === graphics.fov}>

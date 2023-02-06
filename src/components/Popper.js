@@ -1,20 +1,42 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { VscListUnordered as PopperIcon } from 'react-icons/vsc';
 
 import Button from '~/components/ButtonRounded';
+import useScreenSize from '~/hooks/useScreenSize';
 
 const Wrapper = styled.div`
   position: relative;
 `;
 
-const defaultWidth = 540;
-const Content = styled.div`
-  background: black;
-  margin-left: -${p => (p.contentWidth || defaultWidth) * 0.2}px;
+const ClickAwayListener = styled.div`
+  background: transparent;
   position: fixed;
-  max-width: 100vw;
-  width: ${p => p.contentWidth || defaultWidth}px;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+`;
+
+const defaultWidth = 540;
+const Content = styled.div.attrs(p => {
+  const style = {
+    width: `${p.overrides?.width || p.contentWidth || defaultWidth}px`
+  };
+  if (p.overrides?.top !== undefined) {
+    style.top = `${p.overrides?.top}px`;
+    style.marginTop = 0;
+  }
+  if (p.overrides?.left !== undefined) {
+    style.left = `${p.overrides?.left}px`;
+    style.marginLeft = 0;
+  }
+  return { style };
+})`
+  background: black;
+  margin-left: ${p => -0.2 * (p.contentWidth || defaultWidth)}px;
+  position: fixed;
   z-index: 31;
 `;
 
@@ -25,12 +47,18 @@ const Title = styled.div`
   padding: 10px 15px;
   text-transform: uppercase;
 `;
-const Body = styled.div`
-  height: ${p => `${p.contentHeight || 400}px`};
-`;
+const Body = styled.div.attrs(p => ({
+  style: {
+    height: `${p.overrides?.height !== undefined
+      ? p.overrides.height - 42 // offset is for title height
+      : (p.contentHeight || 400)}px`
+  }
+}))``;
 
-const Poppable = ({ children, closeOnChange, disabled, label, title, ...styleProps }) => {
+const Poppable = ({ children, closeOnChange, closeOnClickAway = true, disabled, label, title, ...styleProps }) => {
   const [open, setOpen] = useState(false);
+  const [override, setOverride] = useState();
+  const { height, width } = useScreenSize();
 
   const handleToggle = useCallback(() => {
     if (!disabled)
@@ -45,21 +73,57 @@ const Poppable = ({ children, closeOnChange, disabled, label, title, ...stylePro
     if (open) setOpen(false);
   }, [closeOnChange]);
 
+  const contentRef = useRef();
+  const initialPosition = useRef();
+  useEffect(() => {
+    if (contentRef.current && open) {
+      if (!initialPosition.current) {
+        initialPosition.current = {
+          top: contentRef.current.offsetTop,
+          height: contentRef.current.offsetHeight,
+          left: contentRef.current.offsetLeft,
+          width: contentRef.current.offsetWidth
+        };
+      }
+
+      const override = {};
+      const initialBottom = initialPosition.current.top + initialPosition.current.height;
+      if (initialBottom > height) {
+        override.top = Math.max(0, initialPosition.current.top - (initialBottom - height));
+        if (initialPosition.current.height > height) {
+          override.height = height;
+        }
+      }
+      const initialRight = initialPosition.current.left + initialPosition.current.width;
+      if (initialRight > width) {
+        override.left = Math.max(0, initialPosition.current.left - (initialRight - width));
+        if (initialPosition.current.width > width) {
+          override.width = width;
+        }
+      }
+      setOverride(override);
+    }
+  }, [height, width, open]);
+
   return (
     <Wrapper>
       <Button
         disabled={disabled}
         onClick={handleToggle}
+        buttonWidth="135px"
         {...styleProps}>
         <PopperIcon /> <span>{label}</span>
       </Button>
       {open && (
-        <Content {...styleProps}>
-          <Title>{title}</Title>
-          <Body {...styleProps}>
-            {children}
-          </Body>
-        </Content>
+        <>
+          {closeOnClickAway && <ClickAwayListener onClick={() => setOpen(false)} />}
+          <Content ref={contentRef} {...styleProps} overrides={override}>
+            <Title>{title}</Title>
+            <Body {...styleProps} overrides={override}>
+              {children}
+            </Body>
+          </Content>
+        </>
       )}
     </Wrapper>
   );

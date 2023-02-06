@@ -2,13 +2,24 @@ import { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import screenfull from 'screenfull';
-import { AiOutlineSetting, AiOutlinePushpin, AiFillPushpin } from 'react-icons/ai';
+import { AiOutlineMenu, AiOutlinePushpin, AiFillPushpin } from 'react-icons/ai';
 import { MdFullscreen, MdFullscreenExit } from 'react-icons/md';
 import { BsEyeSlash, BsEye } from 'react-icons/bs';
 
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import IconButton from '~/components/IconButton';
+import { WarningIcon } from '~/components/Icons';
+
+const MobileWarning = styled.div`
+  align-items: center;
+  color: orangered;
+  display: flex;
+  font-size: 13px;
+  @media (min-width: ${p => p.theme.breakpoints.mobile + 1}px) {
+    display: none;
+  }
+`;
 
 const StyledSystemControls = styled.div`
   align-items: center;
@@ -33,6 +44,7 @@ const SystemControls = (props) => {
   const skyboxVisible = useStore(s => s.graphics.skybox);
   const dispatchSkyboxHidden = useStore(s => s.dispatchSkyboxHidden);
   const dispatchSkyboxUnhidden = useStore(s => s.dispatchSkyboxUnhidden);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
   useEffect(() => {
@@ -93,11 +105,15 @@ const SystemControls = (props) => {
           <BsEye />
         </IconButton>
       )}
+      <MobileWarning>
+        <WarningIcon />
+        <span>Mobile is not well supported in Testnet.</span>
+      </MobileWarning>
       <IconButton
-        data-tip="Settings"
-        onClick={() => history.push('/launcher/settings')}
+        data-tip="Main Menu"
+        onClick={() => dispatchLauncherPage(true)}
         borderless>
-        <AiOutlineSetting />
+        <AiOutlineMenu />
       </IconButton>
     </StyledSystemControls>
   );

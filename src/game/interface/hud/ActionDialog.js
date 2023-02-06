@@ -5,15 +5,15 @@ import Dialog from '~/components/Dialog';
 import useAsteroid from '~/hooks/useAsteroid';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
-import Construction from './actionDialogs/Construction';
-import Extraction from './actionDialogs/Extraction';
+import Construct from './actionDialogs/Construct';
+import Extract from './actionDialogs/Extract';
 import NewCoreSample from './actionDialogs/NewCoreSample';
 import Deconstruct from './actionDialogs/Deconstruct';
 import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
-import PlanConstruction from './actionDialogs/PlanConstruction';
+import PlanBuilding from './actionDialogs/PlanBuilding';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
-import UnplanConstruction from './actionDialogs/UnplanConstruction';
-import { ActionDialogLoader } from './actionDialogs/components';
+import UnplanBuilding from './actionDialogs/UnplanBuilding';
+import ReactTooltip from 'react-tooltip';
 
 export const useAsteroidAndPlot = (props = {}) => {
   const selectedPlot = useStore(s => s.asteroids.plot);
@@ -56,6 +56,18 @@ const ActionDialog = ({ type, params }) => {
     onClose: () => setAction(),
   }), [params, locParams, setAction]);
 
+  useEffect(() => {
+    const onKeyUp = (e) => {
+      if (e.key === 'Escape' || e.which === 32) {
+        setAction();
+      }
+    };
+    document.addEventListener('keyup', onKeyUp);
+    return () => {
+      document.removeEventListener('keyup', onKeyUp);
+    }
+  }, []);
+
   return (
     <Dialog backdrop="rgba(30, 30, 35, 0.5)" opaque>
       {isLoading && (
@@ -65,16 +77,17 @@ const ActionDialog = ({ type, params }) => {
       )}
       {!isLoading && (
         <div style={{ position: 'relative' }}>
-          {type === 'BLUEPRINT' && <PlanConstruction {...allProps} />}
-          {type === 'CANCEL_BLUEPRINT' && <UnplanConstruction {...allProps} />}
-          {type === 'CONSTRUCT' && <Construction {...allProps} />}
+          {type === 'PLAN_BUILDING' && <PlanBuilding {...allProps} />}
+          {type === 'UNPLAN_BUILDING' && <UnplanBuilding {...allProps} />}
+          {type === 'CONSTRUCT' && <Construct {...allProps} />}
           {type === 'DECONSTRUCT' && <Deconstruct {...allProps} />}
-          {type === 'EXTRACT_RESOURCE' && <Extraction {...allProps} />}
+          {type === 'EXTRACT_RESOURCE' && <Extract {...allProps} />}
           {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}
           {type === 'NEW_CORE_SAMPLE' && <NewCoreSample {...allProps} />}
           {type === 'SURFACE_TRANSFER' && <SurfaceTransfer {...allProps} />}
         </div>
       )}
+      <ReactTooltip id="actionDialog" place="left" effect="solid" />
     </Dialog>
   );
 }

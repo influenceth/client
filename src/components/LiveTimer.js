@@ -6,7 +6,7 @@ import { formatTimer } from "~/lib/utils";
 const LiveTimer = ({ target, maxPrecision }) => {
   const chainTime = useChainTime();
   return useMemo(() => {
-    const remaining = Math.max(0, target - chainTime);
+    const remaining = target === null ? NaN : Math.max(0, target - chainTime);
     return isNaN(remaining) ? 'Initializing...' : <>{formatTimer(remaining, maxPrecision)}</>;
   }, [chainTime, maxPrecision, target]);
 };

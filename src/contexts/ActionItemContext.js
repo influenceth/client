@@ -4,7 +4,6 @@ import { useQuery } from 'react-query';
 import useAuth from '~/hooks/useAuth';
 import useChainTime from '~/hooks/useChainTime';
 import useCrew from '~/hooks/useCrew';
-import useEvents from '~/hooks/useEvents';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
 
@@ -48,7 +47,8 @@ export function ActionItemProvider({ children }) {
 
     setPlannedItems(
       (plannedLots || [])
-        .filter((i) => i.gracePeriodEnd >= nowTime)
+        // .filter((i) => i.gracePeriodEnd >= nowTime)
+        .map((a) => ({ ...a, waitingFor: a.gracePeriodEnd > nowTime ? a.gracePeriodEnd : null }))
         .sort((a, b) => a.gracePeriodEnd - b.gracePeriodEnd)
     );
   }, [actionItems, plannedLots]);
@@ -56,8 +56,8 @@ export function ActionItemProvider({ children }) {
 
   const nextCompletionTime = useMemo(() => {
     return [...plannedItems, ...unreadyItems].reduce((acc, cur) => {
-      const relevantTime = cur.gracePeriodEnd || cur.data?.completionTime;
-      if (relevantTime && (acc === null || relevantTime < acc)) {
+      const relevantTime = cur.waitingFor || cur.data?.completionTime;
+      if (relevantTime && relevantTime && (acc === null || relevantTime < acc)) {
         return relevantTime;
       }
       return acc;
@@ -67,9 +67,9 @@ export function ActionItemProvider({ children }) {
   useEffect(() => {
     if (nextCompletionTime) {
       const nextRefreshTime = (nextCompletionTime + 1);
-      console.log('setting timeout in ' + (nextRefreshTime - chainTime), { nextCompletionTime, chainTime });
+      // console.log('setting timeout in ' + (nextRefreshTime - chainTime), { nextCompletionTime, chainTime });
       const to = setTimeout(() => {
-        console.log('running refreesh');
+        // console.log('running refreesh');
         refreshItems(nextRefreshTime);
       }, Math.max(0, 1000 * (nextRefreshTime - chainTime)));
       return () => {
@@ -81,19 +81,29 @@ export function ActionItemProvider({ children }) {
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining
 
+  // without memoizing, triggers as if new value on every chainTime update
+  const contextValue = useMemo(() => ({
+    pendingTransactions,
+    failedTransactions,
+    readyItems,
+    plannedItems,
+    unreadyItems,
+    actionItems
+  }), [
+    pendingTransactions,
+    failedTransactions,
+    readyItems,
+    plannedItems,
+    unreadyItems,
+    actionItems
+  ]);
+
   // TODO: pending and failed transactions are already in context
   //  - ready/unready are only relevant in UI
   //  - probably only need to return actionItems here
   //  - this may even be overkill as a context (although will have to see once implement browser notifications)
   return (
-    <ActionItemContext.Provider value={{
-      pendingTransactions,
-      failedTransactions,
-      readyItems,
-      plannedItems,
-      unreadyItems,
-      actionItems
-    }}>
+    <ActionItemContext.Provider value={contextValue}>
       {children}
     </ActionItemContext.Provider>
   );

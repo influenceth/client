@@ -1,5 +1,4 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from 'react-query';
 import { starknetContracts as configs } from '@influenceth/sdk';
 import { Contract, shortString } from 'starknet';
 
@@ -9,14 +8,10 @@ import useStore from '~/hooks/useStore';
 import useInterval from '~/hooks/useInterval';
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
-
 const ChainTransactionContext = createContext();
 
-console.log('configs', configs);
-
 // TODO: now that all are on dispatcher, could probably collapse a lot of redundant code in getContracts
-
-const getContracts = (account, queryClient) => ({
+const getContracts = (account) => ({
   'PURCHASE_ASTEROID': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
@@ -63,10 +58,7 @@ const getContracts = (account, queryClient) => ({
       _packed.bonuses,
       _proofs.boostBonus,
     ]),
-    isEqual: (txVars, vars) => txVars.i === vars.i,
-    onConfirmed: (event, { i }) => {
-      queryClient.invalidateQueries(['asteroids', i]);
-    }
+    isEqual: (txVars, vars) => txVars.i === vars.i
   },
   'FINISH_ASTEROID_SCAN': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -96,7 +88,68 @@ const getContracts = (account, queryClient) => ({
     },
     isEqual: () => true,
   },
-  'PURCHASE_AND_INITIALIZE_CREW': {
+  // // NOTE: this is just for debugging vvv
+  // 'PURCHASE_UNINITIALIZED_CREWMATE': {
+  //   address: process.env.REACT_APP_STARKNET_DISPATCHER,
+  //   config: configs.Dispatcher,
+  //   transact: (contract) => async () => {
+  //     const { price } = await contract.call('CrewmateSale_getPrice');
+  //     const priceParts = Object.values(price).map((part) => part.toNumber());
+  //     const calls = [
+  //       {
+  //         contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+  //         entrypoint: 'approve',
+  //         calldata: [
+  //           process.env.REACT_APP_STARKNET_DISPATCHER,
+  //           ...priceParts
+  //         ]
+  //       },
+  //       {
+  //         contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+  //         entrypoint: 'Crewmate_purchaseAdalian',
+  //         calldata: [
+  //           ...priceParts,
+  //         ]
+  //       },
+  //     ];
+
+  //     return account.execute(calls);
+  //   },
+  //   isEqual: () => true,
+  // },
+  // // ^^^
+  'INITIALIZE_CREWMATE': {
+    address: process.env.REACT_APP_STARKNET_DISPATCHER,
+    config: configs.Dispatcher,
+    transact: (contract) => async ({ i, name, features, traits, crewId = 0 }) => {
+      return contract.invoke('Crewmate_initializeAdalian', [
+        i,
+        shortString.encodeShortString(name),
+        [
+          features.crewCollection,
+          features.sex,
+          features.body,
+          features.crewClass,
+          features.title,
+          features.outfit,
+          features.hair,
+          features.facialFeature,
+          features.hairColor,
+          features.headPiece,
+          features.bonusItem,
+        ].map((x) => x.toString()),
+        [
+          traits.drive,
+          traits.classImpactful,
+          traits.driveCosmetic,
+          traits.cosmetic,
+        ].map((t) => t.id.toString()),
+        crewId
+      ]);
+    },
+    isEqual: (vars, txVars) => vars.i === txVars.i,
+  },
+  'PURCHASE_AND_INITIALIZE_CREWMATE': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
     transact: (contract) => async ({ name, features, traits, crewId }) => {
@@ -294,21 +347,23 @@ const getNow = () => {
 }
 
 export function ChainTransactionProvider({ children }) {
-  const { wallet: { starknet } } = useAuth();
+  const { account, walletContext: { starknet } } = useAuth();
   const { events, lastBlockNumber } = useEvents();
-  const queryClient = useQueryClient();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchFailedTransaction = useStore(s => s.dispatchFailedTransaction);
   const dispatchPendingTransaction = useStore(s => s.dispatchPendingTransaction);
   const dispatchPendingTransactionUpdate = useStore(s => s.dispatchPendingTransactionUpdate);
   const dispatchPendingTransactionComplete = useStore(s => s.dispatchPendingTransactionComplete);
+  const dispatchClearTransactionHistory = useStore(s => s.dispatchClearTransactionHistory);
   const pendingTransactions = useStore(s => s.pendingTransactions);
+
+  const [promptingTransaction, setPromptingTransaction] = useState(false);
 
   const contracts = useMemo(() => {
     if (!!starknet?.account) {
       const processedContracts = {};
-      const contractConfig = getContracts(starknet?.account, queryClient);
+      const contractConfig = getContracts(starknet?.account);
       Object.keys(contractConfig).forEach((k) => {
         const {
           address,
@@ -354,6 +409,11 @@ export function ChainTransactionProvider({ children }) {
   const [chainTime, setChainTime] = useState(getNow());
   useInterval(() => setChainTime(getNow()), 1000);
 
+  // on logout, clear pending (and failed) transactions
+  useEffect(() => {
+    if (!account) dispatchClearTransactionHistory();
+  }, [!account, dispatchClearTransactionHistory]);
+
   // on initial load, set provider.waitForTransaction for any pendingTransactions
   // so that we can throw any extension-related or timeout errors needed
   useEffect(() => {
@@ -390,6 +450,7 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [contracts, pendingTransactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const lastBlockNumberHandled = useRef(lastBlockNumber);
   useEffect(() => {
     if (contracts && pendingTransactions?.length) {
       const currentBlockNumber = lastBlockNumber + 1;
@@ -398,6 +459,7 @@ export function ChainTransactionProvider({ children }) {
         const { key, vars, txHash, txEvent } = tx;
 
         // if event had previously been received, just waiting for confirms
+        // TODO: can we safely deprecate confirms? should it always be 1? 0?
         if (txEvent && currentBlockNumber >= txEvent.blockNumber + contracts[key].confirms) {
           contracts[key].onConfirmed(txEvent, vars);
           dispatchPendingTransactionComplete(txHash);
@@ -417,15 +479,58 @@ export function ChainTransactionProvider({ children }) {
             } else {
               dispatchPendingTransactionUpdate(txHash, { txEvent });
             }
+
+          // TODO: fix below
+          //  - cartridge needs to respond to getTransactionReceipt more appropriately
+          //    (seems like always returning "Transaction hash not found"; at most should do that for REJECTED txs)
+          //  - move this into its own effect dependent only on block number changes so not running getTransactionReceipt so often
+
+          // // if pending transaction has not turned into an event within 45 seconds
+          // // check every useEffect loop if tx is rejected (or missing)
+          // } else if (lastBlockNumber > lastBlockNumberHandled.current) {
+          //   if (chainTime > Math.floor(tx.timestamp / 1000) + 180) { // TODO: lower this
+          //     starknet.provider.getTransactionReceipt(txHash)
+          //       .then((receipt) => {
+          //         console.info(`RECEIPT for tx ${txHash}`, receipt);  // TODO: remove this
+          //         if (receipt && receipt.status === 'REJECTED') {
+          //           dispatchPendingTransactionComplete(txHash);
+          //           dispatchFailedTransaction({
+          //             key,
+          //             vars,
+          //             txHash,
+          //             err: receipt.status_data || 'Transaction was rejected.'
+          //           });
+          //         }
+          //       })
+          //       .catch((err) => {
+          //         console.warn(err);
+          //         if (err?.message.includes('Transaction hash not found')) {
+          //           dispatchPendingTransactionComplete(txHash);
+          //           dispatchFailedTransaction({
+          //             key,
+          //             vars,
+          //             txHash,
+          //             err: 'Transaction was rejected.'
+          //           });
+          //         }
+          //       });
+          //   }
           }
         }
       });
     }
+    lastBlockNumberHandled.current = lastBlockNumber;
   }, [events?.length, lastBlockNumber]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const execute = useCallback(async (key, vars) => {
     if (contracts && contracts[key]) {
       const { execute, onTransactionError } = contracts[key];
+
+      // TODO: will need to sort this out when argentX implements session wallets, but
+      //  currently in non-session wallet, argentX does not return from the `await execute`
+      //  below when their user prompt is closed instead of rejected (the user has to
+      //  reopen the prompt and reject it to get out of here)
+      setPromptingTransaction(true);
       try {
         const tx = await execute(vars);
         dispatchPendingTransaction({
@@ -435,15 +540,19 @@ export function ChainTransactionProvider({ children }) {
           waitingOn: 'TRANSACTION'
         });
       } catch (e) {
-        if (e?.message !== 'User abort') {
+        // TODO: in Braavos, get "Execute failed" when decline (but it's unclear if that is just their generic error)
+        // ("User abort" is argent, "Canceled" is Cartridge)
+        if (!['User abort', 'Canceled'].includes(e?.message)) {
           dispatchFailedTransaction({
             key,
             vars,
+            txHash: null,
             err: e?.message || e
           });
         }
         onTransactionError(e, vars);
       }
+      setPromptingTransaction(false);
     } else {
       createAlert({
         type: 'GenericAlert',
@@ -479,7 +588,8 @@ export function ChainTransactionProvider({ children }) {
       chainTime,
       execute,
       getStatus,
-      getPendingTx
+      getPendingTx,
+      promptingTransaction
     }}>
       {children}
     </ChainTransactionContext.Provider>

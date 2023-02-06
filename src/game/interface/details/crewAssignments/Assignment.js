@@ -7,7 +7,7 @@ import useBook from '~/hooks/useBook';
 import useCrew from '~/hooks/useCrew';
 import useStorySession from '~/hooks/useStorySession';
 import useStore from '~/hooks/useStore';
-import Button from '~/components/Button';
+import Button from '~/components/ButtonAlt';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
@@ -41,6 +41,7 @@ const CoverImage = styled.div`
   }
 
   &:before {
+    background-color: #111;
     background-image: url(${p => p.src});
     background-repeat: no-repeat;
     background-position: ${p => p.center || 'center center'};
@@ -376,7 +377,7 @@ const CrewAssignment = (props) => {
         {!contentReady && <Loader />}
         {contentReady && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <InvisibleImage src={storyState.image} onLoad={onCoverImageLoad} />
+            <InvisibleImage src={storyState.image} onError={onCoverImageLoad} onLoad={onCoverImageLoad} />
             <CoverImage
               src={coverImageLoaded}
               center={storyState.imageCenter}
@@ -398,7 +399,7 @@ const CrewAssignment = (props) => {
                     <b>{crew.name || `Crew Member #${crew.i}`}</b>
                     {' '}<CrewClassIcon crewClass={crew.crewClass} />
                   </div>
-                  <div>{Crewmate.toClass(crew.crewClass)?.name || 'Unknown Class'}</div>
+                  <div>{Crewmate.getClass(crew.crewClass)?.name || 'Unknown Class'}</div>
                 </MobileCrewContainer>
               )}
             </AboveFold>

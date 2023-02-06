@@ -5,7 +5,7 @@ import { MdWorkspacesOutline as ResourcesIcon } from 'react-icons/md';
 
 import IconButton from '~/components/IconButton';
 import {
-  LayBlueprintIcon as BuildingsIcon,
+  ConstructIcon as BuildingsIcon,
   CloseIcon,
   CrewIcon,
   EyeIcon,
@@ -17,6 +17,7 @@ import {
   StarIcon,
   TimeIcon
 } from '~/components/Icons';
+import InfluenceLogo from '~/components/InfluenceLogo';
 import useAuth from '~/hooks/useAuth';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrew from '~/hooks/useCrew';
@@ -26,7 +27,6 @@ import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
 import Time from './mainMenu/Time';
 import Logo from './mainMenu/menu-logo.svg';
-import LogoLong from '~/assets/images/logo.svg';
 
 const StyledMainMenu = styled.div`
   align-items: flex-end;
@@ -74,7 +74,7 @@ const StyledLogo = styled(Logo)`
   width: auto;
 `;
 
-const StyledLogoLong = styled(LogoLong)`
+const StyledLogoLong = styled(InfluenceLogo)`
   height: 40px;
   min-width: 100%;
   padding-right: 20px;
@@ -192,6 +192,7 @@ const MainMenu = (props) => {
             icon={<TimeIcon />}
             onClick={() => openSection('timeControl')} />
         </Menu>
+        {/* 
         <Menu title="Viewer">
           <MenuItem
             name="Buildings"
@@ -202,6 +203,7 @@ const MainMenu = (props) => {
             icon={<ResourcesIcon />}
             onClick={() => history.push('/resource-viewer')} />
         </Menu>
+        */}
         {!!account && hasGenesisCrewmate && (
           <Menu title="Activities" badge={totalAssignments}>
             <MenuItem

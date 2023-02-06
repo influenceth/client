@@ -1,8 +1,5 @@
-import { useCallback, useEffect, useRef } from 'react';
-import styled from 'styled-components';
-import {
-  FaCubes as InfrastructureIcon
-} from 'react-icons/fa';
+import { useCallback, useEffect } from 'react';
+import {FaCubes as InfrastructureIcon } from 'react-icons/fa';
 
 import { ResourceIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -12,41 +9,44 @@ import { LeftActionButton, Rule } from '../HUD';
 
 const ResourceMapToggle = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
-  const mapResourceId = useStore(s => s.asteroids.mapResourceId);
+  const resourceMap = useStore(s => s.asteroids.resourceMap);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
-  const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
+  const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
+  const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
 
   const { data: asteroid } = useAsteroid(asteroidId);
   const asteroidAssets = useAsteroidAbundances(asteroid);
 
   const toggleResourceMode = useCallback((which) => {
     if (which) {
-      dispatchResourceMap(asteroidAssets[0]?.resources[0]?.i);
+      dispatchResourceMapSelect(resourceMap?.selected || asteroidAssets[0]?.resources[0]?.i);
+      dispatchResourceMapToggle(true);
     } else {
-      dispatchResourceMap();
+      dispatchResourceMapToggle(false);
     }
-  }, [asteroidAssets, dispatchResourceMap]);
+  }, [asteroidAssets, dispatchResourceMapSelect, dispatchResourceMapToggle, resourceMap]);
 
   useEffect(() => {
     if (asteroid) {
-      // if asteroid is loaded and resourceMap is on, make sure it is a valid selection
-      // if asteroid is not actually scanned OR if asteroid has zero abundance for selection
-      if (mapResourceId) {
-        if (asteroid.scanned) {
-          if (asteroidAssets.find((a) => a.resources.find((r) => Number(r.i) === mapResourceId))) {
-            return;
-          }
-        }
-        dispatchResourceMap();
+      // if scanned but current resourcemap resource has zero abundance on this asteroid, switch to a present resource
+      if (asteroid.scanned) {
+        if (!(asteroidAssets || []).find((a) => a.resources.find((r) => Number(r.i) === resourceMap?.selected))) {
+          dispatchResourceMapSelect(asteroidAssets[0]?.resources[0]?.i);
+        };
+
+      // else if not scanned but resourceMap is active, deselect (and deactivate)
+      } else if(resourceMap?.active) {
+        dispatchResourceMapSelect();
+        dispatchResourceMapToggle(false);
       }
     }
-  }, [asteroidAssets, mapResourceId]);
+  }, [asteroidAssets, resourceMap]);
 
   if (!(asteroid?.scanned && !zoomToPlot)) return null;
   return (
     <>
       <LeftActionButton
-        active={!!mapResourceId}
+        active={resourceMap?.active}
         data-arrow-color="transparent"
         data-for="global"
         data-place="right"
@@ -55,7 +55,7 @@ const ResourceMapToggle = () => {
         <ResourceIcon />
       </LeftActionButton>
       <LeftActionButton
-        active={!mapResourceId}
+        active={!resourceMap?.active}
         data-arrow-color="transparent"
         data-for="global"
         data-place="right"

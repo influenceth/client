@@ -9,17 +9,7 @@ const useAsteroidCrewPlots = (asteroidId, explicitCrewId) => {
   const crewId = explicitCrewId || crew?.i;
   return useQuery(
     [ 'asteroidCrewPlots', asteroidId, crewId ],
-    () => {
-      return api.getCrewOccupiedPlots(asteroidId, crewId)
-        .then((plots) => {
-          return (plots || []).map((plot) => {
-            if (plot?.building) {
-              plot.building.assetId = parseInt(Object.keys(Capable.TYPES).find((i) => Capable.TYPES[i].name === plot.building.__t));
-            }
-            return plot;
-          });
-        });
-    },
+    () => api.getCrewOccupiedPlots(asteroidId, crewId),
     { enabled: !!(asteroidId && crewId) }
   );
 };

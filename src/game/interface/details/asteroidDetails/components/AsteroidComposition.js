@@ -14,15 +14,15 @@ import {
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
 import { cleanupScene } from '~/game/scene/asteroid/helpers/utils';
-
 import theme from '~/theme';
+import { keyify } from '~/lib/utils';
 
 const hexToLinear = (hex) => new Color(hex).convertSRGBToLinear();
 
 const margin = 0.001 * 2 * Math.PI;
 const rotationPerFrame = 0.1;
 const segmentsPerCircle = 120; // target 1 segment per 3 degrees
-const dummyCategory = { abundance: 0.2, category: 'unscanned', resources: [] };
+const dummyCategory = { abundance: 0.2, categoryKey: 'unscanned', resources: [] };
 
 const getSegments = (centralAngle) => {
   return Math.max(2, Math.ceil(segmentsPerCircle * centralAngle / 2 * Math.PI));
@@ -41,7 +41,9 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
   const hovered = useRef();
 
   const resources = useRef();
-  
+
+  const focusKey = keyify(focus);
+
   useEffect(() => {
     if (asteroid && abundances) {
       hovered.current = null;
@@ -49,18 +51,18 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
       rotation.current = 0;
       targetRotation.current = 0;
 
-      const slices = abundances.length > 0 ? [...abundances] : [dummyCategory, dummyCategory, dummyCategory, dummyCategory, dummyCategory];
+      const slices = abundances.length > 0 ? [...abundances] : Array(5).fill(dummyCategory);
       resources.current = slices.sort((a, b) => b.abundance - a.abundance);
 
       groupRef.current = new Group();
       scene.add(groupRef.current);
 
       let totalTheta = 0;
-      resources.current.forEach(({ category, abundance }, i) => {
+      resources.current.forEach(({ categoryKey, abundance }, i) => {
         const sliceTheta = 2 * Math.PI * abundance;
         const geometry = new CircleGeometry(1.0, getSegments(sliceTheta), totalTheta + margin, sliceTheta - 2 * margin);
         const material = new MeshBasicMaterial({
-          color: noColor ? hexToLinear('#222222') : hexToLinear(theme.colors.resources[category]),
+          color: noColor ? hexToLinear('#222222') : hexToLinear(theme.colors.resources[categoryKey]),
           alphaMap: new Texture(),  // include so vUv is set
           side: BackSide, // (to make angles work as designed)
           toneMapped: false,
@@ -93,7 +95,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
           material.userData.shader = shader;
         };
         const mesh = new Mesh(geometry, material);
-        mesh.userData.resource = category;
+        mesh.userData.resource = categoryKey;
         groupRef.current.add(mesh);
 
         resources.current[i].start = totalTheta;
@@ -102,7 +104,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         }
         resources.current[i].thetaWidth = sliceTheta;
 
-        totalTheta += sliceTheta;        
+        totalTheta += sliceTheta;
       });
       groupRef.current.setRotationFromAxisAngle(
         new Vector3(0, 1, 0),
@@ -149,7 +151,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
   }, [hover]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const target = resources.current.find((c) => c.category === focus);
+    const target = resources.current.find((c) => c.categoryKey === focusKey);
     if (target) {
       targetRotation.current = -1 * target.start;
       const distance = Math.abs(targetRotation.current - rotation.current);
@@ -170,7 +172,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         useWidth--;
 
         const subSliceMaterial = new MeshBasicMaterial({
-          color: hexToLinear(theme.colors.resources[target.category]),
+          color: hexToLinear(theme.colors.resources[target.categoryKey]),
           alphaMap: new Texture(),  // include so vUv is set
           side: BackSide, // (to make angles work as designed),
           toneMapped: false,
@@ -200,7 +202,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
           new RingGeometry(0.79, height, getSegments(thetaWidth), 1, thetaStart + margin, thetaWidth - 2 * margin),
           subSliceMaterial
         );
-        subSlice.userData.parentGroup = focus;
+        subSlice.userData.parentGroup = focusKey;
         subSlice.position.add(new Vector3(0, 0, 0.001));
         groupRef.current.add(subSlice);
 
@@ -212,7 +214,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
     }
 
     onAnimationChange(true);
-  }, [focus]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [focusKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // this triggers the intro effect (i.e. removing the obscurer layer)
   useEffect(() => {
@@ -240,7 +242,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
     const focusComplete = groupRef.current.children.reduce((acc, mesh) => {
       if (mesh.userData.parentGroup) {
         if (mesh.material.userData.shader) {
-          if (mesh.userData.parentGroup === focus) {
+          if (mesh.userData.parentGroup === focusKey) {
             if (mesh.material.userData.shader.uniforms.uReveal.value < 1.0) {
               mesh.material.userData.shader.uniforms.uReveal.value += 0.025;
               return false;
@@ -255,7 +257,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
       }
       return acc;
     }, true);
-    if (!focus && focusComplete) {
+    if (!focusKey && focusComplete) {
       groupRef.current.children
         .filter((mesh) => mesh.userData.parentGroup)
         .forEach((mesh) => groupRef.current.remove(mesh));
@@ -297,7 +299,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
       onAnimationChange(false);
     }
   });
-  
+
   return null;
 };
 

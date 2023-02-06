@@ -85,8 +85,8 @@ class QuadtreeTerrainCube {
   }
 
   dispose() {
-    Object.values(this.chunks).forEach(({ chunk }) => chunk.dispose());
-    this.builder.dispose();
+    if (this.chunks) Object.values(this.chunks).forEach(({ chunk }) => chunk.dispose());
+    if (this.builder) this.builder.dispose();
   }
 
   // preprocess geometry from high-res texture
@@ -145,10 +145,10 @@ class QuadtreeTerrainCube {
 
     // vvv BENCHMARK 0.1ms (zoomed out) --> 5.5ms (zoomed in)
     // TODO: can we improve the zoomed-in benchmark? probably related
-    //  to multiple-array traversals per loop... potentially could 
+    //  to multiple-array traversals per loop... potentially could
     //  put into a more usable data structure and get better performance
     // const x = performance.now();
-    
+
     // create a list of changes to make, sorted by closest to farthest
     const queuedChangesObj = {};
 
@@ -243,14 +243,14 @@ class QuadtreeTerrainCube {
 
   // TODO (enhancement): could pre-populate the pool more
   processNextQueuedChange() {
-    if (this.queuedChanges.length === 0) {
+    if (!this.queuedChanges || this.queuedChanges.length === 0) {
       // console.log('FINISHED!');
       return;
     }
     // console.log('queue length', this.queuedChanges.length);
-    
+
     const { add, removeByKey } = this.queuedChanges.shift();
-    
+
     // TODO: (redo) vvv BENCHMARK trends to <0.6ms as chunk pool is established
     // TODO (enhancement): could pre-build more chunks for pool?
 

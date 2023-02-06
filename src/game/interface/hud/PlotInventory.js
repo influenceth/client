@@ -7,6 +7,7 @@ import useStore from '~/hooks/useStore';
 import usePlot from '~/hooks/usePlot';
 import { formatResourceAmount, ResourceImage } from './actionDialogs/components';
 import { useResourceAssets } from '~/hooks/useAssets';
+import { formatFixed } from '~/lib/utils';
 
 const Wrapper = styled.div`
   display: flex;
@@ -95,12 +96,13 @@ const PlotInventory = ({ active }) => {
   const resources = useResourceAssets();
 
   const inventory = plot?.building?.inventories ? plot?.building?.inventories[1] : null;
-  const { progress, secondaryProgress, totalUse, massOrVolume } = useMemo(() => {
+  const { progress, secondaryProgress, activeUse, reservedUse, massOrVolume } = useMemo(() => {
     if (!inventory) {
       return {
         progress: 0,
         secondaryProgress: 0,
-        totalUse: 0,
+        activeUse: 0,
+        reservedUse: 0,
         massOrVolume: 'mass'
       };
     }
@@ -118,14 +120,16 @@ const PlotInventory = ({ active }) => {
       return {
         progress: volumeUsage,
         secondaryProgress: volumeUsage + volumeReservedUsage,
-        totalUse: volume + reservedVolume,
+        activeUse: volume,
+        reservedUse: reservedVolume,
         massOrVolume: 'volume'
       };
     }
     return {
       progress: massUsage,
       secondaryProgress: massUsage + massReservedUsage,
-      totalUse: mass + reservedMass,
+      activeUse: mass,
+      reservedUse: reservedMass,
       massOrVolume: 'mass'
     };
 
@@ -139,12 +143,21 @@ const PlotInventory = ({ active }) => {
       <InnerWrapper>
         <div style={{ paddingBottom: 10 }}>
           <StorageTotal>
-            <label>Storage:</label>
+            <label>Stored:</label>
             <span>
-              <b>{Math.ceil(totalUse).toLocaleString()}</b> / {Inventory.CAPACITIES[1][1][massOrVolume || 'mass'].toLocaleString()}{' '}
+              <b>{activeUse > 0 && activeUse < 0.05 ? '> ' : ''}{formatFixed(activeUse, 1)}</b> / {Inventory.CAPACITIES[1][1][massOrVolume || 'mass'].toLocaleString()}{' '}
               {massOrVolume === 'volume' ? <>m<sup>3</sup></> : 'tonnes'}
             </span>
           </StorageTotal>
+          {reservedUse > 0 && (
+            <StorageTotal>
+              <label>Reserved:</label>
+              <span>
+                <b>{reservedUse > 0 && reservedUse < 0.05 ? '> ' : ''}{formatFixed(reservedUse, 1)}</b> / {Inventory.CAPACITIES[1][1][massOrVolume || 'mass'].toLocaleString()}{' '}
+                {massOrVolume === 'volume' ? <>m<sup>3</sup></> : 'tonnes'}
+              </span>
+            </StorageTotal>
+          )}
           <ProgressBar progress={progress} secondaryProgress={secondaryProgress} />
         </div>
         <InventoryItems>

@@ -1,67 +1,15 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
-import {
-  FiCrosshair as TargetIcon,
-  FiSquare as UncheckedIcon,
-  FiCheckSquare as CheckedIcon
-} from 'react-icons/fi';
-import { RingLoader } from 'react-spinners';
-import DataTable, { createTheme } from 'react-data-table-component';
-import { Crew, Asteroid as AsteroidLib, Construction, CoreSample, Inventory, Lot } from '@influenceth/sdk';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Asteroid as AsteroidLib, CoreSample, Inventory, } from '@influenceth/sdk';
 
-import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
-import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
-import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
-import Button from '~/components/ButtonAlt';
-import ButtonRounded from '~/components/ButtonRounded';
-import Dialog from '~/components/Dialog';
-import Dropdown from '~/components/Dropdown';
-import IconButton from '~/components/IconButton';
-import {
-  CancelBlueprintIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  CloseIcon,
-  ConstructIcon,
-  CoreSampleIcon,
-  CrewIcon,
-  DeconstructIcon,
-  ExtractionIcon,
-  ImproveCoreSampleIcon,
-  LayBlueprintIcon,
-  LocationPinIcon,
-  PlusIcon,
-  ResourceIcon,
-  SurfaceTransferIcon,
-  TimerIcon,
-  WarningOutlineIcon
-} from '~/components/Icons';
-import Poppable from '~/components/Popper';
-import SliderInput from '~/components/SliderInput';
-import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
+import { CoreSampleIcon } from '~/components/Icons';
+import { useResourceAssets } from '~/hooks/useAssets';
 import useCrew from '~/hooks/useCrew';
 import useStore from '~/hooks/useStore';
-import theme from '~/theme';
-import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
-import useInterval from '~/hooks/useInterval';
 import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  BlueprintSelection,
-  CoreSampleSelection,
-  DestinationSelection,
-
-  BuildingPlanSection,
-  BuildingRequirementsSection,
-  DeconstructionMaterialsSection,
-  DestinationPlotSection,
-  ExistingSampleSection,
-  ExtractionAmountSection,
-  ExtractSampleSection,
-  ItemSelectionSection,
   RawMaterialSection,
   ToolSection,
 
@@ -71,12 +19,10 @@ import {
   ActionDialogTimers,
 
   getBonusDirection,
-  getTripDetails,
   formatSampleMass,
   TravelBonusTooltip,
   TimeBonusTooltip,
-  MaterialBonusTooltip,
-  ActionDialogLoader,
+  MaterialBonusTooltip
 } from './components';
 
 const NewCoreSample = ({ asteroid, plot, ...props }) => {
@@ -84,19 +30,40 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
   const { startSampling, finishSampling, samplingStatus, ...coreSampleManager } = useCoreSampleManager(asteroid?.i, plot?.i);
   const { crew, crewMemberMap } = useCrew();
 
-  const dispatchResourceMap = useStore(s => s.dispatchResourceMap);
-  const resourceId = useStore(s => s.asteroids.mapResourceId);
+  const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
+  const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
+  const resourceMap = useStore(s => s.asteroids.resourceMap);
 
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
   const [sampleId, setSampleId] = useState();
+  const [resourceId, setResourceId] = useState(resourceMap?.active && resourceMap?.selected || undefined);
   useEffect(() => {
     if (coreSampleManager.currentSample) {
       setSampleId(coreSampleManager.currentSample.sampleId);
       if (coreSampleManager.currentSample.resourceId !== resourceId) {
-        dispatchResourceMap(coreSampleManager.currentSample.resourceId);
+        setResourceId(coreSampleManager.currentSample.resourceId)
+      }
+      if (resourceMap?.active && coreSampleManager.currentSample.resourceId !== resourceMap?.selected) {
+        dispatchResourceMapSelect(coreSampleManager.currentSample.resourceId);
+        dispatchResourceMapToggle(true);
       }
     }
   }, [coreSampleManager.currentSample]);
+
+  const onSelectResource = useCallback((r) => {
+    setResourceId(r);
+
+    // if open to a different resource map, switch... if a resource map is not open, don't open one
+    if (resourceMap?.active && resourceMap.selected !== r) {
+      dispatchResourceMapSelect(r);
+    }
+  }, [resourceMap?.active]);
+
+  const goToResourceMap = useCallback(() => {
+    if (resourceId) dispatchResourceMapSelect(resourceId);
+    dispatchResourceMapToggle(true);
+    props.onClose();
+  }, [dispatchResourceMapSelect, dispatchResourceMapToggle, props.onClose, resourceId]);
 
   const sample = useMemo(() => {
     if (plot?.coreSamples && resourceId && sampleId) {
@@ -112,16 +79,22 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
   }, [plot?.coreSamples, sampleId, resourceId]);
 
   // get lot abundance
-  const lotAbundance = useMemo(() => {
-    if (!resourceId || !asteroid?.resourceSeed || !asteroid.resources) return 0;
-    return AsteroidLib.getAbundanceAtLot(
-      asteroid?.i,
-      BigInt(asteroid?.resourceSeed),
-      Number(plot?.i),
-      resourceId,
-      asteroid.resources[resourceId]
-    );
-}, [asteroid, plot, resourceId]);
+  const lotAbundances = useMemo(() => {
+    // TODO: do this in worker? takes about 200ms on decent cpu
+    return Object.keys(asteroid.resources).reduce((acc, r) => {
+      if (asteroid.resources[r] > 0) {
+        acc[r] = AsteroidLib.getAbundanceAtLot(
+          asteroid?.i,
+          BigInt(asteroid?.resourceSeed),
+          Number(plot?.i),
+          r,
+          asteroid.resources[r]
+        )
+      }
+      return acc;
+    }, {});
+  }, [asteroid, plot]);
+  const lotAbundance = resourceId ? lotAbundances[resourceId] : 0;
 
   const crewMembers = coreSampleManager.currentSample?._crewmates
     || ((crew?.crewMembers || []).map((i) => crewMemberMap[i]));
@@ -130,16 +103,18 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
   const sampleQualityBonus = getCrewAbilityBonus(2, crewMembers);
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
 
+  // TODO: ...
   // TODO: the crew origin and destination lots are currently set to 1, and when
   //  that is updated, it will need to be persisted in the actionItem
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-    if (!asteroid?.i || !plot?.i) return {};
-    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
-      { label: 'Retrieve Core Sampler', plot: 1 },
-      { label: 'Travel to destination', plot: plot.i },
-      { label: 'Return from destination', plot: 1 },
-    ]);
-  }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  //   if (!asteroid?.i || !plot?.i) return {};
+  //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
+  //     { label: 'Travel to destination', plot: plot.i },
+  //     { label: 'Return from destination', plot: 1 },
+  //   ]);
+  // }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  const crewTravelTime = 0;
+  const tripDetails = null;
 
   const sampleBounds = CoreSample.getSampleBounds(lotAbundance, 0, sampleQualityBonus.totalBonus);
   const sampleTime = CoreSample.getSampleTime(sampleTimeBonus.totalBonus);
@@ -148,8 +123,8 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
     {
       label: 'Discovery Minimum',
       value: `${formatSampleMass(sampleBounds.lower)} tonnes`,
-      direction: getBonusDirection(sampleQualityBonus),
-      tooltip: sampleQualityBonus.totalBonus !== 1 && (
+      direction: sampleQualityBonus.totalBonus > 1 ? getBonusDirection(sampleQualityBonus) : 0,
+      tooltip: sampleQualityBonus.totalBonus > 1 && (
         <MaterialBonusTooltip
           bonus={sampleQualityBonus}
           title="Minimum Yield"
@@ -159,8 +134,8 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
     {
       label: 'Discovery Maximum',
       value: `${formatSampleMass(sampleBounds.upper)} tonnes`,
-      direction: getBonusDirection(sampleQualityBonus),
-      tooltip: sampleQualityBonus.totalBonus !== 1 && (
+      direction: sampleQualityBonus.totalBonus < 1 ? getBonusDirection(sampleQualityBonus) : 0,
+      tooltip: sampleQualityBonus.totalBonus < 1 && (
         <MaterialBonusTooltip
           bonus={sampleQualityBonus}
           title="Maximum Yield"
@@ -171,6 +146,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
       direction: getBonusDirection(crewTravelBonus),
+      isTimeStat: true,
       tooltip: (
         <TravelBonusTooltip
           bonus={crewTravelBonus}
@@ -183,6 +159,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
       label: 'Sample Time',
       value: formatTimer(sampleTime),
       direction: getBonusDirection(sampleTimeBonus),
+      isTimeStat: true,
       tooltip: sampleTimeBonus.totalBonus !== 1 && (
         <TimeBonusTooltip
           bonus={sampleTimeBonus}
@@ -204,6 +181,18 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
     return 'AFTER';
   }, [sample, samplingStatus]);
 
+  // handle auto-closing
+  const lastStatus = useRef();
+  useEffect(() => {
+    // (close on status change from)
+    if (['READY'].includes(lastStatus.current)) {
+      if (samplingStatus !== lastStatus.current) {
+        props.onClose();
+      }
+    }
+    lastStatus.current = samplingStatus;
+  }, [samplingStatus]);
+
   return (
     <>
       <ActionDialogHeader
@@ -222,8 +211,12 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
         {...props} />
 
       <RawMaterialSection
-        abundance={lotAbundance}
-        resource={resources[resourceId]}
+        abundances={lotAbundances}
+        goToResourceMap={goToResourceMap}
+        onSelectResource={onSelectResource}
+        plotId={plot?.i}
+        resourceId={resourceId}
+        resources={resources}
         status={status}
         tonnage={status === 'AFTER' ? sample?.initialYieldTonnage : undefined} />
 
@@ -243,8 +236,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
         {...props}
         buttonsOverride={sample?.initialYield !== undefined && [
           { label: 'Close', onClick: props.onClose },
-          // TODO: this should pass in selected sample
-          { label: 'Improve Sample', onClick: () => { props.onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...sample } }); } },
+          // { label: 'Improve Sample', onClick: () => { props.onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...sample } }); } },
         ]}
         buttonsDisabled={samplingStatus === 'READY' && lotAbundance === 0}
         buttonsLoading={samplingStatus === 'FINISHING' || undefined}

@@ -10,10 +10,13 @@ import {
   ConstructIcon,
   CoreSampleIcon,
   CrewIcon,
+  DeconstructIcon,
   ExtractionIcon,
+  PlanBuildingIcon,
   PromoteIcon,
   ScanAsteroidIcon,
   SurfaceTransferIcon,
+  UnplanBuildingIcon,
 } from '~/components/Icons';
 
 const getTxLink = (event) => {
@@ -149,19 +152,19 @@ const entries = {
   //   txLink: getTxLink(e),
   // }),
 
-  Construction_Planned: (e) => ({
-    icon: <ConstructIcon />,
+  Dispatcher_ConstructionPlan: (e) => ({
+    icon: <PlanBuildingIcon />,
     content: (
       <>
-        <span>{Capable.TYPES[e.returnValues.capableType]?.name} plan completed on </span>
+        <span>{Capable.TYPES[e.returnValues.capableType]?.name} site plan completed on </span>
         <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
       </>
     ),
     txLink: getTxLink(e),
   }),
 
-  Construction_Unplanned: (e) => ({
-    icon: <ConstructIcon />,
+  Dispatcher_ConstructionUnplan: (e) => ({
+    icon: <UnplanBuildingIcon />,
     content: (
       <>
         <span>Construction plans canceled on </span>
@@ -171,7 +174,7 @@ const entries = {
     txLink: getTxLink(e),
   }),
 
-  // Construction_Started: (e) => ({
+  // Dispatcher_ConstructionStart: (e) => ({
   //   icon: <ConstructIcon />,
   //   content: (
   //     <>
@@ -181,10 +184,10 @@ const entries = {
   //   txLink: getTxLink(e),
   // }),
 
-  Construction_Finished: (e) => {
-    const asteroidId = e.linked.find((l) => l.type === 'Asteroid')?.asset?.asteroidId;
+  Dispatcher_ConstructionFinish: (e) => {
+    const asteroidId = e.returnValues.asteroidId;
+    const lotId = e.returnValues.lotId;
     const lot = e.linked.find((l) => l.type === 'Lot')?.asset;
-    const lotId = lot?.i;
     const capableName = lot?.building?.type;
     return {
       icon: <ConstructIcon />,
@@ -198,13 +201,13 @@ const entries = {
     };
   },
 
-  Construction_Deconstructed: (e) => {
-    const asteroidId = e.linked.find((l) => l.type === 'Asteroid')?.asset?.asteroidId;
+  Dispatcher_ConstructionDeconstruct: (e) => {
+    const asteroidId = e.returnValues.asteroidId;
+    const lotId = e.returnValues.lotId;
     const lot = e.linked.find((l) => l.type === 'Lot')?.asset;
-    const lotId = lot?.i;
     const capableName = lot?.building?.type;
     return {
-      icon: <ConstructIcon />,
+      icon: <DeconstructIcon />,
       content: (
         <>
           <span>{capableName ? `${capableName} ` : 'Building'} deconstructed on </span>
@@ -215,7 +218,7 @@ const entries = {
     };
   },
 
-  // CoreSample_SamplingStarted: (e) => ({
+  // Dispatcher_CoreSampleStartSampling: (e) => ({
   //   icon: <CoreSampleIcon />,
   //   content: (
   //     <>
@@ -227,7 +230,7 @@ const entries = {
   // }),
 
   // TODO: add data from server that this was an improvement?
-  CoreSample_SamplingFinished: (e) => {
+  Dispatcher_CoreSampleFinishSampling: (e) => {
     return {
       icon: <CoreSampleIcon />,
       content: (
@@ -240,30 +243,26 @@ const entries = {
     };
   },
 
-  Extraction_Started: (e) => {
-    const asteroidId = e.linked.find((l) => l.type === 'Asteroid')?.asset?.asteroidId;
-    const lotId = e.linked.find((l) => l.type === 'Lot')?.asset?.i;
+  Dispatcher_ExtractionStart: (e) => {
     return {
       icon: <ExtractionIcon />,
       content: (
         <>
           <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} extraction started at </span>
-          <PlotLink asteroidId={asteroidId} plotId={lotId} resourceId={e.returnValues.resourceId} />
+          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
         </>
       ),
       txLink: getTxLink(e),
     };
   },
 
-  Extraction_Finished: (e) => {
-    const asteroidId = e.linked.find((l) => l.type === 'Asteroid')?.asset?.asteroidId;
-    const lotId = e.linked.find((l) => l.type === 'Lot')?.asset?.i;
+  Dispatcher_ExtractionFinish: (e) => {
     return {
       icon: <ExtractionIcon />,
       content: (
         <>
           <span>Extraction completed at </span>
-          <PlotLink asteroidId={asteroidId} plotId={lotId} resourceId={e.returnValues.resourceId} />
+          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
         </>
       ),
       txLink: getTxLink(e),

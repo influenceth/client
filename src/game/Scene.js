@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient, QueryClientProvider } from 'react-query';
 import { Object3D, Vector3 } from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
@@ -17,6 +17,8 @@ import Asteroids from './scene/Asteroids';
 import Asteroid from './scene/Asteroid';
 import SettingsManager from './scene/SettingsManager';
 import Postprocessor from './Postprocessor';
+import WebsocketContext from '~/contexts/WebsocketContext';
+import { GpuContextLostMessage, GpuContextLostReporter } from './GpuContextLost';
 
 const glConfig = {
   antialias: true,
@@ -79,7 +81,8 @@ const Scene = (props) => {
   const ContextBridge = useContextBridge(
     AuthContext,
     ClockContext,
-    CrewContext
+    CrewContext,
+    WebsocketContext
   );
 
   // Orient such that z is up, perpindicular to the stellar plane
@@ -89,6 +92,9 @@ const Scene = (props) => {
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const statsOn = useStore(s => s.graphics.stats);
+
+  const [contextLost, setContextLost] = useState(false);
+  const canvasStyle = useMemo(() => (contextLost ? { opacity: 0, pointerEvents: 'none' } : {}), [contextLost]);
 
   useEffect(() => {
     if (!zoomedFrom) {
@@ -107,7 +113,9 @@ const Scene = (props) => {
   return (
     <StyledContainer>
       {statsOn && (<Stats />)}
-      <Canvas {...glConfig} frameloop={frameloop}>
+      {contextLost && <GpuContextLostMessage />}
+      <Canvas {...glConfig} frameloop={frameloop} style={canvasStyle}>
+        <GpuContextLostReporter setContextLost={setContextLost} />
         <ContextBridge>
           <SettingsManager />
           <Postprocessor enabled={true} />

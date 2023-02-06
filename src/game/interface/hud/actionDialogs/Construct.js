@@ -19,7 +19,7 @@ import Dialog from '~/components/Dialog';
 import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
 import {
-  CancelBlueprintIcon,
+  UnplanBuildingIcon,
   CheckIcon,
   ChevronRightIcon,
   CloseIcon,
@@ -29,7 +29,7 @@ import {
   DeconstructIcon,
   ExtractionIcon,
   ImproveCoreSampleIcon,
-  LayBlueprintIcon,
+  PlanBuildingIcon,
   LocationPinIcon,
   PlusIcon,
   ResourceIcon,
@@ -50,7 +50,6 @@ import useInterval from '~/hooks/useInterval';
 import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  BlueprintSelection,
   CoreSampleSelection,
   DestinationSelection,
 
@@ -90,23 +89,27 @@ const Construct = ({ asteroid, plot, ...props }) => {
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
   const constructionBonus = getCrewAbilityBonus(5, crewMembers);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-    if (!asteroid?.i || !plot?.i) return {};
-    return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
-      { label: 'Travel to destination', plot: plot.i },
-      { label: 'Return from destination', plot: 1 },
-    ])
-  }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  // TODO: ...
+  // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  //   if (!asteroid?.i || !plot?.i) return {};
+  //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
+  //     { label: 'Travel to destination', plot: plot.i },
+  //     { label: 'Return from destination', plot: 1 },
+  //   ])
+  // }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  const crewTravelTime = 0;
+  const tripDetails = null;
 
   const constructionTime = useMemo(() =>
-    plot?.building?.assetId ? Construction.getConstructionTime(plot?.building?.assetId, constructionBonus.totalBonus) : 0,
-    [plot?.building?.assetId, constructionBonus.totalBonus]
+    plot?.building?.capableType ? Construction.getConstructionTime(plot?.building?.capableType, constructionBonus.totalBonus) : 0,
+    [plot?.building?.capableType, constructionBonus.totalBonus]
   );
 
   const stats = useMemo(() => ([
     {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
+      isTimeStat: true,
       direction: getBonusDirection(crewTravelBonus),
       tooltip: (
         <TravelBonusTooltip
@@ -119,6 +122,7 @@ const Construct = ({ asteroid, plot, ...props }) => {
     {
       label: 'Construction Time',
       value: formatTimer(constructionTime),
+      isTimeStat: true,
       direction: getBonusDirection(constructionBonus),
       tooltip: constructionBonus.totalBonus !== 1 && (
         <TimeBonusTooltip
@@ -139,10 +143,20 @@ const Construct = ({ asteroid, plot, ...props }) => {
     return 'AFTER';
   }, [constructionStatus]);
 
+  // handle auto-closing
+  const lastStatus = useRef();
   useEffect(() => {
-    if (constructionStatus === 'FINISHING' || constructionStatus === 'OPERATIONAL') {
+    // (always close on)
+    if (['OPERATIONAL'].includes(constructionStatus)) {
       props.onClose();
     }
+    // (close on status change from)
+    else if (['PLANNED', 'READY_TO_FINISH'].includes(lastStatus.current)) {
+      if (constructionStatus !== lastStatus.current) {
+        props.onClose();
+      }
+    }
+    lastStatus.current = constructionStatus;
   }, [constructionStatus]);
 
   return (
@@ -164,14 +178,14 @@ const Construct = ({ asteroid, plot, ...props }) => {
         {...props} />
 
       <BuildingPlanSection
-        building={buildings[plot.building?.assetId]}
+        building={buildings[plot?.building?.capableType]}
         status={status}
         gracePeriodEnd={plot?.gracePeriodEnd} />
 
       {status === 'BEFORE' && (
         <BuildingRequirementsSection
           isGathering
-          building={buildings[plot.building?.assetId]}
+          building={buildings[plot.building?.capableType]}
           label="Construction Materials"
           resources={resources} />
       )}

@@ -32,6 +32,7 @@ const formatters = {
   },
 
   asteroidPrice: (r, sale) => {
+    if (!sale?.basePrice || !sale?.saleModifier) return '?';
     const base = Number(ethersUtils.formatEther(String(sale.basePrice)));
     const lot = Number(ethersUtils.formatEther(String(sale.saleModifier)));
     const lotCount = Math.floor(4 * Math.PI * (r / 1000) ** 2);
@@ -40,6 +41,7 @@ const formatters = {
   },
 
   crewPrice: (sale) => {
+    if (!sale?.basePrice) return '?';
     const price = Number(ethersUtils.formatEther(String(sale.basePrice)));
     return price.toLocaleString([], { maximumFractionDigits: 3 });
   }

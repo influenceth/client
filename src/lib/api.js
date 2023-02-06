@@ -11,12 +11,15 @@ if (initialCrew) config.headers['X-Crew-Id'] = initialCrew;
 const instance = axios.create(config);
 
 // subscribe to changes relevant to the config
-useStore.subscribe(([newToken, crewId]) => {
-  instance.defaults.headers = {
-    Authorization: `Bearer ${newToken}`,
-    'X-Crew-Id': crewId
-  };
-}, s => [s.auth.token, s.selectedCrewId]);
+useStore.subscribe(
+  s => [s.auth.token, s.selectedCrewId],
+  ([newToken, crewId]) => {
+    instance.defaults.headers = {
+      Authorization: `Bearer ${newToken}`,
+      'X-Crew-Id': crewId
+    };
+  }
+);
 
 const api = {
   getUser: async () => {
@@ -40,7 +43,7 @@ const api = {
   },
 
   getEvents: async (since) => {
-    const response = await instance.get(`/v1/user/events?since=${since}`);
+    const response = await instance.get(`/v1/user/events${since ? `?since=${since}` : ''}`);
     return {
       events: response.data,
       blockNumber: parseInt(response.headers['starknet-block-number']),
@@ -94,22 +97,30 @@ const api = {
     if (response.data) {
       const occupied = '1';
       const padding = '0';
+      
       return (new Uint32Array(await response.data.arrayBuffer())).reduce((acc, byte, i) => {
         const x = Number(byte).toString(2).padStart(32, padding);
         for (let j = 0; j < 32; j++) {
           const index = i * 32 + j;
           if (index < plotTally) {
-            acc[index + 1] = x[j] === occupied; // (adjust for one-index of plot ids)
+            if (x[j] === occupied) {
+              acc[index + 1] = true; // (adjust for one-index of plot ids)
+            }
           }
         }
         return acc;
-      }, {});
+      }, []);
     }
     return null;
   },
 
   getCrewOccupiedPlots: async (a, c) => {
     const response = await instance.get(`/v1/asteroids/${a}/lots/occupier/${c}`);
+    return response.data;
+  },
+
+  getCrewSampledPlots: async (a, c, r) => {
+    const response = await instance.get(`/v1/asteroids/${a}/lots/sampled/${c}/${r}`);
     return response.data;
   },
 

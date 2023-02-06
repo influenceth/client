@@ -19,7 +19,7 @@ import Dialog from '~/components/Dialog';
 import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
 import {
-  CancelBlueprintIcon,
+  UnplanBuildingIcon,
   CheckIcon,
   ChevronRightIcon,
   CloseIcon,
@@ -29,7 +29,7 @@ import {
   DeconstructIcon,
   ExtractionIcon,
   ImproveCoreSampleIcon,
-  LayBlueprintIcon,
+  PlanBuildingIcon,
   LocationPinIcon,
   PlusIcon,
   ResourceIcon,
@@ -47,10 +47,9 @@ import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useInterval from '~/hooks/useInterval';
-import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  BlueprintSelection,
   CoreSampleSelection,
   DestinationSelection,
 
@@ -67,47 +66,39 @@ import {
 
   ActionDialogFooter,
   ActionDialogHeader,
-  ActionDialogLoader,
   ActionDialogStats,
   ActionDialogTimers,
 
   getBonusDirection,
+  ActionDialogLoader,
 } from './components';
-import useAsteroid from '~/hooks/useAsteroid';
 
-const PlanConstruction = ({ asteroid, plot, ...props }) => {
+const UnplanBuilding = ({ asteroid, plot, ...props }) => {
   const buildings = useBuildingAssets();
-  const resources = useResourceAssets();
-  const { currentConstruction, constructionStatus, planConstruction } = useConstructionManager(asteroid?.i, plot?.i);
+  const { constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, plot?.i);
   const { captain } = useCrew();
 
-  const [capableType, setCapableType] = useState();
-
-  const stats = useMemo(() => [
-    {
-      label: 'Abandonment Timer',
-      value: formatTimer(Lot.GRACE_PERIOD),
-      warning: (
-        <>
-          Building sites become <b>Abandoned</b> if they have not started construction by the time the <b>Abandonment Timer</b> expires.
-          <br/><br/>
-          Any items left on an <b>Abandoned Site</b> may be claimed by other players!
-        </>
-      )
-    },
-  ], []);
-
   useEffect(() => {
-    if (!['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
-      props.onSetAction('CONSTRUCT');
+    if (constructionStatus === 'READY_TO_PLAN') {
+      props.onClose();
     }
   }, [constructionStatus]);
 
+  // handle auto-closing
+  const lastStatus = useRef();
   useEffect(() => {
-    if (constructionStatus === 'PLANNING' && !capableType) {
-      if (currentConstruction?.capableType) setCapableType(currentConstruction.capableType)
+    // (always close if not)
+    if (!['PLANNED', 'CANCELING'].includes(constructionStatus)) {
+      props.onClose();
     }
-  }, [currentConstruction?.capableType]);
+    // (close on status change from)
+    else if (['PLANNED'].includes(lastStatus.current)) {
+      if (constructionStatus !== lastStatus.current) {
+        props.onClose();
+      }
+    }
+    lastStatus.current = constructionStatus;
+  }, [constructionStatus]);
 
   return (
     <>
@@ -116,31 +107,28 @@ const PlanConstruction = ({ asteroid, plot, ...props }) => {
         captain={captain}
         plot={plot}
         action={{
-          actionIcon: <LayBlueprintIcon />,
+          actionIcon: <UnplanBuildingIcon />,
           headerBackground: constructionBackground,
-          label: 'Place Building Site',
-          completeLabel: 'Building Site',
+          label: 'Unplan Building Site',
         }}
         status="BEFORE"
         {...props} />
 
-      <BuildingPlanSection building={buildings[capableType]} onBuildingSelected={setCapableType} status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
-      <BuildingRequirementsSection
-        building={buildings[capableType]}
-        label="Required for Construction"
-        resources={resources} />
+      <BuildingPlanSection
+        building={buildings[plot?.building?.capableType]}
+        canceling
+        status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
 
-      <ActionDialogStats stats={stats} status="BEFORE" />
       <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />
+
       <ActionDialogFooter
-        buttonsLoading={constructionStatus === 'PLANNING'}
-        goDisabled={!capableType}
-        goLabel="Place Site"
-        onGo={() => planConstruction(capableType)}
-        status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'}
-        {...props} />
+        {...props}
+        buttonsLoading={constructionStatus === 'CANCELING'}
+        goLabel="Unplan Site"
+        onGo={unplanConstruction}
+        status={constructionStatus === 'CANCELING' ? 'DURING' : 'BEFORE'} />
     </>
   );
 };
 
-export default PlanConstruction;
+export default UnplanBuilding;

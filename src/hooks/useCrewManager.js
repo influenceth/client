@@ -1,9 +1,15 @@
-import { useCallback, useContext } from 'react';
+import { useCallback, useContext, useMemo } from 'react';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import useCrew from './useCrew';
 
 const useCrewManager = () => {
-  const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
+  const { execute, getPendingTx } = useContext(ChainTransactionContext);
+  const { crewMemberMap } = useCrew();
+
+  const crewCredits = useMemo(() => {
+    return Object.values(crewMemberMap || {}).filter((c) => !c.crewClass);
+  }, [crewMemberMap]);
 
   const changeActiveCrew = useCallback(
     (params) => execute('SET_ACTIVE_CREW', params),
@@ -14,32 +20,34 @@ const useCrewManager = () => {
     [getPendingTx]
   );
 
-  const purchaseAndInitializeCrew = useCallback(
-    (params) => execute('PURCHASE_AND_INITIALIZE_CREW', params),
-    [execute]
-  );
-  const getPendingPurchase = useCallback(
-    () => getPendingTx('PURCHASE_AND_INITIALIZE_CREW', {}),
-    [getPendingTx]
+  const purchaseAndOrInitializeCrew = useCallback(
+    (params) => {
+      if (crewCredits.length > 0) {
+        execute('INITIALIZE_CREWMATE', { i: crewCredits[0].i, ...params });
+      } else {
+        execute('PURCHASE_AND_INITIALIZE_CREWMATE', params);
+      }
+    },
+    [crewCredits, execute]
   );
 
-  // TODO: implement / test these once crew credits / empty crew are implemented
-  const initializeCrew = useCallback(
-    (params) => execute('INITIALIZE_CREW', params),
-    [execute]
-  );
-  const getInitializationStatus = useCallback(
-    (i) => getStatus('INITIALIZE_CREW', { i }),
-    [getStatus]
+  const getPendingCrewmate = useCallback(
+    () => {
+      if (crewCredits.length > 0) {
+        return getPendingTx('INITIALIZE_CREWMATE', { i: crewCredits[0].i });
+      } else {
+        return getPendingTx('PURCHASE_AND_INITIALIZE_CREWMATE', {});
+      }
+    },
+    [crewCredits, getPendingTx]
   );
 
   return {
     changeActiveCrew,
     getPendingActiveCrewChange,
-    purchaseAndInitializeCrew,
-    getPendingPurchase,
-    initializeCrew,
-    getInitializationStatus,
+    purchaseAndOrInitializeCrew,
+    getPendingCrewmate,
+    crewCredits,
   };
 };
 

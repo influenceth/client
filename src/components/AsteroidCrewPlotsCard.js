@@ -1,10 +1,12 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { Capable, Construction } from '@influenceth/sdk';
 
+import NumberInput from '~/components/NumberInput';
 import { usePlotLink } from '~/components/PlotLink';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
-
+import useChainTime from '~/hooks/useChainTime';
+import useStore from '~/hooks/useStore';
 
 const PlotTable = styled.table`
   border-collapse: collapse;
@@ -29,6 +31,7 @@ const Status = styled.td`
   color: ${p => {
     if (p.status === 'Extracting') return p.theme.colors.success;
     else if (p.status === 'Ready') return p.theme.colors.main;
+    else if (p.status === 'At Risk') return 'rgb(248, 133, 44)';
     return '#777';
   }};
   text-align: right;
@@ -37,6 +40,7 @@ const Status = styled.td`
 `;
 
 const BuildingRow = ({ plot }) => {
+  const chainTime = useChainTime();
   const onClick = usePlotLink({
     asteroidId: plot.asteroid,
     plotId: plot.i,
@@ -48,6 +52,9 @@ const BuildingRow = ({ plot }) => {
         return 'Extracting';
       }
       return 'Ready';
+    }
+    if (plot.building?.construction?.status === Construction.STATUS_PLANNED && plot.gracePeriodEnd < chainTime) {
+      return 'At Risk';
     }
     return Construction.STATUSES[plot.building?.construction?.status || 0];
   }, [plot.building]);
@@ -64,9 +71,19 @@ const BuildingRow = ({ plot }) => {
 const AsteroidCrewPlotsCard = (props) => {
   const { asteroid, ...restProps } = props;
   const { data: plots, isLoading } = useAsteroidCrewPlots(asteroid?.i);
+  const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
+
+  const handleLotJumper = useCallback((e) => {
+    if (e.key === 'Enter' && e.currentTarget.value) {
+      dispatchPlotSelected(asteroid?.i, parseInt(e.currentTarget.value));
+    }
+  }, [asteroid?.i]);
+
+  const plotTally = useMemo(() => Math.floor(4 * Math.PI * Math.pow(asteroid?.radius / 1000, 2)), [asteroid?.radius]);
+  
   return (
     <div {...restProps} style={{ overflowY: 'auto' }}>
-      {asteroid && !isLoading && (
+      {asteroid && plots && !isLoading && (
         <>
           {plots.length === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied on lots on this asteroid yet.</div>}
           {plots.length > 0 && (
@@ -78,6 +95,16 @@ const AsteroidCrewPlotsCard = (props) => {
           )}
         </>
       )}
+      <div style={{ alignItems: 'center', background: 'rgba(50, 50, 50, 0.5)', display: 'flex', justifyContent: 'space-between', marginTop: 12, padding: '4px 8px' }}>
+        <label>Jump to Lot #</label>
+        <NumberInput
+          initialValue={null}
+          max={plotTally}
+          min={1}
+          step={1}
+          onBlur={(e) => e.currentTarget.value = undefined}
+          onKeyDown={handleLotJumper} />
+      </div>
     </div>
   );
 };
