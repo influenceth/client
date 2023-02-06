@@ -694,30 +694,44 @@ const Asteroid = (props) => {
       automatingCamera.current = true;
 
       const currentCameraHeight = controls.object.position.length();
+      const targetAltitude = (cameraAltitude && cameraAltitude < 5000) ? cameraAltitude : 5000;
 
       const plotPosition = new Vector3(...AsteroidLib.getLotPosition(selectedPlot.asteroidId, selectedPlot.plotId, plotTally));
-      plotPosition.multiply(config.stretch);
-      // plotPosition.setLength(currentCameraHeight);
-      plotPosition.setLength(config.radius + ((cameraAltitude && cameraAltitude < 5000) ? cameraAltitude : 5000));
-      const unrotatedPlotPosition = plotPosition.clone();
-      plotPosition.applyAxisAngle(rotationAxis.current, rotation.current);
+      plotPosition.setLength(config.radius).multiply(config.stretch); // best guess of plot position
+      plotPosition.setLength(plotPosition.length() + targetAltitude); // best guess of final camera position
 
       // regenerate chunks for the destination, then get closest
-      geometry.current.setCameraPosition(unrotatedPlotPosition);
+      // (then iterate because depending on how far away starting from and the size of the asteroid,
+      //  the first guess may be pretty far off... the 2nd should be very close though)
+      // TODO (enhancement): move this to webworker
+      // TODO: experiment with skipping 2nd iteration if asteroid below certain size
       let closestChunk;
-      if (geometry.current.queuedChanges.length > 0) {
-        const x = geometry.current.queuedChanges.reduce((acc, changeSet) => {
-          return changeSet.add.reduce((acc, c) => {
-            const distance = c.sphereCenter.distanceTo(unrotatedPlotPosition);
-            return (acc.length === 0 || distance < acc[1]) ? [c, distance] : acc;
-          }, acc);
-        }, []);
-        closestChunk = x[0];
+      for (let i = 0; i < 2; i++) {
+        // vvv BENCHMARK 3.5 - 7ms
+        geometry.current.setCameraPosition(plotPosition);
+        if (geometry.current.queuedChanges.length > 0) {
+          const x = geometry.current.queuedChanges.reduce((acc, changeSet) => {
+            return changeSet.add.reduce((acc, c) => {
+              const distance = c.sphereCenter.distanceTo(plotPosition);
+              return (acc.length === 0 || distance < acc[1]) ? [c, distance] : acc;
+            }, acc);
+          }, []);
+          closestChunk = x[0];
+  
+          // 2nd pass will be more accurate now that first pass gives us an accurate guess for altitude
+          // TODO (enhancement): if this is close to original location, this is probably not necessary
+          if (closestChunk) {
+            plotPosition.setLength(closestChunk.sphereCenterHeight + targetAltitude);
+          }
+        }
+        // ^^^
       }
       if (!closestChunk) {
-        closestChunk = getClosestChunk(unrotatedPlotPosition);
+        closestChunk = getClosestChunk(plotPosition);
       }
 
+      // apply rotation to plotPosition
+      plotPosition.applyAxisAngle(rotationAxis.current, rotation.current);
 
       // if farther than 10000 out, adjust in to altitude of 5000
       // if closer than surfaceDistance, adjust out to altitude of surfaceDistance
