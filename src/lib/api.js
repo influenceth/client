@@ -221,6 +221,14 @@ const api = {
   verifyLogin: async (account, params) => {
     const response = await instance.post(`/v1/auth/login/${account}`, params);
     return response.data.token;
+  },
+
+  createDevnetBlock: async () => {
+    try {
+      axios.post(`${process.env.REACT_APP_STARKNET_NETWORK}/create_block`, {});
+    } catch (e) {
+      console.warn(e);
+    }
   }
 };
 
