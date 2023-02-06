@@ -4,7 +4,7 @@ import { SurfaceTransferIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import ActionButton from './ActionButton';
 
-const SurfaceTransfer = ({ asteroid, plot, onSetAction, _disabled }) => {
+const SurfaceTransferOutgoing = ({ asteroid, plot, onSetAction, _disabled }) => {
   const { deliveryStatus } = useDeliveryManager(asteroid?.i, plot?.i);
 
   const handleClick = useCallback(() => {
@@ -28,4 +28,4 @@ const SurfaceTransfer = ({ asteroid, plot, onSetAction, _disabled }) => {
   );
 };
 
-export default SurfaceTransfer;
+export default SurfaceTransferOutgoing;
