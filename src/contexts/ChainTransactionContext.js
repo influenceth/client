@@ -459,6 +459,7 @@ export function ChainTransactionProvider({ children }) {
         const { key, vars, txHash, txEvent } = tx;
 
         // if event had previously been received, just waiting for confirms
+        // TODO: can we safely deprecate confirms? should it always be 1? 0?
         if (txEvent && currentBlockNumber >= txEvent.blockNumber + contracts[key].confirms) {
           contracts[key].onConfirmed(txEvent, vars);
           dispatchPendingTransactionComplete(txHash);

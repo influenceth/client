@@ -605,6 +605,7 @@ const ActionItem = ({ data, type }) => {
     if (item.asteroidId) {
       goToAction();
     }
+    // return;
 
     if (item.onClick) {
       // delay dialog opening based on how far camera needs to fly to get there

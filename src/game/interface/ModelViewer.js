@@ -923,7 +923,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
           {false && assetType === 'Building' && (
             <>
               <ambientLight intensity={0.4} />
-              <Postprocessor enabled={true} bloomByName={(n) => !!n.match(/(light|fire)/i)} />
+              <Postprocessor enabled={true} />
             </>
           )}
           {model?.modelUrl && !loadingSkybox && (

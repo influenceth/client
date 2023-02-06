@@ -257,6 +257,7 @@ const Asteroid = (props) => {
     if (position.current) unloadedPosition.current = [...position.current];
     position.current = null;
     rotation.current = null;
+    automatingCamera.current = false;
     disposeLight();
     disposeGeometry();
   }, [disposeLight, disposeGeometry]);
@@ -415,6 +416,16 @@ const Asteroid = (props) => {
   useEffect(() => {
     if (!shouldZoomIn || !initialOrientation || !config) return;
     if (!group.current || !position.current) return;
+    
+    // if have rotation info and geometry is loaded, can calculate the initial chunks, then set automatingCamera
+    // to pause additional chunk calculations while zooming in
+    if (geometry.current && rotationAxis.current && rotation.current) {
+      automatingCamera.current = true;
+
+      const geometryFramedPosition = initialOrientation.objectPosition.clone();
+      geometryFramedPosition.applyAxisAngle(rotationAxis.current, -rotation.current);
+      geometry.current.setCameraPosition(geometryFramedPosition);
+    }
 
     controls.maxDistance = Infinity;
 
@@ -444,7 +455,7 @@ const Asteroid = (props) => {
     controls.object.near = 100;
     controls.object.updateProjectionMatrix();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ shouldZoomIn, initialOrientation ]);
+  }, [ shouldZoomIn, !initialOrientation ]);
 
   const shouldFinishZoomIn = zoomStatus === 'in' && controls && config?.radius;
   useEffect(() => {
@@ -468,6 +479,8 @@ const Asteroid = (props) => {
 
     controls.object.updateProjectionMatrix();
     controls.noPan = true;
+
+    automatingCamera.current = false;
 
     // console.log('asteroidId.current', `${asteroidId.current}`);
     setZoomedIntoAsteroidId(asteroidId.current);
@@ -521,6 +534,13 @@ const Asteroid = (props) => {
     return closestChunk;
   }, []);
 
+  const getMinDistance = useCallback((closestChunk) => {
+    return Math.min(
+      config?.radius * MIN_ZOOM_DEFAULT,  // for smallest asteroids to match legacy (where this > min surface distance)
+      closestChunk.sphereCenterHeight + surfaceDistance
+    );
+  }, [config?.radius, surfaceDistance]);
+
   // NOTE: in theory, all distances between sphereCenter's to camera are calculated
   //       in quadtree calculation and could be passed back here, so would be more
   //       performant to re-use that BUT that is also outdated as the camera moves
@@ -533,14 +553,15 @@ const Asteroid = (props) => {
     applyingZoomLimits.current = true;
     setTimeout(() => {
       const closestChunk = getClosestChunk(cameraPosition);
-      if (!closestChunk) return;
+      if (!closestChunk) {
+        applyingZoomLimits.current = false;
+        return;
+      }
 
-      const minDistance = Math.min(
-        config?.radius * MIN_ZOOM_DEFAULT,  // for smallest asteroids to match legacy (where this > min surface distance)
-        closestChunk.sphereCenterHeight + surfaceDistance
-      );
+      const minDistance = getMinDistance(closestChunk);
 
       // too close, so should animate camera out
+      // TODO: use gsap for this instead of this weird animatin
       //  TODO (enhancement): jump to surface immediately if somehow ended up inside asteroid
       //    (might need to use raycasting to do accurately though)
       if (minDistance > controls?.minDistance) {
@@ -664,37 +685,86 @@ const Asteroid = (props) => {
   //   }
   // }, [controls, config?.radius]);
 
+  const automatingCamera = useRef();
   useEffect(() => {
-    if (selectedPlot && zoomedIntoAsteroidId === selectedPlot?.asteroidId && config?.radiusNominal && zoomStatus === 'in' && terrainInitialized) {
+    if (selectedPlot && zoomedIntoAsteroidId === selectedPlot?.asteroidId && config?.radiusNominal && zoomStatus === 'in') {
       const plotTally = Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2);
       if (plotTally < selectedPlot.plotId) { selectPlot(); return; }
 
-      const currentCameraHeight = controls.object.position.length();
+      automatingCamera.current = true;
 
-      let plotPosition = AsteroidLib.getLotPosition(selectedPlot.asteroidId, selectedPlot.plotId, plotTally);
-      plotPosition = new Vector3(...plotPosition);
-      plotPosition.multiply(config.stretch);
-      plotPosition.setLength(currentCameraHeight);
+      const currentCameraHeight = controls.object.position.length();
+      const targetAltitude = (cameraAltitude && cameraAltitude < 5000) ? cameraAltitude : 5000;
+
+      const plotPosition = new Vector3(...AsteroidLib.getLotPosition(selectedPlot.asteroidId, selectedPlot.plotId, plotTally));
+      plotPosition.setLength(config.radius).multiply(config.stretch); // best guess of plot position
+      plotPosition.setLength(plotPosition.length() + targetAltitude); // best guess of final camera position
+
+      // regenerate chunks for the destination, then get closest
+      // (then iterate because depending on how far away starting from and the size of the asteroid,
+      //  the first guess may be pretty far off... the 2nd should be very close though)
+      // TODO (enhancement): move this to webworker
+      // TODO: experiment with skipping 2nd iteration if asteroid below certain size
+      let closestChunk;
+      for (let i = 0; i < 2; i++) {
+        // vvv BENCHMARK 3.5 - 7ms
+        geometry.current.setCameraPosition(plotPosition);
+        if (geometry.current.queuedChanges.length > 0) {
+          const x = geometry.current.queuedChanges.reduce((acc, changeSet) => {
+            return changeSet.add.reduce((acc, c) => {
+              const distance = c.sphereCenter.distanceTo(plotPosition);
+              return (acc.length === 0 || distance < acc[1]) ? [c, distance] : acc;
+            }, acc);
+          }, []);
+          closestChunk = x[0];
+  
+          // 2nd pass will be more accurate now that first pass gives us an accurate guess for altitude
+          // TODO (enhancement): if this is close to original location, this is probably not necessary
+          if (closestChunk) {
+            plotPosition.setLength(closestChunk.sphereCenterHeight + targetAltitude);
+          }
+        }
+        // ^^^
+      }
+      if (!closestChunk) {
+        closestChunk = getClosestChunk(plotPosition);
+      }
+
+      // apply rotation to plotPosition
       plotPosition.applyAxisAngle(rotationAxis.current, rotation.current);
 
-      // if farther than 12500 out, adjust in to altitude of 5000
+      // if farther than 10000 out, adjust in to altitude of 5000
       // if closer than surfaceDistance, adjust out to altitude of surfaceDistance
       // else, will just reuse camera height
-      const closestChunk = getClosestChunk(plotPosition);
       if (closestChunk) {
         const predictedAltitude = currentCameraHeight - closestChunk.sphereCenterHeight;
-        if (predictedAltitude > 12500) {
+        // console.group();
+        // console.log(`predictedAltitude ${predictedAltitude} at height ${closestChunk.sphereCenterHeight + predictedAltitude}`);
+        if (predictedAltitude > 10000) {
+          // console.log(`zoom IN to ${closestChunk.sphereCenterHeight} + 5000`, closestChunk.sphereCenterHeight + 5000);
           plotPosition.setLength(closestChunk.sphereCenterHeight + 5000);
-        } else if(predictedAltitude < surfaceDistance) {
-          plotPosition.setLength(closestChunk.sphereCenterHeight + 1.25 * surfaceDistance);
+        } else {
+          const minDistance = getMinDistance(closestChunk);
+          if(currentCameraHeight + predictedAltitude < minDistance) {
+            // console.log(`zoom OUT to ${minDistance} + Math.min(${cameraAltitude} || Infinity, 5000)`, minDistance + Math.min(cameraAltitude || Infinity, 5000));
+            plotPosition.setLength(minDistance + Math.min(cameraAltitude || Infinity, 5000));
+          } else {
+            plotPosition.setLength(currentCameraHeight);
+          }
         }
       }
 
       gsap
-        .timeline({ defaults: { duration: 0.7, ease: 'power4.out' } })
-        .to(controls.object.position, { ...plotPosition });
+      .timeline({
+        defaults: { duration: 0.7, ease: 'power4.out' },
+        onComplete: () => {
+          // setTimeout(() => { console.log('final is', controls.object.position.length(), 'of', plotPosition.length()); console.groupEnd(); }, 3500)
+          automatingCamera.current = false;
+        }
+      })
+      .to(controls.object.position, { ...plotPosition });
     }
-  }, [zoomedIntoAsteroidId, origin, selectedPlot, config?.radiusNominal, terrainInitialized, zoomStatus]);
+  }, [zoomedIntoAsteroidId, origin, selectedPlot, config?.radiusNominal, zoomStatus]);
 
   useEffect(() => {
     if (!cameraNeedsReorientation) return;
@@ -858,7 +928,8 @@ const Asteroid = (props) => {
       // ^^^
 
       // initiate update of quads (based on camera position)
-      if (updateQuadCube) {
+      // if camera is not currently moving
+      if (updateQuadCube && !automatingCamera.current) {
         settingCameraPosition.current = true;
         // TODO: setting state in useFrame is an antipattern, BUT this should
         //  only set state rarely, so it's prob ok to move the resulting calculations
