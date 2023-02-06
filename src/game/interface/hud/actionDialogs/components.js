@@ -1957,7 +1957,7 @@ export const ActionDialogTimers = ({ actionReadyIn, crewAvailableIn }) => (
   </StatSection>
 );
 
-export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOverride, goDisabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
+export const ActionDialogFooter = ({ buttonsLoading, buttonsOverride, goDisabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // TODO: connect notifications to top-level state
@@ -1974,7 +1974,7 @@ export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOve
       <SectionBody>
         {buttonsOverride
           ? buttonsOverride.map(({ label, onClick }) => (
-            <Button key={label} disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClick}>{label}</Button>
+            <Button key={label} loading={buttonsLoading} onClick={onClick}>{label}</Button>
           ))
           : (
             <>
@@ -1987,20 +1987,19 @@ export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOve
                     </NotificationEnabler>
                     */}
                     <Spacer />
-                    <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClose}>Cancel</Button>
+                    <Button loading={buttonsLoading} onClick={onClose}>Cancel</Button>
                     <Button
-                      disabled={buttonsDisabled || goDisabled}
+                      disabled={goDisabled}
                       loading={buttonsLoading}
                       isTransaction
                       onClick={onGo}>{goLabel}</Button>
                   </>
                 )}
               {status === 'DURING' && (
-                <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClose}>{'Close'}</Button>
+                <Button loading={buttonsLoading} onClick={onClose}>{'Close'}</Button>
               )}
               {status === 'AFTER' && (
                 <Button
-                  disabled={buttonsDisabled}
                   isTransaction
                   loading={buttonsLoading}
                   onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>

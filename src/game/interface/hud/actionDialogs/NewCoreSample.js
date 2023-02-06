@@ -238,7 +238,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
           { label: 'Close', onClick: props.onClose },
           // { label: 'Improve Sample', onClick: () => { props.onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...sample } }); } },
         ]}
-        buttonsDisabled={samplingStatus === 'READY' && lotAbundance === 0}
+        goDisabled={lotAbundance === 0}
         buttonsLoading={samplingStatus === 'FINISHING' || undefined}
         finalizeLabel="Analyze"
         goLabel="Begin Sample"
