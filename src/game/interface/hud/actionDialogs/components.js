@@ -1234,19 +1234,22 @@ const TransferSelectionRow = ({ onUpdate, quanta, resource, selecting }) => {
 };
 
 const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) => {
-  const [newSelectedItems, setNewSelectedItems] = useState(selectedItems);
+  const [newSelectedItems, setNewSelectedItems] = useState({ ...selectedItems });
 
   const onUpdate = useCallback((resourceId, amount, isSelected) => {
-    const makeUpdate = { ...newSelectedItems };
-    if (isSelected) {
-      if (!makeUpdate[resourceId]) makeUpdate[resourceId] = 0;
-      makeUpdate[resourceId] += amount;
-    } else {
-      makeUpdate[resourceId] -= amount;
-      if (makeUpdate[resourceId] <= 0) delete makeUpdate[resourceId];
-    }
-    setNewSelectedItems(makeUpdate);
-  }, [newSelectedItems]);
+    setNewSelectedItems((currentlySelected) => {
+      const updated = {...currentlySelected};
+
+      if (isSelected) {
+        if (!updated[resourceId]) updated[resourceId] = 0;
+        updated[resourceId] += amount;
+      } else {
+        updated[resourceId] -= amount;
+        if (updated[resourceId] <= 0) delete updated[resourceId];
+      }
+      return updated;
+    });
+  }, []);
 
   const unselectedItems = useMemo(() => {
     return Object.keys(inventory).reduce((acc, cur) => {
@@ -1255,9 +1258,6 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
       return acc;
     }, { ...inventory });
   }, [inventory, newSelectedItems]);
-
-  useEffect(() => {
-  }, [newSelectedItems, unselectedItems]);
 
   return (
     <PopperBody>
