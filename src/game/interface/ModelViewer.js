@@ -145,7 +145,12 @@ const skyboxDefaults = {
 };
 
 const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled, zoomLimitsEnabled }) => {
-  const { camera, gl, scene } = useThree();
+  const { camera, clock, gl, scene } = useThree();
+
+  // if three is started with frameloop == 'never', clock is not set to autoStart, so we need to set it
+  useEffect(() => {
+    if (clock && !clock.autoStart) clock.autoStart = true;
+  }, []);
 
   const animationMixer = useRef();
   const maxCameraDistance = useRef();
