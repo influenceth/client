@@ -134,13 +134,16 @@ export const getPlotPointGeometry = (lotId, pointTally, resolution, heightMaps, 
   };
 };
 
-export const getPlotGeometryHeightMapResolution = (config) => {
-  return getSamplingResolution(config.radius, 250);
+export const getPlotGeometryHeightMapResolution = (config, textureQuality) => {
+  // textureQuality 1, 2, 3 --> sampling every 1000, 500, 250m
+  let sampleEvery = 1000;
+  if (textureQuality === 2) sampleEvery = 500;
+  if (textureQuality === 3) sampleEvery = 250;
+  return getSamplingResolution(config.radius, sampleEvery);
 };
 
-export const getPlotGeometryHeightMaps = (config) => {
+export const getPlotGeometryHeightMaps = (config, resolution) => {
   const heightMaps = [];
-  const resolution = getPlotGeometryHeightMapResolution(config);
   for (let i = 0; i < 6; i++) {
     const sideTransform = cubeTransforms[i].clone();
     heightMaps[i] = generateHeightMap(
@@ -149,8 +152,6 @@ export const getPlotGeometryHeightMaps = (config) => {
       new Vector3(0, 0, 0),
       resolution,
       { N: 1, S: 1, E: 1, W: 1 },
-      0,
-      16,
       false,
       config,
       'texture',
@@ -159,10 +160,10 @@ export const getPlotGeometryHeightMaps = (config) => {
   return heightMaps;
 };
 
-export const getPlotGeometry = ({ config, aboveSurface = 0.0, prebuiltHeightMaps }) => {
+export const getPlotGeometry = ({ config, aboveSurface = 0.0, prebuiltHeightMaps, textureQuality }) => {
   const pointTally = Math.floor(4 * Math.PI * (config.radiusNominal / 1000) ** 2);
-  const resolution = getPlotGeometryHeightMapResolution(config);
-  const heightMaps = prebuiltHeightMaps || getPlotGeometryHeightMaps(config);
+  const resolution = getPlotGeometryHeightMapResolution(config, textureQuality);
+  const heightMaps = prebuiltHeightMaps || getPlotGeometryHeightMaps(config, resolution);
 
   const positions = new Float32Array(pointTally * 3);
   const orientations = new Float32Array(pointTally * 3);

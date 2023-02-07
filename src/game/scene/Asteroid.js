@@ -1042,7 +1042,7 @@ const Asteroid = (props) => {
       )}
       {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
       {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
-      {false && <ambientLight intensity={0.07} />}
+      {false && <ambientLight intensity={0.2} />}
     </group>
   );
 }
