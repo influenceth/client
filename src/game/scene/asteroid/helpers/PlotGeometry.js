@@ -99,15 +99,19 @@ export const getPlotPointGeometry = (lotId, pointTally, resolution, heightMaps, 
     s1t0.clone().multiplyScalar(t0Weight),
     s1t1.clone().multiplyScalar(t1Weight)
   );
-  const position = (new Vector3()).addVectors(
+  // in theory, this should be an accurate representation of final position, but
+  // for whatever reason, we lose enough precision in the weighted averaging to
+  // end up with some stair-steppy artifacts on the surface... so, when setting final
+  // position, we just apply the sampled length to the stretched (initial) fibo position
+  const sampledPosition = (new Vector3()).addVectors(
     s0t.multiplyScalar(s0Weight),
     s1t.multiplyScalar(s1Weight)
   );
-  position.setLength(position.length() + aboveSurface);
+  const position = fibo.clone().multiply(config.stretch).setLength(sampledPosition.length()+ aboveSurface);
 
   // trying to avoid seeing plots through ridges...
   // for small asteroids, seems best to always use radial orientation because plots are far enough apart relative to displacement
-  // for medium asteroids, seems like it helps to take surface orientation into account somewhat
+  // for medium+ asteroids, seems like it helps to take surface orientation into account somewhat
   // this "averages" radial direction and surface normal direction
   const orientation = (new Vector3());
   if (config.radiusNominal > 7500) {
