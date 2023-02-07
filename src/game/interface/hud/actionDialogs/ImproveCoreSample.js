@@ -82,18 +82,11 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
       .map((c) => ({ ...c, tonnage: c.initialYield * resources[c.resourceId].massPerUnit }))
   , [plot?.coreSamples]);
 
-  const onReset = useCallback(() => {
-    const repeatSample = { ...sample };
-    props.onSetAction();
-    setTimeout(() => {
-      props.onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...repeatSample } })
-    }, 0);
-  }, [sample]);
-
   const onSampleSelection = useCallback((sample) => {
     if (sample.resourceId !== resourceId) {
       dispatchResourceMapSelect(sample.resourceId);
     }
+    dispatchResourceMapToggle(true);
     setSelectedSample(sample);
   }, [resourceId]);
 

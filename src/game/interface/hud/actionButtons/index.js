@@ -5,7 +5,8 @@ import CoreSample from './CoreSample';
 import PlanBuilding from './PlanBuilding';
 import PurchaseAsteroid from './PurchaseAsteroid';
 import ScanAsteroid from './ScanAsteroid';
-import SurfaceTransfer from './SurfaceTransfer';
+import SurfaceTransferIncoming from './SurfaceTransferIncoming';
+import SurfaceTransferOutgoing from './SurfaceTransferOutgoing';
 import UnplanBuilding from './UnplanBuilding';
 
 const ActionsButtons = {
@@ -16,7 +17,8 @@ const ActionsButtons = {
   PlanBuilding,
   PurchaseAsteroid,
   ScanAsteroid,
-  SurfaceTransfer,
+  SurfaceTransferIncoming,
+  SurfaceTransferOutgoing,
   UnplanBuilding,
 };
 

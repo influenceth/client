@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import styled, { css, keyframes } from 'styled-components';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import styled, { css } from 'styled-components';
 import { Capable, Construction, CoreSample, Extraction, Inventory } from '@influenceth/sdk';
 
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -9,7 +9,6 @@ import { ExtractionIcon, ImproveCoreSampleIcon } from '~/components/Icons';
 import { IconButtonRounded } from '~/components/ButtonRounded';
 import ReactTooltip from 'react-tooltip';
 import useStore from '~/hooks/useStore';
-import theme from '~/theme';
 
 const mouseoverCss = css`
   max-height: 300px;
@@ -85,6 +84,10 @@ const CoreSampleMouseover = ({ building, children, coreSamples }) => {
     setOpen((o) => !o);
   });
 
+  const isCoreSampling = useMemo(() => {
+    return !!(coreSamples || []).find((cs) => cs.status < CoreSample.STATUS_FINISHED);
+  }, [coreSamples])
+
   // this is to accomodate initial transitions in the HUD so that we know the popper position is onscreen/valid
   // (b/c otherwise, it will default to top-left corner of screen, i.e. if refresh page with lot already selected)
   const [display, setDisplay] = useState(false);
@@ -133,7 +136,7 @@ const CoreSampleMouseover = ({ building, children, coreSamples }) => {
                           data-for="coreSampleMouseover"
                           data-place="left"
                           data-tip="Improve Sample"
-                          disabled={cs.status !== CoreSample.STATUS_FINISHED}
+                          disabled={isCoreSampling || cs.status !== CoreSample.STATUS_FINISHED}
                           onClick={onClickImprove(cs)}
                           style={{ padding: 4, marginRight: 4 }}>
                           <ImproveCoreSampleIcon />

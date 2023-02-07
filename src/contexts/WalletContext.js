@@ -3,6 +3,8 @@ import getStarknet from 'get-starknet-core';
 import { injectController } from '@cartridge/controller';
 import { Address } from '@influenceth/sdk';
 
+import api from '~/lib/api';
+
 // Add Cartridge wallet to get-starknet set
 const dispatcherMethods = [
   'Asteroid_startScan',
@@ -61,6 +63,18 @@ export function WalletProvider({ children }) {
   const [error, setError] = useState();
   const [starknet, setStarknet] = useState(false);
   const [starknetReady, setStarknetReady] = useState(false);
+
+  // if using devnet, put "create block" on a timer since otherwise, blocks will not be advancing in the background
+  useEffect(() => {
+    if (process.env.REACT_APP_STARKNET_NETWORK.includes('localhost')) {
+      let blockInterval = setInterval(() => {
+        api.createDevnetBlock();
+      }, 15e3);
+      return () => {
+        if (blockInterval) clearInterval(blockInterval);
+      }
+    }
+  }, []);
 
   const active = useMemo(() => {
     return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.account?.chainId);

@@ -768,6 +768,12 @@ const TitleCell = styled.td`
     content: '${p => p.title}';
   }
 `;
+const TransferSelectionBody = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  max-height: calc(100% - 47px);
+`;
 const TransferSelectionTableWrapper = styled(PoppableTableWrapper)`
   border-width: 0;
   flex: 1 0 auto;
@@ -1234,19 +1240,22 @@ const TransferSelectionRow = ({ onUpdate, quanta, resource, selecting }) => {
 };
 
 const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) => {
-  const [newSelectedItems, setNewSelectedItems] = useState(selectedItems);
+  const [newSelectedItems, setNewSelectedItems] = useState({ ...selectedItems });
 
   const onUpdate = useCallback((resourceId, amount, isSelected) => {
-    const makeUpdate = { ...newSelectedItems };
-    if (isSelected) {
-      if (!makeUpdate[resourceId]) makeUpdate[resourceId] = 0;
-      makeUpdate[resourceId] += amount;
-    } else {
-      makeUpdate[resourceId] -= amount;
-      if (makeUpdate[resourceId] <= 0) delete makeUpdate[resourceId];
-    }
-    setNewSelectedItems(makeUpdate);
-  }, [newSelectedItems]);
+    setNewSelectedItems((currentlySelected) => {
+      const updated = {...currentlySelected};
+
+      if (isSelected) {
+        if (!updated[resourceId]) updated[resourceId] = 0;
+        updated[resourceId] += amount;
+      } else {
+        updated[resourceId] -= amount;
+        if (updated[resourceId] <= 0) delete updated[resourceId];
+      }
+      return updated;
+    });
+  }, []);
 
   const unselectedItems = useMemo(() => {
     return Object.keys(inventory).reduce((acc, cur) => {
@@ -1256,13 +1265,10 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
     }, { ...inventory });
   }, [inventory, newSelectedItems]);
 
-  useEffect(() => {
-  }, [newSelectedItems, unselectedItems]);
-
   return (
     <PopperBody>
       {/* TODO: see mockup for title area */}
-      <div style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+      <TransferSelectionBody>
         <TransferSelectionTableWrapper>
           <table>
             <thead>
@@ -1308,7 +1314,7 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
             </table>
           </TransferSelectionTableWrapper>
         )}
-      </div>
+      </TransferSelectionBody>
       <PopperFooter>
         <Button onClick={() => onComplete(newSelectedItems)}>Done</Button>
       </PopperFooter>
@@ -1951,7 +1957,7 @@ export const ActionDialogTimers = ({ actionReadyIn, crewAvailableIn }) => (
   </StatSection>
 );
 
-export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOverride, goDisabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
+export const ActionDialogFooter = ({ buttonsLoading, buttonsOverride, goDisabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // TODO: connect notifications to top-level state
@@ -1968,7 +1974,7 @@ export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOve
       <SectionBody>
         {buttonsOverride
           ? buttonsOverride.map(({ label, onClick }) => (
-            <Button key={label} disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClick}>{label}</Button>
+            <Button key={label} loading={buttonsLoading} onClick={onClick}>{label}</Button>
           ))
           : (
             <>
@@ -1981,20 +1987,19 @@ export const ActionDialogFooter = ({ buttonsDisabled, buttonsLoading, buttonsOve
                     </NotificationEnabler>
                     */}
                     <Spacer />
-                    <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClose}>Cancel</Button>
+                    <Button loading={buttonsLoading} onClick={onClose}>Cancel</Button>
                     <Button
-                      disabled={buttonsDisabled || goDisabled}
+                      disabled={goDisabled}
                       loading={buttonsLoading}
                       isTransaction
                       onClick={onGo}>{goLabel}</Button>
                   </>
                 )}
               {status === 'DURING' && (
-                <Button disabled={buttonsDisabled} loading={buttonsLoading} onClick={onClose}>{'Close'}</Button>
+                <Button loading={buttonsLoading} onClick={onClose}>{'Close'}</Button>
               )}
               {status === 'AFTER' && (
                 <Button
-                  disabled={buttonsDisabled}
                   isTransaction
                   loading={buttonsLoading}
                   onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
