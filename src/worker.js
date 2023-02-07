@@ -39,6 +39,7 @@ onmessage = function(event) {
       buildPlotGeometry({
         aboveSurface: event.data.aboveSurface,
         heightMaps: event.data.heightMaps,
+        textureQuality: event.data.textureQuality,
         ...cache.asteroid,
       });
       break;
@@ -112,11 +113,12 @@ const rebuildTerrainGeometry = function (chunk) {
 //   });
 // }
 
-const buildPlotGeometry = function({ aboveSurface, config, heightMaps }) {
+const buildPlotGeometry = function({ aboveSurface, config, heightMaps, textureQuality }) {
   const { positions, orientations } = getPlotGeometry({
     config,
     aboveSurface,
-    prebuiltHeightMaps: heightMaps
+    prebuiltHeightMaps: heightMaps,
+    textureQuality
   });
   postMessage({
     topic: 'builtPlotGeometry',

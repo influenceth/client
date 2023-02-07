@@ -25,7 +25,7 @@ import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
 import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
-import { getPlotGeometryHeightMaps } from './helpers/PlotGeometry';
+import { getPlotGeometryHeightMaps, getPlotGeometryHeightMapResolution } from './helpers/PlotGeometry';
 
 const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
 const STROKE_COLOR = new Color().setHex(0xbbbbbb).convertSRGBToLinear();
@@ -55,6 +55,7 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
   const { processInBackground } = useWebWorker();
 
   const mapResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
+  const textureQuality = useStore(s => s.graphics.textureQuality);
   const dispatchPlotsLoading = useStore(s => s.dispatchPlotsLoading);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
   const { plotId: selectedPlotId } = useStore(s => s.asteroids.plot || {});
@@ -153,7 +154,10 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
     let heightMaps = null;
     let transfer = [];
     if (typeof OffscreenCanvas === 'undefined') {
-      heightMaps = getPlotGeometryHeightMaps(prunedConfig);
+      heightMaps = getPlotGeometryHeightMaps(
+        prunedConfig,
+        getPlotGeometryHeightMapResolution(config, textureQuality)
+      );
       transfer = heightMaps.map((m) => m.buffer.buffer);
     }
 
@@ -173,6 +177,7 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
         },
         aboveSurface: 0,
         heightMaps,
+        textureQuality,
         _cacheable: 'asteroid'
       },
       (data) => {

@@ -117,7 +117,9 @@ export const getSamplingResolution = (radius, minChunkSize = MIN_CHUNK_SIZE) => 
   return 1024;
 };
 
-export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, edgeStrides, extraPasses, extraPassesMax, oversample, config, returnType = 'bitmap') {
+export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, edgeStrides, oversample, config, returnType = 'bitmap') {
+  const extraPasses = getExtraPasses(chunkSize, chunkResolution);
+  const extraPassesMax = getExtraPasses(getMinChunkSize(config.radius) / (2 * config.radius), chunkResolution) - 1;
   const material = new ShaderMaterial({
     fragmentShader: (edgeStrides.N === 1 && edgeStrides.S === 1 && edgeStrides.E === 1 && edgeStrides.W === 1)
       ? heightShader
@@ -378,17 +380,12 @@ export function rebuildChunkMaps({ config, edgeStrides, emissiveParams, groupMat
   const textureResolution = OVERSAMPLE_CHUNK_TEXTURES ? resolutionPlusOne + 2 : resolutionPlusOne;
   const textureSize = OVERSAMPLE_CHUNK_TEXTURES ? chunkSize * (1 + 2 / resolution) : chunkSize;
 
-  const extraPasses = getExtraPasses(chunkSize, resolution);
-  const extraPassesMax = getExtraPasses(getMinChunkSize(config.radius) / (2 * config.radius), resolution) - 1;
-
   const heightBitmap = generateHeightMap(
     localToWorld,
     textureSize,
     chunkOffset,
     textureResolution,
     edgeStrides,
-    extraPasses,
-    extraPassesMax,
     OVERSAMPLE_CHUNK_TEXTURES,
     config
   );
@@ -403,17 +400,18 @@ export function rebuildChunkMaps({ config, edgeStrides, emissiveParams, groupMat
   );
 
   // conditionally add emissive bitmap
-  const chunkParams = {
-    cubeTransform: localToWorld,
-    chunkSize: textureSize,
-    chunkOffset,
-    chunkResolution: textureResolution,
-    extraPasses,
-    extraPassesMax,
-    oversample: OVERSAMPLE_CHUNK_TEXTURES
-  };
-
-  const emissiveBitmap = emissiveParams && generateEmissiveMap(chunkParams, emissiveParams);
+  const emissiveBitmap = emissiveParams && generateEmissiveMap(
+    {
+      cubeTransform: localToWorld,
+      chunkSize: textureSize,
+      chunkOffset,
+      chunkResolution: textureResolution,
+      extraPasses: getExtraPasses(chunkSize, resolution),
+      extraPassesMax: getExtraPasses(getMinChunkSize(config.radius) / (2 * config.radius), resolution) - 1,
+      oversample: OVERSAMPLE_CHUNK_TEXTURES
+    },
+    emissiveParams
+  );
 
   // done with interim data textures
   heightTexture.dispose();

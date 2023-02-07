@@ -99,15 +99,19 @@ export const getPlotPointGeometry = (lotId, pointTally, resolution, heightMaps, 
     s1t0.clone().multiplyScalar(t0Weight),
     s1t1.clone().multiplyScalar(t1Weight)
   );
-  const position = (new Vector3()).addVectors(
+  // in theory, this should be an accurate representation of final position, but
+  // for whatever reason, we lose enough precision in the weighted averaging to
+  // end up with some stair-steppy artifacts on the surface... so, when setting final
+  // position, we just apply the sampled length to the stretched (initial) fibo position
+  const sampledPosition = (new Vector3()).addVectors(
     s0t.multiplyScalar(s0Weight),
     s1t.multiplyScalar(s1Weight)
   );
-  position.setLength(position.length() + aboveSurface);
+  const position = fibo.clone().multiply(config.stretch).setLength(sampledPosition.length()+ aboveSurface);
 
   // trying to avoid seeing plots through ridges...
   // for small asteroids, seems best to always use radial orientation because plots are far enough apart relative to displacement
-  // for medium asteroids, seems like it helps to take surface orientation into account somewhat
+  // for medium+ asteroids, seems like it helps to take surface orientation into account somewhat
   // this "averages" radial direction and surface normal direction
   const orientation = (new Vector3());
   if (config.radiusNominal > 7500) {
@@ -130,13 +134,16 @@ export const getPlotPointGeometry = (lotId, pointTally, resolution, heightMaps, 
   };
 };
 
-export const getPlotGeometryHeightMapResolution = (config) => {
-  return getSamplingResolution(config.radius, 250);
+export const getPlotGeometryHeightMapResolution = (config, textureQuality) => {
+  // textureQuality 1, 2, 3 --> sampling every 1000, 500, 250m
+  let sampleEvery = 1000;
+  if (textureQuality === 2) sampleEvery = 500;
+  if (textureQuality === 3) sampleEvery = 250;
+  return getSamplingResolution(config.radius, sampleEvery);
 };
 
-export const getPlotGeometryHeightMaps = (config) => {
+export const getPlotGeometryHeightMaps = (config, resolution) => {
   const heightMaps = [];
-  const resolution = getPlotGeometryHeightMapResolution(config);
   for (let i = 0; i < 6; i++) {
     const sideTransform = cubeTransforms[i].clone();
     heightMaps[i] = generateHeightMap(
@@ -145,8 +152,6 @@ export const getPlotGeometryHeightMaps = (config) => {
       new Vector3(0, 0, 0),
       resolution,
       { N: 1, S: 1, E: 1, W: 1 },
-      0,
-      16,
       false,
       config,
       'texture',
@@ -155,10 +160,10 @@ export const getPlotGeometryHeightMaps = (config) => {
   return heightMaps;
 };
 
-export const getPlotGeometry = ({ config, aboveSurface = 0.0, prebuiltHeightMaps }) => {
+export const getPlotGeometry = ({ config, aboveSurface = 0.0, prebuiltHeightMaps, textureQuality }) => {
   const pointTally = Math.floor(4 * Math.PI * (config.radiusNominal / 1000) ** 2);
-  const resolution = getPlotGeometryHeightMapResolution(config);
-  const heightMaps = prebuiltHeightMaps || getPlotGeometryHeightMaps(config);
+  const resolution = getPlotGeometryHeightMapResolution(config, textureQuality);
+  const heightMaps = prebuiltHeightMaps || getPlotGeometryHeightMaps(config, resolution);
 
   const positions = new Float32Array(pointTally * 3);
   const orientations = new Float32Array(pointTally * 3);

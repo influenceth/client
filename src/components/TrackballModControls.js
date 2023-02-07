@@ -18,14 +18,15 @@ export const TrackballModControls = forwardRef(({ children, ...props }, ref) => 
     controls?.attach(group.current);
   }, [ children, controls ]);
 
-  useEffect(() => {
-    controls?.addEventListener('change', invalidate);
+  // (this is presumably just for static scenes / scenes without a running frameloop)
+  // useEffect(() => {
+  //   controls?.addEventListener('change', invalidate);
 
-    return () => {
-      controls?.removeEventListener('change', invalidate);
-      controls?.dispose();
-    };
-  }, [ controls, invalidate ]);
+  //   return () => {
+  //     controls?.removeEventListener('change', invalidate);
+  //     controls?.dispose();
+  //   };
+  // }, [ controls, invalidate ]);
 
   useFrame(() => {
     if (controls.enabled) controls.update();
