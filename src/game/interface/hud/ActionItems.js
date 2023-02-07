@@ -364,7 +364,8 @@ const formatTx = (item) => {
     resourceId: null,
     locationDetail: '',
     completionTime: null,
-    onClick: null
+    onClick: null,
+    _timestamp: item.timestamp // (only used for dismissing failed tx's)
   };
   switch(item.event?.event || item.key) {
     case 'PURCHASE_ASTEROID':
@@ -641,7 +642,7 @@ const ActionItem = ({ data, type }) => {
 
   const onDismiss = useCallback((e) => {
     e.stopPropagation();
-    dismissFailedTx(item.key);
+    dismissFailedTx(item._timestamp);
     return false;
   }, [item]);
 
