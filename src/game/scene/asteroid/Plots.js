@@ -735,7 +735,7 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
     }
   }, [attachTo.quaternion, selectedPlotId]);
 
-  const selectionAnimationTime = useRef();
+  const selectionAnimationTime = useRef(0);
   useEffect(() => {
     if (selectionMesh.current && positions.current && positionsReady && selectedPlotId) {
       const plotIndex = selectedPlotId - 1;
@@ -801,8 +801,8 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
 
 
   useFrame((state, delta) => {
-    selectionAnimationTime.current += delta;
-
+    selectionAnimationTime.current = (selectionAnimationTime.current || 0) + delta;
+    
     // if no plots, nothing to do
     if (!plotTally) return;
 

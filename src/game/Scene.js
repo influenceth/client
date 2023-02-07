@@ -47,8 +47,13 @@ const StyledContainer = styled.div`
 `;
 
 const WrappedScene = (props) => {
-  const { controls } = useThree();
+  const { clock, controls } = useThree();
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+
+  // if three is started with frameloop == 'never', clock is not set to autoStart, so we need to set it
+  useEffect(() => {
+    if (clock && !clock.autoStart) clock.autoStart = true;
+  }, []);
 
   // reset to "zoomed out" control settings if zoomed out to belt view
   useEffect(() => {
@@ -71,6 +76,7 @@ const WrappedScene = (props) => {
 }
 
 const Scene = (props) => {
+
   /**
    * Grab reference to queryClient to recreate QueryClientProvider within Canvas element
    * See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#gotchas
@@ -88,6 +94,7 @@ const Scene = (props) => {
   // Orient such that z is up, perpindicular to the stellar plane
   Object3D.DefaultUp = new Vector3(0, 0, 1);
 
+  const canvasStack = useStore(s => s.canvasStack); // TODO: this might be easier to manage in a dedicated context
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const statsOn = useStore(s => s.graphics.stats);
@@ -106,11 +113,13 @@ const Scene = (props) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const frameloop = useMemo(() => canvasStack?.length === 0 ? 'always' : 'never', [canvasStack]);
+
   return (
     <StyledContainer>
       {statsOn && (<Stats />)}
       {contextLost && <GpuContextLostMessage />}
-      <Canvas {...glConfig} style={canvasStyle}>
+      <Canvas {...glConfig} frameloop={frameloop} style={canvasStyle}>
         <GpuContextLostReporter setContextLost={setContextLost} />
         <ContextBridge>
           <SettingsManager />

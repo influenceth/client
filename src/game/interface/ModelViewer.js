@@ -16,6 +16,7 @@ import Details from '~/components/DetailsFullsize';
 import Dropdown from '~/components/Dropdown';
 import NumberInput from '~/components/NumberInput';
 import Postprocessor from '../Postprocessor';
+import useStore from '~/hooks/useStore';
 
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
@@ -144,7 +145,12 @@ const skyboxDefaults = {
 };
 
 const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled, zoomLimitsEnabled }) => {
-  const { camera, gl, scene } = useThree();
+  const { camera, clock, gl, scene } = useThree();
+
+  // if three is started with frameloop == 'never', clock is not set to autoStart, so we need to set it
+  useEffect(() => {
+    if (clock && !clock.autoStart) clock.autoStart = true;
+  }, []);
 
   const animationMixer = useRef();
   const maxCameraDistance = useRef();
@@ -656,9 +662,13 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   const resources = useResourceAssets();
   const buildings = useBuildingAssets();
 
+  const canvasStack = useStore(s => s.canvasStack);
+  const dispatchCanvasStacked = useStore(s => s.dispatchCanvasStacked);
+  const dispatchCanvasUnstacked = useStore(s => s.dispatchCanvasUnstacked);
+
   const assets = assetType === 'Building' ? buildings.filter((b, i) => i < 3) : resources;
   const singleModel = plotZoomMode || Number(paramModel);
-
+  
   const [devtoolsEnabled, setDevtoolsEnabled] = useState(!singleModel);
   const [model, setModel] = useState();
   const [bgOverride, setBgOverride] = useState();
@@ -677,6 +687,13 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
 
   const [uploadType, setUploadType] = useState();
   const fileInput = useRef();
+
+  useEffect(() => {
+    dispatchCanvasStacked(assetType);
+    return () => {
+      dispatchCanvasUnstacked(assetType);
+    }
+  }, []);
 
   const removeOverride = useCallback((which) => () => {
     if (which === 'model') {
@@ -908,6 +925,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
 
       <CanvasContainer ready={!isLoading}>
         <Canvas
+          frameloop={canvasStack[0] === assetType ? 'always' : 'never'}
           shadows
           resize={{ debounce: 5, scroll: false }}
           style={{ height: '100%', width: '100%' }}>

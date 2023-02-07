@@ -31,6 +31,8 @@ const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 20;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
 
+const ZOOM_TO_PLOT_ANIMATION_TIME = 700;
+
 // some numbers estimated from https://web.dev/rendering-performance/
 const TARGET_FPS = 60;
 const USABLE_FRAME = 0.6; // leave time for GPU housekeeping, etc
@@ -730,8 +732,16 @@ const Asteroid = (props) => {
         closestChunk = getClosestChunk(plotPosition);
       }
 
-      // apply rotation to plotPosition
-      plotPosition.applyAxisAngle(rotationAxis.current, rotation.current);
+      // figure out how far we are traveling to adjust animation time for short trips
+      const currentUnrotatedCameraPosition = controls.object.position.clone();
+      currentUnrotatedCameraPosition.applyAxisAngle(rotationAxis.current, -rotation.current);
+      const shortTrip = currentUnrotatedCameraPosition.sub(plotPosition).length() < 5000;
+      const animationTime = shortTrip ? ZOOM_TO_PLOT_ANIMATION_TIME / 2 : ZOOM_TO_PLOT_ANIMATION_TIME;
+
+      // apply rotation to plotPosition (adjusting for mid-animation rotation of asteroid)
+      const arrivalTime = getTime(Date.now() + animationTime);
+      const willBeRotation = arrivalTime * config.rotationSpeed * 2 * Math.PI;
+      plotPosition.applyAxisAngle(rotationAxis.current, willBeRotation);
 
       // if farther than 10000 out, adjust in to altitude of 5000
       // if closer than surfaceDistance, adjust out to altitude of surfaceDistance
@@ -756,7 +766,7 @@ const Asteroid = (props) => {
 
       gsap
       .timeline({
-        defaults: { duration: 0.7, ease: 'power4.out' },
+        defaults: { duration: animationTime / 1e3, ease: shortTrip ? 'power1.out' : 'power4.out' }, // power>1.out seems to have bounce artifact for short trips
         onComplete: () => {
           // setTimeout(() => { console.log('final is', controls.object.position.length(), 'of', plotPosition.length()); console.groupEnd(); }, 3500)
           automatingCamera.current = false;
@@ -813,7 +823,7 @@ const Asteroid = (props) => {
     // update asteroid rotation
     let updatedRotation = rotation.current;
     if (config?.rotationSpeed && time) {
-      updatedRotation = time * config.rotationSpeed * 2 * Math.PI
+      updatedRotation = time * config.rotationSpeed * 2 * Math.PI;
       // updatedRotation = 0; // TODO: remove
       if (updatedRotation !== rotation.current) {
         quadtreeRef.current.setRotationFromAxisAngle(

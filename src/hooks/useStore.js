@@ -71,7 +71,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     cameraNeedsReorientation: false,
 
     hasSeenIntroVideo: false,
-    cutscene: null,
+    cutscenePlaying: false,
+    canvasStack: [],
 
     logs: {
       alerts: []
@@ -493,6 +494,16 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.pendingTransactions = state.pendingTransactions.filter((tx) => tx.txHash !== txHash);
     })),
 
+    dispatchCanvasStacked: (id) => set(produce(state => {
+      if (!state.canvasStack) state.canvasStack = [];
+      state.canvasStack.unshift(id);
+    })),
+
+    dispatchCanvasUnstacked: (id) => set(produce(state => {
+      if (!state.canvasStack) state.canvasStack = [];
+      state.canvasStack = state.canvasStack.filter((s) => s !== id);
+    })),
+
     dispatchClearTransactionHistory: () => set(produce(state => {
       state.pendingTransactions = [];
       state.failedTransactions = [];
@@ -530,8 +541,9 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'asteroids.plot',
     'asteroids.plotDestination',
     'asteroids.zoomToPlot',
+    'canvasStack',
+    'cutscenePlaying',
     'cameraNeedsReorientation',
-    'cutscene',
     'draggables',
     'failedTransactions',
     'plotLoader',
