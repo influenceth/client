@@ -7,18 +7,28 @@ float normalizeNoise(float n) {
   return clamp(0.5 * n + 0.5, 0.0, 1.0);
 }
 
-// TODO: this is really heavy -- calls snoise 3x octaves + 1 times (the same as the rest of the features combined)
+// float getBase(vec3 p, float pers, int octaves) {
+//   float scale = pow(2.0, float(octaves));
+//   vec3 displace = vec3(0.0, 0.0, 0.0);
+
+//   for (int i = 0; i < octaves; i ++) {
+//     displace = vec3(
+//       normalizeNoise(snoise(p.xyz * scale + displace)) * pers,
+//       normalizeNoise(snoise(p.yzx * scale + displace)) * pers,
+//       normalizeNoise(snoise(p.zxy * scale + displace)) * pers
+//     );
+
+//     scale *= 0.5;
+//   }
+
+//   return normalizeNoise(snoise(p * scale + displace));
+// }
 float getBase(vec3 p, float pers, int octaves) {
   float scale = pow(2.0, float(octaves));
-  vec3 displace;
+  vec3 displace = vec3(0.0, 0.0, 0.0);
 
   for (int i = 0; i < octaves; i ++) {
-    displace = vec3(
-      normalizeNoise(snoise(p.xyz * scale + displace)) * pers,
-      normalizeNoise(snoise(p.yzx * scale + displace)) * pers,
-      normalizeNoise(snoise(p.zxy * scale + displace)) * pers
-    );
-
+    displace[int(mod(float(i), 3.))] = normalizeNoise(snoise(p * scale + displace)) * pers;
     scale *= 0.5;
   }
 
@@ -44,7 +54,7 @@ float getRidges(vec3 p, float pers, int octaves) {
 // Generates overall topography, hills, cliffs, etc.
 float getTopography(vec3 p, int octaves) {
   vec3 point = p * uTopoFreq + uSeed;
-  float base = getBase(p, 0.45, octaves); // [0,1]
+  float base = getBase(p, 0.24, octaves); // [0,1]
   float ridges = getRidges(p, 0.5, octaves); // [0,1]
   return (base + ridges * uRidgeWeight) - uRidgeWeight; // [-uRidgeWeight, 1]
   // TODO (maybe?): below would be [0, 1]
