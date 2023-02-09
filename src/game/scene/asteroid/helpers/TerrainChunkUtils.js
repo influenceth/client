@@ -20,6 +20,8 @@ import constants from '~/lib/constants';
 import TextureRenderer from '~/lib/graphics/TextureRenderer';
 
 const { CHUNK_RESOLUTION, MIN_CHUNK_SIZE, OVERSAMPLE_CHUNK_TEXTURES } = constants;
+const MAX_CRATER_PASSES = 15;
+
 const textureOptsDefault = Object.freeze({
   generateMipmaps: true, minFilter: LinearMipMapLinearFilter, magFilter: LinearFilter, needsUpdate: true
 });
@@ -118,8 +120,7 @@ export const getSamplingResolution = (radius, minChunkSize = MIN_CHUNK_SIZE) => 
 };
 
 export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkResolution, edgeStrides, oversample, config, returnType = 'bitmap') {
-  const extraPasses = getExtraPasses(chunkSize, chunkResolution);
-  const extraPassesMax = getExtraPasses(getMinChunkSize(config.radius) / (2 * config.radius), chunkResolution) - 1;
+  const extraPasses = getExtraPasses(getMinChunkSize(config.radius) / (2 * config.radius), chunkResolution) - 1;
   const material = new ShaderMaterial({
     fragmentShader: (edgeStrides.N === 1 && edgeStrides.S === 1 && edgeStrides.E === 1 && edgeStrides.W === 1)
       ? heightShader
@@ -129,19 +130,17 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uChunkSize: { type: 'f', value: chunkSize },
       uCraterCut: { type: 'f', value: config.craterCut },
       uCraterFalloff: { type: 'f', value: config.craterFalloff },
-      uCraterPasses: { type: 'i', value: config.craterPasses },
+      uCraterPasses: { type: 'i', value: Math.min(MAX_CRATER_PASSES, config.craterPasses + extraPasses - 1) },
       uCraterPersist: { type: 'f', value: config.craterPersist },
       uCraterSteep: { type: 'f', value: config.craterSteep },
       uDispFreq: { type: 'f', value: config.dispFreq },
-      uDispPasses: { type: 'i', value: config.dispPasses },
+      uDispPasses: { type: 'i', value: config.dispPasses + extraPasses },
       uDispPersist: { type: 'f', value: config.dispPersist },
       uDispWeight: { type: 'f', value: config.dispWeight },
       uEdgeStrideN: { type: 'f', value: edgeStrides.N },
       uEdgeStrideS: { type: 'f', value: edgeStrides.S },
       uEdgeStrideE: { type: 'f', value: edgeStrides.E },
       uEdgeStrideW: { type: 'f', value: edgeStrides.W },
-      uExtraPasses: { type: 'i', value: extraPasses },
-      uExtraPassesMax: { type: 'i', value: extraPassesMax },
       uFeaturesFreq: { type: 'f', value: config.featuresFreq },
       uFeaturesSharpness: { type: 'f', value: config.featuresSharpness },
       uFineDispFraction: { type: 'f', value: config.fineDispFraction },
@@ -155,7 +154,7 @@ export function generateHeightMap(cubeTransform, chunkSize, chunkOffset, chunkRe
       uRimWidth: { type: 'f', value: config.rimWidth },
       uSeed: { type: 'v3', value: config.seed },
       uStretch: { type: 'v3', value: config.stretch },
-      uTopoDetail: { type: 'i', value: config.topoDetail },
+      uTopoPasses: { type: 'i', value: config.topoDetail + extraPasses },
       uTopoFreq: { type: 'f', value: config.topoFreq },
       uTopoWeight: { type: 'f', value: config.topoWeight },
       uTransform: { type: 'mat4', value: cubeTransform },
@@ -227,8 +226,6 @@ export function generateEmissiveMap(chunkParams, emissiveParams, returnType = 'b
     uniforms: {
       uChunkOffset: { type: 'v2', value: chunkParams.chunkOffset },
       uChunkSize: { type: 'f', value: chunkParams.chunkSize },
-      uExtraPasses: { type: 'i', value: chunkParams.extraPasses },
-      uExtraPassesMax: { type: 'i', value: chunkParams.extraPassesMax },
       uOversampling: { type: 'b', value: chunkParams.oversample },
       uResolution: { type: 'f', value: chunkParams.chunkResolution },
       uTransform: { type: 'mat4', value: chunkParams.cubeTransform },
@@ -406,8 +403,6 @@ export function rebuildChunkMaps({ config, edgeStrides, emissiveParams, groupMat
       chunkSize: textureSize,
       chunkOffset,
       chunkResolution: textureResolution,
-      extraPasses: getExtraPasses(chunkSize, resolution),
-      extraPassesMax: getExtraPasses(getMinChunkSize(config.radius) / (2 * config.radius), resolution) - 1,
       oversample: OVERSAMPLE_CHUNK_TEXTURES
     },
     emissiveParams

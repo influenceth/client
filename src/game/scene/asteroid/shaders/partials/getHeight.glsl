@@ -7,6 +7,7 @@ float normalizeNoise(float n) {
   return clamp(0.5 * n + 0.5, 0.0, 1.0);
 }
 
+// TODO: this is really heavy -- calls snoise 3x octaves + 1 times (the same as the rest of the features combined)
 float getBase(vec3 p, float pers, int octaves) {
   float scale = pow(2.0, float(octaves));
   vec3 displace;
@@ -24,41 +25,34 @@ float getBase(vec3 p, float pers, int octaves) {
   return normalizeNoise(snoise(p * scale + displace));
 }
 
-float getRidges(vec3 p, float pers, int octaves, int maxOctaves, int attenuatedOctaves, float attenuationAmount) {
+float getRidges(vec3 p, float pers, int octaves) {
   float total = 0.0;
   float frequency = 1.0;
   float amplitude = 1.0;
   float maxValue = 0.0;
-  float unattenuatedOctaves = float(octaves - attenuatedOctaves);
 
   for (int i = 0; i < octaves; i++) {
-    total += abs(snoise(p * frequency) * amplitude * (1.0 - step(unattenuatedOctaves, float(i)) * attenuationAmount));
+    total += abs(snoise(p * frequency) * amplitude);
     maxValue += amplitude;
     amplitude *= pers;
     frequency *= 2.0;
-  }
-
-  for (int i = octaves; i < maxOctaves; i++) {
-    maxValue += amplitude;
-    amplitude *= pers;
   }
 
   return 1.0 - sqrt(total / maxValue);
 }
 
 // Generates overall topography, hills, cliffs, etc.
-float getTopography(vec3 p, int octaves, int maxOctaves, int attenuatedOctaves, float attenuationAmount) {
+float getTopography(vec3 p, int octaves) {
   vec3 point = p * uTopoFreq + uSeed;
-  // TODO: getBase technically should also use attenuation
   float base = getBase(p, 0.45, octaves); // [0,1]
-  float ridges = getRidges(p, 0.5, octaves, maxOctaves, attenuatedOctaves, attenuationAmount); // [0,1]
+  float ridges = getRidges(p, 0.5, octaves); // [0,1]
   return (base + ridges * uRidgeWeight) - uRidgeWeight; // [-uRidgeWeight, 1]
   // TODO (maybe?): below would be [0, 1]
   // return (base + ridges * uRidgeWeight) / (1.0 + uRidgeWeight);
 }
 
 // Generates coarse displacement to shape the asteroid
-float getDisplacement(vec3 p, int octaves, int maxOctaves, int attenuatedOctaves, float attenuationAmount) {
+float getDisplacement(vec3 p, int octaves) {
   p.y *= -1.0;  // (to match original noise sampling)
   p = p * uDispFreq + uSeed;
 
@@ -66,25 +60,15 @@ float getDisplacement(vec3 p, int octaves, int maxOctaves, int attenuatedOctaves
   float frequency = 1.0;
   float amplitude = 1.0;
   float maxValue = 0.0;
-  float unattenuatedOctaves = float(octaves - attenuatedOctaves);
 
   for (int i = 0; i < octaves; i++) {
-    total += snoise(p * frequency) * amplitude * (1.0 - step(unattenuatedOctaves, float(i)) * attenuationAmount);
+    total += snoise(p * frequency) * amplitude;
     maxValue += amplitude;
     amplitude *= uDispPersist;
     frequency *= 2.0;
   }
 
-  for (int i = octaves; i < maxOctaves; i++) {
-    maxValue += amplitude;
-    amplitude *= uDispPersist;
-  }
-
   return total / maxValue;
-}
-
-float getFeatureFadeIn(int currentOctave, int totalOctaves) {
-  return pow(0.6, 3.0 - min(3.0, float(totalOctaves - currentOctave)));
 }
 
 // Generates craters and combines with topography
@@ -104,7 +88,7 @@ float getFeatureFadeIn(int currentOctave, int totalOctaves) {
       - flat floor: (less relevant to explicitly add since slope should simulate)
 */
 /* TODO (enhancement): modify crater shape and incidence by asteroid composition */
-float getFeatures(vec3 p, int octaves, int neighborPassDeficit, float neighborProximity) {
+float getFeatures(vec3 p, int octaves) {
   p = p * uFeaturesFreq + uSeed;
 
   float varNoise;
@@ -127,11 +111,9 @@ float getFeatures(vec3 p, int octaves, int neighborPassDeficit, float neighborPr
   float craterDepth = 0.0;
   float craterPersist = 1.0;
   float octaveFeatures = 0.0;
-
   float totalFeatures = 0.0;
-  float totalNeighborFeatures = 0.0;
 
-  int neighborOctaves = octaves - neighborPassDeficit;
+  float unattenuatedOctaves = float(octaves) - 3.0;
 
   for (int i = 0; i < octaves; i++) {
     craterFreq = pow(uCraterFalloff, float(i));
@@ -157,35 +139,32 @@ float getFeatures(vec3 p, int octaves, int neighborPassDeficit, float neighborPr
     craters = pow(smoothstep(0.0, craterCut, cellNoise.x), steep) - 1.0; // [-1, 0]
     rims = (1.0 - smoothstep(craterCut, craterCut + rimWidth, cellNoise.x)) * rimWeight; // [0, rimWeight]
 
-    // fade in last two octaves (to minimize "popping")
-    octaveFeatures = craterDepth * (craters + rims);
-    totalFeatures += octaveFeatures * getFeatureFadeIn(i, octaves);
-    totalNeighborFeatures += octaveFeatures * getFeatureFadeIn(i, neighborOctaves) * (1.0 - step(float(neighborOctaves), float(i)));
+    // total features
+    totalFeatures += craterDepth * (craters + rims);
+
+    // for matching legacy, taper off final two passes
+    craterPersist *= 1.0 - step(unattenuatedOctaves, float(i)) * 0.35;
   }
 
   totalFeatures /= uMaxCraterDepth; // [-1, 1]?
   totalFeatures = sign(totalFeatures) * pow(abs(totalFeatures), uFeaturesSharpness); // [-1, 1] (if above is [-1, 1])
-
-  totalNeighborFeatures /= uMaxCraterDepth; // [-1, 1]?
-  totalNeighborFeatures = sign(totalNeighborFeatures) * pow(abs(totalNeighborFeatures), uFeaturesSharpness); // [-1, 1] (if above is [-1, 1])
-
-  return mix(totalFeatures, totalNeighborFeatures, neighborProximity);
+  return totalFeatures;
 }
 
 // NOTE: point must be a point on unit sphere
-vec4 getHeight(vec3 point, int neighborPassDeficit, float neighborProximity) {
+vec4 getHeight(vec3 point) {
   float uCoarseDispFraction = 1.0 - uFineDispFraction;
 
   // Get course displacement
-  float disp = getDisplacement(point, uDispPasses + uExtraPasses, uDispPasses + uExtraPassesMax, neighborPassDeficit, neighborProximity); // [-1, 1]
+  float disp = getDisplacement(point, uDispPasses); // [-1, 1]
 
   // Get final coarse point location
   point = point * (1.0 + disp * uCoarseDispFraction * uDispWeight) * uStretch;
 
   // Get topography and features
   // TODO (maybe?): topo should probably technically scale from [0, 1] or [-1, 1]
-  float topo = getTopography(point, uTopoDetail + uExtraPasses, uTopoDetail + uExtraPassesMax, neighborPassDeficit, neighborProximity); // [-uRidgeWeight, 1]
-  float features = getFeatures(point, uCraterPasses + uExtraPasses - 1, neighborPassDeficit, neighborProximity); // -1 to 1
+  float topo = getTopography(point, uTopoPasses); // [-uRidgeWeight, 1]
+  float features = getFeatures(point, uCraterPasses); // -1 to 1
 
   // Define fine displacement
   // TODO (maybe?): this technically should scale [-1, 1]
@@ -207,16 +186,10 @@ vec4 getHeight(vec3 point, int neighborPassDeficit, float neighborProximity) {
   );
 }
 
-vec4 getHeight(vec2 flipY, int neighborPassDeficit, float neighborProximity) {
-  return getHeight(
-    getUnitSphereCoords(flipY), // standardize from flipY to spherical coords
-    neighborPassDeficit,
-    neighborProximity
-  );
-}
-
 vec4 getHeight(vec2 flipY) {
-  return getHeight(flipY, 0, 0.0);
+  return getHeight(
+    getUnitSphereCoords(flipY) // standardize from flipY to spherical coords
+  );
 }
 
 #pragma glslify: export(getHeight)
