@@ -536,6 +536,17 @@ const SliderLabel = styled.div`
   }
 `;
 
+const SliderTextInput = styled.input`
+  background: transparent;
+  border: 1px solid ${borderColor};
+  color: white;
+  font-family: inherit;
+  font-size: 26px;
+  height: 33px;
+  text-align: right;
+  width: 120px;
+`;
+
 const SliderWrapper = styled.div`
   flex: 1;
 `;
@@ -1793,14 +1804,52 @@ export const DeconstructionMaterialsSection = ({ label, resources, status }) => 
 
 export const ExtractionAmountSection = ({ amount, extractionTime, min, max, resource, setAmount }) => {
   const tonnage = useMemo(() => amount * resource?.massPerUnit || 0, [amount, resource]);
+  const tonnageValue = useMemo(() => Math.round(1e3 * tonnage) / 1e3, [tonnage]);
+  
+  const [focusOn, setFocusOn] = useState();
+  const [mouseIn, setMouseIn] = useState(false);
+
+  const onFocusEvent = useCallback((e) => {
+    if (e.type === 'focus') {
+      setFocusOn(true);
+      e.target.select();
+    } else {
+      setFocusOn(false);
+    }
+  }, []);
+
+  const onMouseEvent = useCallback((e) => {
+    setMouseIn(e.type === 'mouseenter')
+  }, []);
+
+  const onChangeInput = (e) => {
+    let quanta = Math.ceil(e.currentTarget.value / resource.massPerUnit);
+    if (quanta > max) quanta = max;
+    if (quanta < min) quanta = min;
+    setAmount(quanta);
+  };
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Extraction Amount</SectionTitle>
       <SectionBody>
         <SliderWrapper>
           <SliderInfoRow>
-            <SliderLabel>
-              <b>{formatSampleMass(tonnage)}</b> tonnes
+            <SliderLabel onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent}>
+              {(mouseIn || focusOn) ? (
+                <SliderTextInput
+                  type="number"
+                  step={0.1}
+                  value={tonnageValue}
+                  onChange={onChangeInput}
+                  onBlur={onFocusEvent}
+                  onFocus={onFocusEvent} />
+                )
+                : (
+                  <b>{formatSampleMass(tonnage)}</b>
+                )
+              }
+              {' '}
+              tonnes
             </SliderLabel>
             <ButtonRounded disabled={amount === max} onClick={() => setAmount(max)}>Max</ButtonRounded>
           </SliderInfoRow>
