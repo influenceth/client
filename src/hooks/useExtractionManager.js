@@ -7,8 +7,8 @@ import usePlot from './usePlot';
 import useActionItems from './useActionItems';
 
 const useExtractionManager = (asteroidId, plotId) => {
-  const { actionItems, readyItems } = useActionItems();
-  const { chainTime, execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
+  const { actionItems, readyItems, liveBlockTime } = useActionItems();
+  const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrew();
   const { data: plot } = usePlot(asteroidId, plotId);
 
@@ -54,7 +54,7 @@ const useExtractionManager = (asteroidId, plotId) => {
       
       if(getStatus('FINISH_EXTRACTION', payload) === 'pending') {
         status = 'FINISHING';
-      } else if (plot.building.extraction.completionTime && plot.building.extraction.completionTime < chainTime) {
+      } else if (plot.building.extraction.completionTime && plot.building.extraction.completionTime < liveBlockTime) {
         status = 'READY_TO_FINISH';
       } else {
         status = 'EXTRACTING';

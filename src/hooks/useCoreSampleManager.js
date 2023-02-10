@@ -7,8 +7,8 @@ import usePlot from './usePlot';
 import useActionItems from './useActionItems';
 
 const useCoreSampleManager = (asteroidId, plotId) => {
-  const { actionItems, readyItems } = useActionItems();
-  const { chainTime, execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
+  const { actionItems, readyItems, liveBlockTime } = useActionItems();
+  const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrew();
   const { data: plot } = usePlot(asteroidId, plotId);
 
@@ -50,7 +50,7 @@ const useCoreSampleManager = (asteroidId, plotId) => {
       current.sampleId = activeSample.sampleId;
       current.startTime = activeSample.startTime;
 
-      if (activeSample.completionTime < chainTime) {
+      if (activeSample.completionTime < liveBlockTime) {
         if (getStatus('FINISH_CORE_SAMPLE', payload) === 'pending') {
           status = 'FINISHING';
         } else {

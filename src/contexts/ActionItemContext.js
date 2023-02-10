@@ -10,6 +10,7 @@ import api from '~/lib/api';
 const ActionItemContext = React.createContext();
 
 export function ActionItemProvider({ children }) {
+  const { walletContext: { starknet } } = useAuth();
   const chainTime = useChainTime();
   const { crew } = useCrew();
 
@@ -28,31 +29,57 @@ export function ActionItemProvider({ children }) {
 
   const pendingTransactions = useStore(s => s.pendingTransactions);
   const failedTransactions = useStore(s => s.failedTransactions);
+  const [liveBlockTime, setLiveBlockTime] = useState(0);
   const [readyItems, setReadyItems] = useState([]);
   const [unreadyItems, setUnreadyItems] = useState([]);
   const [plannedItems, setPlannedItems] = useState([]);
 
-  const refreshItems = useCallback((nowTime) => {
+
+  // TODO: "Starknet could not be reached."
+  // TODO: if block time > 2m, error; if error, set error
+  const refetchBlockTime = useCallback(async (untilGreaterThan = 0) => {
+    if (starknet?.provider) {
+      let blockTimestamp = 0;
+      try {
+        const block = await starknet.provider.getBlock();
+        blockTimestamp = block?.timestamp;
+        setLiveBlockTime(blockTimestamp);
+      } catch(e) {
+        console.warn(e);
+      }
+      
+      if (blockTimestamp < untilGreaterThan) {
+        setTimeout(() => {
+          refetchBlockTime(untilGreaterThan);
+        }, 3000); // TODO: exponential backoff might be appropriate
+      }
+    }
+  }, [starknet?.provider]);
+
+  useEffect(refetchBlockTime, [refetchBlockTime]);
+
+  useEffect(() => {
+    if (!liveBlockTime) return;
+
     setReadyItems(
       (actionItems || [])
-        .filter((i) => i.data?.completionTime < nowTime)
+        .filter((i) => i.data?.completionTime <= liveBlockTime)
         .sort((a, b) => a.data?.completionTime - b.data?.completionTime)
     );
 
     setUnreadyItems(
       (actionItems || [])
-        .filter((i) => i.data?.completionTime >= nowTime)
+        .filter((i) => i.data?.completionTime > liveBlockTime)
         .sort((a, b) => a.data?.completionTime - b.data?.completionTime)
     );
 
     setPlannedItems(
       (plannedLots || [])
         // .filter((i) => i.gracePeriodEnd >= nowTime)
-        .map((a) => ({ ...a, waitingFor: a.gracePeriodEnd > nowTime ? a.gracePeriodEnd : null }))
+        .map((a) => ({ ...a, waitingFor: a.gracePeriodEnd > liveBlockTime ? a.gracePeriodEnd : null }))
         .sort((a, b) => a.gracePeriodEnd - b.gracePeriodEnd)
     );
-  }, [actionItems, plannedLots]);
-  useEffect(() => refreshItems(chainTime), [refreshItems]);
+  }, [actionItems, plannedLots, liveBlockTime]);
 
   const nextCompletionTime = useMemo(() => {
     return [...plannedItems, ...unreadyItems].reduce((acc, cur) => {
@@ -67,22 +94,21 @@ export function ActionItemProvider({ children }) {
   useEffect(() => {
     if (nextCompletionTime) {
       const nextRefreshTime = (nextCompletionTime + 1);
-      // console.log('setting timeout in ' + (nextRefreshTime - chainTime), { nextCompletionTime, chainTime });
       const to = setTimeout(() => {
-        // console.log('running refreesh');
-        refreshItems(nextRefreshTime);
+        refetchBlockTime(nextCompletionTime);
       }, Math.max(0, 1000 * (nextRefreshTime - chainTime)));
       return () => {
         if (to) clearTimeout(to);
       }
     }
-  }, [nextCompletionTime, refreshItems]);
+  }, [nextCompletionTime]);
 
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining
 
   // without memoizing, triggers as if new value on every chainTime update
   const contextValue = useMemo(() => ({
+    liveBlockTime,
     pendingTransactions,
     failedTransactions,
     readyItems,
@@ -90,6 +116,7 @@ export function ActionItemProvider({ children }) {
     unreadyItems,
     actionItems
   }), [
+    liveBlockTime,
     pendingTransactions,
     failedTransactions,
     readyItems,
