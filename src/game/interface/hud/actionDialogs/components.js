@@ -1823,7 +1823,7 @@ export const ExtractionAmountSection = ({ amount, extractionTime, min, max, reso
   }, []);
 
   const onChangeInput = (e) => {
-    let quanta = Math.ceil(e.currentTarget.value / resource.massPerUnit);
+    let quanta = Math.round(e.currentTarget.value / resource.massPerUnit);
     if (quanta > max) quanta = max;
     if (quanta < min) quanta = min;
     setAmount(quanta);
