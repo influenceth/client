@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
+  BoxGeometry,
   CircleGeometry,
   Color,
   FrontSide,
@@ -21,6 +22,7 @@ import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
 import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 import useAuth from '~/hooks/useAuth';
 import useCrew from '~/hooks/useCrew';
+import useProjectionLayer from '~/hooks/useProjectionLayer';
 import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
 import useWebWorker from '~/hooks/useWebWorker';
@@ -49,7 +51,8 @@ const MOUSE_THROTTLE_TIME = 1000 / 30; // ms
 const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
   const { token } = useAuth();
   const { crew } = useCrew();
-  const { gl, scene } = useThree();
+  const { setProjection } = useProjectionLayer();
+  const { camera, gl, scene } = useThree();
   const queryClient = useQueryClient();
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
   const { processInBackground } = useWebWorker();
@@ -712,6 +715,27 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
     updateVisiblePlots();
   }, [sampledPlotMap]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // TODO: since this may change often but should not be retained, should keep the state in its own context instead of app store
+  // TODO: need to keep up with rotation
+  // TODO: need to keep up with resize
+  const togglePlotTooltip = useCallback((plotId) => {
+    if (plotId) {
+      const plotIndex = plotId - 1;
+      const projection = new Vector3(positions.current[plotIndex * 3 + 0], positions.current[plotIndex * 3 + 1], positions.current[plotIndex * 3 + 2])
+        .applyAxisAngle(axis, getRotation())
+        .project(camera);
+      setProjection({
+        plotId,
+        position: {
+          x: 0.5 * gl.domElement.width * (1 + projection.x),
+          y: 0.5 * gl.domElement.height * (1 - projection.y),
+        }
+      });
+    } else {
+      setProjection();
+    }
+  }, [axis])
+
   const highlightPlot = useCallback((plotId) => {
     highlighted.current = null;
     // if a new plotId was passed to highlight, do it
@@ -735,8 +759,11 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
       mouseHoverMesh.current.lookAt(orientation);
       mouseHoverMesh.current.material.opacity = 0.5;
       highlighted.current = plotId;
+
+      togglePlotTooltip(plotId);
     } else {
       mouseHoverMesh.current.material.opacity = 0;
+      togglePlotTooltip();
     }
   }, [attachTo.quaternion, selectedPlotId]);
 

@@ -9,6 +9,7 @@ import { CrewProvider } from './contexts/CrewContext';
 import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
 import { ClockProvider } from '~/contexts/ClockContext';
 import { EventsProvider } from '~/contexts/EventsContext';
+import { ProjectionLayerProvider } from '~/contexts/ProjectionLayerContext';
 import { WalletProvider } from '~/contexts/WalletContext';
 import { WebsocketProvider } from '~/contexts/WebsocketContext';
 import Audio from '~/game/Audio';
@@ -145,27 +146,29 @@ const Game = (props) => {
               <ChainTransactionProvider>
                 <ActionItemProvider>
                   <ThemeProvider theme={theme}>
-                    <GlobalStyle />
-                    <Router>
-                      <Referral />
-                      <Switch>
-                        {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
-                        <Route path="/play">
-                          <LandingPage />
-                        </Route>
-                        {/* for everything else */}
-                        <Route>
-                          <LauncherRedirect />
-                          <ClockProvider>
-                            <StyledMain>
-                              <Interface />
-                              {showScene && <Scene />}
-                              <Audio />
-                            </StyledMain>
-                          </ClockProvider>
-                        </Route>
-                      </Switch>
-                    </Router>
+                    <ProjectionLayerProvider>
+                      <GlobalStyle />
+                      <Router>
+                        <Referral />
+                        <Switch>
+                          {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
+                          <Route path="/play">
+                            <LandingPage />
+                          </Route>
+                          {/* for everything else */}
+                          <Route>
+                            <LauncherRedirect />
+                            <ClockProvider>
+                              <StyledMain>
+                                <Interface />
+                                {showScene && <Scene />}
+                                <Audio />
+                              </StyledMain>
+                            </ClockProvider>
+                          </Route>
+                        </Switch>
+                      </Router>
+                    </ProjectionLayerProvider>
                   </ThemeProvider>
                 </ActionItemProvider>
               </ChainTransactionProvider>

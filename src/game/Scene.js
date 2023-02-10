@@ -19,6 +19,8 @@ import SettingsManager from './scene/SettingsManager';
 import Postprocessor from './Postprocessor';
 import WebsocketContext from '~/contexts/WebsocketContext';
 import { GpuContextLostMessage, GpuContextLostReporter } from './GpuContextLost';
+import ProjectionLayerContext from '~/contexts/ProjectionLayerContext';
+import ProjectionLayer from './ProjectionLayer';
 
 const glConfig = {
   antialias: true,
@@ -88,6 +90,7 @@ const Scene = (props) => {
     AuthContext,
     ClockContext,
     CrewContext,
+    ProjectionLayerContext,
     WebsocketContext
   );
 
@@ -119,6 +122,7 @@ const Scene = (props) => {
     <StyledContainer>
       {statsOn && (<Stats />)}
       {contextLost && <GpuContextLostMessage />}
+      <ProjectionLayer />
       <Canvas {...glConfig} frameloop={frameloop} style={canvasStyle}>
         <GpuContextLostReporter setContextLost={setContextLost} />
         <ContextBridge>
