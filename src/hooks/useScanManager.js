@@ -5,8 +5,8 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from './useActionItems';
 
 const useScanManager = (asteroid) => {
-  const { readyItems } = useActionItems();
-  const { chainTime, execute, getStatus } = useContext(ChainTransactionContext);
+  const { readyItems, liveBlockTime } = useActionItems();
+  const { execute, getStatus } = useContext(ChainTransactionContext);
 
   const payload = useMemo(() => ({
     i: asteroid ? Number(asteroid.i) : null
@@ -34,7 +34,7 @@ const useScanManager = (asteroid) => {
       } else if(asteroid.scanCompletionTime > 0) {
         if(getStatus('FINISH_ASTEROID_SCAN', payload) === 'pending') {
           return 'FINISHING';
-        } else if (asteroid.scanCompletionTime < chainTime) {
+        } else if (asteroid.scanCompletionTime < liveBlockTime) {
           return 'READY_TO_FINISH';
         }
         return 'SCANNING';
