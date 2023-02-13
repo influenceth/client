@@ -64,6 +64,7 @@ const TrackballModControls = function (object, domElement) {
   const eventHandlers = {
     contextmenu,
     mousedown,
+    mouseleave,
     mouseup,
     mousemove,
     wheel: mousewheel,
@@ -339,6 +340,7 @@ const TrackballModControls = function (object, domElement) {
     }
 
     _this.domElement.addEventListener('mousemove', eventHandler, false);
+    _this.domElement.addEventListener('mouseleave', eventHandler, false);
     _this.domElement.addEventListener('mouseup', eventHandler, false);
     _this.dispatchEvent(startEvent);
   }
@@ -364,8 +366,13 @@ const TrackballModControls = function (object, domElement) {
     event.stopPropagation();
     _state = STATE.NONE;
     _this.domElement.removeEventListener('mousemove', eventHandler);
+    _this.domElement.removeEventListener('mouseleave', eventHandler);
     _this.domElement.removeEventListener('mouseup', eventHandler);
     _this.dispatchEvent(endEvent);
+  }
+
+  function mouseleave(event) {
+    mouseup(event);
   }
 
   function mousewheel(event) {
@@ -472,6 +479,7 @@ const TrackballModControls = function (object, domElement) {
     this.domElement.removeEventListener('touchend', eventHandler, false);
     this.domElement.removeEventListener('touchmove', eventHandler, false);
     this.domElement.removeEventListener('mousemove', eventHandler, false);
+    this.domElement.removeEventListener('mouseleave', eventHandler, false);
     this.domElement.removeEventListener('mouseup', eventHandler, false);
     window.removeEventListener('keydown', eventHandler, false);
     window.removeEventListener('keyup', eventHandler, false);
