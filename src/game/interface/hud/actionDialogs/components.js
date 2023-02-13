@@ -528,6 +528,7 @@ const InventoryUtilization = styled(ResourceProgress)`
 `;
 
 const SliderLabel = styled.div`
+  height: 33px;
   margin-bottom: -4px;
   & > b {
     color: white;
@@ -1805,7 +1806,7 @@ export const DeconstructionMaterialsSection = ({ label, resources, status }) => 
 export const ExtractionAmountSection = ({ amount, extractionTime, min, max, resource, setAmount }) => {
   const tonnage = useMemo(() => amount * resource?.massPerUnit || 0, [amount, resource]);
   const tonnageValue = useMemo(() => Math.round(1e3 * tonnage) / 1e3, [tonnage]);
-  
+
   const [focusOn, setFocusOn] = useState();
   const [mouseIn, setMouseIn] = useState(false);
 
