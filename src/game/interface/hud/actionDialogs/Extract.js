@@ -307,7 +307,7 @@ const Extract = ({ asteroid, plot, ...props }) => {
         goLabel="Begin Extraction"
         onFinalize={finishExtraction}
         onGo={onStartExtraction}
-        status={status} />
+        status={extractionStatus === 'FINISHING' ? 'DURING' : status} />
     </>
   );
 };
