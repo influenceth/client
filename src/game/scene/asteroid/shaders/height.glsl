@@ -33,5 +33,5 @@ uniform mat4 uTransform;
 
 void main() {
   vec2 flipY = vec2(gl_FragCoord.x, uResolution - gl_FragCoord.y);
-  gl_FragColor = getHeight(flipY, 0);
+  gl_FragColor = getHeight(flipY);
 }

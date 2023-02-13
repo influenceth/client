@@ -103,11 +103,15 @@ export const getPlotPointGeometry = (lotId, pointTally, resolution, heightMaps, 
   // for whatever reason, we lose enough precision in the weighted averaging to
   // end up with some stair-steppy artifacts on the surface... so, when setting final
   // position, we just apply the sampled length to the stretched (initial) fibo position
+  // TODO: may be worth troubleshooting why this is happening b/c it shouldn't be, and
+  //  it is possible that we are just masking the fact that our weighted sampling is not
+  //  calculating the correct length accurately either
   const sampledPosition = (new Vector3()).addVectors(
     s0t.multiplyScalar(s0Weight),
     s1t.multiplyScalar(s1Weight)
   );
-  const position = fibo.clone().multiply(config.stretch).setLength(sampledPosition.length()+ aboveSurface);
+  // TODO: should this technically stretch after length setting? maybe not since samples were already stretched
+  const position = fibo.clone().multiply(config.stretch).setLength(sampledPosition.length() + aboveSurface);
 
   // trying to avoid seeing plots through ridges...
   // for small asteroids, seems best to always use radial orientation because plots are far enough apart relative to displacement

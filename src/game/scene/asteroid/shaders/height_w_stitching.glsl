@@ -40,6 +40,7 @@ void main() {
 
   float oversampleAddOn = uOversampling ? 1.0 : 0.0;
   float edgeDistance = 0.5 + oversampleAddOn;
+  float attenuationDistance = 0.5 + oversampleAddOn + floor(uResolution / 10.0);
   float strideX = flipY.y <= edgeDistance
     ? uEdgeStrideS
     : (
@@ -60,14 +61,53 @@ void main() {
   float y = flipY.y - edgeDistance;
   float strideModY = mod(y, strideY);
 
+  int neighborPassDeficit = int(
+    max(
+      flipY.y <= attenuationDistance
+        ? uEdgeStrideS
+        : (
+          flipY.y >= uResolution - attenuationDistance
+            ? uEdgeStrideN
+            : 1.0
+        ),
+      flipY.x <= attenuationDistance
+        ? uEdgeStrideW
+        : (
+          flipY.x >= uResolution - attenuationDistance
+            ? uEdgeStrideE
+            : 1.0
+        )
+    )
+  ) - 1;
+  float neighborProximity = min(
+    attenuationDistance - oversampleAddOn,
+    max(
+      flipY.y <= attenuationDistance
+        ? attenuationDistance - flipY.y
+        : (
+          (flipY.y >= uResolution - attenuationDistance)
+            ? attenuationDistance - (uResolution - flipY.y)
+            : 0.0
+        ),
+      flipY.x <= attenuationDistance
+        ? attenuationDistance - flipY.x
+        : (
+          (flipY.x >= uResolution - attenuationDistance)
+            ? attenuationDistance - (uResolution - flipY.x)
+            : 0.0
+        )
+    )
+  ) / (attenuationDistance - oversampleAddOn);
+
+  // TODO: can we minimize the branching by combining some of the ternaries / turning them into multipliers?
+
   float mixAmount = max(strideModX / strideX, strideModY / strideY);
-  int skipPasses = int(max(strideX - 1.0, strideY - 1.0));
 
   vec2 point1 = vec2(
     strideModX > 0.0 ? floor(x / strideX) * strideX + edgeDistance : flipY.x,
     strideModY > 0.0 ? floor(y / strideY) * strideY + edgeDistance : flipY.y
   );
-  vec4 output1 = getHeight(point1, skipPasses);
+  vec4 output1 = getHeight(point1, neighborPassDeficit, neighborProximity);
   float height1 = (output1.x * 255.0 + output1.y) / 255.0;
   float topo1 = output1.z;
 
@@ -75,7 +115,7 @@ void main() {
     strideModX > 0.0 ? ceil(x / strideX) * strideX + edgeDistance : flipY.x,
     strideModY > 0.0 ? ceil(y / strideY) * strideY + edgeDistance : flipY.y
   );
-  vec4 output2 = getHeight(point2, skipPasses);
+  vec4 output2 = getHeight(point2, neighborPassDeficit, neighborProximity);
   float height2 = (output2.x * 255.0 + output2.y) / 255.0;
   float topo2 = output2.z;
 
