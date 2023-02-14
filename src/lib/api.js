@@ -129,10 +129,11 @@ const api = {
     return response.data;
   },
 
-  getOwnedAsteroidsCount: async () => {
-    const response = await instance.get('/v1/asteroids/ownedCount');
-    return response.data;
-  },
+  // (not using this)
+  // getOwnedAsteroidsCount: async () => {
+  //   const response = await instance.get('/v1/asteroids/ownedCount');
+  //   return response.data;
+  // },
 
   getOwnedCrews: async () => {
     const response = await instance.get(`/v1/crews/owned`);
@@ -154,10 +155,11 @@ const api = {
     return response.data;
   },
 
-  getMintableCrew: async (query) => {
-    const response = await instance.get('/v1/crewmates/mintable', { params: query });
-    return response.data;
-  },
+  // (deprecated)
+  // getMintableCrew: async (query) => {
+  //   const response = await instance.get('/v1/crewmates/mintable', { params: query });
+  //   return response.data;
+  // },
 
   getPlanets: async () => {
     const response = await instance.get('/v1/planets');

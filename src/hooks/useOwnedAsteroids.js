@@ -1,16 +1,13 @@
-import { useQuery } from 'react-query';
-
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
-
-const baseQuery = { hydrated: true };
+import { useAsteroidAggregate } from './useAsteroid';
 
 const useOwnedAsteroids = () => {
   const { account } = useAuth();
 
-  return useQuery(
-    [ 'asteroids', 'search', {...baseQuery, ownedBy: account } ],
-    () => api.getAsteroids({...baseQuery, ownedBy: account }),
+  return useAsteroidAggregate(
+    ['asteroids', 'owned'],
+    () => api.getAsteroids({ ownedBy: account, hydrated: true }),
     { enabled: !!account }
   );
 };

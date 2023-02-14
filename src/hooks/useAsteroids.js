@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useThrottle } from '@react-hook/throttle';
 import { useQuery } from 'react-query';
+import { useThrottle } from '@react-hook/throttle';
 
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
@@ -25,7 +25,7 @@ const useAsteroids = () => {
     if (!!highlight) newQuery.highlight = highlight.field;
     setQuery(newQuery);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [ account, includeOwned, includeWatched, filterOwned, filterWatched, filters, highlight ]);
+  }, [ account, includeOwned, includeWatched, filterOwned, filterWatched, filters, highlight ]);
 
   return useQuery(
     [ 'asteroids', 'search', query ],
