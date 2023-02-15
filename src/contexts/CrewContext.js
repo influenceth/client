@@ -3,6 +3,7 @@ import { useQuery } from 'react-query';
 
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
+import { useCrewMemberAggregate } from '~/hooks/useCrewMember';
 import useStore from '~/hooks/useStore';
 
 const CrewContext = createContext();
@@ -12,7 +13,7 @@ export function CrewProvider({ children }) {
   const selectedCrewId = useStore(s => s.selectedCrewId);
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
 
-  const { data: allCrewMembers, isLoading: crewMembersLoading } = useQuery(
+  const { data: allCrewMembers, isLoading: crewMembersLoading} = useCrewMemberAggregate(
     [ 'crewmembers', 'owned', account ],
     () => api.getOwnedCrewMembers(),
     { enabled: !!account }

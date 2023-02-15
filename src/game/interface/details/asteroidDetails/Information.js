@@ -370,7 +370,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
               </LogHeader>
               <div>
                 <ul>
-                  {asteroid.events.length > 0
+                  {asteroid.events?.length > 0
                     ? asteroid.events.map(e => (
                       <LogEntry
                         key={e.id}

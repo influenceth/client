@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { IoIosPin } from 'react-icons/io';
@@ -38,7 +38,7 @@ const SelectedAsteroid = (props) => {
 
   const { data: asteroid } = useAsteroid(asteroidId);
   const { crew } = useCrew();
-  const { ids: watchlistIds } = useWatchlist();
+  const { data: watchlist } = useWatchlist();
   const watchAsteroid = useWatchAsteroid();
   const unWatchAsteroid = useUnWatchAsteroid();
 
@@ -49,6 +49,8 @@ const SelectedAsteroid = (props) => {
 
   const [ inWatchlist, setInWatchlist ] = useState(false);
   const [ showBuildings, setShowBuildings ] = useState(false);
+
+  const watchlistIds = useMemo(() => (watchlist || []).map((w) => w.asteroid.i), [watchlist]);
 
   useEffect(() => {
     if (watchlistIds && asteroid) {

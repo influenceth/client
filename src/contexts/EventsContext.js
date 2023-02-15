@@ -12,142 +12,198 @@ const getLinkedAsset = (linked, type) => {
   return linked.find((l) => l.type === type && !!l.asset)?.asset || {};
 };
 
-// TODO (enhancement): rather than invalidating, make optimistic updates to cache value directly
-// (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)
-const getInvalidations = (event, returnValues, linked) => {
-  let rewriteEvent;
-  try {
-    const map = {
-      AsteroidUsed: [
-        ['asteroids', 'mintableCrew'],
-      ],
-      Asteroid_NameChanged: [
-        ['asteroids', returnValues.tokenId],
-        ['asteroids', 'search'],
-        ['events'], // (to update name in already-fetched events)
-        ['watchlist']
-      ],
-      Asteroid_ScanStarted: [
+// TODO:
+//  * asteroid reloads when replaced from linked (causes it to disappear and reload)
+//    ^ can we just traverse and update keys instead? or figure out what is being listened to in Asteroid that is causing this
+//  * same asteroid reload issue also causes reload of packed lot data from server
+//  * create duplicate logs from Crew_CompositionChanged in activity log instead of here
+
+//  - test all events --> invalidations (and updates of aggregates)
+
+//  - test that Asteroid.events (and any other *.events) is being updated as much as ever
+//    AND that events data is included in the `linked` updates
+
+//  - how to handle ['asteroid', 'search'] (esp. as it relates to my owned assets)
+//    ^ THESE ARE NOT HYDRATED and the info returned is not ever update-able
+//      if they are not hydrated. however, the search results may change acc.
+//      to updates
+//    ^ see useAsteroids, usePageAsteroids, watchlist
+
+//  - probably move 'extended' asteroid data usage into scanManager and only in scanManager
+//    (should only use immutable boost, etc data from that call, so doesn't need to be invalidated)
+//    (should also refresh from inside that component (remove from below))
+
+//  - (v2) custom code for each aggregate / event combo to determine when can mutate
+//    aggregate keys without invalidating aggregate
+
+// TODO: work through asteroid websocket room events and decide how
+//  want to incorporate those here
+
+
+const updateCacheQueryData = ({ event, returnValues, linked }, queryClient) => {
+  let invalidations = [];
+
+  switch(event) {
+    case 'Asteroid_NameChanged':
+      invalidations = [
+        ['asteroid', returnValues.tokenId]
+      ];
+    break;
+
+    case 'Asteroid_Transfer':
+      invalidations = [
+        ['asteroid', returnValues.tokenId],
+        ['asteroids', 'owned'],
+      ];
+    break;
+
+    case 'Dispatcher_AsteroidStartScan':
+    case 'Dispatcher_AsteroidFinishScan':
+      invalidations = [
+        ['asteroid', returnValues.asteroidId, true],  // NOTE: scan manager uses extended (should potentially just keep this in scan manager context and reload from there); also, Finished action may not need to update this one anyway
+        ['asteroid', returnValues.asteroidId],
         ['actionItems'],
-        ['asteroids', returnValues.asteroidId],
-      ],
-      // Asteroid_ScanFinished: [
-      Asteroid_BonusesSet: [
-        ['actionItems'],
-        ['asteroids', returnValues.asteroidId],
-        ['asteroids', 'search'],
-        ['watchlist']
-      ],
-      Asteroid_Transfer: [
-        ['asteroids', returnValues.tokenId],
-        ['asteroids', 'mintableCrew'],
-        ['asteroids', 'ownedCount'],
-        ['asteroids', 'search'],
-      ],
-      Crew_CompositionChanged: [
+      ];
+    break;
+
+    case 'Crew_CompositionChanged':
+      invalidations = [
         ['crews', 'owned'],
-      ],
-      Crewmate_FeaturesSet: [
-        ['assignments'],
-        ['crewmembers', returnValues.crewId],
-        ['crewmembers', 'owned'],
-      ],
-      Crewmate_TraitsSet: [
-        ['crewmembers', returnValues.crewId],
-        ['crewmembers', 'owned'],
-      ],
-      Crewmate_NameChanged: [
-        ['crewmembers', returnValues.tokenId],
-        ['crewmembers', 'owned'],
-        ['events'], // (to update name in already-fetched events)
-      ],
-      Crewmate_Transfer: [
-        ['assignments'],
-        ['crewmembers', 'owned'],
-        ['crewmembers', returnValues.tokenId],
-      ],
+      ];
+    break;
 
-      Dispatcher_ConstructionPlan: [
-        ['planned'],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-        // ['asteroidPlots', returnValues.asteroidId], (handled by asteroid room connection now)
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
-      ],
-      Dispatcher_ConstructionUnplan: [
-        ['planned'],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-        // ['asteroidPlots', returnValues.asteroidId], (handled by asteroid room connection now)
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
-      ],
-      Dispatcher_ConstructionStart: [
-        ['planned'],
-        ['actionItems'],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
-      ],
-      Dispatcher_ConstructionFinish: [
-        ['actionItems'],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
-      ],
-      Dispatcher_ConstructionDeconstruct: [
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
-      ],
+    case 'Crewmate_Transfer':
+      invalidations = [
+        ['crewmember', returnValues.tokenId || returnValues.crewmateId ],
+        ['crewmembers', 'owned'],
+      ];
+    break;
 
-      Dispatcher_CoreSampleStartSampling: [
-        ['actionItems'],
-        ['asteroidCrewSampledPlots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-      ],
-      Dispatcher_CoreSampleFinishSampling: [
-        ['actionItems'],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-      ],
-      // (invalidations done in extractionStart)
-      // CoreSample_Used: [
-      //   ['asteroidCrewSampledPlots', returnValues.asteroidId, returnValues.resourceId, getLinkedAsset(linked, 'Crew').i],
-      //   ['plots', returnValues.asteroidId, returnValues.lotId],
-      // ],
-      Dispatcher_ExtractionStart: [
-        ['actionItems'],
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
-        ['asteroidCrewSampledPlots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-        // ['plots', returnValues.asteroidId, returnValues.destinationLotId] // (this should happen in inventory_changed)
-      ],
-      Dispatcher_ExtractionFinish: [
-        ['actionItems'],
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
-        ['plots', returnValues.asteroidId, returnValues.lotId]
-      ],
+    case 'Crewmate_FeaturesSet':
+    case 'Crewmate_NameChanged':
+    case 'Crewmate_TraitsSet':
+      invalidations = [
+        ['crewmember', returnValues.tokenId || returnValues.crewmateId ],
+      ];
+    break;
 
-      Inventory_DeliveryStarted: [
+    case 'Dispatcher_ConstructionPlan':
+    case 'Dispatcher_ConstructionUnplan':
+      invalidations = [
+        ['plot', returnValues.asteroidId, returnValues.lotId],
+        ['plots', 'planned', returnValues.crewId],
+        ['plots', 'occupied', returnValues.asteroidId, returnValues.crewId]
+      ];
+    break;
+
+    case 'Dispatcher_ConstructionStart':
+    case 'Dispatcher_ConstructionDeconstruct':
+      invalidations = [
+        ['plot', returnValues.asteroidId, returnValues.lotId],
+        ['plots', 'planned', returnValues.crewId],
         ['actionItems'],
-        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
-      ],
-      Inventory_DeliveryFinished: [
+      ];
+    break;
+
+    case 'Dispatcher_CoreSampleStartSampling':
+    case 'Dispatcher_ExtractionStart':
+      invalidations = [
+        ['plot', returnValues.asteroidId, returnValues.lotId],
+        ['plots', 'sampled', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
         ['actionItems'],
-        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
-      ],
-      Inventory_ReservedChanged: [
-        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
-        ['asteroidCrewPlots',  getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Crew').i],
-      ],
-      Inventory_Changed: [
-        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
-        ['asteroidCrewPlots',  getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Crew').i],
-      ],
-      // TODO: update crew and asteroid events to use Dispatcher_* events where possible
-      // TODO: would be nice if the cached plot collections was somehow a collection of ['plots', asteroid.i, plot.i], so when we invalidate the relevant lot, the "collection" is updated
-      // TODO: would be nice to replace the query results using the linked asset we've already been passed (where that is possible)
+      ];
+    break;
+
+    case 'Dispatcher_ConstructionFinish':
+    case 'Dispatcher_CoreSampleFinishSampling':
+    case 'Dispatcher_ExtractionFinish':
+      invalidations = [
+        ['plot', returnValues.asteroidId, returnValues.lotId],
+        ['actionItems']
+      ];
+    break;
+
+    // TODO: review this change to Dispatcher_* events
+    //        > the lot is probably ambiguous on these, but perhaps we can get the values from returnValues
+    case 'Dispatcher_InventoryTransferStart':
+    case 'Dispatcher_InventoryTransferFinish':
+      invalidations = [
+        ['plot', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
+        ['actionItems'],
+      ];
+    break;
+
+    case 'Inventory_ReservedChanged':
+    case 'Inventory_Changed':
+      invalidations = [
+        ['plot', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
+      ];
+    break;
+  }
+
+  console.log('-- EVENT --', event)
+  console.log('must invalidate', [ ...invalidations ]);
+
+  // linked roll-up (only replace lots if can populate the linked lot with any needed linked building)
+  //    make all linked updates to 'asteroid' and 'asteroids' if key is present in cache
+  //    remove invalidations if there is an individual hit from linked data
+  const safeLinked = [];
+  linked.forEach((l) => {
+    if (l.type === 'Lot') {
+      const needsBuilding = !!l.asset.building;
+      l.asset.building = linked.find(({ type, asset }) => type === l.asset.building?.type && asset.i === l.asset.building?.i)?.asset;
+      if (!needsBuilding || l.asset.building) {
+        safeLinked.push(l);
+      } else {
+        console.log('missing linked building', { event, returnValues, linked });
+      }
+
+    // other noted linked types (not sure which are actually implemented on backend):
+    // 'CoreSample', 'Crew','Crossing', 'Referral', 'Sale', 'User', (...buildings)
+    } else if (['Asteroid','CrewMember'].includes(l.type)) {
+      safeLinked.push(l);
     }
+  });
 
-    return map[rewriteEvent || event] || [];
-  } catch (e) {/* no-op */}
+  console.log('safeLinked', safeLinked);
 
-  return [];
-};
+  // replace linked data into individual record (this will automatically update where referenced by aggs)
+  // cancel invalidation of individual records where linked successfully
+  const alreadyInvalidated = [];
+  safeLinked.forEach(({ type, asset }) => {
+    let linkedQueryKey;
+    if (type === 'Asteroid') {
+      linkedQueryKey = ['asteroid', asset.i];
+    } else if (type === 'Lot') {
+      linkedQueryKey = ['plot', asset.asteroid, asset.i];
+    } else if (type === 'CrewMember') {
+      linkedQueryKey = ['crewmember', asset.i];
+    }
+    if (linkedQueryKey) {
+      // update query cache for linked item
+      console.log('update', linkedQueryKey, asset);
+      queryClient.setQueryData(linkedQueryKey, asset);
+
+      // if this key was in list of pending invalidations, remove it (no longer need to refetch)
+      const skipInvalidation = invalidations.find((invkey) => {
+        return invkey.reduce((acc, part, k) => acc && part === linkedQueryKey[k], true)
+      });
+      if (skipInvalidation) {
+        console.log('in skip', skipInvalidation.join(','));
+        alreadyInvalidated.push(skipInvalidation.join(','));
+      }
+    }
+  });
+
+  // invalidate whatever wasn't already replaced by linked
+  invalidations.forEach((queryKey) => {
+    if (!alreadyInvalidated.includes(queryKey.join(','))) {
+      console.log('invalidating', queryKey);
+      queryClient.invalidateQueries({ queryKey });
+    }
+  });
+
+}
 
 const EventsContext = createContext();
 const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
@@ -185,6 +241,7 @@ export function EventsProvider({ children }) {
       }
 
       // generate log events from events
+      // TODO: shuold probably split this in activity log rather than here
       if (e.event === 'Crew_CompositionChanged') {
         new Set([...e.returnValues.oldCrew, ...e.returnValues.newCrew, '']).forEach((i) => { // the extra '' is in case both crews are empty
           transformedEvents.push({ ...e, event: eventName, i, key: `${e.id}_${i}` });
@@ -194,57 +251,18 @@ export function EventsProvider({ children }) {
       }
     });
 
-    // TODO: this timeout can be removed if/when we start optimistically updating query cache from
-    //        the event's linked assets
-    // (hopefully cure any race conditions)
-    setTimeout(() => {
+    // update / invalidation query cache
+    if (!skipInvalidations) {
       transformedEvents.forEach(e => {
-        if (!skipInvalidations) {
-          const invalidations = [
-            ...getInvalidations(e.event, e.returnValues, e.linked),
-            ...(e.invalidations || [])
-          ];
-          // console.log('e.event', e.event, invalidations, e);
-
-          invalidations.forEach((queryKey) => {
-
-            // // // // //
-            // TODO: vvv remove this when updating more systematically from linked data
-
-            // if this event invalidates a Plot and has a linked Plot, use the linked Plot data
-            // (but still also re-fetch the plot for sanity's sake)
-            let optimisticUpdate = false;
-            if (queryKey[0] === 'plots') {
-              const [, asteroidId, plotId] = queryKey;
-              const optimisticPlot = e.linked
-                .find(({ type, asset }) => type === 'Lot' && asset?.asteroid === asteroidId && asset?.i === plotId)
-                ?.asset;
-              if (optimisticPlot) {
-                const needsBuilding = !!optimisticPlot.building;
-                optimisticPlot.building = e.linked
-                  .find(({ type, asset }) => type === optimisticPlot.building?.type && asset?.i === optimisticPlot.building?.i)
-                  ?.asset;
-                if (!needsBuilding || !!optimisticPlot.building) {
-                  queryClient.setQueryData(queryKey, optimisticPlot);
-                  optimisticUpdate = true;
-                }                
-              }
-            }
-            // ^^^
-            // // // // //
-
-            if (!optimisticUpdate) {
-              queryClient.invalidateQueries({ queryKey });
-            }
-          });
-        }
+        updateCacheQueryData(e, queryClient);
       });
+    }
 
-      setEvents((prevEvents) => uniq([
-        ...transformedEvents,
-        ...prevEvents
-      ], 'key'));
-    }, 1000);
+    // update events
+    setEvents((prevEvents) => uniq([
+      ...transformedEvents,
+      ...prevEvents
+    ], 'key'));
   }, []);
 
   // try to process WS events grouped by block

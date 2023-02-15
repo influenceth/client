@@ -36,7 +36,7 @@ const StyledWatchlist = styled.div`
 const Watchlist = (props) => {
   const history = useHistory();
   const { isMobile } = useScreenSize();
-  const { watchlist: { data: watchlist }} = useWatchlist();
+  const { data: watchlist } = useWatchlist();
   const watchAsteroid = useWatchAsteroid();
   const includeWatched = useStore(s => s.asteroids.watched.mapped);
   const filterWatched = useStore(s => s.asteroids.watched.filtered);

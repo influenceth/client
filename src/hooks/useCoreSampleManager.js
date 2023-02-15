@@ -33,7 +33,7 @@ const useCoreSampleManager = (asteroidId, plotId) => {
     };
 
     let status = 'READY';
-    const activeSample = plot?.coreSamples.find((c) => c.owner === crew?.i && c.status < CoreSample.STATUS_FINISHED);
+    const activeSample = (plot?.coreSamples || []).find((c) => c.owner === crew?.i && c.status < CoreSample.STATUS_FINISHED);
     if (activeSample) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_CoreSampleStartSampling'

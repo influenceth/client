@@ -339,7 +339,8 @@ const formatPlans = (item) => {
   return {
     key: item.key,
     icon: <PlanBuildingIcon />,
-    label: `${item.building.type} Site Plan`,
+    // TODO: requires change on server for /plans to return with populated buildings
+    label: `${item.building.__t} Site Plan`,
     crewId: item.occupier,
     asteroidId: item.asteroid,
     plotId: item.i,

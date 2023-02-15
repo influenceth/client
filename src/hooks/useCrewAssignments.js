@@ -1,13 +1,16 @@
 import { useQuery } from 'react-query';
-import useAuth from '~/hooks/useAuth';
 
 import api from '~/lib/api';
+import useAuth from '~/hooks/useAuth';
+import useCrew from '~/hooks/useCrew';
 
 const useCrewAssignments = () => {
   const { token } = useAuth();
+  const { crewMemberMap } = useCrew();
 
   return useQuery(
-    [ 'assignments', token ],
+    // (refresh on crewMemberMap change)
+    [ 'assignments', token, Object.keys(crewMemberMap || {}).sort().join(',') ],
     async () => {
       const assignmentsByBook = {};
       let totalAssignments = 0;

@@ -4,6 +4,7 @@ import { useQuery } from 'react-query';
 import useAuth from '~/hooks/useAuth';
 import useChainTime from '~/hooks/useChainTime';
 import useCrew from '~/hooks/useCrew';
+import { usePlotAggregate } from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
 
@@ -20,11 +21,10 @@ export function ActionItemProvider({ children }) {
     { enabled: !!crew?.i }
   );
 
-  // TODO: probably could move planned lots into actionitems component
-  const { data: plannedLots } = useQuery(
-    [ 'planned', crew?.i ],
+  const { data: plannedLots } = usePlotAggregate(
+    [ 'plots', 'planned', crew?.i ],
     () => api.getCrewPlannedLots(),
-    { enabled: !!crew?.i }
+    { enabled: !!crew?.i },
   );
 
   const pendingTransactions = useStore(s => s.pendingTransactions);
