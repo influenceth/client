@@ -1,38 +1,38 @@
 import { useCallback, useEffect, useMemo, useRef, useState, createContext } from 'react';
+import { Provider, Signer } from 'starknet';
 import getStarknet from 'get-starknet-core';
+import { createSession, supportsSessions, SessionAccount } from '@argent/x-sessions';
 import { injectController } from '@cartridge/controller';
-import { Address } from '@influenceth/sdk';
+import { Address, starknetContracts } from '@influenceth/sdk';
 
 import api from '~/lib/api';
+import useStore from '~/hooks/useStore';
 
-// Add Cartridge wallet to get-starknet set
-const dispatcherMethods = [
-  'Asteroid_startScan',
-  'Asteroid_finishScan',
-  'Asteroid_setName',
-  'Construction_finish',
-  'Construction_start',
-  'Construction_deconstruct',
-  'Construction_plan',
-  'Construction_unplan',
-  'CoreSample_startSampling',
-  'CoreSample_finishSampling',
-  'Crewmate_setName',
-  'Crew_setComposition',
-  'Extraction_finish',
-  'Extraction_start',
-  'Inventory_transferStart',
-  'Inventory_transferFinish',
-  'Lot_occupy'
+const nonsessionMethods = [
+  "Asteroid_bridgeToL1",
+  "AsteroidSale_purchase",
+  "Crewmate_bridgeToL1",
+  "Crewmate_purchaseAdalian",
+  "Crewmate_purchaseAndInitializeAdalian",
+  'Crew_mint'
 ];
+const dispatcherSessionMethods = starknetContracts.Dispatcher
+  .filter((c) => c.type === 'function' && c.stateMutability !== 'view' && c.name.includes('_') && !nonsessionMethods.includes(c.name))
+  .map((c) => c.name);
 
-const sessionWhitelist = dispatcherMethods.map(method => {
-  return { target: process.env.REACT_APP_STARKNET_DISPATCHER, method };
-});
+const argentSessionWhitelist = dispatcherSessionMethods.map(selector => ({
+  contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+  selector
+}));
 
-injectController(sessionWhitelist, { url: "https://keychain-git-removenextrouting.preview.cartridge.gg/" });
+const cartridgeSessionWhitelist = dispatcherSessionMethods.map(method => ({
+  target: process.env.REACT_APP_STARKNET_DISPATCHER,
+  method
+}));
 
-const { disconnect, enable, getAvailableWallets, getLastConnectedWallet } = getStarknet;
+injectController(cartridgeSessionWhitelist, { url: "https://keychain-git-removenextrouting.preview.cartridge.gg/" });
+
+const { enable, getAvailableWallets, getLastConnectedWallet } = getStarknet;
 
 const getErrorMessage = (error) => {
   console.error(error);
@@ -54,6 +54,105 @@ const getAllowedChainLabel = (wallet) => {
   return wallet === 'Braavos' ? 'Goerli-Alpha' : 'Testnet';
 }
 
+const useSessionSigner = (starknet) => {
+  const activeSessionWalletData = useStore(s => s.auth.sessionWalletData);
+  const dispatchSessionStarted = useStore(s => s.dispatchSessionStarted);
+  const dispatchSessionEnded = useStore(s => s.dispatchSessionEnded);
+
+  const walletSupported = useMemo(
+    () => starknet?.account && ['Argent X'].includes(starknet?.name),
+    [starknet?.account, starknet?.name]
+  );
+
+  const [userEnabled, setUserEnabled] = useState(false);
+  useEffect(() => {
+    if (starknet?.account?.address) {
+      supportsSessions(starknet.account.address, starknet.account)
+        .then((enabled) => {
+          setUserEnabled(enabled);
+        })
+        .catch((e) => {
+          // console.warn('not enabled', e)
+        });
+    }
+  }, [starknet?.account]);
+
+  const activeSession = useMemo(() => {
+    if (starknet?.provider && activeSessionWalletData) {
+      try {
+        const { address, providerBaseUrl, signerKeypair, signedSession } = activeSessionWalletData;
+        if (!(address && providerBaseUrl && signerKeypair && signedSession)) throw new Error('Missing session data.');
+        if (starknet.account.address && !Address.areEqual(starknet.account.address, address)) throw new Error('Session address mismatch.');
+        if (JSON.stringify(signedSession.policies) !== JSON.stringify(argentSessionWhitelist)) throw new Error('Default session policies changed.');
+        if (signedSession.expires < Date.now() / 1000) throw new Error('Session expired.');
+
+        // rebuild signer
+        const signer = new Signer();
+        signer.keyPair._importPublic(signerKeypair.pub, signerKeypair.pubEnc);
+        signer.keyPair._importPrivate(signerKeypair.priv, signerKeypair.privEnc);
+
+        // instantiate session account
+        return new SessionAccount(
+          { sequencer: { baseUrl: providerBaseUrl } },
+          address,
+          signer,
+          signedSession
+        );
+      } catch (e) {
+        console.warn(e);
+        dispatchSessionEnded();
+        // TODO: prompt to restart session?
+      }
+    }
+    return null;
+  }, [activeSessionWalletData, starknet?.provider, dispatchSessionEnded]);
+  
+  // TODO: we need to end sessions automatically on relevant errors
+  //  (i.e. expiration, fund depletion, etc)
+  const startSession = useCallback(async () => {
+    if (walletSupported) {
+      if (starknet?.name === 'Argent X') {
+        const signer = new Signer();
+        createSession(
+          {
+            key: await signer.getPubKey(),
+            expires: Math.round((Date.now() + 86400e3) / 1000),
+            policies: argentSessionWhitelist
+          },
+          starknet.account
+        ).then((signedSession) => {
+          if (signedSession) {
+            dispatchSessionStarted({
+              address: starknet.account.address,
+              providerBaseUrl: starknet.account.baseUrl,
+              signerKeypair: {
+                pub: signer.keyPair.getPublic('hex'),
+                pubEnc: 'hex',
+                priv: signer.keyPair.getPrivate('hex'),
+                privEnc: 'hex',
+              },
+              signedSession
+            })
+          }
+        });
+      }
+    }
+  }, [starknet?.account, dispatchSessionStarted]);
+
+  const stopSession = useCallback(() => {
+    dispatchSessionEnded();
+  }, [dispatchSessionEnded]);
+
+  return {
+    supported: walletSupported,
+    enabled: userEnabled,
+    startSession,
+    stopSession,
+    account: activeSession,
+  }
+}
+
+
 const WalletContext = createContext();
 
 export function WalletProvider({ children }) {
@@ -63,6 +162,8 @@ export function WalletProvider({ children }) {
   const [error, setError] = useState();
   const [starknet, setStarknet] = useState(false);
   const [starknetReady, setStarknetReady] = useState(false);
+
+  const session = useSessionSigner(starknet);
 
   // if using devnet, put "create block" on a timer since otherwise, blocks will not be advancing in the background
   useEffect(() => {
@@ -148,6 +249,11 @@ export function WalletProvider({ children }) {
     }
   }, [attemptConnection]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const disconnect = useCallback((params) => {
+    if (session.account) session.stopSession();
+    getStarknet.disconnect(params);
+  }, [session]);
+
   // while connecting or connected, listen for network changes from extension
   useEffect(() => {
     const onConnectionChange = (e) => {
@@ -207,6 +313,7 @@ export function WalletProvider({ children }) {
       isConnecting: connecting,
       walletIcon: starknet?.icon && <img src={starknet.icon} alt={`${starknet.name}`} />,
       walletName: starknet?.name,
+      session,
       starknet,
     }}>
       {starknetReady && children}

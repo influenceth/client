@@ -408,7 +408,7 @@ const formatTx = (item) => {
         history.push(`/owned-crew`);
       };
       break;
-    case 'NAME_CREW':
+    case 'NAME_CREWMATE':
       formatted.icon = <CrewMemberIcon />;
       formatted.label = 'Name Crewmate';
       formatted.onClick = ({ history }) => {

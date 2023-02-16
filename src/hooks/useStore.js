@@ -63,7 +63,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     },
 
     auth: {
-      token: null
+      token: null,
+      sessionWalletData: null
     },
 
     selectedCrewId: null,
@@ -394,6 +395,14 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchCrewSelected: (crewId) => set(produce(state => {
       state.selectedCrewId = crewId;
+    })),
+    
+    dispatchSessionStarted: (data) => set(produce(state => {
+      state.auth.sessionWalletData = data;
+    })),
+
+    dispatchSessionEnded: () => set(produce(state => {
+      state.auth.sessionWalletData = null;
     })),
 
     dispatchCutscene: (source, allowSkip) => set(produce(state => {
