@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { starknetContracts as configs } from '@influenceth/sdk';
-import { Contract, shortString } from 'starknet';
+import { Contract, Provider, shortString } from 'starknet';
 
 import useAuth from '~/hooks/useAuth';
 import useEvents from '~/hooks/useEvents';
@@ -9,6 +9,9 @@ import useInterval from '~/hooks/useInterval';
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
 const ChainTransactionContext = createContext();
+
+// doing this b/c currently starknet's provider doesn't work for provider.getTransaction/getTransactionReceipt
+const genericProvider = new Provider({ sequencer: { baseUrl: process.env.REACT_APP_STARKNET_NETWORK } });
 
 // TODO: now that all are on dispatcher, could probably collapse a lot of redundant code in getContracts
 const contractConfig = {
@@ -490,7 +493,6 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [contracts, pendingTransactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const lastBlockNumberHandled = useRef(lastBlockNumber);
   useEffect(() => {
     if (contracts && pendingTransactions?.length) {
       const currentBlockNumber = lastBlockNumber + 1;
@@ -519,48 +521,41 @@ export function ChainTransactionProvider({ children }) {
             } else {
               dispatchPendingTransactionUpdate(txHash, { txEvent });
             }
-
-          // TODO: fix below
-          //  - cartridge needs to respond to getTransactionReceipt more appropriately
-          //    (seems like always returning "Transaction hash not found"; at most should do that for REJECTED txs)
-          //  - move this into its own effect dependent only on block number changes so not running getTransactionReceipt so often
-
-          // // if pending transaction has not turned into an event within 45 seconds
-          // // check every useEffect loop if tx is rejected (or missing)
-          // } else if (lastBlockNumber > lastBlockNumberHandled.current) {
-          //   if (chainTime > Math.floor(tx.timestamp / 1000) + 180) { // TODO: lower this
-          //     starknet.provider.getTransactionReceipt(txHash)
-          //       .then((receipt) => {
-          //         console.info(`RECEIPT for tx ${txHash}`, receipt);  // TODO: remove this
-          //         if (receipt && receipt.status === 'REJECTED') {
-          //           dispatchPendingTransactionComplete(txHash);
-          //           dispatchFailedTransaction({
-          //             key,
-          //             vars,
-          //             txHash,
-          //             err: receipt.status_data || 'Transaction was rejected.'
-          //           });
-          //         }
-          //       })
-          //       .catch((err) => {
-          //         console.warn(err);
-          //         if (err?.message.includes('Transaction hash not found')) {
-          //           dispatchPendingTransactionComplete(txHash);
-          //           dispatchFailedTransaction({
-          //             key,
-          //             vars,
-          //             txHash,
-          //             err: 'Transaction was rejected.'
-          //           });
-          //         }
-          //       });
-          //   }
           }
         }
       });
     }
-    lastBlockNumberHandled.current = lastBlockNumber;
   }, [events?.length, lastBlockNumber]);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (contracts && pendingTransactions?.length) {
+      pendingTransactions.filter((tx) => !tx.txEvent).forEach((tx) => {
+        // if it's been 45+ seconds, start checking on each block if has been rejected (or missing)
+        if (chainTime > Math.floor(tx.timestamp / 1000) + 45) {
+          const { key, vars, txHash } = tx;
+
+          genericProvider.getTransactionReceipt(txHash)
+            .then((receipt) => {
+              console.info(`RECEIPT for tx ${txHash}`, receipt);  // TODO: remove this
+              if (receipt && receipt.status === 'REJECTED') {
+                dispatchPendingTransactionComplete(txHash);
+                dispatchFailedTransaction({
+                  key,
+                  vars,
+                  txHash,
+                  err: receipt.status_data || 'Transaction was rejected.'
+                });
+              }
+            })
+            .catch((err) => {
+              console.warn(err);
+            });
+        }
+      });
+    }
+  }, [lastBlockNumber])
+
+
 
   const execute = useCallback(async (key, vars) => {
     if (contracts && contracts[key]) {

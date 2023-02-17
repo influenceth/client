@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, createContext } from 'react';
-import { Provider, Signer } from 'starknet';
+import { Signer } from 'starknet';
 import getStarknet from 'get-starknet-core';
 import { createSession, supportsSessions, SessionAccount } from '@argent/x-sessions';
 import { injectController } from '@cartridge/controller';
