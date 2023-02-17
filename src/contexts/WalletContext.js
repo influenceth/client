@@ -105,7 +105,7 @@ const useSessionSigner = (starknet) => {
       }
     }
     return null;
-  }, [activeSessionWalletData, starknet?.provider, dispatchSessionEnded]);
+  }, [activeSessionWalletData, starknet?.account?.address, starknet?.provider, dispatchSessionEnded]);
   
   // TODO: we need to end sessions automatically on relevant errors
   //  (i.e. expiration, fund depletion, etc)
