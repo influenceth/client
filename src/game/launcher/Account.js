@@ -269,7 +269,7 @@ const Account = (props) => {
     if (!hasSeenIntroVideo) {
       dispatchSeenIntroVideo(true);
       dispatchCutscene(
-        `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/influence/goerli/videos/intro.m3u8`,
+        `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/videos/intro.m3u8`,
         true
       );
     }
