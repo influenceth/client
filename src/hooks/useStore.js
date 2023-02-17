@@ -465,13 +465,17 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchFailedTransaction: ({ key, vars, txHash, err }) => set(produce(state => {
       if (!state.failedTransactions) state.failedTransactions = [];
-      state.failedTransactions.push({
-        key,
-        vars,
-        err,
-        txHash,
-        timestamp: Date.now()
-      });
+      // because different wallets report tx failure in different ways, this is
+      // prone to duplicates, so only report one failure per failed transaction
+      if (!state.failedTransactions.find((tx) => tx.txHash === txHash)) {
+        state.failedTransactions.push({
+          key,
+          vars,
+          err,
+          txHash,
+          timestamp: Date.now()
+        });
+      }
     })),
 
     dispatchFailedTransactionDismissed: (txHashOrTimestamp) => set(produce(state => {
