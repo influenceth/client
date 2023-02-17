@@ -462,7 +462,10 @@ export function ChainTransactionProvider({ children }) {
   useEffect(() => {
     if (contracts && pendingTransactions?.length) {
       pendingTransactions.forEach(({ key, vars, txHash }) => {
+        // (sanity check) this should not be possible since pendingTransaction should not be created
+        // without txHash... so we aren't even reporting this error to user since should not happen
         if (!txHash) return dispatchPendingTransactionComplete(txHash);
+
         if (!transactionWaiters.current.includes(txHash)) {
           transactionWaiters.current.push(txHash);
 
@@ -482,6 +485,12 @@ export function ChainTransactionProvider({ children }) {
             // })
             .catch((err) => {
               contracts[key].onTransactionError(err, vars);
+              dispatchFailedTransaction({
+                key,
+                vars,
+                txHash,
+                err: err?.message || 'Transaction was rejected.'
+              });
               dispatchPendingTransactionComplete(txHash);
             })
             .finally(() => {
@@ -536,15 +545,15 @@ export function ChainTransactionProvider({ children }) {
 
           genericProvider.getTransactionReceipt(txHash)
             .then((receipt) => {
-              console.info(`RECEIPT for tx ${txHash}`, receipt);  // TODO: remove this
               if (receipt && receipt.status === 'REJECTED') {
-                dispatchPendingTransactionComplete(txHash);
+                contracts[key].onTransactionError(receipt, vars);
                 dispatchFailedTransaction({
                   key,
                   vars,
                   txHash,
                   err: receipt.status_data || 'Transaction was rejected.'
                 });
+                dispatchPendingTransactionComplete(txHash);
               }
             })
             .catch((err) => {
