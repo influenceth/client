@@ -27,7 +27,7 @@ const getIconUrl = (asset, type, { append, w, h, f } = {}) => {
 }
 
 const getModelUrl = (asset, type) => {
-  const slug = `influence/goerli/models/${type}/${getSlug(asset)}.v${asset.modelVersion || '1'}.glb`;
+  const slug = `models/${type}/${getSlug(asset)}.v${asset.modelVersion || '1'}.glb`;
   return `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/${slug}`;
 }
 

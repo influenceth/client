@@ -2,13 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Howler, Howl } from 'howler';
 
 import useStore from '~/hooks/useStore';
-import ambient1 from '~/assets/sounds/ambient1.mp3';
-import ambient2 from '~/assets/sounds/ambient2.mp3';
-import ambient3 from '~/assets/sounds/ambient3.mp3';
-import ambient4 from '~/assets/sounds/ambient4.mp3';
-import click from '~/assets/sounds/click.wav';
-import failure from '~/assets/sounds/failure.wav';
-import success from '~/assets/sounds/success.wav';
 
 class Sound extends Howl {
   constructor(args) {
@@ -18,17 +11,26 @@ class Sound extends Howl {
   }
 }
 
+const basePath = process.env.REACT_APP_CLOUDFRONT_OTHER_URL;
 const sounds = {
   effects: {
-    click: { src: [ click ], html5: true, preload: false, volume: 0.25 },
-    failure: { src: [ failure ], html5: true, preload: false, volume: 1.0 },
-    success: { src: [ success ], html5: true, preload: false, volume: 1.0 }
+    click: { src: [ `${basePath}/sounds/click.mp3` ], html5: true, preload: false, volume: 0.25 },
+    failure: { src: [ `${basePath}/sounds/failure.mp3` ], html5: true, preload: false, volume: 1.0 },
+    success: { src: [ `${basePath}/sounds/success.mp3` ], html5: true, preload: false, volume: 1.0 }
   },
   music: {
-    ambient1: { src: [ ambient1 ], html5: true, preload: false, volume: 1.0 },
-    ambient2: { src: [ ambient2 ], html5: true, preload: false, volume: 1.0 },
-    ambient3: { src: [ ambient3 ], html5: true, preload: false, volume: 1.0 },
-    ambient4: { src: [ ambient4 ], html5: true, preload: false, volume: 1.0 },
+    ambient1: { src: [ `${basePath}/music/ambient1.mp3` ], html5: true, preload: false, volume: 0.25 },
+    ambient2: { src: [ `${basePath}/music/ambient2.mp3` ], html5: true, preload: false, volume: 0.25 },
+    ambient3: { src: [ `${basePath}/music/ambient3.mp3` ], html5: true, preload: false, volume: 0.25 },
+    ambient4: { src: [ `${basePath}/music/ambient4.mp3` ], html5: true, preload: false, volume: 0.25 },
+    ambient5: { src: [ `${basePath}/music/ambient5.mp3` ], html5: true, preload: false, volume: 0.35 },
+    ambient6: { src: [ `${basePath}/music/ambient6.mp3` ], html5: true, preload: false, volume: 0.25 },
+    ambient7: { src: [ `${basePath}/music/ambient7.mp3` ], html5: true, preload: false, volume: 0.25 },
+    ambient8: { src: [ `${basePath}/music/ambient8.mp3` ], html5: true, preload: false, volume: 0.25 },
+    ambient9: { src: [ `${basePath}/music/ambient9.mp3` ], html5: true, preload: false, volume: 0.25 },
+    ambient10: { src: [ `${basePath}/music/ambient10.mp3` ], html5: true, preload: false, volume: 0.25 },
+    ambient11: { src: [ `${basePath}/music/ambient11.mp3` ], html5: true, preload: false, volume: 0.25 },
+    ambient12: { src: [ `${basePath}/music/ambient12.mp3` ], html5: true, preload: false, volume: 0.25 }
   }
 };
 
@@ -69,7 +71,7 @@ const Audio = (props) => {
 
     let to;
     if (musicVolume === 0 || !tracks[index]) {
-      to = setTimeout(() => setLastTrack(index), Math.random() * 60000 * 3);
+      to = setTimeout(() => setLastTrack(index), Math.random() * 60000);
     } else {
       const track = new Sound(tracks[index]);
       setCurrentTrack(track);
@@ -111,7 +113,7 @@ const Audio = (props) => {
         currentTrack.volume(targetVolume);
       }
     }
-    
+
     return () => {
       if (to) clearTimeout(to);
     }
