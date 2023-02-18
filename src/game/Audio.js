@@ -19,18 +19,18 @@ const sounds = {
     success: { src: [ `${basePath}/sounds/success.mp3` ], html5: true, preload: false, volume: 1.0 }
   },
   music: {
-    ambient1: { src: [ `${basePath}/music/ambient1.mp3` ], html5: true, preload: false, volume: 0.25 },
-    ambient2: { src: [ `${basePath}/music/ambient2.mp3` ], html5: true, preload: false, volume: 0.25 },
-    ambient3: { src: [ `${basePath}/music/ambient3.mp3` ], html5: true, preload: false, volume: 0.25 },
-    ambient4: { src: [ `${basePath}/music/ambient4.mp3` ], html5: true, preload: false, volume: 0.25 },
-    ambient5: { src: [ `${basePath}/music/ambient5.mp3` ], html5: true, preload: false, volume: 0.35 },
-    ambient6: { src: [ `${basePath}/music/ambient6.mp3` ], html5: true, preload: false, volume: 0.25 },
-    ambient7: { src: [ `${basePath}/music/ambient7.mp3` ], html5: true, preload: false, volume: 0.25 },
-    ambient8: { src: [ `${basePath}/music/ambient8.mp3` ], html5: true, preload: false, volume: 0.25 },
-    ambient9: { src: [ `${basePath}/music/ambient9.mp3` ], html5: true, preload: false, volume: 0.25 },
-    ambient10: { src: [ `${basePath}/music/ambient10.mp3` ], html5: true, preload: false, volume: 0.25 },
-    ambient11: { src: [ `${basePath}/music/ambient11.mp3` ], html5: true, preload: false, volume: 0.25 },
-    ambient12: { src: [ `${basePath}/music/ambient12.mp3` ], html5: true, preload: false, volume: 0.25 }
+    ambient1: { src: [ `${basePath}/music/ambient1.mp3` ], html5: true, preload: false, volume: 1.0 },
+    ambient2: { src: [ `${basePath}/music/ambient2.mp3` ], html5: true, preload: false, volume: 1.0 },
+    ambient3: { src: [ `${basePath}/music/ambient3.mp3` ], html5: true, preload: false, volume: 1.0 },
+    ambient4: { src: [ `${basePath}/music/ambient4.mp3` ], html5: true, preload: false, volume: 1.0 },
+    ambient5: { src: [ `${basePath}/music/ambient5.mp3` ], html5: true, preload: false, volume: 1.0 },
+    ambient6: { src: [ `${basePath}/music/ambient6.mp3` ], html5: true, preload: false, volume: 1.0 },
+    ambient7: { src: [ `${basePath}/music/ambient7.mp3` ], html5: true, preload: false, volume: 1.0 },
+    ambient8: { src: [ `${basePath}/music/ambient8.mp3` ], html5: true, preload: false, volume: 1.0 },
+    ambient9: { src: [ `${basePath}/music/ambient9.mp3` ], html5: true, preload: false, volume: 1.0 },
+    ambient10: { src: [ `${basePath}/music/ambient10.mp3` ], html5: true, preload: false, volume: 1.0 },
+    ambient11: { src: [ `${basePath}/music/ambient11.mp3` ], html5: true, preload: false, volume: 1.0 },
+    ambient12: { src: [ `${basePath}/music/ambient12.mp3` ], html5: true, preload: false, volume: 0.5 }
   }
 };
 
@@ -61,7 +61,7 @@ const Audio = (props) => {
     };
   }, []);
 
-  // Play random ambient music with a gap between them
+  // Play random ambient music
   useEffect(() => {
     if (!soundEnabled) return;
 
@@ -83,7 +83,7 @@ const Audio = (props) => {
         track.stop();
         track.unload();
         setCurrentTrack(null);
-        to = setTimeout(() => setLastTrack(index), Math.random() * 60000 * 3);
+        to = setTimeout(() => setLastTrack(index), Math.random() * 2500);
       });
     }
 
