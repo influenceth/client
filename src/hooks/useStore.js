@@ -63,7 +63,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     },
 
     auth: {
-      token: null
+      token: null,
+      sessionWalletData: null
     },
 
     selectedCrewId: null,
@@ -395,6 +396,14 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchCrewSelected: (crewId) => set(produce(state => {
       state.selectedCrewId = crewId;
     })),
+    
+    dispatchSessionStarted: (data) => set(produce(state => {
+      state.auth.sessionWalletData = data;
+    })),
+
+    dispatchSessionEnded: () => set(produce(state => {
+      state.auth.sessionWalletData = null;
+    })),
 
     dispatchCutscene: (source, allowSkip) => set(produce(state => {
       state.cutscene = source ? { source, allowSkip: allowSkip || false } : null;
@@ -456,13 +465,17 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchFailedTransaction: ({ key, vars, txHash, err }) => set(produce(state => {
       if (!state.failedTransactions) state.failedTransactions = [];
-      state.failedTransactions.push({
-        key,
-        vars,
-        err,
-        txHash,
-        timestamp: Date.now()
-      });
+      // because different wallets report tx failure in different ways, this is
+      // prone to duplicates, so only report one failure per failed transaction
+      if (!txHash || !state.failedTransactions.find((tx) => tx.txHash === txHash)) {
+        state.failedTransactions.push({
+          key,
+          vars,
+          err,
+          txHash,
+          timestamp: Date.now()
+        });
+      }
     })),
 
     dispatchFailedTransactionDismissed: (txHashOrTimestamp) => set(produce(state => {

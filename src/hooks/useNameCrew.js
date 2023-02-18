@@ -6,12 +6,12 @@ const useNameCrew = (i) => {
   const { execute, getStatus } = useContext(ChainTransactionContext);
 
   const nameCrew = useCallback(
-    (name) => execute('NAME_CREW', { i, name }),
+    (name) => execute('NAME_CREWMATE', { i, name }),
     [execute, i]
   );
 
   const status = useMemo(
-    () => getStatus('NAME_CREW', { i }),
+    () => getStatus('NAME_CREWMATE', { i }),
     [getStatus, i]
   );
 
