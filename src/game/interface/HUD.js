@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
-import {
-  MdScreenRotation as ReorientCameraIcon,
-  MdBugReport as BugIcon
-} from 'react-icons/md';
 
 import { BackIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
@@ -16,6 +12,7 @@ import ResourceMapToggle from './hud/ResourceMapToggle';
 import useActionButtons from './hud/useActionButtons';
 import useActionModules from './hud/useActionModules';
 import ActionModules, { ActionModule } from './hud/ActionModules';
+import SystemControls from './outliner/SystemControls';
 
 const bottomMargin = 90;
 const rightModuleWidth = 375;
@@ -45,7 +42,7 @@ const LeftWrapper = styled(Wrapper)`
 `;
 
 const RightWrapper = styled(Wrapper)`
-  right: -23px;
+  right: 0px;
 `;
 
 const LeftActions = styled.div`
@@ -121,43 +118,12 @@ const ActionButtonContainer = styled(ActionModule)`
   width: 100%;
 `;
 
-const CameraControls = styled.div`
-  align-items: center;
-  background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
-  border: 1px solid ${p => p.theme.colors.main};
-  border-radius: 6px;
-  color: ${p => p.theme.colors.main};
-  cursor: ${p => p.theme.cursors.active};
-  display: flex;
-  font-size: 28px;
-  height: 40px;
-  justify-content: center;
-  opacity: ${p => p.visible ? 0.7 : 0};
-  pointer-events: ${p => p.visible ? 'all' : 'none'};
-  position: absolute;
-  right: -10px;
-  top: 10px;
-  transition: opacity 250ms ease, top 250ms ease;
-  width: 40px;
-  &:hover {
-    opacity: 1;
-  }
-`;
-
-const HelpButton = styled(CameraControls)`
-  background: rgba(255, 152, 79, 0.2);
-  border: 1px solid ${p => p.theme.colors.orange};
-  color: ${p => p.theme.colors.orange};
-  ${p => p.lower && 'top: 60px;'}
-`;
-
 const HUD = () => {
   const { plotId } = useStore(s => s.asteroids.plot) || {};
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
 
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
-  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
@@ -184,10 +150,6 @@ const HUD = () => {
     }
   }, [plotId, zoomToPlot]);
 
-  const openHelpChannel = useCallback(() => {
-    window.open(process.env.REACT_APP_HELP_URL, '_blank');
-  }, []);
-
   useEffect(() => ReactTooltip.rebuild(), [actions]);
 
   return (
@@ -212,6 +174,8 @@ const HUD = () => {
         <InfoPane />
       </LeftWrapper>
 
+      <SystemControls />
+
       <RightWrapper>
         <ActionModuleContainer lower={!actions?.length}>
           <ActionModules containerWidth={rightModuleWidth} />
@@ -225,27 +189,6 @@ const HUD = () => {
           ))}
         </ActionButtonContainer>
       </RightWrapper>
-
-      <CameraControls
-        data-tip="Realign camera to poles"
-        data-for="global"
-        data-place="left"
-        onClick={dispatchReorientCamera}
-        visible={zoomStatus === 'in'}>
-        <ReorientCameraIcon />
-      </CameraControls>
-
-      {process.env.REACT_APP_HELP_URL && (
-        <HelpButton
-          data-tip="Report a Testnet Bug"
-          data-for="global"
-          data-place="left"
-          onClick={openHelpChannel}
-          lower={zoomStatus === 'in'}
-          visible>
-          <BugIcon />
-        </HelpButton>
-      )}
 
       <ActionDialog />
     </>

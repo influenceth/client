@@ -1,15 +1,14 @@
-import { useState, useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useCallback } from 'react';
 import styled from 'styled-components';
-import screenfull from 'screenfull';
-import { AiOutlineMenu, AiOutlinePushpin, AiFillPushpin } from 'react-icons/ai';
-import { MdFullscreen, MdFullscreenExit } from 'react-icons/md';
-import { BsEyeSlash, BsEye } from 'react-icons/bs';
 
 import useStore from '~/hooks/useStore';
-import useScreenSize from '~/hooks/useScreenSize';
-import IconButton from '~/components/IconButton';
-import { WarningIcon } from '~/components/Icons';
+import HudIconButton from '~/components/HudIconButton';
+import {
+  BugIcon,
+  MenuIcon,
+  SettingsIcon, 
+  ReorientCameraIcon,
+  WarningIcon } from '~/components/Icons';
 
 const MobileWarning = styled.div`
   align-items: center;
@@ -23,98 +22,74 @@ const MobileWarning = styled.div`
 
 const StyledSystemControls = styled.div`
   align-items: center;
-  bottom: 0;
   display: flex;
+  flex-direction: row;
   height: 50px;
-  justify-content: flex-end;
+  opacity: 0.5;
+  pointer-events: all;
   position: absolute;
-  width: 385px;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    width: 100%;
+  right: 5px;
+  top: 0;
+  transition: opacity 250ms ease;
+  &:hover {
+    opacity: 1;
   }
 `;
 
-const SystemControls = (props) => {
-  const history = useHistory();
-  const { isMobile } = useScreenSize();
-  const outlinerPinned = useStore(s => s.outliner.pinned);
-  const dispatchOutlinerPinned = useStore(s => s.dispatchOutlinerPinned);
-  const dispatchOutlinerUnpinned = useStore(s => s.dispatchOutlinerUnpinned);
-  const skyboxVisible = useStore(s => s.graphics.skybox);
-  const dispatchSkyboxHidden = useStore(s => s.dispatchSkyboxHidden);
-  const dispatchSkyboxUnhidden = useStore(s => s.dispatchSkyboxUnhidden);
-  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-  const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
+const VerticalRule = styled.div`
+  border-left: 1px solid #CCC;
+  height: 28px;
+  margin-left: 14px;
+  opacity: 0.33;
+  padding-left: 14px;
+`;
 
-  useEffect(() => {
-    if (screenfull.isEnabled) {
-      screenfull.on('change', () => {
-        setFullscreen(screenfull.isEnabled && screenfull.isFullscreen);
-      });
-    }
+const SystemControls = (props) => {
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+
+  const openHelpChannel = useCallback(() => {
+    window.open(process.env.REACT_APP_HELP_URL, '_blank');
   }, []);
 
   return (
     <StyledSystemControls>
-      {!outlinerPinned && !isMobile && (
-        <IconButton
-          data-tip="Pin Outliner"
-          onClick={dispatchOutlinerPinned}
-          borderless>
-          <AiOutlinePushpin />
-        </IconButton>
-      )}
-      {outlinerPinned && !isMobile && (
-        <IconButton
-          data-tip="Unpin Outliner"
-          onClick={dispatchOutlinerUnpinned}
-          borderless>
-          <AiFillPushpin />
-        </IconButton>
-      )}
-      {screenfull.isEnabled && !fullscreen && !isMobile && (
-        <IconButton
-          data-tip="Go Fullscreen"
-          onClick={() => screenfull.request()}
-          borderless>
-          <MdFullscreen />
-        </IconButton>
-      )}
-      {screenfull.isEnabled && fullscreen && !isMobile && (
-        <IconButton
-          data-tip="Exit Fullscreen"
-          onClick={() => screenfull.exit()}
-          borderless>
-          <MdFullscreenExit />
-        </IconButton>
-      )}
-      {skyboxVisible && !isMobile && (
-        <IconButton
-          data-tip="Hide Skybox"
-          onClick={dispatchSkyboxHidden}
-          borderless>
-          <BsEyeSlash />
-        </IconButton>
-      )}
-      {!skyboxVisible && !isMobile && (
-        <IconButton
-          data-tip="Show Skybox"
-          onClick={dispatchSkyboxUnhidden}
-          borderless>
-          <BsEye />
-        </IconButton>
-      )}
+
       <MobileWarning>
         <WarningIcon />
         <span>Mobile is not well supported in Testnet.</span>
       </MobileWarning>
-      <IconButton
+
+      {process.env.REACT_APP_HELP_URL && (
+        <HudIconButton
+          data-tip="Report a Testnet Bug"
+          onClick={openHelpChannel}>
+          <BugIcon />
+        </HudIconButton>
+      )}
+
+      <HudIconButton
+        data-tip="Realign camera to poles"
+        onClick={dispatchReorientCamera}>
+        <ReorientCameraIcon />
+      </HudIconButton>
+
+      <VerticalRule />
+
+      {/* TODO: consider mute/unmute button here */}
+
+      <HudIconButton
+        data-tip="Settings"
+        onClick={() => dispatchLauncherPage('settings')}>
+        <SettingsIcon />
+      </HudIconButton>
+
+      <HudIconButton
         data-tip="Main Menu"
-        onClick={() => dispatchLauncherPage(true)}
-        borderless>
-        <AiOutlineMenu />
-      </IconButton>
+        onClick={() => dispatchLauncherPage(true)}>
+        <MenuIcon />
+      </HudIconButton>
     </StyledSystemControls>
   );
 };

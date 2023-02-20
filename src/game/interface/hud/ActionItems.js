@@ -30,6 +30,7 @@ import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import theme, { hexToRGB } from '~/theme';
 import LiveTimer from '~/components/LiveTimer';
+import CollapsableSection from './CollapsableSection';
 
 const ICON_WIDTH = 34;
 const ITEM_WIDTH = 400;
@@ -43,6 +44,10 @@ const ActionItemWrapper = styled.div`
   transition: width 0.15s ease;
   user-select: none;
   width: ${ITEM_WIDTH}px;
+`;
+
+const Filters = styled.div`
+
 `;
 
 const Pinner = styled.div`
@@ -69,30 +74,6 @@ const OuterWrapper = styled.div`
   height: 0;
   pointer-events: none;
   position: relative;
-  ${p => !p.pinned && `
-    ${ActionItemWrapper} {
-      width: ${ICON_WIDTH}px;
-    }
-  `}
-  ${p => p.forceOpen && `
-    ${ActionItemWrapper} {
-      width: ${ITEM_WIDTH}px;
-    }
-  `}
-  &:hover {
-    ${p => !p.pinned && `
-      ${ActionItemWrapper} {
-        width: ${ITEM_WIDTH}px;
-      }
-    `}
-    ${Pinner} {
-      opacity: 0.33;
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-        opacity: 1;
-      }
-    }
-  }
 `;
 
 const ActionItemContainer = styled.div`
@@ -703,9 +684,6 @@ const ActionItems = () => {
 
   const { token, account } = useAuth();
 
-  const actionItemsPinned = useStore(s => s.actionItemsPinned);
-  const dispatchActionItemsPinned = useStore(s => s.dispatchActionItemsPinned);
-
   // hide readyItems that have a pending transaction
   const readyItems = useMemo(() => {
     return allReadyItems.filter((item) => {
@@ -798,49 +776,22 @@ const ActionItems = () => {
     }
   }, [allItems]);
 
-
-  const watching = [
-    failedTransactions.length,
-    allReadyItems.length,
-    allPlannedItems.length,
-    unreadyItems.length
-  ];
-  const previousState = useRef(watching);
-
-  const [forceOpen, setForceOpen] = useState(false);
-  useEffect(() => {
-    // don't force open for pending transactions, but do for increase in any of the others (excluding suppressions)
-    if (!!watching.find((x, i) => x > previousState.current[i])) {
-      setForceOpen(true);
-    }
-    previousState.current = [...watching];
-    
-  }, [...watching]);
-
-  useEffect(() => {
-    if (forceOpen) {
-      const closeTimeout = setTimeout(() => {
-        setForceOpen(false);
-      }, 4000);
-      return () => {
-        if (closeTimeout) clearTimeout(closeTimeout);
-      }
-    }
-  }, [forceOpen]);
-
   return (
-    <OuterWrapper pinned={actionItemsPinned || undefined} forceOpen={forceOpen || undefined}>
-      <Pinner onClick={() => dispatchActionItemsPinned(!actionItemsPinned)}>
-        {actionItemsPinned && <><UnpinIcon /> Unpin</>}
-        {!actionItemsPinned && <><PinIcon /> Pin Open</>}
-      </Pinner>
-      <ActionItemWrapper>
-        <ActionItemContainer>
-          {(displayItems || []).map(({ transition, type, ...item }) => (
-            <ActionItem key={`${type}_${item.key || item.i}_${item.timestamp || item.gracePeriodEnd}`} data={item} type={type} />
-          ))}
-        </ActionItemContainer>
-      </ActionItemWrapper>
+    <OuterWrapper>
+      <CollapsableSection
+        title={(
+          <Filters>
+            
+          </Filters>
+        )}>
+        <ActionItemWrapper>
+          <ActionItemContainer>
+            {(displayItems || []).map(({ transition, type, ...item }) => (
+              <ActionItem key={`${type}_${item.key || item.i}_${item.timestamp || item.gracePeriodEnd}`} data={item} type={type} />
+            ))}
+          </ActionItemContainer>
+        </ActionItemWrapper>
+      </CollapsableSection>
     </OuterWrapper>
   );
 };

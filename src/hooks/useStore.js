@@ -30,7 +30,6 @@ const outlinerSectionDefaults = {
 
 const useStore = create(subscribeWithSelector(persist((set, get) => ({
     actionDialog: {},
-    actionItemsPinned: true,
     launcherPage: null,
 
     asteroids: {
@@ -379,10 +378,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchTimeOverride: (anchor, speed) => set((produce(state => {
       state.timeOverride = anchor ? { anchor, speed, ts: Date.now() } : null;
     }))),
-
-    dispatchActionItemsPinned: (which) => set(produce(state => {
-      state.actionItemsPinned = which;
-    })),
 
     dispatchAuthenticated: (token) => set(produce(state => {
       state.auth.token = token;

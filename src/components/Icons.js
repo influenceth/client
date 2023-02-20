@@ -1,8 +1,8 @@
-import { AiFillEdit, AiFillEye, AiFillStar } from 'react-icons/ai';
+import { AiFillBug, AiFillEdit, AiFillEye, AiFillStar } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle, BsChevronLeft, BsPieChartFill, BsStopwatch } from 'react-icons/bs';
 import { FaEthereum, FaMapMarkedAlt, FaCopy, FaGem } from 'react-icons/fa';
 import { FiMenu } from 'react-icons/fi';
-import { HiClock } from 'react-icons/hi';
+import { HiClock, HiCog, HiChevronDoubleLeft } from 'react-icons/hi';
 import {
   MdAccountBalanceWallet,
   MdAdd,
@@ -16,6 +16,7 @@ import {
   MdLocationPin,
   MdPlayArrow,
   MdPause,
+  MdScreenRotation,
   MdStop,
   MdNavigateBefore,
   MdNavigateNext,
@@ -132,11 +133,11 @@ export const ResourceGroupIcons = {
 };
 
 export {
+  AiFillBug as BugIcon,
   AiFillEdit as EditIcon,
   AiFillEye as EyeIcon,
   AiFillStar as StarIcon,
   BsCheckCircle as CheckCircleIcon,
-  BsChevronLeft as BackIcon,
   BsFillPersonFill as CrewMemberIcon,
   BsPieChartFill as CompositionIcon,
   BsStopwatch as TimerIcon,
@@ -146,11 +147,11 @@ export {
   RiPagesFill as DetailIcon,
   FaMapMarkedAlt as MapIcon,
   FiMenu as MenuIcon,
+  HiChevronDoubleLeft as BackIcon,
   HiClock as TimeIcon,
-  // HiUserGroup as CrewIcon,
+  HiCog as SettingsIcon,
   MdAccountBalanceWallet as WalletIcon,
   MdAdd as PlusIcon,
-  MdKeyboardArrowDown as CaretIcon,
   MdChevronRight as ChevronRightIcon,
   MdChevronRight as CollapsedIcon,
   MdClose as CloseIcon,
@@ -159,11 +160,13 @@ export {
   MdFastForward as FastForwardIcon,
   MdFirstPage as BeginningIcon,
   MdFlag as ClaimIcon,
+  MdKeyboardArrowDown as CaretIcon,
   MdLocationPin as LocationPinIcon,
   MdNavigateBefore as PreviousIcon,
   MdNavigateNext as NextIcon,
   MdPause as PauseIcon,
   MdPlayArrow as PlayIcon,
+  MdScreenRotation as ReorientCameraIcon,
   MdStop as StopIcon,
   RiAlertFill as WarningIcon,
   RiFilter2Fill as FilterIcon,

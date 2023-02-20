@@ -162,7 +162,7 @@ const Interface = () => {
             <CrewCreation />
           </Route>
         </Switch>
-        <Outliner />
+        {false && <Outliner />}
         <Draggables />
       </StyledInterface>
     </>

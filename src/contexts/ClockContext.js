@@ -6,6 +6,8 @@ import { orbitTimeToGameTime, orbitTimeToRealDate } from '~/lib/utils';
 
 const INTERVAL_LENGTH = 1000 / 30;  // denominator is FPS for clock check
 
+export const DISPLAY_TIME_FRACTION_DIGITS = 2;
+
 const ClockContext = React.createContext();
 
 // NOTE: we only track coarseTime in state because we don't want a state update firing every ms
@@ -26,7 +28,7 @@ export function ClockProvider({ children }) {
       setTimeout(() => { // setter gets slow at fast intervals, so return setInterval function before setting
         setContextValue({
           coarseTime,
-          displayTime: `${gameTime >= 0 ? '' : ''}${gameTime.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+          displayTime: `${gameTime >= 0 ? '' : ''}${gameTime.toLocaleString(undefined, { minimumFractionDigits: DISPLAY_TIME_FRACTION_DIGITS })}`,
           realWorldTime: orbitTimeToRealDate(coarseTime)
         });
       }, 0);

@@ -1,6 +1,8 @@
 import { Suspense, useContext, useCallback, useEffect, useRef, useState } from 'react';
 import { Color } from 'three';
 import { useThrottleCallback } from '@react-hook/throttle';
+import { useThree } from '@react-three/fiber';
+import gsap from 'gsap';
 
 import ClockContext from '~/contexts/ClockContext';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -16,6 +18,7 @@ import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
 
 const Asteroids = (props) => {
+  const { controls } = useThree();
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
   const hovered = useStore(s => s.asteroids.hovered);
@@ -24,6 +27,8 @@ const Asteroids = (props) => {
   const ownedColor = useStore(s => s.asteroids.owned.highlightColor);
   const watchedColor = useStore(s => s.asteroids.watched.highlightColor);
   const highlightConfig = useStore(s => s.asteroids.highlight);
+  const cameraNeedsReorientation = useStore(s => s.cameraNeedsReorientation);
+  
   const { processInBackground } = useWebWorker();
 
   const { data: asteroids } = useAsteroids();
@@ -31,6 +36,7 @@ const Asteroids = (props) => {
   const { data: destination } = useAsteroid(destinationId);
   const { coarseTime } = useContext(ClockContext);
 
+  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const selectOrigin = useStore(s => s.dispatchOriginSelected);
   const selectDestination = useStore(s => s.dispatchDestinationSelected);
   const hoverAsteroid = useStore(s => s.dispatchAsteroidHovered);
@@ -154,6 +160,12 @@ const Asteroids = (props) => {
       asteroidsGeom.current.computeBoundingSphere();
     }
   }, [positions]);
+
+  useEffect(() => {
+    if (!cameraNeedsReorientation || zoomStatus !== 'out') return;
+    dispatchReorientCamera();
+    gsap.timeline().to(controls.object.up, { x: 0, y: 0, z: 1, ease: 'slow.out' });
+  }, [cameraNeedsReorientation]);
 
   // mouse event handlers
   const onClick = useCallback((e) => {

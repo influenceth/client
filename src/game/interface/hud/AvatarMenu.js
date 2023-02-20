@@ -1,16 +1,17 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
 import styled, { css, keyframes } from 'styled-components';
 import CrewCard from '~/components/CrewCard';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
 
-import { CaptainIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
+import { CaptainIcon, CollapsedIcon, CrewIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
 import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCrew from '~/hooks/useCrew';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
+import CollapsableSection from './CollapsableSection';
 
 const bgColor = '#000';
 const hoverBgColor = '#183541';
@@ -27,6 +28,11 @@ const silhouetteAnimation = keyframes`
 const Wrapper = styled.div`
   margin-bottom: 12px;
   pointer-events: none;
+  width: 100%;
+`;
+
+const StatusContainer = styled.div`
+
 `;
 
 const Avatar = styled.div`
@@ -163,32 +169,43 @@ const AvatarMenu = (props) => {
   if (crewIsLoading) return null;
   return (
     <Wrapper>
-      <SwayContainer noCaptain={!captain}><SwayIcon /> 0</SwayContainer>
-      <AvatarWrapper
-        data-tip={tooltip}
-        data-for="global"
-        data-place="right"
-        onClick={onClick}>
-        <Avatar captainless={!captain}>
-          {captain && (
-            <CrewCard
-              crew={captain}
-              hideHeader
-              hideFooter
-              hideMask />
-          )}
-          {!captain && (
-            <CrewSilhouetteCard overlay={silhouetteOverlay} />
-          )}
-        </Avatar>
-        <AvatarFlourish>
-          <StyledCaptainIcon captainless={!captain} />
-          <StyledTriangleTip
-            fillColor={bgColor}
-            strokeColor={borderColor}
-            strokeWidth={2} />
-        </AvatarFlourish>
-      </AvatarWrapper>
+      <CollapsableSection
+        title={(
+          <>
+            <CrewIcon />
+            <label>The Mod Squad</label>
+            <StatusContainer>
+              Idle
+            </StatusContainer>
+          </>
+        )}>
+        <SwayContainer noCaptain={!captain}><SwayIcon /> 0</SwayContainer>
+        <AvatarWrapper
+          data-tip={tooltip}
+          data-for="global"
+          data-place="right"
+          onClick={onClick}>
+          <Avatar captainless={!captain}>
+            {captain && (
+              <CrewCard
+                crew={captain}
+                hideHeader
+                hideFooter
+                hideMask />
+            )}
+            {!captain && (
+              <CrewSilhouetteCard overlay={silhouetteOverlay} />
+            )}
+          </Avatar>
+          <AvatarFlourish>
+            <StyledCaptainIcon captainless={!captain} />
+            <StyledTriangleTip
+              fillColor={bgColor}
+              strokeColor={borderColor}
+              strokeWidth={2} />
+          </AvatarFlourish>
+        </AvatarWrapper>
+      </CollapsableSection>
     </Wrapper>
   );
 };

@@ -777,7 +777,7 @@ const Asteroid = (props) => {
   }, [zoomedIntoAsteroidId, origin, selectedPlot, config?.radiusNominal, zoomStatus]);
 
   useEffect(() => {
-    if (!cameraNeedsReorientation) return;
+    if (!cameraNeedsReorientation || zoomStatus !== 'in') return;
     dispatchReorientCamera();
     gsap.timeline().to(controls.object.up, { ...rotationAxis.current.clone(), ease: 'slow.out' });
   }, [cameraNeedsReorientation]);

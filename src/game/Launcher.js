@@ -14,17 +14,18 @@ import Wallets from './launcher/Wallets';
 
 const headerFooterHeight = 100;
 
+// TODO: should add in/out transitions to this page
 const StyledLauncher = styled.div`
   align-items: center;
   backdrop-filter: blur(0.75px) saturate(70%) brightness(70%);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
   justify-content: space-between;
   opacity: 1;
   padding: ${headerFooterHeight}px 0;
   position: absolute;
-  width: 100%;
+  width: 100vw;
   z-index: 8999;
 `;
 
@@ -166,7 +167,11 @@ const MainContent = styled.div`
   // height: calc(100vh - 2 * ${headerFooterHeight}px);
 `;
 
-const StyledTime = styled(Time)`
+const StyledTime = styled(Time).attrs(() => ({
+  style: {
+    'font-size': '20px'
+  }
+}))`
   margin: 20px 0;
 `;
 
