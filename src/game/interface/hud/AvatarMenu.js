@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
 import styled, { css, keyframes } from 'styled-components';
+import { MdFastfood as FoodIcon } from 'react-icons/md';
+
 import CrewCard from '~/components/CrewCard';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
-
-import { CaptainIcon, CollapsedIcon, CrewIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
+import { CaptainIcon, CrewIcon, IdleIcon, LocationPinIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
 import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCrew from '~/hooks/useCrew';
@@ -15,8 +16,8 @@ import CollapsableSection from './CollapsableSection';
 
 const bgColor = '#000';
 const hoverBgColor = '#183541';
-const borderColor = '#888';
-const cardWidth = 90;
+const borderColor = '#444';
+const cardWidth = 96;
 const tween = '250ms ease';
 
 const silhouetteAnimation = keyframes`
@@ -31,8 +32,35 @@ const Wrapper = styled.div`
   width: 100%;
 `;
 
+const StatusIcon = styled.div`
+  align-items: center;
+  background: #646464;
+  border-radius: 3px;
+  color: inherit;
+  display: flex;
+  font-size: 25px;
+  height: 26px;
+  justify-content: center;
+  margin-left: 8px;
+  width: 26px;
+`;
 const StatusContainer = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  ${p => p.active ? `
+    color: ${p.theme.colors.main};
+    & ${StatusIcon} {
+      background: rgba(${p.theme.colors.mainRGB}, 0.3);
+    }
+  ` : ''}
+`;
 
+
+const CrewWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
 `;
 
 const Avatar = styled.div`
@@ -50,7 +78,7 @@ const Avatar = styled.div`
         animation: ${silhouetteAnimation} 2000ms linear infinite;
         border: 1px solid ${p => p.theme.colors.main};
       `
-      : 'margin-top: -8px;'
+      : ''//'margin-top: -8px;'
     }
     transition: opacity ${tween};
   }
@@ -80,10 +108,6 @@ const StyledCaptainIcon = styled(CaptainIcon)`
 
 const AvatarWrapper = styled.div`
   cursor: ${p => p.theme.cursors.active};
-  margin-left: 5px;
-  margin-top: -30px;
-  position: relative;
-  z-index: 1;
   width: ${cardWidth}px;
 
   &:hover {
@@ -106,30 +130,101 @@ const AvatarWrapper = styled.div`
   }
 `;
 
+const CrewInfoContainer = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  & > div {
+    margin-left: 12px;
+    padding: 8px 0;
+
+    & svg {
+      font-size: 24px;
+    }
+  }
+`;
+
 const SwayContainer = styled.div`
-  background: ${bgColor};
+  ${CrewInfoContainer} & {
+    background: ${bgColor};
+    color: white;
+    font-size: 20px;
+    height: 48px;
+    margin-left: 0;
+    pointer-events: auto;
+    padding: 6px 12px 0;
+
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% 24px,
+      calc(100% - 12px) 36px,
+      12px 36px,
+      0 48px
+    );
+
+    & + * {
+      margin-top: -12px;
+    }
+  }
+`;
+
+const BaseLocation = styled.div`
   color: white;
-  font-size: 20px;
-  margin-left: 1px;
-  pointer-events: auto;
-  padding: 6px 12px 6px ${p => 12 + (p.noCaptain ? 0 : cardWidth)}px;
-  min-width: ${p => 100 + (p.noCaptain ? 0 : cardWidth)}px;
+  font-size: 14.5px;
+  span {
+    color: #777;
+  }
+  svg {
+    margin-right: 2px;
+    vertical-align: middle;
+  }
+`;
+const Personnel = styled.div`
+  ${CrewInfoContainer} & {
+    border-top: 1px solid ${borderColor};
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 14px 2px 0 6px;
+  }
+`;
 
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    calc(100% - 10px) 100%,
-    0 100%
-  );
+const CrewMemberIcon = styled.div`
+  height: 25px;
+  width: 7px;
+  border-radius: 10px;
+  background: #333;
+`;
+const CrewMemberIcons = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 54px;
 
-  & > svg {
-    font-size: 24px;
+  ${p => p.crewMembers > 0 
+    ? `
+      ${CrewMemberIcon}:nth-child(n+1):nth-child(-n+${p.crewMembers}) {
+        background: #CCC;
+      }
+    `
+    : ``
+  }
+`;
+
+const Food = styled.div`
+  align-items: center;
+  color: ${p => p.isRationing ? p.theme.colors.red : p.theme.colors.main};
+  display: flex;
+  span {
+    font-size: 15px;
+    margin: 0 6px;
   }
 `;
 
 const AvatarMenu = (props) => {
   const { account } = useAuth();
-  const { captain, crewMemberMap, loading: crewIsLoading } = useCrew();
+  const { captain, crewMemberMap, crew, loading: crewIsLoading } = useCrew();
   const history = useHistory();
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
@@ -173,38 +268,69 @@ const AvatarMenu = (props) => {
         title={(
           <>
             <CrewIcon />
-            <label>The Mod Squad</label>
+            <label>Skull Squadron</label>
             <StatusContainer>
               Idle
+              <StatusIcon>
+                <IdleIcon />
+              </StatusIcon>
             </StatusContainer>
           </>
         )}>
-        <SwayContainer noCaptain={!captain}><SwayIcon /> 0</SwayContainer>
-        <AvatarWrapper
-          data-tip={tooltip}
-          data-for="global"
-          data-place="right"
-          onClick={onClick}>
-          <Avatar captainless={!captain}>
+        <CrewWrapper>
+          <AvatarWrapper
+            data-tip={tooltip}
+            data-for="global"
+            data-place="right"
+            onClick={onClick}>
+            <Avatar captainless={!captain}>
+              {captain && (
+                <CrewCard
+                  crew={captain}
+                  hideHeader
+                  hideFooter
+                  hideMask />
+              )}
+              {!captain && (
+                <CrewSilhouetteCard overlay={silhouetteOverlay} />
+              )}
+            </Avatar>
+            <AvatarFlourish>
+              <StyledCaptainIcon captainless={!captain} />
+              <StyledTriangleTip
+                fillColor={bgColor}
+                strokeColor={borderColor}
+                strokeWidth={2} />
+            </AvatarFlourish>
+          </AvatarWrapper>
+
+          <CrewInfoContainer>
+            <SwayContainer noCaptain={!captain}><SwayIcon /> 0</SwayContainer>
             {captain && (
-              <CrewCard
-                crew={captain}
-                hideHeader
-                hideFooter
-                hideMask />
+              <>
+                <BaseLocation>
+                  <LocationPinIcon /> Habitat <span>&gt; Adalia Prime</span>
+                </BaseLocation>
+                <Personnel>
+                  <div>
+                    <CrewMemberIcons crewMembers={crew?.crewMembers?.length || 0}>
+                      <CrewMemberIcon />
+                      <CrewMemberIcon />
+                      <CrewMemberIcon />
+                      <CrewMemberIcon />
+                      <CrewMemberIcon />
+                    </CrewMemberIcons>
+                  </div>
+                  <Food isRationing={false}>
+                    {false && <WarningOutlineIcon />}
+                    <span>94%</span>
+                    <FoodIcon />
+                  </Food>
+                </Personnel>
+              </>
             )}
-            {!captain && (
-              <CrewSilhouetteCard overlay={silhouetteOverlay} />
-            )}
-          </Avatar>
-          <AvatarFlourish>
-            <StyledCaptainIcon captainless={!captain} />
-            <StyledTriangleTip
-              fillColor={bgColor}
-              strokeColor={borderColor}
-              strokeWidth={2} />
-          </AvatarFlourish>
-        </AvatarWrapper>
+          </CrewInfoContainer>
+        </CrewWrapper>
       </CollapsableSection>
     </Wrapper>
   );

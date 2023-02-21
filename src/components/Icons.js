@@ -1,6 +1,6 @@
 import { AiFillBug, AiFillEdit, AiFillEye, AiFillStar } from 'react-icons/ai';
-import { BsFillPersonFill, BsCheckCircle, BsChevronLeft, BsPieChartFill, BsStopwatch } from 'react-icons/bs';
-import { FaEthereum, FaMapMarkedAlt, FaCopy, FaGem } from 'react-icons/fa';
+import { BsFillPersonFill, BsCheckCircle, BsPieChartFill, BsStopwatch } from 'react-icons/bs';
+import { FaEthereum, FaMapMarkedAlt, FaCopy, FaGem, FaRegCircle } from 'react-icons/fa';
 import { FiMenu } from 'react-icons/fi';
 import { HiClock, HiCog, HiChevronDoubleLeft } from 'react-icons/hi';
 import {
@@ -33,7 +33,7 @@ import {
 } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
 import { WiMoonAltWaningCrescent5 } from 'react-icons/wi';
-import { VscDebugDisconnect } from 'react-icons/vsc';
+import { VscDebugDisconnect, VscCircleOutline } from 'react-icons/vsc';
 
 import AdalianSVG from '~/assets/icons/AdalianIcon.svg';
 import ArvadSVG from '~/assets/icons/ArvadIcon.svg';
@@ -145,6 +145,7 @@ export {
   FaGem as ResourceIcon,
   FaEthereum as ConnectIcon,
   RiPagesFill as DetailIcon,
+  VscCircleOutline as IdleIcon,
   FaMapMarkedAlt as MapIcon,
   FiMenu as MenuIcon,
   HiChevronDoubleLeft as BackIcon,

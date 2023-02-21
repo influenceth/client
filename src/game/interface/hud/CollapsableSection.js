@@ -40,13 +40,14 @@ const Toggle = styled.div`
 `;
 const Title = styled.div`
   align-items: center;
+  color: white;
   display: flex;
   height: 48px;
   transition: border-color 250ms ease;
   width: 100%;
   & > svg {
     font-size: 28px;
-    opacity: 0.7;
+    color: #646464;
   }
   & label {
     flex: 1;
@@ -56,12 +57,12 @@ const Title = styled.div`
 `;
 const Collapsable = styled.div`
   border-bottom: 1px solid transparent;
-  height: 145px;
+  height: 152px;
   overflow: hidden;
   margin-left: ${toggleWidth}px;
   transition: height 250ms ease, border-color 250ms ease;
   ${p => p.collapsed && `
-    border-color: #777;
+    border-color: #444;
     height: 0;
   `};
 `;
