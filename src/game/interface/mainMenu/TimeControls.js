@@ -69,8 +69,9 @@ const SpeedDots = styled.div`
 
 const SpeedMult = styled.div`
   color: ${p => p.dir < 0 ? p.theme.colors.error : p.theme.colors.main};
+  min-width: 50px;
+  padding: 0 8px;
   text-align: center;
-  width: 50px;
 `;
 
 const TimeButton = styled(IconButton)`
@@ -123,11 +124,7 @@ const TimeController = ({ open }) => {
 
   const displaySpeed = useMemo(() => {
     if (isPaused) return '0';
-    const speedMult = speeds[Math.abs(speedSetting)];
-    if (speedMult > 10) {
-      return <>10<sup>{Math.log10(speedMult)}</sup></>;
-    }
-    return speedMult;
+    return speeds[Math.abs(speedSetting)].toLocaleString();
   }, [isPaused, speedSetting]);
 
   useEffect(() => {

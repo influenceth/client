@@ -79,7 +79,7 @@ const RenderedAsteroidInCanvas = (props) => {
     <Canvas
       antialias
       frameloop="never"
-      style={{ width: '100%', height: '100%' }}>
+      style={{ width: '100%', height: '100%', ...(props.style || {}) }}>
       <RenderedAsteroid {...props} webWorkerPool={webWorkerPool} />
     </Canvas>
   );

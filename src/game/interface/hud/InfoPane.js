@@ -117,7 +117,7 @@ const CloseButton = styled(IconButton)`
   font-size: 95%;
   margin-right: 0;
   position: absolute !important;
-  top: 6px;
+  top: 5px;
   right: 5px;
   z-index: 2;
   opacity: 0.7;
@@ -177,16 +177,33 @@ const ThumbBackground = styled.div`
   `}
 `;
 
-const Rarity = styled.div`
-  font-weight: bold;
-  &:before {
-    content: "${p => p.rarity}";
-  }
+const ThumbBanner = styled.div`
+  position: absolute;
+  z-index: 1;
+  height: 30px;
+  background: rgba(0, 0, 0, 0.8);
+  color: ${p => p.color ? p.theme.colors[p.color] : 'white'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  top: calc(50% - 15px);
+  text-transform: uppercase;
+`;
 
-  ${p => p.rarity
-    ? `color: ${p.theme.colors.rarity[p.rarity]};`
-    : 'display: none;'
-  }
+const RarityEarmark = styled.div`
+  background: ${p => p.theme.colors.rarity[p.rarity]};
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  height: 15px;
+  width: 15px;
+  z-index: 1;
+  clip-path: polygon(
+    0% 0%,
+    100% 0%,
+    0% 100%
+  );
 `;
 
 const Pane = styled.div`
@@ -344,6 +361,7 @@ const InfoPane = () => {
   const { constructionStatus, isAtRisk } = useConstructionManager(asteroidId, plotId);
   const { crew } = useCrewContext();
   const { data: plot } = usePlot(asteroidId, plotId);
+  const saleIsActive = useStore(s => s.sale);
 
   const [renderReady, setRenderReady] = useState(false);
   const onRenderReady = useCallback(() => {
@@ -433,14 +451,43 @@ const InfoPane = () => {
         pane.titleLink = `/asteroids/${asteroid.i}`;
         pane.subtitle = <>{toSize(asteroid.radius)} <b>{toSpectralType(asteroid.spectralType)}-type</b></>;
         pane.hoverSubtitle = 'Zoom to Asteroid';
-        // TODO: add captainCard for managing "crew"
+        // TODO: add captainCard for the "crew" managing the asteroid
+
+        let thumbBanner = '';
+        let thumbBannerColor = 'main';
+        if (!asteroid.scanned) {
+          if (asteroid.owner) {
+            thumbBanner = asteroid.scanCompletionTime ? 'Scanning...' :  'Ready to Scan';
+            thumbBannerColor = 'success';
+          } else if (saleIsActive) {
+            thumbBanner = 'Available to Purchase';
+            thumbBannerColor = 'main';
+          } else {
+            thumbBanner = 'Unscanned';
+            thumbBannerColor = 'error';
+          }
+        }
+
         pane.thumbnail = (
           <ThumbBackground>
-            <AsteroidRendering asteroid={asteroid} onReady={onRenderReady} />
+            {thumbBanner && <ThumbBanner color={thumbBannerColor}>{thumbBanner}</ThumbBanner>}
+            {asteroid.scanned && (
+              <RarityEarmark
+                data-for="infoPane"
+                data-tip={toRarity(asteroid.bonuses)}
+                data-place="right"
+                rarity={toRarity(asteroid.bonuses)} />
+            )}
+            <AsteroidRendering
+              asteroid={asteroid}
+              onReady={onRenderReady}
+              style={!asteroid.scanned ? { filter: 'grayscale(1)' } : {}} />
           </ThumbBackground>
         );
         pane.thumbVisible = !!renderReady;
       } else {
+        pane.title = '&nbsp;';
+        pane.subtitle = '&nbsp;';
         pane.thumbnail = <ThumbLoader />;
       }
 
@@ -501,34 +548,35 @@ const InfoPane = () => {
 
   return (
     <Pane visible={asteroidId && ['out','in'].includes(zoomStatus)}>
-        <OuterTitleRow>
-          {captainCard && <CaptainCardContainer><CaptainCard crewId={captainCard} /></CaptainCardContainer>}
-          <div>
-            {title && (
-                <TitleRow hasLink={!!titleLink} onClick={onClickTitle}>
-                  <Title hasThumb={!!thumbnail}>{title}</Title>
-                  {titleLink && <PopoutIcon />}
-                </TitleRow>
-            )}
-            {subtitle && <Subtitle>{hover && hoverSubtitle ? <b>{hoverSubtitle}</b> : subtitle}</Subtitle>}
-          </div>
-        </OuterTitleRow>
-        {thumbnail && (
-          <ThumbWrapper
-            onClick={onClickPane}
-            onMouseEnter={onMouseEvent}
-            onMouseLeave={onMouseEvent}
-            hasCaptainCard={!!captainCard}>
-            {hover ? <DetailsIcon /> : <ForwardIcon />}
-            <ThumbPreview visible={thumbVisible}>
-              <CloseButton onClick={onClosePane}>
-                <CloseIcon />
-              </CloseButton>
-              {thumbnail}
-              <ClipCorner dimension={20} color={hover ? 'white' : 'rgba(255,255,255,0.25)'} />
-            </ThumbPreview>
-          </ThumbWrapper>
-        )}
+      <ReactTooltip id="infoPane" effect="solid" />
+      <OuterTitleRow>
+        {captainCard && <CaptainCardContainer><CaptainCard crewId={captainCard} /></CaptainCardContainer>}
+        <div>
+          {title && (
+              <TitleRow hasLink={!!titleLink} onClick={onClickTitle}>
+                <Title hasThumb={!!thumbnail}>{title}</Title>
+                {titleLink && <PopoutIcon />}
+              </TitleRow>
+          )}
+          {subtitle && <Subtitle>{hover && hoverSubtitle ? <b>{hoverSubtitle}</b> : subtitle}</Subtitle>}
+        </div>
+      </OuterTitleRow>
+      {thumbnail && (
+        <ThumbWrapper
+          onClick={onClickPane}
+          onMouseEnter={onMouseEvent}
+          onMouseLeave={onMouseEvent}
+          hasCaptainCard={!!captainCard}>
+          {hover ? <DetailsIcon /> : <ForwardIcon />}
+          <ThumbPreview visible={thumbVisible}>
+            <CloseButton onClick={onClosePane}>
+              <CloseIcon />
+            </CloseButton>
+            {thumbnail}
+            <ClipCorner dimension={20} color={hover ? 'white' : 'rgba(255,255,255,0.25)'} />
+          </ThumbPreview>
+        </ThumbWrapper>
+      )}
     </Pane>
   );
 
