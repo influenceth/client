@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import { Extraction } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useCrew from './useCrew';
+import useCrewContext from './useCrewContext';
 import usePlot from './usePlot';
 import useActionItems from './useActionItems';
 
@@ -17,7 +17,7 @@ import useActionItems from './useActionItems';
 const useDeliveryManager = (asteroidId, plotId, deliveryId = 0) => {
   const { actionItems, readyItems, liveBlockTime } = useActionItems();
   const { execute, getStatus, getPendingTx } = useContext(ChainTransactionContext);
-  const { crew } = useCrew();
+  const { crew } = useCrewContext();
   const { data: plot } = usePlot(asteroidId, plotId);
 
   const payload = useMemo(() => ({

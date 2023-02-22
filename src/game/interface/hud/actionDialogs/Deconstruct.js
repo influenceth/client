@@ -41,7 +41,7 @@ import Poppable from '~/components/Popper';
 import SliderInput from '~/components/SliderInput';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -81,7 +81,7 @@ import {
 const Deconstruct = ({ asteroid, plot, ...props }) => {
   const resources = useResourceAssets();
   const { constructionStatus, deconstruct } = useConstructionManager(asteroid?.i, plot?.i);
-  const { crew, crewMemberMap } = useCrew();
+  const { crew, crewMemberMap } = useCrewContext();
 
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];

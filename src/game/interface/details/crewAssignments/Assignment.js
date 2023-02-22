@@ -4,7 +4,7 @@ import styled, { keyframes } from 'styled-components';
 import { Crewmate } from '@influenceth/sdk';
 
 import useBook from '~/hooks/useBook';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStorySession from '~/hooks/useStorySession';
 import useStore from '~/hooks/useStore';
 import Button from '~/components/ButtonAlt';
@@ -292,7 +292,7 @@ const PromptDetails = styled.div`
 const CrewAssignment = (props) => {
   const { id: sessionId } = useParams();
   const history = useHistory();
-  const { crewMemberMap} = useCrew();
+  const { crewMemberMap} = useCrewContext();
   const { currentStep, storyState, commitPath, loadingPath } = useStorySession(sessionId);
   const { data: book } = useBook(storyState?.book)
   const playSound = useStore(s => s.dispatchSoundRequested);

@@ -3,7 +3,7 @@ import { useQuery } from 'react-query';
 
 import useAuth from '~/hooks/useAuth';
 import useChainTime from '~/hooks/useChainTime';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
 
@@ -12,7 +12,7 @@ const ActionItemContext = React.createContext();
 export function ActionItemProvider({ children }) {
   const { walletContext: { starknet } } = useAuth();
   const chainTime = useChainTime();
-  const { crew } = useCrew();
+  const { crew } = useCrewContext();
 
   const { data: actionItems } = useQuery(
     [ 'actionItems', crew?.i ],

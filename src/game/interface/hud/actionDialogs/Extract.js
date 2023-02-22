@@ -4,7 +4,7 @@ import { CoreSample, Asteroid, Extraction, Inventory } from '@influenceth/sdk';
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import { ExtractionIcon } from '~/components/Icons';
 import { useResourceAssets } from '~/hooks/useAssets';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
@@ -32,7 +32,7 @@ const Extract = ({ asteroid, plot, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const resources = useResourceAssets();
   const { currentExtraction, extractionStatus, startExtraction, finishExtraction } = useExtractionManager(asteroid?.i, plot?.i);
-  const { crew, crewMemberMap } = useCrew();
+  const { crew, crewMemberMap } = useCrewContext();
   const { data: currentExtractionDestinationPlot } = usePlot(asteroid.i, currentExtraction?.destinationLotId);
 
   const [amount, setAmount] = useState(0);

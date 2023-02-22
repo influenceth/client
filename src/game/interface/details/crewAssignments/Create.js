@@ -23,7 +23,7 @@ import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCrewManager from '~/hooks/useCrewManager';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useSale from '~/hooks/useSale';
 import useStorySession from '~/hooks/useStorySession';
 import formatters from '~/lib/formatters';
@@ -470,7 +470,7 @@ const CrewAssignmentCreate = (props) => {
   const { storyState } = useStorySession(sessionId);
   const { getCrewNameAvailability } = useNameAvailability();
   const { purchaseAndOrInitializeCrew, getPendingCrewmate, crewCredits } = useCrewManager();
-  const { crew, crewMemberMap } = useCrew();
+  const { crew, crewMemberMap } = useCrewContext();
   const { data: crewSale } = useSale('Crewmate');
 
   const [confirming, setConfirming] = useState();

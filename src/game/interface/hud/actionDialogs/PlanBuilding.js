@@ -41,7 +41,7 @@ import Poppable from '~/components/Popper';
 import SliderInput from '~/components/SliderInput';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -78,7 +78,7 @@ const PlanBuilding = ({ asteroid, plot, ...props }) => {
   const buildings = useBuildingAssets();
   const resources = useResourceAssets();
   const { currentConstruction, constructionStatus, planConstruction } = useConstructionManager(asteroid?.i, plot?.i);
-  const { captain } = useCrew();
+  const { captain } = useCrewContext();
 
   const [capableType, setCapableType] = useState();
 

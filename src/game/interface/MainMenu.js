@@ -22,7 +22,7 @@ import {
 import InfluenceLogo from '~/components/InfluenceLogo';
 import useAuth from '~/hooks/useAuth';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import Menu from './mainMenu/Menu';
@@ -125,12 +125,20 @@ const MainMenu = (props) => {
   const { isMobile } = useScreenSize();
   const history = useHistory();
 
+  const { plotId } = useStore(s => s.asteroids.plot) || {};
+  const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+
+  const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
+  const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
+  const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
+
   const { account } = useAuth();
   const { data: crewAssignmentData } = useCrewAssignments();
   const { totalAssignments } = crewAssignmentData || {};
 
   // TODO: genesis book deprecation vvv
-  const { crew, crewMemberMap } = useCrew();
+  const { crew, crewMemberMap } = useCrewContext();
   const hasGenesisCrewmate = useMemo(() => {
     return crew && crew?.crewMembers && crewMemberMap && crew.crewMembers.find((i) => [1,2,3].includes(crewMemberMap[i]?.crewCollection));
   }, [crew?.crewMembers, crewMemberMap]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -144,7 +152,6 @@ const MainMenu = (props) => {
     if (isMobile) setShowMenu(false);
   };
 
-  
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
   useEffect(() => {
@@ -155,15 +162,44 @@ const MainMenu = (props) => {
     }
   }, []);
 
+  const { backLabel, onClickBack } = useMemo(() => {
+    if (zoomStatus !== 'in') return {};
+    if (zoomToPlot) {
+      return {
+        backLabel: 'Back to Asteroid',
+        onClickBack: () => dispatchZoomToPlot()
+      }
+    }
+    if (plotId) {
+      return {
+        backLabel: 'Deselect Lot',
+        onClickBack: () => dispatchPlotSelected()
+      }
+    }
+    return {
+      backLabel: 'Back to Belt',
+      onClickBack: () => updateZoomStatus('zooming-out')
+    }
+  }, [plotId, zoomToPlot, zoomStatus]);
+
   return (
     <StyledMainMenu>
       <Actionable>
         <LeftHudButtonArea>
-          <HudIconButton
-            data-tip="Report a Testnet Bug"
-            onClick={() => {}}>
-            <BackIcon />
-          </HudIconButton>
+          {onClickBack
+            ? (
+              <HudIconButton
+                data-tip={backLabel}
+                onClick={onClickBack}>
+                <BackIcon />
+              </HudIconButton>
+            )
+            : (
+              <img
+                src={`${process.env.PUBLIC_URL}/maskable-logo-48x48.png`}
+                style={{ height: 38, marginLeft: 3 }} />
+            )
+          }
         </LeftHudButtonArea>
 
         <MenuWrapper>
@@ -206,11 +242,6 @@ const MainMenu = (props) => {
               onClick={() => openSection('timeControl')} />
 
           </Menu>
-          
-          
-          
-          
-          
           
           {/*
           <Menu title="Viewer">

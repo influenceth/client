@@ -20,7 +20,10 @@ import {
   PurchaseAsteroidIcon,
   ScanAsteroidIcon,
   SurfaceTransferIcon,
+  LinkIcon,
+  PopoutIcon,
 } from '~/components/Icons';
+import LiveTimer from '~/components/LiveTimer';
 import NavIcon from '~/components/NavIcon';
 import { usePlotLink } from '~/components/PlotLink';
 import useActionItems from '~/hooks/useActionItems';
@@ -29,8 +32,8 @@ import useAuth from '~/hooks/useAuth';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import theme, { hexToRGB } from '~/theme';
-import LiveTimer from '~/components/LiveTimer';
-import CollapsableSection from './CollapsableSection';
+import CollapsibleSection from './CollapsibleSection';
+import OnClickLink from '~/components/OnClickLink';
 
 const ICON_WIDTH = 34;
 const ITEM_WIDTH = 400;
@@ -47,7 +50,51 @@ const ActionItemWrapper = styled.div`
 `;
 
 const Filters = styled.div`
-
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+`;
+const Filter = styled.div`
+  border-radius: 20px;
+  cursor: ${p => p.theme.cursors.active};
+  font-size: 90%;
+  margin-right: 8px;
+  padding: 3px 12px;
+  &:before {
+    content: "${p => p.tally}";
+    color: white;
+    margin-right: 8px;
+  }
+`;
+const ReadyFilter = styled(Filter)`
+  background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.2);
+  border: 1px solid ${p => p.selected ? `rgba(${hexToRGB(p.theme.colors.success)}, 0.5)` : 'transparent'};
+  &:hover {
+    border: 1px solid rgba(${p => hexToRGB(p.theme.colors.success)}, 0.3);
+  }
+  &:after {
+    content: "Ready";
+    color: ${p => p.theme.colors.success};
+  }
+`;
+const InProgressFilter = styled(Filter)`
+  background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+  border: 1px solid ${p => p.selected ? `rgba(${p.theme.colors.mainRGB}, 0.5)` : 'transparent'};
+  &:hover {
+    border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.3);
+  }
+  &:after {
+    content: "In Progress";
+    color: ${p => p.theme.colors.main};
+  }
+`;
+const LinkContainer = styled.div`
+  flex: 1;
+  text-align: right;
+  & > span {
+    color: ${p => p.theme.colors.main};
+  }
 `;
 
 const Pinner = styled.div`
@@ -548,8 +595,8 @@ const formatTx = (item) => {
 const itemColors = {
   pending: hexToRGB(theme.colors.purple),
   failed: hexToRGB(theme.colors.error),
-  ready: theme.colors.mainRGB,
-  unready: '90, 90, 90',
+  ready: theme.colors.successRGB,
+  unready: theme.colors.mainRGB,
   plans: '248, 133, 44',
 };
 
@@ -776,22 +823,60 @@ const ActionItems = () => {
     }
   }, [allItems]);
 
+  const [selectedFilter, setSelectedFilter] = useState('ready');
+
+  const onClickFilter = useCallback((filter) => (e) => {
+    e.stopPropagation();
+    setSelectedFilter(filter);
+  }, []);
+
+  const tallies = useMemo(() => {
+    return (displayItems || []).reduce(
+      (acc, cur) => {
+        if (cur.type === 'ready' || cur.type === 'plans') acc.ready++;
+        if (cur.type === 'unready') acc.progress++;
+        return acc;
+      },
+      {
+        ready: 0,
+        progress: 0
+      }
+    )
+  }, [displayItems]);
+
+  const filteredDisplayItems = useMemo(() => {
+    const filter = selectedFilter === 'ready'
+      ? (i) => i.type !== 'unready'
+      : (i) => i.type !== 'ready' && i.type !== 'plans';
+    return (displayItems || []).filter(filter)
+  }, [displayItems, selectedFilter]);
+
   return (
     <OuterWrapper>
-      <CollapsableSection
-        title={(
-          <Filters>
-            
-          </Filters>
-        )}>
-        <ActionItemWrapper>
-          <ActionItemContainer>
-            {(displayItems || []).map(({ transition, type, ...item }) => (
-              <ActionItem key={`${type}_${item.key || item.i}_${item.timestamp || item.gracePeriodEnd}`} data={item} type={type} />
-            ))}
-          </ActionItemContainer>
-        </ActionItemWrapper>
-      </CollapsableSection>
+      {account && (
+        <CollapsibleSection
+          borderless
+          openHeight="calc(100% - 60px)"
+          title={(
+            <Filters>
+              <ReadyFilter tally={tallies.ready} onClick={onClickFilter('ready')} selected={selectedFilter === 'ready'} />
+              <InProgressFilter tally={tallies.progress} onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'} />
+              <LinkContainer>
+                <OnClickLink>
+                  <PopoutIcon />
+                </OnClickLink>
+              </LinkContainer>
+            </Filters>
+          )}>
+          <ActionItemWrapper>
+            <ActionItemContainer>
+              {filteredDisplayItems.map(({ transition, type, ...item }) => (
+                <ActionItem key={`${type}_${item.key || item.i}_${item.timestamp || item.gracePeriodEnd}`} data={item} type={type} />
+              ))}
+            </ActionItemContainer>
+          </ActionItemWrapper>
+        </CollapsibleSection>
+      )}
     </OuterWrapper>
   );
 };

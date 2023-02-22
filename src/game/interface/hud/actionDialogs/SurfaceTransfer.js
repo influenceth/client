@@ -4,7 +4,7 @@ import { Asteroid, Construction, Inventory } from '@influenceth/sdk';
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
 import { SurfaceTransferIcon } from '~/components/Icons';
 import { useResourceAssets } from '~/hooks/useAssets';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
@@ -29,7 +29,7 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
   const resources = useResourceAssets();
   // NOTE: plot should be destination if deliveryId > 0
   const { currentDelivery, deliveryStatus, startDelivery, finishDelivery } = useDeliveryManager(asteroid?.i, plot?.i, props.deliveryId);
-  const { crew, crewMemberMap } = useCrew();
+  const { crew, crewMemberMap } = useCrewContext();
   const { data: currentDeliveryOriginPlot } = usePlot(asteroid.i, currentDelivery?.originPlotId);
   const { data: currentDeliveryDestinationPlot } = usePlot(asteroid.i, currentDelivery?.destPlotId);
 

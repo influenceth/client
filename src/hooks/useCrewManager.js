@@ -1,11 +1,11 @@
 import { useCallback, useContext, useMemo } from 'react';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useCrew from './useCrew';
+import useCrewContext from './useCrewContext';
 
 const useCrewManager = () => {
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
-  const { crewMemberMap } = useCrew();
+  const { crewMemberMap } = useCrewContext();
 
   const crewCredits = useMemo(() => {
     return Object.values(crewMemberMap || {}).filter((c) => !c.crewClass);

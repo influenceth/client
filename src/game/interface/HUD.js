@@ -14,7 +14,7 @@ import useActionModules from './hud/useActionModules';
 import ActionModules, { ActionModule } from './hud/ActionModules';
 import SystemControls from './outliner/SystemControls';
 
-const bottomMargin = 90;
+const bottomMargin = 60;
 const rightModuleWidth = 375;
 
 const Wrapper = styled.div`
@@ -25,13 +25,6 @@ const Wrapper = styled.div`
   position: absolute;
   bottom: ${bottomMargin}px;
   z-index: 2;
-
-  & > * {
-    margin-bottom: 12px;
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
 `;
 
 const LeftWrapper = styled(Wrapper)`
@@ -119,36 +112,9 @@ const ActionButtonContainer = styled(ActionModule)`
 `;
 
 const HUD = () => {
-  const { plotId } = useStore(s => s.asteroids.plot) || {};
-  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
-
-  const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
-  const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
-  const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
-
   const { actions, props: actionProps } = useActionButtons();
   const actionModuleVisible = useActionModules();
   const anyActionModulesVisible = useMemo(() => Object.values(actionModuleVisible).find((v) => !!v), [actionModuleVisible]);
-
-  const { backLabel, onClickBack } = useMemo(() => {
-    if (zoomToPlot) {
-      return {
-        backLabel: 'Back to Asteroid',
-        onClickBack: () => dispatchZoomToPlot()
-      }
-    }
-    if (plotId) {
-      return {
-        backLabel: 'Deselect Lot',
-        onClickBack: () => dispatchPlotSelected()
-      }
-    }
-    return {
-      backLabel: 'Back to Belt',
-      onClickBack: () => updateZoomStatus('zooming-out')
-    }
-  }, [plotId, zoomToPlot]);
 
   useEffect(() => ReactTooltip.rebuild(), [actions]);
 
@@ -158,18 +124,6 @@ const HUD = () => {
         <AvatarMenu />
 
         <ActionItems />
-        
-        <LeftActions visible={zoomStatus === 'in'}>
-          <ResourceMapToggle />
-          <LeftActionButton
-            data-arrow-color="transparent"
-            data-for="global"
-            data-place="right"
-            data-tip={backLabel}
-            onClick={onClickBack}>
-            <BackIcon />
-          </LeftActionButton>
-        </LeftActions>
 
         <InfoPane />
       </LeftWrapper>

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const CrewLink = (props) => {
   const { id, name: initialName } = props;
-  const { crewMemberMap } = useCrew();
+  const { crewMemberMap } = useCrewContext();
   const [ name, setName ] = useState(initialName);
 
   useEffect(() => {

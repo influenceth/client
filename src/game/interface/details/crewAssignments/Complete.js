@@ -10,7 +10,7 @@ import CrewCard from '~/components/CrewCard';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/DetailsModal';
 import { LinkIcon, TwitterIcon } from '~/components/Icons';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStorySession from '~/hooks/useStorySession';
 
 const slideOutTransition = keyframes`
@@ -287,7 +287,7 @@ const CrewAssignmentComplete = (props) => {
   const { account } = useAuth();
   const { id: sessionId } = useParams();
   const history = useHistory();
-  const { crewMemberMap } = useCrew();
+  const { crewMemberMap } = useCrewContext();
   const { storyState } = useStorySession(sessionId);
 
   const onCloseDestination = useMemo(

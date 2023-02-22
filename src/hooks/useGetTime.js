@@ -1,13 +1,19 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { START_TIMESTAMP } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 
 const useGetTime = () => {
   const timeOverride = useStore(s => s.timeOverride);
+
+  useEffect(() => {
+    console.log('override is', timeOverride);
+  }, [timeOverride])
+
   return useCallback((overrideNow) => {
     const now = overrideNow || Date.now();
     const override = timeOverride || {};
+
     let preciseTime = override.anchor || (((now / 1000) - START_TIMESTAMP) / 3600);
     // console.log('override.speed', now - override.ts);
     // if (override.speed) preciseTime += override.speed * (now - override.ts) / 30;

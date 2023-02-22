@@ -5,7 +5,7 @@ import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
 import useConstructionManager from '~/hooks/useConstructionManager';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import actionButtons from './actionButtons';
@@ -23,7 +23,7 @@ const useActionButtons = () => {
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
   const { constructionStatus } = useConstructionManager(asteroidId, plotId);
   const { data: plot, isLoading: plotIsLoading } = usePlot(asteroidId, plotId);
-  const { crew } = useCrew();
+  const { crew } = useCrewContext();
 
   const [actions, setActions] = useState([]);
 

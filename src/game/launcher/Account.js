@@ -4,7 +4,7 @@ import styled, { css, keyframes } from 'styled-components';
 import LoadingSpinner from 'react-spinners/PuffLoader';
 
 import useAuth from '~/hooks/useAuth';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import ButtonAlt from '~/components/ButtonAlt';
 import ButtonPill from '~/components/ButtonPill';
 import CrewCard from '~/components/CrewCard';
@@ -249,7 +249,7 @@ const MainButton = styled(ButtonAlt)`
 const Account = (props) => {
   const history = useHistory();
   const { account, logout } = useAuth();
-  const { captain, loading: crewLoading, crew, crewMemberMap } = useCrew();
+  const { captain, loading: crewLoading, crew, crewMemberMap } = useCrewContext();
 
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
   const dispatchCutscene = useStore(s => s.dispatchCutscene);

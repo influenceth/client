@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import useAuth from '~/hooks/useAuth';
 import useBook from '~/hooks/useBook';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import CrewCard from '~/components/CrewCard';
 import Details from '~/components/DetailsModal';
@@ -320,7 +320,7 @@ const CrewAssignments = (props) => {
   const { account } = useAuth();
 
   const createStorySession = useCreateStorySession();
-  const { crew, crewMemberMap } = useCrew();
+  const { crew, crewMemberMap } = useCrewContext();
   const { data: book, isError } = useBook(bookId);
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);

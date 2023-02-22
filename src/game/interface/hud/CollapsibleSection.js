@@ -1,20 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import ReactTooltip from 'react-tooltip';
-import styled, { css, keyframes } from 'styled-components';
-import CrewCard from '~/components/CrewCard';
-import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
+import { useCallback, useState } from 'react';
+import styled from 'styled-components';
 
-import { CaptainIcon, CollapsedIcon, CrewIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
-import TriangleTip from '~/components/TriangleTip';
-import useAuth from '~/hooks/useAuth';
-import useCrew from '~/hooks/useCrew';
-import useStore from '~/hooks/useStore';
-import theme from '~/theme';
+import { CollapsedIcon } from '~/components/Icons';
 
 const toggleWidth = 32;
 
-const Uncollapsable = styled.div`
+const Uncollapsible = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
@@ -34,7 +25,7 @@ const Toggle = styled.div`
     transition: transform 250ms ease;
   }
 
-  ${Uncollapsable}:hover & {
+  ${Uncollapsible}:hover & {
     opacity: 1;
   }
 `;
@@ -55,19 +46,21 @@ const Title = styled.div`
     padding-left: 8px;
   }
 `;
-const Collapsable = styled.div`
+const Collapsible = styled.div`
   border-bottom: 1px solid transparent;
-  height: 152px;
+  height: ${p => p.openHeight || '150px'};
   overflow: hidden;
   margin-left: ${toggleWidth}px;
-  transition: height 250ms ease, border-color 250ms ease;
+  margin-bottom: 12px;
+  transition: height 250ms ease, border-color 250ms ease, margin-bottom 250ms ease;
   ${p => p.collapsed && `
-    border-color: #444;
+    border-color: ${p.borderless ? 'transparent' : '#444'};
     height: 0;
+    margin-bottom: 4px;
   `};
 `;
 
-const CollapsableSection = ({ title, children }) => {
+const CollapsibleSection = ({ borderless, children, title, openHeight }) => {
   const [collapsed, setCollapsed] = useState();
   const toggleCollapse = useCallback(() => {
     setCollapsed((c) => !c);
@@ -75,19 +68,19 @@ const CollapsableSection = ({ title, children }) => {
 
   return (
     <>
-      <Uncollapsable collapsed={collapsed} onClick={toggleCollapse}>
+      <Uncollapsible collapsed={collapsed} onClick={toggleCollapse}>
         <Toggle collapsed={collapsed}>
           <CollapsedIcon />
         </Toggle>
         <Title>
           {title}
         </Title>
-      </Uncollapsable>
-      <Collapsable collapsed={collapsed}>
+      </Uncollapsible>
+      <Collapsible borderless={borderless} collapsed={collapsed} openHeight={openHeight}>
         {children}
-      </Collapsable>
+      </Collapsible>
     </>
   );
 };
 
-export default CollapsableSection;
+export default CollapsibleSection;

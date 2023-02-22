@@ -4,6 +4,7 @@ import LoadingAnimation from 'react-spinners/BarLoader';
 import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
 import theme from '~/theme';
+import ClipCorner from './ClipCorner';
 
 const StyledForm = styled.div`
   align-items: flex-start;
@@ -81,9 +82,7 @@ const StaticForm = (props) => {
       <CloseButton onClick={onClose} borderless>
         <CloseIcon />
       </CloseButton>
-      <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
-        <line x1="0" y1="10" x2="10" y2="0" />
-      </Corner>
+      <ClipCorner dimension={10} color={theme.colors.main} />
     </StyledForm>
   );
 };

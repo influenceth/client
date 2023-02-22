@@ -16,7 +16,7 @@ import AsteroidDataCard from '~/components/AsteroidDataCard';
 import IconButton from '~/components/IconButton';
 import { ConstructIcon, DetailIcon } from '~/components/Icons';
 import Section from '~/components/Section';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const Controls = styled.div`
   flex: 0 0 auto;
@@ -37,7 +37,7 @@ const SelectedAsteroid = (props) => {
   const { isMobile } = useScreenSize();
 
   const { data: asteroid } = useAsteroid(asteroidId);
-  const { crew } = useCrew();
+  const { crew } = useCrewContext();
   const { ids: watchlistIds } = useWatchlist();
   const watchAsteroid = useWatchAsteroid();
   const unWatchAsteroid = useUnWatchAsteroid();

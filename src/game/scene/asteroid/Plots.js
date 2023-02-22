@@ -20,7 +20,7 @@ import useAsteroidPlots from '~/hooks/useAsteroidPlots';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
 import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 import useAuth from '~/hooks/useAuth';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
 import useWebWorker from '~/hooks/useWebWorker';
@@ -48,7 +48,7 @@ const MOUSE_THROTTLE_TIME = 1000 / 30; // ms
 
 const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
   const { token } = useAuth();
-  const { crew } = useCrew();
+  const { crew } = useCrewContext();
   const { gl, scene } = useThree();
   const queryClient = useQueryClient();
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();

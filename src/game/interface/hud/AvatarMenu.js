@@ -9,10 +9,11 @@ import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
 import { CaptainIcon, CrewIcon, IdleIcon, LocationPinIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
 import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
-import CollapsableSection from './CollapsableSection';
+import CollapsibleSection from './CollapsibleSection';
+import CrewCardFramed from '~/components/CrewCardFramed';
 
 const bgColor = '#000';
 const hoverBgColor = '#183541';
@@ -27,7 +28,6 @@ const silhouetteAnimation = keyframes`
 `;
 
 const Wrapper = styled.div`
-  margin-bottom: 12px;
   pointer-events: none;
   width: 100%;
 `;
@@ -146,7 +146,7 @@ const CrewInfoContainer = styled.div`
 
 const SwayContainer = styled.div`
   ${CrewInfoContainer} & {
-    background: ${bgColor};
+    background: rgba(0, 0, 0, 0.7);
     color: white;
     font-size: 20px;
     height: 48px;
@@ -224,7 +224,7 @@ const Food = styled.div`
 
 const AvatarMenu = (props) => {
   const { account } = useAuth();
-  const { captain, crewMemberMap, crew, loading: crewIsLoading } = useCrew();
+  const { captain, crewMemberMap, crew, loading: crewIsLoading } = useCrewContext();
   const history = useHistory();
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
@@ -264,7 +264,8 @@ const AvatarMenu = (props) => {
   if (crewIsLoading) return null;
   return (
     <Wrapper>
-      <CollapsableSection
+      <CollapsibleSection
+        borderless={!account}
         title={(
           <>
             <CrewIcon />
@@ -278,31 +279,13 @@ const AvatarMenu = (props) => {
           </>
         )}>
         <CrewWrapper>
-          <AvatarWrapper
-            data-tip={tooltip}
-            data-for="global"
-            data-place="right"
-            onClick={onClick}>
-            <Avatar captainless={!captain}>
-              {captain && (
-                <CrewCard
-                  crew={captain}
-                  hideHeader
-                  hideFooter
-                  hideMask />
-              )}
-              {!captain && (
-                <CrewSilhouetteCard overlay={silhouetteOverlay} />
-              )}
-            </Avatar>
-            <AvatarFlourish>
-              <StyledCaptainIcon captainless={!captain} />
-              <StyledTriangleTip
-                fillColor={bgColor}
-                strokeColor={borderColor}
-                strokeWidth={2} />
-            </AvatarFlourish>
-          </AvatarWrapper>
+          <CrewCardFramed
+            crewmate={captain}
+            isCaptain
+            onClick={onClick}
+            silhouetteOverlay={silhouetteOverlay}
+            tooltip={tooltip}
+            width={96} />
 
           <CrewInfoContainer>
             <SwayContainer noCaptain={!captain}><SwayIcon /> 0</SwayContainer>
@@ -331,7 +314,7 @@ const AvatarMenu = (props) => {
             )}
           </CrewInfoContainer>
         </CrewWrapper>
-      </CollapsableSection>
+      </CollapsibleSection>
     </Wrapper>
   );
 };

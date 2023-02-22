@@ -1,8 +1,8 @@
 import { AiFillBug, AiFillEdit, AiFillEye, AiFillStar } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle, BsPieChartFill, BsStopwatch } from 'react-icons/bs';
 import { FaEthereum, FaMapMarkedAlt, FaCopy, FaGem, FaRegCircle } from 'react-icons/fa';
-import { FiMenu } from 'react-icons/fi';
-import { HiClock, HiCog, HiChevronDoubleLeft } from 'react-icons/hi';
+import { FiExternalLink, FiMenu } from 'react-icons/fi';
+import { HiClock, HiCog, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import {
   MdAccountBalanceWallet,
   MdAdd,
@@ -147,8 +147,10 @@ export {
   RiPagesFill as DetailIcon,
   VscCircleOutline as IdleIcon,
   FaMapMarkedAlt as MapIcon,
+  FiExternalLink as PopoutIcon,
   FiMenu as MenuIcon,
   HiChevronDoubleLeft as BackIcon,
+  HiChevronDoubleRight as ForwardIcon,
   HiClock as TimeIcon,
   HiCog as SettingsIcon,
   MdAccountBalanceWallet as WalletIcon,

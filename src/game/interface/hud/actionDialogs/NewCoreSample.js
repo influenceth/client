@@ -4,7 +4,7 @@ import { Asteroid as AsteroidLib, CoreSample, Inventory, } from '@influenceth/sd
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { CoreSampleIcon } from '~/components/Icons';
 import { useResourceAssets } from '~/hooks/useAssets';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
 import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
@@ -28,7 +28,7 @@ import {
 const NewCoreSample = ({ asteroid, plot, ...props }) => {
   const resources = useResourceAssets();
   const { startSampling, finishSampling, samplingStatus, ...coreSampleManager } = useCoreSampleManager(asteroid?.i, plot?.i);
-  const { crew, crewMemberMap } = useCrew();
+  const { crew, crewMemberMap } = useCrewContext();
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);

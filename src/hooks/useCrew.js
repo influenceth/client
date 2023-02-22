@@ -1,9 +1,13 @@
-import { useContext } from 'react';
+import { useQuery } from 'react-query';
 
-import CrewContext from '~/contexts/CrewContext';
+import api from '~/lib/api';
 
-const useCrew = () => {
-  return useContext(CrewContext);
+const useCrew = (i) => {
+  return useQuery(
+    [ 'crew', i ],
+    () => api.getCrew(i),
+    { enabled: !!i }
+  );
 };
 
 export default useCrew;

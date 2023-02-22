@@ -112,9 +112,13 @@ const TimeController = ({ open }) => {
   }, [speedSetting]);
 
   useEffect(() => {
-    const dir = speedSetting < 0 ? -1 : 1;
-    const selectedSpeed = speeds[Math.abs(speedSetting)] * dir;
-    dispatchTimeOverride(getTime(), selectedSpeed);
+    // if speedSetting is zero and timeOverride is already non-set, don't override
+    // otherwise (there is a timeOverride and speedSetting changes), update override
+    if (speedSetting !== 0 || timeOverride) {
+      const dir = speedSetting < 0 ? -1 : 1;
+      const selectedSpeed = speeds[Math.abs(speedSetting)] * dir;
+      dispatchTimeOverride(getTime(), selectedSpeed);
+    }
   }, [ speedSetting ]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const displaySpeed = useMemo(() => {
@@ -157,7 +161,7 @@ const TimeController = ({ open }) => {
       {isPaused
         ? (
           <TimeButton
-            data-tip="Reset"
+            data-tip="Reset to Current Time"
             data-place="top"
             onClick={reset}>
             <PlayIcon />

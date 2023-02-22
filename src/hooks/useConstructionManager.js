@@ -2,14 +2,14 @@ import { useCallback, useContext, useMemo } from 'react';
 import { Construction } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useCrew from './useCrew';
+import useCrewContext from './useCrewContext';
 import usePlot from './usePlot';
 import useActionItems from './useActionItems';
 
 const useConstructionManager = (asteroidId, plotId) => {
   const { actionItems, readyItems, liveBlockTime } = useActionItems();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
-  const { crew } = useCrew();
+  const { crew } = useCrewContext();
   const { data: plot } = usePlot(asteroidId, plotId);
 
   const payload = useMemo(() => ({

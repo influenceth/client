@@ -21,6 +21,8 @@ export const getContrastText = (rgb) => {
   return (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000 > 125 ? 'black' : 'white';
 }
 
+const main = '#36a7cd';
+const success = '#00ffe7';
 const gray = '#bbbbbb';
 const teal = '#69ebf4';
 const blue = '#4f90ff';
@@ -31,8 +33,8 @@ const red = '#df4300';
 
 const theme = {
   colors: {
-    main: '#36a7cd',
-    mainRGB: '0, 191, 255', // NOTE: this should be rgb of `main`
+    main,
+    mainRGB: hexToRGB(main),
     mainBorder: 'rgba(255, 255, 255, 0.25)',
     mobileBackground: '#181818',
     contentBorder: '#666666',
@@ -44,8 +46,8 @@ const theme = {
     disabledText: 'rgba(255,255,255,0.4)',
     borderBottom: '#555555',
     borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
-    success: '#54de94',
-    successRGB: '84, 222, 148', // NOTE: this should be rgb of `success`
+    success,
+    successRGB: hexToRGB(success),
     txButton: '#4444b8',
     error: red,
     teal, blue, purple, orange, yellow, red,

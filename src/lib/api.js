@@ -139,6 +139,11 @@ const api = {
     return response.data;
   },
 
+  getCrew: async (i) => {
+    const response = await instance.get(`/v1/crews/${i}`);
+    return response.data;
+  },
+
   getCrewMember: async (i) => {
     const response = await instance.get(`/v1/crewmates/${i}`);
     return response.data;

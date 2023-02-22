@@ -5,15 +5,17 @@ import ReactTooltip from 'react-tooltip';
 import useStore from '~/hooks/useStore';
 
 const StyledIconButton = styled.button`
+  align-items: center;
   border: ${p => p.borderless ? '0px' : '1px'} solid ${p => p.theme.colors.main};
   background-color: ${p => p.backgroundColor || 'transparent'};
   border-radius: 2px;
   color: ${p => p.theme.colors.main};
+  display: flex;
   font-family: 'Jura', sans-serif;
   font-size: 15px;
+  justify-content: center;
   height: 2em;
   width: 2em;
-  padding: ${p => p.borderless ? '5px' : '4px'};
   transition: all 300ms ease;
   ${p => p.scale && `transform: scale(${p.scale});`}
   position: relative;
