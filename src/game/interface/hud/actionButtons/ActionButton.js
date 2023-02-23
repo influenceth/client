@@ -2,8 +2,6 @@ import { useCallback, useEffect } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import ClipCorner from '~/components/ClipCorner';
-import InProgressIcon from '~/components/InProgressIcon';
-import NavIcon from '~/components/NavIcon';
 
 const dimension = 60;
 const padding = 4;
@@ -20,6 +18,11 @@ const cornerAnimation = keyframes`
   0% { stroke-width: 2px; bottom: -1px; right: -1px; }
   50% { stroke-width: 3px; bottom: -2px; right: -2px; }
   100% { stroke-width: 2px; bottom: -1px; right: -1px; }
+`;
+
+const rotationAnimation = keyframes`
+  0% { transform: rotate(0); }
+  100% { transform: rotate(360deg); }
 `;
 
 const ActionButtonWrapper = styled.div`
@@ -65,15 +68,6 @@ const ActionButtonWrapper = styled.div`
       background-color: #777;
     }
   `}
-`;
-
-const loadingHeight = 12;
-const LoadingAnimation = styled.div`
-  position: absolute;
-  top: -${0.5 * loadingHeight + 2}px;
-  left: 50%;
-  margin-left: -${1.5 * loadingHeight}px;
-  z-index: 1;
 `;
 
 const ActionButton = styled.div`
@@ -166,6 +160,41 @@ const ActionButton = styled.div`
   }
 `;
 
+const LoadingAnimation = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - ${cornerSize}px),
+    calc(100% - ${cornerSize}px) 100%,
+    0 100%,
+    0 0,
+    ${padding}px ${padding}px,
+    ${padding}px calc(100% - ${padding}px),
+    calc(100% - ${cornerSize + padding - 1}px) calc(100% - ${padding}px),
+    calc(100% - ${padding}px) calc(100% - ${cornerSize + padding - 1}px),
+    calc(100% - ${padding}px) ${padding}px,
+    ${padding}px ${padding}px
+  );
+
+  &:before {
+    animation: ${rotationAnimation} 2000ms linear infinite;
+    background: currentColor;
+    content: '';
+    height: 100%;
+    width: 200%;
+    opacity: 0.75;
+    position: absolute;
+    left: -50%;
+    bottom: 50%;
+    transform-origin: bottom center;
+  }
+`;
+
 // TODO: consider a booleanProp wrapper so could wrap boolean props in
 // {...booleanProps({ a, b, c })} where booleanProps(props) would either include
 // or not rather than true/false OR would pass 1/0 instead
@@ -183,7 +212,7 @@ const ActionButtonComponent = ({ label, flags = {}, icon, onClick }) => {
       data-tip={label}
       onClick={_onClick}
       {...flags}>
-      {flags.loading && <LoadingAnimation><InProgressIcon height={loadingHeight} /></LoadingAnimation>}
+      {flags.loading && <LoadingAnimation />}
       <ActionButton {...flags}>
         <ClipCorner dimension={cornerSize} />
         <div>
