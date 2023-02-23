@@ -6,10 +6,6 @@ import useStore from '~/hooks/useStore';
 const useGetTime = () => {
   const timeOverride = useStore(s => s.timeOverride);
 
-  useEffect(() => {
-    console.log('override is', timeOverride);
-  }, [timeOverride])
-
   return useCallback((overrideNow) => {
     const now = overrideNow || Date.now();
     const override = timeOverride || {};

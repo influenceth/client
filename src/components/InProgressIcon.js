@@ -28,7 +28,7 @@ const Svg = styled.svg`
 const animationLength = 1250;
 const Diamond = styled.path`
   animation: ${animation} ${animationLength}ms ease infinite;
-  fill: white;
+  fill: currentColor;
   &:nth-child(1) {
     animation-delay: 0;
     transform-origin: 50px 50px;

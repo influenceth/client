@@ -13,6 +13,7 @@ import {
   ForwardIcon,
   InfoIcon,
   PopoutIcon,
+  WarningOutlineIcon,
 } from '~/components/Icons';
 import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
 import { useBuildingAssets } from '~/hooks/useAssets';
@@ -28,6 +29,8 @@ import CoreSampleMouseover from './mouseovers/CoreSampleMouseover';
 import ClipCorner from '~/components/ClipCorner';
 import CrewCard from '~/components/CrewCard';
 import CrewCardFramed from '~/components/CrewCardFramed';
+import useActionButtons from './useActionButtons';
+import InProgressIcon from '~/components/InProgressIcon';
 
 const opacityAnimation = keyframes`
   0% { opacity: 1; }
@@ -36,6 +39,11 @@ const opacityAnimation = keyframes`
 `;
 
 const OuterTitleRow = styled.div`
+  display: flex;
+  flex-direction: row;
+`;
+
+const OuterThumbRow = styled.div`
   display: flex;
   flex-direction: row;
 `;
@@ -126,14 +134,16 @@ const CloseButton = styled(IconButton)`
   }
 `;
 
+
+const thumbCornerSize = 10;
 const ThumbPreview = styled.div`
-  background: black;
+  background: #0d0d0d;
   border: 1px solid rgba(255,255,255,0.25);
   clip-path: polygon(
     0% 0%,
     100% 0%,
-    100% calc(100% - 20px),
-    calc(100% - 20px) 100%,
+    100% calc(100% - ${thumbCornerSize}px),
+    calc(100% - ${thumbCornerSize}px) 100%,
     0% 100%
   );
   color: #999;
@@ -178,17 +188,23 @@ const ThumbBackground = styled.div`
 `;
 
 const ThumbBanner = styled.div`
-  position: absolute;
-  z-index: 1;
-  height: 30px;
-  background: rgba(0, 0, 0, 0.8);
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
   color: ${p => p.color ? p.theme.colors[p.color] : 'white'};
   display: flex;
-  align-items: center;
+  font-weight: bold;
+  height: 36px;
   justify-content: center;
-  width: 100%;
-  top: calc(50% - 15px);
+  left: 5%;
+  position: absolute;
   text-transform: uppercase;
+  top: calc(50% - 15px);
+  width: 90%;
+  z-index: 1;
+  & > svg {
+    font-size: 18px;
+    margin-right: 6px;
+  }
 `;
 
 const RarityEarmark = styled.div`
@@ -231,6 +247,13 @@ const ThumbWrapper = styled.div`
       border-color: white;
     }
   }
+`;
+
+const ActionButtonContainer = styled.div`
+  align-items: flex-end;
+  display: flex;
+  flex-direction: row;
+  margin-left: 16px;
 `;
 
 // const LotConstructionWarning = styled.span`
@@ -356,6 +379,7 @@ const InfoPane = () => {
   const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
+  const { actions, props: actionProps } = useActionButtons();
   const { data: asteroid } = useAsteroid(asteroidId);
   const buildings = useBuildingAssets();
   const { constructionStatus, isAtRisk } = useConstructionManager(asteroidId, plotId);
@@ -456,14 +480,17 @@ const InfoPane = () => {
         let thumbBanner = '';
         let thumbBannerColor = 'main';
         if (!asteroid.scanned) {
-          if (asteroid.owner) {
-            thumbBanner = asteroid.scanCompletionTime ? 'Scanning...' :  'Ready to Scan';
+          if (asteroid.owner && asteroid.scanCompletionTime) {
+            thumbBanner = 'Scanning...';
+            thumbBannerColor = 'main';
+          } else if (asteroid.owner) {
+            thumbBanner = <><WarningOutlineIcon /> Ready to Scan</>;
             thumbBannerColor = 'success';
           } else if (saleIsActive) {
             thumbBanner = 'Available to Purchase';
             thumbBannerColor = 'main';
           } else {
-            thumbBanner = 'Unscanned';
+            thumbBanner = <><WarningOutlineIcon /> Unscanned</>;
             thumbBannerColor = 'error';
           }
         }
@@ -486,8 +513,8 @@ const InfoPane = () => {
         );
         pane.thumbVisible = !!renderReady;
       } else {
-        pane.title = '&nbsp;';
-        pane.subtitle = '&nbsp;';
+        pane.title = ' ';
+        pane.subtitle = ' ';
         pane.thumbnail = <ThumbLoader />;
       }
 
@@ -510,7 +537,15 @@ const InfoPane = () => {
           pane.subtitle = <>{asteroid?.customName || asteroid?.baseName} &gt; <b>Lot {plotId.toLocaleString()}</b></>;
           pane.captainCard = plot.occupier;
           pane.hoverSubtitle = 'Zoom to Lot';
-          pane.thumbnail = <ThumbBackground image={thumbUrl} />;
+          pane.thumbnail = (
+            <ThumbBackground image={thumbUrl}>
+              {isAtRisk && (
+                <ThumbBanner color="error">
+                  {plot.occupier === crew?.i ? 'At Risk' : 'Abandoned'}
+                </ThumbBanner>
+              )}
+            </ThumbBackground>
+          );
         } else {
           pane.thumbnail = <ThumbLoader />;
         }
@@ -546,6 +581,15 @@ const InfoPane = () => {
     history.push(titleLink);
   };
 
+  useEffect(() => ReactTooltip.rebuild(), [actions]);
+  const actionButtons = useMemo(() => (
+    <ActionButtonContainer visible={actions?.length > 0}>
+      {actions.map((ActionButton, i) => (
+        <ActionButton key={i} {...actionProps} />
+      ))}
+    </ActionButtonContainer>
+  ), [actions, actionProps]);
+
   return (
     <Pane visible={asteroidId && ['out','in'].includes(zoomStatus)}>
       <ReactTooltip id="infoPane" effect="solid" />
@@ -553,29 +597,33 @@ const InfoPane = () => {
         {captainCard && <CaptainCardContainer><CaptainCard crewId={captainCard} /></CaptainCardContainer>}
         <div>
           {title && (
-              <TitleRow hasLink={!!titleLink} onClick={onClickTitle}>
-                <Title hasThumb={!!thumbnail}>{title}</Title>
-                {titleLink && <PopoutIcon />}
-              </TitleRow>
+            <TitleRow hasLink={!!titleLink} onClick={onClickTitle}>
+              <Title hasThumb={!!thumbnail}>{title}</Title>
+              {titleLink && <PopoutIcon />}
+            </TitleRow>
           )}
           {subtitle && <Subtitle>{hover && hoverSubtitle ? <b>{hoverSubtitle}</b> : subtitle}</Subtitle>}
         </div>
+        {title && !thumbnail && actionButtons}
       </OuterTitleRow>
       {thumbnail && (
-        <ThumbWrapper
-          onClick={onClickPane}
-          onMouseEnter={onMouseEvent}
-          onMouseLeave={onMouseEvent}
-          hasCaptainCard={!!captainCard}>
-          {hover ? <DetailsIcon /> : <ForwardIcon />}
-          <ThumbPreview visible={thumbVisible}>
-            <CloseButton onClick={onClosePane}>
-              <CloseIcon />
-            </CloseButton>
-            {thumbnail}
-            <ClipCorner dimension={20} color={hover ? 'white' : 'rgba(255,255,255,0.25)'} />
-          </ThumbPreview>
-        </ThumbWrapper>
+        <OuterThumbRow>
+          <ThumbWrapper
+            onClick={onClickPane}
+            onMouseEnter={onMouseEvent}
+            onMouseLeave={onMouseEvent}
+            hasCaptainCard={!!captainCard}>
+            {hover ? <DetailsIcon /> : <ForwardIcon />}
+            <ThumbPreview visible={thumbVisible}>
+              <CloseButton onClick={onClosePane}>
+                <CloseIcon />
+              </CloseButton>
+              {thumbnail}
+              <ClipCorner dimension={thumbCornerSize} color={hover ? 'white' : 'rgba(255,255,255,0.25)'} />
+            </ThumbPreview>
+          </ThumbWrapper>
+          {actionButtons}
+        </OuterThumbRow>
       )}
     </Pane>
   );

@@ -25,7 +25,7 @@ const SurfaceTransferIncoming = ({ asteroid, plot, onSetAction, _disabled }) => 
       label={`${deliveryStatus === 'READY_TO_FINISH' ? 'Finish' : 'Incoming'} Surface Transfer`}
       flags={{
         attention: isReadyToFinish || undefined,
-        badge: isReadyToFinish ? '✓' : (incoming.length > 1 ? incoming.length : undefined),
+        badge: !isReadyToFinish && incoming.length > 1 ? incoming.length : 0,
         disabled: _disabled || undefined,
         loading: !isReadyToFinish || undefined
       }}

@@ -29,7 +29,7 @@ const Extract = ({ onSetAction, asteroid, crew, plot, _disabled }) => {
   const myUsableSamples = useMemo(() => usableSamples.filter((c) => c.owner === crew?.i), [crew?.i, usableSamples]);
 
   const attention = extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY';
-  const badge = extractionStatus === 'READY_TO_FINISH' ? '✓' : (extractionStatus === 'READY' ? usableSamples?.length : 0);
+  const badge = (extractionStatus === 'READY' ? usableSamples?.length : 0);
   const disabled = extractionStatus === 'READY' && (myUsableSamples?.length === 0);
   const loading = ['EXTRACTING', 'FINISHING'].includes(extractionStatus);
   return (

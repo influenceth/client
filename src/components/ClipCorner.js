@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 const Corner = styled.svg`
   bottom: -1px;
@@ -6,7 +6,7 @@ const Corner = styled.svg`
   margin-right: 0;
   position: absolute;
   right: -1px;
-  stroke: ${p => p.color};
+  stroke: ${p => p.color || 'currentColor'};
   stroke-width: 2px;
   width: ${p => p.dimension}px;
 `;

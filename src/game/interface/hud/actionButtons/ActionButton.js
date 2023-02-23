@@ -1,34 +1,109 @@
 import { useCallback, useEffect } from 'react';
 import styled, { css, keyframes } from 'styled-components';
-import LoadingAnimation from 'react-spinners/BarLoader';
 import ReactTooltip from 'react-tooltip';
+import ClipCorner from '~/components/ClipCorner';
+import InProgressIcon from '~/components/InProgressIcon';
+import NavIcon from '~/components/NavIcon';
 
-const outlineAnimation = keyframes`
-  0% { outline-width: 0; }
-  50% { outline-width: 3px; }
-  100% { outline-width: 0; }
+const dimension = 60;
+const padding = 4;
+const cornerSize = 10;
+
+const borderAnimation = keyframes`
+  0% { border-width: 1px; padding: ${padding}px; }
+  50% { border-width: 3px; padding: ${padding - 2}px; }
+  100% { border-width: 1px; padding: ${padding}px; }
+`;
+
+// (see ClipCorner for these values)
+const cornerAnimation = keyframes`
+  0% { stroke-width: 2px; bottom: -1px; right: -1px; }
+  50% { stroke-width: 3px; bottom: -2px; right: -2px; }
+  100% { stroke-width: 2px; bottom: -1px; right: -1px; }
+`;
+
+const ActionButtonWrapper = styled.div`
+  color: ${p => p.theme.colors.main};
+  cursor: ${p => p.theme.cursors.active};
+  margin-right: 8px;
+  pointer-events: all;
+  position: relative;
+
+  &:last-child {
+    margin-right: 0;
+  }
+
+  ${p => p?.badge ? `
+    &:before {
+      background-color: ${p.theme.colors.main};
+      content: "${p.badge}";
+      color: white;
+      border-radius: 2em;
+      font-size: 12px;
+      font-weight: bold;
+      line-height: 20px;
+      position: absolute;
+      text-align: center;
+      top: -8px;
+      right: -6px;
+      height: 20px;
+      width: 20px;
+      z-index: 1;
+    }
+  ` : ''}
+
+  ${p => p.attention && css`
+    color: ${p.theme.colors.success};
+    &:before {
+      background-color: ${p => p.theme.colors.success};
+    }
+  `}
+
+  ${p => p.disabled && css`
+    color: #aaa;
+    &:before {
+      background-color: #777;
+    }
+  `}
+`;
+
+const loadingHeight = 12;
+const LoadingAnimation = styled.div`
+  position: absolute;
+  top: -${0.5 * loadingHeight + 2}px;
+  left: 50%;
+  margin-left: -${1.5 * loadingHeight}px;
+  z-index: 1;
 `;
 
 const ActionButton = styled.div`
-  background: #111;
   border: 1px solid ${p => p.theme.colors.main};
-  border-radius: 6px;
-  color: ${p => p.theme.colors.main};
-  cursor: ${p => p.theme.cursors.active};
-  height: 64px;
-  margin-left: 8px;
-  padding: 3px;
-  pointer-events: all;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - ${cornerSize}px),
+    calc(100% - ${cornerSize}px) 100%,
+    0 100%
+  );
+  height: ${dimension}px;
+  width: ${dimension}px;
+  padding: ${padding}px;
   position: relative;
   transition: color 250ms ease;
-  width: 64px;
-  &:first-child {
-    margin-left: 0;
+  & > svg {
+    stroke: ${p => p.theme.colors.main} !important;
   }
+
   & > div {
     align-items: center;
     background-color: rgba(${p => p.theme.colors.mainRGB}, 0.2);
-    border-radius: 3px;
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% calc(100% - ${cornerSize - 4}px),
+      calc(100% - ${cornerSize - 4}px) 100%,
+      0 100%
+    );
     display: flex;
     font-size: 55px;
     height: 100%;
@@ -45,30 +120,9 @@ const ActionButton = styled.div`
     }
   }
 
-  ${p => p?.badge ? `
-    &:before {
-      background-color: ${p.theme.colors.main};
-      content: "${p.badge}";
-      color: white;
-      border-radius: 2em;
-      font-size: 12px;
-      font-weight: bold;
-      line-height: 20px;
-      position: absolute;
-      text-align: center;
-      top: -8px;
-      right: -8px;
-      height: 20px;
-      width: 20px;
-      z-index: 1;
-    }
-  ` : ''}
-
   ${p => p.attention ? css`
-    animation: ${outlineAnimation} 800ms ease-out infinite;
+    animation: ${borderAnimation} 800ms ease-out infinite;
     border-color: ${p.theme.colors.success};
-    color: ${p.theme.colors.success};
-    outline: 0 solid ${p.theme.colors.success};
     & > div {
       background-color: rgba(${p.theme.colors.successRGB}, 0.2);
     }
@@ -80,12 +134,15 @@ const ActionButton = styled.div`
         background-color: rgba(${p.theme.colors.successRGB}, 0.4) !important;
       }
     }
+    & > svg {
+      animation: ${cornerAnimation} 800ms ease-out infinite;
+      stroke: ${p.theme.colors.success} !important;
+    }
   ` : ''}
 
   ${p => p.disabled
     ? `
       border-color: #444;
-      color: #aaa;
       cursor: ${p.theme.cursors.default};
       opacity: 0.75;
       & > div {
@@ -93,6 +150,9 @@ const ActionButton = styled.div`
       }
       &:before {
         background-color: #777;
+      }
+      & > svg {
+        stroke: #444 !important;
       }
     `
     : `
@@ -116,18 +176,21 @@ const ActionButtonComponent = ({ label, flags = {}, icon, onClick }) => {
   }, [flags, onClick]);
   useEffect(() => ReactTooltip.rebuild(), []);
   return (
-    <ActionButton
+    <ActionButtonWrapper
       data-arrow-color="transparent"
       data-for="global"
       data-place="top"
       data-tip={label}
       onClick={_onClick}
       {...flags}>
-      <div>
-        {icon}
-        {flags.loading && <LoadingAnimation color="white" height="1" />}
-      </div>
-    </ActionButton>
+      {flags.loading && <LoadingAnimation><InProgressIcon height={loadingHeight} /></LoadingAnimation>}
+      <ActionButton {...flags}>
+        <ClipCorner dimension={cornerSize} />
+        <div>
+          {icon}
+        </div>
+      </ActionButton>
+    </ActionButtonWrapper>
   );
 }
 

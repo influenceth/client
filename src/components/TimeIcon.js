@@ -5,7 +5,6 @@ import { DISPLAY_TIME_FRACTION_DIGITS } from '~/contexts/ClockContext';
 const diamondDimension = 35;
 const halfDimension = diamondDimension / 2;
 const radius = 50 - halfDimension;
-const rounding = 2;
 
 const Wrapper = styled.div`
   height: ${p => p.size};
@@ -31,8 +30,16 @@ const OuterCircle = styled.circle`
   stroke: ${p => p.theme.colors.main};
   stroke-width: ${radius * 0.05}px;
 `;
+// TODO: this could presumably be improved using a radial gradient
+// https://stackoverflow.com/a/21448994
+const BlurCircle = styled.circle`
+  fill: none;
+  opacity: 0.25;
+  stroke: white;
+  stroke-width: ${1.4 * halfDimension}px;
+`;
 
-const TimeIcon = ({ time, ...props }) => {
+const TimeIcon = ({ time, motionBlur, ...props }) => {
   const position = useMemo(() => {
     const t = parseInt(time.substr(-DISPLAY_TIME_FRACTION_DIGITS)) / Math.pow(10, DISPLAY_TIME_FRACTION_DIGITS);
     if (isNaN(t)) return { x: -100, y: -100 };
@@ -46,14 +53,15 @@ const TimeIcon = ({ time, ...props }) => {
     <Wrapper size={props.size || '2em'} {...props}>
       <Svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" viewBox="0 0 100 100">
         <OuterCircle cx="50" cy="50" r={radius} />
-        <g transform={`translate(${position.x},${position.y})`}>
-          <HandDiamond
-            fill="red"
-            d={`M ${-halfDimension},0
-            L 0,${halfDimension}
-            L ${halfDimension},0
-            L 0,${-halfDimension} z`} />
-        </g>
+        {motionBlur
+          ? <BlurCircle cx="50" cy="50" r={radius} />
+          : <HandDiamond
+              d={`M ${-halfDimension},0
+              L 0,${halfDimension}
+              L ${halfDimension},0
+              L 0,${-halfDimension} z`}
+              transform={`translate(${position.x},${position.y})`} />
+        }
       </Svg>
     </Wrapper>
   );

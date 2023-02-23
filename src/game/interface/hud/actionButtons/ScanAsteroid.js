@@ -42,7 +42,6 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
         };
       case 'READY_TO_FINISH':
         flags.attention = true;
-        flags.badge = '✓';
         return {
           label: 'Retrieve Scan Results',
           flags,

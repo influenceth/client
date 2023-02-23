@@ -101,22 +101,16 @@ const ActionModuleContainer = styled.div`
   width: ${rightModuleWidth}px;
 `;
 
-const ActionButtonContainer = styled(ActionModule)`
+const LowerLeft = styled.div`
   display: flex;
   flex-direction: row;
-  justify-content: flex-end;
-  padding-bottom: 8px;
-  padding-top: 8px;
-  position: static;
-  width: 100%;
 `;
 
+
 const HUD = () => {
-  const { actions, props: actionProps } = useActionButtons();
+  
   const actionModuleVisible = useActionModules();
   const anyActionModulesVisible = useMemo(() => Object.values(actionModuleVisible).find((v) => !!v), [actionModuleVisible]);
-
-  useEffect(() => ReactTooltip.rebuild(), [actions]);
 
   return (
     <>
@@ -131,17 +125,9 @@ const HUD = () => {
       <SystemControls />
 
       <RightWrapper>
-        <ActionModuleContainer lower={!actions?.length}>
+        <ActionModuleContainer>
           <ActionModules containerWidth={rightModuleWidth} />
-        </ActionModuleContainer>
-
-        <Rule visible={anyActionModulesVisible && actions?.length > 0} />
-
-        <ActionButtonContainer visible={actions?.length > 0}>
-          {actions.map((ActionButton, i) => (
-            <ActionButton key={i} {...actionProps} />
-          ))}
-        </ActionButtonContainer>
+        </ActionModuleContainer>        
       </RightWrapper>
 
       <ActionDialog />

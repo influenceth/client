@@ -187,6 +187,11 @@ const TimeController = ({ open }) => {
 
 const TimeControls = (props) => {
   const { displayTime } = useContext(ClockContext);
+  const timeOverride = useStore(s => s.timeOverride);
+  useEffect(() => {
+    console.log(timeOverride);
+  }, [timeOverride])
+  
 
   const [open, setOpen] = useState(false);
   const toggleOpen = useCallback((e) => {
@@ -196,7 +201,11 @@ const TimeControls = (props) => {
   return (
     <StyledTime {...props}>
       <TimeController open={open} />
-      <TimeIcon size="30px" style={{ marginLeft: 12, marginRight: -4 }} time={displayTime} />
+      <TimeIcon
+        motionBlur={Math.abs(timeOverride?.speed || 0) > 10000}
+        size="30px"
+        style={{ marginLeft: 12, marginRight: -4 }}
+        time={displayTime} />
       <DaysSince displayTime={displayTime} onClick={toggleOpen} />
     </StyledTime>
   );
