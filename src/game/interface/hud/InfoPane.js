@@ -9,7 +9,7 @@ import ReactTooltip from 'react-tooltip';
 import IconButton from '~/components/IconButton';
 import {
   CloseIcon,
-  CoreSampleIcon,
+  NewCoreSampleIcon,
   ForwardIcon,
   InfoIcon,
   PopoutIcon,
@@ -756,7 +756,7 @@ const InfoPane = () => {
   //                                 data-for="infoPane"
   //                                 data-place="right"
   //                                 onClick={onToggle}>
-  //                                 <CoreSampleIcon />
+  //                                 <NewCoreSampleIcon />
   //                               </ThumbFootButton>
   //                             )}
   //                           </CoreSampleMouseover>

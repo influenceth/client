@@ -10,7 +10,7 @@ import moment from 'moment';
 import {
   UnplanBuildingIcon,
   ConstructIcon,
-  CoreSampleIcon,
+  NewCoreSampleIcon,
   CrewIcon,
   CrewMemberIcon,
   DeconstructIcon,
@@ -314,7 +314,7 @@ const formatItem = (item) => {
 
     case 'Dispatcher_CoreSampleStartSampling':
       const isImprovement = item.assets?.coreSample?.initialYield > 0;
-      formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <CoreSampleIcon />;
+      formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
       formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
       formatted.asteroidId = item.event.returnValues?.asteroidId;
       formatted.plotId = item.event.returnValues?.lotId;
@@ -468,7 +468,7 @@ const formatTx = (item) => {
 
     case 'START_CORE_SAMPLE':
       const isImprovement = item.vars.sampleId > 0;
-      formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <CoreSampleIcon />;
+      formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
       formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;
@@ -480,7 +480,7 @@ const formatTx = (item) => {
       };
       break;
     case 'FINISH_CORE_SAMPLE':
-      formatted.icon = <CoreSampleIcon />;
+      formatted.icon = <NewCoreSampleIcon />;
       formatted.label = `Core Analysis`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.plotId = item.vars.plotId;

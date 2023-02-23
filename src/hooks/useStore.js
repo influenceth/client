@@ -31,6 +31,7 @@ const outlinerSectionDefaults = {
 const useStore = create(subscribeWithSelector(persist((set, get) => ({
     actionDialog: {},
     launcherPage: null,
+    openHudMenu: null,
 
     asteroids: {
       origin: null,
@@ -197,6 +198,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       if (state.draggables[id]) {
         state.draggables[id].position = position;
       }
+    })),
+
+    dispatchHudMenuOpened: (section) => set(produce(state => {
+      state.openHudMenu = section;
     })),
 
     dispatchOutlinerPinned: () => set(produce(state => {

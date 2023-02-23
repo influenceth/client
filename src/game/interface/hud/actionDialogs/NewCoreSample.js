@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Asteroid as AsteroidLib, CoreSample, Inventory, } from '@influenceth/sdk';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
-import { CoreSampleIcon } from '~/components/Icons';
+import { NewCoreSampleIcon } from '~/components/Icons';
 import { useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
@@ -200,7 +200,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
         captain={captain}
         plot={plot}
         action={{
-          actionIcon: <CoreSampleIcon />,
+          actionIcon: <NewCoreSampleIcon />,
           headerBackground: coreSampleBackground,
           label: 'Core Sample',
           crewRequirement: 'duration',

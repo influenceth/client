@@ -24,7 +24,7 @@ import {
   ChevronRightIcon,
   CloseIcon,
   ConstructIcon,
-  CoreSampleIcon,
+  NewCoreSampleIcon,
   CrewIcon,
   DeconstructIcon,
   ExtractionIcon,

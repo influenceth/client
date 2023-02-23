@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { Asteroid, Inventory } from '@influenceth/sdk';
 
-import { CoreSampleIcon, ImproveCoreSampleIcon } from '~/components/Icons';
+import { NewCoreSampleIcon, ImproveCoreSampleIcon } from '~/components/Icons';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
@@ -73,7 +73,7 @@ const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
         disabled,
         loading: loading || undefined
       }}
-      icon={isImprovement ? <ImproveCoreSampleIcon /> : <CoreSampleIcon />}
+      icon={isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
       onClick={handleClick} />
   );
 };

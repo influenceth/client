@@ -37,30 +37,47 @@ import { VscDebugDisconnect, VscCircleOutline } from 'react-icons/vsc';
 
 import AdalianSVG from '~/assets/icons/AdalianIcon.svg';
 import ArvadSVG from '~/assets/icons/ArvadIcon.svg';
+import AssignmentsSVG from '~/assets/icons/AssignmentsIcon.svg';
 import CaptainSVG from '~/assets/icons/CaptainIcon.svg';
 import ChapterSVG from '~/assets/icons/ChapterIcon.svg';
+import ChatSVG from '~/assets/icons/ChatIcon.svg';
 import CheckSVG from '~/assets/icons/CheckIcon.svg';
 import ChevronDoubleDownSVG from '~/assets/icons/ChevronDoubleDownIcon.svg';
+import CoreSampleSVG from '~/assets/icons/CoreSampleIcon.svg';
 import CrewSVG from '~/assets/icons/CrewIcon.svg';
+import CrewmateSVG from '~/assets/icons/CrewmateIcon.svg';
+import CrewStorySVG from '~/assets/icons/CrewStoryIcon.svg';
 import EccentricitySVG from '~/assets/icons/EccentricityIcon.svg';
+import EventSVG from '~/assets/icons/EventIcon.svg';
+import FavoriteSVG from '~/assets/icons/FavoriteIcon.svg';
+import FoodSVG from '~/assets/icons/FoodIcon.svg';
 import HexagonSVG from '~/assets/icons/HexagonIcon.svg';
 import InclinationSVG from '~/assets/icons/InclinationIcon.svg';
+import InfoSVG from '~/assets/icons/InfoIcon.svg';
+import InventorySVG from '~/assets/icons/InventoryIcon.svg';
+import LeaderboardSVG from '~/assets/icons/LeaderboardIcon.svg';
+import LeaseSVG from '~/assets/icons/LeaseIcon.svg';
 import LinkSVG from '~/assets/icons/LinkIcon.svg';
 import LockSVG from '~/assets/icons/LockIcon.svg';
+import MyAssetsSVG from '~/assets/icons/MyAssetsIcon.svg';
 import OrbitalPeriodSVG from '~/assets/icons/OrbitalPeriodIcon.svg';
+import OrderSVG from '~/assets/icons/OrderIcon.svg';
 import PromoteSVG from '~/assets/icons/PromoteIcon.svg';
 import RadiusSVG from '~/assets/icons/RadiusIcon.svg';
+import ResourceSVG from '~/assets/icons/ResourceIcon.svg';
 import RocketSVG from '~/assets/icons/RocketIcon.svg';
+import SearchSVG from '~/assets/icons/SearchIcon.svg';
 import SemiMajorAxisSVG from '~/assets/icons/SemiMajorAxisIcon.svg';
 import SurfaceAreaSVG from '~/assets/icons/SurfaceAreaIcon.svg';
 import SwaySVG from '~/assets/icons/SwayIcon.svg';
 import SwayMonochromeSVG from '~/assets/icons/SwayMonoIcon.svg';
 import TrophySVG from '~/assets/icons/TrophyIcon.svg';
 import TwitterSVG from '~/assets/icons/TwitterIcon.svg';
+import WalletSVG from '~/assets/icons/WalletIcon.svg';
 import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
 
 import ConstructSVG from '~/assets/icons/action_buttons/Construct.svg';
-import CoreSampleSVG from '~/assets/icons/action_buttons/CoreSample.svg';
+import NewCoreSampleSVG from '~/assets/icons/action_buttons/CoreSample.svg';
 import DeconstructSVG from '~/assets/icons/action_buttons/Deconstruct.svg';
 import ExtractResourceSVG from '~/assets/icons/action_buttons/ExtractResource.svg';
 import ImproveCoreSampleSVG from '~/assets/icons/action_buttons/ImproveCoreSample.svg';
@@ -87,31 +104,48 @@ import UnplanBuildingSVG from '~/assets/icons/action_buttons/UnplanBuilding.svg'
 */
 export const AdalianIcon = () => <AdalianSVG className="icon" />;
 export const ArvadIcon = () => <ArvadSVG className="icon" style={{ width: '1.94em' }} />;
+export const AssignmentsIcon = () => <AssignmentsSVG className="icon" />;
 export const CaptainIcon = (props) => <CaptainSVG className={`icon ${props?.className}`} style={{ width: '3.05em' }} />;
 export const ChapterIcon = () => <ChapterSVG className="icon" />;
+export const ChatIcon = () => <ChatSVG className="icon" />;
 export const CheckIcon = () => <CheckSVG className="icon" style={{ width: '1.314em' }} />;
 export const ChevronDoubleDownIcon = () => <ChevronDoubleDownSVG className="icon" />;
 export const ChevronDoubleUpIcon = () => <ChevronDoubleDownSVG className="icon" style={{ transform: 'rotate(180deg)' }} />;
+export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
 export const CrewIcon = () => <CrewSVG className="icon" />;
+export const CrewmateIcon = () => <CrewmateSVG className="icon" />;
+export const CrewStoryIcon = () => <CrewStorySVG className="icon" />;
 export const EccentricityIcon = () => <EccentricitySVG className="icon" />;
+export const EventIcon = () => <EventSVG className="icon" />;
+export const FavoriteIcon = () => <FavoriteSVG className="icon" />;
+export const FoodIcon = () => <FoodSVG className="icon" />;
 export const HexagonIcon = () => <HexagonSVG className="icon" />;
 export const InclinationIcon = () => <InclinationSVG className="icon" />;
+export const InfoIcon = () => <InfoSVG className="icon" />;
+export const InventoryIcon = () => <InventorySVG className="icon" />;
+export const LeaderboardIcon = () => <LeaderboardSVG className="icon" />;
+export const LeaseIcon = () => <LeaseSVG className="icon" />;
 export const LinkIcon = () => <LinkSVG className="icon" />;
 export const LockIcon = () => <LockSVG className="icon" />;
+export const MyAssetsIcon = () => <MyAssetsSVG className="icon" />;
 export const OrbitalPeriodIcon = () => <OrbitalPeriodSVG className="icon" />;
+export const OrderIcon = () => <OrderSVG className="icon" />;
 export const PromoteIcon = () => <PromoteSVG className="icon" />;
 export const RadiusIcon = () => <RadiusSVG className="icon" />;
+export const ResourceIcon = () => <ResourceSVG className="icon" />;
 export const RocketIcon = () => <RocketSVG className="icon" />;
+export const SearchIcon = () => <SearchSVG className="icon" />;
 export const SemiMajorAxisIcon = () => <SemiMajorAxisSVG className="icon" />;
 export const SurfaceAreaIcon = () => <SurfaceAreaSVG className="icon" />;
 export const SwayIcon = () => <SwaySVG className="icon" />;
 export const SwayMonochromeIcon = () => <SwayMonochromeSVG className="icon" />;
 export const TrophyIcon = () => <TrophySVG className="icon" />;
 export const TwitterIcon = () => <TwitterSVG className="icon" />;
+export const WalletIcon = () => <WalletSVG className="icon" />;
 export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
 
 export const ConstructIcon = () => <ConstructSVG className="icon" />;
-export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
+export const NewCoreSampleIcon = () => <CoreSampleSVG className="icon" />;
 export const DeconstructIcon = () => <DeconstructSVG className="icon" />;
 export const ExtractionIcon = () => <ExtractResourceSVG className="icon" />;
 export const ImproveCoreSampleIcon = () => <ImproveCoreSampleSVG className="icon" />;
@@ -142,7 +176,6 @@ export {
   BsPieChartFill as CompositionIcon,
   BsStopwatch as TimerIcon,
   FaCopy as CopyIcon,
-  FaGem as ResourceIcon,
   FaEthereum as ConnectIcon,
   RiPagesFill as DetailIcon,
   VscCircleOutline as IdleIcon,
@@ -153,7 +186,6 @@ export {
   HiChevronDoubleRight as ForwardIcon,
   HiClock as TimeIcon,
   HiCog as SettingsIcon,
-  MdAccountBalanceWallet as WalletIcon,
   MdAdd as PlusIcon,
   MdChevronRight as ChevronRightIcon,
   MdChevronRight as CollapsedIcon,
@@ -173,7 +205,6 @@ export {
   MdStop as StopIcon,
   RiAlertFill as WarningIcon,
   RiFilter2Fill as FilterIcon,
-  RiInformationLine as InfoIcon,
   RiLoginCircleFill as LoginIcon,
   RiRouteFill as RouteIcon,
   RiTableFill as TableIcon,

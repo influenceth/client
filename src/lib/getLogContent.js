@@ -8,7 +8,7 @@ import CrewLink from '~/components/CrewLink';
 import PlotLink from '~/components/PlotLink';
 import {
   ConstructIcon,
-  CoreSampleIcon,
+  NewCoreSampleIcon,
   CrewIcon,
   DeconstructIcon,
   ExtractionIcon,
@@ -219,7 +219,7 @@ const entries = {
   },
 
   // Dispatcher_CoreSampleStartSampling: (e) => ({
-  //   icon: <CoreSampleIcon />,
+  //   icon: <NewCoreSampleIcon />,
   //   content: (
   //     <>
   //       <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample started at </span>
@@ -232,7 +232,7 @@ const entries = {
   // TODO: add data from server that this was an improvement?
   Dispatcher_CoreSampleFinishSampling: (e) => {
     return {
-      icon: <CoreSampleIcon />,
+      icon: <NewCoreSampleIcon />,
       content: (
         <>
           <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample completed at </span>

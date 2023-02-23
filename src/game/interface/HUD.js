@@ -13,6 +13,7 @@ import useActionButtons from './hud/useActionButtons';
 import useActionModules from './hud/useActionModules';
 import ActionModules, { ActionModule } from './hud/ActionModules';
 import SystemControls from './outliner/SystemControls';
+import HudMenu from './hud/HudMenu';
 
 const bottomMargin = 60;
 const rightModuleWidth = 375;
@@ -116,19 +117,13 @@ const HUD = () => {
     <>
       <LeftWrapper>
         <AvatarMenu />
-
         <ActionItems />
-
         <InfoPane />
       </LeftWrapper>
 
-      <SystemControls />
+      <HudMenu />
 
-      <RightWrapper>
-        <ActionModuleContainer>
-          <ActionModules containerWidth={rightModuleWidth} />
-        </ActionModuleContainer>        
-      </RightWrapper>
+      <SystemControls />
 
       <ActionDialog />
     </>
