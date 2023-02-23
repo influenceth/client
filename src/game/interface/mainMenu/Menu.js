@@ -5,7 +5,7 @@ import Badge from '~/components/Badge';
 const StyledMenu = styled.div`
   cursor: ${p => p.theme.cursors.active};
   margin-right: 10px;
-  width: 120px;
+  flex: 1;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     margin: 0;
@@ -62,7 +62,7 @@ const MenuHeader = styled.div`
 `;
 
 const MenuItems = styled.div`
-  background-color: rgb(0, 0, 0, 0.25);
+  background-color: rgb(0, 0, 0, 0.4);
   backdrop-filter: blur(5px);
 
   max-height: 0;
@@ -70,7 +70,7 @@ const MenuItems = styled.div`
   transition: max-height 0.6s ease;
 
   ${StyledMenu}:hover & {
-    max-height: 250px;
+    max-height: 310px;
   }
 `;
 

@@ -145,7 +145,7 @@ export const WalletIcon = () => <WalletSVG className="icon" />;
 export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
 
 export const ConstructIcon = () => <ConstructSVG className="icon" />;
-export const NewCoreSampleIcon = () => <CoreSampleSVG className="icon" />;
+export const NewCoreSampleIcon = () => <NewCoreSampleSVG className="icon" />;
 export const DeconstructIcon = () => <DeconstructSVG className="icon" />;
 export const ExtractionIcon = () => <ExtractResourceSVG className="icon" />;
 export const ImproveCoreSampleIcon = () => <ImproveCoreSampleSVG className="icon" />;

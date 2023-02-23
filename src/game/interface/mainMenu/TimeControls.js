@@ -204,7 +204,7 @@ const TimeControls = (props) => {
       <TimeIcon
         motionBlur={Math.abs(timeOverride?.speed || 0) > 10000}
         size="30px"
-        style={{ marginLeft: 12, marginRight: -4 }}
+        style={{ marginLeft: 12 }}
         time={displayTime} />
       <DaysSince displayTime={displayTime} onClick={toggleOpen} />
     </StyledTime>

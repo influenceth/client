@@ -1,25 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
-import { MdFullscreen, MdFullscreenExit, MdWorkspacesOutline as ResourcesIcon } from 'react-icons/md';
+import {
+  MdFullscreen as FullscreenIcon,
+  MdFullscreenExit as ExitFullscreenIcon } from 'react-icons/md';
 import screenfull from 'screenfull';
 
-import IconButton from '~/components/IconButton';
 import {
   ConstructIcon as BuildingsIcon,
-  CloseIcon,
   CrewIcon,
   EyeIcon,
-  FilterIcon,
-  MapIcon,
-  MenuIcon,
   RocketIcon,
   RouteIcon,
-  StarIcon,
-  TimeIcon,
-  BackIcon
+  BackIcon,
+  CoreSampleIcon,
+  FavoriteIcon,
+  ResourceIcon,
+  CrewStoryIcon,
+  LeaseIcon,
+  OrderIcon,
+  WalletIcon,
+  RadiusIcon
 } from '~/components/Icons';
-import InfluenceLogo from '~/components/InfluenceLogo';
 import useAuth from '~/hooks/useAuth';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -27,8 +29,6 @@ import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
-import Time from './mainMenu/TimeControls';
-import Logo from './mainMenu/menu-logo.svg';
 import HudIconButton from '~/components/HudIconButton';
 import TimeControls from './mainMenu/TimeControls';
 
@@ -48,7 +48,7 @@ const Actionable = styled.div`
 `;
 
 const barHeight = 50;
-const centerAreaWidth = 540;
+const centerAreaWidth = 560;
 const centerAreaHalfWidth = centerAreaWidth / 2;
 const cornerButtonWidth = 40;
 const dipAmount = 15;
@@ -129,6 +129,7 @@ const MainMenu = (props) => {
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
   const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
@@ -182,6 +183,15 @@ const MainMenu = (props) => {
     }
   }, [plotId, zoomToPlot, zoomStatus]);
 
+  const notYet = () => {
+    createAlert({
+      type: 'GenericAlert',
+      level: 'warning',
+      content: 'Not yet.',
+      duration: 1000
+    });
+  }
+
   return (
     <StyledMainMenu>
       <Actionable>
@@ -206,40 +216,64 @@ const MainMenu = (props) => {
           {!!account && (
             <Menu title="Assets">
               <MenuItem
-                name="Asteroids"
-                icon={<StarIcon />}
-                onClick={() => openSection('ownedAsteroids')} />
+                name="My Asteroids"
+                icon={<RadiusIcon />}
+                onClick={notYet} />
               <MenuItem
-                name="Crew"
+                name="My Crew"
                 icon={<CrewIcon />}
                 onClick={() => history.push('/owned-crew')} />
+              <MenuItem
+                name="My Ships"
+                icon={<RocketIcon />}
+                onClick={notYet} />
+              <MenuItem
+                name="My Buildings"
+                icon={<BuildingsIcon />}
+                onClick={notYet} />
+              <MenuItem
+                name="My Resources"
+                icon={<ResourceIcon />}
+                onClick={notYet} />
+              <MenuItem
+                name="My Core Samples"
+                icon={<CoreSampleIcon />}
+                onClick={notYet} />
+              <MenuItem
+                name="Favorites"
+                icon={<FavoriteIcon />}
+                onClick={() => openSection('belt.Favorites')} />
             </Menu>
           )}
           {!!account && (
             <Menu title="Events">
               <MenuItem
-                name="Watchlist"
+                name="Captain's Log"
                 icon={<EyeIcon />}
-                onClick={() => openSection('watchlist')} />
+                onClick={notYet} />
+              <MenuItem
+                name="Trips"
+                icon={<RouteIcon />}
+                onClick={notYet} />
+              <MenuItem
+                name="Crew Stories"
+                icon={<CrewStoryIcon />}
+                onClick={notYet} />
             </Menu>
           )}
           <Menu title="Finances">
             <MenuItem
-              name="Filters"
-              icon={<FilterIcon />}
-              onClick={() => openSection('filters')} />
+              name="Transactions"
+              icon={<WalletIcon />}
+              onClick={notYet} />
             <MenuItem
-              name="Mapped Asteroids"
-              icon={<MapIcon />}
-              onClick={() => openSection('mappedAsteroids')} />
+              name="Market Orders"
+              icon={<OrderIcon />}
+              onClick={notYet} />
             <MenuItem
-              name="Route Planner"
-              icon={<RouteIcon />}
-              onClick={() => openSection('routePlanner')} />
-            <MenuItem
-              name="Time Controls"
-              icon={<TimeIcon />}
-              onClick={() => openSection('timeControl')} />
+              name="Leases"
+              icon={<LeaseIcon />}
+              onClick={notYet} />
 
           </Menu>
           
@@ -277,14 +311,14 @@ const MainMenu = (props) => {
             <HudIconButton
               data-tip="Go Fullscreen"
               onClick={() => screenfull.request()}>
-              <MdFullscreen />
+              <FullscreenIcon />
             </HudIconButton>
           )}
           {screenfull.isEnabled && fullscreen && !isMobile && (
             <HudIconButton
               data-tip="Exit Fullscreen"
               onClick={() => screenfull.exit()}>
-              <MdFullscreenExit />
+              <ExitFullscreenIcon />
             </HudIconButton>
           )}
         </RightHudButtonArea>
