@@ -73,7 +73,7 @@ const useConstructionManager = (asteroidId, plotId) => {
       } else if (plot.building.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION) {
         if (getStatus('FINISH_CONSTRUCTION', payload) === 'pending') {
           status = 'FINISHING';
-        } else if (plot.building.construction?.completionTime && (plot.building.construction.completionTime < liveBlockTime)) {
+        } else if (plot.building.construction?.completionTime && (plot.building.construction.completionTime <= liveBlockTime)) {
           status = 'READY_TO_FINISH';
         } else {
           status = 'UNDER_CONSTRUCTION';

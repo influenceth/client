@@ -25,7 +25,8 @@ const Construct = ({ asteroid, plot, onSetAction, _disabled }) => {
       flags={{
         disabled: _disabled || undefined,
         attention: attention || undefined,
-        loading: loading || undefined
+        loading: loading || undefined,
+        completionTime: plot?.building?.construction?.completionTime
       }}
       icon={<ConstructIcon />}
       onClick={handleClick} />

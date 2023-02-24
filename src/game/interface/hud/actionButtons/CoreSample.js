@@ -71,7 +71,8 @@ const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
       flags={{
         attention: attention || undefined,
         disabled,
-        loading: loading || undefined
+        loading: loading || undefined,
+        completionTime: currentSample?.completionTime
       }}
       icon={isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
       onClick={handleClick} />

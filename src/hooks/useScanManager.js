@@ -34,7 +34,7 @@ const useScanManager = (asteroid) => {
       } else if(asteroid.scanCompletionTime > 0) {
         if(getStatus('FINISH_ASTEROID_SCAN', payload) === 'pending') {
           return 'FINISHING';
-        } else if (asteroid.scanCompletionTime < liveBlockTime) {
+        } else if (asteroid.scanCompletionTime <= liveBlockTime) {
           return 'READY_TO_FINISH';
         }
         return 'SCANNING';

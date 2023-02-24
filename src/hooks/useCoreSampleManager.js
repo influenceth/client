@@ -50,7 +50,7 @@ const useCoreSampleManager = (asteroidId, plotId) => {
       current.sampleId = activeSample.sampleId;
       current.startTime = activeSample.startTime;
 
-      if (activeSample.completionTime < liveBlockTime) {
+      if (activeSample.completionTime <= liveBlockTime) {
         if (getStatus('FINISH_CORE_SAMPLE', payload) === 'pending') {
           status = 'FINISHING';
         } else {

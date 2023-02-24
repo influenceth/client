@@ -40,6 +40,7 @@ const Extract = ({ onSetAction, asteroid, crew, plot, _disabled }) => {
         disabled: _disabled || disabled || undefined,
         attention: attention || undefined,
         loading: loading || undefined,
+        completionTime: plot?.building?.extraction?.completionTime
       }}
       icon={<ExtractionIcon />}
       onClick={handleClick} />

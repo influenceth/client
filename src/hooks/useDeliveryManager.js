@@ -66,7 +66,7 @@ const useDeliveryManager = (asteroidId, plotId, deliveryId = 0) => {
       } else {
         if(getStatus('FINISH_DELIVERY', { ...payload, destPlotId: plotId, deliveryId }) === 'pending') {
           status = 'FINISHING';
-        } else if (delivery.completionTime && delivery.completionTime < liveBlockTime) {
+        } else if (delivery.completionTime && delivery.completionTime <= liveBlockTime) {
           status = 'READY_TO_FINISH';
         } else {
           status = 'IN_TRANSIT';

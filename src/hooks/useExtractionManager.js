@@ -54,7 +54,7 @@ const useExtractionManager = (asteroidId, plotId) => {
       
       if(getStatus('FINISH_EXTRACTION', payload) === 'pending') {
         status = 'FINISHING';
-      } else if (plot.building.extraction.completionTime && plot.building.extraction.completionTime < liveBlockTime) {
+      } else if (plot.building.extraction.completionTime && plot.building.extraction.completionTime <= liveBlockTime) {
         status = 'READY_TO_FINISH';
       } else {
         status = 'EXTRACTING';

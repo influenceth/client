@@ -1,7 +1,10 @@
 import { useCallback, useEffect } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import ReactTooltip from 'react-tooltip';
+
 import ClipCorner from '~/components/ClipCorner';
+import useChainTime from '~/hooks/useChainTime';
+import { formatTimer } from "~/lib/utils";
 
 const dimension = 60;
 const padding = 4;
@@ -134,6 +137,12 @@ const ActionButton = styled.div`
     }
   ` : ''}
 
+  ${p => p.loading && `
+    & > div > svg {
+      opacity: 0.25;
+    }
+  `}
+
   ${p => p.disabled
     ? `
       border-color: #444;
@@ -182,7 +191,7 @@ const LoadingAnimation = styled.div`
   );
 
   &:before {
-    animation: ${rotationAnimation} 2000ms linear infinite;
+    animation: ${rotationAnimation} 4000ms linear infinite;
     background: currentColor;
     content: '';
     height: 100%;
@@ -195,9 +204,32 @@ const LoadingAnimation = styled.div`
   }
 `;
 
+const CompletionTime = styled.label`
+  align-items: center;
+  display: flex;
+  font-weight: bold;
+  position: absolute;
+  justify-content: center;
+  text-shadow: 0px 0px 1px black;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+`;
+
 // TODO: consider a booleanProp wrapper so could wrap boolean props in
 // {...booleanProps({ a, b, c })} where booleanProps(props) would either include
 // or not rather than true/false OR would pass 1/0 instead
+
+const LoadingTimer = ({ completionTime }) => {
+  const chainTime = useChainTime();
+  const timeLeft = completionTime - chainTime;
+  return (
+    <CompletionTime>
+      {timeLeft > 0 ? formatTimer(timeLeft, 1) : '...'}
+    </CompletionTime>
+  );
+};
 
 const ActionButtonComponent = ({ label, flags = {}, icon, onClick }) => {
   const _onClick = useCallback(() => {
@@ -215,9 +247,8 @@ const ActionButtonComponent = ({ label, flags = {}, icon, onClick }) => {
       {flags.loading && <LoadingAnimation />}
       <ActionButton {...flags}>
         <ClipCorner dimension={cornerSize} />
-        <div>
-          {icon}
-        </div>
+        <div>{icon}</div>
+        {flags.loading && <LoadingTimer completionTime={flags.completionTime} />}
       </ActionButton>
     </ActionButtonWrapper>
   );

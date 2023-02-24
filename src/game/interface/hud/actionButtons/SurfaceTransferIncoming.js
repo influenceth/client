@@ -13,7 +13,6 @@ const SurfaceTransferIncoming = ({ asteroid, plot, onSetAction, _disabled }) => 
   const nextIncoming = incoming?.length > 0 ? incoming[0] : null;
   const { deliveryStatus } = useDeliveryManager(asteroid?.i, plot?.i, nextIncoming?.deliveryId);
   
-
   const handleClick = useCallback(() => {
     onSetAction('SURFACE_TRANSFER', { deliveryId: nextIncoming?.deliveryId });
   }, [onSetAction, nextIncoming?.deliveryId]);
@@ -27,7 +26,8 @@ const SurfaceTransferIncoming = ({ asteroid, plot, onSetAction, _disabled }) => 
         attention: isReadyToFinish || undefined,
         badge: !isReadyToFinish && incoming.length > 1 ? incoming.length : 0,
         disabled: _disabled || undefined,
-        loading: !isReadyToFinish || undefined
+        loading: !isReadyToFinish || undefined,
+        completionTime: nextIncoming?.completionTime
       }}
       icon={<SurfaceTransferIcon />}
       onClick={handleClick} />
