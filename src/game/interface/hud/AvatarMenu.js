@@ -2,18 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
 import styled, { css, keyframes } from 'styled-components';
-import { MdFastfood as FoodIcon } from 'react-icons/md';
 
-import CrewCard from '~/components/CrewCard';
-import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
-import { CaptainIcon, CrewIcon, IdleIcon, LocationPinIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
+import CollapsibleSection from '~/components/CollapsibleSection';
+import CrewCardFramed from '~/components/CrewCardFramed';
+import { CaptainIcon, CrewIcon, CrewmateIcon, FoodIcon, IdleIcon, LocationPinIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
 import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
-import CollapsibleSection from './CollapsibleSection';
-import CrewCardFramed from '~/components/CrewCardFramed';
 
 const bgColor = '#000';
 const hoverBgColor = '#183541';
@@ -138,7 +135,7 @@ const CrewInfoContainer = styled.div`
     margin-left: 12px;
     padding: 8px 0;
 
-    & svg {
+    & > svg {
       font-size: 24px;
     }
   }
@@ -190,22 +187,20 @@ const Personnel = styled.div`
   }
 `;
 
-const CrewMemberIcon = styled.div`
-  height: 25px;
-  width: 7px;
-  border-radius: 10px;
-  background: #333;
-`;
-const CrewMemberIcons = styled.div`
+const CrewmateIcons = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   width: 54px;
+  & > svg {
+    color: #2b2b2b;
+    font-size: 24px;
+  }
 
   ${p => p.crewMembers > 0 
     ? `
-      ${CrewMemberIcon}:nth-child(n+1):nth-child(-n+${p.crewMembers}) {
-        background: #CCC;
+      & > svg:nth-child(n+1):nth-child(-n+${p.crewMembers}) {
+        color: #888;
       }
     `
     : ``
@@ -219,6 +214,9 @@ const Food = styled.div`
   span {
     font-size: 15px;
     margin: 0 6px;
+  }
+  svg {
+    font-size: 18px;
   }
 `;
 
@@ -296,13 +294,13 @@ const AvatarMenu = (props) => {
                 </BaseLocation>
                 <Personnel>
                   <div>
-                    <CrewMemberIcons crewMembers={crew?.crewMembers?.length || 0}>
-                      <CrewMemberIcon />
-                      <CrewMemberIcon />
-                      <CrewMemberIcon />
-                      <CrewMemberIcon />
-                      <CrewMemberIcon />
-                    </CrewMemberIcons>
+                    <CrewmateIcons crewMembers={crew?.crewMembers?.length || 0}>
+                      <CrewmateIcon />
+                      <CrewmateIcon />
+                      <CrewmateIcon />
+                      <CrewmateIcon />
+                      <CrewmateIcon />
+                    </CrewmateIcons>
                   </div>
                   <Food isRationing={false}>
                     {false && <WarningOutlineIcon />}

@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import styled from 'styled-components';
 
-const SearchLots = () => {
+const AllAssets = () => {
   return null;
 };
 
-export default SearchLots;
+export default AllAssets;

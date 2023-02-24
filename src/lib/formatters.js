@@ -10,7 +10,7 @@ const formatters = {
 
   period: (a) => {
     const orbit = new KeplerianOrbit({ a });
-    return orbit.getPeriod().toFixed(0).toLocaleString() + ' days';
+    return Math.round(orbit.getPeriod()).toLocaleString() + ' days';
   },
 
   // Asteroid attribute formatters

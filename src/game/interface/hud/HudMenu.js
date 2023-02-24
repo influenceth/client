@@ -37,14 +37,16 @@ import CrewCard from '~/components/CrewCard';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import useActionButtons from './useActionButtons';
 import InProgressIcon from '~/components/InProgressIcon';
+import hudMenus from './hudMenus';
+import useAuth from '~/hooks/useAuth';
 
-
+// const background = 'rgba(0, 0, 0, 0.9)';
+const background = 'rgba(0, 14, 25, 0.9)';
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
 const buttonsWidth = 66;
 const panelAnimationLength = 250;
-// const background = 'rgba(0, 0, 0, 0.9)';
-const background = 'rgba(0, 14, 25, 0.9)';
+const panelWidth = 450;
 
 const Wrapper = styled.div`
   align-items: flex-end;
@@ -112,7 +114,6 @@ const Button = styled.div`
   }
 `;
 
-const panelWidth = 400;
 const Panel = styled.div`
   background: ${background};
   border-left: 1px solid #444;
@@ -138,7 +139,28 @@ const Panel = styled.div`
 `;
 
 const PanelInner = styled.div`
-  
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px 16px 0 12px;
+`;
+
+const PanelTitle = styled.div`
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: row;
+  font-size: 22px;
+  padding-bottom: 12px;
+  text-transform: uppercase;
+  & button:last-child {
+    margin-right: 0;
+  }
+`;
+const PanelContent = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 0;
 `;
 
 const buttons = {
@@ -146,67 +168,71 @@ const buttons = {
     {
       label: 'Asteroid Info',
       icon: <InfoIcon />,
-      component: 'AsteroidInfo'
+      Component: hudMenus.AsteroidInfo
     },
     {
       label: 'My Assets',
       icon: <MyAssetsIcon />,
-      component: 'AssetsBelt'
+      Component: hudMenus.AllAssets,
+      requireLogin: true
     },
     {
       label: 'Favorites',
       icon: <FavoriteIcon />,
-      component: 'Favorites'
+      Component: hudMenus.Favorites,
+      requireLogin: true
     },
     {
       label: 'System Search',
       icon: <SearchIcon />,
-      component: 'SearchAsteroids'
+      Component: hudMenus.SearchAsteroids
     }
   ],
   asteroid: [
     {
       label: 'My Assets',
       icon: <MyAssetsIcon />,
-      component: 'AssetsAsteroid'
+      Component: hudMenus.AsteroidAssets,
+      requireLogin: true
     },
     {
       label: 'Natural Resources',
       icon: <ResourceIcon />,
-      component: 'AsteroidResources'
+      Component: hudMenus.Resources
     },
     {
       label: 'Lot Search',
       icon: <SearchIcon />,
-      component: 'SearchLots'
+      Component: hudMenus.SearchLots
     },
     {
       label: 'Asteroid Chat',
       icon: <ChatIcon />,
-      component: 'AsteroidChat'
+      Component: hudMenus.AsteroidChat
     },
   ],
   lot: [
     {
       label: 'Information',
       icon: <InfoIcon />,
-      component: 'LotInfo'
+      Component: hudMenus.LotInfo
     },
     {
       label: 'Inventory',
       icon: <InventoryIcon />,
-      component: 'Inventory'
+      Component: hudMenus.Inventory
     },
     {
       label: 'CoreSamples',
       icon: <CoreSampleIcon />,
-      component: 'CoreSamples'
+      Component: hudMenus.CoreSamples
     },
   ]
 };
 
 
 const HudMenu = () => {
+  const { account } = useAuth();
   const openHudMenu = useStore(s => s.openHudMenu);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
@@ -240,16 +266,21 @@ const HudMenu = () => {
     setOpen(!!openHudMenu);
   }, [openHudMenu]);
 
+  const { label, Component } = useMemo(() => {
+    const [category, label] = (openHudMenu || '').split('.');
+    return (buttons[category] || []).find((b) => b.label === label) || {};
+  }, [openHudMenu]);
+
   const buttonFilter = zoomStatus === 'in' && zoomToPlot
     ? 'lot'
     : (zoomStatus === 'in' ? 'asteroid' : 'belt');
-  const [category, label] = (openHudMenu || '').split('.');
   return (
     <Wrapper>
       <ReactTooltip id="hudMenu" effect="solid" />
       <Buttons open={open}>
-        {(buttons[buttonFilter] || []).map(({ label, icon }) => {
+        {(buttons[buttonFilter] || []).map(({ label, icon, requireLogin }) => {
           const key = `${buttonFilter}.${label}`;
+          if (requireLogin && !account) return null;
           return (
             <Button
               key={key}
@@ -265,7 +296,13 @@ const HudMenu = () => {
       </Buttons>
       <Panel open={open}>
         <PanelInner>
-          {label}
+          <PanelTitle>
+            <span style={{ flex: 1 }}>{label}</span>
+            <IconButton onClick={() => handleButtonClick()}><CloseIcon /></IconButton>
+          </PanelTitle>
+          <PanelContent>
+            {Component && <Component onClose={() => handleButtonClick()} />}
+          </PanelContent>
         </PanelInner>
       </Panel>
     </Wrapper>

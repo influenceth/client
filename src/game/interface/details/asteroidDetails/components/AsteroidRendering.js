@@ -52,7 +52,7 @@ const RenderedAsteroid = ({ asteroid, onReady, webWorkerPool }) => {
         camera.updateProjectionMatrix();
 
         gl.render(scene, camera);
-        onReady();
+        if (onReady) onReady();
 
         disposeFunc.current = dispose;
       });

@@ -23,8 +23,10 @@ import {
   LinkIcon,
   PopoutIcon,
 } from '~/components/Icons';
+import CollapsibleSection from '~/components/CollapsibleSection';
 import LiveTimer from '~/components/LiveTimer';
 import NavIcon from '~/components/NavIcon';
+import OnClickLink from '~/components/OnClickLink';
 import { usePlotLink } from '~/components/PlotLink';
 import useActionItems from '~/hooks/useActionItems';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -32,8 +34,6 @@ import useAuth from '~/hooks/useAuth';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import theme, { hexToRGB } from '~/theme';
-import CollapsibleSection from './CollapsibleSection';
-import OnClickLink from '~/components/OnClickLink';
 
 const ICON_WIDTH = 34;
 const ITEM_WIDTH = 400;

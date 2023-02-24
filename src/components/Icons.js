@@ -1,10 +1,9 @@
-import { AiFillBug, AiFillEdit, AiFillEye, AiFillStar } from 'react-icons/ai';
+import { AiFillBug, AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle, BsPieChartFill, BsStopwatch } from 'react-icons/bs';
-import { FaEthereum, FaMapMarkedAlt, FaCopy, FaGem, FaRegCircle } from 'react-icons/fa';
+import { FaEthereum, FaMapMarkedAlt, FaCopy } from 'react-icons/fa';
 import { FiExternalLink, FiMenu } from 'react-icons/fi';
 import { HiClock, HiCog, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import {
-  MdAccountBalanceWallet,
   MdAdd,
   MdFlag,
   MdKeyboardArrowDown,
@@ -59,6 +58,7 @@ import LeaderboardSVG from '~/assets/icons/LeaderboardIcon.svg';
 import LeaseSVG from '~/assets/icons/LeaseIcon.svg';
 import LinkSVG from '~/assets/icons/LinkIcon.svg';
 import LockSVG from '~/assets/icons/LockIcon.svg';
+import MyAssetSVG from '~/assets/icons/MyAssetIcon.svg';
 import MyAssetsSVG from '~/assets/icons/MyAssetsIcon.svg';
 import OrbitalPeriodSVG from '~/assets/icons/OrbitalPeriodIcon.svg';
 import OrderSVG from '~/assets/icons/OrderIcon.svg';
@@ -127,6 +127,7 @@ export const LeaderboardIcon = () => <LeaderboardSVG className="icon" />;
 export const LeaseIcon = () => <LeaseSVG className="icon" />;
 export const LinkIcon = () => <LinkSVG className="icon" />;
 export const LockIcon = () => <LockSVG className="icon" />;
+export const MyAssetIcon = () => <MyAssetSVG className="icon" />;
 export const MyAssetsIcon = () => <MyAssetsSVG className="icon" />;
 export const OrbitalPeriodIcon = () => <OrbitalPeriodSVG className="icon" />;
 export const OrderIcon = () => <OrderSVG className="icon" />;
@@ -179,6 +180,7 @@ export {
   FaEthereum as ConnectIcon,
   RiPagesFill as DetailIcon,
   VscCircleOutline as IdleIcon,
+  AiOutlineNumber as IdIcon,
   FaMapMarkedAlt as MapIcon,
   FiExternalLink as PopoutIcon,
   FiMenu as MenuIcon,

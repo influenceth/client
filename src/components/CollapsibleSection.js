@@ -53,14 +53,15 @@ const Collapsible = styled.div`
   margin-left: ${toggleWidth}px;
   margin-bottom: 12px;
   transition: height 250ms ease, border-color 250ms ease, margin-bottom 250ms ease;
+  ${p => p.width && `width: ${p.width};`}
   ${p => p.collapsed && `
-    border-color: ${p.borderless ? 'transparent' : '#444'};
+    border-color: ${p.borderless ? 'transparent' : (p.borderColor || '#444')};
     height: 0;
     margin-bottom: 4px;
   `};
 `;
 
-const CollapsibleSection = ({ borderless, children, title, openHeight }) => {
+const CollapsibleSection = ({ borderless, children, title, openHeight, ...props }) => {
   const [collapsed, setCollapsed] = useState();
   const toggleCollapse = useCallback(() => {
     setCollapsed((c) => !c);
@@ -68,7 +69,7 @@ const CollapsibleSection = ({ borderless, children, title, openHeight }) => {
 
   return (
     <>
-      <Uncollapsible collapsed={collapsed} onClick={toggleCollapse}>
+      <Uncollapsible collapsed={collapsed} onClick={toggleCollapse} {...props.uncollapsibleProps}>
         <Toggle collapsed={collapsed}>
           <CollapsedIcon />
         </Toggle>
@@ -76,7 +77,7 @@ const CollapsibleSection = ({ borderless, children, title, openHeight }) => {
           {title}
         </Title>
       </Uncollapsible>
-      <Collapsible borderless={borderless} collapsed={collapsed} openHeight={openHeight}>
+      <Collapsible borderless={borderless} collapsed={collapsed} openHeight={openHeight} {...props.collapsibleProps}>
         {children}
       </Collapsible>
     </>
