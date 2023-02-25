@@ -1,24 +1,18 @@
+import { useCallback } from 'react';
 import styled from 'styled-components';
 import { Address, toSize, toSpectralType } from '@influenceth/sdk';
 
-import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
-import CollapsibleSection from '~/components/CollapsibleSection';
 import ClipCorner from '~/components/ClipCorner';
+import { MyAssetIcon } from '~/components/Icons';
+import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
 import useStore from '~/hooks/useStore';
 import useWatchlist from '~/hooks/useWatchlist';
-import theme from '~/theme';
-import { majorBorderColor, Scrollable } from './components';
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useAuth from '~/hooks/useAuth';
-import { MyAssetIcon } from '~/components/Icons';
-import { useCallback } from 'react';
+import theme from '~/theme';
+import { HudMenuCollapsibleSection, Scrollable } from './components';
 
 const thumbnailDimension = 75;
-
-const SectionTitle = styled.div`
-  font-size: 16px;
-  text-transform: uppercase;
-`;
 
 const Thumbnail = styled.div`
   background: black;
@@ -105,15 +99,7 @@ const Favorites = ({ onClose }) => {
 
   return (
     <Scrollable>
-      <CollapsibleSection
-        collapsibleProps={{
-          borderColor: majorBorderColor,
-          width: 'calc(100% - 36px)'
-        }}
-        openHeight="calc(100% - 60px)"
-        title={(
-          <SectionTitle>Asteroids</SectionTitle>
-        )}>
+      <HudMenuCollapsibleSection titleText="Asteroids">
         <div>
           {([...(ownedAsteroids || []), ...(watchlist || []).map(w => w.asteroid)]).map((asteroid) => (
             <SelectableRow key={asteroid.i} selected={asteroidId === asteroid.i} onClick={onClick(asteroid.i)}>
@@ -132,13 +118,9 @@ const Favorites = ({ onClose }) => {
             </SelectableRow>
           ))}
         </div>
-      </CollapsibleSection>
+      </HudMenuCollapsibleSection>
     </Scrollable>
   );
-
-
-  console.log({ watchlist });
-  return null;
 };
 
 export default Favorites;

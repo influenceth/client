@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
@@ -16,6 +16,7 @@ import useStore from '~/hooks/useStore';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import theme, { hexToRGB } from '~/theme';
 import LiveTimer from '~/components/LiveTimer';
+import AsteroidBonuses from './AsteroidBonuses';
 
 // TODO (enhancement): if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
@@ -394,15 +395,6 @@ const spectralLabels = {
   m: 'Metallic'
 };
 
-const bonusLabels = {
-  yield: 'Overall',
-  fissile: 'Fissile',
-  metal: 'Metal',
-  organic: 'Organic',
-  rareearth: 'Rare-Earth',
-  volatile: 'Volatile',
-};
-
 const StartScanButton = ({ i }) => {
   const { data: extendedAsteroid, isLoading } = useAsteroid(Number(i), true);
   const { startAsteroidScan } = useScanManager(extendedAsteroid);
@@ -458,8 +450,6 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     history.push('/');
     return false;
   }, [asteroid?.i, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const nonzeroBonuses = useMemo(() => (asteroid?.bonuses || []).filter((b) => b.level > 0), [asteroid?.bonuses]);
 
   const [infoPaneAnchor, setInfoPaneAnchor] = useState();
   const setInfoPaneRef = (which) => (e) => {
@@ -644,24 +634,13 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             )}
 
             {/* NOTE: for L1-scanned asteroids, these bonuses will already be set even though "unscanned" */}
-            {nonzeroBonuses?.length > 0 && (
-              <div>
-                <SectionHeader>Yield Bonuses</SectionHeader>
-                <SectionBody>
-                  <Bonuses>
-                    {nonzeroBonuses.map((bonus) => (
-                      <BonusItem key={bonus.name}
-                        category={bonusLabels[bonus.type]}
-                        onMouseEnter={setInfoPaneRef(true)}
-                        onMouseLeave={setInfoPaneRef(false)}>
-                        <BonusBar bonus={bonus.level} />
-                        <label>{bonusLabels[bonus.type]} Yield: +{bonus.modifier}%</label>
-                      </BonusItem>
-                    ))}
-                  </Bonuses>
-                </SectionBody>
-              </div>
-            )}
+
+            <div>
+              <SectionHeader>Yield Bonuses</SectionHeader>
+              <SectionBody>
+                <AsteroidBonuses bonuses={asteroid?.bonuses} />
+              </SectionBody>
+            </div>
           </>
         )}
         <BonusInfoPane referenceEl={infoPaneAnchor} visible={!!infoPaneAnchor} />

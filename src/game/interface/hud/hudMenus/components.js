@@ -1,5 +1,7 @@
 import styled, { keyframes } from 'styled-components';
 
+import CollapsibleSection from '~/components/CollapsibleSection';
+
 const trayHeight = 80;
 export const majorBorderColor = 'rgba(255, 255, 255, 0.2)';
 
@@ -24,3 +26,21 @@ export const Tray = styled.div`
   flex-direction: row;
   height: ${trayHeight}px;
 `;
+
+export const SectionTitle = styled.div`
+  font-size: 16px;
+  text-transform: uppercase;
+`;
+
+export const HudMenuCollapsibleSection = ({ children, titleText, ...props }) => (
+  <CollapsibleSection
+    title={(<SectionTitle>{titleText}</SectionTitle>)}
+    collapsibleProps={{
+      borderColor: majorBorderColor,
+      width: props.openHeight ? undefined : 'calc(100% - 36px)'
+    }}
+    openHeight="calc(100% - 60px)"
+    {...props}>
+    {children}
+  </CollapsibleSection>
+);
