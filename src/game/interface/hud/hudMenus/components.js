@@ -30,11 +30,21 @@ export const Tray = styled.div`
 export const SectionTitle = styled.div`
   font-size: 16px;
   text-transform: uppercase;
+  width: 100%;
+  ${p => p.label && `
+    &:after {
+      content: "${p.label}";
+      color: #777;
+      float: right;
+      font-size: 14px;
+      text-transform: none;
+    }
+  `}
 `;
 
-export const HudMenuCollapsibleSection = ({ children, titleText, ...props }) => (
+export const HudMenuCollapsibleSection = ({ children, titleText, titleLabel, ...props }) => (
   <CollapsibleSection
-    title={(<SectionTitle>{titleText}</SectionTitle>)}
+    title={(<SectionTitle label={titleLabel}>{titleText}</SectionTitle>)}
     collapsibleProps={{
       borderColor: majorBorderColor,
       width: props.openHeight ? undefined : 'calc(100% - 36px)'
