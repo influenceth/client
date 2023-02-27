@@ -824,10 +824,12 @@ const ActionItems = () => {
   }, [allItems]);
 
   const [selectedFilter, setSelectedFilter] = useState('ready');
+  const [lastClick, setLastClick] = useState();
 
   const onClickFilter = useCallback((filter) => (e) => {
     e.stopPropagation();
     setSelectedFilter(filter);
+    setLastClick(Date.now());
   }, []);
 
   const tallies = useMemo(() => {
@@ -856,7 +858,7 @@ const ActionItems = () => {
       {account && (
         <CollapsibleSection
           borderless
-          openHeight="calc(100% - 60px)"
+          openOnChange={lastClick}
           title={(
             <Filters>
               <ReadyFilter tally={tallies.ready} onClick={onClickFilter('ready')} selected={selectedFilter === 'ready'} />

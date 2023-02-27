@@ -53,10 +53,9 @@ export const HudMenuCollapsibleSection = ({ children, collapsed, titleText, titl
     title={(<SectionTitle label={titleLabel}>{titleText}</SectionTitle>)}
     collapsibleProps={{
       borderColor: majorBorderColor,
-      width: props.openHeight ? undefined : 'calc(100% - 36px)'
+      width: 'calc(100% - 36px)'
     }}
-    initiallyOpen={!collapsed}
-    openHeight="calc(100% - 60px)"
+    initiallyClosed={!!collapsed}
     {...props}>
     {children}
   </CollapsibleSection>

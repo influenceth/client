@@ -218,8 +218,7 @@ const AsteroidAssets = () => {
       <SectionWrapper>
         <HudMenuCollapsibleSection
           titleText="Buildings"
-          titleLabel={`${buildingTally.toLocaleString()} Asset${buildingTally === 1 ? '' : 's'}`}
-          openHeight="auto">
+          titleLabel={`${buildingTally.toLocaleString()} Asset${buildingTally === 1 ? '' : 's'}`}>
           {asteroid && plots && !isLoading && (
             <>
               {buildingTally === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied on lots on this asteroid yet.</div>}
@@ -240,8 +239,7 @@ const AsteroidAssets = () => {
       <SectionWrapper>
         <HudMenuCollapsibleSection
           titleText="Ships"
-          titleLabel="0 Assets"
-          openHeight="auto">
+          titleLabel="0 Assets">
           <></>
         </HudMenuCollapsibleSection>
       </SectionWrapper>
@@ -249,7 +247,6 @@ const AsteroidAssets = () => {
         <HudMenuCollapsibleSection
           titleText="Stationed Crewmates"
           titleLabel="0 Assets"
-          openHeight="auto"
           borderless>
           <></>
         </HudMenuCollapsibleSection>

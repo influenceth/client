@@ -154,7 +154,7 @@ const ConstructionPlan = ({ capableType, constructionInventory }) => {
   const resources = useResourceAssets();
   const thumbUrl = buildings[capableType]?.siteIconUrls?.w400;
   const ingredients = buildingRecipes[capableType] || buildingRecipes[1]; // TODO: shoudl default to []
-  console.log('ingredients', ingredients, resources);
+  // TODO: use constructionInventory to update hasTally
   return (
     <>
       <SiteThumb image={thumbUrl}>
@@ -189,9 +189,7 @@ const LotInfo = () => {
     return (
       <Wrapper>
         <SectionWrapper>
-          <HudMenuCollapsibleSection
-            titleText="Empty Lot"
-            openHeight="auto">
+          <HudMenuCollapsibleSection titleText="Empty Lot">
             <Description>{buildingDescriptions[0]}</Description>
             <ExtraDescription>
               <label>Building Sites</label>
@@ -200,10 +198,7 @@ const LotInfo = () => {
           </HudMenuCollapsibleSection>
         </SectionWrapper>
         <SectionWrapper>
-          <HudMenuCollapsibleSection
-            titleText="Buildings Overview"
-            openHeight="auto"
-            borderless>
+          <HudMenuCollapsibleSection titleText="Buildings Overview" borderless>
             <BuildingRow>
               <label>Name</label>
               <span>Complexity</span>
@@ -246,9 +241,7 @@ const LotInfo = () => {
   return (
     <Wrapper>
       <SectionWrapper>
-        <HudMenuCollapsibleSection
-          titleText={plot.building.__t}
-          openHeight="auto">
+        <HudMenuCollapsibleSection titleText={plot.building.__t}>
           {plot && !isLoading && (
             <>
               <Description>{buildingDescriptions[plot.building?.capableType]}</Description>
@@ -272,7 +265,6 @@ const LotInfo = () => {
       <SectionWrapper>
         <HudMenuCollapsibleSection
           titleText="Construction"
-          openHeight="auto"
           collapsed={plot.building.construction.status === Construction.STATUS_OPERATIONAL}
           borderless>
           <ConstructionPlan capableType={plot.building.capableType} />

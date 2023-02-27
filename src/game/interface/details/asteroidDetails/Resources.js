@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
@@ -466,6 +466,8 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     }
   }, [abundances?.length, initialCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const nonzeroBonuses = useMemo(() => (asteroid?.bonuses || []).filter((b) => b.level > 0), [asteroid?.bonuses]);
+
   useEffect(() => ReactTooltip.rebuild(), [selected]);
 
   return (
@@ -634,13 +636,14 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             )}
 
             {/* NOTE: for L1-scanned asteroids, these bonuses will already be set even though "unscanned" */}
-
-            <div>
-              <SectionHeader>Yield Bonuses</SectionHeader>
-              <SectionBody>
-                <AsteroidBonuses bonuses={asteroid?.bonuses} />
-              </SectionBody>
-            </div>
+            {nonzeroBonuses.length > 0 && (
+              <div>
+                <SectionHeader>Yield Bonuses</SectionHeader>
+                <SectionBody>
+                  <AsteroidBonuses bonuses={asteroid?.bonuses} />
+                </SectionBody>
+              </div>
+            )}
           </>
         )}
         <BonusInfoPane referenceEl={infoPaneAnchor} visible={!!infoPaneAnchor} />

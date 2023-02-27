@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { Address, toSize, toSpectralType } from '@influenceth/sdk';
 
@@ -97,11 +97,21 @@ const Favorites = ({ onClose }) => {
     }
   }, [asteroidId]);
 
+  const fullList = useMemo(() => {
+    const favorites = [...(watchlist || []).map(w => w.asteroid)];
+    (ownedAsteroids || []).forEach((a) => {
+      if (!favorites.find((f) => f.i === a.i)) {
+        favorites.push(a);
+      }
+    });
+    return favorites;
+  }, [ownedAsteroids, watchlist]);
+
   return (
     <Scrollable>
       <HudMenuCollapsibleSection titleText="Asteroids">
         <div>
-          {([...(ownedAsteroids || []), ...(watchlist || []).map(w => w.asteroid)]).map((asteroid) => (
+          {fullList.map((asteroid) => (
             <SelectableRow key={asteroid.i} selected={asteroidId === asteroid.i} onClick={onClick(asteroid.i)}>
               {asteroidId === asteroid.i && (
                 <Thumbnail>

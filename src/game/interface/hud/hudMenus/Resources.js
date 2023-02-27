@@ -119,7 +119,7 @@ const Resources = ({ onClose }) => {
   return (
     <Wrapper>
       <ResourceWrapper>
-        <HudMenuCollapsibleSection titleText="Resource Map" openHeight="auto">
+        <HudMenuCollapsibleSection titleText="Resource Map">
           <div>
             {groupAbundances.map(({ categoryKey, category, resources, abundance: groupAbundance }) => (
               <ResourceGroup key={categoryKey} category={categoryKey}>
@@ -150,7 +150,7 @@ const Resources = ({ onClose }) => {
       </ResourceWrapper>
       {nonzeroBonuses?.length > 0 && (
         <div>
-          <HudMenuCollapsibleSection titleText="Yield Bonuses" borderless openHeight="auto">
+          <HudMenuCollapsibleSection titleText="Yield Bonuses" borderless>
             <AsteroidBonuses bonuses={asteroid?.bonuses} fullWidth />
           </HudMenuCollapsibleSection>
         </div>

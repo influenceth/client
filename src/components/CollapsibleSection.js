@@ -1,9 +1,11 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 import { CollapsedIcon } from '~/components/Icons';
 
 const toggleWidth = 32;
+const titleHeight = 48;
+const marginBottom = 12;
 
 const Uncollapsible = styled.div`
   align-items: center;
@@ -33,7 +35,7 @@ const Title = styled.div`
   align-items: center;
   color: white;
   display: flex;
-  height: 48px;
+  height: ${titleHeight}px;
   transition: border-color 250ms ease;
   width: 100%;
   & > svg {
@@ -48,24 +50,34 @@ const Title = styled.div`
 `;
 const Collapsible = styled.div`
   border-bottom: 1px solid transparent;
-  height: ${p => p.openHeight || '150px'};
-  overflow: hidden;
+  height: calc(100% - ${titleHeight + marginBottom}px);
+  overflow: hidden auto;
   margin-left: ${toggleWidth}px;
-  margin-bottom: 12px;
+  margin-bottom: ${marginBottom}px;
   transition: height 250ms ease, border-color 250ms ease, margin-bottom 250ms ease;
   ${p => p.width && `width: ${p.width};`}
   ${p => p.collapsed && `
     border-color: ${p.borderless ? 'transparent' : (p.borderColor || '#444')};
     height: 0;
+    overflow: hidden;
     margin-bottom: 4px;
   `};
 `;
 
-const CollapsibleSection = ({ borderless, children, initiallyOpen, title, openHeight, ...props }) => {
-  const [collapsed, setCollapsed] = useState(!initiallyOpen);
+const CollapsibleSection = ({ borderless, children, initiallyClosed, openOnChange, title, ...props }) => {
+  const [collapsed, setCollapsed] = useState(!!initiallyClosed);
   const toggleCollapse = useCallback(() => {
     setCollapsed((c) => !c);
   }, []);
+
+  const hasLoaded = useRef();
+  useEffect(() => {
+    if (hasLoaded.current) {
+      setCollapsed(false);
+    } else {
+      hasLoaded.current = true;
+    }
+  }, [openOnChange, toggleCollapse]);
 
   return (
     <>
@@ -77,7 +89,7 @@ const CollapsibleSection = ({ borderless, children, initiallyOpen, title, openHe
           {title}
         </Title>
       </Uncollapsible>
-      <Collapsible borderless={borderless} collapsed={collapsed} openHeight={openHeight} {...props.collapsibleProps}>
+      <Collapsible borderless={borderless} collapsed={collapsed} {...props.collapsibleProps}>
         {children}
       </Collapsible>
     </>

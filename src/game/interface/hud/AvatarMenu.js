@@ -17,6 +17,7 @@ const hoverBgColor = '#183541';
 const borderColor = '#444';
 const cardWidth = 96;
 const tween = '250ms ease';
+const menuWidth = 432;
 
 const silhouetteAnimation = keyframes`
   0% { opacity: 0.4; }
@@ -26,7 +27,7 @@ const silhouetteAnimation = keyframes`
 
 const Wrapper = styled.div`
   pointer-events: none;
-  width: 100%;
+  width: ${menuWidth}px;
 `;
 
 const StatusIcon = styled.div`
