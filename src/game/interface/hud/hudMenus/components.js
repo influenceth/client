@@ -42,13 +42,20 @@ export const SectionTitle = styled.div`
   `}
 `;
 
-export const HudMenuCollapsibleSection = ({ children, titleText, titleLabel, ...props }) => (
+export const Rule = styled.div`
+  border-bottom: 1px solid ${majorBorderColor};
+  margin: ${p => p.margin || '6px'} 0;
+  width: 100%;
+`;
+
+export const HudMenuCollapsibleSection = ({ children, collapsed, titleText, titleLabel, ...props }) => (
   <CollapsibleSection
     title={(<SectionTitle label={titleLabel}>{titleText}</SectionTitle>)}
     collapsibleProps={{
       borderColor: majorBorderColor,
       width: props.openHeight ? undefined : 'calc(100% - 36px)'
     }}
+    initiallyOpen={!collapsed}
     openHeight="calc(100% - 60px)"
     {...props}>
     {children}

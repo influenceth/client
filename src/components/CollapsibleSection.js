@@ -61,8 +61,8 @@ const Collapsible = styled.div`
   `};
 `;
 
-const CollapsibleSection = ({ borderless, children, title, openHeight, ...props }) => {
-  const [collapsed, setCollapsed] = useState();
+const CollapsibleSection = ({ borderless, children, initiallyOpen, title, openHeight, ...props }) => {
+  const [collapsed, setCollapsed] = useState(!initiallyOpen);
   const toggleCollapse = useCallback(() => {
     setCollapsed((c) => !c);
   }, []);

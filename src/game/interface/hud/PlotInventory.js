@@ -5,7 +5,8 @@ import { Inventory } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import usePlot from '~/hooks/usePlot';
-import { formatResourceAmount, ResourceImage } from './actionDialogs/components';
+import { ResourceImage } from '~/components/ResourceThumbnail';
+import { formatResourceAmount } from './actionDialogs/components';
 import { useResourceAssets } from '~/hooks/useAssets';
 import { formatFixed } from '~/lib/utils';
 

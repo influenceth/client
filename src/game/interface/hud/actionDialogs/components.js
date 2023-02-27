@@ -28,6 +28,8 @@ import {
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import Poppable from '~/components/Popper';
 import ResourceColorIcon from '~/components/ResourceColorIcon';
+import ResourceThumbnail, { ResourceThumbnailWrapper, ResourceImage, ResourceProgress } from '~/components/ResourceThumbnail';
+import ResourceRequirement from '~/components/ResourceRequirement';
 import SliderInput from '~/components/SliderInput';
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
@@ -399,50 +401,6 @@ const EmptyThumbnail = styled.div`
     left: 5px;
   }
 `;
-const ResourceBadge = styled.div`
-  position: absolute;
-  bottom: 5px;
-  color: white;
-  font-size: 80%;
-  left: 5px;
-  line-height: 1em;
-  &:before {
-    content: "${p => p.badge !== undefined ? p.badge.toLocaleString() : ''}";
-    position: relative;
-    z-index: 3;
-  }
-  &:after {
-    content: "${p => p.badgeDenominator ? `/ ${p.badgeDenominator.toLocaleString()}` : ''}";
-    display: block;
-  }
-`;
-const ResourceThumbnailWrapper = styled.div`
-  border: 2px solid transparent;
-  outline: 1px solid ${borderColor};
-  height: 115px;
-  position: relative;
-  width: 115px;
-  ${p => `
-    ${p.outlineColor ? `outline-color: ${p.outlineColor} !important;` : ''}
-    ${p.outlineStyle ? `outline-style: ${p.outlineStyle} !important;` : ''}
-    ${p.badgeColor && p.hasDenominator ? `${ResourceBadge} { &:after { color: ${p.badgeColor} !important; } }` : ''}
-    ${p.badgeColor && !p.hasDenominator ? `${ResourceBadge} { &:before { color: ${p.badgeColor} !important; } }` : ''}
-  `}
-`;
-const ThumbnailIconOverlay = styled.div`
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: ${p => p.theme.colors.main};
-  font-size: 40px;
-  display: flex;
-  justify-content: center;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 1;
-`;
 const BuildingThumbnailWrapper = styled(ResourceThumbnailWrapper)`
   height: 92px;
   width: 150px;
@@ -453,72 +411,6 @@ const BuildingThumbnailWrapper = styled(ResourceThumbnailWrapper)`
       margin-top: -20px;
     }
   }
-`;
-const ResourceThumbnail = styled.div`
-  background: black url("${p => p.src}") center center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 0;
-`;
-const ResourceProgress = styled.div`
-  background: #333;
-  border-radius: 2px;
-  position: absolute;
-  right: 5px;
-  bottom: 5px;
-  ${p => p.horizontal
-    ? `
-      height: 4px;
-      width: calc(100% - 10px);
-    `
-    : `
-      height: calc(100% - 10px);
-      width: 4px;
-    `
-  }
-  &:after {
-    content: "";
-    background: ${p => p.theme.colors.main};
-    border-radius: 2px;
-    position: absolute;
-    ${p => p.horizontal
-      ? `
-        left: 0;
-        height: 100%;
-        width: ${Math.min(1, p.progress) * 100}%;
-      `
-      : `
-        bottom: 0;
-        height: ${Math.min(1, p.progress) * 100}%;
-        width: 100%;
-      `
-    }
-  }
-  ${p => p.secondaryProgress && `
-    &:before {
-      content: "";
-      background: white;
-      border-radius: 2px;
-      position: absolute;
-      ${p.horizontal
-        ? `
-          left: 0;
-          height: 100%;
-          width: ${Math.min(1, p.secondaryProgress) * 100}%;
-        `
-        : `
-          bottom: 0;
-          height: ${Math.min(1, p.secondaryProgress) * 100}%;
-          width: 100%;
-        `
-      }
-    }
-  `}
 `;
 const InventoryUtilization = styled(ResourceProgress)`
   bottom: 8px;
@@ -889,27 +781,6 @@ const EmptyImage = ({ children }) => (
   </EmptyThumbnail>
 );
 
-// TODO: this component is functionally overloaded... create more components so not trying to use in so many different ways
-export const ResourceImage = ({ resource, badge, badgeColor, badgeDenominator, outlineColor, outlineStyle, overlayIcon, progress, showTooltip }) => {
-  const tooltipProps = showTooltip ? {
-    'data-tip': resource.name,
-    'data-for': 'global'
-  } : {}
-  return (
-    <ResourceThumbnailWrapper
-      badgeColor={badgeColor}
-      hasDenominator={!!badgeDenominator}
-      outlineColor={outlineColor}
-      outlineStyle={outlineStyle}
-      {...tooltipProps}>
-      <ResourceThumbnail src={resource.iconUrls.w125} />
-      {badge !== undefined && <ResourceBadge badge={badge} badgeDenominator={badgeDenominator} />}
-      {progress !== undefined && <ResourceProgress progress={progress} />}
-      {overlayIcon && <ThumbnailIconOverlay>{overlayIcon}</ThumbnailIconOverlay>}
-    </ResourceThumbnailWrapper>
-  );
-};
-
 export const EmptyResourceImage = ({ iconOverride }) => (
   <ResourceThumbnailWrapper><EmptyImage>{iconOverride || <PlusIcon />}</EmptyImage></ResourceThumbnailWrapper>
 );
@@ -941,7 +812,7 @@ const BuildingImage = ({ building, inventories, showInventoryStatusForType, unfi
   const capacity = getCapacityUsage(building, inventories, showInventoryStatusForType);
   return (
     <BuildingThumbnailWrapper>
-      <ResourceThumbnail src={building[unfinished ? 'siteIconUrls' : 'iconUrls']?.w150} />
+      <ResourceImage src={building[unfinished ? 'siteIconUrls' : 'iconUrls']?.w150} />
       {showInventoryStatusForType !== undefined && (
         <>
           <InventoryUtilization
@@ -986,27 +857,6 @@ const MouseoverIcon = ({ children, icon, iconStyle = {}, themeColor }) => {
   );
 };
 
-const ResourceRequirement = ({ resource, hasTally, isGathering, needsTally }) => {
-  const props = { resource };
-  if (isGathering) {
-    props.badge = hasTally;
-    if (hasTally >= needsTally) {
-      props.badgeColor = theme.colors.main;
-      props.overlayIcon = <CheckIcon />;
-    } else {
-      props.badgeDenominator = needsTally;
-      props.badgeColor = theme.colors.yellow;
-      props.outlineColor = theme.colors.yellow;
-      props.outlineStyle = 'dashed';
-    }
-  } else {
-    props.badge = needsTally;
-    props.badgeDenominator = null;
-  }
-  return (
-    <ResourceImage {...props} />
-  );
-};
 
 //
 // Selectors
@@ -1351,7 +1201,7 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
       <SectionBody highlight={status === 'AFTER'}>
         {selectedSample ? (
           <ResourceWithData>
-            <ResourceImage resource={resource} />
+            <ResourceThumbnail resource={resource} />
             <label>
               <h3>{resource?.name} Deposit #{selectedSample.sampleId.toLocaleString()}{(status === 'AFTER' && overrideTonnage) ? ' (Improved)' : ''}</h3>
               <div>
@@ -1403,7 +1253,7 @@ export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, 
       <SectionBody highlight={status === 'AFTER'}>
         {selectedSample ? (
           <ResourceWithData>
-            <ResourceImage resource={resources[selectedSample.resourceId]} />
+            <ResourceThumbnail resource={resources[selectedSample.resourceId]} />
             <label>
               <h3>
                 {resources[selectedSample.resourceId].name} Deposit #{selectedSample.sampleId.toLocaleString()}
@@ -1469,7 +1319,7 @@ export const RawMaterialSection = ({ abundances, goToResourceMap, plotId, resour
         {resource
           ? (
             <ResourceWithData>
-              <ResourceImage resource={resource} />
+              <ResourceThumbnail resource={resource} />
               <label>
                 {/* TODO: adding sampleId here might be most consistent with other dialogs */}
                 <h3>{resource.name}{tonnage !== undefined ? ' Deposit Discovered' : ''}</h3>
@@ -1523,7 +1373,7 @@ export const ToolSection = ({ resource, sourcePlot }) => {
         <FutureSectionOverlay />
         {resource && (
           <ResourceWithData>
-            <ResourceImage badge="∞" resource={resource} />{/* TODO: badge */}
+            <ResourceThumbnail badge="∞" resource={resource} />{/* TODO: badge */}
             <label>
               <h3>{resource.name}</h3>
               {sourcePlot && sourcePlot.building && (
@@ -1592,7 +1442,7 @@ export const ItemSelectionSection = ({ inventory, onSelectItems, resources, sele
             <div>
               <ItemsList>
                 {selectedItemKeys.map((resourceId, x) => (
-                  <ResourceImage
+                  <ResourceThumbnail
                     key={resourceId}
                     badge={formatResourceAmount(selectedItems[resourceId], resourceId)}
                     resource={resources[resourceId]}
@@ -1790,7 +1640,7 @@ export const DeconstructionMaterialsSection = ({ label, resources, status }) => 
         <FutureSectionOverlay />
         <IngredientsList>
           {ingredients.map(([tally, i, hasTally]) => (
-            <ResourceImage key={i}
+            <ResourceThumbnail key={i}
               badge={`+${tally}`}
               badgeColor={theme.colors.main}
               outlineColor={borderColor}

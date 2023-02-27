@@ -7,10 +7,9 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
 import useChainTime from '~/hooks/useChainTime';
 import useStore from '~/hooks/useStore';
-import { HudMenuCollapsibleSection, majorBorderColor } from './components';
+import { HudMenuCollapsibleSection, Rule, majorBorderColor } from './components';
 import ClipCorner from '~/components/ClipCorner';
 import { ConstructIcon } from '~/components/Icons';
-
 
 const Wrapper = styled.div`
   display: flex;
@@ -114,12 +113,6 @@ const Bar = styled.div`
     transition: width 1000ms linear;
     width: ${p => 100 * p.progress}%;
   }
-`;
-
-const Rule = styled.div`
-  border-bottom: 1px solid ${majorBorderColor};
-  margin: 6px 0;
-  width: 100%;
 `;
 
 const Status = styled.td`
