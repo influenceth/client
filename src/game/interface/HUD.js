@@ -1,22 +1,13 @@
-import { useCallback, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
-import ReactTooltip from 'react-tooltip';
 
-import { BackIcon } from '~/components/Icons';
-import useStore from '~/hooks/useStore';
 import ActionDialog from './hud/ActionDialog';
 import ActionItems from './hud/ActionItems';
 import AvatarMenu from './hud/AvatarMenu';
 import InfoPane from './hud/InfoPane';
-import ResourceMapToggle from './hud/ResourceMapToggle';
-import useActionButtons from './hud/useActionButtons';
-import useActionModules from './hud/useActionModules';
-import ActionModules, { ActionModule } from './hud/ActionModules';
 import SystemControls from './outliner/SystemControls';
 import HudMenu from './hud/HudMenu';
 
 const bottomMargin = 60;
-const rightModuleWidth = 375;
 
 const Wrapper = styled.div`
   align-items: flex-start;
@@ -33,22 +24,6 @@ const LeftWrapper = styled(Wrapper)`
   height: calc(100% - ${bottomMargin}px);
   left: 0;
   top: 0;
-`;
-
-const RightWrapper = styled(Wrapper)`
-  right: 0px;
-`;
-
-const LeftActions = styled.div`
-  flex-shrink: 0;
-  transform: ${p => p.visible ? 'translateX(0)' : 'translateX(-64px)'};
-  transition: transform 250ms ease ${p => p.visible ? '750ms' : '0ms'};
-  & > * {
-    margin-bottom: 12px;
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
 `;
 
 const IconHolder = styled.div`
@@ -93,26 +68,7 @@ export const Rule = styled.div`
   width: 100%;
 `;
 
-const ActionModuleContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  transform: translateY(${p => p.lower ? `52px` : 0});
-  transition: transform 350ms ease;
-  width: ${rightModuleWidth}px;
-`;
-
-const LowerLeft = styled.div`
-  display: flex;
-  flex-direction: row;
-`;
-
-
 const HUD = () => {
-  
-  const actionModuleVisible = useActionModules();
-  const anyActionModulesVisible = useMemo(() => Object.values(actionModuleVisible).find((v) => !!v), [actionModuleVisible]);
-
   return (
     <>
       <LeftWrapper>

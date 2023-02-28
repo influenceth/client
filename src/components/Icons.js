@@ -1,7 +1,7 @@
 import { AiFillBug, AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle, BsPieChartFill, BsStopwatch } from 'react-icons/bs';
 import { FaEthereum, FaMapMarkedAlt, FaCopy } from 'react-icons/fa';
-import { FiExternalLink, FiMenu } from 'react-icons/fi';
+import { FiCheckSquare, FiExternalLink, FiMenu, FiSquare } from 'react-icons/fi';
 import { HiClock, HiCog, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import {
   MdAdd,
@@ -22,7 +22,6 @@ import {
   MdFirstPage
 } from 'react-icons/md';
 import {
-  RiInformationLine,
   RiPagesFill,
   RiTableFill,
   RiRouteFill,
@@ -212,5 +211,7 @@ export {
   RiTableFill as TableIcon,
   TiArrowRight as GoIcon,
   VscDebugDisconnect as DisconnectIcon,
-  WiMoonAltWaningCrescent5 as DownloadModelIcon
+  WiMoonAltWaningCrescent5 as DownloadModelIcon,
+  FiCheckSquare as CheckedIcon,
+  FiSquare as UncheckedIcon,
 };

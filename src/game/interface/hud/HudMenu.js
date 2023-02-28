@@ -163,79 +163,14 @@ const PanelContent = styled.div`
   height: 0;
 `;
 
-const buttons = {
-  belt: [
-    {
-      label: 'Asteroid Info',
-      icon: <InfoIcon />,
-      Component: hudMenus.AsteroidInfo
-    },
-    {
-      label: 'My Assets',
-      icon: <MyAssetsIcon />,
-      Component: hudMenus.AllAssets,
-      requireLogin: true
-    },
-    {
-      label: 'Favorites',
-      icon: <FavoriteIcon />,
-      Component: hudMenus.Favorites,
-      requireLogin: true
-    },
-    {
-      label: 'System Search',
-      icon: <SearchIcon />,
-      Component: hudMenus.SearchAsteroids
-    }
-  ],
-  asteroid: [
-    {
-      label: 'My Assets',
-      icon: <MyAssetsIcon />,
-      Component: hudMenus.AsteroidAssets,
-      requireLogin: true
-    },
-    {
-      label: 'Asteroid Resources',
-      icon: <ResourceIcon />,
-      Component: hudMenus.Resources
-    },
-    {
-      label: 'Lot Search',
-      icon: <SearchIcon />,
-      Component: hudMenus.SearchLots
-    },
-    {
-      label: 'Asteroid Chat',
-      icon: <ChatIcon />,
-      Component: hudMenus.AsteroidChat
-    },
-  ],
-  lot: [
-    {
-      label: 'Information',
-      icon: <InfoIcon />,
-      Component: hudMenus.LotInfo
-    },
-    {
-      label: 'Resources',
-      icon: <ResourceIcon />,
-      Component: hudMenus.LotResources
-    },
-    {
-      label: 'Inventory',
-      icon: <InventoryIcon />,
-      Component: hudMenus.Inventory
-    },
-  ]
-};
-
-
 const HudMenu = () => {
   const { account } = useAuth();
+  const { asteroidId, plotId } = useStore(s => s.asteroids.plot) || {};
   const openHudMenu = useStore(s => s.openHudMenu);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
+
+  const { data: plot } = usePlot(asteroidId, plotId);
 
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   
@@ -266,9 +201,89 @@ const HudMenu = () => {
     setOpen(!!openHudMenu);
   }, [openHudMenu]);
 
+  const buttons = useMemo(() => {
+    if (zoomStatus === 'out') {
+      return [
+        {
+          label: 'Asteroid Info',
+          icon: <InfoIcon />,
+          Component: hudMenus.AsteroidInfo
+        },
+        {
+          label: 'My Assets',
+          icon: <MyAssetsIcon />,
+          Component: hudMenus.AllAssets,
+          requireLogin: true
+        },
+        {
+          label: 'Favorites',
+          icon: <FavoriteIcon />,
+          Component: hudMenus.Favorites,
+          requireLogin: true
+        },
+        {
+          label: 'System Search',
+          icon: <SearchIcon />,
+          Component: hudMenus.SearchAsteroids
+        }
+      ];
+    } else if (zoomStatus === 'in' && !zoomToPlot) {
+      return [
+        {
+          label: 'My Assets',
+          icon: <MyAssetsIcon />,
+          Component: hudMenus.AsteroidAssets,
+          requireLogin: true
+        },
+        {
+          label: 'Asteroid Resources',
+          icon: <ResourceIcon />,
+          Component: hudMenus.Resources
+        },
+        {
+          label: 'Lot Search',
+          icon: <SearchIcon />,
+          Component: hudMenus.SearchLots
+        },
+        {
+          label: 'Asteroid Chat',
+          icon: <ChatIcon />,
+          Component: hudMenus.AsteroidChat
+        }
+      ];
+    } else if (zoomStatus === 'in' && zoomToPlot) {
+      const b = [
+        {
+          label: 'Information',
+          icon: <InfoIcon />,
+          Component: hudMenus.LotInfo
+        },
+        {
+          label: 'Resources',
+          icon: <ResourceIcon />,
+          Component: hudMenus.LotResources
+        }
+      ];
+      if (plot?.building?.capableType) {
+        if (
+          (plot.building.construction?.status === Construction.STATUS_PLANNED && Inventory.CAPACITIES[plot.building.capableType][0])
+          || (plot.building.construction?.status === Construction.STATUS_OPERATIONAL && Inventory.CAPACITIES[plot.building.capableType][1])
+        ) {
+          b.push({
+            label: 'Inventory',
+            icon: <InventoryIcon />,
+            Component: hudMenus.Inventory
+          });
+        } 
+      }
+      return b;
+    }
+    return [];
+  }, [zoomStatus, zoomToPlot, plot]);
+
   const { label, Component } = useMemo(() => {
     const [category, label] = (openHudMenu || '').split('.');
-    return (buttons[category] || []).find((b) => b.label === label) || {};
+    return buttons.find((b) => b.label === label) || {};
   }, [openHudMenu]);
 
   const buttonFilter = zoomStatus === 'in' && zoomToPlot
@@ -278,7 +293,7 @@ const HudMenu = () => {
     <Wrapper>
       <ReactTooltip id="hudMenu" effect="solid" />
       <Buttons open={open}>
-        {(buttons[buttonFilter] || []).map(({ label, icon, requireLogin }) => {
+        {buttons.map(({ label, icon, requireLogin }) => {
           const key = `${buttonFilter}.${label}`;
           if (requireLogin && !account) return null;
           return (

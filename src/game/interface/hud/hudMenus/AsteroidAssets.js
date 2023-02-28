@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import styled from 'styled-components';
-import { Capable, Construction, Lot } from '@influenceth/sdk';
+import { Capable, Construction, Inventory, Lot } from '@influenceth/sdk';
 
 import { usePlotLink } from '~/components/PlotLink';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -10,6 +10,7 @@ import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Rule, majorBorderColor } from './components';
 import ClipCorner from '~/components/ClipCorner';
 import { ConstructIcon } from '~/components/Icons';
+import { formatFixed } from '~/lib/utils';
 
 const Wrapper = styled.div`
   display: flex;
@@ -18,7 +19,7 @@ const Wrapper = styled.div`
 `;
 
 const SectionWrapper = styled.div`
-  overflow: auto;
+  overflow: hidden;
   margin-right: -12px;
   padding-right: 12px;
 `;
@@ -134,24 +135,20 @@ const BuildingRow = ({ plot }) => {
     plotId: plot.i,
   });
 
-  const status = useMemo(() => {
-    if (plot.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
-      if (plot.building?.capableType === 2 && plot.building?.extraction?.status > 0) {
-        return 'Extracting';
-      }
-      return 'Idle';
-    }
-    if (plot.building?.construction?.status === Construction.STATUS_PLANNED && plot.gracePeriodEnd < chainTime) {
-      return 'At Risk';
-    }
-    return Construction.STATUSES[plot.building?.construction?.status || 0];
-  }, [plot.building]);
-
   const [progress, progressColor] = useMemo(() => {
     if (plot.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
       if (plot.building?.capableType === 2 && plot.building?.extraction?.status > 0) {
         return [
           Math.min(1, (chainTime - plot.building?.extraction?.startTime) / (plot.building?.extraction?.completionTime - plot.building?.extraction?.startTime)),
+          'main'
+        ];
+      } else if (plot.building?.capableType === 1) {
+        const usage = Math.max(
+          ((plot.building.inventories[1].mass || 0) + (plot.building.inventories[1].reservedMass || 0)) / (1e6 * Inventory.CAPACITIES[1][1].mass),
+          ((plot.building.inventories[1].volume || 0) + (plot.building.inventories[1].reservedVolume || 0)) / (1e6 * Inventory.CAPACITIES[1][1].volume),
+        );
+        return [
+          Math.min(1, usage),
           'main'
         ];
       }
@@ -170,6 +167,21 @@ const BuildingRow = ({ plot }) => {
     }
     return [0];
   }, [chainTime, plot.building]);
+
+  const status = useMemo(() => {
+    if (plot.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
+      if (plot.building?.capableType === 2 && plot.building?.extraction?.status > 0) {
+        return 'Extracting';
+      } else if (plot.building?.capableType === 1) {
+        return `${formatFixed(100 * progress, 1)}% Full`
+      }
+      return 'Idle';
+    }
+    if (plot.building?.construction?.status === Construction.STATUS_PLANNED && plot.gracePeriodEnd < chainTime) {
+      return 'At Risk';
+    }
+    return Construction.STATUSES[plot.building?.construction?.status || 0];
+  }, [plot.building, progress]);
 
   return (
     <PlotRow onClick={onClick}>
