@@ -147,8 +147,8 @@ const LotResources = () => {
   const onClickResource = useCallback((i) => () => {
     setSelected({ type: 'resource', i });
   }, []);
-  const onClickSample = useCallback((i) => () => {
-    setSelected({ type: 'sample', i });
+  const onClickSample = useCallback((r, i) => () => {
+    setSelected({ type: 'sample', r, i });
   }, []);
 
   const [showAbundances, abundancesTruncated] = useMemo(() => {
@@ -196,7 +196,7 @@ const LotResources = () => {
 
   const selectedSample = useMemo(() => {
     if (selected && selected.type === 'sample') {
-      return ownedSamples.find((s) => selected.i === s.sampleId);
+      return ownedSamples.find((s) => selected.r === s.resourceId && selected.i === s.sampleId);
     }
     return null;
   }, [ownedSamples, selected]);
@@ -274,11 +274,11 @@ const LotResources = () => {
           <HudMenuCollapsibleSection titleText="Core Samples" titleLabel={`${sampleTally} Sample${sampleTally === 1 ? '' : 's'}`}>
             {ownedSamples.map((sample) => {
               const { name, categoryKey } = resources[sample.resourceId];
-              const isSelected = selected?.type === 'sample' && selected?.i === sample.sampleId;
+              const isSelected = selected?.type === 'sample' && selected?.r === sample.resourceId && selected?.i === sample.sampleId;
               return (
                 <Sample key={sample.i}
                   category={categoryKey}
-                  onClick={onClickSample(sample.sampleId)}
+                  onClick={onClickSample(sample.resourceId, sample.sampleId)}
                   selected={isSelected}>
                   {isSelected
                     ? (
