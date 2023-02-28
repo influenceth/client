@@ -112,6 +112,13 @@ const ResourceBadge = styled.div`
   }
 `;
 
+const ResourceIconBadge = styled.div`
+  position: absolute;
+  font-size: 18px;
+  top: 2px;
+  left: 0px;
+`;
+
 const ThumbnailIconOverlay = styled.div`
   align-items: center;
   background-color: rgba(0, 0, 0, 0.5);
@@ -128,7 +135,7 @@ const ThumbnailIconOverlay = styled.div`
 `;
 
 // TODO: this component is functionally overloaded... create more components so not trying to use in so many different ways
- const ResourceThumbnail = ({ resource, badge, badgeColor, badgeDenominator, outlineColor, outlineStyle, overlayIcon, progress, size, showTooltip }) => {
+ const ResourceThumbnail = ({ resource, badge, badgeColor, badgeDenominator, iconBadge, outlineColor, outlineStyle, overlayIcon, progress, size, showTooltip }) => {
   const tooltipProps = showTooltip ? {
     'data-tip': resource.name,
     'data-for': 'global'
@@ -144,6 +151,7 @@ const ThumbnailIconOverlay = styled.div`
       <ResourceImage src={resource.iconUrls.w125} />
       <ClipCorner dimension={10} color={outlineColor || defaultBorderColor} />
       {badge !== undefined && <ResourceBadge badge={badge} badgeDenominator={badgeDenominator} />}
+      {iconBadge !== undefined && <ResourceIconBadge>{iconBadge}</ResourceIconBadge>}}
       {progress !== undefined && <ResourceProgress progress={progress} />}
       {overlayIcon && <ThumbnailIconOverlay>{overlayIcon}</ThumbnailIconOverlay>}
     </ResourceThumbnailWrapper>

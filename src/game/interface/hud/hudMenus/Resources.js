@@ -6,9 +6,9 @@ import useStore from '~/hooks/useStore';
 import { hexToRGB } from '~/theme';
 import useAsteroidAbundances from '~/hooks/useAsteroidAbundances';
 import useAsteroid from '~/hooks/useAsteroid';
-import { majorBorderColor, HudMenuCollapsibleSection } from './components';
-import AsteroidBonuses from '../../details/asteroidDetails/AsteroidBonuses';
 import { keyify } from '~/lib/utils';
+import AsteroidBonuses from '../../details/asteroidDetails/AsteroidBonuses';
+import { majorBorderColor, HudMenuCollapsibleSection } from './components';
 
 const Wrapper = styled.div`
   display: flex;

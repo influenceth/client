@@ -36,7 +36,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
 
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
   const [sampleId, setSampleId] = useState();
-  const [resourceId, setResourceId] = useState(resourceMap?.active && resourceMap?.selected || undefined);
+  const [resourceId, setResourceId] = useState(props.preselect?.resourceId || (resourceMap?.active && resourceMap?.selected || undefined));
   useEffect(() => {
     if (coreSampleManager.currentSample) {
       setSampleId(coreSampleManager.currentSample.sampleId);

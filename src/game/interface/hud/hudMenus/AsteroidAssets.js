@@ -203,6 +203,7 @@ const AsteroidAssets = () => {
   const buildingTally = plots?.length || 0;
 
   const buildingsByType = useMemo(() => {
+    if (!plots) return {};
     return plots
     .sort((a, b) => a.building?.__t < b.building?.__t ? -1 : 1)
     .reduce((acc, plot) => {

@@ -14,9 +14,18 @@ const labelDict = {
   FINISHING: 'Analyzing...'
 };
 
-const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
-  const resourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
-  const { currentSample, samplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i);
+const NewCoreSample = ({ asteroid, plot, onSetAction, overrideResourceId, improveSample, _disabled }) => {
+  const defaultResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
+  const { currentSample: actualCurrentSample, samplingStatus: actualSamplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i);
+
+  const resourceId = overrideResourceId || defaultResourceId;
+
+  let currentSample = actualCurrentSample;
+  let samplingStatus = actualSamplingStatus;
+  if (improveSample && (currentSample?.sampleId !== improveSample.sampleId || currentSample?.isNew)) {
+    currentSample = null;
+    samplingStatus = 'READY';
+  }
 
   // get lot abundance
   const lotAbundance = useMemo(() => {
@@ -32,7 +41,7 @@ const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
 
   let label = labelDict[samplingStatus];
   let attention = undefined;
-  let disabled = _disabled = undefined;
+  let disabled = _disabled || undefined;
   let loading = undefined;
 
   // if there is a current sample ongoing
@@ -51,7 +60,10 @@ const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
     
   // else if there is not at current sample, if it is ready...
   } else if (samplingStatus === 'READY') {
-    if (lotAbundance > 0) {
+    if (improveSample) {
+      label = 'Improve Core Sample';
+    }
+    else if (lotAbundance > 0) {
       label += ` (${formatFixed(100 * lotAbundance, 1)}%)`;
     }
   }
@@ -59,12 +71,14 @@ const NewCoreSample = ({ asteroid, plot, onSetAction, _disabled }) => {
   const handleClick = useCallback(() => {
     if (currentSample && !currentSample.isNew) {
       onSetAction('IMPROVE_CORE_SAMPLE');
+    } else if (improveSample) {
+      onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...improveSample } });
     } else {
-      onSetAction('NEW_CORE_SAMPLE', resourceId ? { resourceId } : undefined);
+      onSetAction('NEW_CORE_SAMPLE', resourceId ? { preselect: { resourceId } } : undefined);
     }
   }, [currentSample, onSetAction, resourceId]);
 
-  const isImprovement = currentSample && !currentSample.isNew;
+  const isImprovement = improveSample || (currentSample && !currentSample.isNew);
   return (
     <ActionButton
       label={label}

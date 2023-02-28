@@ -2,7 +2,7 @@ import styled, { keyframes } from 'styled-components';
 
 import CollapsibleSection from '~/components/CollapsibleSection';
 
-const trayHeight = 80;
+export const trayHeight = 80;
 export const majorBorderColor = 'rgba(255, 255, 255, 0.2)';
 
 export const opacityAnimation = keyframes`

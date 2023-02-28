@@ -196,7 +196,7 @@ const buttons = {
       requireLogin: true
     },
     {
-      label: 'Natural Resources',
+      label: 'Asteroid Resources',
       icon: <ResourceIcon />,
       Component: hudMenus.Resources
     },
@@ -218,14 +218,14 @@ const buttons = {
       Component: hudMenus.LotInfo
     },
     {
+      label: 'Resources',
+      icon: <ResourceIcon />,
+      Component: hudMenus.LotResources
+    },
+    {
       label: 'Inventory',
       icon: <InventoryIcon />,
       Component: hudMenus.Inventory
-    },
-    {
-      label: 'CoreSamples',
-      icon: <CoreSampleIcon />,
-      Component: hudMenus.CoreSamples
     },
   ]
 };
