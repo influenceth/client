@@ -43,7 +43,7 @@ const OuterTitleRow = styled.div`
   flex-direction: row;
 `;
 
-const OuterThumbRow = styled.div`
+const ContentRow = styled.div`
   display: flex;
   flex-direction: row;
 `;
@@ -237,6 +237,7 @@ const ThumbWrapper = styled.div`
   display: flex;
   ${p => p.hasCaptainCard && `margin-top: 12px;`}
   margin-left: -32px;
+  margin-right: 16px;
   & > svg {
     font-size: 18px;
     margin-right: 15px;
@@ -253,7 +254,7 @@ const ActionButtonContainer = styled.div`
   align-items: flex-end;
   display: flex;
   flex-direction: row;
-  margin-left: 16px;
+  padding-top: 20px;
 `;
 
 // const LotConstructionWarning = styled.span`
@@ -582,13 +583,6 @@ const InfoPane = () => {
   };
 
   useEffect(() => ReactTooltip.rebuild(), [actions]);
-  const actionButtons = useMemo(() => (
-    <ActionButtonContainer visible={actions?.length > 0}>
-      {actions.map((ActionButton, i) => (
-        <ActionButton key={i} {...actionProps} />
-      ))}
-    </ActionButtonContainer>
-  ), [actions, actionProps]);
 
   return (
     <Pane visible={asteroidId && ['out','in'].includes(zoomStatus)}>
@@ -604,10 +598,9 @@ const InfoPane = () => {
           )}
           {subtitle && <Subtitle>{hover && hoverSubtitle ? <b>{hoverSubtitle}</b> : subtitle}</Subtitle>}
         </div>
-        {title && !thumbnail && actionButtons}
       </OuterTitleRow>
-      {thumbnail && (
-        <OuterThumbRow>
+      <ContentRow>
+        {thumbnail && (
           <ThumbWrapper
             onClick={onClickPane}
             onMouseEnter={onMouseEvent}
@@ -622,217 +615,15 @@ const InfoPane = () => {
               <ClipCorner dimension={thumbCornerSize} color={hover ? 'white' : 'rgba(255,255,255,0.25)'} />
             </ThumbPreview>
           </ThumbWrapper>
-          {actionButtons}
-        </OuterThumbRow>
-      )}
+        )}
+        <ActionButtonContainer visible={actions?.length > 0}>
+          {actions.map((ActionButton, i) => (
+            <ActionButton key={i} {...actionProps} />
+          ))}
+        </ActionButtonContainer>
+      </ContentRow>
     </Pane>
   );
-
-
-
-
-  // return (
-  //   <Pane onClick={onClickPane} visible={asteroidId && ['out','in'].includes(zoomStatus)}>
-  //     {zoomToPlot && (
-  //       <IconlessDetail />
-  //     )}
-  //     {!zoomToPlot && (
-  //       <IconColumn>
-  //         <IconHolder>
-  //           {zoomStatus === 'in' && !plotId && <InfoIcon />}
-  //           {(zoomStatus === 'out' || plotId) && <DetailsIcon />}
-  //         </IconHolder>
-  //       </IconColumn>
-  //     )}
-
-  //     <InfoColumn>
-  //       {zoomStatus === 'out' && asteroid && (
-  //         <div>
-  //           <ThumbPreview visible={renderReady}>
-  //             <CloseButton borderless onClick={onClosePane}>
-  //               <CloseIcon />
-  //             </CloseButton>
-  //             <ThumbBackground>
-  //               <AsteroidRendering asteroid={asteroid} onReady={onRenderReady} />
-  //             </ThumbBackground>
-  //             <ThumbMain>
-  //               <ThumbTitle>{asteroid.customName || asteroid.baseName}</ThumbTitle>
-  //               <ThumbSubtitle>
-  //                 <PaneContent>
-  //                   {toSize(asteroid.r)}{' '}
-  //                   <b>{toSpectralType(asteroid.spectralType)}{'-type'}</b>
-  //                   {asteroid.scanned && <Rarity rarity={toRarity(asteroid.bonuses)} />}
-  //                 </PaneContent>
-  //                 <PaneHoverContent>
-  //                   Zoom to Asteroid
-  //                 </PaneHoverContent>
-  //               </ThumbSubtitle>
-  //               <div style={{ flex: 1 }} />
-  //               <ThumbFootnote>
-  //                 <div>
-  //                   <span><b>{plotTally.toLocaleString()}</b> Lots</span>
-  //                   <span><b>{((asteroid.buildingTally || 0) / plotTally).toFixed(2)}%</b> Developed</span>
-  //                 </div>
-  //               </ThumbFootnote>
-  //             </ThumbMain>
-  //           </ThumbPreview>
-  //         </div>
-  //       )}
-  //       {zoomStatus === 'in' && asteroid && !plotId && (
-  //         <>
-  //           <Title>{asteroid.customName || asteroid.baseName}</Title>
-  //           <Subtitle>
-  //             <PaneContent>
-  //               {toSize(asteroid.radius)} <b>{toSpectralType(asteroid.spectralType)}-type</b>
-  //             </PaneContent>
-  //             <PaneHoverContent>
-  //               Asteroid Details
-  //             </PaneHoverContent>
-  //             <SubtitleLoader>
-  //               {!(plotLoader.i === asteroidId && plotLoader.progress === 1) && (
-  //                 <ProgressBar progress={plotLoader.i === asteroidId ? plotLoader.progress : 0} />
-  //               )}
-  //             </SubtitleLoader>
-  //           </Subtitle>
-  //         </>
-  //       )}
-  //       {zoomStatus === 'in' && plotId && !zoomToPlot && (
-  //         <div>
-  //           <ReactTooltip id="infoPane" effect="solid" />
-  //           <ThumbPreview visible>
-  //             <CloseButton borderless onClick={onClosePane}>
-  //               <CloseIcon />
-  //             </CloseButton>
-  //             {!plot && (
-  //               <ThumbLoading>
-  //                 <PuffLoader color="white" />
-  //               </ThumbLoading>
-  //             )}
-  //             {plot && (
-  //               <>
-  //                 {!(plot.building?.capableType > 0) && <ThumbBackground image={buildings[0]?.iconUrls?.w400} />}
-  //                 {plot.building?.capableType > 0 && (
-  //                   <>
-  //                     {
-  //                       // TODO: if planning, could use the currentConstruction object to go ahead and put hologram image
-  //                       (['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus) && !isAtRisk)
-  //                         ? <ThumbBackground image={buildings[plot.building?.capableType || 0]?.iconUrls?.w400} />
-  //                         : (
-  //                           <ThumbBackground
-  //                             backgroundColor={isAtRisk && '#2e1400'}
-  //                             image={buildings[plot.building?.capableType || 0]?.siteIconUrls?.w400} />
-  //                         )
-  //                     }
-  //                   </>
-  //                 )}
-  //                 <ThumbMain>
-  //                   <ThumbTitle>{buildings[plot.building?.capableType || 0]?.name}</ThumbTitle>
-  //                   <ThumbSubtitle>
-  //                     <PaneContent>
-  //                       Lot #{plot.i.toLocaleString()}
-  //                     </PaneContent>
-  //                     <PaneHoverContent>
-  //                       Zoom to Lot
-  //                     </PaneHoverContent>
-  //                   </ThumbSubtitle>
-  //                   <div style={{ flex: 1 }} />
-  //                   <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-  //                     <ThumbFootnote>
-  //                       {isAtRisk ? <b>{plot.occupier === crew?.i ? 'At Risk' : `Abandoned by #${plot.occupier}`}</b> : ''}
-  //                       {!isAtRisk && plot.occupier ? `Controlled by ${plot.occupier === crew?.i ? 'Me' : `#${plot.occupier}`}` : ''}
-  //                       {!plot.occupier && 'Uncontrolled'}
-  //                     </ThumbFootnote>
-  //                     <ThumbFootButtons>
-  //                       {myPlotCoreSamples.length > 0 && (
-  //                         <>
-  //                           <CoreSampleMouseover
-  //                             building={plot?.building}
-  //                             coreSamples={myPlotCoreSamples}>
-  //                             {({ refEl, onToggle }) => (
-  //                               <ThumbFootButton
-  //                                 ref={refEl}
-  //                                 badge={myPlotCoreSamples.length}
-  //                                 data-tip="Toggle Core Sample List"
-  //                                 data-for="infoPane"
-  //                                 data-place="right"
-  //                                 onClick={onToggle}>
-  //                                 <NewCoreSampleIcon />
-  //                               </ThumbFootButton>
-  //                             )}
-  //                           </CoreSampleMouseover>
-  //                         </>
-  //                       )}
-  //                     </ThumbFootButtons>
-  //                   </div>
-  //                 </ThumbMain>
-  //               </>
-  //             )}
-  //           </ThumbPreview>
-  //         </div>
-  //       )}
-  //       {zoomStatus === 'in' && plotId && zoomToPlot && (
-  //         <>
-  //           <Title>{Capable.TYPES[plot?.building?.capableType || 0]?.name}</Title>
-  //           <Subtitle>
-  //             Lot {plotId.toLocaleString()}
-  //             {plot?.building?.capableType > 0 && plot?.building?.construction?.status !== Construction.STATUS_OPERATIONAL && (
-  //               <LotConstructionWarning>{Construction.STATUSES[plot?.building?.construction?.status]}</LotConstructionWarning>
-  //             )}
-  //           </Subtitle>
-  //           <PlotDetails>
-  //             <DetailRow>
-  //               <label>Controlled by</label>
-  //               {plot?.occupier && <div>{plot.occupier === crew?.i ? 'Me' : `Crew #${plot.occupier}`}</div>}
-  //               {!plot?.occupier && <div>Uncontrolled</div>}
-  //             </DetailRow>
-  //             {topResources?.length > 0 && (
-  //               <DetailRow>
-  //                 <label>Highest Abundance</label>
-  //                 <div>
-  //                   {topResources.map((r) => (
-  //                     <ResourceRow key={r.resourceId} category={keyify(Inventory.RESOURCES[r.resourceId].category)}>
-  //                       <span>{formatFixed(100 * r.abundance, 1)}%</span>
-  //                       {Inventory.RESOURCES[r.resourceId].name}
-  //                     </ResourceRow>
-  //                   ))}
-  //                 </div>
-  //               </DetailRow>
-  //             )}
-  //             {plot?.building?.capableType === 1 && (
-  //               <>
-  //                 <DetailRow>
-  //                   <label>Max Storage Volume</label>
-  //                   <div>{Inventory.CAPACITIES[1][1].volume.toLocaleString()} m<sup>3</sup></div>
-  //                 </DetailRow>
-  //                 <DetailRow>
-  //                   <label>Max Storage Mass</label>
-  //                   <div>{Inventory.CAPACITIES[1][1].mass.toLocaleString()} tonnes</div>
-  //                 </DetailRow>
-  //                 <DetailRow>
-  //                   <label>Available Capacity</label>
-  //                   <div>
-  //                     {constructionStatus === 'OPERATIONAL' ? formatFixed(
-  //                       (100 - Math.ceil(1000 * (
-  //                         (plot.building.inventories && plot.building.inventories[1])
-  //                           ? Math.max(
-  //                             1E-6 * ((plot.building.inventories[1]?.mass || 0) + (plot.building.inventories[1]?.reservedMass || 0)) / Inventory.CAPACITIES[1][1].mass,
-  //                             1E-6 * ((plot.building.inventories[1]?.volume || 0) + (plot.building.inventories[1]?.reservedVolume || 0)) / Inventory.CAPACITIES[1][1].volume,
-  //                           )
-  //                           : 0
-  //                         )) / 10
-  //                       ),
-  //                       1
-  //                     ) : 0}%
-  //                   </div>
-  //                 </DetailRow>
-  //               </>
-  //             )}
-  //           </PlotDetails>
-  //         </>
-  //       )}
-  //     </InfoColumn>
-  //   </Pane>
-  // )
 };
 
 export default InfoPane;
