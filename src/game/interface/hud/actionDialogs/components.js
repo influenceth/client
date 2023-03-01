@@ -35,7 +35,7 @@ import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
 import theme from '~/theme';
 import useChainTime from '~/hooks/useChainTime';
-import { formatFixed, formatTimer, keyify } from '~/lib/utils';
+import { formatFixed, formatTimer } from '~/lib/utils';
 import LiveTimer from '~/components/LiveTimer';
 import NavIcon from '~/components/NavIcon';
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 import styled from 'styled-components';
 import { Capable, Construction, Inventory, Lot } from '@influenceth/sdk';
 
@@ -143,10 +143,10 @@ const BuildingRow = ({ plot }) => {
           'main'
         ];
       } else if (plot.building?.capableType === 1) {
-        const usage = Math.max(
+        const usage = plot.building.inventories ? Math.max(
           ((plot.building.inventories[1].mass || 0) + (plot.building.inventories[1].reservedMass || 0)) / (1e6 * Inventory.CAPACITIES[1][1].mass),
           ((plot.building.inventories[1].volume || 0) + (plot.building.inventories[1].reservedVolume || 0)) / (1e6 * Inventory.CAPACITIES[1][1].volume),
-        );
+        ) : 0;
         return [
           Math.min(1, usage),
           'main'
@@ -236,14 +236,14 @@ const AsteroidAssets = () => {
             <>
               {buildingTally === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied on lots on this asteroid yet.</div>}
               {buildingTally > 0 && Object.keys(buildingsByType).map((capableType, i) => (
-                <>
+                <Fragment key={capableType}>
                   {i > 0 && <Rule />}
-                  <PlotTable key={capableType}>
+                  <PlotTable>
                     <tbody>
                       {buildingsByType[capableType].map((plot) => <BuildingRow key={plot.i} plot={plot} />)}
                     </tbody>
                   </PlotTable>
-                </>
+                </Fragment>
               ))}
             </>
           )}

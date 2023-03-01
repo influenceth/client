@@ -45,7 +45,6 @@ const AsteroidBonuses = ({ bonuses, ...props }) => {
 
   const nonzeroBonuses = useMemo(() => (bonuses || []).filter((b) => b.level > 0), [bonuses]);
 
-  console.log('bonuses', bonuses, nonzeroBonuses);
   if (!(nonzeroBonuses?.length > 0)) return null;
   return (
     <>

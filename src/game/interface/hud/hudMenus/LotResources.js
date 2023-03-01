@@ -310,15 +310,6 @@ const LotResources = () => {
         </ResourceWrapper>
       </Wrapper>
 
-      {/* TODO: if abundance selected, prompt for new sample */}
-      {/* TODO: disable instead of hide, downsize button, and show progress inline */}
-
-
-      {
-        
-
-      }
-
       {(currentSample || selectedResource || selectedSample || currentExtraction) && (
         <Tray>
           <>

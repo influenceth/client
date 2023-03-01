@@ -38,7 +38,7 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
     [currentDelivery, currentDeliveryOriginPlot, plot]
   ) || {};
   const [destinationPlot, setDestinationPlot] = useState();
-  const [selectedItems, setSelectedItems] = useState({});
+  const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
 
   const crewMembers = currentDelivery?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];

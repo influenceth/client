@@ -25,6 +25,24 @@ export const Tray = styled.div`
   display: flex;
   flex-direction: row;
   height: ${trayHeight}px;
+  position: relative;
+`;
+
+export const TrayLabel = styled.div`
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  top: -29px;
+  text-align: center;
+  width: 100%;
+  &:before {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+    content: "${p => p.content}";
+    display: inline-block;
+    font-size: 90%;
+    padding: 0 22px;
+    line-height: 28px;
+  }
 `;
 
 export const SectionTitle = styled.div`

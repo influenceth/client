@@ -1,21 +1,30 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { Inventory } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
-import { CheckedIcon, UncheckedIcon } from '~/components/Icons';
+import { CheckedIcon, DotsIcon, UncheckedIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { useResourceAssets } from '~/hooks/useAssets';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
 import { formatFixed } from '~/lib/utils';
-import { formatResourceAmount } from '../actionDialogs/components';
+import actionButtons from '../actionButtons';
+import useActionButtons from '../useActionButtons';
+import { formatMass, formatResourceAmount, formatVolume } from '../actionDialogs/components';
+import { Tray, TrayLabel } from './components';
+import { usePopper } from 'react-popper';
+import { createPortal } from 'react-dom';
+import theme from '~/theme';
+
+const resourceItemWidth = 83;
 
 const Wrapper = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
+  flex: 1;
 `;
 
 const InnerWrapper = styled.div`
@@ -121,7 +130,7 @@ const InventoryItems = styled.div`
   display: grid;
   flex: 1;
   grid-gap: 4px;
-  grid-template-columns: repeat(4, 83px);
+  grid-template-columns: repeat(4, ${resourceItemWidth}px);
   flex-direction: row;
   flex-wrap: wrap;
   overflow-x: hidden;
@@ -129,21 +138,134 @@ const InventoryItems = styled.div`
   padding: 1px;
   padding-right: 10px;
   margin-right: -10px;
+`;
+
+const StackSplitButton = styled.span`
+  align-items: center;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 5px;
+  color: white;
+  display: flex;
+  height: 24px;
+  left: 4px;
+  justify-content: center;
+  opacity: 0;
+  position: absolute;
+  top: 4px;
+  transition: background 250ms ease, opacity 250ms ease;
+  width: 24px;
+  z-index: 2;
+  ${p => p.isSplitting && `
+    background: rgba(${p.theme.colors.mainRGB}, 0.7);
+    opacity: 1;
+  `}
+
+  &:hover {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.7);
+  }
+`;
+
+const ThumbnailWrapper = styled.div`
+  cursor: ${p => p.theme.cursors.active};
+  height: ${resourceItemWidth}px;
+  position: relative;
+  width: ${resourceItemWidth}px;
   & > div {
-    height: 83px;
-    width: 83px;
+    height: 100%;
+    width: 100%;
+
+    & > div {
+      transition: background-color 250ms ease;
+    }
+
+    ${p => p.selected && `
+      border-color: ${p.theme.colors.main};
+      & > div {
+        background-color: rgba(${p.theme.colors.mainRGB}, 0.15);
+      }
+      & > svg {
+        stroke: ${p.theme.colors.main};
+      }
+    `};
+  }
+
+  &:hover {
+    opacity: 0.8;
+    & > div {
+      border-color: ${p => p.theme.colors.main};
+      & > div {
+        background-color: rgba(${p => p.theme.colors.mainRGB}, 0.05);
+      }
+      & > svg {
+        stroke: ${p => p.theme.colors.main};
+      }
+    }
+    ${StackSplitButton} {
+      opacity: 1;
+    }
   }
 `;
 
 const sortOptions = ['Name', 'Mass', 'Volume'];
 
+const StackSplitter = styled.div`
+  background: black;
+  padding: 6px;
+  pointer-events: all;
+  label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+`;
+
+const QuantaInput = styled.input`
+  background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+  border: 1px solid ${p => p.theme.colors.main};
+  color: white;
+  font-family: inherit;
+  font-size: 16px;
+  text-align: right;
+  width: 100%;
+`;
+
+const StackSplitterPopper = ({ children, referenceEl }) => {
+  const [popperEl, setPopperEl] = useState();
+  const { styles, attributes } = usePopper(referenceEl, popperEl, {
+    placement: 'top',
+    modifiers: [
+      {
+        name: 'flip',
+        options: {
+          fallbackPlacements: ['top-start', 'top-end', 'right', 'left'],
+        },
+      },
+    ],
+  });
+
+  return createPortal(
+    <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000, pointerEvents: 'none' }} {...attributes.popper}>
+      {children}
+    </div>,
+    document.body
+  );
+}
+
 const PlotInventory = () => {
+  const { props: actionProps } = useActionButtons();
   const { asteroidId, plotId } = useStore(s => s.asteroids.plot) || {};
   const { data: plot } = usePlot(asteroidId, plotId);
   const resources = useResourceAssets();
 
+  const [amount, setAmount] = useState();
+  const [focused, setFocused] = useState();
   const [order, setOrder] = useState(sortOptions[0]);
   const [displayVolumes, setDisplayVolumes] = useState(true);
+  const [selectedItems, setSelectedItems] = useState({});
+  const [splittingResourceId, setSplittingResourceId] = useState();
+
+  const resourceItemRefs = useRef([]);
 
   const inventory = plot?.building?.inventories ? plot?.building?.inventories[1] : null;
   const { used, usedOrReserved } = useMemo(() => {
@@ -182,7 +304,6 @@ const PlotInventory = () => {
 
   const sortedResources = useMemo(() => {
     if (!inventory?.resources) return [];
-    console.log('inventory.resources', inventory.resources);
     return Object.keys(inventory.resources).sort((a, b) => {
       if (order === 'Mass') return inventory.resources[a] * resources[a].massPerUnit > inventory.resources[b] * resources[b].massPerUnit ? -1 : 1;
       else if (order === 'Volume') return inventory.resources[a] * resources[a].volumePerUnit > inventory.resources[b] * resources[b].volumePerUnit ? -1 : 1;
@@ -190,47 +311,162 @@ const PlotInventory = () => {
     });
   }, [inventory?.resources, order]);
 
+  const isIncomingDelivery = useMemo(() => {
+    return (plot?.building?.deliveries || []).find((d) => d.status !== 'COMPLETE')
+  }, [plot])
+
+  const handleSelected = useCallback((resourceId, newTotal) => {
+    setSelectedItems((s) => {
+      const newS = { ...s };
+      if (newTotal === 0) {
+        delete newS[resourceId];
+      } else {
+        newS[resourceId] = newTotal;
+      }
+      return newS;
+    });
+  }, []);
+
+  const splitStack = useCallback((resourceId) => (e) => {
+    e.stopPropagation();
+    setSplittingResourceId(resourceId);
+    setAmount(selectedItems[resourceId] || inventory?.resources[resourceId] || 0);
+  }, [selectedItems, inventory?.resources]);
+
+  const onChangeAmount = useCallback((e) => {
+    let newValue = parseInt(e.target.value.replace(/^0+/g, '').replace(/[^0-9]/g, ''));
+    if (!(newValue > -1)) newValue = 0;
+    if (newValue > e.target.max) newValue = e.target.max;
+    setAmount(newValue);
+  }, []);
+
+  const onKeyDown = useCallback((e) => {
+    if (['Enter', 'Tab'].includes(e.key) && e.currentTarget.value) {
+      handleSelected(splittingResourceId, amount);
+      setFocused(false);
+      setSplittingResourceId();
+    }
+  }, [amount, splittingResourceId]);
+
+  const onMouseLeave = useCallback(() => {
+    if (!focused) {
+      setSplittingResourceId();
+    }
+  }, [focused]);
+
+  const onFocusAmount = useCallback((e) => {
+    if (e.type === 'focus') {
+      setFocused(true);
+    } else {
+      setFocused(false);
+      setSplittingResourceId();
+    }
+  }, []);
+
+  const trayLabel = useMemo(() => {
+    const selectedTally = Object.keys(selectedItems).length;
+    if (selectedTally > 0) {
+      const [totalMass, totalVolume] = Object.keys(selectedItems).reduce((acc, resourceId) => {
+        acc[0] += selectedItems[resourceId] * resources[resourceId].massPerUnit;
+        acc[1] += selectedItems[resourceId] * resources[resourceId].volumePerUnit;
+        return acc;
+      }, [0, 0]);
+      return `${selectedTally} Product${selectedTally === 1 ? '' : 's'}: ${formatMass(totalMass * 1e6)} | ${formatVolume(totalVolume * 1e6)}`;
+    }
+    return null;
+  }, [selectedItems]);
+
   useEffect(() => ReactTooltip.rebuild(), []);
 
   if (!inventory === 0) return null;
   return (
-    <Wrapper>
-      <InnerWrapper>
-        <div>
-          <StorageTotal utilization={usedOrReserved}>
-            <label>Used Capacity:</label>
-            <span>
-              {usedOrReserved > 0 && usedOrReserved < 0.01 ? '> ' : ''}{formatFixed(100 * usedOrReserved, 1)}%
-            </span>
-          </StorageTotal>
-          <ProgressBar progress={used} secondaryProgress={usedOrReserved} />
-        </div>
-        <Controls>
-          <label onClick={toggleVolumeDisplay}>
-            {displayVolumes ? <CheckedIcon /> : <UncheckedIcon />}
-            <span>Show Volumes</span>
-          </label>
+    <>
+      <Wrapper>
+        <InnerWrapper>
           <div>
-            <Dropdown
-              options={sortOptions}
-              onChange={(l) => setOrder(l)}
-              width="160px" />
+            <StorageTotal utilization={usedOrReserved}>
+              <label>Used Capacity:</label>
+              <span>
+                {usedOrReserved > 0 && usedOrReserved < 0.01 ? '> ' : ''}{formatFixed(100 * usedOrReserved, 1)}%
+              </span>
+            </StorageTotal>
+            <ProgressBar progress={used} secondaryProgress={usedOrReserved} />
           </div>
-        </Controls>
-        <InventoryItems>
-          {sortedResources.map((resourceId) => (
-            <ResourceThumbnail
-              key={resourceId}
-              badge={formatResourceAmount(inventory.resources[resourceId], resourceId)}
-              progress={displayVolumes
-                ? inventory.resources[resourceId] * resources[resourceId].volumePerUnit / (1E-6 * plot.building.inventories[1]?.volume)
-                : undefined}
-              resource={resources[resourceId]}
-              showTooltip={true} />
-          ))}
-        </InventoryItems>
-      </InnerWrapper>
-    </Wrapper>
+          <Controls>
+            <label onClick={toggleVolumeDisplay}>
+              {displayVolumes ? <CheckedIcon /> : <UncheckedIcon />}
+              <span>Show Volumes</span>
+            </label>
+            <div>
+              <Dropdown
+                options={sortOptions}
+                onChange={(l) => setOrder(l)}
+                width="160px" />
+            </div>
+          </Controls>
+          <InventoryItems>
+            {splittingResourceId && (
+              <StackSplitterPopper referenceEl={resourceItemRefs.current[splittingResourceId]}>
+                <StackSplitter onMouseLeave={onMouseLeave}>
+                  <label>Selected Amount ({resources[splittingResourceId].massPerUnit === 0.001 ? 'kg' : ''})</label>
+                  <QuantaInput
+                    type="number"
+                    max={inventory.resources[splittingResourceId]}
+                    min={0}
+                    onBlur={onFocusAmount}
+                    onChange={onChangeAmount}
+                    onKeyDown={onKeyDown}
+                    onFocus={onFocusAmount}
+                    step={1}
+                    value={amount} />
+                </StackSplitter>
+              </StackSplitterPopper>
+            )}
+            {sortedResources.map((resourceId) => (
+              <ThumbnailWrapper
+                key={resourceId}
+                onClick={() => handleSelected(resourceId, selectedItems[resourceId] > 0 ? 0 : inventory.resources[resourceId])}
+                selected={selectedItems[resourceId]}>
+                <StackSplitButton
+                  ref={ref => (resourceItemRefs.current[resourceId] = ref)}
+                  onClick={splitStack(resourceId)}
+                  isSplitting={splittingResourceId === resourceId}>
+                  <DotsIcon />
+                </StackSplitButton>
+                <ResourceThumbnail
+                  badge={formatResourceAmount(selectedItems[resourceId] || inventory.resources[resourceId], resourceId)}
+                  badgeColor={
+                    selectedItems[resourceId]
+                    ? (
+                      selectedItems[resourceId] === inventory.resources[resourceId]
+                      ? theme.colors.main
+                      : theme.colors.orange
+                    )
+                    : undefined
+                  }
+                  progress={displayVolumes
+                    ? inventory.resources[resourceId] * resources[resourceId].volumePerUnit / (1E-6 * inventory.volume)
+                    : undefined}
+                  resource={resources[resourceId]}
+                  showTooltip />
+              </ThumbnailWrapper>
+            ))}
+          </InventoryItems>
+        </InnerWrapper>
+      </Wrapper>
+
+      {(isIncomingDelivery || Object.keys(selectedItems).length > 0) && (
+        <Tray>
+          {trayLabel && <TrayLabel content={trayLabel} />}
+          {Object.keys(selectedItems).length > 0 && (
+            <actionButtons.SurfaceTransferOutgoing {...actionProps} preselect={{ selectedItems }} />
+          )}
+          {isIncomingDelivery && (
+            <actionButtons.SurfaceTransferIncoming {...actionProps} />
+          )}
+        </Tray>
+      )}
+    </>
   );
 };
 
