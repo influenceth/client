@@ -156,7 +156,7 @@ const AsteroidInfo = ({ onClose }) => {
             <WalletIcon />
             <label>Owner</label>
             <span>
-              <AddressLink address={asteroid.owner} chain={asteroid.chain} />
+              <AddressLink address={asteroid.owner} chain={asteroid.chain} truncate />
             </span>
           </InfoRow>
         )}
