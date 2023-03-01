@@ -95,14 +95,14 @@ const AsteroidInfo = ({ onClose }) => {
   const history = useHistory();
 
   const resourceCategories = useMemo(() => {
-    return (Asteroid.SPECTRAL_TYPES[asteroid.spectralType]?.resources || []).reduce((acc, cur) => {
+    return (Asteroid.SPECTRAL_TYPES[asteroid?.spectralType]?.resources || []).reduce((acc, cur) => {
       const category = Inventory.RESOURCES[cur]?.category;
       if (category && !acc.includes(category)) {
         return [...acc, category];
       }
       return acc;
     }, []);
-  }, []);
+  }, [asteroid?.spectralType]);
 
   const onClickDetails = useCallback(() => {
     onClose();
