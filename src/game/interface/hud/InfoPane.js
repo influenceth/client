@@ -254,7 +254,7 @@ const ActionButtonContainer = styled.div`
   align-items: flex-end;
   display: flex;
   flex-direction: row;
-  padding-top: 20px;
+  padding-top: 12px;
 `;
 
 // const LotConstructionWarning = styled.span`
@@ -616,11 +616,13 @@ const InfoPane = () => {
             </ThumbPreview>
           </ThumbWrapper>
         )}
-        <ActionButtonContainer visible={actions?.length > 0}>
-          {actions.map((ActionButton, i) => (
-            <ActionButton key={i} {...actionProps} />
-          ))}
-        </ActionButtonContainer>
+        {actions?.length > 0 && (
+          <ActionButtonContainer>
+            {actions.map((ActionButton, i) => (
+              <ActionButton key={i} {...actionProps} />
+            ))}
+          </ActionButtonContainer>
+        )}
       </ContentRow>
     </Pane>
   );
