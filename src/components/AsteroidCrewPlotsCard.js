@@ -85,7 +85,7 @@ const AsteroidCrewPlotsCard = (props) => {
     <div {...restProps} style={{ overflowY: 'auto' }}>
       {asteroid && plots && !isLoading && (
         <>
-          {plots.length === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied on lots on this asteroid yet.</div>}
+          {plots.length === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied any lots on this asteroid yet.</div>}
           {plots.length > 0 && (
             <PlotTable>
               <tbody>

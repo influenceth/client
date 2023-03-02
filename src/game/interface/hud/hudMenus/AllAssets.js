@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Address, toSize, toSpectralType } from '@influenceth/sdk';
+import { Address } from '@influenceth/sdk';
 
 import ClipCorner from '~/components/ClipCorner';
 import { MyAssetIcon } from '~/components/Icons';
@@ -16,15 +16,8 @@ const thumbnailDimension = 75;
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100%;
-`;
-
-const SectionWrapper = styled.div`
-  overflow: hidden;
-  margin-right: -12px;
-  min-height: 48px;
-  padding-right: 12px;
-  flex: 0 1 max-content;
+  justify-content: flex-start;
+  max-height: 100%;
 `;
 
 const MyAssetWrapper = styled.div`
@@ -128,33 +121,31 @@ const AllAssets = ({ onClose }) => {
 
   return (
     <Wrapper>
-      <SectionWrapper>
+      
         <HudMenuCollapsibleSection
           titleText="My Ship"
           collapsed>
-          <></>
+          
         </HudMenuCollapsibleSection>
-      </SectionWrapper>
-      <SectionWrapper>
+        
         <HudMenuCollapsibleSection titleText="Asteroids" borderless>
-          <div>
-            {(ownedAsteroids || []).map((asteroid, i) => (
-              <SelectableRow key={asteroid.i} selected={asteroidId === asteroid.i} onClick={onClick(asteroid.i)}>
-                <Thumbnail>
-                  {asteroid.owner && Address.areEqual(account, asteroid.owner) && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
-                  {rendersReady >= i && <AsteroidRendering asteroid={asteroid} onReady={onRenderReady} />}
-                  <ClipCorner dimension={10} color={majorBorderColor} />
-                </Thumbnail>
-                <Info>
-                  <label>{asteroid.customName || asteroid.baseName}</label>
-                  <div style={{ flex: 1 }}></div>
-                </Info>
-                {asteroidId === asteroid.i && <ClipCorner dimension={10} color={theme.colors.main} />}
-              </SelectableRow>
-            ))}
-          </div>
+          {(ownedAsteroids || []).map((asteroid, i) => (
+            <SelectableRow key={asteroid.i} selected={asteroidId === asteroid.i} onClick={onClick(asteroid.i)}>
+              <Thumbnail>
+                {asteroid.owner && Address.areEqual(account, asteroid.owner) && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
+                {rendersReady >= i && <AsteroidRendering asteroid={asteroid} onReady={onRenderReady} />}
+                <ClipCorner dimension={10} color={majorBorderColor} />
+              </Thumbnail>
+              <Info>
+                <label>{asteroid.customName || asteroid.baseName}</label>
+                <div style={{ flex: 1 }}></div>
+              </Info>
+              {asteroidId === asteroid.i && <ClipCorner dimension={10} color={theme.colors.main} />}
+            </SelectableRow>
+          ))}
         </HudMenuCollapsibleSection>
-      </SectionWrapper>
+        
+      
     </Wrapper>
 
   );

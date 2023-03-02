@@ -20,13 +20,8 @@ import useExtractionManager from '~/hooks/useExtractionManager';
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
-  height: calc(100% - ${trayHeight}px);
-`;
-
-const ResourceWrapper = styled.div`
-  margin-right: -12px;
-  padding-right: 12px;
-  min-height: 48px;
+  justify-content: flex-start;
+  max-height: calc(100% - ${trayHeight}px);
 `;
 
 const Circle = styled.div`
@@ -123,7 +118,7 @@ const LotResources = () => {
   const lotAbundances = useMemo(() => {
     if (!(asteroid && plot)) return [];
     // TODO: do this in worker? takes about 200ms on decent cpu
-    return Object.keys(asteroid.resources)
+    return Object.keys(asteroid?.resources || {})
       .reduce((acc, i) => {
         if (asteroid.resources[i] > 0) {
           acc.push({
@@ -239,39 +234,57 @@ const LotResources = () => {
   return (
     <>
       <Wrapper>
-        <ResourceWrapper>
           <HudMenuCollapsibleSection titleText="Lot Resources" titleLabel="Abundance">
-            <div style={{ maxHeight: '100%', overflow: 'auto' }}>
-              {showAbundances.map(({ i, abundance }) => {
-                const { name, categoryKey } = resources[i];
-                const isSelected = selected?.type === 'resource' && selected?.i === i;
-                return (
-                  <Resource key={i}
-                    category={categoryKey}
-                    onClick={onClickResource(i)}
-                    selected={isSelected}>
-                    {isSelected
-                      ? <ResourceThumbnail resource={resources[i]} size="75px" />
-                      : <Circle />}
-                    <label>{name}</label>
-                    <span>{(abundance * 100).toFixed(1)}%</span>
-                  </Resource>
-                );
-              })}
-              {abundancesTruncated && (
-                <ShowMoreRow onClick={() => setShowAllAbundances(true)}>
-                  <PlusIcon />
-                  <label>
-                    Show {lotAbundances.length - 5} more...
-                  </label>
-                </ShowMoreRow>
-              )}
+            <div style={{ height: '100%', overflow: 'hidden' }}>
+            {showAbundances.map(({ i, abundance }) => {
+              const { name, categoryKey } = resources[i];
+              const isSelected = selected?.type === 'resource' && selected?.i === i;
+              return (
+                <Resource key={i}
+                  category={categoryKey}
+                  onClick={onClickResource(i)}
+                  selected={isSelected}>
+                  {isSelected
+                    ? <ResourceThumbnail resource={resources[i]} size="75px" />
+                    : <Circle />}
+                  <label>{name}</label>
+                  <span>{(abundance * 100).toFixed(1)}%</span>
+                </Resource>
+              );
+            })}
+            {abundancesTruncated && (
+              <ShowMoreRow onClick={() => setShowAllAbundances(true)}>
+                <PlusIcon />
+                <label>
+                  Show {lotAbundances.length - 5} more...
+                </label>
+              </ShowMoreRow>
+            )}
             </div>
           </HudMenuCollapsibleSection>
-        </ResourceWrapper>
-
-        <ResourceWrapper>
+          
           <HudMenuCollapsibleSection titleText="Core Samples" titleLabel={`${sampleTally} Sample${sampleTally === 1 ? '' : 's'}`}>
+            {ownedSamples.map((sample) => {
+              const { name, categoryKey } = resources[sample.resourceId];
+              const isSelected = selected?.type === 'sample' && selected?.r === sample.resourceId && selected?.i === sample.sampleId;
+              return (
+                <Sample key={sample.i}
+                  category={categoryKey}
+                  onClick={onClickSample(sample.resourceId, sample.sampleId)}
+                  selected={isSelected}>
+                  {isSelected
+                    ? (
+                      <ResourceThumbnail
+                        resource={resources[sample.resourceId]}
+                        iconBadge={<CoreSampleIcon />}
+                        size="75px" />
+                    )
+                    : <CoreSampleIcon />}
+                  <label>{name}{isSelected ? '' : ' Deposit'}</label>
+                  <span>{getSampleYield(sample)}</span>
+                </Sample>
+              );
+            })}
             {ownedSamples.map((sample) => {
               const { name, categoryKey } = resources[sample.resourceId];
               const isSelected = selected?.type === 'sample' && selected?.r === sample.resourceId && selected?.i === sample.sampleId;
@@ -302,12 +315,9 @@ const LotResources = () => {
               </ShowMoreRow>
             )}
           </HudMenuCollapsibleSection>
-        </ResourceWrapper>
-
-        <ResourceWrapper>
+          
           <HudMenuCollapsibleSection titleText="For Sale" titleLabel={`0 Samples`} borderless collapsed>
           </HudMenuCollapsibleSection>
-        </ResourceWrapper>
       </Wrapper>
 
       {(currentSample || selectedResource || selectedSample || currentExtraction) && (

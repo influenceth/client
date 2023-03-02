@@ -21,12 +21,6 @@ const Wrapper = styled.div`
   height: 100%;
 `;
 
-const SectionWrapper = styled.div`
-  overflow: auto;
-  margin-right: -12px;
-  padding-right: 12px;
-`;
-
 const Description = styled.div`
   color: #999;
   font-size: 14px;
@@ -188,88 +182,82 @@ const LotInfo = () => {
   if (plot && !plot.building) {
     return (
       <Wrapper>
-        <SectionWrapper>
-          <HudMenuCollapsibleSection titleText="Empty Lot">
-            <Description>{buildingDescriptions[0]}</Description>
-            <ExtraDescription>
-              <label>Building Sites</label>
-              <div>Sites are active for 24 hours to allow building materials to be transferred.</div>
-            </ExtraDescription>
-          </HudMenuCollapsibleSection>
-        </SectionWrapper>
-        <SectionWrapper>
-          <HudMenuCollapsibleSection titleText="Buildings Overview" borderless>
-            <BuildingRow>
-              <label>Name</label>
-              <span>Complexity</span>
-            </BuildingRow>
-            {Object.values(Capable.TYPES).map(({ name }, capableType) => {
-              if (capableType === 0) return null;
-              return (
-                <BuildingRow
-                  key={capableType}
-                  complexity={
-                    (capableType > 0 ? 1 : 0)
-                    + (capableType > 2 ? 1 : 0)
-                    + (capableType > 5 ? 1 : 0)
-                    + (capableType > 7 ? 1 : 0)
-                    + (capableType > 8 ? 1 : 0)
-                  }
-                  onClick={() => setSelectedBuilding(capableType)}
-                  selected={selectedBuilding === capableType}>
-                  <label>{name}</label>
-                  <span>
-                    <Dot />
-                    <Dot />
-                    <Dot />
-                    <Dot />
-                    <Dot />
-                  </span>
-                </BuildingRow>
-              );
-            })}
-            {selectedBuilding && (
-              <div style={{ marginTop: 15 }}>
-                <ConstructionPlan capableType={selectedBuilding} />
-              </div>
-            )}
-          </HudMenuCollapsibleSection>
-        </SectionWrapper>
+        <HudMenuCollapsibleSection titleText="Empty Lot">
+          <Description>{buildingDescriptions[0]}</Description>
+          <ExtraDescription>
+            <label>Building Sites</label>
+            <div>Sites are active for 24 hours to allow building materials to be transferred.</div>
+          </ExtraDescription>
+        </HudMenuCollapsibleSection>
+        
+        <HudMenuCollapsibleSection titleText="Buildings Overview" borderless>
+          <BuildingRow>
+            <label>Name</label>
+            <span>Complexity</span>
+          </BuildingRow>
+          {Object.values(Capable.TYPES).map(({ name }, capableType) => {
+            if (capableType === 0) return null;
+            return (
+              <BuildingRow
+                key={capableType}
+                complexity={
+                  (capableType > 0 ? 1 : 0)
+                  + (capableType > 2 ? 1 : 0)
+                  + (capableType > 5 ? 1 : 0)
+                  + (capableType > 7 ? 1 : 0)
+                  + (capableType > 8 ? 1 : 0)
+                }
+                onClick={() => setSelectedBuilding(capableType)}
+                selected={selectedBuilding === capableType}>
+                <label>{name}</label>
+                <span>
+                  <Dot />
+                  <Dot />
+                  <Dot />
+                  <Dot />
+                  <Dot />
+                </span>
+              </BuildingRow>
+            );
+          })}
+          {selectedBuilding && (
+            <div style={{ marginTop: 15 }}>
+              <ConstructionPlan capableType={selectedBuilding} />
+            </div>
+          )}
+        </HudMenuCollapsibleSection>
       </Wrapper>
     );
   }
   return (
     <Wrapper>
-      <SectionWrapper>
-        <HudMenuCollapsibleSection titleText={plot.building.__t}>
-          {plot && !isLoading && (
-            <>
-              <Description>{buildingDescriptions[plot.building?.capableType]}</Description>
-              {!!Inventory.CAPACITIES[plot.building?.capableType][1] && (
-                <>
-                  <Rule margin="15px" />
-                  <DetailRow>
-                    <label>Maximum Storage Volume</label>
-                    <div>{Inventory.CAPACITIES[plot.building.capableType][1].volume.toLocaleString()} m<sup>3</sup></div>
-                  </DetailRow>
-                  <DetailRow>
-                    <label>Maximum Storage Mass</label>
-                    <div>{Inventory.CAPACITIES[plot.building.capableType][1].mass.toLocaleString()} t</div>
-                  </DetailRow>
-                </>
-              )}
-            </>
-          )}
-        </HudMenuCollapsibleSection>
-      </SectionWrapper>
-      <SectionWrapper>
-        <HudMenuCollapsibleSection
-          titleText="Construction"
-          collapsed={plot.building.construction.status === Construction.STATUS_OPERATIONAL}
-          borderless>
-          <ConstructionPlan capableType={plot.building.capableType} />
-        </HudMenuCollapsibleSection>
-      </SectionWrapper>
+      <HudMenuCollapsibleSection titleText={plot.building.__t}>
+        {plot && !isLoading && (
+          <>
+            <Description>{buildingDescriptions[plot.building?.capableType]}</Description>
+            {!!Inventory.CAPACITIES[plot.building?.capableType][1] && (
+              <>
+                <Rule margin="15px" />
+                <DetailRow>
+                  <label>Maximum Storage Volume</label>
+                  <div>{Inventory.CAPACITIES[plot.building.capableType][1].volume.toLocaleString()} m<sup>3</sup></div>
+                </DetailRow>
+                <DetailRow>
+                  <label>Maximum Storage Mass</label>
+                  <div>{Inventory.CAPACITIES[plot.building.capableType][1].mass.toLocaleString()} t</div>
+                </DetailRow>
+              </>
+            )}
+          </>
+        )}
+      </HudMenuCollapsibleSection>
+
+      <HudMenuCollapsibleSection
+        titleText="Construction"
+        collapsed={plot.building.construction.status === Construction.STATUS_OPERATIONAL}
+        borderless>
+        <ConstructionPlan capableType={plot.building.capableType} />
+      </HudMenuCollapsibleSection>
     </Wrapper>
   );
 };

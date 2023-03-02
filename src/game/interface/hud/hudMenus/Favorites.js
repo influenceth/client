@@ -97,28 +97,24 @@ const Favorites = ({ onClose }) => {
   }, [asteroidId]);
 
   return (
-    <Scrollable>
-      <HudMenuCollapsibleSection titleText="Asteroids">
-        <div>
-          {(watchlist || []).map(({ asteroid }) => (
-            <SelectableRow key={asteroid.i} selected={asteroidId === asteroid.i} onClick={onClick(asteroid.i)}>
-              {asteroidId === asteroid.i && (
-                <Thumbnail>
-                  {asteroid.owner && Address.areEqual(account, asteroid.owner) && <MyAssetIcon />}
-                  <AsteroidRendering asteroid={asteroid} />
-                </Thumbnail>
-              )}
-              <label>{asteroid.customName || asteroid.baseName}</label>
-              <span>
-                {toSize(asteroid.r)}{' '}
-                <b>{toSpectralType(asteroid.spectralType)}{'-type'}</b>
-              </span>
-              {asteroidId === asteroid.i && <ClipCorner dimension={10} color={theme.colors.main} />}
-            </SelectableRow>
-          ))}
-        </div>
-      </HudMenuCollapsibleSection>
-    </Scrollable>
+    <HudMenuCollapsibleSection titleText="Asteroids">
+      {(watchlist || []).map(({ asteroid }) => (
+        <SelectableRow key={asteroid.i} selected={asteroidId === asteroid.i} onClick={onClick(asteroid.i)}>
+          {asteroidId === asteroid.i && (
+            <Thumbnail>
+              {asteroid.owner && Address.areEqual(account, asteroid.owner) && <MyAssetIcon />}
+              <AsteroidRendering asteroid={asteroid} />
+            </Thumbnail>
+          )}
+          <label>{asteroid.customName || asteroid.baseName}</label>
+          <span>
+            {toSize(asteroid.r)}{' '}
+            <b>{toSpectralType(asteroid.spectralType)}{'-type'}</b>
+          </span>
+          {asteroidId === asteroid.i && <ClipCorner dimension={10} color={theme.colors.main} />}
+        </SelectableRow>
+      ))}
+    </HudMenuCollapsibleSection>
   );
 };
 

@@ -18,12 +18,6 @@ const Wrapper = styled.div`
   height: 100%;
 `;
 
-const SectionWrapper = styled.div`
-  overflow: hidden;
-  margin-right: -12px;
-  padding-right: 12px;
-`;
-
 const PlotTable = styled.table`
   border-collapse: collapse;
   width: 100%;
@@ -228,44 +222,40 @@ const AsteroidAssets = () => {
 
   return (
     <Wrapper>
-      <SectionWrapper>
-        <HudMenuCollapsibleSection
-          titleText="Buildings"
-          titleLabel={`${buildingTally.toLocaleString()} Asset${buildingTally === 1 ? '' : 's'}`}>
-          {asteroid && plots && !isLoading && (
-            <>
-              {buildingTally === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied on lots on this asteroid yet.</div>}
-              {buildingTally > 0 && Object.keys(buildingsByType).map((capableType, i) => (
-                <Fragment key={capableType}>
-                  {i > 0 && <Rule />}
-                  <PlotTable>
-                    <tbody>
-                      {buildingsByType[capableType].map((plot) => <BuildingRow key={plot.i} plot={plot} />)}
-                    </tbody>
-                  </PlotTable>
-                </Fragment>
-              ))}
-            </>
-          )}
-        </HudMenuCollapsibleSection>
-      </SectionWrapper>
-      <SectionWrapper>
-        <HudMenuCollapsibleSection
-          titleText="Ships"
-          titleLabel="0 Assets"
-          collapsed>
-          <></>
-        </HudMenuCollapsibleSection>
-      </SectionWrapper>
-      <SectionWrapper>
-        <HudMenuCollapsibleSection
-          titleText="Stationed Crewmates"
-          titleLabel="0 Assets"
-          collapsed
-          borderless>
-          <></>
-        </HudMenuCollapsibleSection>
-      </SectionWrapper>
+      <HudMenuCollapsibleSection
+        titleText="Buildings"
+        titleLabel={`${buildingTally.toLocaleString()} Asset${buildingTally === 1 ? '' : 's'}`}>
+        {asteroid && plots && !isLoading && (
+          <>
+            {buildingTally === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied any lots on this asteroid yet.</div>}
+            {buildingTally > 0 && Object.keys(buildingsByType).map((capableType, i) => (
+              <Fragment key={capableType}>
+                {i > 0 && <Rule />}
+                <PlotTable>
+                  <tbody>
+                    {buildingsByType[capableType].map((plot) => <BuildingRow key={plot.i} plot={plot} />)}
+                  </tbody>
+                </PlotTable>
+              </Fragment>
+            ))}
+          </>
+        )}
+      </HudMenuCollapsibleSection>
+      
+      <HudMenuCollapsibleSection
+        titleText="Ships"
+        titleLabel="0 Assets"
+        collapsed>
+        <></>
+      </HudMenuCollapsibleSection>
+
+      <HudMenuCollapsibleSection
+        titleText="Stationed Crewmates"
+        titleLabel="0 Assets"
+        collapsed
+        borderless>
+        <></>
+      </HudMenuCollapsibleSection>
     </Wrapper>
   );
 };
