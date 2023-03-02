@@ -50,15 +50,15 @@ const Title = styled.div`
 `;
 const Collapsible = styled.div`
   border-bottom: 1px solid transparent;
-  height: calc(100% - ${titleHeight + marginBottom}px);
+  max-height: calc(100% - ${titleHeight + marginBottom}px);
   overflow: hidden auto;
   margin-left: ${toggleWidth}px;
   margin-bottom: ${marginBottom}px;
-  transition: height 250ms ease, border-color 250ms ease, margin-bottom 250ms ease;
+  transition: max-height 250ms ease, border-color 250ms ease, margin-bottom 250ms ease;
   ${p => p.width && `width: ${p.width};`}
   ${p => p.collapsed && `
     border-color: ${p.borderless ? 'transparent' : (p.borderColor || '#444')};
-    height: 0;
+    max-height: 0;
     overflow: hidden;
     margin-bottom: 4px;
   `};

@@ -252,7 +252,8 @@ const AsteroidAssets = () => {
       <SectionWrapper>
         <HudMenuCollapsibleSection
           titleText="Ships"
-          titleLabel="0 Assets">
+          titleLabel="0 Assets"
+          collapsed>
           <></>
         </HudMenuCollapsibleSection>
       </SectionWrapper>
@@ -260,6 +261,7 @@ const AsteroidAssets = () => {
         <HudMenuCollapsibleSection
           titleText="Stationed Crewmates"
           titleLabel="0 Assets"
+          collapsed
           borderless>
           <></>
         </HudMenuCollapsibleSection>
