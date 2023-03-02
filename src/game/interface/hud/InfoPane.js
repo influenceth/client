@@ -137,7 +137,7 @@ const CloseButton = styled(IconButton)`
 
 const thumbCornerSize = 10;
 const ThumbPreview = styled.div`
-  background: #0d0d0d;
+  background: #000;
   border: 1px solid rgba(255,255,255,0.25);
   clip-path: polygon(
     0% 0%,

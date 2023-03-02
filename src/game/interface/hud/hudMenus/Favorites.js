@@ -85,7 +85,6 @@ const Favorites = ({ onClose }) => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const selectAsteroid = useStore(s => s.dispatchOriginSelected);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
-  const { data: ownedAsteroids } = useOwnedAsteroids(); // TODO: remove this
   const { watchlist: { data: watchlist }} = useWatchlist();
 
   const onClick = useCallback((i) => () => {
@@ -97,21 +96,11 @@ const Favorites = ({ onClose }) => {
     }
   }, [asteroidId]);
 
-  const fullList = useMemo(() => {
-    const favorites = [...(watchlist || []).map(w => w.asteroid)];
-    (ownedAsteroids || []).forEach((a) => {
-      if (!favorites.find((f) => f.i === a.i)) {
-        favorites.push(a);
-      }
-    });
-    return favorites;
-  }, [ownedAsteroids, watchlist]);
-
   return (
     <Scrollable>
       <HudMenuCollapsibleSection titleText="Asteroids">
         <div>
-          {fullList.map((asteroid) => (
+          {(watchlist || []).map(({ asteroid }) => (
             <SelectableRow key={asteroid.i} selected={asteroidId === asteroid.i} onClick={onClick(asteroid.i)}>
               {asteroidId === asteroid.i && (
                 <Thumbnail>
