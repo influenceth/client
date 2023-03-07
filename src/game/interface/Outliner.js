@@ -105,6 +105,7 @@ const Outliner = (props) => {
     if (origin) activateSection('selectedAsteroid');
   }, [ origin, activateSection ]);
 
+  return null;
   return (
     <MainContainer>
       <Border>

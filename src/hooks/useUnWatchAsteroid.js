@@ -14,7 +14,7 @@ const useUnWatchAsteroid = () => {
     enabled: !!token,
     onSuccess: async () => {
       queryClient.invalidateQueries('watchlist');
-      if (watchedMapped) queryClient.invalidateQueries('asteroids', 'search');
+      if (watchedMapped) queryClient.invalidateQueries('asteroids', 'list');
     }
   });
 };

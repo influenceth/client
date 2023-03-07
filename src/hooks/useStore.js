@@ -47,16 +47,13 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
         active: false,
         selected: null
       },
+      sort: ['r', 'asc'],
       zoomToPlot: null,
       owned: {
-        mapped: false,
-        filtered: false,
         highlighted: false,
         highlightColor: '#AB149E'
       },
       watched: {
-        mapped: false,
-        filtered: false,
         highlighted: false,
         highlightColor: '#AB149E'
       },
@@ -336,45 +333,49 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.asteroids.filters = filters;
     })),
 
+    dispatchSortUpdated: (sort) => set(produce(state => {
+      state.asteroids.sort = sort;
+    })),
+
     dispatchHighlightUpdated: (settings) => set(produce(state => {
       state.asteroids.highlight = settings;
     })),
 
-    dispatchOwnedAsteroidsMapped: () => set(produce(state => {
-      state.asteroids.owned.mapped = true;
-    })),
+    // dispatchOwnedAsteroidsMapped: () => set(produce(state => {
+    //   state.asteroids.owned.mapped = true;
+    // })),
 
-    dispatchOwnedAsteroidsUnmapped: () => set(produce(state => {
-      state.asteroids.owned.mapped = false;
-    })),
+    // dispatchOwnedAsteroidsUnmapped: () => set(produce(state => {
+    //   state.asteroids.owned.mapped = false;
+    // })),
 
-    dispatchOwnedAsteroidsFiltered: () => set(produce(state => {
-      state.asteroids.owned.filtered = true;
-    })),
+    // dispatchOwnedAsteroidsFiltered: () => set(produce(state => {
+    //   state.asteroids.owned.filtered = true;
+    // })),
 
-    dispatchOwnedAsteroidsUnfiltered: () => set(produce(state => {
-      state.asteroids.owned.filtered = false;
-    })),
+    // dispatchOwnedAsteroidsUnfiltered: () => set(produce(state => {
+    //   state.asteroids.owned.filtered = false;
+    // })),
 
     dispatchOwnedAsteroidColorChange: (color) => set(produce(state => {
       state.asteroids.owned.highlightColor = color;
     })),
 
-    dispatchWatchedAsteroidsMapped: () => set(produce(state => {
-      state.asteroids.watched.mapped = true;
-    })),
+    // dispatchWatchedAsteroidsMapped: () => set(produce(state => {
+    //   state.asteroids.watched.mapped = true;
+    // })),
 
-    dispatchWatchedAsteroidsUnmapped: () => set(produce(state => {
-      state.asteroids.watched.mapped = false;
-    })),
+    // dispatchWatchedAsteroidsUnmapped: () => set(produce(state => {
+    //   state.asteroids.watched.mapped = false;
+    // })),
 
-    dispatchWatchedAsteroidsFiltered: () => set(produce(state => {
-      state.asteroids.watched.filtered = true;
-    })),
+    // dispatchWatchedAsteroidsFiltered: () => set(produce(state => {
+    //   state.asteroids.watched.filtered = true;
+    // })),
 
-    dispatchWatchedAsteroidsUnfiltered: () => set(produce(state => {
-      state.asteroids.watched.filtered = false;
-    })),
+    // dispatchWatchedAsteroidsUnfiltered: () => set(produce(state => {
+    //   state.asteroids.watched.filtered = false;
+    // })),
 
     dispatchWatchedAsteroidColorChange: (color) => set(produce(state => {
       state.asteroids.watched.highlightColor = color;

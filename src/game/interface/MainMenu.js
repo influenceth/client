@@ -125,7 +125,7 @@ const MainMenu = (props) => {
   const { isMobile } = useScreenSize();
   const history = useHistory();
 
-  const { plotId } = useStore(s => s.asteroids.plot) || {};
+  const { plotId } = useStore(s => s.asteroids.plot || {});
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
@@ -136,7 +136,6 @@ const MainMenu = (props) => {
 
   const { account } = useAuth();
   const { data: crewAssignmentData } = useCrewAssignments();
-  const { totalAssignments } = crewAssignmentData || {};
 
   // TODO: genesis book deprecation vvv
   const { crew, crewMemberMap } = useCrewContext();

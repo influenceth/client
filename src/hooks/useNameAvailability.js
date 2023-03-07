@@ -31,6 +31,7 @@ const useNameAvailability = (i) => {
     try {
       if (!validateName(name, suppressAlert)) return false;
 
+      // TODO: switch this to use elasticsearch?
       const existingAsteroids = await api.getAsteroids({ name });
       if (existingAsteroids?.length > 0) {
         if (!suppressAlert) {

@@ -4,7 +4,7 @@ import useStore from "~/hooks/useStore";
 import ModelViewer from "./ModelViewer";
 
 const PlotViewer = () => {
-  const { asteroidId, plotId } = useStore(s => s.asteroids.plot) || {};
+  const { asteroidId, plotId } = useStore(s => s.asteroids.plot || {});
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
 
   const { data, isLoading } = usePlot(asteroidId, plotId);

@@ -6,6 +6,7 @@ import AvatarMenu from './hud/AvatarMenu';
 import InfoPane from './hud/InfoPane';
 import SystemControls from './outliner/SystemControls';
 import HudMenu from './hud/HudMenu';
+import SearchResultsBanner from './hud/SearchResultsBanner';
 
 const bottomMargin = 60;
 
@@ -76,6 +77,8 @@ const HUD = () => {
         <ActionItems />
         <InfoPane />
       </LeftWrapper>
+
+      <SearchResultsBanner />
 
       <HudMenu />
 

@@ -218,6 +218,19 @@ const api = {
     return response.data;
   },
 
+  searchAsteroids: async (query) => {
+    const response = await instance.post(`/asteroids/_search`, query);
+    return {
+      hits: response.data.hits.hits.map((h) => h._source),
+      total: response.data.hits.total.value
+    }
+  },
+
+  searchPlots: async (query) => {
+    const response = await instance.get(`/lots/_search`, { params: query });
+    return response.data;
+  },
+
   requestLogin: async (account) => {
     const response = await instance.get(`/v1/auth/login/${account}`);
     return response.data.message;

@@ -1,4 +1,4 @@
-import { Suspense, useContext, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useContext, useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Color } from 'three';
 import { useThrottleCallback } from '@react-hook/throttle';
 import { useThree } from '@react-three/fiber';
@@ -6,7 +6,7 @@ import gsap from 'gsap';
 
 import ClockContext from '~/contexts/ClockContext';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAsteroids from '~/hooks/useAsteroids';
+import useAsteroidSearch from '~/hooks/useAsteroidSearch';
 import useStore from '~/hooks/useStore';
 import useWebWorker from '~/hooks/useWebWorker';
 
@@ -31,7 +31,7 @@ const Asteroids = (props) => {
   
   const { processInBackground } = useWebWorker();
 
-  const { data: asteroids } = useAsteroids();
+  const { data: asteroidSearch } = useAsteroidSearch();
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
   const { coarseTime } = useContext(ClockContext);
@@ -53,6 +53,15 @@ const Asteroids = (props) => {
   const isUpdating = useRef(false);
 
   const asteroidsGeom = useRef();
+  
+  const asteroids = useMemo(() => {
+    return asteroidSearch?.hits?.length > 0 ? asteroidSearch.hits : [];
+  }, [asteroidSearch?.hits]);
+
+  useEffect(() => {
+    console.log(highlightConfig, highlighters)
+  }, []);
+
 
   // Update state when asteroids from server, origin, or destination change
   const isZoomedIn = zoomStatus === 'in';
@@ -145,7 +154,7 @@ const Asteroids = (props) => {
     const color = new Color();
 
     const newColors = mappedAsteroids.map(a => {
-      if (highlightConfig && a.hasOwnProperty('f')) return highlighters[highlightConfig.field](a.f, highlightConfig);
+      if (highlightConfig) return highlighters[highlightConfig.field](a, highlightConfig);
       if (a.owned) return color.set(ownedColor).toArray();
       if (a.watched) return color.set(watchedColor).toArray();
       return [ 0.87, 0.87, 0.87 ];

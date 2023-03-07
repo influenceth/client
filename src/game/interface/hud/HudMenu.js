@@ -41,7 +41,7 @@ import hudMenus from './hudMenus';
 import useAuth from '~/hooks/useAuth';
 
 // const background = 'rgba(0, 0, 0, 0.9)';
-const background = 'rgba(0, 14, 25, 0.9)';
+export const background = 'rgba(0, 14, 25, 0.9)';
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
 const buttonsWidth = 66;
@@ -165,7 +165,7 @@ const PanelContent = styled.div`
 
 const HudMenu = () => {
   const { account } = useAuth();
-  const { asteroidId, plotId } = useStore(s => s.asteroids.plot) || {};
+  const { asteroidId, plotId } = useStore(s => s.asteroids.plot || {});
   const openHudMenu = useStore(s => s.openHudMenu);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);

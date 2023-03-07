@@ -92,7 +92,7 @@ const InventoryItems = styled.div`
 `;
 
 const PlotInventory = ({ active }) => {
-  const { asteroidId, plotId } = useStore(s => s.asteroids.plot) || {};
+  const { asteroidId, plotId } = useStore(s => s.asteroids.plot || {});
   const { data: plot } = usePlot(asteroidId, plotId);
   const resources = useResourceAssets();
 

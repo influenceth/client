@@ -7,7 +7,7 @@ const useActionModules = () => {
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
-  const { asteroidId, plotId } = useStore(s => s.asteroids.plot) || {};
+  const { asteroidId, plotId } = useStore(s => s.asteroids.plot || {});
   const { data: plot } = usePlot(asteroidId, zoomToPlot ? plotId : null);
 
   return {

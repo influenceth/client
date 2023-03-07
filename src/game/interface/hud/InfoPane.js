@@ -370,7 +370,7 @@ const InfoPane = () => {
   const history = useHistory();
 
   const asteroidId = useStore(s => s.asteroids.origin);
-  const { plotId } = useStore(s => s.asteroids.plot) || {};
+  const { plotId } = useStore(s => s.asteroids.plot || {});
   const plotLoader = useStore(s => s.plotLoader);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);

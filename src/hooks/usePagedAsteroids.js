@@ -40,7 +40,7 @@ const usePagedAsteroids = () => {
   }, [ account, filterOwned, filterWatched, filters ]);
 
   const query = useQuery(
-    [ 'asteroids', 'search', params ],
+    [ 'asteroids', 'list', params ],
     () => api.getAsteroids(params),
     { keepPreviousData: true }
   );

@@ -23,6 +23,7 @@ const getInvalidations = (event, returnValues, linked) => {
       ],
       Asteroid_NameChanged: [
         ['asteroids', returnValues.tokenId],
+        ['asteroids', 'list'],
         ['asteroids', 'search'],
         ['events'], // (to update name in already-fetched events)
         ['watchlist']
@@ -35,6 +36,7 @@ const getInvalidations = (event, returnValues, linked) => {
       Asteroid_BonusesSet: [
         ['actionItems'],
         ['asteroids', returnValues.asteroidId],
+        ['asteroids', 'list'],
         ['asteroids', 'search'],
         ['watchlist']
       ],
@@ -42,6 +44,7 @@ const getInvalidations = (event, returnValues, linked) => {
         ['asteroids', returnValues.tokenId],
         ['asteroids', 'mintableCrew'],
         ['asteroids', 'ownedCount'],
+        ['asteroids', 'list'],
         ['asteroids', 'search'],
       ],
       Crew_CompositionChanged: [
