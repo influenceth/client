@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import Loader from 'react-spinners/RingLoader';
 
 import ClipCorner from '~/components/ClipCorner';
 import Dropdown from '~/components/DropdownV2';
+import InProgressIcon from '~/components/InProgressIcon';
 import { EccentricityIcon, InclinationIcon, OrbitalPeriodIcon, RadiusIcon } from '~/components/Icons';
 import useAsteroidSearch from '~/hooks/useAsteroidSearch';
 import useStore from '~/hooks/useStore';
@@ -42,7 +42,10 @@ const Container = styled.div`
   padding: 3px;
   pointer-events: all;
   position: relative;
-  width: 100%;
+
+  margin: 0 auto;
+  width: ${p => p.loading ? '320px' : '100%'};
+  transition: width 250ms ease;
 `;
 
 const InnerContainer = styled(Container)`
@@ -54,6 +57,7 @@ const InnerContainer = styled(Container)`
   justify-content: space-between;
   height: 45px;
   padding: 0 12px;
+  overflow: hidden;
 `;
 
 const Loading = styled.div`
@@ -61,6 +65,13 @@ const Loading = styled.div`
   color: ${p => p.theme.colors.main};
   display: flex;
   flex: 1;
+  & > label {
+    flex: 1;
+    font-size: 115%;
+    margin-right: 42px;
+    text-align: center;
+    text-transform: uppercase;
+  }
 `;
 const Showing = styled.div`
   align-items: center;
@@ -76,6 +87,10 @@ const Showing = styled.div`
     transform: rotate(45deg);
     transform-origin: center center;
     width: 8px;
+  }
+
+  & > * {
+    white-space: nowrap;
   }
 `;
 const SortDirection = styled.div`
@@ -116,7 +131,7 @@ const SearchResultsBanner = () => {
   }, [asteroidSearch, openHudMenu])
 
   const totalHits = useMemo(() => {
-    if (isLoading) return 'Searching...'
+    if (isLoading) return <>&nbsp;</>;
     if (data?.total > 2000) {
       return `${Math.floor(data.total / 1e3)}k${data.total === 250000 ? '' : '+'} Results`;
     }
@@ -141,28 +156,29 @@ const SearchResultsBanner = () => {
   return (
     <Wrapper visible={!!data}>
       <TotalHits>{totalHits}</TotalHits>
-      <Container>
+      <Container loading={isLoading}>
         <InnerContainer>
-          {data && (
+          {isLoading && (
+            <Loading>
+              <InProgressIcon height={14} />
+              <label>Searching</label>
+            </Loading>
+          )}
+          {!isLoading && data && (
             <>
-                {isLoading
-                  ? <Loading><Loader color="currentColor" size="1.4em" /></Loading>
-                  : (
-                    <Showing>
-                      Showing: {data.showing > 0 ? `1 - ${data.showing.toLocaleString()}` : 'n/a'}
-                    </Showing>
-                  )
-                }
-                <SortDirection onClick={toggleSortOrder}>
-                  {sort[1] === 'asc' ? 'Low > High' : 'High > Low'}
-                </SortDirection>
-                <SortSelection>
-                  <Dropdown
-                    initialSelection={sort[0] || 'r'}
-                    onChange={updateSortOrder}
-                    options={sortOptions}
-                    width="180px" />
-                </SortSelection>
+              <Showing>
+                Showing: {data.showing > 0 ? `1 - ${data.showing.toLocaleString()}` : 'n/a'}
+              </Showing>
+              <SortDirection onClick={toggleSortOrder}>
+                {sort[1] === 'asc' ? 'Low > High' : 'High > Low'}
+              </SortDirection>
+              <SortSelection>
+                <Dropdown
+                  initialSelection={sort[0] || 'r'}
+                  onChange={updateSortOrder}
+                  options={sortOptions}
+                  width="180px" />
+              </SortSelection>
             </>
           )}
         </InnerContainer>

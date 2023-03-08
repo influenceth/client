@@ -41,7 +41,9 @@ import hudMenus from './hudMenus';
 import useAuth from '~/hooks/useAuth';
 
 // const background = 'rgba(0, 0, 0, 0.9)';
-export const background = 'rgba(0, 14, 25, 0.9)';
+// export const background = 'rgba(0, 14, 25, 0.9)';
+export const background = 'rgba(20, 20, 20, 0.75)';
+
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
 const buttonsWidth = 66;
