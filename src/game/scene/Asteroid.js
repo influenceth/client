@@ -127,7 +127,6 @@ const Asteroid = (props) => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const selectPlot = useStore(s => s.dispatchPlotSelected);
-  const resourceMap = useStore(s => s.asteroids.resourceMap);
   const selectedPlot = useStore(s => s.asteroids.plot);
 
   const { data: asteroidData } = useAsteroid(origin);
@@ -321,8 +320,8 @@ const Asteroid = (props) => {
 
   // turn down the sun while in resource mode
   const currentLightIntensity = useMemo(() => {
-    return (resourceMap?.active && resourceMap?.selected) ? Math.min(0.175, defaultLightIntensity) : defaultLightIntensity;
-  }, [defaultLightIntensity, resourceMap]);
+    return defaultLightIntensity;
+  }, [defaultLightIntensity]);
   useEffect(() => {
     if (light.current && light.current.intensity !== currentLightIntensity) {
       gsap.timeline().to(light.current, { intensity: currentLightIntensity, ease: 'power4.out', duration: 0.5 });
@@ -581,38 +580,6 @@ const Asteroid = (props) => {
     }, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
-
-  useEffect(() => {
-    const resourceMapActive = resourceMap?.active;
-    const resourceMapId = resourceMap?.selected;
-
-    if (!geometry.current || !config?.radiusNominal || !asteroidData?.resources) return;
-    if (resourceMapActive && resourceMapId && terrainInitialized) {
-      const categoryKey = keyify(Inventory.RESOURCES[resourceMapId]?.category);
-      const color = new Color(theme.colors.resources[categoryKey]);
-      color.convertSRGBToLinear();
-
-      // Collect relevant settings for generating procedural resource map
-      const { asteroidId, resourceSeed } = asteroidData;
-      const settings = AsteroidLib.getAbundanceMapSettings(
-        asteroidId,
-        resourceSeed,
-        resourceMapId,
-        asteroidData.resources[resourceMapId]
-      );
-      geometry.current.setEmissiveParams({
-        asteroidId: asteroidId,
-        color,
-        resource: resourceMapId,
-        intensityMult: EMISSIVE_INTENSITY[categoryKey],
-        ...settings
-      });
-      forceUpdate.current = Date.now();
-    } else if (geometry.current.emissiveParams) {
-      geometry.current.setEmissiveParams();
-      forceUpdate.current = Date.now();
-    }
-  }, [resourceMap, terrainInitialized, !asteroidData?.resources]);
 
   useEffect(() => {
     if (geometry.current && terrainUpdateNeeded) {
