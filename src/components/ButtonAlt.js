@@ -80,9 +80,9 @@ const StyledButton = styled.button`
       }
     `
     : `
-      color: ${p.color ? getContrastText(p.color) : 'white'};
+      color: ${p.background === 'transparent' ? p.color : (p.color ? getContrastText(p.color) : 'white')};
       & > div {
-        background-color: ${p.color || (p.isTransaction ? '#232d64' : '#1a404f')};
+        background-color: ${p.background || p.color || (p.isTransaction ? '#232d64' : '#1a404f')};
       }
       &:active > div {
         background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main};
@@ -131,6 +131,7 @@ const loadingCss = css`
 `;
 
 const sizes = {
+  small: { font: 16, height: 32, width: 125, line: 10, borderWidth: 1 },
   medium: { font: 16, height: 32, width: 185, line: 10, borderWidth: 1 },
   large: { font: 20, height: 50, width: 250, line: 15, borderWidth: 1 },
   huge: { font: 32, height: 52, width: 275, line: 18, borderWidth: 2 }
