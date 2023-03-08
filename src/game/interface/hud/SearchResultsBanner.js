@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
+import Loader from 'react-spinners/RingLoader';
 
 import ClipCorner from '~/components/ClipCorner';
 import Dropdown from '~/components/DropdownV2';
@@ -55,6 +56,12 @@ const InnerContainer = styled(Container)`
   padding: 0 12px;
 `;
 
+const Loading = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.main};
+  display: flex;
+  flex: 1;
+`;
 const Showing = styled.div`
   align-items: center;
   color: white;
@@ -89,7 +96,7 @@ const SortSelection = styled.div`
 `;
 
 const SearchResultsBanner = () => {
-  const { data: asteroidSearch } = useAsteroidSearch();
+  const { data: asteroidSearch, isLoading } = useAsteroidSearch();
 
   const openHudMenu = useStore(s => s.openHudMenu);
   const sort = useStore(s => s.asteroids.sort || ['r', 'desc']);
@@ -109,11 +116,12 @@ const SearchResultsBanner = () => {
   }, [asteroidSearch, openHudMenu])
 
   const totalHits = useMemo(() => {
+    if (isLoading) return 'Searching...'
     if (data?.total > 2000) {
       return `${Math.floor(data.total / 1e3)}k${data.total === 250000 ? '' : '+'} Results`;
     }
     return `${(data?.total || 0).toLocaleString()} Results`
-  }, [data?.total]);
+  }, [data?.total, isLoading]);
 
   const toggleSortOrder = useCallback(() => {
     updateSort([sort[0], sort[1] === 'asc' ? 'desc' : 'asc']);
@@ -137,7 +145,14 @@ const SearchResultsBanner = () => {
         <InnerContainer>
           {data && (
             <>
-                <Showing>Showing: {data.showing > 0 ? `1 - ${data.showing.toLocaleString()}` : 0}</Showing>
+                {isLoading
+                  ? <Loading><Loader color="currentColor" size="1.4em" /></Loading>
+                  : (
+                    <Showing>
+                      Showing: {data.showing > 0 ? `1 - ${data.showing.toLocaleString()}` : 'n/a'}
+                    </Showing>
+                  )
+                }
                 <SortDirection onClick={toggleSortOrder}>
                   {sort[1] === 'asc' ? 'Low > High' : 'High > Low'}
                 </SortDirection>
