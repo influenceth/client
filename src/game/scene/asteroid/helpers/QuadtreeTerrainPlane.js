@@ -51,6 +51,20 @@ const edgeToEdgeMap = [
   [[0,'N',true], [1,'S',true], [3,'W',false],[2,'E',false]]
 ];
 
+// let taskTotal = 0;
+// let taskTally = 0;
+// setInterval(() => {
+//   if (taskTally > 0) {
+//     console.log(
+//       `avg children time (over ${taskTally}): ${Math.round(1000 * taskTotal / taskTally) / 1000}ms`,
+//     );
+//   }
+// }, 5000);
+// const debug = (start) => {
+//   taskTally++;
+//   taskTotal += performance.now() - start;
+// };
+
 class QuadtreeTerrainPlane {
   constructor({ heightSamples, localToWorld, minChunkSize, sampleResolution, side, size, worldStretch }) {
     this.localToWorld = localToWorld;
@@ -68,6 +82,7 @@ class QuadtreeTerrainPlane {
     this.root = {
       side,
       bounds: rootNode,
+      key: `${side}`,
       children: [],
       center: rootNode.getCenter(new Vector3()),
       size: rootNode.getSize(new Vector3()),
@@ -79,14 +94,14 @@ class QuadtreeTerrainPlane {
   }
 
   getChildren() {
-    const children = [];
+    const children = {};
     this._getChildren(this.root, children);
     return children;
   }
 
   _getChildren(node, target) {
     if (node.children.length === 0) {
-      target.push(node);
+      target[node.key] = node;
       return;
     }
 
@@ -96,13 +111,13 @@ class QuadtreeTerrainPlane {
   }
 
   setCameraPosition(pos) {
-    this._setCameraPosition(this.root, pos);
-    this.populateNeighbors();
+    this._setCameraPosition(this.root, pos);  // 0.120ms
+    this.populateNeighbors(); // 0.008ms
   }
 
   _setCameraPosition(child, pos) {
-    const distToChild = child.sphereCenter.distanceTo(pos);
-    if (distToChild < child.size.x * CHUNK_SPLIT_DISTANCE && child.size.x >= this.minChunkSize * 2) {
+    child.distanceToCamera = child.sphereCenter.distanceTo(pos);
+    if (child.distanceToCamera < child.size.x * CHUNK_SPLIT_DISTANCE && child.size.x >= this.minChunkSize * 2) {
       child.children = this.generateChildren(child);
 
       for (let c of child.children) {
@@ -180,7 +195,7 @@ class QuadtreeTerrainPlane {
   populateEdges() {
     Object.keys(this.edges).forEach((dir) => { this.edges[dir] = []; });
 
-    this.getChildren().forEach((child) => {
+    Object.values(this.getChildren()).forEach((child) => {
       Object.keys(child.neighbors).forEach((dir) => {
         if (!child.neighbors[dir]) {
           const useCoord = (dir === 'N' || dir === 'S') ? 'x' : 'y';
@@ -253,8 +268,9 @@ class QuadtreeTerrainPlane {
         b: new Box3(midpoint, parent.bounds.max),
         orientation: 'NE', 
       },
-    ].map(({ b }) => {
+    ].map(({ b }, i) => {
       const node = {
+        key: `${parent.key}.${i}`,
         side: this.side,
         bounds: b,
         children: [],

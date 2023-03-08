@@ -1,11 +1,6 @@
 import { useMemo } from 'react';
-import { ImageBitmapLoader } from 'three';
 
-import rampsDataUri from '~/game/scene/asteroid/helpers/_ramps.png.datauri';
-import constants from '~/lib/constants'
 import Worker from 'worker-loader!../worker'; // eslint-disable-line
-
-const { USE_DEDICATED_GPU_WORKER } = constants;
 
 let workerIds = 0;
 
@@ -59,38 +54,11 @@ class WorkerThread {
 }
 
 class WorkerThreadPool {
-  constructor(tally, initForGpuWork) {
+  constructor(tally) {
     this.workers = [...Array(tally)].map(_ => new WorkerThread());
-    if (initForGpuWork) {
-      this.available = [];
-      this.initGpuAssets(tally);  // will set available once init'd available
-    } else {
-      this.available = [...this.workers];
-    }
+    this.available = [...this.workers];
     this.busy = {};
     this.workQueue = [];
-  }
-
-  // NOTE: this helps speed up initial "on" time when using multiple gpu-focused
-  //  webworkers concurrently... it's not necessary when using a dedicated gpu
-  //  worker, but it doesn't hurt anything
-  async initGpuAssets(tally) {
-    const loader = new ImageBitmapLoader();
-    loader.setOptions({ imageOrientation: 'flipY' });
-    for(let i = 0; i < tally; i++) {
-      const rampsBitmap = await loader.loadAsync(rampsDataUri);
-      this.workers[i].postMessage({
-        topic: 'initGpuAssets',
-        data: {
-          ramps: rampsBitmap
-        }
-      }, () => {
-        this.available.push(this.workers[i]);
-        if (this.workQueue.length) this.processQueue();
-      }, [
-        rampsBitmap
-      ]);
-    }
   }
 
   // i.e. post to all workers in pool
@@ -108,8 +76,8 @@ class WorkerThreadPool {
     return this.workQueue.length > 0 || Object.keys(this.busy).length > 0;
   }
 
-  addToQueue(workItem, resolve) {
-    this.workQueue.push([workItem, resolve]);
+  addToQueue(workItem, resolve, transfer) {
+    this.workQueue.push([workItem, resolve, transfer]);
     this.processQueue();
   }
 
@@ -118,39 +86,29 @@ class WorkerThreadPool {
       const w = this.available.pop();
       this.busy[w.id] = w;
 
-      const [workItem, workResolve] = this.workQueue.shift();
+      const [workItem, workResolve, transfer] = this.workQueue.shift();
 
-      // const startTime = Date.now();
-      w.postMessage(workItem, (v) => {
-        // if (resetPending && taskTally === 20) { // TODO: remove debug
-        //   taskTotal = 0;
-        //   taskTally = 0;
-        //   resetPending = false;
-        // }
-        // taskTotal += Date.now() - startTime;
-        // taskTally++;
-        delete this.busy[w.id];
-        this.available.push(w);
-        workResolve(v);
-        this.processQueue();
-      });
+      w.postMessage(
+        workItem,
+        (v) => {
+          delete this.busy[w.id];
+          this.available.push(w);
+          if (workResolve) workResolve(v);
+          this.processQueue();
+        },
+        transfer || []
+      );
     }
   }
 }
 
 const totalWorkers = (navigator?.hardwareConcurrency || 4) - 1; // CPUs minus 1
-const dedicatedGpuWorkers = USE_DEDICATED_GPU_WORKER && totalWorkers >= 2 ? 1 : 0;
-const cpuWorkerThreadPool = new WorkerThreadPool(totalWorkers - dedicatedGpuWorkers, dedicatedGpuWorkers === 0);
-const gpuWorkerThreadPool = dedicatedGpuWorkers > 0 ? new WorkerThreadPool(dedicatedGpuWorkers, true) : null;
+const workerThreadPool = new WorkerThreadPool(totalWorkers);
 
 const useWebWorker = () => {
   return useMemo(() => ({
-    broadcast: (message) => {
-      cpuWorkerThreadPool.broadcast(message);
-      if (gpuWorkerThreadPool) gpuWorkerThreadPool.broadcast(message);
-    },
-    processInBackground: (message, callback) => cpuWorkerThreadPool.addToQueue(message, callback),
-    gpuProcessInBackground: (message, callback) => (gpuWorkerThreadPool || cpuWorkerThreadPool).addToQueue(message, callback),
+    broadcast: (message) => workerThreadPool.broadcast(message),
+    processInBackground: (message, callback, transfer) => workerThreadPool.addToQueue(message, callback, transfer),
   }), []);
 };
 

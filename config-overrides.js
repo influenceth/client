@@ -1,4 +1,4 @@
-const { addBabelPlugin, override, tap } = require('customize-cra');
+const { addBabelPlugin, override, setWebpackTarget } = require('customize-cra');
 
 // Custom loader for GLSL shaders
 const addGlslifyLoader = () => config => {
@@ -66,6 +66,7 @@ addProposalChainingInModules = () => config => {
 };
 
 module.exports = override(
+  setWebpackTarget('web'),
   addBabelPlugin([
     'babel-plugin-root-import',
     {

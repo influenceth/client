@@ -5,7 +5,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   OrthographicCamera,
-  PlaneBufferGeometry,
+  PlaneGeometry,
   RGBAFormat,
   Scene,
   ShaderMaterial,
@@ -16,7 +16,7 @@ import {
 class TextureRenderer {
   constructor() {
     this.isOffscreen = (typeof OffscreenCanvas !== 'undefined');
-    
+
     let canvas;
     if (this.isOffscreen) {
       canvas = new OffscreenCanvas(0, 0);
@@ -30,7 +30,7 @@ class TextureRenderer {
       minFilter: LinearMipMapLinearFilter,
       magFilter: LinearFilter
     });
-    this.geometry = new PlaneBufferGeometry(2, 2);
+    this.geometry = new PlaneGeometry(2, 2);
     this.material = new ShaderMaterial();
     this.plane = new Mesh(this.geometry, this.material);
     this.plane.position.z = -10;

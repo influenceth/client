@@ -27,6 +27,10 @@ const outlinerSectionDefaults = {
 };
 
 const useStore = create(persist((set, get) => ({
+    plotLoader: {
+      i: null,
+      progress: 0
+    },
     asteroids: {
       origin: null,
       zoomStatus: 'out', // out -> zooming-in -> in -> zooming-out -> out
@@ -35,6 +39,9 @@ const useStore = create(persist((set, get) => ({
       hovered: null,
       filters: {},
       highlight: null,
+      plot: null,
+      plotDestination: null,
+      zoomToPlot: null,
       owned: {
         mapped: false,
         filtered: false,
@@ -361,6 +368,19 @@ const useStore = create(persist((set, get) => ({
     dispatchPendingTransactionSettled: (txHash) => set(produce(state => {
       if (!state.pendingTransactions) state.pendingTransactions = [];
       state.pendingTransactions = state.pendingTransactions.filter((tx) => tx.txHash !== txHash);
+    })),
+
+    dispatchPlotsLoading: (i, progress = 0, simulateTarget = 0) => set(produce(state => {
+      if (simulateTarget) {
+        state.plotLoader = { i, progress: state.plotLoader.progress + (simulateTarget - state.plotLoader.progress) / 3 };
+      } else {
+        state.plotLoader = { i, progress: progress > 0.99 ? 1 : progress };
+      }
+    })),
+
+    dispatchPlotSelected: (asteroidId, plotId) => set(produce(state => {
+      state.asteroids.plot = asteroidId && plotId ? { asteroidId, plotId } : null;
+      state.asteroids.zoomToPlot = null;
     })),
 
 }), {
