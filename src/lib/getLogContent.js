@@ -206,17 +206,20 @@ const entries = {
     ),
   }),
 
-  Sale_Started: (e) => {
-    const singular = e.available === 1;
-    return {
-      content: (
-        <span>
-          An asteroid development rights sale is now open!
-          There {singular ? 'is' : 'are'} {e.available.toLocaleString()} remaining asteroid{singular ? '' : 's'} available.
-        </span>
-      ),
-    }
-  },
+  Sale_Started: (e) => ({
+    content: (
+      <span>
+        An asteroid development rights sale is now open!
+        {e.endTime
+          ? `Asteroid purchases will be available from now until ${new Date(e.endTime * 1e3).toLocaleString()}`
+          : (e.available
+              ? `There ${e.available === 1 ? 'is' : 'are'} ${e.available.toLocaleString()} remaining asteroid${e.available === 1 ? '' : 's'} available.`
+              : ''
+            )
+        }
+      </span>
+    ),
+  }),
 
   Sale_Ended: (e) => ({
     content: (

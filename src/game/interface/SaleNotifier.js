@@ -52,7 +52,8 @@ const SaleNotifier = (props) => {
       saleStarted();
       createAlert({
         type: 'Sale_Started',
-        available: endCount - soldCount
+        available: endCount - soldCount,
+        endTime: sale.saleEndTime
       });
     }
 
