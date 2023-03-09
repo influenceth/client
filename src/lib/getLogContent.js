@@ -211,9 +211,9 @@ const entries = {
       <span>
         An asteroid development rights sale is now open!
         {e.endTime
-          ? `Asteroid purchases will be available from now until ${new Date(e.endTime * 1e3).toLocaleString()}`
+          ? ` Asteroid purchases will be available from now until ${new Date(e.endTime * 1e3).toLocaleString()}`
           : (e.available
-              ? `There ${e.available === 1 ? 'is' : 'are'} ${e.available.toLocaleString()} remaining asteroid${e.available === 1 ? '' : 's'} available.`
+              ? ` There ${e.available === 1 ? 'is' : 'are'} ${e.available.toLocaleString()} remaining asteroid${e.available === 1 ? '' : 's'} available.`
               : ''
             )
         }
