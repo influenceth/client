@@ -1,19 +1,37 @@
 import { useCallback, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { Address, toRarity, toSpectralType } from '@influenceth/sdk';
 
 import OnClickLink from '~/components/OnClickLink';
 import MarketplaceLink from '~/components/MarketplaceLink';
-import { EccentricityIcon, FavoriteIcon, InclinationIcon, MyAssetIcon, RadiusIcon, ResourceIcon, ScanAsteroidIcon, SemiMajorAxisIcon, WalletIcon } from '~/components/Icons';
+import {
+  EccentricityIcon,
+  FavoriteIcon,
+  InclinationIcon,
+  MyAssetIcon,
+  RadiusIcon,
+  ResourceIcon,
+  ScanAsteroidIcon,
+  SemiMajorAxisIcon,
+  WalletIcon
+} from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useWatchlist from '~/hooks/useWatchlist';
 import useWatchAsteroid from '~/hooks/useWatchAsteroid';
 import useUnWatchAsteroid from '~/hooks/useUnWatchAsteroid';
+import { LocationLink } from './components';
 
 const FavoriteToggle = styled.span`
   cursor: ${p => p.theme.cursors.active};
-  opacity: ${p => p.favorited ? 1 : 0.4};
+  ${p => p.favorited
+    ? `
+      color: ${p.theme.colors.main};
+      opacity: 1;
+    `
+    : `
+      opacity: 0.4;
+    `
+  }
   transition: opacity 250ms ease;
   &:hover {
     opacity: 0.8;
@@ -38,6 +56,7 @@ const useColumns = () => {
     const columns = [
       {
         key: 'my',
+        align: 'center',
         icon: <MyAssetIcon />,
         selector: row => {
           if (account && row.owner && Address.areEqual(row.owner, account)) {
@@ -50,24 +69,35 @@ const useColumns = () => {
       },
       {
         key: 'favorite',
+        align: 'center',
         icon: <FavoriteIcon />,
-        selector: row => (
-          <FavoriteToggle
-            favorited={watchlistIds.includes(row.i)}
-            onClick={toggleWatchlist(row.i)}>
-            <FavoriteIcon />
-          </FavoriteToggle>
-        ),
+        selector: row => {
+          const isFavorited = watchlistIds.includes(row.i);
+          return (
+            <FavoriteToggle
+              data-for="global"
+              data-tip={isFavorited ? 'Favorited' : 'Add to Favorites'}
+              data-place="left"
+              favorited={isFavorited}
+              onClick={toggleWatchlist(row.i)}>
+              <FavoriteIcon />
+            </FavoriteToggle>
+          );
+        },
         bodyStyle: { fontSize: '24px' },
         requireLogin: true
       },
       {
         key: 'name',
-        align: 'left',
         label: 'Name',
         // TODO: make sortable
         // sortField: 'baseName',
-        selector: row => <Link to={`/asteroids/${row.i}`}>{row.customName || row.baseName}</Link>,
+        selector: row => (
+          <>
+            <LocationLink asteroidId={row.i} />
+            <span>{row.customName || row.baseName}</span>
+          </>
+        ),
       },
       {
         key: 'owner',

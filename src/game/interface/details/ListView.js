@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
+import ReactTooltip from 'react-tooltip';
 
 import usePagedAsteroids from '~/hooks/usePagedAsteroids';
 import DataTable from '~/components/DataTable';
@@ -128,6 +129,8 @@ const ListView = ({ assetType, ...props }) => {
   useEffect(() => {
     if (query?.data?.length === 0) setPage(1);
   }, [ query?.data, setPage ]);
+
+  useEffect(() => ReactTooltip.rebuild(), [query?.data?.hits]);
 
   return (
     <Details fullWidth title={title} contentProps={{ hasFooter: true }}>

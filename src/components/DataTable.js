@@ -21,17 +21,17 @@ const DataTable = styled.table.attrs({
     color: #AAA;
     & > div {
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       display: flex;
       height: 100%;
-      padding: 0 24px;
+      padding: 0 16px;
       position: relative;
       white-space: nowrap;
       width: 100%;
     }
   }
   td {
-    font-size: 14px;
+    font-size: 15px;
   }
 `;
 const DataTableHead = styled.thead``;
@@ -46,11 +46,11 @@ const DataTableRow = styled.tr`
 const SortIcon = styled.span`
   font-size: 14px;
   position: absolute;
-  left: 8px;
+  right: 6px;
   transition: opacity 250ms ease, transform 250ms ease;
 `;
 const DataTableHeadCell = styled.th`
-  height: 44px;
+  height: 40px;
   position: sticky;
   top: 0;
   z-index: 1;
@@ -103,7 +103,7 @@ const DataTableHeadCell = styled.th`
 `;
 const DataTableCell = styled.td`
   border-bottom: 1px solid #171717;
-  height: 44px;
+  height: 40px;
   ${p => p.sorted && `
     color: white !important;
     & > div {
@@ -153,8 +153,7 @@ const DataTableComponent = ({
                   }
                 </SortIcon>
               )}
-              {c.icon}
-              {c.label}
+              {c.label ? c.label : c.icon}
             </div>
           </DataTableHeadCell>
         ))}
