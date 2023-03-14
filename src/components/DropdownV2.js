@@ -138,9 +138,7 @@ const Dropdown = ({
   const [open, setOpen] = useState(false);
   const [popperEl, setPopperEl] = useState();
   const [referenceEl, setReferenceEl] = useState();
-  const [selected, setSelected] = useState(
-    (options.find((o) => o[valueKey] === initialSelection)) || options[0]
-  );
+  const [selected, setSelected] = useState();
 
   const { styles, attributes } = usePopper(referenceEl, popperEl, {
     placement: 'bottom-start',
@@ -179,16 +177,19 @@ const Dropdown = ({
     }, 500);
   }, []);
 
-  // useEffect(() => {
-  //   const i = initialSelection || 0;
-  //   setSelectedIndex(i);
-  //   setSelectedLabel(isObjArr ? options[i][labelKey] : options[i]);
-  // }, [initialSelection, options]); // eslint-disable-line react-hooks/exhaustive-deps
-
+  // if initialSelection changes, assume that should be my new value
+  // (but don't call onChange since obviously changed from elsewhere)
+  useEffect(() => {
+    setSelected(
+      (initialSelection && options.find((o) => o[valueKey] === initialSelection)) || options[0]
+    );
+  }, [initialSelection]);
+  
   useEffect(() => {
     setOpen(false);
   }, [disabled]);
 
+  if (!selected) return null;
   return (
     <Wrapper
       onMouseEnter={handleMouseEnter}

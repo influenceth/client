@@ -1,44 +1,25 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import styled, { css, keyframes } from 'styled-components';
-import PuffLoader from 'react-spinners/PuffLoader';
-import { toRarity, toSize, toSpectralType, Asteroid as AsteroidLib, Capable, Construction, CoreSample, Inventory } from '@influenceth/sdk';
-import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import styled from 'styled-components';
+import { Construction, Inventory } from '@influenceth/sdk';
 import ReactTooltip from 'react-tooltip';
 
 import IconButton from '~/components/IconButton';
 import {
   ChatIcon,
   CloseIcon,
-  CoreSampleIcon,
   FavoriteIcon,
-  ForwardIcon,
   InfoIcon,
   InventoryIcon,
+  ListIcon,
   MyAssetsIcon,
-  PopoutIcon,
   ResourceIcon,
   SearchIcon,
-  WarningOutlineIcon,
 } from '~/components/Icons';
-import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
-import { useBuildingAssets } from '~/hooks/useAssets';
-import useAsteroid from '~/hooks/useAsteroid';
-import useConstructionManager from '~/hooks/useConstructionManager';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
-import useCrew from '~/hooks/useCrew';
-import useCrewContext from '~/hooks/useCrewContext';
-import { formatFixed, keyify } from '~/lib/utils';
-import { hexToRGB } from '~/theme';
-import CoreSampleMouseover from './mouseovers/CoreSampleMouseover';
-import ClipCorner from '~/components/ClipCorner';
-import CrewCard from '~/components/CrewCard';
-import CrewCardFramed from '~/components/CrewCardFramed';
-import useActionButtons from './useActionButtons';
-import InProgressIcon from '~/components/InProgressIcon';
 import hudMenus from './hudMenus';
 import useAuth from '~/hooks/useAuth';
+import { useHistory } from 'react-router-dom';
 
 // const background = 'rgba(0, 0, 0, 0.9)';
 // export const background = 'rgba(0, 14, 25, 0.9)';
@@ -166,13 +147,15 @@ const PanelContent = styled.div`
 `;
 
 const HudMenu = () => {
+  const history = useHistory();
   const { account } = useAuth();
-  const { asteroidId, plotId } = useStore(s => s.asteroids.plot || {});
+  const asteroidId = useStore(s => s.asteroids.origin);
+  const { plotAsteroidId, plotId } = useStore(s => s.asteroids.plot || {});
   const openHudMenu = useStore(s => s.openHudMenu);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
 
-  const { data: plot } = usePlot(asteroidId, plotId);
+  const { data: plot } = usePlot(plotAsteroidId, plotId);
 
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   
@@ -209,7 +192,12 @@ const HudMenu = () => {
         {
           label: 'Asteroid Info',
           icon: <InfoIcon />,
-          Component: hudMenus.AsteroidInfo
+          Component: hudMenus.AsteroidInfo,
+          onDetailClick: () => {
+            if (asteroidId) {
+              history.push(`/asteroids/${asteroidId}`);
+            }
+          }
         },
         {
           label: 'My Assets',
@@ -226,7 +214,10 @@ const HudMenu = () => {
         {
           label: 'System Search',
           icon: <SearchIcon />,
-          Component: hudMenus.SearchAsteroids
+          Component: hudMenus.SearchAsteroids,
+          onDetailClick: () => {
+            history.push(`/asteroids`);
+          }
         }
       ];
     } else if (zoomStatus === 'in' && !zoomToPlot) {
@@ -281,9 +272,9 @@ const HudMenu = () => {
       return b;
     }
     return [];
-  }, [zoomStatus, zoomToPlot, plot]);
+  }, [asteroidId, plotId, zoomStatus, zoomToPlot, plot]);
 
-  const { label, Component } = useMemo(() => {
+  const { label, onDetailClick, Component } = useMemo(() => {
     const [category, label] = (openHudMenu || '').split('.');
     return buttons.find((b) => b.label === label) || {};
   }, [openHudMenu]);
@@ -315,6 +306,7 @@ const HudMenu = () => {
         <PanelInner>
           <PanelTitle>
             <span style={{ flex: 1 }}>{label}</span>
+            <IconButton onClick={onDetailClick}><ListIcon /></IconButton>
             <IconButton onClick={() => handleButtonClick()}><CloseIcon /></IconButton>
           </PanelTitle>
           <PanelContent>

@@ -8,6 +8,7 @@ import { EccentricityIcon, InclinationIcon, OrbitalPeriodIcon, RadiusIcon } from
 import useAsteroidSearch from '~/hooks/useAsteroidSearch';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
+import useAsteroidColumns from '../details/listViews/asteroids';
 import { background } from './HudMenu';
 
 const cornerSize = 15;
@@ -18,6 +19,9 @@ const Wrapper = styled.div`
   width: 560px;
   transform: ${p => p.visible ? 'translateY(20px)' : 'translateY(-80px)'};
   transition: transform 250ms ease;
+  & > * {
+    white-space: nowrap;
+  }
 `;
 
 const TotalHits = styled.div`
@@ -110,11 +114,14 @@ const SortSelection = styled.div`
   justify-content: flex-end;
 `;
 
+
+
 const SearchResultsBanner = () => {
   const { data: asteroidSearch, isLoading } = useAsteroidSearch();
+  const columns = useAsteroidColumns();
 
   const openHudMenu = useStore(s => s.openHudMenu);
-  const sort = useStore(s => s.asteroids.sort || ['r', 'desc']);
+  const sort = useStore(s => s.asteroids.sort);
   const updateSort = useStore(s => s.dispatchSortUpdated);
   
   const data = useMemo(() => {
@@ -143,15 +150,14 @@ const SearchResultsBanner = () => {
   }, [sort]);
 
   const updateSortOrder = useCallback((option) => {
-    updateSort([option.value || 'r', sort[1] || 'desc']);
+    updateSort([option.value || 'r', 'desc']);
   }, [sort]);
 
-  const sortOptions = useMemo(() => ([
-    { icon: <RadiusIcon />, label: 'Diameter', value: 'r' },
-    { icon: <OrbitalPeriodIcon />, label: 'Orbital Period', value: 'orbital.a' },
-    { icon: <InclinationIcon />, label: 'Inclination', value: 'orbital.i' },
-    { icon: <EccentricityIcon />, label: 'Eccentricity', value: 'orbital.e' },
-  ]), []);
+  const sortOptions = useMemo(() => {
+    return columns
+      .filter((c) => c.sortField)
+      .map((c) => ({ label: c.label, value: c.sortField, icon: c.icon }));
+  }, [columns]);
 
   return (
     <Wrapper visible={!!data}>
@@ -174,7 +180,7 @@ const SearchResultsBanner = () => {
               </SortDirection>
               <SortSelection>
                 <Dropdown
-                  initialSelection={sort[0] || 'r'}
+                  initialSelection={sort[0]}
                   onChange={updateSortOrder}
                   options={sortOptions}
                   width="180px" />

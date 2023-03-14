@@ -15,6 +15,7 @@ import MainMenu from './interface/MainMenu';
 import ModelViewer from './interface/ModelViewer';
 import Outliner from './interface/Outliner';
 import SaleNotifier from './interface/SaleNotifier';
+import ListView from './interface/details/ListView';
 import AsteroidDetails from './interface/details/AsteroidDetails';
 import AsteroidsTable from './interface/details/AsteroidsTable';
 import CrewAssignment from './interface/details/crewAssignments/Assignment';
@@ -114,7 +115,7 @@ const Interface = () => {
         <MainContainer>
           <Switch>
             <Route exact path="/asteroids">
-              <AsteroidsTable />
+              <ListView assetType="asteroids" />
             </Route>
             <Route path="/building-viewer/:model?">
               <ModelViewer assetType="Building" />

@@ -47,7 +47,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
         active: false,
         selected: null
       },
-      sort: ['r', 'asc'],
+      sort: ['r', 'desc'],
       zoomToPlot: null,
       owned: {
         highlighted: false,

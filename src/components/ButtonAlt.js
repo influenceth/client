@@ -14,9 +14,16 @@ const InnerContainer = styled.div`
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(100% - ${p => p.sizeParams.line - 3.5}px),
-    calc(100% - ${p => p.sizeParams.line - 3.5}px) 100%,
-    0 100%
+    ${p => p.flip ? `
+      100% 100%,
+      ${p.sizeParams.line - 3.5}px 100%,
+      0 calc(100% - ${p.sizeParams.line - 3.5}px)
+    `
+    : `
+      100% calc(100% - ${p.sizeParams.line - 3.5}px),
+      calc(100% - ${p.sizeParams.line - 3.5}px) 100%,
+      0 100%
+    `}
   );
   display: flex;
   justify-content: center;
@@ -43,9 +50,16 @@ const StyledButton = styled.button`
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(100% - ${p => p.sizeParams.line - 0.5}px),
-    calc(100% - ${p => p.sizeParams.line - 0.5}px) 100%,
-    0 100%
+    ${p => p.flip ? `
+      100% 100%,
+      ${p.sizeParams.line - 0.5}px 100%,
+      0 calc(100% - ${p.sizeParams.line - 0.5}px)
+    `
+    : `
+      100% calc(100% - ${p.sizeParams.line - 0.5}px),
+      calc(100% - ${p.sizeParams.line - 0.5}px) 100%,
+      0 100%
+    `}
   );
   display: flex;
   font-family: 'Jura', sans-serif;
@@ -69,11 +83,11 @@ const StyledButton = styled.button`
 
   ${p => p.disabled
     ? `
-      color: rgba(255, 255, 255, 0.7);
+      color: rgba(255, 255, 255, 0.5);
       cursor: ${p.theme.cursors.default};
       border-color: ${p.theme.colors.disabledText};
       & > div {
-        background-color: ${p.disabledColor || '#222'};
+        background-color: ${p.disabledColor || (p.background === 'transparent' ? 'transparent' : '#222')};
       }
       & > svg {
         stroke: ${p.theme.colors.disabledText};
@@ -99,10 +113,19 @@ const Corner = styled.svg`
   height: ${p => p.sizeParams.line - (p.sizeParams.borderWidth === 1 ? 0 : p.sizeParams.borderWidth - 1)}px;
   margin-right: 0;
   position: absolute;
-  right: -1px;
   stroke: ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)};
   stroke-width: ${p => p.sizeParams.borderWidth + 0.5}px;
   width: ${p => p.sizeParams.line - (p.sizeParams.borderWidth === 1 ? 0 : p.sizeParams.borderWidth - 1)}px;
+
+  ${p => p.flip
+    ? `
+      left: -1px;
+      transform: scaleX(-1);
+    `
+    : `
+      right: -1px;
+    `
+  }
 `;
 
 const StyledBadge = styled(Badge)`
@@ -131,6 +154,7 @@ const loadingCss = css`
 `;
 
 const sizes = {
+  icon: { font: 25, height: 32, width: 85, line: 10, borderWidth: 1 },
   small: { font: 16, height: 32, width: 125, line: 10, borderWidth: 1 },
   medium: { font: 16, height: 32, width: 185, line: 10, borderWidth: 1 },
   large: { font: 20, height: 50, width: 250, line: 15, borderWidth: 1 },
@@ -165,7 +189,7 @@ const StandardButton = (props) => {
       data-place={dataPlace || "right"}
       sizeParams={sizeParams}
       {...restProps}>
-      <InnerContainer sizeParams={sizeParams}>
+      <InnerContainer flip={restProps.flip} sizeParams={sizeParams}>
         {loading && (
           <BarLoader
             color={props.color
@@ -179,6 +203,7 @@ const StandardButton = (props) => {
       </InnerContainer>
       <Corner
         color={props.color}
+        flip={restProps.flip}
         isTransaction={props.isTransaction}
         sizeParams={sizeParams}
         viewBox={`0 0 ${sizeParams.line} ${sizeParams.line}`}

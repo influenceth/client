@@ -2,13 +2,13 @@ import styled from 'styled-components';
 
 const Corner = styled.svg`
   bottom: -1px;
-  height: ${p => p.dimension}px;
+  height: ${p => p.dimension}px !important;
   margin-right: 0;
   position: absolute;
   ${p => p.flip ? `left: -1px;` : `right: -1px;`}
   stroke: ${p => p.color || 'currentColor'};
   stroke-width: 2px;
-  width: ${p => p.dimension}px;
+  width: ${p => p.dimension}px !important;
 `;
 
 const ClipCorner = ({ color, dimension, flip }) => (

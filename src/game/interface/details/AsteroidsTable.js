@@ -12,6 +12,7 @@ import MarketplaceLink from '~/components/MarketplaceLink';
 
 const columns = [
   {
+    align: 'left',
     name: 'Name',
     selector: row => row.name,
     sortable: false,
@@ -77,31 +78,6 @@ const columns = [
     format: row => `${(row.orbital.i * 180 / Math.PI).toLocaleString()}°`
   }
 ];
-
-// Create custom theme based on primary theme for DataTable
-createTheme('influence', {
-  text: {
-    primary: theme.colors.mainText,
-    secondary: theme.colors.secondaryText,
-  },
-  background: {
-    default: 'transparent'
-  },
-  divider: {
-    default: theme.colors.contentBorder,
-  },
-  button: {
-    default: theme.colors.main,
-    disabled: theme.colors.disabledText,
-  },
-  highlightOnHover: {
-    default: 'rgba(255, 255, 255, 0.15)',
-    text: theme.colors.main,
-  },
-  sortFocus: {
-    default: 'white',
-  }
-});
 
 const styleOverrides = {
   headCells: {

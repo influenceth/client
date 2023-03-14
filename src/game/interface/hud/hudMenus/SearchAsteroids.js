@@ -27,7 +27,7 @@ const FilterTally = styled.div`
   }
 `;
 
-const SearchAsteroids = () => {
+const SearchAsteroids = ({ alwaysTray }) => {
   const filters = useStore(s => s.asteroids.filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated);
 
@@ -40,9 +40,10 @@ const SearchAsteroids = () => {
   }, []);
 
   const activeFilters = useMemo(() => Object.values(filters).filter((v) => v !== undefined).length, [filters]);
+  const hasTray = alwaysTray || activeFilters > 0;
   return (
     <>
-      <Scrollable hasTray={activeFilters > 0}>
+      <Scrollable hasTray={hasTray}>
         <OwnershipFilter filters={filters} onChange={onFiltersChange} />
         <RadiusFilter filters={filters} onChange={onFiltersChange} />
         <SpectralTypeFilter filters={filters} onChange={onFiltersChange} />
@@ -53,15 +54,19 @@ const SearchAsteroids = () => {
         <div style={{ height: 20 }} />
       </Scrollable>
 
-      {activeFilters > 0 && (
+      {hasTray && (
         <Tray>
-          <Button onClick={onClear} size="small" background="transparent" color={theme.colors.main}>
-            <CloseIcon /> Clear
-          </Button>
-          <FilterTally>
-            <FilterIcon />
-            {activeFilters} Active Filter{activeFilters === 1 ? '' : 's'}
-          </FilterTally>
+          {activeFilters > 0 && (
+            <>
+              <Button onClick={onClear} size="small" background="transparent" color={theme.colors.main}>
+                <CloseIcon /> Clear
+              </Button>
+              <FilterTally>
+                <FilterIcon />
+                {activeFilters} Active Filter{activeFilters === 1 ? '' : 's'}
+              </FilterTally>
+            </>
+          )}
         </Tray>
       )}
     </>

@@ -6,10 +6,9 @@ import esb from 'elastic-builder';
 import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
 
-const useAsteroidSearch = () => {
+const useAsteroidSearch = ({ from = 0, size = 2000 } = {}) => {
   const filters = useStore(s => s.asteroids.filters);
   const sort = useStore(s => s.asteroids.sort);
-  const highlight = useStore(s => s.asteroids.highlight);
   const [ query, setQuery ] = useThrottle({}, 2, true);
 
   useEffect(() => {
@@ -66,11 +65,12 @@ const useAsteroidSearch = () => {
       esb.requestBodySearch()
         .query(queryBuilder)
         .sort(esb.sort(...(sort ? sort : ['r', 'desc'])))
-        .size(2000)
+        .from(from)
+        .size(size)
         .trackTotalHits(true)
         .toJSON()
     );
-  }, [ filters, sort ]);
+  }, [ filters, from, size, sort ]);
 
   return useQuery(
     [ 'asteroids', 'search', query ],
