@@ -15,13 +15,13 @@ export const Scrollable = styled.div`
   height: ${p => p.hasTray ? `calc(100% - ${trayHeight}px)` : '100%'};
   overflow-x: hidden;
   overflow-y: auto;
-  padding-right: 8px;
+  padding-right: 15px;
   margin-right: -12px;
 `;
 
 export const Tray = styled.div`
   align-items: center;
-  border-top: 1px solid ${majorBorderColor};
+  ${p => !p.borderless && `border-top: 1px solid ${majorBorderColor};`}
   display: flex;
   flex-direction: row;
   height: ${trayHeight}px;

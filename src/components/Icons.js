@@ -1,5 +1,5 @@
 import { AiFillBug, AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/ai';
-import { BsFillPersonFill, BsCheckCircle, BsPieChartFill, BsStopwatch, BsThreeDots } from 'react-icons/bs';
+import { BsFillPersonFill, BsCheckCircle, BsPieChartFill, BsSliders, BsStopwatch, BsThreeDots } from 'react-icons/bs';
 import { FaCaretDown, FaCaretUp, FaCopy, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
 import { FiCheckSquare, FiExternalLink, FiMenu, FiSquare } from 'react-icons/fi';
 import { HiClock, HiCog, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
@@ -174,6 +174,7 @@ export {
   BsCheckCircle as CheckCircleIcon,
   BsFillPersonFill as CrewMemberIcon,
   BsPieChartFill as CompositionIcon,
+  BsSliders as SlidersIcon,
   BsStopwatch as TimerIcon,
   BsThreeDots as DotsIcon,
   FaCopy as CopyIcon,

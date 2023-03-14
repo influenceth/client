@@ -77,12 +77,12 @@ const Button = styled.button`
   `}
 
   ${p => !p.disabled && `
-    &:hover {
+    ${!p.isActive ? `&:hover {` : ''}
       border-color: ${p.theme.colors.main};
       ${ButtonClipCorner} {
         opacity: 1;
       }
-    }
+    ${!p.isActive ? `}` : ''}
   `}
 `;
 const Options = styled.div`

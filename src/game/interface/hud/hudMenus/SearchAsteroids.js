@@ -17,6 +17,7 @@ import OwnershipFilter from './filters/OwnershipFilter';
 const FilterTally = styled.div`
   align-items: center;
   color: ${p => p.theme.colors.main};
+  ${p => p.clickable && `cursor: ${p.theme.cursors.active};`}
   display: flex;
   flex-direction: row;
   font-size: 90%;
@@ -27,7 +28,37 @@ const FilterTally = styled.div`
   }
 `;
 
-const SearchAsteroids = ({ alwaysTray }) => {
+export const SearchAsteroidTray = (props) => {
+  const filters = useStore(s => s.asteroids.filters);
+  const updateFilters = useStore(s => s.dispatchFiltersUpdated);
+
+  const onClear = useCallback(() => {
+    updateFilters({});
+  }, []);
+
+  const onClickFilters = useCallback((e) => {
+    if (props.onClickFilters) props.onClickFilters(e);
+  }, [props.onClickFilters]);
+
+  const activeFilters = useMemo(() => Object.values(filters).filter((v) => v !== undefined).length, [filters]);
+  return (
+    <Tray {...props}>
+      {activeFilters > 0 && (
+        <>
+          <Button onClick={onClear} size="small" background="transparent" color={theme.colors.main}>
+            <CloseIcon /> Clear
+          </Button>
+          <FilterTally clickable={!!props.onClickFilters} onClick={onClickFilters}>
+            <FilterIcon />
+            {activeFilters} Active Filter{activeFilters === 1 ? '' : 's'}
+          </FilterTally>
+        </>
+      )}
+    </Tray>
+  );
+}
+
+const SearchAsteroids = ({ hideTray }) => {
   const filters = useStore(s => s.asteroids.filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated);
 
@@ -35,12 +66,8 @@ const SearchAsteroids = ({ alwaysTray }) => {
     updateFilters({ ...(filters || {}), ...update });
   }, [filters, updateFilters]);
 
-  const onClear = useCallback(() => {
-    updateFilters({});
-  }, []);
-
   const activeFilters = useMemo(() => Object.values(filters).filter((v) => v !== undefined).length, [filters]);
-  const hasTray = alwaysTray || activeFilters > 0;
+  const hasTray = !hideTray && activeFilters > 0;
   return (
     <>
       <Scrollable hasTray={hasTray}>
@@ -54,21 +81,7 @@ const SearchAsteroids = ({ alwaysTray }) => {
         <div style={{ height: 20 }} />
       </Scrollable>
 
-      {hasTray && (
-        <Tray>
-          {activeFilters > 0 && (
-            <>
-              <Button onClick={onClear} size="small" background="transparent" color={theme.colors.main}>
-                <CloseIcon /> Clear
-              </Button>
-              <FilterTally>
-                <FilterIcon />
-                {activeFilters} Active Filter{activeFilters === 1 ? '' : 's'}
-              </FilterTally>
-            </>
-          )}
-        </Tray>
-      )}
+      {hasTray && <SearchAsteroidTray />}
     </>
   );
 };

@@ -7,18 +7,36 @@ import DataTable from '~/components/DataTable';
 import Details, { borderColor } from '~/components/DetailsV2';
 import Pagination from '~/components/Pagination';
 import listConfigs from './listViews';
-import SearchAsteroids from '../hud/hudMenus/SearchAsteroids';
+import SearchAsteroids, { SearchAsteroidTray } from '../hud/hudMenus/SearchAsteroids';
 import { trayHeight } from '../hud/hudMenus/components';
 import InProgressIcon from '~/components/InProgressIcon';
+import { ScanAsteroidIcon, SlidersIcon } from '~/components/Icons';
+import Button from '~/components/ButtonAlt';
+import Dropdown from '~/components/DropdownV2';
 
 const footerMargin = 12;
+const filterWidth = 344;
 
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100% - 1px);
+  padding-top: 15px;
 `;
-const UpperWrapper = styled.div`
+const Controls = styled.div`
+  display: flex;
+  flex-direction: row;
+  height: 44px;
+  width: 100%;
+`;
+const LeftControls = styled.div`
+  display: flex;
+  padding-left: 10px;
+  width: 344px;
+  border-right: 1px solid ${p => p.filtersOpen ? borderColor : 'transparent'};
+  transition: border-color 250ms ease;
+`;
+const MainWrapper = styled.div`
   display: flex;
   flex: 1;
   flex-direction: row;
@@ -26,24 +44,37 @@ const UpperWrapper = styled.div`
   margin-bottom: ${footerMargin}px;
 `;
 const FilterContainer = styled.div`
-  height: calc(100% + ${trayHeight + footerMargin}px);
-  padding-right: 12px;
-  width: 360px;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  transition: margin 250ms ease, width 250ms ease;
+
+  ${p => p.open
+    ? `
+      border-right: 1px solid ${borderColor};
+      margin-right: 16px;
+      width: ${filterWidth}px;
+    `
+    : `
+      border-right: 1px solid transparent;
+      margin-right: 0;
+      width: 0;
+    `
+  }
 
   & > div:last-child {
     border-top: 0;
   }
 `;
+const InnerFilterContainer = styled.div`
+  height: 100%;
+  overflow: hidden;
+  width: ${filterWidth - 16}px;
+`;
 const TableContainer = styled.div`
   flex: 1;
   height: 100%;
   overflow-x: auto;
-`;
-const VR = styled.div`
-  border-left: 1px solid ${borderColor};
-  margin-left: 12px;
-  height: 100%;
-  padding-left: 24px;
 `;
 const Tray = styled.div`
   align-items: center;
@@ -95,11 +126,18 @@ const Counts = styled.div`
 const assetTypes = {
   asteroids: {
     keyField: 'i',
+    icon: <ScanAsteroidIcon />,
     title: 'Asteroids',
     useColumns: listConfigs.asteroids,
     useHook: usePagedAsteroids,
   }
 }
+
+const assetsAsOptions = Object.keys(assetTypes).map((key) => ({
+  value: key,
+  label: assetTypes[key].title,
+  icon: assetTypes[key].icon
+}));
 
 const ListView = ({ assetType, ...props }) => {
   const { keyField, title, useColumns, useHook } = assetTypes[assetType];
@@ -107,6 +145,16 @@ const ListView = ({ assetType, ...props }) => {
   const [sortField, sortDirection] = sort;
 
   const columns = useColumns();
+
+  const [filtersOpen, setFiltersOpen] = useState();
+
+  const onToggleFilters = useCallback(() => {
+    setFiltersOpen((o) => !o);
+  }, []);
+  
+  const onClickFilters = useCallback(() => {
+    setFiltersOpen(true);
+  }, []);
 
   const handleSort = useCallback((field) => () => {
     if (!field) return;
@@ -135,11 +183,34 @@ const ListView = ({ assetType, ...props }) => {
   return (
     <Details fullWidth title={title} contentProps={{ hasFooter: true }}>
       <Wrapper>
-        <UpperWrapper>
-          <FilterContainer>
-            <SearchAsteroids alwaysTray />
+        <Controls>
+          <LeftControls filtersOpen={filtersOpen}>
+            <Dropdown
+              initialSelection={assetsAsOptions[0]}
+              isActive
+              onChange={() => {}}
+              options={assetsAsOptions}
+              width="280px" />
+            <div style={{ marginLeft: 6 }}>
+              <Button
+                data-for="global"
+                data-place="right"
+                data-tip={filtersOpen ? 'Hide Filters' : 'Show Filters'}
+                color={filtersOpen ? 'transparent' : undefined}
+                onClick={onToggleFilters}
+                size="icon">
+                <SlidersIcon />
+              </Button>
+            </div>
+          </LeftControls>
+        </Controls>
+
+        <MainWrapper>
+          <FilterContainer open={filtersOpen}>
+            <InnerFilterContainer>
+              <SearchAsteroids hideTray />
+            </InnerFilterContainer>
           </FilterContainer>
-          <VR />
           <TableContainer>
             <DataTable
               columns={columns}
@@ -150,9 +221,11 @@ const ListView = ({ assetType, ...props }) => {
               sortField={sort[0]}
             />
           </TableContainer>
-        </UpperWrapper>
+        </MainWrapper>
         <Tray>
-          <div />
+          <div>
+            <SearchAsteroidTray borderless onClickFilters={onClickFilters} />
+          </div>
           {query?.isLoading
             ? (
               <Loading>

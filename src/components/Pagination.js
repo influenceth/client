@@ -25,9 +25,7 @@ const Pagination = (props) => {
         flip
         disabled={currentPage === 1}
         onClick={handleFirst}
-        size="icon"
-        background="transparent"
-        color={theme.colors.main}>
+        size="wideicon">
         <BeginningIcon />
       </Button>
 
@@ -35,9 +33,7 @@ const Pagination = (props) => {
         flip
         disabled={currentPage === 1}
         onClick={handlePrevious}
-        size="icon"
-        background="transparent"
-        color={theme.colors.main}>
+        size="wideicon">
         <PreviousIcon />
       </Button>
 
@@ -45,9 +41,7 @@ const Pagination = (props) => {
         disabled={rowCount <= currentPage * rowsPerPage}
         flipCorner
         onClick={handleNext}
-        size="icon"
-        background="transparent"
-        color={theme.colors.main}>
+        size="wideicon">
         <NextIcon />
       </Button>
     </StyledPagination>

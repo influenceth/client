@@ -23,7 +23,7 @@ import { useHistory } from 'react-router-dom';
 
 // const background = 'rgba(0, 0, 0, 0.9)';
 // export const background = 'rgba(0, 14, 25, 0.9)';
-export const background = 'rgba(20, 20, 20, 0.75)';
+export const background = 'rgba(15, 15, 15, 0.85)';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;

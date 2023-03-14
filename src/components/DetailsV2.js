@@ -75,8 +75,7 @@ const ContentWrapper = styled.div`
 `;
 
 const Content = styled.div`
-  height: calc(100% - ${p => p.hasFooter ? 25 : 50}px);
-  margin: 25px 0 ${p => p.hasFooter ? 0 : 25};
+  height: 100%;
   min-width: 0;
   overflow-y: auto;
   position: relative;

@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { TriangleDownIcon, TriangleUpIcon } from './Icons';
 
-const minColumnWidth = 200;
+const minColumnWidth = 190;
 
 const align = {
   left: 'flex-start',
@@ -63,7 +63,7 @@ const DataTableHeadCell = styled.th`
         min-width: 1px !important;
         color: #444;
         padding: 0 !important;
-        width: 45px !important;
+        max-width: 45px !important;
       `
       : `
         min-width: ${minColumnWidth}px;  

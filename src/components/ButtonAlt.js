@@ -32,6 +32,9 @@ const InnerContainer = styled.div`
 
   & > * {
     margin-right: 5px;
+    &:last-child {
+      margin-right: 0;
+    }
   }
 `;
 
@@ -78,7 +81,7 @@ const StyledButton = styled.button`
 
   & ${InnerContainer} {
     min-height: ${p => p.sizeParams.height}px;
-    padding: 0 10px;
+    ${p => !p.sizeParams.isIconOnly && `padding: 0 10px;`}
   }
 
   ${p => p.disabled
@@ -87,7 +90,7 @@ const StyledButton = styled.button`
       cursor: ${p.theme.cursors.default};
       border-color: ${p.theme.colors.disabledText};
       & > div {
-        background-color: ${p.disabledColor || (p.background === 'transparent' ? 'transparent' : '#222')};
+        background-color: ${p.disabledColor || (p.background === 'transparent' ? 'transparent' : '#171717')};
       }
       & > svg {
         stroke: ${p.theme.colors.disabledText};
@@ -96,7 +99,7 @@ const StyledButton = styled.button`
     : `
       color: ${p.background === 'transparent' ? p.color : (p.color ? getContrastText(p.color) : 'white')};
       & > div {
-        background-color: ${p.background || p.color || (p.isTransaction ? '#232d64' : '#1a404f')};
+        background-color: ${p.background || p.color || (p.isTransaction ? '#232d64' : '#05212d')};
       }
       &:active > div {
         background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main};
@@ -154,7 +157,8 @@ const loadingCss = css`
 `;
 
 const sizes = {
-  icon: { font: 25, height: 32, width: 85, line: 10, borderWidth: 1 },
+  icon: { font: 16, height: 26, width: 36, line: 8, borderWidth: 1, isIconOnly: true },
+  wideicon: { font: 25, height: 32, width: 85, line: 10, borderWidth: 1, isIconOnly: true },
   small: { font: 16, height: 32, width: 125, line: 10, borderWidth: 1 },
   medium: { font: 16, height: 32, width: 185, line: 10, borderWidth: 1 },
   large: { font: 20, height: 50, width: 250, line: 15, borderWidth: 1 },
