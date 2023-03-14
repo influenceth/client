@@ -104,19 +104,15 @@ const DataTableHeadCell = styled.th`
 const DataTableCell = styled.td`
   border-bottom: 1px solid #171717;
   height: 40px;
-  ${p => p.sorted && `
-    color: white !important;
-    & > div {
-      background: rgba(255, 255, 255, 0.1);
-    }
-  `}
+  ${p => p.isIconColumn && `width: 45px;`}
+  ${p => p.sorted && `color: white !important;`}
   & > div {
     ${p => p.align && `justify-content: ${align[p.align]} !important;`}
+    ${p => p.sorted && `background: rgba(255, 255, 255, 0.1);`}
     ${p => p.isIconColumn
       ? `
-        min-width: 1px !important;
         padding: 0 !important;
-        width: 45px !important;
+        width: 100% !important;
       `
       : `
         min-width: ${minColumnWidth}px;  

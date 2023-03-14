@@ -10,7 +10,7 @@ import listConfigs from './listViews';
 import SearchAsteroids, { SearchAsteroidTray } from '../hud/hudMenus/SearchAsteroids';
 import { trayHeight } from '../hud/hudMenus/components';
 import InProgressIcon from '~/components/InProgressIcon';
-import { ScanAsteroidIcon, SlidersIcon } from '~/components/Icons';
+import { CoreSampleIcon, CrewIcon, CrewmateIcon, RocketIcon, ScanAsteroidIcon, SlidersIcon, SwayIcon } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import Dropdown from '~/components/DropdownV2';
 
@@ -126,11 +126,67 @@ const Counts = styled.div`
 const assetTypes = {
   asteroids: {
     keyField: 'i',
-    icon: <ScanAsteroidIcon />,
+    icon: <ScanAsteroidIcon />, // TODO
     title: 'Asteroids',
     useColumns: listConfigs.asteroids,
     useHook: usePagedAsteroids,
-  }
+  },
+  crewmates: {
+    keyField: 'i',
+    icon: <CrewmateIcon />,
+    title: 'Crewmates',
+    useColumns: listConfigs.asteroids,
+    useHook: usePagedAsteroids,
+  },
+  crews: {
+    keyField: 'i',
+    icon: <CrewIcon />,
+    title: 'Crews',
+    useColumns: listConfigs.asteroids,
+    useHook: usePagedAsteroids,
+  },
+  coreSamples: {
+    keyField: 'i',
+    icon: <CoreSampleIcon />,
+    title: 'Core Samples',
+    useColumns: listConfigs.asteroids,
+    useHook: usePagedAsteroids,
+  },
+  ships: {
+    keyField: 'i',
+    icon: <RocketIcon />, // TODO
+    title: 'Ships',
+    useColumns: listConfigs.asteroids,
+    useHook: usePagedAsteroids,
+  },
+  marketOrders: {
+    keyField: 'i',
+    icon: <RocketIcon />, // TODO
+    title: 'Market Orders',
+    useColumns: listConfigs.asteroids,
+    useHook: usePagedAsteroids,
+  },
+  leases: {
+    keyField: 'i',
+    icon: <RocketIcon />, // TODO
+    title: 'Leases',
+    useColumns: listConfigs.asteroids,
+    useHook: usePagedAsteroids,
+  },
+  actions: {
+    keyField: 'i',
+    icon: <RocketIcon />, // TODO
+    title: 'Actions',
+    useColumns: listConfigs.asteroids,
+    useHook: usePagedAsteroids,
+  },
+  transactions: {
+    keyField: 'i',
+    icon: <RocketIcon />, // TODO
+    title: 'Transactions',
+    useColumns: listConfigs.asteroids,
+    useHook: usePagedAsteroids,
+  },
 }
 
 const assetsAsOptions = Object.keys(assetTypes).map((key) => ({
@@ -146,6 +202,7 @@ const ListView = ({ assetType, ...props }) => {
 
   const columns = useColumns();
 
+  const [disabledColumns, setDisabledColumns] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState();
 
   const onToggleFilters = useCallback(() => {
@@ -178,7 +235,18 @@ const ListView = ({ assetType, ...props }) => {
     if (query?.data?.length === 0) setPage(1);
   }, [ query?.data, setPage ]);
 
+  // on asset type change
+  useEffect(() => {
+    setDisabledColumns([]);
+    setPage(1);
+  }, [assetType, setPage])
+
   useEffect(() => ReactTooltip.rebuild(), [query?.data?.hits]);
+
+  const enabledColumns = useMemo(() => {
+    console.log(columns)
+    return columns.filter((c) => !disabledColumns.includes(c.key));
+  }, [columns, disabledColumns]);
 
   return (
     <Details fullWidth title={title} contentProps={{ hasFooter: true }}>
@@ -213,7 +281,7 @@ const ListView = ({ assetType, ...props }) => {
           </FilterContainer>
           <TableContainer>
             <DataTable
-              columns={columns}
+              columns={enabledColumns}
               data={query?.data?.hits || []}
               keyField={keyField}
               onClickColumn={handleSort}
