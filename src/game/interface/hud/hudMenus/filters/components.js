@@ -105,7 +105,6 @@ export const SearchMenu = ({
   }, [fieldName, filters]);
 
   const toggleHighlight = useCallback((e) => {
-    console.log('highlightMetadata', highlightMetadata);
     e.stopPropagation();
     if (fieldHighlight) {
       updateHighlight();
@@ -126,7 +125,6 @@ export const SearchMenu = ({
 
   useEffect(() => {
     if (fieldHighlight) {
-      console.log('in here', highlightColorMap);
       if (highlightColorMap) {
         updateHighlight({ field: highlightFieldName, colorMap: highlightColorMap, ...(highlightMetadata || {}) });
       } else if (highlightColorRange) {

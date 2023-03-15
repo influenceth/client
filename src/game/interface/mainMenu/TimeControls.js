@@ -108,7 +108,6 @@ const TimeController = ({ open }) => {
     if (Number.isFinite(newSpeed)) {
       setIsPaused(false);
       setSpeedSetting(speedSetting + direction);
-      console.log(speedSetting);
     }
   }, [speedSetting]);
 
@@ -188,10 +187,6 @@ const TimeController = ({ open }) => {
 const TimeControls = (props) => {
   const { displayTime } = useContext(ClockContext);
   const timeOverride = useStore(s => s.timeOverride);
-  useEffect(() => {
-    console.log(timeOverride);
-  }, [timeOverride])
-  
 
   const [open, setOpen] = useState(false);
   const toggleOpen = useCallback((e) => {

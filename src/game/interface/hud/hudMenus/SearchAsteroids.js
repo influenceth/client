@@ -37,18 +37,18 @@ export const SearchAsteroidTray = (props) => {
   }, []);
 
   const onClickFilters = useCallback((e) => {
-    if (props.onClickFilters) props.onClickFilters(e);
-  }, [props.onClickFilters]);
+    if (props.handleClickFilters) props.handleClickFilters(e);
+  }, [props.handleClickFilters]);
 
   const activeFilters = useMemo(() => Object.values(filters).filter((v) => v !== undefined).length, [filters]);
   return (
     <Tray {...props}>
       {activeFilters > 0 && (
         <>
-          <Button onClick={onClear} size="small" background="transparent" color={theme.colors.main}>
-            <CloseIcon /> Clear
+          <Button onClick={onClear} size="medium" padding="0 15px 0 10px" width="auto" subtle>
+            <CloseIcon style={{ marginRight: 5 }} /> <span>Clear</span>
           </Button>
-          <FilterTally clickable={!!props.onClickFilters} onClick={onClickFilters}>
+          <FilterTally clickable={!!props.handleClickFilters} onClick={onClickFilters}>
             <FilterIcon />
             {activeFilters} Active Filter{activeFilters === 1 ? '' : 's'}
           </FilterTally>

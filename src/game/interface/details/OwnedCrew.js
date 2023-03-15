@@ -154,6 +154,7 @@ const CrewContainer = styled.div`
 
 const ButtonHolder = styled.div`
   bottom: 18px;
+  display: flex;
   left: 50%;
   margin-left: ${p => p.isCaptain ? '-15px' : '-32px'};
   position: absolute;

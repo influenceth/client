@@ -112,6 +112,11 @@ const SortSelection = styled.div`
   display: flex;
   flex: 1;
   justify-content: flex-end;
+  opacity: 0.6;
+  transition: opacity 250ms ease;
+  &:hover {
+    opacity: 1;
+  }
 `;
 
 
@@ -181,9 +186,12 @@ const SearchResultsBanner = () => {
               <SortSelection>
                 <Dropdown
                   initialSelection={sort[0]}
+                  background="transparent"
                   onChange={updateSortOrder}
                   options={sortOptions}
-                  width="180px" />
+                  size="small"
+                  style={{ textTransform: 'none' }}
+                  width={180} />
               </SortSelection>
             </>
           )}

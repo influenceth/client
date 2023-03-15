@@ -10,10 +10,11 @@ import listConfigs from './listViews';
 import SearchAsteroids, { SearchAsteroidTray } from '../hud/hudMenus/SearchAsteroids';
 import { trayHeight } from '../hud/hudMenus/components';
 import InProgressIcon from '~/components/InProgressIcon';
-import { BuildingIcon, ConstructIcon, CoreSampleIcon, CrewIcon, CrewmateIcon, PlanBuildingIcon, RocketIcon, ScanAsteroidIcon, ShipIcon, SlidersIcon, SwayIcon, TransactionIcon } from '~/components/Icons';
+import { BuildingIcon, ColumnsIcon, ConstructIcon, CoreSampleIcon, CrewIcon, CrewmateIcon, PlanBuildingIcon, RocketIcon, ScanAsteroidIcon, ShipIcon, SlidersIcon, SwayIcon, TransactionIcon } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import Dropdown from '~/components/DropdownV2';
 import { useHistory, useParams } from 'react-router-dom';
+import Multiselect from '~/components/Multiselect';
 
 const footerMargin = 12;
 const filterWidth = 344;
@@ -22,18 +23,20 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   height: calc(100% - 1px);
-  padding-top: 15px;
 `;
 const Controls = styled.div`
   display: flex;
   flex-direction: row;
-  height: 44px;
+  height: 59px;
+  padding: 10px 10px 0;
   width: 100%;
+  & > div {
+    padding-bottom: 5px;
+  }
 `;
 const LeftControls = styled.div`
   display: flex;
-  padding-left: 10px;
-  width: 344px;
+  width: 334px;
   border-right: 1px solid ${p => p.filtersOpen ? borderColor : 'transparent'};
   transition: border-color 250ms ease;
 `;
@@ -213,6 +216,15 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
   const [disabledColumns, setDisabledColumns] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState();
 
+  const onToggleColumns = useCallback((col) => () => {
+    setDisabledColumns((colKeys) => {
+      if (colKeys.find((k) => k === col.key)) {
+        return colKeys.filter((k) => k !== col.key);
+      }
+      return [...colKeys, col.key];
+    });
+  }, []);
+
   const onToggleFilters = useCallback(() => {
     setFiltersOpen((o) => !o);
   }, []);
@@ -252,9 +264,14 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
   useEffect(() => ReactTooltip.rebuild(), [query?.data?.hits]);
 
   const enabledColumns = useMemo(() => {
-    console.log(columns)
     return columns.filter((c) => !disabledColumns.includes(c.key));
   }, [columns, disabledColumns]);
+
+  const hideableColumns = useMemo(() => {
+    return columns.filter((c) => !c.unhideable);
+  }, [columns]);
+
+  const enabledColumnKeys = useMemo(() => enabledColumns.map((c) => c.key), [enabledColumns]);
 
   return (
     <Details fullWidth title="List View" contentProps={{ hasFooter: true }}>
@@ -263,22 +280,34 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
           <LeftControls filtersOpen={filtersOpen}>
             <Dropdown
               initialSelection={assetType}
-              isActive
               onChange={onAssetTypeChange}
               options={assetsAsOptions}
+              size="medium"
               width={272} />
             <div style={{ marginLeft: 6 }}>
               <Button
                 data-for="global"
                 data-place="right"
                 data-tip={filtersOpen ? 'Hide Filters' : 'Show Filters'}
-                color={filtersOpen ? 'transparent' : undefined}
+                background={filtersOpen ? 'transparent' : undefined}
+                subtle={!filtersOpen || undefined}
+                borderless={filtersOpen ? 'transparent' : undefined}
                 onClick={onToggleFilters}
-                size="icon">
+                size="bigicon">
                 <SlidersIcon />
               </Button>
             </div>
           </LeftControls>
+          <div style={{ flex: 1 }} />
+          <Multiselect
+            enabledKeys={enabledColumnKeys}
+            buttonIcon={<ColumnsIcon />}
+            buttonLabel="Columns"
+            onChange={onToggleColumns}
+            options={hideableColumns}
+            size="medium"
+            width={175}
+          />
         </Controls>
 
         <MainWrapper>
@@ -300,7 +329,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
         </MainWrapper>
         <Tray>
           <div>
-            <SearchAsteroidTray borderless onClickFilters={onClickFilters} />
+            <SearchAsteroidTray borderless handleClickFilters={onClickFilters} />
           </div>
           {query?.isLoading
             ? (

@@ -65,7 +65,8 @@ const useColumns = () => {
           return '';
         },
         bodyStyle: { fontSize: '24px' },
-        requireLogin: true
+        requireLogin: true,
+        unhideable: true
       },
       {
         key: 'favorite',
@@ -85,7 +86,8 @@ const useColumns = () => {
           );
         },
         bodyStyle: { fontSize: '24px' },
-        requireLogin: true
+        requireLogin: true,
+        unhideable: true
       },
       {
         key: 'name',
@@ -98,6 +100,7 @@ const useColumns = () => {
             <span>{row.customName || row.baseName}</span>
           </>
         ),
+        unhideable: true
       },
       {
         key: 'owner',

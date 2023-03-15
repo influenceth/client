@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { usePopper } from 'react-popper';
 import styled from 'styled-components';
 import Button from './ButtonAlt';
+import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
+import { hexToRGB } from '~/theme';
 
 const Wrapper = styled.div`
   position: relative;
@@ -21,7 +23,6 @@ const IconWrapper = styled.span`
 
 const Options = styled.div`
   background: #111;
-  
   max-height: 50vh;
   min-width: ${p => p.width ? `${p.width}px` : 'auto'};
   overflow: auto;
@@ -31,10 +32,12 @@ const Options = styled.div`
   `}
 `;
 const Option = styled.div`
-  background-color: transparent;
+  align-items: center;
   cursor: ${p => p.theme.cursors.active};
+  display: flex;
   padding: 8px;
   transition: background-color 200ms ease;
+  white-space: nowrap;
   width: 100%;
   &:hover {
     background-color: rgba(${p => p.theme.colors.mainRGB}, 0.3);
@@ -47,15 +50,15 @@ const SelectedLabel = styled.label`
 `;
 
 // options can be array of strings or array of objects
-const Dropdown = ({
+const Multiselect = ({
   disabled,
-  footnote,
-  initialSelection,
-  iconKey = 'icon',
+  enabledKeys = [],
+  buttonIcon,
+  buttonLabel,
   labelKey = 'label',
-  valueKey = 'value',
   onChange,
   options: rawOptions,
+  valueKey = 'key',
   ...styleProps
 }) => {
   const [isObjArr, options] = useMemo(() => {
@@ -70,7 +73,6 @@ const Dropdown = ({
   const [open, setOpen] = useState(false);
   const [popperEl, setPopperEl] = useState();
   const [referenceEl, setReferenceEl] = useState();
-  const [selected, setSelected] = useState();
 
   const { styles, attributes } = usePopper(referenceEl, popperEl, {
     placement: 'bottom-start',
@@ -88,23 +90,10 @@ const Dropdown = ({
     if (!disabled)
     setOpen((o) => !o);
   }, [disabled]);
-  
-  const handleSelection = useCallback((option) => () => {
-    if (option[valueKey] !== selected[valueKey]) {
-      onChange(isObjArr ? option : option[valueKey]);
-    }
-    setSelected(option);
-    setOpen(false);
-  }, [onChange, selected]);
 
   const handleMouseEnter = useCallback(() => {
     if (closeTimer.current) {
       clearTimeout(closeTimer.current);
-    }
-  }, []);
-  useEffect(() => {
-    return () => {
-      if (closeTimer.current) clearTimeout(closeTimer.current);
     }
   }, []);
 
@@ -113,20 +102,16 @@ const Dropdown = ({
       setOpen(false);
     }, 500);
   }, []);
-
-  // if initialSelection changes, assume that should be my new value
-  // (but don't call onChange since obviously changed from elsewhere)
   useEffect(() => {
-    setSelected(
-      (initialSelection && options.find((o) => o[valueKey] === initialSelection)) || options[0]
-    );
-  }, [initialSelection]);
+    return () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    }
+  }, []);
   
   useEffect(() => {
     setOpen(false);
   }, [disabled]);
 
-  if (!selected) return null;
   return (
     <Wrapper
       onMouseEnter={handleMouseEnter}
@@ -137,8 +122,8 @@ const Dropdown = ({
           disabled={disabled}
           onClick={handleToggle}
           {...styleProps}>
-          {selected[iconKey] && <IconWrapper>{selected[iconKey]}</IconWrapper>}
-          <SelectedLabel>{selected[labelKey] || ''}</SelectedLabel>
+          {buttonIcon && <IconWrapper>{buttonIcon}</IconWrapper>}
+          <SelectedLabel>{buttonLabel}</SelectedLabel>
           <Caret>▾</Caret>
         </Button>
       </span>
@@ -146,9 +131,11 @@ const Dropdown = ({
       {open && createPortal(
         <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000 }} {...attributes.popper}>
           <Options {...styleProps}>
-            {options.filter((o) => o[valueKey] !== selected[valueKey]).map((o) => (
-              <Option key={o[valueKey]} footnote={footnote && footnote(o)} onClick={handleSelection(o)}>
-                {o[iconKey] && <IconWrapper>{o[iconKey]}</IconWrapper>}
+            {options.map((o) => (
+              <Option key={o[valueKey]} onClick={onChange(isObjArr ? o : o[valueKey])}>
+                <IconWrapper>
+                  {enabledKeys.includes(o[valueKey]) ? <CheckedIcon /> : <UncheckedIcon />}
+                </IconWrapper>
                 <label>{o[labelKey]}</label>
               </Option>
             ))}
@@ -160,4 +147,4 @@ const Dropdown = ({
   );
 };
 
-export default Dropdown;
+export default Multiselect;

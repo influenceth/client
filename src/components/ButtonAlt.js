@@ -52,7 +52,7 @@ const StyledButton = styled.button`
     animation: ${opacityAnimation} 1250ms ease infinite;
   `}
   background: transparent;
-  border: ${p => p.sizeParams.borderWidth}px solid ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)};
+  border: ${p => p.sizeParams.borderWidth}px solid ${p => p.borderless ? 'transparent' : (p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton))};
   clip-path: polygon(
     0 0,
     100% 0,
@@ -84,14 +84,14 @@ const StyledButton = styled.button`
 
   & ${InnerContainer} {
     min-height: ${p => p.sizeParams.height}px;
-    ${p => !p.sizeParams.isIconOnly && `padding: 0 10px;`}
+    ${p => p.sizeParams.isIconOnly ? '' : `padding: ${p.padding || '0 10px'};`}
   }
 
   ${p => p.disabled
     ? `
       color: rgba(255, 255, 255, 0.5);
       cursor: ${p.theme.cursors.default};
-      border-color: ${p.theme.colors.disabledText};
+      border-color: ${p.borderless ? 'transparent' : p.theme.colors.disabledText};
       & > div {
         background-color: ${p.disabledColor || (p.background === 'transparent' ? 'transparent' : `rgba(${hexToRGB(p.theme.colors.disabledButton)}, ${bgOpacity})`)};
       }
@@ -100,9 +100,15 @@ const StyledButton = styled.button`
       }
     `
     : `
-      color: ${p.background === 'transparent' ? p.color : (p.color ? getContrastText(p.color) : 'white')};
+      color: ${p.color || (
+        p.subtle ? p.theme.colors.main : (
+          p.background && p.background !== 'transparent'
+            ? getContrastText(p.background)
+            : 'white'
+        )
+      )};
       & > div {
-        background-color: ${p.background || p.color || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${bgOpacity})`};
+        background-color: ${p.background || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${bgOpacity})`};
       }
       &:active > div {
         background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton};
@@ -119,7 +125,7 @@ const Corner = styled.svg`
   height: ${p => p.sizeParams.line - (p.sizeParams.borderWidth === 1 ? 0 : p.sizeParams.borderWidth - 1)}px;
   margin-right: 0;
   position: absolute;
-  stroke: ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)};
+  stroke: ${p => p.borderless ? 'transparent' : (p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton))};
   stroke-width: ${p => p.sizeParams.borderWidth + 0.5}px;
   width: ${p => p.sizeParams.line - (p.sizeParams.borderWidth === 1 ? 0 : p.sizeParams.borderWidth - 1)}px;
 
@@ -160,9 +166,10 @@ const loadingCss = css`
 `;
 
 const sizes = {
-  icon: { font: 16, height: 32, width: 40, line: 10, borderWidth: 1, isIconOnly: true },
+  icon: { font: 16, height: 26, width: 34, line: 8, borderWidth: 1, isIconOnly: true },
+  bigicon: { font: 16, height: 32, width: 40, line: 10, borderWidth: 1, isIconOnly: true },
   wideicon: { font: 25, height: 32, width: 85, line: 10, borderWidth: 1, isIconOnly: true },
-  small: { font: 16, height: 32, width: 125, line: 10, borderWidth: 1 },
+  small: { font: 14, height: 26, width: 100, line: 10, borderWidth: 1 },
   medium: { font: 16, height: 32, width: 185, line: 10, borderWidth: 1 },
   large: { font: 20, height: 50, width: 250, line: 15, borderWidth: 1 },
   huge: { font: 32, height: 52, width: 275, line: 18, borderWidth: 2 }
@@ -209,6 +216,7 @@ const StandardButton = (props) => {
         {props.badge && <StyledBadge value={props.badge} />}
       </InnerContainer>
       <Corner
+        borderless={props.borderless}
         color={props.color}
         flip={restProps.flip}
         isTransaction={props.isTransaction}

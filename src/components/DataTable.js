@@ -60,10 +60,9 @@ const DataTableHeadCell = styled.th`
     border-bottom: 1px solid #444;
     ${p => p.isIconColumn
       ? `
-        min-width: 1px !important;
         color: #444;
         padding: 0 !important;
-        max-width: 45px !important;
+        width: 45px !important;
       `
       : `
         min-width: ${minColumnWidth}px;  
