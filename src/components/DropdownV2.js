@@ -2,10 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePopper } from 'react-popper';
 import styled from 'styled-components';
-import theme from '~/theme';
-import ClipCorner from './ClipCorner';
-
-const cornerSize = 8;
+import Button from './ButtonAlt';
 
 const Wrapper = styled.div`
   position: relative;
@@ -15,11 +12,6 @@ const Caret = styled.span`
   font-size: 80%;
 `;
 
-const ButtonClipCorner = styled.span`
-  opacity: 0.5;
-  transition: opacity 250ms ease;
-`;
-
 const IconWrapper = styled.span`
   display: inline-block;
   font-size: 120%;
@@ -27,69 +19,11 @@ const IconWrapper = styled.span`
   margin-right: 4px;
 `;
 
-const Button = styled.button`
-  align-items: center;
-  background-color: black;
-  border: ${p => p.buttonBorderless ? 'none' : '1px solid'};
-  border-color: ${p => p.disabled ? '#444' : `rgba(${p.theme.colors.mainRGB}, 0.5)`};
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - ${cornerSize}px),
-    calc(100% - ${cornerSize}px) 100%,
-    0 100%
-  );
-  color: white;
-  cursor: ${p => p.theme.cursors[p.disabled ? 'default' : 'active']};
-  display: flex;
-  font-family: 'Jura', sans-serif;
-  font-size: 105%;
-  opacity: ${p => p.disabled ? 0.7 : 1};
-  outline: 0;
-  overflow: hidden;
-  padding: 6px 6px;
-  position: relative;
-  text-align: left;
-  text-overflow: ellipsis;
-  transition: border-color 200ms ease;
-  white-space: nowrap;
-  width: ${p => p.width || 'auto'};
-  & > label {
-    flex: 1;
-  }
-  ${Caret} {
-    margin-left: 5px;
-    ${p => p.buttonBackground && `
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-      line-height: 1.44em;
-      padding: 0 6px;
-    `}
-  }
-  ${p => p.footnote && `
-    &:after {
-      content: "${p.footnote}";
-      color: ${p.disabled ? '#444' : 'white'};
-      font-size: 80%;
-      line-height: 145%;
-      margin-right: 2px;
-    }
-  `}
-
-  ${p => !p.disabled && `
-    ${!p.isActive ? `&:hover {` : ''}
-      border-color: ${p.theme.colors.main};
-      ${ButtonClipCorner} {
-        opacity: 1;
-      }
-    ${!p.isActive ? `}` : ''}
-  `}
-`;
 const Options = styled.div`
   background: #111;
   
   max-height: 50vh;
-  min-width: ${p => p.width || 'auto'};
+  min-width: ${p => p.width ? `${p.width}px` : 'auto'};
   overflow: auto;
   position: absolute;
   ${p => p.dropUp && `
@@ -105,13 +39,11 @@ const Option = styled.div`
   &:hover {
     background-color: rgba(${p => p.theme.colors.mainRGB}, 0.3);
   }
-  ${p => p.footnote && `
-    &:after {
-      content: "${p.footnote}";
-      color: ${p.theme.colors.main};
-      float: right;
-    }
-  `}
+`;
+
+const SelectedLabel = styled.label`
+  flex: 1;
+  text-align: left;
 `;
 
 // options can be array of strings or array of objects
@@ -194,23 +126,19 @@ const Dropdown = ({
     <Wrapper
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}>
-      <Button
-        ref={setReferenceEl}
-        disabled={disabled}
-        footnote={footnote && selected && footnote(selected)}
-        onClick={handleToggle}
-        {...styleProps}>
-        {selected[iconKey] && <IconWrapper>{selected[iconKey]}</IconWrapper>}
-        <label>{selected[labelKey] || ''}</label>
-        <Caret>▾</Caret>
-        {!styleProps.buttonBorderless && (
-          <ButtonClipCorner>
-            <ClipCorner
-              color={disabled ? '#444' : theme.colors.main}
-              dimension={cornerSize} />
-          </ButtonClipCorner>
-        )}
-      </Button>
+
+      <span ref={setReferenceEl}>
+        <Button
+          disabled={disabled}
+          onClick={handleToggle}
+          {...styleProps}>
+          {selected[iconKey] && <IconWrapper>{selected[iconKey]}</IconWrapper>}
+          <SelectedLabel 
+          ref={setReferenceEl}>{selected[labelKey] || ''}</SelectedLabel>
+          <Caret>▾</Caret>
+        </Button>
+      </span>
+
       {open && createPortal(
         <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000 }} {...attributes.popper}>
           <Options {...styleProps}>

@@ -48,7 +48,6 @@ const theme = {
     borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
     success,
     successRGB: hexToRGB(success),
-    txButton: '#4444b8',
     error: red,
     teal, blue, purple, orange, yellow, red,
     bonus: {
@@ -85,7 +84,10 @@ const theme = {
         Merchant: hexToRGB(yellow),
         Scientist: hexToRGB(blue),
       }
-    }
+    },
+    mainButton: main,
+    disabledButton: '#676767',
+    txButton: '#4444b8',
   },
   fontSizes: {
     smallText: '12px',

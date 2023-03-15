@@ -5,6 +5,7 @@ import ReactTooltip from 'react-tooltip';
 
 import IconButton from '~/components/IconButton';
 import {
+  AsteroidSearchIcon,
   ChatIcon,
   CloseIcon,
   DetailIcon,
@@ -12,9 +13,9 @@ import {
   InfoIcon,
   InventoryIcon,
   ListViewIcon,
+  LotSearchIcon,
   MyAssetsIcon,
   ResourceIcon,
-  SearchIcon,
 } from '~/components/Icons';
 import usePlot from '~/hooks/usePlot';
 import useStore from '~/hooks/useStore';
@@ -161,7 +162,7 @@ const HudMenu = () => {
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   
   const [open, setOpen] = useState();
-  const handleButtonClick = useCallback((selected) => {
+  const handleButtonClick = useCallback((selected, onOpen) => {
     // clicking button of already-open --> close
     if (openHudMenu === selected) {
       dispatchHudMenuOpened();
@@ -170,12 +171,14 @@ const HudMenu = () => {
     } else if (open) {
       setOpen(false);
       setTimeout(() => {
-        dispatchHudMenuOpened(selected);
+        if (onOpen) onOpen();
+        else dispatchHudMenuOpened(selected);
       }, panelAnimationLength);
 
     // else, nothing open --> open new
     } else {
-      dispatchHudMenuOpened(selected);
+      if (onOpen) onOpen();
+      else dispatchHudMenuOpened(selected);
     }
   }, [open, openHudMenu]);
 
@@ -208,20 +211,27 @@ const HudMenu = () => {
           requireLogin: true
         },
         {
+          label: 'System Search',
+          icon: <AsteroidSearchIcon />,
+          Component: hudMenus.SearchAsteroids,
+          detailType: 'list',
+          onDetailClick: () => {
+            history.push(`/listview/asteroids`);
+          }
+        },
+        {
           label: 'Favorites',
           icon: <FavoriteIcon />,
           Component: hudMenus.Favorites,
           requireLogin: true
         },
         {
-          label: 'System Search',
-          icon: <SearchIcon />,
-          Component: hudMenus.SearchAsteroids,
-          detailType: 'list',
-          onDetailClick: () => {
-            history.push(`/asteroids`);
+          label: 'List View',
+          icon: <ListViewIcon />,
+          onOpen: () => {
+            history.push(`/listview/asteroids`);
           }
-        }
+        },
       ];
     } else if (zoomStatus === 'in' && !zoomToPlot) {
       return [
@@ -238,18 +248,25 @@ const HudMenu = () => {
         },
         {
           label: 'Lot Search',
-          icon: <SearchIcon />,
+          icon: <LotSearchIcon />,
           Component: hudMenus.SearchLots,
           detailType: 'list',
           onDetailClick: () => {
-            history.push(`/asteroids`);
+            history.push(`/listview/lots`);
           }
         },
         {
           label: 'Asteroid Chat',
           icon: <ChatIcon />,
           Component: hudMenus.AsteroidChat
-        }
+        },
+        {
+          label: 'List View',
+          icon: <ListViewIcon />,
+          onOpen: () => {
+            history.push(`/listview/lots`);
+          }
+        },
       ];
     } else if (zoomStatus === 'in' && zoomToPlot) {
       const b = [
@@ -293,13 +310,13 @@ const HudMenu = () => {
     <Wrapper>
       <ReactTooltip id="hudMenu" effect="solid" />
       <Buttons open={open}>
-        {buttons.map(({ label, icon, requireLogin }) => {
+        {buttons.map(({ label, icon, onOpen, requireLogin }) => {
           const key = `${buttonFilter}.${label}`;
           if (requireLogin && !account) return null;
           return (
             <Button
               key={key}
-              onClick={() => handleButtonClick(key)}
+              onClick={() => handleButtonClick(key, onOpen)}
               selected={key === openHudMenu}
               data-for="hudMenu"
               data-place="left"

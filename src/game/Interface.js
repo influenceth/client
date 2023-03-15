@@ -17,7 +17,6 @@ import Outliner from './interface/Outliner';
 import SaleNotifier from './interface/SaleNotifier';
 import ListView from './interface/details/ListView';
 import AsteroidDetails from './interface/details/AsteroidDetails';
-import AsteroidsTable from './interface/details/AsteroidsTable';
 import CrewAssignment from './interface/details/crewAssignments/Assignment';
 import CrewAssignmentComplete from './interface/details/crewAssignments/Complete';
 import CrewCreation from './interface/details/crewAssignments/Create';
@@ -114,8 +113,8 @@ const Interface = () => {
         {sale && <SaleNotifier sale={sale} />}
         <MainContainer>
           <Switch>
-            <Route exact path="/asteroids">
-              <ListView assetType="asteroids" />
+            <Route exact path="/listview/:assetType?">
+              <ListView />
             </Route>
             <Route path="/building-viewer/:model?">
               <ModelViewer assetType="Building" />

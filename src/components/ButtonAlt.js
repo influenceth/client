@@ -6,8 +6,11 @@ import { uniqueId } from 'lodash';
 
 import useStore from '~/hooks/useStore';
 import Badge from '~/components/Badge';
-import theme, { getContrastText } from '~/theme';
+import theme, { getContrastText, hexToRGB } from '~/theme';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+
+const bgOpacity = 0.175;
+const hoverBgOpacity = 0.35;
 
 const InnerContainer = styled.div`
   align-items: center;
@@ -49,7 +52,7 @@ const StyledButton = styled.button`
     animation: ${opacityAnimation} 1250ms ease infinite;
   `}
   background: transparent;
-  border: ${p => p.sizeParams.borderWidth}px solid ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)};
+  border: ${p => p.sizeParams.borderWidth}px solid ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)};
   clip-path: polygon(
     0 0,
     100% 0,
@@ -67,7 +70,7 @@ const StyledButton = styled.button`
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: ${p => p.sizeParams.font}px;
-  min-width: ${p => p.sizeParams.width}px;
+  min-width: ${p => p.width || p.sizeParams.width}px;
   padding: 3px; /* must match loadingCss.top */
   pointer-events: auto;
   position: relative;
@@ -90,7 +93,7 @@ const StyledButton = styled.button`
       cursor: ${p.theme.cursors.default};
       border-color: ${p.theme.colors.disabledText};
       & > div {
-        background-color: ${p.disabledColor || (p.background === 'transparent' ? 'transparent' : '#171717')};
+        background-color: ${p.disabledColor || (p.background === 'transparent' ? 'transparent' : `rgba(${hexToRGB(p.theme.colors.disabledButton)}, ${bgOpacity})`)};
       }
       & > svg {
         stroke: ${p.theme.colors.disabledText};
@@ -99,13 +102,13 @@ const StyledButton = styled.button`
     : `
       color: ${p.background === 'transparent' ? p.color : (p.color ? getContrastText(p.color) : 'white')};
       & > div {
-        background-color: ${p.background || p.color || (p.isTransaction ? '#232d64' : '#05212d')};
+        background-color: ${p.background || p.color || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${bgOpacity})`};
       }
       &:active > div {
-        background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main};
+        background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton};
       }
       &:hover > div {
-        background-color: ${p.isTransaction ? 'rgba(53, 80, 228, 0.75)' : 'rgba(54, 167, 205, 0.25)'};
+        background-color: rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${hoverBgOpacity});
       }
     `
   }
@@ -116,7 +119,7 @@ const Corner = styled.svg`
   height: ${p => p.sizeParams.line - (p.sizeParams.borderWidth === 1 ? 0 : p.sizeParams.borderWidth - 1)}px;
   margin-right: 0;
   position: absolute;
-  stroke: ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)};
+  stroke: ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)};
   stroke-width: ${p => p.sizeParams.borderWidth + 0.5}px;
   width: ${p => p.sizeParams.line - (p.sizeParams.borderWidth === 1 ? 0 : p.sizeParams.borderWidth - 1)}px;
 
@@ -157,7 +160,7 @@ const loadingCss = css`
 `;
 
 const sizes = {
-  icon: { font: 16, height: 26, width: 36, line: 8, borderWidth: 1, isIconOnly: true },
+  icon: { font: 16, height: 32, width: 40, line: 10, borderWidth: 1, isIconOnly: true },
   wideicon: { font: 25, height: 32, width: 85, line: 10, borderWidth: 1, isIconOnly: true },
   small: { font: 16, height: 32, width: 125, line: 10, borderWidth: 1 },
   medium: { font: 16, height: 32, width: 185, line: 10, borderWidth: 1 },
@@ -198,7 +201,7 @@ const StandardButton = (props) => {
           <BarLoader
             color={props.color
               ? getContrastText(props.color)
-              : (props.isTransaction ? 'rgb(73, 100, 248)' : theme.colors.main)}
+              : (props.isTransaction ? theme.colors.txButton : theme.colors.mainButton)}
             css={loadingCss}
             height={1} />
         )}

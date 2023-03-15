@@ -13,6 +13,7 @@ import InProgressIcon from '~/components/InProgressIcon';
 import { BuildingIcon, ConstructIcon, CoreSampleIcon, CrewIcon, CrewmateIcon, PlanBuildingIcon, RocketIcon, ScanAsteroidIcon, ShipIcon, SlidersIcon, SwayIcon, TransactionIcon } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import Dropdown from '~/components/DropdownV2';
+import { useHistory, useParams } from 'react-router-dom';
 
 const footerMargin = 12;
 const filterWidth = 344;
@@ -202,7 +203,7 @@ const assetsAsOptions = Object.keys(assetTypes).map((key) => ({
   icon: assetTypes[key].icon
 }));
 
-const ListView = ({ assetType, ...props }) => {
+const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
   const { keyField, title, useColumns, useHook } = assetTypes[assetType];
   const { query, page, perPage, setPage, sort, setSort } = useHook();
   const [sortField, sortDirection] = sort;
@@ -256,16 +257,16 @@ const ListView = ({ assetType, ...props }) => {
   }, [columns, disabledColumns]);
 
   return (
-    <Details fullWidth title={title} contentProps={{ hasFooter: true }}>
+    <Details fullWidth title="List View" contentProps={{ hasFooter: true }}>
       <Wrapper>
         <Controls>
           <LeftControls filtersOpen={filtersOpen}>
             <Dropdown
-              initialSelection={assetsAsOptions[0]}
+              initialSelection={assetType}
               isActive
-              onChange={() => {}}
+              onChange={onAssetTypeChange}
               options={assetsAsOptions}
-              width="280px" />
+              width={272} />
             <div style={{ marginLeft: 6 }}>
               <Button
                 data-for="global"
@@ -331,6 +332,23 @@ const ListView = ({ assetType, ...props }) => {
       </Wrapper>
     </Details>
   );
+};
+
+const ListView = () => {
+  const { assetType } = useParams();
+  const history = useHistory();
+
+  const onAssetTypeChange = useCallback(({ value }) => {
+    history.push(`/listview/${value}`);
+  }, []);
+
+  useEffect(() => {
+    if (!assetType) history.push('/listview/asteroids');
+    else if (!assetTypes[assetType]) history.replace('/listview/asteroids');
+  }, [assetType]);
+
+  if (!assetType) return null;
+  return <ListViewComponent assetType={assetType} onAssetTypeChange={onAssetTypeChange} />;
 };
 
 export default ListView;

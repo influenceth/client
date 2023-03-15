@@ -441,7 +441,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                   disabled={exportingModel}
                   loading={exportingModel}
                   onClick={download3dModel}>
-                  <SmHidden>Download</SmHidden> 3D Model
+                  <><SmHidden>Download{' '}</SmHidden><span>3D Model</span></>
                 </ModelButton>
               )}
 
