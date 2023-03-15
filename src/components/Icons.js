@@ -36,11 +36,15 @@ import { VscDebugDisconnect, VscCircleOutline } from 'react-icons/vsc';
 import AdalianSVG from '~/assets/icons/AdalianIcon.svg';
 import ArvadSVG from '~/assets/icons/ArvadIcon.svg';
 import AssignmentsSVG from '~/assets/icons/AssignmentsIcon.svg';
+import AsteroidSearchSVG from '~/assets/icons/AsteroidSearchIcon.svg';
+import BugSVG from '~/assets/icons/BugIcon.svg';
+import BuildingSVG from '~/assets/icons/BuildingIcon.svg';
 import CaptainSVG from '~/assets/icons/CaptainIcon.svg';
 import ChapterSVG from '~/assets/icons/ChapterIcon.svg';
 import ChatSVG from '~/assets/icons/ChatIcon.svg';
 import CheckSVG from '~/assets/icons/CheckIcon.svg';
 import ChevronDoubleDownSVG from '~/assets/icons/ChevronDoubleDownIcon.svg';
+import ColumnsSVG from '~/assets/icons/ColumnsIcon.svg';
 import CoreSampleSVG from '~/assets/icons/CoreSampleIcon.svg';
 import CrewSVG from '~/assets/icons/CrewIcon.svg';
 import CrewmateSVG from '~/assets/icons/CrewmateIcon.svg';
@@ -56,20 +60,27 @@ import InventorySVG from '~/assets/icons/InventoryIcon.svg';
 import LeaderboardSVG from '~/assets/icons/LeaderboardIcon.svg';
 import LeaseSVG from '~/assets/icons/LeaseIcon.svg';
 import LinkSVG from '~/assets/icons/LinkIcon.svg';
+import ListViewSVG from '~/assets/icons/ListViewIcon.svg';
+import LocationSVG from '~/assets/icons/LocationIcon.svg';
 import LockSVG from '~/assets/icons/LockIcon.svg';
+import LotSearchSVG from '~/assets/icons/LotSearchIcon.svg';
 import MyAssetSVG from '~/assets/icons/MyAssetIcon.svg';
 import MyAssetsSVG from '~/assets/icons/MyAssetsIcon.svg';
 import OrbitalPeriodSVG from '~/assets/icons/OrbitalPeriodIcon.svg';
 import OrderSVG from '~/assets/icons/OrderIcon.svg';
+import ProductionSVG from '~/assets/icons/ProductionIcon.svg';
 import PromoteSVG from '~/assets/icons/PromoteIcon.svg';
 import RadiusSVG from '~/assets/icons/RadiusIcon.svg';
+import ResetCameraSVG from '~/assets/icons/ResetCameraIcon.svg';
 import ResourceSVG from '~/assets/icons/ResourceIcon.svg';
 import RocketSVG from '~/assets/icons/RocketIcon.svg';
 import SearchSVG from '~/assets/icons/SearchIcon.svg';
 import SemiMajorAxisSVG from '~/assets/icons/SemiMajorAxisIcon.svg';
+import ShipSVG from '~/assets/icons/ShipIcon.svg';
 import SurfaceAreaSVG from '~/assets/icons/SurfaceAreaIcon.svg';
 import SwaySVG from '~/assets/icons/SwayIcon.svg';
 import SwayMonochromeSVG from '~/assets/icons/SwayMonoIcon.svg';
+import TransactionSVG from '~/assets/icons/TransactionIcon.svg';
 import TrophySVG from '~/assets/icons/TrophyIcon.svg';
 import TwitterSVG from '~/assets/icons/TwitterIcon.svg';
 import WalletSVG from '~/assets/icons/WalletIcon.svg';
@@ -88,6 +99,7 @@ import TravelingFromSVG from '~/assets/icons/action_buttons/TravelingFrom.svg';
 import TravelingToSVG from '~/assets/icons/action_buttons/TravelingTo.svg';
 import UnplanBuildingSVG from '~/assets/icons/action_buttons/UnplanBuilding.svg';
 
+
 /*
   A note on importing custom icons...
   1) These should be the top-level attributes (viewBox should keep its original value):
@@ -104,12 +116,16 @@ import UnplanBuildingSVG from '~/assets/icons/action_buttons/UnplanBuilding.svg'
 export const AdalianIcon = () => <AdalianSVG className="icon" />;
 export const ArvadIcon = () => <ArvadSVG className="icon" style={{ width: '1.94em' }} />;
 export const AssignmentsIcon = () => <AssignmentsSVG className="icon" />;
+export const AsteroidSearchIcon = () => <AsteroidSearchSVG className="icon" />;
+export const BugIcon = () => <BugSVG className="icon" />;
+export const BuildingIcon = () => <BuildingSVG className="icon" />;
 export const CaptainIcon = (props) => <CaptainSVG className={`icon ${props?.className}`} style={{ width: '3.05em' }} />;
 export const ChapterIcon = () => <ChapterSVG className="icon" />;
 export const ChatIcon = () => <ChatSVG className="icon" />;
 export const CheckIcon = () => <CheckSVG className="icon" style={{ width: '1.314em' }} />;
 export const ChevronDoubleDownIcon = () => <ChevronDoubleDownSVG className="icon" />;
 export const ChevronDoubleUpIcon = () => <ChevronDoubleDownSVG className="icon" style={{ transform: 'rotate(180deg)' }} />;
+export const ColumnsIcon = () => <ColumnsSVG className="icon" />;
 export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
 export const CrewIcon = () => <CrewSVG className="icon" />;
 export const CrewmateIcon = () => <CrewmateSVG className="icon" />;
@@ -125,20 +141,27 @@ export const InventoryIcon = () => <InventorySVG className="icon" />;
 export const LeaderboardIcon = () => <LeaderboardSVG className="icon" />;
 export const LeaseIcon = () => <LeaseSVG className="icon" />;
 export const LinkIcon = () => <LinkSVG className="icon" />;
+export const ListViewIcon = () => <ListViewSVG className="icon" />;
+export const LocationIcon = () => <LocationSVG className="icon" />;
 export const LockIcon = () => <LockSVG className="icon" />;
+export const LotSearchIcon = () => <LotSearchSVG className="icon" />;
 export const MyAssetIcon = () => <MyAssetSVG className="icon" />;
 export const MyAssetsIcon = () => <MyAssetsSVG className="icon" />;
 export const OrbitalPeriodIcon = () => <OrbitalPeriodSVG className="icon" />;
 export const OrderIcon = () => <OrderSVG className="icon" />;
+export const ProductionIcon = () => <ProductionSVG className="icon" />;
 export const PromoteIcon = () => <PromoteSVG className="icon" />;
 export const RadiusIcon = () => <RadiusSVG className="icon" />;
+export const ResetCameraIcon = () => <ResetCameraSVG className="icon" />;
 export const ResourceIcon = () => <ResourceSVG className="icon" />;
 export const RocketIcon = () => <RocketSVG className="icon" />;
 export const SearchIcon = () => <SearchSVG className="icon" />;
 export const SemiMajorAxisIcon = () => <SemiMajorAxisSVG className="icon" />;
+export const ShipIcon = () => <ShipSVG className="icon" />;
 export const SurfaceAreaIcon = () => <SurfaceAreaSVG className="icon" />;
 export const SwayIcon = () => <SwaySVG className="icon" />;
 export const SwayMonochromeIcon = () => <SwayMonochromeSVG className="icon" />;
+export const TransactionIcon = () => <TransactionSVG className="icon" />;
 export const TrophyIcon = () => <TrophySVG className="icon" />;
 export const TwitterIcon = () => <TwitterSVG className="icon" />;
 export const WalletIcon = () => <WalletSVG className="icon" />;
@@ -167,7 +190,6 @@ export const ResourceGroupIcons = {
 };
 
 export {
-  AiFillBug as BugIcon,
   AiFillEdit as EditIcon,
   AiFillEye as EyeIcon,
   AiFillStar as StarIcon,
@@ -202,12 +224,10 @@ export {
   MdKeyboardArrowDown as CaretIcon,
   FaCaretDown as TriangleDownIcon,
   FaCaretUp as TriangleUpIcon,
-  MdLocationPin as LocationPinIcon,
   MdNavigateBefore as PreviousIcon,
   MdNavigateNext as NextIcon,
   MdPause as PauseIcon,
   MdPlayArrow as PlayIcon,
-  MdScreenRotation as ReorientCameraIcon,
   MdStop as StopIcon,
   RiAlertFill as WarningIcon,
   RiFilter2Fill as FilterIcon,

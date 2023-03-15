@@ -7,10 +7,11 @@ import IconButton from '~/components/IconButton';
 import {
   ChatIcon,
   CloseIcon,
+  DetailIcon,
   FavoriteIcon,
   InfoIcon,
   InventoryIcon,
-  ListIcon,
+  ListViewIcon,
   MyAssetsIcon,
   ResourceIcon,
   SearchIcon,
@@ -193,6 +194,7 @@ const HudMenu = () => {
           label: 'Asteroid Info',
           icon: <InfoIcon />,
           Component: hudMenus.AsteroidInfo,
+          detailType: 'detail',
           onDetailClick: () => {
             if (asteroidId) {
               history.push(`/asteroids/${asteroidId}`);
@@ -215,6 +217,7 @@ const HudMenu = () => {
           label: 'System Search',
           icon: <SearchIcon />,
           Component: hudMenus.SearchAsteroids,
+          detailType: 'list',
           onDetailClick: () => {
             history.push(`/asteroids`);
           }
@@ -236,7 +239,11 @@ const HudMenu = () => {
         {
           label: 'Lot Search',
           icon: <SearchIcon />,
-          Component: hudMenus.SearchLots
+          Component: hudMenus.SearchLots,
+          detailType: 'list',
+          onDetailClick: () => {
+            history.push(`/asteroids`);
+          }
         },
         {
           label: 'Asteroid Chat',
@@ -274,7 +281,7 @@ const HudMenu = () => {
     return [];
   }, [asteroidId, plotId, zoomStatus, zoomToPlot, plot]);
 
-  const { label, onDetailClick, Component } = useMemo(() => {
+  const { label, onDetailClick, detailType, Component } = useMemo(() => {
     const [category, label] = (openHudMenu || '').split('.');
     return buttons.find((b) => b.label === label) || {};
   }, [openHudMenu]);
@@ -306,7 +313,13 @@ const HudMenu = () => {
         <PanelInner>
           <PanelTitle>
             <span style={{ flex: 1 }}>{label}</span>
-            <IconButton onClick={onDetailClick}><ListIcon /></IconButton>
+            <IconButton
+              data-for="global"
+              data-tip={detailType === 'detail' ? 'Detail View' : 'List View'}
+              data-place="left"
+              onClick={onDetailClick}>
+              {detailType === 'detail' ? <DetailIcon /> : <ListViewIcon />}
+            </IconButton>
             <IconButton onClick={() => handleButtonClick()}><CloseIcon /></IconButton>
           </PanelTitle>
           <PanelContent>

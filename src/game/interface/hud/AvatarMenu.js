@@ -5,7 +5,7 @@ import styled, { css, keyframes } from 'styled-components';
 
 import CollapsibleSection from '~/components/CollapsibleSection';
 import CrewCardFramed from '~/components/CrewCardFramed';
-import { CaptainIcon, CrewIcon, CrewmateIcon, FoodIcon, IdleIcon, LocationPinIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
+import { CaptainIcon, CrewIcon, CrewmateIcon, FoodIcon, IdleIcon, LocationIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
 import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -291,7 +291,7 @@ const AvatarMenu = (props) => {
             {captain && (
               <>
                 <BaseLocation>
-                  <LocationPinIcon /> Habitat <span>&gt; Adalia Prime</span>
+                  <LocationIcon /> Habitat <span>&gt; Adalia Prime</span>
                 </BaseLocation>
                 <Personnel>
                   <div>

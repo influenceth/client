@@ -30,7 +30,7 @@ import {
   ExtractionIcon,
   ImproveCoreSampleIcon,
   PlanBuildingIcon,
-  LocationPinIcon,
+  LocationIcon,
   PlusIcon,
   ResourceIcon,
   SurfaceTransferIcon,

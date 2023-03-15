@@ -121,9 +121,8 @@ const useColumns = () => {
                 )}
               </MarketplaceLink>
             );
-          } else {
-            return 'Un-owned';
           }
+          return 'Un-owned';
         }
       },
       {

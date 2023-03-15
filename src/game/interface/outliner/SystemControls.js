@@ -7,7 +7,7 @@ import {
   BugIcon,
   MenuIcon,
   SettingsIcon, 
-  ReorientCameraIcon,
+  ResetCameraIcon,
   WarningIcon } from '~/components/Icons';
 
 const MobileWarning = styled.div`
@@ -72,7 +72,7 @@ const SystemControls = (props) => {
       <HudIconButton
         data-tip="Realign camera to poles"
         onClick={dispatchReorientCamera}>
-        <ReorientCameraIcon />
+        <ResetCameraIcon />
       </HudIconButton>
 
       <VerticalRule />

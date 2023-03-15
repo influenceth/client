@@ -1,7 +1,7 @@
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { LocationPinIcon } from '~/components/Icons';
+import { LocationIcon } from '~/components/Icons';
 import { usePlotLink } from '~/components/PlotLink';
 
 const LocLink = styled.span`
@@ -31,7 +31,7 @@ export const LocationLink = ({ asteroidId, plotId, resourceId }) => {
         history.push('/');
         _onClick();
       }}>
-      <LocationPinIcon />
+      <LocationIcon />
     </LocLink>
   )
 };

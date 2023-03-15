@@ -7,20 +7,20 @@ import {
 import screenfull from 'screenfull';
 
 import {
-  ConstructIcon as BuildingsIcon,
-  CrewIcon,
-  EyeIcon,
-  RocketIcon,
-  RouteIcon,
   BackIcon,
+  BuildingIcon,
   CoreSampleIcon,
-  FavoriteIcon,
-  ResourceIcon,
+  CrewIcon,
   CrewStoryIcon,
+  EyeIcon,
+  FavoriteIcon,
   LeaseIcon,
   OrderIcon,
-  WalletIcon,
-  RadiusIcon
+  RadiusIcon,
+  ResourceIcon,
+  RouteIcon,
+  ShipIcon,
+  TransactionIcon,
 } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
@@ -224,11 +224,11 @@ const MainMenu = (props) => {
                 onClick={() => history.push('/owned-crew')} />
               <MenuItem
                 name="My Ships"
-                icon={<RocketIcon />}
+                icon={<ShipIcon />}
                 onClick={notYet} />
               <MenuItem
                 name="My Buildings"
-                icon={<BuildingsIcon />}
+                icon={<BuildingIcon />}
                 onClick={notYet} />
               <MenuItem
                 name="My Resources"
@@ -263,7 +263,7 @@ const MainMenu = (props) => {
           <Menu title="Finances">
             <MenuItem
               name="Transactions"
-              icon={<WalletIcon />}
+              icon={<TransactionIcon />}
               onClick={notYet} />
             <MenuItem
               name="Market Orders"

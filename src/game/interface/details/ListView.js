@@ -10,7 +10,7 @@ import listConfigs from './listViews';
 import SearchAsteroids, { SearchAsteroidTray } from '../hud/hudMenus/SearchAsteroids';
 import { trayHeight } from '../hud/hudMenus/components';
 import InProgressIcon from '~/components/InProgressIcon';
-import { CoreSampleIcon, CrewIcon, CrewmateIcon, RocketIcon, ScanAsteroidIcon, SlidersIcon, SwayIcon } from '~/components/Icons';
+import { BuildingIcon, ConstructIcon, CoreSampleIcon, CrewIcon, CrewmateIcon, PlanBuildingIcon, RocketIcon, ScanAsteroidIcon, ShipIcon, SlidersIcon, SwayIcon, TransactionIcon } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import Dropdown from '~/components/DropdownV2';
 
@@ -145,6 +145,13 @@ const assetTypes = {
     useColumns: listConfigs.asteroids,
     useHook: usePagedAsteroids,
   },
+  buildings: {
+    keyField: 'i',
+    icon: <BuildingIcon />,
+    title: 'Buildings',
+    useColumns: listConfigs.asteroids,
+    useHook: usePagedAsteroids,
+  },
   coreSamples: {
     keyField: 'i',
     icon: <CoreSampleIcon />,
@@ -154,7 +161,7 @@ const assetTypes = {
   },
   ships: {
     keyField: 'i',
-    icon: <RocketIcon />, // TODO
+    icon: <ShipIcon />,
     title: 'Ships',
     useColumns: listConfigs.asteroids,
     useHook: usePagedAsteroids,
@@ -182,7 +189,7 @@ const assetTypes = {
   },
   transactions: {
     keyField: 'i',
-    icon: <RocketIcon />, // TODO
+    icon: <TransactionIcon />,
     title: 'Transactions',
     useColumns: listConfigs.asteroids,
     useHook: usePagedAsteroids,

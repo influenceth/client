@@ -19,7 +19,7 @@ import {
   ConstructIcon,
   CrewIcon,
   PlanBuildingIcon,
-  LocationPinIcon,
+  LocationIcon,
   PlusIcon,
   ResourceIcon,
   TimerIcon,
@@ -829,7 +829,7 @@ const BuildingImage = ({ building, inventories, showInventoryStatusForType, unfi
   );
 };
 const EmptyBuildingImage = ({ iconOverride }) => (
-  <BuildingThumbnailWrapper><EmptyImage>{iconOverride || <LocationPinIcon />}</EmptyImage></BuildingThumbnailWrapper>
+  <BuildingThumbnailWrapper><EmptyImage>{iconOverride || <LocationIcon />}</EmptyImage></BuildingThumbnailWrapper>
 );
 
 const ReadyHighlight = () => <ReadyIconWrapper><div><NavIcon animate selected /></div></ReadyIconWrapper>;
