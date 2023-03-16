@@ -25,8 +25,8 @@ const FilterSection = styled.div`
 const EccentricityFilter = (props) => {
   const { onChange } = props;
 
-  const highlight = useStore(s => s.asteroids.highlight);
-  const updateHighlight = useStore(s => s.dispatchHighlightUpdated);
+  const highlight = useStore(s => s.assetSearch.asteroids.highlight);
+  const updateHighlight = useStore(s => s.dispatchHighlightUpdated('asteroids'));
 
   const [ highlightActive, setHighlightActive ] = useState(false);
   const [ eccMin, setEccMin ] = useState(initialValues.eccMin);

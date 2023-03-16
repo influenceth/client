@@ -66,9 +66,9 @@ const FilterGroup = styled.div`
 `;
 
 const Filters = (props) => {
-  const activeHighlight = useStore(s => s.asteroids.highlight);
-  const updateFilters = useStore(s => s.dispatchFiltersUpdated);
-  const updateHighlights = useStore(s => s.dispatchHighlightUpdated);
+  const activeHighlight = useStore(s => s.assetSearch.asteroids.highlight);
+  const updateFilters = useStore(s => s.dispatchFiltersUpdated('asteroids'));
+  const updateHighlights = useStore(s => s.dispatchHighlightUpdated('asteroids'));
 
   const [ filters, setFilters ] = useState({});
   const [ activeFilters, setActiveFilters ] = useState({

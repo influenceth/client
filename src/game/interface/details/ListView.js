@@ -2,19 +2,30 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 
-import usePagedAsteroids from '~/hooks/usePagedAsteroids';
+import usePagedAssets from '~/hooks/usePagedAssets';
 import DataTable from '~/components/DataTable';
 import Details, { borderColor } from '~/components/DetailsV2';
 import Pagination from '~/components/Pagination';
-import listConfigs from './listViews';
-import SearchAsteroids, { SearchAsteroidTray } from '../hud/hudMenus/SearchAsteroids';
-import { trayHeight } from '../hud/hudMenus/components';
+import SearchFilters from '~/components/SearchFilters';
+import SearchFilterTray from '~/components/SearchFilterTray';
 import InProgressIcon from '~/components/InProgressIcon';
-import { BuildingIcon, ColumnsIcon, ConstructIcon, CoreSampleIcon, CrewIcon, CrewmateIcon, PlanBuildingIcon, RocketIcon, ScanAsteroidIcon, ShipIcon, SlidersIcon, SwayIcon, TransactionIcon } from '~/components/Icons';
+import {
+  BuildingIcon,
+  ColumnsIcon,
+  CoreSampleIcon,
+  CrewIcon,
+  CrewmateIcon,
+  RocketIcon,
+  ScanAsteroidIcon,
+  ShipIcon,
+  SlidersIcon,
+  TransactionIcon
+} from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import Dropdown from '~/components/DropdownV2';
 import { useHistory, useParams } from 'react-router-dom';
 import Multiselect from '~/components/Multiselect';
+import listConfigs from './listViews';
 
 const footerMargin = 12;
 const filterWidth = 344;
@@ -85,7 +96,7 @@ const Tray = styled.div`
   border-top: 1px solid ${borderColor};
   display: flex;
   flex-direction: row;
-  height: ${trayHeight}px;
+  height: 80px;
   & > div {
     flex: 1;
   }
@@ -133,70 +144,60 @@ const assetTypes = {
     icon: <ScanAsteroidIcon />, // TODO
     title: 'Asteroids',
     useColumns: listConfigs.asteroids,
-    useHook: usePagedAsteroids,
   },
   crewmates: {
     keyField: 'i',
     icon: <CrewmateIcon />,
     title: 'Crewmates',
-    useColumns: listConfigs.asteroids,
-    useHook: usePagedAsteroids,
+    useColumns: listConfigs.crewmates,
   },
   crews: {
     keyField: 'i',
     icon: <CrewIcon />,
     title: 'Crews',
     useColumns: listConfigs.asteroids,
-    useHook: usePagedAsteroids,
   },
   buildings: {
     keyField: 'i',
     icon: <BuildingIcon />,
     title: 'Buildings',
     useColumns: listConfigs.asteroids,
-    useHook: usePagedAsteroids,
   },
   coreSamples: {
     keyField: 'i',
     icon: <CoreSampleIcon />,
     title: 'Core Samples',
     useColumns: listConfigs.asteroids,
-    useHook: usePagedAsteroids,
   },
   ships: {
     keyField: 'i',
     icon: <ShipIcon />,
     title: 'Ships',
     useColumns: listConfigs.asteroids,
-    useHook: usePagedAsteroids,
   },
   marketOrders: {
     keyField: 'i',
     icon: <RocketIcon />, // TODO
     title: 'Market Orders',
     useColumns: listConfigs.asteroids,
-    useHook: usePagedAsteroids,
   },
   leases: {
     keyField: 'i',
     icon: <RocketIcon />, // TODO
     title: 'Leases',
     useColumns: listConfigs.asteroids,
-    useHook: usePagedAsteroids,
   },
   actions: {
     keyField: 'i',
     icon: <RocketIcon />, // TODO
     title: 'Actions',
     useColumns: listConfigs.asteroids,
-    useHook: usePagedAsteroids,
   },
   transactions: {
     keyField: 'i',
     icon: <TransactionIcon />,
     title: 'Transactions',
     useColumns: listConfigs.asteroids,
-    useHook: usePagedAsteroids,
   },
 }
 
@@ -207,8 +208,8 @@ const assetsAsOptions = Object.keys(assetTypes).map((key) => ({
 }));
 
 const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
-  const { keyField, title, useColumns, useHook } = assetTypes[assetType];
-  const { query, page, perPage, setPage, sort, setSort } = useHook();
+  const { keyField, title, useColumns, filters, filterTray } = assetTypes[assetType];
+  const { query, page, perPage, setPage, sort, setSort } = usePagedAssets(assetType);
   const [sortField, sortDirection] = sort;
 
   const columns = useColumns();
@@ -313,7 +314,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
         <MainWrapper>
           <FilterContainer open={filtersOpen}>
             <InnerFilterContainer>
-              <SearchAsteroids hideTray />
+              <SearchFilters assetType={assetType} />
             </InnerFilterContainer>
           </FilterContainer>
           <TableContainer>
@@ -328,8 +329,8 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
           </TableContainer>
         </MainWrapper>
         <Tray>
-          <div>
-            <SearchAsteroidTray borderless handleClickFilters={onClickFilters} />
+          <div style={{ display: 'flex' }}>
+            <SearchFilterTray assetType={assetType} handleClickFilters={onClickFilters} />
           </div>
           {query?.isLoading
             ? (
@@ -377,7 +378,8 @@ const ListView = () => {
   }, [assetType]);
 
   if (!assetType) return null;
-  return <ListViewComponent assetType={assetType} onAssetTypeChange={onAssetTypeChange} />;
+  // (NOTE: key forces remount so that doesn't complain about hook order changing due to useColumns)
+  return <ListViewComponent key={assetType} assetType={assetType} onAssetTypeChange={onAssetTypeChange} />;
 };
 
 export default ListView;

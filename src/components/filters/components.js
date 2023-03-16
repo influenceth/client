@@ -5,7 +5,7 @@ import { RiPaintFill as HighlightIcon } from 'react-icons/ri';
 import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
-import { HudMenuCollapsibleSection } from '../components';
+import { HudMenuCollapsibleSection } from '../../game/interface/hud/hudMenus/components';
 
 const HighlightToggle = styled(IconButton)`
   color: ${p => p.enabled ? 'white' : '#444'};
@@ -23,6 +23,42 @@ const Resetter = styled(IconButton)`
   margin: 0 0 0 8px;
   padding: unset;
   width: 1.6em;
+`;
+
+export const InputBlock = styled.div`
+  padding-bottom: 12px;
+  padding-right: 2px;
+  &:last-child {
+    padding-bottom: 0;
+  }
+
+  label {
+    font-size: 13px;
+    margin-bottom: 4px;
+    opacity: 0.5;
+  }
+  & > div {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    ${p => p.singleField ? '' : 'padding-top: 6px;'}
+    width: 100%;
+
+    & > span {
+      flex: 1;
+      font-size: 90%;
+      opacity: 0.5;
+      padding-left: 8px;
+      transition: opacity 250ms ease;
+    }
+
+    ${p => p.singleField ? 'input { width: 100%; }' : ''}
+
+    input:focus + span {
+      opacity: 1;
+    }
+  }
 `;
 
 export const CheckboxButton = styled.button`
@@ -78,6 +114,7 @@ const Highlighter = (props) => {
 };
 
 export const SearchMenu = ({
+  assetType,
   children,
   fieldName,
   highlightColorMap,
@@ -87,10 +124,10 @@ export const SearchMenu = ({
   title,
   ...props
 }) => {
-  const highlight = useStore(s => s.asteroids.highlight);
-  const filters = useStore(s => s.asteroids.filters);
-  const updateHighlight = useStore(s => s.dispatchHighlightUpdated);
-  const updateFilters = useStore(s => s.dispatchFiltersUpdated);
+  const highlight = useStore(s => s.assetSearch[assetType].highlight);
+  const filters = useStore(s => s.assetSearch[assetType].filters);
+  const updateHighlight = useStore(s => s.dispatchHighlightUpdated(assetType));
+  const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
 
   const fieldHighlight = useMemo(() => highlight && highlight.field === highlightFieldName, [highlight, highlightFieldName]);
 

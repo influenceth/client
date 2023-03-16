@@ -3,7 +3,7 @@ import { toRarity, toSpectralType } from '@influenceth/sdk';
 import { Link } from 'react-router-dom';
 import DataTable, { createTheme } from 'react-data-table-component';
 
-import usePagedAsteroids from '~/hooks/usePagedAsteroids';
+import usePagedAssets from '~/hooks/usePagedAssets';
 import Details from '~/components/Details';
 import OnClickLink from '~/components/OnClickLink';
 import Pagination from '~/components/Pagination';
@@ -91,7 +91,7 @@ const styleOverrides = {
 };
 
 const AsteroidsTable = (props) => {
-  const { query, setPage, setPerPage, setSort } = usePagedAsteroids();
+  const { query, setPage, setPerPage, setSort } = usePagedAssets('asteroids');
 
   const handleSort = (field, direction) => {
     direction = direction.charAt(0).toUpperCase() + direction.slice(1);

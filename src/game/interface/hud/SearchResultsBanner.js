@@ -4,8 +4,7 @@ import styled from 'styled-components';
 import ClipCorner from '~/components/ClipCorner';
 import Dropdown from '~/components/DropdownV2';
 import InProgressIcon from '~/components/InProgressIcon';
-import { EccentricityIcon, InclinationIcon, OrbitalPeriodIcon, RadiusIcon } from '~/components/Icons';
-import useAsteroidSearch from '~/hooks/useAsteroidSearch';
+import useAssetSearch from '~/hooks/useAssetSearch';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 import useAsteroidColumns from '../details/listViews/asteroids';
@@ -122,12 +121,12 @@ const SortSelection = styled.div`
 
 
 const SearchResultsBanner = () => {
-  const { data: asteroidSearch, isLoading } = useAsteroidSearch();
+  const { data: asteroidSearch, isLoading } = useAssetSearch('asteroids');
   const columns = useAsteroidColumns();
 
   const openHudMenu = useStore(s => s.openHudMenu);
-  const sort = useStore(s => s.asteroids.sort);
-  const updateSort = useStore(s => s.dispatchSortUpdated);
+  const sort = useStore(s => s.assetSearch.asteroids.sort);
+  const updateSort = useStore(s => s.dispatchSortUpdated('asteroids'));
   
   const data = useMemo(() => {
     if (openHudMenu === 'belt.System Search') {

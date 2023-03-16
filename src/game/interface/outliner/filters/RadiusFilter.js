@@ -34,8 +34,8 @@ const RadiusFilter = (props) => {
   const { onChange } = props;
   const { data: sale } = useSale();
 
-  const highlight = useStore(s => s.asteroids.highlight);
-  const updateHighlight = useStore(s => s.dispatchHighlightUpdated);
+  const highlight = useStore(s => s.assetSearch.asteroids.highlight);
+  const updateHighlight = useStore(s => s.dispatchHighlightUpdated('asteroids'));
 
   const [ highlightActive, setHighlightActive ] = useState(false);
   const [ radiusMin, setRadiusMin ] = useState(initialValues.radiusMin);

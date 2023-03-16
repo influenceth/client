@@ -8,34 +8,11 @@ import ColorPicker from '~/components/ColorPicker';
 import Ether from '~/components/Ether';
 import formatters from '~/lib/formatters';
 import constants from '~/lib/constants';
-import { SearchMenu } from './components';
+import { InputBlock, SearchMenu } from './components';
 import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontrolled';
 
 import IconButton from '~/components/IconButton';
 import { GoIcon } from '~/components/Icons';
-
-const InputBlock = styled.div`
-  padding-bottom: 12px;
-  &:last-child {
-    padding-bottom: 0;
-  }
-
-  label {
-    font-size: 13px;
-    margin-bottom: 4px;
-    opacity: 0.5;
-  }
-  & > div {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    padding-top: 6px;
-    width: 100%;
-    input {
-      flex: 1;
-    }
-  }
-`;
 
 const fieldName = 'name';
 
@@ -62,6 +39,7 @@ const NameFilter = ({ filters, onChange }) => {
 
   return (
     <SearchMenu
+      assetType="asteroids"
       collapsed={!filters[fieldName]}
       fieldName={fieldName}
       title="Name & Id">

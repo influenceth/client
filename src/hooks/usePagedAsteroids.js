@@ -11,9 +11,9 @@ const pageSize = 25;
 const usePagedAsteroids = () => {
   const [page, setPage] = useState(1);
 
-  const filters = useStore(s => s.asteroids.filters);
-  const sort = useStore(s => s.asteroids.sort || []);
-  const setSort = useStore(s => s.dispatchSortUpdated);
+  const filters = useStore(s => s.assetSearch.asteroids.filters);
+  const sort = useStore(s => s.assetSearch.asteroids.sort);
+  const setSort = useStore(s => s.dispatchSortUpdated('asteroids'));
 
   useEffect(() => {
     setPage(1);

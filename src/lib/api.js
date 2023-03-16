@@ -218,8 +218,8 @@ const api = {
     return response.data;
   },
 
-  searchAsteroids: async (query) => {
-    const response = await instance.post(`/asteroids/_search`, query);
+  searchAssets: async (asset, query) => {
+    const response = await instance.post(`/_search/${asset.replace(/s$/, '')}`, query);
     return {
       hits: response.data.hits.hits.map((h) => h._source),
       total: response.data.hits.total.value

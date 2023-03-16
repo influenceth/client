@@ -39,7 +39,7 @@ const highlightFieldName = 'ownership';
 
 const OwnershipFilter = ({ filters, onChange }) => {
   const { account } = useAuth();
-  const highlight = useStore(s => s.asteroids.highlight) || {};
+  const highlight = useStore(s => s.assetSearch.asteroids.highlight) || {};
   const fieldHighlight = highlight && highlight.field === highlightFieldName;
 
   const [types, setTypes] = useState(initialValues);
@@ -115,6 +115,7 @@ const OwnershipFilter = ({ filters, onChange }) => {
 
   return (
     <SearchMenu
+      assetType="asteroids"
       collapsed={!filters[fieldName]}
       fieldName={fieldName}
       highlightFieldName={highlightFieldName}

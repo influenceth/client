@@ -28,8 +28,8 @@ const OwnershipType = styled.div`
 const OwnershipFilter = (props) => {
   const { onChange } = props;
   const { account } = useAuth();
-  const highlight = useStore(s => s.asteroids.highlight);
-  const updateHighlight = useStore(s => s.dispatchHighlightUpdated);
+  const highlight = useStore(s => s.assetSearch.asteroids.highlight);
+  const updateHighlight = useStore(s => s.dispatchHighlightUpdated('asteroids'));
 
   const [ highlightActive, setHighlightActive ] = useState(false);
   const [ types, setTypes ] = useState(initialValues);

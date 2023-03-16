@@ -7,8 +7,8 @@ import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
 
 const useAsteroidSearch = ({ from = 0, size = 2000 } = {}) => {
-  const filters = useStore(s => s.asteroids.filters);
-  const sort = useStore(s => s.asteroids.sort);
+  const filters = useStore(s => s.assetSearch.asteroids.filters);
+  const sort = useStore(s => s.assetSearch.asteroids.sort);
   const [ query, setQuery ] = useThrottle({}, 2, true);
 
   useEffect(() => {
@@ -74,11 +74,7 @@ const useAsteroidSearch = ({ from = 0, size = 2000 } = {}) => {
 
   return useQuery(
     [ 'asteroids', 'search', query ],
-    () => new Promise((resolve, reject) => {
-      api.searchAsteroids(query)
-        .then(resolve)
-        .catch(reject);
-    }),
+    () => api.searchAssets('asteroids', query),
     {
       enabled: !!query,
       // keepPreviousData: true // TODO: do we want this?

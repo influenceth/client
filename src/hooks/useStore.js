@@ -28,6 +28,11 @@ const outlinerSectionDefaults = {
   timeControl: { ...sectionDefault }
 };
 
+const assetSearchDefaults = {
+  asteroids: { filters: {}, sort: ['r', 'desc'], highlight: null },
+  crewmates: { filters: {}, sort: ['i', 'asc'] },
+};
+
 const useStore = create(subscribeWithSelector(persist((set, get) => ({
     actionDialog: {},
     launcherPage: null,
@@ -39,15 +44,12 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       zoomedFrom: null,
       destination: null,
       hovered: null,
-      filters: {},
-      highlight: null,
       plot: null,
       plotDestination: null,
       resourceMap: {
         active: false,
         selected: null
       },
-      sort: ['r', 'desc'],
       zoomToPlot: null,
       owned: {
         highlighted: false,
@@ -57,6 +59,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
         highlighted: false,
         highlightColor: '#AB149E'
       },
+    },
+
+    assetSearch: {
+      ...assetSearchDefaults
     },
 
     auth: {
@@ -329,16 +335,16 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.asteroids.zoomedFrom = from;
     })),
 
-    dispatchFiltersUpdated: (filters) => set(produce(state => {
-      state.asteroids.filters = filters;
+    dispatchFiltersUpdated: (assetType) => (filters) => set(produce(state => {
+      state.assetSearch[assetType].filters = filters;
     })),
 
-    dispatchSortUpdated: (sort) => set(produce(state => {
-      state.asteroids.sort = sort;
+    dispatchSortUpdated: (assetType) => (sort) => set(produce(state => {
+      state.assetSearch[assetType].sort = sort;
     })),
 
-    dispatchHighlightUpdated: (settings) => set(produce(state => {
-      state.asteroids.highlight = settings;
+    dispatchHighlightUpdated: (assetType) => (settings) => set(produce(state => {
+      state.assetSearch[assetType].highlight = settings;
     })),
 
     // dispatchOwnedAsteroidsMapped: () => set(produce(state => {

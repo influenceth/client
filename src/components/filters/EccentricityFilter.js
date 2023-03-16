@@ -5,43 +5,8 @@ import useStore from '~/hooks/useStore';
 import ColorPicker from '~/components/ColorPicker';
 import formatters from '~/lib/formatters';
 import constants from '~/lib/constants';
-import { SearchMenu } from './components';
+import { InputBlock, SearchMenu } from './components';
 import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontrolled';
-
-const Period = styled.span``;
-
-const InputBlock = styled.div`
-  padding-bottom: 12px;
-  &:last-child {
-    padding-bottom: 0;
-  }
-
-  label {
-    font-size: 13px;
-    margin-bottom: 4px;
-    opacity: 0.5;
-  }
-  & > div {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    padding-top: 6px;
-    width: 100%;
-
-    & > span {
-      flex: 1;
-      font-size: 90%;
-      opacity: 0.5;
-      padding-left: 8px;
-      transition: opacity 250ms ease;
-    }
-
-    input:focus + span {
-      opacity: 1;
-    }
-  }
-`;
 
 const highlightFieldName = 'eccentricity';
 
@@ -51,7 +16,7 @@ const initialValues = {
 };
 
 const EccentricityFilter = ({ filters, onChange }) => {
-  const highlight = useStore(s => s.asteroids.highlight) || {};
+  const highlight = useStore(s => s.assetSearch.asteroids.highlight) || {};
   const fieldHighlight = highlight && highlight.field === highlightFieldName;
 
   const [ focus, setFocus ] = useState();
@@ -111,6 +76,7 @@ const EccentricityFilter = ({ filters, onChange }) => {
 
   return (
     <SearchMenu
+      assetType="asteroids"
       collapsed={!(filters.eccMin || filters.eccMax)}
       fieldName={['eccMin', 'eccMax']}
       highlightFieldName={highlightFieldName}

@@ -7,39 +7,8 @@ import ColorPicker from '~/components/ColorPicker';
 import Ether from '~/components/Ether';
 import formatters from '~/lib/formatters';
 import constants from '~/lib/constants';
-import { SearchMenu } from './components';
+import { InputBlock, SearchMenu } from './components';
 import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontrolled';
-
-const InputBlock = styled.div`
-  padding-bottom: 12px;
-  &:last-child {
-    padding-bottom: 0;
-  }
-
-  label {
-    font-size: 13px;
-    margin-bottom: 4px;
-    opacity: 0.5;
-  }
-  & > div {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    padding-top: 6px;
-    width: 100%;
-    ${Ether} {
-      flex: 1;
-      font-size: 90%;
-      opacity: 0.5;
-      padding-left: 8px;
-      transition: opacity 250ms ease;
-    }
-
-    input:focus + span {
-      opacity: 1;
-    }
-  }
-`;
 
 const highlightFieldName = 'radius';
 
@@ -51,7 +20,7 @@ const initialValues = {
 const RadiusFilter = ({ filters, onChange }) => {
   const { data: sale } = useSale();
 
-  const highlight = useStore(s => s.asteroids.highlight) || {};
+  const highlight = useStore(s => s.assetSearch.asteroids.highlight) || {};
   const fieldHighlight = highlight && highlight.field === highlightFieldName;
 
   const [ focus, setFocus ] = useState();
@@ -111,6 +80,7 @@ const RadiusFilter = ({ filters, onChange }) => {
 
   return (
     <SearchMenu
+      assetType="asteroids"
       collapsed={!(filters.radiusMin || filters.radiusMax)}
       fieldName={['radiusMin', 'radiusMax']}
       highlightFieldName={highlightFieldName}

@@ -12,8 +12,8 @@ const useAsteroids = () => {
   const filterOwned = useStore(s => s.asteroids.owned.filtered);
   const includeWatched = useStore(s => s.asteroids.watched.mapped);
   const filterWatched = useStore(s => s.asteroids.watched.filtered);
-  const filters = useStore(s => s.asteroids.filters);
-  const highlight = useStore(s => s.asteroids.highlight);
+  const filters = useStore(s => s.assetSearch.asteroids.filters);
+  const highlight = useStore(s => s.assetSearch.asteroids.highlight);
   const [ query, setQuery ] = useThrottle({}, 2, true);
 
   useEffect(() => {

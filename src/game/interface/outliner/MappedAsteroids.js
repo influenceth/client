@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 
-import usePagedAsteroids from '~/hooks/usePagedAsteroids';
+import usePagedAssets from '~/hooks/usePagedAssets';
 import IconButton from '~/components/IconButton';
 import Section from '~/components/Section';
 import AsteroidItem from '~/components/AsteroidItem';
@@ -29,7 +29,7 @@ const AsteroidList = styled.ul`
 const MappedAsteroids = (props) => {
   const history = useHistory();
   const perPage = 25;
-  const { query, setPage, setPerPage } = usePagedAsteroids();
+  const { query, setPage, setPerPage } = usePagedAssets('asteroids');
   const [ currentPage, setCurrentPage ] = useState(1);
 
   useEffect(() => {

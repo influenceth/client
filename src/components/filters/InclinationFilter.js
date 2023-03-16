@@ -5,43 +5,8 @@ import useStore from '~/hooks/useStore';
 import ColorPicker from '~/components/ColorPicker';
 import formatters from '~/lib/formatters';
 import constants from '~/lib/constants';
-import { SearchMenu } from './components';
+import { InputBlock, SearchMenu } from './components';
 import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontrolled';
-
-const Period = styled.span``;
-
-const InputBlock = styled.div`
-  padding-bottom: 12px;
-  &:last-child {
-    padding-bottom: 0;
-  }
-
-  label {
-    font-size: 13px;
-    margin-bottom: 4px;
-    opacity: 0.5;
-  }
-  & > div {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    padding-top: 6px;
-    width: 100%;
-
-    & > span {
-      flex: 1;
-      font-size: 90%;
-      opacity: 0.5;
-      padding-left: 8px;
-      transition: opacity 250ms ease;
-    }
-
-    input:focus + span {
-      opacity: 1;
-    }
-  }
-`;
 
 const highlightFieldName = 'inclination';
 
@@ -54,7 +19,7 @@ const toRadians = (d) => d >= 0 ? Math.PI * d / 180 : undefined;
 const toDegrees = (r) => r > 0 ? Math.round(100 * 180 * r / Math.PI) / 100 : '';
 
 const InclinationFilter = ({ filters, onChange }) => {
-  const highlight = useStore(s => s.asteroids.highlight) || {};
+  const highlight = useStore(s => s.assetSearch.asteroids.highlight) || {};
   const fieldHighlight = highlight && highlight.field === highlightFieldName;
 
   const [ focus, setFocus ] = useState();
@@ -114,6 +79,7 @@ const InclinationFilter = ({ filters, onChange }) => {
 
   return (
     <SearchMenu
+      assetType="asteroids"
       collapsed={!(filters.incMin || filters.incMax)}
       fieldName={['incMin', 'incMax']}
       highlightFieldName={highlightFieldName}
