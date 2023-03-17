@@ -141,9 +141,11 @@ const Corner = styled.svg`
 `;
 
 const StyledBadge = styled(Badge)`
+  position: absolute;
   font-size: 80%;
-  margin-left: 12px;
-  margin-right: -6px;
+  margin-left: calc(${p => p.width || p.sizeParams.width}px - 0.8em);
+  margin-top: -0.5em;
+  z-index: 1;
 `;
 
 const DisabledTooltip = styled.span`
@@ -197,38 +199,40 @@ const StandardButton = (props) => {
   if (setRef) restProps.ref = setRef;
 
   return (
-    <StyledButton
-      onClick={_onClick}
-      data-tip={dataTip}
-      data-place={dataPlace || "right"}
-      sizeParams={sizeParams}
-      {...restProps}>
-      <InnerContainer flip={restProps.flip} sizeParams={sizeParams}>
-        {loading && (
-          <BarLoader
-            color={props.color
-              ? getContrastText(props.color)
-              : (props.isTransaction ? theme.colors.txButton : theme.colors.mainButton)}
-            css={loadingCss}
-            height={1} />
-        )}
-        {props.children}
-        {props.badge && <StyledBadge value={props.badge} />}
-      </InnerContainer>
-      <Corner
-        borderless={props.borderless}
-        color={props.color}
-        flip={restProps.flip}
-        isTransaction={props.isTransaction}
+    <>
+      {props.badge ? <StyledBadge value={props.badge} {...restProps} sizeParams={sizeParams} /> : null}
+      <StyledButton
+        onClick={_onClick}
+        data-tip={dataTip}
+        data-place={dataPlace || "right"}
         sizeParams={sizeParams}
-        viewBox={`0 0 ${sizeParams.line} ${sizeParams.line}`}
-        xmlns="http://www.w3.org/2000/svg">
-        <line x1="0" y1={sizeParams.line} x2={sizeParams.line} y2="0" />
-      </Corner>
-      {props.disabled && props.disabledTooltip && (
-        <DisabledTooltip {...(props.disabledTooltip || {})} />
-      )}
-    </StyledButton>
+        {...restProps}>
+        <InnerContainer flip={restProps.flip} sizeParams={sizeParams}>
+          {loading && (
+            <BarLoader
+              color={props.color
+                ? getContrastText(props.color)
+                : (props.isTransaction ? theme.colors.txButton : theme.colors.mainButton)}
+              css={loadingCss}
+              height={1} />
+          )}
+          {props.children}
+        </InnerContainer>
+        <Corner
+          borderless={props.borderless}
+          color={props.color}
+          flip={restProps.flip}
+          isTransaction={props.isTransaction}
+          sizeParams={sizeParams}
+          viewBox={`0 0 ${sizeParams.line} ${sizeParams.line}`}
+          xmlns="http://www.w3.org/2000/svg">
+          <line x1="0" y1={sizeParams.line} x2={sizeParams.line} y2="0" />
+        </Corner>
+        {props.disabled && props.disabledTooltip && (
+          <DisabledTooltip {...(props.disabledTooltip || {})} />
+        )}
+      </StyledButton>
+    </>
   );
 };
 

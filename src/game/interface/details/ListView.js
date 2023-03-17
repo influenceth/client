@@ -27,6 +27,7 @@ import { useHistory, useParams } from 'react-router-dom';
 import Multiselect from '~/components/Multiselect';
 import listConfigs from './listViews';
 import theme from '~/theme';
+import useStore from '~/hooks/useStore';
 
 const footerMargin = 12;
 const filterWidth = 344;
@@ -214,10 +215,11 @@ const assetsAsOptions = Object.keys(assetTypes).map((key) => ({
 }));
 
 const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
-  const { keyField, title, useColumns, filters, filterTray } = assetTypes[assetType];
+  const { keyField, title, useColumns } = assetTypes[assetType];
   const { query, page, perPage, setPage, sort, setSort } = usePagedAssets(assetType);
   const [sortField, sortDirection] = sort;
 
+  const filters = useStore(s => s.assetSearch[assetType].filters);
   const columns = useColumns();
 
   const [disabledColumns, setDisabledColumns] = useState([]);
@@ -280,6 +282,8 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
 
   const enabledColumnKeys = useMemo(() => enabledColumns.map((c) => c.key), [enabledColumns]);
 
+  const activeFilters = useMemo(() => Object.values(filters).filter((v) => v !== undefined).length, [filters]);
+
   return (
     <Details fullWidth title="List View" contentProps={{ hasFooter: true }}>
       <ReactTooltip id="listView" effect="solid" />
@@ -298,6 +302,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
                 data-place="right"
                 data-tip={filtersOpen ? 'Hide Filters' : 'Show Filters'}
                 background={filtersOpen ? theme.colors.main : undefined}
+                badge={filtersOpen ? undefined : activeFilters}
                 subtle={!filtersOpen || undefined}
                 onClick={onToggleFilters}
                 size="bigicon">
