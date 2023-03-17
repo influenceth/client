@@ -19,12 +19,12 @@ const LocLink = styled.span`
   }
 `;
 
-export const LocationLink = ({ asteroidId, plotId, resourceId }) => {
+export const LocationLink = ({ asteroidId, plotId, resourceId, zoomToPlot }) => {
   const history = useHistory();
-  const _onClick = usePlotLink({ asteroidId, plotId, resourceId });
+  const _onClick = usePlotLink({ asteroidId, plotId, resourceId, zoomToPlot });
   return (
     <LocLink
-      data-for="global"
+      data-for="listView"
       data-tip={`View ${plotId ? 'Lot' : 'Asteroid'}`}
       data-place="left"
       onClick={() => {

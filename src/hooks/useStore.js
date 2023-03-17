@@ -30,7 +30,14 @@ const outlinerSectionDefaults = {
 
 const assetSearchDefaults = {
   asteroids: { filters: {}, sort: ['r', 'desc'], highlight: null },
+  buildings: { filters: {}, sort: ['i', 'asc'] },
+  coreSamples: { filters: { status: '2,3' }, sort: ['i', 'asc'] },
   crewmates: { filters: {}, sort: ['i', 'asc'] },
+  crews: { filters: {}, sort: ['i', 'asc'] },
+  ships: { filters: {}, sort: ['i', 'asc'] },
+  marketOrders: { filters: {}, sort: ['i', 'asc'] },
+  leases: { filters: {}, sort: ['i', 'asc'] },
+  lots: { filters: {}, sort: ['i', 'asc'], highlight: null },
 };
 
 const useStore = create(subscribeWithSelector(persist((set, get) => ({
@@ -522,7 +529,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
 }), {
   name: 'influence',
-  version: 1,
+  version: 2,
   migrate: (persistedState, oldVersion) => {
     const migrations = [
       (state, version) => {
@@ -531,7 +538,12 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
         const selected = state.asteroids.mapResourceId || null;
         state.asteroids.resourceMap = { active, selected };
         return state;
-      }
+      },
+      (state, version) => {
+        if (version >= 2) return;
+        state.assetSearch = { ...assetSearchDefaults };
+        return state;
+      },
     ];
 
     for (let i = 0; i < migrations.length; i++) {

@@ -60,6 +60,16 @@ filtersToQuery.asteroids = (filters) => {
   return queryBuilder;
 };
 
+filtersToQuery.buildings = (filters) => {
+  const queryBuilder = esb.boolQuery();
+  return queryBuilder;
+};
+
+filtersToQuery.coreSamples = (filters) => {
+  const queryBuilder = esb.boolQuery();
+  return queryBuilder;
+};
+
 filtersToQuery.crewmates = (filters) => {
   const queryBuilder = esb.boolQuery();
   if (filters.name) {
@@ -82,6 +92,31 @@ filtersToQuery.crewmates = (filters) => {
       esb.termsQuery('collection', filters.collection.split(',').map((t) => parseInt(t)))
     );
   }
+  return queryBuilder;
+};
+
+filtersToQuery.crews = (filters) => {
+  const queryBuilder = esb.boolQuery();
+  return queryBuilder;
+};
+
+filtersToQuery.leases = (filters) => {
+  const queryBuilder = esb.boolQuery();
+  return queryBuilder;
+};
+
+filtersToQuery.lots = (filters) => {
+  const queryBuilder = esb.boolQuery();
+  return queryBuilder;
+};
+
+filtersToQuery.marketOrders = (filters) => {
+  const queryBuilder = esb.boolQuery();
+  return queryBuilder;
+};
+
+filtersToQuery.ships = (filters) => {
+  const queryBuilder = esb.boolQuery();
   return queryBuilder;
 };
 

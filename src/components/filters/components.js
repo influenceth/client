@@ -45,7 +45,7 @@ export const InputBlock = styled.div`
     ${p => p.singleField ? '' : 'padding-top: 6px;'}
     width: 100%;
 
-    & > span {
+    & > * {
       flex: 1;
       font-size: 90%;
       opacity: 0.5;

@@ -167,11 +167,8 @@ const MainContent = styled.div`
   // height: calc(100vh - 2 * ${headerFooterHeight}px);
 `;
 
-const StyledTime = styled(Time).attrs(() => ({
-  style: {
-    'font-size': '20px'
-  }
-}))`
+const StyledTime = styled(Time)`
+  font-size: 20px !important;
   margin: 20px 0;
 `;
 

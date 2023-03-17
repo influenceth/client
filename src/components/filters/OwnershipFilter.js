@@ -143,7 +143,7 @@ const OwnershipFilter = ({ filters, onChange }) => {
         onFocus={(e) => e.target.select()}
         onKeyDown={handleEvent}
         placeholder="Wallet Address"
-        style={{ marginTop: 4, marginLeft: 24, opacity: types.ownedBy ? 1 : 0.3, width: 'calc(100% - 24px)' }} />
+        style={{ marginTop: 4, marginLeft: 24, opacity: types.ownedBy ? 1 : 0.3, width: 'calc(100% - 26px)' }} />
     </SearchMenu>
   );
 };

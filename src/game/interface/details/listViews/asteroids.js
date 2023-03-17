@@ -76,7 +76,7 @@ const useColumns = () => {
           const isFavorited = watchlistIds.includes(row.i);
           return (
             <FavoriteToggle
-              data-for="global"
+              data-for="listView"
               data-tip={isFavorited ? 'Favorited' : 'Add to Favorites'}
               data-place="left"
               favorited={isFavorited}

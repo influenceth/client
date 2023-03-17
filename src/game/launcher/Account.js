@@ -352,6 +352,7 @@ const Account = (props) => {
       }
       <PlayCTA loggedIn={loggedIn}>
         <MainButton
+          background={theme.colors.main}
           color={theme.colors.main}
           size="huge"
           onClick={onClickPlay}>

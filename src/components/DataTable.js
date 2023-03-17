@@ -155,8 +155,8 @@ const DataTableComponent = ({
       </DataTableRow>
     </DataTableHead>
     <DataTableBody>
-      {(data || []).map((row) => (
-        <DataTableRow key={row[keyField]}>
+      {(data || []).map((row, i) => (
+        <DataTableRow key={keyField ? row[keyField] : i}>
           {columns.map((c) => (
             <DataTableCell
               key={c.key}

@@ -58,6 +58,7 @@ const MainWrapper = styled.div`
   height: 0;
   margin-bottom: ${footerMargin}px;
 `;
+
 const FilterContainer = styled.div`
   height: 100%;
   overflow-x: hidden;
@@ -83,8 +84,10 @@ const FilterContainer = styled.div`
 `;
 const InnerFilterContainer = styled.div`
   height: 100%;
-  overflow: hidden;
-  width: ${filterWidth - 16}px;
+  margin-right: -12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 28px;
 `;
 const TableContainer = styled.div`
   flex: 1;
@@ -164,10 +167,10 @@ const assetTypes = {
     useColumns: listConfigs.asteroids,
   },
   coreSamples: {
-    keyField: 'i',
+    // keyField: 'i',
     icon: <CoreSampleIcon />,
     title: 'Core Samples',
-    useColumns: listConfigs.asteroids,
+    useColumns: listConfigs.coreSamples,
   },
   ships: {
     keyField: 'i',
@@ -276,6 +279,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
 
   return (
     <Details fullWidth title="List View" contentProps={{ hasFooter: true }}>
+      <ReactTooltip id="listView" effect="solid" />
       <Wrapper>
         <Controls>
           <LeftControls filtersOpen={filtersOpen}>

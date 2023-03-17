@@ -65,6 +65,7 @@ const NameFilter = ({ filters, onChange }) => {
             step={1}
             max={250000}
             min={1}
+            style={{ flex: 1 }}
             type="number" />
           <IconButton
             onClick={handleById}

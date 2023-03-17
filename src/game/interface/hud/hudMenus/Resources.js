@@ -140,19 +140,6 @@ const Resources = ({ onClose }) => {
                       </Resource>
                     );
                   })}
-                  {resources.map(({ i, categoryKey, name, abundance }) => {
-                    const selected = resourceMap.active && resourceMap.selected === Number(i);
-                    return (
-                      <Resource key={name}
-                        category={categoryKey}
-                        onClick={onClick(i)}
-                        selected={selected}>
-                        {selected ? <PlusIcon /> : <Circle />}
-                        <label>{name}</label>
-                        <span>{(abundance * 100).toFixed(1)}%</span>
-                      </Resource>
-                    );
-                  })}
                 </ResourceList>
               </ResourceGroup>
             ))}

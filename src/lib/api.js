@@ -219,7 +219,7 @@ const api = {
   },
 
   searchAssets: async (asset, query) => {
-    const response = await instance.post(`/_search/${asset.replace(/s$/, '')}`, query);
+    const response = await instance.post(`/_search/${asset.replace(/s$/, '').toLowerCase()}`, query);
     return {
       hits: response.data.hits.hits.map((h) => h._source),
       total: response.data.hits.total.value

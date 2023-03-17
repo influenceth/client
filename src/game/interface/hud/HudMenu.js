@@ -154,6 +154,7 @@ const HudMenu = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const { plotAsteroidId, plotId } = useStore(s => s.asteroids.plot || {});
   const openHudMenu = useStore(s => s.openHudMenu);
+  const resourceMap = useStore(s => s.asteroids.resourceMap);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
 
@@ -183,8 +184,20 @@ const HudMenu = () => {
   }, [open, openHudMenu]);
 
   useEffect(() => {
-    dispatchHudMenuOpened();
+    if (openHudMenu) {
+      const category = openHudMenu.split('.').shift();
+      if (category === 'belt' && zoomStatus !== 'out') dispatchHudMenuOpened();
+      if (category === 'asteroid' && !(zoomStatus === 'in' && !zoomToPlot)) dispatchHudMenuOpened();
+      if (category === 'lot' && !(zoomStatus === 'in' && zoomToPlot)) dispatchHudMenuOpened();
+    }
   }, [dispatchHudMenuOpened, zoomToPlot, zoomStatus]);
+
+  useEffect(() => {
+    // if just zoomed in and resourcemap is active, then open asteroid resources
+    if (zoomStatus === 'in' && !zoomToPlot && resourceMap.active) {
+      dispatchHudMenuOpened('asteroid.Asteroid Resources');
+    }
+  }, [zoomStatus, zoomToPlot])
 
   useEffect(() => {
     setOpen(!!openHudMenu);
@@ -264,7 +277,7 @@ const HudMenu = () => {
           label: 'List View',
           icon: <ListViewIcon />,
           onOpen: () => {
-            history.push(`/listview/lots`);
+            history.push(`/listview`);  // TODO: should probably also go to /listview/lots
           }
         },
       ];
@@ -301,7 +314,7 @@ const HudMenu = () => {
   const { label, onDetailClick, detailType, Component } = useMemo(() => {
     const [category, label] = (openHudMenu || '').split('.');
     return buttons.find((b) => b.label === label) || {};
-  }, [openHudMenu]);
+  }, [buttons, openHudMenu]);
 
   const buttonFilter = zoomStatus === 'in' && zoomToPlot
     ? 'lot'
