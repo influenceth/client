@@ -12,6 +12,9 @@ import CrewmateNameFilter from './filters/CrewmateNameFilter';
 import CrewmateCrewFilter from './filters/CrewmateCrewFilter';
 import CrewmateClassFilter from './filters/CrewmateClassFilter';
 import CrewmateCollectionFilter from './filters/CrewmateCollectionFilter';
+import YieldFilter from './filters/YieldFilter';
+import ResourceTypeFilter from './filters/ResourceTypeFilter';
+import BuildingTypeFilter from './filters/BuildingTypeFilter';
 
 const SearchFilters = ({ assetType }) => {
   const filters = useStore(s => s.assetSearch[assetType].filters);
@@ -31,6 +34,21 @@ const SearchFilters = ({ assetType }) => {
         <InclinationFilter filters={filters} onChange={onFiltersChange} />
         <EccentricityFilter filters={filters} onChange={onFiltersChange} />
         <AsteroidNameFilter filters={filters} onChange={onFiltersChange} />
+      </>
+    );
+  }
+  if (assetType === 'buildings') {
+    return (
+      <>
+        <BuildingTypeFilter filters={filters} onChange={onFiltersChange} />
+      </>
+    );
+  }
+  if (assetType === 'coresamples') {
+    return (
+      <>
+        <ResourceTypeFilter filters={filters} onChange={onFiltersChange} />
+        <YieldFilter filters={filters} onChange={onFiltersChange} />
       </>
     );
   }

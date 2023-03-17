@@ -22,7 +22,7 @@ const useColumns = () => {
         key: 'my',
         align: 'center',
         icon: <MyAssetIcon />,
-        selector: row => row.owner === crew?.i,
+        selector: row => row.owner === crew?.i ? <MyAssetIcon /> : null,
         bodyStyle: { fontSize: '24px' },
         requireLogin: true,
         unhideable: true
@@ -66,11 +66,14 @@ const useColumns = () => {
         label: 'Amount',
         sortField: 'remainingYield',
         selector: row => {
-          if (row.initialYield > row.remainingYield) {
+          if (row.initialYield === undefined) {
+            return `(incomplete)`;
+          }
+          else if (row.initialYield > row.remainingYield) {
             return (
               <>
                 {formatFixed(row.remainingYield / 1e3, 0)} t
-                <small>of original {formatFixed(row.initialYield / 1e3, 0)} t</small>
+                <small style={{ marginLeft: 5 }}>(original {formatFixed(row.initialYield / 1e3, 0)} t)</small>
               </>
             );
           }

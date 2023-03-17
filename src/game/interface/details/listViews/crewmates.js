@@ -20,7 +20,7 @@ const useColumns = () => {
         key: 'my',
         align: 'center',
         icon: <MyAssetIcon />,
-        selector: row => !!crewMemberMap[row.crew],
+        selector: row => !!crewMemberMap[row.crew] ? <MyAssetIcon /> : null,
         bodyStyle: { fontSize: '24px' },
         requireLogin: true,
         unhideable: true

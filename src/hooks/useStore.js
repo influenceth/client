@@ -31,11 +31,11 @@ const outlinerSectionDefaults = {
 const assetSearchDefaults = {
   asteroids: { filters: {}, sort: ['r', 'desc'], highlight: null },
   buildings: { filters: {}, sort: ['i', 'asc'] },
-  coreSamples: { filters: { status: '2,3' }, sort: ['i', 'asc'] },
+  coresamples: { filters: { status: '2,3' }, sort: ['i', 'asc'] },
   crewmates: { filters: {}, sort: ['i', 'asc'] },
   crews: { filters: {}, sort: ['i', 'asc'] },
   ships: { filters: {}, sort: ['i', 'asc'] },
-  marketOrders: { filters: {}, sort: ['i', 'asc'] },
+  orders: { filters: {}, sort: ['i', 'asc'] },
   leases: { filters: {}, sort: ['i', 'asc'] },
   lots: { filters: {}, sort: ['i', 'asc'], highlight: null },
 };

@@ -161,12 +161,12 @@ const assetTypes = {
     useColumns: listConfigs.asteroids,
   },
   buildings: {
-    keyField: 'i',
+    // keyField: 'i',
     icon: <BuildingIcon />,
     title: 'Buildings',
-    useColumns: listConfigs.asteroids,
+    useColumns: listConfigs.buildings,
   },
-  coreSamples: {
+  coresamples: {
     // keyField: 'i',
     icon: <CoreSampleIcon />,
     title: 'Core Samples',
@@ -178,7 +178,7 @@ const assetTypes = {
     title: 'Ships',
     useColumns: listConfigs.asteroids,
   },
-  marketOrders: {
+  orders: {
     keyField: 'i',
     icon: <RocketIcon />, // TODO
     title: 'Market Orders',
