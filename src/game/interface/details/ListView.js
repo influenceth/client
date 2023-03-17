@@ -26,6 +26,7 @@ import Dropdown from '~/components/DropdownV2';
 import { useHistory, useParams } from 'react-router-dom';
 import Multiselect from '~/components/Multiselect';
 import listConfigs from './listViews';
+import theme from '~/theme';
 
 const footerMargin = 12;
 const filterWidth = 344;
@@ -36,6 +37,7 @@ const Wrapper = styled.div`
   height: calc(100% - 1px);
 `;
 const Controls = styled.div`
+  align-items: center;
   display: flex;
   flex-direction: row;
   height: 59px;
@@ -46,10 +48,33 @@ const Controls = styled.div`
   }
 `;
 const LeftControls = styled.div`
+  align-items: center;
   display: flex;
+  height: 100%;
   width: 334px;
   border-right: 1px solid ${p => p.filtersOpen ? borderColor : 'transparent'};
   transition: border-color 250ms ease;
+`;
+
+const ResultContainer = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.main};
+  display: flex;
+  height: 100%;
+  padding-left: ${p => p.filtersOpen ? '16px' : '0'};
+  transition: padding-left 250ms ease;
+`;
+const ResultCount = styled.div`
+  &:before {
+    background: ${p => p.theme.colors.main};
+    content: '';
+    display: inline-block;
+    height: 10px;
+    margin-right: 8px;
+    transform: rotate(45deg);
+    transform-origin: center center;
+    width: 10px;
+  }
 `;
 const MainWrapper = styled.div`
   display: flex;
@@ -100,44 +125,22 @@ const Tray = styled.div`
   display: flex;
   flex-direction: row;
   height: 80px;
-  & > div {
-    flex: 1;
-  }
 `;
 
 const Loading = styled.div`
-  color: ${p => p.theme.colors.main};
   display: flex;
   justify-content: center;
 `;
 
-const Counts = styled.div`
+const Pages = styled.div`
+  color: #999;
   display: flex;
-  flex-direction: row;
-  & > div {
-    align-items: center;
+  flex: 1;
+  justify-content: flex-end;
+  padding-right: 15px;
+  & b {
     color: white;
-    display: flex;
-    flex: 1;
-    padding: 0 20px;
-    text-align: left;
-
-    &:first-child {
-      border-right: 1px solid ${borderColor};
-      color: ${p => p.theme.colors.main};
-      justify-content: flex-end;
-      text-align: right;
-      &:before {
-        background: ${p => p.theme.colors.main};
-        content: '';
-        display: inline-block;
-        height: 8px;
-        margin-right: 8px;
-        transform: rotate(45deg);
-        transform-origin: center center;
-        width: 8px;
-      }
-    }
+    font-weight: normal;
   }
 `;
 
@@ -294,15 +297,20 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
                 data-for="global"
                 data-place="right"
                 data-tip={filtersOpen ? 'Hide Filters' : 'Show Filters'}
-                background={filtersOpen ? 'transparent' : undefined}
+                background={filtersOpen ? theme.colors.main : undefined}
                 subtle={!filtersOpen || undefined}
-                borderless={filtersOpen ? 'transparent' : undefined}
                 onClick={onToggleFilters}
                 size="bigicon">
                 <SlidersIcon />
               </Button>
             </div>
           </LeftControls>
+          <ResultContainer filtersOpen={filtersOpen}>
+            {query?.isLoading
+              ? <Loading><InProgressIcon height={14} /></Loading>
+              : <ResultCount>{(query?.data?.total || 0).toLocaleString()} Result{query?.data?.total === 1 ? '' : 's'}</ResultCount>
+            }
+          </ResultContainer>
           <div style={{ flex: 1 }} />
           <Multiselect
             enabledKeys={enabledColumnKeys}
@@ -336,25 +344,19 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
           <div style={{ display: 'flex' }}>
             <SearchFilterTray assetType={assetType} handleClickFilters={onClickFilters} />
           </div>
-          {query?.isLoading
-            ? (
-              <Loading>
-                <InProgressIcon height={14} />
-              </Loading>
-            )
-            : (
-              <Counts>
-                <div>
-                  {(query?.data?.total || 0).toLocaleString()} Result{query?.data?.total === 1 ? '' : 's'}
-                </div>
-                <div>
-                  Showing: {query?.data?.total > 0
-                    ? `${((page - 1) * perPage + 1).toLocaleString()} - ${Math.min(page * perPage, query?.data?.total).toLocaleString()}`
-                    : 'n/a'
-                  }
-                </div>
-              </Counts>
+          <Pages>
+            {!query?.isLoading && query?.data?.total > 0 && (
+              <>
+                <b>
+                  {((page - 1) * perPage + 1).toLocaleString()}-{Math.min(page * perPage, query?.data?.total).toLocaleString()} |
+                </b>
+                &nbsp;
+                <span>
+                  Page {page.toLocaleString()} of {Math.ceil(query.data.total / perPage).toLocaleString()}
+                </span>
+              </>
             )}
+          </Pages>
           <div>
             <Pagination
               currentPage={page}
