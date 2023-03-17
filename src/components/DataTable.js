@@ -49,8 +49,11 @@ const SortIcon = styled.span`
   right: 6px;
   transition: opacity 250ms ease, transform 250ms ease;
 `;
+
+const iconColumnWidth = 45;
 const DataTableHeadCell = styled.th`
   height: 40px;
+  ${p => p.isIconColumn && `width: ${iconColumnWidth}px;`}
   position: sticky;
   top: 0;
   z-index: 1;
@@ -62,7 +65,7 @@ const DataTableHeadCell = styled.th`
       ? `
         color: #444;
         padding: 0 !important;
-        width: 45px !important;
+        width: ${iconColumnWidth}px !important;
       `
       : `
         min-width: ${minColumnWidth}px;  

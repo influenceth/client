@@ -158,7 +158,7 @@ const assetTypes = {
     keyField: 'i',
     icon: <CrewIcon />,
     title: 'Crews',
-    useColumns: listConfigs.asteroids,
+    useColumns: listConfigs.crews,
   },
   buildings: {
     // keyField: 'i',
@@ -172,36 +172,36 @@ const assetTypes = {
     title: 'Core Samples',
     useColumns: listConfigs.coreSamples,
   },
-  ships: {
-    keyField: 'i',
-    icon: <ShipIcon />,
-    title: 'Ships',
-    useColumns: listConfigs.asteroids,
-  },
-  orders: {
-    keyField: 'i',
-    icon: <RocketIcon />, // TODO
-    title: 'Market Orders',
-    useColumns: listConfigs.asteroids,
-  },
-  leases: {
-    keyField: 'i',
-    icon: <RocketIcon />, // TODO
-    title: 'Leases',
-    useColumns: listConfigs.asteroids,
-  },
-  actions: {
-    keyField: 'i',
-    icon: <RocketIcon />, // TODO
-    title: 'Actions',
-    useColumns: listConfigs.asteroids,
-  },
-  transactions: {
-    keyField: 'i',
-    icon: <TransactionIcon />,
-    title: 'Transactions',
-    useColumns: listConfigs.asteroids,
-  },
+  // ships: {
+  //   keyField: 'i',
+  //   icon: <ShipIcon />,
+  //   title: 'Ships',
+  //   useColumns: listConfigs.asteroids,
+  // },
+  // orders: {
+  //   keyField: 'i',
+  //   icon: <RocketIcon />, // TODO
+  //   title: 'Market Orders',
+  //   useColumns: listConfigs.asteroids,
+  // },
+  // leases: {
+  //   keyField: 'i',
+  //   icon: <RocketIcon />, // TODO
+  //   title: 'Leases',
+  //   useColumns: listConfigs.asteroids,
+  // },
+  // actions: {
+  //   keyField: 'i',
+  //   icon: <RocketIcon />, // TODO
+  //   title: 'Actions',
+  //   useColumns: listConfigs.asteroids,
+  // },
+  // transactions: {
+  //   keyField: 'i',
+  //   icon: <TransactionIcon />,
+  //   title: 'Transactions',
+  //   useColumns: listConfigs.asteroids,
+  // },
 }
 
 const assetsAsOptions = Object.keys(assetTypes).map((key) => ({

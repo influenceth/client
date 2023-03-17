@@ -114,6 +114,17 @@ filtersToQuery.crewmates = (filters) => {
 
 filtersToQuery.crews = (filters) => {
   const queryBuilder = esb.boolQuery();
+
+  if (filters.owner) {
+    queryBuilder.filter(esb.termQuery('owner', filters.owner));
+  }
+
+  if (filters.name) {
+    queryBuilder.filter(
+      esb.termQuery('name', filters.name)
+    );
+  }
+
   return queryBuilder;
 };
 

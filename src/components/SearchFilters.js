@@ -15,6 +15,8 @@ import CrewmateCollectionFilter from './filters/CrewmateCollectionFilter';
 import YieldFilter from './filters/YieldFilter';
 import ResourceTypeFilter from './filters/ResourceTypeFilter';
 import BuildingTypeFilter from './filters/BuildingTypeFilter';
+import CrewNameFilter from './filters/CrewNameFilter';
+import CrewOwnershipFilter from './filters/CrewOwnershipFilter';
 
 const SearchFilters = ({ assetType }) => {
   const filters = useStore(s => s.assetSearch[assetType].filters);
@@ -51,6 +53,14 @@ const SearchFilters = ({ assetType }) => {
         <YieldFilter filters={filters} onChange={onFiltersChange} />
       </>
     );
+  }
+  if (assetType === 'crews') {
+    return (
+      <>
+        <CrewOwnershipFilter filters={filters} onChange={onFiltersChange} />
+        <CrewNameFilter filters={filters} onChange={onFiltersChange} />
+      </>
+    )
   }
   if (assetType === 'crewmates') {
     return (
