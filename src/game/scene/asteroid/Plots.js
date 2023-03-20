@@ -15,6 +15,7 @@ import {
   Vector3
 } from 'three';
 import { useQueryClient } from 'react-query';
+import { Asteroid } from '@influenceth/sdk';
 
 import useAsteroidPlots from '~/hooks/useAsteroidPlots';
 import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
@@ -36,12 +37,10 @@ const FILL_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
 const PLOT_LOADER_GEOMETRY_PCT = 0.25;
 
 const MOUSEABLE_WIDTH = 800;
-const MAX_MESH_INSTANCES = 8000;  // TODO: maybe GPU dependent
+const MAX_MESH_INSTANCES = Asteroid.MAX_LOTS_RENDERED;  // TODO: maybe can adjust with GPU dependent, but keep in mind lots are now indexed to region
 const PIP_VISIBILITY_ALTITUDE = 25000;
 const OUTLINE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE * 0.5;
 const MOUSE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE;
-
-const MAX_REGIONS = 5000;
 
 const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
 const MOUSE_THROTTLE_TIME = 1000 / 30; // ms
@@ -95,12 +94,10 @@ const Plots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, c
   const RETICULE_WIDTH = 5 * PLOT_WIDTH;
 
   const chunkyAltitude = useMemo(() => Math.round(cameraAltitude / 500) * 500, [cameraAltitude]);
-  const plotTally = useMemo(() => Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2), [config?.radiusNominal]);
+
+  const plotTally = useMemo(() => Asteroid.getSurfaceArea(asteroidId, config?.radiusNominal / 1e3), [config?.radiusNominal]);
+  const regionTally = useMemo(() => Asteroid.getLotRegionTally(plotTally), [plotTally]);
   const visiblePlotTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, plotTally), [plotTally]);
-  const regionTally = useMemo(() => {
-    if (plotTally < MAX_MESH_INSTANCES) return 1;
-    return Math.min(MAX_REGIONS, Math.max(Math.ceil(plotTally / 100), 100));
-  }, [plotTally]);
 
   const { data: plots, isLoading: allPlotsLoading, refetch: refetchPlots } = useAsteroidPlots(asteroidId, plotTally);
   const { data: crewPlots, isLoading: crewPlotsLoading } = useAsteroidCrewPlots(asteroidId);

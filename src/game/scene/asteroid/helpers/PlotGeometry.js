@@ -165,7 +165,7 @@ export const getPlotGeometryHeightMaps = (config, resolution) => {
 };
 
 export const getPlotGeometry = ({ config, aboveSurface = 0.0, prebuiltHeightMaps, textureQuality }) => {
-  const pointTally = Math.floor(4 * Math.PI * (config.radiusNominal / 1000) ** 2);
+  const pointTally = AsteroidLib.getSurfaceArea(null, config.radiusNominal / 1000);
   const resolution = getPlotGeometryHeightMapResolution(config, textureQuality);
   const heightMaps = prebuiltHeightMaps || getPlotGeometryHeightMaps(config, resolution);
 
@@ -189,86 +189,9 @@ export const getPlotGeometry = ({ config, aboveSurface = 0.0, prebuiltHeightMaps
 }
 
 export const getPlotRegions = (positions, regionTally) => {
-  // TODO: benchmark this against loop to check all (i.e. above, prepopulating region positions)
-  // TODO: does this position need to be shifted per asteroid stretch / deformations?
-  const batchSize = positions.length / 3;
-  const regions = new Int16Array(batchSize);
-  for (let i = 0; i < batchSize; i++) {
-    const positionIndex = i * 3;
-    const center = new Vector3(positions[positionIndex], positions[positionIndex + 1], positions[positionIndex + 2]).normalize();
-    regions[i] = getClosestPlots({ center, plotTally: regionTally, findTally: 1 })[0];
-    // if (i % 1000 === 0) console.log(`to ${i}`);
-    if (regions[i] === undefined) regions[i] = -1;
-  }
-  return regions;
-}
-
-export const getAngleDiff = (angle1, angle2) => {
-  const a1 = angle1 >= 0 ? angle1 : (angle1 + twoPI);
-  const a2 = angle2 >= 0 ? angle2 : (angle2 + twoPI);
-  const diff = Math.abs(a1 - a2) % twoPI;
-  return diff > Math.PI ? (twoPI - diff) : diff;
+  return AsteroidLib.lotPositionsToRegions(positions, regionTally);
 }
 
 export const getClosestPlots = ({ center, centerPlot, plotTally, findTally }) => {
-  const returnAllPoints = !findTally; // if no findTally attached, return all (sorted)
-
-  // if pass centerPlot instead of center, set center from centerPlot
-  // NOTE: assume centerPlot is nominal plot id
-  if (centerPlot && !center) {
-    center = new Vector3(...AsteroidLib.getLotPosition(0, centerPlot, plotTally));
-  }
-
-  let arcToSearch, yToSearch, maxIndex, minIndex, centerTheta, thetaTolerance;
-  if (returnAllPoints || plotTally < 100) {
-    minIndex = 0;
-    maxIndex = plotTally;
-  } else {
-    // assuming # of lots returning represent a circular area around center,
-    // the radius of which is ~the arc length we need to search
-    //    SA of unit sphere (4 * pi * r^2) == 4 * pi
-    //    lotArea is SA / plotTally == 4 * pi / plotTally
-    //    targetArea is pi * search_radius^2 == findTally * lotArea
-    //      search_radius = sqrt(findTally * (4 * pi / plotTally) / pi)
-    // + 10% safety factor
-    arcToSearch = 1.1 * Math.sqrt(4 * findTally / plotTally);
-
-    // angle of arclen == arclen / radius (radius is 1)
-    // y of angle == sin(angle) * radius (radius is 1)
-    yToSearch = Math.sin(arcToSearch);
-    maxIndex = Math.min(plotTally, Math.ceil((1 - center.y + yToSearch) * (plotTally - 1) / 2));
-    minIndex = Math.max(0, Math.floor((1 - center.y - yToSearch) * (plotTally - 1) / 2));
-
-    centerTheta = Math.atan2(center.z, center.x);
-    thetaTolerance = arcToSearch / Math.sqrt(1 - center.y * center.y);
-  }
-
-  const points = [];
-  for(let index = minIndex; index < maxIndex; index++) {
-    const theta = phi * index;
-    if (!returnAllPoints) {
-      if (getAngleDiff(centerTheta, theta) > thetaTolerance) {
-        continue;
-      }
-    }
-
-    const y = 1 - (2 * index / (plotTally - 1));
-    const radiusAtY = Math.sqrt(1 - y * y);
-    const x = Math.cos(theta) * radiusAtY;
-    const z = Math.sin(theta) * radiusAtY;
-
-    points.push([
-      x,
-      y,
-      z,
-      index + 1,  // nominalIndex
-      Math.pow(center.x - x, 2) + Math.pow(center.y - y, 2) + Math.pow(center.z - z, 2),
-    ]);
-  }
-  //console.log(`${maxIndex - minIndex} points in range; ${points.length} checked`);
-
-  return points
-    .sort((a, b) => a[4] < b[4] ? -1 : 1) // sort by distance
-    .map((p) => p[3]) // map to plot index
-    .slice(0, findTally || undefined); // slice to target number
+  return AsteroidLib.getClosestLots({ center, centerPlot, plotTally, findTally });
 }
