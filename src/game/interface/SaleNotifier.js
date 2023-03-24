@@ -24,8 +24,8 @@ const SaleNotifier = (props) => {
   useEffect(() => {
     if (!Number.isInteger(soldCount)) return;
 
-    // Use original sale value to support testnet usage
-    const endCount = sale.endCount || 1859;
+    // Use max sales value if none is set
+    const endCount = sale.endCount || 250000;
 
     // Sale starts in the future. Wait for the time until it starts and set to starting
     if (sale.saleStartTime > Date.now() / 1000) {
@@ -40,14 +40,14 @@ const SaleNotifier = (props) => {
     }
 
     // Sale has already ended.
-    if (sale.saleStartTime < Date.now() / 1000 && soldCount >= endCount) setStatus('ended');
+    if (sale.saleStartTime < Date.now() / 1000 || soldCount >= endCount) setStatus('ended');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ sale, soldCount ]);
 
   useEffect(() => {
     if (status === 'started') {
-      // Use original sale value to support testnet usage
-      const endCount = sale.endCount || 1859;
+      // Use max sales value if none is set
+      const endCount = sale.endCount || 250000;
 
       saleStarted();
       createAlert({
