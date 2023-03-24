@@ -2,9 +2,6 @@ import { Vector3 } from 'three';
 import { Asteroid as AsteroidLib } from '@influenceth/sdk';
 import { cubeTransforms, generateHeightMap, getSamplingResolution } from './TerrainChunkUtils';
 
-const phi = Math.PI * (3 - Math.sqrt(5));
-const twoPI = 2 * Math.PI;
-
 const getSamplePoint = (side, resolution, s, t) => {
   let x, y, z;
   const u = s / (resolution - 1);
@@ -193,5 +190,10 @@ export const getPlotRegions = (positions, regionTally) => {
 }
 
 export const getClosestPlots = ({ center, centerPlot, plotTally, findTally }) => {
-  return AsteroidLib.getClosestLots({ center, centerPlot, plotTally, findTally });
+  return AsteroidLib.getClosestLots({
+    center: center ? [center.x, center.y, center.z] : undefined,
+    centerLot: centerPlot,
+    lotTally: plotTally,
+    findTally
+  });
 }
