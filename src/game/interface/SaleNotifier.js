@@ -39,8 +39,12 @@ const SaleNotifier = (props) => {
       setStatus('starting');
     }
 
-    // Sale has already ended.
-    if (sale.saleStartTime < Date.now() / 1000 || soldCount >= endCount) setStatus('ended');
+    // Check if one week has passed since the sale start time
+    const oneWeekInSeconds = 60 * 60 * 24 * 7;
+    const oneWeekPassed = (Date.now() / 1000) > (sale.saleStartTime + oneWeekInSeconds);
+    
+    // Sale has already ended
+    if (oneWeekPassed || soldCount >= endCount) setStatus('ended');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ sale, soldCount ]);
 
