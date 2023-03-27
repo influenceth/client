@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { PlusIcon, ResourceGroupIcons } from '~/components/Icons';
@@ -108,10 +108,23 @@ const Resources = ({ onClose }) => {
     if (resourceMap.active && resourceMap.selected === Number(i)) {
       dispatchResourceMapSelect();
     } else {
-      dispatchResourceMapSelect(i)
+      dispatchResourceMapSelect(i);
       dispatchResourceMapToggle(true);
     }
   }, [resourceMap]);
+
+  // hide emissive when the panel is closed
+  useEffect(() => {
+    if (!resourceMap.active && groupAbundances.length > 0) {
+      if (!resourceMap.selected) {
+        dispatchResourceMapSelect(groupAbundances[0].resources[0].i);
+      }
+      dispatchResourceMapToggle(true);
+    }
+    return () => {
+      dispatchResourceMapToggle(false);
+    };
+  }, []);
 
   const nonzeroBonuses = useMemo(() => (asteroid?.bonuses || []).filter((b) => b.level > 0), [asteroid?.bonuses]);
   return (

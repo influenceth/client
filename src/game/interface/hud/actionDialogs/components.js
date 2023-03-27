@@ -1734,6 +1734,7 @@ export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, s
     return startTime && targetTime ? Math.min(100, 100 * (chainTime - startTime) / (targetTime - startTime)) : 0;
   }, [chainTime, startTime, targetTime]);
 
+  if (!(action && plot)) return null;
   return (
     <>
       {status === 'DURING' && (
