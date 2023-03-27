@@ -243,6 +243,8 @@ const useStore = create(persist((set, get) => ({
 
     dispatchOriginSelected: (i) => set(produce(state => {
       if (Number(i) > 0 && Number(i) <= 250000) state.asteroids.origin = Number(i);
+      state.asteroids.plot = null;
+      state.asteroids.zoomToPlot = null;
     })),
 
     dispatchOriginCleared: () => set(produce(state => {
@@ -267,6 +269,8 @@ const useStore = create(persist((set, get) => ({
 
     dispatchZoomStatusChanged: (status) => set(produce(state => {
       state.asteroids.zoomStatus = status;
+      state.asteroids.plot = null;
+      state.asteroids.zoomToPlot = null;
     })),
 
     dispatchAsteroidZoomedFrom: (from) => set(produce(state => {
@@ -386,7 +390,12 @@ const useStore = create(persist((set, get) => ({
 }), {
   name: 'influence',
   version: 0,
-  blacklist: [ 'timeOverride' ]
+  blacklist: [
+    'timeOverride',
+    'asteroids.plot',
+    'asteroids.plotDestination',
+    'asteroids.zoomToPlot',
+  ]
 }));
 
 export default useStore;
