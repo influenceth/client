@@ -164,6 +164,9 @@ export function WalletProvider({ children }) {
   const [starknetReady, setStarknetReady] = useState(false);
 
   const session = useSessionSigner(starknet);
+  useEffect(() => {
+    console.log({ session });
+  }, [session]);
 
   // if using devnet, put "create block" on a timer since otherwise, blocks will not be advancing in the background
   useEffect(() => {
