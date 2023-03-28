@@ -34,8 +34,9 @@ const CrewmateCollectionFilter = ({ filters, onChange }) => {
   return (
     <SearchMenu
       assetType="crewmates"
-      collapsed={!filters[fieldName]}
       fieldName={fieldName}
+      filters={filters}
+      onChange={onChange}
       title="Collection">
       
       {Object.keys(Crewmate.COLLECTIONS).map((k) => (

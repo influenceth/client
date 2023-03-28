@@ -1,10 +1,17 @@
-import { useEffect } from 'react';
-import styled from 'styled-components';
+import { useMemo } from 'react';
+// import styled from 'styled-components';
 
-const SearchLots = () => {
+import useStore from '~/hooks/useStore';
+import { Scrollable, Tray } from './components';
+import SearchFilterTray from '~/components/SearchFilterTray';
+import SearchFilters from '~/components/SearchFilters';
 
 
-  // TODO: include by id:
+const SearchLots = ({ hideTray }) => {
+  const filters = useStore(s => s.assetSearch.plots.mapFilters);
+  const updateFilters = useStore(s => s.dispatchMapFiltersUpdated('plots'));
+
+// TODO: include by id:
   /*
     const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
 
@@ -26,7 +33,28 @@ const SearchLots = () => {
       onKeyDown={handleLotJumper} />
   */
 
-  return null;
+  const activeFilters = useMemo(() => Object.values(filters).filter((v) => v !== undefined).length, [filters]);
+  const hasTray = !hideTray && activeFilters > 0;  
+  return (
+    <>
+      <Scrollable hasTray={hasTray}>
+        <SearchFilters
+          assetType="plots"
+          filters={filters}
+          highlighting
+          updateFilters={updateFilters} />
+        <div style={{ height: 20 }} />
+      </Scrollable>
+
+      {hasTray && (
+        <Tray>
+          <SearchFilterTray
+            filters={filters}
+            updateFilters={updateFilters} />
+        </Tray>
+      )}
+    </>
+  );
 };
 
 export default SearchLots;

@@ -118,15 +118,13 @@ const SortSelection = styled.div`
   }
 `;
 
-
-
 const SearchResultsBanner = () => {
-  const { data: asteroidSearch, isLoading } = useAssetSearch('asteroids');
+  const { data: asteroidSearch, isLoading } = useAssetSearch('asteroids', { isMapSearch: true });
   const columns = useAsteroidColumns();
 
   const openHudMenu = useStore(s => s.openHudMenu);
-  const sort = useStore(s => s.assetSearch.asteroids.sort);
-  const updateSort = useStore(s => s.dispatchSortUpdated('asteroids'));
+  const sort = useStore(s => s.assetSearch.asteroids.mapSort);
+  const updateSort = useStore(s => s.dispatchMapSortUpdated('asteroids'));
   
   const data = useMemo(() => {
     if (openHudMenu === 'belt.System Search') {

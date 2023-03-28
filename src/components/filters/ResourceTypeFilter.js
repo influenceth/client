@@ -6,7 +6,12 @@ import { CheckboxButton, CheckboxRow, SearchMenu } from './components';
 
 const fieldName = 'resource';
 
-const initialValues = Object.keys(Inventory.RESOURCES).reduce((acc, k) => ({ ...acc, [k]: true }), {});
+const sampleableResources = Object.keys(Inventory.RESOURCES)
+  .filter((k) => k <= 22)
+  .reduce((acc, k) => ({ ...acc, [k]: Inventory.RESOURCES[k] }), {});
+
+const initialValues = Object.keys(sampleableResources)
+  .reduce((acc, k) => ({ ...acc, [k]: true }), {});
 
 const ResourceTypeFilter = ({ filters, onChange }) => {
   const [ types, setTypes ] = useState({ ...initialValues });
@@ -34,16 +39,17 @@ const ResourceTypeFilter = ({ filters, onChange }) => {
   return (
     <SearchMenu
       assetType="coresamples"
-      collapsed={!filters[fieldName]}
       fieldName={fieldName}
+      filters={filters}
+      onChange={onChange}
       title="Resource Type">
       
-      {Object.keys(Inventory.RESOURCES).map((k) => (
+      {Object.keys(sampleableResources).map((k) => (
         <CheckboxRow key={k} onClick={onClick(k)}>
           <CheckboxButton checked={types[k]}>
             {types[k] ? <CheckedIcon /> : <UncheckedIcon />}
           </CheckboxButton>
-          <span>{Inventory.RESOURCES[k].name}</span>
+          <span>{sampleableResources[k].name}</span>
         </CheckboxRow>
       ))}
     </SearchMenu>

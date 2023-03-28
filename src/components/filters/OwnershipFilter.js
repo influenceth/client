@@ -37,10 +37,10 @@ const defaultColorMap = {
 const fieldName = 'ownedBy';
 const highlightFieldName = 'ownership';
 
-const OwnershipFilter = ({ filters, onChange }) => {
+const OwnershipFilter = ({ filters, onChange, showHighlighting }) => {
   const { account } = useAuth();
-  const highlight = useStore(s => s.assetSearch.asteroids.highlight) || {};
-  const fieldHighlight = highlight && highlight.field === highlightFieldName;
+  const highlight = useStore(s => s.assetSearch.asteroids.highlight || {});
+  const fieldHighlight = showHighlighting && highlight && highlight.field === highlightFieldName;
 
   const [types, setTypes] = useState(initialValues);
   const [ownedByAddress, setOwnedByAddress] =  useState('');
@@ -116,9 +116,10 @@ const OwnershipFilter = ({ filters, onChange }) => {
   return (
     <SearchMenu
       assetType="asteroids"
-      collapsed={!filters[fieldName]}
       fieldName={fieldName}
-      highlightFieldName={highlightFieldName}
+      filters={filters}
+      onChange={onChange}
+      highlightFieldName={showHighlighting && highlightFieldName}
       highlightMetadata={highlightMetadata}
       title="Owner"
       highlightColorMap={highlightColors}>

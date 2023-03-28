@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { RiPaintFill as HighlightIcon } from 'react-icons/ri';
 
@@ -41,13 +41,13 @@ export const InputBlock = styled.div`
     align-items: center;
     display: flex;
     flex-direction: row;
+    font-size: 90%;
     justify-content: space-between;
     ${p => p.singleField ? '' : 'padding-top: 6px;'}
     width: 100%;
 
-    & > * {
+    & > span {
       flex: 1;
-      font-size: 90%;
       opacity: 0.5;
       padding-left: 8px;
       transition: opacity 250ms ease;
@@ -117,29 +117,26 @@ export const SearchMenu = ({
   assetType,
   children,
   fieldName,
+  filters,
   highlightColorMap,
   highlightColorRange,
   highlightFieldName,
   highlightMetadata,
+  onChange,
   title,
   ...props
 }) => {
   const highlight = useStore(s => s.assetSearch[assetType].highlight);
-  const filters = useStore(s => s.assetSearch[assetType].filters);
   const updateHighlight = useStore(s => s.dispatchHighlightUpdated(assetType));
-  const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
-
   const fieldHighlight = useMemo(() => highlight && highlight.field === highlightFieldName, [highlight, highlightFieldName]);
-
-  useEffect(() => {
-    // console.log('highlight', highlight)
-  }, [highlight])
 
   const filterIsOn = useMemo(() => {
     return Array.isArray(fieldName)
       ? fieldName.reduce((acc, n) => acc || Object.keys(filters).includes(n), false)
       : filters[fieldName];
   }, [fieldName, filters]);
+
+  const [initiallyCollapsed] = useState(!filterIsOn);
 
   const toggleHighlight = useCallback((e) => {
     e.stopPropagation();
@@ -154,11 +151,10 @@ export const SearchMenu = ({
 
   const resetFilter = useCallback((e) => {
     e.stopPropagation();
-    const updated = { ...filters };
-    const filterOut = Array.isArray(fieldName) ? fieldName : [fieldName];
-    filterOut.forEach((n) => delete updated[n]);
-    updateFilters(updated);
-  }, [fieldName, filters]);
+    onChange(
+      (Array.isArray(fieldName) ? fieldName : [fieldName]).reduce((acc, k) => ({ ...acc, [k]: undefined }), {})
+    );
+  }, [fieldName, onChange]);
 
   useEffect(() => {
     if (fieldHighlight) {
@@ -190,6 +186,7 @@ export const SearchMenu = ({
           )}
         </div>
       )}
+      collapsed={initiallyCollapsed}
       {...props}>
       {children}
     </HudMenuCollapsibleSection>

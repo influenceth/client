@@ -40,8 +40,9 @@ const NameFilter = ({ filters, onChange }) => {
   return (
     <SearchMenu
       assetType="asteroids"
-      collapsed={!filters[fieldName]}
       fieldName={fieldName}
+      filters={filters}
+      onChange={onChange}
       title="Name & Id">
       
       <InputBlock>

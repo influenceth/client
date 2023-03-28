@@ -17,9 +17,9 @@ const initialValues = {
   axisMax: ''
 };
 
-const AxisFilter = ({ filters, onChange }) => {
-  const highlight = useStore(s => s.assetSearch.asteroids.highlight) || {};
-  const fieldHighlight = highlight && highlight.field === highlightFieldName;
+const AxisFilter = ({ filters, onChange, showHighlighting }) => {
+  const highlight = useStore(s => s.assetSearch.asteroids.highlight || {});
+  const fieldHighlight = showHighlighting && highlight && highlight.field === highlightFieldName;
 
   const [ focus, setFocus ] = useState();
   const [ axisMin, setAxisMin ] = useState(initialValues.axisMin);
@@ -79,9 +79,10 @@ const AxisFilter = ({ filters, onChange }) => {
   return (
     <SearchMenu
       assetType="asteroids"
-      collapsed={!(filters.axisMin || filters.axisMax)}
       fieldName={['axisMin', 'axisMax']}
-      highlightFieldName={highlightFieldName}
+      filters={filters}
+      onChange={onChange}
+      highlightFieldName={showHighlighting && highlightFieldName}
       title="Semi-major Axis"
       highlightColorRange={highlightColorRange}>
       

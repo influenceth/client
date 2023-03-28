@@ -50,6 +50,7 @@ const SelectedLabel = styled.label`
 const Dropdown = ({
   disabled,
   footnote,
+  hideSelected,
   initialSelection,
   iconKey = 'icon',
   labelKey = 'label',
@@ -146,7 +147,7 @@ const Dropdown = ({
       {open && createPortal(
         <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000 }} {...attributes.popper}>
           <Options {...styleProps}>
-            {options.filter((o) => o[valueKey] !== selected[valueKey]).map((o) => (
+            {options.filter((o) => !hideSelected || o[valueKey] !== selected[valueKey]).map((o) => (
               <Option key={o[valueKey]} footnote={footnote && footnote(o)} onClick={handleSelection(o)}>
                 {o[iconKey] && <IconWrapper>{o[iconKey]}</IconWrapper>}
                 <label>{o[labelKey]}</label>

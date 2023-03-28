@@ -31,7 +31,7 @@ const Asteroids = (props) => {
   
   const { processInBackground } = useWebWorker();
 
-  const { data: asteroidSearch } = useAssetSearch('asteroids');
+  const { data: asteroidSearch } = useAssetSearch('asteroids', { isMapSearch: true });
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
   const { coarseTime } = useContext(ClockContext);

@@ -29,7 +29,7 @@ const outlinerSectionDefaults = {
 };
 
 const assetSearchDefaults = {
-  asteroids: { filters: {}, sort: ['r', 'desc'], highlight: null },
+  asteroids: { filters: {}, mapFilters: {}, sort: ['r', 'desc'], mapSort: ['r', 'desc'], highlight: null },
   buildings: { filters: {}, sort: ['i', 'asc'] },
   coresamples: { filters: { status: '2,3' }, sort: ['i', 'asc'] },
   crewmates: { filters: {}, sort: ['i', 'asc'] },
@@ -37,7 +37,7 @@ const assetSearchDefaults = {
   ships: { filters: {}, sort: ['i', 'asc'] },
   orders: { filters: {}, sort: ['i', 'asc'] },
   leases: { filters: {}, sort: ['i', 'asc'] },
-  lots: { filters: {}, sort: ['i', 'asc'], highlight: null },
+  lots: { filters: {}, mapFilters: {}, sort: ['i', 'asc'], highlight: null },
 };
 
 const useStore = create(subscribeWithSelector(persist((set, get) => ({
@@ -348,6 +348,14 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchSortUpdated: (assetType) => (sort) => set(produce(state => {
       state.assetSearch[assetType].sort = sort;
+    })),
+
+    dispatchMapFiltersUpdated: (assetType) => (filters) => set(produce(state => {
+      state.assetSearch[assetType].mapFilters = filters;
+    })),
+
+    dispatchMapSortUpdated: (assetType) => (sort) => set(produce(state => {
+      state.assetSearch[assetType].mapSort = sort;
     })),
 
     dispatchHighlightUpdated: (assetType) => (settings) => set(produce(state => {

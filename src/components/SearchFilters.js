@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import useStore from '~/hooks/useStore';
 import AsteroidNameFilter from './filters/AsteroidNameFilter';
@@ -18,57 +18,68 @@ import BuildingTypeFilter from './filters/BuildingTypeFilter';
 import CrewNameFilter from './filters/CrewNameFilter';
 import CrewOwnershipFilter from './filters/CrewOwnershipFilter';
 
-const SearchFilters = ({ assetType }) => {
-  const filters = useStore(s => s.assetSearch[assetType].filters);
-  const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
-
+const SearchFilters = ({ assetType, filters, highlighting, updateFilters }) => {
   const onFiltersChange = useCallback((update) => {
-    updateFilters({ ...(filters || {}), ...update });
+    const newFilters = {...(filters || {})};
+    Object.keys(update).forEach((k) => {
+      if (update[k] === undefined) {
+        delete newFilters[k];
+      } else {
+        newFilters[k] = update[k];
+      }
+    });
+    updateFilters(newFilters);
   }, [filters, updateFilters]);
+
+  const filterProps = useMemo(() => ({
+    filters,
+    onChange: onFiltersChange,
+    showHighlighting: highlighting,
+  }), [filters, highlighting, onFiltersChange]);
 
   if (assetType === 'asteroids') {
     return (
       <>
-        <OwnershipFilter filters={filters} onChange={onFiltersChange} />
-        <RadiusFilter filters={filters} onChange={onFiltersChange} />
-        <SpectralTypeFilter filters={filters} onChange={onFiltersChange} />
-        <AxisFilter filters={filters} onChange={onFiltersChange} />  
-        <InclinationFilter filters={filters} onChange={onFiltersChange} />
-        <EccentricityFilter filters={filters} onChange={onFiltersChange} />
-        <AsteroidNameFilter filters={filters} onChange={onFiltersChange} />
+        <OwnershipFilter {...filterProps} />
+        <RadiusFilter {...filterProps} />
+        <SpectralTypeFilter {...filterProps} />
+        <AxisFilter {...filterProps} />  
+        <InclinationFilter {...filterProps} />
+        <EccentricityFilter {...filterProps} />
+        <AsteroidNameFilter {...filterProps} />
       </>
     );
   }
   if (assetType === 'buildings') {
     return (
       <>
-        <BuildingTypeFilter filters={filters} onChange={onFiltersChange} />
+        <BuildingTypeFilter {...filterProps} />
       </>
     );
   }
   if (assetType === 'coresamples') {
     return (
       <>
-        <ResourceTypeFilter filters={filters} onChange={onFiltersChange} />
-        <YieldFilter filters={filters} onChange={onFiltersChange} />
+        <ResourceTypeFilter {...filterProps} />
+        <YieldFilter {...filterProps} />
       </>
     );
   }
   if (assetType === 'crews') {
     return (
       <>
-        <CrewOwnershipFilter filters={filters} onChange={onFiltersChange} />
-        <CrewNameFilter filters={filters} onChange={onFiltersChange} />
+        <CrewOwnershipFilter {...filterProps} />
+        <CrewNameFilter {...filterProps} />
       </>
     )
   }
   if (assetType === 'crewmates') {
     return (
       <>
-        <CrewmateNameFilter filters={filters} onChange={onFiltersChange} />
-        <CrewmateCrewFilter filters={filters} onChange={onFiltersChange} />
-        <CrewmateClassFilter filters={filters} onChange={onFiltersChange} />
-        <CrewmateCollectionFilter filters={filters} onChange={onFiltersChange} />
+        <CrewmateNameFilter {...filterProps} />
+        <CrewmateCrewFilter {...filterProps} />
+        <CrewmateClassFilter {...filterProps} />
+        <CrewmateCollectionFilter {...filterProps} />
       </>
     )
   }

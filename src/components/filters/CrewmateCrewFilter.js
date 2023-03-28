@@ -13,8 +13,9 @@ const CrewmateCrewFilter = ({ filters, onChange }) => {
   return (
     <SearchMenu
       assetType="crewmates"
-      collapsed={!filters[fieldName]}
       fieldName={fieldName}
+      filters={filters}
+      onChange={onChange}
       title="Crew">
       
       <InputBlock singleField>

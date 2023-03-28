@@ -19,10 +19,7 @@ const FilterTally = styled.div`
   }
 `;
 
-const SearchFilterTray = ({ assetType, handleClickFilters }) => {
-  const filters = useStore(s => s.assetSearch[assetType].filters);
-  const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
-
+const SearchFilterTray = ({ handleClickFilters, filters, updateFilters }) => {
   const onClear = useCallback(() => {
     updateFilters({});
   }, []);

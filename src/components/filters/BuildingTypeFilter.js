@@ -34,8 +34,9 @@ const BuildingTypeFilter = ({ filters, onChange }) => {
   return (
     <SearchMenu
       assetType="buildings"
-      collapsed={!filters[fieldName]}
       fieldName={fieldName}
+      filters={filters}
+      onChange={onChange}
       title="Type">
       
       {Object.keys(Capable.TYPES).map((k) => (

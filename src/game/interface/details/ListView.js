@@ -220,6 +220,8 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
   const [sortField, sortDirection] = sort;
 
   const filters = useStore(s => s.assetSearch[assetType].filters);
+  const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
+
   const columns = useColumns();
 
   const [disabledColumns, setDisabledColumns] = useState([]);
@@ -331,7 +333,10 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
         <MainWrapper>
           <FilterContainer open={filtersOpen}>
             <InnerFilterContainer>
-              <SearchFilters assetType={assetType} />
+              <SearchFilters
+                assetType={assetType}
+                filters={filters}
+                updateFilters={updateFilters} />
             </InnerFilterContainer>
           </FilterContainer>
           <TableContainer>
@@ -347,7 +352,10 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
         </MainWrapper>
         <Tray>
           <div style={{ display: 'flex' }}>
-            <SearchFilterTray assetType={assetType} handleClickFilters={onClickFilters} />
+            <SearchFilterTray
+              filters={filters}
+              handleClickFilters={onClickFilters}
+              updateFilters={updateFilters} />
           </div>
           <Pages>
             {!query?.isLoading && query?.data?.total > 0 && (

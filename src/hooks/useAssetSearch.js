@@ -148,9 +148,9 @@ filtersToQuery.ships = (filters) => {
   return queryBuilder;
 };
 
-const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
-  const filters = useStore(s => s.assetSearch[assetType].filters);
-  const sort = useStore(s => s.assetSearch[assetType].sort);
+const useAssetSearch = (assetType, { isMapSearch = false, from = 0, size = 2000 } = {}) => {
+  const filters = useStore(s => s.assetSearch[assetType][isMapSearch ? 'mapFilters' : 'filters']);
+  const sort = useStore(s => s.assetSearch[assetType][isMapSearch ? 'mapSort' : 'sort']);
   const [ query, setQuery ] = useThrottle({}, 2, true);
 
   useEffect(() => {

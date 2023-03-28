@@ -13,8 +13,9 @@ const CrewNameFilter = ({ filters, onChange }) => {
   return (
     <SearchMenu
       assetType="crews"
-      collapsed={!filters[fieldName]}
       fieldName={fieldName}
+      filters={filters}
+      onChange={onChange}
       title="Name">
       
       <InputBlock singleField>

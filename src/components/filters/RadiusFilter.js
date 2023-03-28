@@ -17,11 +17,11 @@ const initialValues = {
   radiusMax: ''
 };
 
-const RadiusFilter = ({ filters, onChange }) => {
+const RadiusFilter = ({ filters, onChange, showHighlighting }) => {
   const { data: sale } = useSale();
 
-  const highlight = useStore(s => s.assetSearch.asteroids.highlight) || {};
-  const fieldHighlight = highlight && highlight.field === highlightFieldName;
+  const highlight = useStore(s => s.assetSearch.asteroids.highlight || {});
+  const fieldHighlight = showHighlighting && highlight && highlight.field === highlightFieldName;
 
   const [ focus, setFocus ] = useState();
   const [ radiusMin, setRadiusMin ] = useState(initialValues.radiusMin);
@@ -81,9 +81,10 @@ const RadiusFilter = ({ filters, onChange }) => {
   return (
     <SearchMenu
       assetType="asteroids"
-      collapsed={!(filters.radiusMin || filters.radiusMax)}
       fieldName={['radiusMin', 'radiusMax']}
-      highlightFieldName={highlightFieldName}
+      filters={filters}
+      onChange={onChange}
+      highlightFieldName={showHighlighting && highlightFieldName}
       title="Radius"
       highlightColorRange={highlightColorRange}>
       

@@ -58,12 +58,13 @@ const TonnageFilter = ({ filters, onChange }) => {
   return (
     <SearchMenu
       assetType="coresamples"
-      collapsed={!(filters.yieldMin || filters.yieldMax)}
       fieldName={['yieldMin', 'yieldMax']}
+      filters={filters}
+      onChange={onChange}
       title="Yield">
       
       <InputBlock>
-        <label>Min (m)</label>
+        <label>Min (tonnes)</label>
         <div>
           <UncontrolledTextInput
             onBlur={handleFocusChange('yieldMin')}
@@ -77,7 +78,7 @@ const TonnageFilter = ({ filters, onChange }) => {
       </InputBlock>
       
       <InputBlock>
-        <label>Max (m)</label>
+        <label>Max (tonnes)</label>
         <div>
           <UncontrolledTextInput
             onBlur={handleFocusChange('yieldMax')}
