@@ -8,7 +8,7 @@ const initialValues = {
   yieldMax: ''
 };
 
-const TonnageFilter = ({ filters, onChange }) => {
+const TonnageFilter = ({ assetType, filters, onChange }) => {
   const [ focus, setFocus ] = useState();
   const [ yieldMin, setYieldMin ] = useState(initialValues.yieldMin);
   const [ yieldMax, setYieldMax ] = useState(initialValues.yieldMax);
@@ -57,7 +57,7 @@ const TonnageFilter = ({ filters, onChange }) => {
 
   return (
     <SearchMenu
-      assetType="coresamples"
+      assetType={assetType}
       fieldName={['yieldMin', 'yieldMax']}
       filters={filters}
       onChange={onChange}

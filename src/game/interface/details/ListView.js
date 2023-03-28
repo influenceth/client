@@ -287,7 +287,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
   const activeFilters = useMemo(() => Object.values(filters).filter((v) => v !== undefined).length, [filters]);
 
   return (
-    <Details fullWidth title="List View" contentProps={{ hasFooter: true }}>
+    <Details fullWidth title="Advanced Search" contentProps={{ hasFooter: true }}>
       <ReactTooltip id="listView" effect="solid" />
       <Wrapper>
         <Controls>
@@ -353,9 +353,8 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
         <Tray>
           <div style={{ display: 'flex' }}>
             <SearchFilterTray
-              filters={filters}
-              handleClickFilters={onClickFilters}
-              updateFilters={updateFilters} />
+              assetType={assetType}
+              handleClickFilters={onClickFilters} />
           </div>
           <Pages>
             {!query?.isLoading && query?.data?.total > 0 && (

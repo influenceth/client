@@ -148,14 +148,16 @@ filtersToQuery.ships = (filters) => {
   return queryBuilder;
 };
 
-const useAssetSearch = (assetType, { isMapSearch = false, from = 0, size = 2000 } = {}) => {
-  const filters = useStore(s => s.assetSearch[assetType][isMapSearch ? 'mapFilters' : 'filters']);
-  const sort = useStore(s => s.assetSearch[assetType][isMapSearch ? 'mapSort' : 'sort']);
+const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
+  const filters = useStore(s => s.assetSearch[assetType]?.filters);
+  const sort = useStore(s => s.assetSearch[assetType]?.sort);
   const [ query, setQuery ] = useThrottle({}, 2, true);
 
+  // asteroidsMapped use the exact same indices as asteroids for now
+  const esAssetType = assetType === 'asteroidsMapped' ? 'asteroids' : assetType;
   useEffect(() => {
     const q = esb.requestBodySearch();
-    q.query(filtersToQuery[assetType](filters || {}));
+    q.query(filtersToQuery[esAssetType](filters || {}));
     if (sort) q.sort(esb.sort(...sort));
     q.from(from);
     q.size(size);
@@ -165,8 +167,8 @@ const useAssetSearch = (assetType, { isMapSearch = false, from = 0, size = 2000 
   }, [ filters, from, size, sort ]);
 
   return useQuery(
-    [ 'search', assetType, query ],
-    () => api.searchAssets(assetType, query),
+    [ 'search', esAssetType, query ],
+    () => api.searchAssets(esAssetType, query),
     {
       enabled: !!query,
       // keepPreviousData: true // TODO: do we want this?

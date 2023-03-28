@@ -13,7 +13,7 @@ const sampleableResources = Object.keys(Inventory.RESOURCES)
 const initialValues = Object.keys(sampleableResources)
   .reduce((acc, k) => ({ ...acc, [k]: true }), {});
 
-const ResourceTypeFilter = ({ filters, onChange }) => {
+const ResourceTypeFilter = ({ assetType, filters, onChange }) => {
   const [ types, setTypes ] = useState({ ...initialValues });
 
   useEffect(() => {
@@ -38,7 +38,7 @@ const ResourceTypeFilter = ({ filters, onChange }) => {
 
   return (
     <SearchMenu
-      assetType="coresamples"
+      assetType={assetType}
       fieldName={fieldName}
       filters={filters}
       onChange={onChange}

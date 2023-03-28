@@ -27,7 +27,8 @@ import {
   RiRouteFill,
   RiLoginCircleFill,
   RiAlertFill,
-  RiFilter2Fill
+  RiFilter2Fill,
+  RiSortDesc
 } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
 import { WiMoonAltWaningCrescent5 } from 'react-icons/wi';
@@ -233,6 +234,7 @@ export {
   RiFilter2Fill as FilterIcon,
   RiLoginCircleFill as LoginIcon,
   RiRouteFill as RouteIcon,
+  RiSortDesc as SortIcon,
   RiTableFill as TableIcon,
   TiArrowRight as GoIcon,
   VscDebugDisconnect as DisconnectIcon,

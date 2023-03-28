@@ -226,7 +226,8 @@ const HudMenu = () => {
         {
           label: 'System Search',
           icon: <AsteroidSearchIcon />,
-          Component: hudMenus.SearchAsteroids,
+          Component: hudMenus.SearchMap,
+          componentProps: { assetType: 'asteroidsMapped' },
           detailType: 'list',
           onDetailClick: () => {
             history.push(`/listview/asteroids`);
@@ -239,7 +240,7 @@ const HudMenu = () => {
           requireLogin: true
         },
         {
-          label: 'List View',
+          label: 'Advanced Search',
           icon: <ListViewIcon />,
           onOpen: () => {
             history.push(`/listview/asteroids`);
@@ -262,7 +263,8 @@ const HudMenu = () => {
         {
           label: 'Lot Search',
           icon: <LotSearchIcon />,
-          Component: hudMenus.SearchLots,
+          Component: hudMenus.SearchMap,
+          componentProps: { assetType: 'lotsMapped' },
           detailType: 'list',
           onDetailClick: () => {
             history.push(`/listview/lots`);
@@ -274,7 +276,7 @@ const HudMenu = () => {
           Component: hudMenus.AsteroidChat
         },
         {
-          label: 'List View',
+          label: 'Advanced Search',
           icon: <ListViewIcon />,
           onOpen: () => {
             history.push(`/listview`);  // TODO: should probably also go to /listview/lots
@@ -311,7 +313,7 @@ const HudMenu = () => {
     return [];
   }, [asteroidId, lotId, zoomStatus, zoomToLot, lot]);
 
-  const { label, onDetailClick, detailType, Component } = useMemo(() => {
+  const { label, onDetailClick, detailType, Component, componentProps } = useMemo(() => {
     const [category, label] = (openHudMenu || '').split('.');
     return buttons.find((b) => b.label === label) || {};
   }, [buttons, openHudMenu]);
@@ -345,7 +347,7 @@ const HudMenu = () => {
             <span style={{ flex: 1 }}>{label}</span>
             <IconButton
               data-for="global"
-              data-tip={detailType === 'detail' ? 'Detail View' : 'List View'}
+              data-tip={detailType === 'detail' ? 'Detail View' : 'Advanced Search'}
               data-place="left"
               onClick={onDetailClick}>
               {detailType === 'detail' ? <DetailIcon /> : <ListViewIcon />}
@@ -353,7 +355,11 @@ const HudMenu = () => {
             <IconButton onClick={() => handleButtonClick()}><CloseIcon /></IconButton>
           </PanelTitle>
           <PanelContent>
-            {Component && <Component onClose={() => handleButtonClick()} />}
+            {Component && (
+              <Component
+                {...(componentProps || {})}
+                onClose={() => handleButtonClick()} />
+            )}
           </PanelContent>
         </PanelInner>
       </Panel>

@@ -18,7 +18,10 @@ import BuildingTypeFilter from './filters/BuildingTypeFilter';
 import CrewNameFilter from './filters/CrewNameFilter';
 import CrewOwnershipFilter from './filters/CrewOwnershipFilter';
 
-const SearchFilters = ({ assetType, filters, highlighting, updateFilters }) => {
+const SearchFilters = ({ assetType, highlighting }) => {
+  const filters = useStore(s => s.assetSearch[assetType].filters);
+  const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
+
   const onFiltersChange = useCallback((update) => {
     const newFilters = {...(filters || {})};
     Object.keys(update).forEach((k) => {
@@ -32,12 +35,13 @@ const SearchFilters = ({ assetType, filters, highlighting, updateFilters }) => {
   }, [filters, updateFilters]);
 
   const filterProps = useMemo(() => ({
+    assetType,
     filters,
     onChange: onFiltersChange,
-    showHighlighting: highlighting,
-  }), [filters, highlighting, onFiltersChange]);
+  }), [assetType, filters, highlighting, onFiltersChange]);
 
-  if (assetType === 'asteroids') {
+
+  if (assetType === 'asteroids' || assetType === 'asteroidsMapped') {
     return (
       <>
         <OwnershipFilter {...filterProps} />
@@ -82,6 +86,21 @@ const SearchFilters = ({ assetType, filters, highlighting, updateFilters }) => {
         <CrewmateCollectionFilter {...filterProps} />
       </>
     )
+  }
+  if (assetType === 'lotsMapped') {
+    <>
+    {/* TODO: 
+      <LotOccupiedFilter {...filterProps} />
+      <BuildingTypeFilter {...filterProps} />
+      <LotForLeaseFilter {...filterProps} />
+      <LotHasSamplesFilter {...filterProps} />
+      <LotHasCrewFilter {...filterProps} />
+      <LotIdFilter {...filterProps} />
+      */}
+    </>
+  }
+  if (assetType === 'lots') {
+
   }
   return null;
 };

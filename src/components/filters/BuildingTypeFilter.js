@@ -8,7 +8,7 @@ const fieldName = 'type';
 
 const initialValues = Object.keys(Capable.TYPES).reduce((acc, k) => ({ ...acc, [k]: true }), {});
 
-const BuildingTypeFilter = ({ filters, onChange }) => {
+const BuildingTypeFilter = ({ assetType, filters, onChange }) => {
   const [ types, setTypes ] = useState({ ...initialValues });
 
   useEffect(() => {
@@ -33,7 +33,7 @@ const BuildingTypeFilter = ({ filters, onChange }) => {
 
   return (
     <SearchMenu
-      assetType="buildings"
+      assetType={assetType}
       fieldName={fieldName}
       filters={filters}
       onChange={onChange}

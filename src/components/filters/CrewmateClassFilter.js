@@ -8,7 +8,7 @@ const fieldName = 'class';
 
 const initialValues = Object.keys(Crewmate.CLASSES).reduce((acc, k) => ({ ...acc, [k]: true }), {});
 
-const CrewmateClassFilter = ({ filters, onChange }) => {
+const CrewmateClassFilter = ({ assetType, filters, onChange }) => {
   const [ types, setTypes ] = useState({ ...initialValues });
 
   useEffect(() => {
@@ -33,7 +33,7 @@ const CrewmateClassFilter = ({ filters, onChange }) => {
 
   return (
     <SearchMenu
-      assetType="crewmates"
+      assetType={assetType}
       fieldName={fieldName}
       filters={filters}
       onChange={onChange}

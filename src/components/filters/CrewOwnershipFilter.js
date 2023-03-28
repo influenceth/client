@@ -21,7 +21,7 @@ const initialValues = {
 
 const fieldName = 'owner';
 
-const CrewOwnershipFilter = ({ filters, onChange }) => {
+const CrewOwnershipFilter = ({ assetType, filters, onChange }) => {
   const { account } = useAuth();
 
   const [types, setTypes] = useState(initialValues);
@@ -94,7 +94,7 @@ const CrewOwnershipFilter = ({ filters, onChange }) => {
 
   return (
     <SearchMenu
-      assetType="asteroids"
+      assetType={assetType}
       fieldName={fieldName}
       filters={filters}
       onChange={onChange}

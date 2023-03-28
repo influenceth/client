@@ -126,8 +126,10 @@ export const SearchMenu = ({
   title,
   ...props
 }) => {
+  const highlightable = useStore(s => Object.keys(s.assetSearch[assetType]).includes('highlight'));
   const highlight = useStore(s => s.assetSearch[assetType].highlight);
   const updateHighlight = useStore(s => s.dispatchHighlightUpdated(assetType));
+
   const fieldHighlight = useMemo(() => highlight && highlight.field === highlightFieldName, [highlight, highlightFieldName]);
 
   const filterIsOn = useMemo(() => {
@@ -171,7 +173,7 @@ export const SearchMenu = ({
       titleText={title}
       titleAction={(isOpen) => (
         <div style={{ display: 'flex' }}>
-          {highlightFieldName && (isOpen || fieldHighlight) && (
+          {highlightable && highlightFieldName && (isOpen || fieldHighlight) && (
             <Highlighter
               active={!!fieldHighlight}
               onClick={toggleHighlight} />

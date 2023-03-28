@@ -27,9 +27,9 @@ const defaultColorMap = {
   10: '#ff00f2'
 };
 
-const SpectralTypeFilter = ({ filters, onChange, showHighlighting }) => {
-  const highlight = useStore(s => s.assetSearch.asteroids.highlight || {});
-  const fieldHighlight = showHighlighting && highlight && highlight.field === highlightFieldName;
+const SpectralTypeFilter = ({ assetType, filters, onChange }) => {
+  const highlight = useStore(s => s.assetSearch[assetType].highlight);
+  const fieldHighlight = highlight && highlight.field === highlightFieldName;
   
   const [ types, setTypes ] = useState({ ...initialValues });
   const [highlightColors, setHighlightColors] = useState({ ...(fieldHighlight?.colorMap || defaultColorMap) });
@@ -56,11 +56,11 @@ const SpectralTypeFilter = ({ filters, onChange, showHighlighting }) => {
 
   return (
     <SearchMenu
-      assetType="asteroids"
+      assetType={assetType}
       fieldName={fieldName}
       filters={filters}
       onChange={onChange}
-      highlightFieldName={showHighlighting && highlightFieldName}
+      highlightFieldName={highlightFieldName}
       title="Spectral Type"
       highlightColorMap={highlightColors}>
       

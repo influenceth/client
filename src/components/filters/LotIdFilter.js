@@ -16,7 +16,7 @@ import { GoIcon } from '~/components/Icons';
 
 const fieldName = 'name';
 
-const NameFilter = ({ assetType, filters, onChange }) => {  
+const LotIdFilter = ({ assetType, filters, onChange }) => {  
   const asteroidId = useRef();
 
   const selectAsteroidId = useStore((s) => s.dispatchOriginSelected);
@@ -37,26 +37,39 @@ const NameFilter = ({ assetType, filters, onChange }) => {
     }
   }, [handleById]);
 
+
+// TODO: include by id:
+  /*
+    const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
+
+    const handleLotJumper = useCallback((e) => {
+      if (e.key === 'Enter' && e.currentTarget.value) {
+        dispatchLotSelected(asteroid?.i, parseInt(e.currentTarget.value));
+      }
+    }, [asteroid?.i]);
+
+    const lotTally = useMemo(() => Math.floor(4 * Math.PI * Math.pow(asteroid?.radius / 1000, 2)), [asteroid?.radius]);
+    
+    <label>Jump to Lot #</label>
+    <NumberInput
+      initialValue={null}
+      max={lotTally}
+      min={1}
+      step={1}
+      onBlur={(e) => e.currentTarget.value = undefined}
+      onKeyDown={handleLotJumper} />
+  */
+
   return (
     <SearchMenu
       assetType={assetType}
       fieldName={fieldName}
       filters={filters}
       onChange={onChange}
-      title="Name & Id">
+      title="Lot Id">
       
       <InputBlock>
-        <label>Asteroid Name</label>
-        <div>
-          <UncontrolledTextInput
-            onChange={handleChange}
-            placeholder="Filter by Asteroid Name..."
-            value={filters[fieldName] || ''} />
-        </div>
-      </InputBlock>
-      
-      <InputBlock>
-        <label>Asteroid Id</label>
+        <label>Lot Id</label>
         <div>
           <UncontrolledTextInput
             ref={asteroidId}
@@ -79,4 +92,4 @@ const NameFilter = ({ assetType, filters, onChange }) => {
   );
 };
 
-export default NameFilter;
+export default LotIdFilter;

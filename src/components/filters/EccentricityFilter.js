@@ -15,9 +15,9 @@ const initialValues = {
   eccMax: ''
 };
 
-const EccentricityFilter = ({ filters, onChange, showHighlighting }) => {
-  const highlight = useStore(s => s.assetSearch.asteroids.highlight || {});
-  const fieldHighlight = showHighlighting && highlight && highlight.field === highlightFieldName;
+const EccentricityFilter = ({ assetType, filters, onChange }) => {
+  const highlight = useStore(s => s.assetSearch[assetType].highlight);
+  const fieldHighlight = highlight && highlight.field === highlightFieldName;
 
   const [ focus, setFocus ] = useState();
   const [ eccMin, setEccMin ] = useState(initialValues.eccMin);
@@ -76,11 +76,11 @@ const EccentricityFilter = ({ filters, onChange, showHighlighting }) => {
 
   return (
     <SearchMenu
-      assetType="asteroids"
+      assetType={assetType}
       fieldName={['eccMin', 'eccMax']}
       filters={filters}
       onChange={onChange}
-      highlightFieldName={showHighlighting && highlightFieldName}
+      highlightFieldName={highlightFieldName}
       title="Orbit Eccentricity"
       highlightColorRange={highlightColorRange}>
       

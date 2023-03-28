@@ -18,9 +18,9 @@ const initialValues = {
 const toRadians = (d) => d >= 0 ? Math.PI * d / 180 : undefined;
 const toDegrees = (r) => r > 0 ? Math.round(100 * 180 * r / Math.PI) / 100 : '';
 
-const InclinationFilter = ({ filters, onChange, showHighlighting }) => {
-  const highlight = useStore(s => s.assetSearch.asteroids.highlight || {});
-  const fieldHighlight = showHighlighting && highlight && highlight.field === highlightFieldName;
+const InclinationFilter = ({ assetType, filters, onChange }) => {
+  const highlight = useStore(s => s.assetSearch[assetType].highlight);
+  const fieldHighlight = highlight && highlight.field === highlightFieldName;
 
   const [ focus, setFocus ] = useState();
   const [ incMin, setIncMin ] = useState(initialValues.incMin);
@@ -79,11 +79,11 @@ const InclinationFilter = ({ filters, onChange, showHighlighting }) => {
 
   return (
     <SearchMenu
-      assetType="asteroids"
+      assetType={assetType}
       fieldName={['incMin', 'incMax']}
       filters={filters}
       onChange={onChange}
-      highlightFieldName={showHighlighting && highlightFieldName}
+      highlightFieldName={highlightFieldName}
       title="Orbit Inclination"
       highlightColorRange={highlightColorRange}>
       

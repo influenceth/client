@@ -7,8 +7,7 @@ import Inventory from './Inventory';
 import LotInfo from './LotInfo';
 import LotResources from './LotResources';
 import Resources from './Resources';
-import SearchAsteroids from './SearchAsteroids';
-import SearchLots from './SearchLots';
+import SearchMap from './SearchMap';
 
 const HudMenus = {
   AllAssets,
@@ -20,8 +19,7 @@ const HudMenus = {
   LotInfo,
   LotResources,
   Resources,
-  SearchAsteroids,
-  SearchLots,
+  SearchMap,
 };
 
 export default HudMenus;

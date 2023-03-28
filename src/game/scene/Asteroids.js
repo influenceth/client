@@ -26,12 +26,12 @@ const Asteroids = (props) => {
   const routePlannerActive = useStore(s => s.outliner.routePlanner.active);
   const ownedColor = useStore(s => s.asteroids.owned.highlightColor);
   const watchedColor = useStore(s => s.asteroids.watched.highlightColor);
-  const highlightConfig = useStore(s => s.assetSearch.asteroids.highlight);
+  const highlightConfig = useStore(s => s.assetSearch.asteroidsMapped.highlight);
   const cameraNeedsReorientation = useStore(s => s.cameraNeedsReorientation);
   
   const { processInBackground } = useWebWorker();
 
-  const { data: asteroidSearch } = useAssetSearch('asteroids', { isMapSearch: true });
+  const { data: asteroidSearch } = useAssetSearch('asteroidsMapped');
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
   const { coarseTime } = useContext(ClockContext);
@@ -57,11 +57,6 @@ const Asteroids = (props) => {
   const asteroids = useMemo(() => {
     return asteroidSearch?.hits?.length > 0 ? asteroidSearch.hits : [];
   }, [asteroidSearch?.hits]);
-
-  useEffect(() => {
-    console.log(highlightConfig, highlighters)
-  }, []);
-
 
   // Update state when asteroids from server, origin, or destination change
   const isZoomedIn = zoomStatus === 'in';

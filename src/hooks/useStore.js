@@ -1,6 +1,7 @@
 import create from 'zustand';
 import { persist, subscribeWithSelector } from 'zustand/middleware';
 import produce from 'immer';
+import isEqual from 'lodash/isEqual';
 
 import constants from '~/lib/constants';
 
@@ -29,7 +30,8 @@ const outlinerSectionDefaults = {
 };
 
 const assetSearchDefaults = {
-  asteroids: { filters: {}, mapFilters: {}, sort: ['r', 'desc'], mapSort: ['r', 'desc'], highlight: null },
+  asteroids: { filters: {}, sort: ['r', 'desc'] },
+  asteroidsMapped: { filters: {}, sort: ['r', 'desc'], highlight: null },
   buildings: { filters: {}, sort: ['i', 'asc'] },
   coresamples: { filters: { status: '2,3' }, sort: ['i', 'asc'] },
   crewmates: { filters: {}, sort: ['i', 'asc'] },
@@ -37,7 +39,8 @@ const assetSearchDefaults = {
   ships: { filters: {}, sort: ['i', 'asc'] },
   orders: { filters: {}, sort: ['i', 'asc'] },
   leases: { filters: {}, sort: ['i', 'asc'] },
-  lots: { filters: {}, mapFilters: {}, sort: ['i', 'asc'], highlight: null },
+  lots: { filters: {}, sort: ['i', 'asc'] },
+  lotsMapped: { filters: {}, sort: ['i', 'asc'], highlight: null },
 };
 
 const useStore = create(subscribeWithSelector(persist((set, get) => ({
@@ -346,6 +349,11 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.assetSearch[assetType].filters = filters;
     })),
 
+    dispatchFiltersReset: (assetType) => () => set(produce(state => {
+      state.assetSearch[assetType].filters = { ...assetSearchDefaults[assetType].filters };
+      state.assetSearch[assetType].sort = [ ...assetSearchDefaults[assetType].sort ];
+    })),
+
     dispatchSortUpdated: (assetType) => (sort) => set(produce(state => {
       state.assetSearch[assetType].sort = sort;
     })),
@@ -456,26 +464,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.cameraNeedsReorientation = !!needsReorienting;
     })),
 
-    //
-    // SPECIAL GETTERS
-
-    getShadowQuality: () => {
-      // NOTE: 0 is no shadows, 1 is single-light shadows, 2 is CSMs
-      //       (support for CSMs has been removed because it was non-performant and didn't look great)
-      const q = ENABLE_SHADOWS ? get().graphics?.shadowQuality : 0;
-      if (q === 1) return { shadowMode: 1, shadowSize: 1024 };
-      if (q === 2) return { shadowMode: 2, shadowSize: 2048 };
-      if (q === 3) return { shadowMode: 2, shadowSize: 4096 };
-      return { shadowMode: 0, shadowSize: 1024 };
-    },
-
-    getTerrainQuality: () => {
-      const q = get().graphics?.textureQuality;
-      if (q === 2) return { textureSize: 2 * CHUNK_RESOLUTION - 3 };
-      if (q === 3) return { textureSize: 4 * CHUNK_RESOLUTION - 3 };
-      return { textureSize: 1 * CHUNK_RESOLUTION - 3 };
-    },
-
     dispatchFailedTransaction: ({ key, vars, txHash, err }) => set(produce(state => {
       if (!state.failedTransactions) state.failedTransactions = [];
       state.failedTransactions.push({
@@ -533,7 +521,33 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchZoomToLot: (isZoomed) => set(produce(state => {
       state.asteroids.zoomToLot = isZoomed;
-    }))
+    })),
+
+    //
+    // SPECIAL GETTERS
+
+    getShadowQuality: () => {
+      // NOTE: 0 is no shadows, 1 is single-light shadows, 2 is CSMs
+      //       (support for CSMs has been removed because it was non-performant and didn't look great)
+      const q = ENABLE_SHADOWS ? get().graphics?.shadowQuality : 0;
+      if (q === 1) return { shadowMode: 1, shadowSize: 1024 };
+      if (q === 2) return { shadowMode: 2, shadowSize: 2048 };
+      if (q === 3) return { shadowMode: 2, shadowSize: 4096 };
+      return { shadowMode: 0, shadowSize: 1024 };
+    },
+
+    getTerrainQuality: () => {
+      const q = get().graphics?.textureQuality;
+      if (q === 2) return { textureSize: 2 * CHUNK_RESOLUTION - 3 };
+      if (q === 3) return { textureSize: 4 * CHUNK_RESOLUTION - 3 };
+      return { textureSize: 1 * CHUNK_RESOLUTION - 3 };
+    },
+
+    isAssetSearchMatchingDefault: (assetType) => {
+      if (!assetType) return true;
+      return isEqual(get().assetSearch[assetType].filters, assetSearchDefaults[assetType].filters)
+        && isEqual(get().assetSearch[assetType].sort, assetSearchDefaults[assetType].sort)
+    },
 
 }), {
   name: 'influence',

@@ -5,14 +5,14 @@ import UncontrolledTextInput from '~/components/TextInputUncontrolled';
 
 const fieldName = 'name';
 
-const CrewmateNameFilter = ({ filters, onChange }) => {  
+const CrewmateNameFilter = ({ assetType, filters, onChange }) => {  
   const handleChange = useCallback((e) => {
     onChange({ [fieldName]: e.currentTarget.value });
   }, [onChange]);
 
   return (
     <SearchMenu
-      assetType="crewmates"
+      assetType={assetType}
       fieldName={fieldName}
       filters={filters}
       onChange={onChange}

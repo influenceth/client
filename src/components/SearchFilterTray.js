@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
 import Button from '~/components/ButtonAlt';
-import { CloseIcon, FilterIcon } from '~/components/Icons';
+import { CloseIcon, FilterIcon, SortIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
 
 const FilterTally = styled.div`
@@ -19,26 +19,40 @@ const FilterTally = styled.div`
   }
 `;
 
-const SearchFilterTray = ({ handleClickFilters, filters, updateFilters }) => {
+const SearchFilterTray = ({ assetType, handleClickFilters }) => {
+  const filters = useStore(s => s.assetSearch[assetType]?.filters);
+  const resetFilters = useStore(s => s.dispatchFiltersReset(assetType));
+  const isAssetSearchMatchingDefault = useStore(s => s.isAssetSearchMatchingDefault);
+
   const onClear = useCallback(() => {
-    updateFilters({});
+    resetFilters();
   }, []);
 
   const onClickFilters = useCallback((e) => {
     if (handleClickFilters) handleClickFilters(e);
   }, [handleClickFilters]);
 
-  const activeFilters = useMemo(() => Object.values(filters).filter((v) => v !== undefined).length, [filters]);
-  if (activeFilters === 0) return null;
+  const isDefaultSearch = useMemo(() => isAssetSearchMatchingDefault(assetType), [assetType, filters]);
+  const activeFilters = useMemo(() => Object.values(filters || {}).filter((v) => v !== undefined).length, [filters]);
+
+  if (isDefaultSearch) return null;
   return (
     <>
       <Button onClick={onClear} size="medium" padding="0 15px 0 10px" width="auto" subtle>
         <CloseIcon style={{ marginRight: 5 }} /> <span>Clear</span>
       </Button>
-      <FilterTally clickable={!!handleClickFilters} onClick={onClickFilters}>
-        <FilterIcon />
-        {activeFilters} Active Filter{activeFilters === 1 ? '' : 's'}
-      </FilterTally>
+      {activeFilters > 0
+        ? (
+          <FilterTally clickable={!!handleClickFilters} onClick={onClickFilters}>
+            <FilterIcon />
+            {activeFilters} Active Filter{activeFilters === 1 ? '' : 's'}
+          </FilterTally>
+        )
+        : (
+          <FilterTally>
+            <SortIcon /> Active Sort
+          </FilterTally>
+        )}
     </>
   );
 }
