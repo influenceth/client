@@ -32,7 +32,7 @@ import ResourceThumbnail, { ResourceThumbnailWrapper, ResourceImage, ResourcePro
 import ResourceRequirement from '~/components/ResourceRequirement';
 import SliderInput from '~/components/SliderInput';
 import { useBuildingAssets } from '~/hooks/useAssets';
-import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
+import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import theme from '~/theme';
 import useChainTime from '~/hooks/useChainTime';
 import { formatFixed, formatTimer } from '~/lib/utils';
@@ -882,11 +882,11 @@ const BuildingPlanSelection = ({ onBuildingSelected }) => {
   );
 };
 
-const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
+const CoreSampleSelection = ({ onClick, options, lot, resources }) => {
   return (
     <PopperBody>
       <PoppableTitle>
-        <h3>Lot #{(plot?.i || 0).toLocaleString()}</h3>
+        <h3>Lot #{(lot?.i || 0).toLocaleString()}</h3>
         <div>{(options.length || 0).toLocaleString()} Available Sample{options.length === 1 ? '' : 's'}</div>
       </PoppableTitle>
       {/* TODO: replace with DataTable? */}
@@ -912,24 +912,24 @@ const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
   );
 };
 
-const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlotId }) => {
-  const { data: crewPlots, isLoading } = useAsteroidCrewPlots(asteroid.i);
+const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originLotId }) => {
+  const { data: crewLots, isLoading } = useAsteroidCrewLots(asteroid.i);
 
   const inventories = useMemo(() => {
-    return (crewPlots || [])
-      .filter((plot) => (
-        plot.building
-        && plot.i !== originPlotId // not the origin
-        && Inventory.CAPACITIES[plot.building.capableType][inventoryType] // building has inventoryType
+    return (crewLots || [])
+      .filter((lot) => (
+        lot.building
+        && lot.i !== originLotId // not the origin
+        && Inventory.CAPACITIES[lot.building.capableType][inventoryType] // building has inventoryType
         && ( // building is built (or this is construction inventory and building is planned)
-          (inventoryType === 0 && plot.building.construction?.status === Construction.STATUS_PLANNED)
-          || (inventoryType !== 0 && plot.building.construction?.status === Construction.STATUS_OPERATIONAL)
+          (inventoryType === 0 && lot.building.construction?.status === Construction.STATUS_PLANNED)
+          || (inventoryType !== 0 && lot.building.construction?.status === Construction.STATUS_OPERATIONAL)
         )
       ))
-      .map((plot) => {
-        const capacity = { ...Inventory.CAPACITIES[plot.building.capableType][inventoryType] };
+      .map((lot) => {
+        const capacity = { ...Inventory.CAPACITIES[lot.building.capableType][inventoryType] };
 
-        const inventory = (plot.building?.inventories || {})[inventoryType];
+        const inventory = (lot.building?.inventories || {})[inventoryType];
         const usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0)) / 1e6;
         const usedVolume = ((inventory?.volume || 0) + (inventory?.reservedVolume || 0)) / 1e6;
 
@@ -941,16 +941,16 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
         );
 
         return {
-          plot,
-          distance: Asteroid.getLotDistance(asteroid.i, originPlotId, plot.i) || 0,
-          type: plot.building?.__t || 'Empty Lot',
+          lot,
+          distance: Asteroid.getLotDistance(asteroid.i, originLotId, lot.i) || 0,
+          type: lot.building?.__t || 'Empty Lot',
           fullness,
           availMass,
           availVolume
         };
       })
       .sort((a, b) => a.distance - b.distance)
-  }, [crewPlots]);
+  }, [crewLots]);
 
   // TODO: use isLoading
   return (
@@ -978,8 +978,8 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
                 ? theme.colors.error
                 : (inventory.fullness > 0.5 ? theme.colors.yellow : theme.colors.success);
               return (
-                <tr key={`${asteroid.i}_${inventory.plot.i}`} onClick={onClick(inventory.plot)}>
-                  <td>Lot #{inventory.plot.i}</td>
+                <tr key={`${asteroid.i}_${inventory.lot.i}`} onClick={onClick(inventory.lot)}>
+                  <td>Lot #{inventory.lot.i}</td>
                   <td>{formatFixed(inventory.distance, 1)} km</td>
                   <td>{inventory.type}</td>
                   <td style={{ color: warningColor }}>{(100 * inventory.fullness).toFixed(1)}%</td>
@@ -995,12 +995,12 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlot
   );
 };
 
-const ResourceSelection = ({ abundances, onSelect, plotId, resources }) => {
+const ResourceSelection = ({ abundances, onSelect, lotId, resources }) => {
   const nonzeroAbundances = useMemo(() => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
   return (
     <PopperBody>
       <PoppableTitle>
-        <h3>Lot #{(plotId || 0).toLocaleString()}</h3>
+        <h3>Lot #{(lotId || 0).toLocaleString()}</h3>
         <div>{(nonzeroAbundances || 0).toLocaleString()} Available Resource{nonzeroAbundances === 1 ? '' : 's'}</div>
       </PoppableTitle>
       {/* TODO: replace with DataTable? */}
@@ -1188,7 +1188,7 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
 // Sections
 //
 
-export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample, selectedSample, resources, overrideTonnage, status }) => {
+export const ExistingSampleSection = ({ improvableSamples, lot, onSelectSample, selectedSample, resources, overrideTonnage, status }) => {
   const [clicked, setClicked] = useState(0);
   const onClick = useCallback((id) => () => {
     setClicked((x) => x + 1);
@@ -1222,7 +1222,7 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
         {status === 'BEFORE' && improvableSamples?.length > 1 && (
           <div>
             <Poppable label="Select" closeOnChange={clicked} title="Select Improvable Sample">
-              <CoreSampleSelection plot={plot} onClick={onClick} options={improvableSamples} resources={resources} />
+              <CoreSampleSelection lot={lot} onClick={onClick} options={improvableSamples} resources={resources} />
             </Poppable>
           </div>
         )}
@@ -1234,7 +1234,7 @@ export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample,
   );
 };
 
-export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, selectedSample, status, usableSamples }) => {
+export const ExtractSampleSection = ({ amount, lot, resources, onSelectSample, selectedSample, status, usableSamples }) => {
   const remainingAfterExtraction = useMemo(() => selectedSample
     ? selectedSample.remainingYield - amount
     : null
@@ -1291,7 +1291,7 @@ export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, 
         {status === 'BEFORE' && (
           <div>
             <Poppable label="Select" closeOnChange={clicked} title="Select Core Sample">
-              <CoreSampleSelection plot={plot} onClick={onClick} options={usableSamples} resources={resources} />
+              <CoreSampleSelection lot={lot} onClick={onClick} options={usableSamples} resources={resources} />
             </Poppable>
           </div>
         )}
@@ -1303,7 +1303,7 @@ export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, 
   );
 };
 
-export const RawMaterialSection = ({ abundances, goToResourceMap, plotId, resourceId, resources, onSelectResource, tonnage, status }) => {
+export const RawMaterialSection = ({ abundances, goToResourceMap, lotId, resourceId, resources, onSelectResource, tonnage, status }) => {
   const [clicked, setClicked] = useState(0);
   const onClick = useCallback((resourceId) => () => {
     setClicked((x) => x + 1);
@@ -1353,7 +1353,7 @@ export const RawMaterialSection = ({ abundances, goToResourceMap, plotId, resour
               </IconButtonRounded>
             )}
             <Poppable label="Select" title="Select Target Resource" closeOnChange={clicked} contentHeight={360}>
-              <ResourceSelection abundances={abundances} onSelect={onClick} plotId={plotId} resources={resources} />
+              <ResourceSelection abundances={abundances} onSelect={onClick} lotId={lotId} resources={resources} />
             </Poppable>
           </div>
         )}
@@ -1365,7 +1365,7 @@ export const RawMaterialSection = ({ abundances, goToResourceMap, plotId, resour
 };
 
 // TODO: this needs an empty state if source is not yet selected
-export const ToolSection = ({ resource, sourcePlot }) => {
+export const ToolSection = ({ resource, sourceLot }) => {
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Tool</SectionTitle>
@@ -1376,8 +1376,8 @@ export const ToolSection = ({ resource, sourcePlot }) => {
             <ResourceThumbnail badge="∞" resource={resource} />{/* TODO: badge */}
             <label>
               <h3>{resource.name}</h3>
-              {sourcePlot && sourcePlot.building && (
-                <div>{sourcePlot.building.__t} (Lot {sourcePlot.i.toLocaleString()})</div>
+              {sourceLot && sourceLot.building && (
+                <div>{sourceLot.building.__t} (Lot {sourceLot.i.toLocaleString()})</div>
               )}
               <footer>NOTE: This item will be consumed.</footer>
             </label>
@@ -1468,22 +1468,22 @@ export const ItemSelectionSection = ({ inventory, onSelectItems, resources, sele
   );
 };
 
-export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, onDestinationSelect, originPlot, status }) => {
+export const DestinationLotSection = ({ asteroid, destinationLot, futureFlag, onDestinationSelect, originLot, status }) => {
   const buildings = useBuildingAssets();  // TODO: probably more consistent to move this up a level
   const [clicked, setClicked] = useState(0);
-  const onClick = useCallback((plot) => () => {
+  const onClick = useCallback((lot) => () => {
     setClicked((x) => x + 1);
-    if (onDestinationSelect) onDestinationSelect(plot);
+    if (onDestinationSelect) onDestinationSelect(lot);
   }, []);
 
   const destinationBuilding = useMemo(() => {
-    if (destinationPlot?.building) {
-      return buildings[destinationPlot.building?.capableType];
+    if (destinationLot?.building) {
+      return buildings[destinationLot.building?.capableType];
     }
     return null;
-  }, [destinationPlot?.building]);
+  }, [destinationLot?.building]);
 
-  const capacity = getCapacityUsage(destinationBuilding, destinationPlot?.building?.inventories, 1);
+  const capacity = getCapacityUsage(destinationBuilding, destinationLot?.building?.inventories, 1);
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> Destination</SectionTitle>
@@ -1494,11 +1494,11 @@ export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, 
             <Destination status={status}>
               <BuildingImage
                 building={destinationBuilding}
-                inventories={destinationPlot?.building?.inventories}
+                inventories={destinationLot?.building?.inventories}
                 showInventoryStatusForType={1} />
               <label>
                 <h3>{destinationBuilding?.name}</h3>
-                <div>{asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {destinationPlot.i.toLocaleString()}</b></div>
+                <div>{asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {destinationLot.i.toLocaleString()}</b></div>
                 <div />
                 {status === 'BEFORE' && (
                   <div>
@@ -1528,7 +1528,7 @@ export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, 
               </IconButtonRounded>
             */}
             <Poppable label="Select" title="Select Destination" closeOnChange={clicked}>
-              <DestinationSelection asteroid={asteroid} onClick={onClick} originPlotId={originPlot.i} />
+              <DestinationSelection asteroid={asteroid} onClick={onClick} originLotId={originLot.i} />
             </Poppable>
           </div>
         )}
@@ -1726,7 +1726,7 @@ export const ActionDialogLoader = () => {
   );
 };
 
-export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, status, startTime, targetTime }) => {
+export const ActionDialogHeader = ({ action, asteroid, captain, onClose, lot, status, startTime, targetTime }) => {
   const buildings = useBuildingAssets();
   const chainTime = useChainTime();
 
@@ -1734,7 +1734,7 @@ export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, s
     return startTime && targetTime ? Math.min(100, 100 * (chainTime - startTime) / (targetTime - startTime)) : 0;
   }, [chainTime, startTime, targetTime]);
 
-  if (!(action && plot)) return null;
+  if (!(action && lot)) return null;
   return (
     <>
       {status === 'DURING' && (
@@ -1757,11 +1757,11 @@ export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, s
               {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName}
               {' > '}
               <b>
-                Lot {(plot.i || '').toLocaleString()}{' '}
+                Lot {(lot.i || '').toLocaleString()}{' '}
                 (
-                  {buildings[plot.building?.capableType]?.name || 'Empty Lot'}
-                  {plot.building?.construction?.status === Construction.STATUS_PLANNED && ' - Planned'}
-                  {plot.building?.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION && ' - Under Construction'}
+                  {buildings[lot.building?.capableType]?.name || 'Empty Lot'}
+                  {lot.building?.construction?.status === Construction.STATUS_PLANNED && ' - Planned'}
+                  {lot.building?.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION && ' - Under Construction'}
                 )
               </b>
             </Subtitle>
@@ -2139,10 +2139,10 @@ export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps
   let totalDistance = 0;
   let totalTime = 0;
 
-  const tripDetails = steps.map(({ label, plot, skipTo }) => {
-    const stepDistance = Asteroid.getLotDistance(asteroidId, currentLocation, plot) || 0;
-    const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLocation, plot, crewTravelBonus) || 0;
-    currentLocation = skipTo || plot;
+  const tripDetails = steps.map(({ label, lot, skipTo }) => {
+    const stepDistance = Asteroid.getLotDistance(asteroidId, currentLocation, lot) || 0;
+    const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLocation, lot, crewTravelBonus) || 0;
+    currentLocation = skipTo || lot;
 
     // agg
     totalDistance += stepDistance;

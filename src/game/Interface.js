@@ -24,7 +24,7 @@ import CrewAssignments from './interface/details/CrewAssignments';
 import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
-import PlotViewer from './interface/PlotViewer';
+import LotViewer from './interface/LotViewer';
 import RouteDetails from './interface/details/RouteDetails';
 import WatchlistTable from './interface/details/WatchlistTable';
 import theme from '~/theme';
@@ -136,7 +136,7 @@ const Interface = () => {
             </Route>
           </Switch>
 
-          <PlotViewer />
+          <LotViewer />
           <HUD />
           <MainMenu />
         </MainContainer>

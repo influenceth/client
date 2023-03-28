@@ -6,7 +6,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useCrewContext from '~/hooks/useCrewContext';
-import usePlot from '~/hooks/usePlot';
+import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import actionButtons from './actionButtons';
 
@@ -15,14 +15,14 @@ const useActionButtons = () => {
   const buildings = useBuildingAssets();
 
   const asteroidId = useStore(s => s.asteroids.origin);
-  const { plotId } = useStore(s => s.asteroids.plot || {});
+  const { lotId } = useStore(s => s.asteroids.lot || {});
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const setAction = useStore(s => s.dispatchActionDialog);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
-  const { constructionStatus } = useConstructionManager(asteroidId, plotId);
-  const { data: plot, isLoading: plotIsLoading } = usePlot(asteroidId, plotId);
+  const { constructionStatus } = useConstructionManager(asteroidId, lotId);
+  const { data: lot, isLoading: lotIsLoading } = useLot(asteroidId, lotId);
   const { crew } = useCrewContext();
 
   const [actions, setActions] = useState([]);
@@ -31,7 +31,7 @@ const useActionButtons = () => {
   // TODO: could reasonably have buttons determine own visibility and remove some redundant logic here
   // (the only problem is parent wouldn't know how many visible buttons there were)
   useEffect(() => {
-    if (asteroidIsLoading || plotIsLoading) return;
+    if (asteroidIsLoading || lotIsLoading) return;
 
     const a = [];
     if (asteroid) {
@@ -42,12 +42,12 @@ const useActionButtons = () => {
         if (account && asteroid.owner && Address.areEqual(account, asteroid.owner)) {
           a.push(actionButtons.ScanAsteroid);
         }
-      } else if (plot && crew && zoomStatus === 'in') {
+      } else if (lot && crew && zoomStatus === 'in') {
         a.push(actionButtons.CoreSample);
 
-        if (plot.occupier === crew.i) {
-          if (constructionStatus === 'OPERATIONAL' && plot.building?.capableType) {
-            const buildingAsset = buildings[plot.building.capableType];
+        if (lot.occupier === crew.i) {
+          if (constructionStatus === 'OPERATIONAL' && lot.building?.capableType) {
+            const buildingAsset = buildings[lot.building.capableType];
             if (buildingAsset.capabilities.includes('extraction')) {
               a.push(actionButtons.Extract);
             }
@@ -58,12 +58,12 @@ const useActionButtons = () => {
           }
 
           // NOTE: this will need to change once using contruction inventories, and when that happens, it
-          //  is worth nothing that plot?.building?.inventories is undefined until it is used (this is
+          //  is worth nothing that lot?.building?.inventories is undefined until it is used (this is
           //  probably worth addressing on the server)
-          if (constructionStatus === 'OPERATIONAL' && Inventory.CAPACITIES[plot.building?.capableType || 0][1]) {
+          if (constructionStatus === 'OPERATIONAL' && Inventory.CAPACITIES[lot.building?.capableType || 0][1]) {
             a.push(actionButtons.SurfaceTransferOutgoing);
           }
-          if ((plot.building?.deliveries || []).find((d) => d.status !== 'COMPLETE')) {
+          if ((lot.building?.deliveries || []).find((d) => d.status !== 'COMPLETE')) {
             a.push(actionButtons.SurfaceTransferIncoming);
           }
 
@@ -73,23 +73,23 @@ const useActionButtons = () => {
           if (['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
             a.push(actionButtons.Deconstruct);
           }
-        } else if (!plot.occupier || constructionStatus === 'READY_TO_PLAN') {
+        } else if (!lot.occupier || constructionStatus === 'READY_TO_PLAN') {
           a.push(actionButtons.PlanBuilding);
         }
       }
     }
 
     setActions(a);
-  }, [asteroid, constructionStatus, crew, plot, resourceMap?.active, !!resourceMap?.selected, zoomStatus]);
+  }, [asteroid, constructionStatus, crew, lot, resourceMap?.active, !!resourceMap?.selected, zoomStatus]);
 
   return {
     actions,
     props: {
       asteroid,
       crew,
-      plot,
+      lot,
       onSetAction: setAction,
-      _disabled: asteroidIsLoading || plotIsLoading
+      _disabled: asteroidIsLoading || lotIsLoading
     }
   }
 };

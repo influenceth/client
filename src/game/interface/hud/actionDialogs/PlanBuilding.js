@@ -56,7 +56,7 @@ import {
   BuildingPlanSection,
   BuildingRequirementsSection,
   DeconstructionMaterialsSection,
-  DestinationPlotSection,
+  DestinationLotSection,
   ExistingSampleSection,
   ExtractionAmountSection,
   ExtractSampleSection,
@@ -74,10 +74,10 @@ import {
 } from './components';
 import useAsteroid from '~/hooks/useAsteroid';
 
-const PlanBuilding = ({ asteroid, plot, ...props }) => {
+const PlanBuilding = ({ asteroid, lot, ...props }) => {
   const buildings = useBuildingAssets();
   const resources = useResourceAssets();
-  const { currentConstruction, constructionStatus, planConstruction } = useConstructionManager(asteroid?.i, plot?.i);
+  const { currentConstruction, constructionStatus, planConstruction } = useConstructionManager(asteroid?.i, lot?.i);
   const { captain } = useCrewContext();
 
   const [capableType, setCapableType] = useState();
@@ -115,7 +115,7 @@ const PlanBuilding = ({ asteroid, plot, ...props }) => {
       <ActionDialogHeader
         asteroid={asteroid}
         captain={captain}
-        plot={plot}
+        lot={lot}
         action={{
           actionIcon: <PlanBuildingIcon />,
           headerBackground: constructionBackground,

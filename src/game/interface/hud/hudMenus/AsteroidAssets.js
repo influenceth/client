@@ -2,9 +2,9 @@ import { Fragment, useMemo } from 'react';
 import styled from 'styled-components';
 import { Capable, Construction, Inventory, Lot } from '@influenceth/sdk';
 
-import { usePlotLink } from '~/components/PlotLink';
+import { useLotLink } from '~/components/LotLink';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
+import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import useChainTime from '~/hooks/useChainTime';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Rule, majorBorderColor } from './components';
@@ -18,7 +18,7 @@ const Wrapper = styled.div`
   height: 100%;
 `;
 
-const PlotTable = styled.table`
+const LotTable = styled.table`
   border-collapse: collapse;
   width: 100%;
 `;
@@ -30,7 +30,7 @@ const NotHoverContent = styled.span`
   font-weight: bold;
 `;
 
-const PlotRow = styled.tr`
+const LotRow = styled.tr`
   cursor: ${p => p.theme.cursors.active};
   & > * {
     padding: 4px 4px;
@@ -122,24 +122,24 @@ const Status = styled.td`
   white-space: nowrap;
 `;
 
-const BuildingRow = ({ plot }) => {
+const BuildingRow = ({ lot }) => {
   const chainTime = useChainTime();
-  const onClick = usePlotLink({
-    asteroidId: plot.asteroid,
-    plotId: plot.i,
+  const onClick = useLotLink({
+    asteroidId: lot.asteroid,
+    lotId: lot.i,
   });
 
   const [progress, progressColor] = useMemo(() => {
-    if (plot.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
-      if (plot.building?.capableType === 2 && plot.building?.extraction?.status > 0) {
+    if (lot.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
+      if (lot.building?.capableType === 2 && lot.building?.extraction?.status > 0) {
         return [
-          Math.min(1, (chainTime - plot.building?.extraction?.startTime) / (plot.building?.extraction?.completionTime - plot.building?.extraction?.startTime)),
+          Math.min(1, (chainTime - lot.building?.extraction?.startTime) / (lot.building?.extraction?.completionTime - lot.building?.extraction?.startTime)),
           'main'
         ];
-      } else if (plot.building?.capableType === 1) {
-        const usage = plot.building.inventories ? Math.max(
-          ((plot.building.inventories[1].mass || 0) + (plot.building.inventories[1].reservedMass || 0)) / (1e6 * Inventory.CAPACITIES[1][1].mass),
-          ((plot.building.inventories[1].volume || 0) + (plot.building.inventories[1].reservedVolume || 0)) / (1e6 * Inventory.CAPACITIES[1][1].volume),
+      } else if (lot.building?.capableType === 1) {
+        const usage = lot.building.inventories ? Math.max(
+          ((lot.building.inventories[1].mass || 0) + (lot.building.inventories[1].reservedMass || 0)) / (1e6 * Inventory.CAPACITIES[1][1].mass),
+          ((lot.building.inventories[1].volume || 0) + (lot.building.inventories[1].reservedVolume || 0)) / (1e6 * Inventory.CAPACITIES[1][1].volume),
         ) : 0;
         return [
           Math.min(1, usage),
@@ -147,38 +147,38 @@ const BuildingRow = ({ plot }) => {
         ];
       }
     }
-    if (plot.building?.construction?.status === Construction.STATUS_PLANNED) {
+    if (lot.building?.construction?.status === Construction.STATUS_PLANNED) {
       return [
-        Math.min(1, 1 - (plot.gracePeriodEnd - chainTime) / Lot.GRACE_PERIOD),
+        Math.min(1, 1 - (lot.gracePeriodEnd - chainTime) / Lot.GRACE_PERIOD),
         'error'
       ];
     }
-    if (plot.building?.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION) {
+    if (lot.building?.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION) {
       return [
-        Math.min(1, (chainTime - plot.building?.construction?.startTime) / (plot.building?.construction?.completionTime - plot.building?.construction?.startTime)),
+        Math.min(1, (chainTime - lot.building?.construction?.startTime) / (lot.building?.construction?.completionTime - lot.building?.construction?.startTime)),
         'main'
       ];
     }
     return [0];
-  }, [chainTime, plot.building]);
+  }, [chainTime, lot.building]);
 
   const status = useMemo(() => {
-    if (plot.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
-      if (plot.building?.capableType === 2 && plot.building?.extraction?.status > 0) {
+    if (lot.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
+      if (lot.building?.capableType === 2 && lot.building?.extraction?.status > 0) {
         return 'Extracting';
-      } else if (plot.building?.capableType === 1) {
+      } else if (lot.building?.capableType === 1) {
         return `${formatFixed(100 * progress, 1)}% Full`
       }
       return 'Idle';
     }
-    if (plot.building?.construction?.status === Construction.STATUS_PLANNED && plot.gracePeriodEnd < chainTime) {
+    if (lot.building?.construction?.status === Construction.STATUS_PLANNED && lot.gracePeriodEnd < chainTime) {
       return 'At Risk';
     }
-    return Construction.STATUSES[plot.building?.construction?.status || 0];
-  }, [plot.building, progress]);
+    return Construction.STATUSES[lot.building?.construction?.status || 0];
+  }, [lot.building, progress]);
 
   return (
-    <PlotRow onClick={onClick}>
+    <LotRow onClick={onClick}>
       <BuildingCell>
         <Building>
           <ConstructIcon />
@@ -188,54 +188,54 @@ const BuildingRow = ({ plot }) => {
       <InfoCell>
         <Details>
           <label>
-            {Capable.TYPES[plot.building?.capableType || 0].name}
+            {Capable.TYPES[lot.building?.capableType || 0].name}
           </label>
           <span>
-            <HoverContent>Lot {(plot.i || '').toLocaleString()}</HoverContent>
+            <HoverContent>Lot {(lot.i || '').toLocaleString()}</HoverContent>
             <NotHoverContent>{status}</NotHoverContent>
           </span>
         </Details>
         <Bar progress={progress} progressColor={progressColor} />
       </InfoCell>
-    </PlotRow>
+    </LotRow>
   );
 };
 
 const AsteroidAssets = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
-  const { data: plots, isLoading } = useAsteroidCrewPlots(asteroidId);
+  const { data: lots, isLoading } = useAsteroidCrewLots(asteroidId);
 
-  const buildingTally = plots?.length || 0;
+  const buildingTally = lots?.length || 0;
 
   const buildingsByType = useMemo(() => {
-    if (!plots) return {};
-    return plots
+    if (!lots) return {};
+    return lots
     .sort((a, b) => a.building?.__t < b.building?.__t ? -1 : 1)
-    .reduce((acc, plot) => {
-      const capableType = plot.building?.capableType;
+    .reduce((acc, lot) => {
+      const capableType = lot.building?.capableType;
       if (!acc[capableType]) acc[capableType] = [];
-      acc[capableType].push(plot);
+      acc[capableType].push(lot);
       return acc;
     }, {});
-  }, [plots]);
+  }, [lots]);
 
   return (
     <Wrapper>
       <HudMenuCollapsibleSection
         titleText="Buildings"
         titleLabel={`${buildingTally.toLocaleString()} Asset${buildingTally === 1 ? '' : 's'}`}>
-        {asteroid && plots && !isLoading && (
+        {asteroid && lots && !isLoading && (
           <>
             {buildingTally === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied any lots on this asteroid yet.</div>}
             {buildingTally > 0 && Object.keys(buildingsByType).map((capableType, i) => (
               <Fragment key={capableType}>
                 {i > 0 && <Rule />}
-                <PlotTable>
+                <LotTable>
                   <tbody>
-                    {buildingsByType[capableType].map((plot) => <BuildingRow key={plot.i} plot={plot} />)}
+                    {buildingsByType[capableType].map((lot) => <BuildingRow key={lot.i} lot={lot} />)}
                   </tbody>
-                </PlotTable>
+                </LotTable>
               </Fragment>
             ))}
           </>

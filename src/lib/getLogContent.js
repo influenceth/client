@@ -5,7 +5,7 @@ import { Capable, Inventory } from '@influenceth/sdk';
 import AddressLink from '~/components/AddressLink';
 import AsteroidLink from '~/components/AsteroidLink';
 import CrewLink from '~/components/CrewLink';
-import PlotLink from '~/components/PlotLink';
+import LotLink from '~/components/LotLink';
 import {
   ConstructIcon,
   NewCoreSampleIcon,
@@ -157,7 +157,7 @@ const entries = {
     content: (
       <>
         <span>{Capable.TYPES[e.returnValues.capableType]?.name} site plan completed on </span>
-        <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
+        <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} />
       </>
     ),
     txLink: getTxLink(e),
@@ -168,7 +168,7 @@ const entries = {
     content: (
       <>
         <span>Construction plans canceled on </span>
-        <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
+        <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} />
       </>
     ),
     txLink: getTxLink(e),
@@ -194,7 +194,7 @@ const entries = {
       content: (
         <>
           <span>{capableName ? `${capableName} construction` : 'Construction'} finished on </span>
-          <PlotLink asteroidId={asteroidId} plotId={lotId} />
+          <LotLink asteroidId={asteroidId} lotId={lotId} />
         </>
       ),
       txLink: getTxLink(e),
@@ -211,7 +211,7 @@ const entries = {
       content: (
         <>
           <span>{capableName ? `${capableName} ` : 'Building'} deconstructed on </span>
-          <PlotLink asteroidId={asteroidId} plotId={lotId} />
+          <LotLink asteroidId={asteroidId} lotId={lotId} />
         </>
       ),
       txLink: getTxLink(e),
@@ -223,7 +223,7 @@ const entries = {
   //   content: (
   //     <>
   //       <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample started at </span>
-  //       <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+  //       <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
   //     </>
   //   ),
   //   txLink: getTxLink(e),
@@ -236,7 +236,7 @@ const entries = {
       content: (
         <>
           <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample completed at </span>
-          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+          <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
         </>
       ),
       txLink: getTxLink(e),
@@ -249,7 +249,7 @@ const entries = {
       content: (
         <>
           <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} extraction started at </span>
-          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+          <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
         </>
       ),
       txLink: getTxLink(e),
@@ -262,7 +262,7 @@ const entries = {
       content: (
         <>
           <span>Extraction completed at </span>
-          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
+          <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} />
         </>
       ),
       txLink: getTxLink(e),
@@ -275,7 +275,7 @@ const entries = {
       content: (
         <>
           <span>Delivery completed to </span>
-          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.destinationLotId} />
+          <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.destinationLotId} />
         </>
       ),
       txLink: getTxLink(e),

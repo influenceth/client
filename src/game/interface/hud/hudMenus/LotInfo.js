@@ -2,16 +2,16 @@ import { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Capable, Construction, Inventory, Lot } from '@influenceth/sdk';
 
-import { usePlotLink } from '~/components/PlotLink';
+import { useLotLink } from '~/components/LotLink';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
+import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useChainTime from '~/hooks/useChainTime';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, majorBorderColor, Rule } from './components';
 import ClipCorner from '~/components/ClipCorner';
 import { ConstructIcon } from '~/components/Icons';
-import usePlot from '~/hooks/usePlot';
+import useLot from '~/hooks/useLot';
 import { buildingDescriptions, buildingRecipes } from '~/lib/utils';
 import ResourceRequirement from '~/components/ResourceRequirement';
 
@@ -173,13 +173,13 @@ const ConstructionPlan = ({ capableType, constructionInventory }) => {
 };
 
 const LotInfo = () => {
-  const { asteroidId, plotId } = useStore(s => s.asteroids.plot || {});
-  const { data: plot, isLoading } = usePlot(asteroidId, plotId);
+  const { asteroidId, lotId } = useStore(s => s.asteroids.lot || {});
+  const { data: lot, isLoading } = useLot(asteroidId, lotId);
 
   const [selectedBuilding, setSelectedBuilding] = useState();
 
-  if (!plot) return null;
-  if (plot && !plot.building) {
+  if (!lot) return null;
+  if (lot && !lot.building) {
     return (
       <Wrapper>
         <HudMenuCollapsibleSection titleText="Empty Lot">
@@ -231,20 +231,20 @@ const LotInfo = () => {
   }
   return (
     <Wrapper>
-      <HudMenuCollapsibleSection titleText={plot.building.__t}>
-        {plot && !isLoading && (
+      <HudMenuCollapsibleSection titleText={lot.building.__t}>
+        {lot && !isLoading && (
           <>
-            <Description>{buildingDescriptions[plot.building?.capableType]}</Description>
-            {!!Inventory.CAPACITIES[plot.building?.capableType][1] && (
+            <Description>{buildingDescriptions[lot.building?.capableType]}</Description>
+            {!!Inventory.CAPACITIES[lot.building?.capableType][1] && (
               <>
                 <Rule margin="15px" />
                 <DetailRow>
                   <label>Maximum Storage Volume</label>
-                  <div>{Inventory.CAPACITIES[plot.building.capableType][1].volume.toLocaleString()} m<sup>3</sup></div>
+                  <div>{Inventory.CAPACITIES[lot.building.capableType][1].volume.toLocaleString()} m<sup>3</sup></div>
                 </DetailRow>
                 <DetailRow>
                   <label>Maximum Storage Mass</label>
-                  <div>{Inventory.CAPACITIES[plot.building.capableType][1].mass.toLocaleString()} t</div>
+                  <div>{Inventory.CAPACITIES[lot.building.capableType][1].mass.toLocaleString()} t</div>
                 </DetailRow>
               </>
             )}
@@ -254,9 +254,9 @@ const LotInfo = () => {
 
       <HudMenuCollapsibleSection
         titleText="Construction"
-        collapsed={plot.building.construction.status === Construction.STATUS_OPERATIONAL}
+        collapsed={lot.building.construction.status === Construction.STATUS_OPERATIONAL}
         borderless>
-        <ConstructionPlan capableType={plot.building.capableType} />
+        <ConstructionPlan capableType={lot.building.capableType} />
       </HudMenuCollapsibleSection>
     </Wrapper>
   );

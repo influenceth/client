@@ -4,14 +4,14 @@ import { Capable } from '@influenceth/sdk';
 import api from '~/lib/api';
 import useCrewContext from './useCrewContext';
 
-const useAsteroidCrewPlots = (asteroidId, explicitCrewId) => {
+const useAsteroidCrewLots = (asteroidId, explicitCrewId) => {
   const { crew } = useCrewContext();
   const crewId = explicitCrewId || crew?.i;
   return useQuery(
-    [ 'asteroidCrewPlots', asteroidId, crewId ],
-    () => api.getCrewOccupiedPlots(asteroidId, crewId),
+    [ 'asteroidCrewLots', asteroidId, crewId ],
+    () => api.getCrewOccupiedLots(asteroidId, crewId),
     { enabled: !!(asteroidId && crewId) }
   );
 };
 
-export default useAsteroidCrewPlots;
+export default useAsteroidCrewLots;

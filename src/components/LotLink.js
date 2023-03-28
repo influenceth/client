@@ -5,18 +5,18 @@ import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useStore from '~/hooks/useStore';
 import OnClickLink from './OnClickLink';
 
-export const usePlotLink = ({ asteroidId, plotId, resourceId, zoomToPlot }) => {
+export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
-  const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
+  const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
-  const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
+  const dispatchZoomToLot = useStore(s => s.dispatchZoomToLot);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const openHudMenu = useStore(s => s.asteroids.openHudMenu);
   const origin = useStore(s => s.asteroids.origin);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const currentlyZoomedToPlot = useStore(s => s.asteroids.zoomToPlot);
+  const currentlyZoomedToLot = useStore(s => s.asteroids.zoomToLot);
 
   const selectResourceMapAsNeeded = useCallback(() => {
     if (resourceId) {
@@ -25,44 +25,44 @@ export const usePlotLink = ({ asteroidId, plotId, resourceId, zoomToPlot }) => {
     }
   }, [resourceId, dispatchResourceMapSelect, dispatchResourceMapToggle, dispatchHudMenuOpened, openHudMenu]);
 
-  const zoomToPlotAsNeeded = useCallback(() => {
-    if (zoomToPlot !== currentlyZoomedToPlot) {
-      dispatchZoomToPlot(!!zoomToPlot);
+  const zoomToLotAsNeeded = useCallback(() => {
+    if (zoomToLot !== currentlyZoomedToLot) {
+      dispatchZoomToLot(!!zoomToLot);
 
       // if this is not just a boolean, it is assumed to be a hudmenu to open upon arrival
-      if (zoomToPlot && zoomToPlot !== true) {
+      if (zoomToLot && zoomToLot !== true) {
         setTimeout(() => {
-          dispatchHudMenuOpened(`lot.${zoomToPlot}`);
+          dispatchHudMenuOpened(`lot.${zoomToLot}`);
         }, 0);
       }
     }
-  }, [zoomToPlot, currentlyZoomedToPlot, dispatchZoomToPlot, dispatchHudMenuOpened]);
+  }, [zoomToLot, currentlyZoomedToLot, dispatchZoomToLot, dispatchHudMenuOpened]);
 
   return useCallback(() => {
     // if already zoomed into asteroid, just select lot and select resource map
     if (asteroidId === origin && zoomStatus === 'in') {
-      dispatchPlotSelected(asteroidId, plotId);
+      dispatchLotSelected(asteroidId, lotId);
       selectResourceMapAsNeeded();
       setTimeout(() => {
-        zoomToPlotAsNeeded();
+        zoomToLotAsNeeded();
       }, 500);
 
-    // else, start zooming to asteroid... once on the way, it will also select the plot in the above effect
+    // else, start zooming to asteroid... once on the way, it will also select the lot in the above effect
     } else {
       dispatchOriginSelected(asteroidId);
       if (zoomStatus === 'out') updateZoomStatus('zooming-in');
 
       setTimeout(() => {
-        if (plotId) {
-          dispatchPlotSelected(asteroidId, plotId);
+        if (lotId) {
+          dispatchLotSelected(asteroidId, lotId);
           selectResourceMapAsNeeded();
-          zoomToPlotAsNeeded();
+          zoomToLotAsNeeded();
         } else {
           selectResourceMapAsNeeded();
         }
       }, 0);
     }
-  }, [asteroidId, plotId, selectResourceMapAsNeeded, zoomToPlotAsNeeded, zoomStatus]);
+  }, [asteroidId, lotId, selectResourceMapAsNeeded, zoomToLotAsNeeded, zoomStatus]);
 }
 
 const AsteroidName = ({ asteroidId }) => {
@@ -74,8 +74,8 @@ const AsteroidName = ({ asteroidId }) => {
   );
 };
 
-export const PlotLink = ({ asteroidId, plotId, resourceId, zoomToPlot }) => {
-  const onClick = usePlotLink({ asteroidId, plotId, resourceId, zoomToPlot });
+export const LotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
+  const onClick = useLotLink({ asteroidId, lotId, resourceId, zoomToLot });
 
   const { data: owned, isLoading: ownedAreLoading } = useOwnedAsteroids();
   const asteroidName = useMemo(() => {
@@ -93,9 +93,9 @@ export const PlotLink = ({ asteroidId, plotId, resourceId, zoomToPlot }) => {
       {ownedAreLoading
         ? `Asteroid #${asteroidId.toLocaleString()}`
         : (asteroidName || <AsteroidName asteroidId={asteroidId} />)}
-      {' '}#{plotId ? plotId.toLocaleString() : '?'}
+      {' '}#{lotId ? lotId.toLocaleString() : '?'}
     </OnClickLink>
   );
 };
 
-export default PlotLink;
+export default LotLink;

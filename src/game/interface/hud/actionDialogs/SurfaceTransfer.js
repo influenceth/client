@@ -6,11 +6,11 @@ import { SurfaceTransferIcon } from '~/components/Icons';
 import { useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
-import usePlot from '~/hooks/usePlot';
+import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 import {
-  DestinationPlotSection,
+  DestinationLotSection,
   ItemSelectionSection,
   ActionDialogFooter,
   ActionDialogHeader,
@@ -24,20 +24,20 @@ import {
   formatVolume,
 } from './components';
 
-const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
+const SurfaceTransfer = ({ asteroid, lot, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const resources = useResourceAssets();
-  // NOTE: plot should be destination if deliveryId > 0
-  const { currentDelivery, deliveryStatus, startDelivery, finishDelivery } = useDeliveryManager(asteroid?.i, plot?.i, props.deliveryId);
+  // NOTE: lot should be destination if deliveryId > 0
+  const { currentDelivery, deliveryStatus, startDelivery, finishDelivery } = useDeliveryManager(asteroid?.i, lot?.i, props.deliveryId);
   const { crew, crewMemberMap } = useCrewContext();
-  const { data: currentDeliveryOriginPlot } = usePlot(asteroid.i, currentDelivery?.originPlotId);
-  const { data: currentDeliveryDestinationPlot } = usePlot(asteroid.i, currentDelivery?.destPlotId);
+  const { data: currentDeliveryOriginLot } = useLot(asteroid.i, currentDelivery?.originLotId);
+  const { data: currentDeliveryDestinationLot } = useLot(asteroid.i, currentDelivery?.destLotId);
 
-  const originPlot = useMemo(
-    () => currentDelivery ? currentDeliveryOriginPlot : plot,
-    [currentDelivery, currentDeliveryOriginPlot, plot]
+  const originLot = useMemo(
+    () => currentDelivery ? currentDeliveryOriginLot : lot,
+    [currentDelivery, currentDeliveryOriginLot, lot]
   ) || {};
-  const [destinationPlot, setDestinationPlot] = useState();
+  const [destinationLot, setDestinationLot] = useState();
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
 
   const crewMembers = currentDelivery?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
@@ -52,13 +52,13 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
   }, [currentDelivery]);
 
   useEffect(() => {
-    if (currentDeliveryDestinationPlot) {
-      setDestinationPlot(currentDeliveryDestinationPlot);
+    if (currentDeliveryDestinationLot) {
+      setDestinationLot(currentDeliveryDestinationLot);
     }
-  }, [currentDeliveryDestinationPlot]);
+  }, [currentDeliveryDestinationLot]);
 
-  const transportDistance = Asteroid.getLotDistance(asteroid?.i, originPlot?.i, destinationPlot?.i) || 0;
-  const transportTime = Asteroid.getLotTravelTime(asteroid?.i, originPlot?.i, destinationPlot?.i, crewTravelBonus.totalBonus) || 0;
+  const transportDistance = Asteroid.getLotDistance(asteroid?.i, originLot?.i, destinationLot?.i) || 0;
+  const transportTime = Asteroid.getLotTravelTime(asteroid?.i, originLot?.i, destinationLot?.i, crewTravelBonus.totalBonus) || 0;
 
   const { totalMass, totalVolume } = useMemo(() => {
     return Object.keys(selectedItems).reduce((acc, cur) => {
@@ -109,33 +109,33 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
   }, [deliveryStatus]);
 
   const originInvId = useMemo(() => {
-    if (originPlot?.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
+    if (originLot?.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
       return 1;
-    } else if (originPlot?.building?.construction?.status === Construction.STATUS_PLANNED) {
+    } else if (originLot?.building?.construction?.status === Construction.STATUS_PLANNED) {
       return 0;
     }
     return null;
-  }, [originPlot?.building?.construction?.status]);
+  }, [originLot?.building?.construction?.status]);
 
   const destInvId = useMemo(() => {
-    if (destinationPlot?.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
+    if (destinationLot?.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
       return 1;
-    } else if (destinationPlot?.building?.construction?.status === Construction.STATUS_PLANNED) {
+    } else if (destinationLot?.building?.construction?.status === Construction.STATUS_PLANNED) {
       return 0;
     }
     return null;
-  }, [destinationPlot]);
+  }, [destinationLot]);
 
   const originInventory = useMemo(() => {
-    return (originPlot?.building?.inventories || {})[originInvId];
-  }, [originInvId, originPlot?.building?.inventories]);
+    return (originLot?.building?.inventories || {})[originInvId];
+  }, [originInvId, originLot?.building?.inventories]);
 
   const onStartDelivery = useCallback(() => {
-    let destCapacityRemaining = { ...Inventory.CAPACITIES[destinationPlot?.building?.capableType][destInvId] };
-    if (destinationPlot?.building?.inventories && destinationPlot?.building?.inventories[destInvId]) {
+    let destCapacityRemaining = { ...Inventory.CAPACITIES[destinationLot?.building?.capableType][destInvId] };
+    if (destinationLot?.building?.inventories && destinationLot?.building?.inventories[destInvId]) {
       // Capacities are in tonnes and cubic meters, Inventories are in grams and mLs
-      destCapacityRemaining.mass -= 1e-6 * ((destinationPlot.building.inventories[destInvId].mass || 0) + (destinationPlot.building.inventories[destInvId].reservedMass || 0));
-      destCapacityRemaining.volume -= 1e-6 * ((destinationPlot.building.inventories[destInvId].volume || 0) + (destinationPlot.building.inventories[destInvId].reservedVolume || 0));
+      destCapacityRemaining.mass -= 1e-6 * ((destinationLot.building.inventories[destInvId].mass || 0) + (destinationLot.building.inventories[destInvId].reservedMass || 0));
+      destCapacityRemaining.volume -= 1e-6 * ((destinationLot.building.inventories[destInvId].volume || 0) + (destinationLot.building.inventories[destInvId].reservedVolume || 0));
     }
     if (destCapacityRemaining.mass < totalMass || destCapacityRemaining.volume < totalVolume) {
       createAlert({
@@ -149,11 +149,11 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
 
     startDelivery({
       originInvId: originInvId,
-      destPlotId: destinationPlot?.i,
+      destLotId: destinationLot?.i,
       destInvId,
       resources: selectedItems
     });
-  }, [originInvId, destinationPlot?.i, destInvId, selectedItems]);
+  }, [originInvId, destinationLot?.i, destInvId, selectedItems]);
 
   // handle auto-closing
   const lastStatus = useRef();
@@ -169,7 +169,7 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
       <ActionDialogHeader
         asteroid={asteroid}
         captain={captain}
-        plot={currentDeliveryOriginPlot || originPlot}
+        lot={currentDeliveryOriginLot || originLot}
         action={{
           actionIcon: <SurfaceTransferIcon />,
           headerBackground: surfaceTransferBackground,
@@ -188,11 +188,11 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
         selectedItems={selectedItems}
         status={status} />
 
-      <DestinationPlotSection
+      <DestinationLotSection
         asteroid={asteroid}
-        originPlot={originPlot}
-        destinationPlot={destinationPlot}
-        onDestinationSelect={setDestinationPlot}
+        originLot={originLot}
+        destinationLot={destinationLot}
+        onDestinationSelect={setDestinationLot}
         status={status} />
 
       <ActionDialogStats stats={stats} status={status} />
@@ -205,7 +205,7 @@ const SurfaceTransfer = ({ asteroid, plot, ...props }) => {
         {...props}
         buttonsLoading={deliveryStatus === 'FINISHING' || undefined}
         finalizeLabel="Complete"
-        goDisabled={!destinationPlot?.i || totalMass === 0}
+        goDisabled={!destinationLot?.i || totalMass === 0}
         goLabel="Transfer"
         onFinalize={() => finishDelivery()}
         onGo={onStartDelivery}

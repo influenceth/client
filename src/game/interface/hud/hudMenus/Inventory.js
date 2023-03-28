@@ -7,7 +7,7 @@ import Dropdown from '~/components/Dropdown';
 import { CheckedIcon, DotsIcon, UncheckedIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { useResourceAssets } from '~/hooks/useAssets';
-import usePlot from '~/hooks/usePlot';
+import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { formatFixed } from '~/lib/utils';
 import actionButtons from '../actionButtons';
@@ -252,10 +252,10 @@ const StackSplitterPopper = ({ children, referenceEl }) => {
   );
 }
 
-const PlotInventory = () => {
+const LotInventory = () => {
   const { props: actionProps } = useActionButtons();
-  const { asteroidId, plotId } = useStore(s => s.asteroids.plot) || {};
-  const { data: plot } = usePlot(asteroidId, plotId);
+  const { asteroidId, lotId } = useStore(s => s.asteroids.lot) || {};
+  const { data: lot } = useLot(asteroidId, lotId);
   const resources = useResourceAssets();
 
   const [amount, setAmount] = useState();
@@ -267,7 +267,7 @@ const PlotInventory = () => {
 
   const resourceItemRefs = useRef([]);
 
-  const inventory = plot?.building?.inventories ? plot?.building?.inventories[1] : null;
+  const inventory = lot?.building?.inventories ? lot?.building?.inventories[1] : null;
   const { used, usedOrReserved } = useMemo(() => {
     if (!inventory) {
       return {
@@ -276,10 +276,10 @@ const PlotInventory = () => {
       };
     }
 
-    const mass = 1E-6 * plot.building.inventories[1]?.mass || 0;
-    const reservedMass = 1E-6 * plot.building.inventories[1]?.reservedMass || 0;
-    const volume = 1E-6 * plot.building.inventories[1]?.volume || 0;
-    const reservedVolume = 1E-6 * plot.building.inventories[1]?.reservedVolume || 0;
+    const mass = 1E-6 * lot.building.inventories[1]?.mass || 0;
+    const reservedMass = 1E-6 * lot.building.inventories[1]?.reservedMass || 0;
+    const volume = 1E-6 * lot.building.inventories[1]?.volume || 0;
+    const reservedVolume = 1E-6 * lot.building.inventories[1]?.reservedVolume || 0;
 
     const massUsage = mass / Inventory.CAPACITIES[1][1].mass;
     const massReservedUsage = reservedMass / Inventory.CAPACITIES[1][1].mass;
@@ -312,8 +312,8 @@ const PlotInventory = () => {
   }, [inventory?.resources, order]);
 
   const isIncomingDelivery = useMemo(() => {
-    return (plot?.building?.deliveries || []).find((d) => d.status !== 'COMPLETE')
-  }, [plot])
+    return (lot?.building?.deliveries || []).find((d) => d.status !== 'COMPLETE')
+  }, [lot])
 
   const handleSelected = useCallback((resourceId, newTotal) => {
     setSelectedItems((s) => {
@@ -470,4 +470,4 @@ const PlotInventory = () => {
   );
 };
 
-export default PlotInventory;
+export default LotInventory;

@@ -27,11 +27,11 @@ import CollapsibleSection from '~/components/CollapsibleSection';
 import LiveTimer from '~/components/LiveTimer';
 import NavIcon from '~/components/NavIcon';
 import OnClickLink from '~/components/OnClickLink';
-import { usePlotLink } from '~/components/PlotLink';
+import { useLotLink } from '~/components/LotLink';
 import useActionItems from '~/hooks/useActionItems';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
-import usePlot from '~/hooks/usePlot';
+import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import theme, { hexToRGB } from '~/theme';
 
@@ -294,7 +294,7 @@ const formatItem = (item) => {
     icon: null,
     label: '',
     asteroidId: null,
-    plotId: null,
+    lotId: null,
     resourceId: null,
     locationDetail: '',
     completionTime: item.data?.completionTime || 0,
@@ -317,7 +317,7 @@ const formatItem = (item) => {
       formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
       formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
       formatted.asteroidId = item.event.returnValues?.asteroidId;
-      formatted.plotId = item.event.returnValues?.lotId;
+      formatted.lotId = item.event.returnValues?.lotId;
       formatted.resourceId = item.event.returnValues?.resourceId;
       formatted.locationDetail = Inventory.RESOURCES[item.event.returnValues?.resourceId].name;
       formatted.onClick = ({ openDialog }) => {
@@ -329,7 +329,7 @@ const formatItem = (item) => {
       formatted.icon = <ConstructIcon />;
       formatted.label = `${Capable.TYPES[item.assets.building.type]?.name || 'Building'} Construction`;
       formatted.asteroidId = item.assets.asteroid.i;
-      formatted.plotId = item.assets.lot.i;
+      formatted.lotId = item.assets.lot.i;
       formatted.onClick = ({ openDialog }) => {
         openDialog('CONSTRUCT');
       };
@@ -339,7 +339,7 @@ const formatItem = (item) => {
       formatted.icon = <ExtractionIcon />;
       formatted.label = `${Inventory.RESOURCES[item.event.returnValues?.resourceId]?.name || 'Resource'} Extraction`;
       formatted.asteroidId = item.event.returnValues?.asteroidId;
-      formatted.plotId = item.event.returnValues?.lotId;
+      formatted.lotId = item.event.returnValues?.lotId;
       formatted.resourceId = item.event.returnValues?.resourceId;
       formatted.onClick = ({ openDialog }) => {
         openDialog('EXTRACT_RESOURCE');
@@ -350,7 +350,7 @@ const formatItem = (item) => {
       formatted.icon = <SurfaceTransferIcon />;
       formatted.label = 'Surface Transfer';
       formatted.asteroidId = item.event.returnValues?.asteroidId;
-      formatted.plotId = item.event.returnValues?.destinationLotId;  // after start, link to destination
+      formatted.lotId = item.event.returnValues?.destinationLotId;  // after start, link to destination
       formatted.onClick = ({ openDialog }) => {
         openDialog('SURFACE_TRANSFER', { deliveryId: item.assets.delivery?.deliveryId });
       };
@@ -370,7 +370,7 @@ const formatPlans = (item) => {
     label: `${item.building.type} Site Plan`,
     crewId: item.occupier,
     asteroidId: item.asteroid,
-    plotId: item.i,
+    lotId: item.i,
     resourceId: null,
     locationDetail: '',
     completionTime: item.waitingFor,
@@ -388,7 +388,7 @@ const formatTx = (item) => {
     label: '',
     crewId: null,
     asteroidId: null,
-    plotId: null,
+    lotId: null,
     resourceId: null,
     locationDetail: '',
     completionTime: null,
@@ -471,7 +471,7 @@ const formatTx = (item) => {
       formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
       formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
       formatted.asteroidId = item.vars.asteroidId;
-      formatted.plotId = item.vars.plotId;
+      formatted.lotId = item.vars.lotId;
       formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
       formatted.onClick = ({ openDialog }) => {
         // TODO: in case of failure (and improvement mode), should link with selected sampleId
@@ -483,10 +483,10 @@ const formatTx = (item) => {
       formatted.icon = <NewCoreSampleIcon />;
       formatted.label = `Core Analysis`;
       formatted.asteroidId = item.vars.asteroidId;
-      formatted.plotId = item.vars.plotId;
+      formatted.lotId = item.vars.lotId;
       formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
-      formatted.onClick = ({ openDialog, plot }) => {
-        const isImprovement = item.vars.sampleId && plot?.coreSamples?.length > 0 && !!plot.coreSamples.find((s) => (
+      formatted.onClick = ({ openDialog, lot }) => {
+        const isImprovement = item.vars.sampleId && lot?.coreSamples?.length > 0 && !!lot.coreSamples.find((s) => (
           s.sampleId === item.vars.sampleId
           && s.resourceId === formatted.resourceId
           && s.initialYield > 0
@@ -499,7 +499,7 @@ const formatTx = (item) => {
       formatted.icon = <PlanBuildingIcon />;
       formatted.label = `Plan ${Capable.TYPES[item.vars.capableType]?.name || 'Building'} Site`;
       formatted.asteroidId = item.vars.asteroidId;
-      formatted.plotId = item.vars.plotId;
+      formatted.lotId = item.vars.lotId;
       formatted.onClick = ({ openDialog }) => {
         // TODO: in case of failure, should link with selected building type
         // (low priority b/c would have to fail and would have to have closed dialog)
@@ -510,7 +510,7 @@ const formatTx = (item) => {
       formatted.icon = <UnplanBuildingIcon />;
       formatted.label = 'Unplan Building Site';
       formatted.asteroidId = item.vars.asteroidId;
-      formatted.plotId = item.vars.plotId;
+      formatted.lotId = item.vars.lotId;
       formatted.onClick = ({ openDialog }) => {
         openDialog('UNPLAN_BUILDING');
       };
@@ -519,7 +519,7 @@ const formatTx = (item) => {
       formatted.icon = <ConstructIcon />;
       formatted.label = 'Start Construction';
       formatted.asteroidId = item.vars.asteroidId;
-      formatted.plotId = item.vars.plotId;
+      formatted.lotId = item.vars.lotId;
       formatted.onClick = ({ openDialog }) => {
         openDialog('CONSTRUCT');
       };
@@ -528,7 +528,7 @@ const formatTx = (item) => {
       formatted.icon = <ConstructIcon />;
       formatted.label = 'Finish Construction';
       formatted.asteroidId = item.vars.asteroidId;
-      formatted.plotId = item.vars.plotId;
+      formatted.lotId = item.vars.lotId;
       formatted.onClick = ({ openDialog }) => {
         openDialog('CONSTRUCT');
       };
@@ -537,7 +537,7 @@ const formatTx = (item) => {
       formatted.icon = <DeconstructIcon />;
       formatted.label = 'Deconstruct';
       formatted.asteroidId = item.vars.asteroidId;
-      formatted.plotId = item.vars.plotId;
+      formatted.lotId = item.vars.lotId;
       formatted.onClick = ({ openDialog }) => {
         openDialog('DECONSTRUCT');
       };
@@ -547,7 +547,7 @@ const formatTx = (item) => {
       formatted.icon = <ExtractionIcon />;
       formatted.label = `${Inventory.RESOURCES[item.vars.resourceId]?.name || 'Resource'} Extraction`;
       formatted.asteroidId = item.vars.asteroidId;
-      formatted.plotId = item.vars.plotId;
+      formatted.lotId = item.vars.lotId;
       formatted.resourceId = item.vars.resourceId;
       formatted.onClick = ({ openDialog }) => {
         // TODO: in case of failure, should link with sample preset, destination, and amount selection
@@ -559,7 +559,7 @@ const formatTx = (item) => {
       formatted.icon = <ExtractionIcon />;
       formatted.label = 'Finish Extraction';
       formatted.asteroidId = item.vars.asteroidId;
-      formatted.plotId = item.vars.plotId;
+      formatted.lotId = item.vars.lotId;
       formatted.onClick = ({ openDialog }) => {
         openDialog('EXTRACT_RESOURCE');
       };
@@ -569,7 +569,7 @@ const formatTx = (item) => {
       formatted.icon = <SurfaceTransferIcon />;
       formatted.label = 'Start Transfer';
       formatted.asteroidId = item.vars.asteroidId;
-      formatted.plotId = item.vars.originPlotId;  // at start, link to origin (in case of failure)
+      formatted.lotId = item.vars.originLotId;  // at start, link to origin (in case of failure)
       formatted.onClick = ({ openDialog }) => {
         // TODO: in case of failure, should link with selected resource and destination
         // (low priority b/c would have to fail and would have to have closed dialog)
@@ -580,7 +580,7 @@ const formatTx = (item) => {
       formatted.icon = <SurfaceTransferIcon />;
       formatted.label = 'Finish Transfer';
       formatted.asteroidId = item.vars.asteroidId;
-      formatted.plotId = item.vars.destPlotId;  // after start, link to destination
+      formatted.lotId = item.vars.destLotId;  // after start, link to destination
       formatted.onClick = ({ openDialog }) => {
         openDialog('SURFACE_TRANSFER', { deliveryId: item.vars.deliveryId });
       };
@@ -622,11 +622,11 @@ const ActionItem = ({ data, type }) => {
   }, [data]);
 
   const { data: asteroid } = useAsteroid(item.asteroidId);
-  const { data: plot } = usePlot(item.asteroidId, item.plotId);
+  const { data: lot } = useLot(item.asteroidId, item.lotId);
 
-  const goToAction = usePlotLink({
+  const goToAction = useLotLink({
     asteroidId: item.asteroidId,
-    plotId: item.plotId,
+    lotId: item.lotId,
     resourceId: item.resourceId,
   });
 
@@ -641,16 +641,16 @@ const ActionItem = ({ data, type }) => {
       let dialogDelay = 0;
       if (item.asteroidId && (currentAsteroid.origin !== item.asteroidId || currentAsteroid.zoomStatus !== 'in')) {
         dialogDelay = 3250;
-        if (item.plotId) dialogDelay += 750;
-      } else if (item.plotId && currentAsteroid.plot?.plotId !== item.plotId) {
+        if (item.lotId) dialogDelay += 750;
+      } else if (item.lotId && currentAsteroid.lot?.lotId !== item.lotId) {
         dialogDelay = 400;
       }
       setTimeout(() => {
         item.onClick({
-          openDialog: (dialog, vars) => dispatchActionDialog(dialog, { asteroidId: item.asteroidId, plotId: item.plotId, ...vars }),
+          openDialog: (dialog, vars) => dispatchActionDialog(dialog, { asteroidId: item.asteroidId, lotId: item.lotId, ...vars }),
           history,
           asteroid,
-          plot
+          lot
         });
       }, dialogDelay)
     }
@@ -661,10 +661,10 @@ const ActionItem = ({ data, type }) => {
   }, [
     goToAction,
     currentAsteroid?.origin,
-    currentAsteroid?.plot?.plotId,
+    currentAsteroid?.lot?.lotId,
     currentAsteroid?.zoomStatus,
     item.asteroidId,
-    item.plotId,
+    item.lotId,
     item.onClick
   ]);
 
@@ -745,25 +745,25 @@ const ActionItems = () => {
             return !pendingTransactions.find((tx) => (
               tx.key === 'FINISH_CORE_SAMPLE'
               && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-              && tx.vars.plotId === item.event.returnValues?.lotId
+              && tx.vars.lotId === item.event.returnValues?.lotId
             ));
           case 'Dispatcher_ConstructionStart':
             return !pendingTransactions.find((tx) => (
               tx.key === 'FINISH_CONSTRUCTION'
               && tx.vars.asteroidId === item.assets.asteroid.i
-              && tx.vars.plotId === item.assets.lot.i
+              && tx.vars.lotId === item.assets.lot.i
             ));
           case 'Dispatcher_ExtractionStart':
             return !pendingTransactions.find((tx) => (
               tx.key === 'FINISH_EXTRACTION'
               && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-              && tx.vars.plotId === item.event.returnValues?.lotId
+              && tx.vars.lotId === item.event.returnValues?.lotId
             ));
           case 'Dispatcher_InventoryTransferStart':
             return !pendingTransactions.find((tx) => (
               tx.key === 'FINISH_DELIVERY'
               && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-              && tx.vars.destPlotId === item.event.returnValues?.destinationLotId
+              && tx.vars.destLotId === item.event.returnValues?.destinationLotId
               && tx.vars.deliveryId === item.assets.delivery?.deliveryId
             ));
         }
@@ -778,7 +778,7 @@ const ActionItems = () => {
         return !pendingTransactions.find((tx) => (
           ['START_CONSTRUCTION', 'UNPLAN_CONSTRUCTION'].includes(tx.key)
           && tx.vars.asteroidId === item.asteroid
-          && tx.vars.plotId === item.i
+          && tx.vars.lotId === item.i
         ));
       }
       return true;

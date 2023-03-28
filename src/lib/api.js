@@ -92,7 +92,7 @@ const api = {
     return response.data;
   },
 
-  getOccupiedPlots: async (i, plotTally) => {
+  getOccupiedLots: async (i, lotTally) => {
     const response = await instance.get(`/v1/asteroids/${i}/lots/occupied`, { responseType: 'blob' });
     if (response.data) {
       const occupied = '1';
@@ -102,9 +102,9 @@ const api = {
         const x = Number(byte).toString(2).padStart(32, padding);
         for (let j = 0; j < 32; j++) {
           const index = i * 32 + j;
-          if (index < plotTally) {
+          if (index < lotTally) {
             if (x[j] === occupied) {
-              acc[index + 1] = true; // (adjust for one-index of plot ids)
+              acc[index + 1] = true; // (adjust for one-index of lot ids)
             }
           }
         }
@@ -114,18 +114,18 @@ const api = {
     return null;
   },
 
-  getCrewOccupiedPlots: async (a, c) => {
+  getCrewOccupiedLots: async (a, c) => {
     const response = await instance.get(`/v1/asteroids/${a}/lots/occupier/${c}`);
     return response.data;
   },
 
-  getCrewSampledPlots: async (a, c, r) => {
+  getCrewSampledLots: async (a, c, r) => {
     const response = await instance.get(`/v1/asteroids/${a}/lots/sampled/${c}/${r}`);
     return response.data;
   },
 
-  getPlot: async (asteroidId, plotId) => {
-    const response = await instance.get(`/v1/asteroids/${asteroidId}/lots/${plotId}`);
+  getLot: async (asteroidId, lotId) => {
+    const response = await instance.get(`/v1/asteroids/${asteroidId}/lots/${lotId}`);
     return response.data;
   },
 
@@ -226,7 +226,7 @@ const api = {
     }
   },
 
-  searchPlots: async (query) => {
+  searchLots: async (query) => {
     const response = await instance.get(`/lots/_search`, { params: query });
     return response.data;
   },

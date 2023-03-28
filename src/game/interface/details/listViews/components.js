@@ -2,7 +2,7 @@ import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { LocationIcon } from '~/components/Icons';
-import { usePlotLink } from '~/components/PlotLink';
+import { useLotLink } from '~/components/LotLink';
 
 const LocLink = styled.span`
   color: white;
@@ -19,13 +19,13 @@ const LocLink = styled.span`
   }
 `;
 
-export const LocationLink = ({ asteroidId, plotId, resourceId, zoomToPlot }) => {
+export const LocationLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
   const history = useHistory();
-  const _onClick = usePlotLink({ asteroidId, plotId, resourceId, zoomToPlot });
+  const _onClick = useLotLink({ asteroidId, lotId, resourceId, zoomToLot });
   return (
     <LocLink
       data-for="listView"
-      data-tip={`View ${plotId ? 'Lot' : 'Asteroid'}`}
+      data-tip={`View ${lotId ? 'Lot' : 'Asteroid'}`}
       data-place="left"
       onClick={() => {
         history.push('/');

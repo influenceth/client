@@ -33,7 +33,7 @@ const useColumns = () => {
         sortField: 'resource',
         selector: row => (
           <>
-            <LocationLink asteroidId={row.asteroid?.i} plotId={row.lot?.i} resourceId={row.resource} zoomToPlot="Resources" />
+            <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} resourceId={row.resource} zoomToLot="Resources" />
             <span>{Inventory.RESOURCES[row.resource]?.name}</span>
           </>
         ),
@@ -56,7 +56,7 @@ const useColumns = () => {
         sortField: 'lot.i',
         selector: row => (
           <>
-            <LocationLink asteroidId={row.asteroid?.i} plotId={row.lot?.i} resourceId={row.resource} />
+            <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} resourceId={row.resource} />
             <span>{row.lot?.i.toLocaleString()}</span>
           </>
         ),

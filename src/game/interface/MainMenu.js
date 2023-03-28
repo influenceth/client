@@ -125,13 +125,13 @@ const MainMenu = (props) => {
   const { isMobile } = useScreenSize();
   const history = useHistory();
 
-  const { plotId } = useStore(s => s.asteroids.plot || {});
-  const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
+  const { lotId } = useStore(s => s.asteroids.lot || {});
+  const zoomToLot = useStore(s => s.asteroids.zoomToLot);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
-  const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
+  const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
+  const dispatchZoomToLot = useStore(s => s.dispatchZoomToLot);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const { account } = useAuth();
@@ -164,23 +164,23 @@ const MainMenu = (props) => {
 
   const { backLabel, onClickBack } = useMemo(() => {
     if (zoomStatus !== 'in') return {};
-    if (zoomToPlot) {
+    if (zoomToLot) {
       return {
         backLabel: 'Back to Asteroid',
-        onClickBack: () => dispatchZoomToPlot()
+        onClickBack: () => dispatchZoomToLot()
       }
     }
-    if (plotId) {
+    if (lotId) {
       return {
         backLabel: 'Deselect Lot',
-        onClickBack: () => dispatchPlotSelected()
+        onClickBack: () => dispatchLotSelected()
       }
     }
     return {
       backLabel: 'Back to Belt',
       onClickBack: () => updateZoomStatus('zooming-out')
     }
-  }, [plotId, zoomToPlot, zoomStatus]);
+  }, [lotId, zoomToLot, zoomStatus]);
 
   const notYet = () => {
     createAlert({

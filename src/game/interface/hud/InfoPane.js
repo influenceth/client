@@ -19,7 +19,7 @@ import AsteroidRendering from '~/game/interface/details/asteroidDetails/componen
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useConstructionManager from '~/hooks/useConstructionManager';
-import usePlot from '~/hooks/usePlot';
+import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -263,7 +263,7 @@ const ActionButtonContainer = styled.div`
 //   margin-left: 6px;
 // `;
 
-// const PlotDetails = styled.div`
+// const LotDetails = styled.div`
 //   border-left: 1px solid #444;
 //   margin-bottom: 12px;
 //   padding-left: 15px;
@@ -370,22 +370,22 @@ const InfoPane = () => {
   const history = useHistory();
 
   const asteroidId = useStore(s => s.asteroids.origin);
-  const { plotId } = useStore(s => s.asteroids.plot || {});
-  const plotLoader = useStore(s => s.plotLoader);
+  const { lotId } = useStore(s => s.asteroids.lot || {});
+  const lotLoader = useStore(s => s.lotLoader);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
+  const zoomToLot = useStore(s => s.asteroids.zoomToLot);
 
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
-  const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
-  const dispatchZoomToPlot = useStore(s => s.dispatchZoomToPlot);
+  const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
+  const dispatchZoomToLot = useStore(s => s.dispatchZoomToLot);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const { actions, props: actionProps } = useActionButtons();
   const { data: asteroid } = useAsteroid(asteroidId);
   const buildings = useBuildingAssets();
-  const { constructionStatus, isAtRisk } = useConstructionManager(asteroidId, plotId);
+  const { constructionStatus, isAtRisk } = useConstructionManager(asteroidId, lotId);
   const { crew } = useCrewContext();
-  const { data: plot } = usePlot(asteroidId, plotId);
+  const { data: lot } = useLot(asteroidId, lotId);
   const saleIsActive = useStore(s => s.sale);
 
   const [renderReady, setRenderReady] = useState(false);
@@ -393,16 +393,16 @@ const InfoPane = () => {
     setRenderReady(true);
   }, []);
 
-  const plotTally = useMemo(() => Math.floor(4 * Math.PI * Math.pow(asteroid?.radius / 1000, 2)), [asteroid?.radius]);
+  const lotTally = useMemo(() => Math.floor(4 * Math.PI * Math.pow(asteroid?.radius / 1000, 2)), [asteroid?.radius]);
 
-  const myPlotCoreSamples = useMemo(() => {
-    return (plot?.coreSamples || []).filter((c) => c.owner === crew?.i)
-  }, [crew?.i, plot]);
+  const myLotCoreSamples = useMemo(() => {
+    return (lot?.coreSamples || []).filter((c) => c.owner === crew?.i)
+  }, [crew?.i, lot]);
 
   const onClickPane = useCallback(() => {
-    // open plot
-    if (asteroidId && plotId && zoomStatus === 'in') {
-      dispatchZoomToPlot(true);
+    // open lot
+    if (asteroidId && lotId && zoomStatus === 'in') {
+      dispatchZoomToLot(true);
 
     // open asteroid details
     } else if (asteroidId && zoomStatus === 'in') {
@@ -412,14 +412,14 @@ const InfoPane = () => {
     } else if (asteroidId && zoomStatus === 'out') {
       updateZoomStatus('zooming-in');
     }
-  }, [asteroidId, plotId, zoomStatus, plot?.building]);
+  }, [asteroidId, lotId, zoomStatus, lot?.building]);
 
   const onClosePane = useCallback((e) => {
     e.stopPropagation();
 
-    // deselect plot
-    if (asteroidId && plotId && zoomStatus === 'in') {
-      dispatchPlotSelected();
+    // deselect lot
+    if (asteroidId && lotId && zoomStatus === 'in') {
+      dispatchLotSelected();
 
     // deselect asteroid
     } else if (asteroidId && zoomStatus === 'out') {
@@ -427,16 +427,16 @@ const InfoPane = () => {
     }
 
     return false;
-  }, [asteroidId, plotId, zoomStatus]);
+  }, [asteroidId, lotId, zoomStatus]);
 
   const topResources = useMemo(() => {
     const resources = [];
-    if (plotId && zoomToPlot && asteroid?.scanned) {
+    if (lotId && zoomToLot && asteroid?.scanned) {
       Object.keys((asteroid.resources || {})).forEach((resourceId) => {
         const abundance = AsteroidLib.getAbundanceAtLot(
           asteroid.i,
           BigInt(asteroid.resourceSeed),
-          plotId,
+          lotId,
           resourceId,
           asteroid.resources[resourceId]
         );
@@ -446,7 +446,7 @@ const InfoPane = () => {
       });
     }
     return resources.sort((a, b) => b.abundance - a.abundance).slice(0, 1);
-  }, [asteroid?.scanned, plotId, zoomToPlot]);
+  }, [asteroid?.scanned, lotId, zoomToLot]);
 
 
   const [hover, setHover] = useState();
@@ -456,7 +456,7 @@ const InfoPane = () => {
 
   useEffect(() => {
     setHover(false);
-  }, [asteroidId, plotId, zoomStatus, zoomToPlot]);
+  }, [asteroidId, lotId, zoomStatus, zoomToLot]);
   
   const {
     captainCard,
@@ -520,29 +520,29 @@ const InfoPane = () => {
       }
 
     } else if (zoomStatus === 'in') {
-      if (zoomToPlot) {
-        pane.title = buildings[plot?.building?.capableType || 0]?.name;
-        pane.subtitle = <>{asteroid?.customName || asteroid?.baseName} &gt; <b>Lot {plotId.toLocaleString()}</b></>;
-        pane.captainCard = plot?.occupier;
+      if (zoomToLot) {
+        pane.title = buildings[lot?.building?.capableType || 0]?.name;
+        pane.subtitle = <>{asteroid?.customName || asteroid?.baseName} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
+        pane.captainCard = lot?.occupier;
 
-      } else if (plotId) {
-        if (plot) {
-          const thumbUrl = plot.building?.capableType > 0
+      } else if (lotId) {
+        if (lot) {
+          const thumbUrl = lot.building?.capableType > 0
             ? (
               ['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus) && !isAtRisk
-                ? buildings[plot.building?.capableType || 0]?.iconUrls?.w400
-                : buildings[plot.building?.capableType || 0]?.siteIconUrls?.w400
+                ? buildings[lot.building?.capableType || 0]?.iconUrls?.w400
+                : buildings[lot.building?.capableType || 0]?.siteIconUrls?.w400
             )
             : buildings[0]?.iconUrls?.w400;
-          pane.title = buildings[plot.building?.capableType || 0]?.name;
-          pane.subtitle = <>{asteroid?.customName || asteroid?.baseName} &gt; <b>Lot {plotId.toLocaleString()}</b></>;
-          pane.captainCard = plot.occupier;
+          pane.title = buildings[lot.building?.capableType || 0]?.name;
+          pane.subtitle = <>{asteroid?.customName || asteroid?.baseName} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
+          pane.captainCard = lot.occupier;
           pane.hoverSubtitle = 'Zoom to Lot';
           pane.thumbnail = (
             <ThumbBackground image={thumbUrl}>
               {isAtRisk && (
                 <ThumbBanner color="error">
-                  {plot.occupier === crew?.i ? 'At Risk' : 'Abandoned'}
+                  {lot.occupier === crew?.i ? 'At Risk' : 'Abandoned'}
                 </ThumbBanner>
               )}
             </ThumbBackground>
@@ -558,8 +558,8 @@ const InfoPane = () => {
           <>
             {toSize(asteroid.radius)} <b>{toSpectralType(asteroid.spectralType)}-type</b>
             <SubtitleLoader>
-              {!(plotLoader.i === asteroidId && plotLoader.progress === 1) && (
-                <ProgressBar progress={plotLoader.i === asteroidId ? plotLoader.progress : 0} />
+              {!(lotLoader.i === asteroidId && lotLoader.progress === 1) && (
+                <ProgressBar progress={lotLoader.i === asteroidId ? lotLoader.progress : 0} />
               )}
             </SubtitleLoader>
           </>
@@ -570,12 +570,12 @@ const InfoPane = () => {
   }, [
     asteroidId,
     asteroid,
-    plotId,
-    plot,
+    lotId,
+    lot,
     renderReady,
-    plotLoader,
+    lotLoader,
     zoomStatus,
-    zoomToPlot
+    zoomToLot
   ]);
 
   const onClickTitle = () => {

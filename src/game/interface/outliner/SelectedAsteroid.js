@@ -11,7 +11,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useWatchAsteroid from '~/hooks/useWatchAsteroid';
 import useUnWatchAsteroid from '~/hooks/useUnWatchAsteroid';
 import useWatchlist from '~/hooks/useWatchlist';
-import AsteroidCrewPlotsCard from '~/components/AsteroidCrewPlotsCard';
+import AsteroidCrewLotsCard from '~/components/AsteroidCrewLotsCard';
 import AsteroidDataCard from '~/components/AsteroidDataCard';
 import IconButton from '~/components/IconButton';
 import { ConstructIcon, DetailIcon } from '~/components/Icons';
@@ -125,7 +125,7 @@ const SelectedAsteroid = (props) => {
         </Controls>
       )}
       {asteroid && !showBuildings && <StyledAsteroidDataCard asteroid={asteroid} />}
-      {showBuildings && <AsteroidCrewPlotsCard asteroid={asteroid} />}
+      {showBuildings && <AsteroidCrewLotsCard asteroid={asteroid} />}
     </Section>
   );
 };

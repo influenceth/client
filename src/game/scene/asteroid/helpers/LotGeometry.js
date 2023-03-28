@@ -49,7 +49,7 @@ const getSamplePosition = (side, s, t, heightMap, config, resolution) => {
   return getSamplePoint(side, resolution, s, t).setLength(displacement).multiply(config.stretch);
 }
 
-export const getPlotPointGeometry = (lotId, pointTally, resolution, heightMaps, config, aboveSurface) => {
+export const getLotPointGeometry = (lotId, pointTally, resolution, heightMaps, config, aboveSurface) => {
   const fibo = (new Vector3()).fromArray(AsteroidLib.getLotPosition(0, lotId, pointTally));
 
   const xAbs = Math.abs(fibo.x);
@@ -110,8 +110,8 @@ export const getPlotPointGeometry = (lotId, pointTally, resolution, heightMaps, 
   // TODO: should this technically stretch after length setting? maybe not since samples were already stretched
   const position = fibo.clone().multiply(config.stretch).setLength(sampledPosition.length() + aboveSurface);
 
-  // trying to avoid seeing plots through ridges...
-  // for small asteroids, seems best to always use radial orientation because plots are far enough apart relative to displacement
+  // trying to avoid seeing lots through ridges...
+  // for small asteroids, seems best to always use radial orientation because lots are far enough apart relative to displacement
   // for medium+ asteroids, seems like it helps to take surface orientation into account somewhat
   // this "averages" radial direction and surface normal direction
   const orientation = (new Vector3());
@@ -135,7 +135,7 @@ export const getPlotPointGeometry = (lotId, pointTally, resolution, heightMaps, 
   };
 };
 
-export const getPlotGeometryHeightMapResolution = (config, textureQuality) => {
+export const getLotGeometryHeightMapResolution = (config, textureQuality) => {
   // textureQuality 1, 2, 3 --> sampling every 1000, 500, 250m
   let sampleEvery = 1000;
   if (textureQuality === 2) sampleEvery = 500;
@@ -143,7 +143,7 @@ export const getPlotGeometryHeightMapResolution = (config, textureQuality) => {
   return getSamplingResolution(config.radius, sampleEvery);
 };
 
-export const getPlotGeometryHeightMaps = (config, resolution) => {
+export const getLotGeometryHeightMaps = (config, resolution) => {
   const heightMaps = [];
   for (let i = 0; i < 6; i++) {
     const sideTransform = cubeTransforms[i].clone();
@@ -161,15 +161,15 @@ export const getPlotGeometryHeightMaps = (config, resolution) => {
   return heightMaps;
 };
 
-export const getPlotGeometry = ({ config, aboveSurface = 0.0, prebuiltHeightMaps, textureQuality }) => {
+export const getLotGeometry = ({ config, aboveSurface = 0.0, prebuiltHeightMaps, textureQuality }) => {
   const pointTally = AsteroidLib.getSurfaceArea(null, config.radiusNominal / 1000);
-  const resolution = getPlotGeometryHeightMapResolution(config, textureQuality);
-  const heightMaps = prebuiltHeightMaps || getPlotGeometryHeightMaps(config, resolution);
+  const resolution = getLotGeometryHeightMapResolution(config, textureQuality);
+  const heightMaps = prebuiltHeightMaps || getLotGeometryHeightMaps(config, resolution);
 
   const positions = new Float32Array(pointTally * 3);
   const orientations = new Float32Array(pointTally * 3);
   for (let index = 0; index < pointTally; index++) {
-    const { position, orientation } = getPlotPointGeometry(
+    const { position, orientation } = getLotPointGeometry(
       index + 1, pointTally, resolution, heightMaps, config, aboveSurface
     );
 
@@ -185,15 +185,15 @@ export const getPlotGeometry = ({ config, aboveSurface = 0.0, prebuiltHeightMaps
   return { positions, orientations };
 }
 
-export const getPlotRegions = (positions, regionTally) => {
+export const getLotRegions = (positions, regionTally) => {
   return AsteroidLib.lotPositionsToRegions(positions, regionTally);
 }
 
-export const getClosestPlots = ({ center, centerPlot, plotTally, findTally }) => {
+export const getClosestLots = ({ center, centerLot, lotTally, findTally }) => {
   return AsteroidLib.getClosestLots({
     center: center ? [center.x, center.y, center.z] : undefined,
-    centerLot: centerPlot,
-    lotTally: plotTally,
+    centerLot: centerLot,
+    lotTally: lotTally,
     findTally
   });
 }

@@ -51,13 +51,13 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       zoomedFrom: null,
       destination: null,
       hovered: null,
-      plot: null,
-      plotDestination: null,
+      lot: null,
+      lotDestination: null,
       resourceMap: {
         active: false,
         selected: null
       },
-      zoomToPlot: null,
+      zoomToLot: null,
       owned: {
         highlighted: false,
         highlightColor: '#AB149E'
@@ -110,7 +110,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     failedTransactions: [],
     pendingTransactions: [],
 
-    plotLoader: {
+    lotLoader: {
       i: null,
       progress: 0
     },
@@ -309,9 +309,9 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       if (i && Number(i) > 0 && Number(i) <= 250000) {
         state.asteroids.origin = Number(i);
       }
-      state.asteroids.plot = null;
-      state.asteroids.plotDestination = null;
-      state.asteroids.zoomToPlot = null;
+      state.asteroids.lot = null;
+      state.asteroids.lotDestination = null;
+      state.asteroids.zoomToLot = null;
     })),
 
     dispatchDestinationSelected: (i) => set(produce(state => {
@@ -329,12 +329,12 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.asteroids.hovered = null;
     })),
 
-    dispatchZoomStatusChanged: (status, maintainPlot) => set(produce(state => {
+    dispatchZoomStatusChanged: (status, maintainLot) => set(produce(state => {
       state.asteroids.zoomStatus = status;
-      state.asteroids.plotDestination = null;
-      if (!maintainPlot) {
-        state.asteroids.plot = null;
-        state.asteroids.zoomToPlot = null;
+      state.asteroids.lotDestination = null;
+      if (!maintainLot) {
+        state.asteroids.lot = null;
+        state.asteroids.zoomToLot = null;
       }
     })),
 
@@ -439,17 +439,17 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       if (!resourceId) state.asteroids.resourceMap.active = false;
     })),
 
-    dispatchPlotsLoading: (i, progress = 0, simulateTarget = 0) => set(produce(state => {
+    dispatchLotsLoading: (i, progress = 0, simulateTarget = 0) => set(produce(state => {
       if (simulateTarget) {
-        state.plotLoader = { i, progress: state.plotLoader.progress + (simulateTarget - state.plotLoader.progress) / 3 };
+        state.lotLoader = { i, progress: state.lotLoader.progress + (simulateTarget - state.lotLoader.progress) / 3 };
       } else {
-        state.plotLoader = { i, progress: progress > 0.99 ? 1 : progress };
+        state.lotLoader = { i, progress: progress > 0.99 ? 1 : progress };
       }
     })),
 
-    dispatchPlotSelected: (asteroidId, plotId) => set(produce(state => {
-      state.asteroids.plot = asteroidId && plotId ? { asteroidId, plotId } : null;
-      state.asteroids.zoomToPlot = null;
+    dispatchLotSelected: (asteroidId, lotId) => set(produce(state => {
+      state.asteroids.lot = asteroidId && lotId ? { asteroidId, lotId } : null;
+      state.asteroids.zoomToLot = null;
     })),
 
     dispatchReorientCamera: (needsReorienting) => set(produce(state => {
@@ -531,8 +531,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.failedTransactions = [];
     })),
 
-    dispatchZoomToPlot: (isZoomed) => set(produce(state => {
-      state.asteroids.zoomToPlot = isZoomed;
+    dispatchZoomToLot: (isZoomed) => set(produce(state => {
+      state.asteroids.zoomToLot = isZoomed;
     }))
 
 }), {
@@ -565,15 +565,15 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     // TODO: the nested values are not supported by zustand
     'actionDialog',
     'asteroids.hovered',
-    'asteroids.plot',
-    'asteroids.plotDestination',
-    'asteroids.zoomToPlot',
+    'asteroids.lot',
+    'asteroids.lotDestination',
+    'asteroids.zoomToLot',
     'canvasStack',
     'cutscenePlaying',
     'cameraNeedsReorientation',
     'draggables',
     'failedTransactions',
-    'plotLoader',
+    'lotLoader',
     'timeOverride'  // should this be in ClockContext?
   ]
 })));

@@ -17,7 +17,7 @@ import {
   MyAssetsIcon,
   ResourceIcon,
 } from '~/components/Icons';
-import usePlot from '~/hooks/usePlot';
+import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import hudMenus from './hudMenus';
 import useAuth from '~/hooks/useAuth';
@@ -152,13 +152,13 @@ const HudMenu = () => {
   const history = useHistory();
   const { account } = useAuth();
   const asteroidId = useStore(s => s.asteroids.origin);
-  const { plotAsteroidId, plotId } = useStore(s => s.asteroids.plot || {});
+  const { lotAsteroidId, lotId } = useStore(s => s.asteroids.lot || {});
   const openHudMenu = useStore(s => s.openHudMenu);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
+  const zoomToLot = useStore(s => s.asteroids.zoomToLot);
 
-  const { data: plot } = usePlot(plotAsteroidId, plotId);
+  const { data: lot } = useLot(lotAsteroidId, lotId);
 
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   
@@ -187,17 +187,17 @@ const HudMenu = () => {
     if (openHudMenu) {
       const category = openHudMenu.split('.').shift();
       if (category === 'belt' && zoomStatus !== 'out') dispatchHudMenuOpened();
-      if (category === 'asteroid' && !(zoomStatus === 'in' && !zoomToPlot)) dispatchHudMenuOpened();
-      if (category === 'lot' && !(zoomStatus === 'in' && zoomToPlot)) dispatchHudMenuOpened();
+      if (category === 'asteroid' && !(zoomStatus === 'in' && !zoomToLot)) dispatchHudMenuOpened();
+      if (category === 'lot' && !(zoomStatus === 'in' && zoomToLot)) dispatchHudMenuOpened();
     }
-  }, [dispatchHudMenuOpened, zoomToPlot, zoomStatus]);
+  }, [dispatchHudMenuOpened, zoomToLot, zoomStatus]);
 
   useEffect(() => {
     // if just zoomed in and resourcemap is active, then open asteroid resources
-    if (zoomStatus === 'in' && !zoomToPlot && resourceMap.active) {
+    if (zoomStatus === 'in' && !zoomToLot && resourceMap.active) {
       dispatchHudMenuOpened('asteroid.Asteroid Resources');
     }
-  }, [zoomStatus, zoomToPlot])
+  }, [zoomStatus, zoomToLot])
 
   useEffect(() => {
     setOpen(!!openHudMenu);
@@ -246,7 +246,7 @@ const HudMenu = () => {
           }
         },
       ];
-    } else if (zoomStatus === 'in' && !zoomToPlot) {
+    } else if (zoomStatus === 'in' && !zoomToLot) {
       return [
         {
           label: 'My Assets',
@@ -281,7 +281,7 @@ const HudMenu = () => {
           }
         },
       ];
-    } else if (zoomStatus === 'in' && zoomToPlot) {
+    } else if (zoomStatus === 'in' && zoomToLot) {
       const b = [
         {
           label: 'Information',
@@ -294,10 +294,10 @@ const HudMenu = () => {
           Component: hudMenus.LotResources
         }
       ];
-      if (plot?.building?.capableType) {
+      if (lot?.building?.capableType) {
         if (
-          (plot.building.construction?.status === Construction.STATUS_PLANNED && Inventory.CAPACITIES[plot.building.capableType][0])
-          || (plot.building.construction?.status === Construction.STATUS_OPERATIONAL && Inventory.CAPACITIES[plot.building.capableType][1])
+          (lot.building.construction?.status === Construction.STATUS_PLANNED && Inventory.CAPACITIES[lot.building.capableType][0])
+          || (lot.building.construction?.status === Construction.STATUS_OPERATIONAL && Inventory.CAPACITIES[lot.building.capableType][1])
         ) {
           b.push({
             label: 'Inventory',
@@ -309,14 +309,14 @@ const HudMenu = () => {
       return b;
     }
     return [];
-  }, [asteroidId, plotId, zoomStatus, zoomToPlot, plot]);
+  }, [asteroidId, lotId, zoomStatus, zoomToLot, lot]);
 
   const { label, onDetailClick, detailType, Component } = useMemo(() => {
     const [category, label] = (openHudMenu || '').split('.');
     return buttons.find((b) => b.label === label) || {};
   }, [buttons, openHudMenu]);
 
-  const buttonFilter = zoomStatus === 'in' && zoomToPlot
+  const buttonFilter = zoomStatus === 'in' && zoomToLot
     ? 'lot'
     : (zoomStatus === 'in' ? 'asteroid' : 'belt');
   return (

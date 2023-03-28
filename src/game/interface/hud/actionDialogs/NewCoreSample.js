@@ -25,9 +25,9 @@ import {
   MaterialBonusTooltip
 } from './components';
 
-const NewCoreSample = ({ asteroid, plot, ...props }) => {
+const NewCoreSample = ({ asteroid, lot, ...props }) => {
   const resources = useResourceAssets();
-  const { startSampling, finishSampling, samplingStatus, ...coreSampleManager } = useCoreSampleManager(asteroid?.i, plot?.i);
+  const { startSampling, finishSampling, samplingStatus, ...coreSampleManager } = useCoreSampleManager(asteroid?.i, lot?.i);
   const { crew, crewMemberMap } = useCrewContext();
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
@@ -66,8 +66,8 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
   }, [dispatchResourceMapSelect, dispatchResourceMapToggle, props.onClose, resourceId]);
 
   const sample = useMemo(() => {
-    if (plot?.coreSamples && resourceId && sampleId) {
-      const thisSample = plot.coreSamples.find((s) => s.sampleId === sampleId && s.resourceId === resourceId);
+    if (lot?.coreSamples && resourceId && sampleId) {
+      const thisSample = lot.coreSamples.find((s) => s.sampleId === sampleId && s.resourceId === resourceId);
       if (thisSample) {
         thisSample.initialYieldTonnage = Object.keys(thisSample).includes('initialYield')
           ? thisSample.initialYield * Inventory.RESOURCES[resourceId].massPerUnit
@@ -76,7 +76,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
       }
     }
     return null;
-  }, [plot?.coreSamples, sampleId, resourceId]);
+  }, [lot?.coreSamples, sampleId, resourceId]);
 
   // get lot abundance
   const lotAbundances = useMemo(() => {
@@ -86,14 +86,14 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
         acc[r] = AsteroidLib.getAbundanceAtLot(
           asteroid?.i,
           BigInt(asteroid?.resourceSeed),
-          Number(plot?.i),
+          Number(lot?.i),
           r,
           asteroid.resources[r]
         )
       }
       return acc;
     }, {});
-  }, [asteroid, plot]);
+  }, [asteroid, lot]);
   const lotAbundance = resourceId ? lotAbundances[resourceId] : 0;
 
   const crewMembers = coreSampleManager.currentSample?._crewmates
@@ -107,12 +107,12 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
   // TODO: the crew origin and destination lots are currently set to 1, and when
   //  that is updated, it will need to be persisted in the actionItem
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-  //   if (!asteroid?.i || !plot?.i) return {};
+  //   if (!asteroid?.i || !lot?.i) return {};
   //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
-  //     { label: 'Travel to destination', plot: plot.i },
-  //     { label: 'Return from destination', plot: 1 },
+  //     { label: 'Travel to destination', lot: lot.i },
+  //     { label: 'Return from destination', lot: 1 },
   //   ]);
-  // }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  // }, [asteroid?.i, lot?.i, crewTravelBonus]);
   const crewTravelTime = 0;
   const tripDetails = null;
 
@@ -198,7 +198,7 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
       <ActionDialogHeader
         asteroid={asteroid}
         captain={captain}
-        plot={plot}
+        lot={lot}
         action={{
           actionIcon: <NewCoreSampleIcon />,
           headerBackground: coreSampleBackground,
@@ -214,14 +214,14 @@ const NewCoreSample = ({ asteroid, plot, ...props }) => {
         abundances={lotAbundances}
         goToResourceMap={goToResourceMap}
         onSelectResource={onSelectResource}
-        plotId={plot?.i}
+        lotId={lot?.i}
         resourceId={resourceId}
         resources={resources}
         status={status}
         tonnage={status === 'AFTER' ? sample?.initialYieldTonnage : undefined} />
 
       {status === 'BEFORE' && (
-        <ToolSection resource={resources[175]} sourcePlot={plot} />
+        <ToolSection resource={resources[175]} sourceLot={lot} />
       )}
 
       <ActionDialogStats stats={stats} status={status} />

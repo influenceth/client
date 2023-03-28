@@ -1,18 +1,18 @@
 import { Construction } from '@influenceth/sdk';
 
-import usePlot from '~/hooks/usePlot';
+import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 
 const useActionModules = () => {
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const zoomToPlot = useStore(s => s.asteroids.zoomToPlot);
-  const { asteroidId, plotId } = useStore(s => s.asteroids.plot || {});
-  const { data: plot } = usePlot(asteroidId, zoomToPlot ? plotId : null);
+  const zoomToLot = useStore(s => s.asteroids.zoomToLot);
+  const { asteroidId, lotId } = useStore(s => s.asteroids.lot || {});
+  const { data: lot } = useLot(asteroidId, zoomToLot ? lotId : null);
 
   return {
-    resourceMapSelector: zoomStatus === 'in' && !zoomToPlot && resourceMap?.active,
-    plotInventory: zoomStatus === 'in' && zoomToPlot && plot?.building?.capableType === 1 && plot?.building?.construction?.status === Construction.STATUS_OPERATIONAL
+    resourceMapSelector: zoomStatus === 'in' && !zoomToLot && resourceMap?.active,
+    lotInventory: zoomStatus === 'in' && zoomToLot && lot?.building?.capableType === 1 && lot?.building?.construction?.status === Construction.STATUS_OPERATIONAL
   };
 }
 

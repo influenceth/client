@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Address, Asteroid, CoreSample, Inventory } from '@influenceth/sdk';
 
 import useAsteroid from '~/hooks/useAsteroid';
-import usePlot from '~/hooks/usePlot';
+import useLot from '~/hooks/useLot';
 import { useResourceAssets } from '~/hooks/useAssets';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Tray, trayHeight } from './components';
@@ -104,11 +104,11 @@ const InProgress = styled.span`
 const LotResources = () => {
   const { props: actionProps } = useActionButtons();
   const { crew } = useCrewContext();
-  const { asteroidId, plotId } = useStore(s => s.asteroids.plot || {});
+  const { asteroidId, lotId } = useStore(s => s.asteroids.lot || {});
   const { data: asteroid } = useAsteroid(asteroidId);
-  const { data: plot } = usePlot(asteroidId, plotId);
-  const { currentSample } = useCoreSampleManager(asteroidId, plotId);
-  const { currentExtraction } = useExtractionManager(asteroidId, plotId);
+  const { data: lot } = useLot(asteroidId, lotId);
+  const { currentSample } = useCoreSampleManager(asteroidId, lotId);
+  const { currentExtraction } = useExtractionManager(asteroidId, lotId);
   const resources = useResourceAssets();
 
   const [showAllAbundances, setShowAllAbundances] = useState();
@@ -116,7 +116,7 @@ const LotResources = () => {
 
   // get lot abundance
   const lotAbundances = useMemo(() => {
-    if (!(asteroid && plot)) return [];
+    if (!(asteroid && lot)) return [];
     // TODO: do this in worker? takes about 200ms on decent cpu
     return Object.keys(asteroid?.resources || {})
       .reduce((acc, i) => {
@@ -126,7 +126,7 @@ const LotResources = () => {
             abundance: Asteroid.getAbundanceAtLot(
               asteroid.i,
               BigInt(asteroid.resourceSeed),
-              Number(plot.i),
+              Number(lot.i),
               i,
               asteroid.resources[i]
             )
@@ -135,7 +135,7 @@ const LotResources = () => {
         return acc;
       }, [])
       .sort((a, b) => b.abundance - a.abundance);
-  }, [asteroid, plot]);
+  }, [asteroid, lot]);
 
   const [selected, setSelected] = useState();
 
@@ -155,7 +155,7 @@ const LotResources = () => {
   }, [lotAbundances, showAllAbundances]);
 
   const [ownedSamples, depletedSamples] = useMemo(() => ([
-    (plot?.coreSamples || [])
+    (lot?.coreSamples || [])
       .filter((s) => s.owner === crew?.i)
       .filter((s) => !s.initialYield || showAllSamples || s.remainingYield > 0)
       .sort((a, b) => {
@@ -164,10 +164,10 @@ const LotResources = () => {
         }
         return b.initialYield ? -1 : 1;
       }),
-    (plot?.coreSamples || [])
+    (lot?.coreSamples || [])
       .filter((s) => s.owner === crew?.i)
       .filter((s) => s.initialYield > 0 && s.remainingYield === 0),
-  ]), [crew?.i, plot?.coreSamples, showAllSamples]);
+  ]), [crew?.i, lot?.coreSamples, showAllSamples]);
 
   const getSampleYield = useCallback((sample) => {
     if (sample.initialYield) {

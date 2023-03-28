@@ -3,20 +3,20 @@ import { Construction, CoreSample, Inventory } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from './useCrewContext';
-import usePlot from './usePlot';
+import useLot from './useLot';
 import useActionItems from './useActionItems';
 
-const useCoreSampleManager = (asteroidId, plotId) => {
+const useCoreSampleManager = (asteroidId, lotId) => {
   const { actionItems, readyItems, liveBlockTime } = useActionItems();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
-  const { data: plot } = usePlot(asteroidId, plotId);
+  const { data: lot } = useLot(asteroidId, lotId);
 
   const payload = useMemo(() => ({
     asteroidId,
-    plotId,
+    lotId,
     crewId: crew?.i
-  }), [asteroidId, plotId, crew?.i]);
+  }), [asteroidId, lotId, crew?.i]);
 
   // status flow
   // READY > SAMPLING > READY_TO_FINISH > FINISHING
@@ -33,12 +33,12 @@ const useCoreSampleManager = (asteroidId, plotId) => {
     };
 
     let status = 'READY';
-    const activeSample = plot?.coreSamples.find((c) => c.owner === crew?.i && c.status < CoreSample.STATUS_FINISHED);
+    const activeSample = lot?.coreSamples.find((c) => c.owner === crew?.i && c.status < CoreSample.STATUS_FINISHED);
     if (activeSample) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_CoreSampleStartSampling'
         && item.event.returnValues.asteroidId === asteroidId
-        && item.event.returnValues.lotId === plotId
+        && item.event.returnValues.lotId === lotId
         && item.event.returnValues.resourceId === activeSample.resourceId
         && item.event.returnValues.sampleId === activeSample.sampleId
       ));
@@ -74,7 +74,7 @@ const useCoreSampleManager = (asteroidId, plotId) => {
       status === 'READY' ? null : current,
       status
     ];
-  }, [actionItems, readyItems, getPendingTx, getStatus, payload, plot?.coreSamples]);
+  }, [actionItems, readyItems, getPendingTx, getStatus, payload, lot?.coreSamples]);
 
   const startSampling = useCallback((resourceId, sampleId = 0) => {
     execute('START_CORE_SAMPLE', {

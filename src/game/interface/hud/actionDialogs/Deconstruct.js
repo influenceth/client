@@ -56,7 +56,7 @@ import {
   BuildingPlanSection,
   BuildingRequirementsSection,
   DeconstructionMaterialsSection,
-  DestinationPlotSection,
+  DestinationLotSection,
   ExistingSampleSection,
   ExtractionAmountSection,
   ExtractSampleSection,
@@ -78,9 +78,9 @@ import {
   ActionDialogLoader,
 } from './components';
 
-const Deconstruct = ({ asteroid, plot, ...props }) => {
+const Deconstruct = ({ asteroid, lot, ...props }) => {
   const resources = useResourceAssets();
-  const { constructionStatus, deconstruct } = useConstructionManager(asteroid?.i, plot?.i);
+  const { constructionStatus, deconstruct } = useConstructionManager(asteroid?.i, lot?.i);
   const { crew, crewMemberMap } = useCrewContext();
 
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
@@ -89,16 +89,16 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
 
   // TODO: ...
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-  //   if (!asteroid?.i || !plot?.i) return {};
+  //   if (!asteroid?.i || !lot?.i) return {};
   //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
-  //     { label: 'Travel to destination', plot: plot.i },
-  //     { label: 'Return from destination', plot: 1 },
+  //     { label: 'Travel to destination', lot: lot.i },
+  //     { label: 'Return from destination', lot: 1 },
   //   ])
-  // }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  // }, [asteroid?.i, lot?.i, crewTravelBonus]);
   const crewTravelTime = 0;
   const tripDetails = null;
 
-  const constructionTime = Construction.getConstructionTime(plot?.building?.capableType || 0, 1);
+  const constructionTime = Construction.getConstructionTime(lot?.building?.capableType || 0, 1);
 
   const stats = useMemo(() => [
     { label: 'Returned Volume', value: '0 m³', direction: 0 },    // TODO: ...
@@ -140,7 +140,7 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
       <ActionDialogHeader
         asteroid={asteroid}
         captain={captain}
-        plot={plot}
+        lot={lot}
         action={{
           actionIcon: <DeconstructIcon />,
           headerBackground: constructionBackground,

@@ -215,26 +215,26 @@ const getContracts = (account) => ({
   'START_CORE_SAMPLE': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, plotId, resourceId, crewId, sampleId = 0 }) => contract.invoke(
+    transact: (contract) => ({ asteroidId, lotId, resourceId, crewId, sampleId = 0 }) => contract.invoke(
       'CoreSample_startSampling',
-      [asteroidId, plotId, resourceId, sampleId, crewId]
+      [asteroidId, lotId, resourceId, sampleId, crewId]
     ),
     isEqual: (txVars, vars) => (
       txVars.asteroidId === vars.asteroidId
-      && txVars.plotId === vars.plotId
+      && txVars.lotId === vars.lotId
       && txVars.crewId === vars.crewId
     ),
   },
   'FINISH_CORE_SAMPLE': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, plotId, resourceId, crewId, sampleId }) => contract.invoke(
+    transact: (contract) => ({ asteroidId, lotId, resourceId, crewId, sampleId }) => contract.invoke(
       'CoreSample_finishSampling',
-      [asteroidId, plotId, resourceId, sampleId, crewId]
+      [asteroidId, lotId, resourceId, sampleId, crewId]
     ),
     isEqual: (txVars, vars) => (
       txVars.asteroidId === vars.asteroidId
-      && txVars.plotId === vars.plotId
+      && txVars.lotId === vars.lotId
       && txVars.crewId === vars.crewId
     ),
   },
@@ -242,22 +242,22 @@ const getContracts = (account) => ({
   'PLAN_CONSTRUCTION': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ capableType, asteroidId, plotId, crewId }) => contract.invoke(
+    transact: (contract) => ({ capableType, asteroidId, lotId, crewId }) => contract.invoke(
       'Construction_plan',
-      [capableType, asteroidId, plotId, crewId]
+      [capableType, asteroidId, lotId, crewId]
     ),
     isEqual: (txVars, vars) => (
       txVars.asteroidId === vars.asteroidId
-      && txVars.plotId === vars.plotId
+      && txVars.lotId === vars.lotId
       && txVars.crewId === vars.crewId
     )
   },
   'UNPLAN_CONSTRUCTION': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
+    transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
       'Construction_unplan',
-      [asteroidId, plotId, crewId]
+      [asteroidId, lotId, crewId]
     ),
     isEqual: 'ALL'
   },
@@ -265,27 +265,27 @@ const getContracts = (account) => ({
   'START_CONSTRUCTION': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
+    transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
       'Construction_start',
-      [asteroidId, plotId, crewId]
+      [asteroidId, lotId, crewId]
     ),
     isEqual: 'ALL'
   },
   'FINISH_CONSTRUCTION': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
+    transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
       'Construction_finish',
-      [asteroidId, plotId, crewId]
+      [asteroidId, lotId, crewId]
     ),
     isEqual: 'ALL'
   },
   'DECONSTRUCT': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
+    transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
       'Construction_deconstruct',
-      [asteroidId, plotId, crewId]
+      [asteroidId, lotId, crewId]
     ),
     isEqual: 'ALL'
   },
@@ -293,22 +293,22 @@ const getContracts = (account) => ({
   'START_EXTRACTION': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, plotId, crewId, resourceId, sampleId, amount, destinationLotId, destinationInventoryId }) => contract.invoke(
+    transact: (contract) => ({ asteroidId, lotId, crewId, resourceId, sampleId, amount, destinationLotId, destinationInventoryId }) => contract.invoke(
       'Extraction_start',
-      [asteroidId, plotId, resourceId, sampleId, amount, destinationLotId, destinationInventoryId, crewId]
+      [asteroidId, lotId, resourceId, sampleId, amount, destinationLotId, destinationInventoryId, crewId]
     ),
     isEqual: (txVars, vars) => (
       txVars.asteroidId === vars.asteroidId
-      && txVars.plotId === vars.plotId
+      && txVars.lotId === vars.lotId
       && txVars.crewId === vars.crewId
     )
   },
   'FINISH_EXTRACTION': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, plotId, crewId }) => contract.invoke(
+    transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
       'Extraction_finish',
-      [asteroidId, plotId, crewId]
+      [asteroidId, lotId, crewId]
     ),
     isEqual: 'ALL'
   },
@@ -316,27 +316,27 @@ const getContracts = (account) => ({
   'START_DELIVERY': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, originPlotId, originInvId, destPlotId, destInvId, resources, crewId }) => contract.invoke(
+    transact: (contract) => ({ asteroidId, originLotId, originInvId, destLotId, destInvId, resources, crewId }) => contract.invoke(
       'Inventory_transferStart',
-      [asteroidId, originPlotId, originInvId, destPlotId, destInvId, Object.keys(resources), Object.values(resources), crewId]
+      [asteroidId, originLotId, originInvId, destLotId, destInvId, Object.keys(resources), Object.values(resources), crewId]
     ),
     isEqual: (txVars, vars) => (
       txVars.asteroidId === vars.asteroidId
       && txVars.crewId === vars.crewId
-      && txVars.originPlotId === vars.originPlotId
+      && txVars.originLotId === vars.originLotId
     )
   },
   'FINISH_DELIVERY': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, destPlotId, destInvId, deliveryId, crewId }) => contract.invoke(
+    transact: (contract) => ({ asteroidId, destLotId, destInvId, deliveryId, crewId }) => contract.invoke(
       'Inventory_transferFinish',
-      [asteroidId, destPlotId, destInvId, deliveryId, crewId]
+      [asteroidId, destLotId, destInvId, deliveryId, crewId]
     ),
     isEqual: (txVars, vars) => (
       txVars.asteroidId === vars.asteroidId
       && txVars.crewId === vars.crewId
-      && txVars.destPlotId === vars.destPlotId
+      && txVars.destLotId === vars.destLotId
       && txVars.deliveryId === vars.deliveryId
     )
   }

@@ -27,7 +27,7 @@ const useColumns = () => {
         sortField: 'type',
         selector: row => (
           <>
-            <LocationLink asteroidId={row.asteroid?.i} plotId={row.lot?.i} zoomToPlot />
+            <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} zoomToLot />
             <span>{Capable.TYPES[row.type].name}</span>
           </>
         ),
@@ -50,7 +50,7 @@ const useColumns = () => {
         sortField: 'lot.i',
         selector: row => (
           <>
-            <LocationLink asteroidId={row.asteroid?.i} plotId={row.lot?.i} />
+            <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} />
             <span>{row.lot?.i.toLocaleString()}</span>
           </>
         ),

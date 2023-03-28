@@ -56,7 +56,7 @@ import {
   BuildingPlanSection,
   BuildingRequirementsSection,
   DeconstructionMaterialsSection,
-  DestinationPlotSection,
+  DestinationLotSection,
   ExistingSampleSection,
   ExtractionAmountSection,
   ExtractSampleSection,
@@ -78,10 +78,10 @@ import {
   ActionDialogLoader,
 } from './components';
 
-const Construct = ({ asteroid, plot, ...props }) => {
+const Construct = ({ asteroid, lot, ...props }) => {
   const buildings = useBuildingAssets();
   const resources = useResourceAssets();
-  const { currentConstruction, constructionStatus, startConstruction, finishConstruction } = useConstructionManager(asteroid?.i, plot?.i);
+  const { currentConstruction, constructionStatus, startConstruction, finishConstruction } = useConstructionManager(asteroid?.i, lot?.i);
   const { crew, crewMemberMap } = useCrewContext();
 
   const crewMembers = currentConstruction?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
@@ -91,18 +91,18 @@ const Construct = ({ asteroid, plot, ...props }) => {
 
   // TODO: ...
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-  //   if (!asteroid?.i || !plot?.i) return {};
+  //   if (!asteroid?.i || !lot?.i) return {};
   //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
-  //     { label: 'Travel to destination', plot: plot.i },
-  //     { label: 'Return from destination', plot: 1 },
+  //     { label: 'Travel to destination', lot: lot.i },
+  //     { label: 'Return from destination', lot: 1 },
   //   ])
-  // }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  // }, [asteroid?.i, lot?.i, crewTravelBonus]);
   const crewTravelTime = 0;
   const tripDetails = null;
 
   const constructionTime = useMemo(() =>
-    plot?.building?.capableType ? Construction.getConstructionTime(plot?.building?.capableType, constructionBonus.totalBonus) : 0,
-    [plot?.building?.capableType, constructionBonus.totalBonus]
+    lot?.building?.capableType ? Construction.getConstructionTime(lot?.building?.capableType, constructionBonus.totalBonus) : 0,
+    [lot?.building?.capableType, constructionBonus.totalBonus]
   );
 
   const stats = useMemo(() => ([
@@ -164,7 +164,7 @@ const Construct = ({ asteroid, plot, ...props }) => {
       <ActionDialogHeader
         asteroid={asteroid}
         captain={captain}
-        plot={plot}
+        lot={lot}
         action={{
           actionIcon: <ConstructIcon />,
           headerBackground: constructionBackground,
@@ -173,19 +173,19 @@ const Construct = ({ asteroid, plot, ...props }) => {
           crewRequirement: 'start',
         }}
         status={status}
-        startTime={plot?.building?.construction?.startTime}
-        targetTime={plot?.building?.construction?.completionTime}
+        startTime={lot?.building?.construction?.startTime}
+        targetTime={lot?.building?.construction?.completionTime}
         {...props} />
 
       <BuildingPlanSection
-        building={buildings[plot?.building?.capableType]}
+        building={buildings[lot?.building?.capableType]}
         status={status}
-        gracePeriodEnd={plot?.gracePeriodEnd} />
+        gracePeriodEnd={lot?.gracePeriodEnd} />
 
       {status === 'BEFORE' && (
         <BuildingRequirementsSection
           isGathering
-          building={buildings[plot.building?.capableType]}
+          building={buildings[lot.building?.capableType]}
           label="Construction Materials"
           resources={resources} />
       )}

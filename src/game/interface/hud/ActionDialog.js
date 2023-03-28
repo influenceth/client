@@ -3,7 +3,7 @@ import { PuffLoader } from 'react-spinners';
 
 import Dialog from '~/components/Dialog';
 import useAsteroid from '~/hooks/useAsteroid';
-import usePlot from '~/hooks/usePlot';
+import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import Construct from './actionDialogs/Construct';
 import Extract from './actionDialogs/Extract';
@@ -15,28 +15,28 @@ import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import UnplanBuilding from './actionDialogs/UnplanBuilding';
 import ReactTooltip from 'react-tooltip';
 
-export const useAsteroidAndPlot = (props = {}) => {
-  const selectedPlot = useStore(s => s.asteroids.plot);
-  const { asteroidId: defaultAsteroidId, plotId: defaultPlotId } = selectedPlot || {};
+export const useAsteroidAndLot = (props = {}) => {
+  const selectedLot = useStore(s => s.asteroids.lot);
+  const { asteroidId: defaultAsteroidId, lotId: defaultLotId } = selectedLot || {};
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(props.asteroidId || defaultAsteroidId);
-  const { data: plot, isLoading: plotIsLoading } = usePlot(
+  const { data: lot, isLoading: lotIsLoading } = useLot(
     props.asteroidId || defaultAsteroidId,
-    props.plotId || defaultPlotId // (should prop only use plot default if using asteroid default)
+    props.lotId || defaultLotId // (should prop only use lot default if using asteroid default)
   );
 
-  // close dialog if cannot load asteroid and plot
+  // close dialog if cannot load asteroid and lot
   useEffect(() => {
-    if (!asteroid || !plot) {
-      if (!asteroidIsLoading && !plotIsLoading) {
+    if (!asteroid || !lot) {
+      if (!asteroidIsLoading && !lotIsLoading) {
         props.onClose();
       }
     }
-  }, [asteroid, plot, asteroidIsLoading, plotIsLoading]);
+  }, [asteroid, lot, asteroidIsLoading, lotIsLoading]);
 
   return {
     asteroid,
-    plot,
-    isLoading: asteroidIsLoading || plotIsLoading
+    lot,
+    isLoading: asteroidIsLoading || lotIsLoading
   }
 };
 
@@ -47,7 +47,7 @@ const ActionDialogWrapper = () => {
 
 const ActionDialog = ({ type, params }) => {
   const setAction = useStore(s => s.dispatchActionDialog);
-  const { isLoading, ...locParams } = useAsteroidAndPlot(params);
+  const { isLoading, ...locParams } = useAsteroidAndLot(params);
 
   const allProps = useMemo(() => ({
     ...params,

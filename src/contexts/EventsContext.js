@@ -72,77 +72,77 @@ const getInvalidations = (event, returnValues, linked) => {
 
       Dispatcher_ConstructionPlan: [
         ['planned'],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-        // ['asteroidPlots', returnValues.asteroidId], (handled by asteroid room connection now)
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
+        ['lots', returnValues.asteroidId, returnValues.lotId],
+        // ['asteroidLots', returnValues.asteroidId], (handled by asteroid room connection now)
+        ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
       ],
       Dispatcher_ConstructionUnplan: [
         ['planned'],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-        // ['asteroidPlots', returnValues.asteroidId], (handled by asteroid room connection now)
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
+        ['lots', returnValues.asteroidId, returnValues.lotId],
+        // ['asteroidLots', returnValues.asteroidId], (handled by asteroid room connection now)
+        ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
       ],
       Dispatcher_ConstructionStart: [
         ['planned'],
         ['actionItems'],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
+        ['lots', returnValues.asteroidId, returnValues.lotId],
+        ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
       ],
       Dispatcher_ConstructionFinish: [
         ['actionItems'],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
+        ['lots', returnValues.asteroidId, returnValues.lotId],
+        ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
       ],
       Dispatcher_ConstructionDeconstruct: [
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
+        ['lots', returnValues.asteroidId, returnValues.lotId],
+        ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
       ],
 
       Dispatcher_CoreSampleStartSampling: [
         ['actionItems'],
-        ['asteroidCrewSampledPlots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
+        ['asteroidCrewSampledLots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
+        ['lots', returnValues.asteroidId, returnValues.lotId],
       ],
       Dispatcher_CoreSampleFinishSampling: [
         ['actionItems'],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
+        ['lots', returnValues.asteroidId, returnValues.lotId],
       ],
       // (invalidations done in extractionStart)
       // CoreSample_Used: [
-      //   ['asteroidCrewSampledPlots', returnValues.asteroidId, returnValues.resourceId, getLinkedAsset(linked, 'Crew').i],
-      //   ['plots', returnValues.asteroidId, returnValues.lotId],
+      //   ['asteroidCrewSampledLots', returnValues.asteroidId, returnValues.resourceId, getLinkedAsset(linked, 'Crew').i],
+      //   ['lots', returnValues.asteroidId, returnValues.lotId],
       // ],
       Dispatcher_ExtractionStart: [
         ['actionItems'],
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
-        ['asteroidCrewSampledPlots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
-        ['plots', returnValues.asteroidId, returnValues.lotId],
-        // ['plots', returnValues.asteroidId, returnValues.destinationLotId] // (this should happen in inventory_changed)
+        ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
+        ['asteroidCrewSampledLots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
+        ['lots', returnValues.asteroidId, returnValues.lotId],
+        // ['lots', returnValues.asteroidId, returnValues.destinationLotId] // (this should happen in inventory_changed)
       ],
       Dispatcher_ExtractionFinish: [
         ['actionItems'],
-        ['asteroidCrewPlots', returnValues.asteroidId, returnValues.crewId],
-        ['plots', returnValues.asteroidId, returnValues.lotId]
+        ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
+        ['lots', returnValues.asteroidId, returnValues.lotId]
       ],
 
       Inventory_DeliveryStarted: [
         ['actionItems'],
-        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+        ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
       Inventory_DeliveryFinished: [
         ['actionItems'],
-        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+        ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
       ],
       Inventory_ReservedChanged: [
-        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
-        ['asteroidCrewPlots',  getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Crew').i],
+        ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
+        ['asteroidCrewLots',  getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Crew').i],
       ],
       Inventory_Changed: [
-        ['plots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
-        ['asteroidCrewPlots',  getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Crew').i],
+        ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
+        ['asteroidCrewLots',  getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Crew').i],
       ],
       // TODO: update crew and asteroid events to use Dispatcher_* events where possible
-      // TODO: would be nice if the cached plot collections was somehow a collection of ['plots', asteroid.i, plot.i], so when we invalidate the relevant lot, the "collection" is updated
+      // TODO: would be nice if the cached lot collections was somehow a collection of ['lots', asteroid.i, lot.i], so when we invalidate the relevant lot, the "collection" is updated
       // TODO: would be nice to replace the query results using the linked asset we've already been passed (where that is possible)
     }
 
@@ -214,21 +214,21 @@ export function EventsProvider({ children }) {
             // // // // //
             // TODO: vvv remove this when updating more systematically from linked data
 
-            // if this event invalidates a Plot and has a linked Plot, use the linked Plot data
-            // (but still also re-fetch the plot for sanity's sake)
+            // if this event invalidates a Lot and has a linked Lot, use the linked Lot data
+            // (but still also re-fetch the lot for sanity's sake)
             let optimisticUpdate = false;
-            if (queryKey[0] === 'plots') {
-              const [, asteroidId, plotId] = queryKey;
-              const optimisticPlot = e.linked
-                .find(({ type, asset }) => type === 'Lot' && asset?.asteroid === asteroidId && asset?.i === plotId)
+            if (queryKey[0] === 'lots') {
+              const [, asteroidId, lotId] = queryKey;
+              const optimisticLot = e.linked
+                .find(({ type, asset }) => type === 'Lot' && asset?.asteroid === asteroidId && asset?.i === lotId)
                 ?.asset;
-              if (optimisticPlot) {
-                const needsBuilding = !!optimisticPlot.building;
-                optimisticPlot.building = e.linked
-                  .find(({ type, asset }) => type === optimisticPlot.building?.type && asset?.i === optimisticPlot.building?.i)
+              if (optimisticLot) {
+                const needsBuilding = !!optimisticLot.building;
+                optimisticLot.building = e.linked
+                  .find(({ type, asset }) => type === optimisticLot.building?.type && asset?.i === optimisticLot.building?.i)
                   ?.asset;
-                if (!needsBuilding || !!optimisticPlot.building) {
-                  queryClient.setQueryData(queryKey, optimisticPlot);
+                if (!needsBuilding || !!optimisticLot.building) {
+                  queryClient.setQueryData(queryKey, optimisticLot);
                   optimisticUpdate = true;
                 }                
               }

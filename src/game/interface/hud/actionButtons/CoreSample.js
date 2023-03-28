@@ -14,9 +14,9 @@ const labelDict = {
   FINISHING: 'Analyzing...'
 };
 
-const NewCoreSample = ({ asteroid, plot, onSetAction, overrideResourceId, improveSample, _disabled }) => {
+const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improveSample, _disabled }) => {
   const defaultResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
-  const { currentSample: actualCurrentSample, samplingStatus: actualSamplingStatus } = useCoreSampleManager(asteroid?.i, plot?.i);
+  const { currentSample: actualCurrentSample, samplingStatus: actualSamplingStatus } = useCoreSampleManager(asteroid?.i, lot?.i);
 
   const resourceId = overrideResourceId || defaultResourceId;
 
@@ -33,11 +33,11 @@ const NewCoreSample = ({ asteroid, plot, onSetAction, overrideResourceId, improv
     return Asteroid.getAbundanceAtLot(
       asteroid?.i,
       BigInt(asteroid?.resourceSeed),
-      Number(plot?.i),
+      Number(lot?.i),
       resourceId,
       asteroid.resources[resourceId]
     );
-  }, [asteroid, plot, resourceId]);
+  }, [asteroid, lot, resourceId]);
 
   let label = labelDict[samplingStatus];
   let attention = undefined;

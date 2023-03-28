@@ -3,20 +3,20 @@ import { Construction } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from './useCrewContext';
-import usePlot from './usePlot';
+import useLot from './useLot';
 import useActionItems from './useActionItems';
 
-const useConstructionManager = (asteroidId, plotId) => {
+const useConstructionManager = (asteroidId, lotId) => {
   const { actionItems, readyItems, liveBlockTime } = useActionItems();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
-  const { data: plot } = usePlot(asteroidId, plotId);
+  const { data: lot } = useLot(asteroidId, lotId);
 
   const payload = useMemo(() => ({
     asteroidId,
-    plotId,
+    lotId,
     crewId: crew?.i
-  }), [asteroidId, plotId, crew?.i]);
+  }), [asteroidId, lotId, crew?.i]);
 
   // READY_TO_PLAN > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
   //               < CANCELING <         <                  DECONSTRUCTING                  <
@@ -32,25 +32,25 @@ const useConstructionManager = (asteroidId, plotId) => {
 
     let status = 'READY_TO_PLAN';
     let isAtRisk = false;
-    if (plot?.building) {
+    if (lot?.building) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_ConstructionStart'
         && item.assets.asteroid?.i === asteroidId
-        && item.assets.lot?.i === plotId
+        && item.assets.lot?.i === lotId
       ));
       if (actionItem) current._crewmates = actionItem.assets.crew.crewmates;
-      current.capableId = plot.building.i;
-      current.capableType = plot.building.capableType;
-      current.completionTime = plot.building.construction?.completionTime;
-      current.crewId = plot.occupier;
-      current.startTime = plot.building.construction?.startTime;
+      current.capableId = lot.building.i;
+      current.capableType = lot.building.capableType;
+      current.completionTime = lot.building.construction?.completionTime;
+      current.crewId = lot.occupier;
+      current.startTime = lot.building.construction?.startTime;
 
-      if (plot.building.construction?.status === Construction.STATUS_PLANNED) {
+      if (lot.building.construction?.status === Construction.STATUS_PLANNED) {
         if (getStatus('START_CONSTRUCTION', payload) === 'pending') {
           status = 'UNDER_CONSTRUCTION';
         } else if (getStatus('UNPLAN_CONSTRUCTION', payload) === 'pending') {
           status = 'CANCELING';
-        } else if (plot.gracePeriodEnd >= liveBlockTime) {
+        } else if (lot.gracePeriodEnd >= liveBlockTime) {
           status = 'PLANNED';
         } else {
           isAtRisk = true;
@@ -65,21 +65,21 @@ const useConstructionManager = (asteroidId, plotId) => {
             status = 'PLANNING';
 
           // if at risk, but i was the occupier, still treat as "planned" (will go back to "ready to plan" for other crews)
-          } else if (plot.occupier === crew?.i) {
+          } else if (lot.occupier === crew?.i) {
             status = 'PLANNED';
           }
         }
 
-      } else if (plot.building.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION) {
+      } else if (lot.building.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION) {
         if (getStatus('FINISH_CONSTRUCTION', payload) === 'pending') {
           status = 'FINISHING';
-        } else if (plot.building.construction?.completionTime && (plot.building.construction.completionTime <= liveBlockTime)) {
+        } else if (lot.building.construction?.completionTime && (lot.building.construction.completionTime <= liveBlockTime)) {
           status = 'READY_TO_FINISH';
         } else {
           status = 'UNDER_CONSTRUCTION';
         }
 
-      } else if (plot.building.construction?.status === Construction.STATUS_OPERATIONAL) {
+      } else if (lot.building.construction?.status === Construction.STATUS_OPERATIONAL) {
         if (getStatus('DECONSTRUCT', payload) === 'pending') {
           status = 'DECONSTRUCTING';
         } else {
@@ -100,7 +100,7 @@ const useConstructionManager = (asteroidId, plotId) => {
       status,
       isAtRisk
     ];
-  }, [actionItems, readyItems, getPendingTx, getStatus, payload, plot?.building]);
+  }, [actionItems, readyItems, getPendingTx, getStatus, payload, lot?.building]);
 
   const planConstruction = useCallback((capableType) => {
     execute(

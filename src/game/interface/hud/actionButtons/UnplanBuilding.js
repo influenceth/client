@@ -9,8 +9,8 @@ const labelDict = {
   CANCELING: 'Unplanning...'
 };
 
-const UnplanBuilding = ({ asteroid, plot, onSetAction, _disabled }) => {
-  const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
+const UnplanBuilding = ({ asteroid, lot, onSetAction, _disabled }) => {
+  const { constructionStatus } = useConstructionManager(asteroid?.i, lot?.i);
   const handleClick = useCallback(() => {
     onSetAction('UNPLAN_BUILDING');
   }, [onSetAction]);

@@ -3,20 +3,20 @@ import { Extraction } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from './useCrewContext';
-import usePlot from './usePlot';
+import useLot from './useLot';
 import useActionItems from './useActionItems';
 
-const useExtractionManager = (asteroidId, plotId) => {
+const useExtractionManager = (asteroidId, lotId) => {
   const { actionItems, readyItems, liveBlockTime } = useActionItems();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
-  const { data: plot } = usePlot(asteroidId, plotId);
+  const { data: lot } = useLot(asteroidId, lotId);
 
   const payload = useMemo(() => ({
     asteroidId,
-    plotId,
+    lotId,
     crewId: crew?.i
-  }), [asteroidId, plotId, crew?.i]);
+  }), [asteroidId, lotId, crew?.i]);
 
   // status flow
   // READY > EXTRACTING > READY_TO_FINISH > FINISHING
@@ -34,11 +34,11 @@ const useExtractionManager = (asteroidId, plotId) => {
     };
   
     let status = 'READY';
-    if (plot?.building?.extraction?.status === Extraction.STATUS_EXTRACTING) {
+    if (lot?.building?.extraction?.status === Extraction.STATUS_EXTRACTING) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_ExtractionStart'
         && item.event.returnValues.asteroidId === asteroidId
-        && item.event.returnValues.lotId === plotId
+        && item.event.returnValues.lotId === lotId
       ));
       if (actionItem) {
         current._crewmates = actionItem.assets.crew.crewmates;
@@ -46,15 +46,15 @@ const useExtractionManager = (asteroidId, plotId) => {
         current.destinationInventoryId = actionItem.event.returnValues.destinationInventoryId;
         current.sampleId = actionItem.event.returnValues.sampleId;
       }
-      current.completionTime = plot.building.extraction.completionTime;
-      current.resourceId = plot.building.extraction.resourceId;
-      current.startTime = plot.building.extraction.startTime;
-      current.yield = plot.building.extraction.yield;
+      current.completionTime = lot.building.extraction.completionTime;
+      current.resourceId = lot.building.extraction.resourceId;
+      current.startTime = lot.building.extraction.startTime;
+      current.yield = lot.building.extraction.yield;
       current.isCoreSampleUpdated = true;
       
       if(getStatus('FINISH_EXTRACTION', payload) === 'pending') {
         status = 'FINISHING';
-      } else if (plot.building.extraction.completionTime && plot.building.extraction.completionTime <= liveBlockTime) {
+      } else if (lot.building.extraction.completionTime && lot.building.extraction.completionTime <= liveBlockTime) {
         status = 'READY_TO_FINISH';
       } else {
         status = 'EXTRACTING';
@@ -75,15 +75,15 @@ const useExtractionManager = (asteroidId, plotId) => {
       status === 'READY' ? null : current,
       status
     ];
-  }, [actionItems, readyItems, getPendingTx, getStatus, payload, plot?.building?.extraction?.status]);
+  }, [actionItems, readyItems, getPendingTx, getStatus, payload, lot?.building?.extraction?.status]);
 
-  const startExtraction = useCallback((amount, coreSample, destinationPlot) => {
+  const startExtraction = useCallback((amount, coreSample, destinationLot) => {
     execute('START_EXTRACTION', {
       ...payload,
       amount,
       resourceId: coreSample.resourceId,
       sampleId: coreSample.sampleId,
-      destinationLotId: destinationPlot.i,
+      destinationLotId: destinationLot.i,
       destinationInventoryId: 1 // TODO: probably should not hard-code this
     })
   }, [payload]);

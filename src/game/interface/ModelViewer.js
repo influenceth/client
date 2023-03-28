@@ -656,7 +656,7 @@ const Lighting = ({ assetType }) => {
 };
 
 const reader = new FileReader();
-const ModelViewer = ({ assetType, plotZoomMode }) => {
+const ModelViewer = ({ assetType, lotZoomMode }) => {
   const { model: paramModel } = useParams();
   const { search } = useLocation();
   const resources = useResourceAssets();
@@ -667,7 +667,7 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   const dispatchCanvasUnstacked = useStore(s => s.dispatchCanvasUnstacked);
 
   const assets = assetType === 'Building' ? buildings.filter((b, i) => i < 3) : resources;
-  const singleModel = plotZoomMode || Number(paramModel);
+  const singleModel = lotZoomMode || Number(paramModel);
   
   const [devtoolsEnabled, setDevtoolsEnabled] = useState(!singleModel);
   const [model, setModel] = useState();
@@ -812,19 +812,19 @@ const ModelViewer = ({ assetType, plotZoomMode }) => {
   const onCloseDestination = useMemo(() => new URLSearchParams(search).get('back'), [search]);
 
   const title = useMemo(() => {
-    if (plotZoomMode) return '';
+    if (lotZoomMode) return '';
     if (singleModel && model) {
       return `${assetType === 'Resource' ? model.category : 'Infrastructure'} — ${model.name}`;
     }
     return `${assetType} Details`;
-  }, [singleModel, model, assetType, plotZoomMode]);
+  }, [singleModel, model, assetType, lotZoomMode]);
 
   const isLoading = loadingModel || loadingSkybox;
   return (
     <Details
       edgeToEdge
-      hideClose={plotZoomMode}
-      lowerZIndex={!!plotZoomMode}
+      hideClose={lotZoomMode}
+      lowerZIndex={!!lotZoomMode}
       onCloseDestination={onCloseDestination}
       title={title}>
       <BarLoader color="#AAA" height={3} loading={isLoading} css={loadingCss} />

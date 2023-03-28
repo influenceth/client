@@ -56,7 +56,7 @@ import {
   BuildingPlanSection,
   BuildingRequirementsSection,
   DeconstructionMaterialsSection,
-  DestinationPlotSection,
+  DestinationLotSection,
   ExistingSampleSection,
   ExtractionAmountSection,
   ExtractSampleSection,
@@ -73,9 +73,9 @@ import {
   ActionDialogLoader,
 } from './components';
 
-const UnplanBuilding = ({ asteroid, plot, ...props }) => {
+const UnplanBuilding = ({ asteroid, lot, ...props }) => {
   const buildings = useBuildingAssets();
-  const { constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, plot?.i);
+  const { constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, lot?.i);
   const { captain } = useCrewContext();
 
   useEffect(() => {
@@ -105,7 +105,7 @@ const UnplanBuilding = ({ asteroid, plot, ...props }) => {
       <ActionDialogHeader
         asteroid={asteroid}
         captain={captain}
-        plot={plot}
+        lot={lot}
         action={{
           actionIcon: <UnplanBuildingIcon />,
           headerBackground: constructionBackground,
@@ -115,7 +115,7 @@ const UnplanBuilding = ({ asteroid, plot, ...props }) => {
         {...props} />
 
       <BuildingPlanSection
-        building={buildings[plot?.building?.capableType]}
+        building={buildings[lot?.building?.capableType]}
         canceling
         status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
 

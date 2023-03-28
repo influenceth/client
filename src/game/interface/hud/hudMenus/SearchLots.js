@@ -8,25 +8,25 @@ import SearchFilters from '~/components/SearchFilters';
 
 
 const SearchLots = ({ hideTray }) => {
-  const filters = useStore(s => s.assetSearch.plots.mapFilters);
-  const updateFilters = useStore(s => s.dispatchMapFiltersUpdated('plots'));
+  const filters = useStore(s => s.assetSearch.lots.mapFilters);
+  const updateFilters = useStore(s => s.dispatchMapFiltersUpdated('lots'));
 
 // TODO: include by id:
   /*
-    const dispatchPlotSelected = useStore(s => s.dispatchPlotSelected);
+    const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
 
     const handleLotJumper = useCallback((e) => {
       if (e.key === 'Enter' && e.currentTarget.value) {
-        dispatchPlotSelected(asteroid?.i, parseInt(e.currentTarget.value));
+        dispatchLotSelected(asteroid?.i, parseInt(e.currentTarget.value));
       }
     }, [asteroid?.i]);
 
-    const plotTally = useMemo(() => Math.floor(4 * Math.PI * Math.pow(asteroid?.radius / 1000, 2)), [asteroid?.radius]);
+    const lotTally = useMemo(() => Math.floor(4 * Math.PI * Math.pow(asteroid?.radius / 1000, 2)), [asteroid?.radius]);
     
     <label>Jump to Lot #</label>
     <NumberInput
       initialValue={null}
-      max={plotTally}
+      max={lotTally}
       min={1}
       step={1}
       onBlur={(e) => e.currentTarget.value = undefined}
@@ -39,7 +39,7 @@ const SearchLots = ({ hideTray }) => {
     <>
       <Scrollable hasTray={hasTray}>
         <SearchFilters
-          assetType="plots"
+          assetType="lots"
           filters={filters}
           highlighting
           updateFilters={updateFilters} />

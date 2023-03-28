@@ -2,7 +2,7 @@ import { Vector3 } from 'three';
 
 import * as utils from '~/lib/geometryUtils';
 import { rebuildChunkGeometry } from '~/game/scene/asteroid/helpers/TerrainChunkUtils';
-import { getPlotGeometry, getPlotRegions, getClosestPlots } from '~/game/scene/asteroid/helpers/PlotGeometry';
+import { getLotGeometry, getLotRegions, getClosestLots } from '~/game/scene/asteroid/helpers/LotGeometry';
 
 let cache = {
   asteroid: {},
@@ -34,20 +34,20 @@ onmessage = function(event) {
     //     ...event.data.chunk
     //   });
     //   break;
-    case 'buildPlotGeometry':
+    case 'buildLotGeometry':
       if (event.data.asteroid) cache.asteroid = event.data.asteroid;
-      buildPlotGeometry({
+      buildLotGeometry({
         aboveSurface: event.data.aboveSurface,
         heightMaps: event.data.heightMaps,
         textureQuality: event.data.textureQuality,
         ...cache.asteroid,
       });
       break;
-    case 'buildPlotRegions':
-      buildPlotRegions(event.data.data);
+    case 'buildLotRegions':
+      buildLotRegions(event.data.data);
       break;
-    case 'findClosestPlots':
-      findClosestPlots(event.data.data);
+    case 'findClosestLots':
+      findClosestLots(event.data.data);
       break;
     default:
       console.error('Method not supported');
@@ -113,15 +113,15 @@ const rebuildTerrainGeometry = function (chunk) {
 //   });
 // }
 
-const buildPlotGeometry = function({ aboveSurface, config, heightMaps, textureQuality }) {
-  const { positions, orientations } = getPlotGeometry({
+const buildLotGeometry = function({ aboveSurface, config, heightMaps, textureQuality }) {
+  const { positions, orientations } = getLotGeometry({
     config,
     aboveSurface,
     prebuiltHeightMaps: heightMaps,
     textureQuality
   });
   postMessage({
-    topic: 'builtPlotGeometry',
+    topic: 'builtLotGeometry',
     positions,
     orientations
   }, [
@@ -130,17 +130,17 @@ const buildPlotGeometry = function({ aboveSurface, config, heightMaps, textureQu
   ]);
 }
 
-const buildPlotRegions = function ({ positions, regionTally }) {
-  const regions = getPlotRegions(positions, regionTally);
+const buildLotRegions = function ({ positions, regionTally }) {
+  const regions = getLotRegions(positions, regionTally);
   postMessage({
-    topic: 'gotPlotRegions',
+    topic: 'gotLotRegions',
     regions
   }, [
     regions.buffer
   ])
 };
 
-const findClosestPlots = function(data) {
-  const plots = getClosestPlots(data);
-  postMessage({ topic: 'foundClosestPlots', plots });
+const findClosestLots = function(data) {
+  const lots = getClosestLots(data);
+  postMessage({ topic: 'foundClosestLots', lots });
 }

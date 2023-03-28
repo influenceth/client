@@ -25,9 +25,9 @@ import {
   MaterialBonusTooltip
 } from './components';
 
-const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
+const ImproveCoreSample = ({ asteroid, lot, ...props }) => {
   const resources = useResourceAssets();
-  const { startSampling, finishSampling, samplingStatus, ...coreSampleManager } = useCoreSampleManager(asteroid?.i, plot?.i);
+  const { startSampling, finishSampling, samplingStatus, ...coreSampleManager } = useCoreSampleManager(asteroid?.i, lot?.i);
   const { crew, crewMemberMap } = useCrewContext();
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
@@ -47,9 +47,9 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
   }, [coreSampleManager.currentSample]);
 
   const sample = useMemo(() => {
-    if (plot?.coreSamples) {
+    if (lot?.coreSamples) {
       if (resourceId && sampleId) {
-        const thisSample = plot.coreSamples.find((s) => s.sampleId === sampleId && s.resourceId === resourceId);
+        const thisSample = lot.coreSamples.find((s) => s.sampleId === sampleId && s.resourceId === resourceId);
         if (thisSample) {
           thisSample.initialYieldTonnage = Object.keys(thisSample).includes('initialYield')
             ? thisSample.initialYield * Inventory.RESOURCES[resourceId].massPerUnit
@@ -59,7 +59,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
       }
     }
     return null;
-  }, [plot?.coreSamples, sampleId, resourceId]);
+  }, [lot?.coreSamples, sampleId, resourceId]);
 
   // get lot abundance
   const lotAbundance = useMemo(() => {
@@ -67,20 +67,20 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
     return AsteroidLib.getAbundanceAtLot(
       asteroid?.i,
       BigInt(asteroid?.resourceSeed),
-      Number(plot?.i),
+      Number(lot?.i),
       resourceId,
       asteroid.resources[resourceId]
     );
-}, [asteroid, plot, resourceId]);
+}, [asteroid, lot, resourceId]);
 
   // handle sample selection
   const [selectedSample, setSelectedSample] = useState();
 
   const improvableSamples = useMemo(() =>
-    (plot?.coreSamples || [])
+    (lot?.coreSamples || [])
       .filter((c) => (c.owner === crew?.i && c.initialYield > 0 && c.status !== CoreSample.STATUS_USED))
       .map((c) => ({ ...c, tonnage: c.initialYield * resources[c.resourceId].massPerUnit }))
-  , [plot?.coreSamples]);
+  , [lot?.coreSamples]);
 
   const onSampleSelection = useCallback((sample) => {
     if (sample.resourceId !== resourceId) {
@@ -116,12 +116,12 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
 
   // TODO: ...
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-  //   if (!asteroid?.i || !plot?.i) return {};
+  //   if (!asteroid?.i || !lot?.i) return {};
   //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
-  //     { label: 'Travel to destination', plot: plot.i },
-  //     { label: 'Return from destination', plot: 1 },
+  //     { label: 'Travel to destination', lot: lot.i },
+  //     { label: 'Return from destination', lot: 1 },
   //   ]);
-  // }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  // }, [asteroid?.i, lot?.i, crewTravelBonus]);
   const crewTravelTime = 0;
   const tripDetails = null;
 
@@ -207,7 +207,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
       <ActionDialogHeader
         asteroid={asteroid}
         captain={captain}
-        plot={plot}
+        lot={lot}
         action={{
           actionIcon: <ImproveCoreSampleIcon />,
           headerBackground: coreSampleBackground,
@@ -221,7 +221,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
         {...props} />
 
       <ExistingSampleSection
-        plot={plot}
+        lot={lot}
         improvableSamples={improvableSamples}
         onSelectSample={onSampleSelection}
         selectedSample={currentSample}
@@ -231,7 +231,7 @@ const ImproveCoreSample = ({ asteroid, plot, ...props }) => {
         overrideTonnage={isImproved && status === 'AFTER' ? sample?.initialYieldTonnage : undefined} />
 
       {status === 'BEFORE' && (
-        <ToolSection resource={resources[175]} sourcePlot={plot} />
+        <ToolSection resource={resources[175]} sourceLot={lot} />
       )}
 
       <ActionDialogStats stats={stats} status={status} />

@@ -4,17 +4,17 @@ import { SurfaceTransferIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import ActionButton from './ActionButton';
 
-const SurfaceTransferOutgoing = ({ asteroid, plot, onSetAction, preselect, _disabled }) => {
-  const { deliveryStatus } = useDeliveryManager(asteroid?.i, plot?.i);
+const SurfaceTransferOutgoing = ({ asteroid, lot, onSetAction, preselect, _disabled }) => {
+  const { deliveryStatus } = useDeliveryManager(asteroid?.i, lot?.i);
 
   const handleClick = useCallback(() => {
     onSetAction('SURFACE_TRANSFER', { deliveryId: 0, preselect });
   }, [onSetAction, preselect]);
 
   const disabled = useMemo(() => {
-    const hasMass = Object.values(plot?.building?.inventories || {}).find((i) => i.mass > 0);
+    const hasMass = Object.values(lot?.building?.inventories || {}).find((i) => i.mass > 0);
     return !hasMass;
-  }, [plot?.building?.inventories]);
+  }, [lot?.building?.inventories]);
 
   return (
     <ActionButton

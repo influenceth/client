@@ -6,8 +6,8 @@ import useCrewContext from './useCrewContext';
 const useAsteroidCrewSamples = (asteroidId, resourceId) => {
   const { crew } = useCrewContext();
   return useQuery(
-    [ 'asteroidCrewSampledPlots', asteroidId, resourceId, crew?.i ],
-    () => api.getCrewSampledPlots(asteroidId, crew?.i, resourceId),
+    [ 'asteroidCrewSampledLots', asteroidId, resourceId, crew?.i ],
+    () => api.getCrewSampledLots(asteroidId, crew?.i, resourceId),
     { enabled: !!(asteroidId && crew?.i && resourceId) }
   );
 };

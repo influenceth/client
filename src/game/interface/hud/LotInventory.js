@@ -4,7 +4,7 @@ import ReactTooltip from 'react-tooltip';
 import { Inventory } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
-import usePlot from '~/hooks/usePlot';
+import useLot from '~/hooks/useLot';
 import { ResourceImage } from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from './actionDialogs/components';
 import { useResourceAssets } from '~/hooks/useAssets';
@@ -91,12 +91,12 @@ const InventoryItems = styled.div`
   }
 `;
 
-const PlotInventory = ({ active }) => {
-  const { asteroidId, plotId } = useStore(s => s.asteroids.plot || {});
-  const { data: plot } = usePlot(asteroidId, plotId);
+const LotInventory = ({ active }) => {
+  const { asteroidId, lotId } = useStore(s => s.asteroids.lot || {});
+  const { data: lot } = useLot(asteroidId, lotId);
   const resources = useResourceAssets();
 
-  const inventory = plot?.building?.inventories ? plot?.building?.inventories[1] : null;
+  const inventory = lot?.building?.inventories ? lot?.building?.inventories[1] : null;
   const { progress, secondaryProgress, activeUse, reservedUse, massOrVolume } = useMemo(() => {
     if (!inventory) {
       return {
@@ -108,10 +108,10 @@ const PlotInventory = ({ active }) => {
       };
     }
 
-    const mass = 1E-6 * plot.building.inventories[1]?.mass || 0;
-    const reservedMass = 1E-6 * plot.building.inventories[1]?.reservedMass || 0;
-    const volume = 1E-6 * plot.building.inventories[1]?.volume || 0;
-    const reservedVolume = 1E-6 * plot.building.inventories[1]?.reservedVolume || 0;
+    const mass = 1E-6 * lot.building.inventories[1]?.mass || 0;
+    const reservedMass = 1E-6 * lot.building.inventories[1]?.reservedMass || 0;
+    const volume = 1E-6 * lot.building.inventories[1]?.volume || 0;
+    const reservedVolume = 1E-6 * lot.building.inventories[1]?.reservedVolume || 0;
 
     const massUsage = mass / Inventory.CAPACITIES[1][1].mass;
     const massReservedUsage = reservedMass / Inventory.CAPACITIES[1][1].mass;
@@ -175,4 +175,4 @@ const PlotInventory = ({ active }) => {
   );
 };
 
-export default PlotInventory;
+export default LotInventory;
