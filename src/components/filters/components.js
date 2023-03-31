@@ -122,21 +122,20 @@ export const SearchMenu = ({
   highlightColorRange,
   highlightFieldName,
   highlightMetadata,
-  onChange,
   title,
   ...props
 }) => {
   const highlightable = useStore(s => Object.keys(s.assetSearch[assetType]).includes('highlight'));
   const highlight = useStore(s => s.assetSearch[assetType].highlight);
+  const dispatchFilterReset = useStore(s => s.dispatchFilterReset);
   const updateHighlight = useStore(s => s.dispatchHighlightUpdated(assetType));
+  const isAssetSearchFilterMatchingDefault = useStore(s => s.isAssetSearchFilterMatchingDefault);
 
   const fieldHighlight = useMemo(() => highlight && highlight.field === highlightFieldName, [highlight, highlightFieldName]);
 
   const filterIsOn = useMemo(() => {
-    return Array.isArray(fieldName)
-      ? fieldName.reduce((acc, n) => acc || Object.keys(filters).includes(n), false)
-      : filters[fieldName];
-  }, [fieldName, filters]);
+    return !isAssetSearchFilterMatchingDefault(assetType, fieldName);
+  }, [assetType, fieldName, filters[fieldName]]);
 
   const [initiallyCollapsed] = useState(!filterIsOn);
 
@@ -153,10 +152,8 @@ export const SearchMenu = ({
 
   const resetFilter = useCallback((e) => {
     e.stopPropagation();
-    onChange(
-      (Array.isArray(fieldName) ? fieldName : [fieldName]).reduce((acc, k) => ({ ...acc, [k]: undefined }), {})
-    );
-  }, [fieldName, onChange]);
+    dispatchFilterReset(assetType, fieldName);
+  }, [assetType, dispatchFilterReset, fieldName]);
 
   useEffect(() => {
     if (fieldHighlight) {
@@ -194,4 +191,3 @@ export const SearchMenu = ({
     </HudMenuCollapsibleSection>
   );
 }
-

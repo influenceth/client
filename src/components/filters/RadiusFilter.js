@@ -83,7 +83,6 @@ const RadiusFilter = ({ assetType, filters, onChange }) => {
       assetType={assetType}
       fieldName={['radiusMin', 'radiusMax']}
       filters={filters}
-      onChange={onChange}
       highlightFieldName={highlightFieldName}
       title="Radius"
       highlightColorRange={highlightColorRange}>

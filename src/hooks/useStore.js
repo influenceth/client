@@ -1,7 +1,9 @@
 import create from 'zustand';
 import { persist, subscribeWithSelector } from 'zustand/middleware';
 import produce from 'immer';
+import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
+import { Capable } from '@influenceth/sdk';
 
 import constants from '~/lib/constants';
 
@@ -29,18 +31,20 @@ const outlinerSectionDefaults = {
   timeControl: { ...sectionDefault }
 };
 
+const buildingIds = Object.keys(Capable.TYPES).filter((k) => k > 0).map((k) => k.toString());
+
 const assetSearchDefaults = {
   asteroids: { filters: {}, sort: ['r', 'desc'] },
   asteroidsMapped: { filters: {}, sort: ['r', 'desc'], highlight: null },
   buildings: { filters: {}, sort: ['i', 'asc'] },
-  coresamples: { filters: { status: '2,3' }, sort: ['i', 'asc'] },
+  coresamples: { filters: { status: [2,3] }, sort: ['i', 'asc'] },
   crewmates: { filters: {}, sort: ['i', 'asc'] },
   crews: { filters: {}, sort: ['i', 'asc'] },
   ships: { filters: {}, sort: ['i', 'asc'] },
   orders: { filters: {}, sort: ['i', 'asc'] },
   leases: { filters: {}, sort: ['i', 'asc'] },
   lots: { filters: {}, sort: ['i', 'asc'] },
-  lotsMapped: { filters: {}, sort: ['i', 'asc'], highlight: null },
+  lotsMapped: { filters: { type: [...buildingIds] }, sort: ['i', 'asc'], highlight: null },
 };
 
 const useStore = create(subscribeWithSelector(persist((set, get) => ({
@@ -119,8 +123,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     },
 
     sounds: {
-      music: 100,
-      effects: 100,
+      music: process.env.NODE_ENV === 'development' ? 0 : 100,
+      effects: process.env.NODE_ENV === 'development' ? 0 : 100,
       toPlay: null
     },
 
@@ -349,6 +353,14 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.assetSearch[assetType].filters = filters;
     })),
 
+    dispatchFilterReset: (assetType, fieldName) => set(produce(state => {
+      if (assetSearchDefaults[assetType].filters[fieldName]) {
+        state.assetSearch[assetType].filters[fieldName] = cloneDeep(assetSearchDefaults[assetType].filters[fieldName]);
+      } else {
+        delete state.assetSearch[assetType].filters[fieldName];
+      }
+    })),
+
     dispatchFiltersReset: (assetType) => () => set(produce(state => {
       state.assetSearch[assetType].filters = { ...assetSearchDefaults[assetType].filters };
       state.assetSearch[assetType].sort = [ ...assetSearchDefaults[assetType].sort ];
@@ -547,6 +559,11 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       if (!assetType) return true;
       return isEqual(get().assetSearch[assetType].filters, assetSearchDefaults[assetType].filters)
         && isEqual(get().assetSearch[assetType].sort, assetSearchDefaults[assetType].sort)
+    },
+
+    isAssetSearchFilterMatchingDefault: (assetType, fieldName) => {
+      if (!assetType || !fieldName) return true;
+      return isEqual(get().assetSearch[assetType].filters[fieldName], assetSearchDefaults[assetType].filters[fieldName]);
     },
 
 }), {

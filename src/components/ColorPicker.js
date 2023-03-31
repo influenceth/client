@@ -80,6 +80,10 @@ const ColorPicker = ({ onChange, initialColor, ...restProps}) => {
     setOpen(true);
   }, []);
 
+  const stopProp = useCallback((e) => {
+    e.stopPropagation();
+  }, []);
+
   return (
     <>
       <StyledColorPicker ref={setReferenceEl} {...restProps}>
@@ -93,7 +97,11 @@ const ColorPicker = ({ onChange, initialColor, ...restProps}) => {
         <>
           <Cover onClick={onClickAway} />
           {createPortal(
-            <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000 }} {...attributes.popper}>
+            <div
+              ref={setPopperEl}
+              onClick={stopProp}
+              style={{ ...styles.popper, zIndex: 1000 }}
+              {...attributes.popper}>
               <StyledCompactPicker
                 color={color}
                 onChangeComplete={handleChangeComplete} />

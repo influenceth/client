@@ -15,7 +15,6 @@ const CrewNameFilter = ({ assetType, filters, onChange }) => {
       assetType={assetType}
       fieldName={fieldName}
       filters={filters}
-      onChange={onChange}
       title="Name">
       
       <InputBlock singleField>

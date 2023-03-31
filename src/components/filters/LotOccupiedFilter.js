@@ -12,118 +12,62 @@ import IconButton from '~/components/IconButton';
 import ColorPicker from '~/components/ColorPicker';
 import TextInput from '~/components/TextInputUncontrolled';
 import { CheckboxButton, CheckboxRow, SearchMenu } from './components';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const options = {
-  unowned: "Unowned",
-  owned: "Owned (by Anyone)",
-  ownedByMe: "Owned by Me",
-  ownedBy: "Owned by Address",
+  me: "Occupied by Me",
+  other: "Occupied by Someone Else",
+  unoccupied: "Occupied by Nobody",
 };
 
 const initialValues = {
-  owned: null,
-  unowned: null,
-  ownedByMe: null,
-  ownedBy: null
+  me: null,
+  other: null,
+  unoccupied: null
 };
 
 const defaultColorMap = {
-  owned: '#6efaf4',
-  unowned: '#00c7ff',
-  ownedByMe: '#ffffff',
-  ownedBy: '#ff00f2'
+  me: '#FDA1FF',
+  other: '#68CCCA',
+  unoccupied: '#666666',
 }
 
-const fieldName = 'ownedBy';
-const highlightFieldName = 'ownership';
+const fieldName = 'occupiedBy';
+const highlightFieldName = 'occupiedBy';
 
-const OwnershipFilter = ({ assetType, filters, onChange }) => {
-  const { account } = useAuth();
+const LotOccupiedFilter = ({ assetType, filters, onChange }) => {
+  const { crew } = useCrewContext();
   const highlight = useStore(s => s.assetSearch[assetType].highlight);
   const fieldHighlight = highlight && highlight.field === highlightFieldName;
 
   const [types, setTypes] = useState(initialValues);
-  const [ownedByAddress, setOwnedByAddress] =  useState('');
   const [highlightColors, setHighlightColors] = useState({ ...(fieldHighlight?.colorMap || defaultColorMap) });
 
-  const addressInput = useRef(); 
-
   useEffect(() => {
-    const newTypes = { ...initialValues };
-    if (filters[fieldName]) {
-      const standardAddress = Address.toStandard(filters[fieldName]) || '';
-      if (standardAddress) {
-        if (Address.areEqual(filters[fieldName], account)) {
-          newTypes.ownedByMe = true;
-        } else {
-          newTypes.ownedBy = standardAddress;
-          setOwnedByAddress(standardAddress);
-        }
-      } else {
-        newTypes[filters[fieldName]] = true;
-      }
+    const newTypes = ({ ...initialValues });
+    if (filters[fieldName] && filters[fieldName].length > 0) {
+      const filterArr = filters[fieldName];
+      Object.keys(newTypes).forEach((k) => {
+        newTypes[k] = filterArr.includes(k);
+      });
     }
     setTypes(newTypes);
-    
   }, [filters[fieldName]]);
 
   const onClick = useCallback((k) => (e) => {
     e.stopPropagation();
-    let value = k;
-    if (k === 'ownedByMe' && account && Address.toStandard(account)) {
-      value = Address.toStandard(account);
-    } else if (k === 'ownedBy') {
-      if (ownedByAddress && Address.toStandard(ownedByAddress)) {
-        value = Address.toStandard(ownedByAddress);
-
-        // if ownedByAddress is currently my address, could appear "stuck" on owned by me,
-        // so clear the ownedByAddress if it's me when I click ownedBy
-        if (Address.areEqual(account, ownedByAddress)) {
-          value = 'ownedBy';
-          setOwnedByAddress('');
-        }
-      }
-
-      // when click "owned by address", focus on field
-      if (addressInput.current) addressInput.current.focus();
-    }
-    onChange({ [fieldName]: value });
-  }, [account, onChange, ownedByAddress]);
-
-  const handleEvent = useCallback((e) => {
-    if (e.type === 'blur' || e.key === 'Enter' || e.key === 'Tab') {
-      let validatedValue = e.currentTarget.value && e.currentTarget.value !== '0' && Address.toStandard(e.currentTarget.value);
-      if (validatedValue) {
-        e.currentTarget.value = validatedValue;
-      } else {
-        e.currentTarget.value = '';
-      }
-      e.currentTarget.blur();
-
-      setOwnedByAddress(e.currentTarget.value);
-      if (types.ownedBy) {
-        onChange({ [fieldName]: validatedValue || 'ownedBy' });
-      }
-    }
-  }, [onChange, types]);
-
-  useEffect(() => {
-    if (addressInput.current) addressInput.current.value = ownedByAddress;
-  }, [ownedByAddress]);
-
-  const highlightMetadata = useMemo(() => ({ myAddress: account, address: ownedByAddress }), [account, ownedByAddress]);
+    onChange({ [fieldName]: k });
+  }, [onChange]);
 
   return (
     <SearchMenu
       assetType={assetType}
       fieldName={fieldName}
       filters={filters}
-      onChange={onChange}
       highlightFieldName={highlightFieldName}
-      highlightMetadata={highlightMetadata}
-      title="Owner"
+      title="Occupation"
       highlightColorMap={highlightColors}>
-      {Object.keys(options).map((k) => (!account && k === 'ownedByMe') ? null : (
+      {Object.keys(options).map((k) => (!crew && k === 'me') ? null : (
         <CheckboxRow key={k} onClick={onClick(k)}>
           <CheckboxButton checked={types[k]}>
             {types[k] ? <CheckedIcon /> : <UncheckedIcon />}
@@ -136,17 +80,8 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
           )}
         </CheckboxRow>
       ))}
-
-      <TextInput
-        ref={addressInput}
-        initialValue={types.ownedBy || ''}
-        onBlur={handleEvent}
-        onFocus={(e) => e.target.select()}
-        onKeyDown={handleEvent}
-        placeholder="Wallet Address"
-        style={{ marginTop: 4, marginLeft: 24, opacity: types.ownedBy ? 1 : 0.3, width: 'calc(100% - 26px)' }} />
     </SearchMenu>
   );
 };
 
-export default OwnershipFilter;
+export default LotOccupiedFilter;

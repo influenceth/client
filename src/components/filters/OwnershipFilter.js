@@ -118,7 +118,6 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
       assetType={assetType}
       fieldName={fieldName}
       filters={filters}
-      onChange={onChange}
       highlightFieldName={highlightFieldName}
       highlightMetadata={highlightMetadata}
       title="Owner"

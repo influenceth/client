@@ -17,33 +17,47 @@ import {
 import { useQueryClient } from 'react-query';
 import { Asteroid } from '@influenceth/sdk';
 
-import useAsteroidLots from '~/hooks/useAsteroidLots';
-import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
-import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
 import useWebWorker from '~/hooks/useWebWorker';
-import theme from '~/theme';
 import { getLotGeometryHeightMaps, getLotGeometryHeightMapResolution } from './helpers/LotGeometry';
+import useMappedAsteroidLots from '~/hooks/useMappedAsteroidLots';
 
-const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
 const STROKE_COLOR = new Color().setHex(0xbbbbbb).convertSRGBToLinear();
 const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
-
 const FILL_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
+
+const colorCache = {};
+const getColor = (hex) => {
+  if (!colorCache[hex]) {
+    colorCache[hex] = new Color(hex).convertSRGBToLinear();
+  }
+  return colorCache[hex];
+}
 
 const PLOT_LOADER_GEOMETRY_PCT = 0.25;
 
+const getMaxInstancesForAltitude = (altitude) => {
+  return Math.round(2 * Math.pow(altitude * 2 * Math.tan(Math.PI * 35 / 180) / 1e3, 2));
+}
+
 const MOUSEABLE_WIDTH = 800;
-const MAX_MESH_INSTANCES = Asteroid.MAX_LOTS_RENDERED;  // TODO: maybe can adjust with GPU dependent, but keep in mind lots are now indexed to region
+const MAX_MESH_INSTANCES = Asteroid.MAX_LOTS_RENDERED;
 const PIP_VISIBILITY_ALTITUDE = 25000;
-const OUTLINE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE * 0.5;
 const MOUSE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE;
+const STROKE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE * 0.5;
+const FILL_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE * 0.75;
+const MAX_OUTLINE_INSTANCES = getMaxInstancesForAltitude(STROKE_VISIBILITY_ALTITUDE);
+const MAX_FILL_INSTANCES = getMaxInstancesForAltitude(FILL_VISIBILITY_ALTITUDE);
 
 const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
 const MOUSE_THROTTLE_TIME = 1000 / 30; // ms
+
+const isResultMask = 0b100000;
+const hasBuildingMask = 0b010000;
+const colorIndexMask  = 0b001111;
 
 const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
   const { token } = useAuth();
@@ -53,7 +67,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
   const { processInBackground } = useWebWorker();
 
-  const mapResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
   const textureQuality = useStore(s => s.graphics.textureQuality);
   const dispatchLotsLoading = useStore(s => s.dispatchLotsLoading);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
@@ -66,11 +79,11 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   const positions = useRef();
   const orientations = useRef();
   const lotsByRegion = useRef([]);
-  const buildingsByRegion = useRef([]);
+  const resultsByRegion = useRef([]);
 
   const pipMesh = useRef();
   const mouseableMesh = useRef();
-  const buildingMesh = useRef();
+  const resultMesh = useRef();
 
   const lotStrokeMesh = useRef();
   const lotFillMesh = useRef();
@@ -95,50 +108,45 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
   const chunkyAltitude = useMemo(() => Math.round(cameraAltitude / 500) * 500, [cameraAltitude]);
 
-  const lotTally = useMemo(() => Asteroid.getSurfaceArea(asteroidId, config?.radiusNominal / 1e3), [config?.radiusNominal]);
+  // NOTE: for every dependency on `lotDataMap`, should also include `lastLotUpdate` so react triggers it
+  //  (it seems react does not handle sparse arrays very well for equality checks)
+  // const [lastLotUpdate, setLastLotUpdate] = useState();
+
+  const {
+    data: {
+      buildingTally,
+      fillTally,
+      resultTally,
+      lastLotUpdate,
+
+      colorMap,
+      lotDisplayMap,
+      lotSampledMap,
+    },
+    isLoading,
+    refetch: refetchLots
+  } = useMappedAsteroidLots(asteroidId);
+  const lotsReady = !isLoading && lotDisplayMap;
+
+  const lotTally = useMemo(() => Asteroid.getSurfaceArea(asteroidId), [asteroidId]);
   const regionTally = useMemo(() => Asteroid.getLotRegionTally(lotTally), [lotTally]);
   const visibleLotTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, lotTally), [lotTally]);
-
-  const { data: lots, isLoading: allLotsLoading, refetch: refetchLots } = useAsteroidLots(asteroidId, lotTally);
-  const { data: crewLots, isLoading: crewLotsLoading } = useAsteroidCrewLots(asteroidId);
-  const { data: sampledLots, isLoading: sampledLotsLoading } = useAsteroidCrewSamples(asteroidId, mapResourceId);
-
-  // NOTE: for every dependency on `lots`, should also include `lastLotUpdate` so react triggers it
-  //  (it seems react does not handle sparse arrays very well for equality checks)
-  const [lastLotUpdate, setLastLotUpdate] = useState();
-
-  const sampledLotMap = useMemo(() => {
-    if (sampledLots) {
-      return sampledLots.reduce((acc, i) => { acc[i] = true; return acc; }, {});
-    } else if (sampledLotsLoading) {
-      return {};
-    }
-    return null;
-  }, [sampledLots]);
-
-  const crewLotMap = useMemo(() => {
-    if (crewLotsLoading) return null;
-    return (crewLots || []).reduce((acc, p) => {
-      acc[p.i] = true;
-      return acc;
-    }, {});
-  }, [crewLots, crewLotsLoading]);
-  const lotsReady = (!allLotsLoading && !crewLotsLoading && !!crewLotMap);
-  const buildingTally = useMemo(() => lots && Object.values(lots).reduce((acc, cur) => acc + (cur > 0 ? 1 : 0), 0), [lots, lastLotUpdate]);
-  const visibleBuildingTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, buildingTally), [buildingTally]);
+  const visibleStrokeTally = useMemo(() => Math.min(MAX_OUTLINE_INSTANCES, buildingTally), [buildingTally]);
+  const visibleFillTally = useMemo(() => Math.min(MAX_FILL_INSTANCES, fillTally), [fillTally]);
+  const visibleResultTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, resultTally), [resultTally]);
 
   // if just navigated to asteroid and lots already loaded, refetch
   // (b/c might have missed ws updates while on a different asteroid)
   // TODO: probably technically need to capture allLotsReloading / lotsReady alongside lastLotUpdate in dependency arrays
   useEffect(() => {
-    if (lots) refetchLots();
+    if (lotDisplayMap) refetchLots();
   }, []);
 
   // position lots and bucket into regions (as needed)
   // BATCHED region bucketing is really only helpful for largest couple asteroids
   // NOTE: this just runs once when lots is initial populated
   useEffect(() => {
-    if (!lots) return;
+    // if (!lotDisplayMap) return;  // TODO (TODAY): commented out in case can skip building region buckets
 
     const {
       ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
@@ -201,11 +209,13 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
               if (!lotsByRegion.current[region]) lotsByRegion.current[region] = [];
               lotsByRegion.current[region].push(lotId);
 
+              // TODO (TODAY): commented out in case can skip building region buckets
+              // TODO (TODAY): re-evaluate this... do we need to do this for all search results
               // (if there is building data) if there is a building, also add to building region records
-              if (lots[lotId]) {
-                if (!buildingsByRegion.current[region]) buildingsByRegion.current[region] = [];
-                buildingsByRegion.current[region].push(lotId);
-              }
+              // if (lotDisplayMap[lotId] & hasBuildingMask) {
+              //   if (!buildingsByRegion.current[region]) buildingsByRegion.current[region] = [];
+              //   buildingsByRegion.current[region].push(lotId);
+              // }
             });
             batchesProcessed++;
             if (batchesProcessed === expectedBatches) {
@@ -221,17 +231,22 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       },
       transfer
     );
-  }, [!lots]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // TODO (TODAY): commented out in case can skip building region buckets
+  // }, [!lotDisplayMap]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // TODO (TODAY): this should hopefully be able to replace above (we may just want to let it run once)
+  //  before declaring the lots "loaded" initially
   // run this when lots changes (after its initial run through the effect that follows this one)
   useEffect(() => {
-    if (lots && lotsByRegion.current?.length) {
+    if (lotDisplayMap && lotsByRegion.current?.length) {
       Object.keys(lotsByRegion.current).forEach((region) => {
-        buildingsByRegion.current[region] = lotsByRegion.current[region].filter((lotId) => lots[lotId] > 0);
+        resultsByRegion.current[region] = lotsByRegion.current[region].filter((lotId) => lotDisplayMap[lotId] & isResultMask > 0);
       });
     }
-  }, [lots, lastLotUpdate]);
+  }, [lotDisplayMap, lastLotUpdate]);
 
+  // TODO (TODAY): need to update base lot data, then re-run search
+  //  TODO (TODAY): should probably move this into the hook
   const handleWSMessage = useCallback(({ type: eventType, body }) => {
     // TODO: these events could/should technically go through the same invalidation process as primary events
     //  (it's just that these events won't match as much data b/c most may not be relevant to my crew)
@@ -247,7 +262,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
           }
           return currentLotsValue;
         });
-        setLastLotUpdate(Date.now());
+        // setLastLotUpdate(Date.now());
       }
     }
 
@@ -298,128 +313,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     }
   }, [token, handleWSMessage, wsReady]);
 
-  // instantiate pips mesh
-  useEffect(() => {
-    if (!visibleLotTally) return;
-
-    const pipGeometry = new CircleGeometry(PIP_RADIUS, 6);
-    const pipMaterial = new MeshBasicMaterial({
-      color: WHITE_COLOR,
-      depthTest: false,
-      depthWrite: false,
-      opacity: 0.6,
-      toneMapped: false,
-      transparent: true,
-    });
-
-    pipMesh.current = new InstancedMesh(pipGeometry, pipMaterial, visibleLotTally);
-    pipMesh.current.renderOrder = 999;
-    (attachTo || scene).add(pipMesh.current);
-
-    const mouseableGeometry = new CircleGeometry(MOUSEABLE_WIDTH, 6);
-    const mouseableMaterial = new MeshBasicMaterial({
-      // color: 0x00ff00, opacity: 0.5, // for debugging
-      opacity: 0,
-      depthTest: false,
-      depthWrite: false,
-      toneMapped: false,
-      transparent: true,
-    });
-
-    mouseableMesh.current = new InstancedMesh(mouseableGeometry, mouseableMaterial, visibleLotTally);
-    mouseableMesh.current.renderOrder = 999;
-    (attachTo || scene).add(mouseableMesh.current);
-
-    return () => {
-      if (pipMesh.current) {
-        (attachTo || scene).remove(pipMesh.current);
-      }
-      if (mouseableMesh.current) {
-        (attachTo || scene).remove(mouseableMesh.current);
-      }
-    };
-
-  }, [visibleLotTally]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // instantiate buildings mesh
-  useEffect(() => {
-    if (!visibleBuildingTally) return;
-
-    const buildingGeometry = new CircleGeometry(BUILDING_RADIUS, 6);
-    // buildingGeometry.rotateX(-Math.PI / 2);
-    const buildingMaterial = new MeshBasicMaterial({
-      color: new Color().setHex(0xffffff),
-      depthTest: false,
-      depthWrite: false,
-      toneMapped: false,
-      transparent: false,
-    });
-
-    buildingMesh.current = new InstancedMesh(buildingGeometry, buildingMaterial, visibleBuildingTally);
-    buildingMesh.current.renderOrder = 999;
-    buildingMesh.current.userData.bloom = true;
-    (attachTo || scene).add(buildingMesh.current);
-
-    return () => {
-      if (buildingMesh.current) {
-        (attachTo || scene).remove(buildingMesh.current);
-      }
-    };
-
-  }, [visibleBuildingTally]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // instantiate lot outline mesh
-  useEffect(() => {
-    if (!visibleLotTally) return;
-
-    // const strokeGeometry = new TorusGeometry(PLOT_WIDTH, 5, 3, 6);
-    const strokeGeometry = new RingGeometry(PLOT_WIDTH, PLOT_WIDTH + PLOT_STROKE_MARGIN, 6, 1);
-    const strokeMaterial = new MeshBasicMaterial({
-      color: 0xffffff,
-      depthTest: false,
-      depthWrite: false,
-      toneMapped: false,
-      transparent: false,
-    });
-
-    lotStrokeMesh.current = new InstancedMesh(strokeGeometry, strokeMaterial, visibleLotTally);
-    lotStrokeMesh.current.renderOrder = 999;
-    (attachTo || scene).add(lotStrokeMesh.current);
-
-    return () => {
-      if (lotStrokeMesh.current) {
-        (attachTo || scene).remove(lotStrokeMesh.current);
-      }
-    };
-  }, [visibleLotTally]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // instantiate lot fill mesh
-  // TODO: instantiate only in resource mode?
-  useEffect(() => {
-    if (!visibleLotTally) return;
-
-    // const fillGeometry = new CircleGeometry(PLOT_WIDTH - PLOT_STROKE_MARGIN, 6);
-    const fillGeometry = new CircleGeometry(PLOT_WIDTH - PLOT_STROKE_MARGIN, 6);
-    const fillMaterial = new MeshBasicMaterial({
-      color: FILL_COLOR,
-      depthTest: false,
-      depthWrite: false,
-      opacity: 0.5,
-      side: FrontSide,
-      toneMapped: false,
-      transparent: true
-    });
-
-    lotFillMesh.current = new InstancedMesh(fillGeometry, fillMaterial, visibleLotTally);
-    lotFillMesh.current.renderOrder = 998;
-    (attachTo || scene).add(lotFillMesh.current);
-
-    return () => {
-      if (lotFillMesh.current) {
-        (attachTo || scene).remove(lotFillMesh.current);
-      }
-    };
-  }, [visibleLotTally]);
 
   // listen for click events
   // NOTE: if just use onclick, then fires on drag events too :(
@@ -450,6 +343,137 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       gl.domElement.removeEventListener('pointerup', onMouseEvent, true);
     };
   }, []);
+
+  // instantiate pips mesh
+  useEffect(() => {
+    if (!visibleLotTally) return;
+
+    const pipGeometry = new CircleGeometry(PIP_RADIUS, 6);
+    const pipMaterial = new MeshBasicMaterial({
+      color: WHITE_COLOR,
+      depthTest: false,
+      depthWrite: false,
+      opacity: 0.6,
+      toneMapped: false,
+      transparent: true,
+    });
+
+    pipMesh.current = new InstancedMesh(pipGeometry, pipMaterial, visibleLotTally);
+    pipMesh.current.renderOrder = 999;
+    (attachTo || scene).add(pipMesh.current);
+
+    return () => {
+      if (pipMesh.current) {
+        (attachTo || scene).remove(pipMesh.current);
+      }
+    }
+  }, [visibleLotTally]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // instantiate (invisible) mouseable mesh (behind all pips)
+  useEffect(() => {
+    if (!visibleLotTally) return;
+
+    const mouseableGeometry = new CircleGeometry(MOUSEABLE_WIDTH, 6);
+    const mouseableMaterial = new MeshBasicMaterial({
+      // color: 0x00ff00, opacity: 0.5, // for debugging
+      opacity: 0,
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+      transparent: true,
+    });
+
+    mouseableMesh.current = new InstancedMesh(mouseableGeometry, mouseableMaterial, visibleLotTally);
+    mouseableMesh.current.renderOrder = 999;
+    (attachTo || scene).add(mouseableMesh.current);
+
+    return () => {
+      if (mouseableMesh.current) {
+        (attachTo || scene).remove(mouseableMesh.current);
+      }
+    };
+
+  }, [visibleLotTally]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // instantiate results mesh
+  useEffect(() => {
+    if (!visibleResultTally) return;
+
+    const resultGeometry = new CircleGeometry(BUILDING_RADIUS, 6);
+    // resultGeometry.rotateX(-Math.PI / 2);
+    const resultMaterial = new MeshBasicMaterial({
+      color: new Color().setHex(0xffffff),
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+      transparent: false,
+    });
+
+    resultMesh.current = new InstancedMesh(resultGeometry, resultMaterial, visibleResultTally);
+    resultMesh.current.renderOrder = 999;
+    resultMesh.current.userData.bloom = true;
+    (attachTo || scene).add(resultMesh.current);
+
+    return () => {
+      if (resultMesh.current) {
+        (attachTo || scene).remove(resultMesh.current);
+      }
+    };
+
+  }, [visibleResultTally]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // instantiate lot outline mesh
+  useEffect(() => {
+    if (!visibleStrokeTally) return;
+
+    // const strokeGeometry = new TorusGeometry(PLOT_WIDTH, 5, 3, 6);
+    const strokeGeometry = new RingGeometry(PLOT_WIDTH, PLOT_WIDTH + PLOT_STROKE_MARGIN, 6, 1);
+    const strokeMaterial = new MeshBasicMaterial({
+      color: 0xffffff,
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+      transparent: false,
+    });
+
+    lotStrokeMesh.current = new InstancedMesh(strokeGeometry, strokeMaterial, visibleStrokeTally);
+    lotStrokeMesh.current.renderOrder = 999;
+    (attachTo || scene).add(lotStrokeMesh.current);
+
+    return () => {
+      if (lotStrokeMesh.current) {
+        (attachTo || scene).remove(lotStrokeMesh.current);
+      }
+    };
+  }, [visibleStrokeTally]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // instantiate lot fill mesh
+  // TODO: instantiate only in resource mode?
+  useEffect(() => {
+    if (!visibleFillTally) return;
+
+    // const fillGeometry = new CircleGeometry(PLOT_WIDTH - PLOT_STROKE_MARGIN, 6);
+    const fillGeometry = new CircleGeometry(PLOT_WIDTH - PLOT_STROKE_MARGIN, 6);
+    const fillMaterial = new MeshBasicMaterial({
+      color: FILL_COLOR,
+      depthTest: false,
+      depthWrite: false,
+      opacity: 0.5,
+      side: FrontSide,
+      toneMapped: false,
+      transparent: true
+    });
+
+    lotFillMesh.current = new InstancedMesh(fillGeometry, fillMaterial, visibleFillTally);
+    lotFillMesh.current.renderOrder = 998;
+    (attachTo || scene).add(lotFillMesh.current);
+
+    return () => {
+      if (lotFillMesh.current) {
+        (attachTo || scene).remove(lotFillMesh.current);
+      }
+    };
+  }, [visibleFillTally]);
 
   // instantiate mouse mesh
   useEffect(() => {
@@ -502,25 +526,26 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     if (!positions.current) return;
     if (!regionsByDistance?.length) return;
     if (!lotsByRegion.current?.length) return;
-    if (!buildingsByRegion.current) return;
+    if (!resultsByRegion.current) return;
     try {
       const dummy = new Object3D();
 
-      let buildingsRendered = 0;
+      let resultsRendered = 0;
+      let strokesRendered = 0;
       let fillsRendered = 0;
       let pipsRendered = 0;
       let breakLoop = false;
 
-      let updateBuildingMatrix = false;
       let updateFillMatrix = false;
       let updatePipMatrix = false;
       let updateMouseableMatrix = false;
+      let updateResultMatrix = false;
       let updateStrokeMatrix = false;
-      let updateBuildingColor = false;
+      let updateResultColor = false;
       let updateStrokeColor = false;
 
-      // scale down buildings if in fill-mode and zoomed in pretty close (so can see fill)
-      const buildingScale = ((cameraAltitude < OUTLINE_VISIBILITY_ALTITUDE && sampledLotMap) ? 0.5 : 1)
+      // scale down results if in fill-mode and zoomed in pretty close (so can see fill)
+      const resultScale = ((cameraAltitude < FILL_VISIBILITY_ALTITUDE && lotSampledMap) ? 0.5 : 1)
         * Math.max(1, Math.min(250 / BUILDING_RADIUS, cameraAltitude / 15000));
 
       let i = 0;
@@ -530,25 +555,26 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
         // (without this, imagine all the unnecessary loops if there were a single building on AP)
         const lotSource = i < visibleLotTally && (cameraAltitude <= PIP_VISIBILITY_ALTITUDE || !lotsInitialized.current)
           ? lotsByRegion.current
-          : buildingsByRegion.current;
+          : resultsByRegion.current;
         if (!lotSource[lotRegion]) return true;
 
         // TODO (enhancement): on altitude change (where rotation has not changed), don't need to recalculate pip matrixes, etc
-        //  (i.e. even when lotTally > visibleLotTally)... just would need to update building matrixes (to update scale)
+        //  (i.e. even when lotTally > visibleLotTally)... just would need to update result matrixes (to update scale)
         lotSource[lotRegion].every((lotId) => {
-          const hasBuilding = (lots[lotId] || crewLotMap[lotId]) && (buildingsRendered < visibleBuildingTally);
-          const hasPip = (pipsRendered + buildingsRendered) < visibleLotTally;
-          const hasFill = sampledLotMap && sampledLotMap[lotId] && (fillsRendered < visibleBuildingTally);
+          const hasPip = (pipsRendered + resultsRendered) < visibleLotTally;
+          const hasResult = (isResultMask & lotDisplayMap[lotId]) && (resultsRendered < visibleResultTally);
+          const hasStroke = (hasBuildingMask & lotDisplayMap[lotId]) && (strokesRendered < visibleStrokeTally);
+          const hasFill = lotSampledMap && lotSampledMap[lotId] && (fillsRendered < visibleFillTally);
           const hasMouseable = lotTally > visibleLotTally || !lotsInitialized.current;
-          const hasStroke = lotTally > visibleLotTally || !lotsInitialized.current;
-          if (hasBuilding || hasPip || hasMouseable || hasFill) {
+
+          if (hasPip || hasResult || hasStroke || hasFill || hasMouseable) {
 
             // MATRIX
-            // > if have a building, always need to rebuild entire matrix (to update scale with altitude)
-            // > if have a pip, only need to rebuild matrix if lot visibility is dynamic (i.e. lotTally > visibleLotTally)
-            // > if have fill, only need to rebuild if fill source has changed (listen to lotsInitialized)
-            // > mouseable, stroke, and fill matrix will not change unless pip matrix does (but will need to change around buildings and pips)
-            if (hasBuilding || lotTally > visibleLotTally || !lotsInitialized.current) {
+            // > if has a result, always need to rebuild entire matrix for this lot (to update scale with altitude)
+            // > otherwise, only need to (re)build matrix on (re)initialization or if lot visibility is dynamic
+            //   (note: building source and fill source changes will result in updated lotsInitialized)
+            //  TODO (TODAY): make sure that note ^ is true for buildings
+            if (hasResult || lotTally > visibleLotTally || !lotsInitialized.current) {
               const lotIndex = lotId - 1;
 
               dummy.position.set(
@@ -564,20 +590,20 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
               );
 
               // update building matrix or pip matrix
-              if (hasBuilding) {
-                dummy.scale.set(buildingScale, buildingScale, buildingScale);
+              if (hasResult) {
+                dummy.scale.set(resultScale, resultScale, resultScale);
                 dummy.updateMatrix();
 
-                buildingMesh.current.setMatrixAt(buildingsRendered, dummy.matrix);
-                updateBuildingMatrix = true;
+                resultMesh.current.setMatrixAt(resultsRendered, dummy.matrix);
+                updateResultMatrix = true;
               }
 
               // everything but buildings should be scaled to 1
               dummy.scale.set(1, 1, 1);
               dummy.updateMatrix();
 
-              // if no building, show pip
-              if (!hasBuilding) {
+              // if no result, show pip
+              if (!hasResult) {
                 pipMesh.current.setMatrixAt(pipsRendered, dummy.matrix);
                 updatePipMatrix = true;
               }
@@ -590,7 +616,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
               // update stroke matrix
               if (hasStroke) {
-                lotStrokeMesh.current.setMatrixAt(i, dummy.matrix);
+                lotStrokeMesh.current.setMatrixAt(strokesRendered, dummy.matrix);
                 updateStrokeMatrix = true;
               }
 
@@ -603,49 +629,57 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
             }
 
             // COLOR
-            // > if have a building, must always update color (because matrix always updated, so instance indexes will change position)
+            // > if has a result, must always update color (because matrix always updated, so instance indexes will change position)
             //  (if logged in -- otherwise, can't be white anyway so just color once on initialization)
             // > pips never need color updated
-            // > strokes use building color (if building) else pip color (only need to be updated after initialization if dynamic)
+            // > strokes use result color (if result) else pip color (only need to be updated after initialization if dynamic)
             let lotColor;
-            if (hasBuilding) {
-              // white if occupied by me; else, blue
-              lotColor = crewLotMap[lotId] ? WHITE_COLOR : MAIN_COLOR;
+            if (hasResult) {
+              lotColor = getColor(colorMap[colorIndexMask & lotDisplayMap[lotId]]);
+
+              // TODO (TODAY): unclear what this if is for... would be nice to put in enhancement below
+              // if (!!crewLotMap || !lotsInitialized.current) {
+
+                // if this is first color change to instance, need to let material know
+                // TODO (enhancement): could check if there is a color change against existing buildingMesh instanceColor before setting updateBuildingColor
+                if (!resultMesh.current.instanceColor && !resultMesh.current.material.needsUpdate) {
+                  resultMesh.current.material.needsUpdate = true;
+                }
+                resultMesh.current.setColorAt(resultsRendered, lotColor);
+                updateResultColor = true;
+              // }
             }
-            if (hasBuilding && (!!crewLotMap || !lotsInitialized.current)) {
-              // if this is first color change to instance, need to let material know
-              // TODO (enhancement): could check if there is a color change against existing buildingMesh instanceColor before setting updateBuildingColor
-              if (!buildingMesh.current.instanceColor && !buildingMesh.current.material.needsUpdate) {
-                buildingMesh.current.material.needsUpdate = true;
-              }
-              buildingMesh.current.setColorAt(buildingsRendered, lotColor);
-              updateBuildingColor = true;
-            }
-            if (lotTally > visibleLotTally || !lotsInitialized.current) {
+
+            if (hasStroke) {
               // if this is first color change to instance, need to let material know
               if (!lotStrokeMesh.current.instanceColor && !lotStrokeMesh.current.material.needsUpdate) {
                 lotStrokeMesh.current.material.needsUpdate = true;
               }
-              // if (hasFill) {
-              //   lotStrokeMesh.current.setColorAt(i, FILL_COLOR);
-              // } else 
-              lotStrokeMesh.current.setColorAt(i, lotColor || STROKE_COLOR);
+              lotStrokeMesh.current.setColorAt(strokesRendered, lotColor || STROKE_COLOR);
               updateStrokeColor = true;
             }
+            
+            // TODO (TODAY): this wrapped the above (instead of hasStroke)... we don't want to update on every loop
+            // if (lotTally > visibleLotTally || !lotsInitialized.current) {
           }
 
-          if (hasBuilding) {
-            buildingsRendered++;
+          if (hasResult) {
+            resultsRendered++;
           } else if (hasPip) {
             pipsRendered++;
+          }
+          if (hasStroke) {
+            strokesRendered++;
           }
           if (hasFill) {
             fillsRendered++;
           }
           i++;
 
-          // break loop if all visible buildings are rendered AND *something* is rendered on closest visibleLots
-          breakLoop = (buildingsRendered >= visibleBuildingTally && (pipsRendered + buildingsRendered) >= visibleLotTally);
+          // break loop if all visible results are rendered AND *something* is rendered on closest visibleLots
+          // TODO (TODAY): do we need to add buildings to this breakLoop condition? probably not since
+          //  will have looped through closestPips (results are special because can be seen from farther out)
+          breakLoop = (resultsRendered >= visibleResultTally && (pipsRendered + resultsRendered) >= visibleLotTally);
 
           if (breakLoop) return false;
           return true;
@@ -653,15 +687,17 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
         if (breakLoop) return false;
         return true;
       });
-      pipMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : Math.min(pipsRendered, visibleLotTally);
-      lotFillMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : Math.min(fillsRendered, visibleLotTally);
-      mouseableMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : visibleLotTally;
-      lotStrokeMesh.current.count = cameraAltitude > OUTLINE_VISIBILITY_ALTITUDE ? 0 : visibleLotTally;
-      // console.log('i', i, buildingsRendered, pipsRendered, pipMesh.current.count);
 
-      // (building mesh isn't created if no buildings)
-      if (buildingMesh.current && updateBuildingColor) buildingMesh.current.instanceColor.needsUpdate = true;
-      if (buildingMesh.current && updateBuildingMatrix) buildingMesh.current.instanceMatrix.needsUpdate = true;
+      if (pipMesh.current) pipMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : Math.min(pipsRendered, visibleLotTally);
+      if (mouseableMesh.current) mouseableMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : visibleLotTally;
+      if (lotFillMesh.current) lotFillMesh.current.count = cameraAltitude > FILL_VISIBILITY_ALTITUDE ? 0 : Math.min(fillsRendered, visibleFillTally);
+      if (lotStrokeMesh.current) lotStrokeMesh.current.count = cameraAltitude > STROKE_VISIBILITY_ALTITUDE ? 0 : Math.min(strokesRendered, visibleStrokeTally);
+
+      // console.log('i', i, strokesRendered, pipsRendered, pipMesh.current.count);
+
+      // (result mesh isn't created if no results)
+      if (resultMesh.current && updateResultColor) resultMesh.current.instanceColor.needsUpdate = true;
+      if (resultMesh.current && updateResultMatrix) resultMesh.current.instanceMatrix.needsUpdate = true;
       if (pipMesh.current && updatePipMatrix) pipMesh.current.instanceMatrix.needsUpdate = true;
       if (mouseableMesh.current && updateMouseableMatrix) mouseableMesh.current.instanceMatrix.needsUpdate = true;
       if (lotFillMesh.current && updateFillMatrix) lotFillMesh.current.instanceMatrix.needsUpdate = true;
@@ -690,7 +726,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       // changed, so needs to fail gracefully (i.e. if buildingMesh.current is unset)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cameraAltitude, lots, lastLotUpdate, crewLotMap, sampledLotMap, regionsByDistance]);
+  }, [cameraAltitude, lastLotUpdate, lotDisplayMap, lotSampledMap, regionsByDistance]);
 
   useEffect(
     () => updateVisibleLots(),
@@ -701,13 +737,18 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     if (!lotsReady) return;
     lotsInitialized.current = false;
     updateVisibleLots();
-  }, [lotsReady, lots, lastLotUpdate, crewLotMap]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [!lotsReady, lastLotUpdate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!sampledLotMap) return;
-    lotsInitialized.current = false;
-    updateVisibleLots();
-  }, [sampledLotMap]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  }, []);
+
+  // TODO (TODAY): commented this out because it seems it could be rolled into above
+  // useEffect(() => {
+  //   if (!lotSampledMap) return;
+  //   lotsInitialized.current = false;
+  //   updateVisibleLots();
+  // }, [lotSampledMap]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const highlightLot = useCallback((lotId) => {
     highlighted.current = null;
@@ -763,15 +804,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       selectionMesh.current.material.opacity = 0;
     }
   }, [attachTo.quaternion, selectedLotId, positionsReady]);
-
-  // useEffect(() => { // shouldn't be zoomed to lot when lots first loaded or unloaded
-  //   dispatchLotSelected();
-  //   dispatchZoomToLot();
-  //   return () => {
-  //     dispatchLotSelected();
-  //     dispatchZoomToLot();
-  //   };
-  // }, []);
 
   // when camera angle changes, sort all regions by closest, then display
   // up to max lots (ordered by region proximity)

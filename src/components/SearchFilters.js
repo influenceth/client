@@ -17,6 +17,10 @@ import ResourceTypeFilter from './filters/ResourceTypeFilter';
 import BuildingTypeFilter from './filters/BuildingTypeFilter';
 import CrewNameFilter from './filters/CrewNameFilter';
 import CrewOwnershipFilter from './filters/CrewOwnershipFilter';
+import LotIdFilter from './filters/LotIdFilter';
+import LotOccupiedFilter from './filters/LotOccupiedFilter';
+import LotLeaseFilter from './filters/LotLeaseFilter';
+import BooleanFilter from './filters/BooleanFilter';
 
 const SearchFilters = ({ assetType, highlighting }) => {
   const filters = useStore(s => s.assetSearch[assetType].filters);
@@ -88,19 +92,31 @@ const SearchFilters = ({ assetType, highlighting }) => {
     )
   }
   if (assetType === 'lotsMapped') {
-    <>
-    {/* TODO: 
-      <LotOccupiedFilter {...filterProps} />
-      <BuildingTypeFilter {...filterProps} />
-      <LotForLeaseFilter {...filterProps} />
-      <LotHasSamplesFilter {...filterProps} />
-      <LotHasCrewFilter {...filterProps} />
-      <LotIdFilter {...filterProps} />
-      */}
-    </>
+    return (
+      <>
+        <LotIdFilter {...filterProps} />
+        <BuildingTypeFilter {...filterProps} isLotSearch />
+        <LotOccupiedFilter {...filterProps} />
+        <BooleanFilter
+          {...filterProps}
+          title="Crew"
+          fieldName="hasCrew"
+          label="Stationed Crew" />
+        <BooleanFilter
+          {...filterProps}
+          title="Core Samples"
+          fieldName="hasCoresForSale"
+          label="Core Samples for Sale" />
+      </>
+    );
   }
   if (assetType === 'lots') {
-
+    return (
+      <>
+        <BuildingTypeFilter {...filterProps} isLotSearch />
+        <LotOccupiedFilter {...filterProps} />
+      </>
+    );
   }
   return null;
 };

@@ -35,9 +35,9 @@ const Title = styled.div`
   align-items: center;
   color: white;
   display: flex;
+  flex: 1;
   height: ${titleHeight}px;
   transition: border-color 250ms ease;
-  width: 100%;
   & > svg {
     font-size: 28px;
     color: #646464;

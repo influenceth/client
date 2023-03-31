@@ -42,7 +42,6 @@ const NameFilter = ({ assetType, filters, onChange }) => {
       assetType={assetType}
       fieldName={fieldName}
       filters={filters}
-      onChange={onChange}
       title="Name & Id">
       
       <InputBlock>

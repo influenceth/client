@@ -81,7 +81,6 @@ const AxisFilter = ({ assetType, filters, onChange }) => {
       assetType={assetType}
       fieldName={['axisMin', 'axisMax']}
       filters={filters}
-      onChange={onChange}
       highlightFieldName={highlightFieldName}
       title="Semi-major Axis"
       highlightColorRange={highlightColorRange}>

@@ -97,7 +97,6 @@ const CrewOwnershipFilter = ({ assetType, filters, onChange }) => {
       assetType={assetType}
       fieldName={fieldName}
       filters={filters}
-      onChange={onChange}
       title="Owner">
       {Object.keys(options).map((k) => (!account && k === 'ownedByMe') ? null : (
         <CheckboxRow key={k} onClick={onClick(k)}>

@@ -82,7 +82,6 @@ const InclinationFilter = ({ assetType, filters, onChange }) => {
       assetType={assetType}
       fieldName={['incMin', 'incMax']}
       filters={filters}
-      onChange={onChange}
       highlightFieldName={highlightFieldName}
       title="Orbit Inclination"
       highlightColorRange={highlightColorRange}>

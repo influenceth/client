@@ -23,6 +23,7 @@ const SearchFilterTray = ({ assetType, handleClickFilters }) => {
   const filters = useStore(s => s.assetSearch[assetType]?.filters);
   const resetFilters = useStore(s => s.dispatchFiltersReset(assetType));
   const isAssetSearchMatchingDefault = useStore(s => s.isAssetSearchMatchingDefault);
+  const isAssetSearchFilterMatchingDefault = useStore(s => s.isAssetSearchFilterMatchingDefault);
 
   const onClear = useCallback(() => {
     resetFilters();
@@ -33,7 +34,10 @@ const SearchFilterTray = ({ assetType, handleClickFilters }) => {
   }, [handleClickFilters]);
 
   const isDefaultSearch = useMemo(() => isAssetSearchMatchingDefault(assetType), [assetType, filters]);
-  const activeFilters = useMemo(() => Object.values(filters || {}).filter((v) => v !== undefined).length, [filters]);
+  const activeFilters = useMemo(() => {
+    return Object.keys(filters || {})
+      .reduce((acc, fieldName) => acc + isAssetSearchFilterMatchingDefault(assetType, fieldName) ? 0 : 1, 0)
+  }, [filters]);
 
   if (isDefaultSearch) return null;
   return (

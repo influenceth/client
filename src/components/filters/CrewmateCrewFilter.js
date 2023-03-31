@@ -15,7 +15,6 @@ const CrewmateCrewFilter = ({ assetType, filters, onChange }) => {
       assetType={assetType}
       fieldName={fieldName}
       filters={filters}
-      onChange={onChange}
       title="Crew">
       
       <InputBlock singleField>

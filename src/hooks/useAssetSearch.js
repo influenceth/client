@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useThrottle } from '@react-hook/throttle';
 import { useQuery } from 'react-query';
 import esb from 'elastic-builder';
@@ -28,7 +28,7 @@ filtersToQuery.asteroids = (filters) => {
   }
 
   if (filters.spectralType) {
-    queryBuilder.filter(esb.termsQuery('spectralType', filters.spectralType.split(',').map((t) => parseInt(t))));
+    queryBuilder.filter(esb.termsQuery('spectralType', filters.spectralType.map((t) => parseInt(t))));
   }
 
   if (filters.axisMin || filters.axisMax) {
@@ -64,7 +64,7 @@ filtersToQuery.buildings = (filters) => {
   const queryBuilder = esb.boolQuery();
 
   if (filters.type) {
-    queryBuilder.filter(esb.termsQuery('type', filters.type.split(',').map((t) => parseInt(t))));
+    queryBuilder.filter(esb.termsQuery('type', filters.type.map((t) => parseInt(t))));
   }
 
   return queryBuilder;
@@ -74,7 +74,7 @@ filtersToQuery.coresamples = (filters) => {
   const queryBuilder = esb.boolQuery();
 
   if (filters.resource) {
-    queryBuilder.filter(esb.termsQuery('resource', filters.resource.split(',').map((t) => parseInt(t))));
+    queryBuilder.filter(esb.termsQuery('resource', filters.resource.map((t) => parseInt(t))));
   }
 
   if (filters.yieldMin || filters.yieldMax) {
@@ -101,12 +101,12 @@ filtersToQuery.crewmates = (filters) => {
   }
   if (filters.class) {
     queryBuilder.filter(
-      esb.termsQuery('class', filters.class.split(',').map((t) => parseInt(t)))
+      esb.termsQuery('class', filters.class.map((t) => parseInt(t)))
     );
   }
   if (filters.collection) {
     queryBuilder.filter(
-      esb.termsQuery('collection', filters.collection.split(',').map((t) => parseInt(t)))
+      esb.termsQuery('collection', filters.collection.map((t) => parseInt(t)))
     );
   }
   return queryBuilder;
@@ -154,21 +154,27 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
   const [ query, setQuery ] = useThrottle({}, 2, true);
 
   // asteroidsMapped use the exact same indices as asteroids for now
-  const esAssetType = assetType === 'asteroidsMapped' ? 'asteroids' : assetType;
+  // lotsMapped does not need to query ES
+  let esAssetType = assetType;
+  if (esAssetType === 'asteroidsMapped') esAssetType = 'asteroids';
+  if (esAssetType === 'lotsMapped') esAssetType = '';
+  
   useEffect(() => {
-    const q = esb.requestBodySearch();
-    q.query(filtersToQuery[esAssetType](filters || {}));
-    if (sort) q.sort(esb.sort(...sort));
-    q.from(from);
-    q.size(size);
-    q.trackTotalHits(true);
-
-    setQuery(q.toJSON());
+    if (esAssetType) {
+      const q = esb.requestBodySearch();
+      q.query(filtersToQuery[esAssetType](filters || {}));
+      if (sort) q.sort(esb.sort(...sort));
+      q.from(from);
+      q.size(size);
+      q.trackTotalHits(true);
+  
+      setQuery(q.toJSON());
+    }
   }, [ filters, from, size, sort ]);
 
   return useQuery(
     [ 'search', esAssetType, query ],
-    () => api.searchAssets(esAssetType, query),
+    () => esAssetType ? api.searchAssets(esAssetType, query) : [],
     {
       enabled: !!query,
       // keepPreviousData: true // TODO: do we want this?

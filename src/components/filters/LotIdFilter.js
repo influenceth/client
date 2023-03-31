@@ -1,35 +1,37 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
-import { trim } from 'lodash';
-
-import useStore from '~/hooks/useStore';
-import useSale from '~/hooks/useSale';
-import ColorPicker from '~/components/ColorPicker';
-import Ether from '~/components/Ether';
-import formatters from '~/lib/formatters';
-import constants from '~/lib/constants';
-import { InputBlock, SearchMenu } from './components';
-import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontrolled';
+import { useCallback, useMemo, useRef } from 'react';
+import { Asteroid } from '@influenceth/sdk';
 
 import IconButton from '~/components/IconButton';
 import { GoIcon } from '~/components/Icons';
+import useStore from '~/hooks/useStore';
+import UncontrolledTextInput from '~/components/TextInputUncontrolled';
 
-const fieldName = 'name';
+import { InputBlock, SearchMenu } from './components';
 
-const LotIdFilter = ({ assetType, filters, onChange }) => {  
-  const asteroidId = useRef();
+const fieldName = 'id';
 
-  const selectAsteroidId = useStore((s) => s.dispatchOriginSelected);
+const LotIdFilter = ({ assetType, filters }) => {  
+  const asteroidId = useStore((s) => s.asteroids.origin);
+  const selectLotId = useStore((s) => s.dispatchLotSelected);
+  
+  const lotId = useRef();
 
-  const handleChange = useCallback((e) => {
-    onChange({ [fieldName]: e.currentTarget.value });
-  }, [onChange]);
+  const maxLots = useMemo(() => Asteroid.getSurfaceArea(asteroidId), [asteroidId]);
 
   const handleById = useCallback(() => {
-    if (asteroidId.current.value) {
-      selectAsteroidId(asteroidId.current.value);
+    if (lotId.current.value) {
+      let targetId = parseInt(lotId.current.value);
+      if (targetId <= 0) {
+        lotId.current.value = 1;
+        targetId = 1;
+      }
+      if (targetId > maxLots) {
+        lotId.current.value = maxLots;
+        targetId = maxLots;
+      }
+      selectLotId(asteroidId, targetId);
     }
-  }, []);
+  }, [asteroidId]);
 
   const handleKeydown = useCallback((e) => {
     if (['Enter', 'Tab'].includes(e.key)) {
@@ -37,47 +39,22 @@ const LotIdFilter = ({ assetType, filters, onChange }) => {
     }
   }, [handleById]);
 
-
-// TODO: include by id:
-  /*
-    const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
-
-    const handleLotJumper = useCallback((e) => {
-      if (e.key === 'Enter' && e.currentTarget.value) {
-        dispatchLotSelected(asteroid?.i, parseInt(e.currentTarget.value));
-      }
-    }, [asteroid?.i]);
-
-    const lotTally = useMemo(() => Math.floor(4 * Math.PI * Math.pow(asteroid?.radius / 1000, 2)), [asteroid?.radius]);
-    
-    <label>Jump to Lot #</label>
-    <NumberInput
-      initialValue={null}
-      max={lotTally}
-      min={1}
-      step={1}
-      onBlur={(e) => e.currentTarget.value = undefined}
-      onKeyDown={handleLotJumper} />
-  */
-
   return (
     <SearchMenu
       assetType={assetType}
       fieldName={fieldName}
       filters={filters}
-      onChange={onChange}
       title="Lot Id">
       
       <InputBlock>
-        <label>Lot Id</label>
         <div>
           <UncontrolledTextInput
-            ref={asteroidId}
+            ref={lotId}
             onBlur={(e) => e.currentTarget.value = ''}
             onKeyDown={handleKeydown}
-            placeholder="Pick by Asteroid Id..."
+            placeholder="Lot ID"
             step={1}
-            max={250000}
+            max={maxLots}
             min={1}
             style={{ flex: 1 }}
             type="number" />

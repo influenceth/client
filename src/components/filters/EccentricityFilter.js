@@ -79,7 +79,6 @@ const EccentricityFilter = ({ assetType, filters, onChange }) => {
       assetType={assetType}
       fieldName={['eccMin', 'eccMax']}
       filters={filters}
-      onChange={onChange}
       highlightFieldName={highlightFieldName}
       title="Orbit Eccentricity"
       highlightColorRange={highlightColorRange}>

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Asteroid } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 
@@ -92,24 +93,29 @@ const api = {
     return response.data;
   },
 
-  getOccupiedLots: async (i, lotTally) => {
-    const response = await instance.get(`/v1/asteroids/${i}/lots/occupied`, { responseType: 'blob' });
+  getAsteroidLotData: async (i) => {
+    const response = await instance.get(`/v1/asteroids/${i}/lots/packed`, { responseType: 'blob' });
+
+    const lotTally = Asteroid.getSurfaceArea(i);
+
+    let shift;
+    const mask = 0b11111111;
+
+    // TODO (TODAY): any benefit to returning a sparse array here instead?
     if (response.data) {
-      const occupied = '1';
-      const padding = '0';
-      
       return (new Uint32Array(await response.data.arrayBuffer())).reduce((acc, byte, i) => {
-        const x = Number(byte).toString(2).padStart(32, padding);
-        for (let j = 0; j < 32; j++) {
-          const index = i * 32 + j;
+        for (let j = 0; j < 4; j++) {
+          const index = i * 4 + j;
           if (index < lotTally) {
-            if (x[j] === occupied) {
-              acc[index + 1] = true; // (adjust for one-index of lot ids)
-            }
+            // shift right 24, 16, 8, then 0
+            shift = (3 - j) * 8;
+
+            // (adjust for one-index of lot ids)
+            acc[index + 1] = (Number(byte) >> shift) & mask;
           }
         }
         return acc;
-      }, []);
+      }, [0]);
     }
     return null;
   },

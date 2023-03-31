@@ -19,7 +19,7 @@ const ResourceTypeFilter = ({ assetType, filters, onChange }) => {
   useEffect(() => {
     const newTypes = ({ ...initialValues });
     if (filters[fieldName] && filters[fieldName].length > 0) {
-      const filterArr = filters[fieldName].split(',');
+      const filterArr = filters[fieldName];
       Object.keys(newTypes).forEach((k) => {
         newTypes[k] = filterArr.includes(k);
       });
@@ -33,7 +33,7 @@ const ResourceTypeFilter = ({ assetType, filters, onChange }) => {
       ...types,
       [k]: !types[k]
     }
-    onChange({ [fieldName]: Object.keys(newTypes).filter((k) => newTypes[k]).join(',') });
+    onChange({ [fieldName]: Object.keys(newTypes).filter((k) => newTypes[k]) });
   }, [onChange, types]);
 
   return (
@@ -41,7 +41,6 @@ const ResourceTypeFilter = ({ assetType, filters, onChange }) => {
       assetType={assetType}
       fieldName={fieldName}
       filters={filters}
-      onChange={onChange}
       title="Resource Type">
       
       {Object.keys(sampleableResources).map((k) => (

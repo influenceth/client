@@ -60,7 +60,6 @@ const TonnageFilter = ({ assetType, filters, onChange }) => {
       assetType={assetType}
       fieldName={['yieldMin', 'yieldMax']}
       filters={filters}
-      onChange={onChange}
       title="Yield">
       
       <InputBlock>
