@@ -17,19 +17,19 @@ import useCrewContext from '~/hooks/useCrewContext';
 const options = {
   me: "Occupied by Me",
   other: "Occupied by Someone Else",
-  unoccupied: "Occupied by Nobody",
+  // unoccupied: "Occupied by Nobody",
 };
 
 const initialValues = {
   me: null,
   other: null,
-  unoccupied: null
+  // unoccupied: null
 };
 
 const defaultColorMap = {
   me: '#FDA1FF',
   other: '#68CCCA',
-  unoccupied: '#666666',
+  // unoccupied: '#666666',
 }
 
 const fieldName = 'occupiedBy';

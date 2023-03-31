@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { SPECTRAL_TYPES } from '@influenceth/sdk';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
@@ -8,28 +8,23 @@ import IconButton from '~/components/IconButton'
 import ColorPicker from '~/components/ColorPicker';
 import { CheckboxButton, CheckboxRow, SearchMenu } from './components';
 
-const fieldName = 'spectralType';
-const highlightFieldName = 'spectralType';
+const CheckboxFilter = ({
+  assetType,
+  filters,
+  onChange, 
 
-const initialValues = Object.keys(SPECTRAL_TYPES).reduce((acc, k) => ({ ...acc, [k]: true }), {});
-
-const defaultColorMap = {
-  0: '#6efaf4',
-  1: '#00f3ff',
-  2: '#00ebff',
-  3: '#00e1ff',
-  4: '#00d5ff',
-  5: '#00c7ff',
-  6: '#00b6ff',
-  7: '#50a0ff',
-  8: '#a084ff',
-  9: '#d65dff',
-  10: '#ff00f2'
-};
-
-const SpectralTypeFilter = ({ assetType, filters, onChange }) => {
+  title,
+  options,
+  fieldName,
+  highlightFieldName,
+  defaultColorMap
+}) => {
   const highlight = useStore(s => s.assetSearch[assetType].highlight);
   const fieldHighlight = highlight && highlight.field === highlightFieldName;
+  
+  const initialValues = useMemo(() => {
+    return options.reduce((acc, { key, initialValue }) => ({ ...acc, [key]: initialValue }), {});
+  }, [options]);
   
   const [ types, setTypes ] = useState({ ...initialValues });
   const [highlightColors, setHighlightColors] = useState({ ...(fieldHighlight?.colorMap || defaultColorMap) });
@@ -60,19 +55,19 @@ const SpectralTypeFilter = ({ assetType, filters, onChange }) => {
       fieldName={fieldName}
       filters={filters}
       highlightFieldName={highlightFieldName}
-      title="Spectral Type"
+      title={title}
       highlightColorMap={highlightColors}>
       
-      {SPECTRAL_TYPES.map((v, k) => (
-        <CheckboxRow key={k} onClick={onClick(k)}>
-          <CheckboxButton checked={types[k]}>
-            {types[k] ? <CheckedIcon /> : <UncheckedIcon />}
+      {options.map(({ key, label }) => (
+        <CheckboxRow key={key} onClick={onClick(key)}>
+          <CheckboxButton checked={types[key]}>
+            {types[key] ? <CheckedIcon /> : <UncheckedIcon />}
           </CheckboxButton>
-          <span>{v}-Type</span>
+          <span>{label}</span>
           {fieldHighlight && (
             <ColorPicker
-              initialColor={highlightColors[k]}
-              onChange={(c) => setHighlightColors((h) => ({ ...h, [k]: c }))} />
+              initialColor={highlightColors[key]}
+              onChange={(c) => setHighlightColors((h) => ({ ...h, [key]: c }))} />
           )}
         </CheckboxRow>
       ))}
@@ -80,4 +75,4 @@ const SpectralTypeFilter = ({ assetType, filters, onChange }) => {
   );
 };
 
-export default SpectralTypeFilter;
+export default CheckboxFilter;

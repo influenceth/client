@@ -40,7 +40,7 @@ const useColumns = () => {
         selector: row => (
           <>
             <LocationLink asteroidId={row.asteroid?.i} />
-            <span>{row.asteroid?.i.toLocaleString()}</span>
+            <span>{row.asteroid?.i ? row.asteroid.i.toLocaleString() : null}</span>
           </>
         ),
       },
@@ -51,7 +51,7 @@ const useColumns = () => {
         selector: row => (
           <>
             <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} />
-            <span>{row.lot?.i.toLocaleString()}</span>
+            <span>{row.lot?.i ? row.lot.i.toLocaleString() : null}</span>
           </>
         ),
       },
