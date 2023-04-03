@@ -16,6 +16,7 @@ import {
   RocketIcon,
   RouteIcon,
   StarIcon,
+  SwayMonochromeIcon,
   TimeIcon
 } from '~/components/Icons';
 import Menu from './mainMenu/Menu';
@@ -159,6 +160,12 @@ const MainMenu = (props) => {
               name="Crew Members"
               icon={<CrewIcon />}
               onClick={() => openSection('ownedCrew')} />
+            {process.env.REACT_APP_AELIN_POOL_URL && (
+              <MenuItem
+                name="SWAY"
+                icon={<SwayMonochromeIcon />}
+                onClick={() => window.open(process.env.REACT_APP_AELIN_POOL_URL, '_blank', 'noopener')} />
+            )}
           </Menu>
         )}
         <Menu title="Map">
