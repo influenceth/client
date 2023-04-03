@@ -1,18 +1,28 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { SPECTRAL_TYPES } from '@influenceth/sdk';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 
 import useStore from '~/hooks/useStore';
-import IconButton from '~/components/IconButton'
 import ColorPicker from '~/components/ColorPicker';
 import { CheckboxButton, CheckboxRow, SearchMenu } from './components';
+
+const SelectAllRow = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.main};
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  font-size: 12px;
+  justify-content: flex-end;
+  padding: 2px 0;
+  &:hover {
+    text-decoration: underline;
+  }
+`;
 
 const CheckboxFilter = ({
   assetType,
   filters,
   onChange, 
-
   title,
   options,
   fieldName,
@@ -31,7 +41,7 @@ const CheckboxFilter = ({
 
   useEffect(() => {
     const newTypes = ({ ...initialValues });
-    if (filters[fieldName] && filters[fieldName].length > 0) {
+    if (filters[fieldName] !== undefined) {
       const filterArr = filters[fieldName];
       Object.keys(newTypes).forEach((k) => {
         newTypes[k] = filterArr.includes(k);
@@ -48,6 +58,17 @@ const CheckboxFilter = ({
     }
     onChange({ [fieldName]: Object.keys(newTypes).filter((k) => newTypes[k]) });
   }, [onChange, types]);
+
+  const toggleAll = useCallback(() => {
+    onChange({ [fieldName]: filters[fieldName].length < options.length / 2 ? Object.keys(types) : [] });
+  }, [filters[fieldName]]);
+
+  const toggleAllLabel = useMemo(() => {
+    if (options.length > 3) {
+      return filters[fieldName].length < options.length / 2 ? 'Select All' : 'Deselect All';
+    }
+    return null;
+  }, [filters[fieldName]]);
 
   return (
     <SearchMenu
@@ -71,6 +92,11 @@ const CheckboxFilter = ({
           )}
         </CheckboxRow>
       ))}
+
+      {toggleAllLabel && (
+        <SelectAllRow onClick={toggleAll}>{toggleAllLabel}</SelectAllRow>
+      )}
+      
     </SearchMenu>
   );
 };
