@@ -50,6 +50,7 @@ const NameFilter = ({ assetType, filters, onChange }) => {
           <UncontrolledTextInput
             onChange={handleChange}
             placeholder="Filter by Asteroid Name..."
+            style={{ width: 'calc(100% - 32px)' }}
             value={filters[fieldName] || ''} />
         </div>
       </InputBlock>

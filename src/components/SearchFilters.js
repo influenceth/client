@@ -3,14 +3,9 @@ import { SPECTRAL_TYPES, Capable, Crewmate, Inventory } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import AsteroidNameFilter from './filters/AsteroidNameFilter';
-import RadiusFilter from './filters/RadiusFilter';
-import AxisFilter from './filters/AxisFilter';
-import InclinationFilter from './filters/InclinationFilter';
-import EccentricityFilter from './filters/EccentricityFilter';
 import OwnershipFilter from './filters/OwnershipFilter';
 import CrewmateNameFilter from './filters/CrewmateNameFilter';
 import CrewmateCrewFilter from './filters/CrewmateCrewFilter';
-import YieldFilter from './filters/YieldFilter';
 import BuildingTypeFilter from './filters/BuildingTypeFilter';
 import CrewNameFilter from './filters/CrewNameFilter';
 import CrewOwnershipFilter from './filters/CrewOwnershipFilter';
@@ -19,8 +14,13 @@ import LotOccupiedFilter from './filters/LotOccupiedFilter';
 import LotLeaseFilter from './filters/LotLeaseFilter';  // TODO (TODAY)
 import BooleanFilter from './filters/BooleanFilter';
 import CheckboxFilter from './filters/CheckboxFilter';
+import RangeFilter from './filters/RangeFilter';
+import constants from '~/lib/constants';
+import Ether from './Ether';
+import formatters from '~/lib/formatters';
+import useSale from '~/hooks/useSale';
 
-
+// spectral type filter configs
 const spectralTypeOptions = Object.keys(SPECTRAL_TYPES).reduce((acc, key) => ([
   ...acc,
   { key, label: `${SPECTRAL_TYPES[key]}-type`, initialValue: true }
@@ -40,6 +40,7 @@ const spectralTypeColors = {
   10: '#ff00f2'
 };
 
+// building type filter configs
 const buildingTypeOptions = Object.keys(Capable.TYPES)
   .filter((k) => k > 0)
   .reduce((acc, key) => ([
@@ -67,7 +68,7 @@ const buildingTypeColors = {
   10: '#fff100',
 };
 
-
+// resource type filter configs
 const resourceTypeOptions = Object.keys(Inventory.RESOURCES)
   .filter((k) => k <= 22)
   .reduce((acc, key) => ([
@@ -75,19 +76,61 @@ const resourceTypeOptions = Object.keys(Inventory.RESOURCES)
     { key, label: Inventory.RESOURCES[key].name, initialValue: true }
   ]), []);
 
+// crewmate class filter configs
 const crewmateClassOptions = Object.keys(Crewmate.CLASSES).reduce((acc, key) => ([
   ...acc,
   { key, label: Crewmate.CLASSES[key].name, initialValue: true }
 ]), []);
 
+// crewmate collection filter configs
 const crewmateCollectionOptions = Object.keys(Crewmate.COLLECTIONS).reduce((acc, key) => ([
   ...acc,
   { key, label: Crewmate.COLLECTIONS[key].name, initialValue: true }
 ]), []);
 
+const radiusConfig = {
+  fieldNames: { min: 'radiusMin', max: 'radiusMax' },
+  labels: { min: 'Min (m)', max: 'Max (m)' },
+  rangeLimits: { min: constants.MIN_ASTEROID_RADIUS, max: constants.MAX_ASTEROID_RADIUS }
+};
+
+const axisConfig = {
+  fieldNames: { min: 'axisMin', max: 'axisMax' },
+  fieldNote: formatters.period,
+  labels: { min: 'Min (AU)', max: 'Max (AU)' },
+  rangeLimits: { min: constants.MIN_AXIS, max: constants.MAX_AXIS }
+};
+
+const inclinationConfig = {
+  fieldNames: { min: 'incMin', max: 'incMax' },
+  labels: { min: 'Min (Deg)', max: 'Max (Deg)' },
+  rangeLimits: { min: constants.MIN_INCLINATION, max: constants.MAX_INCLINATION },
+  displayFormatter: (r) => r > 0 ? Math.round(100 * 180 * r / Math.PI) / 100 : '',
+  searchFormatter: (d) => d >= 0 ? Math.PI * d / 180 : undefined
+};
+
+const eccConfig = {
+  fieldNames: { min: 'eccMin', max: 'eccMax' },
+  rangeLimits: { min: constants.MIN_ECCENTRICITY, max: constants.MAX_ECCENTRICITY }
+};
+
+const yieldConfig = {
+  fieldNames: { min: 'yieldMin', max: 'yieldMax' },
+  labels: { min: 'Min (tonnes)', max: 'Max (tonnes)' },
+  rangeLimits: { min: 0, max: 10000 }
+};
+
+
+
+// TODO: there is probably a more performant way to break these apart
+//  (and to memoize any inputs possible)
 const SearchFilters = ({ assetType, highlighting }) => {
+  const { data: sale } = useSale();
   const filters = useStore(s => s.assetSearch[assetType].filters);
+  const highlight = useStore(s => s.assetSearch[assetType].highlight);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
+  
+  const radiusFieldNote = useCallback((value) => sale ? <Ether>{formatters.asteroidPrice(value, sale)}</Ether> : null, [sale])
 
   const onFiltersChange = useCallback((update) => {
     const newFilters = {...(filters || {})};
@@ -112,7 +155,14 @@ const SearchFilters = ({ assetType, highlighting }) => {
     return (
       <>
         <OwnershipFilter {...filterProps} />
-        <RadiusFilter {...filterProps} />
+
+        <RangeFilter
+          {...filterProps}
+          {...radiusConfig}
+          fieldNote={radiusFieldNote}
+          highlightFieldName="radius"
+          title="Radius" />
+
         <CheckboxFilter
           {...filterProps}
           defaultColorMap={spectralTypeColors}
@@ -120,9 +170,29 @@ const SearchFilters = ({ assetType, highlighting }) => {
           highlightFieldName="spectralType"
           options={spectralTypeOptions}
           title="Spectral Type" />
-        <AxisFilter {...filterProps} />  
-        <InclinationFilter {...filterProps} />
-        <EccentricityFilter {...filterProps} />
+
+        <RangeFilter
+          {...filterProps}
+          {...axisConfig}
+          highlightFieldName="axis"
+          step={0.1}
+          title="Semi-major Axis" />
+
+        <RangeFilter
+          {...filterProps}
+          {...inclinationConfig}
+          highlightFieldName="inclination"
+          step={0.01}
+          title="Orbit Inclination"
+          {...inclinationConfig} />
+
+        <RangeFilter
+          {...filterProps}
+          {...eccConfig}
+          highlightFieldName="eccentricity"
+          step={0.001}
+          title="Orbit Eccentricity" />
+
         <AsteroidNameFilter {...filterProps} />
       </>
     );
@@ -146,7 +216,11 @@ const SearchFilters = ({ assetType, highlighting }) => {
           fieldName="resource"
           options={resourceTypeOptions}
           title="Resource Type" />
-        <YieldFilter {...filterProps} />
+        
+        <RangeFilter
+          {...filterProps}
+          {...yieldConfig}
+          title="Yield" />
       </>
     );
   }
@@ -154,6 +228,7 @@ const SearchFilters = ({ assetType, highlighting }) => {
     return (
       <>
         <CrewOwnershipFilter {...filterProps} />
+
         <CrewNameFilter {...filterProps} />
       </>
     )
@@ -162,12 +237,15 @@ const SearchFilters = ({ assetType, highlighting }) => {
     return (
       <>
         <CrewmateNameFilter {...filterProps} />
+
         <CrewmateCrewFilter {...filterProps} />
+
         <CheckboxFilter
           {...filterProps}
           fieldName="class"
           options={crewmateClassOptions}
           title="Class" />
+
         <CheckboxFilter
           {...filterProps}
           fieldName="collection"
@@ -180,6 +258,7 @@ const SearchFilters = ({ assetType, highlighting }) => {
     return (
       <>
         <LotIdFilter {...filterProps} />
+
         <CheckboxFilter
           {...filterProps}
           defaultColorMap={buildingTypeColors}
@@ -189,11 +268,13 @@ const SearchFilters = ({ assetType, highlighting }) => {
           title="Buildings" />
 
         <LotOccupiedFilter {...filterProps} />
+
         <BooleanFilter
           {...filterProps}
           title="Crew"
           fieldName="hasCrew"
           label="Stationed Crew" />
+
         <BooleanFilter
           {...filterProps}
           title="Core Samples"
