@@ -36,6 +36,10 @@ const StyledReactNotification = styled(ReactNotifications)`
     top: 0 !important;
   }
 
+  & .rnc__notification {
+    width: 370px !important;
+  }
+
   & .rnc__notification-item {
     background-color: ${p => p.theme.colors.contentBackdrop};
     border-color: ${p => p.theme.colors.main};

@@ -103,6 +103,7 @@ const LinkLabel = styled.div`
   flex: 0 0 28px;
 `;
 
+const noop = () => {};
 const LogEntry = ({ data = {}, isHeaderRow, isTabular, type }) => {
   const m = useMemo(() => {
     if (isTabular) {
@@ -124,6 +125,7 @@ const LogEntry = ({ data = {}, isHeaderRow, isTabular, type }) => {
   const {
     icon,
     content,
+    onClickContent,
     txLink
   } = getLogContent({ type, data }) || {};
 
@@ -133,7 +135,7 @@ const LogEntry = ({ data = {}, isHeaderRow, isTabular, type }) => {
         <Icon>
           {icon}
         </Icon>
-        <Description>
+        <Description onClick={onClickContent || noop}>
           {content}
         </Description>
         {isTabular && (

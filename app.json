@@ -56,6 +56,12 @@
     },
     "REACT_APP_CONTRACT_CREW_NAMES": {
       "required": true
+    },
+    "REACT_APP_ASTEROID_SALE_GUIDE_URL": {
+      "required": false
+    },
+    "REACT_APP_AELIN_POOL_URL": {
+      "required": false
     }
   }
 }

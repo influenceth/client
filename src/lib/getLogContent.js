@@ -2,10 +2,31 @@ import { BiTransfer as TransferIcon } from 'react-icons/bi';
 import { MdBlurOff as ScanIcon } from 'react-icons/md';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
 import { HiUserGroup as CrewIcon } from 'react-icons/hi';
+import styled from 'styled-components';
 
 import AsteroidLink from '~/components/AsteroidLink';
 import CrewLink from '~/components/CrewLink';
 import AddressLink from '~/components/AddressLink';
+import { LinkIcon } from '~/components/Icons';
+
+const SaleLink = styled.a`
+  color: ${p => p.theme.colors.main} !important;
+  font-weight: bold;
+  max-width: 100% !important;
+  pointer-events: none;
+  text-overflow: initial;
+`;
+const InnerLink = styled.div`
+  &:hover a {
+    text-decoration: underline;
+  }
+`;
+
+const SwayLink = styled.a`
+  color: ${p => p.theme.colors.main} !important;
+  max-width: 100% !important;
+  text-decoration: underline;
+`;
 
 const getTxLink = (txHash) => `${process.env.REACT_APP_ETHERSCAN_URL}/tx/${txHash}`;
 
@@ -34,16 +55,23 @@ const entries = {
   Asteroid_Transfer: (e) => ({
     icon: <TransferIcon />,
     content: (
-      <>
-        <span>Asteroid </span>
-        <AsteroidLink id={e.returnValues.tokenId} />
-        <span> transferred from </span>
-        <AddressLink address={e.returnValues.from} />
-        <span> to </span>
-        <AddressLink address={e.returnValues.to} />
-      </>
+      <div>
+        <div>
+          <span>Asteroid </span>
+          <AsteroidLink id={e.returnValues.tokenId} />
+          <span> transferred from </span>
+          <AddressLink address={e.returnValues.from} />
+          <span> to </span>
+          <AddressLink address={e.returnValues.to} />
+        </div>
+        {process.env.REACT_APP_AELIN_POOL_URL && (
+          <div style={{ marginTop: 10 }}>
+            You are now eligible to purchase up to <SwayLink target="_blank" rel="noreferrer" href={process.env.REACT_APP_AELIN_POOL_URL}>25,000,000 SWAY</SwayLink>
+          </div>
+        )}
+      </div>
     ),
-    txLink: getTxLink(e.transactionHash),
+    txLink: getTxLink(e.transactionHash)
   }),
 
   Asteroid_ScanStarted: (e) => ({
@@ -147,14 +175,21 @@ const entries = {
   CrewMember_Transfer: (e) => ({
     icon: <TransferIcon />,
     content: (
-      <>
-        <span>Crew member </span>
-        <CrewLink id={e.returnValues.tokenId} />
-        <span> transferred from </span>
-        <AddressLink address={e.returnValues.from} />
-        <span> to </span>
-        <AddressLink address={e.returnValues.to} />
-      </>
+      <div>
+        <div>
+          <span>Crew member </span>
+          <CrewLink id={e.returnValues.tokenId} />
+          <span> transferred from </span>
+          <AddressLink address={e.returnValues.from} />
+          <span> to </span>
+          <AddressLink address={e.returnValues.to} />
+        </div>
+        {process.env.REACT_APP_AELIN_POOL_URL && (
+          <div style={{ marginTop: 10 }}>
+            You are now eligible to purchase up to <SwayLink target="_blank" rel="noreferrer" href={process.env.REACT_APP_AELIN_POOL_URL}>25,000,000 SWAY</SwayLink>
+          </div>
+        )}
+      </div>
     ),
     txLink: getTxLink(e.transactionHash),
   }),
@@ -199,26 +234,48 @@ const entries = {
 
   Sale_TimeToStart: (e) => ({
     content: (
-      <span>
-        The next asteroid development rights sale will start at
-        {` ${(new Date(e.start)).toLocaleString()}`}
-      </span>
+      <InnerLink>
+        <div>
+          The next asteroid development rights sale will start at
+          {` ${(new Date(e.start)).toLocaleString()}`}
+        </div>
+        <div style={{ marginTop: 10 }}>
+          <SaleLink><LinkIcon /> Asteroid Sale How-To Guide</SaleLink>
+        </div>
+      </InnerLink>
     ),
+    onClickContent: () => {
+      if (process.env.REACT_APP_ASTEROID_SALE_GUIDE_URL) {
+        e.stopPropagation();
+        window.open(process.env.REACT_APP_ASTEROID_SALE_GUIDE_URL, '_blank', 'noopener');
+      }
+    }
   }),
 
   Sale_Started: (e) => ({
     content: (
-      <span>
-        An asteroid development rights sale is now open!
-        {e.endTime
-          ? ` Asteroid purchases will be available from now until ${new Date(e.endTime * 1e3).toLocaleString()}`
-          : (e.available
-              ? ` There ${e.available === 1 ? 'is' : 'are'} ${e.available.toLocaleString()} remaining asteroid${e.available === 1 ? '' : 's'} available.`
-              : ''
-            )
-        }
-      </span>
+      <InnerLink>
+        <div>
+          An asteroid development rights sale is now open!
+          {e.endTime
+            ? ` Asteroid purchases will be available until ${new Date(e.endTime * 1e3).toLocaleString()}`
+            : (e.available
+                ? ` There ${e.available === 1 ? 'is' : 'are'} ${e.available.toLocaleString()} remaining asteroid${e.available === 1 ? '' : 's'} available.`
+                : ''
+              )
+          }
+        </div>
+        <div style={{ marginTop: 10 }}>
+          <SaleLink><LinkIcon /> Asteroid Sale How-To Guide</SaleLink>
+        </div>
+      </InnerLink>
     ),
+    onClickContent: (e) => {
+      if (process.env.REACT_APP_ASTEROID_SALE_GUIDE_URL) {
+        e.stopPropagation();
+        window.open(process.env.REACT_APP_ASTEROID_SALE_GUIDE_URL, '_blank', 'noopener');
+      }
+    }
   }),
 
   Sale_Ended: (e) => ({
