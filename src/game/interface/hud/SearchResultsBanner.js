@@ -10,13 +10,15 @@ import useStore, { assetSearchDefaults } from '~/hooks/useStore';
 import theme from '~/theme';
 import useAsteroidColumns from '../details/listViews/asteroids';
 import { background } from './HudMenu';
+import { CloseIcon, LotSearchIcon } from '~/components/Icons';
+import Button from '~/components/ButtonAlt';
 
 const cornerSize = 15;
 
 const Wrapper = styled.div`
   position: fixed;
   top: 0;
-  width: 560px;
+  width: ${p => p.assetType === 'lotsMapped' ? 480 : 560}px;
   transform: ${p => p.visible ? 'translateY(20px)' : 'translateY(-80px)'};
   transition: transform 250ms ease;
   & > * {
@@ -119,9 +121,31 @@ const SortSelection = styled.div`
   }
 `;
 
+const ActiveFilters = styled.div`
+  align-items: center;
+  display: flex;
+  & > svg {
+    color: ${p => p.theme.colors.main};
+    font-size: 28px;
+    margin-right: 8px;
+  }
+`;
 
-const SearchBannerAsteroids = ({ data, isLoading }) => {
+const ResultsTally = ({ tally, maxResults }) => {
+  const formattedTotal = useMemo(() => {
+    if (tally === undefined) return <>&nbsp;</>;
+    if (tally > 2000 && tally !== maxResults) {
+      return `${Math.floor(tally / 1e3)}k${tally === maxResults ? '' : '+'} Results`;
+    }
+    return `${(tally || 0).toLocaleString()} Results`;
+  }, [tally, maxResults]);
+  return <TotalHits>{formattedTotal}</TotalHits>
+}
+
+const SearchBannerAsteroids = ({ visible }) => {
   const assetType = 'asteroidsMapped';
+  const { data: assetSearch, isLoading } = useAssetSearch(assetType);
+
   const columns = useAsteroidColumns();
   const sort = useStore(s => s.assetSearch[assetType].sort);
   const updateSort = useStore(s => s.dispatchSortUpdated(assetType));
@@ -140,59 +164,15 @@ const SearchBannerAsteroids = ({ data, isLoading }) => {
       .map((c) => ({ label: c.label, value: c.sortField, icon: c.icon }));
   }, [columns]);
 
-  if (isLoading || !data) return null;
-  return (
-    <>
-      <Showing>
-        Showing: {data.showing > 0 ? `1 - ${data.showing.toLocaleString()}` : 'n/a'}
-      </Showing>
-      <SortDirection onClick={toggleSortOrder}>
-        {sort[1] === 'asc' ? 'Low > High' : 'High > Low'}
-      </SortDirection>
-      <SortSelection>
-        <Dropdown
-          initialSelection={sort[0]}
-          background="transparent"
-          onChange={updateSortOrder}
-          options={sortOptions}
-          size="small"
-          style={{ textTransform: 'none' }}
-          width={180} />
-      </SortSelection>
-    </>
-  );
-};
-
-const SearchBannerLots = ({ data, isLoading }) => {
-  return (
-    <>
-      Lots
-    </>
-  );
-};
-
-const SearchResultsBanner = ({ assetType }) => {
-  const { data: assetSearch, isLoading } = useAssetSearch(assetType);
-  const asteroidId = useStore(s => s.asteroids.origin);
-
   const data = useMemo(() => {
     const total = assetSearch?.total;
     const showing = assetSearch?.hits?.length || 0;
     return { total, showing };
   }, [assetSearch]);
 
-  const formattedTotal = useMemo(() => {
-    if (isLoading) return <>&nbsp;</>;
-    const maxResults = assetType === 'lotsMapped' ? Asteroid.getSurfaceArea(asteroidId) : 250000;
-    if (data?.total > 2000 && data?.total !== maxResults) {
-      return `${Math.floor(data?.total / 1e3)}k${data?.total === maxResults ? '' : '+'} Results`;
-    }
-    return `${(data?.total || 0).toLocaleString()} Results`;
-  }, [assetType, asteroidId, data, isLoading]);
-
   return (
-    <Wrapper visible={!!data}>
-      <TotalHits>{formattedTotal}</TotalHits>
+    <Wrapper assetType={assetType} visible={visible && !!data}>
+      <ResultsTally tally={isLoading ? undefined : data?.total} maxResults={250000} />
       <Container loading={isLoading}>
         <InnerContainer>
           {isLoading && (
@@ -201,8 +181,80 @@ const SearchResultsBanner = ({ assetType }) => {
               <label>Searching</label>
             </Loading>
           )}
-          {assetType === 'asteroidsMapped' && <SearchBannerAsteroids data={data} isLoading={isLoading} />}
-          {assetType === 'lotsMapped' && <SearchBannerLots data={data} isLoading={isLoading} />}
+          {!isLoading && (
+            <>
+              <Showing>
+                Showing: {data.showing > 0 ? `1 - ${data.showing.toLocaleString()}` : 'n/a'}
+              </Showing>
+              <SortDirection onClick={toggleSortOrder}>
+                {sort[1] === 'asc' ? 'Low > High' : 'High > Low'}
+              </SortDirection>
+              <SortSelection>
+                <Dropdown
+                  initialSelection={sort[0]}
+                  background="transparent"
+                  onChange={updateSortOrder}
+                  options={sortOptions}
+                  size="small"
+                  style={{ textTransform: 'none' }}
+                  width={180} />
+              </SortSelection>
+            </>
+          )}
+        </InnerContainer>
+        <ClipCorner dimension={cornerSize} color={theme.colors.main} />
+        <ClipCorner dimension={cornerSize} color={theme.colors.main} flip />
+      </Container>
+    </Wrapper>
+  );
+};
+
+const SearchBannerLots = ({ visible }) => {
+  const assetType = 'lotsMapped';
+  const filters = useStore(s => s.assetSearch[assetType]?.filters);
+  const highlight = useStore(s => s.assetSearch[assetType]?.highlight);
+  const resetFilters = useStore(s => s.dispatchFiltersReset(assetType));
+  const isAssetSearchFilterMatchingDefault = useStore(s => s.isAssetSearchFilterMatchingDefault);
+
+  const { total, isLoading } = useStore(s => s.lotsMappedAssetSearchResults);
+  const asteroidId = useStore(s => s.asteroids.origin);
+
+  const maxResults = useMemo(() => Asteroid.getSurfaceArea(asteroidId), asteroidId);
+
+  const activeFilters = useMemo(() => {
+    return Object.keys(filters || {})
+      .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault(assetType, fieldName) ? 0 : 1), 0)
+  }, [filters]);
+
+  return (
+    <Wrapper assetType={assetType} visible={visible}>
+      <ResultsTally tally={isLoading ? undefined : total} maxResults={maxResults} />
+      <Container loading={isLoading}>
+        <InnerContainer>
+          {isLoading && (
+            <Loading>
+              <InProgressIcon height={14} />
+              <label>Searching</label>
+            </Loading>
+          )}
+          {!isLoading && (
+            <>
+              <ActiveFilters style={{ fontSize: '90%' }}>
+                <LotSearchIcon />
+                {activeFilters > 0
+                  ? `${activeFilters} Lot Filter${activeFilters === 1 ? '' : 's'} Active`
+                  : (highlight ? `Custom Highlighting` : '')
+                }
+              </ActiveFilters>
+              <div>
+                {(activeFilters > 0 || highlight) && (
+                  <Button size="small" width={110} subtle onClick={resetFilters}>
+                    <CloseIcon style={{ marginRight: 6 }} /> Clear
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
         </InnerContainer>
         <ClipCorner dimension={cornerSize} color={theme.colors.main} />
         <ClipCorner dimension={cornerSize} color={theme.colors.main} flip />
@@ -220,18 +272,23 @@ const SearchResultsBannerWrapper = () => {
   
   let assetType = useMemo(() => {
     if (zoomStatus === 'in' && !zoomToLot) {
-      if (openHudMenu === 'asteroid.Lot Search' || !isAssetSearchMatchingDefault('lotsMapped')) {
-         return 'lotsMapped';
-      }
+      return 'lotsMapped';
     } else if (zoomStatus === 'out') {
-      if (openHudMenu === 'belt.System Search' || !isAssetSearchMatchingDefault('asteroidsMapped')) {
-        return 'asteroidsMapped';
-      }
+      return 'asteroidsMapped';
     }
-  }, [assetSearch, openHudMenu, zoomStatus, zoomToLot]);
+  }, [zoomStatus, zoomToLot]);
 
-  if (!assetType) return null;
-  return <SearchResultsBanner assetType={assetType} />;
+  const visible = useMemo(() => {
+    if (assetType === 'lotsMapped') {
+      return (openHudMenu === 'asteroid.Lot Search' || !isAssetSearchMatchingDefault('lotsMapped'));
+    } else if (assetType === 'asteroidsMapped') {
+      return (openHudMenu === 'belt.System Search' || !isAssetSearchMatchingDefault('asteroidsMapped'));
+    }
+  }, [assetType, assetSearch, openHudMenu]);
+
+  if (assetType === 'asteroidsMapped') return <SearchBannerAsteroids visible={visible} />;
+  if (assetType === 'lotsMapped') return <SearchBannerLots visible={visible} />;
+  return null;
 };
 
 export default SearchResultsBannerWrapper;

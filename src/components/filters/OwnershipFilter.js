@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
 import {
   MdRadioButtonChecked as CheckedIcon,
   MdRadioButtonUnchecked as UncheckedIcon,
@@ -8,7 +7,6 @@ import { Address } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
-import IconButton from '~/components/IconButton';
 import ColorPicker from '~/components/ColorPicker';
 import TextInput from '~/components/TextInputUncontrolled';
 import { CheckboxButton, CheckboxRow, SearchMenu } from './components';

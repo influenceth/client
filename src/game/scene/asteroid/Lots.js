@@ -68,9 +68,10 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   const { processInBackground } = useWebWorker();
 
   const textureQuality = useStore(s => s.graphics.textureQuality);
+  const { lotId: selectedLotId } = useStore(s => s.asteroids.lot || {});
   const dispatchLotsLoading = useStore(s => s.dispatchLotsLoading);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
-  const { lotId: selectedLotId } = useStore(s => s.asteroids.lot || {});
+  const dispatchSearchResults = useStore(s => s.dispatchLotsMappedSearchResults);
 
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
@@ -118,7 +119,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       fillTally,
       resultTally,
       lastLotUpdate,
-
       colorMap,
       lotDisplayMap,
       lotSampledMap,
@@ -127,6 +127,10 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     refetch: refetchLots
   } = useMappedAsteroidLots(asteroidId);
   const lotsReady = !isLoading && lotDisplayMap;
+
+  useEffect(() => {
+    dispatchSearchResults({ total: resultTally, isLoading });
+  }, [resultTally, isLoading])
 
   const lotTally = useMemo(() => Asteroid.getSurfaceArea(asteroidId), [asteroidId]);
   const regionTally = useMemo(() => Asteroid.getLotRegionTally(lotTally), [lotTally]);
@@ -240,7 +244,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   useEffect(() => {
     if (lotDisplayMap && lotsByRegion.current?.length) {
       Object.keys(lotsByRegion.current).forEach((region) => {
-        resultsByRegion.current[region] = lotsByRegion.current[region].filter((lotId) => lotDisplayMap[lotId] & isResultMask > 0);
+        resultsByRegion.current[region] = lotsByRegion.current[region].filter((lotId) => (lotDisplayMap[lotId] & isResultMask) > 0);
       });
     }
   }, [lotDisplayMap, lastLotUpdate]);
@@ -553,7 +557,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
         // use lotsByRegion on first pass even if zoomed out so single-render asteroids are ready
         // else, use buildings-only source once have been through closest X lots (i.e. rendered all pips needed for this altitude)
         // (without this, imagine all the unnecessary loops if there were a single building on AP)
-        const lotSource = i < visibleLotTally && (cameraAltitude <= PIP_VISIBILITY_ALTITUDE || !lotsInitialized.current)
+        const lotSource = (i < visibleLotTally && (cameraAltitude <= PIP_VISIBILITY_ALTITUDE || !lotsInitialized.current))
           ? lotsByRegion.current
           : resultsByRegion.current;
         if (!lotSource[lotRegion]) return true;

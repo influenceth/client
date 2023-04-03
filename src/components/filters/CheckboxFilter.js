@@ -8,13 +8,15 @@ import { CheckboxButton, CheckboxRow, SearchMenu } from './components';
 
 const SelectAllRow = styled.div`
   align-items: center;
-  color: ${p => p.theme.colors.main};
+  color: #555;
   cursor: ${p => p.theme.cursors.active};
   display: flex;
   font-size: 12px;
   justify-content: flex-end;
   padding: 2px 0;
+  transition: color 250ms ease;
   &:hover {
+    color: ${p => p.theme.colors.main};
     text-decoration: underline;
   }
 `;
@@ -60,12 +62,12 @@ const CheckboxFilter = ({
   }, [onChange, types]);
 
   const toggleAll = useCallback(() => {
-    onChange({ [fieldName]: filters[fieldName].length < options.length / 2 ? Object.keys(types) : [] });
+    onChange({ [fieldName]: (filters[fieldName]?.length || 0) < options.length / 2 ? Object.keys(types) : [] });
   }, [filters[fieldName]]);
 
   const toggleAllLabel = useMemo(() => {
     if (options.length > 3) {
-      return filters[fieldName].length < options.length / 2 ? 'Select All' : 'Deselect All';
+      return (filters[fieldName]?.length || 0) < options.length / 2 ? 'Select All' : 'Deselect All';
     }
     return null;
   }, [filters[fieldName]]);

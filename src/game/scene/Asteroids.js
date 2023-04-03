@@ -23,7 +23,7 @@ const Asteroids = (props) => {
   const destinationId = useStore(s => s.asteroids.destination);
   const hovered = useStore(s => s.asteroids.hovered);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const routePlannerActive = useStore(s => s.outliner.routePlanner.active);
+  const routePlannerActive = false; // TODO: (when route planning restored)
   const ownedColor = useStore(s => s.asteroids.owned.highlightColor);
   const watchedColor = useStore(s => s.asteroids.watched.highlightColor);
   const highlightConfig = useStore(s => s.assetSearch.asteroidsMapped.highlight);

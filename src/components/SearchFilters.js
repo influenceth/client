@@ -6,12 +6,11 @@ import AsteroidNameFilter from './filters/AsteroidNameFilter';
 import OwnershipFilter from './filters/OwnershipFilter';
 import CrewmateNameFilter from './filters/CrewmateNameFilter';
 import CrewmateCrewFilter from './filters/CrewmateCrewFilter';
-import BuildingTypeFilter from './filters/BuildingTypeFilter';
 import CrewNameFilter from './filters/CrewNameFilter';
 import CrewOwnershipFilter from './filters/CrewOwnershipFilter';
 import LotIdFilter from './filters/LotIdFilter';
 import LotOccupiedFilter from './filters/LotOccupiedFilter';
-import LotLeaseFilter from './filters/LotLeaseFilter';  // TODO (TODAY)
+import LotLeaseFilter from './filters/LotLeaseFilter';
 import BooleanFilter from './filters/BooleanFilter';
 import CheckboxFilter from './filters/CheckboxFilter';
 import RangeFilter from './filters/RangeFilter';
@@ -269,6 +268,8 @@ const SearchFilters = ({ assetType, highlighting }) => {
 
         <LotOccupiedFilter {...filterProps} />
 
+        <LotLeaseFilter {...filterProps} />
+
         <BooleanFilter
           {...filterProps}
           title="Crew"
@@ -286,7 +287,14 @@ const SearchFilters = ({ assetType, highlighting }) => {
   if (assetType === 'lots') {
     return (
       <>
-        <BuildingTypeFilter {...filterProps} isLotSearch />
+        <CheckboxFilter
+          {...filterProps}
+          defaultColorMap={buildingTypeColors}
+          fieldName="type"
+          highlightFieldName="type"
+          options={lotSearchBuildingTypeOptions}
+          title="Buildings" />
+
         <LotOccupiedFilter {...filterProps} />
       </>
     );

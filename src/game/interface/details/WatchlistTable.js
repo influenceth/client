@@ -61,9 +61,10 @@ const styleOverrides = {
   }
 };
 
+// TODO: (this component is probably deprecated)
 const WatchlistTable = (props) => {
   const { watchlist: { data: watchlist }} = useWatchlist();
-  const active = useStore(s => s.outliner.watchlist.active);
+  const active = true;
   const history = useHistory();
 
   // Close if the watchlist section is closed

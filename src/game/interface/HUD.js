@@ -4,7 +4,7 @@ import ActionDialog from './hud/ActionDialog';
 import ActionItems from './hud/ActionItems';
 import AvatarMenu from './hud/AvatarMenu';
 import InfoPane from './hud/InfoPane';
-import SystemControls from './outliner/SystemControls';
+import SystemControls from './hud/SystemControls';
 import HudMenu from './hud/HudMenu';
 import SearchResultsBanner from './hud/SearchResultsBanner';
 

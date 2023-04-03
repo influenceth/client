@@ -13,14 +13,6 @@ import useAsteroidCrewLots from './useAsteroidCrewLots';
 
 const lotLeaseOptionKeys = Object.keys(lotLeaseOptions);
 
-const useAsteroidLotData = (i) => {
-  return useQuery(
-    [ 'asteroidLots', i ],
-    () => api.getAsteroidLotData(i),
-    { enabled: !!i }
-  );
-}
-
 const useMappedAsteroidLots = (i) => {
   const isAssetSearchMatchingDefault = useStore(s => s.isAssetSearchMatchingDefault);
   const mappedLotSearch = useStore(s => s.assetSearch.lotsMapped);
@@ -31,7 +23,11 @@ const useMappedAsteroidLots = (i) => {
   const [rebuildTally, setRebuildTally] = useState(0);
 
   // get all packed lot data from server
-  const { data: lotData, isLoading: lotDataLoading } = useAsteroidLotData(i);
+  const { data: lotData, isLoading: lotDataLoading } = useQuery(
+    [ 'asteroidLots', i ],
+    () => api.getAsteroidLotData(i),
+    { enabled: !!i }
+  );
 
   // get all sampled lots (for this resource) from the server
   const { data: sampledLots, isLoading: sampledLotsLoading } = useAsteroidCrewSamples(i, mapResourceId);
@@ -75,7 +71,7 @@ const useMappedAsteroidLots = (i) => {
       highlightColorMap: colorMap,
       highlightValueMap: valueMap
     }
-  }, [highlightConfig]);
+  }, [highlightConfig, searchIsOn]);
 
   // create "search results" test function
   const isFilterMatch = useCallback((unpacked) => {
@@ -114,7 +110,7 @@ const useMappedAsteroidLots = (i) => {
       //  00001100 lease status (0 unleasable, 1 leasable, 2 leased)
       //  00000010 has crew present
       //  00000001 has samples for sale present
-      for (let i = 0; i < lotData.length; i++) {
+      for (let i = 1; i < lotData.length; i++) {
 
         // unpack this lot data
         unpacked.type = lotData[i] >> 4;
@@ -124,7 +120,7 @@ const useMappedAsteroidLots = (i) => {
         unpacked.occupiedBy = unpacked.type === 0
           ? 'unoccupied'
           : (
-            myOccupationMap[i]
+            myOccupationMap && myOccupationMap[i]
               ? 'me'
               : 'other'
           );
@@ -157,7 +153,7 @@ const useMappedAsteroidLots = (i) => {
 
           // pack into sparse results array
           // TODO (maybe): could fit this in Uint8Array if that was preferred
-          results[i + 1] =
+          results[i] =
             (isResult << 5)       // 100000
             + (hasBuilding << 4)  // 010000
             + color;              // 001111;

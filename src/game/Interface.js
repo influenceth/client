@@ -13,7 +13,6 @@ import Draggables from './interface/Draggables';
 import HUD from './interface/HUD';
 import MainMenu from './interface/MainMenu';
 import ModelViewer from './interface/ModelViewer';
-import Outliner from './interface/Outliner';
 import SaleNotifier from './interface/SaleNotifier';
 import ListView from './interface/details/ListView';
 import AsteroidDetails from './interface/details/AsteroidDetails';
@@ -162,7 +161,6 @@ const Interface = () => {
             <CrewCreation />
           </Route>
         </Switch>
-        {false && <Outliner />}
         <Draggables />
       </StyledInterface>
     </>

@@ -15,22 +15,6 @@ const {
   MAX_FOV
 } = constants;
 
-// (keep these out of state so can change)
-const sectionDefault = { active: false, expanded: true, highlighted: false };
-const outlinerSectionDefaults = {
-  wallet: { ...sectionDefault, active: true },
-  log: { ...sectionDefault, active: true },
-  filters: { ...sectionDefault, active: true },
-  mappedAsteroids: { ...sectionDefault, active: true },
-  selectedAsteroid: { ...sectionDefault },
-  ownedAsteroids: { ...sectionDefault },
-  ownedCrew: { ...sectionDefault },
-  crewAssignments: { ...sectionDefault },
-  watchlist: { ...sectionDefault },
-  routePlanner: { ...sectionDefault },
-  timeControl: { ...sectionDefault }
-};
-
 const buildingIds = Object.keys(Capable.TYPES).filter((k) => k > 0).map((k) => k.toString());
 
 const assetSearchDefaults = {
@@ -78,6 +62,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     assetSearch: {
       ...assetSearchDefaults
     },
+    lotsMappedAssetSearchResults: {},
 
     auth: {
       token: null
@@ -98,11 +83,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     timeOverride: null,
 
     draggables: {},
-
-    outliner: {
-      pinned: true,
-      ...outlinerSectionDefaults
-    },
 
     graphics: {
       autodetect: true,
@@ -221,40 +201,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.openHudMenu = section;
     })),
 
-    dispatchOutlinerPinned: () => set(produce(state => {
-      state.outliner.pinned = true;
-    })),
-
-    dispatchOutlinerUnpinned: () => set(produce(state => {
-      state.outliner.pinned = false;
-    })),
-
-    dispatchOutlinerSectionActivated: (section) => set(produce(state => {
-      if (!state.outliner[section]) state.outliner[section] = { ...outlinerSectionDefaults[section] };
-      state.outliner[section].active = true;
-      state.outliner[section].expanded = true;
-      state.outliner[section].highlighted = true;
-      state.outliner.pinned = true;
-      setTimeout(() => {
-        set(produce(state => { state.outliner[section].highlighted = false; }));
-      }, 0);
-    })),
-
-    dispatchOutlinerSectionDeactivated: (section) => set(produce(state => {
-      if (!state.outliner[section]) state.outliner[section] = { ...outlinerSectionDefaults[section] };
-      state.outliner[section].active = false;
-    })),
-
-    dispatchOutlinerSectionExpanded: (section) => set(produce(state => {
-      if (!state.outliner[section]) state.outliner[section] = { ...outlinerSectionDefaults[section] };
-      state.outliner[section].expanded = true;
-    })),
-
-    dispatchOutlinerSectionCollapsed: (section) => set(produce(state => {
-      if (!state.outliner[section]) state.outliner[section] = { ...outlinerSectionDefaults[section] };
-      state.outliner[section].expanded = false;
-    })),
-
     dispatchGraphicsAutodetectSet: (which, gpuInfo) => set(produce(state => {
       state.graphics.autodetect = which;
       if (state.graphics.autodetect) {
@@ -364,22 +310,19 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchFiltersReset: (assetType) => () => set(produce(state => {
       state.assetSearch[assetType].filters = { ...assetSearchDefaults[assetType].filters };
       state.assetSearch[assetType].sort = [ ...assetSearchDefaults[assetType].sort ];
+      state.assetSearch[assetType].highlight = null;
     })),
 
     dispatchSortUpdated: (assetType) => (sort) => set(produce(state => {
       state.assetSearch[assetType].sort = sort;
     })),
 
-    dispatchMapFiltersUpdated: (assetType) => (filters) => set(produce(state => {
-      state.assetSearch[assetType].mapFilters = filters;
-    })),
-
-    dispatchMapSortUpdated: (assetType) => (sort) => set(produce(state => {
-      state.assetSearch[assetType].mapSort = sort;
-    })),
-
     dispatchHighlightUpdated: (assetType) => (settings) => set(produce(state => {
       state.assetSearch[assetType].highlight = settings;
+    })),
+
+    dispatchLotsMappedSearchResults: (payload) => set(produce(state => {
+      state.lotsMappedAssetSearchResults = { ...payload };
     })),
 
     // dispatchOwnedAsteroidsMapped: () => set(produce(state => {

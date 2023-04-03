@@ -120,7 +120,6 @@ const MenuWrapper = styled.div`
 `;
 
 const MainMenu = (props) => {
-  const activateSection = useStore(s => s.dispatchOutlinerSectionActivated);
   const playSound = useStore(s => s.dispatchSoundRequested);
   const { isMobile } = useScreenSize();
   const history = useHistory();
@@ -147,7 +146,8 @@ const MainMenu = (props) => {
   const [ showMenu, setShowMenu ] = useState(!isMobile);
 
   const openSection = (section) => {
-    activateSection(section);
+    // activateSection(section);
+    // TODO: ... this used to reference outliner, but outliner is gone 
     playSound('effects.click');
     if (isMobile) setShowMenu(false);
   };
