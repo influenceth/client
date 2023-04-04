@@ -310,7 +310,11 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchFiltersReset: (assetType) => () => set(produce(state => {
       state.assetSearch[assetType].filters = { ...assetSearchDefaults[assetType].filters };
       state.assetSearch[assetType].sort = [ ...assetSearchDefaults[assetType].sort ];
-      state.assetSearch[assetType].highlight = null;
+      if (Object.keys(assetSearchDefaults[assetType]).includes('highlight')) {
+        state.assetSearch[assetType].highlight = assetSearchDefaults[assetType].highlight
+          ? { ...assetSearchDefaults[assetType].highlight }
+          : null;
+      }
     })),
 
     dispatchSortUpdated: (assetType) => (sort) => set(produce(state => {
@@ -318,7 +322,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     })),
 
     dispatchHighlightUpdated: (assetType) => (settings) => set(produce(state => {
-      state.assetSearch[assetType].highlight = settings;
+      state.assetSearch[assetType].highlight = settings || null;
     })),
 
     dispatchLotsMappedSearchResults: (payload) => set(produce(state => {

@@ -232,7 +232,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   // run this when lots changes (after its initial run through the effect that follows this one)
   useEffect(() => {
     if (lotDisplayMap && lotsByRegion.current?.length) {
-      console.log('RE-EVAL resultsByRegion', lastLotUpdate);
       Object.keys(lotsByRegion.current).forEach((region) => {
         resultsByRegion.current[region] = lotsByRegion.current[region].filter((lotId) => (lotDisplayMap[lotId] & isResultMask) > 0);
       });

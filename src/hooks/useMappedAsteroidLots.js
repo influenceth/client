@@ -189,7 +189,7 @@ const useMappedAsteroidLots = (i) => {
   const isLoading = lotDataLoading || sampledLotsLoading || crewLotsLoading;
 
   return useMemo(() => {
-    console.log('re memoize -- make sure this is not happening more than expected');
+    // console.log('re memoize -- make sure this is not happening more than expected');
     return {
       data: {
         buildingTally,
