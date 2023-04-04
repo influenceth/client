@@ -1,12 +1,9 @@
-import { useCallback, useMemo } from 'react';
-import { SPECTRAL_TYPES, Capable, Crewmate, Inventory } from '@influenceth/sdk';
+import { useCallback, useEffect, useMemo } from 'react';
+import { SPECTRAL_TYPES, Capable, Construction, Crewmate, Inventory } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import AsteroidNameFilter from './filters/AsteroidNameFilter';
 import OwnershipFilter from './filters/OwnershipFilter';
-import CrewmateNameFilter from './filters/CrewmateNameFilter';
-import CrewmateCrewFilter from './filters/CrewmateCrewFilter';
-import CrewNameFilter from './filters/CrewNameFilter';
 import CrewOwnershipFilter from './filters/CrewOwnershipFilter';
 import LotIdFilter from './filters/LotIdFilter';
 import LotOccupiedFilter from './filters/LotOccupiedFilter';
@@ -18,6 +15,7 @@ import constants from '~/lib/constants';
 import Ether from './Ether';
 import formatters from '~/lib/formatters';
 import useSale from '~/hooks/useSale';
+import TextFilter from './filters/TextFilter';
 
 // spectral type filter configs
 const spectralTypeOptions = Object.keys(SPECTRAL_TYPES).reduce((acc, key) => ([
@@ -52,6 +50,13 @@ const lotSearchBuildingTypeOptions = Object.keys(Capable.TYPES).reduce((acc, key
   { key, label: Capable.TYPES[key].name, initialValue: true }
 ]), []);
 lotSearchBuildingTypeOptions.push({ key: 10, label: 'Light Transport (landed)', initialValue: true });
+
+const constructionStatusOptions = Object.keys(Construction.STATUSES)
+  .reduce((acc, key) => ([
+    ...acc,
+    { key, label: Construction.STATUSES[key], initialValue: true }
+  ]), [])
+  .filter(({ key }) => key > 0);
 
 const buildingTypeColors = {
   0: '#666666',
@@ -125,6 +130,7 @@ const yieldConfig = {
 //  (and to memoize any inputs possible)
 const SearchFilters = ({ assetType, highlighting }) => {
   const { data: sale } = useSale();
+  const asteroidId = useStore(s => s.asteroids.origin);
   const filters = useStore(s => s.assetSearch[assetType].filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
   
@@ -147,6 +153,12 @@ const SearchFilters = ({ assetType, highlighting }) => {
     filters,
     onChange: onFiltersChange,
   }), [assetType, filters, highlighting, onFiltersChange]);
+
+  useEffect(() => {
+    if (assetType === 'lots') {
+      onFiltersChange({ asteroid: asteroidId });
+    }
+  }, [asteroidId, assetType]);
 
 
   if (assetType === 'asteroids' || assetType === 'asteroidsMapped') {
@@ -227,16 +239,27 @@ const SearchFilters = ({ assetType, highlighting }) => {
       <>
         <CrewOwnershipFilter {...filterProps} />
 
-        <CrewNameFilter {...filterProps} />
+        <TextFilter
+          {...filterProps}
+          fieldName="name"
+          title="Name" />
       </>
     )
   }
   if (assetType === 'crewmates') {
     return (
       <>
-        <CrewmateNameFilter {...filterProps} />
+        <TextFilter
+          {...filterProps}
+          fieldName="name"
+          title="Name" />
 
-        <CrewmateCrewFilter {...filterProps} />
+        <TextFilter
+          {...filterProps}
+          fieldName="crew"
+          isId
+          placeholder="Filter by Crew Id..."
+          title="Crew" />
 
         <CheckboxFilter
           {...filterProps}
@@ -286,15 +309,38 @@ const SearchFilters = ({ assetType, highlighting }) => {
   if (assetType === 'lots') {
     return (
       <>
+        <TextFilter
+          {...filterProps}
+          fieldName="asteroid"
+          isId
+          placeholder="Filter by Asteroid Id..."
+          title="Asteroid" />
+
+        <TextFilter
+          {...filterProps}
+          fieldName="controller"
+          isId
+          placeholder="Filter by Controlling Crew Id..."
+          title="Controller" />
+
+        <TextFilter
+          {...filterProps}
+          fieldName="occupier"
+          isId
+          placeholder="Filter by Occupying Crew Id..."
+          title="Occupier" />
+
         <CheckboxFilter
           {...filterProps}
-          defaultColorMap={buildingTypeColors}
-          fieldName="type"
-          highlightFieldName="type"
+          fieldName="building"
           options={lotSearchBuildingTypeOptions}
           title="Buildings" />
 
-        <LotOccupiedFilter {...filterProps} />
+        <CheckboxFilter
+          {...filterProps}
+          fieldName="construction"
+          options={constructionStatusOptions}
+          title="Construction Status" />
       </>
     );
   }

@@ -10,11 +10,13 @@ import SearchFilters from '~/components/SearchFilters';
 import SearchFilterTray from '~/components/SearchFilterTray';
 import InProgressIcon from '~/components/InProgressIcon';
 import {
+  AsteroidSearchIcon,
   BuildingIcon,
   ColumnsIcon,
   CoreSampleIcon,
   CrewIcon,
   CrewmateIcon,
+  LotSearchIcon,
   RocketIcon,
   ScanAsteroidIcon,
   ShipIcon,
@@ -148,9 +150,15 @@ const Pages = styled.div`
 const assetTypes = {
   asteroids: {
     keyField: 'i',
-    icon: <ScanAsteroidIcon />, // TODO
+    icon: <AsteroidSearchIcon />,
     title: 'Asteroids',
     useColumns: listConfigs.asteroids,
+  },
+  lots: {
+    keyField: 'id',
+    icon: <LotSearchIcon />,
+    title: 'Lots',
+    useColumns: listConfigs.lots,
   },
   crewmates: {
     keyField: 'i',

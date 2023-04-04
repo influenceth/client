@@ -1,32 +1,29 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { InputBlock, SearchMenu } from './components';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
 
-const fieldName = 'crew';
-
-const CrewmateCrewFilter = ({ assetType, filters, onChange }) => {  
+const TextFilter = ({ assetType, fieldName, filters, isId, onChange, placeholder, title }) => {  
   const handleChange = useCallback((e) => {
     onChange({ [fieldName]: e.currentTarget.value });
   }, [onChange]);
+
+  const extraProps = useMemo(() => isId ? { step: 1, min: 1, type: "number" } : {}, [isId]);
 
   return (
     <SearchMenu
       assetType={assetType}
       fieldName={fieldName}
       filters={filters}
-      title="Crew">
+      title={title}>
       
       <InputBlock singleField>
-        {/* <label>Crew Id</label>*/}
         <div>
           <UncontrolledTextInput
             onChange={handleChange}
-            placeholder="Filter by Crew Id..."
-            step={1}
-            min={1}
-            type="number"
-            value={filters[fieldName] || ''} />
+            placeholder={placeholder || `Filter by ${title}...`}
+            value={filters[fieldName] || ''}
+            {...extraProps} />
         </div>
       </InputBlock>
 
@@ -34,4 +31,4 @@ const CrewmateCrewFilter = ({ assetType, filters, onChange }) => {
   );
 };
 
-export default CrewmateCrewFilter;
+export default TextFilter;

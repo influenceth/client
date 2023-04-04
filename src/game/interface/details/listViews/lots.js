@@ -1,18 +1,16 @@
 import { useMemo } from 'react';
-import { Address } from '@influenceth/sdk';
+import { Capable, Construction } from '@influenceth/sdk';
 
-import OnClickLink from '~/components/OnClickLink';
-import MarketplaceLink from '~/components/MarketplaceLink';
 import {
   MyAssetIcon,
-  PlanBuildingIcon,
-  WalletIcon
 } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import { LocationLink } from './components';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const useColumns = () => {
   const { account } = useAuth();
+  const { crew } = useCrewContext();
 
   return useMemo(() => {
     const columns = [
@@ -21,71 +19,85 @@ const useColumns = () => {
         align: 'center',
         icon: <MyAssetIcon />,
         selector: row => {
-          if (account && row.owner && Address.areEqual(row.owner, account)) {
+          if (row.occupier?.i && row.occupier.i === crew?.i) {
             return <MyAssetIcon />
           }
           return '';
         },
         bodyStyle: { fontSize: '24px' },
-        requireLogin: true
+        requireLogin: true,
+        unhideable: true
       },
       {
         key: 'asteroidId',
         label: 'Asteroid Id',
-        // TODO: make sortable
-        // sortField: 'baseName',
-        selector: row => (
-          <>
-            <LocationLink asteroidId={row.asteroid} />
-            <span>{row.asteroid.toLocaleString()}</span>
-          </>
-        ),
+        sortField: 'asteroid.i',
+        selector: row => row.asteroid?.i
+          ? (
+            <>
+              <LocationLink asteroidId={row.asteroid.i} />
+              <span>{row.asteroid.i.toLocaleString()}</span>
+            </>
+          )
+          : null,
       },
       {
-        // TODO: this might be a crew id?
+        key: 'i',
+        label: 'Lot Id',
+        sortField: 'i',
+        selector: row => row.asteroid?.i && row.i
+          ? (
+            <>
+              <LocationLink asteroidId={row.asteroid.i} lotId={row.i} />
+              <span>{row.i.toLocaleString()}</span>
+            </>
+          )
+          : null,
+        unhideable: true,
+      },
+      {
         key: 'controller',
-        icon: <WalletIcon />,
         label: 'Controller',
-        sortField: 'controller',
+        sortField: 'controller.i',
         selector: row => {
-          if (row.controller) {
-            return (
-              <MarketplaceLink
-                chain={row.chain}
-                assetType="account"
-                id={row.controller}>
-                {(onClick, setRefEl) => (
-                  <OnClickLink ref={setRefEl} onClick={onClick}>
-                    {account && Address.areEqual(row.owner, account)
-                      ? `you`
-                      : `${row.owner.substr(0, 6)}...${row.owner.substr(-4)}`
-                    }
-                  </OnClickLink>
-                )}
-              </MarketplaceLink>
-            );
+          if (row.controller?.i) {
+            return row.controller.i === crew?.i ? 'you' : row.controller.i.toLocaleString();
           }
           return 'Uncontrolled';
         }
       },
       {
         key: 'occupier',
-        icon: <WalletIcon />,
         label: 'Occupier',
-        sortField: 'occupier',
+        sortField: 'occupier.i',
         selector: row => {
-          if (row.occupier) {
-            return row.occupier;
+          if (row.occupier?.i) {
+            return row.occupier.i === crew?.i ? 'you' : row.occupier.i.toLocaleString();
           }
           return 'Unoccupied';
         }
       },
       {
         key: 'building',
-        icon: <PlanBuildingIcon />, // TODO: ...
-        label: 'Radius',
-        sortField: 'r',
-        selector: row => `${row.r?.toLocaleString()} km`,
+        label: 'Building Type',
+        sortField: 'building.type',
+        selector: row => {
+          if (row.building?.type) {
+            return Capable.TYPES[row.building.type]?.name;
+          }
+          return null;
+        }
+      },
+      {
+        key: 'construction',
+        label: 'Construction Status',
+        sortField: 'construction.status',
+        selector: row => {
+          if (row.construction?.status) {
+            return Construction.STATUSES[row.construction.status];
+          }
+          return null;
+        }
       }
     ];
 

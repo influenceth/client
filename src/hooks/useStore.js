@@ -27,7 +27,7 @@ const assetSearchDefaults = {
   ships: { filters: {}, sort: ['i', 'asc'] },
   orders: { filters: {}, sort: ['i', 'asc'] },
   leases: { filters: {}, sort: ['i', 'asc'] },
-  lots: { filters: {}, sort: ['i', 'asc'] },
+  lots: { filters: {}, sort: ['asteroid.i', 'asc'] },
   lotsMapped: { filters: { type: [...buildingIds] }, sort: ['i', 'asc'], highlight: null },
 };
 
@@ -504,6 +504,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     isAssetSearchMatchingDefault: (assetType) => {
       if (!assetType) return true;
+      console.log('as', assetType, get().assetSearch[assetType].sort);
       return isEqual(get().assetSearch[assetType].filters, assetSearchDefaults[assetType].filters)
         && isEqual(get().assetSearch[assetType].sort, assetSearchDefaults[assetType].sort)
     },

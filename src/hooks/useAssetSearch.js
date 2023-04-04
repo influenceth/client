@@ -135,6 +135,27 @@ filtersToQuery.leases = (filters) => {
 
 filtersToQuery.lots = (filters) => {
   const queryBuilder = esb.boolQuery();
+
+  if (filters.asteroid) {
+    queryBuilder.filter(esb.termQuery('asteroid.i', filters.asteroid));
+  }
+
+  if (filters.controller) {
+    queryBuilder.filter(esb.termQuery('controller.i', filters.controller));
+  }
+
+  if (filters.occupier) {
+    queryBuilder.filter(esb.termQuery('occupier.i', filters.occupier));
+  }
+
+  if (filters.building) {
+    queryBuilder.filter(esb.termsQuery('building.type', filters.building.map((t) => parseInt(t))));
+  }
+
+  if (filters.construction) {
+    queryBuilder.filter(esb.termsQuery('construction.status', filters.construction.map((t) => parseInt(t))));
+  }
+
   return queryBuilder;
 };
 
