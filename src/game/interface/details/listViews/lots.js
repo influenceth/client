@@ -29,7 +29,7 @@ const useColumns = () => {
         unhideable: true
       },
       {
-        key: 'asteroidId',
+        key: 'asteroid',
         label: 'Asteroid Id',
         sortField: 'asteroid.i',
         selector: row => row.asteroid?.i

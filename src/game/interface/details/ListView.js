@@ -228,6 +228,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
   const [sortField, sortDirection] = sort;
 
   const filters = useStore(s => s.assetSearch[assetType].filters);
+  const isAssetSearchFilterMatchingDefault = useStore(s => s.isAssetSearchFilterMatchingDefault);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
 
   const columns = useColumns();
@@ -292,7 +293,10 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
 
   const enabledColumnKeys = useMemo(() => enabledColumns.map((c) => c.key), [enabledColumns]);
 
-  const activeFilters = useMemo(() => Object.values(filters).filter((v) => v !== undefined).length, [filters]);
+  const activeFilters = useMemo(() => {
+    return Object.keys(filters || {})
+      .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault(assetType, fieldName) ? 0 : 1), 0)
+  }, [assetType, filters]);
 
   return (
     <Details fullWidth title="Advanced Search" contentProps={{ hasFooter: true }}>

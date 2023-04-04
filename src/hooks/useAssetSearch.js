@@ -63,6 +63,10 @@ filtersToQuery.asteroids = (filters) => {
 filtersToQuery.buildings = (filters) => {
   const queryBuilder = esb.boolQuery();
 
+  if (filters.asteroid) {
+    queryBuilder.filter(esb.termQuery('asteroid.i', filters.asteroid));
+  }
+
   if (filters.type) {
     queryBuilder.filter(esb.termsQuery('type', filters.type.map((t) => parseInt(t))));
   }
@@ -72,6 +76,10 @@ filtersToQuery.buildings = (filters) => {
 
 filtersToQuery.coresamples = (filters) => {
   const queryBuilder = esb.boolQuery();
+
+  if (filters.asteroid) {
+    queryBuilder.filter(esb.termQuery('asteroid.i', filters.asteroid));
+  }
 
   if (filters.resource) {
     queryBuilder.filter(esb.termsQuery('resource', filters.resource.map((t) => parseInt(t))));
@@ -130,6 +138,11 @@ filtersToQuery.crews = (filters) => {
 
 filtersToQuery.leases = (filters) => {
   const queryBuilder = esb.boolQuery();
+
+  if (filters.asteroid) {
+    queryBuilder.filter(esb.termQuery('asteroid.i', filters.asteroid));
+  }
+
   return queryBuilder;
 };
 

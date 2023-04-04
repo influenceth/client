@@ -9,7 +9,6 @@ const align = {
   right: 'flex-end'
 };
 
-
 const DataTable = styled.table.attrs({
   cellSpacing: 0,
   cellPadding: 0

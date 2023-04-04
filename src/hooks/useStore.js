@@ -20,14 +20,14 @@ const buildingIds = Object.keys(Capable.TYPES).filter((k) => k > 0).map((k) => k
 const assetSearchDefaults = {
   asteroids: { filters: {}, sort: ['r', 'desc'] },
   asteroidsMapped: { filters: {}, sort: ['r', 'desc'], highlight: null },
-  buildings: { filters: {}, sort: ['i', 'asc'] },
-  coresamples: { filters: { status: [2,3] }, sort: ['i', 'asc'] },
+  buildings: { filters: {}, sort: ['lot.i', 'asc'] },
+  coresamples: { filters: { status: [2,3] }, sort: ['lot.i', 'asc'] },
   crewmates: { filters: {}, sort: ['i', 'asc'] },
   crews: { filters: {}, sort: ['i', 'asc'] },
   ships: { filters: {}, sort: ['i', 'asc'] },
   orders: { filters: {}, sort: ['i', 'asc'] },
-  leases: { filters: {}, sort: ['i', 'asc'] },
-  lots: { filters: {}, sort: ['asteroid.i', 'asc'] },
+  leases: { filters: {}, sort: ['lot.i', 'asc'] },
+  lots: { filters: {}, sort: ['i', 'asc'] },
   lotsMapped: { filters: { type: [...buildingIds] }, sort: ['i', 'asc'], highlight: null },
 };
 

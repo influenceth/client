@@ -37,7 +37,7 @@ const SearchFilterTray = ({ assetType, handleClickFilters }) => {
   const activeFilters = useMemo(() => {
     return Object.keys(filters || {})
       .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault(assetType, fieldName) ? 0 : 1), 0)
-  }, [filters]);
+  }, [assetType, filters]);
 
   if (isDefaultSearch) return null;
   return (

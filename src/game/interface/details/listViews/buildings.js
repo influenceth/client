@@ -59,13 +59,23 @@ const useColumns = () => {
         key: 'controller',
         label: 'Lot Controller',
         sortField: 'lot.controller.i',
-        selector: row => row.lot?.controller?.i,
+        selector: row => {
+          if (row.lot?.controller?.i) {
+            return row.lot.controller.i === crew?.i ? 'you' : row.lot.controller.i.toLocaleString();
+          }
+          return 'Uncontrolled';
+        }
       },
       {
         key: 'occupier',
         label: 'Lot Occupier',
         sortField: 'lot.occupier.i',
-        selector: row => row.lot?.occupier?.i,
+        selector: row => {
+          if (row.lot?.occupier?.i) {
+            return row.lot.occupier.i === crew?.i ? 'you' : row.lot.occupier.i.toLocaleString();
+          }
+          return 'Unoccupied';
+        }
       },
       {
         key: 'occupation',

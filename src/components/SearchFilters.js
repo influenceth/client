@@ -155,7 +155,8 @@ const SearchFilters = ({ assetType, highlighting }) => {
   }), [assetType, filters, highlighting, onFiltersChange]);
 
   useEffect(() => {
-    if (assetType === 'lots') {
+    // for most types, default filter to asteroid if one is selected
+    if (['buildings','coresamples','leases','lots'].includes(assetType)) {
       onFiltersChange({ asteroid: asteroidId });
     }
   }, [asteroidId, assetType]);
@@ -210,6 +211,13 @@ const SearchFilters = ({ assetType, highlighting }) => {
   if (assetType === 'buildings') {
     return (
       <>
+        <TextFilter
+          {...filterProps}
+          fieldName="asteroid"
+          isId
+          placeholder="Filter by Asteroid Id..."
+          title="Asteroid" />
+
         <CheckboxFilter
           {...filterProps}
           fieldName="type"
@@ -221,6 +229,13 @@ const SearchFilters = ({ assetType, highlighting }) => {
   if (assetType === 'coresamples') {
     return (
       <>
+        <TextFilter
+          {...filterProps}
+          fieldName="asteroid"
+          isId
+          placeholder="Filter by Asteroid Id..."
+          title="Asteroid" />
+          
         <CheckboxFilter
           {...filterProps}
           fieldName="resource"

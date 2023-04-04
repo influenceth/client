@@ -224,7 +224,7 @@ const SearchBannerLots = ({ visible }) => {
   const activeFilters = useMemo(() => {
     return Object.keys(filters || {})
       .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault(assetType, fieldName) ? 0 : 1), 0)
-  }, [filters]);
+  }, [assetType, filters]);
 
   return (
     <Wrapper assetType={assetType} visible={visible}>
