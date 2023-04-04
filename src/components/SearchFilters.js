@@ -126,7 +126,6 @@ const yieldConfig = {
 const SearchFilters = ({ assetType, highlighting }) => {
   const { data: sale } = useSale();
   const filters = useStore(s => s.assetSearch[assetType].filters);
-  const highlight = useStore(s => s.assetSearch[assetType].highlight);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
   
   const radiusFieldNote = useCallback((value) => sale ? <Ether>{formatters.asteroidPrice(value, sale)}</Ether> : null, [sale])

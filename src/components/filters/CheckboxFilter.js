@@ -61,16 +61,23 @@ const CheckboxFilter = ({
     onChange({ [fieldName]: Object.keys(newTypes).filter((k) => newTypes[k]) });
   }, [onChange, types]);
 
+  const toggleAllMode = useMemo(() => {
+    let selectedTally = (filters[fieldName] !== undefined)
+      ? filters[fieldName].length
+      : options.length;
+    return selectedTally < options.length / 2;
+  }, [filters[fieldName]])
+
   const toggleAll = useCallback(() => {
-    onChange({ [fieldName]: (filters[fieldName]?.length || 0) < options.length / 2 ? Object.keys(types) : [] });
-  }, [filters[fieldName]]);
+    onChange({ [fieldName]: toggleAllMode ? Object.keys(types) : [] });
+  }, [toggleAllMode, fieldName]);
 
   const toggleAllLabel = useMemo(() => {
     if (options.length > 3) {
-      return (filters[fieldName]?.length || 0) < options.length / 2 ? 'Select All' : 'Deselect All';
+      return toggleAllMode ? 'Select All' : 'Deselect All';
     }
     return null;
-  }, [filters[fieldName]]);
+  }, [toggleAllMode]);
 
   return (
     <SearchMenu
