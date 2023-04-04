@@ -1,19 +1,18 @@
-import { useState } from 'react';
-import { useQuery } from 'react-query';
-import { Asteroid } from '@influenceth/sdk';
+import { useCallback, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from 'react-query';
 
 import api from '~/lib/api';
 import { options as lotLeaseOptions } from '~/components/filters/LotLeaseFilter';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
-import { useCallback, useEffect, useMemo } from 'react';
 import useAsteroidCrewSamples from './useAsteroidCrewSamples';
 import useAsteroidCrewLots from './useAsteroidCrewLots';
-
 
 const lotLeaseOptionKeys = Object.keys(lotLeaseOptions);
 
 const useMappedAsteroidLots = (i) => {
+  const queryClient = useQueryClient();
+
   const isAssetSearchMatchingDefault = useStore(s => s.isAssetSearchMatchingDefault);
   const mappedLotSearch = useStore(s => s.assetSearch.lotsMapped);
   const openHudMenu = useStore(s => s.openHudMenu);
@@ -88,10 +87,8 @@ const useMappedAsteroidLots = (i) => {
     }
   }, [mappedLotSearch?.filters, searchIsOn]);
   
-  // TODO (TODAY): should put the following into an effect since the memo will be blocking and this could take a moment
-  //  (could even send to worker, but do some benchmarking first)
-  
   // build sparse array of search results
+  // TODO (enhancement): should send this to a worker if possible
   const [lotDisplayMap, buildingTally, resultTally] = useMemo(() => {
     const results = [];
 
@@ -103,7 +100,7 @@ const useMappedAsteroidLots = (i) => {
     let buildingTally = 0;
     let resultTally = 0;
 
-    if (lotData) {
+    if (lotData && myOccupationMap) {
 
       // packed data has the following masks:
       //  11110000 capable type
@@ -120,7 +117,7 @@ const useMappedAsteroidLots = (i) => {
         unpacked.occupiedBy = unpacked.type === 0
           ? 'unoccupied'
           : (
-            myOccupationMap && myOccupationMap[i]
+            myOccupationMap[i]
               ? 'me'
               : 'other'
           );
@@ -166,11 +163,28 @@ const useMappedAsteroidLots = (i) => {
     // console.log('results', results);
 
     return [results, buildingTally, resultTally];
-  }, [lotData, sampledLots, crewLots, isFilterMatch, highlightValueMap, rebuildTally]);
+  }, [lotData, myOccupationMap, isFilterMatch, highlightValueMap, rebuildTally]);
 
   const refetch = useCallback(() => {
     setRebuildTally((t) => t + 1);
   }, [])
+
+  const processEvent = useCallback((eventType, body) => {
+    // TODO: these events could/should technically go through the same invalidation process as primary events
+    //  (it's just that these events won't match as much data b/c most may not be relevant to my crew)
+    switch (eventType) {
+      case 'Dispatcher_ConstructionPlan':
+      case 'Dispatcher_ConstructionUnplan':
+        // asteroidId, lotId, crewId, (capableType)
+        queryClient.setQueryData([ 'asteroidLots', body.returnValues.asteroidId ], (currentLotsValue) => {
+          currentLotsValue[body.returnValues.lotId] = 
+            (currentLotsValue[body.returnValues.lotId] & 0b00001111)  // clear existing building
+            | (body.returnValues.capableType || 0) << 4               // set to event building (if there is one)
+          return currentLotsValue;
+        });
+        break;
+    }
+  }, []);
 
   const isLoading = lotDataLoading || sampledLotsLoading || crewLotsLoading;
 
@@ -187,6 +201,7 @@ const useMappedAsteroidLots = (i) => {
         lastLotUpdate: Date.now()
       },
       isLoading,
+      processEvent,
       refetch
     };
   }, [
@@ -197,6 +212,7 @@ const useMappedAsteroidLots = (i) => {
     lotDisplayMap,
     lotSampledMap,
     isLoading,
+    processEvent,
     refetch
   ]);
 };

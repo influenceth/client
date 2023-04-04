@@ -101,7 +101,8 @@ const api = {
     let shift;
     const mask = 0b11111111;
 
-    // TODO (TODAY): any benefit to returning a sparse array here instead?
+    // TODO (enhancement?): any benefit to returning a sparse array here instead?
+    // (probably yes unless going to send as a buffer to worker as part of a performance enhancement)
     if (response.data) {
       return (new Uint32Array(await response.data.arrayBuffer())).reduce((acc, byte, i) => {
         for (let j = 0; j < 4; j++) {

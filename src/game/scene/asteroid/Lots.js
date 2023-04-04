@@ -124,6 +124,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       lotSampledMap,
     },
     isLoading,
+    processEvent,
     refetch: refetchLots
   } = useMappedAsteroidLots(asteroidId);
   const lotsReady = !isLoading && lotDisplayMap;
@@ -150,8 +151,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   // BATCHED region bucketing is really only helpful for largest couple asteroids
   // NOTE: this just runs once when lots is initial populated
   useEffect(() => {
-    // if (!lotDisplayMap) return;  // TODO (TODAY): commented out in case can skip building region buckets
-
     const {
       ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
       ...prunedConfig
@@ -212,14 +211,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
               const lotId = batchStart + i + 1;
               if (!lotsByRegion.current[region]) lotsByRegion.current[region] = [];
               lotsByRegion.current[region].push(lotId);
-
-              // TODO (TODAY): commented out in case can skip building region buckets
-              // TODO (TODAY): re-evaluate this... do we need to do this for all search results
-              // (if there is building data) if there is a building, also add to building region records
-              // if (lotDisplayMap[lotId] & hasBuildingMask) {
-              //   if (!buildingsByRegion.current[region]) buildingsByRegion.current[region] = [];
-              //   buildingsByRegion.current[region].push(lotId);
-              // }
             });
             batchesProcessed++;
             if (batchesProcessed === expectedBatches) {
@@ -235,43 +226,29 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       },
       transfer
     );
-  }, []); // TODO (TODAY): commented out in case can skip building region buckets
-  // }, [!lotDisplayMap]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [config]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // TODO (TODAY): this should hopefully be able to replace above (we may just want to let it run once)
   //  before declaring the lots "loaded" initially
   // run this when lots changes (after its initial run through the effect that follows this one)
   useEffect(() => {
     if (lotDisplayMap && lotsByRegion.current?.length) {
+      console.log('RE-EVAL resultsByRegion', lastLotUpdate);
       Object.keys(lotsByRegion.current).forEach((region) => {
         resultsByRegion.current[region] = lotsByRegion.current[region].filter((lotId) => (lotDisplayMap[lotId] & isResultMask) > 0);
       });
     }
   }, [lotDisplayMap, lastLotUpdate]);
 
-  // TODO (TODAY): need to update base lot data, then re-run search
-  //  TODO (TODAY): should probably move this into the hook
   const handleWSMessage = useCallback(({ type: eventType, body }) => {
-    // TODO: these events could/should technically go through the same invalidation process as primary events
-    //  (it's just that these events won't match as much data b/c most may not be relevant to my crew)
-
-    // if lot occupied or lot unoccupied, update lots by updating querycache
-    switch (eventType) {
-      case 'Lot_Occupied': {
-        queryClient.setQueryData([ 'asteroidLots', body.returnValues.asteroidId ], (currentLotsValue) => {
-          if (body.returnValues.crewId > 0) {
-            currentLotsValue[body.returnValues.lotId] = true;
-          } else {
-            delete currentLotsValue[body.returnValues.lotId];
-          }
-          return currentLotsValue;
-        });
-        // setLastLotUpdate(Date.now());
-      }
-    }
+    // pass the event to useMappedAsteroidLots hook
+    processEvent(eventType, body);
 
     // // // // //
     // TODO: vvv maybe remove this when updating more systematically from linked data
+
+    //
+    // UPDATE CACHE FOR SPECIFIC LOT VALUES
+    //
 
     // try to minimize redundant updates by just listening to Dispatcher_* events
     if (eventType.match(/^Dispatcher_/)) {
@@ -298,7 +275,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     // ^^^
     // // // // //
 
-  }, []);
+  }, [processEvent]);
 
   useEffect(() => {
     if (token && wsReady) {
@@ -576,8 +553,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
             // MATRIX
             // > if has a result, always need to rebuild entire matrix for this lot (to update scale with altitude)
             // > otherwise, only need to (re)build matrix on (re)initialization or if lot visibility is dynamic
-            //   (note: building source and fill source changes will result in updated lotsInitialized)
-            //  TODO (TODAY): make sure that note ^ is true for buildings
+            //   (note: building source and fill source changes will result in updated lastLotUpdate update)
             if (hasResult || lotTally > visibleLotTally || !lotsInitialized.current) {
               const lotIndex = lotId - 1;
 
@@ -602,69 +578,77 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
                 updateResultMatrix = true;
               }
 
-              // everything but buildings should be scaled to 1
-              dummy.scale.set(1, 1, 1);
-              dummy.updateMatrix();
+              // everything else is only in visible-lot area
+              // (this should be redundant, but will at least save the dummy-rescaling to wrap)
+              if (i < visibleLotTally) {
 
-              // if no result, show pip
-              if (!hasResult) {
-                pipMesh.current.setMatrixAt(pipsRendered, dummy.matrix);
-                updatePipMatrix = true;
-              }
+                // everything but buildings should be scaled to 1
+                dummy.scale.set(1, 1, 1);
+                dummy.updateMatrix();
 
-              // update fill matrix
-              if (hasFill) {
-                lotFillMesh.current.setMatrixAt(fillsRendered, dummy.matrix);
-                updateFillMatrix = true;
-              }
+                // if no result, show pip
+                if (hasPip && !hasResult) {
+                  pipMesh.current.setMatrixAt(pipsRendered, dummy.matrix);
+                  updatePipMatrix = true;
+                }
 
-              // update stroke matrix
-              if (hasStroke) {
-                lotStrokeMesh.current.setMatrixAt(strokesRendered, dummy.matrix);
-                updateStrokeMatrix = true;
-              }
+                // update fill matrix
+                if (hasFill) {
+                  lotFillMesh.current.setMatrixAt(fillsRendered, dummy.matrix);
+                  updateFillMatrix = true;
+                }
 
-              // update mouseable matrix
-              // TODO: should these always face the camera? or have a slight bias towards camera at least?
-              if (hasMouseable) {
-                mouseableMesh.current.setMatrixAt(i, dummy.matrix);
-                updateMouseableMatrix = true;
+                // update stroke matrix
+                if (hasStroke) {
+                  lotStrokeMesh.current.setMatrixAt(strokesRendered, dummy.matrix);
+                  updateStrokeMatrix = true;
+                }
+
+                // update mouseable matrix
+                // TODO: should these always face the camera? or have a slight bias towards camera at least?
+                if (hasMouseable) {
+                  mouseableMesh.current.setMatrixAt(i, dummy.matrix);
+                  updateMouseableMatrix = true;
+                }
               }
             }
 
             // COLOR
             // > if has a result, must always update color (because matrix always updated, so instance indexes will change position)
-            //  (if logged in -- otherwise, can't be white anyway so just color once on initialization)
             // > pips never need color updated
             // > strokes use result color (if result) else pip color (only need to be updated after initialization if dynamic)
             let lotColor;
             if (hasResult) {
               lotColor = getColor(colorMap[colorIndexMask & lotDisplayMap[lotId]]);
-
-              // TODO (TODAY): unclear what this if is for... would be nice to put in enhancement below
-              // if (!!crewLotMap || !lotsInitialized.current) {
-
+              let testColor = new Color();
+              try { resultMesh.current.getColorAt(resultsRendered, testColor); } catch {}
+              if (!testColor.equals(lotColor)) {
                 // if this is first color change to instance, need to let material know
-                // TODO (enhancement): could check if there is a color change against existing buildingMesh instanceColor before setting updateBuildingColor
                 if (!resultMesh.current.instanceColor && !resultMesh.current.material.needsUpdate) {
                   resultMesh.current.material.needsUpdate = true;
                 }
+
+                // update color
                 resultMesh.current.setColorAt(resultsRendered, lotColor);
                 updateResultColor = true;
-              // }
+              }
             }
 
             if (hasStroke) {
-              // if this is first color change to instance, need to let material know
-              if (!lotStrokeMesh.current.instanceColor && !lotStrokeMesh.current.material.needsUpdate) {
-                lotStrokeMesh.current.material.needsUpdate = true;
+              let strokeColor = lotColor || STROKE_COLOR;
+              let testColor = new Color();
+              try { lotStrokeMesh.current.getColorAt(strokesRendered, testColor); } catch {}
+              if (!testColor.equals(strokeColor)) {
+                // if this is first color change to instance, need to let material know
+                if (!lotStrokeMesh.current.instanceColor && !lotStrokeMesh.current.material.needsUpdate) {
+                  lotStrokeMesh.current.material.needsUpdate = true;
+                }
+
+                // update color
+                lotStrokeMesh.current.setColorAt(strokesRendered, strokeColor);
+                updateStrokeColor = true;
               }
-              lotStrokeMesh.current.setColorAt(strokesRendered, lotColor || STROKE_COLOR);
-              updateStrokeColor = true;
             }
-            
-            // TODO (TODAY): this wrapped the above (instead of hasStroke)... we don't want to update on every loop
-            // if (lotTally > visibleLotTally || !lotsInitialized.current) {
           }
 
           if (hasResult) {
@@ -681,9 +665,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
           i++;
 
           // break loop if all visible results are rendered AND *something* is rendered on closest visibleLots
-          // TODO (TODAY): do we need to add buildings to this breakLoop condition? probably not since
-          //  will have looped through closestPips (results are special because can be seen from farther out)
-          breakLoop = (resultsRendered >= visibleResultTally && (pipsRendered + resultsRendered) >= visibleLotTally);
+          breakLoop = (resultsRendered >= visibleResultTally && i >= visibleLotTally);
 
           if (breakLoop) return false;
           return true;
@@ -742,17 +724,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     lotsInitialized.current = false;
     updateVisibleLots();
   }, [!lotsReady, lastLotUpdate]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-
-  }, []);
-
-  // TODO (TODAY): commented this out because it seems it could be rolled into above
-  // useEffect(() => {
-  //   if (!lotSampledMap) return;
-  //   lotsInitialized.current = false;
-  //   updateVisibleLots();
-  // }, [lotSampledMap]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const highlightLot = useCallback((lotId) => {
     highlighted.current = null;

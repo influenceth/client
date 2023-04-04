@@ -6,7 +6,7 @@ import ClipCorner from '~/components/ClipCorner';
 import Dropdown from '~/components/DropdownV2';
 import InProgressIcon from '~/components/InProgressIcon';
 import useAssetSearch from '~/hooks/useAssetSearch';
-import useStore, { assetSearchDefaults } from '~/hooks/useStore';
+import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 import useAsteroidColumns from '../details/listViews/asteroids';
 import { background } from './HudMenu';
@@ -219,7 +219,7 @@ const SearchBannerLots = ({ visible }) => {
   const { total, isLoading } = useStore(s => s.lotsMappedAssetSearchResults);
   const asteroidId = useStore(s => s.asteroids.origin);
 
-  const maxResults = useMemo(() => Asteroid.getSurfaceArea(asteroidId), asteroidId);
+  const maxResults = useMemo(() => Asteroid.getSurfaceArea(asteroidId), [asteroidId]);
 
   const activeFilters = useMemo(() => {
     return Object.keys(filters || {})
@@ -241,9 +241,13 @@ const SearchBannerLots = ({ visible }) => {
             <>
               <ActiveFilters style={{ fontSize: '90%' }}>
                 <LotSearchIcon />
-                {activeFilters > 0
-                  ? `${activeFilters} Lot Filter${activeFilters === 1 ? '' : 's'} Active`
-                  : (highlight ? `Custom Highlighting` : '')
+                {total > Asteroid.MAX_LOTS_RENDERED
+                  ? `Showing ${Asteroid.MAX_LOTS_RENDERED.toLocaleString()} Results`
+                  : (
+                    activeFilters > 0
+                      ? `${activeFilters} Lot Filter${activeFilters === 1 ? '' : 's'} Active`
+                      : (highlight ? `Custom Highlighting` : '')
+                  )
                 }
               </ActiveFilters>
               <div>
