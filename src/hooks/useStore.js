@@ -504,7 +504,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     isAssetSearchMatchingDefault: (assetType) => {
       if (!assetType) return true;
-      console.log('as', assetType, get().assetSearch[assetType].sort);
       return isEqual(get().assetSearch[assetType].filters, assetSearchDefaults[assetType].filters)
         && isEqual(get().assetSearch[assetType].sort, assetSearchDefaults[assetType].sort)
     },
