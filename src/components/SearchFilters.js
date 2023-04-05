@@ -45,6 +45,20 @@ const buildingTypeOptions = Object.keys(Capable.TYPES)
     { key, label: Capable.TYPES[key].name, initialValue: true }
   ]), []);
 
+  const buildingTypeColors = {
+    0: '#666666',
+    1: '#ff8c00',
+    2: '#e81123',
+    3: '#ec008c',
+    4: '#68217a',
+    5: '#00188f',
+    6: '#00bcf2',
+    7: '#00b294',
+    8: '#009e49',
+    9: '#bad80a',
+    10: '#fff100',
+  };
+
 const lotSearchBuildingTypeOptions = Object.keys(Capable.TYPES).reduce((acc, key) => ([
   ...acc,
   { key, label: Capable.TYPES[key].name, initialValue: true }
@@ -58,19 +72,13 @@ const constructionStatusOptions = Object.keys(Construction.STATUSES)
   ]), [])
   .filter(({ key }) => key > 0);
 
-const buildingTypeColors = {
-  0: '#666666',
-  1: '#ff8c00',
-  2: '#e81123',
-  3: '#ec008c',
-  4: '#68217a',
-  5: '#00188f',
-  6: '#00bcf2',
-  7: '#00b294',
-  8: '#009e49',
-  9: '#bad80a',
-  10: '#fff100',
-};
+const actionItemStatusOptions = [
+  { key: 'pending', label: 'Processing', initialValue: true },
+  { key: 'failed', label: 'Failed', initialValue: true },
+  { key: 'ready', label: 'Ready', initialValue: true },
+  { key: 'unready', label: 'Not Ready', initialValue: true },
+  { key: 'plans', label: 'Planned', initialValue: true },
+];
 
 // resource type filter configs
 const resourceTypeOptions = Object.keys(Inventory.RESOURCES)
@@ -126,11 +134,12 @@ const yieldConfig = {
 
 
 
-// TODO: there is probably a more performant way to break these apart
+// TODO: there is probably a more performant and/or organized way to break these apart
 //  (and to memoize any inputs possible)
 const SearchFilters = ({ assetType, highlighting }) => {
   const { data: sale } = useSale();
   const asteroidId = useStore(s => s.asteroids.origin);
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const filters = useStore(s => s.assetSearch[assetType].filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
   
@@ -159,7 +168,10 @@ const SearchFilters = ({ assetType, highlighting }) => {
     if (['buildings','coresamples','leases','lots'].includes(assetType)) {
       onFiltersChange({ asteroid: asteroidId });
     }
-  }, [asteroidId, assetType]);
+    else if (['actionitems'].includes(assetType)) {
+      onFiltersChange({ asteroid: zoomStatus === 'in' ? asteroidId : undefined });
+    }
+  }, [asteroidId, assetType, zoomStatus]);
 
 
   if (assetType === 'asteroids' || assetType === 'asteroidsMapped') {
@@ -358,6 +370,24 @@ const SearchFilters = ({ assetType, highlighting }) => {
           title="Construction Status" />
       </>
     );
+  }
+  if (assetType === 'actionitems') {
+    return (
+      <>
+        <TextFilter
+          {...filterProps}
+          fieldName="asteroid"
+          isId
+          placeholder="Filter by Asteroid Id..."
+          title="Asteroid" />
+
+        <CheckboxFilter
+          {...filterProps}
+          fieldName="status"
+          options={actionItemStatusOptions}
+          title="Status" />
+      </>
+    )
   }
   return null;
 };

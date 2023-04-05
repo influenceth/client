@@ -1,39 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import { AiOutlineExclamation as FailureIcon, AiFillPushpin as UnpinIcon, AiOutlinePushpin as PinIcon } from 'react-icons/ai';
+import { AiOutlineExclamation as FailureIcon } from 'react-icons/ai';
 import { MdClear as DismissIcon } from 'react-icons/md';
 import BarLoader from 'react-spinners/BarLoader';
-import { Capable, Inventory } from '@influenceth/sdk';
-import moment from 'moment';
 
-import {
-  UnplanBuildingIcon,
-  ConstructIcon,
-  NewCoreSampleIcon,
-  CrewIcon,
-  CrewMemberIcon,
-  DeconstructIcon,
-  ExtractionIcon,
-  ImproveCoreSampleIcon,
-  PlanBuildingIcon,
-  PurchaseAsteroidIcon,
-  ScanAsteroidIcon,
-  SurfaceTransferIcon,
-  LinkIcon,
-  PopoutIcon,
-} from '~/components/Icons';
+import { PopoutIcon, } from '~/components/Icons';
 import CollapsibleSection from '~/components/CollapsibleSection';
 import LiveTimer from '~/components/LiveTimer';
 import NavIcon from '~/components/NavIcon';
-import OnClickLink from '~/components/OnClickLink';
 import { useLotLink } from '~/components/LotLink';
 import useActionItems from '~/hooks/useActionItems';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import theme, { hexToRGB } from '~/theme';
+import { formatActionItem, itemColors, statuses } from '~/lib/actionItem';
+import { hexToRGB } from '~/theme';
 
 const ICON_WIDTH = 34;
 const ITEM_WIDTH = 400;
@@ -92,7 +75,7 @@ const InProgressFilter = styled(Filter)`
 const LinkContainer = styled.div`
   flex: 1;
   text-align: right;
-  & > span {
+  & > a {
     color: ${p => p.theme.colors.main};
   }
 `;
@@ -288,338 +271,15 @@ const ActionItemRow = styled.div`
   }
 `;
 
-const formatItem = (item) => {
-  const formatted = {
-    key: item.key,
-    icon: null,
-    label: '',
-    asteroidId: null,
-    lotId: null,
-    resourceId: null,
-    locationDetail: '',
-    completionTime: item.data?.completionTime || 0,
-    ago: (new moment(new Date(1000 * (item.data?.completionTime || 0)))).fromNow(),
-    onClick: null
-  };
-
-  switch(item.event.name) {
-    case 'Dispatcher_AsteroidStartScan':
-      formatted.icon = <ScanAsteroidIcon />;
-      formatted.label = 'Asteroid Scan';
-      formatted.asteroidId = item.event.returnValues?.asteroidId;
-      formatted.onClick = ({ history }) => {
-        history.push(`/asteroids/${formatted.asteroidId}/resources`);
-      };
-      break;
-
-    case 'Dispatcher_CoreSampleStartSampling':
-      const isImprovement = item.assets?.coreSample?.initialYield > 0;
-      formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
-      formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
-      formatted.asteroidId = item.event.returnValues?.asteroidId;
-      formatted.lotId = item.event.returnValues?.lotId;
-      formatted.resourceId = item.event.returnValues?.resourceId;
-      formatted.locationDetail = Inventory.RESOURCES[item.event.returnValues?.resourceId].name;
-      formatted.onClick = ({ openDialog }) => {
-        openDialog(isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
-      };
-      break;
-
-    case 'Dispatcher_ConstructionStart':
-      formatted.icon = <ConstructIcon />;
-      formatted.label = `${Capable.TYPES[item.assets.building.type]?.name || 'Building'} Construction`;
-      formatted.asteroidId = item.assets.asteroid.i;
-      formatted.lotId = item.assets.lot.i;
-      formatted.onClick = ({ openDialog }) => {
-        openDialog('CONSTRUCT');
-      };
-      break;
-
-    case 'Dispatcher_ExtractionStart':
-      formatted.icon = <ExtractionIcon />;
-      formatted.label = `${Inventory.RESOURCES[item.event.returnValues?.resourceId]?.name || 'Resource'} Extraction`;
-      formatted.asteroidId = item.event.returnValues?.asteroidId;
-      formatted.lotId = item.event.returnValues?.lotId;
-      formatted.resourceId = item.event.returnValues?.resourceId;
-      formatted.onClick = ({ openDialog }) => {
-        openDialog('EXTRACT_RESOURCE');
-      };
-      break;
-
-    case 'Dispatcher_InventoryTransferStart':
-      formatted.icon = <SurfaceTransferIcon />;
-      formatted.label = 'Surface Transfer';
-      formatted.asteroidId = item.event.returnValues?.asteroidId;
-      formatted.lotId = item.event.returnValues?.destinationLotId;  // after start, link to destination
-      formatted.onClick = ({ openDialog }) => {
-        openDialog('SURFACE_TRANSFER', { deliveryId: item.assets.delivery?.deliveryId });
-      };
-      break;
-
-    default:
-      console.log('Unhandled ActionItem', item);
-      break;
-  }
-  return formatted;
-};
-
-const formatPlans = (item) => {
-  return {
-    key: item.key,
-    icon: <PlanBuildingIcon />,
-    label: `${item.building.type} Site Plan`,
-    crewId: item.occupier,
-    asteroidId: item.asteroid,
-    lotId: item.i,
-    resourceId: null,
-    locationDetail: '',
-    completionTime: item.waitingFor,
-    onClick: ({ openDialog }) => {
-      openDialog('CONSTRUCT');
-    }
-  };
-};
-
-const formatTx = (item) => {
-  const formatted = {
-    key: item.key,
-    txHash: item.txHash,
-    icon: null,
-    label: '',
-    crewId: null,
-    asteroidId: null,
-    lotId: null,
-    resourceId: null,
-    locationDetail: '',
-    completionTime: null,
-    onClick: null,
-    _timestamp: item.timestamp // (only used for dismissing failed tx's)
-  };
-  switch(item.event?.event || item.key) {
-    case 'PURCHASE_ASTEROID':
-      formatted.icon = <PurchaseAsteroidIcon />;
-      formatted.label = 'Purchase Asteroid';
-      formatted.asteroidId = item.vars.i;
-      break;
-
-    case 'NAME_ASTEROID':
-      formatted.icon = <PurchaseAsteroidIcon />;
-      formatted.label = 'Name Asteroid';
-      formatted.asteroidId = item.vars.i;
-      formatted.locationDetail = item.vars.name;
-      formatted.onClick = ({ history }) => {
-        history.push(`/asteroids/${formatted.asteroidId}`);
-      };
-      break;
-
-    case 'START_ASTEROID_SCAN':
-      formatted.icon = <ScanAsteroidIcon />;
-      formatted.label = 'Asteroid Scan';
-      formatted.asteroidId = item.vars.i;
-      formatted.onClick = ({ history }) => {
-        history.push(`/asteroids/${formatted.asteroidId}/resources`);
-      };
-      break;
-    case 'FINISH_ASTEROID_SCAN':
-      formatted.icon = <ScanAsteroidIcon />;
-      formatted.label = 'Retrieve Scan Results';
-      formatted.asteroidId = item.vars.i;
-      formatted.onClick = ({ history }) => {
-        history.push(`/asteroids/${formatted.asteroidId}/resources`);
-      };
-      break;
-
-    case 'SET_ACTIVE_CREW':
-      formatted.icon = <CrewIcon />;
-      formatted.label = 'Update Crew';
-      formatted.onClick = ({ history }) => {
-        history.push(`/owned-crew`);
-      };
-      break;
-    case 'NAME_CREW':
-      formatted.icon = <CrewMemberIcon />;
-      formatted.label = 'Name Crewmate';
-      formatted.onClick = ({ history }) => {
-        history.push(`/crew/${item.vars.i}`);
-      };
-      break;
-    case 'INITIALIZE_CREWMATE':
-      formatted.icon = <CrewIcon />;
-      formatted.label = 'Initialize Crewmate';
-      formatted.onClick = ({ history }) => {
-        if (item.vars.sessionId) {
-          history.push(`/crew-assignment/${item.vars.sessionId}/create`);
-        } else {
-          history.push(`/owned-crew`);
-        }
-      };
-      break;
-    case 'PURCHASE_AND_INITIALIZE_CREWMATE':
-      formatted.icon = <CrewIcon />;
-      formatted.label = 'Mint Crewmate';
-      formatted.onClick = ({ history }) => {
-        if (item.vars.sessionId) {
-          history.push(`/crew-assignment/${item.vars.sessionId}/create`);
-        } else {
-          history.push(`/owned-crew`);
-        }
-      };
-      break;
-
-    case 'START_CORE_SAMPLE':
-      const isImprovement = item.vars.sampleId > 0;
-      formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
-      formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
-      formatted.asteroidId = item.vars.asteroidId;
-      formatted.lotId = item.vars.lotId;
-      formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
-      formatted.onClick = ({ openDialog }) => {
-        // TODO: in case of failure (and improvement mode), should link with selected sampleId
-        // (low priority b/c would have to fail and would have to have closed dialog)
-        openDialog(isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
-      };
-      break;
-    case 'FINISH_CORE_SAMPLE':
-      formatted.icon = <NewCoreSampleIcon />;
-      formatted.label = `Core Analysis`;
-      formatted.asteroidId = item.vars.asteroidId;
-      formatted.lotId = item.vars.lotId;
-      formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
-      formatted.onClick = ({ openDialog, lot }) => {
-        const isImprovement = item.vars.sampleId && lot?.coreSamples?.length > 0 && !!lot.coreSamples.find((s) => (
-          s.sampleId === item.vars.sampleId
-          && s.resourceId === formatted.resourceId
-          && s.initialYield > 0
-        ));
-        openDialog(isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
-      };
-      break;
-
-    case 'PLAN_CONSTRUCTION':
-      formatted.icon = <PlanBuildingIcon />;
-      formatted.label = `Plan ${Capable.TYPES[item.vars.capableType]?.name || 'Building'} Site`;
-      formatted.asteroidId = item.vars.asteroidId;
-      formatted.lotId = item.vars.lotId;
-      formatted.onClick = ({ openDialog }) => {
-        // TODO: in case of failure, should link with selected building type
-        // (low priority b/c would have to fail and would have to have closed dialog)
-        openDialog('PLAN_BUILDING');
-      };
-      break;
-    case 'UNPLAN_CONSTRUCTION':
-      formatted.icon = <UnplanBuildingIcon />;
-      formatted.label = 'Unplan Building Site';
-      formatted.asteroidId = item.vars.asteroidId;
-      formatted.lotId = item.vars.lotId;
-      formatted.onClick = ({ openDialog }) => {
-        openDialog('UNPLAN_BUILDING');
-      };
-      break;
-    case 'START_CONSTRUCTION':
-      formatted.icon = <ConstructIcon />;
-      formatted.label = 'Start Construction';
-      formatted.asteroidId = item.vars.asteroidId;
-      formatted.lotId = item.vars.lotId;
-      formatted.onClick = ({ openDialog }) => {
-        openDialog('CONSTRUCT');
-      };
-      break;
-    case 'FINISH_CONSTRUCTION':
-      formatted.icon = <ConstructIcon />;
-      formatted.label = 'Finish Construction';
-      formatted.asteroidId = item.vars.asteroidId;
-      formatted.lotId = item.vars.lotId;
-      formatted.onClick = ({ openDialog }) => {
-        openDialog('CONSTRUCT');
-      };
-      break;
-    case 'DECONSTRUCT':
-      formatted.icon = <DeconstructIcon />;
-      formatted.label = 'Deconstruct';
-      formatted.asteroidId = item.vars.asteroidId;
-      formatted.lotId = item.vars.lotId;
-      formatted.onClick = ({ openDialog }) => {
-        openDialog('DECONSTRUCT');
-      };
-      break;
-
-    case 'START_EXTRACTION':
-      formatted.icon = <ExtractionIcon />;
-      formatted.label = `${Inventory.RESOURCES[item.vars.resourceId]?.name || 'Resource'} Extraction`;
-      formatted.asteroidId = item.vars.asteroidId;
-      formatted.lotId = item.vars.lotId;
-      formatted.resourceId = item.vars.resourceId;
-      formatted.onClick = ({ openDialog }) => {
-        // TODO: in case of failure, should link with sample preset, destination, and amount selection
-        // (low priority b/c would have to fail and would have to have closed dialog)
-        openDialog('EXTRACT_RESOURCE');
-      };
-      break;
-    case 'FINISH_EXTRACTION':
-      formatted.icon = <ExtractionIcon />;
-      formatted.label = 'Finish Extraction';
-      formatted.asteroidId = item.vars.asteroidId;
-      formatted.lotId = item.vars.lotId;
-      formatted.onClick = ({ openDialog }) => {
-        openDialog('EXTRACT_RESOURCE');
-      };
-      break;
-
-    case 'START_DELIVERY':
-      formatted.icon = <SurfaceTransferIcon />;
-      formatted.label = 'Start Transfer';
-      formatted.asteroidId = item.vars.asteroidId;
-      formatted.lotId = item.vars.originLotId;  // at start, link to origin (in case of failure)
-      formatted.onClick = ({ openDialog }) => {
-        // TODO: in case of failure, should link with selected resource and destination
-        // (low priority b/c would have to fail and would have to have closed dialog)
-        openDialog('SURFACE_TRANSFER');
-      };
-      break;
-    case 'FINISH_DELIVERY':
-      formatted.icon = <SurfaceTransferIcon />;
-      formatted.label = 'Finish Transfer';
-      formatted.asteroidId = item.vars.asteroidId;
-      formatted.lotId = item.vars.destLotId;  // after start, link to destination
-      formatted.onClick = ({ openDialog }) => {
-        openDialog('SURFACE_TRANSFER', { deliveryId: item.vars.deliveryId });
-      };
-      break;
-    default:
-      console.log('Unhandled ActionItems tx', item);
-      break;
-  }
-  return formatted;
-};
-
-const itemColors = {
-  pending: hexToRGB(theme.colors.purple),
-  failed: hexToRGB(theme.colors.error),
-  ready: theme.colors.successRGB,
-  unready: theme.colors.mainRGB,
-  plans: '248, 133, 44',
-};
-
-const statuses = {
-  pending: 'Processing',
-  failed: 'Failed',
-  ready: 'Ready',
-  unready: '',
-  plans: ''
-};
-
-const ActionItem = ({ data, type }) => {
+const ActionItem = ({ data }) => {
   const history = useHistory();
   const currentAsteroid = useStore(s => s.asteroids);
   const dispatchActionDialog = useStore(s => s.dispatchActionDialog);
   const dismissFailedTx = useStore(s => s.dispatchFailedTransactionDismissed);
+  const type = data?.type;
 
   // TODO: can probably clean up the `formatted` structure
-  const item = useMemo(() => {
-    if (type === 'pending' || type === 'failed') return formatTx(data, history);
-    if (type === 'plans') return formatPlans(data);
-    return formatItem(data);
-  }, [data]);
+  const item = useMemo(() => formatActionItem(data), [data]);
 
   const { data: asteroid } = useAsteroid(item.asteroidId);
   const { data: lot } = useLot(item.asteroidId, item.lotId);
@@ -721,84 +381,8 @@ const ActionItem = ({ data, type }) => {
 };
 
 const ActionItems = () => {
-  const {
-    pendingTransactions,
-    failedTransactions,
-    readyItems: allReadyItems,
-    unreadyItems,
-    plannedItems: allPlannedItems
-  } = useActionItems() || {};
-
-  const { token, account } = useAuth();
-
-  // hide readyItems that have a pending transaction
-  const readyItems = useMemo(() => {
-    return allReadyItems.filter((item) => {
-      if (pendingTransactions) {
-        switch (item.event.name) {
-          case 'Dispatcher_AsteroidStartScan':
-            return !pendingTransactions.find((tx) => (
-              tx.key === 'FINISH_ASTEROID_SCAN'
-              && tx.vars.i === item.event.returnValues?.asteroidId
-            ));
-          case 'Dispatcher_CoreSampleStartSampling':
-            return !pendingTransactions.find((tx) => (
-              tx.key === 'FINISH_CORE_SAMPLE'
-              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-              && tx.vars.lotId === item.event.returnValues?.lotId
-            ));
-          case 'Dispatcher_ConstructionStart':
-            return !pendingTransactions.find((tx) => (
-              tx.key === 'FINISH_CONSTRUCTION'
-              && tx.vars.asteroidId === item.assets.asteroid.i
-              && tx.vars.lotId === item.assets.lot.i
-            ));
-          case 'Dispatcher_ExtractionStart':
-            return !pendingTransactions.find((tx) => (
-              tx.key === 'FINISH_EXTRACTION'
-              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-              && tx.vars.lotId === item.event.returnValues?.lotId
-            ));
-          case 'Dispatcher_InventoryTransferStart':
-            return !pendingTransactions.find((tx) => (
-              tx.key === 'FINISH_DELIVERY'
-              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-              && tx.vars.destLotId === item.event.returnValues?.destinationLotId
-              && tx.vars.deliveryId === item.assets.delivery?.deliveryId
-            ));
-        }
-      }
-      return true;
-    });
-  }, [pendingTransactions, allReadyItems]);
-
-  const plannedItems = useMemo(() => {
-    return allPlannedItems.filter((item) => {
-      if (pendingTransactions) {
-        return !pendingTransactions.find((tx) => (
-          ['START_CONSTRUCTION', 'UNPLAN_CONSTRUCTION'].includes(tx.key)
-          && tx.vars.asteroidId === item.asteroid
-          && tx.vars.lotId === item.i
-        ));
-      }
-      return true;
-    });
-  }, [pendingTransactions, allPlannedItems]);
-
-  const allItems = useMemo(() => {
-    if (!account || !token) return [];
-
-    return [
-      ...(pendingTransactions || []).map((item) => ({ ...item, type: 'pending' })),
-      ...(failedTransactions || []).map((item) => ({ ...item, type: 'failed' })),
-      ...(readyItems || []).map((item) => ({ ...item, type: 'ready' })),
-      ...(plannedItems || []).map((item) => ({ ...item, type: 'plans' })),
-      ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready' }))
-    ].map((x) => {  // make sure everything has a key
-      if (!x.key) x.key = `${x.type}_${x.txHash || x.id || x.timestamp || x.gracePeriodEnd}`;
-      return x;
-    });
-  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems, account, token]);
+  const { account } = useAuth();
+  const { allVisibleItems: allItems } = useActionItems();
 
   const [displayItems, setDisplayItems] = useState();
   useEffect(() => {
@@ -864,16 +448,16 @@ const ActionItems = () => {
               <ReadyFilter tally={tallies.ready} onClick={onClickFilter('ready')} selected={selectedFilter === 'ready'} />
               <InProgressFilter tally={tallies.progress} onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'} />
               <LinkContainer>
-                <OnClickLink>
+                <Link to="/listview/actionitems" onClick={(e) => e.stopPropagation()}>
                   <PopoutIcon />
-                </OnClickLink>
+                </Link>
               </LinkContainer>
             </Filters>
           )}>
           <ActionItemWrapper>
             <ActionItemContainer>
-              {filteredDisplayItems.map(({ transition, type, ...item }) => (
-                <ActionItem key={`${type}_${item.key || item.i}_${item.timestamp || item.gracePeriodEnd}`} data={item} type={type} />
+              {filteredDisplayItems.map(({ transition, ...item }) => (
+                <ActionItem key={`${item.type}_${item.key || item.i}_${item.timestamp || item.gracePeriodEnd}`} data={item} />
               ))}
             </ActionItemContainer>
           </ActionItemWrapper>

@@ -10,18 +10,17 @@ import api from '~/lib/api';
 const ActionItemContext = React.createContext();
 
 export function ActionItemProvider({ children }) {
-  const { walletContext: { starknet } } = useAuth();
+  const { account, token, walletContext: { starknet } } = useAuth();
   const chainTime = useChainTime();
   const { crew } = useCrewContext();
 
-  const { data: actionItems } = useQuery(
+  const { data: actionItems, isLoading: actionItemsLoading } = useQuery(
     [ 'actionItems', crew?.i ],
     () => api.getCrewActionItems(),
     { enabled: !!crew?.i }
   );
 
-  // TODO: probably could move planned lots into actionitems component
-  const { data: plannedLots } = useQuery(
+  const { data: plannedLots, isLoading: plannedLotsLoading } = useQuery(
     [ 'planned', crew?.i ],
     () => api.getCrewPlannedLots(),
     { enabled: !!crew?.i }
@@ -103,26 +102,97 @@ export function ActionItemProvider({ children }) {
     }
   }, [nextCompletionTime]);
 
+  const allVisibleItems = useMemo(() => {
+    if (!account || !token) return [];
+
+    const visibleReadyItems = readyItems.filter((item) => {
+      if (pendingTransactions) {
+        switch (item.event.name) {
+          case 'Dispatcher_AsteroidStartScan':
+            return !pendingTransactions.find((tx) => (
+              tx.key === 'FINISH_ASTEROID_SCAN'
+              && tx.vars.i === item.event.returnValues?.asteroidId
+            ));
+          case 'Dispatcher_CoreSampleStartSampling':
+            return !pendingTransactions.find((tx) => (
+              tx.key === 'FINISH_CORE_SAMPLE'
+              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+              && tx.vars.lotId === item.event.returnValues?.lotId
+            ));
+          case 'Dispatcher_ConstructionStart':
+            return !pendingTransactions.find((tx) => (
+              tx.key === 'FINISH_CONSTRUCTION'
+              && tx.vars.asteroidId === item.assets.asteroid.i
+              && tx.vars.lotId === item.assets.lot.i
+            ));
+          case 'Dispatcher_ExtractionStart':
+            return !pendingTransactions.find((tx) => (
+              tx.key === 'FINISH_EXTRACTION'
+              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+              && tx.vars.lotId === item.event.returnValues?.lotId
+            ));
+          case 'Dispatcher_InventoryTransferStart':
+            return !pendingTransactions.find((tx) => (
+              tx.key === 'FINISH_DELIVERY'
+              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+              && tx.vars.destLotId === item.event.returnValues?.destinationLotId
+              && tx.vars.deliveryId === item.assets.delivery?.deliveryId
+            ));
+        }
+      }
+      return true;
+    });
+
+    const visiblePlannedItems = plannedItems.filter((item) => {
+      if (pendingTransactions) {
+        return !pendingTransactions.find((tx) => (
+          ['START_CONSTRUCTION', 'UNPLAN_CONSTRUCTION'].includes(tx.key)
+          && tx.vars.asteroidId === item.asteroid
+          && tx.vars.lotId === item.i
+        ));
+      }
+      return true;
+    });
+
+    return [
+      ...(pendingTransactions || []).map((item) => ({ ...item, type: 'pending' })),
+      ...(failedTransactions || []).map((item) => ({ ...item, type: 'failed' })),
+      ...(visibleReadyItems || []).map((item) => ({ ...item, type: 'ready' })),
+      ...(visiblePlannedItems || []).map((item) => ({ ...item, type: 'plans' })),
+      ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready' }))
+    ].map((x) => {  // make sure everything has a key
+      if (!x.key) x.key = `${x.type}_${x.txHash || x.id || x.timestamp || x.gracePeriodEnd}`;
+      return x;
+    });
+
+  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems, account, token]);
+
+
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining
 
   // without memoizing, triggers as if new value on every chainTime update
   const contextValue = useMemo(() => ({
+    allVisibleItems,
     liveBlockTime,
     pendingTransactions,
     failedTransactions,
     readyItems,
     plannedItems,
     unreadyItems,
-    actionItems
+    actionItems,
+    isLoading: actionItemsLoading || plannedLotsLoading
   }), [
+    allVisibleItems,
     liveBlockTime,
     pendingTransactions,
     failedTransactions,
     readyItems,
     plannedItems,
     unreadyItems,
-    actionItems
+    actionItems,
+    actionItemsLoading,
+    plannedLotsLoading
   ]);
 
   // TODO: pending and failed transactions are already in context

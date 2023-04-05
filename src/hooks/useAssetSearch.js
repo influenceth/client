@@ -192,6 +192,8 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
   let esAssetType = assetType;
   if (esAssetType === 'asteroidsMapped') esAssetType = 'asteroids';
   if (esAssetType === 'lotsMapped') esAssetType = '';
+  if (esAssetType === 'actionitems') esAssetType = '';
+  if (esAssetType === 'eventlog') esAssetType = '';
   
   useEffect(() => {
     if (esAssetType) {

@@ -1,6 +1,8 @@
 import styled from 'styled-components';
 import { TriangleDownIcon, TriangleUpIcon } from './Icons';
 
+import { itemColors } from '~/lib/actionItem';
+
 const minColumnWidth = 190;
 
 const align = {
@@ -36,10 +38,27 @@ const DataTable = styled.table.attrs({
 const DataTableHead = styled.thead``;
 const DataTableBody = styled.tbody``;
 const DataTableRow = styled.tr`
-  &:hover {
-    td {
-      background: rgba(${p => p.theme.colors.mainRGB}, 0.1);
-    }
+  ${p => p.status
+    ? `
+      td {
+        background: rgba(${itemColors[p.status]}, 0.12);
+        i {
+          color: rgb(${itemColors[p.status]});
+        }
+      }
+      &:hover {
+        td {
+          background: rgba(${itemColors[p.status]}, 0.16);
+        }
+      }
+    `
+    : `
+      &:hover {
+        td {
+          background: rgba(${p.theme.colors.mainRGB}, 0.1);
+        }
+      }
+    `
   }
 `;
 const SortIcon = styled.span`
@@ -121,9 +140,12 @@ const DataTableCell = styled.td`
     }
   }
 `;
+
+const getEmptyObj = () => ({});
 const DataTableComponent = ({
   columns,
   data,
+  getRowProps = getEmptyObj,
   keyField,
   onClickColumn,
   sortField,
@@ -158,7 +180,7 @@ const DataTableComponent = ({
     </DataTableHead>
     <DataTableBody>
       {(data || []).map((row, i) => (
-        <DataTableRow key={keyField ? row[keyField] : i}>
+        <DataTableRow key={keyField ? row[keyField] : i} {...getRowProps(row)}>
           {columns.map((c) => (
             <DataTableCell
               key={c.key}

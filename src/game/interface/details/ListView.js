@@ -27,9 +27,12 @@ import Button from '~/components/ButtonAlt';
 import Dropdown from '~/components/DropdownV2';
 import { useHistory, useParams } from 'react-router-dom';
 import Multiselect from '~/components/Multiselect';
-import listConfigs from './listViews';
-import theme from '~/theme';
+import { itemColors, statuses } from '~/lib/actionItem';
+import usePagedActionItems from '~/hooks/usePagedActionItems';
+import usePagedEvents from '~/hooks/usePagedEvents';
 import useStore from '~/hooks/useStore';
+import theme from '~/theme';
+import listConfigs from './listViews';
 
 const footerMargin = 12;
 const filterWidth = 344;
@@ -214,6 +217,28 @@ const assetTypes = {
   //   title: 'Transactions',
   //   useColumns: listConfigs.asteroids,
   // },
+  actionitems: {
+    keyField: 'key',
+    icon: <RocketIcon />,
+    title: 'Active Events',
+    useColumns: listConfigs.actionItems,
+    usePagedAssetsOverride: usePagedActionItems,
+    disableFilters: true,
+    getRowProps: (row) => {
+      if (statuses[row.type]) {
+        return { status: row.type };
+      }
+      return {};
+    }
+  },
+  eventlog: {
+    keyField: 'i',
+    icon: <RocketIcon />,
+    title: 'Logged Events',
+    useColumns: listConfigs.events,
+    usePagedAssetsOverride: usePagedEvents,
+    disableFilters: true
+  },
 }
 
 const assetsAsOptions = Object.keys(assetTypes).map((key) => ({
@@ -223,9 +248,9 @@ const assetsAsOptions = Object.keys(assetTypes).map((key) => ({
 }));
 
 const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
-  const { keyField, title, useColumns } = assetTypes[assetType];
-  const { query, page, perPage, setPage, sort, setSort } = usePagedAssets(assetType);
-  const [sortField, sortDirection] = sort;
+  const { keyField, getRowProps, useColumns, usePagedAssetsOverride } = assetTypes[assetType];
+  const { query, page, perPage, setPage, sort, setSort } = usePagedAssetsOverride ? usePagedAssetsOverride() : usePagedAssets(assetType); // eslint-disable-line react-hooks/rules-of-hooks
+  const [sortField, sortDirection] = sort || [];
 
   const filters = useStore(s => s.assetSearch[assetType].filters);
   const isAssetSearchFilterMatchingDefault = useStore(s => s.isAssetSearchFilterMatchingDefault);
@@ -355,6 +380,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
             <DataTable
               columns={enabledColumns}
               data={query?.data?.hits || []}
+              getRowProps={getRowProps}
               keyField={keyField}
               onClickColumn={handleSort}
               sortDirection={sort[1]}

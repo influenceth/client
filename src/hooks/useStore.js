@@ -18,12 +18,14 @@ const {
 const buildingIds = Object.keys(Capable.TYPES).filter((k) => k > 0).map((k) => k.toString());
 
 const assetSearchDefaults = {
+  actionitems: { filters: {}, sort: ['time', 'asc'] },
   asteroids: { filters: {}, sort: ['r', 'desc'] },
   asteroidsMapped: { filters: {}, sort: ['r', 'desc'], highlight: null },
   buildings: { filters: {}, sort: ['lot.i', 'asc'] },
   coresamples: { filters: { status: [2,3] }, sort: ['lot.i', 'asc'] },
   crewmates: { filters: {}, sort: ['i', 'asc'] },
   crews: { filters: {}, sort: ['i', 'asc'] },
+  eventlog: { filters: {}, sort: [] },
   ships: { filters: {}, sort: ['i', 'asc'] },
   orders: { filters: {}, sort: ['i', 'asc'] },
   leases: { filters: {}, sort: ['lot.i', 'asc'] },
