@@ -223,7 +223,6 @@ const assetTypes = {
     title: 'Active Events',
     useColumns: listConfigs.actionItems,
     usePagedAssetsOverride: usePagedActionItems,
-    disableFilters: true,
     getRowProps: (row) => {
       if (statuses[row.type]) {
         return { status: row.type };
@@ -248,7 +247,7 @@ const assetsAsOptions = Object.keys(assetTypes).map((key) => ({
 }));
 
 const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
-  const { keyField, getRowProps, useColumns, usePagedAssetsOverride } = assetTypes[assetType];
+  const { keyField, getRowProps, useColumns, usePagedAssetsOverride, disableFilters } = assetTypes[assetType];
   const { query, page, perPage, setPage, sort, setSort } = usePagedAssetsOverride ? usePagedAssetsOverride() : usePagedAssets(assetType); // eslint-disable-line react-hooks/rules-of-hooks
   const [sortField, sortDirection] = sort || [];
 
@@ -342,6 +341,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
                 data-tip={filtersOpen ? 'Hide Filters' : 'Show Filters'}
                 background={filtersOpen ? theme.colors.main : undefined}
                 badge={filtersOpen ? undefined : activeFilters}
+                disabled={disableFilters}
                 subtle={!filtersOpen || undefined}
                 onClick={onToggleFilters}
                 size="bigicon">

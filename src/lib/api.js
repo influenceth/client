@@ -22,6 +22,12 @@ useStore.subscribe(
   }
 );
 
+const buildQuery = (queryObj) => {
+  return Object.keys(queryObj || {}).map((key) => {
+    return `${encodeURIComponent(key)}=${encodeURIComponent(queryObj[key])}`;
+  }).join('&');
+};
+
 const api = {
   getUser: async () => {
     const response = await instance.get('/v1/user');
@@ -43,10 +49,11 @@ const api = {
     return response.data;
   },
 
-  getEvents: async (since) => {
-    const response = await instance.get(`/v1/user/events${since ? `?since=${since}` : ''}`);
+  getEvents: async (query) => {
+    const response = await instance.get(`/v1/user/events${query ? `?${buildQuery(query)}` : ''}`);
     return {
       events: response.data,
+      totalHits: query.returnTotal ? parseInt(response.headers['total-hits']) : undefined,
       blockNumber: parseInt(response.headers['starknet-block-number']),
       // ethBlockNumber: parseInt(response.headers['eth-block-number'])  // NOTE: probably not needed anymore
     };

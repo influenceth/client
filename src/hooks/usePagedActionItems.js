@@ -5,7 +5,7 @@ import { formatActionItem } from '~/lib/actionItem';
 import useStore from './useStore';
 
 const assetType = 'actionitems';
-const pageSize = 50;
+const pageSize = 25;
 
 const typeOrder = ['pending', 'failed', 'ready', 'unready', 'plans'];
 

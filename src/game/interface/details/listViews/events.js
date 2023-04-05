@@ -1,16 +1,33 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import styled from 'styled-components';
-import { Inventory } from '@influenceth/sdk';
+import moment from 'moment';
 
-import {
-  CrewIcon,
-  CrewmateIcon,
-  MyAssetIcon,
-} from '~/components/Icons';
+import { LinkIcon, } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
-import { formatFixed } from '~/lib/utils';
 import { LocationLink } from './components';
+import OnClickLink from '~/components/OnClickLink';
+import theme from '~/theme';
+
+const Content = styled.div`
+  & a,
+  ${OnClickLink} {
+    color: inherit;
+    display: inline-block;
+    pointer-events: none;
+    text-decoration: none;
+  }
+`;
+// TODO: pointer-events is a bit hacky to reuse getLogContent,
+//  so if we come back and address that, we'll probably want to 
+//  remove this hack
+
+const LocationLabel = styled.span`
+  margin-right: 8px;
+`;
+const BuildingLabel = styled.span`
+  color: white;
+`;
 
 const useColumns = () => {
   const { account } = useAuth();
@@ -19,72 +36,57 @@ const useColumns = () => {
   return useMemo(() => {
     const columns = [
       {
-        key: 'my',
+        key: 'icon',
         align: 'center',
-        icon: <MyAssetIcon />,
-        selector: row => row.owner === crew?.i ? <MyAssetIcon /> : null,
-        bodyStyle: { fontSize: '24px' },
-        requireLogin: true,
-        unhideable: true
+        bodyStyle: { color: 'white', fontSize: '24px' },
+        selector: (row) => row.icon,
+        unhideable: true,
       },
       {
-        key: 'resource',
-        label: 'Deposit',
-        sortField: 'resource',
-        selector: row => (
-          <>
-            <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} resourceId={row.resource} zoomToLot="Resources" />
-            <span>{Inventory.RESOURCES[row.resource]?.name}</span>
-          </>
-        ),
-        unhideable: true
+        key: 'content',
+        label: 'Event',
+        selector: row => <Content>{row.content}</Content>,
+        unhideable: true,
       },
       {
-        key: 'asteroid',
-        label: 'Asteroid',
-        sortField: 'asteroid.i',
-        selector: row => (
-          <>
-            <LocationLink asteroidId={row.asteroid?.i} resourceId={row.resource} />
-            <span>{row.asteroid?.i.toLocaleString()}</span>
-          </>
-        ),
+        key: 'time',
+        align: 'center',
+        label: 'Time',
+        selector: row => (new moment(new Date(1000 * (row.e.timestamp || 0)))).fromNow(),
       },
       {
-        key: 'lot',
-        label: 'Lot',
-        sortField: 'lot.i',
-        selector: row => (
-          <>
-            <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} resourceId={row.resource} />
-            <span>{row.lot?.i.toLocaleString()}</span>
-          </>
-        ),
-      },
-      {
-        key: 'remainingYield',
-        label: 'Amount',
-        sortField: 'remainingYield',
+        key: 'location',
+        label: ' ',
+        align: 'right',
         selector: row => {
-          if (row.initialYield === undefined) {
-            return `(incomplete)`;
-          }
-          else if (row.initialYield > row.remainingYield) {
-            return (
-              <>
-                {formatFixed(row.remainingYield / 1e3, 0)} t
-                <small style={{ marginLeft: 5 }}>(original {formatFixed(row.initialYield / 1e3, 0)} t)</small>
-              </>
-            );
-          }
-          return `${formatFixed(row.remainingYield / 1e3, 0)} t`;
+          if (!row.e.linked) return null;
+          const asteroid = row.e.linked.find((l) => l.type === 'Asteroid')?.asset;
+          const lot = row.e.linked.find((l) => l.type === 'Lot')?.asset;
+          const building = (lot && lot.building?.type) || 'Empty Lot';
+          
+          if (!asteroid) return null;
+          return (
+            <>
+              <LocationLabel>
+                <BuildingLabel>{lot ? `${building} > ` : ``}</BuildingLabel>
+                {asteroid?.customName || asteroid?.baseName || `Asteroid #${(asteroid?.i || 0).toLocaleString()}`}
+              </LocationLabel>
+              <LocationLink asteroidId={asteroid.i} lotId={lot?.i} />
+            </>
+          );
         },
+        unhideable: true,
       },
       {
-        key: 'forSale',
-        label: 'For Sale',
-        sortField: 'forSale',
-        selector: row => row.forSale ? '(TODO: price)' : 'No',  // TODO: ...
+        key: 'txLink',
+        align: 'center',
+        bodyStyle: { fontSize: '20px' },
+        selector: row => (
+          <a style={{ color: theme.colors.main }} href={row.txLink} target="_blank" rel="noopener noreferrer">
+            <LinkIcon />
+          </a>
+        ),
+        unhideable: true,
       },
     ];
 

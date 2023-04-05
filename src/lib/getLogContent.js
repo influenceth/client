@@ -370,6 +370,8 @@ const entries = {
   // })
 };
 
+export const types = Object.keys(entries);
+
 const getLogContent = ({ type, data }) => {
   try {
     return entries[type](data);

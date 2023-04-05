@@ -1,14 +1,15 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import EventsContext from '~/contexts/EventsContext';
+import api from '~/lib/api';
+import getLogContent, { types } from '~/lib/getLogContent';
 import useStore from './useStore';
 
 const assetType = 'eventlog';
-const pageSize = 50;
+const pageSize = 25;
 
 const usePagedEvents = () => {
-  const e = useContext(EventsContext);
-
+  const [data, setData] = useState({ hits: [], total: 0 });
+  const [loading, setLoading] = useState();
   const [page, setPage] = useState(1);
 
   const filters = useStore(s => s.assetSearch[assetType].filters || {});
@@ -18,6 +19,29 @@ const usePagedEvents = () => {
   useEffect(() => {
     setPage(1);
   }, [filters, sort]);
+  
+  useEffect(() => {
+    setLoading(true);
+
+    // TODO (enhancement): if not using any filters, should probably use react-query here...
+    //  but will need to invalidate these queries when get event updates from WS
+
+    api.getEvents({ page, pageSize, types, returnTotal: true })
+      .then(({ events, totalHits }) => {
+        setData({
+          hits: events.map((e) => ({
+            ...getLogContent({ type: e.event, data: e }),
+            e
+          })),
+          total: totalHits
+        });
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.warn(err);
+        setLoading(false);
+      });
+  }, [filters, sort, page]);
 
   return {
     page,
@@ -26,8 +50,8 @@ const usePagedEvents = () => {
     sort,
     setSort,
     query: {
-      data: [],
-      isLoading: false,
+      data: data,
+      isLoading: loading,
     }
   };
 };

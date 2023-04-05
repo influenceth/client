@@ -1,7 +1,6 @@
 import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import uniq from 'lodash.uniqby';
-import { Capable } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import api from '~/lib/api';
@@ -305,7 +304,7 @@ export function EventsProvider({ children }) {
         if (since) since = Math.floor(since / 1000);
       }
 
-      api.getEvents(since).then((eventData) => {
+      api.getEvents({ since }).then((eventData) => {
         handleEvents(eventData.events, true);
         setLastBlockNumber(eventData.blockNumber);
       });

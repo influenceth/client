@@ -25,7 +25,7 @@ const assetSearchDefaults = {
   coresamples: { filters: { status: [2,3] }, sort: ['lot.i', 'asc'] },
   crewmates: { filters: {}, sort: ['i', 'asc'] },
   crews: { filters: {}, sort: ['i', 'asc'] },
-  eventlog: { filters: {}, sort: [] },
+  eventlog: { filters: {}, sort: ['time', 'desc'] },
   ships: { filters: {}, sort: ['i', 'asc'] },
   orders: { filters: {}, sort: ['i', 'asc'] },
   leases: { filters: {}, sort: ['lot.i', 'asc'] },
