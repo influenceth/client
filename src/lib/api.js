@@ -85,11 +85,6 @@ const api = {
     return response.status;
   },
 
-  getAssets: async (i) => {
-    const response = await instance.get(`/v1/assets`);
-    return response.data;
-  },
-
   getAsteroid: async (i, extended = false) => {
     const response = await instance.get(`/v1/asteroids/${i}${extended ? '?extended=1' : ''}`);
     return response.data;
@@ -238,11 +233,6 @@ const api = {
       hits: response.data.hits.hits.map((h) => h._source),
       total: response.data.hits.total.value
     }
-  },
-
-  searchLots: async (query) => {
-    const response = await instance.get(`/lots/_search`, { params: query });
-    return response.data;
   },
 
   requestLogin: async (account) => {
