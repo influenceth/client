@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@cartridge/controller": "^0.3.8",
-    "@influenceth/sdk": "^2.0.0-beta.32",
+    "@influenceth/sdk": "^2.0.0-beta.33",
     "@popperjs/core": "^2.11.6",
     "@react-hook/throttle": "^2.2.0",
     "@react-three/drei": "^8.8.1",
