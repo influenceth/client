@@ -13,6 +13,7 @@
     "@web3-react/walletconnect-connector": "6.2.8",
     "animate.css": "^4.1.1",
     "axios": "^0.21.1",
+    "buffer": "^6.0.3",
     "compression": "^1.7.4",
     "connect-history-api-fallback": "^1.6.0",
     "ethers": "^5.4.1",

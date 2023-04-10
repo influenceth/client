@@ -11,6 +11,8 @@ import './index.css';
 import reportWebVitals from './reportWebVitals';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
+window.Buffer = window.Buffer || require('buffer').Buffer;
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
