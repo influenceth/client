@@ -58,7 +58,6 @@ const AsteroidItem = (props) => {
   const dispatchAsteroidUnhovered = useStore(s => s.dispatchAsteroidUnhovered);
   const origin = useStore(s => s.asteroids.origin);
   const selectOrigin = useStore(s => s.dispatchOriginSelected);
-  const clearOrigin = useStore(s => s.dispatchOriginCleared);
   const routePlannerActive = useStore(s => s.outliner.routePlanner.active);
   const destination = useStore(s => s.asteroids.destination);
   const selectDestination = useStore(s => s.dispatchDestinationSelected);
@@ -80,7 +79,7 @@ const AsteroidItem = (props) => {
       <Controls>
         <IconButton
           data-tip={origin === asteroid.i ? 'Deselect Asteroid' : 'Select Asteroid'}
-          onClick={() => origin === asteroid.i ? clearOrigin() : selectOrigin(asteroid.i)}
+          onClick={() => origin === asteroid.i ? selectOrigin() : selectOrigin(asteroid.i)}
           active={origin === asteroid.i}>
           <IoIosPin />
         </IconButton>

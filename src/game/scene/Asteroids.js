@@ -32,7 +32,6 @@ const Asteroids = (props) => {
   const { coarseTime } = useContext(ClockContext);
 
   const selectOrigin = useStore(s => s.dispatchOriginSelected);
-  const clearOrigin = useStore(s => s.dispatchOriginCleared);
   const selectDestination = useStore(s => s.dispatchDestinationSelected);
   const hoverAsteroid = useStore(s => s.dispatchAsteroidHovered);
   const unhoverAsteroid = useStore(s => s.dispatchAsteroidUnhovered);
@@ -168,7 +167,7 @@ const Asteroids = (props) => {
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
 
     if (asteroids[index]) {
-      if (asteroids[index].i === originId) clearOrigin();
+      if (asteroids[index].i === originId) selectOrigin();
       if (!routePlannerActive) return; // Only allow picking a destination if the route planner is open
       selectDestination(asteroids[index].i);
     }

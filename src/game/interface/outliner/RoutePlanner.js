@@ -70,7 +70,6 @@ const RoutePlanner = (props) => {
   const history = useHistory();
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
-  const dispatchOriginCleared = useStore(s => s.dispatchOriginCleared);
   const dispatchDestinationCleared = useStore(s => s.dispatchDestinationCleared);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchDestinationSelected = useStore(s => s.dispatchDestinationSelected);
@@ -123,7 +122,7 @@ const RoutePlanner = (props) => {
         <IconButton
           data-tip="Clear Route"
           onClick={() => {
-            dispatchOriginCleared();
+            dispatchOriginSelected();
             dispatchDestinationCleared();
           }}
           disabled={!originId && !destinationId}>
