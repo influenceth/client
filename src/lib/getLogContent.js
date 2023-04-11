@@ -244,7 +244,7 @@ const entries = {
         </div>
       </InnerLink>
     ),
-    onClickContent: () => {
+    onClickContent: (e) => {
       if (process.env.REACT_APP_ASTEROID_SALE_GUIDE_URL) {
         e.stopPropagation();
         window.open(process.env.REACT_APP_ASTEROID_SALE_GUIDE_URL, '_blank', 'noopener');
