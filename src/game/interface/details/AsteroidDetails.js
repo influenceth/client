@@ -28,7 +28,7 @@ import DataReadout from '~/components/DataReadout';
 import LogEntry from '~/components/LogEntry';
 import Ether from '~/components/Ether';
 import AddressLink from '~/components/AddressLink';
-import { DownloadModelIcon, EditIcon, CheckCircleIcon, ClaimIcon, ScanIcon } from '~/components/Icons';
+import { DownloadModelIcon, EditIcon, CheckCircleIcon, ClaimIcon, ScanIcon, SwayIcon } from '~/components/Icons';
 import QuadtreeTerrainCube from '~/game/scene/asteroid/helpers/QuadtreeTerrainCube';
 import ResourceMix from './asteroidDetails/ResourceMix';
 import ResourceBonuses from './asteroidDetails/ResourceBonuses';
@@ -292,7 +292,12 @@ const AsteroidDetails = (props) => {
                 </GeneralData>
               )}
               <GeneralData label="Size">{utils.toSize(asteroid.r)}</GeneralData>
-              <GeneralData label="Claimable SWAY">{(claimableSway || 0).toLocaleString()}</GeneralData>
+              <GeneralData label="Claimable SWAY">
+                {asteroid?.creditClaimed
+                  ? `CLAIMED`
+                  : <><SwayIcon /> {(claimableSway || 0).toLocaleString()}</>
+                }
+              </GeneralData>
             </Pane>
             <Pane>
               <Subtitle>Manage Asteroid</Subtitle>
