@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useWeb3React } from '@web3-react/core';
 import { Group, Vector3 } from 'three';
@@ -250,6 +250,16 @@ const AsteroidDetails = (props) => {
     window.open(url, '_blank');
   }, []);
 
+  const claimableSway = useMemo(() => {
+    if (!asteroid) return 0;
+    if (!asteroid.purchaseOrder || asteroid.purchaseOrder > 11100) return 0;
+    if (asteroid.creditClaimed) return 0;
+    const factor = BigInt('231808622658467920000'); // 4 * PI * 2^64
+    const radius = BigInt(asteroid.r.toString());
+    const area = (factor * (radius * radius)) / BigInt('1000000'); // area convert m2 to km2
+    return Number((area / BigInt('18446744073709552000')) * BigInt('6922'));
+  }, [asteroid]);
+
   return (
     <Details
       title={!!asteroid ? `${asteroid.name} - Details` : 'Asteroid Details'}>
@@ -282,6 +292,7 @@ const AsteroidDetails = (props) => {
                 </GeneralData>
               )}
               <GeneralData label="Size">{utils.toSize(asteroid.r)}</GeneralData>
+              <GeneralData label="Claimable SWAY">{(claimableSway || 0).toLocaleString()}</GeneralData>
             </Pane>
             <Pane>
               <Subtitle>Manage Asteroid</Subtitle>
