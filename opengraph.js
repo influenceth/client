@@ -15,7 +15,7 @@ const getOpengraphTags = async (originalUrl) => {
     'twitter:site': '@influenceth',
     'og:title': 'Influence | Space Strategy MMO',
     'og:description': 'Space strategy MMO built on Ethereum',
-    'og:image': 'https://res.cloudinary.com/influenceth/social/influence.jpg',
+    'og:image': 'https://d1c1daundk1ax0.cloudfront.net/influence/production/images/misc/influence.jpg',
     'og:image:width': '630',
     'og:image:height': '1200',
   };
