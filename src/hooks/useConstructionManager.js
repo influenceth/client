@@ -109,7 +109,7 @@ const useConstructionManager = (asteroidId, lotId) => {
         current.capableType = planTx.vars.capableType;
         current.crewId = planTx.vars.crewId;
         status = 'PLANNING';
-        stages.plan = actionStage.IN_PROGRESS;
+        stages.plan = actionStage.COMPLETING;
       }
     }
 

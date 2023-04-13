@@ -132,9 +132,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
   }, [crew?.crewMembers]);
 
   useEffect(() => {
-    if (stage === actionStage.NOT_STARTED && !capableType) {
-      if (currentConstruction?.capableType) setCapableType(currentConstruction.capableType)
-    }
+    if (currentConstruction?.capableType) setCapableType(currentConstruction.capableType)
   }, [currentConstruction?.capableType]);
 
   const [siteSelectorOpen, setSiteSelectorOpen] = useState();
