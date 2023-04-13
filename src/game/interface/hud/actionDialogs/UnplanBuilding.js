@@ -1,93 +1,49 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import {
-  FiCrosshair as TargetIcon,
-  FiSquare as UncheckedIcon,
-  FiCheckSquare as CheckedIcon
-} from 'react-icons/fi';
-import { RingLoader } from 'react-spinners';
-import DataTable, { createTheme } from 'react-data-table-component';
-import { Crew, Asteroid, Construction, Lot } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
-import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
-import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
-import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
-import Button from '~/components/ButtonAlt';
-import ButtonRounded from '~/components/ButtonRounded';
-import Dialog from '~/components/Dialog';
-import Dropdown from '~/components/Dropdown';
-import IconButton from '~/components/IconButton';
 import {
   UnplanBuildingIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  CloseIcon,
-  ConstructIcon,
-  NewCoreSampleIcon,
-  CrewIcon,
-  DeconstructIcon,
-  ExtractionIcon,
-  ImproveCoreSampleIcon,
-  PlanBuildingIcon,
-  LocationIcon,
-  PlusIcon,
-  ResourceIcon,
-  SurfaceTransferIcon,
-  TimerIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
-import Poppable from '~/components/Popper';
-import SliderInput from '~/components/SliderInput';
-import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
+import { useBuildingAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
-import useStore from '~/hooks/useStore';
-import theme from '~/theme';
-import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useConstructionManager from '~/hooks/useConstructionManager';
-import useInterval from '~/hooks/useInterval';
-import { getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  CoreSampleSelection,
-  DestinationSelection,
-
-  BuildingPlanSection,
-  BuildingRequirementsSection,
-  DeconstructionMaterialsSection,
-  DestinationLotSection,
-  ExistingSampleSection,
-  ExtractionAmountSection,
-  ExtractSampleSection,
-  ItemSelectionSection,
-  RawMaterialSection,
-  ToolSection,
-
   ActionDialogFooter,
   ActionDialogHeader,
-  ActionDialogStats,
-  ActionDialogTimers,
-
-  getBonusDirection,
-  ActionDialogLoader,
+  ActionDialogBody,
+  FlexSection,
+  FlexSectionInputBlock,
+  BuildingImage,
 } from './components';
+import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
+import actionStage from '~/lib/actionStages';
 
-const UnplanBuilding = ({ asteroid, lot, ...props }) => {
+const UnplanWarning = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.error};
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
+  margin-top: 25px;
+  & span:last-child {
+    font-size: 175%;
+    line-height: 1em;
+    margin-left: 8px;
+  }
+`;
+
+const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const buildings = useBuildingAssets();
-  const { constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, lot?.i);
+  const { currentConstruction, constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, lot?.i);
   const { captain } = useCrewContext();
-
-  useEffect(() => {
-    if (constructionStatus === 'READY_TO_PLAN') {
-      props.onClose();
-    }
-  }, [constructionStatus]);
 
   // handle auto-closing
   const lastStatus = useRef();
   useEffect(() => {
-    // (always close if not)
+    // (always close if not in planned or canceling state)
     if (!['PLANNED', 'CANCELING'].includes(constructionStatus)) {
       props.onClose();
     }
@@ -100,35 +56,75 @@ const UnplanBuilding = ({ asteroid, lot, ...props }) => {
     lastStatus.current = constructionStatus;
   }, [constructionStatus]);
 
+  const capableType = currentConstruction?.capableType || 0;
+
   return (
     <>
       <ActionDialogHeader
-        asteroid={asteroid}
-        captain={captain}
-        lot={lot}
         action={{
-          actionIcon: <UnplanBuildingIcon />,
-          headerBackground: constructionBackground,
-          label: 'Unplan Building Site',
+          icon: <UnplanBuildingIcon />,
+          label: 'Remove Building Site',
+          status: stage === actionStage.NOT_STARTED ? 'Confirm' : '',
         }}
-        status="BEFORE"
-        {...props} />
+        captain={captain}
+        crewAvailableTime={0}
+        taskCompleteTime={0}
+        stage={stage} />
 
-      <BuildingPlanSection
-        building={buildings[lot?.building?.capableType]}
-        canceling
-        status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
-
-      <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />
+      <ActionDialogBody style={{ paddingBottom: 15 }}>
+        <FlexSection>
+          <FlexSectionInputBlock
+            title="Current Plans"
+            image={<BuildingImage building={buildings[capableType]} unfinished />}
+            label={buildings[capableType].name}
+            disabled
+            sublabel="Site Plans"
+          />
+          <UnplanWarning>
+            <span>On-site materials<br/>will be abandoned</span>
+            <span><WarningOutlineIcon /></span>
+          </UnplanWarning>
+        </FlexSection>
+      </ActionDialogBody>
 
       <ActionDialogFooter
-        {...props}
-        buttonsLoading={constructionStatus === 'CANCELING'}
-        goLabel="Unplan Site"
+        goLabel="Remove Site"
         onGo={unplanConstruction}
-        status={constructionStatus === 'CANCELING' ? 'DURING' : 'BEFORE'} />
+        stage={stage}
+        {...props} />
     </>
   );
 };
 
-export default UnplanBuilding;
+const Wrapper = (props) => {
+  const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
+  const constructionManager = useConstructionManager(asteroid?.i, lot?.i);
+  const { stageByActivity } = constructionManager;
+
+  useEffect(() => {
+    if (!asteroid || !lot) {
+      if (!isLoading) {
+        if (props.onClose) props.onClose();
+      }
+    }
+  }, [asteroid, lot, isLoading]);
+
+  return (
+    <ActionDialogInner
+      actionImage={constructionBackground}
+      asteroid={asteroid}
+      isLoading={isLoading}
+      lot={lot}
+      onClose={props.onClose}
+      stage={stageByActivity.unplan}>
+      <UnplanBuilding
+        asteroid={asteroid}
+        lot={lot}
+        constructionManager={constructionManager}
+        stage={stageByActivity.unplan}
+        {...props} />
+    </ActionDialogInner>
+  )
+};
+
+export default Wrapper;

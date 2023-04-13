@@ -1638,7 +1638,7 @@ export const ActionDialogHeader = ({ action, captain, crewAvailableTime, stage, 
         <LabelContainer>
           <h1>{action.label}</h1>
           <div>
-            <h2>{action.status || theming[stage].label}</h2>
+            <h2>{action.status || theming[stage]?.label}</h2>
             {crewAvailableTime !== undefined && <TimePill type="crew"><CrewIcon /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
             {taskCompleteTime !== undefined && <TimePill type="total"><AlertIcon /> {formatTimer(taskCompleteTime, 2)}</TimePill>}
           </div>

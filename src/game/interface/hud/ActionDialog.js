@@ -126,8 +126,8 @@ export const theming = {
     label: 'Ready',
   }
 };
-theming[actionStage.COMPLETING] = theming[actionStage.STARTING];
-theming[actionStage.COMPLETED] = theming[actionStage.READY_TO_COMPLETE];
+theming[actionStage.COMPLETING] = { ...theming[actionStage.STARTING] };
+theming[actionStage.COMPLETED] = { ...theming[actionStage.READY_TO_COMPLETE] };
 theming[actionStage.COMPLETED].label = 'Results';
 
 
