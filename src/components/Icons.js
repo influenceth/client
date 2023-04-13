@@ -32,7 +32,7 @@ import {
 } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
 import { WiMoonAltWaningCrescent5 } from 'react-icons/wi';
-import { VscDebugDisconnect, VscCircleOutline } from 'react-icons/vsc';
+import { VscDebugDisconnect, VscCircle } from 'react-icons/vsc';
 
 import AdalianSVG from '~/assets/icons/AdalianIcon.svg';
 import ArvadSVG from '~/assets/icons/ArvadIcon.svg';
@@ -204,7 +204,7 @@ export {
   FaEthereum as ConnectIcon,
   FaList as ListIcon,
   RiPagesFill as DetailIcon,
-  VscCircleOutline as IdleIcon,
+  VscCircle as IdleIcon,
   AiOutlineNumber as IdIcon,
   FaMapMarkedAlt as MapIcon,
   FiExternalLink as PopoutIcon,

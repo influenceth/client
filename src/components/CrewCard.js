@@ -76,6 +76,7 @@ const Card = styled.div`
   ` : ''}
 
   ${p => p.hideHeader && `
+    padding-top: 128%;
     & ${CardHeader} {
       display: none;
     }

@@ -5,6 +5,7 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from './useCrewContext';
 import useLot from './useLot';
 import useActionItems from './useActionItems';
+import actionStage from '~/lib/actionStages';
 
 const useConstructionManager = (asteroidId, lotId) => {
   const { actionItems, readyItems, liveBlockTime } = useActionItems();
@@ -20,7 +21,7 @@ const useConstructionManager = (asteroidId, lotId) => {
 
   // READY_TO_PLAN > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
   //               < CANCELING <         <                  DECONSTRUCTING                  <
-  const [currentConstruction, constructionStatus, isAtRisk] = useMemo(() => {
+  const [currentConstruction, constructionStatus, isAtRisk, stageByActivity] = useMemo(() => {
     let current = {
       _crewmates: null,
       capableId: null,
@@ -28,6 +29,12 @@ const useConstructionManager = (asteroidId, lotId) => {
       completionTime: null,
       crewId: null,
       startTime: null
+    };
+    const stages = {
+      plan: actionStage.NOT_STARTED,
+      unplan: actionStage.NOT_STARTED,
+      construct: actionStage.NOT_STARTED,
+      deconstruct: actionStage.NOT_STARTED,
     };
 
     let status = 'READY_TO_PLAN';
@@ -48,10 +55,13 @@ const useConstructionManager = (asteroidId, lotId) => {
       if (lot.building.construction?.status === Construction.STATUS_PLANNED) {
         if (getStatus('START_CONSTRUCTION', payload) === 'pending') {
           status = 'UNDER_CONSTRUCTION';
+          stages.construct = actionStage.IN_PROGRESS;
         } else if (getStatus('UNPLAN_CONSTRUCTION', payload) === 'pending') {
           status = 'CANCELING';
+          stages.unplan = actionStage.IN_PROGRESS;
         } else if (lot.gracePeriodEnd >= liveBlockTime) {
           status = 'PLANNED';
+          stages.plan = actionStage.COMPLETED;
         } else {
           isAtRisk = true;
 
@@ -63,27 +73,34 @@ const useConstructionManager = (asteroidId, lotId) => {
             current.completionTime = null;
             current.startTime = null;
             status = 'PLANNING';
+            stages.plan = actionStage.IN_PROGRESS;
 
           // if at risk, but i was the occupier, still treat as "planned" (will go back to "ready to plan" for other crews)
           } else if (lot.occupier === crew?.i) {
             status = 'PLANNED';
+            stages.plan = actionStage.COMPLETED;
           }
         }
 
       } else if (lot.building.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION) {
         if (getStatus('FINISH_CONSTRUCTION', payload) === 'pending') {
           status = 'FINISHING';
+          stages.construct = actionStage.COMPLETING;
         } else if (lot.building.construction?.completionTime && (lot.building.construction.completionTime <= liveBlockTime)) {
           status = 'READY_TO_FINISH';
+          stages.construct = actionStage.READY_TO_COMPLETE;
         } else {
           status = 'UNDER_CONSTRUCTION';
+          stages.construct = actionStage.IN_PROGRESS;
         }
 
       } else if (lot.building.construction?.status === Construction.STATUS_OPERATIONAL) {
         if (getStatus('DECONSTRUCT', payload) === 'pending') {
           status = 'DECONSTRUCTING';
+          stages.deconstruct = actionStage.IN_PROGRESS;
         } else {
           status = 'OPERATIONAL';
+          stages.construct = actionStage.COMPLETED;
         }
       }
     } else {
@@ -92,13 +109,15 @@ const useConstructionManager = (asteroidId, lotId) => {
         current.capableType = planTx.vars.capableType;
         current.crewId = planTx.vars.crewId;
         status = 'PLANNING';
+        stages.plan = actionStage.IN_PROGRESS;
       }
     }
 
     return [
       status === 'READY_TO_PLAN' ? null : current,
       status,
-      isAtRisk
+      isAtRisk,
+      stages
     ];
   }, [actionItems, readyItems, getPendingTx, getStatus, payload, lot?.building]);
 
@@ -136,7 +155,8 @@ const useConstructionManager = (asteroidId, lotId) => {
     deconstruct,
     constructionStatus,
     currentConstruction,
-    isAtRisk
+    isAtRisk,
+    stageByActivity
   };
 };
 

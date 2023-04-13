@@ -13,7 +13,7 @@ const InfoTooltip = styled.div`
   opacity: 0;
   transform: translateY(0);
   transition: opacity 250ms ease, transform 250ms ease;
-  width: 360px;
+  width: 415px;
 
   ${p => p.css || ''};
 

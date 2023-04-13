@@ -2,10 +2,11 @@ import React from 'react';
 import styled from 'styled-components';
 import ClipCorner from './ClipCorner';
 
-const defaultSize = '115px';
+const defaultSize = '92px';
 const defaultBorderColor = '#333';
 
 export const ResourceThumbnailWrapper = styled.div`
+  background: black;
   border: 1px solid;
   clip-path: polygon(
     0 0,
@@ -20,6 +21,7 @@ export const ResourceThumbnailWrapper = styled.div`
   width: ${p => p.size || defaultSize};
   ${p => `
     border-color: ${p.outlineColor || defaultBorderColor};
+    color: ${p.outlineColor || defaultBorderColor};
     ${p.outlineStyle ? `border-style: ${p.outlineStyle} !important;` : ''}
     ${p.badgeColor && p.hasDenominator ? `${ResourceBadge} { &:after { color: ${p.badgeColor} !important; } }` : ''}
     ${p.badgeColor && !p.hasDenominator ? `${ResourceBadge} { &:before { color: ${p.badgeColor} !important; } }` : ''}
@@ -27,7 +29,7 @@ export const ResourceThumbnailWrapper = styled.div`
 `;
 
 export const ResourceImage = styled.div`
-  background: black url("${p => p.src}") center center;
+  background: ${p => p.backgroundColor || 'black'} url("${p => p.src}") center center;
   background-size: cover;
   background-repeat: no-repeat;
   position: absolute;
@@ -125,7 +127,7 @@ const ThumbnailIconOverlay = styled.div`
   align-items: center;
   background-color: rgba(0, 0, 0, 0.5);
   color: ${p => p.theme.colors.main};
-  font-size: 40px;
+  font-size: 32px;
   display: flex;
   justify-content: center;
   position: absolute;
@@ -137,7 +139,21 @@ const ThumbnailIconOverlay = styled.div`
 `;
 
 // TODO: this component is functionally overloaded... create more components so not trying to use in so many different ways
- const ResourceThumbnail = ({ resource, badge, badgeColor, badgeDenominator, iconBadge, outlineColor, outlineStyle, overlayIcon, progress, size, showTooltip, ...props }) => {
+ const ResourceThumbnail = ({
+  resource,
+  backgroundColor,
+  badge,
+  badgeColor,
+  badgeDenominator,
+  iconBadge,
+  outlineColor,
+  outlineStyle,
+  overlayIcon,
+  progress,
+  size,
+  showTooltip,
+  ...props
+}) => {
   const tooltipProps = showTooltip ? {
     'data-tip': resource.name,
     'data-for': 'global'
@@ -151,7 +167,7 @@ const ThumbnailIconOverlay = styled.div`
       outlineStyle={outlineStyle}
       {...props}
       {...tooltipProps}>
-      <ResourceImage src={resource.iconUrls.w125} />
+      <ResourceImage src={resource.iconUrls.w125} backgroundColor={backgroundColor} />
       <ClipCorner dimension={10} color={outlineColor || defaultBorderColor} />
       {badge !== undefined && <ResourceBadge badge={badge} badgeDenominator={badgeDenominator} />}
       {iconBadge !== undefined && <ResourceIconBadge>{iconBadge}</ResourceIconBadge>}

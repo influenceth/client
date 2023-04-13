@@ -160,7 +160,7 @@ const SearchBannerAsteroids = ({ visible }) => {
 
   const sortOptions = useMemo(() => {
     return columns
-      .filter((c) => c.sortField)
+      .filter((c) => c.sortField && !['owner','spectralType'].includes(c.sortField))
       .map((c) => ({ label: c.label, value: c.sortField, icon: c.icon }));
   }, [columns]);
 

@@ -79,24 +79,26 @@ const AvatarWrapper = styled.div`
     `;
   }}
 
-  &:hover {
-    ${Avatar} {
-      background: ${hoverBgColor};
-      border-color: ${p => p.theme.colors.main};
-      & > div {
-        animation: none;
-        opacity: 1;
+  ${p => p.clickable && `
+    &:hover {
+      ${Avatar} {
+        background: ${hoverBgColor};
+        border-color: ${p.theme.colors.main};
+        & > div {
+          animation: none;
+          opacity: 1;
+        }
+      }
+      ${StyledTriangleTip} {
+        polygon {
+          fill: ${hoverBgColor};
+        }
+        path {
+          stroke: ${p.theme.colors.main};
+        }
       }
     }
-    ${StyledTriangleTip} {
-      polygon {
-        fill: ${hoverBgColor};
-      }
-      path {
-        stroke: ${p => p.theme.colors.main};
-      }
-    }
-  }
+  `}
 `;
 
 const noop = () => {};

@@ -26,7 +26,9 @@ const success = '#00ffe7';
 const gray = '#bbbbbb';
 const teal = '#69ebf4';
 const blue = '#4f90ff';
+const lightPurple = '#636ee1';
 const purple = '#884fff';
+const lightOrange = '#faaf42';
 const orange = '#ff984f';
 const yellow = '#ffd94f';
 const red = '#df4300';
@@ -49,7 +51,7 @@ const theme = {
     success,
     successRGB: hexToRGB(success),
     error: red,
-    teal, blue, purple, orange, yellow, red,
+    teal, blue, lightPurple, purple, lightOrange, orange, yellow, red,
     bonus: {
       level0: '#999999',
       level1: 'rgb(105, 235, 244)',

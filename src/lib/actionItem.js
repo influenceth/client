@@ -94,7 +94,7 @@ const formatAsItem = (item) => {
 
   if (formatted?.asteroidId) formatted.asteroidId = Number(formatted.asteroidId);
   if (formatted?.lotId) formatted.lotId = Number(formatted.lotId);
-  if (formatted?.resourceId) formatted.lotId = Number(formatted.resourceId);
+  if (formatted?.resourceId) formatted.resourceId = Number(formatted.resourceId);
 
   return formatted;
 };

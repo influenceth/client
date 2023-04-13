@@ -19,7 +19,7 @@ const StyledIconButton = styled.button`
   transition: all 300ms ease;
   ${p => p.scale && `transform: scale(${p.scale});`}
   position: relative;
-  margin-right: 10px;
+  margin-right: ${p => p.marginless ? 0 : '10px'};
 
   &:disabled {
     border-color: ${p => p.theme.colors.disabledText};

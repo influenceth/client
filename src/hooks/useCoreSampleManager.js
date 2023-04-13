@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import { Construction, CoreSample, Inventory } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import actionStages from '~/lib/actionStages';
 import useCrewContext from './useCrewContext';
 import useLot from './useLot';
 import useActionItems from './useActionItems';
@@ -18,9 +19,11 @@ const useCoreSampleManager = (asteroidId, lotId) => {
     crewId: crew?.i
   }), [asteroidId, lotId, crew?.i]);
 
+  const [completingSample, setCompletingSample] = useState();
+
   // status flow
   // READY > SAMPLING > READY_TO_FINISH > FINISHING
-  const [currentSample, samplingStatus] = useMemo(() => {
+  const [currentSample, samplingStatus, actionStage] = useMemo(() => {
     let current = {
       _crewmates: null,
       completionTime: null,
@@ -33,6 +36,7 @@ const useCoreSampleManager = (asteroidId, lotId) => {
     };
 
     let status = 'READY';
+    let stage = actionStages.NOT_STARTED;
     const activeSample = lot?.coreSamples.find((c) => c.owner === crew?.i && c.status < CoreSample.STATUS_FINISHED);
     if (activeSample) {
       let actionItem = (actionItems || []).find((item) => (
@@ -53,11 +57,14 @@ const useCoreSampleManager = (asteroidId, lotId) => {
       if (activeSample.completionTime <= liveBlockTime) {
         if (getStatus('FINISH_CORE_SAMPLE', payload) === 'pending') {
           status = 'FINISHING';
+          stage = actionStages.COMPLETING;
         } else {
           status = 'READY_TO_FINISH';
+          stage = actionStages.READY_TO_COMPLETE;
         }
       } else {
         status = 'SAMPLING';
+        stage = actionStages.IN_PROGRESS;
       }
     } else {
       const sampleTx = getPendingTx('START_CORE_SAMPLE', payload);
@@ -67,14 +74,33 @@ const useCoreSampleManager = (asteroidId, lotId) => {
         current.resourceId = sampleTx.vars.resourceId;
         current.sampleId = sampleTx.vars.sampleId;
         status = 'SAMPLING';
+        stage = actionStages.IN_PROGRESS;
       }
+    }
+
+    // if did not update status beyond NOT_STARTED but there was a completingSample
+    //  previously, must now be COMPLETED
+    // NOTE: if ever change this to output different status as well (and / or
+    //  currentSample), then need to review references to this hook to make sure
+    //  behavior doesn't change (i.e. actionButtons)
+    if (completingSample && stage === actionStages.NOT_STARTED) {
+      stage = actionStages.COMPLETED;
     }
 
     return [
       status === 'READY' ? null : current,
-      status
+      status,
+      stage
     ];
-  }, [actionItems, readyItems, getPendingTx, getStatus, payload, lot?.coreSamples]);
+  }, [actionItems, completingSample, readyItems, getPendingTx, getStatus, payload, lot?.coreSamples]);
+
+  useEffect(() => {
+    if (currentSample && actionStage === actionStages.COMPLETING) {
+      if (completingSample?.resourceId !== currentSample.resourceId || completingSample?.sampleId !== currentSample.sampleId) {
+        setCompletingSample(currentSample);
+      }
+    }
+  }, [currentSample, actionStage]);
 
   const startSampling = useCallback((resourceId, sampleId = 0) => {
     execute('START_CORE_SAMPLE', {
@@ -97,6 +123,7 @@ const useCoreSampleManager = (asteroidId, lotId) => {
     finishSampling,
     samplingStatus,
     currentSample,
+    actionStage
   }
 };
 

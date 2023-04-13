@@ -29,11 +29,12 @@ const Modal = styled.div`
   max-width: 90%;
   max-height: 90%;
   overflow: auto;
+  ${p => p.css || ``};
 `;
 
-const Dialog = ({ children, ...props }) => (
+const Dialog = ({ children, dialogCss, ...props }) => (
   <Backdrop {...props}>
-    <Modal {...props}>
+    <Modal {...props} css={dialogCss}>
       {children}
     </Modal>
   </Backdrop>

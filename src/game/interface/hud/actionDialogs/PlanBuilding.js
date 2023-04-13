@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import {
   FiCrosshair as TargetIcon,
   FiSquare as UncheckedIcon,
@@ -37,7 +37,7 @@ import {
   TimerIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
-import Poppable from '~/components/Popper';
+// import Poppable, { PoppableContent } from '~/components/Popper';
 import SliderInput from '~/components/SliderInput';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
@@ -49,6 +49,7 @@ import useConstructionManager from '~/hooks/useConstructionManager';
 import useInterval from '~/hooks/useInterval';
 import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
+import { ActionDialogInner, Modal, ModalInner, theming, useAsteroidAndLot } from '../ActionDialog';
 import {
   CoreSampleSelection,
   DestinationSelection,
@@ -71,77 +72,199 @@ import {
   ActionDialogTimers,
 
   getBonusDirection,
+  FlexSection,
+  FlexSectionInputBlock,
+  BuildingPlanSelection,
+  BuildingImage,
+  EmptyBuildingImage,
+  SelectionPopper,
+  SelectionDialog,
+  SitePlanSelectionDialog,
+  ProgressBarSection,
+  TravelBonusTooltip,
+  ActionDialogBody
 } from './components';
 import useAsteroid from '~/hooks/useAsteroid';
+import { usePopper } from 'react-popper';
+import { createPortal } from 'react-dom';
+import actionStage from '~/lib/actionStages';
 
-const PlanBuilding = ({ asteroid, lot, ...props }) => {
+const MouseoverWarning = styled.span`
+  & b { color: ${theme.colors.error}; }
+`;
+
+const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const buildings = useBuildingAssets();
   const resources = useResourceAssets();
-  const { currentConstruction, constructionStatus, planConstruction } = useConstructionManager(asteroid?.i, lot?.i);
-  const { captain } = useCrewContext();
+  const { currentConstruction, planConstruction } = constructionManager;
+  const { captain, crew, crewMemberMap } = useCrewContext();
 
   const [capableType, setCapableType] = useState();
 
-  const stats = useMemo(() => [
-    {
-      label: 'Abandonment Timer',
-      value: formatTimer(Lot.GRACE_PERIOD),
-      isTimeStat: true,
-      warning: (
-        <>
-          Building sites become <b>Abandoned</b> if they have not started construction by the time the <b>Abandonment Timer</b> expires.
-          <br/><br/>
-          Any items left on an <b>Abandoned Site</b> may be claimed by other players!
-        </>
-      )
-    },
-  ], []);
+  const crewTravelTime = useMemo(() => 0, []);  // TODO: ...
+  const taskTime = useMemo(() => 0, []);
+  const stats = useMemo(() => {
+    if (!asteroid?.i || !lot?.i) return [];
+    const crewMembers = (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
+    const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+    const tripDetails = []; // TODO: 
+    const taskTime = 0;
+    return [
+      {
+        label: 'Crew Travel Time',
+        value: formatTimer(crewTravelTime),
+        isTimeStat: true,
+        direction: getBonusDirection(crewTravelBonus),
+        tooltip: (
+          <TravelBonusTooltip
+            bonus={crewTravelBonus}
+            totalTime={crewTravelTime}
+            tripDetails={tripDetails}
+            crewRequired="start" />
+        )
+      },
+      {
+        label: 'Task Duration',
+        value: formatTimer(taskTime),
+        isTimeStat: true
+      },
+    ];
+  }, [crew?.crewMembers]);
 
   useEffect(() => {
-    if (constructionStatus === 'PLANNING' && !capableType) {
+    if (stage === actionStage.NOT_STARTED && !capableType) {
       if (currentConstruction?.capableType) setCapableType(currentConstruction.capableType)
     }
   }, [currentConstruction?.capableType]);
 
-  // stay in this window until PLANNED, then swap to CONSTRUCT
-  useEffect(() => {
-    if (!['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {
-      props.onSetAction('CONSTRUCT');
-    }
-  }, [constructionStatus]);
+  const [siteSelectorOpen, setSiteSelectorOpen] = useState();
+  const onBuildingSelected = (type) => {
+    setCapableType(type);
+    setSiteSelectorOpen();
+  }
 
   return (
     <>
       <ActionDialogHeader
-        asteroid={asteroid}
-        captain={captain}
-        lot={lot}
         action={{
-          actionIcon: <PlanBuildingIcon />,
-          headerBackground: constructionBackground,
-          label: 'Plan Building Site',
-          completeLabel: 'Building Site',
+          icon: <PlanBuildingIcon />,
+          label: 'Create Building Site',
         }}
-        status="BEFORE"
-        {...props} />
+        captain={captain}
+        crewAvailableTime={crewTravelTime}
+        taskCompleteTime={crewTravelTime + taskTime}
+        stage={stage} />
 
-      <BuildingPlanSection building={buildings[capableType]} onBuildingSelected={setCapableType} status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'} />
-      <BuildingRequirementsSection
-        building={buildings[capableType]}
-        label="Required for Construction"
-        resources={resources} />
+      <ActionDialogBody>
+        <FlexSection>
+          <FlexSectionInputBlock
+            title="Building Site"
+            image={
+              capableType
+                ? <BuildingImage building={buildings[capableType]} unfinished />
+                : <EmptyBuildingImage iconOverride={<PlanBuildingIcon />} />
+            }
+            isSelected={stage === actionStage.NOT_STARTED}
+            label={capableType ? buildings[capableType].name : 'Select'}
+            onClick={() => setSiteSelectorOpen(true)}
+            disabled={stage !== actionStage.NOT_STARTED}
+            sublabel="Site"
+          />
+        </FlexSection>
 
-      <ActionDialogStats stats={stats} status="BEFORE" />
-      <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />
+        {capableType && stage === actionStage.NOT_STARTED && (
+          <BuildingRequirementsSection
+            building={buildings[capableType]}
+            label="Required for Construction"
+            resources={resources} />
+        )}
+
+        {/* TODO: if crew travel becomes part of planning, will need to configure this */}
+        {stage === actionStage.NOT_STARTED && (
+          <ProgressBarSection
+            overrides={{
+              barColor: capableType ? theme.colors.lightOrange : '#bbbbbb',
+              color: capableType ? theme.colors.lightOrange : undefined,
+              left: <><WarningOutlineIcon /> Site Timer</>,
+              right: formatTimer(Lot.GRACE_PERIOD)
+            }}
+            stage={stage}
+            title="Lot Reservation"
+            tooltip={(
+              <MouseoverWarning>
+                Building Sites are used to stage materials before construction. While the{' '}<b>Site Timer</b> 
+                {' '}is active, any assets moved to the building site are protected. However, a site becomes 
+                {' '}<b>Abandoned</b>{' '}if it has not started construction when the time expires.
+                <br/><br/>
+                Warning: Any materials on an{' '}<b>Abandoned Site</b>{' '}become public, and are subject to be
+                claimed by other players!
+              </MouseoverWarning>
+            )}
+          />
+        )}
+
+        <ActionDialogStats
+          actionStage={stage}
+          stats={stats}
+        />
+      </ActionDialogBody>
+
       <ActionDialogFooter
-        buttonsLoading={constructionStatus === 'PLANNING'}
-        goDisabled={!capableType}
-        goLabel="Plan Site"
+        disabled={!capableType}
+        goLabel="Create Site"
         onGo={() => planConstruction(capableType)}
-        status={constructionStatus === 'PLANNING' ? 'DURING' : 'BEFORE'}
+        stage={stage}
         {...props} />
+
+      {stage === actionStage.NOT_STARTED && (
+        <SitePlanSelectionDialog
+          initialSelection={capableType}
+          onClose={() => setSiteSelectorOpen(false)}
+          onSelected={onBuildingSelected}
+          open={siteSelectorOpen}
+        />
+      )}
     </>
   );
 };
 
-export default PlanBuilding;
+const Wrapper = (props) => {
+  const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
+  const constructionManager = useConstructionManager(asteroid?.i, lot?.i);
+  const { stageByActivity } = constructionManager;
+
+  useEffect(() => {
+    if (!asteroid || !lot) {
+      if (!isLoading) {
+        if (props.onClose) props.onClose();
+      }
+    }
+  }, [asteroid, lot, isLoading]);
+
+
+  // stay in this window until PLANNED, then swap to CONSTRUCT
+  useEffect(() => {
+    if (!['READY_TO_PLAN', 'PLANNING'].includes(constructionManager.constructionStatus)) {
+      props.onSetAction('CONSTRUCT');
+    }
+  }, [constructionManager.constructionStatus]);
+
+  return (
+    <ActionDialogInner
+      actionImage={constructionBackground}
+      asteroid={asteroid}
+      isLoading={isLoading}
+      lot={lot}
+      onClose={props.onClose}
+      stage={stageByActivity.plan}>
+      <PlanBuilding
+        asteroid={asteroid}
+        lot={lot}
+        constructionManager={constructionManager}
+        stage={stageByActivity.plan}
+        {...props} />
+    </ActionDialogInner>
+  )
+};
+
+export default Wrapper;

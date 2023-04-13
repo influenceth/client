@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import { FiCrosshair as TargetIcon } from 'react-icons/fi';
 import {
   BsChevronDoubleDown as ChevronDoubleDownIcon,
   BsChevronDoubleUp as ChevronDoubleUpIcon,
 } from 'react-icons/bs';
+import {
+  TbBellRingingFilled as AlertIcon
+} from 'react-icons/tb';
 import { RingLoader, PuffLoader } from 'react-spinners';
 import { Asteroid, Construction, Crewmate, Inventory } from '@influenceth/sdk';
 
@@ -31,36 +34,93 @@ import ResourceColorIcon from '~/components/ResourceColorIcon';
 import ResourceThumbnail, { ResourceThumbnailWrapper, ResourceImage, ResourceProgress } from '~/components/ResourceThumbnail';
 import ResourceRequirement from '~/components/ResourceRequirement';
 import SliderInput from '~/components/SliderInput';
-import { useBuildingAssets } from '~/hooks/useAssets';
+import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
-import theme from '~/theme';
+import theme, { hexToRGB } from '~/theme';
 import useChainTime from '~/hooks/useChainTime';
 import { formatFixed, formatTimer } from '~/lib/utils';
 import LiveTimer from '~/components/LiveTimer';
 import NavIcon from '~/components/NavIcon';
+import CrewCardFramed from '~/components/CrewCardFramed';
+import { usePopper } from 'react-popper';
+import { createPortal } from 'react-dom';
+import ClipCorner from '~/components/ClipCorner';
+import Dialog from '~/components/Dialog';
+import actionStage from '~/lib/actionStages';
+import { theming } from '../ActionDialog';
+
+const SECTION_WIDTH = 780;
 
 const borderColor = '#333';
-
-const CloseButton = styled(IconButton)`
-  opacity: 0.6;
-  position: absolute !important;
-  top: 5px;
-  right: -5px;
-  z-index: 1;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    right: 0;
-  }
-`;
 
 const Spacer = styled.div`
   flex: 1;
 `;
 const Section = styled.div`
   color: #777;
-  min-height: 100px;
+  margin-top: 15px;
   padding: 0 36px;
-  width: 780px;
+  width: ${SECTION_WIDTH}px;
+`;
+
+const FlexSectionInputContainer = styled.div`
+  width: 50%;
+`;
+
+export const FlexSectionSpacer = styled.div`
+  width: 32px;
+`;
+
+const sectionBodyCornerSize = 15;
+const FlexSectionInputBody = styled.div`
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 15px),
+    calc(100% - 15px) 100%,
+    0 100%
+  );
+  padding: 8px 16px 8px 8px;
+  position: relative;
+  transition-properties: background, border-color;
+  transition-duration: 250ms;
+  transition-function: ease;
+  & > svg {
+    transition: stroke 250ms ease;
+  }
+
+  ${p => p.isSelected ? `
+      background: rgba(${p.theme.colors.mainRGB}, 0.18);
+      border: 1px solid rgba(${p.theme.colors.mainRGB}, 0.7);
+      & > svg {
+        stroke: rgba(${p.theme.colors.mainRGB}, 0.7);
+      }
+    `
+    : `
+      background: rgba(${p.theme.colors.mainRGB}, 0.1);
+      border: 1px solid transparent;
+      & > svg {
+        stroke: transparent;
+      }
+    `
+  }
+
+  ${p => p.onClick && `
+    cursor: ${p.theme.cursors.active};
+    &:hover {
+      background: rgba(${p => p.theme.colors.mainRGB}, 0.25);
+      border-color: rgba(${p => p.theme.colors.mainRGB}, 0.9);
+      & > svg {
+        stroke: rgba(${p => p.theme.colors.mainRGB}, 0.9);
+      }
+    }
+  `};
+`;
+
+
+export const FlexSection = styled(Section)`
+  align-items: center;
+  display: flex;
 `;
 const SectionTitle = styled.div`
   align-items: center;
@@ -69,19 +129,51 @@ const SectionTitle = styled.div`
   flex-direction: row;
   font-size: 90%;
   line-height: 1.5em;
-  padding: 0 5px 10px;
+  margin-bottom: 8px;
+  padding: 0 2px 4px;
   text-transform: uppercase;
+  transition: border-color 250ms ease, margin-bottom 250ms ease;
+  white-space: nowrap;
   & > svg {
-    font-size: 175%;
-    margin-left: -30px;
+    font-size: 150%;
+    margin-left: -26px;
+    transform: rotate(0);
+    transition: transform 250ms ease;
   }
+
+  ${p => p.isDetailsHeader && `
+    border-color: transparent;
+    color: white;
+    cursor: ${p.theme.cursors.active};
+    font-size: 18px;
+    margin-bottom: 0;
+    &:hover {
+      opacity: 0.9;
+    }
+
+    ${p.isOpen && `
+      border-color: ${borderColor};
+      margin-bottom: 8px;
+      & > svg { transform: rotate(90deg); }
+    `}
+  `}
+
+  ${p => p.note && `
+    &:after {
+      content: "${p.note}";
+      display: block;
+      flex: 1;
+      text-align: right;
+      text-transform: none;
+    }
+  `}
 `;
 const SectionBody = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
-  padding: 15px 0px;
   position: relative;
+  transition: max-height 250ms ease;
   ${p => p.highlight && `
     background: rgba(${p.theme.colors.mainRGB}, 0.2);
     border-radius: 10px;
@@ -89,108 +181,124 @@ const SectionBody = styled.div`
     padding-left: 15px;
     padding-right: 15px;
   `}
+  ${p => p.collapsible && `
+    overflow: hidden;
+    max-height: ${p.isOpen ? '400px' : '0'};
+  `}
 `;
 
+const IconAndLabel = styled.div`
+  display: flex;
+  flex: 1;
+`;
+const IconContainer = styled.div`
+  font-size: 48px;
+  padding: 0 10px;
+`;
+const TimePill = styled.div`
+  align-items: center;
+  background: rgba(${p => hexToRGB(p.type === 'crew' ? p.theme.colors.purple : p.theme.colors.success)}, 0.4);
+  border-radius: 20px;
+  color: white;
+  display: flex;
+  margin-left: 4px;
+  padding: 3px 12px;
+  text-align: center;
+  text-transform: none;
+  & > svg {
+    color: ${p => p.type === 'crew' ? p.theme.colors.purple : p.theme.colors.success};
+    opacity: 0.7;
+    margin-right: 4px;
+  }
+`;
+const LabelContainer = styled.div`
+  flex: 1;
+  text-transform: uppercase;
+  h1 {
+    align-items: flex-end;
+    color: white;
+    display: flex;
+    font-weight: normal;
+    font-size: 36px;
+    height: 48px;
+    line-height: 36px;
+    margin: 0;
+  }
+  & > div {
+    align-items: center;
+    display: flex;
+    h2 {
+      font-size: 18px;
+      flex: 1;
+      margin: 6px 0 0;
+    }
+    ${TimePill} {
+      margin-top: 3px;
+    }
+  }
+`;
 const Header = styled(Section)`
-  padding-bottom: 20px;
-  padding-top: 20px;
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  padding-bottom: 5px;
+  padding-top: 5px;
   position: relative;
-  ${p => p.backgroundSrc && `
-    &:before {
-      content: "";
-      background: url("${p.backgroundSrc}") center center;
-      background-size: cover;
-      bottom: 0;
-      mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
-
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      z-index: 0;
+  ${p => p.theming?.highlight && `
+    ${IconContainer}, h2 {
+      color: ${p.theming.highlight};
     }
   `}
 `;
-const HeaderSectionBody = styled(SectionBody)`
-  padding: 0;
-`;
-const HeaderInfo = styled.div`
+
+export const ActionDialogBody = styled.div`
   flex: 1;
-  color: #999;
-  display: flex;
-  flex-direction: column;
-  font-size: 90%;
-  justify-content: center;
-  ${p => p.padTop
-    ? `height: 140px; padding-top: 15px;`
-    : 'height: 125px;'}
-  position: relative;
-  & b {
-    color: white;
-    font-weight: normal;
-  }
+  overflow-x: hidden;
+  overflow-y: auto;
 `;
-const Title = styled.div`
-  color: white;
-  font-size: 36px;
-  line-height: 48px;
-  & svg {
-    font-size: 150%;
-    margin-bottom: -5px;
-  }
-`;
-const Subtitle = styled.div`
 
-`;
-const CrewRequirement = styled.div``;
-const CrewInfo = styled.div`
-  align-items: flex-end;
-  display: ${p => (p.status === 'BEFORE' || p.requirement === 'duration') ? 'flex' : 'none'};
-  flex-direction: row;
-  position: absolute;
-  right: 0;
-  bottom: 0;
+const SelectionPopperContent = styled.div`
+  background: black;
+  border: 1px solid #222;
+  box-shadow: 0 0 10px rgba(${p => p.theme.colors.mainRGB}, 0.8);
+  margin-left: -180px;
+  margin-top: 20px;
+  padding: 15px;
+  width: 540px;
   & > div:first-child {
-    text-align: right;
-    & b {
-      color: orange;
-      font-weight: bold;
+    h1 {
+      border-left: 3px solid ${p => p.theme.colors.main};
+      color: white;
+      font-size: 20px;
+      font-weight: normal;
+      margin: 0 0 15px;
+      padding: 5px 12px;
+      text-transform: uppercase;
     }
+    border-bottom: 1px solid ${borderColor};
   }
-  ${CrewRequirement} {
-    &:before {
-      content: ${p => p.status === 'BEFORE' ? '"Crew: "' : '""'};
-    }
-    &:after {
-      display: block;
-      font-weight: bold;
-      ${p => {
-        if (p.status === 'BEFORE') {
-          if (p.requirement === 'duration') {
-            return `
-              content: "Required for Duration";
-              color: ${p.theme.colors.orange};
-            `;
-          }
-          return `
-            content: "Required to Start";
-            color: ${p.theme.colors.main};
-          `;
-        }
-      }}
-    }
+  & > h1 {
   }
+  & > div:last-child {
+    max-height: 400px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+`;
+const PoppableInner = styled.div`
+  pointer-events: all;
 `;
 
-const CardContainer = styled.div`
-  border: 1px solid #555;
-  margin-left: 8px;
-  padding: 2px;
-  width: 75px;
-  & > div {
-    background-color: #111;
-  }
+const ClickAwayListener = styled.div`
+  background: transparent;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
 `;
+
 const StatRow = styled.div`
   align-items: center;
   display: flex;
@@ -200,29 +308,24 @@ const StatRow = styled.div`
     flex: 1;
   }
   & > span {
-    color: ${p => p.theme.colors.main};
+    color: ${p => {
+      if (p.isTimeStat && p.direction > 0) return p.theme.colors.error;
+      if (p.isTimeStat && p.direction < 0) return p.theme.colors.success;
+      if (p.direction > 0) return p.theme.colors.success;
+      if (p.direction < 0) return p.theme.colors.error;
+      return 'white';
+    }};
     font-weight: bold;
     white-space: nowrap;
     &:after {
-      display: none;
-      ${p => {
-        if (!p.direction) {
-          return `
-            content: " ▲";
-            color: transparent;
-          `;
-        }
-        else if ((p.isTimeStat ? -1 : 1) * p.direction > 0) {
-          return `
-            content: " ▲";
-            color: ${p.isTimeStat ? p.theme.colors.error : p.theme.colors.success};
-          `;
-        }
-        return `
-          content: " ▼";
-          color: ${!p.isTimeStat ? p.theme.colors.error : p.theme.colors.success};
-        `;
-      }}
+      content: "${p => {
+        if (!p.direction) return ' —';
+        if ((p.isTimeStat ? -1 : 1) * p.direction > 0) return ' ▲';
+        return ' ▼';
+      }}";
+      font-size: 50%;
+      padding-left: 2px;
+      vertical-align: middle;
     }
   }
 `;
@@ -230,10 +333,8 @@ const StatSection = styled(Section)`
   min-height: 0;
   & ${SectionBody} {
     align-items: flex-start;
-    border-top: 1px solid ${borderColor};
     display: flex;
     font-size: 15px;
-    padding: 10px 0;
     & > div {
       flex: 1;
       &:last-child {
@@ -244,16 +345,8 @@ const StatSection = styled(Section)`
     }
   }
 
-  ${p => p.status === 'BEFORE' && `
-    ${StatRow} > span {
-      color: white;
-      &:after {
-        display: inline;
-        font-size: 50%;
-        padding-left: 2px;
-        vertical-align: middle;
-      }
-    }
+  ${p => p.actionStage === actionStage.NOT_STARTED && `
+    ${StatRow} > span { color: #BBB; }
   `}
 `;
 
@@ -287,6 +380,7 @@ const TimerRow = styled.div`
 `;
 
 const Footer = styled(Section)`
+  margin-top: 8px;
   min-height: 0;
   & > div {
     border-top: 1px solid ${borderColor};
@@ -301,17 +395,19 @@ const Footer = styled(Section)`
 
 const ThumbnailWithData = styled.div`
   align-items: center;
+  color: #777;
   display: flex;
   flex: 1;
   position: relative;
   & > label {
+    flex: 1;
     font-size: 14px;
     padding-left: 15px;
     & > h3 {
       color: white;
-      font-size: 25px;
+      font-size: 18px;
       font-weight: normal;
-      margin: 0;
+      margin: 0 0 4px;
     }
     & > footer {
       bottom: 0;
@@ -366,49 +462,23 @@ const BuildingPlan = styled(ThumbnailWithData)`
 
 const EmptyThumbnail = styled.div`
   color: ${borderColor};
-  font-size: 56px;
+  font-size: 40px;
   & > svg {
     left: 50%;
-    margin-left: -28px;
-    margin-top: -28px;
+    margin-left: -20px;
+    margin-top: -20px;
     position: absolute;
     top: 50%;
-  }
-  & > div {
-    border: 0px solid ${borderColor};
-    height: 10px;
-    position: absolute;
-    width: 10px;
-  }
-  & > div:nth-child(1) {
-    border-width: 1px 0 0 1px;
-    top: 5px;
-    left: 5px;
-  }
-  & > div:nth-child(2) {
-    border-width: 1px 1px 0 0;
-    top: 5px;
-    right: 5px;
-  }
-  & > div:nth-child(3) {
-    border-width: 0 1px 1px 0;
-    bottom: 5px;
-    right: 5px;
-  }
-  & > div:nth-child(4) {
-    border-width: 0 0 1px 1px;
-    bottom: 5px;
-    left: 5px;
   }
 `;
 const BuildingThumbnailWrapper = styled(ResourceThumbnailWrapper)`
   height: 92px;
   width: 150px;
   & ${EmptyThumbnail} {
-    font-size: 40px;
+    font-size: 50px;
     & > svg {
-      margin-left: -20px;
-      margin-top: -20px;
+      margin-left: -25px;
+      margin-top: -25px;
     }
   }
 `;
@@ -557,9 +627,37 @@ const ItemsList = styled.div`
     }
   }
 `;
-const IngredientsList = styled(ItemsList)`
-  & > div {
-    outline: 1px dashed ${p => p.empty ? borderColor : p.theme.colors.main};
+const IngredientsList = styled.div`
+  background: rgba(${p => hexToRGB(p.theme.colors.lightOrange)}, 0.15);
+  clip-path: polygon(
+    0 0, 
+    100% 0,
+    100% calc(100% - 20px),
+    calc(100% - 20px) 100%,
+    0 100%
+  );
+  column-gap: 5px;
+  display: grid;
+  grid-template-columns: repeat(7, 95px);
+  padding: 5px;
+  position: relative;
+  row-gap: 5px;
+  width: 100%;
+  ${p => p.hasSummary && `padding-bottom: 36px;`}
+`;
+
+const IngredientSummary = styled.div`
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  & > span {
+    background: rgba(${p => hexToRGB(p.mode === 'warning' ? p.theme.colors.lightOrange : p.theme.colors.main)}, 0.45);
+    color: white;
+    padding: 5px 32px;
   }
 `;
 
@@ -619,13 +717,20 @@ const PoppableTitle = styled.div`
     margin: 0;
   }
 `;
-const PoppableTableRow = styled.tr`
+const SelectionTableRow = styled.tr`
   ${p => p.disabledRow && `
     opacity: 0.33;
     pointer-events: none;
   `}
+  ${p => p.selectedRow && `
+    & > td,
+    &:hover > td {
+      background: rgba(${p.theme.colors.mainRGB}, 0.3) !important;
+    }
+  `}
 `;
-const PoppableTableWrapper = styled.div`
+const PoppableTableRow = styled(SelectionTableRow);
+const SelectionTableWrapper = styled.div`
   border: solid ${borderColor};
   border-width: 1px 0;
   flex: 1;
@@ -649,7 +754,8 @@ const PoppableTableWrapper = styled.div`
     }
 
     & thead {
-      font-size: 12px;
+      color: #aaa;
+      font-size: 14px;
       & > tr > td {
         border-bottom: 1px solid ${borderColor};
       }
@@ -657,7 +763,7 @@ const PoppableTableWrapper = styled.div`
 
     & tbody {
       color: white;
-      font-size: 14px;
+      font-size: 16px;
       & > tr {
         cursor: ${p => p.theme.cursors.active};
         &:hover > td {
@@ -667,6 +773,7 @@ const PoppableTableWrapper = styled.div`
     }
   }
 `;
+const PoppableTableWrapper = styled(SelectionTableWrapper);
 const TitleCell = styled.td`
   &:after {
     content: '${p => p.title}';
@@ -766,24 +873,263 @@ const FutureSectionOverlay = styled.div`
   }
 `;
 
+const SelectionTitle = styled.div`
+  align-items: center;
+  border-bottom: 1px solid ${borderColor};
+  display: flex;
+  flex: 0 0 60px;
+  justify-content: space-between;
+  margin: 0 20px 0 20px;
+  position: relative;
+  z-index: 1;
+  & > div {
+    border-left: 2px solid ${p => p.theme.colors.main};
+    font-size: 20px;
+    height: 36px;
+    line-height: 36px;
+    padding-left: 10px;
+    text-transform: uppercase;
+  }
+`;
+const SelectionBody = styled.div`
+  flex: 1;
+  overflow: hidden auto;
+  margin: 10px 0;
+  padding: 0 20px;
+`;
+
+const SelectionButtons = styled.div`
+  align-items: center;
+  border-top: 1px solid ${borderColor};
+  display: flex;
+  flex-direction: row;
+  flex: 0 0 60px;
+  justify-content: flex-end;
+  padding-right: 0px;
+  margin: 0 20px 0 20px;
+  & > button {
+    margin-top: 0;
+    margin-left: 10px;
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+`;
+
+const selectionDialogCornerSize = 20;
+const dialogCss = css`
+  border: 1px solid ${borderColor};
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - ${selectionDialogCornerSize}px),
+    calc(100% - ${selectionDialogCornerSize}px) 100%,
+    0 100%
+  );
+  display: flex;
+  flex-direction: column;
+  max-height: 80%;
+  max-width: ${SECTION_WIDTH - 60}px;
+  overflow: hidden;
+  position: relative;
+`;
+
+const SelectionGrid = styled.div`
+  column-gap: 10px;
+  display: grid;
+  grid-template-columns: calc(50% - 5px) calc(50% - 5px);
+  row-gap: 10px;
+  width: 100%;
+`;
+
+
+const gradientWidth = 23;
+const gradientAngle = 135;
+const gradientAngleSine = Math.sin(Math.PI * gradientAngle / 180);
+const widthOverSine = gradientWidth / gradientAngleSine;
+const actionProgressBarAnimation = keyframes`
+  0% { background-position: ${widthOverSine}px 0; }
+`;
+const ActionProgress = styled.div.attrs((p) => ({
+  style: {
+    filter: p.progress >= 1 ? 'brightness(0.45)' : undefined,
+    opacity: p.progress >= 1 ? '1' : undefined,
+    width: `${100 * p.progress}%`
+  }
+}))`
+  transition: all 250ms ease;
+`;
+const ActionProgressLabels = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  font-size: 20px;
+  justify-content: space-between;
+  padding: 0 12px;
+  & > div:first-child {
+    text-transform: uppercase;
+  }
+`;
+const ActionProgressWrapper = styled.div`
+  border: 1px solid ${borderColor};
+  padding: 8px;
+`;
+const ActionProgressContainer = styled.div`
+  height: 34px;
+  width: 100%;
+  position: relative;
+  z-index: 0;
+
+  &:before, ${ActionProgress}, ${ActionProgressLabels} {
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: -1;
+  }
+
+  &:before {
+    content: "";
+    ${p => p.animating && css`
+      animation: ${actionProgressBarAnimation} 1s linear infinite reverse;
+    `}
+    background: repeating-linear-gradient(
+      ${gradientAngle}deg,
+      ${p => p.color || '#ffffff'} 0,
+      ${p => p.color || '#ffffff'} 16px,
+      transparent 16px,
+      transparent ${gradientWidth}px
+    );
+    background-size: ${widthOverSine}px 100%;
+    opacity: 0.1;
+  }
+
+  ${ActionProgress} {
+    background: ${p => p.color};
+    opacity: 0.4;
+  }
+  ${ActionProgressLabels} {
+    color: ${p => p.labelColor || p.color};
+  }
+`;
+
+export const SelectionDialog = ({ children, isCompletable, open, onClose, onComplete, title }) => {
+  if (!open) return null;
+  return createPortal(
+    <Dialog opaque dialogCss={dialogCss}>
+      <SelectionTitle>
+        <div>{title}</div>
+        <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
+      </SelectionTitle>
+      <SelectionBody>
+        <div>{children}</div>
+      </SelectionBody>
+      <SelectionButtons style={{ position: 'relative'}}>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onComplete} disabled={!isCompletable}>Done</Button>
+      </SelectionButtons>
+      <ClipCorner color={borderColor} dimension={selectionDialogCornerSize} />
+    </Dialog>,
+    document.body
+  );
+};
+
+export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected, open }) => {
+  const buildings = useBuildingAssets();
+
+  const [selection, setSelection] = useState(initialSelection);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title="Select Site Type">
+      <SelectionGrid>
+        {Object.keys(buildings).filter((c) => c > 0).map((capableType) => (
+          <FlexSectionInputBlock
+            key={capableType}
+            fullWidth
+            image={<BuildingImage building={buildings[capableType]} unfinished />}
+            isSelected={capableType === selection}
+            label={buildings[capableType].name}
+            sublabel="Site"
+            onClick={() => setSelection(capableType)}
+            style={{ width: '100%' }}
+          />
+        ))}
+      </SelectionGrid>
+    </SelectionDialog>
+  );
+};
+
+export const ResourceSelectionDialog = ({ abundances, lotId, resources, initialSelection, onClose, onSelected, open }) => {
+  const [selection, setSelection] = useState(initialSelection);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  const nonzeroAbundances = useMemo(() => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={`Lot #${(lotId || 0).toLocaleString()}`}>
+      {/* TODO: replace with DataTable? */}
+      <SelectionTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>{(nonzeroAbundances || 0).toLocaleString()} Available Resource{nonzeroAbundances === 1 ? '' : 's'}</td>
+              <td>Abundance at Lot</td>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(abundances)
+              .sort((a, b) => abundances[b] - abundances[a])
+              .map((resourceId) => (
+                <SelectionTableRow
+                  key={`${resourceId}`}
+                  disabledRow={abundances[resourceId] === 0}
+                  onClick={() => setSelection(resourceId)}
+                  selectedRow={selection === Number(resourceId)}>
+                  <td><ResourceColorIcon category={resources[resourceId].category} /> {resources[resourceId].name}</td>
+                  <td>{(100 * abundances[resourceId]).toFixed(1)}%</td>
+                </SelectionTableRow>
+              ))
+            }
+          </tbody>
+        </table>
+      </SelectionTableWrapper>
+    </SelectionDialog>
+  );
+}
+
+
+
+
 const ingredients = [
   [700, 5, 700], [700, 19, 500], [400, 22, 0],
-  // [700, 5, 0], [700, 19, 0], [400, 22, 0], [700, 5, 0], [700, 19, 0], [400, 22, 0],
+  // [700, 2, 0], [700, 7, 0], [400, 23, 0], [700, 24, 0], [700, 69, 0], [400, 45, 0],
 ];
 
-const EmptyImage = ({ children }) => (
-  <EmptyThumbnail>
-    <div />
-    <div />
-    <div />
-    <div />
-    {children}
-  </EmptyThumbnail>
-);
-
-export const EmptyResourceImage = ({ iconOverride }) => (
-  <ResourceThumbnailWrapper><EmptyImage>{iconOverride || <PlusIcon />}</EmptyImage></ResourceThumbnailWrapper>
-);
+//
+//  FORMATTERS
+//
 
 const getCapacityUsage = (building, inventories, type) => {
   const capacity = {
@@ -803,11 +1149,17 @@ const getCapacityUsage = (building, inventories, type) => {
   }
   return capacity;
 }
+
 const formatCapacity = (value) => {
   return formatFixed(value / 1e6, 1);
 }
 
-const BuildingImage = ({ building, inventories, showInventoryStatusForType, unfinished }) => {
+
+//
+// SUB-COMPONENTS
+//
+
+export const BuildingImage = ({ building, inventories, showInventoryStatusForType, unfinished }) => {
   if (!building) return null;
   const capacity = getCapacityUsage(building, inventories, showInventoryStatusForType);
   return (
@@ -825,16 +1177,28 @@ const BuildingImage = ({ building, inventories, showInventoryStatusForType, unfi
             horizontal />
         </>
       )}
+      <ClipCorner dimension={10} />
     </BuildingThumbnailWrapper>
   );
 };
-const EmptyBuildingImage = ({ iconOverride }) => (
-  <BuildingThumbnailWrapper><EmptyImage>{iconOverride || <LocationIcon />}</EmptyImage></BuildingThumbnailWrapper>
+
+export const EmptyBuildingImage = ({ iconOverride }) => (
+  <BuildingThumbnailWrapper>
+    <EmptyThumbnail>{iconOverride || <LocationIcon />}</EmptyThumbnail>
+    <ClipCorner dimension={10} />
+  </BuildingThumbnailWrapper>
 );
 
 const ReadyHighlight = () => <ReadyIconWrapper><div><NavIcon animate selected /></div></ReadyIconWrapper>;
 
 const CompletedHighlight = () => <CompletedIconWrapper><CheckIcon /></CompletedIconWrapper>;
+
+export const EmptyResourceImage = ({ iconOverride }) => (
+  <ResourceThumbnailWrapper>
+    <EmptyThumbnail>{iconOverride || <PlusIcon />}</EmptyThumbnail>
+    <ClipCorner dimension={10} />
+  </ResourceThumbnailWrapper>
+);
 
 const MouseoverIcon = ({ children, icon, iconStyle = {}, themeColor }) => {
   const refEl = useRef();
@@ -859,9 +1223,42 @@ const MouseoverIcon = ({ children, icon, iconStyle = {}, themeColor }) => {
 
 
 //
-// Selectors
+// SELECTORS
 //
-const BuildingPlanSelection = ({ onBuildingSelected }) => {
+
+export const SelectionPopper = ({ children, onClose, open, position = 'right', referenceEl, title, ...styleProps }) => {
+  const [popperEl, setPopperEl] = useState();
+  const { styles, attributes } = usePopper(referenceEl, popperEl, {
+    placement: `${position}-start`,
+    modifiers: [
+      {
+        name: 'flip',
+        options: {
+          fallbackPlacements: [position, position === 'right' ? 'left' : 'right'],
+        },
+      },
+    ],
+  });
+
+  if (!children) return null;
+  if (!open) return null;
+  return (
+    <>
+      <ClickAwayListener onClick={onClose} />
+      {createPortal(
+        <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000 }} {...attributes.popper}>
+          <SelectionPopperContent {...styleProps}>
+            <div><h1>{title}</h1></div>
+            <div>{children}</div>
+          </SelectionPopperContent>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+};
+
+export const BuildingPlanSelection = ({ onBuildingSelected }) => {
   const buildings = useBuildingAssets();
   return (
     <PopperBody style={{ paddingBottom: 5, paddingTop: 5 }}>
@@ -1185,6 +1582,55 @@ const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) 
 };
 
 //
+// COMPONENTS
+//
+
+export const ActionDialogHeader = ({ action, captain, crewAvailableTime, stage, taskCompleteTime }) => {
+  return (
+    <Header theming={theming[stage]}>
+      {captain && (
+        <CrewCardFramed
+          crewmate={captain}
+          isCaptain
+          width={75} />
+      )}
+      <IconAndLabel>
+        <IconContainer>{action.icon}</IconContainer>
+        <LabelContainer>
+          <h1>{action.label}</h1>
+          <div>
+            <h2>{action.status || theming[stage].label}</h2>
+            {crewAvailableTime !== undefined && <TimePill type="crew"><CrewIcon /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
+            {taskCompleteTime !== undefined && <TimePill type="total"><AlertIcon /> {formatTimer(taskCompleteTime, 2)}</TimePill>}
+          </div>
+        </LabelContainer>
+      </IconAndLabel>
+    </Header>
+  );
+};
+
+export const FlexSectionInputBlock = ({ disabled, image, isSelected, label, onClick, sublabel, title, style = {} }) => {
+  return (
+    <FlexSectionInputContainer style={style}>
+      {title && <SectionTitle>{title}</SectionTitle>}
+      <FlexSectionInputBody onClick={disabled ? null : onClick} isSelected={isSelected}>
+        <ThumbnailWithData>
+          {image}
+          <label>
+            <h3>{label}</h3>
+            {sublabel && <b>{sublabel}</b>}
+          </label>
+        </ThumbnailWithData>
+        <ClipCorner dimension={sectionBodyCornerSize} />
+      </FlexSectionInputBody>
+    </FlexSectionInputContainer>
+  );
+
+};
+
+
+
+//
 // Sections
 //
 
@@ -1395,7 +1841,7 @@ export const ToolSection = ({ resource, sourceLot }) => {
   );
 }
 
-const SelectionPopper = ({ closeOnChange, inventory, onSelectionCompleted, resources, selectedItems }) => (
+const TransferSelectionPopper = ({ closeOnChange, inventory, onSelectionCompleted, resources, selectedItems }) => (
   <Poppable label="Select" title="Items to Transfer" closeOnChange={closeOnChange} contentHeight={360} contentWidth={700}>
     <TransferSelection
       inventory={inventory}
@@ -1428,7 +1874,7 @@ export const ItemSelectionSection = ({ inventory, onSelectItems, resources, sele
               </label>
             </EmptyResourceWithData>
             <div>
-              <SelectionPopper
+              <TransferSelectionPopper
                 closeOnChange={completed}
                 inventory={inventory}
                 onSelectionCompleted={onSelectionCompleted}
@@ -1453,7 +1899,7 @@ export const ItemSelectionSection = ({ inventory, onSelectItems, resources, sele
             <div>
               <div>{selectedItemKeys.length} item{selectedItemKeys.length === 1 ? '' : 's'}</div>
               {status === 'BEFORE' && (
-                <SelectionPopper
+                <TransferSelectionPopper
                   closeOnChange={completed}
                   inventory={inventory}
                   onSelectionCompleted={onSelectionCompleted}
@@ -1597,35 +2043,33 @@ export const BuildingPlanSection = ({ building, canceling, gracePeriodEnd, onBui
 
 export const BuildingRequirementsSection = ({ isGathering, label, building, resources }) => {
   const gatheringComplete = isGathering && !ingredients.find(([tally, i, hasTally]) => hasTally < tally);
+  const { totalMass, totalVolume } = useMemo(() => {
+    return ingredients.reduce((acc, [units, i]) => {
+      acc.totalMass += units * resources[i].massPerUnit * 1e6;
+      acc.totalVolume += units * (resources[i].volumePerUnit || 0) * 1e6;
+      return acc;
+    }, { totalMass: 0, totalVolume: 0 });
+  }, [ingredients]);
   return (
     <Section>
-      <SectionTitle><ChevronRightIcon /> {label}</SectionTitle>
+      <SectionTitle>{label}</SectionTitle>
       <SectionBody>
-        <FutureSectionOverlay />
-        <IngredientsList empty={!building}>
-          {building && (
-            <>
-              {ingredients.map(([tally, i, hasTally]) => (
-                <ResourceRequirement
-                  key={i}
-                  isGathering={isGathering}
-                  hasTally={hasTally}
-                  needsTally={tally}
-                  resource={resources[i]} />
-              ))}
-              {!gatheringComplete && (
-                <MouseoverIcon
-                  icon={(<WarningOutlineIcon />)}
-                  iconStyle={{ alignSelf: 'center', fontSize: '150%', marginLeft: 5 }}
-                  themeColor={isGathering ? theme.colors.yellow : theme.colors.main}>
-                  After placing a site, the required construction materials must be transfered to the location before construction can begin.
-                </MouseoverIcon>
-              )}
-            </>
-          )}
-          {!building && [0,1,2].map((i) => (
-            <EmptyResourceImage key={i} iconOverride={<ConstructIcon />} />
+        {/* TODO: <FutureSectionOverlay /> */}
+        <IngredientsList hasSummary>
+          {ingredients.map(([tally, i, hasTally]) => (
+            <ResourceRequirement
+              key={i}
+              isGathering={isGathering}
+              hasTally={hasTally}
+              needsTally={tally}
+              resource={resources[i]}
+              size="95px" />
           ))}
+          <IngredientSummary mode="warning">
+            <span>
+              {ingredients.length} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
+            </span>
+          </IngredientSummary>
         </IngredientsList>
       </SectionBody>
     </Section>
@@ -1649,6 +2093,97 @@ export const DeconstructionMaterialsSection = ({ label, resources, status }) => 
         </IngredientsList>
         {status === 'AFTER' && <><Spacer /><CompletedHighlight /></>}
       </SectionBody>
+    </Section>
+  );
+};
+
+export const ProgressBarSection = ({
+  completionTime,
+  overrides = {
+    barColor: null,
+    color: null,
+    left: '',
+    right: ''
+  },
+  stage,
+  startTime,
+  title,
+  tooltip,
+  totalTime
+}) => {
+  const chainTime = useChainTime();
+
+  const refEl = useRef();
+  const [hovered, setHovered] = useState();
+  
+  const { animating, barWidth, color, left, right } = useMemo(() => {
+    const r = {
+      animating: false,
+      barWidth: 0,
+      color: null,
+      left: '',
+      right: '',
+    }
+    if (stage === actionStage.NOT_STARTED) {
+      r.color = '#AAA';
+      r.left = '0.0%';
+    } else if (stage === actionStage.STARTING) {
+      r.animating = true;
+      r.color = '#AAA';
+      r.left = '0.0%';
+    } else if (stage === actionStage.IN_PROGRESS) {
+      const progress = startTime && completionTime && chainTime
+        ? Math.min(1, (chainTime - startTime) / (completionTime - startTime))
+        : 0;
+      r.animating = true;
+      r.barWidth = progress;
+      r.color = '#FFF';
+      r.left = `${formatFixed(100 * progress, 1)}%`;
+      r.right = <LiveTimer target={completionTime} />
+    } else if (stage === actionStage.READY_TO_COMPLETE) {
+      r.barWidth = 1;
+      r.color = '#FFF';
+      r.left = '100%';
+    } else if (stage === actionStage.COMPLETING) {
+      r.animating = true;
+    } else if (stage === actionStage.COMPLETED) {
+      r.barWidth = 1;
+      r.color = '#FFF';
+    }
+    return r;
+  }, [chainTime, completionTime, stage, startTime]);
+
+  const totalTimeNote = useMemo(() => {
+    if (!totalTime) return '';
+    if ([actionStage.NOT_STARTED, actionStage.COMPLETING, actionStage.COMPLETED].includes(stage)) return '';
+    return `TOTAL: ${formatTimer(totalTime, 2)}`;
+  }, [stage, totalTime]);
+
+  return (
+    <Section>
+      <SectionTitle note={totalTimeNote}>{title}</SectionTitle>
+      {tooltip && (
+        <MouseoverInfoPane referenceEl={refEl.current} visible={hovered}>
+          <MouseoverContent>
+            {tooltip}
+          </MouseoverContent>
+        </MouseoverInfoPane>
+      )}
+      <ActionProgressWrapper>
+        <ActionProgressContainer
+          animating={animating}
+          color={overrides.barColor || theming[stage].highlight}
+          labelColor={overrides.color || color || undefined}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          ref={refEl}>
+          <ActionProgress progress={barWidth || 0} />
+          <ActionProgressLabels>
+            <div>{overrides.left || left}</div>
+            <div>{overrides.right || right}</div>
+          </ActionProgressLabels>
+        </ActionProgressContainer>
+      </ActionProgressWrapper>
     </Section>
   );
 };
@@ -1720,69 +2255,6 @@ export const ExtractionAmountSection = ({ amount, extractionTime, min, max, reso
   );
 }
 
-export const ActionDialogLoader = () => {
-  return (
-    <PuffLoader />
-  );
-};
-
-export const ActionDialogHeader = ({ action, asteroid, captain, onClose, lot, status, startTime, targetTime }) => {
-  const buildings = useBuildingAssets();
-  const chainTime = useChainTime();
-
-  const progress = useMemo(() => {
-    return startTime && targetTime ? Math.min(100, 100 * (chainTime - startTime) / (targetTime - startTime)) : 0;
-  }, [chainTime, startTime, targetTime]);
-
-  if (!(action && lot)) return null;
-  return (
-    <>
-      {status === 'DURING' && (
-        <LoadingBar progress={progress}>{action.label}: {(progress || 0).toFixed(1)}%</LoadingBar>
-      )}
-      {status === 'AFTER' && (
-        <LoadingBar progress={progress}>{action.completeLabel || action.label} Ready</LoadingBar>
-      )}
-      <CloseButton backgroundColor={status !== 'BEFORE' && 'black'} onClick={onClose} borderless>
-        <CloseIcon />
-      </CloseButton>
-      <Header backgroundSrc={action.headerBackground}>
-        <HeaderSectionBody>
-          <HeaderInfo padTop={status !== 'BEFORE'}>
-            <Title>
-              {status !== 'DURING' && <>{action.actionIcon} {action.label.toUpperCase()}</>}
-              {status === 'DURING' && <><RingLoader color={theme.colors.main} size="1em" /> <span style={{ marginLeft: 40 }}><LiveTimer target={targetTime} /></span></>}
-            </Title>
-            <Subtitle>
-              {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName}
-              {' > '}
-              <b>
-                Lot {(lot.i || '').toLocaleString()}{' '}
-                (
-                  {buildings[lot.building?.capableType]?.name || 'Empty Lot'}
-                  {lot.building?.construction?.status === Construction.STATUS_PLANNED && ' - Planned'}
-                  {lot.building?.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION && ' - Under Construction'}
-                )
-              </b>
-            </Subtitle>
-            {captain && action.crewRequirement && status === 'BEFORE' && (
-              <CrewInfo requirement={action.crewRequirement} status={status}>
-                <CrewRequirement />
-                <CardContainer>
-                  <CrewCard
-                    crew={captain}
-                    hideHeader
-                    hideFooter
-                    hideMask />
-                </CardContainer>
-              </CrewInfo>
-            )}
-          </HeaderInfo>
-        </HeaderSectionBody>
-      </Header>
-    </>
-  );
-};
 
 const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip, warning }}) => {
   const refEl = useRef();
@@ -1815,24 +2287,35 @@ const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip
   );
 };
 
-export const ActionDialogStats = ({ stats, status }) => (
-  <>
-    {stats?.length > 0 && (
-      <StatSection status={status}>
-        <SectionBody>
-          {[0,1].map((statGroup) => (
-            <div key={statGroup}>
-              {(statGroup === 0
-                ? stats.slice(0, Math.ceil(stats.length / 2))
-                : stats.slice(Math.ceil(stats.length / 2))
-              ).map((stat) => <ActionDialogStat key={stat.label} stat={stat} />)}
-            </div>
-          ))}
-        </SectionBody>
-      </StatSection>
-    )}
-  </>
-);
+export const ActionDialogStats = ({ actionStage, stats }) => {
+  const [open, setOpen] = useState();
+
+  useEffect(() => {
+    setOpen(actionStage === actionStage.NOT_STARTED);
+  }, [actionStage])
+
+  if (!stats?.length) return null;
+  return (
+    <StatSection actionStage={actionStage}>
+      <SectionTitle
+        isDetailsHeader
+        isOpen={open}
+        onClick={() => setOpen((o) => !o)}>
+        <ChevronRightIcon /> Details
+      </SectionTitle>
+      <SectionBody collapsible isOpen={open}>
+        {[0,1].map((statGroup) => (
+          <div key={statGroup}>
+            {(statGroup === 0
+              ? stats.slice(0, Math.ceil(stats.length / 2))
+              : stats.slice(Math.ceil(stats.length / 2))
+            ).map((stat) => <ActionDialogStat key={stat.label} stat={stat} />)}
+          </div>
+        ))}
+      </SectionBody>
+    </StatSection>
+  );
+};
 
 
 export const ActionDialogTimers = ({ actionReadyIn, crewAvailableIn }) => (
@@ -1858,7 +2341,7 @@ export const ActionDialogTimers = ({ actionReadyIn, crewAvailableIn }) => (
   </StatSection>
 );
 
-export const ActionDialogFooter = ({ buttonsLoading, buttonsOverride, goDisabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
+export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, stage }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // TODO: connect notifications to top-level state
@@ -1873,41 +2356,47 @@ export const ActionDialogFooter = ({ buttonsLoading, buttonsOverride, goDisabled
   return (
     <Footer>
       <SectionBody>
-        {buttonsOverride
-          ? buttonsOverride.map(({ label, onClick }) => (
-            <Button key={label} loading={buttonsLoading} onClick={onClick}>{label}</Button>
-          ))
-          : (
+        {/* TODO: ...
+          <NotificationEnabler onClick={enableNotifications}>
+            {notificationsEnabled ? <CheckedIcon /> : <UncheckedIcon />}
+            Notify on Completion
+          </NotificationEnabler>
+        */}
+        <Spacer />
+        
+        {stage === actionStage.NOT_STARTED
+          ? (
             <>
-              {status === 'BEFORE' && (
-                  <>
-                    {/* TODO: ...
-                    <NotificationEnabler onClick={enableNotifications}>
-                      {notificationsEnabled ? <CheckedIcon /> : <UncheckedIcon />}
-                      Notify on Completion
-                    </NotificationEnabler>
-                    */}
-                    <Spacer />
-                    <Button loading={buttonsLoading} onClick={onClose}>Cancel</Button>
-                    <Button
-                      disabled={goDisabled}
-                      loading={buttonsLoading}
-                      isTransaction
-                      onClick={onGo}>{goLabel}</Button>
-                  </>
-                )}
-              {status === 'DURING' && (
-                <Button loading={buttonsLoading} onClick={onClose}>{'Close'}</Button>
-              )}
-              {status === 'AFTER' && (
-                <Button
-                  isTransaction
-                  loading={buttonsLoading}
-                  onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
-              )}
+              <Button
+                loading={buttonsLoading}
+                onClick={onClose}>Cancel</Button>
+              <Button
+                isTransaction
+                disabled={disabled}
+                loading={buttonsLoading}
+                onClick={onGo}>{goLabel}</Button>
             </>
+          )
+          : (
+              stage === actionStage.READY_TO_COMPLETE
+              ? (
+                <>
+                  <Button
+                    loading={buttonsLoading}
+                    onClick={onClose}>Close</Button>
+                  <Button
+                    isTransaction
+                    disabled={disabled}
+                    loading={buttonsLoading}
+                    onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
+                </>
+              )
+              : (
+                <Button
+                  loading={buttonsLoading}
+                  onClick={onClose}>Close</Button>
+              )
           )}
-
       </SectionBody>
     </Footer>
   );
