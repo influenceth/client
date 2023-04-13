@@ -33,6 +33,7 @@ import QuadtreeTerrainCube from '~/game/scene/asteroid/helpers/QuadtreeTerrainCu
 import ResourceMix from './asteroidDetails/ResourceMix';
 import ResourceBonuses from './asteroidDetails/ResourceBonuses';
 import Dimensions from './asteroidDetails/Dimensions';
+import ReactTooltip from 'react-tooltip';
 
 const StyledAsteroidDetails = styled.div`
   align-items: stretch;
@@ -259,6 +260,8 @@ const AsteroidDetails = (props) => {
     const area = (factor * (radius * radius)) / BigInt('1000000'); // area convert m2 to km2
     return Number((area / BigInt('18446744073709552000')) * BigInt('6922'));
   }, [asteroid]);
+  
+  useEffect(() => ReactTooltip.rebuild(), []);
 
   return (
     <Details
@@ -302,17 +305,30 @@ const AsteroidDetails = (props) => {
             <Pane>
               <Subtitle>Manage Asteroid</Subtitle>
               {sale && !asteroid.owner && (
-                <Button
-                  data-tip="Purchase development rights"
+                <span
                   data-for="global"
-                  disabled={!account || !saleIsActive || buying}
-                  loading={buying}
-                  onClick={() => {
-                    buyAsteroid();
-                    createReferral.mutate();
-                  }}>
-                  <ClaimIcon /> Purchase
-                </Button>
+                  data-place="right"
+                  data-tip={(
+                    !account
+                      ? 'Connect your Wallet to Purchase'
+                      : (
+                        !saleIsActive
+                          ? 'Asteroid sales are currently inactive'
+                          : 'Purchase development rights'
+                      )
+                  )}
+                  style={{ marginTop: 15, width: 175 }}>
+                  <Button
+                    disabled={!account || !saleIsActive || buying}
+                    loading={buying}
+                    onClick={() => {
+                      buyAsteroid();
+                      createReferral.mutate();
+                    }}
+                    style={{ display: 'inline-flex', marginTop: 0 }}>
+                    <ClaimIcon /> Purchase
+                  </Button>
+                </span>
               )}
               {asteroid.owner && asteroid.owner !== account && (
                 <Button
