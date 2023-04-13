@@ -285,27 +285,6 @@ const LotResources = () => {
                 </Sample>
               );
             })}
-            {ownedSamples.map((sample) => {
-              const { name, categoryKey } = resources[sample.resourceId];
-              const isSelected = selected?.type === 'sample' && selected?.r === sample.resourceId && selected?.i === sample.sampleId;
-              return (
-                <Sample key={sample.i}
-                  category={categoryKey}
-                  onClick={onClickSample(sample.resourceId, sample.sampleId)}
-                  selected={isSelected}>
-                  {isSelected
-                    ? (
-                      <ResourceThumbnail
-                        resource={resources[sample.resourceId]}
-                        iconBadge={<CoreSampleIcon />}
-                        size="75px" />
-                    )
-                    : <CoreSampleIcon />}
-                  <label>{name}{isSelected ? '' : ' Deposit'}</label>
-                  <span>{getSampleYield(sample)}</span>
-                </Sample>
-              );
-            })}
             {!showAllSamples && depletedSamples?.length > 0 && (
               <ShowMoreRow onClick={() => setShowAllSamples(true)}>
                 <PlusIcon />

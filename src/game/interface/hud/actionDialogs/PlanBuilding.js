@@ -204,7 +204,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
         )}
 
         <ActionDialogStats
-          actionStage={stage}
+          stage={stage}
           stats={stats}
         />
       </ActionDialogBody>

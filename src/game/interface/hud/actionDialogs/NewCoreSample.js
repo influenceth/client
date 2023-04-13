@@ -4,21 +4,21 @@ import styled from 'styled-components';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { NewCoreSampleIcon, ResourceIcon } from '~/components/Icons';
+import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
+import actionStage from '~/lib/actionStages';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { hexToRGB } from '~/theme';
 
 import {
   ActionDialogBody,
-  RawMaterialSection,
-  ToolSection,
 
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
-  ActionDialogTimers,
 
   getBonusDirection,
   formatSampleMass,
@@ -31,16 +31,11 @@ import {
   FlexSectionSpacer,
   ResourceSelectionDialog,
   ProgressBarSection,
-  formatResourceAmount
 } from './components';
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
-import ResourceThumbnail from '~/components/ResourceThumbnail';
-import actionStage from '~/lib/actionStages';
-import useChainTime from '~/hooks/useChainTime';
-import { hexToRGB } from '~/theme';
 
 const DepositSize = styled.div`
-  background: rgba(${hexToRGB(theming[actionStage.COMPLETED].highlight)}, 0.3);
+  background: rgba(${p => hexToRGB(p.color)}, 0.3);
   color: white;
   clip-path: polygon(
     0 0,
@@ -232,7 +227,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
               disabled
               style={{ width: '100%' }}
               sublabel={sample?.initialYieldTonnage && (
-                <DepositSize>
+                <DepositSize color={theming[actionStage.COMPLETED].highlight}>
                   <ResourceIcon /> {formatSampleMass(sample.initialYieldTonnage)}t
                 </DepositSize>
               )}
@@ -242,7 +237,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
         {stage !== actionStage.COMPLETED && (
           <FlexSection>
             <FlexSectionInputBlock
-              title="Prospect For"
+              title="Resource"
               image={
                 resourceId
                   ? <ResourceThumbnail resource={resources[resourceId]} />
@@ -288,13 +283,13 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
         )}
 
         <ActionDialogStats
-          actionStage={stage}
+          stage={stage}
           stats={stats} />
 
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={lotAbundance === 0}
+        disabled={lotAbundance === 0 || !coreDrillSourceSelected}
         goLabel="Prospect"
         onGo={() => startSampling(resourceId)}
         finalizeLabel="Analyze"

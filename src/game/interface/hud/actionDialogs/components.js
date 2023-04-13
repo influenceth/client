@@ -344,10 +344,6 @@ const StatSection = styled(Section)`
       }
     }
   }
-
-  ${p => p.actionStage === actionStage.NOT_STARTED && `
-    ${StatRow} > span { color: #BBB; }
-  `}
 `;
 
 const TimerRow = styled.div`
@@ -1118,6 +1114,49 @@ export const ResourceSelectionDialog = ({ abundances, lotId, resources, initialS
     </SelectionDialog>
   );
 }
+
+export const CoreSampleSelectionDialog = ({ lotId, improvableSamples, resources, initialSelection, onClose, onSelected, open }) => {
+  const [selection, setSelection] = useState(initialSelection);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  console.log(selection, improvableSamples);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection?.sampleId > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={`Lot #${(lotId || 0).toLocaleString()}`}>
+      {/* TODO: replace with DataTable? */}
+      <SelectionTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>Resource</td>
+              <td>Deposit Amount</td>
+            </tr>
+          </thead>
+          <tbody>
+            {improvableSamples.sort((a, b) => b.remainingYield - a.remainingYield).map((sample) => (
+              <SelectionTableRow
+                key={`${sample.resourceId}_${sample.sampleId}`}
+                onClick={() => setSelection(sample)}
+                selectedRow={selection.resourceId === sample.resourceId && selection.sampleId === sample.sampleId}>
+                <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name} #{sample.sampleId.toLocaleString()}</td>
+                <td>{formatSampleMass(sample.remainingYield * resources[sample.resourceId].massPerUnit)} tonnes</td>
+              </SelectionTableRow>
+            ))}
+          </tbody>
+        </table>
+      </SelectionTableWrapper>
+    </SelectionDialog>
+  );
+};
 
 
 
@@ -2287,16 +2326,16 @@ const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip
   );
 };
 
-export const ActionDialogStats = ({ actionStage, stats }) => {
+export const ActionDialogStats = ({ stage, stats }) => {
   const [open, setOpen] = useState();
 
   useEffect(() => {
-    setOpen(actionStage === actionStage.NOT_STARTED);
-  }, [actionStage])
+    setOpen(stage === actionStage.NOT_STARTED);
+  }, [stage]);
 
   if (!stats?.length) return null;
   return (
-    <StatSection actionStage={actionStage}>
+    <StatSection actionStage={stage}>
       <SectionTitle
         isDetailsHeader
         isOpen={open}
