@@ -284,6 +284,15 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             )}
           />
         )}
+        {stage === actionStage.IN_PROGRESS && (
+          <ProgressBarSection
+            completionTime={lot?.building?.construction?.completionTime}
+            startTime={lot?.building?.construction?.startTime}
+            stage={stage}
+            title="Progress"
+            totalTime={crewTravelTime + constructionTime}
+          />
+        )}
 
         <ActionDialogStats
           stage={stage}
@@ -316,14 +325,6 @@ const Wrapper = (props) => {
       }
     }
   }, [asteroid, lot, isLoading]);
-
-
-  // stay in this window until PLANNED, then swap to CONSTRUCT
-  useEffect(() => {
-    if (!['READY_TO_PLAN', 'PLANNING'].includes(constructionManager.constructionStatus)) {
-      props.onSetAction('CONSTRUCT');
-    }
-  }, [constructionManager.constructionStatus]);
 
   return (
     <ActionDialogInner

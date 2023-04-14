@@ -1217,7 +1217,7 @@ export const getBuildingRequirements = (building) => {
   // TODO: presumably ingredients will come from sdk per building
   return ingredients.map(([tally, i]) => {
     const totalRequired = tally;
-    const inInventory = (inventories[0]?.resources || [])[i] || 0;
+    const inInventory = tally || (inventories[0]?.resources || [])[i] || 0; // TODO: remove `tally ||`
     const inTransit = deliveries
       .filter((d) => d.status === 'IN_PROGRESS')
       .reduce((acc, cur) => acc + cur.resources[i] || 0, 0);

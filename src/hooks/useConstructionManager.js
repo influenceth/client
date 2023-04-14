@@ -55,7 +55,7 @@ const useConstructionManager = (asteroidId, lotId) => {
       if (lot.building.construction?.status === Construction.STATUS_PLANNED) {
         if (getStatus('START_CONSTRUCTION', payload) === 'pending') {
           status = 'UNDER_CONSTRUCTION';
-          stages.construct = actionStage.IN_PROGRESS;
+          stages.construct = actionStage.STARTING;
         } else if (getStatus('UNPLAN_CONSTRUCTION', payload) === 'pending') {
           status = 'CANCELING';
           stages.unplan = actionStage.COMPLETING;
