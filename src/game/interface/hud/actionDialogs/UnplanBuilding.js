@@ -17,6 +17,7 @@ import {
   FlexSection,
   FlexSectionInputBlock,
   BuildingImage,
+  FlexSectionSpacer,
 } from './components';
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -26,8 +27,8 @@ const UnplanWarning = styled.div`
   color: ${p => p.theme.colors.error};
   display: flex;
   flex: 1;
+  height: 100%;
   justify-content: flex-end;
-  margin-top: 25px;
   & span:last-child {
     font-size: 175%;
     line-height: 1em;
@@ -80,10 +81,13 @@ const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props })
             disabled
             sublabel="Site Plans"
           />
-          <UnplanWarning>
-            <span>On-site materials<br/>will be abandoned</span>
-            <span><WarningOutlineIcon /></span>
-          </UnplanWarning>
+          <FlexSectionSpacer />
+          <FlexSectionInputBlock bodyStyle={{ background: 'transparent' }}>
+            <UnplanWarning>
+              <span>On-site materials<br/>will be abandoned</span>
+              <span><WarningOutlineIcon /></span>
+            </UnplanWarning>
+          </FlexSectionInputBlock>
         </FlexSection>
       </ActionDialogBody>
 

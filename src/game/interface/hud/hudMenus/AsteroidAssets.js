@@ -87,6 +87,7 @@ const Details = styled.div`
   }
 `;
 
+// TODO: progress should be an attribute, or else each of these creates a new class every second
 const Bar = styled.div`
   background: ${majorBorderColor};
   border-radius: 3px;

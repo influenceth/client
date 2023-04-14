@@ -9,7 +9,7 @@ import {
   TbBellRingingFilled as AlertIcon
 } from 'react-icons/tb';
 import { RingLoader, PuffLoader } from 'react-spinners';
-import { Asteroid, Construction, Crewmate, Inventory } from '@influenceth/sdk';
+import { Asteroid, Capable, Construction, Crewmate, Inventory } from '@influenceth/sdk';
 
 import Button from '~/components/ButtonAlt';
 import ButtonRounded, { IconButtonRounded } from '~/components/ButtonRounded';
@@ -108,18 +108,27 @@ const FlexSectionInputBody = styled.div`
   ${p => p.onClick && `
     cursor: ${p.theme.cursors.active};
     &:hover {
-      background: rgba(${p => p.theme.colors.mainRGB}, 0.25);
-      border-color: rgba(${p => p.theme.colors.mainRGB}, 0.9);
+      background: rgba(${p.theme.colors.mainRGB}, 0.25) !important;
+      border-color: rgba(${p.theme.colors.mainRGB}, 0.9) !important;
       & > svg {
-        stroke: rgba(${p => p.theme.colors.mainRGB}, 0.9);
+        stroke: rgba(${p.theme.colors.mainRGB}, 0.9) !important;
       }
     }
   `};
+
+  ${p => p.style?.borderColor && `
+    & > svg {
+      stroke: ${p.style?.borderColor};
+    }
+  `}
+`;
+const FlexSectionInputBodyInner = styled.div`
+  height: 92px;
 `;
 
 
 export const FlexSection = styled(Section)`
-  align-items: center;
+  align-items: flex-end;
   display: flex;
 `;
 const SectionTitle = styled.div`
@@ -309,8 +318,8 @@ const StatRow = styled.div`
   }
   & > span {
     color: ${p => {
-      if (p.isTimeStat && p.direction > 0) return p.theme.colors.error;
-      if (p.isTimeStat && p.direction < 0) return p.theme.colors.success;
+      if (p.isTimeStat && p.direction < 0) return p.theme.colors.error;
+      if (p.isTimeStat && p.direction > 0) return p.theme.colors.success;
       if (p.direction > 0) return p.theme.colors.success;
       if (p.direction < 0) return p.theme.colors.error;
       return 'white';
@@ -478,6 +487,14 @@ const BuildingThumbnailWrapper = styled(ResourceThumbnailWrapper)`
     }
   }
 `;
+const ThumbnailOverlay = styled.div`
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  position: absolute;
+  width: 100%;
+`;
 const InventoryUtilization = styled(ResourceProgress)`
   bottom: 8px;
   &:last-child {
@@ -623,8 +640,12 @@ const ItemsList = styled.div`
     }
   }
 `;
+
 const IngredientsList = styled.div`
-  background: rgba(${p => hexToRGB(p.theme.colors.lightOrange)}, 0.15);
+  background: rgba(${p => p.theme.colors.mainRGB}, 0.1);
+  ${p => p.incomplete && `
+    background: rgba(${hexToRGB(p.theme.colors.lightOrange)}, 0.15);
+  `}
   clip-path: polygon(
     0 0, 
     100% 0,
@@ -651,7 +672,7 @@ const IngredientSummary = styled.div`
   left: 0;
   right: 0;
   & > span {
-    background: rgba(${p => hexToRGB(p.mode === 'warning' ? p.theme.colors.lightOrange : p.theme.colors.main)}, 0.45);
+    background: rgba(${p => hexToRGB(p.incomplete ? p.theme.colors.lightOrange : p.theme.colors.main)}, 0.45);
     color: white;
     padding: 5px 32px;
   }
@@ -835,9 +856,10 @@ const QuantaInput = styled.input`
   width: 100px;
 `;
 
-const MouseoverContent = styled.div`
+export const MouseoverContent = styled.div`
   & b {
     color: ${p => p.highlightColor || 'white'};
+    white-space: nowrap;
   }
   color: #999;
   font-size: 90%;
@@ -988,7 +1010,7 @@ const ActionProgressContainer = styled.div`
   &:before {
     content: "";
     ${p => p.animating && css`
-      animation: ${actionProgressBarAnimation} 1s linear infinite reverse;
+      animation: ${actionProgressBarAnimation} 1s linear infinite ${p.reverseAnimation ? '' : 'reverse'};
     `}
     background: repeating-linear-gradient(
       ${gradientAngle}deg,
@@ -1118,12 +1140,14 @@ export const ResourceSelectionDialog = ({ abundances, lotId, resources, initialS
 export const CoreSampleSelectionDialog = ({ lotId, improvableSamples, resources, initialSelection, onClose, onSelected, open }) => {
   const [selection, setSelection] = useState(initialSelection);
 
+  useEffect(() => {
+    setSelection(initialSelection);
+  }, [initialSelection]);
+
   const onComplete = useCallback(() => {
     onSelected(selection);
     onClose();
   }, [onClose, onSelected, selection]);
-
-  console.log(selection, improvableSamples);
 
   return (
     <SelectionDialog
@@ -1146,7 +1170,7 @@ export const CoreSampleSelectionDialog = ({ lotId, improvableSamples, resources,
               <SelectionTableRow
                 key={`${sample.resourceId}_${sample.sampleId}`}
                 onClick={() => setSelection(sample)}
-                selectedRow={selection.resourceId === sample.resourceId && selection.sampleId === sample.sampleId}>
+                selectedRow={selection?.resourceId === sample.resourceId && selection?.sampleId === sample.sampleId}>
                 <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name} #{sample.sampleId.toLocaleString()}</td>
                 <td>{formatSampleMass(sample.remainingYield * resources[sample.resourceId].massPerUnit)} tonnes</td>
               </SelectionTableRow>
@@ -1157,14 +1181,6 @@ export const CoreSampleSelectionDialog = ({ lotId, improvableSamples, resources,
     </SelectionDialog>
   );
 };
-
-
-
-
-const ingredients = [
-  [700, 5, 700], [700, 19, 500], [400, 22, 0],
-  // [700, 2, 0], [700, 7, 0], [400, 23, 0], [700, 24, 0], [700, 69, 0], [400, 45, 0],
-];
 
 //
 //  FORMATTERS
@@ -1189,6 +1205,32 @@ const getCapacityUsage = (building, inventories, type) => {
   return capacity;
 }
 
+export const getBuildingRequirements = (building) => {
+  const { capableType, inventories = [], deliveries = [] } = building || {};
+  
+  // TODO: remove this fallback (just for dev)
+  const ingredients = Capable.TYPES[capableType].buildingRequirements || [
+    [700, 5, 700], [700, 19, 500], [400, 22, 0],
+    // [700, 2, 0], [700, 7, 0], [400, 23, 0], [700, 24, 0], [700, 69, 0], [400, 45, 0],
+  ];
+
+  // TODO: presumably ingredients will come from sdk per building
+  return ingredients.map(([tally, i]) => {
+    const totalRequired = tally;
+    const inInventory = (inventories[0]?.resources || [])[i] || 0;
+    const inTransit = deliveries
+      .filter((d) => d.status === 'IN_PROGRESS')
+      .reduce((acc, cur) => acc + cur.resources[i] || 0, 0);
+    return {
+      i,
+      totalRequired,
+      inInventory,
+      inTransit,
+      inNeed: Math.max(0, totalRequired - inInventory - inTransit)
+    };
+  })
+};
+
 const formatCapacity = (value) => {
   return formatFixed(value / 1e6, 1);
 }
@@ -1198,7 +1240,7 @@ const formatCapacity = (value) => {
 // SUB-COMPONENTS
 //
 
-export const BuildingImage = ({ building, inventories, showInventoryStatusForType, unfinished }) => {
+export const BuildingImage = ({ building, iconOverlay, inventories, showInventoryStatusForType, unfinished }) => {
   if (!building) return null;
   const capacity = getCapacityUsage(building, inventories, showInventoryStatusForType);
   return (
@@ -1216,6 +1258,7 @@ export const BuildingImage = ({ building, inventories, showInventoryStatusForTyp
             horizontal />
         </>
       )}
+      {iconOverlay && <ThumbnailOverlay>{iconOverlay}</ThumbnailOverlay>}
       <ClipCorner dimension={10} />
     </BuildingThumbnailWrapper>
   );
@@ -1648,21 +1691,45 @@ export const ActionDialogHeader = ({ action, captain, crewAvailableTime, stage, 
   );
 };
 
-export const FlexSectionInputBlock = ({ disabled, image, isSelected, label, onClick, sublabel, title, style = {} }) => {
+export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, isSelected, label, onClick, style = {}, sublabel, title, tooltip }) => {
+  const refEl = useRef();
+  const [hovered, setHovered] = useState();
   return (
-    <FlexSectionInputContainer style={style}>
-      {title && <SectionTitle>{title}</SectionTitle>}
-      <FlexSectionInputBody onClick={disabled ? null : onClick} isSelected={isSelected}>
-        <ThumbnailWithData>
-          {image}
-          <label>
-            <h3>{label}</h3>
-            {sublabel && <b>{sublabel}</b>}
-          </label>
-        </ThumbnailWithData>
-        <ClipCorner dimension={sectionBodyCornerSize} />
-      </FlexSectionInputBody>
-    </FlexSectionInputContainer>
+    <>
+      {tooltip && (
+        <MouseoverInfoPane referenceEl={refEl.current} visible={hovered}>
+          <MouseoverContent highlightColor={theme.colors.lightOrange}>
+            {tooltip}
+          </MouseoverContent>
+        </MouseoverInfoPane>
+      )}
+      <FlexSectionInputContainer style={style}>
+        {title && <SectionTitle>{title}</SectionTitle>}
+        <FlexSectionInputBody
+          isSelected={isSelected}
+          onClick={disabled ? null : onClick}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          ref={refEl}
+          style={bodyStyle}>
+          {children && (
+            <FlexSectionInputBodyInner>
+              {children}
+            </FlexSectionInputBodyInner>
+          )}
+          {!children && (
+            <ThumbnailWithData>
+              {image}
+              <label>
+                <h3>{label}</h3>
+                {sublabel && <b>{sublabel}</b>}
+              </label>
+            </ThumbnailWithData>
+          )}
+          <ClipCorner dimension={sectionBodyCornerSize} />
+        </FlexSectionInputBody>
+      </FlexSectionInputContainer>
+    </>
   );
 
 };
@@ -2080,33 +2147,34 @@ export const BuildingPlanSection = ({ building, canceling, gracePeriodEnd, onBui
   );
 }
 
-export const BuildingRequirementsSection = ({ isGathering, label, building, resources }) => {
-  const gatheringComplete = isGathering && !ingredients.find(([tally, i, hasTally]) => hasTally < tally);
+export const BuildingRequirementsSection = ({ mode, label, requirements, requirementsMet, resources }) => {
+  const isGathering = mode === 'gathering';
+
   const { totalMass, totalVolume } = useMemo(() => {
-    return ingredients.reduce((acc, [units, i]) => {
-      acc.totalMass += units * resources[i].massPerUnit * 1e6;
-      acc.totalVolume += units * (resources[i].volumePerUnit || 0) * 1e6;
+    return requirements.reduce((acc, { i, totalRequired }) => {
+      acc.totalMass += totalRequired * resources[i].massPerUnit * 1e6;
+      acc.totalVolume += totalRequired * (resources[i].volumePerUnit || 0) * 1e6;
       return acc;
     }, { totalMass: 0, totalVolume: 0 });
-  }, [ingredients]);
+  }, [requirements]);
+
   return (
     <Section>
       <SectionTitle>{label}</SectionTitle>
       <SectionBody>
         {/* TODO: <FutureSectionOverlay /> */}
-        <IngredientsList hasSummary>
-          {ingredients.map(([tally, i, hasTally]) => (
+        <IngredientsList incomplete={isGathering && !requirementsMet} hasSummary>
+          {requirements.map((req) => (
             <ResourceRequirement
-              key={i}
+              key={req.i}
               isGathering={isGathering}
-              hasTally={hasTally}
-              needsTally={tally}
-              resource={resources[i]}
+              resource={resources[req.i]}
+              {...req}
               size="95px" />
           ))}
-          <IngredientSummary mode="warning">
+          <IngredientSummary incomplete={isGathering && !requirementsMet}>
             <span>
-              {ingredients.length} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
+              {requirements.length} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
             </span>
           </IngredientSummary>
         </IngredientsList>
@@ -2116,6 +2184,7 @@ export const BuildingRequirementsSection = ({ isGathering, label, building, reso
 };
 
 export const DeconstructionMaterialsSection = ({ label, resources, status }) => {
+  const ingredients = []; // TODO: ...
   return (
     <Section>
       <SectionTitle><ChevronRightIcon /> {label}</SectionTitle>
@@ -2138,6 +2207,7 @@ export const DeconstructionMaterialsSection = ({ label, resources, status }) => 
 
 export const ProgressBarSection = ({
   completionTime,
+  isCountDown,
   overrides = {
     barColor: null,
     color: null,
@@ -2155,15 +2225,29 @@ export const ProgressBarSection = ({
   const refEl = useRef();
   const [hovered, setHovered] = useState();
   
-  const { animating, barWidth, color, left, right } = useMemo(() => {
+  const { animating, barWidth, color, left, reverseAnimation, right } = useMemo(() => {
     const r = {
       animating: false,
+      reverseAnimation: false,
       barWidth: 0,
       color: null,
       left: '',
       right: '',
     }
     if (stage === actionStage.NOT_STARTED) {
+      if (isCountDown) {
+        const isZero = chainTime > completionTime;
+        const progress = startTime && completionTime && chainTime
+          ? Math.max(0, 1 - (chainTime - startTime) / (completionTime - startTime))
+          : 1;
+        r.animating = !isZero;
+        r.reverseAnimation = true;
+        r.barWidth = progress;
+        r.left = `${formatFixed(100 * progress, 1)}%`;
+        r.right = isZero
+          ? <span style={{ color: theme.colors.error }}>ABANDONED</span>
+          : <><LiveTimer target={completionTime} maxPrecision={2} /> left</>;
+      }
       r.color = '#AAA';
       r.left = '0.0%';
     } else if (stage === actionStage.STARTING) {
@@ -2215,7 +2299,8 @@ export const ProgressBarSection = ({
           labelColor={overrides.color || color || undefined}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
-          ref={refEl}>
+          ref={refEl}
+          reverseAnimation={reverseAnimation}>
           <ActionProgress progress={barWidth || 0} />
           <ActionProgressLabels>
             <div>{overrides.left || left}</div>

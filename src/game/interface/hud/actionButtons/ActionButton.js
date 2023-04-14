@@ -231,7 +231,7 @@ const LoadingTimer = ({ completionTime }) => {
   );
 };
 
-const ActionButtonComponent = ({ label, flags = {}, icon, onClick }) => {
+const ActionButtonComponent = ({ label, flags = {}, icon, onClick, ...props }) => {
   const _onClick = useCallback(() => {
     if (!flags?.disabled && onClick) onClick();
   }, [flags, onClick]);
@@ -243,7 +243,8 @@ const ActionButtonComponent = ({ label, flags = {}, icon, onClick }) => {
       data-place="top"
       data-tip={label}
       onClick={_onClick}
-      {...flags}>
+      {...flags}
+      {...props}>
       {flags.loading && <LoadingAnimation />}
       <ActionButton {...flags}>
         <ClipCorner dimension={cornerSize} />
