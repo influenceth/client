@@ -26,29 +26,44 @@ const PartialUnderlay = styled.div`
   width: 100%;
 `;
 
-const ResourceRequirement = ({ isGathering, totalRequired, inInventory, inTransit, inNeed, ...props }) => {
+// const ResourceRequirement = ({ isGathering, totalRequired, inInventory, inTransit, inNeed, ...props }) => {
+const ResourceRequirement = ({ isGathering, item, ...props }) => {
+
   // badge amounts
-  props.badge = totalRequired;
+  // (if gathering, show numerator and denominator)
   if (isGathering) {
-    props.badge = inInventory + inTransit;
-    props.badgeDenominator = totalRequired;
+    props.badge = item.numerator;
+    props.badgeDenominator = item.denominator;
+  // (else, show denominator if set (showing requirements) or numerator if not (showing something else))
+  } else {
+    props.badge = item.denominator || item.numerator;
   }
 
   // styles
-  if (inNeed > 0) {
+  // (needs not yet met)
+  if (item.denominator && item.numerator < item.denominator) {
     props.backgroundColor = `rgba(${lightOrangeRGB}, 0.15)`;
     props.badgeColor = theme.colors.lightOrange;
     props.outlineColor = `rgba(${lightOrangeRGB}, 0.4)`;
-    if (inNeed < totalRequired) {
+    if (item.numerator > 0) { // (needs partially met)
       props.underlay = <PartialUnderlay />;
     }
+  
+  // (needs met or no needs specified)
   } else {
     props.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.1)`;
     props.badgeColor = theme.colors.main;
     props.outlineColor = `rgba(${theme.colors.mainRGB}, 0.4)`;
-    props.overlayIcon = <div style={{ fontSize: 16, padding: '3px 0 0 3px' }}><CheckIcon /></div>;
+    if (item.denominator) { // (needs met)
+      props.overlayIcon = <div style={{ fontSize: 16, padding: '3px 0 0 3px' }}><CheckIcon /></div>;
+    }
   }
-  if (inTransit > 0) props.overlayIcon = <Animation><SurfaceTransferIcon /></Animation>;
+
+  if (item.customIcon) { // TODO: use for inTransit
+    props.overlayIcon = item.customIcon.animated
+      ? <Animation>{item.customIcon.icon}</Animation>
+      : <div>{item.customIcon.icon}</div>;
+  }
   
   return (
     <ResourceThumbnail {...props} />

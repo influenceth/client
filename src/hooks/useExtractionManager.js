@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import { Extraction } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import actionStages from '~/lib/actionStages';
 import useCrewContext from './useCrewContext';
 import useLot from './useLot';
 import useActionItems from './useActionItems';
@@ -20,7 +21,7 @@ const useExtractionManager = (asteroidId, lotId) => {
 
   // status flow
   // READY > EXTRACTING > READY_TO_FINISH > FINISHING
-  const [currentExtraction, extractionStatus] = useMemo(() => {
+  const [currentExtraction, extractionStatus, actionStage] = useMemo(() => {
     let current = {
       _crewmates: null,
       completionTime: null,
@@ -34,6 +35,7 @@ const useExtractionManager = (asteroidId, lotId) => {
     };
   
     let status = 'READY';
+    let stage = actionStages.NOT_STARTED;
     if (lot?.building?.extraction?.status === Extraction.STATUS_EXTRACTING) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_ExtractionStart'
@@ -54,10 +56,13 @@ const useExtractionManager = (asteroidId, lotId) => {
       
       if(getStatus('FINISH_EXTRACTION', payload) === 'pending') {
         status = 'FINISHING';
+        stage = actionStages.COMPLETING;
       } else if (lot.building.extraction.completionTime && lot.building.extraction.completionTime <= liveBlockTime) {
         status = 'READY_TO_FINISH';
+        stage = actionStages.READY_TO_COMPLETE;
       } else {
         status = 'EXTRACTING';
+        stage = actionStages.IN_PROGRESS;
       }
     } else {
       const startTx = getPendingTx('START_EXTRACTION', payload);
@@ -68,12 +73,14 @@ const useExtractionManager = (asteroidId, lotId) => {
         current.sampleId = startTx.vars.sampleId;
         current.yield = startTx.vars.amount;
         status = 'EXTRACTING';
+        stage = actionStages.STARTING;
       }
     }
 
     return [
       status === 'READY' ? null : current,
-      status
+      status,
+      stage
     ];
   }, [actionItems, readyItems, getPendingTx, getStatus, payload, lot?.building?.extraction?.status]);
 
@@ -96,7 +103,8 @@ const useExtractionManager = (asteroidId, lotId) => {
     startExtraction,
     finishExtraction,
     extractionStatus,
-    currentExtraction
+    currentExtraction,
+    actionStage
   };
 };
 

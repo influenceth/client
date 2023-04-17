@@ -32,32 +32,9 @@ import {
   ResourceSelectionDialog,
   ProgressBarSection,
   CoreSampleSelectionDialog,
+  SublabelBanner,
 } from './components';
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
-
-const DepositSize = styled.div`
-  align-items: center;
-  background: rgba(${p => hexToRGB(p.color)}, 0.3);
-  color: white;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 15px),
-    calc(100% - 15px) 100%,
-    0 100%
-  );
-  display: flex;
-  flex-direction: row;
-  font-size: 26px;
-  margin-top: 8px;
-  padding: 10px 10px;
-  width: 100%;
-
-  b {
-    color: rgba(${p => hexToRGB(p.color)}, 0.8);
-    padding-right: 10px;
-  }
-`;
 
 const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
   const resources = useResourceAssets();
@@ -267,11 +244,11 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
               disabled
               style={{ width: '100%' }}
               sublabel={sample?.initialYieldTonnage && (
-                <DepositSize color={theming[actionStage.COMPLETED].highlight}>
+                <SublabelBanner color={theming[actionStage.COMPLETED].highlight}>
                   <ResourceIcon />
                   <span style={{ flex: 1 }}>{formatSampleMass(sample.initialYieldTonnage)}t</span>
                   <b>+{formatSampleMass(sample.initialYieldTonnage - originalTonnage)}t</b>
-                </DepositSize>
+                </SublabelBanner>
               )}
             />
           </FlexSection>
@@ -309,7 +286,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
               label={coreDrillSourceSelected ? 'Core Drill' : 'Select'} // TODO: same as above, select an origin for tool
               onClick={() => { /*setSiteSelectorOpen(true)*/ }}
               disabled={stage !== actionStage.NOT_STARTED}
-              sublabel={coreDrillSourceSelected ? 'Tool' : 'Select'}
+              sublabel={coreDrillSourceSelected ? 'Tool' : 'Core Drill'}
             />
           </FlexSection>
         )}
@@ -341,7 +318,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
 
       {stage === actionStage.NOT_STARTED && (
         <CoreSampleSelectionDialog
-          improvableSamples={improvableSamples}
+          options={improvableSamples}
           initialSelection={currentSample}
           lotId={lot?.i}
           onClose={() => setSampleSelectorOpen(false)}

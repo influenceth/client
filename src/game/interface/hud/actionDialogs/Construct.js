@@ -223,7 +223,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             label={buildings[lot?.building?.capableType].name}
             bodyStyle={requirementsMet ? {} : { background: `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.15)` }}
             sublabel="Building"
-            tooltip={(
+            tooltip={!requirementsMet && (
               <>
                 This site is missing construction materials. Use <b>Transfer Materials to Site</b> to transfer
                 all required materials to the site before construction can begin.
@@ -266,7 +266,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             startTime={lot?.gracePeriodEnd - Lot.GRACE_PERIOD}
             isCountDown
             overrides={{
-              barColor: requirementsMet ? theme.colors.main : theme.colors.lightOrange,
+              barColor: theme.colors.lightOrange,
               color: 'white',
               left: <span style={{ display: 'flex', alignItems: 'center' }}><WarningOutlineIcon /> <span style={{ marginLeft: 6 }}>Site Timer</span></span>,
             }}
@@ -284,7 +284,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             )}
           />
         )}
-        {stage === actionStage.IN_PROGRESS && (
+        {stage !== actionStage.IN_PROGRESS && (
           <ProgressBarSection
             completionTime={lot?.building?.construction?.completionTime}
             startTime={lot?.building?.construction?.startTime}

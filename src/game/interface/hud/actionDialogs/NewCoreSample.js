@@ -31,24 +31,9 @@ import {
   FlexSectionSpacer,
   ResourceSelectionDialog,
   ProgressBarSection,
+  SublabelBanner,
 } from './components';
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
-
-const DepositSize = styled.div`
-  background: rgba(${p => hexToRGB(p.color)}, 0.3);
-  color: white;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 15px),
-    calc(100% - 15px) 100%,
-    0 100%
-  );
-  font-size: 26px;
-  margin-top: 8px;
-  padding: 10px 10px;
-  width: 100%;
-`;
 
 const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
   const resources = useResourceAssets();
@@ -227,9 +212,9 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
               disabled
               style={{ width: '100%' }}
               sublabel={sample?.initialYieldTonnage && (
-                <DepositSize color={theming[actionStage.COMPLETED].highlight}>
+                <SublabelBanner color={theming[actionStage.COMPLETED].highlight}>
                   <ResourceIcon /> {formatSampleMass(sample.initialYieldTonnage)}t
-                </DepositSize>
+                </SublabelBanner>
               )}
             />
           </FlexSection>

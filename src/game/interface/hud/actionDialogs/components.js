@@ -26,7 +26,8 @@ import {
   PlusIcon,
   ResourceIcon,
   TimerIcon,
-  WarningOutlineIcon
+  WarningOutlineIcon,
+  SurfaceTransferIcon
 } from '~/components/Icons';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import Poppable from '~/components/Popper';
@@ -56,7 +57,7 @@ const borderColor = '#333';
 const Spacer = styled.div`
   flex: 1;
 `;
-const Section = styled.div`
+export const Section = styled.div`
   color: #777;
   margin-top: 15px;
   padding: 0 36px;
@@ -131,7 +132,7 @@ export const FlexSection = styled(Section)`
   align-items: flex-end;
   display: flex;
 `;
-const SectionTitle = styled.div`
+export const SectionTitle = styled.div`
   align-items: center;
   border-bottom: 1px solid ${borderColor};
   display: flex;
@@ -177,7 +178,7 @@ const SectionTitle = styled.div`
     }
   `}
 `;
-const SectionBody = styled.div`
+export const SectionBody = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
@@ -194,6 +195,30 @@ const SectionBody = styled.div`
     overflow: hidden;
     max-height: ${p.isOpen ? '400px' : '0'};
   `}
+`;
+
+export const SublabelBanner = styled.div`
+  align-items: center;
+  background: rgba(${p => hexToRGB(p.color)}, 0.3);
+  color: white;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 15px),
+    calc(100% - 15px) 100%,
+    0 100%
+  );
+  display: flex;
+  flex-direction: row;
+  font-size: 26px;
+  margin-top: 8px;
+  padding: 10px 10px;
+  width: 100%;
+
+  b {
+    color: rgba(${p => hexToRGB(p.color)}, 0.8);
+    padding-right: 10px;
+  }
 `;
 
 const IconAndLabel = styled.div`
@@ -503,6 +528,7 @@ const InventoryUtilization = styled(ResourceProgress)`
 `;
 
 const SliderLabel = styled.div`
+  flex: 1;
   height: 33px;
   margin-bottom: -4px;
   & > b {
@@ -510,6 +536,12 @@ const SliderLabel = styled.div`
     font-size: 28px;
     font-weight: normal;
   }
+`;
+const SliderInfo = styled.div`
+  color: white;
+  font-size: 22px;
+  line-height: 1em;
+  margin-right: 8px;
 `;
 
 const SliderTextInput = styled.input`
@@ -527,6 +559,7 @@ const SliderWrapper = styled.div`
   flex: 1;
 `;
 const SliderInfoRow = styled.div`
+  align-items: flex-end;
   display: flex;
   justify-content: space-between;
   & > button {
@@ -1137,7 +1170,7 @@ export const ResourceSelectionDialog = ({ abundances, lotId, resources, initialS
   );
 }
 
-export const CoreSampleSelectionDialog = ({ lotId, improvableSamples, resources, initialSelection, onClose, onSelected, open }) => {
+export const CoreSampleSelectionDialog = ({ lotId, options, resources, initialSelection, onClose, onSelected, open }) => {
   const [selection, setSelection] = useState(initialSelection);
 
   useEffect(() => {
@@ -1166,7 +1199,7 @@ export const CoreSampleSelectionDialog = ({ lotId, improvableSamples, resources,
             </tr>
           </thead>
           <tbody>
-            {improvableSamples.sort((a, b) => b.remainingYield - a.remainingYield).map((sample) => (
+            {options.sort((a, b) => b.remainingYield - a.remainingYield).map((sample) => (
               <SelectionTableRow
                 key={`${sample.resourceId}_${sample.sampleId}`}
                 onClick={() => setSelection(sample)}
@@ -1181,6 +1214,123 @@ export const CoreSampleSelectionDialog = ({ lotId, improvableSamples, resources,
     </SelectionDialog>
   );
 };
+
+// TODO: pass options?
+export const DestinationSelectionDialog = ({
+  asteroid,
+  includeDeconstruction, // includes deconstructed origin's site plan as an option
+  originLotId,
+  initialSelection,
+  onClose,
+  onSelected,
+  open
+}) => {
+  const { data: crewLots, isLoading } = useAsteroidCrewLots(asteroid.i);
+  const [selection, setSelection] = useState(initialSelection);
+
+  useEffect(() => {
+    setSelection(initialSelection);
+  }, [initialSelection]);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+  
+  const inventories = useMemo(() => {
+    return (crewLots || [])
+      .filter((lot) => (includeDeconstruction && lot.i === originLotId) || (
+        lot.building
+        && lot.i !== originLotId // not the origin
+
+        && Inventory.CAPACITIES[lot.building.capableType][1]
+        && lot.building.construction?.status === Construction.STATUS_OPERATIONAL
+        // && Inventory.CAPACITIES[lot.building.capableType][inventoryType] // building has inventoryType
+        // && ( // building is built (or this is construction inventory and building is planned)
+        //   (inventoryType === 0 && lot.building.construction?.status === Construction.STATUS_PLANNED)
+        //   || (inventoryType !== 0 && lot.building.construction?.status === Construction.STATUS_OPERATIONAL)
+        // )
+      ))
+      .map((lot) => {
+        let capacity, usedMass = 0, usedVolume = 0, type;
+        if (includeDeconstruction && lot.i === originLotId) {
+          capacity = { ...Inventory.CAPACITIES[lot.building.capableType][0] };
+          type = `(empty lot)`;
+        } else {
+          const inventory = (lot.building?.inventories || {})[1];
+          capacity = { ...Inventory.CAPACITIES[lot.building.capableType][1] };
+          usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0)) / 1e6;
+          usedVolume = ((inventory?.volume || 0) + (inventory?.reservedVolume || 0)) / 1e6;
+          type = lot.building?.__t || 'Empty Lot';
+        }
+
+        const availMass = capacity.mass - usedMass;
+        const availVolume = capacity.volume - usedVolume;
+        const fullness = Math.max(
+          1 - availMass / capacity.mass,
+          1 - availVolume / capacity.volume,
+        ) || 0;
+
+        return {
+          lot,
+          distance: Asteroid.getLotDistance(asteroid.i, originLotId, lot.i) || 0,
+          type,
+          fullness,
+          availMass,
+          availVolume
+        };
+      })
+      .sort((a, b) => a.distance - b.distance)
+  }, [crewLots, originLotId]);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection?.i > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={`Origin Lot #${(originLotId || 0).toLocaleString()}`}>
+      {/* TODO: isLoading */}
+      {/* TODO: replace with DataTable? */}
+      <SelectionTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>Destination</td>
+              <td>Distance</td>
+              <td>Type</td>
+              <td>% Full</td>
+              <td>Avail. Mass</td>
+              <td>Avail. Volume</td>
+            </tr>
+          </thead>
+          <tbody>
+            {inventories.map((inventory, i) => {
+              const warningColor = inventory.fullness > 0.8
+                ? theme.colors.error
+                : (inventory.fullness > 0.5 ? theme.colors.yellow : theme.colors.success);
+              return (
+                <SelectionTableRow
+                  key={`${asteroid.i}_${inventory.lot.i}`}
+                  disabled={inventory.fullness >= 1}
+                  onClick={() => setSelection(inventory.lot)}
+                  selectedRow={inventory.lot.i === Number(selection?.i)}>
+                  <td>{inventory.lot.i === originLotId ? '(in place)' : `Lot #${inventory.lot.i}`}</td>
+                  <td>{formatFixed(inventory.distance, 1)} km</td>
+                  <td>{inventory.type}</td>
+                  <td style={{ color: warningColor }}>{(100 * inventory.fullness).toFixed(1)}%</td>
+                  <td style={{ color: warningColor }}>{formatFixed(inventory.availMass)} t</td>
+                  <td style={{ color: warningColor }}>{formatFixed(inventory.availVolume)} m<sup>3</sup></td>
+                </SelectionTableRow>
+              );
+            })}
+          </tbody>
+        </table>
+      </SelectionTableWrapper>
+    </SelectionDialog>
+  );
+}
+
 
 //
 //  FORMATTERS
@@ -1209,7 +1359,7 @@ export const getBuildingRequirements = (building) => {
   const { capableType, inventories = [], deliveries = [] } = building || {};
   
   // TODO: remove this fallback (just for dev)
-  const ingredients = Capable.TYPES[capableType].buildingRequirements || [
+  const ingredients = Capable.TYPES[capableType || 0].buildingRequirements || [
     [700, 5, 700], [700, 19, 500], [400, 22, 0],
     // [700, 2, 0], [700, 7, 0], [400, 23, 0], [700, 24, 0], [700, 69, 0], [400, 45, 0],
   ];
@@ -1217,7 +1367,8 @@ export const getBuildingRequirements = (building) => {
   // TODO: presumably ingredients will come from sdk per building
   return ingredients.map(([tally, i]) => {
     const totalRequired = tally;
-    const inInventory = tally || (inventories[0]?.resources || [])[i] || 0; // TODO: remove `tally ||`
+    const inInventory = //tally || 
+      (inventories[0]?.resources || [])[i] || 0; // TODO: remove `tally ||`
     const inTransit = deliveries
       .filter((d) => d.status === 'IN_PROGRESS')
       .reduce((acc, cur) => acc + cur.resources[i] || 0, 0);
@@ -1251,11 +1402,11 @@ export const BuildingImage = ({ building, iconOverlay, inventories, showInventor
           <InventoryUtilization
             progress={capacity.volume.used / capacity.volume.max}
             secondaryProgress={(capacity.volume.reserved + capacity.volume.used) / capacity.volume.max}
-            horizontal />
+             />
           <InventoryUtilization
             progress={capacity.mass.used / capacity.mass.max}
             secondaryProgress={(capacity.mass.reserved + capacity.mass.used) / capacity.mass.max}
-            horizontal />
+             />
         </>
       )}
       {iconOverlay && <ThumbnailOverlay>{iconOverlay}</ThumbnailOverlay>}
@@ -1731,7 +1882,6 @@ export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, is
       </FlexSectionInputContainer>
     </>
   );
-
 };
 
 
@@ -2147,34 +2297,36 @@ export const BuildingPlanSection = ({ building, canceling, gracePeriodEnd, onBui
   );
 }
 
-export const BuildingRequirementsSection = ({ mode, label, requirements, requirementsMet, resources }) => {
-  const isGathering = mode === 'gathering';
-
+// TODO: building requirements should wrap this
+//  deconstruction should wrap this
+//  transfer should wrap this
+const ResourceGridSection = ({ isGathering, items, label, resources, showWarning }) => {
   const { totalMass, totalVolume } = useMemo(() => {
-    return requirements.reduce((acc, { i, totalRequired }) => {
-      acc.totalMass += totalRequired * resources[i].massPerUnit * 1e6;
-      acc.totalVolume += totalRequired * (resources[i].volumePerUnit || 0) * 1e6;
+    return items.reduce((acc, { i, numerator, denominator }) => {
+      const sumValue = denominator !== undefined ? denominator : numerator;
+      acc.totalMass += sumValue * resources[i].massPerUnit * 1e6;
+      acc.totalVolume += sumValue * (resources[i].volumePerUnit || 0) * 1e6;
       return acc;
     }, { totalMass: 0, totalVolume: 0 });
-  }, [requirements]);
+  }, [items]);
 
   return (
     <Section>
       <SectionTitle>{label}</SectionTitle>
       <SectionBody>
         {/* TODO: <FutureSectionOverlay /> */}
-        <IngredientsList incomplete={isGathering && !requirementsMet} hasSummary>
-          {requirements.map((req) => (
+        <IngredientsList incomplete={showWarning} hasSummary>
+          {items.map((item) => (
             <ResourceRequirement
-              key={req.i}
+              key={item.i}
               isGathering={isGathering}
-              resource={resources[req.i]}
-              {...req}
+              item={item}
+              resource={resources[item.i]}
               size="95px" />
           ))}
-          <IngredientSummary incomplete={isGathering && !requirementsMet}>
+          <IngredientSummary incomplete={showWarning}>
             <span>
-              {requirements.length} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
+              {items.length} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
             </span>
           </IngredientSummary>
         </IngredientsList>
@@ -2183,25 +2335,45 @@ export const BuildingRequirementsSection = ({ mode, label, requirements, require
   );
 };
 
-export const DeconstructionMaterialsSection = ({ label, resources, status }) => {
-  const ingredients = []; // TODO: ...
+export const BuildingRequirementsSection = ({ mode, label, requirements, requirementsMet, resources }) => {
+  const items = useMemo(() => {
+    return requirements.map((item) => ({
+      i: item.i,
+      numerator: item.inInventory + item.inTransit,
+      denominator: item.totalRequired,
+      customIcon: item.inTransit > 0
+        ? {
+          animated: true,
+          icon: <SurfaceTransferIcon />
+        }
+        : undefined
+    }));
+  }, [requirements]);
+
   return (
-    <Section>
-      <SectionTitle><ChevronRightIcon /> {label}</SectionTitle>
-      <SectionBody highlight={status === 'AFTER'}>
-        <FutureSectionOverlay />
-        <IngredientsList>
-          {ingredients.map(([tally, i, hasTally]) => (
-            <ResourceThumbnail key={i}
-              badge={`+${tally}`}
-              badgeColor={theme.colors.main}
-              outlineColor={borderColor}
-              resource={resources[i]} />
-          ))}
-        </IngredientsList>
-        {status === 'AFTER' && <><Spacer /><CompletedHighlight /></>}
-      </SectionBody>
-    </Section>
+    <ResourceGridSection
+      isGathering={mode === 'gathering'}
+      items={items}
+      label={label}
+      resources={resources}
+      showWarning={!requirementsMet} />
+  );
+};
+
+export const DeconstructionMaterialsSection = ({ label, itemsReturned, resources }) => {
+  const items = useMemo(() => {
+    return itemsReturned.map((item) => ({
+      i: item.i,
+      customIcon: { icon: <PlusIcon /> },
+      numerator: item.totalRequired
+    }));
+  }, [itemsReturned]);
+
+  return (
+    <ResourceGridSection
+      items={items}
+      label={label}
+      resources={resources} />
   );
 };
 
@@ -2339,43 +2511,39 @@ export const ExtractionAmountSection = ({ amount, extractionTime, min, max, reso
     setAmount(quanta);
   };
   return (
-    <Section>
-      <SectionTitle><ChevronRightIcon /> Extraction Amount</SectionTitle>
-      <SectionBody>
-        <SliderWrapper>
-          <SliderInfoRow>
-            <SliderLabel onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent}>
-              {(mouseIn || focusOn) ? (
-                <SliderTextInput
-                  type="number"
-                  step={0.1}
-                  value={tonnageValue}
-                  onChange={onChangeInput}
-                  onBlur={onFocusEvent}
-                  onFocus={onFocusEvent} />
-                )
-                : (
-                  <b>{formatSampleMass(tonnage)}</b>
-                )
-              }
-              {' '}
-              tonnes
-            </SliderLabel>
-            <ButtonRounded disabled={amount === max} onClick={() => setAmount(max)}>Max</ButtonRounded>
-          </SliderInfoRow>
-          <SliderInput
-            min={min}
-            max={max}
-            increment={resource ? (0.1 / resource?.massPerUnit) : 1}
-            onChange={setAmount}
-            value={amount || 0} />
-          <SliderInfoRow style={{ marginTop: -5 }}>
-            <div>{resource ? formatResourceVolume(amount, resource?.i, { fixedPrecision: 1 }) : `0 L`}</div>
-            <div>{formatTimer(extractionTime)}</div>
-          </SliderInfoRow>
-        </SliderWrapper>
-      </SectionBody>
-    </Section>
+    <SliderWrapper>
+      <SliderInfoRow>
+        <SliderLabel onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent}>
+          {(mouseIn || focusOn) ? (
+            <SliderTextInput
+              type="number"
+              step={0.1}
+              value={tonnageValue}
+              onChange={onChangeInput}
+              onBlur={onFocusEvent}
+              onFocus={onFocusEvent} />
+            )
+            : (
+              <b>{formatSampleMass(tonnage)}</b>
+            )
+          }
+          {' '}
+          tonnes
+        </SliderLabel>
+        <SliderInfo>{formatTimer(extractionTime, 3)}</SliderInfo>
+        <Button
+          disabled={amount === max}
+          onClick={() => setAmount(max)}
+          size="small"
+          style={{ padding: 0, minWidth: 75 }}>Max</Button>
+      </SliderInfoRow>
+      <SliderInput
+        min={min}
+        max={max}
+        increment={resource ? (0.1 / resource?.massPerUnit) : 1}
+        onChange={setAmount}
+        value={amount || 0} />
+    </SliderWrapper>
   );
 }
 

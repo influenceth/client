@@ -21,7 +21,7 @@ const useConstructionManager = (asteroidId, lotId) => {
 
   // READY_TO_PLAN > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
   //               < CANCELING <         <                  DECONSTRUCTING                  <
-  const [currentConstruction, constructionStatus, isAtRisk, stageByActivity] = useMemo(() => {
+  const [currentConstruction, constructionStatus, isAtRisk, deconstructTx, stageByActivity] = useMemo(() => {
     let current = {
       _crewmates: null,
       capableId: null,
@@ -39,6 +39,7 @@ const useConstructionManager = (asteroidId, lotId) => {
 
     let status = 'READY_TO_PLAN';
     let isAtRisk = false;
+    let deconstructTx;
     if (lot?.building) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_ConstructionStart'
@@ -97,7 +98,8 @@ const useConstructionManager = (asteroidId, lotId) => {
       } else if (lot.building.construction?.status === Construction.STATUS_OPERATIONAL) {
         if (getStatus('DECONSTRUCT', payload) === 'pending') {
           status = 'DECONSTRUCTING';
-          stages.deconstruct = actionStage.IN_PROGRESS;
+          deconstructTx = getPendingTx('DECONSTRUCT', payload);
+          stages.deconstruct = actionStage.STARTING;
         } else {
           status = 'OPERATIONAL';
           stages.construct = actionStage.COMPLETED;
@@ -117,6 +119,7 @@ const useConstructionManager = (asteroidId, lotId) => {
       status === 'READY_TO_PLAN' ? null : current,
       status,
       isAtRisk,
+      deconstructTx,
       stages
     ];
   }, [actionItems, readyItems, getPendingTx, getStatus, payload, lot?.building]);
@@ -155,6 +158,7 @@ const useConstructionManager = (asteroidId, lotId) => {
     deconstruct,
     constructionStatus,
     currentConstruction,
+    deconstructTx,
     isAtRisk,
     stageByActivity
   };

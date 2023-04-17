@@ -8,6 +8,7 @@ const fadeIn = keyframes`
 
 const Backdrop = styled.div`
   animation: ${fadeIn} 200ms linear 1;
+  backdrop-filter: blur(1.5px);
   pointer-events: auto;
   position: fixed;
   top: 0;
