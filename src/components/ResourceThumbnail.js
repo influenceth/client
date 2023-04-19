@@ -1,10 +1,42 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { FaEllipsisH as MenuIcon } from 'react-icons/fa';
+import ReactTooltip from 'react-tooltip';
+
 import { hexToRGB } from '~/theme';
 import ClipCorner from './ClipCorner';
 
 const defaultSize = '92px';
 const defaultBorderColor = '#333';
+
+const MenuWrapper = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: ${p => p.open ? 1 : 0};
+  transition: opacity 250ms ease;
+  z-index: 3;
+`;
+
+const MenuButton = styled.div`
+  align-items: center;
+  background: rgba(50, 50, 50, 0.6);
+  border-radius: 4px;
+  color: white;
+  display: flex;
+  height: 25px;
+  justify-content: center;
+  margin: 3px;
+  width: 25px;
+  &:hover {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.5);
+  }
+`;
+
+const MenuOpenWrapper = styled.div`
+  background: rgba(33, 33, 33, 0.7);
+  width: 90px;
+`;
 
 export const ResourceThumbnailWrapper = styled.div`
   border: 1px solid;
@@ -15,6 +47,15 @@ export const ResourceThumbnailWrapper = styled.div`
     calc(100% - 10px) 100%,
     0 100%
   );
+  ${p => p.onClick && `cursor: ${p.theme.cursors.active};`}
+  &:hover {
+    ${p => p.onClick && `
+      background: rgba(${p.theme.colors.mainRGB}, 0.2);
+    `}
+    ${MenuWrapper} {
+      opacity: 1;
+    }
+  }
   height: ${p => p.size || defaultSize};
   padding: 2px;
   position: relative;
@@ -138,6 +179,26 @@ const ThumbnailIconOverlay = styled.div`
   width: 40px;
 `;
 
+const Menu = ({ children }) => {
+  const [open, setOpen] = useState();
+  const onClick = useCallback((e) => {
+    e.stopPropagation();
+    setOpen(true);
+  }, []);
+  return (
+    <MenuWrapper onClick={onClick} open={open || undefined}>
+      {open
+        ? <MenuOpenWrapper>{children(() => setOpen(false))}</MenuOpenWrapper>
+        : (
+          <MenuButton>
+            <MenuIcon />
+          </MenuButton>
+        )
+      }
+    </MenuWrapper>
+  );
+};
+
 // TODO: this component is functionally overloaded... create more components so not trying to use in so many different ways
  const ResourceThumbnail = ({
   resource,
@@ -146,19 +207,21 @@ const ThumbnailIconOverlay = styled.div`
   badgeColor,
   badgeDenominator,
   iconBadge,
+  menu,
   outlineColor,
   outlineStyle,
   overlayIcon,
   progress,
   size,
-  showTooltip,
+  showTooltip = true,
   underlay,
   ...props
 }) => {
   const tooltipProps = showTooltip ? {
     'data-tip': resource.name,
     'data-for': 'global'
-  } : {}
+  } : {};
+  useEffect(() => ReactTooltip.rebuild(), []);
   return (
     <ResourceThumbnailWrapper
       backgroundColor={backgroundColor}
@@ -176,6 +239,7 @@ const ThumbnailIconOverlay = styled.div`
       {iconBadge !== undefined && <ResourceIconBadge>{iconBadge}</ResourceIconBadge>}
       {progress !== undefined && <ResourceProgress progress={progress} />}
       {overlayIcon && <ThumbnailIconOverlay color={badgeColor}>{overlayIcon}</ThumbnailIconOverlay>}
+      {menu && <Menu>{menu}</Menu>}
     </ResourceThumbnailWrapper>
   );
 };

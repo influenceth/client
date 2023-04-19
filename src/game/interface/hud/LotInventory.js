@@ -166,8 +166,7 @@ const LotInventory = ({ active }) => {
             <ResourceImage
               key={resourceId}
               badge={formatResourceAmount(inventory.resources[resourceId], resourceId)}
-              resource={resources[resourceId]}
-              showTooltip={true} />
+              resource={resources[resourceId]} />
           ))}
         </InventoryItems>
       </InnerWrapper>

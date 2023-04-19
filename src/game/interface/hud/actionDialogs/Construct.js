@@ -284,7 +284,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             )}
           />
         )}
-        {stage !== actionStage.IN_PROGRESS && (
+        {stage !== actionStage.NOT_STARTED && (
           <ProgressBarSection
             completionTime={lot?.building?.construction?.completionTime}
             startTime={lot?.building?.construction?.startTime}

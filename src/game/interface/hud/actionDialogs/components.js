@@ -34,6 +34,7 @@ import Poppable from '~/components/Popper';
 import ResourceColorIcon from '~/components/ResourceColorIcon';
 import ResourceThumbnail, { ResourceThumbnailWrapper, ResourceImage, ResourceProgress } from '~/components/ResourceThumbnail';
 import ResourceRequirement from '~/components/ResourceRequirement';
+import ResourceSelection from '~/components/ResourceSelection';
 import SliderInput from '~/components/SliderInput';
 import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
@@ -69,6 +70,12 @@ const FlexSectionInputContainer = styled.div`
 `;
 
 export const FlexSectionSpacer = styled.div`
+  align-items: center;
+  align-self: stretch;
+  display: flex;
+  font-size: 20px;
+  justify-content: center;
+  margin-top: 26px;
   width: 32px;
 `;
 
@@ -77,8 +84,8 @@ const FlexSectionInputBody = styled.div`
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(100% - 15px),
-    calc(100% - 15px) 100%,
+    100% calc(100% - ${sectionBodyCornerSize}px),
+    calc(100% - ${sectionBodyCornerSize}px) 100%,
     0 100%
   );
   padding: 8px 16px 8px 8px;
@@ -674,18 +681,13 @@ const ItemsList = styled.div`
   }
 `;
 
-const IngredientsList = styled.div`
-  background: rgba(${p => p.theme.colors.mainRGB}, 0.1);
-  ${p => p.incomplete && `
+const IngredientsList = styled(FlexSectionInputBody)`
+  ${p => p.theming === 'warning' && `
     background: rgba(${hexToRGB(p.theme.colors.lightOrange)}, 0.15);
   `}
-  clip-path: polygon(
-    0 0, 
-    100% 0,
-    100% calc(100% - 20px),
-    calc(100% - 20px) 100%,
-    0 100%
-  );
+  ${p => p.theming === 'success' && `
+    background: rgba(${p.theme.colors.successRGB}, 0.15);
+  `}
   column-gap: 5px;
   display: grid;
   grid-template-columns: repeat(7, 95px);
@@ -694,6 +696,16 @@ const IngredientsList = styled.div`
   row-gap: 5px;
   width: 100%;
   ${p => p.hasSummary && `padding-bottom: 36px;`}
+  ${p => p.onClick && `
+    ${ResourceThumbnailWrapper} {
+      background: rgba(0, 0, 0, 0.5);
+    }
+  `}
+`;
+
+const DialogIngredientsList = styled(IngredientsList)`
+  background: transparent;
+  grid-template-columns: repeat(6, 95px);
 `;
 
 const IngredientSummary = styled.div`
@@ -705,7 +717,11 @@ const IngredientSummary = styled.div`
   left: 0;
   right: 0;
   & > span {
-    background: rgba(${p => hexToRGB(p.incomplete ? p.theme.colors.lightOrange : p.theme.colors.main)}, 0.45);
+    background:
+      ${p => p.theming === 'warning' && `rgba(${hexToRGB(p.theme.colors.lightOrange)}, 0.45)`}
+      ${p => p.theming === 'success' && `rgba(${p.theme.colors.successRGB}, 0.2)`}
+      ${p => (!p.theming || p.theming === 'default') && `rgba(${p.theme.colors.mainRGB}, 0.45)`}
+    ;
     color: white;
     padding: 5px 32px;
   }
@@ -880,14 +896,6 @@ const TransferSelectionTableWrapper = styled(PoppableTableWrapper)`
     }
   }
 `;
-const QuantaInput = styled.input`
-  background: transparent;
-  border: 1px solid white;
-  color: white;
-  font-family: inherit;
-  text-align: right;
-  width: 100px;
-`;
 
 export const MouseoverContent = styled.div`
   & b {
@@ -940,6 +948,10 @@ const SelectionTitle = styled.div`
     line-height: 36px;
     padding-left: 10px;
     text-transform: uppercase;
+    & > b {
+      font-weight: normal;
+      opacity: 0.5;
+    }
   }
 `;
 const SelectionBody = styled.div`
@@ -1331,6 +1343,80 @@ export const DestinationSelectionDialog = ({
   );
 }
 
+export const TransferSelectionDialog = ({ inventory, lot, resources, initialSelection, onClose, onSelected, open }) => {
+  const [selection, setSelection] = useState({});
+
+  useEffect(() => {
+    setSelection({ ...initialSelection });
+  }, [initialSelection]);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  const onSelectItem = useCallback((resourceId) => (selectedAmount) => {
+    setSelection((currentlySelected) => {
+      const updated = {...currentlySelected};
+      if (selectedAmount > 0) {
+        updated[resourceId] = selectedAmount;
+      } else {
+        delete updated[resourceId];
+      }
+      return updated;
+    });
+  }, []);
+
+  const cells = useMemo(() => [...Array(6 * Math.max(2, Math.ceil(Object.keys(inventory).length / 6))).keys()], [inventory]);
+  const items = useMemo(() => {
+    return Object.keys(inventory).map((resourceId) => ({
+      selected: selection[resourceId],
+      available: inventory[resourceId],
+      resource: resources[resourceId],
+    }));
+  }, [inventory, selection]);
+
+  const { tally, totalMass, totalVolume } = useMemo(() => {
+    return items.reduce((acc, { selected, resource }) => {
+      acc.tally += selected > 0 ? 1 : 0;
+      acc.totalMass += (selected || 0) * resource.massPerUnit * 1e6;
+      acc.totalVolume += (selected || 0) * (resource.volumePerUnit || 0) * 1e6;
+      return acc;
+    }, { tally: 0, totalMass: 0, totalVolume: 0 });
+  }, [items]);
+
+  return (
+    <SelectionDialog
+      isCompletable
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={<>{lot?.building?.__t} Inventory <b>{'> '}Lot {(lot?.i || 0).toLocaleString()}</b></>}>
+      <DialogIngredientsList>
+        {cells.map((i) => (
+          items[i]
+            ? <ResourceSelection key={i} item={items[i]} onSelectItem={onSelectItem(items[i].resource.i)} />
+            : (
+              <EmptyResourceImage
+                key={i}
+                backgroundColor="#111"
+                outlineColor="#111"
+                noIcon />
+            )
+        ))}
+        <IngredientSummary>
+          <span>
+            {tally > 0
+              ? `${tally} Items: ${formatMass(totalMass)} | ${formatVolume(totalVolume)}`
+              : `None Selected`
+            }
+          </span>
+        </IngredientSummary>
+      </DialogIngredientsList>
+    </SelectionDialog>
+  );
+};
+
 
 //
 //  FORMATTERS
@@ -1367,8 +1453,8 @@ export const getBuildingRequirements = (building) => {
   // TODO: presumably ingredients will come from sdk per building
   return ingredients.map(([tally, i]) => {
     const totalRequired = tally;
-    const inInventory = //tally || 
-      (inventories[0]?.resources || [])[i] || 0; // TODO: remove `tally ||`
+    const inInventory = tally || // TODO: remove `tally ||`
+      (inventories[0]?.resources || [])[i] || 0;
     const inTransit = deliveries
       .filter((d) => d.status === 'IN_PROGRESS')
       .reduce((acc, cur) => acc + cur.resources[i] || 0, 0);
@@ -1426,9 +1512,9 @@ const ReadyHighlight = () => <ReadyIconWrapper><div><NavIcon animate selected />
 
 const CompletedHighlight = () => <CompletedIconWrapper><CheckIcon /></CompletedIconWrapper>;
 
-export const EmptyResourceImage = ({ iconOverride }) => (
-  <ResourceThumbnailWrapper>
-    <EmptyThumbnail>{iconOverride || <PlusIcon />}</EmptyThumbnail>
+export const EmptyResourceImage = ({ iconOverride, noIcon, ...props }) => (
+  <ResourceThumbnailWrapper {...props}>
+    <EmptyThumbnail>{noIcon ? null : (iconOverride || <PlusIcon />)}</EmptyThumbnail>
     <ClipCorner dimension={10} />
   </ResourceThumbnailWrapper>
 );
@@ -1625,38 +1711,38 @@ const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originLotI
   );
 };
 
-const ResourceSelection = ({ abundances, onSelect, lotId, resources }) => {
-  const nonzeroAbundances = useMemo(() => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
-  return (
-    <PopperBody>
-      <PoppableTitle>
-        <h3>Lot #{(lotId || 0).toLocaleString()}</h3>
-        <div>{(nonzeroAbundances || 0).toLocaleString()} Available Resource{nonzeroAbundances === 1 ? '' : 's'}</div>
-      </PoppableTitle>
-      {/* TODO: replace with DataTable? */}
-      <PoppableTableWrapper>
-        <table>
-          <thead>
-            <tr>
-              <td>Resource</td>
-              <td>Abundance at Lot</td>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.keys(abundances)
-              .sort((a, b) => abundances[b] - abundances[a])
-              .map((resourceId) => (
-              <PoppableTableRow key={`${resourceId}`} disabledRow={abundances[resourceId] === 0} onClick={onSelect(resourceId)}>
-                <td><ResourceColorIcon category={resources[resourceId].category} /> {resources[resourceId].name}</td>
-                <td>{(100 * abundances[resourceId]).toFixed(1)}%</td>
-              </PoppableTableRow>
-            ))}
-          </tbody>
-        </table>
-      </PoppableTableWrapper>
-    </PopperBody>
-  );
-};
+// const ResourceSelection = ({ abundances, onSelect, lotId, resources }) => {
+//   const nonzeroAbundances = useMemo(() => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
+//   return (
+//     <PopperBody>
+//       <PoppableTitle>
+//         <h3>Lot #{(lotId || 0).toLocaleString()}</h3>
+//         <div>{(nonzeroAbundances || 0).toLocaleString()} Available Resource{nonzeroAbundances === 1 ? '' : 's'}</div>
+//       </PoppableTitle>
+//       {/* TODO: replace with DataTable? */}
+//       <PoppableTableWrapper>
+//         <table>
+//           <thead>
+//             <tr>
+//               <td>Resource</td>
+//               <td>Abundance at Lot</td>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {Object.keys(abundances)
+//               .sort((a, b) => abundances[b] - abundances[a])
+//               .map((resourceId) => (
+//               <PoppableTableRow key={`${resourceId}`} disabledRow={abundances[resourceId] === 0} onClick={onSelect(resourceId)}>
+//                 <td><ResourceColorIcon category={resources[resourceId].category} /> {resources[resourceId].name}</td>
+//                 <td>{(100 * abundances[resourceId]).toFixed(1)}%</td>
+//               </PoppableTableRow>
+//             ))}
+//           </tbody>
+//         </table>
+//       </PoppableTableWrapper>
+//     </PopperBody>
+//   );
+// };
 
 const TransferSelectionRow = ({ onUpdate, quanta, resource, selecting }) => {
   const [focusOn, setFocusOn] = useState();
@@ -1709,7 +1795,7 @@ const TransferSelectionRow = ({ onUpdate, quanta, resource, selecting }) => {
             {quanta.toLocaleString()}
           </>
         )}
-        {(mouseIn || focusOn) && (
+        {(mouseIn || focusOn) && null /*(
           <QuantaInput
             type="number"
             max={quanta}
@@ -1719,7 +1805,7 @@ const TransferSelectionRow = ({ onUpdate, quanta, resource, selecting }) => {
             onFocus={onFocusEvent}
             step={1}
             value={amount} />
-        )}
+        )*/}
         {resource.massPerUnit === 0.001 ? ' kg' : ''}
       </td>
       <td>
@@ -2107,7 +2193,7 @@ const TransferSelectionPopper = ({ closeOnChange, inventory, onSelectionComplete
   </Poppable>
 );
 
-export const ItemSelectionSection = ({ inventory, onSelectItems, resources, selectedItems, status }) => {
+export const ItemSelectionSectionz = ({ inventory, onSelectItems, resources, selectedItems, status }) => {
   const selectedItemKeys = Object.keys(selectedItems || {});
 
   const [completed, setCompleted] = useState(0);
@@ -2297,10 +2383,15 @@ export const BuildingPlanSection = ({ building, canceling, gracePeriodEnd, onBui
   );
 }
 
-// TODO: building requirements should wrap this
-//  deconstruction should wrap this
-//  transfer should wrap this
-const ResourceGridSection = ({ isGathering, items, label, resources, showWarning }) => {
+const ResourceGridSection = ({
+  isGathering,
+  items,
+  label,
+  onClick,
+  resources,
+  noCellStyles,
+  theming = 'default'
+}) => {
   const { totalMass, totalVolume } = useMemo(() => {
     return items.reduce((acc, { i, numerator, denominator }) => {
       const sumValue = denominator !== undefined ? denominator : numerator;
@@ -2315,20 +2406,47 @@ const ResourceGridSection = ({ isGathering, items, label, resources, showWarning
       <SectionTitle>{label}</SectionTitle>
       <SectionBody>
         {/* TODO: <FutureSectionOverlay /> */}
-        <IngredientsList incomplete={showWarning} hasSummary>
-          {items.map((item) => (
-            <ResourceRequirement
-              key={item.i}
-              isGathering={isGathering}
-              item={item}
-              resource={resources[item.i]}
-              size="95px" />
-          ))}
-          <IngredientSummary incomplete={showWarning}>
-            <span>
-              {items.length} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
-            </span>
-          </IngredientSummary>
+        <IngredientsList
+          hasSummary
+          theming={theming}
+          isSelected={onClick || undefined}
+          onClick={onClick}>
+          {items.length > 0
+            ? (
+              <>
+                {items.map((item) => (
+                  <ResourceRequirement
+                    key={item.i}
+                    isGathering={isGathering}
+                    item={item}
+                    resource={resources[item.i]}
+                    noStyles={noCellStyles}
+                    size="95px" />
+                ))}
+                <IngredientSummary theming={theming}>
+                  <span>
+                    {items.length} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
+                  </span>
+                </IngredientSummary>
+              </>
+            )
+            : (
+              <>
+                <div style={{ height: 92 }}>
+                  <ThumbnailWithData style={{ marginLeft: 4, position: 'absolute' }}>
+                    <EmptyResourceImage />
+                    <label>
+                      <h3>Select</h3>
+                      <b>Items</b>
+                    </label>
+                  </ThumbnailWithData>
+                </div>
+                <IngredientSummary>
+                  <span>None Selected</span>
+                </IngredientSummary>
+              </>
+            )}
+          <ClipCorner dimension={sectionBodyCornerSize} />
         </IngredientsList>
       </SectionBody>
     </Section>
@@ -2356,7 +2474,7 @@ export const BuildingRequirementsSection = ({ mode, label, requirements, require
       items={items}
       label={label}
       resources={resources}
-      showWarning={!requirementsMet} />
+      theming={requirementsMet ? undefined : 'warning'} />
   );
 };
 
@@ -2375,6 +2493,85 @@ export const DeconstructionMaterialsSection = ({ label, itemsReturned, resources
       label={label}
       resources={resources} />
   );
+};
+
+export const ItemSelectionSection = ({ label, items, onClick, resources, stage }) => {
+  const formattedItems = useMemo(() => {
+    return Object.keys(items || {}).map((resourceId) => ({
+      i: resourceId,
+      numerator: items[resourceId]
+    }));
+  }, [items]);
+
+  return (
+    <ResourceGridSection
+      items={formattedItems}
+      label={label}
+      noCellStyles={stage !== actionStage.NOT_STARTED}
+      onClick={onClick}
+      resources={resources}
+      theming={stage === actionStage.READY_TO_COMPLETE ? 'success' : 'default'} />
+  );
+
+  // const selectedItemKeys = Object.keys(selectedItems || {});
+
+  // const [completed, setCompleted] = useState(0);
+  // const onSelectionCompleted = useCallback((items) => {
+  //   setCompleted((x) => x + 1);
+  //   if (onSelectItems) onSelectItems(items);
+  // }, [onSelectItems]);
+
+  // return (
+  //   <Section>
+  //     <SectionTitle><ChevronRightIcon /> Items</SectionTitle>
+  //     <SectionBody highlight={status === 'AFTER'}>
+  //       {selectedItemKeys.length === 0 && (
+  //         <>
+  //           <EmptyResourceWithData>
+  //             <EmptyResourceImage />
+  //             <label>
+  //               <div>Items:</div>
+  //               <h3>Select</h3>
+  //             </label>
+  //           </EmptyResourceWithData>
+  //           <div>
+  //             <TransferSelectionPopper
+  //               closeOnChange={completed}
+  //               inventory={inventory}
+  //               onSelectionCompleted={onSelectionCompleted}
+  //               resources={resources}
+  //               selectedItems={selectedItems} />
+  //           </div>
+  //         </>
+  //       )}
+  //       {selectedItemKeys.length > 0 && (
+  //         <ItemSelectionWrapper>
+  //           <div>
+  //             <ItemsList>
+  //               {selectedItemKeys.map((resourceId, x) => (
+  //                 <ResourceThumbnail
+  //                   key={resourceId}
+  //                   badge={formatResourceAmount(selectedItems[resourceId], resourceId)}
+  //                   resource={resources[resourceId]}
+  //                   progress={selectedItems[resourceId] / inventory[resourceId]} />
+  //               ))}
+  //             </ItemsList>
+  //           </div>
+  //           <div>
+  //             <div>{selectedItemKeys.length} item{selectedItemKeys.length === 1 ? '' : 's'}</div>
+  //             {status === 'BEFORE' && (
+  //               <TransferSelectionPopper
+  //                 closeOnChange={completed}
+  //                 inventory={inventory}
+  //                 onSelectionCompleted={onSelectionCompleted}
+  //                 resources={resources}
+  //                 selectedItems={selectedItems} />
+  //             )}
+  //           </div>
+  //         </ItemSelectionWrapper>
+  //       )}
+  //     </SectionBody>
+  //   </Section>
 };
 
 export const ProgressBarSection = ({

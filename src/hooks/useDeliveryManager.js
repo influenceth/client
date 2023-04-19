@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import { Extraction } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import actionStages from '~/lib/actionStages';
 import useCrewContext from './useCrewContext';
 import useLot from './useLot';
 import useActionItems from './useActionItems';
@@ -27,7 +28,7 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
 
   // status flow
   // READY > DEPARTING > IN_TRANSIT > READY_TO_FINISH > FINISHING > FINISHED
-  const [currentDelivery, deliveryStatus] = useMemo(() => {
+  const [currentDelivery, deliveryStatus, actionStage] = useMemo(() => {
     let current = {
       _crewmates: null,
       completionTime: null,
@@ -40,6 +41,7 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
     };
 
     let status = 'READY';
+    let stage = actionStages.NOT_STARTED;
 
     // if deliveryId, treat lot as destination and assume in progress or done
     const delivery = deliveryId > 0 && (lot?.building?.deliveries || []).find((d) => d.deliveryId === deliveryId);
@@ -63,13 +65,17 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
 
       if (delivery.status === 'COMPLETE') {
         status = 'FINISHED';
+        stage = actionStages.COMPLETED;
       } else {
         if(getStatus('FINISH_DELIVERY', { ...payload, destLotId: lotId, deliveryId }) === 'pending') {
           status = 'FINISHING';
+          stage = actionStages.COMPLETING;
         } else if (delivery.completionTime && delivery.completionTime <= liveBlockTime) {
           status = 'READY_TO_FINISH';
+          stage = actionStages.READY_TO_COMPLETE;
         } else {
           status = 'IN_TRANSIT';
+          stage = actionStages.IN_PROGRESS;
         }
       }
 
@@ -83,12 +89,14 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
         current.originLotInvId = startTx.vars.originInvId;
         current.resources = startTx.vars.resources;
         status = 'DEPARTING';
+        stage = actionStages.STARTING;
       }
     }
 
     return [
       status === 'READY' ? null : current,
-      status
+      status,
+      stage
     ];
   }, [actionItems, readyItems, getPendingTx, getStatus, payload, deliveryId]);
 
@@ -118,6 +126,7 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
     finishDelivery,
     deliveryStatus,
     currentDelivery,
+    actionStage,
   };
 };
 

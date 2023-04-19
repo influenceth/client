@@ -36,7 +36,8 @@ import {
   SurfaceTransferIcon,
   TimerIcon,
   WarningOutlineIcon,
-  InventoryIcon
+  InventoryIcon,
+  ForwardIcon
 } from '~/components/Icons';
 import Poppable from '~/components/Popper';
 import SliderInput from '~/components/SliderInput';
@@ -174,7 +175,9 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
             sublabel="Building"
           />
           
-          <FlexSectionSpacer />
+          <FlexSectionSpacer>
+            <ForwardIcon />
+          </FlexSectionSpacer>
 
           <FlexSectionInputBlock
             title="Transfer To"
@@ -205,11 +208,9 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
         </FlexSection>
 
         <DeconstructionMaterialsSection
-          label="Items Returned"
-          itemsReturned={itemsReturned}
+          label="Recovered Materials"
+          itemsReturned={itemsReturned || []}
           resources={resources} />
-
-        {/* <DeconstructionMaterialsSection label="Recovered Materials" resources={resources} status={status} />*/}
 
         {stage !== actionStage.NOT_STARTED && (
           <ProgressBarSection

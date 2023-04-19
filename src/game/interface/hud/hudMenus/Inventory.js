@@ -447,8 +447,7 @@ const LotInventory = () => {
                   progress={displayVolumes
                     ? inventory.resources[resourceId] * resources[resourceId].volumePerUnit / (1E-6 * inventory.volume)
                     : undefined}
-                  resource={resources[resourceId]}
-                  showTooltip />
+                  resource={resources[resourceId]} />
               </ThumbnailWrapper>
             ))}
           </InventoryItems>

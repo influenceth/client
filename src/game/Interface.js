@@ -29,6 +29,7 @@ import WatchlistTable from './interface/details/WatchlistTable';
 import theme from '~/theme';
 import Cutscene from './Cutscene';
 import Launcher from './Launcher';
+import { createPortal } from 'react-dom';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -70,6 +71,11 @@ const MainContainer = styled.div`
   }
 `;
 
+const Zinf = styled.div`
+  position: fixed;
+  z-index: 99999;
+`;
+
 const loadingCss = css`
   left: 0;
   position: absolute;
@@ -107,7 +113,7 @@ const Interface = () => {
       {launcherPage && <Launcher />}
       {cutscene && <Cutscene />}
       <StyledInterface hide={interfaceHidden}>
-        {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
+        {!isMobile && createPortal(<Zinf><ReactTooltip id="global" place="left" effect="solid" /></Zinf>, document.body)}
         {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
         {sale && <SaleNotifier sale={sale} />}
         <MainContainer>
