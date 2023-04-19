@@ -1,25 +1,18 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CoreSample, Asteroid, Extraction, Inventory } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
-import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, MapIcon, ResourceIcon } from '~/components/Icons';
+import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, ResourceIcon } from '~/components/Icons';
 import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
-import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  DestinationLotSection,
-  ExtractionAmountSection,
-  ExtractSampleSection,
-
-  ActionDialogFooter,
+  ExtractionAmountSection, ActionDialogFooter,
   ActionDialogHeader,
-  ActionDialogStats,
-  ActionDialogTimers,
-
-  getBonusDirection,
+  ActionDialogStats, getBonusDirection,
   formatResourceVolume,
   formatSampleMass,
   formatSampleVolume,
@@ -38,7 +31,7 @@ import {
   ProgressBarSection,
   CoreSampleSelectionDialog,
   DestinationSelectionDialog,
-  SublabelBanner,
+  SublabelBanner
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';

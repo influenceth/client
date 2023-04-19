@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid as AsteroidLib, CoreSample, Inventory } from '@influenceth/sdk';
-import styled from 'styled-components';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { CoreSampleIcon, ImproveCoreSampleIcon, ResourceIcon } from '~/components/Icons';
@@ -11,7 +10,6 @@ import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
 import actionStage from '~/lib/actionStages';
 import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
-import { hexToRGB } from '~/theme';
 
 import {
   ActionDialogBody,
@@ -28,11 +26,9 @@ import {
   EmptyResourceImage,
   FlexSection,
   FlexSectionInputBlock,
-  FlexSectionSpacer,
-  ResourceSelectionDialog,
-  ProgressBarSection,
+  FlexSectionSpacer, ProgressBarSection,
   CoreSampleSelectionDialog,
-  SublabelBanner,
+  SublabelBanner
 } from './components';
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 

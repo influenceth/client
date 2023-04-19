@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Construction, Inventory } from '@influenceth/sdk';
 
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
@@ -10,13 +10,10 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 import {
-  DestinationLotSection,
   ItemSelectionSection,
   ActionDialogFooter,
   ActionDialogHeader,
-  ActionDialogStats,
-  ActionDialogTimers,
-  getBonusDirection,
+  ActionDialogStats, getBonusDirection,
   formatSampleMass,
   formatSampleVolume,
   TimeBonusTooltip,
@@ -30,7 +27,7 @@ import {
   FlexSection,
   TransferSelectionDialog,
   DestinationSelectionDialog,
-  ProgressBarSection,
+  ProgressBarSection
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';

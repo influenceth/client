@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
@@ -19,7 +19,7 @@ import {
   BuildingImage,
   FlexSectionSpacer,
 } from './components';
-import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
+import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
 
 const UnplanWarning = styled.div`
