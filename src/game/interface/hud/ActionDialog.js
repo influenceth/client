@@ -18,6 +18,7 @@ import Deconstruct from './actionDialogs/Deconstruct';
 import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
 import PlanBuilding from './actionDialogs/PlanBuilding';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
+import TransferToSite from './actionDialogs/TransferToSite';
 import UnplanBuilding from './actionDialogs/UnplanBuilding';
 
 const cornerSize = 20;
@@ -286,6 +287,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}
         {type === 'NEW_CORE_SAMPLE' && <NewCoreSample {...allProps} />}
         {type === 'SURFACE_TRANSFER' && <SurfaceTransfer {...allProps} />}
+        {type === 'TRANSFER_TO_SITE' && <TransferToSite {...allProps} />}
       </ModalCushion>
     </Backdrop>
   );

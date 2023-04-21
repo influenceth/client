@@ -65,6 +65,11 @@ const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
         ? <Animation>{item.customIcon.icon}</Animation>
         : <div>{item.customIcon.icon}</div>;
     }
+
+    if (item.requirementMet) {
+      props.requirementMet = true;
+      props.backgroundColor = props.outlineColor = 'rgba(50, 50, 50, 0.3)';
+    }
   }
   
   return (

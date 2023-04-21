@@ -30,13 +30,13 @@ const QuantaInput = styled.input`
   text-align: right;
 `;
 
-const PartialSelectMenu = ({ available, onChange, onClose, resource, selected }) => {
+const PartialSelectMenu = ({ maxSelectable, onChange, onClose, resource, selected }) => {
   const fieldRef = useRef();
 
   const onBlur = useCallback(() => {
     let useValue = parseInt(fieldRef.current.value) || 0;
     if (useValue < 0) useValue = 0;
-    if (useValue > available) useValue = available;
+    if (useValue > maxSelectable) useValue = maxSelectable;
     onChange(useValue);
     onClose();
   }, []);
@@ -60,7 +60,7 @@ const PartialSelectMenu = ({ available, onChange, onClose, resource, selected })
       <QuantaInput
         ref={fieldRef}
         type="number"
-        max={available}
+        max={maxSelectable}
         min={0}
         onBlur={onBlur}
         onKeyDown={onKeyDown}
@@ -89,14 +89,18 @@ const ResourceSelection = ({ item, onSelectItem }) => {
       config.badgeColor = '#ffffff';
     }
 
-    config.menu = (onClose) => <PartialSelectMenu onChange={onSelectItem} onClose={onClose} {...item} />;
+    if (item.maxSelectable > 0) {
+      config.menu = (onClose) => <PartialSelectMenu onChange={onSelectItem} onClose={onClose} {...item} />;
+    } else {
+      config.disabled = true;
+    }
 
     return config;
   }, [item]);
 
   const onToggleAll = useCallback(() => {
     if (item.selected > 0) onSelectItem(0);
-    else onSelectItem(item.available);
+    else onSelectItem(item.maxSelectable);
   }, [item]);
   
   return (

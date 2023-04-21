@@ -47,15 +47,17 @@ export const ResourceThumbnailWrapper = styled.div`
     calc(100% - 10px) 100%,
     0 100%
   );
-  ${p => p.onClick && `cursor: ${p.theme.cursors.active};`}
-  &:hover {
-    ${p => p.onClick && `
-      background: rgba(${p.theme.colors.mainRGB}, 0.2);
-    `}
-    ${MenuWrapper} {
-      opacity: 1;
+  ${p => !p.disabled && `
+    ${p.onClick && `cursor: ${p.theme.cursors.active};`}
+    &:hover {
+      ${p.onClick && `
+        background: rgba(${p.theme.colors.mainRGB}, 0.2);
+      `}
+      ${MenuWrapper} {
+        opacity: 1;
+      }
     }
-  }
+  `}
   height: ${p => p.size || defaultSize};
   padding: 2px;
   position: relative;
@@ -67,6 +69,10 @@ export const ResourceThumbnailWrapper = styled.div`
     ${p.outlineStyle ? `border-style: ${p.outlineStyle} !important;` : ''}
     ${p.badgeColor && p.hasDenominator ? `${ResourceBadge} { &:after { color: ${p.badgeColor} !important; } }` : ''}
     ${p.badgeColor && !p.hasDenominator ? `${ResourceBadge} { &:before { color: ${p.badgeColor} !important; } }` : ''}
+    ${(p.requirementMet || p.disabled) ? `
+      & > * { opacity: 0.35; }
+      & > svg, ${ThumbnailIconOverlay} { opacity: 1; }
+    ` : ''}
   `}
 `;
 

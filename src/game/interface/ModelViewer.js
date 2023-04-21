@@ -266,7 +266,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
               // }
             }
 
-            // only worry about depth on non-transparent materials
+            // no depth evaluation on transparent materials (NOTE: this may happen automatically in gltfloader now)
             // (from https://github.com/donmccurdy/three-gltf-viewer/blob/main/src/viewer.js)
             node.material.depthWrite = !node.material.transparent;
           } else if (assetType === 'Building' && node.isSpotLight) {

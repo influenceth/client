@@ -985,7 +985,7 @@ export const DestinationSelectionDialog = ({
   );
 }
 
-export const TransferSelectionDialog = ({ inventory, lot, resources, initialSelection, onClose, onSelected, open }) => {
+export const TransferSelectionDialog = ({ requirements, inventory, lot, resources, initialSelection, onClose, onSelected, open }) => {
   const [selection, setSelection] = useState({});
 
   useEffect(() => {
@@ -1010,13 +1010,14 @@ export const TransferSelectionDialog = ({ inventory, lot, resources, initialSele
   }, []);
 
   const cells = useMemo(() => [...Array(6 * Math.max(2, Math.ceil(Object.keys(inventory).length / 6))).keys()], [inventory]);
-  const items = useMemo(() => {
-    return Object.keys(inventory).map((resourceId) => ({
-      selected: selection[resourceId],
-      available: inventory[resourceId],
-      resource: resources[resourceId],
-    }));
-  }, [inventory, selection]);
+  const items = useMemo(() => Object.keys(inventory).map((resourceId) => ({
+    selected: selection[resourceId],
+    available: inventory[resourceId],
+    resource: resources[resourceId],
+    maxSelectable: requirements
+      ? Math.min(inventory[resourceId], requirements.find((r) => r.i === Number(resourceId))?.inNeed || 0)
+      : inventory[resourceId]
+  })), [inventory, requirements, selection]);
 
   const { tally, totalMass, totalVolume } = useMemo(() => {
     return items.reduce((acc, { selected, resource }) => {
@@ -1037,7 +1038,12 @@ export const TransferSelectionDialog = ({ inventory, lot, resources, initialSele
       <DialogIngredientsList>
         {cells.map((i) => (
           items[i]
-            ? <ResourceSelection key={i} item={items[i]} onSelectItem={onSelectItem(items[i].resource.i)} />
+            ? (
+              <ResourceSelection
+                key={i}
+                item={items[i]}
+                onSelectItem={onSelectItem(items[i].resource.i)} />
+            )
             : (
               <EmptyResourceImage
                 key={i}
@@ -1088,14 +1094,14 @@ export const getBuildingRequirements = (building) => {
   
   // TODO: remove this fallback (just for dev)
   const ingredients = Capable.TYPES[capableType || 0].buildingRequirements || [
-    [700, 5, 700], [700, 19, 500], [400, 22, 0],
+    [700, 5, 700], [700, 9, 500], [400, 22, 0],
     // [700, 2, 0], [700, 7, 0], [400, 23, 0], [700, 24, 0], [700, 69, 0], [400, 45, 0],
   ];
 
   // TODO: presumably ingredients will come from sdk per building
   return ingredients.map(([tally, i]) => {
     const totalRequired = tally;
-    const inInventory = tally || // TODO: remove `tally ||`
+    const inInventory = i === 5 ? tally : //tally || // TODO: remove `tally ||`
       (inventories[0]?.resources || [])[i] || 0;
     const inTransit = deliveries
       .filter((d) => d.status === 'IN_PROGRESS')
@@ -1259,13 +1265,17 @@ const ResourceGridSection = ({
   noCellStyles,
   theming = 'default'
 }) => {
-  const { totalMass, totalVolume } = useMemo(() => {
-    return items.reduce((acc, { i, numerator, denominator }) => {
-      const sumValue = denominator !== undefined ? denominator : numerator;
+  const { totalItems, totalMass, totalVolume } = useMemo(() => {
+    return items.reduce((acc, { i, numerator, denominator, selected }) => {
+      let sumValue = numerator;
+      if (selected !== undefined) sumValue = selected;
+      else if (denominator !== undefined) sumValue = denominator;
+
+      acc.totalItems += (selected === undefined || selected > 0) ? 1 : 0;
       acc.totalMass += sumValue * resources[i].massPerUnit * 1e6;
       acc.totalVolume += sumValue * (resources[i].volumePerUnit || 0) * 1e6;
       return acc;
-    }, { totalMass: 0, totalVolume: 0 });
+    }, { totalItems: 0, totalMass: 0, totalVolume: 0 });
   }, [items]);
 
   return (
@@ -1292,7 +1302,7 @@ const ResourceGridSection = ({
                 ))}
                 <IngredientSummary theming={theming}>
                   <span>
-                    {items.length} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
+                    {totalItems} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
                   </span>
                 </IngredientSummary>
               </>
@@ -1342,6 +1352,32 @@ export const BuildingRequirementsSection = ({ mode, label, requirements, require
       label={label}
       resources={resources}
       theming={requirementsMet ? undefined : 'warning'} />
+  );
+};
+
+export const TransferBuildingRequirementsSection = ({ label, onClick, requirements, resources, selectedItems }) => {
+  const items = useMemo(() => requirements.map((item) => ({
+    i: item.i,
+    numerator: item.inInventory + item.inTransit + (selectedItems[item.i] || 0),
+    denominator: item.totalRequired,
+    requirementMet: (item.inInventory + item.inTransit) >= item.totalRequired,
+    selected: selectedItems[item.i] || 0,
+    customIcon: item.inTransit > 0
+      ? {
+        animated: true,
+        icon: <SurfaceTransferIcon />
+      }
+      : undefined
+  })), [requirements, selectedItems]);
+
+  return (
+    <ResourceGridSection
+      isGathering
+      items={items}
+      selectedItems={selectedItems}
+      label={label}
+      onClick={onClick}
+      resources={resources} />
   );
 };
 

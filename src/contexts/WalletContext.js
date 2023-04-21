@@ -66,7 +66,7 @@ export function WalletProvider({ children }) {
 
   // if using devnet, put "create block" on a timer since otherwise, blocks will not be advancing in the background
   useEffect(() => {
-    if (process.env.REACT_APP_STARKNET_NETWORK.includes('localhost')) {
+    if (process.env.REACT_APP_IS_DEVNET) {
       let blockInterval = setInterval(() => {
         api.createDevnetBlock();
       }, 15e3);

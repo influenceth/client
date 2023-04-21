@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Construction, Inventory } from '@influenceth/sdk';
 
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
-import { ForwardIcon, InventoryIcon, LocationIcon, SurfaceTransferIcon } from '~/components/Icons';
+import { ForwardIcon, InventoryIcon, LocationIcon, SurfaceTransferIcon, TransferToSiteIcon } from '~/components/Icons';
 import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
@@ -10,16 +10,17 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 import {
-  ItemSelectionSection,
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
-  formatMass,
+  TransferBuildingRequirementsSection,
   formatSampleMass,
   formatSampleVolume,
+  getBuildingRequirements,
+  TimeBonusTooltip,
+  formatMass,
   formatVolume,
   getBonusDirection,
-  TimeBonusTooltip,
   EmptyBuildingImage,
   BuildingImage,
   FlexSectionSpacer,
@@ -33,7 +34,7 @@ import {
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
 
-const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) => {
+const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const buildings = useBuildingAssets();
   const resources = useResourceAssets();
@@ -43,12 +44,13 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   const { data: currentDeliveryOriginLot } = useLot(asteroid.i, currentDelivery?.originLotId);
   const { data: currentDeliveryDestinationLot } = useLot(asteroid.i, currentDelivery?.destLotId);
 
-  const originLot = useMemo(
-    () => currentDelivery ? currentDeliveryOriginLot : lot,
-    [currentDelivery, currentDeliveryOriginLot, lot]
+  const destinationLot = useMemo(
+    () => currentDelivery ? currentDeliveryDestinationLot : lot,
+    [currentDelivery, currentDeliveryDestinationLot, lot]
   ) || {};
-  const [destinationLot, setDestinationLot] = useState();
-  const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
+
+  const [originLot, setOriginLot] = useState();
+  const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
   const [transferSelectorOpen, setTransferSelectorOpen] = useState();
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
 
@@ -64,10 +66,10 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   }, [currentDelivery]);
 
   useEffect(() => {
-    if (currentDeliveryDestinationLot) {
-      setDestinationLot(currentDeliveryDestinationLot);
+    if (currentDeliveryOriginLot) {
+      setOriginLot(currentDeliveryOriginLot);
     }
-  }, [currentDeliveryDestinationLot]);
+  }, [currentDeliveryOriginLot]);
 
   const transportDistance = Asteroid.getLotDistance(asteroid?.i, originLot?.i, destinationLot?.i) || 0;
   const transportTime = Asteroid.getLotTravelTime(asteroid?.i, originLot?.i, destinationLot?.i, crewTravelBonus.totalBonus) || 0;
@@ -110,15 +112,6 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
       )
     },
   ]), [totalMass, totalVolume, transportDistance, transportTime]);
-
-  const status = useMemo(() => {
-    if (deliveryStatus === 'READY') {
-      return 'BEFORE';
-    } else if (deliveryStatus === 'DEPARTING' || deliveryStatus === 'IN_TRANSIT') {
-      return 'DURING';
-    }
-    return 'AFTER';
-  }, [deliveryStatus]);
 
   const originInvId = useMemo(() => {
     if (originLot?.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
@@ -167,12 +160,17 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
     });
   }, [originInvId, destinationLot?.i, destInvId, selectedItems]);
 
+  const buildingRequirements = useMemo(
+    () => getBuildingRequirements(destinationLot?.building),
+    [destinationLot?.building]
+  );
+
   return (
     <>
       <ActionDialogHeader
         action={{
-          icon: <SurfaceTransferIcon />,
-          label: 'Surface Transfer',
+          icon: <TransferToSiteIcon />,
+          label: 'Transfer to Site',
         }}
         captain={captain}
         crewAvailableTime={0}
@@ -183,14 +181,21 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
         <FlexSection>
           <FlexSectionInputBlock
             title="Origin"
-            image={(
-              <BuildingImage
-                building={buildings[lot.building?.capableType || 0]}
-                inventories={lot.building?.inventories}
-                showInventoryStatusForType={1} />
-            )}
-            label={buildings[lot.building?.capableType || 0]?.name}
-            sublabel={<><LocationIcon /> Lot {lot.i.toLocaleString()}</>}
+            image={
+              originLot
+                ? (
+                  <BuildingImage
+                    building={buildings[originLot.building?.capableType || 0]}
+                    inventories={originLot?.building?.inventories}
+                    showInventoryStatusForType={1} />
+                )
+                : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
+            }
+            label={originLot ? buildings[originLot.building?.capableType || 0]?.name : 'Select'}
+            isSelected={stage === actionStage.NOT_STARTED}
+            onClick={() => { setOriginSelectorOpen(true) }}
+            disabled={stage !== actionStage.NOT_STARTED}
+            sublabel={originLot ? <><LocationIcon /> Lot {originLot.i.toLocaleString()}</> : 'Inventory'}
           />
           
           <FlexSectionSpacer>
@@ -199,30 +204,25 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
 
           <FlexSectionInputBlock
             title="Destination"
-            image={
-              destinationLot
-                ? (
-                  <BuildingImage
-                    building={buildings[destinationLot.building?.capableType || 0]}
-                    inventories={destinationLot?.building?.inventories}
-                    showInventoryStatusForType={1} />
-                )
-                : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
-            }
-            isSelected={stage === actionStage.NOT_STARTED}
-            label={destinationLot ? buildings[destinationLot.building?.capableType || 0]?.name : 'Select'}
-            onClick={() => { setDestinationSelectorOpen(true) }}
-            disabled={stage !== actionStage.NOT_STARTED}
-            sublabel={destinationLot ? <><LocationIcon /> Lot {destinationLot.i.toLocaleString()}</> : 'Inventory'}
+            image={(
+              <BuildingImage
+                building={buildings[lot.building?.capableType || 0]}
+                inventories={lot.building?.inventories}
+                showInventoryStatusForType={0}
+                unfinished />
+            )}
+            label={buildings[lot.building?.capableType || 0]?.name}
+            sublabel={<><LocationIcon /> Lot {lot.i.toLocaleString()}</>}
           />
         </FlexSection>
 
-        <ItemSelectionSection
-          label="Items"
-          items={selectedItems}
-          onClick={stage === actionStage.NOT_STARTED && (() => setTransferSelectorOpen(true))}
+        <TransferBuildingRequirementsSection
+          label="Construction Requirements"
+          onClick={originLot ? () => setTransferSelectorOpen(true) : null}
+          requirements={buildingRequirements}
           resources={resources}
-          stage={stage} />
+          selectedItems={selectedItems}
+        />
 
         {stage !== actionStage.NOT_STARTED && (
           <ProgressBarSection
@@ -242,7 +242,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!destinationLot?.i || totalMass === 0}
+        disabled={!originLot?.i || totalMass === 0}
         finalizeLabel="Complete"
         goLabel="Transfer"
         onFinalize={finishDelivery}
@@ -253,6 +253,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
       {stage === actionStage.NOT_STARTED && (
         <>
           <TransferSelectionDialog
+            requirements={buildingRequirements}
             inventory={originInventory?.resources || {}}
             initialSelection={selectedItems}
             lot={lot}
@@ -266,9 +267,9 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
             asteroid={asteroid}
             originLotId={lot?.i}
             initialSelection={undefined}
-            onClose={() => setDestinationSelectorOpen(false)}
-            onSelected={setDestinationLot}
-            open={destinationSelectorOpen}
+            onClose={() => setOriginSelectorOpen(false)}
+            onSelected={setOriginLot}
+            open={originSelectorOpen}
           />
         </>
       )}
@@ -280,7 +281,7 @@ const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
 
   // NOTE: lot should be destination if deliveryId > 0
-  const deliveryManager = useDeliveryManager(asteroid?.i, lot?.i, props.deliveryId);
+  const deliveryManager = useDeliveryManager(asteroid?.i, lot?.i);
   const { deliveryStatus, actionStage } = deliveryManager;
 
   useEffect(() => {
@@ -291,14 +292,18 @@ const Wrapper = (props) => {
     }
   }, [asteroid, lot, isLoading]);
 
-  // handle auto-closing on any status change
-  const lastStatus = useRef();
-  useEffect(() => {
-    if (lastStatus.current && deliveryStatus !== lastStatus.current) {
-      props.onClose();
-    }
-    lastStatus.current = deliveryStatus;
-  }, [deliveryStatus]);
+  // TODO: UX flow:
+  //  start delivery --> pending
+  //  once underway... are requirements now met?
+  //    yes? send to construction dialog
+  //    no? reset this dialog (requirements will be updated)
+  // const lastStatus = useRef();
+  // useEffect(() => {
+  //   if (lastStatus.current && deliveryStatus !== lastStatus.current) {
+  //     props.onClose();
+  //   }
+  //   lastStatus.current = deliveryStatus;
+  // }, [deliveryStatus]);
 
   return (
     <ActionDialogInner
@@ -308,7 +313,7 @@ const Wrapper = (props) => {
       lot={lot}
       onClose={props.onClose}
       stage={actionStage}>
-      <SurfaceTransfer
+      <TransferToSite
         asteroid={asteroid}
         lot={lot}
         deliveryManager={deliveryManager}
