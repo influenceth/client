@@ -107,7 +107,8 @@ const ResourceSelection = ({ item, onSelectItem }) => {
     <ResourceThumbnail
       {...props}
       onClick={onToggleAll}
-      resource={item.resource} />
+      resource={item.resource}
+      tooltipContainer="selectionDialog" />
   );
 };
 

@@ -235,7 +235,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
           <FlexSection>
             <FlexSectionInputBlock
               title="New Result"
-              image={<ResourceThumbnail resource={resources[resourceId]} />}
+              image={<ResourceThumbnail resource={resources[resourceId]} tooltipContainer="none" />}
               label={`${resources[resourceId]?.name} Deposit`}
               disabled
               style={{ width: '100%' }}
@@ -255,7 +255,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
               title="Deposit"
               image={
                 resourceId
-                  ? <ResourceThumbnail resource={resources[resourceId]} />
+                  ? <ResourceThumbnail resource={resources[resourceId]} tooltipContainer="none" />
                   : <EmptyResourceImage iconOverride={<CoreSampleIcon />} />
               }
               isSelected={stage === actionStage.NOT_STARTED}
@@ -275,7 +275,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
               title="Tool"
               image={
                 resourceId  // TODO: this should be tool origin lot selected
-                  ? <ResourceThumbnail badge="1" resource={resources[175]} />
+                  ? <ResourceThumbnail badge="1" resource={resources[175]} tooltipContainer="none" />
                   : <EmptyResourceImage />
               }
               isSelected={stage === actionStage.NOT_STARTED}

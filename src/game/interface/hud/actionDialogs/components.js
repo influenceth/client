@@ -32,7 +32,7 @@ import {
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import Poppable from '~/components/Popper';
 import ResourceColorIcon from '~/components/ResourceColorIcon';
-import ResourceThumbnail, { ResourceThumbnailWrapper, ResourceImage, ResourceProgress } from '~/components/ResourceThumbnail';
+import { ResourceThumbnailWrapper, ResourceImage, ResourceProgress } from '~/components/ResourceThumbnail';
 import ResourceRequirement from '~/components/ResourceRequirement';
 import ResourceSelection from '~/components/ResourceSelection';
 import SliderInput from '~/components/SliderInput';
@@ -40,7 +40,7 @@ import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import theme, { hexToRGB } from '~/theme';
 import useChainTime from '~/hooks/useChainTime';
-import { formatFixed, formatTimer } from '~/lib/utils';
+import { formatFixed, formatTimer, keyify } from '~/lib/utils';
 import LiveTimer from '~/components/LiveTimer';
 import NavIcon from '~/components/NavIcon';
 import CrewCardFramed from '~/components/CrewCardFramed';
@@ -50,6 +50,7 @@ import ClipCorner from '~/components/ClipCorner';
 import Dialog from '~/components/Dialog';
 import actionStage from '~/lib/actionStages';
 import { theming } from '../ActionDialog';
+import ReactTooltip from 'react-tooltip';
 
 const SECTION_WIDTH = 780;
 
@@ -723,6 +724,7 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
   if (!open) return null;
   return createPortal(
     <Dialog opaque dialogCss={dialogCss}>
+      <ReactTooltip id="selectionDialog" effect="solid" />
       <SelectionTitle>
         <div>{title}</div>
         <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
@@ -1298,7 +1300,8 @@ const ResourceGridSection = ({
                     item={item}
                     resource={resources[item.i]}
                     noStyles={noCellStyles}
-                    size="95px" />
+                    size="95px"
+                    tooltipContainer="actionDialog" />
                 ))}
                 <IngredientSummary theming={theming}>
                   <span>
@@ -1415,66 +1418,6 @@ export const ItemSelectionSection = ({ label, items, onClick, resources, stage }
       resources={resources}
       theming={stage === actionStage.READY_TO_COMPLETE ? 'success' : 'default'} />
   );
-
-  // const selectedItemKeys = Object.keys(selectedItems || {});
-
-  // const [completed, setCompleted] = useState(0);
-  // const onSelectionCompleted = useCallback((items) => {
-  //   setCompleted((x) => x + 1);
-  //   if (onSelectItems) onSelectItems(items);
-  // }, [onSelectItems]);
-
-  // return (
-  //   <Section>
-  //     <SectionTitle><ChevronRightIcon /> Items</SectionTitle>
-  //     <SectionBody highlight={status === 'AFTER'}>
-  //       {selectedItemKeys.length === 0 && (
-  //         <>
-  //           <EmptyResourceWithData>
-  //             <EmptyResourceImage />
-  //             <label>
-  //               <div>Items:</div>
-  //               <h3>Select</h3>
-  //             </label>
-  //           </EmptyResourceWithData>
-  //           <div>
-  //             <TransferSelectionPopper
-  //               closeOnChange={completed}
-  //               inventory={inventory}
-  //               onSelectionCompleted={onSelectionCompleted}
-  //               resources={resources}
-  //               selectedItems={selectedItems} />
-  //           </div>
-  //         </>
-  //       )}
-  //       {selectedItemKeys.length > 0 && (
-  //         <ItemSelectionWrapper>
-  //           <div>
-  //             <ItemsList>
-  //               {selectedItemKeys.map((resourceId, x) => (
-  //                 <ResourceThumbnail
-  //                   key={resourceId}
-  //                   badge={formatResourceAmount(selectedItems[resourceId], resourceId)}
-  //                   resource={resources[resourceId]}
-  //                   progress={selectedItems[resourceId] / inventory[resourceId]} />
-  //               ))}
-  //             </ItemsList>
-  //           </div>
-  //           <div>
-  //             <div>{selectedItemKeys.length} item{selectedItemKeys.length === 1 ? '' : 's'}</div>
-  //             {status === 'BEFORE' && (
-  //               <TransferSelectionPopper
-  //                 closeOnChange={completed}
-  //                 inventory={inventory}
-  //                 onSelectionCompleted={onSelectionCompleted}
-  //                 resources={resources}
-  //                 selectedItems={selectedItems} />
-  //             )}
-  //           </div>
-  //         </ItemSelectionWrapper>
-  //       )}
-  //     </SectionBody>
-  //   </Section>
 };
 
 export const ProgressBarSection = ({

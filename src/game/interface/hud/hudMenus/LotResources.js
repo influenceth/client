@@ -245,7 +245,7 @@ const LotResources = () => {
                   onClick={onClickResource(i)}
                   selected={isSelected}>
                   {isSelected
-                    ? <ResourceThumbnail resource={resources[i]} size="75px" />
+                    ? <ResourceThumbnail resource={resources[i]} size="75px" tooltipContainer="null" />
                     : <Circle />}
                   <label>{name}</label>
                   <span>{(abundance * 100).toFixed(1)}%</span>
@@ -277,7 +277,8 @@ const LotResources = () => {
                       <ResourceThumbnail
                         resource={resources[sample.resourceId]}
                         iconBadge={<CoreSampleIcon />}
-                        size="75px" />
+                        size="75px"
+                        tooltipContainer="hudeMenu" />
                     )
                     : <CoreSampleIcon />}
                   <label>{name}{isSelected ? '' : ' Deposit'}</label>

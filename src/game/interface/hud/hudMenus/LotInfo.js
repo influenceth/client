@@ -10,10 +10,11 @@ import useChainTime from '~/hooks/useChainTime';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, majorBorderColor, Rule } from './components';
 import ClipCorner from '~/components/ClipCorner';
-import { ConstructIcon } from '~/components/Icons';
+import { ConstructIcon, SurfaceTransferIcon } from '~/components/Icons';
 import useLot from '~/hooks/useLot';
 import { buildingDescriptions, buildingRecipes } from '~/lib/utils';
 import ResourceRequirement from '~/components/ResourceRequirement';
+import { getBuildingRequirements } from '../actionDialogs/components';
 
 const Wrapper = styled.div`
   display: flex;
@@ -143,12 +144,29 @@ const ItemsList = styled.div`
   }
 `;
 
-const ConstructionPlan = ({ capableType, constructionInventory }) => {
+const ConstructionPlan = ({ capableType, planningLot }) => {
   const buildings = useBuildingAssets();
   const resources = useResourceAssets();
   const thumbUrl = buildings[capableType]?.siteIconUrls?.w400;
-  const ingredients = buildingRecipes[capableType] || buildingRecipes[1]; // TODO: shoudl default to []
-  // TODO: use constructionInventory to update hasTally
+
+  const items = useMemo(
+    () => {
+      const requirements = getBuildingRequirements(planningLot);
+      return requirements.map((item) => ({
+        i: item.i,
+        numerator: item.inInventory + item.inTransit,
+        denominator: item.totalRequired,
+        customIcon: item.inTransit > 0
+          ? {
+            animated: true,
+            icon: <SurfaceTransferIcon />
+          }
+          : undefined
+      }));
+    },
+    [planningLot]
+  );
+
   return (
     <>
       <SiteThumb image={thumbUrl}>
@@ -157,13 +175,15 @@ const ConstructionPlan = ({ capableType, constructionInventory }) => {
       <Requirements>
         <label>Required Materials</label>
         <ItemsList>
-          {ingredients.map(([tally, i, hasTally]) => (
+          {items.map((item) => (
             <ResourceRequirement
-              key={i}
-              hasTally={hasTally}
-              needsTally={tally}
-              resource={resources[i]}
-              size="85px" />
+              key={item.i}
+              isGathering={!!planningLot}
+              noStyles={!planningLot}
+              item={item}
+              resource={resources[item.i]}
+              size="85px"
+              tooltipContainer="hudMenu" />
           ))}
         </ItemsList>
       </Requirements>
@@ -256,7 +276,9 @@ const LotInfo = () => {
         titleText="Construction"
         collapsed={lot.building.construction.status === Construction.STATUS_OPERATIONAL}
         borderless>
-        <ConstructionPlan capableType={lot.building.capableType} />
+        <ConstructionPlan
+          capableType={lot.building.capableType}
+          planningLot={lot.building.construction.status === Construction.STATUS_PLANNED ? lot : null} />
       </HudMenuCollapsibleSection>
     </Wrapper>
   );

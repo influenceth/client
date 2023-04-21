@@ -152,7 +152,7 @@ const HudMenu = () => {
   const history = useHistory();
   const { account } = useAuth();
   const asteroidId = useStore(s => s.asteroids.origin);
-  const { lotAsteroidId, lotId } = useStore(s => s.asteroids.lot || {});
+  const { asteroidId: lotAsteroidId, lotId } = useStore(s => s.asteroids.lot || {});
   const openHudMenu = useStore(s => s.openHudMenu);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);

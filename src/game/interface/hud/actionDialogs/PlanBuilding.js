@@ -86,7 +86,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
     setSiteSelectorOpen();
   }
 
-  const buildingRequirements = useMemo(() => getBuildingRequirements({ capableType }), [capableType])
+  const buildingRequirements = useMemo(() => getBuildingRequirements({ capableType }), [capableType]);
 
   return (
     <>

@@ -219,13 +219,14 @@ const Menu = ({ children }) => {
   overlayIcon,
   progress,
   size,
-  showTooltip = true,
+  tooltipContainer = 'global',
   underlay,
   ...props
 }) => {
-  const tooltipProps = showTooltip ? {
+  const tooltipProps = tooltipContainer ? {
+    'data-place': 'top',
     'data-tip': resource.name,
-    'data-for': 'global'
+    'data-for': tooltipContainer
   } : {};
   useEffect(() => ReactTooltip.rebuild(), []);
   return (

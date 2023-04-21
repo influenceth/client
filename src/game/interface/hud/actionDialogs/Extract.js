@@ -280,7 +280,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
             title="Deposit"
             image={
               resource
-                ? <ResourceThumbnail resource={resource} />
+                ? <ResourceThumbnail resource={resource} tooltipContainer="none" />
                 : <EmptyResourceImage iconOverride={<CoreSampleIcon />} />
             }
             isSelected={stage === actionStage.NOT_STARTED}
