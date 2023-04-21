@@ -71,6 +71,13 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
     }
   }, [currentDeliveryOriginLot]);
 
+  // reset selectedItems if change origin lot before starting
+  // TODO: in general, could probably remove all currentDelivery stuff
+  //  since we don't follow the course of the delivery in this dialog
+  useEffect(() => {
+    if (!currentDelivery) setSelectedItems(props.preselect?.selectedItems || {});
+  }, [originLot]);
+
   const transportDistance = Asteroid.getLotDistance(asteroid?.i, originLot?.i, destinationLot?.i) || 0;
   const transportTime = Asteroid.getLotTravelTime(asteroid?.i, originLot?.i, destinationLot?.i, crewTravelBonus.totalBonus) || 0;
 
