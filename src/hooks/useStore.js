@@ -51,14 +51,14 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
         selected: null
       },
       zoomToLot: null,
-      owned: {
-        highlighted: false,
-        highlightColor: '#AB149E'
-      },
-      watched: {
-        highlighted: false,
-        highlightColor: '#AB149E'
-      },
+      // owned: {
+      //   highlighted: false,
+      //   highlightColor: '#AB149E'
+      // },
+      // watched: {
+      //   highlighted: false,
+      //   highlightColor: '#AB149E'
+      // },
     },
 
     assetSearch: {
@@ -347,9 +347,9 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     //   state.asteroids.owned.filtered = false;
     // })),
 
-    dispatchOwnedAsteroidColorChange: (color) => set(produce(state => {
-      state.asteroids.owned.highlightColor = color;
-    })),
+    // dispatchOwnedAsteroidColorChange: (color) => set(produce(state => {
+    //   state.asteroids.owned.highlightColor = color;
+    // })),
 
     // dispatchWatchedAsteroidsMapped: () => set(produce(state => {
     //   state.asteroids.watched.mapped = true;
@@ -367,9 +367,9 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     //   state.asteroids.watched.filtered = false;
     // })),
 
-    dispatchWatchedAsteroidColorChange: (color) => set(produce(state => {
-      state.asteroids.watched.highlightColor = color;
-    })),
+    // dispatchWatchedAsteroidColorChange: (color) => set(produce(state => {
+    //   state.asteroids.watched.highlightColor = color;
+    // })),
 
     dispatchTimeOverride: (anchor, speed) => set((produce(state => {
       state.timeOverride = anchor ? { anchor, speed, ts: Date.now() } : null;

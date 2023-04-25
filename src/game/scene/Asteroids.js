@@ -1,7 +1,9 @@
 import { Suspense, useContext, useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import styled from 'styled-components';
 import { Color } from 'three';
 import { useThrottleCallback } from '@react-hook/throttle';
 import { useThree } from '@react-three/fiber';
+import { Html, useTexture } from '@react-three/drei';
 import gsap from 'gsap';
 
 import ClockContext from '~/contexts/ClockContext';
@@ -16,6 +18,35 @@ import Marker from './asteroids/Marker';
 import highlighters from './asteroids/highlighters';
 import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
+import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
+import useWatchlist from '~/hooks/useWatchlist';
+import theme from '~/theme';
+import { CaptainIcon, MyAssetIcon, RocketIcon } from '~/components/Icons';
+
+const assetColor = new Color().setStyle(theme.colors.main);
+const watchlistColor = new Color().setStyle('#e35528');
+
+const AsteroidTooltip = styled.div`
+  align-items: flex-end;
+  display: flex;
+  flex-direction: row;
+  pointer-events: none;
+  & > div:first-child {
+    opacity: ${p => p.hasActiveCrew ? 1 : 0};
+    padding-bottom: 3px;
+  }
+  & > div:last-child {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    & > span {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 2px 4px;
+      white-space: nowrap;
+    }
+  }
+`;
+
 
 const Asteroids = (props) => {
   const { controls } = useThree();
@@ -24,10 +55,17 @@ const Asteroids = (props) => {
   const hovered = useStore(s => s.asteroids.hovered);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const routePlannerActive = false; // TODO: (when route planning restored)
-  const ownedColor = useStore(s => s.asteroids.owned.highlightColor);
-  const watchedColor = useStore(s => s.asteroids.watched.highlightColor);
   const highlightConfig = useStore(s => s.assetSearch.asteroidsMapped.highlight);
   const cameraNeedsReorientation = useStore(s => s.cameraNeedsReorientation);
+  const isAssetSearchMatchingDefault = useStore(s => s.isAssetSearchMatchingDefault);
+  const filters = useStore(s => s.assetSearch.asteroids?.filters);
+  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
+  const selectOrigin = useStore(s => s.dispatchOriginSelected);
+  const selectDestination = useStore(s => s.dispatchDestinationSelected);
+  const hoverAsteroid = useStore(s => s.dispatchAsteroidHovered);
+  const unhoverAsteroid = useStore(s => s.dispatchAsteroidUnhovered);
+  
+  const isDefaultSearch = useMemo(() => isAssetSearchMatchingDefault('asteroids'), [filters]);
   
   const { processInBackground } = useWebWorker();
 
@@ -35,12 +73,8 @@ const Asteroids = (props) => {
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
   const { coarseTime } = useContext(ClockContext);
-
-  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
-  const selectOrigin = useStore(s => s.dispatchOriginSelected);
-  const selectDestination = useStore(s => s.dispatchDestinationSelected);
-  const hoverAsteroid = useStore(s => s.dispatchAsteroidHovered);
-  const unhoverAsteroid = useStore(s => s.dispatchAsteroidUnhovered);
+  const { data: ownedAsteroids } = useOwnedAsteroids();
+  const { watchlist: { data: watchlist }} = useWatchlist();
 
   const [ mappedAsteroids, setMappedAsteroids ] = useState([]);
   const [ asteroidsWorkerPayload, setAsteroidsWorkerPayload ] = useState();
@@ -58,15 +92,45 @@ const Asteroids = (props) => {
     return asteroidSearch?.hits?.length > 0 ? asteroidSearch.hits : [];
   }, [asteroidSearch?.hits]);
 
+  // TODO: can also handle this with white texture and setting color on points, but the hole in the middle to
+  // let original point shine through was not aligning consistently
+  const assetMarker = useTexture(`${process.env.PUBLIC_URL}/textures/markerFilled_blue.png`);
+  const watchlistMarker = useTexture(`${process.env.PUBLIC_URL}/textures/markerFilled_red.png`);
+
+  const assetedAsteroids = useMemo(() => {
+    const asseted = {};
+    (ownedAsteroids || []).forEach((a) => {
+      if (!asseted[a.i]) asseted[a.i] = { asteroid: a };
+      asseted[a.i].owned = true;
+    });
+    if (asteroids?.length > 0) {
+      asseted[`${asteroids[0].i}`] = { asteroid: asteroids[0], crew: 1, ships: 2 };
+      
+    }
+    return asseted;
+  }, [asteroids, ownedAsteroids]);
+
   // Update state when asteroids from server, origin, or destination change
   const isZoomedIn = zoomStatus === 'in';
   useEffect(() => {
     const newMappedAsteroids = !!asteroids ? asteroids.slice() : [];
 
+    // in default search, append watchlist and owned as needed
+    Object.keys(assetedAsteroids || {}).forEach((i) => {
+      const already = newMappedAsteroids.find((a) => a.i === i);
+      if (already) already.isAsseted = 1;
+      else if (isDefaultSearch) newMappedAsteroids.push(Object.assign({ isAsseted: 1 }, assetedAsteroids[i].asteroid));
+    });
+    (watchlist || []).forEach((wa) => {
+      const already = newMappedAsteroids.find((a) => a.i === wa.asteroid.i);
+      if (already) already.isWatched = 1;
+      else if (isDefaultSearch) newMappedAsteroids.push(Object.assign({ isWatched: 1 }, wa.asteroid));
+    });
+
+    // append origin and destination in case not already in results
     if (!!origin && !newMappedAsteroids.find(a => a.i === origin.i)) {
       newMappedAsteroids.push(Object.assign({}, origin));
     }
-
     if (!!destination && !newMappedAsteroids.find(a => a.i === destination.i)) {
       newMappedAsteroids.push(Object.assign({}, destination));
     }
@@ -80,7 +144,7 @@ const Asteroids = (props) => {
       key: newValue.map((a) => a.i).join(','),
       orbitals: newValue.map((a) => a.orbital),
     })
-  }, [ asteroids, origin, destination, isZoomedIn ]);
+  }, [ asteroids, origin, destination, isDefaultSearch, assetedAsteroids, watchlist, isZoomedIn ]);
 
   // Responds to hover changes in the store which could be fired from the HUD
   useEffect(() => {
@@ -146,17 +210,13 @@ const Asteroids = (props) => {
 
   // Update colors
   useEffect(() => {
-    const color = new Color();
-
     const newColors = mappedAsteroids.map(a => {
       if (highlightConfig) return highlighters[highlightConfig.field](a, highlightConfig);
-      if (a.owned) return color.set(ownedColor).toArray();
-      if (a.watched) return color.set(watchedColor).toArray();
       return [ 0.87, 0.87, 0.87 ];
     });
 
     setColors(new Float32Array([].concat.apply([], newColors)));
-  }, [ mappedAsteroids, ownedColor, watchedColor, highlightConfig ]);
+  }, [ mappedAsteroids, highlightConfig ]);
 
   // re-computeBoundingSphere on geometry change
   useEffect(() => {
@@ -175,8 +235,8 @@ const Asteroids = (props) => {
   const onClick = useCallback((e) => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
-    if (asteroids[index]) selectOrigin(asteroids[index].i);
-  }, [asteroids]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (mappedAsteroids[index]) selectOrigin(mappedAsteroids[index].i);
+  }, [mappedAsteroids]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onContextClick = useCallback((e) => {
     e.stopPropagation();
@@ -199,8 +259,60 @@ const Asteroids = (props) => {
     unhoverAsteroid();
   }, 30);  // eslint-disable-line react-hooks/exhaustive-deps
 
+  const { assetPositions, assetPositionsById, watchlistPositions } = useMemo(() => {
+    const assetPositions = [];
+    const assetPositionsById = {};
+    const watchlistPositions = [];
+    mappedAsteroids.forEach((a, i) => {
+      if (a.i === origin?.i) {  // always include origin so html rendered on origin
+        assetPositionsById[a.i] = [positions[i * 3 + 0], positions[i * 3 + 1], positions[i * 3 + 2]];
+      } else if (a.isAsseted) {
+        assetPositionsById[a.i] = [positions[i * 3 + 0], positions[i * 3 + 1], positions[i * 3 + 2]];
+        assetPositions.push(assetPositionsById[a.i][0], assetPositionsById[a.i][1], assetPositionsById[a.i][2]);
+      }
+      else if (a.isWatched) {
+        watchlistPositions.push(positions[i * 3 + 0], positions[i * 3 + 1], positions[i * 3 + 2]);
+      }
+    });
+    return {
+      assetPositions: new Float32Array(assetPositions),
+      assetPositionsById,
+      watchlistPositions: new Float32Array(watchlistPositions),
+    }
+  }, [origin, positions, watchlist]); // don't update when mappedAsteroids updated (wait for positions update)
+
   return (
     <group>
+      {assetPositions.length > 0 && (
+        <points>
+          <pointsMaterial
+            attach="material"
+            depthWrite={false}
+            size={15}
+            sizeAttenuation={false}
+            map={assetMarker}
+            toneMapped={false}
+            transparent />
+          <bufferGeometry>
+            <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ assetPositions, 3 ]} />
+          </bufferGeometry>
+        </points>
+      )}
+      {watchlistPositions.length > 0 && (
+        <points>
+          <pointsMaterial
+            attach="material"
+            depthWrite={false}
+            size={15}
+            sizeAttenuation={false}
+            map={watchlistMarker}
+            toneMapped={false}
+            transparent />
+          <bufferGeometry>
+            <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ watchlistPositions, 3 ]} />
+          </bufferGeometry>
+        </points>
+      )}
       {positions?.length > 0 && colors?.length > 0 && (
         <points
           onClick={zoomStatus === 'out' && onClick}
@@ -227,12 +339,41 @@ const Asteroids = (props) => {
         <>
           <Suspense fallback={<group />}>
             {hoveredPos && <Marker asteroidPos={hoveredPos} />}
-            {originPos && <Marker asteroidPos={originPos} />}
+            {originPos && <Marker asteroidPos={originPos} selected />}
             {destinationPos && <Marker asteroidPos={destinationPos} />}
           </Suspense>
           {!!origin && <Orbit asteroid={origin} />}
           {!!destination && <Orbit asteroid={destination} />}
           {originPos && destinationPos && <FlightLine originPos={originPos} destinationPos={destinationPos} />}
+          {asteroids && (
+            <group>
+              {Object.keys(assetPositionsById).map((i) => {
+                const isOrigin = origin?.i === Number(i);
+                return (
+                  <Html
+                    key={i}
+                    position={assetPositionsById[i]}
+                    style={{ pointerEvents: 'none', transform: `translate(-45px, calc(-100% - ${isOrigin ? 15 : 5}px))` }}>
+                    <AsteroidTooltip hasActiveCrew={assetedAsteroids[i]?.crew}>
+                      <div><CaptainIcon /></div>
+                      <div>
+                        {assetedAsteroids[i] && (
+                          <span>
+                            {assetedAsteroids[i]?.owned && <MyAssetIcon />}
+                            {assetedAsteroids[i]?.ships > 0 && <RocketIcon />}
+                            {assetedAsteroids[i]?.ships > 1 && <RocketIcon />}
+                          </span>
+                        )}
+                        {isOrigin && (
+                          <span>{origin?.customName || origin?.baseName || `#${(origin?.i || 0).toLocaleString()}`}</span>
+                        )}
+                      </div>
+                    </AsteroidTooltip>
+                  </Html>
+                );
+              })}
+            </group>
+          )}
         </>
       )}
     </group>

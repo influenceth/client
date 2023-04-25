@@ -246,6 +246,7 @@ const api = {
   },
 
   createDevnetBlock: async () => {
+    return;
     try {
       axios.post(`${process.env.REACT_APP_STARKNET_NETWORK}/create_block`, {});
     } catch (e) {

@@ -100,7 +100,7 @@ const Scene = (props) => {
   const statsOn = useStore(s => s.graphics.stats);
 
   const [contextLost, setContextLost] = useState(false);
-  const canvasStyle = useMemo(() => (contextLost ? { opacity: 0, pointerEvents: 'none' } : {}), [contextLost]);
+  const canvasStyle = useMemo(() => (contextLost ? { opacity: 0, pointerEvents: 'none' } : { zIndex: 0 }), [contextLost]);
 
   useEffect(() => {
     if (!zoomedFrom) {
@@ -117,7 +117,7 @@ const Scene = (props) => {
 
   return (
     <StyledContainer>
-      {statsOn && (<Stats />)}
+      {statsOn && <Stats />}
       {contextLost && <GpuContextLostMessage />}
       <Canvas {...glConfig} frameloop={frameloop} style={canvasStyle}>
         <GpuContextLostReporter setContextLost={setContextLost} />
