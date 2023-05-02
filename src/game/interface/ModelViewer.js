@@ -140,7 +140,7 @@ const skyboxDefaults = {
   },
   'Building': {
     background: '/textures/model-viewer/building_skybox.jpg',
-    envmap: '/textures/model-viewer/resource_envmap.hdr',
+    envmap: '/textures/model-viewer/building_skybox.jpg',
   }
 };
 
@@ -251,7 +251,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
               node.material.envMapIntensity = ENV_MAP_STRENGTH;
             }
             if (assetType === 'Building') {
-              node.material.envMapIntensity = 0;
+              // node.material.envMapIntensity = 0;
               if (node.material?.emissiveMap) {
                 if (node.material.lightMap) console.warn('LIGHTMAP overwritten by emissiveMap', node);
 
