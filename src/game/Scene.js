@@ -65,7 +65,7 @@ const WrappedScene = (props) => {
     }
   }, [!!controls, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return (
+  return !controls ? null : (
     <>
       <Star />
       <Planets />

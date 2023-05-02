@@ -1,18 +1,14 @@
 import { useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Capable, Construction, Inventory, Lot } from '@influenceth/sdk';
+import { Capable, Construction, Inventory } from '@influenceth/sdk';
 
-import { useLotLink } from '~/components/LotLink';
-import useAsteroid from '~/hooks/useAsteroid';
-import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
-import useChainTime from '~/hooks/useChainTime';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, majorBorderColor, Rule } from './components';
 import ClipCorner from '~/components/ClipCorner';
-import { ConstructIcon, SurfaceTransferIcon } from '~/components/Icons';
+import { SurfaceTransferIcon } from '~/components/Icons';
 import useLot from '~/hooks/useLot';
-import { buildingDescriptions, buildingRecipes } from '~/lib/utils';
+import { buildingDescriptions } from '~/lib/utils';
 import ResourceRequirement from '~/components/ResourceRequirement';
 import { getBuildingRequirements } from '../actionDialogs/components';
 

@@ -1,6 +1,7 @@
 import { Vector3 } from 'three';
 
 import * as utils from '~/lib/geometryUtils';
+import porkchop from '~/lib/porkchop';
 import { rebuildChunkGeometry } from '~/game/scene/asteroid/helpers/TerrainChunkUtils';
 import { getLotGeometry, getLotRegions, getClosestLots } from '~/game/scene/asteroid/helpers/LotGeometry';
 
@@ -48,6 +49,9 @@ onmessage = function(event) {
       break;
     case 'findClosestLots':
       findClosestLots(event.data.data);
+      break;
+    case 'calculatePorkchop':
+      calculatePorkchop(event.data.data);
       break;
     default:
       console.error('Method not supported');
@@ -144,3 +148,13 @@ const findClosestLots = function(data) {
   const lots = getClosestLots(data);
   postMessage({ topic: 'foundClosestLots', lots });
 }
+
+const calculatePorkchop = async function(data) {
+  const deltaVs = await porkchop(data);
+  postMessage({
+    topic: 'calculatedPorkchop',
+    deltaVs
+  }, [
+    deltaVs.buffer
+  ]);
+};

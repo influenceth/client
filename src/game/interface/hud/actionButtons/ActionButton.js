@@ -117,6 +117,13 @@ const ActionButton = styled.div`
     }
   }
 
+  ${p => p.active && !p.disabled && `
+    & > div {
+      background-color: ${p.theme.colors.main};
+      color: rgba(0, 0, 0, 0.8);
+    }
+  `}
+
   ${p => p.attention ? css`
     animation: ${borderAnimation} 800ms ease-out infinite;
     border-color: ${p.theme.colors.success};

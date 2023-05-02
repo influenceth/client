@@ -48,7 +48,7 @@ const useMappedAsteroidLots = (i) => {
 
   // determine if search is on or not
   const searchIsOn = useMemo(() => {
-    return openHudMenu === 'asteroid.Lot Search' || !isAssetSearchMatchingDefault('lotsMapped');
+    return openHudMenu === 'ASTEROID_MAP_SEARCH' || !isAssetSearchMatchingDefault('lotsMapped');
   }, [openHudMenu, mappedLotSearch]);
 
   // init highlight config helpers

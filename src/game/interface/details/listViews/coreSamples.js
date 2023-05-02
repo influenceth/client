@@ -33,7 +33,7 @@ const useColumns = () => {
         sortField: 'resource',
         selector: row => (
           <>
-            <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} resourceId={row.resource} zoomToLot="Resources" />
+            <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} resourceId={row.resource} zoomToLot="LOT_RESOURCES" />
             <span>{Inventory.RESOURCES[row.resource]?.name}</span>
           </>
         ),

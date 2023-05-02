@@ -32,7 +32,7 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
       // if this is not just a boolean, it is assumed to be a hudmenu to open upon arrival
       if (zoomToLot && zoomToLot !== true) {
         setTimeout(() => {
-          dispatchHudMenuOpened(`lot.${zoomToLot}`);
+          dispatchHudMenuOpened(zoomToLot);
         }, 0);
       }
     }

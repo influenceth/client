@@ -1,6 +1,6 @@
 import { Suspense, useContext, useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import styled from 'styled-components';
-import { Color } from 'three';
+import { AxesHelper, Color } from 'three';
 import { useThrottleCallback } from '@react-hook/throttle';
 import { useThree } from '@react-three/fiber';
 import { Html, useTexture } from '@react-three/drei';
@@ -22,6 +22,7 @@ import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useWatchlist from '~/hooks/useWatchlist';
 import theme from '~/theme';
 import { CaptainIcon, MyAssetIcon, RocketIcon } from '~/components/Icons';
+import constants from '~/lib/constants';
 
 const assetColor = new Color().setStyle(theme.colors.main);
 const watchlistColor = new Color().setStyle('#e35528');
@@ -60,10 +61,12 @@ const Asteroids = (props) => {
   const isAssetSearchMatchingDefault = useStore(s => s.isAssetSearchMatchingDefault);
   const filters = useStore(s => s.assetSearch.asteroids?.filters);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
-  const selectOrigin = useStore(s => s.dispatchOriginSelected);
-  const selectDestination = useStore(s => s.dispatchDestinationSelected);
+  const openHudMenu = useStore(s => s.openHudMenu);
   const hoverAsteroid = useStore(s => s.dispatchAsteroidHovered);
   const unhoverAsteroid = useStore(s => s.dispatchAsteroidUnhovered);
+  const selectOrigin = useStore(s => s.dispatchOriginSelected);
+  const selectDestination = useStore(s => s.dispatchDestinationSelected);
+  const dispatchSwapOriginDestination = useStore(s => s.dispatchSwapOriginDestination);
   
   const isDefaultSearch = useMemo(() => isAssetSearchMatchingDefault('asteroids'), [filters]);
   
@@ -221,22 +224,41 @@ const Asteroids = (props) => {
   // re-computeBoundingSphere on geometry change
   useEffect(() => {
     if (asteroidsGeom.current) {
+      console.log('computeBoundingSphere', positions);
       asteroidsGeom.current.computeBoundingSphere();
     }
   }, [positions]);
 
   useEffect(() => {
-    if (!cameraNeedsReorientation || zoomStatus !== 'out') return;
+    if (!cameraNeedsReorientation || zoomStatus !== 'out' || !controls?.object?.position) return;
+
     dispatchReorientCamera();
-    gsap.timeline().to(controls.object.up, { x: 0, y: 0, z: 1, ease: 'slow.out' });
+    if (openHudMenu === 'BELT_SIMULATE_ROUTE') {
+      gsap.timeline().to(controls.object.position, { x: 0, y: 0, z: 7 * constants.AU, ease: 'slow.out' });
+
+    } else {
+      gsap.timeline().to(controls.object.up, { x: 0, y: 0, z: 1, ease: 'slow.out' });
+
+      // if camera is on z-axis, move off
+      if (controls.object.position.x === 0 && controls.object.position.y === 0) {
+        gsap.timeline().to(controls.object.position, { x: 4 * constants.AU, y: 0, z: controls.object.position.z, ease: 'slow.out' });
+      }
+    }
   }, [cameraNeedsReorientation]);
 
   // mouse event handlers
   const onClick = useCallback((e) => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
-    if (mappedAsteroids[index]) selectOrigin(mappedAsteroids[index].i);
-  }, [mappedAsteroids]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (mappedAsteroids[index]) {
+      const clickedAsteroidId = mappedAsteroids[index].i;
+      if (clickedAsteroidId === destinationId) {
+        dispatchSwapOriginDestination();
+      } else {
+        selectOrigin(clickedAsteroidId);
+      }
+    }
+  }, [mappedAsteroids, destinationId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onContextClick = useCallback((e) => {
     e.stopPropagation();
@@ -264,7 +286,7 @@ const Asteroids = (props) => {
     const assetPositionsById = {};
     const watchlistPositions = [];
     mappedAsteroids.forEach((a, i) => {
-      if (a.i === origin?.i) {  // always include origin so html rendered on origin
+      if (a.i === origin?.i || a.i === destination?.i) {  // always include origin and destination so billboard labeled
         assetPositionsById[a.i] = [positions[i * 3 + 0], positions[i * 3 + 1], positions[i * 3 + 2]];
       } else if (a.isAsseted) {
         assetPositionsById[a.i] = [positions[i * 3 + 0], positions[i * 3 + 1], positions[i * 3 + 2]];
@@ -283,77 +305,105 @@ const Asteroids = (props) => {
 
   return (
     <group>
-      {assetPositions.length > 0 && (
-        <points>
-          <pointsMaterial
-            attach="material"
-            depthWrite={false}
-            size={15}
-            sizeAttenuation={false}
-            map={assetMarker}
-            toneMapped={false}
-            transparent />
-          <bufferGeometry>
-            <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ assetPositions, 3 ]} />
-          </bufferGeometry>
-        </points>
+      {openHudMenu !== 'BELT_SIMULATE_ROUTE' && (
+        <>
+          {/* asset / watchlist markers (zoomed out only) */}
+          {zoomStatus === 'out' && (
+            <>
+              {assetPositions.length > 0 && (
+                <points>
+                  <pointsMaterial
+                    attach="material"
+                    depthWrite={false}
+                    size={15}
+                    sizeAttenuation={false}
+                    map={assetMarker}
+                    toneMapped={false}
+                    transparent />
+                  <bufferGeometry>
+                    <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ assetPositions, 3 ]} />
+                  </bufferGeometry>
+                </points>
+              )}
+              {watchlistPositions.length > 0 && (
+                <points>
+                  <pointsMaterial
+                    attach="material"
+                    depthWrite={false}
+                    size={15}
+                    sizeAttenuation={false}
+                    map={watchlistMarker}
+                    toneMapped={false}
+                    transparent />
+                  <bufferGeometry>
+                    <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ watchlistPositions, 3 ]} />
+                  </bufferGeometry>
+                </points>
+              )}
+            </>
+          )}
+          {/* all asteroids */}
+          {positions?.length > 0 && colors?.length > 0 && (
+            <points
+              onClick={zoomStatus === 'out' && onClick}
+              onContextMenu={zoomStatus === 'out' && onContextClick}
+              onPointerOver={zoomStatus === 'out' && setMousePos}
+              onPointerOut={zoomStatus === 'out' && setMousePos}>
+              <bufferGeometry ref={asteroidsGeom}>
+                <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3 ]} />
+                <bufferAttribute attachObject={[ 'attributes', 'highlightColor' ]} args={[ colors, 3 ]} />
+              </bufferGeometry>
+              <shaderMaterial args={[{
+                depthWrite: false,
+                fragmentShader: frag,
+                transparent: true,
+                uniforms: {
+                  uOpacity: { type: 'f', value: zoomStatus === 'out' ? 1.0 : 0.5 },
+                },
+                vertexColors: true,
+                vertexShader: vert
+              }]} />
+            </points>
+          )}
+        </>
       )}
-      {watchlistPositions.length > 0 && (
-        <points>
-          <pointsMaterial
-            attach="material"
-            depthWrite={false}
-            size={15}
-            sizeAttenuation={false}
-            map={watchlistMarker}
-            toneMapped={false}
-            transparent />
-          <bufferGeometry>
-            <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ watchlistPositions, 3 ]} />
-          </bufferGeometry>
-        </points>
-      )}
-      {positions?.length > 0 && colors?.length > 0 && (
-        <points
-          onClick={zoomStatus === 'out' && onClick}
-          onContextMenu={zoomStatus === 'out' && onContextClick}
-          onPointerOver={zoomStatus === 'out' && setMousePos}
-          onPointerOut={zoomStatus === 'out' && setMousePos}>
-          <bufferGeometry ref={asteroidsGeom}>
-            <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3 ]} />
-            <bufferAttribute attachObject={[ 'attributes', 'highlightColor' ]} args={[ colors, 3 ]} />
-          </bufferGeometry>
-          <shaderMaterial args={[{
-            depthWrite: false,
-            fragmentShader: frag,
-            transparent: true,
-            uniforms: {
-              uOpacity: { type: 'f', value: zoomStatus === 'out' ? 1.0 : 0.5 },
-            },
-            vertexColors: true,
-            vertexShader: vert
-          }]} />
-        </points>
-      )}
+
+
       {zoomStatus === 'out' && (
         <>
-          <Suspense fallback={<group />}>
-            {hoveredPos && <Marker asteroidPos={hoveredPos} />}
-            {originPos && <Marker asteroidPos={originPos} selected />}
-            {destinationPos && <Marker asteroidPos={destinationPos} />}
-          </Suspense>
+          {/* hover reticule */}
+          {hoveredPos && <Marker asteroidPos={hoveredPos} />}
+          
+          {/* selected origin marker and orbit */}
+          {originPos && <Marker asteroidPos={originPos} isOrigin />}
           {!!origin && <Orbit asteroid={origin} />}
-          {!!destination && <Orbit asteroid={destination} />}
-          {originPos && destinationPos && <FlightLine originPos={originPos} destinationPos={destinationPos} />}
+
+          {/* selected destination marker and orbit */}
+          {destinationPos && <Marker asteroidPos={destinationPos} isDestination />}
+          {!!destination && <Orbit asteroid={destination} color={'#ff0000'} />}
+
+          {/* flight line (only in simulation mode) */}
+          {origin && destination && false && (
+            <FlightLine
+              currentTime={coarseTime}
+              originOrbital={origin.orbital}
+              originPos={originPos}
+              destinationOrbital={destination.orbital}
+              destinationPos={destinationPos} />
+          )}
+
+          {/* billboarded data */}
           {asteroids && (
             <group>
               {Object.keys(assetPositionsById).map((i) => {
                 const isOrigin = origin?.i === Number(i);
-                return (
+                const isDestination = destination?.i === Number(i);
+                const display = openHudMenu !== 'BELT_SIMULATE_ROUTE' || isOrigin || isDestination;
+                return !display ? null : (
                   <Html
                     key={i}
                     position={assetPositionsById[i]}
-                    style={{ pointerEvents: 'none', transform: `translate(-45px, calc(-100% - ${isOrigin ? 15 : 5}px))` }}>
+                    style={{ pointerEvents: 'none', transform: `translate(-45px, calc(-100% - ${(isOrigin || isDestination) ? 15 : 5}px))` }}>
                     <AsteroidTooltip hasActiveCrew={assetedAsteroids[i]?.crew}>
                       <div><CaptainIcon /></div>
                       <div>
@@ -367,6 +417,9 @@ const Asteroids = (props) => {
                         {isOrigin && (
                           <span>{origin?.customName || origin?.baseName || `#${(origin?.i || 0).toLocaleString()}`}</span>
                         )}
+                        {isDestination && (
+                          <span>{destination?.customName || destination?.baseName || `#${(destination?.i || 0).toLocaleString()}`}</span>
+                        )}
                       </div>
                     </AsteroidTooltip>
                   </Html>
@@ -376,6 +429,7 @@ const Asteroids = (props) => {
           )}
         </>
       )}
+      {false && <primitive object={new AxesHelper(2 * constants.AU)} />}
     </group>
   )
 };

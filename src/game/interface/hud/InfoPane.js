@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import PuffLoader from 'react-spinners/PuffLoader';
-import { toRarity, toSize, toSpectralType, Asteroid as AsteroidLib, Capable, Construction, CoreSample, Inventory } from '@influenceth/sdk';
+import { toRarity, toSize, toSpectralType, Asteroid as AsteroidLib } from '@influenceth/sdk';
 import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
 
+import ClipCorner from '~/components/ClipCorner';
+import CrewCardFramed from '~/components/CrewCardFramed';
 import IconButton from '~/components/IconButton';
 import {
   CloseIcon,
-  NewCoreSampleIcon,
   ForwardIcon,
-  InfoIcon,
   PopoutIcon,
   WarningOutlineIcon,
 } from '~/components/Icons';
@@ -23,14 +23,8 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
-import { formatFixed, keyify } from '~/lib/utils';
-import { hexToRGB } from '~/theme';
-import CoreSampleMouseover from './mouseovers/CoreSampleMouseover';
-import ClipCorner from '~/components/ClipCorner';
-import CrewCard from '~/components/CrewCard';
-import CrewCardFramed from '~/components/CrewCardFramed';
+import RouteSelection from './actionForms/RouteSelection';
 import useActionButtons from './useActionButtons';
-import InProgressIcon from '~/components/InProgressIcon';
 
 const opacityAnimation = keyframes`
   0% { opacity: 1; }
@@ -251,100 +245,23 @@ const ThumbWrapper = styled.div`
 `;
 
 const ActionButtonContainer = styled.div`
-  align-items: flex-end;
+  align-self: flex-end;
   display: flex;
-  flex-direction: row;
-  padding-top: 12px;
+  flex-direction: column;
+  // padding-top: 12px;
 `;
 
-// const LotConstructionWarning = styled.span`
-//   color: ${p => p.theme.colors.error};
-//   display: inline-block;
-//   margin-left: 6px;
-// `;
+const ActionForm = styled.div`
+  margin-bottom: 15px;
+  width: 250px;
+`;
 
-// const LotDetails = styled.div`
-//   border-left: 1px solid #444;
-//   margin-bottom: 12px;
-//   padding-left: 15px;
-//   width: 325px;
-// `;
-// const DetailRow = styled.div`
-//   color: white;  
-//   display: flex;
-//   flex-direction: row;
-//   font-size: 90%;
-//   padding: 4px 0;
-//   width: 100%;
-//   & > label {
-//     flex: 1;
-//     opacity: 0.5;
-//   }
-//   & > div {
-//     text-align: right;
-//   }
-// `;
-// const ResourceRow = styled.div`
-//   & > span {
-//     background: rgba(${p => hexToRGB(p.theme.colors.resources[p.category])}, 0.5);
-//     border-radius: 10px;
-//     color: rgba(255, 255, 255, 0.9);
-//     display: inline-block;
-//     font-size: 12px;
-//     line-height: 18.4px;
-//     margin-right: 4px;
-//     text-align: center;
-//     width: 40px;
-//   }
-// `;
-
-// const ThumbFootButtons = styled.div``;
-// const ThumbFootButton = styled.div`
-//   align-items: center;
-//   border: 1px solid currentColor;
-//   border-radius: 18px;
-//   color: white;
-//   cursor: ${p => p.theme.cursors.active};
-//   display: flex;
-//   font-size: 28px;
-//   height: 36px;
-//   justify-content: center;
-//   opacity: 0.5;
-//   position: relative;
-//   transition-property: color, opacity;
-//   transition-duration: 250ms;
-//   width: 36px;
-
-//   ${p => p.badge && `
-//     &:before {
-//       align-items: center;
-//       background-color: white;
-//       border-radius: 8px;
-//       color: black;
-//       content: "${p.badge}";
-//       display: flex;
-//       font-size: 14px;
-//       font-weight: bold;
-//       justify-content: center;
-//       position: absolute;
-//       top: -4px;
-//       right: -4px;
-//       width: 16px;
-//       height: 16px;
-//       transition-property: color, background-color;
-//       transition-duration: 250ms;
-//     }
-//   `}
-
-//   &:hover {
-//     color: ${p => p.theme.colors.main};
-//     opacity: 1;
-//     &:before {
-//       background-color: ${p => p.theme.colors.main};
-//       color: white;
-//     }
-//   }
-// `;
+const ActionButtons = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  width: 100%;
+`;
 
 const ThumbLoader = () => <ThumbLoading><PuffLoader color="white" /></ThumbLoading>;
 const CaptainCard = ({ crewId }) => {
@@ -372,6 +289,7 @@ const InfoPane = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const { lotId } = useStore(s => s.asteroids.lot || {});
   const lotLoader = useStore(s => s.lotLoader);
+  const inTravelMode = useStore(s => s.asteroids.travelMode);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToLot = useStore(s => s.asteroids.zoomToLot);
 
@@ -392,12 +310,6 @@ const InfoPane = () => {
   const onRenderReady = useCallback(() => {
     setRenderReady(true);
   }, []);
-
-  const lotTally = useMemo(() => Math.floor(4 * Math.PI * Math.pow(asteroid?.radius / 1000, 2)), [asteroid?.radius]);
-
-  const myLotCoreSamples = useMemo(() => {
-    return (lot?.coreSamples || []).filter((c) => c.owner === crew?.i)
-  }, [crew?.i, lot]);
 
   const onClickPane = useCallback(() => {
     // open lot
@@ -428,26 +340,6 @@ const InfoPane = () => {
 
     return false;
   }, [asteroidId, lotId, zoomStatus]);
-
-  const topResources = useMemo(() => {
-    const resources = [];
-    if (lotId && zoomToLot && asteroid?.scanned) {
-      Object.keys((asteroid.resources || {})).forEach((resourceId) => {
-        const abundance = AsteroidLib.getAbundanceAtLot(
-          asteroid.i,
-          BigInt(asteroid.resourceSeed),
-          lotId,
-          resourceId,
-          asteroid.resources[resourceId]
-        );
-        if (abundance > 0) {
-          resources.push(({ resourceId, abundance }));
-        }
-      });
-    }
-    return resources.sort((a, b) => b.abundance - a.abundance).slice(0, 1);
-  }, [asteroid?.scanned, lotId, zoomToLot]);
-
 
   const [hover, setHover] = useState();
   const onMouseEvent = useCallback((e) => {
@@ -618,9 +510,12 @@ const InfoPane = () => {
         )}
         {actions?.length > 0 && (
           <ActionButtonContainer>
-            {actions.map((ActionButton, i) => (
-              <ActionButton key={i} {...actionProps} />
-            ))}
+            {inTravelMode && <ActionForm><RouteSelection /></ActionForm>}
+            <ActionButtons>
+              {actions.map((ActionButton, i) => (
+                <ActionButton key={i} {...actionProps} />
+              ))}
+            </ActionButtons>
           </ActionButtonContainer>
         )}
       </ContentRow>

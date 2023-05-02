@@ -16,6 +16,7 @@ import {
   LotSearchIcon,
   MyAssetsIcon,
   ResourceIcon,
+  RocketIcon,
 } from '~/components/Icons';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -152,6 +153,7 @@ const HudMenu = () => {
   const history = useHistory();
   const { account } = useAuth();
   const asteroidId = useStore(s => s.asteroids.origin);
+  const destination = useStore(s => s.asteroids.destination);
   const { asteroidId: lotAsteroidId, lotId } = useStore(s => s.asteroids.lot || {});
   const openHudMenu = useStore(s => s.openHudMenu);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
@@ -185,17 +187,17 @@ const HudMenu = () => {
 
   useEffect(() => {
     if (openHudMenu) {
-      const category = openHudMenu.split('.').shift();
-      if (category === 'belt' && zoomStatus !== 'out') dispatchHudMenuOpened();
-      if (category === 'asteroid' && !(zoomStatus === 'in' && !zoomToLot)) dispatchHudMenuOpened();
-      if (category === 'lot' && !(zoomStatus === 'in' && zoomToLot)) dispatchHudMenuOpened();
+      const category = openHudMenu.split('_').shift();
+      if (category === 'BELT' && zoomStatus !== 'out') dispatchHudMenuOpened();
+      if (category === 'ASTEROID' && !(zoomStatus === 'in' && !zoomToLot)) dispatchHudMenuOpened();
+      if (category === 'LOT' && !(zoomStatus === 'in' && zoomToLot)) dispatchHudMenuOpened();
     }
   }, [dispatchHudMenuOpened, zoomToLot, zoomStatus]);
 
   useEffect(() => {
     // if just zoomed in and resourcemap is active, then open asteroid resources
     if (zoomStatus === 'in' && !zoomToLot && resourceMap.active) {
-      dispatchHudMenuOpened('asteroid.Asteroid Resources');
+      dispatchHudMenuOpened('ASTEROID_RESOURCES');
     }
   }, [zoomStatus, zoomToLot])
 
@@ -205,8 +207,9 @@ const HudMenu = () => {
 
   const buttons = useMemo(() => {
     if (zoomStatus === 'out') {
-      return [
+      const out = [
         {
+          key: 'BELT_ASTEROID_INFO',
           label: 'Asteroid Info',
           icon: <InfoIcon />,
           Component: hudMenus.AsteroidInfo,
@@ -218,12 +221,14 @@ const HudMenu = () => {
           }
         },
         {
+          key: 'BELT_ASSETS',
           label: 'My Assets',
           icon: <MyAssetsIcon />,
           Component: hudMenus.AllAssets,
           requireLogin: true
         },
         {
+          key: 'BELT_MAP_SEARCH',
           label: 'System Search',
           icon: <AsteroidSearchIcon />,
           Component: hudMenus.SearchMap,
@@ -234,12 +239,14 @@ const HudMenu = () => {
           }
         },
         {
+          key: 'BELT_FAVORITES',
           label: 'Favorites',
           icon: <FavoriteIcon />,
           Component: hudMenus.Favorites,
           requireLogin: true
         },
         {
+          key: 'BELT_ADVANCED_SEARCH',
           label: 'Advanced Search',
           icon: <ListViewIcon />,
           onOpen: () => {
@@ -247,20 +254,33 @@ const HudMenu = () => {
           }
         },
       ];
+      if (asteroidId && destination) {
+        out.push({
+          key: 'BELT_SIMULATE_ROUTE',
+          label: 'Simulate Route',
+          icon: <RocketIcon />,
+          Component: hudMenus.RouteSimulator,
+          noDetail: true
+        });
+      }
+      return out;
     } else if (zoomStatus === 'in' && !zoomToLot) {
       return [
         {
+          key: 'ASTEROID_ASSETS',
           label: 'My Assets',
           icon: <MyAssetsIcon />,
           Component: hudMenus.AsteroidAssets,
           requireLogin: true
         },
         {
+          key: 'ASTEROID_RESOURCES',
           label: 'Asteroid Resources',
           icon: <ResourceIcon />,
           Component: hudMenus.Resources
         },
         {
+          key: 'ASTEROID_MAP_SEARCH',
           label: 'Lot Search',
           icon: <LotSearchIcon />,
           Component: hudMenus.SearchMap,
@@ -271,11 +291,13 @@ const HudMenu = () => {
           }
         },
         {
+          key: 'ASTEROID_CHAT',
           label: 'Asteroid Chat',
           icon: <ChatIcon />,
           Component: hudMenus.AsteroidChat
         },
         {
+          key: 'ASTEROID_ADVANCED_SEARCH',
           label: 'Advanced Search',
           icon: <ListViewIcon />,
           onOpen: () => {
@@ -286,11 +308,13 @@ const HudMenu = () => {
     } else if (zoomStatus === 'in' && zoomToLot) {
       const b = [
         {
+          key: 'LOT_INFORMATION',
           label: 'Information',
           icon: <InfoIcon />,
           Component: hudMenus.LotInfo
         },
         {
+          key: 'LOT_RESOURCES',
           label: 'Resources',
           icon: <ResourceIcon />,
           Component: hudMenus.LotResources
@@ -302,6 +326,7 @@ const HudMenu = () => {
           || (lot.building.construction?.status === Construction.STATUS_OPERATIONAL && Inventory.CAPACITIES[lot.building.capableType][1])
         ) {
           b.push({
+            key: 'LOT_INVENTORY',
             label: 'Inventory',
             icon: <InventoryIcon />,
             Component: hudMenus.Inventory
@@ -311,22 +336,17 @@ const HudMenu = () => {
       return b;
     }
     return [];
-  }, [asteroidId, lotId, zoomStatus, zoomToLot, lot]);
+  }, [asteroidId, destination, lot, lotId, zoomStatus, zoomToLot]);
 
-  const { label, onDetailClick, detailType, Component, componentProps } = useMemo(() => {
-    const [category, label] = (openHudMenu || '').split('.');
-    return buttons.find((b) => b.label === label) || {};
+  const { label, onDetailClick, detailType, Component, componentProps, noDetail } = useMemo(() => {
+    return buttons.find((b) => b.key === openHudMenu) || {};
   }, [buttons, openHudMenu]);
 
-  const buttonFilter = zoomStatus === 'in' && zoomToLot
-    ? 'lot'
-    : (zoomStatus === 'in' ? 'asteroid' : 'belt');
   return (
     <Wrapper>
       <ReactTooltip id="hudMenu" effect="solid" />
       <Buttons open={open}>
-        {buttons.map(({ label, icon, onOpen, requireLogin }) => {
-          const key = `${buttonFilter}.${label}`;
+        {buttons.map(({ key, label, icon, onOpen, requireLogin }) => {
           if (requireLogin && !account) return null;
           return (
             <Button
@@ -345,13 +365,15 @@ const HudMenu = () => {
         <PanelInner>
           <PanelTitle>
             <span style={{ flex: 1 }}>{label}</span>
-            <IconButton
-              data-for="global"
-              data-tip={detailType === 'detail' ? 'Detail View' : 'Advanced Search'}
-              data-place="left"
-              onClick={onDetailClick}>
-              {detailType === 'detail' ? <DetailIcon /> : <ListViewIcon />}
-            </IconButton>
+            {!noDetail && (
+              <IconButton
+                data-for="global"
+                data-tip={detailType === 'detail' ? 'Detail View' : 'Advanced Search'}
+                data-place="left"
+                onClick={onDetailClick}>
+                {detailType === 'detail' ? <DetailIcon /> : <ListViewIcon />}
+              </IconButton>
+            )}
             <IconButton onClick={() => handleButtonClick()}><CloseIcon /></IconButton>
           </PanelTitle>
           <PanelContent>

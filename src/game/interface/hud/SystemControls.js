@@ -47,7 +47,6 @@ const VerticalRule = styled.div`
 const SystemControls = (props) => {
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
-  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
   const openHelpChannel = useCallback(() => {
     window.open(process.env.REACT_APP_HELP_URL, '_blank');

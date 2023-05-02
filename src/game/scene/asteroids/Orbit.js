@@ -10,17 +10,18 @@ import theme from '~/theme';
 
 const order = new Float32Array(Array(360).fill().map((_, i) => i+1));
 const initialUniforms = {
-  uCol: { type: 'c', value: new Color(theme.colors.main) },
   uTime: { type: 'i', value: 0 },
   uAlpha: { type: 'f', value: 1.0 },
   uCount: { type: 'f', value: 360 }
 };
 
-const Orbit = (props) => {
-  const { asteroid } = props;
+const Orbit = ({ asteroid, color }) => {
   const [ positions, setPositions ] = useState(new Float32Array(360 * 3));
 
-  const material = useRef();
+  const uniforms = useRef({
+    ...initialUniforms,
+    uCol: { type: 'c', value: new Color(color || theme.colors.main) },
+  });
 
   useEffect(() => {
     const keplerianOrbit = new KeplerianOrbit(asteroid.orbital);
@@ -33,8 +34,8 @@ const Orbit = (props) => {
   }, [ asteroid ]);
 
   useFrame(() => {
-    const time = material.current.uniforms.uTime.value;
-    material.current.uniforms.uTime.value = time + 1;
+    const time = uniforms.current.uTime.value;
+    uniforms.current.uTime.value = time + 1;
   });
 
   return (
@@ -44,11 +45,10 @@ const Orbit = (props) => {
         <bufferAttribute attachObject={[ 'attributes', 'order' ]} args={[ order, 1 ]} />
       </bufferGeometry>
       <shaderMaterial
-        ref={material}
         args={[{
           depthWrite: false,
           fragmentShader: frag,
-          uniforms: initialUniforms,
+          uniforms: uniforms.current,
           transparent: true,
           vertexShader: vert,
         }]} />

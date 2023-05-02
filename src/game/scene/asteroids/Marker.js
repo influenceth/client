@@ -25,38 +25,44 @@ const Marker = (props) => {
       newPoints.set(asteroidPos);
       newPoints.set([ asteroidPos[0], asteroidPos[1], 0 ], 3);
       setPoints(newPoints);
-      console.log('setPoints', newPoints);
     }
   }, [ asteroidPos ]);
 
   if (points?.length !== 6) return null;
   return (
     <group>
-      <points>
+      <points userData={{ bloom: true }}>
         <bufferGeometry>
           <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points.slice(0, 3), 3 ]} />
         </bufferGeometry>
-        {props.selected
-          ? (
-            <pointsMaterial
-              map={selectedTexture}
-              size={35}
-              depthWrite={false}
-              sizeAttenuation={false}
-              transparent={true} />
-          )
-          : (
-            <pointsMaterial
-              blending={AdditiveBlending}
-              color={theme.colors.main}
-              map={asteroidTexture}
-              size={20}
-              opacity={0.8}
-              depthWrite={false}
-              sizeAttenuation={false}
-              transparent={true} />
-          )
-        }
+        {props.isOrigin && (
+          <pointsMaterial
+            map={selectedTexture}
+            size={35}
+            depthWrite={false}
+            sizeAttenuation={false}
+            transparent={true} />
+        )}
+        {!props.isOrigin && props.isDestination && (
+          <pointsMaterial
+            color={0xff0000}
+            map={selectedTexture}
+            size={25}
+            depthWrite={false}
+            sizeAttenuation={false}
+            transparent={true} />
+        )}
+        {!props.isOrigin && !props.isDestination && (
+          <pointsMaterial
+            blending={AdditiveBlending}
+            color={theme.colors.main}
+            map={asteroidTexture}
+            size={20}
+            opacity={0.8}
+            depthWrite={false}
+            sizeAttenuation={false}
+            transparent={true} />
+        )}
       </points>
       <line>
         <bufferGeometry>

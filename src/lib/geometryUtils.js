@@ -63,3 +63,24 @@ const getPerpendicular = (n) => {
   return n.clone().cross(new Vector3(0, 1, 0));
 }
 
+export const sampleAsteroidOrbit = (baseTime, orbital, minOffset, maxOffset, increment) => {
+  const positions = [];
+  const velocities = [];
+  const orbit = new KeplerianOrbit(orbital);
+  for (let delay = minOffset; delay < maxOffset + 1; delay += increment) {
+    const p = orbit.getPositionAtTime(baseTime + delay)
+    positions[delay] = new Vector3(p.x, p.y, p.z);
+    positions[delay].multiplyScalar(constants.AU);
+
+    // set velocity of previous based on this position
+    if (positions[delay - increment]) {
+      velocities[delay - increment] = (new Vector3()).subVectors(
+        positions[delay],
+        positions[delay - increment]
+      );
+      velocities[delay - increment].divideScalar(increment * 86400);
+    }
+  }
+  return { positions, velocities };
+}
+

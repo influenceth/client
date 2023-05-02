@@ -283,10 +283,11 @@ const SearchResultsBannerWrapper = () => {
   }, [zoomStatus, zoomToLot]);
 
   const visible = useMemo(() => {
+    console.log('openHudMenu', openHudMenu)
     if (assetType === 'lotsMapped') {
-      return (openHudMenu === 'asteroid.Lot Search' || !isAssetSearchMatchingDefault('lotsMapped'));
+      return (openHudMenu === 'ASTEROID_MAP_SEARCH' || !isAssetSearchMatchingDefault('lotsMapped'));
     } else if (assetType === 'asteroidsMapped') {
-      return (openHudMenu === 'belt.System Search' || !isAssetSearchMatchingDefault('asteroidsMapped'));
+      return (openHudMenu === 'BELT_MAP_SEARCH' || !isAssetSearchMatchingDefault('asteroidsMapped'));
     }
   }, [assetType, assetSearch, openHudMenu]);
 
