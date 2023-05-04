@@ -339,6 +339,7 @@ export function getOrbitalElements(k, r, v, tol = 1e-8) {
     ),
     k
   );
+
   const ecc = math.norm(e);
   const p = math.dot(h, h) / k;
   const inc = Math.acos(h[2] / math.norm(h));
@@ -386,7 +387,7 @@ export function getOrbitalElements(k, r, v, tol = 1e-8) {
   // * p: Semi-latus rectum of parameter (km)
   // * e: Eccentricity
   // * i: Inclination (rad)
-  // * raan: Right ascension of the ascending nod (rad)
+  // * raan: Right ascension of the ascending node (rad)
   // * argp: Argument of Perigee (rad)
   // * nu: True Anomaly (rad)
 
@@ -405,6 +406,7 @@ export function getOrbitalElements(k, r, v, tol = 1e-8) {
     const eccAnomaly = Math.acosh((ecc + Math.cos(nu)) / (1 + ecc * Math.cos(nu)));
     meanAnomaly = ecc * Math.sinh(eccAnomaly) - eccAnomaly;
   }
+
   return {
     a: (p / (1 - ecc ** 2)),
     e: ecc,
@@ -479,18 +481,19 @@ export async function minDeltaVSolver(mu, r1, r2, tof, vi1, vi2) {
   let bestSolution;
   let minDeltaV = null;
   for (let prograde of [true, false]) {
-    for (let low_path of [true, false]) {
-      try {
-        const [vf1, vf2] = await solver(mu, r1, r2, tof, 0, prograde, low_path);
-        const deltaV = math.norm(math.subtract(vi1, vf1)) + math.norm(math.subtract(vi2, vf2));
-        // console.log('solution', deltaV, vi1, vf1);
-        if (minDeltaV === null || deltaV < minDeltaV) {
-          bestSolution = vf1;
-          minDeltaV = deltaV;
-        }
-      } catch (e) {
-        console.warn(e);
+    // low_path / high_path is only relevant for multi-revolution solutions
+    // for (let low_path of [true, false]) {
+    const low_path = true;
+    try {
+      const [vf1, vf2] = await solver(mu, r1, r2, tof, 0, prograde, low_path);
+      const deltaV = math.norm(math.subtract(vi1, vf1)) + math.norm(math.subtract(vi2, vf2));
+      // console.log('solution', deltaV, vi1, vf1);
+      if (minDeltaV === null || deltaV < minDeltaV) {
+        bestSolution = vf1;
+        minDeltaV = deltaV;
       }
+    } catch (e) {
+      console.warn(e);
     }
   }
   return { v1: bestSolution, deltaV: minDeltaV };

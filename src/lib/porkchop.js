@@ -1,7 +1,7 @@
 import { minDeltaVSolver } from './lambertSolver';
 
 const G = 6.6743015e-11; // N m2 / kg2
-const m = 0.86 * 1.98847e30; // kg  // TODO: mass of adalia (and probably gravitational constant should be in sdk)
+const m = 1.7033730830877265e30; // kg  // TODO: mass of adalia (and probably gravitational constant should be in sdk)
 const Gm = G * m;
 
 const v3ToArray = (v3) => ([

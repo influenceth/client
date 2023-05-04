@@ -12,9 +12,9 @@ import useAssetSearch from '~/hooks/useAssetSearch';
 import useStore from '~/hooks/useStore';
 import useWebWorker from '~/hooks/useWebWorker';
 
-import FlightLine from './asteroids/FlightLine';
 import Orbit from './asteroids/Orbit';
 import Marker from './asteroids/Marker';
+import TravelSolution from './asteroids/TravelSolution';
 import highlighters from './asteroids/highlighters';
 import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
@@ -383,14 +383,7 @@ const Asteroids = (props) => {
           {!!destination && <Orbit asteroid={destination} color={'#ff0000'} />}
 
           {/* flight line (only in simulation mode) */}
-          {origin && destination && false && (
-            <FlightLine
-              currentTime={coarseTime}
-              originOrbital={origin.orbital}
-              originPos={originPos}
-              destinationOrbital={destination.orbital}
-              destinationPos={destinationPos} />
-          )}
+          <TravelSolution />
 
           {/* billboarded data */}
           {asteroids && (

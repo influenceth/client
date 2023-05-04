@@ -49,6 +49,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
         selected: null
       },
       travelMode: false,
+      travelSolution: null,
       zoomedFrom: null,
       zoomStatus: 'out', // out -> zooming-in -> in -> zooming-out -> out
       zoomToLot: null,
@@ -268,6 +269,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.asteroids.lot = null;
       state.asteroids.lotDestination = null;
       state.asteroids.zoomToLot = null;
+      state.asteroids.travelSolution = null;
     })),
 
     dispatchDestinationSelected: (i) => set(produce(state => {
@@ -275,10 +277,18 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       if (i && Number(i) > 0 && Number(i) <= 250000) {
         state.asteroids.destination = Number(i);
       }
+      state.asteroids.travelSolution = null;
     })),
 
     dispatchTravelMode: (which) => set(produce((state => {
       state.asteroids.travelMode = which;
+      if (!which) {
+        state.asteroids.travelSolution = null;
+      }
+    }))),
+
+    dispatchTravelSolution: (solution) => set(produce((state => {
+      state.asteroids.travelSolution = solution;
     }))),
 
     dispatchSwapOriginDestination: () => set(produce((state => {
@@ -561,6 +571,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'asteroids.lot',
     'asteroids.lotDestination',
     'asteroids.travelMode',
+    'asteroids.travelSolution',
     'asteroids.zoomToLot',
     'canvasStack',
     'cutscenePlaying',
