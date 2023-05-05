@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { KeplerianOrbit } from '@influenceth/sdk';
+import { LambertSolver, GM_ADALIA } from '@influenceth/sdk';
 import { useThrottle } from '@react-hook/throttle';
 import { Vector3 } from 'three';
 
@@ -8,17 +8,10 @@ import ClockContext from '~/contexts/ClockContext';
 import useAsteroid from '~/hooks/useAsteroid';
 import useStore from '~/hooks/useStore';
 import useWebWorker from '~/hooks/useWebWorker';
-import constants from '~/lib/constants';
-import { minDeltaVSolver } from '~/lib/lambertSolver';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
 import theme from '~/theme';
 
 const InfoRow = styled.div``;
-
-// TODO: move to sdk
-const G = 6.6743015e-11; // N m2 / kg2
-const m = 1.7033730830877265e30; // kg  // TODO: mass of adalia (and probably gravitational constant should be in sdk)
-const Gm = G * m;
 
 const resolution = 1;//0.25;
 const minDelay = 0;
@@ -371,16 +364,16 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
     const dVel = destinationPath.velocities[dIndex];
 
     console.log('lambert tof', tof);
-    const solution = await minDeltaVSolver(
-      Gm,
+    const solution = await LambertSolver.multiSolver(
+      GM_ADALIA,
       oPos.toArray(),
       dPos.toArray(),
       tof * 84000, // tof in days
       oVel.toArray(),
       dVel.toArray(),
     );
-
     console.log('lambert dest pos', dPos.toArray());
+    console.log('lambert', solution);
 
     // TODO: include positions in state?
 

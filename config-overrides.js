@@ -69,15 +69,8 @@ patchNpmModules = () => config => {
   return config;
 };
 
-const cephesFix = () => config => {
-  config.resolve.fallback = {
-    fs: false,
-  };
-  return config;
-};
 
 module.exports = override(
-  cephesFix(),
   setWebpackTarget('web'),
   addBabelPlugin([
     'babel-plugin-root-import',

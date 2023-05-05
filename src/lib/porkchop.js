@@ -1,8 +1,4 @@
-import { minDeltaVSolver } from './lambertSolver';
-
-const G = 6.6743015e-11; // N m2 / kg2
-const m = 1.7033730830877265e30; // kg  // TODO: mass of adalia (and probably gravitational constant should be in sdk)
-const Gm = G * m;
+import { LambertSolver, GM_ADALIA } from '@influenceth/sdk';
 
 const v3ToArray = (v3) => ([
   v3.x || v3[0],
@@ -19,8 +15,8 @@ async function porkchop({ originPath, destinationPath, minDelay, maxDelay, minTo
       const destinationPosition = destinationPath.positions[delay + tof];
       const destinationVelocity = destinationPath.velocities[delay + tof];
       if (originVelocity && destinationVelocity) {
-        const { deltaV } = await minDeltaVSolver(
-          Gm,
+        const { deltaV } = await LambertSolver.multiSolver(
+          GM_ADALIA,
           v3ToArray(originPosition),
           v3ToArray(destinationPosition),
           tof * 86400,  // tof is in days
