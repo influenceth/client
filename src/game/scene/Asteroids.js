@@ -1,6 +1,6 @@
 import { Suspense, useContext, useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import styled from 'styled-components';
-import { AxesHelper, Color } from 'three';
+import { AxesHelper, Color, Vector3 } from 'three';
 import { useThrottleCallback } from '@react-hook/throttle';
 import { useThree } from '@react-three/fiber';
 import { Html, useTexture } from '@react-three/drei';
@@ -234,7 +234,15 @@ const Asteroids = (props) => {
 
     dispatchReorientCamera();
     if (openHudMenu === 'BELT_SIMULATE_ROUTE') {
-      gsap.timeline().to(controls.object.position, { x: 0, y: 0, z: 7 * constants.AU, ease: 'slow.out' });
+      const timeline = gsap.timeline({
+        defaults: { ease: 'slow.out' }
+      });
+      const newUp = new Vector3(-controls.object.position.x, -controls.object.position.y, 0).normalize();
+      if (newUp.length() > 0) {
+        timeline.to(controls.object.up, { x: newUp.x, y: newUp.y, z: 0 }, 0);
+      }
+      timeline.to(controls.object.position, { x: 0, y: 0, z: 7 * constants.AU }, 0);
+      
 
     } else {
       gsap.timeline().to(controls.object.up, { x: 0, y: 0, z: 1, ease: 'slow.out' });

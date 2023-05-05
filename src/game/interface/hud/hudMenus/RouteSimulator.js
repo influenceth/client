@@ -13,6 +13,8 @@ import { minDeltaVSolver } from '~/lib/lambertSolver';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
 import theme from '~/theme';
 
+const InfoRow = styled.div``;
+
 // TODO: move to sdk
 const G = 6.6743015e-11; // N m2 / kg2
 const m = 1.7033730830877265e30; // kg  // TODO: mass of adalia (and probably gravitational constant should be in sdk)
@@ -66,32 +68,68 @@ const colors = [
 ][1];
 
 const bands = colors.reverse().map((c, i) => ({
-  start: maxDeltaV * i * 1 / colors.length,
-  end: i === colors.length - 1 ? undefined : maxDeltaV * (i + 1) * 1 / colors.length,
+  start: maxDeltaV * i * 1 / (colors.length - 1),
+  end: i === colors.length - 1 ? undefined : maxDeltaV * (i + 1) * 1 / (colors.length - 1),
   color: c
 }));
 
+// const colorRange = [new Vector3(0, 255, 255), new Vector3(0, 0, 255)]; // cyan to blue
+// const colorRange = [new Vector3(255, 0, 191), new Vector3(0, 0, 255)]; // magenta to blue
+// const colorRange = [new Vector3(0, 255, 255), new Vector3(128, 0, 255)]; // cyan to purple
+// const colorRange = [new Vector3(255, 0, 191), new Vector3(0, 0, 255), new Vector3(0, 0, 102)]; // three
+// const colorRange = [new Vector3(0, 255, 255), new Vector3(0, 0, 255), new Vector3(0, 0, 90)]; // three
+
+// const colorRange = [new Vector3(0, 204, 204), new Vector3(0, 0, 204), new Vector3(0, 0, 102)]; // three
+// const colorRange = [new Vector3(255, 0, 255), new Vector3(0, 0, 255), new Vector3(0, 0, 102)]; // three
+// const colorRange = [new Vector3(255, 0, 115), new Vector3(0, 0, 255), new Vector3(0, 0, 102)]; // three
+
+const colorRange = [
+  new Vector3(255, 255, 255),
+  new Vector3(255, 0, 115),
+  new Vector3(0, 0, 204),
+  new Vector3(0, 0, 102)
+]; // four
 const deltaVColor = (deltaV) => {
-  return bands.find((b) => (
-    b.start <= deltaV
-    && (!b.end || b.end > deltaV)
-  )).color;
+  // if (deltaV > maxDeltaV) return '#000000';
+  // const c = colorRange[0].clone();
+  // c.lerp(colorRange[1], deltaV / maxDeltaV);
+  // const fadeOut = 0;//0.1;
+  // if (deltaV > (1 - fadeOut) * maxDeltaV) {
+  //   // console.log();
+  //   c.lerp(new Vector3(0, 0, 0), (deltaV - (1 - fadeOut) * maxDeltaV) / (fadeOut * maxDeltaV));
+  // }
+  // return `rgb(${c.x},${c.y},${c.z})`
 
+  // if (deltaV > maxDeltaV) return '#000000';
+  // if (deltaV < 0.5 * maxDeltaV) {
+  //   const c = colorRange[0].clone();
+  //   c.lerp(colorRange[1], deltaV / (0.5 * maxDeltaV));
+  //   return `rgb(${c.x},${c.y},${c.z})`
+  // } else {
+  //   const c = colorRange[1].clone();
+  //   c.lerp(colorRange[2], (deltaV - 0.5 * maxDeltaV) / (0.5 * maxDeltaV));
+  //   return `rgb(${c.x},${c.y},${c.z})`
+  // }
 
-  // return deltaV > maxDeltaV ? '0,0,0' :
-  //   (deltaV > 0.9 * maxDeltaV ? '64,0,0' : (
-  //     (deltaV > 0.8 * maxDeltaV ? '96,0,0' : (
-  //       (deltaV > 0.6 * maxDeltaV ? '128,0,0' : (
-  //         (deltaV > 0.4 * maxDeltaV ? '255,0,0' : (
-  //           (deltaV > 0.2 * maxDeltaV ? '255,128,0' : (
-  //             (deltaV > 0.1 * maxDeltaV ? '255,196,0' : (
-  //               (deltaV > 0 ? '255,255,0' : '255,255,255')
-  //             ))
-  //           ))
-  //         ))
-  //       ))
-  //     ))
-  //   ))
+  if (deltaV > maxDeltaV) return '#000000';
+  if (deltaV < 0.33 * maxDeltaV) {
+    const c = colorRange[0].clone();
+    c.lerp(colorRange[1], deltaV / (0.33 * maxDeltaV));
+    return `rgb(${c.x},${c.y},${c.z})`
+  } else if (deltaV < 0.67 * maxDeltaV) {
+    const c = colorRange[1].clone();
+    c.lerp(colorRange[2], (deltaV - 0.33 * maxDeltaV) / (0.33 * maxDeltaV));
+    return `rgb(${c.x},${c.y},${c.z})`
+  } else {
+    const c = colorRange[2].clone();
+    c.lerp(colorRange[3], (deltaV - 0.67 * maxDeltaV) / (0.33 * maxDeltaV));
+    return `rgb(${c.x},${c.y},${c.z})`
+  }
+
+  // return bands.find((b) => (
+  //   b.start <= deltaV
+  //   && (!b.end || b.end > deltaV)
+  // )).color;
 };
 
 const PorkchopWrapper = styled.div`
@@ -253,37 +291,51 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
         let currentRect = null;
         let pixelColor;
 
+        let previousQuintile = null;
+        let currentQuintile;
+        const isobuckets = 8;
+
         for (let i in deltaVs) {
-          // canvasCtx.fillStyle = `rgba(${deltaVColor(deltaVs[i])},1)`;
-          // canvasCtx.fillRect(col, height - i, 1, 1);
-
-          pixelColor = deltaVColor(deltaVs[i]);
-          if (currentRect) {
-            // if same color, extend current rect
-            if (currentRect.color === pixelColor) {
-              currentRect.height++;
-              continue;
-
-            // else, draw previous rect because changing colors
-            } else {
-              canvasCtx.fillStyle = currentRect.color;
-              canvasCtx.fillRect(col, currentRect.start, 1, -currentRect.height);
+          canvasCtx.fillStyle = deltaVColor(deltaVs[i]);
+          canvasCtx.fillRect(col, height - i, 1, -1);
+          currentQuintile = Math.floor(isobuckets * deltaVs[i] / maxDeltaV);
+          if (previousQuintile !== null && currentQuintile !== previousQuintile) {
+            if (currentQuintile < isobuckets && previousQuintile < isobuckets) {
+              canvasCtx.fillStyle = (currentQuintile < isobuckets && previousQuintile < isobuckets)
+                ? `rgba(0, 0, 0, 0.3)`
+                : `rgba(255, 255, 255, 0.15)`;
+              canvasCtx.fillRect(col, height - i + 1, 1, 1);
             }
           }
+          previousQuintile = currentQuintile;
 
-          // if get here, start a new rect
-          currentRect = {
-            color: pixelColor,
-            start: height - i,
-            height: 1
-          }
+          // pixelColor = deltaVColor(deltaVs[i]);
+          // if (currentRect) {
+          //   // if same color, extend current rect
+          //   if (currentRect.color === pixelColor) {
+          //     currentRect.height++;
+          //     continue;
+
+          //   // else, draw previous rect because changing colors
+          //   } else {
+          //     canvasCtx.fillStyle = currentRect.color;
+          //     canvasCtx.fillRect(col, currentRect.start, 1, -currentRect.height);
+          //   }
+          // }
+
+          // // if get here, start a new rect
+          // currentRect = {
+          //   color: pixelColor,
+          //   start: height - i,
+          //   height: 1
+          // }
         }
 
-        // draw remaining rectangle
-        if (currentRect) {
-          canvasCtx.fillStyle = currentRect.color;
-          canvasCtx.fillRect(col, currentRect.start, 1, -currentRect.height);
-        }
+        // // draw remaining rectangle
+        // if (currentRect) {
+        //   canvasCtx.fillStyle = currentRect.color;
+        //   canvasCtx.fillRect(col, currentRect.start, 1, -currentRect.height);
+        // }
 
         batchesProcessed++;
         if (batchesProcessed === expectedBatches) {
@@ -362,7 +414,7 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
       onClick={handleClick}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseMove}>
-      <canvas ref={setCanvasRef} height={size} width={size} />
+      <canvas ref={setCanvasRef} height={size} width={size} style={{ verticalAlign: 'bottom' }} />
       {selectionPos && <Reticule selected center={selectionPos} />}
       {mousePos && <Reticule center={mousePos} />}
     </PorkchopWrapper>
@@ -385,13 +437,12 @@ const RouteSimulator = () => {
 
   const [baseTime, setBaseTime] = useState();
 
-  // TODO: fix
-  // useEffect(() => {
-  //   dispatchReorientCamera(true);
-  //   return () => {
-  //     dispatchReorientCamera(true);
-  //   }
-  // }, []);
+  useEffect(() => {
+    dispatchReorientCamera(true);
+    return () => {
+      dispatchReorientCamera(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!baseTime || Math.abs(timeOverride?.speed) <= 1) {
@@ -399,25 +450,12 @@ const RouteSimulator = () => {
     }
   }, [coarseTime]);
 
-
-
-
-
-
-
-
-
-
   // TODO:
-  // address color splits as represented
-  // selection reticule
-  //  + labels beneath
-  //      departure, tof, arrival (relative to "now"),
-  //      deltav, propellant
-  // draw selection
+  // labels beneath
+  //    departure, tof, arrival (relative to "now"),
+  //    deltav, propellant
   // "impossible" message
-
-  // action dialogs?
+  // in-scene billboards and paths for journey
 
 
 
@@ -461,77 +499,6 @@ const RouteSimulator = () => {
     return paths;
   }, [baseTime, origin, destination]);
 
-  // TODO: definitely do this in a worker
-  // const calculatePorkchop = useCallback(async () => {
-  //   if (!origin || !destination) return;
-  //   const p1 = performance.now();
-  //   const originPath = sampleOrbital(
-  //     origin.orbital,
-  //     minDelay,
-  //     maxDelay,
-  //     resolution
-  //   );
-  //   const destinationPath = sampleOrbital(
-  //     destination.orbital,
-  //     minDelay + minTof,
-  //     maxDelay + maxTof,
-  //     resolution
-  //   );
-  //   console.log('time to calc trajectories', performance.now() - p1);
-
-  //   const p2 = performance.now();    
-
-  //   const G = 6.6743015e-11; // N m2 / kg2
-  //   const m = 0.86 * 1.98847e30; // kg  // TODO: mass of adalia (and probably gravitational constant should be in sdk)
-  //   const Gm = G * m;
-  //   const lamberts = [];
-  //   for (let delay = minDelay; delay <= maxDelay; delay += resolution) {
-  //     const originPosition = originPath.positions[delay];
-  //     const originVelocity = originPath.velocities[delay];
-  //     for (let tof = minTof; tof <= maxTof; tof += resolution) {
-  //       const destinationPosition = destinationPath.positions[delay + tof];
-  //       const destinationVelocity = destinationPath.velocities[delay + tof];
-  //       if (originVelocity && destinationVelocity) {
-  //         const { v1, deltaV } = await minDeltaVSolver(
-  //           Gm,
-  //           originPosition.toArray(),
-  //           destinationPosition.toArray(),
-  //           tof * 86400,  // tof is in days
-  //           originVelocity.toArray(),
-  //           destinationVelocity.toArray(),
-  //         );
-  //         lamberts.push({ delay, tof, v1, deltaV });
-  //       }
-  //     }
-  //   }
-  //   setSolutions(lamberts);
-  //   console.log('time to calc solutions', performance.now() - p2);
-  // }, [origin, destination]);
-
-  // const paths = useMemo(() => {
-  //   if (!solutions) return []
-  //   console.log('solutions', solutions);
-  //   return [];
-  // }, [solutions]);
-
-  const getOpacity = useCallback((deltaV) => {
-    return deltaV > maxDeltaV ? '0,0,0' :
-      (deltaV > 0.9 * maxDeltaV ? '64,0,0' : (
-        (deltaV > 0.8 * maxDeltaV ? '96,0,0' : (
-          (deltaV > 0.6 * maxDeltaV ? '128,0,0' : (
-            (deltaV > 0.4 * maxDeltaV ? '255,0,0' : (
-              (deltaV > 0.2 * maxDeltaV ? '255,128,0' : (
-                (deltaV > 0.1 * maxDeltaV ? '255,196,0' : (
-                  (deltaV > 0 ? '255,255,0' : '255,255,255')
-                ))
-              ))
-            ))
-          ))
-        ))
-      ))
-    return Math.max(0, Math.min(1 - (deltaV / 100000), 1));
-  }, []);
-
   return (
     <>
       {originPath && destinationPath && (
@@ -546,6 +513,21 @@ const RouteSimulator = () => {
           size={345}
         />
       )}
+
+      <InfoRow>
+        <label>Propellant Required</label>
+        <value note=""></value>
+      </InfoRow>
+
+      <InfoRow>
+        <label>Departure</label>
+        <value note=""></value>
+      </InfoRow>
+
+      <InfoRow>
+        <label>Arrival</label>
+        <value note=""></value>
+      </InfoRow>
     </>
   );
 };
