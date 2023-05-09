@@ -291,7 +291,7 @@ const SolutionLabels = ({ center, mousePos, shipParams }) => {
       <CornerLabels x={center.x} y={center.y} mousePos={mousePos}>
         <Row>
           <Label>Propellant Burned</Label>
-          <StatValue colorValue={burnedPropellant}>{burnedPropellant > 100 ? <WarningIcon /> : `${burnedPropellant}%`}</StatValue>
+          <StatValue colorValue={burnedPropellant}>{invalid ? <WarningIcon /> : `${burnedPropellant}%`}</StatValue>
         </Row>
         {!invalid && (
           <Row>

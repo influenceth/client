@@ -229,7 +229,7 @@ const RoutePlanner = () => {
   const hasTray = false;
 
   return (
-    <Scrollable hasTray={hasTray}>
+    <Scrollable hasTray={hasTray} style={{ marginLeft: -12, paddingLeft: 12 }}>
 
       <ShipSelection isSimulated={ship?.isSimulated}>
         <BuildingImage

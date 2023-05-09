@@ -75,7 +75,7 @@ const RouteSelection = () => {
 
   const handleSwap = useCallback(() => {
     if (originId && destinationId) dispatchSwapOriginDestination();
-  }, []);
+  }, [destinationId, originId]);
 
   const handleClose = useCallback(() => {
     dispatchDestinationSelected();
