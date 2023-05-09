@@ -139,7 +139,7 @@ const TravelSolution = ({}) => {
           <bufferGeometry>
             <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ trajectoryDebug, 3 ]} />
           </bufferGeometry>
-          <lineBasicMaterial color={0xffff00} transparent opacity={0.4} />
+          <lineBasicMaterial color={0xffffff} transparent opacity={0.2} />
         </line>
       )}
 

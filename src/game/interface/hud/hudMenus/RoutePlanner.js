@@ -48,7 +48,7 @@ const SliderInfoRow = styled.div`
     background: rgba(${p => p.theme.colors.mainRGB}, 0.1);
     border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.5);
     transition: border-color 250ms ease;
-    width: 78px;
+    width: 85px;
     &:hover {
       border-color: ${p => p.theme.colors.main};
     }
