@@ -82,16 +82,14 @@ const TravelSolution = ({}) => {
     setTrajectory(new Float32Array(newPositions.map((x) => x * constants.AU)));
     setOrder(new Float32Array(Array(newPositions.length).fill().map((_, i) => i + 1)));
 
-    // TODO: comment this out
+    // TODO: comment this out vvv
     let debugPositions = [];
     solutionOrbit.getSmoothOrbit(360).forEach(p => {
       debugPositions.push(...[ p.x, p.y, p.z ].map(v => v * constants.AU));
     });
     setTrajectoryDebug(new Float32Array(debugPositions));
-    console.log(solutionOrbit.e);
-
-    // departureTime: baseTime + delay,
-    // arrivalTime: baseTime + delay + tof,
+    console.log('solutionOrbit.e', solutionOrbit.e);
+    // ^^^
 
     const originPositions = [];
     const originOrbit = new KeplerianOrbit(origin.orbital);

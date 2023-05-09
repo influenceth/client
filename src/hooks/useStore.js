@@ -296,6 +296,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
         const tmp = state.asteroids.origin;
         state.asteroids.origin = state.asteroids.destination;
         state.asteroids.destination = tmp;
+        state.asteroids.travelSolution = null;
       }
     }))),
 

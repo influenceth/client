@@ -108,6 +108,9 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
 
     const currentRun = Date.now();
     runRef.current = currentRun;
+
+    // NOTE: if this ends up being too much (i.e. if we are running porkchops in multiple contexts),
+    //  we could always specify the last run id in the item and just cancel previous run id here
     cancelBackgroundProcesses((item) => item.topic !== 'calculatePorkchop');
     
     const width = maxDelay - minDelay + 1;
@@ -157,6 +160,7 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
           if (zeroSolutionsExist && deltaVs[i] > 0 && deltaVs[i] < maxDeltaV) {
             zeroSolutionsExist = false;
           }
+          if (delay === minDelay) console.log(i, deltaVs[i]);
           canvasCtx.fillStyle = deltaVColor(deltaVs[i], maxDeltaV);
           canvasCtx.fillRect(col, height - i, 1, -1);
           currentBucket = Math.floor(isobuckets * deltaVs[i] / maxDeltaV);
