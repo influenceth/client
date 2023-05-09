@@ -63,11 +63,12 @@ const TravelSolution = ({}) => {
       z: originPosition[2],
     });
 
-    const finalAngle = solutionOrbit.getTrueAnomalyAtPos({
+    let finalAngle = solutionOrbit.getTrueAnomalyAtPos({
       x: destinationPosition[0],
       y: destinationPosition[1],
       z: destinationPosition[2],
     });
+    while (finalAngle < initialAngle) finalAngle += 2 * Math.PI;
     
     const slnIncrement = (finalAngle - initialAngle) / solutionPoints;
 
