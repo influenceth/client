@@ -8,8 +8,10 @@ import { Vector3 } from 'three';
 import useStore from '~/hooks/useStore';
 import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
+import Grid from './porkchop/Grid';
 import SolutionLabels from './porkchop/SolutionLabels';
 import Reticule from './porkchop/Reticule';
+import { WarningOutlineIcon } from './Icons';
 
 const PorkchopWrapper = styled.div`
   overflow: visible;
@@ -20,6 +22,34 @@ const PorkchopContainer = styled.div`
   border: 1px solid #333;
   overflow: hidden;
   position: relative;
+`;
+
+const Solutionless = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.main};
+  display: flex;
+  flex-direction: column;
+  left: 0;
+  height: 100%;
+  justify-content: center;
+  opacity: ${p => p.show ? 1 : 0};
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  transition: opacity 1000ms ease;
+  width: 100%;
+  & > svg {
+    font-size: 40px;
+  }
+  h3 {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+    font-size: 16px;
+    margin: 10px 0 0;
+    padding: 4px;
+    text-align: center;
+    text-transform: uppercase;
+    width: 96%;
+  }
 `;
 
 const colorRange = [
@@ -47,7 +77,7 @@ const deltaVColor = (deltaV, maxDeltaV) => {
 };
 
 const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, minTof, maxTof, shipParams, size }) => {
-  const { processInBackground } = useWebWorker();
+  const { processInBackground, cancelBackgroundProcesses } = useWebWorker();
 
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   const dispatchTravelSolution = useStore(s => s.dispatchTravelSolution);
@@ -56,8 +86,10 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
   const [loading, setLoading] = useState(true);
   const [mousePos, setMousePos] = useThrottle(null, 30, true);
   const [selectionPos, setSelectionPos] = useState();
+  const [solutionsExist, setSolutionsExist] = useState(false);
 
   const canvasRef = useRef();
+  const runRef = useRef();
 
   const { maxDeltaV } = shipParams;
 
@@ -71,6 +103,12 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
     if (!originPath || !destinationPath) return;
     setLoading(true);
     setMousePos(null);
+    setSelectionPos(null);
+    dispatchTravelSolution();
+
+    const currentRun = Date.now();
+    runRef.current = currentRun;
+    cancelBackgroundProcesses((item) => item.topic !== 'calculatePorkchop');
     
     const width = maxDelay - minDelay + 1;
     const height = maxTof - minTof + 1;
@@ -85,6 +123,7 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
 
     // for (let delay of delays) {
     let maxDelayProcessed = minDelay;
+    let zeroSolutionsExist = true;
     for (let delay = minDelay; delay <= maxDelay; delay++) {
       processInBackground({
         topic: 'calculatePorkchop',
@@ -97,6 +136,8 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
           maxTof,
         }
       }, ({ deltaVs }) => {
+        if (runRef.current !== currentRun) return;
+
         // console.log('drawing', delay, performance.now() - p2);
         if (delay > maxDelayProcessed) {
           maxDelayProcessed = delay;
@@ -113,6 +154,9 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
         const isobuckets = 8;
 
         for (let i in deltaVs) {
+          if (zeroSolutionsExist && deltaVs[i] > 0 && deltaVs[i] < maxDeltaV) {
+            zeroSolutionsExist = false;
+          }
           canvasCtx.fillStyle = deltaVColor(deltaVs[i], maxDeltaV);
           canvasCtx.fillRect(col, height - i, 1, -1);
           currentBucket = Math.floor(isobuckets * deltaVs[i] / maxDeltaV);
@@ -128,6 +172,7 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
         batchesProcessed++;
         if (batchesProcessed === expectedBatches) {
           console.log('porkchop ready in', performance.now() - p2);
+          setSolutionsExist(!zeroSolutionsExist);
           setLoading(false);
         }
       })
@@ -207,9 +252,14 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
           height={maxTof - minTof}
           width={maxDelay - minDelay}
           style={{ verticalAlign: 'bottom', height: `${size}px`, width: `${size}px` }} />
+        <Grid />
         {selectionPos && <Reticule selected center={selectionPos} fade={!!mousePos} invalid={travelSolution?.deltaV > maxDeltaV} />}
         {mousePos && <Reticule center={mousePos} />}
       </PorkchopContainer>
+      <Solutionless show={!solutionsExist && !loading}>
+        <WarningOutlineIcon />
+        <h3>No Possible Routes</h3>
+      </Solutionless>
       {selectionPos && <SolutionLabels center={selectionPos} mousePos={mousePos} shipParams={shipParams} />}
     </PorkchopWrapper>
   );

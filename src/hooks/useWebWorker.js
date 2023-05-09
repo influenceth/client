@@ -81,6 +81,10 @@ class WorkerThreadPool {
     this.processQueue();
   }
 
+  removeFromQueue(filterFunc) {
+    this.workQueue = this.workQueue.filter(([workItem]) => filterFunc(workItem));
+  }
+
   processQueue() {
     while (this.available.length > 0 && this.workQueue.length > 0) {
       const w = this.available.pop();
@@ -109,6 +113,7 @@ const useWebWorker = () => {
   return useMemo(() => ({
     broadcast: (message) => workerThreadPool.broadcast(message),
     processInBackground: (message, callback, transfer) => workerThreadPool.addToQueue(message, callback, transfer),
+    cancelBackgroundProcesses: (filterFunc) => workerThreadPool.removeFromQueue(filterFunc)
   }), []);
 };
 

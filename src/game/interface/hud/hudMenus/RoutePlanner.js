@@ -5,7 +5,6 @@ import Dropdown from '~/components/DropdownV2';
 import NumberInput from '~/components/NumberInput';
 import Porkchop from '~/components/Porkchop';
 import SliderInput from '~/components/SliderInput';
-import TextInput from '~/components/TextInput';
 import ClockContext from '~/contexts/ClockContext';
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -16,15 +15,18 @@ import { BuildingImage } from '../actionDialogs/components';
 import { Scrollable } from './components';
 
 const ShipSelection = styled.div`
+  align-items: center;
   display: flex;
   flex-direction: row;
+  margin: 10px 0;
   & > div:first-child {
     height: 80px;
     margin-right: 8px;
     width: 125px;
   }
-  & > div:last-child {
-
+  & button {
+    ${p => p.isSimulated && `color: ${p.theme.colors.main};`}
+    margin-bottom: 10px;
   }
 `;
 
@@ -115,7 +117,8 @@ const ships = [
     maxPropellantMass: 950e3,
     maxCargoMass: 10e3,
     engines: 1,
-    maxThrust: 612916
+    maxThrust: 612916,
+    isSimulated: true
   },
   {
     i: 1,
@@ -124,7 +127,8 @@ const ships = [
     maxPropellantMass: 1805e3,
     maxCargoMass: 2000e3,
     engines: 2,
-    maxThrust: 1225831
+    maxThrust: 1225831,
+    isSimulated: true
   },
   {
     i: 2,
@@ -133,7 +137,8 @@ const ships = [
     maxPropellantMass: 11875e3,
     maxCargoMass: 12000e3,
     engines: 9,
-    maxThrust: 5516241
+    maxThrust: 5516241,
+    isSimulated: true
   }
 ];
 
@@ -166,6 +171,7 @@ const RoutePlanner = () => {
 
   const shipParams = useMemo(() => {
     if (!ship) return 0;
+    
     return {
       ...ship,
       actualCargoMass: cargoMass,
@@ -225,15 +231,22 @@ const RoutePlanner = () => {
   return (
     <Scrollable hasTray={hasTray}>
 
-      <ShipSelection>
+      <ShipSelection isSimulated={ship?.isSimulated}>
         <BuildingImage
           building={buildings[1]}
           unfinished
         />
 
         <div>
-          <label>Ship</label>
-          <Dropdown onChange={setShip} options={ships} labelKey="label" valueKey="i" />
+          <SectionHeader style={{ border: 0, margin: 0 }}>Ship</SectionHeader>
+          <Dropdown
+            labelKey="label"
+            onChange={setShip}
+            options={ships}
+            valueKey="i"
+            size="small"
+            style={{ textTransform: 'none' }}
+            width={200} />
         </div>
 
       </ShipSelection>
@@ -298,7 +311,7 @@ const RoutePlanner = () => {
       {travelSolution && (
         <>
           <SectionHeader>Route Details</SectionHeader>
-          <SectionBody>
+          <SectionBody style={{ paddingBottom: 20 }}>
             <InfoRow>
               <label>Depart</label>
               <Value>
