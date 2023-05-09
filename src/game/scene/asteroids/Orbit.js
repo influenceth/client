@@ -12,6 +12,7 @@ const order = new Float32Array(Array(360).fill().map((_, i) => i+1));
 const initialUniforms = {
   uTime: { type: 'i', value: 0 },
   uAlpha: { type: 'f', value: 1.0 },
+  uAlphaMin: { type: 'f', value: 0.5 },
   uCount: { type: 'f', value: 360 }
 };
 

@@ -1,14 +1,30 @@
-import { useContext, useEffect, useState } from 'react';
-import { Vector3 } from 'three';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { Color, Vector3 } from 'three';
 import { KeplerianOrbit } from '@influenceth/sdk';
 
 import ClockContext from '~/contexts/ClockContext';
 import constants from '~/lib/constants';
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
+import frag from './orbit/orbit.frag';
+import vert from './orbit/orbit.vert';
+
+const solutionPoints = 100;
+const initialUniforms = {
+  uTime: { type: 'i', value: 0 },
+  uAlpha: { type: 'f', value: 1.0 },
+  uAlphaMin: { type: 'f', value: 0.05 },
+  uCount: { type: 'f', value: solutionPoints + 2 }
+};
 
 const TravelSolution = ({}) => {
   const { coarseTime } = useContext(ClockContext);
+
+  const uniforms = useRef({
+    ...initialUniforms,
+    uCol: { type: 'c', value: new Color(0xffff00) },
+  });
 
   const destinationId = useStore(s => s.asteroids.destination);
   const originId = useStore(s => s.asteroids.origin);
@@ -16,6 +32,7 @@ const TravelSolution = ({}) => {
   const { data: destination } = useAsteroid(destinationId);
   const { data: origin } = useAsteroid(originId);
 
+  const [order, setOrder] = useState();
   const [prearrival, setPrearrival] = useState();
   const [predeparture, setPredeparture] = useState();
   const [trajectory, setTrajectory] = useState();
@@ -52,17 +69,17 @@ const TravelSolution = ({}) => {
       z: destinationPosition[2],
     });
     
-    const slnIncrement = (finalAngle - initialAngle) / 100;
+    const slnIncrement = (finalAngle - initialAngle) / solutionPoints;
 
-    let newPositions = [];
+    const newPositions = [];
     newPositions.push(...Object.values(originPosition).map((x) => x / constants.AU));
     for (let t = initialAngle; t <= finalAngle; t += slnIncrement) {
       const p = solutionOrbit.getPosByAngle(t);
       newPositions.push(...[ p.x, p.y, p.z ]);
     }
     newPositions.push(...Object.values(destinationPosition).map((x) => x / constants.AU));
-
     setTrajectory(new Float32Array(newPositions.map((x) => x * constants.AU)));
+    setOrder(new Float32Array(Array(newPositions.length).fill().map((_, i) => i + 1)));
 
     // TODO: comment this out
     let debugPositions = [];
@@ -95,14 +112,9 @@ const TravelSolution = ({}) => {
 
   }, [coarseTime, travelSolution]);
 
-
-
-  // TODO: originDelay curve
-  // TODO: originDelay marker
-  // TODO: destination arrival curve
-  // TODO: arrival marker
-
-
+  useFrame(() => {
+    uniforms.current.uTime.value++;
+  });
 
   return (
     <>
@@ -110,8 +122,16 @@ const TravelSolution = ({}) => {
         <line userData={{ bloom: true }}>
           <bufferGeometry>
             <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ trajectory, 3 ]} />
+            <bufferAttribute attachObject={[ 'attributes', 'order' ]} args={[ order, 1 ]} />
           </bufferGeometry>
-          <lineBasicMaterial color={0xffff00} />
+          <shaderMaterial
+            args={[{
+              depthWrite: false,
+              fragmentShader: frag,
+              uniforms: uniforms.current,
+              transparent: true,
+              vertexShader: vert,
+            }]} />
         </line>
       )}
       {trajectoryDebug && (
