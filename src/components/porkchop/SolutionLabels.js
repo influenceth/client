@@ -264,6 +264,8 @@ const SolutionLabels = ({ center, mousePos, shipParams }) => {
     burnedPropellant,
     tof
   } = useMemo(() => {
+    if (!travelSolution) return {};
+
     // TODO: check units on deltaV
     const unusedPropellantMass = (
       (shipParams.emptyMass + shipParams.actualCargoMass + shipParams.actualPropellantMass)

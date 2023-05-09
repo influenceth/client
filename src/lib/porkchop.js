@@ -1,4 +1,5 @@
-import { LambertSolver, GM_ADALIA } from '@influenceth/sdk';
+import { lambert } from '@influenceth/astro';
+import { GM_ADALIA } from '@influenceth/sdk';
 
 const v3ToArray = (v3) => ([
   v3.x || v3[0],
@@ -15,7 +16,7 @@ async function porkchop({ originPath, destinationPath, minDelay, maxDelay, minTo
       const destinationPosition = destinationPath.positions[delay + tof];
       const destinationVelocity = destinationPath.velocities[delay + tof];
       if (originVelocity && destinationVelocity) {
-        const { deltaV } = await LambertSolver.multiSolver(
+        const { deltaV } = await lambert.multiSolver(
           GM_ADALIA,
           v3ToArray(originPosition),
           v3ToArray(destinationPosition),

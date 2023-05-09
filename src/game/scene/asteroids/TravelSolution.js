@@ -19,6 +19,7 @@ const TravelSolution = ({}) => {
   const [prearrival, setPrearrival] = useState();
   const [predeparture, setPredeparture] = useState();
   const [trajectory, setTrajectory] = useState();
+  const [trajectoryDebug, setTrajectoryDebug] = useState();
 
   const travelSolution = useStore(s => s.asteroids.travelSolution);
 
@@ -27,17 +28,17 @@ const TravelSolution = ({}) => {
       setPrearrival();
       setPredeparture();
       setTrajectory();
+      setTrajectoryDebug();
       return;
     }
 
     const { v1, originPosition, destinationPosition, departureTime, arrivalTime } = travelSolution;
     if (!v1 || !originPosition) return;
 
-    const solutionOrbit = KeplerianOrbit.fromPositionAndVelocity(
+    const solutionOrbit = KeplerianOrbit.fromStateVectors(
       [originPosition[0], originPosition[1], originPosition[2]],
       v1
     );
-    console.log('solutionOrbit', travelSolution, solutionOrbit);
     
     const initialAngle = solutionOrbit.getTrueAnomalyAtPos({
       x: originPosition[0],
@@ -63,6 +64,13 @@ const TravelSolution = ({}) => {
 
     setTrajectory(new Float32Array(newPositions.map((x) => x * constants.AU)));
 
+    // TODO: comment this out
+    let debugPositions = [];
+    solutionOrbit.getSmoothOrbit(360).forEach(p => {
+      debugPositions.push(...[ p.x, p.y, p.z ].map(v => v * constants.AU));
+    });
+    setTrajectoryDebug(new Float32Array(debugPositions));
+    console.log(solutionOrbit.e);
 
     // departureTime: baseTime + delay,
     // arrivalTime: baseTime + delay + tof,
@@ -104,6 +112,14 @@ const TravelSolution = ({}) => {
             <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ trajectory, 3 ]} />
           </bufferGeometry>
           <lineBasicMaterial color={0xffff00} />
+        </line>
+      )}
+      {trajectoryDebug && (
+        <line>
+          <bufferGeometry>
+            <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ trajectoryDebug, 3 ]} />
+          </bufferGeometry>
+          <lineBasicMaterial color={0xffff00} transparent opacity={0.4} />
         </line>
       )}
 

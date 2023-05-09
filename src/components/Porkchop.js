@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { LambertSolver, GM_ADALIA } from '@influenceth/sdk';
+import { lambert } from '@influenceth/astro';
+import { GM_ADALIA } from '@influenceth/sdk';
 import { useThrottle } from '@react-hook/throttle';
 import { Vector3 } from 'three';
 
@@ -159,7 +160,7 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
     const dPos = destinationPath.positions[dIndex];
     const dVel = destinationPath.velocities[dIndex];
 
-    const solution = await LambertSolver.multiSolver(
+    const solution = await lambert.multiSolver(
       GM_ADALIA,
       oPos.toArray(),
       dPos.toArray(),
@@ -206,7 +207,7 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
           height={maxTof - minTof}
           width={maxDelay - minDelay}
           style={{ verticalAlign: 'bottom', height: `${size}px`, width: `${size}px` }} />
-        {selectionPos && <Reticule selected center={selectionPos} fade={!!mousePos} invalid={travelSolution.deltaV > maxDeltaV} />}
+        {selectionPos && <Reticule selected center={selectionPos} fade={!!mousePos} invalid={travelSolution?.deltaV > maxDeltaV} />}
         {mousePos && <Reticule center={mousePos} />}
       </PorkchopContainer>
       {selectionPos && <SolutionLabels center={selectionPos} mousePos={mousePos} shipParams={shipParams} />}
