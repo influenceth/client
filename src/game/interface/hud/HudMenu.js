@@ -256,10 +256,10 @@ const HudMenu = () => {
       ];
       if (asteroidId && destination) {
         out.push({
-          key: 'BELT_SIMULATE_ROUTE',
-          label: 'Simulate Route',
+          key: 'BELT_PLAN_FLIGHT',
+          label: 'Plan Flight',
           icon: <RocketIcon />,
-          Component: hudMenus.RouteSimulator,
+          Component: hudMenus.RoutePlanner,
           noDetail: true
         });
       }

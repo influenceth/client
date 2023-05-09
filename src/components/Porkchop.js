@@ -45,7 +45,7 @@ const deltaVColor = (deltaV, maxDeltaV) => {
   }
 };
 
-const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, minTof, maxTof, maxDeltaV, size }) => {
+const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, minTof, maxTof, shipParams, size }) => {
   const { processInBackground } = useWebWorker();
 
   const travelSolution = useStore(s => s.asteroids.travelSolution);
@@ -57,6 +57,8 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
   const [selectionPos, setSelectionPos] = useState();
 
   const canvasRef = useRef();
+
+  const { maxDeltaV } = shipParams;
 
   const setCanvasRef = useCallback((canvas) => {
     canvasRef.current = canvas;
@@ -129,7 +131,7 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
         }
       })
     }
-  }, [canvasRefIsSet, originPath, destinationPath]);
+  }, [canvasRefIsSet, originPath, destinationPath, maxDeltaV]);
 
   const getMouseData = useCallback((e) => {
     const data = {
@@ -207,7 +209,7 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
         {selectionPos && <Reticule selected center={selectionPos} fade={!!mousePos} invalid={travelSolution.deltaV > maxDeltaV} />}
         {mousePos && <Reticule center={mousePos} />}
       </PorkchopContainer>
-      {selectionPos && <SolutionLabels center={selectionPos} maxDeltaV={maxDeltaV} mousePos={mousePos} />}
+      {selectionPos && <SolutionLabels center={selectionPos} mousePos={mousePos} shipParams={shipParams} />}
     </PorkchopWrapper>
   );
 };

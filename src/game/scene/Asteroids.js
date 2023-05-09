@@ -233,7 +233,7 @@ const Asteroids = (props) => {
     if (!cameraNeedsReorientation || zoomStatus !== 'out' || !controls?.object?.position) return;
 
     dispatchReorientCamera();
-    if (openHudMenu === 'BELT_SIMULATE_ROUTE') {
+    if (openHudMenu === 'BELT_PLAN_FLIGHT') {
       const timeline = gsap.timeline({
         defaults: { ease: 'slow.out' }
       });
@@ -313,7 +313,7 @@ const Asteroids = (props) => {
 
   return (
     <group>
-      {openHudMenu !== 'BELT_SIMULATE_ROUTE' && (
+      {openHudMenu !== 'BELT_PLAN_FLIGHT' && (
         <>
           {/* asset / watchlist markers (zoomed out only) */}
           {zoomStatus === 'out' && (
@@ -399,7 +399,7 @@ const Asteroids = (props) => {
               {Object.keys(assetPositionsById).map((i) => {
                 const isOrigin = origin?.i === Number(i);
                 const isDestination = destination?.i === Number(i);
-                const display = openHudMenu !== 'BELT_SIMULATE_ROUTE' || isOrigin || isDestination;
+                const display = openHudMenu !== 'BELT_PLAN_FLIGHT' || isOrigin || isDestination;
                 return !display ? null : (
                   <Html
                     key={i}

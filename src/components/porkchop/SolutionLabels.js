@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import ClockContext from '~/contexts/ClockContext';
 import useStore from '~/hooks/useStore';
 
-const tagHeight = 24;
+const tagHeight = 22;
 const halfTagHeight = tagHeight / 2;
 
 const tagClipPath = (flip, height) => {
@@ -32,6 +32,7 @@ const tagClipPath = (flip, height) => {
 }
 
 const TopLevelLabel = styled.div`
+  font-size: 14px;
   opacity: 1;
   pointer-events: none;
   transition: opacity 250ms ease;
@@ -43,7 +44,7 @@ const TopLevelLabel = styled.div`
 const Label = styled.label`
   background: rgba(0, 0, 0, 0.6);
   color: ${p => p.theme.colors.main};
-  font-size: 90%;
+  font-size: 100%;
   font-weight: bold;
 `;
 
@@ -85,7 +86,7 @@ const FlightTimeLabel = styled(TopLevelLabel).attrs((p) => {
   ${p => p.y > 0.5
     ? `
       flex-direction: column;
-      margin-top: -34px;
+      margin-top: -32px;
       & > ${Label} { margin-bottom: -1px; }
     `
     : `
@@ -134,7 +135,7 @@ const Row = styled.div`
   ${Label} {
     align-items: center;
     display: flex;
-    height: 24px;
+    height: ${tagHeight}px;
     padding: 0 6px;
   }
   &:first-child {
@@ -154,7 +155,7 @@ const CornerLabels = styled(TopLevelLabel).attrs((p) => {
   display: flex;
   flex-direction: column;
   position: absolute;
-  ${p => p.x > 0.5 ? 'left' : 'right'}: 12px;
+  ${p => p.x > 0.5 ? 'left' : 'right'}: 6px;
   align-items: ${p => p.x > 0.5 ? 'flex-start' : 'flex-end'};
   ${p => p.y > 0.5 ? 'top' : 'bottom'}: 6px;
   z-index: 2;
@@ -180,10 +181,10 @@ const StatValue = styled.div`
   width: 80px;
   ${p => {
     if (p.colorValue !== undefined) {
-      const color = p.colorValue > 1
+      const color = p.colorValue > 100
         ? p.theme.colors.error
         : (
-          p.colorValue > 0.5
+          p.colorValue > 50
           ? p.theme.colors.orange
           : null
         );
@@ -211,7 +212,7 @@ const DelayLabel = styled(TopLevelLabel)`
     `
     : `
       flex-direction: row;
-      right: ${100 * (1 - p.x)}%;
+      right: ${Math.max(5, 100 * (1 - p.x))}%;
       margin-right: -35px;
     `
   }
@@ -220,7 +221,7 @@ const DelayLabel = styled(TopLevelLabel)`
   }
 
   ${Tag} {
-    height: 26px;
+    height: ${tagHeight + 4}px;
     margin-top: -5px;
     clip-path: polygon(
       0 5px,
@@ -252,25 +253,30 @@ const DelayLabel = styled(TopLevelLabel)`
   }
 `;
 
-const SolutionLabels = ({ center, maxDeltaV, mousePos }) => {
+const SolutionLabels = ({ center, mousePos, shipParams }) => {
   const { coarseTime } = useContext(ClockContext);
   const travelSolution = useStore(s => s.asteroids.travelSolution);
 
   const {
     arrival,
     delay,
-    deltaV,
     invalid,
+    burnedPropellant,
     tof
   } = useMemo(() => {
+    // TODO: check units on deltaV
+    const unusedPropellantMass = (
+      (shipParams.emptyMass + shipParams.actualCargoMass + shipParams.actualPropellantMass)
+        / Math.exp(travelSolution.deltaV / shipParams.exhaustVelocity)
+    ) - shipParams.emptyMass - shipParams.actualCargoMass;
     return {
       arrival: Math.round(travelSolution.arrivalTime - coarseTime),
       delay: Math.round(travelSolution.departureTime - coarseTime),
-      deltaV: Math.round(1000 * travelSolution.deltaV / maxDeltaV) / 10,
-      invalid: travelSolution.deltaV > maxDeltaV,
+      invalid: travelSolution.deltaV > shipParams.maxDeltaV,
       tof: (travelSolution.arrivalTime - travelSolution.departureTime),
+      burnedPropellant: Math.ceil(100 * (shipParams.actualPropellantMass - unusedPropellantMass) / shipParams.actualPropellantMass)
     }
-  });
+  }, [shipParams, travelSolution]);
 
   return (
     <>
@@ -282,7 +288,7 @@ const SolutionLabels = ({ center, maxDeltaV, mousePos }) => {
       <CornerLabels x={center.x} y={center.y} mousePos={mousePos}>
         <Row>
           <Label>Propellant Burned</Label>
-          <StatValue colorValue={travelSolution.deltaV / maxDeltaV}>{deltaV}%</StatValue>
+          <StatValue colorValue={burnedPropellant}>{burnedPropellant}%</StatValue>
         </Row>
         {!invalid && (
           <Row>

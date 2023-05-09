@@ -7,7 +7,7 @@ import Inventory from './Inventory';
 import LotInfo from './LotInfo';
 import LotResources from './LotResources';
 import Resources from './Resources';
-import RouteSimulator from './RouteSimulator';
+import RoutePlanner from './RoutePlanner';
 import SearchMap from './SearchMap';
 
 const HudMenus = {
@@ -20,7 +20,7 @@ const HudMenus = {
   LotInfo,
   LotResources,
   Resources,
-  RouteSimulator,
+  RoutePlanner,
   SearchMap,
 };
 

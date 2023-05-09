@@ -37,6 +37,7 @@ const TravelSolution = ({}) => {
       [originPosition[0], originPosition[1], originPosition[2]],
       v1
     );
+    console.log('solutionOrbit', travelSolution, solutionOrbit);
     
     const initialAngle = solutionOrbit.getTrueAnomalyAtPos({
       x: originPosition[0],

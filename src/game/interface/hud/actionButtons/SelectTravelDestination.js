@@ -14,7 +14,7 @@ const SelectTravelDestination = ({}) => {
   
   const handleClick = useCallback(() => {
     if (inTravelMode) {
-      dispatchHudMenuOpened(openHudMenu !== 'BELT_SIMULATE_ROUTE' ? 'BELT_SIMULATE_ROUTE' : null);
+      dispatchHudMenuOpened(openHudMenu !== 'BELT_PLAN_FLIGHT' ? 'BELT_PLAN_FLIGHT' : null);
     } else {
       dispatchTravelMode(true);
     }
@@ -26,7 +26,7 @@ const SelectTravelDestination = ({}) => {
         active: !!inTravelMode,
         disabled: inTravelMode && !destination
       }}
-      label={origin && destination && inTravelMode ? 'Simulate Route' : 'Plan Flight'}
+      label={origin && destination && inTravelMode ? 'Optimize Route' : 'Plan Flight'}
       icon={<RocketIcon />}
       onClick={handleClick} />
   );

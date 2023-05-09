@@ -108,7 +108,7 @@ const SliderInput = ({ min = 0, max = 1, increment = 1, value, onChange }) => {
     }
   }, [increment, min, max, handleChange]);
 
-  const percentage = useMemo(() => (value - min) / (max - min), [value, min, max]) || 0;
+  const percentage = useMemo(() => Math.max(0, Math.min(100, (value - min) / (max - min))), [value, min, max]) || 0;
   return (
     <Wrapper>
       <Slider ref={sliderRef} animating={expectedChange.current !== value}>
