@@ -3,7 +3,6 @@ import styled from 'styled-components';
 
 import ClockContext from '~/contexts/ClockContext';
 import useStore from '~/hooks/useStore';
-import { WarningIcon } from '../Icons';
 
 const tagHeight = 22;
 const halfTagHeight = tagHeight / 2;
@@ -262,22 +261,33 @@ const SolutionLabels = ({ center, mousePos, shipParams }) => {
     arrival,
     delay,
     invalid,
-    burnedPropellant,
+    usedPropellant,
     tof
   } = useMemo(() => {
     if (!travelSolution) return {};
+    const invalid = travelSolution.deltaV > shipParams.maxDeltaV;
 
-    // TODO: check units on deltaV
-    const unusedPropellantMass = (
-      (shipParams.emptyMass + shipParams.actualCargoMass + shipParams.actualPropellantMass)
-        / Math.exp(travelSolution.deltaV / shipParams.exhaustVelocity)
-    ) - shipParams.emptyMass - shipParams.actualCargoMass;
+    // deltav = v_e * ln(wetmass / drymass)
+    let usedPropellantMass;
+
+    // deltav = v_e * ln((drymass + propused) / drymass)
+    if (invalid) {
+      // if invalid, calculate the required propellant if 100% is to be used (i.e. actual === used)
+      let drymass = (shipParams.emptyMass + shipParams.actualCargoMass);
+      usedPropellantMass = drymass * (Math.exp(travelSolution.deltaV / shipParams.exhaustVelocity) - 1);
+
+    // deltav = v_e * ln(wetmass / (wetmass - usedprop))
+    } else {
+      let wetmass = (shipParams.emptyMass + shipParams.actualCargoMass + shipParams.actualPropellantMass);
+      usedPropellantMass = wetmass * (1 - 1 / Math.exp(travelSolution.deltaV / shipParams.exhaustVelocity));
+    }
+
     return {
       arrival: Math.round(travelSolution.arrivalTime - coarseTime),
       delay: Math.round(travelSolution.departureTime - coarseTime),
-      invalid: travelSolution.deltaV > shipParams.maxDeltaV,
+      invalid,
       tof: (travelSolution.arrivalTime - travelSolution.departureTime),
-      burnedPropellant: Math.ceil(100 * (shipParams.actualPropellantMass - unusedPropellantMass) / shipParams.actualPropellantMass)
+      usedPropellant: Math.ceil(100 * usedPropellantMass / shipParams.actualPropellantMass)
     }
   }, [shipParams, travelSolution]);
 
@@ -290,8 +300,8 @@ const SolutionLabels = ({ center, mousePos, shipParams }) => {
 
       <CornerLabels x={center.x} y={center.y} mousePos={mousePos}>
         <Row>
-          <Label>Propellant Burned</Label>
-          <StatValue colorValue={burnedPropellant}>{invalid ? <WarningIcon /> : `${burnedPropellant}%`}</StatValue>
+          <Label>Propellant Used</Label>
+          <StatValue colorValue={usedPropellant}>{usedPropellant}%</StatValue>
         </Row>
         {!invalid && (
           <Row>
