@@ -41,6 +41,7 @@ import AsteroidSearchSVG from '~/assets/icons/AsteroidSearchIcon.svg';
 import BugSVG from '~/assets/icons/BugIcon.svg';
 import BuildingSVG from '~/assets/icons/BuildingIcon.svg';
 import CaptainSVG from '~/assets/icons/CaptainIcon.svg';
+import CargoSVG from '~/assets/icons/CargoIcon.svg';
 import ChapterSVG from '~/assets/icons/ChapterIcon.svg';
 import ChatSVG from '~/assets/icons/ChatIcon.svg';
 import CheckSVG from '~/assets/icons/CheckIcon.svg';
@@ -54,6 +55,7 @@ import EccentricitySVG from '~/assets/icons/EccentricityIcon.svg';
 import EventSVG from '~/assets/icons/EventIcon.svg';
 import FavoriteSVG from '~/assets/icons/FavoriteIcon.svg';
 import FoodSVG from '~/assets/icons/FoodIcon.svg';
+import GasSVG from '~/assets/icons/GasIcon.svg';
 import HexagonSVG from '~/assets/icons/HexagonIcon.svg';
 import InclinationSVG from '~/assets/icons/InclinationIcon.svg';
 import InfoSVG from '~/assets/icons/InfoIcon.svg';
@@ -69,12 +71,14 @@ import MyAssetSVG from '~/assets/icons/MyAssetIcon.svg';
 import MyAssetsSVG from '~/assets/icons/MyAssetsIcon.svg';
 import OrbitalPeriodSVG from '~/assets/icons/OrbitalPeriodIcon.svg';
 import OrderSVG from '~/assets/icons/OrderIcon.svg';
+import PassengersSVG from '~/assets/icons/PassengersIcon.svg';
 import ProductionSVG from '~/assets/icons/ProductionIcon.svg';
 import PromoteSVG from '~/assets/icons/PromoteIcon.svg';
 import RadiusSVG from '~/assets/icons/RadiusIcon.svg';
 import ResetCameraSVG from '~/assets/icons/ResetCameraIcon.svg';
 import ResourceSVG from '~/assets/icons/ResourceIcon.svg';
 import RocketSVG from '~/assets/icons/RocketIcon.svg';
+import RouteSVG from '~/assets/icons/RouteIcon.svg';
 import SearchSVG from '~/assets/icons/SearchIcon.svg';
 import SemiMajorAxisSVG from '~/assets/icons/SemiMajorAxisIcon.svg';
 import ShipSVG from '~/assets/icons/ShipIcon.svg';
@@ -88,19 +92,30 @@ import WalletSVG from '~/assets/icons/WalletIcon.svg';
 import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
 
 import ConstructSVG from '~/assets/icons/action_buttons/Construct.svg';
+import EjectPassengersSVG from '~/assets/icons/action_buttons/EjectPassengers.svg';
 import NewCoreSampleSVG from '~/assets/icons/action_buttons/CoreSample.svg';
 import DeconstructSVG from '~/assets/icons/action_buttons/Deconstruct.svg';
 import ExtractResourceSVG from '~/assets/icons/action_buttons/ExtractResource.svg';
 import ImproveCoreSampleSVG from '~/assets/icons/action_buttons/ImproveCoreSample.svg';
+import LandShipSVG from '~/assets/icons/action_buttons/LandShip.svg';
+import LaunchShipSVG from '~/assets/icons/action_buttons/LaunchShip.svg';
 import PlanBuildingSVG from '~/assets/icons/action_buttons/PlanBuilding.svg';
 import PurchaseAsteroidSVG from '~/assets/icons/action_buttons/PurchaseAsteroid.svg';
 import ScanAsteroidSVG from '~/assets/icons/action_buttons/ScanAsteroid.svg';
+import SetCourseSVG from '~/assets/icons/action_buttons/SetCourse.svg';
+import SimulateRouteSVG from '~/assets/icons/action_buttons/SimulateRoute.svg';
+import StationCrewSVG from '~/assets/icons/action_buttons/StationCrew.svg';
+import StationPassengersSVG from '~/assets/icons/action_buttons/StationPassengers.svg';
 import SurfaceTransferSVG from '~/assets/icons/action_buttons/SurfaceTransfer.svg';
 import TransferToSiteSVG from '~/assets/icons/action_buttons/TransferToSite.svg';
 import TravelingFromSVG from '~/assets/icons/action_buttons/TravelingFrom.svg';
 import TravelingToSVG from '~/assets/icons/action_buttons/TravelingTo.svg';
 import UnplanBuildingSVG from '~/assets/icons/action_buttons/UnplanBuilding.svg';
 
+import FlagMarkerSVG from '~/assets/icons/scene/Flag.svg';
+import ShipMarkerSVG from '~/assets/icons/scene/Ship.svg';
+export const FlagMarkerIcon = () => <FlagMarkerSVG style={{ width: '0.83em' }} className="icon" />;
+export const ShipMarkerIcon = () => <ShipMarkerSVG style={{ width: '0.67em' }} className="icon" />;
 
 /*
   A note on importing custom icons...
@@ -122,6 +137,7 @@ export const AsteroidSearchIcon = () => <AsteroidSearchSVG className="icon" />;
 export const BugIcon = () => <BugSVG className="icon" />;
 export const BuildingIcon = () => <BuildingSVG className="icon" />;
 export const CaptainIcon = (props) => <CaptainSVG className={`icon ${props?.className}`} style={{ width: '3.05em' }} />;
+export const CargoIcon = () => <CargoSVG className="icon" />;
 export const ChapterIcon = () => <ChapterSVG className="icon" />;
 export const ChatIcon = () => <ChatSVG className="icon" />;
 export const CheckIcon = () => <CheckSVG className="icon" style={{ width: '1.314em' }} />;
@@ -136,6 +152,7 @@ export const EccentricityIcon = () => <EccentricitySVG className="icon" />;
 export const EventIcon = () => <EventSVG className="icon" />;
 export const FavoriteIcon = () => <FavoriteSVG className="icon" />;
 export const FoodIcon = () => <FoodSVG className="icon" />;
+export const GasIcon = () => <GasSVG className="icon" />;
 export const HexagonIcon = () => <HexagonSVG className="icon" />;
 export const InclinationIcon = () => <InclinationSVG className="icon" />;
 export const InfoIcon = () => <InfoSVG className="icon" />;
@@ -151,12 +168,14 @@ export const MyAssetIcon = () => <MyAssetSVG className="icon" />;
 export const MyAssetsIcon = () => <MyAssetsSVG className="icon" />;
 export const OrbitalPeriodIcon = () => <OrbitalPeriodSVG className="icon" />;
 export const OrderIcon = () => <OrderSVG className="icon" />;
+export const PassengersIcon = () => <PassengersSVG className="icon" />;
 export const ProductionIcon = () => <ProductionSVG className="icon" />;
 export const PromoteIcon = () => <PromoteSVG className="icon" />;
 export const RadiusIcon = () => <RadiusSVG className="icon" />;
 export const ResetCameraIcon = () => <ResetCameraSVG className="icon" />;
 export const ResourceIcon = () => <ResourceSVG className="icon" />;
 export const RocketIcon = () => <RocketSVG className="icon" />;
+export const RouteIcon = () => <RouteSVG className="icon" />;
 export const SearchIcon = () => <SearchSVG className="icon" />;
 export const SemiMajorAxisIcon = () => <SemiMajorAxisSVG className="icon" />;
 export const ShipIcon = () => <ShipSVG className="icon" />;
@@ -171,13 +190,20 @@ export const WalletIcon = () => <WalletSVG className="icon" />;
 export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
 
 export const ConstructIcon = () => <ConstructSVG className="icon" />;
-export const NewCoreSampleIcon = () => <NewCoreSampleSVG className="icon" />;
 export const DeconstructIcon = () => <DeconstructSVG className="icon" />;
+export const EjectPassengersIcon = () => <EjectPassengersSVG className="icon" />;
 export const ExtractionIcon = () => <ExtractResourceSVG className="icon" />;
 export const ImproveCoreSampleIcon = () => <ImproveCoreSampleSVG className="icon" />;
+export const LandShipIcon = () => <LandShipSVG className="icon" />;
+export const LaunchShipIcon = () => <LaunchShipSVG className="icon" />;
+export const NewCoreSampleIcon = () => <NewCoreSampleSVG className="icon" />;
 export const PlanBuildingIcon = () => <PlanBuildingSVG className="icon" />;
 export const PurchaseAsteroidIcon = () => <PurchaseAsteroidSVG className="icon" />;
 export const ScanAsteroidIcon = () => <ScanAsteroidSVG className="icon" />;
+export const SetCourseIcon = () => <SetCourseSVG className="icon" />;
+export const SimulateRouteIcon = () => <SimulateRouteSVG className="icon" />;
+export const StationCrewIcon = () => <StationCrewSVG className="icon" />;
+export const StationPassengersIcon = () => <StationPassengersSVG className="icon" />;
 export const SurfaceTransferIcon = () => <SurfaceTransferSVG className="icon" />;
 export const TravelingFromIcon = () => <TravelingFromSVG className="icon" />;
 export const TravelingToIcon = () => <TravelingToSVG className="icon" />;
@@ -235,9 +261,9 @@ export {
   RiAlertFill as WarningIcon,
   RiFilter2Fill as FilterIcon,
   RiLoginCircleFill as LoginIcon,
-  RiRouteFill as RouteIcon,
   RiSortDesc as SortIcon,
   RiTableFill as TableIcon,
+  RiRouteFill as TripsIcon,
   TiArrowRight as GoIcon,
   VscDebugDisconnect as DisconnectIcon,
   WiMoonAltWaningCrescent5 as DownloadModelIcon,

@@ -1,37 +1,31 @@
-import { Suspense, useContext, useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useContext, useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import styled from 'styled-components';
-import { AxesHelper, Color, Vector3 } from 'three';
+import { AxesHelper, Vector3 } from 'three';
 import { useThrottleCallback } from '@react-hook/throttle';
 import { useThree } from '@react-three/fiber';
 import { Html, useTexture } from '@react-three/drei';
 import gsap from 'gsap';
 
+import { CaptainIcon, FlagMarkerIcon, MyAssetIcon, ShipMarkerIcon } from '~/components/Icons';
 import ClockContext from '~/contexts/ClockContext';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAssetSearch from '~/hooks/useAssetSearch';
+import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useStore from '~/hooks/useStore';
+import useWatchlist from '~/hooks/useWatchlist';
 import useWebWorker from '~/hooks/useWebWorker';
-
+import constants from '~/lib/constants';
 import Orbit from './asteroids/Orbit';
 import Marker from './asteroids/Marker';
 import TravelSolution from './asteroids/TravelSolution';
 import highlighters from './asteroids/highlighters';
 import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
-import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
-import useWatchlist from '~/hooks/useWatchlist';
-import theme from '~/theme';
-import { CaptainIcon, MyAssetIcon, RocketIcon } from '~/components/Icons';
-import constants from '~/lib/constants';
-
-const assetColor = new Color().setStyle(theme.colors.main);
-const watchlistColor = new Color().setStyle('#e35528');
 
 const AsteroidTooltip = styled.div`
   align-items: flex-end;
   display: flex;
   flex-direction: row;
-  pointer-events: none;
   & > div:first-child {
     opacity: ${p => p.hasActiveCrew ? 1 : 0};
     padding-bottom: 3px;
@@ -95,11 +89,6 @@ const Asteroids = (props) => {
     return asteroidSearch?.hits?.length > 0 ? asteroidSearch.hits : [];
   }, [asteroidSearch?.hits]);
 
-  // TODO: can also handle this with white texture and setting color on points, but the hole in the middle to
-  // let original point shine through was not aligning consistently
-  const assetMarker = useTexture(`${process.env.PUBLIC_URL}/textures/markerFilled_blue.png`);
-  const watchlistMarker = useTexture(`${process.env.PUBLIC_URL}/textures/markerFilled_red.png`);
-
   const assetedAsteroids = useMemo(() => {
     const asseted = {};
     (ownedAsteroids || []).forEach((a) => {
@@ -108,7 +97,6 @@ const Asteroids = (props) => {
     });
     if (asteroids?.length > 0) {
       asseted[`${asteroids[0].i}`] = { asteroid: asteroids[0], crew: 1, ships: 2 };
-      
     }
     return asseted;
   }, [asteroids, ownedAsteroids]);
@@ -120,7 +108,7 @@ const Asteroids = (props) => {
 
     // in default search, append watchlist and owned as needed
     Object.keys(assetedAsteroids || {}).forEach((i) => {
-      const already = newMappedAsteroids.find((a) => a.i === i);
+      const already = newMappedAsteroids.find((a) => a.i === Number(i));
       if (already) already.isAsseted = 1;
       else if (isDefaultSearch) newMappedAsteroids.push(Object.assign({ isAsseted: 1 }, assetedAsteroids[i].asteroid));
     });
@@ -224,7 +212,6 @@ const Asteroids = (props) => {
   // re-computeBoundingSphere on geometry change
   useEffect(() => {
     if (asteroidsGeom.current) {
-      console.log('computeBoundingSphere', positions);
       asteroidsGeom.current.computeBoundingSphere();
     }
   }, [positions]);
@@ -311,6 +298,11 @@ const Asteroids = (props) => {
     }
   }, [origin, positions, watchlist]); // don't update when mappedAsteroids updated (wait for positions update)
 
+  // TODO: can also handle this with white texture and setting color on points, but the hole in the middle to
+  // let original point shine through was not aligning consistently
+  const assetMarker = useTexture(`${process.env.PUBLIC_URL}/textures/markerFilled_blue.png`);
+  const watchlistMarker = useTexture(`${process.env.PUBLIC_URL}/textures/markerFilled_red.png`);
+
   return (
     <group>
       {openHudMenu !== 'BELT_PLAN_FLIGHT' && (
@@ -388,7 +380,7 @@ const Asteroids = (props) => {
 
           {/* selected destination marker and orbit */}
           {destinationPos && <Marker asteroidPos={destinationPos} isDestination />}
-          {!!destination && <Orbit asteroid={destination} color={'#ff0000'} />}
+          {!!destination && <Orbit asteroid={destination} color={'#cccccc'} />}
 
           {/* flight line (only in simulation mode) */}
           <TravelSolution />
@@ -411,8 +403,9 @@ const Asteroids = (props) => {
                         {assetedAsteroids[i] && (
                           <span>
                             {assetedAsteroids[i]?.owned && <MyAssetIcon />}
-                            {assetedAsteroids[i]?.ships > 0 && <RocketIcon />}
-                            {assetedAsteroids[i]?.ships > 1 && <RocketIcon />}
+                            {assetedAsteroids[i]?.ships > 0 && <ShipMarkerIcon />}
+                            {assetedAsteroids[i]?.ships > 1 && <ShipMarkerIcon />}
+                            {!assetedAsteroids[i]?.owned && <FlagMarkerIcon />}
                           </span>
                         )}
                         {isOrigin && (

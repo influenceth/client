@@ -265,29 +265,12 @@ const SolutionLabels = ({ center, mousePos, shipParams }) => {
     tof
   } = useMemo(() => {
     if (!travelSolution) return {};
-    const invalid = travelSolution.deltaV > shipParams.maxDeltaV;
-
-    // deltav = v_e * ln(wetmass / drymass)
-    let usedPropellantMass;
-
-    // deltav = v_e * ln((drymass + propused) / drymass)
-    if (invalid) {
-      // if invalid, calculate the required propellant if 100% is to be used (i.e. actual === used)
-      let drymass = (shipParams.emptyMass + shipParams.actualCargoMass);
-      usedPropellantMass = drymass * (Math.exp(travelSolution.deltaV / shipParams.exhaustVelocity) - 1);
-
-    // deltav = v_e * ln(wetmass / (wetmass - usedprop))
-    } else {
-      let wetmass = (shipParams.emptyMass + shipParams.actualCargoMass + shipParams.actualPropellantMass);
-      usedPropellantMass = wetmass * (1 - 1 / Math.exp(travelSolution.deltaV / shipParams.exhaustVelocity));
-    }
-
     return {
       arrival: Math.round(travelSolution.arrivalTime - coarseTime),
       delay: Math.round(travelSolution.departureTime - coarseTime),
-      invalid,
+      invalid: travelSolution.invalid,
       tof: (travelSolution.arrivalTime - travelSolution.departureTime),
-      usedPropellant: Math.ceil(100 * usedPropellantMass / shipParams.actualPropellantMass)
+      usedPropellant: Math.ceil(travelSolution.usedPropellantPercent)
     }
   }, [shipParams, travelSolution]);
 

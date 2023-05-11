@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import Dropdown from '~/components/DropdownV2';
+import { CloseIcon } from '~/components/Icons';
 import NumberInput from '~/components/NumberInput';
 import Porkchop from '~/components/Porkchop';
 import SliderInput from '~/components/SliderInput';
@@ -62,12 +63,17 @@ const SliderInfoRow = styled.div`
 const SliderSection = styled.div``;
 
 const SectionHeader = styled.div`
+  align-items: center;
   border-bottom: 1px solid #333;
   color: #777;
+  display: flex;
   font-size: 13px;
   height: 22px;
   margin-bottom: 4px;
   text-transform: uppercase;
+  & > span:first-child {
+    flex: 1;
+  }
 `;
 const SectionBody = styled.div`
   padding-left: 12px;
@@ -98,6 +104,16 @@ const Value = styled.span`
       margin-right: 8px;
     }
   `}
+`;
+
+const Closer = styled.span`
+  color: ${p => p.theme.colors.red};
+  cursor: ${p => p.theme.cursors.active};
+  opacity: 0.5;
+  transition: opacity 250ms ease;
+  &:hover {
+    opacity: 1;
+  }
 `;
 
 const resolution = 1;
@@ -149,6 +165,7 @@ const RoutePlanner = () => {
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
+  const dispatchTravelSolution = useStore(s => s.dispatchTravelSolution);
   const timeOverride = useStore(s => s.timeOverride);
   const travelSolution = useStore(s => s.asteroids.travelSolution);
 
@@ -168,6 +185,10 @@ const RoutePlanner = () => {
   const onSetPropellantMass = useCallback((amount) => {
     setPropellantMass(Math.max(0, Math.min(ship?.maxPropellantMass, Math.floor(parseInt(amount) || 0))));
   }, [ship]);
+
+  const onCancel = useCallback(() => {
+    dispatchTravelSolution();
+  }, []);
 
   const shipParams = useMemo(() => {
     if (!ship) return 0;
@@ -291,7 +312,12 @@ const RoutePlanner = () => {
         </SliderSection>
       </Sliders>
 
-      <SectionHeader style={{ marginBottom: 10 }}>Ballistic Transfer Graph</SectionHeader>
+      <SectionHeader style={{ marginBottom: 10 }}>
+        <span>Ballistic Transfer Graph</span>
+        {travelSolution && (
+          <Closer onClick={onCancel}><CloseIcon /></Closer>
+        )}
+      </SectionHeader>
       <SectionBody>
         {shipParams && originPath && destinationPath && (
           <Porkchop

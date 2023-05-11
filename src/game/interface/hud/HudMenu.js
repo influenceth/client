@@ -16,17 +16,13 @@ import {
   LotSearchIcon,
   MyAssetsIcon,
   ResourceIcon,
-  RocketIcon,
+  SimulateRouteIcon,
 } from '~/components/Icons';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import hudMenus from './hudMenus';
 import useAuth from '~/hooks/useAuth';
 import { useHistory } from 'react-router-dom';
-
-// const background = 'rgba(0, 0, 0, 0.9)';
-// export const background = 'rgba(0, 14, 25, 0.9)';
-export const background = 'rgba(15, 15, 15, 0.85)';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -47,7 +43,7 @@ const Wrapper = styled.div`
   z-index: 2;
 `;
 const Buttons = styled.div`
-  background: ${background};
+  background: ${p => p.theme.colors.hudMenuBackground};
   border-left: 1px solid #444;
   clip-path: polygon(
     0 ${cornerWidth}px,
@@ -101,7 +97,7 @@ const Button = styled.div`
 `;
 
 const Panel = styled.div`
-  background: ${background};
+  background: ${p => p.theme.colors.hudMenuBackground};
   border-left: 1px solid #444;
   clip-path: polygon(
     100% 0,
@@ -258,7 +254,7 @@ const HudMenu = () => {
         out.push({
           key: 'BELT_PLAN_FLIGHT',
           label: 'Plan Flight',
-          icon: <RocketIcon />,
+          icon: <SimulateRouteIcon />,
           Component: hudMenus.RoutePlanner,
           noDetail: true
         });

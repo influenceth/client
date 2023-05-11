@@ -6,7 +6,7 @@ import AvatarMenu from './hud/AvatarMenu';
 import InfoPane from './hud/InfoPane';
 import SystemControls from './hud/SystemControls';
 import HudMenu from './hud/HudMenu';
-import SearchResultsBanner from './hud/SearchResultsBanner';
+import SceneBanner from './hud/SceneBanner';
 
 const bottomMargin = 60;
 
@@ -78,7 +78,7 @@ const HUD = () => {
         <InfoPane />
       </LeftWrapper>
 
-      <SearchResultsBanner />
+      <SceneBanner />
 
       <HudMenu />
 

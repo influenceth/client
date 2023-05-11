@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { RocketIcon } from '~/components/Icons';
+import { SimulateRouteIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
 
@@ -27,7 +27,7 @@ const SelectTravelDestination = ({}) => {
         disabled: inTravelMode && !destination
       }}
       label={origin && destination && inTravelMode ? 'Optimize Route' : 'Plan Flight'}
-      icon={<RocketIcon />}
+      icon={<SimulateRouteIcon />}
       onClick={handleClick} />
   );
 };

@@ -183,6 +183,10 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
     }
   }, [canvasRefIsSet, originPath, destinationPath, maxDeltaV]);
 
+  useEffect(() => {
+    if (!travelSolution) setSelectionPos();
+  }, [travelSolution])
+
   const getMouseData = useCallback((e) => {
     const data = {
       x: Math.max(0, Math.min(e.nativeEvent.offsetX / size, 1)),
@@ -218,6 +222,27 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
       dVel.toArray(),
     );
 
+    const invalid = solution.deltaV > maxDeltaV;
+
+    // deltav = v_e * ln(wetmass / drymass)
+    let usedPropellantMass;
+
+    // deltav = v_e * ln((drymass + propused) / drymass)
+    // (if invalid, calculate the required propellant req if 100% is to be used (i.e. actual === used))
+    if (invalid) {
+      let drymass = (shipParams.emptyMass + shipParams.actualCargoMass);
+      usedPropellantMass = drymass * (Math.exp(solution.deltaV / shipParams.exhaustVelocity) - 1);
+
+    // deltav = v_e * ln(wetmass / (wetmass - usedprop))
+    } else {
+      let wetmass = (shipParams.emptyMass + shipParams.actualCargoMass + shipParams.actualPropellantMass);
+      usedPropellantMass = wetmass * (1 - 1 / Math.exp(solution.deltaV / shipParams.exhaustVelocity));
+    }
+
+
+
+
+
     // TODO: include positions in state?
 
     // TODO: should we use absolute times here so not stale until coarseTime > departureTime
@@ -226,13 +251,16 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
     //        should we not clear solution unless cleared (keep flight line, but highlighted orbit lines from now until departure/arrival)
     dispatchTravelSolution({
       ...solution,
+      invalid,
+      usedPropellantMass,
+      usedPropellantPercent: 100 * usedPropellantMass / shipParams.actualPropellantMass,
       departureTime: baseTime + delay,
       arrivalTime: baseTime + delay + tof,
       originPosition: oPos.toArray(),
       originVelocity: oVel.toArray(),
       destinationPosition: dPos.toArray(),
     });
-  }, [originPath, destinationPath]);
+  }, [originPath, destinationPath, maxDeltaV, shipParams]);
 
   const handleMouseMove = useCallback((e) => {
     if (loading) return;
@@ -257,7 +285,7 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
           width={maxDelay - minDelay}
           style={{ verticalAlign: 'bottom', height: `${size}px`, width: `${size}px` }} />
         <Grid />
-        {selectionPos && <Reticule selected center={selectionPos} fade={!!mousePos} invalid={travelSolution?.deltaV > maxDeltaV} />}
+        {selectionPos && <Reticule selected center={selectionPos} fade={!!mousePos} invalid={travelSolution?.invalid} />}
         {mousePos && <Reticule center={mousePos} />}
       </PorkchopContainer>
       <Solutionless show={!solutionsExist && !loading}>

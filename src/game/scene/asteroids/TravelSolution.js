@@ -10,7 +10,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import frag from './orbit/orbit.frag';
 import vert from './orbit/orbit.vert';
 
-const solutionPoints = 100;
+const solutionPoints = 240;
 const initialUniforms = {
   uTime: { type: 'i', value: 0 },
   uAlpha: { type: 'f', value: 1.0 },

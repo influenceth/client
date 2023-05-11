@@ -43,6 +43,7 @@ const theme = {
     contentBackdrop: 'rgba(0, 0, 0, 0.5)',
     contentHighlight: 'rgba(40, 40, 40, 0.5)',
     contentDark: 'rgb(40, 40, 40)',
+    hudMenuBackground: 'rgba(15, 15, 15, 0.85)',
     mainText: '#cccccc',
     secondaryText: '#999999',
     disabledText: 'rgba(255,255,255,0.4)',

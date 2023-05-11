@@ -6,6 +6,7 @@ import PlanBuilding from './PlanBuilding';
 import PurchaseAsteroid from './PurchaseAsteroid';
 import ScanAsteroid from './ScanAsteroid';
 import SelectTravelDestination from './SelectTravelDestination';
+import SetCourse from './SetCourse';
 import SurfaceTransferIncoming from './SurfaceTransferIncoming';
 import SurfaceTransferOutgoing from './SurfaceTransferOutgoing';
 import UnplanBuilding from './UnplanBuilding';
@@ -19,6 +20,7 @@ const ActionsButtons = {
   PurchaseAsteroid,
   ScanAsteroid,
   SelectTravelDestination,
+  SetCourse,
   SurfaceTransferIncoming,
   SurfaceTransferOutgoing,
   UnplanBuilding,

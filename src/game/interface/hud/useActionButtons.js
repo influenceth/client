@@ -16,7 +16,9 @@ const useActionButtons = () => {
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const { lotId } = useStore(s => s.asteroids.lot || {});
+  const openHudMenu = useStore(s => s.openHudMenu);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
+  const travelMode = useStore(s => s.asteroids.travelMode);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const setAction = useStore(s => s.dispatchActionDialog);
 
@@ -43,7 +45,11 @@ const useActionButtons = () => {
           a.push(actionButtons.ScanAsteroid);
         }
       }
-      a.push(actionButtons.SelectTravelDestination);
+      if (openHudMenu === 'BELT_PLAN_FLIGHT') {
+        a.push(actionButtons.SetCourse);
+      } else {
+        a.push(actionButtons.SelectTravelDestination);
+      }
       if (asteroid.scanned && lot && crew && zoomStatus === 'in') {
         a.push(actionButtons.CoreSample);
 
