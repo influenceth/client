@@ -7,7 +7,6 @@ import { AdalianOrbit } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
 
 import ClockContext from '~/contexts/ClockContext';
-import constants from '~/lib/constants';
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
 import orbitColors from './orbit/orbitColors';
@@ -90,29 +89,6 @@ const TravelSolution = ({}) => {
       v1
     );
     
-    const initialAngle = solutionOrbit.getTrueAnomalyAtPos({
-      x: originPosition[0],
-      y: originPosition[1],
-      z: originPosition[2],
-    });
-
-    let finalAngle = solutionOrbit.getTrueAnomalyAtPos({
-      x: destinationPosition[0],
-      y: destinationPosition[1],
-      z: destinationPosition[2],
-    });
-    while (finalAngle < initialAngle) finalAngle += 2 * Math.PI;
-    
-    // const slnIncrement = (finalAngle - initialAngle) / solutionPoints;
-
-    // const newPositions = [];
-    // newPositions.push(...Object.values(originPosition));
-    // for (let t = initialAngle; t <= finalAngle; t += slnIncrement) {
-    //   const p = solutionOrbit.getPosByAngle(t);
-    //   newPositions.push(...[ p.x, p.y, p.z ]);
-    // }
-    // newPositions.push(...Object.values(destinationPosition));
-    
     const totalTime = arrivalTime - departureTime;
     const timeInc = (arrivalTime - departureTime) / solutionPoints;
     const halfway = 3 * (solutionPoints + 2) / 2;
@@ -121,6 +97,7 @@ const TravelSolution = ({}) => {
     let trajectoryLengthEstimate = 0;
     let currentPosition = new Vector3();
     let previousPosition = new Vector3();
+
     const newPositions = [];
     newPositions.push(...Object.values(originPosition));
     for (let t = 0; t < totalTime; t += timeInc) {
@@ -137,19 +114,20 @@ const TravelSolution = ({}) => {
       previousPosition.copy(currentPosition);
     }
     newPositions.push(...Object.values(destinationPosition));
+
     setTrajectory(new Float32Array(newPositions));
     setTrajectoryCenter(centerPosition);
     setTrajectoryLength(trajectoryLengthEstimate);
     setOrder(new Float32Array(Array(newPositions.length).fill().map((_, i) => i + 1)));
 
-    // TODO: comment this out vvv
-    let debugPositions = [];
-    solutionOrbit.getSmoothOrbit(360).forEach(p => {
-      debugPositions.push(...[ p.x, p.y, p.z ]);//.map(v => v * constants.AU));
-    });
-    setTrajectoryDebug(new Float32Array(debugPositions));
-    console.log('solution.orbit.ecc', solutionOrbit.orbit.ecc);
-    // ^^^
+    // // TODO: comment this out vvv
+    // let debugPositions = [];
+    // solutionOrbit.getSmoothOrbit(360).forEach(p => {
+    //   debugPositions.push(...[ p.x, p.y, p.z ]);//.map(v => v * constants.AU));
+    // });
+    // setTrajectoryDebug(new Float32Array(debugPositions));
+    // console.log('solution.orbit.ecc', solutionOrbit.orbit.ecc, 'period', solutionOrbit.getPeriod());
+    // // ^^^
 
     const originPositions = [];
     const originOrbit = new AdalianOrbit(origin.orbital);
@@ -201,14 +179,14 @@ const TravelSolution = ({}) => {
             }]} />
         </line>
       )}
-      {false && trajectoryDebug && (
+      {/*trajectoryDebug && (
         <line>
           <bufferGeometry>
             <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ trajectoryDebug, 3 ]} />
           </bufferGeometry>
           <lineBasicMaterial color={orbitColors.white} transparent opacity={0.2} />
         </line>
-      )}
+      )*/}
 
       {predeparture && (
         <line>

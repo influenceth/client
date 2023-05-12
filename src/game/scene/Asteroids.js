@@ -454,7 +454,7 @@ const Asteroids = (props) => {
                 const display = openHudMenu !== 'BELT_PLAN_FLIGHT' || isOrigin || isDestination;
                 return !display ? null : (
                   <Html
-                    key={i}
+                    key={`billboard_${i}`}
                     position={assetPositionsById[i]}
                     style={{ pointerEvents: 'none', transform: `translate(-45px, calc(-100% - ${(isOrigin || isDestination) ? 15 : 5}px))` }}>
                     <AsteroidTooltip hasActiveCrew={assetedAsteroids[i]?.crew}>
