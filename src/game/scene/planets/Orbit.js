@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { KeplerianOrbit } from '@influenceth/sdk';
+import { AdalianOrbit } from '@influenceth/sdk';
 
 import constants from '~/lib/constants';
 import theme from '~/theme';
@@ -11,9 +11,9 @@ const Orbit = (props) => {
 
   const positions = useMemo(() => {
     const vertices = [];
-    const keplerianOrbit = new KeplerianOrbit(props.planet.orbital);
-    keplerianOrbit.getSmoothOrbit(360).forEach(p => {
-      vertices.push(...[ p.x, p.y, p.z ].map(v => v * constants.AU))
+    const orbit = new AdalianOrbit(props.planet.orbital);
+    orbit.getSmoothOrbit(360).forEach(p => {
+      vertices.push(...[ p.x, p.y, p.z ]);//.map(v => v * constants.AU))
     });
 
     return new Float32Array(vertices);

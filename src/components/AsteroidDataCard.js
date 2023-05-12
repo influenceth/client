@@ -50,7 +50,7 @@ const AsteroidDataCard = (props) => {
           <DataReadout
             label="Orbital Period"
             copyable={asteroid.orbital.a}>
-            {formatters.period(asteroid.orbital.a)}
+            {formatters.period(asteroid.orbital)}
           </DataReadout>
           <DataReadout
             label="Semi-major Axis"

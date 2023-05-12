@@ -8,6 +8,6 @@ varying float vOrder;
 
 void main() {
   float dashMult = uDash ? mod(floor(vOrder / 4.), 2.) : 1.;
-  float alpha = dashMult * mod(vOrder - uTime * 0.25, uCount) / uCount;
-  gl_FragColor = vec4(uCol, clamp(alpha, uAlphaMin, 1.0));
+  float alpha = mod(vOrder - uTime * 0.25, uCount) / uCount;
+  gl_FragColor = vec4(uCol, dashMult * clamp(alpha, uAlphaMin, uAlpha));
 }

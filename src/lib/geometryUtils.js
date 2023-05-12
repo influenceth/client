@@ -1,15 +1,16 @@
-import { KeplerianOrbit } from '@influenceth/sdk';
+import { AdalianOrbit } from '@influenceth/sdk';
 import { Vector3 } from 'three';
 
 import constants from '~/lib/constants';
 
 export const getUpdatedAsteroidPositions = function(orbitals, elapsed = 0) {
   const positions = new Float32Array(orbitals.length * 3);
+
   orbitals.forEach((orbital, i) => {
-    const coords = (new KeplerianOrbit(orbital)).getPositionAtTime(elapsed);
-    positions[i * 3 + 0] = coords.x * constants.AU;
-    positions[i * 3 + 1] = coords.y * constants.AU;
-    positions[i * 3 + 2] = coords.z * constants.AU;
+    const coords = (new AdalianOrbit(orbital)).getPositionAtTime(elapsed);
+    positions[i * 3 + 0] = coords.x;// * constants.AU;
+    positions[i * 3 + 1] = coords.y;// * constants.AU;
+    positions[i * 3 + 2] = coords.z;// * constants.AU;
   });
   return positions;
 };
@@ -17,10 +18,10 @@ export const getUpdatedAsteroidPositions = function(orbitals, elapsed = 0) {
 export const getUpdatedPlanetPositions = function(orbitals, elapsed = 0) {
   const positions = new Float32Array(orbitals.length * 3);
   orbitals.forEach((orbital, i) => {
-    const coords = (new KeplerianOrbit(orbital)).getPositionAtTime(elapsed);
-    positions[i * 3 + 0] = coords.x * constants.AU;
-    positions[i * 3 + 1] = coords.y * constants.AU;
-    positions[i * 3 + 2] = coords.z * constants.AU;
+    const coords = (new AdalianOrbit(orbital)).getPositionAtTime(elapsed);
+    positions[i * 3 + 0] = coords.x;// * constants.AU;
+    positions[i * 3 + 1] = coords.y;// * constants.AU;
+    positions[i * 3 + 2] = coords.z;// * constants.AU;
   });
   return positions;
 };
@@ -66,11 +67,11 @@ const getPerpendicular = (n) => {
 export const sampleAsteroidOrbit = (baseTime, orbital, minOffset, maxOffset, increment) => {
   const positions = [];
   const velocities = [];
-  const orbit = new KeplerianOrbit(orbital);
+  const orbit = new AdalianOrbit(orbital);
   for (let delay = minOffset; delay < maxOffset + 1; delay += increment) {
     const p = orbit.getPositionAtTime(baseTime + delay)
     positions[delay] = new Vector3(p.x, p.y, p.z);
-    positions[delay].multiplyScalar(constants.AU);
+    // positions[delay].multiplyScalar(constants.AU);
 
     // set velocity of previous based on this position
     if (positions[delay - increment]) {

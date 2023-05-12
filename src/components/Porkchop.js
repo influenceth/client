@@ -160,7 +160,6 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
           if (zeroSolutionsExist && deltaVs[i] > 0 && deltaVs[i] < maxDeltaV) {
             zeroSolutionsExist = false;
           }
-          if (delay === minDelay) console.log(i, deltaVs[i]);
           canvasCtx.fillStyle = deltaVColor(deltaVs[i], maxDeltaV);
           canvasCtx.fillRect(col, height - i, 1, -1);
           currentBucket = Math.floor(isobuckets * deltaVs[i] / maxDeltaV);

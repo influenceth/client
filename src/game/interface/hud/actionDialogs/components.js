@@ -51,6 +51,7 @@ import Dialog from '~/components/Dialog';
 import actionStage from '~/lib/actionStages';
 import { theming } from '../ActionDialog';
 import ReactTooltip from 'react-tooltip';
+import constants from '~/lib/constants';
 
 const SECTION_WIDTH = 780;
 
@@ -2050,3 +2051,14 @@ export const formatVolume = (ml, { abbrev = true, minPrecision = 3, fixedPrecisi
   }
   return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
 };
+
+export const formatBeltDistance = (m) => {
+  if (m > constants.AU) {
+    return `${(Math.round(100 * m / constants.AU) / 100).toLocaleString()} AU`;
+  } else if (m > 1e9) {
+    return `${(Math.round(m / 1e8) / 10).toLocaleString()}m km`;
+  } else if (m > 1e6) {
+    return `${(Math.round(m / 1e5) / 10).toLocaleString()}k km`;
+  }
+  return `${Math.round(m / 1e3).toLocaleString()} km`;
+}

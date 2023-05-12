@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import ClockContext from '~/contexts/ClockContext';
 import useStore from '~/hooks/useStore';
+import { WarningIcon } from '../Icons';
 
 const tagHeight = 22;
 const halfTagHeight = tagHeight / 2;
@@ -285,7 +286,7 @@ const SolutionLabels = ({ center, mousePos, shipParams }) => {
       <CornerLabels x={center.x} y={center.y} mousePos={mousePos}>
         <Row>
           <Label>Propellant Used</Label>
-          <StatValue colorValue={usedPropellant}>{usedPropellant}%</StatValue>
+          <StatValue colorValue={usedPropellant}>{usedPropellant > 1000 ? <WarningIcon /> : `${usedPropellant}%`}</StatValue>
         </Row>
         <Row>
           <ArrivalLabel>Arrival In</ArrivalLabel>

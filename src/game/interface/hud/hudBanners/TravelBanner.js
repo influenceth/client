@@ -94,7 +94,7 @@ const TravelBanner = ({ visible }) => {
       )}
       {travelSolution && travelSolution.invalid && (
         <Content color={bannerColor}>
-          <Side><GasIcon /> {formatFixed(travelSolution.usedPropellantPercent, 1)}%</Side>
+          <Side><GasIcon /> {travelSolution.usedPropellantPercent > 100 ? '' : `${formatFixed(travelSolution.usedPropellantPercent, 1)}%`}</Side>
           <Center>Route is not possible with specified parameters.</Center>
           <Side><WarningIcon /></Side>
         </Content>

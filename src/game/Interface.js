@@ -24,7 +24,6 @@ import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
 import LotViewer from './interface/LotViewer';
-import RouteDetails from './interface/details/RouteDetails';
 import WatchlistTable from './interface/details/WatchlistTable';
 import theme from '~/theme';
 import Cutscene from './Cutscene';
@@ -126,9 +125,6 @@ const Interface = () => {
             </Route>
             <Route path="/owned-asteroids">
               <OwnedAsteroidsTable />
-            </Route>
-            <Route path="/route">
-              <RouteDetails />
             </Route>
             <Route path="/watchlist">
               <WatchlistTable />

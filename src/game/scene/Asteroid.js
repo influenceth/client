@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { AxesHelper, CameraHelper, Color, DirectionalLight, DirectionalLightHelper, Vector3 } from 'three';
 import gsap from 'gsap';
-import { KeplerianOrbit, toSpectralType, Asteroid as AsteroidLib, Inventory } from '@influenceth/sdk';
+import { AdalianOrbit, toSpectralType, Asteroid as AsteroidLib, Inventory } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -296,9 +296,9 @@ const Asteroid = (props) => {
 
       // init orbit, position, and rotation
       const time = getTime();
-      asteroidOrbit.current = new KeplerianOrbit(asteroidData.orbital);
+      asteroidOrbit.current = new AdalianOrbit(asteroidData.orbital);
       rotationAxis.current = c.seed.clone().normalize();
-      position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU);
+      position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time));//.map(v => v * constants.AU);
       rotation.current = time * c.rotationSpeed * 2 * Math.PI;
 
       // if geometry.current already exists, dispose first
@@ -796,7 +796,7 @@ const Asteroid = (props) => {
     // update asteroid position
     const time = getTime();
     if (asteroidOrbit.current && time) {
-      position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time)).map(v => v * constants.AU);
+      position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time));//.map(v => v * constants.AU);
 
       // update object and camera position (if zoomed in)
       if (zoomStatus === 'in') {

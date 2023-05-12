@@ -21,6 +21,7 @@ import TravelSolution from './asteroids/TravelSolution';
 import highlighters from './asteroids/highlighters';
 import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
+import { formatBeltDistance } from '../interface/hud/actionDialogs/components';
 
 const blueMarkerColor = new Color('#20bde5').convertSRGBToLinear();
 const redMarkerColor = new Color('#fd7056').convertSRGBToLinear();
@@ -43,6 +44,18 @@ const AsteroidTooltip = styled.div`
       white-space: nowrap;
     }
   }
+`;
+
+const DistanceTooltip = styled.div`
+  background: rgba(0, 0, 0, 0.7);
+  color: #999;
+  font-size: 15px;
+  left: -50%;
+  top: -7.5px;
+  padding: 2px 4px;
+  position: relative;
+  text-transform: uppercase;
+  white-space: nowrap;
 `;
 
 
@@ -302,6 +315,26 @@ const Asteroids = (props) => {
     }
   }, [origin, positions, watchlist]); // don't update when mappedAsteroids updated (wait for positions update)
 
+  const [originToDestination, originToDestinationDistance, originToDestinationHalfway] = useMemo(() => {
+    if (originPos && destinationPos) {
+      const o = new Vector3(originPos[0], originPos[1], originPos[2]);
+      const d = new Vector3(destinationPos[0], destinationPos[1], destinationPos[2]);
+      return [
+        new Float32Array([
+          originPos[0], originPos[1], originPos[2],
+          destinationPos[0], destinationPos[1], destinationPos[2],
+        ]),
+        formatBeltDistance(o.distanceTo(d)),
+        [
+          (originPos[0] + destinationPos[0]) / 2,
+          (originPos[1] + destinationPos[1]) / 2,
+          (originPos[2] + destinationPos[2]) / 2,
+        ]
+      ];
+    }
+    return [];
+  }, [originPos, destinationPos]);
+
   const diamondMarker = useTexture(`${process.env.PUBLIC_URL}/textures/asteroids/solid_diamond.png`);
 
   return (
@@ -381,21 +414,36 @@ const Asteroids = (props) => {
           {destinationPos && <Marker asteroidPos={destinationPos} isDestination travelSolution={travelSolution} />}
           {travelSolution && (
             <>
-              <Marker asteroidPos={travelSolution?.originPosition} travelSolution={travelSolution} isOrigin isTravelMarker />
-              <Marker asteroidPos={travelSolution?.destinationPosition} travelSolution={travelSolution} isDestination isTravelMarker />
-              <Orbit asteroid={origin} opacityMult={0.65} />
-              <Orbit asteroid={destination} opacityMult={0.65} color={travelSolution?.invalid ? 'error' : 'success'} />
+              <Marker asteroidPos={travelSolution.originPosition} travelSolution={travelSolution} isOrigin isTravelMarker />
+              <Marker asteroidPos={travelSolution.destinationPosition} travelSolution={travelSolution} isDestination isTravelMarker />
+              {origin && <Orbit asteroid={origin} opacityMult={0.5} />}
+              {destination && <Orbit asteroid={destination} opacityMult={0.5} color={travelSolution?.invalid ? 'error' : 'success'} />}
             </>
           )}
           {!travelSolution && (
             <>
-              <Orbit asteroid={origin} />
-              <Orbit asteroid={destination} color="gray" />
+              {origin && <Orbit asteroid={origin} />}
+              {destination && <Orbit asteroid={destination} color="gray" />}
+              {origin && destination && (
+                <>
+                  <line>
+                    <bufferGeometry>
+                      <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ originToDestination, 3 ]} />
+                    </bufferGeometry>
+                    <lineBasicMaterial color={0x777777} />
+                  </line>
+                  <Html
+                    position={originToDestinationHalfway}
+                    style={{ pointerEvents: 'none' }}>
+                    <DistanceTooltip>Distance: {originToDestinationDistance}</DistanceTooltip>
+                  </Html>
+                </>
+              )}
             </>
           )}
 
           {/* flight line (only in simulation mode) */}
-          <TravelSolution />
+          <TravelSolution  />
 
           {/* billboarded data */}
           {asteroids && (

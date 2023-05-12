@@ -113,8 +113,12 @@ import TravelingToSVG from '~/assets/icons/action_buttons/TravelingTo.svg';
 import UnplanBuildingSVG from '~/assets/icons/action_buttons/UnplanBuilding.svg';
 
 import FlagMarkerSVG from '~/assets/icons/scene/Flag.svg';
+import RouteValidSVG from '~/assets/icons/scene/RouteValidIcon.svg';
+import RouteInvalidSVG from '~/assets/icons/scene/RouteInvalidIcon.svg';
 import ShipMarkerSVG from '~/assets/icons/scene/Ship.svg';
 export const FlagMarkerIcon = () => <FlagMarkerSVG style={{ width: '0.83em' }} className="icon" />;
+export const RouteValidIcon = () => <RouteValidSVG className="icon" />;
+export const RouteInvalidIcon = () => <RouteInvalidSVG className="icon" />;
 export const ShipMarkerIcon = () => <ShipMarkerSVG style={{ width: '0.67em' }} className="icon" />;
 
 /*

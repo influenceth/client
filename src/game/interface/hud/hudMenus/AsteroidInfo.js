@@ -187,7 +187,7 @@ const AsteroidInfo = ({ onClose }) => {
         <InfoRow>
           <OrbitalPeriodIcon />
           <label>Orbital Period</label>
-          <span>{formatters.period(asteroid.orbital.a)}</span>
+          <span>{formatters.period(asteroid.orbital)}</span>
         </InfoRow>
         <InfoRow>
           <SemiMajorAxisIcon />

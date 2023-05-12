@@ -1,4 +1,4 @@
-import { KeplerianOrbit, toSpectralType } from '@influenceth/sdk';
+import { AdalianOrbit, toSpectralType } from '@influenceth/sdk';
 import { utils as ethersUtils } from 'ethers';
 
 const formatters = {
@@ -8,8 +8,8 @@ const formatters = {
 
   inclination: (i) => (i * 180 / Math.PI).toLocaleString() + '°',
 
-  period: (a) => {
-    const orbit = new KeplerianOrbit({ a });
+  period: (orbital) => {
+    const orbit = new AdalianOrbit(orbital);
     return Math.round(orbit.getPeriod()).toLocaleString() + ' days';
   },
 

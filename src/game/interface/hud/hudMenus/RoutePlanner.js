@@ -107,7 +107,7 @@ const Value = styled.span`
 `;
 
 const Closer = styled.span`
-  color: ${p => p.theme.colors.red};
+  color: ${p => p.theme.colors.main};
   cursor: ${p => p.theme.cursors.active};
   opacity: 0.5;
   transition: opacity 250ms ease;

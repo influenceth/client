@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { KeplerianOrbit } from '@influenceth/sdk';
+import { AdalianOrbit } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
 
 import constants from '~/lib/constants';
@@ -26,10 +26,10 @@ const Orbit = ({ asteroid, color, opacityMult = 1, staticOpacity }) => {
   });
 
   useEffect(() => {
-    const keplerianOrbit = new KeplerianOrbit(asteroid.orbital);
+    const orbit = new AdalianOrbit(asteroid.orbital);
     let newPositions = [];
-    keplerianOrbit.getSmoothOrbit(360).forEach(p => {
-      newPositions.push(...[ p.x, p.y, p.z ].map(v => v * constants.AU));
+    orbit.getSmoothOrbit(360).forEach(p => {
+      newPositions.push(...[ p.x, p.y, p.z ]);//.map(v => v * constants.AU));
     });
 
     setPositions(new Float32Array(newPositions));

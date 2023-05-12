@@ -7,6 +7,7 @@ const orbitColors = {
   error: new Color(theme.colors.error).convertSRGBToLinear(),
   success: new Color(theme.colors.success).convertSRGBToLinear(),
   white: new Color('#ffffff').convertSRGBToLinear(),
+  gray: new Color('#cccccc').convertSRGBToLinear(),
 };
 
 export default orbitColors;

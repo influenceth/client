@@ -329,7 +329,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
             <div>
               <OrbitalPeriodIcon />
               <label>Orbital Period</label>
-              <span>{formatters.period(asteroid.orbital.a)}</span>
+              <span>{formatters.period(asteroid.orbital)}</span>
             </div>
             <div>
               <InclinationIcon />
