@@ -1,6 +1,6 @@
 import { useContext, useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import styled from 'styled-components';
-import { AxesHelper, Vector3 } from 'three';
+import { AxesHelper, Color, Vector3 } from 'three';
 import { useThrottleCallback } from '@react-hook/throttle';
 import { useThree } from '@react-three/fiber';
 import { Html, useTexture } from '@react-three/drei';
@@ -21,6 +21,9 @@ import TravelSolution from './asteroids/TravelSolution';
 import highlighters from './asteroids/highlighters';
 import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
+
+const blueMarkerColor = new Color('#20bde5').convertSRGBToLinear();
+const redMarkerColor = new Color('#fd7056').convertSRGBToLinear();
 
 const AsteroidTooltip = styled.div`
   align-items: flex-end;
@@ -54,8 +57,9 @@ const Asteroids = (props) => {
   const cameraNeedsReorientation = useStore(s => s.cameraNeedsReorientation);
   const isAssetSearchMatchingDefault = useStore(s => s.isAssetSearchMatchingDefault);
   const filters = useStore(s => s.assetSearch.asteroids?.filters);
-  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const openHudMenu = useStore(s => s.openHudMenu);
+  const travelSolution = useStore(s => s.asteroids.travelSolution);
+  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const hoverAsteroid = useStore(s => s.dispatchAsteroidHovered);
   const unhoverAsteroid = useStore(s => s.dispatchAsteroidUnhovered);
   const selectOrigin = useStore(s => s.dispatchOriginSelected);
@@ -298,10 +302,7 @@ const Asteroids = (props) => {
     }
   }, [origin, positions, watchlist]); // don't update when mappedAsteroids updated (wait for positions update)
 
-  // TODO: can also handle this with white texture and setting color on points, but the hole in the middle to
-  // let original point shine through was not aligning consistently
-  const assetMarker = useTexture(`${process.env.PUBLIC_URL}/textures/markerFilled_blue.png`);
-  const watchlistMarker = useTexture(`${process.env.PUBLIC_URL}/textures/markerFilled_red.png`);
+  const diamondMarker = useTexture(`${process.env.PUBLIC_URL}/textures/asteroids/solid_diamond.png`);
 
   return (
     <group>
@@ -314,10 +315,10 @@ const Asteroids = (props) => {
                 <points>
                   <pointsMaterial
                     attach="material"
-                    depthWrite={false}
+                    color={blueMarkerColor}
                     size={15}
                     sizeAttenuation={false}
-                    map={assetMarker}
+                    map={diamondMarker}
                     toneMapped={false}
                     transparent />
                   <bufferGeometry>
@@ -329,10 +330,10 @@ const Asteroids = (props) => {
                 <points>
                   <pointsMaterial
                     attach="material"
-                    depthWrite={false}
+                    color={redMarkerColor}
                     size={15}
                     sizeAttenuation={false}
-                    map={watchlistMarker}
+                    map={diamondMarker}
                     toneMapped={false}
                     transparent />
                   <bufferGeometry>
@@ -368,19 +369,30 @@ const Asteroids = (props) => {
         </>
       )}
 
-
       {zoomStatus === 'out' && (
         <>
           {/* hover reticule */}
           {hoveredPos && <Marker asteroidPos={hoveredPos} />}
           
           {/* selected origin marker and orbit */}
-          {originPos && <Marker asteroidPos={originPos} isOrigin />}
-          {!!origin && <Orbit asteroid={origin} />}
+          {originPos && <Marker asteroidPos={originPos} isOrigin hasDestination={!!destination} travelSolution={travelSolution} />}
 
           {/* selected destination marker and orbit */}
-          {destinationPos && <Marker asteroidPos={destinationPos} isDestination />}
-          {!!destination && <Orbit asteroid={destination} color={'#cccccc'} />}
+          {destinationPos && <Marker asteroidPos={destinationPos} isDestination travelSolution={travelSolution} />}
+          {travelSolution && (
+            <>
+              <Marker asteroidPos={travelSolution?.originPosition} travelSolution={travelSolution} isOrigin isTravelMarker />
+              <Marker asteroidPos={travelSolution?.destinationPosition} travelSolution={travelSolution} isDestination isTravelMarker />
+              <Orbit asteroid={origin} opacityMult={0.65} />
+              <Orbit asteroid={destination} opacityMult={0.65} color={travelSolution?.invalid ? 'error' : 'success'} />
+            </>
+          )}
+          {!travelSolution && (
+            <>
+              <Orbit asteroid={origin} />
+              <Orbit asteroid={destination} color="gray" />
+            </>
+          )}
 
           {/* flight line (only in simulation mode) */}
           <TravelSolution />

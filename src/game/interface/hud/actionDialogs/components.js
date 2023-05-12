@@ -1980,7 +1980,12 @@ export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecis
 export const formatMass = (grams, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   let unitLabel;
   let scale;
-  if (grams >= 1e12) {
+  if (grams >= 1e18) {
+    return `${(grams / 1e3).toExponential((fixedPrecision || minPrecision || 1) - 1)} ${abbrev ? 'kg' : 'kilograms'}`;
+  } else if (grams >= 1e15) {
+    scale = 1e15;
+    unitLabel = abbrev ? 'Gt' : 'gigatonnes';
+  } else if (grams >= 1e12) {
     scale = 1e12;
     unitLabel = abbrev ? 'Mt' : 'megatonnes';
   } else if (grams >= 1e9) {

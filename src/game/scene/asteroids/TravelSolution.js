@@ -1,12 +1,14 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Color, Vector3 } from 'three';
+import { Color } from 'three';
 import { KeplerianOrbit } from '@influenceth/sdk';
+import { cloneDeep } from 'lodash';
 
 import ClockContext from '~/contexts/ClockContext';
 import constants from '~/lib/constants';
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
+import orbitColors from './orbit/orbitColors';
 import frag from './orbit/orbit.frag';
 import vert from './orbit/orbit.vert';
 
@@ -15,15 +17,16 @@ const initialUniforms = {
   uTime: { type: 'i', value: 0 },
   uAlpha: { type: 'f', value: 1.0 },
   uAlphaMin: { type: 'f', value: 0.05 },
-  uCount: { type: 'f', value: solutionPoints + 2 }
+  uCount: { type: 'f', value: solutionPoints + 2 },
+  uDash: { type: 'b', value: false }
 };
 
 const TravelSolution = ({}) => {
   const { coarseTime } = useContext(ClockContext);
 
   const uniforms = useRef({
-    ...initialUniforms,
-    uCol: { type: 'c', value: new Color(0xffff00) },
+    ...cloneDeep(initialUniforms),
+    uCol: { type: 'c', value: new Color(0x000000) },
   });
 
   const destinationId = useStore(s => s.asteroids.destination);
@@ -109,6 +112,9 @@ const TravelSolution = ({}) => {
     }
     setPrearrival(new Float32Array(destinationPositions.map((x) => x * constants.AU)));
 
+    uniforms.current.uCol.value = new Color(travelSolution.invalid ? orbitColors.error : orbitColors.success);
+    uniforms.current.uDash.value = !!travelSolution.invalid;
+
   }, [coarseTime, travelSolution]);
 
   useFrame(() => {
@@ -118,7 +124,7 @@ const TravelSolution = ({}) => {
   return (
     <>
       {trajectory && (
-        <line userData={{ bloom: true }}>
+        <line renderOrder={0} userData={{ bloom: true }}>
           <bufferGeometry>
             <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ trajectory, 3 ]} />
             <bufferAttribute attachObject={[ 'attributes', 'order' ]} args={[ order, 1 ]} />
@@ -133,38 +139,31 @@ const TravelSolution = ({}) => {
             }]} />
         </line>
       )}
-      {trajectoryDebug && (
+      {false && trajectoryDebug && (
         <line>
           <bufferGeometry>
             <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ trajectoryDebug, 3 ]} />
           </bufferGeometry>
-          <lineBasicMaterial color={0xffffff} transparent opacity={0.2} />
+          <lineBasicMaterial color={orbitColors.white} transparent opacity={0.2} />
         </line>
       )}
 
       {predeparture && (
-        <line userData={{ bloom: true }}>
+        <line>
           <bufferGeometry>
             <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ predeparture, 3 ]} />
           </bufferGeometry>
-          <lineBasicMaterial color={0x72c1dc} />
+          <lineBasicMaterial color={orbitColors.main} />
         </line>
       )}
 
       {prearrival && (
-        <line userData={{ bloom: true }}>
+        <line>
           <bufferGeometry>
             <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ prearrival, 3 ]} />
           </bufferGeometry>
-          <lineBasicMaterial color={0xff5555} />
+          <lineBasicMaterial color={travelSolution?.invalid ? orbitColors.error : orbitColors.success} />
         </line>
-      )}
-
-      {false && (
-        <mesh position={new Vector3(travelSolution.destinationPosition[0], travelSolution.destinationPosition[1], travelSolution.destinationPosition[2])}>
-          <sphereGeometry args={[3e9]} />
-          <meshBasicMaterial color={0x00ff00} transparent opacity={0.5} />
-        </mesh>
       )}
     </>
   );

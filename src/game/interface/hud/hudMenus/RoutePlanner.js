@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import Dropdown from '~/components/DropdownV2';
-import { CloseIcon } from '~/components/Icons';
+import { CloseIcon, WarningIcon } from '~/components/Icons';
 import NumberInput from '~/components/NumberInput';
 import Porkchop from '~/components/Porkchop';
 import SliderInput from '~/components/SliderInput';
@@ -11,8 +11,8 @@ import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useStore from '~/hooks/useStore';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
-import { orbitTimeToGameTime } from '~/lib/utils';
-import { BuildingImage } from '../actionDialogs/components';
+import { formatFixed, orbitTimeToGameTime } from '~/lib/utils';
+import { BuildingImage, formatMass } from '../actionDialogs/components';
 import { Scrollable } from './components';
 
 const ShipSelection = styled.div`
@@ -92,18 +92,18 @@ const InfoRow = styled.div`
   }
 `;
 
-const Value = styled.span`
+const Note = styled.span`
+  color: ${p => p.isError ? p.theme.colors.error : p.theme.colors.main};
   flex: 1;
+  font-size: 80%;
+  font-weight: bold;
+  padding-right: 10px;
   text-align: right;
-  ${p => p.note && `
-    &:before {
-      content: "${p.note}";
-      color: ${p.theme.colors.main};
-      font-size: 80%;
-      font-weight: bold;
-      margin-right: 8px;
-    }
-  `}
+`;
+
+const Value = styled.span`
+  text-align: right;
+  min-width: 90px;
 `;
 
 const Closer = styled.span`
@@ -340,6 +340,7 @@ const RoutePlanner = () => {
           <SectionBody style={{ paddingBottom: 20 }}>
             <InfoRow>
               <label>Depart</label>
+              <Note>{travelSolution.departureTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.departureTime - coarseTime, 2)}h</Note>
               <Value>
                 {orbitTimeToGameTime(travelSolution.departureTime).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </Value>
@@ -347,8 +348,22 @@ const RoutePlanner = () => {
 
             <InfoRow>
               <label>Arrive</label>
-              <Value note={`${Math.round(travelSolution.arrivalTime - coarseTime)}h from now`}>
+              <Note>{travelSolution.arrivalTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.arrivalTime - coarseTime, 2)}h</Note>
+              <Value>
                 {orbitTimeToGameTime(travelSolution.arrivalTime).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </Value>
+            </InfoRow>
+
+            <InfoRow>
+              <label>Propellant</label>
+              <Note isError={travelSolution.usedPropellantPercent > 100}>
+                {travelSolution.usedPropellantPercent > 1000
+                  ? <WarningIcon />
+                  : `${formatFixed(travelSolution.usedPropellantPercent, 1)}%`
+                }
+              </Note>
+              <Value>
+                {formatMass(travelSolution.usedPropellantMass * 1e3, { minPrecision: 4 })}
               </Value>
             </InfoRow>
           </SectionBody>

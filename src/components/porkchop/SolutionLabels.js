@@ -46,6 +46,7 @@ const Label = styled.label`
   color: ${p => p.theme.colors.main};
   font-size: 100%;
   font-weight: bold;
+  white-space: nowrap;
 `;
 
 const Tag = styled.div`
@@ -286,16 +287,14 @@ const SolutionLabels = ({ center, mousePos, shipParams }) => {
           <Label>Propellant Used</Label>
           <StatValue colorValue={usedPropellant}>{usedPropellant}%</StatValue>
         </Row>
-        {!invalid && (
-          <Row>
-            <ArrivalLabel>Arrival In</ArrivalLabel>
-            <StatValue>{arrival}h</StatValue>
-          </Row>
-        )}
+        <Row>
+          <ArrivalLabel>Arrival In</ArrivalLabel>
+          <StatValue colorValue={invalid ? 1000 : 0}>{arrival}h</StatValue>
+        </Row>
       </CornerLabels>
 
       <DelayLabel x={center.x}>
-        <Label>Launch Delay</Label>
+        <Label>Departure Delay</Label>
         <Tag invalid={invalid}><label>{delay}h</label></Tag>
       </DelayLabel>
     </>
