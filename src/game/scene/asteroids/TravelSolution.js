@@ -56,10 +56,12 @@ const TravelSolution = ({}) => {
 
   const destinationId = useStore(s => s.asteroids.destination);
   const originId = useStore(s => s.asteroids.origin);
+  const timeOverride = useStore(s => s.timeOverride);
 
   const { data: destination } = useAsteroid(destinationId);
   const { data: origin } = useAsteroid(originId);
 
+  const [baseTime, setBaseTime] = useState();
   const [order, setOrder] = useState();
   const [prearrival, setPrearrival] = useState();
   const [predeparture, setPredeparture] = useState();
@@ -69,6 +71,12 @@ const TravelSolution = ({}) => {
   const [trajectoryLength, setTrajectoryLength] = useState();
 
   const travelSolution = useStore(s => s.asteroids.travelSolution);
+
+  useEffect(() => {
+    if (!baseTime || Math.abs(timeOverride?.speed) <= 1) {
+      setBaseTime(coarseTime);
+    }
+  }, [coarseTime]);
 
   useEffect(() => {
     if (!travelSolution || !destination || !origin) {
@@ -96,7 +104,7 @@ const TravelSolution = ({}) => {
     let centerPosition;
     let trajectoryLengthEstimate = 0;
     let currentPosition = new Vector3();
-    let previousPosition = new Vector3();
+    let previousPosition = null;
 
     const newPositions = [];
     newPositions.push(...Object.values(originPosition));
@@ -110,6 +118,8 @@ const TravelSolution = ({}) => {
       currentPosition.set(p.x, p.y, p.z);
       if (previousPosition) {
         trajectoryLengthEstimate += previousPosition.distanceTo(currentPosition);
+      } else {
+        previousPosition = new Vector3();
       }
       previousPosition.copy(currentPosition);
     }
@@ -123,7 +133,7 @@ const TravelSolution = ({}) => {
     // // TODO: comment this out vvv
     // let debugPositions = [];
     // solutionOrbit.getSmoothOrbit(360).forEach(p => {
-    //   debugPositions.push(...[ p.x, p.y, p.z ]);//.map(v => v * constants.AU));
+    //   debugPositions.push(...[ p.x, p.y, p.z ]);
     // });
     // setTrajectoryDebug(new Float32Array(debugPositions));
     // console.log('solution.orbit.ecc', solutionOrbit.orbit.ecc, 'period', solutionOrbit.getPeriod());
@@ -131,26 +141,25 @@ const TravelSolution = ({}) => {
 
     const originPositions = [];
     const originOrbit = new AdalianOrbit(origin.orbital);
-    const originIncrement = (departureTime - coarseTime) / 360;
-    for (let t = coarseTime; t < departureTime; t += originIncrement) {
+    const originIncrement = (departureTime - baseTime) / 360;
+    for (let t = baseTime; t < departureTime; t += originIncrement) {
       const p = originOrbit.getPositionAtTime(t);
       originPositions.push(...[ p.x, p.y, p.z ]);
     }
-    setPredeparture(new Float32Array(originPositions));//.map((x) => x * constants.AU)));
+    setPredeparture(new Float32Array(originPositions));
 
     const destinationPositions = [];
     const destinationOrbit = new AdalianOrbit(destination.orbital);
-    const destinationIncrement = (arrivalTime - coarseTime) / 360;
-    for (let t = coarseTime; t < arrivalTime; t += destinationIncrement) {
+    const destinationIncrement = (arrivalTime - baseTime) / 360;
+    for (let t = baseTime; t < arrivalTime; t += destinationIncrement) {
       const p = destinationOrbit.getPositionAtTime(t);
       destinationPositions.push(...[ p.x, p.y, p.z ]);
     }
-    setPrearrival(new Float32Array(destinationPositions));//.map((x) => x * constants.AU)));
+    setPrearrival(new Float32Array(destinationPositions));
 
     uniforms.current.uCol.value = new Color(travelSolution.invalid ? orbitColors.error : orbitColors.main);
     uniforms.current.uDash.value = true;//!!travelSolution.invalid;
-
-  }, [coarseTime, travelSolution]);
+  }, [baseTime, travelSolution]);
 
   const formattedTrajectoryLength = useMemo(() => {
     if (!trajectoryLength) return '';

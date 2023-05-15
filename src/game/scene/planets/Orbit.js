@@ -13,7 +13,7 @@ const Orbit = (props) => {
     const vertices = [];
     const orbit = new AdalianOrbit(props.planet.orbital);
     orbit.getSmoothOrbit(360).forEach(p => {
-      vertices.push(...[ p.x, p.y, p.z ]);//.map(v => v * constants.AU))
+      vertices.push(...[ p.x, p.y, p.z ]);
     });
 
     return new Float32Array(vertices);

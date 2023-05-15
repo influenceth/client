@@ -443,7 +443,7 @@ const Asteroids = (props) => {
           )}
 
           {/* flight line (only in simulation mode) */}
-          <TravelSolution  />
+          <TravelSolution key={travelSolution?.key} />
 
           {/* billboarded data */}
           {asteroids && (

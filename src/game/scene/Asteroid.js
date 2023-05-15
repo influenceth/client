@@ -298,7 +298,7 @@ const Asteroid = (props) => {
       const time = getTime();
       asteroidOrbit.current = new AdalianOrbit(asteroidData.orbital);
       rotationAxis.current = c.seed.clone().normalize();
-      position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time));//.map(v => v * constants.AU);
+      position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time));
       rotation.current = time * c.rotationSpeed * 2 * Math.PI;
 
       // if geometry.current already exists, dispose first
@@ -796,7 +796,7 @@ const Asteroid = (props) => {
     // update asteroid position
     const time = getTime();
     if (asteroidOrbit.current && time) {
-      position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time));//.map(v => v * constants.AU);
+      position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time));
 
       // update object and camera position (if zoomed in)
       if (zoomStatus === 'in') {

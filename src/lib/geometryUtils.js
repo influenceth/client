@@ -8,9 +8,9 @@ export const getUpdatedAsteroidPositions = function(orbitals, elapsed = 0) {
 
   orbitals.forEach((orbital, i) => {
     const coords = (new AdalianOrbit(orbital)).getPositionAtTime(elapsed);
-    positions[i * 3 + 0] = coords.x;// * constants.AU;
-    positions[i * 3 + 1] = coords.y;// * constants.AU;
-    positions[i * 3 + 2] = coords.z;// * constants.AU;
+    positions[i * 3 + 0] = coords.x;
+    positions[i * 3 + 1] = coords.y;
+    positions[i * 3 + 2] = coords.z;
   });
   return positions;
 };
@@ -19,9 +19,9 @@ export const getUpdatedPlanetPositions = function(orbitals, elapsed = 0) {
   const positions = new Float32Array(orbitals.length * 3);
   orbitals.forEach((orbital, i) => {
     const coords = (new AdalianOrbit(orbital)).getPositionAtTime(elapsed);
-    positions[i * 3 + 0] = coords.x;// * constants.AU;
-    positions[i * 3 + 1] = coords.y;// * constants.AU;
-    positions[i * 3 + 2] = coords.z;// * constants.AU;
+    positions[i * 3 + 0] = coords.x;
+    positions[i * 3 + 1] = coords.y;
+    positions[i * 3 + 2] = coords.z;
   });
   return positions;
 };

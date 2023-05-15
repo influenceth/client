@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTexture } from '@react-three/drei';
-import { AdditiveBlending, Color, DoubleSide } from 'three';
+import { AdditiveBlending, Color, DoubleSide, Vector2 } from 'three';
 
 import frag from './marker/marker.frag';
 import vert from './marker/marker.vert';
 import constants from '~/lib/constants';
 import theme from '~/theme';
 import orbitColors from './orbit/orbitColors';
+import { useFrame } from '@react-three/fiber';
 
 const markerMaxRadius = constants.AU / 50;
 const initialUniforms = {
@@ -34,6 +35,10 @@ const Marker = (props) => {
     `${process.env.PUBLIC_URL}/textures/circleFaded.png`,
     `${process.env.PUBLIC_URL}/textures/marker.png`
   ]);
+
+  useEffect(() => {
+    reticuleTexture.center = new Vector2(0.5, 0.5);
+  }, [reticuleTexture]);
 
   const { outerProps, innerProps, showInner, showReticule } = useMemo(() => {
     const x = {
@@ -115,6 +120,17 @@ const Marker = (props) => {
     }
   }, [ asteroidPos ]);
 
+  const reticulePoints = useRef();
+  const animationTime = useRef();
+  useFrame((state, delta) => {
+    animationTime.current = (animationTime.current || 0) + delta;
+    if (reticulePoints.current) {
+      reticulePoints.current.material.map.rotation = -0.7 * animationTime.current;
+      // const scale = 1 + 0.05 * Math.sin(7.5 * animationTime.current);
+      // reticulePoints.current.material.size = scale * 52;
+    }
+  });
+
   if (points?.length !== 6) return null;
   return (
     <group>
@@ -125,13 +141,13 @@ const Marker = (props) => {
         ? (
           <>
             {showReticule && (
-              <points renderOrder={1}>
+              <points ref={reticulePoints} renderOrder={1}>
                 <bufferGeometry>
                   <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points.slice(0, 3), 3 ]} />
                 </bufferGeometry>
                 <pointsMaterial
                   map={reticuleTexture}
-                  size={40}
+                  size={52}
                   depthWrite={false}
                   sizeAttenuation={false}
                   transparent />
@@ -174,7 +190,7 @@ const Marker = (props) => {
               blending={AdditiveBlending}
               color={theme.colors.main}
               map={asteroidTexture}
-              size={20}
+              size={23}
               opacity={0.8}
               depthWrite={false}
               sizeAttenuation={false}

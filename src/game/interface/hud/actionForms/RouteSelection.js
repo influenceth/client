@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import styled, { css, keyframes } from 'styled-components';
+import { useCallback, useRef } from 'react';
+import styled from 'styled-components';
 import { TiMediaRecord as OriginIcon } from 'react-icons/ti';
 import { TbSwitch2 as SwapIcon } from 'react-icons/tb';
 import { MdRadioButtonChecked as DestinationIcon } from 'react-icons/md';
@@ -8,15 +7,10 @@ import { MdRadioButtonChecked as DestinationIcon } from 'react-icons/md';
 import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
 
-import TextInput from '~/components/TextInputUncontrolled';
 import useAsteroid from '~/hooks/useAsteroid';
 import useStore from '~/hooks/useStore';
+import Autocomplete from '~/components/Autocomplete';
 
-const AsteroidInput = styled(TextInput)`
-  background: rgba(${p => p.theme.colors.mainRGB}, 0.15);
-  flex: 1;
-  height: 30px;
-`;
 const Wrapper = styled.div`
   position: relative;
 `;
@@ -43,13 +37,15 @@ const Row = styled.div`
     font-weight: bold;
     padding-left: 5px;
   }
+  svg:first-child {
+    width: 16px;
+  }
 
   &:first-child {
     margin-top: 0;
   }
 `;
 
-// TODO: asteroid typeahead component
 const RouteSelection = () => {
   const destinationId = useStore(s => s.asteroids.destination);
   const originId = useStore(s => s.asteroids.origin);
@@ -61,18 +57,6 @@ const RouteSelection = () => {
 
   const destInput = useRef();
 
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Enter' || e.key === 'Tab') {
-      let newDestId = parseInt(e.currentTarget.value);
-      if (newDestId > 0 && newDestId <= 250000 && newDestId !== originId) {
-        dispatchDestinationSelected(newDestId);
-      } else {
-        dispatchDestinationSelected(null);
-      }
-      // TODO: alert on error
-    }
-  }, []);
-
   const handleSwap = useCallback(() => {
     if (originId && destinationId) dispatchSwapOriginDestination();
   }, [destinationId, originId]);
@@ -82,9 +66,9 @@ const RouteSelection = () => {
     dispatchTravelMode(false);
   }, []);
 
-  useEffect(() => {
-    destInput.current.value = destinationId;
-  }, [destinationId]);
+  const handleSelect = useCallback((dest) => {
+    if (Number(dest?.i) !== Number(originId)) dispatchDestinationSelected(dest?.i)
+  }, [originId]);
 
   return (
     <>
@@ -103,10 +87,14 @@ const RouteSelection = () => {
         </Row>
         <Row>
           <DestinationIcon />
-          <AsteroidInput
+          <Autocomplete
             ref={destInput}
-            onKeyDown={handleKeyDown}
-            placeholder="Asteroid Id..." />
+            assetType="asteroids"
+            dropdownProps={{ style: { maxHeight: 115 }}}
+            placeholder="Destination Asteroid..."
+            onSelect={handleSelect}
+            selected={destination}
+            width={180} />
           <IconButton
             data-tip="Close Route Selection"
             data-place="right"

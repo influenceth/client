@@ -29,7 +29,7 @@ const Orbit = ({ asteroid, color, opacityMult = 1, staticOpacity }) => {
     const orbit = new AdalianOrbit(asteroid.orbital);
     let newPositions = [];
     orbit.getSmoothOrbit(360).forEach(p => {
-      newPositions.push(...[ p.x, p.y, p.z ]);//.map(v => v * constants.AU));
+      newPositions.push(...[ p.x, p.y, p.z ]);
     });
 
     setPositions(new Float32Array(newPositions));

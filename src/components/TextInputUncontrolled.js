@@ -10,6 +10,7 @@ const UncontrolledTextInput = styled.input`
   outline: none;
   padding: 0 5px;
   transition: background-color 250ms ease, border-color 250ms ease;
+  ${p => p.width ? `width: ${p.width}px` : ''};
   &::placeholder {
     opacity: 0.3;
     transition: opacity 250ms ease;

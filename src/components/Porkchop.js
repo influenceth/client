@@ -258,6 +258,7 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
       originPosition: oPos.toArray(),
       originVelocity: oVel.toArray(),
       destinationPosition: dPos.toArray(),
+      key: Date.now()
     });
   }, [originPath, destinationPath, maxDeltaV, shipParams]);
 

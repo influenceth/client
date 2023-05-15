@@ -29,6 +29,7 @@ const glConfig = {
     far: constants.MAX_SYSTEM_RADIUS * constants.AU * 2,
     position: [ 4 * constants.AU, 0, 1.5 * constants.AU ]
   },
+  // pixelRatio: Math.min(window.devicePixelRatio, 2),
   powerPreference: 'default',
   onCreated: (state) => {
     state.raycaster.params.Points = {
