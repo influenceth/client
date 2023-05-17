@@ -52,6 +52,17 @@ const Solutionless = styled.div`
   }
 `;
 
+const TimeBlock = styled.div`
+  background: rgba(0, 0, 0, 0.7);
+  border-right: ${p => p.width > 0 ? 1 : 0}px solid rgba(150, 0, 0, 0.7);
+  left: 0;
+  height: 100%;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: ${p => Math.max(0, 100 * p.width)}%;
+`;
+
 const colorRange = [
   new Vector3(255, 255, 255),
   new Vector3(255, 0, 115),
@@ -76,7 +87,20 @@ const deltaVColor = (deltaV, maxDeltaV) => {
   }
 };
 
-const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, minTof, maxTof, shipParams, size }) => {
+const Porkchop = ({
+  baseTime,
+  nowTime,
+  originPath,
+  originId,
+  destinationPath,
+  destinationId,
+  minDelay,
+  maxDelay,
+  minTof,
+  maxTof,
+  shipParams,
+  size
+}) => {
   const { processInBackground, cancelBackgroundProcesses } = useWebWorker();
 
   const travelSolution = useStore(s => s.asteroids.travelSolution);
@@ -148,9 +172,8 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
           canvasCtx.fillRect(maxDelayProcessed - minDelay + 1, 0, 2, height);
         }
 
-        // TODO: preprocess to minimize # of rectangles to draw (at least per column)
         // TODO: don't need to draw black areas if clear in advance
-        const col = delay - minDelay;
+        const col = Math.round(delay - minDelay);
 
         let previousBucket = null;
         let currentBucket;
@@ -191,11 +214,18 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
       x: Math.max(0, Math.min(e.nativeEvent.offsetX / size, 1)),
       y: Math.max(0, Math.min(e.nativeEvent.offsetY / size, 1)),
     };
-    data.delay = Math.round(minDelay + (maxDelay - minDelay) * data.x);
-    data.tof = Math.round(minTof + (maxTof - minTof) * (1 - data.y));
+    data.delay = minDelay + Math.round((maxDelay - minDelay) * data.x);
+    data.tof = minTof + Math.round((maxTof - minTof) * (1 - data.y));
+
+    // ensure delay is not in the past
+    const timeProgression = nowTime - baseTime;
+    while (data.delay < timeProgression) {
+      data.delay += 1;
+      data.x = (data.delay - minDelay) / (maxDelay - minDelay);
+    }
 
     return data;
-  }, [size]);
+  }, [baseTime, nowTime, size]);
 
   const handleClick = useCallback(async (e) => {
     const mouseData = getMouseData(e);
@@ -238,19 +268,11 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
       usedPropellantMass = wetmass * (1 - 1 / Math.exp(solution.deltaV / shipParams.exhaustVelocity));
     }
 
-
-
-
-
-    // TODO: include positions in state?
-
-    // TODO: should we use absolute times here so not stale until coarseTime > departureTime
-    // TODO: clear solution if coarseTime > baseTime
-    // TODO: should we freeze time?
-    //        should we not clear solution unless cleared (keep flight line, but highlighted orbit lines from now until departure/arrival)
     dispatchTravelSolution({
-      ...solution,
+      ...solution, // v1, v2, deltaV
       invalid,
+      originId,
+      destinationId,
       usedPropellantMass,
       usedPropellantPercent: 100 * usedPropellantMass / shipParams.actualPropellantMass,
       departureTime: baseTime + delay,
@@ -288,6 +310,7 @@ const Porkchop = ({ baseTime, originPath, destinationPath, minDelay, maxDelay, m
         {selectionPos && <Reticule selected center={selectionPos} fade={!!mousePos} invalid={travelSolution?.invalid} />}
         {mousePos && <Reticule center={mousePos} />}
       </PorkchopContainer>
+      <TimeBlock width={(nowTime - baseTime) / (maxDelay - minDelay)} />
       <Solutionless show={!solutionsExist && !loading}>
         <WarningOutlineIcon />
         <h3>No Possible Routes</h3>

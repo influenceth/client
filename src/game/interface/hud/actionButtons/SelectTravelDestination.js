@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { SimulateRouteIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
@@ -13,20 +13,18 @@ const SelectTravelDestination = ({}) => {
   const dispatchTravelMode = useStore(s => s.dispatchTravelMode);
   
   const handleClick = useCallback(() => {
-    if (inTravelMode) {
-      dispatchHudMenuOpened(openHudMenu !== 'BELT_PLAN_FLIGHT' ? 'BELT_PLAN_FLIGHT' : null);
-    } else {
-      dispatchTravelMode(true);
-    }
+    dispatchTravelMode(!inTravelMode);
   }, [inTravelMode]);
+
+  useEffect(() => {
+    if (openHudMenu) return;
+    dispatchHudMenuOpened(origin && destination && inTravelMode ? 'BELT_PLAN_FLIGHT' : null);
+  }, [destination, inTravelMode, origin]);
 
   return (
     <ActionButton
-      flags={{
-        active: !!inTravelMode,
-        disabled: inTravelMode && !destination
-      }}
-      label={origin && destination && inTravelMode ? 'Optimize Route' : 'Plan Flight'}
+      flags={{ active: !!inTravelMode }}
+      label={origin && destination && inTravelMode ? 'Cancel Planning' : 'Plan Flight'}
       icon={<SimulateRouteIcon />}
       onClick={handleClick} />
   );

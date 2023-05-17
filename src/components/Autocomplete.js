@@ -69,8 +69,8 @@ const Autocomplete = ({
   const textInputEl = useRef();
 
   const [focused, setFocused] = useState();
+  const [hovered, setHovered] = useState();
   const [highlighted, setHighlighted] = useState(0);
-  const [open, setOpen] = useState(false);
   const [popperEl, setPopperEl] = useState();
   const [referenceEl, setReferenceEl] = useState();
 
@@ -87,7 +87,9 @@ const Autocomplete = ({
   });
 
   const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Escape') {
+      textInputEl.current.blur();
+    } else if (e.key === 'Enter') {
       if (options[highlighted]) {
         handleSelection(options[highlighted]);
       }
@@ -99,19 +101,25 @@ const Autocomplete = ({
   }, [highlighted, options]);
 
   useEffect(() => {
-    if (focused) setOpen(true);
-    else if (!open) setSearchTerm('');
-  }, [focused, open]);
-
-  useEffect(() => {
-    setHighlighted(0);
-    if (searchTerm) setOpen(true);
-  }, [searchTerm]);
+    if (!focused && !hovered) {
+      setHighlighted(0);
+      setSearchTerm('');
+    }
+  }, [focused, hovered]);
 
   const handleSelection = useCallback((s) => {
     onSelect(s);
-    setOpen(false);
+    setFocused(false);
+    setHovered(false);
     textInputEl.current.blur();
+  }, []);
+
+  const handleOptionHover = useCallback((e) => {
+    if (e.type === 'mouseenter') {
+      setHovered(true);
+    } else {
+      setHovered(false);
+    }
   }, []);
 
   return (
@@ -131,9 +139,13 @@ const Autocomplete = ({
         </Loading>
       </span>
 
-      {(focused || open) && createPortal(
+      {(focused || hovered) && createPortal(
         <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000 }} {...attributes.popper}>
-          <Options width={width} {...dropdownProps}>
+          <Options
+            onMouseEnter={handleOptionHover}
+            onMouseLeave={handleOptionHover}
+            width={width}
+            {...dropdownProps}>
             {options.map((o, i) => (
               <Option key={o[valueKey]} isHighlighted={i === highlighted} onClick={() => handleSelection(o)}>
                 <label>{formatLabel(o)}</label>

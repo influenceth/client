@@ -28,6 +28,7 @@ const useAutocomplete = (assetType) => {
         queryBuilder = esb.boolQuery();
 
         // if all numeric, also search against id
+        // TODO: prioritize match against i if i is included
         const matchAgainst = ['customName', 'baseName'];
         if (!/^[^0-9]/.test(searchTerm)) matchAgainst.unshift('i');
         queryBuilder.filter(

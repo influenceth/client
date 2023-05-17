@@ -71,6 +71,7 @@ const Asteroids = (props) => {
   const isAssetSearchMatchingDefault = useStore(s => s.isAssetSearchMatchingDefault);
   const filters = useStore(s => s.assetSearch.asteroids?.filters);
   const openHudMenu = useStore(s => s.openHudMenu);
+  const travelMode = useStore(s => s.asteroids.travelMode);
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const hoverAsteroid = useStore(s => s.dispatchAsteroidHovered);
@@ -266,11 +267,13 @@ const Asteroids = (props) => {
       const clickedAsteroidId = mappedAsteroids[index].i;
       if (clickedAsteroidId === destinationId) {
         dispatchSwapOriginDestination();
+      } else if (travelMode && origin) {
+        selectDestination(clickedAsteroidId);
       } else {
         selectOrigin(clickedAsteroidId);
       }
     }
-  }, [mappedAsteroids, destinationId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mappedAsteroids, destinationId, travelMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onContextClick = useCallback((e) => {
     e.stopPropagation();
@@ -336,6 +339,36 @@ const Asteroids = (props) => {
   }, [originPos, destinationPos]);
 
   const diamondMarker = useTexture(`${process.env.PUBLIC_URL}/textures/asteroids/solid_diamond.png`);
+
+  const billboardedAsteroids = useMemo(() => {
+    const b = {};
+    if (origin && originPos) {
+      b[origin.i] = {
+        a: origin,
+        p: Array.from(originPos),
+        name: true
+      };
+    }
+    if (destination && destinationPos) {
+      b[destination.i] = {
+        a: destination,
+        p: Array.from(destinationPos),
+        name: true
+      };
+    }
+    if (openHudMenu !== 'BELT_PLAN_FLIGHT') {
+      Object.keys(assetedAsteroids).forEach((i) => {
+        if (assetPositionsById[i] && !b[i]) {
+          b[i] = {
+            a: assetedAsteroids[i].asteroid,
+            p: assetPositionsById[i],
+            name: Number(i) === Number(hovered)
+          };
+        }
+      });
+    }
+    return Object.values(b);
+  }, [origin, originPos, destination, destinationPos, assetedAsteroids, assetPositionsById, hovered, openHudMenu]);
 
   return (
     <group>
@@ -442,45 +475,37 @@ const Asteroids = (props) => {
             </>
           )}
 
-          {/* flight line (only in simulation mode) */}
-          <TravelSolution key={travelSolution?.key} />
-
           {/* billboarded data */}
-          {asteroids && (
+          {billboardedAsteroids && (
             <group>
-              {Object.keys(assetPositionsById).map((i) => {
-                const isOrigin = origin?.i === Number(i);
-                const isDestination = destination?.i === Number(i);
-                const display = openHudMenu !== 'BELT_PLAN_FLIGHT' || isOrigin || isDestination;
-                return !display ? null : (
-                  <Html
-                    key={`billboard_${i}`}
-                    position={assetPositionsById[i]}
-                    style={{ pointerEvents: 'none', transform: `translate(-45px, calc(-100% - ${(isOrigin || isDestination) ? 15 : 5}px))` }}>
-                    <AsteroidTooltip hasActiveCrew={assetedAsteroids[i]?.crew}>
-                      <div><CaptainIcon /></div>
-                      <div>
-                        {assetedAsteroids[i] && (
-                          <span>
-                            {assetedAsteroids[i]?.owned && <MyAssetIcon />}
-                            {assetedAsteroids[i]?.ships > 0 && <ShipMarkerIcon />}
-                            {assetedAsteroids[i]?.ships > 1 && <ShipMarkerIcon />}
-                            {!assetedAsteroids[i]?.owned && <FlagMarkerIcon />}
-                          </span>
-                        )}
-                        {isOrigin && (
-                          <span>{origin?.customName || origin?.baseName || `#${(origin?.i || 0).toLocaleString()}`}</span>
-                        )}
-                        {isDestination && (
-                          <span>{destination?.customName || destination?.baseName || `#${(destination?.i || 0).toLocaleString()}`}</span>
-                        )}
-                      </div>
-                    </AsteroidTooltip>
-                  </Html>
-                );
-              })}
+              {billboardedAsteroids.filter(({ p }) => p?.length).map(({ a, p, name }) => (
+                <Html
+                  key={`billboard_${a.i}`}
+                  position={p}
+                  style={{ pointerEvents: 'none', transform: `translate(-45px, calc(-100% - ${name ? 15 : 5}px))` }}>
+                  <AsteroidTooltip hasActiveCrew={assetedAsteroids[a.i]?.crew}>
+                    <div><CaptainIcon /></div>
+                    <div>
+                      {assetedAsteroids[a.i] && (
+                        <span>
+                          {assetedAsteroids[a.i]?.owned && <MyAssetIcon />}
+                          {assetedAsteroids[a.i]?.ships > 0 && <ShipMarkerIcon />}
+                          {assetedAsteroids[a.i]?.ships > 1 && <ShipMarkerIcon />}
+                          {!assetedAsteroids[a.i]?.owned && <FlagMarkerIcon />}
+                        </span>
+                      )}
+                      {name && (
+                        <span>{a.customName || a.baseName || `#${(a.i || 0).toLocaleString()}`}</span>
+                      )}
+                    </div>
+                  </AsteroidTooltip>
+                </Html>
+              ))}
             </group>
           )}
+
+          {/* flight line (only in simulation mode) */}
+          <TravelSolution key={travelSolution?.key} />
         </>
       )}
       {false && <primitive object={new AxesHelper(2 * constants.AU)} />}

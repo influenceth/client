@@ -69,17 +69,21 @@ export const sampleAsteroidOrbit = (baseTime, orbital, minOffset, maxOffset, inc
   const velocities = [];
   const orbit = new AdalianOrbit(orbital);
   for (let delay = minOffset; delay < maxOffset + 1; delay += increment) {
-    const p = orbit.getPositionAtTime(baseTime + delay)
+    // to safely deal with floats
+    const basePlusDelay = Math.round(100 * (baseTime + delay)) / 100;
+    const delayMinusIncr = Math.round(100 * (delay - increment)) / 100;
+
+    // set positions
+    const p = orbit.getPositionAtTime(basePlusDelay)
     positions[delay] = new Vector3(p.x, p.y, p.z);
-    // positions[delay].multiplyScalar(constants.AU);
 
     // set velocity of previous based on this position
-    if (positions[delay - increment]) {
-      velocities[delay - increment] = (new Vector3()).subVectors(
+    if (positions[delayMinusIncr]) {
+      velocities[delayMinusIncr] = (new Vector3()).subVectors(
         positions[delay],
-        positions[delay - increment]
+        positions[delayMinusIncr]
       );
-      velocities[delay - increment].divideScalar(increment * 86400);
+      velocities[delayMinusIncr].divideScalar(increment * 86400);
     }
   }
   return { positions, velocities };

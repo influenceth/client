@@ -41,7 +41,7 @@ const solutionPoints = 240;
 const initialUniforms = {
   uTime: { type: 'i', value: 0 },
   uAlpha: { type: 'f', value: 1.0 },
-  uAlphaMin: { type: 'f', value: 0.35 },
+  uAlphaMin: { type: 'f', value: 0 },
   uCount: { type: 'f', value: solutionPoints + 2 },
   uDash: { type: 'b', value: false }
 };
@@ -71,12 +71,35 @@ const TravelSolution = ({}) => {
   const [trajectoryLength, setTrajectoryLength] = useState();
 
   const travelSolution = useStore(s => s.asteroids.travelSolution);
+  const dispatchTravelSolution = useStore(s => s.dispatchTravelSolution);
 
   useEffect(() => {
-    if (!baseTime || Math.abs(timeOverride?.speed) <= 1) {
+    if (!baseTime || !timeOverride?.speed || Math.abs(timeOverride.speed) <= 1) {
       setBaseTime(coarseTime);
     }
-  }, [coarseTime]);
+  }, [coarseTime, timeOverride?.speed]);
+
+  useEffect(() => {
+    if (!travelSolution) return;
+
+    // clear travel solution...
+    if (
+      // ...on endpoint mismatch
+      travelSolution.originId !== originId
+      || travelSolution.destinationId !== destinationId
+      
+      // ...on ship param mismatch
+      // (only possible in RoutePlanner, so cleared on porkchop rebuild)
+      
+      // ...on baseTime > departureTime
+      || travelSolution.departureTime < baseTime
+      
+      // ...on time override (i.e. ff / rewind)
+      || timeOverride && ![0, 1].includes(Number(timeOverride.speed))
+    ) {
+      dispatchTravelSolution();
+    } 
+  }, [baseTime, destinationId, originId, timeOverride, travelSolution]);
 
   useEffect(() => {
     if (!travelSolution || !destination || !origin) {
@@ -158,7 +181,7 @@ const TravelSolution = ({}) => {
     setPrearrival(new Float32Array(destinationPositions));
 
     uniforms.current.uCol.value = new Color(travelSolution.invalid ? orbitColors.error : orbitColors.main);
-    uniforms.current.uDash.value = true;//!!travelSolution.invalid;
+    uniforms.current.uDash.value = true;
   }, [baseTime, travelSolution]);
 
   const formattedTrajectoryLength = useMemo(() => {

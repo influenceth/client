@@ -1,27 +1,23 @@
-import { useCallback, useContext } from 'react';
+import { useCallback } from 'react';
 
 import { SetCourseIcon } from '~/components/Icons';
-import ClockContext from '~/contexts/ClockContext';
+import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
 
 const SetCourse = ({}) => {
-  const { coarseTime } = useContext(ClockContext);
+  const { account } = useAuth();
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   
   const handleClick = useCallback(() => {
     console.log('SET ROUTE', travelSolution);
   }, [travelSolution]);
 
-
-  // TODO: any invalid reason
-  const invalid = !(travelSolution?.departureTime > coarseTime);
-
   return (
     <ActionButton
       flags={{
-        attention: !invalid,
-        disabled: invalid
+        attention: account && travelSolution && !travelSolution.invalid,
+        disabled: !(account && travelSolution && !travelSolution.invalid),
       }}
       label="Set Course"
       icon={<SetCourseIcon />}

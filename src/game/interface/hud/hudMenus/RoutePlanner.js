@@ -117,8 +117,8 @@ const Closer = styled.span`
 `;
 
 const resolution = 1;
-const minDelay = 0;
-const maxDelay = 365;
+const minDelay = 0.1;
+const maxDelay = minDelay + 365;
 const minTof = Math.max(resolution, 1);
 const maxTof = minTof + 365;
 
@@ -173,6 +173,7 @@ const RoutePlanner = () => {
   const { data: destination } = useAsteroid(destinationId);
 
   const [baseTime, setBaseTime] = useState();
+  const [nowTime, setNowTime] = useState();
 
   const [cargoMass, setCargoMass] = useState(0);
   const [propellantMass, setPropellantMass] = useState(0);
@@ -216,8 +217,11 @@ const RoutePlanner = () => {
   }, []);
 
   useEffect(() => {
-    if (!baseTime || Math.abs(timeOverride?.speed) <= 1) {
-      setBaseTime(coarseTime);
+    if (!nowTime || !timeOverride?.speed || Math.abs(timeOverride.speed) <= 1) {
+      setNowTime(coarseTime);
+      if (!baseTime || !travelSolution || travelSolution?.departureTime < coarseTime) {
+        setBaseTime(coarseTime);
+      }
     }
   }, [coarseTime]);
 
@@ -321,7 +325,10 @@ const RoutePlanner = () => {
       <SectionBody>
         {shipParams && originPath && destinationPath && (
           <Porkchop
+            originId={originId}
+            destinationId={destinationId}
             baseTime={baseTime}
+            nowTime={nowTime}
             originPath={originPath}
             destinationPath={destinationPath}
             minDelay={minDelay}
@@ -340,7 +347,7 @@ const RoutePlanner = () => {
           <SectionBody style={{ paddingBottom: 20 }}>
             <InfoRow>
               <label>Depart</label>
-              <Note>{travelSolution.departureTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.departureTime - coarseTime, 2)}h</Note>
+              <Note>{travelSolution.departureTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.departureTime - coarseTime, 1)}h</Note>
               <Value>
                 {orbitTimeToGameTime(travelSolution.departureTime).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </Value>
@@ -348,7 +355,7 @@ const RoutePlanner = () => {
 
             <InfoRow>
               <label>Arrive</label>
-              <Note>{travelSolution.arrivalTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.arrivalTime - coarseTime, 2)}h</Note>
+              <Note>{travelSolution.arrivalTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.arrivalTime - coarseTime, 1)}h</Note>
               <Value>
                 {orbitTimeToGameTime(travelSolution.arrivalTime).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </Value>
