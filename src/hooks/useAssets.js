@@ -82,3 +82,65 @@ export const useResourceAssets = () => {
     return resourcesById;
   }, []);
 };
+
+// TODO: this should be in SDK
+// masses are in tons
+const Ship = {
+  TYPES: {
+    1: {
+      name: 'Shuttle',
+      emptyMass: 100e3,
+      maxPropellantMass: 950e3,
+      maxCargoMass: 10e3,
+      engines: 1,
+      maxThrust: 612916,
+      iconVersion: 1,
+      modelVersion: 1
+    },
+    2: {
+      name: 'Light Transport',
+      emptyMass: 180e3,
+      maxPropellantMass: 1805e3,
+      maxCargoMass: 2000e3,
+      engines: 2,
+      maxThrust: 1225831,
+      iconVersion: 1,
+      modelVersion: 1
+
+    },
+    3: {
+      name: 'Heavy Transport',
+      emptyMass: 1010e3,
+      maxPropellantMass: 11875e3,
+      maxCargoMass: 12000e3,
+      engines: 9,
+      maxThrust: 5516241,
+      iconVersion: 1,
+      modelVersion: 1
+    }
+  }
+}
+export const useShipAssets = () => {
+  return useMemo(() => Object.keys(Ship.TYPES)
+  .map((i) => {
+    const asset = {
+      ...Ship.TYPES[i],
+      i: Number(i),
+    };
+
+    asset.iconUrl = getIconUrl(asset, 'ships');
+    asset.iconUrls = {
+      w150: getIconUrl(asset, 'ships', { w: 150 }),
+      w400: getIconUrl(asset, 'ships', { w: 400 }),
+    };
+
+    asset.simIconUrls = {
+      w150: getIconUrl(asset, 'ships', { w: 150, append: '_Holo' }),
+      w400: getIconUrl(asset, 'ships', { w: 400, append: '_Holo' }),
+    };
+
+    asset.modelUrl = getModelUrl(asset, 'ships');
+
+    return asset;
+  }), []);
+};

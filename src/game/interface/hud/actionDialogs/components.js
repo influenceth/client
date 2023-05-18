@@ -407,6 +407,10 @@ const BuildingThumbnailWrapper = styled(ResourceThumbnailWrapper)`
     }
   }
 `;
+const ShipThumbnailWrapper = styled(ResourceThumbnailWrapper)`
+  height: 92px;
+  width: 150px;
+`;
 const ThumbnailOverlay = styled.div`
   align-items: center;
   display: flex;
@@ -1123,6 +1127,31 @@ export const getBuildingRequirements = (building) => {
 //
 // SUB-COMPONENTS
 //
+
+export const ShipImage = ({ ship, iconOverlay, inventories, showInventoryStatusForType, simulated }) => {
+  if (!ship) return null;
+  // TODO: getCapacityUsage is intended for buildings
+  const capacity = getCapacityUsage(ship, inventories, showInventoryStatusForType);
+  return (
+    <ShipThumbnailWrapper>
+      <ResourceImage src={ship[simulated ? 'simIconUrls' : 'iconUrls']?.w150} />
+      {showInventoryStatusForType !== undefined && (
+        <>
+          <InventoryUtilization
+            progress={capacity.volume.used / capacity.volume.max}
+            secondaryProgress={(capacity.volume.reserved + capacity.volume.used) / capacity.volume.max}
+             />
+          <InventoryUtilization
+            progress={capacity.mass.used / capacity.mass.max}
+            secondaryProgress={(capacity.mass.reserved + capacity.mass.used) / capacity.mass.max}
+             />
+        </>
+      )}
+      {iconOverlay && <ThumbnailOverlay>{iconOverlay}</ThumbnailOverlay>}
+      <ClipCorner dimension={10} />
+    </ShipThumbnailWrapper>
+  );
+};
 
 export const BuildingImage = ({ building, iconOverlay, inventories, showInventoryStatusForType, unfinished }) => {
   if (!building) return null;

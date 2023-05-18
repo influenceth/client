@@ -7,12 +7,12 @@ import NumberInput from '~/components/NumberInput';
 import Porkchop from '~/components/Porkchop';
 import SliderInput from '~/components/SliderInput';
 import ClockContext from '~/contexts/ClockContext';
-import { useBuildingAssets } from '~/hooks/useAssets';
+import { useShipAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useStore from '~/hooks/useStore';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
 import { formatFixed, orbitTimeToGameTime } from '~/lib/utils';
-import { BuildingImage, formatMass } from '../actionDialogs/components';
+import { ShipImage, formatMass } from '../actionDialogs/components';
 import { Scrollable } from './components';
 
 const ShipSelection = styled.div`
@@ -122,45 +122,12 @@ const maxDelay = minDelay + 365;
 const minTof = Math.max(resolution, 1);
 const maxTof = minTof + 365;
 
+// TODO: should be in sdk or at least Constants
 const exhaustVelocity = 29000; // m/s
-// masses are in tons
-// maxThrust is in N (kg m / s^2)
-const ships = [
-  {
-    i: 0,
-    label: 'Shuttle',
-    emptyMass: 100e3,
-    maxPropellantMass: 950e3,
-    maxCargoMass: 10e3,
-    engines: 1,
-    maxThrust: 612916,
-    isSimulated: true
-  },
-  {
-    i: 1,
-    label: 'Light Transport',
-    emptyMass: 180e3,
-    maxPropellantMass: 1805e3,
-    maxCargoMass: 2000e3,
-    engines: 2,
-    maxThrust: 1225831,
-    isSimulated: true
-  },
-  {
-    i: 2,
-    label: 'Heavy Transport',
-    emptyMass: 1010e3,
-    maxPropellantMass: 11875e3,
-    maxCargoMass: 12000e3,
-    engines: 9,
-    maxThrust: 5516241,
-    isSimulated: true
-  }
-];
 
 const RoutePlanner = () => {
   const { coarseTime } = useContext(ClockContext);
-  const buildings = useBuildingAssets();
+  const ships = useShipAssets();
   
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
@@ -257,15 +224,12 @@ const RoutePlanner = () => {
     <Scrollable hasTray={hasTray} style={{ marginLeft: -12, paddingLeft: 12 }}>
 
       <ShipSelection isSimulated={ship?.isSimulated}>
-        <BuildingImage
-          building={buildings[1]}
-          unfinished
-        />
+        <ShipImage ship={ship} simulated />
 
         <div>
           <SectionHeader style={{ border: 0, margin: 0 }}>Ship</SectionHeader>
           <Dropdown
-            labelKey="label"
+            labelKey="name"
             onChange={setShip}
             options={ships}
             valueKey="i"
