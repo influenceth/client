@@ -63,7 +63,7 @@ export const ResourceThumbnailWrapper = styled.div`
   position: relative;
   width: ${p => p.size || defaultSize};
   ${p => `
-    background: ${p.backgroundColor || 'black'}};
+    background-color: ${p.backgroundColor || 'black'}};
     border-color: ${p.outlineColor || defaultBorderColor};
     color: ${p.outlineColor || defaultBorderColor};
     ${p.outlineStyle ? `border-style: ${p.outlineStyle} !important;` : ''}

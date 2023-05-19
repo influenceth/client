@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
+import { usePopper } from 'react-popper';
+import { createPortal } from 'react-dom';
+import ReactTooltip from 'react-tooltip';
 import { FiCrosshair as TargetIcon } from 'react-icons/fi';
 import {
   BsChevronDoubleDown as ChevronDoubleDownIcon,
@@ -11,6 +14,7 @@ import {
 import { RingLoader, PuffLoader } from 'react-spinners';
 import { Asteroid, Capable, Construction, Crewmate, Inventory } from '@influenceth/sdk';
 
+import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
 import ButtonRounded, { IconButtonRounded } from '~/components/ButtonRounded';
 import CrewCard from '~/components/CrewCard';
@@ -39,19 +43,16 @@ import SliderInput from '~/components/SliderInput';
 import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import theme, { hexToRGB } from '~/theme';
-import useChainTime from '~/hooks/useChainTime';
-import { formatFixed, formatTimer, keyify } from '~/lib/utils';
 import LiveTimer from '~/components/LiveTimer';
 import NavIcon from '~/components/NavIcon';
 import CrewCardFramed from '~/components/CrewCardFramed';
-import { usePopper } from 'react-popper';
-import { createPortal } from 'react-dom';
 import ClipCorner from '~/components/ClipCorner';
 import Dialog from '~/components/Dialog';
+import useChainTime from '~/hooks/useChainTime';
+import { formatFixed, formatTimer, keyify } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
-import { theming } from '../ActionDialog';
-import ReactTooltip from 'react-tooltip';
 import constants from '~/lib/constants';
+import { theming } from '../ActionDialog';
 
 const SECTION_WIDTH = 780;
 
@@ -65,6 +66,47 @@ export const Section = styled.div`
   margin-top: 15px;
   padding: 0 36px;
   width: ${SECTION_WIDTH}px;
+`;
+
+const Tabs = styled.div`
+  border-bottom: 1px solid ${borderColor};
+  display: flex;
+  flex-direction: row;
+  margin: 0 -18px 20px;
+`;
+const Tab = styled.div`
+  align-items: center;
+  border-bottom: 3px solid #555;
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  flex-direction: row;
+  height: 35px;
+  justify-content: center;
+  margin-right: 12px;
+  text-transform: uppercase;
+  transition-property: background, border-color, color;
+  transition-duration: 250ms;
+  transition-timing-function: ease;
+  width: 140px;
+  ${p => p.isSelected
+    ? `
+      background: rgba(${p.theme.colors.mainRGB}, 0.5);
+      border-color: ${p.theme.colors.main};
+      color: white;
+    `
+    : `
+      cursor: ${p.theme.cursors.active};
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    `
+  }
+`;
+const TabIcon = styled.div`
+  font-size: 30px;
+  line-height: 1em;
+  margin-right: 5px;
+  margin-left: -5px;
 `;
 
 const FlexSectionInputContainer = styled.div`
@@ -186,6 +228,15 @@ export const SectionTitle = styled.div`
       text-transform: none;
     }
   `}
+`;
+const SectionTitleRight = styled.div`
+  color: white;
+  font-size: 19px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
+  max-width: 240px;
 `;
 export const SectionBody = styled.div`
   align-items: center;
@@ -395,6 +446,10 @@ const EmptyThumbnail = styled.div`
     position: absolute;
     top: 50%;
   }
+`;
+
+const AsteroidThumbnailWrapper = styled(ResourceThumbnailWrapper)`
+  background-color: rgba(0, 0, 0, 0.6);
 `;
 const BuildingThumbnailWrapper = styled(ResourceThumbnailWrapper)`
   height: 92px;
@@ -722,6 +777,112 @@ const ActionProgressContainer = styled.div`
   }
   ${ActionProgressLabels} {
     color: ${p => p.labelColor || p.color};
+  }
+`;
+
+const barChartHeight = 20;
+const barChartPadding = 2;
+const barChartRounding = barChartHeight / 2;
+const BarChart = styled.div`
+  background: rgba(${p => hexToRGB(p.color)}, 0.4);
+  border-radius: ${barChartRounding}px;
+  height: ${barChartHeight}px;
+  position: relative;
+  width: 100%;
+  &:before, &:after {
+    content: "";
+    bottom: ${barChartPadding}px;
+    border-radius: ${barChartRounding - barChartPadding}px;
+    position: absolute;
+    top: ${barChartPadding}px;
+    transition: width 500ms ease;
+    z-index: 0;
+  }
+  &:before {
+    background: ${p => p.color};
+    left: ${barChartPadding}px;
+    width: ${p => 100 * p.value}%;
+  }
+  ${p => p.rightValue !== undefined && `
+    &:after {
+      background: ${p.rightColor || p.color};
+      right: ${barChartPadding}px;
+      width: ${100 * p.rightValue}%;
+      z-index: 1;
+    }
+  `}
+`;
+const BarChartNotes = styled.div`
+  color: ${p => p.color || 'inherit'};
+  display: flex;
+  flex-direction: row;
+  font-size: 92%;
+  font-weight: bold;
+  justify-content: space-between;
+  margin-top: 6px;
+  width: 100%;
+  & b {
+    color: white;
+  }
+  & > div:first-child, & > div:last-child {
+    min-width: 220px;
+  }
+  & > div:last-child {
+    text-align: right;
+  }
+`;
+
+export const MiniBarChartSection = styled(FlexSectionInputBody)`
+  background: transparent;
+`;
+const MiniBarWrapper = styled.div`
+  margin-top: 15px;
+  &:first-child {
+    margin-top: 0;
+  }
+`;
+const ChartLabels = styled.div`
+  align-items: center;
+  color: #999;
+  display: flex;
+  flex-direction: row;
+  font-size: 14.5px;
+  justify-content: space-between;
+  & > label:last-child {
+    color: white;
+  }
+`;
+const miniBarChartHeight = 4;
+const miniBarChartRounding = miniBarChartHeight / 2;
+const MiniBar = styled.div`
+  background: #333;
+  border-radius: ${miniBarChartRounding}px;
+  height: ${miniBarChartHeight}px;
+  margin: 4px 0;
+  position: relative;
+  width: 100%;
+  &:before {
+    background: ${p => p.color || p.theme.colors.main};
+    content: "";
+    bottom: 0px;
+    border-radius: ${miniBarChartRounding}px;
+    left: 0px;
+    position: absolute;
+    top: 0px;
+    transition: width 500ms ease;
+    width: ${p => 100 * p.value}%;
+    z-index: 1;
+  }
+`;
+
+export const ProgressBarNote = styled.div`
+  color: ${p => p.color || p.theme.colors[p.themeColor] || 'inherit'};
+  font-size: 92%;
+  margin: 10px 0;
+  text-align: center;
+  & b {
+    color: white;
+    font-weight: normal;
   }
 `;
 
@@ -1128,6 +1289,15 @@ export const getBuildingRequirements = (building) => {
 // SUB-COMPONENTS
 //
 
+export const AsteroidImage = ({ asteroid }) => {
+  return (
+    <AsteroidThumbnailWrapper>
+      <AsteroidRendering asteroid={asteroid} brightness={1.2} />
+      <ClipCorner dimension={10} />
+    </AsteroidThumbnailWrapper>
+  )
+}
+
 export const ShipImage = ({ ship, iconOverlay, inventories, showInventoryStatusForType, simulated }) => {
   if (!ship) return null;
   // TODO: getCapacityUsage is intended for buildings
@@ -1191,6 +1361,16 @@ export const EmptyResourceImage = ({ iconOverride, noIcon, ...props }) => (
   </ResourceThumbnailWrapper>
 );
 
+export const MiniBarChart = ({ color, label, valueLabel, value }) => (
+  <MiniBarWrapper>
+    <ChartLabels>
+      <label>{label}</label>
+      <label>{valueLabel}</label>
+    </ChartLabels>
+    <MiniBar color={color} value={value} />
+  </MiniBarWrapper>
+);
+
 const MouseoverIcon = ({ children, icon, iconStyle = {}, themeColor }) => {
   const refEl = useRef();
   const [hovered, setHovered] = useState();
@@ -1240,7 +1420,7 @@ export const ActionDialogHeader = ({ action, captain, crewAvailableTime, stage, 
   );
 };
 
-export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, isSelected, label, onClick, style = {}, sublabel, title, tooltip }) => {
+export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, isSelected, label, onClick, style = {}, sublabel, title, titleDetails, tooltip }) => {
   const refEl = useRef();
   const [hovered, setHovered] = useState();
   return (
@@ -1253,7 +1433,8 @@ export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, is
         </MouseoverInfoPane>
       )}
       <FlexSectionInputContainer style={style}>
-        {title && <SectionTitle>{title}</SectionTitle>}
+        {title && <SectionTitle>{title}{titleDetails && <><b style={{ flex: 1 }} /><SectionTitleRight>{titleDetails}</SectionTitleRight></>}</SectionTitle>}
+        
         <FlexSectionInputBody
           isSelected={isSelected}
           onClick={disabled ? null : onClick}
@@ -1620,6 +1801,30 @@ export const ExtractionAmountSection = ({ amount, extractionTime, min, max, reso
   );
 }
 
+export const PropellantSection = ({ title, propellantMax, propellantLoaded, propellantRequired }) => {
+  const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : 1;
+  return (
+    <Section>
+      {title && <SectionTitle>{title}</SectionTitle>}
+      <SectionBody style={{ flexDirection: 'column', marginBottom: 20 }}>
+        <BarChart color={theme.colors.main} value={propellantUse} />
+        <BarChartNotes color={theme.colors.main}>
+          <div>
+            <b>Propellant Required:</b> {formatMass(propellantRequired * 1e3)}
+          </div>
+          <div>
+            {formatFixed(100 * propellantUse)}% of Loaded
+          </div>
+          <div>
+            <b>Loaded:</b> {formatMass(propellantLoaded * 1e3)}
+            <small style={{ color: '#667'}}> / {formatMass(propellantMax * 1e3)} max</small>
+          </div>
+        </BarChartNotes>
+      </SectionBody>
+    </Section>
+  )
+}
+
 
 const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip, warning }}) => {
   const refEl = useRef();
@@ -1742,6 +1947,19 @@ export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, go
     </Footer>
   );
 };
+
+export const ActionDialogTabs = ({ tabs, selected, onSelect }) => (
+  <Section>
+    <Tabs>
+      {tabs.map((tab, i) => (
+        <Tab key={i} onClick={() => onSelect(i)} isSelected={i === selected}>
+          {tab.icon && <TabIcon>{tab.icon}</TabIcon>}
+          <div>{tab.label}</div>
+        </Tab>
+      ))}
+    </Tabs>
+  </Section>
+);
 
 //
 // bonus tooltips

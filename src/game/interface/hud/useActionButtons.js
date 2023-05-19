@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Address, Inventory } from '@influenceth/sdk';
 
 import { useBuildingAssets } from '~/hooks/useAssets';
@@ -10,15 +10,26 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import actionButtons from './actionButtons';
 
+// TODO: need a ships hook probably
+//  but for now, since don't know structure of that data...
+const ships = [{
+  i: 123,
+  type: 1,
+  status: 'ON_SURFACE', // IN_FLIGHT, IN_ORBIT, LAUNCHING, LANDING, ON_SURFACE
+  asteroid: 1000,
+  lot: 123,
+  hasCrew: true
+}];
+
 const useActionButtons = () => {
   const { account } = useAuth();
   const buildings = useBuildingAssets();
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const { lotId } = useStore(s => s.asteroids.lot || {});
-  const openHudMenu = useStore(s => s.openHudMenu);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const openHudMenu = useStore(s => s.openHudMenu);
   const setAction = useStore(s => s.dispatchActionDialog);
 
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
@@ -26,8 +37,16 @@ const useActionButtons = () => {
   const { data: lot, isLoading: lotIsLoading } = useLot(asteroidId, lotId);
   const { crew } = useCrewContext();
 
-  const [actions, setActions] = useState([]);
+  const crewedShip = useMemo(() => {
+    return ships.find((s) => s.hasCrew);
+  }, [ships]);
 
+  const lotShips = useMemo(() => {
+    return lotId ? ships.filter((s) => s.asteroid === asteroidId && s.lot === lotId) : [];
+  }, [ships, asteroidId, lotId]);
+  
+
+  const [actions, setActions] = useState([]);
 
   // TODO: could reasonably have buttons determine own visibility and remove some redundant logic here
   // (the only problem is parent wouldn't know how many visible buttons there were)
@@ -44,9 +63,17 @@ const useActionButtons = () => {
           a.push(actionButtons.ScanAsteroid);
         }
       }
-      a.push(actionButtons.SelectTravelDestination);
-      if (openHudMenu === 'BELT_PLAN_FLIGHT') {
-        a.push(actionButtons.SetCourse);
+      if (zoomStatus === 'out') {
+        a.push(actionButtons.SelectTravelDestination);
+        if (openHudMenu === 'BELT_PLAN_FLIGHT') {
+          a.push(actionButtons.SetCourse);
+        }
+      } else if (zoomStatus === 'in') {
+        if (lotShips?.length > 0) {
+          a.push(actionButtons.LaunchShip);
+        } else if (crewedShip?.status === 'IN_ORBIT' && crewedShip?.asteroid === asteroidId) {
+          a.push(actionButtons.LandShip);
+        }
       }
       if (asteroid.scanned && lot && crew && zoomStatus === 'in') {
         a.push(actionButtons.CoreSample);

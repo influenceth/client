@@ -1,7 +1,9 @@
 import Construct from './Construct';
+import CoreSample from './CoreSample';
 import Deconstruct from './Deconstruct';
 import Extract from './Extract';
-import CoreSample from './CoreSample';
+import LandShip from './LandShip';
+import LaunchShip from './LaunchShip';
 import PlanBuilding from './PlanBuilding';
 import PurchaseAsteroid from './PurchaseAsteroid';
 import ScanAsteroid from './ScanAsteroid';
@@ -13,9 +15,11 @@ import UnplanBuilding from './UnplanBuilding';
 
 const ActionsButtons = {
   Construct,
+  CoreSample,
   Deconstruct,
   Extract,
-  CoreSample,
+  LandShip,
+  LaunchShip,
   PlanBuilding,
   PurchaseAsteroid,
   ScanAsteroid,

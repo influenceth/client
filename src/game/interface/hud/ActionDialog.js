@@ -16,6 +16,8 @@ import Extract from './actionDialogs/Extract';
 import NewCoreSample from './actionDialogs/NewCoreSample';
 import Deconstruct from './actionDialogs/Deconstruct';
 import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
+import LandShip from './actionDialogs/LandShip';
+import LaunchShip from './actionDialogs/LaunchShip';
 import PlanBuilding from './actionDialogs/PlanBuilding';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import TransferToSite from './actionDialogs/TransferToSite';
@@ -158,11 +160,9 @@ export const useAsteroidAndLot = (props = {}) => {
   }
 };
 
-
 const ActionImage = styled.div`
-  background: url("${p => p.src}") center center;
+  background: url("${p => p.src}") center center no-repeat;
   background-size: cover;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 85%, transparent 100%);
   height: 250px;
   left: 0;
   position: absolute;
@@ -284,6 +284,8 @@ const ActionDialog = ({ type, params }) => {
         {type === 'CONSTRUCT' && <Construct {...allProps} />}
         {type === 'DECONSTRUCT' && <Deconstruct {...allProps} />}
         {type === 'EXTRACT_RESOURCE' && <Extract {...allProps} />}
+        {type === 'LAND_SHIP' && <LandShip {...allProps} />}
+        {type === 'LAUNCH_SHIP' && <LaunchShip {...allProps} />}
         {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}
         {type === 'NEW_CORE_SAMPLE' && <NewCoreSample {...allProps} />}
         {type === 'SURFACE_TRANSFER' && <SurfaceTransfer {...allProps} />}

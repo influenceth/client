@@ -7,7 +7,7 @@ import TriangleTip from '~/components/TriangleTip';
 
 const bgColor = '#000';
 const hoverBgColor = '#183541';
-const borderColor = '#444';
+const defaultBorderColor = '#444';
 const tween = '250ms ease';
 
 const silhouetteAnimation = keyframes`
@@ -18,8 +18,8 @@ const silhouetteAnimation = keyframes`
 
 const Avatar = styled.div`
   background: ${bgColor};
-  border: solid ${borderColor};
-  border-width: 1px 1px 0;
+  border: solid ${p => p.borderColor || defaultBorderColor};
+  border-width: ${p => p.noArrow ? '1px' : '1px 1px 0'};
   overflow: hidden;
   pointer-events: auto;
   transition: background ${tween}, border-color ${tween};
@@ -61,17 +61,17 @@ const AvatarWrapper = styled.div`
   
   ${p => {
     const widthMult = p.width / 96;
-    const iconWidth = 67 * widthMult;
+    const iconWidth = p.lessPadding ? 50 * widthMult : 67 * widthMult;
     const fontSize = iconWidth * 22 / 67;
     return `
       width: ${p.width}px;
       ${Avatar} {
-        padding: ${5 * widthMult}px ${5 * widthMult}px ${8 * widthMult}px;
+        padding: ${p.lessPadding ? 0 : `${5 * widthMult}px ${5 * widthMult}px ${8 * widthMult}px`};
       }
       ${StyledCaptainIcon} {
         font-size: ${fontSize}px;
         margin-left: ${-iconWidth / 2}px;
-        top: ${-7 * widthMult}px;
+        top: ${(p.lessPadding ? -1 : -7) * widthMult}px;
       }
       ${StyledTriangleTip} {
         height: ${20 * widthMult}px;
@@ -108,7 +108,8 @@ const CrewCardFramed = ({
   onClick,
   silhouetteOverlay,
   tooltip,
-  width
+  width,
+  ...props
 }) => {
   const cardWidth = width || 96;
   return (
@@ -118,8 +119,9 @@ const CrewCardFramed = ({
       data-place="right"
       clickable={!!onClick}
       onClick={onClick || noop}
-      width={cardWidth}>
-      <Avatar isEmpty={!crewmate}>
+      width={cardWidth}
+      {...props}>
+      <Avatar isEmpty={!crewmate} {...props}>
         {crewmate && (
           <CrewCard
             crew={crewmate}
@@ -133,10 +135,12 @@ const CrewCardFramed = ({
       </Avatar>
       <AvatarFlourish>
         {isCaptain && <StyledCaptainIcon isEmpty={!crewmate} />}
-        <StyledTriangleTip
-          fillColor={bgColor}
-          strokeColor={borderColor}
-          strokeWidth={2} />
+        {!props.noArrow && (
+          <StyledTriangleTip
+            fillColor={bgColor}
+            strokeColor={props.borderColor || defaultBorderColor}
+            strokeWidth={2} />
+        )}
       </AvatarFlourish>
     </AvatarWrapper>
   );

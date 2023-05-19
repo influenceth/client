@@ -5,19 +5,20 @@ import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
 
-const SetCourse = ({}) => {
+const SetCourse = ({ onSetAction }) => {
   const { account } = useAuth();
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   
   const handleClick = useCallback(() => {
-    console.log('SET ROUTE', travelSolution);
+    onSetAction('SET_COURSE', travelSolution);
   }, [travelSolution]);
 
   return (
     <ActionButton
       flags={{
         attention: account && travelSolution && !travelSolution.invalid,
-        disabled: !(account && travelSolution && !travelSolution.invalid),
+        // TODO: remove false
+        disabled: false && !(account && travelSolution && !travelSolution.invalid),
       }}
       label="Set Course"
       icon={<SetCourseIcon />}
