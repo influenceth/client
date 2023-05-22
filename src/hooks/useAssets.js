@@ -94,6 +94,7 @@ const Ship = {
       maxCargoMass: 10e3,
       engines: 1,
       maxThrust: 612916,
+      spaceportRequired: true,
       iconVersion: 1,
       modelVersion: 1
     },
@@ -104,9 +105,9 @@ const Ship = {
       maxCargoMass: 2000e3,
       engines: 2,
       maxThrust: 1225831,
+      spaceportRequired: false,
       iconVersion: 1,
       modelVersion: 1
-
     },
     3: {
       name: 'Heavy Transport',
@@ -115,6 +116,7 @@ const Ship = {
       maxCargoMass: 12000e3,
       engines: 9,
       maxThrust: 5516241,
+      spaceportRequired: true,
       iconVersion: 1,
       modelVersion: 1
     }

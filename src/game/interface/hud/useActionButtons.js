@@ -15,7 +15,7 @@ import actionButtons from './actionButtons';
 const ships = [{
   i: 123,
   type: 1,
-  status: 'ON_SURFACE', // IN_FLIGHT, IN_ORBIT, LAUNCHING, LANDING, ON_SURFACE
+  status: 'IN_ORBIT', // IN_FLIGHT, IN_ORBIT, LAUNCHING, LANDING, ON_SURFACE
   asteroid: 1000,
   lot: 123,
   hasCrew: true
@@ -42,7 +42,7 @@ const useActionButtons = () => {
   }, [ships]);
 
   const lotShips = useMemo(() => {
-    return lotId ? ships.filter((s) => s.asteroid === asteroidId && s.lot === lotId) : [];
+    return lotId ? ships.filter((s) => s.asteroid === asteroidId && s.lot === lotId && ['LAUNCHING','ON_SURFACE'].includes(s.status)) : [];
   }, [ships, asteroidId, lotId]);
   
 
@@ -71,7 +71,8 @@ const useActionButtons = () => {
       } else if (zoomStatus === 'in') {
         if (lotShips?.length > 0) {
           a.push(actionButtons.LaunchShip);
-        } else if (crewedShip?.status === 'IN_ORBIT' && crewedShip?.asteroid === asteroidId) {
+        }
+        if (crewedShip?.status === 'IN_ORBIT' && crewedShip?.asteroid === asteroidId) {
           a.push(actionButtons.LandShip);
         }
       }

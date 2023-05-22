@@ -1,55 +1,44 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
-import { usePopper } from 'react-popper';
 import { createPortal } from 'react-dom';
 import ReactTooltip from 'react-tooltip';
-import { FiCrosshair as TargetIcon } from 'react-icons/fi';
+import { useQuery } from 'react-query';
+import api from '~/lib/api';
 import {
-  BsChevronDoubleDown as ChevronDoubleDownIcon,
-  BsChevronDoubleUp as ChevronDoubleUpIcon,
-} from 'react-icons/bs';
-import {
-  TbBellRingingFilled as AlertIcon
+  TbBellRingingFilled as AlertIcon,
+  TbDelta as DeltaVIcon // TODO: ...
 } from 'react-icons/tb';
-import { RingLoader, PuffLoader } from 'react-spinners';
 import { Asteroid, Capable, Construction, Crewmate, Inventory } from '@influenceth/sdk';
 
 import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
-import ButtonRounded, { IconButtonRounded } from '~/components/ButtonRounded';
-import CrewCard from '~/components/CrewCard';
 import IconButton from '~/components/IconButton';
 import {
-  CheckIcon,
   ChevronRightIcon,
   CloseIcon,
-  ConstructIcon,
   CrewIcon,
-  PlanBuildingIcon,
   LocationIcon,
   PlusIcon,
-  ResourceIcon,
-  TimerIcon,
   WarningOutlineIcon,
-  SurfaceTransferIcon
+  SurfaceTransferIcon,
+  GasIcon
 } from '~/components/Icons';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
-import Poppable from '~/components/Popper';
 import ResourceColorIcon from '~/components/ResourceColorIcon';
 import { ResourceThumbnailWrapper, ResourceImage, ResourceProgress } from '~/components/ResourceThumbnail';
 import ResourceRequirement from '~/components/ResourceRequirement';
 import ResourceSelection from '~/components/ResourceSelection';
 import SliderInput from '~/components/SliderInput';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
+import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import theme, { hexToRGB } from '~/theme';
 import LiveTimer from '~/components/LiveTimer';
-import NavIcon from '~/components/NavIcon';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import ClipCorner from '~/components/ClipCorner';
 import Dialog from '~/components/Dialog';
+import TextInput from '~/components/TextInputUncontrolled';
 import useChainTime from '~/hooks/useChainTime';
-import { formatFixed, formatTimer, keyify } from '~/lib/utils';
+import { formatFixed, formatTimer } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
 import constants from '~/lib/constants';
 import { theming } from '../ActionDialog';
@@ -238,6 +227,37 @@ const SectionTitleRight = styled.div`
   white-space: nowrap;
   max-width: 240px;
 `;
+
+const SectionTitleTab = styled.button`
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  color: white;
+  display: flex;
+  font-size: 20px;
+  height: 26px;
+  justify-content: center;
+  margin-left: 3px;
+  margin-top: -1px;
+  padding: 0;
+  transition: background 250ms ease, color 250ms ease;
+  width: 26px;
+  ${p => p.isSelected
+    ? `
+      background: ${p.theme.colors.main};
+      cursor: ${p.theme.cursors.default};
+      color: black;
+    `
+    : `
+      cursor: ${p.theme.cursors.active};
+      &:hover {
+        background: rgba(${p.theme.colors.mainRGB}, 0.3);
+      }
+    `
+  }
+`;
+
 export const SectionBody = styled.div`
   align-items: center;
   display: flex;
@@ -624,6 +644,35 @@ const SelectionTableWrapper = styled.div`
     }
   }
 `;
+const EmptyMessage = styled.div`
+  background: rgba(255, 255, 255, 0.15);
+  opacity: 0.7;
+  padding: 20px;
+  text-align: center;
+`;
+
+const TextInputWithNote = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 10px;
+`;
+const TextInputNote = styled.div`
+  align-items: center;
+  align-self: stretch;
+  border: 1px solid ${p => p.error ? p.theme.colors.error : '#777'};
+  color: ${p => p.error ? p.theme.colors.error : '#777'};
+  display: flex;
+  font-size: 14px;
+  justify-content: center;
+  margin-left: 10px;
+  padding: 0 20px;
+  & > svg {
+    font-size: 18px;
+    margin-right: 6px;
+  }
+  transition: border-color 500ms ease, color 500ms ease;
+`;
 
 export const MouseoverContent = styled.div`
   & b {
@@ -784,7 +833,7 @@ const barChartHeight = 20;
 const barChartPadding = 2;
 const barChartRounding = barChartHeight / 2;
 const BarChart = styled.div`
-  background: rgba(${p => hexToRGB(p.color)}, 0.4);
+  background: rgba(${p => hexToRGB(p.color)}, 0.2);
   border-radius: ${barChartRounding}px;
   height: ${barChartHeight}px;
   position: relative;
@@ -883,6 +932,27 @@ export const ProgressBarNote = styled.div`
   & b {
     color: white;
     font-weight: normal;
+  }
+`;
+
+const CrewCards = styled.div`
+  display: flex;
+  flex-direction: row;
+  & > div {
+    margin-right: 5px;
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+`;
+const CrewCardPlaceholder = styled.div`
+  width: 60px;
+  &:before {
+    content: "";
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.07);
+    display: block;
+    height: 0;
+    padding-top: 128%;
   }
 `;
 
@@ -1229,6 +1299,107 @@ export const TransferSelectionDialog = ({ requirements, inventory, lot, resource
           </span>
         </IngredientSummary>
       </DialogIngredientsList>
+    </SelectionDialog>
+  );
+};
+
+export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, onSelected, open, ship }) => {
+  const [error, setError] = useState();
+  const [selection, setSelection] = useState(initialSelection);
+
+  // TODO: to get spaceport names, it will probably make more sense to have
+  //  a "get spaceports" api endpoint
+  const { data: lotData, isLoading: lotDataLoading } = useQuery(
+    [ 'asteroidLots', asteroid?.i ],
+    () => api.getAsteroidLotData(asteroid?.i),
+    { enabled: !!asteroid?.i }
+  );
+
+  const spaceports = useMemo(() => {
+    if (!lotData) return [];
+    return lotData.reduce((acc, cur, i) => {
+      if (cur >> 4 === 7) acc.push(i)
+      return acc;
+    }, []);
+  }, [lotData]);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter') {
+      const lot = parseInt(e.target.value);
+      if (lot && lotData[lot] !== undefined) {
+        const capableType = lotData[lot] >> 4;
+        if (capableType === 0 || capableType === 7) {
+          onSelected(lot);
+          onClose();
+          return;
+        }
+      }
+      setError(true);
+      setTimeout(() => {
+        setError(false);
+      }, 4000);
+    }
+  }, [lotData]);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={`Landing Sites`}>
+      {/* TODO: isLoading */}
+      {/* TODO: replace with DataTable? */}
+      <div style={{ minWidth: 500 }}></div>
+      {!ship?.spaceportRequired && (
+        <TextInputWithNote>
+          <TextInput
+            onKeyDown={handleKeyDown}
+            placeholder="Specify Lot by Id..."
+            type="number" />
+          <TextInputNote error={!!error}>
+            <WarningOutlineIcon />
+            This ship may land at a Spaceport or Empty Lot.
+          </TextInputNote>
+        </TextInputWithNote>
+      )}
+      {spaceports.length > 0
+        ? (
+          <SelectionTableWrapper>
+            <table>
+              <thead>
+                <tr>
+                  <td>Name</td>
+                  <td>Building</td>
+                  <td>Lot Id</td>
+                  <td>Landing Fee</td>
+                </tr>
+              </thead>
+              <tbody>
+                {spaceports.map((lotId) => {
+                  return (
+                    <SelectionTableRow
+                      key={lotId}
+                      onClick={() => setSelection(lotId)}
+                      selectedRow={lotId === selection}>
+                      <td>Parking @ {lotId}</td>
+                      <td>Spaceport</td>
+                      <td><LocationIcon /> {lotId}</td>
+                      <td>0</td>
+                    </SelectionTableRow>
+                  );
+                })}
+              </tbody>
+            </table>
+          </SelectionTableWrapper>
+        )
+        : <EmptyMessage>There are no available spaceports.</EmptyMessage>
+      }
     </SelectionDialog>
   );
 };
@@ -1802,28 +1973,140 @@ export const ExtractionAmountSection = ({ amount, extractionTime, min, max, reso
 }
 
 export const PropellantSection = ({ title, propellantMax, propellantLoaded, propellantRequired }) => {
+  const [deltaVMode, setDeltaVMode] = useState(false);
+  // useEffect(() => ReactTooltip.rebuild(), []);
+
   const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : 1;
+  
   return (
     <Section>
-      {title && <SectionTitle>{title}</SectionTitle>}
+      <SectionTitle>
+        {title}
+        <b style={{ flex: 1 }} />
+        <SectionTitleTab
+          data-for="actionDialog"
+          data-tip="Propellant Usage"
+          data-place="left"
+          onClick={() => setDeltaVMode(false)}
+          isSelected={!deltaVMode}><GasIcon /></SectionTitleTab>
+        <SectionTitleTab
+          data-for="actionDialog"
+          data-tip="Delta-V Usage"
+          data-place="left"
+          onClick={() => setDeltaVMode(true)}
+          isSelected={!!deltaVMode}><DeltaVIcon /></SectionTitleTab>
+      </SectionTitle>
       <SectionBody style={{ flexDirection: 'column', marginBottom: 20 }}>
-        <BarChart color={theme.colors.main} value={propellantUse} />
-        <BarChartNotes color={theme.colors.main}>
-          <div>
-            <b>Propellant Required:</b> {formatMass(propellantRequired * 1e3)}
-          </div>
-          <div>
-            {formatFixed(100 * propellantUse)}% of Loaded
-          </div>
-          <div>
-            <b>Loaded:</b> {formatMass(propellantLoaded * 1e3)}
-            <small style={{ color: '#667'}}> / {formatMass(propellantMax * 1e3)} max</small>
-          </div>
-        </BarChartNotes>
+        {deltaVMode && (
+          <>
+            <BarChart color={'#cccccc'} value={propellantUse} rightColor={'#ff4500'} rightValue={0.04} />
+            <BarChartNotes color={'#999999'}>
+              <div>
+                <b>Delta-V Used:</b> 54%
+              </div>
+              <div style={{ color: '#ff4500' }}>
+                <b style={{ color: '#ff4500' }}>Reserved for Landing:</b> 4%
+              </div>
+            </BarChartNotes>
+          </>
+        )}
+        {!deltaVMode && (
+          <>
+            <BarChart color={theme.colors.main} bgColor={''} value={propellantUse} />
+            <BarChartNotes color={theme.colors.main}>
+              <div>
+                <b>Propellant Required:</b> {formatMass(propellantRequired * 1e3)}
+              </div>
+              <div>
+                {formatFixed(100 * propellantUse)}% of Loaded
+              </div>
+              <div>
+                <b>Loaded:</b> {formatMass(propellantLoaded * 1e3)}
+                <small style={{ color: '#667'}}> / {formatMass(propellantMax * 1e3)} max</small>
+              </div>
+            </BarChartNotes>
+          </>
+        )}
       </SectionBody>
     </Section>
   )
-}
+};
+
+export const ShipTab = ({ pilotCrew, ship, stage }) => {
+  return (
+    <>
+      <FlexSection>
+        <FlexSectionInputBlock
+          title="Ship"
+          image={<ShipImage ship={ship} />}
+          label="Icarus"
+          disabled={stage !== actionStage.NOT_STARTED}
+          sublabel={ship.name}
+        />
+
+        <FlexSectionSpacer />
+
+        <FlexSectionInputBlock
+          title="Piloted By"
+          titleDetails={pilotCrew?.name || `Crew #${pilotCrew?.i}`}
+          bodyStyle={{ paddingRight: 8 }}>
+          <CrewCards>
+            {Array.from({ length: 5 }).map((_, i) => 
+              pilotCrew.members[i]
+                ? (
+                  <CrewCardFramed
+                    key={i}
+                    borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
+                    crewmate={pilotCrew.members[i]}
+                    isCaptain={i === 0}
+                    lessPadding
+                    noArrow={i > 0}
+                    width={60} />
+                )
+                : <CrewCardPlaceholder key={i} />
+            )}
+          </CrewCards>
+        </FlexSectionInputBlock>
+      </FlexSection>
+
+      <FlexSection>
+        <div style={{ width: '50%'}}>
+          <MiniBarChartSection>
+            <MiniBarChart
+              color="#8cc63f"
+              label="Propellant Mass"
+              valueLabel={`${formatFixed(0.5 * ship.maxPropellantMass / 1e3)} / ${formatFixed(ship.maxPropellantMass / 1e3)}t`}
+              value={0.5}
+            />
+            <MiniBarChart
+              color="#557826"
+              label="Propellant Volume"
+              valueLabel={`${formatFixed(0.5 * ship.maxPropellantMass / 1e3)} / ${formatFixed(ship.maxPropellantMass / 1e3)}m³`}
+              value={0.7}
+            />
+            <MiniBarChart
+              label="Cargo Mass"
+              valueLabel={`${formatFixed(0.5 * ship.maxCargoMass / 1e3)} / ${formatFixed(ship.maxCargoMass / 1e3)}t`}
+              value={0.8}
+            />
+            <MiniBarChart
+              color="#1f5f75"
+              label="Cargo Volume"
+              valueLabel={`${formatFixed(0.5 * ship.maxCargoMass / 1e3)} / ${formatFixed(ship.maxCargoMass / 1e3)}m³`}
+              value={0.3}
+            />
+            <MiniBarChart
+              color="#92278f"
+              label="Passengers"
+              valueLabel={`${pilotCrew.members.length} / 5`}
+              value={pilotCrew.members.length / 5}
+            />
+          </MiniBarChartSection>
+        </div>
+      </FlexSection>
+    </>
+  );
+};
 
 
 const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip, warning }}) => {

@@ -43,7 +43,8 @@ import {
   ShipImage,
   formatMass,
   MiniBarChart,
-  MiniBarChartSection
+  MiniBarChartSection,
+  ShipTab
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -52,27 +53,6 @@ import ResourceThumbnail from '~/components/ResourceThumbnail';
 import actionStages from '~/lib/actionStages';
 import theme from '~/theme';
 import CrewCardFramed from '~/components/CrewCardFramed';
-
-const CrewCards = styled.div`
-  display: flex;
-  flex-direction: row;
-  & > div {
-    margin-right: 5px;
-    &:last-child {
-      margin-right: 0;
-    }
-  }
-`;
-const CrewCardPlaceholder = styled.div`
-  width: 60px;
-  &:before {
-    content: "";
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.07);
-    display: block;
-    height: 0;
-    padding-top: 128%;
-  }
-`;
 
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
@@ -176,7 +156,7 @@ const LaunchShip = ({ asteroid, lot, manager, stage, ...props }) => {
       isTimeStat: true,
     },
     {
-      label: 'Delta V Used',
+      label: 'Delta-V Used',
       value: `1.712 m/s`,
       direction: 0,
     },
@@ -305,77 +285,7 @@ const LaunchShip = ({ asteroid, lot, manager, stage, ...props }) => {
         )}
 
         {tab === 1 && (
-          <>
-            <FlexSection>
-              <FlexSectionInputBlock
-                title="Ship"
-                image={<ShipImage ship={ships[0]} />}
-                label="Icarus"
-                disabled={stage !== actionStages.NOT_STARTED}
-                sublabel={ships[0].name}
-              />
-
-              <FlexSectionSpacer />
-
-              <FlexSectionInputBlock
-                title="Piloted By"
-                titleDetails={crew?.name || `Crew #${crew?.i}`}
-                bodyStyle={{ paddingRight: 8 }}>
-                <CrewCards>
-                  {Array.from({ length: 5 }).map((_, i) => 
-                    crewMembers[i]
-                      ? (
-                        <CrewCardFramed
-                          key={i}
-                          borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
-                          crewmate={crewMembers[i]}
-                          isCaptain={i === 0}
-                          lessPadding
-                          noArrow={i > 0}
-                          width={60} />
-                      )
-                      : <CrewCardPlaceholder key={i} />
-                  )}
-                </CrewCards>
-              </FlexSectionInputBlock>
-            </FlexSection>
-
-            <FlexSection>
-              <div style={{ width: '50%'}}>
-                <MiniBarChartSection>
-                  <MiniBarChart
-                    color="#8cc63f"
-                    label="Propellant Mass"
-                    valueLabel={`${formatFixed(0.5 * ship.maxPropellantMass / 1e3)} / ${formatFixed(ship.maxPropellantMass / 1e3)}t`}
-                    value={0.5}
-                  />
-                  <MiniBarChart
-                    color="#557826"
-                    label="Propellant Volume"
-                    valueLabel={`${formatFixed(0.5 * ship.maxPropellantMass / 1e3)} / ${formatFixed(ship.maxPropellantMass / 1e3)}m³`}
-                    value={0.7}
-                  />
-                  <MiniBarChart
-                    label="Cargo Mass"
-                    valueLabel={`${formatFixed(0.5 * ship.maxCargoMass / 1e3)} / ${formatFixed(ship.maxCargoMass / 1e3)}t`}
-                    value={0.8}
-                  />
-                  <MiniBarChart
-                    color="#1f5f75"
-                    label="Cargo Volume"
-                    valueLabel={`${formatFixed(0.5 * ship.maxCargoMass / 1e3)} / ${formatFixed(ship.maxCargoMass / 1e3)}m³`}
-                    value={0.3}
-                  />
-                  <MiniBarChart
-                    color="#92278f"
-                    label="Passengers"
-                    valueLabel={`${crewMembers.length} / 5`}
-                    value={crewMembers.length / 5}
-                  />
-                </MiniBarChartSection>
-              </div>
-            </FlexSection>
-          </>
+          <ShipTab pilotCrew={{ ...crew, members: crewMembers }} ship={ships[0]} stage={stage} />
         )}
 
 
