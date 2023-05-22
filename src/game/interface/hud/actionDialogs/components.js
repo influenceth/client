@@ -660,8 +660,8 @@ const TextInputWithNote = styled.div`
 const TextInputNote = styled.div`
   align-items: center;
   align-self: stretch;
-  border: 1px solid ${p => p.error ? p.theme.colors.error : '#777'};
-  color: ${p => p.error ? p.theme.colors.error : '#777'};
+  background: ${p => p.error ? p.theme.colors.error : '#222'};
+  color: ${p => p.error ? 'white' : '#aaa'};
   display: flex;
   font-size: 14px;
   justify-content: center;
