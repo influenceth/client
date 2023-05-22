@@ -21,6 +21,7 @@ import useStore from '~/hooks/useStore';
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
 const ENV_MAP_STRENGTH = 4.5;
+const MAX_LIGHTS = 10;
 const DOWN = new Vector3(0, -1, 0);
 
 const dracoLoader = new DRACOLoader();
@@ -144,7 +145,7 @@ const skyboxDefaults = {
   }
 };
 
-const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled, zoomLimitsEnabled }) => {
+const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength, rotationEnabled, zoomLimitsEnabled }) => {
   const { camera, clock, gl, scene } = useThree();
 
   // if three is started with frameloop == 'never', clock is not set to autoStart, so we need to set it
@@ -226,6 +227,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
       function (gltf) {
         let predefinedCenter;
         let predefinedCamera;
+        let totalLights = 0;
 
         const removeNodes = [];
         model.current = gltf.scene || gltf.scenes[0];
@@ -251,7 +253,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
               node.material.envMapIntensity = ENV_MAP_STRENGTH;
             }
             if (assetType === 'Building') {
-              node.material.envMapIntensity = 0;
+              node.material.envMapIntensity = overrideEnvName ? ENV_MAP_STRENGTH : 0;
               if (node.material?.emissiveMap) {
                 if (node.material.lightMap) console.warn('LIGHTMAP overwritten by emissiveMap', node);
 
@@ -270,9 +272,14 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
             // (from https://github.com/donmccurdy/three-gltf-viewer/blob/main/src/viewer.js)
             node.material.depthWrite = !node.material.transparent;
           } else if (assetType === 'Building' && node.isSpotLight) {
-            node.castShadow = true;
-            node.shadow.bias = -0.0001;
-            node.intensity /= 8;
+            if (totalLights < MAX_LIGHTS) {
+              node.castShadow = true;
+              node.shadow.bias = -0.0001;
+              node.intensity /= 8;
+            } else {
+              console.warn(`excessive light (#${totalLights}) removed: `, node.name);
+            }
+            totalLights++;
           } else if (node.isLight) {
             console.warn(`unexpected light (${node.type}) removed: `, node.name);
             removeNodes.push(node);
@@ -398,7 +405,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvStrength, rotationEnabled,
     model.current.traverse(function (node) {
       if (node.isMesh) {
         if (node.material?.envMapIntensity) {
-          node.material.envMapIntensity = overrideEnvStrength || 3.0;
+          node.material.envMapIntensity = overrideEnvStrength || ENV_MAP_STRENGTH;
         }
       }
     });
@@ -948,6 +955,7 @@ const ModelViewer = ({ assetType, lotZoomMode }) => {
             <Model
               assetType={assetType}
               onLoaded={handleLoaded}
+              overrideEnvName={envOverrideName}
               overrideEnvStrength={envStrengthOverride}
               rotationEnabled={rotationEnabled}
               zoomLimitsEnabled={zoomLimitsEnabled}
