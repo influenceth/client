@@ -19,6 +19,7 @@ import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
 import LandShip from './actionDialogs/LandShip';
 import LaunchShip from './actionDialogs/LaunchShip';
 import PlanBuilding from './actionDialogs/PlanBuilding';
+import SetCourse from './actionDialogs/SetCourse';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import TransferToSite from './actionDialogs/TransferToSite';
 import UnplanBuilding from './actionDialogs/UnplanBuilding';
@@ -65,7 +66,7 @@ const ModalCushion = styled.div`
     calc(100% - ${cornerSize + 4}px) 100%,
     0 100%
   );
-  max-height: 90vh;
+  max-height: 95vh;
   max-width: 90vw;
   overflow: hidden;
   padding: 5px;
@@ -87,7 +88,7 @@ const Modal = styled.div`
 const ModalInner = styled.div`
   color: white;
   display: flex;
-  max-height: ${p => p.isLoading ? `200px` : `calc(90vh - 12px)`};
+  max-height: ${p => p.isLoading ? `200px` : `calc(95vh - 12px)`};
   max-width: ${p => p.isLoading ? `300px` : `calc(90vw - 12px)`};
   overflow: hidden;
   transition: max-width 250ms ease, max-height 250ms ease;
@@ -288,6 +289,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'LAUNCH_SHIP' && <LaunchShip {...allProps} />}
         {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}
         {type === 'NEW_CORE_SAMPLE' && <NewCoreSample {...allProps} />}
+        {type === 'SET_COURSE' && <SetCourse {...allProps} />}
         {type === 'SURFACE_TRANSFER' && <SurfaceTransfer {...allProps} />}
         {type === 'TRANSFER_TO_SITE' && <TransferToSite {...allProps} />}
       </ModalCushion>

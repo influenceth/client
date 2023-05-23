@@ -29,6 +29,7 @@ const useActionButtons = () => {
   const { lotId } = useStore(s => s.asteroids.lot || {});
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const zoomToLot = useStore(s => s.asteroids.zoomToLot);
   const openHudMenu = useStore(s => s.openHudMenu);
   const setAction = useStore(s => s.dispatchActionDialog);
 
@@ -65,9 +66,6 @@ const useActionButtons = () => {
       }
       if (zoomStatus === 'out') {
         a.push(actionButtons.SelectTravelDestination);
-        if (openHudMenu === 'BELT_PLAN_FLIGHT') {
-          a.push(actionButtons.SetCourse);
-        }
       } else if (zoomStatus === 'in') {
         if (lotShips?.length > 0) {
           a.push(actionButtons.LaunchShip);
@@ -75,6 +73,9 @@ const useActionButtons = () => {
         if (crewedShip?.status === 'IN_ORBIT' && crewedShip?.asteroid === asteroidId) {
           a.push(actionButtons.LandShip);
         }
+      }
+      if (openHudMenu === 'BELT_PLAN_FLIGHT' && !zoomToLot) {
+        a.push(actionButtons.SetCourse);
       }
       if (asteroid.scanned && lot && crew && zoomStatus === 'in') {
         a.push(actionButtons.CoreSample);

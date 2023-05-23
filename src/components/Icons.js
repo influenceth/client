@@ -120,6 +120,7 @@ export const FlagMarkerIcon = () => <FlagMarkerSVG style={{ width: '0.83em' }} c
 export const RouteValidIcon = () => <RouteValidSVG className="icon" />;
 export const RouteInvalidIcon = () => <RouteInvalidSVG className="icon" />;
 export const ShipMarkerIcon = () => <ShipMarkerSVG style={{ width: '0.67em' }} className="icon" />;
+export const RotatedShipMarkerIcon = () => <ShipMarkerSVG style={{ transform: 'rotate(90deg)', width: '1.33em' }} className="icon" />;
 
 /*
   A note on importing custom icons...

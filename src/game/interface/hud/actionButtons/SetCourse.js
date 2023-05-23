@@ -10,7 +10,7 @@ const SetCourse = ({ onSetAction }) => {
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   
   const handleClick = useCallback(() => {
-    onSetAction('SET_COURSE', travelSolution);
+    onSetAction('SET_COURSE', { travelSolution });
   }, [travelSolution]);
 
   return (

@@ -22,6 +22,7 @@ export const getContrastText = (rgb) => {
 }
 
 const main = '#36a7cd';
+const brightMain = '#57d5ff';
 const success = '#00ffe7';
 const gray = '#bbbbbb';
 const teal = '#69ebf4';
@@ -38,6 +39,7 @@ const theme = {
     main,
     mainRGB: hexToRGB(main),
     mainBorder: 'rgba(255, 255, 255, 0.25)',
+    brightMain,
     mobileBackground: '#181818',
     contentBorder: '#666666',
     contentBackdrop: 'rgba(0, 0, 0, 0.5)',

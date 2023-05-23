@@ -54,7 +54,6 @@ import actionStages from '~/lib/actionStages';
 import theme from '~/theme';
 import CrewCardFramed from '~/components/CrewCardFramed';
 
-
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
 //  - however, could you launch two ships at once? probably not because crew needs to be on ship?
 
@@ -74,74 +73,7 @@ const LaunchShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const crewMembers = currentLaunch?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
-  const launchBonus = 0;/*useMemo(() => {
-    const bonus = getCrewAbilityBonus(4, crewMembers);
-    const asteroidBonus = Asteroid.getBonusByResource(asteroid?.bonuses, selectedCoreSample?.resourceId);
-    if (asteroidBonus.totalBonus !== 1) {
-      bonus.totalBonus *= asteroidBonus.totalBonus;
-      bonus.others = [{
-        text: `${resources[selectedCoreSample?.resourceId].category} Yield Bonus`,
-        bonus: asteroidBonus.totalBonus - 1,
-        direction: 1
-      }];
-    }
-    return bonus;
-  }, [asteroid?.bonuses, crewMembers, selectedCoreSample?.resourceId]);*/
-
-  // useEffect(() => {
-  //   let defaultSelection;
-  //   if (!currentExtraction && !selectedCoreSample) {
-  //     if (props.preselect) {
-  //       defaultSelection = usableSamples.find((s) => s.resourceId === props.preselect.resourceId && s.sampleId === props.preselect.sampleId);
-  //     } else if (usableSamples.length === 1) {
-  //       defaultSelection = usableSamples[0];
-  //     }
-  //     if (defaultSelection) {
-  //       selectCoreSample(defaultSelection);
-  //     }
-  //   }
-  // }, [!currentExtraction, !selectedCoreSample, usableSamples]);
-
-  // // handle "currentExtraction" state
-  // useEffect(() => {
-  //   if (currentExtraction) {
-  //     if (lot?.coreSamples) {
-  //       const currentSample = lot.coreSamples.find((c) => c.resourceId === currentExtraction.resourceId && c.sampleId === currentExtraction.sampleId);
-  //       if (currentSample) {
-  //         setSelectedCoreSample({
-  //           ...currentSample,
-  //           remainingYield: currentSample.remainingYield + (currentExtraction.isCoreSampleUpdated ? currentExtraction.yield : 0)
-  //         });
-  //         setAmount(currentExtraction.yield);
-  //       }
-  //     }
-  //   }
-  // }, [currentExtraction, lot?.coreSamples]);
-
-  // useEffect(() => {
-  //   if (currentExtractionDestinationLot) {
-  //     setDestinationLot(currentExtractionDestinationLot);
-  //   }
-  // }, [currentExtractionDestinationLot]);
-
-  // const resource = useMemo(() => {
-  //   if (!selectedCoreSample) return null;
-  //   return resources[selectedCoreSample.resourceId];
-  // }, [selectedCoreSample]);
-
-  // const extractionTime = useMemo(() => {
-  //   if (!selectedCoreSample) return 0;
-  //   return Extraction.getExtractionTime(
-  //     amount,
-  //     selectedCoreSample.remainingYield || 0,
-  //     extractionBonus.totalBonus || 1
-  //   );
-  // }, [amount, extractionBonus, selectedCoreSample]);
-
-
-  // const crewTravelTime = 0;
-  // const tripDetails = null;
-
+  const launchBonus = 0;
 
   const stats = useMemo(() => ([
     {
@@ -204,15 +136,6 @@ const LaunchShip = ({ asteroid, lot, manager, stage, ...props }) => {
     lastStatus.current = launchStatus;
   }, [launchStatus]);
 
-  useEffect(() => {
-    console.log('set tin');
-    const x = setInterval(() => console.log('still open'), 1000);
-    return () => {
-      console.log('clear tin');
-      if (x) clearInterval(x);
-    }
-  }, []);
-
   return (
     <>
       <ActionDialogHeader
@@ -258,7 +181,7 @@ const LaunchShip = ({ asteroid, lot, manager, stage, ...props }) => {
             </FlexSection>
 
             <PropellantSection
-              title="Propellant"
+              title="Requirements"
               propellantRequired={168e3}
               propellantLoaded={840e3}
               propellantMax={950e3}
@@ -288,34 +211,6 @@ const LaunchShip = ({ asteroid, lot, manager, stage, ...props }) => {
           <ShipTab pilotCrew={{ ...crew, members: crewMembers }} ship={ships[0]} stage={stage} />
         )}
 
-
-
-{/* 
-        {stage === actionStages.NOT_STARTED && (
-          <Section>
-            <SectionTitle>Extraction Amount</SectionTitle>
-            <SectionBody style={{ paddingTop: 5 }}>
-              <ExtractionAmountSection
-                amount={amount || 0}
-                extractionTime={extractionTime || 0}
-                min={0}
-                max={selectedCoreSample?.remainingYield || 0}
-                resource={resource}
-                setAmount={setAmount} />
-            </SectionBody>
-          </Section>
-        )}
-
-        {stage !== actionStages.NOT_STARTED && (
-          <ProgressBarSection
-            completionTime={lot?.building?.extraction?.completionTime}
-            startTime={lot?.building?.extraction?.startTime}
-            stage={stage}
-            title="Progress"
-            totalTime={crewTravelTime + extractionTime}
-          />
-        )}
-*/}
         <ActionDialogStats
           stage={stage}
           stats={stats}
@@ -334,7 +229,6 @@ const LaunchShip = ({ asteroid, lot, manager, stage, ...props }) => {
 };
 
 const Wrapper = (props) => {
-  console.log('PROPS', props);
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   // TODO: ...
   // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);

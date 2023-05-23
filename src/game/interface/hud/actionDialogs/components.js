@@ -2002,7 +2002,7 @@ export const PropellantSection = ({ title, propellantMax, propellantLoaded, prop
             <BarChart color={'#cccccc'} value={propellantUse} rightColor={'#ff4500'} rightValue={0.04} />
             <BarChartNotes color={'#999999'}>
               <div>
-                <b>Delta-V Used:</b> 54%
+                <b>Delta-V Required:</b> 54%
               </div>
               <div style={{ color: '#ff4500' }}>
                 <b style={{ color: '#ff4500' }}>Reserved for Landing:</b> 4%

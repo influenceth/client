@@ -202,15 +202,6 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
     lastStatus.current = landingStatus;
   }, [landingStatus]);
 
-  useEffect(() => {
-    console.log('set tin');
-    const x = setInterval(() => console.log('still open'), 1000);
-    return () => {
-      console.log('clear tin');
-      if (x) clearInterval(x);
-    }
-  }, []);
-
   return (
     <>
       <ActionDialogHeader
@@ -258,7 +249,7 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
             </FlexSection>
 
             <PropellantSection
-              title="Propellant"
+              title="Requirements"
               propellantRequired={168e3}
               propellantLoaded={840e3}
               propellantMax={950e3}
@@ -317,7 +308,6 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
 };
 
 const Wrapper = (props) => {
-  console.log('PROPS', props);
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   // TODO: ...
   // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
