@@ -6,9 +6,14 @@ import { Color } from 'three';
 import useStore from '~/hooks/useStore';
 
 const SettingsManager = (props) => {
-  const { scene, camera } = useThree();
-  const skyboxVisible = useStore(s => s.graphics.skybox);
+  const { gl, scene, camera } = useThree();
   const fov = useStore(s => s.graphics.fov);
+  const pixelRatio = useStore(s => s.graphics.pixelRatio);
+  const skyboxVisible = useStore(s => s.graphics.skybox);
+
+  useEffect(() => {
+    gl.setPixelRatio(pixelRatio || 1);
+  }, [pixelRatio]);
 
   // Import skybox textures
   const skybox = useCubeTexture([

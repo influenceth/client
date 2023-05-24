@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient, QueryClientProvider } from 'react-query';
 import { Object3D, Vector3 } from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
@@ -29,7 +29,6 @@ const glConfig = {
     far: constants.MAX_SYSTEM_RADIUS * constants.AU * 2,
     position: [ 4 * constants.AU, 0, 1.5 * constants.AU ]
   },
-  // pixelRatio: Math.min(window.devicePixelRatio, 2),
   powerPreference: 'default',
   onCreated: (state) => {
     state.raycaster.params.Points = {
@@ -98,6 +97,7 @@ const Scene = (props) => {
   const canvasStack = useStore(s => s.canvasStack); // TODO: this might be easier to manage in a dedicated context
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
+  const pixelRatio = useStore(s => s.graphics.pixelRatio || 1);
   const statsOn = useStore(s => s.graphics.stats);
 
   const [contextLost, setContextLost] = useState(false);
@@ -120,7 +120,7 @@ const Scene = (props) => {
     <StyledContainer>
       {statsOn && <Stats />}
       {contextLost && <GpuContextLostMessage />}
-      <Canvas {...glConfig} frameloop={frameloop} style={canvasStyle}>
+      <Canvas key={pixelRatio} {...glConfig} frameloop={frameloop} style={canvasStyle}>
         <GpuContextLostReporter setContextLost={setContextLost} />
         <ContextBridge>
           <SettingsManager />

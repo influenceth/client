@@ -92,6 +92,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       autodetect: true,
       fov: 75,
       lensflare: true,
+      pixelRatio: 1,
       skybox: true,
       // (these will default per the gpu tier):
       shadowQuality: undefined,
@@ -221,6 +222,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchShowInterface: () => set(produce(state => {
       state.graphics.hideInterface = false;
+    })),
+
+    dispatchPixelRatio: (ratio) => set(produce(state => {
+      state.graphics.pixelRatio = ratio;
     })),
 
     dispatchTextureQualitySet: (quality) => set(produce(state => {

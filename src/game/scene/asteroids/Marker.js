@@ -242,9 +242,6 @@ const Marker = (props) => {
           </mesh>
         </>
       )}
-
-      
-
     </group>
   );
 };

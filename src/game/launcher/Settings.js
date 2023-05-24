@@ -84,6 +84,7 @@ const Settings = (props) => {
   const turnOnLensflare = useStore(s => s.dispatchLensflareUnhidden);
   const turnOffLensflare = useStore(s => s.dispatchLensflareHidden);
   const setAutodetect = useStore(s => s.dispatchGraphicsAutodetectSet);
+  const setPixelRatio = useStore(s => s.dispatchPixelRatio);
   const setShadowQuality = useStore(s => s.dispatchShadowQualitySet);
   const setTextureQuality = useStore(s => s.dispatchTextureQualitySet);
   const setFOV = useStore(s => s.dispatchFOVSet);
@@ -138,6 +139,42 @@ const Settings = (props) => {
                 {graphics.autodetect ? <CheckedIcon /> : <UncheckedIcon />}
                 Autodetect
               </AutodetectButton>
+            </ControlGroup>
+          </StyledDataReadout>
+
+          <StyledDataReadout label="Render Pixel Ratio">
+            <ControlGroup>
+              <Button
+                active={graphics.pixelRatio === 0.5}
+                onClick={() => setPixelRatio(0.5)}>
+                0.5x
+              </Button>
+              <Button
+                active={!graphics.pixelRatio || graphics.pixelRatio === 1}
+                onClick={() => setPixelRatio(1)}>
+                1x
+              </Button>
+              {window.devicePixelRatio >= 2 && (
+                <Button
+                  active={graphics.pixelRatio === 2}
+                  onClick={() => setPixelRatio(2)}>
+                  2x
+                </Button>
+              )}
+              {window.devicePixelRatio >= 4 && (
+                <Button
+                  active={graphics.pixelRatio === 4}
+                  onClick={() => setPixelRatio(4)}>
+                  4x
+                </Button>
+              )}
+              {window.devicePixelRatio >= 8 && (
+                <Button
+                  active={graphics.pixelRatio === 8}
+                  onClick={() => setPixelRatio(8)}>
+                  8x
+                </Button>
+              )}
             </ControlGroup>
           </StyledDataReadout>
 

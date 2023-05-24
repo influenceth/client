@@ -147,6 +147,11 @@ const skyboxDefaults = {
 
 const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength, rotationEnabled, zoomLimitsEnabled }) => {
   const { camera, clock, gl, scene } = useThree();
+  const pixelRatio = useStore(s => s.graphics.pixelRatio);
+
+  useEffect(() => {
+    gl.setPixelRatio(pixelRatio || 1);
+  }, [pixelRatio]);
 
   // if three is started with frameloop == 'never', clock is not set to autoStart, so we need to set it
   useEffect(() => {
