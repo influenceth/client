@@ -15,9 +15,10 @@ import actionButtons from './actionButtons';
 const ships = [{
   i: 123,
   type: 1,
-  status: 'IN_ORBIT', // IN_FLIGHT, IN_ORBIT, LAUNCHING, LANDING, ON_SURFACE
+  status: 'ON_SURFACE', // IN_FLIGHT, IN_ORBIT, LAUNCHING, LANDING, ON_SURFACE
   asteroid: 1000,
   lot: 123,
+  isOwnedByMe: true,
   hasCrew: true
 }];
 
@@ -41,12 +42,15 @@ const useActionButtons = () => {
   const crewedShip = useMemo(() => {
     return ships.find((s) => s.hasCrew);
   }, [ships]);
+  
+  const myLotShips = useMemo(() => {
+    return lotId ? ships.filter((s) => s.asteroid === asteroidId && s.lot === lotId && ['LAUNCHING','ON_SURFACE'].includes(s.status) && s.isOwnedByMe) : [];
+  }, [ships, asteroidId, lotId]);
 
-  const lotShips = useMemo(() => {
-    return lotId ? ships.filter((s) => s.asteroid === asteroidId && s.lot === lotId && ['LAUNCHING','ON_SURFACE'].includes(s.status)) : [];
+  const otherLotShips = useMemo(() => {
+    return lotId ? ships.filter((s) => s.asteroid === asteroidId && s.lot === lotId && ['LAUNCHING','ON_SURFACE'].includes(s.status) && !s.isOwnedByMe) : [];
   }, [ships, asteroidId, lotId]);
   
-
   const [actions, setActions] = useState([]);
 
   // TODO: could reasonably have buttons determine own visibility and remove some redundant logic here
@@ -67,8 +71,12 @@ const useActionButtons = () => {
       if (zoomStatus === 'out') {
         a.push(actionButtons.SelectTravelDestination);
       } else if (zoomStatus === 'in') {
-        if (lotShips?.length > 0) {
+        if (myLotShips?.length > 0) {
           a.push(actionButtons.LaunchShip);
+          a.push(actionButtons.StationCrewOnShip);
+        }
+        if (otherLotShips?.length > 0) {
+          a.push(actionButtons.StationPassengersOnShip);
         }
         if (crewedShip?.status === 'IN_ORBIT' && crewedShip?.asteroid === asteroidId) {
           a.push(actionButtons.LandShip);

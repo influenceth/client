@@ -210,7 +210,7 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
   const buildings = useBuildingAssets();
   const ships = useShipAssets();
   
-  const { currentLaunch, launchStatus, startLaunch } = manager;
+  const { currentLaunch, flightStatus, startLaunch } = manager;
 
   const { crew, crewMemberMap } = useCrewContext();
 
@@ -277,14 +277,26 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
   useEffect(() => {
     // (close on status change from)
     if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
-      if (launchStatus !== lastStatus.current) {
+      if (flightStatus !== lastStatus.current) {
         props.onClose();
       }
     }
-    lastStatus.current = launchStatus;
-  }, [launchStatus]);
+    lastStatus.current = flightStatus;
+  }, [flightStatus]);
 
   const delay = travelSolution.departureTime - coarseTime;
+  useEffect(() => {
+    if (flightStatus === 'READY' && delay <= 0) {
+      createAlert({
+        type: 'GenericAlert',
+        content: 'Scheduled departure time has past.',
+        level: 'warning',
+        duration: 0,
+      })
+      props.onClose();
+    }
+  }, [delay]);
+  
 
   return (
     <>
@@ -431,7 +443,7 @@ const Wrapper = ({ travelSolution, ...props }) => {
   // TODO: ...
   // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
   // const { actionStage } = extractionManager;
-  const manager = {};
+  const manager = { flightStatus: 'READY' };
   const actionStage = actionStages.NOT_STARTED;
 
   return (

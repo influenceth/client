@@ -17,11 +17,13 @@ import {
   ChevronRightIcon,
   CloseIcon,
   CrewIcon,
+  FastForwardIcon,
   LocationIcon,
   PlusIcon,
   WarningOutlineIcon,
   SurfaceTransferIcon,
-  GasIcon
+  GasIcon,
+  SwayIcon
 } from '~/components/Icons';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import ResourceColorIcon from '~/components/ResourceColorIcon';
@@ -42,6 +44,7 @@ import { formatFixed, formatTimer } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
 import constants from '~/lib/constants';
 import { theming } from '../ActionDialog';
+import useCrewMember from '~/hooks/useCrewMember';
 
 const SECTION_WIDTH = 780;
 
@@ -903,16 +906,24 @@ const ChartLabels = styled.div`
 `;
 const miniBarChartHeight = 4;
 const miniBarChartRounding = miniBarChartHeight / 2;
+const DeltaIcon = styled.div`
+  font-size: 120%;
+  position: absolute;
+  top: -0.4em;
+  left: calc(${p => 100 * p.value}% - 12px);
+  z-index: 1;
+`;
 const MiniBar = styled.div`
   background: #333;
   border-radius: ${miniBarChartRounding}px;
+  color: ${p => p.deltaColor || p.theme.colors.brightMain};
   height: ${miniBarChartHeight}px;
   margin: 4px 0;
   position: relative;
   width: 100%;
   &:before {
-    background: ${p => p.color || p.theme.colors.main};
     content: "";
+    background: ${p => p.color || p.theme.colors.main};
     bottom: 0px;
     border-radius: ${miniBarChartRounding}px;
     left: 0px;
@@ -922,6 +933,20 @@ const MiniBar = styled.div`
     width: ${p => 100 * p.value}%;
     z-index: 1;
   }
+  ${p => p.deltaValue && `
+    &:after {
+      content: "";
+      background: ${p.deltaColor || p.theme.colors.brightMain};
+      bottom: 0px;
+      border-radius: ${miniBarChartRounding}px;
+      position: absolute;
+      left: ${100 * (p.value - p.deltaValue)}%;
+      top: 0px;
+      transition: width 500ms ease;
+      width: ${100 * p.deltaValue}%;
+      z-index: 1;
+    }
+  `}
 `;
 
 export const ProgressBarNote = styled.div`
@@ -935,6 +960,19 @@ export const ProgressBarNote = styled.div`
   }
 `;
 
+const CrewLabel = styled.div`
+  align-self: center;
+  margin-left: 5px;
+  margin-top: -10px;
+  & h3 {
+    color: white;
+    margin: 4px 0;
+    & label {
+      color: ${p => p.theme.colors.main};
+      margin-left: 5px;
+    }
+  }
+`;
 const CrewCards = styled.div`
   display: flex;
   flex-direction: row;
@@ -953,6 +991,40 @@ const CrewCardPlaceholder = styled.div`
     display: block;
     height: 0;
     padding-top: 128%;
+  }
+`;
+
+const SwayInputRow = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  & input {
+    margin-bottom: 0;
+  }
+`;
+const SwayInputIconWrapper = styled.div`
+  color: white;
+  font-size: 36px;
+  line-height: 0;
+`;
+const SwayInputFieldWrapper = styled.div`
+  flex: 1;
+  position: relative;
+  &:after {
+    content: "SWAY";
+    color: white;
+    font-size: 18px;
+    margin-top: -10px;
+    opacity: 0.5;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+  }
+
+  & input {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+    padding-right: 72px;
+    width: 100%;
   }
 `;
 
@@ -1532,15 +1604,28 @@ export const EmptyResourceImage = ({ iconOverride, noIcon, ...props }) => (
   </ResourceThumbnailWrapper>
 );
 
-export const MiniBarChart = ({ color, label, valueLabel, value }) => (
+export const MiniBarChart = ({ color, deltaColor, deltaValue, label, valueLabel, value }) => (
   <MiniBarWrapper>
     <ChartLabels>
       <label>{label}</label>
       <label>{valueLabel}</label>
     </ChartLabels>
-    <MiniBar color={color} value={value} />
+    <MiniBar color={color} value={value} deltaColor={deltaColor} deltaValue={deltaValue}>
+      {deltaValue && <DeltaIcon value={value}><FastForwardIcon /></DeltaIcon>}
+    </MiniBar>
   </MiniBarWrapper>
 );
+
+export const SwayInput = () => {
+  return (
+    <SwayInputRow>
+      <SwayInputIconWrapper><SwayIcon /></SwayInputIconWrapper>
+      <SwayInputFieldWrapper>
+        <TextInput type="number" />
+      </SwayInputFieldWrapper>
+    </SwayInputRow>
+  );
+};
 
 const MouseoverIcon = ({ children, icon, iconStyle = {}, themeColor }) => {
   const refEl = useRef();
@@ -2032,6 +2117,55 @@ export const PropellantSection = ({ title, propellantMax, propellantLoaded, prop
   )
 };
 
+export const CrewInputBlock = ({ crew, title }) => (
+  <FlexSectionInputBlock
+    title={title}
+    titleDetails={crew?.name || `Crew #${crew?.i}`}
+    bodyStyle={{ paddingRight: 8 }}>
+    <CrewCards>
+      {Array.from({ length: 5 }).map((_, i) => 
+        crew.members[i]
+          ? (
+            <CrewCardFramed
+              key={i}
+              borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
+              crewmate={crew.members[i]}
+              isCaptain={i === 0}
+              lessPadding
+              noArrow={i > 0}
+              width={60} />
+          )
+          : <CrewCardPlaceholder key={i} />
+      )}
+    </CrewCards>
+  </FlexSectionInputBlock>
+);
+
+export const CrewOwnerBlock = ({ crew, isMe, title }) => {
+  const { data: captain } = useCrewMember((crew?.crewMembers || [])[0]);
+  return (
+    <FlexSectionInputBlock
+      title={title}
+      bodyStyle={{ background: 'transparent' }}>
+      <CrewCards>
+        <CrewCardFramed
+          borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
+          crewmate={captain}
+          isCaptain
+          lessPadding
+          width={60} />
+        <CrewLabel>
+          <div>Owned by</div>
+          <h3>
+            {crew?.name || `Crew #${crew?.i}`}
+            {isMe ? <label>(Me)</label> : null}
+          </h3>
+        </CrewLabel>
+      </CrewCards>
+    </FlexSectionInputBlock>
+  );
+}
+
 export const ShipTab = ({ pilotCrew, ship, stage }) => {
   return (
     <>
@@ -2046,27 +2180,10 @@ export const ShipTab = ({ pilotCrew, ship, stage }) => {
 
         <FlexSectionSpacer />
 
-        <FlexSectionInputBlock
+        <CrewInputBlock
           title="Piloted By"
-          titleDetails={pilotCrew?.name || `Crew #${pilotCrew?.i}`}
-          bodyStyle={{ paddingRight: 8 }}>
-          <CrewCards>
-            {Array.from({ length: 5 }).map((_, i) => 
-              pilotCrew.members[i]
-                ? (
-                  <CrewCardFramed
-                    key={i}
-                    borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
-                    crewmate={pilotCrew.members[i]}
-                    isCaptain={i === 0}
-                    lessPadding
-                    noArrow={i > 0}
-                    width={60} />
-                )
-                : <CrewCardPlaceholder key={i} />
-            )}
-          </CrewCards>
-        </FlexSectionInputBlock>
+          crew={pilotCrew} />
+        
       </FlexSection>
 
       <FlexSection>

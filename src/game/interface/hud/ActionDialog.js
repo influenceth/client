@@ -20,6 +20,7 @@ import LandShip from './actionDialogs/LandShip';
 import LaunchShip from './actionDialogs/LaunchShip';
 import PlanBuilding from './actionDialogs/PlanBuilding';
 import SetCourse from './actionDialogs/SetCourse';
+import StationOnShip from './actionDialogs/StationOnShip';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import TransferToSite from './actionDialogs/TransferToSite';
 import UnplanBuilding from './actionDialogs/UnplanBuilding';
@@ -290,6 +291,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}
         {type === 'NEW_CORE_SAMPLE' && <NewCoreSample {...allProps} />}
         {type === 'SET_COURSE' && <SetCourse {...allProps} />}
+        {type === 'STATION_ON_SHIP' && <StationOnShip {...allProps} />}
         {type === 'SURFACE_TRANSFER' && <SurfaceTransfer {...allProps} />}
         {type === 'TRANSFER_TO_SITE' && <TransferToSite {...allProps} />}
       </ModalCushion>

@@ -42,7 +42,6 @@ const SearchLotsBanner = ({ visible }) => {
       .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault(assetType, fieldName) ? 0 : 1), 0)
   }, [assetType, filters]);
 
-
   return (
     <Banner
       headline={formatResultsTally(isLoading ? undefined : total, maxResults)}
