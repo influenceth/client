@@ -499,9 +499,20 @@ const ThumbnailOverlay = styled.div`
 `;
 const InventoryUtilization = styled(ResourceProgress)`
   bottom: 8px;
-  &:last-child {
-    bottom: 3px;
-  }
+  ${p => p.horizontal && `right: 8px;`}
+  ${p => p.second && `bottom: 3px;`}
+  ${p => p.overloaded && `
+    &:after {
+      background: ${p.theme.colors.error};
+    }
+  `}
+`;
+const InventoryLabel = styled.div`
+  color: ${p => p.overloaded ? p.theme.colors.error : 'white'};
+  font-size: 12px;
+  position: absolute;
+  left: 8px;
+  bottom: 14px;
 `;
 
 const SliderLabel = styled.div`
@@ -904,14 +915,23 @@ const ChartLabels = styled.div`
     color: white;
   }
 `;
+const UnderChartLabels = styled(ChartLabels)``;
 const miniBarChartHeight = 4;
 const miniBarChartRounding = miniBarChartHeight / 2;
 const DeltaIcon = styled.div`
   font-size: 120%;
   position: absolute;
   top: -0.4em;
-  left: calc(${p => 100 * p.value}% - 12px);
   z-index: 1;
+  ${p => p.negativeDelta 
+    ? `
+      left: calc(${100 * p.value}% - 4px);
+      transform: scaleX(-1);
+    `
+    : `
+      left: calc(${100 * p.value}% - 12px);
+    `
+  }
 `;
 const MiniBar = styled.div`
   background: #333;
@@ -927,6 +947,7 @@ const MiniBar = styled.div`
     bottom: 0px;
     border-radius: ${miniBarChartRounding}px;
     left: 0px;
+    opacity: ${p => p.deltaValue ? 0.5 : 1};
     position: absolute;
     top: 0px;
     transition: width 500ms ease;
@@ -940,11 +961,17 @@ const MiniBar = styled.div`
       bottom: 0px;
       border-radius: ${miniBarChartRounding}px;
       position: absolute;
-      left: ${100 * (p.value - p.deltaValue)}%;
       top: 0px;
       transition: width 500ms ease;
-      width: ${100 * p.deltaValue}%;
+      width: ${Math.abs(100 * p.deltaValue)}%;
       z-index: 1;
+      ${p.deltaValue < 0
+        ? `
+          right: ${100 * (1 - (p.value - p.deltaValue))}%;
+        `
+        : `
+          left: ${100 * (p.value - p.deltaValue)}%;
+        `}
     }
   `}
 `;
@@ -1481,7 +1508,7 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
 //  FORMATTERS
 //
 
-const getCapacityUsage = (building, inventories, type) => {
+export const getCapacityUsage = (building, inventories, type) => {
   const capacity = {
     mass: { max: 0, used: 0, reserved: 0 },
     volume: { max: 0, used: 0, reserved: 0 },
@@ -1553,11 +1580,11 @@ export const ShipImage = ({ ship, iconOverlay, inventories, showInventoryStatusF
           <InventoryUtilization
             progress={capacity.volume.used / capacity.volume.max}
             secondaryProgress={(capacity.volume.reserved + capacity.volume.used) / capacity.volume.max}
-             />
+          />
           <InventoryUtilization
             progress={capacity.mass.used / capacity.mass.max}
             secondaryProgress={(capacity.mass.reserved + capacity.mass.used) / capacity.mass.max}
-             />
+          />
         </>
       )}
       {iconOverlay && <ThumbnailOverlay>{iconOverlay}</ThumbnailOverlay>}
@@ -1566,22 +1593,23 @@ export const ShipImage = ({ ship, iconOverlay, inventories, showInventoryStatusF
   );
 };
 
-export const BuildingImage = ({ building, iconOverlay, inventories, showInventoryStatusForType, unfinished }) => {
+export const BuildingImage = ({ building, error, iconOverlay, inventories, showInventoryStatusForType, unfinished }) => {
   if (!building) return null;
   const capacity = getCapacityUsage(building, inventories, showInventoryStatusForType);
+  const closerLimit = (capacity.volume.used + capacity.volume.reserved) / capacity.volume.max > (capacity.mass.used + capacity.mass.reserved) / capacity.mass.max ? 'volume' : 'mass';
   return (
     <BuildingThumbnailWrapper>
       <ResourceImage src={building[unfinished ? 'siteIconUrls' : 'iconUrls']?.w150} />
       {showInventoryStatusForType !== undefined && (
         <>
+          <InventoryLabel overloaded={error}>
+            {formatFixed(100 * (capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max, 1)}% {closerLimit === 'volume' ? `m³` : `t`}
+          </InventoryLabel>
           <InventoryUtilization
-            progress={capacity.volume.used / capacity.volume.max}
-            secondaryProgress={(capacity.volume.reserved + capacity.volume.used) / capacity.volume.max}
-             />
-          <InventoryUtilization
-            progress={capacity.mass.used / capacity.mass.max}
-            secondaryProgress={(capacity.mass.reserved + capacity.mass.used) / capacity.mass.max}
-             />
+            horizontal
+            overloaded={error}
+            progress={capacity[closerLimit].used / capacity[closerLimit].max}
+            secondaryProgress={(capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max} />
         </>
       )}
       {iconOverlay && <ThumbnailOverlay>{iconOverlay}</ThumbnailOverlay>}
@@ -1604,15 +1632,16 @@ export const EmptyResourceImage = ({ iconOverride, noIcon, ...props }) => (
   </ResourceThumbnailWrapper>
 );
 
-export const MiniBarChart = ({ color, deltaColor, deltaValue, label, valueLabel, value }) => (
+export const MiniBarChart = ({ color, deltaColor, deltaValue, label, valueLabel, value, valueStyle, underLabels }) => (
   <MiniBarWrapper>
     <ChartLabels>
       <label>{label}</label>
-      <label>{valueLabel}</label>
+      <label style={valueStyle || {}}>{valueLabel}</label>
     </ChartLabels>
-    <MiniBar color={color} value={value} deltaColor={deltaColor} deltaValue={deltaValue}>
-      {deltaValue && <DeltaIcon value={value}><FastForwardIcon /></DeltaIcon>}
+    <MiniBar color={color} value={Math.min(value, 1)} deltaColor={deltaColor} deltaValue={Math.max(-1, Math.min(deltaValue, 1))}>
+      {deltaValue ? <DeltaIcon negativeDelta={deltaValue < 0} value={value}><FastForwardIcon /></DeltaIcon> : null}
     </MiniBar>
+    {underLabels && <UnderChartLabels>{underLabels}</UnderChartLabels>}
   </MiniBarWrapper>
 );
 
@@ -1647,6 +1676,27 @@ const MouseoverIcon = ({ children, icon, iconStyle = {}, themeColor }) => {
     </>
   );
 };
+
+export const Mouseoverable = ({ children, tooltip, style = {}, themeColor }) => {
+  const refEl = useRef();
+  const [hovered, setHovered] = useState();
+  return (
+    <>
+      <span
+        ref={refEl}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={style}>
+        {children}
+      </span>
+      <MouseoverInfoPane referenceEl={refEl.current} visible={hovered}>
+        <MouseoverContent highlightColor={themeColor}>
+          {tooltip}
+        </MouseoverContent>
+      </MouseoverInfoPane>
+    </>
+  );
+}
 
 //
 // COMPONENTS
@@ -1731,6 +1781,7 @@ const ResourceGridSection = ({
   label,
   onClick,
   resources,
+  minCells = 0,
   noCellStyles,
   theming = 'default'
 }) => {
@@ -1748,7 +1799,7 @@ const ResourceGridSection = ({
   }, [items]);
 
   return (
-    <Section>
+    <Section style={{ marginBottom: 25 }}>
       <SectionTitle>{label}</SectionTitle>
       <SectionBody>
         {/* TODO: <FutureSectionOverlay /> */}
@@ -1767,8 +1818,11 @@ const ResourceGridSection = ({
                     item={item}
                     resource={resources[item.i]}
                     noStyles={noCellStyles}
-                    size="95px"
+                    size="92px"
                     tooltipContainer="actionDialog" />
+                ))}
+                {Array.from({ length: Math.max(0, minCells - items.length) }).map((_, i) => (
+                  <EmptyResourceImage key={i} noIcon outlineColor="transparent" style={{ background: 'rgba(0, 0, 0, 0.25)' }} />
                 ))}
                 <IngredientSummary theming={theming}>
                   <span>
@@ -1880,6 +1934,7 @@ export const ItemSelectionSection = ({ label, items, onClick, resources, stage }
     <ResourceGridSection
       items={formattedItems}
       label={label}
+      minCells={14}
       noCellStyles={stage !== actionStage.NOT_STARTED}
       onClick={onClick}
       resources={resources}
@@ -2225,6 +2280,58 @@ export const ShipTab = ({ pilotCrew, ship, stage }) => {
   );
 };
 
+export const InventoryChangeCharts = ({ building, inventoryType, deltaMass, deltaVolume }) => {
+  const buildings = useBuildingAssets();
+
+  if (!(building && building.inventories && inventoryType !== undefined)) return null;
+  
+  const capacity = getCapacityUsage(buildings[building?.capableType], building?.inventories, inventoryType);
+  const postDeltaMass = capacity.mass.used + capacity.mass.reserved + deltaMass * 1e6;
+  const postDeltaVolume = capacity.volume.used + capacity.volume.reserved + deltaVolume * 1e6;
+  const overMassCapacity = postDeltaMass > capacity.mass.max;
+  const overVolumeCapacity = postDeltaVolume > capacity.volume.max;
+  const massColor = overMassCapacity ? theme.colors.error : theme.colors.main;
+  const volumeColor = overVolumeCapacity ? theme.colors.error : theme.colors.main;
+  return (
+    <>
+      <div style={{ paddingBottom: 15 }}>
+        <MiniBarChart
+          color={massColor}
+          label="Mass Capacity"
+          valueStyle={{ color: massColor, fontWeight: 'bold' }}
+          valueLabel={`${formatFixed(100 * postDeltaMass / capacity.mass.max, 1)}%`}
+          value={postDeltaMass / capacity.mass.max}
+          deltaColor={overMassCapacity ? theme.colors.error : theme.colors.brightMain}
+          deltaValue={deltaMass * 1e6 / capacity.mass.max}
+          underLabels={(
+            <>
+              <span style={{ color: massColor, opacity: deltaMass < 0 ? 0.6 : 1 }}>{deltaMass < 0 ? '-' : '+'}{formatMass(Math.abs(deltaMass * 1e6))}</span>
+              <span style={{ color: overMassCapacity ? theme.colors.error : 'white' }}>{formatMass(capacity.mass.max)}</span>
+            </>
+          )}
+        />
+      </div>
+
+      <div style={{ paddingBottom: 5 }}>
+        <MiniBarChart
+          color={volumeColor}
+          label="Volume Capacity"
+          valueStyle={{ color: volumeColor, fontWeight: 'bold' }}
+          valueLabel={`${formatFixed(100 * postDeltaVolume / capacity.volume.max, 1)}%`}
+          value={postDeltaVolume / capacity.volume.max}
+          deltaColor={overVolumeCapacity ? theme.colors.error : theme.colors.brightMain}
+          deltaValue={deltaVolume * 1e6 / capacity.volume.max}
+          underLabels={(
+            <>
+              <span style={{ color: volumeColor, opacity: deltaVolume < 0 ? 0.6 : 1 }}>{deltaVolume < 0 ? '-' : '+'}{formatVolume(Math.abs(deltaVolume * 1e6))}</span>
+              <span style={{ color: overVolumeCapacity ? theme.colors.error : 'white' }}>{formatVolume(capacity.volume.max)}</span>
+            </>
+          )}
+        />
+      </div>
+    </>
+  );
+}
 
 const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip, warning }}) => {
   const refEl = useRef();
@@ -2353,7 +2460,7 @@ export const ActionDialogTabs = ({ tabs, selected, onSelect }) => (
     <Tabs>
       {tabs.map((tab, i) => (
         <Tab key={i} onClick={() => onSelect(i)} isSelected={i === selected}>
-          {tab.icon && <TabIcon>{tab.icon}</TabIcon>}
+          {tab.icon && <TabIcon style={tab.iconStyle || {}}>{tab.icon}</TabIcon>}
           <div>{tab.label}</div>
         </Tab>
       ))}
