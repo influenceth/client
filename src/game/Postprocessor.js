@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
+  LinearToneMapping,
   MeshBasicMaterial,
   ShaderMaterial,
   Vector2
 } from 'three';
+// import * as THREE from 'three';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
@@ -54,7 +56,13 @@ const materials = {};
 //   taskTotal += performance.now() - start;
 // };
 
-const Postprocessor = ({ enabled }) => {
+const defaultBloomParams = {
+  threshold: 0,
+  strength: 2,
+  radius: 0.25
+}
+
+const Postprocessor = ({ enabled, isModelViewer, bloomParams = {} }) => {
   const { gl: renderer, camera, scene, size } = useThree();
 
   const bloomPass = useRef();
@@ -123,20 +131,24 @@ const Postprocessor = ({ enabled }) => {
   }
 
   useEffect(() => {
-    // renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    // THREE.NoToneMapping // default
-    // THREE.LinearToneMapping
-    // THREE.ReinhardToneMapping
-    // THREE.CineonToneMapping
-    // THREE.ACESFilmicToneMapping
-    // THREE.CustomToneMapping
+    if (isModelViewer) {
+      renderer.toneMapping = LinearToneMapping;
+      // THREE.NoToneMapping // default
+      // THREE.LinearToneMapping // 3.75
+      // THREE.ReinhardToneMapping  // 4.5
+      // THREE.CineonToneMapping
+      // THREE.ACESFilmicToneMapping
+      // THREE.CustomToneMapping
+      ;
+      renderer.toneMappingExposure = 3.75;
+    }
 
     const renderScene = new RenderPass( scene, camera );
 
     bloomPass.current = new UnrealBloomPass(new Vector2( size.width, size.height ));
-    bloomPass.current.threshold = 0;
-    bloomPass.current.strength = 2;
-    bloomPass.current.radius = 0.25;
+    Object.keys(defaultBloomParams).forEach((k) => {
+      bloomPass.current[k] = Object.keys(bloomParams).includes(k) ? bloomParams[k] : defaultBloomParams[k];
+    });
 
     bloomComposer.current = new EffectComposer( renderer );
     bloomComposer.current.renderToScreen = false;

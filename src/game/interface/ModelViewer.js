@@ -186,7 +186,8 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
     controls.current.target.set(0, 0, 0);
     controls.current.zoomSpeed = 0.33;
 
-    controls.current.object.near = 0.001;
+    controls.current.object.near = 0.0018;  // postprocessing introduces acne if near is too low
+    controls.current.object.far = 10;
     controls.current.object.updateProjectionMatrix();
 
     return () => {
@@ -265,6 +266,8 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
                 node.material.lightMap = node.material.emissiveMap;
                 node.material.emissive = new Color(0x0);
                 node.material.emissiveMap = null;
+              } else if (node.material.emissive && node.material.emissive.getHex() > 0) {
+                node.userData.bloom = true;
               }
 
               // TODO: should tag this surface in the userData rather than matching by name
@@ -444,10 +447,11 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
           );
           const intercepts = raycaster.current.intersectObject(asteroidTerrain.current, false);
           if (intercepts.length > 0) {
-            if (intercepts[0].point.y + 0.001 > controls.current.object.position.y) {
+            const buffer = controls.current.object.near;
+            if (intercepts[0].point.y + buffer > controls.current.object.position.y) {
               controls.current.object.position.set(
                 controls.current.object.position.x,
-                intercepts[0].point.y + 0.001001,
+                intercepts[0].point.y + buffer * 1.001,
                 controls.current.object.position.z,
               );
               updateControls = true;
@@ -949,13 +953,7 @@ const ModelViewer = ({ assetType, lotZoomMode }) => {
             overrideEnvironment={envOverride}
             overrideEnvironmentName={envOverrideName}
           />
-          {/* disabled because this darkens scene too much */}
-          {false && assetType === 'Building' && (
-            <>
-              <ambientLight intensity={0.4} />
-              <Postprocessor enabled={true} />
-            </>
-          )}
+          {assetType === 'Building' && <Postprocessor enabled={true} isModelViewer bloomParams={{ strength: 3, radius: 0.25 }} />}
           {model?.modelUrl && !loadingSkybox && (
             <Model
               assetType={assetType}
