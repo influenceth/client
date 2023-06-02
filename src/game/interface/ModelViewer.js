@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimationMixer, Box3, Color, DirectionalLight, EquirectangularReflectionMapping, LoopRepeat, PCFSoftShadowMap, Raycaster, Vector2, Vector3 } from 'three';
+import { AnimationMixer, Box3, Color, DirectionalLight, EquirectangularReflectionMapping, LoopRepeat, Raycaster, Vector2, Vector3 } from 'three';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -266,7 +266,12 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
                 node.material.lightMap = node.material.emissiveMap;
                 node.material.emissive = new Color(0x0);
                 node.material.emissiveMap = null;
+
               } else if (node.material.emissive && node.material.emissive.getHex() > 0) {
+                if (node.material.emissiveIntensity > 1) {
+                  console.warn(`emissiveIntensity > 1 on material "${node.material.name}" @ node "${node.name}"`);
+                  // node.material.emissiveIntensity = Math.min(node.material.emissiveIntensity, 1);
+                }
                 node.userData.bloom = true;
               }
 
@@ -953,7 +958,7 @@ const ModelViewer = ({ assetType, lotZoomMode }) => {
             overrideEnvironment={envOverride}
             overrideEnvironmentName={envOverrideName}
           />
-          {assetType === 'Building' && <Postprocessor enabled={true} isModelViewer bloomParams={{ strength: 3, radius: 0.25 }} />}
+          {true && assetType === 'Building' && <Postprocessor enabled={true} isModelViewer bloomParams={{ strength: 3, radius: 0.25 }} />}
           {model?.modelUrl && !loadingSkybox && (
             <Model
               assetType={assetType}

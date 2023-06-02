@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import screenfull from 'screenfull';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
@@ -108,6 +108,23 @@ const Settings = (props) => {
     setAutodetect(!graphics.autodetect, gpuInfo);
   };
 
+  const pixelRatioOptions = useMemo(() => {
+    const options = new Set();
+
+    // add device settings and current selection always
+    if (graphics.pixelRatio) options.add(graphics.pixelRatio);
+    options.add(window.devicePixelRatio);
+
+    // add others dynamically
+    options.add(0.5);
+    options.add(1);
+    if (window.devicePixelRatio >= 2) options.add(2);
+    if (window.devicePixelRatio >= 4) options.add(4);
+    if (window.devicePixelRatio >= 8) options.add(8);
+
+    return Array.from(options).sort();
+  }, [graphics?.pixelRatio]);
+
   return (
     <StyledSettings>
       {!isMobile && (
@@ -144,37 +161,14 @@ const Settings = (props) => {
 
           <StyledDataReadout label="Render Pixel Ratio">
             <ControlGroup>
-              <Button
-                active={graphics.pixelRatio === 0.5}
-                onClick={() => setPixelRatio(0.5)}>
-                0.5x
-              </Button>
-              <Button
-                active={!graphics.pixelRatio || graphics.pixelRatio === 1}
-                onClick={() => setPixelRatio(1)}>
-                1x
-              </Button>
-              {window.devicePixelRatio >= 2 && (
+              {pixelRatioOptions.map((option) => (
                 <Button
-                  active={graphics.pixelRatio === 2}
-                  onClick={() => setPixelRatio(2)}>
-                  2x
+                  key={option}
+                  active={graphics.pixelRatio === option || (!graphics.pixelRatio && option === 1)}
+                  onClick={() => setPixelRatio(option)}>
+                  {option}x
                 </Button>
-              )}
-              {window.devicePixelRatio >= 4 && (
-                <Button
-                  active={graphics.pixelRatio === 4}
-                  onClick={() => setPixelRatio(4)}>
-                  4x
-                </Button>
-              )}
-              {window.devicePixelRatio >= 8 && (
-                <Button
-                  active={graphics.pixelRatio === 8}
-                  onClick={() => setPixelRatio(8)}>
-                  8x
-                </Button>
-              )}
+              ))}
             </ControlGroup>
           </StyledDataReadout>
 
