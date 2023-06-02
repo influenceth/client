@@ -120,6 +120,9 @@ const Interface = () => {
             <Route path="/resource-viewer/:model?">
               <ModelViewer assetType="Resource" />
             </Route>
+            <Route path="/ship-viewer/:model?">
+              <ModelViewer assetType="Ship" />
+            </Route>
             <Route path="/crew/:i(\d+)">
               <CrewMemberDetails />
             </Route>

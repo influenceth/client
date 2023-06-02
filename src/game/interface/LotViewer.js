@@ -15,7 +15,7 @@ const LotViewer = () => {
     ? data.building.__t
     : 'Empty Lot';
   return (
-    <ModelViewer assetType="Building" lotZoomMode={building} />
+    <ModelViewer assetType="Building" inGameMode={building} />
   );
 }
 

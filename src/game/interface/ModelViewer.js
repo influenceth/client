@@ -10,7 +10,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import BarLoader from 'react-spinners/BarLoader';
 import styled, { css } from 'styled-components';
 
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
+import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import Button from '~/components/Button';
 import Details from '~/components/DetailsFullsize';
 import Dropdown from '~/components/Dropdown';
@@ -134,18 +134,7 @@ const loadingCss = css`
   z-index: 10;
 `;
 
-const skyboxDefaults = {
-  'Resource': {
-    background: '/textures/model-viewer/resource_skybox.hdr',
-    envmap: '/textures/model-viewer/resource_envmap.hdr',
-  },
-  'Building': {
-    background: '/textures/model-viewer/building_skybox.jpg',
-    envmap: '/textures/model-viewer/resource_envmap.hdr',
-  }
-};
-
-const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength, rotationEnabled, zoomLimitsEnabled }) => {
+const Model = ({ url, onLoaded, overrideEnvName, overrideEnvStrength, rotationEnabled, zoomLimitsEnabled, ...settings }) => {
   const { camera, clock, gl, scene } = useThree();
   const pixelRatio = useStore(s => s.graphics.pixelRatio);
 
@@ -163,14 +152,14 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
   const controls = useRef();
   const model = useRef();
 
-  const asteroidTerrain = useRef();
+  const collisionFloor = useRef();
   const raycaster = useRef(new Raycaster());
 
   // init the camera (reset when url changes)
   useEffect(() => {
     // TODO (enhancement): on mobile, aspect ratio is such that zoomed out to 1 may not have
     //  view of full width of 1.0 at 0,0,0... so on mobile, should probably set this to 1.5+
-    const zoom = assetType === 'Building' ? 0.2 : 1.75;
+    const zoom = settings.initialZoom || 1;
     camera.position.set(0, 0.75 * zoom, 1.25 * zoom);
     camera.up.set(0, 1, 0);
     camera.fov = 50;
@@ -178,7 +167,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
     if (controls.current) {
       controls.current.update();
     }
-  }, [url]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [settings.initialZoom, url]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // init orbitcontrols
   useEffect(() => {
@@ -186,7 +175,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
     controls.current.target.set(0, 0, 0);
     controls.current.zoomSpeed = 0.33;
 
-    controls.current.object.near = 0.0018;  // postprocessing introduces acne if near is too low
+    controls.current.object.near = settings.enablePostprocessing ? 0.0018 : 0.001;  // postprocessing introduces acne if near is too low
     controls.current.object.far = 10;
     controls.current.object.updateProjectionMatrix();
 
@@ -196,14 +185,14 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
   }, [camera, gl]);
 
   useEffect(() => {
-    if (assetType === 'Resource' && zoomLimitsEnabled) {
-      controls.current.minDistance = 0.85;
-      controls.current.maxDistance = 5;
+    if (zoomLimitsEnabled && settings.simpleZoomConstraints) {
+      controls.current.minDistance = settings.simpleZoomConstraints[0];
+      controls.current.maxDistance = settings.simpleZoomConstraints[1];
     } else {
       controls.current.minDistance = 0;
       controls.current.maxDistance = Infinity;
     }
-  }, [assetType, zoomLimitsEnabled]);
+  }, [settings.simpleZoomConstraints, zoomLimitsEnabled]);
 
   // // init axeshelper
   // useEffect(() => {
@@ -244,8 +233,8 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
           } else if (node.name === 'Camera') {
             predefinedCamera = node.position.clone();
           } else if (node.isMesh) {
-            if (node.name === 'Asteroid_Terrain') {
-              asteroidTerrain.current = node;
+            if (node.name === settings.floorNodeName) {
+              collisionFloor.current = node;
             }
 
             // self-shadowing
@@ -258,7 +247,9 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
             if (node.material?.envMapIntensity) {
               node.material.envMapIntensity = ENV_MAP_STRENGTH;
             }
-            if (assetType === 'Building') {
+
+            // rewrite emissive map to lightmap
+            if (settings.emissiveMapAsLightMap) {
               node.material.envMapIntensity = overrideEnvName ? ENV_MAP_STRENGTH : 0;
               if (node.material?.emissiveMap) {
                 if (node.material.lightMap) console.warn('LIGHTMAP overwritten by emissiveMap', node);
@@ -266,36 +257,42 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
                 node.material.lightMap = node.material.emissiveMap;
                 node.material.emissive = new Color(0x0);
                 node.material.emissiveMap = null;
+              }
+            }
 
-              } else if (node.material.emissive && node.material.emissive.getHex() > 0) {
+            // use no-map emissive color as indication mesh should be bloomed
+            // NOTE: this only does something if bloom postprocessing is also enabled
+            if (settings.emissiveAsBloom) {
+              if (node.material.emissive && node.material.emissive.getHex() > 0) {
                 if (node.material.emissiveIntensity > 1) {
                   console.warn(`emissiveIntensity > 1 on material "${node.material.name}" @ node "${node.name}"`);
-                  // node.material.emissiveIntensity = Math.min(node.material.emissiveIntensity, 1);
+                  node.material.emissiveIntensity = Math.min(node.material.emissiveIntensity, 1);
                 }
+                node.material.toneMapped = false;
                 node.userData.bloom = true;
               }
-
-              // TODO: should tag this surface in the userData rather than matching by name
-              // if (node.name === 'Asteroid001') {
-              //   node.castShadow = false;
-              // }
             }
 
             // no depth evaluation on transparent materials (NOTE: this may happen automatically in gltfloader now)
             // (from https://github.com/donmccurdy/three-gltf-viewer/blob/main/src/viewer.js)
             node.material.depthWrite = !node.material.transparent;
-          } else if (assetType === 'Building' && node.isSpotLight) {
-            if (totalLights < MAX_LIGHTS) {
-              node.castShadow = true;
-              node.shadow.bias = -0.0001;
-              node.intensity /= 8;
-            } else {
-              console.warn(`excessive light (#${totalLights}) removed: `, node.name);
-            }
-            totalLights++;
+
+          // allow embedded spotlights per settings (up to MAX_LIGHTS)
           } else if (node.isLight) {
-            console.warn(`unexpected light (${node.type}) removed: `, node.name);
-            removeNodes.push(node);
+            if (settings.enableEmbeddedLights && node.isSpotLight) {
+              if (totalLights < MAX_LIGHTS) {
+                node.castShadow = true;
+                node.shadow.bias = -0.0001;
+                node.intensity /= 8;
+              } else {
+                console.warn(`excessive light (#${totalLights}) removed: `, node.name);
+              }
+              totalLights++;
+
+            } else {
+              console.warn(`unexpected light (${node.type}) removed: `, node.name);
+              removeNodes.push(node);
+            }
           }
 
           // disable frustum culling because several of the models have some issues with the
@@ -362,9 +359,9 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
           controls.current.update();
         }
 
-        if (assetType === 'Building') {
+        if (settings.maxCameraDistance) {
           // maxCameraDistance.current = 2 * controls.current.object.position.length();
-          maxCameraDistance.current = 0.1;
+          maxCameraDistance.current = settings.maxCameraDistance;
         }
 
         // bbox.setFromObject(model.current);
@@ -436,12 +433,12 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
     }
 
     // apply camera constraints to building scene
-    if (assetType === 'Building') {
+    if (maxCameraDistance.current || collisionFloor.current) {
       if (controls.current.object && controls.current.target) {
         let updateControls = false;
 
         // collision detection on asteroid terrain
-        if (asteroidTerrain.current) {
+        if (collisionFloor.current) {
           raycaster.current.set(
             new Vector3(
               controls.current.object.position.x,
@@ -450,7 +447,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
             ),
             DOWN
           );
-          const intercepts = raycaster.current.intersectObject(asteroidTerrain.current, false);
+          const intercepts = raycaster.current.intersectObject(collisionFloor.current, false);
           if (intercepts.length > 0) {
             const buffer = controls.current.object.near;
             if (intercepts[0].point.y + buffer > controls.current.object.position.y) {
@@ -464,7 +461,8 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
           }
         }
 
-        if (zoomLimitsEnabled && maxCameraDistance.current !== null) {
+        // max camera distance (enforcing on zoom and on pan)
+        if (zoomLimitsEnabled && maxCameraDistance.current) {
           // don't let camera beyond distance (if defined)
           if (controls.current.object.position.length() > maxCameraDistance.current) {
             controls.current.object.position.setLength(maxCameraDistance.current);
@@ -476,6 +474,7 @@ const Model = ({ assetType, url, onLoaded, overrideEnvName, overrideEnvStrength,
             updateControls = true;
           }
         }
+
         if (updateControls) {
           controls.current.update();
         }
@@ -502,14 +501,14 @@ const loadTexture = (file, filename = '') => {
   })
 };
 
-const Skybox = ({ assetType, onLoaded, overrideBackground, overrideBackgroundName, overrideEnvironment, overrideEnvironmentName }) => {
+const Skybox = ({ defaultBackground, defaultEnvmap, onLoaded, overrideBackground, overrideBackgroundName, overrideEnvironment, overrideEnvironmentName }) => {
   const { scene } = useThree();
 
   useEffect(() => {
     let cleanupTextures = [];
 
-    let background = overrideBackground || skyboxDefaults[assetType].background;
-    let env = overrideEnvironment || skyboxDefaults[assetType].envmap;
+    let background = overrideBackground || defaultBackground;
+    let env = overrideEnvironment || defaultEnvmap;
 
     let waitingOn = background === env ? 1 : 2;
     loadTexture(background, overrideBackgroundName).then(function (texture) {
@@ -537,51 +536,49 @@ const Skybox = ({ assetType, onLoaded, overrideBackground, overrideBackgroundNam
     return () => {
       cleanupTextures.forEach((t) => t.dispose());
     };
-  }, [assetType, overrideBackground, overrideEnvironment]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [defaultBackground, defaultEnvmap, overrideBackground, overrideEnvironment]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 };
 
-const Lighting = ({ assetType }) => {
+const Lighting = ({ keylightIntensity = 1.0, rimlightIntensity = 0.25 }) => {
   const { gl, scene } = useThree();
 
   useEffect(() => {
-    const keyLight = new DirectionalLight(0xFFFFFF);
-    keyLight.castShadow = true;
-    keyLight.intensity = 1.0;
-    if (assetType === 'Building') {
-      keyLight.intensity = 0;//0.1;
-    }
-    keyLight.position.set(-2, 2, 2);
-    // keyLight.position.set(0, 2, 0);
-    scene.add(keyLight);
-
-    const rimLight = new DirectionalLight(0x9ECFFF);
-    rimLight.intensity = 0.25;
-    rimLight.position.set(4, 2, 4);
-    scene.add(rimLight);
-
-    if (ENABLE_SHADOWS) {
-      gl.shadowMap.enabled = true;
-      // gl.shadowMap.type = PCFSoftShadowMap;
-
+    let keyLight;
+    if (keylightIntensity > 0) {
+      keyLight = new DirectionalLight(0xFFFFFF);
       keyLight.castShadow = true;
-      keyLight.shadow.camera.near = 2.75;
-      keyLight.shadow.camera.far = 4.25;
-      keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.75;
-      keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.75;
-      if (assetType === 'Building') {
-        keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.075;
-        keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.075;
+      keyLight.intensity = keylightIntensity;
+      keyLight.position.set(-2, 2, 2);
+      scene.add(keyLight);
+
+      if (ENABLE_SHADOWS) {
+        gl.shadowMap.enabled = true;
+        // gl.shadowMap.type = PCFSoftShadowMap;
+
+        keyLight.castShadow = true;
+        keyLight.shadow.camera.near = 2.75;
+        keyLight.shadow.camera.far = 4.25;
+        keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.75;
+        keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.75;
+        // keyLight.shadow.camera.near = 1.75;
+        // keyLight.shadow.camera.far = 2.25;
+        // keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.15;
+        // keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.15;
+        keyLight.shadow.camera.updateProjectionMatrix();
+        keyLight.shadow.mapSize.height = 1024;
+        keyLight.shadow.mapSize.width = 1024;
+        // keyLight.shadow.bias = -0.02;
       }
-      // keyLight.shadow.camera.near = 1.75;
-      // keyLight.shadow.camera.far = 2.25;
-      // keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.15;
-      // keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.15;
-      keyLight.shadow.camera.updateProjectionMatrix();
-      keyLight.shadow.mapSize.height = 1024;
-      keyLight.shadow.mapSize.width = 1024;
-      // keyLight.shadow.bias = -0.02;
+    }
+
+    let rimLight;
+    if (rimlightIntensity > 0) {
+      rimLight = new DirectionalLight(0x9ECFFF);
+      rimLight.intensity = rimlightIntensity;
+      rimLight.position.set(4, 2, 4);
+      scene.add(rimLight);
     }
 
     // const spotlightFOV = Math.PI / 2.3;
@@ -660,7 +657,6 @@ const Lighting = ({ assetType }) => {
     // scene.add(helper5);
 
     return () => {
-      // if (sunLight) scene.remove(sunLight);
       if (keyLight) scene.remove(keyLight);
       if (rimLight) scene.remove(rimLight);
       // if (spotlights) spotlights.forEach((spotlight) => { scene.remove(spotlight.target); scene.remove(spotlight); });
@@ -677,33 +673,77 @@ const Lighting = ({ assetType }) => {
 };
 
 const reader = new FileReader();
-const ModelViewer = ({ assetType, lotZoomMode }) => {
+const ModelViewer = ({ assetType, inGameMode }) => {
   const { model: paramModel } = useParams();
   const { search } = useLocation();
-  const resources = useResourceAssets();
   const buildings = useBuildingAssets();
+  const resources = useResourceAssets();
+  const ships = useShipAssets();
 
   const canvasStack = useStore(s => s.canvasStack);
+  const pixelRatio = useStore(s => s.graphics.pixelRatio);
   const dispatchCanvasStacked = useStore(s => s.dispatchCanvasStacked);
   const dispatchCanvasUnstacked = useStore(s => s.dispatchCanvasUnstacked);
 
-  const assets = assetType === 'Building' ? buildings.filter((b, i) => i < 3) : resources;
-  const singleModel = lotZoomMode || Number(paramModel);
+  const assets = useMemo(() => {
+    if (assetType === 'Building') return buildings.filter((b, i) => i < 3);
+    if (assetType === 'Resource') return resources;
+    if (assetType === 'Ship') return ships;
+  }, [assetType, buildings, resources, ships]);
+
+  const settings = useMemo(() => {
+    const s = {
+      background: '/textures/model-viewer/building_skybox.jpg',
+      envmap: '/textures/model-viewer/resource_envmap.hdr',
+    };
+
+    if (assetType === 'Building') {
+      s.bloomOverrides = { strength: 5, radius: 1 }; // { strength: 3, radius: 0.25 };
+      s.emissiveAsBloom = true;
+      s.emissiveMapAsLightMap = true;
+      s.envStrengthOverride = 0.01;
+      s.enableEmbeddedLights = true;
+      s.enablePostprocessing = true;
+      s.floorNodeName = 'Asteroid_Terrain'; // (enforces collision detection with this node (only in y-axis direction))
+      s.maxCameraDistance = 0.1;  // NOTE: use this or simple zoom constraints, not both
+      s.initialZoom = 0.2;
+      s.keylightIntensity = 0;
+
+    } else if (assetType === 'Resource') {
+      s.background = '/textures/model-viewer/resource_skybox.hdr';
+      s.initialZoom = 1.75;
+      s.lightsEnabled = true;
+      s.removeModelLights = true;
+      s.rotationEnabled = true;
+      s.simpleZoomConstraints = [0.85, 5];  // TODO: if using simple zoom constraints, should probably not allow panning... maybe all should use maxCameraDistance?
+
+    } else if (assetType === 'Ship') {
+      s.emissiveAsBloom = true;
+      s.enableEmbeddedLights = true;
+      s.enablePostprocessing = true;
+    }
+    return s;
+  }, [assetType]);
+  
+  const singleModel = inGameMode || Number(paramModel);
   
   const [devtoolsEnabled, setDevtoolsEnabled] = useState(!singleModel);
   const [model, setModel] = useState();
   const [bgOverride, setBgOverride] = useState();
   const [bgOverrideName, setBgOverrideName] = useState();
+  const [bloomRadiusOverride, setBloomRadiusOverride] = useState(settings.bloomOverrides?.radius || 0.25);
+  const [bloomStrengthOverride, setBloomStrengthOverride] = useState(settings.bloomOverrides?.strength || 2);
   const [envOverride, setEnvOverride] = useState();
   const [envOverrideName, setEnvOverrideName] = useState();
-  const [envStrengthOverride, setEnvStrengthOverride] = useState(assetType === 'Building' ? 0.01 : null);
+  const [envStrengthOverride, setEnvStrengthOverride] = useState(settings.envStrengthOverride);
   const [modelOverride, setModelOverride] = useState();
   const [modelOverrideName, setModelOverrideName] = useState();
+  const [postprocessingEnabled, setPostprocessingEnabled] = useState(!!settings.enablePostprocessing);
 
-  const [lightsEnabled, setLightsEnabled] = useState(assetType === 'Building' ? false : true);
+  const [lightsEnabled, setLightsEnabled] = useState(!!settings.lightsEnabled);
   const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState();
-  const [rotationEnabled, setRotationEnabled] = useState(assetType === 'Resource');
+  const [rotationEnabled, setRotationEnabled] = useState(settings.rotationEnabled);
   const [zoomLimitsEnabled, setZoomLimitsEnabled] = useState(true);
 
   const [uploadType, setUploadType] = useState();
@@ -775,6 +815,10 @@ const ModelViewer = ({ assetType, lotZoomMode }) => {
     setLightsEnabled((e) => !e);
   }, []);
 
+  const togglePostprocessing = useCallback(() => {
+    setPostprocessingEnabled((e) => !e);
+  }, []);
+
   const toggleRotation = useCallback(() => {
     setRotationEnabled((e) => !e);
   }, []);
@@ -833,19 +877,25 @@ const ModelViewer = ({ assetType, lotZoomMode }) => {
   const onCloseDestination = useMemo(() => new URLSearchParams(search).get('back'), [search]);
 
   const title = useMemo(() => {
-    if (lotZoomMode) return '';
+    if (inGameMode) return '';
     if (singleModel && model) {
       return `${assetType === 'Resource' ? model.category : 'Infrastructure'} — ${model.name}`;
     }
     return `${assetType} Details`;
-  }, [singleModel, model, assetType, lotZoomMode]);
+  }, [singleModel, model, assetType, inGameMode]);
+
+  const bloomOverrides = useMemo(() => ({
+    key: `${pixelRatio}_${bloomRadiusOverride}_${bloomStrengthOverride}`,
+    radius: bloomRadiusOverride,
+    strength: bloomStrengthOverride
+  }), [bloomRadiusOverride, bloomStrengthOverride, pixelRatio]);
 
   const isLoading = loadingModel || loadingSkybox;
   return (
     <Details
       edgeToEdge
-      hideClose={lotZoomMode}
-      lowerZIndex={!!lotZoomMode}
+      hideClose={inGameMode}
+      lowerZIndex={!!inGameMode}
       onCloseDestination={onCloseDestination}
       title={title}>
       <BarLoader color="#AAA" height={3} loading={isLoading} css={loadingCss} />
@@ -897,6 +947,14 @@ const ModelViewer = ({ assetType, lotZoomMode }) => {
           <div>
             <Button
               disabled={isLoading}
+              onClick={togglePostprocessing}>
+              Toggle Bloom
+            </Button>
+            {!postprocessingEnabled && <span onClick={togglePostprocessing}>Off</span>}
+          </div>
+          <div>
+            <Button
+              disabled={isLoading}
               onClick={toggleLights}>
               Toggle Lighting
             </Button>
@@ -929,6 +987,30 @@ const ModelViewer = ({ assetType, lotZoomMode }) => {
               onChange={(v) => setEnvStrengthOverride(parseFloat(v))} />
           </Miniform>
 
+          {postprocessingEnabled && (
+            <>
+              <Miniform>
+                <label>Bloom Radius</label>
+                <NumberInput
+                  disabled={isLoading}
+                  initialValue={bloomRadiusOverride}
+                  min="0"
+                  step="0.05"
+                  onChange={(v) => setBloomRadiusOverride(parseFloat(v))} />
+              </Miniform>
+
+              <Miniform>
+                <label>Bloom Strength</label>
+                <NumberInput
+                  disabled={isLoading}
+                  initialValue={bloomStrengthOverride}
+                  min="0"
+                  step="0.5"
+                  onChange={(v) => setBloomStrengthOverride(parseFloat(v))} />
+              </Miniform>
+            </>
+          )}
+
           <input
             ref={fileInput}
             onChange={handleFile}
@@ -950,26 +1032,37 @@ const ModelViewer = ({ assetType, lotZoomMode }) => {
           shadows
           resize={{ debounce: 5, scroll: false }}
           style={{ height: '100%', width: '100%' }}>
+
           <Skybox
-            assetType={assetType}
+            defaultBackground={settings.background}
+            defaultEnvmap={settings.envmap}
             onLoaded={() => setLoadingSkybox(false)}
             overrideBackground={bgOverride}
             overrideBackgroundName={bgOverrideName}
             overrideEnvironment={envOverride}
             overrideEnvironmentName={envOverrideName}
           />
-          {true && assetType === 'Building' && <Postprocessor enabled={true} isModelViewer bloomParams={{ strength: 3, radius: 0.25 }} />}
+
+          {postprocessingEnabled && (
+            <Postprocessor key={bloomOverrides?.key} enabled isModelViewer bloomParams={bloomOverrides} />
+          )}
+
           {model?.modelUrl && !loadingSkybox && (
             <Model
-              assetType={assetType}
               onLoaded={handleLoaded}
               overrideEnvName={envOverrideName}
               overrideEnvStrength={envStrengthOverride}
               rotationEnabled={rotationEnabled}
+              url={modelOverride || model.modelUrl}
               zoomLimitsEnabled={zoomLimitsEnabled}
-              url={modelOverride || model.modelUrl} />
+              {...settings} />
           )}
-          {lightsEnabled && <Lighting assetType={assetType} />}
+
+          {lightsEnabled && (
+            <Lighting
+              keylightIntensity={settings.keylightIntensity}
+              rimlightIntensity={settings.rimlightIntensity} />
+          )}
         </Canvas>
       </CanvasContainer>
     </Details>

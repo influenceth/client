@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
-  LinearToneMapping,
   MeshBasicMaterial,
   ShaderMaterial,
   Vector2
@@ -12,6 +11,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
+import useStore from '~/hooks/useStore';
 
 const VERTEX_SHADER = `
   varying vec2 vUv;
@@ -65,6 +65,8 @@ const defaultBloomParams = {
 const Postprocessor = ({ enabled, isModelViewer, bloomParams = {} }) => {
   const { gl: renderer, camera, scene, size } = useThree();
 
+  const pixelRatio = useStore(s => s.graphics.pixelRatio || 1);
+
   const bloomPass = useRef();
   const fxaaPass = useRef();
   const bloomComposer = useRef();
@@ -75,12 +77,6 @@ const Postprocessor = ({ enabled, isModelViewer, bloomParams = {} }) => {
       backgrounds[obj.uuid] = obj.background;
       obj.background = null;
     }
-    /* NOTE: traverse is apparently recursive already, so this is seemingly unnecessary
-    if (obj.isScene || obj.isGroup) {
-      obj.children.forEach((child) => {
-        darkenNonBloomed(child);
-      });
-    } else*/
     if (obj.isLensflare) {
       obj.visible = false;
     } else if (obj.material && obj.material.opacity === 0) {
@@ -109,12 +105,6 @@ const Postprocessor = ({ enabled, isModelViewer, bloomParams = {} }) => {
     if (obj.isScene && backgrounds[obj.uuid]) {
       obj.background = backgrounds[obj.uuid];
     }
-    /* NOTE: traverse is apparently recursive already, so this is seemingly unnecessary
-    if (obj.isScene || obj.isGroup) {
-      obj.children.forEach((child) => {
-        restoreMaterial(child);
-      });
-    } else*/
     if (obj.isLensflare) {
       obj.visible = true;
     } else if (obj.material && obj.material.opacity === 0) {
@@ -131,18 +121,24 @@ const Postprocessor = ({ enabled, isModelViewer, bloomParams = {} }) => {
   }
 
   useEffect(() => {
-    if (isModelViewer) {
-      renderer.toneMapping = LinearToneMapping;
+    if (enabled && isModelViewer) {
+      // renderer.toneMapping = 
       // THREE.NoToneMapping // default
       // THREE.LinearToneMapping // 3.75
       // THREE.ReinhardToneMapping  // 4.5
       // THREE.CineonToneMapping
-      // THREE.ACESFilmicToneMapping
+      // THREE.ACESFilmicToneMapping  // seems to be the actual default
       // THREE.CustomToneMapping
-      ;
-      renderer.toneMappingExposure = 3.75;
+      // ;
+      renderer.toneMappingExposure = 3.5;
+      return () => {
+        renderer.toneMappingExposure = 1;
+      }
     }
 
+  }, [enabled, isModelViewer])
+
+  useEffect(() => {
     const renderScene = new RenderPass( scene, camera );
 
     bloomPass.current = new UnrealBloomPass(new Vector2( size.width, size.height ));
@@ -169,7 +165,6 @@ const Postprocessor = ({ enabled, isModelViewer, bloomParams = {} }) => {
     );
     selectiveBloomPass.needsSwap = true;
 
-    const pixelRatio = renderer.getPixelRatio();
     fxaaPass.current = new ShaderPass( FXAAShader );
     fxaaPass.current.material.uniforms['resolution'].value.x = 1 / ( size.width * pixelRatio );
     fxaaPass.current.material.uniforms['resolution'].value.y = 1 / ( size.height * pixelRatio );
@@ -191,11 +186,10 @@ const Postprocessor = ({ enabled, isModelViewer, bloomParams = {} }) => {
       finalComposer.current.setSize( size.width, size.height );
     }
     if (fxaaPass.current) {
-      const pixelRatio = renderer.getPixelRatio();
       fxaaPass.current.material.uniforms['resolution'].value.x = 1 / ( size.width * pixelRatio );
       fxaaPass.current.material.uniforms['resolution'].value.y = 1 / ( size.height * pixelRatio );
     }
-  }, [size.height, size.width]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [size.height, size.width, pixelRatio]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useFrame(({ camera, gl, scene }) => {
     try {
