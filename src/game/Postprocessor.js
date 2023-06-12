@@ -132,7 +132,7 @@ const Postprocessor = ({ enabled, isModelViewer, bloomParams = {} }) => {
       // THREE.ACESFilmicToneMapping  // seems to be the actual default
       // THREE.CustomToneMapping
       // ;
-      renderer.toneMappingExposure = 3.75;
+      renderer.toneMappingExposure = 4;
       return () => {
         renderer.toneMappingExposure = 1;
       }

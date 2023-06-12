@@ -3,7 +3,7 @@ import { CoreSample, Asteroid, Extraction, Inventory } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, RotatedShipMarkerIcon, WarningOutlineIcon } from '~/components/Icons';
+import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, RotatedShipMarkerIcon, WarningOutlineIcon, MyAssetIcon } from '~/components/Icons';
 import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
@@ -44,7 +44,8 @@ import {
   formatMass,
   MiniBarChart,
   MiniBarChartSection,
-  ShipTab
+  ShipTab,
+  formatVelocity
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -147,7 +148,7 @@ const TimingDetails = styled.div`
   align-self: flex-start;
   width: 50%;
   & > div {
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
     color: white;
     display: flex;
     flex-direction: row;
@@ -155,7 +156,7 @@ const TimingDetails = styled.div`
     padding: 4px 8px;
     & > label {
       flex: 1;
-      opacity: 0.5;
+      font-size: 95%;
     }
     & > span {
       font-size: 18px;
@@ -304,10 +305,12 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
         action={{
           icon: <SetCourseIcon />,
           label: 'Set Course',
+          status: stage === actionStages.NOT_STARTED ? 'Travel to Asteroid' : undefined,
         }}
         captain={captain}
         crewAvailableTime={arrivingIn}
         taskCompleteTime={arrivingIn}
+        overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
         stage={stage} />
 
       <ActionDialogBody>
@@ -350,23 +353,16 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
                     <LocationDiamond />
                   </CourseGraphic>
                   <CourseDeltaV>
-                    <span>Trip Delta-V: <b>{Math.round(travelSolution.deltaV).toLocaleString()} m/s</b></span>
+                    <span>Trip Delta-V: <b>{formatVelocity(travelSolution.deltaV, { minPrecision: 3 })}</b></span>
                   </CourseDeltaV>
                 </Course>
                 <AsteroidImage asteroid={destination} />
               </CourseRow>
             </Section>
 
-            <PropellantSection
-              title="Requirements"
-              propellantRequired={168e3}
-              propellantLoaded={840e3}
-              propellantMax={950e3}
-            />
-
-            <FlexSection style={{ marginTop: 35 }}>
+            <FlexSection style={{ marginTop: 20 }}>
               <FlexSectionInputBlock
-                image={<ShipImage ship={ship} />}
+                image={<ShipImage iconBadge={<MyAssetIcon />} ship={ship} />}
                 label="Icarus"
                 disabled={stage !== actionStages.NOT_STARTED}
                 sublabel={(
@@ -399,11 +395,24 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
               </TimingDetails>
 
             </FlexSection>
+
+            <FlexSection style={{ marginBottom: -15 }}>
+              <PropellantSection
+                title="Requirements"
+                propellantRequired={168e3}
+                propellantLoaded={840e3}
+                propellantMax={950e3}
+              />
+            </FlexSection>
           </>
         )}
 
         {tab === 1 && (
-          <ShipTab pilotCrew={{ ...crew, members: crewMembers }} ship={ships[0]} stage={stage} />
+          <ShipTab
+            pilotCrew={{ ...crew, members: crewMembers }}
+            previousStats={{ propellantMass: -168e3 }}
+            ship={ship}
+            stage={stage} />
         )}
 
         <ActionDialogStats
@@ -452,6 +461,7 @@ const Wrapper = ({ travelSolution, ...props }) => {
       asteroid={origin}
       isLoading={originIsLoading || destinationIsLoading}
       onClose={props.onClose}
+      overrideColor={actionStage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
       stage={actionStage}>
       <SetCourse
         origin={origin}

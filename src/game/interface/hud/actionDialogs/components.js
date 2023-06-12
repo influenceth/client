@@ -23,7 +23,11 @@ import {
   WarningOutlineIcon,
   SurfaceTransferIcon,
   GasIcon,
-  SwayIcon
+  SwayIcon,
+  RadioCheckedIcon,
+  RadioUncheckedIcon,
+  MyAssetIcon,
+  CaptainIcon
 } from '~/components/Icons';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import ResourceColorIcon from '~/components/ResourceColorIcon';
@@ -79,7 +83,7 @@ const Tab = styled.div`
   transition-property: background, border-color, color;
   transition-duration: 250ms;
   transition-timing-function: ease;
-  width: 140px;
+  width: 145px;
   ${p => p.isSelected
     ? `
       background: rgba(${p.theme.colors.mainRGB}, 0.5);
@@ -134,14 +138,14 @@ const FlexSectionInputBody = styled.div`
   }
 
   ${p => p.isSelected ? `
-      background: rgba(${p.theme.colors.mainRGB}, 0.18);
+      background: rgba(${p.theme.colors.mainRGB}, 0.22);
       border: 1px solid rgba(${p.theme.colors.mainRGB}, 0.7);
       & > svg {
         stroke: rgba(${p.theme.colors.mainRGB}, 0.7);
       }
     `
     : `
-      background: rgba(${p.theme.colors.mainRGB}, 0.1);
+      background: rgba(${p.theme.colors.mainRGB}, 0.15);
       border: 1px solid transparent;
       & > svg {
         stroke: transparent;
@@ -168,6 +172,10 @@ const FlexSectionInputBody = styled.div`
 `;
 const FlexSectionInputBodyInner = styled.div`
   height: 92px;
+`;
+const FlexSectionBlockInner = styled.div`
+  height: 92px;
+  padding: 8px 16px 8px 8px;
 `;
 
 
@@ -229,6 +237,10 @@ const SectionTitleRight = styled.div`
   text-transform: none;
   white-space: nowrap;
   max-width: 240px;
+`;
+const SectionTitleRightTabs = styled.div`
+  display: flex;
+  flex-direction: row;
 `;
 
 const SectionTitleTab = styled.button`
@@ -361,9 +373,14 @@ const Header = styled(Section)`
   padding-bottom: 5px;
   padding-top: 5px;
   position: relative;
-  ${p => p.theming?.highlight && `
+  ${p => p.theming?.highlight && !p.overrideHighlightColor && `
     ${IconContainer}, h2 {
       color: ${p.theming.highlight};
+    }
+  `}
+  ${p => p.overrideHighlightColor && `
+    ${IconContainer}, h2 {
+      color: ${p.overrideHighlightColor};
     }
   `}
 `;
@@ -488,6 +505,11 @@ const BuildingThumbnailWrapper = styled(ResourceThumbnailWrapper)`
 const ShipThumbnailWrapper = styled(ResourceThumbnailWrapper)`
   height: 92px;
   width: 150px;
+`;
+const ThumbnailBadge = styled.div`
+  position: absolute;
+  left: 5px;
+  top: 5px;
 `;
 const ThumbnailOverlay = styled.div`
   align-items: center;
@@ -843,13 +865,14 @@ const ActionProgressContainer = styled.div`
   }
 `;
 
-const barChartHeight = 20;
-const barChartPadding = 2;
+const barChartHeight = 22;
+const barChartPadding = 3;
 const barChartRounding = barChartHeight / 2;
 const BarChart = styled.div`
-  background: rgba(${p => hexToRGB(p.color)}, 0.2);
+  background: rgba(${p => hexToRGB(p.bgColor || p.color)}, 0.3);
   border-radius: ${barChartRounding}px;
   height: ${barChartHeight}px;
+  margin: ${(28 - barChartHeight) / 2}px 0;
   position: relative;
   width: 100%;
   &:before, &:after {
@@ -881,14 +904,14 @@ const BarChartNotes = styled.div`
   flex-direction: row;
   font-size: 92%;
   font-weight: bold;
+  line-height: 28px;
   justify-content: space-between;
-  margin-top: 6px;
   width: 100%;
   & b {
     color: white;
   }
   & > div:first-child, & > div:last-child {
-    min-width: 220px;
+    min-width: 150px;
   }
   & > div:last-child {
     text-align: right;
@@ -936,7 +959,7 @@ const DeltaIcon = styled.div`
 const MiniBar = styled.div`
   background: #333;
   border-radius: ${miniBarChartRounding}px;
-  color: ${p => p.deltaColor || p.theme.colors.brightMain};
+  color: ${p => p.deltaColor || p.color || p.theme.colors.brightMain};
   height: ${miniBarChartHeight}px;
   margin: 4px 0;
   position: relative;
@@ -957,7 +980,7 @@ const MiniBar = styled.div`
   ${p => p.deltaValue && `
     &:after {
       content: "";
-      background: ${p.deltaColor || p.theme.colors.brightMain};
+      background: ${p.deltaColor || p.color || p.theme.colors.brightMain};
       bottom: 0px;
       border-radius: ${miniBarChartRounding}px;
       position: absolute;
@@ -1568,7 +1591,7 @@ export const AsteroidImage = ({ asteroid }) => {
   )
 }
 
-export const ShipImage = ({ ship, iconOverlay, inventories, showInventoryStatusForType, simulated }) => {
+export const ShipImage = ({ ship, iconBadge, iconBadgeColor, iconOverlay, inventories, showInventoryStatusForType, simulated }) => {
   if (!ship) return null;
   // TODO: getCapacityUsage is intended for buildings
   const capacity = getCapacityUsage(ship, inventories, showInventoryStatusForType);
@@ -1587,6 +1610,7 @@ export const ShipImage = ({ ship, iconOverlay, inventories, showInventoryStatusF
           />
         </>
       )}
+      {iconBadge && <ThumbnailBadge style={{ color: iconBadgeColor || 'white' }}>{iconBadge}</ThumbnailBadge>}
       {iconOverlay && <ThumbnailOverlay>{iconOverlay}</ThumbnailOverlay>}
       <ClipCorner dimension={10} />
     </ShipThumbnailWrapper>
@@ -1702,9 +1726,9 @@ export const Mouseoverable = ({ children, tooltip, style = {}, themeColor }) => 
 // COMPONENTS
 //
 
-export const ActionDialogHeader = ({ action, captain, crewAvailableTime, stage, taskCompleteTime }) => {
+export const ActionDialogHeader = ({ action, captain, crewAvailableTime, overrideColor, stage, taskCompleteTime }) => {
   return (
-    <Header theming={theming[stage]}>
+    <Header theming={theming[stage]} overrideHighlightColor={overrideColor}>
       {captain && (
         <CrewCardFramed
           crewmate={captain}
@@ -1769,6 +1793,16 @@ export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, is
   );
 };
 
+export const FlexSectionBlock = ({ bodyStyle, children, style = {}, title, titleDetails }) => {
+  return (
+    <FlexSectionInputContainer style={style}>
+      {title && <SectionTitle>{title}{titleDetails && <><b style={{ flex: 1 }} /><SectionTitleRight>{titleDetails}</SectionTitleRight></>}</SectionTitle>}
+      <FlexSectionBlockInner style={bodyStyle}>
+        {children}
+      </FlexSectionBlockInner>
+    </FlexSectionInputContainer>
+  );
+};
 
 
 //
@@ -2112,61 +2146,149 @@ export const ExtractionAmountSection = ({ amount, extractionTime, min, max, reso
   );
 }
 
-export const PropellantSection = ({ title, propellantMax, propellantLoaded, propellantRequired }) => {
+const PropulsionTypeOption = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  font-size: 90%;
+  height: 28px;
+  ${p => p.onClick && `
+    cursor: ${p.theme.cursors.active};
+    opacity: 0.8;
+    &:hover {
+      opacity: 1;
+    }
+  `}
+
+  ${p => p.selected && `
+    color: white;
+    opacity: 1;
+  `}
+
+  & svg {
+    color: ${p => p.theme.colors.main};
+    font-size: 22px;
+    margin-right: 5px;
+  }
+  & label {
+    text-transform: uppercase;
+  }
+`;
+
+export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, selected, onSelect }) => {
+  return (
+    <FlexSectionBlock title={`${objectLabel} Type`} bodyStyle={{ padding: 0 }}>
+      <>
+        <PropulsionTypeOption
+          onClick={onSelect ? onSelect('propulsive') : undefined}
+          selected={selected === 'propulsive'}>
+          {onSelect && (selected === 'propulsive' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
+          <div style={{ flex: 1 }}>
+            <label>Propulsive:</label> Thruster {objectLabel}
+          </div>
+          <div>{formatTimer(propulsiveTime || 0, 2)}</div>
+        </PropulsionTypeOption>
+        <PropulsionTypeOption
+          onClick={onSelect ? onSelect('tug') : undefined}
+          selected={selected === 'tug'}>
+          {onSelect && (selected === 'tug' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
+          <div style={{ flex: 1 }}>
+            <label>Tug:</label> Hopper-Assisted {objectLabel}
+          </div>
+          <div>{formatTimer(tugTime || 0, 2)}</div>
+        </PropulsionTypeOption>
+      </>
+    </FlexSectionBlock>
+  );
+}
+
+export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired, propellantLoaded, propellantRequired }) => {
   const [deltaVMode, setDeltaVMode] = useState(false);
   // useEffect(() => ReactTooltip.rebuild(), []);
 
   const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : 1;
+  const deltaVUse = deltaVLoaded > 0 ? deltaVRequired / deltaVLoaded : 1;
   
+  return (
+    <FlexSectionBlock
+      title={title}
+      titleDetails={(
+        <SectionTitleRightTabs>
+          <SectionTitleTab
+            data-for="actionDialog"
+            data-tip="Propellant Usage"
+            data-place="left"
+            onClick={() => setDeltaVMode(false)}
+            isSelected={!deltaVMode}><GasIcon /></SectionTitleTab>
+          <SectionTitleTab
+            data-for="actionDialog"
+            data-tip="Delta-V Usage"
+            data-place="left"
+            onClick={() => setDeltaVMode(true)}
+            isSelected={!!deltaVMode}><DeltaVIcon /></SectionTitleTab>
+        </SectionTitleRightTabs>
+      )}
+      bodyStyle={{ padding: '1px 0' }}
+      style={narrow ? {} : { width: '100%' }}>
+        {narrow && (
+          <BarChartNotes color={deltaVMode ? '#aaaaaa' : theme.colors.main}>
+            <div>
+              <b>Required: </b>
+              {propellantRequired
+                ? (deltaVMode ? formatVelocity(deltaVRequired) : formatMass(propellantRequired * 1e3))
+                : 'NONE'
+              }
+            </div>
+            <div />
+            <div>
+              <b>Loaded:</b> {deltaVMode ? formatVelocity(deltaVLoaded) : formatMass(propellantLoaded * 1e3)}
+              {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax * 1e3)} max</small> */}
+            </div>
+          </BarChartNotes>
+        )}
+        {deltaVMode
+          ? <BarChart
+              color="#cccccc"
+              value={deltaVUse} />
+          : <BarChart
+              color={theme.colors.orange}
+              bgColor={theme.colors.main}
+              value={propellantUse} />
+        }
+        {!(narrow && !propellantRequired) && (
+          <BarChartNotes color={deltaVMode ? '#aaaaaa' : theme.colors.main}>
+            {!narrow && (
+              <div>
+                <b>Required: </b>
+                {propellantRequired
+                  ? (deltaVMode ? formatVelocity(deltaVRequired) : formatMass(propellantRequired * 1e3))
+                  : 'NONE'
+                }
+              </div>
+            )}
+            <div style={{ color: deltaVMode ? '#ccc' : theme.colors.orange, ...(narrow ? { textAlign: 'center', width: '100%'} : {}) }}>
+              {formatFixed(100 * (deltaVMode ? deltaVUse : propellantUse))}% of Loaded
+            </div>
+            {!narrow && (
+              <div>
+                <b>Loaded:</b> {deltaVMode ? formatVelocity(deltaVLoaded) : formatMass(propellantLoaded * 1e3)}
+                {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax * 1e3)} max</small>*/}
+              </div>
+            )}
+          </BarChartNotes>
+        )}
+    </FlexSectionBlock>
+  );
+
   return (
     <Section>
       <SectionTitle>
         {title}
         <b style={{ flex: 1 }} />
-        <SectionTitleTab
-          data-for="actionDialog"
-          data-tip="Propellant Usage"
-          data-place="left"
-          onClick={() => setDeltaVMode(false)}
-          isSelected={!deltaVMode}><GasIcon /></SectionTitleTab>
-        <SectionTitleTab
-          data-for="actionDialog"
-          data-tip="Delta-V Usage"
-          data-place="left"
-          onClick={() => setDeltaVMode(true)}
-          isSelected={!!deltaVMode}><DeltaVIcon /></SectionTitleTab>
+        
       </SectionTitle>
       <SectionBody style={{ flexDirection: 'column', marginBottom: 20 }}>
-        {deltaVMode && (
-          <>
-            <BarChart color={'#cccccc'} value={propellantUse} rightColor={'#ff4500'} rightValue={0.04} />
-            <BarChartNotes color={'#999999'}>
-              <div>
-                <b>Delta-V Required:</b> 54%
-              </div>
-              <div style={{ color: '#ff4500' }}>
-                <b style={{ color: '#ff4500' }}>Reserved for Landing:</b> 4%
-              </div>
-            </BarChartNotes>
-          </>
-        )}
-        {!deltaVMode && (
-          <>
-            <BarChart color={theme.colors.main} bgColor={''} value={propellantUse} />
-            <BarChartNotes color={theme.colors.main}>
-              <div>
-                <b>Propellant Required:</b> {formatMass(propellantRequired * 1e3)}
-              </div>
-              <div>
-                {formatFixed(100 * propellantUse)}% of Loaded
-              </div>
-              <div>
-                <b>Loaded:</b> {formatMass(propellantLoaded * 1e3)}
-                <small style={{ color: '#667'}}> / {formatMass(propellantMax * 1e3)} max</small>
-              </div>
-            </BarChartNotes>
-          </>
-        )}
+        
       </SectionBody>
     </Section>
   )
@@ -2175,7 +2297,14 @@ export const PropellantSection = ({ title, propellantMax, propellantLoaded, prop
 export const CrewInputBlock = ({ crew, title }) => (
   <FlexSectionInputBlock
     title={title}
-    titleDetails={crew?.name || `Crew #${crew?.i}`}
+    titleDetails={(
+      <div style={{ fontSize: '90%' }}>
+        <CrewIcon />
+        <span style={{ marginLeft: 4 }}>
+          {crew?.name || `Crew #${crew?.i}`}
+        </span>
+      </div>
+    )}
     bodyStyle={{ paddingRight: 8 }}>
     <CrewCards>
       {Array.from({ length: 5 }).map((_, i) => 
@@ -2221,24 +2350,30 @@ export const CrewOwnerBlock = ({ crew, isMe, title }) => {
   );
 }
 
-export const ShipTab = ({ pilotCrew, ship, stage }) => {
+export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {} }) => {
   return (
     <>
       <FlexSection>
         <FlexSectionInputBlock
           title="Ship"
-          image={<ShipImage ship={ship} />}
+          image={<ShipImage iconBadge={<MyAssetIcon />} ship={ship} />}
           label="Icarus"
           disabled={stage !== actionStage.NOT_STARTED}
-          sublabel={ship.name}
+          sublabel={(
+            <>
+              <div>{ship.name}</div>
+              {/* TODO: if active crew is on board, show captain icon */}
+              {/* TODO: if in, orbit, say "IN ORBIT" in blue */}
+              <div style={{ marginTop: 2 }}><CaptainIcon /></div>
+            </>
+          )}
         />
 
         <FlexSectionSpacer />
 
         <CrewInputBlock
-          title="Piloted By"
+          title="Flight Crew"
           crew={pilotCrew} />
-        
       </FlexSection>
 
       <FlexSection>
@@ -2249,6 +2384,13 @@ export const ShipTab = ({ pilotCrew, ship, stage }) => {
               label="Propellant Mass"
               valueLabel={`${formatFixed(0.5 * ship.maxPropellantMass / 1e3)} / ${formatFixed(ship.maxPropellantMass / 1e3)}t`}
               value={0.5}
+              {...(/* TODO: would probably be more performant to do this in a memo hook */
+                previousStats.propellantMass
+                  ? {
+                    deltaValue: previousStats.propellantMass / ship.maxPropellantMass
+                  }
+                  : {}
+              )}
             />
             <MiniBarChart
               color="#557826"
@@ -2816,3 +2958,25 @@ export const formatBeltDistance = (m) => {
   }
   return `${Math.round(m / 1e3).toLocaleString()} km`;
 }
+
+export const formatVelocity = (metersPerSecond, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  let unitLabel;
+  let scale;
+  if (metersPerSecond >= 1e3) {
+    scale = 1e3;
+    unitLabel = abbrev ? 'km/s' : 'kilometers / second';
+  } else {
+    scale = 1;
+    unitLabel = abbrev ? 'm/s' : 'meters / second';
+  }
+
+  const workingUnits = (metersPerSecond / scale);
+
+  let fixedPlaces = fixedPrecision || 0;
+  if (fixedPrecision === undefined) {
+    while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
+      fixedPlaces++;
+    }
+  }
+  return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+};

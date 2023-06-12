@@ -45,7 +45,8 @@ import {
   MiniBarChart,
   MiniBarChartSection,
   ShipTab,
-  LandingSelectionDialog
+  LandingSelectionDialog,
+  PropulsionTypeSection
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -65,9 +66,10 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
   
   const { crew, crewMemberMap } = useCrewContext();
   const { data: landingDestinationLot } = useLot(asteroid?.i, currentLanding?.destinationLotId);
-
+  
+  const [propulsionType, setPropulsionType] = useState('propulsive');
   const [tab, setTab] = useState(0);
-  const ship = ships[1];  // TODO
+  const ship = ships[2];  // TODO
 
   const crewMembers = currentLanding?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
@@ -208,10 +210,12 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
         action={{
           icon: <LandShipIcon />,
           label: 'Land Ship',
+          status: stage === actionStages.NOT_STARTED ? 'On Surface' : undefined,
         }}
         captain={captain}
         crewAvailableTime={0}
         taskCompleteTime={0}
+        overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
         stage={stage} />
 
       <ActionDialogBody>
@@ -248,13 +252,25 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
               />
             </FlexSection>
 
-            <PropellantSection
-              title="Requirements"
-              propellantRequired={168e3}
-              propellantLoaded={840e3}
-              propellantMax={950e3}
-            />
+            <FlexSection style={{ marginBottom: -15 }}>
+              <PropulsionTypeSection
+                objectLabel="Landing"
+                onSelect={(x) => () => setPropulsionType(x)}
+                selected={propulsionType} />
 
+              <FlexSectionSpacer />
+
+              <PropellantSection
+                title="Propellant"
+                deltaVLoaded={1500}
+                deltaVRequired={propulsionType === 'tug' ? 0 : 1123}
+                propellantLoaded={840e3}
+                propellantRequired={propulsionType === 'tug' ? 0 : 168e3}
+                narrow
+              />
+            </FlexSection>
+
+            {/* TODO: only need "port traffic" bar if landing in spaceport AND there is > 0 traffic (see also: launching) */}
             {stage === actionStages.NOT_STARTED && (
               <>
                 <ProgressBarSection
@@ -276,7 +292,11 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
         )}
 
         {tab === 1 && (
-          <ShipTab pilotCrew={{ ...crew, members: crewMembers }} ship={ships[0]} stage={stage} />
+          <ShipTab
+            pilotCrew={{ ...crew, members: crewMembers }}
+            previousStats={{ propellantMass: -168e3 }}
+            ship={ship}
+            stage={stage} />
         )}
 
         <ActionDialogStats
@@ -330,6 +350,7 @@ const Wrapper = (props) => {
       isLoading={isLoading}
       lot={lot}
       onClose={props.onClose}
+      overrideColor={actionStage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
       stage={actionStage}>
       <LandShip
         asteroid={asteroid}

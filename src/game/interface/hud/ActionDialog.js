@@ -197,7 +197,7 @@ const BarLoadingContainer = styled.div`
 `;
 
 const ActionLocation = styled.div`
-  border-left: 2px solid ${p => p.highlight};
+  border-left: 2px solid ${p => p.overrideColor || p.highlight};
   color: rgba(210, 210, 210, 0.7);
   display: flex;
   font-size: 20px;
@@ -226,7 +226,7 @@ const ActionMain = styled.div`
 `;
 
 // TODO: transition in
-export const ActionDialogInner = ({ actionImage, asteroid, children, isLoading, lot, onClose, stage }) => (
+export const ActionDialogInner = ({ actionImage, asteroid, children, isLoading, lot, onClose, overrideColor, stage }) => (
   <Modal {...theming[stage]}>
     <ModalInner isLoading={isLoading}>
       {isLoading && <LoadingContainer><PuffLoader color="white" /></LoadingContainer>}
@@ -240,7 +240,7 @@ export const ActionDialogInner = ({ actionImage, asteroid, children, isLoading, 
                   <BarLoader color={theme.colors.lightPurple} height="5" speedMultiplier={0.5} width="100%" />
                 </BarLoadingContainer>
               )}
-              <ActionLocation {...theming[stage]}>
+              <ActionLocation {...theming[stage]} overrideColor={overrideColor}>
                 <b>{asteroid?.customName || asteroid?.baseName}</b><span>{lot?.i ? `> LOT ${lot?.i.toLocaleString()}` : ''}</span>
               </ActionLocation>
               <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
