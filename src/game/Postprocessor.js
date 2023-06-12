@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
+  LinearToneMapping,
   MeshBasicMaterial,
   ShaderMaterial,
   Vector2
@@ -122,6 +123,7 @@ const Postprocessor = ({ enabled, isModelViewer, bloomParams = {} }) => {
 
   useEffect(() => {
     if (enabled && isModelViewer) {
+      renderer.toneMapping = LinearToneMapping;
       // renderer.toneMapping = 
       // THREE.NoToneMapping // default
       // THREE.LinearToneMapping // 3.75
@@ -130,7 +132,7 @@ const Postprocessor = ({ enabled, isModelViewer, bloomParams = {} }) => {
       // THREE.ACESFilmicToneMapping  // seems to be the actual default
       // THREE.CustomToneMapping
       // ;
-      renderer.toneMappingExposure = 3.5;
+      renderer.toneMappingExposure = 3.75;
       return () => {
         renderer.toneMappingExposure = 1;
       }
