@@ -12,6 +12,7 @@ import useStore from '~/hooks/useStore';
 import actionStage from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
 import Construct from './actionDialogs/Construct';
+import EvictShip from './actionDialogs/EvictShip';
 import Extract from './actionDialogs/Extract';
 import NewCoreSample from './actionDialogs/NewCoreSample';
 import Deconstruct from './actionDialogs/Deconstruct';
@@ -175,7 +176,7 @@ const ActionImage = styled.div`
 
 const ActionBar = styled.div`
   align-items: center;
-  background: ${p => p.headerBackground};
+  background: ${p => p.overrideColor ? `rgba(${hexToRGB(p.overrideColor)}, 0.2)` : p.headerBackground};
   display: flex;
   flex: 0 0 62px;
   justify-content: space-between;
@@ -234,7 +235,7 @@ export const ActionDialogInner = ({ actionImage, asteroid, children, isLoading, 
         <>
           <ActionImage src={actionImage} />
           <ActionMain>
-            <ActionBar {...theming[stage]}>
+            <ActionBar {...theming[stage]} overrideColor={overrideColor}>
               {(stage === actionStage.STARTING || stage === actionStage.COMPLETING) && (
                 <BarLoadingContainer>
                   <BarLoader color={theme.colors.lightPurple} height="5" speedMultiplier={0.5} width="100%" />
@@ -285,6 +286,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'UNPLAN_BUILDING' && <UnplanBuilding {...allProps} />}
         {type === 'CONSTRUCT' && <Construct {...allProps} />}
         {type === 'DECONSTRUCT' && <Deconstruct {...allProps} />}
+        {type === 'EVICT_SHIP' && <EvictShip {...allProps} />}
         {type === 'EXTRACT_RESOURCE' && <Extract {...allProps} />}
         {type === 'LAND_SHIP' && <LandShip {...allProps} />}
         {type === 'LAUNCH_SHIP' && <LaunchShip {...allProps} />}

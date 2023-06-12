@@ -580,6 +580,48 @@ const SliderInfoRow = styled.div`
   }
 `;
 
+const PropulsionTypeOption = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  font-size: 90%;
+  height: 28px;
+  ${p => p.onClick && `
+    cursor: ${p.theme.cursors.active};
+    opacity: 0.8;
+    &:hover {
+      opacity: 1;
+    }
+  `}
+
+  ${p => p.selected && `
+    color: white;
+    opacity: 1;
+  `}
+
+  & svg {
+    color: ${p => p.theme.colors.main};
+    font-size: 22px;
+    margin-right: 5px;
+  }
+  & label {
+    text-transform: uppercase;
+  }
+`;
+
+const TugWarning = styled.div`
+  align-items: center;
+  background: rgba(${p => hexToRGB(p.theme.colors.error)}, 0.2);
+  color: ${p => p.theme.colors.error};
+  display: flex;
+  padding: 12px;
+  white-space: pre-line;
+  & svg {
+    font-size: 32px;
+    margin-right: 10px;
+  }
+`;
+
 const IngredientsList = styled(FlexSectionInputBody)`
   ${p => p.theming === 'warning' && `
     background: rgba(${hexToRGB(p.theme.colors.lightOrange)}, 0.15);
@@ -2146,57 +2188,38 @@ export const ExtractionAmountSection = ({ amount, extractionTime, min, max, reso
   );
 }
 
-const PropulsionTypeOption = styled.div`
-  align-items: center;
-  display: flex;
-  flex-direction: row;
-  font-size: 90%;
-  height: 28px;
-  ${p => p.onClick && `
-    cursor: ${p.theme.cursors.active};
-    opacity: 0.8;
-    &:hover {
-      opacity: 1;
-    }
-  `}
-
-  ${p => p.selected && `
-    color: white;
-    opacity: 1;
-  `}
-
-  & svg {
-    color: ${p => p.theme.colors.main};
-    font-size: 22px;
-    margin-right: 5px;
-  }
-  & label {
-    text-transform: uppercase;
-  }
-`;
-
-export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, selected, onSelect }) => {
+export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, selected, onSelect, warning }) => {
   return (
     <FlexSectionBlock title={`${objectLabel} Type`} bodyStyle={{ padding: 0 }}>
       <>
-        <PropulsionTypeOption
-          onClick={onSelect ? onSelect('propulsive') : undefined}
-          selected={selected === 'propulsive'}>
-          {onSelect && (selected === 'propulsive' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
-          <div style={{ flex: 1 }}>
-            <label>Propulsive:</label> Thruster {objectLabel}
-          </div>
-          <div>{formatTimer(propulsiveTime || 0, 2)}</div>
-        </PropulsionTypeOption>
-        <PropulsionTypeOption
-          onClick={onSelect ? onSelect('tug') : undefined}
-          selected={selected === 'tug'}>
-          {onSelect && (selected === 'tug' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
-          <div style={{ flex: 1 }}>
-            <label>Tug:</label> Hopper-Assisted {objectLabel}
-          </div>
-          <div>{formatTimer(tugTime || 0, 2)}</div>
-        </PropulsionTypeOption>
+        {(onSelect || selected === 'propulsive') && (
+          <PropulsionTypeOption
+            onClick={onSelect ? onSelect('propulsive') : undefined}
+            selected={selected === 'propulsive'}>
+            {onSelect && (selected === 'propulsive' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
+            <div style={{ flex: 1 }}>
+              <label>Propulsive:</label> Thruster {objectLabel}
+            </div>
+            <div>{formatTimer(propulsiveTime || 0, 2)}</div>
+          </PropulsionTypeOption>
+        )}
+        {(onSelect || selected === 'tug') && (
+          <PropulsionTypeOption
+            onClick={onSelect ? onSelect('tug') : undefined}
+            selected={selected === 'tug'}>
+            {onSelect && (selected === 'tug' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
+            <div style={{ flex: 1 }}>
+              <label>Tug:</label> Hopper-Assisted {objectLabel}
+            </div>
+            <div>{formatTimer(tugTime || 0, 2)}</div>
+          </PropulsionTypeOption>
+        )}
+        {warning && (
+          <TugWarning>
+            <WarningOutlineIcon />
+            <span>{warning}</span>
+          </TugWarning>
+        )}
       </>
     </FlexSectionBlock>
   );
@@ -2363,7 +2386,8 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {} }) => {
             <>
               <div>{ship.name}</div>
               {/* TODO: if active crew is on board, show captain icon */}
-              {/* TODO: if in, orbit, say "IN ORBIT" in blue */}
+              {/* TODO: if in orbit, say "IN ORBIT" in blue */}
+              {/* TODO: if in spaceport, say "IN PORT" in purple */}
               <div style={{ marginTop: 2 }}><CaptainIcon /></div>
             </>
           )}
