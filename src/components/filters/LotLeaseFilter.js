@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  MdRadioButtonChecked as CheckedIcon,
-  MdRadioButtonUnchecked as UncheckedIcon,
-} from 'react-icons/md';
 
 import useStore from '~/hooks/useStore';
 import ColorPicker from '~/components/ColorPicker';
+import { RadioCheckedIcon, RadioUncheckedIcon } from '~/components/Icons';
 import { CheckboxButton, CheckboxRow, SearchMenu } from './components';
 
 export const options = {
@@ -63,7 +60,7 @@ const LotLeaseFilter = ({ assetType, filters, onChange }) => {
       {Object.keys(options).map((k) => (
         <CheckboxRow key={k} onClick={onClick(k)}>
           <CheckboxButton checked={types[k]}>
-            {types[k] ? <CheckedIcon /> : <UncheckedIcon />}
+            {types[k] ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
           </CheckboxButton>
           <span>{options[k]}</span>
           {fieldHighlight && (

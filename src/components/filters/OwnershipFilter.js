@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  MdRadioButtonChecked as CheckedIcon,
-  MdRadioButtonUnchecked as UncheckedIcon,
-} from 'react-icons/md';
 import { Address } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import ColorPicker from '~/components/ColorPicker';
+import { RadioCheckedIcon, RadioUncheckedIcon } from '~/components/Icons';
 import TextInput from '~/components/TextInputUncontrolled';
 import { CheckboxButton, CheckboxRow, SearchMenu } from './components';
 
@@ -123,7 +120,7 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
       {Object.keys(options).map((k) => (!account && k === 'ownedByMe') ? null : (
         <CheckboxRow key={k} onClick={onClick(k)}>
           <CheckboxButton checked={types[k]}>
-            {types[k] ? <CheckedIcon /> : <UncheckedIcon />}
+            {types[k] ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
           </CheckboxButton>
           <span>{options[k]}</span>
           {fieldHighlight && (

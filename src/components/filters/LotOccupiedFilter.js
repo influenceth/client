@@ -1,16 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
-import {
-  MdRadioButtonChecked as CheckedIcon,
-  MdRadioButtonUnchecked as UncheckedIcon,
-} from 'react-icons/md';
-import { Address } from '@influenceth/sdk';
+import { useCallback, useEffect, useState } from 'react';
 
-import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
-import IconButton from '~/components/IconButton';
 import ColorPicker from '~/components/ColorPicker';
-import TextInput from '~/components/TextInputUncontrolled';
+import { RadioCheckedIcon, RadioUncheckedIcon } from '~/components/Icons';
 import { CheckboxButton, CheckboxRow, SearchMenu } from './components';
 import useCrewContext from '~/hooks/useCrewContext';
 
@@ -70,7 +62,7 @@ const LotOccupiedFilter = ({ assetType, filters, onChange }) => {
       {Object.keys(options).map((k) => (!crew && k === 'me') ? null : (
         <CheckboxRow key={k} onClick={onClick(k)}>
           <CheckboxButton checked={types[k]}>
-            {types[k] ? <CheckedIcon /> : <UncheckedIcon />}
+            {types[k] ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
           </CheckboxButton>
           <span>{options[k]}</span>
           {fieldHighlight && (
