@@ -9,7 +9,7 @@ const SceneBanner = () => {
   const origin = useStore(s => s.asteroids.origin);
   const destination = useStore(s => s.asteroids.destination);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const zoomToLot = useStore(s => s.asteroids.zoomToLot);
+  const zoomScene = useStore(s => s.asteroids.zoomScene);
   const assetSearch = useStore(s => s.assetSearch);
   const openHudMenu = useStore(s => s.openHudMenu);
   const isAssetSearchMatchingDefault = useStore(s => s.isAssetSearchMatchingDefault);
@@ -20,14 +20,14 @@ const SceneBanner = () => {
       visible: openHudMenu === 'BELT_MAP_SEARCH' || !isAssetSearchMatchingDefault('asteroidsMapped')
     },
     searchLots: {
-      enabled: zoomStatus === 'in' && !zoomToLot,
+      enabled: zoomStatus === 'in' && !zoomScene,
       visible: openHudMenu === 'ASTEROID_MAP_SEARCH' || !isAssetSearchMatchingDefault('lotsMapped')
     },
     travel: {
       enabled: zoomStatus === 'out',
       visible: origin && destination && origin !== destination
     }
-  }), [assetSearch, destination, openHudMenu, origin, zoomStatus, zoomToLot]);
+  }), [assetSearch, destination, openHudMenu, origin, zoomStatus, zoomScene]);
 
   return (
     <>

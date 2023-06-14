@@ -10,7 +10,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
-import actionButtons from './actionButtons';
+import actionButtons from '../game/interface/hud/actionButtons';
 
 const useActionButtons = () => {
   const { account } = useAuth();
@@ -20,8 +20,7 @@ const useActionButtons = () => {
   const { lotId } = useStore(s => s.asteroids.lot || {});
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const zoomToLot = useStore(s => s.asteroids.zoomToLot);
-  const zoomToShip = useStore(s => s.asteroids.zoomToLot);  // TODO: ...
+  const zoomScene = useStore(s => s.asteroids.zoomScene);
   const openHudMenu = useStore(s => s.openHudMenu);
   const setAction = useStore(s => s.dispatchActionDialog);
 
@@ -29,7 +28,7 @@ const useActionButtons = () => {
   const { data: ships, isLoading: shipsLoading } = useAsteroidShips(asteroidId);
   const { constructionStatus } = useConstructionManager(asteroidId, lotId);
   const { data: lot, isLoading: lotIsLoading } = useLot(asteroidId, lotId);
-  const { data: zoomedToShip, isLoading: shipIsLoading } = useShip(zoomToShip);
+  const { data: zoomedToShip, isLoading: shipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
   const { crew } = useCrewContext();
 
   const crewedShip = useMemo(() => {
@@ -90,7 +89,7 @@ const useActionButtons = () => {
           a.push(actionButtons.StationCrewAsPassengers);
         }
       }
-      if (openHudMenu === 'BELT_PLAN_FLIGHT' && !zoomToLot) {
+      if (openHudMenu === 'BELT_PLAN_FLIGHT') {
         a.push(actionButtons.SetCourse);
       }
       if (asteroid.scanned && lot && crew && zoomStatus === 'in') {

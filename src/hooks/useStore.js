@@ -51,8 +51,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       travelMode: false,
       travelSolution: null,
       zoomedFrom: null,
+      zoomScene: null,
       zoomStatus: 'out', // out -> zooming-in -> in -> zooming-out -> out
-      zoomToLot: null,
       // owned: {
       //   highlighted: false,
       //   highlightColor: '#AB149E'
@@ -273,8 +273,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       }
       state.asteroids.lot = null;
       state.asteroids.lotDestination = null;
-      state.asteroids.zoomToLot = null;
       state.asteroids.travelSolution = null;
+      state.asteroids.zoomScene = null;
     })),
 
     dispatchDestinationSelected: (i) => set(produce(state => {
@@ -318,7 +318,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.asteroids.lotDestination = null;
       if (!maintainLot) {
         state.asteroids.lot = null;
-        state.asteroids.zoomToLot = null;
+        state.asteroids.zoomScene = null;
       }
     })),
 
@@ -447,7 +447,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchLotSelected: (asteroidId, lotId) => set(produce(state => {
       state.asteroids.lot = asteroidId && lotId ? { asteroidId, lotId } : null;
-      state.asteroids.zoomToLot = null;
+      state.asteroids.zoomScene = null;
     })),
 
     dispatchReorientCamera: (needsReorienting) => set(produce(state => {
@@ -509,8 +509,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.failedTransactions = [];
     })),
 
-    dispatchZoomToLot: (isZoomed) => set(produce(state => {
-      state.asteroids.zoomToLot = isZoomed;
+    dispatchZoomScene: (details) => set(produce(state => {
+      state.asteroids.zoomScene = details || null;
     })),
 
     //
@@ -578,7 +578,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'asteroids.lotDestination',
     'asteroids.travelMode',
     'asteroids.travelSolution',
-    'asteroids.zoomToLot',
+    'asteroids.zoomScene',
     'canvasStack',
     'cutscenePlaying',
     'cameraNeedsReorientation',

@@ -1029,8 +1029,8 @@ const ModelViewer = ({ assetType, inGameMode }) => {
       <CanvasContainer ready={!isLoading}>
         <Canvas
           frameloop={canvasStack[0] === assetType ? 'always' : 'never'}
-          shadows
           resize={{ debounce: 5, scroll: false }}
+          shadows
           style={{ height: '100%', width: '100%' }}>
 
           <Skybox

@@ -125,12 +125,12 @@ const MainMenu = (props) => {
   const history = useHistory();
 
   const { lotId } = useStore(s => s.asteroids.lot || {});
-  const zoomToLot = useStore(s => s.asteroids.zoomToLot);
+  const zoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
-  const dispatchZoomToLot = useStore(s => s.dispatchZoomToLot);
+  const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const { account } = useAuth();
@@ -164,10 +164,10 @@ const MainMenu = (props) => {
 
   const { backLabel, onClickBack } = useMemo(() => {
     if (zoomStatus !== 'in') return {};
-    if (zoomToLot) {
+    if (zoomScene?.type === 'LOT' || zoomScene?.type === 'SHIP') {
       return {
         backLabel: 'Back to Asteroid',
-        onClickBack: () => dispatchZoomToLot()
+        onClickBack: () => dispatchZoomScene()
       }
     }
     if (lotId) {
@@ -180,7 +180,7 @@ const MainMenu = (props) => {
       backLabel: 'Back to Belt',
       onClickBack: () => updateZoomStatus('zooming-out')
     }
-  }, [lotId, zoomToLot, zoomStatus]);
+  }, [lotId, zoomScene, zoomStatus]);
 
   const notYet = () => {
     createAlert({

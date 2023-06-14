@@ -16,6 +16,7 @@ import {
   WarningOutlineIcon,
 } from '~/components/Icons';
 import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
+import useActionButtons from '~/hooks/useActionButtons';
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useConstructionManager from '~/hooks/useConstructionManager';
@@ -24,7 +25,7 @@ import useStore from '~/hooks/useStore';
 import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
 import RouteSelection from './actionForms/RouteSelection';
-import useActionButtons from './useActionButtons';
+
 
 const opacityAnimation = keyframes`
   0% { opacity: 1; }
@@ -290,12 +291,12 @@ const InfoPane = () => {
   const { lotId } = useStore(s => s.asteroids.lot || {});
   const lotLoader = useStore(s => s.lotLoader);
   const inTravelMode = useStore(s => s.asteroids.travelMode);
+  const zoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const zoomToLot = useStore(s => s.asteroids.zoomToLot);
 
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
-  const dispatchZoomToLot = useStore(s => s.dispatchZoomToLot);
+  const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const { actions, props: actionProps } = useActionButtons();
@@ -314,7 +315,7 @@ const InfoPane = () => {
   const onClickPane = useCallback(() => {
     // open lot
     if (asteroidId && lotId && zoomStatus === 'in') {
-      dispatchZoomToLot(true);
+      dispatchZoomScene({ type: 'LOT' });
 
     // open asteroid details
     } else if (asteroidId && zoomStatus === 'in') {
@@ -348,7 +349,7 @@ const InfoPane = () => {
 
   useEffect(() => {
     setHover(false);
-  }, [asteroidId, lotId, zoomStatus, zoomToLot]);
+  }, [asteroidId, lotId, zoomStatus, zoomScene]);
   
   const {
     captainCard,
@@ -412,7 +413,7 @@ const InfoPane = () => {
       }
 
     } else if (zoomStatus === 'in') {
-      if (zoomToLot) {
+      if (zoomScene?.type === 'LOT') {
         pane.title = buildings[lot?.building?.capableType || 0]?.name;
         pane.subtitle = <>{asteroid?.customName || asteroid?.baseName} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
         pane.captainCard = lot?.occupier;
@@ -467,7 +468,7 @@ const InfoPane = () => {
     renderReady,
     lotLoader,
     zoomStatus,
-    zoomToLot
+    zoomScene
   ]);
 
   const onClickTitle = () => {

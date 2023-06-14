@@ -153,8 +153,8 @@ const HudMenu = () => {
   const { asteroidId: lotAsteroidId, lotId } = useStore(s => s.asteroids.lot || {});
   const openHudMenu = useStore(s => s.openHudMenu);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
+  const zoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const zoomToLot = useStore(s => s.asteroids.zoomToLot);
 
   const { data: lot } = useLot(lotAsteroidId, lotId);
 
@@ -185,17 +185,18 @@ const HudMenu = () => {
     if (openHudMenu) {
       const category = openHudMenu.split('_').shift();
       if (category === 'BELT' && zoomStatus !== 'out') dispatchHudMenuOpened();
-      if (category === 'ASTEROID' && !(zoomStatus === 'in' && !zoomToLot)) dispatchHudMenuOpened();
-      if (category === 'LOT' && !(zoomStatus === 'in' && zoomToLot)) dispatchHudMenuOpened();
+      if (category === 'ASTEROID' && !(zoomStatus === 'in' && !zoomScene)) dispatchHudMenuOpened();
+      if (category === 'LOT' && !(zoomStatus === 'in' && zoomScene?.type === 'LOT')) dispatchHudMenuOpened();
+      if (category === 'SHIP' && !(zoomStatus === 'in' && zoomScene?.type === 'SHIP')) dispatchHudMenuOpened();
     }
-  }, [dispatchHudMenuOpened, zoomToLot, zoomStatus]);
+  }, [dispatchHudMenuOpened, zoomScene, zoomStatus]);
 
   useEffect(() => {
     // if just zoomed in and resourcemap is active, then open asteroid resources
-    if (zoomStatus === 'in' && !zoomToLot && resourceMap.active) {
+    if (zoomStatus === 'in' && !zoomScene && resourceMap.active) {
       dispatchHudMenuOpened('ASTEROID_RESOURCES');
     }
-  }, [zoomStatus, zoomToLot])
+  }, [zoomStatus, zoomScene])
 
   useEffect(() => {
     setOpen(!!openHudMenu);
@@ -260,7 +261,7 @@ const HudMenu = () => {
         });
       }
       return out;
-    } else if (zoomStatus === 'in' && !zoomToLot) {
+    } else if (zoomStatus === 'in' && !zoomScene) {
       return [
         {
           key: 'ASTEROID_ASSETS',
@@ -301,7 +302,7 @@ const HudMenu = () => {
           }
         },
       ];
-    } else if (zoomStatus === 'in' && zoomToLot) {
+    } else if (zoomStatus === 'in' && zoomScene?.type === 'LOT') {
       const b = [
         {
           key: 'LOT_INFORMATION',
@@ -330,9 +331,11 @@ const HudMenu = () => {
         } 
       }
       return b;
+    } else if (zoomStatus === 'in' && zoomScene?.type === 'SHIP') {
+      // TODO: ... ship HUD menu options ...
     }
     return [];
-  }, [asteroidId, destination, lot, lotId, zoomStatus, zoomToLot]);
+  }, [asteroidId, destination, lot, lotId, zoomStatus, zoomScene]);
 
   const { label, onDetailClick, detailType, Component, componentProps, noDetail } = useMemo(() => {
     return buttons.find((b) => b.key === openHudMenu) || {};

@@ -1,22 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styled from 'styled-components';
+import { usePopper } from 'react-popper';
 import ReactTooltip from 'react-tooltip';
 import { Inventory } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
 import { CheckedIcon, DotsIcon, UncheckedIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
+import useActionButtons from '~/hooks/useActionButtons';
 import { useResourceAssets } from '~/hooks/useAssets';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { formatFixed } from '~/lib/utils';
+import theme from '~/theme';
 import actionButtons from '../actionButtons';
-import useActionButtons from '../useActionButtons';
 import { formatMass, formatResourceAmount, formatVolume } from '../actionDialogs/components';
 import { Tray, TrayLabel } from './components';
-import { usePopper } from 'react-popper';
-import { createPortal } from 'react-dom';
-import theme from '~/theme';
 
 const resourceItemWidth = 83;
 

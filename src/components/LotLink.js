@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import useAsteroid from '~/hooks/useAsteroid';
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
@@ -11,12 +11,12 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
-  const dispatchZoomToLot = useStore(s => s.dispatchZoomToLot);
+  const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const openHudMenu = useStore(s => s.asteroids.openHudMenu);
   const origin = useStore(s => s.asteroids.origin);
+  const currentZoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const currentlyZoomedToLot = useStore(s => s.asteroids.zoomToLot);
 
   const selectResourceMapAsNeeded = useCallback(() => {
     if (resourceId) {
@@ -26,8 +26,9 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
   }, [resourceId, dispatchResourceMapSelect, dispatchResourceMapToggle, dispatchHudMenuOpened, openHudMenu]);
 
   const zoomToLotAsNeeded = useCallback(() => {
-    if (zoomToLot !== currentlyZoomedToLot) {
-      dispatchZoomToLot(!!zoomToLot);
+    // if zoomToLot !== current zoomToLot, do something
+    if (!!zoomToLot === currentZoomScene?.type === 'LOT') {
+      dispatchZoomScene(zoomToLot ? { type: 'LOT' } : null);
 
       // if this is not just a boolean, it is assumed to be a hudmenu to open upon arrival
       if (zoomToLot && zoomToLot !== true) {
@@ -36,7 +37,7 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
         }, 0);
       }
     }
-  }, [zoomToLot, currentlyZoomedToLot, dispatchZoomToLot, dispatchHudMenuOpened]);
+  }, [zoomToLot, currentZoomScene, dispatchZoomScene, dispatchHudMenuOpened]);
 
   return useCallback(() => {
     // if already zoomed into asteroid, just select lot and select resource map
