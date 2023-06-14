@@ -3,10 +3,10 @@ import { CoreSample, Asteroid, Extraction, Inventory } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
+import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
 import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
-import useShip from '~/hooks/useShip';
+import useExtractionManager from '~/hooks/useExtractionManager';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
@@ -47,11 +47,7 @@ import {
   ShipTab,
   CrewInputBlock,
   CrewOwnerBlock,
-  SwayInput,
-  CrewOwnerInner,
-  SwayInputBlock,
-  TransferDistanceDetails,
-  TransferDistanceTitleDetails
+  SwayInput
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -84,6 +80,8 @@ const Note = styled.div`
   padding: 15px 10px 10px;
 `;
 
+// TODO: this is copied from StationOnShip, we can/should potentially provide them
+
 const StationOnShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const buildings = useBuildingAssets();
@@ -91,8 +89,8 @@ const StationOnShip = ({ asteroid, lot, manager, stage, ...props }) => {
   
   const { currentStationing, stationingStatus, stationOnShip } = manager;
 
-  const { data: dbShip } = useShip(1);
-  const ship = { ...(dbShip || {}), ...ships[0] };
+  const ship = ships[0];  // TODO
+  ship.owner = 1;
 
   const { crew, crewMemberMap } = useCrewContext();
   const { data: crewOriginLot } = useLot(asteroid?.i, currentStationing?.originLotId);
@@ -104,8 +102,6 @@ const StationOnShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const captain = crewMembers[0];
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
   const launchBonus = 0;
-
-  const transportDistance = Asteroid.getLotDistance(asteroid?.i, currentStationing?.originLotId, lot?.i) || 0;
 
   const stats = useMemo(() => ([
     {
@@ -144,11 +140,9 @@ const StationOnShip = ({ asteroid, lot, manager, stage, ...props }) => {
         action={{
           icon: crewIsOwner ? <StationCrewIcon /> : <StationPassengersIcon />,
           label: crewIsOwner ? 'Station Flight Crew' : 'Station Passengers',
-          status: stage === actionStages.NOT_STARTED ? `Send to ${crewIsOwner ? 'My ' : ''} Ship` : undefined,
         }}
         captain={captain}
         crewAvailableTime={0}
-        overrideColor={stage === actionStages.NOT_STARTED ? (crewIsOwner ? theme.colors.main : theme.colors.green) : undefined}
         taskCompleteTime={0}
         stage={stage} />
 
@@ -166,12 +160,7 @@ const StationOnShip = ({ asteroid, lot, manager, stage, ...props }) => {
 
           <FlexSectionInputBlock
             title="Ship"
-            titleDetails={
-              ship?.status === 'IN_ORBIT' // TODO: not orbital transfer if in-orbit to in-orbit transfer
-              ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
-              : <TransferDistanceDetails distance={transportDistance} />
-            }
-            image={<ShipImage iconBadge={crewIsOwner && <MyAssetIcon />} ship={ship} />}
+            image={<ShipImage ship={ship} />}
             label="Icarus"
             disabled={stage !== actionStages.NOT_STARTED}
             sublabel={ship.name}
@@ -179,37 +168,45 @@ const StationOnShip = ({ asteroid, lot, manager, stage, ...props }) => {
         </FlexSection>
 
         <FlexSection>
-          <CrewInputBlock
-            title={crewIsOwner ? 'Flight Crew' : 'Passengers'}
-            crew={{ ...crew, members: crewMembers }} />
+          <CrewInputBlock title="Station Crew" crew={{ ...crew, members: crewMembers }} />
+
+          <FlexSectionSpacer />
+
+          <CrewOwnerBlock title="Ship Owner" crew={ownerCrew} isMe={crew?.i === ownerCrew?.i} />
+        </FlexSection>
+
+        <FlexSection style={{ alignItems: 'flex-start' }}>
+          <FlexSectionInputBlock
+            title="Crew Manifest"
+            bodyStyle={{ background: 'transparent' }}>
+            <MiniBarChart
+              color="#92278f"
+              label="Passengers"
+              valueLabel={`7 / ${ship.maxPassengers}`}
+              value={7 / ship.maxPassengers}
+              deltaColor="#f644fa"
+              deltaValue={2 / ship.maxPassengers}
+            />
+          </FlexSectionInputBlock>
 
           <FlexSectionSpacer />
 
           <div style={{ alignSelf: 'flex-start', width: '50%' }}>
-            {!crewIsOwner && <CrewOwnerInner crew={ownerCrew} isMe={crew?.i === ownerCrew?.i} />}
-            <MiniBarChart
-              color="#92278f"
-              label="Crewmate Count"
-              valueLabel={`7 / ${ship.maxPassengers}`}
-              value={7 / ship.maxPassengers}
-              deltaColor="#f644fa"
-              deltaValue={crew?.crewMembers?.length / ship.maxPassengers}
-            />
+            {(true || crew?.i !== ownerCrew?.i) && (
+              <>
+                <Warning>
+                  <WarningOutlineIcon />
+                  <span>The selected ship is owned by another player.</span>
+                </Warning>
+                <Note>
+                  [OPTIONAL] Include a SWAY payment to the owner with transfer:
+                </Note>
+                <SwayInput />
+              </>
+            )}
           </div>
+
         </FlexSection>
-
-        {!crewIsOwner && (
-          <FlexSection style={{ alignItems: 'flex-start' }}>
-            <SwayInputBlock
-              title="Sway Payment"
-              instruction="OPTIONAL: Include with transfer" />
-
-            <FlexSectionSpacer />
-
-            <div style={{ width: '50%' }} />
-
-          </FlexSection>
-        )}
 
         <ActionDialogStats
           stage={stage}
@@ -251,7 +248,6 @@ const Wrapper = (props) => {
       isLoading={isLoading}
       lot={lot}
       onClose={props.onClose}
-      overrideColor={actionStage === actionStages.NOT_STARTED && (props.passengers ? theme.colors.green : theme.colors.main)}
       stage={actionStage}>
       <StationOnShip
         asteroid={asteroid}

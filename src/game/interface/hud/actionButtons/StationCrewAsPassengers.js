@@ -3,14 +3,14 @@ import { useCallback } from 'react';
 import { StationPassengersIcon } from '~/components/Icons';
 import ActionButton from './ActionButton';
 
-const StationPassengersOnShip = ({ asteroid, lot, onSetAction }) => {
+const StationCrewAsPassengers = ({ asteroid, lot, onSetAction }) => {
   const handleClick = useCallback(() => {
-    onSetAction('STATION_ON_SHIP');
+    onSetAction('STATION_PASSENGERS_ON_SHIP');
   }, [onSetAction]);
 
   return (
     <ActionButton
-      label="Station Passengers on Ship"
+      label="Station Crew on Ship Passengers"
       flags={{
         disabled: false, // TODO: ... crew not on asteroid? ship permissions?
         loading: false, // TODO: ...
@@ -20,4 +20,4 @@ const StationPassengersOnShip = ({ asteroid, lot, onSetAction }) => {
   );
 };
 
-export default StationPassengersOnShip;
+export default StationCrewAsPassengers;

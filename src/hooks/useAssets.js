@@ -122,6 +122,18 @@ const Ship = {
       spaceportRequired: true,
       iconVersion: 1,
       modelVersion: 1
+    },
+    4: {
+      name: 'Escape Pod',
+      emptyMass: 50e3,
+      maxPropellantMass: 250e3,
+      maxCargoMass: 0,
+      maxPassengers: 5,
+      engines: 1,
+      maxThrust: 612916,
+      spaceportRequired: true,
+      iconVersion: 1,
+      modelVersion: 1
     }
   }
 }

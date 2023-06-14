@@ -34,27 +34,13 @@ import {
   getCapacityUsage,
   ActionDialogTabs,
   InventoryChangeCharts,
-  CrewOwnerBlock
+  CrewOwnerBlock,
+  TransferDistanceDetails
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
 import useCrew from '~/hooks/useCrew';
 
-const TransferDistance = styled.span`
-  font-size: 15px;
-  & label {
-    color: ${p => p.theme.colors.main};
-    font-weight: bold;
-  }
-`;
-const FreeTransferNote = styled.div`
-  color: #999;
-  & > div:first-child {
-    color: ${p => p.theme.colors.main};
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
-`;
 const Overloaded = styled.div`
   color: ${p => p.theme.colors.error};
   font-size: 12px;
@@ -246,21 +232,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
 
           <FlexSectionInputBlock
             title="Destination"
-            titleDetails={(
-              <TransferDistance>
-                {transportDistance && transportDistance < Asteroid.FREE_TRANSPORT_RADIUS ? (
-                  <Mouseoverable tooltip={(
-                    <FreeTransferNote>
-                      <div>Instant Transfer Radius</div>
-                      <div>Transfers less than {Asteroid.FREE_TRANSPORT_RADIUS}km in distance are instantaneous.</div>
-                    </FreeTransferNote>
-                  )}>
-                    <label><WarningOutlineIcon /> {Math.round(transportDistance)}km Away</label>
-                  </Mouseoverable>
-                ) : ''}
-                {transportDistance && transportDistance >= Asteroid.FREE_TRANSPORT_RADIUS ? `${Math.round(transportDistance)}km Away` : ''}
-              </TransferDistance>
-            )}
+            titleDetails={<TransferDistanceDetails distance={transportDistance} />}
             image={
               destinationLot
                 ? (
@@ -331,7 +303,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
               </div>
             </FlexSection>
 
-            {(true || (originLot && destinationLot && originLot?.occupier !== destinationLot?.occupier)) && (
+            {(originLot && destinationLot && originLot?.occupier !== destinationLot?.occupier) && (
               <FlexSection>
                 <CrewOwnerBlock crew={originLotOccupier} isMe={originLot?.occupier === crew?.i} />
 

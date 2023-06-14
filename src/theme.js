@@ -24,6 +24,8 @@ export const getContrastText = (rgb) => {
 const main = '#36a7cd';
 const brightMain = '#57d5ff';
 const success = '#00ffe7';
+
+const green = '#88e675';
 const gray = '#bbbbbb';
 const teal = '#69ebf4';
 const blue = '#4f90ff';
@@ -54,7 +56,7 @@ const theme = {
     success,
     successRGB: hexToRGB(success),
     error: red,
-    teal, blue, lightPurple, purple, lightOrange, orange, yellow, red,
+    teal, blue, lightPurple, purple, lightOrange, orange, yellow, red, green,
     bonus: {
       level0: '#999999',
       level1: 'rgb(105, 235, 244)',

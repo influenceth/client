@@ -21,6 +21,7 @@ import LandShip from './actionDialogs/LandShip';
 import LaunchShip from './actionDialogs/LaunchShip';
 import PlanBuilding from './actionDialogs/PlanBuilding';
 import SetCourse from './actionDialogs/SetCourse';
+import StationCrew from './actionDialogs/StationCrew';
 import StationOnShip from './actionDialogs/StationOnShip';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import TransferToSite from './actionDialogs/TransferToSite';
@@ -198,7 +199,7 @@ const BarLoadingContainer = styled.div`
 `;
 
 const ActionLocation = styled.div`
-  border-left: 2px solid ${p => p.overrideColor || p.highlight};
+  border-left: 3px solid ${p => p.overrideColor || p.highlight};
   color: rgba(210, 210, 210, 0.7);
   display: flex;
   font-size: 20px;
@@ -293,7 +294,9 @@ const ActionDialog = ({ type, params }) => {
         {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}
         {type === 'NEW_CORE_SAMPLE' && <NewCoreSample {...allProps} />}
         {type === 'SET_COURSE' && <SetCourse {...allProps} />}
-        {type === 'STATION_ON_SHIP' && <StationOnShip {...allProps} />}
+        {type === 'STATION_CREW' && <StationCrew {...allProps} />}
+        {type === 'STATION_PASSENGERS_ON_SHIP' && <StationOnShip {...allProps} passengers />}
+        {type === 'STATION_PILOTS_ON_SHIP' && <StationOnShip {...allProps} />}
         {type === 'SURFACE_TRANSFER' && <SurfaceTransfer {...allProps} />}
         {type === 'TRANSFER_TO_SITE' && <TransferToSite {...allProps} />}
       </ModalCushion>

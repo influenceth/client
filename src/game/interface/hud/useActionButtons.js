@@ -3,24 +3,14 @@ import { Address, Inventory } from '@influenceth/sdk';
 
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
+import useAsteroidShips from '~/hooks/useAsteroidShips';
 import useAuth from '~/hooks/useAuth';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
+import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import actionButtons from './actionButtons';
-
-// TODO: need a ships hook probably
-//  but for now, since don't know structure of that data...
-const ships = [{
-  i: 123,
-  type: 1,
-  status: 'ON_SURFACE', // IN_FLIGHT, IN_ORBIT, LAUNCHING, LANDING, ON_SURFACE
-  asteroid: 1000,
-  lot: 123,
-  isOwnedByMe: true,
-  hasCrew: true
-}];
 
 const useActionButtons = () => {
   const { account } = useAuth();
@@ -31,24 +21,23 @@ const useActionButtons = () => {
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomToLot = useStore(s => s.asteroids.zoomToLot);
+  const zoomToShip = useStore(s => s.asteroids.zoomToLot);  // TODO: ...
   const openHudMenu = useStore(s => s.openHudMenu);
   const setAction = useStore(s => s.dispatchActionDialog);
 
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
+  const { data: ships, isLoading: shipsLoading } = useAsteroidShips(asteroidId);
   const { constructionStatus } = useConstructionManager(asteroidId, lotId);
   const { data: lot, isLoading: lotIsLoading } = useLot(asteroidId, lotId);
+  const { data: zoomedToShip, isLoading: shipIsLoading } = useShip(zoomToShip);
   const { crew } = useCrewContext();
 
   const crewedShip = useMemo(() => {
-    return ships.find((s) => s.hasCrew);
+    return (ships || []).find((s) => s.hasCrew);
   }, [ships]);
   
   const myLotShips = useMemo(() => {
-    return lotId ? ships.filter((s) => s.asteroid === asteroidId && s.lot === lotId && ['LAUNCHING','ON_SURFACE'].includes(s.status) && s.isOwnedByMe) : [];
-  }, [ships, asteroidId, lotId]);
-
-  const otherLotShips = useMemo(() => {
-    return lotId ? ships.filter((s) => s.asteroid === asteroidId && s.lot === lotId && ['LAUNCHING','ON_SURFACE'].includes(s.status) && !s.isOwnedByMe) : [];
+    return lotId ? (ships || []).filter((s) => s.asteroid === asteroidId && s.lot === lotId && ['LAUNCHING','ON_SURFACE'].includes(s.status) && s.isOwnedByMe) : [];
   }, [ships, asteroidId, lotId]);
   
   const [actions, setActions] = useState([]);
@@ -56,7 +45,7 @@ const useActionButtons = () => {
   // TODO: could reasonably have buttons determine own visibility and remove some redundant logic here
   // (the only problem is parent wouldn't know how many visible buttons there were)
   useEffect(() => {
-    if (asteroidIsLoading || lotIsLoading) return;
+    if (asteroidIsLoading || lotIsLoading || shipsLoading) return;
 
     const a = [];
     if (asteroid) {
@@ -70,16 +59,35 @@ const useActionButtons = () => {
       }
       if (zoomStatus === 'out') {
         a.push(actionButtons.SelectTravelDestination);
+
       } else if (zoomStatus === 'in') {
+        // if i have a ship at the selected lot, offer "launch" button
         if (myLotShips?.length > 0) {
-          a.push(actionButtons.LaunchShip);
-          a.push(actionButtons.StationCrewOnShip);
+          a.push(actionButtons.LaunchShip); // TODO: disable if crew not on ship
         }
-        if (otherLotShips?.length > 0) {
-          a.push(actionButtons.StationPassengersOnShip);
-        }
+
+        // if my crew is on a ship in orbit on this asteroid offer "land" button
+        // (may be disabled if this is not a light transport and not a spaceport)
         if (crewedShip?.status === 'IN_ORBIT' && crewedShip?.asteroid === asteroidId) {
           a.push(actionButtons.LandShip);
+        }
+
+        // if i am zoomed to my ship, i have selected a lot with my ship(s), or i have own a ship in orbit, offer "station on ship"
+        if (
+          (zoomedToShip && zoomedToShip.owner === crew?.i)
+          || (lotId && ships && ships.find((s) => s.lot === lotId && s.owner === crew?.i && s.status === 'ON_SURFACE'))
+          || (!lotId && ships && ships.find((s) => s.owner === crew?.i && s.status === 'IN_ORBIT'))
+        ) {
+
+          a.push(actionButtons.StationCrewAsPilots);
+        }
+
+        // if i am zoomed to another's ship or i have selected a lot with others' ship(s)
+        if (
+          (zoomedToShip && zoomedToShip.owner !== crew?.i)
+          || (lotId && ships && ships.find((s) => s.lot === lotId && s.owner !== crew?.i && s.status === 'ON_SURFACE'))
+        ) {
+          a.push(actionButtons.StationCrewAsPassengers);
         }
       }
       if (openHudMenu === 'BELT_PLAN_FLIGHT' && !zoomToLot) {
@@ -88,6 +96,15 @@ const useActionButtons = () => {
       if (asteroid.scanned && lot && crew && zoomStatus === 'in') {
         a.push(actionButtons.CoreSample);
 
+        // potentially-public/shared buildings
+        if (constructionStatus === 'OPERATIONAL' && lot.building?.capableType) {
+          const buildingAsset = buildings[lot.building.capableType];
+          if (buildingAsset.capabilities.includes('habitation')) {
+            a.push(actionButtons.StationCrew);
+          }
+        }
+
+        // buildings i own
         if (lot.occupier === crew.i) {
           if (constructionStatus === 'OPERATIONAL' && lot.building?.capableType) {
             const buildingAsset = buildings[lot.building.capableType];
@@ -123,7 +140,7 @@ const useActionButtons = () => {
     }
 
     setActions(a);
-  }, [asteroid, constructionStatus, crew, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, zoomStatus]);
+  }, [asteroid, constructionStatus, crew, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, ships, zoomStatus]);
 
   return {
     actions,
@@ -132,7 +149,7 @@ const useActionButtons = () => {
       crew,
       lot,
       onSetAction: setAction,
-      _disabled: asteroidIsLoading || lotIsLoading
+      _disabled: asteroidIsLoading || lotIsLoading || shipsLoading
     }
   }
 };

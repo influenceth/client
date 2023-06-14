@@ -27,7 +27,8 @@ import {
   RadioCheckedIcon,
   RadioUncheckedIcon,
   MyAssetIcon,
-  CaptainIcon
+  CaptainIcon,
+  InfoIcon
 } from '~/components/Icons';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import ResourceColorIcon from '~/components/ResourceColorIcon';
@@ -1086,6 +1087,11 @@ const CrewCardPlaceholder = styled.div`
   }
 `;
 
+const SwayInputInstruction = styled.div`
+  color: white;
+  margin-top: -5px;
+  margin-bottom: 10px;
+`;
 const SwayInputRow = styled.div`
   align-items: center;
   display: flex;
@@ -1104,7 +1110,7 @@ const SwayInputFieldWrapper = styled.div`
   position: relative;
   &:after {
     content: "SWAY";
-    color: white;
+    color: ${p => p.theme.colors.main};
     font-size: 18px;
     margin-top: -10px;
     opacity: 0.5;
@@ -1115,8 +1121,42 @@ const SwayInputFieldWrapper = styled.div`
 
   & input {
     background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+    font-size: 18px;
     padding-right: 72px;
     width: 100%;
+  }
+`;
+const SwayInputHelp = styled.div`
+  font-size: 20px;
+  margin-left: 10px;
+`;
+const QuestionIcon = styled.div`
+  align-items: center;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 1.2em;
+  color: white;
+  display: flex;
+  height: 1.2em;
+  justify-content: center;
+  width: 1.2em;
+  &:after {
+    content: "?";
+  }
+`;
+
+export const TransferDistanceTitleDetails = styled.span`
+  font-size: 15px;
+  & label {
+    color: ${p => p.theme.colors.main};
+    font-weight: bold;
+  }
+`;
+const FreeTransferNote = styled.div`
+  color: #999;
+  & > div:first-child {
+    color: ${p => p.theme.colors.main};
+    font-weight: bold;
+    margin-bottom: 10px;
   }
 `;
 
@@ -1716,8 +1756,11 @@ export const SwayInput = () => {
     <SwayInputRow>
       <SwayInputIconWrapper><SwayIcon /></SwayInputIconWrapper>
       <SwayInputFieldWrapper>
-        <TextInput type="number" />
+        <TextInput type="number" min={0} value={0} />
       </SwayInputFieldWrapper>
+      <SwayInputHelp>{/* TODO: this doesn't do anything */}
+        <QuestionIcon />
+      </SwayInputHelp>
     </SwayInputRow>
   );
 };
@@ -2018,6 +2061,22 @@ export const ItemSelectionSection = ({ label, items, onClick, resources, stage }
   );
 };
 
+export const TransferDistanceDetails = ({ distance }) => (
+  <TransferDistanceTitleDetails>
+    {distance && distance < Asteroid.FREE_TRANSPORT_RADIUS ? (
+      <Mouseoverable tooltip={(
+        <FreeTransferNote>
+          <div>Instant Transfer Radius</div>
+          <div>Transfers less than {Asteroid.FREE_TRANSPORT_RADIUS}km in distance are instantaneous.</div>
+        </FreeTransferNote>
+      )}>
+        <label><WarningOutlineIcon /> {Math.round(distance)}km Away</label>
+      </Mouseoverable>
+    ) : ''}
+    {distance && distance >= Asteroid.FREE_TRANSPORT_RADIUS ? `${Math.round(distance)}km Away` : ''}
+  </TransferDistanceTitleDetails>
+);
+
 export const ProgressBarSection = ({
   completionTime,
   isCountDown,
@@ -2317,13 +2376,24 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
   )
 };
 
+export const SwayInputBlock = ({ title, instruction }) => {
+  return (
+    <FlexSectionInputBlock
+      title={title}
+      bodyStyle={{ background: 'transparent' }}>
+      {instruction && <SwayInputInstruction>{instruction}</SwayInputInstruction>}
+      <SwayInput />
+    </FlexSectionInputBlock>
+  );
+}
+
 export const CrewInputBlock = ({ crew, title }) => (
   <FlexSectionInputBlock
     title={title}
     titleDetails={(
-      <div style={{ fontSize: '90%' }}>
+      <div>
         <CrewIcon />
-        <span style={{ marginLeft: 4 }}>
+        <span style={{ fontSize: '85%', marginLeft: 4 }}>
           {crew?.name || `Crew #${crew?.i}`}
         </span>
       </div>
@@ -2348,27 +2418,33 @@ export const CrewInputBlock = ({ crew, title }) => (
   </FlexSectionInputBlock>
 );
 
-export const CrewOwnerBlock = ({ crew, isMe, title }) => {
+export const CrewOwnerInner = ({ crew, isMe }) => {
   const { data: captain } = useCrewMember((crew?.crewMembers || [])[0]);
+  return (
+    <CrewCards>
+      <CrewCardFramed
+        borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
+        crewmate={captain}
+        isCaptain
+        lessPadding
+        width={60} />
+      <CrewLabel>
+        <div>Owned by</div>
+        <h3>
+          {crew?.name || `Crew #${crew?.i}`}
+          {isMe ? <label>(Me)</label> : null}
+        </h3>
+      </CrewLabel>
+    </CrewCards>
+  );
+};
+
+export const CrewOwnerBlock = ({ title, ...innerProps }) => {
   return (
     <FlexSectionInputBlock
       title={title}
       bodyStyle={{ background: 'transparent' }}>
-      <CrewCards>
-        <CrewCardFramed
-          borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
-          crewmate={captain}
-          isCaptain
-          lessPadding
-          width={60} />
-        <CrewLabel>
-          <div>Owned by</div>
-          <h3>
-            {crew?.name || `Crew #${crew?.i}`}
-            {isMe ? <label>(Me)</label> : null}
-          </h3>
-        </CrewLabel>
-      </CrewCards>
+      <CrewOwnerInner {...innerProps} />
     </FlexSectionInputBlock>
   );
 }
