@@ -137,27 +137,34 @@ const Ship = {
     }
   }
 }
+
 export const useShipAssets = () => {
-  return useMemo(() => Object.keys(Ship.TYPES)
-  .map((i) => {
-    const asset = {
-      ...Ship.TYPES[i],
-      i: Number(i),
-    };
+  return useMemo(() => {
+    const shipsByClass = [];
+    Object.keys(Ship.TYPES).forEach((i) => {
+      const asset = {
+        ...Ship.TYPES[i],
+        i: Number(i),
+      };
 
-    asset.iconUrl = getIconUrl(asset, 'ships');
-    asset.iconUrls = {
-      w150: getIconUrl(asset, 'ships', { w: 150 }),
-      w400: getIconUrl(asset, 'ships', { w: 400 }),
-    };
+      asset.iconUrl = getIconUrl(asset, 'ships');
+      asset.iconUrls = {
+        w150: getIconUrl(asset, 'ships', { w: 150 }),
+        w400: getIconUrl(asset, 'ships', { w: 400 }),
+      };
 
-    asset.simIconUrls = {
-      w150: getIconUrl(asset, 'ships', { w: 150, append: '_Holo' }),
-      w400: getIconUrl(asset, 'ships', { w: 400, append: '_Holo' }),
-    };
+      asset.simIconUrls = {
+        w150: getIconUrl(asset, 'ships', { w: 150, append: '_Holo' }),
+        w400: getIconUrl(asset, 'ships', { w: 400, append: '_Holo' }),
+      };
 
-    asset.modelUrl = getModelUrl(asset, 'ships');
+      asset.modelUrl = getModelUrl(asset, 'ships');
 
-    return asset;
-  }), []);
+      asset.className = asset.name;
+
+      shipsByClass[i] = asset;
+    });
+    
+    return shipsByClass;
+  }, []);
 };

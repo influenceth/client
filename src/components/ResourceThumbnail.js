@@ -78,7 +78,7 @@ export const ResourceThumbnailWrapper = styled.div`
 
 export const ResourceImage = styled.div`
   background: transparent url("${p => p.src}") center center;
-  background-size: cover;
+  background-size: ${p => p.contain ? 'contain' : 'cover'};
   background-repeat: no-repeat;
   position: absolute;
   top: 0;

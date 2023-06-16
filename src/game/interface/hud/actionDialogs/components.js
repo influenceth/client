@@ -1087,6 +1087,31 @@ const CrewCardPlaceholder = styled.div`
   }
 `;
 
+const ShipStatus = styled.span`
+  color: ${p => p.theme.colors.main};
+  display: inline-block;
+  margin-top: 4px;
+  text-transform: uppercase;
+  &:before {
+    content: "${p => formatShipStatus(p.status)}";
+    color: ${p => p.theme.colors.main};
+    text-transform: uppercase;
+    ${p => {
+      switch (p.status) {
+        case 'IN_FLIGHT':
+        case 'LAUNCHING':
+        case 'LANDING':
+          return `color: ${p.theme.colors.warning};`;
+        case 'IN_ORBIT':
+          return `color: ${p.theme.colors.main};`;
+        case 'IN_PORT':
+        case 'ON_SURFACE':
+          return `color: ${p.theme.colors.purple};`;
+      }
+    }}
+  }
+`;
+
 const SwayInputInstruction = styled.div`
   color: white;
   margin-top: -5px;
@@ -1673,7 +1698,7 @@ export const AsteroidImage = ({ asteroid }) => {
   )
 }
 
-export const ShipImage = ({ ship, iconBadge, iconBadgeColor, iconOverlay, inventories, showInventoryStatusForType, simulated }) => {
+export const ShipImage = ({ ship, iconBadge, iconBadgeColor, iconOverlay, inventories, showInventoryStatusForType, simulated, square }) => {
   if (!ship) return null;
   // TODO: getCapacityUsage is intended for buildings
   const capacity = getCapacityUsage(ship, inventories, showInventoryStatusForType);
@@ -2447,27 +2472,40 @@ export const CrewOwnerBlock = ({ title, ...innerProps }) => {
       <CrewOwnerInner {...innerProps} />
     </FlexSectionInputBlock>
   );
-}
+};
+
+export const ShipInputBlock = ({ ship, hasMyCrew, isMine, ...props }) => {
+  return (
+    <FlexSectionInputBlock
+      image={(
+        <ShipImage
+          iconBadge={isMine ? <MyAssetIcon /> : null}
+          ship={ship} />
+      )}
+      label={ship.name}
+      sublabel={(
+        <>
+          <div>{ship.className}</div>
+          <ShipStatus status={ship.status}>
+            {hasMyCrew && <CaptainIcon />}
+          </ShipStatus>
+        </>
+      )}
+      {...props}
+    />
+  );
+};
 
 export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {} }) => {
   return (
     <>
       <FlexSection>
-        <FlexSectionInputBlock
+        <ShipInputBlock
           title="Ship"
-          image={<ShipImage iconBadge={<MyAssetIcon />} ship={ship} />}
-          label="Icarus"
           disabled={stage !== actionStage.NOT_STARTED}
-          sublabel={(
-            <>
-              <div>{ship.name}</div>
-              {/* TODO: if active crew is on board, show captain icon */}
-              {/* TODO: if in orbit, say "IN ORBIT" in blue */}
-              {/* TODO: if in spaceport, say "IN PORT" in purple */}
-              <div style={{ marginTop: 2 }}><CaptainIcon /></div>
-            </>
-          )}
-        />
+          ship={ship}
+          hasMyCrew
+          isMine />
 
         <FlexSectionSpacer />
 
@@ -3080,3 +3118,21 @@ export const formatVelocity = (metersPerSecond, { abbrev = true, minPrecision = 
   }
   return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
 };
+
+export const formatShipStatus = (ship) => {
+  switch (ship?.status || ship) {
+    case 'IN_FLIGHT':
+      return 'In Flight';
+    case 'LAUNCHING':
+      return 'Launching';
+    case 'LANDING':
+      return 'Landing';
+    case 'IN_ORBIT':
+      return 'In Orbit';
+    case 'IN_PORT':
+      return 'In Port';
+    case 'ON_SURFACE':
+      return 'On Surface';
+  }
+  return '';
+}

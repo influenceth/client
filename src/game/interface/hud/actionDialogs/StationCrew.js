@@ -47,7 +47,8 @@ import {
   ShipTab,
   CrewInputBlock,
   CrewOwnerBlock,
-  SwayInput
+  SwayInput,
+  ShipInputBlock
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -58,6 +59,7 @@ import theme, { hexToRGB } from '~/theme';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import useCrew from '~/hooks/useCrew';
 import useCrewMember from '~/hooks/useCrewMember';
+import useShip from '~/hooks/useShip';
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
 //  - however, could you launch two ships at once? probably not because crew needs to be on ship?
@@ -82,15 +84,11 @@ const Note = styled.div`
 
 // TODO: this is copied from StationOnShip, we can/should potentially provide them
 
-const StationOnShip = ({ asteroid, lot, manager, stage, ...props }) => {
+const StationOnShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const buildings = useBuildingAssets();
-  const ships = useShipAssets();
   
   const { currentStationing, stationingStatus, stationOnShip } = manager;
-
-  const ship = ships[0];  // TODO
-  ship.owner = 1;
 
   const { crew, crewMemberMap } = useCrewContext();
   const { data: crewOriginLot } = useLot(asteroid?.i, currentStationing?.originLotId);
@@ -158,13 +156,12 @@ const StationOnShip = ({ asteroid, lot, manager, stage, ...props }) => {
 
           <FlexSectionSpacer />
 
-          <FlexSectionInputBlock
-            title="Ship"
-            image={<ShipImage ship={ship} />}
-            label="Icarus"
+          <ShipInputBlock
+            title="ship"
             disabled={stage !== actionStages.NOT_STARTED}
-            sublabel={ship.name}
-          />
+            ship={ship}
+            hasMyCrew
+            isMine />
         </FlexSection>
 
         <FlexSection>
@@ -227,6 +224,8 @@ const StationOnShip = ({ asteroid, lot, manager, stage, ...props }) => {
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
+  const { data: ship } = useShip();
+
   // TODO: ...
   // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
   // const { actionStage } = extractionManager;
@@ -248,6 +247,7 @@ const Wrapper = (props) => {
       isLoading={isLoading}
       lot={lot}
       onClose={props.onClose}
+      ship={ship}
       stage={actionStage}>
       <StationOnShip
         asteroid={asteroid}

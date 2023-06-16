@@ -41,7 +41,6 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   
-
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
   const [sampleId, setSampleId] = useState();
   const [resourceId, setResourceId] = useState(props.preselect?.resourceId || (resourceMap?.active && resourceMap?.selected || undefined));

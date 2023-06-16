@@ -45,7 +45,8 @@ import {
   MiniBarChart,
   MiniBarChartSection,
   ShipTab,
-  formatVelocity
+  formatVelocity,
+  ShipInputBlock
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -136,12 +137,6 @@ const CourseDeltaV = styled(CourseLabels)`
     color: white;
     text-transform: none;
   }
-`;
-const InOrbit = styled.span`
-  color: ${p => p.theme.colors.main};
-  display: inline-block;
-  margin-top: 4px;
-  text-transform: uppercase;
 `;
 
 const TimingDetails = styled.div`
@@ -361,17 +356,10 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
             </Section>
 
             <FlexSection style={{ marginTop: 20 }}>
-              <FlexSectionInputBlock
-                image={<ShipImage iconBadge={<MyAssetIcon />} ship={ship} />}
-                label="Icarus"
+              <ShipInputBlock
+                ship={ship}
                 disabled={stage !== actionStages.NOT_STARTED}
-                sublabel={(
-                  <>
-                    <div>{ship.name}</div>
-                    <InOrbit>In Orbit</InOrbit>
-                  </>
-                )}
-              />
+                isMine />
 
               <FlexSectionSpacer />
 

@@ -85,7 +85,7 @@ const Note = styled.div`
   padding: 15px 10px 10px;
 `;
 
-const StationOnShip = ({ asteroid, lot, manager, stage, ...props }) => {
+const EjectCrew = ({ asteroid, lot, manager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const buildings = useBuildingAssets();
   const ships = useShipAssets();
@@ -230,6 +230,8 @@ const StationOnShip = ({ asteroid, lot, manager, stage, ...props }) => {
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
+  const { data: ship } = useShip();
+  
   // TODO: ...
   // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
   // const { actionStage } = extractionManager;
@@ -252,8 +254,9 @@ const Wrapper = (props) => {
       lot={lot}
       onClose={props.onClose}
       overrideColor={actionStage === actionStages.NOT_STARTED && (props.passengers ? theme.colors.green : theme.colors.main)}
+      ship={ship}
       stage={actionStage}>
-      <StationOnShip
+      <EjectCrew
         asteroid={asteroid}
         lot={lot}
         manager={manager}

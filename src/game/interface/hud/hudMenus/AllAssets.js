@@ -7,9 +7,14 @@ import { MyAssetIcon } from '~/components/Icons';
 import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
 import useStore from '~/hooks/useStore';
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
+import useOwnedShips from '~/hooks/useOwnedShips';
 import useAuth from '~/hooks/useAuth';
 import theme from '~/theme';
 import { HudMenuCollapsibleSection, majorBorderColor } from './components';
+import { ShipImage } from '../actionDialogs/components';
+import { useShipLink } from '~/components/ShipLink';
+import { ResourceImage } from '~/components/ResourceThumbnail';
+import { useShipAssets } from '~/hooks/useAssets';
 
 const thumbnailDimension = 75;
 
@@ -97,16 +102,36 @@ const Info = styled.div`
   }
 `;
 
+const ShipRow = ({ asset, ship }) => {
+  const onClickShip = useShipLink({ shipId: ship.i, zoomToShip: true })
+  return (
+    <SelectableRow onClick={onClickShip}>
+      <Thumbnail>
+        <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>
+        <ResourceImage src={asset.iconUrls?.w150} contain />
+        <ClipCorner dimension={10} color={majorBorderColor} />
+      </Thumbnail>
+      <Info>
+        <label>{ship.name || `Ship #${ship.i.toLocaleString()}`}</label>
+        <div style={{ flex: 1 }}></div>
+      </Info>
+    </SelectableRow>
+  );
+};
+
 const AllAssets = ({ onClose }) => {
   const { account } = useAuth();
+  const shipAssets = useShipAssets();
+
   const asteroidId = useStore(s => s.asteroids.origin);
   const selectAsteroid = useStore(s => s.dispatchOriginSelected);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const { data: ownedAsteroids } = useOwnedAsteroids();
+  const { data: ownedShips } = useOwnedShips();
 
   const [rendersReady, setRendersReady] = useState(0);
 
-  const onClick = useCallback((i) => () => {
+  const onClickAsteroid = useCallback((i) => () => {
     if (asteroidId === i) {
       updateZoomStatus('zooming-in');
       onClose();
@@ -123,14 +148,16 @@ const AllAssets = ({ onClose }) => {
     <Wrapper>
       
         <HudMenuCollapsibleSection
-          titleText="My Ship"
+          titleText={`Ships`}
           collapsed>
-          
+          {(ownedShips || []).map((ship) => <ShipRow key={ship.i} ship={ship} asset={shipAssets[ship.type]} />)}
         </HudMenuCollapsibleSection>
         
-        <HudMenuCollapsibleSection titleText="Asteroids" borderless>
+        <HudMenuCollapsibleSection
+          titleText={`Asteroids`}
+          borderless>
           {(ownedAsteroids || []).map((asteroid, i) => (
-            <SelectableRow key={asteroid.i} selected={asteroidId === asteroid.i} onClick={onClick(asteroid.i)}>
+            <SelectableRow key={asteroid.i} selected={asteroidId === asteroid.i} onClick={onClickAsteroid(asteroid.i)}>
               <Thumbnail>
                 {asteroid.owner && Address.areEqual(account, asteroid.owner) && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
                 {rendersReady >= i && <AsteroidRendering asteroid={asteroid} onReady={onRenderReady} />}

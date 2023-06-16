@@ -9,8 +9,14 @@ import useChainTime from '~/hooks/useChainTime';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Rule, majorBorderColor } from './components';
 import ClipCorner from '~/components/ClipCorner';
-import { ConstructIcon } from '~/components/Icons';
+import { CaretIcon, ConstructIcon } from '~/components/Icons';
 import { formatFixed } from '~/lib/utils';
+import useAsteroidShips from '~/hooks/useAsteroidShips';
+import { ShipImage } from '../actionDialogs/components';
+import { ResourceImage } from '~/components/ResourceThumbnail';
+import { useShipAssets } from '~/hooks/useAssets';
+import useLot from '~/hooks/useLot';
+import { useShipLink } from '~/components/ShipLink';
 
 const Wrapper = styled.div`
   display: flex;
@@ -18,7 +24,7 @@ const Wrapper = styled.div`
   height: 100%;
 `;
 
-const LotTable = styled.table`
+const AssetTable = styled.table`
   border-collapse: collapse;
   width: 100%;
 `;
@@ -47,7 +53,33 @@ const LotRow = styled.tr`
     }
   }
 `;
-const BuildingCell = styled.td`
+
+const ShipHeaderRow = styled.tr`
+  border-bottom: 1px solid #333;
+  font-size: 14px;
+  th, td {
+    padding: 2px 0 6px;
+  }
+  th {
+    text-align: left;
+  }
+  td {
+    color: #777;
+    text-align: right;
+  }
+`;
+const ShipRow = styled(LotRow)`
+  & > * {
+    color: #777;
+    font-size: 14px;
+    vertical-align: middle;
+    &:last-child {
+      color: white;
+      text-align: right;
+    }
+  }
+`;
+const ImageCell = styled.td`
   padding-left: 2px;
   width: 40px;
 `;
@@ -56,7 +88,7 @@ const InfoCell = styled.td`
   vertical-align: top;
 `;
 
-const Building = styled.div`
+const ImageWrapper = styled.div`
   align-items: center;
   background: black;
   border: 1px solid #222;
@@ -180,12 +212,12 @@ const BuildingRow = ({ lot }) => {
 
   return (
     <LotRow onClick={onClick}>
-      <BuildingCell>
-        <Building>
+      <ImageCell>
+        <ImageWrapper>
           <ConstructIcon />
           <ClipCorner color="#222" dimension={8} />
-        </Building>
-      </BuildingCell>
+        </ImageWrapper>
+      </ImageCell>
       <InfoCell>
         <Details>
           <label>
@@ -202,10 +234,52 @@ const BuildingRow = ({ lot }) => {
   );
 };
 
+const ShipGroupHeader = ({ asteroidId, lotId }) => {
+  const { data: lot } = useLot(asteroidId, lotId);
+
+  const mainLabel = useMemo(() => {
+    return lotId > 0 ? (lot?.building?.__t || 'Empty Lot') : 'In Orbit';
+  }, [lot, lotId]);
+  
+  const details = useMemo(() => {
+    return lotId > 0 ? `Lot ${lotId.toLocaleString()}` : '';
+  }, [lotId]);
+
+  return (
+    <ShipHeaderRow>
+      <th colspan="2" style={{  }}><CaretIcon /> {mainLabel}</th>
+      <td style={{  }}>{details}</td>
+    </ShipHeaderRow>
+  );
+};
+
+const ShipInfoRow = ({ asset, ship }) => {
+  const onClick = useShipLink({ shipId: ship?.i, zoomToShip: true });
+
+  return (
+    <ShipRow onClick={onClick}>
+      <ImageCell>
+        <ImageWrapper>
+          <ResourceImage src={asset.iconUrls?.w150} style={{ width: 32, backgroundSize: 'contain' }} />
+          <ClipCorner color="#222" dimension={8} />
+        </ImageWrapper>
+      </ImageCell>
+      <td>
+        {ship.name}
+      </td>
+      <td>
+        {asset.name}
+      </td>
+    </ShipRow>
+  );
+};
+
 const AsteroidAssets = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
-  const { data: lots, isLoading } = useAsteroidCrewLots(asteroidId);
+  const { data: lots, isLoading: lotsLoading } = useAsteroidCrewLots(asteroidId);
+  const { data: ships, isLoading: shipsLoading } = useAsteroidShips(asteroidId);
+  const shipAssets = useShipAssets();
 
   const buildingTally = lots?.length || 0;
 
@@ -221,22 +295,33 @@ const AsteroidAssets = () => {
     }, {});
   }, [lots]);
 
+  const shipsByLocation = useMemo(() => {
+    if (!ships) return {};
+    return ships
+    .reduce((acc, ship) => {
+      const lot = ship.lot || -1;
+      if (!acc[lot]) acc[lot] = [];
+      acc[lot].push(ship);
+      return acc;
+    }, {});
+  }, [ships]);
+
   return (
     <Wrapper>
       <HudMenuCollapsibleSection
         titleText="Buildings"
         titleLabel={`${buildingTally.toLocaleString()} Asset${buildingTally === 1 ? '' : 's'}`}>
-        {asteroid && lots && !isLoading && (
+        {asteroid && lots && !lotsLoading && (
           <>
             {buildingTally === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied any lots on this asteroid yet.</div>}
             {buildingTally > 0 && Object.keys(buildingsByType).map((capableType, i) => (
               <Fragment key={capableType}>
                 {i > 0 && <Rule />}
-                <LotTable>
+                <AssetTable>
                   <tbody>
                     {buildingsByType[capableType].map((lot) => <BuildingRow key={lot.i} lot={lot} />)}
                   </tbody>
-                </LotTable>
+                </AssetTable>
               </Fragment>
             ))}
           </>
@@ -245,9 +330,25 @@ const AsteroidAssets = () => {
       
       <HudMenuCollapsibleSection
         titleText="Ships"
-        titleLabel="0 Assets"
+        titleLabel={`${ships?.length || 0} Asset${ships?.length === 1 ? '' : 's'}`}
         collapsed>
-        <></>
+        {asteroid && ships && !shipsLoading && (
+          <>
+            {!ships?.length && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has no ships landed on or orbiting this asteroid yet.</div>}
+            {ships?.length > 0 && Object.keys(shipsByLocation).map((lotId, i) => (
+              <Fragment key={lotId}>
+                <AssetTable style={i > 0 ? { marginTop: 10 } : {}}>
+                  <thead>
+                    <ShipGroupHeader asteroidId={asteroidId} lotId={lotId} />
+                  </thead>
+                  <tbody>
+                    {shipsByLocation[lotId].map((ship) => <ShipInfoRow key={ship.i} ship={ship} asset={shipAssets[ship.type]} />)}
+                  </tbody>
+                </AssetTable>
+              </Fragment>
+            ))}
+          </>
+        )}
       </HudMenuCollapsibleSection>
 
       <HudMenuCollapsibleSection

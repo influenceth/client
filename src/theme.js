@@ -55,6 +55,7 @@ const theme = {
     borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
     success,
     successRGB: hexToRGB(success),
+    warning: orange,
     error: red,
     teal, blue, lightPurple, purple, lightOrange, orange, yellow, red, green,
     bonus: {

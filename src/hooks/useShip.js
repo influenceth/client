@@ -1,20 +1,22 @@
 import { useQuery } from 'react-query';
 
 import api from '~/lib/api';
+import { useShipAssets } from './useAssets';
+import fakeShips from './_ships.json';
 
-const useLot = (shipId) => {
+const useShip = (shipId) => {
+  const shipAssets = useShipAssets();
   return useQuery(
     [ 'ships', shipId ],
-    () => ({ // TODO: ...
-      i: 123,
-      type: 1,
-      status: 'IN_ORBIT', // IN_FLIGHT, IN_ORBIT, LAUNCHING, LANDING, ON_SURFACE
-      asteroid: 1000,
-      lot: 123,
-      owner: 1,
-    }),
+    () => {
+      const ship = fakeShips.find((s) => s.i === shipId); // IN_FLIGHT, IN_ORBIT, LAUNCHING, LANDING, IN_PORT, ON_SURFACE
+      return {
+        ...shipAssets[ship.type],
+        ...ship
+      };
+    },
     { enabled: !!shipId }
   );
 };
 
-export default useLot;
+export default useShip;

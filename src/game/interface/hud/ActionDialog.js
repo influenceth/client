@@ -26,6 +26,7 @@ import StationOnShip from './actionDialogs/StationOnShip';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import TransferToSite from './actionDialogs/TransferToSite';
 import UnplanBuilding from './actionDialogs/UnplanBuilding';
+import { formatShipStatus } from './actionDialogs/components';
 
 const cornerSize = 20;
 
@@ -228,7 +229,7 @@ const ActionMain = styled.div`
 `;
 
 // TODO: transition in
-export const ActionDialogInner = ({ actionImage, asteroid, children, isLoading, lot, onClose, overrideColor, stage }) => (
+export const ActionDialogInner = ({ actionImage, asteroid, children, isLoading, lot, onClose, overrideColor, ship, stage }) => (
   <Modal {...theming[stage]}>
     <ModalInner isLoading={isLoading}>
       {isLoading && <LoadingContainer><PuffLoader color="white" /></LoadingContainer>}
@@ -243,7 +244,9 @@ export const ActionDialogInner = ({ actionImage, asteroid, children, isLoading, 
                 </BarLoadingContainer>
               )}
               <ActionLocation {...theming[stage]} overrideColor={overrideColor}>
-                <b>{asteroid?.customName || asteroid?.baseName}</b><span>{lot?.i ? `> LOT ${lot?.i.toLocaleString()}` : ''}</span>
+                <b>{asteroid?.customName || asteroid?.baseName}</b>
+                <span>{lot?.i ? `> LOT ${lot?.i.toLocaleString()}` : ''}</span>
+                <span>{ship && !lot ? `> ${formatShipStatus(ship)}` : ''}</span>
               </ActionLocation>
               <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
                 <CloseIcon />

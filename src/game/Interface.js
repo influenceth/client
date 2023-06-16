@@ -24,6 +24,7 @@ import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
 import LotViewer from './interface/LotViewer';
+import ShipViewer from './interface/ShipViewer';
 import WatchlistTable from './interface/details/WatchlistTable';
 import theme from '~/theme';
 import Cutscene from './Cutscene';
@@ -135,6 +136,7 @@ const Interface = () => {
           </Switch>
 
           <LotViewer />
+          <ShipViewer />
           <HUD />
           <MainMenu />
         </MainContainer>

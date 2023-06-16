@@ -36,7 +36,7 @@ const useActionButtons = () => {
   }, [ships]);
   
   const myLotShips = useMemo(() => {
-    return lotId ? (ships || []).filter((s) => s.asteroid === asteroidId && s.lot === lotId && ['LAUNCHING','ON_SURFACE'].includes(s.status) && s.isOwnedByMe) : [];
+    return lotId ? (ships || []).filter((s) => s.asteroid === asteroidId && s.lot === lotId && ['LAUNCHING','IN_PORT','ON_SURFACE'].includes(s.status) && s.isOwnedByMe) : [];
   }, [ships, asteroidId, lotId]);
   
   const [actions, setActions] = useState([]);
@@ -74,7 +74,7 @@ const useActionButtons = () => {
         // if i am zoomed to my ship, i have selected a lot with my ship(s), or i have own a ship in orbit, offer "station on ship"
         if (
           (zoomedToShip && zoomedToShip.owner === crew?.i)
-          || (lotId && ships && ships.find((s) => s.lot === lotId && s.owner === crew?.i && s.status === 'ON_SURFACE'))
+          || (lotId && ships && ships.find((s) => s.lot === lotId && s.owner === crew?.i && ['IN_PORT','ON_SURFACE'].includes(s.status)))
           || (!lotId && ships && ships.find((s) => s.owner === crew?.i && s.status === 'IN_ORBIT'))
         ) {
 
@@ -84,7 +84,7 @@ const useActionButtons = () => {
         // if i am zoomed to another's ship or i have selected a lot with others' ship(s)
         if (
           (zoomedToShip && zoomedToShip.owner !== crew?.i)
-          || (lotId && ships && ships.find((s) => s.lot === lotId && s.owner !== crew?.i && s.status === 'ON_SURFACE'))
+          || (lotId && ships && ships.find((s) => s.lot === lotId && s.owner !== crew?.i && ['IN_PORT','ON_SURFACE'].includes(s.status)))
         ) {
           a.push(actionButtons.StationCrewAsPassengers);
         }
