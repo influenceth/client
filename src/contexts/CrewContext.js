@@ -43,7 +43,7 @@ export function CrewProvider({ children }) {
     selectedCrew.station = {
       asteroidId: 1000,
       lotId: 123,
-      // shipId: 123
+      shipId: 123
     };
   }
   // ^^^

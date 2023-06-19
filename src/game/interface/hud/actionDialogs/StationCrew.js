@@ -10,7 +10,7 @@ import useShip from '~/hooks/useShip';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  ExtractionAmountSection,
+  ResourceAmountSlider,
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,

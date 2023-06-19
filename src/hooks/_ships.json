@@ -7,7 +7,8 @@
     "asteroidId": 1000,
     "lotId": 123,
     "owner": 1,
-    "stationedCrews": []
+    "stationedCrews": [],
+    "inEmergencyMode": true
   },
   {
     "i": 124,

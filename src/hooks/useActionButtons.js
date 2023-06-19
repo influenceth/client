@@ -114,6 +114,12 @@ const useActionButtons = () => {
         }
         if (ejectableShip) {
           a.push(actionButtons.EjectCrew);
+          if (ejectableShip) {  // TODO: if propellant < 10% OR in emergency mode already
+            a.push(actionButtons.EmergencyModeToggle);
+            if (ejectableShip.inEmergencyMode) {
+              a.push(actionButtons.EmergencyModeGenerate);
+            }
+          }
         }
         if (ejectableGuestShip) {
           a.push(actionButtons.EjectGuestCrew);

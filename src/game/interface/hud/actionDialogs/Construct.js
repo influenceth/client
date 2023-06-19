@@ -157,7 +157,8 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             image={(
               <BuildingImage
                 building={buildings[lot?.building?.capableType]}
-                iconOverlay={requirementsMet ? null : <span style={{ color: theme.colors.lightOrange, fontSize: '36px', lineHeight: '30px' }}><WarningOutlineIcon /></span>} />
+                iconOverlay={requirementsMet ? null : <WarningOutlineIcon />}
+                iconOverlayColor={theme.colors.lightOrange} />
             )}
             label={buildings[lot?.building?.capableType].name}
             bodyStyle={requirementsMet ? {} : { background: `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.15)` }}

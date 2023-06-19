@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Capable } from '@influenceth/sdk';
+import { Asteroid, Capable, Extraction } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { CoreSampleIcon, EjectPassengersIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
+import { CloseIcon, CoreSampleIcon, EjectPassengersIcon, EmergencyModeEnterIcon, EmergencyModeExitIcon, EmergencyModeGenerateIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
 import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
@@ -53,7 +53,7 @@ import {
   TransferDistanceDetails,
   TransferDistanceTitleDetails,
   ShipInputBlock,
-  WarningAlert
+  EmergencyPropellantSection
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -67,38 +67,83 @@ import useCrewMember from '~/hooks/useCrewMember';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
 import useCrewMembers from '~/hooks/useCrewMembers';
+import ResourceSelection from '~/components/ResourceSelection';
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
 //  - however, could you launch two ships at once? probably not because crew needs to be on ship?
 
+const Warning = styled.div`
+  align-items: center;
+  background: rgba(${p => hexToRGB(p.theme.colors.red)}, 0.2);
+  color: ${p => p.theme.colors.red};
+  display: flex;
+  flex-direction: row;
+  font-size: 96%;
+  padding: 10px;
+  width: 100%;
+  & > svg {
+    font-size: 30px;
+    margin-right: 12px;
+  }
+`;
+const Note = styled.div`
+  color: white;
+  font-size: 95%;
+  padding: 15px 10px 10px;
+`;
 
-const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }) => {
+const resourceId = 170;
+
+const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const buildings = useBuildingAssets();
+  const resources = useResourceAssets();
   const shipAssets = useShipAssets();
   
   const { currentStationing, stationingStatus, stationOnShip } = manager;
 
   const { crew, crewMemberMap } = useCrewContext();
 
-  const myCrewMembers = currentStationing?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
-  const captain = myCrewMembers[0];
+  const crewMembers = currentStationing?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
+  const captain = crewMembers[0];
 
-  const myCrewIsTarget = targetCrew?.i === crew?.i;
+  const [amount, setAmount] = useState(0);
 
   const stats = useMemo(() => ([
     {
-      label: 'Travel Time',
+      label: 'Action Time',
       value: formatTimer(0),
       direction: 0,
       isTimeStat: true,
     },
     {
-      label: 'Crewmates Ejected',
-      value: `5`,
+      label: 'Propellant Mass Jettisoned',
+      value: 0,
       direction: 0,
     },
-  ]), []);
+    {
+      label: 'Propellant Volume Jettisoned',
+      value: 0,
+      direction: 0,
+    },
+    {
+      label: 'Cargo Mass Jettisoned',
+      value: 0,
+      direction: 0,
+    },
+    {
+      label: 'Cargo Volume Jettisoned',
+      value: 0,
+      direction: 0,
+    },
+  ]), [ship]);
+
+  const currentPropellantMass = 0;
+  const maxTonnageToGenerate = 0.1 * (shipAssets[ship?.type]?.maxPropellantMass - currentPropellantMass);
+  const generationTime = Extraction.getExtractionTime( // TODO: ...
+    amount,
+    0,
+    1
+  );
 
   const onStation = useCallback(() => {
     stationOnShip();
@@ -118,94 +163,79 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
   }, [stationingStatus]);
 
   const actionDetails = useMemo(() => {
-    const icon = <EjectPassengersIcon />;
-    const label = myCrewIsTarget ? 'Eject My Crew' : 'Force Eject Crew';
+    const icon = ship?.inEmergencyMode ? <EmergencyModeExitIcon /> : <EmergencyModeEnterIcon />;
+    const label = `${ship?.inEmergencyMode ? 'Exit' : 'Enter'} Emergency Mode`;
     const status = stage === actionStages.NOT_STARTED
-      ? `Eject from My ${ship ? 'Ship' : lot?.building?.__t}`
+      ? `${ship?.inEmergencyMode ? 'Restore' : 'Prepare'} Ship`
       : undefined;
     return { icon, label, status };
-  }, [myCrewIsTarget, lot, ship, stage]);
+  }, [ship, stage]);
 
   return (
     <>
       <ActionDialogHeader
-        action={actionDetails}
+        action={{
+          icon: <EmergencyModeGenerateIcon />,
+          label: 'Emergency Generation',
+          status: stage === actionStages.NOT_STARTED ? 'Generate Propellant' : undefined
+        }}
         captain={captain}
         crewAvailableTime={0}
-        overrideColor={stage === actionStages.NOT_STARTED ? (myCrewIsTarget ? theme.colors.main : theme.colors.red) : undefined}
+        overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.orange : undefined}
         taskCompleteTime={0}
         stage={stage} />
 
       <ActionDialogBody>
         <FlexSection>
-          {ship
-            ? (
-              <ShipInputBlock
-                title="Origin"
-                ship={{ ...shipAssets[ship.type], ...ship }}
-                disabled={stage !== actionStages.NOT_STARTED}
-                isMine
-                hasMyCrew={ship.stationedCrews.includes(crew?.i)} />
-            )
-            : (
-              <FlexSectionInputBlock
-                title="Origin"
-                image={<BuildingImage building={buildings[lot?.building?.capableType || 0]} />}
-                label={`${buildings[lot?.building?.capableType || 0].name}`}
-                disabled={stage !== actionStages.NOT_STARTED}
-                sublabel={`Lot #${lot?.i || 1}`}
-              />
-            )
-          }
-
-          <FlexSectionSpacer />
 
           <FlexSectionInputBlock
-            title="Destination"
-            titleDetails={
-              !(ship && ship.status === 'IN_ORBIT') && <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
-            }  
-            image={<AsteroidImage asteroid={asteroid} />}
-            label={asteroid?.customName || asteroid?.baseName || `Asteroid #${asteroid.i}`}
-            sublabel="Orbit"
-          />
-        </FlexSection>
-
-        <FlexSection>
-
-          <div style={{ alignSelf: 'flex-start', width: '50%' }}>
-            {ship && (
-              <MiniBarChart
-                color="#92278f"
-                label="Crewmate Count"
-                valueLabel={`5 / ${shipAssets[ship.type].maxPassengers}`}
-                value={5 / shipAssets[ship.type].maxPassengers}
-                deltaColor="#f644fa"
-                deltaValue={-targetCrew?.crewMembers?.length / shipAssets[ship.type].maxPassengers}
-              />
+            title="Propellant"
+            image={<ResourceThumbnail resource={resources[resourceId]} tooltipContainer="none" />}
+            label={(
+              <>
+                <div style={{ color: theme.colors.orange }}>EMERGENCY</div>
+                {resources[resourceId].name}
+              </>
             )}
-          </div>
+            disabled={stage !== actionStages.NOT_STARTED}
+            sublabel={`${formatSampleMass(1234)}t`}
+            bodyStyle={{ backgroundColor: `rgba(${hexToRGB(theme.colors.orange)}, 0.2)` }}
+          />
 
           <FlexSectionSpacer />
 
-          <CrewInputBlock
-            title="Ejected Crew"
-            crew={{ ...targetCrew, members: targetCrew.crewMembers }} />
+          <ShipInputBlock
+            title="Ship"
+            disabled={stage !== actionStages.NOT_STARTED}
+            ship={ship}
+            hasMyCrew
+            isMine />
 
         </FlexSection>
-
-        {!(ship && ship.status === 'IN_ORBIT') && (
-          <FlexSection>
-            <div style={{ width: '50%' }} />
-            <FlexSectionSpacer />
-            <div style={{ width: '50%' }}>
-              <WarningAlert>
-                <div><WarningOutlineIcon /></div>
-                <div>Ejected crews must travel into orbit.</div>
-              </WarningAlert>
-            </div>
-          </FlexSection>
+          
+        {stage === actionStages.NOT_STARTED && (
+          <Section>
+            <SectionTitle>Amount Generated</SectionTitle>
+            <SectionBody style={{ paddingTop: 5 }}>
+              <ResourceAmountSlider
+                amount={amount || 0}
+                extractionTime={generationTime || 0}
+                min={0}
+                max={maxTonnageToGenerate}
+                resource={resources[resourceId]}
+                setAmount={setAmount} />
+            </SectionBody>
+          </Section>
         )}
+
+        <FlexSection style={{ marginBottom: -15 }}>
+          <EmergencyPropellantSection
+            title="Propellant"
+            propellantPregeneration={0}
+            propellantPostgeneration={0 + amount}
+            propellantTankMax={shipAssets[ship?.type || 0].maxPropellantMass}
+          />
+        </FlexSection>
 
         <ActionDialogStats
           stage={stage}
@@ -216,7 +246,7 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
 
       <ActionDialogFooter
         disabled={false/* TODO: no permission */}
-        goLabel="Eject"
+        goLabel="Generate"
         onGo={onStation}
         stage={stage}
         {...props} />
@@ -266,9 +296,9 @@ const Wrapper = (props) => {
       ship={ship}
       isLoading={isLoading}
       onClose={props.onClose}
-      overrideColor={actionStage === actionStages.NOT_STARTED && (props.guests ? theme.colors.red : theme.colors.main)}
+      overrideColor={actionStage === actionStages.NOT_STARTED ? theme.colors.orange : undefined}
       stage={actionStage}>
-      <EjectCrew
+      <EmergencyModeGenerate
         asteroid={asteroid}
         lot={lot}
         ship={ship}

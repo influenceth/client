@@ -6,7 +6,6 @@ import { useQuery } from 'react-query';
 import api from '~/lib/api';
 import {
   TbBellRingingFilled as AlertIcon,
-  TbDelta as DeltaVIcon // TODO: ...
 } from 'react-icons/tb';
 import { Asteroid, Capable, Construction, Crewmate, Inventory } from '@influenceth/sdk';
 
@@ -17,6 +16,7 @@ import {
   ChevronRightIcon,
   CloseIcon,
   CrewIcon,
+  DeltaVIcon,
   FastForwardIcon,
   LocationIcon,
   PlusIcon,
@@ -28,7 +28,8 @@ import {
   RadioUncheckedIcon,
   MyAssetIcon,
   CaptainIcon,
-  InfoIcon
+  InfoIcon,
+  EmergencyModeEnterIcon
 } from '~/components/Icons';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import ResourceColorIcon from '~/components/ResourceColorIcon';
@@ -514,8 +515,11 @@ const ThumbnailBadge = styled.div`
 `;
 const ThumbnailOverlay = styled.div`
   align-items: center;
+  color: ${p => p.color || p.theme.colors.main};
   display: flex;
+  font-size: 40px;
   height: 100%;
+  line-height: 30px;
   justify-content: center;
   position: absolute;
   width: 100%;
@@ -927,19 +931,30 @@ const BarChart = styled.div`
     transition: width 500ms ease;
     z-index: 0;
   }
-  &:before {
+  &:after {
     background: ${p => p.color};
     left: ${barChartPadding}px;
     width: ${p => 100 * p.value}%;
+    z-index: 1;
   }
-  ${p => p.rightValue !== undefined && `
-    &:after {
-      background: ${p.rightColor || p.color};
-      right: ${barChartPadding}px;
-      width: ${100 * p.rightValue}%;
+  ${p => p.postValue !== undefined && `
+    &:before {
+      background: ${p.color};
+      left: ${barChartPadding}px;
+      opacity: 0.7;
+      width: ${100 * p.postValue}%;
       z-index: 1;
     }
   `}
+`;
+const BarChartLimitLine = styled.div`
+  border: solid ${p => p.theme.colors.red};
+  border-width: 0 1px;
+  top: 0;
+  bottom: 0;
+  position: absolute;
+  left: calc(${barChartPadding + 1}px + ${p => p.position * 100}%);
+  z-index: 3;
 `;
 const BarChartNotes = styled.div`
   color: ${p => p.color || 'inherit'};
@@ -1092,7 +1107,7 @@ const ShipStatus = styled.span`
   display: inline-block;
   margin-top: 4px;
   text-transform: uppercase;
-  &:before {
+  &:after {
     content: "${p => formatShipStatus(p.status)}";
     color: ${p => p.theme.colors.main};
     text-transform: uppercase;
@@ -1109,6 +1124,27 @@ const ShipStatus = styled.span`
           return `color: ${p.theme.colors.purple};`;
       }
     }}
+  }
+`;
+
+export const WarningAlert = styled.div`
+  align-items: center;
+  background: rgba(${p => hexToRGB(p.theme.colors.red)}, 0.2);
+  color: ${p => p.theme.colors.red};
+  display: flex;
+  flex-direction: row;
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
+  & > div:first-child {
+    font-size: 30px;
+    margin-right: 12px;
+  }
+  & > div:last-child {
+    font-size: 96%;
+  }
+  &:first-child {
+    margin-top: 0;
   }
 `;
 
@@ -1698,7 +1734,7 @@ export const AsteroidImage = ({ asteroid }) => {
   )
 }
 
-export const ShipImage = ({ ship, iconBadge, iconBadgeColor, iconOverlay, inventories, showInventoryStatusForType, simulated, square }) => {
+export const ShipImage = ({ ship, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, simulated, square }) => {
   if (!ship) return null;
   // TODO: getCapacityUsage is intended for buildings
   const capacity = getCapacityUsage(ship, inventories, showInventoryStatusForType);
@@ -1718,13 +1754,13 @@ export const ShipImage = ({ ship, iconBadge, iconBadgeColor, iconOverlay, invent
         </>
       )}
       {iconBadge && <ThumbnailBadge style={{ color: iconBadgeColor || 'white' }}>{iconBadge}</ThumbnailBadge>}
-      {iconOverlay && <ThumbnailOverlay>{iconOverlay}</ThumbnailOverlay>}
+      {iconOverlay && <ThumbnailOverlay color={iconOverlayColor}>{iconOverlay}</ThumbnailOverlay>}
       <ClipCorner dimension={10} />
     </ShipThumbnailWrapper>
   );
 };
 
-export const BuildingImage = ({ building, error, iconOverlay, inventories, showInventoryStatusForType, unfinished }) => {
+export const BuildingImage = ({ building, error, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, unfinished }) => {
   if (!building) return null;
   const capacity = getCapacityUsage(building, inventories, showInventoryStatusForType);
   const closerLimit = (capacity.volume.used + capacity.volume.reserved) / capacity.volume.max > (capacity.mass.used + capacity.mass.reserved) / capacity.mass.max ? 'volume' : 'mass';
@@ -1743,7 +1779,7 @@ export const BuildingImage = ({ building, error, iconOverlay, inventories, showI
             secondaryProgress={(capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max} />
         </>
       )}
-      {iconOverlay && <ThumbnailOverlay>{iconOverlay}</ThumbnailOverlay>}
+      {iconOverlay && <ThumbnailOverlay color={iconOverlayColor}>{iconOverlay}</ThumbnailOverlay>}
       <ClipCorner dimension={10} />
     </BuildingThumbnailWrapper>
   );
@@ -2209,7 +2245,7 @@ export const ProgressBarSection = ({
   );
 };
 
-export const ExtractionAmountSection = ({ amount, extractionTime, min, max, resource, setAmount }) => {
+export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resource, setAmount }) => {
   const tonnage = useMemo(() => amount * resource?.massPerUnit || 0, [amount, resource]);
   const tonnageValue = useMemo(() => Math.round(1e3 * tonnage) / 1e3, [tonnage]);
 
@@ -2270,7 +2306,7 @@ export const ExtractionAmountSection = ({ amount, extractionTime, min, max, reso
         value={amount || 0} />
     </SliderWrapper>
   );
-}
+};
 
 export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, selected, onSelect, warning }) => {
   return (
@@ -2386,19 +2422,41 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
         )}
     </FlexSectionBlock>
   );
+};
 
+export const EmergencyPropellantSection = ({ title, propellantPregeneration, propellantPostgeneration, propellantTankMax }) => {
+  // useEffect(() => ReactTooltip.rebuild(), []);
+
+  const propellantPre = propellantPregeneration / propellantTankMax;
+  const propellantPost = propellantPostgeneration / propellantTankMax;
+  console.log({propellantPre ,propellantPost});
+  
   return (
-    <Section>
-      <SectionTitle>
-        {title}
-        <b style={{ flex: 1 }} />
-        
-      </SectionTitle>
-      <SectionBody style={{ flexDirection: 'column', marginBottom: 20 }}>
-        
-      </SectionBody>
-    </Section>
-  )
+    <FlexSectionBlock
+      title={title}
+      bodyStyle={{ padding: '1px 0' }}
+      style={{ width: '100%' }}>
+        <BarChart
+          color={theme.colors.main}
+          bgColor={theme.colors.main}
+          value={propellantPre}
+          postValue={propellantPost}>
+          <BarChartLimitLine position={0.1} />
+        </BarChart>
+        <BarChartNotes color={theme.colors.main}>
+          <div>
+            <span style={{ color: theme.colors.red }}>Emergency Limit: </span>
+            <b>{formatMass(0.1 * propellantTankMax * 1e3)}</b>
+          </div>
+          <div style={{ color: theme.colors.main }}>
+            {formatFixed(100 * propellantPost / 0.1)}% of Limit
+          </div>
+          <div>
+            After Generation: <b>{formatMass(propellantPostgeneration * 1e3)}</b>
+          </div>
+        </BarChartNotes>
+    </FlexSectionBlock>
+  );
 };
 
 export const SwayInputBlock = ({ title, instruction }) => {
@@ -2480,6 +2538,8 @@ export const ShipInputBlock = ({ ship, hasMyCrew, isMine, ...props }) => {
       image={(
         <ShipImage
           iconBadge={isMine ? <MyAssetIcon /> : null}
+          iconOverlay={ship.inEmergencyMode ? <EmergencyModeEnterIcon /> : null}
+          iconOverlayColor={theme.colors.orange}
           ship={ship} />
       )}
       label={ship.name}
@@ -2491,12 +2551,13 @@ export const ShipInputBlock = ({ ship, hasMyCrew, isMine, ...props }) => {
           </ShipStatus>
         </>
       )}
+      bodyStyle={ship.inEmergencyMode ? { backgroundColor: `rgba(${hexToRGB(theme.colors.orange)}, 0.2)` } : {}}
       {...props}
     />
   );
 };
 
-export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {} }) => {
+export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings = [] }) => {
   return (
     <>
       <FlexSection>
@@ -2555,6 +2616,19 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {} }) => {
             />
           </MiniBarChartSection>
         </div>
+
+        <FlexSectionSpacer />
+
+        {warnings?.length > 0 && (
+          <div style={{ alignSelf: 'flex-start', width: '50%' }}>
+            {warnings.map(({ icon, text }) => (
+              <WarningAlert>
+                <div>{icon}</div>
+                <div>{text}</div>
+              </WarningAlert>
+            ))}
+          </div>
+        )}
       </FlexSection>
     </>
   );

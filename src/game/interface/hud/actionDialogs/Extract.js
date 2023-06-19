@@ -10,7 +10,7 @@ import useExtractionManager from '~/hooks/useExtractionManager';
 import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  ExtractionAmountSection, ActionDialogFooter,
+  ResourceAmountSlider, ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats, getBonusDirection,
   formatResourceVolume,
@@ -334,7 +334,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
           <Section>
             <SectionTitle>Extraction Amount</SectionTitle>
             <SectionBody style={{ paddingTop: 5 }}>
-              <ExtractionAmountSection
+              <ResourceAmountSlider
                 amount={amount || 0}
                 extractionTime={extractionTime || 0}
                 min={0}

@@ -10,7 +10,7 @@ import useExtractionManager from '~/hooks/useExtractionManager';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
-  ExtractionAmountSection,
+  ResourceAmountSlider,
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,

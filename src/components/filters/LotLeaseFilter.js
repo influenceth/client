@@ -21,7 +21,7 @@ const defaultColorMap = {
   unleaseable: '#00c7ff',
   leaseable: '#ffcccc',
   leased: '#ffffff',
-}
+};
 
 const fieldName = 'leasability';
 const highlightFieldName = 'leasability';
