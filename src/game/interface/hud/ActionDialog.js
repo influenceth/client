@@ -12,6 +12,7 @@ import useStore from '~/hooks/useStore';
 import actionStage from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
 import Construct from './actionDialogs/Construct';
+import EjectCrew from './actionDialogs/EjectCrew';
 import EvictShip from './actionDialogs/EvictShip';
 import Extract from './actionDialogs/Extract';
 import NewCoreSample from './actionDialogs/NewCoreSample';
@@ -22,7 +23,6 @@ import LaunchShip from './actionDialogs/LaunchShip';
 import PlanBuilding from './actionDialogs/PlanBuilding';
 import SetCourse from './actionDialogs/SetCourse';
 import StationCrew from './actionDialogs/StationCrew';
-import StationOnShip from './actionDialogs/StationOnShip';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import TransferToSite from './actionDialogs/TransferToSite';
 import UnplanBuilding from './actionDialogs/UnplanBuilding';
@@ -290,6 +290,8 @@ const ActionDialog = ({ type, params }) => {
         {type === 'UNPLAN_BUILDING' && <UnplanBuilding {...allProps} />}
         {type === 'CONSTRUCT' && <Construct {...allProps} />}
         {type === 'DECONSTRUCT' && <Deconstruct {...allProps} />}
+        {type === 'EJECT_CREW' && <EjectCrew {...allProps} />}
+        {type === 'EJECT_GUEST_CREW' && <EjectCrew {...allProps} guests />}
         {type === 'EVICT_SHIP' && <EvictShip {...allProps} />}
         {type === 'EXTRACT_RESOURCE' && <Extract {...allProps} />}
         {type === 'LAND_SHIP' && <LandShip {...allProps} />}
@@ -298,8 +300,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'NEW_CORE_SAMPLE' && <NewCoreSample {...allProps} />}
         {type === 'SET_COURSE' && <SetCourse {...allProps} />}
         {type === 'STATION_CREW' && <StationCrew {...allProps} />}
-        {type === 'STATION_PASSENGERS_ON_SHIP' && <StationOnShip {...allProps} passengers />}
-        {type === 'STATION_PILOTS_ON_SHIP' && <StationOnShip {...allProps} />}
+        {type === 'STATION_CREW_AS_GUESTS' && <StationCrew {...allProps} guests />}
         {type === 'SURFACE_TRANSFER' && <SurfaceTransfer {...allProps} />}
         {type === 'TRANSFER_TO_SITE' && <TransferToSite {...allProps} />}
       </ModalCushion>
@@ -308,8 +309,8 @@ const ActionDialog = ({ type, params }) => {
 }
 
 const ActionDialogWrapper = () => {
-  const actionDialog = useStore(s => s.actionDialog);  // TODO: use this instead of below
-  // const actionDialog = { params: { asteroidId: 1, lotId: 1 }, type: 'NEW_CORE_SAMPLE' };
+  const actionDialog = useStore(s => s.actionDialog);
+  // const actionDialog = { params: { asteroidId: 1, lotId: 1 }, type: 'NEW_CORE_SAMPLE' }; // (for debugging)
   return actionDialog?.type ? <ActionDialog {...actionDialog} /> : null;
 };
 

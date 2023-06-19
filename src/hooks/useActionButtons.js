@@ -36,7 +36,7 @@ const useActionButtons = () => {
   }, [ships]);
   
   const myLotShips = useMemo(() => {
-    return lotId ? (ships || []).filter((s) => s.asteroid === asteroidId && s.lot === lotId && ['LAUNCHING','IN_PORT','ON_SURFACE'].includes(s.status) && s.isOwnedByMe) : [];
+    return lotId ? (ships || []).filter((s) => s.asteroid === asteroidId && s.lotId === lotId && ['LAUNCHING','IN_PORT','ON_SURFACE'].includes(s.status) && s.isOwnedByMe) : [];
   }, [ships, asteroidId, lotId]);
   
   const [actions, setActions] = useState([]);
@@ -71,22 +71,52 @@ const useActionButtons = () => {
           a.push(actionButtons.LandShip);
         }
 
-        // if i am zoomed to my ship, i have selected a lot with my ship(s), or i have own a ship in orbit, offer "station on ship"
-        if (
-          (zoomedToShip && zoomedToShip.owner === crew?.i)
-          || (lotId && ships && ships.find((s) => s.lot === lotId && s.owner === crew?.i && ['IN_PORT','ON_SURFACE'].includes(s.status)))
-          || (!lotId && ships && ships.find((s) => s.owner === crew?.i && s.status === 'IN_ORBIT'))
-        ) {
+        // get selection / ship action possibilities
+        let pilotableShip;
+        let rideableShip;
+        let ejectableShip;
+        let ejectableGuestShip;
+        if (zoomedToShip) {
+          if (crew?.station?.shipId === zoomedToShip.i) {
+            ejectableShip = zoomedToShip;
+          } else if (zoomedToShip.owner === crew?.i) {
+            pilotableShip = zoomedToShip;
+          } else {
+            rideableShip = zoomedToShip;
+          }
 
-          a.push(actionButtons.StationCrewAsPilots);
+          if (zoomedToShip.owner === crew?.i && (zoomedToShip.stationedCrews || []).find((c) => c !== crew?.i)) {
+            ejectableGuestShip = zoomedToShip;
+          }
+        } else if (ships) {
+          if (lotId) {
+            const lotShips = ships.filter((s) => s.lotId === lotId && ['IN_PORT','ON_SURFACE'].includes(s.status));
+            pilotableShip = lotShips.find((s) => s.owner === crew?.i && s.i !== crew?.station?.shipId);
+            rideableShip = lotShips.find((s) => s.owner !== crew?.i && s.i !== crew?.station?.shipId);
+            ejectableShip = lotShips.find((s) => s.i === crew?.station?.shipId);
+            ejectableGuestShip = lotShips.find((s) => s.owner === crew?.i && (s.stationedCrews || []).find((c) => c !== crew?.i));
+          } else {
+            const orbitShips = ships.filter((s) => s.status === 'IN_ORBIT');
+            pilotableShip = orbitShips.find((s) => s.owner === crew?.i && s.i !== crew?.station?.shipId);
+            rideableShip = orbitShips.find((s) => s.owner !== crew?.i && s.i !== crew?.station?.shipId);
+            ejectableShip = orbitShips.find((s) => s.i === crew?.station?.shipId);
+            // (for force ejection in orbit, must zoom to ship)
+            // ejectableGuestShip = orbitShips.find((s) => s.owner === crew?.i && (s.stationedCrews || []).find((c) => c !== crew?.i));
+          }
         }
 
-        // if i am zoomed to another's ship or i have selected a lot with others' ship(s)
-        if (
-          (zoomedToShip && zoomedToShip.owner !== crew?.i)
-          || (lotId && ships && ships.find((s) => s.lot === lotId && s.owner !== crew?.i && ['IN_PORT','ON_SURFACE'].includes(s.status)))
-        ) {
+        console.log({ pilotableShip, rideableShip, ejectableShip, ejectableGuestShip });
+        if (pilotableShip && crew?.station?.asteroidId === pilotableShip.asteroidId) {
+          a.push(actionButtons.StationCrewAsPilots);
+        }
+        if (rideableShip && crew?.station?.asteroidId === rideableShip.asteroidId) {
           a.push(actionButtons.StationCrewAsPassengers);
+        }
+        if (ejectableShip) {
+          a.push(actionButtons.EjectCrew);
+        }
+        if (ejectableGuestShip) {
+          a.push(actionButtons.EjectGuestCrew);
         }
       }
       if (openHudMenu === 'BELT_PLAN_FLIGHT') {
@@ -98,7 +128,9 @@ const useActionButtons = () => {
         // potentially-public/shared buildings
         if (constructionStatus === 'OPERATIONAL' && lot.building?.capableType) {
           const buildingAsset = buildings[lot.building.capableType];
-          if (buildingAsset.capabilities.includes('habitation')) {
+          if (crew.station?.asteroidId === asteroidId && crew.station?.lotId === lotId && !crew.station?.shipId) {
+            a.push(actionButtons.EjectCrew);
+          } else if (buildingAsset.capabilities.includes('habitation')) {
             a.push(actionButtons.StationCrew);
           }
         }
@@ -109,6 +141,9 @@ const useActionButtons = () => {
             const buildingAsset = buildings[lot.building.capableType];
             if (buildingAsset.capabilities.includes('extraction')) {
               a.push(actionButtons.Extract);
+            }
+            if (buildingAsset.capabilities.includes('habitation') && (lot.building?.stationedCrews || []).find((c) => c !== crew?.i)) {
+              a.push(actionButtons.EjectGuestCrew);
             }
           } else if (['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus)) {
             a.push(actionButtons.Construct);

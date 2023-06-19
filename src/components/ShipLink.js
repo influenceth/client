@@ -16,12 +16,12 @@ export const useShipLink = ({ shipId, zoomToShip }) => {
   const { data: ship } = useShip(shipId);
 
   const zoomToAsteroid = useLotLink({
-    asteroidId: ship?.asteroid
+    asteroidId: ship?.asteroidId
   });
 
   const zoomToLot = useLotLink({
-    asteroidId: ship?.asteroid,
-    lotId: ship?.lot,
+    asteroidId: ship?.asteroidId,
+    lotId: ship?.lotId,
   });
 
   const zoomToShipAsNeeded = useCallback(() => {

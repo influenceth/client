@@ -37,6 +37,17 @@ export function CrewProvider({ children }) {
     return selectedCrewId && (crews || []).find((crew) => crew.i === selectedCrewId);
   }, [crews, selectedCrewId]);
 
+  // TODO: vvv remove this
+  // NOTE: either shipId or (asteroidId and lotId) must be set
+  if (selectedCrew) {
+    selectedCrew.station = {
+      asteroidId: 1000,
+      lotId: 123,
+      // shipId: 123
+    };
+  }
+  // ^^^
+
   useEffect(() => {
     // if logged in and done loading and there are crews
     if (!crewsLoading && !crewMembersLoading) {

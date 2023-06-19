@@ -1,6 +1,8 @@
 import Construct from './Construct';
 import CoreSample from './CoreSample';
 import Deconstruct from './Deconstruct';
+import EjectCrew from './EjectCrew';
+import EjectGuestCrew from './EjectGuestCrew';
 import Extract from './Extract';
 import LandShip from './LandShip';
 import LaunchShip from './LaunchShip';
@@ -20,6 +22,8 @@ const ActionsButtons = {
   Construct,
   CoreSample,
   Deconstruct,
+  EjectCrew,
+  EjectGuestCrew,
   Extract,
   LandShip,
   LaunchShip,

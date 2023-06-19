@@ -4,24 +4,27 @@
     "type": 2,
     "name": "Apollo XIII",
     "status": "ON_SURFACE",
-    "asteroid": 1000,
-    "lot": 123,
-    "owner": 1
+    "asteroidId": 1000,
+    "lotId": 123,
+    "owner": 1,
+    "stationedCrews": []
   },
   {
     "i": 124,
     "type": 1,
     "name": "Icarus",
     "status": "IN_ORBIT",
-    "asteroid": 1000,
-    "owner": 1
+    "asteroidId": 1000,
+    "owner": 1,
+    "stationedCrews": [1,2]
   },
   {
     "i": 125,
     "type": 3,
     "name": "Santa's Little Helper",
     "status": "IN_ORBIT",
-    "asteroid": 1,
-    "owner": 1
+    "asteroidId": 1,
+    "owner": 1,
+    "stationedCrews": []
   }
 ]

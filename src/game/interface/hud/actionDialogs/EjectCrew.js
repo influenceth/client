@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CoreSample, Asteroid, Extraction, Inventory } from '@influenceth/sdk';
+import { Asteroid, Capable } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
+import { CoreSampleIcon, EjectPassengersIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
 import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
@@ -63,17 +63,22 @@ import theme, { hexToRGB } from '~/theme';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import useCrew from '~/hooks/useCrew';
 import useCrewMember from '~/hooks/useCrewMember';
+import useAsteroid from '~/hooks/useAsteroid';
+import useAsteroidShips from '~/hooks/useAsteroidShips';
+import useCrewMembers from '~/hooks/useCrewMembers';
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
 //  - however, could you launch two ships at once? probably not because crew needs to be on ship?
 
 const Warning = styled.div`
   align-items: center;
-  background: rgba(${p => hexToRGB(p.theme.colors.orange)}, 0.3);
-  color: ${p => p.theme.colors.orange};
+  background: rgba(${p => hexToRGB(p.theme.colors.red)}, 0.2);
+  color: ${p => p.theme.colors.red};
   display: flex;
   flex-direction: row;
+  font-size: 96%;
   padding: 10px;
+  width: 100%;
   & > svg {
     font-size: 30px;
     margin-right: 12px;
@@ -85,28 +90,19 @@ const Note = styled.div`
   padding: 15px 10px 10px;
 `;
 
-const EjectCrew = ({ asteroid, lot, manager, stage, ...props }) => {
+const StationCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const buildings = useBuildingAssets();
-  const ships = useShipAssets();
+  const shipAssets = useShipAssets();
   
   const { currentStationing, stationingStatus, stationOnShip } = manager;
 
-  const { data: dbShip } = useShip(1);
-  const ship = { ...ships[0], ...(dbShip || {}) };
-
   const { crew, crewMemberMap } = useCrewContext();
-  const { data: crewOriginLot } = useLot(asteroid?.i, currentStationing?.originLotId);
-  const { data: ownerCrew } = useCrew(ship?.owner);
-  
-  const crewIsOwner = ship.owner === crew?.i;
 
-  const crewMembers = currentStationing?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
-  const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
-  const launchBonus = 0;
+  const myCrewMembers = currentStationing?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
+  const captain = myCrewMembers[0];
 
-  const transportDistance = Asteroid.getLotDistance(asteroid?.i, currentStationing?.originLotId, lot?.i) || 0;
+  const myCrewIsTarget = targetCrew?.i === crew?.i;
 
   const stats = useMemo(() => ([
     {
@@ -116,7 +112,7 @@ const EjectCrew = ({ asteroid, lot, manager, stage, ...props }) => {
       isTimeStat: true,
     },
     {
-      label: 'Crewmates Stationed',
+      label: 'Crewmates Ejected',
       value: `5`,
       direction: 0,
     },
@@ -139,75 +135,93 @@ const EjectCrew = ({ asteroid, lot, manager, stage, ...props }) => {
     lastStatus.current = stationingStatus;
   }, [stationingStatus]);
 
+  const actionDetails = useMemo(() => {
+    const icon = <EjectPassengersIcon />;
+    const label = myCrewIsTarget ? 'Eject My Crew' : 'Force Eject Crew';
+    const status = stage === actionStages.NOT_STARTED
+      ? `Eject from My ${ship ? 'Ship' : lot?.building?.__t}`
+      : undefined;
+    return { icon, label, status };
+  }, [myCrewIsTarget, lot, ship, stage]);
+
   return (
     <>
       <ActionDialogHeader
-        action={{
-          icon: crewIsOwner ? <StationCrewIcon /> : <StationPassengersIcon />,
-          label: crewIsOwner ? 'Station Flight Crew' : 'Station Passengers',
-          status: stage === actionStages.NOT_STARTED ? `Send to ${crewIsOwner ? 'My ' : ''} Ship` : undefined,
-        }}
+        action={actionDetails}
         captain={captain}
         crewAvailableTime={0}
-        overrideColor={stage === actionStages.NOT_STARTED ? (crewIsOwner ? theme.colors.main : theme.colors.green) : undefined}
+        overrideColor={stage === actionStages.NOT_STARTED ? (myCrewIsTarget ? theme.colors.main : theme.colors.red) : undefined}
         taskCompleteTime={0}
         stage={stage} />
 
       <ActionDialogBody>
         <FlexSection>
-          <FlexSectionInputBlock
-            title="Origin"
-            image={<BuildingImage building={buildings[crewOriginLot?.building?.capableType || 0]} />}
-            label={`${buildings[crewOriginLot?.building?.capableType || 0].name}`}
-            disabled={stage !== actionStages.NOT_STARTED}
-            sublabel={`Lot #${crewOriginLot?.i || 1}`}
-          />
+          {ship
+            ? (
+              <ShipInputBlock
+                title="Origin"
+                ship={{ ...shipAssets[ship.type], ...ship }}
+                disabled={stage !== actionStages.NOT_STARTED}
+                isMine
+                hasMyCrew={ship.stationedCrews.includes(crew?.i)} />
+            )
+            : (
+              <FlexSectionInputBlock
+                title="Origin"
+                image={<BuildingImage building={buildings[lot?.building?.capableType || 0]} />}
+                label={`${buildings[lot?.building?.capableType || 0].name}`}
+                disabled={stage !== actionStages.NOT_STARTED}
+                sublabel={`Lot #${lot?.i || 1}`}
+              />
+            )
+          }
 
           <FlexSectionSpacer />
 
-          <ShipInputBlock
-            disabled={stage !== actionStages.NOT_STARTED}
-            title="Ship"
+          <FlexSectionInputBlock
+            title="Destination"
             titleDetails={
-              ship?.status === 'IN_ORBIT' // TODO: not orbital transfer if in-orbit to in-orbit transfer
-              ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
-              : <TransferDistanceDetails distance={transportDistance} />
-            }
-            ship={ship}
-            hasMyCrew
-            isMine />
+              !(ship && ship.status === 'IN_ORBIT') && <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
+            }  
+            image={<AsteroidImage asteroid={asteroid} />}
+            label={asteroid?.customName || asteroid?.baseName || `Asteroid #${asteroid.i}`}
+            sublabel="Orbit"
+          />
         </FlexSection>
 
         <FlexSection>
-          <CrewInputBlock
-            title={crewIsOwner ? 'Flight Crew' : 'Passengers'}
-            crew={{ ...crew, members: crewMembers }} />
+
+          <div style={{ alignSelf: 'flex-start', width: '50%' }}>
+            {ship && (
+              <MiniBarChart
+                color="#92278f"
+                label="Crewmate Count"
+                valueLabel={`5 / ${shipAssets[ship.type].maxPassengers}`}
+                value={5 / shipAssets[ship.type].maxPassengers}
+                deltaColor="#f644fa"
+                deltaValue={-targetCrew?.crewMembers?.length / shipAssets[ship.type].maxPassengers}
+              />
+            )}
+          </div>
 
           <FlexSectionSpacer />
 
-          <div style={{ alignSelf: 'flex-start', width: '50%' }}>
-            {!crewIsOwner && <CrewOwnerInner crew={ownerCrew} isMe={crew?.i === ownerCrew?.i} />}
-            <MiniBarChart
-              color="#92278f"
-              label="Crewmate Count"
-              valueLabel={`7 / ${ship.maxPassengers}`}
-              value={7 / ship.maxPassengers}
-              deltaColor="#f644fa"
-              deltaValue={crew?.crewMembers?.length / ship.maxPassengers}
-            />
-          </div>
+          <CrewInputBlock
+            title="Ejected Crew"
+            crew={{ ...targetCrew, members: targetCrew.crewMembers }} />
+
         </FlexSection>
 
-        {!crewIsOwner && (
-          <FlexSection style={{ alignItems: 'flex-start' }}>
-            <SwayInputBlock
-              title="Sway Payment"
-              instruction="OPTIONAL: Include with transfer" />
-
-            <FlexSectionSpacer />
-
+        {!(ship && ship.status === 'IN_ORBIT') && (
+          <FlexSection>
             <div style={{ width: '50%' }} />
-
+            <FlexSectionSpacer />
+            <div style={{ width: '50%' }}>
+              <Warning>
+                <WarningOutlineIcon />
+                <div>Ejected crews must travel into orbit.</div>
+              </Warning>
+            </div>
           </FlexSection>
         )}
 
@@ -220,7 +234,7 @@ const EjectCrew = ({ asteroid, lot, manager, stage, ...props }) => {
 
       <ActionDialogFooter
         disabled={false/* TODO: no permission */}
-        goLabel="Station"
+        goLabel="Eject"
         onGo={onStation}
         stage={stage}
         {...props} />
@@ -229,36 +243,54 @@ const EjectCrew = ({ asteroid, lot, manager, stage, ...props }) => {
 };
 
 const Wrapper = (props) => {
-  const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  const { data: ship } = useShip();
-  
+  const { crew } = useCrewContext();
+
+  const originAsteroid = useStore(s => s.asteroids.origin);
+  const originLot = useStore(s => s.asteroids.lot || {});
+  const zoomScene = useStore(s => s.asteroids.zoomScene);
+
+  const asteroidId = props.guests ? originAsteroid : crew?.station?.asteroidId;
+  const lotId = props.guests ? originLot?.lotId : crew?.station?.lotId;
+  const shipId = props.guests ? (zoomScene?.type === 'SHIP' && zoomScene.shipId) : crew?.station?.shipId;
+
+  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
+  const { data: lot, isLoading: lotIsLoading } = useLot(asteroidId, lotId);
+  const { data: ship, isLoading: shipIsLoading } = useShip(shipId);
+
+  const targetCrewId = props.guests ? ship?.stationedCrews.find((c) => c !== crew?.i) : crew?.i;
+  const { data: targetCrew, isLoading: crewIsLoading } = useCrew(targetCrewId);
+  const { data: targetCrewMembers, isLoading: targetCrewMembersLoading } = useCrewMembers(targetCrew?.crewMembers ? { ids: targetCrew?.crewMembers.join(',') } : []);
+
   // TODO: ...
   // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
   // const { actionStage } = extractionManager;
   const manager = {};
   const actionStage = actionStages.NOT_STARTED;
 
+  const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading || crewIsLoading || targetCrewMembersLoading;
   useEffect(() => {
-    if (!asteroid || !lot) {
+    if (!asteroid || (!lot && !ship)) {// || !targetCrew) { // TODO: restore this
       if (!isLoading) {
         if (props.onClose) props.onClose();
       }
     }
-  }, [asteroid, lot, isLoading]);
+  }, [asteroid, lot, ship, isLoading]);
 
   return (
     <ActionDialogInner
       actionImage={travelBackground}
       asteroid={asteroid}
-      isLoading={isLoading}
       lot={lot}
-      onClose={props.onClose}
-      overrideColor={actionStage === actionStages.NOT_STARTED && (props.passengers ? theme.colors.green : theme.colors.main)}
       ship={ship}
+      isLoading={isLoading}
+      onClose={props.onClose}
+      overrideColor={actionStage === actionStages.NOT_STARTED && (props.guests ? theme.colors.red : theme.colors.main)}
       stage={actionStage}>
-      <EjectCrew
+      <StationCrew
         asteroid={asteroid}
         lot={lot}
+        ship={ship}
+        targetCrew={{ ...targetCrew, crewMembers: targetCrewMembers }}
         manager={manager}
         stage={actionStage}
         {...props} />

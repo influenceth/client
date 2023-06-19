@@ -299,7 +299,7 @@ const AsteroidAssets = () => {
     if (!ships) return {};
     return ships
     .reduce((acc, ship) => {
-      const lot = ship.lot || -1;
+      const lot = ship.lotId || -1;
       if (!acc[lot]) acc[lot] = [];
       acc[lot].push(ship);
       return acc;

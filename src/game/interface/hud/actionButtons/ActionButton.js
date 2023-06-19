@@ -5,6 +5,7 @@ import ReactTooltip from 'react-tooltip';
 import ClipCorner from '~/components/ClipCorner';
 import useChainTime from '~/hooks/useChainTime';
 import { formatTimer } from "~/lib/utils";
+import { hexToRGB } from '~/theme';
 
 const dimension = 60;
 const padding = 4;
@@ -29,7 +30,7 @@ const rotationAnimation = keyframes`
 `;
 
 const ActionButtonWrapper = styled.div`
-  color: ${p => p.theme.colors.main};
+  color: ${p => p.overrideColor || p.theme.colors.main};
   cursor: ${p => p.theme.cursors.active};
   margin-right: 8px;
   pointer-events: all;
@@ -41,7 +42,7 @@ const ActionButtonWrapper = styled.div`
 
   ${p => p?.badge ? `
     &:before {
-      background-color: ${p.theme.colors.main};
+      background-color: ${p.overrideColor || p.theme.colors.main};
       content: "${p.badge}";
       color: white;
       border-radius: 2em;
@@ -74,7 +75,7 @@ const ActionButtonWrapper = styled.div`
 `;
 
 const ActionButton = styled.div`
-  border: 1px solid ${p => p.theme.colors.main};
+  border: 1px solid ${p => p.overrideColor || p.theme.colors.main};
   clip-path: polygon(
     0 0,
     100% 0,
@@ -88,12 +89,12 @@ const ActionButton = styled.div`
   position: relative;
   transition: color 250ms ease;
   & > svg {
-    stroke: ${p => p.theme.colors.main} !important;
+    stroke: ${p => p.overrideColor || p.theme.colors.main} !important;
   }
 
   & > div {
     align-items: center;
-    background-color: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+    background-color: rgba(${p => p.overrideColor ? hexToRGB(p.overrideColor) : p.theme.colors.mainRGB}, 0.2);
     clip-path: polygon(
       0 0,
       100% 0,
@@ -119,7 +120,7 @@ const ActionButton = styled.div`
 
   ${p => p.active && !p.disabled && `
     & > div {
-      background-color: ${p.theme.colors.main};
+      background-color: ${p.overrideColor || p.theme.colors.main};
       color: rgba(0, 0, 0, 0.8);
     }
   `}
@@ -169,7 +170,7 @@ const ActionButton = styled.div`
       &:hover {
         color: white;
         & > div {
-          background-color: rgba(${p.theme.colors.mainRGB}, 0.4);
+          background-color: rgba(${p.overrideColor ? hexToRGB(p.overrideColor) : p.theme.colors.mainRGB}, 0.4);
         }
       }
     `
@@ -253,7 +254,7 @@ const ActionButtonComponent = ({ label, flags = {}, icon, onClick, ...props }) =
       {...flags}
       {...props}>
       {flags.loading && <LoadingAnimation />}
-      <ActionButton {...flags}>
+      <ActionButton {...flags} overrideColor={props.overrideColor}>
         <ClipCorner dimension={cornerSize} />
         <div>{icon}</div>
         {flags.loading && <LoadingTimer completionTime={flags.completionTime} />}

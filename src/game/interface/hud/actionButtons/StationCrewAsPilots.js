@@ -5,7 +5,7 @@ import ActionButton from './ActionButton';
 
 const StationCrewAsPilots = ({ asteroid, lot, onSetAction }) => {
   const handleClick = useCallback(() => {
-    onSetAction('STATION_PILOTS_ON_SHIP');
+    onSetAction('STATION_CREW');
   }, [onSetAction]);
 
   return (

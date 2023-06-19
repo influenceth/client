@@ -1,23 +1,23 @@
 import { useCallback } from 'react';
 
-import { StationPassengersIcon } from '~/components/Icons';
+import { EjectPassengersIcon } from '~/components/Icons';
 import ActionButton from './ActionButton';
 
-const StationCrewAsPassengers = ({ asteroid, lot, onSetAction }) => {
+const EjectCrew = ({ asteroid, lot, onSetAction }) => {
   const handleClick = useCallback(() => {
-    onSetAction('STATION_CREW_AS_GUESTS');
+    onSetAction('EJECT_CREW');
   }, [onSetAction]);
 
   return (
     <ActionButton
-      label="Station Crew on Ship Passengers"
+      label="Eject My Crew"
       flags={{
         disabled: false, // TODO: ... crew not on asteroid? ship permissions?
         loading: false, // TODO: ...
       }}
-      icon={<StationPassengersIcon />}
+      icon={<EjectPassengersIcon />}
       onClick={handleClick} />
   );
 };
 
-export default StationCrewAsPassengers;
+export default EjectCrew;
