@@ -269,8 +269,10 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
           label: 'Extract Resource',
         }}
         captain={captain}
+        location={{ asteroid, lot }}
         crewAvailableTime={crewTravelTime}
         taskCompleteTime={crewTravelTime + extractionTime}
+        onClose={props.onClose}
         stage={stage} />
 
       <ActionDialogBody>
@@ -413,10 +415,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={extractionBackground}
-      asteroid={asteroid}
       isLoading={isLoading}
-      lot={lot}
-      onClose={props.onClose}
       stage={actionStage}>
       <Extract
         asteroid={asteroid}

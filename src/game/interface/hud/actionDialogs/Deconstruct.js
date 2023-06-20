@@ -98,8 +98,10 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
           status: stage === actionStage.NOT_STARTED ? 'Confirm' : '',
         }}
         captain={captain}
+        location={{ asteroid, lot }}
         crewAvailableTime={crewTravelTime}
         taskCompleteTime={crewTravelTime + constructionTime}
+        onClose={props.onClose}
         stage={stage} />
 
       <ActionDialogBody>
@@ -210,10 +212,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={constructionBackground}
-      asteroid={asteroid}
       isLoading={isLoading}
-      lot={lot}
-      onClose={props.onClose}
       stage={stageByActivity.deconstruct}>
       <Deconstruct
         asteroid={asteroid}

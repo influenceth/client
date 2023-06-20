@@ -126,8 +126,10 @@ const LaunchShip = ({ asteroid, lot, manager, stage, ...props }) => {
           status: stage === actionStages.NOT_STARTED ? 'Send to Orbit' : undefined,
         }}
         captain={captain}
+        location={{ asteroid, lot, ship }}
         crewAvailableTime={0}
         taskCompleteTime={0}
+        onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
         stage={stage} />
 
@@ -246,11 +248,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      asteroid={asteroid}
       isLoading={isLoading}
-      lot={lot}
-      onClose={props.onClose}
-      overrideColor={actionStage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
       stage={actionStage}>
       <LaunchShip
         asteroid={asteroid}

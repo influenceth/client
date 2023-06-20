@@ -180,7 +180,9 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
           label: 'Transfer to Site',
         }}
         captain={captain}
+        location={{ asteroid, lot }}
         crewAvailableTime={0}
+        onClose={props.onClose}
         taskCompleteTime={transportTime}
         stage={stage} />
 
@@ -315,10 +317,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={surfaceTransferBackground}
-      asteroid={asteroid}
       isLoading={isLoading}
-      lot={lot}
-      onClose={props.onClose}
       stage={actionStage}>
       <TransferToSite
         asteroid={asteroid}

@@ -125,8 +125,10 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
           status: stage === actionStages.NOT_STARTED ? 'Evict from my Spaceport' : undefined,
         }}
         captain={captain}
+        location={{ asteroid, lot, ship }}
         crewAvailableTime={0}
         taskCompleteTime={0}
+        onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.error : undefined}
         stage={stage} />
 
@@ -247,11 +249,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      asteroid={asteroid}
       isLoading={isLoading}
-      lot={lot}
-      onClose={props.onClose}
-      overrideColor={actionStage === actionStages.NOT_STARTED ? theme.colors.error : undefined}
       stage={actionStage}>
       <EvictShip
         asteroid={asteroid}

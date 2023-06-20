@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { BarLoader, PuffLoader } from 'react-spinners';
+import { PuffLoader } from 'react-spinners';
 import ReactTooltip from 'react-tooltip';
 
 import ClipCorner from '~/components/ClipCorner';
-import { CloseIcon } from '~/components/Icons';
-import IconButton from '~/components/IconButton';
 import useAsteroid from '~/hooks/useAsteroid';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -28,7 +26,6 @@ import StationCrew from './actionDialogs/StationCrew';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import TransferToSite from './actionDialogs/TransferToSite';
 import UnplanBuilding from './actionDialogs/UnplanBuilding';
-import { formatShipStatus } from './actionDialogs/components';
 
 const cornerSize = 20;
 
@@ -178,50 +175,6 @@ const ActionImage = styled.div`
   z-index: 0;
 `;
 
-const ActionBar = styled.div`
-  align-items: center;
-  background: ${p => p.overrideColor ? `rgba(${hexToRGB(p.overrideColor)}, 0.2)` : p.headerBackground};
-  display: flex;
-  flex: 0 0 62px;
-  justify-content: space-between;
-  padding: 0 15px 0 20px;
-  position: relative;
-  z-index: 1;
-`;
-
-const BarLoadingContainer = styled.div`
-  height: 2px;
-  left: 0;
-  position: absolute;
-  right: 0;
-  top: 0;
-  z-index: 2;
-  & > span {
-    display: block;
-  }
-`;
-
-const ActionLocation = styled.div`
-  border-left: 3px solid ${p => p.overrideColor || p.highlight};
-  color: rgba(210, 210, 210, 0.7);
-  display: flex;
-  font-size: 20px;
-  height: 36px;
-  line-height: 36px;
-  padding-left: 10px;
-  white-space: nowrap;
-  & > b {
-    color: white;
-    display: inline-block;
-    height: 36px;
-    margin-right: 6px;
-    max-width: 350px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-`;
-
 const ActionMain = styled.div`
   display: flex;
   flex: 1;
@@ -231,7 +184,7 @@ const ActionMain = styled.div`
 `;
 
 // TODO: transition in
-export const ActionDialogInner = ({ actionImage, asteroid, children, isLoading, lot, onClose, overrideColor, ship, stage }) => (
+export const ActionDialogInner = ({ actionImage, children, isLoading, stage }) => (
   <Modal {...theming[stage]}>
     <ModalInner isLoading={isLoading}>
       {isLoading && <LoadingContainer><PuffLoader color="white" /></LoadingContainer>}
@@ -239,21 +192,6 @@ export const ActionDialogInner = ({ actionImage, asteroid, children, isLoading, 
         <>
           <ActionImage src={actionImage} />
           <ActionMain>
-            <ActionBar {...theming[stage]} overrideColor={overrideColor}>
-              {(stage === actionStage.STARTING || stage === actionStage.COMPLETING) && (
-                <BarLoadingContainer>
-                  <BarLoader color={theme.colors.lightPurple} height="5" speedMultiplier={0.5} width="100%" />
-                </BarLoadingContainer>
-              )}
-              <ActionLocation {...theming[stage]} overrideColor={overrideColor}>
-                <b>{asteroid?.customName || asteroid?.baseName}</b>
-                <span>{lot?.i ? `> LOT ${lot?.i.toLocaleString()}` : ''}</span>
-                <span>{ship && !lot ? `> ${formatShipStatus(ship)}` : ''}</span>
-              </ActionLocation>
-              <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
-                <CloseIcon />
-              </IconButton>
-            </ActionBar>
             {children}
           </ActionMain>
         </>

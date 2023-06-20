@@ -186,6 +186,8 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, targetCrew, 
         action={actionDetails}
         captain={captain}
         crewAvailableTime={0}
+        location={{ asteroid, lot, ship }}
+        onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.orange : undefined}
         taskCompleteTime={0}
         stage={stage} />
@@ -252,12 +254,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      asteroid={asteroid}
-      lot={lot}
-      ship={ship}
       isLoading={isLoading}
-      onClose={props.onClose}
-      overrideColor={actionStage === actionStages.NOT_STARTED ? theme.colors.orange : undefined}
       stage={actionStage}>
       <EmergencyModeToggle
         asteroid={asteroid}

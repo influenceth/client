@@ -225,8 +225,10 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
           label: 'Optimize Deposit',
         }}
         captain={captain}
+        location={{ asteroid, lot }}
         crewAvailableTime={crewTravelTime + sampleTime}
         taskCompleteTime={crewTravelTime + sampleTime}
+        onClose={props.onClose}
         stage={stage} />
 
       <ActionDialogBody>
@@ -342,10 +344,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={coreSampleBackground}
-      asteroid={asteroid}
       isLoading={isLoading}
-      lot={lot}
-      onClose={props.onClose}
       stage={actionStage}>
       <ImproveCoreSample
         asteroid={asteroid}

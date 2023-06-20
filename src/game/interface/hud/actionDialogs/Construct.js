@@ -146,8 +146,10 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
           label: 'Construct Building',
         }}
         captain={captain}
+        location={{ asteroid, lot }}
         crewAvailableTime={crewTravelTime}
         taskCompleteTime={constructionTime}
+        onClose={props.onClose}
         stage={stage} />
 
       <ActionDialogBody>
@@ -269,10 +271,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={constructionBackground}
-      asteroid={asteroid}
       isLoading={isLoading}
-      lot={lot}
-      onClose={props.onClose}
       stage={stageByActivity.construct}>
       <Construct
         asteroid={asteroid}

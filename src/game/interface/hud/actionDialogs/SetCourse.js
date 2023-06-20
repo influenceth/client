@@ -303,8 +303,10 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
           status: stage === actionStages.NOT_STARTED ? 'Travel to Asteroid' : undefined,
         }}
         captain={captain}
+        location={{ asteroid: origin, ship }}
         crewAvailableTime={arrivingIn}
         taskCompleteTime={arrivingIn}
+        onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
         stage={stage} />
 
@@ -446,10 +448,7 @@ const Wrapper = ({ travelSolution, ...props }) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      asteroid={origin}
       isLoading={originIsLoading || destinationIsLoading}
-      onClose={props.onClose}
-      overrideColor={actionStage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
       stage={actionStage}>
       <SetCourse
         origin={origin}

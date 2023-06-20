@@ -164,6 +164,8 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
         action={actionDetails}
         captain={captain}
         crewAvailableTime={0}
+        location={{ asteroid, lot, ship }}
+        onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? (crewIsOwner ? theme.colors.main : theme.colors.green) : undefined}
         taskCompleteTime={0}
         stage={stage} />
@@ -342,12 +344,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      asteroid={asteroid}
-      lot={lot}
-      ship={ship}
       isLoading={isLoading}
-      onClose={props.onClose}
-      overrideColor={actionStage === actionStages.NOT_STARTED && (props.guests ? theme.colors.green : theme.colors.main)}
       stage={actionStage}>
       <StationCrew
         asteroid={asteroid}

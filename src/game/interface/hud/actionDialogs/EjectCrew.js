@@ -132,6 +132,8 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
         action={actionDetails}
         captain={captain}
         crewAvailableTime={0}
+        location={{ asteroid, lot, ship }}
+        onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? (myCrewIsTarget ? theme.colors.main : theme.colors.red) : undefined}
         taskCompleteTime={0}
         stage={stage} />
@@ -261,12 +263,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      asteroid={asteroid}
-      lot={lot}
-      ship={ship}
       isLoading={isLoading}
-      onClose={props.onClose}
-      overrideColor={actionStage === actionStages.NOT_STARTED && (props.guests ? theme.colors.red : theme.colors.main)}
       stage={actionStage}>
       <EjectCrew
         asteroid={asteroid}

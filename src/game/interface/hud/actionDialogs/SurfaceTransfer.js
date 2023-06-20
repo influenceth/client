@@ -35,11 +35,17 @@ import {
   ActionDialogTabs,
   InventoryChangeCharts,
   CrewOwnerBlock,
-  TransferDistanceDetails
+  TransferDistanceDetails,
+  FlexSectionBlock,
+  CrewOwnerInner,
+  WarningAlert,
+  SwayInputBlock,
+  SwayInputBlockInner
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
 import useCrew from '~/hooks/useCrew';
+import theme from '~/theme';
 
 const Overloaded = styled.div`
   color: ${p => p.theme.colors.error};
@@ -191,15 +197,34 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
     });
   }, [originInvId, destinationLot?.i, destInvId, selectedItems]);
 
+  const actionDetails = useMemo(() => {
+    let overrideColor = undefined;
+    let status = undefined;
+    if (stage === actionStage.NOT_STARTED) {
+      if (destinationLot && destinationLot?.occupier !== crew?.i) {
+        status = 'Send to Crew';
+        overrideColor = theme.colors.green;
+      } else {
+        status = 'Send Items';
+        overrideColor = theme.colors.main;
+      }
+    }
+    return { overrideColor, status };
+  }, [crew, destinationLot, stage]);
+
   return (
     <>
       <ActionDialogHeader
         action={{
           icon: <SurfaceTransferIcon />,
           label: 'Surface Transfer',
+          status: actionDetails.status
         }}
         captain={captain}
+        location={{ asteroid, lot }}
         crewAvailableTime={0}
+        onClose={props.onClose}
+        overrideColor={actionDetails.overrideColor}
         taskCompleteTime={transportTime}
         stage={stage} />
 
@@ -262,12 +287,45 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
 
         {tab === 0 && (
           <>
-            <ItemSelectionSection
-              label="Transfer Items"
-              items={selectedItems}
-              onClick={stage === actionStage.NOT_STARTED && (() => setTransferSelectorOpen(true))}
-              resources={resources}
-              stage={stage} />
+            {(!destinationLot || destinationLot?.occupier === crew?.i)
+              ? (
+                <ItemSelectionSection
+                  label="Transfer Items"
+                  items={selectedItems}
+                  onClick={stage === actionStage.NOT_STARTED && (() => setTransferSelectorOpen(true))}
+                  resources={resources}
+                  stage={stage} />
+              )
+              : (
+                <FlexSection>
+                  <FlexSectionBlock title="Offered Items" bodyStyle={{ height: 'auto', padding: 0 }}>
+                    <ItemSelectionSection
+                      columns={3}
+                      label="Transfer Items"
+                      items={selectedItems}
+                      onClick={stage === actionStage.NOT_STARTED && (() => setTransferSelectorOpen(true))}
+                      resources={resources}
+                      stage={stage}
+                      unwrapped />
+                  </FlexSectionBlock>
+
+                  <FlexSectionSpacer />
+
+                  <div style={{ alignSelf: 'flex-start', width: '50%' }}>
+                    <CrewOwnerInner crew={crew} />
+
+                    <WarningAlert severity="warning" style={{ marginBottom: 20 }}>
+                      <div><WarningOutlineIcon /></div>
+                      <div>The destination is controlled by a different crew.</div>
+                    </WarningAlert>
+
+                    <SwayInputBlockInner
+                      instruction="OPTIONAL: You may request a SWAY payment from the controlling crew in exchange for goods delivered." />
+                  </div>
+
+                </FlexSection>
+              )
+            }
 
             {stage !== actionStage.NOT_STARTED && (
               <ProgressBarSection
@@ -384,10 +442,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={surfaceTransferBackground}
-      asteroid={asteroid}
       isLoading={isLoading}
-      lot={lot}
-      onClose={props.onClose}
       stage={actionStage}>
       <SurfaceTransfer
         asteroid={asteroid}

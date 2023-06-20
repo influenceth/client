@@ -68,7 +68,9 @@ const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props })
           status: stage === actionStage.NOT_STARTED ? 'Confirm' : '',
         }}
         captain={captain}
+        location={{ asteroid, lot }}
         crewAvailableTime={0}
+        onClose={props.onClose}
         taskCompleteTime={0}
         stage={stage} />
 
@@ -116,10 +118,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={constructionBackground}
-      asteroid={asteroid}
       isLoading={isLoading}
-      lot={lot}
-      onClose={props.onClose}
       stage={stageByActivity.unplan}>
       <UnplanBuilding
         asteroid={asteroid}

@@ -51,6 +51,7 @@ import actionStage from '~/lib/actionStages';
 import constants from '~/lib/constants';
 import { theming } from '../ActionDialog';
 import useCrewMember from '~/hooks/useCrewMember';
+import { BarLoader } from 'react-spinners';
 
 const SECTION_WIDTH = 780;
 
@@ -292,6 +293,50 @@ export const SectionBody = styled.div`
     overflow: hidden;
     max-height: ${p.isOpen ? '400px' : '0'};
   `}
+`;
+
+const ActionBar = styled.div`
+  align-items: center;
+  background: ${p => p.overrideColor ? `rgba(${hexToRGB(p.overrideColor)}, 0.2)` : p.headerBackground};
+  display: flex;
+  flex: 0 0 62px;
+  justify-content: space-between;
+  padding: 0 15px 0 20px;
+  position: relative;
+  z-index: 1;
+`;
+
+const BarLoadingContainer = styled.div`
+  height: 2px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 2;
+  & > span {
+    display: block;
+  }
+`;
+
+const ActionLocation = styled.div`
+  border-left: 3px solid ${p => p.overrideColor || p.highlight};
+  color: rgba(210, 210, 210, 0.7);
+  display: flex;
+  font-size: 20px;
+  height: 36px;
+  line-height: 36px;
+  padding-left: 10px;
+  white-space: nowrap;
+  & > b {
+    color: white;
+    display: inline-block;
+    height: 36px;
+    margin-right: 6px;
+    max-width: 350px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 `;
 
 export const SublabelBanner = styled.div`
@@ -636,7 +681,7 @@ const IngredientsList = styled(FlexSectionInputBody)`
   `}
   column-gap: 5px;
   display: grid;
-  grid-template-columns: repeat(7, 95px);
+  grid-template-columns: repeat(${p => p.columns || 7}, 95px);
   padding: 5px;
   position: relative;
   row-gap: 5px;
@@ -1129,8 +1174,8 @@ const ShipStatus = styled.span`
 
 export const WarningAlert = styled.div`
   align-items: center;
-  background: rgba(${p => hexToRGB(p.theme.colors.red)}, 0.2);
-  color: ${p => p.theme.colors.red};
+  background: rgba(${p => hexToRGB(p.theme.colors[p.severity === 'warning' ? 'orange' : 'red'])}, 0.2);
+  color: ${p => p.theme.colors[p.severity === 'warning' ? 'orange' : 'red']};
   display: flex;
   flex-direction: row;
   margin-top: 10px;
@@ -1872,27 +1917,53 @@ export const Mouseoverable = ({ children, tooltip, style = {}, themeColor }) => 
 // COMPONENTS
 //
 
-export const ActionDialogHeader = ({ action, captain, crewAvailableTime, overrideColor, stage, taskCompleteTime }) => {
+const ActionDialogActionBar = ({ location, onClose, overrideColor, stage }) => (
+  <ActionBar {...theming[stage]} overrideColor={overrideColor}>
+    {(stage === actionStage.STARTING || stage === actionStage.COMPLETING) && (
+      <BarLoadingContainer>
+        <BarLoader color={theme.colors.lightPurple} height="5" speedMultiplier={0.5} width="100%" />
+      </BarLoadingContainer>
+    )}
+    <ActionLocation {...theming[stage]} overrideColor={overrideColor}>
+      <b>{location?.asteroid?.customName || location?.asteroid?.baseName}</b>
+      <span>{location?.lot?.i ? `> LOT ${location.lot.i.toLocaleString()}` : ''}</span>
+      <span>{location?.ship && !location?.lot ? `> ${formatShipStatus(location.ship)}` : ''}</span>
+    </ActionLocation>
+    <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
+      <CloseIcon />
+    </IconButton>
+  </ActionBar>
+);
+
+export const ActionDialogHeader = ({ action, captain, crewAvailableTime, location, onClose, overrideColor, stage, taskCompleteTime }) => {
   return (
-    <Header theming={theming[stage]} overrideHighlightColor={overrideColor}>
-      {captain && (
-        <CrewCardFramed
-          crewmate={captain}
-          isCaptain
-          width={75} />
-      )}
-      <IconAndLabel>
-        <IconContainer>{action.icon}</IconContainer>
-        <LabelContainer>
-          <h1>{action.label}</h1>
-          <div>
-            <h2>{action.status || theming[stage]?.label}</h2>
-            {crewAvailableTime !== undefined && <TimePill type="crew"><CrewIcon /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
-            {taskCompleteTime !== undefined && <TimePill type="total"><AlertIcon /> {formatTimer(taskCompleteTime, 2)}</TimePill>}
-          </div>
-        </LabelContainer>
-      </IconAndLabel>
-    </Header>
+    <>
+      <ActionDialogActionBar
+        location={location}
+        onClose={onClose}
+        overrideColor={overrideColor}
+        stage={stage}
+      />
+      <Header theming={theming[stage]} overrideHighlightColor={overrideColor}>
+        {captain && (
+          <CrewCardFramed
+            crewmate={captain}
+            isCaptain
+            width={75} />
+        )}
+        <IconAndLabel>
+          <IconContainer>{action.icon}</IconContainer>
+          <LabelContainer>
+            <h1>{action.label}</h1>
+            <div>
+              <h2>{action.status || theming[stage]?.label}</h2>
+              {crewAvailableTime !== undefined && <TimePill type="crew"><CrewIcon /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
+              {taskCompleteTime !== undefined && <TimePill type="total"><AlertIcon /> {formatTimer(taskCompleteTime, 2)}</TimePill>}
+            </div>
+          </LabelContainer>
+        </IconAndLabel>
+      </Header>
+    </>
   );
 };
 
@@ -1955,10 +2026,10 @@ export const FlexSectionBlock = ({ bodyStyle, children, style = {}, title, title
 // Sections
 //
 
-const ResourceGridSection = ({
+export const ResourceGridSectionInner = ({
+  columns,
   isGathering,
   items,
-  label,
   onClick,
   resources,
   minCells = 0,
@@ -1979,60 +2050,64 @@ const ResourceGridSection = ({
   }, [items]);
 
   return (
-    <Section style={{ marginBottom: 25 }}>
-      <SectionTitle>{label}</SectionTitle>
-      <SectionBody>
-        {/* TODO: <FutureSectionOverlay /> */}
-        <IngredientsList
-          hasSummary
-          theming={theming}
-          isSelected={onClick || undefined}
-          onClick={onClick}>
-          {items.length > 0
-            ? (
-              <>
-                {items.map((item) => (
-                  <ResourceRequirement
-                    key={item.i}
-                    isGathering={isGathering}
-                    item={item}
-                    resource={resources[item.i]}
-                    noStyles={noCellStyles}
-                    size="92px"
-                    tooltipContainer="actionDialog" />
-                ))}
-                {Array.from({ length: Math.max(0, minCells - items.length) }).map((_, i) => (
-                  <EmptyResourceImage key={i} noIcon outlineColor="transparent" style={{ background: 'rgba(0, 0, 0, 0.25)' }} />
-                ))}
-                <IngredientSummary theming={theming}>
-                  <span>
-                    {totalItems} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
-                  </span>
-                </IngredientSummary>
-              </>
-            )
-            : (
-              <>
-                <div style={{ height: 92 }}>
-                  <ThumbnailWithData style={{ marginLeft: 4, position: 'absolute' }}>
-                    <EmptyResourceImage />
-                    <label>
-                      <h3>Select</h3>
-                      <b>Items</b>
-                    </label>
-                  </ThumbnailWithData>
-                </div>
-                <IngredientSummary>
-                  <span>None Selected</span>
-                </IngredientSummary>
-              </>
-            )}
-          <ClipCorner dimension={sectionBodyCornerSize} />
-        </IngredientsList>
-      </SectionBody>
-    </Section>
+    <IngredientsList
+      columns={columns}
+      hasSummary
+      theming={theming}
+      isSelected={onClick || undefined}
+      onClick={onClick}>
+      {items.length > 0
+        ? (
+          <>
+            {items.map((item) => (
+              <ResourceRequirement
+                key={item.i}
+                isGathering={isGathering}
+                item={item}
+                resource={resources[item.i]}
+                noStyles={noCellStyles}
+                size="92px"
+                tooltipContainer="actionDialog" />
+            ))}
+            {Array.from({ length: Math.max(0, minCells - items.length) }).map((_, i) => (
+              <EmptyResourceImage key={i} noIcon outlineColor="transparent" style={{ background: 'rgba(0, 0, 0, 0.25)' }} />
+            ))}
+            <IngredientSummary theming={theming}>
+              <span>
+                {totalItems} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
+              </span>
+            </IngredientSummary>
+          </>
+        )
+        : (
+          <>
+            <div style={{ height: 92 }}>
+              <ThumbnailWithData style={{ marginLeft: 4, position: 'absolute' }}>
+                <EmptyResourceImage />
+                <label>
+                  <h3>Select</h3>
+                  <b>Items</b>
+                </label>
+              </ThumbnailWithData>
+            </div>
+            <IngredientSummary>
+              <span>None Selected</span>
+            </IngredientSummary>
+          </>
+        )}
+      <ClipCorner dimension={sectionBodyCornerSize} />
+    </IngredientsList>
   );
 };
+
+const ResourceGridSection = ({ label, ...props }) => (
+  <Section style={{ marginBottom: 25 }}>
+    <SectionTitle>{label}</SectionTitle>
+    <SectionBody>
+      <ResourceGridSectionInner {...props} />
+    </SectionBody>
+  </Section>
+);
 
 export const BuildingRequirementsSection = ({ mode, label, requirements, requirementsMet, resources }) => {
   const items = useMemo(() => {
@@ -2102,7 +2177,7 @@ export const DeconstructionMaterialsSection = ({ label, itemsReturned, resources
   );
 };
 
-export const ItemSelectionSection = ({ label, items, onClick, resources, stage }) => {
+export const ItemSelectionSection = ({ columns = 7, label, items, onClick, resources, stage, unwrapped }) => {
   const formattedItems = useMemo(() => {
     return Object.keys(items || {}).map((resourceId) => ({
       i: resourceId,
@@ -2110,16 +2185,28 @@ export const ItemSelectionSection = ({ label, items, onClick, resources, stage }
     }));
   }, [items]);
 
-  return (
-    <ResourceGridSection
-      items={formattedItems}
-      label={label}
-      minCells={14}
-      noCellStyles={stage !== actionStage.NOT_STARTED}
-      onClick={onClick}
-      resources={resources}
-      theming={stage === actionStage.READY_TO_COMPLETE ? 'success' : 'default'} />
-  );
+  return unwrapped
+    ? (
+      <ResourceGridSectionInner
+        columns={columns}
+        items={formattedItems}
+        minCells={columns * 2}
+        noCellStyles={stage !== actionStage.NOT_STARTED}
+        onClick={onClick}
+        resources={resources}
+        theming={stage === actionStage.READY_TO_COMPLETE ? 'success' : 'default'} />
+    )
+    : (
+      <ResourceGridSection
+        columns={columns}
+        items={formattedItems}
+        label={label}
+        minCells={columns * 2}
+        noCellStyles={stage !== actionStage.NOT_STARTED}
+        onClick={onClick}
+        resources={resources}
+        theming={stage === actionStage.READY_TO_COMPLETE ? 'success' : 'default'} />
+    );
 };
 
 export const TransferDistanceDetails = ({ distance }) => (
@@ -2459,16 +2546,22 @@ export const EmergencyPropellantSection = ({ title, propellantPregeneration, pro
   );
 };
 
-export const SwayInputBlock = ({ title, instruction }) => {
+export const SwayInputBlockInner = ({ instruction }) => {
   return (
-    <FlexSectionInputBlock
-      title={title}
-      bodyStyle={{ background: 'transparent' }}>
+    <>
       {instruction && <SwayInputInstruction>{instruction}</SwayInputInstruction>}
       <SwayInput />
-    </FlexSectionInputBlock>
-  );
-}
+    </>
+  )
+};
+
+export const SwayInputBlock = ({ title, ...props }) => (
+  <FlexSectionInputBlock
+    title={title}
+    bodyStyle={{ background: 'transparent' }}>
+    <SwayInputBlockInner {...props} />
+  </FlexSectionInputBlock>
+);
 
 export const CrewInputBlock = ({ crew, title }) => (
   <FlexSectionInputBlock
