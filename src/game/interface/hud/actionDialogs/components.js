@@ -2429,7 +2429,6 @@ export const EmergencyPropellantSection = ({ title, propellantPregeneration, pro
 
   const propellantPre = propellantPregeneration / propellantTankMax;
   const propellantPost = propellantPostgeneration / propellantTankMax;
-  console.log({propellantPre ,propellantPost});
   
   return (
     <FlexSectionBlock
@@ -2448,7 +2447,8 @@ export const EmergencyPropellantSection = ({ title, propellantPregeneration, pro
             <span style={{ color: theme.colors.red }}>Emergency Limit: </span>
             <b>{formatMass(0.1 * propellantTankMax * 1e3)}</b>
           </div>
-          <div style={{ color: theme.colors.main }}>
+          <div style={{ color: propellantPost > 0.1 ? theme.colors.error : theme.colors.main }}>
+            {propellantPost > 0.1 && <span style={{ verticalAlign: 'middle', fontSize: 20, lineHeight: '1em' }}><CloseIcon /></span>}
             {formatFixed(100 * propellantPost / 0.1)}% of Limit
           </div>
           <div>
