@@ -240,7 +240,7 @@ const Menu = ({ children }) => {
       {...props}
       {...tooltipProps}>
       {underlay}
-      <ResourceImage src={resource.iconUrls.w125} />
+      <ResourceImage contain={props.contain} src={parseInt(size) > 125 ? resource.iconUrls.w400 : resource.iconUrls.w125} />
       <ClipCorner dimension={10} color={outlineColor || defaultBorderColor} />
       {badge !== undefined && <ResourceBadge badge={badge} badgeDenominator={badgeDenominator} />}
       {iconBadge !== undefined && <ResourceIconBadge>{iconBadge}</ResourceIconBadge>}

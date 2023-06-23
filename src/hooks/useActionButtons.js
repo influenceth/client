@@ -151,6 +151,7 @@ const useActionButtons = () => {
             if (buildingAsset.capabilities.includes('habitation') && (lot.building?.stationedCrews || []).find((c) => c !== crew?.i)) {
               a.push(actionButtons.EjectGuestCrew);
             }
+            a.push(actionButtons.Refine);
           } else if (['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus)) {
             a.push(actionButtons.Construct);
           } else if (['READY_TO_PLAN', 'PLANNING'].includes(constructionStatus)) {

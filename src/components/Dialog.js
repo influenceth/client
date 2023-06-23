@@ -33,9 +33,9 @@ const Modal = styled.div`
   ${p => p.css || ``};
 `;
 
-const Dialog = ({ children, dialogCss, ...props }) => (
+const Dialog = ({ children, dialogCss, dialogStyle = {}, ...props }) => (
   <Backdrop {...props}>
-    <Modal {...props} css={dialogCss}>
+    <Modal {...props} css={dialogCss} style={dialogStyle}>
       {children}
     </Modal>
   </Backdrop>

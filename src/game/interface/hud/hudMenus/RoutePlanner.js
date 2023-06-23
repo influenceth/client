@@ -9,6 +9,7 @@ import SliderInput from '~/components/SliderInput';
 import ClockContext from '~/contexts/ClockContext';
 import { useShipAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
+import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
 import { formatFixed, orbitTimeToGameTime } from '~/lib/utils';
@@ -144,7 +145,7 @@ const RoutePlanner = () => {
 
   const [cargoMass, setCargoMass] = useState(0);
   const [propellantMass, setPropellantMass] = useState(0);
-  const [ship, setShip] = useState(ships[0]);
+  const [ship, setShip] = useState(ships[1]);
 
   const onSetCargoMass = useCallback((amount) => {
     setCargoMass(Math.max(0, Math.min(ship?.maxCargoMass, Math.floor(parseInt(amount) || 0))));
@@ -231,7 +232,7 @@ const RoutePlanner = () => {
           <Dropdown
             labelKey="name"
             onChange={setShip}
-            options={ships}
+            options={Object.values(ships)}
             valueKey="i"
             size="small"
             style={{ textTransform: 'none' }}

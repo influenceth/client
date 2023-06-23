@@ -511,7 +511,7 @@ const InfoPane = () => {
         )}
         {actions?.length > 0 && (
           <ActionButtonContainer>
-            {inTravelMode && <ActionForm><RouteSelection /></ActionForm>}
+            {inTravelMode && zoomStatus === 'out' && <ActionForm><RouteSelection /></ActionForm>}
             <ActionButtons>
               {actions.map((ActionButton, i) => (
                 <ActionButton key={i} {...actionProps} />

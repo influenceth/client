@@ -65,8 +65,9 @@ const SliderInput = ({ min = 0, max = 1, increment = 1, value, onChange }) => {
   const expectedChange = useRef();
 
   const handleChange = (newValue) => {
-    expectedChange.current = newValue;
-    onChange(newValue);
+    const incrementedNewValue = (newValue === max || newValue === min) ? newValue : Math.round((1 / increment) * newValue) * increment;
+    expectedChange.current = incrementedNewValue;
+    onChange(incrementedNewValue);
   }
 
   useEffect(() => {

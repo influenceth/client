@@ -29,15 +29,17 @@ import {
   MyAssetIcon,
   CaptainIcon,
   InfoIcon,
-  EmergencyModeEnterIcon
+  EmergencyModeEnterIcon,
+  CheckIcon,
+  ProcessIcon
 } from '~/components/Icons';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import ResourceColorIcon from '~/components/ResourceColorIcon';
-import { ResourceThumbnailWrapper, ResourceImage, ResourceProgress } from '~/components/ResourceThumbnail';
+import ResourceThumbnail, { ResourceThumbnailWrapper, ResourceImage, ResourceProgress } from '~/components/ResourceThumbnail';
 import ResourceRequirement from '~/components/ResourceRequirement';
 import ResourceSelection from '~/components/ResourceSelection';
 import SliderInput from '~/components/SliderInput';
-import { useBuildingAssets } from '~/hooks/useAssets';
+import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import theme, { hexToRGB } from '~/theme';
 import LiveTimer from '~/components/LiveTimer';
@@ -122,8 +124,8 @@ export const FlexSectionSpacer = styled.div`
   width: 32px;
 `;
 
-const sectionBodyCornerSize = 15;
-const FlexSectionInputBody = styled.div`
+export const sectionBodyCornerSize = 15;
+export const FlexSectionInputBody = styled.div`
   clip-path: polygon(
     0 0,
     100% 0,
@@ -430,6 +432,7 @@ const Header = styled(Section)`
       color: ${p.overrideHighlightColor};
     }
   `}
+  ${p => p.wide && `width: 100%;`}
 `;
 
 export const ActionDialogBody = styled.div`
@@ -470,6 +473,7 @@ const StatRow = styled.div`
 `;
 const StatSection = styled(Section)`
   min-height: 0;
+  ${p => p.wide && `width: 100%;`}
   & ${SectionBody} {
     align-items: flex-start;
     display: flex;
@@ -497,6 +501,7 @@ const Footer = styled(Section)`
       margin: 15px 5px;
     }
   }
+  ${p => p.wide && `width: 100%;`}
 `;
 
 const ThumbnailWithData = styled.div`
@@ -593,7 +598,7 @@ const SliderLabel = styled.div`
   margin-bottom: -4px;
   & > b {
     color: white;
-    font-size: 28px;
+    font-size: 175%;
     font-weight: normal;
   }
 `;
@@ -609,8 +614,8 @@ const SliderTextInput = styled.input`
   border: 1px solid ${borderColor};
   color: white;
   font-family: inherit;
-  font-size: 26px;
-  height: 33px;
+  font-size: 175%;
+  height: 100%;
   text-align: right;
   width: 120px;
 `;
@@ -628,6 +633,65 @@ const SliderInfoRow = styled.div`
   & > div:last-child {
     text-align: right;
   }
+`;
+
+const ProductWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+`;
+const ProductGridWrapper = styled.div`
+  column-gap: 5px;
+  display: grid;
+  grid-template-columns: repeat(3, 87px);
+  row-gap: 5px;
+`;
+const ProductSelector = styled.div`
+  padding: 4px;
+  position: relative;
+  ${p => p.input && `
+    padding-bottom: 0;
+    padding-top: 0;
+  `}
+  ${p => p.output && `
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% calc(100% - 10px),
+      calc(100% - 10px) 100%,
+      0 100%
+    );
+  `}
+  ${p => p.output && p.primary && `
+    background: rgba(${p.theme.colors.mainRGB}, 0.2);
+    border: 1px solid ${p.theme.colors.main};
+    padding: 3px;
+  `}
+  ${p => p.output && !p.primary && `
+    cursor: ${p.theme.cursors.active};
+    &:hover {
+      background: #171717;
+    }
+  `}
+  & > label {
+    color: ${p => p.primary ? p.theme.colors.main : 'inherit'};
+    display: block;
+    font-size: 15px;
+    font-weight: bold;
+    padding-top: 3px;
+    text-align: center;
+    text-transform: uppercase;
+    & > svg {
+      font-size: 65%;
+      height: 15px;
+    }
+  }
+`;
+const RecipeLabel = styled.div`
+  color: white;
+  font-size: 13px;
+  line-height: 13px;
+  margin-top: 2px;
+  margin-left: 4px;
 `;
 
 const PropulsionTypeOption = styled.div`
@@ -777,6 +841,18 @@ const EmptyMessage = styled.div`
   opacity: 0.7;
   padding: 20px;
   text-align: center;
+`;
+const InputOutputTableCell = styled.div`
+  align-items: center;
+  display: flex;
+  & > * {
+    margin-left: 2px;
+  }
+  & > label {
+    opacity: 0.5;
+    margin-left: 0;
+    padding-right: 8px;
+  }
 `;
 
 const TextInputWithNote = styled.div`
@@ -1252,6 +1328,7 @@ const QuestionIcon = styled.div`
 
 export const TransferDistanceTitleDetails = styled.span`
   font-size: 15px;
+  line-height: 15px;
   & label {
     color: ${p => p.theme.colors.main};
     font-weight: bold;
@@ -1266,10 +1343,10 @@ const FreeTransferNote = styled.div`
   }
 `;
 
-export const SelectionDialog = ({ children, isCompletable, open, onClose, onComplete, title }) => {
+export const SelectionDialog = ({ children, isCompletable, open, onClose, onComplete, style = {}, title }) => {
   if (!open) return null;
   return createPortal(
-    <Dialog opaque dialogCss={dialogCss}>
+    <Dialog opaque dialogCss={dialogCss} dialogStyle={style}>
       <ReactTooltip id="selectionDialog" effect="solid" />
       <SelectionTitle>
         <div>{title}</div>
@@ -1714,6 +1791,72 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
   );
 };
 
+export const ProcessSelectionDialog = ({ initialSelection, processes, onClose, onSelected, open }) => {
+  const resources = useResourceAssets();
+  const shipAssets = useShipAssets();
+  const [error, setError] = useState();
+  const [selection, setSelection] = useState(initialSelection);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={`Select Process`}
+      style={{ maxWidth: '90vw' }}>
+      {/* TODO: isLoading */}
+      {/* TODO: replace with DataTable? */}
+      <SelectionTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>Process Name</td>
+              <td style={{ textAlign: 'left'}}>Inputs</td>
+              <td style={{ textAlign: 'left'}}>Outputs</td>
+            </tr>
+          </thead>
+          <tbody>
+            {processes.map(({ i, name, inputs, outputs }) => {
+              return (
+                <SelectionTableRow
+                  key={i}
+                  onClick={() => setSelection(i)}
+                  selectedRow={i === selection}>
+                  <td><div style={{ display: 'flex', alignItems: 'center' }}><ProcessIcon style={{ marginRight: 6 }} /> {name}</div></td>
+                  <td>
+                    <InputOutputTableCell>
+                      <label>{inputs.length}</label>
+                      {inputs.map(({ resourceId }) => (
+                        <ResourceThumbnail key={resourceId} resource={resources[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                      ))}
+                    </InputOutputTableCell>
+                  </td>
+                  <td>
+                    <InputOutputTableCell>
+                      <label>{outputs.length}</label>
+                      {outputs.map(({ resourceId, shipAssetId }) => 
+                        shipAssetId
+                          ? <ShipImage key={shipAssetId} ship={shipAssets[shipAssetId]} style={{ height: '45px', width: '74px' }} tooltipContainer="selectionDialog" />
+                          : <ResourceThumbnail key={resourceId} resource={resources[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                      )}
+                    </InputOutputTableCell>
+                  </td>
+                </SelectionTableRow>
+              );
+            })}
+          </tbody>
+        </table>
+      </SelectionTableWrapper>
+    </SelectionDialog>
+  );
+}
+
 
 //
 //  FORMATTERS
@@ -1779,12 +1922,12 @@ export const AsteroidImage = ({ asteroid }) => {
   )
 }
 
-export const ShipImage = ({ ship, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, simulated, square }) => {
+export const ShipImage = ({ ship, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, simulated, square, style = {} }) => {
   if (!ship) return null;
   // TODO: getCapacityUsage is intended for buildings
   const capacity = getCapacityUsage(ship, inventories, showInventoryStatusForType);
   return (
-    <ShipThumbnailWrapper>
+    <ShipThumbnailWrapper style={style}>
       <ResourceImage src={ship[simulated ? 'simIconUrls' : 'iconUrls']?.w150} />
       {showInventoryStatusForType !== undefined && (
         <>
@@ -1935,7 +2078,7 @@ const ActionDialogActionBar = ({ location, onClose, overrideColor, stage }) => (
   </ActionBar>
 );
 
-export const ActionDialogHeader = ({ action, captain, crewAvailableTime, location, onClose, overrideColor, stage, taskCompleteTime }) => {
+export const ActionDialogHeader = ({ action, captain, crewAvailableTime, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
   return (
     <>
       <ActionDialogActionBar
@@ -1944,7 +2087,7 @@ export const ActionDialogHeader = ({ action, captain, crewAvailableTime, locatio
         overrideColor={overrideColor}
         stage={stage}
       />
-      <Header theming={theming[stage]} overrideHighlightColor={overrideColor}>
+      <Header theming={theming[stage]} overrideHighlightColor={overrideColor} wide={wide}>
         {captain && (
           <CrewCardFramed
             crewmate={captain}
@@ -2395,6 +2538,151 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
   );
 };
 
+export const RecipeSlider = ({ amount, processingTime, min, max, setAmount }) => {
+  const [focusOn, setFocusOn] = useState();
+  const [mouseIn, setMouseIn] = useState(false);
+
+  const onFocusEvent = useCallback((e) => {
+    if (e.type === 'focus') {
+      setFocusOn(true);
+      e.target.select();
+    } else {
+      setFocusOn(false);
+    }
+  }, []);
+
+  const onMouseEvent = useCallback((e) => {
+    setMouseIn(e.type === 'mouseenter')
+  }, []);
+
+  const onChangeInput = (e) => {
+    let currentValue = Math.round(1000 * e.currentTarget.value) / 1000;
+    if (currentValue > max) currentValue = max;
+    if (currentValue < min) currentValue = min;
+    setAmount(currentValue);
+  };
+
+  const onRound = () => {
+    let newValue = Math.round(amount);
+    if (newValue > max) newValue = Math.floor(amount);
+    if (newValue < min) newValue = Math.ceil(amount);
+    setAmount(newValue);
+  };
+
+  return (
+    <SliderWrapper>
+      <SliderInput
+        min={min}
+        max={max}
+        increment={0.001}
+        onChange={setAmount}
+        value={amount || 0} />
+      <SliderInfoRow style={{ alignItems: 'center' }}>
+        <SliderInfo style={{ flex: 1 }}>{formatTimer(processingTime, 3)}</SliderInfo>
+        <SliderLabel onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent} style={{ flex: 'none', fontSize: '10px', lineHeight: '29px' }}>
+          {(mouseIn || focusOn) ? (
+            <SliderTextInput
+              type="number"
+              step={0.001}
+              value={amount}
+              onChange={onChangeInput}
+              onBlur={onFocusEvent}
+              onFocus={onFocusEvent}
+              style={{ marginTop: -2 }} />
+            )
+            : (
+              <b>{amount.toLocaleString(undefined, { minimumFractionDigits: 3 })}</b>
+            )
+          }
+          {' '}
+          <span style={{ fontSize: 14 }}>SRs</span>
+        </SliderLabel>
+        <Button
+          disabled={amount === Math.round(amount)}
+          onClick={onRound}
+          size="small"
+          style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Round</Button>
+        <Button
+          disabled={amount === max}
+          onClick={() => setAmount(max)}
+          size="small"
+          style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Max</Button>
+      </SliderInfoRow>
+    </SliderWrapper>
+  );
+};
+
+export const ProcessInputOutputSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, ...props }) => {
+  const resources = useResourceAssets();
+  return (
+    <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
+      <ProductWrapper>
+        {products.map(({ resourceId, recipe, amount }) => (
+          <ProductSelector
+            key={resourceId}
+            input={input}
+            output={output}
+            primary={primaryOutput === resourceId}
+            onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
+            <ResourceThumbnail
+              resource={resources[resourceId]}
+              backgroundColor={output ? `rgba(${hexToRGB(theme.colors.green)}, 0.15)` : undefined}
+              badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
+              badgeColor={output ? theme.colors.green : theme.colors.main}
+              progress={0.5}
+              iconBadge={<RecipeLabel>{recipe}</RecipeLabel>}
+              tooltipContainer="actionDialog"
+            />
+            {output && (
+              <label>
+                {primaryOutput === resourceId
+                  ? (
+                    <>
+                      <CheckIcon /> Primary
+                      <ClipCorner dimension={10} color={theme.colors.main} />
+                    </>
+                  )
+                  : `-50%`
+                }
+              </label>
+            )}
+          </ProductSelector>
+        ))}
+      </ProductWrapper>
+    </FlexSectionBlock>
+  );
+};
+
+export const ProcessInputSquareSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, ...props }) => {
+  const resources = useResourceAssets();
+  return (
+    <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
+      <ProductGridWrapper>
+        {products.map(({ resourceId, recipe, amount }) => (
+          <ProductSelector
+            key={resourceId}
+            input={input}
+            output={output}
+            primary={primaryOutput === resourceId}
+            onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
+            <ResourceThumbnail
+              resource={resources[resourceId]}
+              backgroundColor={output ? `rgba(${hexToRGB(theme.colors.green)}, 0.15)` : undefined}
+              badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
+              badgeColor={output ? theme.colors.green : theme.colors.main}
+              progress={0.5}
+              iconBadge={<RecipeLabel>{recipe}</RecipeLabel>}
+              size="87px"
+              tooltipContainer="actionDialog"
+            />
+            {output && <label>{primaryOutput === resourceId ? <><CheckIcon /> Primary</> : `-50%`}</label>}
+          </ProductSelector>
+        ))}
+      </ProductGridWrapper>
+    </FlexSectionBlock>
+  );
+};
+
 export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, selected, onSelect, warning }) => {
   return (
     <FlexSectionBlock title={`${objectLabel} Type`} bodyStyle={{ padding: 0 }}>
@@ -2811,7 +3099,7 @@ const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip
   );
 };
 
-export const ActionDialogStats = ({ stage, stats }) => {
+export const ActionDialogStats = ({ stage, stats, wide }) => {
   const [open, setOpen] = useState();
 
   useEffect(() => {
@@ -2820,7 +3108,7 @@ export const ActionDialogStats = ({ stage, stats }) => {
 
   if (!stats?.length) return null;
   return (
-    <StatSection actionStage={stage}>
+    <StatSection actionStage={stage} wide={wide}>
       <SectionTitle
         isDetailsHeader
         isOpen={open}
@@ -2841,7 +3129,7 @@ export const ActionDialogStats = ({ stage, stats }) => {
   );
 };
 
-export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, stage }) => {
+export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, stage, wide }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // TODO: connect notifications to top-level state
@@ -2854,7 +3142,7 @@ export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, go
   }, []);
 
   return (
-    <Footer>
+    <Footer wide={wide}>
       <SectionBody>
         {/* TODO: ...
           <NotificationEnabler onClick={enableNotifications}>

@@ -9,6 +9,7 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import actionStage from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
+import BuildShip from './actionDialogs/BuildShip';
 import Construct from './actionDialogs/Construct';
 import EmergencyModeGenerate from './actionDialogs/EmergencyModeGenerate';
 import EmergencyModeToggle from './actionDialogs/EmergencyModeToggle';
@@ -21,6 +22,7 @@ import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
 import LandShip from './actionDialogs/LandShip';
 import LaunchShip from './actionDialogs/LaunchShip';
 import PlanBuilding from './actionDialogs/PlanBuilding';
+import Refine from './actionDialogs/Refine';
 import SetCourse from './actionDialogs/SetCourse';
 import StationCrew from './actionDialogs/StationCrew';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
@@ -226,6 +228,7 @@ const ActionDialog = ({ type, params }) => {
   return (
     <Backdrop>
       <ModalCushion>
+        {type === 'BUILD_SHIP' && <BuildShip {...allProps} />}
         {type === 'PLAN_BUILDING' && <PlanBuilding {...allProps} />}
         {type === 'UNPLAN_BUILDING' && <UnplanBuilding {...allProps} />}
         {type === 'CONSTRUCT' && <Construct {...allProps} />}
@@ -240,6 +243,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'LAUNCH_SHIP' && <LaunchShip {...allProps} />}
         {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}
         {type === 'NEW_CORE_SAMPLE' && <NewCoreSample {...allProps} />}
+        {type === 'REFINE' && <Refine {...allProps} />}
         {type === 'SET_COURSE' && <SetCourse {...allProps} />}
         {type === 'STATION_CREW' && <StationCrew {...allProps} />}
         {type === 'STATION_CREW_AS_GUESTS' && <StationCrew {...allProps} guests />}
