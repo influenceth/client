@@ -279,7 +279,7 @@ const MarketplaceOrderBook = ({ lot, marketplace, resource }) => {
         { price: 370, amount: 369 },
         { price: 327, amount: 16 },
         { price: 317, amount: 80 },
-      ].sort((a, b) => a.price - b.price ? -1 : 1)
+      ].sort((a, b) => a.price > b.price ? -1 : 1)
     );
   }, []);
 
@@ -304,11 +304,11 @@ const MarketplaceOrderBook = ({ lot, marketplace, resource }) => {
     // calculate centerPrice and spread for the orders
     let centerPrice;
     let spread;
-    if (buyOrders[0] && sellOrders[0]) {
-      centerPrice = (buyOrders[0].price + sellOrders[0].price) / 2;
-      spread = sellOrders[0].price - buyOrders[0].price;
+    if (buyOrders[0] && sellOrders[sellOrders.length - 1]) {
+      centerPrice = (buyOrders[0].price + sellOrders[sellOrders.length - 1].price) / 2;
+      spread = sellOrders[sellOrders.length - 1].price - buyOrders[0].price;
     } else {
-      centerPrice = buyOrders[0].price || sellOrders[0].price;
+      centerPrice = buyOrders[0].price || sellOrders[sellOrders.length - 1].price;
     }
     
     // set the size of the y-axis
@@ -317,7 +317,7 @@ const MarketplaceOrderBook = ({ lot, marketplace, resource }) => {
       yAxisHalf = Math.max(yAxisHalf, centerPrice - buyOrders[buyOrders.length - 1].price);
     }
     if (sellOrders.length) {
-      yAxisHalf = Math.max(yAxisHalf, sellOrders[sellOrders.length - 1].price - centerPrice);
+      yAxisHalf = Math.max(yAxisHalf, sellOrders[0].price - centerPrice);
     }
     yAxisHalf *= 1.05; // add enough buffer that can draw last step
 
@@ -355,7 +355,7 @@ const MarketplaceOrderBook = ({ lot, marketplace, resource }) => {
     // calculate the "sell" polygon
     let totalForSale = 0;
     const sellPoints = [];
-    sellOrders.forEach(({ price, amount }) => {
+    [...sellOrders].reverse().forEach(({ price, amount }) => {
       if (sellPoints.length === 0) {
         sellPoints.push(`${xViewbox + STROKE_WIDTH},${priceToY(price)}`);
       }
