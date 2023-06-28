@@ -471,11 +471,10 @@ const MarketplaceOrderBook = ({ lot, marketplace, resource }) => {
                 </thead>
                 <tbody>
                   {buyOrders.map(({ price, amount }, i) => {
-                    const rowVolume = rowBuyVolume;
                     rowBuyVolume += amount;
                     return (
                       <tr key={i}>
-                        <td><VolumeBar volume={volumeBenchmark > 0 ? rowVolume / volumeBenchmark : 0} />{price.toLocaleString()}</td>
+                        <td><VolumeBar volume={volumeBenchmark > 0 ? rowBuyVolume / volumeBenchmark : 0} />{price.toLocaleString()}</td>
                         <td>{amount.toLocaleString()}</td>
                         <td>{formatPrice(price * amount)}</td>
                       </tr>
