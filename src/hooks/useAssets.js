@@ -44,11 +44,13 @@ export const useBuildingAssets = () => {
     asset.iconUrls = {
       w150: getIconUrl(asset, 'buildings', { w: 150 }),
       w400: getIconUrl(asset, 'buildings', { w: 400 }),
+      w1000: getIconUrl(asset, 'buildings', { w: 1000 }),
     };
 
     asset.siteIconUrls = {
       w150: getIconUrl(asset, 'buildings', { w: 150, append: '_Site' }),
       w400: getIconUrl(asset, 'buildings', { w: 400, append: '_Site' }),
+      w1000: getIconUrl(asset, 'buildings', { w: 1000, append: '_Site' }),
     };
 
     asset.modelUrl = getModelUrl(asset, 'buildings');

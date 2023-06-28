@@ -54,6 +54,7 @@ import constants from '~/lib/constants';
 import { theming } from '../ActionDialog';
 import useCrewMember from '~/hooks/useCrewMember';
 import { BarLoader } from 'react-spinners';
+import CrewIndicator from '~/components/CrewIndicator';
 
 const SECTION_WIDTH = 780;
 
@@ -1189,19 +1190,6 @@ export const ProgressBarNote = styled.div`
   }
 `;
 
-const CrewLabel = styled.div`
-  align-self: center;
-  margin-left: 5px;
-  margin-top: -10px;
-  & h3 {
-    color: white;
-    margin: 4px 0;
-    & label {
-      color: ${p => p.theme.colors.main};
-      margin-left: 5px;
-    }
-  }
-`;
 const CrewCards = styled.div`
   display: flex;
   flex-direction: row;
@@ -2882,33 +2870,12 @@ export const CrewInputBlock = ({ crew, title }) => (
   </FlexSectionInputBlock>
 );
 
-export const CrewOwnerInner = ({ crew, isMe }) => {
-  const { data: captain } = useCrewMember((crew?.crewMembers || [])[0]);
-  return (
-    <CrewCards>
-      <CrewCardFramed
-        borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
-        crewmate={captain}
-        isCaptain
-        lessPadding
-        width={60} />
-      <CrewLabel>
-        <div>Owned by</div>
-        <h3>
-          {crew?.name || `Crew #${crew?.i}`}
-          {isMe ? <label>(Me)</label> : null}
-        </h3>
-      </CrewLabel>
-    </CrewCards>
-  );
-};
-
 export const CrewOwnerBlock = ({ title, ...innerProps }) => {
   return (
     <FlexSectionInputBlock
       title={title}
       bodyStyle={{ background: 'transparent' }}>
-      <CrewOwnerInner {...innerProps} />
+      <CrewIndicator {...innerProps} />
     </FlexSectionInputBlock>
   );
 };

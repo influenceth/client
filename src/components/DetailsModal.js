@@ -61,6 +61,7 @@ const StyledDetails = styled.div`
 const headerHeight = 60;
 const Header = styled.h1`
   border-left: 5px solid ${p => p.theme.colors.main};
+  ${p => p.underline ? 'border-bottom: 1px solid #333;' : ''}
   font-size: 24px;
   font-weight: 400;
   height: ${headerHeight}px;
@@ -84,7 +85,7 @@ const Content = styled.div`
       }
       return 'margin: 0;';
     }
-    return 'margin: 25px 35px 35px 25px;';
+    return 'margin: 25px 35px 35px;';
   }}
   overflow-y: auto;
   position: relative;
@@ -115,13 +116,14 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Details = (props) => {
-  const { title, contentProps = {}, edgeToEdge, onCloseDestination, width, ...restProps } = props;
+  const { title, contentProps = {}, edgeToEdge, onCloseDestination, outerNode, underlineHeader, width, ...restProps } = props;
   const history = useHistory();
 
   return (
     <Wrapper {...restProps}>
       <StyledDetails {...restProps}>
-        {title && <Header>{title}</Header>}
+        {outerNode || null}
+        {title && <Header underline={underlineHeader || undefined}>{title}</Header>}
         <CloseButton
           onClick={() => history.push(onCloseDestination || '/')}
           hasBackground={edgeToEdge}

@@ -66,7 +66,6 @@ export const ResourceThumbnailWrapper = styled.div`
     background-color: ${p.backgroundColor || 'black'}};
     border-color: ${p.outlineColor || defaultBorderColor};
     color: ${p.outlineColor || defaultBorderColor};
-    ${p.outlineStyle ? `border-style: ${p.outlineStyle} !important;` : ''}
     ${p.badgeColor && p.hasDenominator ? `${ResourceBadge} { &:after { color: ${p.badgeColor} !important; } }` : ''}
     ${p.badgeColor && !p.hasDenominator ? `${ResourceBadge} { &:before { color: ${p.badgeColor} !important; } }` : ''}
     ${(p.requirementMet || p.disabled) ? `

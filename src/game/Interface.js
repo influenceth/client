@@ -23,6 +23,7 @@ import CrewAssignments from './interface/details/CrewAssignments';
 import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
+import Marketplace from './interface/details/Marketplace';
 import LotViewer from './interface/LotViewer';
 import ShipViewer from './interface/ShipViewer';
 import WatchlistTable from './interface/details/WatchlistTable';
@@ -160,6 +161,9 @@ const Interface = () => {
           </Route>
           <Route path="/crew-assignment/:id([a-z0-9]+)/create">
             <CrewCreation />
+          </Route>
+          <Route path="/marketplace/:asteroidId([0-9]+)/:lotId([0-9]+)">
+            <Marketplace />
           </Route>
         </Switch>
         <Draggables />

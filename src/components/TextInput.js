@@ -3,8 +3,8 @@ import styled from 'styled-components';
 
 const StyledInput = styled.input`
   background-color: transparent;
-  border: 0px;
-  border-bottom: 1px solid ${p => p.theme.colors.main};
+  border: solid ${p => p.theme.colors.main};
+  border-width: 0px 0px 1px;
   color: ${p => p.theme.colors.mainText};
   font-family: 'Jura', sans-serif;
   font-size: ${p => p.theme.fontSizes.mainText};

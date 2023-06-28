@@ -15,6 +15,7 @@ import {
   ListViewIcon,
   LotSearchIcon,
   MyAssetsIcon,
+  OrderIcon,
   ResourceIcon,
   SimulateRouteIcon,
 } from '~/components/Icons';
@@ -309,14 +310,30 @@ const HudMenu = () => {
           label: 'Information',
           icon: <InfoIcon />,
           Component: hudMenus.LotInfo
-        },
-        {
-          key: 'LOT_RESOURCES',
-          label: 'Resources',
-          icon: <ResourceIcon />,
-          Component: hudMenus.LotResources
         }
       ];
+
+      if (lot?.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
+        // marketplace
+        if (lot.building.capableType === 1) { // TODO: 8) {
+          b.push({
+            key: 'MARKETPLACE_LISTINGS',
+            label: 'Marketplace Listings',
+            icon: <OrderIcon />,
+            onOpen: () => {
+              history.push(`/marketplace/${asteroidId}/${lotId}`);
+            }
+          });
+        }
+      }
+
+      b.push({
+        key: 'LOT_RESOURCES',
+        label: 'Resources',
+        icon: <ResourceIcon />,
+        Component: hudMenus.LotResources
+      });
+
       if (lot?.building?.capableType) {
         if (
           (lot.building.construction?.status === Construction.STATUS_PLANNED && Inventory.CAPACITIES[lot.building.capableType][0])
@@ -330,6 +347,7 @@ const HudMenu = () => {
           });
         } 
       }
+
       return b;
     } else if (zoomStatus === 'in' && zoomScene?.type === 'SHIP') {
       // TODO: ... ship HUD menu options ...

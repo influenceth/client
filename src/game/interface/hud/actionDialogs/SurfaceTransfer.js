@@ -37,7 +37,6 @@ import {
   CrewOwnerBlock,
   TransferDistanceDetails,
   FlexSectionBlock,
-  CrewOwnerInner,
   WarningAlert,
   SwayInputBlock,
   SwayInputBlockInner
@@ -46,6 +45,7 @@ import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
 import useCrew from '~/hooks/useCrew';
 import theme from '~/theme';
+import CrewIndicator from '~/components/CrewIndicator';
 
 const Overloaded = styled.div`
   color: ${p => p.theme.colors.error};
@@ -312,7 +312,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
                   <FlexSectionSpacer />
 
                   <div style={{ alignSelf: 'flex-start', width: '50%' }}>
-                    <CrewOwnerInner crew={crew} />
+                    <CrewIndicator crew={crew} />
 
                     <WarningAlert severity="warning" style={{ marginBottom: 20 }}>
                       <div><WarningOutlineIcon /></div>
@@ -363,11 +363,11 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
 
             {(originLot && destinationLot && originLot?.occupier !== destinationLot?.occupier) && (
               <FlexSection>
-                <CrewOwnerBlock crew={originLotOccupier} isMe={originLot?.occupier === crew?.i} />
+                <CrewOwnerBlock crew={originLotOccupier} />
 
                 <FlexSectionSpacer />
 
-                <CrewOwnerBlock crew={destinationLotOccupier} isMe={destinationLot?.occupier === crew?.i} />
+                <CrewOwnerBlock crew={destinationLotOccupier} />
               </FlexSection>  
             )}
           </>

@@ -251,6 +251,28 @@ const LotInfo = () => {
         {lot && !isLoading && (
           <>
             <Description>{buildingDescriptions[lot.building?.capableType]}</Description>
+            {lot.building?.capableType === 8 && (
+              <>
+                {/* TODO: real stats */}
+                <Rule margin="15px" />
+                <DetailRow>
+                  <label>Weekly Volume</label>
+                  <div>1.5m SWAY</div>
+                </DetailRow>
+                <DetailRow>
+                  <label>Open Orders</label>
+                  <div>13,429</div>
+                </DetailRow>
+                <DetailRow>
+                  <label>Open For</label>
+                  <div>43,429 ADAYS</div>
+                </DetailRow>
+                <DetailRow>
+                  <label>Tax Rate</label>
+                  <div>0.5%</div>
+                </DetailRow>
+              </>
+            )}
             {!!Inventory.CAPACITIES[lot.building?.capableType][1] && (
               <>
                 <Rule margin="15px" />

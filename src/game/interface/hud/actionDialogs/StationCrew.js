@@ -48,7 +48,6 @@ import {
   CrewInputBlock,
   CrewOwnerBlock,
   SwayInput,
-  CrewOwnerInner,
   SwayInputBlock,
   TransferDistanceDetails,
   TransferDistanceTitleDetails,
@@ -65,6 +64,7 @@ import useCrew from '~/hooks/useCrew';
 import useCrewMember from '~/hooks/useCrewMember';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
+import CrewIndicator from '~/components/CrewIndicator';
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
 //  - however, could you launch two ships at once? probably not because crew needs to be on ship?
@@ -235,7 +235,7 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
           <FlexSectionSpacer />
 
           <div style={{ alignSelf: 'flex-start', width: '50%' }}>
-            {!crewIsOwner && <CrewOwnerInner crew={ownerCrew} isMe={crew?.i === ownerCrew?.i} />}
+            {!crewIsOwner && <CrewIndicator crew={ownerCrew} />}
             {destinationShip && (
               <MiniBarChart
                 color="#92278f"

@@ -1,4 +1,4 @@
-import { AiFillBug, AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/ai';
+import { AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle, BsPieChartFill, BsSliders, BsStopwatch, BsThreeDots } from 'react-icons/bs';
 import { FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
 import { FiCheckSquare, FiExternalLink, FiMenu, FiSquare } from 'react-icons/fi';
@@ -12,12 +12,10 @@ import {
   MdExpandMore,
   MdFastRewind,
   MdFastForward,
-  MdLocationPin,
   MdPlayArrow,
   MdPause,
   MdRadioButtonChecked,
   MdRadioButtonUnchecked,
-  MdScreenRotation,
   MdStop,
   MdNavigateBefore,
   MdNavigateNext,
@@ -25,6 +23,7 @@ import {
 } from 'react-icons/md';
 import {
   RiPagesFill,
+  RiLayoutGridFill,
   RiTableFill,
   RiRouteFill,
   RiLoginCircleFill,
@@ -288,6 +287,7 @@ export {
   MdStop as StopIcon,
   RiAlertFill as WarningIcon,
   RiFilter2Fill as FilterIcon,
+  RiLayoutGridFill as GridIcon,
   RiLoginCircleFill as LoginIcon,
   RiSortDesc as SortIcon,
   RiTableFill as TableIcon,
