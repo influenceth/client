@@ -11,7 +11,7 @@ import Button from '~/components/ButtonAlt';
 import theme, { hexToRGB } from '~/theme';
 import { formatFixed } from '~/lib/utils';
 import MarketplaceHome from './marketplace/Home';
-import MarketplaceOrderBook from './marketplace/OrderBook';
+import MarketplaceDepthChart from './marketplace/DepthChart';
 
 
 const ActionImage = styled.div`
@@ -135,7 +135,7 @@ const Marketplace = (props) => {
       <Wrapper>
         <Wrapper style={{ height: `calc(100% - ${footerHeight}px)` }}>
           {resourceId
-            ? <MarketplaceOrderBook lot={lot} marketplace={marketplace} resource={resources[resourceId]} />
+            ? <MarketplaceDepthChart lot={lot} marketplace={marketplace} resource={resources[resourceId]} />
             : <MarketplaceHome lot={lot} marketplace={marketplace} onSelectListing={onSelectListing} />}
         </Wrapper>
         {myOpenOrders && (

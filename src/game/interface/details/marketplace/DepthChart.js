@@ -245,7 +245,7 @@ const formatPrice = (sway, { minPrecision = 3, fixedPrecision } = {}) => {
     
 const STROKE_WIDTH = 2;
 
-const MarketplaceOrderBook = ({ lot, marketplace, resource }) => {
+const MarketplaceDepthChart = ({ lot, marketplace, resource }) => {
   const { width, height } = useScreenSize();
 
   const { data: owner } = useCrew(lot?.occupier);
@@ -493,4 +493,4 @@ const MarketplaceOrderBook = ({ lot, marketplace, resource }) => {
   );
 };
 
-export default MarketplaceOrderBook;
+export default MarketplaceDepthChart;
