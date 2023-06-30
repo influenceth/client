@@ -164,10 +164,17 @@ const HudMenu = () => {
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   
   const [open, setOpen] = useState();
-  const handleButtonClick = useCallback((selected, onOpen) => {
+  const [hidden, setHidden] = useState();
+
+  const handleButtonClick = useCallback((selected, onOpen, hideInsteadOfClose) => {
+
     // clicking button of already-open --> close
     if (openHudMenu === selected) {
-      dispatchHudMenuOpened();
+      if (hideInsteadOfClose) {
+        setHidden((h) => !h);
+        return;
+      }
+      else dispatchHudMenuOpened();
 
     // else, already open, but clicking different button --> close, then open new
     } else if (open) {
@@ -182,6 +189,8 @@ const HudMenu = () => {
       if (onOpen) onOpen();
       else dispatchHudMenuOpened(selected);
     }
+
+    setHidden(false);
   }, [open, openHudMenu]);
 
   useEffect(() => {
@@ -367,14 +376,15 @@ const HudMenu = () => {
         label: 'Dev Tools',
         icon: <WrenchIcon />,
         noDetail: true,
-        Component: hudMenus.DevTools
+        Component: hudMenus.DevTools,
+        hideInsteadOfClose: true
       });
     }
 
     return buttons;
   }, [asteroidId, destination, lot, lotId, showDevTools, zoomStatus, zoomScene]);
 
-  const { label, onDetailClick, detailType, Component, componentProps, noDetail } = useMemo(() => {
+  const { label, onDetailClick, detailType, Component, componentProps, hideInsteadOfClose, noDetail } = useMemo(() => {
     return buttons.find((b) => b.key === openHudMenu) || {};
   }, [buttons, openHudMenu]);
 
@@ -382,12 +392,12 @@ const HudMenu = () => {
     <Wrapper>
       <ReactTooltip id="hudMenu" effect="solid" />
       <Buttons open={open}>
-        {buttons.map(({ key, label, icon, onOpen, requireLogin }) => {
+        {buttons.map(({ key, label, icon, onOpen, requireLogin, hideInsteadOfClose }) => {
           if (requireLogin && !account) return null;
           return (
             <Button
               key={key}
-              onClick={() => handleButtonClick(key, onOpen)}
+              onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
               selected={key === openHudMenu}
               data-for="hudMenu"
               data-place="left"
@@ -397,7 +407,7 @@ const HudMenu = () => {
           );
         })}
       </Buttons>
-      <Panel open={open}>
+      <Panel open={open && !hidden}>
         <PanelInner>
           <PanelTitle>
             <span style={{ flex: 1 }}>{label}</span>
@@ -410,13 +420,13 @@ const HudMenu = () => {
                 {detailType === 'detail' ? <DetailIcon /> : <ListViewIcon />}
               </IconButton>
             )}
-            <IconButton onClick={() => handleButtonClick()}><CloseIcon /></IconButton>
+            <IconButton onClick={() => handleButtonClick(openHudMenu, null, hideInsteadOfClose)}><CloseIcon /></IconButton>
           </PanelTitle>
           <PanelContent>
             {Component && (
               <Component
                 {...(componentProps || {})}
-                onClose={() => handleButtonClick()} />
+                onClose={() => handleButtonClick(openHudMenu, null, hideInsteadOfClose)} />
             )}
           </PanelContent>
         </PanelInner>

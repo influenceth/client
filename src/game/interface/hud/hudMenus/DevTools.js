@@ -87,6 +87,7 @@ const DevTools = () => {
   const [category, setCategory] = useState();
   const [categories, setCategories] = useState();
   const [categoryModels, setCategoryModels] = useState();
+  const [isLoading, setIsLoading] = useState();
   const [modelSelection, setModelSelection] = useState();
   const [modelOverride, setModelOverride] = useState();
 
@@ -103,7 +104,9 @@ const DevTools = () => {
       const categorySet = new Set(assets.filter((a) => !!a).map((a) => a.category || ''));
       const categoryArr = Array.from(categorySet).sort();
       setCategories(categoryArr.map((c) => ({ label: c || '(Uncategorized)', value: c })));
-      setCategory(categoryArr[0]);
+
+      const currentModel = assets.find((a) => a?.modelUrl === settings.modelUrl);
+      setCategory(categoryArr.find((c) => c.value === currentModel?.category) || categoryArr[0]);
     }
   }, [assets]);
 
@@ -113,7 +116,9 @@ const DevTools = () => {
         .filter((a) => (a.category || '') === category)
         .sort((a, b) => a.name < b.name ? -1 : 1);
       setCategoryModels(bAssets);
-      setModelSelection(bAssets[0]);
+
+      const currentModel = bAssets.find((a) => a?.modelUrl === settings.modelUrl);
+      setModelSelection(currentModel || bAssets[0]);
     }
   }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -133,14 +138,17 @@ const DevTools = () => {
   const handleFile = useCallback((e) => {
     const file = e.target.files[0];
     if (uploadType.current === 'model' && file.name.match(/\.(gltf|glb)$/i)) {
+      setIsLoading(true);
       reader.readAsDataURL(file);
       reader.onload = () => {
         setModelOverride({
           name: file.name,
           url: reader.result
         });
+        setIsLoading(false);
       };
     } else if (file.name.match(/\.(hdr|jpg)$/i)) {
+      setIsLoading(true);
       reader.readAsDataURL(file);
       reader.onload = () => {
         if (uploadType.current === 'bg') {
@@ -150,6 +158,7 @@ const DevTools = () => {
           setters.setEnvmapOverrideName(file.name);
           setters.setEnvmap(reader.result);
         }
+        setIsLoading(false);
       };
     } else {
       window.alert('Bad file type.');
@@ -170,7 +179,7 @@ const DevTools = () => {
 
   const toggleSetting = useCallback((setter) => {
     setter((s) => !s);
-  }, [settings]);
+  }, []);
 
   const onChangeToneMapping = useCallback((selection) => {
     setters.setToneMapping(selection?.value);
@@ -179,7 +188,6 @@ const DevTools = () => {
     }
   }, []);
 
-  const isLoading = false; // TODO:...
   if (!process.env.REACT_APP_ENABLE_DEV_TOOLS) return null;
   return (
     <Scrollable>
@@ -246,36 +254,38 @@ const DevTools = () => {
       </HudMenuCollapsibleSection>
 
       <HudMenuCollapsibleSection titleText="Environment">
+        <InnerSection>
+          <Button
+            disabled={isLoading}
+            onClick={handleUploadClick('bg')}
+            subtle>
+            Upload Skybox
+          </Button>
+          {overrides.background && (
+            <OverrideLabel style={{ marginBottom: 20 }}>
+              <IconButton onClick={removeOverride('bg')}><CloseIcon /></IconButton>
+              <label>{overrides.backgroundOverrideName}</label>
+            </OverrideLabel>
+          )}
+
+          <Button
+            disabled={isLoading}
+            onClick={handleUploadClick('env')}
+            subtle>
+            Upload EnvMap
+          </Button>
+          {overrides.envmap && (
+            <OverrideLabel>
+              <IconButton onClick={removeOverride('env')}><CloseIcon /></IconButton>
+              <label>{overrides.envmapOverrideName}</label>
+            </OverrideLabel>
+          )}
+        </InnerSection>
+      </HudMenuCollapsibleSection>
+
+      <HudMenuCollapsibleSection titleText="Other Settings">
         {/* many of these are reset on assetType change */}
         <InnerSection key={settings.assetType}>
-            <Button
-              disabled={isLoading}
-              onClick={handleUploadClick('bg')}
-              subtle>
-              Upload Skybox
-            </Button>
-            {overrides.background && (
-              <OverrideLabel style={{ marginBottom: 20 }}>
-                <IconButton onClick={removeOverride('bg')}><CloseIcon /></IconButton>
-                <label>{overrides.backgroundOverrideName}</label>
-              </OverrideLabel>
-            )}
-
-            <Button
-              disabled={isLoading}
-              onClick={handleUploadClick('env')}
-              subtle>
-              Upload EnvMap
-            </Button>
-            {overrides.envmap && (
-              <OverrideLabel>
-                <IconButton onClick={removeOverride('env')}><CloseIcon /></IconButton>
-                <label>{overrides.envmapOverrideName}</label>
-              </OverrideLabel>
-            )}
-
-            <hr />
-
             <CheckboxRow onClick={() => toggleSetting(setters.setEnablePostprocessing)}>
               {settings.enablePostprocessing ? <CheckedIcon /> : <UncheckedIcon />}
               <label>Bloom</label>
@@ -296,7 +306,7 @@ const DevTools = () => {
                     <label>Tone Mapping Exposure</label>
                     <NumberInput
                       disabled={isLoading}
-                      initialValue={defaultSettings.toneMappingExposure}
+                      initialValue={settings.toneMappingExposure}
                       min="0.5"
                       step="0.5"
                       onChange={(v) => setters.setToneMappingExposure(parseFloat(v) || 1)} />
@@ -307,7 +317,7 @@ const DevTools = () => {
                   <label>Bloom Radius</label>
                   <NumberInput
                     disabled={isLoading}
-                    initialValue={defaultSettings.bloomRadius}
+                    initialValue={settings.bloomRadius}
                     min="0"
                     step="0.05"
                     onChange={(v) => setters.setBloomRadius(parseFloat(v))} />
@@ -317,7 +327,7 @@ const DevTools = () => {
                   <label>Bloom Strength</label>
                   <NumberInput
                     disabled={isLoading}
-                    initialValue={defaultSettings.bloomStrength}
+                    initialValue={settings.bloomStrength}
                     min="0"
                     step="0.5"
                     onChange={(v) => setters.setBloomStrength(parseFloat(v))} />
