@@ -122,7 +122,7 @@ const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) =>
   }
 
   useEffect(() => {
-    if (enabled && toneMappingParams) {
+    if (enabled && toneMappingParams?.toneMapping) {
       renderer.toneMapping = toneMappingParams.toneMapping;
       renderer.toneMappingExposure = toneMappingParams.toneMappingExposure;
       return () => {
