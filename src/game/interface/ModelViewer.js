@@ -6,21 +6,15 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { useFrame, useThree, Canvas } from '@react-three/fiber';
-import { useLocation, useParams } from 'react-router-dom';
 import BarLoader from 'react-spinners/BarLoader';
 import styled, { css } from 'styled-components';
 
-import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
-import Button from '~/components/Button';
 import Details from '~/components/DetailsFullsize';
-import Dropdown from '~/components/Dropdown';
-import NumberInput from '~/components/NumberInput';
 import Postprocessor from '../Postprocessor';
 import useStore from '~/hooks/useStore';
 
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
-const ENV_MAP_STRENGTH = 4.5;
 const MAX_LIGHTS = 10;
 const DOWN = new Vector3(0, -1, 0);
 
@@ -41,69 +35,6 @@ const CanvasContainer = styled.div`
     max-height: none;
     max-width: none;
     width: 100%;
-  }
-`;
-
-const Miniform = styled.div`
-  display: block !important;
-  margin-top: 15px;
-  padding-left: 5px;
-  width: 175px;
-  & > label {
-    display: block;
-    font-size: 10px;
-  }
-  & > input {
-    width: 100%;
-  }
-`;
-
-const Devtools = styled.div`
-  display: flex;
-  flex-direction: column;
-  left: 32px;
-  position: absolute;
-  top: 108px;
-  z-index: 2;
-
-  & > div {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    margin-top: 15px;
-    & > button {
-      margin: 0;
-    }
-    & > span {
-      cursor: ${p => p.theme.cursors.active};
-      font-size: 10px;
-      padding-left: 10px;
-      &:hover {
-        opacity: 0.7;
-      }
-    }
-  }
-
-  @media (max-width: 800px) {
-    display: none;
-  }
-`;
-
-const Dropdowns = styled.div`
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  left: 32px;
-  position: absolute;
-  top: 60px;
-  z-index: 3;
-  & > * {
-    margin-bottom: 2px;
-    margin-right: 10px;
-  }
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    left: 20px;
   }
 `;
 
@@ -134,7 +65,70 @@ const loadingCss = css`
   z-index: 10;
 `;
 
-const Model = ({ url, onLoaded, overrideEnvName, overrideEnvStrength, rotationEnabled, zoomLimitsEnabled, ...settings }) => {
+export const getModelViewerSettings = (assetType, overrides = {}) => {
+  // get default settings (for all)
+  const s = {
+    background: '/textures/model-viewer/building_skybox.jpg',
+    bloomRadius: 0.25,
+    bloomStrength: 2,
+    enableZoomLimits: true,
+    enableModelLights: true,
+    envmap: '/textures/model-viewer/resource_envmap.hdr',
+    envmapStrength: 4.5,
+  };
+
+  // modify default settings by asset type
+  if (assetType === 'building') {
+    s.bloomRadius = 1;  // 0.25
+    s.bloomStrength = 5;  // 3
+    s.emissiveAsBloom = true;
+    s.emissiveMapAsLightMap = true;
+    s.enableModelLights = true;
+    s.envmapStrength = 0.1;
+    s.floorNodeName = 'Asteroid_Terrain'; // (enforces collision detection with this node (only in y-axis direction))
+    s.maxCameraDistance = 0.1;  // NOTE: use this or simple zoom constraints, not both
+    s.initialZoom = 0.2;
+    s.keylightIntensity = 0;
+
+  } else if (assetType === 'resource') {
+    s.background = '/textures/model-viewer/resource_skybox.hdr';
+    s.initialZoom = 1.75;
+    s.enableDefaultLights = true;
+    s.enableRotation = true;
+    s.simpleZoomConstraints = [0.85, 5];  // TODO: if using simple zoom constraints, should probably not allow panning... maybe all should use maxCameraDistance?
+
+  } else if (assetType === 'ship') {
+    s.emissiveAsBloom = true;
+    s.enableModelLights = true;
+  }
+
+  // apply overrides
+  // NOTE: currently not override-able:
+  //  emissiveAsBloom, emissiveMapAsLightMap, enableModelLights,
+  //  floorNodeName, maxCameraDistance, initialZoom, keylightIntensity,
+  //  simpleZoomConstraints
+  Object.keys(overrides).forEach((k) => {
+    if (overrides[k] !== null && overrides[k] !== undefined) {
+      s[k] = overrides[k];
+    }
+  });
+
+  return s;
+};
+
+const loadTexture = (file, filename = '') => {
+  return new Promise((resolve) => {
+    if (/\.hdr$/i.test(filename || file || '')) {
+      new RGBELoader().load(file, resolve);
+    } else {
+      new THREE.TextureLoader().load(file, resolve);
+    }
+  })
+};
+
+let currentModelLoadId;
+
+const Model = ({ url, onLoaded, ...settings }) => {
   const { camera, clock, gl, scene } = useThree();
   const pixelRatio = useStore(s => s.graphics.pixelRatio);
 
@@ -185,14 +179,14 @@ const Model = ({ url, onLoaded, overrideEnvName, overrideEnvStrength, rotationEn
   }, [camera, gl]);
 
   useEffect(() => {
-    if (zoomLimitsEnabled && settings.simpleZoomConstraints) {
+    if (settings.enableZoomLimits && settings.simpleZoomConstraints) {
       controls.current.minDistance = settings.simpleZoomConstraints[0];
       controls.current.maxDistance = settings.simpleZoomConstraints[1];
     } else {
       controls.current.minDistance = 0;
       controls.current.maxDistance = Infinity;
     }
-  }, [settings.simpleZoomConstraints, zoomLimitsEnabled]);
+  }, [settings.simpleZoomConstraints, settings.enableZoomLimits]);
 
   // // init axeshelper
   // useEffect(() => {
@@ -201,25 +195,31 @@ const Model = ({ url, onLoaded, overrideEnvName, overrideEnvStrength, rotationEn
   //   return () => {
   //     scene.remove(axesHelper);
   //   };
-  // }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // const box3h = useRef();
+  // }, []); // eslint-disable-line react-hooks/exhaustive-deps=
 
   // load the model on url change
   useEffect(() => {
-    if (model.current) scene.remove(model.current);
-    // if (box3h.current) {
-    //   box3h.current.removeFromParent();
-    // }
-    
+    if (model.current) {
+      console.log('previous model not unloaded', model.current);
+      return;
+    }
+
     const helpers = [];
 
     // load the model
+    const loadId = Date.now();
+    currentModelLoadId = loadId + 0;
     loader.load(
       url,
 
       // onload
       function (gltf) {
+        // if a new load has started, abandon the previous run
+        if (currentModelLoadId !== loadId) {
+          console.log('double load, abandoning older', loadId);
+          return;
+        }
+
         let predefinedCenter;
         let predefinedCamera;
         let totalLights = 0;
@@ -245,12 +245,12 @@ const Model = ({ url, onLoaded, overrideEnvName, overrideEnvStrength, rotationEn
 
             // env-map intensity
             if (node.material?.envMapIntensity) {
-              node.material.envMapIntensity = ENV_MAP_STRENGTH;
+              node.material.envMapIntensity = settings.envmapStrength;
             }
 
             // rewrite emissive map to lightmap
             if (settings.emissiveMapAsLightMap) {
-              node.material.envMapIntensity = overrideEnvName ? ENV_MAP_STRENGTH : 0;
+              node.material.envMapIntensity = settings.envmapOverrideName ? settings.envmapStrength : 0;
               if (node.material?.emissiveMap) {
                 if (node.material.lightMap) console.warn('LIGHTMAP overwritten by emissiveMap', node);
 
@@ -279,7 +279,7 @@ const Model = ({ url, onLoaded, overrideEnvName, overrideEnvStrength, rotationEn
 
           // allow embedded spotlights per settings (up to MAX_LIGHTS)
           } else if (node.isLight) {
-            if (settings.enableEmbeddedLights && node.isSpotLight) {
+            if (settings.enableModelLights && node.isSpotLight) {
               if (totalLights < MAX_LIGHTS) {
                 node.castShadow = true;
                 node.shadow.bias = -0.0001;
@@ -403,8 +403,15 @@ const Model = ({ url, onLoaded, overrideEnvName, overrideEnvStrength, rotationEn
 
     // (clean-up)
     return () => {
-      if (model.current) scene.remove(model.current);
-      (helpers || []).forEach((helper) => scene.add(helper));
+      if (model.current) {
+        model.current.children.forEach((n) => {
+          if (n.parent) n.removeFromParent();
+          else scene.remove(n);
+        });
+        scene.remove(model.current);
+        model.current = null;
+      }
+      (helpers || []).forEach((helper) => scene.remove(helper));
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -415,18 +422,15 @@ const Model = ({ url, onLoaded, overrideEnvName, overrideEnvStrength, rotationEn
     model.current.traverse(function (node) {
       if (node.isMesh) {
         if (node.material?.envMapIntensity) {
-          node.material.envMapIntensity = overrideEnvStrength || ENV_MAP_STRENGTH;
+          node.material.envMapIntensity = settings.envmapStrength;
         }
       }
     });
-  }, [overrideEnvStrength]);
+  }, [settings.envmapStrength]);
 
   useFrame((state, delta) => {
-    if (model.current && rotationEnabled) {
+    if (model.current && settings.enableRotation) {
       model.current.rotation.y += 0.0025;
-      // if (box3h.current) {
-      //   box3h.current.rotation.y += 0.0025;
-      // }
     }
     if (animationMixer.current) {
       animationMixer.current.update(delta);
@@ -462,7 +466,7 @@ const Model = ({ url, onLoaded, overrideEnvName, overrideEnvStrength, rotationEn
         }
 
         // max camera distance (enforcing on zoom and on pan)
-        if (zoomLimitsEnabled && maxCameraDistance.current) {
+        if (settings.enableZoomLimits && maxCameraDistance.current) {
           // don't let camera beyond distance (if defined)
           if (controls.current.object.position.length() > maxCameraDistance.current) {
             controls.current.object.position.setLength(maxCameraDistance.current);
@@ -491,39 +495,27 @@ const Model = ({ url, onLoaded, overrideEnvName, overrideEnvStrength, rotationEn
   // );
 }
 
-const loadTexture = (file, filename = '') => {
-  return new Promise((resolve) => {
-    if (/\.hdr$/i.test(filename || file || '')) {
-      new RGBELoader().load(file, resolve);
-    } else {
-      new THREE.TextureLoader().load(file, resolve);
-    }
-  })
-};
-
-const Skybox = ({ defaultBackground, defaultEnvmap, onLoaded, overrideBackground, overrideBackgroundName, overrideEnvironment, overrideEnvironmentName }) => {
+// only overrides will have names
+const Skybox = ({ background, envmap, onLoaded, backgroundOverrideName = '', envmapOverrideName = '' }) => {
   const { scene } = useThree();
 
   useEffect(() => {
     let cleanupTextures = [];
 
-    let background = overrideBackground || defaultBackground;
-    let env = overrideEnvironment || defaultEnvmap;
-
-    let waitingOn = background === env ? 1 : 2;
-    loadTexture(background, overrideBackgroundName).then(function (texture) {
+    let waitingOn = background === envmap ? 1 : 2;
+    loadTexture(background, backgroundOverrideName).then(function (texture) {
       cleanupTextures.push(texture);
       texture.mapping = EquirectangularReflectionMapping;
       scene.background = texture;
-      if (background === env) {
+      if (background === envmap) {
         scene.environment = texture;
       }
 
       waitingOn--;
       if (waitingOn === 0) onLoaded();
     });
-    if (background !== env) {
-      loadTexture(env, overrideEnvironmentName).then(function (texture) {
+    if (background !== envmap) {
+      loadTexture(envmap, envmapOverrideName).then(function (texture) {
         cleanupTextures.push(texture);
         texture.mapping = EquirectangularReflectionMapping;
         scene.environment = texture;
@@ -534,9 +526,11 @@ const Skybox = ({ defaultBackground, defaultEnvmap, onLoaded, overrideBackground
     }
 
     return () => {
+      scene.background = null;
+      scene.environment = null;
       cleanupTextures.forEach((t) => t.dispose());
     };
-  }, [defaultBackground, defaultEnvmap, overrideBackground, overrideEnvironment]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [background, envmap]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 };
@@ -672,82 +666,19 @@ const Lighting = ({ keylightIntensity = 1.0, rimlightIntensity = 0.25 }) => {
   return null;
 };
 
-const reader = new FileReader();
-const ModelViewer = ({ assetType, inGameMode }) => {
-  const { model: paramModel } = useParams();
-  const { search } = useLocation();
-  const buildings = useBuildingAssets();
-  const resources = useResourceAssets();
-  const ships = useShipAssets();
-
+const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
   const canvasStack = useStore(s => s.canvasStack);
   const pixelRatio = useStore(s => s.graphics.pixelRatio);
   const dispatchCanvasStacked = useStore(s => s.dispatchCanvasStacked);
   const dispatchCanvasUnstacked = useStore(s => s.dispatchCanvasUnstacked);
 
-  const assets = useMemo(() => {
-    if (assetType === 'Building') return buildings.filter((b, i) => i < 3);
-    if (assetType === 'Resource') return resources;
-    if (assetType === 'Ship') return ships;
-  }, [assetType, buildings, resources, ships]);
-
-  const settings = useMemo(() => {
-    const s = {
-      background: '/textures/model-viewer/building_skybox.jpg',
-      envmap: '/textures/model-viewer/resource_envmap.hdr',
-    };
-
-    if (assetType === 'Building') {
-      s.bloomOverrides = { strength: 5, radius: 1 }; // { strength: 3, radius: 0.25 };
-      s.emissiveAsBloom = true;
-      s.emissiveMapAsLightMap = true;
-      s.envStrengthOverride = 0.01;
-      s.enableEmbeddedLights = true;
-      s.enablePostprocessing = true;
-      s.floorNodeName = 'Asteroid_Terrain'; // (enforces collision detection with this node (only in y-axis direction))
-      s.maxCameraDistance = 0.1;  // NOTE: use this or simple zoom constraints, not both
-      s.initialZoom = 0.2;
-      s.keylightIntensity = 0;
-
-    } else if (assetType === 'Resource') {
-      s.background = '/textures/model-viewer/resource_skybox.hdr';
-      s.initialZoom = 1.75;
-      s.lightsEnabled = true;
-      s.removeModelLights = true;
-      s.rotationEnabled = true;
-      s.simpleZoomConstraints = [0.85, 5];  // TODO: if using simple zoom constraints, should probably not allow panning... maybe all should use maxCameraDistance?
-
-    } else if (assetType === 'Ship') {
-      s.emissiveAsBloom = true;
-      s.enableEmbeddedLights = true;
-      s.enablePostprocessing = true;
-    }
-    return s;
-  }, [assetType]);
-  
-  const singleModel = inGameMode || Number(paramModel);
-  
-  const [devtoolsEnabled, setDevtoolsEnabled] = useState(!singleModel);
-  const [model, setModel] = useState();
-  const [bgOverride, setBgOverride] = useState();
-  const [bgOverrideName, setBgOverrideName] = useState();
-  const [bloomRadiusOverride, setBloomRadiusOverride] = useState(settings.bloomOverrides?.radius || 0.25);
-  const [bloomStrengthOverride, setBloomStrengthOverride] = useState(settings.bloomOverrides?.strength || 2);
-  const [envOverride, setEnvOverride] = useState();
-  const [envOverrideName, setEnvOverrideName] = useState();
-  const [envStrengthOverride, setEnvStrengthOverride] = useState(settings.envStrengthOverride);
-  const [modelOverride, setModelOverride] = useState();
-  const [modelOverrideName, setModelOverrideName] = useState();
-  const [postprocessingEnabled, setPostprocessingEnabled] = useState(!!settings.enablePostprocessing);
-
-  const [lightsEnabled, setLightsEnabled] = useState(!!settings.lightsEnabled);
   const [loadingSkybox, setLoadingSkybox] = useState(true);
-  const [loadingModel, setLoadingModel] = useState();
-  const [rotationEnabled, setRotationEnabled] = useState(settings.rotationEnabled);
-  const [zoomLimitsEnabled, setZoomLimitsEnabled] = useState(true);
+  const [loadingModel, setLoadingModel] = useState(true);
 
-  const [uploadType, setUploadType] = useState();
-  const fileInput = useRef();
+  const settings = useMemo(
+    () => getModelViewerSettings(assetType, overrides),
+    [assetType, overrides]
+  );
 
   useEffect(() => {
     dispatchCanvasStacked(assetType);
@@ -756,275 +687,33 @@ const ModelViewer = ({ assetType, inGameMode }) => {
     }
   }, []);
 
-  const removeOverride = useCallback((which) => () => {
-    if (which === 'model') {
-      setModelOverride();
-      setModelOverrideName();
-    } else if (which === 'bg') {
-      setBgOverride();
-      setBgOverrideName();
-    } else if (which === 'env') {
-      setEnvOverride();
-      setEnvOverrideName();
-    }
-  }, []);
-
-  const selectModel = useCallback((m) => {
-    if (loadingModel) return;
-    removeOverride('model')();
-    setLoadingModel(true);
-    setModel(m);
-  }, [loadingModel, removeOverride]);
-
-  const handleLoaded = useCallback(() => {
-    setLoadingModel(false);
-  }, []);
-
-  const handleUploadClick = useCallback((which) => () => {
-    setUploadType(which);
-    fileInput.current.click();
-  }, []);
-
-  const handleFile = useCallback((e) => {
-    const file = e.target.files[0];
-    if (uploadType === 'model' && file.name.match(/\.(gltf|glb)$/i)) {
-      setLoadingModel(true);
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        setModelOverride(reader.result);
-        setModelOverrideName(file.name);
-      };
-    } else if (file.name.match(/\.(hdr|jpg)$/i)) {
-      setLoadingSkybox(true);
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        if (uploadType === 'bg') {
-          setBgOverrideName(file.name);
-          setBgOverride(reader.result);
-        } else if (uploadType === 'env') {
-          setEnvOverrideName(file.name);
-          setEnvOverride(reader.result);
-        }
-      };
-    } else {
-      window.alert('Bad file type.');
-    }
-  }, [uploadType]);
-
-  const toggleLights = useCallback(() => {
-    setLightsEnabled((e) => !e);
-  }, []);
-
-  const togglePostprocessing = useCallback(() => {
-    setPostprocessingEnabled((e) => !e);
-  }, []);
-
-  const toggleRotation = useCallback(() => {
-    setRotationEnabled((e) => !e);
-  }, []);
-
-  const toggleZoomLimits = useCallback(() => {
-    setZoomLimitsEnabled((e) => !e);
-  }, []);
-
-  const [category, setCategory] = useState();
-  const [categories, setCategories] = useState();
-  const [categoryModels, setCategoryModels] = useState();
   useEffect(() => {
-    if (!!assets) {
-      setCategories();
-      if (singleModel) {
-        const asset = typeof singleModel === 'string'
-          ? assets.find((a) => a?.name === singleModel)
-          : assets.find((a) => Number(a?.i) === singleModel);
-        if (asset) {
-          setLoadingModel(true);
-          setModel(asset);
-          return;
-        }
-      }
-
-      // this is default if no singleModel or can't find singleModel
-      const categorySet = new Set(assets.map((a) => a.category));
-      const categoryArr = Array.from(categorySet).sort();
-      setCategories(categoryArr);
-      setCategory(categoryArr[0]);
-    }
-  }, [!!assets, assetType, singleModel]);
+    if (modelUrl) setLoadingModel(true);
+  }, [modelUrl]);
 
   useEffect(() => {
-    if (!!assets && category !== undefined) {
-      const bAssets = assets
-        .filter((a) => a.category === category)
-        .sort((a, b) => a.name < b.name ? -1 : 1);
-      setCategoryModels(bAssets);
-      selectModel(bAssets[0]);
-    }
-  }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
+    setLoadingSkybox(true);
+  }, [settings.background, settings.envmap])
 
-  useEffect(() => {
-    const onKeydown = (e) => {
-      if (e.shiftKey && e.which === 32) {
-        setDevtoolsEnabled((d) => !d);
-      }
-    };
-    document.addEventListener('keydown', onKeydown);
-    return () => {
-      document.removeEventListener('keydown', onKeydown);
-    }
-  }, []);
+  const bloomParams = useMemo(() => ({
+    key: `${pixelRatio}_${settings.bloomRadius}_${settings.bloomStrength}`,
+    radius: settings.bloomRadius,
+    strength: settings.bloomStrength
+  }), [pixelRatio, settings]);
 
-  const onCloseDestination = useMemo(() => new URLSearchParams(search).get('back'), [search]);
-
-  const title = useMemo(() => {
-    if (inGameMode) return '';
-    if (singleModel && model) {
-      return `${assetType === 'Resource' ? model.category : 'Infrastructure'} — ${model.name}`;
-    }
-    return `${assetType} Details`;
-  }, [singleModel, model, assetType, inGameMode]);
-
-  const bloomOverrides = useMemo(() => ({
-    key: `${pixelRatio}_${bloomRadiusOverride}_${bloomStrengthOverride}`,
-    radius: bloomRadiusOverride,
-    strength: bloomStrengthOverride
-  }), [bloomRadiusOverride, bloomStrengthOverride, pixelRatio]);
+  const onModelLoaded = useCallback(() => setLoadingModel(false), []);
+  const onSkyboxLoaded = useCallback(() => setLoadingSkybox(false), []);
 
   const isLoading = loadingModel || loadingSkybox;
+
+  // TODO: is Details best component to wrap this in?
+  // TODO: is canvasStack assetType causing a problem since it might change?
   return (
     <Details
       edgeToEdge
-      hideClose={inGameMode}
-      lowerZIndex={!!inGameMode}
-      onCloseDestination={onCloseDestination}
-      title={title}>
+      hideClose
+      lowerZIndex>
       <BarLoader color="#AAA" height={3} loading={isLoading} css={loadingCss} />
-
-      {!singleModel && categories && categoryModels && (
-        <Dropdowns>
-          {categories.length > 1 && (
-            <Dropdown
-              disabled={isLoading}
-              options={categories}
-              onChange={(b) => setCategory(b)}
-              width="200px" />
-          )}
-          <Dropdown
-            disabled={isLoading}
-            labelKey="name"
-            options={categoryModels}
-            onChange={(a) => selectModel(a)}
-            resetOn={category}
-            width="200px" />
-        </Dropdowns>
-      )}
-      {process.env.REACT_APP_ENABLE_DEV_TOOLS && devtoolsEnabled && (
-        <Devtools>
-          <div>
-            <Button
-              disabled={isLoading}
-              onClick={handleUploadClick('model')}>
-              Upload Model
-            </Button>
-            {modelOverrideName && <span onClick={removeOverride('model')}>{modelOverrideName}</span>}
-          </div>
-          <div>
-            <Button
-              disabled={isLoading}
-              onClick={handleUploadClick('env')}>
-              Upload EnvMap
-            </Button>
-            {envOverrideName && <span onClick={removeOverride('env')}>{envOverrideName}</span>}
-          </div>
-          <div>
-            <Button
-              disabled={isLoading}
-              onClick={handleUploadClick('bg')}>
-              Upload Skybox
-            </Button>
-            {bgOverrideName && <span onClick={removeOverride('bg')}>{bgOverrideName}</span>}
-          </div>
-          <div>
-            <Button
-              disabled={isLoading}
-              onClick={togglePostprocessing}>
-              Toggle Bloom
-            </Button>
-            {!postprocessingEnabled && <span onClick={togglePostprocessing}>Off</span>}
-          </div>
-          <div>
-            <Button
-              disabled={isLoading}
-              onClick={toggleLights}>
-              Toggle Lighting
-            </Button>
-            {!lightsEnabled && <span onClick={toggleLights}>Off</span>}
-          </div>
-          <div>
-            <Button
-              disabled={isLoading}
-              onClick={toggleRotation}>
-              Toggle Rotation
-            </Button>
-            {!rotationEnabled && <span onClick={toggleRotation}>Off</span>}
-          </div>
-          <div>
-            <Button
-              disabled={isLoading}
-              onClick={toggleZoomLimits}>
-              Toggle Zoom Limits
-            </Button>
-            {!zoomLimitsEnabled && <span onClick={toggleZoomLimits}>Off</span>}
-          </div>
-
-          <Miniform>
-            <label>Env Map Strength</label>
-            <NumberInput
-              disabled={isLoading}
-              initialValue={ENV_MAP_STRENGTH}
-              min="0.1"
-              step="0.1"
-              onChange={(v) => setEnvStrengthOverride(parseFloat(v))} />
-          </Miniform>
-
-          {postprocessingEnabled && (
-            <>
-              <Miniform>
-                <label>Bloom Radius</label>
-                <NumberInput
-                  disabled={isLoading}
-                  initialValue={bloomRadiusOverride}
-                  min="0"
-                  step="0.05"
-                  onChange={(v) => setBloomRadiusOverride(parseFloat(v))} />
-              </Miniform>
-
-              <Miniform>
-                <label>Bloom Strength</label>
-                <NumberInput
-                  disabled={isLoading}
-                  initialValue={bloomStrengthOverride}
-                  min="0"
-                  step="0.5"
-                  onChange={(v) => setBloomStrengthOverride(parseFloat(v))} />
-              </Miniform>
-            </>
-          )}
-
-          <input
-            ref={fileInput}
-            onChange={handleFile}
-            onClick={(e) => e.target.value = null}
-            style={{ display: 'none' }}
-            type="file" />
-        </Devtools>
-      )}
-
-      {!modelOverride && model?.iconUrls?.w125 && (
-        <IconContainer>
-          <img src={model.iconUrls.w125} alt={`${model.name} icon`} />
-        </IconContainer>
-      )}
 
       <CanvasContainer ready={!isLoading}>
         <Canvas
@@ -1034,31 +723,29 @@ const ModelViewer = ({ assetType, inGameMode }) => {
           style={{ height: '100%', width: '100%' }}>
 
           <Skybox
-            defaultBackground={settings.background}
-            defaultEnvmap={settings.envmap}
-            onLoaded={() => setLoadingSkybox(false)}
-            overrideBackground={bgOverride}
-            overrideBackgroundName={bgOverrideName}
-            overrideEnvironment={envOverride}
-            overrideEnvironmentName={envOverrideName}
+            background={settings.background}
+            envmap={settings.envmap}
+            backgroundOverrideName={settings.backgroundOverrideName}
+            envmapOverrideName={settings.envmapOverrideName}
+            onLoaded={onSkyboxLoaded}
           />
 
-          {postprocessingEnabled && (
-            <Postprocessor key={bloomOverrides?.key} enabled isModelViewer bloomParams={bloomOverrides} />
+          {settings.postprocessingEnabled && (
+            <Postprocessor
+              key={bloomParams?.key}
+              enabled
+              isModelViewer
+              bloomParams={bloomParams} />
           )}
 
-          {model?.modelUrl && !loadingSkybox && (
+          {!loadingSkybox && modelUrl && (
             <Model
-              onLoaded={handleLoaded}
-              overrideEnvName={envOverrideName}
-              overrideEnvStrength={envStrengthOverride}
-              rotationEnabled={rotationEnabled}
-              url={modelOverride || model.modelUrl}
-              zoomLimitsEnabled={zoomLimitsEnabled}
+              onLoaded={onModelLoaded}
+              url={modelUrl}
               {...settings} />
           )}
 
-          {lightsEnabled && (
+          {settings.enableDefaultLights && (
             <Lighting
               keylightIntensity={settings.keylightIntensity}
               rimlightIntensity={settings.rimlightIntensity} />

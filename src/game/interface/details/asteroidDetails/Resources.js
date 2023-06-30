@@ -437,7 +437,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
   const goToResourceViewer = useCallback((resource) => (e) => {
     e.stopPropagation();
     ReactTooltip.hide();
-    history.push(`/resource-viewer/${resource.i}?back=${encodeURIComponent(history.location.pathname)}`)
+    history.push(`/model/resource/${resource.i}?back=${encodeURIComponent(history.location.pathname)}`)
     return false;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

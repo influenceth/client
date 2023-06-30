@@ -147,6 +147,7 @@ export const useShipAssets = () => {
       const asset = {
         ...Ship.TYPES[i],
         i: Number(i),
+        category: 'Ship'
       };
 
       asset.iconUrl = getIconUrl(asset, 'ships');

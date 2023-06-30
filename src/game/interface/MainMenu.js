@@ -277,17 +277,6 @@ const MainMenu = (props) => {
           </Menu>
           
           {/*
-          <Menu title="Viewer">
-            <MenuItem
-              name="Buildings"
-              icon={<BuildingsIcon />}
-              onClick={() => history.push('/building-viewer')} />
-            <MenuItem
-              name="Resources"
-              icon={<ResourcesIcon />}
-              onClick={() => history.push('/resource-viewer')} />
-          </Menu>
-
           {!!account && hasGenesisCrewmate && (
             <Menu title="Activities" badge={totalAssignments}>
               <MenuItem

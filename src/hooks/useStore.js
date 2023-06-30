@@ -216,12 +216,21 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       }
     })),
 
-    dispatchHideInterface: () => set(produce(state => {
-      state.graphics.hideInterface = true;
+    dispatchToggleInterface: (force) => set(produce(state => {
+      state.graphics.hideInterface = (force === true || force === false)
+        ? force
+        : !state.graphics.hideInterface;
     })),
 
-    dispatchShowInterface: () => set(produce(state => {
-      state.graphics.hideInterface = false;
+    dispatchToggleDevTools: (force) => set(produce(state => {
+      state.graphics.showDevTools = (force === true || force === false)
+        ? force
+        : !state.graphics.showDevTools;
+      if (state.graphics.showDevTools && state.openHudMenu !== 'DEV_TOOLS') {
+        state.openHudMenu = 'DEV_TOOLS';
+      } else if (!state.graphics.showDevTools && state.openHudMenu === 'DEV_TOOLS') {
+        state.openHudMenu = null;
+      }
     })),
 
     dispatchPixelRatio: (ratio) => set(produce(state => {

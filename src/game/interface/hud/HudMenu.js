@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { Construction, Inventory } from '@influenceth/sdk';
 import ReactTooltip from 'react-tooltip';
+import { BiWrench as WrenchIcon } from 'react-icons/bi';
 
 import IconButton from '~/components/IconButton';
 import {
@@ -23,7 +25,6 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import hudMenus from './hudMenus';
 import useAuth from '~/hooks/useAuth';
-import { useHistory } from 'react-router-dom';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -152,10 +153,11 @@ const HudMenu = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const destination = useStore(s => s.asteroids.destination);
   const { asteroidId: lotAsteroidId, lotId } = useStore(s => s.asteroids.lot || {});
-  const openHudMenu = useStore(s => s.openHudMenu);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const showDevTools = useStore(s => s.graphics.showDevTools);
+  const openHudMenu = useStore(s => s.openHudMenu);
 
   const { data: lot } = useLot(lotAsteroidId, lotId);
 
@@ -204,8 +206,11 @@ const HudMenu = () => {
   }, [openHudMenu]);
 
   const buttons = useMemo(() => {
+    let buttons = [];
+
+    // "system view"
     if (zoomStatus === 'out') {
-      const out = [
+      buttons.push(
         {
           key: 'BELT_ASTEROID_INFO',
           label: 'Asteroid Info',
@@ -251,9 +256,9 @@ const HudMenu = () => {
             history.push(`/listview/asteroids`);
           }
         },
-      ];
+      );
       if (asteroidId && destination) {
-        out.push({
+        buttons.push({
           key: 'BELT_PLAN_FLIGHT',
           label: 'Plan Flight',
           icon: <SimulateRouteIcon />,
@@ -261,9 +266,10 @@ const HudMenu = () => {
           noDetail: true
         });
       }
-      return out;
+      
+    // zoomed to asteroid, not zoomed to lot or ship
     } else if (zoomStatus === 'in' && !zoomScene) {
-      return [
+      buttons.push(
         {
           key: 'ASTEROID_ASSETS',
           label: 'My Assets',
@@ -302,21 +308,23 @@ const HudMenu = () => {
             history.push(`/listview`);  // TODO: should probably also go to /listview/lots
           }
         },
-      ];
+      );
+
+    // zoomed to lot
     } else if (zoomStatus === 'in' && zoomScene?.type === 'LOT') {
-      const b = [
+      buttons.push(
         {
           key: 'LOT_INFORMATION',
           label: 'Information',
           icon: <InfoIcon />,
           Component: hudMenus.LotInfo
         }
-      ];
+      );
 
       if (lot?.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
         // marketplace
         if (lot.building.capableType === 1) { // TODO: 8) {
-          b.push({
+          buttons.push({
             key: 'MARKETPLACE_LISTINGS',
             label: 'Marketplace Listings',
             icon: <OrderIcon />,
@@ -327,7 +335,7 @@ const HudMenu = () => {
         }
       }
 
-      b.push({
+      buttons.push({
         key: 'LOT_RESOURCES',
         label: 'Resources',
         icon: <ResourceIcon />,
@@ -339,7 +347,7 @@ const HudMenu = () => {
           (lot.building.construction?.status === Construction.STATUS_PLANNED && Inventory.CAPACITIES[lot.building.capableType][0])
           || (lot.building.construction?.status === Construction.STATUS_OPERATIONAL && Inventory.CAPACITIES[lot.building.capableType][1])
         ) {
-          b.push({
+          buttons.push({
             key: 'LOT_INVENTORY',
             label: 'Inventory',
             icon: <InventoryIcon />,
@@ -348,12 +356,23 @@ const HudMenu = () => {
         } 
       }
 
-      return b;
+    // zoomed to ship
     } else if (zoomStatus === 'in' && zoomScene?.type === 'SHIP') {
       // TODO: ... ship HUD menu options ...
     }
-    return [];
-  }, [asteroidId, destination, lot, lotId, zoomStatus, zoomScene]);
+
+    if (process.env.REACT_APP_ENABLE_DEV_TOOLS && showDevTools) {
+      buttons.push({
+        key: 'DEV_TOOLS',
+        label: 'Dev Tools',
+        icon: <WrenchIcon />,
+        noDetail: true,
+        Component: hudMenus.DevTools
+      });
+    }
+
+    return buttons;
+  }, [asteroidId, destination, lot, lotId, showDevTools, zoomStatus, zoomScene]);
 
   const { label, onDetailClick, detailType, Component, componentProps, noDetail } = useMemo(() => {
     return buttons.find((b) => b.key === openHudMenu) || {};

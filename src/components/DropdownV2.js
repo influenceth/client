@@ -63,7 +63,7 @@ const Dropdown = ({
     if (typeof (rawOptions || [])[0] === 'object') {
       return [true, [...rawOptions]];
     }
-    return [false, rawOptions.map((o, i) => ({ [labelKey]: o, [valueKey]: i }))];
+    return [false, (rawOptions || []).map((o, i) => ({ [labelKey]: o, [valueKey]: i }))];
   }, [rawOptions]);
 
   const closeTimer = useRef();

@@ -24,12 +24,14 @@ import CrewMemberDetails from './interface/details/CrewMemberDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
 import Marketplace from './interface/details/Marketplace';
-import LotViewer from './interface/LotViewer';
-import ShipViewer from './interface/ShipViewer';
+import LotViewer from './interface/modelViewer/LotViewer';
+import ShipViewer from './interface/modelViewer/ShipViewer';
 import WatchlistTable from './interface/details/WatchlistTable';
 import theme from '~/theme';
 import Cutscene from './Cutscene';
 import Launcher from './Launcher';
+import LinkedViewer from './interface/modelViewer/LinkedViewer';
+import DevToolsViewer from './interface/modelViewer/DevToolsViewer';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -87,13 +89,16 @@ const Interface = () => {
   const cutscene = useStore(s => s.cutscene);
   const launcherPage = useStore(s => s.launcherPage);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
-  const hideInterface = useStore(s => s.dispatchHideInterface);
-  const showInterface = useStore(s => s.dispatchShowInterface);
+  const showDevTools = useStore(s => s.graphics.showDevTools);
+  const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
+  const dispatchToggleDevTools = useStore(s => s.dispatchToggleDevTools);
 
   const handleInterfaceShortcut = useCallback((e) => {
     // ctrl+f9
-    if (e.ctrlKey && e.which === 120) interfaceHidden ? showInterface() : hideInterface();
-  }, [interfaceHidden]);
+    if (e.ctrlKey && e.which === 120) dispatchToggleInterface();
+    // ctrl+f10
+    if (e.ctrlKey && e.which === 121) dispatchToggleDevTools();
+  }, [dispatchToggleInterface, dispatchToggleDevTools]);
 
   useEffect(() => {
     document.addEventListener('keyup', handleInterfaceShortcut);
@@ -116,14 +121,8 @@ const Interface = () => {
             <Route exact path="/listview/:assetType?">
               <ListView />
             </Route>
-            <Route path="/building-viewer/:model?">
-              <ModelViewer assetType="Building" />
-            </Route>
-            <Route path="/resource-viewer/:model?">
-              <ModelViewer assetType="Resource" />
-            </Route>
-            <Route path="/ship-viewer/:model?">
-              <ModelViewer assetType="Ship" />
+            <Route path="/model/:assetType/:assetName?">
+              <LinkedViewer />
             </Route>
             <Route path="/crew/:i(\d+)">
               <CrewMemberDetails />
@@ -136,6 +135,7 @@ const Interface = () => {
             </Route>
           </Switch>
 
+          {showDevTools && <DevToolsViewer />}
           <LotViewer />
           <ShipViewer />
           <HUD />

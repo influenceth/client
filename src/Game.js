@@ -4,10 +4,12 @@ import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
+import { ActionItemProvider } from '~/contexts/ActionItemContext';
 import { AuthProvider } from '~/contexts/AuthContext';
 import { CrewProvider } from './contexts/CrewContext';
 import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
 import { ClockProvider } from '~/contexts/ClockContext';
+import { DevToolProvider } from '~/contexts/DevToolContext';
 import { EventsProvider } from '~/contexts/EventsContext';
 import { WalletProvider } from '~/contexts/WalletContext';
 import { WebsocketProvider } from '~/contexts/WebsocketContext';
@@ -20,8 +22,8 @@ import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import theme from '~/theme';
-import { ActionItemProvider } from './contexts/ActionItemContext';
 import useAuth from './hooks/useAuth';
+
 
 const { GRAPHICS_DEFAULTS } = constants;
 
@@ -140,37 +142,39 @@ const Game = (props) => {
     <WalletProvider>
       <AuthProvider>
         <CrewProvider>
-          <WebsocketProvider>
-            <EventsProvider>
-              <ChainTransactionProvider>
-                <ActionItemProvider>
-                  <ThemeProvider theme={theme}>
-                    <GlobalStyle />
-                    <Router>
-                      <Referral />
-                      <Switch>
-                        {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
-                        <Route path="/play">
-                          <LandingPage />
-                        </Route>
-                        {/* for everything else */}
-                        <Route>
-                          <LauncherRedirect />
-                          <ClockProvider>
-                            <StyledMain>
-                              <Interface />
-                              {showScene && <Scene />}
-                              <Audio />
-                            </StyledMain>
-                          </ClockProvider>
-                        </Route>
-                      </Switch>
-                    </Router>
-                  </ThemeProvider>
-                </ActionItemProvider>
-              </ChainTransactionProvider>
-            </EventsProvider>
-          </WebsocketProvider>
+          <DevToolProvider>
+            <WebsocketProvider>
+              <EventsProvider>
+                <ChainTransactionProvider>
+                  <ActionItemProvider>
+                    <ThemeProvider theme={theme}>
+                      <GlobalStyle />
+                      <Router>
+                        <Referral />
+                        <Switch>
+                          {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
+                          <Route path="/play">
+                            <LandingPage />
+                          </Route>
+                          {/* for everything else */}
+                          <Route>
+                            <LauncherRedirect />
+                            <ClockProvider>
+                              <StyledMain>
+                                <Interface />
+                                {showScene && <Scene />}
+                                <Audio />
+                              </StyledMain>
+                            </ClockProvider>
+                          </Route>
+                        </Switch>
+                      </Router>
+                    </ThemeProvider>
+                  </ActionItemProvider>
+                </ChainTransactionProvider>
+              </EventsProvider>
+            </WebsocketProvider>
+          </DevToolProvider>
         </CrewProvider>
       </AuthProvider>
     </WalletProvider>

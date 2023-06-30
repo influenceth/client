@@ -229,8 +229,7 @@ const Launcher = (props) => {
   const { displayTime } = useContext(ClockContext);
   const launcherPage = useStore(s => s.launcherPage);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-  const hideInterface = useStore(s => s.dispatchHideInterface);
-  const showInterface = useStore(s => s.dispatchShowInterface);
+  const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
   const { walletContext, token } = useAuth();
   const { account, walletIcon, walletName } = walletContext;
   const loggedIn = account && token;
@@ -240,8 +239,8 @@ const Launcher = (props) => {
   }, [ walletContext ]);
 
   useEffect(() => {
-    hideInterface();
-    return () => showInterface();
+    dispatchToggleInterface(false);
+    return () => dispatchToggleInterface(true);
   }, []);
 
   return (

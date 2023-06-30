@@ -31,6 +31,7 @@ const StyledSystemControls = styled.div`
   right: 5px;
   top: 0;
   transition: opacity 250ms ease;
+  z-index: 2;
   &:hover {
     opacity: 1;
   }
