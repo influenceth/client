@@ -18,6 +18,9 @@ export function DevToolProvider({ children }) {
   const [envmap, setEnvmap] = useState();
   const [envmapOverrideName, setEnvmapOverrideName] = useState();
   const [envmapStrength, setEnvmapStrength] = useState();
+  const [toneMapping, setToneMapping] = useState();
+  const [toneMappingExposure, setToneMappingExposure] = useState();
+  const [trackCamera, setTrackCamera] = useState();
 
   // reset most overrides on change of asset type
   useEffect(() => {
@@ -46,7 +49,10 @@ export function DevToolProvider({ children }) {
       enableZoomLimits,
       envmap,
       envmapOverrideName,
-      envmapStrength
+      envmapStrength,
+      toneMapping,
+      toneMappingExposure,
+      trackCamera
     },
     setAssetType,
     setModelUrl,
@@ -60,7 +66,10 @@ export function DevToolProvider({ children }) {
     setEnableZoomLimits,
     setEnvmap,
     setEnvmapOverrideName,
-    setEnvmapStrength
+    setEnvmapStrength,
+    setToneMapping,
+    setToneMappingExposure,
+    setTrackCamera
   }), [
     assetType,
     modelUrl,
@@ -75,7 +84,10 @@ export function DevToolProvider({ children }) {
     envmap,
     envmapOverrideName,
     envmapStrength,
-  ])
+    toneMapping,
+    toneMappingExposure,
+    trackCamera
+  ]);
 
   return (
     <DevToolContext.Provider value={contextValue}>

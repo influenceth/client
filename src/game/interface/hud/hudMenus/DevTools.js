@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
+import { NoToneMapping } from 'three';
 
 import Button from '~/components/ButtonAlt';
 import Dropdown from '~/components/DropdownV2';
@@ -9,7 +10,7 @@ import NumberInput from '~/components/NumberInput';
 import DevToolContext from '~/contexts/DevToolContext';
 import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import theme from '~/theme';
-import ModelViewer, { getModelViewerSettings } from '../../ModelViewer';
+import { getModelViewerSettings, toneMaps } from '../../ModelViewer';
 import { HudMenuCollapsibleSection, Scrollable } from './components';
 
 const InnerSection = styled.div`
@@ -101,7 +102,7 @@ const DevTools = () => {
     if (assets) {
       const categorySet = new Set(assets.filter((a) => !!a).map((a) => a.category || ''));
       const categoryArr = Array.from(categorySet).sort();
-      setCategories(categoryArr.map((c) => ({ label: c || '(uncategorized)', value: c })));
+      setCategories(categoryArr.map((c) => ({ label: c || '(Uncategorized)', value: c })));
       setCategory(categoryArr[0]);
     }
   }, [assets]);
@@ -171,6 +172,13 @@ const DevTools = () => {
     setter((s) => !s);
   }, [settings]);
 
+  const onChangeToneMapping = useCallback((selection) => {
+    setters.setToneMapping(selection?.value);
+    if (selection?.value === NoToneMapping) {
+      setters.setToneMappingExposure();
+    }
+  }, []);
+
   const isLoading = false; // TODO:...
   if (!process.env.REACT_APP_ENABLE_DEV_TOOLS) return null;
   return (
@@ -209,7 +217,7 @@ const DevTools = () => {
               options={categories}
               onChange={(c) => setCategory(c?.value)}
               size="small"
-              style={{ width: '250px' }} />
+              style={{ textTransform: 'none', width: '250px' }} />
           )}
           <Dropdown
             disabled={isLoading || modelOverride}
@@ -219,7 +227,7 @@ const DevTools = () => {
             options={categoryModels}
             onChange={(a) => selectModel(a)}
             size="small"
-            style={{ width: '250px' }} />
+            style={{ textTransform: 'none', width: '250px' }} />
 
           <Button
             disabled={isLoading}
@@ -237,7 +245,7 @@ const DevTools = () => {
         </InnerSection>
       </HudMenuCollapsibleSection>
 
-      <HudMenuCollapsibleSection titleText="Environment" collapsed>
+      <HudMenuCollapsibleSection titleText="Environment">
         {/* many of these are reset on assetType change */}
         <InnerSection key={settings.assetType}>
             <Button
@@ -268,18 +276,33 @@ const DevTools = () => {
 
             <hr />
 
-            <Miniform>
-              <label>Env Map Strength</label>
-              <NumberInput
-                disabled={isLoading}
-                initialValue={defaultSettings.envmapStrength}
-                min="0.1"
-                step="0.1"
-                onChange={(v) => setters.setEnvmapStrength(parseFloat(v))} />
-            </Miniform>
+            <CheckboxRow onClick={() => toggleSetting(setters.setEnablePostprocessing)}>
+              {settings.enablePostprocessing ? <CheckedIcon /> : <UncheckedIcon />}
+              <label>Bloom</label>
+            </CheckboxRow>
 
             {settings.enablePostprocessing && (
-              <>
+              <div style={{ marginTop: 8 }}>
+                <Dropdown
+                  disabled={isLoading}
+                  initialSelection={toneMaps.find((t) => t.value === settings.toneMapping)?.value}
+                  options={toneMaps}
+                  onChange={onChangeToneMapping}
+                  size="small"
+                  style={{ textTransform: 'none', width: '250px' }} />
+
+                {settings.toneMapping !== NoToneMapping && (
+                  <Miniform>
+                    <label>Tone Mapping Exposure</label>
+                    <NumberInput
+                      disabled={isLoading}
+                      initialValue={defaultSettings.toneMappingExposure}
+                      min="0.5"
+                      step="0.5"
+                      onChange={(v) => setters.setToneMappingExposure(parseFloat(v) || 1)} />
+                  </Miniform>
+                )}
+
                 <Miniform>
                   <label>Bloom Radius</label>
                   <NumberInput
@@ -299,13 +322,8 @@ const DevTools = () => {
                     step="0.5"
                     onChange={(v) => setters.setBloomStrength(parseFloat(v))} />
                 </Miniform>
-              </>
+              </div>
             )}
-
-            <CheckboxRow onClick={() => toggleSetting(setters.setEnablePostprocessing)}>
-              {settings.enablePostprocessing ? <CheckedIcon /> : <UncheckedIcon />}
-              <label>Bloom</label>
-            </CheckboxRow>
 
             <CheckboxRow onClick={() => toggleSetting(setters.setEnableDefaultLights)}>
               {settings.enableDefaultLights ? <CheckedIcon /> : <UncheckedIcon />}
@@ -321,6 +339,21 @@ const DevTools = () => {
               {settings.enableZoomLimits ? <CheckedIcon /> : <UncheckedIcon />}
               <label>Camera Zoom Limits</label>
             </CheckboxRow>
+
+            <CheckboxRow onClick={() => toggleSetting(setters.setTrackCamera)}>
+              {settings.trackCamera ? <CheckedIcon /> : <UncheckedIcon />}
+              <label>Track Camera</label>
+            </CheckboxRow>
+
+            <Miniform>
+              <label>Env Map Strength</label>
+              <NumberInput
+                disabled={isLoading}
+                initialValue={defaultSettings.envmapStrength}
+                min="0.1"
+                step="0.1"
+                onChange={(v) => setters.setEnvmapStrength(parseFloat(v))} />
+            </Miniform>
         </InnerSection>
       </HudMenuCollapsibleSection>
 

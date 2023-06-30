@@ -63,7 +63,7 @@ const defaultBloomParams = {
   radius: 0.25
 }
 
-const Postprocessor = ({ enabled, isModelViewer, bloomParams = {} }) => {
+const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) => {
   const { gl: renderer, camera, scene, size } = useThree();
 
   const pixelRatio = useStore(s => s.graphics.pixelRatio || 1);
@@ -122,23 +122,15 @@ const Postprocessor = ({ enabled, isModelViewer, bloomParams = {} }) => {
   }
 
   useEffect(() => {
-    if (enabled && isModelViewer) {
-      renderer.toneMapping = LinearToneMapping;
-      // renderer.toneMapping = 
-      // THREE.NoToneMapping // default
-      // THREE.LinearToneMapping // 3.75
-      // THREE.ReinhardToneMapping  // 4.5
-      // THREE.CineonToneMapping
-      // THREE.ACESFilmicToneMapping  // seems to be the actual default
-      // THREE.CustomToneMapping
-      // ;
-      renderer.toneMappingExposure = 4;
+    if (enabled && toneMappingParams) {
+      renderer.toneMapping = toneMappingParams.toneMapping;
+      renderer.toneMappingExposure = toneMappingParams.toneMappingExposure;
       return () => {
+        renderer.toneMapping = LinearToneMapping;
         renderer.toneMappingExposure = 1;
       }
     }
-
-  }, [enabled, isModelViewer])
+  }, [enabled, toneMappingParams])
 
   useEffect(() => {
     const renderScene = new RenderPass( scene, camera );

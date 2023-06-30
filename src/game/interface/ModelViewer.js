@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimationMixer, Box3, Color, DirectionalLight, EquirectangularReflectionMapping, LoopRepeat, Raycaster, Vector2, Vector3 } from 'three';
+import { ACESFilmicToneMapping, AnimationMixer, Box3, CineonToneMapping, Color, DirectionalLight, EquirectangularReflectionMapping, LinearToneMapping, LoopRepeat, NoToneMapping, Raycaster, ReinhardToneMapping, Vector2, Vector3 } from 'three';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -12,6 +12,7 @@ import styled, { css } from 'styled-components';
 import Details from '~/components/DetailsFullsize';
 import Postprocessor from '../Postprocessor';
 import useStore from '~/hooks/useStore';
+import { formatFixed } from '~/lib/utils';
 
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
@@ -57,6 +58,16 @@ const IconContainer = styled.div`
   }
 `;
 
+const CameraInfo = styled.div`
+  background: rgba(128, 128, 128, 0.25);
+  color: white;
+  padding: 5px 10px;
+  position: absolute;
+  left: 15px;
+  bottom: 140px;
+  z-index: 1000;
+`;
+
 const loadingCss = css`
   left: 0;
   position: absolute;
@@ -64,6 +75,14 @@ const loadingCss = css`
   width: 100%;
   z-index: 10;
 `;
+
+export const toneMaps = [
+  { label: 'NoToneMapping', value: NoToneMapping },
+  { label: 'LinearToneMapping', value: LinearToneMapping },
+  { label: 'ReinhardToneMapping', value: ReinhardToneMapping },
+  { label: 'CineonToneMapping', value: CineonToneMapping },
+  { label: 'ACESFilmicToneMapping', value: ACESFilmicToneMapping },
+];
 
 export const getModelViewerSettings = (assetType, overrides = {}) => {
   // get default settings (for all)
@@ -84,6 +103,7 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
     s.emissiveAsBloom = true;
     s.emissiveMapAsLightMap = true;
     s.enableModelLights = true;
+    s.enablePostprocessing = true;
     s.envmapStrength = 0.1;
     s.floorNodeName = 'Asteroid_Terrain'; // (enforces collision detection with this node (only in y-axis direction))
     s.maxCameraDistance = 0.1;  // NOTE: use this or simple zoom constraints, not both
@@ -100,6 +120,15 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
   } else if (assetType === 'ship') {
     s.emissiveAsBloom = true;
     s.enableModelLights = true;
+    s.enablePostprocessing = true;
+  }
+
+  if (s.enablePostprocessing) {
+    s.toneMapping = s.toneMapping || LinearToneMapping;
+    s.toneMappingExposure = s.toneMappingExposure || 3.5;
+  } else {
+    s.toneMapping = NoToneMapping;
+    s.toneMappingExposure = 1;
   }
 
   // apply overrides
@@ -128,7 +157,7 @@ const loadTexture = (file, filename = '') => {
 
 let currentModelLoadId;
 
-const Model = ({ url, onLoaded, ...settings }) => {
+const Model = ({ url, onLoaded, onCameraUpdate, ...settings }) => {
   const { camera, clock, gl, scene } = useThree();
   const pixelRatio = useStore(s => s.graphics.pixelRatio);
 
@@ -145,6 +174,10 @@ const Model = ({ url, onLoaded, ...settings }) => {
   const maxCameraDistance = useRef();
   const controls = useRef();
   const model = useRef();
+
+  const cameraReportTime = useRef();
+  const cameraCenterOffset = useRef();
+  const scaleValue = useRef();
 
   const collisionFloor = useRef();
   const raycaster = useRef(new Raycaster());
@@ -176,7 +209,7 @@ const Model = ({ url, onLoaded, ...settings }) => {
     return () => {
       controls.current.dispose();
     };
-  }, [camera, gl]);
+  }, [camera, gl, url]);
 
   useEffect(() => {
     if (settings.enableZoomLimits && settings.simpleZoomConstraints) {
@@ -313,12 +346,12 @@ const Model = ({ url, onLoaded, ...settings }) => {
         // );
         // const height = bbox.max.y - bbox.min.y;
         // const scaleValue = 1.0 / Math.max(height, crossVector.length());
-        const scaleValue = 1.0 / Math.max(
+        scaleValue.current = 1.0 / Math.max(
           bbox.max.x - bbox.min.x,
           bbox.max.y - bbox.min.y,
           bbox.max.z - bbox.min.z
         );
-        model.current.scale.set(scaleValue, scaleValue, scaleValue);
+        model.current.scale.set(scaleValue.current, scaleValue.current, scaleValue.current);
 
         // resize shadow cameras (these don't automatically resize with the rest of the model)
         model.current.traverse(function (node) {
@@ -339,7 +372,7 @@ const Model = ({ url, onLoaded, ...settings }) => {
         // reposition (to put center at origin or predefined point)
         let center;
         if (predefinedCenter) {
-          center = predefinedCenter.clone().setLength(predefinedCenter.length() * scaleValue);
+          center = predefinedCenter.clone().setLength(predefinedCenter.length() * scaleValue.current);
         } else {
           bbox.setFromObject(model.current);
           center = bbox.getCenter(new Vector3());
@@ -347,10 +380,11 @@ const Model = ({ url, onLoaded, ...settings }) => {
         model.current.position.x += model.current.position.x - center.x;
         model.current.position.y += model.current.position.y - center.y;
         model.current.position.z += model.current.position.z - center.z;
+        cameraCenterOffset.current = center;
 
         // if camera is predefined, position camera accordingly
         if (predefinedCamera) {
-          const cam = predefinedCamera.clone().setLength(predefinedCamera.length() * scaleValue);
+          const cam = predefinedCamera.clone().setLength(predefinedCamera.length() * scaleValue.current);
           controls.current.object.position.set(
             cam.x + model.current.position.x,
             cam.y + model.current.position.y,
@@ -482,6 +516,17 @@ const Model = ({ url, onLoaded, ...settings }) => {
         if (updateControls) {
           controls.current.update();
         }
+      }
+    }
+
+    if (onCameraUpdate && controls.current.object && controls.current.target) {
+      if ((cameraReportTime.current || 0) < Date.now() - 250) {
+        const adjustedObject = cameraCenterOffset.current.clone().add(controls.current.object.position);
+        const adjustedTarget = cameraCenterOffset.current.clone().add(controls.current.target);
+        onCameraUpdate({
+          object: Object.values(adjustedObject).map((x) => formatFixed(x / scaleValue.current, 1)).join(', '),
+          target: Object.values(adjustedTarget).map((x) => formatFixed(x / scaleValue.current, 1)).join(', '),
+        });
       }
     }
   });
@@ -672,6 +717,7 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
   const dispatchCanvasStacked = useStore(s => s.dispatchCanvasStacked);
   const dispatchCanvasUnstacked = useStore(s => s.dispatchCanvasUnstacked);
 
+  const [cameraInfo, setCameraInfo] = useState();
   const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState(true);
 
@@ -696,10 +742,14 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
   }, [settings.background, settings.envmap])
 
   const bloomParams = useMemo(() => ({
-    key: `${pixelRatio}_${settings.bloomRadius}_${settings.bloomStrength}`,
     radius: settings.bloomRadius,
     strength: settings.bloomStrength
-  }), [pixelRatio, settings]);
+  }), [settings]);
+
+  const toneMappingParams = useMemo(() => ({
+    toneMapping: settings.toneMapping || NoToneMapping,
+    toneMappingExposure: settings.toneMappingExposure
+  }), [settings]);
 
   const onModelLoaded = useCallback(() => setLoadingModel(false), []);
   const onSkyboxLoaded = useCallback(() => setLoadingSkybox(false), []);
@@ -730,16 +780,17 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
             onLoaded={onSkyboxLoaded}
           />
 
-          {settings.postprocessingEnabled && (
+          {settings.enablePostprocessing && (
             <Postprocessor
-              key={bloomParams?.key}
+              key={`${pixelRatio}_${settings.bloomRadius}_${settings.bloomStrength}_${settings.toneMapping}_${settings.toneMappingExposure}`}
               enabled
-              isModelViewer
-              bloomParams={bloomParams} />
+              bloomParams={bloomParams}
+              toneMappingParams={toneMappingParams} />
           )}
 
           {!loadingSkybox && modelUrl && (
             <Model
+              onCameraUpdate={settings.trackCamera ? setCameraInfo : null}
               onLoaded={onModelLoaded}
               url={modelUrl}
               {...settings} />
@@ -752,6 +803,13 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
           )}
         </Canvas>
       </CanvasContainer>
+      
+      {settings.trackCamera && cameraInfo && (
+        <CameraInfo>
+          <div><b>Center:</b> {cameraInfo.target}</div>
+          <div><b>Camera:</b> {cameraInfo.object}</div>
+        </CameraInfo>
+      )}
     </Details>
   );
 };
