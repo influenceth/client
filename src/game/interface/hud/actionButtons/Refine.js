@@ -5,7 +5,6 @@ import ActionButton from './ActionButton';
 
 const Refine = ({ asteroid, crew, lot, onSetAction }) => {
   const handleClick = useCallback(() => {
-    // onSetAction('BUILD_SHIP');
     onSetAction('REFINE');
   }, [onSetAction]);
 

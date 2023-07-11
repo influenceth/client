@@ -11,6 +11,7 @@ import useScreenSize from '~/hooks/useScreenSize';
 import theme, { hexToRGB } from '~/theme';
 import { formatFixed } from '~/lib/utils';
 import ActionButton from '~/game/interface/hud/actionButtons/ActionButton';
+import useStore from '~/hooks/useStore';
 
 const greenRGB = hexToRGB(theme.colors.green);
 
@@ -264,9 +265,6 @@ const FormSection = styled.div`
   &:first-child {
     margin-top: 0;
   }
-  input {
-    width: 100%;
-  }
 `;
 
 const RadioRow = styled.label`
@@ -374,6 +372,8 @@ const STROKE_WIDTH = 2;
 
 const MarketplaceDepthChart = ({ lot, marketplace, resource }) => {
   const { width, height } = useScreenSize();
+
+  const onSetAction = useStore(s => s.dispatchActionDialog);
 
   const { data: owner } = useCrew(lot?.occupier);
 
@@ -524,6 +524,17 @@ const MarketplaceDepthChart = ({ lot, marketplace, resource }) => {
     setLimitPrice(0);
   }, [mode, type]);
 
+  const createOrder = useCallback(() => {
+    onSetAction('MARKETPLACE_ORDER', {
+      asteroidId: lot?.asteroid,
+      lotId: lot?.i,
+      mode,
+      type,
+      resourceId: resource?.i,
+      preselect: { limitPrice, quantity }
+    });
+  }, [limitPrice, lot, mode, quantity, resource, type]);
+
   const handleChangeQuantity = useCallback((e) => {
     let input = parseInt(e.currentTarget.value) || 0;
     if (input && type === 'market') {
@@ -537,8 +548,6 @@ const MarketplaceDepthChart = ({ lot, marketplace, resource }) => {
   const handleChangeLimitPrice = useCallback((e) => {
     setLimitPrice(e.currentTarget.value);
   }, []);
-
-  // TODO: limit price 
 
   const [totalMarketPrice, avgMarketPrice] = useMemo(() => {
     let total = 0;
@@ -759,7 +768,6 @@ const MarketplaceDepthChart = ({ lot, marketplace, resource }) => {
                   </TextInputWrapper>
                 </FormSection>
 
-
                 <FormSection>
                   <InputLabel>
                     <label>Marketplace Fee</label>
@@ -787,7 +795,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, resource }) => {
                   <ActionButton
                     label="Create Order"
                     icon={<OrderIcon />}
-                    onClick={() => {/* TODO: */}} />
+                    onClick={createOrder} />
                 </Tray>
               )}
             </PanelContent>

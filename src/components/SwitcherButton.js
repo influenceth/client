@@ -30,6 +30,7 @@ const Switcher = ({ buttons, buttonWidth, onChange, size, value }) => (
       if (i !== 0) styles.borderLeft = 0;
       return (
         <SwitcherButton
+          key={buttonValue}
           background={buttonValue === value ? theme.colors.main : '#444'}
           width={buttonWidth}
           flip={(i === 0) || undefined}

@@ -21,6 +21,7 @@ import Deconstruct from './actionDialogs/Deconstruct';
 import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
 import LandShip from './actionDialogs/LandShip';
 import LaunchShip from './actionDialogs/LaunchShip';
+import MarketplaceOrder from './actionDialogs/MarketplaceOrder';
 import PlanBuilding from './actionDialogs/PlanBuilding';
 import Refine from './actionDialogs/Refine';
 import SetCourse from './actionDialogs/SetCourse';
@@ -243,6 +244,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'LAUNCH_SHIP' && <LaunchShip {...allProps} />}
         {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}
         {type === 'NEW_CORE_SAMPLE' && <NewCoreSample {...allProps} />}
+        {type === 'MARKETPLACE_ORDER' && <MarketplaceOrder {...allProps} />}
         {type === 'REFINE' && <Refine {...allProps} />}
         {type === 'SET_COURSE' && <SetCourse {...allProps} />}
         {type === 'STATION_CREW' && <StationCrew {...allProps} />}
