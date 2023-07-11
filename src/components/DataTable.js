@@ -77,7 +77,7 @@ const DataTableHeadCell = styled.th`
   z-index: 1;
   & > div {
     ${p => p.align && `justify-content: ${align[p.align]} !important;`}
-    background: black;
+    background: transparent;
     border-bottom: 1px solid #444;
     ${p => p.isIconColumn
       ? `

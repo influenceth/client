@@ -162,7 +162,7 @@ const Interface = () => {
           <Route path="/crew-assignment/:id([a-z0-9]+)/create">
             <CrewCreation />
           </Route>
-          <Route path="/marketplace/:asteroidId([0-9]+)/:lotId([0-9]+)">
+          <Route path="/marketplace/:asteroidId([0-9]+)/:lotId([0-9]+)/:discriminator?">
             <Marketplace />
           </Route>
         </Switch>

@@ -1,19 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 
-import { ChevronDoubleDownIcon, ChevronDoubleUpIcon, ChevronRightIcon, CompositionIcon, GridIcon, SwayIcon } from '~/components/Icons';
+import { CompositionIcon, InfoIcon, OrderIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon } from '~/components/Icons';
 import CrewIndicator from '~/components/CrewIndicator';
-import useCrew from '~/hooks/useCrew';
-import { useResourceAssets } from '~/hooks/useAssets';
-import useScreenSize from '~/hooks/useScreenSize';
-import TextInput from '~/components/TextInput';
-import Dropdown from '~/components/DropdownV2';
-import Button from '~/components/ButtonAlt';
-import theme, { hexToRGB } from '~/theme';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
-import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
-import ClipCorner from '~/components/ClipCorner';
+import Switcher from '~/components/SwitcherButton';
+import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
+import useCrew from '~/hooks/useCrew';
+import useScreenSize from '~/hooks/useScreenSize';
+import theme, { hexToRGB } from '~/theme';
 import { formatFixed } from '~/lib/utils';
+import ActionButton from '~/game/interface/hud/actionButtons/ActionButton';
 
 const greenRGB = hexToRGB(theme.colors.green);
 
@@ -30,10 +27,55 @@ const Main = styled.div`
   height: 100%;
   width: 100%;
 `;
-const ActionTray = styled.div`
-  background: #222;
+
+const ActionPanel = styled.div`
   margin-left: 20px;
   width: 320px;
+  & > div {
+    background: #171717;
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% calc(100% - 15px),
+      calc(100% - 15px) 100%,
+      0 100%
+    );
+    height: calc(100% - 25px);
+  }
+`;
+
+
+const PanelInner = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px 16px 0 12px;
+`;
+
+const trayHeight = 80;
+const PanelTitle = styled.div`
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: row;
+  font-size: 18px;
+  font-weight: bold;
+  padding-bottom: 8px;
+  padding-top: 4px;
+  text-transform: uppercase;
+`;
+const PanelContent = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 0;
+  padding: 15px 0 0;
+  & > div:first-child {
+    height: calc(100% - ${trayHeight}px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 15px;
+    margin-right: -12px;
+  }
 `;
 
 const Subheader = styled.div``;
@@ -130,7 +172,7 @@ const TableArea = styled.div`
   height: 100%;
   overflow: hidden;
   padding-left: 15px;
-  width: 300px;
+  width: 360px;
 `;
 
 const VolumeBar = styled.div`
@@ -217,6 +259,91 @@ const Price = styled.div`
   `}
 `;
 
+const FormSection = styled.div`
+  margin-top: 15px;
+  &:first-child {
+    margin-top: 0;
+  }
+  input {
+    width: 100%;
+  }
+`;
+
+const RadioRow = styled.label`
+  align-items: center;
+  color: #888;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  flex-direction: row;
+  height: 25px;
+  width: 100%;
+  ${p => p.selected
+    ? `& > svg { color: white; }`
+    : `&:hover > svg { color: white; }`
+  }
+
+  & > span {
+    flex: 1;
+    padding-left: 6px;
+  }
+`;
+const InfoTooltip = styled.div`
+  color: white;
+`;
+
+const InputLabel = styled.div`
+  align-items: center;
+  color: #888;
+  display: flex;
+  flex-direction: row;
+  font-size: 14px;
+  margin-bottom: 3px;
+  & > label {
+    flex: 1;
+  }
+  & > span {
+    b {
+      color: white;
+      font-weight: normal;
+    }
+  }
+`;
+
+const Tray = styled.div`
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: row;
+  height: ${trayHeight}px;
+  justify-content: space-between;
+  position: relative;
+`;
+
+const Summary = styled.div`
+  & > div {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    font-size: 28px;
+    & > svg {
+      font-size: 32px;
+    }
+  }
+`;
+const SummaryLabel = styled.label`
+  display: block;
+  font-size: 90%;
+  margin-bottom: 3px;
+  &:before {
+    content: "${p => p.type === 'limit' ? 'Limit' : 'Market'} ${p => p.mode === 'buy' ? 'Buy' : 'Sell'} ";
+    color: ${p => p.mode === 'buy' ? p.theme.colors.green : p.theme.colors.main};
+  }
+  &:after {
+    content: "Preview";
+    color: #888;
+  }
+`;
+
 const formatPrice = (sway, { minPrecision = 3, fixedPrecision } = {}) => {
   let unitLabel;
   let scale;
@@ -253,7 +380,10 @@ const MarketplaceDepthChart = ({ lot, marketplace, resource }) => {
   const [buyOrders, setBuyOrders] = useState([]);
   const [sellOrders, setSellOrders] = useState([]);
   const [mode, setMode] = useState('buy');
+  const [type, setType] = useState('market');
   const chartWrapperRef = useRef();
+
+  // TODO: if nothing available for market order, default to limit
 
   // TODO: presumably these will come from useQuery and don't
   //  need to be in local state like this
@@ -384,6 +514,59 @@ const MarketplaceDepthChart = ({ lot, marketplace, resource }) => {
   let rowBuyVolume = 0;
   let rowSaleVolume = totalForSale + 0;
   let volumeBenchmark = Math.max(totalForBuy, totalForSale);
+  const marketplaceFee = 0.05;  // TODO: ...
+
+  const [quantity, setQuantity] = useState();
+  const [limitPrice, setLimitPrice] = useState();
+
+  useEffect(() => {
+    setQuantity(0);
+    setLimitPrice(0);
+  }, [mode, type]);
+
+  const handleChangeQuantity = useCallback((e) => {
+    let input = parseInt(e.currentTarget.value) || 0;
+    if (input && type === 'market') {
+      if (mode === 'buy') input = Math.max(0, Math.min(input, totalForSale));
+      if (mode === 'sell') input = Math.max(0, Math.min(input, totalForBuy));
+    }
+    // TODO: set limits for limit orders
+    setQuantity(input);
+  }, [mode, type, totalForBuy, totalForSale]);
+
+  const handleChangeLimitPrice = useCallback((e) => {
+    setLimitPrice(e.currentTarget.value);
+  }, []);
+
+  // TODO: limit price 
+
+  const [totalMarketPrice, avgMarketPrice] = useMemo(() => {
+    let total = 0;
+    let needed = quantity;
+    const orders = []
+      .concat(mode === 'buy' ? sellOrders : buyOrders)
+      .sort((a, b) => (mode === 'buy' ? 1 : -1) * (a.price - b.price));
+    orders.forEach(({ price, amount }) => {
+      const levelAmount = Math.min(needed, amount);
+      total += levelAmount * price;
+      needed -= levelAmount;
+    })
+    return [total, total / quantity];
+  }, [buyOrders, mode, quantity, sellOrders]);
+
+  const totalLimitPrice = useMemo(() => {
+    return (limitPrice || 0) * quantity;
+  }, [limitPrice, quantity]);
+
+  const fee = useMemo(() => {
+    return (type === 'market' ? totalMarketPrice : totalLimitPrice)
+      * marketplaceFee;
+  }, [marketplaceFee, totalMarketPrice, totalLimitPrice, type]);
+
+  const total = useMemo(() => {
+    let sum = type === 'limit' ? totalLimitPrice : totalMarketPrice;
+    return sum + (mode === 'buy' ? fee : -fee);
+  }, [fee, mode, totalLimitPrice, totalMarketPrice, type]);
 
   // TODO: loading might be better than null
   if (!owner) return null;
@@ -396,6 +579,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, resource }) => {
             <h1><CompositionIcon /> {marketplace.name}</h1>
             <Subheader>
               <span>{resource.name}</span>
+              {/* TODO: values */}
               <span style={{ color: theme.colors.green }}>240t Available</span>
               <span style={{ color: theme.colors.main }}>142t Sellable</span>
             </Subheader>
@@ -486,9 +670,130 @@ const MarketplaceDepthChart = ({ lot, marketplace, resource }) => {
           </TableArea>
         </Body>
       </Main>
-      <ActionTray>
+      <ActionPanel>
+        <div>
+          <PanelInner>
+            <PanelTitle>
+              Transact
+            </PanelTitle>
+            <PanelContent>
+              <div>
+                <FormSection>
+                  <Switcher
+                    buttons={[
+                      { label: 'Buy', value: 'buy' },
+                      { label: 'Sell', value: 'sell' }
+                    ]}
+                    buttonWidth="50%"
+                    onChange={setMode}
+                    value={mode}
+                  />
+                </FormSection>
 
-      </ActionTray>
+                <FormSection>
+                  <RadioRow onClick={() => setType('market')} selected={type === 'market' || undefined}>
+                    {type === 'market' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
+                    <span>Market Order</span>
+                    <InfoTooltip data-tip="help" data-for="details"><InfoIcon /></InfoTooltip>
+                  </RadioRow>
+                  <RadioRow onClick={() => setType('limit')} selected={type === 'limit' || undefined}>
+                    {type === 'limit' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
+                    <span>Limit Order</span>
+                    <InfoTooltip data-tip="help" data-for="details"><InfoIcon /></InfoTooltip>
+                  </RadioRow>
+                </FormSection>
+
+                <FormSection>
+                  <InputLabel>
+                    <label>Quantity</label>
+                    {type === 'market' && (
+                      <span>Max <b>{((mode === 'buy' ? totalForSale : totalForBuy) || 0).toLocaleString()}{resource.massPerUnit === 0.001 ? ' kg' : ''}</b></span>
+                    )}
+                  </InputLabel>
+                  <TextInputWrapper rightLabel={resource.massPerUnit === 0.001 ? ' kg' : ''}>
+                    <UncontrolledTextInput
+                      min={0}
+                      max={type === 'market' ? (mode === 'buy' ? totalForSale : totalForBuy) : undefined}
+                      onChange={handleChangeQuantity}
+                      placeholder="Specify Quantity"
+                      step={1}
+                      type="number"
+                      value={quantity || ''} />
+                  </TextInputWrapper>
+                </FormSection>
+
+                {type === 'market' && (
+                  <FormSection>
+                    <InputLabel>
+                      <label>Market Price</label>
+                    </InputLabel>
+                    <TextInputWrapper rightLabel="SWAY">
+                      <UncontrolledTextInput
+                        disabled
+                        value={avgMarketPrice ? formatFixed(avgMarketPrice || 0, 2) : centerPrice + spread / 2} />
+                    </TextInputWrapper>
+                  </FormSection>
+                )}
+                {type === 'limit' && (
+                  <FormSection>
+                    <InputLabel>
+                      <label>Price</label>
+                    </InputLabel>
+                    <TextInputWrapper rightLabel="SWAY">
+                      <UncontrolledTextInput
+                        onChange={handleChangeLimitPrice}
+                        placeholder="Specify Price"
+                        value={limitPrice || ''} />
+                    </TextInputWrapper>
+                  </FormSection>
+                )}
+
+                <FormSection>
+                  <InputLabel>
+                    <label>Subtotal</label>
+                  </InputLabel>
+                  <TextInputWrapper rightLabel="SWAY">
+                    <UncontrolledTextInput
+                      disabled
+                      value={((type === 'market' ? totalMarketPrice : totalLimitPrice) || 0).toLocaleString()} />
+                  </TextInputWrapper>
+                </FormSection>
+
+
+                <FormSection>
+                  <InputLabel>
+                    <label>Marketplace Fee</label>
+                    <span style={{ color: theme.colors.main }}>{100 * marketplaceFee}%</span>
+                  </InputLabel>
+                  <TextInputWrapper rightLabel="SWAY">
+                    <UncontrolledTextInput
+                      disabled
+                      value={formatFixed(fee || 0, 2)} />
+                  </TextInputWrapper>
+                </FormSection>
+
+              </div>
+
+              {total > 0 && (
+                <Tray>
+                  <Summary>
+                    <SummaryLabel type={type} mode={mode} />
+                    <div>
+                      <SwayIcon /> {total.toLocaleString()}
+                    </div>
+                  </Summary>
+
+                  {/* TODO: update icon */}
+                  <ActionButton
+                    label="Create Order"
+                    icon={<OrderIcon />}
+                    onClick={() => {/* TODO: */}} />
+                </Tray>
+              )}
+            </PanelContent>
+          </PanelInner>
+        </div>
+      </ActionPanel>
     </Wrapper>
   );
 };

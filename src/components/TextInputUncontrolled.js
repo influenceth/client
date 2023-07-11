@@ -24,6 +24,25 @@ const UncontrolledTextInput = styled.input`
       opacity: 0.4;
     }
   }
+
+  &:disabled {
+    border-color: transparent;
+    cursor: ${p => p.theme.cursors.default};
+  }
+`;
+
+export const TextInputWrapper = styled.div`
+  position: relative;
+  ${p => p.rightLabel && `
+    &:after {
+      content: "${p.rightLabel}";
+      opacity: 0.33;
+      position: absolute;
+      right: 8px;
+      height: 32px;
+      line-height: 32px;
+    }
+  `}
 `;
 
 export const safeValue = (v) => {

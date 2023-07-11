@@ -12,6 +12,8 @@ import theme, { hexToRGB } from '~/theme';
 import { formatFixed } from '~/lib/utils';
 import MarketplaceHome from './marketplace/Home';
 import MarketplaceDepthChart from './marketplace/DepthChart';
+import MarketplaceOpenOrders from './marketplace/OpenOrders';
+import useCrewContext from '~/hooks/useCrewContext';
 
 
 const ActionImage = styled.div`
@@ -95,11 +97,13 @@ const Marketplace = (props) => {
   const resources = useResourceAssets();
 
   const history = useHistory();
-  const { asteroidId, lotId } = useParams();
+  const { asteroidId, lotId, discriminator } = useParams();
+
+  const { crew } = useCrewContext();
   const { data: asteroid } = useAsteroid(Number(asteroidId));
   const { data: lot } = useLot(Number(asteroidId), Number(lotId));
 
-  const [resourceId, setResourceId] = useState();
+  const resourceId = discriminator === 'orders' ? null : discriminator;
 
   // TODO: if lot is loaded and this is not a marketplace, go back
 
@@ -116,8 +120,16 @@ const Marketplace = (props) => {
     orders: []
   };
 
+  const goBack = useCallback(() => {
+    history.push(`/marketplace/${asteroidId}/${lotId}`);
+  }, []);
+
+  const goToMyOrders = useCallback(() => {
+    history.push(`/marketplace/${asteroidId}/${lotId}/orders`);
+  }, []);
+
   const onSelectListing = useCallback((listing) => {
-    setResourceId(listing ? listing.resourceId : null);
+    history.push(`/marketplace/${asteroidId}/${lotId}/${listing?.resourceId || ''}`);
   }, []);
 
   // TODO: loading might be better than null
@@ -131,19 +143,30 @@ const Marketplace = (props) => {
       title={`${asteroid.customName || asteroid.baseName || '...'} > ${marketplace.name || 'Marketplace'}`}
       underlineHeader
       contentProps={myOpenOrders ? { style: { marginBottom: 0 } } : {}}
+      maxWidth="1600px"
       width="max">
       <Wrapper>
         <Wrapper style={{ height: `calc(100% - ${footerHeight}px)` }}>
-          {resourceId
-            ? <MarketplaceDepthChart lot={lot} marketplace={marketplace} resource={resources[resourceId]} />
-            : <MarketplaceHome lot={lot} marketplace={marketplace} onSelectListing={onSelectListing} />}
+          {discriminator === 'orders' && (
+            <MarketplaceOpenOrders lot={lot} marketplace={marketplace} />
+          )}
+          {discriminator && discriminator !== 'orders' && (
+            <MarketplaceDepthChart lot={lot} marketplace={marketplace} resource={resources[resourceId]} />
+          )}
+          {!discriminator && (
+            <MarketplaceHome lot={lot} marketplace={marketplace} onSelectListing={onSelectListing} />
+          )}
         </Wrapper>
         {myOpenOrders && (
           <Footer>
-            {resourceId && <Button flip subtle onClick={() => setResourceId()}>Back to Marketplace</Button>}
+            {discriminator && <Button flip subtle onClick={goBack}>Back</Button>}
             <div style={{ flex: 1 }} />
-            <OrderTally><OrderIcon /> {myOpenOrders} Order{myOpenOrders === 1 ? '' : 's'} at this Marketplace</OrderTally>
-            <Button subtle>My Open Orders</Button>
+            {crew?.i && discriminator !== 'orders' && (
+              <>
+                <OrderTally><OrderIcon /> {myOpenOrders} Order{myOpenOrders === 1 ? '' : 's'} at this Marketplace</OrderTally>
+                <Button subtle onClick={goToMyOrders}>My Open Orders</Button>
+              </>
+            )}
           </Footer>
         )}
       </Wrapper>

@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
+import ReactTooltip from 'react-tooltip';
 
 import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
@@ -131,12 +132,13 @@ const Details = (props) => {
           <CloseIcon />
         </CloseButton>
         <Content edgeToEdge={edgeToEdge} hasTitle={!!title} {...contentProps}>
-          <ContentWrapper width={width}>
+          <ContentWrapper width={width} maxWidth={restProps.maxWidth}>
             {props.children}
           </ContentWrapper>
         </Content>
         <ClipCorner dimension={cornerWidth} color={theme.colors.borderBottom} />
       </StyledDetails>
+      <ReactTooltip id="details" effect="solid" />
     </Wrapper>
   );
 };

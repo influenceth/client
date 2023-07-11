@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 
-import { ChevronDoubleDownIcon, ChevronDoubleUpIcon, ChevronRightIcon, CompositionIcon, GridIcon, SwayIcon } from '~/components/Icons';
+import ClipCorner from '~/components/ClipCorner';
 import CrewIndicator from '~/components/CrewIndicator';
+import Dropdown from '~/components/DropdownV2';
+import { ChevronDoubleDownIcon, ChevronDoubleUpIcon, ChevronRightIcon, CompositionIcon, GridIcon, SwayIcon } from '~/components/Icons';
+import ResourceThumbnail from '~/components/ResourceThumbnail';
+import Switcher from '~/components/SwitcherButton';
+import TextInput from '~/components/TextInput';
 import useCrew from '~/hooks/useCrew';
 import { useResourceAssets } from '~/hooks/useAssets';
-import TextInput from '~/components/TextInput';
-import Dropdown from '~/components/DropdownV2';
-import Button from '~/components/ButtonAlt';
-import theme, { hexToRGB } from '~/theme';
-import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
-import ClipCorner from '~/components/ClipCorner';
 import { formatFixed } from '~/lib/utils';
+import theme, { hexToRGB } from '~/theme';
 
 const Subheader = styled.div``;
 const Header = styled.div`
@@ -86,22 +86,6 @@ const ResultsTally = styled.div`
   margin-left: 10px;
   & > span {
     margin-left: 4px;
-  }
-`;
-
-const Switcher = styled.div`
-  display: flex;
-  flex-direction: row;
-`;
-const SwitcherButton = styled(Button)`
-  width: 150px;
-`;
-const SwitcherButtonInner = styled.div`
-  align-items: center;
-  display: flex;
-  & > svg {
-    font-size: 85%;
-    margin-right: 12px;
   }
 `;
 
@@ -285,30 +269,22 @@ const MarketplaceHome = ({ lot, marketplace, onSelectListing }) => {
         
         <div style={{ flex: 1 }} />
 
-        <Switcher>
-          <SwitcherButton
-            background={mode === 'buy' ? theme.colors.main : '#444'}
-            flip
-            onClick={() => setMode('buy')}
-            size="small"
-            style={{ borderRight: 0, color: mode === 'buy' ? undefined : '#999' }}>
-            <SwitcherButtonInner>
-              <ChevronDoubleDownIcon />
-              Buy
-            </SwitcherButtonInner>
-          </SwitcherButton>
-          <SwitcherButton
-            background={mode === 'sell' ? theme.colors.main : '#444'}
-            onClick={() => setMode('sell')}
-            size="small"
-            style={{ borderLeft: 0, color: mode === 'sell' ? undefined : '#999' }}>
-            <SwitcherButtonInner>
-              <ChevronDoubleUpIcon />
-              Sell
-            </SwitcherButtonInner>
-          </SwitcherButton>
-        </Switcher>
-        {/* TODO: switcher */}
+        <Switcher
+          buttons={[
+            {
+              icon: <ChevronDoubleDownIcon />,
+              label: 'Buy',
+              value: 'buy'
+            },
+            {
+              icon: <ChevronDoubleUpIcon />,
+              label: 'Sell',
+              value: 'sell'
+            }
+          ]}
+          onChange={setMode}
+          size="small"
+          value={mode} />
 
       </BodyNav>
 
