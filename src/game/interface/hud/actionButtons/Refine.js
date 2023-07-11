@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { HexagonIcon } from '~/components/Icons';
+import { RefineIcon } from '~/components/Icons';
 import ActionButton from './ActionButton';
 
 const Refine = ({ asteroid, crew, lot, onSetAction }) => {
@@ -16,7 +16,7 @@ const Refine = ({ asteroid, crew, lot, onSetAction }) => {
         disabled: false, // TODO: ... crew not on asteroid? crew already on ship? ship ownership?
         loading: false, // TODO: ...
       }}
-      icon={<HexagonIcon />}
+      icon={<RefineIcon />}
       onClick={handleClick} />
   );
 };
