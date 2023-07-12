@@ -135,7 +135,7 @@ const OrderAlert = styled.div`
 `;
 
 const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
-  const { mode, type, resourceId, preselect } = props;
+  const { isCancellation, mode, type, resourceId, preselect } = props;
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const buildings = useBuildingAssets();
@@ -309,9 +309,15 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
   const dialogAction = useMemo(() => {
     return {
       icon: <OrderIcon />,
-      label: `${type === 'market' ? 'Market' : 'Limit'} ${mode === 'buy' ? 'Buy' : 'Sell'}`
+      label: `${isCancellation ? 'Cancel ' : ''}${type === 'market' ? 'Market' : 'Limit'} ${mode === 'buy' ? 'Buy' : 'Sell'}`
     };
-  }, [mode, type]);
+  }, [mode, type, isCancellation]);
+
+  const goLabel = useMemo(() => {
+    if (isCancellation) return `Cancel Order`;
+    if (type === 'market') return `Submit Order`;
+    else return `Create Order`;
+  }, [type, isCancellation]);
 
   return (
     <>
@@ -379,6 +385,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
               </InputLabel>
               <TextInputWrapper rightLabel={resourceByMass ? ' kg' : ''}>
                 <UncontrolledTextInput
+                  disabled={stage !== actionStages.NOT_STARTED}
                   min={0}
                   max={type === 'market' ? (mode === 'buy' ? totalForSale : totalForBuy) : undefined}
                   onChange={handleChangeQuantity}
@@ -404,29 +411,31 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
               </TextInputWrapper>
             </FormSection>
 
-            <FormSection style={{ marginTop: 10 }}>
-              {type === 'market' && (
-                <InputLabel>
-                  <span style={{ flex: 1 }}>
-                    Average Price from: <b>{' '}{(averagedOrderTally || 0).toLocaleString()} {mode === 'buy' ? 'Seller' : 'Buyer'}{averagedOrderTally === 1 ? '' : 's'}</b>
-                  </span>
-                  <Button onClick={() => {/* TODO: ... */}} size="small" subtle>Refresh</Button>
-                </InputLabel>
-              )}
-              {type === 'limit' && (
-                <InputLabel>
-                  {/* TODO: no other bids */}
-                  <span style={{ flex: 1, color: noCompetingOrders ? '#777' : theme.colors.main, fontSize: '16px' }}>
-                    {noCompetingOrders ? 'No Competing Orders' : `Current ${mode === 'buy' ? 'Highest' : 'Lowest'}`}
-                  </span>
-                  <Button
-                    disabled={noCompetingOrders}
-                    onClick={matchBestLimitOrder}
-                    size="small"
-                    subtle>Match</Button>
-                </InputLabel>
-              )}
-            </FormSection>
+            {stage === actionStages.NOT_STARTED && (
+              <FormSection style={{ marginTop: 10 }}>
+                {type === 'market' && (
+                  <InputLabel>
+                    <span style={{ flex: 1 }}>
+                      Average Price from: <b>{' '}{(averagedOrderTally || 0).toLocaleString()} {mode === 'buy' ? 'Seller' : 'Buyer'}{averagedOrderTally === 1 ? '' : 's'}</b>
+                    </span>
+                    <Button onClick={() => {/* TODO: ... */}} size="small" subtle>Refresh</Button>
+                  </InputLabel>
+                )}
+                {type === 'limit' && (
+                  <InputLabel>
+                    {/* TODO: no other bids */}
+                    <span style={{ flex: 1, color: noCompetingOrders ? '#777' : theme.colors.main, fontSize: '16px' }}>
+                      {noCompetingOrders ? 'No Competing Orders' : `Current ${mode === 'buy' ? 'Highest' : 'Lowest'}`}
+                    </span>
+                    <Button
+                      disabled={noCompetingOrders}
+                      onClick={matchBestLimitOrder}
+                      size="small"
+                      subtle>Match</Button>
+                  </InputLabel>
+                )}
+              </FormSection>
+            )}
           </FlexSectionBlock>
 
         </FlexSection>
@@ -441,18 +450,29 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
               <div>
                 {type === 'limit' && (
                   <div style={{ fontSize: '35px', lineHeight: '30px' }}>
-                    <b><WarningOutlineIcon /></b>
+                    <b>{isCancellation ? <CloseIcon /> : <WarningOutlineIcon />}</b>
                   </div>
                 )}
                 <div style={{ flex: 1 }}>
-                  <div><b>{type} {mode}</b></div>
-                  <div><b>{type === 'limit' ? 'Up to' : ''}</b> {resourceByMass ? formatResourceMass(quantity || 0, resourceId) : quantity.toLocaleString()} {resource.name}</div>
+                  <div><b>{isCancellation ? 'Cancel ': ''}{type} {mode}</b></div>
+                  <div>
+                    <b>{type === 'limit' ? (isCancellation ? 'Unfilled ' : 'Up to ') : ''}</b>
+                    {resourceByMass ? formatResourceMass(quantity || 0, resourceId) : quantity.toLocaleString()}
+                    {' '}{resource.name}
+                  </div>
                 </div>
                 <div style={{ alignItems: 'flex-end', display: 'flex' }}>
-                  <b>{type === 'limit' ? 'Spend Up to' : 'Total'}</b>
-                  <span style={{ display: 'inline-flex', fontSize: '35px', lineHeight: '30px' }}>
-                    <SwayIcon /> {formatFixed(total || 0)}
-                  </span>
+                  <b>
+                    {type === 'market' && 'Total'}
+                    {type === 'limit' && !isCancellation && 'Spend Up to'}
+                    {type === 'limit' && isCancellation && mode === 'buy' && 'Escrow Unlocked'}
+                    {type === 'limit' && isCancellation && mode === 'sell' && 'All Items Returned'}
+                  </b>
+                  {!(type === 'limit' && isCancellation && mode === 'sell') && (
+                    <span style={{ display: 'inline-flex', fontSize: '35px', lineHeight: '30px' }}>
+                      <SwayIcon /> {formatFixed(total || 0)}
+                    </span>
+                  )}
                 </div>
               </div>
             </OrderAlert>
@@ -480,7 +500,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
 
       <ActionDialogFooter
         disabled={false/* TODO: no destination selected, amount invalid, price too much, etc */}
-        goLabel="Submit Order"
+        goLabel={goLabel}
         onGo={onSubmitOrder}
         stage={stage}
         wide
