@@ -1,6 +1,6 @@
 import { AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle, BsPieChartFill, BsSliders, BsStopwatch, BsThreeDots } from 'react-icons/bs';
-import { FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
+import { FaBan, FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
 import { FiCheckSquare, FiExternalLink, FiMenu, FiSquare } from 'react-icons/fi';
 import { HiClock, HiCog, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import {
@@ -260,6 +260,7 @@ export {
   BsSliders as SlidersIcon,
   BsStopwatch as TimerIcon,
   BsThreeDots as DotsIcon,
+  FaBan as BanIcon,
   FaCogs as ProcessIcon,
   FaCopy as CopyIcon,
   FaEthereum as ConnectIcon,

@@ -1,55 +1,41 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CoreSample, Asteroid, Extraction, Inventory } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { BackIcon, CaretIcon, CloseIcon, CoreSampleIcon, ExtractionIcon, ForwardIcon, RefineIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ProcessIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon, OrderIcon, SwayIcon } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
+import { BanIcon, InventoryIcon, LocationIcon, WarningOutlineIcon, OrderIcon, SwayIcon } from '~/components/Icons';
+import Button from '~/components/ButtonAlt';
+import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
+import useLot from '~/hooks/useLot';
+import useStore from '~/hooks/useStore';
+import ResourceThumbnail from '~/components/ResourceThumbnail';
+import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
+import actionStages from '~/lib/actionStages';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
-
+import theme, { hexToRGB } from '~/theme';
+import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
-  ActionDialogTabs,
   ActionDialogBody,
   FlexSection,
   FlexSectionInputBlock,
   FlexSectionSpacer,
   BuildingImage,
   ProgressBarSection,
-  AsteroidImage,
   ProgressBarNote,
-  PropellantSection,
-  ShipTab,
-  PropulsionTypeSection,
   FlexSectionBlock,
-  FlexSectionInputBody,
-  sectionBodyCornerSize,
-  RecipeSlider,
-  ProcessInputOutputSection,
   TransferDistanceDetails,
-  ProcessSelectionDialog,
   formatResourceMass,
   formatResourceVolume,
   EmptyBuildingImage,
   DestinationSelectionDialog
 } from './components';
-import useLot from '~/hooks/useLot';
-import useStore from '~/hooks/useStore';
-import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
-import ResourceThumbnail from '~/components/ResourceThumbnail';
-import actionStages from '~/lib/actionStages';
-import theme, { hexToRGB } from '~/theme';
-import CrewCardFramed from '~/components/CrewCardFramed';
-import ClipCorner from '~/components/ClipCorner';
-import IconButton from '~/components/IconButton';
-import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
-import Button from '~/components/ButtonAlt';
 
 const greenRGB = hexToRGB(theme.colors.green);
+const redRGB = hexToRGB(theme.colors.red);
 
 const FormSection = styled.div`
   margin-top: 12px;
@@ -78,7 +64,16 @@ const InputLabel = styled.div`
 
 const OrderAlert = styled.div`
   ${p => {
-    if (p.mode === 'buy') {
+    if (p.isCancellation) {
+      return `
+        background: rgba(${redRGB}, 0.2);
+        & > div {
+          background: rgba(${redRGB}, 0.2);
+          b { color: ${p.theme.colors.red}; }
+        }
+      `;
+    }
+    else if (p.mode === 'buy') {
       return `
         background: rgba(${greenRGB}, 0.2);
         & > div {
@@ -446,11 +441,11 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
             title="Order"
             bodyStyle={{ height: 'auto', padding: 0 }}
             style={{ width: '100%' }}>
-            <OrderAlert mode={mode}>
+            <OrderAlert mode={mode} isCancellation={isCancellation || undefined}>
               <div>
                 {type === 'limit' && (
                   <div style={{ fontSize: '35px', lineHeight: '30px' }}>
-                    <b>{isCancellation ? <CloseIcon /> : <WarningOutlineIcon />}</b>
+                    <b>{isCancellation ? <BanIcon /> : <WarningOutlineIcon />}</b>
                   </div>
                 )}
                 <div style={{ flex: 1 }}>
@@ -464,13 +459,12 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
                 <div style={{ alignItems: 'flex-end', display: 'flex' }}>
                   <b>
                     {type === 'market' && 'Total'}
-                    {type === 'limit' && !isCancellation && 'Spend Up to'}
-                    {type === 'limit' && isCancellation && mode === 'buy' && 'Escrow Unlocked'}
-                    {type === 'limit' && isCancellation && mode === 'sell' && 'All Items Returned'}
+                    {type === 'limit' && mode === 'buy' && (isCancellation ? 'Escrow Unlocked' : 'Spend up to')}
+                    {type === 'limit' && mode === 'sell' && (isCancellation ? 'All Items Returned' : 'Receive up to')}
                   </b>
-                  {!(type === 'limit' && isCancellation && mode === 'sell') && (
+                  {!(type === 'limit' && mode === 'sell' && isCancellation) && (
                     <span style={{ display: 'inline-flex', fontSize: '35px', lineHeight: '30px' }}>
-                      <SwayIcon /> {formatFixed(total || 0)}
+                      <SwayIcon /> {type === 'market' && (mode === 'buy' ? '-' : '+')}{formatFixed(total || 0)}
                     </span>
                   )}
                 </div>
