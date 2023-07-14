@@ -256,6 +256,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
           </>
         )
       },
+      // TODO: add distanceAway, calculate from crew's current position (if logged in and on asteroid surface)
       {
         key: 'fee',
         label: 'Marketplace Fee',
