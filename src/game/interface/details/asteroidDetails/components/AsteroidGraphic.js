@@ -4,7 +4,7 @@ import { toSize, toSpectralType } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import AsteroidComposition from './AsteroidComposition';
-import AsteroidRendering from './AsteroidRendering';
+import AsteroidRendering from '../../../../../components/AsteroidRendering';
 import AsteroidSpinner from './AsteroidSpinner';
 import { WarningOutlineIcon } from '~/components/Icons';
 import theme from '~/theme';

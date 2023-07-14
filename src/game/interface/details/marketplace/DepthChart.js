@@ -6,10 +6,9 @@ import CrewIndicator from '~/components/CrewIndicator';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import Switcher from '~/components/SwitcherButton';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
-import useCrew from '~/hooks/useCrew';
 import useScreenSize from '~/hooks/useScreenSize';
 import theme, { hexToRGB } from '~/theme';
-import { formatFixed } from '~/lib/utils';
+import { formatFixed, formatPrice } from '~/lib/utils';
 import ActionButton from '~/game/interface/hud/actionButtons/ActionButton';
 import useStore from '~/hooks/useStore';
 
@@ -341,41 +340,13 @@ const SummaryLabel = styled.label`
     color: #888;
   }
 `;
-
-const formatPrice = (sway, { minPrecision = 3, fixedPrecision } = {}) => {
-  let unitLabel;
-  let scale;
-  if (sway >= 1e6) {
-    scale = 1e6;
-    unitLabel = 'M';
-  } else if (sway >= 1e3) {
-    scale = 1e3;
-    unitLabel = 'k';
-  } else {
-    scale = 1;
-    unitLabel = '';
-  }
-
-  const workingUnits = (sway / scale);
-
-  let fixedPlaces = fixedPrecision || 0;
-  if (fixedPrecision === undefined) {
-    while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
-      fixedPlaces++;
-    }
-  }
-  return `${formatFixed(workingUnits, fixedPlaces)}${unitLabel}`;
-}
-
     
 const STROKE_WIDTH = 2;
 
-const MarketplaceDepthChart = ({ lot, marketplace, resource }) => {
+const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource }) => {
   const { width, height } = useScreenSize();
 
   const onSetAction = useStore(s => s.dispatchActionDialog);
-
-  const { data: owner } = useCrew(lot?.occupier);
 
   const [buyOrders, setBuyOrders] = useState([]);
   const [sellOrders, setSellOrders] = useState([]);
@@ -577,8 +548,6 @@ const MarketplaceDepthChart = ({ lot, marketplace, resource }) => {
     return sum + (mode === 'buy' ? fee : -fee);
   }, [fee, mode, totalLimitPrice, totalMarketPrice, type]);
 
-  // TODO: loading might be better than null
-  if (!owner) return null;
   return (
     <Wrapper>
       <Main>
@@ -593,7 +562,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, resource }) => {
               <span style={{ color: theme.colors.main }}>142t Sellable</span>
             </Subheader>
           </div>
-          <CrewIndicator crew={owner} flip label="Managed by" />
+          {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
         </Header>
         <Body>
           <ChartArea ref={chartWrapperRef} spread={spread}>

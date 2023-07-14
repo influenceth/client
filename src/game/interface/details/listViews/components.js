@@ -28,8 +28,10 @@ export const LocationLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
       data-tip={`View ${lotId ? 'Lot' : 'Asteroid'}`}
       data-place="left"
       onClick={() => {
-        history.push('/');
-        _onClick();
+        if (_onClick) {
+          history.push('/');
+          _onClick();
+        }
       }}>
       <LocationIcon />
     </LocLink>

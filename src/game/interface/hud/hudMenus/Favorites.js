@@ -4,7 +4,7 @@ import { Address, toSize, toSpectralType } from '@influenceth/sdk';
 
 import ClipCorner from '~/components/ClipCorner';
 import { MyAssetIcon } from '~/components/Icons';
-import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
+import AsteroidRendering from '~/components/AsteroidRendering';
 import useStore from '~/hooks/useStore';
 import useWatchlist from '~/hooks/useWatchlist';
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';

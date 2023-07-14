@@ -9,7 +9,7 @@ import {
 } from 'react-icons/tb';
 import { Asteroid, Capable, Construction, Crewmate, Inventory } from '@influenceth/sdk';
 
-import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
+import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
 import IconButton from '~/components/IconButton';
 import {
@@ -1901,9 +1901,9 @@ export const getBuildingRequirements = (building) => {
 // SUB-COMPONENTS
 //
 
-export const AsteroidImage = ({ asteroid }) => {
+export const AsteroidImage = ({ asteroid, size }) => {
   return (
-    <AsteroidThumbnailWrapper>
+    <AsteroidThumbnailWrapper size={size}>
       <AsteroidRendering asteroid={asteroid} brightness={1.2} />
       <ClipCorner dimension={10} />
     </AsteroidThumbnailWrapper>

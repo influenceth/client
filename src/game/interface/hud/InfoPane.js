@@ -15,7 +15,7 @@ import {
   PopoutIcon,
   WarningOutlineIcon,
 } from '~/components/Icons';
-import AsteroidRendering from '~/game/interface/details/asteroidDetails/components/AsteroidRendering';
+import AsteroidRendering from '~/components/AsteroidRendering';
 import useActionButtons from '~/hooks/useActionButtons';
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';

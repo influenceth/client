@@ -105,7 +105,6 @@ const useActionButtons = () => {
           }
         }
 
-        console.log({ pilotableShip, rideableShip, ejectableShip, ejectableGuestShip });
         if (pilotableShip && crew?.station?.asteroidId === pilotableShip.asteroidId) {
           a.push(actionButtons.StationCrewAsPilots);
         }

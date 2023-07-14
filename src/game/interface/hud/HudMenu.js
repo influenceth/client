@@ -319,6 +319,17 @@ const HudMenu = () => {
         },
       );
 
+      if (true) { // TODO: if has at least 1 OPERATIONAL marketplace
+        buttons.push({
+          key: 'ASTEROID_MARKETS',
+          label: 'Asteroid Markets',
+          icon: <OrderIcon />,
+          onOpen: () => {
+            history.push(`/marketplace/${asteroidId}/all`);
+          }
+        });
+      }
+
     // zoomed to lot
     } else if (zoomStatus === 'in' && zoomScene?.type === 'LOT') {
       buttons.push(

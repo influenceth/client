@@ -1,6 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { Inventory } from '@influenceth/sdk';
 
 import Details from '~/components/DetailsModal';
 import { OrderIcon } from '~/components/Icons';
@@ -14,6 +15,8 @@ import MarketplaceHome from './marketplace/Home';
 import MarketplaceDepthChart from './marketplace/DepthChart';
 import MarketplaceOpenOrders from './marketplace/OpenOrders';
 import useCrewContext from '~/hooks/useCrewContext';
+import useCrew from '~/hooks/useCrew';
+import AsteroidResourcePrices from './marketplace/AsteroidResourcePrices';
 
 
 const ActionImage = styled.div`
@@ -65,31 +68,41 @@ const OrderTally = styled.div`
   }
 `;
 
-const greenRGB = hexToRGB(theme.colors.green);
+const myOpenOrders = [
+  { i: 1, asteroidId: 1000, lotId: 2350, marketplaceName: `Joe's Spacing Emporium`, type: 'LimitBuy', resourceId: 8, createdAt: 1688798552, amount: 12346, price: 1234, deliveryTo: 123 },
+  { i: 2, asteroidId: 1000, lotId: 2350, marketplaceName: `Joe's Spacing Emporium`, type: 'LimitBuy', resourceId: 8, createdAt: 1688598552, amount: 12346, price: 1234, deliveryTo: 123 },
+  { i: 3, asteroidId: 1000, lotId: 2350, marketplaceName: `Joe's Spacing Emporium`, type: 'LimitSell', resourceId: 9, createdAt: 1688998552, amount: 1246, price: 1234, deliveryTo: 100 },
+  { i: 4, asteroidId: 1000, lotId: 1572, marketplaceName: `The Fanciest of Stuffs`, type: 'LimitBuy', resourceId: 8, createdAt: 1688298552, amount: 12346, price: 1234, deliveryTo: 123 },
+  { i: 5, asteroidId:    1, lotId: 2350, marketplaceName: `Emma's Space Resources`, type: 'LimitSell', resourceId: 101, createdAt: 1688198552, amount: 22346, price: 1234, deliveryTo: 250 },
+];
 
-const formatPrice = (sway, { minPrecision = 3, fixedPrecision } = {}) => {
-  let unitLabel;
-  let scale;
-  if (sway >= 1e6) {
-    scale = 1e6;
-    unitLabel = 'M';
-  } else if (sway >= 1e3) {
-    scale = 1e3;
-    unitLabel = 'k';
-  } else {
-    scale = 1;
-    unitLabel = '';
+const asteroidListings = [];
+for (let resourceId = 1; resourceId <= 245; resourceId++) {
+  if (!Inventory.RESOURCES[resourceId]) continue;
+  if (resourceId % 3 === 0) {
+    asteroidListings.push({
+      resourceId,
+      lotId: 2350,
+      forBuy: resourceId % 6 === 0 ? 0 : resourceId * 197,
+      buyPrice: resourceId * 1112,
+      buyChange: Math.random() - 0.5,
+      forSale: resourceId % 5 === 0 ? 0 : resourceId * 123,
+      salePrice: resourceId * 1357,
+      saleChange: Math.random() - 0.5,
+    });
   }
-
-  const workingUnits = (sway / scale);
-
-  let fixedPlaces = fixedPrecision || 0;
-  if (fixedPrecision === undefined) {
-    while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
-      fixedPlaces++;
-    }
+  if (resourceId % 4 === 0) {
+    asteroidListings.push({
+      resourceId,
+      lotId: 1572,
+      forBuy: resourceId % 5 === 0 ? 0 : resourceId * 1027,
+      buyPrice: resourceId * 1132,
+      buyChange: Math.random() - 0.5,
+      forSale: resourceId % 6 === 0 ? 0 : resourceId * 1123,
+      salePrice: resourceId * 1337,
+      saleChange: Math.random() - 0.5,
+    });
   }
-  return `${formatFixed(workingUnits, fixedPlaces)}${unitLabel}`;
 }
 
 const Marketplace = (props) => {
@@ -98,31 +111,64 @@ const Marketplace = (props) => {
 
   const history = useHistory();
   const { asteroidId, lotId, discriminator } = useParams();
+  const { search } = useLocation();
+
+  const backOverride = useMemo(() => {
+    const q = new URLSearchParams(search);
+    return q.get('back');
+  }, [search]);
 
   const { crew } = useCrewContext();
   const { data: asteroid } = useAsteroid(Number(asteroidId));
-  const { data: lot } = useLot(Number(asteroidId), Number(lotId));
+  const { data: lot } = useLot(Number(asteroidId), lotId === 'all' ? null : Number(lotId));
+  const { data: marketplaceOwner } = useCrew(lot?.occupier);
 
   const resourceId = discriminator === 'orders' ? null : discriminator;
+  const resource = resources[resourceId];
 
   // TODO: if lot is loaded and this is not a marketplace, go back
 
-  const myOpenOrders = 2;
-  const marketplace = {
+  const localOrders = useMemo(() => (myOpenOrders || []).filter((o) => {
+    return o.asteroidId === Number(asteroidId) && (lotId === 'all' || Number(lotId) === o.lotId);
+  }), [asteroidId, lotId, myOpenOrders]);
+
+  const marketplace = lotId === 'all' ? null : {
     name: `Joe's Spacing Emporium`,
-    listings: [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144].map((resourceId) => ({
-      resourceId,
-      forBuy: resourceId % 2 === 0 ? 0 : resourceId * 197,
-      buyPrice: resourceId * 1112,
-      forSale: resourceId % 2 === 0 ? resourceId * 123 : 0,
-      salePrice: resourceId * 1357,
-    })),
+    listings: asteroidListings.filter((l) => l.lotId === lotId),
     orders: []
   };
 
+  const rolledUpListings = useMemo(() => {
+    const rollup = asteroidListings.reduce((acc, cur) => {
+      if (!acc[cur.resourceId]) {
+        acc[cur.resourceId] = {
+          resourceId: cur.resourceId,
+          forBuy: 0,
+          buyPrice: -1,
+          buyChange: -1,
+          forSale: 0,
+          salePrice: Infinity,
+          saleChange: Infinity,
+        };
+      }
+      acc[cur.resourceId].forBuy += cur.forBuy;
+      acc[cur.resourceId].buyPrice = Math.max(acc[cur.resourceId].buyPrice, cur.buyPrice);
+      acc[cur.resourceId].buyChange = Math.max(acc[cur.resourceId].buyChange, cur.buyChange);
+      acc[cur.resourceId].forSale += cur.forSale;
+      acc[cur.resourceId].salePrice = Math.min(acc[cur.resourceId].salePrice, cur.salePrice);
+      acc[cur.resourceId].saleChange = Math.min(acc[cur.resourceId].saleChange, cur.saleChange);
+      return acc;
+    }, {});
+    return Object.values(rollup);
+  }, [asteroidListings]);
+
   const goBack = useCallback(() => {
-    history.push(`/marketplace/${asteroidId}/${lotId}`);
-  }, []);
+    if (backOverride === 'all') {
+      history.push(`/marketplace/${asteroidId}/all/${resourceId || ''}`);
+    } else {
+      history.push(`/marketplace/${asteroidId}/${lotId}`);
+    }
+  }, [backOverride, resourceId]);
 
   const goToMyOrders = useCallback(() => {
     history.push(`/marketplace/${asteroidId}/${lotId}/orders`);
@@ -132,38 +178,59 @@ const Marketplace = (props) => {
     history.push(`/marketplace/${asteroidId}/${lotId}/${listing?.resourceId || ''}`);
   }, []);
 
+  const showFooter = discriminator || localOrders.length > 0;
+
   // TODO: loading might be better than null
-  if (!asteroid || !lot || !marketplace) return null;
+  if (!asteroid || (lotId !== 'all' && (!lot || !marketplace))) return null;
   return (
     <Details
-      outerNode={resourceId
-        ? <ResourceActionImage src={resources[resourceId].iconUrls.w400} />
+      outerNode={resource
+        ? <ResourceActionImage src={resource.iconUrls.w400} />
         : <ActionImage src={buildings[8].iconUrls.w1000} />
       }
-      title={`${asteroid.customName || asteroid.baseName || '...'} > ${marketplace.name || 'Marketplace'}`}
+      title={`${asteroid.customName || asteroid.baseName || '...'} > ${lotId === 'all' ? 'Markets' : (marketplace.name || 'Marketplace')}`}
       underlineHeader
-      contentProps={myOpenOrders ? { style: { marginBottom: 0 } } : {}}
+      contentProps={showFooter ? { style: { marginBottom: 0 } } : {}}
       maxWidth="1600px"
       width="max">
       <Wrapper>
         <Wrapper style={{ height: `calc(100% - ${footerHeight}px)` }}>
           {discriminator === 'orders' && (
-            <MarketplaceOpenOrders lot={lot} marketplace={marketplace} />
+            <MarketplaceOpenOrders
+              asteroid={asteroid}
+              marketplace={marketplace}
+              marketplaceOwner={marketplaceOwner}
+              orders={localOrders} />
           )}
-          {discriminator && discriminator !== 'orders' && (
-            <MarketplaceDepthChart lot={lot} marketplace={marketplace} resource={resources[resourceId]} />
+          {discriminator && discriminator !== 'orders' && marketplace && (
+            <MarketplaceDepthChart
+              lot={lot}
+              marketplace={marketplace}
+              marketplaceOwner={marketplaceOwner}
+              resource={resource} />
+          )}
+          {discriminator && discriminator !== 'orders' && !marketplace && (
+            <AsteroidResourcePrices
+              asteroid={asteroid}
+              resource={resource} />
           )}
           {!discriminator && (
-            <MarketplaceHome lot={lot} marketplace={marketplace} onSelectListing={onSelectListing} />
+            <MarketplaceHome
+              asteroid={asteroid}
+              listings={marketplace ? marketplace.listings : rolledUpListings}
+              marketplace={marketplace}
+              marketplaceOwner={marketplaceOwner}
+              orders={marketplace?.orders || []}
+              onSelectListing={onSelectListing} />
           )}
         </Wrapper>
-        {myOpenOrders && (
+        {showFooter && (
           <Footer>
             {discriminator && <Button flip subtle onClick={goBack}>Back</Button>}
             <div style={{ flex: 1 }} />
-            {crew?.i && discriminator !== 'orders' && (
+            {crew?.i && (!discriminator || (discriminator !== 'orders' && marketplace)) && (
               <>
-                <OrderTally><OrderIcon /> {myOpenOrders} Order{myOpenOrders === 1 ? '' : 's'} at this Marketplace</OrderTally>
+                <OrderTally><OrderIcon /> {localOrders.length} Order{localOrders.length === 1 ? '' : 's'} {marketplace ? 'at this Marketplace' : 'on this Asteroid'}</OrderTally>
                 <Button subtle onClick={goToMyOrders}>My Open Orders</Button>
               </>
             )}

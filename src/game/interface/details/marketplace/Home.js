@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import styled from 'styled-components';
+import Ticker from 'react-ticker';
 
 import ClipCorner from '~/components/ClipCorner';
 import CrewIndicator from '~/components/CrewIndicator';
@@ -8,10 +9,9 @@ import { ChevronDoubleDownIcon, ChevronDoubleUpIcon, ChevronRightIcon, Compositi
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import Switcher from '~/components/SwitcherButton';
 import TextInput from '~/components/TextInput';
-import useCrew from '~/hooks/useCrew';
 import { useResourceAssets } from '~/hooks/useAssets';
-import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
-import { formatFixed } from '~/lib/utils';
+import { AsteroidImage, formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
+import { formatPrecision, formatPrice } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 
 const Subheader = styled.div``;
@@ -20,7 +20,7 @@ const Header = styled.div`
   border-bottom: 1px solid #333;
   display: flex;
   flex-direction: row;
-  height: 150px;
+  height: ${p => p.marketplace ? '150px' : '250px'};
   margin-top: -25px;
   padding-bottom: 25px;
   padding-top: 25px;
@@ -28,13 +28,14 @@ const Header = styled.div`
   & > div:first-child {
     flex: 1;
     h1 {
+      ${p => p.marketplace ? '' : 'color: white;'}
       font-size: 50px;
       font-weight: normal;
       line-height: 1em;
       margin: 0;
       text-transform: uppercase;
       svg {
-        color: ${p => p.theme.colors.main};
+        color: ${p => p.marketplace ? p.theme.colors.main : '#CCC'};
         height: 35px;
         width: 35px;
       }
@@ -42,7 +43,7 @@ const Header = styled.div`
     ${Subheader} {
       color: #999;
       line-height: 1em;
-      padding-left: 50px;
+      padding-left: ${p => p.marketplace ? '50px' : '0'};
       padding-top: 15px;
       span:not(:first-child) {
         border-left: 1px solid #777;
@@ -167,6 +168,30 @@ const PriceArrow = styled.div`
   font-size: 25px;
   line-height: 0;
 `;
+const ChangeBubble = styled.div`
+  align-items: ${p => p.isUp ? 'flex-start' : 'flex-end'};
+  background: rgba(${p => hexToRGB(p.isUp ? p.theme.colors.green : p.theme.colors.red)}, 0.3);
+  border-radius: 10px;
+  color: ${p => p.isUp ? p.theme.colors.green : p.theme.colors.red};
+  display: flex;
+  font-size: 14px;
+  padding: 2px 8px;
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  z-index: 1;
+  &:before {
+    content: "▾";
+    font-size: 14px;
+    margin-bottom: 1px;
+    margin-right: 3px;
+    line-height: 14px;
+    ${p => p.isUp && `
+      margin-top: 1px;
+      transform: rotate(180deg);
+    `}
+  }
+`;
 
 const ListingOffer = styled.div`
   align-items: center;
@@ -197,37 +222,44 @@ const ListingOffer = styled.div`
   }
 `;
 
+const TickerItems = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  height: 50px;
+`;
+const TickerItem = styled.div`
+  align-items: center;
+  border-radius: 4px;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  flex-direction: row;
+  font-size: 15px;
+  font-weight: bold;
+  padding: 5px 10px;
+  text-transform: uppercase;
+
+  &:hover {
+    background: #171717;
+  }
+
+  & > svg {
+    font-size: 22px;
+  }
+  & > span {
+    white-space: nowrap;
+  }
+  ${ChangeBubble} {
+    margin-left: 4px;
+    position: static;
+  }
+`;
+
+
 const greenRGB = hexToRGB(theme.colors.green);
 
-const formatPrice = (sway, { minPrecision = 3, fixedPrecision } = {}) => {
-  let unitLabel;
-  let scale;
-  if (sway >= 1e6) {
-    scale = 1e6;
-    unitLabel = 'M';
-  } else if (sway >= 1e3) {
-    scale = 1e3;
-    unitLabel = 'k';
-  } else {
-    scale = 1;
-    unitLabel = '';
-  }
-
-  const workingUnits = (sway / scale);
-
-  let fixedPlaces = fixedPrecision || 0;
-  if (fixedPrecision === undefined) {
-    while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
-      fixedPlaces++;
-    }
-  }
-  return `${formatFixed(workingUnits, fixedPlaces)}${unitLabel}`;
-}
-
-const MarketplaceHome = ({ lot, marketplace, onSelectListing }) => {
+const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketplace = null, marketplaceOwner = null }) => {
   const resources = useResourceAssets();
-
-  const { data: owner } = useCrew(lot?.occupier);
 
   const [mode, setMode] = useState('buy');
   const [nameFilter, setNameFilter] = useState('');
@@ -236,23 +268,77 @@ const MarketplaceHome = ({ lot, marketplace, onSelectListing }) => {
     { key: 'recentlyTraded', label: 'Recently Traded' }
   ];
 
-  // TODO: loading might be better than null
-  if (!owner) return null;
+  const tickerListings = useMemo(() => {
+    if (!!marketplace) return [];
+    return listings
+      .filter((l) => {
+        if (mode === 'buy') return l.forSale > 0;
+        return l.forBuy > 0;
+      })
+      .sort((a, b) => {
+        return resources[a.resourceId].name < resources[b.resourceId].name ? -1 : 1;
+      });
+  }, [!!marketplace, listings, mode]);
+
+  // TODO: loading might be better
+  if (!asteroid) return null;
   return (
     <>
-      <Header>
-        <div>
-          {/* TODO: marketplace icon */}
-          <h1><CompositionIcon /> {marketplace?.name}</h1>
-          <Subheader>
-            <span>Marketplace</span>
-            <span><b>{marketplace.listings.length || 0}</b> Listed Product{marketplace.listings.length === 1 ? '' : 's'}</span>
-            <span><b>{marketplace.orders.length || 0}</b> Active Order{marketplace.orders.length === 1 ? '' : 's'}</span>
-          </Subheader>
-        </div>
-        <CrewIndicator crew={owner} flip label="Managed by" />
+      <Header marketplace={!!marketplace}>
+        {marketplace
+          ? (
+            <>
+              <div>
+                {/* TODO: marketplace icon */}
+                <h1><CompositionIcon /> {marketplace?.name}</h1>
+                <Subheader>
+                  <span>Marketplace</span>
+                  <span><b>{listings.length || 0}</b> Listed Product{listings.length === 1 ? '' : 's'}</span>
+                  <span><b>{orders.length || 0}</b> Active Order{orders.length === 1 ? '' : 's'}</span>
+                </Subheader>
+              </div>
+              {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
+            </>
+          )
+          : (
+            <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'row' }}>
+              <AsteroidImage asteroid={asteroid} size="125px" />
+              <div style={{ flex: 1, paddingLeft: 25 }}>
+                <h1><CompositionIcon /> {asteroid?.customName || asteroid?.baseName || 'Asteroid'} Markets</h1>
+                <Subheader>
+                  <span><b>127</b> Marketplaces</span>
+                  <span><b>{listings.length || 0}</b> Product{listings.length === 1 ? '' : 's'} Listed</span>
+                  <span><b>{orders.length || 0}</b> Active Order{orders.length === 1 ? '' : 's'}</span>
+                </Subheader>
+              </div>
+            </div>
+          )
+        }
       </Header>
-      <BodyNav>
+
+      {tickerListings?.length > 0 && (
+        <Ticker>
+          {() => (
+            <TickerItems>
+              {tickerListings.map((listing) => {
+                const resource = resources[listing.resourceId];
+                const price = mode === 'buy' ? listing.salePrice : listing.buyPrice;
+                const change = mode === 'buy' ? listing.saleChange : listing.buyChange;
+                return (
+                  <TickerItem key={listing.resourceId} onClick={() => onSelectListing(listing)}>
+                    <span>{resource.name}</span>
+                    <SwayIcon />
+                    <span>{formatPrice(price)}</span>
+                    <ChangeBubble isUp={change > 0}>{change > 0 ? '+' : ''}{formatPrecision(100 * change, 3)}%</ChangeBubble>
+                  </TickerItem>
+                );
+              })}
+            </TickerItems>
+          )}
+        </Ticker>
+      )}
+
+      <BodyNav style={tickerListings?.length > 0 ? { borderTop: '1px solid #333' } : {}}>
         <IconPillow><GridIcon /></IconPillow>
         <TextInput
           initialValue={nameFilter}
@@ -290,21 +376,25 @@ const MarketplaceHome = ({ lot, marketplace, onSelectListing }) => {
 
       <Body>
         <Listings>
-          {marketplace.listings
-            // .filter(({ resourceId }) => nameFilter.length === 0 || resources[resourceId].name.toLowerCase().includes(nameFilter))
-            // .sort() // TODO: according to dropdown
+          {listings
+            .filter(({ resourceId }) => nameFilter.length === 0 || resources[resourceId].name.toLowerCase().includes((nameFilter || '').toLowerCase()))
+            .sort((a, b) => resources[a.resourceId].name < resources[b.resourceId].name ? -1 : 1) // TODO: according to dropdown
             .map((listing) => {
               let thumbBG = 'rgba(170, 170, 170, 0.2)';
-              if (mode === 'buy' && listing.forSale > 0) {
-                thumbBG = `rgba(${greenRGB}, 0.2);`;//`#002511`;
-              } else if (mode === 'sell' && listing.forBuy > 0) {
-                thumbBG = `rgba(${theme.colors.mainRGB}, 0.2);`//`#0d2a33`;
-              };
+              if (!!marketplace) {
+                if (mode === 'buy' && listing.forSale > 0) {
+                  thumbBG = `rgba(${greenRGB}, 0.2);`;//`#002511`;
+                } else if (mode === 'sell' && listing.forBuy > 0) {
+                  thumbBG = `rgba(${theme.colors.mainRGB}, 0.2);`//`#0d2a33`;
+                };
+              }
               const resource = resources[listing.resourceId];
               const amount = mode === 'buy' ? listing.forSale : listing.forBuy;
-              const price = (mode === 'buy' ? listing.buyPrice : listing.salePrice);
+              const price = mode === 'buy' ? listing.salePrice : listing.buyPrice;
+              const change = mode === 'buy' ? listing.saleChange : listing.buyChange;
               return (
                 <Listing key={listing.resourceId} onClick={() => onSelectListing(listing)}>
+                  {!!marketplace && <ChangeBubble isUp={change > 0}>{change > 0 ? '+' : ''}{formatPrecision(100 * change, 3)}%</ChangeBubble>}
                   <ResourceThumbnail
                     backgroundColor={thumbBG}
                     outlineColor="transparent"

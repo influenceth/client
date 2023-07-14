@@ -55,6 +55,37 @@ export const formatFixed = (value, maximumFractionDigits = 0) => {
   return (Math.round((value || 0) * div) / div).toLocaleString();
 };
 
+export const formatPrecision = (value, maximumPrecision = 0) => {
+  const allowedDecimals = Math.max(0, maximumPrecision - Math.ceil(Math.log10(Math.abs(value))));
+  if (isNaN(allowedDecimals)) { console.log('is nan', value, maximumPrecision); }
+  return formatFixed(value, allowedDecimals);
+};
+
+export const formatPrice = (sway, { minPrecision = 3, fixedPrecision } = {}) => {
+  let unitLabel;
+  let scale;
+  if (sway >= 1e6) {
+    scale = 1e6;
+    unitLabel = 'M';
+  } else if (sway >= 1e3) {
+    scale = 1e3;
+    unitLabel = 'k';
+  } else {
+    scale = 1;
+    unitLabel = '';
+  }
+
+  const workingUnits = (sway / scale);
+
+  let fixedPlaces = fixedPrecision || 0;
+  if (fixedPrecision === undefined) {
+    while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
+      fixedPlaces++;
+    }
+  }
+  return `${formatFixed(workingUnits, fixedPlaces)}${unitLabel}`;
+};
+
 export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');
 
 // TODO: both buildingRecipes and buildingDescriptions should be in SDK

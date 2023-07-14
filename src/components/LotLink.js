@@ -27,11 +27,11 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
 
   const zoomToLotAsNeeded = useCallback(() => {
     // if zoomToLot !== current zoomToLot, do something
-    if (!!zoomToLot === currentZoomScene?.type === 'LOT') {
+    if (!!zoomToLot !== (currentZoomScene?.type === 'LOT')) {
       dispatchZoomScene(zoomToLot ? { type: 'LOT' } : null);
 
       // if this is not just a boolean, it is assumed to be a hudmenu to open upon arrival
-      if (zoomToLot && zoomToLot !== true) {
+      if (zoomToLot && (zoomToLot !== true)) {
         setTimeout(() => {
           dispatchHudMenuOpened(zoomToLot);
         }, 0);
@@ -39,7 +39,7 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
     }
   }, [zoomToLot, currentZoomScene, dispatchZoomScene, dispatchHudMenuOpened]);
 
-  return useCallback(() => {
+  const onClickFunction = useCallback(() => {
     // if already zoomed into asteroid, just select lot and select resource map
     if (asteroidId === origin && zoomStatus === 'in') {
       dispatchLotSelected(asteroidId, lotId);
@@ -64,6 +64,12 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
       }, 0);
     }
   }, [asteroidId, lotId, selectResourceMapAsNeeded, zoomToLotAsNeeded, zoomStatus]);
+
+  if (!asteroidId) {
+    console.log('no asteroid id selected');
+    return null;
+  }
+  return onClickFunction;
 }
 
 const AsteroidName = ({ asteroidId }) => {

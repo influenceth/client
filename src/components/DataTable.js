@@ -38,6 +38,7 @@ const DataTable = styled.table.attrs({
 const DataTableHead = styled.thead``;
 const DataTableBody = styled.tbody``;
 const DataTableRow = styled.tr`
+  ${p => p.onClick && `cursor: ${p.theme.cursors.active};`}
   ${p => p.status
     ? `
       td {
@@ -52,13 +53,21 @@ const DataTableRow = styled.tr`
         }
       }
     `
-    : `
-      &:hover {
-        td {
-          background: rgba(${p.theme.colors.mainRGB}, 0.1);
-        }
-      }
-    `
+    : (
+      p.isSelected
+        ? `
+          td {
+            background: rgba(255, 255, 255, 0.15) !important;
+          }
+        `
+        : `
+          &:hover {
+            td {
+              background: rgba(${p.theme.colors.mainRGB}, 0.1);
+            }
+          }
+        `
+    )
   }
 `;
 const SortIcon = styled.span`
