@@ -3245,7 +3245,7 @@ const BonusesFootnote = styled.div`
   margin-top: -5px;
 `;
 
-const BonusTooltip = ({ bonus, crewRequired, details, title, titleValue, isTimeStat }) => {
+export const BonusTooltip = ({ bonus, crewRequired, details, title, titleValue, isTimeStat }) => {
   const { titles, traits, others, totalBonus } = bonus;
   const timeMult = isTimeStat ? -1 : 1;
   const titleDirection = getBonusDirection({ totalBonus });

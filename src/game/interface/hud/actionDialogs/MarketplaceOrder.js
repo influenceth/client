@@ -31,8 +31,12 @@ import {
   formatResourceMass,
   formatResourceVolume,
   EmptyBuildingImage,
-  DestinationSelectionDialog
+  DestinationSelectionDialog,
+  BonusTooltip,
+  getBonusDirection,
+  MouseoverContent
 } from './components';
+import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 
 const greenRGB = hexToRGB(theme.colors.green);
 const redRGB = hexToRGB(theme.colors.red);
@@ -62,6 +66,7 @@ const InputLabel = styled.div`
   }
 `;
 
+const TotalSway = styled.span``;
 const OrderAlert = styled.div`
   ${p => {
     if (p.isCancellation) {
@@ -92,6 +97,19 @@ const OrderAlert = styled.div`
     }
   }};
 
+  ${p => p.insufficientBalance && `
+    &:before {
+      content: "Insufficient Wallet Balance";
+      color: ${p.theme.colors.red};
+      display: inline-block;
+      margin: 3px 5px 7px;
+    }
+
+    ${TotalSway} {
+      color: ${p.theme.colors.red};
+    }
+  `}
+
   color: white;
   clip-path: polygon(
     0 0,
@@ -100,7 +118,7 @@ const OrderAlert = styled.div`
     calc(100% - 15px) 100%,
     0 100%
   );
-  height: 75px;
+  
   padding: 5px;
   width: 100%;
   
@@ -115,7 +133,7 @@ const OrderAlert = styled.div`
     );
     display: flex;
     flex-direction: row;
-    height: 100%;
+    height: 65px;
     padding: 0 8px;
     width: 100%;
     
@@ -126,6 +144,42 @@ const OrderAlert = styled.div`
     b {
       text-transform: uppercase;
     }
+  }
+`;
+
+const CompetitionSummary = styled.span`
+  color: ${p => {
+    if (p.matchingBest) {
+      return p.theme.colors.green;
+    } else if (p.notBest) {
+      return p.theme.colors.red;
+    } else {
+      return p.theme.colors.main;
+    }
+  }};
+  #777; theme.colors.main;
+  flex: 1;
+  font-size: 16px;
+  & > b {
+    color: white;
+    font-weight: normal;
+  }
+`;
+
+const TooltipHeader = styled.div`
+  border-bottom: 1px solid #333;
+  color: white;
+  font-weight: bold;
+  padding-bottom: 12px;
+  text-transform: uppercase;
+`;
+const TooltipBody = styled.div`
+  color: ${p => p.theme.colors.main};
+  & label {
+    color: white;
+    margin-top: 15px;
+    text-transform: uppercase;
+    display: block;
   }
 `;
 
@@ -153,8 +207,11 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
   const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
   const launchBonus = 0;
 
+  const tooltipRefEl = useRef();
+
   const [buyOrders, setBuyOrders] = useState([]);
   const [sellOrders, setSellOrders] = useState([]);
+  const [tooltipVisible, setTooltipVisible] = useState();
   
   const marketplaceFee = 0.05;  // TODO: ...
   
@@ -228,7 +285,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
   }, [mode, totalForSale, totalForBuy, type]);
 
   const handleChangeLimitPrice = useCallback((e) => {
-    setLimitPrice(e.currentTarget.value);
+    setLimitPrice(Number(e.currentTarget.value));
   }, []);
 
   const matchBestLimitOrder = useCallback((e) => {
@@ -263,9 +320,20 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
     return (limitPrice || 0) * quantity;
   }, [limitPrice, quantity]);
 
-  const noCompetingOrders = useMemo(() => {
-    return !((mode === 'buy' && buyOrders.length > 0) || (mode === 'sell' && sellOrders.length > 0));
-  }, [mode, buyOrders, sellOrders]);
+  const [competingOrderTally, betterOrderTally, bestOrderPrice] = useMemo(() => {
+    if (mode === 'buy') {
+      return [
+        buyOrders.length,
+        buyOrders.filter((o) => o.price > limitPrice).length,
+        buyOrders.reduce((acc, cur) => Math.max(acc, cur.price), 0)
+      ];
+    }
+    return [
+      sellOrders.length,
+      sellOrders.filter((o) => o.price < limitPrice).length,
+      sellOrders.reduce((acc, cur) => Math.min(acc, cur.price), Infinity)
+    ];
+  }, [buyOrders, mode, sellOrders, limitPrice]);
 
   const fee = useMemo(() => {
     return (type === 'market' ? totalMarketPrice : totalLimitPrice)
@@ -277,6 +345,8 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
     return sum + (mode === 'buy' ? fee : -fee);
   }, [fee, mode, totalLimitPrice, totalMarketPrice, type]);
 
+  const marketplaceBonus = getCrewAbilityBonus(2, crewMembers); // TODO: not 2
+
   const stats = useMemo(() => ([
     {
       label: 'Crew Travel Time',
@@ -287,7 +357,14 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
     {
       label: 'Marketplace Fee',
       value: (fee || 0).toLocaleString(),
-      direction: 0
+      direction: 0,
+      direction: marketplaceBonus.totalBonus > 1 ? getBonusDirection(marketplaceBonus) : 0,
+      tooltip: marketplaceBonus.totalBonus > 1 && (
+        <BonusTooltip
+          bonus={marketplaceBonus}
+          title="Marketplace Fee"
+          titleValue={`${(fee || 0).toLocaleString()}`} />
+      )
     },
     {
       label: 'Order Mass',
@@ -299,7 +376,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
       value: formatResourceVolume(quantity, resourceId),
       direction: 0,
     },
-  ]), [fee, quantity, resourceId]);
+  ]), [fee, quantity, marketplaceBonus, resourceId]);
 
   const dialogAction = useMemo(() => {
     return {
@@ -313,6 +390,8 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
     if (type === 'market') return `Submit Order`;
     else return `Create Order`;
   }, [type, isCancellation]);
+
+  const insufficientBalance = false;  // TODO: ...
 
   return (
     <>
@@ -418,12 +497,25 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
                 )}
                 {type === 'limit' && (
                   <InputLabel>
-                    {/* TODO: no other bids */}
-                    <span style={{ flex: 1, color: noCompetingOrders ? '#777' : theme.colors.main, fontSize: '16px' }}>
-                      {noCompetingOrders ? 'No Competing Orders' : `Current ${mode === 'buy' ? 'Highest' : 'Lowest'}`}
-                    </span>
+                    <CompetitionSummary mode={mode} matchingBest={limitPrice === bestOrderPrice} notBest={betterOrderTally > 0}>
+                      {mode === 'buy' && (
+                        <>
+                          {limitPrice > bestOrderPrice ? `Current Highest` : ''}
+                          {limitPrice === bestOrderPrice ? `Equal to Highest` : ''}
+                          {betterOrderTally > 0 ? <>Lower than <b>{betterOrderTally} Buyer{betterOrderTally === 1 ? '' : 's'}</b></> : ''}
+                        </>
+                      )}
+                      {mode === 'sell' && (
+                        <>
+                          {limitPrice < bestOrderPrice && `Current Lowest`}
+                          {limitPrice === bestOrderPrice && `Equal to Lowest`}
+                          {betterOrderTally > 0 ? <>Higher than <b>{betterOrderTally} Sellers{betterOrderTally === 1 ? '' : 's'}</b></> : ''}
+                        </>
+                      )}
+                    </CompetitionSummary>
+
                     <Button
-                      disabled={noCompetingOrders}
+                      disabled={limitPrice === bestOrderPrice}
                       onClick={matchBestLimitOrder}
                       size="small"
                       subtle>Match</Button>
@@ -441,7 +533,10 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
             title="Order"
             bodyStyle={{ height: 'auto', padding: 0 }}
             style={{ width: '100%' }}>
-            <OrderAlert mode={mode} isCancellation={isCancellation || undefined}>
+            <OrderAlert
+              mode={mode}
+              insufficientBalance={insufficientBalance || undefined}
+              isCancellation={isCancellation || undefined}>
               <div>
                 {type === 'limit' && (
                   <div style={{ fontSize: '35px', lineHeight: '30px' }}>
@@ -456,7 +551,11 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
                     {' '}{resource.name}
                   </div>
                 </div>
-                <div style={{ alignItems: 'flex-end', display: 'flex' }}>
+                <div
+                  ref={tooltipRefEl}
+                  onMouseEnter={() => setTooltipVisible(true)}
+                  onMouseLeave={() => setTooltipVisible(false)}
+                  style={{ alignItems: 'flex-end', display: 'flex' }}>
                   <b>
                     {type === 'market' && 'Total'}
                     {type === 'limit' && mode === 'buy' && (isCancellation ? 'Escrow Unlocked' : 'Spend up to')}
@@ -464,12 +563,36 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
                   </b>
                   {!(type === 'limit' && mode === 'sell' && isCancellation) && (
                     <span style={{ display: 'inline-flex', fontSize: '35px', lineHeight: '30px' }}>
-                      <SwayIcon /> {type === 'market' && (mode === 'buy' ? '-' : '+')}{formatFixed(total || 0)}
+                      <SwayIcon /> <TotalSway>{type === 'market' && (mode === 'buy' ? '-' : '+')}{formatFixed(total || 0)}</TotalSway>
                     </span>
                   )}
                 </div>
               </div>
             </OrderAlert>
+
+            {type === 'limit' && (
+              <MouseoverInfoPane referenceEl={tooltipRefEl.current} visible={tooltipVisible}>
+                <MouseoverContent>
+                  <TooltipHeader>limit {mode}</TooltipHeader>
+                  <TooltipBody>
+                    <div>
+                      <label>{mode === 'buy' ? 'Sway Escrow' : 'Escrow of Goods'} </label>
+                      <span>
+                        {mode === 'buy'
+                          ? `The specified buy total is deducted from your wallet and held in escrow until the order is filled or cancelled.`
+                          : `The specified quantity of goods will be held at the marketplace until the order is filled or cancelled.`
+                        }
+                      </span>
+                    </div>
+                    <div>
+                      <label>Partial Fills</label>
+                      <span>The entire order may not fill at once. Select your open orders to see the amount left unfilled.</span>
+                    </div>
+                  </TooltipBody>
+                </MouseoverContent>
+              </MouseoverInfoPane>
+            )}
+
           </FlexSectionBlock>
 
         </FlexSection>
