@@ -71,7 +71,7 @@ const AutodetectButton = styled(Button)`
   }
 `;
 
-const Settings = (props) => {
+const Settings = () => {
   const gpuInfo = useDetectGPU();
 
   const { account } = useAuth();

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import {
@@ -119,7 +119,7 @@ const MenuWrapper = styled.div`
   z-index: 4;
 `;
 
-const MainMenu = (props) => {
+const MainMenu = () => {
   const playSound = useStore(s => s.dispatchSoundRequested);
   const { isMobile } = useScreenSize();
   const history = useHistory();
@@ -136,6 +136,8 @@ const MainMenu = (props) => {
   const { account } = useAuth();
   const { data: crewAssignmentData } = useCrewAssignments();
 
+  const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
+
   // TODO: genesis book deprecation vvv
   const { crew, crewMemberMap } = useCrewContext();
   const hasGenesisCrewmate = useMemo(() => {
@@ -145,14 +147,12 @@ const MainMenu = (props) => {
 
   const [ showMenu, setShowMenu ] = useState(!isMobile);
 
-  const openSection = (section) => {
+  const openSection = useCallback((section) => {
     // activateSection(section);
     // TODO: ... this used to reference outliner, but outliner is gone 
     playSound('effects.click');
     if (isMobile) setShowMenu(false);
-  };
-
-  const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
+  }, [isMobile]);
 
   useEffect(() => {
     if (screenfull.isEnabled) {
@@ -182,14 +182,14 @@ const MainMenu = (props) => {
     }
   }, [lotId, zoomScene, zoomStatus]);
 
-  const notYet = () => {
+  const notYet = useCallback(() => {
     createAlert({
       type: 'GenericAlert',
       level: 'warning',
       content: 'Not yet.',
       duration: 1000
     });
-  }
+  }, []);
 
   return (
     <StyledMainMenu>

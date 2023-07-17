@@ -45,7 +45,7 @@ const VerticalRule = styled.div`
   padding-left: 14px;
 `;
 
-const SystemControls = (props) => {
+const SystemControls = () => {
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
 

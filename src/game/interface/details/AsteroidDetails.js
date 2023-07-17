@@ -32,7 +32,7 @@ const tabContainerCss = css`
 `;
 
 // TODO (enhancement): would be nice if at least the asteroid render was shared between the tabs
-const AsteroidDetails = (props) => {
+const AsteroidDetails = () => {
   const { account } = useAuth();
   const history = useHistory();
   const { i, tab } = useParams();

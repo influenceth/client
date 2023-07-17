@@ -62,7 +62,7 @@ const styleOverrides = {
 };
 
 // TODO: (this component is probably deprecated)
-const WatchlistTable = (props) => {
+const WatchlistTable = () => {
   const { watchlist: { data: watchlist }} = useWatchlist();
   const active = true;
   const history = useHistory();

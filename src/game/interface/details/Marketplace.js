@@ -105,7 +105,7 @@ for (let resourceId = 1; resourceId <= 245; resourceId++) {
   }
 }
 
-const Marketplace = (props) => {
+const Marketplace = () => {
   const buildings = useBuildingAssets();
   const resources = useResourceAssets();
 
@@ -134,7 +134,7 @@ const Marketplace = (props) => {
 
   const marketplace = lotId === 'all' ? null : {
     name: `Joe's Spacing Emporium`,
-    listings: asteroidListings.filter((l) => l.lotId === lotId),
+    listings: asteroidListings.filter((l) => l.lotId === Number(lotId)),
     orders: []
   };
 

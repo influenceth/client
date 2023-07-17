@@ -32,7 +32,7 @@ const sounds = {
   }
 };
 
-const Audio = (props) => {
+const Audio = () => {
   const toPlay = useStore(s => s.sounds.toPlay);
   const musicVolume = useStore(s => s.sounds.music);
   const effectsVolume = useStore(s => s.sounds.effects);

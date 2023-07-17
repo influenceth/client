@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 import IconButton from './IconButton';
 
-const HudIconButton = styled(IconButton).attrs((props) => ({
+const HudIconButton = styled(IconButton).attrs(() => ({
   borderless: true
 }))`
   color: #CCC;

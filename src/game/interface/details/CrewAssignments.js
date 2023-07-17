@@ -314,7 +314,7 @@ const ProgressIcon = styled.span`
   }}
 `;
 
-const CrewAssignments = (props) => {
+const CrewAssignments = () => {
   const { id: bookId, selected: initialSelectedId } = useParams();
   const history = useHistory();
   const { account } = useAuth();

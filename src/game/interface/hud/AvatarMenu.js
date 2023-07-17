@@ -221,7 +221,7 @@ const Food = styled.div`
   }
 `;
 
-const AvatarMenu = (props) => {
+const AvatarMenu = () => {
   const { account } = useAuth();
   const { captain, crewMemberMap, crew, loading: crewIsLoading } = useCrewContext();
   const history = useHistory();

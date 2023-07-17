@@ -289,7 +289,7 @@ const PromptDetails = styled.div`
   }
 `;
 
-const CrewAssignment = (props) => {
+const CrewAssignment = () => {
   const { id: sessionId } = useParams();
   const history = useHistory();
   const { crewMemberMap} = useCrewContext();

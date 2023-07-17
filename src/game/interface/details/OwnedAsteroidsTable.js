@@ -59,7 +59,7 @@ const styleOverrides = {
   }
 };
 
-const OwnedAsteroidsTable = (props) => {
+const OwnedAsteroidsTable = () => {
   const { data: asteroids } = useOwnedAsteroids();
 
   return (

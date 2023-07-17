@@ -90,7 +90,7 @@ const styleOverrides = {
   }
 };
 
-const AsteroidsTable = (props) => {
+const AsteroidsTable = () => {
   const { query, setPage, setPerPage, setSort } = usePagedAssets('asteroids');
 
   const handleSort = (field, direction) => {

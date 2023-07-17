@@ -246,7 +246,7 @@ const MainButton = styled(ButtonAlt)`
   }
 `;
 
-const Account = (props) => {
+const Account = () => {
   const history = useHistory();
   const { account, logout } = useAuth();
   const { captain, loading: crewLoading, crew, crewMemberMap } = useCrewContext();

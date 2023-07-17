@@ -149,7 +149,7 @@ const External = styled.div`
   }
 `;
 
-const Wallets = (props) => {
+const Wallets = () => {
   const { account, login, walletContext, authenticating } = useAuth();
   const [ waiting, setWaiting ] = useState(false);
   const { getAvailableWallets, walletName } = walletContext;

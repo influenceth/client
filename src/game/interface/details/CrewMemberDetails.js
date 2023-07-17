@@ -372,7 +372,7 @@ const EmptyLogEntry = styled.li`
 
 const MIN_TRAIT_SLOTS = 12;
 
-const CrewMemberDetails = (props) => {
+const CrewMemberDetails = () => {
   const { i } = useParams();
   const history = useHistory();
   const { account } = useAuth();

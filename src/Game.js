@@ -90,7 +90,7 @@ const LauncherRedirect = () => {
   return null;
 };
 
-const Game = (props) => {
+const Game = () => {
   const gpuInfo = useDetectGPU();
   const { updateNeeded, onUpdateVersion } = useServiceWorker();
 

@@ -8,7 +8,7 @@ import useWebWorker from '~/hooks/useWebWorker';
 import Orbit from './planets/Orbit';
 import theme from '~/theme';
 
-const Planets = (props) => {
+const Planets = () => {
   const planets = usePlanets();
   const { coarseTime } = useContext(ClockContext);
 

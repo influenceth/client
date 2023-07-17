@@ -450,7 +450,7 @@ const reducer = (state, action) => {
   }
 }
 
-const OwnedCrew = (props) => {
+const OwnedCrew = () => {
   const { account, token } = useAuth();
   const createStorySession = useCreateStorySession();
   const { data: crewAssignmentData, isLoading: assignmentsAreLoading } = useCrewAssignments();

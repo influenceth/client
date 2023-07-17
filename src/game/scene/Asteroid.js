@@ -114,7 +114,7 @@ const EMISSIVE_INTENSITY = {
   Volatile: 1.25
 };
 
-const Asteroid = (props) => {
+const Asteroid = () => {
   const { controls } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const { textureSize } = useStore(s => s.getTerrainQuality());

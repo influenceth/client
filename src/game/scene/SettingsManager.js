@@ -5,7 +5,7 @@ import { Color } from 'three';
 
 import useStore from '~/hooks/useStore';
 
-const SettingsManager = (props) => {
+const SettingsManager = () => {
   const { gl, scene, camera } = useThree();
   const fov = useStore(s => s.graphics.fov);
   const pixelRatio = useStore(s => s.graphics.pixelRatio);

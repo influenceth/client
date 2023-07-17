@@ -46,7 +46,7 @@ const StyledContainer = styled.div`
   width: 100%;
 `;
 
-const WrappedScene = (props) => {
+const WrappedScene = () => {
   const { clock, controls } = useThree();
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
@@ -75,7 +75,7 @@ const WrappedScene = (props) => {
   );
 }
 
-const Scene = (props) => {
+const Scene = () => {
 
   /**
    * Grab reference to queryClient to recreate QueryClientProvider within Canvas element

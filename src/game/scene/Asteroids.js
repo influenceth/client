@@ -59,7 +59,7 @@ const DistanceTooltip = styled.div`
 `;
 
 
-const Asteroids = (props) => {
+const Asteroids = () => {
   const { controls } = useThree();
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);

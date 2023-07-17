@@ -283,7 +283,7 @@ const FinishContainer = styled.div`
   }
 `;
 
-const CrewAssignmentComplete = (props) => {
+const CrewAssignmentComplete = () => {
   const { account } = useAuth();
   const { id: sessionId } = useParams();
   const history = useHistory();
