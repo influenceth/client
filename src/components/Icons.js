@@ -28,7 +28,6 @@ import {
   RiRouteFill,
   RiLoginCircleFill,
   RiAlertFill,
-  RiFilter2Fill,
   RiSortDesc
 } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
@@ -58,6 +57,7 @@ import EccentricitySVG from '~/assets/icons/EccentricityIcon.svg';
 import EventSVG from '~/assets/icons/EventIcon.svg';
 import FavoriteSVG from '~/assets/icons/FavoriteIcon.svg';
 import FarmSVG from '~/assets/icons/FarmIcon.svg';
+import FilterSVG from '~/assets/icons/FilterIcon.svg';
 import FoodSVG from '~/assets/icons/FoodIcon.svg';
 import GasSVG from '~/assets/icons/GasIcon.svg';
 import HexagonSVG from '~/assets/icons/HexagonIcon.svg';
@@ -72,6 +72,7 @@ import LocationSVG from '~/assets/icons/LocationIcon.svg';
 import LockSVG from '~/assets/icons/LockIcon.svg';
 import LotSearchSVG from '~/assets/icons/LotSearchIcon.svg';
 import ManufactureSVG from '~/assets/icons/ManufactureIcon.svg';
+import MarketsSVG from '~/assets/icons/MarketsIcon.svg';
 import MyAssetSVG from '~/assets/icons/MyAssetIcon.svg';
 import MyAssetsSVG from '~/assets/icons/MyAssetsIcon.svg';
 import OrbitalPeriodSVG from '~/assets/icons/OrbitalPeriodIcon.svg';
@@ -101,6 +102,7 @@ import TwitterSVG from '~/assets/icons/TwitterIcon.svg';
 import WalletSVG from '~/assets/icons/WalletIcon.svg';
 import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
 
+import CancelLimitOrderSVG from '~/assets/icons/action_buttons/CancelLimitOrder.svg';
 import ConstructSVG from '~/assets/icons/action_buttons/Construct.svg';
 import ConstructShipSVG from '~/assets/icons/action_buttons/ConstructShip.svg';
 import EjectPassengersSVG from '~/assets/icons/action_buttons/EjectPassengers.svg';
@@ -113,6 +115,10 @@ import ExtractResourceSVG from '~/assets/icons/action_buttons/ExtractResource.sv
 import ImproveCoreSampleSVG from '~/assets/icons/action_buttons/ImproveCoreSample.svg';
 import LandShipSVG from '~/assets/icons/action_buttons/LandShip.svg';
 import LaunchShipSVG from '~/assets/icons/action_buttons/LaunchShip.svg';
+import LimitBuySVG from '~/assets/icons/action_buttons/LimitBuy.svg';
+import LimitSellSVG from '~/assets/icons/action_buttons/LimitSell.svg';
+import MarketBuySVG from '~/assets/icons/action_buttons/MarketBuy.svg';
+import MarketSellSVG from '~/assets/icons/action_buttons/MarketSell.svg';
 import PlanBuildingSVG from '~/assets/icons/action_buttons/PlanBuilding.svg';
 import PurchaseAsteroidSVG from '~/assets/icons/action_buttons/PurchaseAsteroid.svg';
 import ScanAsteroidSVG from '~/assets/icons/action_buttons/ScanAsteroid.svg';
@@ -125,6 +131,16 @@ import TransferToSiteSVG from '~/assets/icons/action_buttons/TransferToSite.svg'
 import TravelingFromSVG from '~/assets/icons/action_buttons/TravelingFrom.svg';
 import TravelingToSVG from '~/assets/icons/action_buttons/TravelingTo.svg';
 import UnplanBuildingSVG from '~/assets/icons/action_buttons/UnplanBuilding.svg';
+
+import BioreactorBuildingSVG from '~/assets/icons/buildings/Bioreactor.svg';
+import ExtractorBuildingSVG from '~/assets/icons/buildings/Extractor.svg';
+import FactoryBuildingSVG from '~/assets/icons/buildings/Factory.svg';
+import HabitatBuildingSVG from '~/assets/icons/buildings/Habitat.svg';
+import MarketplaceBuildingSVG from '~/assets/icons/buildings/Marketplace.svg';
+import RefineryBuildingSVG from '~/assets/icons/buildings/Refinery.svg';
+import ShipyardBuildingSVG from '~/assets/icons/buildings/Shipyard.svg';
+import SpaceportBuildingSVG from '~/assets/icons/buildings/Spaceport.svg';
+import WarehouseBuildingSVG from '~/assets/icons/buildings/Warehouse.svg';
 
 import FlagMarkerSVG from '~/assets/icons/scene/Flag.svg';
 import RouteValidSVG from '~/assets/icons/scene/RouteValidIcon.svg';
@@ -149,6 +165,8 @@ export const RotatedShipMarkerIcon = () => <ShipMarkerSVG style={{ transform: 'r
     Else, on the style below, set the width on the `${width/height}em`
   5) View the altered SVG to make sure it still looks right (https://www.svgviewer.dev/ is a good tool)
 */
+
+// general icons
 export const AdalianIcon = () => <AdalianSVG className="icon" />;
 export const ArvadIcon = () => <ArvadSVG className="icon" style={{ width: '1.94em' }} />;
 export const AssignmentsIcon = () => <AssignmentsSVG className="icon" />;
@@ -176,6 +194,7 @@ export const EmergencyModeGenerateIcon = () => <EModeGenerateSVG className="icon
 export const EventIcon = () => <EventSVG className="icon" />;
 export const FarmIcon = () => <FarmSVG className="icon" />;
 export const FavoriteIcon = () => <FavoriteSVG className="icon" />;
+export const FilterIcon = () => <FilterSVG className="icon" />;
 export const FoodIcon = () => <FoodSVG className="icon" />;
 export const GasIcon = () => <GasSVG className="icon" />;
 export const HexagonIcon = () => <HexagonSVG className="icon" />;
@@ -190,6 +209,7 @@ export const LocationIcon = () => <LocationSVG className="icon" />;
 export const LockIcon = () => <LockSVG className="icon" />;
 export const LotSearchIcon = () => <LotSearchSVG className="icon" />;
 export const ManufactureIcon = () => <ManufactureSVG className="icon" />;
+export const MarketsIcon = () => <MarketsSVG className="icon" />;
 export const MyAssetIcon = () => <MyAssetSVG className="icon" />;
 export const MyAssetsIcon = () => <MyAssetsSVG className="icon" />;
 export const OrbitalPeriodIcon = () => <OrbitalPeriodSVG className="icon" />;
@@ -220,6 +240,8 @@ export const TwitterIcon = () => <TwitterSVG className="icon" />;
 export const WalletIcon = () => <WalletSVG className="icon" />;
 export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
 
+// action icons
+export const CancelLimitOrderIcon = () => <CancelLimitOrderSVG className="icon" />;
 export const ConstructIcon = () => <ConstructSVG className="icon" />;
 export const ConstructShipIcon = () => <ConstructShipSVG className="icon" />;
 export const DeconstructIcon = () => <DeconstructSVG className="icon" />;
@@ -228,6 +250,10 @@ export const ExtractionIcon = () => <ExtractResourceSVG className="icon" />;
 export const ImproveCoreSampleIcon = () => <ImproveCoreSampleSVG className="icon" />;
 export const LandShipIcon = () => <LandShipSVG className="icon" />;
 export const LaunchShipIcon = () => <LaunchShipSVG className="icon" />;
+export const LimitBuyIcon = () => <LimitBuySVG className="icon" />;
+export const LimitSellIcon = () => <LimitSellSVG className="icon" />;
+export const MarketBuyIcon = () => <MarketBuySVG className="icon" />;
+export const MarketSellIcon = () => <MarketSellSVG className="icon" />;
 export const NewCoreSampleIcon = () => <NewCoreSampleSVG className="icon" />;
 export const PlanBuildingIcon = () => <PlanBuildingSVG className="icon" />;
 export const PurchaseAsteroidIcon = () => <PurchaseAsteroidSVG className="icon" />;
@@ -240,6 +266,17 @@ export const SurfaceTransferIcon = () => <SurfaceTransferSVG className="icon" />
 export const TravelingFromIcon = () => <TravelingFromSVG className="icon" />;
 export const TravelingToIcon = () => <TravelingToSVG className="icon" />;
 export const UnplanBuildingIcon = () => <UnplanBuildingSVG className="icon" />;
+
+// building icons
+export const BioreactorBuildingIcon = () => <BioreactorBuildingSVG className="icon" />;
+export const ExtractorBuildingIcon = () => <ExtractorBuildingSVG className="icon" />;
+export const FactoryBuildingIcon = () => <FactoryBuildingSVG className="icon" />;
+export const HabitatBuildingIcon = () => <HabitatBuildingSVG className="icon" />;
+export const MarketplaceBuildingIcon = () => <MarketplaceBuildingSVG className="icon" />;
+export const RefineryBuildingIcon = () => <RefineryBuildingSVG className="icon" />;
+export const ShipyardBuildingIcon = () => <ShipyardBuildingSVG className="icon" />;
+export const SpaceportBuildingIcon = () => <SpaceportBuildingSVG className="icon" />;
+export const WarehouseBuildingIcon = () => <WarehouseBuildingSVG className="icon" />;
 
 export const ResourceGroupIcons = {
   rareearth: (<svg viewBox="0 0 24 24"><path d="M16.67,4H15V2H9V4H7.33A1.33,1.33 0 0,0 6,5.33V20.66C6,21.4 6.6,22 7.33,22H16.66C17.4,22 18,21.4 18,20.67V5.33C18,4.6 17.4,4 16.67,4M11,20V14.5H9L13,7V12.5H15" /></svg>),
@@ -295,7 +332,6 @@ export {
   MdRadioButtonUnchecked as RadioUncheckedIcon,
   MdStop as StopIcon,
   RiAlertFill as WarningIcon,
-  RiFilter2Fill as FilterIcon,
   RiLayoutGridFill as GridIcon,
   RiLoginCircleFill as LoginIcon,
   RiSortDesc as SortIcon,

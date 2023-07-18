@@ -4,7 +4,7 @@ import moment from 'moment';
 
 import CrewIndicator from '~/components/CrewIndicator';
 import DataTable from '~/components/DataTable';
-import { CompositionIcon, ProductIcon, SwayIcon } from '~/components/Icons';
+import { CompositionIcon, MarketplaceBuildingIcon, MarketsIcon, ProductIcon, SwayIcon } from '~/components/Icons';
 import { useResourceAssets } from '~/hooks/useAssets';
 import { formatPrice } from '~/lib/utils';
 import theme from '~/theme';
@@ -24,6 +24,8 @@ const Header = styled.div`
   & > div:first-child {
     flex: 1;
     h1 {
+      align-items: center;
+      display: flex;
       font-size: 50px;
       font-weight: normal;
       line-height: 1em;
@@ -31,14 +33,14 @@ const Header = styled.div`
       text-transform: uppercase;
       svg {
         color: ${p => p.theme.colors.main};
-        height: 35px;
-        width: 35px;
+        height: 1em;
+        margin-right: 6px;
       }
     }
     ${Subheader} {
       color: #999;
       line-height: 1em;
-      padding-left: 50px;
+      padding-left: 56px;
       padding-top: 15px;
       span:not(:first-child) {
         border-left: 1px solid #777;
@@ -210,8 +212,8 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
       <Header>
         <div>
           {/* TODO: marketplace icon */}
-          {marketplace && <h1><CompositionIcon /> {marketplace?.name || 'Marketplace'}</h1>}
-          {!marketplace && <h1><CompositionIcon /> {asteroid?.customName || asteroid?.baseName}</h1>}
+          {marketplace && <h1><MarketplaceBuildingIcon /> {marketplace?.name || 'Marketplace'}</h1>}
+          {!marketplace && <h1><MarketsIcon /> {asteroid?.customName || asteroid?.baseName}</h1>}
           <Subheader>
             <span><b>{orders.length || 0}</b> Open Order{orders.length === 1 ? '' : 's'} {marketplace ? 'at this Marketplace' : 'on this Asteroid'}</span>
           </Subheader>

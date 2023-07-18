@@ -9,27 +9,28 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useLot from '~/hooks/useLot';
 import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import Button from '~/components/ButtonAlt';
-import theme, { hexToRGB } from '~/theme';
-import { formatFixed } from '~/lib/utils';
 import MarketplaceHome from './marketplace/Home';
 import MarketplaceDepthChart from './marketplace/DepthChart';
 import MarketplaceOpenOrders from './marketplace/OpenOrders';
 import useCrewContext from '~/hooks/useCrewContext';
 import useCrew from '~/hooks/useCrew';
 import AsteroidResourcePrices from './marketplace/AsteroidResourcePrices';
+import marketplaceHeader from '~/assets/images/modal_headers/Marketplace.png';
 
 
 const ActionImage = styled.div`
   background: black url("${p => p.src}") center center no-repeat;
-  background-position-y: -120px;
   background-size: cover;
-  mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
-  opacity: 0.5;
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 350px;
+  ${p => !p.isPreMasked && `
+    background-position-y: -120px;
+    mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
+    opacity: 0.5;
+  `};
 `;
 const ResourceActionImage = styled(ActionImage)`
   background-position-x: -225px;
@@ -186,7 +187,9 @@ const Marketplace = () => {
     <Details
       outerNode={resource
         ? <ResourceActionImage src={resource.iconUrls.w400} />
-        : <ActionImage src={buildings[8].iconUrls.w1000} />
+        : <ActionImage
+            isPreMasked={!marketplace}
+            src={marketplace ? buildings[8].iconUrls.w1000 : marketplaceHeader} />
       }
       title={`${asteroid.customName || asteroid.baseName || '...'} > ${lotId === 'all' ? 'Markets' : (marketplace.name || 'Marketplace')}`}
       underlineHeader

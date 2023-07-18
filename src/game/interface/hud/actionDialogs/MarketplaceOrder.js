@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 
-import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { BanIcon, InventoryIcon, LocationIcon, WarningOutlineIcon, OrderIcon, SwayIcon } from '~/components/Icons';
+import marketplaceBackground from '~/assets/images/modal_headers/Marketplace.png';
+import { BanIcon, InventoryIcon, LocationIcon, WarningOutlineIcon, OrderIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -379,10 +379,25 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
   ]), [fee, quantity, marketplaceBonus, resourceId]);
 
   const dialogAction = useMemo(() => {
-    return {
-      icon: <OrderIcon />,
-      label: `${isCancellation ? 'Cancel ' : ''}${type === 'market' ? 'Market' : 'Limit'} ${mode === 'buy' ? 'Buy' : 'Sell'}`
-    };
+    let a = {};
+    if (type === 'market' && mode === 'buy') {
+      a.icon = <MarketBuyIcon />;
+      a.label = 'Market Buy';
+    } else if (type === 'market' && mode === 'sell') {
+      a.icon = <MarketSellIcon />;
+      a.label = 'Market Sell';
+    } else if (type === 'limit' && mode === 'buy') {
+      a.icon = <LimitBuyIcon />;
+      a.label = 'Limit Buy';
+    } else if (type === 'limit' && mode === 'sell') {
+      a.icon = <LimitSellIcon />;
+      a.label = 'Limit Sell';
+    }
+    if (isCancellation) {
+      a.icon = <CancelLimitOrderIcon />;
+      a.label = `Cancel ${a.label}`;
+    }
+    return a;
   }, [mode, type, isCancellation]);
 
   const goLabel = useMemo(() => {
@@ -656,7 +671,7 @@ const Wrapper = (props) => {
   // TODO: actionImage
   return (
     <ActionDialogInner
-      actionImage={travelBackground}
+      actionImage={marketplaceBackground}
       isLoading={isLoading}
       stage={actionStage}>
       <MarketplaceOrder

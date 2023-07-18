@@ -5,7 +5,7 @@ import Ticker from 'react-ticker';
 import ClipCorner from '~/components/ClipCorner';
 import CrewIndicator from '~/components/CrewIndicator';
 import Dropdown from '~/components/DropdownV2';
-import { ChevronDoubleDownIcon, ChevronDoubleUpIcon, ChevronRightIcon, CompositionIcon, GridIcon, SwayIcon } from '~/components/Icons';
+import { ChevronDoubleDownIcon, ChevronDoubleUpIcon, ChevronRightIcon, CompositionIcon, GridIcon, MarketplaceBuildingIcon, MarketsIcon, SwayIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import Switcher from '~/components/SwitcherButton';
 import TextInput from '~/components/TextInput';
@@ -28,6 +28,8 @@ const Header = styled.div`
   & > div:first-child {
     flex: 1;
     h1 {
+      align-items: center;
+      display: flex;
       ${p => p.marketplace ? '' : 'color: white;'}
       font-size: 50px;
       font-weight: normal;
@@ -36,14 +38,14 @@ const Header = styled.div`
       text-transform: uppercase;
       svg {
         color: ${p => p.marketplace ? p.theme.colors.main : '#CCC'};
-        height: 35px;
-        width: 35px;
+        height: 1em;
+        margin-right: 6px;
       }
     }
     ${Subheader} {
       color: #999;
       line-height: 1em;
-      padding-left: ${p => p.marketplace ? '50px' : '0'};
+      padding-left: ${p => p.marketplace ? '56px' : '0'};
       padding-top: 15px;
       span:not(:first-child) {
         border-left: 1px solid #777;
@@ -289,8 +291,7 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
           ? (
             <>
               <div>
-                {/* TODO: marketplace icon */}
-                <h1><CompositionIcon /> {marketplace?.name}</h1>
+                <h1><MarketplaceBuildingIcon /> {marketplace?.name}</h1>
                 <Subheader>
                   <span>Marketplace</span>
                   <span><b>{listings.length || 0}</b> Listed Product{listings.length === 1 ? '' : 's'}</span>
@@ -304,7 +305,7 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
             <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'row' }}>
               <AsteroidImage asteroid={asteroid} size="125px" />
               <div style={{ flex: 1, paddingLeft: 25 }}>
-                <h1><CompositionIcon /> {asteroid?.customName || asteroid?.baseName || 'Asteroid'} Markets</h1>
+                <h1><MarketsIcon /> {asteroid?.customName || asteroid?.baseName || 'Asteroid'} Markets</h1>
                 <Subheader>
                   <span><b>127</b> Marketplaces</span>
                   <span><b>{listings.length || 0}</b> Product{listings.length === 1 ? '' : 's'} Listed</span>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 
-import { CompositionIcon, InfoIcon, OrderIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon } from '~/components/Icons';
+import { CompositionIcon, InfoIcon, MarketplaceBuildingIcon, OrderIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon } from '~/components/Icons';
 import CrewIndicator from '~/components/CrewIndicator';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import Switcher from '~/components/SwitcherButton';
@@ -93,6 +93,8 @@ const Header = styled.div`
   & > div:first-child {
     flex: 1;
     h1 {
+      align-items: center;
+      display: flex;
       font-size: 50px;
       font-weight: normal;
       line-height: 1em;
@@ -100,8 +102,8 @@ const Header = styled.div`
       text-transform: uppercase;
       svg {
         color: ${p => p.theme.colors.main};
-        height: 35px;
-        width: 35px;
+        height: 1em;
+        margin-right: 6px;
       }
     }
     ${Subheader} {
@@ -553,8 +555,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       <Main>
         <Header>
           <div>
-            {/* TODO: marketplace icon */}
-            <h1><CompositionIcon /> {marketplace.name}</h1>
+            <h1><MarketplaceBuildingIcon /> {marketplace.name}</h1>
             <Subheader>
               <span>{resource.name}</span>
               {/* TODO: values */}
