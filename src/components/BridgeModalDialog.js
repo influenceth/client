@@ -73,6 +73,8 @@ const CloseButton = styled(IconButton)`
   }
 `;
 
+// TODO: since the updated HUD login screen, this is no longer linked anywhere... find a place for it
+
 const BridgeModalDialog = ({ onClose }) => {
   const openBridge = () => {
     window.open(process.env.REACT_APP_BRIDGE_URL);
