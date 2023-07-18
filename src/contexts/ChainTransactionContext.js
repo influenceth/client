@@ -443,7 +443,7 @@ export function ChainTransactionProvider({ children }) {
       return processedContracts;
     }
     return null;
-  }, [createAlert, starknet?.account?.address, starknet?.account?.baseUrl, session?.account]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, starknet?.account?.address, starknet?.account?.provider?.baseUrl, session?.account]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionWaiters = useRef([]);
 
