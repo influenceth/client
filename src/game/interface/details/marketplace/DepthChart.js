@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 
-import { CompositionIcon, InfoIcon, MarketplaceBuildingIcon, OrderIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon } from '~/components/Icons';
+import { CompositionIcon, InfoIcon, LimitBuyIcon, LimitSellIcon, MarketBuyIcon, MarketplaceBuildingIcon, MarketSellIcon, OrderIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon } from '~/components/Icons';
 import CrewIndicator from '~/components/CrewIndicator';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import Switcher from '~/components/SwitcherButton';
@@ -550,6 +550,18 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     return sum + (mode === 'buy' ? fee : -fee);
   }, [fee, mode, totalLimitPrice, totalMarketPrice, type]);
 
+  const actionButtonDetails = useMemo(() => {
+    const a = { label: '', icon: null };
+    if (type === 'limit') {
+      a.label = 'Create Limit Order';
+      a.icon = mode === 'buy' ? <LimitBuyIcon /> : <LimitSellIcon />;
+    } else {
+      a.label = 'Create Market Order';
+      a.icon = mode === 'buy' ? <MarketBuyIcon /> : <MarketSellIcon />;
+    }
+    return a;
+  }, [mode, type])
+
   return (
     <Wrapper>
       <Main>
@@ -763,8 +775,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
                   {/* TODO: update icon */}
                   <ActionButton
-                    label="Create Order"
-                    icon={<OrderIcon />}
+                    {...actionButtonDetails}
                     onClick={createOrder} />
                 </Tray>
               )}
