@@ -400,8 +400,9 @@ const LotInventory = () => {
             <div>
               <Dropdown
                 options={sortOptions}
-                onChange={(l) => setOrder(l)}
-                width="160px" />
+                onChange={(l) => setOrder(sortOptions[l])}
+                size="legacy"
+                style={{ width: 160 }} />
             </div>
           </Controls>
           <InventoryItems>

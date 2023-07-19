@@ -74,7 +74,7 @@ const StyledButton = styled.button`
   padding: 3px; /* must match loadingCss.top */
   pointer-events: auto;
   position: relative;
-  text-transform: uppercase;
+  text-transform: ${p => p.sizeParams.textTransform || 'uppercase'};
   transition: all 300ms ease;
 
   & > svg {
@@ -171,6 +171,7 @@ const sizes = {
   icon: { font: 16, height: 26, width: 34, line: 8, borderWidth: 1, isIconOnly: true },
   bigicon: { font: 16, height: 32, width: 40, line: 10, borderWidth: 1, isIconOnly: true },
   wideicon: { font: 25, height: 32, width: 85, line: 10, borderWidth: 1, isIconOnly: true },
+  legacy: { font: 14, height: 18, width: 100, line: 10, borderWidth: 1, textTransform: 'none', background: 'transparent' },
   small: { font: 14, height: 26, width: 100, line: 10, borderWidth: 1 },
   medium: { font: 16, height: 32, width: 185, line: 10, borderWidth: 1 },
   large: { font: 20, height: 50, width: 250, line: 15, borderWidth: 1 },
@@ -206,6 +207,7 @@ const StandardButton = (props) => {
         data-tip={dataTip}
         data-place={dataPlace || "right"}
         sizeParams={sizeParams}
+        background={sizeParams.background}
         {...restProps}>
         <InnerContainer flip={restProps.flip} sizeParams={sizeParams}>
           {loading && (

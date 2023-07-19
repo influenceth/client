@@ -24,7 +24,7 @@ import {
   TransactionIcon
 } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
-import Dropdown from '~/components/DropdownV2';
+import Dropdown from '~/components/Dropdown';
 import { useHistory, useParams } from 'react-router-dom';
 import Multiselect from '~/components/Multiselect';
 import { itemColors, statuses } from '~/lib/actionItem';

@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
-import Dropdown from '~/components/DropdownV2';
+import Dropdown from '~/components/Dropdown';
 import { CloseIcon, WarningIcon } from '~/components/Icons';
 import NumberInput from '~/components/NumberInput';
 import Porkchop from '~/components/Porkchop';

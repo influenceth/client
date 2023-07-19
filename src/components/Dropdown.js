@@ -1,61 +1,29 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { usePopper } from 'react-popper';
 import styled from 'styled-components';
+import Button from './ButtonAlt';
 
 const Wrapper = styled.div`
   position: relative;
 `;
 
-const Button = styled.button`
-  background-color: ${p => p.buttonBackground ? `rgba(${p.theme.colors.mainRGB}, 0.4)` : 'transparent'};
-  border: ${p => p.buttonBorderless ? 'none' : `1px solid ${p.disabled ? '#444' : p.theme.colors.main}`};
-  color: white;
-  cursor: ${p => p.theme.cursors[p.disabled ? 'default' : 'active']};
-  font-family: 'Jura', sans-serif;
+const Caret = styled.span`
   font-size: 80%;
-  opacity: ${p => p.disabled ? 0.7 : 1};
-  outline: 0;
-  overflow: hidden;
-  padding: 4px 5px;
-  text-align: left;
-  text-overflow: ellipsis;
-  transition: background-color 200ms ease;
-  white-space: nowrap;
-  width: ${p => p.width || 'auto'};
-  &:before {
-    content: "▾";
-    float: right;
-    font-size: 80%;
-    line-height: 1.44em;
-    margin-left: 5px;
-    ${p => p.buttonBackground && `
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-      line-height: 1.44em;
-      padding: 0 6px;
-    `}
-  }
-  ${p => p.footnote && `
-    &:after {
-      content: "${p.footnote}";
-      color: ${p.disabled ? '#444' : 'white'};
-      float: right;
-      font-size: 80%;
-      line-height: 145%;
-      margin-right: 2px;
-    }
-  `}
-
-  ${p => !p.disabled && `
-    &:hover {
-      background-color: rgba(${p.theme.colors.mainRGB}, 0.3);
-    }
-  `}
 `;
+
+const IconWrapper = styled.span`
+  display: inline-block;
+  font-size: 120%;
+  line-height: 0;
+  margin-right: 4px;
+`;
+
 const Options = styled.div`
   background: #111;
-  font-size: 80%;
+  
   max-height: 50vh;
-  min-width: ${p => p.width || 'auto'};
+  min-width: ${p => p.width ? `${p.width}px` : 'auto'};
   overflow: auto;
   position: absolute;
   ${p => p.dropUp && `
@@ -71,41 +39,73 @@ const Option = styled.div`
   &:hover {
     background-color: rgba(${p => p.theme.colors.mainRGB}, 0.3);
   }
-  ${p => p.footnote && `
-    &:after {
-      content: "${p.footnote}";
-      color: ${p.theme.colors.main};
-      float: right;
-    }
-  `}
+`;
+
+const SelectedLabel = styled.label`
+  flex: 1;
+  text-align: left;
 `;
 
 // options can be array of strings or array of objects
-const Dropdown = ({ disabled, footnote, initialSelection, labelKey = 'label', onChange, options, resetOn, ...styleProps }) => {
-  const [open, setOpen] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(initialSelection || 0);
-  const [selectedLabel, setSelectedLabel] = useState();
+const Dropdown = ({
+  disabled,
+  footnote,
+  hideSelected,
+  initialSelection,
+  iconKey = 'icon',
+  labelKey = 'label',
+  valueKey = 'value',
+  onChange,
+  options: rawOptions,
+  ...styleProps
+}) => {
+  const [isObjArr, options] = useMemo(() => {
+    if (typeof (rawOptions || [])[0] === 'object') {
+      return [true, [...rawOptions]];
+    }
+    return [false, (rawOptions || []).map((o, i) => ({ [labelKey]: o, [valueKey]: i }))];
+  }, [rawOptions]);
 
   const closeTimer = useRef();
 
-  const isObjArr = typeof (options || [])[0] === 'object';
+  const [open, setOpen] = useState(false);
+  const [popperEl, setPopperEl] = useState();
+  const [referenceEl, setReferenceEl] = useState();
+  const [selected, setSelected] = useState();
+
+  const { styles, attributes } = usePopper(referenceEl, popperEl, {
+    placement: 'bottom-start',
+    modifiers: [
+      {
+        name: 'flip',
+        options: {
+          fallbackPlacements: ['top-start', 'top-end', 'right', 'left'],
+        },
+      },
+    ],
+  });
 
   const handleToggle = useCallback(() => {
     if (!disabled)
     setOpen((o) => !o);
   }, [disabled]);
   
-  const handleSelection = useCallback((index) => () => {
-    if (selectedIndex !== index) {
-      onChange(options[index]);
+  const handleSelection = useCallback((option) => () => {
+    if (option[valueKey] !== selected[valueKey]) {
+      onChange(isObjArr ? option : option[valueKey]);
     }
-    setSelectedIndex(index);
+    setSelected(option);
     setOpen(false);
-  }, [onChange, options, selectedIndex]);
+  }, [onChange, selected]);
 
   const handleMouseEnter = useCallback(() => {
     if (closeTimer.current) {
       clearTimeout(closeTimer.current);
+    }
+  }, []);
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
     }
   }, []);
 
@@ -115,39 +115,47 @@ const Dropdown = ({ disabled, footnote, initialSelection, labelKey = 'label', on
     }, 500);
   }, []);
 
+  // if initialSelection changes, assume that should be my new value
+  // (but don't call onChange since obviously changed from elsewhere)
   useEffect(() => {
-    const i = initialSelection || 0;
-    setSelectedIndex(i);
-    setSelectedLabel(isObjArr ? options[i][labelKey] : options[i]);
-  }, [initialSelection, options]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    setSelectedLabel(isObjArr ? options[selectedIndex][labelKey] : options[selectedIndex]);
-  }, [selectedIndex]); // eslint-disable-line react-hooks/exhaustive-deps
-
+    setSelected(
+      (initialSelection && options.find((o) => o[valueKey] === initialSelection)) || options[0]
+    );
+  }, [initialSelection]);
+  
   useEffect(() => {
     setOpen(false);
   }, [disabled]);
 
+  if (!selected) return null;
   return (
     <Wrapper
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}>
-      <Button
-        disabled={disabled}
-        footnote={footnote && options[selectedIndex] && footnote(options[selectedIndex])}
-        onClick={handleToggle}
-        {...styleProps}>
-        {selectedLabel || ''}
-      </Button>
-      {open && (
-        <Options {...styleProps}>
-          {options.map((o, i) => (
-            <Option key={i} footnote={footnote && footnote(o)} onClick={handleSelection(i)}>
-              {isObjArr ? o[labelKey] : o}
-            </Option>
-          ))}
-        </Options>
+
+      <span ref={setReferenceEl}>
+        <Button
+          disabled={disabled}
+          onClick={handleToggle}
+          {...styleProps}>
+          {selected[iconKey] && <IconWrapper>{selected[iconKey]}</IconWrapper>}
+          <SelectedLabel>{selected[labelKey] || ''}</SelectedLabel>
+          <Caret>▾</Caret>
+        </Button>
+      </span>
+
+      {open && createPortal(
+        <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000 }} {...attributes.popper}>
+          <Options {...styleProps}>
+            {options.filter((o) => !hideSelected || o[valueKey] !== selected[valueKey]).map((o) => (
+              <Option key={o[valueKey]} footnote={footnote && footnote(o)} onClick={handleSelection(o)}>
+                {o[iconKey] && <IconWrapper>{o[iconKey]}</IconWrapper>}
+                <label>{o[labelKey]}</label>
+              </Option>
+            ))}
+          </Options>
+        </div>,
+        document.body
       )}
     </Wrapper>
   );

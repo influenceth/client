@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { NoToneMapping } from 'three';
 
 import Button from '~/components/ButtonAlt';
-import Dropdown from '~/components/DropdownV2';
+import Dropdown from '~/components/Dropdown';
 import IconButton from '~/components/IconButton';
 import { CheckedIcon, CloseIcon, UncheckedIcon } from '~/components/Icons';
 import NumberInput from '~/components/NumberInput';

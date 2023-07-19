@@ -4,7 +4,7 @@ import Ticker from 'react-ticker';
 
 import ClipCorner from '~/components/ClipCorner';
 import CrewIndicator from '~/components/CrewIndicator';
-import Dropdown from '~/components/DropdownV2';
+import Dropdown from '~/components/Dropdown';
 import { ChevronDoubleDownIcon, ChevronDoubleUpIcon, ChevronRightIcon, CompositionIcon, GridIcon, MarketplaceBuildingIcon, MarketsIcon, SwayIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import Switcher from '~/components/SwitcherButton';

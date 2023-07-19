@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
-import Dropdown from '~/components/DropdownV2';
+import Dropdown from '~/components/Dropdown';
 import useAssetSearch from '~/hooks/useAssetSearch';
 import useStore from '~/hooks/useStore';
 import useAsteroidColumns from '~/game/interface/details/listViews/asteroids';
