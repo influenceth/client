@@ -32,6 +32,7 @@ const TextInput = forwardRef((props, forwardedRef) => {
     setValue(e.target.value);
     if (onChange) onChange(e.target.value);
 
+    // TODO (bug): below does not seem to use pattern (should probably be an OR with maxlength also)
     // pattern takes precedence over maxlength, so this will apply maxlength
     // explicitly if both properties are set
     if (ref.current && props.pattern && props.maxlength) {
