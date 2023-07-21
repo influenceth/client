@@ -112,6 +112,7 @@ const Interface = () => {
       <Alerts />
       {launcherPage && <Launcher />}
       {cutscene && <Cutscene />}
+      {showDevTools && <DevToolsViewer />}
       <StyledInterface hide={interfaceHidden}>
         {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
         {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
@@ -135,7 +136,6 @@ const Interface = () => {
             </Route>
           </Switch>
 
-          {showDevTools && <DevToolsViewer />}
           <LotViewer />
           <ShipViewer />
           <HUD />
