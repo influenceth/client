@@ -230,6 +230,7 @@ const Launcher = (props) => {
   const launcherPage = useStore(s => s.launcherPage);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
+  const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const { walletContext, token } = useAuth();
   const { account, walletIcon, walletName } = walletContext;
   const loggedIn = account && token;
@@ -239,8 +240,10 @@ const Launcher = (props) => {
   }, [ walletContext ]);
 
   useEffect(() => {
-    dispatchToggleInterface(false);
-    return () => dispatchToggleInterface(true);
+    if (interfaceHidden) {
+      dispatchToggleInterface(false);
+      return () => dispatchToggleInterface(true);
+    }
   }, []);
 
   return (
