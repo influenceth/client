@@ -15,7 +15,7 @@ const useNameCrew = (i) => {
         content: 'Crewmate name changes are disabled as we complete the L2 Asset Bridge. Stay tuned.',
       })
     },
-    [execute, i]
+    [createAlert, execute, i]
   );
 
   const status = useMemo(
