@@ -5,7 +5,10 @@ import { Asteroid } from '@influenceth/sdk';
 import Button from '~/components/ButtonAlt';
 import { CloseIcon, LotSearchIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
+import constants from '~/lib/constants';
 import Banner from './Banner';
+
+const { MAX_LOTS_RENDERED } = constants;
 
 const ActiveFilters = styled.div`
   align-items: center;
@@ -50,8 +53,8 @@ const SearchLotsBanner = ({ visible }) => {
       loadingMessage="Searching">
       <ActiveFilters style={{ fontSize: '90%' }}>
         <LotSearchIcon />
-        {total > Asteroid.MAX_LOTS_RENDERED
-          ? `Showing ${Asteroid.MAX_LOTS_RENDERED.toLocaleString()} Results`
+        {total > MAX_LOTS_RENDERED
+          ? `Showing ${MAX_LOTS_RENDERED.toLocaleString()} Results`
           : (
             activeFilters > 0
               ? `${activeFilters} Lot Filter${activeFilters === 1 ? '' : 's'} Active`

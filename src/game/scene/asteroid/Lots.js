@@ -22,8 +22,11 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
 import useWebWorker from '~/hooks/useWebWorker';
-import { getLotGeometryHeightMaps, getLotGeometryHeightMapResolution } from './helpers/LotGeometry';
 import useMappedAsteroidLots from '~/hooks/useMappedAsteroidLots';
+import constants from '~/lib/constants';
+import { getLotGeometryHeightMaps, getLotGeometryHeightMapResolution } from './helpers/LotGeometry';
+
+const { MAX_LOTS_RENDERED } = constants;
 
 const STROKE_COLOR = new Color().setHex(0xbbbbbb).convertSRGBToLinear();
 const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
@@ -44,7 +47,7 @@ const getMaxInstancesForAltitude = (altitude) => {
 }
 
 const MOUSEABLE_WIDTH = 800;
-const MAX_MESH_INSTANCES = Asteroid.MAX_LOTS_RENDERED;
+const MAX_MESH_INSTANCES = MAX_LOTS_RENDERED;
 const PIP_VISIBILITY_ALTITUDE = 25000;
 const MOUSE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE;
 const STROKE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE * 0.5;
@@ -134,7 +137,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   }, [resultTally, isLoading])
 
   const lotTally = useMemo(() => Asteroid.getSurfaceArea(asteroidId), [asteroidId]);
-  const regionTally = useMemo(() => Asteroid.getLotRegionTally(lotTally), [lotTally]);
+  const regionTally = useMemo(() => lotTally <= MAX_LOTS_RENDERED ? 1 : Asteroid.getLotRegionTally(lotTally), [lotTally]);
   const visibleLotTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, lotTally), [lotTally]);
   const visibleStrokeTally = useMemo(() => Math.min(MAX_OUTLINE_INSTANCES, buildingTally), [buildingTally]);
   const visibleFillTally = useMemo(() => Math.min(MAX_FILL_INSTANCES, fillTally), [fillTally]);
