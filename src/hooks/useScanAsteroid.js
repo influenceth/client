@@ -1,20 +1,34 @@
 import { useCallback, useContext, useMemo } from 'react';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import useStore from './useStore';
 
 const useAsteroidScan = (asteroid) => {
   const { execute, getStatus } = useContext(ChainTransactionContext);
+  const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const i = asteroid ? Number(asteroid.i) : null;
 
   const startAsteroidScan = useCallback(
-    () => execute('START_ASTEROID_SCAN', { i }),
-    [execute, i]
+    () => {
+      createAlert({
+        type: 'GenericAlert',
+        content: 'Crewmate name changes are disabled as we complete the L2 Asset Bridge. Stay tuned.',
+      })
+    },
+    //() => execute('START_ASTEROID_SCAN', { i }),
+    [createAlert, execute, i]
   );
 
   const finalizeAsteroidScan = useCallback(
-    () => execute('FINALIZE_ASTEROID_SCAN', { i }),
-    [execute, i]
+    () => {
+      createAlert({
+        type: 'GenericAlert',
+        content: 'Crewmate name changes are disabled as we complete the L2 Asset Bridge. Stay tuned.',
+      })
+    },
+    // () => execute('FINALIZE_ASTEROID_SCAN', { i }),
+    [createAlert, execute, i]
   );
 
   const startingScan = useMemo(
