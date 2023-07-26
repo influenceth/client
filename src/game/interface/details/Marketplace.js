@@ -16,6 +16,7 @@ import useCrew from '~/hooks/useCrew';
 import AsteroidResourcePrices from './marketplace/AsteroidResourcePrices';
 import marketplaceHeader from '~/assets/images/modal_headers/Marketplace.png';
 import { getBuildingIcon, getProductIcon } from '~/lib/assetUtils';
+import formatters from '~/lib/formatters';
 
 
 const ActionImage = styled.div`
@@ -188,7 +189,7 @@ const Marketplace = () => {
             isPreMasked={!marketplace}
             src={marketplace ? getBuildingIcon(8, 'w1000') : marketplaceHeader} />
       }
-      title={`${asteroid.customName || asteroid.baseName || '...'} > ${lotId === 'all' ? 'Markets' : (marketplace.name || 'Marketplace')}`}
+      title={`${formatters.asteroidName(asteroid, '...')} > ${lotId === 'all' ? 'Markets' : (marketplace.name || 'Marketplace')}`}
       underlineHeader
       contentProps={showFooter ? { style: { marginBottom: 0 } } : {}}
       maxWidth="1600px"

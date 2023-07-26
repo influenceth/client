@@ -3,13 +3,14 @@ import { useQuery } from 'react-query';
 import { useThrottle } from '@react-hook/throttle';
 import esb from 'elastic-builder';
 import api from '~/lib/api';
+import formatters from '~/lib/formatters';
 
 let sort;
 
 const configByType = {
   asteroids: {
     formatFootnote: (a) => `ID #${(a.i || '').toLocaleString()}`,
-    formatLabel: (a) => a?.customName || a?.baseName || '',
+    formatLabel: (a) => formatters.asteroidName(a),
     valueKey: 'i'
   },
 }

@@ -13,6 +13,7 @@ import TextInput from '~/components/TextInput';
 import { AsteroidImage, formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 import { formatPrecision, formatPrice } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
+import formatters from '~/lib/formatters';
 
 const Subheader = styled.div``;
 const Header = styled.div`
@@ -303,7 +304,7 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
             <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'row' }}>
               <AsteroidImage asteroid={asteroid} size="125px" />
               <div style={{ flex: 1, paddingLeft: 25 }}>
-                <h1><MarketsIcon /> {asteroid?.customName || asteroid?.baseName || 'Asteroid'} Markets</h1>
+                <h1><MarketsIcon /> {formatters.asteroidName(asteroid)} Markets</h1>
                 <Subheader>
                   <span><b>127</b> Marketplaces</span>
                   <span><b>{listings.length || 0}</b> Product{listings.length === 1 ? '' : 's'} Listed</span>

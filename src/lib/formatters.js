@@ -31,6 +31,11 @@ const formatters = {
     return desc;
   },
 
+  asteroidName: (a, fallbackText) => {
+    if (!a) return fallbackText || 'Asteroid';
+    return a.customName || a.baseName || `Asteroid #${a.i.toLocaleString()}`;
+  },
+
   asteroidPrice: (r, sale) => {
     if (!sale?.basePrice || !sale?.saleModifier) return '?';
     const base = Number(ethersUtils.formatEther(String(sale.basePrice)));

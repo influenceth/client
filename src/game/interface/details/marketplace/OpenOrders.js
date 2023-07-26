@@ -9,6 +9,7 @@ import { CompositionIcon, MarketplaceBuildingIcon, MarketsIcon, ProductIcon, Swa
 import { formatPrice } from '~/lib/utils';
 import theme from '~/theme';
 import { LocationLink } from '../listViews/components';
+import formatters from '~/lib/formatters';
 
 const Subheader = styled.div``;
 const Header = styled.div`
@@ -211,7 +212,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
         <div>
           {/* TODO: marketplace icon */}
           {marketplace && <h1><MarketplaceBuildingIcon /> {marketplace?.name || 'Marketplace'}</h1>}
-          {!marketplace && <h1><MarketsIcon /> {asteroid?.customName || asteroid?.baseName}</h1>}
+          {!marketplace && <h1><MarketsIcon /> {formatters.asteroidName(asteroid)}</h1>}
           <Subheader>
             <span><b>{orders.length || 0}</b> Open Order{orders.length === 1 ? '' : 's'} {marketplace ? 'at this Marketplace' : 'on this Asteroid'}</span>
           </Subheader>

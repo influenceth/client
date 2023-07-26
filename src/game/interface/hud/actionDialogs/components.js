@@ -52,6 +52,7 @@ import constants from '~/lib/constants';
 import { getBuildingIcon, getShipIcon } from '~/lib/assetUtils';
 import theme, { hexToRGB } from '~/theme';
 import { theming } from '../ActionDialog';
+import formatters from '~/lib/formatters';
 
 const SECTION_WIDTH = 780;
 
@@ -2047,7 +2048,7 @@ const ActionDialogActionBar = ({ location, onClose, overrideColor, stage }) => (
       </BarLoadingContainer>
     )}
     <ActionLocation {...theming[stage]} overrideColor={overrideColor}>
-      <b>{location?.asteroid?.customName || location?.asteroid?.baseName}</b>
+      <b>{formatters.asteroidName(location?.asteroid)}</b>
       <span>{location?.lot?.i ? `> LOT ${location.lot.i.toLocaleString()}` : ''}</span>
       <span>{location?.ship && !location?.lot ? `> ${formatShipStatus(location.ship)}` : ''}</span>
     </ActionLocation>

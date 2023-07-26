@@ -14,6 +14,7 @@ import { HudMenuCollapsibleSection, majorBorderColor } from './components';
 import { useShipLink } from '~/components/ShipLink';
 import { ResourceImage } from '~/components/ResourceThumbnail';
 import { getShipIcon } from '~/lib/assetUtils';
+import formatters from '~/lib/formatters';
 
 const thumbnailDimension = 75;
 
@@ -162,7 +163,7 @@ const AllAssets = ({ onClose }) => {
                 <ClipCorner dimension={10} color={majorBorderColor} />
               </Thumbnail>
               <Info>
-                <label>{asteroid.customName || asteroid.baseName}</label>
+                <label>{formatters.asteroidName(asteroid)}</label>
                 <div style={{ flex: 1 }}></div>
               </Info>
               {asteroidId === asteroid.i && <ClipCorner dimension={10} color={theme.colors.main} />}

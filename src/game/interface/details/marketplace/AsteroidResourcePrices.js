@@ -15,6 +15,7 @@ import { formatPrice } from '~/lib/utils';
 import theme from '~/theme';
 import { LocationLink } from '../listViews/components';
 import { getBuildingIcon } from '~/lib/assetUtils';
+import formatters from '~/lib/formatters';
 
 
 const Header = styled.div`
@@ -314,7 +315,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
             </Subheader>
             <MarketSummary>
               <div>
-                Listed at <b>{resourceMarketplaces.length} Marketplaces</b> on <b>{asteroid?.customName || asteroid?.baseName || 'Asteroid'}</b>
+                Listed at <b>{resourceMarketplaces.length} Marketplaces</b> on <b>{formatters.asteroidName(asteroid)}</b>
               </div>
               <div>
                 Total Supply: <span style={{ color: theme.colors.green }}>{formatResourceAmount(totalSupply, resource.i)}</span>

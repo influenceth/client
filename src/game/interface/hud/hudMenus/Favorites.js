@@ -11,6 +11,7 @@ import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useAuth from '~/hooks/useAuth';
 import theme from '~/theme';
 import { HudMenuCollapsibleSection, Scrollable } from './components';
+import formatters from '~/lib/formatters';
 
 const thumbnailDimension = 75;
 
@@ -106,7 +107,7 @@ const Favorites = ({ onClose }) => {
               <AsteroidRendering asteroid={asteroid} />
             </Thumbnail>
           )}
-          <label>{asteroid.customName || asteroid.baseName}</label>
+          <label>{formatters.asteroidName(asteroid)}</label>
           <span>
             {Asteroid.getSize(asteroid.r)}{' '}
             <b>{Asteroid.getSpectralType(asteroid.spectralType)?.name}{'-type'}</b>

@@ -10,6 +10,7 @@ import { CloseIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useStore from '~/hooks/useStore';
 import Autocomplete from '~/components/Autocomplete';
+import formatters from '~/lib/formatters';
 
 const Wrapper = styled.div`
   position: relative;
@@ -75,7 +76,7 @@ const RouteSelection = () => {
       <Wrapper>
         <Row>
           <OriginIcon />
-          <label>{origin?.customName || origin?.baseName || `Asteroid #${originId || ''.toLocaleString()}`}</label>
+          <label>{formatters.asteroidName(origin)}</label>
           {origin && destination && (
             <IconButton
               borderless

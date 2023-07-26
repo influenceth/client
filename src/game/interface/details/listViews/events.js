@@ -8,6 +8,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import { LocationLink } from './components';
 import OnClickLink from '~/components/OnClickLink';
 import theme from '~/theme';
+import formatters from '~/lib/formatters';
 
 const Content = styled.div`
   & a,
@@ -69,7 +70,7 @@ const useColumns = () => {
             <>
               <LocationLabel>
                 <BuildingLabel>{lot ? `${building} > ` : ``}</BuildingLabel>
-                {asteroid?.customName || asteroid?.baseName || `Asteroid #${(asteroid?.i || 0).toLocaleString()}`}
+                {formatters.asteroidName(asteroid)}
               </LocationLabel>
               <LocationLink asteroidId={asteroid.i} lotId={lot?.i} />
             </>

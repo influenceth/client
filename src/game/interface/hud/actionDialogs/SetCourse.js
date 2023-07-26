@@ -56,6 +56,7 @@ import theme from '~/theme';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import useAsteroid from '~/hooks/useAsteroid';
 import ClockContext from '~/contexts/ClockContext';
+import formatters from '~/lib/formatters';
 
 const Banner = styled.div`
   align-items: center;
@@ -322,9 +323,9 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
           <>
             <Section>
               <Banner>
-                <label>{origin.customName || origin.baseName || `Asteroid #${origin.i}`}</label>
+                <label>{formatters.asteroidName(origin)}</label>
                 <span>to</span>
-                <label>{destination.customName || destination.baseName || `Asteroid #${destination.i}`}</label>
+                <label>{formatters.asteroidName(destination)}</label>
               </Banner>
               <CourseRow>
                 <AsteroidImage asteroid={origin} />

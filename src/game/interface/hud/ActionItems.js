@@ -17,6 +17,7 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { formatActionItem, itemColors, statuses } from '~/lib/actionItem';
 import { hexToRGB } from '~/theme';
+import formatters from '~/lib/formatters';
 
 const ICON_WIDTH = 34;
 const ITEM_WIDTH = 400;
@@ -367,7 +368,7 @@ const ActionItem = ({ data }) => {
         {type !== 'failed' && asteroid && (
           <Location>
             {item.locationDetail && <><b>{item.locationDetail}</b></>}
-            <span>{asteroid.customName || asteroid.baseName}</span>
+            <span>{formatters.asteroidName(asteroid)}</span>
           </Location>
         )}
       </Details>

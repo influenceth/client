@@ -116,7 +116,7 @@ const AsteroidInfo = ({ onClose }) => {
     <>
       <Scrollable hasTray>
         <TitleArea>
-          <Title>{asteroid.customName || asteroid.baseName}</Title>
+          <Title>{formatters.asteroidName(asteroid)}</Title>
           <InfoRow style={{ fontSize: 16 }}>
             <span style={{ flex: 1 }}>
               {Asteroid.getSize(asteroid.r)}{' '}

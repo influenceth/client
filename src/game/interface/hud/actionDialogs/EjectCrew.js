@@ -65,6 +65,7 @@ import useCrewMember from '~/hooks/useCrewMember';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
 import useCrewMembers from '~/hooks/useCrewMembers';
+import formatters from '~/lib/formatters';
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
 //  - however, could you launch two ships at once? probably not because crew needs to be on ship?
@@ -164,7 +165,7 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
               !(ship && ship.status === 'IN_ORBIT') && <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
             }  
             image={<AsteroidImage asteroid={asteroid} />}
-            label={asteroid?.customName || asteroid?.baseName || `Asteroid #${asteroid.i}`}
+            label={formatters.asteroidName(asteroid)}
             sublabel="Orbit"
           />
         </FlexSection>

@@ -20,6 +20,7 @@ import useWatchlist from '~/hooks/useWatchlist';
 import useWatchAsteroid from '~/hooks/useWatchAsteroid';
 import useUnWatchAsteroid from '~/hooks/useUnWatchAsteroid';
 import { LocationLink } from './components';
+import formatters from '~/lib/formatters';
 
 const FavoriteToggle = styled.span`
   cursor: ${p => p.theme.cursors.active};
@@ -97,7 +98,7 @@ const useColumns = () => {
         selector: row => (
           <>
             <LocationLink asteroidId={row.i} />
-            <span>{row.customName || row.baseName}</span>
+            <span>{formatters.asteroidName(row)}</span>
           </>
         ),
         unhideable: true

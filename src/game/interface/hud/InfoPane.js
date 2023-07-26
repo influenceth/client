@@ -25,6 +25,7 @@ import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
 import RouteSelection from './actionForms/RouteSelection';
 import { getBuildingIcon } from '~/lib/assetUtils';
+import formatters from '~/lib/formatters';
 
 
 const opacityAnimation = keyframes`
@@ -364,7 +365,7 @@ const InfoPane = () => {
     };
     if (zoomStatus === 'out' && asteroidId) {
       if (asteroid) {
-        pane.title = asteroid.customName || asteroid.baseName;
+        pane.title = formatters.asteroidName(asteroid);
         pane.titleLink = `/asteroids/${asteroid.i}`;
         pane.subtitle = <>{Asteroid.getSize(asteroid.radius)} <b>{Asteroid.getSpectralType(asteroid.spectralType)?.name}-type</b></>;
         pane.hoverSubtitle = 'Zoom to Asteroid';
@@ -414,7 +415,7 @@ const InfoPane = () => {
     } else if (zoomStatus === 'in') {
       if (zoomScene?.type === 'LOT') {
         pane.title = Building.TYPES[lot?.building?.capableType || 0]?.name;
-        pane.subtitle = <>{asteroid?.customName || asteroid?.baseName} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
+        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
         pane.captainCard = lot?.occupier;
 
       } else if (lotId) {
@@ -423,7 +424,7 @@ const InfoPane = () => {
             ? getBuildingIcon(lot.building?.capableType, 'w400', isAtRisk || !['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus))
             : getBuildingIcon(0, 'w400');
           pane.title = Building.TYPES[lot.building?.capableType || 0]?.name;
-          pane.subtitle = <>{asteroid?.customName || asteroid?.baseName} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
+          pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
           pane.captainCard = lot.occupier;
           pane.hoverSubtitle = 'Zoom to Lot';
           pane.thumbnail = (
@@ -440,7 +441,7 @@ const InfoPane = () => {
         }
 
       } else if (asteroid) {
-        pane.title = asteroid.customName || asteroid.baseName;
+        pane.title = formatters.asteroidName(asteroid);
         pane.titleLink = `/asteroids/${asteroid.i}`;
         pane.subtitle = (
           <>

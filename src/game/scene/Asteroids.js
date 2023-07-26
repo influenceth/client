@@ -22,6 +22,7 @@ import highlighters from './asteroids/highlighters';
 import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
 import { formatBeltDistance } from '../interface/hud/actionDialogs/components';
+import formatters from '~/lib/formatters';
 
 const blueMarkerColor = new Color('#20bde5').convertSRGBToLinear();
 const redMarkerColor = new Color('#fd7056').convertSRGBToLinear();
@@ -495,7 +496,7 @@ const Asteroids = () => {
                         </span>
                       )}
                       {name && (
-                        <span>{a.customName || a.baseName || `#${(a.i || 0).toLocaleString()}`}</span>
+                        <span>{formatters.asteroidName(a)}</span>
                       )}
                     </div>
                   </AsteroidTooltip>

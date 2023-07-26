@@ -4,6 +4,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useStore from '~/hooks/useStore';
 import OnClickLink from './OnClickLink';
+import formatters from '~/lib/formatters';
 
 export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
@@ -74,11 +75,7 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
 
 const AsteroidName = ({ asteroidId }) => {
   const { data: asteroid } = useAsteroid(asteroidId);
-  return (
-    <>
-      {asteroid?.customName || asteroid?.baseName || `Asteroid #${(asteroidId || 0).toLocaleString()}`}
-    </>
-  );
+  return <>{formatters.asteroidName(asteroid)}</>;
 };
 
 export const LotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
@@ -89,7 +86,7 @@ export const LotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
     if (owned) {
       const match = owned.find(a => a.i === Number(asteroidId));
       if (match) {
-        return match.customName || match.baseName;
+        return formatters.asteroidName(match);
       }
     }
     return null;

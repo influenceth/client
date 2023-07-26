@@ -52,6 +52,7 @@ import useStore from '~/hooks/useStore';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
 import theme from '~/theme';
+import formatters from '~/lib/formatters';
 
 const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -234,7 +235,7 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
               <FlexSectionInputBlock
                 title="Origin"
                 image={<AsteroidImage asteroid={asteroid} />}
-                label={asteroid?.customName || asteroid?.baseName || `Asteroid #${asteroid.i}`}
+                label={formatters.asteroidName(asteroid)}
                 sublabel="Orbit"
               />
 

@@ -12,6 +12,7 @@ import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import AsteroidInformation from './asteroidDetails/Information';
 import AsteroidResources from './asteroidDetails/Resources';
+import formatters from '~/lib/formatters';
 
 const breakpoint = 1375;
 const tabContainerCss = css`
@@ -57,7 +58,7 @@ const AsteroidDetails = () => {
 
   return (
     <Details
-      title={`Details - ${asteroid ? (asteroid.customName || asteroid.baseName) : '...'}`}
+      title={`Details - ${formatters.asteroidName(asteroid, '...')}`}
       width="max">
       {asteroid && (
         <TabContainer

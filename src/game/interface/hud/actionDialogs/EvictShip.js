@@ -32,6 +32,7 @@ import ResourceThumbnail from '~/components/ResourceThumbnail';
 import actionStages from '~/lib/actionStages';
 import theme from '~/theme';
 import CrewCardFramed from '~/components/CrewCardFramed';
+import formatters from '~/lib/formatters';
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
 //  - however, could you launch two ships at once? probably not because crew needs to be on ship?
@@ -156,7 +157,7 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
               <FlexSectionInputBlock
                 title="Destination"
                 image={<AsteroidImage asteroid={asteroid} />}
-                label={asteroid?.customName || asteroid?.baseName || `Asteroid #${asteroid.i}`}
+                label={formatters.asteroidName(asteroid)}
                 sublabel="Orbit"
               />
             </FlexSection>
