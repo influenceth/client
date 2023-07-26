@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Lot } from '@influenceth/sdk';
+import { Building } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -134,7 +134,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
               barColor: capableType ? theme.colors.lightOrange : '#bbbbbb',
               color: capableType ? theme.colors.lightOrange : undefined,
               left: <><WarningOutlineIcon /> Site Timer</>,
-              right: formatTimer(Lot.GRACE_PERIOD)
+              right: formatTimer(Building.GRACE_PERIOD)
             }}
             stage={stage}
             title="Lot Reservation"

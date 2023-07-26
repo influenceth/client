@@ -3,7 +3,7 @@ import { persist, subscribeWithSelector } from 'zustand/middleware';
 import produce from 'immer';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
-import { Capable } from '@influenceth/sdk';
+import { Building } from '@influenceth/sdk';
 
 import constants from '~/lib/constants';
 
@@ -15,7 +15,7 @@ const {
   MAX_FOV
 } = constants;
 
-const buildingIds = Object.keys(Capable.TYPES).filter((k) => k > 0).map((k) => k.toString());
+const buildingIds = Object.values(Building.IDS).filter((k) => k > 0).map((k) => k.toString());
 
 const assetSearchDefaults = {
   actionitems: { filters: {}, sort: ['time', 'asc'] },

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Capable, Inventory } from '@influenceth/sdk';
+import { Building, Inventory } from '@influenceth/sdk';
 import { keyify } from '~/lib/utils';
 
 const getSlug = (asset) => {
@@ -32,31 +32,29 @@ const getModelUrl = (asset, type) => {
 }
 
 export const useBuildingAssets = () => {
-  return useMemo(() => Object.keys(Capable.TYPES)
-  .filter((i) => Capable.TYPES[i].category === 'Building')
-  .map((i) => {
-    const asset = {
-      ...Capable.TYPES[i],
-      i: Number(i),
-    };
+  return useMemo(() => 
+    Object.values(Building.TYPES).map((b) => {
+      const asset = { ...b };
 
-    asset.iconUrl = getIconUrl(asset, 'buildings');
-    asset.iconUrls = {
-      w150: getIconUrl(asset, 'buildings', { w: 150 }),
-      w400: getIconUrl(asset, 'buildings', { w: 400 }),
-      w1000: getIconUrl(asset, 'buildings', { w: 1000 }),
-    };
+      asset.iconUrl = getIconUrl(asset, 'buildings');
+      asset.iconUrls = {
+        w150: getIconUrl(asset, 'buildings', { w: 150 }),
+        w400: getIconUrl(asset, 'buildings', { w: 400 }),
+        w1000: getIconUrl(asset, 'buildings', { w: 1000 }),
+      };
 
-    asset.siteIconUrls = {
-      w150: getIconUrl(asset, 'buildings', { w: 150, append: '_Site' }),
-      w400: getIconUrl(asset, 'buildings', { w: 400, append: '_Site' }),
-      w1000: getIconUrl(asset, 'buildings', { w: 1000, append: '_Site' }),
-    };
+      asset.siteIconUrls = {
+        w150: getIconUrl(asset, 'buildings', { w: 150, append: '_Site' }),
+        w400: getIconUrl(asset, 'buildings', { w: 400, append: '_Site' }),
+        w1000: getIconUrl(asset, 'buildings', { w: 1000, append: '_Site' }),
+      };
 
-    asset.modelUrl = getModelUrl(asset, 'buildings');
+      asset.modelUrl = getModelUrl(asset, 'buildings');
 
-    return asset;
-  }), []);
+      return asset;
+    }),
+    []
+  );
 };
 
 export const useResourceAssets = () => {

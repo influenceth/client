@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Capable, Construction, Inventory } from '@influenceth/sdk';
+import { Building, Inventory } from '@influenceth/sdk';
 
 import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useStore from '~/hooks/useStore';
@@ -8,7 +8,6 @@ import { HudMenuCollapsibleSection, majorBorderColor, Rule } from './components'
 import ClipCorner from '~/components/ClipCorner';
 import { SurfaceTransferIcon } from '~/components/Icons';
 import useLot from '~/hooks/useLot';
-import { buildingDescriptions } from '~/lib/utils';
 import ResourceRequirement from '~/components/ResourceRequirement';
 import { getBuildingRequirements } from '../actionDialogs/components';
 
@@ -194,12 +193,14 @@ const LotInfo = () => {
 
   const [selectedBuilding, setSelectedBuilding] = useState();
 
+  const mainInventoryType = useMemo(() => ((lot?.building?.inventories || [])[1] || {}).inventoryType, [lot]);
+
   if (!lot) return null;
   if (lot && !lot.building) {
     return (
       <Wrapper>
-        <HudMenuCollapsibleSection titleText="Empty Lot">
-          <Description>{buildingDescriptions[0]}</Description>
+        <HudMenuCollapsibleSection titleText={Building.TYPES[0].name}>
+          <Description>{Building.TYPES[0].description}</Description>
           <ExtraDescription>
             <label>Building Sites</label>
             <div>Sites are active for 24 hours to allow building materials to be transferred.</div>
@@ -211,7 +212,7 @@ const LotInfo = () => {
             <label>Name</label>
             <span>Complexity</span>
           </BuildingRow>
-          {Object.values(Capable.TYPES).map(({ name }, capableType) => {
+          {Object.values(Building.TYPES).map(({ name }, capableType) => {
             if (capableType === 0) return null;
             return (
               <BuildingRow
@@ -250,8 +251,22 @@ const LotInfo = () => {
       <HudMenuCollapsibleSection titleText={lot.building.__t}>
         {lot && !isLoading && (
           <>
-            <Description>{buildingDescriptions[lot.building?.capableType]}</Description>
-            {lot.building?.capableType === 8 && (
+            <Description>{Building.TYPES[lot.building?.capableType].description}</Description>
+            {lot.building?.capableType === Building.IDS.WAREHOUSE && (
+              <>
+                <Rule margin="15px" />
+                <DetailRow>
+                  <label>Maximum Storage Volume</label>
+                  <div>{Inventory.TYPES[mainInventoryType].volume.toLocaleString()} m<sup>3</sup></div>
+                </DetailRow>
+                <DetailRow>
+                  <label>Maximum Storage Mass</label>
+                  <div>{Inventory.TYPES[mainInventoryType].mass.toLocaleString()} t</div>
+                </DetailRow>
+              </>
+            )}
+
+            {lot.building?.capableType === Building.IDS.MARKETPLACE && (
               <>
                 {/* TODO: real stats */}
                 <Rule margin="15px" />
@@ -273,30 +288,17 @@ const LotInfo = () => {
                 </DetailRow>
               </>
             )}
-            {!!Inventory.CAPACITIES[lot.building?.capableType][1] && (
-              <>
-                <Rule margin="15px" />
-                <DetailRow>
-                  <label>Maximum Storage Volume</label>
-                  <div>{Inventory.CAPACITIES[lot.building.capableType][1].volume.toLocaleString()} m<sup>3</sup></div>
-                </DetailRow>
-                <DetailRow>
-                  <label>Maximum Storage Mass</label>
-                  <div>{Inventory.CAPACITIES[lot.building.capableType][1].mass.toLocaleString()} t</div>
-                </DetailRow>
-              </>
-            )}
           </>
         )}
       </HudMenuCollapsibleSection>
 
       <HudMenuCollapsibleSection
         titleText="Construction"
-        collapsed={lot.building.construction.status === Construction.STATUS_OPERATIONAL}
+        collapsed={lot.building.construction.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL}
         borderless>
         <ConstructionPlan
           capableType={lot.building.capableType}
-          planningLot={lot.building.construction.status === Construction.STATUS_PLANNED ? lot : null} />
+          planningLot={lot.building.construction.status === Building.CONSTRUCTION_STATUSES.PLANNED ? lot : null} />
       </HudMenuCollapsibleSection>
     </Wrapper>
   );

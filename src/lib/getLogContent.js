@@ -1,6 +1,6 @@
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
-import { Capable, Inventory } from '@influenceth/sdk';
+import { Building, Product } from '@influenceth/sdk';
 
 import AddressLink from '~/components/AddressLink';
 import AsteroidLink from '~/components/AsteroidLink';
@@ -156,7 +156,7 @@ const entries = {
     icon: <PlanBuildingIcon />,
     content: (
       <>
-        <span>{Capable.TYPES[e.returnValues.capableType]?.name} site plan completed on </span>
+        <span>{Building.TYPES[e.returnValues.capableType]?.title} site plan completed on </span>
         <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} />
       </>
     ),
@@ -222,7 +222,7 @@ const entries = {
   //   icon: <NewCoreSampleIcon />,
   //   content: (
   //     <>
-  //       <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample started at </span>
+  //       <span>{Product.TYPES[e.returnValues.resourceId]?.name} core sample started at </span>
   //       <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
   //     </>
   //   ),
@@ -235,7 +235,7 @@ const entries = {
       icon: <NewCoreSampleIcon />,
       content: (
         <>
-          <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample completed at </span>
+          <span>{Product.TYPES[e.returnValues.resourceId]?.name} core sample completed at </span>
           <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
         </>
       ),
@@ -248,7 +248,7 @@ const entries = {
       icon: <ExtractionIcon />,
       content: (
         <>
-          <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} extraction started at </span>
+          <span>{Product.TYPES[e.returnValues.resourceId]?.name} extraction started at </span>
           <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
         </>
       ),

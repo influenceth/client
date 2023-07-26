@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { Crewmate } from '@influenceth/sdk';
+import { Crewmate, Time } from '@influenceth/sdk';
 import { FaBookOpen as BioIcon } from 'react-icons/fa';
 import { RiBarChart2Fill as StatsIcon } from 'react-icons/ri';
 
@@ -30,7 +30,6 @@ import useCrewMember from '~/hooks/useCrewMember';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import useNameCrew from '~/hooks/useNameCrew';
 import useStore from '~/hooks/useStore';
-import { unixTimeToGameTime } from '~/lib/utils';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -387,7 +386,7 @@ const CrewMemberDetails = () => {
 
   const startDate = useMemo(() => {
     if (crew?.events?.length > 0) {
-      return unixTimeToGameTime(crew.events[0].timestamp);
+      return Time.unixTimeToGameTime(crew.events[0].timestamp);
     }
     return null;
   }, [crew?.events]);

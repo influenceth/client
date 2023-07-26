@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { AxesHelper, CameraHelper, Color, DirectionalLight, DirectionalLightHelper, Vector3 } from 'three';
 import gsap from 'gsap';
-import { AdalianOrbit, toSpectralType, Asteroid as AsteroidLib, Inventory } from '@influenceth/sdk';
+import { AdalianOrbit, Asteroid, Product } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -114,7 +114,7 @@ const EMISSIVE_INTENSITY = {
   Volatile: 1.25
 };
 
-const Asteroid = () => {
+const AsteroidComponent = () => {
   const { controls } = useThree();
   const origin = useStore(s => s.asteroids.origin);
   const { textureSize } = useStore(s => s.getTerrainQuality());
@@ -588,13 +588,13 @@ const Asteroid = () => {
 
     if (!geometry.current || !config?.radiusNominal || !asteroidData?.resources) return;
     if (resourceMapActive && resourceMapId && terrainInitialized) {
-      const categoryKey = keyify(Inventory.RESOURCES[resourceMapId]?.category);
+      const categoryKey = keyify(Product.TYPES[resourceMapId]?.category);
       const color = new Color(theme.colors.resources[categoryKey]);
       color.convertSRGBToLinear();
 
       // Collect relevant settings for generating procedural resource map
       const { asteroidId, resourceSeed } = asteroidData;
-      const settings = AsteroidLib.getAbundanceMapSettings(
+      const settings = Asteroid.getAbundanceMapSettings(
         asteroidId,
         resourceSeed,
         resourceMapId,
@@ -698,7 +698,7 @@ const Asteroid = () => {
       const currentCameraHeight = controls.object.position.length();
       const targetAltitude = (cameraAltitude && cameraAltitude < 5000) ? cameraAltitude : 5000;
 
-      const lotPosition = new Vector3(...AsteroidLib.getLotPosition(selectedLot.asteroidId, selectedLot.lotId, lotTally));
+      const lotPosition = new Vector3(...Asteroid.getLotPosition(selectedLot.asteroidId, selectedLot.lotId, lotTally));
       lotPosition.setLength(config.radius).multiply(config.stretch); // best guess of lot position
       lotPosition.setLength(lotPosition.length() + targetAltitude); // best guess of final camera position
 
@@ -1014,7 +1014,7 @@ const Asteroid = () => {
           isScanned={asteroidData?.scanned}
           radius={config.radius}
           scaleHelper={SCALE_HELPER}
-          spectralType={toSpectralType(config.spectralType)}
+          spectralType={Asteroid.getSpectralType(config.spectralType)?.name}
         />
       )}
 
@@ -1047,4 +1047,4 @@ const Asteroid = () => {
   );
 }
 
-export default Asteroid;
+export default AsteroidComponent;

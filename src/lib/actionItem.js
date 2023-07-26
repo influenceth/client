@@ -1,4 +1,4 @@
-import { Capable, Inventory } from '@influenceth/sdk';
+import { Building, Product } from '@influenceth/sdk';
 import moment from 'moment';
 
 import {
@@ -50,7 +50,7 @@ const formatAsItem = (item) => {
       formatted.asteroidId = item.event.returnValues?.asteroidId;
       formatted.lotId = item.event.returnValues?.lotId;
       formatted.resourceId = item.event.returnValues?.resourceId;
-      formatted.locationDetail = Inventory.RESOURCES[item.event.returnValues?.resourceId].name;
+      formatted.locationDetail = Product.TYPES[item.event.returnValues?.resourceId].name;
       formatted.onClick = ({ openDialog }) => {
         openDialog(isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
       };
@@ -58,7 +58,7 @@ const formatAsItem = (item) => {
 
     case 'Dispatcher_ConstructionStart':
       formatted.icon = <ConstructIcon />;
-      formatted.label = `${Capable.TYPES[item.assets.building.type]?.name || 'Building'} Construction`;
+      formatted.label = `${Building.TYPES[item.assets.building.type]?.name || 'Building'} Construction`;
       formatted.asteroidId = item.assets.asteroid.i;
       formatted.lotId = item.assets.lot.i;
       formatted.onClick = ({ openDialog }) => {
@@ -68,7 +68,7 @@ const formatAsItem = (item) => {
 
     case 'Dispatcher_ExtractionStart':
       formatted.icon = <ExtractionIcon />;
-      formatted.label = `${Inventory.RESOURCES[item.event.returnValues?.resourceId]?.name || 'Resource'} Extraction`;
+      formatted.label = `${Product.TYPES[item.event.returnValues?.resourceId]?.name || 'Resource'} Extraction`;
       formatted.asteroidId = item.event.returnValues?.asteroidId;
       formatted.lotId = item.event.returnValues?.lotId;
       formatted.resourceId = item.event.returnValues?.resourceId;
@@ -237,7 +237,7 @@ const formatAsTx = (item) => {
 
     case 'PLAN_CONSTRUCTION':
       formatted.icon = <PlanBuildingIcon />;
-      formatted.label = `Plan ${Capable.TYPES[item.vars.capableType]?.name || 'Building'} Site`;
+      formatted.label = `Plan ${Building.TYPES[item.vars.capableType]?.name || 'Building'} Site`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.lotId = item.vars.lotId;
       formatted.onClick = ({ openDialog }) => {
@@ -285,7 +285,7 @@ const formatAsTx = (item) => {
 
     case 'START_EXTRACTION':
       formatted.icon = <ExtractionIcon />;
-      formatted.label = `${Inventory.RESOURCES[item.vars.resourceId]?.name || 'Resource'} Extraction`;
+      formatted.label = `${Product.TYPES[item.vars.resourceId]?.name || 'Resource'} Extraction`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.lotId = item.vars.lotId;
       formatted.resourceId = item.vars.resourceId;

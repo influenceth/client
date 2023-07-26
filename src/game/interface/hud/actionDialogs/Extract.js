@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CoreSample, Asteroid, Extraction, Inventory } from '@influenceth/sdk';
+import { Asteroid, Deposit, Extractor, Inventory } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
@@ -82,7 +82,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const usableSamples = useMemo(() => (lot?.coreSamples || []).filter((c) => (
     c.owner === crew?.i
     && c.remainingYield > 0
-    && c.status >= CoreSample.STATUS_FINISHED
+    && c.status >= Deposit.STATUSES.SAMPLED
   )), [lot?.coreSample, crew?.i]);
 
   const selectCoreSample = useCallback((sample) => {
@@ -136,7 +136,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
   const extractionTime = useMemo(() => {
     if (!selectedCoreSample) return 0;
-    return Extraction.getExtractionTime(
+    return Extractor.getExtractionTime(
       amount,
       selectedCoreSample.remainingYield || 0,
       extractionBonus.totalBonus || 1
@@ -225,12 +225,12 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   ]), [amount, crewTravelBonus, crewTravelTime, extractionBonus, extractionTime, resource]);
 
   const onStartExtraction = useCallback(() => {
-    const destInvId = 1;
-    let destCapacityRemaining = { ...Inventory.CAPACITIES[destinationLot?.building?.capableType][destInvId] };
-    if (destinationLot?.building?.inventories && destinationLot?.building?.inventories[destInvId]) {
+    const inventory = (destinationLot?.building?.inventories || []).find((i) => !i.locked);
+    let destCapacityRemaining = { ...Inventory.TYPES[inventory.inventoryType] };
+    if (inventory) {
       // Capacities are in tonnes and cubic meters, Inventories are in grams and mLs
-      destCapacityRemaining.mass -= 1e-6 * ((destinationLot.building.inventories[destInvId].mass || 0) + (destinationLot.building.inventories[destInvId].reservedMass || 0));
-      destCapacityRemaining.volume -= 1e-6 * ((destinationLot.building.inventories[destInvId].volume || 0) + (destinationLot.building.inventories[destInvId].reservedVolume || 0));
+      destCapacityRemaining.mass -= 1e-6 * ((inventory.mass || 0) + (inventory.reservedMass || 0));
+      destCapacityRemaining.volume -= 1e-6 * ((inventory.volume || 0) + (inventory.reservedVolume || 0));
     }
     const neededCapacity = {
       mass: amount * resource?.massPerUnit,

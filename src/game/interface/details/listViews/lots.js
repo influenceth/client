@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Capable, Construction } from '@influenceth/sdk';
+import { Building } from '@influenceth/sdk';
 
 import {
   MyAssetIcon,
@@ -83,7 +83,7 @@ const useColumns = () => {
         sortField: 'building.type',
         selector: row => {
           if (row.building?.type) {
-            return Capable.TYPES[row.building.type]?.name;
+            return Building.TYPES[row.building.type]?.name;
           }
           return null;
         }
@@ -94,7 +94,7 @@ const useColumns = () => {
         sortField: 'construction.status',
         selector: row => {
           if (row.construction?.status) {
-            return Construction.STATUSES[row.construction.status];
+            return Building.CONSTRUCTION_STATUSES[row.construction.status];
           }
           return null;
         }

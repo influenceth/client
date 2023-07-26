@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { CoreSample } from '@influenceth/sdk';
+import { Deposit } from '@influenceth/sdk';
 
 import { ExtractionIcon } from '~/components/Icons';
 import useExtractionManager from '~/hooks/useExtractionManager';
@@ -23,7 +23,7 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
   const usableSamples = useMemo(() => (lot?.coreSamples || []).filter((c) => (
     c.owner === crew?.i
     && c.remainingYield > 0
-    && c.status >= CoreSample.STATUS_FINISHED
+    && c.status >= Deposit.STATUSES.SAMPLED
   )), [lot?.coreSamples, crew?.i]);
   // add attention flag if any of those ^ are mine
   const myUsableSamples = useMemo(() => usableSamples.filter((c) => c.owner === crew?.i), [crew?.i, usableSamples]);

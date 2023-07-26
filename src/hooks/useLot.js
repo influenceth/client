@@ -1,5 +1,4 @@
 import { useQuery } from 'react-query';
-import { Capable } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 

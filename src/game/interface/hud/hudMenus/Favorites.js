@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { Address, toSize, toSpectralType } from '@influenceth/sdk';
+import { Address, Asteroid } from '@influenceth/sdk';
 
 import ClipCorner from '~/components/ClipCorner';
 import { MyAssetIcon } from '~/components/Icons';
@@ -108,8 +108,8 @@ const Favorites = ({ onClose }) => {
           )}
           <label>{asteroid.customName || asteroid.baseName}</label>
           <span>
-            {toSize(asteroid.r)}{' '}
-            <b>{toSpectralType(asteroid.spectralType)}{'-type'}</b>
+            {Asteroid.getSize(asteroid.r)}{' '}
+            <b>{Asteroid.getSpectralType(asteroid.spectralType)?.name}{'-type'}</b>
           </span>
           {asteroidId === asteroid.i && <ClipCorner dimension={10} color={theme.colors.main} />}
         </SelectableRow>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Address, Asteroid, CoreSample, Inventory } from '@influenceth/sdk';
+import { Asteroid, Deposit } from '@influenceth/sdk';
 
 import useActionButtons from '~/hooks/useActionButtons';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -203,7 +203,7 @@ const LotResources = () => {
         params.overrideResourceId = Number(selectedResource?.i);
       } else if (selectedSample) {
         params.improveSample = { ...selectedSample };
-        params._disabled = !(selectedSample?.status === CoreSample.STATUS_FINISHED && selectedSample?.initialYield === selectedSample?.remainingYield);
+        params._disabled = !(selectedSample?.status === Deposit.STATUSES.SAMPLED && selectedSample?.initialYield === selectedSample?.remainingYield);
       }
     }
     return params;

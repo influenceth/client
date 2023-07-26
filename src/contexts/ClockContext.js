@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Time } from '@influenceth/sdk';
 
 import useGetTime from '~/hooks/useGetTime';
 import useInterval from '~/hooks/useInterval';
-import { orbitTimeToGameTime, orbitTimeToRealDate } from '~/lib/utils';
+
 
 const INTERVAL_LENGTH = 1000 / 30;  // denominator is FPS for clock check
 
@@ -24,12 +25,12 @@ export function ClockProvider({ children }) {
   const updateClock = useCallback(() => {
     const coarseTime = Math.floor(100 * getTime()) / 100;
     if (contextValue.coarseTime !== coarseTime) {
-      const gameTime = orbitTimeToGameTime(coarseTime);
+      const gameTime = Time.orbitTimeToGameTime(coarseTime);
       setTimeout(() => { // setter gets slow at fast intervals, so return setInterval function before setting
         setContextValue({
           coarseTime,
           displayTime: `${gameTime >= 0 ? '' : ''}${gameTime.toLocaleString(undefined, { minimumFractionDigits: DISPLAY_TIME_FRACTION_DIGITS })}`,
-          realWorldTime: orbitTimeToRealDate(coarseTime)
+          realWorldTime: Time.orbitTimeToRealDate(coarseTime)
         });
       }, 0);
     }

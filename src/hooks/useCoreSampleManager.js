@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Construction, CoreSample, Inventory } from '@influenceth/sdk';
+import { Deposit } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import actionStages from '~/lib/actionStages';
@@ -37,7 +37,7 @@ const useCoreSampleManager = (asteroidId, lotId) => {
 
     let status = 'READY';
     let stage = actionStages.NOT_STARTED;
-    const activeSample = lot?.coreSamples.find((c) => c.owner === crew?.i && c.status < CoreSample.STATUS_FINISHED);
+    const activeSample = lot?.coreSamples.find((c) => c.owner === crew?.i && c.status < Deposit.STATUSES.SAMPLED);
     if (activeSample) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_CoreSampleStartSampling'

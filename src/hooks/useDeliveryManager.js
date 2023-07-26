@@ -1,5 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Extraction } from '@influenceth/sdk';
+import { useCallback, useContext, useMemo } from 'react';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import actionStages from '~/lib/actionStages';

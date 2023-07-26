@@ -1,4 +1,4 @@
-import { AdalianOrbit, toSpectralType } from '@influenceth/sdk';
+import { AdalianOrbit, Asteroid } from '@influenceth/sdk';
 import { utils as ethersUtils } from 'ethers';
 
 const formatters = {
@@ -16,7 +16,7 @@ const formatters = {
   // Asteroid attribute formatters
   radius: (r) => r.toLocaleString() + ' m',
 
-  spectralType: (t) => toSpectralType(t) + '-type',
+  spectralType: (t) => Asteroid.getSpectralType(t)?.name + '-type',
 
   surfaceArea: (r) => {
     const area = (4 * Math.PI * Math.pow(r / 1000, 2)).toFixed(1);

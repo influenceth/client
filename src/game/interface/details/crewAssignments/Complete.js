@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { toCrewTrait } from '@influenceth/sdk';
+import { Crewmate } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import Button from '~/components/Button';
@@ -303,7 +303,7 @@ const CrewAssignmentComplete = () => {
   const rewards = useMemo(() => {
     return (storyState?.accruedTraits || []).map((id) => ({
       id,
-      ...toCrewTrait(id)
+      ...Crewmate.getTrait(id)
     }));
   }, [storyState?.accruedTraits]);
 

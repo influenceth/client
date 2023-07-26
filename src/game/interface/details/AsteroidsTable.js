@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { toRarity, toSpectralType } from '@influenceth/sdk';
+import { Asteroid } from '@influenceth/sdk';
 import { Link } from 'react-router-dom';
 import DataTable, { createTheme } from 'react-data-table-component';
 
@@ -50,12 +50,12 @@ const columns = [
   {
     name: 'Spectral Type',
     selector: row => row.spectralType,
-    format: row => `${toSpectralType(row.spectralType)}-type`
+    format: row => `${Asteroid.getSpectralType(row.spectralType)?.name || ''}-type`
   },
   {
     name: 'Rarity',
     selector: row => row.bonuses,
-    format: row => toRarity(row.bonuses)
+    format: row => Asteroid.getRarity(row.bonuses)
   },
   {
     name: 'Semi-major Axis',

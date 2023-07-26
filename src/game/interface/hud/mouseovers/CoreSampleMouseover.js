@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css } from 'styled-components';
-import { Capable, Construction, CoreSample, Extraction, Inventory } from '@influenceth/sdk';
+import { Building, Deposit, Extractor, Product } from '@influenceth/sdk';
 
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import ResourceColorIcon from '~/components/ResourceColorIcon';
@@ -85,7 +85,7 @@ const CoreSampleMouseover = ({ building, children, coreSamples }) => {
   });
 
   const isCoreSampling = useMemo(() => {
-    return !!(coreSamples || []).find((cs) => cs.status < CoreSample.STATUS_FINISHED);
+    return !!(coreSamples || []).find((cs) => cs.status < Deposit.STATUSES.SAMPLED);
   }, [coreSamples])
 
   // this is to accomodate initial transitions in the HUD so that we know the popper position is onscreen/valid
@@ -120,15 +120,15 @@ const CoreSampleMouseover = ({ building, children, coreSamples }) => {
                 return (
                   <tr key={`${cs.resourceId}_${cs.sampleId}`}>
                     <td>
-                      <ResourceColorIcon category={Inventory.RESOURCES[cs.resourceId].category} />
-                      {Inventory.RESOURCES[cs.resourceId].name} #{cs.sampleId.toLocaleString()}
+                      <ResourceColorIcon category={Product.TYPES[cs.resourceId].category} />
+                      {Product.TYPES[cs.resourceId].name} #{cs.sampleId.toLocaleString()}
                     </td>
                     <td>{cs.initialYield ? `${formatFixed(cs.initialYield * 1e-3, 1)} tonnes` : 'Not yet known'}</td>
                     <td>{(cs.initialYield ? (100 * cs.remainingYield / cs.initialYield) : 100).toFixed(1)}%</td>
                     <StatusCell status={
-                      cs.status === CoreSample.STATUS_USED
+                      cs.status === Deposit.STATUSES.USED
                         ? (cs.remainingYield > 0 ? 'Utilized' : 'Depleted')
-                        : (cs.status === CoreSample.STATUS_FINISHED ? 'Ready' : 'Sampling')
+                        : (cs.status === Deposit.STATUSES.SAMPLED ? 'Ready' : 'Sampling')
                     } />
                     <td>
                       <div style={{ display: 'flex'}}>
@@ -136,19 +136,18 @@ const CoreSampleMouseover = ({ building, children, coreSamples }) => {
                           data-for="coreSampleMouseover"
                           data-place="left"
                           data-tip="Improve Sample"
-                          disabled={isCoreSampling || cs.status !== CoreSample.STATUS_FINISHED}
+                          disabled={isCoreSampling || cs.status !== Deposit.STATUSES.SAMPLED}
                           onClick={onClickImprove(cs)}
                           style={{ padding: 4, marginRight: 4 }}>
                           <ImproveCoreSampleIcon />
                         </IconButtonRounded>
-                        {Capable.TYPES[building?.capableType]?.name === 'Extractor'
-                          && building?.construction?.status === Construction.STATUS_OPERATIONAL
+                        {building?.extractor && building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
                           && (
                             <IconButtonRounded
                               data-for="coreSampleMouseover"
                               data-place="left"
                               data-tip="Use for Extraction"
-                              disabled={building.extraction?.status === Extraction.STATUS_EXTRACTING || cs.status < CoreSample.STATUS_FINISHED || cs.remainingYield === 0}
+                              disabled={building.extraction?.status === Extractor.STATUSES.RUNNING || cs.status < Deposit.STATUSES.SAMPLED || cs.remainingYield === 0}
                               onClick={onClickExtract(cs)}
                               style={{ padding: 4 }}>
                               <ExtractionIcon />

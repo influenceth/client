@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { Address, toRarity, toSpectralType } from '@influenceth/sdk';
+import { Address, Asteroid } from '@influenceth/sdk';
 
 import OnClickLink from '~/components/OnClickLink';
 import MarketplaceLink from '~/components/MarketplaceLink';
@@ -140,14 +140,14 @@ const useColumns = () => {
         icon: <ScanAsteroidIcon />,
         label: 'Spectral Type',
         sortField: 'spectralType',
-        selector: row => `${toSpectralType(row.spectralType)}-type`
+        selector: row => `${Asteroid.getSpectralType(row.spectralType)?.name}-type`
       },
       {
         key: 'rarity',
         icon: <ResourceIcon />,
         label: 'Rarity',
         // TODO: sortField?
-        selector: row => row.bonuses ? toRarity(row.bonuses) : 0,
+        selector: row => row.bonuses ? Asteroid.getRarity(row.bonuses) : 0,
       },
       {
         key: 'axis',

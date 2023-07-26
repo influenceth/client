@@ -7,7 +7,7 @@ import api from '~/lib/api';
 import {
   TbBellRingingFilled as AlertIcon,
 } from 'react-icons/tb';
-import { Asteroid, Capable, Construction, Crewmate, Inventory } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Inventory, Product } from '@influenceth/sdk';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
@@ -1507,46 +1507,48 @@ export const DestinationSelectionDialog = ({
   const inventories = useMemo(() => {
     return (crewLots || [])
       .filter((lot) => (includeDeconstruction && lot.i === originLotId) || (
-        lot.building
-        && lot.i !== originLotId // not the origin
-
-        && Inventory.CAPACITIES[lot.building.capableType][1]
-        && lot.building.construction?.status === Construction.STATUS_OPERATIONAL
-        // && Inventory.CAPACITIES[lot.building.capableType][inventoryType] // building has inventoryType
-        // && ( // building is built (or this is construction inventory and building is planned)
-        //   (inventoryType === 0 && lot.building.construction?.status === Construction.STATUS_PLANNED)
-        //   || (inventoryType !== 0 && lot.building.construction?.status === Construction.STATUS_OPERATIONAL)
-        // )
+        lot.building && lot.i !== originLotId && (lot.building.inventories || []).find((i) => !i.locked)
       ))
-      .map((lot) => {
-        let capacity, usedMass = 0, usedVolume = 0, type;
-        if (includeDeconstruction && lot.i === originLotId) {
-          capacity = { ...Inventory.CAPACITIES[lot.building.capableType][0] };
-          type = `(empty lot)`;
-        } else {
-          const inventory = (lot.building?.inventories || {})[1];
-          capacity = { ...Inventory.CAPACITIES[lot.building.capableType][1] };
-          usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0)) / 1e6;
-          usedVolume = ((inventory?.volume || 0) + (inventory?.reservedVolume || 0)) / 1e6;
-          type = lot.building?.__t || 'Empty Lot';
-        }
+      .reduce((acc, lot) => {
+        (lot.building.inventories || []).forEach((inventory, slot) => {
+          let capacity, usedMass = 0, usedVolume = 0, type;
 
-        const availMass = capacity.mass - usedMass;
-        const availVolume = capacity.volume - usedVolume;
-        const fullness = Math.max(
-          1 - availMass / capacity.mass,
-          1 - availVolume / capacity.volume,
-        ) || 0;
+          // deconstructing in place (use currently-locked inventory)
+          if (includeDeconstruction && lot.i === originLotId && inventory.locked) {
+            capacity = { ...Inventory.TYPES[inventory.inventoryType][0] };
+            type = `(construction site)`;
 
-        return {
-          lot,
-          distance: Asteroid.getLotDistance(asteroid.i, originLotId, lot.i) || 0,
-          type,
-          fullness,
-          availMass,
-          availVolume
-        };
-      })
+          // going to another lot (if unlocked)
+          } else if (!inventory.locked) {
+            capacity = { ...Inventory.TYPES[inventory.inventoryType][1] };
+            usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0)) / 1e6;
+            usedVolume = ((inventory?.volume || 0) + (inventory?.reservedVolume || 0)) / 1e6;
+            type = lot.building?.__t || 'Construction Site';
+
+          // else, continue
+          } else {
+            return;
+          }
+  
+          const availMass = capacity.mass - usedMass;
+          const availVolume = capacity.volume - usedVolume;
+          const fullness = Math.max(
+            1 - availMass / capacity.mass,
+            1 - availVolume / capacity.volume,
+          ) || 0;
+  
+          acc.push({
+            lot,
+            slot,
+            distance: Asteroid.getLotDistance(asteroid.i, originLotId, lot.i) || 0,
+            type,
+            fullness,
+            availMass,
+            availVolume
+          });
+        });
+        return acc;
+      }, [])
       .sort((a, b) => a.distance - b.distance)
   }, [crewLots, originLotId]);
 
@@ -1856,11 +1858,13 @@ export const getCapacityUsage = (building, inventories, type) => {
     volume: { max: 0, used: 0, reserved: 0 },
   }
   if (building && type !== undefined) {
-    let { mass: maxMass, volume: maxVolume } = Inventory.CAPACITIES[building.i][type];
+    const inventory = inventories.find((i) => !i.locked);
+
+    let { mass: maxMass, volume: maxVolume } = Inventory.TYPES[inventory.inventoryType];
     capacity.mass.max = maxMass * 1e6; // TODO: it seems like this mult should be handled in CAPACITIES
     capacity.volume.max = maxVolume * 1e6;
 
-    const { reservedMass, reservedVolume, mass, volume } = (inventories || {})[type] || {};
+    const { reservedMass, reservedVolume, mass, volume } = inventory || {};
     capacity.mass.used = (mass || 0);
     capacity.mass.reserved = (reservedMass || 0);
     capacity.volume.used = (volume || 0);
@@ -1871,23 +1875,17 @@ export const getCapacityUsage = (building, inventories, type) => {
 
 export const getBuildingRequirements = (building) => {
   const { capableType, inventories = [], deliveries = [] } = building || {};
-  
-  // TODO: remove this fallback (just for dev)
-  const ingredients = Capable.TYPES[capableType || 0].buildingRequirements || [
-    [700, 5, 700], [700, 9, 500], [400, 22, 0],
-    // [700, 2, 0], [700, 7, 0], [400, 23, 0], [700, 24, 0], [700, 69, 0], [400, 45, 0],
-  ];
+  const inventory = inventories.find((i) => !i.locked);
 
   // TODO: presumably ingredients will come from sdk per building
-  return ingredients.map(([tally, i]) => {
-    const totalRequired = tally;
-    const inInventory = i === 5 ? tally : //tally || // TODO: remove `tally ||`
-      (inventories[0]?.resources || [])[i] || 0;
+  return Object.keys(Building.CONSTRUCTION_TYPES[capableType]?.materials || {}).map((productId) => {
+    const totalRequired = Building.CONSTRUCTION_TYPES[capableType].materials[productId];
+    const inInventory = (inventory?.resources || [])[productId] || 0;
     const inTransit = deliveries
       .filter((d) => d.status === 'IN_PROGRESS')
-      .reduce((acc, cur) => acc + cur.resources[i] || 0, 0);
+      .reduce((acc, cur) => acc + cur.resources[productId] || 0, 0);
     return {
-      i,
+      i: productId,
       totalRequired,
       inInventory,
       inTransit,
@@ -3416,7 +3414,7 @@ export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps
 };
 
 export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
-  const { massPerUnit } = Inventory.RESOURCES[resourceId];
+  const { massPerUnit } = Product.TYPES[resourceId];
 
   if (massPerUnit === 0.001) {
     return formatResourceMass(units, resourceId, { abbrev, minPrecision, fixedPrecision });
@@ -3428,7 +3426,7 @@ export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrec
 export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   return formatMass(
     resourceId
-      ? units * Inventory.RESOURCES[resourceId].massPerUnit * 1e6
+      ? units * Product.TYPES[resourceId].massPerUnit * 1e6
       : 0,
     { abbrev, minPrecision, fixedPrecision }
   );
@@ -3475,7 +3473,7 @@ export const formatMass = (grams, { abbrev = true, minPrecision = 3, fixedPrecis
 export const formatResourceVolume = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   return formatVolume(
     resourceId
-      ? units * Inventory.RESOURCES[resourceId].volumePerUnit * 1e6
+      ? units * Product.TYPES[resourceId].volumePerUnit * 1e6
       : 0,
     { abbrev, minPrecision, fixedPrecision }
   );

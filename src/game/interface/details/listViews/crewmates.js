@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { toCrewClass, toCrewCollection, toCrewTrait } from '@influenceth/sdk';
+import { Crewmate } from '@influenceth/sdk';
 
 import {
   CrewIcon,
@@ -44,18 +44,18 @@ const useColumns = () => {
         key: 'class',
         label: 'Class',
         sortField: 'class',
-        selector: row => row.class ? toCrewClass(row.class) : '',
+        selector: row => row.class ? Crewmate.getClass(row.class)?.name : '',
       },
       {
         key: 'collection',
         label: 'Collection',
         sortField: 'collection',
-        selector: row => row.collection ? toCrewCollection(row.collection) : '',
+        selector: row => row.collection ? Crewmate.getCollection(row.collection)?.name : '',
       },
       {
         key: 'traits',
         label: 'Traits',
-        selector: row => Array.isArray(row.traits) ? row.traits.filter((t) => !!t).map((t) => toCrewTrait(t)?.name).join(', ') : '',
+        selector: row => Array.isArray(row.traits) ? row.traits.filter((t) => !!t).map((t) => Crewmate.getTrait(t)?.name).join(', ') : '',
       },
     ];
 

@@ -1,5 +1,5 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Extraction } from '@influenceth/sdk';
+import { useCallback, useContext, useMemo } from 'react';
+import { Extractor } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import actionStages from '~/lib/actionStages';
@@ -36,7 +36,7 @@ const useExtractionManager = (asteroidId, lotId) => {
   
     let status = 'READY';
     let stage = actionStages.NOT_STARTED;
-    if (lot?.building?.extraction?.status === Extraction.STATUS_EXTRACTING) {
+    if (lot?.building?.extraction?.status === Extractor.STATUSES.RUNNING) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_ExtractionStart'
         && item.event.returnValues.asteroidId === asteroidId

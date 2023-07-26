@@ -267,7 +267,7 @@ const LotInventory = () => {
 
   const resourceItemRefs = useRef([]);
 
-  const inventory = lot?.building?.inventories ? lot?.building?.inventories[1] : null;
+  const inventory = (lot?.building?.inventories || []).find((i) => !i.locked);
   const { used, usedOrReserved } = useMemo(() => {
     if (!inventory) {
       return {
@@ -276,15 +276,15 @@ const LotInventory = () => {
       };
     }
 
-    const mass = 1E-6 * lot.building.inventories[1]?.mass || 0;
-    const reservedMass = 1E-6 * lot.building.inventories[1]?.reservedMass || 0;
-    const volume = 1E-6 * lot.building.inventories[1]?.volume || 0;
-    const reservedVolume = 1E-6 * lot.building.inventories[1]?.reservedVolume || 0;
+    const mass = 1E-6 * inventory?.mass || 0;
+    const reservedMass = 1E-6 * inventory?.reservedMass || 0;
+    const volume = 1E-6 * inventory?.volume || 0;
+    const reservedVolume = 1E-6 * inventory?.reservedVolume || 0;
 
-    const massUsage = mass / Inventory.CAPACITIES[1][1].mass;
-    const massReservedUsage = reservedMass / Inventory.CAPACITIES[1][1].mass;
-    const volumeUsage = volume / Inventory.CAPACITIES[1][1].volume;
-    const volumeReservedUsage = reservedVolume / Inventory.CAPACITIES[1][1].volume;
+    const massUsage = mass / Inventory.TYPES[inventory.inventoryType].mass;
+    const massReservedUsage = reservedMass / Inventory.TYPES[inventory.inventoryType].mass;
+    const volumeUsage = volume / Inventory.TYPES[inventory.inventoryType].volume;
+    const volumeReservedUsage = reservedVolume / Inventory.TYPES[inventory.inventoryType].volume;
     if (volumeUsage + volumeReservedUsage > massUsage + massReservedUsage) {
       return {
         used: volumeUsage,

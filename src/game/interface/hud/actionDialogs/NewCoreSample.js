@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid as AsteroidLib, CoreSample, Inventory, } from '@influenceth/sdk';
+import { Asteroid, Deposit, Product } from '@influenceth/sdk';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { NewCoreSampleIcon, ResourceIcon } from '~/components/Icons';
@@ -74,7 +74,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
       const thisSample = lot.coreSamples.find((s) => s.sampleId === sampleId && s.resourceId === resourceId);
       if (thisSample) {
         thisSample.initialYieldTonnage = Object.keys(thisSample).includes('initialYield')
-          ? thisSample.initialYield * Inventory.RESOURCES[resourceId].massPerUnit
+          ? thisSample.initialYield * Product.TYPES[resourceId].massPerUnit
           : undefined;
         return thisSample;
       }
@@ -87,7 +87,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
     // TODO: do this in worker? takes about 200ms on decent cpu
     return Object.keys(asteroid.resources).reduce((acc, r) => {
       if (asteroid.resources[r] > 0) {
-        acc[r] = AsteroidLib.getAbundanceAtLot(
+        acc[r] = Asteroid.getAbundanceAtLot(
           asteroid?.i,
           BigInt(asteroid?.resourceSeed),
           Number(lot?.i),
@@ -120,8 +120,8 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   const crewTravelTime = 0;
   const tripDetails = null;
 
-  const sampleBounds = CoreSample.getSampleBounds(lotAbundance, 0, sampleQualityBonus.totalBonus);
-  const sampleTime = CoreSample.getSampleTime(sampleTimeBonus.totalBonus);
+  const sampleBounds = Deposit.getSampleBounds(lotAbundance, 0, sampleQualityBonus.totalBonus);
+  const sampleTime = Deposit.getSampleTime(sampleTimeBonus.totalBonus);
 
   const stats = useMemo(() => ([
     {

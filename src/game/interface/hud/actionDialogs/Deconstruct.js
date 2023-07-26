@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Asteroid, Construction } from '@influenceth/sdk';
+import { Asteroid, Building } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -58,7 +58,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
   const crewTravelTime = 0;
   const tripDetails = null;
 
-  const constructionTime = Construction.getConstructionTime(lot?.building?.capableType || 0, 1);
+  const constructionTime = Building.getConstructionTime(lot?.building?.capableType || 0, 1);
 
   const stats = useMemo(() => [
     {

@@ -1,13 +1,13 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { CoreSample, Asteroid, Extraction, Inventory } from '@influenceth/sdk';
 import styled from 'styled-components';
+import { Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, RotatedShipMarkerIcon, WarningOutlineIcon, MyAssetIcon } from '~/components/Icons';
 import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
-import { formatFixed, formatTimer, getCrewAbilityBonus, orbitTimeToGameTime } from '~/lib/utils';
+import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   ResourceAmountSlider,
@@ -376,11 +376,11 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
                 </div>
                 <div>
                   <label>Depart</label>
-                  <span>{(orbitTimeToGameTime(travelSolution.departureTime) || 0).toLocaleString()}</span>
+                  <span>{(Time.orbitTimeToGameTime(travelSolution.departureTime) || 0).toLocaleString()}</span>
                 </div>
                 <div>
                   <label>Arrive</label>
-                  <span>{(orbitTimeToGameTime(travelSolution.arrivalTime) || 0).toLocaleString()}</span>
+                  <span>{(Time.orbitTimeToGameTime(travelSolution.arrivalTime) || 0).toLocaleString()}</span>
                 </div>
               </TimingDetails>
 

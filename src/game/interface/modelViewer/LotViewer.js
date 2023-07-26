@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Capable, Construction } from '@influenceth/sdk';
+import { Building } from '@influenceth/sdk';
 
 import { useBuildingAssets } from '~/hooks/useAssets';
 import useLot from '~/hooks/useLot';
@@ -14,7 +14,7 @@ const LotViewer = () => {
   const { data: lot, isLoading } = useLot(asteroidId, lotId);
 
   const modelUrl = useMemo(() => {
-    if (lot?.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
+    if (lot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       const asset = buildings.find((a) => a.name === lot.building.__t);
       if (asset) {
         return asset.modelUrl;

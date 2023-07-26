@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import { Asteroid as AsteroidLib } from '@influenceth/sdk';
+import { Asteroid } from '@influenceth/sdk';
 import { cubeTransforms, generateHeightMap, getSamplingResolution } from './TerrainChunkUtils';
 
 const getSamplePoint = (side, resolution, s, t) => {
@@ -50,7 +50,7 @@ const getSamplePosition = (side, s, t, heightMap, config, resolution) => {
 }
 
 export const getLotPointGeometry = (lotId, pointTally, resolution, heightMaps, config, aboveSurface) => {
-  const fibo = (new Vector3()).fromArray(AsteroidLib.getLotPosition(0, lotId, pointTally));
+  const fibo = (new Vector3()).fromArray(Asteroid.getLotPosition(0, lotId, pointTally));
 
   const xAbs = Math.abs(fibo.x);
   const yAbs = Math.abs(fibo.y);
@@ -162,7 +162,7 @@ export const getLotGeometryHeightMaps = (config, resolution) => {
 };
 
 export const getLotGeometry = ({ config, aboveSurface = 0.0, prebuiltHeightMaps, textureQuality }) => {
-  const pointTally = AsteroidLib.getSurfaceArea(null, config.radiusNominal / 1000);
+  const pointTally = Asteroid.getSurfaceArea(null, config.radiusNominal / 1000);
   const resolution = getLotGeometryHeightMapResolution(config, textureQuality);
   const heightMaps = prebuiltHeightMaps || getLotGeometryHeightMaps(config, resolution);
 
@@ -186,11 +186,11 @@ export const getLotGeometry = ({ config, aboveSurface = 0.0, prebuiltHeightMaps,
 }
 
 export const getLotRegions = (positions, regionTally) => {
-  return AsteroidLib.lotPositionsToRegions(positions, regionTally);
+  return Asteroid.lotPositionsToRegions(positions, regionTally);
 }
 
 export const getClosestLots = ({ center, centerLot, lotTally, findTally }) => {
-  return AsteroidLib.getClosestLots({
+  return Asteroid.getClosestLots({
     center: center ? [center.x, center.y, center.z] : undefined,
     centerLot: centerLot,
     lotTally: lotTally,

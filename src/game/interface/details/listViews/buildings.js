@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Capable } from '@influenceth/sdk';
+import { Building } from '@influenceth/sdk';
 
 import { MyAssetIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
@@ -28,7 +28,7 @@ const useColumns = () => {
         selector: row => (
           <>
             <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} zoomToLot />
-            <span>{Capable.TYPES[row.type].name}</span>
+            <span>{Building.TYPES[row.type].name}</span>
           </>
         ),
         unhideable: true

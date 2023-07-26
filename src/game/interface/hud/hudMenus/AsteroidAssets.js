@@ -1,6 +1,6 @@
 import { Fragment, useMemo } from 'react';
 import styled from 'styled-components';
-import { Capable, Construction, Inventory, Lot } from '@influenceth/sdk';
+import { Building, Inventory } from '@influenceth/sdk';
 
 import { useLotLink } from '~/components/LotLink';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -163,30 +163,32 @@ const BuildingRow = ({ lot }) => {
   });
 
   const [progress, progressColor] = useMemo(() => {
-    if (lot.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
-      if (lot.building?.capableType === 2 && lot.building?.extraction?.status > 0) {
-        return [
-          Math.min(1, (chainTime - lot.building?.extraction?.startTime) / (lot.building?.extraction?.completionTime - lot.building?.extraction?.startTime)),
-          'main'
-        ];
-      } else if (lot.building?.capableType === 1) {
-        const usage = lot.building.inventories ? Math.max(
-          ((lot.building.inventories[1].mass || 0) + (lot.building.inventories[1].reservedMass || 0)) / (1e6 * Inventory.CAPACITIES[1][1].mass),
-          ((lot.building.inventories[1].volume || 0) + (lot.building.inventories[1].reservedVolume || 0)) / (1e6 * Inventory.CAPACITIES[1][1].volume),
+    if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+      if (lot.building?.capableType === Building.IDS.WAREHOUSE) {
+        const inventory = (lot.building.inventories || [0]).find((i) => !i.locked);
+        const usage = inventory ? Math.max(
+          ((inventory.mass || 0) + (inventory.reservedMass || 0)) / (1e6 * Inventory.TYPES[inventory.inventoryType].mass),
+          ((inventory.volume || 0) + (inventory.reservedVolume || 0)) / (1e6 * Inventory.TYPES[inventory.inventoryType].volume),
         ) : 0;
         return [
           Math.min(1, usage),
           'main'
         ];
       }
+      if (lot.building?.capableType === Building.IDS.EXTRACTOR) {
+        return [
+          Math.min(1, (chainTime - lot.building?.extraction?.startTime) / (lot.building?.extraction?.completionTime - lot.building?.extraction?.startTime)),
+          'main'
+        ];
+      }
     }
-    if (lot.building?.construction?.status === Construction.STATUS_PLANNED) {
+    if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
       return [
-        Math.min(1, 1 - (lot.gracePeriodEnd - chainTime) / Lot.GRACE_PERIOD),
+        Math.min(1, 1 - (lot.gracePeriodEnd - chainTime) / Building.GRACE_PERIOD),
         'error'
       ];
     }
-    if (lot.building?.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION) {
+    if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
       return [
         Math.min(1, (chainTime - lot.building?.construction?.startTime) / (lot.building?.construction?.completionTime - lot.building?.construction?.startTime)),
         'main'
@@ -196,7 +198,7 @@ const BuildingRow = ({ lot }) => {
   }, [chainTime, lot.building]);
 
   const status = useMemo(() => {
-    if (lot.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
+    if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       if (lot.building?.capableType === 2 && lot.building?.extraction?.status > 0) {
         return 'Extracting';
       } else if (lot.building?.capableType === 1) {
@@ -204,10 +206,10 @@ const BuildingRow = ({ lot }) => {
       }
       return 'Idle';
     }
-    if (lot.building?.construction?.status === Construction.STATUS_PLANNED && lot.gracePeriodEnd < chainTime) {
+    if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED && lot.gracePeriodEnd < chainTime) {
       return 'At Risk';
     }
-    return Construction.STATUSES[lot.building?.construction?.status || 0];
+    return Building.CONSTRUCTION_STATUSES[lot.building?.construction?.status || 0];
   }, [lot.building, progress]);
 
   return (
@@ -221,7 +223,7 @@ const BuildingRow = ({ lot }) => {
       <InfoCell>
         <Details>
           <label>
-            {Capable.TYPES[lot.building?.capableType || 0].name}
+            {Building.TYPES[lot.building?.capableType || 0].name}
           </label>
           <span>
             <HoverContent>Lot {(lot.i || '').toLocaleString()}</HoverContent>

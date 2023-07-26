@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { toRarity, toSize, toSpectralType, Asteroid, Capable, Construction, CoreSample, Inventory } from '@influenceth/sdk';
+import { Asteroid, Product } from '@influenceth/sdk';
 
 import Ether from '~/components/Ether';
 import { EccentricityIcon, IdIcon, InclinationIcon, OrbitalPeriodIcon, RadiusIcon, ResourceGroupIcons, ScanAsteroidIcon, SemiMajorAxisIcon, SurfaceAreaIcon, WalletIcon } from '~/components/Icons';
@@ -96,7 +96,7 @@ const AsteroidInfo = ({ onClose }) => {
 
   const resourceCategories = useMemo(() => {
     return (Asteroid.SPECTRAL_TYPES[asteroid?.spectralType]?.resources || []).reduce((acc, cur) => {
-      const category = Inventory.RESOURCES[cur]?.category;
+      const category = Product.TYPES[cur]?.category;
       if (category && !acc.includes(category)) {
         return [...acc, category];
       }
@@ -119,11 +119,11 @@ const AsteroidInfo = ({ onClose }) => {
           <Title>{asteroid.customName || asteroid.baseName}</Title>
           <InfoRow style={{ fontSize: 16 }}>
             <span style={{ flex: 1 }}>
-              {toSize(asteroid.r)}{' '}
-              <b>{toSpectralType(asteroid.spectralType)}{'-type'}</b>
+              {Asteroid.getSize(asteroid.r)}{' '}
+              <b>{Asteroid.getSpectralType(asteroid.spectralType)?.name}{'-type'}</b>
             </span>
             <span>
-              {asteroid.scanned && <Rarity rarity={toRarity(asteroid.bonuses)} />}
+              {asteroid.scanned && <Rarity rarity={Asteroid.getRarity(asteroid.bonuses)} />}
               {!asteroid.scanned && asteroid.scanCompletionTime && <Unscanned scanning>Scanning...</Unscanned>}
               {!asteroid.scanned && !asteroid.scanCompletionTime && <Unscanned>Unscanned</Unscanned>}
             </span>

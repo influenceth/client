@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Capable } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';

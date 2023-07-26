@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Construction, Inventory } from '@influenceth/sdk';
+import { Asteroid, Building, Inventory } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
@@ -151,18 +151,18 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   }, [totalMass, totalVolume, destinationLot])
 
   const originInvId = useMemo(() => {
-    if (originLot?.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
+    if (originLot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       return 1;
-    } else if (originLot?.building?.construction?.status === Construction.STATUS_PLANNED) {
+    } else if (originLot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
       return 0;
     }
     return null;
   }, [originLot?.building?.construction?.status]);
 
   const destInvId = useMemo(() => {
-    if (destinationLot?.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
+    if (destinationLot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       return 1;
-    } else if (destinationLot?.building?.construction?.status === Construction.STATUS_PLANNED) {
+    } else if (destinationLot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
       return 0;
     }
     return null;
@@ -173,11 +173,14 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   }, [originInvId, originLot?.building?.inventories]);
 
   const onStartDelivery = useCallback(() => {
-    let destCapacityRemaining = { ...Inventory.CAPACITIES[destinationLot?.building?.capableType][destInvId] };
-    if (destinationLot?.building?.inventories && destinationLot?.building?.inventories[destInvId]) {
+    let destCapacityRemaining = { mass: 0, volume: 0 };
+    const destInventory = (destinationLot?.building?.inventories || []).find((i) => !i.locked);
+    if (destInventory) {
+      destCapacityRemaining = { ...Inventory.TYPES[destInventory.inventoryType] };
+
       // Capacities are in tonnes and cubic meters, Inventories are in grams and mLs
-      destCapacityRemaining.mass -= 1e-6 * ((destinationLot.building.inventories[destInvId].mass || 0) + (destinationLot.building.inventories[destInvId].reservedMass || 0));
-      destCapacityRemaining.volume -= 1e-6 * ((destinationLot.building.inventories[destInvId].volume || 0) + (destinationLot.building.inventories[destInvId].reservedVolume || 0));
+      destCapacityRemaining.mass -= 1e-6 * ((destInventory.mass || 0) + (destInventory.reservedMass || 0));
+      destCapacityRemaining.volume -= 1e-6 * ((destInventory.volume || 0) + (destInventory.reservedVolume || 0));
     }
     if (destCapacityRemaining.mass < totalMass || destCapacityRemaining.volume < totalVolume) {
       createAlert({

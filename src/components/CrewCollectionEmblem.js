@@ -1,4 +1,4 @@
-import { toCrewCollection } from '@influenceth/sdk';
+import { Crewmate } from '@influenceth/sdk';
 
 import Image1 from '~/assets/images/crew_collections/1.png';
 import Image2 from '~/assets/images/crew_collections/2.png';
@@ -13,7 +13,7 @@ const indexedImages = [
 const CrewCollectionEmblem = ({ collection, style = {} }) => {
   const imageSrc = indexedImages[Number(collection)];
   if (imageSrc) {
-    const collectionLabel = toCrewCollection(collection);
+    const collectionLabel = Crewmate.getCollection(collection)?.name || '';
     return (
       <img
         alt={collectionLabel}

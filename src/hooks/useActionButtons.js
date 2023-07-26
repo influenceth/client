@@ -157,10 +157,7 @@ const useActionButtons = () => {
             a.push(actionButtons.PlanBuilding);
           }
 
-          // NOTE: this will need to change once using contruction inventories, and when that happens, it
-          //  is worth nothing that lot?.building?.inventories is undefined until it is used (this is
-          //  probably worth addressing on the server)
-          if (constructionStatus === 'OPERATIONAL' && Inventory.CAPACITIES[lot.building?.capableType || 0][1]) {
+          if (constructionStatus === 'OPERATIONAL' && (lot.building?.inventories || []).find((i) => !i.locked)) {
             a.push(actionButtons.SurfaceTransferOutgoing);
           }
           if ((lot.building?.deliveries || []).find((d) => d.status !== 'COMPLETE')) {

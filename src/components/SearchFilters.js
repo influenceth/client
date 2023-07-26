@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { SPECTRAL_TYPES, Capable, Construction, Crewmate, Inventory } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Product } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import AsteroidNameFilter from './filters/AsteroidNameFilter';
@@ -18,9 +18,9 @@ import useSale from '~/hooks/useSale';
 import TextFilter from './filters/TextFilter';
 
 // spectral type filter configs
-const spectralTypeOptions = Object.keys(SPECTRAL_TYPES).reduce((acc, key) => ([
+const spectralTypeOptions = Object.keys(Asteroid.SPECTRAL_TYPES).reduce((acc, key) => ([
   ...acc,
-  { key, label: `${SPECTRAL_TYPES[key]}-type`, initialValue: true }
+  { key, label: `${Asteroid.getSpectralType(key)?.name}-type`, initialValue: true }
 ]), []);
 
 const spectralTypeColors = {
@@ -38,11 +38,11 @@ const spectralTypeColors = {
 };
 
 // building type filter configs
-const buildingTypeOptions = Object.keys(Capable.TYPES)
+const buildingTypeOptions = Object.keys(Building.TYPES)
   .filter((k) => k > 0)
   .reduce((acc, key) => ([
     ...acc,
-    { key, label: Capable.TYPES[key].name, initialValue: true }
+    { key, label: Building.TYPES[key].name, initialValue: true }
   ]), []);
 
   const buildingTypeColors = {
@@ -59,16 +59,16 @@ const buildingTypeOptions = Object.keys(Capable.TYPES)
     10: '#fff100',
   };
 
-const lotSearchBuildingTypeOptions = Object.keys(Capable.TYPES).reduce((acc, key) => ([
+const lotSearchBuildingTypeOptions = Object.keys(Building.TYPES).reduce((acc, key) => ([
   ...acc,
-  { key, label: Capable.TYPES[key].name, initialValue: true }
+  { key, label: Building.TYPES[key].name, initialValue: true }
 ]), []);
 lotSearchBuildingTypeOptions.push({ key: 10, label: 'Light Transport (landed)', initialValue: true });
 
-const constructionStatusOptions = Object.keys(Construction.STATUSES)
+const constructionStatusOptions = Object.keys(Building.CONSTRUCTION_STATUSES)
   .reduce((acc, key) => ([
     ...acc,
-    { key, label: Construction.STATUSES[key], initialValue: true }
+    { key, label: Building.CONSTRUCTION_STATUSES[key], initialValue: true }
   ]), [])
   .filter(({ key }) => key > 0);
 
@@ -81,11 +81,11 @@ const actionItemStatusOptions = [
 ];
 
 // resource type filter configs
-const resourceTypeOptions = Object.keys(Inventory.RESOURCES)
-  .filter((k) => k <= 22)
+const resourceTypeOptions = Object.keys(Product.TYPES)
+  .filter((k) => Product.TYPES[k].type === 'Raw Material')
   .reduce((acc, key) => ([
     ...acc,
-    { key, label: Inventory.RESOURCES[key].name, initialValue: true }
+    { key, label: Product.TYPES[key].name, initialValue: true }
   ]), []);
 
 // crewmate class filter configs

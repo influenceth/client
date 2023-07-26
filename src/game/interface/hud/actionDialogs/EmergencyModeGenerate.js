@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Capable, Extraction } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
@@ -138,11 +137,7 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew
 
   const currentPropellantMass = 0;
   const maxTonnageToGenerate = 0.1 * (shipAssets[ship?.type]?.maxPropellantMass - currentPropellantMass);
-  const generationTime = Extraction.getExtractionTime( // TODO: ...
-    amount,
-    0,
-    1
-  );
+  const generationTime = 1000;
 
   const onStation = useCallback(() => {
     stationOnShip();

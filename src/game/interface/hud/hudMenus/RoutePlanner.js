@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
+import { Time } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
 import { CloseIcon, WarningIcon } from '~/components/Icons';
@@ -12,7 +13,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
-import { formatFixed, orbitTimeToGameTime } from '~/lib/utils';
+import { formatFixed } from '~/lib/utils';
 import { ShipImage, formatMass } from '../actionDialogs/components';
 import { Scrollable } from './components';
 
@@ -314,7 +315,7 @@ const RoutePlanner = () => {
               <label>Depart</label>
               <Note>{travelSolution.departureTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.departureTime - coarseTime, 1)}h</Note>
               <Value>
-                {orbitTimeToGameTime(travelSolution.departureTime).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {Time.orbitTimeToGameTime(travelSolution.departureTime).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </Value>
             </InfoRow>
 
@@ -322,7 +323,7 @@ const RoutePlanner = () => {
               <label>Arrive</label>
               <Note>{travelSolution.arrivalTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.arrivalTime - coarseTime, 1)}h</Note>
               <Value>
-                {orbitTimeToGameTime(travelSolution.arrivalTime).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {Time.orbitTimeToGameTime(travelSolution.arrivalTime).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </Value>
             </InfoRow>
 

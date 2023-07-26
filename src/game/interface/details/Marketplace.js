@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
-import { Inventory } from '@influenceth/sdk';
+import { Product } from '@influenceth/sdk';
 
 import Details from '~/components/DetailsModal';
 import { OrderIcon } from '~/components/Icons';
@@ -79,7 +79,7 @@ const myOpenOrders = [
 
 const asteroidListings = [];
 for (let resourceId = 1; resourceId <= 245; resourceId++) {
-  if (!Inventory.RESOURCES[resourceId]) continue;
+  if (!Product.TYPES[resourceId]) continue;
   if (resourceId % 3 === 0) {
     asteroidListings.push({
       resourceId,

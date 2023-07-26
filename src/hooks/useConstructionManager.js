@@ -1,5 +1,5 @@
 import { useCallback, useContext, useMemo } from 'react';
-import { Construction } from '@influenceth/sdk';
+import { Building } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from './useCrewContext';
@@ -53,7 +53,7 @@ const useConstructionManager = (asteroidId, lotId) => {
       current.crewId = lot.occupier;
       current.startTime = lot.building.construction?.startTime;
 
-      if (lot.building.construction?.status === Construction.STATUS_PLANNED) {
+      if (lot.building.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
         if (getStatus('START_CONSTRUCTION', payload) === 'pending') {
           status = 'UNDER_CONSTRUCTION';
           stages.construct = actionStage.STARTING;
@@ -83,7 +83,7 @@ const useConstructionManager = (asteroidId, lotId) => {
           }
         }
 
-      } else if (lot.building.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION) {
+      } else if (lot.building.construction?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
         if (getStatus('FINISH_CONSTRUCTION', payload) === 'pending') {
           status = 'FINISHING';
           stages.construct = actionStage.COMPLETING;
@@ -95,7 +95,7 @@ const useConstructionManager = (asteroidId, lotId) => {
           stages.construct = actionStage.IN_PROGRESS;
         }
 
-      } else if (lot.building.construction?.status === Construction.STATUS_OPERATIONAL) {
+      } else if (lot.building.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
         if (getStatus('DECONSTRUCT', payload) === 'pending') {
           status = 'DECONSTRUCTING';
           deconstructTx = getPendingTx('DECONSTRUCT', payload);

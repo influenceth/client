@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Capable } from '@influenceth/sdk';
+import { Asteroid } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
@@ -318,7 +318,7 @@ const Wrapper = (props) => {
   
       // if lot && !ships, if habitable, destinations.length = 1, destination is hab
       if (d.length === 0) {
-        if (Capable.TYPES[destinationLot.building?.capableType || 0].capabilities.includes('habitation')) {
+        if (destinationLot.building?.station) {
           d = [{ type: 'lot', data: destinationLot }];
         }
       }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import PuffLoader from 'react-spinners/PuffLoader';
-import { toRarity, toSize, toSpectralType, Asteroid as AsteroidLib } from '@influenceth/sdk';
+import { Asteroid } from '@influenceth/sdk';
 import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
 
@@ -321,7 +321,7 @@ const InfoPane = () => {
     } else if (asteroidId && zoomStatus === 'in') {
       history.push(`/asteroids/${asteroidId}`);
 
-    // zoom in to asteriod
+    // zoom in to Asteroid
     } else if (asteroidId && zoomStatus === 'out') {
       updateZoomStatus('zooming-in');
     }
@@ -367,7 +367,7 @@ const InfoPane = () => {
       if (asteroid) {
         pane.title = asteroid.customName || asteroid.baseName;
         pane.titleLink = `/asteroids/${asteroid.i}`;
-        pane.subtitle = <>{toSize(asteroid.radius)} <b>{toSpectralType(asteroid.spectralType)}-type</b></>;
+        pane.subtitle = <>{Asteroid.getSize(asteroid.radius)} <b>{Asteroid.getSpectralType(asteroid.spectralType)?.name}-type</b></>;
         pane.hoverSubtitle = 'Zoom to Asteroid';
         // TODO: add captainCard for the "crew" managing the asteroid
 
@@ -395,9 +395,9 @@ const InfoPane = () => {
             {asteroid.scanned && (
               <RarityEarmark
                 data-for="infoPane"
-                data-tip={toRarity(asteroid.bonuses)}
+                data-tip={Asteroid.getRarity(asteroid.bonuses)}
                 data-place="right"
-                rarity={toRarity(asteroid.bonuses)} />
+                rarity={Asteroid.getRarity(asteroid.bonuses)} />
             )}
             <AsteroidRendering
               asteroid={asteroid}
@@ -449,7 +449,7 @@ const InfoPane = () => {
         pane.titleLink = `/asteroids/${asteroid.i}`;
         pane.subtitle = (
           <>
-            {toSize(asteroid.radius)} <b>{toSpectralType(asteroid.spectralType)}-type</b>
+            {Asteroid.getSize(asteroid.radius)} <b>{Asteroid.getSpectralType(asteroid.spectralType)?.name}-type</b>
             <SubtitleLoader>
               {!(lotLoader.i === asteroidId && lotLoader.progress === 1) && (
                 <ProgressBar progress={lotLoader.i === asteroidId ? lotLoader.progress : 0} />

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { Inventory } from '@influenceth/sdk';
+import { Product } from '@influenceth/sdk';
 
 import {
   CrewIcon,
@@ -34,7 +34,7 @@ const useColumns = () => {
         selector: row => (
           <>
             <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} resourceId={row.resource} zoomToLot="LOT_RESOURCES" />
-            <span>{Inventory.RESOURCES[row.resource]?.name}</span>
+            <span>{Product.TYPES[row.resource]?.name}</span>
           </>
         ),
         unhideable: true

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid as AsteroidLib, CoreSample, Inventory } from '@influenceth/sdk';
+import { Asteroid, Deposit, Product } from '@influenceth/sdk';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { CoreSampleIcon, ImproveCoreSampleIcon, ResourceIcon } from '~/components/Icons';
@@ -77,7 +77,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
         const thisSample = lot.coreSamples.find((s) => s.sampleId === sampleId && s.resourceId === resourceId);
         if (thisSample) {
           thisSample.initialYieldTonnage = Object.keys(thisSample).includes('initialYield')
-            ? thisSample.initialYield * Inventory.RESOURCES[resourceId].massPerUnit
+            ? thisSample.initialYield * Product.TYPES[resourceId].massPerUnit
             : undefined;
           return thisSample;
         }
@@ -89,7 +89,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   // get lot abundance
   const lotAbundance = useMemo(() => {
     if (!resourceId || !asteroid?.resourceSeed || !asteroid.resources) return 0;
-    return AsteroidLib.getAbundanceAtLot(
+    return Asteroid.getAbundanceAtLot(
       asteroid?.i,
       BigInt(asteroid?.resourceSeed),
       Number(lot?.i),
@@ -103,7 +103,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
 
   const improvableSamples = useMemo(() =>
     (lot?.coreSamples || [])
-      .filter((c) => (c.owner === crew?.i && c.initialYield > 0 && c.status !== CoreSample.STATUS_USED))
+      .filter((c) => (c.owner === crew?.i && c.initialYield > 0 && c.status !== Deposit.STATUSES.USED))
       .map((c) => ({ ...c, tonnage: c.initialYield * resources[c.resourceId].massPerUnit }))
   , [lot?.coreSamples]);
 
@@ -149,8 +149,8 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   const crewTravelTime = 0;
   const tripDetails = null;
 
-  const sampleBounds = CoreSample.getSampleBounds(lotAbundance, originalTonnage, sampleQualityBonus.totalBonus);
-  const sampleTime = CoreSample.getSampleTime(sampleTimeBonus.totalBonus);
+  const sampleBounds = Deposit.getSampleBounds(lotAbundance, originalTonnage, sampleQualityBonus.totalBonus);
+  const sampleTime = Deposit.getSampleTime(sampleTimeBonus.totalBonus);
 
   const stats = useMemo(() => ([
     {

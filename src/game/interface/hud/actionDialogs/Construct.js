@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Construction, Lot } from '@influenceth/sdk';
+import { Building } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -69,7 +69,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const tripDetails = null;
 
   const constructionTime = useMemo(() =>
-    lot?.building?.capableType ? Construction.getConstructionTime(lot?.building?.capableType, constructionBonus.totalBonus) : 0,
+    lot?.building?.capableType ? Building.getConstructionTime(lot?.building?.capableType, constructionBonus.totalBonus) : 0,
     [lot?.building?.capableType, constructionBonus.totalBonus]
   );
 
@@ -205,7 +205,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
         {stage === actionStage.NOT_STARTED && (
           <ProgressBarSection
             completionTime={lot?.gracePeriodEnd}
-            startTime={lot?.gracePeriodEnd - Lot.GRACE_PERIOD}
+            startTime={lot?.gracePeriodEnd - Building.GRACE_PERIOD}
             isCountDown
             overrides={{
               barColor: theme.colors.lightOrange,

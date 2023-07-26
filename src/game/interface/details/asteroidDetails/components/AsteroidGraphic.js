@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
-import { toSize, toSpectralType } from '@influenceth/sdk';
+import { Asteroid } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import AsteroidComposition from './AsteroidComposition';
@@ -114,7 +114,7 @@ const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
       </OpacityContainer>
       <GraphicData>
         <div>
-          {toSize(asteroid.radius)} <b>{toSpectralType(asteroid.spectralType)}-type</b>
+          {Asteroid.getSize(asteroid.radius)} <b>{Asteroid.getSpectralType(asteroid.spectralType)?.name}-type</b>
         </div>
         <AsteroidName>
           {asteroid.customName ? `\`${asteroid.customName}\`` : asteroid.baseName}

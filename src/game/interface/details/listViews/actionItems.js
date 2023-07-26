@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { Inventory } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';

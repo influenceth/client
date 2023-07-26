@@ -391,7 +391,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
         <div>
           <SectionHeader>Management</SectionHeader>
           <SectionBody>
-            {isOwner && <HighlightOwnership>You own this asteriod.</HighlightOwnership>}
+            {isOwner && <HighlightOwnership>You own this Asteroid.</HighlightOwnership>}
             <ButtonRow>
               {isOwner && (
                 <>

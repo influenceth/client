@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Asteroid, Inventory } from '@influenceth/sdk';
+import { Asteroid, Product } from '@influenceth/sdk';
 
 import { NewCoreSampleIcon, ImproveCoreSampleIcon } from '~/components/Icons';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
@@ -55,7 +55,7 @@ const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improve
 
     // always append which resource it is if not the selected one
     if (currentSample.resourceId !== resourceId) {
-      label += ` (${Inventory.RESOURCES[currentSample.resourceId].name})`;
+      label += ` (${Product.TYPES[currentSample.resourceId].name})`;
     }
     
   // else if there is not at current sample, if it is ready...

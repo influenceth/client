@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
-import { Construction, Inventory } from '@influenceth/sdk';
+import { Building } from '@influenceth/sdk';
 import ReactTooltip from 'react-tooltip';
 import { BiWrench as WrenchIcon } from 'react-icons/bi';
 
@@ -341,7 +341,7 @@ const HudMenu = () => {
         }
       );
 
-      if (lot?.building?.construction?.status === Construction.STATUS_OPERATIONAL) {
+      if (lot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
         // marketplace
         if (lot.building.capableType === 1) { // TODO: 8) {
           buttons.push({
@@ -362,18 +362,13 @@ const HudMenu = () => {
         Component: hudMenus.LotResources
       });
 
-      if (lot?.building?.capableType) {
-        if (
-          (lot.building.construction?.status === Construction.STATUS_PLANNED && Inventory.CAPACITIES[lot.building.capableType][0])
-          || (lot.building.construction?.status === Construction.STATUS_OPERATIONAL && Inventory.CAPACITIES[lot.building.capableType][1])
-        ) {
-          buttons.push({
-            key: 'LOT_INVENTORY',
-            label: 'Inventory',
-            icon: <InventoryIcon />,
-            Component: hudMenus.Inventory
-          });
-        } 
+      if (lot?.building?.capableType && (lot.building.inventories || []).find((i) => !i.locked)) {
+        buttons.push({
+          key: 'LOT_INVENTORY',
+          label: 'Inventory',
+          icon: <InventoryIcon />,
+          Component: hudMenus.Inventory
+        });
       }
 
     // zoomed to ship

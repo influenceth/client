@@ -1,8 +1,6 @@
 import { AdalianOrbit } from '@influenceth/sdk';
 import { Vector3 } from 'three';
 
-import constants from '~/lib/constants';
-
 export const getUpdatedAsteroidPositions = function(orbitals, elapsed = 0) {
   const positions = new Float32Array(orbitals.length * 3);
 
@@ -64,6 +62,7 @@ const getPerpendicular = (n) => {
   return n.clone().cross(new Vector3(0, 1, 0));
 }
 
+// TODO: should this go into sdk's AdalianOrbit?
 export const sampleAsteroidOrbit = (baseTime, orbital, minOffset, maxOffset, increment) => {
   const positions = [];
   const velocities = [];
