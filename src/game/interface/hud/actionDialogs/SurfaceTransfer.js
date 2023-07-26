@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Building, Inventory } from '@influenceth/sdk';
+import { Asteroid, Building, Inventory, Product } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
 import { ForwardIcon, InventoryIcon, LocationIcon, RouteIcon, SurfaceTransferIcon, WarningOutlineIcon } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import useLot from '~/hooks/useLot';
@@ -56,8 +55,6 @@ const Overloaded = styled.div`
 
 const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const buildings = useBuildingAssets();
-  const resources = useResourceAssets();
 
   const { currentDelivery, deliveryStatus, startDelivery, finishDelivery } = deliveryManager;
   const { crew, crewMemberMap } = useCrewContext();
@@ -99,8 +96,8 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
 
   const { totalMass, totalVolume } = useMemo(() => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {
-      acc.totalMass += selectedItems[resourceId] * resources[resourceId].massPerUnit;
-      acc.totalVolume += selectedItems[resourceId] * resources[resourceId].volumePerUnit;
+      acc.totalMass += selectedItems[resourceId] * Product.TYPES[resourceId].massPerUnit;
+      acc.totalVolume += selectedItems[resourceId] * Product.TYPES[resourceId].volumePerUnit;
       return acc;
     }, { totalMass: 0, totalVolume: 0 })
   }, [selectedItems]);
@@ -139,7 +136,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   const destinationOverloaded = useMemo(() => {
     const showInventoryStatusForType = 1; // TODO: ...
     if (destinationLot?.building?.capableType && destinationLot?.building?.inventories) {
-      const capacity = getCapacityUsage(buildings[destinationLot.building.capableType], destinationLot.building.inventories, showInventoryStatusForType);
+      const capacity = getCapacityUsage(Building.TYPES[destinationLot.building.capableType], destinationLot.building.inventories, showInventoryStatusForType);
       if (capacity.mass.used + capacity.mass.reserved + totalMass * 1e6 > capacity.mass.max) {
         return true;
       }
@@ -246,11 +243,11 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
             title="Origin"
             image={(
               <BuildingImage
-                building={buildings[lot.building?.capableType || 0]}
+                building={Building.TYPES[lot.building?.capableType || 0]}
                 inventories={lot.building?.inventories}
                 showInventoryStatusForType={1} />
             )}
-            label={buildings[lot.building?.capableType || 0]?.name}
+            label={Building.TYPES[lot.building?.capableType || 0]?.name}
             sublabel={<><LocationIcon /> Lot {lot.i.toLocaleString()}</>}
           />
           
@@ -265,7 +262,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
               destinationLot
                 ? (
                   <BuildingImage
-                    building={buildings[destinationLot.building?.capableType || 0]}
+                    building={Building.TYPES[destinationLot.building?.capableType || 0]}
                     error={destinationOverloaded}
                     inventories={destinationLot?.building?.inventories}
                     showInventoryStatusForType={1} />
@@ -273,7 +270,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
                 : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
             }
             isSelected={stage === actionStage.NOT_STARTED}
-            label={destinationLot ? buildings[destinationLot.building?.capableType || 0]?.name : 'Select'}
+            label={destinationLot ? Building.TYPES[destinationLot.building?.capableType || 0]?.name : 'Select'}
             onClick={() => { setDestinationSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}
             sublabel={
@@ -296,7 +293,6 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
                   label="Transfer Items"
                   items={selectedItems}
                   onClick={stage === actionStage.NOT_STARTED && (() => setTransferSelectorOpen(true))}
-                  resources={resources}
                   stage={stage} />
               )
               : (
@@ -307,7 +303,6 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
                       label="Transfer Items"
                       items={selectedItems}
                       onClick={stage === actionStage.NOT_STARTED && (() => setTransferSelectorOpen(true))}
-                      resources={resources}
                       stage={stage}
                       unwrapped />
                   </FlexSectionBlock>
@@ -400,7 +395,6 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
             lot={lot}
             onClose={() => setTransferSelectorOpen(false)}
             onSelected={setSelectedItems}
-            resources={resources}
             open={transferSelectorOpen}
           />
 

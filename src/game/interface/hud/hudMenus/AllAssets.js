@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import styled from 'styled-components';
 import { Address } from '@influenceth/sdk';
 
@@ -11,10 +11,9 @@ import useOwnedShips from '~/hooks/useOwnedShips';
 import useAuth from '~/hooks/useAuth';
 import theme from '~/theme';
 import { HudMenuCollapsibleSection, majorBorderColor } from './components';
-import { ShipImage } from '../actionDialogs/components';
 import { useShipLink } from '~/components/ShipLink';
 import { ResourceImage } from '~/components/ResourceThumbnail';
-import { useShipAssets } from '~/hooks/useAssets';
+import { getShipIcon } from '~/lib/assetUtils';
 
 const thumbnailDimension = 75;
 
@@ -102,13 +101,13 @@ const Info = styled.div`
   }
 `;
 
-const ShipRow = ({ asset, ship }) => {
+const ShipRow = ({ ship }) => {
   const onClickShip = useShipLink({ shipId: ship.i, zoomToShip: true })
   return (
     <SelectableRow onClick={onClickShip}>
       <Thumbnail>
         <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>
-        <ResourceImage src={asset.iconUrls?.w150} contain />
+        <ResourceImage src={getShipIcon(ship.shipType, 'w150')} contain />
         <ClipCorner dimension={10} color={majorBorderColor} />
       </Thumbnail>
       <Info>
@@ -121,7 +120,6 @@ const ShipRow = ({ asset, ship }) => {
 
 const AllAssets = ({ onClose }) => {
   const { account } = useAuth();
-  const shipAssets = useShipAssets();
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const selectAsteroid = useStore(s => s.dispatchOriginSelected);
@@ -150,7 +148,7 @@ const AllAssets = ({ onClose }) => {
         <HudMenuCollapsibleSection
           titleText={`Ships`}
           collapsed>
-          {(ownedShips || []).map((ship) => <ShipRow key={ship.i} ship={ship} asset={shipAssets[ship.type]} />)}
+          {(ownedShips || []).map((ship) => <ShipRow key={ship.i} ship={ship} />)}
         </HudMenuCollapsibleSection>
         
         <HudMenuCollapsibleSection

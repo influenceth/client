@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Inventory } from '@influenceth/sdk';
+import { Building, Inventory, Product } from '@influenceth/sdk';
 
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, majorBorderColor, Rule } from './components';
 import ClipCorner from '~/components/ClipCorner';
@@ -10,6 +9,7 @@ import { SurfaceTransferIcon } from '~/components/Icons';
 import useLot from '~/hooks/useLot';
 import ResourceRequirement from '~/components/ResourceRequirement';
 import { getBuildingRequirements } from '../actionDialogs/components';
+import { getBuildingIcon } from '~/lib/assetUtils';
 
 const Wrapper = styled.div`
   display: flex;
@@ -140,9 +140,7 @@ const ItemsList = styled.div`
 `;
 
 const ConstructionPlan = ({ capableType, planningLot }) => {
-  const buildings = useBuildingAssets();
-  const resources = useResourceAssets();
-  const thumbUrl = buildings[capableType]?.siteIconUrls?.w400;
+  const thumbUrl = getBuildingIcon(capableType, 'w400', true);
 
   const items = useMemo(
     () => {
@@ -176,7 +174,7 @@ const ConstructionPlan = ({ capableType, planningLot }) => {
               isGathering={!!planningLot}
               noStyles={!planningLot}
               item={item}
-              resource={resources[item.i]}
+              resource={Product.TYPES[item.i]}
               size="85px"
               tooltipContainer="hudMenu" />
           ))}

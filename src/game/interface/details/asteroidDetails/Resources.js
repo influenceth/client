@@ -17,6 +17,7 @@ import AsteroidGraphic from './components/AsteroidGraphic';
 import theme, { hexToRGB } from '~/theme';
 import LiveTimer from '~/components/LiveTimer';
 import AsteroidBonuses from './AsteroidBonuses';
+import { getProductIcon } from '~/lib/assetUtils';
 
 // TODO (enhancement): if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
@@ -567,7 +568,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
               )}
               {selected.resources.map((resource) => { return (
                 <ResourceRow key={resource.i} category={selected.categoryKey} onClick={goToResourceViewer(resource)}>
-                  <ResourceIcon style={{ backgroundImage: `url(${resource.iconUrls.w85})` }} />
+                  <ResourceIcon style={{ backgroundImage: `url(${getProductIcon(resource.i, 'w85')})` }} />
                   <ResourceInfo>
                     <label>{resource.name}</label>
                     <BarChart value={resource.abundance} maxValue={selected.resources[0].abundance} twoLine>
@@ -622,7 +623,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                               data-tip={resource.name}
                               data-for="global"
                               onClick={goToResourceViewer(resource)}
-                              style={{ backgroundImage: `url(${resource.iconUrls.w25})` }} />
+                              style={{ backgroundImage: `url(${getProductIcon(resource.i, 'w25')})` }} />
                           ))}
                         </div>
                       </ResourceGroupItems>

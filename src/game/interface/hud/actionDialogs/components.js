@@ -3,14 +3,16 @@ import styled, { css, keyframes } from 'styled-components';
 import { createPortal } from 'react-dom';
 import ReactTooltip from 'react-tooltip';
 import { useQuery } from 'react-query';
-import api from '~/lib/api';
-import {
-  TbBellRingingFilled as AlertIcon,
-} from 'react-icons/tb';
-import { Asteroid, Building, Crewmate, Inventory, Product } from '@influenceth/sdk';
+import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
+import { BarLoader } from 'react-spinners';
+import { Asteroid, Building, Crewmate, Inventory, Product, Ship } from '@influenceth/sdk';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
+import ClipCorner from '~/components/ClipCorner';
+import CrewCardFramed from '~/components/CrewCardFramed';
+import CrewIndicator from '~/components/CrewIndicator';
+import Dialog from '~/components/Dialog';
 import IconButton from '~/components/IconButton';
 import {
   ChevronRightIcon,
@@ -28,33 +30,28 @@ import {
   RadioUncheckedIcon,
   MyAssetIcon,
   CaptainIcon,
-  InfoIcon,
   EmergencyModeEnterIcon,
   CheckIcon,
   ProcessIcon
 } from '~/components/Icons';
+import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import ResourceColorIcon from '~/components/ResourceColorIcon';
 import ResourceThumbnail, { ResourceThumbnailWrapper, ResourceImage, ResourceProgress } from '~/components/ResourceThumbnail';
 import ResourceRequirement from '~/components/ResourceRequirement';
 import ResourceSelection from '~/components/ResourceSelection';
 import SliderInput from '~/components/SliderInput';
-import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
-import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
-import theme, { hexToRGB } from '~/theme';
-import LiveTimer from '~/components/LiveTimer';
-import CrewCardFramed from '~/components/CrewCardFramed';
-import ClipCorner from '~/components/ClipCorner';
-import Dialog from '~/components/Dialog';
 import TextInput from '~/components/TextInputUncontrolled';
+import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import useChainTime from '~/hooks/useChainTime';
+import useCrewMember from '~/hooks/useCrewMember';
+import api from '~/lib/api';
 import { formatFixed, formatTimer } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
 import constants from '~/lib/constants';
+import { getBuildingIcon, getShipIcon } from '~/lib/assetUtils';
+import theme, { hexToRGB } from '~/theme';
 import { theming } from '../ActionDialog';
-import useCrewMember from '~/hooks/useCrewMember';
-import { BarLoader } from 'react-spinners';
-import CrewIndicator from '~/components/CrewIndicator';
 
 const SECTION_WIDTH = 780;
 
@@ -1356,8 +1353,6 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
 };
 
 export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected, open }) => {
-  const buildings = useBuildingAssets();
-
   const [selection, setSelection] = useState(initialSelection);
 
   const onComplete = useCallback(() => {
@@ -1373,13 +1368,13 @@ export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected,
       open={open}
       title="Select Site Type">
       <SelectionGrid>
-        {Object.keys(buildings).filter((c) => c > 0).map((capableType) => (
+        {Object.keys(Building.TYPES).filter((c) => c > 0).map((capableType) => (
           <FlexSectionInputBlock
             key={capableType}
             fullWidth
-            image={<BuildingImage building={buildings[capableType]} unfinished />}
+            image={<BuildingImage building={Building.TYPES[capableType]} unfinished />}
             isSelected={capableType === selection}
-            label={buildings[capableType].name}
+            label={Building.TYPES[capableType].name}
             sublabel="Site"
             onClick={() => setSelection(capableType)}
             style={{ width: '100%' }}
@@ -1390,7 +1385,7 @@ export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected,
   );
 };
 
-export const ResourceSelectionDialog = ({ abundances, lotId, resources, initialSelection, onClose, onSelected, open }) => {
+export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, onClose, onSelected, open }) => {
   const [selection, setSelection] = useState(initialSelection);
 
   const onComplete = useCallback(() => {
@@ -1425,7 +1420,7 @@ export const ResourceSelectionDialog = ({ abundances, lotId, resources, initialS
                   disabledRow={abundances[resourceId] === 0}
                   onClick={() => setSelection(resourceId)}
                   selectedRow={selection === Number(resourceId)}>
-                  <td><ResourceColorIcon category={resources[resourceId].category} /> {resources[resourceId].name}</td>
+                  <td><ResourceColorIcon category={Product.TYPES[resourceId].category} /> {Product.TYPES[resourceId].name}</td>
                   <td>{(100 * abundances[resourceId]).toFixed(1)}%</td>
                 </SelectionTableRow>
               ))
@@ -1437,7 +1432,7 @@ export const ResourceSelectionDialog = ({ abundances, lotId, resources, initialS
   );
 }
 
-export const CoreSampleSelectionDialog = ({ lotId, options, resources, initialSelection, onClose, onSelected, open }) => {
+export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, onClose, onSelected, open }) => {
   const [selection, setSelection] = useState(initialSelection);
 
   useEffect(() => {
@@ -1471,8 +1466,8 @@ export const CoreSampleSelectionDialog = ({ lotId, options, resources, initialSe
                 key={`${sample.resourceId}_${sample.sampleId}`}
                 onClick={() => setSelection(sample)}
                 selectedRow={selection?.resourceId === sample.resourceId && selection?.sampleId === sample.sampleId}>
-                <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name} #{sample.sampleId.toLocaleString()}</td>
-                <td>{formatSampleMass(sample.remainingYield * resources[sample.resourceId].massPerUnit)} tonnes</td>
+                <td><ResourceColorIcon category={Product.TYPES[sample.resourceId].category} /> {Product.TYPES[sample.resourceId].name} #{sample.sampleId.toLocaleString()}</td>
+                <td>{formatSampleMass(sample.remainingYield * Product.TYPES[sample.resourceId].massPerUnit)} tonnes</td>
               </SelectionTableRow>
             ))}
           </tbody>
@@ -1600,7 +1595,7 @@ export const DestinationSelectionDialog = ({
   );
 }
 
-export const TransferSelectionDialog = ({ requirements, inventory, lot, resources, initialSelection, onClose, onSelected, open }) => {
+export const TransferSelectionDialog = ({ requirements, inventory, lot, initialSelection, onClose, onSelected, open }) => {
   const [selection, setSelection] = useState({});
 
   useEffect(() => {
@@ -1628,7 +1623,7 @@ export const TransferSelectionDialog = ({ requirements, inventory, lot, resource
   const items = useMemo(() => Object.keys(inventory).map((resourceId) => ({
     selected: selection[resourceId],
     available: inventory[resourceId],
-    resource: resources[resourceId],
+    resource: Product.TYPES[resourceId],
     maxSelectable: requirements
       ? Math.min(inventory[resourceId], requirements.find((r) => r.i === Number(resourceId))?.inNeed || 0)
       : inventory[resourceId]
@@ -1782,8 +1777,6 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
 };
 
 export const ProcessSelectionDialog = ({ initialSelection, processes, onClose, onSelected, open }) => {
-  const resources = useResourceAssets();
-  const shipAssets = useShipAssets();
   const [error, setError] = useState();
   const [selection, setSelection] = useState(initialSelection);
 
@@ -1823,7 +1816,7 @@ export const ProcessSelectionDialog = ({ initialSelection, processes, onClose, o
                     <InputOutputTableCell>
                       <label>{inputs.length}</label>
                       {inputs.map(({ resourceId }) => (
-                        <ResourceThumbnail key={resourceId} resource={resources[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
                       ))}
                     </InputOutputTableCell>
                   </td>
@@ -1832,8 +1825,8 @@ export const ProcessSelectionDialog = ({ initialSelection, processes, onClose, o
                       <label>{outputs.length}</label>
                       {outputs.map(({ resourceId, shipAssetId }) => 
                         shipAssetId
-                          ? <ShipImage key={shipAssetId} ship={shipAssets[shipAssetId]} style={{ height: '45px', width: '74px' }} tooltipContainer="selectionDialog" />
-                          : <ResourceThumbnail key={resourceId} resource={resources[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                          ? <ShipImage key={shipAssetId} ship={Ship.TYPES[shipAssetId]} style={{ height: '45px', width: '74px' }} tooltipContainer="selectionDialog" />
+                          : <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
                       )}
                     </InputOutputTableCell>
                   </td>
@@ -1914,7 +1907,7 @@ export const ShipImage = ({ ship, iconBadge, iconBadgeColor, iconOverlay, iconOv
   const capacity = getCapacityUsage(ship, inventories, showInventoryStatusForType);
   return (
     <ShipThumbnailWrapper style={style}>
-      <ResourceImage src={ship[simulated ? 'simIconUrls' : 'iconUrls']?.w150} />
+      <ResourceImage src={getShipIcon(ship.i, 'w150', simulated)} />
       {showInventoryStatusForType !== undefined && (
         <>
           <InventoryUtilization
@@ -1940,7 +1933,7 @@ export const BuildingImage = ({ building, error, iconOverlay, iconOverlayColor, 
   const closerLimit = (capacity.volume.used + capacity.volume.reserved) / capacity.volume.max > (capacity.mass.used + capacity.mass.reserved) / capacity.mass.max ? 'volume' : 'mass';
   return (
     <BuildingThumbnailWrapper>
-      <ResourceImage src={building[unfinished ? 'siteIconUrls' : 'iconUrls']?.w150} />
+      <ResourceImage src={getBuildingIcon(building.i, 'w150', unfinished)} />
       {showInventoryStatusForType !== undefined && (
         <>
           <InventoryLabel overloaded={error}>
@@ -2160,7 +2153,6 @@ export const ResourceGridSectionInner = ({
   isGathering,
   items,
   onClick,
-  resources,
   minCells = 0,
   noCellStyles,
   theming = 'default'
@@ -2172,8 +2164,8 @@ export const ResourceGridSectionInner = ({
       else if (denominator !== undefined) sumValue = denominator;
 
       acc.totalItems += (selected === undefined || selected > 0) ? 1 : 0;
-      acc.totalMass += sumValue * resources[i].massPerUnit * 1e6;
-      acc.totalVolume += sumValue * (resources[i].volumePerUnit || 0) * 1e6;
+      acc.totalMass += sumValue * Product.TYPES[i].massPerUnit * 1e6;
+      acc.totalVolume += sumValue * (Product.TYPES[i].volumePerUnit || 0) * 1e6;
       return acc;
     }, { totalItems: 0, totalMass: 0, totalVolume: 0 });
   }, [items]);
@@ -2193,7 +2185,7 @@ export const ResourceGridSectionInner = ({
                 key={item.i}
                 isGathering={isGathering}
                 item={item}
-                resource={resources[item.i]}
+                resource={Product.TYPES[item.i]}
                 noStyles={noCellStyles}
                 size="92px"
                 tooltipContainer="actionDialog" />
@@ -2238,7 +2230,7 @@ const ResourceGridSection = ({ label, ...props }) => (
   </Section>
 );
 
-export const BuildingRequirementsSection = ({ mode, label, requirements, requirementsMet, resources }) => {
+export const BuildingRequirementsSection = ({ mode, label, requirements, requirementsMet }) => {
   const items = useMemo(() => {
     return requirements.map((item) => ({
       i: item.i,
@@ -2258,12 +2250,11 @@ export const BuildingRequirementsSection = ({ mode, label, requirements, require
       isGathering={mode === 'gathering'}
       items={items}
       label={label}
-      resources={resources}
       theming={requirementsMet ? undefined : 'warning'} />
   );
 };
 
-export const TransferBuildingRequirementsSection = ({ label, onClick, requirements, resources, selectedItems }) => {
+export const TransferBuildingRequirementsSection = ({ label, onClick, requirements, selectedItems }) => {
   const items = useMemo(() => requirements.map((item) => ({
     i: item.i,
     numerator: item.inInventory + item.inTransit + (selectedItems[item.i] || 0),
@@ -2284,12 +2275,11 @@ export const TransferBuildingRequirementsSection = ({ label, onClick, requiremen
       items={items}
       selectedItems={selectedItems}
       label={label}
-      onClick={onClick}
-      resources={resources} />
+      onClick={onClick} />
   );
 };
 
-export const DeconstructionMaterialsSection = ({ label, itemsReturned, resources }) => {
+export const DeconstructionMaterialsSection = ({ label, itemsReturned }) => {
   const items = useMemo(() => {
     return itemsReturned.map((item) => ({
       i: item.i,
@@ -2301,12 +2291,11 @@ export const DeconstructionMaterialsSection = ({ label, itemsReturned, resources
   return (
     <ResourceGridSection
       items={items}
-      label={label}
-      resources={resources} />
+      label={label} />
   );
 };
 
-export const ItemSelectionSection = ({ columns = 7, label, items, onClick, resources, stage, unwrapped }) => {
+export const ItemSelectionSection = ({ columns = 7, label, items, onClick, stage, unwrapped }) => {
   const formattedItems = useMemo(() => {
     return Object.keys(items || {}).map((resourceId) => ({
       i: resourceId,
@@ -2322,7 +2311,6 @@ export const ItemSelectionSection = ({ columns = 7, label, items, onClick, resou
         minCells={columns * 2}
         noCellStyles={stage !== actionStage.NOT_STARTED}
         onClick={onClick}
-        resources={resources}
         theming={stage === actionStage.READY_TO_COMPLETE ? 'success' : 'default'} />
     )
     : (
@@ -2333,7 +2321,6 @@ export const ItemSelectionSection = ({ columns = 7, label, items, onClick, resou
         minCells={columns * 2}
         noCellStyles={stage !== actionStage.NOT_STARTED}
         onClick={onClick}
-        resources={resources}
         theming={stage === actionStage.READY_TO_COMPLETE ? 'success' : 'default'} />
     );
 };
@@ -2599,7 +2586,6 @@ export const RecipeSlider = ({ amount, processingTime, min, max, setAmount }) =>
 };
 
 export const ProcessInputOutputSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, ...props }) => {
-  const resources = useResourceAssets();
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
       <ProductWrapper>
@@ -2611,7 +2597,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
             primary={primaryOutput === resourceId}
             onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
             <ResourceThumbnail
-              resource={resources[resourceId]}
+              resource={Product.TYPES[resourceId]}
               backgroundColor={output ? `rgba(${hexToRGB(theme.colors.green)}, 0.15)` : undefined}
               badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
               badgeColor={output ? theme.colors.green : theme.colors.main}
@@ -2640,7 +2626,6 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
 };
 
 export const ProcessInputSquareSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, ...props }) => {
-  const resources = useResourceAssets();
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
       <ProductGridWrapper>
@@ -2652,7 +2637,7 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
             primary={primaryOutput === resourceId}
             onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
             <ResourceThumbnail
-              resource={resources[resourceId]}
+              resource={Product.TYPES[resourceId]}
               backgroundColor={output ? `rgba(${hexToRGB(theme.colors.green)}, 0.15)` : undefined}
               badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
               badgeColor={output ? theme.colors.green : theme.colors.main}
@@ -2981,11 +2966,9 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings =
 };
 
 export const InventoryChangeCharts = ({ building, inventoryType, deltaMass, deltaVolume }) => {
-  const buildings = useBuildingAssets();
-
   if (!(building && building.inventories && inventoryType !== undefined)) return null;
   
-  const capacity = getCapacityUsage(buildings[building?.capableType], building?.inventories, inventoryType);
+  const capacity = getCapacityUsage(Building.TYPES[building?.capableType], building?.inventories, inventoryType);
   const postDeltaMass = capacity.mass.used + capacity.mass.reserved + deltaMass * 1e6;
   const postDeltaVolume = capacity.volume.used + capacity.volume.reserved + deltaVolume * 1e6;
   const overMassCapacity = postDeltaMass > capacity.mass.max;

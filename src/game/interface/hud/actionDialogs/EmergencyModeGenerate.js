@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
+import { Product, Ship } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CloseIcon, CoreSampleIcon, EjectPassengersIcon, EmergencyModeEnterIcon, EmergencyModeExitIcon, EmergencyModeGenerateIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
@@ -94,8 +94,6 @@ const resourceId = 170;
 
 const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const resources = useResourceAssets();
-  const shipAssets = useShipAssets();
   
   const { currentStationing, stationingStatus, stationOnShip } = manager;
 
@@ -136,7 +134,7 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew
   ]), [ship]);
 
   const currentPropellantMass = 0;
-  const maxTonnageToGenerate = 0.1 * (shipAssets[ship?.type]?.maxPropellantMass - currentPropellantMass);
+  const maxTonnageToGenerate = 0.1 * (Ship.TYPES[ship?.type]?.maxPropellantMass - currentPropellantMass);
   const generationTime = 1000;
 
   const onStation = useCallback(() => {
@@ -186,11 +184,11 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew
 
           <FlexSectionInputBlock
             title="Propellant"
-            image={<ResourceThumbnail resource={resources[resourceId]} tooltipContainer="none" />}
+            image={<ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer="none" />}
             label={(
               <>
                 <div style={{ color: theme.colors.orange }}>EMERGENCY</div>
-                {resources[resourceId].name}
+                {Product.TYPES[resourceId].name}
               </>
             )}
             disabled={stage !== actionStages.NOT_STARTED}
@@ -218,7 +216,7 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew
                 extractionTime={generationTime || 0}
                 min={0}
                 max={maxTonnageToGenerate}
-                resource={resources[resourceId]}
+                resource={Product.TYPES[resourceId]}
                 setAmount={setAmount} />
             </SectionBody>
           </Section>
@@ -229,7 +227,7 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew
             title="Propellant"
             propellantPregeneration={0}
             propellantPostgeneration={0 + amount}
-            propellantTankMax={shipAssets[ship?.type || 0].maxPropellantMass}
+            propellantTankMax={Ship.TYPES[ship?.type || 0].maxPropellantMass}
           />
         </FlexSection>
 

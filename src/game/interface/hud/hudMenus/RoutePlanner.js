@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Time } from '@influenceth/sdk';
+import { Ship, Time } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
 import { CloseIcon, WarningIcon } from '~/components/Icons';
@@ -8,7 +8,6 @@ import NumberInput from '~/components/NumberInput';
 import Porkchop from '~/components/Porkchop';
 import SliderInput from '~/components/SliderInput';
 import ClockContext from '~/contexts/ClockContext';
-import { useShipAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
@@ -129,7 +128,6 @@ const exhaustVelocity = 29000; // m/s
 
 const RoutePlanner = () => {
   const { coarseTime } = useContext(ClockContext);
-  const ships = useShipAssets();
   
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
@@ -146,7 +144,7 @@ const RoutePlanner = () => {
 
   const [cargoMass, setCargoMass] = useState(0);
   const [propellantMass, setPropellantMass] = useState(0);
-  const [ship, setShip] = useState(ships[1]);
+  const [ship, setShip] = useState(Ship.TYPES[1]);
 
   const onSetCargoMass = useCallback((amount) => {
     setCargoMass(Math.max(0, Math.min(ship?.maxCargoMass, Math.floor(parseInt(amount) || 0))));
@@ -233,7 +231,7 @@ const RoutePlanner = () => {
           <Dropdown
             labelKey="name"
             onChange={setShip}
-            options={Object.values(ships)}
+            options={Object.values(Ship.TYPES)}
             valueKey="i"
             size="small"
             style={{ textTransform: 'none' }}

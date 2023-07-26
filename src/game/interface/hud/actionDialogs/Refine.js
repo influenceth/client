@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
+import { Building } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { BackIcon, CaretIcon, CloseIcon, CoreSampleIcon, ExtractionIcon, ForwardIcon, RefineIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ProcessIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
@@ -107,8 +107,6 @@ const processes = [
 
 const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const buildings = useBuildingAssets();
-  const ships = useShipAssets();
   
   const { currentLaunch, launchStatus, startLaunch } = manager;
 
@@ -207,8 +205,8 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
         <FlexSection style={{ marginBottom: 32, width: SECTION_WIDTH }}>
           <FlexSectionInputBlock
             title="Refining Location"
-            image={<BuildingImage building={buildings[lot?.building?.capableType || 0]} />}
-            label={`${buildings[lot?.building?.capableType || 0].name}`}
+            image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
+            label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
             disabled={stage !== actionStages.NOT_STARTED}
             sublabel={`Lot #${lot?.i}`}
             style={{ width: '33.3%' }}
@@ -251,8 +249,8 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
           <FlexSectionInputBlock
             title="Input Inventory"
             titleDetails={<TransferDistanceDetails distance={8} />}
-            image={<BuildingImage building={buildings[lot?.building?.capableType || 0]} />}
-            label={`${buildings[lot?.building?.capableType || 0].name}`}
+            image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
+            label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
             disabled={stage !== actionStages.NOT_STARTED}
             sublabel={`Lot #${lot?.i}`}
             style={{ width: '33.3%' }}
@@ -283,8 +281,8 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
           <FlexSectionInputBlock
             title="Output Inventory"
             titleDetails={<TransferDistanceDetails distance={19} />}
-            image={<BuildingImage building={buildings[lot?.building?.capableType || 0]} />}
-            label={`${buildings[lot?.building?.capableType || 0].name}`}
+            image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
+            label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
             disabled={stage !== actionStages.NOT_STARTED}
             sublabel={`Lot #${lot?.i}`}
             style={{ width: '33.3%' }}

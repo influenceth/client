@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Building, Inventory } from '@influenceth/sdk';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Asteroid, Building, Inventory, Product } from '@influenceth/sdk';
 
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
 import { ForwardIcon, InventoryIcon, LocationIcon, SurfaceTransferIcon, TransferToSiteIcon } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import useLot from '~/hooks/useLot';
@@ -36,8 +35,6 @@ import actionStage from '~/lib/actionStages';
 
 const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const buildings = useBuildingAssets();
-  const resources = useResourceAssets();
 
   const { currentDelivery, deliveryStatus, startDelivery, finishDelivery } = deliveryManager;
   const { crew, crewMemberMap } = useCrewContext();
@@ -83,8 +80,8 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
 
   const { totalMass, totalVolume } = useMemo(() => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {
-      acc.totalMass += selectedItems[resourceId] * resources[resourceId].massPerUnit;
-      acc.totalVolume += selectedItems[resourceId] * resources[resourceId].volumePerUnit;
+      acc.totalMass += selectedItems[resourceId] * Product.TYPES[resourceId].massPerUnit;
+      acc.totalVolume += selectedItems[resourceId] * Product.TYPES[resourceId].volumePerUnit;
       return acc;
     }, { totalMass: 0, totalVolume: 0 })
   }, [selectedItems]);
@@ -197,13 +194,13 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
               originLot
                 ? (
                   <BuildingImage
-                    building={buildings[originLot.building?.capableType || 0]}
+                    building={Building.TYPES[originLot.building?.capableType || 0]}
                     inventories={originLot?.building?.inventories}
                     showInventoryStatusForType={1} />
                 )
                 : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
             }
-            label={originLot ? buildings[originLot.building?.capableType || 0]?.name : 'Select'}
+            label={originLot ? Building.TYPES[originLot.building?.capableType || 0]?.name : 'Select'}
             isSelected={stage === actionStage.NOT_STARTED}
             onClick={() => { setOriginSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}
@@ -218,12 +215,12 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
             title="Destination"
             image={(
               <BuildingImage
-                building={buildings[lot.building?.capableType || 0]}
+                building={Building.TYPES[lot.building?.capableType || 0]}
                 inventories={lot.building?.inventories}
                 showInventoryStatusForType={0}
                 unfinished />
             )}
-            label={buildings[lot.building?.capableType || 0]?.name}
+            label={Building.TYPES[lot.building?.capableType || 0]?.name}
             sublabel={<><LocationIcon /> Lot {lot.i.toLocaleString()}</>}
           />
         </FlexSection>
@@ -232,7 +229,6 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
           label="Construction Requirements"
           onClick={originLot ? () => setTransferSelectorOpen(true) : null}
           requirements={buildingRequirements}
-          resources={resources}
           selectedItems={selectedItems}
         />
 
@@ -271,7 +267,6 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
             lot={lot}
             onClose={() => setTransferSelectorOpen(false)}
             onSelected={setSelectedItems}
-            resources={resources}
             open={transferSelectorOpen}
           />
 

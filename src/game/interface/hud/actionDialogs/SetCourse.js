@@ -1,10 +1,9 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Time } from '@influenceth/sdk';
+import { Ship, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, RotatedShipMarkerIcon, WarningOutlineIcon, MyAssetIcon } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
@@ -203,15 +202,13 @@ const LocationDiamond = () => (
 const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...props }) => {
   const { coarseTime } = useContext(ClockContext);
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const buildings = useBuildingAssets();
-  const ships = useShipAssets();
   
   const { currentLaunch, flightStatus, startLaunch } = manager;
 
   const { crew, crewMemberMap } = useCrewContext();
 
   const [tab, setTab] = useState(0);
-  const ship = ships[0];  // TODO
+  const ship = Ship.TYPES[1];  // TODO
 
   const crewMembers = currentLaunch?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];

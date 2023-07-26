@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
 import styled from 'styled-components';
+import { Building } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
   UnplanBuildingIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
-import { useBuildingAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useConstructionManager from '~/hooks/useConstructionManager';
 
@@ -37,7 +37,6 @@ const UnplanWarning = styled.div`
 `;
 
 const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
-  const buildings = useBuildingAssets();
   const { currentConstruction, constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, lot?.i);
   const { captain } = useCrewContext();
 
@@ -78,8 +77,8 @@ const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props })
         <FlexSection>
           <FlexSectionInputBlock
             title="Current Plans"
-            image={<BuildingImage building={buildings[capableType]} unfinished />}
-            label={buildings[capableType].name}
+            image={<BuildingImage building={Building.TYPES[capableType]} unfinished />}
+            label={Building.TYPES[capableType].name}
             disabled
             sublabel="Site Plans"
           />

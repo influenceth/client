@@ -7,7 +7,6 @@ import Details from '~/components/DetailsModal';
 import { OrderIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useLot from '~/hooks/useLot';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import Button from '~/components/ButtonAlt';
 import MarketplaceHome from './marketplace/Home';
 import MarketplaceDepthChart from './marketplace/DepthChart';
@@ -16,6 +15,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useCrew from '~/hooks/useCrew';
 import AsteroidResourcePrices from './marketplace/AsteroidResourcePrices';
 import marketplaceHeader from '~/assets/images/modal_headers/Marketplace.png';
+import { getBuildingIcon, getProductIcon } from '~/lib/assetUtils';
 
 
 const ActionImage = styled.div`
@@ -107,8 +107,6 @@ for (let resourceId = 1; resourceId <= 245; resourceId++) {
 }
 
 const Marketplace = () => {
-  const buildings = useBuildingAssets();
-  const resources = useResourceAssets();
 
   const history = useHistory();
   const { asteroidId, lotId, discriminator } = useParams();
@@ -125,7 +123,6 @@ const Marketplace = () => {
   const { data: marketplaceOwner } = useCrew(lot?.occupier);
 
   const resourceId = discriminator === 'orders' ? null : discriminator;
-  const resource = resources[resourceId];
 
   // TODO: if lot is loaded and this is not a marketplace, go back
 
@@ -185,11 +182,11 @@ const Marketplace = () => {
   if (!asteroid || (lotId !== 'all' && (!lot || !marketplace))) return null;
   return (
     <Details
-      outerNode={resource
-        ? <ResourceActionImage src={resource.iconUrls.w400} />
+      outerNode={resourceId
+        ? <ResourceActionImage src={getProductIcon(resourceId, 'w400')} />
         : <ActionImage
             isPreMasked={!marketplace}
-            src={marketplace ? buildings[8].iconUrls.w1000 : marketplaceHeader} />
+            src={marketplace ? getBuildingIcon(8, 'w1000') : marketplaceHeader} />
       }
       title={`${asteroid.customName || asteroid.baseName || '...'} > ${lotId === 'all' ? 'Markets' : (marketplace.name || 'Marketplace')}`}
       underlineHeader
@@ -210,12 +207,12 @@ const Marketplace = () => {
               lot={lot}
               marketplace={marketplace}
               marketplaceOwner={marketplaceOwner}
-              resource={resource} />
+              resource={Product.TYPES[resourceId]} />
           )}
           {discriminator && discriminator !== 'orders' && !marketplace && (
             <AsteroidResourcePrices
               asteroid={asteroid}
-              resource={resource} />
+              resource={Product.TYPES[resourceId]} />
           )}
           {!discriminator && (
             <MarketplaceHome

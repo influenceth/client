@@ -4,7 +4,6 @@ import { Asteroid, Deposit, Product } from '@influenceth/sdk';
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { NewCoreSampleIcon, ResourceIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
-import { useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
@@ -34,7 +33,6 @@ import {
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 
 const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
-  const resources = useResourceAssets();
   const { startSampling, finishSampling, samplingStatus } = coreSampleManager;
   const { crew, crewMemberMap } = useCrewContext();
 
@@ -207,8 +205,8 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
           <FlexSection>
             <FlexSectionInputBlock
               title="Discovered"
-              image={<ResourceThumbnail resource={resources[resourceId]} tooltipContainer="none" />}
-              label={`${resources[resourceId]?.name} Deposit`}
+              image={<ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer="none" />}
+              label={`${Product.TYPES[resourceId]?.name} Deposit`}
               disabled
               style={{ width: '100%' }}
               sublabel={sample?.initialYieldTonnage && (
@@ -225,11 +223,11 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
               title="Resource"
               image={
                 resourceId
-                  ? <ResourceThumbnail resource={resources[resourceId]} tooltipContainer="none" />
+                  ? <ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer="none" />
                   : <EmptyResourceImage iconOverride={<ResourceIcon />} />
               }
               isSelected={stage === actionStage.NOT_STARTED}
-              label={resourceId ? resources[resourceId].name : 'Select'}
+              label={resourceId ? Product.TYPES[resourceId].name : 'Select'}
               onClick={() => setResourceSelectorOpen(true)}
               disabled={stage !== actionStage.NOT_STARTED}
               sublabel={
@@ -245,7 +243,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
               title="Tool"
               image={
                 resourceId  // TODO: this should be tool origin lot selected
-                  ? <ResourceThumbnail badge="1" resource={resources[175]} tooltipContainer="none" />
+                  ? <ResourceThumbnail badge="1" resource={Product.TYPES[175]} tooltipContainer="none" />
                   : <EmptyResourceImage />
               }
               isSelected={stage === actionStage.NOT_STARTED}
@@ -290,7 +288,6 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
           onClose={() => setResourceSelectorOpen(false)}
           onSelected={onSelectResource}
           open={resourceSelectorOpen}
-          resources={resources}
         />
       )}
     </>

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
+import { Building, Ship } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, EjectPassengersIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
@@ -72,8 +72,6 @@ import useCrewMembers from '~/hooks/useCrewMembers';
 
 const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const buildings = useBuildingAssets();
-  const shipAssets = useShipAssets();
   
   const { currentStationing, stationingStatus, stationOnShip } = manager;
 
@@ -142,7 +140,7 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
             ? (
               <ShipInputBlock
                 title="Origin"
-                ship={{ ...shipAssets[ship.type], ...ship }}
+                ship={{ ...Ship.TYPES[ship.type], ...ship }}
                 disabled={stage !== actionStages.NOT_STARTED}
                 isMine
                 hasMyCrew={ship.stationedCrews.includes(crew?.i)} />
@@ -150,8 +148,8 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
             : (
               <FlexSectionInputBlock
                 title="Origin"
-                image={<BuildingImage building={buildings[lot?.building?.capableType || 0]} />}
-                label={`${buildings[lot?.building?.capableType || 0].name}`}
+                image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
+                label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
                 disabled={stage !== actionStages.NOT_STARTED}
                 sublabel={`Lot #${lot?.i || 1}`}
               />
@@ -178,10 +176,10 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
               <MiniBarChart
                 color="#92278f"
                 label="Crewmate Count"
-                valueLabel={`5 / ${shipAssets[ship.type].maxPassengers}`}
-                value={5 / shipAssets[ship.type].maxPassengers}
+                valueLabel={`5 / ${Ship.TYPES[ship.type].maxPassengers}`}
+                value={5 / Ship.TYPES[ship.type].maxPassengers}
                 deltaColor="#f644fa"
-                deltaValue={-targetCrew?.crewMembers?.length / shipAssets[ship.type].maxPassengers}
+                deltaValue={-targetCrew?.crewMembers?.length / Ship.TYPES[ship.type].maxPassengers}
               />
             )}
           </div>

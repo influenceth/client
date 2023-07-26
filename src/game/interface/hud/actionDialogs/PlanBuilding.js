@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Building } from '@influenceth/sdk';
+import { Building, Product } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
   PlanBuildingIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
 import useConstructionManager from '~/hooks/useConstructionManager';
@@ -39,8 +38,6 @@ const MouseoverWarning = styled.span`
 `;
 
 const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
-  const buildings = useBuildingAssets();
-  const resources = useResourceAssets();
   const { currentConstruction, planConstruction } = constructionManager;
   const { captain, crew, crewMemberMap } = useCrewContext();
 
@@ -108,11 +105,11 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
             title="Building Site"
             image={
               capableType
-                ? <BuildingImage building={buildings[capableType]} unfinished />
+                ? <BuildingImage building={Building.TYPES[capableType]} unfinished />
                 : <EmptyBuildingImage iconOverride={<PlanBuildingIcon />} />
             }
             isSelected={stage === actionStage.NOT_STARTED}
-            label={capableType ? buildings[capableType].name : 'Select'}
+            label={capableType ? Building.TYPES[capableType].name : 'Select'}
             onClick={() => setSiteSelectorOpen(true)}
             disabled={stage !== actionStage.NOT_STARTED}
             sublabel="Site"
@@ -123,8 +120,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
           <BuildingRequirementsSection
             label="Required for Construction"
             mode="display"
-            requirements={buildingRequirements}
-            resources={resources} />
+            requirements={buildingRequirements} />
         )}
 
         {/* TODO: if crew travel becomes part of planning, will need to configure this */}

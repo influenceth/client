@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import Ticker from 'react-ticker';
+import { Product } from '@influenceth/sdk';
 
 import ClipCorner from '~/components/ClipCorner';
 import CrewIndicator from '~/components/CrewIndicator';
@@ -9,7 +10,6 @@ import { ChevronDoubleDownIcon, ChevronDoubleUpIcon, ChevronRightIcon, Compositi
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import Switcher from '~/components/SwitcherButton';
 import TextInput from '~/components/TextInput';
-import { useResourceAssets } from '~/hooks/useAssets';
 import { AsteroidImage, formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 import { formatPrecision, formatPrice } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
@@ -261,8 +261,6 @@ const TickerItem = styled.div`
 const greenRGB = hexToRGB(theme.colors.green);
 
 const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketplace = null, marketplaceOwner = null }) => {
-  const resources = useResourceAssets();
-
   const [mode, setMode] = useState('buy');
   const [nameFilter, setNameFilter] = useState('');
 
@@ -278,7 +276,7 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
         return l.forBuy > 0;
       })
       .sort((a, b) => {
-        return resources[a.resourceId].name < resources[b.resourceId].name ? -1 : 1;
+        return Product.TYPES[a.resourceId].name < Product.TYPES[b.resourceId].name ? -1 : 1;
       });
   }, [!!marketplace, listings, mode]);
 
@@ -322,7 +320,7 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
           {() => (
             <TickerItems>
               {tickerListings.map((listing) => {
-                const resource = resources[listing.resourceId];
+                const resource = Product.TYPES[listing.resourceId];
                 const price = mode === 'buy' ? listing.salePrice : listing.buyPrice;
                 const change = mode === 'buy' ? listing.saleChange : listing.buyChange;
                 return (
@@ -378,8 +376,8 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
       <Body>
         <Listings>
           {listings
-            .filter(({ resourceId }) => nameFilter.length === 0 || resources[resourceId].name.toLowerCase().includes((nameFilter || '').toLowerCase()))
-            .sort((a, b) => resources[a.resourceId].name < resources[b.resourceId].name ? -1 : 1) // TODO: according to dropdown
+            .filter(({ resourceId }) => nameFilter.length === 0 || Product.TYPES[resourceId].name.toLowerCase().includes((nameFilter || '').toLowerCase()))
+            .sort((a, b) => Product.TYPES[a.resourceId].name < Product.TYPES[b.resourceId].name ? -1 : 1) // TODO: according to dropdown
             .map((listing) => {
               let thumbBG = 'rgba(170, 170, 170, 0.2)';
               if (!!marketplace) {
@@ -389,7 +387,7 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
                   thumbBG = `rgba(${theme.colors.mainRGB}, 0.2);`//`#0d2a33`;
                 };
               }
-              const resource = resources[listing.resourceId];
+              const resource = Product.TYPES[listing.resourceId];
               const amount = mode === 'buy' ? listing.forSale : listing.forBuy;
               const price = mode === 'buy' ? listing.salePrice : listing.buyPrice;
               const change = mode === 'buy' ? listing.saleChange : listing.buyChange;

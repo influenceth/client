@@ -3,8 +3,9 @@ import styled from 'styled-components';
 import { FaEllipsisH as MenuIcon } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
 
+import ClipCorner from '~/components/ClipCorner';
+import { getProductIcon } from '~/lib/assetUtils';
 import { hexToRGB } from '~/theme';
-import ClipCorner from './ClipCorner';
 
 const defaultSize = '92px';
 const defaultBorderColor = '#333';
@@ -239,7 +240,7 @@ const Menu = ({ children }) => {
       {...props}
       {...tooltipProps}>
       {underlay}
-      <ResourceImage contain={props.contain} src={parseInt(size) > 125 ? resource.iconUrls.w400 : resource.iconUrls.w125} />
+      <ResourceImage contain={props.contain} src={getProductIcon(resource.i, parseInt(size) > 125 ? 'w400' : 'w125')} />
       <ClipCorner dimension={10} color={outlineColor || defaultBorderColor} />
       {badge !== undefined && <ResourceBadge badge={badge} badgeDenominator={badgeDenominator} />}
       {iconBadge !== undefined && <ResourceIconBadge>{iconBadge}</ResourceIconBadge>}

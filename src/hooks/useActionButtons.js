@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Address, Inventory } from '@influenceth/sdk';
+import { Address, Building } from '@influenceth/sdk';
 
-import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
 import useAuth from '~/hooks/useAuth';
@@ -14,7 +13,6 @@ import actionButtons from '../game/interface/hud/actionButtons';
 
 const useActionButtons = () => {
   const { account } = useAuth();
-  const buildings = useBuildingAssets();
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const { lotId } = useStore(s => s.asteroids.lot || {});
@@ -132,7 +130,7 @@ const useActionButtons = () => {
 
         // potentially-public/shared buildings
         if (constructionStatus === 'OPERATIONAL' && lot.building?.capableType) {
-          const buildingAsset = buildings[lot.building.capableType];
+          const buildingAsset = Building.TYPES[lot.building.capableType];
           if (crew.station?.asteroidId === asteroidId && crew.station?.lotId === lotId && !crew.station?.shipId) {
             a.push(actionButtons.EjectCrew);
           } else if (buildingAsset.capabilities.includes('habitation')) {
@@ -143,7 +141,7 @@ const useActionButtons = () => {
         // buildings i own
         if (lot.occupier === crew.i) {
           if (constructionStatus === 'OPERATIONAL' && lot.building?.capableType) {
-            const buildingAsset = buildings[lot.building.capableType];
+            const buildingAsset = Building.TYPES[lot.building.capableType];
             if (buildingAsset.capabilities.includes('extraction')) {
               a.push(actionButtons.Extract);
             }

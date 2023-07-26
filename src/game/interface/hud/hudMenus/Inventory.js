@@ -3,13 +3,12 @@ import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { usePopper } from 'react-popper';
 import ReactTooltip from 'react-tooltip';
-import { Inventory } from '@influenceth/sdk';
+import { Inventory, Product } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
 import { CheckedIcon, DotsIcon, UncheckedIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import useActionButtons from '~/hooks/useActionButtons';
-import { useResourceAssets } from '~/hooks/useAssets';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { formatFixed } from '~/lib/utils';
@@ -256,7 +255,6 @@ const LotInventory = () => {
   const { props: actionProps } = useActionButtons();
   const { asteroidId, lotId } = useStore(s => s.asteroids.lot) || {};
   const { data: lot } = useLot(asteroidId, lotId);
-  const resources = useResourceAssets();
 
   const [amount, setAmount] = useState();
   const [focused, setFocused] = useState();
@@ -305,9 +303,9 @@ const LotInventory = () => {
   const sortedResources = useMemo(() => {
     if (!inventory?.resources) return [];
     return Object.keys(inventory.resources).sort((a, b) => {
-      if (order === 'Mass') return inventory.resources[a] * resources[a].massPerUnit > inventory.resources[b] * resources[b].massPerUnit ? -1 : 1;
-      else if (order === 'Volume') return inventory.resources[a] * resources[a].volumePerUnit > inventory.resources[b] * resources[b].volumePerUnit ? -1 : 1;
-      return resources[a].name < resources[b].name ? -1 : 1;
+      if (order === 'Mass') return inventory.resources[a] * Product.TYPES[a].massPerUnit > inventory.resources[b] * Product.TYPES[b].massPerUnit ? -1 : 1;
+      else if (order === 'Volume') return inventory.resources[a] * Product.TYPES[a].volumePerUnit > inventory.resources[b] * Product.TYPES[b].volumePerUnit ? -1 : 1;
+      return Product.TYPES[a].name < Product.TYPES[b].name ? -1 : 1;
     });
   }, [inventory?.resources, order]);
 
@@ -367,8 +365,8 @@ const LotInventory = () => {
     const selectedTally = Object.keys(selectedItems).length;
     if (selectedTally > 0) {
       const [totalMass, totalVolume] = Object.keys(selectedItems).reduce((acc, resourceId) => {
-        acc[0] += selectedItems[resourceId] * resources[resourceId].massPerUnit;
-        acc[1] += selectedItems[resourceId] * resources[resourceId].volumePerUnit;
+        acc[0] += selectedItems[resourceId] * Product.TYPES[resourceId].massPerUnit;
+        acc[1] += selectedItems[resourceId] * Product.TYPES[resourceId].volumePerUnit;
         return acc;
       }, [0, 0]);
       return `${selectedTally} Product${selectedTally === 1 ? '' : 's'}: ${formatMass(totalMass * 1e6)} | ${formatVolume(totalVolume * 1e6)}`;
@@ -409,7 +407,7 @@ const LotInventory = () => {
             {splittingResourceId && (
               <StackSplitterPopper referenceEl={resourceItemRefs.current[splittingResourceId]}>
                 <StackSplitter onMouseLeave={onMouseLeave}>
-                  <label>Selected Amount ({resources[splittingResourceId].massPerUnit === 0.001 ? 'kg' : ''})</label>
+                  <label>Selected Amount ({Product.TYPES[splittingResourceId].massPerUnit === 0.001 ? 'kg' : ''})</label>
                   <QuantaInput
                     type="number"
                     max={inventory.resources[splittingResourceId]}
@@ -446,9 +444,9 @@ const LotInventory = () => {
                     : undefined
                   }
                   progress={displayVolumes
-                    ? inventory.resources[resourceId] * resources[resourceId].volumePerUnit / (1E-6 * inventory.volume)
+                    ? inventory.resources[resourceId] * Product.TYPES[resourceId].volumePerUnit / (1E-6 * inventory.volume)
                     : undefined}
-                  resource={resources[resourceId]}
+                  resource={Product.TYPES[resourceId]}
                   tooltipContainer="hudMenu" />
               </ThumbnailWrapper>
             ))}

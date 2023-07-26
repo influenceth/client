@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
+import { Building, Product } from '@influenceth/sdk';
 
 import marketplaceBackground from '~/assets/images/modal_headers/Marketplace.png';
 import { BanIcon, InventoryIcon, LocationIcon, WarningOutlineIcon, OrderIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
 import useLot from '~/hooks/useLot';
@@ -187,9 +187,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
   const { isCancellation, mode, type, resourceId, preselect } = props;
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const buildings = useBuildingAssets();
-  const resources = useResourceAssets();
-  const resource = resources[resourceId] || {};
+  const resource = Product.TYPES[resourceId] || {};
   const resourceByMass = resource?.massPerUnit === 0.001;
   
   const { currentLaunch, launchStatus, startLaunch } = manager;
@@ -424,8 +422,8 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
         <FlexSection>
           <FlexSectionInputBlock
             title="Marketplace"
-            image={<BuildingImage building={buildings[lot?.building?.capableType || 0]} />}
-            label={`${lot?.building?.name || buildings[lot?.building?.capableType || 0].name}`}
+            image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
+            label={`${lot?.building?.name || Building.TYPES[lot?.building?.capableType || 0].name}`}
             disabled
             sublabel={`Lot #${lot?.i}`}
           />
@@ -449,14 +447,14 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
               destinationLot
                 ? (
                   <BuildingImage
-                    building={buildings[destinationLot.building?.capableType || 0]}
+                    building={Building.TYPES[destinationLot.building?.capableType || 0]}
                     inventories={destinationLot?.building?.inventories}
                     showInventoryStatusForType={1} />
                 )
                 : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
             }
             isSelected={stage === actionStages.NOT_STARTED}
-            label={destinationLot ? (destinationLot.building?.name || buildings[destinationLot.building?.capableType || 0]?.name) : 'Select'}
+            label={destinationLot ? (destinationLot.building?.name || Building.TYPES[destinationLot.building?.capableType || 0]?.name) : 'Select'}
             onClick={() => setDestinationSelectorOpen(true)}
             disabled={stage !== actionStages.NOT_STARTED}
             sublabel={destinationLot ? <><LocationIcon /> Lot {destinationLot.i.toLocaleString()}</> : 'Inventory'}

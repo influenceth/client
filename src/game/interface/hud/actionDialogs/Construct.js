@@ -7,7 +7,6 @@ import {
   ConstructIcon, WarningOutlineIcon,
   TransferToSiteIcon
 } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import theme, { hexToRGB } from '~/theme';
 import useConstructionManager from '~/hooks/useConstructionManager';
@@ -47,8 +46,6 @@ const TransferToSite = styled.div`
 `;
 
 const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
-  const buildings = useBuildingAssets();
-  const resources = useResourceAssets();
   const { crew, crewMemberMap } = useCrewContext();
   const { currentConstruction, constructionStatus, startConstruction, finishConstruction } = constructionManager;
 
@@ -158,11 +155,11 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             title="Building"
             image={(
               <BuildingImage
-                building={buildings[lot?.building?.capableType]}
+                building={Building.TYPES[lot?.building?.capableType]}
                 iconOverlay={requirementsMet ? null : <WarningOutlineIcon />}
                 iconOverlayColor={theme.colors.lightOrange} />
             )}
-            label={buildings[lot?.building?.capableType].name}
+            label={Building.TYPES[lot?.building?.capableType].name}
             bodyStyle={requirementsMet ? {} : { background: `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.15)` }}
             sublabel="Building"
             tooltip={!requirementsMet && (
@@ -198,8 +195,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             label="Construction Requirements"
             mode="gathering"
             requirementsMet={requirementsMet && !waitingOnTransfer}
-            requirements={buildingRequirements}
-            resources={resources} />
+            requirements={buildingRequirements} />
         )}
 
         {stage === actionStage.NOT_STARTED && (

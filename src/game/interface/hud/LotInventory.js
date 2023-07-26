@@ -7,7 +7,6 @@ import useStore from '~/hooks/useStore';
 import useLot from '~/hooks/useLot';
 import { ResourceImage } from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from './actionDialogs/components';
-import { useResourceAssets } from '~/hooks/useAssets';
 import { formatFixed } from '~/lib/utils';
 
 const Wrapper = styled.div`
@@ -94,7 +93,6 @@ const InventoryItems = styled.div`
 const LotInventory = ({ active }) => {
   const { asteroidId, lotId } = useStore(s => s.asteroids.lot || {});
   const { data: lot } = useLot(asteroidId, lotId);
-  const resources = useResourceAssets();
 
   const inventory = (lot?.building?.inventories || []).find((i) => !i.locked);
 
@@ -167,7 +165,7 @@ const LotInventory = ({ active }) => {
             <ResourceImage
               key={resourceId}
               badge={formatResourceAmount(inventory.resources[resourceId], resourceId)}
-              resource={resources[resourceId]} />
+              resource={Product.TYPES[resourceId]} />
           ))}
         </InventoryItems>
       </InnerWrapper>

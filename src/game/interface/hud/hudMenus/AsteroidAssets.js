@@ -1,6 +1,6 @@
 import { Fragment, useMemo } from 'react';
 import styled from 'styled-components';
-import { Building, Inventory } from '@influenceth/sdk';
+import { Building, Inventory, Ship } from '@influenceth/sdk';
 
 import { useLotLink } from '~/components/LotLink';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -14,9 +14,9 @@ import { formatFixed } from '~/lib/utils';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
 import { ShipImage } from '../actionDialogs/components';
 import { ResourceImage } from '~/components/ResourceThumbnail';
-import { useShipAssets } from '~/hooks/useAssets';
 import useLot from '~/hooks/useLot';
 import { useShipLink } from '~/components/ShipLink';
+import { getShipIcon } from '~/lib/assetUtils';
 
 const Wrapper = styled.div`
   display: flex;
@@ -255,14 +255,14 @@ const ShipGroupHeader = ({ asteroidId, lotId }) => {
   );
 };
 
-const ShipInfoRow = ({ asset, ship }) => {
-  const onClick = useShipLink({ shipId: ship?.i, zoomToShip: true });
+const ShipInfoRow = ({ ship }) => {
+  const onClick = useShipLink({ shipId: ship.i, zoomToShip: true });
 
   return (
     <ShipRow onClick={onClick}>
       <ImageCell>
         <ImageWrapper>
-          <ResourceImage src={asset.iconUrls?.w150} style={{ width: 32, backgroundSize: 'contain' }} />
+          <ResourceImage src={getShipIcon(ship.shipType, 'w150')} style={{ width: 32, backgroundSize: 'contain' }} />
           <ClipCorner color="#222" dimension={8} />
         </ImageWrapper>
       </ImageCell>
@@ -270,7 +270,7 @@ const ShipInfoRow = ({ asset, ship }) => {
         {ship.name}
       </td>
       <td>
-        {asset.name}
+        {Ship.TYPES[ship.shipType].name}
       </td>
     </ShipRow>
   );
@@ -281,7 +281,6 @@ const AsteroidAssets = () => {
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lots, isLoading: lotsLoading } = useAsteroidCrewLots(asteroidId);
   const { data: ships, isLoading: shipsLoading } = useAsteroidShips(asteroidId);
-  const shipAssets = useShipAssets();
 
   const buildingTally = lots?.length || 0;
 
@@ -344,7 +343,7 @@ const AsteroidAssets = () => {
                     <ShipGroupHeader asteroidId={asteroidId} lotId={lotId} />
                   </thead>
                   <tbody>
-                    {shipsByLocation[lotId].map((ship) => <ShipInfoRow key={ship.i} ship={ship} asset={shipAssets[ship.type]} />)}
+                    {shipsByLocation[lotId].map((ship) => <ShipInfoRow key={ship.i} ship={ship} />)}
                   </tbody>
                 </AssetTable>
               </Fragment>

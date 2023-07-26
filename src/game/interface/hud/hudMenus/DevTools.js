@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { NoToneMapping } from 'three';
+import { Building, Product, Ship } from '@influenceth/sdk';
 
 import Button from '~/components/ButtonAlt';
 import Dropdown from '~/components/Dropdown';
@@ -8,10 +9,10 @@ import IconButton from '~/components/IconButton';
 import { CheckedIcon, CloseIcon, UncheckedIcon } from '~/components/Icons';
 import NumberInput from '~/components/NumberInput';
 import DevToolContext from '~/contexts/DevToolContext';
-import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import theme from '~/theme';
 import { getModelViewerSettings, toneMaps } from '../../ModelViewer';
 import { HudMenuCollapsibleSection, Scrollable } from './components';
+import { getBuildingModel, getProductModel, getShipModel } from '~/lib/assetUtils';
 
 const InnerSection = styled.div`
   & > * {
@@ -76,10 +77,6 @@ const DevTools = () => {
 
   const defaultSettings = getModelViewerSettings(overrides.assetType, {});
   const settings = getModelViewerSettings(overrides.assetType, overrides);
-
-  const buildings = useBuildingAssets();
-  const resources = useResourceAssets();
-  const ships = useShipAssets();
   
   const fileInput = useRef();
   const uploadType = useRef();
@@ -92,10 +89,10 @@ const DevTools = () => {
   const [modelOverride, setModelOverride] = useState();
 
   const assets = useMemo(() => {
-    if (settings.assetType === 'building') return buildings;
-    if (settings.assetType === 'resource') return resources;
-    if (settings.assetType === 'ship') return ships;
-  }, [settings.assetType, buildings, resources, ships]);
+    if (settings.assetType === 'building') return Object.keys(Building.TYPES).map((i) => ({ ...Building.TYPES[i], modelUrl: getBuildingModel(i) }));
+    if (settings.assetType === 'resource') return Object.keys(Product.TYPES).map((i) => ({ ...Product.TYPES[i], modelUrl: getProductModel(i) }));
+    if (settings.assetType === 'ship') return Object.keys(Ship.TYPES).map((i) => ({ ...Ship.TYPES[i], modelUrl: getShipModel(i) }));
+  }, [settings.assetType]);
   
   useEffect(() => {
     setCategories();

@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid } from '@influenceth/sdk';
+import { Asteroid, Building, Ship } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
@@ -89,8 +88,6 @@ const Note = styled.div`
 
 const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const buildings = useBuildingAssets();
-  const shipAssets = useShipAssets();
   
   const { currentStationing, stationingStatus, stationOnShip } = manager;
 
@@ -176,7 +173,7 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
             ? (
               <ShipInputBlock
                 title="Origin"
-                ship={{ ...shipAssets[ship.type], ...ship }}
+                ship={{ ...Ship.TYPES[ship.type], ...ship }}
                 disabled={stage !== actionStages.NOT_STARTED}
                 isMine={crewIsOwner}
                 hasMyCrew />
@@ -184,8 +181,8 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
             : (
               <FlexSectionInputBlock
                 title="Origin"
-                image={<BuildingImage building={buildings[lot?.building?.capableType || 0]} />}
-                label={`${buildings[lot?.building?.capableType || 0].name}`}
+                image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
+                label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
                 disabled={stage !== actionStages.NOT_STARTED}
                 sublabel={`Lot #${lot?.i || 1}`}
               />
@@ -203,7 +200,7 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
                   ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
                   : <TransferDistanceDetails distance={transportDistance} />
                 }
-                ship={{ ...shipAssets[destinationShip.type], ...destinationShip }}
+                ship={{ ...Ship.TYPES[destinationShip.type], ...destinationShip }}
                 disabled={stage !== actionStages.NOT_STARTED}
                 isMine={destinationShip?.owner === crew?.i} />
             )
@@ -215,8 +212,8 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
                     ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
                     : <TransferDistanceDetails distance={transportDistance} />
                 }
-                image={<BuildingImage building={buildings[destinationLot?.building?.capableType || 0]} />}
-                label={`${buildings[destinationLot?.building?.capableType || 0].name}`}
+                image={<BuildingImage building={Building.TYPES[destinationLot?.building?.capableType || 0]} />}
+                label={`${Building.TYPES[destinationLot?.building?.capableType || 0].name}`}
                 disabled={stage !== actionStages.NOT_STARTED}
                 sublabel={`Lot #${destinationLot?.i || 1}`} />
             )
@@ -240,10 +237,10 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
               <MiniBarChart
                 color="#92278f"
                 label="Crewmate Count"
-                valueLabel={`7 / ${shipAssets[destinationShip.type].maxPassengers}`}
-                value={7 / shipAssets[destinationShip.type].maxPassengers}
+                valueLabel={`7 / ${Ship.TYPES[destinationShip.type].maxPassengers}`}
+                value={7 / Ship.TYPES[destinationShip.type].maxPassengers}
                 deltaColor="#f644fa"
-                deltaValue={crew?.crewMembers?.length / shipAssets[destinationShip.type].maxPassengers}
+                deltaValue={crew?.crewMembers?.length / Ship.TYPES[destinationShip.type].maxPassengers}
               />
             )}
           </div>

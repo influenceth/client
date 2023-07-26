@@ -6,7 +6,6 @@ import {
   DeconstructIcon, LocationIcon, InventoryIcon,
   ForwardIcon
 } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
@@ -30,8 +29,6 @@ import actionStage from '~/lib/actionStages';
 import useLot from '~/hooks/useLot';
 
 const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
-  const buildings = useBuildingAssets();
-  const resources = useResourceAssets();
   const { crew, crewMemberMap } = useCrewContext();
   const { deconstruct, deconstructTx } = constructionManager;
   const { data: inProgressDestination } = useLot(asteroid?.i, deconstructTx?.returnValues?.destinationLotId);
@@ -108,8 +105,8 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
         <FlexSection>
           <FlexSectionInputBlock
             title="Deconstruct"
-            image={<BuildingImage building={buildings[lot.building?.capableType || 0]} />}
-            label={buildings[lot?.building?.capableType || 0].name}
+            image={<BuildingImage building={Building.TYPES[lot.building?.capableType || 0]} />}
+            label={Building.TYPES[lot?.building?.capableType || 0].name}
             disabled
             sublabel="Building"
           />
@@ -126,12 +123,12 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
                   destinationLot.i === lot.i
                     ? (
                       <BuildingImage
-                        building={buildings[destinationLot.building?.capableType || 0]}
+                        building={Building.TYPES[destinationLot.building?.capableType || 0]}
                         unfinished />
                     )
                     : (
                       <BuildingImage
-                        building={buildings[destinationLot.building?.capableType || 0]}
+                        building={Building.TYPES[destinationLot.building?.capableType || 0]}
                         inventories={destinationLot?.building?.inventories}
                         showInventoryStatusForType={1} />
                     )
@@ -139,7 +136,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
                 : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
             }
             isSelected={stage === actionStage.NOT_STARTED}
-            label={destinationLot ? buildings[destinationLot.building?.capableType || 0]?.name : 'Select'}
+            label={destinationLot ? Building.TYPES[destinationLot.building?.capableType || 0]?.name : 'Select'}
             onClick={() => { setDestinationSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}
             sublabel={destinationLot ? <><LocationIcon /> Lot {destinationLot.i.toLocaleString()}</> : 'Inventory'}
@@ -148,8 +145,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
 
         <DeconstructionMaterialsSection
           label="Recovered Materials"
-          itemsReturned={itemsReturned || []}
-          resources={resources} />
+          itemsReturned={itemsReturned || []} />
 
         {stage !== actionStage.NOT_STARTED && (
           <ProgressBarSection

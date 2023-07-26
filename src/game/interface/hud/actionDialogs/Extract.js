@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Deposit, Extractor, Inventory } from '@influenceth/sdk';
+import { Asteroid, Building, Deposit, Extractor, Inventory, Product } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, ResourceIcon } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
 import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
@@ -50,8 +49,6 @@ const SampleAmount = styled.span`
 
 const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const buildings = useBuildingAssets();
-  const resources = useResourceAssets();
   const { currentExtraction, extractionStatus, startExtraction, finishExtraction } = extractionManager;
   const { crew, crewMemberMap } = useCrewContext();
   const { data: currentExtractionDestinationLot } = useLot(asteroid.i, currentExtraction?.destinationLotId);
@@ -71,7 +68,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     if (asteroidBonus.totalBonus !== 1) {
       bonus.totalBonus *= asteroidBonus.totalBonus;
       bonus.others = [{
-        text: `${resources[selectedCoreSample?.resourceId].category} Yield Bonus`,
+        text: `${Product.TYPES[selectedCoreSample?.resourceId].category} Yield Bonus`,
         bonus: asteroidBonus.totalBonus - 1,
         direction: 1
       }];
@@ -131,7 +128,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
   const resource = useMemo(() => {
     if (!selectedCoreSample) return null;
-    return resources[selectedCoreSample.resourceId];
+    return Product.TYPES[selectedCoreSample.resourceId];
   }, [selectedCoreSample]);
 
   const extractionTime = useMemo(() => {
@@ -318,14 +315,14 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
               destinationLot
                 ? (
                   <BuildingImage
-                    building={buildings[destinationLot.building?.capableType || 0]}
+                    building={Building.TYPES[destinationLot.building?.capableType || 0]}
                     inventories={destinationLot?.building?.inventories}
                     showInventoryStatusForType={1} />
                 )
                 : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
             }
             isSelected={stage === actionStage.NOT_STARTED}
-            label={destinationLot ? buildings[destinationLot.building?.capableType || 0]?.name : 'Select'}
+            label={destinationLot ? Building.TYPES[destinationLot.building?.capableType || 0]?.name : 'Select'}
             onClick={() => { setDestinationSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}
             sublabel={destinationLot ? <><LocationIcon /> Lot {destinationLot.i.toLocaleString()}</> : 'Inventory'}
@@ -382,7 +379,6 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
             onClose={() => setSampleSelectorOpen(false)}
             onSelected={setSelectedCoreSample}
             open={sampleSelectorOpen}
-            resources={resources}
           />
 
           <DestinationSelectionDialog

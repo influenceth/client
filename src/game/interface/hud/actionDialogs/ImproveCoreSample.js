@@ -4,7 +4,6 @@ import { Asteroid, Deposit, Product } from '@influenceth/sdk';
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { CoreSampleIcon, ImproveCoreSampleIcon, ResourceIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
-import { useResourceAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
@@ -33,7 +32,6 @@ import {
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 
 const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
-  const resources = useResourceAssets();
   const { startSampling, finishSampling, samplingStatus } = coreSampleManager;
   const { crew, crewMemberMap } = useCrewContext();
 
@@ -104,7 +102,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   const improvableSamples = useMemo(() =>
     (lot?.coreSamples || [])
       .filter((c) => (c.owner === crew?.i && c.initialYield > 0 && c.status !== Deposit.STATUSES.USED))
-      .map((c) => ({ ...c, tonnage: c.initialYield * resources[c.resourceId].massPerUnit }))
+      .map((c) => ({ ...c, tonnage: c.initialYield * Product.TYPES[c.resourceId].massPerUnit }))
   , [lot?.coreSamples]);
 
   const onSampleSelection = useCallback((sample) => {
@@ -129,7 +127,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
 
   const currentSample = sample || selectedSample;
   const originalYield = useMemo(() => currentSample?.initialYield, [currentSample?.resourceId, currentSample?.sampleId]); // only update on id change
-  const originalTonnage = useMemo(() => originalYield ? originalYield * resources[currentSample.resourceId].massPerUnit : 0, [currentSample, originalYield]);
+  const originalTonnage = useMemo(() => originalYield ? originalYield * Product.TYPES[currentSample.resourceId].massPerUnit : 0, [currentSample, originalYield]);
 
   const crewMembers = coreSampleManager.currentSample?._crewmates
     || ((crew?.crewMembers || []).map((i) => crewMemberMap[i]));
@@ -236,8 +234,8 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
           <FlexSection>
             <FlexSectionInputBlock
               title="New Result"
-              image={<ResourceThumbnail resource={resources[resourceId]} tooltipContainer="none" />}
-              label={`${resources[resourceId]?.name} Deposit`}
+              image={<ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer="none" />}
+              label={`${Product.TYPES[resourceId]?.name} Deposit`}
               disabled
               style={{ width: '100%' }}
               sublabel={sample?.initialYieldTonnage && (
@@ -256,11 +254,11 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
               title="Deposit"
               image={
                 resourceId
-                  ? <ResourceThumbnail resource={resources[resourceId]} tooltipContainer="none" />
+                  ? <ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer="none" />
                   : <EmptyResourceImage iconOverride={<CoreSampleIcon />} />
               }
               isSelected={stage === actionStage.NOT_STARTED}
-              label={resourceId ? resources[resourceId].name : 'Select'}
+              label={resourceId ? Product.TYPES[resourceId].name : 'Select'}
               onClick={() => setSampleSelectorOpen(true)}
               disabled={stage !== actionStage.NOT_STARTED}
               sublabel={
@@ -276,7 +274,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
               title="Tool"
               image={
                 resourceId  // TODO: this should be tool origin lot selected
-                  ? <ResourceThumbnail badge="1" resource={resources[175]} tooltipContainer="none" />
+                  ? <ResourceThumbnail badge="1" resource={Product.TYPES[175]} tooltipContainer="none" />
                   : <EmptyResourceImage />
               }
               isSelected={stage === actionStage.NOT_STARTED}
@@ -321,7 +319,6 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
           onClose={() => setSampleSelectorOpen(false)}
           onSelected={onSelectSample}
           open={sampleSelectorOpen}
-          resources={resources}
         />
       )}
     </>

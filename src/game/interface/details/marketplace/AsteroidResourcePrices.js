@@ -9,12 +9,12 @@ import DataTable from '~/components/DataTable';
 import { ProductIcon, SwayIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
-import { useBuildingAssets } from '~/hooks/useAssets';
 import useCrew from '~/hooks/useCrew';
 import useLot from '~/hooks/useLot';
 import { formatPrice } from '~/lib/utils';
 import theme from '~/theme';
 import { LocationLink } from '../listViews/components';
+import { getBuildingIcon } from '~/lib/assetUtils';
 
 
 const Header = styled.div`
@@ -167,7 +167,6 @@ const resourceMarketplaces = [
 ];
 
 const AsteroidResourcePrices = ({ asteroid, resource }) => {
-  const buildings = useBuildingAssets();
   const history = useHistory();
 
   const [selected, setSelected] = useState();
@@ -335,7 +334,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
             <div>
               {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
               <MarketplaceImage>
-                <img src={buildings[8].iconUrls.w400} />
+                <img src={getBuildingIcon(8, 'w400')} />
                 <ClipCorner dimension={10} color="#333" />
               </MarketplaceImage>
             </div>

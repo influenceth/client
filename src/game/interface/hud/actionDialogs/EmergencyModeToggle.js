@@ -3,7 +3,6 @@ import styled from 'styled-components';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CloseIcon, CoreSampleIcon, EjectPassengersIcon, EmergencyModeEnterIcon, EmergencyModeExitIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
@@ -90,8 +89,6 @@ const Note = styled.div`
 
 const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const buildings = useBuildingAssets();
-  const shipAssets = useShipAssets();
   
   const { currentStationing, stationingStatus, stationOnShip } = manager;
 

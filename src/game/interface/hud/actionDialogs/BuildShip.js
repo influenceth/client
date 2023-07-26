@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
+import { Building, Ship } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { BackIcon, CaretIcon, CloseIcon, CoreSampleIcon, ExtractionIcon, ForwardIcon, ConstructShipIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ProcessIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
-import { useBuildingAssets, useResourceAssets, useShipAssets } from '~/hooks/useAssets';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
 import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
@@ -77,59 +77,8 @@ const IconWrapper = styled.div`
 `;
 const RightIconWrapper = styled.div``;
 
-
-const processes = [
-  {
-    i: 1,
-    name: 'Shuttle Integration',
-    inputs: [
-      { resourceId: 9, recipe: 9 },
-      { resourceId: 10, recipe: 1 },
-      { resourceId: 11, recipe: 1 },
-      { resourceId: 12, recipe: 1 },
-    ],
-    outputs: [
-      { shipAssetId: 1, recipe: 1 }
-    ],
-  },
-  {
-    i: 2,
-    name: 'Light Transport Integration',
-    inputs: [
-      { resourceId: 9, recipe: 9 },
-      { resourceId: 10, recipe: 1 },
-      { resourceId: 11, recipe: 1 },
-      { resourceId: 17, recipe: 1 },
-      { resourceId: 13, recipe: 1 },
-      { resourceId: 14, recipe: 1 },
-    ],
-    outputs: [
-      { shipAssetId: 2, recipe: 1 }
-    ]
-  },
-  {
-    i: 3,
-    name: 'Heavy Transport Integration',
-    inputs: [
-      { resourceId: 9, recipe: 9 },
-      { resourceId: 10, recipe: 1 },
-      { resourceId: 11, recipe: 1 },
-      { resourceId: 17, recipe: 1 },
-      { resourceId: 13, recipe: 1 },
-      { resourceId: 19, recipe: 1 },
-      { resourceId: 15, recipe: 1 },
-      { resourceId: 16, recipe: 3 },
-    ],
-    outputs: [
-      { shipAssetId: 3, recipe: 1 }
-    ]
-  },
-];
-
 const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const buildings = useBuildingAssets();
-  const ships = useShipAssets();
   
   const { currentLaunch, launchStatus, startLaunch } = manager;
 
@@ -137,15 +86,20 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const { data: launchOriginLot } = useLot(asteroid?.i, currentLaunch?.originLotId);
 
   const [amount, setAmount] = useState(0);
-  const [processId, setProcessId] = useState();
+  const [shipId, setShipId] = useState();
   const [processSelectorOpen, setProcessSelectorOpen] = useState(false);
 
   const [primaryOutput, setPrimaryOutput] = useState(40);
   const [propulsionType, setPropulsionType] = useState('propulsive');
 
-  const process = processId && processes.find((p) => p.i === processId);
-  const ship = process && ships.find((s) => s?.i === process.outputs[0].shipAssetId);
+  const processes = Object.keys(Ship.CONSTRUCTION_TYPES).map((i) => ({
+    i,
+    name: `${Ship.TYPES[i].name} Integration`,
+    ...(Ship.CONSTRUCTION_TYPES[i]),
+  }));
 
+  const process = shipId && processes.find((p) => p.i === shipId);
+  const ship = shipId && Ship.TYPES[shipId];
 
   const crewMembers = currentLaunch?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
@@ -224,8 +178,8 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
         <FlexSection style={{ marginBottom: 32, width: SECTION_WIDTH }}>
           <FlexSectionInputBlock
             title="Construction Location"
-            image={<BuildingImage building={buildings[lot?.building?.capableType || 0]} />}
-            label={`${buildings[lot?.building?.capableType || 0].name}`}
+            image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
+            label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
             disabled={stage !== actionStages.NOT_STARTED}
             sublabel={`Lot #${lot?.i}`}
             style={{ width: 350 }}
@@ -270,8 +224,8 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
             <FlexSectionInputBlock
               title="Input Inventory"
               titleDetails={<TransferDistanceDetails distance={8} />}
-              image={<BuildingImage building={buildings[lot?.building?.capableType || 0]} />}
-              label={`${buildings[lot?.building?.capableType || 0].name}`}
+              image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
+              label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
               disabled={stage !== actionStages.NOT_STARTED}
               sublabel={`Lot #${lot?.i}`}
               style={{ marginBottom: 20, width: '100%' }}
@@ -280,8 +234,8 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
             <FlexSectionInputBlock
               title="Output Inventory"
               titleDetails={<TransferDistanceDetails distance={19} />}
-              image={<BuildingImage building={buildings[lot?.building?.capableType || 0]} />}
-              label={`${buildings[lot?.building?.capableType || 0].name}`}
+              image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
+              label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
               disabled={stage !== actionStages.NOT_STARTED}
               sublabel={`Lot #${lot?.i}`}
               style={{ width: '100%' }}
@@ -318,7 +272,7 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
                 {ship && (
                   <ResourceThumbnail
                     backgroundColor={`rgba(${hexToRGB(theme.colors.green)}, 0.15)`}
-                    badge={`+${formatMass(9e8 * processId)}`}
+                    badge={`+${formatMass(9e8 * shipId)}`}
                     badgeColor={theme.colors.green}
                     contain
                     resource={ship}
@@ -357,10 +311,10 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
 
       {stage === actionStages.NOT_STARTED && (
         <ProcessSelectionDialog
-          initialSelection={processId}
+          initialSelection={shipId}
           processes={processes}
           onClose={() => setProcessSelectorOpen(false)}
-          onSelected={setProcessId}
+          onSelected={setShipId}
           open={processSelectorOpen}
         />
       )}

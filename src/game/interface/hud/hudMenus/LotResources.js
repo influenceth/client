@@ -1,20 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Deposit } from '@influenceth/sdk';
+import { Asteroid, Deposit, Product } from '@influenceth/sdk';
 
 import useActionButtons from '~/hooks/useActionButtons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
 import useExtractionManager from '~/hooks/useExtractionManager';
 import useLot from '~/hooks/useLot';
-import { useResourceAssets } from '~/hooks/useAssets';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Tray, trayHeight } from './components';
 import { hexToRGB } from '~/theme';
 import { CoreSampleIcon, PlusIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import useCrewContext from '~/hooks/useCrewContext';
-import { formatFixed } from '~/lib/utils';
+import { formatFixed, keyify } from '~/lib/utils';
 import actionButtons from '../actionButtons';
 
 const Wrapper = styled.div`
@@ -109,7 +108,6 @@ const LotResources = () => {
   const { data: lot } = useLot(asteroidId, lotId);
   const { currentSample } = useCoreSampleManager(asteroidId, lotId);
   const { currentExtraction } = useExtractionManager(asteroidId, lotId);
-  const resources = useResourceAssets();
 
   const [showAllAbundances, setShowAllAbundances] = useState();
   const [showAllSamples, setShowAllSamples] = useState();
@@ -184,7 +182,7 @@ const LotResources = () => {
 
   const selectedResource = useMemo(() => {
     if (selected && selected.type === 'resource') {
-      return resources[selected.i];
+      return Product.TYPES[selected.i];
     }
     return null;
   }, [selected]);
@@ -237,15 +235,17 @@ const LotResources = () => {
           <HudMenuCollapsibleSection titleText="Lot Resources" titleLabel="Abundance">
             <div style={{ height: '100%', overflow: 'hidden' }}>
             {showAbundances.map(({ i, abundance }) => {
-              const { name, categoryKey } = resources[i];
+              const { name, category } = Product.TYPES[i];
+              const categoryKey = keyify(category);
               const isSelected = selected?.type === 'resource' && selected?.i === i;
               return (
-                <Resource key={i}
+                <Resource
+                  key={i}
                   category={categoryKey}
                   onClick={onClickResource(i)}
                   selected={isSelected}>
                   {isSelected
-                    ? <ResourceThumbnail resource={resources[i]} size="75px" tooltipContainer="null" />
+                    ? <ResourceThumbnail resource={Product.TYPES[i]} size="75px" tooltipContainer="null" />
                     : <Circle />}
                   <label>{name}</label>
                   <span>{(abundance * 100).toFixed(1)}%</span>
@@ -265,17 +265,19 @@ const LotResources = () => {
           
           <HudMenuCollapsibleSection titleText="Core Samples" titleLabel={`${sampleTally} Sample${sampleTally === 1 ? '' : 's'}`}>
             {ownedSamples.map((sample) => {
-              const { name, categoryKey } = resources[sample.resourceId];
+              const { name, category } = Product.TYPES[sample.resourceId];
+              const categoryKey = keyify(category);
               const isSelected = selected?.type === 'sample' && selected?.r === sample.resourceId && selected?.i === sample.sampleId;
               return (
-                <Sample key={sample.i}
+                <Sample
+                  key={sample.i}
                   category={categoryKey}
                   onClick={onClickSample(sample.resourceId, sample.sampleId)}
                   selected={isSelected}>
                   {isSelected
                     ? (
                       <ResourceThumbnail
-                        resource={resources[sample.resourceId]}
+                        resource={Product.TYPES[sample.resourceId]}
                         iconBadge={<CoreSampleIcon />}
                         size="75px"
                         tooltipContainer="hudeMenu" />

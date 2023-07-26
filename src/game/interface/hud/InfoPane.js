@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import PuffLoader from 'react-spinners/PuffLoader';
-import { Asteroid } from '@influenceth/sdk';
+import { Asteroid, Building } from '@influenceth/sdk';
 import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
 
@@ -17,7 +17,6 @@ import {
 } from '~/components/Icons';
 import AsteroidRendering from '~/components/AsteroidRendering';
 import useActionButtons from '~/hooks/useActionButtons';
-import { useBuildingAssets } from '~/hooks/useAssets';
 import useAsteroid from '~/hooks/useAsteroid';
 import useConstructionManager from '~/hooks/useConstructionManager';
 import useLot from '~/hooks/useLot';
@@ -25,6 +24,7 @@ import useStore from '~/hooks/useStore';
 import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
 import RouteSelection from './actionForms/RouteSelection';
+import { getBuildingIcon } from '~/lib/assetUtils';
 
 
 const opacityAnimation = keyframes`
@@ -301,7 +301,6 @@ const InfoPane = () => {
 
   const { actions, props: actionProps } = useActionButtons();
   const { data: asteroid } = useAsteroid(asteroidId);
-  const buildings = useBuildingAssets();
   const { constructionStatus, isAtRisk } = useConstructionManager(asteroidId, lotId);
   const { crew } = useCrewContext();
   const { data: lot } = useLot(asteroidId, lotId);
@@ -414,20 +413,16 @@ const InfoPane = () => {
 
     } else if (zoomStatus === 'in') {
       if (zoomScene?.type === 'LOT') {
-        pane.title = buildings[lot?.building?.capableType || 0]?.name;
+        pane.title = Building.TYPES[lot?.building?.capableType || 0]?.name;
         pane.subtitle = <>{asteroid?.customName || asteroid?.baseName} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
         pane.captainCard = lot?.occupier;
 
       } else if (lotId) {
         if (lot) {
           const thumbUrl = lot.building?.capableType > 0
-            ? (
-              ['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus) && !isAtRisk
-                ? buildings[lot.building?.capableType || 0]?.iconUrls?.w400
-                : buildings[lot.building?.capableType || 0]?.siteIconUrls?.w400
-            )
-            : buildings[0]?.iconUrls?.w400;
-          pane.title = buildings[lot.building?.capableType || 0]?.name;
+            ? getBuildingIcon(lot.building?.capableType, 'w400', isAtRisk || !['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus))
+            : getBuildingIcon(0, 'w400');
+          pane.title = Building.TYPES[lot.building?.capableType || 0]?.name;
           pane.subtitle = <>{asteroid?.customName || asteroid?.baseName} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
           pane.captainCard = lot.occupier;
           pane.hoverSubtitle = 'Zoom to Lot';

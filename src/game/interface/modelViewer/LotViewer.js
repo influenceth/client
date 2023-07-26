@@ -1,13 +1,12 @@
 import { useMemo } from 'react';
 import { Building } from '@influenceth/sdk';
 
-import { useBuildingAssets } from '~/hooks/useAssets';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import ModelViewer from '../ModelViewer';
+import { getBuildingModel } from '~/lib/assetUtils';
 
 const LotViewer = () => {
-  const buildings = useBuildingAssets();
   const { asteroidId, lotId } = useStore(s => s.asteroids.lot || {});
   const zoomScene = useStore(s => s.asteroids.zoomScene);
 
@@ -15,12 +14,12 @@ const LotViewer = () => {
 
   const modelUrl = useMemo(() => {
     if (lot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
-      const asset = buildings.find((a) => a.name === lot.building.__t);
+      const asset = Building.TYPES.find((a) => a.name === lot.building.__t);
       if (asset) {
-        return asset.modelUrl;
+        return getBuildingModel(asset.i);
       }
     }
-    return buildings[0]?.modelUrl;
+    return getBuildingModel(0);
   }, [lot?.building]);
 
   if (zoomScene?.type !== 'LOT' || isLoading) return null;

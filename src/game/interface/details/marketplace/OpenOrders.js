@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import moment from 'moment';
+import { Product } from '@influenceth/sdk';
 
 import CrewIndicator from '~/components/CrewIndicator';
 import DataTable from '~/components/DataTable';
 import { CompositionIcon, MarketplaceBuildingIcon, MarketsIcon, ProductIcon, SwayIcon } from '~/components/Icons';
-import { useResourceAssets } from '~/hooks/useAssets';
 import { formatPrice } from '~/lib/utils';
 import theme from '~/theme';
 import { LocationLink } from '../listViews/components';
@@ -86,8 +86,6 @@ const OrderType = styled.div`
 `;
 
 const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketplaceOwner = null }) => {
-  const resources = useResourceAssets();
-
   const [sort, setSort] = useState(['createdAt', 'asc']);
   const [sortField, sortDirection] = sort;
 
@@ -113,7 +111,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
     return (orders || [])
       .map((o) => ({
         ...o,
-        resourceName: resources[o.resourceId]?.name,
+        resourceName: Product.TYPES[o.resourceId]?.name,
         total: o.price * o.amount,
         ago: (new moment(new Date(1000 * (o.createdAt || 0)))).fromNow()
       }))
@@ -205,7 +203,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
       });
     }
     return c;
-  }, [marketplace, resources]);
+  }, [marketplace]);
 
   return (
     <>
