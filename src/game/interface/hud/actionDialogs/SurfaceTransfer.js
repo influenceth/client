@@ -123,12 +123,12 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
     },
     {
       label: 'Transfered Mass',
-      value: `${formatMass(totalMass * 1e6)}`,
+      value: `${formatMass(totalMass)}`,
       direction: 0
     },
     {
       label: 'Transfered Volume',
-      value: `${formatVolume(totalVolume * 1e6)}`,
+      value: `${formatVolume(totalVolume)}`,
       direction: 0
     },
   ]), [totalMass, totalVolume, transportDistance, transportTime]);
@@ -170,20 +170,17 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   }, [originInvId, originLot?.building?.inventories]);
 
   const onStartDelivery = useCallback(() => {
-    let destCapacityRemaining = { mass: 0, volume: 0 };
     const destInventory = (destinationLot?.building?.inventories || []).find((i) => !i.locked);
+    const destInventoryConfig = { ...(Inventory.TYPES[destInventory?.inventoryType] || {}) };
     if (destInventory) {
-      destCapacityRemaining = { ...Inventory.TYPES[destInventory.inventoryType] };
-
-      // Capacities are in tonnes and cubic meters, Inventories are in grams and mLs
-      destCapacityRemaining.mass -= 1e-6 * ((destInventory.mass || 0) + (destInventory.reservedMass || 0));
-      destCapacityRemaining.volume -= 1e-6 * ((destInventory.volume || 0) + (destInventory.reservedVolume || 0));
+      destInventoryConfig.massConstraint -= ((destInventory.mass || 0) + (destInventory.reservedMass || 0));
+      destInventoryConfig.volumeConstraint -= ((destInventory.volume || 0) + (destInventory.reservedVolume || 0));
     }
-    if (destCapacityRemaining.mass < totalMass || destCapacityRemaining.volume < totalVolume) {
+    if (destInventoryConfig.massConstraint < totalMass || destInventoryConfig.volumeConstraint < totalVolume) {
       createAlert({
         type: 'GenericAlert',
         level: 'warning',
-        content: `Insufficient capacity remaining at selected destination: ${formatSampleMass(destCapacityRemaining.mass)} tonnes or ${formatSampleVolume(destCapacityRemaining.volume)} m³`,
+        content: `Insufficient capacity remaining at selected destination: ${formatSampleMass(destInventoryConfig.massConstraint)} tonnes or ${formatSampleVolume(destInventoryConfig.volumeConstraint)} m³`,
         duration: 10000
       });
       return;

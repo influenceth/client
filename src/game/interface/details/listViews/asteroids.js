@@ -141,7 +141,7 @@ const useColumns = () => {
         icon: <ScanAsteroidIcon />,
         label: 'Spectral Type',
         sortField: 'spectralType',
-        selector: row => `${Asteroid.getSpectralType(row.spectralType)?.name}-type`
+        selector: row => `${Asteroid.getSpectralType(row.spectralType)}-type`
       },
       {
         key: 'rarity',

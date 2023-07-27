@@ -110,7 +110,7 @@ const Favorites = ({ onClose }) => {
           <label>{formatters.asteroidName(asteroid)}</label>
           <span>
             {Asteroid.getSize(asteroid.r)}{' '}
-            <b>{Asteroid.getSpectralType(asteroid.spectralType)?.name}{'-type'}</b>
+            <b>{Asteroid.getSpectralType(asteroid.spectralType)}{'-type'}</b>
           </span>
           {asteroidId === asteroid.i && <ClipCorner dimension={10} color={theme.colors.main} />}
         </SelectableRow>

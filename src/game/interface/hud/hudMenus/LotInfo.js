@@ -191,7 +191,8 @@ const LotInfo = () => {
 
   const [selectedBuilding, setSelectedBuilding] = useState();
 
-  const mainInventoryType = useMemo(() => ((lot?.building?.inventories || [])[1] || {}).inventoryType, [lot]);
+  const mainInventoryType = useMemo(() => (lot?.building?.inventories || []).find((l) => !l.locked)?.inventoryType, [lot]);
+  const inventoryConfig = Inventory.TYPES[mainInventoryType] || {}; // TODO: use Inventory.getFilledCapacity() instead?
 
   if (!lot) return null;
   if (lot && !lot.building) {
@@ -253,14 +254,18 @@ const LotInfo = () => {
             {lot.building?.capableType === Building.IDS.WAREHOUSE && (
               <>
                 <Rule margin="15px" />
-                <DetailRow>
-                  <label>Maximum Storage Volume</label>
-                  <div>{Inventory.TYPES[mainInventoryType].volume.toLocaleString()} m<sup>3</sup></div>
-                </DetailRow>
-                <DetailRow>
-                  <label>Maximum Storage Mass</label>
-                  <div>{Inventory.TYPES[mainInventoryType].mass.toLocaleString()} t</div>
-                </DetailRow>
+                {inventoryConfig.volumeConstraint && (
+                  <DetailRow>
+                    <label>Maximum Storage Volume</label>
+                    <div>{inventoryConfig.volumeConstraint} mL (TODO: m<sup>3</sup>)</div>
+                  </DetailRow>
+                )}
+                {inventoryConfig.volumeConstraint && (
+                  <DetailRow>
+                    <label>Maximum Storage Mass</label>
+                    <div>{inventoryConfig.massConstraint} g (TODO: t)</div>
+                  </DetailRow>
+                )}
               </>
             )}
 

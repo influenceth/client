@@ -223,21 +223,20 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
   const onStartExtraction = useCallback(() => {
     const inventory = (destinationLot?.building?.inventories || []).find((i) => !i.locked);
-    let destCapacityRemaining = { ...Inventory.TYPES[inventory.inventoryType] };
+    const inventoryConfig = { ...(Inventory.TYPES[inventory.inventoryType] || {}) };
     if (inventory) {
-      // Capacities are in tonnes and cubic meters, Inventories are in grams and mLs
-      destCapacityRemaining.mass -= 1e-6 * ((inventory.mass || 0) + (inventory.reservedMass || 0));
-      destCapacityRemaining.volume -= 1e-6 * ((inventory.volume || 0) + (inventory.reservedVolume || 0));
+      inventoryConfig.massConstraint -= ((inventory.mass || 0) + (inventory.reservedMass || 0));
+      inventoryConfig.volumeConstraint -= ((inventory.volume || 0) + (inventory.reservedVolume || 0));
     }
     const neededCapacity = {
       mass: amount * resource?.massPerUnit,
       volume: amount * resource?.volumePerUnit
     }
-    if (destCapacityRemaining.mass < neededCapacity.mass || destCapacityRemaining.volume < neededCapacity.volume) {
+    if (inventoryConfig.massConstraint < neededCapacity.mass || inventoryConfig.volumeConstraint < neededCapacity.volume) {
       createAlert({
         type: 'GenericAlert',
         level: 'warning',
-        content: `Insufficient capacity remaining at selected destination: ${formatSampleMass(destCapacityRemaining.mass)} tonnes or ${formatSampleVolume(destCapacityRemaining.volume)} m³`,
+        content: `Insufficient capacity remaining at selected destination: ${formatSampleMass(inventoryConfig.massConstraint)} tonnes or ${formatSampleVolume(inventoryConfig.volumeConstraint)} m³`,
         duration: 10000
       });
       return;

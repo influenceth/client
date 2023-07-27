@@ -1014,7 +1014,7 @@ const AsteroidComponent = () => {
           isScanned={asteroidData?.scanned}
           radius={config.radius}
           scaleHelper={SCALE_HELPER}
-          spectralType={Asteroid.getSpectralType(config.spectralType)?.name}
+          spectralType={Asteroid.getSpectralType(config.spectralType)}
         />
       )}
 

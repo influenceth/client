@@ -475,7 +475,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     <Wrapper>
       <LeftPane>
         <SpectralLegend>
-          {(Asteroid.getSpectralType(asteroid.spectralType)?.name || '').toLowerCase().split('').map((l) => (
+          {Asteroid.getSpectralType(asteroid.spectralType).toLowerCase().split('').map((l) => (
             <div key={l}>
               <span>{l}</span>
               <span>{spectralLabels[l]}</span>

@@ -16,7 +16,7 @@ const formatters = {
   // Asteroid attribute formatters
   radius: (r) => r.toLocaleString() + ' m',
 
-  spectralType: (t) => Asteroid.getSpectralType(t)?.name + '-type',
+  spectralType: (t) => Asteroid.getSpectralType(t) + '-type',
 
   surfaceArea: (r) => {
     const area = (4 * Math.PI * Math.pow(r / 1000, 2)).toFixed(1);

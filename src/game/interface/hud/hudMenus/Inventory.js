@@ -274,15 +274,17 @@ const LotInventory = () => {
       };
     }
 
-    const mass = 1E-6 * inventory?.mass || 0;
-    const reservedMass = 1E-6 * inventory?.reservedMass || 0;
-    const volume = 1E-6 * inventory?.volume || 0;
-    const reservedVolume = 1E-6 * inventory?.reservedVolume || 0;
+    const mass = inventory?.mass || 0;
+    const reservedMass = inventory?.reservedMass || 0;
+    const volume = inventory?.volume || 0;
+    const reservedVolume = inventory?.reservedVolume || 0;
 
-    const massUsage = mass / Inventory.TYPES[inventory.inventoryType].mass;
-    const massReservedUsage = reservedMass / Inventory.TYPES[inventory.inventoryType].mass;
-    const volumeUsage = volume / Inventory.TYPES[inventory.inventoryType].volume;
-    const volumeReservedUsage = reservedVolume / Inventory.TYPES[inventory.inventoryType].volume;
+    // TODO: use Inventory.getFilledCapacity() instead?
+    const inventoryConfig = Inventory.TYPES[inventory.inventoryType] || {};
+    const massUsage = mass / inventoryConfig.massConstraint;
+    const massReservedUsage = reservedMass / inventoryConfig.massConstraint;
+    const volumeUsage = volume / inventoryConfig.volumeConstraint;
+    const volumeReservedUsage = reservedVolume / inventoryConfig.volumeConstraint;
     if (volumeUsage + volumeReservedUsage > massUsage + massReservedUsage) {
       return {
         used: volumeUsage,
@@ -369,7 +371,7 @@ const LotInventory = () => {
         acc[1] += selectedItems[resourceId] * Product.TYPES[resourceId].volumePerUnit;
         return acc;
       }, [0, 0]);
-      return `${selectedTally} Product${selectedTally === 1 ? '' : 's'}: ${formatMass(totalMass * 1e6)} | ${formatVolume(totalVolume * 1e6)}`;
+      return `${selectedTally} Product${selectedTally === 1 ? '' : 's'}: ${formatMass(totalMass)} | ${formatVolume(totalVolume)}`;
     }
     return null;
   }, [selectedItems]);
@@ -444,7 +446,7 @@ const LotInventory = () => {
                     : undefined
                   }
                   progress={displayVolumes
-                    ? inventory.resources[resourceId] * Product.TYPES[resourceId].volumePerUnit / (1E-6 * inventory.volume)
+                    ? inventory.resources[resourceId] * Product.TYPES[resourceId].volumePerUnit / inventory.volume
                     : undefined}
                   resource={Product.TYPES[resourceId]}
                   tooltipContainer="hudMenu" />

@@ -50,7 +50,7 @@ const columns = [
   {
     name: 'Spectral Type',
     selector: row => row.spectralType,
-    format: row => `${Asteroid.getSpectralType(row.spectralType)?.name || ''}-type`
+    format: row => `${Asteroid.getSpectralType(row.spectralType)}-type`
   },
   {
     name: 'Rarity',

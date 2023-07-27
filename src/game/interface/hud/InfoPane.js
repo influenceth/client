@@ -367,7 +367,7 @@ const InfoPane = () => {
       if (asteroid) {
         pane.title = formatters.asteroidName(asteroid);
         pane.titleLink = `/asteroids/${asteroid.i}`;
-        pane.subtitle = <>{Asteroid.getSize(asteroid.radius)} <b>{Asteroid.getSpectralType(asteroid.spectralType)?.name}-type</b></>;
+        pane.subtitle = <>{Asteroid.getSize(asteroid.radius)} <b>{Asteroid.getSpectralType(asteroid.spectralType)}-type</b></>;
         pane.hoverSubtitle = 'Zoom to Asteroid';
         // TODO: add captainCard for the "crew" managing the asteroid
 
@@ -445,7 +445,7 @@ const InfoPane = () => {
         pane.titleLink = `/asteroids/${asteroid.i}`;
         pane.subtitle = (
           <>
-            {Asteroid.getSize(asteroid.radius)} <b>{Asteroid.getSpectralType(asteroid.spectralType)?.name}-type</b>
+            {Asteroid.getSize(asteroid.radius)} <b>{Asteroid.getSpectralType(asteroid.spectralType)}-type</b>
             <SubtitleLoader>
               {!(lotLoader.i === asteroidId && lotLoader.progress === 1) && (
                 <ProgressBar progress={lotLoader.i === asteroidId ? lotLoader.progress : 0} />

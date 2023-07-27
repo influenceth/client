@@ -1507,30 +1507,31 @@ export const DestinationSelectionDialog = ({
       ))
       .reduce((acc, lot) => {
         (lot.building.inventories || []).forEach((inventory, slot) => {
-          let capacity, usedMass = 0, usedVolume = 0, type;
+          let usedMass = 0, usedVolume = 0, type;
 
           // deconstructing in place (use currently-locked inventory)
           if (includeDeconstruction && lot.i === originLotId && inventory.locked) {
-            capacity = { ...Inventory.TYPES[inventory.inventoryType][0] };
             type = `(construction site)`;
 
           // going to another lot (if unlocked)
           } else if (!inventory.locked) {
-            capacity = { ...Inventory.TYPES[inventory.inventoryType][1] };
-            usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0)) / 1e6;
-            usedVolume = ((inventory?.volume || 0) + (inventory?.reservedVolume || 0)) / 1e6;
+            usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0));
+            usedVolume = ((inventory?.volume || 0) + (inventory?.reservedVolume || 0));
             type = lot.building?.__t || 'Construction Site';
 
           // else, continue
           } else {
             return;
           }
-  
-          const availMass = capacity.mass - usedMass;
-          const availVolume = capacity.volume - usedVolume;
+
+          // TODO: use this here instead? also need to apply product restrictions in some cases
+          // const { filledMass, filledVolume } = Inventory.getFilledCapacity(inventory.inventoryType);
+          const inventoryConfig = Inventory.TYPES[inventory.inventoryType];
+          const availMass = inventoryConfig.massConstraint - usedMass;
+          const availVolume = inventoryConfig.volumeConstraint - usedVolume;
           const fullness = Math.max(
-            1 - availMass / capacity.mass,
-            1 - availVolume / capacity.volume,
+            1 - availMass / inventoryConfig.massConstraint,
+            1 - availVolume / inventoryConfig.volumeConstraint,
           ) || 0;
   
           acc.push({
@@ -1854,9 +1855,9 @@ export const getCapacityUsage = (building, inventories, type) => {
   if (building && type !== undefined) {
     const inventory = inventories.find((i) => !i.locked);
 
-    let { mass: maxMass, volume: maxVolume } = Inventory.TYPES[inventory.inventoryType];
-    capacity.mass.max = maxMass * 1e6; // TODO: it seems like this mult should be handled in CAPACITIES
-    capacity.volume.max = maxVolume * 1e6;
+    const { filledMass, filledVolume } = Inventory.getFilledCapacity(inventory.inventoryType);
+    capacity.mass.max = filledMass;
+    capacity.volume.max = filledVolume;
 
     const { reservedMass, reservedVolume, mass, volume } = inventory || {};
     capacity.mass.used = (mass || 0);
@@ -2970,8 +2971,8 @@ export const InventoryChangeCharts = ({ building, inventoryType, deltaMass, delt
   if (!(building && building.inventories && inventoryType !== undefined)) return null;
   
   const capacity = getCapacityUsage(Building.TYPES[building?.capableType], building?.inventories, inventoryType);
-  const postDeltaMass = capacity.mass.used + capacity.mass.reserved + deltaMass * 1e6;
-  const postDeltaVolume = capacity.volume.used + capacity.volume.reserved + deltaVolume * 1e6;
+  const postDeltaMass = capacity.mass.used + capacity.mass.reserved + deltaMass;
+  const postDeltaVolume = capacity.volume.used + capacity.volume.reserved + deltaVolume;
   const overMassCapacity = postDeltaMass > capacity.mass.max;
   const overVolumeCapacity = postDeltaVolume > capacity.volume.max;
   const massColor = overMassCapacity ? theme.colors.error : theme.colors.main;
@@ -2989,7 +2990,7 @@ export const InventoryChangeCharts = ({ building, inventoryType, deltaMass, delt
           deltaValue={deltaMass * 1e6 / capacity.mass.max}
           underLabels={(
             <>
-              <span style={{ color: massColor, opacity: deltaMass < 0 ? 0.6 : 1 }}>{deltaMass < 0 ? '-' : '+'}{formatMass(Math.abs(deltaMass * 1e6))}</span>
+              <span style={{ color: massColor, opacity: deltaMass < 0 ? 0.6 : 1 }}>{deltaMass < 0 ? '-' : '+'}{formatMass(Math.abs(deltaMass))}</span>
               <span style={{ color: overMassCapacity ? theme.colors.error : 'white' }}>{formatMass(capacity.mass.max)}</span>
             </>
           )}

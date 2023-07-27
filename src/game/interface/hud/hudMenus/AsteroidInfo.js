@@ -120,7 +120,7 @@ const AsteroidInfo = ({ onClose }) => {
           <InfoRow style={{ fontSize: 16 }}>
             <span style={{ flex: 1 }}>
               {Asteroid.getSize(asteroid.r)}{' '}
-              <b>{Asteroid.getSpectralType(asteroid.spectralType)?.name}{'-type'}</b>
+              <b>{Asteroid.getSpectralType(asteroid.spectralType)}{'-type'}</b>
             </span>
             <span>
               {asteroid.scanned && <Rarity rarity={Asteroid.getRarity(asteroid.bonuses)} />}

@@ -20,7 +20,7 @@ import TextFilter from './filters/TextFilter';
 // spectral type filter configs
 const spectralTypeOptions = Object.keys(Asteroid.SPECTRAL_TYPES).reduce((acc, key) => ([
   ...acc,
-  { key, label: `${Asteroid.getSpectralType(key)?.name}-type`, initialValue: true }
+  { key, label: `${Asteroid.getSpectralType(key)}-type`, initialValue: true }
 ]), []);
 
 const spectralTypeColors = {
