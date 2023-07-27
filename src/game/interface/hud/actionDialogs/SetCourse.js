@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Ship, Time } from '@influenceth/sdk';
+import { Crewmate, Ship, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, RotatedShipMarkerIcon, WarningOutlineIcon, MyAssetIcon } from '~/components/Icons';
@@ -213,7 +213,7 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
 
   const crewMembers = currentLaunch?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
   const launchBonus = 0;
 
   const arrivingIn = useMemo(() => 3600 * (travelSolution.arrivalTime - coarseTime), [coarseTime, travelSolution])

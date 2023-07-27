@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Building, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Ship } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
@@ -102,7 +102,7 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
 
   const crewMembers = currentStationing?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
   const launchBonus = 0;
 
   const transportDistance = Asteroid.getLotDistance(asteroid?.i, lot?.i, destinationLot?.i || destinationShip?.lotId) || 0;

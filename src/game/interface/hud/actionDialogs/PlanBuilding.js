@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Product } from '@influenceth/sdk';
+import { Building, Crewmate, Product } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -48,7 +48,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
   const stats = useMemo(() => {
     if (!asteroid?.i || !lot?.i) return [];
     const crewMembers = (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
-    const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+    const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
     const tripDetails = []; // TODO: 
     const taskTime = 0;
     return [

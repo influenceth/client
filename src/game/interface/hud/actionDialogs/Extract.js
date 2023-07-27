@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Building, Deposit, Extractor, Inventory, Product } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Deposit, Extractor, Inventory, Product } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
@@ -61,9 +61,9 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
   const crewMembers = currentExtraction?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
   const extractionBonus = useMemo(() => {
-    const bonus = getCrewAbilityBonus(4, crewMembers);
+    const bonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_RATE, crewMembers);
     const asteroidBonus = Asteroid.getBonusByResource(asteroid?.bonuses, selectedCoreSample?.resourceId);
     if (asteroidBonus.totalBonus !== 1) {
       bonus.totalBonus *= asteroidBonus.totalBonus;

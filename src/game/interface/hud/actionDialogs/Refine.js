@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Building } from '@influenceth/sdk';
+import { Building, Crewmate } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { BackIcon, CaretIcon, CloseIcon, CoreSampleIcon, ExtractionIcon, ForwardIcon, RefineIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ProcessIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
@@ -130,7 +130,7 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
 
   const crewMembers = currentLaunch?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
   const launchBonus = 0;
 
   const stats = useMemo(() => ([

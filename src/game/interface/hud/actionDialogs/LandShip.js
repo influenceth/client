@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Ship } from '@influenceth/sdk';
+import { Building, Crewmate, Ship } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LandShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
@@ -71,9 +71,9 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
 
   const crewMembers = currentLanding?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
   const landingBonus = 0;/*useMemo(() => {
-    const bonus = getCrewAbilityBonus(4, crewMembers);
+    const bonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_RATE, crewMembers);
     const asteroidBonus = Asteroid.getBonusByResource(asteroid?.bonuses, selectedCoreSample?.resourceId);
     if (asteroidBonus.totalBonus !== 1) {
       bonus.totalBonus *= asteroidBonus.totalBonus;

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Product } from '@influenceth/sdk';
+import { Building, Crewmate, Product } from '@influenceth/sdk';
 
 import marketplaceBackground from '~/assets/images/modal_headers/Marketplace.png';
 import { BanIcon, InventoryIcon, LocationIcon, WarningOutlineIcon, OrderIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon } from '~/components/Icons';
@@ -202,7 +202,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
 
   const crewMembers = currentLaunch?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
   const launchBonus = 0;
 
   const tooltipRefEl = useRef();
@@ -343,7 +343,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
     return sum + (mode === 'buy' ? fee : -fee);
   }, [fee, mode, totalLimitPrice, totalMarketPrice, type]);
 
-  const marketplaceBonus = getCrewAbilityBonus(2, crewMembers); // TODO: not 2
+  const marketplaceBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers); // TODO: wrong id
 
   const stats = useMemo(() => ([
     {

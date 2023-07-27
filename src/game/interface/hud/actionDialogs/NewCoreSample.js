@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Deposit, Product } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Deposit, Product } from '@influenceth/sdk';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { NewCoreSampleIcon, ResourceIcon } from '~/components/Icons';
@@ -101,9 +101,9 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   const crewMembers = coreSampleManager.currentSample?._crewmates
     || ((crew?.crewMembers || []).map((i) => crewMemberMap[i]));
   const captain = crewMembers[0];
-  const sampleTimeBonus = getCrewAbilityBonus(1, crewMembers);
-  const sampleQualityBonus = getCrewAbilityBonus(2, crewMembers);
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+  const sampleTimeBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_SPEED, crewMembers);
+  const sampleQualityBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, crewMembers);
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
 
   // TODO: ...
   // TODO: the crew origin and destination lots are currently set to 1, and when

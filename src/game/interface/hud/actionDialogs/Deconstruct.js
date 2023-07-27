@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Asteroid, Building } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -35,7 +35,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
 
   const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
 
   const [destinationLot, setDestinationLot] = useState();
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);

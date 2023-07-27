@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Building, Inventory, Product } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Inventory, Product } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
@@ -76,7 +76,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
 
   const crewMembers = currentDelivery?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
 
   // handle "currentDelivery" state
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Building } from '@influenceth/sdk';
+import { Building, Crewmate } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -51,8 +51,8 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
 
   const crewMembers = currentConstruction?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
   const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
-  const constructionBonus = getCrewAbilityBonus(5, crewMembers);
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
+  const constructionBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CONSTRUCTION_EFFICIENCY, crewMembers);
 
   // TODO: ...
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
