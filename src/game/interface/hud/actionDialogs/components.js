@@ -1526,7 +1526,7 @@ export const DestinationSelectionDialog = ({
 
           // TODO: use this here instead? also need to apply product restrictions in some cases
           // const { filledMass, filledVolume } = Inventory.getFilledCapacity(inventory.inventoryType);
-          const inventoryConfig = Inventory.TYPES[inventory.inventoryType];
+          const inventoryConfig = Inventory.getType(inventory.inventoryType);
           const availMass = inventoryConfig.massConstraint - usedMass;
           const availVolume = inventoryConfig.volumeConstraint - usedVolume;
           const fullness = Math.max(

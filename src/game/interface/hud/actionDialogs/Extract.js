@@ -223,7 +223,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
   const onStartExtraction = useCallback(() => {
     const inventory = (destinationLot?.building?.inventories || []).find((i) => !i.locked);
-    const inventoryConfig = { ...(Inventory.TYPES[inventory.inventoryType] || {}) };
+    const inventoryConfig = Inventory.getType(inventory.inventoryType) || {};
     if (inventory) {
       inventoryConfig.massConstraint -= ((inventory.mass || 0) + (inventory.reservedMass || 0));
       inventoryConfig.volumeConstraint -= ((inventory.volume || 0) + (inventory.reservedVolume || 0));

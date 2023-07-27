@@ -166,10 +166,10 @@ const BuildingRow = ({ lot }) => {
     if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       if (lot.building?.capableType === Building.IDS.WAREHOUSE) {
         const inventory = (lot.building.inventories || [0]).find((i) => !i.locked);
-        const inventoryConfig = Inventory.getInventory(inventory?.inventoryType);
+        const filledCapacity = Inventory.getFilledCapacity(inventory?.inventoryType);
         const usage = inventory ? Math.max(
-          ((inventory.mass || 0) + (inventory.reservedMass || 0)) / inventoryConfig.massConstraint,
-          ((inventory.volume || 0) + (inventory.reservedVolume || 0)) / inventoryConfig.volumeConstraint,
+          ((inventory.mass || 0) + (inventory.reservedMass || 0)) / filledCapacity.filledMass,
+          ((inventory.volume || 0) + (inventory.reservedVolume || 0)) / filledCapacity.filledVolume,
         ) : 0;
         return [
           Math.min(1, usage),

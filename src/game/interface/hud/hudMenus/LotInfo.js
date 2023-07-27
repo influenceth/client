@@ -192,7 +192,7 @@ const LotInfo = () => {
   const [selectedBuilding, setSelectedBuilding] = useState();
 
   const mainInventoryType = useMemo(() => (lot?.building?.inventories || []).find((l) => !l.locked)?.inventoryType, [lot]);
-  const inventoryConfig = Inventory.TYPES[mainInventoryType] || {}; // TODO: use Inventory.getFilledCapacity() instead?
+  const inventoryConfig = Inventory.getType(mainInventoryType) || {}; // TODO: use Inventory.getFilledCapacity() instead?
 
   if (!lot) return null;
   if (lot && !lot.building) {

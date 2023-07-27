@@ -280,7 +280,7 @@ const LotInventory = () => {
     const reservedVolume = inventory?.reservedVolume || 0;
 
     // TODO: use Inventory.getFilledCapacity() instead?
-    const inventoryConfig = Inventory.TYPES[inventory.inventoryType] || {};
+    const inventoryConfig = Inventory.getType(inventory.inventoryType) || {};
     const massUsage = mass / inventoryConfig.massConstraint;
     const massReservedUsage = reservedMass / inventoryConfig.massConstraint;
     const volumeUsage = volume / inventoryConfig.volumeConstraint;
