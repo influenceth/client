@@ -265,7 +265,7 @@ const LotInventory = () => {
 
   const resourceItemRefs = useRef([]);
 
-  const inventory = (lot?.building?.inventories || []).find((i) => !i.locked);
+  const inventory = Object.values(lot?.building?.inventories || {}).find((i) => !i.locked);
   const { used, usedOrReserved } = useMemo(() => {
     if (!inventory) {
       return {

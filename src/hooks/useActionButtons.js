@@ -130,10 +130,9 @@ const useActionButtons = () => {
 
         // potentially-public/shared buildings
         if (constructionStatus === 'OPERATIONAL' && lot.building?.capableType) {
-          const buildingAsset = Building.TYPES[lot.building.capableType];
           if (crew.station?.asteroidId === asteroidId && crew.station?.lotId === lotId && !crew.station?.shipId) {
             a.push(actionButtons.EjectCrew);
-          } else if (buildingAsset.capabilities.includes('habitation')) {
+          } else if (lot.building.station) {  // TODO: (looking for presence of station component on building entity)
             a.push(actionButtons.StationCrew);
           }
         }
@@ -141,11 +140,10 @@ const useActionButtons = () => {
         // buildings i own
         if (lot.occupier === crew.i) {
           if (constructionStatus === 'OPERATIONAL' && lot.building?.capableType) {
-            const buildingAsset = Building.TYPES[lot.building.capableType];
-            if (buildingAsset.capabilities.includes('extraction')) {
+            if (lot.building.extractor) {  // TODO: (looking for presence of component on building entity)
               a.push(actionButtons.Extract);
             }
-            if (buildingAsset.capabilities.includes('habitation') && (lot.building?.stationedCrews || []).find((c) => c !== crew?.i)) {
+            if (lot.building.station && (lot.building?.stationedCrews || []).find((c) => c !== crew?.i)) { // TODO: (looking for presence of station component on building entity)
               a.push(actionButtons.EjectGuestCrew);
             }
             a.push(actionButtons.Refine);
@@ -155,7 +153,7 @@ const useActionButtons = () => {
             a.push(actionButtons.PlanBuilding);
           }
 
-          if (constructionStatus === 'OPERATIONAL' && (lot.building?.inventories || []).find((i) => !i.locked)) {
+          if (constructionStatus === 'OPERATIONAL' && Object.values(lot.building?.inventories || {}).find((i) => !i.locked)) {
             a.push(actionButtons.SurfaceTransferOutgoing);
           }
           if ((lot.building?.deliveries || []).find((d) => d.status !== 'COMPLETE')) {

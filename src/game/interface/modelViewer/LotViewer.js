@@ -14,7 +14,7 @@ const LotViewer = () => {
 
   const modelUrl = useMemo(() => {
     if (lot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
-      const asset = Building.TYPES.find((a) => a.name === lot.building.__t);
+      const asset = Object.values(Building.TYPES).find((a) => a.name === lot.building.__t);
       if (asset) {
         return getBuildingModel(asset.i);
       }

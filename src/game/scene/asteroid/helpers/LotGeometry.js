@@ -186,7 +186,7 @@ export const getLotGeometry = ({ config, aboveSurface = 0.0, prebuiltHeightMaps,
 }
 
 export const getLotRegions = (positions, regionTally) => {
-  return Asteroid.lotPositionsToRegions(positions, regionTally);
+  return Asteroid.getRegionsOfLotPositions(positions, regionTally);
 }
 
 export const getClosestLots = ({ center, centerLot, lotTally, findTally }) => {

@@ -170,7 +170,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   }, [originInvId, originLot?.building?.inventories]);
 
   const onStartDelivery = useCallback(() => {
-    const destInventory = (destinationLot?.building?.inventories || []).find((i) => !i.locked);
+    const destInventory = Object.values(destinationLot?.building?.inventories || {}).find((i) => !i.locked);
     const destInventoryConfig = Inventory.getType(destInventory?.inventoryType) || {};
     if (destInventory) {
       destInventoryConfig.massConstraint -= ((destInventory.mass || 0) + (destInventory.reservedMass || 0));

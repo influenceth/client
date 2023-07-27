@@ -18,9 +18,9 @@ import useSale from '~/hooks/useSale';
 import TextFilter from './filters/TextFilter';
 
 // spectral type filter configs
-const spectralTypeOptions = Object.keys(Asteroid.SPECTRAL_TYPES).reduce((acc, key) => ([
+const spectralTypeOptions = Object.keys(Asteroid.SPECTRAL_TYPES).reduce((acc, spectralId) => ([
   ...acc,
-  { key, label: `${Asteroid.getSpectralType(key)}-type`, initialValue: true }
+  { key: spectralId, label: `${Asteroid.getSpectralType(spectralId)}-type`, initialValue: true }
 ]), []);
 
 const spectralTypeColors = {

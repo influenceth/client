@@ -222,7 +222,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   ]), [amount, crewTravelBonus, crewTravelTime, extractionBonus, extractionTime, resource]);
 
   const onStartExtraction = useCallback(() => {
-    const inventory = (destinationLot?.building?.inventories || []).find((i) => !i.locked);
+    const inventory = Object.values(destinationLot?.building?.inventories || {}).find((i) => !i.locked);
     const inventoryConfig = Inventory.getType(inventory.inventoryType) || {};
     if (inventory) {
       inventoryConfig.massConstraint -= ((inventory.mass || 0) + (inventory.reservedMass || 0));

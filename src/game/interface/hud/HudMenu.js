@@ -362,7 +362,7 @@ const HudMenu = () => {
         Component: hudMenus.LotResources
       });
 
-      if (lot?.building?.capableType && (lot.building.inventories || []).find((i) => !i.locked)) {
+      if (lot?.building?.capableType && Object.values(lot.building.inventories || {}).find((i) => !i.locked)) {
         buttons.push({
           key: 'LOT_INVENTORY',
           label: 'Inventory',

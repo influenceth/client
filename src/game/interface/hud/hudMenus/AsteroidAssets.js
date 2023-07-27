@@ -165,7 +165,7 @@ const BuildingRow = ({ lot }) => {
   const [progress, progressColor] = useMemo(() => {
     if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       if (lot.building?.capableType === Building.IDS.WAREHOUSE) {
-        const inventory = (lot.building.inventories || [0]).find((i) => !i.locked);
+        const inventory = Object.values(lot.building.inventories || {}).find((i) => !i.locked);
         const filledCapacity = Inventory.getFilledCapacity(inventory?.inventoryType);
         const usage = inventory ? Math.max(
           ((inventory.mass || 0) + (inventory.reservedMass || 0)) / filledCapacity.filledMass,

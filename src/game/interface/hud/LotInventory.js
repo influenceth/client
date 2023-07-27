@@ -96,7 +96,7 @@
 //   const { asteroidId, lotId } = useStore(s => s.asteroids.lot || {});
 //   const { data: lot } = useLot(asteroidId, lotId);
 
-//   const inventory = (lot?.building?.inventories || []).find((i) => !i.locked);
+//   const inventory = Object.values(lot?.building?.inventories || {}).find((i) => !i.locked);
 //   const inventoryConfig = Inventory.TYPES[inventory.inventoryType] || {};
 
 //   const { progress, secondaryProgress, activeUse, reservedUse, massOrVolume } = useMemo(() => {

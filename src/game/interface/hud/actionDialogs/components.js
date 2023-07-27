@@ -1503,10 +1503,10 @@ export const DestinationSelectionDialog = ({
   const inventories = useMemo(() => {
     return (crewLots || [])
       .filter((lot) => (includeDeconstruction && lot.i === originLotId) || (
-        lot.building && lot.i !== originLotId && (lot.building.inventories || []).find((i) => !i.locked)
+        lot.building && lot.i !== originLotId && Object.values(lot.building.inventories || {}).find((i) => !i.locked)
       ))
       .reduce((acc, lot) => {
-        (lot.building.inventories || []).forEach((inventory, slot) => {
+        Object.values(lot.building.inventories || []).forEach((inventory, slot) => {
           let usedMass = 0, usedVolume = 0, type;
 
           // deconstructing in place (use currently-locked inventory)
@@ -1526,7 +1526,7 @@ export const DestinationSelectionDialog = ({
 
           // TODO: use this here instead? also need to apply product restrictions in some cases
           // const { filledMass, filledVolume } = Inventory.getFilledCapacity(inventory.inventoryType);
-          const inventoryConfig = Inventory.getType(inventory.inventoryType);
+          const inventoryConfig = Inventory.getType(inventory.inventoryType) || {};
           const availMass = inventoryConfig.massConstraint - usedMass;
           const availVolume = inventoryConfig.volumeConstraint - usedVolume;
           const fullness = Math.max(
@@ -1853,7 +1853,7 @@ export const getCapacityUsage = (building, inventories, type) => {
     volume: { max: 0, used: 0, reserved: 0 },
   }
   if (building && type !== undefined) {
-    const inventory = inventories.find((i) => !i.locked);
+    const inventory = Object.values(inventories).find((i) => !i.locked);
 
     const { filledMass, filledVolume } = Inventory.getFilledCapacity(inventory.inventoryType);
     capacity.mass.max = filledMass;
@@ -1870,11 +1870,11 @@ export const getCapacityUsage = (building, inventories, type) => {
 
 export const getBuildingRequirements = (building) => {
   const { capableType, inventories = [], deliveries = [] } = building || {};
-  const inventory = inventories.find((i) => !i.locked);
+  const inventory = Object.values(inventories).find((i) => !i.locked);
 
   // TODO: presumably ingredients will come from sdk per building
-  return Object.keys(Building.CONSTRUCTION_TYPES[capableType]?.materials || {}).map((productId) => {
-    const totalRequired = Building.CONSTRUCTION_TYPES[capableType].materials[productId];
+  return Object.keys(Building.CONSTRUCTION_TYPES[capableType]?.requirements || {}).map((productId) => {
+    const totalRequired = Building.CONSTRUCTION_TYPES[capableType].requirements[productId];
     const inInventory = (inventory?.resources || [])[productId] || 0;
     const inTransit = deliveries
       .filter((d) => d.status === 'IN_PROGRESS')

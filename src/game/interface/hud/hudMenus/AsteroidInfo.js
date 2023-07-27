@@ -94,9 +94,10 @@ const AsteroidInfo = ({ onClose }) => {
   const { data: sale } = useSale();
   const history = useHistory();
 
+  // get the categories of resources present on this asteroid
   const resourceCategories = useMemo(() => {
-    return (Asteroid.SPECTRAL_TYPES[asteroid?.spectralType]?.resources || []).reduce((acc, cur) => {
-      const category = Product.TYPES[cur]?.category;
+    return (Asteroid.SPECTRAL_TYPES[asteroid?.spectralType]?.resources || []).reduce((acc, productId) => {
+      const category = Product.TYPES[productId]?.category;
       if (category && !acc.includes(category)) {
         return [...acc, category];
       }
