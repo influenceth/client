@@ -65,7 +65,7 @@ const PartialSelectMenu = ({ maxSelectable, onChange, onClose, resource, selecte
         onBlur={onBlur}
         onKeyDown={onKeyDown}
         step={1} />
-      <small>{resource.massPerUnit === 0.001 ? 'kg' : ''}</small>
+      <small>{resource.isAtomic ? '' : 'kg'}</small>
     </Miniform>
   );
 };

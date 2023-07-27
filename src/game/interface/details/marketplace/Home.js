@@ -408,7 +408,7 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
                     ? (
                       <ListingPrice>
                         <SwayIcon />
-                        <Price unit={resource.massPerUnit === 0.001 ? 'kg' : 'unit'}>{formatPrice(price)}</Price>
+                        <Price unit={resource.isAtomic ? 'unit' : 'kg'}>{formatPrice(price)}</Price>
                         <PriceArrow mode={mode}><ChevronRightIcon /></PriceArrow>
                       </ListingPrice>
                     )

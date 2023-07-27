@@ -325,7 +325,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
               </div>
             </MarketSummary>
             <MarketPrice>
-              <label>Median Price:</label> <SwayIcon />{formatPrice(medianPrice)}<label>/{resource.massPerUnit === 0.001 ? 'kg' : 'unit'}</label>
+              <label>Median Price:</label> <SwayIcon />{formatPrice(medianPrice)}<label>/{resource.isAtomic ? 'unit' : 'kg'}</label>
             </MarketPrice>
           </div>
         </div>

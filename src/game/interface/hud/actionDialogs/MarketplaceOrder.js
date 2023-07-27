@@ -188,7 +188,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const resource = Product.TYPES[resourceId] || {};
-  const resourceByMass = resource?.massPerUnit === 0.001;
+  const resourceByMass = !resource?.isAtomic;
   
   const { currentLaunch, launchStatus, startLaunch } = manager;
 

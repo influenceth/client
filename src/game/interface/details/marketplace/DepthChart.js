@@ -632,7 +632,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
             <CenterPrice>
               <SwayIcon />
-              <Price unit={resource.massPerUnit === 0.001 ? 'kg' : 'unit'}>{formatPrice(centerPrice)}</Price>
+              <Price unit={resource.isAtomic ? 'unit' : 'kg'}>{formatPrice(centerPrice)}</Price>
             </CenterPrice>
 
             <BuyTable>
@@ -698,10 +698,10 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   <InputLabel>
                     <label>Quantity</label>
                     {type === 'market' && (
-                      <span>Max <b>{((mode === 'buy' ? totalForSale : totalForBuy) || 0).toLocaleString()}{resource.massPerUnit === 0.001 ? ' kg' : ''}</b></span>
+                      <span>Max <b>{((mode === 'buy' ? totalForSale : totalForBuy) || 0).toLocaleString()}{resource.massPerUnit === 1000 ? ' kg' : ''}</b></span>
                     )}
                   </InputLabel>
-                  <TextInputWrapper rightLabel={resource.massPerUnit === 0.001 ? ' kg' : ''}>
+                  <TextInputWrapper rightLabel={resource.isAtomic ? '' : ' kg'}>
                     <UncontrolledTextInput
                       min={0}
                       max={type === 'market' ? (mode === 'buy' ? totalForSale : totalForBuy) : undefined}

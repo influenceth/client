@@ -409,7 +409,7 @@ const LotInventory = () => {
             {splittingResourceId && (
               <StackSplitterPopper referenceEl={resourceItemRefs.current[splittingResourceId]}>
                 <StackSplitter onMouseLeave={onMouseLeave}>
-                  <label>Selected Amount ({Product.TYPES[splittingResourceId].massPerUnit === 0.001 ? 'kg' : ''})</label>
+                  <label>Selected Amount ({Product.TYPES[splittingResourceId].isAtomic ? '' : 'kg'})</label>
                   <QuantaInput
                     type="number"
                     max={inventory.resources[splittingResourceId]}

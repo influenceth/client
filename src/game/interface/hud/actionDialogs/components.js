@@ -3399,9 +3399,7 @@ export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps
 };
 
 export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
-  const { massPerUnit } = Product.TYPES[resourceId];
-
-  if (massPerUnit === 0.001) {
+  if (!Product.TYPES[resourceId].isAtomic) {
     return formatResourceMass(units, resourceId, { abbrev, minPrecision, fixedPrecision });
   }
   // granular units
@@ -3411,7 +3409,7 @@ export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrec
 export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   return formatMass(
     resourceId
-      ? units * Product.TYPES[resourceId].massPerUnit * 1e6
+      ? units * Product.TYPES[resourceId].massPerUnit
       : 0,
     { abbrev, minPrecision, fixedPrecision }
   );
