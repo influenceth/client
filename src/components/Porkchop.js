@@ -259,12 +259,12 @@ const Porkchop = ({
     // deltav = v_e * ln((drymass + propused) / drymass)
     // (if invalid, calculate the required propellant req if 100% is to be used (i.e. actual === used))
     if (invalid) {
-      let drymass = (shipParams.emptyMass + shipParams.actualCargoMass);
+      let drymass = (shipParams.hullMass + shipParams.actualCargoMass);
       usedPropellantMass = drymass * (Math.exp(solution.deltaV / shipParams.exhaustVelocity) - 1);
 
     // deltav = v_e * ln(wetmass / (wetmass - usedprop))
     } else {
-      let wetmass = (shipParams.emptyMass + shipParams.actualCargoMass + shipParams.actualPropellantMass);
+      let wetmass = (shipParams.hullMass + shipParams.actualCargoMass + shipParams.actualPropellantMass);
       usedPropellantMass = wetmass * (1 - 1 / Math.exp(solution.deltaV / shipParams.exhaustVelocity));
     }
 

@@ -166,7 +166,7 @@ const RoutePlanner = () => {
       actualCargoMass: cargoMass,
       actualPropellantMass: propellantMass,
       exhaustVelocity,
-      maxDeltaV: exhaustVelocity * Math.log((ship.emptyMass + cargoMass + propellantMass) / (ship.emptyMass + cargoMass))
+      maxDeltaV: exhaustVelocity * Math.log((ship.hullMass + cargoMass + propellantMass) / (ship.hullMass + cargoMass))
     };
   }, [ship, cargoMass, propellantMass]);
 
