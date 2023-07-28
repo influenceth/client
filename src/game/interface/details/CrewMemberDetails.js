@@ -386,7 +386,7 @@ const CrewMemberDetails = () => {
 
   const startDate = useMemo(() => {
     if (crew?.events?.length > 0) {
-      return Time.unixTimeToGameTime(crew.events[0].timestamp);
+      return Time.fromUnixTime(crew.events[0].timestamp).toGameClockADays();
     }
     return null;
   }, [crew?.events]);

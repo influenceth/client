@@ -313,7 +313,7 @@ const RoutePlanner = () => {
               <label>Depart</label>
               <Note>{travelSolution.departureTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.departureTime - coarseTime, 1)}h</Note>
               <Value>
-                {Time.orbitTimeToGameTime(travelSolution.departureTime).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {Time.fromOrbitADays(travelSolution.departureTime).toGameClockADays(true)}
               </Value>
             </InfoRow>
 
@@ -321,7 +321,7 @@ const RoutePlanner = () => {
               <label>Arrive</label>
               <Note>{travelSolution.arrivalTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.arrivalTime - coarseTime, 1)}h</Note>
               <Value>
-                {Time.orbitTimeToGameTime(travelSolution.arrivalTime).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {Time.fromOrbitADays(travelSolution.arrivalTime).toGameClockADays(true)}
               </Value>
             </InfoRow>
 

@@ -10,7 +10,8 @@ const useGetTime = () => {
     const now = overrideNow || Date.now();
     const override = timeOverride || {};
 
-    let preciseTime = override.anchor || (((now / 1000) - Time.START_TIMESTAMP) / 3600);
+    let preciseTime = override.anchor || Time.fromUnixTime(now).toOrbitADays();
+
     // console.log('override.speed', now - override.ts);
     // if (override.speed) preciseTime += override.speed * (now - override.ts) / 30;
     if (override.speed) preciseTime += (override.speed - 1) * (now - override.ts) / 3600e3;

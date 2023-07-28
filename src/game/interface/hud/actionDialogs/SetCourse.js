@@ -374,11 +374,11 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
                 </div>
                 <div>
                   <label>Depart</label>
-                  <span>{(Time.orbitTimeToGameTime(travelSolution.departureTime) || 0).toLocaleString()}</span>
+                  <span>{(Time.fromOrbitADays(travelSolution.departureTime).toGameClockADays() || 0).toLocaleString()}</span>
                 </div>
                 <div>
                   <label>Arrive</label>
-                  <span>{(Time.orbitTimeToGameTime(travelSolution.arrivalTime) || 0).toLocaleString()}</span>
+                  <span>{(Time.fromOrbitADays(travelSolution.arrivalTime).toGameClockADays() || 0).toLocaleString()}</span>
                 </div>
               </TimingDetails>
 

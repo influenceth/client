@@ -25,12 +25,12 @@ export function ClockProvider({ children }) {
   const updateClock = useCallback(() => {
     const coarseTime = Math.floor(100 * getTime()) / 100;
     if (contextValue.coarseTime !== coarseTime) {
-      const gameTime = Time.orbitTimeToGameTime(coarseTime);
+      const gameTime = Time.fromOrbitADays(coarseTime).toGameClockADays();
       setTimeout(() => { // setter gets slow at fast intervals, so return setInterval function before setting
         setContextValue({
           coarseTime,
           displayTime: `${gameTime >= 0 ? '' : ''}${gameTime.toLocaleString(undefined, { minimumFractionDigits: DISPLAY_TIME_FRACTION_DIGITS })}`,
-          realWorldTime: Time.orbitTimeToRealDate(coarseTime)
+          realWorldTime: Time.fromOrbitADays(coarseTime).toDate()
         });
       }, 0);
     }
