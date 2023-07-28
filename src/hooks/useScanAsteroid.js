@@ -13,7 +13,7 @@ const useAsteroidScan = (asteroid) => {
     () => {
       createAlert({
         type: 'GenericAlert',
-        content: 'Crewmate name changes are disabled as we complete the L2 Asset Bridge. Stay tuned.',
+        content: 'Asteroid scanning is disabled as we complete the L2 Asset Bridge. Stay tuned.',
       })
     },
     //() => execute('START_ASTEROID_SCAN', { i }),
@@ -24,7 +24,7 @@ const useAsteroidScan = (asteroid) => {
     () => {
       createAlert({
         type: 'GenericAlert',
-        content: 'Crewmate name changes are disabled as we complete the L2 Asset Bridge. Stay tuned.',
+        content: 'Asteroid scanning is disabled as we complete the L2 Asset Bridge. Stay tuned.',
       })
     },
     // () => execute('FINALIZE_ASTEROID_SCAN', { i }),
