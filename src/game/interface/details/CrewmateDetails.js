@@ -26,7 +26,7 @@ import Text from '~/components/Text';
 import TextInput from '~/components/TextInput';
 import useAuth from '~/hooks/useAuth';
 import useCrewAssignments from '~/hooks/useCrewAssignments';
-import useCrewMember from '~/hooks/useCrewMember';
+import useCrewmate from '~/hooks/useCrewmate';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import useNameCrew from '~/hooks/useNameCrew';
 import useStore from '~/hooks/useStore';
@@ -371,13 +371,13 @@ const EmptyLogEntry = styled.li`
 
 const MIN_TRAIT_SLOTS = 12;
 
-const CrewMemberDetails = () => {
+const CrewmateDetails = () => {
   const { i } = useParams();
   const history = useHistory();
   const { account } = useAuth();
   const { data: assignmentData } = useCrewAssignments();
-  const { data: crew } = useCrewMember(i);
-  const { getCrewNameAvailability } = useNameAvailability();
+  const { data: crew } = useCrewmate(i);
+  const isNameValid = useNameAvailability('Crewmate');
   const { nameCrew, naming } = useNameCrew(Number(i));
   const playSound = useStore(s => s.dispatchSoundRequested);
 
@@ -421,10 +421,10 @@ const CrewMemberDetails = () => {
   }, [crew?.traits, selectTrait]);
 
   const attemptNameCrew = useCallback(async (name) => {
-    if (await getCrewNameAvailability(name)) {
+    if (await isNameValid(name)) {
       nameCrew(name);
     }
-  }, [getCrewNameAvailability]);
+  }, [isNameValid]);
 
   return (
     <Details
@@ -453,11 +453,11 @@ const CrewMemberDetails = () => {
                 {!crew.name && (
                   <Form
                     title={<><EditIcon /><span>Set Name</span></>}
-                    data-tip="Name crew member"
+                    data-tip="Name crewmate"
                     data-for="global"
                     loading={naming}>
                     <Text>
-                      A crew member can only be named once!
+                      A crewmate can only be named once!
                       Names must be unique, and can only include letters, numbers, and single spaces.
                     </Text>
                     <NameForm>
@@ -603,7 +603,7 @@ const CrewMemberDetails = () => {
                           key={e.key}
                           data={{ ...e, i: crew.i }}
                           timestampBreakpoint="1500px"
-                          type={`CrewMember_${e.event}`}
+                          type={`Crewmate_${e.event}`}
                           isTabular />
                       ))
                       : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
@@ -619,4 +619,4 @@ const CrewMemberDetails = () => {
   );
 };
 
-export default CrewMemberDetails;
+export default CrewmateDetails;

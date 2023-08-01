@@ -287,7 +287,7 @@ const CrewAssignmentComplete = () => {
   const { account } = useAuth();
   const { id: sessionId } = useParams();
   const history = useHistory();
-  const { crewMemberMap } = useCrewContext();
+  const { crewmateMap } = useCrewContext();
   const { storyState } = useStorySession(sessionId);
 
   const onCloseDestination = useMemo(
@@ -296,8 +296,8 @@ const CrewAssignmentComplete = () => {
   );
 
   const crew = useMemo(
-    () => crewMemberMap && storyState && crewMemberMap[storyState.owner],
-    [storyState, crewMemberMap]
+    () => crewmateMap && storyState && crewmateMap[storyState.owner],
+    [storyState, crewmateMap]
   );
 
   const rewards = useMemo(() => {
@@ -337,7 +337,7 @@ const CrewAssignmentComplete = () => {
       ? (
           <RewardSection>
             <div>
-              <h4>This crew member has gained traits:</h4>
+              <h4>This crewmate has gained traits:</h4>
               {rewards.map((reward) => (
                 <div key={reward.id}>
                   <CrewTraitIcon trait={reward.id} />

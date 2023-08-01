@@ -17,9 +17,6 @@ const getInvalidations = (event, returnValues, linked) => {
   let rewriteEvent;
   try {
     const map = {
-      AsteroidUsed: [
-        ['asteroids', 'mintableCrew'],
-      ],
       Asteroid_NameChanged: [
         ['asteroids', returnValues.tokenId],
         ['asteroids', 'list'],
@@ -41,7 +38,6 @@ const getInvalidations = (event, returnValues, linked) => {
       ],
       Asteroid_Transfer: [
         ['asteroids', returnValues.tokenId],
-        ['asteroids', 'mintableCrew'],
         ['asteroids', 'ownedCount'],
         ['asteroids', 'list'],
         ['search', 'asteroids'],
@@ -51,22 +47,22 @@ const getInvalidations = (event, returnValues, linked) => {
       ],
       Crewmate_FeaturesSet: [
         ['assignments'],
-        ['crewmembers', returnValues.crewId],
-        ['crewmembers', 'owned'],
+        ['crewmates', returnValues.crewId],
+        ['crewmates', 'owned'],
       ],
       Crewmate_TraitsSet: [
-        ['crewmembers', returnValues.crewId],
-        ['crewmembers', 'owned'],
+        ['crewmates', returnValues.crewId],
+        ['crewmates', 'owned'],
       ],
       Crewmate_NameChanged: [
-        ['crewmembers', returnValues.tokenId],
-        ['crewmembers', 'owned'],
+        ['crewmates', returnValues.tokenId],
+        ['crewmates', 'owned'],
         ['events'], // (to update name in already-fetched events)
       ],
       Crewmate_Transfer: [
         ['assignments'],
-        ['crewmembers', 'owned'],
-        ['crewmembers', returnValues.tokenId],
+        ['crewmates', 'owned'],
+        ['crewmates', returnValues.tokenId],
       ],
 
       Dispatcher_ConstructionPlan: [
@@ -177,7 +173,7 @@ export function EventsProvider({ children }) {
       let eventName = e.event;
       if (e.event === 'Transfer') {
         if (!!e.linked.find((l) => l.type === 'Asteroid')) eventName = 'Asteroid_Transfer';
-        else if (!!e.linked.find((l) => l.type === 'CrewMember')) eventName = 'Crewmate_Transfer';
+        else if (!!e.linked.find((l) => l.type === 'Crewmate')) eventName = 'Crewmate_Transfer';
         else if (!!e.linked.find((l) => l.type === 'Crew')) eventName = 'Crew_Transfer';
         else console.warn('unhandled transfer type', e);
 

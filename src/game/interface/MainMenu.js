@@ -139,10 +139,10 @@ const MainMenu = () => {
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
   // TODO: genesis book deprecation vvv
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
   const hasGenesisCrewmate = useMemo(() => {
-    return crew && crew?.crewMembers && crewMemberMap && crew.crewMembers.find((i) => [1,2,3].includes(crewMemberMap[i]?.crewCollection));
-  }, [crew?.crewMembers, crewMemberMap]); // eslint-disable-line react-hooks/exhaustive-deps
+    return crew && crew?.crewmates && crewmateMap && crew.crewmates.find((i) => [1,2,3].includes(crewmateMap[i]?.crewCollection));
+  }, [crew?.crewmates, crewmateMap]); // eslint-disable-line react-hooks/exhaustive-deps
   // ^^^
 
   const [ showMenu, setShowMenu ] = useState(!isMobile);

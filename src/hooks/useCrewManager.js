@@ -5,11 +5,11 @@ import useCrewContext from './useCrewContext';
 
 const useCrewManager = () => {
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
-  const { crewMemberMap } = useCrewContext();
+  const { crewmateMap } = useCrewContext();
 
   const crewCredits = useMemo(() => {
-    return Object.values(crewMemberMap || {}).filter((c) => !c.crewClass);
-  }, [crewMemberMap]);
+    return Object.values(crewmateMap || {}).filter((c) => !c.crewClass);
+  }, [crewmateMap]);
 
   const changeActiveCrew = useCallback(
     (params) => execute('SET_ACTIVE_CREW', params),

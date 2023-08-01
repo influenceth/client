@@ -12,7 +12,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 
 const useColumns = () => {
   const { account } = useAuth();
-  const { crewMemberMap } = useCrewContext();
+  const { crewmateMap } = useCrewContext();
 
   return useMemo(() => {
     const columns = [
@@ -20,7 +20,7 @@ const useColumns = () => {
         key: 'my',
         align: 'center',
         icon: <MyAssetIcon />,
-        selector: row => !!crewMemberMap[row.crew] ? <MyAssetIcon /> : null,
+        selector: row => !!crewmateMap[row.crew] ? <MyAssetIcon /> : null,
         bodyStyle: { fontSize: '24px' },
         requireLogin: true,
         unhideable: true
@@ -60,7 +60,7 @@ const useColumns = () => {
     ];
 
     return columns.filter((c) => account || !c.requireLogin);
-  }, [account, crewMemberMap]);
+  }, [account, crewmateMap]);
 };
 
 export default useColumns;

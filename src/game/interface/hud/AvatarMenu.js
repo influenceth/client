@@ -198,9 +198,9 @@ const CrewmateIcons = styled.div`
     font-size: 24px;
   }
 
-  ${p => p.crewMembers > 0 
+  ${p => p.crewmates > 0 
     ? `
-      & > svg:nth-child(n+1):nth-child(-n+${p.crewMembers}) {
+      & > svg:nth-child(n+1):nth-child(-n+${p.crewmates}) {
         color: #888;
       }
     `
@@ -223,14 +223,14 @@ const Food = styled.div`
 
 const AvatarMenu = () => {
   const { account } = useAuth();
-  const { captain, crewMemberMap, crew, loading: crewIsLoading } = useCrewContext();
+  const { captain, crewmateMap, crew, loading: crewIsLoading } = useCrewContext();
   const history = useHistory();
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
   const silhouetteOverlay = useMemo(() => {
-    // if no account or no crew members, show "+" to start their crew
-    if (!account || Object.keys(crewMemberMap || {}).length === 0) {
+    // if no account or no crewmates, show "+" to start their crew
+    if (!account || Object.keys(crewmateMap || {}).length === 0) {
       return {
         alwaysOn: ['icon'],
         disableHover: true,
@@ -239,7 +239,7 @@ const AvatarMenu = () => {
         rgb: theme.colors.mainRGB,
       };
     }
-    // if account and crew members, but no captain, show "warning sign" and link to move crewmates to crew
+    // if account and crewmates, but no captain, show "warning sign" and link to move crewmates to crew
     else if (!captain) {
       return {
         alwaysOn: ['icon'],
@@ -295,7 +295,7 @@ const AvatarMenu = () => {
                 </BaseLocation>
                 <Personnel>
                   <div>
-                    <CrewmateIcons crewMembers={crew?.crewMembers?.length || 0}>
+                    <CrewmateIcons crewmates={crew?.crewmates?.length || 0}>
                       <CrewmateIcon />
                       <CrewmateIcon />
                       <CrewmateIcon />

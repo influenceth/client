@@ -12,26 +12,26 @@ export function CrewProvider({ children }) {
   const selectedCrewId = useStore(s => s.selectedCrewId);
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
 
-  const { data: allCrewMembers, isLoading: crewMembersLoading } = useQuery(
-    [ 'crewmembers', 'owned', account ],
-    () => api.getOwnedCrewMembers(),
-    { enabled: !!account }
-  );
-
   const { data: crews, isLoading: crewsLoading } = useQuery(
     [ 'crews', 'owned', account ],
-    () => api.getOwnedCrews(),
+    () => api.getOwnedCrews(account),
     { enabled: !!account }
   );
 
-  const crewMemberMap = useMemo(() => {
-    if (!crewMembersLoading) {
+  const { data: allCrewmates, isLoading: crewmatesLoading } = useQuery(
+    [ 'crewmates', 'owned', account ],
+    () => api.getCrewmatesByCrewIds(crews.map((c) => c.i)),
+    { enabled: crews?.length > 0 }
+  );
+
+  const crewmateMap = useMemo(() => {
+    if (!crewmatesLoading) {
       const roster = {};
-      (allCrewMembers || []).forEach((crewMember) => roster[crewMember.i] = crewMember);
+      (allCrewmates || []).forEach((crewmate) => roster[crewmate.i] = crewmate);
       return roster;
     }
     return null;
-  }, [allCrewMembers, crewMembersLoading]);
+  }, [allCrewmates, crewmatesLoading]);
 
   const selectedCrew = useMemo(() => {
     return selectedCrewId && (crews || []).find((crew) => crew.i === selectedCrewId);
@@ -50,33 +50,33 @@ export function CrewProvider({ children }) {
 
   useEffect(() => {
     // if logged in and done loading and there are crews
-    if (!crewsLoading && !crewMembersLoading) {
+    if (!crewsLoading && !crewmatesLoading) {
       if (account && crews?.length) {
         // if there is no selected crew, select default crew
         if (!selectedCrew) {
-          const defaultCrew = crews.find((crew) => crew.crewMembers.length > 0);
+          const defaultCrew = crews.find((crew) => crew.crewmates.length > 0);
           dispatchCrewSelected(defaultCrew?.i || crews[0].i);
         }
       } else {
         dispatchCrewSelected();
       }
     }
-  }, [account, crews, crewsLoading, crewMembersLoading, dispatchCrewSelected, selectedCrew]);
+  }, [account, crews, crewsLoading, crewmatesLoading, dispatchCrewSelected, selectedCrew]);
 
   const captain = useMemo(() => {
-    if (crewMemberMap && selectedCrew?.crewMembers?.length) {
-      return crewMemberMap[selectedCrew.crewMembers[0]];
+    if (crewmateMap && selectedCrew?.crewmates?.length) {
+      return crewmateMap[selectedCrew.crewmates[0]];
     }
     return null;
-  }, [crewMemberMap, selectedCrew]);
+  }, [crewmateMap, selectedCrew]);
 
   return (
     <CrewContext.Provider value={{
       captain,
       crew: selectedCrew,
       crews,
-      crewMemberMap,
-      loading: crewsLoading || crewMembersLoading,
+      crewmateMap,
+      loading: crewsLoading || crewmatesLoading,
       selectCrew: dispatchCrewSelected  // TODO: this might be redundant
     }}>
       {children}

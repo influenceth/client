@@ -82,7 +82,7 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
   
   const { currentLaunch, launchStatus, startLaunch } = manager;
 
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
   const { data: launchOriginLot } = useLot(asteroid?.i, currentLaunch?.originLotId);
 
   const [amount, setAmount] = useState(0);
@@ -101,9 +101,9 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const process = shipId && processes.find((p) => p.i === shipId);
   const ship = shipId && Ship.TYPES[shipId];
 
-  const crewMembers = currentLaunch?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
-  const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
+  const crewmates = currentLaunch?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const captain = crewmates[0];
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const launchBonus = 0;
 
   const stats = useMemo(() => ([

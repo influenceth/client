@@ -60,7 +60,7 @@ import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import useCrew from '~/hooks/useCrew';
-import useCrewMember from '~/hooks/useCrewMember';
+import useCrewmate from '~/hooks/useCrewmate';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
 import CrewIndicator from '~/components/CrewIndicator';
@@ -91,7 +91,7 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
   
   const { currentStationing, stationingStatus, stationOnShip } = manager;
 
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
 
   // 
   const destinationLot = destinations[0]?.type === 'lot' ? destinations[0].data : null;
@@ -100,9 +100,9 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
   const { data: ownerCrew } = useCrew(destinationShip?.owner || destinationLot?.occupier);
   const crewIsOwner = ownerCrew?.i === crew?.i;
 
-  const crewMembers = currentStationing?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
-  const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
+  const crewmates = currentStationing?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const captain = crewmates[0];
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const launchBonus = 0;
 
   const transportDistance = Asteroid.getLotDistance(asteroid?.i, lot?.i, destinationLot?.i || destinationShip?.lotId) || 0;
@@ -227,7 +227,7 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
               ? (crewIsOwner ? 'Flight Crew' : 'Passengers')
               : 'Stationed Crew'
             }
-            crew={{ ...crew, members: crewMembers }} />
+            crew={{ ...crew, roster: crewmates }} />
 
           <FlexSectionSpacer />
 
@@ -240,7 +240,7 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
                 valueLabel={`7 / ${Ship.TYPES[destinationShip.type].maxPassengers}`}
                 value={7 / Ship.TYPES[destinationShip.type].maxPassengers}
                 deltaColor="#f644fa"
-                deltaValue={crew?.crewMembers?.length / Ship.TYPES[destinationShip.type].maxPassengers}
+                deltaValue={crew?.crewmates?.length / Ship.TYPES[destinationShip.type].maxPassengers}
               />
             )}
           </div>

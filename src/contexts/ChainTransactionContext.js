@@ -68,20 +68,20 @@ const getContracts = (account) => ({
   'SET_ACTIVE_CREW': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ crewId, crewMembers }) => {
+    transact: (contract) => ({ crewId, crewmates }) => {
       if (crewId) {
         return contract.invoke(
           'Crew_setComposition',
           [
             crewId,
-            [...crewMembers]
+            [...crewmates]
           ]
         );
       } else {
         return contract.invoke(
           'Crew_mint',
           [
-            [...crewMembers]
+            [...crewmates]
           ]
         );
       }

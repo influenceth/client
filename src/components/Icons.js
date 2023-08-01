@@ -292,7 +292,6 @@ export {
   AiFillEye as EyeIcon,
   AiFillStar as StarIcon,
   BsCheckCircle as CheckCircleIcon,
-  BsFillPersonFill as CrewMemberIcon,
   BsPieChartFill as CompositionIcon,
   BsSliders as SlidersIcon,
   BsStopwatch as TimerIcon,

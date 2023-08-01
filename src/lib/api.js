@@ -28,6 +28,36 @@ const buildQuery = (queryObj) => {
   }).join('&');
 };
 
+// TODO: put this in sdk
+const entityId = ({ label, i }) => `${label}/${i}`;
+
+const getEntityById = async ({ label, i, components }) => {
+  const query = { label };
+  query.i = Array.isArray(i) ? i.join(',') : i;
+  if (components) {
+    query.components = components.join(',');  // i.e. [ 'celestial', 'control' ]
+  }
+
+  const response = await instance.get(`/v1/entity/id?${buildQuery(query)}`);
+  return response.data;
+};
+
+const getEntity = async ({ match, label, components }) => {
+  const query = {};
+  if (match) {
+    query.match = match;  // i.e. { 'celestial.celestialType': 2 }
+  }
+  if (label) {
+    query.label = label;  // i.e. 'asteroid'
+  }
+  if (components) {
+    query.components = components.join(',');  // i.e. [ 'celestial', 'control' ]
+  }
+  
+  const response = await instance.get(`/v1/entity?${buildQuery(query)}`);
+  return response.data;
+};
+
 const api = {
   getUser: async () => {
     const response = await instance.get('/v1/user');
@@ -40,7 +70,7 @@ const api = {
   },
 
   getCrewPlannedLots: async () => {
-    const response = await instance.get('/v1/user/plans');
+    const response = await instance.get('/v1/user/plans');  // TODO: server-side update
     return response.data;
   },
 
@@ -60,7 +90,7 @@ const api = {
   },
 
   getWatchlist: async () => {
-    const response = await instance.get('/v1/user/watchlist');
+    const response = await instance.get('/v1/user/watchlist'); // TODO: server-side update
     return response.data;
   },
 
@@ -85,14 +115,10 @@ const api = {
     return response.status;
   },
 
-  getAsteroid: async (i, extended = false) => {
-    const response = await instance.get(`/v1/asteroids/${i}${extended ? '?extended=1' : ''}`);
-    return response.data;
-  },
-
-  getAsteroids: async (query) => {
-    const response = await instance.get('/v1/asteroids', { params: query });
-    return response.data;
+  getAsteroid: async (i) => { //, extended = false) => {
+    // TODO: deprecate `extended` OR need to pass extra queryString to getEntityById OR need a separate call for that data
+    // const response = await instance.get(`/v1/asteroids/${i}${extended ? '?extended=1' : ''}`);
+    return getEntityById({ label: 'asteroid', i });
   },
 
   getAsteroidLotData: async (i) => {
@@ -124,53 +150,66 @@ const api = {
   },
 
   getCrewOccupiedLots: async (a, c) => {
+    // TODO: elasticsearch
     const response = await instance.get(`/v1/asteroids/${a}/lots/occupier/${c}`);
     return response.data;
+    // return getEntity({
+    //   match: { 'control.controller': c },
+    //   label: 'building'
+    // });
   },
 
   getCrewSampledLots: async (a, c, r) => {
+    // TODO: elasticsearch
     const response = await instance.get(`/v1/asteroids/${a}/lots/sampled/${c}/${r}`);
     return response.data;
   },
 
+  getEntityById,
+
+  getEntity,
+
   getLot: async (asteroidId, lotId) => {
-    const response = await instance.get(`/v1/asteroids/${asteroidId}/lots/${lotId}`);
-    return response.data;
+    // TODO: make sure the response matches
+    // const response = await instance.get(`/v1/asteroids/${asteroidId}/lots/${lotId}`);
+    return getEntityById({ label: 'lot', i: lotId });
   },
 
+  getNameUse: async (label, name) => {
+    return getEntity({ match: { name }, label, components: [] });
+  },
+
+  getOwnedAsteroids: async (account) => {
+    return getEntity({ match: { 'nft.owner': account }, label: 'asteroid' });
+  },
+
+  // TODO: deprecate this (and just use .length of getOwnedAsteroids()?)
   getOwnedAsteroidsCount: async () => {
     const response = await instance.get('/v1/asteroids/ownedCount');
     return response.data;
   },
 
-  getOwnedCrews: async () => {
-    const response = await instance.get(`/v1/crews/owned`);
-    return response.data;
+  getOwnedCrews: async (account) => {
+    return getEntity({ match: { 'crew.delegatedTo': account }, label: 'crew' });
+  },
+
+  getCrewmatesByCrewIds: async (crewIds) => {
+    return getEntity({
+      match: { 'control.controller': crewIds.map((i) => entityId('crew', i)) },
+      label: 'crewmate'
+    });
   },
 
   getCrew: async (i) => {
-    const response = await instance.get(`/v1/crews/${i}`);
-    return response.data;
+    return getEntityById({ label: 'crew', i });
   },
 
-  getCrewMember: async (i) => {
-    const response = await instance.get(`/v1/crewmates/${i}`);
-    return response.data;
+  getCrewmate: async (i) => {
+    return getEntityById({ label: 'crewmate', i });
   },
 
-  getOwnedCrewMembers: async () => {
-    const response = await instance.get('/v1/crewmates/owned');
-    return response.data;
-  },
-
-  getCrewMembers: async (query) => {
-    const response = await instance.get('/v1/crewmates', { params: query });
-    return response.data;
-  },
-
-  getMintableCrew: async (query) => {
-    const response = await instance.get('/v1/crewmates/mintable', { params: query });
-    return response.data;
+  getCrewmates: async (ids) => {
+    return getEntityById({ label: 'crewmate', i: ids });
   },
 
   getPlanets: async () => {
@@ -194,8 +233,8 @@ const api = {
     return response.data;
   },
 
-  createStorySession: async (crewMember, story) => {
-    const response = await instance.post(`/v1/stories/sessions`, { crewMember, story });
+  createStorySession: async (crewmate, story) => {
+    const response = await instance.post(`/v1/stories/sessions`, { crewmate, story });
     return response.data;
   },
 

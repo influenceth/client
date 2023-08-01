@@ -292,7 +292,7 @@ const PromptDetails = styled.div`
 const CrewAssignment = () => {
   const { id: sessionId } = useParams();
   const history = useHistory();
-  const { crewMemberMap} = useCrewContext();
+  const { crewmateMap} = useCrewContext();
   const { currentStep, storyState, commitPath, loadingPath } = useStorySession(sessionId);
   const { data: book } = useBook(storyState?.book)
   const playSound = useStore(s => s.dispatchSoundRequested);
@@ -309,7 +309,7 @@ const CrewAssignment = () => {
   if (storyState?.book) {
     onCloseDestination = `/crew-assignments/${storyState?.book}/${storyState?.story}`;
     onCloseDestinationLabel = book?.title;
-  } else if (Object.keys(crewMemberMap || {}).length > 0) {
+  } else if (Object.keys(crewmateMap || {}).length > 0) {
     onCloseDestination = '/owned-crew';
     onCloseDestinationLabel = 'Crew Management';
   } else {
@@ -361,8 +361,8 @@ const CrewAssignment = () => {
   }, [history, playSound, sessionId, isMintingStory]);
 
   const crew = useMemo(
-    () => crewMemberMap && storyState && crewMemberMap[storyState.owner],
-    [storyState, crewMemberMap]
+    () => crewmateMap && storyState && crewmateMap[storyState.owner],
+    [storyState, crewmateMap]
   );
 
   const contentReady = storyState && (crew || storyState.ownerType !== 'CREW_MEMBER');
@@ -396,7 +396,7 @@ const CrewAssignment = () => {
               {crew && (
                 <MobileCrewContainer>
                   <div>
-                    <b>{crew.name || `Crew Member #${crew.i}`}</b>
+                    <b>{crew.name || `Crewmate #${crew.i}`}</b>
                     {' '}<CrewClassIcon crewClass={crew.crewClass} />
                   </div>
                   <div>{Crewmate.getClass(crew.crewClass)?.name || 'Unknown Class'}</div>

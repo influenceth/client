@@ -320,7 +320,7 @@ const CrewAssignments = () => {
   const { account } = useAuth();
 
   const createStorySession = useCreateStorySession();
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
   const { data: book, isError } = useBook(bookId);
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchSoundRequested);
@@ -332,15 +332,15 @@ const CrewAssignments = () => {
   
   // TODO: genesis book deprecation vvv
   const eligibleCrew = useMemo(() => {
-    if (crew && crewMemberMap) {
-      const eligible = crew.crewMembers
-        .filter((i) => [1,2,3].includes(crewMemberMap[i]?.crewCollection))
-        .map((i) => crewMemberMap[i]);
+    if (crew && crewmateMap) {
+      const eligible = crew.crewmates
+        .filter((i) => [1,2,3].includes(crewmateMap[i]?.crewCollection))
+        .map((i) => crewmateMap[i]);
       if (eligible.length === 0) history.push('/owned-crew');
       return eligible;
     }
     return null;
-  }, [crew, crewMemberMap]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [crew, crewmateMap]); // eslint-disable-line react-hooks/exhaustive-deps
   // ^^^
 
   const selectStory = useCallback((story) => () => {
@@ -558,7 +558,7 @@ const CrewAssignments = () => {
             <>
               <CrewHeader>
                 <SectionTitle>Owned Crew ({eligibleCrew?.length || 0})</SectionTitle>
-                <SectionSubtitle>Select a Crew Member to begin the assignment with:</SectionSubtitle>
+                <SectionSubtitle>Select a Crewmate to begin the assignment with:</SectionSubtitle>
               </CrewHeader>
 
               <MobileCrewHeaderContainer>
@@ -567,7 +567,7 @@ const CrewAssignments = () => {
                 </div>
                 <CrewHeader>
                   <SectionTitle>{selectedStory?.title || ''}</SectionTitle>
-                  <SectionSubtitle>Select a Crew Member to begin the assignment:</SectionSubtitle>
+                  <SectionSubtitle>Select a Crewmate to begin the assignment:</SectionSubtitle>
                 </CrewHeader>
               </MobileCrewHeaderContainer>
 
@@ -600,13 +600,7 @@ const CrewAssignments = () => {
 
                     <div>
                       <a href={`${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/collection/influence-crew`} target="_blank" rel="noreferrer">Click here</a>
-                      {' '}to acquire crew members through trade
-                      {true || mintable?.length
-                        ? (
-                          <span>
-                            {', '}or <Link to="/owned-crew">click here</Link> to mint your own.
-                          </span>
-                        ) : '.'}
+                      {' '}to acquire crewmates through trade, or <Link to="/owned-crew">click here</Link> to mint your own.
                     </div>
                     */}
                   </CrewlessSection>

@@ -57,7 +57,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { currentDelivery, deliveryStatus, startDelivery, finishDelivery } = deliveryManager;
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
   const { data: currentDeliveryOriginLot } = useLot(asteroid.i, currentDelivery?.originLotId);
   const { data: currentDeliveryDestinationLot } = useLot(asteroid.i, currentDelivery?.destLotId);
 
@@ -74,9 +74,9 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   const { data: originLotOccupier } = useCrew(originLot?.occupier);
   const { data: destinationLotOccupier } = useCrew(destinationLot?.occupier);
 
-  const crewMembers = currentDelivery?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
-  const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
+  const crewmates = currentDelivery?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const captain = crewmates[0];
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
 
   // handle "currentDelivery" state
   useEffect(() => {

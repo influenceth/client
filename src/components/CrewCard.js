@@ -138,7 +138,7 @@ const CrewCard = ({ crew: crewmate, onClick, overlay, ...props }) => {
   const [ imageFailed, setImageFailed ] = useState(false);
   const [ imageLoaded, setImageLoaded ] = useState(false);
 
-  const useName = crewmate.name || (crewmate.i && `Crew Member #${crewmate.i}`) || '';
+  const useName = crewmate.name || (crewmate.i && `Crewmate #${crewmate.i}`) || '';
   const classLabel = Crewmate.getClass(crewmate.crewClass)?.name;
 
   let imageUrl = useMemo(() => {

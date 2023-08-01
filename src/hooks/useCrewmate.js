@@ -2,12 +2,12 @@ import { useQuery } from 'react-query';
 
 import api from '~/lib/api';
 
-const useCrewMember = (i) => {
+const useCrewmate = (i) => {
   return useQuery(
-    [ 'crewmembers', i ],
-    () => api.getCrewMember(i),
+    [ 'crewmates', i ],
+    () => api.getCrewmate(i),
     { enabled: !!i }
   );
 };
 
-export default useCrewMember;
+export default useCrewmate;

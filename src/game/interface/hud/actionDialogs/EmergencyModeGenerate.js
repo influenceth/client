@@ -61,10 +61,10 @@ import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import useCrew from '~/hooks/useCrew';
-import useCrewMember from '~/hooks/useCrewMember';
+import useCrewmate from '~/hooks/useCrewmate';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
-import useCrewMembers from '~/hooks/useCrewMembers';
+import useCrewmates from '~/hooks/useCrewmates';
 import ResourceSelection from '~/components/ResourceSelection';
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
@@ -97,10 +97,10 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew
   
   const { currentStationing, stationingStatus, stationOnShip } = manager;
 
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
 
-  const crewMembers = currentStationing?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
-  const captain = crewMembers[0];
+  const crewmates = currentStationing?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const captain = crewmates[0];
 
   const [amount, setAmount] = useState(0);
 
@@ -265,7 +265,7 @@ const Wrapper = (props) => {
 
   const targetCrewId = props.guests ? ship?.stationedCrews.find((c) => c !== crew?.i) : crew?.i;
   const { data: targetCrew, isLoading: crewIsLoading } = useCrew(targetCrewId);
-  const { data: targetCrewMembers, isLoading: targetCrewMembersLoading } = useCrewMembers(targetCrew?.crewMembers ? { ids: targetCrew?.crewMembers.join(',') } : []);
+  const { data: targetCrewmates, isLoading: targetCrewmatesLoading } = useCrewmates(targetCrew?.crewmates || []);
 
   // TODO: ...
   // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
@@ -273,7 +273,7 @@ const Wrapper = (props) => {
   const manager = {};
   const actionStage = actionStages.NOT_STARTED;
 
-  const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading || crewIsLoading || targetCrewMembersLoading;
+  const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading || crewIsLoading || targetCrewmatesLoading;
   useEffect(() => {
     if (!asteroid || (!lot && !ship)) {// || !targetCrew) { // TODO: restore this
       if (!isLoading) {
@@ -291,7 +291,7 @@ const Wrapper = (props) => {
         asteroid={asteroid}
         lot={lot}
         ship={ship}
-        targetCrew={{ ...targetCrew, crewMembers: targetCrewMembers }}
+        targetCrew={{ ...targetCrew, crewmates: targetCrewmates }}
         manager={manager}
         stage={actionStage}
         {...props} />

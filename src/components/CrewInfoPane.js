@@ -55,7 +55,7 @@ const CrewInfoPane = ({ crew, cssWhenVisible, referenceEl, visible }) => {
   return (
     <MouseoverInfoPane cssWhenVisible={cssWhenVisible} referenceEl={referenceEl} visible={visible}>
       <TooltipContents>
-        <h3>{crew.name || `Crew Member #${crew.i}`}</h3>
+        <h3>{crew.name || `Crewmate #${crew.i}`}</h3>
         <article>
           <div>
             <CrewClassIcon crewClass={crew.crewClass} />

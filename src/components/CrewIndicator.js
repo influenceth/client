@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 import useCrewContext from '~/hooks/useCrewContext';
-import useCrewMember from '~/hooks/useCrewMember';
+import useCrewmate from '~/hooks/useCrewmate';
 import theme from '~/theme';
 import CrewCardFramed from './CrewCardFramed';
 
@@ -53,7 +53,7 @@ const CrewCards = styled.div`
 
 const CrewIndicator = ({ crew, flip, label = 'Owned by' }) => {
   const { crew: myCrew } = useCrewContext();
-  const { data: captain } = useCrewMember((crew?.crewMembers || [])[0]);
+  const { data: captain } = useCrewmate((crew?.crewmates || [])[0]);
   return (
     <CrewCards flip>
       <CrewCardFramed

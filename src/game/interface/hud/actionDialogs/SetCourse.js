@@ -206,14 +206,14 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
   
   const { currentLaunch, flightStatus, startLaunch } = manager;
 
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
 
   const [tab, setTab] = useState(0);
   const ship = Ship.TYPES[1];  // TODO
 
-  const crewMembers = currentLaunch?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
-  const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
+  const crewmates = currentLaunch?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const captain = crewmates[0];
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const launchBonus = 0;
 
   const arrivingIn = useMemo(() => 3600 * (travelSolution.arrivalTime - coarseTime), [coarseTime, travelSolution])
@@ -397,7 +397,7 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
 
         {tab === 1 && (
           <ShipTab
-            pilotCrew={{ ...crew, members: crewMembers }}
+            pilotCrew={{ ...crew, roster: crewmates }}
             previousStats={{ propellantMass: -168e3 }}
             ship={ship}
             stage={stage} />

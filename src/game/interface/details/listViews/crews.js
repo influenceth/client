@@ -59,8 +59,8 @@ const useColumns = () => {
         }
       },
       {
-        key: 'members',
-        label: 'Members',
+        key: 'roster',
+        label: 'Roster',
         selector: row => (row.crewmates || []).join(', '),
       }
     ];

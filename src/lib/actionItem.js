@@ -6,7 +6,7 @@ import {
   ConstructIcon,
   NewCoreSampleIcon,
   CrewIcon,
-  CrewMemberIcon,
+  CrewmateIcon,
   DeconstructIcon,
   ExtractionIcon,
   ImproveCoreSampleIcon,
@@ -177,7 +177,7 @@ const formatAsTx = (item) => {
       };
       break;
     case 'NAME_CREW':
-      formatted.icon = <CrewMemberIcon />;
+      formatted.icon = <CrewmateIcon />;
       formatted.label = 'Name Crewmate';
       formatted.onClick = ({ history }) => {
         history.push(`/crew/${item.vars.i}`);

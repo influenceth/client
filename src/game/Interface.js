@@ -20,7 +20,7 @@ import CrewAssignment from './interface/details/crewAssignments/Assignment';
 import CrewAssignmentComplete from './interface/details/crewAssignments/Complete';
 import CrewCreation from './interface/details/crewAssignments/Create';
 import CrewAssignments from './interface/details/CrewAssignments';
-import CrewMemberDetails from './interface/details/CrewMemberDetails';
+import CrewmateDetails from './interface/details/CrewmateDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import OwnedCrew from './interface/details/OwnedCrew';
 import Marketplace from './interface/details/Marketplace';
@@ -126,7 +126,7 @@ const Interface = () => {
               <LinkedViewer />
             </Route>
             <Route path="/crew/:i(\d+)">
-              <CrewMemberDetails />
+              <CrewmateDetails />
             </Route>
             <Route path="/owned-asteroids">
               <OwnedAsteroidsTable />

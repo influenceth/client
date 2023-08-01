@@ -468,9 +468,9 @@ const CrewAssignmentCreate = (props) => {
   const { id: sessionId } = useParams();
   const history = useHistory();
   const { storyState } = useStorySession(sessionId);
-  const { getCrewNameAvailability } = useNameAvailability();
+  const isNameValid = useNameAvailability('Crewmate');
   const { purchaseAndOrInitializeCrew, getPendingCrewmate, crewCredits } = useCrewManager();
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
   const { data: crewSale } = useSale('Crewmate');
 
   const [confirming, setConfirming] = useState();
@@ -557,10 +557,10 @@ const CrewAssignmentCreate = (props) => {
   }, [featureOptions.length, featureSelection]);
 
   const confirmFinalize = useCallback(async () => {
-    if (await getCrewNameAvailability(name)) {
+    if (await isNameValid(name)) {
       setConfirming(true);
     }
-  }, [getCrewNameAvailability, name]);
+  }, [isNameValid, name]);
 
   const finalize = useCallback(() => {
     setConfirming(false);
@@ -591,7 +591,7 @@ const CrewAssignmentCreate = (props) => {
       setName(pendingPurchase.vars.name);
       setFinalizing(true);
     } else if (finalizing) {
-      if (Object.values(crewMemberMap).find((c) => c.name === name)) {
+      if (Object.values(crewmateMap).find((c) => c.name === name)) {
         setFinalizing(false);
         setFinalized(true);
       }
@@ -600,7 +600,7 @@ const CrewAssignmentCreate = (props) => {
       rerollAppearance();
     }
   }, [ // eslint-disable-line react-hooks/exhaustive-deps
-    crewMemberMap,
+    crewmateMap,
     finalizing,
     getPendingCrewmate,
     name,

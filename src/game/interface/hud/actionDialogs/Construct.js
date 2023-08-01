@@ -46,13 +46,13 @@ const TransferToSite = styled.div`
 `;
 
 const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
   const { currentConstruction, constructionStatus, startConstruction, finishConstruction } = constructionManager;
 
-  const crewMembers = currentConstruction?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
-  const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
-  const constructionBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CONSTRUCTION_EFFICIENCY, crewMembers);
+  const crewmates = currentConstruction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const captain = crewmates[0];
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const constructionBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CONSTRUCTION_EFFICIENCY, crewmates);
 
   // TODO: ...
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {

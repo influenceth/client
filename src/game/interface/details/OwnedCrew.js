@@ -455,7 +455,7 @@ const OwnedCrew = () => {
   const createStorySession = useCreateStorySession();
   const { data: crewAssignmentData, isLoading: assignmentsAreLoading } = useCrewAssignments();
   const queryClient = useQueryClient();
-  const { crew: selectedCrew, crews: allCrews, crewMemberMap, loading: crewIsLoading } = useCrewContext();
+  const { crew: selectedCrew, crews: allCrews, crewmateMap, loading: crewIsLoading } = useCrewContext();
   const { changeActiveCrew, getPendingActiveCrewChange, getPendingCrewmate, crewCredits } = useCrewManager();
   const history = useHistory();
   const { height, width } = useScreenSize();
@@ -483,13 +483,13 @@ const OwnedCrew = () => {
 
   const crew = useMemo(() => {
     if (crewIsLoading) return [];
-    const activeCrew = (selectedCrew?.crewMembers || []).map((i, index) => ({ ...crewMemberMap[i], activeSlot: index + 1 }));
-    const activeInAnyCrewIds = (allCrews || []).reduce((acc, c) => [...acc, ...c.crewMembers], []);
-    const inactiveCrew = Object.values(crewMemberMap || {})
-      .filter((crewMember) => crewMember.crewClass && !activeInAnyCrewIds.includes(crewMember.i))
+    const activeCrew = (selectedCrew?.crewmates || []).map((i, index) => ({ ...crewmateMap[i], activeSlot: index + 1 }));
+    const activeInAnyCrewIds = (allCrews || []).reduce((acc, c) => [...acc, ...c.crewmates], []);
+    const inactiveCrew = Object.values(crewmateMap || {})
+      .filter((crewmate) => crewmate.crewClass && !activeInAnyCrewIds.includes(crewmate.i))
       .map((c) => ({ ...c, activeSlot: -1 }));
     return [...activeCrew, ...inactiveCrew];
-  }, [selectedCrew, allCrews, crewMemberMap, crewIsLoading]);
+  }, [selectedCrew, allCrews, crewmateMap, crewIsLoading]);
 
   const isDirty = useMemo(() => {
     return pristine !== activeCrew.map((c) => c.i).join(',');
@@ -588,7 +588,7 @@ const OwnedCrew = () => {
   }, [crew]);
 
   const handleSave = useCallback(() => {
-    changeActiveCrew({ crewId: selectedCrew?.i, crewMembers: activeCrew.map((c) => c.i) });
+    changeActiveCrew({ crewId: selectedCrew?.i, crewmates: activeCrew.map((c) => c.i) });
   }, [activeCrew, changeActiveCrew, selectedCrew]);
 
   const handleActiveCrewHeight = useCallback(() => {
@@ -629,7 +629,7 @@ const OwnedCrew = () => {
           type: 'INITIALIZE',
           crew: crew.map((c) => ({
             ...c,
-            activeSlot: (pendingChange.vars.crewMembers || []).indexOf(c.i)
+            activeSlot: (pendingChange.vars.crewmates || []).indexOf(c.i)
           })),
           pristine: false
         });

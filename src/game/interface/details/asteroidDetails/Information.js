@@ -201,7 +201,7 @@ const ButtonRow = styled.div`
   }
 `;
 
-// TODO: componentize this (shared w/ crewmemberdetails)
+// TODO: componentize this (shared w/ crewmatedetails)
 const breakpoint = 1375;
 const LogHeader = styled.ul``;
 const Log = styled.div`
@@ -271,7 +271,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
   const { account } = useAuth();
   const { data: sale } = useSale();
   const createReferral = useCreateReferral(Number(asteroid.i));
-  const { getAsteroidNameAvailability } = useNameAvailability();
+  const isNameValid = useNameAvailability('Asteroid');
   const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.i));
   const { nameAsteroid, naming } = useNameAsteroid(Number(asteroid.i));
   const webWorkerPool = useWebWorker();
@@ -302,10 +302,10 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
   }, [asteroid.customName]);
 
   const attemptUpdateAsteroidName = useCallback(async () => {
-    if (await getAsteroidNameAvailability(newName)) {
+    if (await isNameValid(newName)) {
       nameAsteroid(newName);
     }
-  }, [nameAsteroid, getAsteroidNameAvailability, newName]);
+  }, [nameAsteroid, isNameValid, newName]);
 
   return (
     <Wrapper>

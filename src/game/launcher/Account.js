@@ -249,7 +249,7 @@ const MainButton = styled(ButtonAlt)`
 const Account = () => {
   const history = useHistory();
   const { account, logout } = useAuth();
-  const { captain, loading: crewLoading, crew, crewMemberMap } = useCrewContext();
+  const { captain, loading: crewLoading, crew, crewmateMap } = useCrewContext();
 
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
   const dispatchCutscene = useStore(s => s.dispatchCutscene);
@@ -259,8 +259,8 @@ const Account = () => {
   const loggedIn = !!account;
 
   const onClickPlay = useCallback(() => {
-    // if crew is done loading and there are no crew members, send to owned-crew first
-    if (loggedIn && !crewLoading && !(crew?.crewMembers?.length > 0)) {
+    // if crew is done loading and there are no crewmates, send to owned-crew first
+    if (loggedIn && !crewLoading && !(crew?.crewmates?.length > 0)) {
       history.push('/owned-crew');
     }
     dispatchLauncherPage();
@@ -273,7 +273,7 @@ const Account = () => {
         true
       );
     }
-  }, [crewLoading, crew?.crewMembers, dispatchLauncherPage, dispatchCutscene, dispatchSeenIntroVideo, hasSeenIntroVideo]);
+  }, [crewLoading, crew?.crewmates, dispatchLauncherPage, dispatchCutscene, dispatchSeenIntroVideo, hasSeenIntroVideo]);
 
   return (
     <MainContent loggedIn={loggedIn}>
@@ -297,7 +297,7 @@ const Account = () => {
               <h4>Loading Crew...</h4>
             </Loading>
           )}
-          {!crewLoading && crew?.crewMembers?.length > 0 && (
+          {!crewLoading && crew?.crewmates?.length > 0 && (
             <CrewContainer>
               {captain && <>
                 <CaptainDetails>
@@ -310,8 +310,8 @@ const Account = () => {
                   <StyledCaptainIcon />
                 </CaptainCardContainer>
               </>}
-              {crew.crewMembers.slice(1).map((crewmateId) => {
-                const crewmate = crewMemberMap[crewmateId];
+              {crew.crewmates.slice(1).map((crewmateId) => {
+                const crewmate = crewmateMap[crewmateId];
                 if (crewmate) {
                   return (
                     <CrewCardContainer key={crewmate.i}>
@@ -322,7 +322,7 @@ const Account = () => {
               })}
             </CrewContainer>
           )}
-          {!crewLoading && !(crew?.crewMembers?.length > 0) && (
+          {!crewLoading && !(crew?.crewmates?.length > 0) && (
             <CrewContainer noCrew>
               <>
                 <CaptainDetails>

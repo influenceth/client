@@ -34,7 +34,7 @@ import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 
 const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
   const { startSampling, finishSampling, samplingStatus } = coreSampleManager;
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
@@ -98,12 +98,12 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   }, [asteroid, lot]);
   const lotAbundance = resourceId ? lotAbundances[resourceId] : 0;
 
-  const crewMembers = coreSampleManager.currentSample?._crewmates
-    || ((crew?.crewMembers || []).map((i) => crewMemberMap[i]));
-  const captain = crewMembers[0];
-  const sampleTimeBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_SPEED, crewMembers);
-  const sampleQualityBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, crewMembers);
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
+  const crewmates = coreSampleManager.currentSample?._crewmates
+    || ((crew?.crewmates || []).map((i) => crewmateMap[i]));
+  const captain = crewmates[0];
+  const sampleTimeBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_SPEED, crewmates);
+  const sampleQualityBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, crewmates);
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
 
   // TODO: ...
   // TODO: the crew origin and destination lots are currently set to 1, and when

@@ -143,7 +143,7 @@ const entries = {
   //   icon: <CrewIcon />,
   //   content: (
   //     <>
-  //       <span>Crew member </span>
+  //       <span>Crewmate </span>
   //       <CrewLink id={e.returnValues.crewId} />
   //       <span> minted with </span>
   //       <AsteroidLink id={e.returnValues.asteroidId} />
@@ -303,7 +303,7 @@ const entries = {
         icon,
         content: (
           <>
-            <span>Crew member </span>
+            <span>Crewmate </span>
             <CrewLink id={e.i} />
             <span> {action}.</span>
           </>
@@ -317,7 +317,7 @@ const entries = {
     icon: <TransferIcon />,
     content: (
       <>
-        <span>Crew member </span>
+        <span>Crewmate </span>
         <CrewLink id={e.returnValues.tokenId} />
         <span> transferred from </span>
         <AddressLink address={e.returnValues.from} chain={e.__t} maxWidth={addressMaxWidth} />
@@ -332,7 +332,7 @@ const entries = {
     icon: <NameIcon />,
     content: (
       <>
-        <span>Crew member </span>
+        <span>Crewmate </span>
         <CrewLink id={e.returnValues.crewId || e.returnValues.tokenId} />
         <span>{` re-named to "${e.returnValues.newName}"`}</span>
       </>

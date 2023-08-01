@@ -44,7 +44,7 @@ import SliderInput from '~/components/SliderInput';
 import TextInput from '~/components/TextInputUncontrolled';
 import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import useChainTime from '~/hooks/useChainTime';
-import useCrewMember from '~/hooks/useCrewMember';
+import useCrewmate from '~/hooks/useCrewmate';
 import api from '~/lib/api';
 import { formatFixed, formatTimer } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
@@ -2838,12 +2838,12 @@ export const CrewInputBlock = ({ crew, title }) => (
     bodyStyle={{ paddingRight: 8 }}>
     <CrewCards>
       {Array.from({ length: 5 }).map((_, i) => 
-        crew.members[i]
+        crew.roster[i]
           ? (
             <CrewCardFramed
               key={i}
               borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
-              crewmate={crew.members[i]}
+              crewmate={crew.roster[i]}
               isCaptain={i === 0}
               lessPadding
               noArrow={i > 0}
@@ -2944,8 +2944,8 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings =
             <MiniBarChart
               color="#92278f"
               label="Passengers"
-              valueLabel={`${pilotCrew.members.length} / 5`}
-              value={pilotCrew.members.length / 5}
+              valueLabel={`${pilotCrew.roster.length} / 5`}
+              value={pilotCrew.roster.length / 5}
             />
           </MiniBarChartSection>
         </div>

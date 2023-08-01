@@ -5,17 +5,17 @@ import useCrewContext from '~/hooks/useCrewContext';
 
 const CrewLink = (props) => {
   const { id, name: initialName } = props;
-  const { crewMemberMap } = useCrewContext();
+  const { crewmateMap } = useCrewContext();
   const [ name, setName ] = useState(initialName);
 
   useEffect(() => {
-    if (crewMemberMap) {
-      const match = crewMemberMap[id];
+    if (crewmateMap) {
+      const match = crewmateMap[id];
       if (match) setName(match.name || `#${id}`);
     } else {
       setName(initialName || `#${id}`);
     }
-  }, [ crewMemberMap, id, initialName ]);
+  }, [ crewmateMap, id, initialName ]);
 
   return <Link to={`/crew/${id}`}>{name}</Link>;
 };

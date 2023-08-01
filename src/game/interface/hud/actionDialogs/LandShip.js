@@ -62,18 +62,18 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const [destinationLot, setDestinationLot] = useState();
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState();
   
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
   const { data: landingDestinationLot } = useLot(asteroid?.i, currentLanding?.destinationLotId);
   
   const [propulsionType, setPropulsionType] = useState('propulsive');
   const [tab, setTab] = useState(0);
   const ship = Ship.TYPES[2];  // TODO
 
-  const crewMembers = currentLanding?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
-  const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
+  const crewmates = currentLanding?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const captain = crewmates[0];
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const landingBonus = 0;/*useMemo(() => {
-    const bonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_RATE, crewMembers);
+    const bonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_RATE, crewmates);
     const asteroidBonus = Asteroid.getBonusByResource(asteroid?.bonuses, selectedCoreSample?.resourceId);
     if (asteroidBonus.totalBonus !== 1) {
       bonus.totalBonus *= asteroidBonus.totalBonus;
@@ -84,7 +84,7 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
       }];
     }
     return bonus;
-  }, [asteroid?.bonuses, crewMembers, selectedCoreSample?.resourceId]);*/
+  }, [asteroid?.bonuses, crewmates, selectedCoreSample?.resourceId]);*/
 
   // useEffect(() => {
   //   let defaultSelection;
@@ -293,7 +293,7 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
 
         {tab === 1 && (
           <ShipTab
-            pilotCrew={{ ...crew, members: crewMembers }}
+            pilotCrew={{ ...crew, roster: crewmates }}
             previousStats={{ propellantMass: -168e3 }}
             ship={ship}
             stage={stage} />

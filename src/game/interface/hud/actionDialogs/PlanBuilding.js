@@ -39,7 +39,7 @@ const MouseoverWarning = styled.span`
 
 const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { currentConstruction, planConstruction } = constructionManager;
-  const { captain, crew, crewMemberMap } = useCrewContext();
+  const { captain, crew, crewmateMap } = useCrewContext();
 
   const [capableType, setCapableType] = useState();
 
@@ -47,8 +47,8 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
   const taskTime = useMemo(() => 0, []);
   const stats = useMemo(() => {
     if (!asteroid?.i || !lot?.i) return [];
-    const crewMembers = (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
-    const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
+    const crewmates = (crew?.crewmates || []).map((i) => crewmateMap[i]);
+    const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
     const tripDetails = []; // TODO: 
     const taskTime = 0;
     return [
@@ -71,7 +71,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
         isTimeStat: true
       },
     ];
-  }, [crew?.crewMembers]);
+  }, [crew?.crewmates]);
 
   useEffect(() => {
     if (currentConstruction?.capableType) setCapableType(currentConstruction.capableType)

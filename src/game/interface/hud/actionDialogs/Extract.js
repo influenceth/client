@@ -50,7 +50,7 @@ const SampleAmount = styled.span`
 const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const { currentExtraction, extractionStatus, startExtraction, finishExtraction } = extractionManager;
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
   const { data: currentExtractionDestinationLot } = useLot(asteroid.i, currentExtraction?.destinationLotId);
 
   const [amount, setAmount] = useState(0);
@@ -59,11 +59,11 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const [sampleSelectorOpen, setSampleSelectorOpen] = useState(false);
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
 
-  const crewMembers = currentExtraction?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
-  const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
+  const crewmates = currentExtraction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const captain = crewmates[0];
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const extractionBonus = useMemo(() => {
-    const bonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_RATE, crewMembers);
+    const bonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_RATE, crewmates);
     const asteroidBonus = Asteroid.getBonusByResource(asteroid?.bonuses, selectedCoreSample?.resourceId);
     if (asteroidBonus.totalBonus !== 1) {
       bonus.totalBonus *= asteroidBonus.totalBonus;
@@ -74,7 +74,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       }];
     }
     return bonus;
-  }, [asteroid?.bonuses, crewMembers, selectedCoreSample?.resourceId]);
+  }, [asteroid?.bonuses, crewmates, selectedCoreSample?.resourceId]);
 
   const usableSamples = useMemo(() => (lot?.coreSamples || []).filter((c) => (
     c.owner === crew?.i

@@ -272,14 +272,14 @@ const CaptainCard = ({ crewId }) => {
 
   // onclick should open up crew profile
   const onClick = useCallback(() => {
-    const captainId = crew?.crewMembers?.length && crew.crewMembers[0];
+    const captainId = crew?.crewmates?.length && crew.crewmates[0];
     history.push(`/crew/${captainId}`);
   }, [crew]);
 
-  if (!crewId || !crew?.crewMembers.length) return null;
+  if (!crewId || !crew?.crewmates.length) return null;
   return (
     <CrewCardFramed
-      crewmate={{ i: crew.crewMembers[0] }}
+      crewmate={{ i: crew.crewmates[0] }}
       onClick={onClick}
       width={50} />
   );

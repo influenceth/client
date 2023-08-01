@@ -29,13 +29,13 @@ import actionStage from '~/lib/actionStages';
 import useLot from '~/hooks/useLot';
 
 const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
   const { deconstruct, deconstructTx } = constructionManager;
   const { data: inProgressDestination } = useLot(asteroid?.i, deconstructTx?.returnValues?.destinationLotId);
 
-  const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
-  const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
+  const crewmates = crew.crewmates.map((i) => crewmateMap[i]);
+  const captain = crewmates[0];
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
 
   const [destinationLot, setDestinationLot] = useState();
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);

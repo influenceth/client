@@ -192,7 +192,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
   
   const { currentLaunch, launchStatus, startLaunch } = manager;
 
-  const { crew, crewMemberMap } = useCrewContext();
+  const { crew, crewmateMap } = useCrewContext();
   const { data: currentDestinationLot } = useLot(asteroid.i, currentLaunch?.destinationLotId);
 
   const [destinationLot, setDestinationLot] = useState();
@@ -200,9 +200,9 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
   const [limitPrice, setLimitPrice] = useState(preselect?.limitPrice);
   const [quantity, setQuantity] = useState(preselect?.quantity);
 
-  const crewMembers = currentLaunch?._crewmates || (crew?.crewMembers || []).map((i) => crewMemberMap[i]);
-  const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers);
+  const crewmates = currentLaunch?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const captain = crewmates[0];
+  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const launchBonus = 0;
 
   const tooltipRefEl = useRef();
@@ -343,7 +343,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
     return sum + (mode === 'buy' ? fee : -fee);
   }, [fee, mode, totalLimitPrice, totalMarketPrice, type]);
 
-  const marketplaceBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewMembers); // TODO: wrong id
+  const marketplaceBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates); // TODO: wrong id
 
   const stats = useMemo(() => ([
     {
