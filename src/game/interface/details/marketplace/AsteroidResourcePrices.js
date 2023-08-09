@@ -11,7 +11,7 @@ import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 import useCrew from '~/hooks/useCrew';
 import useLot from '~/hooks/useLot';
-import { formatPrice } from '~/lib/utils';
+import { boolAttr, formatPrice } from '~/lib/utils';
 import theme from '~/theme';
 import { LocationLink } from '../listViews/components';
 import { getBuildingIcon } from '~/lib/assetUtils';
@@ -152,6 +152,8 @@ const PseudoFooterButton = styled(Button)`
   right: 0px;
 `;
 
+// TODO: ecs refactor
+// TODO: get this data from the API (probably elasticsearch?)
 const resourceMarketplaces = [
   { marketplaceName: `Joe's Spacing Emporium`, lotId: 2350, supply: 1234, demand: 0, centerPrice: 1244, fee: 0.05 },
   { marketplaceName: `The Fanciest of Stuffs`, lotId: 1572, supply: 8129, demand: 43666, centerPrice: 2044, fee: 0.075 },
@@ -175,7 +177,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
   const [sortField, sortDirection] = sort;
 
   const { data: selectedLot } = useLot(asteroid.i, selected);
-  const { data: marketplaceOwner } = useCrew(selectedLot?.occupier);
+  const { data: marketplaceOwner } = useCrew(selectedLot?.building?.Control?.controller?.i);
   const selectedSupply = useMemo(() => {
     return resourceMarketplaces.find((m) => m.lotId === selected)?.supply || 0;
   }, [selected]);
@@ -340,7 +342,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
               </MarketplaceImage>
             </div>
             <div>
-              <label>{selectedLot.building?.name || `Marketplace @ ${selectedLot.i.toLocaleString()}`}</label>
+              <label>{selectedLot.building?.Name?.name || `Marketplace @ ${selectedLot.i.toLocaleString()}`}</label>
               <span>{formatResourceAmount(selectedSupply, resource.i)} available</span>
             </div>
           </SelectedMarketplace>
@@ -361,7 +363,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         </TableContainer>
       </Body>
 
-      <PseudoFooterButton subtle disabled={!selected || undefined} onClick={onViewMarketplace}>
+      <PseudoFooterButton subtle disabled={boolAttr(!selected)} onClick={onViewMarketplace}>
         View Marketplace
       </PseudoFooterButton>
     </>

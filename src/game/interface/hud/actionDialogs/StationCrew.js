@@ -6,7 +6,7 @@ import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   ResourceAmountSlider,
@@ -50,7 +50,8 @@ import {
   SwayInputBlock,
   TransferDistanceDetails,
   TransferDistanceTitleDetails,
-  ShipInputBlock
+  ShipInputBlock,
+  getBuildingInputDefaults
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -64,9 +65,6 @@ import useCrewmate from '~/hooks/useCrewmate';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
 import CrewIndicator from '~/components/CrewIndicator';
-
-// TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
-//  - however, could you launch two ships at once? probably not because crew needs to be on ship?
 
 const Warning = styled.div`
   align-items: center;
@@ -93,12 +91,11 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
 
   const { crew, crewmateMap } = useCrewContext();
 
-  // 
   const destinationLot = destinations[0]?.type === 'lot' ? destinations[0].data : null;
   const destinationShip = destinations[0]?.type === 'ship' ? destinations[0].data : null;
   
-  const { data: ownerCrew } = useCrew(destinationShip?.owner || destinationLot?.occupier);
-  const crewIsOwner = ownerCrew?.i === crew?.i;
+  const { data: ownerCrew } = useCrew((destinationShip || destinationLot)?.Control.controller.id);
+  const crewIsOwner = ownerCrew?.id === crew?.i;
 
   const crewmates = currentStationing?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
@@ -149,12 +146,14 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
       ? (
         destinationShip
           ? `Send to ${crewIsOwner ? 'My ' : ''} Ship`
-          : `Send to ${destinationLot?.building?.__t}`
+          : `Send to ${Building.TYPES[destinationLot?.building?.Building?.buildingType]?.name}`
       )
       : undefined;
     return { icon, label, status };
   }, [crewIsOwner, destinationLot, destinationShip, stage]);
 
+  const isInOrbit = ship?.Location?.location?.label === 'Asteroid' && ship?.Ship?.status !== Ship.STATUS.IN_FLIGHT;
+  const destIsInOrbit = destinationShip?.Location?.location?.label === 'Asteroid' && destinationShip?.Ship?.status !== Ship.STATUS.IN_FLIGHT;
   return (
     <>
       <ActionDialogHeader
@@ -173,18 +172,14 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
             ? (
               <ShipInputBlock
                 title="Origin"
-                ship={{ ...Ship.TYPES[ship.type], ...ship }}
-                disabled={stage !== actionStages.NOT_STARTED}
-                isMine={crewIsOwner}
-                hasMyCrew />
+                ship={ship}
+                disabled={stage !== actionStages.NOT_STARTED} />
             )
             : (
               <FlexSectionInputBlock
                 title="Origin"
-                image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
-                label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
+                {...getBuildingInputDefaults(lot)}
                 disabled={stage !== actionStages.NOT_STARTED}
-                sublabel={`Lot #${lot?.i || 1}`}
               />
             )
           }
@@ -196,19 +191,18 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
               <ShipInputBlock
                 title="Destination"
                 titleDetails={
-                  ship?.status !== 'IN_ORBIT' && destinationShip?.status === 'IN_ORBIT'
-                  ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
-                  : <TransferDistanceDetails distance={transportDistance} />
+                  !isInOrbit && destIsInOrbit
+                    ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
+                    : <TransferDistanceDetails distance={transportDistance} />
                 }
-                ship={{ ...Ship.TYPES[destinationShip.type], ...destinationShip }}
-                disabled={stage !== actionStages.NOT_STARTED}
-                isMine={destinationShip?.owner === crew?.i} />
+                ship={destinationShip}
+                disabled={stage !== actionStages.NOT_STARTED} />
             )
             : (
               <FlexSectionInputBlock
                 title="Destination"
                 titleDetails={
-                  ship && ship.status === 'IN_ORBIT'
+                  isInOrbit
                     ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
                     : <TransferDistanceDetails distance={transportDistance} />
                 }
@@ -237,10 +231,10 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
               <MiniBarChart
                 color="#92278f"
                 label="Crewmate Count"
-                valueLabel={`7 / ${Ship.TYPES[destinationShip.type].maxPassengers}`}
-                value={7 / Ship.TYPES[destinationShip.type].maxPassengers}
+                valueLabel={`${destinationShip.Station.population} / ${Station.TYPES[destinationShip.Station.stationType].cap}`}
+                value={destinationShip.Station.population / Station.TYPES[destinationShip.Station.stationType].cap}
                 deltaColor="#f644fa"
-                deltaValue={crew?.crewmates?.length / Ship.TYPES[destinationShip.type].maxPassengers}
+                deltaValue={crew?.roster?.length / Station.TYPES[destinationShip.Station.stationType].cap}
               />
             )}
           </div>
@@ -278,17 +272,19 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
 
 const Wrapper = (props) => {
   const { crew } = useCrewContext();
-  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(crew?.station?.asteroidId);
-  const { data: lot, isLoading: lotIsLoading } = useLot(crew?.station?.asteroidId, crew?.station?.lotId);
-  const { data: ship, isLoading: shipIsLoading } = useShip(crew?.station?.shipId);
+  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(crew?._location?.asteroidId);
+  const { data: lot, isLoading: lotIsLoading } = useLot(crew?._location?.asteroidId, crew?._location?.lotId);
+  const { data: ship, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
   
   const asteroidId = useStore(s => s.asteroids.origin);
   const { lotId } = useStore(s => s.asteroids.lot || {});
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   
-  const { data: ships, isLoading: shipsLoading } = useAsteroidShips(asteroidId);
+  const { data: ships, isLoading: shipsLoading } = useAsteroidShips(asteroidId);  // TODO: do we need this?
   const { data: destinationLot, isLoading: destLotIsLoading } = useLot(asteroidId, lotId);
   const { data: destinationShip, isLoading: destShipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
+
+  // TODO: if no station on destination ship or lot, then close
 
   // TODO: ...
   // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
@@ -298,7 +294,7 @@ const Wrapper = (props) => {
 
   const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading || shipsLoading || destLotIsLoading || destShipIsLoading;
 
-  // determine destinations options based on selection
+  // determine destination options based on selection
   const destinations = useMemo(() => {
     if (isLoading) return [];
 
@@ -307,15 +303,19 @@ const Wrapper = (props) => {
     if (destinationShip) {
       d = [{ type: 'ship', data: destinationShip }];
   
-    // if lot, destinations = ships (filter w/ guests), destination is [0]
+    // if lot, destinations = ships (filter w/ guests boolean), destination is [0]
     } else if (destinationLot) {
-      d = ships
-        .filter((s) => s.lotId === destinationLot.i && ['IN_PORT','ON_SURFACE'].includes(s.status) && !!props.guests === (s.owner !== crew?.i))
+      d = destinationLot.ships
+        .filter((s) => 
+          s.Station
+          && s.Ship.status === Ship.STATUSES.AVAILABLE
+          && s.Ship.operationMode === Ship.MODES.NORMAL
+          && !!props.guests === (s.Control.controller.id !== crew?.i))
         .map((s) => ({ type: 'ship', data: s }));
   
       // if lot && !ships, if habitable, destinations.length = 1, destination is hab
       if (d.length === 0) {
-        if (destinationLot.building?.station) {
+        if (destinationLot.building?.Station) {
           d = [{ type: 'lot', data: destinationLot }];
         }
       }
@@ -323,7 +323,12 @@ const Wrapper = (props) => {
     // if !lot, destinations = ships in orbit (filter w/ guests), destinations is [0]
     } else {
       d = ships
-        .filter((s) => s.status === 'IN_ORBIT' && !!props.guests === (s.owner !== crew?.i))
+        .filter((s) => 
+          s.Station
+          && ship?.Location?.location?.label === 'Asteroid'
+          && ship?.Location?.location?.id === asteroidId
+          && ship?.Ship?.status !== Ship.STATUS.IN_FLIGHT
+          && !!props.guests === (s.owner !== crew?.i))
         .map((s) => ({ type: 'ship', data: s }));
     }
 
@@ -341,7 +346,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={actionStage}>
       <StationCrew
         asteroid={asteroid}

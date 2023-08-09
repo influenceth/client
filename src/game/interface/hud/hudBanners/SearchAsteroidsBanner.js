@@ -6,6 +6,7 @@ import useAssetSearch from '~/hooks/useAssetSearch';
 import useStore from '~/hooks/useStore';
 import useAsteroidColumns from '~/game/interface/details/listViews/asteroids';
 import Banner from './Banner';
+import { boolAttr } from '~/lib/utils';
 
 const Showing = styled.div`
   align-items: center;
@@ -75,7 +76,7 @@ const SearchAsteroidsBanner = ({ visible }) => {
 
   const sortOptions = useMemo(() => {
     return columns
-      .filter((c) => c.sortField && !['owner','spectralType'].includes(c.sortField))
+      .filter((c) => c.sortField && !['owner','spectralType'].includes(c.sortField))  // TODO: ecs refactor
       .map((c) => ({ label: c.label, value: c.sortField, icon: c.icon }));
   }, [columns]);
 
@@ -88,8 +89,8 @@ const SearchAsteroidsBanner = ({ visible }) => {
   return (
     <Banner
       headline={formatResultsTally(isLoading ? undefined : data?.total, 250000)}
-      isLoading={isLoading}
-      isVisible={visible && !!data}
+      isLoading={boolAttr(isLoading)}
+      isVisible={boolAttr(visible && !!data)}
       loadingMessage="Searching"
       wide>
       <Showing>

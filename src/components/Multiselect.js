@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import Button from './ButtonAlt';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 import { hexToRGB } from '~/theme';
+import { boolAttr } from '~/lib/utils';
 
 const Wrapper = styled.div`
   position: relative;
@@ -119,7 +120,7 @@ const Multiselect = ({
 
       <span ref={setReferenceEl}>
         <Button
-          disabled={disabled}
+          disabled={boolAttr(disabled)}
           onClick={handleToggle}
           {...styleProps}>
           {buttonIcon && <IconWrapper>{buttonIcon}</IconWrapper>}

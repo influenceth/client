@@ -5,7 +5,7 @@ import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CloseIcon, CoreSampleIcon, EjectPassengersIcon, EmergencyModeEnterIcon, EmergencyModeExitIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   ResourceAmountSlider,
@@ -63,6 +63,7 @@ import useCrewmate from '~/hooks/useCrewmate';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
 import useCrewmates from '~/hooks/useCrewmates';
+import useShipCrews from '~/hooks/useShipCrews';
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
 //  - however, could you launch two ships at once? probably not because crew needs to be on ship?
@@ -87,12 +88,17 @@ const Note = styled.div`
   padding: 15px 10px 10px;
 `;
 
-const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }) => {
+const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   
   const { currentStationing, stationingStatus, stationOnShip } = manager;
 
   const { crew, crewmateMap } = useCrewContext();
+
+  const shipCrews = useShipCrews(ship?.i);
+  const shipPassengerCrews = useMemo(() => {
+    return shipCrews.filter((c) => c.i !== crew?.i);
+  }, [shipCrews]);
 
   const crewmates = currentStationing?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
@@ -143,18 +149,20 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, targetCrew, 
     lastStatus.current = stationingStatus;
   }, [stationingStatus]);
 
+  const inEmergencyMode = ship?.Ship?.operatingMode === Ship.MODES.EMERGENCY;
+
   const actionDetails = useMemo(() => {
-    const icon = ship?.inEmergencyMode ? <EmergencyModeExitIcon /> : <EmergencyModeEnterIcon />;
-    const label = `${ship?.inEmergencyMode ? 'Exit' : 'Enter'} Emergency Mode`;
+    const icon = inEmergencyMode ? <EmergencyModeExitIcon /> : <EmergencyModeEnterIcon />;
+    const label = `${inEmergencyMode ? 'Exit' : 'Enter'} Emergency Mode`;
     const status = stage === actionStages.NOT_STARTED
-      ? `${ship?.inEmergencyMode ? 'Restore' : 'Prepare'} Ship`
+      ? `${inEmergencyMode ? 'Restore' : 'Prepare'} Ship`
       : undefined;
     return { icon, label, status };
   }, [ship, stage]);
 
   const warnings = useMemo(() => {
     const w = [];
-    if (ship.inEmergencyMode) {
+    if (inEmergencyMode) {
       w.push({
         icon: <WarningOutlineIcon />,
         text: `WARNING: A ship must jettison up to 10% of its propellant when exiting Emergency Mode.`
@@ -164,7 +172,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, targetCrew, 
         icon: <WarningOutlineIcon />,
         text: `WARNING: All cargo in the ship's cargo hold will be jettisoned. This action is irreversible.`
       });
-      if (ship.stationedCrews.find((c) => c !== crew?.i)) {
+      if (shipPassengerCrews.length > 0) {
         w.push({
           icon: <CloseIcon />,
           text: 'All passengers must be ejected before the ship can enter Emergency Mode.'
@@ -173,7 +181,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, targetCrew, 
     }
     
     return w;
-  }, [ship, crew?.i]);
+  }, [ship, shipPassengerCrews]);
 
   return (
     <>
@@ -191,7 +199,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, targetCrew, 
         {/* TODO: set cargo's to zero and make sure delta is shown */}
         <ShipTab
           pilotCrew={{ ...crew, roster: crewmates }}
-          ship={{ ...ship, }}
+          ship={ship}
           stage={stage}
           warnings={warnings} />
 
@@ -203,8 +211,8 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, targetCrew, 
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={false/* TODO: no permission */}
-        goLabel={ship.inEmergencyMode ? 'Restore' : 'Prepare'}
+        disabled={!inEmergencyMode && shipPassengerCrews?.length > 0/* TODO: no permission */}
+        goLabel={inEmergencyMode ? 'Restore' : 'Prepare'}
         onGo={onStation}
         stage={stage}
         {...props} />
@@ -215,21 +223,13 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, targetCrew, 
 const Wrapper = (props) => {
   const { crew } = useCrewContext();
 
-  const originAsteroid = useStore(s => s.asteroids.origin);
-  const originLot = useStore(s => s.asteroids.lot || {});
-  const zoomScene = useStore(s => s.asteroids.zoomScene);
-
-  const asteroidId = props.guests ? originAsteroid : crew?.station?.asteroidId;
-  const lotId = props.guests ? originLot?.lotId : crew?.station?.lotId;
-  const shipId = props.guests ? (zoomScene?.type === 'SHIP' && zoomScene.shipId) : crew?.station?.shipId;
+  const asteroidId = crew?._location?.asteroidId;
+  const lotId = crew?._location?.lotId;
+  const shipId = crew?._location?.shipId;
 
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
   const { data: lot, isLoading: lotIsLoading } = useLot(asteroidId, lotId);
   const { data: ship, isLoading: shipIsLoading } = useShip(shipId);
-
-  const targetCrewId = props.guests ? ship?.stationedCrews.find((c) => c !== crew?.i) : crew?.i;
-  const { data: targetCrew, isLoading: crewIsLoading } = useCrew(targetCrewId);
-  const { data: targetCrewmates, isLoading: targetCrewmatesLoading } = useCrewmates(targetCrew?.crewmates || []);
 
   // TODO: ...
   // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
@@ -237,9 +237,9 @@ const Wrapper = (props) => {
   const manager = {};
   const actionStage = actionStages.NOT_STARTED;
 
-  const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading || crewIsLoading || targetCrewmatesLoading;
+  const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading;
   useEffect(() => {
-    if (!asteroid || (!lot && !ship)) {// || !targetCrew) { // TODO: restore this
+    if (!asteroid || (!lot && !ship)) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
       }
@@ -249,13 +249,12 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={actionStage}>
       <EmergencyModeToggle
         asteroid={asteroid}
         lot={lot}
         ship={ship}
-        targetCrew={{ ...targetCrew, crewmates: targetCrewmates }}
         manager={manager}
         stage={actionStage}
         {...props} />

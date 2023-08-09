@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 
 import { SetCourseIcon } from '~/components/Icons';
-import useAuth from '~/hooks/useAuth';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
 
 const SetCourse = ({ onSetAction }) => {
-  const { account } = useAuth();
+  const { crew } = useCrewContext();
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   
   const handleClick = useCallback(() => {
@@ -16,9 +16,9 @@ const SetCourse = ({ onSetAction }) => {
   return (
     <ActionButton
       flags={{
-        attention: account && travelSolution && !travelSolution.invalid,
+        attention: crew && travelSolution && !travelSolution.invalid,
         // TODO: remove false
-        disabled: false && !(account && travelSolution && !travelSolution.invalid),
+        disabled: false && !(crew && travelSolution && !travelSolution.invalid),
       }}
       label="Set Course"
       icon={<SetCourseIcon />}

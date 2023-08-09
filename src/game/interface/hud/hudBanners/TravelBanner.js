@@ -81,7 +81,7 @@ const TravelBanner = ({ visible }) => {
   return (
     <Banner
       headline={<b>{headline}</b>}
-      isLoading={false}
+      isLoading={undefined}
       isVisible={visible}
       color={bannerColor}
       wide>

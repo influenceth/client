@@ -352,11 +352,11 @@ const ActionItem = ({ data }) => {
         <Timing>
           {type === 'pending' && 'Just Now'}
           {(type === 'ready' || type === 'failed') && item.ago}
-          {type === 'unready' && item.completionTime && <LiveTimer target={item.completionTime} maxPrecision={2} prefix="in " />}
+          {type === 'unready' && item.finishTime && <LiveTimer target={item.finishTime} maxPrecision={2} prefix="in " />}
           {/* TODO: would be nice for this to have different level warning intensity based on time-left and/or presence of inventory on the lot */}
           {type === 'plans' && (
-            item.completionTime
-              ? <LiveTimer target={item.completionTime} maxPrecision={2} prefix="remaining " />
+            item.finishTime
+              ? <LiveTimer target={item.finishTime} maxPrecision={2} prefix="remaining " />
               : <b>at risk</b>
           )}
         </Timing>

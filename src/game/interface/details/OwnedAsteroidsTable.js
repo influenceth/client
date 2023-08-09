@@ -9,42 +9,42 @@ import theme from '~/theme';
 const columns = [
   {
     name: 'Name',
-    selector: row => row.name,
+    selector: row => row.Name?.name,
     sortable: false
   },
   {
     name: 'Radius',
-    selector: row => row.radius,
+    selector: row => row.Celestial.radius,
     sortable: true,
-    format: row => `${row.radius?.toLocaleString()} km`
+    format: row => `${row.Celestial.radius?.toLocaleString()} km`
   },
   {
     name: 'Spectral Type',
-    selector: row => row.spectralType,
+    selector: row => row.Celestial.spectralType,
     sortable: true,
-    format: row => `${Asteroid.getSpectralType(row.spectralType)}-type`
+    format: row => `${Asteroid.getSpectralType(row)}-type`
   },
   {
     name: 'Rarity',
-    selector: row => row.bonuses,
-    format: row => Asteroid.getRarity(row.bonuses)
+    selector: row => row.Celestial.bonuses,
+    format: row => Asteroid.getRarity(row.Celestial.bonuses)
   },
   {
     name: 'Semi-major Axis',
-    selector: row => row.orbital.a,
+    selector: row => row.Orbit.a,
     sortable: true,
-    format: row => `${row.orbital?.a} AU`
+    format: row => `${row.Orbit.a} AU`
   },
   {
     name: 'Eccentricity',
-    selector: row => row.orbital.e,
+    selector: row => row.Orbit.ecc,
     sortable: true,
   },
   {
     name: 'Inclination',
-    selector: row => row.orbital.i,
+    selector: row => row.Orbit.inc,
     sortable: true,
-    format: row => `${(row.orbital.i * 180 / Math.PI).toLocaleString()}°`
+    format: row => `${(row.Orbit.inc * 180 / Math.PI).toLocaleString()}°`
   }
 ];
 

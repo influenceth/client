@@ -53,9 +53,9 @@ const CrewCards = styled.div`
 
 const CrewIndicator = ({ crew, flip, label = 'Owned by' }) => {
   const { crew: myCrew } = useCrewContext();
-  const { data: captain } = useCrewmate((crew?.crewmates || [])[0]);
+  const { data: captain } = useCrewmate((crew?.Crew?.roster || [])[0]);
   return (
-    <CrewCards flip>
+    <CrewCards flip={flip}>
       <CrewCardFramed
         borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
         crewmate={captain}
@@ -65,7 +65,7 @@ const CrewIndicator = ({ crew, flip, label = 'Owned by' }) => {
       <CrewLabel>
         <div>{label}</div>
         <h3>
-          {crew?.name || `Crew #${crew?.i}`}
+          {crew?.Name?.name || `Crew #${crew?.i}`}
           {myCrew?.i === crew?.i ? <label> (Me)</label> : null}
         </h3>
       </CrewLabel>

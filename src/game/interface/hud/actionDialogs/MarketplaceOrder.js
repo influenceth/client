@@ -12,7 +12,7 @@ import useStore from '~/hooks/useStore';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import actionStages from '~/lib/actionStages';
-import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -34,7 +34,8 @@ import {
   DestinationSelectionDialog,
   BonusTooltip,
   getBonusDirection,
-  MouseoverContent
+  MouseoverContent,
+  getBuildingInputDefaults
 } from './components';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 
@@ -182,6 +183,8 @@ const TooltipBody = styled.div`
     display: block;
   }
 `;
+
+// TODO: ecs refactor
 
 const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
   const { isCancellation, mode, type, resourceId, preselect } = props;
@@ -422,10 +425,8 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
         <FlexSection>
           <FlexSectionInputBlock
             title="Marketplace"
-            image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
-            label={`${lot?.building?.name || Building.TYPES[lot?.building?.capableType || 0].name}`}
+            {...getBuildingInputDefaults(lot)}
             disabled
-            sublabel={`Lot #${lot?.i}`}
           />
 
           <FlexSectionSpacer />
@@ -443,21 +444,20 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
         <FlexSection>
           <FlexSectionInputBlock
             title={`Delivery ${mode === 'buy' ? 'To' : 'From'}`}
+            {...getBuildingInputDefaults(lot, 'Inventory')}
             image={
               destinationLot
                 ? (
                   <BuildingImage
-                    building={Building.TYPES[destinationLot.building?.capableType || 0]}
-                    inventories={destinationLot?.building?.inventories}
+                    buildingType={destinationLot?.building?.Building?.buildingType || 0}
+                    inventories={destinationLot?.building?.Inventories}
                     showInventoryStatusForType={1} />
                 )
                 : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
             }
             isSelected={stage === actionStages.NOT_STARTED}
-            label={destinationLot ? (destinationLot.building?.name || Building.TYPES[destinationLot.building?.capableType || 0]?.name) : 'Select'}
             onClick={() => setDestinationSelectorOpen(true)}
             disabled={stage !== actionStages.NOT_STARTED}
-            sublabel={destinationLot ? <><LocationIcon /> Lot {destinationLot.i.toLocaleString()}</> : 'Inventory'}
           />
 
           <FlexSectionSpacer />
@@ -548,8 +548,8 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
             style={{ width: '100%' }}>
             <OrderAlert
               mode={mode}
-              insufficientBalance={insufficientBalance || undefined}
-              isCancellation={isCancellation || undefined}>
+              insufficientBalance={boolAttr(insufficientBalance)}
+              isCancellation={boolAttr(isCancellation)}>
               <div>
                 {type === 'limit' && (
                   <div style={{ fontSize: '35px', lineHeight: '30px' }}>
@@ -612,7 +612,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
 
         {stage !== actionStages.NOT_STARTED && null /* TODO: (
           <ProgressBarSection
-            completionTime={lot?.building?.construction?.completionTime}
+            finishTime={lot?.building?.construction?.finishTime}
             startTime={lot?.building?.construction?.startTime}
             stage={stage}
             title="Progress"
@@ -670,7 +670,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={marketplaceBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={actionStage}>
       <MarketplaceOrder
         asteroid={asteroid}

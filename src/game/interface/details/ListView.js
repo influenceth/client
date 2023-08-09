@@ -33,6 +33,7 @@ import usePagedEvents from '~/hooks/usePagedEvents';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 import listConfigs from './listViews';
+import { boolAttr } from '~/lib/utils';
 
 const footerMargin = 12;
 const filterWidth = 344;
@@ -176,13 +177,13 @@ const assetTypes = {
     useColumns: listConfigs.crews,
   },
   buildings: {
-    // keyField: 'i',
+    keyField: 'i',
     icon: <BuildingIcon />,
     title: 'Buildings',
     useColumns: listConfigs.buildings,
   },
   coresamples: {
-    // keyField: 'i',
+    keyField: 'i',
     icon: <CoreSampleIcon />,
     title: 'Core Samples',
     useColumns: listConfigs.coreSamples,
@@ -342,14 +343,14 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
                 background={filtersOpen ? theme.colors.main : undefined}
                 badge={filtersOpen ? undefined : activeFilters}
                 disabled={disableFilters}
-                subtle={!filtersOpen || undefined}
+                subtle={boolAttr(!filtersOpen)}
                 onClick={onToggleFilters}
                 size="bigicon">
                 <SlidersIcon />
               </Button>
             </div>
           </LeftControls>
-          <ResultContainer filtersOpen={filtersOpen}>
+          <ResultContainer filtersOpen={boolAttr(filtersOpen)}>
             {query?.isLoading
               ? <Loading><InProgressIcon height={14} /></Loading>
               : <ResultCount>{(query?.data?.total || 0).toLocaleString()} Result{query?.data?.total === 1 ? '' : 's'}</ResultCount>
@@ -368,7 +369,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
         </Controls>
 
         <MainWrapper>
-          <FilterContainer open={filtersOpen}>
+          <FilterContainer open={boolAttr(filtersOpen)}>
             <InnerFilterContainer>
               <SearchFilters
                 assetType={assetType}

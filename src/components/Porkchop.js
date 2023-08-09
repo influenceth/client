@@ -12,6 +12,7 @@ import Grid from './porkchop/Grid';
 import SolutionLabels from './porkchop/SolutionLabels';
 import Reticule from './porkchop/Reticule';
 import { WarningOutlineIcon } from './Icons';
+import { boolAttr } from '~/lib/utils';
 
 const PorkchopWrapper = styled.div`
   overflow: visible;
@@ -297,7 +298,7 @@ const Porkchop = ({
   return (
     <PorkchopWrapper style={{ height: `${size}px`, marginBottom: 40, width: `${size}px` }}>
       <PorkchopContainer
-        loading={loading}
+        loading={boolAttr(loading)}
         onClick={handleClick}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseMove}

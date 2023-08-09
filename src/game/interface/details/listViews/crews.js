@@ -6,6 +6,7 @@ import OnClickLink from '~/components/OnClickLink';
 import MarketplaceLink from '~/components/MarketplaceLink';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
+import formatters from '~/lib/formatters';
 
 const useColumns = () => {
   const { account } = useAuth();
@@ -17,7 +18,7 @@ const useColumns = () => {
         align: 'center',
         icon: <MyAssetIcon />,
         selector: row => {
-          if (account && row.owner && Address.areEqual(row.owner, account)) {
+          if (account && row.Nft.owner && Address.areEqual(row.Nft.owner, account)) {
             return <MyAssetIcon />
           }
           return '';
@@ -29,8 +30,8 @@ const useColumns = () => {
       {
         key: 'name',
         label: 'Name',
-        // sortField: 'name', // TODO: 
-        selector: row => '',
+        // sortField: 'name', // TODO: ecs refactor
+        selector: row => formatters.crewName(row),
         unhideable: true
       },
       {
@@ -41,14 +42,14 @@ const useColumns = () => {
           if (row.owner) {
             return (
               <MarketplaceLink
-                chain={row.chain}
+                chain={row.Bridge.destination}
                 assetType="account"
-                id={row.owner}>
+                id={row.Nft.owner}>
                 {(onClick, setRefEl) => (
                   <OnClickLink ref={setRefEl} onClick={onClick}>
-                    {account && Address.areEqual(row.owner, account)
+                    {account && Address.areEqual(row.Nft.owner, account)
                       ? `you`
-                      : `${row.owner.substr(0, 6)}...${row.owner.substr(-4)}`
+                      : `${row.Nft.owner.substr(0, 6)}...${row.Nft.owner.substr(-4)}`
                     }
                   </OnClickLink>
                 )}
@@ -61,7 +62,7 @@ const useColumns = () => {
       {
         key: 'roster',
         label: 'Roster',
-        selector: row => (row.crewmates || []).join(', '),
+        selector: row => (row.Crew.roster || []).join(', '),
       }
     ];
 

@@ -12,7 +12,7 @@ const SurfaceTransferOutgoing = ({ asteroid, lot, onSetAction, preselect, _disab
   }, [onSetAction, preselect]);
 
   const disabled = useMemo(() => {
-    const hasMass = Object.values(lot?.building?.inventories || {}).find((i) => i.mass > 0);
+    const hasMass = Object.values(lot?.building?.Inventories || {}).find((i) => i.mass > 0);
     return !hasMass;
   }, [lot?.building?.inventories]);
 

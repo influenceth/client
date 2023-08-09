@@ -7,7 +7,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 import {
   ActionDialogFooter,
   ActionDialogHeader,
@@ -28,7 +28,8 @@ import {
   FlexSection,
   TransferSelectionDialog,
   DestinationSelectionDialog,
-  ProgressBarSection
+  ProgressBarSection,
+  getBuildingInputDefaults
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -118,29 +119,29 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
   ]), [totalMass, totalVolume, transportDistance, transportTime]);
 
   const originInvId = useMemo(() => {
-    if (originLot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+    if (originLot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       return 1;
-    } else if (originLot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
+    } else if (originLot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
       return 0;
     }
     return null;
-  }, [originLot?.building?.construction?.status]);
+  }, [originLot?.building?.Building?.status]);
 
   const destInvId = useMemo(() => {
-    if (destinationLot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+    if (destinationLot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       return 1;
-    } else if (destinationLot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
+    } else if (destinationLot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
       return 0;
     }
     return null;
-  }, [destinationLot]);
+  }, [destinationLot?.building?.Building?.status]);
 
   const originInventory = useMemo(() => {
-    return (originLot?.building?.inventories || {})[originInvId];
-  }, [originInvId, originLot?.building?.inventories]);
+    return originLot?.building?.Inventories.find((i) => i.slot === originInvId);
+  }, [originInvId, originLot?.building?.Inventories]);
 
   const onStartDelivery = useCallback(() => {
-    const destInventory = Object.values(destinationLot?.building?.inventories || {}).find((i) => !i.locked);
+    const destInventory = destinationLot?.building?.Inventories.find((i) => !i.locked);
     const destInventoryConfig = Inventory.getType(destInventory?.inventoryType) || {};
     if (destInventory) {
       destInventoryConfig.massConstraint -= ((destInventory.mass || 0) + (destInventory.reservedMass || 0));
@@ -165,7 +166,7 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
   }, [originInvId, destinationLot?.i, destInvId, selectedItems]);
 
   const buildingRequirements = useMemo(
-    () => getBuildingRequirements(destinationLot?.building),
+    () => getBuildingRequirements(destinationLot?.building, destinationLot?.deliveries),
     [destinationLot?.building]
   );
 
@@ -187,21 +188,20 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
         <FlexSection>
           <FlexSectionInputBlock
             title="Origin"
+            {...getBuildingInputDefaults(originLot, 'Inventory')}
             image={
               originLot
                 ? (
                   <BuildingImage
-                    building={Building.TYPES[originLot.building?.capableType || 0]}
-                    inventories={originLot?.building?.inventories}
+                    buildingType={originLot.building?.Building?.buildingType || 0}
+                    inventories={originLot?.building?.Inventories}
                     showInventoryStatusForType={1} />
                 )
                 : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
             }
-            label={originLot ? Building.TYPES[originLot.building?.capableType || 0]?.name : 'Select'}
             isSelected={stage === actionStage.NOT_STARTED}
             onClick={() => { setOriginSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}
-            sublabel={originLot ? <><LocationIcon /> Lot {originLot.i.toLocaleString()}</> : 'Inventory'}
           />
           
           <FlexSectionSpacer>
@@ -210,15 +210,14 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
 
           <FlexSectionInputBlock
             title="Destination"
+            {...getBuildingInputDefaults(lot, 'Inventory')}
             image={(
               <BuildingImage
-                building={Building.TYPES[lot.building?.capableType || 0]}
-                inventories={lot.building?.inventories}
+                buildingType={lot.building?.Building?.buildingType || 0}
+                inventories={lot.building?.Inventories}
                 showInventoryStatusForType={0}
                 unfinished />
             )}
-            label={Building.TYPES[lot.building?.capableType || 0]?.name}
-            sublabel={<><LocationIcon /> Lot {lot.i.toLocaleString()}</>}
           />
         </FlexSection>
 
@@ -231,7 +230,7 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
 
         {stage !== actionStage.NOT_STARTED && (
           <ProgressBarSection
-            completionTime={currentDelivery?.completionTime}
+            finishTime={currentDelivery?.finishTime}
             startTime={currentDelivery?.startTime}
             stage={stage}
             title="Progress"
@@ -312,7 +311,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={surfaceTransferBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={actionStage}>
       <TransferToSite
         asteroid={asteroid}

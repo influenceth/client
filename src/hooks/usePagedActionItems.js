@@ -42,7 +42,7 @@ const usePagedActionItems = () => {
           if (sort[0] === 'time') {
             let which = 0;
             if (a.type === b.type) {
-              which = (a.completionTime || a._timestamp) < (b.completionTime || b._timestamp) ? -1 : 1;
+              which = (a.finishTime || a._timestamp) < (b.finishTime || b._timestamp) ? -1 : 1;
             } else {
               which = typeOrder.indexOf(a.type) < typeOrder.indexOf(b.type) ? -1 : 1;
             }

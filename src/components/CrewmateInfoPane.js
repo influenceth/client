@@ -5,6 +5,8 @@ import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import DataReadout from '~/components/DataReadout';
 import MouseoverInfoPane from './MouseoverInfoPane';
+import { useMemo } from 'react';
+import formatters from '~/lib/formatters';
 
 const TooltipContents = styled.div`
   & > h3 {
@@ -50,25 +52,27 @@ const Trait = styled.div`
   }
 `;
 
-const CrewInfoPane = ({ crew, cssWhenVisible, referenceEl, visible }) => {
-  if (!crew) return null;
+const CrewmateInfoPane = ({ crewmate, cssWhenVisible, referenceEl, visible }) => {
+  const traits = useMemo(() => Crewmate.getCombinedTraits(crewmate.Crewmate), [crewmate]);
+
+  if (!crewmate) return null;
   return (
     <MouseoverInfoPane cssWhenVisible={cssWhenVisible} referenceEl={referenceEl} visible={visible}>
       <TooltipContents>
-        <h3>{crew.name || `Crewmate #${crew.i}`}</h3>
+        <h3>{formatters.crewmateName(crewmate)}</h3>
         <article>
           <div>
-            <CrewClassIcon crewClass={crew.crewClass} />
+            <CrewClassIcon crewClass={crewmate.Crewmate.class} />
           </div>
           <div style={{ lineHeight: '1.6em' }}>
-            <DataReadout label="Class" slim inheritFontSize>{Crewmate.getClass(crew.crewClass)?.name}</DataReadout>
-            {crew.title > 0 && <DataReadout label="Title" slim inheritFontSize>{Crewmate.getTitle(crew.title)?.name}</DataReadout>}
-            <DataReadout label="Collection" slim inheritFontSize>{Crewmate.getCollection(crew.crewCollection)?.name}</DataReadout>
+            <DataReadout label="Class" slim inheritFontSize>{Crewmate.getClass(crewmate)?.name}</DataReadout>
+            {crewmate.Crewmate.title > 0 && <DataReadout label="Title" slim inheritFontSize>{Crewmate.getTitle(crewmate)?.name}</DataReadout>}
+            <DataReadout label="Collection" slim inheritFontSize>{Crewmate.getCollection(crewmate)?.name}</DataReadout>
           </div>
         </article>
-        {(crew.traits || []).length > 0 && (
+        {(traits || []).length > 0 && (
           <div>
-            {crew.traits.map((trait) => {
+            {traits.map((trait) => {
               const { name } = Crewmate.getTrait(trait) || {};
               if (name) {
                 return (
@@ -87,4 +91,4 @@ const CrewInfoPane = ({ crew, cssWhenVisible, referenceEl, visible }) => {
   );
 }
 
-export default CrewInfoPane;
+export default CrewmateInfoPane;

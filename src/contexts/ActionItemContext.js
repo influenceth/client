@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
+import { Building } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useChainTime from '~/hooks/useChainTime';
@@ -20,9 +21,9 @@ export function ActionItemProvider({ children }) {
     { enabled: !!crew?.i }
   );
 
-  const { data: plannedLots, isLoading: plannedLotsLoading } = useQuery(
+  const { data: plannedBuildings, isLoading: plannedBuildingsLoading } = useQuery(
     [ 'planned', crew?.i ],
-    () => api.getCrewPlannedLots(),
+    () => api.getCrewPlannedBuildings(),
     { enabled: !!crew?.i }
   );
 
@@ -62,27 +63,30 @@ export function ActionItemProvider({ children }) {
 
     setReadyItems(
       (actionItems || [])
-        .filter((i) => i.data?.completionTime <= liveBlockTime)
-        .sort((a, b) => a.data?.completionTime - b.data?.completionTime)
+        .filter((i) => i.data?.finishTime <= liveBlockTime)
+        .sort((a, b) => a.data?.finishTime - b.data?.finishTime)
     );
 
     setUnreadyItems(
       (actionItems || [])
-        .filter((i) => i.data?.completionTime > liveBlockTime)
-        .sort((a, b) => a.data?.completionTime - b.data?.completionTime)
+        .filter((i) => i.data?.finishTime > liveBlockTime)
+        .sort((a, b) => a.data?.finishTime - b.data?.finishTime)
     );
 
     setPlannedItems(
-      (plannedLots || [])
-        // .filter((i) => i.gracePeriodEnd >= nowTime)
-        .map((a) => ({ ...a, waitingFor: a.gracePeriodEnd > liveBlockTime ? a.gracePeriodEnd : null }))
-        .sort((a, b) => a.gracePeriodEnd - b.gracePeriodEnd)
+      (plannedBuildings || [])
+        // .filter((a) => a.Building.plannedAt + Building.GRACE_PERIOD >= nowTime)
+        .map((a) => ({
+          ...a,
+          waitingFor: a.Building.plannedAt + Building.GRACE_PERIOD > liveBlockTime ? a.Building.plannedAt + Building.GRACE_PERIOD : null
+        }))
+        .sort((a, b) => a.plannedAt - b.plannedAt)
     );
-  }, [actionItems, plannedLots, liveBlockTime]);
+  }, [actionItems, plannedBuildings, liveBlockTime]);
 
   const nextCompletionTime = useMemo(() => {
     return [...plannedItems, ...unreadyItems].reduce((acc, cur) => {
-      const relevantTime = cur.waitingFor || cur.data?.completionTime;
+      const relevantTime = cur.waitingFor || cur.data?.finishTime;
       if (relevantTime && relevantTime && (acc === null || relevantTime < acc)) {
         return relevantTime;
       }
@@ -181,7 +185,7 @@ export function ActionItemProvider({ children }) {
     plannedItems,
     unreadyItems,
     actionItems,
-    isLoading: actionItemsLoading || plannedLotsLoading
+    isLoading: actionItemsLoading || plannedBuildingsLoading
   }), [
     allVisibleItems,
     liveBlockTime,
@@ -192,7 +196,7 @@ export function ActionItemProvider({ children }) {
     unreadyItems,
     actionItems,
     actionItemsLoading,
-    plannedLotsLoading
+    plannedBuildingsLoading
   ]);
 
   // TODO: pending and failed transactions are already in context
@@ -216,7 +220,7 @@ export function ActionItemProvider({ children }) {
 
   //   const openItems = [];
   //   events.forEach((event) => {
-  //     if (event.returnValues?.completionTime) {
+  //     if (event.returnValues?.finishTime) {
   //       const waitingOn = {};
   //       if (event.event === 'Asteroid_ScanStarted') {
   //         waitingOn.event = 'Asteroid_ScanFinished';
@@ -232,7 +236,7 @@ export function ActionItemProvider({ children }) {
   //       // }
   //       openItems.push({
   //         ...event,
-  //         isReady: chainTime >= event.returnValues.completionTime,
+  //         isReady: chainTime >= event.returnValues.finishTime,
   //         waitingOn
   //       });
   //     }
@@ -256,7 +260,7 @@ export function ActionItemProvider({ children }) {
   // useEffect(() => {
   //   actionItemz.forEach((ai) => {
   //     if (!ai.isReady && !nextTimer.current) {
-  //       const readyIn = (ai.returnValues.completionTime - chainTime) + 5;
+  //       const readyIn = (ai.returnValues.finishTime - chainTime) + 5;
   //       nextTimer.current = setTimeout(() => {
   //         console.log('Something is ready.');
   //         setReadyTally((i) => i + 1);

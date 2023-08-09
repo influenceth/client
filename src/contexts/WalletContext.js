@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, createContext } from 'react';
 import getStarknet from 'get-starknet-core';
-import { injectController } from '@cartridge/controller';
+// import { injectController } from '@cartridge/controller';  // TODO: cartridge
 import { Address } from '@influenceth/sdk';
 
 import api from '~/lib/api';
@@ -30,7 +30,8 @@ const sessionWhitelist = dispatcherMethods.map(method => {
   return { target: process.env.REACT_APP_STARKNET_DISPATCHER, method };
 });
 
-injectController(sessionWhitelist, { url: "https://keychain-git-removenextrouting.preview.cartridge.gg/" });
+// TODO: cartridge
+// injectController(sessionWhitelist, { url: "https://keychain-git-removenextrouting.preview.cartridge.gg/" });
 
 const { disconnect, enable, getAvailableWallets, getLastConnectedWallet } = getStarknet;
 

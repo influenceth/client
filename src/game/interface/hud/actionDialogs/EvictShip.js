@@ -6,7 +6,7 @@ import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
-import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -23,7 +23,8 @@ import {
   ProgressBarNote,
   PropellantSection,
   ShipTab,
-  PropulsionTypeSection
+  PropulsionTypeSection,
+  getBuildingInputDefaults
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -36,6 +37,8 @@ import formatters from '~/lib/formatters';
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
 //  - however, could you launch two ships at once? probably not because crew needs to be on ship?
+
+// TODO: ecs refactor
 
 const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -146,10 +149,8 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
             <FlexSection>
               <FlexSectionInputBlock
                 title="Origin"
-                image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
-                label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
+                {...getBuildingInputDefaults(lot)}
                 disabled={stage !== actionStages.NOT_STARTED}
-                sublabel={`Lot #${lot?.i}`}
               />
 
               <FlexSectionSpacer />
@@ -247,7 +248,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={actionStage}>
       <EvictShip
         asteroid={asteroid}

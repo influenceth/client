@@ -83,16 +83,16 @@ const useColumns = () => {
         bodyStyle: { width: '272px' },
         selector: row => (
           <>
-            {row.type === 'unready' && row.completionTime && (
-              <Progress start={row.startTime} finish={row.completionTime} />
+            {row.type === 'unready' && row.finishTime && (
+              <Progress start={row.startTime} finish={row.finishTime} />
             )}
             <Highlight style={{ display: 'inline-block' }}>
               {row.type === 'pending' && 'Just Now'}
               {(row.type === 'ready' || row.type === 'failed') && row.ago}
-              {row.type === 'unready' && row.completionTime && <MainColor><LiveTimer target={row.completionTime} maxPrecision={2} /></MainColor>}
+              {row.type === 'unready' && row.finishTime && <MainColor><LiveTimer target={row.finishTime} maxPrecision={2} /></MainColor>}
               {row.type === 'plans' && (
-                row.completionTime
-                  ? <LiveTimer target={row.completionTime} maxPrecision={2} prefix="remaining " />
+                row.finishTime
+                  ? <LiveTimer target={row.finishTime} maxPrecision={2} prefix="remaining " />
                   : <AtRisk>at risk</AtRisk>
               )}
             </Highlight>

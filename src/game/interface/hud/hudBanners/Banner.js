@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 import ClipCorner from '~/components/ClipCorner';
 import InProgressIcon from '~/components/InProgressIcon';
+import { boolAttr } from '~/lib/utils';
 import theme from '~/theme';
 
 const cornerSize = 15;
@@ -90,7 +91,7 @@ const Wrapper = styled.div`
 const Banner = ({ children, headline, isLoading, isVisible, loadingMessage, ...props }) => (
   <Wrapper visible={isVisible} {...props}>
     {headline && <Headline>{headline}</Headline>}
-    <Container loading={isLoading}>
+    <Container loading={boolAttr(isLoading)}>
       <InnerContainer>
         {isLoading && (
           <Loading>

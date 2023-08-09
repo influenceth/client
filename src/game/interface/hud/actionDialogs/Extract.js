@@ -6,7 +6,7 @@ import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, ResourceIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
-import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   ResourceAmountSlider, ActionDialogFooter,
@@ -30,7 +30,8 @@ import {
   ProgressBarSection,
   CoreSampleSelectionDialog,
   DestinationSelectionDialog,
-  SublabelBanner
+  SublabelBanner,
+  getBuildingInputDefaults
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -64,7 +65,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const extractionBonus = useMemo(() => {
     const bonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_RATE, crewmates);
-    const asteroidBonus = Asteroid.getBonusByResource(asteroid?.bonuses, selectedCoreSample?.resourceId);
+    const asteroidBonus = Asteroid.Entity.getBonusByResource(asteroid, selectedCoreSample?.resourceId);
     if (asteroidBonus.totalBonus !== 1) {
       bonus.totalBonus *= asteroidBonus.totalBonus;
       bonus.others = [{
@@ -74,19 +75,19 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       }];
     }
     return bonus;
-  }, [asteroid?.bonuses, crewmates, selectedCoreSample?.resourceId]);
+  }, [asteroid, crewmates, selectedCoreSample?.resourceId]);
 
-  const usableSamples = useMemo(() => (lot?.coreSamples || []).filter((c) => (
-    c.owner === crew?.i
-    && c.remainingYield > 0
-    && c.status >= Deposit.STATUSES.SAMPLED
-  )), [lot?.coreSample, crew?.i]);
+  const usableSamples = useMemo(() => (lot?.deposits || []).filter((d) => (
+    d.Control.controller.id === crew?.i
+    && d.Deposit.remainingYield > 0
+    && d.Deposit.status >= Deposit.STATUSES.SAMPLED
+  )), [lot?.deposits, crew?.i]);
 
   const selectCoreSample = useCallback((sample) => {
     setSelectedCoreSample(sample);
     setAmount(0);
     setTimeout(() => {
-      setAmount(sample.remainingYield);
+      setAmount(sample.Deposit.remainingYield);
     }, 0);
   }, []);
 
@@ -94,7 +95,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     let defaultSelection;
     if (!currentExtraction && !selectedCoreSample) {
       if (props.preselect) {
-        defaultSelection = usableSamples.find((s) => s.resourceId === props.preselect.resourceId && s.sampleId === props.preselect.sampleId);
+        defaultSelection = usableSamples.find((s) => s.Deposit.resource === props.preselect.resourceId && s.i === props.preselect.sampleId);
       } else if (usableSamples.length === 1) {
         defaultSelection = usableSamples[0];
       }
@@ -107,18 +108,18 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   // handle "currentExtraction" state
   useEffect(() => {
     if (currentExtraction) {
-      if (lot?.coreSamples) {
-        const currentSample = lot.coreSamples.find((c) => c.resourceId === currentExtraction.resourceId && c.sampleId === currentExtraction.sampleId);
+      if (lot?.deposits) {
+        const currentSample = lot.deposits.find((c) => c.Deposit.resource === currentExtraction.resourceId && c.i === currentExtraction.sampleId);
         if (currentSample) {
           setSelectedCoreSample({
             ...currentSample,
-            remainingYield: currentSample.remainingYield + (currentExtraction.isCoreSampleUpdated ? currentExtraction.yield : 0)
+            remainingYield: currentSample.Deposit.remainingYield + (currentExtraction.isCoreSampleUpdated ? currentExtraction.yield : 0)
           });
           setAmount(currentExtraction.yield);
         }
       }
     }
-  }, [currentExtraction, lot?.coreSamples]);
+  }, [currentExtraction, lot?.deposits]);
 
   useEffect(() => {
     if (currentExtractionDestinationLot) {
@@ -128,14 +129,14 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
   const resource = useMemo(() => {
     if (!selectedCoreSample) return null;
-    return Product.TYPES[selectedCoreSample.resourceId];
+    return Product.TYPES[selectedCoreSample.Deposit.resource];
   }, [selectedCoreSample]);
 
   const extractionTime = useMemo(() => {
     if (!selectedCoreSample) return 0;
     return Extractor.getExtractionTime(
       amount,
-      selectedCoreSample.remainingYield || 0,
+      selectedCoreSample.Deposit.remainingYield || 0,
       extractionBonus.totalBonus || 1
     );
   }, [amount, extractionBonus, selectedCoreSample]);
@@ -222,7 +223,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   ]), [amount, crewTravelBonus, crewTravelTime, extractionBonus, extractionTime, resource]);
 
   const onStartExtraction = useCallback(() => {
-    const inventory = Object.values(destinationLot?.building?.inventories || {}).find((i) => !i.locked);
+    const inventory = destinationLot?.building?.inventories.find((i) => !i.locked);
     const inventoryConfig = Inventory.getType(inventory.inventoryType) || {};
     if (inventory) {
       inventoryConfig.massConstraint -= ((inventory.mass || 0) + (inventory.reservedMass || 0));
@@ -292,8 +293,8 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                     ? (
                       <SampleAmount>
                         <ResourceIcon />
-                        <span>{formatSampleMass(selectedCoreSample.remainingYield * resource.massPerUnit)}t</span>
-                        <span>({formatSampleMass((selectedCoreSample.remainingYield - amount) * resource.massPerUnit)}t)</span>
+                        <span>{formatSampleMass(selectedCoreSample.Deposit.remainingYield * resource.massPerUnit)}t</span>
+                        <span>({formatSampleMass((selectedCoreSample.Deposit.remainingYield - amount) * resource.massPerUnit)}t)</span>
                       </SampleAmount>
                     )
                     : (
@@ -310,21 +311,20 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
           <FlexSectionInputBlock
             title="Destination"
+            {...getBuildingInputDefaults(destinationLot, 'Inventory')}
             image={
               destinationLot
                 ? (
                   <BuildingImage
-                    building={Building.TYPES[destinationLot.building?.capableType || 0]}
-                    inventories={destinationLot?.building?.inventories}
+                    buildingType={destinationLot.building?.Building?.buildingType || 0}
+                    inventories={destinationLot.building?.Inventories}
                     showInventoryStatusForType={1} />
                 )
                 : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
             }
             isSelected={stage === actionStage.NOT_STARTED}
-            label={destinationLot ? Building.TYPES[destinationLot.building?.capableType || 0]?.name : 'Select'}
             onClick={() => { setDestinationSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}
-            sublabel={destinationLot ? <><LocationIcon /> Lot {destinationLot.i.toLocaleString()}</> : 'Inventory'}
           />
         </FlexSection>
 
@@ -336,7 +336,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                 amount={amount || 0}
                 extractionTime={extractionTime || 0}
                 min={0}
-                max={selectedCoreSample?.remainingYield || 0}
+                max={selectedCoreSample?.Deposit?.remainingYield || 0}
                 resource={resource}
                 setAmount={setAmount} />
             </SectionBody>
@@ -345,8 +345,8 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
         {stage !== actionStage.NOT_STARTED && (
           <ProgressBarSection
-            completionTime={lot?.building?.extraction?.completionTime}
-            startTime={lot?.building?.extraction?.startTime}
+            finishTime={currentExtraction?.finishTime}
+            startTime={currentExtraction?.startTime}
             stage={stage}
             title="Progress"
             totalTime={crewTravelTime + extractionTime}
@@ -410,7 +410,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={extractionBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={actionStage}>
       <Extract
         asteroid={asteroid}

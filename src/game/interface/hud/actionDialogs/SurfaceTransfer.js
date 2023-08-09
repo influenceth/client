@@ -8,7 +8,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 import {
   ItemSelectionSection,
   ActionDialogFooter,
@@ -71,8 +71,8 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   const [tab, setTab] = useState(0);
   const [transferSelectorOpen, setTransferSelectorOpen] = useState();
 
-  const { data: originLotOccupier } = useCrew(originLot?.occupier);
-  const { data: destinationLotOccupier } = useCrew(destinationLot?.occupier);
+  const { data: originLotOccupier } = useCrew(originLot?.building?.Control?.controller?.id);
+  const { data: destinationLotOccupier } = useCrew(destinationLot?.building?.Control?.controller?.id);
 
   const crewmates = currentDelivery?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
@@ -135,8 +135,8 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
 
   const destinationOverloaded = useMemo(() => {
     const showInventoryStatusForType = 1; // TODO: ...
-    if (destinationLot?.building?.capableType && destinationLot?.building?.inventories) {
-      const capacity = getCapacityUsage(Building.TYPES[destinationLot.building.capableType], destinationLot.building.inventories, showInventoryStatusForType);
+    if (destinationLot?.building?.Inventories) {
+      const capacity = getCapacityUsage(destinationLot.building.Inventories, showInventoryStatusForType);
       if (capacity.mass.used + capacity.mass.reserved + totalMass * 1e6 > capacity.mass.max) {
         return true;
       }
@@ -148,29 +148,29 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   }, [totalMass, totalVolume, destinationLot])
 
   const originInvId = useMemo(() => {
-    if (originLot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+    if (originLot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       return 1;
-    } else if (originLot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
+    } else if (originLot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
       return 0;
     }
     return null;
-  }, [originLot?.building?.construction?.status]);
+  }, [originLot?.building?.Building?.status]);
 
   const destInvId = useMemo(() => {
-    if (destinationLot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+    if (destinationLot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       return 1;
-    } else if (destinationLot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
+    } else if (destinationLot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
       return 0;
     }
     return null;
-  }, [destinationLot]);
+  }, [destinationLot?.building?.Building?.status]);
 
   const originInventory = useMemo(() => {
-    return (originLot?.building?.inventories || {})[originInvId];
-  }, [originInvId, originLot?.building?.inventories]);
+    return originLot?.building?.Inventories.find((i) => i.slot === originInvId);
+  }, [originInvId, originLot?.building?.Inventories]);
 
   const onStartDelivery = useCallback(() => {
-    const destInventory = Object.values(destinationLot?.building?.inventories || {}).find((i) => !i.locked);
+    const destInventory = destinationLot?.building?.Inventories.find((i) => !i.locked);
     const destInventoryConfig = Inventory.getType(destInventory?.inventoryType) || {};
     if (destInventory) {
       destInventoryConfig.massConstraint -= ((destInventory.mass || 0) + (destInventory.reservedMass || 0));
@@ -198,7 +198,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
     let overrideColor = undefined;
     let status = undefined;
     if (stage === actionStage.NOT_STARTED) {
-      if (destinationLot && destinationLot?.occupier !== crew?.i) {
+      if (destinationLot && destinationLot?.building?.Control?.controller?.id !== crew?.i) {
         status = 'Send to Crew';
         overrideColor = theme.colors.green;
       } else {
@@ -238,14 +238,13 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
         <FlexSection>
           <FlexSectionInputBlock
             title="Origin"
+            {...getBuildingInputDefaults(lot)}
             image={(
               <BuildingImage
-                building={Building.TYPES[lot.building?.capableType || 0]}
-                inventories={lot.building?.inventories}
+                buildingType={lot.building?.Building?.buildingType || 0}
+                inventories={lot.building?.Inventories}
                 showInventoryStatusForType={1} />
             )}
-            label={Building.TYPES[lot.building?.capableType || 0]?.name}
-            sublabel={<><LocationIcon /> Lot {lot.i.toLocaleString()}</>}
           />
           
           <FlexSectionSpacer>
@@ -255,19 +254,19 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
           <FlexSectionInputBlock
             title="Destination"
             titleDetails={<TransferDistanceDetails distance={transportDistance} />}
+            {...getBuildingInputDefaults(destinationLot)}
             image={
               destinationLot
                 ? (
                   <BuildingImage
-                    building={Building.TYPES[destinationLot.building?.capableType || 0]}
+                    buildingType={destinationLot.building?.Building?.buildingType || 0}
                     error={destinationOverloaded}
-                    inventories={destinationLot?.building?.inventories}
+                    inventories={destinationLot?.building?.Inventories}
                     showInventoryStatusForType={1} />
                 )
                 : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
             }
             isSelected={stage === actionStage.NOT_STARTED}
-            label={destinationLot ? Building.TYPES[destinationLot.building?.capableType || 0]?.name : 'Select'}
             onClick={() => { setDestinationSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}
             sublabel={
@@ -284,7 +283,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
 
         {tab === 0 && (
           <>
-            {(!destinationLot || destinationLot?.occupier === crew?.i)
+            {(!destinationLot || destinationLot?.building?.Control?.controller?.id === crew?.i)
               ? (
                 <ItemSelectionSection
                   label="Transfer Items"
@@ -324,7 +323,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
 
             {stage !== actionStage.NOT_STARTED && (
               <ProgressBarSection
-                completionTime={currentDelivery?.completionTime}
+                finishTime={currentDelivery?.finishTime}
                 startTime={currentDelivery?.startTime}
                 stage={stage}
                 title="Progress"
@@ -356,7 +355,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
               </div>
             </FlexSection>
 
-            {(originLot && destinationLot && originLot?.occupier !== destinationLot?.occupier) && (
+            {(originLot && destinationLot && originLotOccupier?.i !== destinationLotOccupier?.i) && (
               <FlexSection>
                 <CrewOwnerBlock crew={originLotOccupier} />
 
@@ -436,7 +435,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={surfaceTransferBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={actionStage}>
       <SurfaceTransfer
         asteroid={asteroid}

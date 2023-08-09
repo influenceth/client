@@ -6,7 +6,7 @@ import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { BackIcon, CaretIcon, CloseIcon, CoreSampleIcon, ExtractionIcon, ForwardIcon, RefineIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ProcessIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
-import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -30,7 +30,8 @@ import {
   RecipeSlider,
   ProcessInputOutputSection,
   TransferDistanceDetails,
-  ProcessSelectionDialog
+  ProcessSelectionDialog,
+  getBuildingInputDefaults
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -74,37 +75,6 @@ const IconWrapper = styled.div`
 `;
 const RightIconWrapper = styled.div``;
 
-const processes = [
-  {
-    i: 1,
-    name: 'Water Electrolysis',
-    inputs: [
-      { resourceId: 9, recipe: 9 },
-      { resourceId: 10, recipe: 1 },
-    ],
-    outputs: [
-      { resourceId: 40, recipe: 1 },
-      { resourceId: 11, recipe: 6 },
-      { resourceId: 12, recipe: 6 },
-    ],
-  },
-  {
-    i: 2,
-    name: 'Rare Earths Oxalation and Calcination',
-    inputs: [
-      { resourceId: 13, recipe: 9 },
-      { resourceId: 14, recipe: 7 },
-      { resourceId: 15, recipe: 4 },
-      { resourceId: 16, recipe: 1 },
-      { resourceId: 17, recipe: 1 },
-    ],
-    outputs: [
-      { resourceId: 41, recipe: 2 },
-      { resourceId: 18, recipe: 1 },
-    ],
-  },
-];
-
 const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   
@@ -118,13 +88,12 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
   const [processSelectorOpen, setProcessSelectorOpen] = useState(false);
   const [primaryOutput, setPrimaryOutput] = useState();
 
-  const [propulsionType, setPropulsionType] = useState('propulsive');
   const [tab, setTab] = useState(0);
   
-  const process = processId && processes.find((p) => p.i === processId);
+  const process = Process.TYPES[processId];
   useEffect(() => {
     if (!process) return;
-    setPrimaryOutput(process.outputs[0].resourceId);
+    setPrimaryOutput(Object.keys(process.outputs)[0]);
     setAmount(1e3); // TODO: whatever max is
   }, [process]);
 
@@ -205,10 +174,8 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
         <FlexSection style={{ marginBottom: 32, width: SECTION_WIDTH }}>
           <FlexSectionInputBlock
             title="Refining Location"
-            image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
-            label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
+            {...getBuildingInputDefaults(lot)}
             disabled={stage !== actionStages.NOT_STARTED}
-            sublabel={`Lot #${lot?.i}`}
             style={{ width: '33.3%' }}
           />
 
@@ -249,10 +216,8 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
           <FlexSectionInputBlock
             title="Input Inventory"
             titleDetails={<TransferDistanceDetails distance={8} />}
-            image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
-            label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
+            {...getBuildingInputDefaults(lot)}
             disabled={stage !== actionStages.NOT_STARTED}
-            sublabel={`Lot #${lot?.i}`}
             style={{ width: '33.3%' }}
           />
 
@@ -281,10 +246,8 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
           <FlexSectionInputBlock
             title="Output Inventory"
             titleDetails={<TransferDistanceDetails distance={19} />}
-            image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
-            label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
+            {...getBuildingInputDefaults(lot)}
             disabled={stage !== actionStages.NOT_STARTED}
-            sublabel={`Lot #${lot?.i}`}
             style={{ width: '33.3%' }}
           />
 
@@ -312,7 +275,7 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
 
         {stage !== actionStages.NOT_STARTED && null /* TODO: (
           <ProgressBarSection
-            completionTime={lot?.building?.construction?.completionTime}
+            finishTime={lot?.building?.construction?.finishTime}
             startTime={lot?.building?.construction?.startTime}
             stage={stage}
             title="Progress"
@@ -339,12 +302,23 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
       {stage === actionStages.NOT_STARTED && (
         <ProcessSelectionDialog
           initialSelection={processId}
-          processes={processes}
+          processorType={lot?.building?.Processors?.[0]?.processorType}
           onClose={() => setProcessSelectorOpen(false)}
           onSelected={setProcessId}
           open={processSelectorOpen}
         />
       )}
+      
+      {/* TODO: ecs refactor -- now that shipyard has two processors, need somewhere to construct ships
+      {stage === actionStages.NOT_STARTED && (
+        <ShipConstructionSelectionDialog
+          initialSelection={processId}
+          onClose={() => setProcessSelectorOpen(false)}
+          onSelected={setProcessId}
+          open={processSelectorOpen}
+        />
+      )}
+      */}
     </>
   );
 };
@@ -368,7 +342,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={actionStage}
       extraWide>
       <Refine

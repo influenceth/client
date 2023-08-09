@@ -9,6 +9,7 @@ import {
 } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
+import formatters from '~/lib/formatters';
 
 const useColumns = () => {
   const { account } = useAuth();
@@ -20,7 +21,7 @@ const useColumns = () => {
         key: 'my',
         align: 'center',
         icon: <MyAssetIcon />,
-        selector: row => !!crewmateMap[row.crew] ? <MyAssetIcon /> : null,
+        selector: row => !!crewmateMap[row.id] ? <MyAssetIcon /> : null,
         bodyStyle: { fontSize: '24px' },
         requireLogin: true,
         unhideable: true
@@ -29,33 +30,39 @@ const useColumns = () => {
         key: 'name',
         icon: <CrewmateIcon />,
         label: 'Name',
-        // sortField: 'name',
-        selector: row => row.name,
+        // sortField: 'Name.name',
+        selector: row => formatters.crewmateName(row),
         unhideable: true
       },
       {
         key: 'crew',
         icon: <CrewIcon />,
         label: 'Crew',
-        sortField: 'crew.i',
-        selector: row => row.crew?.i,
+        sortField: 'Control.controller.id',
+        selector: row => row.Control?.controller?.id,
       },
       {
         key: 'class',
         label: 'Class',
-        sortField: 'class',
-        selector: row => row.class ? Crewmate.getClass(row.class)?.name : '',
+        sortField: 'Crewmate.class',
+        selector: row => Crewmate.getClass(row)?.name,
       },
       {
         key: 'collection',
         label: 'Collection',
-        sortField: 'collection',
-        selector: row => row.collection ? Crewmate.getCollection(row.collection)?.name : '',
+        sortField: 'Crewmate.coll',
+        selector: row => Crewmate.getCollection(row)?.name,
       },
       {
         key: 'traits',
         label: 'Traits',
-        selector: row => Array.isArray(row.traits) ? row.traits.filter((t) => !!t).map((t) => Crewmate.getTrait(t)?.name).join(', ') : '',
+        selector: row => {
+          const traits = Crewmate.getCombinedTraits(row);
+          return traits
+            .map((t) => Crewmate.getTrait(t)?.name)
+            .filter((t) => !!t)
+            .join(', ');
+        }
       },
     ];
 

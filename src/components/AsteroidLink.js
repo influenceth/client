@@ -12,7 +12,7 @@ const AsteroidLink = (props) => {
     if (owned) {
       const match = owned.find(a => a.i === Number(id));
       if (match) {
-        if (forceBaseName) return match.baseName;
+        if (forceBaseName) return match.Celestial.baseName;
         return formatters.asteroidName(match);
       }
     }

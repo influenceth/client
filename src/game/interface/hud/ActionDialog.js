@@ -29,6 +29,7 @@ import StationCrew from './actionDialogs/StationCrew';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import TransferToSite from './actionDialogs/TransferToSite';
 import UnplanBuilding from './actionDialogs/UnplanBuilding';
+import { boolAttr } from '~/lib/utils';
 
 const cornerSize = 20;
 
@@ -189,7 +190,7 @@ const ActionMain = styled.div`
 // TODO: transition in
 export const ActionDialogInner = ({ actionImage, children, isLoading, stage }) => (
   <Modal {...theming[stage]}>
-    <ModalInner isLoading={isLoading}>
+    <ModalInner isLoading={boolAttr(isLoading)}>
       {isLoading && <LoadingContainer><PuffLoader color="white" /></LoadingContainer>}
       {!isLoading && (
         <>

@@ -10,7 +10,7 @@ import {
 import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
 import useConstructionManager from '~/hooks/useConstructionManager';
-import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -41,7 +41,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
   const { currentConstruction, planConstruction } = constructionManager;
   const { captain, crew, crewmateMap } = useCrewContext();
 
-  const [capableType, setCapableType] = useState();
+  const [buildingType, setBuildingType] = useState();
 
   const crewTravelTime = useMemo(() => 0, []);  // TODO: ...
   const taskTime = useMemo(() => 0, []);
@@ -74,16 +74,16 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
   }, [crew?.crewmates]);
 
   useEffect(() => {
-    if (currentConstruction?.capableType) setCapableType(currentConstruction.capableType)
-  }, [currentConstruction?.capableType]);
+    if (currentConstruction?.buildingType) setBuildingType(currentConstruction.buildingType)
+  }, [currentConstruction?.buildingType]);
 
   const [siteSelectorOpen, setSiteSelectorOpen] = useState();
   const onBuildingSelected = (type) => {
-    setCapableType(type);
+    setBuildingType(type);
     setSiteSelectorOpen();
   }
 
-  const buildingRequirements = useMemo(() => getBuildingRequirements({ capableType }), [capableType]);
+  const buildingRequirements = useMemo(() => getBuildingRequirements({ Building: { buildingType } }), [buildingType]);
 
   return (
     <>
@@ -104,19 +104,19 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
           <FlexSectionInputBlock
             title="Building Site"
             image={
-              capableType
-                ? <BuildingImage building={Building.TYPES[capableType]} unfinished />
+              buildingType
+                ? <BuildingImage buildingType={buildingType} unfinished />
                 : <EmptyBuildingImage iconOverride={<PlanBuildingIcon />} />
             }
             isSelected={stage === actionStage.NOT_STARTED}
-            label={capableType ? Building.TYPES[capableType].name : 'Select'}
+            label={buildingType ? Building.TYPES[buildingType].name : 'Select'}
             onClick={() => setSiteSelectorOpen(true)}
             disabled={stage !== actionStage.NOT_STARTED}
             sublabel="Site"
           />
         </FlexSection>
 
-        {capableType && stage === actionStage.NOT_STARTED && (
+        {buildingType && stage === actionStage.NOT_STARTED && (
           <BuildingRequirementsSection
             label="Required for Construction"
             mode="display"
@@ -127,8 +127,8 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
         {stage === actionStage.NOT_STARTED && (
           <ProgressBarSection
             overrides={{
-              barColor: capableType ? theme.colors.lightOrange : '#bbbbbb',
-              color: capableType ? theme.colors.lightOrange : undefined,
+              barColor: buildingType ? theme.colors.lightOrange : '#bbbbbb',
+              color: buildingType ? theme.colors.lightOrange : undefined,
               left: <><WarningOutlineIcon /> Site Timer</>,
               right: formatTimer(Building.GRACE_PERIOD)
             }}
@@ -154,15 +154,15 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!capableType}
+        disabled={!buildingType}
         goLabel="Create Site"
-        onGo={() => planConstruction(capableType)}
+        onGo={() => planConstruction(buildingType)}
         stage={stage}
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (
         <SitePlanSelectionDialog
-          initialSelection={capableType}
+          initialSelection={buildingType}
           onClose={() => setSiteSelectorOpen(false)}
           onSelected={onBuildingSelected}
           open={siteSelectorOpen}
@@ -196,7 +196,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={constructionBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={stageByActivity.plan}>
       <PlanBuilding
         asteroid={asteroid}

@@ -5,9 +5,7 @@ import api from '~/lib/api';
 const useShip = (shipId) => {
   return useQuery(
     [ 'ships', shipId ],
-    () => {
-      return {};
-    },
+    () => api.getShip(shipId),
     { enabled: !!shipId }
   );
 };

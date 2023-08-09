@@ -86,6 +86,7 @@ const OrderType = styled.div`
   color: ${p => p.type === 'LimitBuy' ? theme.colors.green : theme.colors.main};
 `;
 
+// TODO: ecs refactor
 const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketplaceOwner = null }) => {
   const [sort, setSort] = useState(['createdAt', 'asc']);
   const [sortField, sortDirection] = sort;

@@ -229,9 +229,9 @@ const CompletionTime = styled.label`
 // {...booleanProps({ a, b, c })} where booleanProps(props) would either include
 // or not rather than true/false OR would pass 1/0 instead
 
-const LoadingTimer = ({ completionTime }) => {
+const LoadingTimer = ({ finishTime }) => {
   const chainTime = useChainTime();
-  const timeLeft = completionTime - chainTime;
+  const timeLeft = finishTime - chainTime;
   return (
     <CompletionTime>
       {timeLeft > 0 ? formatTimer(timeLeft, 1) : '...'}
@@ -257,7 +257,7 @@ const ActionButtonComponent = ({ label, flags = {}, icon, onClick, ...props }) =
       <ActionButton {...flags} overrideColor={props.overrideColor}>
         <ClipCorner dimension={cornerSize} />
         <div>{icon}</div>
-        {flags.loading && <LoadingTimer completionTime={flags.completionTime} />}
+        {flags.loading && <LoadingTimer finishTime={flags.finishTime} />}
       </ActionButton>
     </ActionButtonWrapper>
   );

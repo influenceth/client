@@ -6,7 +6,7 @@ import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LandShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
-import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   ResourceAmountSlider,
@@ -45,7 +45,8 @@ import {
   MiniBarChartSection,
   ShipTab,
   LandingSelectionDialog,
-  PropulsionTypeSection
+  PropulsionTypeSection,
+  getBuildingInputDefaults
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -54,7 +55,9 @@ import actionStages from '~/lib/actionStages';
 import theme from '~/theme';
 import formatters from '~/lib/formatters';
 
-const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
+// TODO: ecs refactor
+
+const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   
   const { currentLanding, landingStatus, startLanding } = manager;
@@ -67,7 +70,6 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
   
   const [propulsionType, setPropulsionType] = useState('propulsive');
   const [tab, setTab] = useState(0);
-  const ship = Ship.TYPES[2];  // TODO
 
   const crewmates = currentLanding?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
@@ -243,12 +245,10 @@ const LandShip = ({ asteroid, lot, manager, stage, ...props }) => {
               
               <FlexSectionInputBlock
                 title="Destination"
-                image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
-                label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
+                {...getBuildingInputDefaults(lot)}
                 disabled={stage !== actionStages.NOT_STARTED}
                 onClick={() => setDestinationSelectorOpen(true)}
                 isSelected={stage === actionStages.NOT_STARTED}
-                sublabel={`Lot #${lot?.i}`}
               />
             </FlexSection>
 
@@ -346,7 +346,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={actionStage}>
       <LandShip
         asteroid={asteroid}

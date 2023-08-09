@@ -8,7 +8,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
 import actionStage from '~/lib/actionStages';
-import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   ActionDialogBody,
@@ -67,18 +67,19 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
     }
   }, [resourceMap?.active]);
 
-  const sample = useMemo(() => {
-    if (lot?.coreSamples && resourceId && sampleId) {
-      const thisSample = lot.coreSamples.find((s) => s.sampleId === sampleId && s.resourceId === resourceId);
+  const [sample, initialYieldTonnage]  = useMemo(() => {
+    if (lot?.deposits && resourceId && sampleId) {
+      const thisSample = lot.deposits.find((s) => s.id === sampleId && s.Deposit.resource === resourceId);
       if (thisSample) {
-        thisSample.initialYieldTonnage = Object.keys(thisSample).includes('initialYield')
-          ? thisSample.initialYield * Product.TYPES[resourceId].massPerUnit
+        // TODO: ecs refactor: with the db changes, double-check that key is still only conditionally included
+        const initialYieldTonnage = Object.keys(thisSample.Deposit).includes('initialYield')
+          ? thisSample.Deposit.initialYield * Product.TYPES[resourceId].massPerUnit
           : undefined;
-        return thisSample;
+        return [thisSample, initialYieldTonnage];
       }
     }
-    return null;
-  }, [lot?.coreSamples, sampleId, resourceId]);
+    return [null, 0];
+  }, [lot?.deposits, sampleId, resourceId]);
 
   // get lot abundance
   const lotAbundances = useMemo(() => {
@@ -209,9 +210,9 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
               label={`${Product.TYPES[resourceId]?.name} Deposit`}
               disabled
               style={{ width: '100%' }}
-              sublabel={sample?.initialYieldTonnage && (
+              sublabel={initialYieldTonnage && (
                 <SublabelBanner color={theming[actionStage.COMPLETED].highlight}>
-                  <ResourceIcon /> {formatSampleMass(sample.initialYieldTonnage)}t
+                  <ResourceIcon /> {formatSampleMass(initialYieldTonnage)}t
                 </SublabelBanner>
               )}
             />
@@ -257,8 +258,8 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
 
         {stage !== actionStage.NOT_STARTED && stage !== actionStage.COMPLETED && (
           <ProgressBarSection
-            completionTime={sample?.completionTime}
-            startTime={sample?.startTime}
+            finishTime={currentSample?.finishTime}
+            startTime={currentSample?.startTime}
             stage={stage}
             title="Progress"
             totalTime={crewTravelTime + sampleTime}
@@ -310,7 +311,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={coreSampleBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={actionStage}>
       <NewCoreSample
         asteroid={asteroid}

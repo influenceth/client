@@ -28,6 +28,7 @@ import useSale from '~/hooks/useSale';
 import useStorySession from '~/hooks/useStorySession';
 import formatters from '~/lib/formatters';
 import useNameAvailability from '~/hooks/useNameAvailability';
+import { boolAttr } from '~/lib/utils';
 
 const blinkingBackground = (p) => keyframes`
   0% {
@@ -642,7 +643,7 @@ const CrewAssignmentCreate = (props) => {
                   <CardContainer>
                     <div>
                       <CrewCard
-                        crew={crewmate}
+                        crewmate={crewmate}
                         fontSize="25px"
                         hideCollectionInHeader
                         hideFooter
@@ -810,8 +811,8 @@ const CrewAssignmentCreate = (props) => {
                   Review Traits
                 </Button>
                 <Button
-                  disabled={finalizing || !name}
-                  loading={finalizing}
+                  disabled={boolAttr(finalizing || !name)}
+                  loading={boolAttr(finalizing)}
                   isTransaction
                   onClick={confirmFinalize}>
                   Finalize
@@ -837,8 +838,8 @@ const CrewAssignmentCreate = (props) => {
                     <CrewClassIcon crewClass={crewmate.crewClass} overrideColor="inherit" />
                   </div>
                   <article>
-                    <h4>{Crewmate.getClass(crewmate.crewClass).name}</h4>
-                    <div>{Crewmate.getClass(crewmate.crewClass).description}</div>
+                    <h4>{Crewmate.getClass(crewmate).name}</h4>
+                    <div>{Crewmate.getClass(crewmate).description}</div>
                   </article>
                 </Trait>
 

@@ -33,7 +33,7 @@ const formatters = {
 
   asteroidName: (a, fallbackText) => {
     if (!a) return fallbackText || 'Asteroid';
-    return a.customName || a.baseName || `Asteroid #${a.i.toLocaleString()}`;
+    return a.Name?.name || a.Celestial?.baseName || `Asteroid #${a.i.toLocaleString()}`;
   },
 
   asteroidPrice: (r, sale) => {
@@ -45,11 +45,31 @@ const formatters = {
     return price.toLocaleString([], { maximumFractionDigits: 4 });
   },
 
+  buildingName: (b, fallbackText) => {
+    if (!b) return fallbackText || 'Building';
+    return b.Name?.name || `${Building.TYPES[b.Building?.buildingType]?.name || 'Building'} #${b.i.toLocaleString()}`;
+  },
+
+  crewName: (c, fallbackText) => {
+    if (!c) return fallbackText || 'Crew';
+    return c.Name?.name || `Crew #${c.i.toLocaleString()}`;
+  },
+
   crewPrice: (sale) => {
     if (!sale?.basePrice) return '?';
     const price = Number(ethersUtils.formatEther(String(sale.basePrice)));
     return price.toLocaleString([], { maximumFractionDigits: 3 });
-  }
+  },
+
+  crewmateName: (c, fallbackText) => {
+    if (!c) return fallbackText || 'Crewmate';
+    return c.Name?.name || `Crewmate #${c.i.toLocaleString()}`;
+  },
+
+  shipName: (s, fallbackText) => {
+    if (!s) return fallbackText || 'Ship';
+    return s.Name?.name || `${Ship.TYPES[s.Ship?.shipType]?.name || 'Ship'} #${s.i.toLocaleString()}`;
+  },
 };
 
 export default formatters;

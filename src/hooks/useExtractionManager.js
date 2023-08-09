@@ -24,7 +24,7 @@ const useExtractionManager = (asteroidId, lotId) => {
   const [currentExtraction, extractionStatus, actionStage] = useMemo(() => {
     let current = {
       _crewmates: null,
-      completionTime: null,
+      finishTime: null,
       destinationLotId: null,
       destinationInventoryId: null,
       resourceId: null,
@@ -48,7 +48,7 @@ const useExtractionManager = (asteroidId, lotId) => {
         current.destinationInventoryId = actionItem.event.returnValues.destinationInventoryId;
         current.sampleId = actionItem.event.returnValues.sampleId;
       }
-      current.completionTime = lot.building.extraction.completionTime;
+      current.finishTime = lot.building.extraction.finishTime;
       current.resourceId = lot.building.extraction.resourceId;
       current.startTime = lot.building.extraction.startTime;
       current.yield = lot.building.extraction.yield;
@@ -57,7 +57,7 @@ const useExtractionManager = (asteroidId, lotId) => {
       if(getStatus('FINISH_EXTRACTION', payload) === 'pending') {
         status = 'FINISHING';
         stage = actionStages.COMPLETING;
-      } else if (lot.building.extraction.completionTime && lot.building.extraction.completionTime <= liveBlockTime) {
+      } else if (lot.building.extraction.finishTime && lot.building.extraction.finishTime <= liveBlockTime) {
         status = 'READY_TO_FINISH';
         stage = actionStages.READY_TO_COMPLETE;
       } else {

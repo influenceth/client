@@ -30,6 +30,7 @@ import useCrewmate from '~/hooks/useCrewmate';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import useNameCrew from '~/hooks/useNameCrew';
 import useStore from '~/hooks/useStore';
+import { boolAttr } from '~/lib/utils';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -376,7 +377,7 @@ const CrewmateDetails = () => {
   const history = useHistory();
   const { account } = useAuth();
   const { data: assignmentData } = useCrewAssignments();
-  const { data: crew } = useCrewmate(i);
+  const { data: crewmate } = useCrewmate(i);
   const isNameValid = useNameAvailability('Crewmate');
   const { nameCrew, naming } = useNameCrew(Number(i));
   const playSound = useStore(s => s.dispatchSoundRequested);
@@ -384,12 +385,14 @@ const CrewmateDetails = () => {
   const [ newName, setNewName ] = useState('');
   const [ selectedTrait, setSelectedTrait ] = useState();
 
+  const traits = useMemo(() => Crewmate.getCombinedTraits(crewmate.Crewmate), [crewmate]);
+
   const startDate = useMemo(() => {
-    if (crew?.events?.length > 0) {
-      return Time.fromUnixTime(crew.events[0].timestamp).toGameClockADays();
+    if (crewmate?.events?.length > 0) {
+      return Time.fromUnixTime(crewmate.events[0].timestamp).toGameClockADays();
     }
     return null;
-  }, [crew?.events]);
+  }, [crewmate?.events]);
 
   const goToCrewAssignments = useCallback(() => {
     if (assignmentData?.assignmentsByBook?.length > 0) {
@@ -408,17 +411,17 @@ const CrewmateDetails = () => {
   }, [playSound]);
 
   const fillerTraits = useMemo(() => {
-    if (crew?.traits.length > 0 && crew?.traits.length < MIN_TRAIT_SLOTS) {
-      return Array.from(Array(MIN_TRAIT_SLOTS - crew.traits.length));
+    if (traits.length > 0 && traits.length < MIN_TRAIT_SLOTS) {
+      return Array.from(Array(MIN_TRAIT_SLOTS - traits.length));
     }
     return [];
-  }, [crew?.traits]);
+  }, [traits]);
 
   useEffect(() => {
-    if(crew?.traits?.length > 0) {
-      selectTrait(crew.traits[0], true)();
+    if(traits?.length > 0) {
+      selectTrait(traits[0], true)();
     }
-  }, [crew?.traits, selectTrait]);
+  }, [traits, selectTrait]);
 
   const attemptNameCrew = useCallback(async (name) => {
     if (await isNameValid(name)) {
@@ -431,11 +434,11 @@ const CrewmateDetails = () => {
       onCloseDestination="/owned-crew"
       title="Crewmate Profile"
       width="max">
-      {crew && (
+      {crewmate && (
         <Content>
           <CrewBasics>
             <CardWrapper>
-              <CrewCard crew={crew} />
+              <CrewCard crewmate={crewmate} />
             </CardWrapper>
             <BelowCardWrapper>
               <CrewLabels>
@@ -444,18 +447,18 @@ const CrewmateDetails = () => {
                     {startDate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SA
                   </DataReadout>
                 )}
-                <DataReadout label="Class" slim inheritFontSize>{Crewmate.getClass(crew.crewClass)?.name || '(n/a)'}</DataReadout>
-                <DataReadout label="Title" slim inheritFontSize>{Crewmate.getTitle(crew.title)?.name || '(n/a)'}</DataReadout>
-                <DataReadout label="Collection" slim inheritFontSize>{Crewmate.getCollection(crew.crewCollection)?.name || '(n/a)'}</DataReadout>
+                <DataReadout label="Class" slim inheritFontSize>{Crewmate.getClass(crewmate)?.name || '(n/a)'}</DataReadout>
+                <DataReadout label="Title" slim inheritFontSize>{Crewmate.getTitle(crewmate)?.name || '(n/a)'}</DataReadout>
+                <DataReadout label="Collection" slim inheritFontSize>{Crewmate.getCollection(crewmate)?.name || '(n/a)'}</DataReadout>
               </CrewLabels>
               <Management>
                 <ManagementSubtitle>Management</ManagementSubtitle>
-                {!crew.name && (
+                {!crewmate.Name?.name && (
                   <Form
                     title={<><EditIcon /><span>Set Name</span></>}
                     data-tip="Name crewmate"
                     data-for="global"
-                    loading={naming}>
+                    loading={boolAttr(naming)}>
                     <Text>
                       A crewmate can only be named once!
                       Names must be unique, and can only include letters, numbers, and single spaces.
@@ -465,13 +468,13 @@ const CrewmateDetails = () => {
                         initialValue=""
                         maxlength={31}
                         pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
-                        disabled={naming}
+                        disabled={boolAttr(naming)}
                         resetOnChange={i}
                         onChange={(v) => setNewName(v)} />
                       <IconButton
                         data-tip="Submit"
                         data-for="global"
-                        disabled={naming}
+                        disabled={boolAttr(naming)}
                         onClick={() => attemptNameCrew(newName)}>
                         <CheckCircleIcon />
                       </IconButton>
@@ -480,15 +483,15 @@ const CrewmateDetails = () => {
                 )}
 
                 <MarketplaceLink
-                  chain={crew?.chain}
+                  chain={crewmate?.Bridge?.destination}
                   assetType="crewmate"
-                  id={crew?.i}>
+                  id={crewmate?.i}>
                   {(onClick, setRefEl) => (
                     <Button
-                      disabled={parseInt(crew?.activeSlot) > -1}
+                      disabled={boolAttr(parseInt(crewmate?.activeSlot) > -1)/* TODO: ecs refactor */}
                       setRef={setRefEl}
                       onClick={onClick}>
-                      <ClaimIcon /> {account === crew.owner ? 'List for Sale' : 'Purchase Crew'}
+                      <ClaimIcon /> {account === crewmate.Nft.owner ? 'List for Sale' : 'Purchase Crew'}
                     </Button>  
                   )}
                 </MarketplaceLink>
@@ -525,10 +528,10 @@ const CrewmateDetails = () => {
               panes={[
                 (
                   <TraitPane>
-                    {crew?.traits?.length > 0 && (
+                    {traits?.length > 0 && (
                       <>
                         <AllTraits>
-                          {crew.traits.map((trait) => {
+                          {traits.map((trait) => {
                             const { name, type } = Crewmate.getTrait(trait) || {};
                             if (name) {
                               return (
@@ -567,7 +570,7 @@ const CrewmateDetails = () => {
                         </TraitSelected>
                       </>
                     )}
-                    {!crew?.traits?.length && (
+                    {!traits?.length && (
                       <NoTraitsMessage>
                         <div>
                           <WarningOutlineIcon />
@@ -597,11 +600,11 @@ const CrewmateDetails = () => {
                 </LogHeader>
                 <div>
                   <ul>
-                    {crew?.events?.length > 0
-                      ? crew.events.map(e => (
+                    {crewmate?.events?.length > 0
+                      ? crewmate.events.map(e => (
                         <LogEntry
                           key={e.key}
-                          data={{ ...e, i: crew.i }}
+                          data={{ ...e, i: crewmate.i }}
                           timestampBreakpoint="1500px"
                           type={`Crewmate_${e.event}`}
                           isTabular />

@@ -129,7 +129,7 @@ const Poppable = ({ children, closeOnChange, closeOnClickAway = true, disabled, 
   return (
     <Wrapper>
       <Button
-        disabled={disabled}
+        disabled={boolAttr(disabled)}
         onClick={handleToggle}
         buttonWidth="135px"
         {...styleProps}>

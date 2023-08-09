@@ -16,15 +16,22 @@ const Deconstruct = ({ asteroid, lot, onSetAction, _disabled }) => {
   }, [onSetAction]);
 
   const disabledReason = useMemo(() => {
-    if (Object.values(lot?.building?.inventories || {}).find((i) => i.mass > 0)) {
-      return 'not empty';
-    }
-    else if (Object.values(lot?.building?.inventories || {}).find((i) => i.reservedMass > 0)) {
+    if (
+      (lot?.building?.Inventories || []).find((i) => i.mass > 0)
+      || lot?.building?.Dock?.dockedShips > 0
+      || lot?.building?.Station?.population > 0
+    ) return 'not empty';
+    
+    if (
+      (lot?.building?.Extractors || []).find((e) => e.status > 0)
+      || (lot?.building?.Processors || []).find((e) => e.status > 0)
+      || lot?.building?.DryDock.status > 0
+    ) return 'busy';
+
+    if ((lot?.building?.Inventories || []).find((i) => i.reservedMass > 0)) {
       return 'pending deliveries';
     }
-    else if (lot?.building?.extraction?.status > 0) {
-      return 'busy';
-    }
+    
     return null;
   }, [lot?.building]);
 

@@ -261,6 +261,7 @@ const TickerItem = styled.div`
 
 const greenRGB = hexToRGB(theme.colors.green);
 
+// TODO: ecs refactor
 const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketplace = null, marketplaceOwner = null }) => {
   const [mode, setMode] = useState('buy');
   const [nameFilter, setNameFilter] = useState('');

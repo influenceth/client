@@ -372,7 +372,7 @@ const CrewAssignmentComplete = () => {
             <CardWrapper>
               <CardContainer>
                 <div>
-                  <CrewCard crew={crew} />
+                  <CrewCard crewmate={crew} />
                 </div>
               </CardContainer>
               {slideOutContents && (

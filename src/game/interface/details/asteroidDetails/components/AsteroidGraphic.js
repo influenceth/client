@@ -114,14 +114,14 @@ const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
       </OpacityContainer>
       <GraphicData>
         <div>
-          {Asteroid.getSize(asteroid.radius)} <b>{Asteroid.getSpectralType(asteroid.spectralType)}-type</b>
+          {Asteroid.getSize(asteroid)} <b>{Asteroid.getSpectralType(asteroid)}-type</b>
         </div>
         <AsteroidName>
-          {asteroid.customName ? `\`${asteroid.customName}\`` : asteroid.baseName}
+          {asteroid.Name?.name ? `\`${asteroid.Name.name}\`` : asteroid.baseName}
         </AsteroidName>
         {scanStatus === 'FINISHED' && (
           <LastRow style={{ color: 'white' }}>
-            {defaultLastRow || `${Number(Math.floor(4 * Math.PI * Math.pow(asteroid.radius / 1000, 2))).toLocaleString()} lots`}
+            {defaultLastRow || `${Number(Math.floor(4 * Math.PI * Math.pow(asteroid.Celestial.radius / 1000, 2))).toLocaleString()} lots`}
           </LastRow>
         )}
         {scanStatus === 'SCANNING' && (
@@ -134,18 +134,18 @@ const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
             Resource<br/>Analysis Ready
           </LastRow>
         )}
-        {scanStatus === 'UNSCANNED' && asteroid.owner && (
+        {scanStatus === 'UNSCANNED' && asteroid.Control?.controller && (
           <LastRow style={{ color: theme.colors.error }}>
             Un-Scanned<br/>
             <WarningOutlineIcon />
           </LastRow>
         )}
-        {scanStatus === 'UNSCANNED' && !asteroid.owner && saleIsActive && (
+        {scanStatus === 'UNSCANNED' && !asteroid.Control?.controller && saleIsActive && (
           <LastRow style={{ color: '#55d0fa', fontWeight: 'bold' }}>
             Available<br/>for Purchase
           </LastRow>
         )}
-        {scanStatus === 'UNSCANNED' && !asteroid.owner && !saleIsActive && (
+        {scanStatus === 'UNSCANNED' && !asteroid.Control?.controller && !saleIsActive && (
           <LastRow>
             Unavailable
           </LastRow>

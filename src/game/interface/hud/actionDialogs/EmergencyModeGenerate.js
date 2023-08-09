@@ -6,7 +6,7 @@ import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CloseIcon, CoreSampleIcon, EjectPassengersIcon, EmergencyModeEnterIcon, EmergencyModeExitIcon, EmergencyModeGenerateIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   ResourceAmountSlider,
@@ -92,7 +92,7 @@ const Note = styled.div`
 
 const resourceId = 170;
 
-const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }) => {
+const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   
   const { currentStationing, stationingStatus, stationOnShip } = manager;
@@ -133,8 +133,9 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew
     },
   ]), [ship]);
 
-  const currentPropellantMass = 0;
-  const maxTonnageToGenerate = 0.1 * (Ship.TYPES[ship?.type]?.maxPropellantMass - currentPropellantMass);
+  const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
+  const maxEmergencyPropellant = 0.1 * Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint;
+  const maxTonnageToGenerate = (maxEmergencyPropellant - propellantInventory.mass) / 1e6;
   const generationTime = 1000;
 
   const onStation = useCallback(() => {
@@ -153,15 +154,6 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew
     }
     lastStatus.current = stationingStatus;
   }, [stationingStatus]);
-
-  const actionDetails = useMemo(() => {
-    const icon = ship?.inEmergencyMode ? <EmergencyModeExitIcon /> : <EmergencyModeEnterIcon />;
-    const label = `${ship?.inEmergencyMode ? 'Exit' : 'Enter'} Emergency Mode`;
-    const status = stage === actionStages.NOT_STARTED
-      ? `${ship?.inEmergencyMode ? 'Restore' : 'Prepare'} Ship`
-      : undefined;
-    return { icon, label, status };
-  }, [ship, stage]);
 
   return (
     <>
@@ -192,7 +184,7 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew
               </>
             )}
             disabled={stage !== actionStages.NOT_STARTED}
-            sublabel={`${formatSampleMass(1234)}t`}
+            sublabel={`${formatMass(propellantInventory.mass)}t`}
             bodyStyle={{ backgroundColor: `rgba(${hexToRGB(theme.colors.orange)}, 0.2)` }}
           />
 
@@ -201,9 +193,7 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew
           <ShipInputBlock
             title="Ship"
             disabled={stage !== actionStages.NOT_STARTED}
-            ship={ship}
-            hasMyCrew
-            isMine />
+            ship={ship} />
 
         </FlexSection>
           
@@ -225,9 +215,9 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew
         <FlexSection style={{ marginBottom: -15 }}>
           <EmergencyPropellantSection
             title="Propellant"
-            propellantPregeneration={0}
-            propellantPostgeneration={0 + amount}
-            propellantTankMax={Ship.TYPES[ship?.type || 0].maxPropellantMass}
+            propellantPregeneration={propellantInventory.mass}
+            propellantPostgeneration={propellantInventory.mass + amount}
+            propellantTankMax={maxEmergencyPropellant}
           />
         </FlexSection>
 
@@ -251,21 +241,13 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, targetCrew
 const Wrapper = (props) => {
   const { crew } = useCrewContext();
 
-  const originAsteroid = useStore(s => s.asteroids.origin);
-  const originLot = useStore(s => s.asteroids.lot || {});
-  const zoomScene = useStore(s => s.asteroids.zoomScene);
-
-  const asteroidId = props.guests ? originAsteroid : crew?.station?.asteroidId;
-  const lotId = props.guests ? originLot?.lotId : crew?.station?.lotId;
-  const shipId = props.guests ? (zoomScene?.type === 'SHIP' && zoomScene.shipId) : crew?.station?.shipId;
+  const asteroidId = crew?._location?.asteroidId;
+  const lotId = crew?._location?.lotId;
+  const shipId = crew?._location?.shipId;
 
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
   const { data: lot, isLoading: lotIsLoading } = useLot(asteroidId, lotId);
   const { data: ship, isLoading: shipIsLoading } = useShip(shipId);
-
-  const targetCrewId = props.guests ? ship?.stationedCrews.find((c) => c !== crew?.i) : crew?.i;
-  const { data: targetCrew, isLoading: crewIsLoading } = useCrew(targetCrewId);
-  const { data: targetCrewmates, isLoading: targetCrewmatesLoading } = useCrewmates(targetCrew?.crewmates || []);
 
   // TODO: ...
   // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
@@ -273,9 +255,9 @@ const Wrapper = (props) => {
   const manager = {};
   const actionStage = actionStages.NOT_STARTED;
 
-  const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading || crewIsLoading || targetCrewmatesLoading;
+  const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading;
   useEffect(() => {
-    if (!asteroid || (!lot && !ship)) {// || !targetCrew) { // TODO: restore this
+    if (!asteroid || (!lot && !ship)) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
       }
@@ -285,13 +267,12 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={actionStage}>
       <EmergencyModeGenerate
         asteroid={asteroid}
         lot={lot}
         ship={ship}
-        targetCrew={{ ...targetCrew, crewmates: targetCrewmates }}
         manager={manager}
         stage={actionStage}
         {...props} />

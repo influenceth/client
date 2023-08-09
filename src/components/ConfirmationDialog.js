@@ -5,6 +5,7 @@ import Button from '~/components/ButtonAlt';
 import Dialog from '~/components/Dialog';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
+import { boolAttr } from '~/lib/utils';
 
 const ConfirmationTitle = styled.div`
   align-items: center;
@@ -73,8 +74,8 @@ const ConfirmationDialog = ({ loading, onConfirm, onReject, isTransaction, ...pr
         {loading ? <Loader /> : props.body}
       </ConfirmationBody>
       <ConfirmationButtons>
-        <Button onClick={onReject} disabled={loading}>{props.rejectText || 'Back'}</Button>
-        <Button onClick={onConfirm} disabled={loading} isTransaction={isTransaction}>{props.confirmText || 'Confirm'}</Button>
+        <Button onClick={onReject} disabled={boolAttr(loading)}>{props.rejectText || 'Back'}</Button>
+        <Button onClick={onConfirm} disabled={boolAttr(loading)} isTransaction={isTransaction}>{props.confirmText || 'Confirm'}</Button>
       </ConfirmationButtons>
     </Confirmation>
   </Dialog>

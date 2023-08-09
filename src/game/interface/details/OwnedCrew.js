@@ -5,7 +5,7 @@ import LoadingIcon from 'react-spinners/PuffLoader';
 
 import Button from '~/components/ButtonAlt';
 import CrewCard from '~/components/CrewCard';
-import CrewInfoPane from '~/components/CrewInfoPane';
+import CrewmateInfoPane from '~/components/CrewmateInfoPane';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
 import Details from '~/components/DetailsModal';
 import IconButton from '~/components/IconButton';
@@ -31,6 +31,7 @@ import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme.js';
 import { useHistory } from 'react-router-dom';
+import { boolAttr } from '~/lib/utils';
 
 const Container = styled.div`
   display: flex;
@@ -139,7 +140,7 @@ const ActiveCrew = styled.div`
   }
 `;
 
-const CrewContainer = styled.div`
+const CrewmateContainer = styled.div`
   padding: ${p => p.slot === 0 ? '28px 20px 32px' : '32px 12px'};
   position: relative;
   & > svg {
@@ -303,7 +304,7 @@ const OuterContainer = styled.div`
     transform: translateY(0);
     transition: opacity 250ms ease, transform 250ms ease;
   }
-  & ${CrewContainer} {
+  & ${CrewmateContainer} {
     background: #111;
     transition: background 250ms ease;
   }
@@ -322,7 +323,7 @@ const OuterContainer = styled.div`
       & ${CardContainer} {
         opacity: 1;
       }
-      & ${CrewContainer} {
+      & ${CrewmateContainer} {
         background: #181818;
       }
       & > svg > polygon {
@@ -336,7 +337,7 @@ const OuterContainer = styled.div`
       & ${CardContainer} {
         transform: translateY(-20px);
       }
-      & ${CrewContainer} {
+      & ${CrewmateContainer} {
         background: #181818;
       }
       & ${ButtonHolder} {
@@ -466,7 +467,7 @@ const OwnedCrew = () => {
 
   const { crewRecruitmentStoryId, crewRecruitmentSessionId } = crewAssignmentData || {};
 
-  const activeCrewContainer = useRef();
+  const activeCrewmateContainer = useRef();
 
   const [{ activeCrew, inactiveCrew, pristine }, dispatch] = useReducer(reducer, {
     activeCrew: [],
@@ -483,10 +484,10 @@ const OwnedCrew = () => {
 
   const crew = useMemo(() => {
     if (crewIsLoading) return [];
-    const activeCrew = (selectedCrew?.crewmates || []).map((i, index) => ({ ...crewmateMap[i], activeSlot: index + 1 }));
+    const activeCrew = (selectedCrew?.Crew.roster || []).map((i, index) => ({ ...crewmateMap[i], activeSlot: index + 1 }));
     const activeInAnyCrewIds = (allCrews || []).reduce((acc, c) => [...acc, ...c.crewmates], []);
     const inactiveCrew = Object.values(crewmateMap || {})
-      .filter((crewmate) => crewmate.crewClass && !activeInAnyCrewIds.includes(crewmate.i))
+      .filter((crewmate) => crewmate.Crewmate.class && !activeInAnyCrewIds.includes(crewmate.i))
       .map((c) => ({ ...c, activeSlot: -1 }));
     return [...activeCrew, ...inactiveCrew];
   }, [selectedCrew, allCrews, crewmateMap, crewIsLoading]);
@@ -592,8 +593,8 @@ const OwnedCrew = () => {
   }, [activeCrew, changeActiveCrew, selectedCrew]);
 
   const handleActiveCrewHeight = useCallback(() => {
-    if (activeCrewContainer.current) {
-      setActiveCrewHeight(activeCrewContainer.current.clientHeight || 0);
+    if (activeCrewmateContainer.current) {
+      setActiveCrewHeight(activeCrewmateContainer.current.clientHeight || 0);
     }
   }, []);
 
@@ -699,12 +700,12 @@ const OwnedCrew = () => {
             </h3>
           </Title>
           <ActiveCrew
-            ref={activeCrewContainer}
+            ref={activeCrewmateContainer}
             captainFirst={slotOrder[0] === 0}
             height={activeCrewHeight}>
             <div>
               {slotOrder.map((slot) => {
-                const crew = activeCrew[slot] || {};
+                const crewmate = activeCrew[slot] || {};
                 const isEmpty = !activeCrew[slot];
                 const isNextEmpty = isEmpty && slot === activeCrew.length && !saving;
                 const isAssigned = !isEmpty;
@@ -724,14 +725,14 @@ const OwnedCrew = () => {
                               <CaptainTopFlourish>
                                 <div>Captain</div>
                               </CaptainTopFlourish>
-                              <CrewContainer>
+                              <CrewmateContainer>
                                 <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty && !creatingSession ? handleRecruit : noop}>
                                   {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
                                   {!isEmpty && <CrewCard
-                                    crew={crew}
+                                    crewmate={crewmate}
                                     fontSize="95%"
                                     noWrapName
-                                    onClick={() => history.push(`/crew/${crew.i}`)} />}
+                                    onClick={() => history.push(`/crew/${crewmate.i}`)} />}
                                 </CardContainer>
                                 {!isEmpty && (
                                   <ButtonHolder isCaptain>
@@ -746,21 +747,21 @@ const OwnedCrew = () => {
                                   </ButtonHolder>
                                 )}
                                 <CaptainIcon />
-                              </CrewContainer>
+                              </CrewmateContainer>
                               <TriangleTip extendStroke strokeColor="currentColor" strokeWidth="6" />
                             </>
                           )}
 
                           {slot !== 0 && (
-                            <CrewContainer slot={slot}>
+                            <CrewmateContainer slot={slot}>
                               <TopFlourish />
                               <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty && !creatingSession ? handleRecruit : noop}>
                                 {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
                                 {!isEmpty && <CrewCard
-                                  crew={crew}
+                                  crewmate={crewmate}
                                   fontSize="75%"
                                   noWrapName
-                                  onClick={() => history.push(`/crew/${crew.i}`)} />}
+                                  onClick={() => history.push(`/crew/${crewmate.i}`)} />}
                               </CardContainer>
                               {!isEmpty && (
                                 <ButtonHolder>
@@ -788,13 +789,13 @@ const OwnedCrew = () => {
                                 selected={isAssigned}
                                 size={20}
                               />
-                            </CrewContainer>
+                            </CrewmateContainer>
                           )}
                         </OuterContainer>
 
                         {!isEmpty && width > 1024 &&  (
-                          <CrewInfoPane
-                            crew={!isEmpty && crew}
+                          <CrewmateInfoPane
+                            crewmate={!isEmpty && crewmate}
                             cssWhenVisible="transform: translateY(-20px);"
                             referenceEl={refEl}
                             visible={hovered === slot}
@@ -815,9 +816,9 @@ const OwnedCrew = () => {
             )}
             <Button
               onClick={handleSave}
-              disabled={saving || !isDirty}
+              disabled={boolAttr(saving || !isDirty)}
               isTransaction
-              loading={saving}>
+              loading={boolAttr(saving)}>
               Save Changes
             </Button>
           </ButtonRow>
@@ -834,8 +835,8 @@ const OwnedCrew = () => {
                 </IconHR>
               </Title>
               <InactiveCrew collapsed={inactiveCrewCollapsed}>
-                {inactiveCrew.map((crew, i) => (
-                  <PopperWrapper key={crew.i}>
+                {inactiveCrew.map((crewmate, i) => (
+                  <PopperWrapper key={crewmate.i}>
                     {(refEl, setRefEl) => (
                       <>
                         <InactiveCardContainer
@@ -843,13 +844,13 @@ const OwnedCrew = () => {
                           onMouseEnter={() => setHovered(i + 5)}
                           onMouseLeave={() => setHovered()}>
                           <CrewCard
-                            crew={crew}
+                            crewmate={crewmate}
                             fontSize="65%"
                             hideCollectionInHeader
                             showClassInHeader
                             hideFooter
                             noWrapName
-                            onClick={() => history.push(`/crew/${crew.i}`)} />
+                            onClick={() => history.push(`/crew/${crewmate.i}`)} />
                           <InnerButtonHolder>
                             <IconButton
                               disabled={saving || activeCrew?.length === 5}
@@ -862,8 +863,8 @@ const OwnedCrew = () => {
                           </InnerButtonHolder>
                         </InactiveCardContainer>
 
-                        <CrewInfoPane
-                          crew={crew}
+                        <CrewmateInfoPane
+                          crewmate={crewmate}
                           cssWhenVisible="transform: translateY(-6px);"
                           referenceEl={refEl}
                           visible={hovered === i + 5}

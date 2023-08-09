@@ -178,7 +178,7 @@ const BuildingRow = ({ lot }) => {
       }
       if (lot.building?.capableType === Building.IDS.EXTRACTOR) {
         return [
-          Math.min(1, (chainTime - lot.building?.extraction?.startTime) / (lot.building?.extraction?.completionTime - lot.building?.extraction?.startTime)),
+          Math.min(1, (chainTime - lot.building?.extraction?.startTime) / (lot.building?.extraction?.finishTime - lot.building?.extraction?.startTime)),
           'main'
         ];
       }
@@ -191,7 +191,7 @@ const BuildingRow = ({ lot }) => {
     }
     if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
       return [
-        Math.min(1, (chainTime - lot.building?.construction?.startTime) / (lot.building?.construction?.completionTime - lot.building?.construction?.startTime)),
+        Math.min(1, (chainTime - lot.building?.construction?.startTime) / (lot.building?.construction?.finishTime - lot.building?.construction?.startTime)),
         'main'
       ];
     }

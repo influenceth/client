@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { usePopper } from 'react-popper';
 import styled from 'styled-components';
 import Button from './ButtonAlt';
+import { boolAttr } from '~/lib/utils';
 
 const Wrapper = styled.div`
   position: relative;
@@ -135,7 +136,7 @@ const Dropdown = ({
 
       <span ref={setReferenceEl}>
         <Button
-          disabled={disabled}
+          disabled={boolAttr(disabled)}
           onClick={handleToggle}
           {...styleProps}>
           {selected[iconKey] && <IconWrapper>{selected[iconKey]}</IconWrapper>}

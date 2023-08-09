@@ -12,7 +12,7 @@ import styled, { css } from 'styled-components';
 import Details from '~/components/DetailsFullsize';
 import Postprocessor from '../Postprocessor';
 import useStore from '~/hooks/useStore';
-import { formatFixed } from '~/lib/utils';
+import { boolAttr, formatFixed } from '~/lib/utils';
 
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
@@ -763,9 +763,9 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
       edgeToEdge
       hideClose
       lowerZIndex>
-      <BarLoader color="#AAA" height={3} loading={isLoading} css={loadingCss} />
+      <BarLoader color="#AAA" height={3} loading={boolAttr(isLoading)} css={loadingCss} />
 
-      <CanvasContainer ready={!isLoading}>
+      <CanvasContainer ready={boolAttr(!isLoading)}>
         <Canvas
           frameloop={canvasStack[0] === assetType ? 'always' : 'never'}
           resize={{ debounce: 5, scroll: false }}

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Building } from '@influenceth/sdk';
+import { Building, Location } from '@influenceth/sdk';
 
 import { MyAssetIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
@@ -12,11 +12,11 @@ const useColumns = () => {
 
   return useMemo(() => {
     const columns = [
-      {
+      { // TODO: implement this per agreements/ownership
         key: 'my',
         align: 'center',
         icon: <MyAssetIcon />,
-        selector: row => row.lot?.occupier?.i === crew?.i ? <MyAssetIcon /> : null,
+        selector: row => row.Control?.controller?.id === crew?.i ? <MyAssetIcon /> : null,
         bodyStyle: { fontSize: '24px' },
         requireLogin: true,
         unhideable: true
@@ -25,43 +25,52 @@ const useColumns = () => {
         key: 'name',
         label: 'Building Type',
         sortField: 'type',
-        selector: row => (
-          <>
-            <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} zoomToLot />
-            <span>{Building.TYPES[row.type].name}</span>
-          </>
-        ),
+        selector: row => {
+          const loc = Location.fromEntityFormat(row.Location?.location);
+          return (
+            <>
+              <LocationLink asteroidId={loc.asteroidId} lotId={loc.lotId} zoomToLot />
+              <span>{Building.TYPES[row.Building.buildingType].name}</span>
+            </>
+          );
+        },
         unhideable: true
       },
       {
         key: 'asteroid',
         label: 'Asteroid',
         sortField: 'asteroid.i',
-        selector: row => (
-          <>
-            <LocationLink asteroidId={row.asteroid?.i} />
-            <span>{row.asteroid?.i ? row.asteroid.i.toLocaleString() : null}</span>
-          </>
-        ),
+        selector: row => {
+          const loc = Location.fromEntityFormat(row.Location?.location);
+          return (
+            <>
+              <LocationLink asteroidId={loc.asteroidId} />
+              <span>{loc.asteroidId ? loc.asteroidId.toLocaleString() : null}</span>
+            </>
+          );
+        },
       },
       {
         key: 'lot',
         label: 'Lot',
         sortField: 'lot.i',
-        selector: row => (
-          <>
-            <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} />
-            <span>{row.lot?.i ? row.lot.i.toLocaleString() : null}</span>
-          </>
-        ),
+        selector: row => {
+          const loc = Location.fromEntityFormat(row.Location?.location);
+          return (
+            <>
+              <LocationLink asteroidId={loc.asteroidId} lotId={loc.lotId} />
+              <span>{loc.lotId ? loc.lotId.toLocaleString() : null}</span>
+            </>
+          );
+        },
       },
       {
         key: 'controller',
         label: 'Lot Controller',
         sortField: 'lot.controller.i',
         selector: row => {
-          if (row.lot?.controller?.i) {
-            return row.lot.controller.i === crew?.i ? 'you' : row.lot.controller.i.toLocaleString();
+          if (row.Control?.controller?.id) {
+            return row.Control?.controller?.id === crew?.i ? 'you' : row.Control?.controller?.id.toLocaleString();
           }
           return 'Uncontrolled';
         }
@@ -71,16 +80,20 @@ const useColumns = () => {
         label: 'Lot Occupier',
         sortField: 'lot.occupier.i',
         selector: row => {
-          if (row.lot?.occupier?.i) {
-            return row.lot.occupier.i === crew?.i ? 'you' : row.lot.occupier.i.toLocaleString();
-          }
-          return 'Unoccupied';
+          return 'TODO'; // TODO: ecs refactor
+          // if (row.lot?.occupier?.i) {
+          //   return row.lot.occupier.i === crew?.i ? 'you' : row.lot.occupier.i.toLocaleString();
+          // }
+          // return 'Unoccupied';
         }
       },
       {
         key: 'occupation',
         label: 'Occupation Type',
-        selector: row => row.lot?.occupier?.isSquatter ? 'Squatting' : (row.lot?.controller?.isRenter ? 'Renting' : ''),
+        selector: row => {
+          return 'TODO';  // TODO: ecs refactor
+          return row.lot?.occupier?.isSquatter ? 'Squatting' : (row.lot?.controller?.isRenter ? 'Renting' : '');
+        },
       },
     ];
 

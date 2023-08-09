@@ -18,6 +18,7 @@ import NavIcon from '~/components/NavIcon';
 import SvgFromSrc from '~/components/SvgFromSrc';
 
 import theme from '~/theme.js';
+import { boolAttr } from '~/lib/utils';
 
 const foldOffset = 28;
 const belowFoldMin = 256;
@@ -408,7 +409,7 @@ const CrewAssignment = () => {
               {pathIsReady && (
                 <>
                   <CrewContainer>
-                    {crew && <CrewCard crew={crew} />}
+                    {crew && <CrewCard crewmate={crew} />}
                   </CrewContainer>
                   <Body>
                     <PageContent>{storyState.content}</PageContent>
@@ -479,7 +480,7 @@ const CrewAssignment = () => {
               <PromptDetails>{selection.text}</PromptDetails>
             </>
           )}
-          loading={!!loadingPath}
+          loading={boolAttr(loadingPath)}
           onConfirm={confirmPath}
           onReject={selectPath()}
         />

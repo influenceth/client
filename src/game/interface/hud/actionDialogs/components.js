@@ -46,13 +46,14 @@ import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import useChainTime from '~/hooks/useChainTime';
 import useCrewmate from '~/hooks/useCrewmate';
 import api from '~/lib/api';
-import { formatFixed, formatTimer } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
 import constants from '~/lib/constants';
 import { getBuildingIcon, getShipIcon } from '~/lib/assetUtils';
 import theme, { hexToRGB } from '~/theme';
 import { theming } from '../ActionDialog';
 import formatters from '~/lib/formatters';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const SECTION_WIDTH = 780;
 
@@ -1215,7 +1216,7 @@ const ShipStatus = styled.span`
   margin-top: 4px;
   text-transform: uppercase;
   &:after {
-    content: "${p => formatShipStatus(p.status)}";
+    content: "${p => formatShipStatus(p.ship)}";
     color: ${p => p.theme.colors.main};
     text-transform: uppercase;
     ${p => {
@@ -1369,15 +1370,15 @@ export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected,
       open={open}
       title="Select Site Type">
       <SelectionGrid>
-        {Object.keys(Building.TYPES).filter((c) => c > 0).map((capableType) => (
+        {Object.keys(Building.TYPES).filter((c) => c > 0).map((buildingType) => (
           <FlexSectionInputBlock
-            key={capableType}
+            key={buildingType}
             fullWidth
-            image={<BuildingImage building={Building.TYPES[capableType]} unfinished />}
-            isSelected={capableType === selection}
-            label={Building.TYPES[capableType].name}
+            image={<BuildingImage buildingType={buildingType} unfinished />}
+            isSelected={buildingType === selection}
+            label={Building.TYPES[buildingType].name}
             sublabel="Site"
-            onClick={() => setSelection(capableType)}
+            onClick={() => setSelection(buildingType)}
             style={{ width: '100%' }}
           />
         ))}
@@ -1503,10 +1504,10 @@ export const DestinationSelectionDialog = ({
   const inventories = useMemo(() => {
     return (crewLots || [])
       .filter((lot) => (includeDeconstruction && lot.i === originLotId) || (
-        lot.building && lot.i !== originLotId && Object.values(lot.building.inventories || {}).find((i) => !i.locked)
+        lot.building && lot.i !== originLotId && (lot.building.Inventories || []).find((i) => !i.locked)
       ))
       .reduce((acc, lot) => {
-        Object.values(lot.building.inventories || []).forEach((inventory, slot) => {
+        (lot.building.Inventories || []).forEach((inventory, slot) => {
           let usedMass = 0, usedVolume = 0, type;
 
           // deconstructing in place (use currently-locked inventory)
@@ -1640,13 +1641,14 @@ export const TransferSelectionDialog = ({ requirements, inventory, lot, initialS
     }, { tally: 0, totalMass: 0, totalVolume: 0 });
   }, [items]);
 
+  // TODO: should title be inventory type name instead?
   return (
     <SelectionDialog
       isCompletable
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title={<>{lot?.building?.__t} Inventory <b>{'> '}Lot {(lot?.i || 0).toLocaleString()}</b></>}>
+      title={<>{Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name} Inventory <b>{'> '}Lot {(lot?.i || 0).toLocaleString()}</b></>}>
       <DialogIngredientsList>
         {cells.map((i) => (
           items[i]
@@ -1706,8 +1708,8 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
     if (e.key === 'Enter') {
       const lot = parseInt(e.target.value);
       if (lot && lotData[lot] !== undefined) {
-        const capableType = lotData[lot] >> 4;
-        if (capableType === 0 || capableType === 7) {
+        const buildingType = lotData[lot] >> 4;
+        if (buildingType === 0 || buildingType === 7) {
           onSelected(lot);
           onClose();
           return;
@@ -1730,7 +1732,7 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
       {/* TODO: isLoading */}
       {/* TODO: replace with DataTable? */}
       <div style={{ minWidth: 500 }}></div>
-      {!ship?.spaceportRequired && (
+      {ship?.landing && (
         <TextInputWithNote>
           <TextInput
             onKeyDown={handleKeyDown}
@@ -1778,9 +1780,13 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
   );
 };
 
-export const ProcessSelectionDialog = ({ initialSelection, processes, onClose, onSelected, open }) => {
+export const ProcessSelectionDialog = ({ initialSelection, processorType, onClose, onSelected, open }) => {
   const [error, setError] = useState();
   const [selection, setSelection] = useState(initialSelection);
+
+  const processes = useMemo(() => {
+    return Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
+  }, [processorType])
 
   const onComplete = useCallback(() => {
     onSelected(selection);
@@ -1816,20 +1822,18 @@ export const ProcessSelectionDialog = ({ initialSelection, processes, onClose, o
                   <td><div style={{ display: 'flex', alignItems: 'center' }}><ProcessIcon style={{ marginRight: 6 }} /> {name}</div></td>
                   <td>
                     <InputOutputTableCell>
-                      <label>{inputs.length}</label>
-                      {inputs.map(({ resourceId }) => (
+                      <label>{Object.keys(inputs).length}</label>
+                      {Object.keys(inputs).map((resourceId) => (
                         <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
                       ))}
                     </InputOutputTableCell>
                   </td>
                   <td>
                     <InputOutputTableCell>
-                      <label>{outputs.length}</label>
-                      {outputs.map(({ resourceId, shipAssetId }) => 
-                        shipAssetId
-                          ? <ShipImage key={shipAssetId} ship={Ship.TYPES[shipAssetId]} style={{ height: '45px', width: '74px' }} tooltipContainer="selectionDialog" />
-                          : <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
-                      )}
+                      <label>{Object.keys(outputs).length}</label>
+                      {Object.keys(outputs).map((resourceId) => (
+                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                      ))}
                     </InputOutputTableCell>
                   </td>
                 </SelectionTableRow>
@@ -1842,18 +1846,77 @@ export const ProcessSelectionDialog = ({ initialSelection, processes, onClose, o
   );
 }
 
+export const ShipConstructionSelectionDialog = ({ initialSelection, onClose, onSelected, open }) => {
+  const [error, setError] = useState();
+  const [selection, setSelection] = useState(initialSelection);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={`Select Process`}
+      style={{ maxWidth: '90vw' }}>
+      {/* TODO: isLoading */}
+      {/* TODO: replace with DataTable? */}
+      <SelectionTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>Process Name</td>
+              <td style={{ textAlign: 'left'}}>Inputs</td>
+              <td style={{ textAlign: 'left'}}>Outputs</td>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(Ship.CONSTRUCTION_TYPES).map((shipType) => {
+              return (
+                <SelectionTableRow
+                  key={shipType}
+                  onClick={() => setSelection(shipType)}
+                  selectedRow={shipType === selection}>
+                  <td><div style={{ display: 'flex', alignItems: 'center' }}><ProcessIcon style={{ marginRight: 6 }} /> {Ship.TYPES[shipType]?.name} Integration</div></td>
+                  <td>
+                    <InputOutputTableCell>
+                      <label>{Object.keys(requirements).length}</label>
+                      {Object.keys(requirements).map((resourceId) => (
+                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                      ))}
+                    </InputOutputTableCell>
+                  </td>
+                  <td>
+                    <InputOutputTableCell>
+                      <ShipImage shipType={shipType} style={{ height: '45px', width: '74px' }} tooltipContainer="selectionDialog" />
+                    </InputOutputTableCell>
+                  </td>
+                </SelectionTableRow>
+              );
+            })}
+          </tbody>
+        </table>
+      </SelectionTableWrapper>
+    </SelectionDialog>
+  );
+};
+
 
 //
 //  FORMATTERS
 //
 
-export const getCapacityUsage = (building, inventories, type) => {
+export const getCapacityUsage = (inventories, type) => {
   const capacity = {
     mass: { max: 0, used: 0, reserved: 0 },
     volume: { max: 0, used: 0, reserved: 0 },
   }
-  if (building && type !== undefined) {
-    const inventory = Object.values(inventories).find((i) => !i.locked);
+  if (type !== undefined) {
+    const inventory = (inventories || []).find((i) => !i.locked);
 
     const { filledMass, filledVolume } = Inventory.getFilledCapacity(inventory.inventoryType);
     capacity.mass.max = filledMass;
@@ -1868,17 +1931,17 @@ export const getCapacityUsage = (building, inventories, type) => {
   return capacity;
 }
 
-export const getBuildingRequirements = (building) => {
-  const { capableType, inventories = [], deliveries = [] } = building || {};
-  const inventory = Object.values(inventories).find((i) => !i.locked);
+export const getBuildingRequirements = (building = {}, deliveries = []) => {
+  const { Building: { buildingType }, Inventories = [] } = building;
+  const inventory = Inventories.find((i) => !i.locked);
 
   // TODO: presumably ingredients will come from sdk per building
-  return Object.keys(Building.CONSTRUCTION_TYPES[capableType]?.requirements || {}).map((productId) => {
-    const totalRequired = Building.CONSTRUCTION_TYPES[capableType].requirements[productId];
-    const inInventory = (inventory?.resources || [])[productId] || 0;
+  return Object.keys(Building.CONSTRUCTION_TYPES[buildingType]?.requirements || {}).map((productId) => {
+    const totalRequired = Building.CONSTRUCTION_TYPES[buildingType].requirements[productId];
+    const inInventory = (inventory?.contents || []).find((c) => c.product === productId)?.amount;
     const inTransit = deliveries
-      .filter((d) => d.status === 'IN_PROGRESS')
-      .reduce((acc, cur) => acc + cur.resources[productId] || 0, 0);
+      .filter((d) => d.Delivery.status === Delivery.STATUSES.IN_PROGRESS)
+      .reduce((acc, d) => acc + d.contents.find((c) => c.product === productId)?.amount || 0, 0);
     return {
       i: productId,
       totalRequired,
@@ -1903,13 +1966,14 @@ export const AsteroidImage = ({ asteroid, size }) => {
   )
 }
 
-export const ShipImage = ({ ship, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, simulated, square, style = {} }) => {
-  if (!ship) return null;
-  // TODO: getCapacityUsage is intended for buildings
-  const capacity = getCapacityUsage(ship, inventories, showInventoryStatusForType);
+export const ShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, simulated, square, style = {} }) => {
+  const shipAsset = Ship.TYPES[shipType];
+  if (!shipAsset) return null;
+
+  const capacity = getCapacityUsage(inventories, showInventoryStatusForType);
   return (
     <ShipThumbnailWrapper style={style}>
-      <ResourceImage src={getShipIcon(ship.i, 'w150', simulated)} />
+      <ResourceImage src={getShipIcon(shipAsset.i, 'w150', simulated)} />
       {showInventoryStatusForType !== undefined && (
         <>
           <InventoryUtilization
@@ -1929,13 +1993,15 @@ export const ShipImage = ({ ship, iconBadge, iconBadgeColor, iconOverlay, iconOv
   );
 };
 
-export const BuildingImage = ({ building, error, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, unfinished }) => {
-  if (!building) return null;
-  const capacity = getCapacityUsage(building, inventories, showInventoryStatusForType);
+export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, unfinished }) => {
+  const buildingAsset = Building.TYPES[buildingType];
+  if (!buildingAsset) return null;
+
+  const capacity = getCapacityUsage(inventories, showInventoryStatusForType);
   const closerLimit = (capacity.volume.used + capacity.volume.reserved) / capacity.volume.max > (capacity.mass.used + capacity.mass.reserved) / capacity.mass.max ? 'volume' : 'mass';
   return (
     <BuildingThumbnailWrapper>
-      <ResourceImage src={getBuildingIcon(building.i, 'w150', unfinished)} />
+      <ResourceImage src={getBuildingIcon(buildingAsset.i, 'w150', unfinished)} />
       {showInventoryStatusForType !== undefined && (
         <>
           <InventoryLabel overloaded={error}>
@@ -2177,7 +2243,7 @@ export const ResourceGridSectionInner = ({
       columns={columns}
       hasSummary
       theming={theming}
-      isSelected={onClick || undefined}
+      isSelected={boolAttr(onClick)}
       onClick={onClick}>
       {items.length > 0
         ? (
@@ -2344,7 +2410,7 @@ export const TransferDistanceDetails = ({ distance }) => (
 );
 
 export const ProgressBarSection = ({
-  completionTime,
+  finishTime,
   isCountDown,
   overrides = {
     barColor: null,
@@ -2374,9 +2440,9 @@ export const ProgressBarSection = ({
     }
     if (stage === actionStage.NOT_STARTED) {
       if (isCountDown) {
-        const isZero = chainTime > completionTime;
-        const progress = startTime && completionTime && chainTime
-          ? Math.max(0, 1 - (chainTime - startTime) / (completionTime - startTime))
+        const isZero = chainTime > finishTime;
+        const progress = startTime && finishTime && chainTime
+          ? Math.max(0, 1 - (chainTime - startTime) / (finishTime - startTime))
           : 1;
         r.animating = !isZero;
         r.reverseAnimation = true;
@@ -2384,35 +2450,40 @@ export const ProgressBarSection = ({
         r.left = `${formatFixed(100 * progress, 1)}%`;
         r.right = isZero
           ? <span style={{ color: theme.colors.error }}>ABANDONED</span>
-          : <><LiveTimer target={completionTime} maxPrecision={2} /> left</>;
+          : <><LiveTimer target={finishTime} maxPrecision={2} /> left</>;
       }
       r.color = '#AAA';
       r.left = '0.0%';
+
     } else if (stage === actionStage.STARTING) {
       r.animating = true;
       r.color = '#AAA';
       r.left = '0.0%';
+
     } else if (stage === actionStage.IN_PROGRESS) {
-      const progress = startTime && completionTime && chainTime
-        ? Math.min(1, (chainTime - startTime) / (completionTime - startTime))
+      const progress = startTime && finishTime && chainTime
+        ? Math.min(1, (chainTime - startTime) / (finishTime - startTime))
         : 0;
       r.animating = true;
       r.barWidth = progress;
       r.color = '#FFF';
       r.left = `${formatFixed(100 * progress, 1)}%`;
-      r.right = <LiveTimer target={completionTime} />
+      r.right = <LiveTimer target={finishTime} />
+
     } else if (stage === actionStage.READY_TO_COMPLETE) {
       r.barWidth = 1;
       r.color = '#FFF';
       r.left = '100%';
+
     } else if (stage === actionStage.COMPLETING) {
       r.animating = true;
+
     } else if (stage === actionStage.COMPLETED) {
       r.barWidth = 1;
       r.color = '#FFF';
     }
     return r;
-  }, [chainTime, completionTime, stage, startTime]);
+  }, [chainTime, finishTime, stage, startTime]);
 
   const totalTimeNote = useMemo(() => {
     if (!totalTime) return '';
@@ -2831,19 +2902,19 @@ export const CrewInputBlock = ({ crew, title }) => (
       <div>
         <CrewIcon />
         <span style={{ fontSize: '85%', marginLeft: 4 }}>
-          {crew?.name || `Crew #${crew?.i}`}
+          {formatters.crewName(crew)}
         </span>
       </div>
     )}
     bodyStyle={{ paddingRight: 8 }}>
     <CrewCards>
       {Array.from({ length: 5 }).map((_, i) => 
-        crew.roster[i]
+        crew.Crew.roster[i]
           ? (
             <CrewCardFramed
               key={i}
               borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
-              crewmate={crew.roster[i]}
+              crewmate={crew.Crew.roster[i]}
               isCaptain={i === 0}
               lessPadding
               noArrow={i > 0}
@@ -2865,41 +2936,60 @@ export const CrewOwnerBlock = ({ title, ...innerProps }) => {
   );
 };
 
-export const ShipInputBlock = ({ ship, hasMyCrew, isMine, ...props }) => {
+export const ShipInputBlock = ({ ship, ...props }) => {
+  const { crew } = useCrewContext();
+  const hasMyCrew = crew && crew._location?.shipId === ship?.i;
+  const isMine = crew && crew.i === ship?.Control?.controller?.i;
+  const inEmergencyMode = ship?.Ship?.operationMode === Ship.MODES.EMERGENCY;
   return (
     <FlexSectionInputBlock
       image={(
         <ShipImage
           iconBadge={isMine ? <MyAssetIcon /> : null}
-          iconOverlay={ship.inEmergencyMode ? <EmergencyModeEnterIcon /> : null}
+          iconOverlay={inEmergencyMode ? <EmergencyModeEnterIcon /> : null}
           iconOverlayColor={theme.colors.orange}
-          ship={ship} />
+          shipType={ship?.shipType} />
       )}
-      label={ship.name}
+      label={formatters.shipName(ship)}
       sublabel={(
         <>
-          <div>{ship.className}</div>
-          <ShipStatus status={ship.status}>
-            {hasMyCrew && <CaptainIcon />}
-          </ShipStatus>
+          <div>{Ship.TYPES[ship?.shipType]?.name}</div>
+          <ShipStatus ship={ship}>{hasMyCrew && <CaptainIcon />}</ShipStatus>
         </>
       )}
-      bodyStyle={ship.inEmergencyMode ? { backgroundColor: `rgba(${hexToRGB(theme.colors.orange)}, 0.2)` } : {}}
+      bodyStyle={inEmergencyMode ? { backgroundColor: `rgba(${hexToRGB(theme.colors.orange)}, 0.2)` } : {}}
       {...props}
     />
   );
 };
 
 export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings = [] }) => {
+  const shipConfig = Ship.TYPES[ship?.shipType] || {};
+  
+  // TODO: if want to include "reserved", it would probably make sense to use getCapacityUsage helper instead
+  const inventory = useMemo(() => {
+    if (!ship) return {};
+    const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
+    const cargoInventory = ship.Inventories.find((i) => i.slot === shipConfig.cargoSlot);
+    return {
+      propellantMass: propellantInventory?.mass || 0,
+      maxPropellantMass: Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint || 0,
+      propellantVolume: propellantInventory?.volume || 0,
+      maxPropellantVolume: Inventory.TYPES[propellantInventory?.inventoryType]?.volumeConstraint || 0,
+      cargoMass: cargoInventory?.mass || 0,
+      maxCargoMass: Inventory.TYPES[cargoInventory?.inventoryType]?.massConstraint || 0,
+      cargoVolume: cargoInventory?.volume || 0,
+      maxCargoVolume: Inventory.TYPES[cargoInventory?.inventoryType]?.volumeConstraint || 0,
+    };
+  }, [shipConfig, ship?.Inventories]);
+
   return (
     <>
       <FlexSection>
         <ShipInputBlock
           title="Ship"
           disabled={stage !== actionStage.NOT_STARTED}
-          ship={ship}
-          hasMyCrew
-          isMine />
+          ship={ship} />
 
         <FlexSectionSpacer />
 
@@ -2914,12 +3004,12 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings =
             <MiniBarChart
               color="#8cc63f"
               label="Propellant Mass"
-              valueLabel={`${formatFixed(0.5 * ship.maxPropellantMass / 1e3)} / ${formatFixed(ship.maxPropellantMass / 1e3)}t`}
+              valueLabel={`${formatFixed(inventory.propellantMass / 1e3)} / ${formatFixed(inventory.maxPropellantMass / 1e3)}t`}
               value={0.5}
               {...(/* TODO: would probably be more performant to do this in a memo hook */
                 previousStats.propellantMass
                   ? {
-                    deltaValue: previousStats.propellantMass / ship.maxPropellantMass
+                    deltaValue: previousStats.propellantMass / inventory.maxPropellantMass
                   }
                   : {}
               )}
@@ -2927,25 +3017,25 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings =
             <MiniBarChart
               color="#557826"
               label="Propellant Volume"
-              valueLabel={`${formatFixed(0.5 * ship.maxPropellantMass / 1e3)} / ${formatFixed(ship.maxPropellantMass / 1e3)}m³`}
+              valueLabel={`${formatFixed(inventory.propellantVolume / 1e3)} / ${formatFixed(inventory.maxPropellantVolume / 1e3)}m³`}
               value={0.7}
             />
             <MiniBarChart
               label="Cargo Mass"
-              valueLabel={`${formatFixed(0.5 * ship.maxCargoMass / 1e3)} / ${formatFixed(ship.maxCargoMass / 1e3)}t`}
+              valueLabel={`${formatFixed(inventory.cargoMass / 1e3)} / ${formatFixed(inventory.maxCargoMass / 1e3)}t`}
               value={0.8}
             />
             <MiniBarChart
               color="#1f5f75"
               label="Cargo Volume"
-              valueLabel={`${formatFixed(0.5 * ship.maxCargoMass / 1e3)} / ${formatFixed(ship.maxCargoMass / 1e3)}m³`}
+              valueLabel={`${formatFixed(inventory.cargoVolume / 1e3)} / ${formatFixed(inventory.maxCargoVolume / 1e3)}m³`}
               value={0.3}
             />
             <MiniBarChart
               color="#92278f"
               label="Passengers"
-              valueLabel={`${pilotCrew.roster.length} / 5`}
-              value={pilotCrew.roster.length / 5}
+              valueLabel={`${pilotCrew.Crew.roster.length} / 5`}
+              value={pilotCrew.Crew.roster.length / 5}
             />
           </MiniBarChartSection>
         </div>
@@ -2970,7 +3060,7 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings =
 export const InventoryChangeCharts = ({ building, inventoryType, deltaMass, deltaVolume }) => {
   if (!(building && building.inventories && inventoryType !== undefined)) return null;
   
-  const capacity = getCapacityUsage(Building.TYPES[building?.capableType], building?.inventories, inventoryType);
+  const capacity = getCapacityUsage(building?.inventories, inventoryType);
   const postDeltaMass = capacity.mass.used + capacity.mass.reserved + deltaMass;
   const postDeltaVolume = capacity.volume.used + capacity.volume.reserved + deltaVolume;
   const overMassCapacity = postDeltaMass > capacity.mass.max;
@@ -3025,7 +3115,7 @@ const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip
     <StatRow
       key={label}
       direction={direction}
-      isTimeStat={isTimeStat || undefined}
+      isTimeStat={boolAttr(isTimeStat)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       ref={refEl}>
@@ -3106,12 +3196,12 @@ export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, go
           ? (
             <>
               <Button
-                loading={buttonsLoading}
+                loading={boolAttr(buttonsLoading)}
                 onClick={onClose}>Cancel</Button>
               <Button
                 isTransaction
-                disabled={disabled}
-                loading={buttonsLoading}
+                disabled={boolAttr(disabled)}
+                loading={boolAttr(buttonsLoading)}
                 onClick={onGo}>{goLabel}</Button>
             </>
           )
@@ -3120,18 +3210,18 @@ export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, go
               ? (
                 <>
                   <Button
-                    loading={buttonsLoading}
+                    loading={boolAttr(buttonsLoading)}
                     onClick={onClose}>Close</Button>
                   <Button
                     isTransaction
-                    disabled={disabled}
-                    loading={buttonsLoading}
+                    disabled={boolAttr(disabled)}
+                    loading={boolAttr(buttonsLoading)}
                     onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
                 </>
               )
               : (
                 <Button
-                  loading={buttonsLoading}
+                  loading={boolAttr(buttonsLoading)}
                   onClick={onClose}>Close</Button>
               )
           )}
@@ -3144,7 +3234,7 @@ export const ActionDialogTabs = ({ tabs, selected, onSelect }) => (
   <Section>
     <Tabs>
       {tabs.map((tab, i) => (
-        <Tab key={i} onClick={() => onSelect(i)} isSelected={i === selected}>
+        <Tab key={i} onClick={() => onSelect(i)} isSelected={boolAttr(i === selected)}>
           {tab.icon && <TabIcon style={tab.iconStyle || {}}>{tab.icon}</TabIcon>}
           <div>{tab.label}</div>
         </Tab>
@@ -3523,19 +3613,28 @@ export const formatVelocity = (metersPerSecond, { abbrev = true, minPrecision = 
 };
 
 export const formatShipStatus = (ship) => {
-  switch (ship?.status || ship) {
-    case 'IN_FLIGHT':
-      return 'In Flight';
-    case 'LAUNCHING':
-      return 'Launching';
-    case 'LANDING':
-      return 'Landing';
-    case 'IN_ORBIT':
-      return 'In Orbit';
-    case 'IN_PORT':
-      return 'In Port';
-    case 'ON_SURFACE':
-      return 'On Surface';
+  if (ship?.Ship?.status === Ship.STATUSES.IN_FLIGHT) {
+    return 'In Flight'; // TODO: do we need to distinguish Launching, Landing
   }
+  
+  const loc = Location.fromEntityFormat(ship?.Location.location);
+  if (loc.buildingId) {
+    return 'In Port';
+  } else if (loc.lotId) {
+    return 'On Surface';
+  } else if (loc.asteroidId) {
+    return 'In Orbit';
+  }
+
+  console.warn('Unknown ship status', ship)
   return '';
 }
+
+export const getBuildingInputDefaults = (lot, fallbackSublabel = 'Lot', fallbackLabel = 'Select') => {
+  const buildingType = lot?.building?.Building?.buildingType || 0;
+  return {
+    image: <BuildingImage buildingType={buildingType} />,
+    label: lot ? `${lot.building?.Name?.name || Building.TYPES[buildingType].name}` : fallbackLabel,
+    sublabel: lot ? lot.building?.Name?.name ? Building.TYPES[buildingType].name : `Lot #${lot.i.toLocaleString()}` : fallbackSublabel,
+  };
+};

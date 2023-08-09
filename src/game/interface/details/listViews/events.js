@@ -61,6 +61,9 @@ const useColumns = () => {
         align: 'right',
         selector: row => {
           if (!row.e.linked) return null;
+          return null;
+
+          // TODO: ecs refactor
           const asteroid = row.e.linked.find((l) => l.type === 'Asteroid')?.asset;
           const lot = row.e.linked.find((l) => l.type === 'Lot')?.asset;
           const building = (lot && lot.building?.type) || 'Empty Lot';

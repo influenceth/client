@@ -305,7 +305,7 @@ const Account = () => {
                   <CaptainName>{captain.name}</CaptainName>
                 </CaptainDetails>
                 <CaptainCardContainer>
-                  <CrewCard crew={captain} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
+                  <CrewCard crewmate={captain} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
                   <StyledTriangleTip extendStroke strokeColor="currentColor" strokeWidth="1.5" />
                   <StyledCaptainIcon />
                 </CaptainCardContainer>
@@ -315,7 +315,7 @@ const Account = () => {
                 if (crewmate) {
                   return (
                     <CrewCardContainer key={crewmate.i}>
-                      <CrewCard crew={crewmate} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
+                      <CrewCard crewmate={crewmate} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
                     </CrewCardContainer>
                   );
                 }

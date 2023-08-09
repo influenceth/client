@@ -9,29 +9,30 @@ import OnClickLink from '~/components/OnClickLink';
 import Pagination from '~/components/Pagination';
 import theme from '~/theme';
 import MarketplaceLink from '~/components/MarketplaceLink';
+import formatters from '~/lib/formatters';
 
 const columns = [
   {
     align: 'left',
     name: 'Name',
-    selector: row => row.name,
+    selector: row => row.Name?.name,
     sortable: false,
-    format: row => <Link to={`/asteroids/${row.i}`}>{row.name}</Link>
+    format: row => <Link to={`/asteroids/${row.i}`}>{formatters.asteroidName(row)}</Link>
   },
   {
     name: 'Owner',
-    selector: row => row.owner,
+    selector: row => row.Nft?.owner,
     sortable: true,
-    sortKey: 'owner',
+    sortKey: 'Nft.owner',
     format: row => {
-      if (row.owner) {
+      if (row.Nft?.owner) {
         return (
           <MarketplaceLink
-            chain={row.chain}
+            chain={row.Bridge?.destination}
             assetType="account"
-            id={row.owner}>
+            id={row.Nft?.owner}>
             {(onClick, setRefEl) => (
-              <OnClickLink ref={setRefEl} onClick={onClick}>{row.owner}</OnClickLink>
+              <OnClickLink ref={setRefEl} onClick={onClick}>{row.Nft?.owner}</OnClickLink>
             )}
           </MarketplaceLink>
         );
@@ -42,40 +43,40 @@ const columns = [
   },
   {
     name: 'Radius',
-    selector: row => row.radius,
+    selector: row => row.Celestial.radius,
     sortable: true,
     sortKey: 'radius',
-    format: row => `${row.radius?.toLocaleString()} km`
+    format: row => `${row.Celestial.radius.toLocaleString()} km`
   },
   {
     name: 'Spectral Type',
-    selector: row => row.spectralType,
-    format: row => `${Asteroid.getSpectralType(row.spectralType)}-type`
+    selector: row => row.Celestial.spectralType,
+    format: row => `${Asteroid.getSpectralType(row)}-type`
   },
   {
     name: 'Rarity',
-    selector: row => row.bonuses,
-    format: row => Asteroid.getRarity(row.bonuses)
+    selector: row => row.Celestial.bonuses,
+    format: row => Asteroid.getRarity(row)
   },
   {
     name: 'Semi-major Axis',
-    selector: row => row.orbital.a,
+    selector: row => row.Orbit.a,
     sortable: true,
     sortKey: 'axis',
-    format: row => `${row.orbital?.a} AU`
+    format: row => `${row.Orbit.a} AU`
   },
   {
     name: 'Eccentricity',
-    selector: row => row.orbital.e,
+    selector: row => row.Orbit.ecc,
     sortable: true,
     sortKey: 'eccentricity'
   },
   {
     name: 'Inclination',
-    selector: row => row.orbital.i,
+    selector: row => row.Orbit.inc,
     sortable: true,
     sortKey: 'inclination',
-    format: row => `${(row.orbital.i * 180 / Math.PI).toLocaleString()}°`
+    format: row => `${(row.Orbit.inc * 180 / Math.PI).toLocaleString()}°`
   }
 ];
 

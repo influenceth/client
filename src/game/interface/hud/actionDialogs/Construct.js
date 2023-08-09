@@ -10,7 +10,7 @@ import {
 import useCrewContext from '~/hooks/useCrewContext';
 import theme, { hexToRGB } from '~/theme';
 import useConstructionManager from '~/hooks/useConstructionManager';
-import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   BuildingRequirementsSection, ActionDialogFooter,
@@ -22,7 +22,7 @@ import {
   FlexSectionInputBlock,
   BuildingImage,
   FlexSectionSpacer,
-  ProgressBarSection, getBuildingRequirements
+  ProgressBarSection, getBuildingRequirements, getBuildingInputDefaults
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -66,8 +66,8 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const tripDetails = null;
 
   const constructionTime = useMemo(() =>
-    lot?.building?.capableType ? Building.getConstructionTime(lot?.building?.capableType, constructionBonus.totalBonus) : 0,
-    [lot?.building?.capableType, constructionBonus.totalBonus]
+    lot?.building?.Building?.buildingType ? Building.getConstructionTime(lot?.building?.Building?.buildingType, constructionBonus.totalBonus) : 0,
+    [lot?.building?.Building?.buildingType, constructionBonus.totalBonus]
   );
 
   const stats = useMemo(() => ([
@@ -129,7 +129,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   }, []);
 
   const [buildingRequirements, requirementsMet, waitingOnTransfer] = useMemo(() => {
-    const reqs = getBuildingRequirements(lot?.building);
+    const reqs = getBuildingRequirements(lot?.building, lot?.deliveries);
     const met = !reqs.find((req) => req.inNeed > 0);
     const wait = reqs.find((req) => req.inTransit > 0);
     return [reqs, met, wait];
@@ -153,15 +153,14 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
         <FlexSection>
           <FlexSectionInputBlock
             title="Building"
+            {...getBuildingInputDefaults(lot, 'Building')}
             image={(
               <BuildingImage
-                building={Building.TYPES[lot?.building?.capableType]}
+                buildingType={lot?.building?.Building?.buildingType}
                 iconOverlay={requirementsMet ? null : <WarningOutlineIcon />}
                 iconOverlayColor={theme.colors.lightOrange} />
             )}
-            label={Building.TYPES[lot?.building?.capableType].name}
             bodyStyle={requirementsMet ? {} : { background: `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.15)` }}
-            sublabel="Building"
             tooltip={!requirementsMet && (
               <>
                 This site is missing construction materials. Use <b>Transfer Materials to Site</b> to transfer
@@ -200,8 +199,8 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
 
         {stage === actionStage.NOT_STARTED && (
           <ProgressBarSection
-            completionTime={lot?.gracePeriodEnd}
-            startTime={lot?.gracePeriodEnd - Building.GRACE_PERIOD}
+            finishTime={lot?.building?.plannedAt + Building.GRACE_PERIOD}
+            startTime={lot?.building?.plannedAt}
             isCountDown
             overrides={{
               barColor: theme.colors.lightOrange,
@@ -224,8 +223,8 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
         )}
         {stage !== actionStage.NOT_STARTED && (
           <ProgressBarSection
-            completionTime={lot?.building?.construction?.completionTime}
-            startTime={lot?.building?.construction?.startTime}
+            finishTime={currentConstruction?.finishTime}
+            startTime={currentConstruction?.startTime}
             stage={stage}
             title="Progress"
             totalTime={crewTravelTime + constructionTime}
@@ -267,7 +266,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={constructionBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={stageByActivity.construct}>
       <Construct
         asteroid={asteroid}

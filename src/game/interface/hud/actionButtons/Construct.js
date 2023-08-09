@@ -26,7 +26,7 @@ const Construct = ({ asteroid, lot, onSetAction, _disabled }) => {
         disabled: _disabled || undefined,
         attention: attention || undefined,
         loading: loading || undefined,
-        completionTime: lot?.building?.construction?.completionTime
+        finishTime: lot?.building?.Building?.finishTime
       }}
       icon={<ConstructIcon />}
       onClick={handleClick} />

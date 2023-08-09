@@ -18,6 +18,7 @@ import theme, { hexToRGB } from '~/theme';
 import LiveTimer from '~/components/LiveTimer';
 import AsteroidBonuses from './AsteroidBonuses';
 import { getProductIcon } from '~/lib/assetUtils';
+import { boolAttr } from '~/lib/utils';
 
 // TODO (enhancement): if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
@@ -402,7 +403,7 @@ const StartScanButton = ({ i }) => {
   return (
     <Button
       disabled={!extendedAsteroid}
-      loading={isLoading}
+      loading={boolAttr(isLoading)}
       onClick={startAsteroidScan}
       isTransaction>
       Start Scan
@@ -467,7 +468,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     }
   }, [abundances?.length, initialCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const nonzeroBonuses = useMemo(() => (asteroid?.bonuses || []).filter((b) => b.level > 0), [asteroid?.bonuses]);
+  const nonzeroBonuses = useMemo(() => (asteroid?.Celestial?.bonuses || []).filter((b) => b.level > 0), [asteroid?.Celestial?.bonuses]);
 
   useEffect(() => ReactTooltip.rebuild(), [selected]);
 
@@ -475,7 +476,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     <Wrapper>
       <LeftPane>
         <SpectralLegend>
-          {Asteroid.getSpectralType(asteroid.spectralType).toLowerCase().split('').map((l) => (
+          {Asteroid.getSpectralType(asteroid.Celestial.spectralType).toLowerCase().split('').map((l) => (
             <div key={l}>
               <span>{l}</span>
               <span>{spectralLabels[l]}</span>
@@ -487,15 +488,15 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             <AsteroidGraphic
               abundances={abundances}
               asteroid={asteroid}
-              defaultLastRow={Asteroid.getRarity(asteroid.bonuses)}
+              defaultLastRow={Asteroid.getRarity(asteroid.Celestial.bonuses)}
               focus={selected?.category}
               hover={hover}
-              noColor={!asteroid.scanned} />
+              noColor={asteroid.Celestial.scanStatus < Asteroid.SCANNING_STATUSES.RESOURCE_SCANNED} />
           </GraphicWrapper>
         </GraphicSection>
       </LeftPane>
       <RightPane>
-        {!asteroid.scanned && (
+        {asteroid.Celestial.scanStatus < Asteroid.SCANNING_STATUSES.RESOURCE_SCANNED && (
           <UnscannedWrapper>
             {isOwner && (
               <UnscannedContainer>
@@ -515,15 +516,15 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                   {scanStatus === 'SCANNING' && (
                     <>
                       <h3>SCANNING</h3>
-                      <LiveTimer target={asteroid.scanCompletionTime} />
+                      <LiveTimer target={asteroid.scanFinishTime} />
                     </>
                   )}
                   {(scanStatus === 'READY_TO_FINISH' || scanStatus === 'FINISHING') && (
                     <>
                       <p>Asteroid scan is complete. Ready to finalize.</p>
                       <Button
-                        disabled={scanStatus === 'FINISHING'}
-                        loading={scanStatus === 'FINISHING'}
+                        disabled={boolAttr(scanStatus === 'FINISHING')}
+                        loading={boolAttr(scanStatus === 'FINISHING')}
                         onClick={finalizeAsteroidScan}
                         isTransaction>
                         Finalize
@@ -641,7 +642,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
               <div>
                 <SectionHeader>Yield Bonuses</SectionHeader>
                 <SectionBody>
-                  <AsteroidBonuses bonuses={asteroid?.bonuses} />
+                  <AsteroidBonuses bonuses={asteroid?.Celestial?.bonuses} />
                 </SectionBody>
               </div>
             )}

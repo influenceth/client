@@ -60,7 +60,10 @@ const useColumns = () => {
         align: 'center',
         icon: <MyAssetIcon />,
         selector: row => {
-          if (account && row.owner && Address.areEqual(row.owner, account)) {
+          // TODO: ecs refactor
+          // TODO: or
+          // selector: row => row.Control?.controller?.id === crew?.i ? <MyAssetIcon /> : null,
+          if (account && row.Nft?.owner && Address.areEqual(row.Nft.owner, account)) {
             return <MyAssetIcon />
           }
           return '';
@@ -91,6 +94,7 @@ const useColumns = () => {
         unhideable: true
       },
       {
+        // TODO: ecs refactor
         key: 'name',
         label: 'Name',
         // TODO: make sortable
@@ -112,14 +116,14 @@ const useColumns = () => {
           if (row.owner) {
             return (
               <MarketplaceLink
-                chain={row.chain}
+                chain={row.Bridge.destination}
                 assetType="account"
-                id={row.owner}>
+                id={row.Nft.owner}>
                 {(onClick, setRefEl) => (
                   <OnClickLink ref={setRefEl} onClick={onClick}>
-                    {account && Address.areEqual(row.owner, account)
+                    {account && Address.areEqual(row.Nft.owner, account)
                       ? `you`
-                      : `${row.owner.substr(0, 6)}...${row.owner.substr(-4)}`
+                      : `${row.owner.substr(0, 6)}...${row.Nft.owner.substr(-4)}`
                     }
                   </OnClickLink>
                 )}
@@ -134,43 +138,43 @@ const useColumns = () => {
         icon: <RadiusIcon />,
         label: 'Radius',
         sortField: 'r',
-        selector: row => `${row.r?.toLocaleString()} km`,
+        selector: row => `${row.Celestial.radius.toLocaleString()} km`,
       },
       {
         key: 'spectralType',
         icon: <ScanAsteroidIcon />,
         label: 'Spectral Type',
         sortField: 'spectralType',
-        selector: row => `${Asteroid.getSpectralType(row.spectralType)}-type`
+        selector: row => `${Asteroid.Entity.getSpectralType(row)}-type`
       },
       {
         key: 'rarity',
         icon: <ResourceIcon />,
         label: 'Rarity',
         // TODO: sortField?
-        selector: row => row.bonuses ? Asteroid.getRarity(row.bonuses) : 0,
+        selector: row => Asteroid.Entity.getRarity(row),
       },
       {
         key: 'axis',
         icon: <SemiMajorAxisIcon />,
         label: 'Semi-major Axis',
-        sortField: 'orbital.a',
-        selector: row => `${row.orbital?.a} AU`
+        sortField: 'Orbit.a',
+        selector: row => `${row.Orbit.a} AU`
         
       },
       {
         key: 'eccentricity',
         icon: <EccentricityIcon />,
         label: 'Eccentricity',
-        sortField: 'orbital.e',
-        selector: row => row.orbital.e
+        sortField: 'Orbit.ecc',
+        selector: row => row.Orbit.ecc
       },
       {
         key: 'inclination',
         icon: <InclinationIcon />,
         label: 'Inclination',
-        sortField: 'orbital.i',
-        selector: row => `${(row.orbital.i * 180 / Math.PI).toLocaleString()}°`
+        sortField: 'Orbit.inc',
+        selector: row => `${(row.Orbit.inc * 180 / Math.PI).toLocaleString()}°`
       }
     ];
 

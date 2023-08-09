@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Nameable } from '@influenceth/sdk';
+import { Name } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useStore from './useStore';
@@ -10,7 +10,7 @@ const useNameAvailability = (entityType) => {
   const validateName = useCallback((name, suppressAlert) => {
     let err = '';
 
-    const standardError = Nameable.getNameError(name, Nameable.getType(entityType));
+    const standardError = Name.getNameError(name, Name.getType(entityType));
     if (standardError) err = standardError;
     // TODO: move these extras to sdk? only really make sense if also true in the contract
     else if (/^ /.test(name) || / $/.test(name)) err = 'Name cannot have leading or trailing spaces.';

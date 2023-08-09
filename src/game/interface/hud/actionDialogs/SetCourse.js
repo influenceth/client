@@ -196,11 +196,9 @@ const LocationDiamond = () => (
   </DiamondOuter>
 );
 
+// TODO: fill in real numbers
 
-// TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
-//  - however, could you launch two ships at once? probably not because crew needs to be on ship?
-
-const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...props }) => {
+const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, ...props }) => {
   const { coarseTime } = useContext(ClockContext);
   const createAlert = useStore(s => s.dispatchAlertLogged);
   
@@ -209,7 +207,6 @@ const SetCourse = ({ origin, destination, manager, stage, travelSolution, ...pro
   const { crew, crewmateMap } = useCrewContext();
 
   const [tab, setTab] = useState(0);
-  const ship = Ship.TYPES[1];  // TODO
 
   const crewmates = currentLaunch?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];

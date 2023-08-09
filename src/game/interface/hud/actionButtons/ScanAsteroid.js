@@ -17,7 +17,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
       attention: undefined,
       disabled: _disabled || undefined,
       loading: undefined,
-      completionTime: asteroid?.scanCompletionTime
+      finishTime: asteroid?.Celestial?.scanFinishTime
     }
     switch (scanStatus) {
       default:

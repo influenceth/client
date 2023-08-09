@@ -6,7 +6,7 @@ import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { BackIcon, CaretIcon, CloseIcon, CoreSampleIcon, ExtractionIcon, ForwardIcon, ConstructShipIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ProcessIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
-import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -33,7 +33,8 @@ import {
   ProcessInputSquareSection,
   ShipImage,
   formatMass,
-  ProcessSelectionDialog
+  ProcessSelectionDialog,
+  getBuildingInputDefaults
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -177,11 +178,9 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
       <ActionDialogBody>
         <FlexSection style={{ marginBottom: 32, width: SECTION_WIDTH }}>
           <FlexSectionInputBlock
+            {...getBuildingInputDefaults(lot)}
             title="Construction Location"
-            image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
-            label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
             disabled={stage !== actionStages.NOT_STARTED}
-            sublabel={`Lot #${lot?.i}`}
             style={{ width: 350 }}
           />
 
@@ -224,20 +223,16 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
             <FlexSectionInputBlock
               title="Input Inventory"
               titleDetails={<TransferDistanceDetails distance={8} />}
-              image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
-              label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
+              {...getBuildingInputDefaults(lot)}
               disabled={stage !== actionStages.NOT_STARTED}
-              sublabel={`Lot #${lot?.i}`}
               style={{ marginBottom: 20, width: '100%' }}
             />
 
             <FlexSectionInputBlock
               title="Output Inventory"
               titleDetails={<TransferDistanceDetails distance={19} />}
-              image={<BuildingImage building={Building.TYPES[lot?.building?.capableType || 0]} />}
-              label={`${Building.TYPES[lot?.building?.capableType || 0].name}`}
+              {...getBuildingInputDefaults(lot)}
               disabled={stage !== actionStages.NOT_STARTED}
-              sublabel={`Lot #${lot?.i}`}
               style={{ width: '100%' }}
             />
           </div>
@@ -285,7 +280,7 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
 
         {stage !== actionStages.NOT_STARTED && null /* TODO: (
           <ProgressBarSection
-            completionTime={lot?.building?.construction?.completionTime}
+            finishTime={lot?.building?.construction?.finishTime}
             startTime={lot?.building?.construction?.startTime}
             stage={stage}
             title="Progress"
@@ -341,7 +336,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={actionStage}
       extraWide>
       <BuildShip

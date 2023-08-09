@@ -21,6 +21,7 @@ import {
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
+import { boolAttr } from '~/lib/utils';
 
 const UnplanWarning = styled.div`
   align-items: center;
@@ -56,7 +57,7 @@ const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props })
     lastStatus.current = constructionStatus;
   }, [constructionStatus]);
 
-  const capableType = currentConstruction?.capableType || 0;
+  const buildingType = currentConstruction?.buildingType || 0;
 
   return (
     <>
@@ -77,8 +78,8 @@ const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props })
         <FlexSection>
           <FlexSectionInputBlock
             title="Current Plans"
-            image={<BuildingImage building={Building.TYPES[capableType]} unfinished />}
-            label={Building.TYPES[capableType].name}
+            image={<BuildingImage buildingType={buildingType} unfinished />}
+            label={Building.TYPES[buildingType].name}
             disabled
             sublabel="Site Plans"
           />
@@ -117,7 +118,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={constructionBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={stageByActivity.unplan}>
       <UnplanBuilding
         asteroid={asteroid}

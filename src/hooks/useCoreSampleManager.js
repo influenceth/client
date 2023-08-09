@@ -26,7 +26,7 @@ const useCoreSampleManager = (asteroidId, lotId) => {
   const [currentSample, samplingStatus, actionStage] = useMemo(() => {
     let current = {
       _crewmates: null,
-      completionTime: null,
+      finishTime: null,
       isNew: null,
       owner: null,
       resourceId: null,
@@ -47,14 +47,14 @@ const useCoreSampleManager = (asteroidId, lotId) => {
         && item.event.returnValues.sampleId === activeSample.sampleId
       ));
       if (actionItem) current._crewmates = actionItem.assets.crew.crewmates;
-      current.completionTime = activeSample.completionTime;
+      current.finishTime = activeSample.finishTime;
       current.isNew = !(activeSample.initialYield > 0);
       current.owner = activeSample.owner;
       current.resourceId = activeSample.resourceId;
       current.sampleId = activeSample.sampleId;
       current.startTime = activeSample.startTime;
 
-      if (activeSample.completionTime <= liveBlockTime) {
+      if (activeSample.finishTime <= liveBlockTime) {
         if (getStatus('FINISH_CORE_SAMPLE', payload) === 'pending') {
           status = 'FINISHING';
           stage = actionStages.COMPLETING;

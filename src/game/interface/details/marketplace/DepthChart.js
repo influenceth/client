@@ -8,7 +8,7 @@ import Switcher from '~/components/SwitcherButton';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import useScreenSize from '~/hooks/useScreenSize';
 import theme, { hexToRGB } from '~/theme';
-import { formatFixed, formatPrice } from '~/lib/utils';
+import { boolAttr, formatFixed, formatPrice } from '~/lib/utils';
 import ActionButton from '~/game/interface/hud/actionButtons/ActionButton';
 import useStore from '~/hooks/useStore';
 
@@ -345,6 +345,7 @@ const SummaryLabel = styled.label`
     
 const STROKE_WIDTH = 2;
 
+// TODO: ecs refactor
 const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource }) => {
   const { width, height } = useScreenSize();
 
@@ -682,12 +683,12 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                 </FormSection>
 
                 <FormSection>
-                  <RadioRow onClick={() => setType('market')} selected={type === 'market' || undefined}>
+                  <RadioRow onClick={() => setType('market')} selected={boolAttr(type === 'market')}>
                     {type === 'market' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
                     <span>Market Order</span>
                     <InfoTooltip data-tip="help" data-for="details"><InfoIcon /></InfoTooltip>
                   </RadioRow>
-                  <RadioRow onClick={() => setType('limit')} selected={type === 'limit' || undefined}>
+                  <RadioRow onClick={() => setType('limit')} selected={boolAttr(type === 'limit')}>
                     {type === 'limit' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
                     <span>Limit Order</span>
                     <InfoTooltip data-tip="help" data-for="details"><InfoIcon /></InfoTooltip>

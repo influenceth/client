@@ -224,7 +224,7 @@ const RoutePlanner = () => {
     <Scrollable hasTray={hasTray} style={{ marginLeft: -12, paddingLeft: 12 }}>
 
       <ShipSelection isSimulated={ship?.isSimulated}>
-        <ShipImage ship={ship} simulated />
+        <ShipImage shipType={ship?.i} simulated />
 
         <div>
           <SectionHeader style={{ border: 0, margin: 0 }}>Ship</SectionHeader>

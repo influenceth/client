@@ -8,7 +8,7 @@ import {
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useConstructionManager from '~/hooks/useConstructionManager';
-import { formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
 
 import {
   DeconstructionMaterialsSection, ActionDialogFooter,
@@ -22,7 +22,8 @@ import {
   BuildingImage,
   DestinationSelectionDialog,
   EmptyBuildingImage,
-  getBuildingRequirements
+  getBuildingRequirements,
+  getBuildingInputDefaults
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -55,7 +56,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
   const crewTravelTime = 0;
   const tripDetails = null;
 
-  const constructionTime = Building.getConstructionTime(lot?.building?.capableType || 0, 1);
+  const constructionTime = Building.getConstructionTime(lot?.building?.Building?.buildingType || 0, 1);
 
   const stats = useMemo(() => [
     {
@@ -105,10 +106,8 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
         <FlexSection>
           <FlexSectionInputBlock
             title="Deconstruct"
-            image={<BuildingImage building={Building.TYPES[lot.building?.capableType || 0]} />}
-            label={Building.TYPES[lot?.building?.capableType || 0].name}
+            {...getBuildingInputDefaults(lot)}
             disabled
-            sublabel="Building"
           />
           
           <FlexSectionSpacer>
@@ -117,18 +116,19 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
 
           <FlexSectionInputBlock
             title="Transfer To"
+            {...getBuildingInputDefaults(destinationLot, 'Inventory')}
             image={
               destinationLot
                 ? (
                   destinationLot.i === lot.i
                     ? (
                       <BuildingImage
-                        building={Building.TYPES[destinationLot.building?.capableType || 0]}
+                        buildingType={destinationLot?.building?.Building?.buildingType || 0}
                         unfinished />
                     )
                     : (
                       <BuildingImage
-                        building={Building.TYPES[destinationLot.building?.capableType || 0]}
+                        buildingType={destinationLot?.building?.Building?.buildingType || 0}
                         inventories={destinationLot?.building?.inventories}
                         showInventoryStatusForType={1} />
                     )
@@ -136,10 +136,8 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
                 : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
             }
             isSelected={stage === actionStage.NOT_STARTED}
-            label={destinationLot ? Building.TYPES[destinationLot.building?.capableType || 0]?.name : 'Select'}
             onClick={() => { setDestinationSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}
-            sublabel={destinationLot ? <><LocationIcon /> Lot {destinationLot.i.toLocaleString()}</> : 'Inventory'}
           />
         </FlexSection>
 
@@ -147,6 +145,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
           label="Recovered Materials"
           itemsReturned={itemsReturned || []} />
 
+        {/* TODO: progress bar if this takes time */}
         {stage !== actionStage.NOT_STARTED && (
           <ProgressBarSection
             stage={stage}
@@ -208,7 +207,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={constructionBackground}
-      isLoading={isLoading}
+      isLoading={boolAttr(isLoading)}
       stage={stageByActivity.deconstruct}>
       <Deconstruct
         asteroid={asteroid}

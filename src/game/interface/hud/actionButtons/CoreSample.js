@@ -86,7 +86,7 @@ const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improve
         attention: attention || undefined,
         disabled,
         loading: loading || undefined,
-        completionTime: currentSample?.completionTime
+        finishTime: currentSample?.finishTime
       }}
       icon={isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
       onClick={handleClick} />

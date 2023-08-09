@@ -314,6 +314,7 @@ const ProgressIcon = styled.span`
   }}
 `;
 
+// TODO: ecs refactor
 const CrewAssignments = () => {
   const { id: bookId, selected: initialSelectedId } = useParams();
   const history = useHistory();
@@ -581,7 +582,7 @@ const CrewAssignments = () => {
                         return (
                           <div key={c.i}>
                             <CrewCard
-                              crew={c}
+                              crewmate={c}
                               clickable={uiConfig.clickable}
                               fade={uiConfig.fade}
                               overlay={uiConfig}

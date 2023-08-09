@@ -11,7 +11,7 @@ const CrewLink = (props) => {
   useEffect(() => {
     if (crewmateMap) {
       const match = crewmateMap[id];
-      if (match) setName(match.name || `#${id}`);
+      if (match) setName(match.Name.name || `#${id}`);
     } else {
       setName(initialName || `#${id}`);
     }

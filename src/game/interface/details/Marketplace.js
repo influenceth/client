@@ -70,6 +70,7 @@ const OrderTally = styled.div`
   }
 `;
 
+// TODO: ecs refactor
 const myOpenOrders = [
   { i: 1, asteroidId: 1000, lotId: 2350, marketplaceName: `Joe's Spacing Emporium`, type: 'LimitBuy', resourceId: 8, createdAt: 1688798552, amount: 12346, price: 1234, deliveryTo: 123 },
   { i: 2, asteroidId: 1000, lotId: 2350, marketplaceName: `Joe's Spacing Emporium`, type: 'LimitBuy', resourceId: 8, createdAt: 1688598552, amount: 12346, price: 1234, deliveryTo: 123 },

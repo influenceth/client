@@ -30,7 +30,7 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
   const [currentDelivery, deliveryStatus, actionStage] = useMemo(() => {
     let current = {
       _crewmates: null,
-      completionTime: null,
+      finishTime: null,
       destLotId: null,
       destLotInvId: null,
       originLotId: null,
@@ -56,7 +56,7 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
         current.originLotId = actionItem.event.returnValues.originLotId;
         current.originLotInvId = actionItem.event.returnValues.originInventoryId;
       }
-      current.completionTime = delivery.completionTime;
+      current.finishTime = delivery.finishTime;
       current.destLotId = lot.i;
       current.destLotInvId = delivery.inventoryType;
       current.resources = delivery.resources;
@@ -69,7 +69,7 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
         if(getStatus('FINISH_DELIVERY', { ...payload, destLotId: lotId, deliveryId }) === 'pending') {
           status = 'FINISHING';
           stage = actionStages.COMPLETING;
-        } else if (delivery.completionTime && delivery.completionTime <= liveBlockTime) {
+        } else if (delivery.finishTime && delivery.finishTime <= liveBlockTime) {
           status = 'READY_TO_FINISH';
           stage = actionStages.READY_TO_COMPLETE;
         } else {

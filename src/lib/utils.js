@@ -61,3 +61,5 @@ export const formatPrice = (sway, { minPrecision = 3, fixedPrecision } = {}) => 
 };
 
 export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');
+
+export const boolAttr = (value) => value ? 'true' : undefined;

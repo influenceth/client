@@ -124,7 +124,7 @@ const CrewCardFramed = ({
       <Avatar isEmpty={!crewmate} {...props}>
         {crewmate && (
           <CrewCard
-            crew={crewmate}
+            crewmate={crewmate}
             hideHeader
             hideFooter
             hideMask />

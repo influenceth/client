@@ -28,24 +28,23 @@ const buildQuery = (queryObj) => {
   }).join('&');
 };
 
-// TODO: put this in sdk
-const entityId = ({ label, i }) => `${label}/${i}`;
-
 const getEntityById = async ({ label, i, components }) => {
   const query = { label };
-  query.i = Array.isArray(i) ? i.join(',') : i;
+  query.id = Array.isArray(i) ? i.join(',') : i;
   if (components) {
     query.components = components.join(',');  // i.e. [ 'celestial', 'control' ]
   }
 
-  const response = await instance.get(`/v1/entity/id?${buildQuery(query)}`);
+  const response = await instance.get(`/v1/entities/id?${buildQuery(query)}`);
   return response.data;
 };
 
-const getEntity = async ({ match, label, components }) => {
+const getEntities = async ({ match, label, components }) => {
   const query = {};
   if (match) {
-    query.match = match;  // i.e. { 'celestial.celestialType': 2 }
+    // i.e. { 'Celestial.celestialType': 2 }
+    // i.e. { 'Location.location': { label: 'Lot', id: 123 } }
+    query.match = `${Object.keys(match)[0]}:${JSON.stringify(Object.values(match)[0])}`;
   }
   if (label) {
     query.label = label;  // i.e. 'asteroid'
@@ -54,7 +53,7 @@ const getEntity = async ({ match, label, components }) => {
     query.components = components.join(',');  // i.e. [ 'celestial', 'control' ]
   }
   
-  const response = await instance.get(`/v1/entity?${buildQuery(query)}`);
+  const response = await instance.get(`/v1/entities?${buildQuery(query)}`);
   return response.data;
 };
 
@@ -69,7 +68,7 @@ const api = {
     return response.data;
   },
 
-  getCrewPlannedLots: async () => {
+  getCrewPlannedBuildings: async () => {
     const response = await instance.get('/v1/user/plans');  // TODO: server-side update
     return response.data;
   },
@@ -118,7 +117,7 @@ const api = {
   getAsteroid: async (i) => { //, extended = false) => {
     // TODO: deprecate `extended` OR need to pass extra queryString to getEntityById OR need a separate call for that data
     // const response = await instance.get(`/v1/asteroids/${i}${extended ? '?extended=1' : ''}`);
-    return getEntityById({ label: 'asteroid', i });
+    return getEntityById({ label: 'Asteroid', i });
   },
 
   getAsteroidLotData: async (i) => {
@@ -153,7 +152,7 @@ const api = {
     // TODO: elasticsearch
     const response = await instance.get(`/v1/asteroids/${a}/lots/occupier/${c}`);
     return response.data;
-    // return getEntity({
+    // return getEntities({
     //   match: { 'control.controller': c },
     //   label: 'building'
     // });
@@ -167,20 +166,28 @@ const api = {
 
   getEntityById,
 
-  getEntity,
+  getEntities,
 
   getLot: async (asteroidId, lotId) => {
     // TODO: make sure the response matches
     // const response = await instance.get(`/v1/asteroids/${asteroidId}/lots/${lotId}`);
-    return getEntityById({ label: 'lot', i: lotId });
+    return getEntityById({ label: 'Lot', i: lotId });
+  },
+
+  getLotBuilding: async (asteroidId, lotId) => {
+    const buildings = getEntities({
+      match: { 'Location.location': Location.toEntityFormat({ asteroidId, lotId }) },
+      label: 'Building'
+    });
+    return buildings[0];
   },
 
   getNameUse: async (label, name) => {
-    return getEntity({ match: { name }, label, components: [] });
+    return getEntities({ match: { name }, label, components: [] });
   },
 
   getOwnedAsteroids: async (account) => {
-    return getEntity({ match: { 'nft.owner': account }, label: 'asteroid' });
+    return getEntities({ match: { 'Nft.owner': account }, label: 'Asteroid' });
   },
 
   // TODO: deprecate this (and just use .length of getOwnedAsteroids()?)
@@ -190,26 +197,27 @@ const api = {
   },
 
   getOwnedCrews: async (account) => {
-    return getEntity({ match: { 'crew.delegatedTo': account }, label: 'crew' });
+    return getEntities({ match: { 'Crew.delegatedTo': account }, label: 'Crew' });
   },
 
   getCrewmatesByCrewIds: async (crewIds) => {
-    return getEntity({
-      match: { 'control.controller': crewIds.map((i) => entityId('crew', i)) },
-      label: 'crewmate'
+    console.log('pmk zz', crewIds);
+    return getEntities({
+      match: { 'Control.controller': crewIds.map((i) => ({ label: 'Crewmate', id: i })) },
+      label: 'Crewmate'
     });
   },
 
   getCrew: async (i) => {
-    return getEntityById({ label: 'crew', i });
+    return getEntityById({ label: 'Crew', i });
   },
 
   getCrewmate: async (i) => {
-    return getEntityById({ label: 'crewmate', i });
+    return getEntityById({ label: 'Crewmate', i });
   },
 
   getCrewmates: async (ids) => {
-    return getEntityById({ label: 'crewmate', i: ids });
+    return getEntityById({ label: 'Crewmate', i: ids });
   },
 
   getPlanets: async () => {
@@ -223,27 +231,43 @@ const api = {
     return response.data[0];
   },
 
+  getShip: async (i) => {
+    return getEntityById({ label: 'Ship', i });
+  },
+
+  getShipCrews: async (shipId) => {
+    return getEntities({
+      match: { 'Location.location': Location.toEntityFormat({ shipId }) },
+      label: 'Crew'
+    });
+  },
+
   getBook: async (id) => {
+    return null;  // TODO: restore this when story is ready again
     const response = await instance.get(`/v1/books/${id}`);
     return response.data;
   },
 
   getStory: async (id, sessionId) => {
+    return null;  // TODO: restore this when story is ready again
     const response = await instance.get(`/v1/stories/${id}`, { params: { session: sessionId }});
     return response.data;
   },
 
   createStorySession: async (crewmate, story) => {
+    return null;  // TODO: restore this when story is ready again
     const response = await instance.post(`/v1/stories/sessions`, { crewmate, story });
     return response.data;
   },
 
   getStorySession: async (id) => {
+    return null;  // TODO: restore this when story is ready again
     const response = await instance.get(`/v1/stories/sessions/${id}`);
     return response.data;
   },
 
   getStoryPath: async (storyId, pathId, sessionId) => {
+    return null;  // TODO: restore this when story is ready again
     const response = await instance.get(
       `/v1/stories/${storyId}/paths/${pathId}`,
       { params: { session: sessionId } }
@@ -252,16 +276,19 @@ const api = {
   },
 
   patchStorySessionPath: async (sessionId, pathId) => {
+    return null;  // TODO: restore this when story is ready again
     const response = await instance.patch(`/v1/stories/sessions/${sessionId}/paths/${pathId}`);
     return response.data;
   },
 
   deleteStorySessionPath: async (sessionId, pathId) => {
+    return null;  // TODO: restore this when story is ready again
     const response = await instance.delete(`/v1/stories/sessions/${sessionId}/paths/${pathId}`);
     return response.data;
   },
 
   getAdalianRecruitmentStory: async (id, sessionId) => {
+    return null;  // TODO: restore this when story is ready again
     const response = await instance.get(`/v1/stories/adalian-recruitment`);
     return response.data;
   },

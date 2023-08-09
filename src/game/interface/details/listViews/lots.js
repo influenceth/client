@@ -19,7 +19,7 @@ const useColumns = () => {
         align: 'center',
         icon: <MyAssetIcon />,
         selector: row => {
-          if (row.occupier?.i && row.occupier.i === crew?.i) {
+          if (row.Control.controller?.id && row.Control.controller?.id === crew?.i) {
             return <MyAssetIcon />
           }
           return '';
@@ -31,28 +31,36 @@ const useColumns = () => {
       {
         key: 'asteroid',
         label: 'Asteroid Id',
-        sortField: 'asteroid.i',
-        selector: row => row.asteroid?.i
-          ? (
-            <>
-              <LocationLink asteroidId={row.asteroid.i} />
-              <span>{row.asteroid.i.toLocaleString()}</span>
-            </>
-          )
-          : null,
+        // sortField: 'asteroid.i',
+        selector: row => {
+          const loc = Location.fromEntityFormat(row.Location?.location);
+          if (loc.asteroidId) {
+            return (
+              <>
+                <LocationLink asteroidId={loc.asteroidId} />
+                <span>{loc.asteroidId.toLocaleString()}</span>
+              </>
+            );
+          }
+          return null;
+        }
       },
       {
         key: 'i',
         label: 'Lot Id',
-        sortField: 'i',
-        selector: row => row.asteroid?.i && row.i
-          ? (
-            <>
-              <LocationLink asteroidId={row.asteroid.i} lotId={row.i} />
-              <span>{row.i.toLocaleString()}</span>
-            </>
-          )
-          : null,
+        sortField: 'row.Location.location',
+        selector: row => {
+          const loc = Location.fromEntityFormat(row.Location?.location);
+          if (loc.asteroidId && loc.lotId) {
+            return (
+              <>
+                <LocationLink asteroidId={loc.asteroidId} lotId={loc.lotId} />
+                <span>{loc.lotId.toLocaleString()}</span>
+              </>
+            );
+          }
+          return null;
+        },
         unhideable: true,
       },
       {
@@ -60,8 +68,8 @@ const useColumns = () => {
         label: 'Controller',
         sortField: 'controller.i',
         selector: row => {
-          if (row.controller?.i) {
-            return row.controller.i === crew?.i ? 'you' : row.controller.i.toLocaleString();
+          if (row.Control?.controller?.id) {
+            return row.Control.controller.id === crew?.i ? 'you' : row.Control.controller.id.toLocaleString();
           }
           return 'Uncontrolled';
         }
@@ -71,9 +79,10 @@ const useColumns = () => {
         label: 'Occupier',
         sortField: 'occupier.i',
         selector: row => {
-          if (row.occupier?.i) {
-            return row.occupier.i === crew?.i ? 'you' : row.occupier.i.toLocaleString();
-          }
+          // TODO: ecs refactor
+          // if (row.occupier?.i) {
+          //   return row.occupier.i === crew?.i ? 'you' : row.occupier.i.toLocaleString();
+          // }
           return 'Unoccupied';
         }
       },
@@ -82,9 +91,10 @@ const useColumns = () => {
         label: 'Building Type',
         sortField: 'building.type',
         selector: row => {
-          if (row.building?.type) {
-            return Building.TYPES[row.building.type]?.name;
-          }
+          // TODO: ecs refactor
+          // if (row.building?.type) {
+          //   return Building.TYPES[row.building.type]?.name;
+          // }
           return null;
         }
       },
@@ -93,9 +103,10 @@ const useColumns = () => {
         label: 'Construction Status',
         sortField: 'construction.status',
         selector: row => {
-          if (row.construction?.status) {
-            return Building.CONSTRUCTION_STATUSES[row.construction.status];
-          }
+          // TODO: ecs refactor
+          // if (row.construction?.status) {
+          //   return Building.CONSTRUCTION_STATUSES[row.construction.status];
+          // }
           return null;
         }
       }

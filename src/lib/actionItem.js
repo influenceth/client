@@ -27,9 +27,9 @@ const formatAsItem = (item) => {
     lotId: null,
     resourceId: null,
     locationDetail: '',
-    completionTime: item.data?.completionTime || 0,
+    finishTime: item.data?.finishTime || 0,
     startTime: item.data?.startTime || 0,
-    ago: (new moment(new Date(1000 * (item.data?.completionTime || 0)))).fromNow(),
+    ago: (new moment(new Date(1000 * (item.data?.finishTime || 0)))).fromNow(),
     onClick: null
   };
 
@@ -110,7 +110,7 @@ const formatAsPlans = (item) => {
     lotId: Number(item.i),
     resourceId: null,
     locationDetail: '',
-    completionTime: item.waitingFor,
+    finishTime: item.waitingFor,
     startTime: null,
     onClick: ({ openDialog }) => {
       openDialog('CONSTRUCT');
@@ -130,7 +130,7 @@ const formatAsTx = (item) => {
     lotId: null,
     resourceId: null,
     locationDetail: '',
-    completionTime: null,
+    finishTime: null,
     startTime: null,
     onClick: null,
     _timestamp: item.timestamp // (only used for dismissing failed tx's)

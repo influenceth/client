@@ -38,13 +38,22 @@ export function CrewProvider({ children }) {
   }, [crews, selectedCrewId]);
 
   // TODO: vvv remove this
-  // NOTE: either shipId or (asteroidId and lotId) must be set
   if (selectedCrew) {
-    selectedCrew.station = {
-      asteroidId: 1000,
-      lotId: 123,
-      shipId: 123
+    // NOTE: this is default location component
+    selectedCrew.Location = {
+      location: {
+        label: 'asteroid',
+        id: 1000
+      }
     };
+
+    // TODO: fill in recursively-flattened location for crew as _location
+    selectedCrew._location = {
+      asteroidId: 1000,
+      lotId: 1000,
+      buildingId: 1000,
+      shipId: 1000
+    }
   }
   // ^^^
 
@@ -54,7 +63,7 @@ export function CrewProvider({ children }) {
       if (account && crews?.length) {
         // if there is no selected crew, select default crew
         if (!selectedCrew) {
-          const defaultCrew = crews.find((crew) => crew.crewmates.length > 0);
+          const defaultCrew = crews.find((crew) => crew.Crew.roster.length > 0);
           dispatchCrewSelected(defaultCrew?.i || crews[0].i);
         }
       } else {
@@ -64,8 +73,8 @@ export function CrewProvider({ children }) {
   }, [account, crews, crewsLoading, crewmatesLoading, dispatchCrewSelected, selectedCrew]);
 
   const captain = useMemo(() => {
-    if (crewmateMap && selectedCrew?.crewmates?.length) {
-      return crewmateMap[selectedCrew.crewmates[0]];
+    if (crewmateMap && selectedCrew?.Crew?.roster?.length) {
+      return crewmateMap[selectedCrew?.Crew?.roster[0]];
     }
     return null;
   }, [crewmateMap, selectedCrew]);

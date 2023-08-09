@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { Product } from '@influenceth/sdk';
+import { Location, Product } from '@influenceth/sdk';
 
 import {
   CrewIcon,
@@ -22,7 +22,7 @@ const useColumns = () => {
         key: 'my',
         align: 'center',
         icon: <MyAssetIcon />,
-        selector: row => row.owner === crew?.i ? <MyAssetIcon /> : null,
+        selector: row => row.Control?.controller?.id === crew?.i ? <MyAssetIcon /> : null,
         bodyStyle: { fontSize: '24px' },
         requireLogin: true,
         unhideable: true
@@ -31,60 +31,69 @@ const useColumns = () => {
         key: 'resource',
         label: 'Deposit',
         sortField: 'resource',
-        selector: row => (
-          <>
-            <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} resourceId={row.resource} zoomToLot="LOT_RESOURCES" />
-            <span>{Product.TYPES[row.resource]?.name}</span>
-          </>
-        ),
+        selector: row => {
+          const loc = Location.fromEntityFormat(row.Location?.location);
+          return (
+            <>
+              <LocationLink asteroidId={loc.asteroidId} lotId={loc.lotId} resourceId={row.Deposit.resource} zoomToLot="LOT_RESOURCES" />
+              <span>{Product.TYPES[row.Deposit.resource]?.name}</span>
+            </>
+          );
+        },
         unhideable: true
       },
       {
         key: 'asteroid',
         label: 'Asteroid',
         sortField: 'asteroid.i',
-        selector: row => (
-          <>
-            <LocationLink asteroidId={row.asteroid?.i} resourceId={row.resource} />
-            <span>{row.asteroid?.i.toLocaleString()}</span>
-          </>
-        ),
+        selector: row => {
+          const loc = Location.fromEntityFormat(row.Location?.location);
+          return (
+            <>
+              <LocationLink asteroidId={loc.asteroidId} resourceId={row.Deposit.resource} />
+              <span>{loc.asteroidId.toLocaleString()}</span>
+            </>
+          );
+        },
       },
       {
         key: 'lot',
         label: 'Lot',
         sortField: 'lot.i',
-        selector: row => (
-          <>
-            <LocationLink asteroidId={row.asteroid?.i} lotId={row.lot?.i} resourceId={row.resource} />
-            <span>{row.lot?.i.toLocaleString()}</span>
-          </>
-        ),
+        selector: row => {
+          const loc = Location.fromEntityFormat(row.Location?.location);
+          return (
+            <>
+              <LocationLink asteroidId={loc.asteroidId} lotId={loc.lotId} resourceId={row.Deposit.resource} />
+              <span>{row.lotId.toLocaleString()}</span>
+            </>
+          );
+        },
       },
       {
         key: 'remainingYield',
         label: 'Amount',
         sortField: 'remainingYield',
         selector: row => {
-          if (row.initialYield === undefined) {
+          if (row.Deposit.initialYield === undefined) {
             return `(incomplete)`;
           }
-          else if (row.initialYield > row.remainingYield) {
+          else if (row.Deposit.initialYield > row.Deposit.remainingYield) {
             return (
               <>
-                {formatFixed(row.remainingYield / 1e3, 0)} t
-                <small style={{ marginLeft: 5 }}>(original {formatFixed(row.initialYield / 1e3, 0)} t)</small>
+                {formatFixed(row.Deposit.remainingYield / 1e3, 0)} t
+                <small style={{ marginLeft: 5 }}>(original {formatFixed(row.Deposit.initialYield / 1e3, 0)} t)</small>
               </>
             );
           }
-          return `${formatFixed(row.remainingYield / 1e3, 0)} t`;
+          return `${formatFixed(row.Deposit.remainingYield / 1e3, 0)} t`;
         },
       },
       {
         key: 'forSale',
         label: 'For Sale',
         sortField: 'forSale',
-        selector: row => row.forSale ? '(TODO: price)' : 'No',  // TODO: ...
+        selector: row => row.Deposit.forSale ? '(TODO: price)' : 'No', // TODO: ecs refactor
       },
     ];
 

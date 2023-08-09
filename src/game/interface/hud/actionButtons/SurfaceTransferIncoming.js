@@ -6,16 +6,16 @@ import ActionButton from './ActionButton';
 
 const SurfaceTransferIncoming = ({ asteroid, lot, onSetAction, _disabled }) => {
   const incoming = useMemo(() => {
-    return (lot?.building?.deliveries || [])
-      .filter((d) => d.status !== 'COMPLETE')
-      .sort((a, b) => (a.completionTime || 0) - (b.completionTime || 0))
-  }, [lot?.building?.deliveries]);
+    return (lot?.deliveries || [])
+      .filter((d) => d.Delivery.status !== 'COMPLETE')
+      .sort((a, b) => (a.Delivery.finishTime || 0) - (b.Delivery.finishTime || 0))
+  }, [lot?.deliveries]);
   const nextIncoming = incoming?.length > 0 ? incoming[0] : null;
-  const { deliveryStatus } = useDeliveryManager(asteroid?.i, lot?.i, nextIncoming?.deliveryId);
+  const { deliveryStatus } = useDeliveryManager(asteroid?.i, lot?.i, nextIncoming?.id);
   
   const handleClick = useCallback(() => {
-    onSetAction('SURFACE_TRANSFER', { deliveryId: nextIncoming?.deliveryId });
-  }, [onSetAction, nextIncoming?.deliveryId]);
+    onSetAction('SURFACE_TRANSFER', { deliveryId: nextIncoming?.id });
+  }, [onSetAction, nextIncoming?.id]);
 
   if (!nextIncoming) return null;
   const isReadyToFinish = deliveryStatus === 'READY_TO_FINISH';
@@ -27,7 +27,7 @@ const SurfaceTransferIncoming = ({ asteroid, lot, onSetAction, _disabled }) => {
         badge: !isReadyToFinish && incoming.length > 1 ? incoming.length : 0,
         disabled: _disabled || undefined,
         loading: !isReadyToFinish || undefined,
-        completionTime: nextIncoming?.completionTime
+        finishTime: nextIncoming?.Delivery?.finishTime
       }}
       icon={<SurfaceTransferIcon />}
       onClick={handleClick} />

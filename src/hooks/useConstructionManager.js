@@ -26,7 +26,7 @@ const useConstructionManager = (asteroidId, lotId) => {
       _crewmates: null,
       capableId: null,
       capableType: null,
-      completionTime: null,
+      finishTime: null,
       crewId: null,
       startTime: null
     };
@@ -49,7 +49,7 @@ const useConstructionManager = (asteroidId, lotId) => {
       if (actionItem) current._crewmates = actionItem.assets.crew.crewmates;
       current.capableId = lot.building.i;
       current.capableType = lot.building.capableType;
-      current.completionTime = lot.building.construction?.completionTime;
+      current.finishTime = lot.building.construction?.finishTime;
       current.crewId = lot.occupier;
       current.startTime = lot.building.construction?.startTime;
 
@@ -71,7 +71,7 @@ const useConstructionManager = (asteroidId, lotId) => {
           if (planTx) {
             current.capableType = planTx.vars.capableType;
             current.crewId = planTx.vars.crewId;
-            current.completionTime = null;
+            current.finishTime = null;
             current.startTime = null;
             status = 'PLANNING';
             stages.plan = actionStage.COMPLETING;
@@ -87,7 +87,7 @@ const useConstructionManager = (asteroidId, lotId) => {
         if (getStatus('FINISH_CONSTRUCTION', payload) === 'pending') {
           status = 'FINISHING';
           stages.construct = actionStage.COMPLETING;
-        } else if (lot.building.construction?.completionTime && (lot.building.construction.completionTime <= liveBlockTime)) {
+        } else if (lot.building.construction?.finishTime && (lot.building.construction.finishTime <= liveBlockTime)) {
           status = 'READY_TO_FINISH';
           stages.construct = actionStage.READY_TO_COMPLETE;
         } else {
