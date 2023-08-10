@@ -1,16 +1,17 @@
 import { useQuery } from 'react-query';
 
 import api from '~/lib/api';
-import useAuth from '~/hooks/useAuth';
 import useCrewContext from './useCrewContext';
 
-const useOwnedShips = () => {
+const useOwnedShips = (otherCrew = null) => {
   const { crew } = useCrewContext();
 
+  const useCrewId = otherCrew?.id || crew?.id;
+
   return useQuery(
-    [ 'ships', 'owner', crew?.i ],
-    () => [],
-    { enabled: !!crew?.i }
+    [ 'ships', 'owner', useCrewId ],
+    () => api.getCrewShips(useCrewId),
+    { enabled: !!useCrewId }
   );
 };
 

@@ -6,6 +6,8 @@ import esb from 'elastic-builder';
 import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
 
+// TODO: ecs refactor
+
 const useAsteroidSearch = ({ from = 0, size = 2000 } = {}) => {
   const filters = useStore(s => s.assetSearch.asteroids.filters);
   const sort = useStore(s => s.assetSearch.asteroids.sort);

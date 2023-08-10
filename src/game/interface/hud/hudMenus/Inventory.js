@@ -265,7 +265,14 @@ const LotInventory = () => {
 
   const resourceItemRefs = useRef([]);
 
-  const inventory = Object.values(lot?.building?.inventories || {}).find((i) => !i.locked);
+  const inventory = Object.values(lot?.building?.Inventories || {}).find((i) => !i.locked);
+  inventory.contentsObj = useMemo(() => {
+    return inventory?.contents?.reduce((acc, c) => {
+      acc[c.resource] = c.amount;
+      return acc;
+    }, {});
+  }, [inventory?.contents])
+
   const { used, usedOrReserved } = useMemo(() => {
     if (!inventory) {
       return {
@@ -303,17 +310,17 @@ const LotInventory = () => {
   }, []);
 
   const sortedResources = useMemo(() => {
-    if (!inventory?.resources) return [];
-    return Object.keys(inventory.resources).sort((a, b) => {
-      if (order === 'Mass') return inventory.resources[a] * Product.TYPES[a].massPerUnit > inventory.resources[b] * Product.TYPES[b].massPerUnit ? -1 : 1;
-      else if (order === 'Volume') return inventory.resources[a] * Product.TYPES[a].volumePerUnit > inventory.resources[b] * Product.TYPES[b].volumePerUnit ? -1 : 1;
+    if (!inventory?.contentsObj) return [];
+    return Object.keys(inventory.contentsObj).sort((a, b) => {
+      if (order === 'Mass') return inventory.contentsObj[a] * Product.TYPES[a].massPerUnit > inventory.contentsObj[b] * Product.TYPES[b].massPerUnit ? -1 : 1;
+      else if (order === 'Volume') return inventory.contentsObj[a] * Product.TYPES[a].volumePerUnit > inventory.contentsObj[b] * Product.TYPES[b].volumePerUnit ? -1 : 1;
       return Product.TYPES[a].name < Product.TYPES[b].name ? -1 : 1;
     });
-  }, [inventory?.resources, order]);
+  }, [inventory?.contentsObj, order]);
 
   const isIncomingDelivery = useMemo(() => {
-    return (lot?.building?.deliveries || []).find((d) => d.status !== 'COMPLETE')
-  }, [lot])
+    return (lot?.deliveries || []).find((d) => d.Delivery.status !== Delivery.STATUSES.COMPLETE)  
+  }, [lot]);
 
   const handleSelected = useCallback((resourceId, newTotal) => {
     setSelectedItems((s) => {
@@ -330,8 +337,8 @@ const LotInventory = () => {
   const splitStack = useCallback((resourceId) => (e) => {
     e.stopPropagation();
     setSplittingResourceId(resourceId);
-    setAmount(selectedItems[resourceId] || inventory?.resources[resourceId] || 0);
-  }, [selectedItems, inventory?.resources]);
+    setAmount(selectedItems[resourceId] || inventory?.contentsObj[resourceId] || 0);
+  }, [selectedItems, inventory?.contentsObj]);
 
   const onChangeAmount = useCallback((e) => {
     let newValue = parseInt(e.target.value.replace(/^0+/g, '').replace(/[^0-9]/g, ''));
@@ -412,7 +419,7 @@ const LotInventory = () => {
                   <label>Selected Amount ({Product.TYPES[splittingResourceId].isAtomic ? '' : 'kg'})</label>
                   <QuantaInput
                     type="number"
-                    max={inventory.resources[splittingResourceId]}
+                    max={inventory.contentsObj[splittingResourceId]}
                     min={0}
                     onBlur={onFocusAmount}
                     onChange={onChangeAmount}
@@ -426,7 +433,7 @@ const LotInventory = () => {
             {sortedResources.map((resourceId) => (
               <ThumbnailWrapper
                 key={resourceId}
-                onClick={() => handleSelected(resourceId, selectedItems[resourceId] > 0 ? 0 : inventory.resources[resourceId])}
+                onClick={() => handleSelected(resourceId, selectedItems[resourceId] > 0 ? 0 : inventory.contentsObj[resourceId])}
                 selected={selectedItems[resourceId]}>
                 <StackSplitButton
                   ref={ref => (resourceItemRefs.current[resourceId] = ref)}
@@ -435,18 +442,18 @@ const LotInventory = () => {
                   <DotsIcon />
                 </StackSplitButton>
                 <ResourceThumbnail
-                  badge={formatResourceAmount(selectedItems[resourceId] || inventory.resources[resourceId], resourceId)}
+                  badge={formatResourceAmount(selectedItems[resourceId] || inventory.contentsObj[resourceId], resourceId)}
                   badgeColor={
                     selectedItems[resourceId]
                     ? (
-                      selectedItems[resourceId] === inventory.resources[resourceId]
+                      selectedItems[resourceId] === inventory.contentsObj[resourceId]
                       ? theme.colors.main
                       : theme.colors.orange
                     )
                     : undefined
                   }
                   progress={displayVolumes
-                    ? inventory.resources[resourceId] * Product.TYPES[resourceId].volumePerUnit / inventory.volume
+                    ? inventory.contentsObj[resourceId] * Product.TYPES[resourceId].volumePerUnit / inventory.volume
                     : undefined}
                   resource={Product.TYPES[resourceId]}
                   tooltipContainer="hudMenu" />

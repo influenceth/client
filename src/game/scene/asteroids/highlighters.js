@@ -4,23 +4,23 @@ import constants from '~/lib/constants';
 
 const getter = (a, config) => {
   switch (config.field) {
-    case 'axis': return a.orbital.a;
-    case 'eccentricity': return a.orbital.e;
-    case 'inclination': return a.orbital.i;
+    case 'axis': return a.Orbit.a;
+    case 'eccentricity': return a.Orbit.ecc;
+    case 'inclination': return a.Orbit.inc;
     case 'ownership': {
-      if (a.owner) {
-        if (config.myAddress && a.owner === config.myAddress) {
+      if (a.Nft?.owner) {
+        if (config.myAddress && a.Nft?.owner === config.myAddress) {
           return 'ownedByMe';
         }
-        if (config.address && a.owner === config.address) {
+        if (config.address && a.Nft?.owner === config.address) {
           return 'ownedBy';
         }
         return 'owned';
       }
       return 'unowned';
     }
-    case 'radius': return a.r;
-    case 'spectralType': return a.spectralType;
+    case 'radius': return a.Celestial.radius;
+    case 'spectralType': return a.Celestial.celestialType;
     default: return null;
   }
 }

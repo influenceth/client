@@ -4,6 +4,7 @@ import { Ship } from '@influenceth/sdk';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import ModelViewer from '../ModelViewer';
+import { getShipModel } from '~/lib/assetUtils';
 
 const ShipViewer = () => {
   const zoomScene = useStore(s => s.asteroids.zoomScene);
@@ -11,8 +12,7 @@ const ShipViewer = () => {
   const { data: ship, isLoading } = useShip(zoomScene?.shipId);
 
   const modelUrl = useMemo(() => {
-    const asset = Object.values(Ship.TYPES).find((s) => s.i === ship?.type);
-    return asset?.modelUrl;
+    return getShipModel(ship?.Ship?.shipType);
   }, [ship?.type]);
 
   if (zoomScene?.type !== 'SHIP' || isLoading) return null;

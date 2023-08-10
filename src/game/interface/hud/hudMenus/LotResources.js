@@ -115,18 +115,20 @@ const LotResources = () => {
   // get lot abundance
   const lotAbundances = useMemo(() => {
     if (!(asteroid && lot)) return [];
+
+    const resourceAbundances = Asteroid.Entity.getAbundances(asteroid);
     // TODO: do this in worker? takes about 200ms on decent cpu
-    return Object.keys(asteroid?.resources || {})
+    return Object.keys(resourceAbundances || {})
       .reduce((acc, i) => {
-        if (asteroid.resources[i] > 0) {
+        if (resourceAbundances[i] > 0) {
           acc.push({
             i,
             abundance: Asteroid.getAbundanceAtLot(
               asteroid.i,
-              BigInt(asteroid.resourceSeed),
+              BigInt(asteroid.Celestial.abundanceSeed),
               Number(lot.i),
               i,
-              asteroid.resources[i]
+              resourceAbundances[i]
             )
           });
         }
@@ -140,8 +142,8 @@ const LotResources = () => {
   const onClickResource = useCallback((i) => () => {
     setSelected({ type: 'resource', i });
   }, []);
-  const onClickSample = useCallback((r, i) => () => {
-    setSelected({ type: 'sample', r, i });
+  const onClickSample = useCallback((i) => () => {
+    setSelected({ type: 'sample', i });
   }, []);
 
   const [showAbundances, abundancesTruncated] = useMemo(() => {
@@ -153,27 +155,27 @@ const LotResources = () => {
   }, [lotAbundances, showAllAbundances]);
 
   const [ownedSamples, depletedSamples] = useMemo(() => ([
-    (lot?.coreSamples || [])
-      .filter((s) => s.owner === crew?.i)
-      .filter((s) => !s.initialYield || showAllSamples || s.remainingYield > 0)
+    (lot?.deposits || [])
+      .filter((s) => s.Control.controller.id === crew?.i)
+      .filter((s) => showAllSamples || !s.Deposit.initialYield || s.Deposit.remainingYield > 0)
       .sort((a, b) => {
-        if (!a.initialYield && !b.initialYield) {
-          return b.remainingYield - a.remainingYield;
+        if (!a.Deposit.initialYield && !b.Deposit.initialYield) {
+          return b.Deposit.remainingYield - a.Deposit.remainingYield;
         }
-        return b.initialYield ? -1 : 1;
+        return b.Deposit.initialYield ? -1 : 1;
       }),
-    (lot?.coreSamples || [])
-      .filter((s) => s.owner === crew?.i)
-      .filter((s) => s.initialYield > 0 && s.remainingYield === 0),
-  ]), [crew?.i, lot?.coreSamples, showAllSamples]);
+    (lot?.deposits || [])
+    .filter((s) => s.Control.controller.id === crew?.i)
+      .filter((s) => s.Deposit.initialYield > 0 && s.Deposit.remainingYield === 0),
+  ]), [crew?.i, lot?.deposits, showAllSamples]);
 
   const getSampleYield = useCallback((sample) => {
-    if (sample.initialYield) {
-      if (sample.remainingYield > 0) {
-        if (sample.initialYield === sample.remainingYield) {
-          return `${formatFixed(sample.remainingYield / 1e3, 0)} t`;
+    if (sample.Deposit.initialYield) {
+      if (sample.Deposit.remainingYield > 0) {
+        if (sample.Deposit.initialYield === sample.Deposit.remainingYield) {
+          return `${formatFixed(sample.Deposit.remainingYield / 1e3, 0)} t`;
         }
-        return <>{formatFixed(sample.remainingYield / 1e3, 0)} t <Used>(partial)</Used></>;
+        return <>{formatFixed(sample.Deposit.remainingYield / 1e3, 0)} t <Used>(partial)</Used></>;
       }
       return <Depleted>Depleted</Depleted>;
     }
@@ -189,7 +191,7 @@ const LotResources = () => {
 
   const selectedSample = useMemo(() => {
     if (selected && selected.type === 'sample') {
-      return ownedSamples.find((s) => selected.r === s.resourceId && selected.i === s.sampleId);
+      return ownedSamples.find((s) => selected.i === s.id);
     }
     return null;
   }, [ownedSamples, selected]);
@@ -201,7 +203,7 @@ const LotResources = () => {
         params.overrideResourceId = Number(selectedResource?.i);
       } else if (selectedSample) {
         params.improveSample = { ...selectedSample };
-        params._disabled = !(selectedSample?.status === Deposit.STATUSES.SAMPLED && selectedSample?.initialYield === selectedSample?.remainingYield);
+        params._disabled = !(selectedSample?.Deposit?.status === Deposit.STATUSES.SAMPLED && selectedSample?.Deposit?.initialYield === selectedSample?.Deposit?.remainingYield);
       }
     }
     return params;
@@ -212,7 +214,7 @@ const LotResources = () => {
     if (!currentExtraction) {
       if (selectedSample) {
         params.preselect = { ...selectedSample };
-        if (selectedSample.remainingYield === 0) {
+        if (selectedSample.Deposit?.remainingYield === 0) {
           params._disabled = true;
         }
       }
@@ -265,19 +267,19 @@ const LotResources = () => {
           
           <HudMenuCollapsibleSection titleText="Core Samples" titleLabel={`${sampleTally} Sample${sampleTally === 1 ? '' : 's'}`}>
             {ownedSamples.map((sample) => {
-              const { name, category } = Product.TYPES[sample.resourceId];
+              const { name, category } = Product.TYPES[sample.Deposit.resource];
               const categoryKey = keyify(category);
-              const isSelected = selected?.type === 'sample' && selected?.r === sample.resourceId && selected?.i === sample.sampleId;
+              const isSelected = selected?.type === 'sample' && selected?.i === sample.id;
               return (
                 <Sample
                   key={sample.i}
                   category={categoryKey}
-                  onClick={onClickSample(sample.resourceId, sample.sampleId)}
+                  onClick={onClickSample(sample.Deposit.resource, sample.id)}
                   selected={isSelected}>
                   {isSelected
                     ? (
                       <ResourceThumbnail
-                        resource={Product.TYPES[sample.resourceId]}
+                        resource={Product.TYPES[sample.Deposit.resource]}
                         iconBadge={<CoreSampleIcon />}
                         size="75px"
                         tooltipContainer="hudeMenu" />

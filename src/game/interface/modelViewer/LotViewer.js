@@ -13,11 +13,8 @@ const LotViewer = () => {
   const { data: lot, isLoading } = useLot(asteroidId, lotId);
 
   const modelUrl = useMemo(() => {
-    if (lot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
-      const asset = Object.values(Building.TYPES).find((a) => a.name === lot.building.__t);
-      if (asset) {
-        return getBuildingModel(asset.i);
-      }
+    if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+      return getBuildingModel(lot.building.Building.buildingType);
     }
     return getBuildingModel(0);
   }, [lot?.building]);

@@ -90,7 +90,7 @@ const useActionButtons = () => {
         a.push(actionButtons.PurchaseAsteroid);
       }
 
-      if (asteroid.Celestial.scanStatus < Asteroid.SCANNING_STATUSES.RESOURCE_SCANNED) {
+      if (asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
         if (asteroid.Control.controller?.id === crew?.i) {
           a.push(actionButtons.ScanAsteroid);
         }
@@ -165,7 +165,7 @@ const useActionButtons = () => {
         }
 
         // if lot is selected and asteroid has been scanned
-        if (lot && asteroid.Celestial.scanStatus === Asteroid.SCANNING_STATUSES.RESOURCE_SCANNED) {
+        if (lot && asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
 
           // can always core sample
           a.push(actionButtons.CoreSample);
@@ -241,7 +241,7 @@ const useActionButtons = () => {
 
           // if this lot or ship has incoming deliveries, link to those deliveries
           // TODO: these deliveries should be filtered to only those that are to/from something user controls
-          if ((lot.delivery || []).find((d) => d.delivery.Delivery.status !== 'COMPLETE')) {
+          if ((lot.delivery || []).find((d) => d.delivery.Delivery.status !== Delivery.STATUSES.COMPLETE)) {
             a.push(actionButtons.SurfaceTransferIncoming);
           }
         }

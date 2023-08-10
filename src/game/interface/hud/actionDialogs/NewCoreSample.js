@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Crewmate, Deposit, Product } from '@influenceth/sdk';
+import { Asteroid, Crew, Crewmate, Deposit, Product } from '@influenceth/sdk';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { NewCoreSampleIcon, ResourceIcon } from '~/components/Icons';
@@ -8,7 +8,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
 import actionStage from '~/lib/actionStages';
-import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
 
 import {
   ActionDialogBody,
@@ -84,27 +84,29 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   // get lot abundance
   const lotAbundances = useMemo(() => {
     // TODO: do this in worker? takes about 200ms on decent cpu
-    return Object.keys(asteroid.resources).reduce((acc, r) => {
-      if (asteroid.resources[r] > 0) {
+    const abundances = Asteroid.getAbundances(asteroid?.Celestial?.abundances);
+    return Object.keys(abundances).reduce((acc, r) => {
+      if (abundances[r] > 0) {
         acc[r] = Asteroid.getAbundanceAtLot(
           asteroid?.i,
-          BigInt(asteroid?.resourceSeed),
+          BigInt(asteroid.Celestial.abundanceSeed),
           Number(lot?.i),
           r,
-          asteroid.resources[r]
+          abundances[r]
         )
       }
       return acc;
     }, {});
   }, [asteroid, lot]);
+
   const lotAbundance = resourceId ? lotAbundances[resourceId] : 0;
 
   const crewmates = coreSampleManager.currentSample?._crewmates
     || ((crew?.crewmates || []).map((i) => crewmateMap[i]));
   const captain = crewmates[0];
-  const sampleTimeBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_SPEED, crewmates);
-  const sampleQualityBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, crewmates);
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const sampleTimeBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_SPEED, crewmates);
+  const sampleQualityBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
 
   // TODO: ...
   // TODO: the crew origin and destination lots are currently set to 1, and when

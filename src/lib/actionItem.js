@@ -17,6 +17,8 @@ import {
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 
+// TODO: ecs refactor
+
 const formatAsItem = (item) => {
   const formatted = {
     key: item.key,

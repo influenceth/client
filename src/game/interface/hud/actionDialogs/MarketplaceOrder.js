@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Crewmate, Product } from '@influenceth/sdk';
+import { Building, Crew, Product } from '@influenceth/sdk';
 
 import marketplaceBackground from '~/assets/images/modal_headers/Marketplace.png';
 import { BanIcon, InventoryIcon, LocationIcon, WarningOutlineIcon, OrderIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon } from '~/components/Icons';
@@ -12,7 +12,7 @@ import useStore from '~/hooks/useStore';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import actionStages from '~/lib/actionStages';
-import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -205,7 +205,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
 
   const crewmates = currentLaunch?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const launchBonus = 0;
 
   const tooltipRefEl = useRef();
@@ -346,7 +346,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
     return sum + (mode === 'buy' ? fee : -fee);
   }, [fee, mode, totalLimitPrice, totalMarketPrice, type]);
 
-  const marketplaceBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates); // TODO: wrong id
+  const marketplaceBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates); // TODO: wrong id
 
   const stats = useMemo(() => ([
     {

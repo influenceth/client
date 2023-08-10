@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Building, Crewmate, Deposit, Extractor, Inventory, Product } from '@influenceth/sdk';
+import { Asteroid, Crew, Deposit, Extractor, Inventory, Product } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, ResourceIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
-import { boolAttr, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatTimer } from '~/lib/utils';
 
 import {
   ResourceAmountSlider, ActionDialogFooter,
@@ -62,9 +62,9 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
   const crewmates = currentExtraction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const extractionBonus = useMemo(() => {
-    const bonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_RATE, crewmates);
+    const bonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_RATE, crewmates);
     const asteroidBonus = Asteroid.Entity.getBonusByResource(asteroid, selectedCoreSample?.resourceId);
     if (asteroidBonus.totalBonus !== 1) {
       bonus.totalBonus *= asteroidBonus.totalBonus;

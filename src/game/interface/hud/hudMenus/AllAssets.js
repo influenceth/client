@@ -108,11 +108,11 @@ const ShipRow = ({ ship }) => {
     <SelectableRow onClick={onClickShip}>
       <Thumbnail>
         <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>
-        <ResourceImage src={getShipIcon(ship.shipType, 'w150')} contain />
+        <ResourceImage src={getShipIcon(ship.Ship.shipType, 'w150')} contain />
         <ClipCorner dimension={10} color={majorBorderColor} />
       </Thumbnail>
       <Info>
-        <label>{ship.name || `Ship #${ship.i.toLocaleString()}`}</label>
+        <label>{ship.Name?.name || `Ship #${ship.i.toLocaleString()}`}</label>
         <div style={{ flex: 1 }}></div>
       </Info>
     </SelectableRow>
@@ -120,7 +120,7 @@ const ShipRow = ({ ship }) => {
 };
 
 const AllAssets = ({ onClose }) => {
-  const { account } = useAuth();
+  const { crew } = useCrewContext();
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const selectAsteroid = useStore(s => s.dispatchOriginSelected);
@@ -158,7 +158,7 @@ const AllAssets = ({ onClose }) => {
           {(ownedAsteroids || []).map((asteroid, i) => (
             <SelectableRow key={asteroid.i} selected={asteroidId === asteroid.i} onClick={onClickAsteroid(asteroid.i)}>
               <Thumbnail>
-                {asteroid.owner && Address.areEqual(account, asteroid.owner) && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
+                {asteroid.Control?.controller?.id === crew?.i && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
                 {rendersReady >= i && <AsteroidRendering asteroid={asteroid} onReady={onRenderReady} />}
                 <ClipCorner dimension={10} color={majorBorderColor} />
               </Thumbnail>

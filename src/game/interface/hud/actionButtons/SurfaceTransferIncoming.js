@@ -7,7 +7,7 @@ import ActionButton from './ActionButton';
 const SurfaceTransferIncoming = ({ asteroid, lot, onSetAction, _disabled }) => {
   const incoming = useMemo(() => {
     return (lot?.deliveries || [])
-      .filter((d) => d.Delivery.status !== 'COMPLETE')
+      .filter((d) => d.Delivery.status !== Delivery.STATUSES.COMPLETE)
       .sort((a, b) => (a.Delivery.finishTime || 0) - (b.Delivery.finishTime || 0))
   }, [lot?.deliveries]);
   const nextIncoming = incoming?.length > 0 ? incoming[0] : null;

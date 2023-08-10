@@ -131,6 +131,13 @@ const AsteroidComponent = () => {
   const selectedLot = useStore(s => s.asteroids.lot);
 
   const { data: asteroidData } = useAsteroid(origin);
+  const { data: ships } = useAsteroidShips(origin);
+
+  const shipsInOrbitTally = useMemo(() => {
+    return (ships || []).filter((ship) => {
+      return ship.Location.location.label === 'Asteroid' && ship.Ship.status === Ship.STATUSES.AVAILABLE;
+    }).length;
+  }, [ships])
 
   const getTime = useGetTime();
   const webWorkerPool = useWebWorker();
@@ -288,7 +295,7 @@ const AsteroidComponent = () => {
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
     // when asteroidData is loaded for selected asteroid...
-    if (asteroidData && asteroidData.asteroidId === origin) {
+    if (asteroidData && asteroidData.i === origin) {
 
       // init config
       const c = new Config(asteroidData);
@@ -296,7 +303,7 @@ const AsteroidComponent = () => {
 
       // init orbit, position, and rotation
       const time = getTime();
-      asteroidOrbit.current = new AdalianOrbit(asteroidData.orbital);
+      asteroidOrbit.current = new AdalianOrbit(asteroidData.Orbit);
       rotationAxis.current = c.seed.clone().normalize();
       position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time));
       rotation.current = time * c.rotationSpeed * 2 * Math.PI;
@@ -586,22 +593,22 @@ const AsteroidComponent = () => {
     const resourceMapActive = resourceMap?.active;
     const resourceMapId = resourceMap?.selected;
 
-    if (!geometry.current || !config?.radiusNominal || !asteroidData?.resources) return;
+    if (!geometry.current || !config?.radiusNominal || !asteroidData?.Celestial?.abundances) return;
     if (resourceMapActive && resourceMapId && terrainInitialized) {
       const categoryKey = keyify(Product.TYPES[resourceMapId]?.category);
       const color = new Color(theme.colors.resources[categoryKey]);
       color.convertSRGBToLinear();
 
       // Collect relevant settings for generating procedural resource map
-      const { asteroidId, resourceSeed } = asteroidData;
+      const abundances = Asteroid.getAbundances(asteroidData.Celestial.abundances);
       const settings = Asteroid.getAbundanceMapSettings(
-        asteroidId,
-        resourceSeed,
+        asteroidData.i,
+        asteroidData.Celestial.abundanceSeed,
         resourceMapId,
-        asteroidData.resources[resourceMapId]
+        abundances[resourceMapId]
       );
       geometry.current.setEmissiveParams({
-        asteroidId: asteroidId,
+        asteroidId: asteroidData.i,
         color,
         resource: resourceMapId,
         intensityMult: EMISSIVE_INTENSITY[categoryKey],
@@ -612,7 +619,7 @@ const AsteroidComponent = () => {
       geometry.current.setEmissiveParams();
       forceUpdate.current = Date.now();
     }
-  }, [resourceMap, terrainInitialized, !asteroidData?.resources]);
+  }, [resourceMap, terrainInitialized, !asteroidData?.Celestial?.abundances]);
 
   useEffect(() => {
     if (geometry.current && terrainUpdateNeeded) {
@@ -1011,9 +1018,10 @@ const AsteroidComponent = () => {
           getRotation={() => rotation.current}
           hasAccess={false}
           initialCameraPosition={initialOrientation?.objectPosition}
-          isScanned={asteroidData?.scanned}
+          isScanned={Asteroid.Entity.getScanned(asteroidData)}
           radius={config.radius}
           scaleHelper={SCALE_HELPER}
+          shipTally={shipsInOrbitTally}
           spectralType={Asteroid.getSpectralType(config.spectralType)}
         />
       )}

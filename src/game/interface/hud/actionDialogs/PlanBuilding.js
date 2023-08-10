@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Crewmate, Product } from '@influenceth/sdk';
+import { Building, Crew, Crewmate, Product } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -10,7 +10,7 @@ import {
 import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
 import useConstructionManager from '~/hooks/useConstructionManager';
-import { boolAttr, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatTimer } from '~/lib/utils';
 
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -48,7 +48,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
   const stats = useMemo(() => {
     if (!asteroid?.i || !lot?.i) return [];
     const crewmates = (crew?.crewmates || []).map((i) => crewmateMap[i]);
-    const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+    const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
     const tripDetails = []; // TODO: 
     const taskTime = 0;
     return [

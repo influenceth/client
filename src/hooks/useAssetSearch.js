@@ -8,6 +8,8 @@ import useStore from '~/hooks/useStore';
 
 const filtersToQuery = {};
 
+// TODO: ecs refactor
+
 filtersToQuery.asteroids = (filters) => {
   const queryBuilder = esb.boolQuery();
   if (filters.ownedBy) {

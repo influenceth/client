@@ -59,10 +59,10 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
       current.finishTime = delivery.finishTime;
       current.destLotId = lot.i;
       current.destLotInvId = delivery.inventoryType;
-      current.resources = delivery.resources;
+      current.contents = delivery.contents;
       current.startTime = delivery.startTime;
 
-      if (delivery.status === 'COMPLETE') {
+      if (delivery.status === Delivery.STATUSES.COMPLETE) {
         status = 'FINISHED';
         stage = actionStages.COMPLETED;
       } else {
@@ -86,7 +86,7 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
         current.destLotInvId = startTx.vars.destInvId;
         current.originLotId = startTx.vars.originLotId;
         current.originLotInvId = startTx.vars.originInvId;
-        current.resources = startTx.vars.resources;
+        current.contents = startTx.vars.contents;
         status = 'DEPARTING';
         stage = actionStages.STARTING;
       }

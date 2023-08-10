@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Building, Crewmate } from '@influenceth/sdk';
+import { Building, Crew } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -10,7 +10,7 @@ import {
 import useCrewContext from '~/hooks/useCrewContext';
 import theme, { hexToRGB } from '~/theme';
 import useConstructionManager from '~/hooks/useConstructionManager';
-import { boolAttr, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatTimer } from '~/lib/utils';
 
 import {
   BuildingRequirementsSection, ActionDialogFooter,
@@ -51,8 +51,8 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
 
   const crewmates = currentConstruction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
-  const constructionBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CONSTRUCTION_EFFICIENCY, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const constructionBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CONSTRUCTION_EFFICIENCY, crewmates);
 
   // TODO: ...
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {

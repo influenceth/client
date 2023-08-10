@@ -163,35 +163,59 @@ const BuildingRow = ({ lot }) => {
   });
 
   const [progress, progressColor] = useMemo(() => {
-    if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
-      if (lot.building?.capableType === Building.IDS.WAREHOUSE) {
-        const inventory = Object.values(lot.building.inventories || {}).find((i) => !i.locked);
+    if (lot.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+      if (lot.building?.Building?.buildingType === Building.IDS.WAREHOUSE) {
+        const inventory = (lot.building.Inventories || []).find((i) => !i.locked);
         const filledCapacity = Inventory.getFilledCapacity(inventory?.inventoryType);
-        const usage = inventory ? Math.max(
-          ((inventory.mass || 0) + (inventory.reservedMass || 0)) / filledCapacity.filledMass,
-          ((inventory.volume || 0) + (inventory.reservedVolume || 0)) / filledCapacity.filledVolume,
-        ) : 0;
+        const usage = inventory
+          ? Math.min(1,
+            Math.max(
+              ((inventory.mass || 0) + (inventory.reservedMass || 0)) / filledCapacity.filledMass,
+              ((inventory.volume || 0) + (inventory.reservedVolume || 0)) / filledCapacity.filledVolume,
+            )
+          )
+          : 0;
+        return [usage, usage < 0.75 ? 'main' : (usage < 0.9 ? 'warning' : 'error')];
+      }
+
+      // TODO: ecs refactor -- must get startTime, finishTime from action items for all the following
+      // TODO: should have multiple bars for multiple processes / inventories
+      // TODO: anything to show for marketplace?
+      // TODO: how do drydocks work at shipyard?
+
+      if (lot.building?.Building?.buildingType === Building.IDS.SPACEPORT) {
+        const usage = Math.min(1, lot.building.Dock.dockedShips / Dock.TYPES[lot.building.Dock.dockType].cap);
+        return [usage, usage < 0.75 ? 'main' : (usage < 0.9 ? 'warning' : 'error')];
+      }
+      else if (lot.building?.Building?.buildingType === Building.IDS.HABITAT) {
+        const usage = Math.min(1, lot.building.Station.population / Station.TYPES[lot.building.Station.stationType].cap);
+        return [usage, usage < 0.75 ? 'main' : (usage < 0.9 ? 'warning' : 'error')];
+      }
+
+      else if (lot.building?.Building?.buildingType === Building.IDS.EXTRACTOR) {
         return [
-          Math.min(1, usage),
+          Math.min(1, (chainTime - lot.building?.Extractors?.[0]?.startTime) / (lot.building?.Extractors?.[0]?.finishTime - lot.building?.Extractors?.[0]?.startTime)),
           'main'
         ];
       }
-      if (lot.building?.capableType === Building.IDS.EXTRACTOR) {
+      else if (lot.building?.Processors?.length) {
         return [
-          Math.min(1, (chainTime - lot.building?.extraction?.startTime) / (lot.building?.extraction?.finishTime - lot.building?.extraction?.startTime)),
+          Math.min(1, (chainTime - lot.building?.Processors?.[0]?.startTime) / (lot.building?.Processors?.[0]?.finishTime - lot.building?.Processors?.[0]?.startTime)),
           'main'
         ];
       }
     }
-    if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
+
+    if (lot.building?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
       return [
-        Math.min(1, 1 - (lot.gracePeriodEnd - chainTime) / Building.GRACE_PERIOD),
+        Math.min(1, 1 - (lot.building?.Building?.plannedAt + Building.GRACE_PERIOD - chainTime) / Building.GRACE_PERIOD),
         'error'
       ];
     }
-    if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
+
+    if (lot.building?.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
       return [
-        Math.min(1, (chainTime - lot.building?.construction?.startTime) / (lot.building?.construction?.finishTime - lot.building?.construction?.startTime)),
+        Math.min(1, (chainTime - lot.building?.Building?.startTime) / (lot.building?.Building?.finishTime - lot.building?.Building?.startTime)),
         'main'
       ];
     }
@@ -199,18 +223,22 @@ const BuildingRow = ({ lot }) => {
   }, [chainTime, lot.building]);
 
   const status = useMemo(() => {
-    if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
-      if (lot.building?.capableType === 2 && lot.building?.extraction?.status > 0) {
+    if (lot.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+      if (lot.building?.Building?.buildingType === Building.IDS.EXTRACTOR && lot.building?.Extractors?.[0]?.status > 0) {
         return 'Extracting';
-      } else if (lot.building?.capableType === 1) {
+
+      } else if (lot.building?.Processors?.length && lot.building?.Processors?.[0]?.status > 0) {
+        return 'Processing';
+      
+      } else if ([Building.IDS.WAREHOUSE, Building.IDS.SPACEPORT, Building.IDS.HABITAT].includes(lot.building?.Building?.buildingType)) {
         return `${formatFixed(100 * progress, 1)}% Full`
       }
       return 'Idle';
     }
-    if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED && lot.gracePeriodEnd < chainTime) {
+    if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED && lot.building?.Building?.plannedAt + Building.GRACE_PERIOD < chainTime) {
       return 'At Risk';
     }
-    return Building.CONSTRUCTION_STATUSES[lot.building?.construction?.status || 0];
+    return Building.CONSTRUCTION_STATUSES[lot.building?.Building?.status || 0];
   }, [lot.building, progress]);
 
   return (
@@ -224,7 +252,7 @@ const BuildingRow = ({ lot }) => {
       <InfoCell>
         <Details>
           <label>
-            {Building.TYPES[lot.building?.capableType || 0].name}
+            {lot.building?.Name?.name || Building.TYPES[lot.building?.Building?.buildingType || 0].name}
           </label>
           <span>
             <HoverContent>Lot {(lot.i || '').toLocaleString()}</HoverContent>
@@ -237,16 +265,19 @@ const BuildingRow = ({ lot }) => {
   );
 };
 
-const ShipGroupHeader = ({ asteroidId, lotId }) => {
-  const { data: lot } = useLot(asteroidId, lotId);
+const ShipGroupHeader = ({ asteroidId, buildingId, lotId }) => {
+  const { data: building } = useBuilding(buildingId);
+  const buildingLoc = Location.fromEntityFormat(building?.Location?.location);
 
-  const mainLabel = useMemo(() => {
-    return lotId > 0 ? (lot?.building?.__t || 'Empty Lot') : 'In Orbit';
+  const { data: lot } = useLot(asteroidId, buildingLoc?.lotId || lotId);
+
+  const [mainLabel, details] = useMemo(() => {
+    if (lotId === 0) return ['In Orbit', ''];
+    return [
+      Building.TYPES[lot?.building?.Building?.buildingType]?.name || 'Empty Lot',
+      `Lot ${lot?.i.toLocaleString()}`
+    ]
   }, [lot, lotId]);
-  
-  const details = useMemo(() => {
-    return lotId > 0 ? `Lot ${lotId.toLocaleString()}` : '';
-  }, [lotId]);
 
   return (
     <ShipHeaderRow>
@@ -263,15 +294,15 @@ const ShipInfoRow = ({ ship }) => {
     <ShipRow onClick={onClick}>
       <ImageCell>
         <ImageWrapper>
-          <ResourceImage src={getShipIcon(ship.shipType, 'w150')} style={{ width: 32, backgroundSize: 'contain' }} />
+          <ResourceImage src={getShipIcon(ship.Ship.shipType, 'w150')} style={{ width: 32, backgroundSize: 'contain' }} />
           <ClipCorner color="#222" dimension={8} />
         </ImageWrapper>
       </ImageCell>
       <td>
-        {ship.name}
+        {ship.Name?.name || `Ship #${ship.i.toLocaleString()}`}
       </td>
       <td>
-        {Ship.TYPES[ship.shipType].name}
+        {Ship.TYPES[ship.Ship.shipType].name}
       </td>
     </ShipRow>
   );
@@ -281,6 +312,8 @@ const AsteroidAssets = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lots, isLoading: lotsLoading } = useAsteroidCrewLots(asteroidId);
+  // TODO: ecs refactor -- should this use useOwnedShips instead (and filter to asteroid location?);
+  //  might be harder todo unless also using elasticsearch for flattened location
   const { data: ships, isLoading: shipsLoading } = useAsteroidShips(asteroidId);
 
   const buildingTally = lots?.length || 0;
@@ -288,11 +321,11 @@ const AsteroidAssets = () => {
   const buildingsByType = useMemo(() => {
     if (!lots) return {};
     return lots
-    .sort((a, b) => a.building?.__t < b.building?.__t ? -1 : 1)
+    .sort((a, b) => Building.TYPES[a.building?.Building?.buildingType]?.name < Building.TYPES[b.building?.Building?.buildingType]?.name ? -1 : 1)
     .reduce((acc, lot) => {
-      const capableType = lot.building?.capableType;
-      if (!acc[capableType]) acc[capableType] = [];
-      acc[capableType].push(lot);
+      const buildingType = lot.building?.Building?.buildingType;
+      if (!acc[buildingType]) acc[buildingType] = [];
+      acc[buildingType].push(lot);
       return acc;
     }, {});
   }, [lots]);
@@ -301,9 +334,12 @@ const AsteroidAssets = () => {
     if (!ships) return {};
     return ships
     .reduce((acc, ship) => {
-      const lot = ship.lotId || -1;
-      if (!acc[lot]) acc[lot] = [];
-      acc[lot].push(ship);
+      if (ship.Control?.controller?.id === crew?.i) {
+        const loc = Location.fromEntityFormat(ship.Location.location);
+        const lot = loc.buildingId ? -loc.buildingId : (loc.lotId || 0);
+        if (!acc[lot]) acc[lot] = [];
+        acc[lot].push(ship);
+      }
       return acc;
     }, {});
   }, [ships]);
@@ -316,12 +352,12 @@ const AsteroidAssets = () => {
         {asteroid && lots && !lotsLoading && (
           <>
             {buildingTally === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied any lots on this asteroid yet.</div>}
-            {buildingTally > 0 && Object.keys(buildingsByType).map((capableType, i) => (
-              <Fragment key={capableType}>
+            {buildingTally > 0 && Object.keys(buildingsByType).map((buildingType, i) => (
+              <Fragment key={buildingType}>
                 {i > 0 && <Rule />}
                 <AssetTable>
                   <tbody>
-                    {buildingsByType[capableType].map((lot) => <BuildingRow key={lot.i} lot={lot} />)}
+                    {buildingsByType[buildingType].map((lot) => <BuildingRow key={lot.i} lot={lot} />)}
                   </tbody>
                 </AssetTable>
               </Fragment>
@@ -337,22 +373,29 @@ const AsteroidAssets = () => {
         {asteroid && ships && !shipsLoading && (
           <>
             {!ships?.length && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has no ships landed on or orbiting this asteroid yet.</div>}
-            {ships?.length > 0 && Object.keys(shipsByLocation).map((lotId, i) => (
-              <Fragment key={lotId}>
-                <AssetTable style={i > 0 ? { marginTop: 10 } : {}}>
-                  <thead>
-                    <ShipGroupHeader asteroidId={asteroidId} lotId={lotId} />
-                  </thead>
-                  <tbody>
-                    {shipsByLocation[lotId].map((ship) => <ShipInfoRow key={ship.i} ship={ship} />)}
-                  </tbody>
-                </AssetTable>
-              </Fragment>
-            ))}
+            {ships?.length > 0 && Object.keys(shipsByLocation).map((lotOrBuildingId, i) => {
+              const headerProps = { asteroidId };
+              if (lotOrBuildingId > 0) headerProps.lotId = lotOrBuildingId;
+              else if (lotOrBuildingId < 0) headerProps.buildingId = -lotOrBuildingId;
+
+              return (
+                <Fragment key={lotOrBuildingId}>
+                  <AssetTable style={i > 0 ? { marginTop: 10 } : {}}>
+                    <thead>
+                      <ShipGroupHeader {...headerProps} />
+                    </thead>
+                    <tbody>
+                      {shipsByLocation[lotOrBuildingId].map((ship) => <ShipInfoRow key={ship.i} ship={ship} />)}
+                    </tbody>
+                  </AssetTable>
+                </Fragment>
+              );
+            })}
           </>
         )}
       </HudMenuCollapsibleSection>
 
+      {/* TODO: ? */}
       <HudMenuCollapsibleSection
         titleText="Stationed Crewmates"
         titleLabel="0 Assets"

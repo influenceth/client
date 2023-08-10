@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Asteroid, Building, Crewmate, Inventory, Product } from '@influenceth/sdk';
+import { Asteroid, Building, Crew, Crewmate, Inventory, Product } from '@influenceth/sdk';
 
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
 import { ForwardIcon, InventoryIcon, LocationIcon, SurfaceTransferIcon, TransferToSiteIcon } from '~/components/Icons';
@@ -7,7 +7,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { boolAttr, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatTimer } from '~/lib/utils';
 import {
   ActionDialogFooter,
   ActionDialogHeader,
@@ -54,12 +54,12 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
 
   const crewmates = currentDelivery?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
 
   // handle "currentDelivery" state
   useEffect(() => {
     if (currentDelivery) {
-      setSelectedItems(currentDelivery.resources);
+      setSelectedItems(currentDelivery.contents);
     }
   }, [currentDelivery]);
 
@@ -258,7 +258,7 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
         <>
           <TransferSelectionDialog
             requirements={buildingRequirements}
-            inventory={originInventory?.resources || {}}
+            inventory={originInventory?.contents || []}
             initialSelection={selectedItems}
             lot={lot}
             onClose={() => setTransferSelectorOpen(false)}

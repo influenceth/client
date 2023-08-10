@@ -12,7 +12,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
-import { formatFixed } from '~/lib/utils';
+import { boolAttr, formatFixed } from '~/lib/utils';
 import { ShipImage, formatMass } from '../actionDialogs/components';
 import { Scrollable } from './components';
 
@@ -123,8 +123,42 @@ const maxDelay = minDelay + 365;
 const minTof = Math.max(resolution, 1);
 const maxTof = minTof + 365;
 
-// TODO: should be in sdk or at least Constants
-const exhaustVelocity = 29000; // m/s
+// contents: [{ type: InventoryItem }],
+//     entity: { type: Entity },
+//     inventoryType: { type: Number },
+//     mass: { type: Number },
+//     slot: { type: Number },
+//     status: { type: Number },
+//     reservedMass: { type: Number },
+//     reservedVolume: { type: Number },
+//     volume: { type: Number }
+
+const simInventoryDefaults = { contents: [], mass: 0, volume: 0, reservedMass: 0, reservedVolume: 0, status: Inventory.STATUSES.AVAILABLE };
+
+const getInventoryTypeOffset = (shipType) => {
+  if (shipType === Ship.IDS.HEAVY_TRANSPORT) return 2;
+  if (shipType === Ship.IDS.LIGHT_TRANSPORT) return 1;
+  return 0;
+};
+const getInventoriesByShipType = (shipType) => {
+  const inventories = [];
+  const config = Ship.TYPES[shipType];
+  if (config.cargoSlot) {
+    inventories.push({
+      ...simInventoryDefaults,
+      slot: config.cargoSlot,
+      inventoryType: Inventory.IDS.CARGO_SMALL + getInventoryTypeOffset(shipType),
+    });
+  }
+  if (config.propellantSlot) {
+    inventories.push({
+      ...simInventoryDefaults,
+      slot: config.propellantSlot,
+      inventoryType: Inventory.IDS.PROPELLANT_SMALL + getInventoryTypeOffset(shipType),
+    });
+  }
+  return inventories;
+}
 
 const RoutePlanner = () => {
   const { coarseTime } = useContext(ClockContext);
@@ -138,21 +172,90 @@ const RoutePlanner = () => {
 
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
+  const { data: myShips, isLoading: myShipsLoading } = { data: [] }; // TODO: useMyShips
 
   const [baseTime, setBaseTime] = useState();
   const [nowTime, setNowTime] = useState();
 
   const [cargoMass, setCargoMass] = useState(0);
   const [propellantMass, setPropellantMass] = useState(0);
-  const [ship, setShip] = useState(Ship.TYPES[1]);
+  const [ship, setShip] = useState();
+
+  const shipList = useMemo(() => {
+    if (myShipsLoading) return [];
+    return [
+      // add my ships
+      ...myShips.sort((a, b) => {
+        if (crew?._location?.shipId === a.id) return -1;
+        if (crew?._location?.shipId === b.id) return 1;
+
+        const aLoc = Location.fromEntityFormat(a.Location.location);
+        const bLoc = Location.fromEntityFormat(b.Location.location);
+        if (aLoc.asteroidId === originId && !aLoc.lotId) return -1;
+        if (bLoc.asteroidId === originId && !bLoc.lotId) return 1;
+
+        if (aLoc.asteroidId === originId) return -1;
+        if (bLoc.asteroidId === originId) return 1;
+
+        return 0;
+      }),
+
+      // add simulations
+      ...Object.keys(Ship.TYPES).map((s, i) => ({
+        label: 'Ship',
+        id: -(1 + i),
+        i: -(1 + i),
+        Name: { name: `[Simulated] ${Ship.TYPES[s].name}` },
+        Ship: { shipType: s, status: Ship.STATUSES.AVAILABLE },
+        Location: { location: { label: 'Asteroid', id: originId } },
+        Inventories: getInventoriesByShipType(s),
+        _simulated: true
+      }))
+    ].map((s) => ({
+      ...s,
+      _name: s.Name?.name || `Ship #${s.id.toLowerCase()}`,
+    }))
+  }, [myShips, myShipsLoading]);
+
+  // select default
+  useEffect(() => {
+    if (shipList.length > 0 && !ship) {
+      setShip(shipList[0]);
+    }
+  }, [shipList.length]);
+
+  const shipConfig = useMemo(() => {
+    if (!ship) return null;
+
+    const cargoInventory = ship.Inventories.find((i) => i.slot === shipConfig.cargoSlot);
+    const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
+
+    const config = {};
+    config.maxCargoMass = Inventory.TYPES[cargoInventory?.inventoryType]?.massConstraint || 0;
+    config.maxPropellantMass = Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint || 0;
+    if (ship._simulated) {
+      config.initialCargoMass = config.maxCargoMass * 0.5;
+      config.initialPropellantMass = config.maxPropellantMass * 0.5;
+    } else {
+      config.initialCargoMass = cargoInventory?.mass || 0;
+      config.initialPropellantMass = propellantInventory?.mass || 0;
+    }
+    return config;
+  }, [ship]);
+
+  useEffect(() => {
+    if (!shipConfig) return;
+    setCargoMass(shipConfig.initialCargoMass);
+    setPropellantMass(shipConfig.initialPropellantMass);
+  }, [shipConfig]);
 
   const onSetCargoMass = useCallback((amount) => {
-    setCargoMass(Math.max(0, Math.min(ship?.maxCargoMass, Math.floor(parseInt(amount) || 0))));
-  }, [ship]);
+    setCargoMass(Math.max(0, Math.min(shipConfig?.maxCargoMass, Math.floor(parseInt(amount) || 0))));
+  }, [shipConfig]);
   
   const onSetPropellantMass = useCallback((amount) => {
-    setPropellantMass(Math.max(0, Math.min(ship?.maxPropellantMass, Math.floor(parseInt(amount) || 0))));
-  }, [ship]);
+    setPropellantMass(Math.max(0, Math.min(shipConfig?.maxPropellantMass, Math.floor(parseInt(amount) || 0))));
+  }, [shipConfig]);
 
   const onCancel = useCallback(() => {
     dispatchTravelSolution();
@@ -169,12 +272,6 @@ const RoutePlanner = () => {
       maxDeltaV: exhaustVelocity * Math.log((ship.hullMass + cargoMass + propellantMass) / (ship.hullMass + cargoMass))
     };
   }, [ship, cargoMass, propellantMass]);
-
-  useEffect(() => {
-    if (!ship) return;
-    onSetCargoMass(ship.maxCargoMass * 0.5);
-    setPropellantMass(ship.maxPropellantMass * 0.5);
-  }, [ship]);
 
   useEffect(() => {
     dispatchReorientCamera(true);
@@ -223,15 +320,15 @@ const RoutePlanner = () => {
   return (
     <Scrollable hasTray={hasTray} style={{ marginLeft: -12, paddingLeft: 12 }}>
 
-      <ShipSelection isSimulated={ship?.isSimulated}>
-        <ShipImage shipType={ship?.i} simulated />
+      <ShipSelection isSimulated={ship?._simulated}>
+        <ShipImage shipType={ship?.i} simulated={boolAttr(ship?._simulated)} />
 
         <div>
           <SectionHeader style={{ border: 0, margin: 0 }}>Ship</SectionHeader>
           <Dropdown
-            labelKey="name"
+            labelKey="_name"
             onChange={setShip}
-            options={Object.values(Ship.TYPES)}
+            options={shipList}
             valueKey="i"
             size="small"
             style={{ textTransform: 'none' }}
@@ -246,7 +343,7 @@ const RoutePlanner = () => {
             <label><b>Simulated</b> Onboard Cargo</label>
             <NumberInput
               min={0}
-              max={ship?.maxCargoMass || 0}
+              max={shipConfig?.maxCargoMass || 0}
               onChange={onSetCargoMass}
               step={1}
               value={cargoMass} />
@@ -254,7 +351,7 @@ const RoutePlanner = () => {
           </SliderInfoRow>
           <SliderInput
             min={0}
-            max={ship?.maxCargoMass || 0}
+            max={shipConfig?.maxCargoMass || 0}
             increment={1}
             onChange={onSetCargoMass}
             value={cargoMass || 0} />
@@ -265,7 +362,7 @@ const RoutePlanner = () => {
             <label><b>Simulated</b> Onboard Propellant</label>
             <NumberInput
               min={0}
-              max={ship?.maxPropellantMass || 0}
+              max={shipConfig?.maxPropellantMass || 0}
               onChange={onSetPropellantMass}
               step={1}
               value={propellantMass} />
@@ -273,7 +370,7 @@ const RoutePlanner = () => {
           </SliderInfoRow>
           <SliderInput
             min={0}
-            max={ship?.maxPropellantMass || 0}
+            max={shipConfig?.maxPropellantMass || 0}
             increment={1}
             onChange={onSetPropellantMass}
             value={propellantMass || 0} />

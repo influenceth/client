@@ -163,7 +163,7 @@ const TravelSolution = ({}) => {
     // // ^^^
 
     const originPositions = [];
-    const originOrbit = new AdalianOrbit(origin.orbital);
+    const originOrbit = new AdalianOrbit(origin.Orbit);
     const originIncrement = (departureTime - baseTime) / 360;
     for (let t = baseTime; t < departureTime; t += originIncrement) {
       const p = originOrbit.getPositionAtTime(t);
@@ -172,7 +172,7 @@ const TravelSolution = ({}) => {
     setPredeparture(new Float32Array(originPositions));
 
     const destinationPositions = [];
-    const destinationOrbit = new AdalianOrbit(destination.orbital);
+    const destinationOrbit = new AdalianOrbit(destination.Orbit);
     const destinationIncrement = (arrivalTime - baseTime) / 360;
     for (let t = baseTime; t < arrivalTime; t += destinationIncrement) {
       const p = destinationOrbit.getPositionAtTime(t);

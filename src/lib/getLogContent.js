@@ -26,6 +26,8 @@ const getTxLink = (event) => {
   return `${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${event.transactionHash}`;
 }
 
+// TODO: ecs refactor
+
 // const saleLabels = {
 //   Asteroid: 'asteroid development rights',
 //   Crewmate: 'crewmate recruitment'

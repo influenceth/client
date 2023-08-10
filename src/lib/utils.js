@@ -1,14 +1,3 @@
-import { Crew } from '@influenceth/sdk';
-
-// TODO: probably should just reconcile the crewmate formatting with the sdk
-export const getCrewAbilityBonus = (abilityId, crewmates) => {
-  return Crew.getAbilityBonus(abilityId, crewmates.map((crewmate) => ({
-    classId: crewmate.crewClass,
-    titleId: crewmate.title,
-    traitIds: crewmate.traits
-  })));
-}
-
 const timerIncrements = { d: 86400, h: 3600, m: 60, s: 1 };
 export const formatTimer = (secondsRemaining, maxPrecision = null) => {
   let remainder = secondsRemaining;

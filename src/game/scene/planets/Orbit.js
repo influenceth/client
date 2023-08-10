@@ -11,13 +11,13 @@ const Orbit = (props) => {
 
   const positions = useMemo(() => {
     const vertices = [];
-    const orbit = new AdalianOrbit(props.planet.orbital);
+    const orbit = new AdalianOrbit(props.planet.Orbit);
     orbit.getSmoothOrbit(360).forEach(p => {
       vertices.push(...[ p.x, p.y, p.z ]);
     });
 
     return new Float32Array(vertices);
-  }, [props.planet.orbital]);
+  }, [props.planet.Orbit]);
 
   // re-computeBoundingSphere on geometry change
   useEffect(() => {

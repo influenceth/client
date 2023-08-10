@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Building, Crewmate, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Crew, Crewmate, Ship } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
 
 import {
   ResourceAmountSlider,
@@ -99,7 +99,7 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
 
   const crewmates = currentStationing?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const launchBonus = 0;
 
   const transportDistance = Asteroid.getLotDistance(asteroid?.i, lot?.i, destinationLot?.i || destinationShip?.lotId) || 0;
@@ -328,7 +328,7 @@ const Wrapper = (props) => {
           && ship?.Location?.location?.label === 'Asteroid'
           && ship?.Location?.location?.id === asteroidId
           && ship?.Ship?.status !== Ship.STATUS.IN_FLIGHT
-          && !!props.guests === (s.owner !== crew?.i))
+          && !!props.guests === (s.Control.controller.id !== crew?.i))
         .map((s) => ({ type: 'ship', data: s }));
     }
 

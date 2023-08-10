@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
+import { Crew } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CloseIcon, CoreSampleIcon, EjectPassengersIcon, EmergencyModeEnterIcon, EmergencyModeExitIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
 
 import {
   ResourceAmountSlider,
@@ -61,7 +62,6 @@ import CrewCardFramed from '~/components/CrewCardFramed';
 import useCrew from '~/hooks/useCrew';
 import useCrewmate from '~/hooks/useCrewmate';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAsteroidShips from '~/hooks/useAsteroidShips';
 import useCrewmates from '~/hooks/useCrewmates';
 import useShipCrews from '~/hooks/useShipCrews';
 

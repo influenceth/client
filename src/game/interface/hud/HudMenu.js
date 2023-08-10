@@ -341,9 +341,8 @@ const HudMenu = () => {
         }
       );
 
-      if (lot?.building?.construction?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
-        // marketplace
-        if (lot.building.capableType === 1) { // TODO: 8) {
+      if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+        if (lot.building.Building.buildingType === Building.IDS.MARKETPLACE) {
           buttons.push({
             key: 'MARKETPLACE_LISTINGS',
             label: 'Marketplace Listings',
@@ -362,7 +361,7 @@ const HudMenu = () => {
         Component: hudMenus.LotResources
       });
 
-      if (lot?.building?.capableType && Object.values(lot.building.inventories || {}).find((i) => !i.locked)) {
+      if (lot?.building?.Building?.buildingType && (lot?.building?.Inventories || []).find((i) => !i.locked)) {
         buttons.push({
           key: 'LOT_INVENTORY',
           label: 'Inventory',

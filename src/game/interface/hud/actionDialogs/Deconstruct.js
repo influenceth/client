@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Asteroid, Building, Crewmate } from '@influenceth/sdk';
+import { Asteroid, Building, Crew, Crewmate } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -8,7 +8,7 @@ import {
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useConstructionManager from '~/hooks/useConstructionManager';
-import { boolAttr, formatFixed, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
 
 import {
   DeconstructionMaterialsSection, ActionDialogFooter,
@@ -36,7 +36,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
 
   const crewmates = crew.crewmates.map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
 
   const [destinationLot, setDestinationLot] = useState();
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);

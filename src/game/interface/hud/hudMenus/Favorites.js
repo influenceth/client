@@ -12,6 +12,7 @@ import useAuth from '~/hooks/useAuth';
 import theme from '~/theme';
 import { HudMenuCollapsibleSection, Scrollable } from './components';
 import formatters from '~/lib/formatters';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const thumbnailDimension = 75;
 
@@ -82,7 +83,7 @@ const SelectableRow = styled.div`
 `;
 
 const Favorites = ({ onClose }) => {
-  const { account } = useAuth();
+  const { crew } = useCrewContext();
   const asteroidId = useStore(s => s.asteroids.origin);
   const selectAsteroid = useStore(s => s.dispatchOriginSelected);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
@@ -103,14 +104,14 @@ const Favorites = ({ onClose }) => {
         <SelectableRow key={asteroid.i} selected={asteroidId === asteroid.i} onClick={onClick(asteroid.i)}>
           {asteroidId === asteroid.i && (
             <Thumbnail>
-              {asteroid.owner && Address.areEqual(account, asteroid.owner) && <MyAssetIcon />}
+              {asteroid.Control.controller.id === crew?.i && <MyAssetIcon />}
               <AsteroidRendering asteroid={asteroid} />
             </Thumbnail>
           )}
           <label>{formatters.asteroidName(asteroid)}</label>
           <span>
-            {Asteroid.getSize(asteroid.r)}{' '}
-            <b>{Asteroid.getSpectralType(asteroid.spectralType)}{'-type'}</b>
+            {Asteroid.Entity.getSize(asteroid)}{' '}
+            <b>{Asteroid.Entity.getSpectralType(asteroid)}{'-type'}</b>
           </span>
           {asteroidId === asteroid.i && <ClipCorner dimension={10} color={theme.colors.main} />}
         </SelectableRow>

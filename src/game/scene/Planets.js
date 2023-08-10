@@ -25,7 +25,7 @@ const Planets = () => {
           topic: 'updatePlanetPositions',
           planets: {
             key: '_planets',
-            orbitals: planets.data.map((p) => p.orbital)
+            orbitals: planets.data.map((p) => p.Orbit)
           },
           elapsed: coarseTime,
           _cacheable: 'planets'

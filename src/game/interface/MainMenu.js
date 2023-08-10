@@ -141,7 +141,7 @@ const MainMenu = () => {
   // TODO: genesis book deprecation vvv
   const { crew, crewmateMap } = useCrewContext();
   const hasGenesisCrewmate = useMemo(() => {
-    return crew && crew?.crewmates && crewmateMap && crew.crewmates.find((i) => [1,2,3].includes(crewmateMap[i]?.crewCollection));
+    return crew && crew?.crewmates && crewmateMap && crew.crewmates.find((i) => [1,2,3].includes(crewmateMap[i]?.coll));
   }, [crew?.crewmates, crewmateMap]); // eslint-disable-line react-hooks/exhaustive-deps
   // ^^^
 

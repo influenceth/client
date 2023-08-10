@@ -7,8 +7,9 @@ const useAsteroidAbundances = (asteroid) => {
   const data = useMemo(() => {
     if (asteroid?.scanned) {
       const categories = {};
-      Object.keys(asteroid.resources || {}).forEach((i) => {
-        const abundance = asteroid.resources[i];
+      const abundances = Asteroid.getAbundances(asteroid.Celestial.abundances);
+      Object.keys(abundances).forEach((i) => {
+        const abundance = abundances[i];
         if (abundance > 0) {
           const { category, name } = Product.TYPES[i];
 
@@ -43,7 +44,7 @@ const useAsteroidAbundances = (asteroid) => {
         .sort((a, b) => b.abundance - a.abundance);
     }
     return [];
-  }, [asteroid?.scanned, asteroid?.resources]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [asteroid?.scanned, asteroid?.Celestial?.abundances]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   return data;
 };

@@ -321,7 +321,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
             <AsteroidGraphic
               abundances={abundances}
               asteroid={asteroid}
-              noColor={asteroid.Celestial.scanStatus < Asteroid.SCANNING_STATUSES.RESOURCE_SCANNED}
+              noColor={asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED}
               noGradient />
           </GraphicWrapper>
         </GraphicSection>

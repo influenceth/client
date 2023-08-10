@@ -29,13 +29,14 @@ const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improve
 
   // get lot abundance
   const lotAbundance = useMemo(() => {
-    if (!resourceId || !asteroid?.resourceSeed || !asteroid.resources) return 0;
+    if (!resourceId || !asteroid?.Celestial?.abundanceSeed || !asteroid.Celestial?.abundances) return 0;
+    const abundances = Asteroid.getAbundances(asteroid.Celestial.abundances);
     return Asteroid.getAbundanceAtLot(
       asteroid?.i,
-      BigInt(asteroid?.resourceSeed),
+      BigInt(asteroid.Celestial.abundanceSeed),
       Number(lot?.i),
       resourceId,
-      asteroid.resources[resourceId]
+      abundances[resourceId]
     );
   }, [asteroid, lot, resourceId]);
 

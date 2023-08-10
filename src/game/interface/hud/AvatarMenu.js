@@ -7,9 +7,11 @@ import CollapsibleSection from '~/components/CollapsibleSection';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import { CaptainIcon, CrewIcon, CrewmateIcon, FoodIcon, IdleIcon, LocationIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
 import TriangleTip from '~/components/TriangleTip';
+import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
+import formatters from '~/lib/formatters';
 import theme from '~/theme';
 
 const bgColor = '#000';
@@ -226,6 +228,10 @@ const AvatarMenu = () => {
   const { captain, crewmateMap, crew, loading: crewIsLoading } = useCrewContext();
   const history = useHistory();
 
+  const { data: crewAsteroid } = useAsteroid(crew?._location?.asteroidId);
+  const { data: crewBuilding } = useBuilding(crew?._location?.buildingId);
+  const { data: crewShip } = useShip(crew?._location?.shipId);
+
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
   const silhouetteOverlay = useMemo(() => {
@@ -268,7 +274,7 @@ const AvatarMenu = () => {
         title={(
           <>
             <CrewIcon />
-            <label>Skull Squadron</label>
+            <label>{crew?.Name?.name || `Your Crew`}</label>
             <StatusContainer>
               Idle
               <StatusIcon>
@@ -291,11 +297,14 @@ const AvatarMenu = () => {
             {captain && (
               <>
                 <BaseLocation>
-                  <LocationIcon /> Habitat <span>&gt; Adalia Prime</span>
+                  <LocationIcon />
+                  {crewShip && formatters.shipName(crewShip)}
+                  {!crewShip && crewBuilding && formatters.buildingName(crewBuilding)}
+                  {crewAsteroid && <span>&gt; {formatters.asteroidName(crewAsteroid)}</span>}
                 </BaseLocation>
                 <Personnel>
                   <div>
-                    <CrewmateIcons crewmates={crew?.crewmates?.length || 0}>
+                    <CrewmateIcons crewmates={crew?.roster?.length || 0}>
                       <CrewmateIcon />
                       <CrewmateIcon />
                       <CrewmateIcon />

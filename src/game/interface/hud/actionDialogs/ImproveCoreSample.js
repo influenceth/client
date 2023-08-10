@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Crewmate, Deposit, Product } from '@influenceth/sdk';
+import { Asteroid, Crew, Deposit, Product } from '@influenceth/sdk';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { CoreSampleIcon, ImproveCoreSampleIcon, ResourceIcon } from '~/components/Icons';
@@ -8,7 +8,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
 import actionStage from '~/lib/actionStages';
-import { boolAttr, formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatTimer } from '~/lib/utils';
 
 import {
   ActionDialogBody,
@@ -87,13 +87,14 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
 
   // get lot abundance
   const lotAbundance = useMemo(() => {
-    if (!resourceId || !asteroid?.resourceSeed || !asteroid.resources) return 0;
+    if (!resourceId || !asteroid?.Celestial?.abundanceSeed || !asteroid.Celestial?.abundances) return 0;
+    const abundances = Asteroid.getAbundances(asteroid.Celestial.abundances);
     return Asteroid.getAbundanceAtLot(
       asteroid?.i,
-      BigInt(asteroid?.resourceSeed),
+      BigInt(asteroid.Celestial.abundanceSeed),
       Number(lot?.i),
       resourceId,
-      asteroid.resources[resourceId]
+      abundances[resourceId]
     );
 }, [asteroid, lot, resourceId]);
 
@@ -133,9 +134,9 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   const crewmates = coreSampleManager.currentSample?._crewmates
     || ((crew?.crewmates || []).map((i) => crewmateMap[i]));
   const captain = crewmates[0];
-  const sampleTimeBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_SPEED, crewmates);
-  const sampleQualityBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, crewmates);
-  const crewTravelBonus = getCrewAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const sampleTimeBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_SPEED, crewmates);
+  const sampleQualityBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
 
   // TODO: ...
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {

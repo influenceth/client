@@ -139,8 +139,8 @@ const ItemsList = styled.div`
   }
 `;
 
-const ConstructionPlan = ({ capableType, planningLot }) => {
-  const thumbUrl = getBuildingIcon(capableType, 'w400', true);
+const ConstructionPlan = ({ buildingType, planningLot }) => {
+  const thumbUrl = getBuildingIcon(buildingType, 'w400', true);
 
   const items = useMemo(
     () => {
@@ -191,7 +191,7 @@ const LotInfo = () => {
 
   const [selectedBuilding, setSelectedBuilding] = useState();
 
-  const mainInventoryType = useMemo(() => Object.values(lot?.building?.inventories || {}).find((l) => !l.locked)?.inventoryType, [lot]);
+  const mainInventoryType = useMemo(() => (lot?.building?.Inventories || []).find((l) => !l.locked)?.inventoryType, [lot]);
   const inventoryConfig = Inventory.getType(mainInventoryType) || {}; // TODO: use Inventory.getFilledCapacity() instead?
 
   if (!lot) return null;
@@ -211,20 +211,21 @@ const LotInfo = () => {
             <label>Name</label>
             <span>Complexity</span>
           </BuildingRow>
-          {Object.values(Building.TYPES).map(({ name }, capableType) => {
-            if (capableType === 0) return null;
+          {Object.keys(Building.TYPES).map((buildingType) => {
+            if (buildingType === 0) return null;
+            const name = Building.TYPES[buildingType].name;
             return (
               <BuildingRow
-                key={capableType}
+                key={buildingType}
                 complexity={
-                  (capableType > 0 ? 1 : 0)
-                  + (capableType > 2 ? 1 : 0)
-                  + (capableType > 5 ? 1 : 0)
-                  + (capableType > 7 ? 1 : 0)
-                  + (capableType > 8 ? 1 : 0)
+                  (buildingType > 0 ? 1 : 0)
+                  + (buildingType > 2 ? 1 : 0)
+                  + (buildingType > 5 ? 1 : 0)
+                  + (buildingType > 7 ? 1 : 0)
+                  + (buildingType > 8 ? 1 : 0)
                 }
-                onClick={() => setSelectedBuilding(capableType)}
-                selected={selectedBuilding === capableType}>
+                onClick={() => setSelectedBuilding(buildingType)}
+                selected={selectedBuilding === buildingType}>
                 <label>{name}</label>
                 <span>
                   <Dot />
@@ -238,7 +239,7 @@ const LotInfo = () => {
           })}
           {selectedBuilding && (
             <div style={{ marginTop: 15 }}>
-              <ConstructionPlan capableType={selectedBuilding} />
+              <ConstructionPlan buildingType={selectedBuilding} />
             </div>
           )}
         </HudMenuCollapsibleSection>
@@ -247,11 +248,11 @@ const LotInfo = () => {
   }
   return (
     <Wrapper>
-      <HudMenuCollapsibleSection titleText={lot.building.__t}>
+      <HudMenuCollapsibleSection titleText={Building.TYPES[lot.building?.Building?.buildingType]?.name}>
         {lot && !isLoading && (
           <>
-            <Description>{Building.TYPES[lot.building?.capableType].description}</Description>
-            {lot.building?.capableType === Building.IDS.WAREHOUSE && (
+            <Description>{Building.TYPES[lot.building?.Building?.buildingType].description}</Description>
+            {lot.building?.Building?.buildingType === Building.IDS.WAREHOUSE && (
               <>
                 <Rule margin="15px" />
                 {inventoryConfig.volumeConstraint && (
@@ -269,7 +270,7 @@ const LotInfo = () => {
               </>
             )}
 
-            {lot.building?.capableType === Building.IDS.MARKETPLACE && (
+            {lot.building?.Building?.buildingType === Building.IDS.MARKETPLACE && (
               <>
                 {/* TODO: real stats */}
                 <Rule margin="15px" />
@@ -297,11 +298,11 @@ const LotInfo = () => {
 
       <HudMenuCollapsibleSection
         titleText="Construction"
-        collapsed={lot.building.construction.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL}
+        collapsed={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL}
         borderless>
         <ConstructionPlan
-          capableType={lot.building.capableType}
-          planningLot={lot.building.construction.status === Building.CONSTRUCTION_STATUSES.PLANNED ? lot : null} />
+          capableType={lot.building.Building.buildingType}
+          planningLot={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.PLANNED ? lot : null} />
       </HudMenuCollapsibleSection>
     </Wrapper>
   );

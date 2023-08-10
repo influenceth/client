@@ -491,12 +491,12 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
               defaultLastRow={Asteroid.getRarity(asteroid.Celestial.bonuses)}
               focus={selected?.category}
               hover={hover}
-              noColor={asteroid.Celestial.scanStatus < Asteroid.SCANNING_STATUSES.RESOURCE_SCANNED} />
+              noColor={asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED} />
           </GraphicWrapper>
         </GraphicSection>
       </LeftPane>
       <RightPane>
-        {asteroid.Celestial.scanStatus < Asteroid.SCANNING_STATUSES.RESOURCE_SCANNED && (
+        {asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED && (
           <UnscannedWrapper>
             {isOwner && (
               <UnscannedContainer>

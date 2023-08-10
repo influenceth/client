@@ -3,7 +3,6 @@ import { useFrame } from '@react-three/fiber';
 import { AdalianOrbit } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
 
-import constants from '~/lib/constants';
 import orbitColors from './orbit/orbitColors';
 import frag from './orbit/orbit.frag';
 import vert from './orbit/orbit.vert';
@@ -26,7 +25,7 @@ const Orbit = ({ asteroid, color, opacityMult = 1, staticOpacity }) => {
   });
 
   useEffect(() => {
-    const orbit = new AdalianOrbit(asteroid.orbital);
+    const orbit = new AdalianOrbit(asteroid.Orbit);
     let newPositions = [];
     orbit.getSmoothOrbit(360).forEach(p => {
       newPositions.push(...[ p.x, p.y, p.z ]);

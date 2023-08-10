@@ -1,4 +1,4 @@
-
+// TODO: ecs refactor
 // TODO: this may not make sense as a hook depending on how the data is stored
 const useCrewStatus = () => {
   return ({

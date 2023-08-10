@@ -1,4 +1,6 @@
 import { Vector3 } from 'three';
+import { Asteroid } from '@influenceth/sdk';
+
 import Seed from '~/lib/math/Seed';
 import OctaveNoise from '~/lib/graphics/OctaveNoise';
 import constants from '~/lib/constants';
@@ -6,10 +8,10 @@ import constants from '~/lib/constants';
 // Responsible for generating a config for any asteroid to be generated
 class Config {
   constructor(asteroid) {
-    this.seedGen = new Seed(asteroid.seed);
-    this.type = asteroid.spectralType;
-    this.radius = asteroid.radius
-    this.bonuses = asteroid.bonuses;
+    this.seedGen = new Seed(asteroid.Celestial.seed);
+    this.type = asteroid.Celestial.celestialType;
+    this.radius = asteroid.Celestial.radius
+    this.bonuses = Asteroid.getBonuses(asteroid.Celestial.bonuses);
 
     const dispWeightCoarse = this._dispWeightCoarse();
     const dispWeightFine = this._dispWeightFine();

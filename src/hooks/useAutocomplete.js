@@ -15,6 +15,8 @@ const configByType = {
   },
 }
 
+// TODO: ecs refactor (pending location of baseName)
+
 const useAutocomplete = (assetType) => {
   const [ searchTerm, setSearchTerm ] = useState('');
   const [ query, setQuery ] = useThrottle({}, 2, true);

@@ -96,14 +96,16 @@ const AsteroidInfo = ({ onClose }) => {
 
   // get the categories of resources present on this asteroid
   const resourceCategories = useMemo(() => {
-    return (Asteroid.SPECTRAL_TYPES[asteroid?.spectralType]?.resources || []).reduce((acc, productId) => {
+    return (Asteroid.SPECTRAL_TYPES[asteroid?.Celestial?.celestialType]?.resources || []).reduce((acc, productId) => {
       const category = Product.TYPES[productId]?.category;
       if (category && !acc.includes(category)) {
         return [...acc, category];
       }
       return acc;
     }, []);
-  }, [asteroid?.spectralType]);
+  }, [asteroid?.Celestial?.celestialType]);
+
+  const isScanned = useMemo(() => Asteroid.Entity.isScanned(asteroid), asteroid);
 
   const onClickDetails = useCallback(() => {
     onClose();
@@ -120,13 +122,13 @@ const AsteroidInfo = ({ onClose }) => {
           <Title>{formatters.asteroidName(asteroid)}</Title>
           <InfoRow style={{ fontSize: 16 }}>
             <span style={{ flex: 1 }}>
-              {Asteroid.getSize(asteroid.r)}{' '}
-              <b>{Asteroid.getSpectralType(asteroid.spectralType)}{'-type'}</b>
+              {Asteroid.Entity.getSize(asteroid)}{' '}
+              <b>{Asteroid.Entity.getSpectralType(asteroid)}{'-type'}</b>
             </span>
             <span>
-              {asteroid.scanned && <Rarity rarity={Asteroid.getRarity(asteroid.bonuses)} />}
-              {!asteroid.scanned && asteroid.scanCompletionTime && <Unscanned scanning>Scanning...</Unscanned>}
-              {!asteroid.scanned && !asteroid.scanCompletionTime && <Unscanned>Unscanned</Unscanned>}
+              {isScanned && <Rarity rarity={Asteroid.Entity.getRarity(asteroid)} />}
+              {!isScanned && asteroid.Celestial.scanStatus > Asteroid.SCAN_STATUSES.UNSCANNED && <Unscanned scanning>Scanning...</Unscanned>}
+              {!isScanned && !(asteroid.Celestial.scanStatus > Asteroid.SCAN_STATUSES.UNSCANNED) && <Unscanned>Unscanned</Unscanned>}
             </span>
           </InfoRow>
         </TitleArea>
@@ -152,58 +154,58 @@ const AsteroidInfo = ({ onClose }) => {
           <label>Asteroid ID</label>
           <span>{asteroid.i.toLocaleString()}</span>
         </InfoRow>
-        {asteroid.owner && (
+        {asteroid.Nft?.owner && (
           <InfoRow>
             <WalletIcon />
             <label>Owner</label>
             <span>
-              <AddressLink address={asteroid.owner} chain={asteroid.chain} truncate />
+              <AddressLink address={asteroid.Nft?.owner} chain={asteroid.Bridge?.destination} truncate />
             </span>
           </InfoRow>
         )}
-        {sale && !asteroid.owner && (
+        {sale && !asteroid.Nft?.owner && (
           <InfoRow>
             <WalletIcon />
             <label>Price</label>
             <span>
-              <Ether>{formatters.asteroidPrice(asteroid.r, sale)}</Ether>
+              <Ether>{formatters.asteroidPrice(asteroid.Celestial.radius, sale)}</Ether>
             </span>
           </InfoRow>
         )}
         <InfoRow>
           <ScanAsteroidIcon />
           <label>Spectral Type</label>
-          <span>{formatters.spectralType(asteroid.spectralType)}</span>
+          <span>{formatters.spectralType(asteroid.Celestial.celestialType)}</span>
         </InfoRow>
         <InfoRow>
           <RadiusIcon />
           <label>Diameter</label>
-          <span>{formatters.radius(2 * asteroid.radius)}</span>
+          <span>{formatters.radius(2 * asteroid.Celestial.radius)}</span>
         </InfoRow>
         <InfoRow>
           <SurfaceAreaIcon />
           <label>Surface Area</label>
-          <span>{formatters.surfaceArea(asteroid.r)}</span>
+          <span>{formatters.surfaceArea(asteroid.Celestial.radius)}</span>
         </InfoRow>
         <InfoRow>
           <OrbitalPeriodIcon />
           <label>Orbital Period</label>
-          <span>{formatters.period(asteroid.orbital)}</span>
+          <span>{formatters.period(asteroid.Orbit)}</span>
         </InfoRow>
         <InfoRow>
           <SemiMajorAxisIcon />
           <label>Semi-major Axis</label>
-          <span>{formatters.axis(asteroid.orbital.a)}</span>
+          <span>{formatters.axis(asteroid.Orbit.a)}</span>
         </InfoRow>
         <InfoRow>
           <InclinationIcon />
           <label>Inclination</label>
-          <span>{formatters.inclination(asteroid.orbital.i)}</span>
+          <span>{formatters.inclination(asteroid.Orbit.inc)}</span>
         </InfoRow>
         <InfoRow>
           <EccentricityIcon />
           <label>Eccentricity</label>
-          <span>{asteroid.orbital.e}</span>
+          <span>{asteroid.Orbit.ecc}</span>
         </InfoRow>
       </Scrollable>
       <Tray>

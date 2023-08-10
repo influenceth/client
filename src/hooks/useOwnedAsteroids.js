@@ -3,6 +3,8 @@ import { useQuery } from 'react-query';
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
 
+// TODO: ecs refactor
+
 const useOwnedAsteroids = () => {
   const { account } = useAuth();
 

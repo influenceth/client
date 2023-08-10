@@ -12,7 +12,6 @@ import Alerts from './interface/Alerts';
 import Draggables from './interface/Draggables';
 import HUD from './interface/HUD';
 import MainMenu from './interface/MainMenu';
-import ModelViewer from './interface/ModelViewer';
 import SaleNotifier from './interface/SaleNotifier';
 import ListView from './interface/details/ListView';
 import AsteroidDetails from './interface/details/AsteroidDetails';

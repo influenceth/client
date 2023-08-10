@@ -115,7 +115,7 @@ const Asteroids = () => {
       asseted[a.i].owned = true;
     });
     if (asteroids?.length > 0) {
-      asseted[`${asteroids[0].i}`] = { asteroid: asteroids[0], crew: 1, ships: 2 };
+      asseted[`${asteroids[0].i}`] = { asteroid: asteroids[0], crew: 1, ships: 2 }; // TODO: ecs refactor
     }
     return asseted;
   }, [asteroids, ownedAsteroids]);
@@ -152,7 +152,7 @@ const Asteroids = () => {
     setMappedAsteroids(newValue);
     setAsteroidsWorkerPayload({
       key: newValue.map((a) => a.i).join(','),
-      orbitals: newValue.map((a) => a.orbital),
+      orbitals: newValue.map((a) => a.Orbit),
     })
   }, [ asteroids, origin, destination, isDefaultSearch, assetedAsteroids, watchlist, isZoomedIn ]);
 

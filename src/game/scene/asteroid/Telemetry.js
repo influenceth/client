@@ -174,7 +174,7 @@ const densityByType = {
 
 const GRAV = 6.6743E-11;
 
-const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPosition, isScanned, attachTo, radius, scaleHelper, spectralType }) => {
+const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPosition, isScanned, attachTo, radius, scaleHelper, shipTally, spectralType }) => {
   const { controls } = useThree();
   const getTime = useGetTime();
 
@@ -331,7 +331,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
     }
 
     if (config.shipCircle.enabled) {
-      const shipTally = Math.min(200, Math.round(config.shipCircle.shipsPerLot * 4 * Math.PI * Math.pow(radius / 1e3, 2)) + Math.round(Math.random()));
+      // const shipTally = Math.min(200, Math.round(config.shipCircle.shipsPerLot * 4 * Math.PI * Math.pow(radius / 1e3, 2)) + Math.round(Math.random()));
       if (shipTally > 0 || config.shipCircle.onEmpty !== 'hide') {
         const shipSprite = new TextureLoader().load('/disc.png');
 
@@ -527,6 +527,10 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
       if (trajectory.current) attachTo.remove(trajectory.current);
     };
   }, [!attachTo, radius]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    // TODO: update the number of ships on the ship circle (or dash if empty)
+  }, [shipTally]);
 
   const lastRotation = useRef();
   useFrame(() => {

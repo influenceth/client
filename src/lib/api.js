@@ -148,6 +148,16 @@ const api = {
     return null;
   },
 
+  getAsteroidShips: async (i) => {
+    // TODO: use elasticsearch so can search by flattened location
+    return [];
+  },
+
+  // TODO: ecs refactor -- probably better to use a single resolve location endpoint
+  getBuilding: async (i) => {
+    return getEntityById({ label: 'Building', i });
+  },
+
   getCrewOccupiedLots: async (a, c) => {
     // TODO: elasticsearch
     const response = await instance.get(`/v1/asteroids/${a}/lots/occupier/${c}`);
@@ -164,6 +174,13 @@ const api = {
     return response.data;
   },
 
+  getCrewShips: async (c) => {
+    return getEntities({
+      match: { 'Control.controller.id': c },
+      label: 'Ship'
+    })
+  },
+
   getEntityById,
 
   getEntities,
@@ -172,14 +189,6 @@ const api = {
     // TODO: make sure the response matches
     // const response = await instance.get(`/v1/asteroids/${asteroidId}/lots/${lotId}`);
     return getEntityById({ label: 'Lot', i: lotId });
-  },
-
-  getLotBuilding: async (asteroidId, lotId) => {
-    const buildings = getEntities({
-      match: { 'Location.location': Location.toEntityFormat({ asteroidId, lotId }) },
-      label: 'Building'
-    });
-    return buildings[0];
   },
 
   getNameUse: async (label, name) => {
