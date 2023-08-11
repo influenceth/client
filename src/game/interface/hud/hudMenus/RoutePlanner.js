@@ -135,10 +135,16 @@ const maxTof = minTof + 365;
 
 const simInventoryDefaults = { contents: [], mass: 0, volume: 0, reservedMass: 0, reservedVolume: 0, status: Inventory.STATUSES.AVAILABLE };
 
-const getInventoryTypeOffset = (shipType) => {
-  if (shipType === Ship.IDS.HEAVY_TRANSPORT) return 2;
-  if (shipType === Ship.IDS.LIGHT_TRANSPORT) return 1;
-  return 0;
+const getCargoInventoryType = (shipType) => {
+  if (shipType === Ship.IDS.HEAVY_TRANSPORT) return Inventory.IDS.CARGO_LARGE;
+  if (shipType === Ship.IDS.LIGHT_TRANSPORT) return Inventory.IDS.CARGO_MEDIUM;
+  return Inventory.IDS.CARGO_SMALL;
+};
+const getPropellantInventoryType = (shipType) => {
+  if (shipType === Ship.IDS.HEAVY_TRANSPORT) return Inventory.IDS.PROPELLANT_LARGE;
+  if (shipType === Ship.IDS.LIGHT_TRANSPORT) return Inventory.IDS.PROPELLANT_MEDIUM;
+  if (shipType === Ship.IDS.SHUTTLE) return Inventory.IDS.PROPELLANT_SMALL;
+  return Inventory.IDS.PROPELLANT_TINY;
 };
 const getInventoriesByShipType = (shipType) => {
   const inventories = [];
@@ -147,14 +153,14 @@ const getInventoriesByShipType = (shipType) => {
     inventories.push({
       ...simInventoryDefaults,
       slot: config.cargoSlot,
-      inventoryType: Inventory.IDS.CARGO_SMALL + getInventoryTypeOffset(shipType),
+      inventoryType: getCargoInventoryType(shipType),
     });
   }
   if (config.propellantSlot) {
     inventories.push({
       ...simInventoryDefaults,
       slot: config.propellantSlot,
-      inventoryType: Inventory.IDS.PROPELLANT_SMALL + getInventoryTypeOffset(shipType),
+      inventoryType: getPropellantInventoryType(shipType),
     });
   }
   return inventories;

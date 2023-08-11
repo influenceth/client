@@ -50,9 +50,9 @@ const SampleAmount = styled.span`
 
 const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const { currentExtraction, extractionStatus, startExtraction, finishExtraction } = extractionManager;
+  const { currentExtractionAction, extractionStatus, startExtraction, finishExtraction } = extractionManager;
   const { crew, crewmateMap } = useCrewContext();
-  const { data: currentExtractionDestinationLot } = useLot(asteroid.i, currentExtraction?.destinationLotId);
+  const { data: currentExtractionDestinationLot } = useLot(asteroid.i, currentExtractionAction?.destinationLotId);
 
   const [amount, setAmount] = useState(0);
   const [destinationLot, setDestinationLot] = useState();
@@ -60,7 +60,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const [sampleSelectorOpen, setSampleSelectorOpen] = useState(false);
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
 
-  const crewmates = currentExtraction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentExtractionAction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const extractionBonus = useMemo(() => {
@@ -93,7 +93,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
   useEffect(() => {
     let defaultSelection;
-    if (!currentExtraction && !selectedCoreSample) {
+    if (!currentExtractionAction && !selectedCoreSample) {
       if (props.preselect) {
         defaultSelection = usableSamples.find((s) => s.Deposit.resource === props.preselect.resourceId && s.i === props.preselect.sampleId);
       } else if (usableSamples.length === 1) {
@@ -103,23 +103,23 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         selectCoreSample(defaultSelection);
       }
     }
-  }, [!currentExtraction, !selectedCoreSample, usableSamples]);
+  }, [!currentExtractionAction, !selectedCoreSample, usableSamples]);
 
-  // handle "currentExtraction" state
+  // handle "currentExtractionAction" state
   useEffect(() => {
-    if (currentExtraction) {
+    if (currentExtractionAction) {
       if (lot?.deposits) {
-        const currentSample = lot.deposits.find((c) => c.Deposit.resource === currentExtraction.resourceId && c.i === currentExtraction.sampleId);
+        const currentSample = lot.deposits.find((c) => c.Deposit.resource === currentExtractionAction.resourceId && c.i === currentExtractionAction.sampleId);
         if (currentSample) {
           setSelectedCoreSample({
             ...currentSample,
-            remainingYield: currentSample.Deposit.remainingYield + (currentExtraction.isCoreSampleUpdated ? currentExtraction.yield : 0)
+            remainingYield: currentSample.Deposit.remainingYield + (currentExtractionAction.isCoreSampleUpdated ? currentExtractionAction.yield : 0)
           });
-          setAmount(currentExtraction.yield);
+          setAmount(currentExtractionAction.yield);
         }
       }
     }
-  }, [currentExtraction, lot?.deposits]);
+  }, [currentExtractionAction, lot?.deposits]);
 
   useEffect(() => {
     if (currentExtractionDestinationLot) {
@@ -345,8 +345,8 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
         {stage !== actionStage.NOT_STARTED && (
           <ProgressBarSection
-            finishTime={currentExtraction?.finishTime}
-            startTime={currentExtraction?.startTime}
+            finishTime={currentExtractionAction?.finishTime}
+            startTime={currentExtractionAction?.startTime}
             stage={stage}
             title="Progress"
             totalTime={crewTravelTime + extractionTime}

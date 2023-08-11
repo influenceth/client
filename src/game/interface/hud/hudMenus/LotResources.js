@@ -106,8 +106,8 @@ const LotResources = () => {
   const { asteroidId, lotId } = useStore(s => s.asteroids.lot || {});
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lot } = useLot(asteroidId, lotId);
-  const { currentSample } = useCoreSampleManager(asteroidId, lotId);
-  const { currentExtraction } = useExtractionManager(asteroidId, lotId);
+  const { currentSamplingAction } = useCoreSampleManager(asteroidId, lotId);
+  const { currentExtractionAction } = useExtractionManager(asteroidId, lotId);
 
   const [showAllAbundances, setShowAllAbundances] = useState();
   const [showAllSamples, setShowAllSamples] = useState();
@@ -198,7 +198,7 @@ const LotResources = () => {
 
   const extraSampleParams = useMemo(() => {
     const params = {};
-    if (!currentSample) {
+    if (!currentSamplingAction) {
       if (selectedResource?.i) {
         params.overrideResourceId = Number(selectedResource?.i);
       } else if (selectedSample) {
@@ -207,11 +207,11 @@ const LotResources = () => {
       }
     }
     return params;
-  }, [currentSample, selectedResource, selectedSample]);
+  }, [currentSamplingAction, selectedResource, selectedSample]);
 
   const extraExtractParams = useMemo(() => {
     const params = {};
-    if (!currentExtraction) {
+    if (!currentExtractionAction) {
       if (selectedSample) {
         params.preselect = { ...selectedSample };
         if (selectedSample.Deposit?.remainingYield === 0) {
@@ -220,7 +220,7 @@ const LotResources = () => {
       }
     }
     return params;
-  }, [currentExtraction, selectedSample]);
+  }, [currentExtractionAction, selectedSample]);
 
   const sampleTally = showAllSamples
     ? (ownedSamples.length - depletedSamples.length)
@@ -304,15 +304,15 @@ const LotResources = () => {
           </HudMenuCollapsibleSection>
       </Wrapper>
 
-      {(currentSample || selectedResource || selectedSample || currentExtraction) && (
+      {(currentSamplingAction || selectedResource || selectedSample || currentExtractionAction) && (
         <Tray>
           <>
-            {(currentSample || selectedResource || selectedSample) && (
+            {(currentSamplingAction || selectedResource || selectedSample) && (
               <actionButtons.CoreSample {...actionProps} {...extraSampleParams} />
             )}
             {/* TODO: list sample for sale */}
             {/* TODO: purchase sample for sale (if one is selected) */}
-            {(currentExtraction || selectedSample) && (
+            {(currentExtractionAction || selectedSample) && (
               <actionButtons.Extract {...actionProps} {...extraExtractParams} />
             )}
           </>

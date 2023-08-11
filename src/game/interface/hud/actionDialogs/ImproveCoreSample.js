@@ -32,7 +32,7 @@ import {
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 
 const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
-  const { startSampling, finishSampling, samplingStatus } = coreSampleManager;
+  const { currentSamplingAction, startSampling, finishSampling, samplingStatus } = coreSampleManager;
   const { crew, crewmateMap } = useCrewContext();
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
@@ -45,17 +45,17 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   const [sampleSelectorOpen, setSampleSelectorOpen] = useState(false);
 
   useEffect(() => {
-    if (coreSampleManager.currentSample) {
-      setSampleId(coreSampleManager.currentSample.id);
-      if (coreSampleManager.currentSample.resourceId !== resourceId) {
-        setResourceId(coreSampleManager.currentSample.resourceId)
+    if (currentSamplingAction) {
+      setSampleId(currentSamplingAction.sampleId);
+      if (currentSamplingAction.resourceId !== resourceId) {
+        setResourceId(currentSamplingAction.resourceId)
       }
-      if (resourceMap?.active && coreSampleManager.currentSample.resourceId !== resourceMap?.selected) {
-        dispatchResourceMapSelect(coreSampleManager.currentSample.resourceId);
+      if (resourceMap?.active && currentSamplingAction.resourceId !== resourceMap?.selected) {
+        dispatchResourceMapSelect(currentSamplingAction.resourceId);
         dispatchResourceMapToggle(true);
       }
     }
-  }, [coreSampleManager.currentSample]);
+  }, [currentSamplingAction]);
 
   const onSelectSample = useCallback((s) => {
     if (s) {
@@ -72,7 +72,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   const [sample, initialYieldTonnage] = useMemo(() => {
     if (lot?.deposits) {
       if (resourceId && sampleId) {
-        const thisSample = lot.deposits.find((s) => s.i === sampleId && s.resource === resourceId);
+        const thisSample = lot.deposits.find((s) => s.i === sampleId && s.Deposit.resource === resourceId);
         if (thisSample) {
           // TODO: ecs refactor: with the db changes, double-check that key is still only conditionally included
           const initialYieldTonnage = Object.keys(thisSample.Deposit).includes('initialYield')
@@ -127,12 +127,11 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
     }
   }, [improvableSamples, props.preselect]);
 
-  const currentSample = sample || selectedSample;
-  const originalYield = useMemo(() => currentSample?.initialYield, [currentSample?.resourceId, currentSample?.sampleId]); // only update on id change
-  const originalTonnage = useMemo(() => originalYield ? originalYield * Product.TYPES[currentSample.resourceId].massPerUnit : 0, [currentSample, originalYield]);
+  const existingSample = sample || selectedSample;
+  const originalYield = useMemo(() => existingSample?.Deposit?.initialYield, [existingSample?.id]); // only update on id change
+  const originalTonnage = useMemo(() => originalYield ? originalYield * Product.TYPES[existingSample.Deposit.resource].massPerUnit : 0, [existingSample, originalYield]);
 
-  const crewmates = coreSampleManager.currentSample?._crewmates
-    || ((crew?.crewmates || []).map((i) => crewmateMap[i]));
+  const crewmates = currentSamplingAction?._crewmates || ((crew?.crewmates || []).map((i) => crewmateMap[i]));
   const captain = crewmates[0];
   const sampleTimeBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_SPEED, crewmates);
   const sampleQualityBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, crewmates);
@@ -290,8 +289,8 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
 
         {stage !== actionStage.NOT_STARTED && stage !== actionStage.COMPLETED && (
           <ProgressBarSection
-            finishTime={currentSample?.finishTime}
-            startTime={currentSample?.startTime}
+            finishTime={currentSamplingAction?.finishTime}
+            startTime={currentSamplingAction?.startTime}
             stage={stage}
             title="Progress"
             totalTime={crewTravelTime + sampleTime}
@@ -305,9 +304,9 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!currentSample || !coreDrillSourceSelected}
+        disabled={!existingSample || !coreDrillSourceSelected}
         goLabel="Optimize"
-        onGo={() => startSampling(resourceId, currentSample?.sampleId)}
+        onGo={() => startSampling(resourceId, existingSample?.id)}
         finalizeLabel="Analyze"
         onFinalize={finishSampling}
         stage={stage}
@@ -316,7 +315,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
       {stage === actionStage.NOT_STARTED && (
         <CoreSampleSelectionDialog
           options={improvableSamples}
-          initialSelection={currentSample}
+          initialSelection={existingSample}
           lotId={lot?.i}
           onClose={() => setSampleSelectorOpen(false)}
           onSelected={onSelectSample}

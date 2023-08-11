@@ -90,7 +90,7 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
 
   // useEffect(() => {
   //   let defaultSelection;
-  //   if (!currentExtraction && !selectedCoreSample) {
+  //   if (!currentExtractionAction && !selectedCoreSample) {
   //     if (props.preselect) {
   //       defaultSelection = usableSamples.find((s) => s.resourceId === props.preselect.resourceId && s.sampleId === props.preselect.sampleId);
   //     } else if (usableSamples.length === 1) {
@@ -100,23 +100,23 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   //       selectCoreSample(defaultSelection);
   //     }
   //   }
-  // }, [!currentExtraction, !selectedCoreSample, usableSamples]);
+  // }, [!currentExtractionAction, !selectedCoreSample, usableSamples]);
 
-  // // handle "currentExtraction" state
+  // // handle "currentExtractionAction" state
   // useEffect(() => {
-  //   if (currentExtraction) {
+  //   if (currentExtractionAction) {
   //     if (lot?.coreSamples) {
-  //       const currentSample = lot.coreSamples.find((c) => c.resourceId === currentExtraction.resourceId && c.sampleId === currentExtraction.sampleId);
+  //       const currentSample = lot.coreSamples.find((c) => c.resourceId === currentExtractionAction.resourceId && c.sampleId === currentExtractionAction.sampleId);
   //       if (currentSample) {
   //         setSelectedCoreSample({
   //           ...currentSample,
-  //           remainingYield: currentSample.remainingYield + (currentExtraction.isCoreSampleUpdated ? currentExtraction.yield : 0)
+  //           remainingYield: currentSample.remainingYield + (currentExtractionAction.isCoreSampleUpdated ? currentExtractionAction.yield : 0)
   //         });
-  //         setAmount(currentExtraction.yield);
+  //         setAmount(currentExtractionAction.yield);
   //       }
   //     }
   //   }
-  // }, [currentExtraction, lot?.coreSamples]);
+  // }, [currentExtractionAction, lot?.coreSamples]);
 
   // useEffect(() => {
   //   if (currentExtractionDestinationLot) {

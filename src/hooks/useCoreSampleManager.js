@@ -23,7 +23,7 @@ const useCoreSampleManager = (asteroidId, lotId) => {
 
   // status flow
   // READY > SAMPLING > READY_TO_FINISH > FINISHING
-  const [currentSample, samplingStatus, actionStage] = useMemo(() => {
+  const [currentSamplingAction, samplingStatus, actionStage] = useMemo(() => {
     let current = {
       _crewmates: null,
       finishTime: null,
@@ -37,24 +37,26 @@ const useCoreSampleManager = (asteroidId, lotId) => {
 
     let status = 'READY';
     let stage = actionStages.NOT_STARTED;
-    const activeSample = lot?.coreSamples.find((c) => c.owner === crew?.i && c.status < Deposit.STATUSES.SAMPLED);
+    const activeSample = (lot?.deposits || []).find((c) => c.Control.controller.id === crew?.i && c.Deposit.status < Deposit.STATUSES.SAMPLED);
     if (activeSample) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_CoreSampleStartSampling'
         && item.event.returnValues.asteroidId === asteroidId
         && item.event.returnValues.lotId === lotId
-        && item.event.returnValues.resourceId === activeSample.resourceId
-        && item.event.returnValues.sampleId === activeSample.sampleId
+        && item.event.returnValues.resourceId === activeSample.Deposit.resource
+        && item.event.returnValues.sampleId === activeSample.id
       ));
-      if (actionItem) current._crewmates = actionItem.assets.crew.crewmates;
-      current.finishTime = activeSample.finishTime;
-      current.isNew = !(activeSample.initialYield > 0);
-      current.owner = activeSample.owner;
-      current.resourceId = activeSample.resourceId;
-      current.sampleId = activeSample.sampleId;
-      current.startTime = activeSample.startTime;
+      if (actionItem) {
+        current._crewmates = actionItem.assets.crew.crewmates;
+        current.startTime = actionItem.startTime;
+      }
+      current.finishTime = activeSample.Deposit.finishTime;
+      current.isNew = !(activeSample.Deposit.initialYield > 0);
+      current.owner = activeSample.Control.controller.id;
+      current.resourceId = activeSample.Deposit.resource;
+      current.sampleId = activeSample.id;
 
-      if (activeSample.finishTime <= liveBlockTime) {
+      if (activeSample.Deposit.finishTime <= liveBlockTime) {
         if (getStatus('FINISH_CORE_SAMPLE', payload) === 'pending') {
           status = 'FINISHING';
           stage = actionStages.COMPLETING;
@@ -81,7 +83,7 @@ const useCoreSampleManager = (asteroidId, lotId) => {
     // if did not update status beyond NOT_STARTED but there was a completingSample
     //  previously, must now be COMPLETED
     // NOTE: if ever change this to output different status as well (and / or
-    //  currentSample), then need to review references to this hook to make sure
+    //  currentSamplingAction), then need to review references to this hook to make sure
     //  behavior doesn't change (i.e. actionButtons)
     if (completingSample && stage === actionStages.NOT_STARTED) {
       stage = actionStages.COMPLETED;
@@ -94,13 +96,14 @@ const useCoreSampleManager = (asteroidId, lotId) => {
     ];
   }, [actionItems, completingSample, readyItems, getPendingTx, getStatus, payload, lot?.coreSamples]);
 
+  // manage the "completed" stage explicitly
   useEffect(() => {
-    if (currentSample && actionStage === actionStages.COMPLETING) {
-      if (completingSample?.resourceId !== currentSample.resourceId || completingSample?.sampleId !== currentSample.sampleId) {
-        setCompletingSample(currentSample);
+    if (currentSamplingAction && actionStage === actionStages.COMPLETING) {
+      if (completingSample?.resourceId !== currentSamplingAction.resourceId || completingSample?.sampleId !== currentSamplingAction.sampleId) {
+        setCompletingSample(currentSamplingAction);
       }
     }
-  }, [currentSample, actionStage]);
+  }, [currentSamplingAction, actionStage]);
 
   const startSampling = useCallback((resourceId, sampleId = 0) => {
     execute('START_CORE_SAMPLE', {
@@ -112,17 +115,17 @@ const useCoreSampleManager = (asteroidId, lotId) => {
 
   const finishSampling = useCallback(() => {
     execute('FINISH_CORE_SAMPLE', {
-      sampleId: currentSample.sampleId,
-      resourceId: currentSample.resourceId,
+      sampleId: currentSamplingAction.sampleId,
+      resourceId: currentSamplingAction.resourceId,
       ...payload
     })
-  }, [currentSample, payload]);
+  }, [currentSamplingAction, payload]);
 
   return {
     startSampling,
     finishSampling,
     samplingStatus,
-    currentSample,
+    currentSamplingAction,
     actionStage
   }
 };

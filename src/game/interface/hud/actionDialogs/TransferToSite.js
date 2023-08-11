@@ -37,14 +37,14 @@ import actionStage from '~/lib/actionStages';
 const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const { currentDelivery, deliveryStatus, startDelivery, finishDelivery } = deliveryManager;
+  const { currentDeliveryAction, deliveryStatus, startDelivery, finishDelivery } = deliveryManager;
   const { crew, crewmateMap } = useCrewContext();
-  const { data: currentDeliveryOriginLot } = useLot(asteroid.i, currentDelivery?.originLotId);
-  const { data: currentDeliveryDestinationLot } = useLot(asteroid.i, currentDelivery?.destLotId);
+  const { data: currentDeliveryOriginLot } = useLot(asteroid.i, currentDeliveryAction?.originLotId);
+  const { data: currentDeliveryDestinationLot } = useLot(asteroid.i, currentDeliveryAction?.destLotId);
 
   const destinationLot = useMemo(
-    () => currentDelivery ? currentDeliveryDestinationLot : lot,
-    [currentDelivery, currentDeliveryDestinationLot, lot]
+    () => currentDeliveryAction ? currentDeliveryDestinationLot : lot,
+    [currentDeliveryAction, currentDeliveryDestinationLot, lot]
   ) || {};
 
   const [originLot, setOriginLot] = useState();
@@ -52,16 +52,16 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
   const [transferSelectorOpen, setTransferSelectorOpen] = useState();
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
 
-  const crewmates = currentDelivery?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentDeliveryAction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
 
-  // handle "currentDelivery" state
+  // handle "currentDeliveryAction" state
   useEffect(() => {
-    if (currentDelivery) {
-      setSelectedItems(currentDelivery.contents);
+    if (currentDeliveryAction) {
+      setSelectedItems(currentDeliveryAction.contents);
     }
-  }, [currentDelivery]);
+  }, [currentDeliveryAction]);
 
   useEffect(() => {
     if (currentDeliveryOriginLot) {
@@ -70,10 +70,10 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
   }, [currentDeliveryOriginLot]);
 
   // reset selectedItems if change origin lot before starting
-  // TODO: in general, could probably remove all currentDelivery stuff
+  // TODO: in general, could probably remove all currentDeliveryAction stuff
   //  since we don't follow the course of the delivery in this dialog
   useEffect(() => {
-    if (!currentDelivery) setSelectedItems(props.preselect?.selectedItems || {});
+    if (!currentDeliveryAction) setSelectedItems(props.preselect?.selectedItems || {});
   }, [originLot]);
 
   const transportDistance = Asteroid.getLotDistance(asteroid?.i, originLot?.i, destinationLot?.i) || 0;
@@ -230,8 +230,8 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
 
         {stage !== actionStage.NOT_STARTED && (
           <ProgressBarSection
-            finishTime={currentDelivery?.finishTime}
-            startTime={currentDelivery?.startTime}
+            finishTime={currentDeliveryAction?.finishTime}
+            startTime={currentDeliveryAction?.startTime}
             stage={stage}
             title="Progress"
             totalTime={transportTime}

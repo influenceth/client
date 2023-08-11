@@ -38,7 +38,7 @@ const UnplanWarning = styled.div`
 `;
 
 const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
-  const { currentConstruction, constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, lot?.i);
+  const { currentConstructionAction, constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, lot?.i);
   const { captain } = useCrewContext();
 
   // handle auto-closing
@@ -57,7 +57,7 @@ const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props })
     lastStatus.current = constructionStatus;
   }, [constructionStatus]);
 
-  const buildingType = currentConstruction?.buildingType || 0;
+  const buildingType = currentConstructionAction?.buildingType || 0;
 
   return (
     <>

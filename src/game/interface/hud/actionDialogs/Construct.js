@@ -47,9 +47,9 @@ const TransferToSite = styled.div`
 
 const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { crew, crewmateMap } = useCrewContext();
-  const { currentConstruction, constructionStatus, startConstruction, finishConstruction } = constructionManager;
+  const { currentConstructionAction, constructionStatus, startConstruction, finishConstruction } = constructionManager;
 
-  const crewmates = currentConstruction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentConstructionAction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const constructionBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CONSTRUCTION_EFFICIENCY, crewmates);
@@ -223,8 +223,8 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
         )}
         {stage !== actionStage.NOT_STARTED && (
           <ProgressBarSection
-            finishTime={currentConstruction?.finishTime}
-            startTime={currentConstruction?.startTime}
+            finishTime={currentConstructionAction?.finishTime}
+            startTime={currentConstructionAction?.startTime}
             stage={stage}
             title="Progress"
             totalTime={crewTravelTime + constructionTime}

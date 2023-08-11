@@ -33,7 +33,7 @@ import {
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 
 const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
-  const { startSampling, finishSampling, samplingStatus } = coreSampleManager;
+  const { currentSamplingAction, startSampling, finishSampling, samplingStatus } = coreSampleManager;
   const { crew, crewmateMap } = useCrewContext();
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
@@ -46,17 +46,17 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   const [resourceSelectorOpen, setResourceSelectorOpen] = useState(false);
 
   useEffect(() => {
-    if (coreSampleManager.currentSample) {
-      setSampleId(coreSampleManager.currentSample.sampleId);
-      if (coreSampleManager.currentSample.resourceId !== resourceId) {
-        setResourceId(coreSampleManager.currentSample.resourceId)
+    if (currentSamplingAction) {
+      setSampleId(currentSamplingAction.sampleId);
+      if (currentSamplingAction.resourceId !== resourceId) {
+        setResourceId(currentSamplingAction.resourceId)
       }
-      if (resourceMap?.active && coreSampleManager.currentSample.resourceId !== resourceMap?.selected) {
-        dispatchResourceMapSelect(coreSampleManager.currentSample.resourceId);
+      if (resourceMap?.active && currentSamplingAction.resourceId !== resourceMap?.selected) {
+        dispatchResourceMapSelect(currentSamplingAction.resourceId);
         dispatchResourceMapToggle(true);
       }
     }
-  }, [coreSampleManager.currentSample]);
+  }, [currentSamplingAction]);
 
   const onSelectResource = useCallback((r) => {
     setResourceId(r);
@@ -101,7 +101,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
 
   const lotAbundance = resourceId ? lotAbundances[resourceId] : 0;
 
-  const crewmates = coreSampleManager.currentSample?._crewmates
+  const crewmates = currentSamplingAction?._crewmates
     || ((crew?.crewmates || []).map((i) => crewmateMap[i]));
   const captain = crewmates[0];
   const sampleTimeBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_SPEED, crewmates);
@@ -260,8 +260,8 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
 
         {stage !== actionStage.NOT_STARTED && stage !== actionStage.COMPLETED && (
           <ProgressBarSection
-            finishTime={currentSample?.finishTime}
-            startTime={currentSample?.startTime}
+            finishTime={currentSamplingAction?.finishTime}
+            startTime={currentSamplingAction?.startTime}
             stage={stage}
             title="Progress"
             totalTime={crewTravelTime + sampleTime}

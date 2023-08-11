@@ -56,14 +56,14 @@ const Overloaded = styled.div`
 const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const { currentDelivery, deliveryStatus, startDelivery, finishDelivery } = deliveryManager;
+  const { currentDeliveryAction, deliveryStatus, startDelivery, finishDelivery } = deliveryManager;
   const { crew, crewmateMap } = useCrewContext();
-  const { data: currentDeliveryOriginLot } = useLot(asteroid.i, currentDelivery?.originLotId);
-  const { data: currentDeliveryDestinationLot } = useLot(asteroid.i, currentDelivery?.destLotId);
+  const { data: currentDeliveryOriginLot } = useLot(asteroid.i, currentDeliveryAction?.originLotId);
+  const { data: currentDeliveryDestinationLot } = useLot(asteroid.i, currentDeliveryAction?.destLotId);
 
   const originLot = useMemo(
-    () => (currentDelivery ? currentDeliveryOriginLot : lot) || {},
-    [currentDelivery, currentDeliveryOriginLot, lot]
+    () => (currentDeliveryAction ? currentDeliveryOriginLot : lot) || {},
+    [currentDeliveryAction, currentDeliveryOriginLot, lot]
   );
   const [destinationLot, setDestinationLot] = useState();
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
@@ -74,16 +74,16 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   const { data: originLotOccupier } = useCrew(originLot?.building?.Control?.controller?.id);
   const { data: destinationLotOccupier } = useCrew(destinationLot?.building?.Control?.controller?.id);
 
-  const crewmates = currentDelivery?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentDeliveryAction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
 
-  // handle "currentDelivery" state
+  // handle "currentDeliveryAction" state
   useEffect(() => {
-    if (currentDelivery) {
-      setSelectedItems(currentDelivery.contents);
+    if (currentDeliveryAction) {
+      setSelectedItems(currentDeliveryAction.contents);
     }
-  }, [currentDelivery]);
+  }, [currentDeliveryAction]);
 
   useEffect(() => {
     if (currentDeliveryDestinationLot) {
@@ -323,8 +323,8 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
 
             {stage !== actionStage.NOT_STARTED && (
               <ProgressBarSection
-                finishTime={currentDelivery?.finishTime}
-                startTime={currentDelivery?.startTime}
+                finishTime={currentDeliveryAction?.finishTime}
+                startTime={currentDeliveryAction?.startTime}
                 stage={stage}
                 title="Progress"
                 totalTime={transportTime}

@@ -38,7 +38,7 @@ const MouseoverWarning = styled.span`
 `;
 
 const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
-  const { currentConstruction, planConstruction } = constructionManager;
+  const { currentConstructionAction, planConstruction } = constructionManager;
   const { captain, crew, crewmateMap } = useCrewContext();
 
   const [buildingType, setBuildingType] = useState();
@@ -74,8 +74,8 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
   }, [crew?.crewmates]);
 
   useEffect(() => {
-    if (currentConstruction?.buildingType) setBuildingType(currentConstruction.buildingType)
-  }, [currentConstruction?.buildingType]);
+    if (currentConstructionAction?.buildingType) setBuildingType(currentConstructionAction.buildingType)
+  }, [currentConstructionAction?.buildingType]);
 
   const [siteSelectorOpen, setSiteSelectorOpen] = useState();
   const onBuildingSelected = (type) => {

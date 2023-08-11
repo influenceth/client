@@ -27,7 +27,7 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
 
   // status flow
   // READY > DEPARTING > IN_TRANSIT > READY_TO_FINISH > FINISHING > FINISHED
-  const [currentDelivery, deliveryStatus, actionStage] = useMemo(() => {
+  const [currentDeliveryAction, deliveryStatus, actionStage] = useMemo(() => {
     let current = {
       _crewmates: null,
       finishTime: null,
@@ -43,7 +43,7 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
     let stage = actionStages.NOT_STARTED;
 
     // if deliveryId, treat lot as destination and assume in progress or done
-    const delivery = deliveryId > 0 && (lot?.building?.deliveries || []).find((d) => d.deliveryId === deliveryId);
+    const delivery = deliveryId > 0 && (lot?.deliveries || []).find((d) => d.id === deliveryId);
     if (delivery) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_InventoryTransferStart'
@@ -55,21 +55,21 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
         current._crewmates = actionItem.assets.crew?.crewmates;
         current.originLotId = actionItem.event.returnValues.originLotId;
         current.originLotInvId = actionItem.event.returnValues.originInventoryId;
+        current.startTime = actionItem.startTime;
       }
-      current.finishTime = delivery.finishTime;
+      current.contents = delivery.Delivery.contents;
       current.destLotId = lot.i;
-      current.destLotInvId = delivery.inventoryType;
-      current.contents = delivery.contents;
-      current.startTime = delivery.startTime;
+      current.destLotInvId = delivery.Delivery.destSlot;
+      current.finishTime = delivery.Delivery.finishTime;
 
-      if (delivery.status === Delivery.STATUSES.COMPLETE) {
+      if (delivery.Delivery.status === Delivery.STATUSES.COMPLETE) {
         status = 'FINISHED';
         stage = actionStages.COMPLETED;
       } else {
         if(getStatus('FINISH_DELIVERY', { ...payload, destLotId: lotId, deliveryId }) === 'pending') {
           status = 'FINISHING';
           stage = actionStages.COMPLETING;
-        } else if (delivery.finishTime && delivery.finishTime <= liveBlockTime) {
+        } else if (delivery.Delivery.finishTime && delivery.Delivery.finishTime <= liveBlockTime) {
           status = 'READY_TO_FINISH';
           stage = actionStages.READY_TO_COMPLETE;
         } else {
@@ -114,17 +114,17 @@ const useDeliveryManager = (asteroidId, lotId, deliveryId = 0) => {
   const finishDelivery = useCallback(() => {
     execute('FINISH_DELIVERY', {
       ...payload,
-      destLotId: currentDelivery?.destLotId,
-      destInvId: currentDelivery?.destLotInvId,
+      destLotId: currentDeliveryAction?.destLotId,
+      destInvId: currentDeliveryAction?.destLotInvId,
       deliveryId
     })
-  }, [payload, currentDelivery]);
+  }, [payload, currentDeliveryAction]);
 
   return {
     startDelivery,
     finishDelivery,
     deliveryStatus,
-    currentDelivery,
+    currentDeliveryAction,
     actionStage,
   };
 };

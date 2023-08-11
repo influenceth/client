@@ -16,14 +16,14 @@ const labelDict = {
 
 const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improveSample, _disabled }) => {
   const defaultResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
-  const { currentSample: actualCurrentSample, samplingStatus: actualSamplingStatus } = useCoreSampleManager(asteroid?.i, lot?.i);
+  const { currentSamplingAction: actualCurrentSample, samplingStatus: actualSamplingStatus } = useCoreSampleManager(asteroid?.i, lot?.i);
 
   const resourceId = overrideResourceId || defaultResourceId;
 
-  let currentSample = actualCurrentSample;
+  let currentSamplingAction = actualCurrentSample;
   let samplingStatus = actualSamplingStatus;
-  if (improveSample && (currentSample?.sampleId !== improveSample.sampleId || currentSample?.isNew)) {
-    currentSample = null;
+  if (improveSample && (currentSamplingAction?.sampleId !== improveSample.sampleId || currentSamplingAction?.isNew)) {
+    currentSamplingAction = null;
     samplingStatus = 'READY';
   }
 
@@ -46,7 +46,7 @@ const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improve
   let loading = undefined;
 
   // if there is a current sample ongoing
-  if (currentSample) {
+  if (currentSamplingAction) {
     // if it's ready to finish, show in "attention" mode (else, loading if loading)
     if (samplingStatus === 'READY_TO_FINISH') {
       attention = true;
@@ -55,8 +55,8 @@ const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improve
     }
 
     // always append which resource it is if not the selected one
-    if (currentSample.resourceId !== resourceId) {
-      label += ` (${Product.TYPES[currentSample.resourceId].name})`;
+    if (currentSamplingAction.resourceId !== resourceId) {
+      label += ` (${Product.TYPES[currentSamplingAction.resourceId].name})`;
     }
     
   // else if there is not at current sample, if it is ready...
@@ -70,16 +70,16 @@ const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improve
   }
 
   const handleClick = useCallback(() => {
-    if (currentSample && !currentSample.isNew) {
+    if (currentSamplingAction && !currentSamplingAction.isNew) {
       onSetAction('IMPROVE_CORE_SAMPLE');
     } else if (improveSample) {
       onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...improveSample } });
     } else {
       onSetAction('NEW_CORE_SAMPLE', resourceId ? { preselect: { resourceId } } : undefined);
     }
-  }, [currentSample, onSetAction, resourceId]);
+  }, [currentSamplingAction, onSetAction, resourceId]);
 
-  const isImprovement = improveSample || (currentSample && !currentSample.isNew);
+  const isImprovement = improveSample || (currentSamplingAction && !currentSamplingAction.isNew);
   return (
     <ActionButton
       label={label}
@@ -87,7 +87,7 @@ const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improve
         attention: attention || undefined,
         disabled,
         loading: loading || undefined,
-        finishTime: currentSample?.finishTime
+        finishTime: currentSamplingAction?.finishTime
       }}
       icon={isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
       onClick={handleClick} />

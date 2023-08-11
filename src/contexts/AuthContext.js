@@ -15,8 +15,7 @@ const getAccountFromToken = (token) => {
 
 export function AuthProvider({ children }) {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  // const token = useStore(s => s.auth.token);
-  const token = 123;
+  const token = useStore(s => s.auth.token);
   const dispatchTokenInvalidated = useStore(s => s.dispatchTokenInvalidated);
   const dispatchAuthenticated = useStore(s => s.dispatchAuthenticated);
   const walletContext = useContext(WalletContext);
@@ -87,8 +86,7 @@ export function AuthProvider({ children }) {
   }, [ walletContext.disconnect, dispatchTokenInvalidated ]);
 
   // `account` will always correspond to current token value)
-  // const tokenAccount = useMemo(() => getAccountFromToken(token), [token]);
-  const tokenAccount = '0x04850f9c825df3e272d3d9feae3bd5e6d625ce5162227bb9ad3731bc4414efed';
+  const tokenAccount = useMemo(() => getAccountFromToken(token), [token]);
   return (
     <AuthContext.Provider value={{
       login: initiateLogin,

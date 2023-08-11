@@ -29,12 +29,12 @@ const useScanManager = (asteroid) => {
 
   const scanStatus = useMemo(() => {
     if (asteroid) {
-      if (asteroid.scanned) {
+      if (Asteroid.Entity.getScanned(asteroid)) {
         return 'FINISHED';
-      } else if(asteroid.scanCompletionTime > 0) {
+      } else if(asteroid.Celestial.scanFinishTime > 0) {
         if(getStatus('FINISH_ASTEROID_SCAN', payload) === 'pending') {
           return 'FINISHING';
-        } else if (asteroid.scanCompletionTime <= liveBlockTime) {
+        } else if (asteroid.Celestial.scanFinishTime <= liveBlockTime) {
           return 'READY_TO_FINISH';
         }
         return 'SCANNING';
