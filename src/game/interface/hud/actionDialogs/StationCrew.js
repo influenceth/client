@@ -1,67 +1,35 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Building, Crew, Crewmate, Ship } from '@influenceth/sdk';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
+import { Asteroid, Building, Crew, Crewmate, Ship, Station } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
+import { StationCrewIcon, StationPassengersIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
+import { boolAttr, formatTimer } from '~/lib/utils';
 
 import {
-  ResourceAmountSlider,
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
-  ActionDialogTabs,
-  getBonusDirection,
-  formatResourceVolume,
-  formatSampleMass,
-  formatSampleVolume,
-  TravelBonusTooltip,
-  TimeBonusTooltip,
   ActionDialogBody,
   FlexSection,
   FlexSectionInputBlock,
-  EmptyResourceImage,
   FlexSectionSpacer,
-  BuildingImage,
-  EmptyBuildingImage,
-  Section,
-  SectionTitle,
-  SectionBody,
-  ProgressBarSection,
-  CoreSampleSelectionDialog,
-  DestinationSelectionDialog,
-  SublabelBanner,
-  AsteroidImage,
-  ProgressBarNote,
-  GenericSection,
-  BarChart,
-  PropellantSection,
-  ShipImage,
-  formatMass,
   MiniBarChart,
-  MiniBarChartSection,
-  ShipTab,
   CrewInputBlock,
-  CrewOwnerBlock,
-  SwayInput,
   SwayInputBlock,
   TransferDistanceDetails,
   TransferDistanceTitleDetails,
   ShipInputBlock,
-  getBuildingInputDefaults
+  LotInputBlock
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
-import ResourceThumbnail from '~/components/ResourceThumbnail';
+import { ActionDialogInner } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
-import CrewCardFramed from '~/components/CrewCardFramed';
 import useCrew from '~/hooks/useCrew';
-import useCrewmate from '~/hooks/useCrewmate';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
 import CrewIndicator from '~/components/CrewIndicator';
@@ -97,7 +65,7 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
   const { data: ownerCrew } = useCrew((destinationShip || destinationLot)?.Control.controller.id);
   const crewIsOwner = ownerCrew?.id === crew?.i;
 
-  const crewmates = currentStationing?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentStationing?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const launchBonus = 0;
@@ -176,9 +144,9 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
                 disabled={stage !== actionStages.NOT_STARTED} />
             )
             : (
-              <FlexSectionInputBlock
+              <LotInputBlock
                 title="Origin"
-                {...getBuildingInputDefaults(lot)}
+                lot={lot}
                 disabled={stage !== actionStages.NOT_STARTED}
               />
             )
@@ -199,17 +167,15 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
                 disabled={stage !== actionStages.NOT_STARTED} />
             )
             : (
-              <FlexSectionInputBlock
+              <LotInputBlock
                 title="Destination"
                 titleDetails={
                   isInOrbit
                     ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
                     : <TransferDistanceDetails distance={transportDistance} />
                 }
-                image={<BuildingImage building={Building.TYPES[destinationLot?.building?.capableType || 0]} />}
-                label={`${Building.TYPES[destinationLot?.building?.capableType || 0].name}`}
-                disabled={stage !== actionStages.NOT_STARTED}
-                sublabel={`Lot #${destinationLot?.i || 1}`} />
+                lot={destinationLot}
+                disabled={stage !== actionStages.NOT_STARTED} />
             )
           }
         </FlexSection>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Crew, Deposit, Product } from '@influenceth/sdk';
+import { Asteroid, Crew, Crewmate, Deposit, Product } from '@influenceth/sdk';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { CoreSampleIcon, ImproveCoreSampleIcon, ResourceIcon } from '~/components/Icons';
@@ -131,7 +131,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   const originalYield = useMemo(() => existingSample?.Deposit?.initialYield, [existingSample?.id]); // only update on id change
   const originalTonnage = useMemo(() => originalYield ? originalYield * Product.TYPES[existingSample.Deposit.resource].massPerUnit : 0, [existingSample, originalYield]);
 
-  const crewmates = currentSamplingAction?._crewmates || ((crew?.crewmates || []).map((i) => crewmateMap[i]));
+  const crewmates = currentSamplingAction?._crewmates || ((crew?._crewmates || []).map((i) => crewmateMap[i]));
   const captain = crewmates[0];
   const sampleTimeBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_SPEED, crewmates);
   const sampleQualityBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, crewmates);

@@ -1,52 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
-import { Building, Crew, Ship } from '@influenceth/sdk';
+import { Crew, Crewmate } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LandShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
+import { LandShipIcon, RouteIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useExtractionManager from '~/hooks/useExtractionManager';
-import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
+import { boolAttr, formatTimer } from '~/lib/utils';
 
 import {
-  ResourceAmountSlider,
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
   ActionDialogTabs,
-  getBonusDirection,
-  formatResourceVolume,
-  formatSampleMass,
-  formatSampleVolume,
-  TravelBonusTooltip,
-  TimeBonusTooltip,
   ActionDialogBody,
   FlexSection,
   FlexSectionInputBlock,
-  EmptyResourceImage,
   FlexSectionSpacer,
-  BuildingImage,
-  EmptyBuildingImage,
-  Section,
-  SectionTitle,
-  SectionBody,
   ProgressBarSection,
-  CoreSampleSelectionDialog,
-  DestinationSelectionDialog,
-  SublabelBanner,
   AsteroidImage,
   ProgressBarNote,
-  GenericSection,
-  BarChart,
   PropellantSection,
-  ShipImage,
-  formatMass,
-  MiniBarChart,
-  MiniBarChartSection,
   ShipTab,
   LandingSelectionDialog,
   PropulsionTypeSection,
-  getBuildingInputDefaults
+  LotInputBlock
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -71,7 +47,7 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   const [propulsionType, setPropulsionType] = useState('propulsive');
   const [tab, setTab] = useState(0);
 
-  const crewmates = currentLanding?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentLanding?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const landingBonus = 0;/*useMemo(() => {
@@ -243,9 +219,9 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
 
               <FlexSectionSpacer />
               
-              <FlexSectionInputBlock
+              <LotInputBlock
                 title="Destination"
-                {...getBuildingInputDefaults(lot)}
+                lot={lot}
                 disabled={stage !== actionStages.NOT_STARTED}
                 onClick={() => setDestinationSelectorOpen(true)}
                 isSelected={stage === actionStages.NOT_STARTED}

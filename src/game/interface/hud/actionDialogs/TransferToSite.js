@@ -29,7 +29,7 @@ import {
   TransferSelectionDialog,
   DestinationSelectionDialog,
   ProgressBarSection,
-  getBuildingInputDefaults
+  LotInputBlock
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -52,7 +52,7 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
   const [transferSelectorOpen, setTransferSelectorOpen] = useState();
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
 
-  const crewmates = currentDeliveryAction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentDeliveryAction?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
 
@@ -141,7 +141,7 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
   }, [originInvId, originLot?.building?.Inventories]);
 
   const onStartDelivery = useCallback(() => {
-    const destInventory = destinationLot?.building?.Inventories.find((i) => !i.locked);
+    const destInventory = destinationLot?.building?.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
     const destInventoryConfig = Inventory.getType(destInventory?.inventoryType) || {};
     if (destInventory) {
       destInventoryConfig.massConstraint -= ((destInventory.mass || 0) + (destInventory.reservedMass || 0));
@@ -186,19 +186,15 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
 
       <ActionDialogBody>
         <FlexSection>
-          <FlexSectionInputBlock
+          <LotInputBlock
             title="Origin"
-            {...getBuildingInputDefaults(originLot, 'Inventory')}
-            image={
-              originLot
-                ? (
-                  <BuildingImage
-                    buildingType={originLot.building?.Building?.buildingType || 0}
-                    inventories={originLot?.building?.Inventories}
-                    showInventoryStatusForType={1} />
-                )
-                : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
-            }
+            lot={originLot}
+            fallbackSublabel="Inventory"
+            imageProps={{
+              iconOverride: <InventoryIcon />,
+              inventories: originLot?.building?.Inventories,
+              showInventoryStatusForType: 1
+            }}
             isSelected={stage === actionStage.NOT_STARTED}
             onClick={() => { setOriginSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}
@@ -208,16 +204,16 @@ const TransferToSite = ({ asteroid, lot, deliveryManager, stage, ...props }) => 
             <ForwardIcon />
           </FlexSectionSpacer>
 
-          <FlexSectionInputBlock
+          <LotInputBlock
             title="Destination"
-            {...getBuildingInputDefaults(lot, 'Inventory')}
-            image={(
-              <BuildingImage
-                buildingType={lot.building?.Building?.buildingType || 0}
-                inventories={lot.building?.Inventories}
-                showInventoryStatusForType={0}
-                unfinished />
-            )}
+            lot={lot}
+            fallbackSublabel="Inventory"
+            imageProps={{
+              iconOverride: <InventoryIcon />,
+              inventories: lot?.building?.Inventories,
+              showInventoryStatusForType: 0,
+              unfinished: true
+            }}
           />
         </FlexSection>
 

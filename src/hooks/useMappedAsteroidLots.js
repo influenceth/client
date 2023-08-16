@@ -175,11 +175,11 @@ const useMappedAsteroidLots = (i) => {
     switch (eventType) {
       case 'Dispatcher_ConstructionPlan':
       case 'Dispatcher_ConstructionUnplan':
-        // asteroidId, lotId, crewId, (capableType)
+        // asteroidId, lotId, crewId, (buildingType)
         queryClient.setQueryData([ 'asteroidLots', body.returnValues.asteroidId ], (currentLotsValue) => {
           currentLotsValue[body.returnValues.lotId] = 
             (currentLotsValue[body.returnValues.lotId] & 0b00001111)  // clear existing building
-            | (body.returnValues.capableType || 0) << 4               // set to event building (if there is one)
+            | (body.returnValues.buildingType || 0) << 4               // set to event building (if there is one)
           return currentLotsValue;
         });
         break;

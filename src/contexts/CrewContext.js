@@ -24,38 +24,36 @@ export function CrewProvider({ children }) {
     { enabled: crews?.length > 0 }
   );
 
+  const { data: selectedCrewLocation, isLoading: crewLocationLoading } = useQuery(
+    [ 'crewLocation', selectedCrewId ],
+    () => api.getCrewLocation(selectedCrewId),
+    { enabled: !!selectedCrewId }
+  );
+
   const crewmateMap = useMemo(() => {
     if (!crewmatesLoading) {
-      const roster = {};
-      (allCrewmates || []).forEach((crewmate) => roster[crewmate.i] = crewmate);
-      return roster;
+      const allMyCrewmates = {};
+      (allCrewmates || []).forEach((crewmate) => allMyCrewmates[crewmate.i] = crewmate);
+      return allMyCrewmates;
     }
     return null;
   }, [allCrewmates, crewmatesLoading]);
 
   const selectedCrew = useMemo(() => {
-    return selectedCrewId && (crews || []).find((crew) => crew.i === selectedCrewId);
-  }, [crews, selectedCrewId]);
-
-  // TODO: vvv remove this
-  if (selectedCrew) {
-    // NOTE: this is default location component
-    selectedCrew.Location = {
-      location: {
-        label: 'asteroid',
-        id: 1000
+    if (selectedCrewId) {
+      const crew = (crews || []).find((crew) => crew.i === selectedCrewId);
+      if (crew) {
+        if (!!crewmateMap) {
+          crew._crewmates = crew.Crew.roster.map((i) => crewmateMap[i]);
+        }
+        if (!!selectedCrewLocation) {
+          crew._location = selectedCrewLocation;
+        }
+        return crew;
       }
-    };
-
-    // TODO: fill in recursively-flattened location for crew as _location
-    selectedCrew._location = {
-      asteroidId: 1000,
-      lotId: 1000,
-      buildingId: 1000,
-      shipId: 1000
     }
-  }
-  // ^^^
+    return null;
+  }, [crews, selectedCrewId, !!crewmateMap, !!selectedCrewLocation]);
 
   useEffect(() => {
     // if logged in and done loading and there are crews
@@ -72,12 +70,7 @@ export function CrewProvider({ children }) {
     }
   }, [account, crews, crewsLoading, crewmatesLoading, dispatchCrewSelected, selectedCrew]);
 
-  const captain = useMemo(() => {
-    if (crewmateMap && selectedCrew?.Crew?.roster?.length) {
-      return crewmateMap[selectedCrew?.Crew?.roster[0]];
-    }
-    return null;
-  }, [crewmateMap, selectedCrew]);
+  const captain = useMemo(() => selectedCrew?._crewmates?.[0] || null, [crewmateMap, selectedCrew]);
 
   return (
     <CrewContext.Provider value={{
@@ -85,7 +78,7 @@ export function CrewProvider({ children }) {
       crew: selectedCrew,
       crews,
       crewmateMap,
-      loading: crewsLoading || crewmatesLoading,
+      loading: crewsLoading || crewmatesLoading || crewLocationLoading,
       selectCrew: dispatchCrewSelected  // TODO: this might be redundant
     }}>
       {children}

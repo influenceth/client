@@ -117,7 +117,7 @@ const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
           {Asteroid.getSize(asteroid)} <b>{Asteroid.getSpectralType(asteroid)}-type</b>
         </div>
         <AsteroidName>
-          {asteroid.Name?.name ? `\`${asteroid.Name.name}\`` : asteroid.baseName}
+          {asteroid.Name?.name ? `\`${asteroid.Name.name}\`` : Asteroid.getBaseName(asteroid.i)}
         </AsteroidName>
         {scanStatus === 'FINISHED' && (
           <LastRow style={{ color: 'white' }}>

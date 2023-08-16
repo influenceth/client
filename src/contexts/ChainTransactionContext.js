@@ -242,9 +242,9 @@ const getContracts = (account) => ({
   'PLAN_CONSTRUCTION': {
     address: process.env.REACT_APP_STARKNET_DISPATCHER,
     config: configs.Dispatcher,
-    transact: (contract) => ({ capableType, asteroidId, lotId, crewId }) => contract.invoke(
+    transact: (contract) => ({ buildingType, asteroidId, lotId, crewId }) => contract.invoke(
       'Construction_plan',
-      [capableType, asteroidId, lotId, crewId]
+      [buildingType, asteroidId, lotId, crewId]
     ),
     isEqual: (txVars, vars) => (
       txVars.asteroidId === vars.asteroidId

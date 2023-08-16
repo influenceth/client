@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Asteroid } from '@influenceth/sdk';
 
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import formatters from '~/lib/formatters';
@@ -12,7 +13,7 @@ const AsteroidLink = (props) => {
     if (owned) {
       const match = owned.find(a => a.i === Number(id));
       if (match) {
-        if (forceBaseName) return match.Celestial.baseName;
+        if (forceBaseName) return Asteroid.getBaseName(match?.i);
         return formatters.asteroidName(match);
       }
     }

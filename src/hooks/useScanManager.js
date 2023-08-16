@@ -1,5 +1,5 @@
-import { useCallback, useContext, useEffect, useMemo } from 'react';
-import { useQueryClient } from 'react-query';
+import { useCallback, useContext, useMemo } from 'react';
+import { Asteroid } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from './useActionItems';

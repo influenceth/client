@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
+import { Asteroid } from '@influenceth/sdk';
 
 import { PlusIcon, ResourceGroupIcons } from '~/components/Icons';
 import useStore from '~/hooks/useStore';

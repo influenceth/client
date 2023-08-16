@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Asteroid, Building, Processor } from '@influenceth/sdk';
+import { Asteroid, Building, Delivery, Inventory, Processor, Ship } from '@influenceth/sdk';
 
 import useAsteroid from '~/hooks/useAsteroid';
 import useConstructionManager from '~/hooks/useConstructionManager';
@@ -190,7 +190,7 @@ const useActionButtons = () => {
             }
 
             // if i control the building
-            if (lot.building.Control.controller?.i === crew.i) {
+            if (lot.building.Control?.controller?.id === crew.i) {
 
               // if it's operational
               if (constructionStatus === 'OPERATIONAL') {
@@ -235,7 +235,7 @@ const useActionButtons = () => {
           }
 
           // if this lot or ship has an unlocked inventory, can transfer things from it
-          if ((lot.building || ship || {}).Inventory.find((i) => !i.locked)) {
+          if ((lot.building || ship || {}).Inventory.find((i) => i.status === Inventory.STATUSES.AVAILABLE)) {
             a.push(actionButtons.SurfaceTransferOutgoing);
           }
 

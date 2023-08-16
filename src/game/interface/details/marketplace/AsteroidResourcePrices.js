@@ -177,7 +177,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
   const [sortField, sortDirection] = sort;
 
   const { data: selectedLot } = useLot(asteroid.i, selected);
-  const { data: marketplaceOwner } = useCrew(selectedLot?.building?.Control?.controller?.i);
+  const { data: marketplaceOwner } = useCrew(selectedLot?.building?.Control?.controller?.id);
   const selectedSupply = useMemo(() => {
     return resourceMarketplaces.find((m) => m.lotId === selected)?.supply || 0;
   }, [selected]);

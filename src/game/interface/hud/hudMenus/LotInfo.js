@@ -191,7 +191,7 @@ const LotInfo = () => {
 
   const [selectedBuilding, setSelectedBuilding] = useState();
 
-  const mainInventoryType = useMemo(() => (lot?.building?.Inventories || []).find((l) => !l.locked)?.inventoryType, [lot]);
+  const mainInventoryType = useMemo(() => (lot?.building?.Inventories || []).find((l) => l.status === Inventory.STATUSES.AVAILABLE)?.inventoryType, [lot]);
   const inventoryConfig = Inventory.getType(mainInventoryType) || {}; // TODO: use Inventory.getFilledCapacity() instead?
 
   if (!lot) return null;
@@ -301,7 +301,7 @@ const LotInfo = () => {
         collapsed={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL}
         borderless>
         <ConstructionPlan
-          capableType={lot.building.Building.buildingType}
+          buildingType={lot.building.Building.buildingType}
           planningLot={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.PLANNED ? lot : null} />
       </HudMenuCollapsibleSection>
     </Wrapper>

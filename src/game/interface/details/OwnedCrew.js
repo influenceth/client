@@ -485,7 +485,7 @@ const OwnedCrew = () => {
   const crew = useMemo(() => {
     if (crewIsLoading) return [];
     const activeCrew = (selectedCrew?.Crew.roster || []).map((i, index) => ({ ...crewmateMap[i], activeSlot: index + 1 }));
-    const activeInAnyCrewIds = (allCrews || []).reduce((acc, c) => [...acc, ...c.crewmates], []);
+    const activeInAnyCrewIds = (allCrews || []).reduce((acc, c) => [...acc, ...c.roster], []);
     const inactiveCrew = Object.values(crewmateMap || {})
       .filter((crewmate) => crewmate.Crewmate.class && !activeInAnyCrewIds.includes(crewmate.i))
       .map((c) => ({ ...c, activeSlot: -1 }));

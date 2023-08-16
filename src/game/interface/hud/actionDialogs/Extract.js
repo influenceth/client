@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Crew, Deposit, Extractor, Inventory, Product } from '@influenceth/sdk';
 import styled from 'styled-components';
+import { Asteroid, Crew, Crewmate, Deposit, Extractor, Inventory, Product } from '@influenceth/sdk';
 
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
-import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, ResourceIcon } from '~/components/Icons';
+import { CoreSampleIcon, ExtractionIcon, InventoryIcon, ResourceIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
 import { boolAttr, formatTimer } from '~/lib/utils';
@@ -31,7 +31,7 @@ import {
   CoreSampleSelectionDialog,
   DestinationSelectionDialog,
   SublabelBanner,
-  getBuildingInputDefaults
+  LotInputBlock
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -60,7 +60,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const [sampleSelectorOpen, setSampleSelectorOpen] = useState(false);
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
 
-  const crewmates = currentExtractionAction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentExtractionAction?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const extractionBonus = useMemo(() => {
@@ -223,7 +223,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   ]), [amount, crewTravelBonus, crewTravelTime, extractionBonus, extractionTime, resource]);
 
   const onStartExtraction = useCallback(() => {
-    const inventory = destinationLot?.building?.inventories.find((i) => !i.locked);
+    const inventory = destinationLot?.building?.inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
     const inventoryConfig = Inventory.getType(inventory.inventoryType) || {};
     if (inventory) {
       inventoryConfig.massConstraint -= ((inventory.mass || 0) + (inventory.reservedMass || 0));
@@ -309,19 +309,15 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
           
           <FlexSectionSpacer />
 
-          <FlexSectionInputBlock
+          <LotInputBlock
             title="Destination"
-            {...getBuildingInputDefaults(destinationLot, 'Inventory')}
-            image={
-              destinationLot
-                ? (
-                  <BuildingImage
-                    buildingType={destinationLot.building?.Building?.buildingType || 0}
-                    inventories={destinationLot.building?.Inventories}
-                    showInventoryStatusForType={1} />
-                )
-                : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
-            }
+            fallbackSublabel="Inventory"
+            lot={destinationLot}
+            imageProps={{
+              inventories: destinationLot?.building?.Inventories,
+              showInventoryStatusForType: 1,
+              iconOverride: <InventoryIcon />
+            }}
             isSelected={stage === actionStage.NOT_STARTED}
             onClick={() => { setDestinationSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}

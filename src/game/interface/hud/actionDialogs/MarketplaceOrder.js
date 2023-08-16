@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Crew, Product } from '@influenceth/sdk';
+import { Crew, Crewmate, Product } from '@influenceth/sdk';
 
 import marketplaceBackground from '~/assets/images/modal_headers/Marketplace.png';
-import { BanIcon, InventoryIcon, LocationIcon, WarningOutlineIcon, OrderIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon } from '~/components/Icons';
+import { BanIcon, InventoryIcon, WarningOutlineIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import useCrewContext from '~/hooks/useCrewContext';
-import useExtractionManager from '~/hooks/useExtractionManager';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
@@ -24,10 +23,7 @@ import {
   FlexSectionInputBlock,
   FlexSectionSpacer,
   BuildingImage,
-  ProgressBarSection,
-  ProgressBarNote,
   FlexSectionBlock,
-  TransferDistanceDetails,
   formatResourceMass,
   formatResourceVolume,
   EmptyBuildingImage,
@@ -35,7 +31,7 @@ import {
   BonusTooltip,
   getBonusDirection,
   MouseoverContent,
-  getBuildingInputDefaults
+  LotInputBlock
 } from './components';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 
@@ -203,7 +199,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
   const [limitPrice, setLimitPrice] = useState(preselect?.limitPrice);
   const [quantity, setQuantity] = useState(preselect?.quantity);
 
-  const crewmates = currentLaunch?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentLaunch?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const launchBonus = 0;
@@ -423,9 +419,9 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
 
       <ActionDialogBody>
         <FlexSection>
-          <FlexSectionInputBlock
+          <LotInputBlock
             title="Marketplace"
-            {...getBuildingInputDefaults(lot)}
+            lot={lot}
             disabled
           />
 
@@ -442,19 +438,15 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
         </FlexSection>
 
         <FlexSection>
-          <FlexSectionInputBlock
+          <LotInputBlock
             title={`Delivery ${mode === 'buy' ? 'To' : 'From'}`}
-            {...getBuildingInputDefaults(lot, 'Inventory')}
-            image={
-              destinationLot
-                ? (
-                  <BuildingImage
-                    buildingType={destinationLot?.building?.Building?.buildingType || 0}
-                    inventories={destinationLot?.building?.Inventories}
-                    showInventoryStatusForType={1} />
-                )
-                : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
-            }
+            lot={destinationLot}
+            fallbackSublabel='Inventory'
+            imageProps={{
+              iconOverride: <InventoryIcon />,
+              inventories: destinationLot?.building?.Inventories,
+              showInventoryStatusForType: 1
+            }}
             isSelected={stage === actionStages.NOT_STARTED}
             onClick={() => setDestinationSelectorOpen(true)}
             disabled={stage !== actionStages.NOT_STARTED}

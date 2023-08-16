@@ -24,7 +24,7 @@ import {
   PropellantSection,
   ShipTab,
   PropulsionTypeSection,
-  getBuildingInputDefaults
+  LotInputBlock
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -51,7 +51,7 @@ const LaunchShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   const [propulsionType, setPropulsionType] = useState('propulsive');
   const [tab, setTab] = useState(0);
 
-  const crewmates = currentLaunch?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentLaunch?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const launchBonus = 0;
@@ -147,10 +147,9 @@ const LaunchShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
         {tab === 0 && (
           <>
             <FlexSection>
-              <FlexSectionInputBlock
+              <LotInputBlock
                 title="Origin"
-                {...getBuildingInputDefaults(lot)}
-                image={<BuildingImage buildingType={lot?.building?.Building?.buildingType || 0} />}
+                lot={lot}
                 disabled={stage !== actionStages.NOT_STARTED}
               />
 

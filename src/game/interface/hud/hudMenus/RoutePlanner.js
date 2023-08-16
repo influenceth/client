@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Ship, Time } from '@influenceth/sdk';
+import { Inventory, Ship, Time } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
 import { CloseIcon, WarningIcon } from '~/components/Icons';
@@ -15,6 +15,7 @@ import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
 import { boolAttr, formatFixed } from '~/lib/utils';
 import { ShipImage, formatMass } from '../actionDialogs/components';
 import { Scrollable } from './components';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const ShipSelection = styled.div`
   align-items: center;
@@ -168,6 +169,7 @@ const getInventoriesByShipType = (shipType) => {
 
 const RoutePlanner = () => {
   const { coarseTime } = useContext(ClockContext);
+  const { crew } = useCrewContext();
   
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
@@ -269,7 +271,8 @@ const RoutePlanner = () => {
 
   const shipParams = useMemo(() => {
     if (!ship) return 0;
-    
+
+    const exhaustVelocity = Ship.TYPES[ship.Ship.shipType]?.exhaustVelocity || 0;
     return {
       ...ship,
       actualCargoMass: cargoMass,
@@ -303,14 +306,14 @@ const RoutePlanner = () => {
     const paths = {
       originPath: sampleAsteroidOrbit(
         baseTime,
-        origin.orbital,
+        origin.Orbit,
         minDelay,
         maxDelay,
         resolution
       ),
       destinationPath: sampleAsteroidOrbit(
         baseTime,
-        destination.orbital,
+        destination.Orbit,
         minDelay + minTof,
         maxDelay + maxTof,
         resolution

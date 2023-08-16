@@ -1,69 +1,27 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Crew } from '@influenceth/sdk';
+import { Ship } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { CloseIcon, CoreSampleIcon, EjectPassengersIcon, EmergencyModeEnterIcon, EmergencyModeExitIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
+import { CloseIcon, EmergencyModeEnterIcon, EmergencyModeExitIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
+import { boolAttr, formatTimer } from '~/lib/utils';
 
 import {
-  ResourceAmountSlider,
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
-  ActionDialogTabs,
-  getBonusDirection,
-  formatResourceVolume,
-  formatSampleMass,
-  formatSampleVolume,
-  TravelBonusTooltip,
-  TimeBonusTooltip,
   ActionDialogBody,
-  FlexSection,
-  FlexSectionInputBlock,
-  EmptyResourceImage,
-  FlexSectionSpacer,
-  BuildingImage,
-  EmptyBuildingImage,
-  Section,
-  SectionTitle,
-  SectionBody,
-  ProgressBarSection,
-  CoreSampleSelectionDialog,
-  DestinationSelectionDialog,
-  SublabelBanner,
-  AsteroidImage,
-  ProgressBarNote,
-  GenericSection,
-  BarChart,
-  PropellantSection,
-  ShipImage,
-  formatMass,
-  MiniBarChart,
-  MiniBarChartSection,
   ShipTab,
-  CrewInputBlock,
-  CrewOwnerBlock,
-  SwayInput,
-  SwayInputBlock,
-  TransferDistanceDetails,
-  TransferDistanceTitleDetails,
-  ShipInputBlock
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
-import ResourceThumbnail from '~/components/ResourceThumbnail';
+import useAsteroid from '~/hooks/useAsteroid';
+import useShipCrews from '~/hooks/useShipCrews';
 import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
-import CrewCardFramed from '~/components/CrewCardFramed';
-import useCrew from '~/hooks/useCrew';
-import useCrewmate from '~/hooks/useCrewmate';
-import useAsteroid from '~/hooks/useAsteroid';
-import useCrewmates from '~/hooks/useCrewmates';
-import useShipCrews from '~/hooks/useShipCrews';
+import { ActionDialogInner } from '../ActionDialog';
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
 //  - however, could you launch two ships at once? probably not because crew needs to be on ship?
@@ -100,7 +58,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
     return shipCrews.filter((c) => c.i !== crew?.i);
   }, [shipCrews]);
 
-  const crewmates = currentStationing?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentStationing?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
 
   const stats = useMemo(() => ([

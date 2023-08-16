@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
 import styled, { css, keyframes } from 'styled-components';
@@ -9,7 +9,9 @@ import { CaptainIcon, CrewIcon, CrewmateIcon, FoodIcon, IdleIcon, LocationIcon, 
 import TriangleTip from '~/components/TriangleTip';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
+import useBuilding from '~/hooks/useBuilding';
 import useCrewContext from '~/hooks/useCrewContext';
+import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
 import theme from '~/theme';

@@ -1,71 +1,37 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
-import { Building, Crew, Ship } from '@influenceth/sdk';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Building, Ship } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { CoreSampleIcon, EjectPassengersIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, MyAssetIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, StationCrewIcon, StationPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
+import { EjectPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
+import { boolAttr, formatTimer } from '~/lib/utils';
 
 import {
-  ResourceAmountSlider,
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
-  ActionDialogTabs,
-  getBonusDirection,
-  formatResourceVolume,
-  formatSampleMass,
-  formatSampleVolume,
-  TravelBonusTooltip,
-  TimeBonusTooltip,
   ActionDialogBody,
   FlexSection,
   FlexSectionInputBlock,
-  EmptyResourceImage,
   FlexSectionSpacer,
-  BuildingImage,
-  EmptyBuildingImage,
-  Section,
-  SectionTitle,
-  SectionBody,
-  ProgressBarSection,
-  CoreSampleSelectionDialog,
-  DestinationSelectionDialog,
-  SublabelBanner,
   AsteroidImage,
-  ProgressBarNote,
-  GenericSection,
-  BarChart,
-  PropellantSection,
-  ShipImage,
-  formatMass,
   MiniBarChart,
-  MiniBarChartSection,
-  ShipTab,
   CrewInputBlock,
-  CrewOwnerBlock,
-  SwayInput,
-  SwayInputBlock,
-  TransferDistanceDetails,
   TransferDistanceTitleDetails,
   ShipInputBlock,
   WarningAlert,
-  getBuildingInputDefaults
+  LotInputBlock
 } from './components';
+import useAsteroid from '~/hooks/useAsteroid';
+import useCrew from '~/hooks/useCrew';
+import useCrewmates from '~/hooks/useCrewmates';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
-import ResourceThumbnail from '~/components/ResourceThumbnail';
 import actionStages from '~/lib/actionStages';
-import theme, { hexToRGB } from '~/theme';
-import CrewCardFramed from '~/components/CrewCardFramed';
-import useCrew from '~/hooks/useCrew';
-import useCrewmate from '~/hooks/useCrewmate';
-import useAsteroid from '~/hooks/useAsteroid';
-import useCrewmates from '~/hooks/useCrewmates';
 import formatters from '~/lib/formatters';
+import theme from '~/theme';
+import { ActionDialogInner } from '../ActionDialog';
 
 const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -74,7 +40,7 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
 
   const { crew, crewmateMap } = useCrewContext();
 
-  const myCrewmates = currentStationing?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const myCrewmates = currentStationing?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = myCrewmates[0];
 
   const myCrewIsTarget = targetCrew?.i === crew?.i;
@@ -121,6 +87,8 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
 
   const shipIsInOrbit = ship?.Location?.location?.label === 'Asteroid' && ship?.Ship?.status !== Ship.STATUS.IN_FLIGHT;
 
+  const maxPassengers = ship?.Station?.cap || 0;
+
   return (
     <>
       <ActionDialogHeader
@@ -143,11 +111,10 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
                 disabled={stage !== actionStages.NOT_STARTED} />
             )
             : (
-              <FlexSectionInputBlock
+              <LotInputBlock
                 title="Origin"
-                {...getBuildingInputDefaults(lot)}
-                disabled={stage !== actionStages.NOT_STARTED}
-              />
+                lot={lot}
+                disabled={stage !== actionStages.NOT_STARTED} />
             )
           }
 
@@ -172,10 +139,10 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
               <MiniBarChart
                 color="#92278f"
                 label="Crewmate Count"
-                valueLabel={`5 / ${Ship.TYPES[ship.Ship.shipType].maxPassengers}`}
-                value={5 / Ship.TYPES[ship.Ship.shipType].maxPassengers}
+                valueLabel={`5 / ${maxPassengers || '?'}`}
+                value={maxPassengers > 0 ? (5 / maxPassengers) : 1}
                 deltaColor="#f644fa"
-                deltaValue={-targetCrew?.crewmates?.length / Ship.TYPES[ship.Ship.shipType].maxPassengers}
+                deltaValue={maxPassengers > 0 ? (-targetCrew?.roster?.length / maxPassengers) : 0}
               />
             )}
           </div>
@@ -262,7 +229,7 @@ const Wrapper = (props) => {
         asteroid={asteroid}
         lot={lot}
         ship={ship}
-        targetCrew={{ ...targetCrew, crewmates: targetCrewmates }}
+        targetCrew={{ ...targetCrew, _crewmates: targetCrewmates }}
         manager={manager}
         stage={actionStage}
         {...props} />

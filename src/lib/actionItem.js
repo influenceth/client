@@ -107,7 +107,7 @@ const formatAsPlans = (item) => {
     type: item.type,
     icon: <PlanBuildingIcon />,
     label: `${item.building.type} Site Plan`,
-    crewId: item.occupier,
+    crewId: item.occupier,  // TODO: ecs refactor -- occupier?
     asteroidId: Number(item.asteroid),
     lotId: Number(item.i),
     resourceId: null,
@@ -239,7 +239,7 @@ const formatAsTx = (item) => {
 
     case 'PLAN_CONSTRUCTION':
       formatted.icon = <PlanBuildingIcon />;
-      formatted.label = `Plan ${Building.TYPES[item.vars.capableType]?.name || 'Building'} Site`;
+      formatted.label = `Plan ${Building.TYPES[item.vars.buildingType]?.name || 'Building'} Site`;
       formatted.asteroidId = item.vars.asteroidId;
       formatted.lotId = item.vars.lotId;
       formatted.onClick = ({ openDialog }) => {

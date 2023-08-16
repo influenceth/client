@@ -66,7 +66,7 @@ const useColumns = () => {
       {
         key: 'controller',
         label: 'Controller',
-        sortField: 'controller.i',
+        sortField: 'controller.id', // TODO: ecs refactor
         selector: row => {
           if (row.Control?.controller?.id) {
             return row.Control.controller.id === crew?.i ? 'you' : row.Control.controller.id.toLocaleString();
@@ -77,13 +77,13 @@ const useColumns = () => {
       {
         key: 'occupier',
         label: 'Occupier',
-        sortField: 'occupier.i',
+        // sortField: 'occupier.i',
         selector: row => {
-          // TODO: ecs refactor
+          return 'TODO'; // TODO: ecs refactor
           // if (row.occupier?.i) {
           //   return row.occupier.i === crew?.i ? 'you' : row.occupier.i.toLocaleString();
           // }
-          return 'Unoccupied';
+          // return 'Unoccupied';
         }
       },
       {

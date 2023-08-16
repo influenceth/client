@@ -5,7 +5,7 @@ import ReactTooltip from 'react-tooltip';
 import { useQuery } from 'react-query';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
-import { Asteroid, Building, Crewmate, Inventory, Product, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Delivery, Inventory, Process, Product, Ship } from '@influenceth/sdk';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
@@ -1504,21 +1504,21 @@ export const DestinationSelectionDialog = ({
   const inventories = useMemo(() => {
     return (crewLots || [])
       .filter((lot) => (includeDeconstruction && lot.i === originLotId) || (
-        lot.building && lot.i !== originLotId && (lot.building.Inventories || []).find((i) => !i.locked)
+        lot.building && lot.i !== originLotId && (lot.building.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)
       ))
       .reduce((acc, lot) => {
         (lot.building.Inventories || []).forEach((inventory, slot) => {
           let usedMass = 0, usedVolume = 0, type;
 
           // deconstructing in place (use currently-locked inventory)
-          if (includeDeconstruction && lot.i === originLotId && inventory.locked) {
+          if (includeDeconstruction && lot.i === originLotId && inventory.status === Inventory.STATUSES.LOCKED) {
             type = `(construction site)`;
 
           // going to another lot (if unlocked)
-          } else if (!inventory.locked) {
+          } else if (inventory.status === Inventory.STATUSES.AVAILABLE) {
             usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0));
             usedVolume = ((inventory?.volume || 0) + (inventory?.reservedVolume || 0));
-            type = lot.building?.__t || 'Construction Site';
+            type = Building.TYPES[lot.building?.Building?.buildingType]?.name || 'Construction Site';
 
           // else, continue
           } else {
@@ -1884,8 +1884,8 @@ export const ShipConstructionSelectionDialog = ({ initialSelection, onClose, onS
                   <td><div style={{ display: 'flex', alignItems: 'center' }}><ProcessIcon style={{ marginRight: 6 }} /> {Ship.TYPES[shipType]?.name} Integration</div></td>
                   <td>
                     <InputOutputTableCell>
-                      <label>{Object.keys(requirements).length}</label>
-                      {Object.keys(requirements).map((resourceId) => (
+                      <label>{Object.keys(Ship.CONSTRUCTION_TYPES[shipType].requirements).length}</label>
+                      {Object.keys(Ship.CONSTRUCTION_TYPES[shipType].requirements).map((resourceId) => (
                         <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
                       ))}
                     </InputOutputTableCell>
@@ -1916,7 +1916,7 @@ export const getCapacityUsage = (inventories, type) => {
     volume: { max: 0, used: 0, reserved: 0 },
   }
   if (type !== undefined) {
-    const inventory = (inventories || []).find((i) => !i.locked);
+    const inventory = (inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
 
     const { filledMass, filledVolume } = Inventory.getFilledCapacity(inventory.inventoryType);
     capacity.mass.max = filledMass;
@@ -1933,7 +1933,7 @@ export const getCapacityUsage = (inventories, type) => {
 
 export const getBuildingRequirements = (building = {}, deliveries = []) => {
   const { Building: { buildingType }, Inventories = [] } = building;
-  const inventory = Inventories.find((i) => !i.locked);
+  const inventory = Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
 
   // TODO: presumably ingredients will come from sdk per building
   return Object.keys(Building.CONSTRUCTION_TYPES[buildingType]?.requirements || {}).map((productId) => {
@@ -2936,10 +2936,26 @@ export const CrewOwnerBlock = ({ title, ...innerProps }) => {
   );
 };
 
+export const LotInputBlock = ({ lot, fallbackLabel = 'Select', fallbackSublabel = 'Lot', imageProps = {}, ...props }) => {
+  const buildingType = lot?.building?.Building?.buildingType || 0;
+  return (
+    <FlexSectionInputBlock
+      image={
+        lot
+          ? <BuildingImage buildingType={buildingType} {...imageProps} />
+          : <EmptyBuildingImage {...imageProps} />
+      }
+      label={lot ? `${lot.building?.Name?.name || Building.TYPES[buildingType].name}` : fallbackLabel}
+      sublabel={lot ? `${lot.building?.Name?.name ? Building.TYPES[buildingType].name : `Lot #${lot.i.toLocaleString()}`}` : fallbackSublabel}
+      {...props}
+    />
+  );
+};
+
 export const ShipInputBlock = ({ ship, ...props }) => {
   const { crew } = useCrewContext();
-  const hasMyCrew = crew && crew._location?.shipId === ship?.i;
-  const isMine = crew && crew.i === ship?.Control?.controller?.i;
+  const hasMyCrew = crew && crew._location?.shipId === ship?.id;
+  const isMine = crew && crew.i === ship?.Control?.controller?.id;
   const inEmergencyMode = ship?.Ship?.operationMode === Ship.MODES.EMERGENCY;
   return (
     <FlexSectionInputBlock
@@ -3629,12 +3645,3 @@ export const formatShipStatus = (ship) => {
   console.warn('Unknown ship status', ship)
   return '';
 }
-
-export const getBuildingInputDefaults = (lot, fallbackSublabel = 'Lot', fallbackLabel = 'Select') => {
-  const buildingType = lot?.building?.Building?.buildingType || 0;
-  return {
-    image: <BuildingImage buildingType={buildingType} />,
-    label: lot ? `${lot.building?.Name?.name || Building.TYPES[buildingType].name}` : fallbackLabel,
-    sublabel: lot ? lot.building?.Name?.name ? Building.TYPES[buildingType].name : `Lot #${lot.i.toLocaleString()}` : fallbackSublabel,
-  };
-};

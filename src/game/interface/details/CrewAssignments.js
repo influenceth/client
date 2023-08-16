@@ -334,7 +334,7 @@ const CrewAssignments = () => {
   // TODO: genesis book deprecation vvv
   const eligibleCrew = useMemo(() => {
     if (crew && crewmateMap) {
-      const eligible = crew.crewmates
+      const eligible = crew._crewmates
         .filter((i) => [1,2,3].includes(crewmateMap[i]?.crewCollection))
         .map((i) => crewmateMap[i]);
       if (eligible.length === 0) history.push('/owned-crew');

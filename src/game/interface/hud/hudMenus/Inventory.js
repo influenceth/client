@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { usePopper } from 'react-popper';
 import ReactTooltip from 'react-tooltip';
-import { Inventory, Product } from '@influenceth/sdk';
+import { Delivery, Inventory, Product } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
 import { CheckedIcon, DotsIcon, UncheckedIcon } from '~/components/Icons';
@@ -265,7 +265,7 @@ const LotInventory = () => {
 
   const resourceItemRefs = useRef([]);
 
-  const inventory = Object.values(lot?.building?.Inventories || {}).find((i) => !i.locked);
+  const inventory = Object.values(lot?.building?.Inventories || {}).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
   inventory.contentsObj = useMemo(() => {
     return inventory?.contents?.reduce((acc, c) => {
       acc[c.resource] = c.amount;

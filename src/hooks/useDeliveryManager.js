@@ -1,4 +1,5 @@
 import { useCallback, useContext, useMemo } from 'react';
+import { Delivery } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import actionStages from '~/lib/actionStages';

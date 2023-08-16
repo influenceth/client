@@ -15,6 +15,7 @@ import { useShipLink } from '~/components/ShipLink';
 import { ResourceImage } from '~/components/ResourceThumbnail';
 import { getShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const thumbnailDimension = 75;
 

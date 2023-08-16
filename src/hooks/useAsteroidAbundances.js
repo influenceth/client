@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Product } from '@influenceth/sdk';
+import { Asteroid, Product } from '@influenceth/sdk';
 
 import { keyify } from '~/lib/utils';
 

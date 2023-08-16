@@ -260,7 +260,7 @@ const Account = () => {
 
   const onClickPlay = useCallback(() => {
     // if crew is done loading and there are no crewmates, send to owned-crew first
-    if (loggedIn && !crewLoading && !(crew?.crewmates?.length > 0)) {
+    if (loggedIn && !crewLoading && !(crew?._crewmates?.length > 0)) {
       history.push('/owned-crew');
     }
     dispatchLauncherPage();
@@ -273,7 +273,7 @@ const Account = () => {
         true
       );
     }
-  }, [crewLoading, crew?.crewmates, dispatchLauncherPage, dispatchCutscene, dispatchSeenIntroVideo, hasSeenIntroVideo]);
+  }, [crewLoading, crew?._crewmates, dispatchLauncherPage, dispatchCutscene, dispatchSeenIntroVideo, hasSeenIntroVideo]);
 
   return (
     <MainContent loggedIn={loggedIn}>
@@ -297,7 +297,7 @@ const Account = () => {
               <h4>Loading Crew...</h4>
             </Loading>
           )}
-          {!crewLoading && crew?.crewmates?.length > 0 && (
+          {!crewLoading && crew?._crewmates?.length > 0 && (
             <CrewContainer>
               {captain && <>
                 <CaptainDetails>
@@ -310,7 +310,7 @@ const Account = () => {
                   <StyledCaptainIcon />
                 </CaptainCardContainer>
               </>}
-              {crew.crewmates.slice(1).map((crewmateId) => {
+              {crew._crewmates.slice(1).map((crewmateId) => {
                 const crewmate = crewmateMap[crewmateId];
                 if (crewmate) {
                   return (
@@ -322,7 +322,7 @@ const Account = () => {
               })}
             </CrewContainer>
           )}
-          {!crewLoading && !(crew?.crewmates?.length > 0) && (
+          {!crewLoading && !(crew?._crewmates?.length > 0) && (
             <CrewContainer noCrew>
               <>
                 <CaptainDetails>

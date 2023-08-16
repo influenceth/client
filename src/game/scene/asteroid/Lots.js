@@ -290,7 +290,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
         // and all ['lots', asteroidId, *] that are not occupied by me when I navigate away from the asteroid
         queryClient.removeQueries({ queryKey: [ 'asteroidLots', asteroidId ] });
         queryClient.getQueriesData(['lots', asteroidId])
-          .filter(([ queryKey, data ]) => data && data.occupier !== crew?.i)
+          .filter(([ queryKey, data ]) => data && data.occupier !== crew?.i)  // TODO: ecs refactor -- occupier?
           .forEach(([ queryKey ]) => { queryClient.removeQueries({ queryKey }); });
       }
     }

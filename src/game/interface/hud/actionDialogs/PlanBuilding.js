@@ -47,7 +47,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
   const taskTime = useMemo(() => 0, []);
   const stats = useMemo(() => {
     if (!asteroid?.i || !lot?.i) return [];
-    const crewmates = (crew?.crewmates || []).map((i) => crewmateMap[i]);
+    const crewmates = (crew?._crewmates || []).map((i) => crewmateMap[i]);
     const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
     const tripDetails = []; // TODO: 
     const taskTime = 0;
@@ -71,7 +71,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
         isTimeStat: true
       },
     ];
-  }, [crew?.crewmates]);
+  }, [crew?._crewmates]);
 
   useEffect(() => {
     if (currentConstructionAction?.buildingType) setBuildingType(currentConstructionAction.buildingType)

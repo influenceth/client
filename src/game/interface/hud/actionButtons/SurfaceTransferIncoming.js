@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { Delivery } from '@influenceth/sdk';
 
 import { SurfaceTransferIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/useDeliveryManager';

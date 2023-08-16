@@ -38,7 +38,8 @@ import {
   FlexSectionBlock,
   WarningAlert,
   SwayInputBlock,
-  SwayInputBlockInner
+  SwayInputBlockInner,
+  LotInputBlock
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -74,7 +75,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   const { data: originLotOccupier } = useCrew(originLot?.building?.Control?.controller?.id);
   const { data: destinationLotOccupier } = useCrew(destinationLot?.building?.Control?.controller?.id);
 
-  const crewmates = currentDeliveryAction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentDeliveryAction?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
 
@@ -170,7 +171,7 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
   }, [originInvId, originLot?.building?.Inventories]);
 
   const onStartDelivery = useCallback(() => {
-    const destInventory = destinationLot?.building?.Inventories.find((i) => !i.locked);
+    const destInventory = destinationLot?.building?.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
     const destInventoryConfig = Inventory.getType(destInventory?.inventoryType) || {};
     if (destInventory) {
       destInventoryConfig.massConstraint -= ((destInventory.mass || 0) + (destInventory.reservedMass || 0));
@@ -236,36 +237,29 @@ const SurfaceTransfer = ({ asteroid, lot, deliveryManager, stage, ...props }) =>
           ]} />
 
         <FlexSection>
-          <FlexSectionInputBlock
+          <LotInputBlock
             title="Origin"
-            {...getBuildingInputDefaults(lot)}
-            image={(
-              <BuildingImage
-                buildingType={lot.building?.Building?.buildingType || 0}
-                inventories={lot.building?.Inventories}
-                showInventoryStatusForType={1} />
-            )}
+            lot={lot}
+            imageProps={{
+              inventories: lot.building?.Inventories,
+              showInventoryStatusForType: 1
+            }}
           />
           
           <FlexSectionSpacer>
             <ForwardIcon />
           </FlexSectionSpacer>
 
-          <FlexSectionInputBlock
+          <LotInputBlock
             title="Destination"
             titleDetails={<TransferDistanceDetails distance={transportDistance} />}
-            {...getBuildingInputDefaults(destinationLot)}
-            image={
-              destinationLot
-                ? (
-                  <BuildingImage
-                    buildingType={destinationLot.building?.Building?.buildingType || 0}
-                    error={destinationOverloaded}
-                    inventories={destinationLot?.building?.Inventories}
-                    showInventoryStatusForType={1} />
-                )
-                : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
-            }
+            lot={destinationLot}
+            imageProps={{
+              error: destinationOverloaded,
+              iconOverride: <InventoryIcon />,
+              inventories: destinationLot?.building?.Inventories,
+              showInventoryStatusForType: 1
+            }}
             isSelected={stage === actionStage.NOT_STARTED}
             onClick={() => { setDestinationSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}

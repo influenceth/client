@@ -1,6 +1,6 @@
 import { Fragment, useMemo } from 'react';
 import styled from 'styled-components';
-import { Building, Inventory, Ship } from '@influenceth/sdk';
+import { Building, Dock, Inventory, Ship, Station } from '@influenceth/sdk';
 
 import { useLotLink } from '~/components/LotLink';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -12,11 +12,12 @@ import ClipCorner from '~/components/ClipCorner';
 import { CaretIcon, ConstructIcon } from '~/components/Icons';
 import { formatFixed } from '~/lib/utils';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
-import { ShipImage } from '../actionDialogs/components';
 import { ResourceImage } from '~/components/ResourceThumbnail';
 import useLot from '~/hooks/useLot';
 import { useShipLink } from '~/components/ShipLink';
 import { getShipIcon } from '~/lib/assetUtils';
+import useBuilding from '~/hooks/useBuilding';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const Wrapper = styled.div`
   display: flex;
@@ -165,7 +166,7 @@ const BuildingRow = ({ lot }) => {
   const [progress, progressColor] = useMemo(() => {
     if (lot.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       if (lot.building?.Building?.buildingType === Building.IDS.WAREHOUSE) {
-        const inventory = (lot.building.Inventories || []).find((i) => !i.locked);
+        const inventory = (lot.building.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
         const filledCapacity = Inventory.getFilledCapacity(inventory?.inventoryType);
         const usage = inventory
           ? Math.min(1,
@@ -309,6 +310,8 @@ const ShipInfoRow = ({ ship }) => {
 };
 
 const AsteroidAssets = () => {
+  const { crew } = useCrewContext();
+
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lots, isLoading: lotsLoading } = useAsteroidCrewLots(asteroidId);

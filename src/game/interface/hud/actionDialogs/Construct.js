@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Building, Crew } from '@influenceth/sdk';
+import { Building, Crew, Crewmate } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -13,16 +13,20 @@ import useConstructionManager from '~/hooks/useConstructionManager';
 import { boolAttr, formatTimer } from '~/lib/utils';
 
 import {
-  BuildingRequirementsSection, ActionDialogFooter,
+  BuildingRequirementsSection,
+  ActionDialogFooter,
   ActionDialogHeader,
-  ActionDialogStats, TravelBonusTooltip,
-
-  getBonusDirection, TimeBonusTooltip, ActionDialogBody,
+  ActionDialogStats,
+  TravelBonusTooltip,
+  getBonusDirection,
+  TimeBonusTooltip,
+  ActionDialogBody,
   FlexSection,
   FlexSectionInputBlock,
-  BuildingImage,
   FlexSectionSpacer,
-  ProgressBarSection, getBuildingRequirements, getBuildingInputDefaults
+  ProgressBarSection,
+  getBuildingRequirements,
+  LotInputBlock
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -49,7 +53,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { crew, crewmateMap } = useCrewContext();
   const { currentConstructionAction, constructionStatus, startConstruction, finishConstruction } = constructionManager;
 
-  const crewmates = currentConstructionAction?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentConstructionAction?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const constructionBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CONSTRUCTION_EFFICIENCY, crewmates);
@@ -151,15 +155,13 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
 
       <ActionDialogBody>
         <FlexSection>
-          <FlexSectionInputBlock
-            title="Building"
-            {...getBuildingInputDefaults(lot, 'Building')}
-            image={(
-              <BuildingImage
-                buildingType={lot?.building?.Building?.buildingType}
-                iconOverlay={requirementsMet ? null : <WarningOutlineIcon />}
-                iconOverlayColor={theme.colors.lightOrange} />
-            )}
+          <LotInputBlock
+            lot={lot}
+            fallbackSublabel="Building"
+            imageProps={{
+              iconOverlay: requirementsMet ? null : <WarningOutlineIcon />,
+              iconOverlayColor: theme.colors.lightOrange,
+            }}
             bodyStyle={requirementsMet ? {} : { background: `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.15)` }}
             tooltip={!requirementsMet && (
               <>

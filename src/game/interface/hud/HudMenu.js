@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import styled from 'styled-components';
-import { Building } from '@influenceth/sdk';
 import ReactTooltip from 'react-tooltip';
+import styled from 'styled-components';
+import { Building, Inventory } from '@influenceth/sdk';
 import { BiWrench as WrenchIcon } from 'react-icons/bi';
 
 import IconButton from '~/components/IconButton';
@@ -21,10 +21,10 @@ import {
   ResourceIcon,
   SimulateRouteIcon,
 } from '~/components/Icons';
+import useAuth from '~/hooks/useAuth';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import hudMenus from './hudMenus';
-import useAuth from '~/hooks/useAuth';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -361,7 +361,7 @@ const HudMenu = () => {
         Component: hudMenus.LotResources
       });
 
-      if (lot?.building?.Building?.buildingType && (lot?.building?.Inventories || []).find((i) => !i.locked)) {
+      if (lot?.building?.Building?.buildingType && (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)) {
         buttons.push({
           key: 'LOT_INVENTORY',
           label: 'Inventory',

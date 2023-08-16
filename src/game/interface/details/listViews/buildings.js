@@ -67,7 +67,7 @@ const useColumns = () => {
       {
         key: 'controller',
         label: 'Lot Controller',
-        sortField: 'lot.controller.i',
+        sortField: 'lot.controller.id',  // TODO: ecs refactor
         selector: row => {
           if (row.Control?.controller?.id) {
             return row.Control?.controller?.id === crew?.i ? 'you' : row.Control?.controller?.id.toLocaleString();
@@ -78,7 +78,7 @@ const useColumns = () => {
       {
         key: 'occupier',
         label: 'Lot Occupier',
-        sortField: 'lot.occupier.i',
+        // sortField: 'lot.occupier.i',
         selector: row => {
           return 'TODO'; // TODO: ecs refactor
           // if (row.lot?.occupier?.i) {
@@ -92,7 +92,7 @@ const useColumns = () => {
         label: 'Occupation Type',
         selector: row => {
           return 'TODO';  // TODO: ecs refactor
-          return row.lot?.occupier?.isSquatter ? 'Squatting' : (row.lot?.controller?.isRenter ? 'Renting' : '');
+          // return row.lot?.occupier?.isSquatter ? 'Squatting' : (row.lot?.controller?.isRenter ? 'Renting' : '');
         },
       },
     ];

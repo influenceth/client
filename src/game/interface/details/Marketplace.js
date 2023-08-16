@@ -122,7 +122,7 @@ const Marketplace = () => {
   const { crew } = useCrewContext();
   const { data: asteroid } = useAsteroid(Number(asteroidId));
   const { data: lot } = useLot(Number(asteroidId), lotId === 'all' ? null : Number(lotId));
-  const { data: marketplaceOwner } = useCrew(lot?.occupier);
+  const { data: marketplaceOwner } = useCrew(lot?.building?.Control?.controller?.id);
 
   const resourceId = discriminator === 'orders' ? null : discriminator;
 

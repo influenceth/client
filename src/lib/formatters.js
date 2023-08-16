@@ -1,4 +1,4 @@
-import { AdalianOrbit, Asteroid } from '@influenceth/sdk';
+import { AdalianOrbit, Asteroid, Building, Ship } from '@influenceth/sdk';
 import { utils as ethersUtils } from 'ethers';
 
 const formatters = {
@@ -33,7 +33,7 @@ const formatters = {
 
   asteroidName: (a, fallbackText) => {
     if (!a) return fallbackText || 'Asteroid';
-    return a.Name?.name || a.Celestial?.baseName || `Asteroid #${a.i.toLocaleString()}`;
+    return a.Name?.name || Asteroid.getBaseName(a.i) || `Asteroid #${a.i.toLocaleString()}`;
   },
 
   asteroidPrice: (r, sale) => {

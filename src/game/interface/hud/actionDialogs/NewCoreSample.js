@@ -101,8 +101,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
 
   const lotAbundance = resourceId ? lotAbundances[resourceId] : 0;
 
-  const crewmates = currentSamplingAction?._crewmates
-    || ((crew?.crewmates || []).map((i) => crewmateMap[i]));
+  const crewmates = currentSamplingAction?._crewmates || ((crew?._crewmates || []).map((i) => crewmateMap[i]));
   const captain = crewmates[0];
   const sampleTimeBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_SPEED, crewmates);
   const sampleQualityBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, crewmates);

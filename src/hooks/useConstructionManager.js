@@ -79,7 +79,7 @@ const useConstructionManager = (asteroidId, lotId) => {
             stages.plan = actionStage.COMPLETING;
 
           // if at risk, but i was the occupier, still treat as "planned" (will go back to "ready to plan" for other crews)
-          } else if (lot.occupier === crew?.i) {
+          } else if (lot.building?.Control?.controller?.id === crew?.i) {
             status = 'PLANNED';
             stages.plan = actionStage.COMPLETED;
           }

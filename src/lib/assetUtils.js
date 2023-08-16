@@ -3,7 +3,7 @@ import { Assets, Building, Product, Ship } from '@influenceth/sdk';
 const ASSET_CACHE = {};
 
 const getSlug = (assetName) => {
-  return assetName.replace(/[^a-z]/ig, '');
+  return (assetName || '').replace(/[^a-z]/ig, '');
 }
 
 const getIconUrl = (type, assetName, iconVersion, { append, w, h, f } = {}) => {
@@ -48,7 +48,7 @@ export const getBuildingIcon = (i, size, isHologram) => {
   if (!ASSET_CACHE[cacheKey]) {
     const conf = BUILDING_SIZES[useSize];
     if (isHologram) conf.append = '_Site';
-    ASSET_CACHE[cacheKey] = getIconUrl('buildings', Building.TYPES[i]?.name, Assets.Building[i].iconVersion, conf);
+    ASSET_CACHE[cacheKey] = getIconUrl('buildings', Building.TYPES[i]?.name, Assets.Building[i]?.iconVersion, conf);
   }
   return ASSET_CACHE[cacheKey];
 };
@@ -56,7 +56,7 @@ export const getBuildingIcon = (i, size, isHologram) => {
 export const getBuildingModel = (i) => {
   const cacheKey = `buildingModel_${i}`;
   if (!ASSET_CACHE[cacheKey]) {
-    ASSET_CACHE[cacheKey] = getModelUrl('buildings', Building.TYPES[i]?.name, Assets.Building[i].modelVersion);
+    ASSET_CACHE[cacheKey] = getModelUrl('buildings', Building.TYPES[i]?.name, Assets.Building[i]?.modelVersion);
   }
   return ASSET_CACHE[cacheKey];
 };
@@ -78,13 +78,13 @@ export const getProductIcon = (i, size) => {
 
   const cacheKey = `productIcon_${i}_${useSize}`;
   if (!ASSET_CACHE[cacheKey]) {
-    ASSET_CACHE[cacheKey] = getIconUrl('resources', Product.TYPES[i]?.name, Assets.Product[i].iconVersion, PRODUCT_SIZES[useSize]);
+    ASSET_CACHE[cacheKey] = getIconUrl('resources', Product.TYPES[i]?.name, Assets.Product[i]?.iconVersion, PRODUCT_SIZES[useSize]);
   }
   return ASSET_CACHE[cacheKey];
 };
 
 export const getProductModel = (i) => {
-  return getModelUrl('resources', Product.TYPES[i]?.name, Assets.Product[i].modelVersion);
+  return getModelUrl('resources', Product.TYPES[i]?.name, Assets.Product[i]?.modelVersion);
 };
 
 
@@ -104,7 +104,7 @@ export const getShipIcon = (i, size, isHologram) => {
   if (!ASSET_CACHE[cacheKey]) {
     const conf = SHIP_SIZES[useSize];
     if (isHologram) conf.append = '_Holo';
-    ASSET_CACHE[cacheKey] = getIconUrl('ships', Ship.TYPES[i]?.name, Assets.Ship[i].iconVersion, conf);
+    ASSET_CACHE[cacheKey] = getIconUrl('ships', Ship.TYPES[i]?.name, Assets.Ship[i]?.iconVersion, conf);
   }
   return ASSET_CACHE[cacheKey];
 };
@@ -112,7 +112,7 @@ export const getShipIcon = (i, size, isHologram) => {
 export const getShipModel = (i) => {
   const cacheKey = `shipModel_${i}`;
   if (!ASSET_CACHE[cacheKey]) {
-    ASSET_CACHE[cacheKey] = getModelUrl('ships', Ship.TYPES[i]?.name, Assets.Ship[i].modelVersion);
+    ASSET_CACHE[cacheKey] = getModelUrl('ships', Ship.TYPES[i]?.name, Assets.Ship[i]?.modelVersion);
   }
   return ASSET_CACHE[cacheKey];
 };

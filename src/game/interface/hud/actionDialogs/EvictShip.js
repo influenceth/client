@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
-import { Building, Crew, Crewmate, Ship } from '@influenceth/sdk';
+import { Crew, Crewmate, Ship } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
+import { LaunchShipIcon, RouteIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useExtractionManager from '~/hooks/useExtractionManager';
-import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
+import { boolAttr, formatTimer } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -17,23 +15,20 @@ import {
   FlexSection,
   FlexSectionInputBlock,
   FlexSectionSpacer,
-  BuildingImage,
   ProgressBarSection,
   AsteroidImage,
   ProgressBarNote,
   PropellantSection,
   ShipTab,
   PropulsionTypeSection,
-  getBuildingInputDefaults
+  LotInputBlock
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
-import ResourceThumbnail from '~/components/ResourceThumbnail';
 import actionStages from '~/lib/actionStages';
-import theme from '~/theme';
-import CrewCardFramed from '~/components/CrewCardFramed';
 import formatters from '~/lib/formatters';
+import theme from '~/theme';
+import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
 //  - however, could you launch two ships at once? probably not because crew needs to be on ship?
@@ -51,7 +46,7 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const [tab, setTab] = useState(0);
   const ship = Ship.TYPES[1];  // TODO
 
-  const crewmates = currentLaunch?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentLaunch?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const launchBonus = 0;
@@ -147,9 +142,9 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
         {tab === 0 && (
           <>
             <FlexSection>
-              <FlexSectionInputBlock
+              <LotInputBlock
                 title="Origin"
-                {...getBuildingInputDefaults(lot)}
+                lot={lot}
                 disabled={stage !== actionStages.NOT_STARTED}
               />
 

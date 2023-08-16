@@ -73,6 +73,17 @@ const api = {
     return response.data;
   },
 
+  getCrewLocation: async (i) => {
+    // TODO: ecs-refactor -- return a recursively flattened location object for crew id
+    // (might be easiest to do from ES since already flattened)
+    return {
+      asteroidId: 1000,
+      lotId: 1,
+      buildingId: 1,
+      shipId: null
+    };
+  },
+
   getUserAssignments: async () => {
     const response = await instance.get('/v1/user/assignments');
     return response.data;
@@ -210,7 +221,6 @@ const api = {
   },
 
   getCrewmatesByCrewIds: async (crewIds) => {
-    console.log('pmk zz', crewIds);
     return getEntities({
       match: { 'Control.controller': crewIds.map((i) => ({ label: 'Crewmate', id: i })) },
       label: 'Crewmate'

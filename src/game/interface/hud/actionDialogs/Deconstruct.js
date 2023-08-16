@@ -3,7 +3,8 @@ import { Asteroid, Building, Crew, Crewmate } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
-  DeconstructIcon, LocationIcon, InventoryIcon,
+  DeconstructIcon,
+  InventoryIcon,
   ForwardIcon
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -11,10 +12,13 @@ import useConstructionManager from '~/hooks/useConstructionManager';
 import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
 
 import {
-  DeconstructionMaterialsSection, ActionDialogFooter,
+  DeconstructionMaterialsSection,
+  ActionDialogFooter,
   ActionDialogHeader,
-  ActionDialogStats, getBonusDirection,
-  TravelBonusTooltip, ActionDialogBody,
+  ActionDialogStats,
+  getBonusDirection,
+  TravelBonusTooltip,
+  ActionDialogBody,
   ProgressBarSection,
   FlexSection,
   FlexSectionInputBlock,
@@ -23,7 +27,7 @@ import {
   DestinationSelectionDialog,
   EmptyBuildingImage,
   getBuildingRequirements,
-  getBuildingInputDefaults
+  LotInputBlock
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -34,7 +38,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
   const { deconstruct, deconstructTx } = constructionManager;
   const { data: inProgressDestination } = useLot(asteroid?.i, deconstructTx?.returnValues?.destinationLotId);
 
-  const crewmates = crew.crewmates.map((i) => crewmateMap[i]);
+  const crewmates = crew._crewmates.map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
 
@@ -104,9 +108,9 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
 
       <ActionDialogBody>
         <FlexSection>
-          <FlexSectionInputBlock
+          <LotInputBlock
             title="Deconstruct"
-            {...getBuildingInputDefaults(lot)}
+            lot={lot}
             disabled
           />
           
@@ -114,26 +118,19 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
             <ForwardIcon />
           </FlexSectionSpacer>
 
-          <FlexSectionInputBlock
+          <LotInputBlock
             title="Transfer To"
-            {...getBuildingInputDefaults(destinationLot, 'Inventory')}
-            image={
-              destinationLot
-                ? (
-                  destinationLot.i === lot.i
-                    ? (
-                      <BuildingImage
-                        buildingType={destinationLot?.building?.Building?.buildingType || 0}
-                        unfinished />
-                    )
-                    : (
-                      <BuildingImage
-                        buildingType={destinationLot?.building?.Building?.buildingType || 0}
-                        inventories={destinationLot?.building?.inventories}
-                        showInventoryStatusForType={1} />
-                    )
-                )
-                : <EmptyBuildingImage iconOverride={<InventoryIcon />} />
+            lot={destinationLot}
+            fallbackSublabel="Inventory"
+            imageProps={destinationLot && destinationLot.i === lot.i
+              ? {
+                unfinished: true
+              }
+              : {
+                iconOverride: <InventoryIcon />,
+                inventories: destinationLot?.building?.inventories,
+                showInventoryStatusForType: 1
+              }
             }
             isSelected={stage === actionStage.NOT_STARTED}
             onClick={() => { setDestinationSelectorOpen(true) }}

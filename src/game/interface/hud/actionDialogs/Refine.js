@@ -1,29 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Crew, Crewmate } from '@influenceth/sdk';
+import { Crew, Crewmate, Process } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { BackIcon, CaretIcon, CloseIcon, CoreSampleIcon, ExtractionIcon, ForwardIcon, RefineIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ProcessIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
+import { BackIcon, CaretIcon, CloseIcon, ForwardIcon, RefineIcon, ProcessIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useExtractionManager from '~/hooks/useExtractionManager';
-import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
+import { boolAttr, formatTimer } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
-  ActionDialogTabs,
   ActionDialogBody,
   FlexSection,
   FlexSectionInputBlock,
   FlexSectionSpacer,
-  BuildingImage,
-  ProgressBarSection,
-  AsteroidImage,
-  ProgressBarNote,
-  PropellantSection,
-  ShipTab,
-  PropulsionTypeSection,
   FlexSectionBlock,
   FlexSectionInputBody,
   sectionBodyCornerSize,
@@ -31,15 +22,12 @@ import {
   ProcessInputOutputSection,
   TransferDistanceDetails,
   ProcessSelectionDialog,
-  getBuildingInputDefaults
+  LotInputBlock,
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
-import ResourceThumbnail from '~/components/ResourceThumbnail';
+import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
-import theme from '~/theme';
-import CrewCardFramed from '~/components/CrewCardFramed';
 import ClipCorner from '~/components/ClipCorner';
 import IconButton from '~/components/IconButton';
 
@@ -97,7 +85,7 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
     setAmount(1e3); // TODO: whatever max is
   }, [process]);
 
-  const crewmates = currentLaunch?._crewmates || (crew?.crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentLaunch?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
   const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
   const launchBonus = 0;
@@ -172,9 +160,9 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
 
       <ActionDialogBody>
         <FlexSection style={{ marginBottom: 32, width: SECTION_WIDTH }}>
-          <FlexSectionInputBlock
+          <LotInputBlock
             title="Refining Location"
-            {...getBuildingInputDefaults(lot)}
+            lot={lot}
             disabled={stage !== actionStages.NOT_STARTED}
             style={{ width: '33.3%' }}
           />
@@ -213,10 +201,10 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
 
         <FlexSection style={{ width: SECTION_WIDTH }}>
 
-          <FlexSectionInputBlock
+          <LotInputBlock
             title="Input Inventory"
             titleDetails={<TransferDistanceDetails distance={8} />}
-            {...getBuildingInputDefaults(lot)}
+            lot={lot}
             disabled={stage !== actionStages.NOT_STARTED}
             style={{ width: '33.3%' }}
           />
@@ -243,10 +231,10 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
 
         <FlexSection style={{ width: SECTION_WIDTH }}>
 
-          <FlexSectionInputBlock
+          <LotInputBlock
             title="Output Inventory"
             titleDetails={<TransferDistanceDetails distance={19} />}
-            {...getBuildingInputDefaults(lot)}
+            lot={lot}
             disabled={stage !== actionStages.NOT_STARTED}
             style={{ width: '33.3%' }}
           />
