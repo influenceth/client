@@ -24,7 +24,7 @@ const useColumns = () => {
       {
         key: 'name',
         label: 'Building Type',
-        sortField: 'type',
+        sortField: 'Building.buildingType',
         selector: row => {
           const loc = Location.fromEntityFormat(row.Location?.location);
           return (
@@ -39,7 +39,7 @@ const useColumns = () => {
       {
         key: 'asteroid',
         label: 'Asteroid',
-        sortField: 'asteroid.i',
+        sortField: 'meta.location[0].id', // TODO: will this work? does sequential sorting matter?
         selector: row => {
           const loc = Location.fromEntityFormat(row.Location?.location);
           return (
@@ -53,7 +53,7 @@ const useColumns = () => {
       {
         key: 'lot',
         label: 'Lot',
-        sortField: 'lot.i',
+        sortField: 'meta.location[1].id', // TODO: will this work? does sequential sorting matter?
         selector: row => {
           const loc = Location.fromEntityFormat(row.Location?.location);
           return (
@@ -67,7 +67,7 @@ const useColumns = () => {
       {
         key: 'controller',
         label: 'Lot Controller',
-        sortField: 'lot.controller.id',  // TODO: ecs refactor
+        sortField: 'Control.controller.id',
         selector: row => {
           if (row.Control?.controller?.id) {
             return row.Control?.controller?.id === crew?.i ? 'you' : row.Control?.controller?.id.toLocaleString();
@@ -94,6 +94,17 @@ const useColumns = () => {
           return 'TODO';  // TODO: ecs refactor
           // return row.lot?.occupier?.isSquatter ? 'Squatting' : (row.lot?.controller?.isRenter ? 'Renting' : '');
         },
+      },
+      {
+        key: 'construction',
+        label: 'Construction Status',
+        sortField: 'Building.status',
+        selector: row => {
+          if (row.Building?.status) {
+            return Building.CONSTRUCTION_STATUSES[row.Building.status];
+          }
+          return null;
+        }
       },
     ];
 

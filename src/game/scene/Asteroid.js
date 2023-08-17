@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { AxesHelper, CameraHelper, Color, DirectionalLight, DirectionalLightHelper, Vector3 } from 'three';
 import gsap from 'gsap';
-import { AdalianOrbit, Asteroid, Product, Ship } from '@influenceth/sdk';
+import { AdalianOrbit, Asteroid, Entity, Product, Ship } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -136,7 +136,7 @@ const AsteroidComponent = () => {
 
   const shipsInOrbitTally = useMemo(() => {
     return (ships || []).filter((ship) => {
-      return ship.Location.location.label === 'Asteroid' && ship.Ship.status === Ship.STATUSES.AVAILABLE;
+      return ship.Location.location.label === Entity.IDS.ASTEROID && ship.Ship.status === Ship.STATUSES.AVAILABLE;
     }).length;
   }, [ships])
 

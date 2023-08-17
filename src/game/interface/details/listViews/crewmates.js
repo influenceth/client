@@ -30,7 +30,7 @@ const useColumns = () => {
         key: 'name',
         icon: <CrewmateIcon />,
         label: 'Name',
-        // sortField: 'Name.name',
+        sortField: 'Name.name',
         selector: row => formatters.crewmateName(row),
         unhideable: true
       },

@@ -158,12 +158,14 @@ const assetTypes = {
     title: 'Asteroids',
     useColumns: listConfigs.asteroids,
   },
-  lots: {
-    keyField: 'id',
-    icon: <LotSearchIcon />,
-    title: 'Lots',
-    useColumns: listConfigs.lots,
-  },
+  // NOTE: this was mostly rolled into the buildings with the ecs refactor...
+  //  it's not clear what additional info would make sense here at this point
+  // lots: {
+  //   keyField: 'id',
+  //   icon: <LotSearchIcon />,
+  //   title: 'Lots',
+  //   useColumns: listConfigs.lots,
+  // },
   crewmates: {
     keyField: 'i',
     icon: <CrewmateIcon />,

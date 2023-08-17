@@ -30,7 +30,7 @@ const useColumns = () => {
       {
         key: 'resource',
         label: 'Deposit',
-        sortField: 'resource',
+        sortField: 'Deposit.resource',
         selector: row => {
           const loc = Location.fromEntityFormat(row.Location?.location);
           return (
@@ -45,7 +45,7 @@ const useColumns = () => {
       {
         key: 'asteroid',
         label: 'Asteroid',
-        sortField: 'asteroid.i',
+        sortField: 'meta.location[0].id', // TODO: will this work? does sequential sorting matter?
         selector: row => {
           const loc = Location.fromEntityFormat(row.Location?.location);
           return (
@@ -59,7 +59,7 @@ const useColumns = () => {
       {
         key: 'lot',
         label: 'Lot',
-        sortField: 'lot.i',
+        sortField: 'meta.location[1].id', // TODO: will this work? does sequential sorting matter?
         selector: row => {
           const loc = Location.fromEntityFormat(row.Location?.location);
           return (
@@ -73,7 +73,7 @@ const useColumns = () => {
       {
         key: 'remainingYield',
         label: 'Amount',
-        sortField: 'remainingYield',
+        sortField: 'Deposit.remainingYield',
         selector: row => {
           if (row.Deposit.initialYield === undefined) {
             return `(incomplete)`;

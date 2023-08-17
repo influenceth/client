@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import useAuth from '~/hooks/useAuth';
@@ -8,7 +8,6 @@ import { LocationLink } from './components';
 import { LinkIcon } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import useChainTime from '~/hooks/useChainTime';
-import theme from '~/theme';
 
 const AtRisk = styled.b`
   color: rgb(${itemColors.plans});
@@ -51,6 +50,7 @@ const Progress = ({ start, finish }) => {
   return <ProgressBar progress={progress} />;
 }
 
+// TODO: ecs refactor
 const useColumns = () => {
   const { account } = useAuth();
   const { crew } = useCrewContext();

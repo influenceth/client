@@ -97,8 +97,7 @@ const useColumns = () => {
         // TODO: ecs refactor
         key: 'name',
         label: 'Name',
-        // TODO: make sortable
-        // sortField: 'baseName',
+        sortField: 'Name.name',
         selector: row => (
           <>
             <LocationLink asteroidId={row.i} />
@@ -111,9 +110,9 @@ const useColumns = () => {
         key: 'owner',
         icon: <WalletIcon />,
         label: 'Owner',
-        sortField: 'owner',
+        sortField: 'Nft.owner',
         selector: row => {
-          if (row.owner) {
+          if (row.Nft.owner) {
             return (
               <MarketplaceLink
                 chain={row.Bridge.destination}
@@ -123,7 +122,7 @@ const useColumns = () => {
                   <OnClickLink ref={setRefEl} onClick={onClick}>
                     {account && Address.areEqual(row.Nft.owner, account)
                       ? `you`
-                      : `${row.owner.substr(0, 6)}...${row.Nft.owner.substr(-4)}`
+                      : `${row.Nft.owner.substr(0, 6)}...${row.Nft.owner.substr(-4)}`
                     }
                   </OnClickLink>
                 )}
@@ -137,14 +136,14 @@ const useColumns = () => {
         key: 'radius',
         icon: <RadiusIcon />,
         label: 'Radius',
-        sortField: 'r',
+        sortField: 'Celestial.radius',
         selector: row => `${row.Celestial.radius.toLocaleString()} km`,
       },
       {
         key: 'spectralType',
         icon: <ScanAsteroidIcon />,
         label: 'Spectral Type',
-        sortField: 'spectralType',
+        sortField: 'Celestial.celestialType',
         selector: row => `${Asteroid.Entity.getSpectralType(row)}-type`
       },
       {

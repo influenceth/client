@@ -30,14 +30,14 @@ const useColumns = () => {
       {
         key: 'name',
         label: 'Name',
-        // sortField: 'name', // TODO: ecs refactor
+        sortField: 'Name.name', // TODO: ecs refactor
         selector: row => formatters.crewName(row),
         unhideable: true
       },
       {
         key: 'owner',
         label: 'Owner',
-        sortField: 'owner',
+        sortField: 'Nft.owner',
         selector: row => {
           if (row.owner) {
             return (

@@ -30,6 +30,8 @@ const BuildingLabel = styled.span`
   color: white;
 `;
 
+// TODO: ecs refactor
+
 const useColumns = () => {
   const { account } = useAuth();
   const { crew } = useCrewContext();

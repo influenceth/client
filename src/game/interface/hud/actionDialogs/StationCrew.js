@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Building, Crew, Crewmate, Ship, Station } from '@influenceth/sdk';
+import { Asteroid, Building, Crew, Crewmate, Entity, Ship, Station } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { StationCrewIcon, StationPassengersIcon } from '~/components/Icons';
@@ -14,7 +14,6 @@ import {
   ActionDialogStats,
   ActionDialogBody,
   FlexSection,
-  FlexSectionInputBlock,
   FlexSectionSpacer,
   MiniBarChart,
   CrewInputBlock,
@@ -120,8 +119,8 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
     return { icon, label, status };
   }, [crewIsOwner, destinationLot, destinationShip, stage]);
 
-  const isInOrbit = ship?.Location?.location?.label === 'Asteroid' && ship?.Ship?.status !== Ship.STATUS.IN_FLIGHT;
-  const destIsInOrbit = destinationShip?.Location?.location?.label === 'Asteroid' && destinationShip?.Ship?.status !== Ship.STATUS.IN_FLIGHT;
+  const isInOrbit = ship?.Location?.location?.label === Entity.IDS.ASTEROID && ship?.Ship?.status !== Ship.STATUS.IN_FLIGHT;
+  const destIsInOrbit = destinationShip?.Location?.location?.label === Entity.IDS.ASTEROID && destinationShip?.Ship?.status !== Ship.STATUS.IN_FLIGHT;
   return (
     <>
       <ActionDialogHeader
@@ -291,7 +290,7 @@ const Wrapper = (props) => {
       d = ships
         .filter((s) => 
           s.Station
-          && ship?.Location?.location?.label === 'Asteroid'
+          && ship?.Location?.location?.label === Entity.IDS.ASTEROID
           && ship?.Location?.location?.id === asteroidId
           && ship?.Ship?.status !== Ship.STATUS.IN_FLIGHT
           && !!props.guests === (s.Control.controller.id !== crew?.i))

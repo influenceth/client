@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Asteroid } from '@influenceth/sdk';
+import { Asteroid, Entity } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 
@@ -43,7 +43,7 @@ const getEntities = async ({ match, label, components }) => {
   const query = {};
   if (match) {
     // i.e. { 'Celestial.celestialType': 2 }
-    // i.e. { 'Location.location': { label: 'Lot', id: 123 } }
+    // i.e. { 'Location.location': { label: Entity.IDS.LOT, id: 123 } }
     query.match = `${Object.keys(match)[0]}:${JSON.stringify(Object.values(match)[0])}`;
   }
   if (label) {
@@ -128,7 +128,7 @@ const api = {
   getAsteroid: async (i) => { //, extended = false) => {
     // TODO: deprecate `extended` OR need to pass extra queryString to getEntityById OR need a separate call for that data
     // const response = await instance.get(`/v1/asteroids/${i}${extended ? '?extended=1' : ''}`);
-    return getEntityById({ label: 'Asteroid', i });
+    return getEntityById({ label: Entity.IDS.ASTEROID, i });
   },
 
   getAsteroidLotData: async (i) => {
@@ -166,7 +166,7 @@ const api = {
 
   // TODO: ecs refactor -- probably better to use a single resolve location endpoint
   getBuilding: async (i) => {
-    return getEntityById({ label: 'Building', i });
+    return getEntityById({ label: Entity.IDS.BUILDING, i });
   },
 
   getCrewOccupiedLots: async (a, c) => {
@@ -175,7 +175,7 @@ const api = {
     return response.data;
     // return getEntities({
     //   match: { 'control.controller': c },
-    //   label: 'building'
+    //   label: Entity.IDS.BUILDING
     // });
   },
 
@@ -188,7 +188,7 @@ const api = {
   getCrewShips: async (c) => {
     return getEntities({
       match: { 'Control.controller.id': c },
-      label: 'Ship'
+      label: Entity.IDS.SHIP
     })
   },
 
@@ -199,7 +199,7 @@ const api = {
   getLot: async (asteroidId, lotId) => {
     // TODO: make sure the response matches
     // const response = await instance.get(`/v1/asteroids/${asteroidId}/lots/${lotId}`);
-    return getEntityById({ label: 'Lot', i: lotId });
+    return getEntityById({ label: Entity.IDS.LOT, i: lotId });
   },
 
   getNameUse: async (label, name) => {
@@ -207,7 +207,7 @@ const api = {
   },
 
   getOwnedAsteroids: async (account) => {
-    return getEntities({ match: { 'Nft.owner': account }, label: 'Asteroid' });
+    return getEntities({ match: { 'Nft.owner': account }, label: Entity.IDS.ASTEROID });
   },
 
   // TODO: deprecate this (and just use .length of getOwnedAsteroids()?)
@@ -217,26 +217,26 @@ const api = {
   },
 
   getOwnedCrews: async (account) => {
-    return getEntities({ match: { 'Crew.delegatedTo': account }, label: 'Crew' });
+    return getEntities({ match: { 'Crew.delegatedTo': account }, label: Entity.IDS.CREW });
   },
 
   getCrewmatesByCrewIds: async (crewIds) => {
     return getEntities({
-      match: { 'Control.controller': crewIds.map((i) => ({ label: 'Crewmate', id: i })) },
-      label: 'Crewmate'
+      match: { 'Control.controller': crewIds.map((i) => ({ label: Entity.IDS.CREWMATE, id: i })) },
+      label: Entity.IDS.CREWMATE
     });
   },
 
   getCrew: async (i) => {
-    return getEntityById({ label: 'Crew', i });
+    return getEntityById({ label: Entity.IDS.CREW, i });
   },
 
   getCrewmate: async (i) => {
-    return getEntityById({ label: 'Crewmate', i });
+    return getEntityById({ label: Entity.IDS.CREWMATE, i });
   },
 
   getCrewmates: async (ids) => {
-    return getEntityById({ label: 'Crewmate', i: ids });
+    return getEntityById({ label: Entity.IDS.CREWMATE, i: ids });
   },
 
   getPlanets: async () => {
@@ -251,13 +251,13 @@ const api = {
   },
 
   getShip: async (i) => {
-    return getEntityById({ label: 'Ship', i });
+    return getEntityById({ label: Entity.IDS.SHIP, i });
   },
 
   getShipCrews: async (shipId) => {
     return getEntities({
       match: { 'Location.location': Location.toEntityFormat({ shipId }) },
-      label: 'Crew'
+      label: Entity.IDS.CREW
     });
   },
 

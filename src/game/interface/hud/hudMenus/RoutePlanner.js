@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Inventory, Ship, Time } from '@influenceth/sdk';
+import { Entity, Inventory, Ship, Time } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
 import { CloseIcon, WarningIcon } from '~/components/Icons';
@@ -210,12 +210,12 @@ const RoutePlanner = () => {
 
       // add simulations
       ...Object.keys(Ship.TYPES).map((s, i) => ({
-        label: 'Ship',
+        label: Entity.IDS.SHIP,
         id: -(1 + i),
         i: -(1 + i),
         Name: { name: `[Simulated] ${Ship.TYPES[s].name}` },
         Ship: { shipType: s, status: Ship.STATUSES.AVAILABLE },
-        Location: { location: { label: 'Asteroid', id: originId } },
+        Location: { location: { label: Entity.IDS.ASTEROID, id: originId } },
         Inventories: getInventoriesByShipType(s),
         _simulated: true
       }))

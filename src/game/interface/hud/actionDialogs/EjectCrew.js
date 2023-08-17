@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Building, Ship } from '@influenceth/sdk';
+import { Building, Entity, Ship } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { EjectPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
@@ -85,7 +85,7 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
     return { icon, label, status };
   }, [myCrewIsTarget, lot, ship, stage]);
 
-  const shipIsInOrbit = ship?.Location?.location?.label === 'Asteroid' && ship?.Ship?.status !== Ship.STATUS.IN_FLIGHT;
+  const shipIsInOrbit = ship?.Location?.location?.label === Entity.IDS.ASTEROID && ship?.Ship?.status !== Ship.STATUS.IN_FLIGHT;
 
   const maxPassengers = ship?.Station?.cap || 0;
 
