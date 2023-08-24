@@ -525,22 +525,22 @@ const CrewAssignmentCreate = (props) => {
     const crewClass = storyState?.classObjective;
     if (!crewClass) return;
 
-    const sex = Math.ceil(Math.random() * 2);
-    const facialFeature = sex === 1 ? [0, 1, 3, 4, 5, 6, 7] : [0, 1, 2];
-    const hair = sex === 1 ? [0, 1, 2, 3, 4, 5] : [0, 6, 7, 8, 9, 10, 11];
+    const gender = Math.ceil(Math.random() * 2);
+    const faces = gender === 1 ? [0, 1, 3, 4, 5, 6, 7] : [0, 1, 2];
+    const hairs = gender === 1 ? [0, 1, 2, 3, 4, 5] : [0, 6, 7, 8, 9, 10, 11];
 
     const params = {
       crewCollection: 4,
-      sex,
-      body: (sex - 1) * 6 + Math.ceil(Math.random() * 6),
+      gender,
+      body: (gender - 1) * 6 + Math.ceil(Math.random() * 6),
       crewClass,
       title: 0,
-      outfit: 31 + (crewClass - 1) * 2 + Math.ceil(Math.random() * 2),
-      hair: hair[Math.floor(Math.random() * hair.length)],
-      facialFeature: facialFeature[Math.floor(Math.random() * facialFeature.length)],
+      clothes: 31 + (crewClass - 1) * 2 + Math.ceil(Math.random() * 2),
+      hair: hairs[Math.floor(Math.random() * hairs.length)],
+      face: faces[Math.floor(Math.random() * faces.length)],
       hairColor: Math.ceil(Math.random() * 5),
-      headPiece: 0,
-      bonusItem: 0
+      head: 0,
+      item: 0
     };
 
     setFeatureOptions((prevValue) => {
