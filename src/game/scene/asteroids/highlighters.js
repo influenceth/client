@@ -1,4 +1,5 @@
 import { Color } from 'three';
+import { Address } from '@influenceth/sdk';
 
 import constants from '~/lib/constants';
 
@@ -9,10 +10,10 @@ const getter = (a, config) => {
     case 'inclination': return a.Orbit.inc;
     case 'ownership': {
       if (a.Nft?.owner) {
-        if (config.myAddress && a.Nft?.owner === config.myAddress) {
+        if (config.myAddress && Address.areEqual(a.Nft.owner, config.myAddress)) {
           return 'ownedByMe';
         }
-        if (config.address && a.Nft?.owner === config.address) {
+        if (config.address && Address.areEqual(a.Nft.owner, config.address)) {
           return 'ownedBy';
         }
         return 'owned';

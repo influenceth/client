@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { Crewmate, Time } from '@influenceth/sdk';
+import { Address, Crewmate, Time } from '@influenceth/sdk';
 import { FaBookOpen as BioIcon } from 'react-icons/fa';
 import { RiBarChart2Fill as StatsIcon } from 'react-icons/ri';
 
@@ -483,7 +483,7 @@ const CrewmateDetails = () => {
                 )}
 
                 <MarketplaceLink
-                  chain={crewmate?.Bridge?.destination}
+                  chain={crewmate?.Nft?.chain}
                   assetType="crewmate"
                   id={crewmate?.i}>
                   {(onClick, setRefEl) => (
@@ -491,7 +491,7 @@ const CrewmateDetails = () => {
                       disabled={boolAttr(parseInt(crewmate?.activeSlot) > -1)/* TODO: ecs refactor */}
                       setRef={setRefEl}
                       onClick={onClick}>
-                      <ClaimIcon /> {account === crewmate.Nft.owner ? 'List for Sale' : 'Purchase Crew'}
+                      <ClaimIcon /> {Address.areEqual(account, crewmate?.Nft?.owner) ? 'List for Sale' : 'Purchase Crew'}
                     </Button>  
                   )}
                 </MarketplaceLink>

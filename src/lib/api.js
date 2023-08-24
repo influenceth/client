@@ -28,15 +28,21 @@ const buildQuery = (queryObj) => {
   }).join('&');
 };
 
-const getEntityById = async ({ label, i, components }) => {
-  const query = { label };
-  query.id = Array.isArray(i) ? i.join(',') : i;
+const getEntitiesById = async ({ label, ids, components }) => {
+  const query = {
+    label,
+    id: ids.join(',')
+  };
   if (components) {
     query.components = components.join(',');  // i.e. [ 'celestial', 'control' ]
   }
 
   const response = await instance.get(`/v1/entities/id?${buildQuery(query)}`);
   return response.data;
+};
+
+const getEntityById = async ({ label, id, components }) => {
+  return getEntitiesById({ label, ids: [id], components })[0];
 };
 
 const getEntities = async ({ match, label, components }) => {
@@ -128,7 +134,7 @@ const api = {
   getAsteroid: async (i) => { //, extended = false) => {
     // TODO: deprecate `extended` OR need to pass extra queryString to getEntityById OR need a separate call for that data
     // const response = await instance.get(`/v1/asteroids/${i}${extended ? '?extended=1' : ''}`);
-    return getEntityById({ label: Entity.IDS.ASTEROID, i });
+    return getEntityById({ label: Entity.IDS.ASTEROID, id: i });
   },
 
   getAsteroidLotData: async (i) => {
@@ -192,14 +198,14 @@ const api = {
     })
   },
 
-  getEntityById,
-
   getEntities,
+  getEntitiesById,
+  getEntityById,
 
   getLot: async (asteroidId, lotId) => {
     // TODO: make sure the response matches
     // const response = await instance.get(`/v1/asteroids/${asteroidId}/lots/${lotId}`);
-    return getEntityById({ label: Entity.IDS.LOT, i: lotId });
+    return getEntityById({ label: Entity.IDS.LOT, id: lotId });
   },
 
   getNameUse: async (label, name) => {
@@ -208,12 +214,6 @@ const api = {
 
   getOwnedAsteroids: async (account) => {
     return getEntities({ match: { 'Nft.owner': account }, label: Entity.IDS.ASTEROID });
-  },
-
-  // TODO: deprecate this (and just use .length of getOwnedAsteroids()?)
-  getOwnedAsteroidsCount: async () => {
-    const response = await instance.get('/v1/asteroids/ownedCount');
-    return response.data;
   },
 
   getOwnedCrews: async (account) => {
@@ -227,20 +227,21 @@ const api = {
     });
   },
 
-  getCrew: async (i) => {
-    return getEntityById({ label: Entity.IDS.CREW, i });
+  getCrew: async (id) => {
+    return getEntityById({ label: Entity.IDS.CREW, id });
   },
 
-  getCrewmate: async (i) => {
-    return getEntityById({ label: Entity.IDS.CREWMATE, i });
+  getCrewmate: async (id) => {
+    return getEntityById({ label: Entity.IDS.CREWMATE, id });
   },
 
   getCrewmates: async (ids) => {
-    return getEntityById({ label: Entity.IDS.CREWMATE, i: ids });
+    return getEntitiesById({ label: Entity.IDS.CREWMATE, ids });
   },
 
   getPlanets: async () => {
-    const response = await instance.get('/v1/planets');
+    // TODO: this will move to sdk
+    const response = {};//await instance.get('/v1/planets');
     return response.data;
   },
 
@@ -250,8 +251,8 @@ const api = {
     return response.data[0];
   },
 
-  getShip: async (i) => {
-    return getEntityById({ label: Entity.IDS.SHIP, i });
+  getShip: async (id) => {
+    return getEntityById({ label: Entity.IDS.SHIP, id });
   },
 
   getShipCrews: async (shipId) => {
@@ -313,7 +314,7 @@ const api = {
   },
 
   searchAssets: async (asset, query) => {
-    const response = await instance.post(`/_search/${asset.replace(/s$/, '').toLowerCase()}`, query);
+    const response = {};//await instance.post(`/_search/${asset.replace(/s$/, '').toLowerCase()}`, query);
     return {
       hits: response.data.hits.hits.map((h) => h._source),
       total: response.data.hits.total.value

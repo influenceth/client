@@ -18,7 +18,7 @@ const useColumns = () => {
         align: 'center',
         icon: <MyAssetIcon />,
         selector: row => {
-          if (account && row.Nft.owner && Address.areEqual(row.Nft.owner, account)) {
+          if (account && row.Nft?.owner && Address.areEqual(row.Nft.owner, account)) {
             return <MyAssetIcon />
           }
           return '';
@@ -42,7 +42,7 @@ const useColumns = () => {
           if (row.owner) {
             return (
               <MarketplaceLink
-                chain={row.Bridge.destination}
+                chain={row.Nft.chain}
                 assetType="account"
                 id={row.Nft.owner}>
                 {(onClick, setRefEl) => (

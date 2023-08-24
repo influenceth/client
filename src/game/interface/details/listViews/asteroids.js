@@ -115,7 +115,7 @@ const useColumns = () => {
           if (row.Nft.owner) {
             return (
               <MarketplaceLink
-                chain={row.Bridge.destination}
+                chain={row.Nft.chain}
                 assetType="account"
                 id={row.Nft.owner}>
                 {(onClick, setRefEl) => (

@@ -314,7 +314,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
       <LeftPane>
         <DataReadout style={{ fontSize: '18px', padding: '0 0 5px' }} label="Asteroid ID#">{asteroid.i}</DataReadout>
         <DataReadout style={{ fontSize: '18px', padding: '0 0 5px' }} label="Owner">
-          <AddressLink address={asteroid.Nft?.owner} chain={asteroid.Bridge?.destination} />
+          <AddressLink address={asteroid.Nft?.owner} chain={asteroid.Nft?.chain} />
         </DataReadout>
         <GraphicSection>
           <GraphicWrapper>
@@ -463,7 +463,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
               )}
               {asteroid.Nft?.owner && (
                 <MarketplaceLink
-                  chain={asteroid.Bridge?.destination}
+                  chain={asteroid.Nft?.chain}
                   assetType="asteroid"
                   id={asteroid.i}>
                   {(onClick, setRefEl) => (
