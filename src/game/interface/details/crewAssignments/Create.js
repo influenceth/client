@@ -24,11 +24,11 @@ import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCrewManager from '~/hooks/useCrewManager';
 import useCrewContext from '~/hooks/useCrewContext';
-import useSale from '~/hooks/useSale';
 import useStorySession from '~/hooks/useStorySession';
 import formatters from '~/lib/formatters';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import { boolAttr } from '~/lib/utils';
+import usePriceConstants from '~/hooks/usePriceConstants';
 
 const blinkingBackground = (p) => keyframes`
   0% {
@@ -472,7 +472,7 @@ const CrewAssignmentCreate = (props) => {
   const isNameValid = useNameAvailability('Crewmate');
   const { purchaseAndOrInitializeCrew, getPendingCrewmate, crewCredits } = useCrewManager();
   const { crew, crewmateMap } = useCrewContext();
-  const { data: crewSale } = useSale('Crewmate');
+  const { data: priceConstants } = usePriceConstants();
 
   const [confirming, setConfirming] = useState();
   const [featureOptions, setFeatureOptions] = useState([]);
@@ -915,9 +915,10 @@ const CrewAssignmentCreate = (props) => {
               onConfirm={finalize}
               confirmText={<>
                 Confirm
-                {crewCredits.length === 0 && crewSale && (
+                {crewCredits.length === 0 && priceConstants && (
                   <span style={{ flex: 1, fontSize: '90%', textAlign: 'right' }}>
-                    <Ether>{formatters.crewPrice(crewSale)}</Ether>
+                    {/* TODO: should this update price before "approve"? what about asteroids? */}
+                    <Ether>{formatters.crewmatePrice(priceConstants)}</Ether>
                   </span>
                 )}
               </>}

@@ -3,6 +3,9 @@ import { Asteroid, Entity } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 
+// set default app version
+const apiVersion = 'v2';
+
 // pass initial config to axios
 const config = { baseURL: process.env.REACT_APP_API_URL, headers: {} };
 const initialToken = useStore.getState().auth.token;
@@ -37,7 +40,7 @@ const getEntitiesById = async ({ label, ids, components }) => {
     query.components = components.join(',');  // i.e. [ 'celestial', 'control' ]
   }
 
-  const response = await instance.get(`/v1/entities/id?${buildQuery(query)}`);
+  const response = await instance.get(`/${apiVersion}/entities/id?${buildQuery(query)}`);
   return response.data;
 };
 
@@ -59,23 +62,23 @@ const getEntities = async ({ match, label, components }) => {
     query.components = components.join(',');  // i.e. [ 'celestial', 'control' ]
   }
   
-  const response = await instance.get(`/v1/entities?${buildQuery(query)}`);
+  const response = await instance.get(`/${apiVersion}/entities?${buildQuery(query)}`);
   return response.data;
 };
 
 const api = {
   getUser: async () => {
-    const response = await instance.get('/v1/user');
+    const response = await instance.get(`/${apiVersion}/user`);
     return response.data;
   },
 
   getCrewActionItems: async () => {
-    const response = await instance.get('/v1/user/actionitems');
+    const response = await instance.get(`/${apiVersion}/user/actionitems`);
     return response.data;
   },
 
   getCrewPlannedBuildings: async () => {
-    const response = await instance.get('/v1/user/plans');  // TODO: server-side update
+    const response = await instance.get(`/${apiVersion}/user/plans`);  // TODO: server-side update
     return response.data;
   },
 
@@ -91,12 +94,12 @@ const api = {
   },
 
   getUserAssignments: async () => {
-    const response = await instance.get('/v1/user/assignments');
+    const response = await instance.get(`/${apiVersion}/user/assignments`);
     return response.data;
   },
 
   getEvents: async (query) => {
-    const response = await instance.get(`/v1/user/events${query ? `?${buildQuery(query)}` : ''}`);
+    const response = await instance.get(`/${apiVersion}/user/events${query ? `?${buildQuery(query)}` : ''}`);
     return {
       events: response.data,
       totalHits: query.returnTotal ? parseInt(response.headers['total-hits']) : undefined,
@@ -106,39 +109,39 @@ const api = {
   },
 
   getWatchlist: async () => {
-    const response = await instance.get('/v1/user/watchlist'); // TODO: server-side update
+    const response = await instance.get(`/${apiVersion}/user/watchlist`); // TODO: server-side update
     return response.data;
   },
 
   watchAsteroid: async (i) => {
-    const response = await instance.post(`/v1/user/watchlist/${i}`);
+    const response = await instance.post(`/${apiVersion}/user/watchlist/${i}`);
     return response.data;
   },
 
   unWatchAsteroid: async (i) => {
-    const response = await instance.delete(`/v1/user/watchlist/${i}`);
+    const response = await instance.delete(`/${apiVersion}/user/watchlist/${i}`);
     return response.data;
   },
 
   getReferralCount: async () => {
-    const response = await instance.get('v1/user/referrals');
+    const response = await instance.get(`/${apiVersion}/user/referrals`);
     return response.data;
   },
 
   createReferral: async (referral) => {
     if (!referral?.referrer) return null;
-    const response = await instance.post(`/v1/user/referrals`, referral);
+    const response = await instance.post(`/${apiVersion}/user/referrals`, referral);
     return response.status;
   },
 
   getAsteroid: async (i) => { //, extended = false) => {
     // TODO: deprecate `extended` OR need to pass extra queryString to getEntityById OR need a separate call for that data
-    // const response = await instance.get(`/v1/asteroids/${i}${extended ? '?extended=1' : ''}`);
+    // const response = await instance.get(`/${apiVersion}/asteroids/${i}${extended ? '?extended=1' : ''}`);
     return getEntityById({ label: Entity.IDS.ASTEROID, id: i });
   },
 
   getAsteroidLotData: async (i) => {
-    const response = await instance.get(`/v1/asteroids/${i}/lots/packed`, { responseType: 'blob' });
+    const response = await instance.get(`/${apiVersion}/asteroids/${i}/lots/packed`, { responseType: 'blob' });
 
     const lotTally = Asteroid.getSurfaceArea(i);
 
@@ -177,7 +180,7 @@ const api = {
 
   getCrewOccupiedLots: async (a, c) => {
     // TODO: elasticsearch
-    const response = await instance.get(`/v1/asteroids/${a}/lots/occupier/${c}`);
+    const response = await instance.get(`/${apiVersion}/asteroids/${a}/lots/occupier/${c}`);
     return response.data;
     // return getEntities({
     //   match: { 'control.controller': c },
@@ -187,7 +190,7 @@ const api = {
 
   getCrewSampledLots: async (a, c, r) => {
     // TODO: elasticsearch
-    const response = await instance.get(`/v1/asteroids/${a}/lots/sampled/${c}/${r}`);
+    const response = await instance.get(`/${apiVersion}/asteroids/${a}/lots/sampled/${c}/${r}`);
     return response.data;
   },
 
@@ -204,7 +207,7 @@ const api = {
 
   getLot: async (asteroidId, lotId) => {
     // TODO: make sure the response matches
-    // const response = await instance.get(`/v1/asteroids/${asteroidId}/lots/${lotId}`);
+    // const response = await instance.get(`/${apiVersion}/asteroids/${asteroidId}/lots/${lotId}`);
     return getEntityById({ label: Entity.IDS.LOT, id: lotId });
   },
 
@@ -241,14 +244,8 @@ const api = {
 
   getPlanets: async () => {
     // TODO: this will move to sdk
-    const response = {};//await instance.get('/v1/planets');
+    const response = {};//await instance.get('/${apiVersion}/planets');
     return response.data;
-  },
-
-  getSale: async (assetType) => {
-    const params = assetType ? { assetType } : {};
-    const response = await instance.get('/v1/sales', { params });
-    return response.data[0];
   },
 
   getShip: async (id) => {
@@ -262,34 +259,39 @@ const api = {
     });
   },
 
+  getConstants: async (names) => {
+    const response = await instance.get(`/${apiVersion}/constants/${Array.isArray(names) ? names.join(',') : names}`);
+    return response.data;
+  },
+
   getBook: async (id) => {
     return null;  // TODO: restore this when story is ready again
-    const response = await instance.get(`/v1/books/${id}`);
+    const response = await instance.get(`/${apiVersion}/books/${id}`);
     return response.data;
   },
 
   getStory: async (id, sessionId) => {
     return null;  // TODO: restore this when story is ready again
-    const response = await instance.get(`/v1/stories/${id}`, { params: { session: sessionId }});
+    const response = await instance.get(`/${apiVersion}/stories/${id}`, { params: { session: sessionId }});
     return response.data;
   },
 
   createStorySession: async (crewmate, story) => {
     return null;  // TODO: restore this when story is ready again
-    const response = await instance.post(`/v1/stories/sessions`, { crewmate, story });
+    const response = await instance.post(`/${apiVersion}/stories/sessions`, { crewmate, story });
     return response.data;
   },
 
   getStorySession: async (id) => {
     return null;  // TODO: restore this when story is ready again
-    const response = await instance.get(`/v1/stories/sessions/${id}`);
+    const response = await instance.get(`/${apiVersion}/stories/sessions/${id}`);
     return response.data;
   },
 
   getStoryPath: async (storyId, pathId, sessionId) => {
     return null;  // TODO: restore this when story is ready again
     const response = await instance.get(
-      `/v1/stories/${storyId}/paths/${pathId}`,
+      `/${apiVersion}/stories/${storyId}/paths/${pathId}`,
       { params: { session: sessionId } }
     );
     return response.data;
@@ -297,19 +299,19 @@ const api = {
 
   patchStorySessionPath: async (sessionId, pathId) => {
     return null;  // TODO: restore this when story is ready again
-    const response = await instance.patch(`/v1/stories/sessions/${sessionId}/paths/${pathId}`);
+    const response = await instance.patch(`/${apiVersion}/stories/sessions/${sessionId}/paths/${pathId}`);
     return response.data;
   },
 
   deleteStorySessionPath: async (sessionId, pathId) => {
     return null;  // TODO: restore this when story is ready again
-    const response = await instance.delete(`/v1/stories/sessions/${sessionId}/paths/${pathId}`);
+    const response = await instance.delete(`/${apiVersion}/stories/sessions/${sessionId}/paths/${pathId}`);
     return response.data;
   },
 
   getAdalianRecruitmentStory: async (id, sessionId) => {
     return null;  // TODO: restore this when story is ready again
-    const response = await instance.get(`/v1/stories/adalian-recruitment`);
+    const response = await instance.get(`/${apiVersion}/stories/adalian-recruitment`);
     return response.data;
   },
 
@@ -322,12 +324,12 @@ const api = {
   },
 
   requestLogin: async (account) => {
-    const response = await instance.get(`/v1/auth/login/${account}`);
+    const response = await instance.get(`/${apiVersion}/auth/login/${account}`);
     return response.data.message;
   },
 
   verifyLogin: async (account, params) => {
-    const response = await instance.post(`/v1/auth/login/${account}`, params);
+    const response = await instance.post(`/${apiVersion}/auth/login/${account}`, params);
     return response.data.token;
   },
 

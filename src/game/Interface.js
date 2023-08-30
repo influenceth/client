@@ -5,14 +5,13 @@ import { Switch, Route, Redirect } from 'react-router-dom';
 import { useIsFetching } from 'react-query'
 import LoadingAnimation from 'react-spinners/BarLoader';
 
-import useSale from '~/hooks/useSale';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
+import theme from '~/theme';
 import Alerts from './interface/Alerts';
 import Draggables from './interface/Draggables';
 import HUD from './interface/HUD';
 import MainMenu from './interface/MainMenu';
-import SaleNotifier from './interface/SaleNotifier';
 import ListView from './interface/details/ListView';
 import AsteroidDetails from './interface/details/AsteroidDetails';
 import CrewAssignment from './interface/details/crewAssignments/Assignment';
@@ -26,11 +25,10 @@ import Marketplace from './interface/details/Marketplace';
 import LotViewer from './interface/modelViewer/LotViewer';
 import ShipViewer from './interface/modelViewer/ShipViewer';
 import WatchlistTable from './interface/details/WatchlistTable';
-import theme from '~/theme';
-import Cutscene from './Cutscene';
-import Launcher from './Launcher';
 import LinkedViewer from './interface/modelViewer/LinkedViewer';
 import DevToolsViewer from './interface/modelViewer/DevToolsViewer';
+import Cutscene from './Cutscene';
+import Launcher from './Launcher';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -83,7 +81,6 @@ const loadingCss = css`
 
 const Interface = () => {
   const { isMobile } = useScreenSize();
-  const { data: sale } = useSale();
   const isFetching = useIsFetching();
   const cutscene = useStore(s => s.cutscene);
   const launcherPage = useStore(s => s.launcherPage);
@@ -115,7 +112,6 @@ const Interface = () => {
       <StyledInterface hide={interfaceHidden}>
         {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
         {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
-        {sale && <SaleNotifier sale={sale} />}
         <MainContainer>
           <Switch>
             <Route exact path="/listview/:assetType?">

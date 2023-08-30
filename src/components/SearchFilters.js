@@ -14,8 +14,8 @@ import RangeFilter from './filters/RangeFilter';
 import constants from '~/lib/constants';
 import Ether from './Ether';
 import formatters from '~/lib/formatters';
-import useSale from '~/hooks/useSale';
 import TextFilter from './filters/TextFilter';
+import usePriceConstants from '~/hooks/usePriceConstants';
 
 // spectral type filter configs
 const spectralTypeOptions = Object.keys(Asteroid.SPECTRAL_TYPES).reduce((acc, spectralId) => ([
@@ -137,13 +137,13 @@ const yieldConfig = {
 // TODO: there is probably a more performant and/or organized way to break these apart
 //  (and to memoize any inputs possible)
 const SearchFilters = ({ assetType, highlighting }) => {
-  const { data: sale } = useSale();
   const asteroidId = useStore(s => s.asteroids.origin);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const filters = useStore(s => s.assetSearch[assetType].filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
+  const { data: priceConstants } = usePriceConstants();
   
-  const radiusFieldNote = useCallback((value) => sale ? <Ether>{formatters.asteroidPrice(value, sale)}</Ether> : null, [sale])
+  const radiusFieldNote = useCallback((value) => priceConstants && <Ether>{formatters.asteroidPrice(value, priceConstants)}</Ether>, [priceConstants])
 
   const onFiltersChange = useCallback((update) => {
     const newFilters = {...(filters || {})};

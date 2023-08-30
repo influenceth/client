@@ -1,350 +1,64 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { starknetContracts as configs } from '@influenceth/sdk';
-import { Contract, shortString } from 'starknet';
+import { Asteroid, System } from '@influenceth/sdk';
+import { utils as ethersUtils } from 'ethers';
 
 import useAuth from '~/hooks/useAuth';
 import useEvents from '~/hooks/useEvents';
 import useStore from '~/hooks/useStore';
 import useInterval from '~/hooks/useInterval';
+import api from '~/lib/api';
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
 const ChainTransactionContext = createContext();
 
-// TODO: now that all are on dispatcher, could probably collapse a lot of redundant code in getContracts
-const getContracts = (account) => ({
-  'PURCHASE_ASTEROID': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => async ({ i }) => {
-      const { price } = await contract.call('AsteroidSale_getPrice', [i]);
-      const priceParts = Object.values(price).map((part) => BigInt(part).toString());
-      const calls = [
-        {
-          contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
-          entrypoint: 'approve',
-          calldata: [
-            process.env.REACT_APP_STARKNET_DISPATCHER,
-            ...priceParts
-          ]
-        },
-        {
-          contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
-          entrypoint: 'AsteroidSale_purchase',
-          calldata: [
-            i,
-            ...priceParts
-          ]
-        },
-      ];
-      return account.execute(calls);
-    }
-  },
-  'NAME_ASTEROID': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ i, name }) => contract.invoke('Asteroid_setName', [
-      i,
-      shortString.encodeShortString(name)
-    ])
-  },
-  'START_ASTEROID_SCAN': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ i, boost, _packed, _proofs }) => contract.invoke('Asteroid_startScan', [
-      i,
-      _packed.features,
-      _proofs.features,
-      boost,
-      _packed.bonuses,
-      _proofs.boostBonus,
-    ]),
-    isEqual: (txVars, vars) => txVars.i === vars.i
-  },
-  'FINISH_ASTEROID_SCAN': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ i }) => contract.invoke('Asteroid_finishScan', [i]),
-  },
-  'SET_ACTIVE_CREW': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ crewId, crewmates }) => {
-      if (crewId) {
-        return contract.invoke(
-          'Crew_setComposition',
-          [
-            crewId,
-            [...crewmates]
-          ]
-        );
-      } else {
-        return contract.invoke(
-          'Crew_mint',
-          [
-            [...crewmates]
-          ]
-        );
-      }
-    },
-    isEqual: () => true,
-  },
-  // // NOTE: this is just for debugging vvv
-  // 'PURCHASE_UNINITIALIZED_CREWMATE': {
-  //   address: process.env.REACT_APP_STARKNET_DISPATCHER,
-  //   config: configs.Dispatcher,
-  //   transact: (contract) => async () => {
-  //     const { price } = await contract.call('CrewmateSale_getPrice');
-  //     const priceParts = Object.values(price).map((part) => part.toNumber());
-  //     const calls = [
-  //       {
-  //         contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
-  //         entrypoint: 'approve',
-  //         calldata: [
-  //           process.env.REACT_APP_STARKNET_DISPATCHER,
-  //           ...priceParts
-  //         ]
-  //       },
-  //       {
-  //         contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
-  //         entrypoint: 'Crewmate_purchaseAdalian',
-  //         calldata: [
-  //           ...priceParts,
-  //         ]
-  //       },
-  //     ];
+const getNow = () => Math.floor(Date.now() / 1000);
 
-  //     return account.execute(calls);
-  //   },
-  //   isEqual: () => true,
-  // },
-  // // ^^^
-  'INITIALIZE_CREWMATE': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => async ({ i, name, features, traits, crewId = 0 }) => {
-      return contract.invoke('Crewmate_initializeAdalian', [
-        i,
-        shortString.encodeShortString(name),
-        [
-          features.crewCollection,
-          features.sex,
-          features.body,
-          features.crewClass,
-          features.title,
-          features.outfit,
-          features.hair,
-          features.facialFeature,
-          features.hairColor,
-          features.headPiece,
-          features.bonusItem,
-        ].map((x) => x.toString()),
-        [
-          traits.drive,
-          traits.classImpactful,
-          traits.driveCosmetic,
-          traits.cosmetic,
-        ].map((t) => t.id.toString()),
-        crewId
-      ]);
-    },
-    isEqual: (vars, txVars) => vars.i === txVars.i,
-  },
-  'PURCHASE_AND_INITIALIZE_CREWMATE': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => async ({ name, features, traits, crewId }) => {
-      const { price } = await contract.call('CrewmateSale_getPrice');
-      const priceParts = Object.values(price).map((part) => part.toNumber());
-      const calls = [
-        {
-          contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
-          entrypoint: 'approve',
-          calldata: [
-            process.env.REACT_APP_STARKNET_DISPATCHER,
-            ...priceParts
-          ]
-        },
-        {
-          contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
-          entrypoint: 'Crewmate_purchaseAndInitializeAdalian',
-          calldata: [
-            ...priceParts,
-            shortString.encodeShortString(name),
-            '11', // array len v
-            ...[
-              features.crewCollection,
-              features.sex,
-              features.body,
-              features.crewClass,
-              features.title,
-              features.outfit,
-              features.hair,
-              features.facialFeature,
-              features.hairColor,
-              features.headPiece,
-              features.bonusItem,
-            ].map((x) => x.toString()),
-            '4', // array len v
-            ...[
-              traits.drive,
-              traits.classImpactful,
-              traits.driveCosmetic,
-              traits.cosmetic,
-            ].map((t) => t.id.toString()),
-            crewId.toString()
-          ]
-        },
-      ];
-
-      return account.execute(calls);
-    },
-    isEqual: () => true,
-  },
-  'NAME_CREW': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ i, name }) => contract.invoke(
-      'Crewmate_setName',
-      [
-        i,
-        shortString.encodeShortString(name)
-      ]
-    ),
-  },
-
-  'START_CORE_SAMPLE': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, lotId, resourceId, crewId, sampleId = 0 }) => contract.invoke(
-      'CoreSample_startSampling',
-      [asteroidId, lotId, resourceId, sampleId, crewId]
-    ),
-    isEqual: (txVars, vars) => (
-      txVars.asteroidId === vars.asteroidId
-      && txVars.lotId === vars.lotId
-      && txVars.crewId === vars.crewId
-    ),
-  },
-  'FINISH_CORE_SAMPLE': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, lotId, resourceId, crewId, sampleId }) => contract.invoke(
-      'CoreSample_finishSampling',
-      [asteroidId, lotId, resourceId, sampleId, crewId]
-    ),
-    isEqual: (txVars, vars) => (
-      txVars.asteroidId === vars.asteroidId
-      && txVars.lotId === vars.lotId
-      && txVars.crewId === vars.crewId
-    ),
-  },
-
-  'PLAN_CONSTRUCTION': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ buildingType, asteroidId, lotId, crewId }) => contract.invoke(
-      'Construction_plan',
-      [buildingType, asteroidId, lotId, crewId]
-    ),
-    isEqual: (txVars, vars) => (
-      txVars.asteroidId === vars.asteroidId
-      && txVars.lotId === vars.lotId
-      && txVars.crewId === vars.crewId
-    )
-  },
-  'UNPLAN_CONSTRUCTION': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
-      'Construction_unplan',
-      [asteroidId, lotId, crewId]
-    ),
-    isEqual: 'ALL'
-  },
-
-  'START_CONSTRUCTION': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
-      'Construction_start',
-      [asteroidId, lotId, crewId]
-    ),
-    isEqual: 'ALL'
-  },
-  'FINISH_CONSTRUCTION': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
-      'Construction_finish',
-      [asteroidId, lotId, crewId]
-    ),
-    isEqual: 'ALL'
-  },
-  'DECONSTRUCT': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
-      'Construction_deconstruct',
-      [asteroidId, lotId, crewId]
-    ),
-    isEqual: 'ALL'
-  },
-
-  'START_EXTRACTION': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, lotId, crewId, resourceId, sampleId, amount, destinationLotId, destinationInventoryId }) => contract.invoke(
-      'Extraction_start',
-      [asteroidId, lotId, resourceId, sampleId, amount, destinationLotId, destinationInventoryId, crewId]
-    ),
-    isEqual: (txVars, vars) => (
-      txVars.asteroidId === vars.asteroidId
-      && txVars.lotId === vars.lotId
-      && txVars.crewId === vars.crewId
-    )
-  },
-  'FINISH_EXTRACTION': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
-      'Extraction_finish',
-      [asteroidId, lotId, crewId]
-    ),
-    isEqual: 'ALL'
-  },
-
-  'START_DELIVERY': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, originLotId, originInvId, destLotId, destInvId, resources, crewId }) => contract.invoke(
-      'Inventory_transferStart',
-      [asteroidId, originLotId, originInvId, destLotId, destInvId, Object.keys(resources), Object.values(resources), crewId]
-    ),
-    isEqual: (txVars, vars) => (
-      txVars.asteroidId === vars.asteroidId
-      && txVars.crewId === vars.crewId
-      && txVars.originLotId === vars.originLotId
-    )
-  },
-  'FINISH_DELIVERY': {
-    address: process.env.REACT_APP_STARKNET_DISPATCHER,
-    config: configs.Dispatcher,
-    transact: (contract) => ({ asteroidId, destLotId, destInvId, deliveryId, crewId }) => contract.invoke(
-      'Inventory_transferFinish',
-      [asteroidId, destLotId, destInvId, deliveryId, crewId]
-    ),
-    isEqual: (txVars, vars) => (
-      txVars.asteroidId === vars.asteroidId
-      && txVars.crewId === vars.crewId
-      && txVars.destLotId === vars.destLotId
-      && txVars.deliveryId === vars.deliveryId
-    )
-  }
+const getApproveEthCall = ({ amount }) => ({
+  contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+  entrypoint: 'approve',
+  calldata: System.formatCallData('approveEth', { amount }),
 });
 
-const getNow = () => {
-  return Math.floor(Date.now() / 1000);
-}
+const getRunSystemCall = (system, input) => ({
+  contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+  entrypoint: 'run_system',
+  calldata: System.formatCallData(system, input),
+});
+
+// supported configs:
+//  confirms, equalityTest
+const customConfigs = {
+  ConstructionStart: { equalityTest: 'ALL' },
+  ConstructionFinish: { equalityTest: 'ALL' },
+  CoreSampleStart: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
+  CoreSampleFinish: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
+  Deconstruct: { equalityTest: 'ALL' },
+  DeliveryStart: { equalityTest: ['asteroidId', 'crewId', 'originLotId'] },
+  DeliveryFinish: { equalityTest: ['asteroidId', 'crewId', 'deliveryId', 'destLotId'] },
+  ExchangeCrew: { equalityTest: true },
+  ExtractionStart: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
+  ExtractionFinish: { equalityTest: 'ALL' },
+  PlanConstruction: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
+  PurchaseAdalian: {
+    getPrice: async () => {
+      const { ADALIAN_PRICE_ETH } = await api.getConstants('ADALIAN_PRICE_ETH');
+      return Number(ethersUtils.formatEther(String(ADALIAN_PRICE_ETH)));
+    },
+    equalityTest: true
+  },
+  PurchaseAsteroid: {
+    getPrice: async ({ i }) => {
+      const { ASTEROID_BASE_PRICE_ETH, ASTEROID_LOT_PRICE_ETH } = await api.getConstants([
+        'ASTEROID_BASE_PRICE_ETH',
+        'ASTEROID_LOT_PRICE_ETH'
+      ]);
+      const base = Number(ethersUtils.formatEther(String(ASTEROID_BASE_PRICE_ETH)));
+      const lot = Number(ethersUtils.formatEther(String(ASTEROID_LOT_PRICE_ETH)));
+      return base + lot * Asteroid.getSurfaceArea(i);
+    },
+  },
+  UnplanConstruction: { equalityTest: 'ALL' },
+};
 
 export function ChainTransactionProvider({ children }) {
   const { account, walletContext: { starknet } } = useAuth();
@@ -362,42 +76,47 @@ export function ChainTransactionProvider({ children }) {
 
   const contracts = useMemo(() => {
     if (!!starknet?.account) {
-      const processedContracts = {};
-      const contractConfig = getContracts(starknet?.account);
-      Object.keys(contractConfig).forEach((k) => {
-        const {
-          address,
-          config,
-          transact,
-          onConfirmed,
-          onEventReceived,
-          getConfirmedAlert,
-          getEventAlert,
-          confirms,
-          isEqual
-        } = contractConfig[k];
-        processedContracts[k] = {
-          execute: transact(new Contract(config, address, starknet.account)),
+      return Object.keys(System.Systems).reduce((acc, systemName) => {
+        const config = {
+          confirms: 1,
+          equalityTest: ['i'],
+          ...(customConfigs[systemName] || {})
+        };
+        
+        acc[systemName] = {
+          confirms: config.confirms,
+          equalityTest: config.equalityTest,
+
+          execute: async (vars) => {
+            const calls = [getRunSystemCall(systemName, vars)];
+            if (config.getPrice) {
+              const priceWei = await config.getPrice(starknet.account, vars);
+              calls.unshift(getApproveEthCall({ amount: priceWei }));
+            }
+            return account.execute(calls);
+          },
+
+          onEventReceived: (event, vars) => {
+            if (config.getEventAlert) {
+              createAlert(config.getEventAlert(vars));
+            }
+            config.onEventReceived && config.onEventReceived(event, vars);
+          },
+
+          onConfirmed: (event, vars) => {
+            if (config.getConfirmedAlert) {
+              createAlert(config.getConfirmedAlert(vars));
+            }
+            config.onConfirmed && config.onConfirmed(event, vars);
+          },
+
           onTransactionError: (err, vars) => {
             console.error(err, vars);
           },
-          onEventReceived: (event, vars) => {
-            if (getEventAlert) {
-              createAlert(getEventAlert(vars));
-            }
-            onEventReceived && onEventReceived(event, vars);
-          },
-          onConfirmed: (event, vars) => {
-            if (getConfirmedAlert) {
-              createAlert(getConfirmedAlert(vars));
-            }
-            onConfirmed && onConfirmed(event, vars);
-          },
-          confirms: confirms || 1,
-          isEqual
         };
-      });
-      return processedContracts;
+
+        return acc;
+      }, {});
     }
     return null;
   }, [createAlert, starknet?.account?.address, starknet?.account?.baseUrl]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -470,7 +189,10 @@ export function ChainTransactionProvider({ children }) {
           const txHashBInt = BigInt(txHash);
           const txEvent = (events || []).find((e) => e.transactionHash && BigInt(e.transactionHash) === txHashBInt);
           if (txEvent) {
-            contracts[key].onEventReceived(txEvent, vars);
+            if (contracts[key].getEventAlert) {
+              createAlert(contracts[key].getEventAlert(vars));
+            }
+            contracts[key].onEventReceived && contracts[key].onEventReceived(txEvent, vars);
 
             // if this event has already been confirmed, trigger completion too; else, just update status
             if (currentBlockNumber >= txEvent.blockNumber + contracts[key].confirms) {
@@ -566,12 +288,13 @@ export function ChainTransactionProvider({ children }) {
     if (contracts && contracts[key]) {
       return pendingTransactions.find((tx) => {
         if (tx.key === key) {
-          if (contracts[key].isEqual === 'ALL') {
-            return Object.keys(tx.vars).reduce((acc, k) => acc && tx.vars[k] === vars[k], true);
-          } else if (contracts[key].isEqual) {
-            return contracts[key].isEqual(tx.vars, vars);
+          if (contracts[key].equalityTest === true) {
+            return true;
+          } else if (contracts[key].equalityTest === 'ALL') {
+            return !Object.keys(tx.vars).find((k) => tx.vars[k] !== vars[k]);
+          } else if (contracts[key].equalityTest) {
+            return !contracts[key].equalityTest.find((k) => tx.vars[k] !== vars[k]);
           }
-          return tx.vars?.i === vars?.i;
         }
         return false;
       });

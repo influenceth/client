@@ -4,7 +4,6 @@ import { Asteroid } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
-import useSale from '~/hooks/useSale';
 import useWebWorker from '~/hooks/useWebWorker';
 import useBuyAsteroid from '~/hooks/useBuyAsteroid';
 import useCreateReferral from '~/hooks/useCreateReferral';
@@ -37,6 +36,7 @@ import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import { boolAttr } from '~/lib/utils';
+import usePriceConstants from '~/hooks/usePriceConstants';
 
 const paneStackBreakpoint = 720;
 
@@ -271,14 +271,12 @@ const SmHidden = styled.span`
 
 const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
   const { account } = useAuth();
-  const { data: sale } = useSale();
   const createReferral = useCreateReferral(Number(asteroid.i));
   const isNameValid = useNameAvailability('Asteroid');
   const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.i));
   const { nameAsteroid, naming } = useNameAsteroid(Number(asteroid.i));
+  const { data: priceConstants } = usePriceConstants();
   const webWorkerPool = useWebWorker();
-
-  const saleIsActive = useStore(s => s.sale);
 
   const [exportingModel, setExportingModel] = useState(false);
   const [newName, setNewName] = useState('');
@@ -447,18 +445,18 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                 </ModelButton>
               )}
 
-              {sale && !asteroid.Nft?.owner && (
+              {priceConstants && !asteroid.Nft?.owner && (
                 <Button
                   data-tip="Purchase development rights"
                   data-for="global"
-                  disabled={boolAttr(!account || !saleIsActive || buying)}
+                  disabled={boolAttr(!account || buying)}
                   isTransaction
                   loading={boolAttr(buying)}
                   onClick={() => {
                     buyAsteroid();
                     createReferral.mutate();
                   }}>
-                  Purchase -&nbsp;<Ether>{formatters.asteroidPrice(asteroid.Celestial.radius, sale)}</Ether>
+                  Purchase -&nbsp;<Ether>{formatters.asteroidPrice(asteroid.Celestial.radius, priceConstants)}</Ether>
                 </Button>
               )}
               {asteroid.Nft?.owner && (

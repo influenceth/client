@@ -36,11 +36,12 @@ const formatters = {
     return a.Name?.name || Asteroid.getBaseName(a.i) || `Asteroid #${a.i.toLocaleString()}`;
   },
 
-  asteroidPrice: (r, sale) => {
-    if (!sale?.basePrice || !sale?.saleModifier) return '?';
-    const base = Number(ethersUtils.formatEther(String(sale.basePrice)));
-    const lot = Number(ethersUtils.formatEther(String(sale.saleModifier)));
-    const lotCount = Math.floor(4 * Math.PI * (r / 1000) ** 2);
+  asteroidPrice: (r, priceConstants) => {
+    if (!priceConstants?.ASTEROID_BASE_PRICE_ETH || !priceConstants?.ASTEROID_LOT_PRICE_ETH) return '?';
+    const base = Number(ethersUtils.formatEther(String(priceConstants.ASTEROID_BASE_PRICE_ETH)));
+    const lot = Number(ethersUtils.formatEther(String(priceConstants.ASTEROID_LOT_PRICE_ETH)));
+    const lotCount = Asteroid.getSurfaceArea(0, r);
+    
     const price = base + lot * lotCount;
     return price.toLocaleString([], { maximumFractionDigits: 4 });
   },
@@ -55,9 +56,9 @@ const formatters = {
     return c.Name?.name || `Crew #${c.i.toLocaleString()}`;
   },
 
-  crewPrice: (sale) => {
-    if (!sale?.basePrice) return '?';
-    const price = Number(ethersUtils.formatEther(String(sale.basePrice)));
+  crewmatePrice: (priceConstants) => {
+    if (!priceConstants?.ADALIAN_PRICE_ETH) return '?';
+    const price = Number(ethersUtils.formatEther(String(priceConstants?.ADALIAN_PRICE_ETH)));
     return price.toLocaleString([], { maximumFractionDigits: 3 });
   },
 

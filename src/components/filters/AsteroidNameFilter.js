@@ -1,15 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
-import { trim } from 'lodash';
+import { useCallback, useRef } from 'react';
 
 import useStore from '~/hooks/useStore';
-import useSale from '~/hooks/useSale';
-import ColorPicker from '~/components/ColorPicker';
-import Ether from '~/components/Ether';
-import formatters from '~/lib/formatters';
-import constants from '~/lib/constants';
 import { InputBlock, SearchMenu } from './components';
-import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontrolled';
+import UncontrolledTextInput from '~/components/TextInputUncontrolled';
 
 import IconButton from '~/components/IconButton';
 import { GoIcon } from '~/components/Icons';

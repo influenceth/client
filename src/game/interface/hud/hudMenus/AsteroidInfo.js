@@ -1,21 +1,18 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Asteroid, Product } from '@influenceth/sdk';
+import { useHistory } from 'react-router-dom';
+import ReactTooltip from 'react-tooltip';
 
+import AddressLink from '~/components/AddressLink';
+import Button from '~/components/ButtonAlt';
 import Ether from '~/components/Ether';
 import { EccentricityIcon, IdIcon, InclinationIcon, OrbitalPeriodIcon, RadiusIcon, ResourceGroupIcons, ScanAsteroidIcon, SemiMajorAxisIcon, SurfaceAreaIcon, WalletIcon } from '~/components/Icons';
-import useAsteroid from '~/hooks/useAsteroid';
-import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
-import AddressLink from '~/components/AddressLink';
-import useSale from '~/hooks/useSale';
-import useAsteroidAbundances from '~/hooks/useAsteroidAbundances';
 import { keyify } from '~/lib/utils';
-import IconButton from '~/components/IconButton';
-import ReactTooltip from 'react-tooltip';
-import Button from '~/components/ButtonAlt';
-import { useHistory } from 'react-router-dom';
-
+import useAsteroid from '~/hooks/useAsteroid';
+import usePriceConstants from '~/hooks/usePriceConstants';
+import useStore from '~/hooks/useStore';
 import { majorBorderColor, opacityAnimation, Scrollable, Tray } from './components';
 
 const InfoRow = styled.div`
@@ -91,7 +88,7 @@ const Resource = styled.span`
 const AsteroidInfo = ({ onClose }) => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
-  const { data: sale } = useSale();
+  const { data: priceConstants } = usePriceConstants();
   const history = useHistory();
 
   // get the categories of resources present on this asteroid
@@ -163,12 +160,12 @@ const AsteroidInfo = ({ onClose }) => {
             </span>
           </InfoRow>
         )}
-        {sale && !asteroid.Nft?.owner && (
+        {priceConstants && !asteroid.Nft?.owner && (
           <InfoRow>
             <WalletIcon />
             <label>Price</label>
             <span>
-              <Ether>{formatters.asteroidPrice(asteroid.Celestial.radius, sale)}</Ether>
+              <Ether>{formatters.asteroidPrice(asteroid.Celestial.radius, priceConstants)}</Ether>
             </span>
           </InfoRow>
         )}
