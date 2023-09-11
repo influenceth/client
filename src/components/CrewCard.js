@@ -139,14 +139,14 @@ const CrewCard = ({ crewmate, onClick, overlay, ...props }) => {
   const [ imageFailed, setImageFailed ] = useState(false);
   const [ imageLoaded, setImageLoaded ] = useState(false);
 
-  const useName = crewmate.Name.name || (crewmate.i && `Crewmate #${crewmate.i}`) || '';
+  const useName = crewmate.Name?.name || (crewmate.i && `Crewmate #${crewmate.i}`) || '';
   const classLabel = Crewmate.getClass(crewmate)?.name;
 
   let imageUrl = useMemo(() => {
     let url = silhouette;
-    if (crewmate.i) {
-      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crewmate.i}/image.svg?bustOnly=true`;
-    } else if (crewmate.Crewmate.class) {
+    if (crewmate.id) {
+      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crewmate.id}/image.svg?bustOnly=true`;
+    } else if (crewmate.Crewmate?.class) {
       url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
         pick(crewmate.Crewmate, ['coll', 'class', 'title', 'appearance'])
       )}`;
@@ -182,7 +182,7 @@ const CrewCard = ({ crewmate, onClick, overlay, ...props }) => {
       </CardImage>
       <CardHeader>
         <CrewName {...props}>
-          <CrewClassIcon crewClass={crewmate.Crewmate.class} />{' '}
+          <CrewClassIcon crewClass={crewmate.Crewmate?.class} />{' '}
           {!props.hideNameInHeader && useName}
         </CrewName>
         {!props.hideCollectionInHeader && (
@@ -203,14 +203,16 @@ const CrewCard = ({ crewmate, onClick, overlay, ...props }) => {
       </CardHeader>
       {!overlay && (
         <CardFooter>
-          <EmblemContainer>
-            <CrewCollectionEmblem
-              collection={crewmate.Crewmate.coll}
-              style={{ width: '100%' }} />
-          </EmblemContainer>
+          {crewmate.Crewmate?.coll && (
+            <EmblemContainer>
+              <CrewCollectionEmblem
+                collection={crewmate.Crewmate.coll}
+                style={{ width: '100%' }} />
+            </EmblemContainer>
+          )}
           <FooterStats>
-            <div>{Crewmate.getClass(crewmate)?.name}</div>
-            {crewmate.Crewmate.title > 0 && <div>{Crewmate.getTitle(crewmate)?.name}</div>}
+            <div>{Crewmate.Entity.getClass(crewmate)?.name}</div>
+            {crewmate.Crewmate.title > 0 && <div>{Crewmate.Entity.getTitle(crewmate)?.name}</div>}
           </FooterStats>
         </CardFooter>
       )}

@@ -20,7 +20,7 @@ export function CrewProvider({ children }) {
 
   const { data: allCrewmates, isLoading: crewmatesLoading } = useQuery(
     [ 'crewmates', 'owned', account ],
-    () => api.getCrewmatesByCrewIds(crews.map((c) => c.i)),
+    () => api.getCrewmates(crews.reduce((acc, c) => [...acc, ...c.Crew.roster], [])),
     { enabled: crews?.length > 0 }
   );
 

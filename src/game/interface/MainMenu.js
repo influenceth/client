@@ -23,7 +23,7 @@ import {
   TransactionIcon,
 } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
-import useCrewAssignments from '~/hooks/useCrewAssignments';
+// import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
@@ -134,7 +134,7 @@ const MainMenu = () => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const { account } = useAuth();
-  const { data: crewAssignmentData } = useCrewAssignments();
+  // const { data: crewAssignmentData } = useCrewAssignments();
 
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 

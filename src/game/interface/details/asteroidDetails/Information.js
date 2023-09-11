@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid } from '@influenceth/sdk';
+import { Asteroid, Entity } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
@@ -272,7 +272,7 @@ const SmHidden = styled.span`
 const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
   const { account } = useAuth();
   const createReferral = useCreateReferral(Number(asteroid.i));
-  const isNameValid = useNameAvailability('Asteroid');
+  const isNameValid = useNameAvailability(Entity.IDS.ASTEROID);
   const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.i));
   const { nameAsteroid, naming } = useNameAsteroid(Number(asteroid.i));
   const { data: priceConstants } = usePriceConstants();

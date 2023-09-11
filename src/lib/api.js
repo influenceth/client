@@ -31,6 +31,10 @@ const buildQuery = (queryObj) => {
   }).join('&');
 };
 
+const backwardCompatibility = (entity) => {
+  return { ...entity, i: entity.id }; // TODO: deprecate the `i` thing, remove this function
+};
+
 const getEntitiesById = async ({ label, ids, components }) => {
   const query = {
     label,
@@ -41,7 +45,7 @@ const getEntitiesById = async ({ label, ids, components }) => {
   }
 
   const response = await instance.get(`/${apiVersion}/entities/id?${buildQuery(query)}`);
-  return response.data;
+  return (response.data || []).map(backwardCompatibility);
 };
 
 const getEntityById = async ({ label, id, components }) => {
@@ -63,7 +67,7 @@ const getEntities = async ({ match, label, components }) => {
   }
   
   const response = await instance.get(`/${apiVersion}/entities?${buildQuery(query)}`);
-  return response.data;
+  return (response.data || []).map(backwardCompatibility);;
 };
 
 const api = {
@@ -93,10 +97,11 @@ const api = {
     };
   },
 
-  getUserAssignments: async () => {
-    const response = await instance.get(`/${apiVersion}/user/assignments`);
-    return response.data;
-  },
+  // TODO: will we want this for "random" story events
+  // getUserAssignments: async () => {
+  //   const response = await instance.get(`/${apiVersion}/user/assignments`);
+  //   return response.data;
+  // },
 
   getEvents: async (query) => {
     const response = await instance.get(`/${apiVersion}/user/events${query ? `?${buildQuery(query)}` : ''}`);
@@ -212,7 +217,7 @@ const api = {
   },
 
   getNameUse: async (label, name) => {
-    return getEntities({ match: { name }, label, components: [] });
+    return getEntities({ match: { 'Name.name': name }, label, components: [] });
   },
 
   getOwnedAsteroids: async (account) => {
@@ -221,13 +226,6 @@ const api = {
 
   getOwnedCrews: async (account) => {
     return getEntities({ match: { 'Crew.delegatedTo': account }, label: Entity.IDS.CREW });
-  },
-
-  getCrewmatesByCrewIds: async (crewIds) => {
-    return getEntities({
-      match: { 'Control.controller': crewIds.map((i) => ({ label: Entity.IDS.CREWMATE, id: i })) },
-      label: Entity.IDS.CREWMATE
-    });
   },
 
   getCrew: async (id) => {
@@ -239,7 +237,7 @@ const api = {
   },
 
   getCrewmates: async (ids) => {
-    return getEntitiesById({ label: Entity.IDS.CREWMATE, ids });
+    return ids?.length > 0 ? getEntitiesById({ label: Entity.IDS.CREWMATE, ids }) : [];
   },
 
   getPlanets: async () => {

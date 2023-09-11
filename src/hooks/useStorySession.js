@@ -5,6 +5,8 @@ import { useHistory } from 'react-router-dom';
 import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
 
+// TODO: deprecated -- remove file
+
 const useStorySession = (id) => {
   const history = useHistory();
   const queryClient = useQueryClient();
@@ -172,7 +174,7 @@ const useStorySession = (id) => {
     commitPath,
     currentStep,
     loadingPath,
-    storyState: storyState,
+    storyState
   };
 };
 

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, System } from '@influenceth/sdk';
+import { Asteroid, Entity, System } from '@influenceth/sdk';
 import { utils as ethersUtils } from 'ethers';
+import { CallData, Contract, shortString, uint256 } from 'starknet';
 
 import useAuth from '~/hooks/useAuth';
 import useEvents from '~/hooks/useEvents';
@@ -13,21 +14,97 @@ const ChainTransactionContext = createContext();
 
 const getNow = () => Math.floor(Date.now() / 1000);
 
+
+
+// const test = () => {
+//   const x = Contract.compile('run_system', {
+//     name: shortString.encodeShortString('RecruitAdalian'),
+//     calldata: [
+//       Entity.IDS.CREWMATE, 0, // crewmate entity
+//       1, // class
+//       1, 28,// impactful
+//       3, 4, 36, 5, // cosmetic
+//       1, // gender
+//       1, // body
+//       1, // face
+//       0, // hair
+//       3, // hair color
+//       31, // clothes
+//       Entity.IDS.BUILDING, 1, // building entity
+//       Entity.IDS.CREW, 3 // caller crew entity
+//     ]
+//   });
+//   console.log('pmk test', x);
+// };
+
+////////////
+// TODO: move back to the sdk
+
+const formatCalldataType = (type, value) => {
+  if (type === 'ContractAddress') {
+    return value;
+  }
+  else if (type === 'Entity') {
+    return [value.label, value.id];
+  }
+  else if (type === 'Number') {
+    return value;
+  }
+  else if (type === 'String') {
+    return value;
+  }
+  else if (type === 'BigNumber') {
+    return uint256.bnToUint256(value)
+  }
+};
+
+const formatSystemCalldata = (name, vars) => {  // TODO: note name change
+  const system = System.Systems[name];  // TODO: "System.Systems" --> "Systems" in sdk
+  if (!system) throw new Error(`Unknown system: ${name}`);
+
+  const x = system.inputs.reduce((acc, { name, type, isArray }) => {
+    console.log('pmk input', name, type, isArray, vars[name]);
+    if (isArray) acc.push(vars[name]?.length || 0);
+    (isArray ? vars[name] : [vars[name]]).forEach((v) => {
+      console.log('pmk v', v);
+      const formattedVar = formatCalldataType(type, v);
+      try {
+        (Array.isArray(formattedVar) ? formattedVar : [formattedVar]).forEach((val) => {
+          console.log('pmk val', val);
+          acc.push(val);
+        });
+      } catch (e) {
+        console.warn(`pmk ${name} could not be formatted`, vars[name], e);
+      }
+    }, []);
+    return acc;
+  }, []);
+  console.log('pmk x', x);
+  return x;
+};
+
+////////////
+
 const getApproveEthCall = ({ amount }) => ({
   contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
   entrypoint: 'approve',
-  calldata: System.formatCallData('approveEth', { amount }),
+  // TODO: put in format like the others
+  calldata: CallData.compile([
+    formatCalldataType('ContractAddress', process.env.REACT_APP_STARKNET_DISPATCHER),
+    formatCalldataType('BigNumber', amount), // TODO: back to sdk version
+  ])
 });
 
-const getRunSystemCall = (system, input) => ({
+const getRunSystemCall = (name, input) => ({
   contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
   entrypoint: 'run_system',
-  calldata: System.formatCallData(system, input),
+  calldata: CallData.compile({ name, calldata: formatSystemCalldata(name, input) }),  // TODO: back to sdk version
 });
 
 // supported configs:
 //  confirms, equalityTest
 const customConfigs = {
+  // customization of Systems configs from sdk
   ConstructionStart: { equalityTest: 'ALL' },
   ConstructionFinish: { equalityTest: 'ALL' },
   CoreSampleStart: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
@@ -57,7 +134,21 @@ const customConfigs = {
       return base + lot * Asteroid.getSurfaceArea(i);
     },
   },
+  RecruitAdalian: {
+    getPrice: async ({ crewmate }) => {
+      if (crewmate?.id > 0) return 0; // if recruiting existing crewmate, no cost
+      const { ADALIAN_PRICE_ETH } = await api.getConstants('ADALIAN_PRICE_ETH');
+      return Number(ethersUtils.formatEther(String(ADALIAN_PRICE_ETH)));
+    },
+    equalityTest: true
+  },
   UnplanConstruction: { equalityTest: 'ALL' },
+
+  // virtual multi-system wrappers
+  // PurchaseAndRecruitAdalian: {
+  //   multisystemCalls: ['RecruitAdalian', 'ChangeName'],
+  //   equalityTest: true,
+  // },
 };
 
 export function ChainTransactionProvider({ children }) {
@@ -76,7 +167,14 @@ export function ChainTransactionProvider({ children }) {
 
   const contracts = useMemo(() => {
     if (!!starknet?.account) {
-      return Object.keys(System.Systems).reduce((acc, systemName) => {
+
+      // include all default systems + any virtuals included in customConfigs
+      const systemKeys = [
+        ...Object.keys(System.Systems),
+        ...(Object.keys(customConfigs).filter((k) => !!customConfigs[k].multisystemCalls))
+      ];
+
+      return systemKeys.reduce((acc, systemName) => {
         const config = {
           confirms: 1,
           equalityTest: ['i'],
@@ -88,12 +186,25 @@ export function ChainTransactionProvider({ children }) {
           equalityTest: config.equalityTest,
 
           execute: async (vars) => {
-            const calls = [getRunSystemCall(systemName, vars)];
-            if (config.getPrice) {
-              const priceWei = await config.getPrice(starknet.account, vars);
-              calls.unshift(getApproveEthCall({ amount: priceWei }));
+            const runSystems = config.multisystemCalls || [systemName];
+            console.log('runSystem', runSystems);
+
+            let totalPrice = 0;
+            const calls = [];
+            for (let runSystem of runSystems) {
+              calls.push(getRunSystemCall(runSystem, vars));
+              if (customConfigs[runSystem]?.getPrice) {
+                totalPrice += await customConfigs[runSystem].getPrice(starknet.account, vars);
+              }
             }
-            return account.execute(calls);
+
+            if (totalPrice > 0) {
+              const amount = totalPrice * 1e18; // convert to wei
+              calls.unshift(getApproveEthCall({ amount }));
+            }
+
+            console.log('pmk calls2', calls, starknet.account);
+            return starknet.account.execute(calls);
           },
 
           onEventReceived: (event, vars) => {

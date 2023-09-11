@@ -25,13 +25,14 @@ import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
 import useCrewContext from '~/hooks/useCrewContext';
-import useCrewAssignments from '~/hooks/useCrewAssignments';
+// import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewManager from '~/hooks/useCrewManager';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme.js';
 import { useHistory } from 'react-router-dom';
 import { boolAttr } from '~/lib/utils';
+import { bookIds } from '~/hooks/useBookSession';
 
 const Container = styled.div`
   display: flex;
@@ -452,10 +453,7 @@ const reducer = (state, action) => {
 }
 
 const OwnedCrew = () => {
-  const { account, token } = useAuth();
-  const createStorySession = useCreateStorySession();
-  const { data: crewAssignmentData, isLoading: assignmentsAreLoading } = useCrewAssignments();
-  const queryClient = useQueryClient();
+  const { token } = useAuth();
   const { crew: selectedCrew, crews: allCrews, crewmateMap, loading: crewIsLoading } = useCrewContext();
   const { changeActiveCrew, getPendingActiveCrewChange, getPendingCrewmate, crewCredits } = useCrewManager();
   const history = useHistory();
@@ -465,8 +463,6 @@ const OwnedCrew = () => {
   const playSound = useStore(s => s.dispatchSoundRequested);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
 
-  const { crewRecruitmentStoryId, crewRecruitmentSessionId } = crewAssignmentData || {};
-
   const activeCrewmateContainer = useRef();
 
   const [{ activeCrew, inactiveCrew, pristine }, dispatch] = useReducer(reducer, {
@@ -475,17 +471,16 @@ const OwnedCrew = () => {
     pristine: ''
   });
   const [activeCrewHeight, setActiveCrewHeight] = useState(null);
-  const [creatingSession, setCreatingSession] = useState();
   const [hovered, setHovered] = useState();
   const [inactiveCrewCollapsed, setInactiveCrewCollapsed] = useState(width < collapsibleWidth);
   const [saving, setSaving] = useState(false);
 
-  const isDataLoading = !token || assignmentsAreLoading || crewIsLoading;
+  const isDataLoading = !token || crewIsLoading;
 
   const crew = useMemo(() => {
     if (crewIsLoading) return [];
     const activeCrew = (selectedCrew?.Crew.roster || []).map((i, index) => ({ ...crewmateMap[i], activeSlot: index + 1 }));
-    const activeInAnyCrewIds = (allCrews || []).reduce((acc, c) => [...acc, ...c.roster], []);
+    const activeInAnyCrewIds = (allCrews || []).reduce((acc, c) => [...acc, ...c.Crew.roster], []);
     const inactiveCrew = Object.values(crewmateMap || {})
       .filter((crewmate) => crewmate.Crewmate.class && !activeInAnyCrewIds.includes(crewmate.i))
       .map((c) => ({ ...c, activeSlot: -1 }));
@@ -497,7 +492,7 @@ const OwnedCrew = () => {
   }, [activeCrew, pristine]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRecruit = useCallback(() => {
-    if (isDataLoading || creatingSession) return;
+    if (isDataLoading) return;
 
     if (isDirty) {
       createAlert({
@@ -510,52 +505,52 @@ const OwnedCrew = () => {
       return;
     }
 
-    // continue open session...
-    if (crewRecruitmentSessionId) {
-      history.push(`/crew-assignment/${crewRecruitmentSessionId}`);
+    // TODO: determine book-id
+    history.push(`/crew-assignment/${bookIds.ADALIAN_RECRUITMENT}`);
+    playSound('effects.success');
 
-    // create new session...
-    } else if (crewRecruitmentStoryId) {
-      setCreatingSession(true);
-      createStorySession.mutate({
-        storyId: crewRecruitmentStoryId,
-        account
-      }, {
-        onSuccess: (session) => {
-          // (update the "open" crew session id in query cache)
-          if (session) {
-            const sessionCacheKey = ['assignments', token];
-            const currentCacheValue = queryClient.getQueryData(sessionCacheKey);
-            queryClient.setQueryData(
-              sessionCacheKey,
-              {
-                ...currentCacheValue,
-                crewRecruitmentSessionId: session.id
-              }
-            );
-          }
-          setCreatingSession(false);
+    // TODO: this is probably all deprecated
+    // // continue open session...
+    // if (crewRecruitmentSessionId) {
+    //   history.push(`/crew-assignment/${crewRecruitmentSessionId}`);
 
-          // go to assignment
-          playSound('effects.success');
-          history.push(`/crew-assignment/${session.id}`);
-        },
-        onError: (err) => {
-          console.error(err);
-          setCreatingSession(false);
-        }
-      });
-    }
+    // // create new session...
+    // } else if (crewRecruitmentStoryId) {
+    //   setCreatingSession(true);
+    //   createStorySession.mutate({
+    //     storyId: crewRecruitmentStoryId,
+    //     account
+    //   }, {
+    //     onSuccess: (session) => {
+    //       // (update the "open" crew session id in query cache)
+    //       if (session) {
+    //         const sessionCacheKey = ['assignments', token];
+    //         const currentCacheValue = queryClient.getQueryData(sessionCacheKey);
+    //         queryClient.setQueryData(
+    //           sessionCacheKey,
+    //           {
+    //             ...currentCacheValue,
+    //             crewRecruitmentSessionId: session.id
+    //           }
+    //         );
+    //       }
+    //       setCreatingSession(false);
+
+    //       // go to assignment
+    //       playSound('effects.success');
+    //       history.push(`/crew-assignment/${session.id}`);
+    //     },
+    //     onError: (err) => {
+    //       console.error(err);
+    //       setCreatingSession(false);
+    //     }
+    //   });
+    // }
   }, [ // eslint-disable-line react-hooks/exhaustive-deps
-    account,
     createAlert,
-    createStorySession,
-    crewRecruitmentSessionId,
-    crewRecruitmentStoryId,
     isDataLoading,
     isDirty,
     playSound,
-    token
   ]);
 
   const handleActivate = useCallback((inactiveIndex) => {
@@ -680,18 +675,18 @@ const OwnedCrew = () => {
   const clickOverlay = useMemo(() => ({
     alwaysOn: ['button','icon'],
     button: 'Recruit',
-    buttonAttention: !creatingSession,
+    buttonAttention: true,
     buttonStyle: activeCrewHeight < 320 && (activeCrewHeight < 275 ? { display: 'none' } : { fontSize: '10px' }),
     disableHover: true,
-    icon: creatingSession ? <div style={{ height: 60, width: 60 }}><LoadingIcon color={theme.colors.main} /></div> : <PlusIcon />,
+    icon: <PlusIcon />,
     rgb: theme.colors.mainRGB,
-  }), [activeCrewHeight, creatingSession]);
+  }), [activeCrewHeight]);
 
   if (isDataLoading) return null;
   return (
     <Details title="Owned Crew" width="max">
-      {!(crew?.length > 0 && crewRecruitmentStoryId) && <Loader />}
-      {crew?.length > 0 && crewRecruitmentStoryId && (
+      {!(crew?.length > 0) && <Loader />}
+      {crew?.length > 0 && (
         <Container style={{ opacity: activeCrewHeight > 0 ? 1 : 0 }}>
           <Title>
             {crewCredits?.length > 0 && <CrewCredits><CheckIcon /> {crewCredits?.length} credit{crewCredits?.length === 1 ? '' : 's'} remaining</CrewCredits>}
@@ -726,7 +721,7 @@ const OwnedCrew = () => {
                                 <div>Captain</div>
                               </CaptainTopFlourish>
                               <CrewmateContainer>
-                                <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty && !creatingSession ? handleRecruit : noop}>
+                                <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
                                   {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
                                   {!isEmpty && <CrewCard
                                     crewmate={crewmate}
@@ -755,7 +750,7 @@ const OwnedCrew = () => {
                           {slot !== 0 && (
                             <CrewmateContainer slot={slot}>
                               <TopFlourish />
-                              <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty && !creatingSession ? handleRecruit : noop}>
+                              <CardContainer ref={setRefEl} isEmpty={isEmpty} onClick={isNextEmpty ? handleRecruit : noop}>
                                 {isEmpty && <CrewSilhouetteCard overlay={(isNextEmpty) ? clickOverlay : undefined} />}
                                 {!isEmpty && <CrewCard
                                   crewmate={crewmate}

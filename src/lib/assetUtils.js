@@ -2,16 +2,11 @@ import { Assets, Building, Product, Ship } from '@influenceth/sdk';
 
 const ASSET_CACHE = {};
 
-const getSlug = (assetName) => {
-  return (assetName || '').replace(/[^a-z]/ig, '');
-}
-
-const getIconUrl = (type, assetName, iconVersion, { append, w, h, f } = {}) => {
-  let slug = `influence/goerli/images/icons/${type}/${getSlug(assetName)}${append || ''}.v${iconVersion || '1'}.png`;
-  if (w || h) {
-    slug = window.btoa(
+export const getCloudfrontUrl = (rawSlug, { w, h, f } = {}) => {
+  const slug = (w || h)
+    ? window.btoa(
       JSON.stringify({
-        key: slug,
+        key: rawSlug,
         bucket: process.env.REACT_APP_CLOUDFRONT_BUCKET,
         edits: {
           resize: {
@@ -22,8 +17,19 @@ const getIconUrl = (type, assetName, iconVersion, { append, w, h, f } = {}) => {
         }
       })
     )
-  }
+    : rawSlug;
   return `${process.env.REACT_APP_CLOUDFRONT_IMAGE_URL}/${slug}`;
+}
+
+const getSlug = (assetName) => {
+  return (assetName || '').replace(/[^a-z]/ig, '');
+}
+
+const getIconUrl = (type, assetName, iconVersion, { append, w, h, f } = {}) => {
+  return getCloudfrontUrl(
+    `influence/goerli/images/icons/${type}/${getSlug(assetName)}${append || ''}.v${iconVersion || '1'}.png`,
+    { w, h, f }
+  );
 }
 
 const getModelUrl = (type, assetName, modelVersion) => {

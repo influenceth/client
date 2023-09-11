@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { Address, Crewmate, Time } from '@influenceth/sdk';
+import { Address, Crewmate, Entity, Time } from '@influenceth/sdk';
 import { FaBookOpen as BioIcon } from 'react-icons/fa';
 import { RiBarChart2Fill as StatsIcon } from 'react-icons/ri';
 
@@ -25,7 +25,7 @@ import TabContainer from '~/components/TabContainer';
 import Text from '~/components/Text';
 import TextInput from '~/components/TextInput';
 import useAuth from '~/hooks/useAuth';
-import useCrewAssignments from '~/hooks/useCrewAssignments';
+// import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewmate from '~/hooks/useCrewmate';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import useNameCrew from '~/hooks/useNameCrew';
@@ -376,9 +376,9 @@ const CrewmateDetails = () => {
   const { i } = useParams();
   const history = useHistory();
   const { account } = useAuth();
-  const { data: assignmentData } = useCrewAssignments();
+  // const { data: assignmentData } = useCrewAssignments();
   const { data: crewmate } = useCrewmate(i);
-  const isNameValid = useNameAvailability('Crewmate');
+  const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
   const { nameCrew, naming } = useNameCrew(Number(i));
   const playSound = useStore(s => s.dispatchSoundRequested);
 
@@ -394,11 +394,11 @@ const CrewmateDetails = () => {
     return null;
   }, [crewmate?.events]);
 
-  const goToCrewAssignments = useCallback(() => {
-    if (assignmentData?.assignmentsByBook?.length > 0) {
-      history.push(`/crew-assignments/${assignmentData.assignmentsByBook[0].id}`);
-    }
-  }, [assignmentData?.assignmentsByBook, history]);
+  // const goToCrewAssignments = useCallback(() => {
+  //   if (assignmentData?.assignmentsByBook?.length > 0) {
+  //     history.push(`/crew-assignments/${assignmentData.assignmentsByBook[0].id}`);
+  //   }
+  // }, [assignmentData?.assignmentsByBook, history]);
 
   const selectTrait = useCallback((trait, mute) => () => {
     setSelectedTrait({
@@ -578,11 +578,14 @@ const CrewmateDetails = () => {
                         <div>
                           This crewmate doesn't have any traits.
                         </div>
+                        {/* TODO: ecs refactor --  this should link to to appropriate "initialization" story flow */}
+                        {/*
                         {assignmentData?.assignmentsByBook?.length > 0 && (
                           <Button onClick={goToCrewAssignments}>
                             Go to Crew Assignments
                           </Button>
                         )}
+                        */}
                       </NoTraitsMessage>
                     )}
                   </TraitPane>

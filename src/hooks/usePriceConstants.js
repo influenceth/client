@@ -1,5 +1,3 @@
-// 'ASTEROID_BASE_PRICE_ETH', 'ASTEROID_LOT_PRICE_ETH', 'ADALIAN_PRICE_ETH'
-
 import { useQuery } from 'react-query';
 
 import api from '~/lib/api';

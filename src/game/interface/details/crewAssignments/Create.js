@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { Crewmate } from '@influenceth/sdk';
+import { Crewmate, Entity } from '@influenceth/sdk';
 import {
   BiUndo as UndoIcon,
   BiRedo as RedoIcon
@@ -22,13 +22,13 @@ import IconButton from '~/components/IconButton';
 import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
+import useBookSession, { bookIds } from '~/hooks/useBookSession';
 import useCrewManager from '~/hooks/useCrewManager';
 import useCrewContext from '~/hooks/useCrewContext';
-import useStorySession from '~/hooks/useStorySession';
-import formatters from '~/lib/formatters';
 import useNameAvailability from '~/hooks/useNameAvailability';
-import { boolAttr } from '~/lib/utils';
 import usePriceConstants from '~/hooks/usePriceConstants';
+import formatters from '~/lib/formatters';
+import { boolAttr } from '~/lib/utils';
 
 const blinkingBackground = (p) => keyframes`
   0% {
@@ -466,10 +466,11 @@ const traitDispOrder = ['classImpactful', 'drive', 'cosmetic', 'driveCosmetic'];
 
 const CrewAssignmentCreate = (props) => {
   const { account } = useAuth();
-  const { id: sessionId } = useParams();
+  const { id: bookId } = useParams();
   const history = useHistory();
-  const { storyState } = useStorySession(sessionId);
-  const isNameValid = useNameAvailability('Crewmate');
+
+  const { bookSession, storySession, undoPath, restart } = useBookSession(bookId);
+  const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
   const { purchaseAndOrInitializeCrew, getPendingCrewmate, crewCredits } = useCrewManager();
   const { crew, crewmateMap } = useCrewContext();
   const { data: priceConstants } = usePriceConstants();
@@ -482,21 +483,26 @@ const CrewAssignmentCreate = (props) => {
   const [name, setName] = useState('');
   const [traitDetailsOpen, setTraitDetailsOpen] = useState(false);
 
+  const pendingCrewmate = useMemo(() => getPendingCrewmate(), [getPendingCrewmate]);
+
   const rewards = useMemo(() => {
-    if (storyState?.accruedTraits) {
-      const traits = (storyState?.accruedTraits || []).map((id) => {
-        return {
-        id,
-        ...Crewmate.getTrait(id)
-      }});
-      return {
-        drive: traits.find((t) => driveTraits.includes(t.id)),
-        classImpactful: traits.find((t) => t.type === 'impactful'),
-        driveCosmetic: traits.find((t) => driveCosmeticTraits.includes(t.id)),
-        cosmetic: traits.find((t) => justCosmeticTraits.includes(t.id)),
-      };
+    let traits = [];
+    if (pendingCrewmate) {
+      traits = [
+        ...pendingCrewmate.vars.cosmetic.map((id) => ({ id, type: Crewmate.TRAIT_TYPES.COSMETIC })),
+        ...pendingCrewmate.vars.impactful.map((id) => ({ id, type: Crewmate.TRAIT_TYPES.IMPACTFUL }))
+      ];
+    } else if (bookSession?.selectedTraits) {
+      traits = (bookSession?.selectedTraits || []).map((id) => ({ id, ...Crewmate.getTrait(id) }));
     }
-  }, [storyState?.accruedTraits]);
+    return {
+      // TODO: ecs refactor -- this is a bit too strict, esp. if including arvardians
+      drive: traits.find((t) => driveTraits.includes(t.id)),
+      classImpactful: traits.find((t) => t.type === 'impactful'),
+      driveCosmetic: traits.find((t) => driveCosmeticTraits.includes(t.id)),
+      cosmetic: traits.find((t) => justCosmeticTraits.includes(t.id)),
+    };
+  }, [bookSession?.selectedTraits, pendingCrewmate]);
 
   const shareOnTwitter = useCallback(() => {
     // TODO: ...
@@ -507,11 +513,11 @@ const CrewAssignmentCreate = (props) => {
         `Join Now:`,
       ].join('\n\n'),
       hashtags: 'PlayToEarn,NFTGaming',
-      url: `${document.location.origin}/play/crew-assignment/${sessionId}?r=${account}`,
+      url: `${document.location.origin}/play/crew-assignment/${bookId}?r=${account}`,
       //via: 'influenceth'
     });
     window.open(`https://twitter.com/intent/tweet?${params.toString()}`, '_blank');
-  }, [account, sessionId]);
+  }, [account, bookId]);
 
   const handleFinish = useCallback(() => {
     history.push(onCloseDestination);
@@ -522,7 +528,7 @@ const CrewAssignmentCreate = (props) => {
   }, []);
 
   const rerollAppearance = useCallback(async () => {
-    const crewClass = storyState?.classObjective;
+    const crewClass = bookSession?.selectedClass;
     if (!crewClass) return;
 
     const gender = Math.ceil(Math.random() * 2);
@@ -530,24 +536,31 @@ const CrewAssignmentCreate = (props) => {
     const hairs = gender === 1 ? [0, 1, 2, 3, 4, 5] : [0, 6, 7, 8, 9, 10, 11];
 
     const params = {
-      crewCollection: 4,
-      gender,
-      body: (gender - 1) * 6 + Math.ceil(Math.random() * 6),
-      crewClass,
-      title: 0,
-      clothes: 31 + (crewClass - 1) * 2 + Math.ceil(Math.random() * 2),
-      hair: hairs[Math.floor(Math.random() * hairs.length)],
-      face: faces[Math.floor(Math.random() * faces.length)],
-      hairColor: Math.ceil(Math.random() * 5),
-      head: 0,
-      item: 0
+      Crewmate: {
+        appearance: Crewmate.packAppearance({
+          gender,
+          body: (gender - 1) * 6 + Math.ceil(Math.random() * 6),
+          face: faces[Math.floor(Math.random() * faces.length)],
+          hair: hairs[Math.floor(Math.random() * hairs.length)],
+          hairColor: Math.ceil(Math.random() * 5),
+          clothes: 31 + (crewClass - 1) * 2 + Math.ceil(Math.random() * 2),
+          head: 0,
+          item: 0
+        }),
+        class: crewClass,
+        coll: bookId === bookIds.ADALIAN_RECRUITMENT ? 4 : 2,  
+        cosmetic: bookSession.selectedTraits.filter((t) => Crewmate.TRAITS[t].type === Crewmate.TRAIT_TYPES.COSMETIC),
+        impactful: bookSession.selectedTraits.filter((t) => Crewmate.TRAITS[t].type === Crewmate.TRAIT_TYPES.IMPACTFUL),
+        title: 0,
+        status: 0
+      }
     };
 
     setFeatureOptions((prevValue) => {
       setFeatureSelection((prevValue || []).length);
       return [...(prevValue || []), params]
     });
-  }, [storyState?.classObjective]);
+  }, [bookSession?.selectedClass]);
 
   const rollBack = useCallback(() => {
     setFeatureSelection(Math.max(0, featureSelection - 1));
@@ -569,32 +582,67 @@ const CrewAssignmentCreate = (props) => {
       name,
       features: featureOptions[featureSelection],
       traits: rewards,
-      crewId: crew?.i || 0,
-      sessionId // used to tag the pendingTransaction
+      crewId: crew?.id || 0,
+      // sessionId // used to tag the pendingTransaction  // TODO: deprecate? use bookId? use random?
     };
     purchaseAndOrInitializeCrew(input);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, featureOptions?.length, featureSelection, purchaseAndOrInitializeCrew, !!rewards, sessionId, crew?.i]);
+  }, [name, featureOptions?.length, featureSelection, purchaseAndOrInitializeCrew, !!rewards, bookId, crew?.id]);
 
   // show "complete" page (instead of "create") for non-recruitment assignments
   useEffect(() => {
-    if (storyState && !(storyState.tags || []).includes('ADALIAN_RECRUITMENT')) {
-      history.push(`/crew-assignment/${sessionId}/complete`);
+    if (bookSession && !bookSession.isMintingStory) {
+      history.push(`/crew-assignment/${bookId}/complete`);
     }
-  }, [!!storyState]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [!!bookSession]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // initialize appearance & state
   useEffect(() => {
-    const pendingPurchase = getPendingCrewmate();
-    if (pendingPurchase) {
-      setFeatureOptions([ pendingPurchase.vars.features ]);
+    if (pendingCrewmate) {
+      const appearanceMasks = [
+        ['gender', 4],
+        ['body', 16],
+        ['face', 16],
+        ['hair', 16],
+        ['hairColor', 16],
+        ['clothes', 16],
+        ['head', 16],
+        ['item', 8]
+      ];
+      const packAppearance = (details) => {
+        let output = 0n;
+      
+        for (let i = appearanceMasks.length - 1; i >= 0; i--) {
+          const [key, exp] = appearanceMasks[i];
+          console.log('key', key, details[key]);
+          output <<= BigInt(exp);
+          output += BigInt(details[key] || 0);
+        }
+      
+        return `0x${output.toString(16)}`;
+      };
+
+
+
+      const { name, ...crewmateVars } = pendingCrewmate.vars;
+      crewmateVars.hairColor = crewmateVars.hair_color;
+      crewmateVars.appearance = packAppearance(crewmateVars);
+      console.log({
+        Crewmate: { ...crewmateVars },
+        Name: { name }
+      });
+      setFeatureOptions([{
+        Crewmate: { ...crewmateVars },
+        Name: { name }
+      }]);
       setFeatureSelection(0);
-      setName(pendingPurchase.vars.name);
+      setName(pendingCrewmate.vars.name);
       setFinalizing(true);
     } else if (finalizing) {
-      if (Object.values(crewmateMap).find((c) => c.name === name)) {
+      const finalizedCrewmate = Object.values(crewmateMap).find((c) => c.Name.name === name);
+      if (finalizedCrewmate) {
         setFinalizing(false);
-        setFinalized(true);
+        setFinalized(finalizedCrewmate);
       }
       // TODO (enhancement): after timeout, show error
     } else if (featureOptions.length === 0) {
@@ -603,19 +651,18 @@ const CrewAssignmentCreate = (props) => {
   }, [ // eslint-disable-line react-hooks/exhaustive-deps
     crewmateMap,
     finalizing,
-    getPendingCrewmate,
+    pendingCrewmate,
     name,
     rerollAppearance,
-    sessionId,
     featureOptions.length
   ]);
 
   // hide until loaded
-  const loading = (!storyState || !featureOptions || !rewards || featureOptions.length === 0);
+  const loading = (!storySession || !rewards || !featureOptions || featureOptions.length === 0);
 
   // draft crew
-  const crewmate = { ...featureOptions[featureSelection] };
-  if (finalized) crewmate.name = name;
+  const crewmate = finalized || { ...featureOptions[featureSelection] };
+  // if (finalized) crewmate.Name = { name };
   return (
     <Details
       onCloseDestination={onCloseDestination}
@@ -630,7 +677,7 @@ const CrewAssignmentCreate = (props) => {
       )}
       {!loading && (
         <>
-          <ImageryContainer src={storyState.completionImage || storyState.image}>
+          <ImageryContainer src={storySession.completionImage || storySession.image}>
             <div />
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
               {finalized && (
@@ -653,15 +700,15 @@ const CrewAssignmentCreate = (props) => {
                   </CardContainer>
                   {!finalized && (
                     <Traits>
-                      {crewmate.crewClass && (
+                      {crewmate.Crewmate?.class && (
                         <TraitRow>
                           <Trait side="left" isCrewClass>
                             <div>
-                              <CrewClassIcon crewClass={crewmate.crewClass} overrideColor="inherit" />
+                              <CrewClassIcon crewClass={crewmate.Crewmate.class} overrideColor="inherit" />
                             </div>
                             <article>
-                              <h4>{Crewmate.getClass(crewmate.crewClass).name}</h4>
-                              <div>{Crewmate.getClass(crewmate.crewClass).description}</div>
+                              <h4>{Crewmate.getClass(crewmate.Crewmate.class).name}</h4>
+                              <div>{Crewmate.getClass(crewmate.Crewmate.class).description}</div>
                             </article>
                             <TipHolder>
                               <TriangleTip strokeWidth="1" rotate="90" />
@@ -688,11 +735,11 @@ const CrewAssignmentCreate = (props) => {
                       <TraitRow>
                         <Trait side="left">
                           <div>
-                            <CrewTraitIcon trait={rewards[traitDispOrder[0]].id} type={rewards[traitDispOrder[0]].type} />
+                            <CrewTraitIcon trait={rewards[traitDispOrder[0]]?.id} type={rewards[traitDispOrder[0]]?.type} />
                           </div>
                           <article>
-                            <h4>{rewards[traitDispOrder[0]].name}</h4>
-                            <div>{rewards[traitDispOrder[0]].description}</div>
+                            <h4>{rewards[traitDispOrder[0]]?.name}</h4>
+                            <div>{rewards[traitDispOrder[0]]?.description}</div>
                           </article>
                           <TipHolder>
                             <TriangleTip strokeWidth="1" rotate="90" />
@@ -703,11 +750,11 @@ const CrewAssignmentCreate = (props) => {
 
                         <Trait side="right">
                           <div>
-                            <CrewTraitIcon trait={rewards[traitDispOrder[1]].id} type={rewards[traitDispOrder[1]].type} />
+                            <CrewTraitIcon trait={rewards[traitDispOrder[1]]?.id} type={rewards[traitDispOrder[1]]?.type} />
                           </div>
                           <article>
-                            <h4>{rewards[traitDispOrder[1]].name}</h4>
-                            <div>{rewards[traitDispOrder[1]].description}</div>
+                            <h4>{rewards[traitDispOrder[1]]?.name}</h4>
+                            <div>{rewards[traitDispOrder[1]]?.description}</div>
                           </article>
                           <TipHolder>
                             <TriangleTip strokeWidth="1" rotate="-90" />
@@ -718,11 +765,11 @@ const CrewAssignmentCreate = (props) => {
                       <TraitRow>
                         <Trait side="left">
                           <div>
-                            <CrewTraitIcon trait={rewards[traitDispOrder[2]].id} type={rewards[traitDispOrder[2]].type} />
+                            <CrewTraitIcon trait={rewards[traitDispOrder[2]]?.id} type={rewards[traitDispOrder[2]]?.type} />
                           </div>
                           <article>
-                            <h4>{rewards[traitDispOrder[2]].name}</h4>
-                            <div>{rewards[traitDispOrder[2]].description}</div>
+                            <h4>{rewards[traitDispOrder[2]]?.name}</h4>
+                            <div>{rewards[traitDispOrder[2]]?.description}</div>
                           </article>
                           <TipHolder side="left">
                             <TriangleTip strokeWidth="1" rotate="90" />
@@ -733,11 +780,11 @@ const CrewAssignmentCreate = (props) => {
 
                         <Trait side="right">
                           <div>
-                            <CrewTraitIcon trait={rewards[traitDispOrder[3]].id} type={rewards[traitDispOrder[3]].type} />
+                            <CrewTraitIcon trait={rewards[traitDispOrder[3]]?.id} type={rewards[traitDispOrder[3]]?.type} />
                           </div>
                           <article>
-                            <h4>{rewards[traitDispOrder[3]].name}</h4>
-                            <div>{rewards[traitDispOrder[3]].description}</div>
+                            <h4>{rewards[traitDispOrder[3]]?.name}</h4>
+                            <div>{rewards[traitDispOrder[3]]?.description}</div>
                           </article>
                           <TipHolder side="right">
                             <TriangleTip strokeWidth="1" rotate="-90" />
@@ -835,11 +882,11 @@ const CrewAssignmentCreate = (props) => {
               <Dialog>
                 <Trait isCrewClass>
                   <div>
-                    <CrewClassIcon crewClass={crewmate.crewClass} overrideColor="inherit" />
+                    <CrewClassIcon crewClass={crewmate.Crewmate.class} overrideColor="inherit" />
                   </div>
                   <article>
-                    <h4>{Crewmate.getClass(crewmate).name}</h4>
-                    <div>{Crewmate.getClass(crewmate).description}</div>
+                    <h4>{Crewmate.getClass(crewmate.Crewmate.class).name}</h4>
+                    <div>{Crewmate.getClass(crewmate.Crewmate.class).description}</div>
                   </article>
                 </Trait>
 

@@ -59,7 +59,7 @@ const formatters = {
   crewmatePrice: (priceConstants) => {
     if (!priceConstants?.ADALIAN_PRICE_ETH) return '?';
     const price = Number(ethersUtils.formatEther(String(priceConstants?.ADALIAN_PRICE_ETH)));
-    return price.toLocaleString([], { maximumFractionDigits: 3 });
+    return price.toLocaleString([]);
   },
 
   crewmateName: (c, fallbackText) => {

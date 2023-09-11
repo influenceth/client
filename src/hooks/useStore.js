@@ -73,6 +73,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     },
 
     selectedCrewId: null,
+    crewAssignments: {},
 
     cameraNeedsReorientation: false,
 
@@ -367,6 +368,29 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchLotsMappedSearchResults: (payload) => set(produce(state => {
       state.lotsMappedAssetSearchResults = { ...payload };
+    })),
+
+    dispatchCrewAssignmentPathSelection: (crewId, crewmateId, bookId, storyId, pathId) => set(produce(state => {
+      const crewKey = `${crewId}_${crewmateId}`;
+      if (!state.crewAssignments) state.crewAssignments = {};
+      if (!state.crewAssignments[crewKey]) state.crewAssignments[crewKey] = {};
+      if (!state.crewAssignments[crewKey][bookId]) state.crewAssignments[crewKey][bookId] = {};
+      if (!state.crewAssignments[crewKey][bookId][storyId]) state.crewAssignments[crewKey][bookId][storyId] = [];
+      if (!state.crewAssignments[crewKey][bookId][storyId].includes(pathId)) {
+        state.crewAssignments[crewKey][bookId][storyId].push(pathId);
+      }
+    })),
+
+    dispatchCrewAssignmentPathUndo: (crewId, crewmateId, bookId, storyId) => set(produce(state => {
+      const crewKey = `${crewId}_${crewmateId}`;
+      if (state.crewAssignments?.[crewKey]?.[bookId]?.[storyId]?.length > 0) {
+        state.crewAssignments[crewKey][bookId][storyId].pop();
+      }
+    })),
+
+    dispatchCrewAssignmentRestart: (crewId, crewmateId, bookId) => set(produce(state => {
+      const crewKey = `${crewId}_${crewmateId}`;
+      state.crewAssignments[crewKey][bookId] = {};
     })),
 
     // dispatchOwnedAsteroidsMapped: () => set(produce(state => {

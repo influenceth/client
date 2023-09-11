@@ -3,22 +3,21 @@ import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { Crewmate } from '@influenceth/sdk';
 
-import useBook from '~/hooks/useBook';
 import useCrewContext from '~/hooks/useCrewContext';
-import useStorySession from '~/hooks/useStorySession';
+import useBookSession, { bookIds } from '~/hooks/useBookSession';
 import useStore from '~/hooks/useStore';
 import Button from '~/components/ButtonAlt';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
 import Details from '~/components/DetailsModal';
-import { ArvadIcon, BackIcon } from '~/components/Icons';
+import { ArvadIcon, BackIcon, GenesisIcon } from '~/components/Icons';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
-import SvgFromSrc from '~/components/SvgFromSrc';
 
 import theme from '~/theme.js';
-import { boolAttr } from '~/lib/utils';
+import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
+import formatters from '~/lib/formatters';
 
 const foldOffset = 28;
 const belowFoldMin = 256;
@@ -116,6 +115,10 @@ const CrewContainer = styled.div`
   }
 `;
 
+const SilhouetteWrapper = styled.div`
+  opacity: 0.3;
+`;
+
 const MobileCrewContainer = styled.div`
   display: none;
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
@@ -137,7 +140,7 @@ const BackButton = styled.div`
   filter: drop-shadow(1px -1px 1px rgba(0, 0, 0, 1));
   font-size: 14px;
   font-weight: bold;
-  ${p => p.isMintingStory
+  ${p => p.noTitle
     ? `
       position: relative;
       bottom: -36px;
@@ -291,26 +294,27 @@ const PromptDetails = styled.div`
 `;
 
 const CrewAssignment = () => {
-  const { id: sessionId } = useParams();
+  const { id: bookId } = useParams();
   const history = useHistory();
-  const { crewmateMap} = useCrewContext();
-  const { currentStep, storyState, commitPath, loadingPath } = useStorySession(sessionId);
-  const { data: book } = useBook(storyState?.book)
+  const { crewmateMap } = useCrewContext();
+
+  const {
+    bookSession,
+    storySession,
+    choosePath,
+    undoPath,
+    restart
+  } = useBookSession(bookId);
+
   const playSound = useStore(s => s.dispatchSoundRequested);
 
   const [coverImageLoaded, setCoverImageLoaded] = useState();
+  const [pathLoading, setPathLoading] = useState();
   const [selection, setSelection] = useState();
-
-  const isMintingStory = (storyState?.tags || []).includes('ADALIAN_RECRUITMENT');
-  const headerTitle = isMintingStory ? 'Crewmate Creation' : 'Crew Assignments';
-  const totalSteps = isMintingStory ? 5 : 3;
 
   let onCloseDestination;
   let onCloseDestinationLabel;
-  if (storyState?.book) {
-    onCloseDestination = `/crew-assignments/${storyState?.book}/${storyState?.story}`;
-    onCloseDestinationLabel = book?.title;
-  } else if (Object.keys(crewmateMap || {}).length > 0) {
+  if (bookSession.isMintingStory || Object.keys(crewmateMap || {}).length > 0) {
     onCloseDestination = '/owned-crew';
     onCloseDestinationLabel = 'Crew Management';
   } else {
@@ -318,89 +322,89 @@ const CrewAssignment = () => {
     onCloseDestinationLabel = 'The Belt';
   }
 
-  // on step change, clear selection (to close modal)
+  // on step change, clear selection (to close modal) and set pseudo path-loading
   useEffect(() => {
     setSelection();
-  }, [currentStep]);
+
+    setPathLoading(true);
+    setTimeout(() => { setPathLoading(false); }, 100);
+  }, [storySession.currentStep]);
 
   const onCoverImageLoad = useCallback(() => {
-    setCoverImageLoaded(storyState?.image);
-  }, [storyState?.image]);
+    setCoverImageLoaded(storySession?.image);
+  }, [storySession?.image]);
 
   const selectPath = useCallback((path) => () => {
     playSound('effects.click');
 
     // if only one choice, don't need to confirm
-    if (storyState.linkedPaths?.length === 1) {
-      commitPath(path.path);
+    if (storySession.linkedPaths?.length === 1) {
+      choosePath(path.id);
     // else, confirm in modal
     } else {
       setSelection(path);
     }
-  }, [commitPath, playSound, storyState]);
+  }, [choosePath, playSound, storySession]);
 
   const confirmPath = useCallback(() => {
     playSound('effects.click');
-    commitPath(selection.path);
-  }, [commitPath, playSound, selection]);
+    choosePath(selection.id);
+  }, [choosePath, playSound, selection]);
 
-  const goBack = useCallback(() => {
+  const onGoBack = useCallback(() => {
     playSound('effects.click');
     history.push(onCloseDestination);
   }, [history, playSound, onCloseDestination]);
 
-  const undoPath = useCallback(() => {
-    commitPath(-1);
-  }, [commitPath]);
+  const onUndoPath = useCallback(() => {
+    undoPath();
+  }, [undoPath]);
 
   const finish = useCallback(() => {
     playSound('effects.success');
-    history.push(isMintingStory
-      ? `/crew-assignment/${sessionId}/create`
-      : `/crew-assignment/${sessionId}/complete`
-    );
-  }, [history, playSound, sessionId, isMintingStory]);
+    history.push(`/crew-assignment/${bookId}/${bookSession.isMintingStory ? 'create' : 'complete'}`);
+  }, [history, playSound, bookId, bookSession.isMintingStory]);
 
-  const crew = useMemo(
-    () => crewmateMap && storyState && crewmateMap[storyState.owner],
-    [storyState, crewmateMap]
+  const crewmate = useMemo(
+    () => crewmateMap && storySession && crewmateMap[storySession.owner],
+    [storySession, crewmateMap]
   );
 
-  const contentReady = storyState && (crew || storyState.ownerType !== 'CREW_MEMBER');
-  const pathIsReady = contentReady && storyState.image === coverImageLoaded && !loadingPath;
+  const contentReady = storySession && (crewmate || storySession.ownerType !== 'CREW_MEMBER');
+  const pathIsReady = contentReady && !pathLoading && storySession.image === coverImageLoaded;
   return (
     <>
       <Details
         edgeToEdge
         onCloseDestination={onCloseDestination}
-        title={headerTitle}
+        title={bookSession.isMintingStory ? 'Crewmate Creation' : 'Crew Assignments'}
         width="max">
         {!contentReady && <Loader />}
         {contentReady && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <InvisibleImage src={storyState.image} onError={onCoverImageLoad} onLoad={onCoverImageLoad} />
+            <InvisibleImage src={storySession.image} onError={onCoverImageLoad} onLoad={onCoverImageLoad} />
             <CoverImage
               src={coverImageLoaded}
-              center={storyState.imageCenter}
-              ready={storyState.image === coverImageLoaded} />
+              center={storySession.imageCenter}
+              ready={storySession.image === coverImageLoaded} />
             <AboveFold ready={!!coverImageLoaded}>
-              {storyState.features?.canGoBack && currentStep > 0 ? (
-                <BackButton onClick={undoPath} isMintingStory={isMintingStory}>
+              {(bookSession.currentStoryIndex > 0 || storySession.currentStep > 0) ? (
+                <BackButton onClick={onUndoPath} noTitle={!storySession.title}>
                   <BackIcon /> Previous Selection
                 </BackButton>
               ) : (
-                <BackButton onClick={goBack} isMintingStory={isMintingStory}>
+                <BackButton onClick={onGoBack} noTitle={!storySession.title}>
                   <BackIcon /> Back to {onCloseDestinationLabel}
                 </BackButton>
               )}
-              <Title ownerType={storyState.ownerType} isMintingStory={isMintingStory}>{storyState.title}</Title>
-              {crew && (
+              <Title ownerType={storySession.ownerType} isMintingStory={bookSession.isMintingStory}>{storySession.title}</Title>
+              {crewmate && (
                 <MobileCrewContainer>
                   <div>
-                    <b>{crew.name || `Crewmate #${crew.i}`}</b>
-                    {' '}<CrewClassIcon crewClass={crew.crewClass} />
+                    <b>{formatters.crewmateName(crewmate)}</b>
+                    {' '}<CrewClassIcon crewClass={crewmate.Crewmate.class} />
                   </div>
-                  <div>{Crewmate.getClass(crew.crewClass)?.name || 'Unknown Class'}</div>
+                  <div>{Crewmate.getClass(crewmate.Crewmate.class)?.name || 'Unknown Class'}</div>
                 </MobileCrewContainer>
               )}
             </AboveFold>
@@ -409,18 +413,28 @@ const CrewAssignment = () => {
               {pathIsReady && (
                 <>
                   <CrewContainer>
-                    {crew && <CrewCard crewmate={crew} />}
+                    {crewmate ? <CrewCard crewmate={crewmate} /> : <SilhouetteWrapper><CrewSilhouetteCard /></SilhouetteWrapper>}
                   </CrewContainer>
                   <Body>
-                    <PageContent>{storyState.content}</PageContent>
-                    {(storyState.linkedPaths || []).length > 0
+                    <PageContent>{storySession.content}</PageContent>
+                    {storySession.isLastPage
                       ? (
+                        <Button
+                          onClick={bookSession.isLastStory ? finish : selectPath(storySession.linkedPaths[0])}
+                          style={{ margin: '0 auto' }}>
+                          {bookSession.isLastStory
+                            ? (bookSession.isMintingStory ? 'Create Your Crewmate' : 'Finish')
+                            : 'Next Chapter'
+                          }
+                        </Button>
+                      )
+                      : (
                         <>
-                          <PagePrompt>{storyState.prompt}</PagePrompt>
+                          <PagePrompt>{storySession.prompt}</PagePrompt>
                           <div>
-                            {storyState.linkedPaths.map((linkedPath, i) => (
-                              <Path key={linkedPath.path}
-                                selected={linkedPath.path === selection?.id}
+                            {storySession.linkedPaths.map((linkedPath, i) => (
+                              <Path key={linkedPath.id}
+                                selected={linkedPath.id === selection?.id}
                                 onClick={selectPath(linkedPath)}>
                                 <div>
                                   <span>{String.fromCharCode(65 + i)}</span>
@@ -431,38 +445,32 @@ const CrewAssignment = () => {
                           </div>
                         </>
                       )
-                      : (
-                        <Button
-                          onClick={finish}
-                          style={{ margin: '0 auto' }}>{isMintingStory ? 'Create Your Adalian' : 'Finish'}</Button>
-                      )
                     }
                   </Body>
                   <Flourish>
-                    <h4>{Math.min(totalSteps, currentStep + 1)} of {totalSteps}</h4>
+                    <h4>{Math.min(storySession.totalSteps, storySession.currentStep + 1)} of {storySession.totalSteps}</h4>
                     <FlourishCentered>
-                      {Array.from({ length: totalSteps }, (x, i) => {
+                      {Array.from({ length: storySession.totalSteps }, (x, i) => {
                         let color = '#777';
-                        if (i < currentStep) {
+                        if (i < storySession.currentStep) {
                           color = theme.colors.main;
-                        } else if (i === currentStep) {
+                        } else if (i === storySession.currentStep) {
                           color = '#FFF';
                         }
                         return (
                           <React.Fragment key={i}>
-                            {i > 0 && <NavSpacer steps={totalSteps} completed={i <= currentStep} />}
+                            {i > 0 && <NavSpacer steps={storySession.totalSteps} completed={i <= storySession.currentStep} />}
                             <NavIcon
                               animate
-                              selected={i === currentStep}
+                              selected={i === storySession.currentStep}
                               size="1em"
                               color={color} />
                           </React.Fragment>
                         );
                       })}
                     </FlourishCentered>
-                    <FlourishImageContainer shrinkIcon={!(book && book.icon)}>
-                      {book && book.icon && <SvgFromSrc src={book.icon} />}
-                      {!(book && book.icon) && <ArvadIcon />}
+                    <FlourishImageContainer shrinkIcon={bookId !== bookIds.ADALIAN_RECRUITMENT}>
+                      {bookId === bookIds.ADALIAN_RECRUITMENT ? <GenesisIcon /> : <ArvadIcon />}
                     </FlourishImageContainer>
                   </Flourish>
                 </>
@@ -476,11 +484,10 @@ const CrewAssignment = () => {
           title="Your Selection:"
           body={(
             <>
-              <PagePrompt>{storyState.prompt}</PagePrompt>
+              <PagePrompt>{storySession.prompt}</PagePrompt>
               <PromptDetails>{selection.text}</PromptDetails>
             </>
           )}
-          loading={boolAttr(loadingPath)}
           onConfirm={confirmPath}
           onReject={selectPath()}
         />
