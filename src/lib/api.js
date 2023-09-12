@@ -67,7 +67,7 @@ const getEntities = async ({ match, label, components }) => {
   }
   
   const response = await instance.get(`/${apiVersion}/entities?${buildQuery(query)}`);
-  return (response.data || []).map(backwardCompatibility);;
+  return (response.data || []).map(backwardCompatibility);
 };
 
 const api = {
@@ -104,7 +104,7 @@ const api = {
   // },
 
   getEvents: async (query) => {
-    const response = await instance.get(`/${apiVersion}/user/events${query ? `?${buildQuery(query)}` : ''}`);
+    const response = await instance.get(`/v1${/* TODO: ? apiVersion */''}/user/events${query ? `?${buildQuery(query)}` : ''}`);
     return {
       events: response.data,
       totalHits: query.returnTotal ? parseInt(response.headers['total-hits']) : undefined,
@@ -238,6 +238,10 @@ const api = {
 
   getCrewmates: async (ids) => {
     return ids?.length > 0 ? getEntitiesById({ label: Entity.IDS.CREWMATE, ids }) : [];
+  },
+
+  getAccountCrewmates: async (account) => {
+    return getEntities({ match: { 'Nft.owners.starknet': account }, label: Entity.IDS.CREWMATE });
   },
 
   getPlanets: async () => {

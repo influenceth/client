@@ -1,5 +1,6 @@
 import { createContext, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
+import { Crewmate } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
@@ -23,6 +24,27 @@ export function CrewProvider({ children }) {
     () => api.getCrewmates(crews.reduce((acc, c) => [...acc, ...c.Crew.roster], [])),
     { enabled: crews?.length > 0 }
   );
+
+  const { data: allRecruits, isLoading: recruitsLoading } = useQuery(
+    [ 'crewmates', 'uninitialized', account ],
+    async () => {
+      // return all account-owned crewmates that are not part of a crew (thus must need initialization)
+      return (await api.getAccountCrewmates(account)).filter((c) => !c.Control?.controller?.id);
+    },
+    { enabled: !!account }
+  );
+
+  const [adalianRecruits, arvadianRecruits] = useMemo(() => {
+    if (!allRecruits) return [[], []];
+    return [
+      allRecruits.filter((c) => !c.Crewmate.coll),
+      allRecruits.filter((c) => [
+        Crewmate.COLLECTION_IDS.ARVAD_CITIZEN,
+        Crewmate.COLLECTION_IDS.ARVAD_SPECIALIST,
+        Crewmate.COLLECTION_IDS.ARVAD_LEADERSHIP
+      ].includes(c.Crewmate.coll))
+    ];
+  }, [allRecruits]);
 
   const { data: selectedCrewLocation, isLoading: crewLocationLoading } = useQuery(
     [ 'crewLocation', selectedCrewId ],
@@ -74,11 +96,13 @@ export function CrewProvider({ children }) {
 
   return (
     <CrewContext.Provider value={{
+      adalianRecruits,
+      arvadianRecruits,
       captain,
       crew: selectedCrew,
       crews,
       crewmateMap,
-      loading: crewsLoading || crewmatesLoading || crewLocationLoading,
+      loading: crewsLoading || crewmatesLoading || crewLocationLoading || recruitsLoading,
       selectCrew: dispatchCrewSelected  // TODO: this might be redundant
     }}>
       {children}

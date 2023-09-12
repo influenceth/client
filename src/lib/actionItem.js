@@ -196,7 +196,7 @@ const formatAsTx = (item) => {
         }
       };
       break;
-    case 'PURCHASE_AND_INITIALIZE_CREWMATE':
+    case 'RecruitAdalian':
       formatted.icon = <CrewIcon />;
       formatted.label = 'Mint Crewmate';
       formatted.onClick = ({ history }) => {

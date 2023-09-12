@@ -455,7 +455,7 @@ const reducer = (state, action) => {
 const OwnedCrew = () => {
   const { token } = useAuth();
   const { crew: selectedCrew, crews: allCrews, crewmateMap, loading: crewIsLoading } = useCrewContext();
-  const { changeActiveCrew, getPendingActiveCrewChange, getPendingCrewmate, crewCredits } = useCrewManager();
+  const { changeActiveCrew, getPendingActiveCrewChange, getPendingCrewmate, adalianRecruits } = useCrewManager();
   const history = useHistory();
   const { height, width } = useScreenSize();
 
@@ -689,7 +689,7 @@ const OwnedCrew = () => {
       {crew?.length > 0 && (
         <Container style={{ opacity: activeCrewHeight > 0 ? 1 : 0 }}>
           <Title>
-            {crewCredits?.length > 0 && <CrewCredits><CheckIcon /> {crewCredits?.length} credit{crewCredits?.length === 1 ? '' : 's'} remaining</CrewCredits>}
+            {adalianRecruits?.length > 0 && <CrewCredits><CheckIcon /> {adalianRecruits?.length} credit{adalianRecruits?.length === 1 ? '' : 's'} remaining</CrewCredits>}
             <h3>
               My Active Crew: {activeCrew.length} / 5
             </h3>

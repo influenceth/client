@@ -471,7 +471,7 @@ const CrewAssignmentCreate = (props) => {
 
   const { bookSession, storySession, undoPath, restart } = useBookSession(bookId);
   const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
-  const { purchaseAndOrInitializeCrew, getPendingCrewmate, crewCredits } = useCrewManager();
+  const { purchaseAndOrInitializeCrew, getPendingCrewmate, adalianRecruits } = useCrewManager();
   const { crew, crewmateMap } = useCrewContext();
   const { data: priceConstants } = usePriceConstants();
 
@@ -489,8 +489,8 @@ const CrewAssignmentCreate = (props) => {
     let traits = [];
     if (pendingCrewmate) {
       traits = [
-        ...pendingCrewmate.vars.cosmetic.map((id) => ({ id, type: Crewmate.TRAIT_TYPES.COSMETIC })),
-        ...pendingCrewmate.vars.impactful.map((id) => ({ id, type: Crewmate.TRAIT_TYPES.IMPACTFUL }))
+        ...pendingCrewmate.vars.cosmetic.map((id) => ({ id, type: Crewmate.TRAIT_TYPES.COSMETIC, ...Crewmate.getTrait(id) })),
+        ...pendingCrewmate.vars.impactful.map((id) => ({ id, type: Crewmate.TRAIT_TYPES.IMPACTFUL, ...Crewmate.getTrait(id) }))
       ];
     } else if (bookSession?.selectedTraits) {
       traits = (bookSession?.selectedTraits || []).map((id) => ({ id, ...Crewmate.getTrait(id) }));
@@ -548,7 +548,7 @@ const CrewAssignmentCreate = (props) => {
           item: 0
         }),
         class: crewClass,
-        coll: bookId === bookIds.ADALIAN_RECRUITMENT ? 4 : 2,  
+        coll: bookId === bookIds.ADALIAN_RECRUITMENT ? Crewmate.COLLECTION_IDS.ADALIAN : Crewmate.COLLECTION_IDS.ARVAD_CITIZEN,
         cosmetic: bookSession.selectedTraits.filter((t) => Crewmate.TRAITS[t].type === Crewmate.TRAIT_TYPES.COSMETIC),
         impactful: bookSession.selectedTraits.filter((t) => Crewmate.TRAITS[t].type === Crewmate.TRAIT_TYPES.IMPACTFUL),
         title: 0,
@@ -599,38 +599,10 @@ const CrewAssignmentCreate = (props) => {
   // initialize appearance & state
   useEffect(() => {
     if (pendingCrewmate) {
-      const appearanceMasks = [
-        ['gender', 4],
-        ['body', 16],
-        ['face', 16],
-        ['hair', 16],
-        ['hairColor', 16],
-        ['clothes', 16],
-        ['head', 16],
-        ['item', 8]
-      ];
-      const packAppearance = (details) => {
-        let output = 0n;
-      
-        for (let i = appearanceMasks.length - 1; i >= 0; i--) {
-          const [key, exp] = appearanceMasks[i];
-          console.log('key', key, details[key]);
-          output <<= BigInt(exp);
-          output += BigInt(details[key] || 0);
-        }
-      
-        return `0x${output.toString(16)}`;
-      };
-
-
-
-      const { name, ...crewmateVars } = pendingCrewmate.vars;
-      crewmateVars.hairColor = crewmateVars.hair_color;
-      crewmateVars.appearance = packAppearance(crewmateVars);
-      console.log({
-        Crewmate: { ...crewmateVars },
-        Name: { name }
-      });
+      const { name, hair_color, ...crewmateVars } = pendingCrewmate.vars;
+      crewmateVars.coll = hair_color;
+      crewmateVars.hairColor = hair_color;
+      crewmateVars.appearance = Crewmate.packAppearance(crewmateVars);
       setFeatureOptions([{
         Crewmate: { ...crewmateVars },
         Name: { name }
@@ -946,23 +918,23 @@ const CrewAssignmentCreate = (props) => {
           )}
           {confirming && (
             <ConfirmationDialog
-              title={`Confirm Character ${crewCredits.length > 0 ? 'Details' : 'Minting'}`}
+              title={`Confirm Character ${adalianRecruits.length > 0 ? 'Details' : 'Minting'}`}
               body={(
                 <PromptBody>
-                  The Crewmate you are about to create will be {crewCredits.length > 0 ? 'initialized' : 'minted'} as a new unique
-                  Player-Owned Game Asset (POGA)! {crewCredits.length > 0 ? 'The ' : 'Once minted, the '}character can never be deleted
+                  The Crewmate you are about to create will be {adalianRecruits.length > 0 ? 'initialized' : 'minted'} as a new unique
+                  Player-Owned Game Asset (POGA)! {adalianRecruits.length > 0 ? 'The ' : 'Once minted, the '}character can never be deleted
                   or unmade, and is yours to keep or trade forever. All of their stats,
                   actions, skills, and attributes will be appended to their unique history
                   and stored as independent on-chain events.
-                  {crewCredits.length > 0 && (
-                    <h4><CheckIcon /> {crewCredits.length} crew credit{crewCredits.length === 1 ? '' : 's'} remaining</h4>
+                  {adalianRecruits.length > 0 && (
+                    <h4><CheckIcon /> {adalianRecruits.length} crew credit{adalianRecruits.length === 1 ? '' : 's'} remaining</h4>
                   )}
                 </PromptBody>
               )}
               onConfirm={finalize}
               confirmText={<>
                 Confirm
-                {crewCredits.length === 0 && priceConstants && (
+                {adalianRecruits.length === 0 && priceConstants && (
                   <span style={{ flex: 1, fontSize: '90%', textAlign: 'right' }}>
                     {/* TODO: should this update price before "approve"? what about asteroids? */}
                     <Ether>{formatters.crewmatePrice(priceConstants)}</Ether>
