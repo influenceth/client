@@ -53,7 +53,7 @@ export function CrewProvider({ children }) {
   );
 
   const crewmateMap = useMemo(() => {
-    if (!crewmatesLoading) {
+    if (!crewsLoading && !crewmatesLoading) {
       const allMyCrewmates = {};
       (allCrewmates || []).forEach((crewmate) => allMyCrewmates[crewmate.i] = crewmate);
       return allMyCrewmates;

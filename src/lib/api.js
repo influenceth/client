@@ -35,26 +35,15 @@ const backwardCompatibility = (entity) => {
   return { ...entity, i: entity.id }; // TODO: deprecate the `i` thing, remove this function
 };
 
-const getEntitiesById = async ({ label, ids, components }) => {
-  const query = {
-    label,
-    id: ids.join(',')
-  };
-  if (components) {
-    query.components = components.join(',');  // i.e. [ 'celestial', 'control' ]
-  }
-
-  const response = await instance.get(`/${apiVersion}/entities/id?${buildQuery(query)}`);
-  return (response.data || []).map(backwardCompatibility);
-};
-
 const getEntityById = async ({ label, id, components }) => {
-  return getEntitiesById({ label, ids: [id], components })[0];
+  return getEntities({ label, ids: [id], components })[0];
 };
 
-const getEntities = async ({ match, label, components }) => {
+const getEntities = async ({ ids, match, label, components }) => {
   const query = {};
-  if (match) {
+  if (ids) {
+    query.id = ids.join(',');
+  } else if (match) {
     // i.e. { 'Celestial.celestialType': 2 }
     // i.e. { 'Location.location': { label: Entity.IDS.LOT, id: 123 } }
     query.match = `${Object.keys(match)[0]}:${JSON.stringify(Object.values(match)[0])}`;
@@ -207,7 +196,6 @@ const api = {
   },
 
   getEntities,
-  getEntitiesById,
   getEntityById,
 
   getLot: async (asteroidId, lotId) => {
@@ -237,7 +225,7 @@ const api = {
   },
 
   getCrewmates: async (ids) => {
-    return ids?.length > 0 ? getEntitiesById({ label: Entity.IDS.CREWMATE, ids }) : [];
+    return ids?.length > 0 ? getEntities({ label: Entity.IDS.CREWMATE, ids }) : [];
   },
 
   getAccountCrewmates: async (account) => {

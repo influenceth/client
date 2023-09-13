@@ -78,7 +78,7 @@ export function WalletProvider({ children }) {
   }, []);
 
   const active = useMemo(() => {
-    return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.account?.chainId);
+    return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.account?.provider?.chainId);
   }, [starknet?.isConnected, starknet?.account ]);
 
   const account = useMemo(() => {
@@ -113,7 +113,7 @@ export function WalletProvider({ children }) {
       //  the connection without them having to push the button again)
 
       if (wallet.isConnected && wallet.account?.address) {
-        if (isAllowedChain(wallet.account?.chainId)) {
+        if (isAllowedChain(wallet.account?.provider?.chainId)) {
           onConnectionResult(wallet);
         } else {
           onConnectionResult(null);
