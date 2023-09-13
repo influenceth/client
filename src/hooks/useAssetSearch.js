@@ -68,6 +68,7 @@ filtersToQuery.asteroids = (filters) => {
       esb.multiMatchQuery(['Name.name', 'id'], filters.name)
     );
   }
+
   return queryBuilder;
 };
 
@@ -173,27 +174,27 @@ filtersToQuery.leases = (filters) => {
 // NOTE: these were all moved into buildings filter
 // filtersToQuery.lots = (filters) => {
 //   const queryBuilder = esb.boolQuery();
-// 
+//
 //   if (filters.asteroid) {
 //     queryBuilder.filter(esb.termQuery('meta.location', { label: Entity.IDS.ASTEROID, id: filters.asteroid }));
 //   }
-// 
+//
 //   if (filters.controller) {
 //     queryBuilder.filter(esb.termQuery('controller.i', filters.controller));
 //   }
-// 
+//
 //   if (filters.occupier) {
 //     queryBuilder.filter(esb.termQuery('occupier.i', filters.occupier));
 //   }
-// 
+//
 //   if (filters.building) {
 //     queryBuilder.filter(esb.termsQuery('building.type', filters.building.map((t) => parseInt(t))));
 //   }
-// 
+//
 //   if (filters.construction) {
 //     queryBuilder.filter(esb.termsQuery('construction.status', filters.construction.map((t) => parseInt(t))));
 //   }
-// 
+//
 //   return queryBuilder;
 // };
 
@@ -221,7 +222,7 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
   if (esAssetType === 'lotsMapped') esAssetType = '';
   if (esAssetType === 'actionitems') esAssetType = '';
   if (esAssetType === 'eventlog') esAssetType = '';
-  
+
   useEffect(() => {
     if (esAssetType) {
       const q = esb.requestBodySearch();
@@ -230,7 +231,7 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
       q.from(from);
       q.size(size);
       q.trackTotalHits(true);
-  
+
       setQuery(q.toJSON());
     }
   }, [ filters, from, size, sort ]);

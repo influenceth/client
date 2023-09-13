@@ -19,8 +19,8 @@ const buildingIds = Object.values(Building.IDS).filter((k) => k > 0).map((k) => 
 
 const assetSearchDefaults = {
   actionitems: { filters: {}, sort: ['time', 'asc'] },
-  asteroids: { filters: {}, sort: ['r', 'desc'] },
-  asteroidsMapped: { filters: {}, sort: ['r', 'desc'], highlight: null },
+  asteroids: { filters: {}, sort: ['Celestial.radius', 'desc'] },
+  asteroidsMapped: { filters: {}, sort: ['Celestial.radius', 'desc'], highlight: null },
   buildings: { filters: {}, sort: ['lot.i', 'asc'] },
   coresamples: { filters: { status: [2,3] }, sort: ['lot.i', 'asc'] },
   crewmates: { filters: {}, sort: ['i', 'asc'] },

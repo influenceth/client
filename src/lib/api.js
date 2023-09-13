@@ -54,7 +54,7 @@ const getEntities = async ({ ids, match, label, components }) => {
   if (components) {
     query.components = components.join(',');  // i.e. [ 'celestial', 'control' ]
   }
-  
+
   const response = await instance.get(`/${apiVersion}/entities?${buildQuery(query)}`);
   return (response.data || []).map(backwardCompatibility);
 };
@@ -306,7 +306,7 @@ const api = {
   },
 
   searchAssets: async (asset, query) => {
-    const response = {};//await instance.post(`/_search/${asset.replace(/s$/, '').toLowerCase()}`, query);
+    const response = await instance.post('/_search/asteroid', query);
     return {
       hits: response.data.hits.hits.map((h) => h._source),
       total: response.data.hits.total.value

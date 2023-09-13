@@ -59,7 +59,6 @@ const DistanceTooltip = styled.div`
   white-space: nowrap;
 `;
 
-
 const Asteroids = () => {
   const { controls } = useThree();
   const originId = useStore(s => s.asteroids.origin);
@@ -80,9 +79,9 @@ const Asteroids = () => {
   const selectOrigin = useStore(s => s.dispatchOriginSelected);
   const selectDestination = useStore(s => s.dispatchDestinationSelected);
   const dispatchSwapOriginDestination = useStore(s => s.dispatchSwapOriginDestination);
-  
+
   const isDefaultSearch = useMemo(() => isAssetSearchMatchingDefault('asteroids'), [filters]);
-  
+
   const { processInBackground } = useWebWorker();
 
   const { data: asteroidSearch } = useAssetSearch('asteroidsMapped');
@@ -103,7 +102,7 @@ const Asteroids = () => {
   const isUpdating = useRef(false);
 
   const asteroidsGeom = useRef();
-  
+
   const asteroids = useMemo(() => {
     return asteroidSearch?.hits?.length > 0 ? asteroidSearch.hits : [];
   }, [asteroidSearch?.hits]);
@@ -111,11 +110,11 @@ const Asteroids = () => {
   const assetedAsteroids = useMemo(() => {
     const asseted = {};
     (ownedAsteroids || []).forEach((a) => {
-      if (!asseted[a.i]) asseted[a.i] = { asteroid: a };
-      asseted[a.i].owned = true;
+      if (!asseted[a.id]) asseted[a.id] = { asteroid: a };
+      asseted[a.id].owned = true;
     });
     if (asteroids?.length > 0) {
-      asseted[`${asteroids[0].i}`] = { asteroid: asteroids[0], crew: 1, ships: 2 }; // TODO: ecs refactor
+      asseted[`${asteroids[0].id}`] = { asteroid: asteroids[0], crew: 1, ships: 2 }; // TODO: ecs refactor
     }
     return asseted;
   }, [asteroids, ownedAsteroids]);
@@ -127,31 +126,31 @@ const Asteroids = () => {
 
     // in default search, append watchlist and owned as needed
     Object.keys(assetedAsteroids || {}).forEach((i) => {
-      const already = newMappedAsteroids.find((a) => a.i === Number(i));
+      const already = newMappedAsteroids.find((a) => a.id === Number(i));
       if (already) already.isAsseted = 1;
       else if (isDefaultSearch) newMappedAsteroids.push(Object.assign({ isAsseted: 1 }, assetedAsteroids[i].asteroid));
     });
     (watchlist || []).forEach((wa) => {
-      const already = newMappedAsteroids.find((a) => a.i === wa.asteroid.i);
+      const already = newMappedAsteroids.find((a) => a.id === wa.asteroid.id);
       if (already) already.isWatched = 1;
       else if (isDefaultSearch) newMappedAsteroids.push(Object.assign({ isWatched: 1 }, wa.asteroid));
     });
 
     // append origin and destination in case not already in results
-    if (!!origin && !newMappedAsteroids.find(a => a.i === origin.i)) {
+    if (!!origin && !newMappedAsteroids.find(a => a.id === origin.id)) {
       newMappedAsteroids.push(Object.assign({}, origin));
     }
-    if (!!destination && !newMappedAsteroids.find(a => a.i === destination.i)) {
+    if (!!destination && !newMappedAsteroids.find(a => a.id === destination.id)) {
       newMappedAsteroids.push(Object.assign({}, destination));
     }
 
     // if zoomed in, don't render the point for the origin (since rendering 3d version)
     const newValue = origin && isZoomedIn
-      ? newMappedAsteroids.filter((a) => a.i !== origin.i)
+      ? newMappedAsteroids.filter((a) => a.id !== origin.i)
       : newMappedAsteroids;
     setMappedAsteroids(newValue);
     setAsteroidsWorkerPayload({
-      key: newValue.map((a) => a.i).join(','),
+      key: newValue.map((a) => a.id).join(','),
       orbitals: newValue.map((a) => a.Orbit),
     })
   }, [ asteroids, origin, destination, isDefaultSearch, assetedAsteroids, watchlist, isZoomedIn ]);
@@ -164,7 +163,7 @@ const Asteroids = () => {
     }
 
     if (mappedAsteroids.length * 3 === positions.length) {
-      const index = mappedAsteroids.findIndex(a => a.i === hovered);
+      const index = mappedAsteroids.findIndex(a => a.id === hovered);
 
       if (index > -1) {
         const pos = positions.slice(index * 3, index * 3 + 3);
@@ -203,14 +202,14 @@ const Asteroids = () => {
     // Check that we have data, positions are processed, and they're in sync
     if (mappedAsteroids.length * 3 === positions.length) {
       if (originId) {
-        const originKey = mappedAsteroids.findIndex(a => a.i === originId);
+        const originKey = mappedAsteroids.findIndex(a => a.id === originId);
         setOriginPos(positions.slice(originKey * 3, originKey * 3 + 3));
       } else {
         setOriginPos(null);
       }
 
       if (destinationId) {
-        const destKey = mappedAsteroids.findIndex(a => a.i === destinationId);
+        const destKey = mappedAsteroids.findIndex(a => a.id === destinationId);
         setDestinationPos(positions.slice(destKey * 3, destKey * 3 + 3));
       } else {
         setDestinationPos(null);
@@ -248,7 +247,7 @@ const Asteroids = () => {
         timeline.to(controls.object.up, { x: newUp.x, y: newUp.y, z: 0 }, 0);
       }
       timeline.to(controls.object.position, { x: 0, y: 0, z: 7 * constants.AU }, 0);
-      
+
 
     } else {
       gsap.timeline().to(controls.object.up, { x: 0, y: 0, z: 1, ease: 'slow.out' });
@@ -265,7 +264,7 @@ const Asteroids = () => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
     if (mappedAsteroids[index]) {
-      const clickedAsteroidId = mappedAsteroids[index].i;
+      const clickedAsteroidId = mappedAsteroids[index].id;
       if (clickedAsteroidId === destinationId) {
         dispatchSwapOriginDestination();
       } else if (travelMode && origin) {
@@ -281,9 +280,9 @@ const Asteroids = () => {
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
 
     if (asteroids[index]) {
-      if (asteroids[index].i === originId) selectOrigin();
+      if (asteroids[index].id === originId) selectOrigin();
       if (!routePlannerActive) return; // Only allow picking a destination if the route planner is open
-      selectDestination(asteroids[index].i);
+      selectDestination(asteroids[index].id);
     }
   }, [asteroids, originId, routePlannerActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -291,7 +290,7 @@ const Asteroids = () => {
     if (mousePos && mousePos.intersections?.length > 0) {
       const index = mousePos.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
       if (asteroids[index]) {
-        return hoverAsteroid(asteroids[index].i);
+        return hoverAsteroid(asteroids[index].id);
       }
     }
     unhoverAsteroid();
@@ -302,11 +301,11 @@ const Asteroids = () => {
     const assetPositionsById = {};
     const watchlistPositions = [];
     mappedAsteroids.forEach((a, i) => {
-      if (a.i === origin?.i || a.i === destination?.i) {  // always include origin and destination so billboard labeled
-        assetPositionsById[a.i] = [positions[i * 3 + 0], positions[i * 3 + 1], positions[i * 3 + 2]];
+      if (a.id === origin?.id || a.id === destination?.id) {  // always include origin and destination so billboard labeled
+        assetPositionsById[a.id] = [positions[i * 3 + 0], positions[i * 3 + 1], positions[i * 3 + 2]];
       } else if (a.isAsseted) {
-        assetPositionsById[a.i] = [positions[i * 3 + 0], positions[i * 3 + 1], positions[i * 3 + 2]];
-        assetPositions.push(assetPositionsById[a.i][0], assetPositionsById[a.i][1], assetPositionsById[a.i][2]);
+        assetPositionsById[a.id] = [positions[i * 3 + 0], positions[i * 3 + 1], positions[i * 3 + 2]];
+        assetPositions.push(assetPositionsById[a.id][0], assetPositionsById[a.id][1], assetPositionsById[a.id][2]);
       }
       else if (a.isWatched) {
         watchlistPositions.push(positions[i * 3 + 0], positions[i * 3 + 1], positions[i * 3 + 2]);
@@ -344,14 +343,14 @@ const Asteroids = () => {
   const billboardedAsteroids = useMemo(() => {
     const b = {};
     if (origin && originPos) {
-      b[origin.i] = {
+      b[origin.id] = {
         a: origin,
         p: Array.from(originPos),
         name: true
       };
     }
     if (destination && destinationPos) {
-      b[destination.i] = {
+      b[destination.id] = {
         a: destination,
         p: Array.from(destinationPos),
         name: true
@@ -440,7 +439,7 @@ const Asteroids = () => {
         <>
           {/* hover reticule */}
           {hoveredPos && <Marker asteroidPos={hoveredPos} />}
-          
+
           {/* selected origin marker and orbit */}
           {originPos && <Marker asteroidPos={originPos} isOrigin hasDestination={!!destination} travelSolution={travelSolution} />}
 
@@ -484,15 +483,15 @@ const Asteroids = () => {
                   key={`billboard_${a.i}`}
                   position={p}
                   style={{ pointerEvents: 'none', transform: `translate(-45px, calc(-100% - ${name ? 15 : 5}px))` }}>
-                  <AsteroidTooltip hasActiveCrew={assetedAsteroids[a.i]?.crew}>
+                  <AsteroidTooltip hasActiveCrew={assetedAsteroids[a.id]?.crew}>
                     <div><CaptainIcon /></div>
                     <div>
-                      {assetedAsteroids[a.i] && (
+                      {assetedAsteroids[a.id] && (
                         <span>
-                          {assetedAsteroids[a.i]?.owned && <MyAssetIcon />}
-                          {assetedAsteroids[a.i]?.ships > 0 && <ShipMarkerIcon />}
-                          {assetedAsteroids[a.i]?.ships > 1 && <ShipMarkerIcon />}
-                          {!assetedAsteroids[a.i]?.owned && <FlagMarkerIcon />}
+                          {assetedAsteroids[a.id]?.owned && <MyAssetIcon />}
+                          {assetedAsteroids[a.id]?.ships > 0 && <ShipMarkerIcon />}
+                          {assetedAsteroids[a.id]?.ships > 1 && <ShipMarkerIcon />}
+                          {!assetedAsteroids[a.id]?.owned && <FlagMarkerIcon />}
                         </span>
                       )}
                       {name && (

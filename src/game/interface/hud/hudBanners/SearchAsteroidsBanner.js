@@ -71,7 +71,7 @@ const SearchAsteroidsBanner = ({ visible }) => {
   }, [sort]);
 
   const updateSortOrder = useCallback((option) => {
-    updateSort([option.value || 'r', 'desc']);
+    updateSort([option.value || 'Celestial.radius', 'desc']);
   }, [sort]);
 
   const sortOptions = useMemo(() => {
