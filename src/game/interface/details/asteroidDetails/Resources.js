@@ -429,8 +429,8 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     setSelected(toBeSelected);
     setHover(null);
 
-    history.replace(`/asteroids/${asteroid.i}/resources${toBeSelected ? `/${toBeSelected.categoryKey}` : ``}`);
-  }, [abundances, asteroid.i]); // eslint-disable-line react-hooks/exhaustive-deps
+    history.replace(`/asteroids/${asteroid.id}/resources${toBeSelected ? `/${toBeSelected.categoryKey}` : ``}`);
+  }, [abundances, asteroid.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleHover = useCallback((category, isHovering) => () => {
     setHover(isHovering ? category : null);
@@ -451,7 +451,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     dispatchResourceMapToggle(true);
     history.push('/');
     return false;
-  }, [asteroid?.i, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [asteroid?.id, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [infoPaneAnchor, setInfoPaneAnchor] = useState();
   const setInfoPaneRef = (which) => (e) => {
@@ -468,7 +468,8 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     }
   }, [abundances?.length, initialCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const nonzeroBonuses = useMemo(() => (asteroid?.Celestial?.bonuses || []).filter((b) => b.level > 0), [asteroid?.Celestial?.bonuses]);
+  const unpackedBonuses = useMemo(() => Asteroid.Entity.getBonuses(asteroid) || [], [asteroid]);
+  const nonzeroBonuses = useMemo(() => unpackedBonuses.filter((b) => b.level > 0), [unpackedBonuses]);
 
   useEffect(() => ReactTooltip.rebuild(), [selected]);
 
@@ -488,7 +489,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             <AsteroidGraphic
               abundances={abundances}
               asteroid={asteroid}
-              defaultLastRow={Asteroid.getRarity(asteroid.Celestial.bonuses)}
+              defaultLastRow={Asteroid.Entity.getRarity(asteroid)}
               focus={selected?.category}
               hover={hover}
               noColor={asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED} />
@@ -510,7 +511,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                   {scanStatus === 'UNSCANNED' && (
                     <>
                       <p><b>You own this asteroid.</b> Perform a scan to determine its final resource composition and bonuses.</p>
-                      <StartScanButton i={asteroid?.i} />
+                      <StartScanButton i={asteroid?.id} />
                     </>
                   )}
                   {scanStatus === 'SCANNING' && (
@@ -642,7 +643,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
               <div>
                 <SectionHeader>Yield Bonuses</SectionHeader>
                 <SectionBody>
-                  <AsteroidBonuses bonuses={asteroid?.Celestial?.bonuses} />
+                  <AsteroidBonuses bonuses={nonzeroBonuses} />
                 </SectionBody>
               </div>
             )}

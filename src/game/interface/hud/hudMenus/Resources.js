@@ -128,7 +128,6 @@ const Resources = ({ onClose }) => {
   }, []);
 
   const unpackedBonuses = useMemo(() => Asteroid.Entity.getBonuses(asteroid) || [], asteroid);
-  
   const nonzeroBonuses = useMemo(() => unpackedBonuses.filter((b) => b.level > 0), [unpackedBonuses]);
 
   return (
@@ -166,7 +165,7 @@ const Resources = ({ onClose }) => {
       {nonzeroBonuses?.length > 0 && (
         <div>
           <HudMenuCollapsibleSection titleText="Yield Bonuses" borderless>
-            <AsteroidBonuses bonuses={unpackedBonuses} fullWidth />
+            <AsteroidBonuses bonuses={nonzeroBonuses} fullWidth />
           </HudMenuCollapsibleSection>
         </div>
       )}
