@@ -90,7 +90,7 @@ const useActionButtons = () => {
       }
 
       if (asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
-        if (asteroid.Control?.controller?.id === crew?.i) {
+        if (asteroid.Control?.controller?.id && asteroid.Control.controller.id === crew?.id) {
           a.push(actionButtons.ScanAsteroid);
         }
       }

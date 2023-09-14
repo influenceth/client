@@ -76,8 +76,18 @@ const HUD = () => {
   return (
     <>
       <LeftWrapper>
-        {captain ? <AvatarMenu /> : <LoginMenu />}
-        <ActionItems />
+        {captain && (
+          <>
+            <AvatarMenu />
+            <ActionItems />
+          </>
+        )}
+        {!captain && (
+          <>
+            <LoginMenu />
+            <div style={{ flex: 1 }} />
+          </>
+        )}
         <InfoPane />
       </LeftWrapper>
 
