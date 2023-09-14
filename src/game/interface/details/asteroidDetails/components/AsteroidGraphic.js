@@ -115,7 +115,7 @@ const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
       </OpacityContainer>
       <GraphicData>
         <div>
-          {Asteroid.getSize(asteroid)} <b>{Asteroid.Entity.getSpectralType(asteroid)}-type</b>
+          {Asteroid.Entity.getSize(asteroid)} <b>{Asteroid.Entity.getSpectralType(asteroid)}-type</b>
         </div>
         <AsteroidName>
           {formatters.asteroidName(asteroid)}

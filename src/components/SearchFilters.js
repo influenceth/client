@@ -132,8 +132,6 @@ const yieldConfig = {
   rangeLimits: { min: 0, max: 10000 }
 };
 
-
-
 // TODO: there is probably a more performant and/or organized way to break these apart
 //  (and to memoize any inputs possible)
 const SearchFilters = ({ assetType, highlighting }) => {

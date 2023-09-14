@@ -165,7 +165,7 @@ const AsteroidInfo = ({ onClose }) => {
             <WalletIcon />
             <label>Price</label>
             <span>
-              <Ether>{formatters.asteroidPrice(asteroid.Celestial.radius / 1000, priceConstants)}</Ether>
+              <Ether>{formatters.asteroidPrice(asteroid.Celestial.radius, priceConstants)}</Ether>
             </span>
           </InfoRow>
         )}

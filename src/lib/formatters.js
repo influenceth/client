@@ -41,8 +41,8 @@ const formatters = {
     if (!priceConstants?.ASTEROID_BASE_PRICE_ETH || !priceConstants?.ASTEROID_LOT_PRICE_ETH) return '?';
     const base = Number(ethersUtils.formatEther(String(priceConstants.ASTEROID_BASE_PRICE_ETH)));
     const lot = Number(ethersUtils.formatEther(String(priceConstants.ASTEROID_LOT_PRICE_ETH)));
-    const lotCount = Asteroid.getSurfaceArea(0, r);
 
+    const lotCount = Asteroid.getSurfaceArea(0, r);
     const price = base + lot * lotCount;
     return price.toLocaleString([], { maximumFractionDigits: 4 });
   },
