@@ -50,9 +50,9 @@ const AsteroidDetails = () => {
 
   const onTabChange = (tabIndex) => {
     if (tabIndex === 1) {
-      history.replace(`/asteroids/${asteroid.i}/resources`);
+      history.replace(`/asteroids/${asteroid.id}/resources`);
     } else {
-      history.replace(`/asteroids/${asteroid.i}`);
+      history.replace(`/asteroids/${asteroid.id}`);
     }
   };
 
@@ -80,7 +80,7 @@ const AsteroidDetails = () => {
             <AsteroidInformation asteroid={asteroid} isOwner={isOwner} abundances={groupAbundances} />,
             <AsteroidResources asteroid={asteroid} isOwner={isOwner} abundances={groupAbundances} />
           ]}
-          
+
         />
       )}
     </Details>

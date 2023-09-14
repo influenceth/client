@@ -8,7 +8,6 @@ import constants from '~/lib/constants';
 // Responsible for generating a config for any asteroid to be generated
 class Config {
   constructor(asteroid) {
-    console.log(asteroid);
     this.seedGen = new Seed(Asteroid.Entity.getSeed(asteroid));
     this.type = asteroid.Celestial.celestialType;
     this.radius = asteroid.Celestial.radius * 1000; // adjust to meters

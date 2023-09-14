@@ -304,7 +304,7 @@ const AsteroidComponent = () => {
 
       // init orbit, position, and rotation
       const time = getTime();
-      asteroidOrbit.current = new AdalianOrbit(asteroidData.Orbit);
+      asteroidOrbit.current = new AdalianOrbit(asteroidData.Orbit, { units: 'km' });
       rotationAxis.current = c.seed.clone().normalize();
       position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time));
       rotation.current = time * c.rotationSpeed * 2 * Math.PI;
@@ -1019,7 +1019,7 @@ const AsteroidComponent = () => {
           getRotation={() => rotation.current}
           hasAccess={false}
           initialCameraPosition={initialOrientation?.objectPosition}
-          isScanned={Asteroid.Entity.getScanned(asteroidData)}
+          isScanned={asteroidData ? Asteroid.Entity.getScanned(asteroidData) : false}
           radius={config.radius}
           scaleHelper={SCALE_HELPER}
           shipTally={shipsInOrbitTally}

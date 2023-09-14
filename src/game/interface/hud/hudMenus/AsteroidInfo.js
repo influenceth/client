@@ -149,7 +149,7 @@ const AsteroidInfo = ({ onClose }) => {
         <InfoRow>
           <IdIcon />
           <label>Asteroid ID</label>
-          <span>{asteroid.i.toLocaleString()}</span>
+          <span>{asteroid.id.toLocaleString()}</span>
         </InfoRow>
         {asteroid.Nft?.owner && (
           <InfoRow>
@@ -165,7 +165,7 @@ const AsteroidInfo = ({ onClose }) => {
             <WalletIcon />
             <label>Price</label>
             <span>
-              <Ether>{formatters.asteroidPrice(asteroid.Celestial.radius, priceConstants)}</Ether>
+              <Ether>{formatters.asteroidPrice(asteroid.Celestial.radius / 1000, priceConstants)}</Ether>
             </span>
           </InfoRow>
         )}

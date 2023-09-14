@@ -1,25 +1,26 @@
 import { AdalianOrbit, Asteroid, Building, Ship } from '@influenceth/sdk';
 import { utils as ethersUtils } from 'ethers';
+import { constants } from '@influenceth/astro';
 
 const formatters = {
 
   // Orbital element formatters
-  axis: (a) => a.toLocaleString() + ' AU',
+  axis: (a) => (a * 1000 / constants.AU).toLocaleString() + ' AU',
 
   inclination: (i) => (i * 180 / Math.PI).toLocaleString() + '°',
 
   period: (orbital) => {
-    const orbit = new AdalianOrbit(orbital);
+    const orbit = new AdalianOrbit(orbital, { units: 'km' });
     return Math.round(orbit.getPeriod()).toLocaleString() + ' days';
   },
 
   // Asteroid attribute formatters
-  radius: (r) => r.toLocaleString() + ' m',
+  radius: (r) => r.toLocaleString() + ' km',
 
   spectralType: (t) => Asteroid.getSpectralType(t) + '-type',
 
   surfaceArea: (r) => {
-    const area = (4 * Math.PI * Math.pow(r / 1000, 2)).toFixed(1);
+    const area = (4 * Math.PI * Math.pow(r, 2)).toFixed(1);
     return Number(area).toLocaleString() + ' km²';
   },
 

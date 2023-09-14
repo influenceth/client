@@ -6,6 +6,7 @@ import useStore from '~/hooks/useStore';
 import AsteroidComposition from './AsteroidComposition';
 import AsteroidRendering from '../../../../../components/AsteroidRendering';
 import AsteroidSpinner from './AsteroidSpinner';
+import formatters from '~/lib/formatters';
 import { WarningOutlineIcon } from '~/components/Icons';
 import theme from '~/theme';
 import useScanManager from '~/hooks/useScanManager';
@@ -114,14 +115,14 @@ const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
       </OpacityContainer>
       <GraphicData>
         <div>
-          {Asteroid.getSize(asteroid)} <b>{Asteroid.getSpectralType(asteroid)}-type</b>
+          {Asteroid.getSize(asteroid)} <b>{Asteroid.Entity.getSpectralType(asteroid)}-type</b>
         </div>
         <AsteroidName>
-          {asteroid.Name?.name ? `\`${asteroid.Name.name}\`` : Asteroid.getBaseName(asteroid.i)}
+          {formatters.asteroidName(asteroid)}
         </AsteroidName>
         {scanStatus === 'FINISHED' && (
           <LastRow style={{ color: 'white' }}>
-            {defaultLastRow || `${Number(Math.floor(4 * Math.PI * Math.pow(asteroid.Celestial.radius / 1000, 2))).toLocaleString()} lots`}
+            {defaultLastRow || `${Asteroid.Entity.getSurfaceArea(asteroid).toLocaleString()} lots`}
           </LastRow>
         )}
         {scanStatus === 'SCANNING' && (
