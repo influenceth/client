@@ -1,3 +1,5 @@
+// TODO: ecs refactor -- remove this file
+
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { starknetContracts as configs } from '@influenceth/sdk';
 import { Contract, shortString } from 'starknet';

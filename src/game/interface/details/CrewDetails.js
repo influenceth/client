@@ -36,6 +36,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import ChoicesDialog from '~/components/ChoicesDialog';
 import { getCloudfrontUrl } from '~/lib/assetUtils';
 import SelectHabitatDialog from '~/components/SelectHabitatDialog';
+import SelectUninitializedCrewmateDialog from '~/components/SelectUninitializedCrewmateDialog';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -446,7 +447,8 @@ const CrewDetails = () => {
       <Details edgeToEdge title="Crew Details" coverImage={{ src: ConstructionImage }}>
         
       </Details>
-      <SelectHabitatDialog />
+      <SelectUninitializedCrewmateDialog />
+      {/* <SelectHabitatDialog /> */}
     </>
   );
 };

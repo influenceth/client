@@ -1,11 +1,14 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { Building } from '@influenceth/sdk'
+import { Building, Location } from '@influenceth/sdk'
 
 import { getBuildingIcon, getCloudfrontUrl } from '~/lib/assetUtils';
 import ChoicesDialog from './ChoicesDialog';
 import { ResourceImage } from './ResourceThumbnail';
 import ClipCorner from './ClipCorner';
+import useBuilding from '~/hooks/useBuilding';
+import formatters from '~/lib/formatters';
+import useAsteroid from '~/hooks/useAsteroid';
 
 const coverImage = getCloudfrontUrl('influence/production/images/stories/adalian-recruitment/3.jpg', { w: 1500 });
 
@@ -68,6 +71,9 @@ const HabCard = styled.div`
 `;
 
 const SelectHabitatDialog = () => {
+  const { data: habitat } = useBuilding(1);
+  const habitatLocation = useMemo(() => Location.fromEntityFormat(habitat?.Location?.location), [habitat])
+  const { data: asteroid } = useAsteroid(habitatLocation?.asteroidId);
 
   const onSelectHabitat = useCallback((choice) => () => {
 
@@ -95,8 +101,12 @@ const SelectHabitatDialog = () => {
               <ClipCorner dimension={10} />
             </BuildingThumbnailWrapper>
             <div>
-              <div>TODO: Building Name</div>
-              <label>Asteroid Name &gt; <span>Lot id</span></label>
+              <div>{formatters.buildingName(habitat)}</div>
+              {asteroid && (
+                <label>
+                  {asteroid?.Name?.name} &gt; <span>Lot #{(habitatLocation.lotId || 0).toLocaleString()}</span>
+                </label>
+              )}
             </div>
           </HabCard>
         </Flourish>

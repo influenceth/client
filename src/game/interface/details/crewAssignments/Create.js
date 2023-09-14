@@ -466,10 +466,10 @@ const traitDispOrder = ['classImpactful', 'drive', 'cosmetic', 'driveCosmetic'];
 
 const CrewAssignmentCreate = (props) => {
   const { account } = useAuth();
-  const { id: bookId } = useParams();
+  const { bookId, crewmateId } = useParams();
   const history = useHistory();
 
-  const { bookSession, storySession, undoPath, restart } = useBookSession(bookId);
+  const { bookSession, storySession, undoPath, restart } = useBookSession(bookId, crewmateId);
   const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
   const { purchaseAndOrInitializeCrew, getPendingCrewmate, adalianRecruits } = useCrewManager();
   const { crew, crewmateMap } = useCrewContext();
@@ -592,7 +592,7 @@ const CrewAssignmentCreate = (props) => {
   // show "complete" page (instead of "create") for non-recruitment assignments
   useEffect(() => {
     if (bookSession && !bookSession.isMintingStory) {
-      history.push(`/crew-assignment/${bookId}/complete`);
+      history.push(`/crew-assignment/${bookId}/${crewmateId}/complete`);
     }
   }, [!!bookSession]); // eslint-disable-line react-hooks/exhaustive-deps
 

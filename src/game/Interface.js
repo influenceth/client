@@ -150,16 +150,18 @@ const Interface = () => {
           <Route path="/asteroids/:i(\d+)/:tab?/:category?">
             <AsteroidDetails />
           </Route>
+          {/* TODO: deprecated?
           <Route exact path="/crew-assignments/:id([a-z0-9]+)/:selected?">
             <CrewAssignments />
           </Route>
-          <Route exact path="/crew-assignment/:id([a-z0-9]+)">
+          */}
+          <Route exact path="/crew-assignment/:bookId([a-z0-9]+)/:crewmateId([0-9]+)/">
             <CrewAssignment />
           </Route>
-          <Route path="/crew-assignment/:id([a-z0-9]+)/complete">
+          <Route path="/crew-assignment/:bookId([a-z0-9]+)/:crewmateId([0-9]+)/complete">
             <CrewAssignmentComplete />
           </Route>
-          <Route path="/crew-assignment/:id([a-z0-9]+)/create">
+          <Route path="/crew-assignment/:bookId([a-z0-9]+)/:crewmateId([0-9]+)/create">
             <CrewCreation />
           </Route>
           <Route path="/marketplace/:asteroidId([0-9]+)/:lotId(all|[0-9]+)?/:discriminator?">

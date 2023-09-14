@@ -14,9 +14,14 @@ import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
 import ChoicesDialog from '~/components/ChoicesDialog';
 
 const CrewContainer = styled.div`
-  flex: 0 1 275px;
+  width: 260px;
   min-width: 210px;
   padding: 0 12px 12px 0;
+
+  & > div {
+    border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.3);
+    padding: 10px;
+  }
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     display: none;
@@ -52,6 +57,7 @@ const Progress = styled.div`
     font-size: 20px;
   }
   & > div {
+    align-items: center;
     display: flex;
     flex-direction: row;
     font-size: 20px;
@@ -90,7 +96,7 @@ const AdalianFlourish = styled.div`
 const REQUIRE_CONFIRM = false;
 
 const CrewAssignment = () => {
-  const { id: bookId } = useParams();
+  const { bookId, crewmateId } = useParams();
   const history = useHistory();
   const { crewmateMap } = useCrewContext();
 
@@ -100,7 +106,7 @@ const CrewAssignment = () => {
     choosePath,
     undoPath,
     restart
-  } = useBookSession(bookId);
+  } = useBookSession(bookId, crewmateId);
 
   const playSound = useStore(s => s.dispatchSoundRequested);
 
@@ -108,7 +114,7 @@ const CrewAssignment = () => {
   const [selection, setSelection] = useState();
 
   let onCloseDestination;
-  if (bookSession.isMintingStory || Object.keys(crewmateMap || {}).length > 0) {
+  if (bookSession?.isMintingStory || Object.keys(crewmateMap || {}).length > 0) {
     onCloseDestination = '/crew';
   } else {
     onCloseDestination = '/';
@@ -120,7 +126,7 @@ const CrewAssignment = () => {
 
     setPathLoading(true);
     setTimeout(() => { setPathLoading(false); }, 100);
-  }, [storySession.currentStep]);
+  }, [storySession?.currentStep]);
 
   const confirmPath = useCallback(() => {
     playSound('effects.click');
@@ -131,7 +137,7 @@ const CrewAssignment = () => {
     playSound('effects.click');
 
     // if only one choice (or auto confirming), don't need to confirm
-    if (!REQUIRE_CONFIRM || storySession.linkedPaths?.length === 1) {
+    if (!REQUIRE_CONFIRM || storySession?.linkedPaths?.length === 1) {
       choosePath(path.id);
 
     // else, confirm in modal
@@ -151,15 +157,14 @@ const CrewAssignment = () => {
 
   const finish = useCallback(() => {
     playSound('effects.success');
-    history.push(`/crew-assignment/${bookId}/${bookSession.isMintingStory ? 'create' : 'complete'}`);
-  }, [history, playSound, bookId, bookSession.isMintingStory]);
+    history.push(`/crew-assignment/${bookId}/${crewmateId}/${bookSession?.isMintingStory ? 'create' : 'complete'}`);
+  }, [history, playSound, bookId, bookSession?.isMintingStory]);
+  
+  if (!bookSession || !storySession) return null;
+  // TODO: ^ should probably redirect somewhere
 
-  const crewmate = useMemo(
-    () => crewmateMap && storySession && crewmateMap[storySession.owner],
-    [storySession, crewmateMap]
-  );
-
-  const contentReady = storySession && (crewmate || storySession.ownerType !== 'CREW_MEMBER');
+  // TODO: contentReady seems unnecessary
+  const contentReady = true; // crewmate || storySession.ownerType !== 'CREW_MEMBER';
   return (
     <>
       <ChoicesDialog
@@ -184,7 +189,17 @@ const CrewAssignment = () => {
             ? <AdalianFlourish />
             : (
               <CrewContainer>
-                {crewmate ? <CrewCard crewmate={crewmate} /> : <SilhouetteWrapper><CrewSilhouetteCard /></SilhouetteWrapper>}
+                <div>
+                  {bookSession.crewmate
+                    ? <CrewCard
+                        crewmate={bookSession.crewmate}
+                        hideCollectionInHeader
+                        hideFooter
+                        hideIfNoName
+                        noWrapName
+                        showClassInHeader />
+                    : <SilhouetteWrapper><CrewSilhouetteCard /></SilhouetteWrapper>}
+                </div>
               </CrewContainer>
             )
         }
@@ -194,8 +209,10 @@ const CrewAssignment = () => {
         }}
         rightButton={{
           label: 'Skip',
-          disabled: (storySession.isLastPage && bookSession.isLastStory),
           onClick: () => {},
+          props: {
+            disabled: (storySession.isLastPage && bookSession.isLastStory) ? 'true' : undefined
+          }
         }}
         title={storySession.title}
         subtitle={(

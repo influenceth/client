@@ -200,6 +200,7 @@ const formatAsTx = (item) => {
       formatted.icon = <CrewIcon />;
       formatted.label = 'Mint Crewmate';
       formatted.onClick = ({ history }) => {
+        console.log('RecruitAdalian item', item)
         if (item.vars.sessionId) {
           history.push(`/crew-assignment/${item.vars.sessionId}/create`);
         } else {

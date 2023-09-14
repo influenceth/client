@@ -115,6 +115,23 @@ const customConfigs = {
   ExchangeCrew: { equalityTest: true },
   ExtractionStart: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
   ExtractionFinish: { equalityTest: 'ALL' },
+  InitializeAsteroid: {
+    preprocess: ({ asteroid }) => ({
+      asteroid,
+      spectralType: BigInt(asteroid.Celestial.celestialType),
+      mass: BigInt(Math.round(Asteroid.Entity.getMass(asteroid))) * 2n ** 64n,
+      radius: BigInt(Math.round(asteroid.Celestial.radius * 1000)) * 2n ** 32n / 1000n,
+      a: BigInt(Math.round(asteroid.Orbit.a * 10000)) * 2n ** 64n / 10000n,
+      ecc: BigInt(Math.round(asteroid.Orbit.ecc * 1000)) * 2n ** 64n / 1000n,
+      inc: BigInt(asteroid.Orbit.inc * 2 ** 64),
+      raan: BigInt(asteroid.Orbit.raan * 2 ** 64),
+      argp: BigInt(asteroid.Orbit.argp * 2 ** 64),
+      m: BigInt(asteroid.Orbit.m * 2 ** 64),
+      purchaseOrder: asteroid.Celestial.purchaseOrder,
+      scanStatus: asteroid.Celestial.scanStatus,
+      bonuses: asteroid.Celestial.bonuses
+    })
+  },
   PlanConstruction: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
   PurchaseAdalian: {
     getPrice: async () => {
@@ -148,6 +165,13 @@ const customConfigs = {
   // PurchaseAndRecruitAdalian: {
   //   multisystemCalls: ['RecruitAdalian', 'ChangeName'],
   //   equalityTest: true,
+  // },
+
+  // TODO: for asteroid transactions that may conditionally require initialization,
+  //  we'll need a multisystem wrapper for each OR could create something a little more fancy
+  // InitializeAndScanAsteroid: {
+  //   multisystemCalls: ['InitializeAsteroid', 'ScanAsteroid'],
+  //   multisystemCalls: [{ name: 'InitializeAsteroid', cond: (a) => !a.AsteroidProof.used }, 'ScanAsteroid'],
   // },
 };
 

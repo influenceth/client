@@ -506,7 +506,7 @@ const OwnedCrew = () => {
     }
 
     // TODO: determine book-id
-    history.push(`/crew-assignment/${bookIds.ADALIAN_RECRUITMENT}`);
+    history.push(`/crew-assignment/${bookIds.ADALIAN_RECRUITMENT}/0/`);
     playSound('effects.success');
 
     // TODO: this is probably all deprecated

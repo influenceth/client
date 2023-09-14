@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Crewmate } from '@influenceth/sdk';
+
 import adalianRecruitmentBook from '~/assets/stories/adalian-recruitment.json'
 import arvadianRecruitmentBook from '~/assets/stories/arvadian-recruitment.json'
 import useCrewContext from './useCrewContext';
@@ -13,10 +15,29 @@ export const bookIds = {
 const anyOf = (mustHave, tests) => !!mustHave.find((x) => tests.includes(x));
 const allOf = (mustHave, tests) => !mustHave.find((x) => !tests.includes(x));
 
-const useBookSession = (bookId, crewmate) => {
-  const { crew } = useCrewContext();
+const useBookSession = (bookId, crewmateId) => {
+  const { crew, arvadianRecruits } = useCrewContext();
   const crewId = crew?.id || 0;
-  const crewmateId = crewmate?.id || 0;
+
+  const crewmate = useMemo(() => {
+    if (bookId === bookIds.ARVADIAN_RECRUITMENT) {
+      return arvadianRecruits.find((c) => c.id === Number(crewmateId));
+    }
+    return null;
+  }, [arvadianRecruits, bookId, crewmateId]);
+
+  useEffect(() => {
+    // validate crewmate (must be adalian w/ 0, or owned uninitialized arvadian w/ !0)
+    let invalid = (crewmateId > 0 && bookId === bookIds.ADALIAN_RECRUITMENT)
+      || (crewmateId === 0 && bookId === bookIds.ARVADIAN_RECRUITMENT)
+      || (crewmateId > 0 && !crewmate)
+      || (crewmate && ![Crewmate.COLLECTION_IDS.ARVAD_CITIZEN, Crewmate.COLLECTION_IDS.ARVAD_SPECIALIST, Crewmate.COLLECTION_IDS.ARVAD_LEADERSHIP].includes(crewmate.Crewmate?.coll))
+      || (crewmate && crewmate.Crewmate?.impactful?.length > 0)
+    if (invalid) {
+      console.error('Invalid crewmate selected');
+      // TODO: do something
+    }
+  }, [crewmate, crewmateId, bookId]);
 
   const sessionData = useStore(s => s.crewAssignments?.[`${crewId}_${crewmateId}`]?.[bookId] || {});
   const dispatchCrewAssignmentPathSelection = useStore(s => s.dispatchCrewAssignmentPathSelection);
@@ -34,6 +55,7 @@ const useBookSession = (bookId, crewmate) => {
 
   const { bookSession, storySession } = useMemo(() => {
     if (!book) return {};
+    if (crewmateId && !crewmate) return {};
 
     let currentStory;
     let currentStoryIndex = -1;
@@ -121,6 +143,7 @@ const useBookSession = (bookId, crewmate) => {
     const { paths, ...storyDefaults } = currentStory;
     return {
       bookSession: {
+        crewmate,
         currentStoryId: currentStory.id,
         currentStoryIndex,
         isComplete: allStoriesCompleted,

@@ -122,24 +122,30 @@ const Subtitle = styled.div`
 `;
 
 const Body = styled.div`
-  flex: 0 1 840px;
-  font-size: 110%;
+  flex: ${p => p.flourishWidth ? '1' : '0'} 1 840px;
   height: 100%;
-  line-height: 1.25em;
-  overflow: auto;
-  padding: 0 100px 25px 25px;
+  overflow: hidden;
+  padding: 0 35px ${p => p.hasContentOverride ? '0' : '25px'} 25px;
   position: relative;
-  scrollbar-width: thin;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding-top: 5px;
   }
 `;
+const BodyInner = styled.div`
+  font-size: 110%;
+  height: 100%;
+  line-height: 1.25em;
+  overflow: auto;
+  padding-right: 65px;
+  width: 100%;
+  scrollbar-width: thin;
+`;
 
 const FlourishWrapper = styled.div`
   align-items: center;
   display: flex;
-  flex: 1 0 250px;
+  flex: ${p => p.flourishWidth ? `0 0 ${p.flourishWidth}px` : '1 0 250px'};
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
@@ -211,10 +217,12 @@ const ChoicesDialog = ({
   choices,
   choicelessButton,
   content,
+  contentOverride,
   coverImage,
   coverImageCenter,
   dialogTitle,
   flourish,
+  flourishWidth,
   isLoading,
   isLoadingChoice,
   leftButton,
@@ -256,28 +264,33 @@ const ChoicesDialog = ({
             {isLoadingImage && <Loader />}
             {!isLoadingImage && (
               <>
-                {flourish && <FlourishWrapper>{flourish}</FlourishWrapper>}
-                <Body>
-                  {content && <PageContent>{content}</PageContent>}
-                  {prompt && <PagePrompt>{prompt}</PagePrompt>}
-                  {choices && (
-                    <div>
-                      {choices.map((choice, i) => (
-                        <Path key={choice.id} onClick={onSelect(choice)}>
-                          <div>
-                            <span>{String.fromCharCode(65 + i)}</span>
-                            <span>{choice.text}</span>
-                          </div>
-                        </Path>
-                      ))}
-                    </div>
-                  )}
-                  {!choices && choicelessButton && (
-                    <Button
-                      onClick={choicelessButton.onClick}
-                      style={{ margin: '0 auto' }}>
-                      {choicelessButton.label}
-                    </Button>
+                {flourish && <FlourishWrapper flourishWidth={flourishWidth}>{flourish}</FlourishWrapper>}
+                <Body hasContentOverride={!!contentOverride} flourishWidth={flourishWidth}>
+                  {contentOverride}
+                  {!contentOverride && (
+                    <BodyInner>
+                      {content && <PageContent>{content}</PageContent>}
+                      {prompt && <PagePrompt>{prompt}</PagePrompt>}
+                      {choices && (
+                        <div>
+                          {choices.map((choice, i) => (
+                            <Path key={choice.id} onClick={onSelect(choice)}>
+                              <div>
+                                <span>{String.fromCharCode(65 + i)}</span>
+                                <span>{choice.text}</span>
+                              </div>
+                            </Path>
+                          ))}
+                        </div>
+                      )}
+                      {!choices && choicelessButton && (
+                        <Button
+                          onClick={choicelessButton.onClick}
+                          style={{ margin: '0 auto' }}>
+                          {choicelessButton.label}
+                        </Button>
+                      )}
+                    </BodyInner>
                   )}
                 </Body>
               </>
@@ -287,11 +300,11 @@ const ChoicesDialog = ({
             <Rule />
             <div style={{ alignItems: 'center', display: 'flex', height: 'calc(100% - 1px)', justifyContent: 'space-between' }}>
               {leftButton
-                ? <Button disabled={leftButton.disabled} onClick={leftButton.onClick} subtle>{leftButton.label}</Button>
+                ? <Button {...(leftButton.props || {})} onClick={leftButton.onClick} subtle>{leftButton.label}</Button>
                 : <div />
               }
               {rightButton
-                ? <Button disabled={rightButton.disabled} onClick={rightButton.onClick} subtle>{rightButton.label}</Button>
+                ? <Button {...(rightButton.props || {})} onClick={rightButton.onClick} subtle>{rightButton.label}</Button>
                 : <div />
               }
             </div>

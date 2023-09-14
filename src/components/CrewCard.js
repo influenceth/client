@@ -10,6 +10,7 @@ import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewCollectionEmblem from '~/components/CrewCollectionEmblem';
 import DataReadout from '~/components/DataReadout';
 import { boolAttr } from '~/lib/utils';
+import formatters from '~/lib/formatters';
 
 const CardLayer = styled.div`
   position: absolute;
@@ -139,7 +140,9 @@ const CrewCard = ({ crewmate, onClick, overlay, ...props }) => {
   const [ imageFailed, setImageFailed ] = useState(false);
   const [ imageLoaded, setImageLoaded ] = useState(false);
 
-  const useName = crewmate.Name?.name || (crewmate.i && `Crewmate #${crewmate.i}`) || '';
+  const useName = props.hideIfNoName
+    ? (crewmate.Name?.name || '')
+    : formatters.crewmateName(crewmate);
   const classLabel = Crewmate.getClass(crewmate)?.name;
 
   let imageUrl = useMemo(() => {
