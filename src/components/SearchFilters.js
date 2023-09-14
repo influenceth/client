@@ -102,8 +102,8 @@ const crewmateCollectionOptions = Object.keys(Crewmate.COLLECTIONS).reduce((acc,
 
 const radiusConfig = {
   fieldNames: { min: 'radiusMin', max: 'radiusMax' },
-  labels: { min: 'Min (m)', max: 'Max (m)' },
-  rangeLimits: { min: constants.MIN_ASTEROID_RADIUS, max: constants.MAX_ASTEROID_RADIUS }
+  labels: { min: 'Min (km)', max: 'Max (km)' },
+  rangeLimits: { min: constants.MIN_ASTEROID_RADIUS / 1000, max: constants.MAX_ASTEROID_RADIUS / 1000 }
 };
 
 const axisConfig = {
@@ -132,8 +132,6 @@ const yieldConfig = {
   rangeLimits: { min: 0, max: 10000 }
 };
 
-
-
 // TODO: there is probably a more performant and/or organized way to break these apart
 //  (and to memoize any inputs possible)
 const SearchFilters = ({ assetType, highlighting }) => {
@@ -142,8 +140,9 @@ const SearchFilters = ({ assetType, highlighting }) => {
   const filters = useStore(s => s.assetSearch[assetType].filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
   const { data: priceConstants } = usePriceConstants();
-
-  const radiusFieldNote = useCallback((value) => priceConstants && <Ether>{formatters.asteroidPrice(value, priceConstants)}</Ether>, [priceConstants])
+  const radiusFieldNote = useCallback((value) => {
+    return priceConstants && <Ether>{formatters.asteroidPrice(value, priceConstants)}</Ether>
+  }, [priceConstants]);
 
   const onFiltersChange = useCallback((update) => {
     const newFilters = {...(filters || {})};

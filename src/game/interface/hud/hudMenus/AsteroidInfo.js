@@ -149,7 +149,7 @@ const AsteroidInfo = ({ onClose }) => {
         <InfoRow>
           <IdIcon />
           <label>Asteroid ID</label>
-          <span>{asteroid.i.toLocaleString()}</span>
+          <span>{asteroid.id.toLocaleString()}</span>
         </InfoRow>
         {asteroid.Nft?.owner && (
           <InfoRow>

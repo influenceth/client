@@ -444,13 +444,13 @@ const InfoPane = () => {
 
       } else if (asteroid) {
         pane.title = formatters.asteroidName(asteroid);
-        pane.titleLink = `/asteroids/${asteroid.i}`;
+        pane.titleLink = `/asteroids/${asteroid.id}`;
         pane.subtitle = (
           <>
             {Asteroid.Entity.getSize(asteroid)} <b>{Asteroid.Entity.getSpectralType(asteroid)}-type</b>
             <SubtitleLoader>
-              {!(lotLoader.i === asteroidId && lotLoader.progress === 1) && (
-                <ProgressBar progress={lotLoader.i === asteroidId ? lotLoader.progress : 0} />
+              {!(lotLoader.id === asteroidId && lotLoader.progress === 1) && (
+                <ProgressBar progress={lotLoader.id === asteroidId ? lotLoader.progress : 0} />
               )}
             </SubtitleLoader>
           </>

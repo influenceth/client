@@ -1,31 +1,31 @@
 import { useContext, useEffect, useRef } from 'react';
 import { AdditiveBlending, Float32BufferAttribute } from 'three';
 import { useTexture } from '@react-three/drei';
+import { Planet } from '@influenceth/sdk';
 
 import ClockContext from '~/contexts/ClockContext';
-import usePlanets from '~/hooks/usePlanets';
 import useWebWorker from '~/hooks/useWebWorker';
 import Orbit from './planets/Orbit';
 import theme from '~/theme';
 
 const Planets = () => {
-  const planets = usePlanets();
+  const planets = Planet.planets;
   const { coarseTime } = useContext(ClockContext);
 
   const texture = useTexture(`${process.env.PUBLIC_URL}/textures/circleFaded.png`);
   const { processInBackground } = useWebWorker();
-  
+
   const geometry = useRef();
 
   // Listen for changes to planets data or global time and update planet positions
   useEffect(() => {
-    if (planets.data && coarseTime) {
+    if (planets && coarseTime) {
       processInBackground(
         {
           topic: 'updatePlanetPositions',
           planets: {
             key: '_planets',
-            orbitals: planets.data.map((p) => p.Orbit)
+            orbitals: planets.map(p => p.orbital)
           },
           elapsed: coarseTime,
           _cacheable: 'planets'
@@ -41,7 +41,7 @@ const Planets = () => {
         }
       );
     }
-  }, [ planets.data, processInBackground, coarseTime ]);
+  }, [ planets, processInBackground, coarseTime ]);
 
   return (
     <group position={[ 0, 0, 0 ]}>
@@ -55,7 +55,7 @@ const Planets = () => {
           sizeAttenuation={false}
           transparent={true} />
       </points>
-      {planets.data && planets.data.map((p) => <Orbit key={p.i} planet={p} />)}
+      {planets.map((p, i) => <Orbit key={i} planet={p.orbital} />)}
     </group>
   )
 };

@@ -271,10 +271,10 @@ const SmHidden = styled.span`
 
 const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
   const { account } = useAuth();
-  const createReferral = useCreateReferral(Number(asteroid.i));
+  const createReferral = useCreateReferral(Number(asteroid.id));
   const isNameValid = useNameAvailability(Entity.IDS.ASTEROID);
-  const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.i));
-  const { nameAsteroid, naming } = useNameAsteroid(Number(asteroid.i));
+  const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.id));
+  const { nameAsteroid, naming } = useNameAsteroid(Number(asteroid.id));
   const { data: priceConstants } = usePriceConstants();
   const webWorkerPool = useWebWorker();
 
@@ -286,7 +286,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
     if (exportingModel || !asteroid) return;
     setExportingModel(true);
     renderDummyAsteroid(asteroid, constants.MODEL_EXPORT_RESOLUTION, webWorkerPool, (asteroidModel, dispose) => {
-      exportGLTF(asteroidModel, `asteroid_${asteroid.i}`, () => {
+      exportGLTF(asteroidModel, `asteroid_${asteroid.id}`, () => {
         try {
           dispose();
         } catch (e) { console.warn(e); }
@@ -370,7 +370,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
               </LogHeader>
               <div>
                 <ul>
-                  {asteroid.events.length > 0
+                  {asteroid.events?.length > 0
                     ? asteroid.events.map(e => (
                       <LogEntry
                         key={e.id}

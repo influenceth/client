@@ -1,24 +1,18 @@
 import { useEffect, useRef } from 'react';
-import {
-  AmbientLight,
-  AxesHelper,
-  Color,
-  DirectionalLight,
-  DirectionalLightHelper
-} from 'three';
+import { AmbientLight, Color, DirectionalLight} from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
 
 import { cleanupScene, renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
+import constants from '~/lib/constants';
 
 const RenderedAsteroid = ({ asteroid, brightness = 1, onReady, webWorkerPool }) => {
   const { camera, gl, scene } = useThree();
-
   const disposeFunc = useRef();
 
   useEffect(() => {
-    if (asteroid?.i && webWorkerPool) {
+    if (asteroid?.id && webWorkerPool) {
       renderDummyAsteroid(asteroid, asteroid.i < 25 ? 64 : 32, webWorkerPool, (asteroidModel, dispose) => {
         asteroidModel.traverse(function (node) {
           if (node.isMesh) {
@@ -26,6 +20,8 @@ const RenderedAsteroid = ({ asteroid, brightness = 1, onReady, webWorkerPool }) 
             node.material.color = new Color(theme.colors.main).multiplyScalar(0.3);
           }
         });
+
+        const radiusMeters = asteroid.Celestial.radius * 1000; // km -> m
         scene.add(asteroidModel);
 
         const lightColor = new Color(theme.colors.main);
@@ -34,25 +30,24 @@ const RenderedAsteroid = ({ asteroid, brightness = 1, onReady, webWorkerPool }) 
         const ambientLight = new AmbientLight(lightColor, 0.15 * lightIntensity);
         scene.add(ambientLight);
 
-        const depth = -0.5 * asteroid.Celestial.radius;
+        const depth = -0.5 * radiusMeters;
 
         const light = new DirectionalLight(lightColor, lightIntensity);
-        light.position.set(-1 * asteroid.Celestial.radius, -1 * asteroid.Celestial.radius, depth);
+        light.position.set(-1 * radiusMeters, -1 * radiusMeters, depth);
         scene.add(light);
 
         const light2 = new DirectionalLight(lightColor, lightIntensity);
-        light2.position.set(1 * asteroid.Celestial.radius, -1 * asteroid.Celestial.radius, depth);
+        light2.position.set(1 * radiusMeters, -1 * radiusMeters, depth);
         scene.add(light2);
 
         const light3 = new DirectionalLight(lightColor, lightIntensity);
-        light3.position.set(0, 1 * asteroid.Celestial.radius, depth);
+        light3.position.set(0, 1 * radiusMeters, depth);
         scene.add(light3);
 
-        // TODO (enhancement): might be cool to adjust zoom so the smaller asteroids look
-        //  smaller (and huge ones are the ones that tend to overlap spectrum lines)
-        // let distance = 2.0 + 2 * (1 - Math.pow(asteroid.radius / 376000, 0.3));
-        camera.position.set(0, 0, 2.4 * asteroid.Celestial.radius);
-        camera.far = 4 * asteroid.Celestial.radius;
+        // Adjust zoom so the smaller asteroids look smaller
+        let distance = 1.5 + 1.5 * (1 - Math.pow(radiusMeters / constants.MAX_ASTEROID_RADIUS, 0.3));
+        camera.position.set(0, 0, distance * radiusMeters);
+        camera.far = 4 * radiusMeters;
         camera.updateProjectionMatrix();
 
         gl.render(scene, camera);
@@ -73,7 +68,7 @@ const RenderedAsteroid = ({ asteroid, brightness = 1, onReady, webWorkerPool }) 
       }
     }
   }, [asteroid?.i, brightness, !!webWorkerPool]);  // eslint-disable-line react-hooks/exhaustive-deps
-  
+
   return null;
 };
 

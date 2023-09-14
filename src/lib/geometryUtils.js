@@ -17,7 +17,7 @@ export const getUpdatedAsteroidPositions = function(orbitals, elapsed = 0) {
 export const getUpdatedPlanetPositions = function(orbitals, elapsed = 0) {
   const positions = new Float32Array(orbitals.length * 3);
   orbitals.forEach((orbital, i) => {
-    const coords = (new AdalianOrbit(orbital)).getPositionAtTime(elapsed);
+    const coords = (new AdalianOrbit(orbital, { units: 'km' })).getPositionAtTime(elapsed);
     positions[i * 3 + 0] = coords.x;
     positions[i * 3 + 1] = coords.y;
     positions[i * 3 + 2] = coords.z;
@@ -67,7 +67,7 @@ const getPerpendicular = (n) => {
 export const sampleAsteroidOrbit = (baseTime, orbital, minOffset, maxOffset, increment) => {
   const positions = [];
   const velocities = [];
-  const orbit = new AdalianOrbit(orbital);
+  const orbit = new AdalianOrbit(orbital, { units: 'km' });
   for (let delay = minOffset; delay < maxOffset + 1; delay += increment) {
     // to safely deal with floats
     const basePlusDelay = Math.round(100 * (baseTime + delay)) / 100;

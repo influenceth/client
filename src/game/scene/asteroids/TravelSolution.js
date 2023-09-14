@@ -87,18 +87,18 @@ const TravelSolution = ({}) => {
       // ...on endpoint mismatch
       travelSolution.originId !== originId
       || travelSolution.destinationId !== destinationId
-      
+
       // ...on ship param mismatch
       // (only possible in RoutePlanner, so cleared on porkchop rebuild)
-      
+
       // ...on baseTime > departureTime
       || travelSolution.departureTime < baseTime
-      
+
       // ...on time override (i.e. ff / rewind)
       || timeOverride && ![0, 1].includes(Number(timeOverride.speed))
     ) {
       dispatchTravelSolution();
-    } 
+    }
   }, [baseTime, destinationId, originId, timeOverride, travelSolution]);
 
   useEffect(() => {
@@ -119,7 +119,7 @@ const TravelSolution = ({}) => {
       [originPosition[0], originPosition[1], originPosition[2]],
       v1
     );
-    
+
     const totalTime = arrivalTime - departureTime;
     const timeInc = (arrivalTime - departureTime) / solutionPoints;
     const halfway = 3 * (solutionPoints + 2) / 2;
@@ -163,7 +163,7 @@ const TravelSolution = ({}) => {
     // // ^^^
 
     const originPositions = [];
-    const originOrbit = new AdalianOrbit(origin.Orbit);
+    const originOrbit = new AdalianOrbit(origin.Orbit, { units: 'km' });
     const originIncrement = (departureTime - baseTime) / 360;
     for (let t = baseTime; t < departureTime; t += originIncrement) {
       const p = originOrbit.getPositionAtTime(t);
@@ -172,7 +172,7 @@ const TravelSolution = ({}) => {
     setPredeparture(new Float32Array(originPositions));
 
     const destinationPositions = [];
-    const destinationOrbit = new AdalianOrbit(destination.Orbit);
+    const destinationOrbit = new AdalianOrbit(destination.Orbit, { units: 'km' });
     const destinationIncrement = (arrivalTime - baseTime) / 360;
     for (let t = baseTime; t < arrivalTime; t += destinationIncrement) {
       const p = destinationOrbit.getPositionAtTime(t);

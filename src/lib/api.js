@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Asteroid, Entity } from '@influenceth/sdk';
+import { Asteroid, Entity, Location } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 
@@ -39,7 +39,7 @@ const getEntityById = async ({ label, id, components }) => {
   return new Promise((resolve, reject) => {
     getEntities({ label, ids: [id], components }).then(entities => {
       if (entities[0]) resolve(entities[0]);
-      reject();
+      resolve(null);
     });
   });
 };
@@ -141,7 +141,6 @@ const api = {
 
   getAsteroidLotData: async (i) => {
     const response = await instance.get(`/${apiVersion}/asteroids/${i}/lots/packed`, { responseType: 'blob' });
-
     const lotTally = Asteroid.getSurfaceArea(i);
 
     let shift;
@@ -204,9 +203,7 @@ const api = {
   getEntityById,
 
   getLot: async (asteroidId, lotId) => {
-    // TODO: make sure the response matches
-    // const response = await instance.get(`/${apiVersion}/asteroids/${asteroidId}/lots/${lotId}`);
-    return getEntityById({ label: Entity.IDS.LOT, id: lotId });
+    return getEntityById(Location.toEntityFormat({ asteroidId, lotId }));
   },
 
   getNameUse: async (label, name) => {
@@ -235,12 +232,6 @@ const api = {
 
   getAccountCrewmates: async (account) => {
     return getEntities({ match: { 'Nft.owners.starknet': account }, label: Entity.IDS.CREWMATE });
-  },
-
-  getPlanets: async () => {
-    // TODO: this will move to sdk
-    const response = {};//await instance.get('/${apiVersion}/planets');
-    return response.data;
   },
 
   getShip: async (id) => {

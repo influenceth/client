@@ -25,7 +25,7 @@ const Orbit = ({ asteroid, color, opacityMult = 1, staticOpacity }) => {
   });
 
   useEffect(() => {
-    const orbit = new AdalianOrbit(asteroid.Orbit);
+    const orbit = new AdalianOrbit(asteroid.Orbit, { units: 'km' });
     let newPositions = [];
     orbit.getSmoothOrbit(360).forEach(p => {
       newPositions.push(...[ p.x, p.y, p.z ]);
