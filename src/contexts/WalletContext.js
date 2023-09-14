@@ -74,7 +74,7 @@ export function WalletProvider({ children }) {
       const wallet = await getStarknetConnect({
         dappName: 'Influence',
         modalMode: mode,
-        webWalletUrl: 'https://web.hydrogen.argent47.net'
+        webWalletUrl: process.env.REACT_APP_ARGENT_WEB_WALLET_URL
       });
 
       if (wallet && wallet.isConnected && wallet.account?.address) {
