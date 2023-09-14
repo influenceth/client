@@ -102,6 +102,7 @@ const Asteroids = () => {
   const isUpdating = useRef(false);
 
   const asteroidsGeom = useRef();
+  const box = useRef();
 
   const asteroids = useMemo(() => {
     return asteroidSearch?.hits?.length > 0 ? asteroidSearch.hits : [];
