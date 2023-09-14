@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
+import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { AiOutlineExclamation as FailureIcon } from 'react-icons/ai';
 import { MdClear as DismissIcon } from 'react-icons/md';
 import BarLoader from 'react-spinners/BarLoader';
@@ -16,12 +17,25 @@ import useAuth from '~/hooks/useAuth';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { formatActionItem, itemColors, statuses } from '~/lib/actionItem';
-import { hexToRGB } from '~/theme';
+import theme, { hexToRGB } from '~/theme';
 import formatters from '~/lib/formatters';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const ICON_WIDTH = 34;
 const ITEM_WIDTH = 400;
 const TRANSITION_TIME = 400;
+
+const TitleWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+`;
+
+const IconWrapper = styled.span`
+  font-size: 24px;
+  line-height: 0;
+  margin-right: 6px;
+`;
 
 const ActionItemWrapper = styled.div`
   display: flex;
@@ -77,27 +91,12 @@ const LinkContainer = styled.div`
   flex: 1;
   text-align: right;
   & > a {
-    color: ${p => p.theme.colors.main};
+    color: ${p => p.theme.colors.main} !important;
+    &:hover {
+      color: white !important;
+    }
+    transition: color 250ms ease;
   }
-`;
-
-const Pinner = styled.div`
-  align-items: center;
-  border-bottom: 2px solid black;
-  color: #CCC;
-  cursor: ${p => p.theme.cursors.active};
-  display: flex;
-  font-size: 14px;
-  height: 28px;
-  justify-content: center;
-  opacity: 0;
-  pointer-events: all;
-  position: absolute;
-  right: 8px;
-  top: -28px;
-  width: 100px;
-  transition: opacity 0.25s ease 0.15s;
-  & > svg { margin-right: 2px; }
 `;
 
 const OuterWrapper = styled.div`
@@ -384,6 +383,7 @@ const ActionItem = ({ data }) => {
 const ActionItems = () => {
   const { account } = useAuth();
   const { allVisibleItems: allItems } = useActionItems();
+  const { captain } = useCrewContext();
 
   const [displayItems, setDisplayItems] = useState();
   useEffect(() => {
@@ -438,6 +438,7 @@ const ActionItems = () => {
     return (displayItems || []).filter(filter)
   }, [displayItems, selectedFilter]);
 
+  if (!captain) return null;
   return (
     <OuterWrapper>
       {account && (
@@ -445,15 +446,18 @@ const ActionItems = () => {
           borderless
           openOnChange={lastClick}
           title={(
-            <Filters>
-              <ReadyFilter tally={tallies.ready} onClick={onClickFilter('ready')} selected={selectedFilter === 'ready'} />
-              <InProgressFilter tally={tallies.progress} onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'} />
-              <LinkContainer>
-                <Link to="/listview/actionitems" onClick={(e) => e.stopPropagation()}>
-                  <PopoutIcon />
-                </Link>
-              </LinkContainer>
-            </Filters>
+            <TitleWrapper>
+              <IconWrapper style={{ color: theme.colors.success }}><AlertIcon /></IconWrapper>
+              <Filters>
+                <ReadyFilter tally={tallies.ready} onClick={onClickFilter('ready')} selected={selectedFilter === 'ready'} />
+                <InProgressFilter tally={tallies.progress} onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'} />
+                <LinkContainer style={{ flex: 1, textAlign: 'right' }}>
+                  <Link to="/listview/actionitems" onClick={(e) => e.stopPropagation()}>
+                    <PopoutIcon />
+                  </Link>
+                </LinkContainer>
+              </Filters>
+            </TitleWrapper>
           )}>
           <ActionItemWrapper>
             <ActionItemContainer>

@@ -175,7 +175,7 @@ const formatAsTx = (item) => {
       formatted.icon = <CrewIcon />;
       formatted.label = 'Update Crew';
       formatted.onClick = ({ history }) => {
-        history.push(`/owned-crew`);
+        history.push(`/crew`);
       };
       break;
     case 'NAME_CREW':
@@ -192,7 +192,7 @@ const formatAsTx = (item) => {
         if (item.vars.sessionId) {
           history.push(`/crew-assignment/${item.vars.sessionId}/create`);
         } else {
-          history.push(`/owned-crew`);
+          history.push(`/crew`);
         }
       };
       break;
@@ -203,7 +203,7 @@ const formatAsTx = (item) => {
         if (item.vars.sessionId) {
           history.push(`/crew-assignment/${item.vars.sessionId}/create`);
         } else {
-          history.push(`/owned-crew`);
+          history.push(`/crew`);
         }
       };
       break;

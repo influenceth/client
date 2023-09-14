@@ -8,18 +8,21 @@ const fadeIn = keyframes`
 
 const Backdrop = styled.div`
   animation: ${fadeIn} 200ms linear 1;
-  backdrop-filter: blur(1.5px);
   pointer-events: auto;
   position: fixed;
   top: 0;
   right: 0;
   left: 0;
   bottom: 0;
-  background-color: ${p => p.backdrop || p.theme.colors.contentBackdrop};
   z-index: 10001;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  ${p => p.invisibleBackdrop ? '' : `
+    backdrop-filter: blur(1.5px);
+    background-color: ${p.backdrop || p.theme.colors.contentBackdrop};
+  `}
 `;
 
 const Modal = styled.div`

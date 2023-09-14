@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
 import styled, { css, keyframes } from 'styled-components';
@@ -6,6 +6,8 @@ import styled, { css, keyframes } from 'styled-components';
 import CollapsibleSection from '~/components/CollapsibleSection';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import { CaptainIcon, CrewIcon, CrewmateIcon, FoodIcon, IdleIcon, LocationIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
+import { useLotLink } from '~/components/LotLink';
+import { useShipLink } from '~/components/ShipLink';
 import TriangleTip from '~/components/TriangleTip';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
@@ -16,120 +18,32 @@ import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
 import theme from '~/theme';
 
-const bgColor = '#000';
-const hoverBgColor = '#183541';
-const borderColor = '#444';
-const cardWidth = 96;
-const tween = '250ms ease';
-const menuWidth = 432;
-
-const silhouetteAnimation = keyframes`
-  0% { opacity: 0.4; }
-  50% { opacity: 0.8; }
-  100% { opacity: 0.4; }
-`;
+const menuWidth = 450;
 
 const Wrapper = styled.div`
   pointer-events: none;
   width: ${menuWidth}px;
 `;
 
-const StatusIcon = styled.div`
-  align-items: center;
-  background: #646464;
-  border-radius: 3px;
-  color: inherit;
-  display: flex;
-  font-size: 25px;
-  height: 26px;
-  justify-content: center;
-  margin-left: 8px;
-  width: 26px;
+const IconWrapper = styled.span`
+  font-size: 24px;
+  line-height: 0;
 `;
+
 const StatusContainer = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
-  ${p => p.active ? `
-    color: ${p.theme.colors.main};
-    & ${StatusIcon} {
-      background: rgba(${p.theme.colors.mainRGB}, 0.3);
-    }
-  ` : ''}
+  & > ${IconWrapper} {
+    margin-left: 4px;
+    margin-right: 6px;
+  }
 `;
-
 
 const CrewWrapper = styled.div`
   display: flex;
   flex-direction: row;
-`;
-
-const Avatar = styled.div`
-  background: ${bgColor};
-  border: solid ${borderColor};
-  border-width: 1px 1px 0;
-  overflow: hidden;
-  padding: 5px 5px 8px;
-  pointer-events: auto;
-  transition: background ${tween}, border-color ${tween};
-
-  & > div {
-    ${p => p.captainless
-      ? css`
-        animation: ${silhouetteAnimation} 2000ms linear infinite;
-        border: 1px solid ${p => p.theme.colors.main};
-      `
-      : ''//'margin-top: -8px;'
-    }
-    transition: opacity ${tween};
-  }
-`;
-const AvatarFlourish = styled.div`
-  pointer-events: auto;
-  position: relative;
-`;
-const StyledTriangleTip = styled(TriangleTip)`
-  height: 20px;
-  width: 100%;
-  path { transition: stroke ${tween}; }
-  polygon { transition: fill ${tween}; }
-`;
-const StyledCaptainIcon = styled(CaptainIcon)`
-  bottom: 8px;
-  font-size: 22px;
-  left: 50%;
-  margin-left: -33.5px;
-  position: absolute;
-  ${p => p.captainless && `
-    & * {
-      fill: rgba(255, 255, 255, 0.25) !important;
-    }
-  `}
-`;
-
-const AvatarWrapper = styled.div`
-  cursor: ${p => p.theme.cursors.active};
-  width: ${cardWidth}px;
-
-  &:hover {
-    ${Avatar} {
-      background: ${hoverBgColor};
-      border-color: ${p => p.theme.colors.main};
-      & > div {
-        animation: none;
-        opacity: 1;
-      }
-    }
-    ${StyledTriangleTip} {
-      polygon {
-        fill: ${hoverBgColor};
-      }
-      path {
-        stroke: ${p => p.theme.colors.main};
-      }
-    }
-  }
 `;
 
 const CrewInfoContainer = styled.div`
@@ -138,7 +52,6 @@ const CrewInfoContainer = styled.div`
   flex-direction: column;
   & > div {
     margin-left: 12px;
-    padding: 8px 0;
 
     & > svg {
       font-size: 24px;
@@ -146,15 +59,19 @@ const CrewInfoContainer = styled.div`
   }
 `;
 
-const SwayContainer = styled.div`
+const TitleBar = styled.div`
   ${CrewInfoContainer} & {
+    align-items: center;
     background: rgba(0, 0, 0, 0.7);
     color: white;
+    display: flex;
+    flex-direction: row;
     font-size: 20px;
     height: 48px;
+    justify-content: space-between;
     margin-left: 0;
     pointer-events: auto;
-    padding: 6px 12px 0;
+    padding: 0 12px 12px;
 
     clip-path: polygon(
       0 0,
@@ -165,63 +82,49 @@ const SwayContainer = styled.div`
       0 48px
     );
 
-    & + * {
-      margin-top: -12px;
+    & svg {
+      font-size: 18px;
     }
   }
 `;
 
 const BaseLocation = styled.div`
   color: white;
+  cursor: ${p => p.theme.cursors.active};
   font-size: 14.5px;
   span {
-    color: #777;
+    color: #AAA;
+    &:before {
+      content: " > ";
+    }
   }
   svg {
+    color: ${p => p.theme.colors.main};
     margin-right: 2px;
     vertical-align: middle;
-  }
-`;
-const Personnel = styled.div`
-  ${CrewInfoContainer} & {
-    border-top: 1px solid ${borderColor};
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 14px 2px 0 6px;
-  }
-`;
-
-const CrewmateIcons = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  width: 54px;
-  & > svg {
-    color: #2b2b2b;
-    font-size: 24px;
-  }
-
-  ${p => p.crewmates > 0 
-    ? `
-      & > svg:nth-child(n+1):nth-child(-n+${p.crewmates}) {
-        color: #888;
-      }
-    `
-    : ``
   }
 `;
 
 const Food = styled.div`
   align-items: center;
-  color: ${p => p.isRationing ? p.theme.colors.red : p.theme.colors.main};
+  color: ${p => p.isRationing ? p.theme.colors.red : p.theme.colors.green};
   display: flex;
   span {
     font-size: 15px;
     margin: 0 6px;
   }
-  svg {
-    font-size: 18px;
+`;
+
+const Crewmates = styled.div`
+  display: flex;
+  flex-direction: row;
+  padding-left: 2px;
+  margin-top: -4px;
+  & > * {
+    margin-left: 5px;
+    &:first-child {
+      margin-left: 0;
+    }
   }
 `;
 
@@ -230,25 +133,16 @@ const AvatarMenu = () => {
   const { captain, crewmateMap, crew, loading: crewIsLoading } = useCrewContext();
   const history = useHistory();
 
+  // TODO: should we combine these into a single location link?
+  const onLotLink = useLotLink(crew?._location || {});
+  const onShipLink = useShipLink(crew?._location || {});
+
   const { data: crewAsteroid } = useAsteroid(crew?._location?.asteroidId);
   const { data: crewBuilding } = useBuilding(crew?._location?.buildingId);
   const { data: crewShip } = useShip(crew?._location?.shipId);
 
-  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-
   const silhouetteOverlay = useMemo(() => {
-    // if no account or no crewmates, show "+" to start their crew
-    if (!account || Object.keys(crewmateMap || {}).length === 0) {
-      return {
-        alwaysOn: ['icon'],
-        disableHover: true,
-        icon: <PlusIcon />,
-        iconSize: 45,
-        rgb: theme.colors.mainRGB,
-      };
-    }
-    // if account and crewmates, but no captain, show "warning sign" and link to move crewmates to crew
-    else if (!captain) {
+    if (!captain) {
       return {
         alwaysOn: ['icon'],
         disableHover: true,
@@ -260,13 +154,12 @@ const AvatarMenu = () => {
     return null;
   }, [account, captain]);
 
-  const [tooltip, onClick] = useMemo(() => {
-    if (!account) return ['Login', () => dispatchLauncherPage('wallets')];
-    else if (!captain) return ['Start Your Crew', () => history.push('/owned-crew')];
-    else return [null, () => history.push('/owned-crew')];
-  }, [ account, captain ]);
+  const goToCrewLocation = useCallback(() => {
+    if (crew?._location?.shipId && !crew?._location?.lotId) onShipLink();
+    else onLotLink();
+  }, [crew?._location, onLotLink, onShipLink]);
 
-  useEffect(() => ReactTooltip.rebuild(), [tooltip]);
+  const onClick = useCallback(() => history.push('/crew'), []);
 
   if (crewIsLoading) return null;
   return (
@@ -275,53 +168,57 @@ const AvatarMenu = () => {
         borderless={!account}
         title={(
           <>
-            <CrewIcon />
-            <label>{crew?.Name?.name || `Your Crew`}</label>
+            <IconWrapper style={{ color: theme.colors.main }}><CrewIcon /></IconWrapper>
+            <label>{formatters.crewName(crew)}</label>
             <StatusContainer>
               Idle
-              <StatusIcon>
-                <IdleIcon />
-              </StatusIcon>
+              <IconWrapper><IdleIcon /></IconWrapper>
             </StatusContainer>
           </>
         )}>
         <CrewWrapper>
           <CrewCardFramed
+            borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
             crewmate={captain}
             isCaptain
             onClick={onClick}
             silhouetteOverlay={silhouetteOverlay}
-            tooltip={tooltip}
             width={96} />
 
           <CrewInfoContainer>
-            <SwayContainer noCaptain={!captain}><SwayIcon /> 0</SwayContainer>
-            {captain && (
-              <>
-                <BaseLocation>
-                  <LocationIcon />
-                  {crewShip && formatters.shipName(crewShip)}
-                  {!crewShip && crewBuilding && formatters.buildingName(crewBuilding)}
-                  {crewAsteroid && <span>&gt; {formatters.asteroidName(crewAsteroid)}</span>}
-                </BaseLocation>
-                <Personnel>
-                  <div>
-                    <CrewmateIcons crewmates={crew?.roster?.length || 0}>
-                      <CrewmateIcon />
-                      <CrewmateIcon />
-                      <CrewmateIcon />
-                      <CrewmateIcon />
-                      <CrewmateIcon />
-                    </CrewmateIcons>
-                  </div>
-                  <Food isRationing={false}>
-                    {false && <WarningOutlineIcon />}
-                    <span>94%</span>
-                    <FoodIcon />
-                  </Food>
-                </Personnel>
-              </>
-            )}
+            <TitleBar>
+              <BaseLocation onClick={goToCrewLocation}>
+                <LocationIcon />{/* TODO: should be different icon */}
+                {crewAsteroid && <>{formatters.asteroidName(crewAsteroid)}</>}
+                {crewShip && <span>{formatters.shipName(crewShip)}</span>}
+                {!crewShip && crewBuilding && <span>{formatters.buildingName(crewBuilding)}</span>}
+                {!crewShip && !crewBuilding && crew?._location?.lotId && <span>Lot {crew._location.lotId.toLocaleString()}</span>}
+              </BaseLocation>
+
+              {/* TODO: potentially link directly to add rations dialog instead */}
+              {/* TODO: implement lastFed or whatever */}
+              <Food isRationing={false} onClick={onClick}>
+                {false && <WarningOutlineIcon />}
+                <span>100%</span>
+                <FoodIcon />
+              </Food>
+            </TitleBar>
+
+            <Crewmates>
+              {(crew?._crewmates || []).map((crewmate, i) => {
+                if (i === 0) return null;
+                return (
+                  <CrewCardFramed
+                    key={crewmate.id}
+                    borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
+                    crewmate={crewmate}
+                    onClick={onClick}
+                    silhouetteOverlay={silhouetteOverlay}
+                    width={65}
+                    noArrow />
+                );
+              })}
+            </Crewmates>
           </CrewInfoContainer>
         </CrewWrapper>
       </CollapsibleSection>

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, createContext } from 'react';
 import getStarknet from 'get-starknet-core';
-// import { injectController } from '@cartridge/controller';  // TODO: cartridge
 import { Address } from '@influenceth/sdk';
 
 import api from '~/lib/api';

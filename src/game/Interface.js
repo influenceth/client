@@ -29,6 +29,8 @@ import LinkedViewer from './interface/modelViewer/LinkedViewer';
 import DevToolsViewer from './interface/modelViewer/DevToolsViewer';
 import Cutscene from './Cutscene';
 import Launcher from './Launcher';
+import CrewDetails from './interface/details/CrewDetails';
+import LoginDialog from '~/components/LoginDialog';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -84,6 +86,7 @@ const Interface = () => {
   const isFetching = useIsFetching();
   const cutscene = useStore(s => s.cutscene);
   const launcherPage = useStore(s => s.launcherPage);
+  const isLoggingIn = useStore(s => s.auth.loggingIn);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const showDevTools = useStore(s => s.graphics.showDevTools);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
@@ -109,6 +112,7 @@ const Interface = () => {
       {launcherPage && <Launcher />}
       {cutscene && <Cutscene />}
       {showDevTools && <DevToolsViewer />}
+      {isLoggingIn && <LoginDialog />}
       <StyledInterface hide={interfaceHidden}>
         {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
         {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
@@ -120,7 +124,10 @@ const Interface = () => {
             <Route path="/model/:assetType/:assetName?">
               <LinkedViewer />
             </Route>
-            <Route path="/crew/:i(\d+)">
+            <Route path="/crew/:i(\d+)?">
+              <CrewDetails />
+            </Route>
+            <Route path="/crewmate/:i(\d+)">
               <CrewmateDetails />
             </Route>
             <Route path="/owned-asteroids">
@@ -137,13 +144,11 @@ const Interface = () => {
           <MainMenu />
         </MainContainer>
 
+        {/* TODO: ecs refactor -- it's unclear why this switch is different from the above... maybe reconcile? */}
         <Switch>
           <Redirect from="/:i(\d+)" to="/asteroids/:i" />
           <Route path="/asteroids/:i(\d+)/:tab?/:category?">
             <AsteroidDetails />
-          </Route>
-          <Route path="/owned-crew">
-            <OwnedCrew />
           </Route>
           <Route exact path="/crew-assignments/:id([a-z0-9]+)/:selected?">
             <CrewAssignments />

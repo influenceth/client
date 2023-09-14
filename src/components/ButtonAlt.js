@@ -93,7 +93,7 @@ const StyledButton = styled.button`
       cursor: ${p.theme.cursors.default};
       border-color: ${p.borderless ? 'transparent' : p.theme.colors.disabledText};
       & > div {
-        background-color: ${p.disabledColor || (p.background === 'transparent' ? 'transparent' : `rgba(${hexToRGB(p.theme.colors.disabledButton)}, ${bgOpacity})`)};
+        background-color: ${p.disabledColor || (p.background === 'transparent' ? 'transparent' : `rgba(${hexToRGB(p.theme.colors.disabledButton)}, ${bgOpacity * (p.bgStrength || 1)})`)};
       }
       & > svg {
         stroke: ${p.theme.colors.disabledText};
@@ -108,13 +108,13 @@ const StyledButton = styled.button`
         )
       )};
       & > div {
-        background-color: ${p.background || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${bgOpacity})`};
+        background-color: ${p.background || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${bgOpacity * (p.bgStrength || 1)})`};
       }
       &:active > div {
         background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton};
       }
       &:hover > div {
-        background-color: rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${hoverBgOpacity});
+        background-color: rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${hoverBgOpacity * (p.bgStrength || 1)});
       }
     `
   }

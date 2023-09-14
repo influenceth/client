@@ -31,6 +31,7 @@ export const cleanupScene = (scene) => {
   scene.children.forEach((c) => scene.remove(c));
 }
 
+// TODO: test this wherever currently used (there was a change to input params)
 export const renderDummyAsteroid = (asteroid, resolution, webWorkerPool, callback) => {
   if (!asteroid) return;
   const exportable = new Group();

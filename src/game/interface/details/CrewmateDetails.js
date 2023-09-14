@@ -28,7 +28,7 @@ import useAuth from '~/hooks/useAuth';
 // import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewmate from '~/hooks/useCrewmate';
 import useNameAvailability from '~/hooks/useNameAvailability';
-import useNameCrew from '~/hooks/useNameCrew';
+import useNameCrewmate from '~/hooks/useNameCrewmate';
 import useStore from '~/hooks/useStore';
 import { boolAttr } from '~/lib/utils';
 
@@ -379,7 +379,7 @@ const CrewmateDetails = () => {
   // const { data: assignmentData } = useCrewAssignments();
   const { data: crewmate } = useCrewmate(i);
   const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
-  const { nameCrew, naming } = useNameCrew(Number(i));
+  const { nameCrewmate, naming } = useNameCrewmate(Number(i));
   const playSound = useStore(s => s.dispatchSoundRequested);
 
   const [ newName, setNewName ] = useState('');
@@ -423,15 +423,15 @@ const CrewmateDetails = () => {
     }
   }, [traits, selectTrait]);
 
-  const attemptNameCrew = useCallback(async (name) => {
+  const attemptNameCrewmate = useCallback(async (name) => {
     if (await isNameValid(name)) {
-      nameCrew(name);
+      nameCrewmate(name);
     }
   }, [isNameValid]);
 
   return (
     <Details
-      onCloseDestination="/owned-crew"
+      onCloseDestination="/crew"
       title="Crewmate Profile"
       width="max">
       {crewmate && (
@@ -475,7 +475,7 @@ const CrewmateDetails = () => {
                         data-tip="Submit"
                         data-for="global"
                         disabled={boolAttr(naming)}
-                        onClick={() => attemptNameCrew(newName)}>
+                        onClick={() => attemptNameCrewmate(newName)}>
                         <CheckCircleIcon />
                       </IconButton>
                     </NameForm>

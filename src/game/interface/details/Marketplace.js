@@ -191,7 +191,7 @@ const Marketplace = () => {
             src={marketplace ? getBuildingIcon(8, 'w1000') : marketplaceHeader} />
       }
       title={`${formatters.asteroidName(asteroid, '...')} > ${lotId === 'all' ? 'Markets' : (marketplace.name || 'Marketplace')}`}
-      underlineHeader
+      headerProps={{ underlineHeader: 'true' }}
       contentProps={showFooter ? { style: { marginBottom: 0 } } : {}}
       maxWidth="1600px"
       width="max">

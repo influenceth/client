@@ -166,6 +166,8 @@ const CrewCard = ({ crewmate, onClick, overlay, ...props }) => {
     if (imageFailed) setImageLoaded(true)
   }, [imageFailed]);
 
+  console.log('imageLoaded', !imageLoaded, boolAttr(!imageLoaded));
+
   return (
     <Card
       onClick={onClick}

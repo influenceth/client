@@ -252,16 +252,18 @@ const Account = () => {
   const { captain, loading: crewLoading, crew, crewmateMap } = useCrewContext();
 
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
+  const isLoggingIn = useStore(s => s.auth.loggingIn);
   const dispatchCutscene = useStore(s => s.dispatchCutscene);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
+  const dispatchLoggingIn = useStore(s => s.dispatchLoggingIn);
 
   const loggedIn = !!account;
 
   const onClickPlay = useCallback(() => {
     // if crew is done loading and there are no crewmates, send to owned-crew first
     if (loggedIn && !crewLoading && !(crew?._crewmates?.length > 0)) {
-      history.push('/owned-crew');
+      history.push('/crew');
     }
     dispatchLauncherPage();
 
@@ -280,11 +282,11 @@ const Account = () => {
       <LogoContainer loggedIn={loggedIn}>
         <InfluenceLogo />
       </LogoContainer>
-      {!loggedIn &&
+      {!loggedIn && !isLoggingIn &&
         <AccountCTA>
           <NotConnected>
             <span>Account Not Connected</span>
-            <ButtonPill onClick={() => dispatchLauncherPage('wallets')}>Login</ButtonPill>
+            <ButtonPill onClick={() => dispatchLoggingIn(true)}>Login</ButtonPill>
           </NotConnected>
         </AccountCTA>
       }

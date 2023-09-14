@@ -34,7 +34,7 @@ const formatters = {
 
   asteroidName: (a, fallbackText) => {
     if (!a) return fallbackText || 'Asteroid';
-    return a.Name?.name || Asteroid.getBaseName(a.id, a.Celestial.celestialType) || `Asteroid #${a.id.toLocaleString()}`;
+    return a.Name?.name || Asteroid.Entity.getBaseName(a) || `Asteroid #${a.id.toLocaleString()}`;
   },
 
   asteroidPrice: (r, priceConstants) => {

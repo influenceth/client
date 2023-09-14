@@ -25,7 +25,7 @@ const Avatar = styled.div`
   transition: background ${tween}, border-color ${tween};
 
   & > div {
-    ${p => p.isEmpty
+    ${p => p.isEmpty && !p.noAnimation
       ? css`
         animation: ${silhouetteAnimation} 2000ms linear infinite;
         border: 1px solid ${p => p.theme.colors.main};

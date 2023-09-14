@@ -10,7 +10,6 @@ import OnClickLink from '~/components/OnClickLink';
 import Time from '~/components/Time';
 import Account, { logoDisplacementHeight } from './launcher/Account';
 import Settings from './launcher/Settings';
-import Wallets from './launcher/Wallets';
 
 const headerFooterHeight = 100;
 
@@ -271,7 +270,6 @@ const Launcher = (props) => {
       </Header>
       <MainContent>
         {launcherPage === 'account' && <Account />}
-        {launcherPage === 'wallets' && <Wallets />}
         {launcherPage === 'settings' && <Settings />}
       </MainContent>
       <StyledTime displayTime={displayTime} />

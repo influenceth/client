@@ -10,7 +10,7 @@ const useOwnedAsteroids = () => {
 
   return useQuery(
     [ 'asteroids', 'list', { hydrated: true, ownedBy: account } ],
-    () => api.getAsteroids({ hydrated: true, ownedBy: account }),
+    () => ([]), // api.getAsteroids({ hydrated: true, ownedBy: account }),
     { enabled: !!account }
   );
 };

@@ -1,8 +1,10 @@
 import styled from 'styled-components';
 
+import useCrewContext from '~/hooks/useCrewContext';
 import ActionDialog from './hud/ActionDialog';
 import ActionItems from './hud/ActionItems';
 import AvatarMenu from './hud/AvatarMenu';
+import LoginMenu from './hud/LoginMenu';
 import InfoPane from './hud/InfoPane';
 import SystemControls from './hud/SystemControls';
 import HudMenu from './hud/HudMenu';
@@ -70,10 +72,11 @@ export const Rule = styled.div`
 `;
 
 const HUD = () => {
+  const { captain } = useCrewContext();
   return (
     <>
       <LeftWrapper>
-        <AvatarMenu />
+        {captain ? <AvatarMenu /> : <LoginMenu />}
         <ActionItems />
         <InfoPane />
       </LeftWrapper>

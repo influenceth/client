@@ -337,7 +337,7 @@ const CrewAssignments = () => {
       const eligible = crew._crewmates
         .filter((i) => [1,2,3].includes(crewmateMap[i]?.crewCollection))
         .map((i) => crewmateMap[i]);
-      if (eligible.length === 0) history.push('/owned-crew');
+      if (eligible.length === 0) history.push('/crew');
       return eligible;
     }
     return null;
@@ -601,7 +601,7 @@ const CrewAssignments = () => {
 
                     <div>
                       <a href={`${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/collection/influence-crew`} target="_blank" rel="noreferrer">Click here</a>
-                      {' '}to acquire crewmates through trade, or <Link to="/owned-crew">click here</Link> to mint your own.
+                      {' '}to acquire crewmates through trade, or <Link to="/crew">click here</Link> to mint your own.
                     </div>
                     */}
                   </CrewlessSection>

@@ -1,109 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { Crewmate } from '@influenceth/sdk';
 
+import adalianImage from '~/assets/images/crew_collections/4.png'
 import useCrewContext from '~/hooks/useCrewContext';
 import useBookSession, { bookIds } from '~/hooks/useBookSession';
 import useStore from '~/hooks/useStore';
-import Button from '~/components/ButtonAlt';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CrewCard from '~/components/CrewCard';
-import CrewClassIcon from '~/components/CrewClassIcon';
-import Details from '~/components/DetailsModal';
-import { ArvadIcon, BackIcon, GenesisIcon } from '~/components/Icons';
-import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
 
-import theme from '~/theme.js';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
-import formatters from '~/lib/formatters';
-
-const foldOffset = 28;
-const belowFoldMin = 256;
-
-const opacityTransition = keyframes`
-  0% { opacity: 0; }
-  100% { opacity: 1; }
-`;
-
-const InvisibleImage = styled.img`
-  display: none;
-`;
-
-const CoverImage = styled.div`
-  height: calc(50% + ${foldOffset}px);
-  max-height: calc(100% - ${foldOffset}px - ${belowFoldMin}px);
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    height: 33%;
-    max-height: none;
-  }
-
-  &:before {
-    background-color: #111;
-    background-image: url(${p => p.src});
-    background-repeat: no-repeat;
-    background-position: ${p => p.center || 'center center'};
-    background-size: cover;
-    content: '';
-    display: block;
-    opacity: ${p => p.ready ? 1 : 0};
-    height: 100%;
-    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 75%, transparent 100%);
-    transition:
-      background-position 750ms ease-out,
-      opacity 750ms ease-out;
-  }
-`;
-
-const aboveFoldHeight = 88;
-const aboveFoldMobileMargin = -30;
-const AboveFold = styled.div`
-  height: ${aboveFoldHeight}px;
-  margin-top: -${aboveFoldHeight}px;
-  opacity: 0;
-  padding: 0 35px;
-  position: relative;
-  z-index: 1;
-
-  opacity: ${p => p.ready ? 1 : 0};
-  transition: opacity 750ms ease-out;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    height: ${aboveFoldHeight * 0.72}px;
-    margin-top: ${aboveFoldMobileMargin}px;
-    padding: 0 25px;
-  }
-`;
-
-const BelowFold = styled.div`
-  display: flex;
-  flex-direction: row;
-  height: calc(50% - ${foldOffset}px);
-  padding: 10px 0 10px 35px;
-  position: relative;
-  @media (min-width: ${p => p.theme.breakpoints.mobile}px) {
-    min-height: ${belowFoldMin}px;
-  }
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    height: calc(67% - ${aboveFoldHeight + aboveFoldMobileMargin}px);
-    padding: 10px 0 0;
-  }
-
-  & > * {
-    opacity: 0;
-    &:nth-child(1) {
-      animation: ${opacityTransition} 600ms normal forwards ease 200ms;
-    }
-    &:nth-child(2) {
-      animation: ${opacityTransition} 600ms normal forwards ease 400ms;
-    }
-    &:nth-child(3) {
-      animation: ${opacityTransition} 600ms normal forwards ease 600ms;
-    }
-  }
-`;
+import ChoicesDialog from '~/components/ChoicesDialog';
 
 const CrewContainer = styled.div`
   flex: 0 1 275px;
@@ -119,97 +27,6 @@ const SilhouetteWrapper = styled.div`
   opacity: 0.3;
 `;
 
-const MobileCrewContainer = styled.div`
-  display: none;
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    align-items: center;
-    display: flex;
-    & > div:first-child {
-      flex: 1;
-    }
-    & > div:last-child {
-      font-size: 13px;
-    }
-  }
-`;
-
-const BackButton = styled.div`
-  align-items: center;
-  cursor: ${p => p.theme.cursors.active};
-  display: inline-flex;
-  filter: drop-shadow(1px -1px 1px rgba(0, 0, 0, 1));
-  font-size: 14px;
-  font-weight: bold;
-  ${p => p.noTitle
-    ? `
-      position: relative;
-      bottom: -36px;
-    `
-    : `margin-bottom: 1em;`
-  }
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    bottom: 0;
-    margin-bottom: 1em;
-  }
-
-  text-transform: uppercase;
-  & *:first-child {
-    margin-right: 0.75em;
-  }
-  &:hover {
-    color: white;
-  }
-
-  ${p => p.disableAndHide && `
-    cursor: ${p.theme.cursors.default};
-    opacity: 0;
-    pointer-events: none;
-  `}
-`;
-
-const Title = styled.div`
-  filter: drop-shadow(1px -1px 1px rgba(0, 0, 0, 1));
-  font-size: 36px;
-  pointer-events: none;
-  ${p => p.ownerType === 'CREW' && 'text-align: center;'}
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    font-size: 28px;
-    text-align: left;
-  }
-`;
-
-const Body = styled.div`
-  flex: 0 1 775px;
-  font-size: 90%;
-  height: 100%;
-  line-height: 1.25em;
-  overflow: auto;
-  padding: 0 25px 25px 25px;
-  position: relative;
-  scrollbar-width: thin;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    padding-top: 5px;
-  }
-`;
-
-const Flourish = styled.div`
-  display: flex;
-  flex: 1 0 250px;
-  flex-direction: column;
-  overflow: hidden;
-  text-align: center;
-
-  @media (max-width: 1300px) {
-    display: none;
-  }
-
-  & > h4 {
-    margin-bottom: 16px;
-  }
-`;
-
 const NavSpacer = styled.div`
   border-top: 1px dotted ${p => p.completed ? '#FFF' : '#777'};
   height: 0;
@@ -222,65 +39,24 @@ const NavSpacer = styled.div`
   `}
 `;
 
-const FlourishCentered = styled.div`
-  align-items: center;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-`;
-
-const FlourishImageContainer = styled(FlourishCentered)`
-  color: white;
-  font-size: ${p => p.shrinkIcon ? '80px' : '120px'};
-  margin-top: ${p => p.shrinkIcon ? '24px' : '16px'};
-  opacity: 0.1;
-`;
-
-const Path = styled.div`
-  cursor: ${p => p.theme.cursors.active};
-  background-color: rgba(255, 255, 255, 0);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 6px 0;
-  transition: background-color 200ms ease;
-
-  &:first-child {
-    border-top: 1px solid rgba(255, 255, 255,0.2);
-  }
-
-  & > div {
-    align-items: flex-start;
-    display: flex;
-    padding: 6px 16px 6px 0;
-
-    & > span:first-child {
-      color: white;
-      font-weight: bold;
-      text-align: center;
-      width: 3em;
-    }
-    & > span:last-child {
-      color: ${p => p.theme.colors.main};
-      flex: 1;
-      transition: color 200ms ease;
-    }
-  }
-
-  ${p => p.selected ? '&' : '&:hover'} > div {
-    background-color: rgba(255, 255, 255, 0.2);
-    & > span:last-child {
-      color: white;
-    }
-  }
-`;
-
-const PageContent = styled.div`
-  color: #aaa;
-  white-space: pre-line;
-  margin-bottom: 1.5em;
-`;
 const PagePrompt = styled.div`
   color: white;
   margin-bottom: 1em;
+`;
+
+const Progress = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  & > label {
+    font-size: 20px;
+  }
+  & > div {
+    display: flex;
+    flex-direction: row;
+    font-size: 20px;
+    margin-left: 25px;
+  }
 `;
 
 const PromptDetails = styled.div`
@@ -292,6 +68,26 @@ const PromptDetails = styled.div`
     padding: 1em;
   }
 `;
+
+const AdalianFlourish = styled.div`
+  display: block;
+  height: 100%;
+  width: 100%;
+  &:before {
+    content: "";
+    background-image: url(${adalianImage});
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 165%;
+    display: block;
+    filter: contrast(0%) sepia(100%) hue-rotate(150deg) saturate(150%);
+    height: 100%;
+    opacity: 0.65;
+    width: 100%;
+  }
+`;
+
+const REQUIRE_CONFIRM = false;
 
 const CrewAssignment = () => {
   const { id: bookId } = useParams();
@@ -308,18 +104,14 @@ const CrewAssignment = () => {
 
   const playSound = useStore(s => s.dispatchSoundRequested);
 
-  const [coverImageLoaded, setCoverImageLoaded] = useState();
   const [pathLoading, setPathLoading] = useState();
   const [selection, setSelection] = useState();
 
   let onCloseDestination;
-  let onCloseDestinationLabel;
   if (bookSession.isMintingStory || Object.keys(crewmateMap || {}).length > 0) {
-    onCloseDestination = '/owned-crew';
-    onCloseDestinationLabel = 'Crew Management';
+    onCloseDestination = '/crew';
   } else {
     onCloseDestination = '/';
-    onCloseDestinationLabel = 'The Belt';
   }
 
   // on step change, clear selection (to close modal) and set pseudo path-loading
@@ -330,26 +122,23 @@ const CrewAssignment = () => {
     setTimeout(() => { setPathLoading(false); }, 100);
   }, [storySession.currentStep]);
 
-  const onCoverImageLoad = useCallback(() => {
-    setCoverImageLoaded(storySession?.image);
-  }, [storySession?.image]);
+  const confirmPath = useCallback(() => {
+    playSound('effects.click');
+    choosePath(selection.id);
+  }, [choosePath, playSound, selection]);
 
   const selectPath = useCallback((path) => () => {
     playSound('effects.click');
 
-    // if only one choice, don't need to confirm
-    if (storySession.linkedPaths?.length === 1) {
+    // if only one choice (or auto confirming), don't need to confirm
+    if (!REQUIRE_CONFIRM || storySession.linkedPaths?.length === 1) {
       choosePath(path.id);
+
     // else, confirm in modal
     } else {
       setSelection(path);
     }
   }, [choosePath, playSound, storySession]);
-
-  const confirmPath = useCallback(() => {
-    playSound('effects.click');
-    choosePath(selection.id);
-  }, [choosePath, playSound, selection]);
 
   const onGoBack = useCallback(() => {
     playSound('effects.click');
@@ -371,115 +160,71 @@ const CrewAssignment = () => {
   );
 
   const contentReady = storySession && (crewmate || storySession.ownerType !== 'CREW_MEMBER');
-  const pathIsReady = contentReady && !pathLoading && storySession.image === coverImageLoaded;
   return (
     <>
-      <Details
-        edgeToEdge
+      <ChoicesDialog
+        dialogTitle={bookSession.isMintingStory ? 'Crewmate Creation' : 'Crew Assignments'}
         onCloseDestination={onCloseDestination}
-        title={bookSession.isMintingStory ? 'Crewmate Creation' : 'Crew Assignments'}
-        width="max">
-        {!contentReady && <Loader />}
-        {contentReady && (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <InvisibleImage src={storySession.image} onError={onCoverImageLoad} onLoad={onCoverImageLoad} />
-            <CoverImage
-              src={coverImageLoaded}
-              center={storySession.imageCenter}
-              ready={storySession.image === coverImageLoaded} />
-            <AboveFold ready={!!coverImageLoaded}>
-              {(bookSession.currentStoryIndex > 0 || storySession.currentStep > 0) ? (
-                <BackButton onClick={onUndoPath} noTitle={!storySession.title}>
-                  <BackIcon /> Previous Selection
-                </BackButton>
-              ) : (
-                <BackButton onClick={onGoBack} noTitle={!storySession.title}>
-                  <BackIcon /> Back to {onCloseDestinationLabel}
-                </BackButton>
-              )}
-              <Title ownerType={storySession.ownerType} isMintingStory={bookSession.isMintingStory}>{storySession.title}</Title>
-              {crewmate && (
-                <MobileCrewContainer>
-                  <div>
-                    <b>{formatters.crewmateName(crewmate)}</b>
-                    {' '}<CrewClassIcon crewClass={crewmate.Crewmate.class} />
-                  </div>
-                  <div>{Crewmate.getClass(crewmate.Crewmate.class)?.name || 'Unknown Class'}</div>
-                </MobileCrewContainer>
-              )}
-            </AboveFold>
-            <BelowFold>
-              {!pathIsReady && <Loader />}
-              {pathIsReady && (
-                <>
-                  <CrewContainer>
-                    {crewmate ? <CrewCard crewmate={crewmate} /> : <SilhouetteWrapper><CrewSilhouetteCard /></SilhouetteWrapper>}
-                  </CrewContainer>
-                  <Body>
-                    <PageContent>{storySession.content}</PageContent>
-                    {storySession.isLastPage
-                      ? (
-                        <Button
-                          onClick={bookSession.isLastStory ? finish : selectPath(storySession.linkedPaths[0])}
-                          style={{ margin: '0 auto' }}>
-                          {bookSession.isLastStory
-                            ? (bookSession.isMintingStory ? 'Create Your Crewmate' : 'Finish')
-                            : 'Next Chapter'
-                          }
-                        </Button>
-                      )
-                      : (
-                        <>
-                          <PagePrompt>{storySession.prompt}</PagePrompt>
-                          <div>
-                            {storySession.linkedPaths.map((linkedPath, i) => (
-                              <Path key={linkedPath.id}
-                                selected={linkedPath.id === selection?.id}
-                                onClick={selectPath(linkedPath)}>
-                                <div>
-                                  <span>{String.fromCharCode(65 + i)}</span>
-                                  <span>{linkedPath.text}</span>
-                                </div>
-                              </Path>
-                            ))}
-                          </div>
-                        </>
-                      )
-                    }
-                  </Body>
-                  <Flourish>
-                    <h4>{Math.min(storySession.totalSteps, storySession.currentStep + 1)} of {storySession.totalSteps}</h4>
-                    <FlourishCentered>
-                      {Array.from({ length: storySession.totalSteps }, (x, i) => {
-                        let color = '#777';
-                        if (i < storySession.currentStep) {
-                          color = theme.colors.main;
-                        } else if (i === storySession.currentStep) {
-                          color = '#FFF';
-                        }
-                        return (
-                          <React.Fragment key={i}>
-                            {i > 0 && <NavSpacer steps={storySession.totalSteps} completed={i <= storySession.currentStep} />}
-                            <NavIcon
-                              animate
-                              selected={i === storySession.currentStep}
-                              size="1em"
-                              color={color} />
-                          </React.Fragment>
-                        );
-                      })}
-                    </FlourishCentered>
-                    <FlourishImageContainer shrinkIcon={bookId !== bookIds.ADALIAN_RECRUITMENT}>
-                      {bookId === bookIds.ADALIAN_RECRUITMENT ? <GenesisIcon /> : <ArvadIcon />}
-                    </FlourishImageContainer>
-                  </Flourish>
-                </>
-              )}
-            </BelowFold>
-          </div>
+        coverImage={storySession.image}
+        coverImageCenter={storySession.imageCenter}
+        content={storySession.content}
+        choices={storySession.isLastPage ? null : storySession.linkedPaths}
+        choicelessButton={{
+          label: bookSession.isLastStory
+            ? (bookSession.isMintingStory ? 'Create Your Crewmate' : 'Finish')
+            : 'Next Chapter',
+          onClick: bookSession.isLastStory ? finish : selectPath(storySession.linkedPaths[0])
+        }}
+        isLoading={!contentReady}
+        isLoadingChoice={!contentReady || pathLoading}
+        onSelect={selectPath}
+        prompt={storySession.prompt}
+        flourish={
+          bookId === bookIds.ADALIAN_RECRUITMENT
+            ? <AdalianFlourish />
+            : (
+              <CrewContainer>
+                {crewmate ? <CrewCard crewmate={crewmate} /> : <SilhouetteWrapper><CrewSilhouetteCard /></SilhouetteWrapper>}
+              </CrewContainer>
+            )
+        }
+        leftButton={{
+          label: 'Back',
+          onClick: (bookSession.currentStoryIndex > 0 || storySession.currentStep > 0) ? onUndoPath : onGoBack,
+        }}
+        rightButton={{
+          label: 'Skip',
+          disabled: (storySession.isLastPage && bookSession.isLastStory),
+          onClick: () => {},
+        }}
+        title={storySession.title}
+        subtitle={(
+          <Progress>
+            <label>{Math.min(storySession.totalSteps, storySession.currentStep + 1)} of {storySession.totalSteps}</label>
+            <div>
+              {Array.from({ length: storySession.totalSteps }, (x, i) => {
+                let color = '#777';
+                if (i < storySession.currentStep) {
+                  color = '#FFF'; //theme.colors.main;
+                } else if (i === storySession.currentStep) {
+                  color = '#FFF';
+                }
+                return (
+                  <React.Fragment key={i}>
+                    {i > 0 && <NavSpacer steps={storySession.totalSteps} completed={i <= storySession.currentStep} />}
+                    <NavIcon
+                      animate
+                      selected={i === storySession.currentStep}
+                      size="1em"
+                      color={color} />
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </Progress>
         )}
-      </Details>
-      {selection && (
+      />
+      {REQUIRE_CONFIRM && selection && (
         <ConfirmationDialog
           title="Your Selection:"
           body={(

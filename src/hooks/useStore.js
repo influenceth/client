@@ -69,6 +69,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     lotsMappedAssetSearchResults: {},
 
     auth: {
+      loggingIn: false,
       token: null
     },
 
@@ -215,6 +216,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
           state.graphics[k] = defaults[k];
         });
       }
+    })),
+    
+    dispatchLoggingIn: (which) => set(produce(state => {
+      state.auth.loggingIn = !!which;
     })),
 
     dispatchToggleInterface: (force) => set(produce(state => {

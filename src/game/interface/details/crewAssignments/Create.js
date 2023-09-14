@@ -456,7 +456,7 @@ const MobileDialogContainer = styled.div`
   }
 `;
 
-const onCloseDestination = `/owned-crew`;
+const onCloseDestination = `/crew`;
 
 const driveTraits = [1, 2, 3, 4];
 const driveCosmeticTraits = [36, 37, 38, 39, 40];
@@ -932,15 +932,17 @@ const CrewAssignmentCreate = (props) => {
                 </PromptBody>
               )}
               onConfirm={finalize}
-              confirmText={<>
-                Confirm
-                {adalianRecruits.length === 0 && priceConstants && (
-                  <span style={{ flex: 1, fontSize: '90%', textAlign: 'right' }}>
-                    {/* TODO: should this update price before "approve"? what about asteroids? */}
-                    <Ether>{formatters.crewmatePrice(priceConstants)}</Ether>
-                  </span>
-                )}
-              </>}
+              confirmText={(
+                <>
+                  Confirm
+                  {adalianRecruits.length === 0 && priceConstants && (
+                    <span style={{ flex: 1, fontSize: '90%', textAlign: 'right' }}>
+                      {/* TODO: should this update price before "approve"? what about asteroids? */}
+                      <Ether>{formatters.crewmatePrice(priceConstants)}</Ether>
+                    </span>
+                  )}
+                </>
+              )}
               onReject={() => setConfirming(false)}
               isTransaction
             />

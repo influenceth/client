@@ -38,7 +38,6 @@ const StyledDetails = styled.div`
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  padding: 15px 20px 0;
   pointer-events: auto;
   position: relative;
 
@@ -50,16 +49,34 @@ const StyledDetails = styled.div`
 `;
 
 const headerHeight = 40;
+const HeaderWrapper = styled.div`
+  padding: 15px 20px 0;
+  ${p => p.edgeToEdge
+    ? `
+      background: rgba(255, 255, 255, 0.08);
+      padding-bottom: 15px;
+    `
+    : `
+      &:after {
+        content: "";
+        display: block;
+        border-bottom: 1px solid ${borderColor};
+        margin-top: 12px;
+        position: relative;
+        z-index: 2;
+      }
+    `}
+`;
 const Header = styled.h1`
   border-left: 2px solid ${p => p.theme.colors.main};
   font-size: 22px;
   font-weight: 400;
   height: ${headerHeight}px;
   line-height: ${headerHeight}px;
+  margin: 0;
   padding: 0 0 0 15px;
   position: relative;
   text-transform: uppercase;
-  margin: 0;
   z-index: 1;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
@@ -68,10 +85,21 @@ const Header = styled.h1`
 `;
 
 const ContentWrapper = styled.div`
-  border-top: 1px solid ${borderColor};
   flex: 1;
-  margin-top: 12px;
-  height: 0;
+  padding: 12px 20px 15px;
+
+  ${p => {
+    if (p.edgeToEdge) {
+      if (p.hasTitle) {
+        return `
+          margin: -60px 0 0;
+          & ${Content} { margin-top: 60px; }
+        `;
+      }
+      return 'margin: 0;';
+    }
+    return 'margin: 0;';
+  }}
 `;
 
 const Content = styled.div`
@@ -89,7 +117,7 @@ const Content = styled.div`
 
 const CloseButton = styled(IconButton)`
   position: absolute !important;
-  top: 17px;
+  top: 20px;
   right: 20px;
   z-index: 1;
   ${p => p.hasBackground ? 'background: rgba(0, 0, 0, 0.75);' : ''}
@@ -99,22 +127,52 @@ const CloseButton = styled(IconButton)`
   }
 `;
 
+const CoverImage = styled.div`
+  position: absolute;
+  height: ${p => p.height || '50%'};
+  width: 100%;
+  z-index: -1;
+
+  &:before {
+    background-color: #111;
+    background-image: url(${p => p.src});
+    background-repeat: no-repeat;
+    background-position: ${p => p.center || 'center center'};
+    background-size: cover;
+    content: '';
+    display: block;
+    height: 100%;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 75%, transparent 100%);
+    transition:
+      background-position 750ms ease-out,
+      opacity 750ms ease-out;
+  }
+`;
+
 const Details = (props) => {
-  const { title, contentProps = {}, edgeToEdge, onCloseDestination, ...restProps } = props;
+  const {
+    title,
+    contentProps = {},
+    coverImage,
+    coverImageHeight,
+    edgeToEdge,
+    onCloseDestination,
+    ...restProps } = props;
   const history = useHistory();
 
   return (
     <Wrapper {...restProps}>
       <StyledDetails {...restProps}>
-        {title && <Header>{title}</Header>}
+        {title && <HeaderWrapper edgeToEdge={edgeToEdge}><Header>{title}</Header></HeaderWrapper>}
         <CloseButton
           onClick={() => history.push(onCloseDestination || '/')}
           hasBackground={edgeToEdge}
           borderless>
           <CloseIcon />
         </CloseButton>
-        <ContentWrapper>
-          <Content edgeToEdge={edgeToEdge} hasTitle={!!title} {...contentProps}>
+        {coverImage && <CoverImage {...coverImage} />}
+        <ContentWrapper edgeToEdge={edgeToEdge} hasTitle={!!title}>
+          <Content {...contentProps}>
             {props.children}
           </Content>
         </ContentWrapper>

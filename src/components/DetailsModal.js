@@ -25,7 +25,7 @@ const Wrapper = styled.div`
   position: absolute;
   right: 0;
   top: 0;
-  z-index: 3;
+  z-index: 5;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding: 0 0 50px 0;
@@ -61,12 +61,28 @@ const StyledDetails = styled.div`
 
 const headerHeight = 60;
 const Header = styled.h1`
-  border-left: 5px solid ${p => p.theme.colors.main};
+  ${p => p.background ? `background: rgba(26, 71, 86, 0.3);` : ''}
   ${p => p.underline ? 'border-bottom: 1px solid #333;' : ''}
+  ${p => p.v2
+    ? `
+      align-items: center;
+      display: flex;
+      span {
+        border-left: 3px solid ${p.theme.colors.main};
+        display: block;
+        font-size: 20px;
+        padding: 5px 10px;
+        text-transform: uppercase;
+      }
+    `
+    : `
+      border-left: 5px solid ${p.theme.colors.main};
+      line-height: ${headerHeight}px;
+    `
+  }
   font-size: 24px;
   font-weight: 400;
   height: ${headerHeight}px;
-  line-height: ${headerHeight}px;
   padding: 0 0 0 30px;
   position: relative;
   margin: 0;
@@ -117,14 +133,14 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Details = (props) => {
-  const { title, contentProps = {}, edgeToEdge, onCloseDestination, outerNode, underlineHeader, width, ...restProps } = props;
+  const { title, contentProps = {}, edgeToEdge, headerProps, onCloseDestination, outerNode, width, ...restProps } = props;
   const history = useHistory();
 
   return (
     <Wrapper {...restProps}>
       <StyledDetails {...restProps}>
         {outerNode || null}
-        {title && <Header underline={underlineHeader || undefined}>{title}</Header>}
+        {title && <Header {...headerProps}><span>{title}</span></Header>}
         <CloseButton
           onClick={() => history.push(onCloseDestination || '/')}
           hasBackground={edgeToEdge}

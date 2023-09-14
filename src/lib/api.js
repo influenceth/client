@@ -133,10 +133,10 @@ const api = {
     return response.status;
   },
 
-  getAsteroid: async (i) => { //, extended = false) => {
+  getAsteroid: async (id) => { //, extended = false) => {
     // TODO: deprecate `extended` OR need to pass extra queryString to getEntityById OR need a separate call for that data
     // const response = await instance.get(`/${apiVersion}/asteroids/${i}${extended ? '?extended=1' : ''}`);
-    return getEntityById({ label: Entity.IDS.ASTEROID, id: i });
+    return getEntityById({ label: Entity.IDS.ASTEROID, id });
   },
 
   getAsteroidLotData: async (i) => {
@@ -302,7 +302,9 @@ const api = {
   },
 
   searchAssets: async (asset, query) => {
-    const response = await instance.post('/_search/asteroid', query);
+    // TODO: ecs refactor -- need to restore searching of other asset types (i.e. should not be hardcoded to asteroid)
+    // const response = await instance.post(`/_search/${asset.replace(/s$/, '').toLowerCase()}`, query);
+    const response = await instance.post(`/_search/asteroid`, query);
     return {
       hits: response.data.hits.hits.map((h) => h._source),
       total: response.data.hits.total.value
