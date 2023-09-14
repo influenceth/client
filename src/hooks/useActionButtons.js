@@ -10,7 +10,6 @@ import useStore from '~/hooks/useStore';
 import actionButtons from '../game/interface/hud/actionButtons';
 import useShipCrews from './useShipCrews';
 
-
 // if selected asteroid (any zoom)
 //  - purchase asteroid
 //  - scan asteroid
@@ -75,7 +74,7 @@ const useActionButtons = () => {
   // set ship IF zoomed to ship or zoomed to lot that can only contain one ship (i.e. not a spaceport)
   const ship = zoomedToShip || (lot && lot.building.Building?.buildingType !== Building.IDS.SPACEPORT ? lot?.Ships?.[0] : null);
   const { data: crewsOnShip } = useShipCrews(ship?.i);  // TODO: isLoading?
-  
+
   const [actions, setActions] = useState([]);
 
   // TODO: could reasonably have buttons determine own visibility and remove some redundant logic here
@@ -91,7 +90,7 @@ const useActionButtons = () => {
       }
 
       if (asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
-        if (asteroid.Control.controller?.id === crew?.i) {
+        if (asteroid.Control?.controller?.id === crew?.i) {
           a.push(actionButtons.ScanAsteroid);
         }
       }
@@ -127,7 +126,7 @@ const useActionButtons = () => {
         if (ship) {
           // TODO: check in buttons that crew is on asteroid
           //  AND check that both in orbit or both on surface
-          
+
           // if i own a ship, can pilot it
           if (ship.Control.controller.id === crew.i) {
             a.push(actionButtons.StationCrewAsPilots);
@@ -156,7 +155,7 @@ const useActionButtons = () => {
             if (ship.Ship.operatingMode === Ship.MODES.EMERGENCY || propellantInventory.mass <= 0.1 * propellantInventoryMassMax) {
               a.push(actionButtons.EmergencyModeToggle);
             }
-            
+
             // if in emergency mode, can generate
             if (ship.Ship.operatingMode === Ship.MODES.EMERGENCY) {
               a.push(actionButtons.EmergencyModeGenerate);
@@ -197,7 +196,7 @@ const useActionButtons = () => {
                 if (lot.building.Station) { // TODO: hide/disable if no guests
                   a.push(actionButtons.EjectGuestCrew);
                 }
-                
+
                 if (lot.building.Extractor?.length > 0) {
                   a.push(actionButtons.Extract);
                 }

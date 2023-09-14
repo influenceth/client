@@ -18,11 +18,12 @@ const { ENABLE_TERRAIN_CHUNK_RESOURCE_POOL } = constants;
 
 class TerrainChunkManager {
   constructor(i, config, textureSize, workerPool, materialOverrides = {}) {
+    console.log(i);
     this.asteroidId = i;
     this.config = config;
     this.workerPool = workerPool;
     this.materialOverrides = materialOverrides;
-    
+
     const {
       ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
       ...prunedConfig

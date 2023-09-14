@@ -35,7 +35,7 @@ export const renderDummyAsteroid = (asteroid, resolution, webWorkerPool, callbac
   if (!asteroid) return;
   const exportable = new Group();
   const manager = new QuadtreeTerrainCube(
-    asteroid.asteroidId,
+    asteroid.id,
     new Config(asteroid),
     resolution,
     webWorkerPool

@@ -296,7 +296,7 @@ const AsteroidComponent = () => {
   // Update texture generation config when new asteroid data is available
   useEffect(() => {
     // when asteroidData is loaded for selected asteroid...
-    if (asteroidData && asteroidData.i === origin) {
+    if (asteroidData && asteroidData.id === origin) {
 
       // init config
       const c = new Config(asteroidData);
@@ -409,7 +409,7 @@ const AsteroidComponent = () => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, ringsPresent, shadowMode, shadowSize, textureSize, surfaceDistance]);
-  
+
   // Zooms the camera to the correct location
   useEffect(() => {
     if (zoomStatus === 'zooming-in' && !prevAsteroidPosition && controls) {
@@ -426,7 +426,7 @@ const AsteroidComponent = () => {
   useEffect(() => {
     if (!shouldZoomIn || !initialOrientation || !config) return;
     if (!group.current || !position.current) return;
-    
+
     // if have rotation info and geometry is loaded, can calculate the initial chunks, then set automatingCamera
     // to pause additional chunk calculations while zooming in
     if (geometry.current && rotationAxis.current && rotation.current) {
@@ -603,13 +603,13 @@ const AsteroidComponent = () => {
       // Collect relevant settings for generating procedural resource map
       const abundances = Asteroid.getAbundances(asteroidData.Celestial.abundances);
       const settings = Asteroid.getAbundanceMapSettings(
-        asteroidData.i,
+        asteroidData.id,
         asteroidData.Celestial.abundanceSeed,
         resourceMapId,
         abundances[resourceMapId]
       );
       geometry.current.setEmissiveParams({
-        asteroidId: asteroidData.i,
+        asteroidId: asteroidData.id,
         color,
         resource: resourceMapId,
         intensityMult: EMISSIVE_INTENSITY[categoryKey],
@@ -727,7 +727,7 @@ const AsteroidComponent = () => {
             }, acc);
           }, []);
           closestChunk = x[0];
-  
+
           // 2nd pass will be more accurate now that first pass gives us an accurate guess for altitude
           // TODO (enhancement): if this is close to original location, this is probably not necessary
           if (closestChunk) {

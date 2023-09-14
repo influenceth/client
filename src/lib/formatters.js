@@ -33,7 +33,7 @@ const formatters = {
 
   asteroidName: (a, fallbackText) => {
     if (!a) return fallbackText || 'Asteroid';
-    return a.Name?.name || Asteroid.getBaseName(a.i) || `Asteroid #${a.i.toLocaleString()}`;
+    return a.Name?.name || Asteroid.getBaseName(a.id, a.Celestial.celestialType) || `Asteroid #${a.id.toLocaleString()}`;
   },
 
   asteroidPrice: (r, priceConstants) => {
@@ -41,7 +41,7 @@ const formatters = {
     const base = Number(ethersUtils.formatEther(String(priceConstants.ASTEROID_BASE_PRICE_ETH)));
     const lot = Number(ethersUtils.formatEther(String(priceConstants.ASTEROID_LOT_PRICE_ETH)));
     const lotCount = Asteroid.getSurfaceArea(0, r);
-    
+
     const price = base + lot * lotCount;
     return price.toLocaleString([], { maximumFractionDigits: 4 });
   },

@@ -5,7 +5,8 @@ export const getUpdatedAsteroidPositions = function(orbitals, elapsed = 0) {
   const positions = new Float32Array(orbitals.length * 3);
 
   orbitals.forEach((orbital, i) => {
-    const coords = (new AdalianOrbit(orbital)).getPositionAtTime(elapsed);
+    const coords = (new AdalianOrbit(orbital, { units: 'km' })).getPositionAtTime(elapsed);
+    if (isNaN(coords.x)) console.log(i, orbital);
     positions[i * 3 + 0] = coords.x;
     positions[i * 3 + 1] = coords.y;
     positions[i * 3 + 2] = coords.z;

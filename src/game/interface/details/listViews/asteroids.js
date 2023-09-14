@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { Address, Asteroid } from '@influenceth/sdk';
+import { constants } from '@influenceth/astro';
 
 import OnClickLink from '~/components/OnClickLink';
 import MarketplaceLink from '~/components/MarketplaceLink';
@@ -77,7 +78,7 @@ const useColumns = () => {
         align: 'center',
         icon: <FavoriteIcon />,
         selector: row => {
-          const isFavorited = watchlistIds.includes(row.i);
+          const isFavorited = watchlistIds.includes(row.id);
           return (
             <FavoriteToggle
               data-for="listView"
@@ -94,13 +95,12 @@ const useColumns = () => {
         unhideable: true
       },
       {
-        // TODO: ecs refactor
         key: 'name',
         label: 'Name',
         sortField: 'Name.name',
         selector: row => (
           <>
-            <LocationLink asteroidId={row.i} />
+            <LocationLink asteroidId={row.id} />
             <span>{formatters.asteroidName(row)}</span>
           </>
         ),
@@ -112,7 +112,7 @@ const useColumns = () => {
         label: 'Owner',
         sortField: 'Nft.owner',
         selector: row => {
-          if (row.Nft.owner) {
+          if (row.Nft?.owner) {
             return (
               <MarketplaceLink
                 chain={row.Nft.chain}
@@ -158,8 +158,8 @@ const useColumns = () => {
         icon: <SemiMajorAxisIcon />,
         label: 'Semi-major Axis',
         sortField: 'Orbit.a',
-        selector: row => `${row.Orbit.a} AU`
-        
+        selector: row => `${(row.Orbit.a * 1000 / constants.AU).toFixed(3)} AU`
+
       },
       {
         key: 'eccentricity',

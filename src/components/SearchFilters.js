@@ -24,17 +24,17 @@ const spectralTypeOptions = Object.keys(Asteroid.SPECTRAL_TYPES).reduce((acc, sp
 ]), []);
 
 const spectralTypeColors = {
-  0: '#6efaf4',
-  1: '#00f3ff',
-  2: '#00ebff',
-  3: '#00e1ff',
-  4: '#00d5ff',
-  5: '#00c7ff',
-  6: '#00b6ff',
-  7: '#50a0ff',
-  8: '#a084ff',
-  9: '#d65dff',
-  10: '#ff00f2'
+  1: '#6efaf4',
+  2: '#00f3ff',
+  3: '#00ebff',
+  4: '#00e1ff',
+  5: '#00d5ff',
+  6: '#00c7ff',
+  7: '#00b6ff',
+  8: '#50a0ff',
+  9: '#a084ff',
+  10: '#d65dff',
+  11: '#ff00f2'
 };
 
 // building type filter configs
@@ -142,7 +142,7 @@ const SearchFilters = ({ assetType, highlighting }) => {
   const filters = useStore(s => s.assetSearch[assetType].filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
   const { data: priceConstants } = usePriceConstants();
-  
+
   const radiusFieldNote = useCallback((value) => priceConstants && <Ether>{formatters.asteroidPrice(value, priceConstants)}</Ether>, [priceConstants])
 
   const onFiltersChange = useCallback((update) => {
@@ -247,13 +247,13 @@ const SearchFilters = ({ assetType, highlighting }) => {
           isId
           placeholder="Filter by Asteroid Id..."
           title="Asteroid" />
-          
+
         <CheckboxFilter
           {...filterProps}
           fieldName="resource"
           options={resourceTypeOptions}
           title="Resource Type" />
-        
+
         <RangeFilter
           {...filterProps}
           {...yieldConfig}
