@@ -235,7 +235,6 @@ const Launcher = (props) => {
   const loggedIn = account && token;
 
   const goToWallet = useCallback(() => {
-    if (walletContext?.starknet?.id === 'Cartridge') window.open('https://cartridge.gg', '_blank');
   }, [ walletContext ]);
 
   useEffect(() => {

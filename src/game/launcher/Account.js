@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import LoadingSpinner from 'react-spinners/PuffLoader';
@@ -248,7 +248,7 @@ const MainButton = styled(ButtonAlt)`
 
 const Account = () => {
   const history = useHistory();
-  const { account, logout } = useAuth();
+  const { account, login, logout } = useAuth();
   const { captain, loading: crewLoading, crew, crewmateMap } = useCrewContext();
 
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
@@ -282,11 +282,11 @@ const Account = () => {
       <LogoContainer loggedIn={loggedIn}>
         <InfluenceLogo />
       </LogoContainer>
-      {!loggedIn && !isLoggingIn &&
+      {!loggedIn &&
         <AccountCTA>
           <NotConnected>
             <span>Account Not Connected</span>
-            <ButtonPill onClick={() => dispatchLoggingIn(true)}>Login</ButtonPill>
+            <ButtonPill onClick={login}>Login</ButtonPill>
           </NotConnected>
         </AccountCTA>
       }

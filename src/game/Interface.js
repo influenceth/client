@@ -20,7 +20,6 @@ import CrewCreation from './interface/details/crewAssignments/Create';
 import CrewAssignments from './interface/details/CrewAssignments';
 import CrewmateDetails from './interface/details/CrewmateDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
-import OwnedCrew from './interface/details/OwnedCrew';
 import Marketplace from './interface/details/Marketplace';
 import LotViewer from './interface/modelViewer/LotViewer';
 import ShipViewer from './interface/modelViewer/ShipViewer';
@@ -30,7 +29,6 @@ import DevToolsViewer from './interface/modelViewer/DevToolsViewer';
 import Cutscene from './Cutscene';
 import Launcher from './Launcher';
 import CrewDetails from './interface/details/CrewDetails';
-import LoginDialog from '~/components/LoginDialog';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -112,7 +110,6 @@ const Interface = () => {
       {launcherPage && <Launcher />}
       {cutscene && <Cutscene />}
       {showDevTools && <DevToolsViewer />}
-      {isLoggingIn && <LoginDialog />}
       <StyledInterface hide={interfaceHidden}>
         {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
         {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
