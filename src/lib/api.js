@@ -36,7 +36,12 @@ const backwardCompatibility = (entity) => {
 };
 
 const getEntityById = async ({ label, id, components }) => {
-  return getEntities({ label, ids: [id], components })[0];
+  return new Promise((resolve, reject) => {
+    getEntities({ label, ids: [id], components }).then(entities => {
+      if (entities[0]) resolve(entities[0]);
+      reject();
+    });
+  });
 };
 
 const getEntities = async ({ ids, match, label, components }) => {

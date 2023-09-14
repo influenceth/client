@@ -158,7 +158,7 @@ const useColumns = () => {
         icon: <SemiMajorAxisIcon />,
         label: 'Semi-major Axis',
         sortField: 'Orbit.a',
-        selector: row => `${row.Orbit.a / constants.AU} AU`
+        selector: row => `${(row.Orbit.a * 1000 / constants.AU).toFixed(3)} AU`
 
       },
       {

@@ -8,10 +8,11 @@ import constants from '~/lib/constants';
 // Responsible for generating a config for any asteroid to be generated
 class Config {
   constructor(asteroid) {
-    this.seedGen = new Seed(asteroid.Celestial.seed);
+    console.log(asteroid);
+    this.seedGen = new Seed(Asteroid.Entity.getSeed(asteroid));
     this.type = asteroid.Celestial.celestialType;
-    this.radius = asteroid.Celestial.radius
-    this.bonuses = Asteroid.getBonuses(asteroid.Celestial.bonuses);
+    this.radius = asteroid.Celestial.radius * 1000; // adjust to meters
+    this.bonuses = Asteroid.Entity.getBonuses(asteroid);
 
     const dispWeightCoarse = this._dispWeightCoarse();
     const dispWeightFine = this._dispWeightFine();
@@ -134,8 +135,20 @@ class Config {
 
   // Makes features like craters, rims, etc. sharper
   _featuresSharpness() {
-    //                   C     Cm   Ci     Cs    Cms   Cis   S     Sm    Si    M     I
-    const sharpness = [ 1.00, 0.90, 1.00, 0.95, 0.90, 0.95, 0.90, 0.80, 1.00, 0.75, 1.00 ];
+    const sharpness = {
+      1: 1.00, // C
+      2: 0.90, // Cm
+      3: 1.00, // Ci
+      4: 0.95, // Cs
+      5: 0.90, // Cms
+      6: 0.95, // Cis
+      7: 0.90, // S
+      8: 0.80, // Sm
+      9: 1.00, // Si
+      10: 0.75, // M
+      11: 1.00 // I
+    };
+
     return sharpness[this.type];
   }
 

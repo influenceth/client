@@ -130,7 +130,6 @@ const CloseButton = styled(IconButton)`
   }
 `;
 
-
 const thumbCornerSize = 10;
 const ThumbPreview = styled.div`
   background: #000;
@@ -350,7 +349,7 @@ const InfoPane = () => {
   useEffect(() => {
     setHover(false);
   }, [asteroidId, lotId, zoomStatus, zoomScene]);
-  
+
   const {
     captainCard,
     title,
@@ -363,6 +362,7 @@ const InfoPane = () => {
     const pane = {
       thumbVisible: true
     };
+
     if (zoomStatus === 'out' && asteroidId) {
       if (asteroid) {
         pane.title = formatters.asteroidName(asteroid);
