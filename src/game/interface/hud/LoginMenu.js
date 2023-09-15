@@ -1,22 +1,13 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
-import styled, { css, keyframes } from 'styled-components';
+import styled from 'styled-components';
 import Button from '~/components/ButtonAlt';
 
-import CollapsibleSection from '~/components/CollapsibleSection';
 import CrewCardFramed from '~/components/CrewCardFramed';
-import { CaptainIcon, CrewIcon, CrewmateIcon, FoodIcon, IdleIcon, LocationIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
-import { useLotLink } from '~/components/LotLink';
-import { useShipLink } from '~/components/ShipLink';
-import TriangleTip from '~/components/TriangleTip';
-import useAsteroid from '~/hooks/useAsteroid';
+import { PlusIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
-import useBuilding from '~/hooks/useBuilding';
-import useCrewContext from '~/hooks/useCrewContext';
-import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
-import formatters from '~/lib/formatters';
 import theme from '~/theme';
 
 const Wrapper = styled.div`
@@ -39,12 +30,11 @@ const ButtonWrapper = styled.div`
 
 const LoginMenu = () => {
   const { account } = useAuth();
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const history = useHistory();
 
-  const dispatchLoggingIn = useStore(s => s.dispatchLoggingIn);
-
   const [tooltip, status, onClick] = useMemo(() => {
-    if (!account) return ['Log-In', 'Account Not Connected', () => dispatchLoggingIn(true)];
+    if (!account) return ['Log-In', 'Account Not Connected', () => dispatchLauncherPage(true)];
     else return ['Start Crew', 'Crew Needs Recruits', () => history.push('/crew')];  // TODO: right place?
   }, [ account ]);
 

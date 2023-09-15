@@ -19,7 +19,6 @@ export function AuthProvider({ children }) {
   const dispatchTokenInvalidated = useStore(s => s.dispatchTokenInvalidated);
   const dispatchAuthenticated = useStore(s => s.dispatchAuthenticated);
   const walletContext = useContext(WalletContext);
-  const walletAccount = walletContext?.account;
 
   const [authenticating, setAuthenticating] = useState(false);
 
@@ -45,27 +44,26 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (token) {
       if (!isExpired(token)) {
-        if (walletAccount && walletAccount === getAccountFromToken(token)) {
-          return;
-        }
+        if (walletContext?.account && walletContext?.account === getAccountFromToken(token)) return;
       }
+
       dispatchTokenInvalidated();
     }
-  }, [ token, walletAccount, dispatchTokenInvalidated ]);
+  }, [ token, walletContext?.account, dispatchTokenInvalidated ]);
 
-  const initiateLogin = useCallback(async (withWallet) => {
-    await walletContext.attemptConnection(withWallet);
-    const address = withWallet?.account?.address;
+  const initiateLogin = useCallback(async () => {
+    const wallet = await walletContext.connect();
+    const walletAccount = wallet?.account?.address;
 
-    if (address && !token) {
+    if (walletAccount && !token) {
       try {
-        const loginMessage = await api.requestLogin(address);
-        const signature = await withWallet.account.signMessage(loginMessage);
+        const loginMessage = await api.requestLogin(walletAccount);
+        const signature = await wallet.account.signMessage(loginMessage);
         if (signature?.code === 'CANCELED') throw new Error('User abort');
 
         if (signature) {
           setAuthenticating(true);
-          const newToken = await api.verifyLogin(address, { signature: signature.join(',') });
+          const newToken = await api.verifyLogin(walletAccount, { signature: signature.join(',') });
           dispatchAuthenticated(newToken);
         }
       } catch (e) {
@@ -76,12 +74,13 @@ export function AuthProvider({ children }) {
           type: 'GenericAlert', level: 'warning', content: 'Signature verification failed.', duration: 10000
         });
       }
+
       setAuthenticating(false);
     }
   }, [ walletContext, token, dispatchAuthenticated ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const initiateLogout = useCallback(() => {
-    walletContext.disconnect({ clearLastWallet: true });
+    walletContext.disconnect();
     dispatchTokenInvalidated();
   }, [ walletContext.disconnect, dispatchTokenInvalidated ]);
 
