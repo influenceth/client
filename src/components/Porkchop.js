@@ -137,7 +137,7 @@ const Porkchop = ({
     // NOTE: if this ends up being too much (i.e. if we are running porkchops in multiple contexts),
     //  we could always specify the last run id in the item and just cancel previous run id here
     cancelBackgroundProcesses((item) => item.topic !== 'calculatePorkchop');
-    
+
     const width = maxDelay - minDelay + 1;
     const height = maxTof - minTof + 1;
 

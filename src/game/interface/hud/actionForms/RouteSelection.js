@@ -56,8 +56,6 @@ const RouteSelection = () => {
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
 
-  const destInput = useRef();
-
   const handleSwap = useCallback(() => {
     if (originId && destinationId) dispatchSwapOriginDestination();
   }, [destinationId, originId]);
@@ -68,7 +66,7 @@ const RouteSelection = () => {
   }, []);
 
   const handleSelect = useCallback((dest) => {
-    if (Number(dest?.i) !== Number(originId)) dispatchDestinationSelected(dest?.i)
+    if (Number(dest?.id) !== Number(originId)) dispatchDestinationSelected(dest?.id)
   }, [originId]);
 
   return (
@@ -89,7 +87,6 @@ const RouteSelection = () => {
         <Row>
           <DestinationIcon />
           <Autocomplete
-            ref={destInput}
             assetType="asteroids"
             dropdownProps={{ style: { maxHeight: 115 }}}
             placeholder="Destination Asteroid..."
