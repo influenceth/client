@@ -84,7 +84,6 @@ const Interface = () => {
   const isFetching = useIsFetching();
   const cutscene = useStore(s => s.cutscene);
   const launcherPage = useStore(s => s.launcherPage);
-  const isLoggingIn = useStore(s => s.auth.loggingIn);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const showDevTools = useStore(s => s.graphics.showDevTools);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);

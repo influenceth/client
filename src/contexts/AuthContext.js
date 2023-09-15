@@ -19,7 +19,6 @@ export function AuthProvider({ children }) {
   const dispatchTokenInvalidated = useStore(s => s.dispatchTokenInvalidated);
   const dispatchAuthenticated = useStore(s => s.dispatchAuthenticated);
   const walletContext = useContext(WalletContext);
-  const walletAccount = walletContext?.account;
 
   const [authenticating, setAuthenticating] = useState(false);
 
@@ -50,7 +49,7 @@ export function AuthProvider({ children }) {
 
       dispatchTokenInvalidated();
     }
-  }, [ token, walletContext, dispatchTokenInvalidated ]);
+  }, [ token, walletContext?.account, dispatchTokenInvalidated ]);
 
   const initiateLogin = useCallback(async () => {
     const wallet = await walletContext.connect();

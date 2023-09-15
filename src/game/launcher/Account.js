@@ -252,11 +252,9 @@ const Account = () => {
   const { captain, loading: crewLoading, crew, crewmateMap } = useCrewContext();
 
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
-  const isLoggingIn = useStore(s => s.auth.loggingIn);
   const dispatchCutscene = useStore(s => s.dispatchCutscene);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
-  const dispatchLoggingIn = useStore(s => s.dispatchLoggingIn);
 
   const loggedIn = !!account;
 
