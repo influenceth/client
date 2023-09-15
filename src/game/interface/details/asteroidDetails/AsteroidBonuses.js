@@ -43,13 +43,12 @@ const AsteroidBonuses = ({ bonuses, ...props }) => {
     setInfoPaneAnchor(which ? e.target : null);
   };
 
-  const nonzeroBonuses = useMemo(() => (bonuses || []).filter((b) => b.level > 0), [bonuses]);
+  if (!(bonuses?.length > 0)) return null;
 
-  if (!(nonzeroBonuses?.length > 0)) return null;
   return (
     <>
       <Bonuses {...props}>
-        {nonzeroBonuses.map((bonus) => (
+        {bonuses.map((bonus) => (
           <BonusItem key={bonus.name}
             category={bonusLabels[bonus.type]}
             onMouseEnter={setInfoPaneRef(true)}

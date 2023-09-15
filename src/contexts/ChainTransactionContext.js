@@ -204,7 +204,7 @@ export function ChainTransactionProvider({ children }) {
           equalityTest: ['i'],
           ...(customConfigs[systemName] || {})
         };
-        
+
         acc[systemName] = {
           confirms: config.confirms,
           equalityTest: config.equalityTest,
@@ -338,8 +338,6 @@ export function ChainTransactionProvider({ children }) {
             }
 
           // TODO: fix below
-          //  - cartridge needs to respond to getTransactionReceipt more appropriately
-          //    (seems like always returning "Transaction hash not found"; at most should do that for REJECTED txs)
           //  - move this into its own effect dependent only on block number changes so not running getTransactionReceipt so often
 
           // // if pending transaction has not turned into an event within 45 seconds

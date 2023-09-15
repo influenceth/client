@@ -170,7 +170,7 @@ const getInventoriesByShipType = (shipType) => {
 const RoutePlanner = () => {
   const { coarseTime } = useContext(ClockContext);
   const { crew } = useCrewContext();
-  
+
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
@@ -235,8 +235,9 @@ const RoutePlanner = () => {
   const shipConfig = useMemo(() => {
     if (!ship) return null;
 
-    const cargoInventory = ship.Inventories.find((i) => i.slot === shipConfig.cargoSlot);
-    const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
+    const shipTypeConfig = Ship.TYPES[ship.Ship.shipType];
+    const cargoInventory = ship.Inventories.find((i) => i.slot === shipTypeConfig.cargoSlot);
+    const propellantInventory = ship.Inventories.find((i) => i.slot === shipTypeConfig.propellantSlot);
 
     const config = {};
     config.maxCargoMass = Inventory.TYPES[cargoInventory?.inventoryType]?.massConstraint || 0;
@@ -260,7 +261,7 @@ const RoutePlanner = () => {
   const onSetCargoMass = useCallback((amount) => {
     setCargoMass(Math.max(0, Math.min(shipConfig?.maxCargoMass, Math.floor(parseInt(amount) || 0))));
   }, [shipConfig]);
-  
+
   const onSetPropellantMass = useCallback((amount) => {
     setPropellantMass(Math.max(0, Math.min(shipConfig?.maxPropellantMass, Math.floor(parseInt(amount) || 0))));
   }, [shipConfig]);

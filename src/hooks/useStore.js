@@ -217,10 +217,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
         });
       }
     })),
-    
-    dispatchLoggingIn: (which) => set(produce(state => {
-      state.auth.loggingIn = !!which;
-    })),
 
     dispatchToggleInterface: (force) => set(produce(state => {
       state.graphics.hideInterface = (force === true || force === false)

@@ -42,14 +42,14 @@ const contractAddress = process.env.REACT_APP_STARKNET_DISPATCHER;
 //   getConfirmedAlert: null,
 //   getEventAlert: null,
 //   confirms: null,
-  
+
 // };
 
 // const actions = {
 //   NameAsteroid: {},
 //   PurchaseAsteroid: {
 //     getCalls: ({ id }) => {
-//       const price = 0; // TODO: 
+//       const price = 0; // TODO:
 //       return [
 //         getApproveEthCall({ amount: price }),
 //         getRunSystemCall('PurchaseAsteroid', { id, price })
@@ -101,11 +101,11 @@ const getContracts = (account) => ({
       //   getRunSystemCall('ChangeName', { i, name })
       // ])
     }
-    
+
     // await accounts[0].invoke(contract, 'execute', {
     //   method: name, calldata: [ 2, shortStringToFelt('Asteroid'), 1, shortStringToFelt('AdaliaPrime') ]
     // });
-    
+
     // contract.invoke('Asteroid_setName', [
     //   i,
     //   shortString.encodeShortString(name)
@@ -528,8 +528,6 @@ export function ChainTransactionProvider({ children }) {
             }
 
           // TODO: fix below
-          //  - cartridge needs to respond to getTransactionReceipt more appropriately
-          //    (seems like always returning "Transaction hash not found"; at most should do that for REJECTED txs)
           //  - move this into its own effect dependent only on block number changes so not running getTransactionReceipt so often
 
           // // if pending transaction has not turned into an event within 45 seconds
