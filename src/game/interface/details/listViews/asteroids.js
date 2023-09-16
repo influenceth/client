@@ -64,7 +64,7 @@ const useColumns = () => {
           // TODO: ecs refactor
           // TODO: or
           // selector: row => row.Control?.controller?.id === crew?.i ? <MyAssetIcon /> : null,
-          if (account && row.Nft?.owner && Address.areEqual(row.Nft.owner, account)) {
+          if (account && row.Nft?.owners && Address.areEqual(row.Nft.owners.starknet, account)) {
             return <MyAssetIcon />
           }
           return '';
@@ -110,19 +110,20 @@ const useColumns = () => {
         key: 'owner',
         icon: <WalletIcon />,
         label: 'Owner',
-        sortField: 'Nft.owner',
+        sortField: 'Nft.owners.starknet',
         selector: row => {
-          if (row.Nft?.owner) {
+          // TODO: refine to show the correct chain owner when owned by bridge
+          if (row.Nft?.owners?.starknet) {
             return (
               <MarketplaceLink
                 chain={row.Nft.chain}
                 assetType="account"
-                id={row.Nft.owner}>
+                id={row.Nft.owners.starknet}>
                 {(onClick, setRefEl) => (
                   <OnClickLink ref={setRefEl} onClick={onClick}>
-                    {account && Address.areEqual(row.Nft.owner, account)
+                    {account && Address.areEqual(row.Nft.owners.starknet, account)
                       ? `you`
-                      : `${row.Nft.owner.substr(0, 6)}...${row.Nft.owner.substr(-4)}`
+                      : `${row.Nft.owners.starknet.substr(0, 6)}...${row.Nft.owners.starknet.substr(-4)}`
                     }
                   </OnClickLink>
                 )}

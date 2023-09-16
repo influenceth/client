@@ -15,7 +15,7 @@ filtersToQuery.asteroids = (filters) => {
     if (filters.ownedBy === 'unowned') {
       queryBuilder.mustNot(esb.existsQuery('Nft.owners'))
     } else if (filters.ownedBy === 'owned') {
-      queryBuilder.filter(esb.existsQuery('Nft.owners'))
+      queryBuilder.filter(esb.existsQuery('Nft.owners.starknet'))
     } else if (filters.ownedBy) {
       queryBuilder.filter(esb.termQuery('Nft.owners.starknet', filters.ownedBy));
     }
@@ -84,7 +84,7 @@ filtersToQuery.buildings = (filters) => {
   }
 
   if (filters.controller) {
-    queryBuilder.filter(esb.termQuery('Control.controller.i', filters.controller));
+    queryBuilder.filter(esb.termQuery('Control.controller.id', filters.controller));
   }
 
   // TODO: ecs refactor

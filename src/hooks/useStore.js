@@ -21,7 +21,7 @@ const assetSearchDefaults = {
   actionitems: { filters: {}, sort: ['time', 'asc'] },
   asteroids: { filters: {}, sort: ['Celestial.radius', 'desc'] },
   asteroidsMapped: { filters: {}, sort: ['Celestial.radius', 'desc'], highlight: null },
-  buildings: { filters: {}, sort: ['lot.id', 'asc'] },
+  buildings: { filters: {}, sort: ['Building.buildingType', 'asc'] },
   coresamples: { filters: { status: [2,3] }, sort: ['lot.id', 'asc'] },
   crewmates: { filters: {}, sort: ['id', 'asc'] },
   crews: { filters: {}, sort: ['id', 'asc'] },

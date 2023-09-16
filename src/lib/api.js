@@ -298,9 +298,9 @@ const api = {
   },
 
   searchAssets: async (asset, query) => {
-    // TODO: ecs refactor -- need to restore searching of other asset types (i.e. should not be hardcoded to asteroid)
-    // const response = await instance.post(`/_search/${asset.replace(/s$/, '').toLowerCase()}`, query);
-    const response = await instance.post(`/_search/asteroid`, query);
+    const assetIndex = asset.replace(/s$/, '').toLowerCase();
+    const response = await instance.post(`/_search/${assetIndex}`, query);
+
     return {
       hits: response.data.hits.hits.map((h) => h._source),
       total: response.data.hits.total.value

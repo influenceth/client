@@ -30,7 +30,7 @@ const useColumns = () => {
         key: 'name',
         icon: <CrewmateIcon />,
         label: 'Name',
-        sortField: 'Name.name',
+        sortField: 'Name.name', // TODO: figure out why elastic doesn't like this
         selector: row => formatters.crewmateName(row),
         unhideable: true
       },
@@ -45,19 +45,20 @@ const useColumns = () => {
         key: 'class',
         label: 'Class',
         sortField: 'Crewmate.class',
-        selector: row => Crewmate.getClass(row)?.name,
+        selector: row => row.Crewmate ? Crewmate.Entity.getClass(row)?.name : null,
       },
       {
         key: 'collection',
         label: 'Collection',
         sortField: 'Crewmate.coll',
-        selector: row => Crewmate.getCollection(row)?.name,
+        selector: row => row.Crewmate ? Crewmate.Entity.getCollection(row)?.name : null,
       },
       {
         key: 'traits',
         label: 'Traits',
         selector: row => {
-          const traits = Crewmate.getCombinedTraits(row);
+          const traits = row.Crewmate ? Crewmate.Entity.getCombinedTraits(row) : [];
+
           return traits
             .map((t) => Crewmate.getTrait(t)?.name)
             .filter((t) => !!t)

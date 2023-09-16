@@ -30,26 +30,26 @@ const useColumns = () => {
       {
         key: 'name',
         label: 'Name',
-        sortField: 'Name.name', // TODO: ecs refactor
+        sortField: 'Name.name',
         selector: row => formatters.crewName(row),
         unhideable: true
       },
       {
         key: 'owner',
         label: 'Owner',
-        sortField: 'Nft.owner',
+        sortField: 'Nft.owners.starknet',
         selector: row => {
-          if (row.owner) {
+          if (row.Nft?.owners?.starknet) {
             return (
               <MarketplaceLink
-                chain={row.Nft.chain}
+                chain={row.Nft.chain || 'starknet'}
                 assetType="account"
-                id={row.Nft.owner}>
+                id={row.Nft.owners.starknet}>
                 {(onClick, setRefEl) => (
                   <OnClickLink ref={setRefEl} onClick={onClick}>
-                    {account && Address.areEqual(row.Nft.owner, account)
+                    {account && Address.areEqual(row.Nft.owners.starknet, account)
                       ? `you`
-                      : `${row.Nft.owner.substr(0, 6)}...${row.Nft.owner.substr(-4)}`
+                      : `${row.Nft.owners.starknet.substr(0, 6)}...${row.Nft.owners.starknet.substr(-4)}`
                     }
                   </OnClickLink>
                 )}
