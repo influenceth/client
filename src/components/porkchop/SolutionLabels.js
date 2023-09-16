@@ -267,6 +267,7 @@ const SolutionLabels = ({ center, mousePos, shipParams }) => {
     tof
   } = useMemo(() => {
     if (!travelSolution) return {};
+
     return {
       arrival: Math.round(travelSolution.arrivalTime - coarseTime),
       delay: Math.round(travelSolution.departureTime - coarseTime),
