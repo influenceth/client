@@ -139,17 +139,18 @@ const simInventoryDefaults = { contents: [], mass: 0, volume: 0, reservedMass: 0
 const getCargoInventoryType = (shipType) => {
   if (shipType === Ship.IDS.HEAVY_TRANSPORT) return Inventory.IDS.CARGO_LARGE;
   if (shipType === Ship.IDS.LIGHT_TRANSPORT) return Inventory.IDS.CARGO_MEDIUM;
-  return Inventory.IDS.CARGO_SMALL;
+  return Inventory.IDS.CARGO_SMALL; // TODO: Escape module has no cargo
 };
 const getPropellantInventoryType = (shipType) => {
-  if (shipType === Ship.IDS.HEAVY_TRANSPORT) return Inventory.IDS.PROPELLANT_LARGE;
-  if (shipType === Ship.IDS.LIGHT_TRANSPORT) return Inventory.IDS.PROPELLANT_MEDIUM;
-  if (shipType === Ship.IDS.SHUTTLE) return Inventory.IDS.PROPELLANT_SMALL;
+  if (Number(shipType) === Ship.IDS.HEAVY_TRANSPORT) return Inventory.IDS.PROPELLANT_LARGE;
+  if (Number(shipType) === Ship.IDS.LIGHT_TRANSPORT) return Inventory.IDS.PROPELLANT_MEDIUM;
+  if (Number(shipType) === Ship.IDS.SHUTTLE) return Inventory.IDS.PROPELLANT_SMALL;
   return Inventory.IDS.PROPELLANT_TINY;
 };
 const getInventoriesByShipType = (shipType) => {
   const inventories = [];
   const config = Ship.TYPES[shipType];
+
   if (config.cargoSlot) {
     inventories.push({
       ...simInventoryDefaults,
@@ -157,6 +158,7 @@ const getInventoriesByShipType = (shipType) => {
       inventoryType: getCargoInventoryType(shipType),
     });
   }
+
   if (config.propellantSlot) {
     inventories.push({
       ...simInventoryDefaults,
@@ -164,6 +166,7 @@ const getInventoriesByShipType = (shipType) => {
       inventoryType: getPropellantInventoryType(shipType),
     });
   }
+
   return inventories;
 }
 
@@ -214,7 +217,7 @@ const RoutePlanner = () => {
         id: -(1 + i),
         i: -(1 + i),
         Name: { name: `[Simulated] ${Ship.TYPES[s].name}` },
-        Ship: { shipType: s, status: Ship.STATUSES.AVAILABLE },
+        Ship: { shipType: Number(s), status: Ship.STATUSES.AVAILABLE },
         Location: { location: { label: Entity.IDS.ASTEROID, id: originId } },
         Inventories: getInventoriesByShipType(s),
         _simulated: true
@@ -242,6 +245,7 @@ const RoutePlanner = () => {
     const config = {};
     config.maxCargoMass = Inventory.TYPES[cargoInventory?.inventoryType]?.massConstraint || 0;
     config.maxPropellantMass = Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint || 0;
+
     if (ship._simulated) {
       config.initialCargoMass = config.maxCargoMass * 0.5;
       config.initialPropellantMass = config.maxPropellantMass * 0.5;
@@ -249,6 +253,7 @@ const RoutePlanner = () => {
       config.initialCargoMass = cargoInventory?.mass || 0;
       config.initialPropellantMass = propellantInventory?.mass || 0;
     }
+
     return config;
   }, [ship]);
 
@@ -259,11 +264,11 @@ const RoutePlanner = () => {
   }, [shipConfig]);
 
   const onSetCargoMass = useCallback((amount) => {
-    setCargoMass(Math.max(0, Math.min(shipConfig?.maxCargoMass, Math.floor(parseInt(amount) || 0))));
+    setCargoMass(Math.max(0, Math.min(shipConfig?.maxCargoMass, Math.floor(parseInt(amount * 1000) || 0))));
   }, [shipConfig]);
 
   const onSetPropellantMass = useCallback((amount) => {
-    setPropellantMass(Math.max(0, Math.min(shipConfig?.maxPropellantMass, Math.floor(parseInt(amount) || 0))));
+    setPropellantMass(Math.max(0, Math.min(shipConfig?.maxPropellantMass, Math.floor(parseInt(amount * 1000) || 0))));
   }, [shipConfig]);
 
   const onCancel = useCallback(() => {
@@ -272,14 +277,16 @@ const RoutePlanner = () => {
 
   const shipParams = useMemo(() => {
     if (!ship) return 0;
-
     const exhaustVelocity = Ship.TYPES[ship.Ship.shipType]?.exhaustVelocity || 0;
+    const hullMass = Ship.TYPES[ship.Ship.shipType]?.hullMass || 0;
+
     return {
       ...ship,
       actualCargoMass: cargoMass,
       actualPropellantMass: propellantMass,
       exhaustVelocity,
-      maxDeltaV: exhaustVelocity * Math.log((ship.hullMass + cargoMass + propellantMass) / (ship.hullMass + cargoMass))
+      hullMass,
+      maxDeltaV: exhaustVelocity * Math.log((hullMass + cargoMass + propellantMass) / (hullMass + cargoMass))
     };
   }, [ship, cargoMass, propellantMass]);
 
@@ -320,6 +327,7 @@ const RoutePlanner = () => {
         resolution
       )
     };
+
     console.log('time to sample trajectories', performance.now() - p1);
     return paths;
   }, [baseTime, origin, destination]);
@@ -353,18 +361,18 @@ const RoutePlanner = () => {
             <label><b>Simulated</b> Onboard Cargo</label>
             <NumberInput
               min={0}
-              max={shipConfig?.maxCargoMass || 0}
+              max={shipConfig?.maxCargoMass / 1000 || 0}
               onChange={onSetCargoMass}
               step={1}
-              value={cargoMass} />
+              value={cargoMass / 1000} />
             <sub>kg</sub>
           </SliderInfoRow>
           <SliderInput
             min={0}
-            max={shipConfig?.maxCargoMass || 0}
+            max={shipConfig?.maxCargoMass / 1000 || 0}
             increment={1}
             onChange={onSetCargoMass}
-            value={cargoMass || 0} />
+            value={cargoMass / 1000 || 0} />
         </SliderSection>
 
         <SliderSection>
@@ -372,18 +380,18 @@ const RoutePlanner = () => {
             <label><b>Simulated</b> Onboard Propellant</label>
             <NumberInput
               min={0}
-              max={shipConfig?.maxPropellantMass || 0}
+              max={shipConfig?.maxPropellantMass / 1000 || 0}
               onChange={onSetPropellantMass}
               step={1}
-              value={propellantMass} />
+              value={propellantMass / 1000} />
             <sub>kg</sub>
           </SliderInfoRow>
           <SliderInput
             min={0}
-            max={shipConfig?.maxPropellantMass || 0}
+            max={shipConfig?.maxPropellantMass / 1000 || 0}
             increment={1}
             onChange={onSetPropellantMass}
-            value={propellantMass || 0} />
+            value={propellantMass / 1000 || 0} />
         </SliderSection>
       </Sliders>
 
