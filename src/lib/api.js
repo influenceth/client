@@ -210,10 +210,6 @@ const api = {
     return getEntities({ match: { 'Name.name': name }, label, components: [] });
   },
 
-  getOwnedAsteroids: async (account) => {
-    return getEntities({ match: { 'Nft.owner': account }, label: Entity.IDS.ASTEROID });
-  },
-
   getOwnedCrews: async (account) => {
     return getEntities({ match: { 'Crew.delegatedTo': account }, label: Entity.IDS.CREW });
   },

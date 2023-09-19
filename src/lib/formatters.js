@@ -54,7 +54,7 @@ const formatters = {
 
   crewName: (c, fallbackText) => {
     if (!c) return fallbackText || 'Crew';
-    return c.Name?.name || `Crew #${c.i.toLocaleString()}`;
+    return c.Name?.name || `Crew #${c.id.toLocaleString()}`;
   },
 
   crewmatePrice: (priceConstants) => {
@@ -65,7 +65,7 @@ const formatters = {
 
   crewmateName: (c, fallbackText) => {
     if (!c) return fallbackText || 'Crewmate';
-    return c.Name?.name || `Crewmate #${c.i.toLocaleString()}`;
+    return c.Name?.name || `Crewmate #${c.id.toLocaleString()}`;
   },
 
   shipName: (s, fallbackText) => {

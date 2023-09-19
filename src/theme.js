@@ -95,7 +95,7 @@ const theme = {
     },
     mainButton: main,
     disabledButton: '#676767',
-    txButton: '#4444b8',
+    txButton: '#6c6adc',
   },
   fontSizes: {
     smallText: '12px',

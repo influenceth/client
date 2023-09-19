@@ -102,8 +102,6 @@ const AsteroidInfo = ({ onClose }) => {
     }, []);
   }, [asteroid?.Celestial?.celestialType]);
 
-  const isScanned = useMemo(() => Asteroid.Entity.isScanned(asteroid), asteroid);
-
   const onClickDetails = useCallback(() => {
     onClose();
     history.push(`/asteroids/${asteroidId}`);
@@ -123,9 +121,10 @@ const AsteroidInfo = ({ onClose }) => {
               <b>{Asteroid.Entity.getSpectralType(asteroid)}{'-type'}</b>
             </span>
             <span>
-              {isScanned && <Rarity rarity={Asteroid.Entity.getRarity(asteroid)} />}
-              {!isScanned && asteroid.Celestial.scanStatus > Asteroid.SCAN_STATUSES.UNSCANNED && <Unscanned scanning>Scanning...</Unscanned>}
-              {!isScanned && !(asteroid.Celestial.scanStatus > Asteroid.SCAN_STATUSES.UNSCANNED) && <Unscanned>Unscanned</Unscanned>}
+              {asteroid.Celestial.scanStatus >= Asteroid.SCAN_STATUSES.SURFACE_SCANNED && <Rarity rarity={Asteroid.Entity.getRarity(asteroid)} />}
+              {asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.UNSCANNED && <Unscanned>Unscanned</Unscanned>}
+              {asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.SURFACE_SCANNING && <Unscanned scanning>Scanning Surface...</Unscanned>}
+              {asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNING && <Unscanned scanning>Scanning Resources...</Unscanned>}
             </span>
           </InfoRow>
         </TitleArea>

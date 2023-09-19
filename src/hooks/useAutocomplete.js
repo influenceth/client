@@ -9,13 +9,11 @@ let sort;
 
 const configByType = {
   asteroids: {
-    formatFootnote: (a) => `ID #${(a.i || '').toLocaleString()}`,
+    formatFootnote: (a) => `ID #${(a.id || '').toLocaleString()}`,
     formatLabel: (a) => formatters.asteroidName(a),
-    valueKey: 'i'
+    valueKey: 'id'
   },
 }
-
-// TODO: ecs refactor (pending location of baseName)
 
 const useAutocomplete = (assetType) => {
   const [ searchTerm, setSearchTerm ] = useState('');
@@ -31,9 +29,9 @@ const useAutocomplete = (assetType) => {
         queryBuilder = esb.boolQuery();
 
         // if all numeric, also search against id
-        // TODO: prioritize match against i if i is included
-        const matchAgainst = ['customName', 'baseName'];
-        if (!/^[^0-9]/.test(searchTerm)) matchAgainst.unshift('i');
+        // TODO: prioritize match against id if id is included
+        const matchAgainst = ['Name.name'];
+        if (!/^[^0-9]/.test(searchTerm)) matchAgainst.unshift('id');
         queryBuilder.filter(
           esb.multiMatchQuery(matchAgainst, searchTerm)
         );

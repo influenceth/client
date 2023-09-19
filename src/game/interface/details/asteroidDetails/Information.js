@@ -37,6 +37,7 @@ import AsteroidGraphic from './components/AsteroidGraphic';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import { boolAttr } from '~/lib/utils';
 import usePriceConstants from '~/hooks/usePriceConstants';
+import useControlAsteroid from '~/hooks/useControlAsteroid';
 
 const paneStackBreakpoint = 720;
 
@@ -184,7 +185,7 @@ const ModelButton = styled(Button)`
 const HighlightOwnership = styled.div`
   font-size: 115%;
   font-weight: bold;
-  color: ${p => p.theme.colors.main};
+  color: ${p => p.warning ? p.theme.colors.warning : p.theme.colors.main};
   margin-top: 0.25em;
   margin-bottom: 1.25em;
 `;
@@ -269,11 +270,12 @@ const SmHidden = styled.span`
 `;
 
 
-const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
+const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   const { account } = useAuth();
   const createReferral = useCreateReferral(Number(asteroid.id));
   const isNameValid = useNameAvailability(Entity.IDS.ASTEROID);
   const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.id));
+  const { controlAsteroid, takingControl } = useControlAsteroid(Number(asteroid.id));
   const { nameAsteroid, naming } = useNameAsteroid(Number(asteroid.id));
   const { data: priceConstants } = usePriceConstants();
   const webWorkerPool = useWebWorker();
@@ -319,7 +321,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
             <AsteroidGraphic
               abundances={abundances}
               asteroid={asteroid}
-              noColor={asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED}
+              noColor={asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED}
               noGradient />
           </GraphicWrapper>
         </GraphicSection>
@@ -391,9 +393,10 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
         <div>
           <SectionHeader>Management</SectionHeader>
           <SectionBody>
-            {isOwner && <HighlightOwnership>You own this Asteroid.</HighlightOwnership>}
+            {isOwner && !isManager && <HighlightOwnership warning>You own this Asteroid, but your crew does not currently manage it.</HighlightOwnership>}
+            {isManager && <HighlightOwnership>Your crew manages this Asteroid.</HighlightOwnership>}
             <ButtonRow>
-              {isOwner && (
+              {isManager && (
                 <>
                   <StaticForm
                     css={{
@@ -434,6 +437,16 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                     Re-Name
                   </Button>
                 </>
+              )}
+
+              {isOwner && !isManager && (
+                <Button
+                  disabled={boolAttr(takingControl)}
+                  isTransaction
+                  loading={boolAttr(takingControl)}
+                  onClick={controlAsteroid}>
+                  Manage Asteroid
+                </Button>
               )}
 
               {isOwner && (

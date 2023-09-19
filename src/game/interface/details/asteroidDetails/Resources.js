@@ -347,12 +347,12 @@ const UnscannedWrapper = styled.div`
   justify-content: center;
 `;
 const UnscannedContainer = styled.div`
-  max-width: 540px;
+  max-width: 570px;
   width: 100%;
 `;
 const UnscannedHeader = styled.div`
-  background: ${p => p.isOwner ? p.theme.colors.main : '#3d3d3d'};
-  color: ${p => p.isOwner ? 'black' : 'white'};
+  background: ${p => p.isManager ? p.theme.colors.main : '#3d3d3d'};
+  color: ${p => p.isManager ? 'black' : 'white'};
   font-size: 20px;
   line-height: 1.8em;
   position: relative;
@@ -411,7 +411,7 @@ const StartScanButton = ({ i }) => {
   );
 };
 
-const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
+const ResourceDetails = ({ abundances, asteroid, isManager }) => {
   const history = useHistory();
   const { category: initialCategory } = useParams();
   const selectOrigin = useStore(s => s.dispatchOriginSelected);
@@ -492,17 +492,17 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
               defaultLastRow={Asteroid.Entity.getRarity(asteroid)}
               focus={selected?.category}
               hover={hover}
-              noColor={asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED} />
+              noColor={asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED} />
           </GraphicWrapper>
         </GraphicSection>
       </LeftPane>
       <RightPane>
-        {asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED && (
+        {asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED && (
           <UnscannedWrapper>
-            {isOwner && (
+            {isManager && (
               <UnscannedContainer>
                 {scanStatus === 'READY_TO_FINISH' && (
-                  <UnscannedHeader isOwner>
+                  <UnscannedHeader isManager>
                     <WarningOutlineIcon />
                     Un-Scanned Asteroid
                   </UnscannedHeader>
@@ -510,14 +510,14 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                 <UnscannedBody>
                   {scanStatus === 'UNSCANNED' && (
                     <>
-                      <p><b>You own this asteroid.</b> Perform a scan to determine its final resource composition and bonuses.</p>
+                      <p><b>You manage this asteroid.</b> Perform a scan to determine its final resource composition and bonuses.</p>
                       <StartScanButton i={asteroid?.id} />
                     </>
                   )}
                   {scanStatus === 'SCANNING' && (
                     <>
                       <h3>SCANNING</h3>
-                      <LiveTimer target={asteroid.scanFinishTime} />
+                      <LiveTimer target={asteroid.Celestial.scanFinishTime} />
                     </>
                   )}
                   {(scanStatus === 'READY_TO_FINISH' || scanStatus === 'FINISHING') && (
@@ -535,14 +535,14 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                 </UnscannedBody>
               </UnscannedContainer>
             )}
-            {!isOwner && (
+            {!isManager && (
               <UnscannedContainer>
                 <UnscannedHeader>
                   <WarningOutlineIcon />
                   Un-Scanned Asteroid
                 </UnscannedHeader>
-                <UnscannedBody isOwner={isOwner}>
-                  You do not own this asteroid. The owner must complete a scan to determine its final resource composition and bonuses.
+                <UnscannedBody isManager={isManager}>
+                  You do not manage this asteroid. The managing crew must complete a scan to determine its resource composition and bonuses.
                 </UnscannedBody>
               </UnscannedContainer>
             )}

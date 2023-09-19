@@ -2,20 +2,20 @@ import { useCallback, useState } from 'react';
 import styled from 'styled-components';
 import { Address } from '@influenceth/sdk';
 
+import AsteroidRendering from '~/components/AsteroidRendering';
 import ClipCorner from '~/components/ClipCorner';
 import { MyAssetIcon } from '~/components/Icons';
-import AsteroidRendering from '~/components/AsteroidRendering';
-import useStore from '~/hooks/useStore';
-import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
-import useOwnedShips from '~/hooks/useOwnedShips';
-import useAuth from '~/hooks/useAuth';
-import theme from '~/theme';
-import { HudMenuCollapsibleSection, majorBorderColor } from './components';
-import { useShipLink } from '~/components/ShipLink';
 import { ResourceImage } from '~/components/ResourceThumbnail';
+import { useShipLink } from '~/components/ShipLink';
 import { getShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import useCrewContext from '~/hooks/useCrewContext';
+import useControlledAsteroids from '~/hooks/useControlledAsteroids';
+import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
+import useOwnedShips from '~/hooks/useOwnedShips';
+import useStore from '~/hooks/useStore';
+import theme from '~/theme';
+import { HudMenuCollapsibleSection, majorBorderColor } from './components';
 
 const thumbnailDimension = 75;
 
@@ -126,6 +126,7 @@ const AllAssets = ({ onClose }) => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const selectAsteroid = useStore(s => s.dispatchOriginSelected);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
+  const { data: controlledAsteroids } = useControlledAsteroids();
   const { data: ownedAsteroids } = useOwnedAsteroids();
   const { data: ownedShips } = useOwnedShips();
 

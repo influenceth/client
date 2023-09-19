@@ -143,13 +143,13 @@ const CrewCard = ({ crewmate, onClick, overlay, ...props }) => {
   const useName = props.hideIfNoName
     ? (crewmate.Name?.name || '')
     : formatters.crewmateName(crewmate);
-  const classLabel = Crewmate.getClass(crewmate)?.name;
+  const classLabel = Crewmate.Entity.getClass(crewmate)?.name;
 
   let imageUrl = useMemo(() => {
     let url = silhouette;
     if (crewmate.id) {
       url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crewmate.id}/image.svg?bustOnly=true`;
-    } else if (crewmate.Crewmate?.class) {
+    } else if (crewmate.Crewmate?.appearance) {
       url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
         pick(crewmate.Crewmate, ['coll', 'class', 'title', 'appearance'])
       )}`;
@@ -168,8 +168,6 @@ const CrewCard = ({ crewmate, onClick, overlay, ...props }) => {
   useEffect(() => {
     if (imageFailed) setImageLoaded(true)
   }, [imageFailed]);
-
-  console.log('imageLoaded', !imageLoaded, boolAttr(!imageLoaded));
 
   return (
     <Card
@@ -204,7 +202,7 @@ const CrewCard = ({ crewmate, onClick, overlay, ...props }) => {
             {Crewmate.getCollection(crewmate)?.name}
           </DataReadout>
         )}
-        {props.showClassInHeader && <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>{Crewmate.getClass(crewmate)?.name}</DataReadout>}
+        {props.showClassInHeader && <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>{Crewmate.Entity.getClass(crewmate)?.name}</DataReadout>}
       </CardHeader>
       {!overlay && (
         <CardFooter>
@@ -216,7 +214,7 @@ const CrewCard = ({ crewmate, onClick, overlay, ...props }) => {
             </EmblemContainer>
           )}
           <FooterStats>
-            <div>{Crewmate.Entity.getClass(crewmate)?.name}</div>
+            {!props.showClassInHeader && <div>{Crewmate.Entity.getClass(crewmate)?.name}</div>}
             {crewmate.Crewmate.title > 0 && <div>{Crewmate.Entity.getTitle(crewmate)?.name}</div>}
           </FooterStats>
         </CardFooter>

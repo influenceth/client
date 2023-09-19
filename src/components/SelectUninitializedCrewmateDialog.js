@@ -6,6 +6,7 @@ import CrewCard from '~/components/CrewCard';
 import { GenesisIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import { getCloudfrontUrl } from '~/lib/assetUtils';
+import { useState } from 'react';
 
 const coverImage = getCloudfrontUrl('influence/production/images/stories/earth-and-the-void/1.jpg', { w: 1500 });
 
@@ -41,29 +42,38 @@ const CardWrapper = styled.div`
   padding: 10px 0;
   white-space: nowrap;
   width: 100%;
-  & > div {
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.15);
-    border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.3);
-    cursor: ${p => p.theme.cursors.active};
-    display: inline-block;
-    margin-left: 15px;
-    opacity: 0.7;
-    padding: 10px;
-    transition: background 250ms ease, border 250ms ease, opacity 250ms ease;;
-    width: ${cardWidth}px;
+`;
+const CardOuter = styled.div`
+  background: rgba(${p => p.theme.colors.mainRGB}, 0.15);
+  border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.3);
+  display: inline-block;
+  margin-left: 15px;
+  opacity: 0.7;
+  padding: 10px;
+  transition: background 250ms ease, border 250ms ease, opacity 250ms ease;;
+  width: ${cardWidth}px;
 
-    &:first-child { margin-left: 0; }
+  &:first-child { margin-left: 0; }
 
-    &:hover {
-      background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
-      border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.6);
+  ${p => p.selected
+    ? `
+      background: rgba(${p.theme.colors.mainRGB}, 0.4);
+      border: 1px solid rgba(${p.theme.colors.mainRGB}, 0.7);
       opacity: 1;
-    }
-
-    @media (max-height: 875px) {
-      margin-left: 1vh;
-      width: 22vh;
-    }
+    `
+    : `
+      cursor: ${p.theme.cursors.active};
+      &:hover {
+        background: rgba(${p.theme.colors.mainRGB}, 0.3);
+        border: 1px solid rgba(${p.theme.colors.mainRGB}, 0.6);
+        opacity: 1;
+      }
+    `
+  }
+  
+  @media (max-height: 875px) {
+    margin-left: 1vh;
+    width: 22vh;
   }
 `;
 
@@ -71,6 +81,8 @@ const SelectUninitializedCrewmateDialog = () => {
   const history = useHistory();
   
   const { adalianRecruits, arvadianRecruits } = useCrewContext();
+
+  const [selected, setSelected] = useState();
 
   return (
     <ChoicesDialog
@@ -82,17 +94,16 @@ const SelectUninitializedCrewmateDialog = () => {
         <Wrapper>
           <CardWrapper>
             {arvadianRecruits.map((crewmate) => (
-              <div>
+              <CardOuter key={crewmate.id} selected={selected === crewmate.id}>
                 <CrewCard
-                  key={crewmate.id}
                   crewmate={crewmate}
                   hasOverlay
                   hideCollectionInHeader
                   showClassInHeader
                   hideFooter
                   noWrapName
-                  onClick={() => { history.push(`/crew-assignment/arvadian/${crewmate.id}/`); }} />
-              </div>
+                  onClick={() => setSelected(crewmate.id)} />
+              </CardOuter>
             ))}
           </CardWrapper>
         </Wrapper>
@@ -107,8 +118,8 @@ const SelectUninitializedCrewmateDialog = () => {
       }}
       rightButton={{
         label: 'Next',
-        onClick: () => {/* noop */},
-        props: { disabled: 'true' }
+        onClick: () => { if (selected) history.push(`/crew-assignment/arvadian/${selected}/`); },
+        props: { disabled: !selected }
       }}
       title="Arvad Crewmates"
       subtitle={<Subtitle>Account has <b>Arvad Crewmates</b> that can be recruited</Subtitle>}

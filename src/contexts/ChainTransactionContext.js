@@ -2,6 +2,7 @@ import { createContext, useCallback, useEffect, useMemo, useRef, useState } from
 import { Asteroid, Entity, System } from '@influenceth/sdk';
 import { utils as ethersUtils } from 'ethers';
 import { CallData, Contract, shortString, uint256 } from 'starknet';
+import { isEqual, get } from 'lodash';
 
 import useAuth from '~/hooks/useAuth';
 import useEvents from '~/hooks/useEvents';
@@ -54,7 +55,10 @@ const formatCalldataType = (type, value) => {
     return value;
   }
   else if (type === 'BigNumber') {
-    return uint256.bnToUint256(value)
+    return BigInt(value);
+  }
+  else if (type === 'Ether') {
+    return uint256.bnToUint256(value);
   }
 };
 
@@ -91,7 +95,7 @@ const getApproveEthCall = ({ amount }) => ({
   // TODO: put in format like the others
   calldata: CallData.compile([
     formatCalldataType('ContractAddress', process.env.REACT_APP_STARKNET_DISPATCHER),
-    formatCalldataType('BigNumber', amount), // TODO: back to sdk version
+    formatCalldataType('Ether', amount), // TODO: back to sdk version
   ])
 });
 
@@ -101,10 +105,13 @@ const getRunSystemCall = (name, input) => ({
   calldata: CallData.compile({ name, calldata: formatSystemCalldata(name, input) }),  // TODO: back to sdk version
 });
 
+// TODO: equalityTest default of 'i' doesn't make sense anymore
+
 // supported configs:
 //  confirms, equalityTest
 const customConfigs = {
   // customization of Systems configs from sdk
+  ChangeName: { equalityTest: ['entity.id', 'entity.label'] },
   ConstructionStart: { equalityTest: 'ALL' },
   ConstructionFinish: { equalityTest: 'ALL' },
   CoreSampleStart: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
@@ -118,7 +125,7 @@ const customConfigs = {
   InitializeAsteroid: {
     preprocess: ({ asteroid }) => ({
       asteroid,
-      spectralType: BigInt(asteroid.Celestial.celestialType),
+      celestial_type: BigInt(asteroid.Celestial.celestialType),
       mass: BigInt(Math.round(Asteroid.Entity.getMass(asteroid))) * 2n ** 64n,
       radius: BigInt(Math.round(asteroid.Celestial.radius * 1000)) * 2n ** 32n / 1000n,
       a: BigInt(Math.round(asteroid.Orbit.a * 10000)) * 2n ** 64n / 10000n,
@@ -127,11 +134,14 @@ const customConfigs = {
       raan: BigInt(asteroid.Orbit.raan * 2 ** 64),
       argp: BigInt(asteroid.Orbit.argp * 2 ** 64),
       m: BigInt(asteroid.Orbit.m * 2 ** 64),
-      purchaseOrder: asteroid.Celestial.purchaseOrder,
-      scanStatus: asteroid.Celestial.scanStatus,
-      bonuses: asteroid.Celestial.bonuses
-    })
+      purchase_order: asteroid.Celestial.purchaseOrder,
+      scan_status: asteroid.Celestial.scanStatus,
+      bonuses: asteroid.Celestial.bonuses,
+      merkle_proof: asteroid.AsteroidProof?.proof || []
+    }),
+    equalityTest: ['asteroid.id']
   },
+  ManageAsteroid: { equalityTest: ['asteroid.id'] },
   PlanConstruction: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
   PurchaseAdalian: {
     getPrice: async () => {
@@ -141,15 +151,18 @@ const customConfigs = {
     equalityTest: true
   },
   PurchaseAsteroid: {
-    getPrice: async ({ i }) => {
+    getPrice: async ({ asteroid }) => {
+      console.log('getPrice', { asteroid });
       const { ASTEROID_BASE_PRICE_ETH, ASTEROID_LOT_PRICE_ETH } = await api.getConstants([
         'ASTEROID_BASE_PRICE_ETH',
         'ASTEROID_LOT_PRICE_ETH'
       ]);
       const base = Number(ethersUtils.formatEther(String(ASTEROID_BASE_PRICE_ETH)));
       const lot = Number(ethersUtils.formatEther(String(ASTEROID_LOT_PRICE_ETH)));
-      return base + lot * Asteroid.getSurfaceArea(i);
+      console.log({ ASTEROID_BASE_PRICE_ETH, ASTEROID_LOT_PRICE_ETH, base, lot });
+      return base + lot * Asteroid.Entity.getSurfaceArea(asteroid);
     },
+    equalityTest: ['asteroid.id']
   },
   RecruitAdalian: {
     getPrice: async ({ crewmate }) => {
@@ -167,12 +180,16 @@ const customConfigs = {
   //   equalityTest: true,
   // },
 
-  // TODO: for asteroid transactions that may conditionally require initialization,
-  //  we'll need a multisystem wrapper for each OR could create something a little more fancy
-  // InitializeAndScanAsteroid: {
-  //   multisystemCalls: ['InitializeAsteroid', 'ScanAsteroid'],
-  //   multisystemCalls: [{ name: 'InitializeAsteroid', cond: (a) => !a.AsteroidProof.used }, 'ScanAsteroid'],
-  // },
+  // TODO: could do fancier conditional multisystems if that would help
+  // i.e. `multisystemCalls: [{ name: 'InitializeAsteroid', cond: (a) => !a.AsteroidProof.used }, 'ScanAsteroid'],`
+  InitializeAndManageAsteroid: {
+    multisystemCalls: ['InitializeAsteroid', 'ManageAsteroid'],
+    equalityTest: ['asteroid.id'],
+  },
+  InitializeAndPurchaseAsteroid: {
+    multisystemCalls: ['InitializeAsteroid', 'PurchaseAsteroid'],
+    equalityTest: ['asteroid.id'],
+  },
 };
 
 export function ChainTransactionProvider({ children }) {
@@ -209,21 +226,23 @@ export function ChainTransactionProvider({ children }) {
           confirms: config.confirms,
           equalityTest: config.equalityTest,
 
-          execute: async (vars) => {
+          execute: async (rawVars) => {
             const runSystems = config.multisystemCalls || [systemName];
-            console.log('runSystem', runSystems);
 
             let totalPrice = 0;
             const calls = [];
             for (let runSystem of runSystems) {
+              const vars = customConfigs[runSystem]?.preprocess ? customConfigs[runSystem].preprocess(rawVars) : rawVars;
               calls.push(getRunSystemCall(runSystem, vars));
               if (customConfigs[runSystem]?.getPrice) {
-                totalPrice += await customConfigs[runSystem].getPrice(starknet.account, vars);
+                totalPrice += await customConfigs[runSystem].getPrice(vars);
               }
             }
 
             if (totalPrice > 0) {
+              console.log('totalPrice', totalPrice);
               const amount = totalPrice * 1e18; // convert to wei
+              console.log('totalPrice amount', amount);
               calls.unshift(getApproveEthCall({ amount }));
             }
 
@@ -424,9 +443,9 @@ export function ChainTransactionProvider({ children }) {
           if (contracts[key].equalityTest === true) {
             return true;
           } else if (contracts[key].equalityTest === 'ALL') {
-            return !Object.keys(tx.vars).find((k) => tx.vars[k] !== vars[k]);
+            return isEqual(tx.vars, vars);
           } else if (contracts[key].equalityTest) {
-            return !contracts[key].equalityTest.find((k) => tx.vars[k] !== vars[k]);
+            return !contracts[key].equalityTest.find((k) => get(tx.vars, k) !== get(vars, k));
           }
         }
         return false;

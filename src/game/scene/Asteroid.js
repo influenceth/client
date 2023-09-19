@@ -1019,7 +1019,7 @@ const AsteroidComponent = () => {
           getRotation={() => rotation.current}
           hasAccess={false}
           initialCameraPosition={initialOrientation?.objectPosition}
-          isScanned={asteroidData ? Asteroid.Entity.getScanned(asteroidData) : false}
+          isScanned={asteroidData?.Celestial?.scanStatus >= Asteroid.SCAN_STATUSES.SURFACE_SCANNED}
           radius={config.radius}
           scaleHelper={SCALE_HELPER}
           shipTally={shipsInOrbitTally}

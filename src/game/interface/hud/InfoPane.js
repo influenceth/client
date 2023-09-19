@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import PuffLoader from 'react-spinners/PuffLoader';
-import { Asteroid, Building } from '@influenceth/sdk';
+import { Asteroid, Building, Entity } from '@influenceth/sdk';
 import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
 
@@ -26,6 +26,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import RouteSelection from './actionForms/RouteSelection';
 import { getBuildingIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
+import useSale from '~/hooks/useSale';
 
 
 const opacityAnimation = keyframes`
@@ -304,7 +305,7 @@ const InfoPane = () => {
   const { constructionStatus, isAtRisk } = useConstructionManager(asteroidId, lotId);
   const { crew } = useCrewContext();
   const { data: lot } = useLot(asteroidId, lotId);
-  const saleIsActive = useStore(s => s.sale);
+  const saleIsActive = useSale(Entity.IDS.ASTEROID);
 
   const [renderReady, setRenderReady] = useState(false);
   const onRenderReady = useCallback(() => {
@@ -373,10 +374,9 @@ const InfoPane = () => {
 
         let thumbBanner = '';
         let thumbBannerColor = 'main';
-        const isScanned = Asteroid.Entity.getScanned(asteroid);
-        if (!isScanned) {
-          if (asteroid.Nft?.owner && asteroid.Celestial.status > Asteroid.SCAN_STATUSES.UNSCANNED) {
-            thumbBanner = 'Scanning...';
+        if (asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED) {
+          if (asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.SURFACE_SCANNING) {
+            thumbBanner = 'Scanning Surface...';
             thumbBannerColor = 'main';
           } else if (asteroid.Nft?.owner) {
             thumbBanner = <><WarningOutlineIcon /> Ready to Scan</>;
@@ -394,7 +394,7 @@ const InfoPane = () => {
         pane.thumbnail = (
           <ThumbBackground>
             {thumbBanner && <ThumbBanner color={thumbBannerColor}>{thumbBanner}</ThumbBanner>}
-            {isScanned && (
+            {asteroid.Celestial.scanStatus >= Asteroid.SCAN_STATUSES.SURFACE_SCANNED && (
               <RarityEarmark
                 data-for="infoPane"
                 data-tip={rarity}
@@ -404,7 +404,7 @@ const InfoPane = () => {
             <AsteroidRendering
               asteroid={asteroid}
               onReady={onRenderReady}
-              style={!isScanned ? { filter: 'grayscale(1)' } : {}} />
+              style={asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.UNSCANNED ? { filter: 'grayscale(1)' } : {}} />
           </ThumbBackground>
         );
         pane.thumbVisible = !!renderReady;

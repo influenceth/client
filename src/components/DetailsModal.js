@@ -133,7 +133,7 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Details = (props) => {
-  const { title, contentProps = {}, edgeToEdge, headerProps, onCloseDestination, outerNode, width, ...restProps } = props;
+  const { title, contentProps = {}, contentInnerProps = {}, edgeToEdge, headerProps, onCloseDestination, outerNode, width, ...restProps } = props;
   const history = useHistory();
 
   return (
@@ -148,7 +148,7 @@ const Details = (props) => {
           <CloseIcon />
         </CloseButton>
         <Content edgeToEdge={edgeToEdge} hasTitle={!!title} {...contentProps}>
-          <ContentWrapper width={width} maxWidth={restProps.maxWidth}>
+          <ContentWrapper width={width} maxWidth={restProps.maxWidth} {...contentInnerProps}>
             {props.children}
           </ContentWrapper>
         </Content>

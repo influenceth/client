@@ -21,16 +21,16 @@ const assetSearchDefaults = {
   actionitems: { filters: {}, sort: ['time', 'asc'] },
   asteroids: { filters: {}, sort: ['Celestial.radius', 'desc'] },
   asteroidsMapped: { filters: {}, sort: ['Celestial.radius', 'desc'], highlight: null },
-  buildings: { filters: {}, sort: ['lot.i', 'asc'] },
-  coresamples: { filters: { status: [2,3] }, sort: ['lot.i', 'asc'] },
-  crewmates: { filters: {}, sort: ['i', 'asc'] },
-  crews: { filters: {}, sort: ['i', 'asc'] },
+  buildings: { filters: {}, sort: ['lot.id', 'asc'] },
+  coresamples: { filters: { status: [2,3] }, sort: ['lot.id', 'asc'] },
+  crewmates: { filters: {}, sort: ['id', 'asc'] },
+  crews: { filters: {}, sort: ['id', 'asc'] },
   eventlog: { filters: {}, sort: ['time', 'desc'] },
-  ships: { filters: {}, sort: ['i', 'asc'] },
-  orders: { filters: {}, sort: ['i', 'asc'] },
-  leases: { filters: {}, sort: ['lot.i', 'asc'] },
-  lots: { filters: {}, sort: ['i', 'asc'] },
-  lotsMapped: { filters: { type: [...buildingIds] }, sort: ['i', 'asc'], highlight: null },
+  ships: { filters: {}, sort: ['id', 'asc'] },
+  orders: { filters: {}, sort: ['id', 'asc'] },
+  leases: { filters: {}, sort: ['lot.id', 'asc'] },
+  lots: { filters: {}, sort: ['id', 'asc'] },
+  lotsMapped: { filters: { type: [...buildingIds] }, sort: ['id', 'asc'], highlight: null },
 };
 
 const useStore = create(subscribeWithSelector(persist((set, get) => ({
@@ -115,8 +115,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       toPlay: null
     },
 
-    sale: false,
-
     referrer: null,
 
     //
@@ -130,14 +128,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
           state.graphics[k] = defaults[k];
         }
       });
-    })),
-
-    dispatchSaleStarted: () => set(produce(state => {
-      state.sale = true;
-    })),
-
-    dispatchSaleEnded: () => set(produce(state => {
-      state.sale = false;
     })),
 
     dispatchSoundPlayed: () => set(produce(state => {

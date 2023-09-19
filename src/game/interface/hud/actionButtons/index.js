@@ -1,4 +1,5 @@
 import Construct from './Construct';
+import ControlAsteroid from './ControlAsteroid';
 import CoreSample from './CoreSample';
 import Deconstruct from './Deconstruct';
 import EjectCrew from './EjectCrew';
@@ -23,6 +24,7 @@ import UnplanBuilding from './UnplanBuilding';
 
 const ActionsButtons = {
   Construct,
+  ControlAsteroid,
   CoreSample,
   Deconstruct,
   EmergencyModeGenerate,

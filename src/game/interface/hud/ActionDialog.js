@@ -11,6 +11,7 @@ import actionStage from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
 import BuildShip from './actionDialogs/BuildShip';
 import Construct from './actionDialogs/Construct';
+import ControlAsteroid from './actionDialogs/ControlAsteroid';
 import EmergencyModeGenerate from './actionDialogs/EmergencyModeGenerate';
 import EmergencyModeToggle from './actionDialogs/EmergencyModeToggle';
 import EjectCrew from './actionDialogs/EjectCrew';
@@ -231,6 +232,7 @@ const ActionDialog = ({ type, params }) => {
     <Backdrop>
       <ModalCushion>
         {type === 'BUILD_SHIP' && <BuildShip {...allProps} />}
+        {type === 'CONTROL_ASTEROID' && <ControlAsteroid {...allProps} />}
         {type === 'PLAN_BUILDING' && <PlanBuilding {...allProps} />}
         {type === 'UNPLAN_BUILDING' && <UnplanBuilding {...allProps} />}
         {type === 'CONSTRUCT' && <Construct {...allProps} />}

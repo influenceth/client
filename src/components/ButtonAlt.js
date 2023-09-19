@@ -101,11 +101,13 @@ const StyledButton = styled.button`
     `
     : `
       color: ${p.color || (
-        p.subtle ? p.theme.colors.main : (
-          p.background && p.background !== 'transparent'
-            ? getContrastText(p.background)
-            : 'white'
-        )
+        p.subtle
+          ? (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)
+          : (
+            p.background && p.background !== 'transparent'
+              ? getContrastText(p.background)
+              : 'white'
+          )
       )};
       & > div {
         background-color: ${p.background || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${bgOpacity * (p.bgStrength || 1)})`};

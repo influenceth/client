@@ -2,6 +2,7 @@ import { AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/
 import { BsFillPersonFill, BsCheckCircle, BsPieChartFill, BsSliders, BsStopwatch, BsThreeDots } from 'react-icons/bs';
 import { FaBan, FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
 import { FiCheckSquare, FiExternalLink, FiMenu, FiSquare } from 'react-icons/fi';
+import { GiHouseKeys } from 'react-icons/gi';
 import { HiClock, HiCog, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import {
   MdAdd,
@@ -309,6 +310,7 @@ export {
   FaMapMarkedAlt as MapIcon,
   FiExternalLink as PopoutIcon,
   FiMenu as MenuIcon,
+  GiHouseKeys as KeysIcon,
   HiChevronDoubleLeft as BackIcon,
   HiChevronDoubleRight as ForwardIcon,
   HiClock as TimeIcon,

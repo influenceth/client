@@ -15,28 +15,28 @@ export const bookIds = {
 const anyOf = (mustHave, tests) => !!mustHave.find((x) => tests.includes(x));
 const allOf = (mustHave, tests) => !mustHave.find((x) => !tests.includes(x));
 
-const useBookSession = (bookId, crewmateId) => {
+const useBookSession = (bookId, rawCrewmateId) => {
   const { crew, arvadianRecruits } = useCrewContext();
+  const crewmateId = Number(rawCrewmateId);
   const crewId = crew?.id || 0;
 
   const crewmate = useMemo(() => {
     if (bookId === bookIds.ARVADIAN_RECRUITMENT) {
-      return arvadianRecruits.find((c) => c.id === Number(crewmateId));
+      return arvadianRecruits.find((c) => c.id === crewmateId);
     }
     return null;
   }, [arvadianRecruits, bookId, crewmateId]);
 
-  useEffect(() => {
+  const error = useMemo(() => {
     // validate crewmate (must be adalian w/ 0, or owned uninitialized arvadian w/ !0)
-    let invalid = (crewmateId > 0 && bookId === bookIds.ADALIAN_RECRUITMENT)
+    if (
+      (crewmateId > 0 && bookId === bookIds.ADALIAN_RECRUITMENT)
       || (crewmateId === 0 && bookId === bookIds.ARVADIAN_RECRUITMENT)
       || (crewmateId > 0 && !crewmate)
       || (crewmate && ![Crewmate.COLLECTION_IDS.ARVAD_CITIZEN, Crewmate.COLLECTION_IDS.ARVAD_SPECIALIST, Crewmate.COLLECTION_IDS.ARVAD_LEADERSHIP].includes(crewmate.Crewmate?.coll))
-      || (crewmate && crewmate.Crewmate?.impactful?.length > 0)
-    if (invalid) {
-      console.error('Invalid crewmate selected');
-      // TODO: do something
-    }
+      || (crewmate && crewmate.Crewmate?.status > 0)
+    ) return 'Invalid params!';
+    return null;
   }, [crewmate, crewmateId, bookId]);
 
   const sessionData = useStore(s => s.crewAssignments?.[`${crewId}_${crewmateId}`]?.[bookId] || {});
@@ -183,6 +183,7 @@ const useBookSession = (bookId, crewmateId) => {
   }, [crewId, crewmateId, bookId]);
 
   return useMemo(() => ({
+    bookError: error,
     bookSession,
     storySession,
     choosePath,

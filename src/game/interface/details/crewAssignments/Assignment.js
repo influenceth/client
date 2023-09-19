@@ -101,6 +101,7 @@ const CrewAssignment = () => {
   const { crewmateMap } = useCrewContext();
 
   const {
+    bookError,
     bookSession,
     storySession,
     choosePath,
@@ -110,6 +111,7 @@ const CrewAssignment = () => {
 
   const playSound = useStore(s => s.dispatchSoundRequested);
 
+  const [confirmingExitStoryMode, setConfirmingExitStoryMode] = useState();
   const [pathLoading, setPathLoading] = useState();
   const [selection, setSelection] = useState();
 
@@ -119,6 +121,10 @@ const CrewAssignment = () => {
   } else {
     onCloseDestination = '/';
   }
+
+  useEffect(() => {
+    if (bookError) history.push(onCloseDestination);
+  }, [bookError, onCloseDestination]);
 
   // on step change, clear selection (to close modal) and set pseudo path-loading
   useEffect(() => {
@@ -159,7 +165,15 @@ const CrewAssignment = () => {
     playSound('effects.success');
     history.push(`/crew-assignment/${bookId}/${crewmateId}/${bookSession?.isMintingStory ? 'create' : 'complete'}`);
   }, [history, playSound, bookId, bookSession?.isMintingStory]);
-  
+
+  const confirmExitStoryMode = useCallback(() => {
+    setConfirmingExitStoryMode(true);
+  }, []);
+
+  const onConfirmExitStoryMode = useCallback(() => {
+    history.push(`/crew-assignment/${bookId}/${crewmateId}/${bookSession?.isMintingStory ? 'create' : 'complete'}`);
+  }, []);
+
   if (!bookSession || !storySession) return null;
   // TODO: ^ should probably redirect somewhere
 
@@ -208,8 +222,8 @@ const CrewAssignment = () => {
           onClick: (bookSession.currentStoryIndex > 0 || storySession.currentStep > 0) ? onUndoPath : onGoBack,
         }}
         rightButton={{
-          label: 'Skip',
-          onClick: () => {},
+          label: 'Exit Story Mode',
+          onClick: confirmExitStoryMode,
           props: {
             disabled: (storySession.isLastPage && bookSession.isLastStory) ? 'true' : undefined
           }
@@ -241,6 +255,24 @@ const CrewAssignment = () => {
           </Progress>
         )}
       />
+      {confirmingExitStoryMode && (
+        <ConfirmationDialog
+          body={(
+            <div style={{ fontSize: '110%' }}>
+              <div>
+                Exiting story mode will allow you to select your character's traits
+                all at once, in contrast to deriving their traits from the choices you 
+                make for them through their unique origin story.
+              </div>
+              <div style={{ marginTop: 15 }}>
+                You will not be able to return to story mode once you exit.
+              </div>
+            </div>
+          )}
+          onConfirm={onConfirmExitStoryMode}
+          onReject={() => setConfirmingExitStoryMode()}
+        />
+      )}
       {REQUIRE_CONFIRM && selection && (
         <ConfirmationDialog
           title="Your Selection:"

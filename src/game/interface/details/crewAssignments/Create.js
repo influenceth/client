@@ -78,24 +78,24 @@ const opacityTransition = keyframes`
 
 const TitleBox = styled.div`
   background: rgba(0, 0, 0, 0.8);
-  padding: 24px 0;
+  padding: 12px 0;
 `;
 const Title = styled.div`
-  border: solid #555;
+  border: solid #444;
   border-width: 1px 0;
   color: white;
   display: flex;
-  font-size: 40px;
+  font-size: 32px;
   font-weight: light;
   line-height: 40px;
   justify-content: center;
   margin: 0 auto;
   overflow: visible;
-  padding: 12px 0;
+  padding: 24px 0;
   text-transform: uppercase;
   text-align: center;
   white-space: nowrap;
-  width: 250px;
+  width: calc(100% - 180px);
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     white-space: normal;
@@ -119,6 +119,7 @@ const ImageryContainer = styled.div`
     left: 0;
     right: 0;
     z-index: 1;
+    opacity: 0.5;
     mask-image: linear-gradient(to bottom, transparent 0%, black 10%, rgba(0,0,0,0.7) 50%, transparent 100%);
     transition: opacity 750ms ease-out, background-image 750ms ease-out;
   }
@@ -443,66 +444,225 @@ const PromptBody = styled.div`
   }
 `;
 
-const MobileDialogContainer = styled.div`
-  & > div > div {
-    border: 2px solid ${p => p.theme.colors.main};
-    padding: 20px 5px 10px;
-    & button {
-      margin: 0 0 0 auto;
-    }
-  }
-  @media (min-width: ${p => p.theme.breakpoints.mobile}px) {
-    display: none;
+const Rule = styled.div`
+  height: 0;
+  border-bottom: 1px solid #333;
+`;
+
+const Footer = styled.div`
+  background: black;
+  padding: 0 35px;
+  height: 80px;
+`;
+
+const RecruitTally = styled.div`
+  color: ${p => p.theme.colors.main};
+  margin-right: 16px;
+  & b {
+    color: white;
+    font-weight: normal;
   }
 `;
 
 const onCloseDestination = `/crew`;
 
-const driveTraits = [1, 2, 3, 4];
-const driveCosmeticTraits = [36, 37, 38, 39, 40];
-const justCosmeticTraits = [5, 6, 7, 8, 9, 10, 13, 15, 16, 18, 20, 22];
+const getRandomAdalianAppearance = () => {
+  const gender = Math.ceil(Math.random() * 2);
+  const faces = gender === 1 ? [0, 1, 3, 4, 5, 6, 7] : [0, 1, 2];
+  const hairs = gender === 1 ? [0, 1, 2, 3, 4, 5] : [0, 6, 7, 8, 9, 10, 11];
+  return {
+    gender,
+    body: (gender - 1) * 6 + Math.ceil(Math.random() * 6),
+    face: faces[Math.floor(Math.random() * faces.length)],
+    hair: hairs[Math.floor(Math.random() * hairs.length)],
+    hairColor: Math.ceil(Math.random() * 5),
+    // clothes: 31 + (crewClass - 1) * 2 + Math.ceil(Math.random() * 2),
+    clothesOffset: 31 + Math.ceil(Math.random() * 2),
+    head: 0,
+    item: 0
+  };
+};
 
-const traitDispOrder = ['classImpactful', 'drive', 'cosmetic', 'driveCosmetic'];
+const getRandomTraitSet = (c) => {
+  if (!(c.Crewmate.coll || c.Crewmate.class)) return [];
+
+  const traits = [];  // TODO: if traits are partially selected, just randomize the rest; if full or empty, randomize all
+  let possibleTraits = Crewmate.nextTraits(c.Crewmate.coll, c.Crewmate.class, traits);
+  let randomIndex;
+  while (possibleTraits.length > 0 && traits.length < 12) {
+    randomIndex = Math.floor(Math.random() * possibleTraits.length);
+    traits.push(possibleTraits[randomIndex]);
+    console.log({ possibleTraits, randomIndex, traits});
+    possibleTraits = Crewmate.nextTraits(c.Crewmate.coll, c.Crewmate.class, traits);
+  }
+
+  return {
+    impactful: [],
+    cosmetic: [],
+  }
+};
 
 const CrewAssignmentCreate = (props) => {
   const { account } = useAuth();
   const { bookId, crewmateId } = useParams();
   const history = useHistory();
 
-  const { bookSession, storySession, undoPath, restart } = useBookSession(bookId, crewmateId);
+  const { bookError, bookSession, storySession, undoPath, restart } = useBookSession(bookId, crewmateId);
   const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
   const { purchaseAndOrInitializeCrew, getPendingCrewmate, adalianRecruits } = useCrewManager();
   const { crew, crewmateMap } = useCrewContext();
   const { data: priceConstants } = usePriceConstants();
 
   const [confirming, setConfirming] = useState();
-  const [featureOptions, setFeatureOptions] = useState([]);
-  const [featureSelection, setFeatureSelection] = useState();
+
+  const [appearanceOptions, setAppearanceOptions] = useState([]);
+  const [appearanceSelection, setAppearanceSelection] = useState();
+
+  const [traitSetOptions, setTraitSetOptions] = useState([]);
+  const [traitSetSelection, setTraitSetSelection] = useState();
+
   const [finalizing, setFinalizing] = useState();
   const [finalized, setFinalized] = useState();
   const [name, setName] = useState('');
   const [traitDetailsOpen, setTraitDetailsOpen] = useState(false);
 
   const pendingCrewmate = useMemo(() => getPendingCrewmate(), [getPendingCrewmate]);
+  const [selectedClass, setSelectedClass] = useState(
+    pendingCrewmate?.Crewmate?.class
+    || bookSession?.crewmate?.Crewmate?.class
+    || bookSession?.selectedClass
+  );
 
-  const rewards = useMemo(() => {
-    let traits = [];
+  useEffect(() => {
+    if (bookError) history.push(onCloseDestination);
+  }, [bookError, onCloseDestination]);
+
+  // derive crewmate-structured crewmate based on selections
+  const crewmate = useMemo(() => {
+
+    // if already finalized, return final version
+    if (finalized) return finalized;
+
+    // if already pending, format from pending tx
     if (pendingCrewmate) {
-      traits = [
-        ...pendingCrewmate.vars.cosmetic.map((id) => ({ id, type: Crewmate.TRAIT_TYPES.COSMETIC, ...Crewmate.getTrait(id) })),
-        ...pendingCrewmate.vars.impactful.map((id) => ({ id, type: Crewmate.TRAIT_TYPES.IMPACTFUL, ...Crewmate.getTrait(id) }))
-      ];
-    } else if (bookSession?.selectedTraits) {
-      traits = (bookSession?.selectedTraits || []).map((id) => ({ id, ...Crewmate.getTrait(id) }));
+      console.log('TODO: update id and coll here if available', pendingCrewmate);
+      const { name, hair_color, caller_crew, ...crewmateVars } = pendingCrewmate.vars;
+      crewmateVars.coll = hair_color; // TODO: this 
+      crewmateVars.hairColor = hair_color;
+      crewmateVars.appearance = Crewmate.packAppearance(crewmateVars);
+      return {
+        id: 0, // TODO: 
+        label: Entity.IDS.CREWMATE,
+        Control: {
+          controller: {
+            id: caller_crew,
+            label: Entity.IDS.CREWMATE,
+          }
+        },
+        Crewmate: {
+          ...crewmateVars
+        },
+        Name: { name },
+        _finalizing: true
+      };
     }
-    return {
-      // TODO: ecs refactor -- this is a bit too strict, esp. if including arvardians
-      drive: traits.find((t) => driveTraits.includes(t.id)),
-      classImpactful: traits.find((t) => t.type === 'impactful'),
-      driveCosmetic: traits.find((t) => driveCosmeticTraits.includes(t.id)),
-      cosmetic: traits.find((t) => justCosmeticTraits.includes(t.id)),
+
+    // if get here, there must be a bookSession...
+    if (!bookSession) return null;
+
+    // default from bookSession crewmate (arvadian) or from empty adalian
+    const c = bookSession.crewmate || {
+      id: 0,
+      label: Entity.IDS.CREWMATE,
+      Crewmate: {
+        coll: Crewmate.COLLECTION_IDS.ADALIAN
+      }
     };
-  }, [bookSession?.selectedTraits, pendingCrewmate]);
+
+    // always force control to current crew
+    c.Control = {
+      controller: {
+        id: crew?.id || 0,
+        label: Entity.IDS.CREWMATE,
+      }
+    }
+
+    // initialize things if not set
+    if (!c.Crewmate.coll) c.Crewmate.coll = bookId === bookIds.ADALIAN_RECRUITMENT ? Crewmate.COLLECTION_IDS.ADALIAN : Crewmate.COLLECTION_IDS.ARVAD_CITIZEN;
+    if (!c.Crewmate.class) {
+      c.Crewmate.class = selectedClass || 1;// TODO: remove `|| 1`
+      c._canReclass = true;
+    }
+    if (!c.Name?.name) {
+      c.Name = { name };
+      c._canRename = true;
+    }
+
+    // get traits selected
+    if (!c.Crewmate.cosmetic || !c.Crewmate.impactful) {
+      // from random
+      if (traitSetOptions.length && traitSetSelection) {
+        c.Crewmate.cosmetic = traitSetOptions[traitSetSelection]?.cosmetic;
+        c.Crewmate.impactful = traitSetOptions[traitSetSelection]?.impactful;
+
+      // from story
+      } else if (bookSession?.selectedTraits) {
+        c.Crewmate.cosmetic = bookSession.selectedTraits.filter((t) => Crewmate.TRAITS[t].type === Crewmate.TRAIT_TYPES.COSMETIC);
+        c.Crewmate.impactful = bookSession.selectedTraits.filter((t) => Crewmate.TRAITS[t].type === Crewmate.TRAIT_TYPES.IMPACTFUL);
+      }
+    }
+
+    // get appearance
+    if (!c.Crewmate.appearance) {
+      if (appearanceOptions.length) {
+        const { clothesOffset, ...appearance } = appearanceOptions[appearanceSelection];
+        c.Crewmate.appearance = Crewmate.packAppearance({
+          ...appearance,
+          clothes: c.Crewmate.class ? (c.Crewmate.class - 1) * 2 + clothesOffset : 18
+        });
+      }
+      c._canRerollAppearance = true;
+    }
+
+    return c;
+  }, [
+    appearanceOptions,
+    appearanceSelection,
+    name,
+    pendingCrewmate,
+    traitSetOptions,
+    traitSetSelection,
+    bookSession
+  ]);
+
+  // init appearance options as desired
+  useEffect(() => {
+    if (crewmate && !crewmate.Crewmate.appearance && appearanceOptions?.length === 0) {
+      setAppearanceOptions([getRandomAdalianAppearance()]);
+      setAppearanceSelection(0);
+    }
+  }, [!!crewmate, appearanceOptions?.length]);
+
+  // handle finalizing
+  useEffect(() => {
+    if (crewmate?._finalizing) setFinalizing(true);
+  }, [crewmate?._finalizing]);
+
+  // handle finalized
+  useEffect(() => {
+    if (finalizing) {
+      const finalizedCrewmate = Object.values(crewmateMap).find((c) => c.Name.name === name);
+      if (finalizedCrewmate) {
+        setFinalizing(false);
+        setFinalized(finalizedCrewmate);
+      }
+      // TODO (enhancement): after timeout, show error
+    }
+  }, [ crewmateMap, finalizing ]);
+
+  useEffect(() => {
+    console.log('getRandomTraitSet', getRandomTraitSet(crewmate));
+  }, [])
 
   const shareOnTwitter = useCallback(() => {
     // TODO: ...
@@ -528,47 +688,35 @@ const CrewAssignmentCreate = (props) => {
   }, []);
 
   const rerollAppearance = useCallback(async () => {
-    const crewClass = bookSession?.selectedClass;
-    if (!crewClass) return;
-
-    const gender = Math.ceil(Math.random() * 2);
-    const faces = gender === 1 ? [0, 1, 3, 4, 5, 6, 7] : [0, 1, 2];
-    const hairs = gender === 1 ? [0, 1, 2, 3, 4, 5] : [0, 6, 7, 8, 9, 10, 11];
-
-    const params = {
-      Crewmate: {
-        appearance: Crewmate.packAppearance({
-          gender,
-          body: (gender - 1) * 6 + Math.ceil(Math.random() * 6),
-          face: faces[Math.floor(Math.random() * faces.length)],
-          hair: hairs[Math.floor(Math.random() * hairs.length)],
-          hairColor: Math.ceil(Math.random() * 5),
-          clothes: 31 + (crewClass - 1) * 2 + Math.ceil(Math.random() * 2),
-          head: 0,
-          item: 0
-        }),
-        class: crewClass,
-        coll: bookId === bookIds.ADALIAN_RECRUITMENT ? Crewmate.COLLECTION_IDS.ADALIAN : Crewmate.COLLECTION_IDS.ARVAD_CITIZEN,
-        cosmetic: bookSession.selectedTraits.filter((t) => Crewmate.TRAITS[t].type === Crewmate.TRAIT_TYPES.COSMETIC),
-        impactful: bookSession.selectedTraits.filter((t) => Crewmate.TRAITS[t].type === Crewmate.TRAIT_TYPES.IMPACTFUL),
-        title: 0,
-        status: 0
-      }
-    };
-
-    setFeatureOptions((prevValue) => {
-      setFeatureSelection((prevValue || []).length);
-      return [...(prevValue || []), params]
+    setAppearanceOptions((prevValue) => {
+      setAppearanceSelection((prevValue || []).length);
+      return [...(prevValue || []), getRandomAdalianAppearance()]
     });
-  }, [bookSession?.selectedClass]);
+  }, []);
 
-  const rollBack = useCallback(() => {
-    setFeatureSelection(Math.max(0, featureSelection - 1));
-  }, [featureSelection]);
+  const rollBackAppearance = useCallback(() => {
+    setAppearanceSelection(Math.max(0, appearanceSelection - 1));
+  }, [appearanceSelection]);
 
-  const rollForward = useCallback(() => {
-    setFeatureSelection(Math.min(featureOptions.length - 1, featureSelection + 1));
-  }, [featureOptions.length, featureSelection]);
+  const rollForwardAppearance = useCallback(() => {
+    setAppearanceSelection(Math.min(appearanceOptions.length - 1, appearanceSelection + 1));
+  }, [appearanceOptions.length, appearanceSelection]);
+
+  const rerollTraits = useCallback(async () => {
+    if (!crewmate?.Crewmate?.class) return;
+    setTraitSetOptions((prevValue) => {
+      setTraitSetSelection((prevValue || []).length);
+      return [...(prevValue || []), getRandomTraitSet(crewmate?.Crewmate?.class)]
+    });
+  }, [crewmate?.Crewmate?.class]);
+
+  const rollBackTraits = useCallback(() => {
+    setTraitSetSelection(Math.max(0, traitSetSelection - 1));
+  }, [traitSetSelection]);
+
+  const rollForwardTraits = useCallback(() => {
+    setTraitSetSelection(Math.min(setTraitSetOptions.length - 1, traitSetSelection + 1));
+  }, [setTraitSetOptions.length, traitSetSelection]);
 
   const confirmFinalize = useCallback(async () => {
     if (await isNameValid(name)) {
@@ -578,16 +726,16 @@ const CrewAssignmentCreate = (props) => {
 
   const finalize = useCallback(() => {
     setConfirming(false);
-    const input = {
-      name,
-      features: featureOptions[featureSelection],
-      traits: rewards,
+    purchaseAndOrInitializeCrew({
+      crewmate,
       crewId: crew?.id || 0,
       // sessionId // used to tag the pendingTransaction  // TODO: deprecate? use bookId? use random?
-    };
-    purchaseAndOrInitializeCrew(input);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, featureOptions?.length, featureSelection, purchaseAndOrInitializeCrew, !!rewards, bookId, crew?.id]);
+    });
+  }, [crewmate, purchaseAndOrInitializeCrew, crew?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleBack = useCallback(() => {
+    history.push(`/crew-assignment/${bookId}/${crewmateId}/`);
+  }, []);
 
   // show "complete" page (instead of "create") for non-recruitment assignments
   useEffect(() => {
@@ -596,52 +744,17 @@ const CrewAssignmentCreate = (props) => {
     }
   }, [!!bookSession]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // initialize appearance & state
-  useEffect(() => {
-    if (pendingCrewmate) {
-      const { name, hair_color, ...crewmateVars } = pendingCrewmate.vars;
-      crewmateVars.coll = hair_color;
-      crewmateVars.hairColor = hair_color;
-      crewmateVars.appearance = Crewmate.packAppearance(crewmateVars);
-      setFeatureOptions([{
-        Crewmate: { ...crewmateVars },
-        Name: { name }
-      }]);
-      setFeatureSelection(0);
-      setName(pendingCrewmate.vars.name);
-      setFinalizing(true);
-    } else if (finalizing) {
-      const finalizedCrewmate = Object.values(crewmateMap).find((c) => c.Name.name === name);
-      if (finalizedCrewmate) {
-        setFinalizing(false);
-        setFinalized(finalizedCrewmate);
-      }
-      // TODO (enhancement): after timeout, show error
-    } else if (featureOptions.length === 0) {
-      rerollAppearance();
-    }
-  }, [ // eslint-disable-line react-hooks/exhaustive-deps
-    crewmateMap,
-    finalizing,
-    pendingCrewmate,
-    name,
-    rerollAppearance,
-    featureOptions.length
-  ]);
-
   // hide until loaded
-  const loading = (!storySession || !rewards || !featureOptions || featureOptions.length === 0);
-
-  // draft crew
-  const crewmate = finalized || { ...featureOptions[featureSelection] };
-  // if (finalized) crewmate.Name = { name };
+  const loading = !crewmate;
+  const finalizedz = false;
   return (
     <Details
-      onCloseDestination={onCloseDestination}
-      contentProps={{ style: { display: 'flex', flexDirection: 'column', } }}
       edgeToEdge
-      title="Crew Assignments"
-      width="max">
+      headerProps={{ background: 'true', v2: 'true' }}
+      onCloseDestination={onCloseDestination}
+      contentInnerProps={{ style: { display: 'flex', flexDirection: 'column', height: '100%' } }}
+      title="Crewmate Recruitment"
+      width="1150px">
       {loading && (
         <div style={{ position: 'absolute', left: 'calc(50% - 30px)', top: 'calc(50% - 30px)' }}>
           <LoadingAnimation color="white" loading />
@@ -652,35 +765,94 @@ const CrewAssignmentCreate = (props) => {
           <ImageryContainer src={storySession.completionImage || storySession.image}>
             <div />
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
-              {finalized && (
-                <TitleBox>
-                  <Title>Crewmate Created</Title>
-                </TitleBox>
+              {finalizedz && (
+                <>
+                  <TitleBox>
+                    <Title>Crewmate Recruited</Title>
+                  </TitleBox>
+                  <div>
+                    <CardWrapper>
+                      <CardContainer>
+                        <div>
+                          <CrewCard
+                            crewmate={crewmate}
+                            fontSize="25px"
+                            noWrapName
+                            showClassInHeader />
+                        </div>
+                      </CardContainer>
+                    </CardWrapper>
+
+                    {/* 
+                    <RecruitSection>
+                      {!process.env.REACT_APP_HIDE_SOCIAL && (
+                        <TwitterButton onClick={shareOnTwitter}>
+                          <span>Share on Twitter</span>
+                          <TwitterIcon />
+                        </TwitterButton>
+                      )}
+                    </RecruitSection>
+                    */}
+                  </div>
+                </>
               )}
-              <div>
-                <CardWrapper>
-                  <CardContainer>
-                    <div>
-                      <CrewCard
-                        crewmate={crewmate}
-                        fontSize="25px"
-                        hideCollectionInHeader
-                        hideFooter
-                        noWrapName={finalized}
-                        showClassInHeader={finalized} />
-                    </div>
-                  </CardContainer>
-                  {!finalized && (
-                    <Traits>
-                      {crewmate.Crewmate?.class && (
+              {!finalizedz && (
+                <div>
+                  <CardWrapper>
+                    <CardContainer>
+                      <div>
+                        <CrewCard
+                          crewmate={crewmate}
+                          fontSize="25px"
+                          hideCollectionInHeader
+                          hideFooter
+                          hideIfNoName
+                          noWrapName={finalized}
+                          showClassInHeader={finalized} />
+                      </div>
+                    </CardContainer>
+                    {!finalized && (
+                      <Traits>
+                        {crewmate.Crewmate?.class && (
+                          <TraitRow>
+                            <Trait side="left" isCrewClass>
+                              <div>
+                                <CrewClassIcon crewClass={crewmate.Crewmate.class} overrideColor="inherit" />
+                              </div>
+                              <article>
+                                <h4>{Crewmate.getClass(crewmate.Crewmate.class).name}</h4>
+                                <div>{Crewmate.getClass(crewmate.Crewmate.class).description}</div>
+                              </article>
+                              <TipHolder>
+                                <TriangleTip strokeWidth="1" rotate="90" />
+                              </TipHolder>
+                            </Trait>
+
+                            <TraitSpacer />
+
+                            <Trait side="right" isCrewClass>
+                              <div>
+                                <AdalianIcon />
+                              </div>
+                              <article>
+                                <h4>Adalian Citizen</h4>
+                                <div>Completed secondary education and entered adulthood in the Adalian System, after the dismantling of the Arvad.</div>
+                              </article>
+                              <TipHolder>
+                                <TriangleTip strokeWidth="1" rotate="-90" />
+                              </TipHolder>
+                            </Trait>
+                          </TraitRow>
+                        )}
+  {/* 
                         <TraitRow>
-                          <Trait side="left" isCrewClass>
+                          <Trait side="left">
                             <div>
-                              <CrewClassIcon crewClass={crewmate.Crewmate.class} overrideColor="inherit" />
+                              <CrewTraitIcon trait={rewards[traitDispOrder[0]]?.id} type={rewards[traitDispOrder[0]]?.type} />
                             </div>
                             <article>
-                              <h4>{Crewmate.getClass(crewmate.Crewmate.class).name}</h4>
-                              <div>{Crewmate.getClass(crewmate.Crewmate.class).description}</div>
+                              <h4>{rewards[traitDispOrder[0]]?.name}</h4>
+                              <div>{rewards[traitDispOrder[0]]?.description}</div>
                             </article>
                             <TipHolder>
                               <TriangleTip strokeWidth="1" rotate="90" />
@@ -689,138 +861,121 @@ const CrewAssignmentCreate = (props) => {
 
                           <TraitSpacer />
 
-                          <Trait side="right" isCrewClass>
+                          <Trait side="right">
                             <div>
-                              <AdalianIcon />
+                              <CrewTraitIcon trait={rewards[traitDispOrder[1]]?.id} type={rewards[traitDispOrder[1]]?.type} />
                             </div>
                             <article>
-                              <h4>Adalian Citizen</h4>
-                              <div>Completed secondary education and entered adulthood in the Adalian System, after the dismantling of the Arvad.</div>
+                              <h4>{rewards[traitDispOrder[1]]?.name}</h4>
+                              <div>{rewards[traitDispOrder[1]]?.description}</div>
                             </article>
                             <TipHolder>
                               <TriangleTip strokeWidth="1" rotate="-90" />
                             </TipHolder>
                           </Trait>
                         </TraitRow>
-                      )}
 
-                      <TraitRow>
-                        <Trait side="left">
-                          <div>
-                            <CrewTraitIcon trait={rewards[traitDispOrder[0]]?.id} type={rewards[traitDispOrder[0]]?.type} />
-                          </div>
-                          <article>
-                            <h4>{rewards[traitDispOrder[0]]?.name}</h4>
-                            <div>{rewards[traitDispOrder[0]]?.description}</div>
-                          </article>
-                          <TipHolder>
-                            <TriangleTip strokeWidth="1" rotate="90" />
-                          </TipHolder>
-                        </Trait>
+                        <TraitRow>
+                          <Trait side="left">
+                            <div>
+                              <CrewTraitIcon trait={rewards[traitDispOrder[2]]?.id} type={rewards[traitDispOrder[2]]?.type} />
+                            </div>
+                            <article>
+                              <h4>{rewards[traitDispOrder[2]]?.name}</h4>
+                              <div>{rewards[traitDispOrder[2]]?.description}</div>
+                            </article>
+                            <TipHolder side="left">
+                              <TriangleTip strokeWidth="1" rotate="90" />
+                            </TipHolder>
+                          </Trait>
 
-                        <TraitSpacer />
+                          <TraitSpacer />
 
-                        <Trait side="right">
-                          <div>
-                            <CrewTraitIcon trait={rewards[traitDispOrder[1]]?.id} type={rewards[traitDispOrder[1]]?.type} />
-                          </div>
-                          <article>
-                            <h4>{rewards[traitDispOrder[1]]?.name}</h4>
-                            <div>{rewards[traitDispOrder[1]]?.description}</div>
-                          </article>
-                          <TipHolder>
-                            <TriangleTip strokeWidth="1" rotate="-90" />
-                          </TipHolder>
-                        </Trait>
-                      </TraitRow>
-
-                      <TraitRow>
-                        <Trait side="left">
-                          <div>
-                            <CrewTraitIcon trait={rewards[traitDispOrder[2]]?.id} type={rewards[traitDispOrder[2]]?.type} />
-                          </div>
-                          <article>
-                            <h4>{rewards[traitDispOrder[2]]?.name}</h4>
-                            <div>{rewards[traitDispOrder[2]]?.description}</div>
-                          </article>
-                          <TipHolder side="left">
-                            <TriangleTip strokeWidth="1" rotate="90" />
-                          </TipHolder>
-                        </Trait>
-
-                        <TraitSpacer />
-
-                        <Trait side="right">
-                          <div>
-                            <CrewTraitIcon trait={rewards[traitDispOrder[3]]?.id} type={rewards[traitDispOrder[3]]?.type} />
-                          </div>
-                          <article>
-                            <h4>{rewards[traitDispOrder[3]]?.name}</h4>
-                            <div>{rewards[traitDispOrder[3]]?.description}</div>
-                          </article>
-                          <TipHolder side="right">
-                            <TriangleTip strokeWidth="1" rotate="-90" />
-                          </TipHolder>
-                        </Trait>
-                      </TraitRow>
-                    </Traits>
-                  )}
-                </CardWrapper>
-
-                {!finalized && (
-                  <NameSection>
-                    <TextInput
-                      disabled={finalizing}
-                      initialValue={name}
-                      maxlength={31}
-                      onChange={handleNameChange}
-                      pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
-                      placeholder="Enter Name" />
-                    <RerollContainer>
-                      <RandomizeControls
-                        onClick={rollBack}
-                        disabled={finalizing || featureSelection === 0}
-                        style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
-                        <UndoIcon />
-                      </RandomizeControls>
-
-                      <RandomizeButton
-                        disabled={finalizing}
-                        lessTransparent
-                        onClick={rerollAppearance}>Randomize Appearance</RandomizeButton>
-
-                      <RandomizeControls
-                        onClick={rollForward}
-                        disabled={finalizing || featureSelection === featureOptions.length - 1}
-                        style={{ opacity: featureOptions.length > 1 ? 1 : 0 }}>
-                        <RedoIcon />
-                      </RandomizeControls>
-                    </RerollContainer>
-                  </NameSection>
-                )}
-                {finalized && (
-                  <RecruitSection>
-                    {!process.env.REACT_APP_HIDE_SOCIAL && (
-                      <TwitterButton onClick={shareOnTwitter}>
-                        <span>Share on Twitter</span>
-                        <TwitterIcon />
-                      </TwitterButton>
+                          <Trait side="right">
+                            <div>
+                              <CrewTraitIcon trait={rewards[traitDispOrder[3]]?.id} type={rewards[traitDispOrder[3]]?.type} />
+                            </div>
+                            <article>
+                              <h4>{rewards[traitDispOrder[3]]?.name}</h4>
+                              <div>{rewards[traitDispOrder[3]]?.description}</div>
+                            </article>
+                            <TipHolder side="right">
+                              <TriangleTip strokeWidth="1" rotate="-90" />
+                            </TipHolder>
+                          </Trait>
+                        </TraitRow>*/}
+                      </Traits>
                     )}
-                    <CopyReferralLink>
-                      <LinkWithIcon>
-                        <LinkIcon />
-                        <span>Copy Recruitment Link</span>
-                      </LinkWithIcon>
-                    </CopyReferralLink>
-                  </RecruitSection>
-                )}
-              </div>
+                  </CardWrapper>
+
+                  <NameSection>
+                    {crewmate._canRename && (
+                      <TextInput
+                        disabled={finalizing || !crewmate._canRename}
+                        initialValue={name}
+                        maxlength={31}
+                        onChange={handleNameChange}
+                        pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                        placeholder="Enter Name" />
+                    )}
+
+                    {crewmate._canRerollAppearance && (
+                      <RerollContainer>
+                        <RandomizeControls
+                          onClick={rollBackAppearance}
+                          disabled={finalizing || appearanceSelection === 0}
+                          style={{ opacity: appearanceOptions.length > 1 ? 1 : 0 }}>
+                          <UndoIcon />
+                        </RandomizeControls>
+
+                        <RandomizeButton
+                          disabled={finalizing}
+                          lessTransparent
+                          onClick={rerollAppearance}>Randomize Appearance</RandomizeButton>
+
+                        <RandomizeControls
+                          onClick={rollForwardAppearance}
+                          disabled={finalizing || appearanceSelection === appearanceOptions.length - 1}
+                          style={{ opacity: appearanceOptions.length > 1 ? 1 : 0 }}>
+                          <RedoIcon />
+                        </RandomizeControls>
+                      </RerollContainer>
+                    )}
+                  </NameSection>
+                </div>
+              )}
               {/* NOTE: the below empty div's are to help with flex spacing on tall screens */}
               <div />
               <div />
             </div>
           </ImageryContainer>
 
+          <Footer>
+            <Rule />
+            <div style={{ alignItems: 'center', display: 'flex', height: 'calc(100% - 1px)', width: '100%' }}>
+              {finalized && (
+                <>
+                  <CopyReferralLink>
+                    <Button subtle><LinkIcon /> <span style={{ marginLeft: 4 }}>Copy Referral Link</span></Button>
+                  </CopyReferralLink>
+                  
+                  <div style={{ flex: 1 }} />
+                  <Button subtle onClick={() => history.push('/crew')}>Go to Crew</Button>
+                </>
+              )}
+              {!finalized && (
+                <>
+                  <Button subtle onClick={handleBack}>Back</Button>
+                  <div style={{ flex: 1 }} />
+                  <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'row' }}>
+                    <RecruitTally>Available Recruits: <b>1</b></RecruitTally>
+                    <Button subtle isTransaction onClick={confirmFinalize}>Recruit</Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </Footer>
+{/* 
           <FinishContainer>
             {!finalized && (
               <>
@@ -848,74 +1003,7 @@ const CrewAssignmentCreate = (props) => {
               </>
             )}
           </FinishContainer>
-
-          {traitDetailsOpen && (
-            <MobileDialogContainer>
-              <Dialog>
-                <Trait isCrewClass>
-                  <div>
-                    <CrewClassIcon crewClass={crewmate.Crewmate.class} overrideColor="inherit" />
-                  </div>
-                  <article>
-                    <h4>{Crewmate.getClass(crewmate.Crewmate.class).name}</h4>
-                    <div>{Crewmate.getClass(crewmate.Crewmate.class).description}</div>
-                  </article>
-                </Trait>
-
-                <Trait isCrewClass>
-                  <div>
-                    <AdalianIcon />
-                  </div>
-                  <article>
-                    <h4>Adalian Citizen</h4>
-                    <div>Completed secondary education and entered adulthood in the Adalian System, after the dismantling of the Arvad.</div>
-                  </article>
-                </Trait>
-
-                <Trait>
-                  <div>
-                    <CrewTraitIcon trait={rewards[traitDispOrder[0]].id} type={rewards[traitDispOrder[0]].type} />
-                  </div>
-                  <article>
-                    <h4>{rewards[traitDispOrder[0]].name}</h4>
-                    <div>{rewards[traitDispOrder[0]].description}</div>
-                  </article>
-                </Trait>
-
-                <Trait>
-                  <div>
-                    <CrewTraitIcon trait={rewards[traitDispOrder[1]].id} type={rewards[traitDispOrder[1]].type} />
-                  </div>
-                  <article>
-                    <h4>{rewards[traitDispOrder[1]].name}</h4>
-                    <div>{rewards[traitDispOrder[1]].description}</div>
-                  </article>
-                </Trait>
-
-                <Trait>
-                  <div>
-                    <CrewTraitIcon trait={rewards[traitDispOrder[2]].id} type={rewards[traitDispOrder[2]].type} />
-                  </div>
-                  <article>
-                    <h4>{rewards[traitDispOrder[2]].name}</h4>
-                    <div>{rewards[traitDispOrder[2]].description}</div>
-                  </article>
-                </Trait>
-
-                <Trait>
-                  <div>
-                    <CrewTraitIcon trait={rewards[traitDispOrder[3]].id} type={rewards[traitDispOrder[3]].type} />
-                  </div>
-                  <article>
-                    <h4>{rewards[traitDispOrder[3]].name}</h4>
-                    <div>{rewards[traitDispOrder[3]].description}</div>
-                  </article>
-                </Trait>
-
-                <Button onClick={() => setTraitDetailsOpen(false)}>Close</Button>
-              </Dialog>
-            </MobileDialogContainer>
-          )}
+*/}
           {confirming && (
             <ConfirmationDialog
               title={`Confirm Character ${adalianRecruits.length > 0 ? 'Details' : 'Minting'}`}

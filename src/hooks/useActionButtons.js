@@ -9,6 +9,7 @@ import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import actionButtons from '../game/interface/hud/actionButtons';
 import useShipCrews from './useShipCrews';
+import useAuth from './useAuth';
 
 // if selected asteroid (any zoom)
 //  - purchase asteroid
@@ -57,6 +58,9 @@ const useActionButtons = () => {
   const openHudMenu = useStore(s => s.openHudMenu);
   const setAction = useStore(s => s.dispatchActionDialog);
 
+  // account
+  const { account } = useAuth();
+
   // crew
   const { crew } = useCrewContext();
 
@@ -87,6 +91,12 @@ const useActionButtons = () => {
 
       if (!asteroid.Nft?.owner) {
         a.push(actionButtons.PurchaseAsteroid);
+      }
+
+      if (asteroid.Nft?.owner === account) {
+        if (crew?.id && asteroid.Control?.controller?.id !== crew?.id) {
+          a.push(actionButtons.ControlAsteroid);
+        }
       }
 
       if (asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {

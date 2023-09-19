@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
-import { Asteroid } from '@influenceth/sdk';
+import { Asteroid, Entity } from '@influenceth/sdk';
 
-import useStore from '~/hooks/useStore';
 import AsteroidComposition from './AsteroidComposition';
 import AsteroidRendering from '../../../../../components/AsteroidRendering';
 import AsteroidSpinner from './AsteroidSpinner';
@@ -10,6 +9,7 @@ import formatters from '~/lib/formatters';
 import { WarningOutlineIcon } from '~/components/Icons';
 import theme from '~/theme';
 import useScanManager from '~/hooks/useScanManager';
+import useSale from '~/hooks/useSale';
 
 const OPACITY_ANIMATION = 400;
 
@@ -86,7 +86,7 @@ const LastRow = styled.div`
 `;
 
 const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
-  const saleIsActive = useStore(s => s.sale);
+  const saleIsActive = useSale(Entity.IDS.ASTEROID);
   const { scanStatus } = useScanManager(asteroid);
 
   const [ready, setReady] = useState();

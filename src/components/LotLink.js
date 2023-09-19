@@ -67,7 +67,7 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
   }, [asteroidId, lotId, selectResourceMapAsNeeded, zoomToLotAsNeeded, zoomStatus]);
 
   if (!asteroidId) {
-    console.log('no asteroid id selected');
+    // console.log('no asteroid id selected');  // TODO: uncomment this once actionitems fixed
     return null;
   }
   return onClickFunction;

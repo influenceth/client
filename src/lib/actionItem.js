@@ -1,4 +1,4 @@
-import { Building, Product } from '@influenceth/sdk';
+import { Building, Entity, Product } from '@influenceth/sdk';
 import moment from 'moment';
 
 import {
@@ -14,6 +14,8 @@ import {
   PurchaseAsteroidIcon,
   ScanAsteroidIcon,
   SurfaceTransferIcon,
+  ShipIcon,
+  BuildingIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 
@@ -144,14 +146,50 @@ const formatAsTx = (item) => {
       formatted.asteroidId = item.vars.i;
       break;
 
-    case 'NAME_ASTEROID':
-      formatted.icon = <PurchaseAsteroidIcon />;
-      formatted.label = 'Name Asteroid';
-      formatted.asteroidId = item.vars.i;
-      formatted.locationDetail = item.vars.name;
-      formatted.onClick = ({ history }) => {
-        history.push(`/asteroids/${formatted.asteroidId}`);
-      };
+    case 'ChangeName':
+      if (item.vars.entity.label === Entity.IDS.ASTEROID) {
+        formatted.icon = <PurchaseAsteroidIcon />;
+        formatted.label = 'Rename Asteroid';
+        formatted.asteroidId = item.vars.entity.id;
+        formatted.locationDetail = item.vars.name;
+        formatted.onClick = ({ history }) => {
+          history.push(`/asteroids/${formatted.asteroidId}`);
+        };
+      }
+      if (item.vars.entity.label === Entity.IDS.CREW) {
+        formatted.icon = <CrewIcon />;
+        formatted.label = 'Rename Crew';
+        formatted.locationDetail = item.vars.name;
+        formatted.onClick = ({ history }) => {
+          history.push(`/crew`);
+        };
+      }
+      if (item.vars.entity.label === Entity.IDS.CREWMATE) {
+        formatted.icon = <CrewmateIcon />;
+        formatted.label = 'Rename Cremwate';
+        formatted.locationDetail = item.vars.name;
+        formatted.onClick = ({ history }) => {
+          history.push(`/crewmate/${item.vars.entity.id}`);
+        };
+      }
+      if (item.vars.entity.label === Entity.IDS.BUILDING) {
+        formatted.icon = <BuildingIcon />;
+        formatted.label = 'Rename Building';
+        formatted.locationDetail = item.vars.name;
+        formatted.onClick = ({ history }) => {
+          // TODO: link to lot
+        };
+      }
+      if (item.vars.entity.label === Entity.IDS.SHIP) {
+        formatted.icon = <ShipIcon />;
+        formatted.label = 'Rename Ship';
+        formatted.locationDetail = item.vars.name;
+        formatted.onClick = ({ history }) => {
+          // TODO: use ship link
+        };
+      }
+
+      
       break;
 
     case 'START_ASTEROID_SCAN':
@@ -194,6 +232,15 @@ const formatAsTx = (item) => {
         } else {
           history.push(`/crew`);
         }
+      };
+      break;
+    case 'InitializeAndManageAsteroid':
+    case 'ManageAsteroid':
+      formatted.icon = <CrewIcon />;
+      formatted.label = 'Control Asteroid';
+      formatted.onClick = ({ openDialog }) => {
+        console.log('ManageAsteroid item', item)
+        openDialog('CONTROL_ASTEROID'); // TODO: need asteroid id?
       };
       break;
     case 'RecruitAdalian':
