@@ -97,7 +97,7 @@ const useColumns = () => {
       {
         key: 'name',
         label: 'Name',
-        sortField: 'Name.name',
+        sortField: 'Name.name.raw',
         selector: row => (
           <>
             <LocationLink asteroidId={row.id} />

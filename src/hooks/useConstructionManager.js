@@ -16,8 +16,8 @@ const useConstructionManager = (asteroidId, lotId) => {
   const payload = useMemo(() => ({
     asteroidId,
     lotId,
-    crewId: crew?.i
-  }), [asteroidId, lotId, crew?.i]);
+    crewId: crew?.id
+  }), [asteroidId, lotId, crew?.id]);
 
   // READY_TO_PLAN > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
   //               < CANCELING <         <                  DECONSTRUCTING                  <
@@ -43,19 +43,21 @@ const useConstructionManager = (asteroidId, lotId) => {
     if (lot?.building) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_ConstructionStart'
-        && item.assets.asteroid?.i === asteroidId
-        && item.assets.lot?.i === lotId
+        && item.assets.asteroid?.id === asteroidId
+        && item.assets.lot?.id === lotId
       ));
+
       if (actionItem) {
         current._crewmates = actionItem.assets.crew.crewmates;
         current.startTime = actionItem.startTime;
       }
-      current.buildingId = lot.building.i;
-      current.buildingType = lot.building.Building.buildingType;
-      current.finishTime = lot.building.Building.finishTime;
-      current.crewId = lot.building.Control.controller.id;
 
-      if (lot.building.Building.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
+      current.buildingId = lot.building.id;
+      current.buildingType = lot.building.Building?.buildingType;
+      current.finishTime = lot.building.Building?.finishTime;
+      current.crewId = lot.building.Control?.controller?.id;
+
+      if (lot.building.Building.status === Building.CONSTRUCTION_STATUS_IDS.PLANNED) {
         if (getStatus('START_CONSTRUCTION', payload) === 'pending') {
           status = 'UNDER_CONSTRUCTION';
           stages.construct = actionStage.STARTING;
@@ -79,13 +81,13 @@ const useConstructionManager = (asteroidId, lotId) => {
             stages.plan = actionStage.COMPLETING;
 
           // if at risk, but i was the occupier, still treat as "planned" (will go back to "ready to plan" for other crews)
-          } else if (lot.building?.Control?.controller?.id === crew?.i) {
+          } else if (lot.building?.Control?.controller?.id === crew?.id) {
             status = 'PLANNED';
             stages.plan = actionStage.COMPLETED;
           }
         }
 
-      } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
+      } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUS_IDS.UNDER_CONSTRUCTION) {
         if (getStatus('FINISH_CONSTRUCTION', payload) === 'pending') {
           status = 'FINISHING';
           stages.construct = actionStage.COMPLETING;
@@ -97,7 +99,7 @@ const useConstructionManager = (asteroidId, lotId) => {
           stages.construct = actionStage.IN_PROGRESS;
         }
 
-      } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+      } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL) {
         if (getStatus('DECONSTRUCT', payload) === 'pending') {
           status = 'DECONSTRUCTING';
           deconstructTx = getPendingTx('DECONSTRUCT', payload);

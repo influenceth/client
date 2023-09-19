@@ -361,7 +361,8 @@ const InfoPane = () => {
     thumbVisible,
   } = useMemo(() => {
     const pane = {
-      thumbVisible: true
+      thumbVisible: true,
+      thumbnail: <ThumbLoader />
     };
 
     if (zoomStatus === 'out' && asteroidId) {
@@ -413,35 +414,30 @@ const InfoPane = () => {
         pane.subtitle = ' ';
         pane.thumbnail = <ThumbLoader />;
       }
-
     } else if (zoomStatus === 'in') {
       if (zoomScene?.type === 'LOT') {
         pane.title = Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name;
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
         pane.captainCard = lot?.Control?.controller?.id;
-
+      } else if (lotId && lot) {
+        let hologram = isAtRisk || !['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus);
+        hologram = lot.building ? hologram : false;
+        const thumbUrl = getBuildingIcon(lot.building?.Building?.buildingType || 0, 'w400', hologram);
+        pane.title = Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name;
+        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
+        pane.captainCard = lot.Control?.controller?.id;
+        pane.hoverSubtitle = 'Zoom to Lot';
+        pane.thumbnail = (
+          <ThumbBackground image={thumbUrl}>
+            {isAtRisk && (
+              <ThumbBanner color="error">
+                {lot.Control?.controller?.id === crew?.i ? 'At Risk' : 'Abandoned'}
+              </ThumbBanner>
+            )}
+          </ThumbBackground>
+        );
       } else if (lotId) {
-        if (lot) {
-          const thumbUrl = lot.building?.Building?.buildingType > 0
-            ? getBuildingIcon(lot.building?.Building?.buildingType, 'w400', isAtRisk || !['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus))
-            : getBuildingIcon(0, 'w400');
-          pane.title = Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name;
-          pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
-          pane.captainCard = lot.Control?.controller?.id;
-          pane.hoverSubtitle = 'Zoom to Lot';
-          pane.thumbnail = (
-            <ThumbBackground image={thumbUrl}>
-              {isAtRisk && (
-                <ThumbBanner color="error">
-                  {lot.Control?.controller?.id === crew?.i ? 'At Risk' : 'Abandoned'}
-                </ThumbBanner>
-              )}
-            </ThumbBackground>
-          );
-        } else {
-          pane.thumbnail = <ThumbLoader />;
-        }
-
+        pane.thumbnail = <ThumbBackground image={getBuildingIcon(0, 'w400')} />;
       } else if (asteroid) {
         pane.title = formatters.asteroidName(asteroid);
         pane.titleLink = `/asteroids/${asteroid.id}`;

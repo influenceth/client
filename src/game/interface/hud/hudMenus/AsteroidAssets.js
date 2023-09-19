@@ -1,6 +1,6 @@
 import { Fragment, useMemo } from 'react';
 import styled from 'styled-components';
-import { Building, Dock, Inventory, Ship, Station } from '@influenceth/sdk';
+import { Building, Dock, Entity, Inventory, Ship, Station } from '@influenceth/sdk';
 
 import { useLotLink } from '~/components/LotLink';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -230,7 +230,7 @@ const BuildingRow = ({ lot }) => {
 
       } else if (lot.building?.Processors?.length && lot.building?.Processors?.[0]?.status > 0) {
         return 'Processing';
-      
+
       } else if ([Building.IDS.WAREHOUSE, Building.IDS.SPACEPORT, Building.IDS.HABITAT].includes(lot.building?.Building?.buildingType)) {
         return `${formatFixed(100 * progress, 1)}% Full`
       }
@@ -268,7 +268,7 @@ const BuildingRow = ({ lot }) => {
 
 const ShipGroupHeader = ({ asteroidId, buildingId, lotId }) => {
   const { data: building } = useBuilding(buildingId);
-  const buildingLoc = Location.fromEntityFormat(building?.Location?.location);
+  const buildingLoc = Entity.toPosition(building?.Location?.location);
 
   const { data: lot } = useLot(asteroidId, buildingLoc?.lotId || lotId);
 
@@ -338,8 +338,8 @@ const AsteroidAssets = () => {
     return ships
     .reduce((acc, ship) => {
       if (ship.Control?.controller?.id === crew?.i) {
-        const loc = Location.fromEntityFormat(ship.Location.location);
-        const lot = loc.buildingId ? -loc.buildingId : (loc.lotId || 0);
+        const loc = ship.Location.location;
+        const lot = loc.label === Entity.IDS.LOT ? (loc.id || 0) : -loc.id;
         if (!acc[lot]) acc[lot] = [];
         acc[lot].push(ship);
       }
@@ -368,7 +368,7 @@ const AsteroidAssets = () => {
           </>
         )}
       </HudMenuCollapsibleSection>
-      
+
       <HudMenuCollapsibleSection
         titleText="Ships"
         titleLabel={`${ships?.length || 0} Asset${ships?.length === 1 ? '' : 's'}`}

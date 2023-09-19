@@ -9,7 +9,6 @@ import Porkchop from '~/components/Porkchop';
 import SliderInput from '~/components/SliderInput';
 import ClockContext from '~/contexts/ClockContext';
 import useAsteroid from '~/hooks/useAsteroid';
-import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
 import { boolAttr, formatFixed } from '~/lib/utils';
@@ -200,13 +199,14 @@ const RoutePlanner = () => {
         if (crew?._location?.shipId === a.id) return -1;
         if (crew?._location?.shipId === b.id) return 1;
 
-        const aLoc = Location.fromEntityFormat(a.Location.location);
-        const bLoc = Location.fromEntityFormat(b.Location.location);
-        if (aLoc.asteroidId === originId && !aLoc.lotId) return -1;
-        if (bLoc.asteroidId === originId && !bLoc.lotId) return 1;
+        const aLoc = a.Location.location;
+        const bLoc = b.Location.location;
 
-        if (aLoc.asteroidId === originId) return -1;
-        if (bLoc.asteroidId === originId) return 1;
+        if (aLoc.label === Entity.IDS.ASTEROID && aLoc.id === originId) return -1;
+        if (aLoc.label === Entity.IDS.ASTEROID && bLoc.id === originId) return 1;
+
+        if (aLoc.id === originId) return -1;
+        if (bLoc.id === originId) return 1;
 
         return 0;
       }),

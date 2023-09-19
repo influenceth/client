@@ -275,7 +275,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
   const onToggleFilters = useCallback(() => {
     setFiltersOpen((o) => !o);
   }, []);
-  
+
   const onClickFilters = useCallback(() => {
     setFiltersOpen(true);
   }, []);
