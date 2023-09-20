@@ -29,12 +29,11 @@ const ButtonWrapper = styled.div`
 `;
 
 const LoginMenu = () => {
-  const { account } = useAuth();
-  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+  const { account, login } = useAuth();
   const history = useHistory();
 
   const [tooltip, status, onClick] = useMemo(() => {
-    if (!account) return ['Log-In', 'Account Not Connected', () => dispatchLauncherPage(true)];
+    if (!account) return ['Log-In', 'Account Not Connected', login];
     else return ['Start Crew', 'Crew Needs Recruits', () => history.push('/crew')];  // TODO: right place?
   }, [ account ]);
 

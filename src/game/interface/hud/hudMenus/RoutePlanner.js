@@ -203,7 +203,7 @@ const RoutePlanner = () => {
         const bLoc = b.Location.location;
 
         if (aLoc.label === Entity.IDS.ASTEROID && aLoc.id === originId) return -1;
-        if (aLoc.label === Entity.IDS.ASTEROID && bLoc.id === originId) return 1;
+        if (bLoc.label === Entity.IDS.ASTEROID && bLoc.id === originId) return 1;
 
         if (aLoc.id === originId) return -1;
         if (bLoc.id === originId) return 1;
@@ -339,7 +339,7 @@ const RoutePlanner = () => {
     <Scrollable hasTray={hasTray} style={{ marginLeft: -12, paddingLeft: 12 }}>
 
       <ShipSelection isSimulated={ship?._simulated}>
-        <ShipImage shipType={ship?.i} simulated={boolAttr(ship?._simulated)} />
+        <ShipImage shipType={ship?.id} simulated={boolAttr(ship?._simulated)} />
 
         <div>
           <SectionHeader style={{ border: 0, margin: 0 }}>Ship</SectionHeader>

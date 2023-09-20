@@ -360,60 +360,52 @@ const InfoPane = () => {
     thumbnail,
     thumbVisible,
   } = useMemo(() => {
-    const pane = {
-      thumbVisible: true,
-      thumbnail: <ThumbLoader />
-    };
+    const pane = {};
 
-    if (zoomStatus === 'out' && asteroidId) {
-      if (asteroid) {
-        pane.title = formatters.asteroidName(asteroid);
-        pane.titleLink = `/asteroids/${asteroid.i}`;
-        pane.subtitle = <>{Asteroid.Entity.getSize(asteroid)} <b>{Asteroid.Entity.getSpectralType(asteroid)}-type</b></>;
-        pane.hoverSubtitle = 'Zoom to Asteroid';
-        // TODO: add captainCard for the "crew" managing the asteroid
+    if (zoomStatus === 'out' && asteroid) {
+      pane.title = formatters.asteroidName(asteroid);
+      pane.titleLink = `/asteroids/${asteroid.i}`;
+      pane.subtitle = <>{Asteroid.Entity.getSize(asteroid)} <b>{Asteroid.Entity.getSpectralType(asteroid)}-type</b></>;
+      pane.hoverSubtitle = 'Zoom to Asteroid';
+      // TODO: add captainCard for the "crew" managing the asteroid
 
-        let thumbBanner = '';
-        let thumbBannerColor = 'main';
-        if (asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED) {
-          if (asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.SURFACE_SCANNING) {
-            thumbBanner = 'Scanning Surface...';
-            thumbBannerColor = 'main';
-          } else if (asteroid.Nft?.owner) {
-            thumbBanner = <><WarningOutlineIcon /> Ready to Scan</>;
-            thumbBannerColor = 'success';
-          } else if (saleIsActive) {
-            thumbBanner = 'Available to Purchase';
-            thumbBannerColor = 'main';
-          } else {
-            thumbBanner = <><WarningOutlineIcon /> Unscanned</>;
-            thumbBannerColor = 'error';
-          }
+      let thumbBanner = '';
+      let thumbBannerColor = 'main';
+      if (asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED) {
+        if (asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.SURFACE_SCANNING) {
+          thumbBanner = 'Scanning Surface...';
+          thumbBannerColor = 'main';
+        } else if (asteroid.Nft?.owner) {
+          thumbBanner = <><WarningOutlineIcon /> Ready to Scan</>;
+          thumbBannerColor = 'success';
+        } else if (saleIsActive) {
+          thumbBanner = 'Available to Purchase';
+          thumbBannerColor = 'main';
+        } else {
+          thumbBanner = <><WarningOutlineIcon /> Unscanned</>;
+          thumbBannerColor = 'error';
         }
-
-        const rarity = Asteroid.Entity.getRarity(asteroid);
-        pane.thumbnail = (
-          <ThumbBackground>
-            {thumbBanner && <ThumbBanner color={thumbBannerColor}>{thumbBanner}</ThumbBanner>}
-            {asteroid.Celestial.scanStatus >= Asteroid.SCAN_STATUSES.SURFACE_SCANNED && (
-              <RarityEarmark
-                data-for="infoPane"
-                data-tip={rarity}
-                data-place="right"
-                rarity={rarity} />
-            )}
-            <AsteroidRendering
-              asteroid={asteroid}
-              onReady={onRenderReady}
-              style={asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.UNSCANNED ? { filter: 'grayscale(1)' } : {}} />
-          </ThumbBackground>
-        );
-        pane.thumbVisible = !!renderReady;
-      } else {
-        pane.title = ' ';
-        pane.subtitle = ' ';
-        pane.thumbnail = <ThumbLoader />;
       }
+
+      const rarity = Asteroid.Entity.getRarity(asteroid);
+      pane.thumbVisible = true;
+      pane.thumbnail = (
+        <ThumbBackground>
+          {thumbBanner && <ThumbBanner color={thumbBannerColor}>{thumbBanner}</ThumbBanner>}
+          {asteroid.Celestial.scanStatus >= Asteroid.SCAN_STATUSES.SURFACE_SCANNED && (
+            <RarityEarmark
+              data-for="infoPane"
+              data-tip={rarity}
+              data-place="right"
+              rarity={rarity} />
+          )}
+          <AsteroidRendering
+            asteroid={asteroid}
+            varyDistance={true}
+            onReady={onRenderReady}
+            style={asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.UNSCANNED ? { filter: 'grayscale(1)' } : {}} />
+        </ThumbBackground>
+      );
     } else if (zoomStatus === 'in') {
       if (zoomScene?.type === 'LOT') {
         pane.title = Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name;
@@ -427,6 +419,7 @@ const InfoPane = () => {
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
         pane.captainCard = lot.Control?.controller?.id;
         pane.hoverSubtitle = 'Zoom to Lot';
+        pane.thumbVisible = true;
         pane.thumbnail = (
           <ThumbBackground image={thumbUrl}>
             {isAtRisk && (
@@ -437,8 +430,10 @@ const InfoPane = () => {
           </ThumbBackground>
         );
       } else if (lotId) {
+        pane.thumbVisible = true;
         pane.thumbnail = <ThumbBackground image={getBuildingIcon(0, 'w400')} />;
       } else if (asteroid) {
+        pane.thumbVisible = false;
         pane.title = formatters.asteroidName(asteroid);
         pane.titleLink = `/asteroids/${asteroid.id}`;
         pane.subtitle = (

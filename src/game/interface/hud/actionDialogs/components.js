@@ -1966,7 +1966,7 @@ export const AsteroidImage = ({ asteroid, size }) => {
 }
 
 export const ShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, simulated, square, style = {} }) => {
-  const shipAsset = Ship.TYPES[shipType];
+  const shipAsset = Ship.TYPES[Math.abs(shipType)]; // abs for simulated ships
   if (!shipAsset) return null;
 
   const capacity = getCapacityUsage(inventories, showInventoryStatusForType);

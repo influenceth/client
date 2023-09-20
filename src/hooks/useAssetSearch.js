@@ -13,11 +13,11 @@ filtersToQuery.asteroids = (filters) => {
   const queryBuilder = esb.boolQuery();
   if (filters.ownedBy) {
     if (filters.ownedBy === 'unowned') {
-      queryBuilder.mustNot(esb.existsQuery('Nft.owners'))
+      queryBuilder.mustNot(esb.existsQuery('Nft.owner'))
     } else if (filters.ownedBy === 'owned') {
-      queryBuilder.filter(esb.existsQuery('Nft.owners.starknet'))
+      queryBuilder.filter(esb.existsQuery('Nft.owner'))
     } else if (filters.ownedBy) {
-      queryBuilder.filter(esb.termQuery('Nft.owners.starknet', filters.ownedBy));
+      queryBuilder.filter(esb.termQuery('Nft.owner', filters.ownedBy));
     }
   }
 
