@@ -175,7 +175,7 @@ const CrewCard = ({ crewmate, onClick, overlay, ...props }) => {
       hasOverlay={!!overlay}
       classLabel={classLabel}
       {...props}>
-      <LoadingAnimation color={'white'} css={loadingCss} loading={boolAttr(!imageLoaded)} />
+      {!imageLoaded && <LoadingAnimation color={'white'} css={loadingCss} />}
       <CardImage visible={imageLoaded} applyMask={!overlay && !props.hideMask}>
         <img
           alt={useName}
