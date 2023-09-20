@@ -30,7 +30,7 @@ const useColumns = () => {
         key: 'name',
         icon: <CrewmateIcon />,
         label: 'Name',
-        sortField: 'Name.name', // TODO: figure out why elastic doesn't like this
+        sortField: 'Name.name.raw',
         selector: row => formatters.crewmateName(row),
         unhideable: true
       },
