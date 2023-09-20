@@ -87,7 +87,7 @@ const LastRow = styled.div`
 
 const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
   const saleIsActive = useSale(Entity.IDS.ASTEROID);
-  const { scanStatus } = useScanManager(asteroid);
+  const { scanStatus, scanType } = useScanManager(asteroid);
 
   const [ready, setReady] = useState();
 
@@ -120,7 +120,7 @@ const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
         <AsteroidName>
           {formatters.asteroidName(asteroid)}
         </AsteroidName>
-        {scanStatus === 'FINISHED' && (
+        {(scanStatus === 'FINISHED' || (scanType === 'RESOURCE' && scanStatus === 'UNSCANNED')) && (
           <LastRow style={{ color: 'white' }}>
             {defaultLastRow || `${Asteroid.Entity.getSurfaceArea(asteroid).toLocaleString()} lots`}
           </LastRow>
@@ -135,21 +135,25 @@ const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
             Resource<br/>Analysis Ready
           </LastRow>
         )}
-        {scanStatus === 'UNSCANNED' && asteroid.Control?.controller && (
-          <LastRow style={{ color: theme.colors.error }}>
-            Un-Scanned<br/>
-            <WarningOutlineIcon />
-          </LastRow>
-        )}
-        {scanStatus === 'UNSCANNED' && !asteroid.Control?.controller && saleIsActive && (
-          <LastRow style={{ color: '#55d0fa', fontWeight: 'bold' }}>
-            Available<br/>for Purchase
-          </LastRow>
-        )}
-        {scanStatus === 'UNSCANNED' && !asteroid.Control?.controller && !saleIsActive && (
-          <LastRow>
-            Unavailable
-          </LastRow>
+        {scanType === 'SURFACE' && scanStatus === 'UNSCANNED' && (
+          <>
+            {asteroid.Control?.controller && (
+              <LastRow style={{ color: theme.colors.error }}>
+                Un-Scanned<br/>
+                <WarningOutlineIcon />
+              </LastRow>
+            )}
+            {!asteroid.Control?.controller && saleIsActive && (
+              <LastRow style={{ color: '#55d0fa', fontWeight: 'bold' }}>
+                Available<br/>for Purchase
+              </LastRow>
+            )}
+            {!asteroid.Control?.controller && !saleIsActive && (
+              <LastRow>
+                Unavailable
+              </LastRow>
+            )}
+          </>
         )}
       </GraphicData>
     </Graphic>

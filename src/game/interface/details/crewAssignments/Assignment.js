@@ -163,6 +163,7 @@ const CrewAssignment = () => {
 
   const finish = useCallback(() => {
     playSound('effects.success');
+    choosePath('x');
     history.push(`/crew-assignment/${bookId}/${crewmateId}/${bookSession?.isMintingStory ? 'create' : 'complete'}`);
   }, [history, playSound, bookId, bookSession?.isMintingStory]);
 

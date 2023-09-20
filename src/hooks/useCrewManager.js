@@ -18,16 +18,17 @@ const useCrewManager = () => {
   );
 
   const purchaseAndOrInitializeCrew = useCallback(
-    (params) => {
+    ({ crewmate }) => {
       if (adalianRecruits.length > 0) {
-        execute('INITIALIZE_CREWMATE', { i: adalianRecruits[0].i, ...params });
+        // execute('INITIALIZE_CREWMATE', { i: adalianRecruits[0].i, ...params });
       } else {
-        const appearance = Crewmate.unpackAppearance(params.features.Crewmate.appearance);
+        console.log('crewmate', crewmate);
+        const appearance = Crewmate.unpackAppearance(crewmate.Crewmate.appearance);
         execute('RecruitAdalian', {
-          crewmate: { id: 0, label: Entity.IDS.CREWMATE },  // TODO: may already have an id
-          class: params.features.Crewmate.class,
-          impactful: params.features.Crewmate.impactful,
-          cosmetic: params.features.Crewmate.cosmetic,
+          crewmate: { id: crewmate.id, label: Entity.IDS.CREWMATE },  // TODO: may already have an id
+          class: crewmate.Crewmate.class,
+          impactful: crewmate.Crewmate.impactful,
+          cosmetic: crewmate.Crewmate.cosmetic,
           gender: appearance.gender,
           body: appearance.body,
           face: appearance.face,
@@ -35,8 +36,8 @@ const useCrewManager = () => {
           hair_color: appearance.hairColor,
           clothes: appearance.clothes,
           station: { id: 1, label: Entity.IDS.BUILDING }, // TODO: should not be hardcoded
-          caller_crew: { id: params.crewId, label: Entity.IDS.CREW },
-          name: params.name
+          caller_crew: crewmate.Control.controller,
+          name: crewmate.Name.name
         });
       }
     },

@@ -62,7 +62,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         const sliceTheta = 2 * Math.PI * abundance;
         const geometry = new CircleGeometry(1.0, getSegments(sliceTheta), totalTheta + margin, sliceTheta - 2 * margin);
         const material = new MeshBasicMaterial({
-          color: noColor ? hexToLinear('#222222') : hexToLinear(theme.colors.resources[categoryKey]),
+          color: noColor ? hexToLinear('#222222') : (hexToLinear(theme.colors.resources[categoryKey] || '#222222')),
           alphaMap: new Texture(),  // include so vUv is set
           side: BackSide, // (to make angles work as designed)
           toneMapped: false,

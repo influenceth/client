@@ -53,6 +53,7 @@ import Svg48 from '~/assets/icons/crew_traits/48.svg';
 import Svg49 from '~/assets/icons/crew_traits/49.svg';
 import Svg50 from '~/assets/icons/crew_traits/50.svg';
 import FallbackSvg from '~/assets/icons/RocketIcon.svg';
+import { boolAttr } from '~/lib/utils';
 
 const innerDim = 0.54;
 const innerShift = (1 - innerDim) / 2;
@@ -65,19 +66,37 @@ const indexedIcons = [ // 1-indexed
   Svg50
 ];
 
+const HexagonOutline = styled(HexagonOutlineSVG)`
+  ${p => p.opaque && `& > polygon { fill: black; }`}
+`;
 const HexagonInnerHighlight = styled(HexagonInnerHighlightSVG)`
-  color: rgba(${p => p.theme.colors.mainRGB}, 0.15);
+  color: rgba(${p => p.theme.colors.mainRGB}, 0.35);
+  display: none;
 `;
 
-const CrewTraitIcon = ({ hideHexagon, trait, type }) => {
+const HighlightableSvg = styled.svg`
+  ${p => p.highlight && `
+    ${HexagonOutline} {
+      color: ${p.theme.colors.main};
+    }
+    ${HexagonInnerHighlight} {
+      display: block;
+    }
+  `}
+`;
+
+
+const CrewTraitIcon = ({ hideHexagon, hideFallback, opaque, trait, type }) => {
   const InnerIcon = indexedIcons[Number(trait)] || FallbackSvg;
-  const highlight = type && type === 'impactful';
   return (
-    <svg className="icon">
+    <HighlightableSvg
+      className="icon"
+      highlight={boolAttr(type && type === 'impactful')}
+      hideInner={boolAttr(hideFallback && !!trait)}>
       {!hideHexagon && (
         <>
-          <HexagonOutlineSVG />
-          {highlight && <HexagonInnerHighlight />}
+          <HexagonOutline opaque={boolAttr(opaque)} />
+          <HexagonInnerHighlight />
         </>
       )}
       <InnerIcon
@@ -85,8 +104,9 @@ const CrewTraitIcon = ({ hideHexagon, trait, type }) => {
         height={`${innerDim}em`}
         width={`${innerDim}em`}
         x={`${innerShift}em`}
-        y={`${innerShift}em`} />
-    </svg>
+        y={`${innerShift}em`}
+        style={hideFallback && !trait ? { opacity: 0 } : {}} />
+    </HighlightableSvg>
   );
 };
 

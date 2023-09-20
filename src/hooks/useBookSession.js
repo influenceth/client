@@ -16,7 +16,7 @@ const anyOf = (mustHave, tests) => !!mustHave.find((x) => tests.includes(x));
 const allOf = (mustHave, tests) => !mustHave.find((x) => !tests.includes(x));
 
 const useBookSession = (bookId, rawCrewmateId) => {
-  const { crew, arvadianRecruits } = useCrewContext();
+  const { crew, arvadianRecruits, loading: crewIsLoading } = useCrewContext();
   const crewmateId = Number(rawCrewmateId);
   const crewId = crew?.id || 0;
 
@@ -55,6 +55,7 @@ const useBookSession = (bookId, rawCrewmateId) => {
 
   const { bookSession, storySession } = useMemo(() => {
     if (!book) return {};
+    if (crewIsLoading) return {};
     if (crewmateId && !crewmate) return {};
 
     let currentStory;
@@ -161,7 +162,7 @@ const useBookSession = (bookId, rawCrewmateId) => {
         totalSteps: bookId === bookIds.ADALIAN_RECRUITMENT ? 5 : 3,
       }
     };
-  }, [book, crewmate, sessionData]);
+  }, [book, crewmate, crewIsLoading, sessionData]);
 
   const choosePath = useCallback((pathId) => {
     dispatchCrewAssignmentPathSelection(crewId, crewmateId, bookId, bookSession?.currentStoryId, pathId);

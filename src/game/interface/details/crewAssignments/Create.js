@@ -1,13 +1,25 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import { Crewmate, Entity } from '@influenceth/sdk';
 import {
+  BiMinus as LockedIcon,
+  BiRedo as RedoIcon,
   BiUndo as UndoIcon,
-  BiRedo as RedoIcon
-} from 'react-icons/bi';
-import LoadingAnimation from 'react-spinners/PuffLoader';
 
+} from 'react-icons/bi';
+import {
+  VscTriangleLeft as LeftArrowIcon,
+  VscTriangleRight as RightArrowIcon,
+
+} from 'react-icons/vsc';
+import LoadingAnimation from 'react-spinners/PuffLoader';
+import { cloneDeep } from 'lodash';
+
+import Collection1 from '~/assets/images/crew_collections/1.png';
+import Collection2 from '~/assets/images/crew_collections/2.png';
+import Collection3 from '~/assets/images/crew_collections/3.png';
+import Collection4 from '~/assets/images/crew_collections/4.png';
 import Button from '~/components/ButtonAlt';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CopyReferralLink from '~/components/CopyReferralLink';
@@ -15,9 +27,8 @@ import CrewCard from '~/components/CrewCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/DetailsModal';
-import Dialog from '~/components/Dialog';
 import Ether from '~/components/Ether';
-import { AdalianIcon, CheckIcon, LinkIcon, TwitterIcon } from '~/components/Icons';
+import { CheckIcon, CloseIcon, LinkIcon, TwitterIcon } from '~/components/Icons';
 import IconButton from '~/components/IconButton';
 import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
@@ -28,7 +39,15 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import formatters from '~/lib/formatters';
-import { boolAttr } from '~/lib/utils';
+import MouseoverInfoPane from '~/components/MouseoverInfoPane';
+import theme from '~/theme';
+
+const CollectionImages = {
+  1: Collection1,
+  2: Collection2,
+  3: Collection3,
+  4: Collection4,
+};
 
 const blinkingBackground = (p) => keyframes`
   0% {
@@ -53,7 +72,6 @@ const slideOutTransition = keyframes`
   }
   100% {
     transform: scaleX(1);
-    width: calc(95% - 120px);
   }
 `;
 
@@ -78,7 +96,10 @@ const opacityTransition = keyframes`
 
 const TitleBox = styled.div`
   background: rgba(0, 0, 0, 0.8);
+  margin: 25px 0;
   padding: 12px 0;
+  position: relative;
+  z-index: 1;
 `;
 const Title = styled.div`
   border: solid #444;
@@ -105,7 +126,7 @@ const Title = styled.div`
 const ImageryContainer = styled.div`
   display: flex;
   flex: 1;
-  padding: 75px 0 0;
+  padding: 60px 0 0;
   position: relative;
 
   & > div:first-child {
@@ -123,30 +144,46 @@ const ImageryContainer = styled.div`
     mask-image: linear-gradient(to bottom, transparent 0%, black 10%, rgba(0,0,0,0.7) 50%, transparent 100%);
     transition: opacity 750ms ease-out, background-image 750ms ease-out;
   }
-  & > div:last-child {
-    position: relative;
-    z-index: 2;
-  }
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding-top: 15px;
   }
 `;
 
-const cardWidth = 360;
-const traitHeight = 150;
-const traitMargin = 2;
-const traitBackground = 'rgba(15,15,15,0.95)';
+const borderColor = '#333';
+const cardWidth = 320;
+const centerWidth = 375;
+const traitHeight = 100;
+const traitHeight_big = 112;
+const traitTriangleWidth = 30;
+const traitBackground = 'rgba(25,25,25,0.95)';
 const traitBorder = '#444';
 
+const MainContent = styled.div`
+  height: 100%;
+  position: relative;
+  width: 100%;
+`;
+
+const CenterColumn = styled.div`
+  background: black;
+  border: solid ${borderColor};
+  border-width: 0 1px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin: 0 auto;
+  padding: 15px 0 30px;
+  position: relative;
+  width: ${centerWidth}px;
+  z-index: 200;
+`;
+
 const CardWrapper = styled.div`
-  align-items: center;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  min-height: ${(traitHeight + 2 * traitMargin) * 3}px;
-  padding: 15px;
-  position: relative;
+  padding: 10px 15px 15px;
   justify-content: center;
   width: 100%;
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
@@ -156,12 +193,10 @@ const CardWrapper = styled.div`
 
 const CardContainer = styled.div`
   background: black;
-  padding: 8px;
-  position: relative;
   z-index: 3;
   & > div {
-    border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.35);
-    padding: 4px;
+    border: 1px solid ${borderColor};
+    padding: 10px;
     width: ${cardWidth}px;
     @media (min-width: 1024px) {
       max-width: 22vw;
@@ -188,47 +223,45 @@ const Traits = styled.div`
   }
 `;
 
-const TraitRow = styled.div`
-  background: ${traitBackground};
-  display: flex;
-  flex-direction: row;
-  height: ${traitHeight}px;
-  margin: ${traitMargin}px 0;
-  overflow: visible;
-  transform: scaleX(0);
-  width: calc(95% - 120px);
-
-  &:nth-child(1) {
-    animation: ${slideOutTransition} 1000ms normal forwards ease-out 500ms;
-  }
-  &:nth-child(2) {
-    animation: ${slideOutTransition} 1000ms normal forwards ease-out 650ms;
-  }
-  &:nth-child(3) {
-    animation: ${slideOutTransition} 1000ms normal forwards ease-out 800ms;
-  }
+const TipIcon = styled.div`
+  position: absolute;
+  ${p => p.side}: -16px;
+  margin-top: 8px;
+  & > * { display: none; }
 `;
-
-const TraitSpacer = styled.div`
-  border: solid ${traitBorder};
-  border-width: 1px 0;
-  max-width: 22vw;
-  width: ${cardWidth}px; // (should match card width)
-`;
-
+const ClickableIcon = styled.div``;
+const AtRiskIcon = styled.div`color: ${p => p.theme.colors.error};`;
+const UnclickableIcon = styled.div`color: #777;`;
 const TipHolder = styled.div`
   position: absolute;
   top: 0;
   & > svg {
-    height: 60px;
+    height: ${traitTriangleWidth}px;
     width: ${traitHeight - 1}px;
     & > polygon {
       fill: ${traitBackground};
+
+      transition: 250ms ease-out;
+      transition-property: fill;
     }
     & > path {
       stroke: ${traitBorder};
+
+      transition: 250ms ease-out;
+      transition-property: stroke;
     }
   }
+`;
+
+const attentionBackground = keyframes`
+  0% { background-color: #005678; }
+  50% { background-color: #14262d; }
+  100% { background-color: #005678; }
+`;
+const attentionFill = keyframes`
+  0% { fill: #005678; }
+  50% { fill: #14262d; }
+  100% { fill: #005678; }
 `;
 
 const Trait = styled.div`
@@ -240,13 +273,16 @@ const Trait = styled.div`
   flex-direction: row;
   align-items: center;
 
+  transition: 250ms ease-out;
+  transition-property: background, border-color;
+
   & > *:first-child {
     ${p => p.side === 'right' && 'margin-left: 20px;'}
-    font-size: ${p => p.isCrewClass ? '64px' : '80px'};
-    line-height: ${p => p.isCrewClass ? '64px' : '80px'};
+    font-size: 65px;
+    line-height: 65px;
     position: relative;
     text-align: center;
-    width: 88px;
+    width: 75px;
     z-index: 3;
   }
   & > article {
@@ -256,13 +292,13 @@ const Trait = styled.div`
     padding-bottom: 10px;
     padding-left: 10px;
     padding-top: 10px;
-    ${p => p.side === 'left' && 'padding-right: 20px;'}
+    ${p => p.side === 'left' && 'padding-right: 15px;'}
     & > h4 {
-      margin: 0 0 8px;
+      font-size: 17px;
+      margin: 0 0 4px;
     }
     & > div {
-      font-size: 80%;
-      opacity: 0.6;
+      color: ${p => p.type === 'impactful' ? p.theme.colors.main : '#888'};
     }
   }
 
@@ -270,16 +306,6 @@ const Trait = styled.div`
     ${p => p.side}: 0;
     & > svg {
       transform-origin: top ${p => p.side};
-    }
-  }
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    border: 0;
-    padding-bottom: 16px;
-    & > *:first-child {
-      font-size: ${p => p.isCrewClass ? '52px' : '64px'};
-      line-height: ${p => p.isCrewClass ? '52px' : '64px'};
-      width: 72px;
     }
   }
 
@@ -299,35 +325,171 @@ const Trait = styled.div`
       padding-left: 20px;
     }
   }
+
+  ${p => {
+    if (p.isAtRisk && !p.isEmpty) {
+      return `
+        background: #4b1e1a;
+        border-color: #444;
+        & > article > h4 {
+          color: ${p.theme.colors.error};
+        }
+        & ${TipHolder} {
+          & > svg {
+            & > polygon {
+              fill: #4b1e1a;
+            }
+            & > path {
+              stroke: #444;
+            }
+          }
+          ${TipIcon} > ${AtRiskIcon} { display: block; }
+        }
+      `;
+    } else if (p.isClickable && !p.isAtRisk) {
+      const clickable = css`
+        border-color: rgba(${p.theme.colors.mainRGB}, 0.5);
+        cursor: ${p.theme.cursors.active};
+        & ${TipHolder} {
+          & > svg > path {
+            stroke: rgba(${p.theme.colors.mainRGB}, 0.5);
+          }
+          ${TipIcon} > ${ClickableIcon} { display: block; }
+        }
+      `;
+      const clickableHover = css`
+        background: #005678;
+        & ${TipHolder} > svg > polygon {
+          fill: #005678;
+        }
+      `;
+      if (p.isEmpty) {
+        return css`
+          ${clickable}
+          animation: ${attentionBackground} 2000ms ease infinite;
+          background: #005678;
+          & > article > h4 {
+            color: ${p.theme.colors.main} !important;
+            font-size: 17px !important;
+            margin: 0;
+            padding: 0;
+            text-transform: none;
+          }
+          & > article > div { display: none; }
+          & ${TipHolder} > svg {
+            & > polygon {
+              animation: ${attentionFill} 2000ms ease infinite;
+              fill: #005678;
+            }
+          }
+
+          &:hover {
+            ${clickableHover}
+            animation: none;
+            & ${TipHolder} > svg > polygon { animation: none; }
+          }
+        `;
+      }
+      return css`
+        ${clickable}
+        &:hover {
+          ${clickableHover}
+        }
+      `;
+    }
+    return `
+      & ${TipHolder} ${TipIcon} > ${UnclickableIcon} { display: block; }
+    `; 
+  }}
+`;
+
+const TraitSpacer = styled.div`
+  border: solid ${traitBorder};
+  border-width: 1px 0;
+  max-width: 22vw;
+  width: ${centerWidth}px; // (should match card width)
+`;
+
+const TraitRow = styled.div`
+  background: ${traitBackground};
+  display: flex;
+  flex-direction: row;
+  height: ${traitHeight}px;
+  margin-bottom: 8px;
+  overflow: visible;
+  transform: scaleX(0);
+  width: calc(85% - ${traitTriangleWidth * 2}px);
+
+  &:nth-child(1) {
+    animation: ${slideOutTransition} 1000ms normal forwards ease-out 500ms;
+  }
+  &:nth-child(2) {
+    animation: ${slideOutTransition} 1000ms normal forwards ease-out 650ms;
+  }
+  &:nth-child(3) {
+    animation: ${slideOutTransition} 1000ms normal forwards ease-out 800ms;
+  }
+  &:nth-child(4) {
+    animation: ${slideOutTransition} 1000ms normal forwards ease-out 950ms;
+  }
+  &:nth-child(5) {
+    animation: ${slideOutTransition} 1000ms normal forwards ease-out 1100ms;
+  }
+
+  ${p => p.big && `
+    height: ${traitHeight_big}px;
+    width: calc(97% - ${traitTriangleWidth * 2}px);
+    ${TipHolder} {
+      & > svg {
+        width: ${traitHeight_big - 1}px;
+      }
+      ${TipIcon} {
+        margin-top: 14px;
+      }
+    }
+    margin-bottom: 60px;
+
+    ${Trait} > article {
+      text-transform: uppercase;
+      & > h4 {
+        color: #777;
+        font-size: 15px;
+      }
+      & > div {
+        color: white;
+        font-size: 17px;
+        font-weight: bold;
+        opacity: 1;
+      }
+    }
+  `}
 `;
 
 const NameSection = styled.div`
+  align-items: center;
   animation: ${opacityTransition} 1000ms normal forwards ease-out 650ms;
+  flex: 1;
   opacity: 0;
   display: flex;
   margin-top: 5px;
   flex-direction: column;
-  align-items: center;
   & > input {
     &:not(:disabled) {
       animation: ${blinkingBackground} 750ms linear 2000ms 2;
     }
     background: #000;
-    border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.35);
-    font-size: 28px;
-    height: 2em;
+    border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.8);
+    font-size: 20px;
+    height: 40px;
     text-align: center;
-    width: 440px;
+    width: 275px;
   }
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    margin-top: -10px;
-    padding: 0 8px;
-    width: 100%;
-    & > input {
-      max-width: 440px;
-      width: 100%;
-    }
+  & > label {
+    color: #777;
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    text-transform: uppercase;
   }
 `;
 
@@ -431,7 +593,13 @@ const FinishContainer = styled.div`
 const PromptBody = styled.div`
   border: solid #333;
   border-width: 1px 0;
+  color: ${p => p.theme.colors.main};
+  line-height: 20px;
   padding: 16px 24px;
+  & b {
+    color: white;
+    font-weight: normal;
+  }
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding: 12px;
   }
@@ -464,7 +632,100 @@ const RecruitTally = styled.div`
   }
 `;
 
+const CollectionImage = styled.div`
+  align-items: center;
+  display: flex;
+  height: 1em;
+  justify-content: center;
+  overflow: visible;
+  width: 1em;
+  &:before {
+    content: "";
+    display: block;
+    background-image: url(${p => CollectionImages[p.coll]});
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center center;
+    position: absolute;
+    height: ${p => p.coll === 4 ? '175%' : '130%'};
+    width: ${p => p.coll === 4 ? '175%' : '130%'};
+  }
+`;
+
+const MouseoverContent = styled.div`
+  padding: 15px;
+`;
+const MouseoverTitle = styled.div`
+  border-bottom: 1px solid #333;
+  color: white;
+  font-size: 18px;
+  margin: 0 0 8px;
+  padding: 0 0 8px;
+`;
+const MouseoverSubtitle = styled.div`
+  color: white;
+  font-size: 14px;
+  margin: 15px 0 5px;
+  text-transform: uppercase;
+`;
+const MouseoverHighlightTitle = styled(MouseoverTitle)`
+  color: ${p => p.theme.colors.main};
+  font-size: 15px;
+  font-weight: bold;
+  text-transform: uppercase;
+`;
+const MouseoverDescription = styled.div`
+  color: #999;
+  font-size: 85%;
+`;
+
+const TraitSelectionArea = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+`;
+
+const SelectableTrait = styled.div`
+  align-items: center;
+  border: 1px solid transparent;
+  color: white;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  justify-content: center;
+  font-size: 54px;
+  height: 58px;
+  margin: 1px;
+  width: 58px;
+  ${p => p.isSelected && `
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.1);
+  `}
+
+  &:hover {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
+    border-color: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+  }
+`;
+
+const ClassSelectionArea = styled(TraitSelectionArea)``;
+const SelectableClass = styled(SelectableTrait)`
+  font-size: 48px;
+`;
+
+const mouseoverPaneProps = (visible, isEditor) => ({
+  css: css`
+    padding: 0;
+    pointer-events: ${visible ? 'auto' : 'none'};
+    width: 400px;
+    ${isEditor ? `border-color: rgba(${theme.colors.mainRGB}, 0.5);` : ''}
+  `,
+  placement: 'top',
+  visible
+});
+
 const onCloseDestination = `/crew`;
+
+const noop = () => {};
 
 const getRandomAdalianAppearance = () => {
   const gender = Math.ceil(Math.random() * 2);
@@ -483,48 +744,122 @@ const getRandomAdalianAppearance = () => {
   };
 };
 
-const getRandomTraitSet = (c) => {
-  if (!(c.Crewmate.coll || c.Crewmate.class)) return [];
+const PopperWrapper = (props) => {
+  const [refEl, setRefEl] = useState();
+  return props.children(refEl, setRefEl);
+}
 
-  const traits = [];  // TODO: if traits are partially selected, just randomize the rest; if full or empty, randomize all
-  let possibleTraits = Crewmate.nextTraits(c.Crewmate.coll, c.Crewmate.class, traits);
-  let randomIndex;
-  while (possibleTraits.length > 0 && traits.length < 12) {
-    randomIndex = Math.floor(Math.random() * possibleTraits.length);
-    traits.push(possibleTraits[randomIndex]);
-    console.log({ possibleTraits, randomIndex, traits});
-    possibleTraits = Crewmate.nextTraits(c.Crewmate.coll, c.Crewmate.class, traits);
-  }
+const MouseoverInfoContent = ({ title, description }) => (
+  <MouseoverContent>
+    <MouseoverTitle>{title}</MouseoverTitle>
+    <MouseoverDescription>{description}</MouseoverDescription>
+  </MouseoverContent>
+);
 
-  return {
-    impactful: [],
-    cosmetic: [],
-  }
+const ClassSelector = ({ classObjects, crewmate, onUpdateClass }) => {
+  const [hovered, setHovered] = useState();
+
+  const classDisplay = useMemo(() => classObjects[hovered || crewmate?.Crewmate?.class], [hovered, crewmate?.Crewmate?.class])
+
+  return (
+    <MouseoverContent>
+      <MouseoverHighlightTitle>Select Class</MouseoverHighlightTitle>
+      <ClassSelectionArea>
+        {Object.values(Crewmate.CLASS_IDS).map((classId) => (
+          <SelectableClass
+            key={classId}
+            isSelected={crewmate?.Crewmate?.class === classId}
+            onClick={() => onUpdateClass(classId)}
+            onMouseEnter={() => setHovered(classId)}
+            onMouseLeave={() => setHovered()}>
+            <CrewClassIcon crewClass={classId} />
+          </SelectableClass>
+        ))}
+      </ClassSelectionArea>
+
+      <div style={{ height: 180, marginTop: 15, overflow: 'hidden' }}>
+        <MouseoverTitle>{classDisplay?.name || '‎'}</MouseoverTitle>
+        <MouseoverDescription>{classDisplay?.description || '(Select a class above)'}</MouseoverDescription>
+
+        {classDisplay && (
+          <>
+            <MouseoverSubtitle>{classDisplay?.name} Bonuses</MouseoverSubtitle>
+            <MouseoverDescription>{classDisplay?.abilities}</MouseoverDescription>
+          </>
+        )}
+      </div>
+    </MouseoverContent>
+  );
 };
 
-const CrewAssignmentCreate = (props) => {
+const TraitSelector = ({ crewmate, currentTraits, onUpdateTraits, traitIndex }) => {
+  const changeTrait = currentTraits[traitIndex];
+  const priorTraits = currentTraits.slice(0, traitIndex).map((t) => t.id);
+  const options = useMemo(() => {
+    return Crewmate.nextTraits(
+      crewmate.Crewmate.coll,
+      crewmate.Crewmate.class,
+      priorTraits
+    ).sort((a, b) => Crewmate.TRAITS[a].name < Crewmate.TRAITS[b].name ? -1 : 1);
+  }, [priorTraits]);
+
+  const [hovered, setHovered] = useState();
+
+  const onSelect = useCallback((newTrait) => {
+    onUpdateTraits(changeTrait?.id === newTrait ? currentTraits.map((t) => t.id) : [...priorTraits, newTrait]);
+  }, [changeTrait, priorTraits]);
+
+  const traitDisplay = useMemo(() => Crewmate.TRAITS[hovered || changeTrait?.id], [hovered, changeTrait])
+
+  return (
+    <MouseoverContent>
+      <MouseoverHighlightTitle>Available Traits</MouseoverHighlightTitle>
+      <TraitSelectionArea>
+        {options.map((t) => (
+          <SelectableTrait
+            key={t}
+            isSelected={changeTrait?.id === t}
+            onClick={() => onSelect(t)}
+            onMouseEnter={() => setHovered(t)}
+            onMouseLeave={() => setHovered()}>
+            <CrewTraitIcon trait={t} />
+          </SelectableTrait>
+        ))}
+      </TraitSelectionArea>
+
+      <div style={{ height: 105, marginTop: 15, overflow: 'hidden' }}>
+        <MouseoverTitle>{traitDisplay?.name || '‎'}</MouseoverTitle>
+        <MouseoverDescription>{traitDisplay?.description || '(Select a trait above)'}</MouseoverDescription>
+      </div>
+    </MouseoverContent>
+  );
+};
+
+const CrewAssignmentCreate = ({ bookSessionHook, ...props }) => {
   const { account } = useAuth();
   const { bookId, crewmateId } = useParams();
   const history = useHistory();
 
-  const { bookError, bookSession, storySession, undoPath, restart } = useBookSession(bookId, crewmateId);
+  const { bookError, bookSession, storySession, undoPath, restart } = bookSessionHook;
   const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
-  const { purchaseAndOrInitializeCrew, getPendingCrewmate, adalianRecruits } = useCrewManager();
+  const { purchaseAndOrInitializeCrew, getPendingCrewmate, adalianRecruits, arvadianRecruits } = useCrewManager();
   const { crew, crewmateMap } = useCrewContext();
   const { data: priceConstants } = usePriceConstants();
 
   const [confirming, setConfirming] = useState();
+  const [hovered, setHovered] = useState();
 
   const [appearanceOptions, setAppearanceOptions] = useState([]);
   const [appearanceSelection, setAppearanceSelection] = useState();
 
-  const [traitSetOptions, setTraitSetOptions] = useState([]);
-  const [traitSetSelection, setTraitSetSelection] = useState();
+  const [toggling, setToggling] = useState();
+
+  const [selectedTraits, setSelectedTraits] = useState(bookSession?.selectedTraits || []);
+  const [traitsLocked, setTraitsLocked] = useState(!!bookSession.isComplete);
 
   const [finalizing, setFinalizing] = useState();
   const [finalized, setFinalized] = useState();
   const [name, setName] = useState('');
-  const [traitDetailsOpen, setTraitDetailsOpen] = useState(false);
 
   const pendingCrewmate = useMemo(() => getPendingCrewmate(), [getPendingCrewmate]);
   const [selectedClass, setSelectedClass] = useState(
@@ -546,17 +881,18 @@ const CrewAssignmentCreate = (props) => {
     // if already pending, format from pending tx
     if (pendingCrewmate) {
       console.log('TODO: update id and coll here if available', pendingCrewmate);
-      const { name, hair_color, caller_crew, ...crewmateVars } = pendingCrewmate.vars;
-      crewmateVars.coll = hair_color; // TODO: this 
+      const { name, hair_color, caller_crew, crewmate, ...crewmateVars } = pendingCrewmate.vars;
+      crewmateVars.coll = pendingCrewmate.key === 'RecruitAdalian'
+        ? Crewmate.COLLECTION_IDS.ADALIAN
+        : arvadianRecruits.find((r) => r.Crewmate.id === crewmateVars.Crewmate.id)?.Crewmate?.coll;
       crewmateVars.hairColor = hair_color;
       crewmateVars.appearance = Crewmate.packAppearance(crewmateVars);
       return {
-        id: 0, // TODO: 
-        label: Entity.IDS.CREWMATE,
+        ...crewmate, // (id, label)
         Control: {
           controller: {
             id: caller_crew,
-            label: Entity.IDS.CREWMATE,
+            label: Entity.IDS.CREW,
           }
         },
         Crewmate: {
@@ -579,18 +915,23 @@ const CrewAssignmentCreate = (props) => {
       }
     };
 
+    if (c.id === 0) {
+      console.log('OVERRIDING ID');
+      c.id = adalianRecruits?.[0]?.id || 0;
+    }
+
     // always force control to current crew
     c.Control = {
       controller: {
         id: crew?.id || 0,
-        label: Entity.IDS.CREWMATE,
+        label: Entity.IDS.CREW,
       }
     }
 
     // initialize things if not set
     if (!c.Crewmate.coll) c.Crewmate.coll = bookId === bookIds.ADALIAN_RECRUITMENT ? Crewmate.COLLECTION_IDS.ADALIAN : Crewmate.COLLECTION_IDS.ARVAD_CITIZEN;
     if (!c.Crewmate.class) {
-      c.Crewmate.class = selectedClass || 1;// TODO: remove `|| 1`
+      c.Crewmate.class = selectedClass;
       c._canReclass = true;
     }
     if (!c.Name?.name) {
@@ -599,16 +940,11 @@ const CrewAssignmentCreate = (props) => {
     }
 
     // get traits selected
+    // TODO: this is probably no longer how we want it?
     if (!c.Crewmate.cosmetic || !c.Crewmate.impactful) {
-      // from random
-      if (traitSetOptions.length && traitSetSelection) {
-        c.Crewmate.cosmetic = traitSetOptions[traitSetSelection]?.cosmetic;
-        c.Crewmate.impactful = traitSetOptions[traitSetSelection]?.impactful;
-
-      // from story
-      } else if (bookSession?.selectedTraits) {
-        c.Crewmate.cosmetic = bookSession.selectedTraits.filter((t) => Crewmate.TRAITS[t].type === Crewmate.TRAIT_TYPES.COSMETIC);
-        c.Crewmate.impactful = bookSession.selectedTraits.filter((t) => Crewmate.TRAITS[t].type === Crewmate.TRAIT_TYPES.IMPACTFUL);
+      if (selectedTraits) {
+        c.Crewmate.cosmetic = selectedTraits.filter((t) => Crewmate.TRAITS[t]?.type === Crewmate.TRAIT_TYPES.COSMETIC);
+        c.Crewmate.impactful = selectedTraits.filter((t) => Crewmate.TRAITS[t]?.type === Crewmate.TRAIT_TYPES.IMPACTFUL);
       }
     }
 
@@ -630,10 +966,12 @@ const CrewAssignmentCreate = (props) => {
     appearanceSelection,
     name,
     pendingCrewmate,
-    traitSetOptions,
-    traitSetSelection,
+    selectedClass,
+    selectedTraits,
     bookSession
   ]);
+  
+  const traitTally = crewmate.Crewmate.coll === Crewmate.COLLECTION_IDS.ADALIAN ? 4 : 8;
 
   // init appearance options as desired
   useEffect(() => {
@@ -659,10 +997,6 @@ const CrewAssignmentCreate = (props) => {
       // TODO (enhancement): after timeout, show error
     }
   }, [ crewmateMap, finalizing ]);
-
-  useEffect(() => {
-    console.log('getRandomTraitSet', getRandomTraitSet(crewmate));
-  }, [])
 
   const shareOnTwitter = useCallback(() => {
     // TODO: ...
@@ -703,20 +1037,28 @@ const CrewAssignmentCreate = (props) => {
   }, [appearanceOptions.length, appearanceSelection]);
 
   const rerollTraits = useCallback(async () => {
-    if (!crewmate?.Crewmate?.class) return;
-    setTraitSetOptions((prevValue) => {
-      setTraitSetSelection((prevValue || []).length);
-      return [...(prevValue || []), getRandomTraitSet(crewmate?.Crewmate?.class)]
-    });
-  }, [crewmate?.Crewmate?.class]);
+    const c = cloneDeep(crewmate);
+    if (!c?.Crewmate?.coll) return;
 
-  const rollBackTraits = useCallback(() => {
-    setTraitSetSelection(Math.max(0, traitSetSelection - 1));
-  }, [traitSetSelection]);
+    // get random class if one is not yet selected
+    if (!c.Crewmate.class) {
+      c.Crewmate.class = Object.values(Crewmate.CLASS_IDS)[Math.floor(Math.random() * Object.values(Crewmate.CLASS_IDS).length)];
+      setSelectedClass(c.Crewmate.class);
+    }
 
-  const rollForwardTraits = useCallback(() => {
-    setTraitSetSelection(Math.min(setTraitSetOptions.length - 1, traitSetSelection + 1));
-  }, [setTraitSetOptions.length, traitSetSelection]);
+    // if full, clear and randomize (else, fill in from current state)
+    const traits = (selectedTraits?.length === traitTally ? [] : selectedTraits);
+    let possibleTraits = Crewmate.nextTraits(c.Crewmate.coll, c.Crewmate.class, traits);
+    let randomIndex;
+    while (possibleTraits.length > 0 && traits.length < 12) {
+      randomIndex = Math.floor(Math.random() * possibleTraits.length);
+      traits.push(possibleTraits[randomIndex]);
+      possibleTraits = Crewmate.nextTraits(c.Crewmate.coll, c.Crewmate.class, traits);
+    }
+
+    // set new traits
+    setSelectedTraits(traits);
+  }, [crewmate?.Crewmate?.class, selectedTraits, traitTally]);
 
   const confirmFinalize = useCallback(async () => {
     if (await isNameValid(name)) {
@@ -728,10 +1070,9 @@ const CrewAssignmentCreate = (props) => {
     setConfirming(false);
     purchaseAndOrInitializeCrew({
       crewmate,
-      crewId: crew?.id || 0,
       // sessionId // used to tag the pendingTransaction  // TODO: deprecate? use bookId? use random?
     });
-  }, [crewmate, purchaseAndOrInitializeCrew, crew?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [crewmate, purchaseAndOrInitializeCrew]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBack = useCallback(() => {
     history.push(`/crew-assignment/${bookId}/${crewmateId}/`);
@@ -744,9 +1085,51 @@ const CrewAssignmentCreate = (props) => {
     }
   }, [!!bookSession]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // hide until loaded
+  // place mouseovers after animation complete
+  const [animationComplete, setAnimationComplete] = useState();
+  useEffect(() => {
+    if (!!crewmate) {
+      const to = setTimeout(() => {
+        setAnimationComplete(true);
+      }, 2500);
+      return () => {
+        if (to) clearTimeout(to);
+      }
+    }
+  }, [!!crewmate]);
+
+  const onUpdateClass = useCallback((newClass) => {
+    if (selectedClass !== newClass) {
+      setSelectedTraits([]);
+    }
+    setSelectedClass(newClass);
+    setToggling();
+  }, [selectedTraits]);
+
+  const onUpdateTraits = useCallback((newTraits) => {
+    setSelectedTraits(newTraits);
+    setToggling();
+  }, [selectedTraits]);
+
+  const traitObjects = useMemo(() => {
+    return (selectedTraits || []).map((id) => ({ id, ...Crewmate.TRAITS[id] }));
+  }, [selectedTraits, selectedTraits?.length]);
+  // TODO: above was not triggering on first click of "randomize" without the length dependency added?
+
+  const classObjects = useMemo(() => {
+    return Object.values(Crewmate.CLASS_IDS).reduce((acc, id) => ({
+      ...acc,
+      [id]: {
+        id,
+        abilities: Object.values(Crewmate.ABILITY_TYPES)
+          .filter((a) => a.class === id)
+          .map((a) => <div key={a.name}>- {a.name}</div>),
+        ...Crewmate.getClass(id),
+      }
+    }), {});
+  }, []);
+
   const loading = !crewmate;
-  const finalizedz = false;
   return (
     <Details
       edgeToEdge
@@ -764,8 +1147,251 @@ const CrewAssignmentCreate = (props) => {
         <>
           <ImageryContainer src={storySession.completionImage || storySession.image}>
             <div />
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
-              {finalizedz && (
+            <MainContent>
+              {!finalized && (
+                <>
+                  <CenterColumn>
+                    <CardWrapper>
+                      <CardContainer>
+                        <div>
+                          <CrewCard
+                            crewmate={crewmate}
+                            fontSize="25px"
+                            hideCollectionInHeader
+                            hideFooter
+                            hideIfNoName
+                            hideMask
+                            noWrapName={finalized}
+                            showClassInHeader={finalized} />
+                        </div>
+                      </CardContainer>
+                    </CardWrapper>
+
+                    {!pendingCrewmate && (
+                      <>
+                        <NameSection>
+                          {crewmate._canRename && (
+                            <>
+                              <label>Crewmate Name</label>
+                              {/* TODO: implement naming rules from sdk */}
+                              <TextInput
+                                disabled={finalizing || !crewmate._canRename}
+                                initialValue={name}
+                                maxlength={31}
+                                onChange={handleNameChange}
+                                pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                                placeholder="Enter Name" />
+                            </>
+                          )}
+
+                          <div style={{ flex: 1 }} />
+
+                          {crewmate._canRerollAppearance && (
+                            <RerollContainer>
+                              <RandomizeControls
+                                onClick={rollBackAppearance}
+                                disabled={finalizing || appearanceSelection === 0}
+                                style={{ opacity: appearanceOptions.length > 1 ? 1 : 0 }}>
+                                <UndoIcon />
+                              </RandomizeControls>
+
+                              <RandomizeButton
+                                disabled={finalizing}
+                                lessTransparent
+                                onClick={rerollAppearance}
+                                style={{ width: 275 }}
+                                subtle>
+                                Randomize Appearance
+                              </RandomizeButton>
+
+                              <RandomizeControls
+                                onClick={rollForwardAppearance}
+                                disabled={finalizing || appearanceSelection === appearanceOptions.length - 1}
+                                style={{ opacity: appearanceOptions.length > 1 ? 1 : 0 }}>
+                                <RedoIcon />
+                              </RandomizeControls>
+                            </RerollContainer>
+                          )}
+
+                          
+                          <RerollContainer>
+                            {traitsLocked
+                              ? (
+                                <RandomizeButton
+                                  disabled={finalizing}
+                                  lessTransparent
+                                  onClick={() => setTraitsLocked(false)}
+                                  style={{ width: 275 }}
+                                  subtle>
+                                  Unlock Traits
+                                </RandomizeButton>
+                              )
+                              : (
+                                <>
+                                  <RandomizeButton
+                                    disabled={finalizing}
+                                    lessTransparent
+                                    onClick={rerollTraits}
+                                    style={{ width: 275 }}
+                                    subtle>
+                                    Randomize Traits
+                                  </RandomizeButton>
+                                </>
+                              )
+                            }
+                          </RerollContainer>
+                          
+                          {/* TODO: _canRerollTraits, _canUnlockTraits */}
+
+                        </NameSection>
+                      </>
+                    )}
+                  </CenterColumn>
+
+                  <Traits>
+                    <TraitRow big>
+                      <Trait side="left">
+                        <div>
+                          <CollectionImage coll={crewmate.Crewmate.coll} />
+                        </div>
+                        <article>
+                          <h4>Collection</h4>
+                          <div>{Crewmate.getCollection(crewmate.Crewmate.coll)?.name}</div>
+                        </article>
+                        <TipHolder>
+                          <TriangleTip strokeWidth="1" rotate="90" />
+                          <TipIcon side="left">
+                            <UnclickableIcon><LockedIcon /></UnclickableIcon>
+                          </TipIcon>
+                        </TipHolder>
+                      </Trait>
+
+                      <TraitSpacer />
+
+                      <PopperWrapper>
+                        {(refEl, setRefEl) => (
+                          <>
+                            <Trait
+                              ref={animationComplete ? setRefEl : noop}
+                              onClick={(traitsLocked || !crewmate._canReclass) ? noop : () => setToggling('class')}
+                              onMouseEnter={() => setHovered('class')}
+                              onMouseLeave={() => setHovered()}
+                              side="right"
+                              isClickable={!traitsLocked && crewmate._canReclass}
+                              isEmpty={!crewmate.Crewmate.class}>
+                              <div>
+                                <CrewClassIcon crewClass={crewmate.Crewmate.class} />
+                              </div>
+                              <article>
+                                <h4>{crewmate.Crewmate.class ? 'Class' : 'Select Class'}</h4>
+                                <div>{classObjects[crewmate.Crewmate.class]?.name}</div>
+                              </article>
+                              <TipHolder>
+                                <TriangleTip strokeWidth="1" rotate="-90" />
+                                <TipIcon side="right">
+                                  <ClickableIcon><RightArrowIcon /></ClickableIcon>
+                                  <UnclickableIcon><LockedIcon /></UnclickableIcon>
+                                </TipIcon>
+                              </TipHolder>
+                            </Trait>
+
+                            <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered === 'class' && crewmate.Crewmate.class && !toggling)}>
+                              <MouseoverInfoContent
+                                title={classObjects[crewmate.Crewmate.class]?.name}
+                                description={(
+                                  <>
+                                    {classObjects[crewmate.Crewmate.class]?.description}
+                                    
+                                    <MouseoverSubtitle>{classObjects[crewmate.Crewmate.class]?.name} Bonuses</MouseoverSubtitle>
+                                    {classObjects[crewmate.Crewmate.class]?.abilities}
+                                  </>
+                                )}
+                              />
+                            </MouseoverInfoPane>
+
+                            <MouseoverInfoPane
+                              referenceEl={refEl}
+                              {...mouseoverPaneProps(toggling === 'class', true)}>
+                              <ClassSelector
+                                classObjects={classObjects}
+                                crewmate={crewmate}
+                                onUpdateClass={onUpdateClass} />
+                            </MouseoverInfoPane>
+                          </>
+                        )}
+                      </PopperWrapper>
+                    </TraitRow>
+
+                    {Array.from(Array(Math.ceil(traitTally / 2))).map((_, i) => {
+                      return (
+                        <TraitRow key={i}>
+                          {Array.from(Array(2)).map((_, j) => {
+                            const traitIndex = 2 * i + j;
+                            const hoverKey = traitIndex;
+                            const trait = traitObjects[traitIndex];
+                            const side = j === 0 ? 'left' : 'right';
+                            return (
+                              <Fragment key={j}>
+                                <PopperWrapper>
+                                  {(refEl, setRefEl) => (
+                                    <>
+                                      <Trait
+                                        ref={animationComplete ? setRefEl : noop}
+                                        onClick={(traitsLocked || traitIndex > selectedTraits?.length) ? noop : () => setToggling(hoverKey)}
+                                        onMouseEnter={() => setHovered(hoverKey)}
+                                        onMouseLeave={() => setHovered()}
+                                        side={side}
+                                        type={trait?.type}
+                                        isClickable={!traitsLocked && crewmate.Crewmate.class && traitIndex <= selectedTraits?.length}
+                                        isEmpty={!trait}
+                                        isAtRisk={toggling === 'class' || toggling < traitIndex}>
+                                        <div>
+                                          <CrewTraitIcon trait={trait?.id} type={trait?.type} hideFallback opaque />
+                                        </div>
+                                        <article>
+                                          <h4>{trait?.name}</h4>
+                                          {!trait?.name && crewmate.Crewmate.class && traitIndex === selectedTraits?.length && <h4>Select Trait</h4>}
+                                          <div>{trait?.type && (trait?.type === 'impactful' ? 'Impactful' : 'Cosmetic')}</div>
+                                        </article>
+                                        <TipHolder>
+                                          <TriangleTip strokeWidth="1" rotate={side === 'left' ? 90 : -90} />
+                                          <TipIcon side={side}>
+                                            <ClickableIcon>{side === 'left' ? <LeftArrowIcon /> : <RightArrowIcon />}</ClickableIcon>
+                                            <UnclickableIcon><LockedIcon /></UnclickableIcon>
+                                            <AtRiskIcon><CloseIcon /></AtRiskIcon>
+                                          </TipIcon>
+                                        </TipHolder>
+                                      </Trait>
+
+                                      <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered === hoverKey && trait && !toggling)}>
+                                        <MouseoverInfoContent title={trait?.name} description={trait?.description} />
+                                      </MouseoverInfoPane>
+
+                                      <MouseoverInfoPane
+                                        referenceEl={refEl}
+                                        {...mouseoverPaneProps(toggling === hoverKey, true)}>
+                                        <TraitSelector
+                                          crewmate={crewmate}
+                                          currentTraits={traitObjects}
+                                          traitIndex={traitIndex}
+                                          onUpdateTraits={onUpdateTraits} />
+                                      </MouseoverInfoPane>
+                                    </>
+                                  )}
+                                </PopperWrapper>
+                                {side === 'left' && <TraitSpacer />}
+                              </Fragment>
+                            );
+                          })}
+
+                        </TraitRow>
+                      );
+                    })}
+                  </Traits>
+                </>
+              )}
+
+              {finalized && (
                 <>
                   <TitleBox>
                     <Title>Crewmate Recruited</Title>
@@ -796,158 +1422,7 @@ const CrewAssignmentCreate = (props) => {
                   </div>
                 </>
               )}
-              {!finalizedz && (
-                <div>
-                  <CardWrapper>
-                    <CardContainer>
-                      <div>
-                        <CrewCard
-                          crewmate={crewmate}
-                          fontSize="25px"
-                          hideCollectionInHeader
-                          hideFooter
-                          hideIfNoName
-                          noWrapName={finalized}
-                          showClassInHeader={finalized} />
-                      </div>
-                    </CardContainer>
-                    {!finalized && (
-                      <Traits>
-                        {crewmate.Crewmate?.class && (
-                          <TraitRow>
-                            <Trait side="left" isCrewClass>
-                              <div>
-                                <CrewClassIcon crewClass={crewmate.Crewmate.class} overrideColor="inherit" />
-                              </div>
-                              <article>
-                                <h4>{Crewmate.getClass(crewmate.Crewmate.class).name}</h4>
-                                <div>{Crewmate.getClass(crewmate.Crewmate.class).description}</div>
-                              </article>
-                              <TipHolder>
-                                <TriangleTip strokeWidth="1" rotate="90" />
-                              </TipHolder>
-                            </Trait>
-
-                            <TraitSpacer />
-
-                            <Trait side="right" isCrewClass>
-                              <div>
-                                <AdalianIcon />
-                              </div>
-                              <article>
-                                <h4>Adalian Citizen</h4>
-                                <div>Completed secondary education and entered adulthood in the Adalian System, after the dismantling of the Arvad.</div>
-                              </article>
-                              <TipHolder>
-                                <TriangleTip strokeWidth="1" rotate="-90" />
-                              </TipHolder>
-                            </Trait>
-                          </TraitRow>
-                        )}
-  {/* 
-                        <TraitRow>
-                          <Trait side="left">
-                            <div>
-                              <CrewTraitIcon trait={rewards[traitDispOrder[0]]?.id} type={rewards[traitDispOrder[0]]?.type} />
-                            </div>
-                            <article>
-                              <h4>{rewards[traitDispOrder[0]]?.name}</h4>
-                              <div>{rewards[traitDispOrder[0]]?.description}</div>
-                            </article>
-                            <TipHolder>
-                              <TriangleTip strokeWidth="1" rotate="90" />
-                            </TipHolder>
-                          </Trait>
-
-                          <TraitSpacer />
-
-                          <Trait side="right">
-                            <div>
-                              <CrewTraitIcon trait={rewards[traitDispOrder[1]]?.id} type={rewards[traitDispOrder[1]]?.type} />
-                            </div>
-                            <article>
-                              <h4>{rewards[traitDispOrder[1]]?.name}</h4>
-                              <div>{rewards[traitDispOrder[1]]?.description}</div>
-                            </article>
-                            <TipHolder>
-                              <TriangleTip strokeWidth="1" rotate="-90" />
-                            </TipHolder>
-                          </Trait>
-                        </TraitRow>
-
-                        <TraitRow>
-                          <Trait side="left">
-                            <div>
-                              <CrewTraitIcon trait={rewards[traitDispOrder[2]]?.id} type={rewards[traitDispOrder[2]]?.type} />
-                            </div>
-                            <article>
-                              <h4>{rewards[traitDispOrder[2]]?.name}</h4>
-                              <div>{rewards[traitDispOrder[2]]?.description}</div>
-                            </article>
-                            <TipHolder side="left">
-                              <TriangleTip strokeWidth="1" rotate="90" />
-                            </TipHolder>
-                          </Trait>
-
-                          <TraitSpacer />
-
-                          <Trait side="right">
-                            <div>
-                              <CrewTraitIcon trait={rewards[traitDispOrder[3]]?.id} type={rewards[traitDispOrder[3]]?.type} />
-                            </div>
-                            <article>
-                              <h4>{rewards[traitDispOrder[3]]?.name}</h4>
-                              <div>{rewards[traitDispOrder[3]]?.description}</div>
-                            </article>
-                            <TipHolder side="right">
-                              <TriangleTip strokeWidth="1" rotate="-90" />
-                            </TipHolder>
-                          </Trait>
-                        </TraitRow>*/}
-                      </Traits>
-                    )}
-                  </CardWrapper>
-
-                  <NameSection>
-                    {crewmate._canRename && (
-                      <TextInput
-                        disabled={finalizing || !crewmate._canRename}
-                        initialValue={name}
-                        maxlength={31}
-                        onChange={handleNameChange}
-                        pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
-                        placeholder="Enter Name" />
-                    )}
-
-                    {crewmate._canRerollAppearance && (
-                      <RerollContainer>
-                        <RandomizeControls
-                          onClick={rollBackAppearance}
-                          disabled={finalizing || appearanceSelection === 0}
-                          style={{ opacity: appearanceOptions.length > 1 ? 1 : 0 }}>
-                          <UndoIcon />
-                        </RandomizeControls>
-
-                        <RandomizeButton
-                          disabled={finalizing}
-                          lessTransparent
-                          onClick={rerollAppearance}>Randomize Appearance</RandomizeButton>
-
-                        <RandomizeControls
-                          onClick={rollForwardAppearance}
-                          disabled={finalizing || appearanceSelection === appearanceOptions.length - 1}
-                          style={{ opacity: appearanceOptions.length > 1 ? 1 : 0 }}>
-                          <RedoIcon />
-                        </RandomizeControls>
-                      </RerollContainer>
-                    )}
-                  </NameSection>
-                </div>
-              )}
-              {/* NOTE: the below empty div's are to help with flex spacing on tall screens */}
-              <div />
-              <div />
-            </div>
+            </MainContent>
           </ImageryContainer>
 
           <Footer>
@@ -965,66 +1440,40 @@ const CrewAssignmentCreate = (props) => {
               )}
               {!finalized && (
                 <>
-                  <Button subtle onClick={handleBack}>Back</Button>
+                  <Button disabled={!!pendingCrewmate} subtle onClick={handleBack}>Back</Button>
                   <div style={{ flex: 1 }} />
                   <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'row' }}>
-                    <RecruitTally>Available Recruits: <b>1</b></RecruitTally>
-                    <Button subtle isTransaction onClick={confirmFinalize}>Recruit</Button>
+                    {!pendingCrewmate && <RecruitTally>Available Recruits: <b>1</b></RecruitTally>}
+                    <Button
+                      disabled={!!pendingCrewmate}
+                      loading={!!pendingCrewmate}
+                      subtle
+                      isTransaction
+                      onClick={confirmFinalize}>Recruit</Button>
                   </div>
                 </>
               )}
             </div>
           </Footer>
-{/* 
-          <FinishContainer>
-            {!finalized && (
-              <>
-                <Button
-                  onClick={() => setTraitDetailsOpen(true)}
-                  style={{ width: 'auto' }}>
-                  Review Traits
-                </Button>
-                <Button
-                  disabled={boolAttr(finalizing || !name)}
-                  loading={boolAttr(finalizing)}
-                  isTransaction
-                  onClick={confirmFinalize}>
-                  Finalize
-                </Button>
-              </>
-            )}
-            {finalized && (
-              <>
-                <span />
-                <Button
-                  onClick={handleFinish}>
-                  Finish
-                </Button>
-              </>
-            )}
-          </FinishContainer>
-*/}
           {confirming && (
             <ConfirmationDialog
-              title={`Confirm Character ${adalianRecruits.length > 0 ? 'Details' : 'Minting'}`}
+              title={`Confirm Character ${crewmate.id ? 'Details' : 'Minting'}`}
               body={(
                 <PromptBody>
-                  The Crewmate you are about to create will be {adalianRecruits.length > 0 ? 'initialized' : 'minted'} as a new unique
-                  Player-Owned Game Asset (POGA)! {adalianRecruits.length > 0 ? 'The ' : 'Once minted, the '}character can never be deleted
-                  or unmade, and is yours to keep or trade forever. All of their stats,
-                  actions, skills, and attributes will be appended to their unique history
-                  and stored as independent on-chain events.
-                  {adalianRecruits.length > 0 && (
-                    <h4><CheckIcon /> {adalianRecruits.length} crew credit{adalianRecruits.length === 1 ? '' : 's'} remaining</h4>
-                  )}
+                  The Crewmate you are about to recruit will be minted as a new digital asset
+                  {crewmate.id ? '.' : <>, which currently costs <b><Ether>{formatters.crewmatePrice(priceConstants)}</Ether></b> and helps to fund game development.</>}
+                  <br/><br/>
+                  {crewmate.id ? 'You' : 'Once minted, you'}{' '}will be the sole owner of the Crewmate; nobody can
+                  delete them or take them from you. They will be yours to keep or trade forever. All of their
+                  stats, actions, skills, and other attributes will be stored in their unique on-chain history.
                 </PromptBody>
               )}
               onConfirm={finalize}
               confirmText={(
                 <>
-                  Confirm
-                  {adalianRecruits.length === 0 && priceConstants && (
-                    <span style={{ flex: 1, fontSize: '90%', textAlign: 'right' }}>
+                  {crewmate.id ? 'Confirm' : 'Purchase Crewmate'}
+                  {!crewmate.id && priceConstants && (
+                    <span style={{ color: 'white', flex: 1, fontSize: '90%', textAlign: 'right', marginLeft: 15 }}>
                       {/* TODO: should this update price before "approve"? what about asteroids? */}
                       <Ether>{formatters.crewmatePrice(priceConstants)}</Ether>
                     </span>
@@ -1041,4 +1490,11 @@ const CrewAssignmentCreate = (props) => {
   );
 };
 
-export default CrewAssignmentCreate;
+const Wrapper = (props) => {
+  const { bookId, crewmateId } = useParams();
+  const bookSessionHook = useBookSession(bookId, crewmateId);
+  if (!bookSessionHook.bookSession) return null;  // TODO: loading would be better
+  return <CrewAssignmentCreate {...props} bookSessionHook={bookSessionHook} />;
+}
+
+export default Wrapper;

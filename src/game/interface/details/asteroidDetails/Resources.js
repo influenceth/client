@@ -19,6 +19,7 @@ import LiveTimer from '~/components/LiveTimer';
 import AsteroidBonuses from './AsteroidBonuses';
 import { getProductIcon } from '~/lib/assetUtils';
 import { boolAttr } from '~/lib/utils';
+import useCrewContext from '~/hooks/useCrewContext';
 
 // TODO (enhancement): if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
@@ -397,20 +398,6 @@ const spectralLabels = {
   m: 'Metallic'
 };
 
-const StartScanButton = ({ i }) => {
-  const { data: extendedAsteroid, isLoading } = useAsteroid(Number(i), true);
-  const { startAsteroidScan } = useScanManager(extendedAsteroid);
-  return (
-    <Button
-      disabled={!extendedAsteroid}
-      loading={boolAttr(isLoading)}
-      onClick={startAsteroidScan}
-      isTransaction>
-      Start Scan
-    </Button>
-  );
-};
-
 const ResourceDetails = ({ abundances, asteroid, isManager }) => {
   const history = useHistory();
   const { category: initialCategory } = useParams();
@@ -419,7 +406,8 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const { finalizeAsteroidScan, scanStatus } = useScanManager(asteroid);
+  const { crew } = useCrewContext();
+  const { startAsteroidScan, finalizeAsteroidScan, scanStatus, scanType } = useScanManager(asteroid);
 
   const [selected, setSelected] = useState();
   const [hover, setHover] = useState();
@@ -497,32 +485,55 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
         </GraphicSection>
       </LeftPane>
       <RightPane>
-        {asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED && (
+        {/* TODO: consider stacking two UnscannedContainer's in this right pane until complete so the complete
+            flow is more clear to the user */}
+        {asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED && (
           <UnscannedWrapper>
             {isManager && (
               <UnscannedContainer>
                 {scanStatus === 'READY_TO_FINISH' && (
                   <UnscannedHeader isManager>
                     <WarningOutlineIcon />
-                    Un-Scanned Asteroid
+                    {scanType === 'RESOURCE'
+                      ? 'Asteroid Resource Scan'
+                      : 'Un-Scanned Asteroid'}
                   </UnscannedHeader>
                 )}
                 <UnscannedBody>
                   {scanStatus === 'UNSCANNED' && (
                     <>
-                      <p><b>You manage this asteroid.</b> Perform a scan to determine its final resource composition and bonuses.</p>
-                      <StartScanButton i={asteroid?.id} />
+                      {scanType === 'SURFACE' && (
+                        <p>
+                          <b>You manage this asteroid.</b> Perform a long-range surface scan to determine its final bonuses.
+                        </p>
+                      )}
+                      {scanType === 'RESOURCE' && (
+                        <p>
+                          A resource scan to determine the final resource composition of this asteroid must be performed
+                          at short-range.
+                          <br/><br/>
+                          <span style={crew._location.asteroidId !== asteroid.id ? { color: theme.colors.error } : {}}>
+                            Your crew must be in orbit or on the surface of the asteroid.
+                          </span>
+                        </p>
+                      )}
+                      <Button
+                        disabled={scanType === 'RESOURCE' && crew._location.asteroidId !== asteroid.id}
+                        onClick={startAsteroidScan}
+                        isTransaction>
+                        Start {scanType} Scan
+                      </Button>
                     </>
                   )}
                   {scanStatus === 'SCANNING' && (
                     <>
-                      <h3>SCANNING</h3>
+                      <h3>SCANNING {scanType === 'RESOURCE' ? 'RESOURCES' : 'SURFACE'}</h3>
                       <LiveTimer target={asteroid.Celestial.scanFinishTime} />
                     </>
                   )}
                   {(scanStatus === 'READY_TO_FINISH' || scanStatus === 'FINISHING') && (
                     <>
-                      <p>Asteroid scan is complete. Ready to finalize.</p>
+                      <p>{scanType === 'RESOURCE' ? 'Short-range resource' : 'Long-range surface'} scan is complete. Ready to finalize.</p>
                       <Button
                         disabled={boolAttr(scanStatus === 'FINISHING')}
                         loading={boolAttr(scanStatus === 'FINISHING')}
@@ -539,10 +550,12 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
               <UnscannedContainer>
                 <UnscannedHeader>
                   <WarningOutlineIcon />
-                  Un-Scanned Asteroid
+                  {scanType === 'RESOURCE'
+                      ? 'Long-range Scan Incomplete'
+                      : 'Un-Scanned Asteroid'}
                 </UnscannedHeader>
                 <UnscannedBody isManager={isManager}>
-                  You do not manage this asteroid. The managing crew must complete a scan to determine its resource composition and bonuses.
+                  The managing crew must complete both long-range and short-range scans to determine its resource composition and bonuses.
                 </UnscannedBody>
               </UnscannedContainer>
             )}
@@ -592,7 +605,7 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
         )}
         {!selected && (
           <>
-            {asteroid.scanned && (
+            {asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED && (
               <div>
                 <SectionHeader>Resource Groups</SectionHeader>
                 <SectionBody>
