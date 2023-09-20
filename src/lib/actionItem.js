@@ -228,7 +228,7 @@ const formatAsTx = (item) => {
       formatted.label = 'Initialize Crewmate';
       formatted.onClick = ({ history }) => {
         if (item.vars.sessionId) {
-          history.push(`/crew-assignment/${item.vars.sessionId}/create`);
+          history.push(`/recruit/${item.vars.sessionId}/create`);
         } else {
           history.push(`/crew`);
         }
@@ -249,7 +249,7 @@ const formatAsTx = (item) => {
       formatted.onClick = ({ history }) => {
         console.log('RecruitAdalian item', item)
         if (item.vars.sessionId) {
-          history.push(`/crew-assignment/${item.vars.sessionId}/create`);
+          history.push(`/recruit/${item.vars.sessionId}/create`);
         } else {
           history.push(`/crew`);
         }

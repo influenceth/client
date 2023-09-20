@@ -146,20 +146,24 @@ const Interface = () => {
           <Route path="/asteroids/:i(\d+)/:tab?/:category?">
             <AsteroidDetails />
           </Route>
+          <Route exact path="/recruit/:crewmateId([0-9]+)/">
+            <CrewAssignment />
+          </Route>
+          <Route path="/recruit/:crewmateId([0-9]+)/create">
+            <CrewCreation />
+          </Route>
+
           {/* TODO: deprecated?
           <Route exact path="/crew-assignments/:id([a-z0-9]+)/:selected?">
             <CrewAssignments />
           </Route>
           */}
-          <Route exact path="/crew-assignment/:bookId([a-z0-9]+)/:crewmateId([0-9]+)/">
-            <CrewAssignment />
-          </Route>
-          <Route path="/crew-assignment/:bookId([a-z0-9]+)/:crewmateId([0-9]+)/complete">
+          {/*
+          /crew-assignment/* will use the same components as /recruit/* 
+          <Route path="/crew-assignment/:crewmateId([0-9]+)/complete">
             <CrewAssignmentComplete />
           </Route>
-          <Route path="/crew-assignment/:bookId([a-z0-9]+)/:crewmateId([0-9]+)/create">
-            <CrewCreation />
-          </Route>
+          */}
           <Route path="/marketplace/:asteroidId([0-9]+)/:lotId(all|[0-9]+)?/:discriminator?">
             <Marketplace />
           </Route>

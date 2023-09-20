@@ -32,7 +32,6 @@ import useStore from '~/hooks/useStore';
 import theme from '~/theme.js';
 import { useHistory } from 'react-router-dom';
 import { boolAttr } from '~/lib/utils';
-import { bookIds } from '~/hooks/useBookSession';
 
 const Container = styled.div`
   display: flex;
@@ -506,7 +505,7 @@ const OwnedCrew = () => {
     }
 
     // TODO: determine book-id
-    history.push(`/crew-assignment/${bookIds.ADALIAN_RECRUITMENT}/0/`);
+    history.push(`/recruit/${adalianRecruits?.[0]?.id || 0}`);
     playSound('effects.success');
 
     // TODO: this is probably all deprecated

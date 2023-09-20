@@ -15,31 +15,28 @@ export const bookIds = {
 const anyOf = (mustHave, tests) => !!mustHave.find((x) => tests.includes(x));
 const allOf = (mustHave, tests) => !mustHave.find((x) => !tests.includes(x));
 
-const useBookSession = (bookId, rawCrewmateId) => {
-  const { crew, arvadianRecruits, loading: crewIsLoading } = useCrewContext();
+const useBookSession = (rawCrewmateId) => {
+  const { crew, adalianRecruits, arvadianRecruits, loading: crewIsLoading } = useCrewContext();
   const crewmateId = Number(rawCrewmateId);
   const crewId = crew?.id || 0;
 
-  const crewmate = useMemo(() => {
-    if (bookId === bookIds.ARVADIAN_RECRUITMENT) {
-      return arvadianRecruits.find((c) => c.id === crewmateId);
-    }
-    return null;
-  }, [arvadianRecruits, bookId, crewmateId]);
+  const [bookId, crewmate] = useMemo(() => {
+    const adalianRecruit = adalianRecruits.find((a) => a.id === crewmateId);
+    if (adalianRecruit) return [bookIds.ADALIAN_RECRUITMENT, adalianRecruit];
+
+    const arvadianRecruit = arvadianRecruits.find((a) => a.id === crewmateId);
+    if (arvadianRecruit) return [bookIds.ARVADIAN_RECRUITMENT, arvadianRecruit];
+
+    return [bookIds.ADALIAN_RECRUITMENT, null];
+  }, [adalianRecruits, arvadianRecruits, crewmateId]);
 
   const error = useMemo(() => {
     // validate crewmate (must be adalian w/ 0, or owned uninitialized arvadian w/ !0)
-    if (
-      (crewmateId > 0 && bookId === bookIds.ADALIAN_RECRUITMENT)
-      || (crewmateId === 0 && bookId === bookIds.ARVADIAN_RECRUITMENT)
-      || (crewmateId > 0 && !crewmate)
-      || (crewmate && ![Crewmate.COLLECTION_IDS.ARVAD_CITIZEN, Crewmate.COLLECTION_IDS.ARVAD_SPECIALIST, Crewmate.COLLECTION_IDS.ARVAD_LEADERSHIP].includes(crewmate.Crewmate?.coll))
-      || (crewmate && crewmate.Crewmate?.status > 0)
-    ) return 'Invalid params!';
+    if ((crewmateId > 0 && !crewmate) || (crewmate && crewmate.Crewmate?.status > 0)) return 'Invalid params!';
     return null;
-  }, [crewmate, crewmateId, bookId]);
+  }, [crewmate, crewmateId]);
 
-  const sessionData = useStore(s => s.crewAssignments?.[`${crewId}_${crewmateId}`]?.[bookId] || {});
+  const sessionData = useStore(s => s.crewAssignments?.[`${crewId}_${crewmateId}`] || {});
   const dispatchCrewAssignmentPathSelection = useStore(s => s.dispatchCrewAssignmentPathSelection);
   const dispatchCrewAssignmentPathUndo = useStore(s => s.dispatchCrewAssignmentPathUndo);
   const dispatchCrewAssignmentRestart = useStore(s => s.dispatchCrewAssignmentRestart);
@@ -144,6 +141,7 @@ const useBookSession = (bookId, rawCrewmateId) => {
     const { paths, ...storyDefaults } = currentStory;
     return {
       bookSession: {
+        bookId,
         crewmate,
         currentStoryId: currentStory.id,
         currentStoryIndex,
@@ -165,23 +163,23 @@ const useBookSession = (bookId, rawCrewmateId) => {
   }, [book, crewmate, crewIsLoading, sessionData]);
 
   const choosePath = useCallback((pathId) => {
-    dispatchCrewAssignmentPathSelection(crewId, crewmateId, bookId, bookSession?.currentStoryId, pathId);
-  }, [crewId, crewmateId, bookId, bookSession?.currentStoryId]);
+    dispatchCrewAssignmentPathSelection(crewId, crewmateId, bookSession?.currentStoryId, pathId);
+  }, [crewId, crewmateId, bookSession?.currentStoryId]);
 
   const undoPath = useCallback(() => {
     if (bookSession.currentStoryIndex > 0 && storySession.history.length === 0) {
       const previousStoryIndex = book.findIndex((s) => s.id === bookSession?.currentStoryId) - 1;
       if (previousStoryIndex >= 0) {
-        dispatchCrewAssignmentPathUndo(crewId, crewmateId, bookId, book[previousStoryIndex].id);
+        dispatchCrewAssignmentPathUndo(crewId, crewmateId, book[previousStoryIndex].id);
       }
     } else {
-      dispatchCrewAssignmentPathUndo(crewId, crewmateId, bookId, bookSession?.currentStoryId);
+      dispatchCrewAssignmentPathUndo(crewId, crewmateId, bookSession?.currentStoryId);
     }
-  }, [crewId, crewmateId, book, bookId, bookSession, storySession]);
+  }, [crewId, crewmateId, book, bookSession, storySession]);
 
   const restart = useCallback(() => {
-    dispatchCrewAssignmentRestart(crewId, crewmateId, bookId);
-  }, [crewId, crewmateId, bookId]);
+    dispatchCrewAssignmentRestart(crewId, crewmateId);
+  }, [crewId, crewmateId]);
 
   return useMemo(() => ({
     bookError: error,

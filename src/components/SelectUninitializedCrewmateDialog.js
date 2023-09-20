@@ -113,12 +113,12 @@ const SelectUninitializedCrewmateDialog = () => {
       leftButton={{
         // TODO: should we put a badge if they have adalianRecruits available?
         label: 'Create a New Adalian',
-        onClick: () => { history.push('/crew-assignment/adalian/0/'); },
+        onClick: () => { history.push(`/recruit/${adalianRecruits?.[0]?.id || 0}/`); },
         props: { style: { width: cardWidth } }
       }}
       rightButton={{
         label: 'Next',
-        onClick: () => { if (selected) history.push(`/crew-assignment/arvadian/${selected}/`); },
+        onClick: () => { if (selected) history.push(`/recruit/${selected}/`); },
         props: { disabled: !selected }
       }}
       title="Arvad Crewmates"

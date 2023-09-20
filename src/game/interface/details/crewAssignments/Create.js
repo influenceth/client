@@ -41,6 +41,7 @@ import usePriceConstants from '~/hooks/usePriceConstants';
 import formatters from '~/lib/formatters';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import theme from '~/theme';
+import useStore from '~/hooks/useStore';
 
 const CollectionImages = {
   1: Collection1,
@@ -835,10 +836,11 @@ const TraitSelector = ({ crewmate, currentTraits, onUpdateTraits, traitIndex }) 
   );
 };
 
-const CrewAssignmentCreate = ({ bookSessionHook, ...props }) => {
+const CrewAssignmentCreate = ({ bookSessionHook, crewmateId, ...props }) => {
   const { account } = useAuth();
-  const { bookId, crewmateId } = useParams();
   const history = useHistory();
+
+  const dispatchCrewAssignmentRestart = useStore((s) => s.dispatchCrewAssignmentRestart);
 
   const { bookError, bookSession, storySession, undoPath, restart } = bookSessionHook;
   const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
@@ -880,7 +882,6 @@ const CrewAssignmentCreate = ({ bookSessionHook, ...props }) => {
 
     // if already pending, format from pending tx
     if (pendingCrewmate) {
-      console.log('TODO: update id and coll here if available', pendingCrewmate);
       const { name, hair_color, caller_crew, crewmate, ...crewmateVars } = pendingCrewmate.vars;
       crewmateVars.coll = pendingCrewmate.key === 'RecruitAdalian'
         ? Crewmate.COLLECTION_IDS.ADALIAN
@@ -929,7 +930,10 @@ const CrewAssignmentCreate = ({ bookSessionHook, ...props }) => {
     }
 
     // initialize things if not set
-    if (!c.Crewmate.coll) c.Crewmate.coll = bookId === bookIds.ADALIAN_RECRUITMENT ? Crewmate.COLLECTION_IDS.ADALIAN : Crewmate.COLLECTION_IDS.ARVAD_CITIZEN;
+    if (!c.Crewmate.coll) {
+      console.warn('This should not happen');
+      c.Crewmate.coll = bookSession.bookId === bookIds.ADALIAN_RECRUITMENT ? Crewmate.COLLECTION_IDS.ADALIAN : Crewmate.COLLECTION_IDS.ARVAD_CITIZEN;
+    }
     if (!c.Crewmate.class) {
       c.Crewmate.class = selectedClass;
       c._canReclass = true;
@@ -988,15 +992,22 @@ const CrewAssignmentCreate = ({ bookSessionHook, ...props }) => {
 
   // handle finalized
   useEffect(() => {
+    console.log('finalizing', finalizing, );
     if (finalizing) {
       const finalizedCrewmate = Object.values(crewmateMap).find((c) => c.Name.name === name);
       if (finalizedCrewmate) {
         setFinalizing(false);
         setFinalized(finalizedCrewmate);
+
+        // clear session data
+        dispatchCrewAssignmentRestart(finalizedCrewmate?.Control?.controller?.id, finalizedCrewmate?.id);
+        if (crewmateId !== finalizedCrewmate?.id) {
+          dispatchCrewAssignmentRestart(finalizedCrewmate?.Control?.controller?.id, crewmateId);
+        }
       }
       // TODO (enhancement): after timeout, show error
     }
-  }, [ crewmateMap, finalizing ]);
+  }, [ crewmateId, crewmateMap, finalizing ]);
 
   const shareOnTwitter = useCallback(() => {
     // TODO: ...
@@ -1007,11 +1018,11 @@ const CrewAssignmentCreate = ({ bookSessionHook, ...props }) => {
         `Join Now:`,
       ].join('\n\n'),
       hashtags: 'PlayToEarn,NFTGaming',
-      url: `${document.location.origin}/play/crew-assignment/${bookId}?r=${account}`,
+      url: `${document.location.origin}/play/crew-assignment/?r=${account}`,
       //via: 'influenceth'
     });
     window.open(`https://twitter.com/intent/tweet?${params.toString()}`, '_blank');
-  }, [account, bookId]);
+  }, [account]);
 
   const handleFinish = useCallback(() => {
     history.push(onCloseDestination);
@@ -1075,13 +1086,13 @@ const CrewAssignmentCreate = ({ bookSessionHook, ...props }) => {
   }, [crewmate, purchaseAndOrInitializeCrew]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBack = useCallback(() => {
-    history.push(`/crew-assignment/${bookId}/${crewmateId}/`);
+    history.push(`/recruit/${crewmateId}/`);
   }, []);
 
   // show "complete" page (instead of "create") for non-recruitment assignments
   useEffect(() => {
     if (bookSession && !bookSession.isMintingStory) {
-      history.push(`/crew-assignment/${bookId}/${crewmateId}/complete`);
+      history.push(`/crew-assignment/${crewmateId}/complete`);
     }
   }, [!!bookSession]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1491,10 +1502,10 @@ const CrewAssignmentCreate = ({ bookSessionHook, ...props }) => {
 };
 
 const Wrapper = (props) => {
-  const { bookId, crewmateId } = useParams();
-  const bookSessionHook = useBookSession(bookId, crewmateId);
+  const { crewmateId } = useParams();
+  const bookSessionHook = useBookSession(crewmateId);
   if (!bookSessionHook.bookSession) return null;  // TODO: loading would be better
-  return <CrewAssignmentCreate {...props} bookSessionHook={bookSessionHook} />;
+  return <CrewAssignmentCreate {...props} crewmateId={crewmateId} bookSessionHook={bookSessionHook} />;
 }
 
 export default Wrapper;

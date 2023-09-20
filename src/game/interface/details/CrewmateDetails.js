@@ -394,12 +394,6 @@ const CrewmateDetails = () => {
     return null;
   }, [crewmate?.events]);
 
-  // const goToCrewAssignments = useCallback(() => {
-  //   if (assignmentData?.assignmentsByBook?.length > 0) {
-  //     history.push(`/crew-assignments/${assignmentData.assignmentsByBook[0].id}`);
-  //   }
-  // }, [assignmentData?.assignmentsByBook, history]);
-
   const selectTrait = useCallback((trait, mute) => () => {
     setSelectedTrait({
       ...(Crewmate.getTrait(trait) || {}),

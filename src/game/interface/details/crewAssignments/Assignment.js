@@ -96,7 +96,7 @@ const AdalianFlourish = styled.div`
 const REQUIRE_CONFIRM = false;
 
 const CrewAssignment = () => {
-  const { bookId, crewmateId } = useParams();
+  const { crewmateId } = useParams();
   const history = useHistory();
   const { crewmateMap } = useCrewContext();
 
@@ -107,7 +107,7 @@ const CrewAssignment = () => {
     choosePath,
     undoPath,
     restart
-  } = useBookSession(bookId, crewmateId);
+  } = useBookSession(crewmateId);
 
   const playSound = useStore(s => s.dispatchSoundRequested);
 
@@ -164,15 +164,15 @@ const CrewAssignment = () => {
   const finish = useCallback(() => {
     playSound('effects.success');
     choosePath('x');
-    history.push(`/crew-assignment/${bookId}/${crewmateId}/${bookSession?.isMintingStory ? 'create' : 'complete'}`);
-  }, [history, playSound, bookId, bookSession?.isMintingStory]);
+    history.push(`/recruit/${crewmateId}/create`); // ${bookSession?.isMintingStory ? 'create' : 'complete'}
+  }, [history, playSound, bookSession?.isMintingStory]);
 
   const confirmExitStoryMode = useCallback(() => {
     setConfirmingExitStoryMode(true);
   }, []);
 
   const onConfirmExitStoryMode = useCallback(() => {
-    history.push(`/crew-assignment/${bookId}/${crewmateId}/${bookSession?.isMintingStory ? 'create' : 'complete'}`);
+    history.push(`/recruit/${crewmateId}/create`); // ${bookSession?.isMintingStory ? 'create' : 'complete'}
   }, []);
 
   if (!bookSession || !storySession) return null;
@@ -200,7 +200,7 @@ const CrewAssignment = () => {
         onSelect={selectPath}
         prompt={storySession.prompt}
         flourish={
-          bookId === bookIds.ADALIAN_RECRUITMENT
+          bookSession.bookId === bookIds.ADALIAN_RECRUITMENT
             ? <AdalianFlourish />
             : (
               <CrewContainer>
