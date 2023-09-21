@@ -70,6 +70,11 @@ const api = {
     return response.data;
   },
 
+  getActivities: async (entity) => {
+    const response = await instance.get(`/${apiVersion}/entities/${Entity.packEntity(entity)}/activity`);
+    return response.data;
+  },
+
   getCrewActionItems: async () => {
     const response = await instance.get(`/${apiVersion}/user/actionitems`);
     return response.data;

@@ -152,7 +152,6 @@ const customConfigs = {
   },
   PurchaseAsteroid: {
     getPrice: async ({ asteroid }) => {
-      console.log('getPrice', { asteroid });
       const { ASTEROID_BASE_PRICE_ETH, ASTEROID_LOT_PRICE_ETH } = await api.getConstants([
         'ASTEROID_BASE_PRICE_ETH',
         'ASTEROID_LOT_PRICE_ETH'
@@ -164,6 +163,7 @@ const customConfigs = {
     },
     equalityTest: ['asteroid.id']
   },
+  InitializeArvadian: { equalityTest: true },
   RecruitAdalian: {
     getPrice: async ({ crewmate }) => {
       if (crewmate?.id > 0) return 0; // if recruiting existing crewmate, no cost
@@ -175,13 +175,9 @@ const customConfigs = {
   UnplanConstruction: { equalityTest: 'ALL' },
 
   // virtual multi-system wrappers
-  // PurchaseAndRecruitAdalian: {
-  //   multisystemCalls: ['RecruitAdalian', 'ChangeName'],
-  //   equalityTest: true,
-  // },
-
   // TODO: could do fancier conditional multisystems if that would help
   // i.e. `multisystemCalls: [{ name: 'InitializeAsteroid', cond: (a) => !a.AsteroidProof.used }, 'ScanAsteroid'],`
+
   InitializeAndManageAsteroid: {
     multisystemCalls: ['InitializeAsteroid', 'ManageAsteroid'],
     equalityTest: ['asteroid.id'],

@@ -31,6 +31,7 @@ import useNameAvailability from '~/hooks/useNameAvailability';
 import useChangeName from '~/hooks/useChangeName';
 import useStore from '~/hooks/useStore';
 import { boolAttr } from '~/lib/utils';
+import useActivities from '~/hooks/useActivities';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -374,10 +375,10 @@ const MIN_TRAIT_SLOTS = 12;
 
 const CrewmateDetails = () => {
   const { i } = useParams();
-  const history = useHistory();
   const { account } = useAuth();
   // const { data: assignmentData } = useCrewAssignments();
   const { data: crewmate } = useCrewmate(i);
+  const { data: activities } = useActivities({ id: i, label: Entity.IDS.CREWMATE });
   const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
   const { changeName, changingName } = useChangeName({ id: Number(i), label: Entity.IDS.CREWMATE });
   const playSound = useStore(s => s.dispatchSoundRequested);
@@ -598,13 +599,14 @@ const CrewmateDetails = () => {
                 </LogHeader>
                 <div>
                   <ul>
-                    {crewmate?.events?.length > 0
-                      ? crewmate.events.map(e => (
+                    {/* TODO: totalCount from api, pagination, custom columns (see mocks) */}
+                    {activities?.docs?.length > 0
+                      ? activities.docs.map(a => (
                         <LogEntry
-                          key={e.key}
-                          data={{ ...e, i: crewmate.i }}
+                          key={a.id}
+                          data={a.event}
                           timestampBreakpoint="1500px"
-                          type={`Crewmate_${e.event}`}
+                          type={`Crewmate_${a.event.event}`}
                           isTabular />
                       ))
                       : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>

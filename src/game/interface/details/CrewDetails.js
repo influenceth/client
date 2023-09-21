@@ -56,6 +56,7 @@ import useShip from '~/hooks/useShip';
 import { useLotLink } from '~/components/LotLink';
 import { useShipLink } from '~/components/ShipLink';
 import CrewmateInfoPane from '~/components/CrewmateInfoPane';
+import useActivities from '~/hooks/useActivities';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -191,7 +192,7 @@ const Log = styled.div`
   overflow: hidden;
   & ul {
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     list-style-type: none;
     margin: 0;
     padding: 5px 0;
@@ -488,6 +489,7 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const isNameValid = useNameAvailability(Entity.IDS.CREW);
+  const { data: activities } = useActivities({ id: crewId, label: Entity.IDS.CREW });
   const { changeName, changingName } = useChangeName({ id: crewId, label: Entity.IDS.CREW });
 
   // TODO: should we combine these into a single location link?
@@ -619,7 +621,7 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
                     const crewmate = crewmates[i + 1];
                     if (!crewmate) {
                       return (
-                        <EmptySlot onClick={onClickRecruit} width={146}>
+                        <EmptySlot key={i} onClick={onClickRecruit} width={146}>
                           <PlusIcon />
                         </EmptySlot>
                       );
@@ -630,7 +632,6 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
                           <>
                             <span ref={setRefEl}>
                               <CrewCardFramed
-                                ref={setRefEl}
                                 borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
                                 crewCardProps={{ hideHeader: false, noWrapName: true }}
                                 crewmate={crewmate}
@@ -725,13 +726,14 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
                     </LogHeader>
                     <div>
                       <ul>
-                        {crew?.events?.length > 0
-                          ? crew.events.map(e => (
+                        {/* TODO: totalCount from api, pagination, custom columns (see mocks) */}
+                        {activities?.docs?.length > 0
+                          ? activities.docs.map(a => (
                             <LogEntry
-                              key={e.key}
-                              data={{ ...e, id: crew.id }}
+                              key={a.id}
+                              data={a.event}
                               timestampBreakpoint="1500px"
-                              type={`Crew_${e.event}`}
+                              type={`Crew_${a.event.event}`}
                               isTabular />
                           ))
                           : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>

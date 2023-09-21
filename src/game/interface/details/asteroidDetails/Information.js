@@ -38,6 +38,7 @@ import useNameAvailability from '~/hooks/useNameAvailability';
 import { boolAttr } from '~/lib/utils';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import useControlAsteroid from '~/hooks/useControlAsteroid';
+import useActivities from '~/hooks/useActivities';
 
 const paneStackBreakpoint = 720;
 
@@ -274,6 +275,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   const { account } = useAuth();
   const createReferral = useCreateReferral(Number(asteroid.id));
   const isNameValid = useNameAvailability(Entity.IDS.ASTEROID);
+  const { data: activities } = useActivities({ id: asteroid.id, label: Entity.IDS.ASTEROID });
   const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.id));
   const { controlAsteroid, takingControl } = useControlAsteroid(Number(asteroid.id));
   const { changeName, changingName } = useChangeName({ id: Number(asteroid.id), label: Entity.IDS.ASTEROID });
@@ -372,14 +374,15 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
               </LogHeader>
               <div>
                 <ul>
-                  {asteroid.events?.length > 0
-                    ? asteroid.events.map(e => (
+                  {/* TODO: totalCount from api, pagination, custom columns (see mocks) */}
+                  {activities?.docs?.length > 0
+                    ? activities.docs.map(a => (
                       <LogEntry
-                        key={e.id}
+                        key={a.id}
                         css={{ fontSize: '13px', fontWeight: 'bold', padding: '6px 4px' }}
-                        data={{ ...e, i: asteroid.i }}
+                        data={a.event}
                         timestampBreakpoint="1400px"
-                        type={`Asteroid_${e.event}`}
+                        type={`Asteroid_${a.event.event}`}
                         isTabular />
                     ))
                     : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>

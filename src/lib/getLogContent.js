@@ -315,6 +315,63 @@ const entries = {
     }
   },
 
+  // TODO: pretty these up
+  Crew_AsteroidManaged: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+  Crew_AsteroidPurchased: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+  Crew_CrewmateRecruited: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+  Crew_NameChanged: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+  Crew_SurfaceScanFinished: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+  Crew_SurfaceScanStarted: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+  Crew_Transfer: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+
+
+
+
+
+
+
   Crewmate_Transfer: (e) => ({
     icon: <TransferIcon />,
     content: (
@@ -341,35 +398,6 @@ const entries = {
     ),
     txLink: getTxLink(e),
   }),
-
-  // Sale_TimeToStart: (e) => ({
-  //   content: (
-  //     <span>
-  //       The next {saleLabels[e.asset]} sale will start at
-  //       {` ${(new Date(e.start)).toLocaleString()}`}
-  //     </span>
-  //   ),
-  // }),
-
-  // Sale_Started: (e) => {
-  //   const singular = e.available === 1;
-  //   return {
-  //     content: (
-  //       <span>
-  //         An {saleLabels[e.asset]} sale is now open!
-  //         There {singular ? 'is' : 'are'} {e.available.toLocaleString()} remaining asteroid{singular ? '' : 's'} available.
-  //       </span>
-  //     ),
-  //   }
-  // },
-
-  // Sale_Ended: (e) => ({
-  //   content: (
-  //     <span>
-  //       The {saleLabels[e.asset]} sale has completed.
-  //     </span>
-  //   ),
-  // })
 };
 
 export const types = Object.keys(entries);

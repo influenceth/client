@@ -5,7 +5,10 @@ import api from '~/lib/api';
 const useCrewmates = (ids) => {
   return useQuery(
     [ 'crewmates', ids.join(',') ],
-    () => api.getCrewmates(ids),
+    async () => {
+      const crewmates = await api.getCrewmates(ids);
+      return ids.map((id) => crewmates.find((c) => c.id === id));
+    },
     { enabled: ids?.length > 0 }
   );
 };

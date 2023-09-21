@@ -837,7 +837,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
     if (!bookSession) return null;
 
     // default from bookSession crewmate (arvadian) or from empty adalian
-    const c = bookSession.crewmate || {
+    const c = cloneDeep(bookSession.crewmate) || {
       id: 0,
       label: Entity.IDS.CREWMATE,
       Crewmate: {
@@ -868,6 +868,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
       c.Crewmate.class = selectedClass;
       c._canReclass = true;
     }
+    console.log('- - - - name', name, c.Name?.name);
     if (!c.Name?.name) {
       c.Name = { name };
       c._canRename = true;
@@ -1016,10 +1017,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
 
   const finalize = useCallback(() => {
     setConfirming(false);
-    purchaseAndOrInitializeCrew({
-      crewmate,
-      // sessionId // used to tag the pendingTransaction  // TODO: deprecate? use bookId? use random?
-    });
+    purchaseAndOrInitializeCrew({ crewmate });
   }, [crewmate, purchaseAndOrInitializeCrew]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBack = useCallback(() => {
@@ -1211,7 +1209,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
                       <>
                         <Trait
                           ref={animationComplete ? setRefEl : noop}
-                          onClick={(traitsLocked || !crewmate._canReclass) ? noop : () => setToggling('class')}
+                          onClick={(pendingCrewmate || traitsLocked || !crewmate._canReclass) ? noop : () => setToggling('class')}
                           onMouseEnter={animationComplete ? () => setHovered('class') : noop}
                           onMouseLeave={() => setHovered()}
                           side="right"
@@ -1276,7 +1274,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
                                 <>
                                   <Trait
                                     ref={animationComplete ? setRefEl : noop}
-                                    onClick={(traitsLocked || traitIndex > selectedTraits?.length) ? noop : () => setToggling(hoverKey)}
+                                    onClick={(pendingCrewmate || traitsLocked || traitIndex > selectedTraits?.length) ? noop : () => setToggling(hoverKey)}
                                     onMouseEnter={animationComplete ? () => setHovered(hoverKey) : noop}
                                     onMouseLeave={() => setHovered()}
                                     side={side}

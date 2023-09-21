@@ -60,7 +60,7 @@ const useCrewManager = () => {
   const getPendingCrewmate = useCallback(
     () => {
       if (adalianRecruits.length > 0) {
-        return getPendingTx('INITIALIZE_CREWMATE', { i: adalianRecruits[0].i });
+        return getPendingTx('InitializeArvadian', {});
       } else {
         return getPendingTx('RecruitAdalian', {});
       }
