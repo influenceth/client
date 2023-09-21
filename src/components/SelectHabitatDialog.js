@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { Building, Location } from '@influenceth/sdk'
+import { Building } from '@influenceth/sdk'
 
 import { getBuildingIcon, getCloudfrontUrl } from '~/lib/assetUtils';
 import ChoicesDialog from './ChoicesDialog';

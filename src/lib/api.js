@@ -203,7 +203,18 @@ const api = {
   getEntityById,
 
   getLot: async (asteroidId, lotId) => {
-    return getEntityById(Location.toEntityFormat({ asteroidId, lotId }));
+    let entity = await getEntityById(Entity.fromPosition({ asteroidId, lotId }));
+    entity = entity ? entity : Entity.fromPosition({ asteroidId, lotId });
+    const entities = await getEntities({
+      match: { 'Location.location': Entity.fromPosition({ asteroidId, lotId }) },
+      components: [ 'Building', 'Control' ]
+    });
+
+    entity.building = entities.find(e => e.label === Entity.IDS.BUILDING);
+    entity.ship = entities.find(e => e.label === Entity.IDS.SHIP);
+    entity.deposits = entities.filter(e => e.label === Entity.IDS.DEPOSIT);
+
+    return entity;
   },
 
   getNameUse: async (label, name) => {
@@ -215,15 +226,15 @@ const api = {
   },
 
   getCrew: async (id) => {
-    return getEntityById({ label: Entity.IDS.CREW, id });
+    return getEntityById({ id, label: Entity.IDS.CREW });
   },
 
   getCrewmate: async (id) => {
-    return getEntityById({ label: Entity.IDS.CREWMATE, id });
+    return getEntityById({ id, label: Entity.IDS.CREWMATE });
   },
 
   getCrewmates: async (ids) => {
-    return ids?.length > 0 ? getEntities({ label: Entity.IDS.CREWMATE, ids }) : [];
+    return ids?.length > 0 ? getEntities({ ids, label: Entity.IDS.CREWMATE }) : [];
   },
 
   getAccountCrewmates: async (account) => {
@@ -231,12 +242,12 @@ const api = {
   },
 
   getShip: async (id) => {
-    return getEntityById({ label: Entity.IDS.SHIP, id });
+    return getEntityById({ id, label: Entity.IDS.SHIP });
   },
 
   getShipCrews: async (shipId) => {
     return getEntities({
-      match: { 'Location.location': Location.toEntityFormat({ shipId }) },
+      match: { 'Location.location': { id: shipId, label: Entity.IDS.SHIP } },
       label: Entity.IDS.CREW
     });
   },
@@ -298,9 +309,9 @@ const api = {
   },
 
   searchAssets: async (asset, query) => {
-    // TODO: ecs refactor -- need to restore searching of other asset types (i.e. should not be hardcoded to asteroid)
-    // const response = await instance.post(`/_search/${asset.replace(/s$/, '').toLowerCase()}`, query);
-    const response = await instance.post(`/_search/asteroid`, query);
+    const assetIndex = asset.replace(/s$/, '').toLowerCase();
+    const response = await instance.post(`/_search/${assetIndex}`, query);
+
     return {
       hits: response.data.hits.hits.map((h) => h._source),
       total: response.data.hits.total.value

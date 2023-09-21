@@ -6,13 +6,14 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { useFrame, useThree, Canvas } from '@react-three/fiber';
+import { useCubeTexture } from '@react-three/drei';
 import BarLoader from 'react-spinners/BarLoader';
 import styled, { css } from 'styled-components';
 
 import Details from '~/components/DetailsFullsize';
 import Postprocessor from '../Postprocessor';
 import useStore from '~/hooks/useStore';
-import { boolAttr, formatFixed } from '~/lib/utils';
+import { formatFixed } from '~/lib/utils';
 
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
@@ -87,7 +88,7 @@ export const toneMaps = [
 export const getModelViewerSettings = (assetType, overrides = {}) => {
   // get default settings (for all)
   const s = {
-    background: '/textures/model-viewer/building_skybox.jpg',
+    background: null,
     bloomRadius: 0.25,
     bloomStrength: 2,
     enableZoomLimits: true,
@@ -363,7 +364,7 @@ const Model = ({ url, onLoaded, onCameraUpdate, ...settings }) => {
             node.shadow.camera.fov = 180 * (2 * node.angle / Math.PI);
             node.shadow.mapSize = new Vector2(1024, 1024);
             node.shadow.camera.updateProjectionMatrix();
-            
+
             // const cameraHelper = new THREE.CameraHelper(node.shadow.camera);
             // helpers.push(cameraHelper);
           }
@@ -404,7 +405,7 @@ const Model = ({ url, onLoaded, onCameraUpdate, ...settings }) => {
         // initial rotation simulates initial camera position in blender
         // (halfway between the x and z axis)
         // model.current.rotation.y = -Math.PI / 4;
-      
+
         // add to scene and report as loaded
         scene.add(model.current);
         helpers.forEach((helper) => scene.add(helper));
@@ -544,30 +545,43 @@ const Model = ({ url, onLoaded, onCameraUpdate, ...settings }) => {
 const Skybox = ({ background, envmap, onLoaded, backgroundOverrideName = '', envmapOverrideName = '' }) => {
   const { scene } = useThree();
 
+  const defaultBackground = useCubeTexture(
+    ['sky_pos_x.jpg', 'sky_neg_x.jpg', 'sky_pos_y.jpg', 'sky_neg_y.jpg', 'sky_pos_z.jpg', 'sky_neg_z.jpg'],
+    { path: `${process.env.PUBLIC_URL}/textures/skybox/`}
+  );
+
   useEffect(() => {
     let cleanupTextures = [];
 
-    let waitingOn = background === envmap ? 1 : 2;
-    loadTexture(background, backgroundOverrideName).then(function (texture) {
-      cleanupTextures.push(texture);
-      texture.mapping = EquirectangularReflectionMapping;
-      scene.background = texture;
-      if (background === envmap) {
-        scene.environment = texture;
-      }
-
-      waitingOn--;
-      if (waitingOn === 0) onLoaded();
-    });
-    if (background !== envmap) {
-      loadTexture(envmap, envmapOverrideName).then(function (texture) {
+    if (!background) {
+      scene.background = defaultBackground;
+      scene.environment = defaultBackground;
+      onLoaded();
+    } else {
+      let waitingOn = background === envmap ? 1 : 2;
+      loadTexture(background, backgroundOverrideName).then(function (texture) {
         cleanupTextures.push(texture);
         texture.mapping = EquirectangularReflectionMapping;
-        scene.environment = texture;
+        scene.background = texture;
+
+        if (background === envmap) {
+          scene.environment = texture;
+        }
 
         waitingOn--;
         if (waitingOn === 0) onLoaded();
       });
+
+      if (background !== envmap) {
+        loadTexture(envmap, envmapOverrideName).then(function (texture) {
+          cleanupTextures.push(texture);
+          texture.mapping = EquirectangularReflectionMapping;
+          scene.environment = texture;
+
+          waitingOn--;
+          if (waitingOn === 0) onLoaded();
+        });
+      }
     }
 
     return () => {
@@ -663,7 +677,7 @@ const Lighting = ({ keylightIntensity = 1.0, rimlightIntensity = 0.25 }) => {
     //   spotlight.shadow.camera.far = 0.01;
     //   spotlight.shadow.camera.fov = 180 * (2 * spotlightFOV);
     //   spotlight.shadow.camera.updateProjectionMatrix();
-      
+
     //   if (i === 1) {
     //     // helpers.push(new THREE.SpotLightHelper(spotlight));
     //     helpers.push(new THREE.CameraHelper(spotlight.shadow.camera));
@@ -720,6 +734,7 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
   const [cameraInfo, setCameraInfo] = useState();
   const [loadingSkybox, setLoadingSkybox] = useState(true);
   const [loadingModel, setLoadingModel] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   const settings = useMemo(
     () => getModelViewerSettings(assetType, overrides),
@@ -754,7 +769,9 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
   const onModelLoaded = useCallback(() => setLoadingModel(false), []);
   const onSkyboxLoaded = useCallback(() => setLoadingSkybox(false), []);
 
-  const isLoading = loadingModel || loadingSkybox;
+  useEffect(() => {
+    setIsLoading(loadingModel || loadingSkybox);
+  }, [ loadingModel, loadingSkybox ]);
 
   // TODO: is Details best component to wrap this in?
   // TODO: is canvasStack assetType causing a problem since it might change?
@@ -763,9 +780,9 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
       edgeToEdge
       hideClose
       lowerZIndex>
-      <BarLoader color="#AAA" height={3} loading={boolAttr(isLoading)} css={loadingCss} />
+      <BarLoader color="#AAA" height={3} loading={isLoading} css={loadingCss} />
 
-      <CanvasContainer ready={boolAttr(!isLoading)}>
+      <CanvasContainer ready={!isLoading}>
         <Canvas
           frameloop={canvasStack[0] === assetType ? 'always' : 'never'}
           resize={{ debounce: 5, scroll: false }}
@@ -803,7 +820,7 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
           )}
         </Canvas>
       </CanvasContainer>
-      
+
       {settings.trackCamera && cameraInfo && (
         <CameraInfo>
           <div><b>Center:</b> {cameraInfo.target}</div>

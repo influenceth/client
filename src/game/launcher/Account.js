@@ -273,7 +273,16 @@ const Account = () => {
         true
       );
     }
-  }, [crewLoading, crew?._crewmates, dispatchLauncherPage, dispatchCutscene, dispatchSeenIntroVideo, hasSeenIntroVideo]);
+  },
+  [
+    loggedIn,
+    crewLoading,
+    crew?._crewmates,
+    dispatchLauncherPage,
+    dispatchCutscene,
+    dispatchSeenIntroVideo,
+    hasSeenIntroVideo
+  ]);
 
   return (
     <MainContent loggedIn={loggedIn}>

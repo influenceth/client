@@ -30,7 +30,7 @@ const useColumns = () => {
       {
         key: 'name',
         label: 'Name',
-        sortField: 'Name.name', // TODO: ecs refactor
+        sortField: 'Name.name.raw',
         selector: row => formatters.crewName(row),
         unhideable: true
       },
@@ -39,7 +39,7 @@ const useColumns = () => {
         label: 'Owner',
         sortField: 'Nft.owner',
         selector: row => {
-          if (row.owner) {
+          if (row.Nft?.owner) {
             return (
               <MarketplaceLink
                 chain={row.Nft.chain}

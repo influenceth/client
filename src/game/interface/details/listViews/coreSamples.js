@@ -1,12 +1,7 @@
-import { useCallback, useMemo } from 'react';
-import styled from 'styled-components';
-import { Location, Product } from '@influenceth/sdk';
+import { useMemo } from 'react';
+import { Entity, Product } from '@influenceth/sdk';
 
-import {
-  CrewIcon,
-  CrewmateIcon,
-  MyAssetIcon,
-} from '~/components/Icons';
+import { MyAssetIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
 import { formatFixed } from '~/lib/utils';
@@ -32,7 +27,7 @@ const useColumns = () => {
         label: 'Deposit',
         sortField: 'Deposit.resource',
         selector: row => {
-          const loc = Location.fromEntityFormat(row.Location?.location);
+          const loc = Entity.toPosition(row.Location?.location);
           return (
             <>
               <LocationLink asteroidId={loc.asteroidId} lotId={loc.lotId} resourceId={row.Deposit.resource} zoomToLot="LOT_RESOURCES" />
@@ -47,7 +42,7 @@ const useColumns = () => {
         label: 'Asteroid',
         sortField: 'meta.location[0].id', // TODO: will this work? does sequential sorting matter?
         selector: row => {
-          const loc = Location.fromEntityFormat(row.Location?.location);
+          const loc = Entity.toPosition(row.Location?.location);
           return (
             <>
               <LocationLink asteroidId={loc.asteroidId} resourceId={row.Deposit.resource} />
@@ -61,7 +56,7 @@ const useColumns = () => {
         label: 'Lot',
         sortField: 'meta.location[1].id', // TODO: will this work? does sequential sorting matter?
         selector: row => {
-          const loc = Location.fromEntityFormat(row.Location?.location);
+          const loc = Entity.toPosition(row.Location?.location);
           return (
             <>
               <LocationLink asteroidId={loc.asteroidId} lotId={loc.lotId} resourceId={row.Deposit.resource} />

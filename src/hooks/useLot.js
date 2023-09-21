@@ -3,7 +3,7 @@ import { useQuery } from 'react-query';
 import api from '~/lib/api';
 
 
-// 
+//
 const useLocationEntities = ({ asteroidId, lotId, buildingId, shipId }) => {
   // asteroidId
   //  (Asteroid)
@@ -17,7 +17,7 @@ const useLocationEntities = ({ asteroidId, lotId, buildingId, shipId }) => {
 };
 
 
-// TODO: ecs refactor -- this is 
+// TODO: ecs refactor -- this is
 const useLot = (asteroidId, lotId) => {
   return useQuery(
     [ 'lots', asteroidId, lotId ],

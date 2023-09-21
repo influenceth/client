@@ -89,22 +89,22 @@ const Favorites = ({ onClose }) => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const { watchlist: { data: watchlist }} = useWatchlist();
 
-  const onClick = useCallback((i) => () => {
-    if (asteroidId === i) {
+  const onClick = useCallback((id) => () => {
+    if (asteroidId === id) {
       updateZoomStatus('zooming-in');
       onClose();
     } else {
-      selectAsteroid(i)
+      selectAsteroid(id)
     }
   }, [asteroidId]);
 
   return (
     <HudMenuCollapsibleSection titleText="Asteroids">
       {(watchlist || []).map(({ asteroid }) => (
-        <SelectableRow key={asteroid.i} selected={asteroidId === asteroid.i} onClick={onClick(asteroid.i)}>
-          {asteroidId === asteroid.i && (
+        <SelectableRow key={asteroid.id} selected={asteroidId === asteroid.i} onClick={onClick(asteroid.id)}>
+          {asteroidId === asteroid.id && (
             <Thumbnail>
-              {asteroid.Control.controller.id === crew?.i && <MyAssetIcon />}
+              {asteroid.Control.controller.id === crew?.id && <MyAssetIcon />}
               <AsteroidRendering asteroid={asteroid} />
             </Thumbnail>
           )}
@@ -113,7 +113,7 @@ const Favorites = ({ onClose }) => {
             {Asteroid.Entity.getSize(asteroid)}{' '}
             <b>{Asteroid.Entity.getSpectralType(asteroid)}{'-type'}</b>
           </span>
-          {asteroidId === asteroid.i && <ClipCorner dimension={10} color={theme.colors.main} />}
+          {asteroidId === asteroid.id && <ClipCorner dimension={10} color={theme.colors.main} />}
         </SelectableRow>
       ))}
     </HudMenuCollapsibleSection>

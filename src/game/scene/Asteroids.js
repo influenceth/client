@@ -100,9 +100,7 @@ const Asteroids = () => {
   const [ destinationPos, setDestinationPos ] = useState();
 
   const isUpdating = useRef(false);
-
   const asteroidsGeom = useRef();
-  const box = useRef();
 
   const asteroids = useMemo(() => {
     return asteroidSearch?.hits?.length > 0 ? asteroidSearch.hits : [];
@@ -114,9 +112,7 @@ const Asteroids = () => {
       if (!asseted[a.id]) asseted[a.id] = { asteroid: a };
       asseted[a.id].owned = true;
     });
-    if (asteroids?.length > 0) {
-      asseted[`${asteroids[0].id}`] = { asteroid: asteroids[0], crew: 1, ships: 2 }; // TODO: ecs refactor
-    }
+
     return asseted;
   }, [asteroids, ownedAsteroids]);
 
@@ -481,7 +477,7 @@ const Asteroids = () => {
             <group>
               {billboardedAsteroids.filter(({ p }) => p?.length).map(({ a, p, name }) => (
                 <Html
-                  key={`billboard_${a.i}`}
+                  key={`billboard_${a.id}`}
                   position={p}
                   style={{ pointerEvents: 'none', transform: `translate(-45px, calc(-100% - ${name ? 15 : 5}px))` }}>
                   <AsteroidTooltip hasActiveCrew={assetedAsteroids[a.id]?.crew}>

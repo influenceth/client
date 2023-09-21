@@ -5,7 +5,7 @@ import ReactTooltip from 'react-tooltip';
 import { useQuery } from 'react-query';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
-import { Asteroid, Building, Crewmate, Delivery, Inventory, Process, Product, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Delivery, Entity, Inventory, Process, Product, Ship } from '@influenceth/sdk';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
@@ -44,7 +44,6 @@ import SliderInput from '~/components/SliderInput';
 import TextInput from '~/components/TextInputUncontrolled';
 import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import useChainTime from '~/hooks/useChainTime';
-import useCrewmate from '~/hooks/useCrewmate';
 import api from '~/lib/api';
 import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
@@ -1125,7 +1124,7 @@ const DeltaIcon = styled.div`
   position: absolute;
   top: -0.4em;
   z-index: 1;
-  ${p => p.negativeDelta 
+  ${p => p.negativeDelta
     ? `
       left: calc(${100 * p.value}% - 4px);
       transform: scaleX(-1);
@@ -1500,7 +1499,7 @@ export const DestinationSelectionDialog = ({
     onSelected(selection);
     onClose();
   }, [onClose, onSelected, selection]);
-  
+
   const inventories = useMemo(() => {
     return (crewLots || [])
       .filter((lot) => (includeDeconstruction && lot.i === originLotId) || (
@@ -1534,7 +1533,7 @@ export const DestinationSelectionDialog = ({
             1 - availMass / inventoryConfig.massConstraint,
             1 - availVolume / inventoryConfig.volumeConstraint,
           ) || 0;
-  
+
           acc.push({
             lot,
             slot,
@@ -1967,7 +1966,7 @@ export const AsteroidImage = ({ asteroid, size }) => {
 }
 
 export const ShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, simulated, square, style = {} }) => {
-  const shipAsset = Ship.TYPES[shipType];
+  const shipAsset = Ship.TYPES[Math.abs(shipType)]; // abs for simulated ships
   if (!shipAsset) return null;
 
   const capacity = getCapacityUsage(inventories, showInventoryStatusForType);
@@ -2171,7 +2170,7 @@ export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, is
       )}
       <FlexSectionInputContainer style={style}>
         {title && <SectionTitle>{title}{titleDetails && <><b style={{ flex: 1 }} /><SectionTitleRight>{titleDetails}</SectionTitleRight></>}</SectionTitle>}
-        
+
         <FlexSectionInputBody
           isSelected={isSelected}
           onClick={disabled ? null : onClick}
@@ -2428,7 +2427,7 @@ export const ProgressBarSection = ({
 
   const refEl = useRef();
   const [hovered, setHovered] = useState();
-  
+
   const { animating, barWidth, color, left, reverseAnimation, right } = useMemo(() => {
     const r = {
       animating: false,
@@ -2770,7 +2769,7 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
 
   const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : 1;
   const deltaVUse = deltaVLoaded > 0 ? deltaVRequired / deltaVLoaded : 1;
-  
+
   return (
     <FlexSectionBlock
       title={title}
@@ -2848,7 +2847,7 @@ export const EmergencyPropellantSection = ({ title, propellantPregeneration, pro
 
   const propellantPre = propellantPregeneration / propellantTankMax;
   const propellantPost = propellantPostgeneration / propellantTankMax;
-  
+
   return (
     <FlexSectionBlock
       title={title}
@@ -2908,7 +2907,7 @@ export const CrewInputBlock = ({ crew, title }) => (
     )}
     bodyStyle={{ paddingRight: 8 }}>
     <CrewCards>
-      {Array.from({ length: 5 }).map((_, i) => 
+      {Array.from({ length: 5 }).map((_, i) =>
         crew.Crew.roster[i]
           ? (
             <CrewCardFramed
@@ -2981,7 +2980,7 @@ export const ShipInputBlock = ({ ship, ...props }) => {
 
 export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings = [] }) => {
   const shipConfig = Ship.TYPES[ship?.shipType] || {};
-  
+
   // TODO: if want to include "reserved", it would probably make sense to use getCapacityUsage helper instead
   const inventory = useMemo(() => {
     if (!ship) return {};
@@ -3075,7 +3074,7 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings =
 
 export const InventoryChangeCharts = ({ building, inventoryType, deltaMass, deltaVolume }) => {
   if (!(building && building.inventories && inventoryType !== undefined)) return null;
-  
+
   const capacity = getCapacityUsage(building?.inventories, inventoryType);
   const postDeltaMass = capacity.mass.used + capacity.mass.reserved + deltaMass;
   const postDeltaVolume = capacity.volume.used + capacity.volume.reserved + deltaVolume;
@@ -3207,7 +3206,7 @@ export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, go
           </NotificationEnabler>
         */}
         <Spacer />
-        
+
         {stage === actionStage.NOT_STARTED
           ? (
             <>
@@ -3632,13 +3631,14 @@ export const formatShipStatus = (ship) => {
   if (ship?.Ship?.status === Ship.STATUSES.IN_FLIGHT) {
     return 'In Flight'; // TODO: do we need to distinguish Launching, Landing
   }
-  
-  const loc = Location.fromEntityFormat(ship?.Location.location);
-  if (loc.buildingId) {
+
+  const loc = ship?.Location.location;
+
+  if (loc.label === Entity.IDS.SHIP) {
     return 'In Port';
-  } else if (loc.lotId) {
+  } else if (loc.label === Entity.IDS.LOT) {
     return 'On Surface';
-  } else if (loc.asteroidId) {
+  } else if (loc.label === Entity.IDS.ASTEROID) {
     return 'In Orbit';
   }
 

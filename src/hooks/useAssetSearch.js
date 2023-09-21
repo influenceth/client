@@ -13,11 +13,11 @@ filtersToQuery.asteroids = (filters) => {
   const queryBuilder = esb.boolQuery();
   if (filters.ownedBy) {
     if (filters.ownedBy === 'unowned') {
-      queryBuilder.mustNot(esb.existsQuery('Nft.owners'))
+      queryBuilder.mustNot(esb.existsQuery('Nft.owner'))
     } else if (filters.ownedBy === 'owned') {
-      queryBuilder.filter(esb.existsQuery('Nft.owners'))
+      queryBuilder.filter(esb.existsQuery('Nft.owner'))
     } else if (filters.ownedBy) {
-      queryBuilder.filter(esb.termQuery('Nft.owners.starknet', filters.ownedBy));
+      queryBuilder.filter(esb.termQuery('Nft.owner', filters.ownedBy));
     }
   }
 
@@ -76,7 +76,8 @@ filtersToQuery.buildings = (filters) => {
   const queryBuilder = esb.boolQuery();
 
   if (filters.asteroid) {
-    queryBuilder.filter(esb.termQuery('meta.location', { label: Entity.IDS.ASTEROID, id: filters.asteroid }));
+    queryBuilder.filter(esb.termQuery('meta.location.label', Entity.IDS.ASTEROID));
+    queryBuilder.filter(esb.termQuery('meta.location.id', filters.asteroid));
   }
 
   if (filters.type) {
@@ -84,7 +85,7 @@ filtersToQuery.buildings = (filters) => {
   }
 
   if (filters.controller) {
-    queryBuilder.filter(esb.termQuery('Control.controller.i', filters.controller));
+    queryBuilder.filter(esb.termQuery('Control.controller.id', filters.controller));
   }
 
   // TODO: ecs refactor
@@ -103,7 +104,8 @@ filtersToQuery.deposits = (filters) => {
   const queryBuilder = esb.boolQuery();
 
   if (filters.asteroid) {
-    queryBuilder.filter(esb.termQuery('meta.location', { label: Entity.IDS.ASTEROID, id: filters.asteroid }));
+    queryBuilder.filter(esb.termQuery('meta.location.label', Entity.IDS.ASTEROID));
+    queryBuilder.filter(esb.termQuery('meta.location.id', filters.asteroid));
   }
 
   if (filters.resource) {
@@ -165,38 +167,12 @@ filtersToQuery.leases = (filters) => {
   const queryBuilder = esb.boolQuery();
 
   if (filters.asteroid) {
-    queryBuilder.filter(esb.termQuery('meta.location', { label: Entity.IDS.ASTEROID, id: filters.asteroid }));
+    queryBuilder.filter(esb.termQuery('meta.location.label', Entity.IDS.ASTEROID));
+    queryBuilder.filter(esb.termQuery('meta.location.id', filters.asteroid));
   }
 
   return queryBuilder;
 };
-
-// NOTE: these were all moved into buildings filter
-// filtersToQuery.lots = (filters) => {
-//   const queryBuilder = esb.boolQuery();
-//
-//   if (filters.asteroid) {
-//     queryBuilder.filter(esb.termQuery('meta.location', { label: Entity.IDS.ASTEROID, id: filters.asteroid }));
-//   }
-//
-//   if (filters.controller) {
-//     queryBuilder.filter(esb.termQuery('controller.i', filters.controller));
-//   }
-//
-//   if (filters.occupier) {
-//     queryBuilder.filter(esb.termQuery('occupier.i', filters.occupier));
-//   }
-//
-//   if (filters.building) {
-//     queryBuilder.filter(esb.termsQuery('building.type', filters.building.map((t) => parseInt(t))));
-//   }
-//
-//   if (filters.construction) {
-//     queryBuilder.filter(esb.termsQuery('construction.status', filters.construction.map((t) => parseInt(t))));
-//   }
-//
-//   return queryBuilder;
-// };
 
 filtersToQuery.orders = (filters) => {
   const queryBuilder = esb.boolQuery();
