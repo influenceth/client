@@ -4,6 +4,7 @@ import CrewCard from '~/components/CrewCard';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
 import { CaptainIcon } from '~/components/Icons';
 import TriangleTip from '~/components/TriangleTip';
+import { boolAttr } from '~/lib/utils';
 
 const bgColor = '#000';
 const hoverBgColor = '#183541';
@@ -104,6 +105,7 @@ const AvatarWrapper = styled.div`
 const noop = () => {};
 const CrewCardFramed = ({
   crewmate,
+  crewCardProps = {},
   isCaptain,
   onClick,
   silhouetteOverlay,
@@ -127,10 +129,11 @@ const CrewCardFramed = ({
             crewmate={crewmate}
             hideHeader
             hideFooter
-            hideMask />
+            hideMask
+            {...crewCardProps} />
         )}
         {!crewmate && (
-          <CrewSilhouetteCard overlay={silhouetteOverlay} />
+          <CrewSilhouetteCard overlay={silhouetteOverlay} {...crewCardProps} />
         )}
       </Avatar>
       <AvatarFlourish>

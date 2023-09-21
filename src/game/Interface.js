@@ -12,12 +12,10 @@ import Alerts from './interface/Alerts';
 import Draggables from './interface/Draggables';
 import HUD from './interface/HUD';
 import MainMenu from './interface/MainMenu';
+import RecruitCrewmate from './interface/RecruitCrewmate';
 import ListView from './interface/details/ListView';
 import AsteroidDetails from './interface/details/AsteroidDetails';
-import CrewAssignment from './interface/details/crewAssignments/Assignment';
-import CrewAssignmentComplete from './interface/details/crewAssignments/Complete';
-import CrewCreation from './interface/details/crewAssignments/Create';
-import CrewAssignments from './interface/details/CrewAssignments';
+// import CrewAssignmentComplete from './interface/details/crewAssignments/Complete';
 import CrewmateDetails from './interface/details/CrewmateDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
 import Marketplace from './interface/details/Marketplace';
@@ -146,12 +144,17 @@ const Interface = () => {
           <Route path="/asteroids/:i(\d+)/:tab?/:category?">
             <AsteroidDetails />
           </Route>
+          <Route path="/recruit/:crewId([0-9]+)/:locationId([0-9]+)?/:crewmateId([0-9]+)?/:page?">
+            <RecruitCrewmate />
+          </Route>
+          {/* 
           <Route exact path="/recruit/:crewmateId([0-9]+)/">
             <CrewAssignment />
           </Route>
           <Route path="/recruit/:crewmateId([0-9]+)/create">
             <CrewCreation />
           </Route>
+          */}
 
           {/* TODO: deprecated?
           <Route exact path="/crew-assignments/:id([a-z0-9]+)/:selected?">

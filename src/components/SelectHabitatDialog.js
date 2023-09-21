@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { Building, Location } from '@influenceth/sdk'
+import { Building, Entity } from '@influenceth/sdk'
 
 import { getBuildingIcon, getCloudfrontUrl } from '~/lib/assetUtils';
 import ChoicesDialog from './ChoicesDialog';
@@ -70,14 +70,41 @@ const HabCard = styled.div`
   }
 `;
 
-const SelectHabitatDialog = () => {
-  const { data: habitat } = useBuilding(1);
-  const habitatLocation = useMemo(() => Location.fromEntityFormat(habitat?.Location?.location), [habitat])
+// TODO: remove this in favor of new sdk location functions
+const fromEntityFormat = (loc) => {
+  if (!loc) return null;
+
+  // ship -> building -> lot -> asteroid
+  if (loc.label === Entity.IDS.SHIP) {
+    return { shipId: loc.id };
+
+  } else if (loc.label === Entity.IDS.BUILDING) {
+    return { buildingId: loc.id };
+
+  } else if (loc.label === Entity.IDS.LOT) {
+    const split = 2 ** 32;
+    return {
+      asteroidId: loc.id % split,
+      lotId: Math.round(loc.id / split)
+    };
+
+  } else if (loc.label === Entity.IDS.ASTEROID) {
+    return { asteroidId: loc.id };
+  }
+
+  throw `Invalid location label: "${loc.label}" (${typeof loc.label})`;
+};
+
+const SelectHabitatDialog = ({ onAccept, onReject }) => {
+  const randomAssignment = 1;// TODO: should not be hardcoded
+  const { data: habitat } = useBuilding(randomAssignment);
+  const habitatLocation = useMemo(() => fromEntityFormat(habitat?.Location?.location), [habitat])
   const { data: asteroid } = useAsteroid(habitatLocation?.asteroidId);
 
   const onSelectHabitat = useCallback((choice) => () => {
-
-  }, []);
+    if (choice.id === 1) return onAccept(randomAssignment);
+    return onReject();
+  }, [randomAssignment]);
 
   return (
     <ChoicesDialog

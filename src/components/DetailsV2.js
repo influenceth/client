@@ -68,7 +68,7 @@ const HeaderWrapper = styled.div`
     `}
 `;
 const Header = styled.h1`
-  border-left: 2px solid ${p => p.theme.colors.main};
+  border-left: 3px solid ${p => p.theme.colors.main};
   font-size: 22px;
   font-weight: 400;
   height: ${headerHeight}px;
@@ -78,6 +78,12 @@ const Header = styled.h1`
   position: relative;
   text-transform: uppercase;
   z-index: 1;
+
+  & b {
+    color: ${p => p.theme.colors.main};
+    font-weight: normal;
+    margin-left: 10px;
+  }
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding-left: 20px;

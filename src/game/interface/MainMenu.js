@@ -221,7 +221,7 @@ const MainMenu = () => {
               <MenuItem
                 name="My Crew"
                 icon={<CrewIcon />}
-                onClick={() => history.push('/crew')} />
+                onClick={() => history.push(`/crew`)} />
               <MenuItem
                 name="My Ships"
                 icon={<ShipIcon />}

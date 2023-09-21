@@ -4,15 +4,14 @@ import { Entity } from '@influenceth/sdk';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
 
-const useNameAsteroid = (id) => {
+const useChangeName = (entity) => {
   const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
 
-  const entity = useMemo(() => ({ id, label: Entity.IDS.ASTEROID }), [id]);
   const caller_crew = useMemo(() => ({ id: crew?.id, label: Entity.IDS.CREW }), [crew?.id]);
 
-  const nameAsteroid = useCallback(
-    (name) => execute('ChangeName', { entity, name, caller_crew, }),
+  const changeName = useCallback(
+    (name) => execute('ChangeName', { entity, name, caller_crew }),
     [execute, entity, caller_crew]
   );
 
@@ -22,9 +21,9 @@ const useNameAsteroid = (id) => {
   );
 
   return {
-    nameAsteroid,
-    naming: status === 'pending'
+    changeName,
+    changingName: status === 'pending'
   };
 };
 
-export default useNameAsteroid;
+export default useChangeName;

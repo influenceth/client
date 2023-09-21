@@ -117,6 +117,7 @@ const Asteroids = () => {
     if (asteroids?.length > 0) {
       asseted[`${asteroids[0].id}`] = { asteroid: asteroids[0], crew: 1, ships: 2 }; // TODO: ecs refactor
     }
+    // TODO: ecs-refactor -- fill in crew and ships tally on each asteroid where located
     return asseted;
   }, [asteroids, ownedAsteroids]);
 

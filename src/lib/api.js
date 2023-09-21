@@ -80,14 +80,18 @@ const api = {
     return response.data;
   },
 
-  getCrewLocation: async (i) => {
-    // TODO: ecs-refactor -- return a recursively flattened location object for crew id
-    // (might be easiest to do from ES since already flattened)
+  getCrewLocation: async (id) => {
+    // this is a little unconventional compared to the rest of the api (i.e. to pull a single id from es),
+    // but since es already has a flattened location, it feels like a worthwhile shortcut
+    const response = await instance.post(`/_search/crew`, { query: { bool: { filter: { term: { id } } } } });
+    const [crew] = (response.data.hits.hits.map((h) => h._source) || []);
+    
+    const lotLocation = crew.Location.locations.find((l) => l.label === Entity.IDS.LOT);
     return {
-      asteroidId: 1000,
-      lotId: 1,
-      buildingId: 1,
-      shipId: null
+      asteroidId: crew.Location.locations.find((l) => Number(l.label) === Entity.IDS.ASTEROID)?.id,
+      lotId: lotLocation ? Entity.toPosition(lotLocation)?.lotId : null,
+      buildingId: crew.Location.locations.find((l) => l.label === Entity.IDS.BUILDING)?.id,
+      shipId: crew.Location.locations.find((l) => l.label === Entity.IDS.SHIP)?.id,
     };
   },
 

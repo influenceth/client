@@ -126,7 +126,8 @@ const Title = styled.div`
 
 const ImageryContainer = styled.div`
   display: flex;
-  flex: 1;
+  flex: 0 1 calc(100% - 80px);
+  overflow: auto;
   padding: 60px 0 0;
   position: relative;
 
@@ -510,87 +511,6 @@ const RerollContainer = styled.div`
   margin-top: 10px;
 `;
 
-const RecruitSection = styled.div`
-  animation: ${opacityTransition} 500ms normal forwards ease-out 750ms;
-  opacity: 0;
-  & button {
-    display: flex;
-    height: 66px;
-    justify-content: space-between;
-    margin: 0 auto 10px;
-    text-transform: uppercase;
-    width: 280px;
-  }
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    margin-bottom: 16px;
-  }
-`;
-const TwitterButton = styled(Button)`
-  color: white;
-  background: #1b9df0;
-  border-color: #1b9df0;
-  font-weight: bold;
-  justify-content: center !important;
-  & > span {
-    font-size: 16px;
-    margin-right: 32px;
-    white-space: nowrap;
-  }
-  & > svg {
-    font-size: 36px;
-    max-height: 36px;
-    max-width: 36px;
-  }
-`;
-
-const LinkWithIcon = styled.a`
-  align-items: center;
-  cursor: ${p => p.theme.cursors.active};
-  display: flex;
-  font-size: 80%;
-  font-weight: bold;
-  justify-content: center;
-  text-shadow: 1px 2px 3px rgba(0, 0, 0, 1);
-  text-transform: uppercase;
-  white-space: nowrap;
-  & > * {
-    color: #777;
-    transition: color 100ms ease;
-  }
-  & > span {
-    margin-left: 4px;
-  }
-  &:hover > * {
-    color: #EEE;
-  }
-`;
-
-const FinishContainer = styled.div`
-  padding-bottom: 25px;
-  padding-right: 35px;
-  text-align: right;
-  & > button {
-    display: inline-block;
-    text-transform: uppercase;
-  }
-
-  @media (min-width: ${p => p.theme.breakpoints.mobile}px) {
-    & > *:first-child {
-      display: none;
-    }
-  }
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    justify-items: flex-end;
-
-    padding-bottom: 12px;
-    padding-left: 8px;
-    padding-right: 8px;
-  }
-`;
-
 const PromptBody = styled.div`
   border: solid #333;
   border-width: 1px 0;
@@ -836,7 +756,7 @@ const TraitSelector = ({ crewmate, currentTraits, onUpdateTraits, traitIndex }) 
   );
 };
 
-const CrewAssignmentCreate = ({ bookSessionHook, crewmateId, ...props }) => {
+const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateId, locationId, ...props }) => {
   const { account } = useAuth();
   const history = useHistory();
 
@@ -883,7 +803,7 @@ const CrewAssignmentCreate = ({ bookSessionHook, crewmateId, ...props }) => {
     // if already pending, format from pending tx
     if (pendingCrewmate) {
       const { name, hair_color, caller_crew, crewmate, ...crewmateVars } = pendingCrewmate.vars;
-      crewmateVars.coll = pendingCrewmate.key === 'RecruitAdalian'
+      crewmateVars.coll = pendingCrewmate.key === 'RecruitAdalian' // TODO: also handle arvadians
         ? Crewmate.COLLECTION_IDS.ADALIAN
         : arvadianRecruits.find((r) => r.Crewmate.id === crewmateVars.Crewmate.id)?.Crewmate?.coll;
       crewmateVars.hairColor = hair_color;
@@ -916,22 +836,23 @@ const CrewAssignmentCreate = ({ bookSessionHook, crewmateId, ...props }) => {
       }
     };
 
-    if (c.id === 0) {
-      console.log('OVERRIDING ID');
+    if (c.id === 0) { // TODO: remove this
+      console.warn('OVERRIDING ID -- should not need to do this');
       c.id = adalianRecruits?.[0]?.id || 0;
     }
 
-    // always force control to current crew
+    // force control to the specified crew
+    // TODO: should we validate this?
     c.Control = {
       controller: {
-        id: crew?.id || 0,
+        id: crewId,
         label: Entity.IDS.CREW,
       }
     }
 
     // initialize things if not set
     if (!c.Crewmate.coll) {
-      console.warn('This should not happen');
+      console.warn('OVERRIDING COLL -- This should not happen');
       c.Crewmate.coll = bookSession.bookId === bookIds.ADALIAN_RECRUITMENT ? Crewmate.COLLECTION_IDS.ADALIAN : Crewmate.COLLECTION_IDS.ARVAD_CITIZEN;
     }
     if (!c.Crewmate.class) {
@@ -964,10 +885,20 @@ const CrewAssignmentCreate = ({ bookSessionHook, crewmateId, ...props }) => {
       c._canRerollAppearance = true;
     }
 
+    // if crew is 0, use location; else, use crew location
+    if (crewId === 0) {
+      c.Location = { id: locationId, label: Entity.IDS.BUILDING };
+    } else if (crew?._location) {
+      c.Location = { id: crew._location.buildingId, label: Entity.IDS.BUILDING };
+    }
+
     return c;
   }, [
     appearanceOptions,
     appearanceSelection,
+    crewId,
+    crew?._location,
+    locationId,
     name,
     pendingCrewmate,
     selectedClass,
@@ -1086,8 +1017,8 @@ const CrewAssignmentCreate = ({ bookSessionHook, crewmateId, ...props }) => {
   }, [crewmate, purchaseAndOrInitializeCrew]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBack = useCallback(() => {
-    history.push(`/recruit/${crewmateId}/`);
-  }, []);
+    history.push(backLocation);
+  }, [backLocation]);
 
   // show "complete" page (instead of "create") for non-recruitment assignments
   useEffect(() => {
@@ -1140,7 +1071,357 @@ const CrewAssignmentCreate = ({ bookSessionHook, crewmateId, ...props }) => {
     }), {});
   }, []);
 
-  const loading = !crewmate;
+  const recruitTally = useMemo(() => {
+    return (adalianRecruits?.length || 0) + (arvadianRecruits?.length || 0);
+  }, [adalianRecruits, arvadianRecruits])
+
+  return (
+    <>
+      <ImageryContainer src={storySession.completionImage || storySession.image}>
+        <div />
+        <MainContent>
+          {!finalized && (
+            <>
+              <CenterColumn>
+                <CardWrapper>
+                  <CardContainer>
+                    <div>
+                      <CrewCard
+                        crewmate={crewmate}
+                        fontSize="25px"
+                        hideCollectionInHeader
+                        hideFooter
+                        hideIfNoName
+                        hideMask
+                        noWrapName={finalized}
+                        showClassInHeader={finalized} />
+                    </div>
+                  </CardContainer>
+                </CardWrapper>
+
+                {!pendingCrewmate && (
+                  <>
+                    <NameSection>
+                      {crewmate._canRename && (
+                        <>
+                          <label>Crewmate Name</label>
+                          {/* TODO: implement naming rules from sdk */}
+                          <TextInput
+                            disabled={finalizing || !crewmate._canRename}
+                            initialValue={name}
+                            maxlength={31}
+                            onChange={handleNameChange}
+                            pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                            placeholder="Enter Name" />
+                        </>
+                      )}
+
+                      <div style={{ flex: 1 }} />
+
+                      {crewmate._canRerollAppearance && (
+                        <RerollContainer>
+                          <RandomizeControls
+                            onClick={rollBackAppearance}
+                            disabled={finalizing || appearanceSelection === 0}
+                            style={{ opacity: appearanceOptions.length > 1 ? 1 : 0 }}>
+                            <UndoIcon />
+                          </RandomizeControls>
+
+                          <RandomizeButton
+                            disabled={finalizing}
+                            lessTransparent
+                            onClick={rerollAppearance}
+                            style={{ width: 275 }}
+                            subtle>
+                            Randomize Appearance
+                          </RandomizeButton>
+
+                          <RandomizeControls
+                            onClick={rollForwardAppearance}
+                            disabled={finalizing || appearanceSelection === appearanceOptions.length - 1}
+                            style={{ opacity: appearanceOptions.length > 1 ? 1 : 0 }}>
+                            <RedoIcon />
+                          </RandomizeControls>
+                        </RerollContainer>
+                      )}
+
+                      
+                      <RerollContainer>
+                        {traitsLocked
+                          ? (
+                            <RandomizeButton
+                              disabled={finalizing}
+                              lessTransparent
+                              onClick={() => setTraitsLocked(false)}
+                              style={{ width: 275 }}
+                              subtle>
+                              Unlock Traits
+                            </RandomizeButton>
+                          )
+                          : (
+                            <>
+                              <RandomizeButton
+                                disabled={finalizing}
+                                lessTransparent
+                                onClick={rerollTraits}
+                                style={{ width: 275 }}
+                                subtle>
+                                Randomize Traits
+                              </RandomizeButton>
+                            </>
+                          )
+                        }
+                      </RerollContainer>
+                      
+                      {/* TODO: _canRerollTraits, _canUnlockTraits */}
+
+                    </NameSection>
+                  </>
+                )}
+              </CenterColumn>
+
+              <Traits>
+                <TraitRow big>
+                  <Trait side="left">
+                    <div>
+                      <CollectionImage coll={crewmate.Crewmate.coll} />
+                    </div>
+                    <article>
+                      <h4>Collection</h4>
+                      <div>{Crewmate.getCollection(crewmate.Crewmate.coll)?.name}</div>
+                    </article>
+                    <TipHolder>
+                      <TriangleTip strokeWidth="1" rotate="90" />
+                      <TipIcon side="left">
+                        <UnclickableIcon><LockedIcon /></UnclickableIcon>
+                      </TipIcon>
+                    </TipHolder>
+                  </Trait>
+
+                  <TraitSpacer />
+
+                  <PopperWrapper>
+                    {(refEl, setRefEl) => (
+                      <>
+                        <Trait
+                          ref={animationComplete ? setRefEl : noop}
+                          onClick={(traitsLocked || !crewmate._canReclass) ? noop : () => setToggling('class')}
+                          onMouseEnter={() => setHovered('class')}
+                          onMouseLeave={() => setHovered()}
+                          side="right"
+                          isClickable={!traitsLocked && crewmate._canReclass}
+                          isEmpty={!crewmate.Crewmate.class}>
+                          <div>
+                            <CrewClassIcon crewClass={crewmate.Crewmate.class} />
+                          </div>
+                          <article>
+                            <h4>{crewmate.Crewmate.class ? 'Class' : 'Select Class'}</h4>
+                            <div>{classObjects[crewmate.Crewmate.class]?.name}</div>
+                          </article>
+                          <TipHolder>
+                            <TriangleTip strokeWidth="1" rotate="-90" />
+                            <TipIcon side="right">
+                              <ClickableIcon><RightArrowIcon /></ClickableIcon>
+                              <UnclickableIcon><LockedIcon /></UnclickableIcon>
+                            </TipIcon>
+                          </TipHolder>
+                        </Trait>
+
+                        <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered === 'class' && crewmate.Crewmate.class && !toggling)}>
+                          <MouseoverInfoContent
+                            title={classObjects[crewmate.Crewmate.class]?.name}
+                            description={(
+                              <>
+                                {classObjects[crewmate.Crewmate.class]?.description}
+                                
+                                <MouseoverSubtitle>{classObjects[crewmate.Crewmate.class]?.name} Bonuses</MouseoverSubtitle>
+                                {classObjects[crewmate.Crewmate.class]?.abilities}
+                              </>
+                            )}
+                          />
+                        </MouseoverInfoPane>
+
+                        <MouseoverInfoPane
+                          referenceEl={refEl}
+                          {...mouseoverPaneProps(toggling === 'class', true)}>
+                          <ClassSelector
+                            classObjects={classObjects}
+                            crewmate={crewmate}
+                            onUpdateClass={onUpdateClass} />
+                        </MouseoverInfoPane>
+                      </>
+                    )}
+                  </PopperWrapper>
+                </TraitRow>
+
+                {Array.from(Array(Math.ceil(traitTally / 2))).map((_, i) => {
+                  return (
+                    <TraitRow key={i}>
+                      {Array.from(Array(2)).map((_, j) => {
+                        const traitIndex = 2 * i + j;
+                        const hoverKey = traitIndex;
+                        const trait = traitObjects[traitIndex];
+                        const side = j === 0 ? 'left' : 'right';
+                        return (
+                          <Fragment key={j}>
+                            <PopperWrapper>
+                              {(refEl, setRefEl) => (
+                                <>
+                                  <Trait
+                                    ref={animationComplete ? setRefEl : noop}
+                                    onClick={(traitsLocked || traitIndex > selectedTraits?.length) ? noop : () => setToggling(hoverKey)}
+                                    onMouseEnter={() => setHovered(hoverKey)}
+                                    onMouseLeave={() => setHovered()}
+                                    side={side}
+                                    type={trait?.type}
+                                    isClickable={!traitsLocked && crewmate.Crewmate.class && traitIndex <= selectedTraits?.length}
+                                    isEmpty={!trait}
+                                    isAtRisk={toggling === 'class' || toggling < traitIndex}>
+                                    <div>
+                                      <CrewTraitIcon trait={trait?.id} type={trait?.type} hideFallback opaque />
+                                    </div>
+                                    <article>
+                                      <h4>{trait?.name}</h4>
+                                      {!trait?.name && crewmate.Crewmate.class && traitIndex === selectedTraits?.length && <h4>Select Trait</h4>}
+                                      <div>{trait?.type && (trait?.type === 'impactful' ? 'Impactful' : 'Cosmetic')}</div>
+                                    </article>
+                                    <TipHolder>
+                                      <TriangleTip strokeWidth="1" rotate={side === 'left' ? 90 : -90} />
+                                      <TipIcon side={side}>
+                                        <ClickableIcon>{side === 'left' ? <LeftArrowIcon /> : <RightArrowIcon />}</ClickableIcon>
+                                        <UnclickableIcon><LockedIcon /></UnclickableIcon>
+                                        <AtRiskIcon><CloseIcon /></AtRiskIcon>
+                                      </TipIcon>
+                                    </TipHolder>
+                                  </Trait>
+
+                                  <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered === hoverKey && trait && !toggling)}>
+                                    <MouseoverInfoContent title={trait?.name} description={trait?.description} />
+                                  </MouseoverInfoPane>
+
+                                  <MouseoverInfoPane
+                                    referenceEl={refEl}
+                                    {...mouseoverPaneProps(toggling === hoverKey, true)}>
+                                    <TraitSelector
+                                      crewmate={crewmate}
+                                      currentTraits={traitObjects}
+                                      traitIndex={traitIndex}
+                                      onUpdateTraits={onUpdateTraits} />
+                                  </MouseoverInfoPane>
+                                </>
+                              )}
+                            </PopperWrapper>
+                            {side === 'left' && <TraitSpacer />}
+                          </Fragment>
+                        );
+                      })}
+
+                    </TraitRow>
+                  );
+                })}
+              </Traits>
+            </>
+          )}
+
+          {finalized && (
+            <>
+              <TitleBox>
+                <Title>Crewmate Recruited</Title>
+              </TitleBox>
+              <div>
+                <CardWrapper>
+                  <CardContainer>
+                    <div>
+                      <CrewCard
+                        crewmate={crewmate}
+                        fontSize="25px"
+                        noWrapName
+                        showClassInHeader />
+                    </div>
+                  </CardContainer>
+                </CardWrapper>
+
+                {/* 
+                <RecruitSection>
+                  {!process.env.REACT_APP_HIDE_SOCIAL && (
+                    <TwitterButton onClick={shareOnTwitter}>
+                      <span>Share on Twitter</span>
+                      <TwitterIcon />
+                    </TwitterButton>
+                  )}
+                </RecruitSection>
+                */}
+              </div>
+            </>
+          )}
+        </MainContent>
+      </ImageryContainer>
+
+      <Footer>
+        <Rule />
+        <div style={{ alignItems: 'center', display: 'flex', height: 'calc(100% - 1px)', width: '100%' }}>
+          {finalized && (
+            <>
+              <CopyReferralLink>
+                <Button subtle><LinkIcon /> <span style={{ marginLeft: 4 }}>Copy Referral Link</span></Button>
+              </CopyReferralLink>
+              
+              <div style={{ flex: 1 }} />
+              <Button subtle onClick={() => history.push('/crew')}>Go to Crew</Button>
+            </>
+          )}
+          {!finalized && (
+            <>
+              <Button disabled={!!pendingCrewmate} subtle onClick={handleBack}>Back</Button>
+              <div style={{ flex: 1 }} />
+              <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'row' }}>
+                {recruitTally > 0 && <RecruitTally>Available Recruits: <b>{recruitTally}</b></RecruitTally>}
+                <Button
+                  disabled={!!pendingCrewmate}
+                  loading={!!pendingCrewmate}
+                  subtle
+                  isTransaction
+                  onClick={confirmFinalize}>Recruit</Button>
+              </div>
+            </>
+          )}
+        </div>
+      </Footer>
+      {confirming && (
+        <ConfirmationDialog
+          title={`Confirm Character ${crewmate.id ? 'Details' : 'Minting'}`}
+          body={(
+            <PromptBody>
+              The Crewmate you are about to recruit will be minted as a new digital asset
+              {crewmate.id ? '.' : <>, which currently costs <b><Ether>{formatters.crewmatePrice(priceConstants)}</Ether></b> and helps to fund game development.</>}
+              <br/><br/>
+              {crewmate.id ? 'You' : 'Once minted, you'}{' '}will be the sole owner of the Crewmate; nobody can
+              delete them or take them from you. They will be yours to keep or trade forever. All of their
+              stats, actions, skills, and other attributes will be stored in their unique on-chain history.
+            </PromptBody>
+          )}
+          onConfirm={finalize}
+          confirmText={(
+            <>
+              {crewmate.id ? 'Confirm' : 'Purchase Crewmate'}
+              {!crewmate.id && priceConstants && (
+                <span style={{ color: 'white', flex: 1, fontSize: '90%', textAlign: 'right', marginLeft: 15 }}>
+                  {/* TODO: should this update price before "approve"? what about asteroids? */}
+                  <Ether>{formatters.crewmatePrice(priceConstants)}</Ether>
+                </span>
+              )}
+            </>
+          )}
+          onReject={() => setConfirming(false)}
+          isTransaction
+        />
+      )}
+    </>
+  );
+};
+
+const Wrapper = ({ backLocation, crewId, crewmateId, locationId }) => {
+  const bookSessionHook = useBookSession(crewId, crewmateId);
   return (
     <Details
       edgeToEdge
@@ -1149,363 +1430,21 @@ const CrewAssignmentCreate = ({ bookSessionHook, crewmateId, ...props }) => {
       contentInnerProps={{ style: { display: 'flex', flexDirection: 'column', height: '100%' } }}
       title="Crewmate Recruitment"
       width="1150px">
-      {loading && (
+      {!bookSessionHook.bookSession && (
         <div style={{ position: 'absolute', left: 'calc(50% - 30px)', top: 'calc(50% - 30px)' }}>
-          <LoadingAnimation color="white" loading />
+          <LoadingAnimation color="white" />
         </div>
       )}
-      {!loading && (
-        <>
-          <ImageryContainer src={storySession.completionImage || storySession.image}>
-            <div />
-            <MainContent>
-              {!finalized && (
-                <>
-                  <CenterColumn>
-                    <CardWrapper>
-                      <CardContainer>
-                        <div>
-                          <CrewCard
-                            crewmate={crewmate}
-                            fontSize="25px"
-                            hideCollectionInHeader
-                            hideFooter
-                            hideIfNoName
-                            hideMask
-                            noWrapName={finalized}
-                            showClassInHeader={finalized} />
-                        </div>
-                      </CardContainer>
-                    </CardWrapper>
-
-                    {!pendingCrewmate && (
-                      <>
-                        <NameSection>
-                          {crewmate._canRename && (
-                            <>
-                              <label>Crewmate Name</label>
-                              {/* TODO: implement naming rules from sdk */}
-                              <TextInput
-                                disabled={finalizing || !crewmate._canRename}
-                                initialValue={name}
-                                maxlength={31}
-                                onChange={handleNameChange}
-                                pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
-                                placeholder="Enter Name" />
-                            </>
-                          )}
-
-                          <div style={{ flex: 1 }} />
-
-                          {crewmate._canRerollAppearance && (
-                            <RerollContainer>
-                              <RandomizeControls
-                                onClick={rollBackAppearance}
-                                disabled={finalizing || appearanceSelection === 0}
-                                style={{ opacity: appearanceOptions.length > 1 ? 1 : 0 }}>
-                                <UndoIcon />
-                              </RandomizeControls>
-
-                              <RandomizeButton
-                                disabled={finalizing}
-                                lessTransparent
-                                onClick={rerollAppearance}
-                                style={{ width: 275 }}
-                                subtle>
-                                Randomize Appearance
-                              </RandomizeButton>
-
-                              <RandomizeControls
-                                onClick={rollForwardAppearance}
-                                disabled={finalizing || appearanceSelection === appearanceOptions.length - 1}
-                                style={{ opacity: appearanceOptions.length > 1 ? 1 : 0 }}>
-                                <RedoIcon />
-                              </RandomizeControls>
-                            </RerollContainer>
-                          )}
-
-                          
-                          <RerollContainer>
-                            {traitsLocked
-                              ? (
-                                <RandomizeButton
-                                  disabled={finalizing}
-                                  lessTransparent
-                                  onClick={() => setTraitsLocked(false)}
-                                  style={{ width: 275 }}
-                                  subtle>
-                                  Unlock Traits
-                                </RandomizeButton>
-                              )
-                              : (
-                                <>
-                                  <RandomizeButton
-                                    disabled={finalizing}
-                                    lessTransparent
-                                    onClick={rerollTraits}
-                                    style={{ width: 275 }}
-                                    subtle>
-                                    Randomize Traits
-                                  </RandomizeButton>
-                                </>
-                              )
-                            }
-                          </RerollContainer>
-                          
-                          {/* TODO: _canRerollTraits, _canUnlockTraits */}
-
-                        </NameSection>
-                      </>
-                    )}
-                  </CenterColumn>
-
-                  <Traits>
-                    <TraitRow big>
-                      <Trait side="left">
-                        <div>
-                          <CollectionImage coll={crewmate.Crewmate.coll} />
-                        </div>
-                        <article>
-                          <h4>Collection</h4>
-                          <div>{Crewmate.getCollection(crewmate.Crewmate.coll)?.name}</div>
-                        </article>
-                        <TipHolder>
-                          <TriangleTip strokeWidth="1" rotate="90" />
-                          <TipIcon side="left">
-                            <UnclickableIcon><LockedIcon /></UnclickableIcon>
-                          </TipIcon>
-                        </TipHolder>
-                      </Trait>
-
-                      <TraitSpacer />
-
-                      <PopperWrapper>
-                        {(refEl, setRefEl) => (
-                          <>
-                            <Trait
-                              ref={animationComplete ? setRefEl : noop}
-                              onClick={(traitsLocked || !crewmate._canReclass) ? noop : () => setToggling('class')}
-                              onMouseEnter={() => setHovered('class')}
-                              onMouseLeave={() => setHovered()}
-                              side="right"
-                              isClickable={!traitsLocked && crewmate._canReclass}
-                              isEmpty={!crewmate.Crewmate.class}>
-                              <div>
-                                <CrewClassIcon crewClass={crewmate.Crewmate.class} />
-                              </div>
-                              <article>
-                                <h4>{crewmate.Crewmate.class ? 'Class' : 'Select Class'}</h4>
-                                <div>{classObjects[crewmate.Crewmate.class]?.name}</div>
-                              </article>
-                              <TipHolder>
-                                <TriangleTip strokeWidth="1" rotate="-90" />
-                                <TipIcon side="right">
-                                  <ClickableIcon><RightArrowIcon /></ClickableIcon>
-                                  <UnclickableIcon><LockedIcon /></UnclickableIcon>
-                                </TipIcon>
-                              </TipHolder>
-                            </Trait>
-
-                            <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered === 'class' && crewmate.Crewmate.class && !toggling)}>
-                              <MouseoverInfoContent
-                                title={classObjects[crewmate.Crewmate.class]?.name}
-                                description={(
-                                  <>
-                                    {classObjects[crewmate.Crewmate.class]?.description}
-                                    
-                                    <MouseoverSubtitle>{classObjects[crewmate.Crewmate.class]?.name} Bonuses</MouseoverSubtitle>
-                                    {classObjects[crewmate.Crewmate.class]?.abilities}
-                                  </>
-                                )}
-                              />
-                            </MouseoverInfoPane>
-
-                            <MouseoverInfoPane
-                              referenceEl={refEl}
-                              {...mouseoverPaneProps(toggling === 'class', true)}>
-                              <ClassSelector
-                                classObjects={classObjects}
-                                crewmate={crewmate}
-                                onUpdateClass={onUpdateClass} />
-                            </MouseoverInfoPane>
-                          </>
-                        )}
-                      </PopperWrapper>
-                    </TraitRow>
-
-                    {Array.from(Array(Math.ceil(traitTally / 2))).map((_, i) => {
-                      return (
-                        <TraitRow key={i}>
-                          {Array.from(Array(2)).map((_, j) => {
-                            const traitIndex = 2 * i + j;
-                            const hoverKey = traitIndex;
-                            const trait = traitObjects[traitIndex];
-                            const side = j === 0 ? 'left' : 'right';
-                            return (
-                              <Fragment key={j}>
-                                <PopperWrapper>
-                                  {(refEl, setRefEl) => (
-                                    <>
-                                      <Trait
-                                        ref={animationComplete ? setRefEl : noop}
-                                        onClick={(traitsLocked || traitIndex > selectedTraits?.length) ? noop : () => setToggling(hoverKey)}
-                                        onMouseEnter={() => setHovered(hoverKey)}
-                                        onMouseLeave={() => setHovered()}
-                                        side={side}
-                                        type={trait?.type}
-                                        isClickable={!traitsLocked && crewmate.Crewmate.class && traitIndex <= selectedTraits?.length}
-                                        isEmpty={!trait}
-                                        isAtRisk={toggling === 'class' || toggling < traitIndex}>
-                                        <div>
-                                          <CrewTraitIcon trait={trait?.id} type={trait?.type} hideFallback opaque />
-                                        </div>
-                                        <article>
-                                          <h4>{trait?.name}</h4>
-                                          {!trait?.name && crewmate.Crewmate.class && traitIndex === selectedTraits?.length && <h4>Select Trait</h4>}
-                                          <div>{trait?.type && (trait?.type === 'impactful' ? 'Impactful' : 'Cosmetic')}</div>
-                                        </article>
-                                        <TipHolder>
-                                          <TriangleTip strokeWidth="1" rotate={side === 'left' ? 90 : -90} />
-                                          <TipIcon side={side}>
-                                            <ClickableIcon>{side === 'left' ? <LeftArrowIcon /> : <RightArrowIcon />}</ClickableIcon>
-                                            <UnclickableIcon><LockedIcon /></UnclickableIcon>
-                                            <AtRiskIcon><CloseIcon /></AtRiskIcon>
-                                          </TipIcon>
-                                        </TipHolder>
-                                      </Trait>
-
-                                      <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered === hoverKey && trait && !toggling)}>
-                                        <MouseoverInfoContent title={trait?.name} description={trait?.description} />
-                                      </MouseoverInfoPane>
-
-                                      <MouseoverInfoPane
-                                        referenceEl={refEl}
-                                        {...mouseoverPaneProps(toggling === hoverKey, true)}>
-                                        <TraitSelector
-                                          crewmate={crewmate}
-                                          currentTraits={traitObjects}
-                                          traitIndex={traitIndex}
-                                          onUpdateTraits={onUpdateTraits} />
-                                      </MouseoverInfoPane>
-                                    </>
-                                  )}
-                                </PopperWrapper>
-                                {side === 'left' && <TraitSpacer />}
-                              </Fragment>
-                            );
-                          })}
-
-                        </TraitRow>
-                      );
-                    })}
-                  </Traits>
-                </>
-              )}
-
-              {finalized && (
-                <>
-                  <TitleBox>
-                    <Title>Crewmate Recruited</Title>
-                  </TitleBox>
-                  <div>
-                    <CardWrapper>
-                      <CardContainer>
-                        <div>
-                          <CrewCard
-                            crewmate={crewmate}
-                            fontSize="25px"
-                            noWrapName
-                            showClassInHeader />
-                        </div>
-                      </CardContainer>
-                    </CardWrapper>
-
-                    {/* 
-                    <RecruitSection>
-                      {!process.env.REACT_APP_HIDE_SOCIAL && (
-                        <TwitterButton onClick={shareOnTwitter}>
-                          <span>Share on Twitter</span>
-                          <TwitterIcon />
-                        </TwitterButton>
-                      )}
-                    </RecruitSection>
-                    */}
-                  </div>
-                </>
-              )}
-            </MainContent>
-          </ImageryContainer>
-
-          <Footer>
-            <Rule />
-            <div style={{ alignItems: 'center', display: 'flex', height: 'calc(100% - 1px)', width: '100%' }}>
-              {finalized && (
-                <>
-                  <CopyReferralLink>
-                    <Button subtle><LinkIcon /> <span style={{ marginLeft: 4 }}>Copy Referral Link</span></Button>
-                  </CopyReferralLink>
-                  
-                  <div style={{ flex: 1 }} />
-                  <Button subtle onClick={() => history.push('/crew')}>Go to Crew</Button>
-                </>
-              )}
-              {!finalized && (
-                <>
-                  <Button disabled={!!pendingCrewmate} subtle onClick={handleBack}>Back</Button>
-                  <div style={{ flex: 1 }} />
-                  <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'row' }}>
-                    {!pendingCrewmate && <RecruitTally>Available Recruits: <b>1</b></RecruitTally>}
-                    <Button
-                      disabled={!!pendingCrewmate}
-                      loading={!!pendingCrewmate}
-                      subtle
-                      isTransaction
-                      onClick={confirmFinalize}>Recruit</Button>
-                  </div>
-                </>
-              )}
-            </div>
-          </Footer>
-          {confirming && (
-            <ConfirmationDialog
-              title={`Confirm Character ${crewmate.id ? 'Details' : 'Minting'}`}
-              body={(
-                <PromptBody>
-                  The Crewmate you are about to recruit will be minted as a new digital asset
-                  {crewmate.id ? '.' : <>, which currently costs <b><Ether>{formatters.crewmatePrice(priceConstants)}</Ether></b> and helps to fund game development.</>}
-                  <br/><br/>
-                  {crewmate.id ? 'You' : 'Once minted, you'}{' '}will be the sole owner of the Crewmate; nobody can
-                  delete them or take them from you. They will be yours to keep or trade forever. All of their
-                  stats, actions, skills, and other attributes will be stored in their unique on-chain history.
-                </PromptBody>
-              )}
-              onConfirm={finalize}
-              confirmText={(
-                <>
-                  {crewmate.id ? 'Confirm' : 'Purchase Crewmate'}
-                  {!crewmate.id && priceConstants && (
-                    <span style={{ color: 'white', flex: 1, fontSize: '90%', textAlign: 'right', marginLeft: 15 }}>
-                      {/* TODO: should this update price before "approve"? what about asteroids? */}
-                      <Ether>{formatters.crewmatePrice(priceConstants)}</Ether>
-                    </span>
-                  )}
-                </>
-              )}
-              onReject={() => setConfirming(false)}
-              isTransaction
-            />
-          )}
-        </>
+      {bookSessionHook.bookSession && (
+        <CrewAssignmentCreate
+          backLocation={backLocation}
+          crewId={crewId}
+          crewmateId={crewmateId}
+          locationId={locationId}
+          bookSessionHook={bookSessionHook} />
       )}
     </Details>
   );
-};
-
-const Wrapper = (props) => {
-  const { crewmateId } = useParams();
-  const bookSessionHook = useBookSession(crewmateId);
-  if (!bookSessionHook.bookSession) return null;  // TODO: loading would be better
-  return <CrewAssignmentCreate {...props} crewmateId={crewmateId} bookSessionHook={bookSessionHook} />;
 }
 
 export default Wrapper;

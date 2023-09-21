@@ -451,6 +451,8 @@ const reducer = (state, action) => {
   }
 }
 
+// TODO: this file is deprecated -- remove
+
 const OwnedCrew = () => {
   const { token } = useAuth();
   const { crew: selectedCrew, crews: allCrews, crewmateMap, loading: crewIsLoading } = useCrewContext();

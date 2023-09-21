@@ -35,7 +35,7 @@ const useCrewManager = () => {
           hair: appearance.hair,
           hair_color: appearance.hairColor,
           clothes: appearance.clothes,
-          station: { id: 1, label: Entity.IDS.BUILDING }, // TODO: should not be hardcoded
+          station: crewmate.Location,
           caller_crew: crewmate.Control.controller,
           name: crewmate.Name.name
         });

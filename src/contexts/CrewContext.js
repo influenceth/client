@@ -5,6 +5,7 @@ import { Crewmate } from '@influenceth/sdk';
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
+import useCrewLocation from '~/hooks/useCrewLocation';
 
 const CrewContext = createContext();
 
@@ -46,11 +47,8 @@ export function CrewProvider({ children }) {
     ];
   }, [allRecruits]);
 
-  const { data: selectedCrewLocation, isLoading: crewLocationLoading } = useQuery(
-    [ 'crewLocation', selectedCrewId ],
-    () => api.getCrewLocation(selectedCrewId),
-    { enabled: !!selectedCrewId }
-  );
+  const { data: selectedCrewLocation, isLoading: crewLocationLoading } = useCrewLocation(selectedCrewId);
+  console.log('selectedCrewLocation', selectedCrewLocation);
 
   const crewmateMap = useMemo(() => {
     if (!crewsLoading && !crewmatesLoading) {

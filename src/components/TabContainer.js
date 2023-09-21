@@ -67,6 +67,7 @@ const TabIcon = styled.div`
 `;
 const TabLabel = styled.div`
   position: relative;
+  white-space: nowrap;
   ${p => p.css || ''}
   
   &:after {

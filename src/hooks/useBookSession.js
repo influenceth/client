@@ -15,10 +15,10 @@ export const bookIds = {
 const anyOf = (mustHave, tests) => !!mustHave.find((x) => tests.includes(x));
 const allOf = (mustHave, tests) => !mustHave.find((x) => !tests.includes(x));
 
-const useBookSession = (rawCrewmateId) => {
-  const { crew, adalianRecruits, arvadianRecruits, loading: crewIsLoading } = useCrewContext();
+const useBookSession = (rawCrewId, rawCrewmateId) => {
+  const crewId = Number(rawCrewId);
   const crewmateId = Number(rawCrewmateId);
-  const crewId = crew?.id || 0;
+  const { adalianRecruits, arvadianRecruits, loading: crewIsLoading } = useCrewContext();
 
   const [bookId, crewmate] = useMemo(() => {
     const adalianRecruit = adalianRecruits.find((a) => a.id === crewmateId);

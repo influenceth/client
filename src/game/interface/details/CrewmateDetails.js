@@ -28,7 +28,7 @@ import useAuth from '~/hooks/useAuth';
 // import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewmate from '~/hooks/useCrewmate';
 import useNameAvailability from '~/hooks/useNameAvailability';
-import useNameCrewmate from '~/hooks/useNameCrewmate';
+import useChangeName from '~/hooks/useChangeName';
 import useStore from '~/hooks/useStore';
 import { boolAttr } from '~/lib/utils';
 
@@ -379,13 +379,13 @@ const CrewmateDetails = () => {
   // const { data: assignmentData } = useCrewAssignments();
   const { data: crewmate } = useCrewmate(i);
   const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
-  const { nameCrewmate, naming } = useNameCrewmate(Number(i));
+  const { changeName, changingName } = useChangeName({ id: Number(i), label: Entity.IDS.CREWMATE });
   const playSound = useStore(s => s.dispatchSoundRequested);
 
   const [ newName, setNewName ] = useState('');
   const [ selectedTrait, setSelectedTrait ] = useState();
 
-  const traits = useMemo(() => Crewmate.getCombinedTraits(crewmate.Crewmate), [crewmate]);
+  const traits = useMemo(() => Crewmate.getCombinedTraits(crewmate?.Crewmate || {}), [crewmate]);
 
   const startDate = useMemo(() => {
     if (crewmate?.events?.length > 0) {
@@ -419,7 +419,7 @@ const CrewmateDetails = () => {
 
   const attemptNameCrewmate = useCallback(async (name) => {
     if (await isNameValid(name)) {
-      nameCrewmate(name);
+      changeName(name);
     }
   }, [isNameValid]);
 
@@ -452,23 +452,24 @@ const CrewmateDetails = () => {
                     title={<><EditIcon /><span>Set Name</span></>}
                     data-tip="Name crewmate"
                     data-for="global"
-                    loading={boolAttr(naming)}>
+                    loading={boolAttr(changingName)}>
                     <Text>
                       A crewmate can only be named once!
                       Names must be unique, and can only include letters, numbers, and single spaces.
                     </Text>
                     <NameForm>
+                      {/* TODO: ecs refactor -- use Name.getTypeRegex, etc below */}
                       <TextInput
                         initialValue=""
                         maxlength={31}
                         pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
-                        disabled={boolAttr(naming)}
+                        disabled={boolAttr(changingName)}
                         resetOnChange={i}
                         onChange={(v) => setNewName(v)} />
                       <IconButton
                         data-tip="Submit"
                         data-for="global"
-                        disabled={boolAttr(naming)}
+                        disabled={boolAttr(changingName)}
                         onClick={() => attemptNameCrewmate(newName)}>
                         <CheckCircleIcon />
                       </IconButton>

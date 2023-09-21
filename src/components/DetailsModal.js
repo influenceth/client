@@ -88,6 +88,12 @@ const Header = styled.h1`
   margin: 0;
   z-index: 1;
 
+  & b {
+    color: ${p => p.theme.colors.main};
+    font-weight: normal;
+    margin-left: 10px;
+  }
+
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding-left: 20px;
   }

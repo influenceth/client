@@ -77,9 +77,7 @@ const CardOuter = styled.div`
   }
 `;
 
-const SelectUninitializedCrewmateDialog = () => {
-  const history = useHistory();
-  
+const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
   const { adalianRecruits, arvadianRecruits } = useCrewContext();
 
   const [selected, setSelected] = useState();
@@ -87,7 +85,7 @@ const SelectUninitializedCrewmateDialog = () => {
   return (
     <ChoicesDialog
       dialogTitle="Crewmate Creation"
-      onCloseDestination={''/* TODO: */}
+      onCloseDestination="/crew"
       coverImage={coverImage}
       coverImageCenter="35% 75%"
       contentOverride={(
@@ -113,12 +111,12 @@ const SelectUninitializedCrewmateDialog = () => {
       leftButton={{
         // TODO: should we put a badge if they have adalianRecruits available?
         label: 'Create a New Adalian',
-        onClick: () => { history.push(`/recruit/${adalianRecruits?.[0]?.id || 0}/`); },
+        onClick: () => onSelect(adalianRecruits?.[0]?.id || 0),
         props: { style: { width: cardWidth } }
       }}
       rightButton={{
         label: 'Next',
-        onClick: () => { if (selected) history.push(`/recruit/${selected}/`); },
+        onClick: () => selected ? onSelect(selected) : null,
         props: { disabled: !selected }
       }}
       title="Arvad Crewmates"

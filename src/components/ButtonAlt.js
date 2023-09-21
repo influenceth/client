@@ -172,6 +172,7 @@ const loadingCss = css`
 const sizes = {
   icon: { font: 16, height: 26, width: 34, line: 8, borderWidth: 1, isIconOnly: true },
   bigicon: { font: 16, height: 32, width: 40, line: 10, borderWidth: 1, isIconOnly: true },
+  hugeicon: { font: 24, height: 40, width: 48, line: 10, borderWidth: 1, isIconOnly: true },
   wideicon: { font: 25, height: 32, width: 85, line: 10, borderWidth: 1, isIconOnly: true },
   legacy: { font: 14, height: 18, width: 100, line: 10, borderWidth: 1, textTransform: 'none', background: 'transparent' },
   small: { font: 14, height: 26, width: 100, line: 10, borderWidth: 1 },

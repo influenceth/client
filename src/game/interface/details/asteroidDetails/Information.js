@@ -6,8 +6,8 @@ import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import useWebWorker from '~/hooks/useWebWorker';
 import useBuyAsteroid from '~/hooks/useBuyAsteroid';
+import useChangeName from '~/hooks/useChangeName';
 import useCreateReferral from '~/hooks/useCreateReferral';
-import useNameAsteroid from '~/hooks/useNameAsteroid';
 import constants from '~/lib/constants';
 import formatters from '~/lib/formatters';
 import exportGLTF from '~/lib/graphics/exportGLTF';
@@ -276,7 +276,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   const isNameValid = useNameAvailability(Entity.IDS.ASTEROID);
   const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.id));
   const { controlAsteroid, takingControl } = useControlAsteroid(Number(asteroid.id));
-  const { nameAsteroid, naming } = useNameAsteroid(Number(asteroid.id));
+  const { changeName, changingName } = useChangeName({ id: Number(asteroid.id), label: Entity.IDS.ASTEROID });
   const { data: priceConstants } = usePriceConstants();
   const webWorkerPool = useWebWorker();
 
@@ -305,9 +305,9 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
 
   const attemptUpdateAsteroidName = useCallback(async () => {
     if (await isNameValid(newName)) {
-      nameAsteroid(newName);
+      changeName(newName);
     }
-  }, [nameAsteroid, isNameValid, newName]);
+  }, [changeName, isNameValid, newName]);
 
   return (
     <Wrapper>
@@ -411,11 +411,12 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                     }}
                     onClose={() => setOpenNameChangeForm(false)}
                     title={<><EditIcon /><span>Change Name</span></>}
-                    loading={boolAttr(naming)}>
+                    loading={boolAttr(changingName)}>
                     <Text>Names must be unique, and can only include letters, numbers, and single spaces.</Text>
                     <NameForm>
+                      {/* TODO: ecs refactor -- use Name.getTypeRegex, etc below */}
                       <TextInput
-                        disabled={boolAttr(naming)}
+                        disabled={boolAttr(changingName)}
                         initialValue=""
                         maxlength={31}
                         pattern="^(([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+){1,31}$"
@@ -423,16 +424,16 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                       <IconButton
                         data-tip="Submit"
                         data-for="global"
-                        disabled={boolAttr(naming)}
+                        disabled={boolAttr(changingName)}
                         onClick={attemptUpdateAsteroidName}>
                         <CheckCircleIcon />
                       </IconButton>
                     </NameForm>
                   </StaticForm>
                   <Button
-                    disabled={boolAttr(naming)}
+                    disabled={boolAttr(changingName)}
                     isTransaction
-                    loading={boolAttr(naming)}
+                    loading={boolAttr(changingName)}
                     onClick={() => setOpenNameChangeForm(true)}>
                     Re-Name
                   </Button>

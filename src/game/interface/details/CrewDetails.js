@@ -1,35 +1,42 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { Address, Crewmate, Entity, Time } from '@influenceth/sdk';
+import { Address, Building, Crewmate, Entity, Name, Time } from '@influenceth/sdk';
 import { FaBookOpen as BioIcon } from 'react-icons/fa';
 import { RiBarChart2Fill as StatsIcon } from 'react-icons/ri';
+import LoadingAnimation from 'react-spinners/PuffLoader';
 
-import ConstructionImage from '~/assets/images/modal_headers/Construction.png';
-import Button from '~/components/Button';
+import CoverImageSrc from '~/assets/images/modal_headers/OwnedCrew.png';
+import Button from '~/components/ButtonAlt';
 import CrewCard from '~/components/CrewCard';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import DataReadout from '~/components/DataReadout';
-import Details from '~/components/DetailsV2';
+import Details from '~/components/DetailsModal';
 import Form from '~/components/Form';
 import IconButton from '~/components/IconButton';
 import {
   CheckCircleIcon,
+  CheckIcon,
   ClaimIcon,
+  CloseIcon,
   EditIcon,
+  FoodIcon,
   HexagonIcon,
+  LocationIcon,
+  MyAssetIcon,
+  PlusIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
 import LogEntry from '~/components/LogEntry';
 import MarketplaceLink from '~/components/MarketplaceLink';
 import TabContainer from '~/components/TabContainer';
 import Text from '~/components/Text';
-import TextInput from '~/components/TextInput';
 import useAuth from '~/hooks/useAuth';
 // import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewmate from '~/hooks/useCrewmate';
+import useCrewLocation from '~/hooks/useCrewLocation';
 import useNameAvailability from '~/hooks/useNameAvailability';
-import useNameCrew from '~/hooks/useNameCrew';
+import useChangeName from '~/hooks/useChangeName';
 import useStore from '~/hooks/useStore';
 import { boolAttr } from '~/lib/utils';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -37,6 +44,17 @@ import ChoicesDialog from '~/components/ChoicesDialog';
 import { getCloudfrontUrl } from '~/lib/assetUtils';
 import SelectHabitatDialog from '~/components/SelectHabitatDialog';
 import SelectUninitializedCrewmateDialog from '~/components/SelectUninitializedCrewmateDialog';
+import TextInput from '~/components/TextInput';
+import formatters from '~/lib/formatters';
+import useCrew from '~/hooks/useCrew';
+import CrewCardFramed from '~/components/CrewCardFramed';
+import useCrewmates from '~/hooks/useCrewmates';
+import theme from '~/theme';
+import useAsteroid from '~/hooks/useAsteroid';
+import useBuilding from '~/hooks/useBuilding';
+import useShip from '~/hooks/useShip';
+import { useLotLink } from '~/components/LotLink';
+import { useShipLink } from '~/components/ShipLink';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -140,10 +158,9 @@ const Management = styled.div`
 
 const tabContainerCss = css`
   color: white;
-  flex: 0 0 330px;
   font-size: 15px;
+  flex: 1;
   @media (min-height: 950px) {
-    flex-basis: 45%;
     max-height: 500px;
   }
   @media (max-width: ${breakpoint}px) {
@@ -156,173 +173,11 @@ const tabContainerCss = css`
   }
 `;
 
-const TraitPane = styled.div`
-  display: flex;
-  flex-direction: row;
-  height: 100%;
-  padding: 8px 0 0;
-  width: 100%;
-  @media (max-width: ${breakpoint}px) {
-    flex-direction: column-reverse;
-    padding: 0;
-  }
-`;
-const traitSize = 128;
-const AllTraits = styled.div`
-  display: grid;
-  flex: 2 0 ${(traitSize + 5) * 3}px;
-  grid-template-columns: repeat(auto-fill, minmax(${traitSize}px, 1fr));
-  grid-template-rows: ${traitSize}px;
-  overflow: auto;
-  scrollbar-width: thin;
-  @media (max-width: ${breakpoint}px) {
-    display: flex;
-    flex: none;
-    flex-direction: row;
-  }
-`;
-const Trait = styled.div`
-  align-items: center;
-  ${p => p.selected && 'background: linear-gradient(to bottom, transparent 0%, rgb(255, 255, 255, 0.175) 100%);'}
-  cursor: ${p => p.theme.cursors.active};
-  display: flex;
-  flex: 1 0 ${traitSize}px;
-  flex-direction: column;
-  font-size: ${traitSize - 32 - 10}px;
-  height: ${traitSize}px;
-  justify-content: center;
-  padding: 5px;
-  line-height: ${0.74 * (traitSize - 32 - 10)}px;
-
-  & > h6 {
-    color: ${p => p.selected ? 'white' : p.theme.colors.secondaryText};
-    font-size: 12px;
-    line-height: 32px;
-    margin: 0;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &:hover {
-    & > h6 {
-      color: white;
-    }
-  }
-
-  @media (max-width: ${breakpoint}px) {
-    ${p => p.selected && 'background: linear-gradient(to top, transparent 0%, rgb(255, 255, 255, 0.175) 100%);'}
-    border-top: 1px solid ${borderColor};
-  }
-`;
-
-const TraitSelected = styled.div`
-  align-items: center;
-  display: flex;
-  flex: 1 0 225px;
-  flex-direction: column;
-  padding-left: 10px;
-`;
-
-const NoTraitsMessage = styled.div`
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 24px;
-  width: 100%;
-  & > div {
-    opacity: 0.5;
-  }
-  & > div:first-child {
-    font-size: 80px;
-  }
-  & > div:nth-child(2) {
-    font-size: 14px;
-    line-height: 32px;
-  }
-  & > button {
-    font-size: 85%;
-    font-weight: bold;
-    margin-top: 24px;
-    padding-left: 40px;
-    padding-right: 40px;
-    opacity: 1;
-    text-transform: uppercase;
-    white-space: nowrap;
-    width: auto;
-  }
-  
-  @media (max-width: ${breakpoint}px) {
-    border-bottom: 2px solid #18313a;
-  }
-`;
-
-const Display = styled.div`
-  align-items: center;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 175px;
-  overflow: hidden;
-  padding: 0 0 10px;
-  & > div {
-    font-size: 100px;
-    line-height: 74px;
-  }
-  & > h6 {
-    font-size: 16px;
-    margin: 0;
-  }
-  @media (max-width: ${breakpoint}px) {
-    min-height: 0;
-    padding-top: 20px;
-  }
-`;
-const Description = styled.div`
-  align-items: center;
-  border-bottom: 1px solid ${borderColor};
-  border-top: 1px solid ${borderColor};
-  color: ${p => p.theme.colors.mainText};
-  display: flex;
-  font-size: 12px;
-  height: 85px;
-  justify-content: center;
-  padding: 5px;
-  text-align: center;
-  width: 100%;
-  & > div {
-    max-height: 75px;
-    max-width: 500px;
-    overflow: auto;
-    padding: 1px 0;
-  }
-  @media (max-width: ${breakpoint}px) {
-    border: none;
-  }
-`;
-
-const NameForm = styled.div`
-  display: flex;
-  margin-top: 15px;
-  max-width: 100%;
-
-  & input {
-    margin-right: 10px;
-    min-width: 0;
-  }
-  & button {
-    margin-right: 0;
-  }
-`;
-
 const History = styled.div`
   display: flex;
   flex: 1;
   flex-direction: column;
-  margin-top: 25px;
+  margin-top: 10px;
   overflow: hidden;
   padding: 0 15px;
 `;
@@ -376,81 +231,528 @@ const EmptyLogEntry = styled.li`
   text-align: center;
 `;
 
-const CrewDetails = () => {
-  const { i } = useParams();
-  const { crew } = useCrewContext();
+const foldOffset = 28;
+const belowFoldMin = 256;
 
-  const crewId = i || crew?.id;
+const CoverImage = styled.div`
+  height: calc(80% + ${foldOffset}px);
+  left: 0;
+  max-height: calc(100% - ${foldOffset}px - ${belowFoldMin}px);
+  position: absolute;
+  top: 0;
+  width: 100%;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    height: 33%;
+    max-height: none;
+  }
+
+  &:before {
+    background-color: #111;
+    background-image: url(${p => p.src});
+    background-repeat: no-repeat;
+    background-position: ${p => p.center || 'center center'};
+    background-size: cover;
+    content: '';
+    display: block;
+    height: 100%;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 75%, transparent 100%);
+    transition:
+      background-position 750ms ease-out,
+      opacity 750ms ease-out;
+  }
+`;
+
+const MainContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  margin-top: 60px;
+  padding: 25px 35px;
+  position: relative;
+  z-index: 1;
+`;
+
+const AboveFold = styled.div`
+  align-items: stretch;
+  display: flex;
+  flex-direction: row;
+  min-height: 300px;
+`;
+const CrewDetailsContainer = styled.div`
+  flex: 1;
+`;
+const ManagementContainer = styled.div`
+  border-left: 1px solid #363636;
+  flex: 0 0 280px;
+  margin-left: 30px;
+  padding-left: 30px;
+  & > div {
+    margin-top: 20px;
+    &:first-child {
+      margin-top: 0;
+    }
+
+    & > button {
+      margin-bottom: 8px;
+      width: 225px;
+    }
+  }
+`;
+const MyCrewStatement = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.main};
+  display: flex;
+  font-weight: bold;
+  & > svg {
+    font-size: 24px;
+    margin-right: 10px;
+  }
+`;
+const Stat = styled.div`
+  color: white;
+  &:before {
+    content: "${p => p.label}:";
+    display: block;
+    opacity: 0.7;
+  }
+`;
 
 
+const NameWrapper = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  & > button {
+    font-size: 24px;
+    margin-right: 15px;
+  }
+  & > h4 {
+    font-size: 30px;
+    font-weight: normal;
+    margin: 0;
+  }
+  & > input {
+    flex: 1;
+    font-size: 30px;
+    height: 48px;
+  }
+`;
 
-  // const history = useHistory();
-  // const { account } = useAuth();
-  // // const { data: assignmentData } = useCrewAssignments();
-  // const { data: crewmate } = useCrewmate(i);
-  // const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
-  // const { nameCrew, naming } = useNameCrew(Number(i));
-  // const playSound = useStore(s => s.dispatchSoundRequested);
 
-  // const [ newName, setNewName ] = useState('');
-  // const [ selectedTrait, setSelectedTrait ] = useState();
+const CrewWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  margin-left: 64px;
+  margin-top: 25px;
+  padding-bottom: 50px;
+`;
 
-  // const traits = useMemo(() => Crewmate.getCombinedTraits(crewmate.Crewmate), [crewmate]);
+const CrewInfoContainer = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  & > div {
+    margin-left: 3px;
 
-  // const startDate = useMemo(() => {
-  //   if (crewmate?.events?.length > 0) {
-  //     return Time.fromUnixTime(crewmate.events[0].timestamp).toGameClockADays();
-  //   }
-  //   return null;
-  // }, [crewmate?.events]);
+    & > svg {
+      font-size: 24px;
+    }
+  }
+`;
 
-  // // const goToCrewAssignments = useCallback(() => {
-  // //   if (assignmentData?.assignmentsByBook?.length > 0) {
-  // //     history.push(`/crew-assignments/${assignmentData.assignmentsByBook[0].id}`);
-  // //   }
-  // // }, [assignmentData?.assignmentsByBook, history]);
+const TitleBar = styled.div`
+  ${CrewInfoContainer} & {
+    align-items: center;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    display: flex;
+    flex-direction: row;
+    font-size: 20px;
+    justify-content: space-between;
+    margin-left: 7px;
+    pointer-events: auto;
+    padding: 4px 12px;
 
-  // const selectTrait = useCallback((trait, mute) => () => {
-  //   setSelectedTrait({
-  //     ...(Crewmate.getTrait(trait) || {}),
-  //     id: trait
-  //   });
-  //   if (!mute) {
-  //     playSound('effects.click');
-  //   }
-  // }, [playSound]);
+    & svg {
+      font-size: 18px;
+    }
+  }
+`;
 
-  // const fillerTraits = useMemo(() => {
-  //   if (traits.length > 0 && traits.length < MIN_TRAIT_SLOTS) {
-  //     return Array.from(Array(MIN_TRAIT_SLOTS - traits.length));
-  //   }
-  //   return [];
-  // }, [traits]);
+const BaseLocation = styled.div`
+  color: white;
+  cursor: ${p => p.theme.cursors.active};
+  font-size: 14.5px;
+  span {
+    color: #AAA;
+    &:before {
+      content: " > ";
+    }
+  }
+  svg {
+    color: ${p => p.theme.colors.main};
+    margin-right: 2px;
+    vertical-align: middle;
+  }
+`;
 
-  // useEffect(() => {
-  //   if(traits?.length > 0) {
-  //     selectTrait(traits[0], true)();
-  //   }
-  // }, [traits, selectTrait]);
+const Food = styled.div`
+  align-items: center;
+  color: ${p => p.isRationing ? p.theme.colors.red : p.theme.colors.green};
+  display: flex;
+  span {
+    font-size: 15px;
+    margin: 0 6px;
+  }
+`;
 
-  // const attemptNameCrew = useCallback(async (name) => {
-  //   if (await isNameValid(name)) {
-  //     nameCrew(name);
-  //   }
-  // }, [isNameValid]);
+const Crewmates = styled.div`
+  align-items: flex-start;
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 10px;
+  padding-left: 5px;
+  & > * {
+    margin-left: 10px;
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+`;
 
-  // TODO: image
+const EmptySlot = styled.div`
+  border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.4);
+  background: black;
+  cursor: ${p => p.theme.cursors.active};
+  padding: 8px 6.5px;
+  position: relative;
+  width: ${p => p.width}px;
+  transition: background 250ms ease, border-color 250ms ease;
+  &:before {
+    content: "";
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.13);
+    display: block;
+    height: 0;
+    padding-top: 137.5%;
+    width: 100%;
+  }
+  & > svg {
+    color: ${p => p.theme.colors.main};
+    opacity: 0.5;
+    position: absolute;
+    top: calc(50% - 35px);
+    left: calc(50% - 35px);
+    font-size: 70px;
+    line-height: 70px;
+    transition: opacity 250ms ease;
+  }
 
+  &:hover {
+    background: #183541;
+    border-color: ${p => p.theme.colors.main};
+    & > svg { opacity: 0.75; }
+  }
+`;
+
+const BelowFold = styled.div``;
+
+// TODO: this should be in sdk
+Name.getTypeRegex = (entityType) => {
+  if (!Name.TYPES[entityType]) return null;
+
+  const { min, max, alpha, num, sym } = Name.TYPES[entityType];
+  let regexPart;
+  if (sym) {
+    if (alpha && num) regexPart = `[^\\s]`;
+    else if (alpha && !num) regexPart = `[^0-9\\s]`;
+    else if (!alpha && num) regexPart = `[^a-zA-Z\\s]`;
+    else if (!alpha && !num) regexPart = `[^a-zA-Z0-9\\s]`;
+  } else {
+    regexPart = `[${alpha ? 'a-zA-Z' : ''}${num ? '0-9' : ''}]`;
+  }
+
+  return `^(?=.{${min},${max}}$)(${regexPart}+\\s)*${regexPart}+$`;
+};
+
+const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
+  const history = useHistory();
+
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+  const isNameValid = useNameAvailability(Entity.IDS.CREW);
+  const { changeName, changingName } = useChangeName({ id: crewId, label: Entity.IDS.CREW });
+
+  // TODO: should we combine these into a single location link?
+  const onLotLink = useLotLink(crewLocation || {});
+  const onShipLink = useShipLink(crewLocation || {});
+
+  // TODO: _location is probably not populated if not my own crew...?
+  const { data: crewAsteroid } = useAsteroid(crewLocation?.asteroidId);
+  const { data: crewBuilding } = useBuilding(crewLocation?.buildingId);
+  const { data: crewShip } = useShip(crewLocation?.shipId);
+
+  const [editing, setEditing] = useState();
+  const [newName, setNewName] = useState(crew.Name?.name || '');
+
+  // reset
+  useEffect(() => {
+    if (editing) setNewName(crew.Name?.name || '');
+  }, [editing]);
+
+  useEffect(() => {
+    if (changingName) setEditing(false);
+  }, [changingName])
+
+  const saveName = useCallback(async () => {
+    if (await isNameValid(newName)) {
+      changeName(newName);
+    }
+  }, [newName]);
+
+  const goToCrewLocation = useCallback(() => {
+    if (crewLocation?.shipId && !crewLocation?.lotId) onShipLink();
+    else onLotLink();
+    history.push('/');
+  }, [crewLocation, onLotLink, onShipLink]);
+
+  const onClickCrewmate = useCallback((crewmate) => () => {
+    history.push(`/crewmate/${crewmate.id}`);
+  }, []);
+
+  const onClickRecruit = useCallback(() => {
+    if (false && crewBuilding?.Building?.buildingType === Building.IDS.HABITAT) {
+      history.push(`/recruit/${crew.id}/${crewLocation.buildingId}`);
+    } else {
+      createAlert({
+        type: 'GenericAlert',
+        content: 'Your crew must be stationed in a habitat to recruit new members.',
+        level: 'warning',
+        duration: 6000
+      })
+    }
+  }, [crew, crewBuilding]);
+
+  const onClickNewCrew = useCallback(() => {
+    history.push(`/recruit/0`);
+  }, []);
 
   return (
     <>
-      <Details edgeToEdge title="Crew Details" coverImage={{ src: ConstructionImage }}>
-        
-      </Details>
-      <SelectUninitializedCrewmateDialog />
-      {/* <SelectHabitatDialog /> */}
+      <MainContainer>
+        <AboveFold>
+          <CrewDetailsContainer>
+            <NameWrapper>
+              {editing
+                ? (
+                  <>
+                    <Button size="hugeicon" subtle disabled={boolAttr(changingName)} onClick={saveName}><CheckIcon /></Button>
+                    <Button size="hugeicon" subtle disabled={boolAttr(changingName)} onClick={() => setEditing()}><CloseIcon /></Button>
+                    <TextInput 
+                      initialValue={crew.Name?.name || ''}
+                      minlength={Name.TYPES[Entity.IDS.CREW].min}
+                      maxlength={Name.TYPES[Entity.IDS.CREW].max}
+                      pattern={Name.getTypeRegex(Entity.IDS.CREW)}
+                      disabled={boolAttr(changingName)}
+                      onChange={(v) => setNewName(v)} />
+                  </>
+                )
+                : (
+                  <>
+                    {isMyCrew && (
+                      <Button size="hugeicon" subtle
+                        disabled={boolAttr(changingName)}
+                        onClick={() => setEditing(true)}>
+                        {changingName ? <LoadingAnimation color="white" size="1em" /> : <EditIcon />}
+                      </Button>
+                    )}
+                    <h4>{changingName ? newName : formatters.crewName(crew)}</h4>
+                  </>
+                )
+              }
+            </NameWrapper>
+
+            <CrewWrapper>
+              <CrewCardFramed
+                borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
+                crewCardProps={{ hideHeader: false, noWrapName: true }}
+                crewmate={crewmates[0]}
+                isCaptain
+                onClick={onClickCrewmate(crewmates[0])}
+                width={180} />
+
+              <CrewInfoContainer>
+                <Crewmates>
+                  {Array.from(Array(4)).map((_, i) => {
+                    const crewmate = crewmates[i + 1];
+                    if (!crewmate) {
+                      return (
+                        <EmptySlot onClick={onClickRecruit} width={146}>
+                          <PlusIcon />
+                        </EmptySlot>
+                      );
+                    }
+                    return (
+                      <CrewCardFramed
+                        key={i}
+                        borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
+                        crewCardProps={{ hideHeader: false, noWrapName: true }}
+                        crewmate={crewmate}
+                        onClick={onClickCrewmate(crewmate)}
+                        width={146}
+                        noArrow />
+                    );
+                  })}
+                </Crewmates>
+
+                <TitleBar>
+                  <BaseLocation onClick={goToCrewLocation}>
+                    <LocationIcon />{/* TODO: should be different icon */}
+                    {crewAsteroid && <>{formatters.asteroidName(crewAsteroid)}</>}
+                    {crewShip && <span>{formatters.shipName(crewShip)}</span>}
+                    {!crewShip && crewBuilding && <span>{formatters.buildingName(crewBuilding)}</span>}
+                    {!crewShip && !crewBuilding && crewLocation?.lotId && <span>Lot {crewLocation.lotId.toLocaleString()}</span>}
+                  </BaseLocation>
+
+                  {/* TODO: potentially link directly to add rations dialog instead */}
+                  {/* TODO: implement lastFed or whatever */}
+                  <Food isRationing={false} onClick={() => {/* TODO */}}>
+                    {false && <WarningOutlineIcon />}
+                    <span>100%</span>
+                    <FoodIcon />
+                  </Food>
+                </TitleBar>
+
+                {isMyCrew && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 15 }}>
+                    <Button subtle style={{ width: 225 }}>Add Rations</Button>
+                  </div>
+                )}
+              </CrewInfoContainer>
+
+            </CrewWrapper>
+
+            
+          </CrewDetailsContainer>
+          <ManagementContainer>
+            {isMyCrew && <MyCrewStatement><MyAssetIcon /> This crew is owned by me.</MyCrewStatement>}
+            <Stat label="No. Members">{crew.Crew?.roster?.length || 0}</Stat>
+            <Stat label="Formed">TODO</Stat>
+            {isMyCrew && (
+              <div style={{ paddingTop: 15 }}>
+                <Button subtle>Manage Crew</Button>
+                <Button subtle onClick={onClickNewCrew}>Form New Crew</Button>
+                <Button subtle onClick={onClickRecruit}>Recruit Crewmate</Button>
+              </div>
+            )}
+          </ManagementContainer>
+        </AboveFold>
+
+        <BelowFold>
+          <TabContainer
+            containerCss={tabContainerCss}
+            iconCss={{}}
+            labelCss={{
+              minWidth: '50px',
+              textAlign: 'center',
+              textTransform: 'uppercase'
+            }}
+            tabCss={{ padding: '0 15px', width: 'auto' }}
+            tabs={[
+              {
+                label: 'Crew Log',
+              },
+              {
+                label: 'Mission Statement',
+                disabled: true
+              }
+            ]}
+            panes={[
+              (
+                <History>
+                  <Log>
+                    <LogHeader>
+                      <LogEntry isHeaderRow isTabular />
+                    </LogHeader>
+                    <div>
+                      <ul>
+                        {crew?.events?.length > 0
+                          ? crew.events.map(e => (
+                            <LogEntry
+                              key={e.key}
+                              data={{ ...e, id: crew.id }}
+                              timestampBreakpoint="1500px"
+                              type={`Crew_${e.event}`}
+                              isTabular />
+                          ))
+                          : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
+                        }
+                      </ul>
+                    </div>
+                  </Log>
+                </History>
+              ),
+              null,
+              null
+            ]}
+          />
+          
+        </BelowFold>
+      </MainContainer>
     </>
   );
 };
 
-export default CrewDetails;
+const Wrapper = () => {
+  const { i } = useParams();
+  const { crew: myCrew, loading: myCrewLoading } = useCrewContext();
+  const history = useHistory();
+
+  const crewId = Number(i || myCrew?.id);
+  const { data: crew, isLoading: crewLoading } = useCrew(crewId);
+  const { data: crewmates, isLoading: crewmatesLoading } = useCrewmates(crew?.Crew?.roster || []);
+  const { data: crewLocation, isLoading: crewLocationLoading } = useCrewLocation(crewId);
+
+  useEffect(() => {
+    if (!i && !myCrewLoading && !myCrew) {
+
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!crewLoading && !crew) {
+      history.push('/');
+    } else if (!i && myCrew?.id) {
+      history.replace(`/crew/${myCrew.id}`);
+    }
+  }, [crewLoading, crew, myCrew])
+
+  const loading = myCrewLoading || crewLoading || crewmatesLoading || crewLocationLoading;
+  if (!myCrewLoading)
+  return (
+    <Details
+      edgeToEdge
+      headerProps={{ background: 'true', v2: 'true' }}
+      onCloseDestination="/"
+      contentInnerProps={{ style: { display: 'flex', flexDirection: 'column', height: '100%' } }}
+      title={<>Crew Details {crewId === myCrew?.id && <b>My Active Crew</b>}</>}
+      width="1250px">
+      <CoverImage src={CoverImageSrc} />
+      {loading && (
+        <div style={{ position: 'absolute', left: 'calc(50% - 30px)', top: 'calc(50% - 30px)' }}>
+          <LoadingAnimation color="white" />
+        </div>
+      )}
+      {crew && !loading && (
+        <CrewDetails
+          crewId={crewId}
+          crew={crew}
+          crewLocation={crewLocation}
+          crewmates={crewmates}
+          isMyCrew={crewId === myCrew?.id}
+        />
+      )}
+    </Details>
+  );
+};
+
+export default Wrapper;
