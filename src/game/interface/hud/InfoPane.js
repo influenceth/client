@@ -232,11 +232,11 @@ const ThumbWrapper = styled.div`
   cursor: ${p => p.theme.cursors.active};
   display: flex;
   ${p => p.hasCaptainCard && `margin-top: 12px;`}
-  margin-left: -32px;
+  margin-left: -50px;
   margin-right: 16px;
   & > svg {
     font-size: 18px;
-    margin-right: 15px;
+    width: 50px;
   }
 
   &:hover {
@@ -265,7 +265,6 @@ const ActionButtons = styled.div`
   width: 100%;
 `;
 
-const ThumbLoader = () => <ThumbLoading><PuffLoader color="white" /></ThumbLoading>;
 const CaptainCard = ({ crewId }) => {
   const { data: crew } = useCrew(crewId);
   const history = useHistory();

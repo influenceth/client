@@ -184,12 +184,12 @@ const assetTypes = {
     title: 'Buildings',
     useColumns: listConfigs.buildings,
   },
-  coresamples: {
-    keyField: 'id',
-    icon: <CoreSampleIcon />,
-    title: 'Core Samples',
-    useColumns: listConfigs.coreSamples,
-  },
+  // coresamples: {
+  //   keyField: 'id',
+  //   icon: <CoreSampleIcon />,
+  //   title: 'Core Samples',
+  //   useColumns: listConfigs.coreSamples,
+  // },
   // ships: {
   //   keyField: 'i',
   //   icon: <ShipIcon />,

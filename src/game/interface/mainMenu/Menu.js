@@ -4,12 +4,14 @@ import Badge from '~/components/Badge';
 
 const StyledMenu = styled.div`
   cursor: ${p => p.theme.cursors.active};
-  margin-right: 10px;
   flex: 1;
+  margin-right: 10px;
+  max-width: 175px;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     margin: 0;
     max-height: none;
+    max-width: 100%;
     width: 100%;
   }
 `;
@@ -49,7 +51,7 @@ const MenuHeader = styled.div`
 
   ${StyledMenu}:hover & {
     color: ${p => p.theme.colors.main};
-    &:before { 
+    &:before {
       left: 0%;
       margin-left: 0;
       width: 100%;

@@ -44,6 +44,7 @@ const Wrapper = styled.div`
   bottom: 0;
   z-index: 2;
 `;
+
 const Buttons = styled.div`
   background: ${p => p.theme.colors.hudMenuBackground};
   border-left: 1px solid #444;
@@ -65,6 +66,7 @@ const Buttons = styled.div`
     background: transparent;
   `}
 `;
+
 const Button = styled.div`
   align-items: center;
   border-radius: 8px 0 0 8px;
@@ -140,6 +142,7 @@ const PanelTitle = styled.div`
     margin-right: 0;
   }
 `;
+
 const PanelContent = styled.div`
   display: flex;
   flex: 1;
@@ -345,7 +348,7 @@ const HudMenu = () => {
         }
       );
 
-      if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+      if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL) {
         if (lot.building.Building.buildingType === Building.IDS.MARKETPLACE) {
           buttons.push({
             key: 'MARKETPLACE_LISTINGS',
