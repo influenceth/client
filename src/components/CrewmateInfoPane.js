@@ -52,12 +52,12 @@ const Trait = styled.div`
   }
 `;
 
-const CrewmateInfoPane = ({ crewmate, cssWhenVisible, referenceEl, visible }) => {
+const CrewmateInfoPane = ({ crewmate, cssWhenVisible, referenceEl, visible, ...props }) => {
   const traits = useMemo(() => Crewmate.getCombinedTraits(crewmate.Crewmate), [crewmate]);
 
   if (!crewmate) return null;
   return (
-    <MouseoverInfoPane cssWhenVisible={cssWhenVisible} referenceEl={referenceEl} visible={visible}>
+    <MouseoverInfoPane cssWhenVisible={cssWhenVisible} referenceEl={referenceEl} visible={visible} {...props}>
       <TooltipContents>
         <h3>{formatters.crewmateName(crewmate)}</h3>
         <article>
@@ -65,9 +65,9 @@ const CrewmateInfoPane = ({ crewmate, cssWhenVisible, referenceEl, visible }) =>
             <CrewClassIcon crewClass={crewmate.Crewmate.class} />
           </div>
           <div style={{ lineHeight: '1.6em' }}>
-            <DataReadout label="Class" slim inheritFontSize>{Crewmate.getClass(crewmate)?.name}</DataReadout>
-            {crewmate.Crewmate.title > 0 && <DataReadout label="Title" slim inheritFontSize>{Crewmate.getTitle(crewmate)?.name}</DataReadout>}
-            <DataReadout label="Collection" slim inheritFontSize>{Crewmate.getCollection(crewmate)?.name}</DataReadout>
+            <DataReadout label="Class" slim inheritFontSize>{Crewmate.Entity.getClass(crewmate)?.name}</DataReadout>
+            {crewmate.Crewmate.title > 0 && <DataReadout label="Title" slim inheritFontSize>{Crewmate.Entity.getTitle(crewmate)?.name}</DataReadout>}
+            <DataReadout label="Collection" slim inheritFontSize>{Crewmate.Entity.getCollection(crewmate)?.name}</DataReadout>
           </div>
         </article>
         {(traits || []).length > 0 && (

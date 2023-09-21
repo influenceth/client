@@ -365,7 +365,7 @@ const Trait = styled.div`
           fill: #005678;
         }
       `;
-      if (p.isEmpty) {
+      if (p.isEmpty && !p.isToggling) {
         return css`
           ${clickable}
           animation: ${attentionBackground} 2000ms ease infinite;
@@ -397,6 +397,14 @@ const Trait = styled.div`
         &:hover {
           ${clickableHover}
         }
+        ${p => p.isToggling && `
+          &:not(:hover) {
+            background: #003447;
+            & ${TipHolder} > svg > polygon {
+              fill: #003447;
+            }
+          }
+        `}
       `;
     }
     return `
@@ -514,7 +522,7 @@ const RerollContainer = styled.div`
 const PromptBody = styled.div`
   border: solid #333;
   border-width: 1px 0;
-  color: ${p => p.theme.colors.main};
+  color: ${p => p.highlight ? p.theme.colors.main : '#AAA'};
   line-height: 20px;
   padding: 16px 24px;
   & b {
@@ -769,6 +777,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
   const { data: priceConstants } = usePriceConstants();
 
   const [confirming, setConfirming] = useState();
+  const [confirmingUnlock, setConfirmingUnlock] = useState();
   const [hovered, setHovered] = useState();
 
   const [appearanceOptions, setAppearanceOptions] = useState([]);
@@ -864,13 +873,10 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
       c._canRename = true;
     }
 
-    // get traits selected
-    // TODO: this is probably no longer how we want it?
-    if (!c.Crewmate.cosmetic || !c.Crewmate.impactful) {
-      if (selectedTraits) {
-        c.Crewmate.cosmetic = selectedTraits.filter((t) => Crewmate.TRAITS[t]?.type === Crewmate.TRAIT_TYPES.COSMETIC);
-        c.Crewmate.impactful = selectedTraits.filter((t) => Crewmate.TRAITS[t]?.type === Crewmate.TRAIT_TYPES.IMPACTFUL);
-      }
+    // split traits selected
+    if (selectedTraits) {
+      c.Crewmate.cosmetic = selectedTraits.filter((t) => Crewmate.TRAITS[t]?.type === Crewmate.TRAIT_TYPES.COSMETIC);
+      c.Crewmate.impactful = selectedTraits.filter((t) => Crewmate.TRAITS[t]?.type === Crewmate.TRAIT_TYPES.IMPACTFUL);
     }
 
     // get appearance
@@ -1073,7 +1079,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
 
   const recruitTally = useMemo(() => {
     return (adalianRecruits?.length || 0) + (arvadianRecruits?.length || 0);
-  }, [adalianRecruits, arvadianRecruits])
+  }, [adalianRecruits, arvadianRecruits]);
 
   return (
     <>
@@ -1152,7 +1158,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
                             <RandomizeButton
                               disabled={finalizing}
                               lessTransparent
-                              onClick={() => setTraitsLocked(false)}
+                              onClick={() => setConfirmingUnlock(true)}
                               style={{ width: 275 }}
                               subtle>
                               Unlock Traits
@@ -1206,10 +1212,11 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
                         <Trait
                           ref={animationComplete ? setRefEl : noop}
                           onClick={(traitsLocked || !crewmate._canReclass) ? noop : () => setToggling('class')}
-                          onMouseEnter={() => setHovered('class')}
+                          onMouseEnter={animationComplete ? () => setHovered('class') : noop}
                           onMouseLeave={() => setHovered()}
                           side="right"
                           isClickable={!traitsLocked && crewmate._canReclass}
+                          isToggling={toggling === 'class'}
                           isEmpty={!crewmate.Crewmate.class}>
                           <div>
                             <CrewClassIcon crewClass={crewmate.Crewmate.class} />
@@ -1270,12 +1277,13 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
                                   <Trait
                                     ref={animationComplete ? setRefEl : noop}
                                     onClick={(traitsLocked || traitIndex > selectedTraits?.length) ? noop : () => setToggling(hoverKey)}
-                                    onMouseEnter={() => setHovered(hoverKey)}
+                                    onMouseEnter={animationComplete ? () => setHovered(hoverKey) : noop}
                                     onMouseLeave={() => setHovered()}
                                     side={side}
                                     type={trait?.type}
                                     isClickable={!traitsLocked && crewmate.Crewmate.class && traitIndex <= selectedTraits?.length}
                                     isEmpty={!trait}
+                                    isToggling={toggling === hoverKey}
                                     isAtRisk={toggling === 'class' || toggling < traitIndex}>
                                     <div>
                                       <CrewTraitIcon trait={trait?.id} type={trait?.type} hideFallback opaque />
@@ -1387,11 +1395,25 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
           )}
         </div>
       </Footer>
+      {confirmingUnlock && (
+        <ConfirmationDialog
+          title="Unlock Traits"
+          body={(
+            <PromptBody>
+              You are about to change <b>Crewmate Traits</b> that were determined by the choices you made in Story Mode.
+              <br/><br/>
+              Are you sure you want to continue?
+            </PromptBody>
+          )}
+          onConfirm={() => { setTraitsLocked(false); setConfirmingUnlock(false); }}
+          onReject={() => setConfirmingUnlock(false)}
+        />
+      )}
       {confirming && (
         <ConfirmationDialog
           title={`Confirm Character ${crewmate.id ? 'Details' : 'Minting'}`}
           body={(
-            <PromptBody>
+            <PromptBody highlight>
               The Crewmate you are about to recruit will be minted as a new digital asset
               {crewmate.id ? '.' : <>, which currently costs <b><Ether>{formatters.crewmatePrice(priceConstants)}</Ether></b> and helps to fund game development.</>}
               <br/><br/>

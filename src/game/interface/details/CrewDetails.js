@@ -55,6 +55,7 @@ import useBuilding from '~/hooks/useBuilding';
 import useShip from '~/hooks/useShip';
 import { useLotLink } from '~/components/LotLink';
 import { useShipLink } from '~/components/ShipLink';
+import CrewmateInfoPane from '~/components/CrewmateInfoPane';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -475,6 +476,13 @@ Name.getTypeRegex = (entityType) => {
   return `^(?=.{${min},${max}}$)(${regexPart}+\\s)*${regexPart}+$`;
 };
 
+const noop = () => {/* noop */};
+
+const PopperWrapper = (props) => {
+  const [refEl, setRefEl] = useState();
+  return props.children(refEl, props.disableRefSetter ? noop : setRefEl);
+}
+
 const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
   const history = useHistory();
 
@@ -492,6 +500,7 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
   const { data: crewShip } = useShip(crewLocation?.shipId);
 
   const [editing, setEditing] = useState();
+  const [hovered, setHovered] = useState();
   const [newName, setNewName] = useState(crew.Name?.name || '');
 
   // reset
@@ -520,7 +529,7 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
   }, []);
 
   const onClickRecruit = useCallback(() => {
-    if (false && crewBuilding?.Building?.buildingType === Building.IDS.HABITAT) {
+    if (crewBuilding?.Building?.buildingType === Building.IDS.HABITAT) {
       history.push(`/recruit/${crew.id}/${crewLocation.buildingId}`);
     } else {
       createAlert({
@@ -535,6 +544,13 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
   const onClickNewCrew = useCallback(() => {
     history.push(`/recruit/0`);
   }, []);
+
+  const [ready, setReady] = useState();
+  useEffect(() => {
+    setTimeout(() => setReady(true), 1000);
+  }, []);
+
+  // TODO: we need to support empty crews here
 
   return (
     <>
@@ -572,13 +588,30 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
             </NameWrapper>
 
             <CrewWrapper>
-              <CrewCardFramed
-                borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
-                crewCardProps={{ hideHeader: false, noWrapName: true }}
-                crewmate={crewmates[0]}
-                isCaptain
-                onClick={onClickCrewmate(crewmates[0])}
-                width={180} />
+              <PopperWrapper disableRefSetter={!ready}>
+                {(refEl, setRefEl) => (
+                  <>
+                    <span ref={setRefEl}>
+                      <CrewCardFramed
+                        borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
+                        crewCardProps={{ hideHeader: false, noWrapName: true }}
+                        crewmate={crewmates[0]}
+                        isCaptain
+                        onClick={onClickCrewmate(crewmates[0])}
+                        onMouseEnter={() => setHovered(0)}
+                        onMouseLeave={() => setHovered()}
+                        width={180} />
+                    </span>
+                    <CrewmateInfoPane
+                      crewmate={crewmates[0]}
+                      css="transform: translateY(25px);"
+                      cssWhenVisible="transform: translateY(3px);"
+                      referenceEl={refEl}
+                      visible={hovered === 0}
+                    />
+                  </>
+                )}
+              </PopperWrapper>
 
               <CrewInfoContainer>
                 <Crewmates>
@@ -592,14 +625,31 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
                       );
                     }
                     return (
-                      <CrewCardFramed
-                        key={i}
-                        borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
-                        crewCardProps={{ hideHeader: false, noWrapName: true }}
-                        crewmate={crewmate}
-                        onClick={onClickCrewmate(crewmate)}
-                        width={146}
-                        noArrow />
+                      <PopperWrapper key={i} disableRefSetter={!ready}>
+                        {(refEl, setRefEl) => (
+                          <>
+                            <span ref={setRefEl}>
+                              <CrewCardFramed
+                                ref={setRefEl}
+                                borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
+                                crewCardProps={{ hideHeader: false, noWrapName: true }}
+                                crewmate={crewmate}
+                                onClick={onClickCrewmate(crewmate)}
+                                onMouseEnter={() => setHovered(i + 1)}
+                                onMouseLeave={() => setHovered()}
+                                width={146}
+                                noArrow />
+                            </span>
+                            <CrewmateInfoPane
+                              crewmate={crewmate}
+                              css="transform: translateY(25px);"
+                              cssWhenVisible="transform: translateY(3px);"
+                              referenceEl={refEl}
+                              visible={hovered === i + 1}
+                            />
+                          </>
+                        )}
+                      </PopperWrapper>
                     );
                   })}
                 </Crewmates>
@@ -727,7 +777,6 @@ const Wrapper = () => {
   }, [crewLoading, crew, myCrew])
 
   const loading = myCrewLoading || crewLoading || crewmatesLoading || crewLocationLoading;
-  if (!myCrewLoading)
   return (
     <Details
       edgeToEdge

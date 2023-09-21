@@ -259,7 +259,7 @@ const Account = () => {
   const loggedIn = !!account;
 
   const onClickPlay = useCallback(() => {
-    // if crew is done loading and there are no crewmates, send to owned-crew first
+    // if crew is done loading and there are no crewmates, send to /crew first
     if (loggedIn && !crewLoading && !(crew?._crewmates?.length > 0)) {
       history.push('/crew');
     }

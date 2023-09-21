@@ -19,13 +19,26 @@ const useCrewManager = () => {
 
   const purchaseAndOrInitializeCrew = useCallback(
     ({ crewmate }) => {
-      if (adalianRecruits.length > 0) {
-        // execute('INITIALIZE_CREWMATE', { i: adalianRecruits[0].i, ...params });
+      if (crewmate.Crewmate.coll !== Crewmate.COLLECTION_IDS.ADALIAN) {
+        console.log('--- InitializeArvadian', {
+          crewmate: { id: crewmate.id, label: Entity.IDS.CREWMATE },
+          impactful: crewmate.Crewmate.impactful,
+          cosmetic: crewmate.Crewmate.cosmetic,
+          caller_crew: crewmate.Control.controller,
+          name: crewmate.Name.name
+        });
+        execute('InitializeArvadian', {
+          crewmate: { id: crewmate.id, label: Entity.IDS.CREWMATE },
+          impactful: crewmate.Crewmate.impactful,
+          cosmetic: crewmate.Crewmate.cosmetic,
+          caller_crew: crewmate.Control.controller,
+          name: crewmate.Name.name
+        });
+
       } else {
-        console.log('crewmate', crewmate);
         const appearance = Crewmate.unpackAppearance(crewmate.Crewmate.appearance);
         execute('RecruitAdalian', {
-          crewmate: { id: crewmate.id, label: Entity.IDS.CREWMATE },  // TODO: may already have an id
+          crewmate: { id: crewmate.id, label: Entity.IDS.CREWMATE },
           class: crewmate.Crewmate.class,
           impactful: crewmate.Crewmate.impactful,
           cosmetic: crewmate.Crewmate.cosmetic,
