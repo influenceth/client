@@ -44,6 +44,7 @@ const Wrapper = styled.div`
   bottom: 0;
   z-index: 2;
 `;
+
 const Buttons = styled.div`
   background: ${p => p.theme.colors.hudMenuBackground};
   border-left: 1px solid #444;
@@ -65,6 +66,7 @@ const Buttons = styled.div`
     background: transparent;
   `}
 `;
+
 const Button = styled.div`
   align-items: center;
   border-radius: 8px 0 0 8px;
@@ -140,6 +142,7 @@ const PanelTitle = styled.div`
     margin-right: 0;
   }
 `;
+
 const PanelContent = styled.div`
   display: flex;
   flex: 1;
@@ -162,7 +165,7 @@ const HudMenu = () => {
   const { data: lot } = useLot(lotAsteroidId, lotId);
 
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
-  
+
   const [open, setOpen] = useState();
   const [hidden, setHidden] = useState();
 
@@ -219,8 +222,8 @@ const HudMenu = () => {
 
     // "system view"
     if (zoomStatus === 'out') {
-      buttons.push(
-        {
+      if (asteroidId) {
+        buttons.push({
           key: 'BELT_ASTEROID_INFO',
           label: 'Asteroid Info',
           icon: <InfoIcon />,
@@ -231,7 +234,10 @@ const HudMenu = () => {
               history.push(`/asteroids/${asteroidId}`);
             }
           }
-        },
+        });
+      }
+
+      buttons.push(
         {
           key: 'BELT_ASSETS',
           label: 'My Assets',
@@ -266,6 +272,7 @@ const HudMenu = () => {
           }
         },
       );
+
       if (asteroidId && destination) {
         buttons.push({
           key: 'BELT_PLAN_FLIGHT',
@@ -275,7 +282,7 @@ const HudMenu = () => {
           noDetail: true
         });
       }
-      
+
     // zoomed to asteroid, not zoomed to lot or ship
     } else if (zoomStatus === 'in' && !zoomScene) {
       buttons.push(
@@ -303,12 +310,12 @@ const HudMenu = () => {
             history.push(`/listview/lots`);
           }
         },
-        {
-          key: 'ASTEROID_CHAT',
-          label: 'Asteroid Chat',
-          icon: <ChatIcon />,
-          Component: hudMenus.AsteroidChat
-        },
+        // {
+        //   key: 'ASTEROID_CHAT',
+        //   label: 'Asteroid Chat',
+        //   icon: <ChatIcon />,
+        //   Component: hudMenus.AsteroidChat
+        // },
         {
           key: 'ASTEROID_ADVANCED_SEARCH',
           label: 'Advanced Search',
@@ -319,7 +326,7 @@ const HudMenu = () => {
         },
       );
 
-      if (true) { // TODO: if has at least 1 OPERATIONAL marketplace
+      if (false) { // TODO: if has at least 1 OPERATIONAL marketplace
         buttons.push({
           key: 'ASTEROID_MARKETS',
           label: 'Asteroid Markets',
@@ -341,7 +348,7 @@ const HudMenu = () => {
         }
       );
 
-      if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+      if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL) {
         if (lot.building.Building.buildingType === Building.IDS.MARKETPLACE) {
           buttons.push({
             key: 'MARKETPLACE_LISTINGS',

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Building, Location } from '@influenceth/sdk';
+import { Building, Entity } from '@influenceth/sdk';
 
 import { MyAssetIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
@@ -26,7 +26,7 @@ const useColumns = () => {
         label: 'Building Type',
         sortField: 'Building.buildingType',
         selector: row => {
-          const loc = Location.fromEntityFormat(row.Location?.location);
+          const loc = Entity.toPosition(row.Location?.location);
           return (
             <>
               <LocationLink asteroidId={loc.asteroidId} lotId={loc.lotId} zoomToLot />
@@ -41,7 +41,7 @@ const useColumns = () => {
         label: 'Asteroid',
         sortField: 'meta.location[0].id', // TODO: will this work? does sequential sorting matter?
         selector: row => {
-          const loc = Location.fromEntityFormat(row.Location?.location);
+          const loc = Entity.toPosition(row.Location?.location);
           return (
             <>
               <LocationLink asteroidId={loc.asteroidId} />
@@ -55,7 +55,7 @@ const useColumns = () => {
         label: 'Lot',
         sortField: 'meta.location[1].id', // TODO: will this work? does sequential sorting matter?
         selector: row => {
-          const loc = Location.fromEntityFormat(row.Location?.location);
+          const loc = Entity.toPosition(row.Location?.location);
           return (
             <>
               <LocationLink asteroidId={loc.asteroidId} lotId={loc.lotId} />

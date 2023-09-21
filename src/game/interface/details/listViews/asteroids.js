@@ -97,7 +97,7 @@ const useColumns = () => {
       {
         key: 'name',
         label: 'Name',
-        sortField: 'Name.name',
+        sortField: 'Name.name.raw',
         selector: row => (
           <>
             <LocationLink asteroidId={row.id} />
@@ -112,6 +112,7 @@ const useColumns = () => {
         label: 'Owner',
         sortField: 'Nft.owner',
         selector: row => {
+          // TODO: refine to show the correct chain owner when owned by bridge
           if (row.Nft?.owner) {
             return (
               <MarketplaceLink

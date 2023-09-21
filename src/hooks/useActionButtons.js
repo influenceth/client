@@ -76,8 +76,8 @@ const useActionButtons = () => {
   const { data: zoomedToShip, isLoading: zoomedShipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
 
   // set ship IF zoomed to ship or zoomed to lot that can only contain one ship (i.e. not a spaceport)
-  const ship = zoomedToShip || (lot && lot.building.Building?.buildingType !== Building.IDS.SPACEPORT ? lot?.Ships?.[0] : null);
-  const { data: crewsOnShip } = useShipCrews(ship?.i);  // TODO: isLoading?
+  const ship = zoomedToShip || (lot && lot.building?.Building?.buildingType !== Building.IDS.SPACEPORT ? lot.Ships?.[0] : null);
+  const { data: crewsOnShip } = useShipCrews(ship?.id);  // TODO: isLoading?
 
   const [actions, setActions] = useState([]);
 

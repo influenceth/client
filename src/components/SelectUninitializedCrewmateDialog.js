@@ -70,7 +70,7 @@ const CardOuter = styled.div`
       }
     `
   }
-  
+
   @media (max-height: 875px) {
     margin-left: 1vh;
     width: 22vh;
@@ -120,7 +120,7 @@ const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
         props: { disabled: !selected }
       }}
       title="Arvad Crewmates"
-      subtitle={<Subtitle>Account has <b>Arvad Crewmates</b> that can be recruited</Subtitle>}
+      subtitle={<Subtitle>Your account has <b>Arvad Crewmates</b> that can be recruited</Subtitle>}
     />
   );
 };

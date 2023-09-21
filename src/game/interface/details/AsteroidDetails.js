@@ -48,7 +48,7 @@ const AsteroidDetails = () => {
     if (i) dispatchOriginSelected(Number(i));
   }, [ i, dispatchOriginSelected ]);
 
-  const isOwner = account && asteroid?.Nft?.owners?.starknet && Address.areEqual(account, asteroid.Nft.owners.starknet);
+  const isOwner = account && asteroid?.Nft?.owner && Address.areEqual(account, asteroid.Nft.owner);
   const isManager = crew && asteroid?.Control?.controller?.id === crew.id;
 
   const onTabChange = (tabIndex) => {

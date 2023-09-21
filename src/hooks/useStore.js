@@ -21,7 +21,7 @@ const assetSearchDefaults = {
   actionitems: { filters: {}, sort: ['time', 'asc'] },
   asteroids: { filters: {}, sort: ['Celestial.radius', 'desc'] },
   asteroidsMapped: { filters: {}, sort: ['Celestial.radius', 'desc'], highlight: null },
-  buildings: { filters: {}, sort: ['lot.id', 'asc'] },
+  buildings: { filters: {}, sort: ['Building.buildingType', 'asc'] },
   coresamples: { filters: { status: [2,3] }, sort: ['lot.id', 'asc'] },
   crewmates: { filters: {}, sort: ['id', 'asc'] },
   crews: { filters: {}, sort: ['id', 'asc'] },
@@ -105,7 +105,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     pendingTransactions: [],
 
     lotLoader: {
-      i: null,
+      id: null,
       progress: 0
     },
 
@@ -460,11 +460,11 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       if (!resourceId) state.asteroids.resourceMap.active = false;
     })),
 
-    dispatchLotsLoading: (i, progress = 0, simulateTarget = 0) => set(produce(state => {
+    dispatchLotsLoading: (id, progress = 0, simulateTarget = 0) => set(produce(state => {
       if (simulateTarget) {
-        state.lotLoader = { i, progress: state.lotLoader.progress + (simulateTarget - state.lotLoader.progress) / 3 };
+        state.lotLoader = { id, progress: state.lotLoader.progress + (simulateTarget - state.lotLoader.progress) / 3 };
       } else {
-        state.lotLoader = { i, progress: progress > 0.99 ? 1 : progress };
+        state.lotLoader = { id, progress: progress > 0.99 ? 1 : progress };
       }
     })),
 

@@ -80,6 +80,7 @@ const BottomBar = styled.div`
     );
   }
 `;
+
 const BottomBarBackground = styled(BottomBar)`
   background: #444;
   bottom: 1px;
@@ -90,9 +91,11 @@ const HudButtonArea = styled.div`
   bottom: 4px;
   z-index: 4;
 `;
+
 const LeftHudButtonArea = styled(HudButtonArea)`
   left: 4px;
 `;
+
 const RightHudButtonArea = styled(HudButtonArea)`
   right: 4px;
 `;
@@ -149,7 +152,7 @@ const MainMenu = () => {
 
   const openSection = useCallback((section) => {
     // activateSection(section);
-    // TODO: ... this used to reference outliner, but outliner is gone 
+    // TODO: ... this used to reference outliner, but outliner is gone
     playSound('effects.click');
     if (isMobile) setShowMenu(false);
   }, [isMobile]);
@@ -221,30 +224,30 @@ const MainMenu = () => {
               <MenuItem
                 name="My Crew"
                 icon={<CrewIcon />}
-                onClick={() => history.push(`/crew`)} />
-              <MenuItem
+                onClick={() => history.push('/crew')} />
+              {/* <MenuItem
                 name="My Ships"
                 icon={<ShipIcon />}
-                onClick={notYet} />
+                onClick={notYet} /> */}
               <MenuItem
                 name="My Buildings"
                 icon={<BuildingIcon />}
                 onClick={notYet} />
-              <MenuItem
+              {/* <MenuItem
                 name="My Resources"
                 icon={<ResourceIcon />}
                 onClick={notYet} />
               <MenuItem
-                name="My Core Samples"
+                name="My Deposits"
                 icon={<CoreSampleIcon />}
-                onClick={notYet} />
+                onClick={notYet} /> */}
               <MenuItem
                 name="Favorites"
                 icon={<FavoriteIcon />}
                 onClick={() => openSection('belt.Favorites')} />
             </Menu>
           )}
-          {!!account && (
+          {/* {!!account && (
             <Menu title="Events">
               <MenuItem
                 name="Captain's Log"
@@ -259,8 +262,8 @@ const MainMenu = () => {
                 icon={<CrewStoryIcon />}
                 onClick={notYet} />
             </Menu>
-          )}
-          <Menu title="Finances">
+          )} */}
+          {/* <Menu title="Finances">
             <MenuItem
               name="Transactions"
               icon={<TransactionIcon />}
@@ -273,9 +276,8 @@ const MainMenu = () => {
               name="Leases"
               icon={<LeaseIcon />}
               onClick={notYet} />
+          </Menu> */}
 
-          </Menu>
-          
           {/*
           {!!account && hasGenesisCrewmate && (
             <Menu title="Activities" badge={totalAssignments}>
@@ -311,7 +313,7 @@ const MainMenu = () => {
           )}
         </RightHudButtonArea>
       </Actionable>
-      
+
       <BottomBarBackground />
       <BottomBar />
     </StyledMainMenu>

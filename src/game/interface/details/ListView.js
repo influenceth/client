@@ -153,7 +153,7 @@ const Pages = styled.div`
 
 const assetTypes = {
   asteroids: {
-    keyField: 'i',
+    keyField: 'id',
     icon: <AsteroidSearchIcon />,
     title: 'Asteroids',
     useColumns: listConfigs.asteroids,
@@ -167,29 +167,29 @@ const assetTypes = {
   //   useColumns: listConfigs.lots,
   // },
   crewmates: {
-    keyField: 'i',
+    keyField: 'id',
     icon: <CrewmateIcon />,
     title: 'Crewmates',
     useColumns: listConfigs.crewmates,
   },
   crews: {
-    keyField: 'i',
+    keyField: 'id',
     icon: <CrewIcon />,
     title: 'Crews',
     useColumns: listConfigs.crews,
   },
   buildings: {
-    keyField: 'i',
+    keyField: 'id',
     icon: <BuildingIcon />,
     title: 'Buildings',
     useColumns: listConfigs.buildings,
   },
-  coresamples: {
-    keyField: 'i',
-    icon: <CoreSampleIcon />,
-    title: 'Core Samples',
-    useColumns: listConfigs.coreSamples,
-  },
+  // coresamples: {
+  //   keyField: 'id',
+  //   icon: <CoreSampleIcon />,
+  //   title: 'Core Samples',
+  //   useColumns: listConfigs.coreSamples,
+  // },
   // ships: {
   //   keyField: 'i',
   //   icon: <ShipIcon />,
@@ -275,7 +275,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
   const onToggleFilters = useCallback(() => {
     setFiltersOpen((o) => !o);
   }, []);
-  
+
   const onClickFilters = useCallback(() => {
     setFiltersOpen(true);
   }, []);

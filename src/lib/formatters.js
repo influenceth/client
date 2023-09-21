@@ -49,7 +49,7 @@ const formatters = {
 
   buildingName: (b, fallbackText) => {
     if (!b) return fallbackText || 'Building';
-    return b.Name?.name || `${Building.TYPES[b.Building?.buildingType]?.name || 'Building'} #${b.i.toLocaleString()}`;
+    return b.Name?.name || `${Building.TYPES[b.Building?.buildingType]?.name || 'Building'} #${b.id.toLocaleString()}`;
   },
 
   crewName: (c, fallbackText) => {
@@ -70,7 +70,7 @@ const formatters = {
 
   shipName: (s, fallbackText) => {
     if (!s) return fallbackText || 'Ship';
-    return s.Name?.name || `${Ship.TYPES[s.Ship?.shipType]?.name || 'Ship'} #${s.i.toLocaleString()}`;
+    return s.Name?.name || `${Ship.TYPES[s.Ship?.shipType]?.name || 'Ship'} #${s.id.toLocaleString()}`;
   },
 };
 

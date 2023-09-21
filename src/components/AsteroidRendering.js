@@ -7,7 +7,7 @@ import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
 import constants from '~/lib/constants';
 
-const RenderedAsteroid = ({ asteroid, brightness = 1, onReady, webWorkerPool }) => {
+const RenderedAsteroid = ({ asteroid, brightness = 1, varyDistance = false, onReady, webWorkerPool }) => {
   const { camera, gl, scene } = useThree();
   const disposeFunc = useRef();
 
@@ -45,7 +45,9 @@ const RenderedAsteroid = ({ asteroid, brightness = 1, onReady, webWorkerPool }) 
         scene.add(light3);
 
         // Adjust zoom so the smaller asteroids look smaller
-        let distance = 1.5 + 1.5 * (1 - Math.pow(radiusMeters / constants.MAX_ASTEROID_RADIUS, 0.3));
+        let distance = 2.4;
+        if (varyDistance) distance = 1.5 + 1.5 * (1 - Math.pow(radiusMeters / constants.MAX_ASTEROID_RADIUS, 0.3));
+
         camera.position.set(0, 0, distance * radiusMeters);
         camera.far = 4 * radiusMeters;
         camera.updateProjectionMatrix();
@@ -67,7 +69,7 @@ const RenderedAsteroid = ({ asteroid, brightness = 1, onReady, webWorkerPool }) 
         }
       }
     }
-  }, [asteroid?.i, brightness, !!webWorkerPool]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [asteroid?.id, brightness, !!webWorkerPool]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 };

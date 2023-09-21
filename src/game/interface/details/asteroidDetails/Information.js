@@ -312,7 +312,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   return (
     <Wrapper>
       <LeftPane>
-        <DataReadout style={{ fontSize: '18px', padding: '0 0 5px' }} label="Asteroid ID#">{asteroid.i}</DataReadout>
+        <DataReadout style={{ fontSize: '18px', padding: '0 0 5px' }} label="Asteroid ID#">{asteroid.id}</DataReadout>
         <DataReadout style={{ fontSize: '18px', padding: '0 0 5px' }} label="Owner">
           <AddressLink address={asteroid.Nft?.owner} chain={asteroid.Nft?.chain} />
         </DataReadout>
