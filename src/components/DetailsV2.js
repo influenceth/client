@@ -92,7 +92,8 @@ const Header = styled.h1`
 
 const ContentWrapper = styled.div`
   flex: 1;
-  padding: 12px 20px 15px;
+  overflow: hidden;
+  padding: 12px 20px 0;
 
   ${p => {
     if (p.edgeToEdge) {
