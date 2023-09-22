@@ -48,7 +48,6 @@ export function CrewProvider({ children }) {
   }, [allRecruits]);
 
   const { data: selectedCrewLocation, isLoading: crewLocationLoading } = useCrewLocation(selectedCrewId);
-  console.log('selectedCrewLocation', selectedCrewLocation);
 
   const crewmateMap = useMemo(() => {
     if (!crewsLoading && !crewmatesLoading) {

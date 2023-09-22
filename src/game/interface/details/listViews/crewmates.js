@@ -1,6 +1,5 @@
-import { useCallback, useMemo } from 'react';
-import styled from 'styled-components';
-import { Crewmate } from '@influenceth/sdk';
+import { useMemo } from 'react';
+import { Address, Crewmate } from '@influenceth/sdk';
 
 import {
   CrewIcon,
@@ -8,6 +7,8 @@ import {
   MyAssetIcon,
 } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
+import OnClickLink from '~/components/OnClickLink';
+import MarketplaceLink from '~/components/MarketplaceLink';
 import useCrewContext from '~/hooks/useCrewContext';
 import formatters from '~/lib/formatters';
 
@@ -33,6 +34,31 @@ const useColumns = () => {
         sortField: 'Name.name.raw',
         selector: row => formatters.crewmateName(row),
         unhideable: true
+      },
+      {
+        key: 'owner',
+        label: 'Owner',
+        sortField: 'Nft.owner',
+        selector: row => {
+          if (row.Nft?.owner) {
+            return (
+              <MarketplaceLink
+                chain={row.Nft.chain}
+                assetType="account"
+                id={row.Nft.owner}>
+                {(onClick, setRefEl) => (
+                  <OnClickLink ref={setRefEl} onClick={onClick}>
+                    {account && Address.areEqual(row.Nft.owner, account)
+                      ? `you`
+                      : `${row.Nft.owner.substr(0, 6)}...${row.Nft.owner.substr(-4)}`
+                    }
+                  </OnClickLink>
+                )}
+              </MarketplaceLink>
+            );
+          }
+          return 'Un-owned';
+        }
       },
       {
         key: 'crew',

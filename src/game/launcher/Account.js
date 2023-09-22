@@ -248,7 +248,7 @@ const MainButton = styled(ButtonAlt)`
 
 const Account = () => {
   const history = useHistory();
-  const { account, login, logout } = useAuth();
+  const { account, authenticating, login, logout } = useAuth();
   const { captain, loading: crewLoading, crew, crewmateMap } = useCrewContext();
 
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
@@ -293,7 +293,7 @@ const Account = () => {
         <AccountCTA>
           <NotConnected>
             <span>Account Not Connected</span>
-            <ButtonPill onClick={login}>Login</ButtonPill>
+            <ButtonPill disabled={authenticating} onClick={login}>Login</ButtonPill>
           </NotConnected>
         </AccountCTA>
       }

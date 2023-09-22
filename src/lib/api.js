@@ -90,7 +90,7 @@ const api = {
     // but since es already has a flattened location, it feels like a worthwhile shortcut
     const response = await instance.post(`/_search/crew`, { query: { bool: { filter: { term: { id } } } } });
     const [crew] = (response.data.hits.hits.map((h) => h._source) || []);
-    
+
     const lotLocation = crew.Location.locations.find((l) => l.label === Entity.IDS.LOT);
     return {
       asteroidId: crew.Location.locations.find((l) => Number(l.label) === Entity.IDS.ASTEROID)?.id,

@@ -7,7 +7,6 @@ import Button from '~/components/ButtonAlt';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import { PlusIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
-import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 
 const Wrapper = styled.div`
@@ -29,7 +28,7 @@ const ButtonWrapper = styled.div`
 `;
 
 const LoginMenu = () => {
-  const { account, login } = useAuth();
+  const { account, authenticating, login } = useAuth();
   const history = useHistory();
 
   const [tooltip, status, onClick] = useMemo(() => {
@@ -57,7 +56,7 @@ const LoginMenu = () => {
         width={88} />
       <ButtonWrapper>
         <label>{status}</label>
-        <Button onClick={onClick} subtle width="140">
+        <Button onClick={onClick} disabled={authenticating} subtle width="140">
           {tooltip}
         </Button>
       </ButtonWrapper>

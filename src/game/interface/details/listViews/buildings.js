@@ -65,34 +65,26 @@ const useColumns = () => {
         },
       },
       {
-        key: 'controller',
-        label: 'Lot Controller',
+        key: 'crew',
+        label: 'Crew',
         sortField: 'Control.controller.id',
         selector: row => {
           if (row.Control?.controller?.id) {
             return row.Control?.controller?.id === crew?.i ? 'you' : row.Control?.controller?.id.toLocaleString();
           }
+
           return 'Uncontrolled';
         }
       },
       {
-        key: 'occupier',
-        label: 'Lot Occupier',
-        // sortField: 'lot.occupier.i',
-        selector: row => {
-          return 'TODO'; // TODO: ecs refactor
-          // if (row.lot?.occupier?.i) {
-          //   return row.lot.occupier.i === crew?.i ? 'you' : row.lot.occupier.i.toLocaleString();
-          // }
-          // return 'Unoccupied';
-        }
-      },
-      {
         key: 'occupation',
-        label: 'Occupation Type',
+        label: 'Lot Use Type',
         selector: row => {
-          return 'TODO';  // TODO: ecs refactor
-          // return row.lot?.occupier?.isSquatter ? 'Squatting' : (row.lot?.controller?.isRenter ? 'Renting' : '');
+          if (row.meta?.lotOccupation) {
+            return row.meta.lotOccupation.charAt(0).toUpperCase() + row.meta.lotOccupation.slice(1);
+          }
+
+          return 'Un-occupied';
         },
       },
       {

@@ -112,7 +112,6 @@ const useColumns = () => {
         label: 'Owner',
         sortField: 'Nft.owner',
         selector: row => {
-          // TODO: refine to show the correct chain owner when owned by bridge
           if (row.Nft?.owner) {
             return (
               <MarketplaceLink

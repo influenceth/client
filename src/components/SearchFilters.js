@@ -108,7 +108,7 @@ const radiusConfig = {
 
 const axisConfig = {
   fieldNames: { min: 'axisMin', max: 'axisMax' },
-  fieldNote: formatters.period,
+  // fieldNote: formatters.period,
   labels: { min: 'Min (AU)', max: 'Max (AU)' },
   rangeLimits: { min: constants.MIN_AXIS, max: constants.MAX_AXIS }
 };

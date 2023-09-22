@@ -41,7 +41,7 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
   const [ownedByAddress, setOwnedByAddress] =  useState('');
   const [highlightColors, setHighlightColors] = useState({ ...(fieldHighlight?.colorMap || defaultColorMap) });
 
-  const addressInput = useRef(); 
+  const addressInput = useRef();
 
   useEffect(() => {
     const newTypes = { ...initialValues };
@@ -59,7 +59,7 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
       }
     }
     setTypes(newTypes);
-    
+
   }, [filters[fieldName]]);
 
   const onClick = useCallback((k) => (e) => {

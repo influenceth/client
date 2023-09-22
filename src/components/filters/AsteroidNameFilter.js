@@ -9,7 +9,7 @@ import { GoIcon } from '~/components/Icons';
 
 const fieldName = 'name';
 
-const NameFilter = ({ assetType, filters, onChange }) => {  
+const NameFilter = ({ assetType, filters, onChange }) => {
   const asteroidId = useRef();
 
   const selectAsteroidId = useStore((s) => s.dispatchOriginSelected);
@@ -36,7 +36,7 @@ const NameFilter = ({ assetType, filters, onChange }) => {
       fieldName={fieldName}
       filters={filters}
       title="Name & Id">
-      
+
       <InputBlock>
         <label>Asteroid Name</label>
         <div>
@@ -47,13 +47,12 @@ const NameFilter = ({ assetType, filters, onChange }) => {
             value={filters[fieldName] || ''} />
         </div>
       </InputBlock>
-      
+
       <InputBlock>
         <label>Asteroid Id</label>
         <div>
           <UncontrolledTextInput
             ref={asteroidId}
-            onBlur={(e) => e.currentTarget.value = ''}
             onKeyDown={handleKeydown}
             placeholder="Pick by Asteroid Id..."
             step={1}

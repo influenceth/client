@@ -94,7 +94,7 @@ const RangeFilter = ({
       highlightFieldName={highlightFieldName}
       title={title}
       highlightColorRange={highlightColorRange}>
-      
+
       <InputBlock>
         <label>{labels.min}</label>
         <div>
@@ -110,7 +110,7 @@ const RangeFilter = ({
           {fieldHighlight && <ColorPicker initialColor={colorFrom} onChange={(c) => setColorFrom(c)} />}
         </div>
       </InputBlock>
-      
+
       <InputBlock>
         <label>{labels.max}</label>
         <div>

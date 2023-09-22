@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import { useThrottle } from '@react-hook/throttle';
 import { useQuery } from 'react-query';
 import { Entity } from '@influenceth/sdk';
@@ -6,6 +6,7 @@ import esb from 'elastic-builder';
 
 import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
+import constants from '~/lib/constants';
 
 const filtersToQuery = {};
 
@@ -44,8 +45,8 @@ filtersToQuery.asteroids = (filters) => {
 
   if (filters.axisMin || filters.axisMax) {
     const axisRange = esb.rangeQuery('Orbit.a');
-    if (filters.axisMin) axisRange.gte(filters.axisMin);
-    if (filters.axisMax) axisRange.lte(filters.axisMax);
+    if (filters.axisMin) axisRange.gte(filters.axisMin * constants.AU / 1000);
+    if (filters.axisMax) axisRange.lte(filters.axisMax * constants.AU / 1000);
     queryBuilder.filter(axisRange);
   }
 
@@ -64,9 +65,11 @@ filtersToQuery.asteroids = (filters) => {
   }
 
   if (filters.name) {
-    queryBuilder.filter(
-      esb.multiMatchQuery(['Name.name', 'id'], filters.name)
-    );
+    queryBuilder.should(esb.matchQuery(['Name.name'], filters.name));
+
+    if (filters.name.match(/^[0-9]+$/)) {
+      queryBuilder.should(esb.termQuery('id', Number(filters.name)));
+    }
   }
 
   return queryBuilder;
