@@ -207,8 +207,9 @@ const Log = styled.div`
     border-top: 1px solid ${borderColor};
     flex: 1;
     height: 100%;
-    overflow-x: hidden;
     overflow-y: auto;
+    padding-right: 5px;
+    margin-right: -5px;
     & ul {
       margin-right: -5px;
       @media (max-width: ${breakpoint}px) {
@@ -268,8 +269,10 @@ const CoverImage = styled.div`
 const MainContainer = styled.div`
   display: flex;
   flex-direction: column;
+  height: 100%;
   justify-content: flex-start;
   margin-top: 60px;
+  overflow: hidden;
   padding: 25px 35px;
   position: relative;
   z-index: 1;
@@ -279,7 +282,7 @@ const AboveFold = styled.div`
   align-items: stretch;
   display: flex;
   flex-direction: row;
-  min-height: 300px;
+  min-height: 375px;
 `;
 const CrewDetailsContainer = styled.div`
   flex: 1;
@@ -319,7 +322,6 @@ const Stat = styled.div`
     opacity: 0.7;
   }
 `;
-
 
 const NameWrapper = styled.div`
   align-items: center;
@@ -457,7 +459,10 @@ const EmptySlot = styled.div`
   }
 `;
 
-const BelowFold = styled.div``;
+const BelowFold = styled.div`
+  flex: 1;
+  height: 0;
+`;
 
 // TODO: this should be in sdk
 Name.getTypeRegex = (entityType) => {
@@ -717,6 +722,7 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
                 disabled: true
               }
             ]}
+            paneCss={{ display: 'flex', flexDirection: 'column', overflowY: 'hidden' }}
             panes={[
               (
                 <History>

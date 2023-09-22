@@ -62,17 +62,17 @@ const AvatarWrapper = styled.div`
   
   ${p => {
     const widthMult = p.width / 96;
-    const iconWidth = p.lessPadding ? 50 * widthMult : 67 * widthMult;
-    const fontSize = iconWidth * 22 / 67;
+    const iconWidth = p.lessPadding ? 58 * widthMult : 67 * widthMult;
+    const fontSize = iconWidth * 17 / 67;
     return `
       width: ${p.width}px;
       ${Avatar} {
-        padding: ${p.lessPadding ? 0 : `${5 * widthMult}px ${5 * widthMult}px ${8 * widthMult}px`};
+        padding: ${p.lessPadding ? 0 : `${3 * widthMult}px`};
       }
       ${StyledCaptainIcon} {
         font-size: ${fontSize}px;
-        margin-left: ${-iconWidth / 2}px;
-        top: ${(p.lessPadding ? -1 : -7) * widthMult}px;
+        margin-left: ${-iconWidth / 2.58}px;
+        top: ${(p.lessPadding ? 1 : -2) * widthMult}px;
       }
       ${StyledTriangleTip} {
         height: ${20 * widthMult}px;

@@ -85,6 +85,8 @@ const Pane = styled.div`
   flex: 1;
   overflow-x: hidden;
   overflow-y: auto;
+
+  ${p => p.css || ''}
 `;
 
 const TabContainer = ({ 
@@ -97,6 +99,7 @@ const TabContainer = ({
   negativeTopMargin,
   onChange,
   panes,
+  paneCss,
   tabs,
   tabCss
 }) => {
@@ -138,7 +141,7 @@ const TabContainer = ({
           </Tab>
         ))}
       </Tabs>
-      <Pane>
+      <Pane css={paneCss || {}}>
         {panes && panes[active]}
       </Pane>
     </Container>
