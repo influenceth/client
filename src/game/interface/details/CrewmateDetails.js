@@ -448,6 +448,7 @@ const CrewmateDetails = () => {
               </CrewLabels>
               <Management>
                 <ManagementSubtitle>Management</ManagementSubtitle>
+                {/* this should be deprecated now that initialization will be required
                 {!crewmate.Name?.name && (
                   <Form
                     title={<><EditIcon /><span>Set Name</span></>}
@@ -459,11 +460,11 @@ const CrewmateDetails = () => {
                       Names must be unique, and can only include letters, numbers, and single spaces.
                     </Text>
                     <NameForm>
-                      {/* TODO: ecs refactor -- use Name.getTypeRegex, etc below */}
                       <TextInput
                         initialValue=""
-                        maxlength={31}
-                        pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
+                        minlength={Name.TYPES[Entity.IDS.CREWMATE].min}
+                        maxlength={Name.TYPES[Entity.IDS.CREWMATE].max}
+                        pattern={Name.getTypeRegex(Entity.IDS.CREWMATE)}
                         disabled={boolAttr(changingName)}
                         resetOnChange={i}
                         onChange={(v) => setNewName(v)} />
@@ -477,6 +478,7 @@ const CrewmateDetails = () => {
                     </NameForm>
                   </Form>
                 )}
+                */}
 
                 <MarketplaceLink
                   chain={crewmate?.Nft?.chain}

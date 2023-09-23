@@ -216,6 +216,7 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
   }, [ filters, from, size, sort ]);
 
   return useQuery(
+    // TODO: convert this to 'entities' model of cache keys
     [ 'search', esAssetType, query ],
     () => esAssetType ? api.searchAssets(esAssetType, query) : [],
     {

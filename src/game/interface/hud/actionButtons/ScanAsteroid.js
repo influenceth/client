@@ -24,7 +24,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
     }
 
     // resource scan requires crew to be on asteroid
-    if (scanType === 'RESOURCE' && (!crew._location.asteroidId || crew._location.asteroidId !== asteroid?.id)) {
+    if (scanType === 'RESOURCE' && (!crew._location?.asteroidId || crew._location?.asteroidId !== asteroid?.id)) {
       flags.disabled = true;
       flags.disabledReason = 'Crew must be Present';
     }

@@ -1,12 +1,13 @@
 import { useQuery } from 'react-query';
+import { Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 
-const useShip = (shipId) => {
+const useShip = (id) => {
   return useQuery(
-    [ 'ships', shipId ],
-    () => api.getShip(shipId),
-    { enabled: !!shipId }
+    [ 'entity', Entity.IDS.SHIP, id ],
+    () => api.getShip(id),
+    { enabled: !!id }
   );
 };
 

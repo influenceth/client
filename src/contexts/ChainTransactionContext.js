@@ -1,11 +1,10 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Entity, System } from '@influenceth/sdk';
+import { Asteroid, System } from '@influenceth/sdk';
 import { utils as ethersUtils } from 'ethers';
-import { CallData, Contract, shortString, uint256 } from 'starknet';
 import { isEqual, get } from 'lodash';
 
+import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useAuth from '~/hooks/useAuth';
-import useEvents from '~/hooks/useEvents';
 import useStore from '~/hooks/useStore';
 import useInterval from '~/hooks/useInterval';
 import api from '~/lib/api';
@@ -14,96 +13,6 @@ const RETRY_INTERVAL = 5e3; // 5 seconds
 const ChainTransactionContext = createContext();
 
 const getNow = () => Math.floor(Date.now() / 1000);
-
-
-
-// const test = () => {
-//   const x = Contract.compile('run_system', {
-//     name: shortString.encodeShortString('RecruitAdalian'),
-//     calldata: [
-//       Entity.IDS.CREWMATE, 0, // crewmate entity
-//       1, // class
-//       1, 28,// impactful
-//       3, 4, 36, 5, // cosmetic
-//       1, // gender
-//       1, // body
-//       1, // face
-//       0, // hair
-//       3, // hair color
-//       31, // clothes
-//       Entity.IDS.BUILDING, 1, // building entity
-//       Entity.IDS.CREW, 3 // caller crew entity
-//     ]
-//   });
-//   console.log('pmk test', x);
-// };
-
-////////////
-// TODO: move back to the sdk
-
-const formatCalldataType = (type, value) => {
-  if (type === 'ContractAddress') {
-    return value;
-  }
-  else if (type === 'Entity') {
-    return [value.label, value.id];
-  }
-  else if (type === 'Number') {
-    return value;
-  }
-  else if (type === 'String') {
-    return value;
-  }
-  else if (type === 'BigNumber') {
-    return BigInt(value);
-  }
-  else if (type === 'Ether') {
-    return uint256.bnToUint256(value);
-  }
-};
-
-const formatSystemCalldata = (name, vars) => {  // TODO: note name change
-  const system = System.Systems[name];  // TODO: "System.Systems" --> "Systems" in sdk
-  if (!system) throw new Error(`Unknown system: ${name}`);
-
-  const x = system.inputs.reduce((acc, { name, type, isArray }) => {
-    console.log('pmk input', name, type, isArray, vars[name]);
-    if (isArray) acc.push(vars[name]?.length || 0);
-    (isArray ? vars[name] : [vars[name]]).forEach((v) => {
-      console.log('pmk v', v);
-      const formattedVar = formatCalldataType(type, v);
-      try {
-        (Array.isArray(formattedVar) ? formattedVar : [formattedVar]).forEach((val) => {
-          console.log('pmk val', val);
-          acc.push(val);
-        });
-      } catch (e) {
-        console.warn(`pmk ${name} could not be formatted`, vars[name], e);
-      }
-    }, []);
-    return acc;
-  }, []);
-  console.log('pmk x', x);
-  return x;
-};
-
-////////////
-
-const getApproveEthCall = ({ amount }) => ({
-  contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
-  entrypoint: 'approve',
-  // TODO: put in format like the others
-  calldata: CallData.compile([
-    formatCalldataType('ContractAddress', process.env.REACT_APP_STARKNET_DISPATCHER),
-    formatCalldataType('Ether', amount), // TODO: back to sdk version
-  ])
-});
-
-const getRunSystemCall = (name, input) => ({
-  contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
-  entrypoint: 'run_system',
-  calldata: CallData.compile({ name, calldata: formatSystemCalldata(name, input) }),  // TODO: back to sdk version
-});
 
 // TODO: equalityTest default of 'i' doesn't make sense anymore
 
@@ -190,12 +99,12 @@ const customConfigs = {
 
 export function ChainTransactionProvider({ children }) {
   const { account, walletContext: { starknet } } = useAuth();
-  const { events, lastBlockNumber } = useEvents();
+  const { activities/*, lastBlockNumber*/ } = useActivitiesContext();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchFailedTransaction = useStore(s => s.dispatchFailedTransaction);
   const dispatchPendingTransaction = useStore(s => s.dispatchPendingTransaction);
-  const dispatchPendingTransactionUpdate = useStore(s => s.dispatchPendingTransactionUpdate);
+  // const dispatchPendingTransactionUpdate = useStore(s => s.dispatchPendingTransactionUpdate);
   const dispatchPendingTransactionComplete = useStore(s => s.dispatchPendingTransactionComplete);
   const dispatchClearTransactionHistory = useStore(s => s.dispatchClearTransactionHistory);
   const pendingTransactions = useStore(s => s.pendingTransactions);
@@ -213,13 +122,11 @@ export function ChainTransactionProvider({ children }) {
 
       return systemKeys.reduce((acc, systemName) => {
         const config = {
-          confirms: 1,
           equalityTest: ['i'],
           ...(customConfigs[systemName] || {})
         };
 
         acc[systemName] = {
-          confirms: config.confirms,
           equalityTest: config.equalityTest,
 
           execute: async (rawVars) => {
@@ -229,7 +136,7 @@ export function ChainTransactionProvider({ children }) {
             const calls = [];
             for (let runSystem of runSystems) {
               const vars = customConfigs[runSystem]?.preprocess ? customConfigs[runSystem].preprocess(rawVars) : rawVars;
-              calls.push(getRunSystemCall(runSystem, vars));
+              calls.push(System.getRunSystemCall(runSystem, vars, process.env.REACT_APP_STARKNET_DISPATCHER));
               if (customConfigs[runSystem]?.getPrice) {
                 totalPrice += await customConfigs[runSystem].getPrice(vars);
               }
@@ -239,18 +146,11 @@ export function ChainTransactionProvider({ children }) {
               console.log('totalPrice', totalPrice);
               const amount = totalPrice * 1e18; // convert to wei
               console.log('totalPrice amount', amount);
-              calls.unshift(getApproveEthCall({ amount }));
+              calls.unshift(System.getApproveEthCall(amount, process.env.REACT_APP_ERC20_TOKEN_ADDRESS, process.env.REACT_APP_STARKNET_DISPATCHER));
             }
 
             console.log('pmk calls2', calls, starknet.account);
             return starknet.account.execute(calls);
-          },
-
-          onEventReceived: (event, vars) => {
-            if (config.getEventAlert) {
-              createAlert(config.getEventAlert(vars));
-            }
-            config.onEventReceived && config.onEventReceived(event, vars);
           },
 
           onConfirmed: (event, vars) => {
@@ -294,7 +194,7 @@ export function ChainTransactionProvider({ children }) {
 
           // NOTE: waitForTransaction is slow -- often slower than server to receive and process
           //  event and send back to frontend... so we are using it just to listen for errors
-          //  (events from backend will demonstrate success)
+          //  (activities from backend will demonstrate success)
           starknet.provider.waitForTransaction(txHash, RETRY_INTERVAL)
             // .then((receipt) => {
             //   if (receipt) {
@@ -319,78 +219,63 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [contracts, pendingTransactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const lastBlockNumberHandled = useRef(lastBlockNumber);
   useEffect(() => {
     if (contracts && pendingTransactions?.length) {
-      const currentBlockNumber = lastBlockNumber + 1;
-
       pendingTransactions.forEach((tx) => {
-        const { key, vars, txHash, txEvent } = tx;
+        const { key, vars, txHash } = tx;
 
-        // if event had previously been received, just waiting for confirms
-        // TODO: can we safely deprecate confirms? should it always be 1? 0?
-        if (txEvent && currentBlockNumber >= txEvent.blockNumber + contracts[key].confirms) {
+        // check for event
+        // TODO (enhancement): only need to check new activities diff (not all)
+        const txHashBInt = BigInt(txHash);
+
+        console.log(
+          'pending tx', activities, txHashBInt
+        );
+
+        const txEvent = (activities || []).find((a) => a.event.transactionHash && BigInt(a.event.transactionHash) === txHashBInt)?.event;
+        if (txEvent) {
           contracts[key].onConfirmed(txEvent, vars);
           dispatchPendingTransactionComplete(txHash);
-
-        // else, check for event
-        // TODO (enhancement): only need to check new events
-        } else {
-          const txHashBInt = BigInt(txHash);
-          const txEvent = (events || []).find((e) => e.transactionHash && BigInt(e.transactionHash) === txHashBInt);
-          if (txEvent) {
-            if (contracts[key].getEventAlert) {
-              createAlert(contracts[key].getEventAlert(vars));
-            }
-            contracts[key].onEventReceived && contracts[key].onEventReceived(txEvent, vars);
-
-            // if this event has already been confirmed, trigger completion too; else, just update status
-            if (currentBlockNumber >= txEvent.blockNumber + contracts[key].confirms) {
-              contracts[key].onConfirmed(txEvent, vars);
-              dispatchPendingTransactionComplete(txHash);
-            } else {
-              dispatchPendingTransactionUpdate(txHash, { txEvent });
-            }
-
-          // TODO: fix below
-          //  - move this into its own effect dependent only on block number changes so not running getTransactionReceipt so often
-
-          // // if pending transaction has not turned into an event within 45 seconds
-          // // check every useEffect loop if tx is rejected (or missing)
-          // } else if (lastBlockNumber > lastBlockNumberHandled.current) {
-          //   if (chainTime > Math.floor(tx.timestamp / 1000) + 180) { // TODO: lower this
-          //     starknet.provider.getTransactionReceipt(txHash)
-          //       .then((receipt) => {
-          //         console.info(`RECEIPT for tx ${txHash}`, receipt);  // TODO: remove this
-          //         if (receipt && receipt.status === 'REJECTED') {
-          //           dispatchPendingTransactionComplete(txHash);
-          //           dispatchFailedTransaction({
-          //             key,
-          //             vars,
-          //             txHash,
-          //             err: receipt.status_data || 'Transaction was rejected.'
-          //           });
-          //         }
-          //       })
-          //       .catch((err) => {
-          //         console.warn(err);
-          //         if (err?.message.includes('Transaction hash not found')) {
-          //           dispatchPendingTransactionComplete(txHash);
-          //           dispatchFailedTransaction({
-          //             key,
-          //             vars,
-          //             txHash,
-          //             err: 'Transaction was rejected.'
-          //           });
-          //         }
-          //       });
-          //   }
-          }
         }
+
+        //
+        // TODO: fix below: move this into its own effect dependent only on block number changes so not running getTransactionReceipt so often
+
+        // // if pending transaction has not turned into an event within 45 seconds
+        // // check every useEffect loop if tx is rejected (or missing)
+        // // TODO: should potentially also try loading full activities using $since tx to see if we missed a ws message
+        // } else if (lastBlockNumber > lastBlockNumberHandled.current) {
+        //   if (chainTime > Math.floor(tx.timestamp / 1000) + 180) { // TODO: lower this
+        //     starknet.provider.getTransactionReceipt(txHash)
+        //       .then((receipt) => {
+        //         console.info(`RECEIPT for tx ${txHash}`, receipt);  // TODO: remove this
+        //         if (receipt && receipt.status === 'REJECTED') {
+        //           dispatchPendingTransactionComplete(txHash);
+        //           dispatchFailedTransaction({
+        //             key,
+        //             vars,
+        //             txHash,
+        //             err: receipt.status_data || 'Transaction was rejected.'
+        //           });
+        //         }
+        //       })
+        //       .catch((err) => {
+        //         console.warn(err);
+        //         if (err?.message.includes('Transaction hash not found')) {
+        //           dispatchPendingTransactionComplete(txHash);
+        //           dispatchFailedTransaction({
+        //             key,
+        //             vars,
+        //             txHash,
+        //             err: 'Transaction was rejected.'
+        //           });
+        //         }
+        //       });
+        //   }
+        // }
       });
     }
-    lastBlockNumberHandled.current = lastBlockNumber;
-  }, [events?.length, lastBlockNumber]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activities?.length]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const execute = useCallback(async (key, vars) => {
     if (contracts && contracts[key]) {
@@ -401,11 +286,24 @@ export function ChainTransactionProvider({ children }) {
       //  below when their user prompt is closed instead of rejected (the user has to
       //  reopen the prompt and reject it to get out of here)
       setPromptingTransaction(true);
+
       try {
+        // TODO: when there are consistent block times on starknet next year, we can remove this extra
+        // check and just use Date.now() (setting the buffer on the $since query to blockTime)
+        // get block so can tag pending transaction with accurate timestamp
+        let block;
+        try {
+          block = await starknet.provider.getBlock();
+        } catch (e) {
+          console.warn('Could not fetch pending block', e)
+        }
+
+        // execute
         const tx = await execute(vars);
         dispatchPendingTransaction({
           key,
           vars,
+          timestamp: block?.timestamp ? (block.timestamp * 1000) : null,
           txHash: tx.transaction_hash,
           waitingOn: 'TRANSACTION'
         });
@@ -468,3 +366,332 @@ export function ChainTransactionProvider({ children }) {
 };
 
 export default ChainTransactionContext;
+
+
+
+// TODO: ecs refactor
+//  below is all the old contract code, remove this when done it as a reference
+
+// // TODO: now that all are on dispatcher, could probably collapse a lot of redundant code in getContracts
+// const getContracts = (account) => ({
+//   // 'PURCHASE_ASTEROID': {
+//   //   address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//   //   config: configs.Dispatcher,
+//   //   transact: (contract) => async ({ i }) => {
+//   //     const { price } = await contract.call('AsteroidSale_getPrice', [i]);
+//   //     const priceParts = Object.values(price).map((part) => BigInt(part).toString());
+//   //     const calls = [
+//   //       {
+//   //         contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+//   //         entrypoint: 'approve',
+//   //         calldata: [
+//   //           process.env.REACT_APP_STARKNET_DISPATCHER,
+//   //           ...priceParts
+//   //         ]
+//   //       },
+//   //       {
+//   //         contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+//   //         entrypoint: 'AsteroidSale_purchase',
+//   //         calldata: [
+//   //           i,
+//   //           ...priceParts
+//   //         ]
+//   //       },
+//   //     ];
+//   //     return account.execute(calls);
+//   //   }
+//   // },
+
+//   'NAME_ASTEROID': {
+//     transact: ({ i, name }) => {
+//       // return account.execute([
+//       //   getRunSystemCall('ChangeName', { i, name })
+//       // ])
+//     }
+
+//     // await accounts[0].invoke(contract, 'execute', {
+//     //   method: name, calldata: [ 2, shortStringToFelt('Asteroid'), 1, shortStringToFelt('AdaliaPrime') ]
+//     // });
+
+//     // contract.invoke('Asteroid_setName', [
+//     //   i,
+//     //   shortString.encodeShortString(name)
+//     // ])
+//   },
+//   // 'NAME_ASTEROID': {
+//   //   address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//   //   config: configs.Dispatcher,
+//   //   transact: (contract) => ({ i, name }) => contract.invoke('Asteroid_setName', [
+//   //     i,
+//   //     shortString.encodeShortString(name)
+//   //   ])
+//   // },
+//   'START_ASTEROID_SCAN': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ i, boost, _packed, _proofs }) => contract.invoke('Asteroid_startScan', [
+//       i,
+//       _packed.features,
+//       _proofs.features,
+//       boost,
+//       _packed.bonuses,
+//       _proofs.boostBonus,
+//     ]),
+//     isEqual: (txVars, vars) => txVars.i === vars.i
+//   },
+//   'FINISH_ASTEROID_SCAN': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ i }) => contract.invoke('Asteroid_finishScan', [i]),
+//   },
+//   'SET_ACTIVE_CREW': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ crewId, crewmates }) => {
+//       if (crewId) {
+//         return contract.invoke(
+//           'Crew_setComposition',
+//           [
+//             crewId,
+//             [...crewmates]
+//           ]
+//         );
+//       } else {
+//         return contract.invoke(
+//           'Crew_mint',
+//           [
+//             [...crewmates]
+//           ]
+//         );
+//       }
+//     },
+//     isEqual: () => true,
+//   },
+//   // // NOTE: this is just for debugging vvv
+//   // 'PURCHASE_UNINITIALIZED_CREWMATE': {
+//   //   address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//   //   config: configs.Dispatcher,
+//   //   transact: (contract) => async () => {
+//   //     const { price } = await contract.call('CrewmateSale_getPrice');
+//   //     const priceParts = Object.values(price).map((part) => part.toNumber());
+//   //     const calls = [
+//   //       {
+//   //         contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+//   //         entrypoint: 'approve',
+//   //         calldata: [
+//   //           process.env.REACT_APP_STARKNET_DISPATCHER,
+//   //           ...priceParts
+//   //         ]
+//   //       },
+//   //       {
+//   //         contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+//   //         entrypoint: 'Crewmate_purchaseAdalian',
+//   //         calldata: [
+//   //           ...priceParts,
+//   //         ]
+//   //       },
+//   //     ];
+
+//   //     return account.execute(calls);
+//   //   },
+//   //   isEqual: () => true,
+//   // },
+//   // // ^^^
+//   'INITIALIZE_CREWMATE': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => async ({ i, name, features, traits, crewId = 0 }) => {
+//       return contract.invoke('Crewmate_initializeAdalian', [
+//         i,
+//         shortString.encodeShortString(name),
+//         [
+//           features.crewCollection,
+//           features.gender,
+//           features.body,
+//           features.crewClass,
+//           features.title,
+//           features.clothes,
+//           features.hair,
+//           features.face,
+//           features.hairColor,
+//           features.head,
+//           features.item,
+//         ].map((x) => x.toString()),
+//         [
+//           traits.drive,
+//           traits.classImpactful,
+//           traits.driveCosmetic,
+//           traits.cosmetic,
+//         ].map((t) => t.id.toString()),
+//         crewId
+//       ]);
+//     },
+//     isEqual: (vars, txVars) => vars.i === txVars.i,
+//   },
+//   'PURCHASE_AND_INITIALIZE_CREWMATE': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => async ({ name, features, traits, crewId }) => {
+//       const { price } = await contract.call('CrewmateSale_getPrice');
+//       const priceParts = Object.values(price).map((part) => part.toNumber());
+//       const calls = [
+//         {
+//           contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+//           entrypoint: 'approve',
+//           calldata: [
+//             process.env.REACT_APP_STARKNET_DISPATCHER,
+//             ...priceParts
+//           ]
+//         },
+//         {
+//           contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
+//           entrypoint: 'Crewmate_purchaseAndInitializeAdalian',
+//           calldata: [
+//             ...priceParts,
+//             shortString.encodeShortString(name),
+//             '11', // array len v
+//             ...[
+//               features.crewCollection,
+//               features.gender,
+//               features.body,
+//               features.crewClass,
+//               features.title,
+//               features.clothes,
+//               features.hair,
+//               features.face,
+//               features.hairColor,
+//               features.head,
+//               features.item,
+//             ].map((x) => x.toString()),
+//             '4', // array len v
+//             ...[
+//               traits.drive,
+//               traits.classImpactful,
+//               traits.driveCosmetic,
+//               traits.cosmetic,
+//             ].map((t) => t.id.toString()),
+//             crewId.toString()
+//           ]
+//         },
+//       ];
+
+//       return account.execute(calls);
+//     },
+//     isEqual: () => true,
+//   },
+//   'NAME_CREW': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ i, name }) => contract.invoke(
+//       'Crewmate_setName',
+//       [
+//         i,
+//         shortString.encodeShortString(name)
+//       ]
+//     ),
+//   },
+
+//   'START_CORE_SAMPLE': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ asteroidId, lotId, resourceId, crewId, sampleId = 0 }) => contract.invoke(
+//       'CoreSample_startSampling',
+//       [asteroidId, lotId, resourceId, sampleId, crewId]
+//     ),
+//     isEqual: (txVars, vars) => ['asteroidId', 'lotId', 'crewId'],
+//   },
+//   'FINISH_CORE_SAMPLE': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ asteroidId, lotId, resourceId, crewId, sampleId }) => contract.invoke(
+//       'CoreSample_finishSampling',
+//       [asteroidId, lotId, resourceId, sampleId, crewId]
+//     ),
+//     isEqual: (txVars, vars) => ['asteroidId', 'lotId', 'crewId'],
+//   },
+
+//   'PLAN_CONSTRUCTION': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ buildingType, asteroidId, lotId, crewId }) => contract.invoke(
+//       'Construction_plan',
+//       [buildingType, asteroidId, lotId, crewId]
+//     ),
+//     isEqual: (txVars, vars) => ['asteroidId', 'lotId', 'crewId']
+//   },
+//   'UNPLAN_CONSTRUCTION': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
+//       'Construction_unplan',
+//       [asteroidId, lotId, crewId]
+//     ),
+//     isEqual: 'ALL'
+//   },
+
+//   'START_CONSTRUCTION': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
+//       'Construction_start',
+//       [asteroidId, lotId, crewId]
+//     ),
+//     isEqual: 'ALL'
+//   },
+//   'FINISH_CONSTRUCTION': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
+//       'Construction_finish',
+//       [asteroidId, lotId, crewId]
+//     ),
+//     isEqual: 'ALL'
+//   },
+//   'DECONSTRUCT': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
+//       'Construction_deconstruct',
+//       [asteroidId, lotId, crewId]
+//     ),
+//     isEqual: 'ALL'
+//   },
+
+//   'START_EXTRACTION': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ asteroidId, lotId, crewId, resourceId, sampleId, amount, destinationLotId, destinationInventoryId }) => contract.invoke(
+//       'Extraction_start',
+//       [asteroidId, lotId, resourceId, sampleId, amount, destinationLotId, destinationInventoryId, crewId]
+//     ),
+//     isEqual: (txVars, vars) => ['asteroidId', 'lotId', 'crewId']
+//   },
+//   'FINISH_EXTRACTION': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ asteroidId, lotId, crewId }) => contract.invoke(
+//       'Extraction_finish',
+//       [asteroidId, lotId, crewId]
+//     ),
+//     isEqual: 'ALL'
+//   },
+
+//   'START_DELIVERY': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ asteroidId, originLotId, originInvId, destLotId, destInvId, resources, crewId }) => contract.invoke(
+//       'Inventory_transferStart',
+//       [asteroidId, originLotId, originInvId, destLotId, destInvId, Object.keys(resources), Object.values(resources), crewId]
+//     ),
+//     isEqual: (txVars, vars) => ['asteroidId', 'originLotId', 'crewId']
+//   },
+//   'FINISH_DELIVERY': {
+//     address: process.env.REACT_APP_STARKNET_DISPATCHER,
+//     config: configs.Dispatcher,
+//     transact: (contract) => ({ asteroidId, destLotId, destInvId, deliveryId, crewId }) => contract.invoke(
+//       'Inventory_transferFinish',
+//       [asteroidId, destLotId, destInvId, deliveryId, crewId]
+//     ),
+//     isEqual: (txVars, vars) => ['asteroidId', 'crewId', 'deliveryId', 'destLotId']
+//   }
+// });

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Entity } from '@influenceth/sdk';
+import { Asteroid, Entity, Name } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
@@ -417,12 +417,12 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                     loading={boolAttr(changingName)}>
                     <Text>Names must be unique, and can only include letters, numbers, and single spaces.</Text>
                     <NameForm>
-                      {/* TODO: ecs refactor -- use Name.getTypeRegex, etc below */}
                       <TextInput
                         disabled={boolAttr(changingName)}
                         initialValue=""
-                        maxlength={31}
-                        pattern="^(([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+){1,31}$"
+                        minlength={Name.TYPES[Entity.IDS.ASTEROID].min}
+                        maxlength={Name.TYPES[Entity.IDS.ASTEROID].max}
+                        pattern={Name.getTypeRegex(Entity.IDS.ASTEROID)}
                         onChange={(v) => setNewName(v)} />
                       <IconButton
                         data-tip="Submit"

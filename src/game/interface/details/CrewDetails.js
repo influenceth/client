@@ -1,62 +1,43 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { Address, Building, Crewmate, Entity, Name, Time } from '@influenceth/sdk';
-import { FaBookOpen as BioIcon } from 'react-icons/fa';
-import { RiBarChart2Fill as StatsIcon } from 'react-icons/ri';
+import { Building, Entity, Name } from '@influenceth/sdk';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 
 import CoverImageSrc from '~/assets/images/modal_headers/OwnedCrew.png';
 import Button from '~/components/ButtonAlt';
-import CrewCard from '~/components/CrewCard';
-import CrewTraitIcon from '~/components/CrewTraitIcon';
-import DataReadout from '~/components/DataReadout';
+import CrewCardFramed from '~/components/CrewCardFramed';
+import CrewmateInfoPane from '~/components/CrewmateInfoPane';
 import Details from '~/components/DetailsModal';
-import Form from '~/components/Form';
-import IconButton from '~/components/IconButton';
 import {
-  CheckCircleIcon,
   CheckIcon,
-  ClaimIcon,
   CloseIcon,
   EditIcon,
   FoodIcon,
-  HexagonIcon,
   LocationIcon,
   MyAssetIcon,
   PlusIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
 import LogEntry from '~/components/LogEntry';
-import MarketplaceLink from '~/components/MarketplaceLink';
-import TabContainer from '~/components/TabContainer';
-import Text from '~/components/Text';
-import useAuth from '~/hooks/useAuth';
-// import useCrewAssignments from '~/hooks/useCrewAssignments';
-import useCrewmate from '~/hooks/useCrewmate';
-import useCrewLocation from '~/hooks/useCrewLocation';
-import useNameAvailability from '~/hooks/useNameAvailability';
-import useChangeName from '~/hooks/useChangeName';
-import useStore from '~/hooks/useStore';
-import { boolAttr } from '~/lib/utils';
-import useCrewContext from '~/hooks/useCrewContext';
-import ChoicesDialog from '~/components/ChoicesDialog';
-import { getCloudfrontUrl } from '~/lib/assetUtils';
-import SelectHabitatDialog from '~/components/SelectHabitatDialog';
-import SelectUninitializedCrewmateDialog from '~/components/SelectUninitializedCrewmateDialog';
-import TextInput from '~/components/TextInput';
-import formatters from '~/lib/formatters';
-import useCrew from '~/hooks/useCrew';
-import CrewCardFramed from '~/components/CrewCardFramed';
-import useCrewmates from '~/hooks/useCrewmates';
-import theme from '~/theme';
-import useAsteroid from '~/hooks/useAsteroid';
-import useBuilding from '~/hooks/useBuilding';
-import useShip from '~/hooks/useShip';
 import { useLotLink } from '~/components/LotLink';
 import { useShipLink } from '~/components/ShipLink';
-import CrewmateInfoPane from '~/components/CrewmateInfoPane';
+import TabContainer from '~/components/TabContainer';
+import TextInput from '~/components/TextInput';
 import useActivities from '~/hooks/useActivities';
+import useAsteroid from '~/hooks/useAsteroid';
+import useBuilding from '~/hooks/useBuilding';
+import useChangeName from '~/hooks/useChangeName';
+import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
+import useCrewLocation from '~/hooks/useCrewLocation';
+import useCrewmates from '~/hooks/useCrewmates';
+import useNameAvailability from '~/hooks/useNameAvailability';
+import useShip from '~/hooks/useShip';
+import useStore from '~/hooks/useStore';
+import formatters from '~/lib/formatters';
+import { boolAttr } from '~/lib/utils';
+import theme from '~/theme';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -463,24 +444,6 @@ const BelowFold = styled.div`
   flex: 1;
   height: 0;
 `;
-
-// TODO: this should be in sdk
-Name.getTypeRegex = (entityType) => {
-  if (!Name.TYPES[entityType]) return null;
-
-  const { min, max, alpha, num, sym } = Name.TYPES[entityType];
-  let regexPart;
-  if (sym) {
-    if (alpha && num) regexPart = `[^\\s]`;
-    else if (alpha && !num) regexPart = `[^0-9\\s]`;
-    else if (!alpha && num) regexPart = `[^a-zA-Z\\s]`;
-    else if (!alpha && !num) regexPart = `[^a-zA-Z0-9\\s]`;
-  } else {
-    regexPart = `[${alpha ? 'a-zA-Z' : ''}${num ? '0-9' : ''}]`;
-  }
-
-  return `^(?=.{${min},${max}}$)(${regexPart}+\\s)*${regexPart}+$`;
-};
 
 const noop = () => {/* noop */};
 

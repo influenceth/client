@@ -1,6 +1,6 @@
 import { createContext, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { Crewmate } from '@influenceth/sdk';
+import { Crewmate, Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
@@ -15,19 +15,19 @@ export function CrewProvider({ children }) {
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
 
   const { data: crews, isLoading: crewsLoading } = useQuery(
-    [ 'crews', 'owned', account ],
+    [ 'entities', Entity.IDS.CREW, 'owned', account ],
     () => api.getOwnedCrews(account),
     { enabled: !!account }
   );
 
   const { data: allCrewmates, isLoading: crewmatesLoading } = useQuery(
-    [ 'crewmates', 'owned', account ],
+    [ 'entities', Entity.IDS.CREWMATE, 'owned', account ],
     () => api.getCrewmates(crews.reduce((acc, c) => [...acc, ...c.Crew.roster], [])),
     { enabled: crews?.length > 0 }
   );
 
   const { data: allRecruits, isLoading: recruitsLoading } = useQuery(
-    [ 'crewmates', 'uninitialized', account ],
+    [ 'entities', Entity.IDS.CREWMATE, 'uninitialized', account ],
     async () => {
       // return all account-owned crewmates that are not part of a crew (thus must need initialization)
       return (await api.getAccountCrewmates(account)).filter((c) => !c.Control?.controller?.id);

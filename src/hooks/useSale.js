@@ -1,8 +1,5 @@
-import { useQuery } from 'react-query';
-import useAuth from '~/hooks/useAuth';
 import { Entity } from '@influenceth/sdk';
 
-import api from '~/lib/api';
 import usePriceConstants from './usePriceConstants';
 
 const useSale = (type) => {

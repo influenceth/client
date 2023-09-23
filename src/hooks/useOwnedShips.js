@@ -1,4 +1,5 @@
 import { useQuery } from 'react-query';
+import { Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useCrewContext from './useCrewContext';
@@ -9,7 +10,7 @@ const useOwnedShips = (otherCrew = null) => {
   const useCrewId = otherCrew?.id || crew?.id;
 
   return useQuery(
-    [ 'ships', 'owner', useCrewId ],
+    [ 'entities', Entity.IDS.SHIP, 'owned', useCrewId ],
     () => api.getCrewShips(useCrewId),
     { enabled: !!useCrewId }
   );

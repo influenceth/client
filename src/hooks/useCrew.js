@@ -1,12 +1,13 @@
 import { useQuery } from 'react-query';
+import { Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 
-const useCrew = (i) => {
+const useCrew = (id) => {
   return useQuery(
-    [ 'crew', i ],
-    () => api.getCrew(i),
-    { enabled: !!i }
+    [ 'entity', Entity.IDS.CREW, id ],
+    () => api.getCrew(id),
+    { enabled: !!id }
   );
 };
 

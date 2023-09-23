@@ -5,7 +5,7 @@ import api from '~/lib/api';
 const useActivities = (entity) => {
   return useQuery(
     [ 'activities', entity.label, entity.id ],
-    () => api.getActivities(entity),
+    () => api.getEntityActivities(entity),
     { enabled: !!entity }
   );
 };

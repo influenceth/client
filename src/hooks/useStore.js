@@ -493,13 +493,13 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.failedTransactions = state.failedTransactions.filter((tx) => tx.txHash !== txHashOrTimestamp && tx.timestamp !== txHashOrTimestamp);
     })),
 
-    dispatchPendingTransaction: ({ key, vars, txHash }) => set(produce(state => {
+    dispatchPendingTransaction: ({ key, vars, timestamp, txHash }) => set(produce(state => {
       if (!state.pendingTransactions) state.pendingTransactions = [];
       state.pendingTransactions.push({
         key,
         vars,
         txHash,
-        timestamp: Date.now()
+        timestamp: timestamp || Date.now() // 1695408166
       });
     })),
 

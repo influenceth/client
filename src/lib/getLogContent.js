@@ -18,6 +18,7 @@ import {
   SurfaceTransferIcon,
   UnplanBuildingIcon,
 } from '~/components/Icons';
+import getActivityConfig from './activities';
 
 const getTxLink = (event) => {
   if (event.__t === 'Ethereum') {
@@ -79,6 +80,23 @@ const entries = {
   //
   // Events
   //
+
+  ActivityLog: (e) => {
+    const config = getActivityConfig(e);
+    if (!config) return null;
+
+    const logContent = config.getLogContent();
+    if (!logContent) return null;
+    
+    const { icon, content, txHash } = logContent;
+    return {
+      icon,
+      content,
+      txLink: txHash ? `${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${txHash}` : null,
+    }
+  },
+
+
 
   Asteroid_Transfer: (e) => ({
     icon: <TransferIcon />,

@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { Asteroid, Entity, Location } from '@influenceth/sdk';
+import { Asteroid, Building, Entity } from '@influenceth/sdk';
+import esb from 'elastic-builder';
 
 import useStore from '~/hooks/useStore';
 
@@ -70,7 +71,7 @@ const api = {
     return response.data;
   },
 
-  getActivities: async (entity) => {
+  getEntityActivities: async (entity) => {
     const response = await instance.get(`/${apiVersion}/entities/${Entity.packEntity(entity)}/activity`);
     return response.data;
   },
@@ -80,15 +81,33 @@ const api = {
     return response.data;
   },
 
-  getCrewPlannedBuildings: async () => {
-    const response = await instance.get(`/${apiVersion}/user/plans`);  // TODO: server-side update
-    return response.data;
+  getCrewPlannedBuildings: async (crewId) => {
+    const queryBuilder = esb.boolQuery();
+    queryBuilder.filter(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUS_IDS.PLANNED));
+    queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    q.from(0);
+    q.size(10000);
+    const query = q.toJSON();
+
+    const response = await instance.post(`/_search/building`, query);
+    return response.data.hits.hits.map((h) => h._source) || [];
   },
 
   getCrewLocation: async (id) => {
     // this is a little unconventional compared to the rest of the api (i.e. to pull a single id from es),
     // but since es already has a flattened location, it feels like a worthwhile shortcut
-    const response = await instance.post(`/_search/crew`, { query: { bool: { filter: { term: { id } } } } });
+    const q = esb.requestBodySearch();
+    const queryBuilder = esb.boolQuery();
+    queryBuilder.filter(esb.termQuery('id', id));
+    q.query(queryBuilder);
+    q.from(0);
+    q.size(1);
+    const query = q.toJSON();
+
+    const response = await instance.post(`/_search/crew`, query);
     const [crew] = (response.data.hits.hits.map((h) => h._source) || []);
 
     const lotLocation = crew.Location.locations.find((l) => l.label === Entity.IDS.LOT);
@@ -106,11 +125,12 @@ const api = {
   //   return response.data;
   // },
 
-  getEvents: async (query) => {
-    const response = await instance.get(`/v1${/* TODO: ? apiVersion */''}/user/events${query ? `?${buildQuery(query)}` : ''}`);
+  getActivities: async (query) => {
+    const response = await instance.get(`/${apiVersion}/user/activity${query ? `?${buildQuery(query)}` : ''}`);
+    console.log({ response });
     return {
-      events: response.data,
-      totalHits: query.returnTotal ? parseInt(response.headers['total-hits']) : undefined,
+      activities: response.data,
+      totalHits: query?.returnTotal ? parseInt(response.headers['total-hits']) : undefined,
       blockNumber: parseInt(response.headers['starknet-block-number']),
       // ethBlockNumber: parseInt(response.headers['eth-block-number'])  // NOTE: probably not needed anymore
     };

@@ -5,12 +5,12 @@ import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router
 import { useDetectGPU } from '@react-three/drei';
 
 import { ActionItemProvider } from '~/contexts/ActionItemContext';
+import { ActivitiesProvider } from '~/contexts/ActivitiesContext';
 import { AuthProvider } from '~/contexts/AuthContext';
 import { CrewProvider } from './contexts/CrewContext';
 import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
 import { ClockProvider } from '~/contexts/ClockContext';
 import { DevToolProvider } from '~/contexts/DevToolContext';
-import { EventsProvider } from '~/contexts/EventsContext';
 import { WalletProvider } from '~/contexts/WalletContext';
 import { WebsocketProvider } from '~/contexts/WebsocketContext';
 import Audio from '~/game/Audio';
@@ -144,7 +144,7 @@ const Game = () => {
         <CrewProvider>
           <DevToolProvider>
             <WebsocketProvider>
-              <EventsProvider>
+              <ActivitiesProvider>
                 <ChainTransactionProvider>
                   <ActionItemProvider>
                     <ThemeProvider theme={theme}>
@@ -172,7 +172,7 @@ const Game = () => {
                     </ThemeProvider>
                   </ActionItemProvider>
                 </ChainTransactionProvider>
-              </EventsProvider>
+              </ActivitiesProvider>
             </WebsocketProvider>
           </DevToolProvider>
         </CrewProvider>

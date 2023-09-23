@@ -8,7 +8,7 @@ const useControlledAsteroids = () => {
   const { crew } = useCrewContext();
 
   return useQuery(
-    [ 'asteroids', 'list', 'controlled' ],
+    [ 'entities', Entity.IDS.ASTEROID, 'controlled', crew?.id ],
     () => api.getEntities({ match: { 'Control.controller.id': crew?.id }, label: Entity.IDS.ASTEROID }),
     { enabled: !!crew?.id }
   );

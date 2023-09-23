@@ -23,7 +23,7 @@ export function ActionItemProvider({ children }) {
 
   const { data: plannedBuildings, isLoading: plannedBuildingsLoading } = useQuery(
     [ 'planned', crew?.i ],
-    () => api.getCrewPlannedBuildings(),
+    () => api.getCrewPlannedBuildings(crew?.i),
     { enabled: !!crew?.i }
   );
 
@@ -106,9 +106,30 @@ export function ActionItemProvider({ children }) {
     }
   }, [nextCompletionTime]);
 
+
+  // create unified events file
+  // potentially create unified systems file
+  // report "unhandled" events (would need to mark ignored ones explicitly)
+
+  // if activity has event.returnValues.finishTime, treat as actionitem (should also have event.timestamp)
+  // 
+  const Events = {
+    NameChanged: {
+      // log content, finishing event (+ equality)
+      // invalidations
+
+      // action item format
+    }
+  }
+
   const allVisibleItems = useMemo(() => {
     if (!account || !token) return [];
 
+    // transactions (equality)
+    // events (equality)
+    // invalidations
+
+    // return the readyItems whose "finishing transaction" is not already pending
     const visibleReadyItems = readyItems.filter((item) => {
       if (pendingTransactions) {
         switch (item.event.name) {

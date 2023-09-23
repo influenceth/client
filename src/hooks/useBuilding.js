@@ -1,10 +1,11 @@
 import { useQuery } from 'react-query';
+import { Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 
 const useBuilding = (id) => {
   return useQuery(
-    [ 'buildings', id ],
+    [ 'entity', Entity.IDS.BUILDING, id ],
     () => api.getBuilding(id),
     { enabled: !!id }
   );

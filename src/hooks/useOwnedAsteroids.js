@@ -8,7 +8,7 @@ const useOwnedAsteroids = () => {
   const { account } = useAuth();
 
   return useQuery(
-    [ 'asteroids', 'list', account ],
+    [ 'entities', Entity.IDS.ASTEROID, 'owned', account ],
     async () => {
       if (!account) return [];
       return await api.getEntities({ match: { 'Nft.owners.starknet': account }, label: Entity.IDS.ASTEROID });

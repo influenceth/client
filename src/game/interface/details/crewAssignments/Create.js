@@ -1,7 +1,7 @@
 import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import { Crewmate, Entity } from '@influenceth/sdk';
+import { Crewmate, Entity, Name } from '@influenceth/sdk';
 import {
   BiMinus as LockedIcon,
   BiRedo as RedoIcon,
@@ -1113,9 +1113,10 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
                           <TextInput
                             disabled={finalizing || !crewmate._canRename}
                             initialValue={name}
-                            maxlength={31}
+                            minlength={Name.TYPES[Entity.IDS.CREWMATE].min}
+                            maxlength={Name.TYPES[Entity.IDS.CREWMATE].max}
+                            pattern={Name.getTypeRegex(Entity.IDS.CREWMATE)}
                             onChange={handleNameChange}
-                            pattern="^([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+$"
                             placeholder="Enter Name" />
                         </>
                       )}

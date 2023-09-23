@@ -26,7 +26,7 @@ const usePagedEvents = () => {
     // TODO (enhancement): if not using any filters, should probably use react-query here...
     //  but will need to invalidate these queries when get event updates from WS
 
-    api.getEvents({ page, pageSize, types, returnTotal: true })
+    api.getActivities({ page, pageSize, types, returnTotal: true })
       .then(({ events, totalHits }) => {
         setData({
           hits: events.map((e) => ({
