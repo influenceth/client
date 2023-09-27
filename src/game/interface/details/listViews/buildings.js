@@ -39,13 +39,13 @@ const useColumns = () => {
       {
         key: 'asteroid',
         label: 'Asteroid',
-        sortField: 'meta.location[0].id', // TODO: will this work? does sequential sorting matter?
+        sortField: 'meta.asteroid.name',
         selector: row => {
           const loc = Entity.toPosition(row.Location?.location);
           return (
             <>
               <LocationLink asteroidId={loc.asteroidId} />
-              <span>{loc.asteroidId ? loc.asteroidId.toLocaleString() : null}</span>
+              <span>{row.meta?.asteroid?.name || `#${loc.asteroidId}`}</span>
             </>
           );
         },

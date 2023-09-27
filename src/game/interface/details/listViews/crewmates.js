@@ -64,8 +64,8 @@ const useColumns = () => {
         key: 'crew',
         icon: <CrewIcon />,
         label: 'Crew',
-        sortField: 'Control.controller.id',
-        selector: row => row.Control?.controller?.id,
+        sortField: 'meta.crew.name',
+        selector: row => row.Control?.controller?.id ? (row.meta?.crew?.name || `#${row.Control?.controller?.id}`) : null
       },
       {
         key: 'class',
