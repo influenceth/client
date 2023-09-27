@@ -131,8 +131,7 @@ const api = {
     return {
       activities: response.data,
       totalHits: query?.returnTotal ? parseInt(response.headers['total-hits']) : undefined,
-      blockNumber: parseInt(response.headers['starknet-block-number']),
-      // ethBlockNumber: parseInt(response.headers['eth-block-number'])  // NOTE: probably not needed anymore
+      blockNumber: parseInt(response.headers['starknet-block-number'])
     };
   },
 

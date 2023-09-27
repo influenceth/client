@@ -44,7 +44,7 @@ const formatters = {
 
     const lotCount = Asteroid.getSurfaceArea(0, r);
     const price = base + lot * lotCount;
-    return price.toLocaleString([], { maximumFractionDigits: 4 });
+    return price.toLocaleString([], { maximumFractionDigits: 3 });
   },
 
   buildingName: (b, fallbackText) => {
