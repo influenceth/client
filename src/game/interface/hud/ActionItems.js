@@ -271,6 +271,328 @@ const ActionItemRow = styled.div`
   }
 `;
 
+// TODO: remove these once reference no longer needed
+
+// const formatItem = (item) => {
+//   const formatted = {
+//     key: item.key,
+//     icon: null,
+//     label: '',
+//     asteroidId: null,
+//     plotId: null,
+//     resourceId: null,
+//     locationDetail: '',
+//     completionTime: item.data?.completionTime || 0,
+//     ago: (new moment(new Date(1000 * (item.data?.completionTime || 0)))).fromNow(),
+//     onClick: null
+//   };
+
+//   switch(item.event.name) {
+//     case 'Dispatcher_AsteroidStartScan':
+//       formatted.icon = <ScanAsteroidIcon />;
+//       formatted.label = 'Asteroid Scan';
+//       formatted.asteroidId = item.event.returnValues?.asteroidId;
+//       formatted.onClick = ({ history }) => {
+//         history.push(`/asteroids/${formatted.asteroidId}/resources`);
+//       };
+//       break;
+
+//     case 'Dispatcher_CoreSampleStartSampling':
+//       const isImprovement = item.assets?.coreSample?.initialYield > 0;
+//       formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <CoreSampleIcon />;
+//       formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
+//       formatted.asteroidId = item.event.returnValues?.asteroidId;
+//       formatted.plotId = item.event.returnValues?.lotId;
+//       formatted.resourceId = item.event.returnValues?.resourceId;
+//       formatted.locationDetail = Inventory.RESOURCES[item.event.returnValues?.resourceId].name;
+//       formatted.onClick = ({ openDialog }) => {
+//         openDialog(isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
+//       };
+//       break;
+
+//     case 'Dispatcher_ConstructionStart':
+//       formatted.icon = <ConstructIcon />;
+//       formatted.label = `${Capable.TYPES[item.assets.building.type]?.name || 'Building'} Construction`;
+//       formatted.asteroidId = item.assets.asteroid.i;
+//       formatted.plotId = item.assets.lot.i;
+//       formatted.onClick = ({ openDialog }) => {
+//         openDialog('CONSTRUCT');
+//       };
+//       break;
+
+//     case 'Dispatcher_ExtractionStart':
+//       formatted.icon = <ExtractionIcon />;
+//       formatted.label = `${Inventory.RESOURCES[item.event.returnValues?.resourceId]?.name || 'Resource'} Extraction`;
+//       formatted.asteroidId = item.event.returnValues?.asteroidId;
+//       formatted.plotId = item.event.returnValues?.lotId;
+//       formatted.resourceId = item.event.returnValues?.resourceId;
+//       formatted.onClick = ({ openDialog }) => {
+//         openDialog('EXTRACT_RESOURCE');
+//       };
+//       break;
+
+//     case 'Dispatcher_InventoryTransferStart':
+//       formatted.icon = <SurfaceTransferIcon />;
+//       formatted.label = 'Surface Transfer';
+//       formatted.asteroidId = item.event.returnValues?.asteroidId;
+//       formatted.plotId = item.event.returnValues?.destinationLotId;  // after start, link to destination
+//       formatted.onClick = ({ openDialog }) => {
+//         openDialog('SURFACE_TRANSFER', { deliveryId: item.assets.delivery?.deliveryId });
+//       };
+//       break;
+
+//     default:
+//       console.log('Unhandled ActionItem', item);
+//       break;
+//   }
+//   return formatted;
+// };
+
+// const formatPlans = (item) => {
+//   return {
+//     key: item.key,
+//     icon: <PlanBuildingIcon />,
+//     label: `${item.building.type} Site Plan`,
+//     crewId: item.occupier,
+//     asteroidId: item.asteroid,
+//     plotId: item.i,
+//     resourceId: null,
+//     locationDetail: '',
+//     completionTime: item.waitingFor,
+//     onClick: ({ openDialog }) => {
+//       openDialog('CONSTRUCT');
+//     }
+//   };
+// };
+
+// const formatTx = (item) => {
+//   const formatted = {
+//     key: item.key,
+//     txHash: item.txHash,
+//     icon: null,
+//     label: '',
+//     crewId: null,
+//     asteroidId: null,
+//     plotId: null,
+//     resourceId: null,
+//     locationDetail: '',
+//     completionTime: null,
+//     onClick: null,
+//     _timestamp: item.timestamp // (only used for dismissing failed tx's)
+//   };
+//   switch(item.event?.event || item.key) {
+//     case 'PURCHASE_ASTEROID':
+//       formatted.icon = <PurchaseAsteroidIcon />;
+//       formatted.label = 'Purchase Asteroid';
+//       formatted.asteroidId = item.vars.i;
+//       break;
+
+//     case 'NAME_ASTEROID':
+//       formatted.icon = <PurchaseAsteroidIcon />;
+//       formatted.label = 'Name Asteroid';
+//       formatted.asteroidId = item.vars.i;
+//       formatted.locationDetail = item.vars.name;
+//       formatted.onClick = ({ history }) => {
+//         history.push(`/asteroids/${formatted.asteroidId}`);
+//       };
+//       break;
+
+//     case 'START_ASTEROID_SCAN':
+//       formatted.icon = <ScanAsteroidIcon />;
+//       formatted.label = 'Asteroid Scan';
+//       formatted.asteroidId = item.vars.i;
+//       formatted.onClick = ({ history }) => {
+//         history.push(`/asteroids/${formatted.asteroidId}/resources`);
+//       };
+//       break;
+//     case 'FINISH_ASTEROID_SCAN':
+//       formatted.icon = <ScanAsteroidIcon />;
+//       formatted.label = 'Retrieve Scan Results';
+//       formatted.asteroidId = item.vars.i;
+//       formatted.onClick = ({ history }) => {
+//         history.push(`/asteroids/${formatted.asteroidId}/resources`);
+//       };
+//       break;
+
+//     case 'SET_ACTIVE_CREW':
+//       formatted.icon = <CrewIcon />;
+//       formatted.label = 'Update Crew';
+//       formatted.onClick = ({ history }) => {
+//         history.push(`/owned-crew`);
+//       };
+//       break;
+//     case 'NAME_CREWMATE':
+//       formatted.icon = <CrewMemberIcon />;
+//       formatted.label = 'Name Crewmate';
+//       formatted.onClick = ({ history }) => {
+//         history.push(`/crew/${item.vars.i}`);
+//       };
+//       break;
+//     case 'INITIALIZE_CREWMATE':
+//       formatted.icon = <CrewIcon />;
+//       formatted.label = 'Initialize Crewmate';
+//       formatted.onClick = ({ history }) => {
+//         if (item.vars.sessionId) {
+//           history.push(`/crew-assignment/${item.vars.sessionId}/create`);
+//         } else {
+//           history.push(`/owned-crew`);
+//         }
+//       };
+//       break;
+//     case 'PURCHASE_AND_INITIALIZE_CREWMATE':
+//       formatted.icon = <CrewIcon />;
+//       formatted.label = 'Mint Crewmate';
+//       formatted.onClick = ({ history }) => {
+//         if (item.vars.sessionId) {
+//           history.push(`/crew-assignment/${item.vars.sessionId}/create`);
+//         } else {
+//           history.push(`/owned-crew`);
+//         }
+//       };
+//       break;
+
+//     case 'START_CORE_SAMPLE':
+//       const isImprovement = item.vars.sampleId > 0;
+//       formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <CoreSampleIcon />;
+//       formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
+//       formatted.asteroidId = item.vars.asteroidId;
+//       formatted.plotId = item.vars.plotId;
+//       formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
+//       formatted.onClick = ({ openDialog }) => {
+//         // TODO: in case of failure (and improvement mode), should link with selected sampleId
+//         // (low priority b/c would have to fail and would have to have closed dialog)
+//         openDialog(isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
+//       };
+//       break;
+//     case 'FINISH_CORE_SAMPLE':
+//       formatted.icon = <CoreSampleIcon />;
+//       formatted.label = `Core Analysis`;
+//       formatted.asteroidId = item.vars.asteroidId;
+//       formatted.plotId = item.vars.plotId;
+//       formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
+//       formatted.onClick = ({ openDialog, plot }) => {
+//         const isImprovement = item.vars.sampleId && plot?.coreSamples?.length > 0 && !!plot.coreSamples.find((s) => (
+//           s.sampleId === item.vars.sampleId
+//           && s.resourceId === formatted.resourceId
+//           && s.initialYield > 0
+//         ));
+//         openDialog(isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
+//       };
+//       break;
+
+//     case 'PLAN_CONSTRUCTION':
+//       formatted.icon = <PlanBuildingIcon />;
+//       formatted.label = `Plan ${Capable.TYPES[item.vars.capableType]?.name || 'Building'} Site`;
+//       formatted.asteroidId = item.vars.asteroidId;
+//       formatted.plotId = item.vars.plotId;
+//       formatted.onClick = ({ openDialog }) => {
+//         // TODO: in case of failure, should link with selected building type
+//         // (low priority b/c would have to fail and would have to have closed dialog)
+//         openDialog('PLAN_BUILDING');
+//       };
+//       break;
+//     case 'UNPLAN_CONSTRUCTION':
+//       formatted.icon = <UnplanBuildingIcon />;
+//       formatted.label = 'Unplan Building Site';
+//       formatted.asteroidId = item.vars.asteroidId;
+//       formatted.plotId = item.vars.plotId;
+//       formatted.onClick = ({ openDialog }) => {
+//         openDialog('UNPLAN_BUILDING');
+//       };
+//       break;
+//     case 'START_CONSTRUCTION':
+//       formatted.icon = <ConstructIcon />;
+//       formatted.label = 'Start Construction';
+//       formatted.asteroidId = item.vars.asteroidId;
+//       formatted.plotId = item.vars.plotId;
+//       formatted.onClick = ({ openDialog }) => {
+//         openDialog('CONSTRUCT');
+//       };
+//       break;
+//     case 'FINISH_CONSTRUCTION':
+//       formatted.icon = <ConstructIcon />;
+//       formatted.label = 'Finish Construction';
+//       formatted.asteroidId = item.vars.asteroidId;
+//       formatted.plotId = item.vars.plotId;
+//       formatted.onClick = ({ openDialog }) => {
+//         openDialog('CONSTRUCT');
+//       };
+//       break;
+//     case 'DECONSTRUCT':
+//       formatted.icon = <DeconstructIcon />;
+//       formatted.label = 'Deconstruct';
+//       formatted.asteroidId = item.vars.asteroidId;
+//       formatted.plotId = item.vars.plotId;
+//       formatted.onClick = ({ openDialog }) => {
+//         openDialog('DECONSTRUCT');
+//       };
+//       break;
+
+//     case 'START_EXTRACTION':
+//       formatted.icon = <ExtractionIcon />;
+//       formatted.label = `${Inventory.RESOURCES[item.vars.resourceId]?.name || 'Resource'} Extraction`;
+//       formatted.asteroidId = item.vars.asteroidId;
+//       formatted.plotId = item.vars.plotId;
+//       formatted.resourceId = item.vars.resourceId;
+//       formatted.onClick = ({ openDialog }) => {
+//         // TODO: in case of failure, should link with sample preset, destination, and amount selection
+//         // (low priority b/c would have to fail and would have to have closed dialog)
+//         openDialog('EXTRACT_RESOURCE');
+//       };
+//       break;
+//     case 'FINISH_EXTRACTION':
+//       formatted.icon = <ExtractionIcon />;
+//       formatted.label = 'Finish Extraction';
+//       formatted.asteroidId = item.vars.asteroidId;
+//       formatted.plotId = item.vars.plotId;
+//       formatted.onClick = ({ openDialog }) => {
+//         openDialog('EXTRACT_RESOURCE');
+//       };
+//       break;
+
+//     case 'START_DELIVERY':
+//       formatted.icon = <SurfaceTransferIcon />;
+//       formatted.label = 'Start Transfer';
+//       formatted.asteroidId = item.vars.asteroidId;
+//       formatted.plotId = item.vars.originPlotId;  // at start, link to origin (in case of failure)
+//       formatted.onClick = ({ openDialog }) => {
+//         // TODO: in case of failure, should link with selected resource and destination
+//         // (low priority b/c would have to fail and would have to have closed dialog)
+//         openDialog('SURFACE_TRANSFER');
+//       };
+//       break;
+//     case 'FINISH_DELIVERY':
+//       formatted.icon = <SurfaceTransferIcon />;
+//       formatted.label = 'Finish Transfer';
+//       formatted.asteroidId = item.vars.asteroidId;
+//       formatted.plotId = item.vars.destPlotId;  // after start, link to destination
+//       formatted.onClick = ({ openDialog }) => {
+//         openDialog('SURFACE_TRANSFER', { deliveryId: item.vars.deliveryId });
+//       };
+//       break;
+//     default:
+//       console.log('Unhandled ActionItems tx', item);
+//       break;
+//   }
+//   return formatted;
+// };
+
+const itemColors = {
+  pending: hexToRGB(theme.colors.purple),
+  failed: hexToRGB(theme.colors.error),
+  ready: theme.colors.mainRGB,
+  unready: '90, 90, 90',
+  plans: '248, 133, 44',
+};
+
+const statuses = {
+  pending: 'Processing',
+  failed: 'Failed',
+  ready: 'Ready',
+  unready: '',
+  plans: ''
+};
+
 const ActionItem = ({ data }) => {
   const history = useHistory();
   const currentAsteroid = useStore(s => s.asteroids);

@@ -169,7 +169,7 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, starknet?.account?.address, starknet?.account?.baseUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, starknet?.account?.address, starknet?.account?.provider?.baseUrl, session?.account]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionWaiters = useRef([]);
 
@@ -188,7 +188,10 @@ export function ChainTransactionProvider({ children }) {
   useEffect(() => {
     if (contracts && pendingTransactions?.length) {
       pendingTransactions.forEach(({ key, vars, txHash }) => {
+        // (sanity check) this should not be possible since pendingTransaction should not be created
+        // without txHash... so we aren't even reporting this error to user since should not happen
         if (!txHash) return dispatchPendingTransactionComplete(txHash);
+
         if (!transactionWaiters.current.includes(txHash)) {
           transactionWaiters.current.push(txHash);
 
@@ -208,6 +211,12 @@ export function ChainTransactionProvider({ children }) {
             // })
             .catch((err) => {
               contracts[key].onTransactionError(err, vars);
+              dispatchFailedTransaction({
+                key,
+                vars,
+                txHash,
+                err: err?.message || 'Transaction was rejected.'
+              });
               dispatchPendingTransactionComplete(txHash);
             })
             .finally(() => {
@@ -272,6 +281,36 @@ export function ChainTransactionProvider({ children }) {
       });
     }
   }, [activities?.length]);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (contracts && pendingTransactions?.length) {
+      pendingTransactions.filter((tx) => !tx.txEvent).forEach((tx) => {
+        // if it's been 45+ seconds, start checking on each block if has been rejected (or missing)
+        if (chainTime > Math.floor(tx.timestamp / 1000) + 45) {
+          const { key, vars, txHash } = tx;
+
+          genericProvider.getTransactionReceipt(txHash)
+            .then((receipt) => {
+              if (receipt && receipt.status === 'REJECTED') {
+                contracts[key].onTransactionError(receipt, vars);
+                dispatchFailedTransaction({
+                  key,
+                  vars,
+                  txHash,
+                  err: receipt.status_data || 'Transaction was rejected.'
+                });
+                dispatchPendingTransactionComplete(txHash);
+              }
+            })
+            .catch((err) => {
+              console.warn(err);
+            });
+        }
+      });
+    }
+  }, [lastBlockNumber])
+
+
 
   const execute = useCallback(async (key, vars) => {
     if (contracts && contracts[key]) {

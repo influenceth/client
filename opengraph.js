@@ -15,7 +15,7 @@ const getOpengraphTags = async (originalUrl) => {
     'twitter:site': '@influenceth',
     'og:title': 'Influence | Space Strategy MMO',
     'og:description': 'Space strategy MMO built on Ethereum',
-    'og:image': 'https://res.cloudinary.com/influenceth/social/influence.jpg',
+    'og:image': 'https://d1c1daundk1ax0.cloudfront.net/influence/production/images/misc/influence.jpg',
     'og:image:width': '630',
     'og:image:height': '1200',
   };
@@ -23,7 +23,7 @@ const getOpengraphTags = async (originalUrl) => {
   try {
     switch(urlParts[0]) {
       // TODO: asteroid, crew sheet
-      
+
       case 'crew-assignments': {
         if (urlParts[1]) {
           const response = await instance.get(`/crew-assignments/${urlParts[1]}`);
@@ -42,7 +42,7 @@ const getOpengraphTags = async (originalUrl) => {
         }
         break;
       }
-  
+
       case 'crew-assignment': {
         if (urlParts[1]) {
           // TODO: if we aren't going to use anything user-specific, we should probably just

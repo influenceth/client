@@ -151,7 +151,7 @@ const Intro = (props) => {
 
       {showingTrailer && createPortal(
         <Cutscene
-          source={`${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/influence/goerli/videos/intro.m3u8`}
+          source={`${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/videos/intro.m3u8`}
           allowSkip
           onComplete={onTrailerComplete}
         />,

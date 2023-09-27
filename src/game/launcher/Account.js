@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import LoadingSpinner from 'react-spinners/PuffLoader';
@@ -130,17 +130,31 @@ const NotConnected = styled.div`
   }
 `;
 
-const LogoutLink = styled.a`
-  color: ${p => p.theme.colors.main};
+const UpperRightLinks = styled.div`
   position: absolute;
   right: 15px;
-  text-decoration: none;
   top: 10px;
+  & a {
+    text-decoration: none;
+    transition: opacity 250ms ease;
 
-  &:hover {
-    text-decoration: underline;
+    &:first-child {
+      color: ${p => p.theme.colors.main};
+    }
+    &:not(:first-child) {
+      color: #CCC;
+      opacity: 0.3;
+    }
+
+    &:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
   }
 `;
+
+const SessionLink = styled.a``;
+const LogoutLink = styled.a``;
 
 const CaptainDetails = styled.div`
   left: 170px;
@@ -248,7 +262,7 @@ const MainButton = styled(ButtonAlt)`
 
 const Account = () => {
   const history = useHistory();
-  const { account, authenticating, login, logout } = useAuth();
+  const { account, authenticating, login, logout, walletContext } = useAuth();
   const { captain, loading: crewLoading, crew, crewmateMap } = useCrewContext();
 
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
@@ -269,7 +283,7 @@ const Account = () => {
     if (!hasSeenIntroVideo) {
       dispatchSeenIntroVideo(true);
       dispatchCutscene(
-        `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/influence/goerli/videos/intro.m3u8`,
+        `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/videos/intro.m3u8`,
         true
       );
     }
@@ -283,6 +297,23 @@ const Account = () => {
     dispatchSeenIntroVideo,
     hasSeenIntroVideo
   ]);
+
+  const [openedSessionInstructions, setOpenedSessionInstructions] = useState(false);
+  const onClickSession = useCallback(() => {
+    if (!walletContext.session.supported) {
+      return;
+    }
+    if (!walletContext.session.enabled) {
+      if (openedSessionInstructions) {
+        window.location.reload(true);
+      } else {
+        setOpenedSessionInstructions(true);
+        window.open('https://github.com/argentlabs/argent-x/tree/develop/packages/sessions#allowing-a-session-as-a-user');
+      }
+      return;
+    }
+    walletContext.session.startSession();
+  }, [openedSessionInstructions]);
 
   return (
     <MainContent loggedIn={loggedIn}>
@@ -299,7 +330,24 @@ const Account = () => {
       }
       {loggedIn &&
         <CrewCTA>
-          <LogoutLink onClick={logout}>Log Out</LogoutLink>
+          <UpperRightLinks>
+            {walletContext.session.supported && !walletContext.session.account && (
+              <>
+                <SessionLink onClick={onClickSession}>
+                  {walletContext.session.enabled
+                    ? `Start Session`
+                    : (
+                      openedSessionInstructions
+                        ? `Reload Page (if enabling session)`
+                        : `Enable Session Wallet`
+                    )
+                  }
+                </SessionLink>
+                <span style={{ display: 'inline-block', width: 10 }} />
+              </>
+            )}
+            <LogoutLink onClick={logout}>Log Out</LogoutLink>
+          </UpperRightLinks>
           {crewLoading && (
             <Loading>
               <div><LoadingSpinner color={theme.colors.main} /></div>
