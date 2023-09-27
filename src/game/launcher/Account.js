@@ -153,7 +153,6 @@ const UpperRightLinks = styled.div`
   }
 `;
 
-const SessionLink = styled.a``;
 const LogoutLink = styled.a``;
 
 const CaptainDetails = styled.div`
@@ -298,23 +297,6 @@ const Account = () => {
     hasSeenIntroVideo
   ]);
 
-  const [openedSessionInstructions, setOpenedSessionInstructions] = useState(false);
-  const onClickSession = useCallback(() => {
-    if (!walletContext.session.supported) {
-      return;
-    }
-    if (!walletContext.session.enabled) {
-      if (openedSessionInstructions) {
-        window.location.reload(true);
-      } else {
-        setOpenedSessionInstructions(true);
-        window.open('https://github.com/argentlabs/argent-x/tree/develop/packages/sessions#allowing-a-session-as-a-user');
-      }
-      return;
-    }
-    walletContext.session.startSession();
-  }, [openedSessionInstructions]);
-
   return (
     <MainContent loggedIn={loggedIn}>
       <LogoContainer loggedIn={loggedIn}>
@@ -331,21 +313,6 @@ const Account = () => {
       {loggedIn &&
         <CrewCTA>
           <UpperRightLinks>
-            {walletContext.session.supported && !walletContext.session.account && (
-              <>
-                <SessionLink onClick={onClickSession}>
-                  {walletContext.session.enabled
-                    ? `Start Session`
-                    : (
-                      openedSessionInstructions
-                        ? `Reload Page (if enabling session)`
-                        : `Enable Session Wallet`
-                    )
-                  }
-                </SessionLink>
-                <span style={{ display: 'inline-block', width: 10 }} />
-              </>
-            )}
             <LogoutLink onClick={logout}>Log Out</LogoutLink>
           </UpperRightLinks>
           {crewLoading && (
