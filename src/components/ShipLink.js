@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { Entity } from '@influenceth/sdk';
 
 import useOwnedShips from '~/hooks/useOwnedShips';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import { useLotLink } from './LotLink';
 import OnClickLink from './OnClickLink';
+import EntityName from './EntityName';
 
 export const useShipLink = ({ shipId, zoomToShip }) => {
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
@@ -60,15 +62,6 @@ export const useShipLink = ({ shipId, zoomToShip }) => {
   return zoomToShipAsNeeded;
 }
 
-const ShipName = ({ shipId }) => {
-  const { data: ship } = useShip(shipId);
-  return (
-    <>
-      {ship?.name || `Ship #${shipId.toLocaleString()}`}
-    </>
-  );
-};
-
 export const ShipLink = ({ shipId, zoomToShip }) => {
   const onClick = useShipLink({ shipId, zoomToShip });
 
@@ -85,7 +78,7 @@ export const ShipLink = ({ shipId, zoomToShip }) => {
     <OnClickLink onClick={onClick}>
       {ownedAreLoading
         ? `Ship #${shipId.toLocaleString()}`
-        : (shipName || <ShipName shipId={shipId} />)}
+        : (shipName || <EntityName id={shipId} label={Entity.IDS.SHIP} />)}
     </OnClickLink>
   );
 };

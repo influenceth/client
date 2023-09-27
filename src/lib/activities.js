@@ -1,4 +1,6 @@
 import { Entity } from '@influenceth/sdk';
+import EntityName from '~/components/EntityName';
+import { ScanAsteroidIcon } from '~/components/Icons';
 
 // useQuery cache keys:
 // [ 'actionItems', crew?.i ],
@@ -41,9 +43,8 @@ import { Entity } from '@influenceth/sdk';
 
 // TODO (enhancement): some of the invalidations may be overkill by using this
 const invalidationDefaults = (label, id) => {
-  const i = [
-    ['entities', label]
-  ];
+  const i = [];
+  i.push(['entities', label]);
   if (id) i.push(['entity', label, id]);
 
   // TODO: convert search keys to entity-based labels
@@ -157,6 +158,21 @@ const activities = {
     ])
   },
   SurfaceScanStarted: {
+    getActionItem: ({ returnValues }) => ({
+      icon: <ScanAsteroidIcon />,
+      label: 'Asteroid Surface Scan',
+      asteroidId: returnValues.asteroid.id,
+      onClick: ({ history }) => {
+        history.push(`/asteroids/${returnValues.asteroid.id}/resources`);
+      }
+    }),
+    hideActionItem: ({ returnValues }) => (pendingTransactions) => {
+      console.log({ returnValues, pendingTransactions });
+      return pendingTransactions.find((tx) => (
+        tx.key === 'ScanSurfaceFinish'
+        && tx.vars.asteroid.id === returnValues.asteroid.id
+      ))
+    },
     getInvalidations: ({ returnValues }) => ([
       ...invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
       ['actionItems'],
@@ -179,10 +195,17 @@ const getActivityConfig = (activity) => {
     console.warn(`No activity config for ${name}`);
     return null;
   }
-  const { getActionItem, getInvalidations, getLogContent, ...config } = activities[name];
+  const {
+    getActionItem,
+    getInvalidations,
+    getLogContent,
+    hideActionItem,
+    ...config
+  } = activities[name];
   return {
     ...config,
     getActionItem: () => getActionItem ? getActionItem(activity.event) : null,
+    hideActionItem: hideActionItem ? hideActionItem(activity.event) : () => false,
     getInvalidations: () => getInvalidations ? getInvalidations(activity.event) : [],
     getLogContent: () => getLogContent ? getLogContent(activity.event) : null,
   };
@@ -264,3 +287,39 @@ export default getActivityConfig;
 //   ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
 //   ['asteroidCrewLots',  getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Crew').i],
 // ],
+
+
+// hiders:
+
+// switch (item.event.name) {
+//   case 'Dispatcher_AsteroidStartScan':
+//     return !pendingTransactions.find((tx) => (
+//       tx.key === 'FINISH_ASTEROID_SCAN'
+//       && tx.vars.i === item.event.returnValues?.asteroidId
+//     ));
+//   case 'Dispatcher_CoreSampleStartSampling':
+//     return !pendingTransactions.find((tx) => (
+//       tx.key === 'FINISH_CORE_SAMPLE'
+//       && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+//       && tx.vars.lotId === item.event.returnValues?.lotId
+//     ));
+//   case 'Dispatcher_ConstructionStart':
+//     return !pendingTransactions.find((tx) => (
+//       tx.key === 'FINISH_CONSTRUCTION'
+//       && tx.vars.asteroidId === item.assets.asteroid.i
+//       && tx.vars.lotId === item.assets.lot.i
+//     ));
+//   case 'Dispatcher_ExtractionStart':
+//     return !pendingTransactions.find((tx) => (
+//       tx.key === 'FINISH_EXTRACTION'
+//       && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+//       && tx.vars.lotId === item.event.returnValues?.lotId
+//     ));
+//   case 'Dispatcher_InventoryTransferStart':
+//     return !pendingTransactions.find((tx) => (
+//       tx.key === 'FINISH_DELIVERY'
+//       && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+//       && tx.vars.destLotId === item.event.returnValues?.destinationLotId
+//       && tx.vars.deliveryId === item.assets.delivery?.deliveryId
+//     ));
+// }

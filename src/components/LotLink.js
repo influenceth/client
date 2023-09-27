@@ -1,10 +1,11 @@
 import { useCallback, useMemo } from 'react';
+import { Entity } from '@influenceth/sdk';
 
-import useAsteroid from '~/hooks/useAsteroid';
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useStore from '~/hooks/useStore';
 import OnClickLink from './OnClickLink';
 import formatters from '~/lib/formatters';
+import EntityName from './EntityName';
 
 export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
@@ -73,11 +74,6 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
   return onClickFunction;
 }
 
-const AsteroidName = ({ asteroidId }) => {
-  const { data: asteroid } = useAsteroid(asteroidId);
-  return <>{formatters.asteroidName(asteroid)}</>;
-};
-
 export const LotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
   const onClick = useLotLink({ asteroidId, lotId, resourceId, zoomToLot });
 
@@ -96,7 +92,7 @@ export const LotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
     <OnClickLink onClick={onClick}>
       {ownedAreLoading
         ? `Asteroid #${asteroidId.toLocaleString()}`
-        : (asteroidName || <AsteroidName asteroidId={asteroidId} />)}
+        : (asteroidName || <EntityName id={asteroidId} label={Entity.IDS.ASTEROID} />)}
       {' '}#{lotId ? lotId.toLocaleString() : '?'}
     </OnClickLink>
   );

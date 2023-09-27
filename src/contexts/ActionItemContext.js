@@ -7,6 +7,7 @@ import useChainTime from '~/hooks/useChainTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
+import getActivityConfig from '~/lib/activities';
 
 const ActionItemContext = React.createContext();
 
@@ -63,14 +64,14 @@ export function ActionItemProvider({ children }) {
 
     setReadyItems(
       (actionItems || [])
-        .filter((i) => i.data?.finishTime <= liveBlockTime)
-        .sort((a, b) => a.data?.finishTime - b.data?.finishTime)
+        .filter((a) => a.event.returnValues?.finishTime <= liveBlockTime)
+        .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime)
     );
 
     setUnreadyItems(
       (actionItems || [])
-        .filter((i) => i.data?.finishTime > liveBlockTime)
-        .sort((a, b) => a.data?.finishTime - b.data?.finishTime)
+        .filter((a) => a.event.returnValues?.finishTime > liveBlockTime)
+        .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime)
     );
 
     setPlannedItems(
@@ -86,7 +87,7 @@ export function ActionItemProvider({ children }) {
 
   const nextCompletionTime = useMemo(() => {
     return [...plannedItems, ...unreadyItems].reduce((acc, cur) => {
-      const relevantTime = cur.waitingFor || cur.data?.finishTime;
+      const relevantTime = cur.waitingFor || cur.event?.returnValues?.finishTime;
       if (relevantTime && relevantTime && (acc === null || relevantTime < acc)) {
         return relevantTime;
       }
@@ -132,37 +133,9 @@ export function ActionItemProvider({ children }) {
     // return the readyItems whose "finishing transaction" is not already pending
     const visibleReadyItems = readyItems.filter((item) => {
       if (pendingTransactions) {
-        switch (item.event.name) {
-          case 'Dispatcher_AsteroidStartScan':
-            return !pendingTransactions.find((tx) => (
-              tx.key === 'FINISH_ASTEROID_SCAN'
-              && tx.vars.i === item.event.returnValues?.asteroidId
-            ));
-          case 'Dispatcher_CoreSampleStartSampling':
-            return !pendingTransactions.find((tx) => (
-              tx.key === 'FINISH_CORE_SAMPLE'
-              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-              && tx.vars.lotId === item.event.returnValues?.lotId
-            ));
-          case 'Dispatcher_ConstructionStart':
-            return !pendingTransactions.find((tx) => (
-              tx.key === 'FINISH_CONSTRUCTION'
-              && tx.vars.asteroidId === item.assets.asteroid.i
-              && tx.vars.lotId === item.assets.lot.i
-            ));
-          case 'Dispatcher_ExtractionStart':
-            return !pendingTransactions.find((tx) => (
-              tx.key === 'FINISH_EXTRACTION'
-              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-              && tx.vars.lotId === item.event.returnValues?.lotId
-            ));
-          case 'Dispatcher_InventoryTransferStart':
-            return !pendingTransactions.find((tx) => (
-              tx.key === 'FINISH_DELIVERY'
-              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-              && tx.vars.destLotId === item.event.returnValues?.destinationLotId
-              && tx.vars.deliveryId === item.assets.delivery?.deliveryId
-            ));
+        const config = getActivityConfig(item);
+        if (config && config.hideActionItem) {
+          return !config.hideActionItem(pendingTransactions);
         }
       }
       return true;

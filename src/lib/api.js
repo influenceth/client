@@ -77,7 +77,7 @@ const api = {
   },
 
   getCrewActionItems: async () => {
-    const response = await instance.get(`/${apiVersion}/user/actionitems`);
+    const response = await instance.get(`/${apiVersion}/user/activity/unresolved`);
     return response.data;
   },
 
