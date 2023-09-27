@@ -186,6 +186,7 @@ export const ColumnsIcon = () => <ColumnsSVG className="icon" />;
 export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
 export const CrewIcon = () => <CrewSVG className="icon" />;
 export const CrewInventoryIcon = () => <CrewInventorySVG className="icon" />;
+export const CrewLocationIcon = () => <LocationSVG className="icon" />; // TODO: this should be different
 export const CrewmateIcon = () => <CrewmateSVG className="icon" />;
 export const CrewStoryIcon = () => <CrewStorySVG className="icon" />;
 export const DeltaVIcon = () => <DeltaVSVG className="icon" />;

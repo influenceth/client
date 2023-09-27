@@ -6,138 +6,35 @@ import LoadingAnimation from 'react-spinners/PuffLoader';
 
 import CoverImageSrc from '~/assets/images/modal_headers/OwnedCrew.png';
 import Button from '~/components/ButtonAlt';
-import CrewCardFramed from '~/components/CrewCardFramed';
+import CrewCardFramed, { EmptyCrewCardFramed } from '~/components/CrewCardFramed';
 import CrewmateInfoPane from '~/components/CrewmateInfoPane';
+import CrewLocationLabel from '~/components/CrewLocationLabel';
 import Details from '~/components/DetailsModal';
+import FoodStatus from '~/components/FoodStatus';
 import {
   CheckIcon,
   CloseIcon,
   EditIcon,
-  FoodIcon,
-  LocationIcon,
   MyAssetIcon,
-  PlusIcon,
-  WarningOutlineIcon
+  PlusIcon
 } from '~/components/Icons';
 import LogEntry from '~/components/LogEntry';
-import { useLotLink } from '~/components/LotLink';
-import { useShipLink } from '~/components/ShipLink';
 import TabContainer from '~/components/TabContainer';
 import TextInput from '~/components/TextInput';
 import useActivities from '~/hooks/useActivities';
-import useAsteroid from '~/hooks/useAsteroid';
-import useBuilding from '~/hooks/useBuilding';
 import useChangeName from '~/hooks/useChangeName';
 import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
-import useCrewLocation from '~/hooks/useCrewLocation';
 import useCrewmates from '~/hooks/useCrewmates';
+import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useNameAvailability from '~/hooks/useNameAvailability';
-import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
-import { boolAttr } from '~/lib/utils';
+import { boolAttr, locationsArrToObj } from '~/lib/utils';
 import theme from '~/theme';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
-
-const Content = styled.div`
-  display: flex;
-  flex-direction: row;
-  height: 100%;
-  padding: 40px 35px 25px;
-  @media (max-width: ${breakpoint}px) {
-    flex-direction: column;
-    height: auto;
-    padding: 10px 0 0px;
-  }
-`;
-
-const Subtitle = styled.h5`
-  border-bottom: 1px solid ${borderColor};
-  font-size: 14px;
-  line-height: 32px;
-  margin: 10px 0 0 0;
-`;
-
-const ManagementSubtitle = styled(Subtitle)`
-  @media (max-width: ${breakpoint}px) {
-    display: none;
-  }
-`;
-
-const CrewBasics = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  height: 100%;
-  overflow: hidden;
-
-  @media (max-width: ${breakpoint}px) {
-    flex-direction: row;
-    flex-wrap: wrap;
-    height: auto;
-    overflow: visible;
-    margin-bottom: 25px;
-    padding: 0 15px;
-  }
-`;
-
-const CardWrapper = styled.div`
-  border: 1px solid #363636;
-  padding: 2px;
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    flex: 0 1 400px;
-    @media (min-width: 440px) {
-      margin: 0 10px 0 0;
-    }
-  }
-  @media (min-width: ${p => p.theme.breakpoints.mobile}px) and (max-width: ${breakpoint}px) {
-    flex: 0 1 350px;
-    margin: 0 10px 0 0;
-  }
-`;
-
-const BelowCardWrapper = styled.div`
-  margin-top: 5px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding-right: 3px;
-  flex: 1;
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    flex: none;
-    max-width: 100%;
-    overflow-y: visible;
-    overflow-x: visible;
-  }
-`;
-
-const CrewmateDetails = styled.div`
-  display: flex;  
-  flex: 3;
-  flex-direction: column;
-  height: 100%;
-  padding-left: 25px;
-  @media (max-width: ${breakpoint}px) {
-    display: block;
-    padding-left: 0;
-  }
-`;
-
-const CrewLabels = styled.div`
-  color: white;
-  font-size: 85%;
-  line-height: 1.4em;
-  margin-top: -5px;
-  & label {
-    color: #666666;
-  }
-`;
-
-const Management = styled.div`
-  padding-top: 15px;
-`;
 
 const tabContainerCss = css`
   color: white;
@@ -382,15 +279,6 @@ const BaseLocation = styled.div`
   }
 `;
 
-const Food = styled.div`
-  align-items: center;
-  color: ${p => p.isRationing ? p.theme.colors.red : p.theme.colors.green};
-  display: flex;
-  span {
-    font-size: 15px;
-    margin: 0 6px;
-  }
-`;
 
 const Crewmates = styled.div`
   align-items: flex-start;
@@ -406,40 +294,6 @@ const Crewmates = styled.div`
   }
 `;
 
-const EmptySlot = styled.div`
-  border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.4);
-  background: black;
-  cursor: ${p => p.theme.cursors.active};
-  padding: 8px 6.5px;
-  position: relative;
-  width: ${p => p.width}px;
-  transition: background 250ms ease, border-color 250ms ease;
-  &:before {
-    content: "";
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.13);
-    display: block;
-    height: 0;
-    padding-top: 137.5%;
-    width: 100%;
-  }
-  & > svg {
-    color: ${p => p.theme.colors.main};
-    opacity: 0.5;
-    position: absolute;
-    top: calc(50% - 35px);
-    left: calc(50% - 35px);
-    font-size: 70px;
-    line-height: 70px;
-    transition: opacity 250ms ease;
-  }
-
-  &:hover {
-    background: #183541;
-    border-color: ${p => p.theme.colors.main};
-    & > svg { opacity: 0.75; }
-  }
-`;
-
 const BelowFold = styled.div`
   flex: 1;
   height: 0;
@@ -452,22 +306,16 @@ const PopperWrapper = (props) => {
   return props.children(refEl, props.disableRefSetter ? noop : setRefEl);
 }
 
-const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
+const CrewDetails = ({ crewId, crew, crewmates, isMyCrew }) => {
   const history = useHistory();
 
+  const onSetAction = useStore(s => s.dispatchActionDialog);
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const isNameValid = useNameAvailability(Entity.IDS.CREW);
   const { data: activities } = useActivities({ id: crewId, label: Entity.IDS.CREW });
   const { changeName, changingName } = useChangeName({ id: crewId, label: Entity.IDS.CREW });
 
-  // TODO: should we combine these into a single location link?
-  const onLotLink = useLotLink(crewLocation || {});
-  const onShipLink = useShipLink(crewLocation || {});
-
-  // TODO: _location is probably not populated if not my own crew...?
-  const { data: crewAsteroid } = useAsteroid(crewLocation?.asteroidId);
-  const { data: crewBuilding } = useBuilding(crewLocation?.buildingId);
-  const { data: crewShip } = useShip(crewLocation?.shipId);
+  const hydratedLocation = useHydratedLocation(locationsArrToObj(crew.Location?.locations));
 
   const [editing, setEditing] = useState();
   const [hovered, setHovered] = useState();
@@ -488,19 +336,13 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
     }
   }, [newName]);
 
-  const goToCrewLocation = useCallback(() => {
-    if (crewLocation?.shipId && !crewLocation?.lotId) onShipLink();
-    else onLotLink();
-    history.push('/');
-  }, [crewLocation, onLotLink, onShipLink]);
-
   const onClickCrewmate = useCallback((crewmate) => () => {
     history.push(`/crewmate/${crewmate.id}`);
   }, []);
 
   const onClickRecruit = useCallback(() => {
-    if (crewBuilding?.Building?.buildingType === Building.IDS.HABITAT) {
-      history.push(`/recruit/${crew.id}/${crewLocation.buildingId}`);
+    if (hydratedLocation?.building?.Building?.buildingType === Building.IDS.HABITAT) {
+      history.push(`/recruit/${crew.id}/${hydratedLocation.building.id}`);
     } else {
       createAlert({
         type: 'GenericAlert',
@@ -509,11 +351,16 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
         duration: 6000
       })
     }
-  }, [crew, crewBuilding]);
+  }, [crew, hydratedLocation?.building]);
 
   const onClickNewCrew = useCallback(() => {
     history.push(`/recruit/0`);
   }, []);
+
+  const onClickLocation = useCallback(() => {
+    hydratedLocation.onLink();
+    history.push('/');
+  }, [hydratedLocation]);
 
   const [ready, setReady] = useState();
   useEffect(() => {
@@ -589,9 +436,9 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
                     const crewmate = crewmates[i + 1];
                     if (!crewmate) {
                       return (
-                        <EmptySlot key={i} onClick={onClickRecruit} width={146}>
+                        <EmptyCrewCardFramed key={i} onClick={onClickRecruit} width={146}>
                           <PlusIcon />
-                        </EmptySlot>
+                        </EmptyCrewCardFramed>
                       );
                     }
                     return (
@@ -624,26 +471,18 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
                 </Crewmates>
 
                 <TitleBar>
-                  <BaseLocation onClick={goToCrewLocation}>
-                    <LocationIcon />{/* TODO: should be different icon */}
-                    {crewAsteroid && <>{formatters.asteroidName(crewAsteroid)}</>}
-                    {crewShip && <span>{formatters.shipName(crewShip)}</span>}
-                    {!crewShip && crewBuilding && <span>{formatters.buildingName(crewBuilding)}</span>}
-                    {!crewShip && !crewBuilding && crewLocation?.lotId && <span>Lot {crewLocation.lotId.toLocaleString()}</span>}
+                  <BaseLocation onClick={onClickLocation}>
+                    <CrewLocationLabel hydratedLocation={hydratedLocation} />
                   </BaseLocation>
 
                   {/* TODO: potentially link directly to add rations dialog instead */}
                   {/* TODO: implement lastFed or whatever */}
-                  <Food isRationing={false} onClick={() => {/* TODO */}}>
-                    {false && <WarningOutlineIcon />}
-                    <span>100%</span>
-                    <FoodIcon />
-                  </Food>
+                  <FoodStatus percentage={100} />
                 </TitleBar>
 
                 {isMyCrew && (
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 15 }}>
-                    <Button subtle style={{ width: 225 }}>Add Rations</Button>
+                    <Button disabled subtle style={{ width: 225 }}>Add Rations</Button>{/* TODO: connect this */}
                   </div>
                 )}
               </CrewInfoContainer>
@@ -658,7 +497,7 @@ const CrewDetails = ({ crewId, crew, crewLocation, crewmates, isMyCrew }) => {
             <Stat label="Formed">TODO</Stat>
             {isMyCrew && (
               <div style={{ paddingTop: 15 }}>
-                <Button subtle>Manage Crew</Button>
+                <Button subtle onClick={() => onSetAction('MANAGE_CREW')}>Manage Crew</Button>
                 <Button subtle onClick={onClickNewCrew}>Form New Crew</Button>
                 <Button subtle onClick={onClickRecruit}>Recruit Crewmate</Button>
               </div>
@@ -731,13 +570,6 @@ const Wrapper = () => {
   const crewId = Number(i || myCrew?.id);
   const { data: crew, isLoading: crewLoading } = useCrew(crewId);
   const { data: crewmates, isLoading: crewmatesLoading } = useCrewmates(crew?.Crew?.roster || []);
-  const { data: crewLocation, isLoading: crewLocationLoading } = useCrewLocation(crewId);
-
-  useEffect(() => {
-    if (!i && !myCrewLoading && !myCrew) {
-
-    }
-  }, []);
 
   useEffect(() => {
     if (!crewLoading && !crew) {
@@ -747,7 +579,7 @@ const Wrapper = () => {
     }
   }, [crewLoading, crew, myCrew])
 
-  const loading = myCrewLoading || crewLoading || crewmatesLoading || crewLocationLoading;
+  const loading = myCrewLoading || crewLoading || crewmatesLoading;
   return (
     <Details
       edgeToEdge
@@ -766,7 +598,6 @@ const Wrapper = () => {
         <CrewDetails
           crewId={crewId}
           crew={crew}
-          crewLocation={crewLocation}
           crewmates={crewmates}
           isMyCrew={crewId === myCrew?.id}
         />

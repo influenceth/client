@@ -5,7 +5,7 @@ import { Crewmate, Entity } from '@influenceth/sdk';
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
-import useCrewLocation from '~/hooks/useCrewLocation';
+import { locationEntitiesToObj, locationsArrToObj } from '~/lib/utils';
 
 const CrewContext = createContext();
 
@@ -14,7 +14,7 @@ export function CrewProvider({ children }) {
   const selectedCrewId = useStore(s => s.selectedCrewId);
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
 
-  const { data: crews, isLoading: crewsLoading } = useQuery(
+  const { data: rawCrews, isLoading: crewsLoading } = useQuery(
     [ 'entities', Entity.IDS.CREW, 'owned', account ],
     () => api.getOwnedCrews(account),
     { enabled: !!account }
@@ -22,8 +22,8 @@ export function CrewProvider({ children }) {
 
   const { data: allCrewmates, isLoading: crewmatesLoading } = useQuery(
     [ 'entities', Entity.IDS.CREWMATE, 'owned', account ],
-    () => api.getCrewmates(crews.reduce((acc, c) => [...acc, ...c.Crew.roster], [])),
-    { enabled: crews?.length > 0 }
+    () => api.getCrewmates(rawCrews.reduce((acc, c) => [...acc, ...c.Crew.roster], [])),
+    { enabled: rawCrews?.length > 0 }
   );
 
   const { data: allRecruits, isLoading: recruitsLoading } = useQuery(
@@ -47,8 +47,6 @@ export function CrewProvider({ children }) {
     ];
   }, [allRecruits]);
 
-  const { data: selectedCrewLocation, isLoading: crewLocationLoading } = useCrewLocation(selectedCrewId);
-
   const crewmateMap = useMemo(() => {
     if (!crewsLoading && !crewmatesLoading) {
       const allMyCrewmates = {};
@@ -58,21 +56,22 @@ export function CrewProvider({ children }) {
     return null;
   }, [allCrewmates, crewmatesLoading]);
 
-  const selectedCrew = useMemo(() => {
-    if (selectedCrewId) {
-      const crew = (crews || []).find((crew) => crew.i === selectedCrewId);
-      if (crew) {
-        if (!!crewmateMap) {
-          crew._crewmates = crew.Crew.roster.map((i) => crewmateMap[i]);
-        }
-        if (!!selectedCrewLocation) {
-          crew._location = selectedCrewLocation;
-        }
-        return crew;
+  const crews = useMemo(() => {
+    if (!rawCrews || !crewmateMap) return [];
+    return rawCrews.map((c) => {
+      if (!!crewmateMap) {
+        c._crewmates = c.Crew.roster.map((i) => crewmateMap[i]);
       }
-    }
-    return null;
-  }, [crews, selectedCrewId, !!crewmateMap, !!selectedCrewLocation]);
+      if (c.Location?.locations) {
+        c._location = locationsArrToObj(c.Location.locations);
+      }
+      return c;
+    })
+  }, [rawCrews, crewmateMap]);
+
+  const selectedCrew = useMemo(() => {
+    return selectedCrewId ? (crews || []).find((crew) => crew.i === selectedCrewId) : null;
+  }, [crews, selectedCrewId, !!crewmateMap]);
 
   useEffect(() => {
     // if logged in and done loading and there are crews
@@ -99,7 +98,7 @@ export function CrewProvider({ children }) {
       crew: selectedCrew,
       crews,
       crewmateMap,
-      loading: crewsLoading || crewmatesLoading || crewLocationLoading || recruitsLoading,
+      loading: crewsLoading || crewmatesLoading || recruitsLoading,
       selectCrew: dispatchCrewSelected  // TODO: this might be redundant
     }}>
       {children}

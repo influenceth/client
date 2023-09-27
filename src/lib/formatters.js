@@ -65,7 +65,12 @@ const formatters = {
 
   crewmateName: (c, fallbackText) => {
     if (!c) return fallbackText || 'Crewmate';
-    return c.Name?.name || `Crewmate #${c.id.toLocaleString()}`;
+    return c.Name?.name || `Crewmate #${(c.id || 0).toLocaleString()}`;
+  },
+
+  lotName: (lotId) => {
+    if (!lotId) return 'Lot';
+    return `Lot ${lotId.toLocaleString()}`;
   },
 
   shipName: (s, fallbackText) => {

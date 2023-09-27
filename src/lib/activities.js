@@ -113,6 +113,7 @@ const activities = {
   },
   CrewmatesExchanged: {
     getInvalidations: ({ returnValues }) => ([
+      [ 'entities', Entity.IDS.CREW, 'owned' ],  // in case created a crew
       ...invalidationDefaults(Entity.IDS.CREW, returnValues.crew1.id),
       ...invalidationDefaults(Entity.IDS.CREW, returnValues.crew2.id),
     ])

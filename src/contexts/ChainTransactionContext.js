@@ -228,10 +228,6 @@ export function ChainTransactionProvider({ children }) {
         // TODO (enhancement): only need to check new activities diff (not all)
         const txHashBInt = BigInt(txHash);
 
-        console.log(
-          'pending tx', activities, txHashBInt
-        );
-
         const txEvent = (activities || []).find((a) => a.event.transactionHash && BigInt(a.event.transactionHash) === txHashBInt)?.event;
         if (txEvent) {
           contracts[key].onConfirmed(txEvent, vars);

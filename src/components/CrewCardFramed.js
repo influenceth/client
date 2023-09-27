@@ -102,6 +102,41 @@ const AvatarWrapper = styled.div`
   `}
 `;
 
+export const EmptyCrewCardFramed = styled.div`
+  border: 1px solid ${p => p.borderColor || `rgba(${p.theme.colors.mainRGB}, 0.4)`};
+  background: black;
+  padding: 4px;
+  position: relative;
+  width: ${p => p.width || 96}px;
+  &:before {
+    content: "";
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.13);
+    display: block;
+    height: 0;
+    padding-top: ${p => p.hideHeader ? '128' : '137.5'}%;
+    width: 100%;
+  }
+  & > svg {
+    color: ${p => p.theme.colors.main};
+    opacity: 0.5;
+    position: absolute;
+    top: calc(50% - 35px);
+    left: calc(50% - 35px);
+    font-size: 70px;
+    line-height: 70px;
+    transition: opacity 250ms ease;
+  }
+  ${p => p.onClick && `
+    cursor: ${p => p.theme.cursors.active};
+    transition: background 250ms ease, border-color 250ms ease;
+    &:hover {
+      background: #183541;
+      border-color: ${p => p.theme.colors.main};
+      & > svg { opacity: 0.75; }
+    }
+  `}
+`;
+
 const noop = () => {};
 const CrewCardFramed = ({
   crewmate,

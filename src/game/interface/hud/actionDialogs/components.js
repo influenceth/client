@@ -6,6 +6,7 @@ import { useQuery } from 'react-query';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
 import { Asteroid, Building, Crewmate, Delivery, Entity, Inventory, Process, Product, Ship } from '@influenceth/sdk';
+import { cloneDeep } from 'lodash';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
@@ -53,6 +54,9 @@ import theme, { hexToRGB } from '~/theme';
 import { theming } from '../ActionDialog';
 import formatters from '~/lib/formatters';
 import useCrewContext from '~/hooks/useCrewContext';
+import FoodStatus from '~/components/FoodStatus';
+import useHydratedLocation from '~/hooks/useHydratedLocation';
+import CrewLocationLabel from '~/components/CrewLocationLabel';
 
 const SECTION_WIDTH = 780;
 
@@ -1199,7 +1203,7 @@ const CrewCards = styled.div`
   }
 `;
 const CrewCardPlaceholder = styled.div`
-  width: 60px;
+  width: ${p => p.width}px;
   &:before {
     content: "";
     background: rgba(${p => p.theme.colors.mainRGB}, 0.07);
@@ -1329,6 +1333,17 @@ const FreeTransferNote = styled.div`
   }
 `;
 
+export const CrewLocationWrapper = styled.div`
+  text-transform: none;
+  & span {
+    opacity: 0.6;
+    &:before {
+      content: ">";
+      margin: 0 4px;
+    }
+  }
+`;
+
 export const SelectionDialog = ({ children, isCompletable, open, onClose, onComplete, style = {}, title }) => {
   if (!open) return null;
   return createPortal(
@@ -1350,6 +1365,62 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
       <ClipCorner color={borderColor} dimension={selectionDialogCornerSize} />
     </Dialog>,
     document.body
+  );
+};
+
+export const CrewSelectionDialog = ({ crews, onClose, onSelected, open }) => {
+  const [selection, setSelection] = useState();
+
+  const onComplete = useCallback(() => {
+    onSelected(selection?.id);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  const nonEmptyCrews = useMemo(() => crews.filter((c) => c.Crew.roster.length > 0), [crews]);
+  const emptyCrews = useMemo(() => crews.filter((c) => c.Crew.roster.length === 0), [crews]);
+  const hydratedLocation = useHydratedLocation(nonEmptyCrews[0]?._location);
+
+  return (
+    <SelectionDialog
+      isCompletable={!!selection}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title="Exchange With Crew">
+      <div style={{ minHeight: 300 }}>
+        {nonEmptyCrews.map((crew, i) => {
+          return (
+            <CrewInputBlock
+              key={crew.id}
+              cardWidth={64}
+              crew={crew}
+              inlineDetails
+              isSelected={crew.id === selection?.id}
+              onClick={() => setSelection(crew)}
+              title={
+                i === 0
+                ? <CrewLocationWrapper><CrewLocationLabel hydratedLocation={hydratedLocation} /></CrewLocationWrapper>
+                : ''
+              }
+              style={{ marginBottom: 8, width: '100%' }} />
+          );
+        })}
+        {emptyCrews.map((crew, i) => {
+          return (
+            <CrewInputBlock
+              key={crew.id}
+              cardWidth={64}
+              crew={crew}
+              hideCrewmates
+              inlineDetails
+              isSelected={crew.id === selection?.id}
+              onClick={() => setSelection(crew)}
+              title={i === 0 ? <CrewLocationWrapper style={{ marginTop: 8 }}>Empty Crews</CrewLocationWrapper> : ''}
+              style={{ marginBottom: 8, width: '100%' }} />
+          );
+        })}
+      </div>
+    </SelectionDialog>
   );
 };
 
@@ -2156,7 +2227,7 @@ export const ActionDialogHeader = ({ action, captain, crewAvailableTime, locatio
   );
 };
 
-export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, isSelected, label, onClick, style = {}, sublabel, title, titleDetails, tooltip }) => {
+export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, innerBodyStyle, isSelected, label, onClick, style = {}, sublabel, title, titleDetails, tooltip }) => {
   const refEl = useRef();
   const [hovered, setHovered] = useState();
   return (
@@ -2179,7 +2250,7 @@ export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, is
           ref={refEl}
           style={bodyStyle}>
           {children && (
-            <FlexSectionInputBodyInner>
+            <FlexSectionInputBodyInner style={innerBodyStyle}>
               {children}
             </FlexSectionInputBodyInner>
           )}
@@ -2894,10 +2965,10 @@ export const SwayInputBlock = ({ title, ...props }) => (
   </FlexSectionInputBlock>
 );
 
-export const CrewInputBlock = ({ crew, title }) => (
+export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, title, inlineDetails, ...props }) => (
   <FlexSectionInputBlock
     title={title}
-    titleDetails={(
+    titleDetails={inlineDetails ? null : (
       <div>
         <CrewIcon />
         <span style={{ fontSize: '85%', marginLeft: 4 }}>
@@ -2905,23 +2976,41 @@ export const CrewInputBlock = ({ crew, title }) => (
         </span>
       </div>
     )}
-    bodyStyle={{ paddingRight: 8 }}>
-    <CrewCards>
-      {Array.from({ length: 5 }).map((_, i) =>
-        crew.Crew.roster[i]
-          ? (
-            <CrewCardFramed
-              key={i}
-              borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
-              crewmate={crew.Crew.roster[i]}
-              isCaptain={i === 0}
-              lessPadding
-              noArrow={i > 0}
-              width={60} />
-          )
-          : <CrewCardPlaceholder key={i} />
+    bodyStyle={{ paddingRight: 8, ...(hideCrewmates ? { paddingBottom: 0 } : {}) }}
+    innerBodyStyle={{ height: 'auto' }}
+    {...props}>
+    <div>
+      {inlineDetails && (
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+          <div>
+            <CrewIcon />
+            <span style={{ marginLeft: 4 }}>
+              {formatters.crewName(crew)}
+            </span>
+          </div>
+          <div style={{ flex: 1 }} />
+          <FoodStatus percentage={100} />
+        </div>
       )}
-    </CrewCards>
+      {!hideCrewmates && (
+        <CrewCards>
+          {Array.from({ length: 5 }).map((_, i) =>
+            crew._crewmates[i]
+              ? (
+                <CrewCardFramed
+                  key={i}
+                  borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
+                  crewmate={crew._crewmates[i]}
+                  isCaptain={i === 0}
+                  lessPadding
+                  noArrow={i > 0}
+                  width={cardWidth || 60} />
+              )
+              : <CrewCardPlaceholder key={i} width={cardWidth || 60} />
+          )}
+        </CrewCards>
+      )}
+    </div>
   </FlexSectionInputBlock>
 );
 
@@ -2946,6 +3035,22 @@ export const LotInputBlock = ({ lot, fallbackLabel = 'Select', fallbackSublabel 
       }
       label={lot ? `${lot.building?.Name?.name || Building.TYPES[buildingType].name}` : fallbackLabel}
       sublabel={lot ? `${lot.building?.Name?.name ? Building.TYPES[buildingType].name : `Lot #${lot.i.toLocaleString()}`}` : fallbackSublabel}
+      {...props}
+    />
+  );
+};
+
+export const BuildingInputBlock = ({ building, imageProps = {}, ...props }) => {
+  const buildingType = building?.Building?.buildingType || 0;
+  return (
+    <FlexSectionInputBlock
+      image={
+        buildingType
+          ? <BuildingImage buildingType={buildingType} {...imageProps} />
+          : <EmptyBuildingImage {...imageProps} />
+      }
+      label={building?.Name?.name || Building.TYPES[buildingType].name}
+      sublabel={building?.Name?.name ? Building.TYPES[buildingType].name : `Lot #${(Entity.toPosition(building.Location?.location)?.lotId || 0).toLocaleString()}`}
       {...props}
     />
   );

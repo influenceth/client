@@ -1,20 +1,15 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
-import ReactTooltip from 'react-tooltip';
-import styled, { css, keyframes } from 'styled-components';
+import styled from 'styled-components';
 
 import CollapsibleSection from '~/components/CollapsibleSection';
 import CrewCardFramed from '~/components/CrewCardFramed';
-import { CaptainIcon, CrewIcon, CrewmateIcon, FoodIcon, IdleIcon, LocationIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
-import { useLotLink } from '~/components/LotLink';
-import { useShipLink } from '~/components/ShipLink';
-import TriangleTip from '~/components/TriangleTip';
-import useAsteroid from '~/hooks/useAsteroid';
+import CrewLocationLabel from '~/components/CrewLocationLabel';
+import FoodStatus from '~/components/FoodStatus';
+import { CrewIcon, CrewLocationIcon, IdleIcon, WarningOutlineIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
-import useBuilding from '~/hooks/useBuilding';
 import useCrewContext from '~/hooks/useCrewContext';
-import useShip from '~/hooks/useShip';
-import useStore from '~/hooks/useStore';
+import useHydratedLocation from '~/hooks/useHydratedLocation';
 import formatters from '~/lib/formatters';
 import theme from '~/theme';
 
@@ -130,16 +125,10 @@ const Crewmates = styled.div`
 
 const AvatarMenu = () => {
   const { account } = useAuth();
-  const { captain, crewmateMap, crew, loading: crewIsLoading } = useCrewContext();
+  const { captain, crew, loading: crewIsLoading } = useCrewContext();
   const history = useHistory();
 
-  // TODO: should we combine these into a single location link?
-  const onLotLink = useLotLink(crew?._location || {});
-  const onShipLink = useShipLink(crew?._location || {});
-
-  const { data: crewAsteroid } = useAsteroid(crew?._location?.asteroidId);
-  const { data: crewBuilding } = useBuilding(crew?._location?.buildingId);
-  const { data: crewShip } = useShip(crew?._location?.shipId);
+  const hydratedLocation = useHydratedLocation(crew?._location);
 
   const silhouetteOverlay = useMemo(() => {
     if (!captain) {
@@ -153,11 +142,6 @@ const AvatarMenu = () => {
     }
     return null;
   }, [account, captain]);
-
-  const goToCrewLocation = useCallback(() => {
-    if (crew?._location?.shipId && !crew?._location?.lotId) onShipLink();
-    else onLotLink();
-  }, [crew?._location, onLotLink, onShipLink]);
 
   const onClick = useCallback(() => history.push('/crew'), []);
 
@@ -187,21 +171,13 @@ const AvatarMenu = () => {
 
           <CrewInfoContainer>
             <TitleBar>
-              <BaseLocation onClick={goToCrewLocation}>
-                <LocationIcon />{/* TODO: should be different icon */}
-                {crewAsteroid && <>{formatters.asteroidName(crewAsteroid)}</>}
-                {crewShip && <span>{formatters.shipName(crewShip)}</span>}
-                {!crewShip && crewBuilding && <span>{formatters.buildingName(crewBuilding)}</span>}
-                {!crewShip && !crewBuilding && crew?._location?.lotId && <span>Lot {crew._location.lotId.toLocaleString()}</span>}
+              <BaseLocation onClick={hydratedLocation.onLink}>
+                <CrewLocationLabel hydratedLocation={hydratedLocation} />
               </BaseLocation>
 
               {/* TODO: potentially link directly to add rations dialog instead */}
               {/* TODO: implement lastFed or whatever */}
-              <Food isRationing={false} onClick={onClick}>
-                {false && <WarningOutlineIcon />}
-                <span>100%</span>
-                <FoodIcon />
-              </Food>
+              <FoodStatus percentage={100} />
             </TitleBar>
 
             <Crewmates>

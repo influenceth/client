@@ -22,6 +22,7 @@ import Deconstruct from './actionDialogs/Deconstruct';
 import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
 import LandShip from './actionDialogs/LandShip';
 import LaunchShip from './actionDialogs/LaunchShip';
+import ManageCrew from './actionDialogs/ManageCrew';
 import MarketplaceOrder from './actionDialogs/MarketplaceOrder';
 import PlanBuilding from './actionDialogs/PlanBuilding';
 import Refine from './actionDialogs/Refine';
@@ -203,7 +204,7 @@ export const ActionDialogInner = ({ actionImage, children, isLoading, stage }) =
       )}
     </ModalInner>
     <ReactTooltip id="actionDialog" place="left" effect="solid" />
-    <ClipCorner dimension={cornerSize} color={theming[stage].borderColor} />
+    <ClipCorner dimension={cornerSize} color={theming[stage]?.borderColor} />
   </Modal>
 );
 
@@ -247,6 +248,8 @@ const ActionDialog = ({ type, params }) => {
         {type === 'LAUNCH_SHIP' && <LaunchShip {...allProps} />}
         {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}
         {type === 'NEW_CORE_SAMPLE' && <NewCoreSample {...allProps} />}
+        {type === 'MANAGE_CREW' && <ManageCrew {...allProps} />}
+        {type === 'NEW_CREW' && <ManageCrew {...allProps} newCrew />}
         {type === 'MARKETPLACE_ORDER' && <MarketplaceOrder {...allProps} />}
         {type === 'REFINE' && <Refine {...allProps} />}
         {type === 'SET_COURSE' && <SetCourse {...allProps} />}

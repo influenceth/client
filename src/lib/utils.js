@@ -1,3 +1,5 @@
+import { Entity } from '@influenceth/sdk';
+
 const timerIncrements = { d: 86400, h: 3600, m: 60, s: 1 };
 export const formatTimer = (secondsRemaining, maxPrecision = null) => {
   let remainder = secondsRemaining;
@@ -52,3 +54,13 @@ export const formatPrice = (sway, { minPrecision = 3, fixedPrecision } = {}) => 
 export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');
 
 export const boolAttr = (value) => value ? 'true' : undefined;
+
+export const locationsArrToObj = (locations) => {
+  const lotLocation = locations.find((l) => l.label === Entity.IDS.LOT);
+  return {
+    asteroidId: locations.find((l) => Number(l.label) === Entity.IDS.ASTEROID)?.id,
+    lotId: lotLocation ? Entity.toPosition(lotLocation)?.lotId : null,
+    buildingId: locations.find((l) => l.label === Entity.IDS.BUILDING)?.id,
+    shipId: locations.find((l) => l.label === Entity.IDS.SHIP)?.id,
+  }
+};
