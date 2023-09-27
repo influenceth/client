@@ -199,14 +199,10 @@ export function WalletProvider({ children }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const disconnect = useCallback(async () => {
+    if (session.account) session.stopSession();
     setStarknet(null);
     getStarknetDisconnect({ clearLastWallet: true });
-  }, [getStarknetDisconnect]);
-
-  const disconnect = useCallback((params) => {
-    if (session.account) session.stopSession();
-    getStarknet.disconnect(params);
-  }, [session]);
+  }, [getStarknetDisconnect, session]);
 
   // while connecting or connected, listen for network changes from extension
   useEffect(() => {
