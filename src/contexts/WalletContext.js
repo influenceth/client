@@ -26,105 +26,6 @@ const getAllowedChainLabel = (wallet) => {
   return wallet === 'Braavos' ? 'Goerli-Alpha' : 'Testnet';
 }
 
-const useSessionSigner = (starknet) => {
-  const activeSessionWalletData = useStore(s => s.auth.sessionWalletData);
-  const dispatchSessionStarted = useStore(s => s.dispatchSessionStarted);
-  const dispatchSessionEnded = useStore(s => s.dispatchSessionEnded);
-
-  const walletSupported = useMemo(
-    () => starknet?.account && ['Argent X'].includes(starknet?.name),
-    [starknet?.account, starknet?.name]
-  );
-
-  const [userEnabled, setUserEnabled] = useState(false);
-  useEffect(() => {
-    if (starknet?.account?.address) {
-      supportsSessions(starknet.account.address, starknet.account)
-        .then((enabled) => {
-          setUserEnabled(enabled);
-        })
-        .catch((e) => {
-          // console.warn('not enabled', e)
-        });
-    }
-  }, [starknet?.account]);
-
-  const activeSession = useMemo(() => {
-    if (starknet?.provider && activeSessionWalletData) {
-      try {
-        const { address, providerBaseUrl, signerKeypair, signedSession } = activeSessionWalletData;
-        if (!(address && providerBaseUrl && signerKeypair && signedSession)) throw new Error('Missing session data.');
-        if (starknet.account.address && !Address.areEqual(starknet.account.address, address)) throw new Error('Session address mismatch.');
-        if (JSON.stringify(signedSession.policies) !== JSON.stringify(argentSessionWhitelist)) throw new Error('Default session policies changed.');
-        if (signedSession.expires < Date.now() / 1000) throw new Error('Session expired.');
-
-        // rebuild signer
-        const signer = new Signer();
-        signer.keyPair._importPublic(signerKeypair.pub, signerKeypair.pubEnc);
-        signer.keyPair._importPrivate(signerKeypair.priv, signerKeypair.privEnc);
-
-        // instantiate session account
-        return new SessionAccount(
-          { sequencer: { baseUrl: providerBaseUrl } },
-          address,
-          signer,
-          signedSession
-        );
-      } catch (e) {
-        console.warn(e);
-        dispatchSessionEnded();
-        // TODO: prompt to restart session?
-      }
-    }
-    return null;
-  }, [activeSessionWalletData, starknet?.account?.address, starknet?.provider, dispatchSessionEnded]);
-  
-  // TODO: we need to end sessions automatically on relevant errors
-  //  (i.e. expiration, fund depletion, etc)
-  const startSession = useCallback(async () => {
-    if (walletSupported) {
-      if (starknet?.name === 'Argent X') {
-        const signer = new Signer();
-        createSession(
-          {
-            key: await signer.getPubKey(),
-            expires: Math.round((Date.now() + 86400e3) / 1000),
-            policies: argentSessionWhitelist
-          },
-          starknet.account
-        ).then((signedSession) => {
-          if (signedSession) {
-            dispatchSessionStarted({
-              address: starknet.account.address,
-              providerBaseUrl: starknet.account.provider.baseUrl,
-              signerKeypair: {
-                pub: signer.keyPair.getPublic('hex'),
-                pubEnc: 'hex',
-                priv: signer.keyPair.getPrivate('hex'),
-                privEnc: 'hex',
-              },
-              signedSession
-            })
-          }
-        });
-      }
-    }
-  }, [starknet?.account, dispatchSessionStarted]);
-
-  const stopSession = useCallback(() => {
-    dispatchSessionEnded();
-  }, [dispatchSessionEnded]);
-
-  return {
-    supported: walletSupported,
-    enabled: userEnabled,
-    startSession,
-    stopSession,
-    account: activeSession,
-  }
-}
-
-
 const WalletContext = createContext();
 
 export function WalletProvider({ children }) {
@@ -134,8 +35,6 @@ export function WalletProvider({ children }) {
   const [error, setError] = useState();
   const [starknet, setStarknet] = useState(false);
   const [starknetReady, setStarknetReady] = useState(false);
-
-  const session = useSessionSigner(starknet);
 
   // if using devnet, put "create block" on a timer since otherwise, blocks will not be advancing in the background
   useEffect(() => {
@@ -199,10 +98,9 @@ export function WalletProvider({ children }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const disconnect = useCallback(async () => {
-    if (session.account) session.stopSession();
     setStarknet(null);
     getStarknetDisconnect({ clearLastWallet: true });
-  }, [getStarknetDisconnect, session]);
+  }, [getStarknetDisconnect]);
 
   // while connecting or connected, listen for network changes from extension
   useEffect(() => {

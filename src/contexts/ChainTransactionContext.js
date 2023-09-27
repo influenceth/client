@@ -169,7 +169,7 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, starknet?.account?.address, starknet?.account?.provider?.baseUrl, session?.account]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, starknet?.account?.address, starknet?.account?.provider?.baseUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionWaiters = useRef([]);
 
@@ -282,33 +282,34 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [activities?.length]);  // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (contracts && pendingTransactions?.length) {
-      pendingTransactions.filter((tx) => !tx.txEvent).forEach((tx) => {
-        // if it's been 45+ seconds, start checking on each block if has been rejected (or missing)
-        if (chainTime > Math.floor(tx.timestamp / 1000) + 45) {
-          const { key, vars, txHash } = tx;
+  // TODO: should probably re-implement this
+  // useEffect(() => {
+  //   if (contracts && pendingTransactions?.length) {
+  //     pendingTransactions.filter((tx) => !tx.txEvent).forEach((tx) => {
+  //       // if it's been 45+ seconds, start checking on each block if has been rejected (or missing)
+  //       if (chainTime > Math.floor(tx.timestamp / 1000) + 45) {
+  //         const { key, vars, txHash } = tx;
 
-          genericProvider.getTransactionReceipt(txHash)
-            .then((receipt) => {
-              if (receipt && receipt.status === 'REJECTED') {
-                contracts[key].onTransactionError(receipt, vars);
-                dispatchFailedTransaction({
-                  key,
-                  vars,
-                  txHash,
-                  err: receipt.status_data || 'Transaction was rejected.'
-                });
-                dispatchPendingTransactionComplete(txHash);
-              }
-            })
-            .catch((err) => {
-              console.warn(err);
-            });
-        }
-      });
-    }
-  }, [lastBlockNumber])
+  //         genericProvider.getTransactionReceipt(txHash)
+  //           .then((receipt) => {
+  //             if (receipt && receipt.status === 'REJECTED') {
+  //               contracts[key].onTransactionError(receipt, vars);
+  //               dispatchFailedTransaction({
+  //                 key,
+  //                 vars,
+  //                 txHash,
+  //                 err: receipt.status_data || 'Transaction was rejected.'
+  //               });
+  //               dispatchPendingTransactionComplete(txHash);
+  //             }
+  //           })
+  //           .catch((err) => {
+  //             console.warn(err);
+  //           });
+  //       }
+  //     });
+  //   }
+  // }, [])
 
 
 
@@ -316,10 +317,6 @@ export function ChainTransactionProvider({ children }) {
     if (contracts && contracts[key]) {
       const { execute, onTransactionError } = contracts[key];
 
-      // TODO: will need to sort this out when argentX implements session wallets, but
-      //  currently in non-session wallet, argentX does not return from the `await execute`
-      //  below when their user prompt is closed instead of rejected (the user has to
-      //  reopen the prompt and reject it to get out of here)
       setPromptingTransaction(true);
 
       try {
