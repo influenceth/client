@@ -72,7 +72,7 @@ export const Rule = styled.div`
 `;
 
 const HUD = () => {
-  const { captain } = useCrewContext();
+  const { captain, loading } = useCrewContext();
   return (
     <>
       <LeftWrapper>
@@ -82,7 +82,7 @@ const HUD = () => {
             <ActionItems />
           </>
         )}
-        {!captain && (
+        {!captain && !loading && (
           <>
             <LoginMenu />
             <div style={{ flex: 1 }} />
