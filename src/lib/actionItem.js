@@ -17,84 +17,93 @@ import {
   ShipIcon,
   BuildingIcon,
 } from '~/components/Icons';
+import getActivityConfig from '~/lib/activities';
 import theme, { hexToRGB } from '~/theme';
 
 // TODO: ecs refactor
 
-const formatAsItem = (item) => {
+const formatAsItem = (activity) => {
   const formatted = {
-    key: item.key,
-    type: item.type,
+    key: `activity_${activity._id}`,
+    type: activity.event.event,
     icon: null,
     label: '',
     asteroidId: null,
     lotId: null,
     resourceId: null,
     locationDetail: '',
-    finishTime: item.data?.finishTime || 0,
-    startTime: item.data?.startTime || 0,
-    ago: (new moment(new Date(1000 * (item.data?.finishTime || 0)))).fromNow(),
+    finishTime: activity.event.returnValues.finishTime || 0,
+    startTime: activity.event.timestamp || 0,
+    ago: (new moment(new Date(1000 * (activity.event.returnValues.finishTime || 0)))).fromNow(),
     onClick: null
   };
 
-  switch(item.event.name) {
-    case 'Dispatcher_AsteroidStartScan':
-      formatted.icon = <ScanAsteroidIcon />;
-      formatted.label = 'Asteroid Scan';
-      formatted.asteroidId = item.event.returnValues?.asteroidId;
-      formatted.onClick = ({ history }) => {
-        history.push(`/asteroids/${formatted.asteroidId}/resources`);
-      };
-      break;
-
-    case 'Dispatcher_CoreSampleStartSampling':
-      const isImprovement = item.assets?.coreSample?.initialYield > 0;
-      formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
-      formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
-      formatted.asteroidId = item.event.returnValues?.asteroidId;
-      formatted.lotId = item.event.returnValues?.lotId;
-      formatted.resourceId = item.event.returnValues?.resourceId;
-      formatted.locationDetail = Product.TYPES[item.event.returnValues?.resourceId].name;
-      formatted.onClick = ({ openDialog }) => {
-        openDialog(isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
-      };
-      break;
-
-    case 'Dispatcher_ConstructionStart':
-      formatted.icon = <ConstructIcon />;
-      formatted.label = `${Building.TYPES[item.assets.building.type]?.name || 'Building'} Construction`;
-      formatted.asteroidId = item.assets.asteroid.i;
-      formatted.lotId = item.assets.lot.i;
-      formatted.onClick = ({ openDialog }) => {
-        openDialog('CONSTRUCT');
-      };
-      break;
-
-    case 'Dispatcher_ExtractionStart':
-      formatted.icon = <ExtractionIcon />;
-      formatted.label = `${Product.TYPES[item.event.returnValues?.resourceId]?.name || 'Resource'} Extraction`;
-      formatted.asteroidId = item.event.returnValues?.asteroidId;
-      formatted.lotId = item.event.returnValues?.lotId;
-      formatted.resourceId = item.event.returnValues?.resourceId;
-      formatted.onClick = ({ openDialog }) => {
-        openDialog('EXTRACT_RESOURCE');
-      };
-      break;
-
-    case 'Dispatcher_InventoryTransferStart':
-      formatted.icon = <SurfaceTransferIcon />;
-      formatted.label = 'Surface Transfer';
-      formatted.asteroidId = item.event.returnValues?.asteroidId;
-      formatted.lotId = item.event.returnValues?.destinationLotId;  // after start, link to destination
-      formatted.onClick = ({ openDialog }) => {
-        openDialog('SURFACE_TRANSFER', { deliveryId: item.assets.delivery?.deliveryId });
-      };
-      break;
-
-    default:
-      console.log('Unhandled ActionItem', item);
-      break;
+  const config = getActivityConfig(activity);
+  if (config) {
+    const actionItem = config.getActionItem() || {};
+    Object.keys(actionItem).forEach((key) => {
+      formatted[key] = actionItem[key];
+    });
   }
+
+  // switch(item.event.name) {
+  //   case 'Dispatcher_AsteroidStartScan':
+  //     formatted.icon = <ScanAsteroidIcon />;
+  //     formatted.label = 'Asteroid Scan';
+  //     formatted.asteroidId = item.event.returnValues?.asteroidId;
+  //     formatted.onClick = ({ history }) => {
+  //       history.push(`/asteroids/${formatted.asteroidId}/resources`);
+  //     };
+  //     break;
+
+  //   case 'Dispatcher_CoreSampleStartSampling':
+  //     const isImprovement = item.assets?.coreSample?.initialYield > 0;
+  //     formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
+  //     formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
+  //     formatted.asteroidId = item.event.returnValues?.asteroidId;
+  //     formatted.lotId = item.event.returnValues?.lotId;
+  //     formatted.resourceId = item.event.returnValues?.resourceId;
+  //     formatted.locationDetail = Product.TYPES[item.event.returnValues?.resourceId].name;
+  //     formatted.onClick = ({ openDialog }) => {
+  //       openDialog(isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
+  //     };
+  //     break;
+
+  //   case 'Dispatcher_ConstructionStart':
+  //     formatted.icon = <ConstructIcon />;
+  //     formatted.label = `${Building.TYPES[item.assets.building.type]?.name || 'Building'} Construction`;
+  //     formatted.asteroidId = item.assets.asteroid.i;
+  //     formatted.lotId = item.assets.lot.i;
+  //     formatted.onClick = ({ openDialog }) => {
+  //       openDialog('CONSTRUCT');
+  //     };
+  //     break;
+
+  //   case 'Dispatcher_ExtractionStart':
+  //     formatted.icon = <ExtractionIcon />;
+  //     formatted.label = `${Product.TYPES[item.event.returnValues?.resourceId]?.name || 'Resource'} Extraction`;
+  //     formatted.asteroidId = item.event.returnValues?.asteroidId;
+  //     formatted.lotId = item.event.returnValues?.lotId;
+  //     formatted.resourceId = item.event.returnValues?.resourceId;
+  //     formatted.onClick = ({ openDialog }) => {
+  //       openDialog('EXTRACT_RESOURCE');
+  //     };
+  //     break;
+
+  //   case 'Dispatcher_InventoryTransferStart':
+  //     formatted.icon = <SurfaceTransferIcon />;
+  //     formatted.label = 'Surface Transfer';
+  //     formatted.asteroidId = item.event.returnValues?.asteroidId;
+  //     formatted.lotId = item.event.returnValues?.destinationLotId;  // after start, link to destination
+  //     formatted.onClick = ({ openDialog }) => {
+  //       openDialog('SURFACE_TRANSFER', { deliveryId: item.assets.delivery?.deliveryId });
+  //     };
+  //     break;
+
+  //   default:
+  //     console.log('Unhandled ActionItem', item);
+  //     break;
+  // }
 
   if (formatted?.asteroidId) formatted.asteroidId = Number(formatted.asteroidId);
   if (formatted?.lotId) formatted.lotId = Number(formatted.lotId);

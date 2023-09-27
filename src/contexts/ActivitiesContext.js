@@ -135,24 +135,18 @@ export function ActivitiesProvider({ children }) {
     // if have pending transactions, load back to the oldest one in case it missed the activity;
     // else, will just pull most recent X (limit set on server)
     if (token) {
-      let since = null;
-      if (pendingTransactions) {
-        since = pendingTransactions.reduce((acc, cur) => {
-          if (acc === null || cur.timestamp < acc) {
-            return cur.timestamp;
-          }
-          return acc;
-        }, null);
-        if (since) since = Math.floor(since / 1000) - 300;  // 5m buffer as sanity-check
+      const pendingTxHashes = pendingTransactions
+        .map((tx) => tx.txHash)
+        .filter((txHash) => !!txHash);
+      if (pendingTxHashes?.length > 0) {
+        // NOTE: since is to make sure no pagination occurs... we should fix this endpoint on the server
+        api.getActivities({ since: 1, txHash: pendingTxHashes.join(',') }).then((data) => {
+          handleActivities(data.activities, true);
+          setLastBlockNumber(data.blockNumber);
+        });
+      } else {
+        handleActivities([], true);
       }
-
-      // TODO: ecs refactor -- re-enable since once server PR 266 merged in
-      api.getActivities(/*since ? { since } : {}*/).then((data) => {
-        // TODO: currently mapping activities to events so consistent with websockets
-        //  but presumably websockets will start emitting activities in the future
-        handleActivities(data.activities, true);
-        setLastBlockNumber(data.blockNumber);
-      });
 
       registerWSHandler(onWSMessage);
 

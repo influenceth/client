@@ -368,6 +368,7 @@ const ActionItem = ({ data }) => {
           <Location>
             {item.locationDetail && <><b>{item.locationDetail}</b></>}
             <span>{formatters.asteroidName(asteroid)}</span>
+            {/* TODO: use <EntityName /> instead? */}
           </Location>
         )}
       </Details>
