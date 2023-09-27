@@ -512,13 +512,13 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
                           A resource scan to determine the final resource composition of this asteroid must be performed
                           at short-range.
                           <br/><br/>
-                          <span style={crew._location.asteroidId !== asteroid.id ? { color: theme.colors.error } : {}}>
+                          <span style={crew._location?.asteroidId !== asteroid.id ? { color: theme.colors.error } : {}}>
                             Your crew must be in orbit or on the surface of the asteroid.
                           </span>
                         </p>
                       )}
                       <Button
-                        disabled={scanType === 'RESOURCE' && crew._location.asteroidId !== asteroid.id}
+                        disabled={scanType === 'RESOURCE' && crew._location?.asteroidId !== asteroid.id}
                         onClick={startAsteroidScan}
                         isTransaction>
                         Start {scanType} Scan

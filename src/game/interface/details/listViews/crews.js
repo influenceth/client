@@ -62,7 +62,15 @@ const useColumns = () => {
       {
         key: 'roster',
         label: 'Roster',
-        selector: row => (row.Crew.roster || []).join(', '),
+        selector: row => {
+          let roster = (row.Crew.roster || []).join(', ');
+
+          if (row.meta?.crewmates?.length > 0) {
+            roster = row.meta.crewmates.map((cm) => cm.name).join(', ');
+          }
+
+          return roster;
+        }
       }
     ];
 
