@@ -1,44 +1,42 @@
-import { useCallback, useContext, useEffect, useMemo } from 'react';
-import { useQueryClient } from 'react-query';
+import { useCallback, useContext, useMemo } from 'react';
+import { Asteroid } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from './useActionItems';
+import useCrewContext from './useCrewContext';
 
 const useScanManager = (asteroid) => {
   const { readyItems, liveBlockTime } = useActionItems();
   const { execute, getStatus } = useContext(ChainTransactionContext);
+  const { crew } = useCrewContext();
 
-  const payload = useMemo(() => ({
-    i: asteroid ? Number(asteroid.i) : null
-  }), [asteroid?.i]);
-
-  const startAsteroidScan = useCallback(
-    () => execute('START_ASTEROID_SCAN', {
-      ...payload,
-      boost: asteroid.boost,
-      _packed: asteroid._packed,
-      _proofs: asteroid._proofs
-    }),
-    [execute, payload, asteroid]
-  );
-
-  const finalizeAsteroidScan = useCallback(
-    () => execute('FINISH_ASTEROID_SCAN', payload),
-    [execute, payload]
-  );
+  const { scanType, startSystem, finishSystem, payload } = useMemo(() => {
+    const scanType = asteroid?.Celestial?.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED ? 'SURFACE' : 'RESOURCE';
+    return {
+      scanType,
+      startSystem: scanType === 'RESOURCE' ? 'ScanResourceStart' : 'ScanSurfaceStart',
+      finishSystem: scanType === 'RESOURCE' ? 'ScanResourceFinish' : 'ScanSurfaceFinish',
+      payload: asteroid && crew && {
+        asteroid: { id: asteroid.id, label: asteroid.label },
+        caller_crew: { id: crew.id, label: crew.label }
+      }
+    };
+  }, [asteroid, crew]);
 
   const scanStatus = useMemo(() => {
-    if (asteroid) {
-      if (asteroid.scanned) {
+    if (asteroid?.Celestial) {
+      if (scanType === 'SURFACE' && asteroid.Celestial?.scanStatus === Asteroid.SCAN_STATUSES.SURFACE_SCANNED) {
         return 'FINISHED';
-      } else if(asteroid.scanCompletionTime > 0) {
-        if(getStatus('FINISH_ASTEROID_SCAN', payload) === 'pending') {
+      } else if (scanType === 'RESOURCE' && asteroid.Celestial?.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
+        return 'FINISHED';
+      } else if (asteroid.Celestial.scanFinishTime > 0) {
+        if(getStatus(finishSystem, payload) === 'pending') {
           return 'FINISHING';
-        } else if (asteroid.scanCompletionTime < liveBlockTime) {
+        } else if (asteroid.Celestial.scanFinishTime <= liveBlockTime) {
           return 'READY_TO_FINISH';
         }
         return 'SCANNING';
-      } else if (getStatus('START_ASTEROID_SCAN', payload) === 'pending') {
+      } else if (getStatus(startSystem, payload) === 'pending') {
         return 'SCANNING';
       }
     }
@@ -47,12 +45,24 @@ const useScanManager = (asteroid) => {
   // NOTE: actionItems is not used in this function, but it being updated suggests
   //  that something might have just gone from UNDER_CONSTRUCTION to READY_TO_FINISH
   //  so it is a good time to re-evaluate the status
-  }, [ asteroid, getStatus, payload, readyItems ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ asteroid, getStatus, startSystem, finishSystem, payload, readyItems, scanType ]);
+
+  const startAsteroidScan = useCallback(
+    () => execute(startSystem, payload),
+    [execute, startSystem, payload]
+  );
+
+  const finalizeAsteroidScan = useCallback(
+    () => execute(finishSystem, payload),
+    [execute, finishSystem, payload]
+  );
 
   return {
     startAsteroidScan,
     finalizeAsteroidScan,
-    scanStatus
+    scanStatus,
+    scanType
   };
 };
 

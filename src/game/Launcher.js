@@ -10,21 +10,21 @@ import OnClickLink from '~/components/OnClickLink';
 import Time from '~/components/Time';
 import Account, { logoDisplacementHeight } from './launcher/Account';
 import Settings from './launcher/Settings';
-import Wallets from './launcher/Wallets';
 
 const headerFooterHeight = 100;
 
+// TODO: should add in/out transitions to this page
 const StyledLauncher = styled.div`
   align-items: center;
   backdrop-filter: blur(0.75px) saturate(70%) brightness(70%);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
   justify-content: space-between;
   opacity: 1;
   padding: ${headerFooterHeight}px 0;
   position: absolute;
-  width: 100%;
+  width: 100vw;
   z-index: 8999;
 `;
 
@@ -167,6 +167,7 @@ const MainContent = styled.div`
 `;
 
 const StyledTime = styled(Time)`
+  font-size: 20px !important;
   margin: 20px 0;
 `;
 
@@ -227,19 +228,20 @@ const Launcher = (props) => {
   const { displayTime } = useContext(ClockContext);
   const launcherPage = useStore(s => s.launcherPage);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-  const hideInterface = useStore(s => s.dispatchHideInterface);
-  const showInterface = useStore(s => s.dispatchShowInterface);
+  const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
+  const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const { walletContext, token } = useAuth();
   const { account, walletIcon, walletName } = walletContext;
   const loggedIn = account && token;
 
   const goToWallet = useCallback(() => {
-    if (walletContext?.starknet?.id === 'Cartridge') window.open('https://cartridge.gg', '_blank');
   }, [ walletContext ]);
 
   useEffect(() => {
-    hideInterface();
-    return () => showInterface();
+    if (interfaceHidden) {
+      dispatchToggleInterface(false);
+      return () => dispatchToggleInterface(true);
+    }
   }, []);
 
   return (
@@ -267,7 +269,6 @@ const Launcher = (props) => {
       </Header>
       <MainContent>
         {launcherPage === 'account' && <Account />}
-        {launcherPage === 'wallets' && <Wallets />}
         {launcherPage === 'settings' && <Settings />}
       </MainContent>
       <StyledTime displayTime={displayTime} />

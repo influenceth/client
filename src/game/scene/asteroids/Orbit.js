@@ -1,40 +1,51 @@
 import { useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Color } from 'three';
-import { KeplerianOrbit } from '@influenceth/sdk';
+import { AdalianOrbit } from '@influenceth/sdk';
+import { cloneDeep } from 'lodash';
 
+import orbitColors from './orbit/orbitColors';
 import frag from './orbit/orbit.frag';
 import vert from './orbit/orbit.vert';
-import constants from '~/lib/constants';
-import theme from '~/theme';
 
 const order = new Float32Array(Array(360).fill().map((_, i) => i+1));
 const initialUniforms = {
-  uCol: { type: 'c', value: new Color(theme.colors.main) },
   uTime: { type: 'i', value: 0 },
   uAlpha: { type: 'f', value: 1.0 },
-  uCount: { type: 'f', value: 360 }
+  uAlphaMin: { type: 'f', value: 0.5 },
+  uCount: { type: 'f', value: 360 },
+  uDash: { type: 'b', value: false }
 };
 
-const Orbit = (props) => {
-  const { asteroid } = props;
+const Orbit = ({ asteroid, color, opacityMult = 1, staticOpacity }) => {
   const [ positions, setPositions ] = useState(new Float32Array(360 * 3));
 
-  const material = useRef();
+  const uniforms = useRef({
+    ...cloneDeep(initialUniforms),
+    uCol: { type: 'c', value: orbitColors.main },
+  });
 
   useEffect(() => {
-    const keplerianOrbit = new KeplerianOrbit(asteroid.orbital);
+    const orbit = new AdalianOrbit(asteroid.Orbit, { units: 'km' });
     let newPositions = [];
-    keplerianOrbit.getSmoothOrbit(360).forEach(p => {
-      newPositions.push(...[ p.x, p.y, p.z ].map(v => v * constants.AU));
+    orbit.getSmoothOrbit(360).forEach(p => {
+      newPositions.push(...[ p.x, p.y, p.z ]);
     });
 
     setPositions(new Float32Array(newPositions));
   }, [ asteroid ]);
 
+  useEffect(() => {
+    uniforms.current.uCol.value = (color && orbitColors[color]) || orbitColors.main;
+  }, [color]);
+
+  useEffect(() => {
+    uniforms.current.uAlpha.value = Math.min(1, initialUniforms.uAlpha.value * opacityMult);
+    uniforms.current.uAlphaMin.value = Math.min(1, initialUniforms.uAlphaMin.value * opacityMult);
+  }, [opacityMult]);
+
   useFrame(() => {
-    const time = material.current.uniforms.uTime.value;
-    material.current.uniforms.uTime.value = time + 1;
+    const time = uniforms.current.uTime.value;
+    uniforms.current.uTime.value = time + 1;
   });
 
   return (
@@ -43,15 +54,22 @@ const Orbit = (props) => {
         <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3 ]} />
         <bufferAttribute attachObject={[ 'attributes', 'order' ]} args={[ order, 1 ]} />
       </bufferGeometry>
-      <shaderMaterial
-        ref={material}
-        args={[{
-          depthWrite: false,
-          fragmentShader: frag,
-          uniforms: initialUniforms,
-          transparent: true,
-          vertexShader: vert,
-        }]} />
+      {staticOpacity && (
+        <lineBasicMaterial
+          color={uniforms.current.uCol.value}
+          opacity={staticOpacity}
+          transparent />
+      )}
+      {!staticOpacity && (
+        <shaderMaterial
+          args={[{
+            depthWrite: false,
+            fragmentShader: frag,
+            uniforms: uniforms.current,
+            transparent: true,
+            vertexShader: vert,
+          }]} />
+      )}
     </lineLoop>
   );
 };

@@ -1,13 +1,14 @@
 import { useQuery } from 'react-query';
 
 import api from '~/lib/api';
-import useCrew from './useCrew';
+import useCrewContext from './useCrewContext';
 
 const useAsteroidCrewSamples = (asteroidId, resourceId) => {
-  const { crew } = useCrew();
+  const { crew } = useCrewContext();
   return useQuery(
-    [ 'asteroidCrewSampledPlots', asteroidId, resourceId, crew?.i ],
-    () => api.getCrewSampledPlots(asteroidId, crew?.i, resourceId),
+    // TODO: convert this to 'entities' model of cache keys
+    [ 'asteroidCrewSampledLots', asteroidId, resourceId, crew?.i ],
+    () => api.getCrewSampledLots(asteroidId, crew?.i, resourceId),
     { enabled: !!(asteroidId && crew?.i && resourceId) }
   );
 };

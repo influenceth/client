@@ -1,112 +1,138 @@
 import { useCallback, useContext, useMemo } from 'react';
-import { Construction } from '@influenceth/sdk';
+import { Building } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useCrew from './useCrew';
-import usePlot from './usePlot';
+import useCrewContext from './useCrewContext';
+import useLot from './useLot';
 import useActionItems from './useActionItems';
+import actionStage from '~/lib/actionStages';
 
-const useConstructionManager = (asteroidId, plotId) => {
+const useConstructionManager = (asteroidId, lotId) => {
   const { actionItems, readyItems, liveBlockTime } = useActionItems();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
-  const { crew } = useCrew();
-  const { data: plot } = usePlot(asteroidId, plotId);
+  const { crew } = useCrewContext();
+  const { data: lot } = useLot(asteroidId, lotId);
 
   const payload = useMemo(() => ({
     asteroidId,
-    plotId,
-    crewId: crew?.i
-  }), [asteroidId, plotId, crew?.i]);
+    lotId,
+    crewId: crew?.id
+  }), [asteroidId, lotId, crew?.id]);
 
   // READY_TO_PLAN > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
   //               < CANCELING <         <                  DECONSTRUCTING                  <
-  const [currentConstruction, constructionStatus, isAtRisk] = useMemo(() => {
+  const [currentConstructionAction, constructionStatus, isAtRisk, deconstructTx, stageByActivity] = useMemo(() => {
     let current = {
       _crewmates: null,
-      capableId: null,
-      capableType: null,
-      completionTime: null,
+      buildingId: null,
+      buildingType: null,
+      finishTime: null,
       crewId: null,
       startTime: null
+    };
+    const stages = {
+      plan: actionStage.NOT_STARTED,
+      unplan: actionStage.NOT_STARTED,
+      construct: actionStage.NOT_STARTED,
+      deconstruct: actionStage.NOT_STARTED,
     };
 
     let status = 'READY_TO_PLAN';
     let isAtRisk = false;
-    if (plot?.building) {
+    let deconstructTx;
+    if (lot?.building) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_ConstructionStart'
-        && item.assets.asteroid?.i === asteroidId
-        && item.assets.lot?.i === plotId
+        && item.assets.asteroid?.id === asteroidId
+        && item.assets.lot?.id === lotId
       ));
-      if (actionItem) current._crewmates = actionItem.assets.crew.crewmates;
-      current.capableId = plot.building.i;
-      current.capableType = plot.building.capableType;
-      current.completionTime = plot.building.construction?.completionTime;
-      current.crewId = plot.occupier;
-      current.startTime = plot.building.construction?.startTime;
 
-      if (plot.building.construction?.status === Construction.STATUS_PLANNED) {
+      if (actionItem) {
+        current._crewmates = actionItem.assets.crew.crewmates;
+        current.startTime = actionItem.startTime;
+      }
+
+      current.buildingId = lot.building.id;
+      current.buildingType = lot.building.Building?.buildingType;
+      current.finishTime = lot.building.Building?.finishTime;
+      current.crewId = lot.building.Control?.controller?.id;
+
+      if (lot.building.Building.status === Building.CONSTRUCTION_STATUS_IDS.PLANNED) {
         if (getStatus('START_CONSTRUCTION', payload) === 'pending') {
           status = 'UNDER_CONSTRUCTION';
+          stages.construct = actionStage.STARTING;
         } else if (getStatus('UNPLAN_CONSTRUCTION', payload) === 'pending') {
           status = 'CANCELING';
-        } else if (plot.gracePeriodEnd >= liveBlockTime) {
+          stages.unplan = actionStage.COMPLETING;
+        } else if (lot.building.Building.plannedAt + Building.GRACE_PERIOD >= liveBlockTime) {
           status = 'PLANNED';
+          stages.plan = actionStage.COMPLETED;
         } else {
           isAtRisk = true;
 
           // if at-risk is being rebuilt on, check transaction to see if a new occupier is re-planning
           const planTx = getPendingTx('PLAN_CONSTRUCTION', payload);
           if (planTx) {
-            current.capableType = planTx.vars.capableType;
+            current.buildingType = planTx.vars.buildingType;
             current.crewId = planTx.vars.crewId;
-            current.completionTime = null;
+            current.finishTime = null;
             current.startTime = null;
             status = 'PLANNING';
+            stages.plan = actionStage.COMPLETING;
 
           // if at risk, but i was the occupier, still treat as "planned" (will go back to "ready to plan" for other crews)
-          } else if (plot.occupier === crew?.i) {
+          } else if (lot.building?.Control?.controller?.id === crew?.id) {
             status = 'PLANNED';
+            stages.plan = actionStage.COMPLETED;
           }
         }
 
-      } else if (plot.building.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION) {
+      } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUS_IDS.UNDER_CONSTRUCTION) {
         if (getStatus('FINISH_CONSTRUCTION', payload) === 'pending') {
           status = 'FINISHING';
-        } else if (plot.building.construction?.completionTime && (plot.building.construction.completionTime < liveBlockTime)) {
+          stages.construct = actionStage.COMPLETING;
+        } else if (lot.building.Building.finishTime && (lot.building.Building.finishTime <= liveBlockTime)) {
           status = 'READY_TO_FINISH';
+          stages.construct = actionStage.READY_TO_COMPLETE;
         } else {
           status = 'UNDER_CONSTRUCTION';
+          stages.construct = actionStage.IN_PROGRESS;
         }
 
-      } else if (plot.building.construction?.status === Construction.STATUS_OPERATIONAL) {
+      } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL) {
         if (getStatus('DECONSTRUCT', payload) === 'pending') {
           status = 'DECONSTRUCTING';
+          deconstructTx = getPendingTx('DECONSTRUCT', payload);
+          stages.deconstruct = actionStage.STARTING;
         } else {
           status = 'OPERATIONAL';
+          stages.construct = actionStage.COMPLETED;
         }
       }
     } else {
       const planTx = getPendingTx('PLAN_CONSTRUCTION', payload);
       if (planTx) {
-        current.capableType = planTx.vars.capableType;
+        current.buildingType = planTx.vars.buildingType;
         current.crewId = planTx.vars.crewId;
         status = 'PLANNING';
+        stages.plan = actionStage.COMPLETING;
       }
     }
 
     return [
       status === 'READY_TO_PLAN' ? null : current,
       status,
-      isAtRisk
+      isAtRisk,
+      deconstructTx,
+      stages
     ];
-  }, [actionItems, readyItems, getPendingTx, getStatus, payload, plot?.building]);
+  }, [actionItems, readyItems, getPendingTx, getStatus, payload, lot?.building]);
 
-  const planConstruction = useCallback((capableType) => {
+  const planConstruction = useCallback((buildingType) => {
     execute(
       'PLAN_CONSTRUCTION',
       {
-        capableType,
+        buildingType,
         ...payload
       }
     )
@@ -135,8 +161,10 @@ const useConstructionManager = (asteroidId, plotId) => {
     finishConstruction,
     deconstruct,
     constructionStatus,
-    currentConstruction,
-    isAtRisk
+    currentConstructionAction,
+    deconstructTx,
+    isAtRisk,
+    stageByActivity
   };
 };
 

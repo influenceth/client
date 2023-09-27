@@ -11,23 +11,22 @@ const labelDict = {
   FINISHING: 'Finishing Construction...'
 };
 
-const Construct = ({ asteroid, plot, onSetAction, _disabled }) => {
-  const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
+const Construct = ({ asteroid, lot, onSetAction, _disabled }) => {
+  const { constructionStatus } = useConstructionManager(asteroid?.i, lot?.i);
   const handleClick = useCallback(() => {
     onSetAction('CONSTRUCT');
   }, [onSetAction]);
 
   const attention = constructionStatus === 'PLANNED' || constructionStatus === 'READY_TO_FINISH';
-  const badge = constructionStatus === 'READY_TO_FINISH' ? '✓' : 0;
   const loading = constructionStatus === 'UNDER_CONSTRUCTION' || constructionStatus === 'FINISHING';
   return (
     <ActionButton
       label={labelDict[constructionStatus] || undefined}
       flags={{
-        badge,
         disabled: _disabled || undefined,
         attention: attention || undefined,
-        loading: loading || undefined
+        loading: loading || undefined,
+        finishTime: lot?.building?.Building?.finishTime
       }}
       icon={<ConstructIcon />}
       onClick={handleClick} />

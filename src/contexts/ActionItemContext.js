@@ -1,29 +1,29 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
+import { Building } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useChainTime from '~/hooks/useChainTime';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
 
 const ActionItemContext = React.createContext();
 
 export function ActionItemProvider({ children }) {
-  const { walletContext: { starknet } } = useAuth();
+  const { account, token, walletContext: { starknet } } = useAuth();
   const chainTime = useChainTime();
-  const { crew } = useCrew();
+  const { crew } = useCrewContext();
 
-  const { data: actionItems } = useQuery(
+  const { data: actionItems, isLoading: actionItemsLoading } = useQuery(
     [ 'actionItems', crew?.i ],
     () => api.getCrewActionItems(),
     { enabled: !!crew?.i }
   );
 
-  // TODO: probably could move planned lots into actionitems component
-  const { data: plannedLots } = useQuery(
+  const { data: plannedBuildings, isLoading: plannedBuildingsLoading } = useQuery(
     [ 'planned', crew?.i ],
-    () => api.getCrewPlannedLots(),
+    () => api.getCrewPlannedBuildings(crew?.i),
     { enabled: !!crew?.i }
   );
 
@@ -63,27 +63,30 @@ export function ActionItemProvider({ children }) {
 
     setReadyItems(
       (actionItems || [])
-        .filter((i) => i.data?.completionTime <= liveBlockTime)
-        .sort((a, b) => a.data?.completionTime - b.data?.completionTime)
+        .filter((i) => i.data?.finishTime <= liveBlockTime)
+        .sort((a, b) => a.data?.finishTime - b.data?.finishTime)
     );
 
     setUnreadyItems(
       (actionItems || [])
-        .filter((i) => i.data?.completionTime > liveBlockTime)
-        .sort((a, b) => a.data?.completionTime - b.data?.completionTime)
+        .filter((i) => i.data?.finishTime > liveBlockTime)
+        .sort((a, b) => a.data?.finishTime - b.data?.finishTime)
     );
 
     setPlannedItems(
-      (plannedLots || [])
-        // .filter((i) => i.gracePeriodEnd >= nowTime)
-        .map((a) => ({ ...a, waitingFor: a.gracePeriodEnd > liveBlockTime ? a.gracePeriodEnd : null }))
-        .sort((a, b) => a.gracePeriodEnd - b.gracePeriodEnd)
+      (plannedBuildings || [])
+        // .filter((a) => a.Building.plannedAt + Building.GRACE_PERIOD >= nowTime)
+        .map((a) => ({
+          ...a,
+          waitingFor: a.Building.plannedAt + Building.GRACE_PERIOD > liveBlockTime ? a.Building.plannedAt + Building.GRACE_PERIOD : null
+        }))
+        .sort((a, b) => a.plannedAt - b.plannedAt)
     );
-  }, [actionItems, plannedLots, liveBlockTime]);
+  }, [actionItems, plannedBuildings, liveBlockTime]);
 
   const nextCompletionTime = useMemo(() => {
     return [...plannedItems, ...unreadyItems].reduce((acc, cur) => {
-      const relevantTime = cur.waitingFor || cur.data?.completionTime;
+      const relevantTime = cur.waitingFor || cur.data?.finishTime;
       if (relevantTime && relevantTime && (acc === null || relevantTime < acc)) {
         return relevantTime;
       }
@@ -103,26 +106,118 @@ export function ActionItemProvider({ children }) {
     }
   }, [nextCompletionTime]);
 
+
+  // create unified events file
+  // potentially create unified systems file
+  // report "unhandled" events (would need to mark ignored ones explicitly)
+
+  // if activity has event.returnValues.finishTime, treat as actionitem (should also have event.timestamp)
+  // 
+  const Events = {
+    NameChanged: {
+      // log content, finishing event (+ equality)
+      // invalidations
+
+      // action item format
+    }
+  }
+
+  const allVisibleItems = useMemo(() => {
+    if (!account || !token) return [];
+
+    // transactions (equality)
+    // events (equality)
+    // invalidations
+
+    // return the readyItems whose "finishing transaction" is not already pending
+    const visibleReadyItems = readyItems.filter((item) => {
+      if (pendingTransactions) {
+        switch (item.event.name) {
+          case 'Dispatcher_AsteroidStartScan':
+            return !pendingTransactions.find((tx) => (
+              tx.key === 'FINISH_ASTEROID_SCAN'
+              && tx.vars.i === item.event.returnValues?.asteroidId
+            ));
+          case 'Dispatcher_CoreSampleStartSampling':
+            return !pendingTransactions.find((tx) => (
+              tx.key === 'FINISH_CORE_SAMPLE'
+              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+              && tx.vars.lotId === item.event.returnValues?.lotId
+            ));
+          case 'Dispatcher_ConstructionStart':
+            return !pendingTransactions.find((tx) => (
+              tx.key === 'FINISH_CONSTRUCTION'
+              && tx.vars.asteroidId === item.assets.asteroid.i
+              && tx.vars.lotId === item.assets.lot.i
+            ));
+          case 'Dispatcher_ExtractionStart':
+            return !pendingTransactions.find((tx) => (
+              tx.key === 'FINISH_EXTRACTION'
+              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+              && tx.vars.lotId === item.event.returnValues?.lotId
+            ));
+          case 'Dispatcher_InventoryTransferStart':
+            return !pendingTransactions.find((tx) => (
+              tx.key === 'FINISH_DELIVERY'
+              && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+              && tx.vars.destLotId === item.event.returnValues?.destinationLotId
+              && tx.vars.deliveryId === item.assets.delivery?.deliveryId
+            ));
+        }
+      }
+      return true;
+    });
+
+    const visiblePlannedItems = plannedItems.filter((item) => {
+      if (pendingTransactions) {
+        return !pendingTransactions.find((tx) => (
+          ['START_CONSTRUCTION', 'UNPLAN_CONSTRUCTION'].includes(tx.key)
+          && tx.vars.asteroidId === item.asteroid
+          && tx.vars.lotId === item.i
+        ));
+      }
+      return true;
+    });
+
+    return [
+      ...(pendingTransactions || []).map((item) => ({ ...item, type: 'pending' })),
+      ...(failedTransactions || []).map((item) => ({ ...item, type: 'failed' })),
+      ...(visibleReadyItems || []).map((item) => ({ ...item, type: 'ready' })),
+      ...(visiblePlannedItems || []).map((item) => ({ ...item, type: 'plans' })),
+      ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready' }))
+    ].map((x) => {  // make sure everything has a key
+      if (!x.key) x.key = `${x.type}_${x.txHash || x.id || x.timestamp || x.gracePeriodEnd}`;
+      return x;
+    });
+
+  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems, account, token]);
+
+
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining
 
   // without memoizing, triggers as if new value on every chainTime update
   const contextValue = useMemo(() => ({
+    allVisibleItems,
     liveBlockTime,
     pendingTransactions,
     failedTransactions,
     readyItems,
     plannedItems,
     unreadyItems,
-    actionItems
+    actionItems,
+    isLoading: actionItemsLoading || plannedBuildingsLoading
   }), [
+    allVisibleItems,
     liveBlockTime,
     pendingTransactions,
     failedTransactions,
     readyItems,
     plannedItems,
     unreadyItems,
-    actionItems
+    actionItems,
+    actionItemsLoading,
+    plannedBuildingsLoading
   ]);
 
   // TODO: pending and failed transactions are already in context
@@ -146,7 +241,7 @@ export function ActionItemProvider({ children }) {
 
   //   const openItems = [];
   //   events.forEach((event) => {
-  //     if (event.returnValues?.completionTime) {
+  //     if (event.returnValues?.finishTime) {
   //       const waitingOn = {};
   //       if (event.event === 'Asteroid_ScanStarted') {
   //         waitingOn.event = 'Asteroid_ScanFinished';
@@ -162,7 +257,7 @@ export function ActionItemProvider({ children }) {
   //       // }
   //       openItems.push({
   //         ...event,
-  //         isReady: chainTime >= event.returnValues.completionTime,
+  //         isReady: chainTime >= event.returnValues.finishTime,
   //         waitingOn
   //       });
   //     }
@@ -186,7 +281,7 @@ export function ActionItemProvider({ children }) {
   // useEffect(() => {
   //   actionItemz.forEach((ai) => {
   //     if (!ai.isReady && !nextTimer.current) {
-  //       const readyIn = (ai.returnValues.completionTime - chainTime) + 5;
+  //       const readyIn = (ai.returnValues.finishTime - chainTime) + 5;
   //       nextTimer.current = setTimeout(() => {
   //         console.log('Something is ready.');
   //         setReadyTally((i) => i + 1);

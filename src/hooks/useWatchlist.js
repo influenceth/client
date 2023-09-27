@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import api from '~/lib/api';
 
@@ -6,7 +6,6 @@ import useAuth from '~/hooks/useAuth';
 
 const useWatchlist = () => {
   const { token } = useAuth();
-  const [ ids, setIds ] = useState([]);
 
   const watchlist = useQuery(
     [ 'watchlist', token ],
@@ -14,13 +13,12 @@ const useWatchlist = () => {
     { enabled: !!token }
   );
 
-  useEffect(() => {
+  const ids = useMemo(() => {
     if (watchlist.data) {
-      setIds(watchlist.data.map(w => w.asteroid.i));
-    } else {
-      setIds([]);
+      return watchlist.data.map(w => w.asteroid.i);
     }
-  }, [ watchlist.data ]);
+    return [];
+  }, [watchlist.data]);
 
   return { watchlist, ids };
 };

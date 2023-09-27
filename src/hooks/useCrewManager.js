@@ -1,15 +1,12 @@
 import { useCallback, useContext, useMemo } from 'react';
+import { Crewmate, Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useCrew from './useCrew';
+import useCrewContext from './useCrewContext';
 
 const useCrewManager = () => {
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
-  const { crewMemberMap } = useCrew();
-
-  const crewCredits = useMemo(() => {
-    return Object.values(crewMemberMap || {}).filter((c) => !c.crewClass);
-  }, [crewMemberMap]);
+  const { adalianRecruits, crewmateMap } = useCrewContext();
 
   const changeActiveCrew = useCallback(
     (params) => execute('SET_ACTIVE_CREW', params),
@@ -21,25 +18,48 @@ const useCrewManager = () => {
   );
 
   const purchaseAndOrInitializeCrew = useCallback(
-    (params) => {
-      if (crewCredits.length > 0) {
-        execute('INITIALIZE_CREWMATE', { i: crewCredits[0].i, ...params });
+    ({ crewmate }) => {
+      if (crewmate.Crewmate.coll !== Crewmate.COLLECTION_IDS.ADALIAN) {
+        execute('InitializeArvadian', {
+          crewmate: { id: crewmate.id, label: Entity.IDS.CREWMATE },
+          impactful: crewmate.Crewmate.impactful,
+          cosmetic: crewmate.Crewmate.cosmetic,
+          station: crewmate.Location,
+          caller_crew: crewmate.Control.controller,
+          name: crewmate.Name.name
+        });
+
       } else {
-        execute('PURCHASE_AND_INITIALIZE_CREWMATE', params);
+        const appearance = Crewmate.unpackAppearance(crewmate.Crewmate.appearance);
+        execute('RecruitAdalian', {
+          crewmate: { id: crewmate.id, label: Entity.IDS.CREWMATE },
+          class: crewmate.Crewmate.class,
+          impactful: crewmate.Crewmate.impactful,
+          cosmetic: crewmate.Crewmate.cosmetic,
+          gender: appearance.gender,
+          body: appearance.body,
+          face: appearance.face,
+          hair: appearance.hair,
+          hair_color: appearance.hairColor,
+          clothes: appearance.clothes,
+          station: crewmate.Location,
+          caller_crew: crewmate.Control.controller,
+          name: crewmate.Name.name
+        });
       }
     },
-    [crewCredits, execute]
+    [adalianRecruits, execute]
   );
 
   const getPendingCrewmate = useCallback(
     () => {
-      if (crewCredits.length > 0) {
-        return getPendingTx('INITIALIZE_CREWMATE', { i: crewCredits[0].i });
+      if (adalianRecruits.length > 0) {
+        return getPendingTx('InitializeArvadian', {});
       } else {
-        return getPendingTx('PURCHASE_AND_INITIALIZE_CREWMATE', {});
+        return getPendingTx('RecruitAdalian', {});
       }
     },
-    [crewCredits, getPendingTx]
+    [adalianRecruits, getPendingTx]
   );
 
   return {
@@ -47,7 +67,7 @@ const useCrewManager = () => {
     getPendingActiveCrewChange,
     purchaseAndOrInitializeCrew,
     getPendingCrewmate,
-    crewCredits,
+    adalianRecruits,
   };
 };
 

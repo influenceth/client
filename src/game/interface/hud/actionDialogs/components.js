@@ -1,85 +1,292 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
-import { FiCrosshair as TargetIcon } from 'react-icons/fi';
-import {
-  BsChevronDoubleDown as ChevronDoubleDownIcon,
-  BsChevronDoubleUp as ChevronDoubleUpIcon,
-} from 'react-icons/bs';
-import { RingLoader, PuffLoader } from 'react-spinners';
-import { Asteroid, Construction, Crewmate, Inventory } from '@influenceth/sdk';
+import styled, { css, keyframes } from 'styled-components';
+import { createPortal } from 'react-dom';
+import ReactTooltip from 'react-tooltip';
+import { useQuery } from 'react-query';
+import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
+import { BarLoader } from 'react-spinners';
+import { Asteroid, Building, Crewmate, Delivery, Entity, Inventory, Process, Product, Ship } from '@influenceth/sdk';
+import { cloneDeep } from 'lodash';
 
+import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
-import ButtonRounded, { IconButtonRounded } from '~/components/ButtonRounded';
-import CrewCard from '~/components/CrewCard';
+import ClipCorner from '~/components/ClipCorner';
+import CrewCardFramed from '~/components/CrewCardFramed';
+import CrewIndicator from '~/components/CrewIndicator';
+import Dialog from '~/components/Dialog';
 import IconButton from '~/components/IconButton';
 import {
-  CheckIcon,
   ChevronRightIcon,
   CloseIcon,
-  ConstructIcon,
   CrewIcon,
-  PlanBuildingIcon,
-  LocationPinIcon,
+  DeltaVIcon,
+  FastForwardIcon,
+  LocationIcon,
   PlusIcon,
-  ResourceIcon,
-  TimerIcon,
-  WarningOutlineIcon
+  WarningOutlineIcon,
+  SurfaceTransferIcon,
+  GasIcon,
+  SwayIcon,
+  RadioCheckedIcon,
+  RadioUncheckedIcon,
+  MyAssetIcon,
+  CaptainIcon,
+  EmergencyModeEnterIcon,
+  CheckIcon,
+  ProcessIcon
 } from '~/components/Icons';
-import MouseoverInfoPane from '~/components/MouseoverInfoPane';
-import Poppable from '~/components/Popper';
-import ResourceColorIcon from '~/components/ResourceColorIcon';
-import SliderInput from '~/components/SliderInput';
-import { useBuildingAssets } from '~/hooks/useAssets';
-import useAsteroidCrewPlots from '~/hooks/useAsteroidCrewPlots';
-import theme from '~/theme';
-import useChainTime from '~/hooks/useChainTime';
-import { formatFixed, formatTimer, keyify } from '~/lib/utils';
 import LiveTimer from '~/components/LiveTimer';
-import NavIcon from '~/components/NavIcon';
+import MouseoverInfoPane from '~/components/MouseoverInfoPane';
+import ResourceColorIcon from '~/components/ResourceColorIcon';
+import ResourceThumbnail, { ResourceThumbnailWrapper, ResourceImage, ResourceProgress } from '~/components/ResourceThumbnail';
+import ResourceRequirement from '~/components/ResourceRequirement';
+import ResourceSelection from '~/components/ResourceSelection';
+import SliderInput from '~/components/SliderInput';
+import TextInput from '~/components/TextInputUncontrolled';
+import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
+import useChainTime from '~/hooks/useChainTime';
+import api from '~/lib/api';
+import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
+import actionStage from '~/lib/actionStages';
+import constants from '~/lib/constants';
+import { getBuildingIcon, getShipIcon } from '~/lib/assetUtils';
+import theme, { hexToRGB } from '~/theme';
+import { theming } from '../ActionDialog';
+import formatters from '~/lib/formatters';
+import useCrewContext from '~/hooks/useCrewContext';
+import FoodStatus from '~/components/FoodStatus';
+import useHydratedLocation from '~/hooks/useHydratedLocation';
+import CrewLocationLabel from '~/components/CrewLocationLabel';
+
+const SECTION_WIDTH = 780;
 
 const borderColor = '#333';
-
-const CloseButton = styled(IconButton)`
-  opacity: 0.6;
-  position: absolute !important;
-  top: 5px;
-  right: -5px;
-  z-index: 1;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    right: 0;
-  }
-`;
 
 const Spacer = styled.div`
   flex: 1;
 `;
-const Section = styled.div`
+export const Section = styled.div`
   color: #777;
-  min-height: 100px;
+  margin-top: 15px;
   padding: 0 36px;
-  width: 780px;
+  width: ${SECTION_WIDTH}px;
 `;
-const SectionTitle = styled.div`
+
+const Tabs = styled.div`
+  border-bottom: 1px solid ${borderColor};
+  display: flex;
+  flex-direction: row;
+  margin: 0 -18px 20px;
+`;
+const Tab = styled.div`
+  align-items: center;
+  border-bottom: 3px solid #555;
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  flex-direction: row;
+  height: 35px;
+  justify-content: center;
+  margin-right: 12px;
+  text-transform: uppercase;
+  transition-property: background, border-color, color;
+  transition-duration: 250ms;
+  transition-timing-function: ease;
+  width: 145px;
+  ${p => p.isSelected
+    ? `
+      background: rgba(${p.theme.colors.mainRGB}, 0.5);
+      border-color: ${p.theme.colors.main};
+      color: white;
+    `
+    : `
+      cursor: ${p.theme.cursors.active};
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    `
+  }
+`;
+const TabIcon = styled.div`
+  font-size: 30px;
+  line-height: 1em;
+  margin-right: 5px;
+  margin-left: -5px;
+`;
+
+const FlexSectionInputContainer = styled.div`
+  width: 50%;
+`;
+
+export const FlexSectionSpacer = styled.div`
+  align-items: center;
+  align-self: stretch;
+  display: flex;
+  font-size: 20px;
+  justify-content: center;
+  margin-top: 26px;
+  width: 32px;
+`;
+
+export const sectionBodyCornerSize = 15;
+export const FlexSectionInputBody = styled.div`
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - ${sectionBodyCornerSize}px),
+    calc(100% - ${sectionBodyCornerSize}px) 100%,
+    0 100%
+  );
+  padding: 8px 16px 8px 8px;
+  position: relative;
+  transition-properties: background, border-color;
+  transition-duration: 250ms;
+  transition-function: ease;
+  & > svg {
+    transition: stroke 250ms ease;
+  }
+
+  ${p => p.isSelected ? `
+      background: rgba(${p.theme.colors.mainRGB}, 0.22);
+      border: 1px solid rgba(${p.theme.colors.mainRGB}, 0.7);
+      & > svg {
+        stroke: rgba(${p.theme.colors.mainRGB}, 0.7);
+      }
+    `
+    : `
+      background: rgba(${p.theme.colors.mainRGB}, 0.15);
+      border: 1px solid transparent;
+      & > svg {
+        stroke: transparent;
+      }
+    `
+  }
+
+  ${p => p.onClick && `
+    cursor: ${p.theme.cursors.active};
+    &:hover {
+      background: rgba(${p.theme.colors.mainRGB}, 0.25) !important;
+      border-color: rgba(${p.theme.colors.mainRGB}, 0.9) !important;
+      & > svg {
+        stroke: rgba(${p.theme.colors.mainRGB}, 0.9) !important;
+      }
+    }
+  `};
+
+  ${p => p.style?.borderColor && `
+    & > svg {
+      stroke: ${p.style?.borderColor};
+    }
+  `}
+`;
+const FlexSectionInputBodyInner = styled.div`
+  height: 92px;
+`;
+const FlexSectionBlockInner = styled.div`
+  height: 92px;
+  padding: 8px 16px 8px 8px;
+`;
+
+
+export const FlexSection = styled(Section)`
+  align-items: flex-end;
+  display: flex;
+`;
+export const SectionTitle = styled.div`
   align-items: center;
   border-bottom: 1px solid ${borderColor};
   display: flex;
   flex-direction: row;
   font-size: 90%;
   line-height: 1.5em;
-  padding: 0 5px 10px;
+  margin-bottom: 8px;
+  padding: 0 2px 4px;
   text-transform: uppercase;
+  transition: border-color 250ms ease, margin-bottom 250ms ease;
+  white-space: nowrap;
   & > svg {
-    font-size: 175%;
-    margin-left: -30px;
+    font-size: 150%;
+    margin-left: -26px;
+    transform: rotate(0);
+    transition: transform 250ms ease;
+  }
+
+  ${p => p.isDetailsHeader && `
+    border-color: transparent;
+    color: white;
+    cursor: ${p.theme.cursors.active};
+    font-size: 18px;
+    margin-bottom: 0;
+    &:hover {
+      opacity: 0.9;
+    }
+
+    ${p.isOpen && `
+      border-color: ${borderColor};
+      margin-bottom: 8px;
+      & > svg { transform: rotate(90deg); }
+    `}
+  `}
+
+  ${p => p.note && `
+    &:after {
+      content: "${p.note}";
+      display: block;
+      flex: 1;
+      text-align: right;
+      text-transform: none;
+    }
+  `}
+`;
+const SectionTitleRight = styled.div`
+  color: white;
+  font-size: 19px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
+  max-width: 240px;
+`;
+const SectionTitleRightTabs = styled.div`
+  display: flex;
+  flex-direction: row;
+`;
+
+const SectionTitleTab = styled.button`
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  color: white;
+  display: flex;
+  font-size: 20px;
+  height: 26px;
+  justify-content: center;
+  margin-left: 3px;
+  margin-top: -1px;
+  padding: 0;
+  transition: background 250ms ease, color 250ms ease;
+  width: 26px;
+  ${p => p.isSelected
+    ? `
+      background: ${p.theme.colors.main};
+      cursor: ${p.theme.cursors.default};
+      color: black;
+    `
+    : `
+      cursor: ${p.theme.cursors.active};
+      &:hover {
+        background: rgba(${p.theme.colors.mainRGB}, 0.3);
+      }
+    `
   }
 `;
-const SectionBody = styled.div`
+
+export const SectionBody = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
-  padding: 15px 0px;
   position: relative;
+  transition: max-height 250ms ease;
   ${p => p.highlight && `
     background: rgba(${p.theme.colors.mainRGB}, 0.2);
     border-radius: 10px;
@@ -87,108 +294,156 @@ const SectionBody = styled.div`
     padding-left: 15px;
     padding-right: 15px;
   `}
-`;
-
-const Header = styled(Section)`
-  padding-bottom: 20px;
-  padding-top: 20px;
-  position: relative;
-  ${p => p.backgroundSrc && `
-    &:before {
-      content: "";
-      background: url("${p.backgroundSrc}") center center;
-      background-size: cover;
-      bottom: 0;
-      mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
-
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      z-index: 0;
-    }
+  ${p => p.collapsible && `
+    overflow: hidden;
+    max-height: ${p.isOpen ? '400px' : '0'};
   `}
 `;
-const HeaderSectionBody = styled(SectionBody)`
-  padding: 0;
-`;
-const HeaderInfo = styled.div`
-  flex: 1;
-  color: #999;
-  display: flex;
-  flex-direction: column;
-  font-size: 90%;
-  justify-content: center;
-  ${p => p.padTop
-    ? `height: 140px; padding-top: 15px;`
-    : 'height: 125px;'}
-  position: relative;
-  & b {
-    color: white;
-    font-weight: normal;
-  }
-`;
-const Title = styled.div`
-  color: white;
-  font-size: 36px;
-  line-height: 48px;
-  & svg {
-    font-size: 150%;
-    margin-bottom: -5px;
-  }
-`;
-const Subtitle = styled.div`
 
+const ActionBar = styled.div`
+  align-items: center;
+  background: ${p => p.overrideColor ? `rgba(${hexToRGB(p.overrideColor)}, 0.2)` : p.headerBackground};
+  display: flex;
+  flex: 0 0 62px;
+  justify-content: space-between;
+  padding: 0 15px 0 20px;
+  position: relative;
+  z-index: 1;
 `;
-const CrewRequirement = styled.div``;
-const CrewInfo = styled.div`
-  align-items: flex-end;
-  display: ${p => (p.status === 'BEFORE' || p.requirement === 'duration') ? 'flex' : 'none'};
-  flex-direction: row;
+
+const BarLoadingContainer = styled.div`
+  height: 2px;
+  left: 0;
   position: absolute;
   right: 0;
-  bottom: 0;
-  & > div:first-child {
-    text-align: right;
-    & b {
-      color: orange;
-      font-weight: bold;
-    }
-  }
-  ${CrewRequirement} {
-    &:before {
-      content: ${p => p.status === 'BEFORE' ? '"Crew: "' : '""'};
-    }
-    &:after {
-      display: block;
-      font-weight: bold;
-      ${p => {
-        if (p.status === 'BEFORE') {
-          if (p.requirement === 'duration') {
-            return `
-              content: "Required for Duration";
-              color: ${p.theme.colors.orange};
-            `;
-          }
-          return `
-            content: "Required to Start";
-            color: ${p.theme.colors.main};
-          `;
-        }
-      }}
-    }
+  top: 0;
+  z-index: 2;
+  & > span {
+    display: block;
   }
 `;
 
-const CardContainer = styled.div`
-  border: 1px solid #555;
-  margin-left: 8px;
-  padding: 2px;
-  width: 75px;
-  & > div {
-    background-color: #111;
+const ActionLocation = styled.div`
+  border-left: 3px solid ${p => p.overrideColor || p.highlight};
+  color: rgba(210, 210, 210, 0.7);
+  display: flex;
+  font-size: 20px;
+  height: 36px;
+  line-height: 36px;
+  padding-left: 10px;
+  white-space: nowrap;
+  & > b {
+    color: white;
+    display: inline-block;
+    height: 36px;
+    margin-right: 6px;
+    max-width: 350px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 `;
+
+export const SublabelBanner = styled.div`
+  align-items: center;
+  background: rgba(${p => hexToRGB(p.color)}, 0.3);
+  color: white;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 15px),
+    calc(100% - 15px) 100%,
+    0 100%
+  );
+  display: flex;
+  flex-direction: row;
+  font-size: 26px;
+  margin-top: 8px;
+  padding: 10px 10px;
+  width: 100%;
+
+  b {
+    color: rgba(${p => hexToRGB(p.color)}, 0.8);
+    padding-right: 10px;
+  }
+`;
+
+const IconAndLabel = styled.div`
+  display: flex;
+  flex: 1;
+`;
+const IconContainer = styled.div`
+  font-size: 48px;
+  padding: 0 10px;
+`;
+const TimePill = styled.div`
+  align-items: center;
+  background: rgba(${p => hexToRGB(p.type === 'crew' ? p.theme.colors.purple : p.theme.colors.success)}, 0.4);
+  border-radius: 20px;
+  color: white;
+  display: flex;
+  margin-left: 4px;
+  padding: 3px 12px;
+  text-align: center;
+  text-transform: none;
+  & > svg {
+    color: ${p => p.type === 'crew' ? p.theme.colors.purple : p.theme.colors.success};
+    opacity: 0.7;
+    margin-right: 4px;
+  }
+`;
+const LabelContainer = styled.div`
+  flex: 1;
+  text-transform: uppercase;
+  h1 {
+    align-items: flex-end;
+    color: white;
+    display: flex;
+    font-weight: normal;
+    font-size: 36px;
+    height: 48px;
+    line-height: 36px;
+    margin: 0;
+  }
+  & > div {
+    align-items: center;
+    display: flex;
+    h2 {
+      font-size: 18px;
+      flex: 1;
+      margin: 6px 0 0;
+    }
+    ${TimePill} {
+      margin-top: 3px;
+    }
+  }
+`;
+const Header = styled(Section)`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  padding-bottom: 5px;
+  padding-top: 5px;
+  position: relative;
+  ${p => p.theming?.highlight && !p.overrideHighlightColor && `
+    ${IconContainer}, h2 {
+      color: ${p.theming.highlight};
+    }
+  `}
+  ${p => p.overrideHighlightColor && `
+    ${IconContainer}, h2 {
+      color: ${p.overrideHighlightColor};
+    }
+  `}
+  ${p => p.wide && `width: 100%;`}
+`;
+
+export const ActionDialogBody = styled.div`
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+`;
+
 const StatRow = styled.div`
   align-items: center;
   display: flex;
@@ -198,40 +453,34 @@ const StatRow = styled.div`
     flex: 1;
   }
   & > span {
-    color: ${p => p.theme.colors.main};
+    color: ${p => {
+      if (p.isTimeStat && p.direction < 0) return p.theme.colors.error;
+      if (p.isTimeStat && p.direction > 0) return p.theme.colors.success;
+      if (p.direction > 0) return p.theme.colors.success;
+      if (p.direction < 0) return p.theme.colors.error;
+      return 'white';
+    }};
     font-weight: bold;
     white-space: nowrap;
     &:after {
-      display: none;
-      ${p => {
-        if (!p.direction) {
-          return `
-            content: " ▲";
-            color: transparent;
-          `;
-        }
-        else if ((p.isTimeStat ? -1 : 1) * p.direction > 0) {
-          return `
-            content: " ▲";
-            color: ${p.isTimeStat ? p.theme.colors.error : p.theme.colors.success};
-          `;
-        }
-        return `
-          content: " ▼";
-          color: ${!p.isTimeStat ? p.theme.colors.error : p.theme.colors.success};
-        `;
-      }}
+      content: "${p => {
+        if (!p.direction) return ' —';
+        if ((p.isTimeStat ? -1 : 1) * p.direction > 0) return ' ▲';
+        return ' ▼';
+      }}";
+      font-size: 50%;
+      padding-left: 2px;
+      vertical-align: middle;
     }
   }
 `;
 const StatSection = styled(Section)`
   min-height: 0;
+  ${p => p.wide && `width: 100%;`}
   & ${SectionBody} {
     align-items: flex-start;
-    border-top: 1px solid ${borderColor};
     display: flex;
     font-size: 15px;
-    padding: 10px 0;
     & > div {
       flex: 1;
       &:last-child {
@@ -241,50 +490,10 @@ const StatSection = styled(Section)`
       }
     }
   }
-
-  ${p => p.status === 'BEFORE' && `
-    ${StatRow} > span {
-      color: white;
-      &:after {
-        display: inline;
-        font-size: 50%;
-        padding-left: 2px;
-        vertical-align: middle;
-      }
-    }
-  `}
-`;
-
-const TimerRow = styled.div`
-  align-items: center;
-  border: none !important;
-  display: flex;
-  margin-left: 0 !important;
-  padding-left: 0 !important;
-  justify-content: space-between;
-  padding: 5px 0;
-  & > div {
-    flex: 1;
-    text-align: left;
-    &:last-child {
-      padding-left: 30px;
-    }
-    & > h6 {
-      align-items: center;
-      color: white;
-      font-size: 24px;
-      font-weight: normal;
-      display: flex;
-      margin: 8px 0 0;
-      & > svg {
-        color: ${p => p.theme.colors.main};
-        margin-right: 10px;
-      }
-    }
-  }
 `;
 
 const Footer = styled(Section)`
+  margin-top: 8px;
   min-height: 0;
   & > div {
     border-top: 1px solid ${borderColor};
@@ -295,21 +504,24 @@ const Footer = styled(Section)`
       margin: 15px 5px;
     }
   }
+  ${p => p.wide && `width: 100%;`}
 `;
 
 const ThumbnailWithData = styled.div`
   align-items: center;
+  color: #777;
   display: flex;
   flex: 1;
   position: relative;
   & > label {
+    flex: 1;
     font-size: 14px;
     padding-left: 15px;
     & > h3 {
       color: white;
-      font-size: 25px;
+      font-size: 18px;
       font-weight: normal;
-      margin: 0;
+      margin: 0 0 4px;
     }
     & > footer {
       bottom: 0;
@@ -318,223 +530,86 @@ const ThumbnailWithData = styled.div`
     }
   }
 `;
-const ResourceWithData = styled(ThumbnailWithData)`
-  & > label {
-    & > div {
-      & > b {
-        color: ${p => p.theme.colors.main};
-        font-size: 25px;
-        font-weight: bold;
-        & > svg {
-          vertical-align: middle;
-        }
-      }
-    }
-  }
-`;
-const EmptyResourceWithData = styled(ResourceWithData)`
-  & > label {
-    & > h3 {
-      font-size: 32px;
-      opacity: 0.3;
-      text-transform: uppercase;
-    }
-  }
-`;
-
-const Destination = styled(ThumbnailWithData)`
-  & > label {
-    & b {
-      color: ${p => p.status === 'BEFORE' ? 'white' : p.theme.colors.main};
-      font-weight: normal;
-    }
-    & > *:last-child {
-      font-size: 85%;
-      margin-top: 1em;
-    }
-  }
-`;
-
-const BuildingPlan = styled(ThumbnailWithData)`
-  & b {
-    color: ${p => p.theme.colors.main};
-    font-weight: normal;
-  }
-`;
 
 const EmptyThumbnail = styled.div`
   color: ${borderColor};
-  font-size: 56px;
+  font-size: 40px;
   & > svg {
     left: 50%;
-    margin-left: -28px;
-    margin-top: -28px;
+    margin-left: -20px;
+    margin-top: -20px;
     position: absolute;
     top: 50%;
   }
-  & > div {
-    border: 0px solid ${borderColor};
-    height: 10px;
-    position: absolute;
-    width: 10px;
-  }
-  & > div:nth-child(1) {
-    border-width: 1px 0 0 1px;
-    top: 5px;
-    left: 5px;
-  }
-  & > div:nth-child(2) {
-    border-width: 1px 1px 0 0;
-    top: 5px;
-    right: 5px;
-  }
-  & > div:nth-child(3) {
-    border-width: 0 1px 1px 0;
-    bottom: 5px;
-    right: 5px;
-  }
-  & > div:nth-child(4) {
-    border-width: 0 0 1px 1px;
-    bottom: 5px;
-    left: 5px;
-  }
 `;
-const ResourceBadge = styled.div`
-  position: absolute;
-  bottom: 5px;
-  color: white;
-  font-size: 80%;
-  left: 5px;
-  line-height: 1em;
-  &:before {
-    content: "${p => p.badge !== undefined ? p.badge.toLocaleString() : ''}";
-    position: relative;
-    z-index: 3;
-  }
-  &:after {
-    content: "${p => p.badgeDenominator ? `/ ${p.badgeDenominator.toLocaleString()}` : ''}";
-    display: block;
-  }
-`;
-const ResourceThumbnailWrapper = styled.div`
-  border: 2px solid transparent;
-  outline: 1px solid ${borderColor};
-  height: 115px;
-  position: relative;
-  width: 115px;
-  ${p => `
-    ${p.outlineColor ? `outline-color: ${p.outlineColor} !important;` : ''}
-    ${p.outlineStyle ? `outline-style: ${p.outlineStyle} !important;` : ''}
-    ${p.badgeColor && p.hasDenominator ? `${ResourceBadge} { &:after { color: ${p.badgeColor} !important; } }` : ''}
-    ${p.badgeColor && !p.hasDenominator ? `${ResourceBadge} { &:before { color: ${p.badgeColor} !important; } }` : ''}
-  `}
-`;
-const ThumbnailIconOverlay = styled.div`
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: ${p => p.theme.colors.main};
-  font-size: 40px;
-  display: flex;
-  justify-content: center;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 1;
+
+const AsteroidThumbnailWrapper = styled(ResourceThumbnailWrapper)`
+  background-color: rgba(0, 0, 0, 0.6);
 `;
 const BuildingThumbnailWrapper = styled(ResourceThumbnailWrapper)`
   height: 92px;
   width: 150px;
   & ${EmptyThumbnail} {
-    font-size: 40px;
+    font-size: 50px;
     & > svg {
-      margin-left: -20px;
-      margin-top: -20px;
+      margin-left: -25px;
+      margin-top: -25px;
     }
   }
 `;
-const ResourceThumbnail = styled.div`
-  background: black url("${p => p.src}") center center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 0;
+const ShipThumbnailWrapper = styled(ResourceThumbnailWrapper)`
+  height: 92px;
+  width: 150px;
 `;
-const ResourceProgress = styled.div`
-  background: #333;
-  border-radius: 2px;
+const ThumbnailBadge = styled.div`
   position: absolute;
-  right: 5px;
-  bottom: 5px;
-  ${p => p.horizontal
-    ? `
-      height: 4px;
-      width: calc(100% - 10px);
-    `
-    : `
-      height: calc(100% - 10px);
-      width: 4px;
-    `
-  }
-  &:after {
-    content: "";
-    background: ${p => p.theme.colors.main};
-    border-radius: 2px;
-    position: absolute;
-    ${p => p.horizontal
-      ? `
-        left: 0;
-        height: 100%;
-        width: ${Math.min(1, p.progress) * 100}%;
-      `
-      : `
-        bottom: 0;
-        height: ${Math.min(1, p.progress) * 100}%;
-        width: 100%;
-      `
-    }
-  }
-  ${p => p.secondaryProgress && `
-    &:before {
-      content: "";
-      background: white;
-      border-radius: 2px;
-      position: absolute;
-      ${p.horizontal
-        ? `
-          left: 0;
-          height: 100%;
-          width: ${Math.min(1, p.secondaryProgress) * 100}%;
-        `
-        : `
-          bottom: 0;
-          height: ${Math.min(1, p.secondaryProgress) * 100}%;
-          width: 100%;
-        `
-      }
-    }
-  `}
+  left: 5px;
+  top: 5px;
+`;
+const ThumbnailOverlay = styled.div`
+  align-items: center;
+  color: ${p => p.color || p.theme.colors.main};
+  display: flex;
+  font-size: 40px;
+  height: 100%;
+  line-height: 30px;
+  justify-content: center;
+  position: absolute;
+  width: 100%;
 `;
 const InventoryUtilization = styled(ResourceProgress)`
   bottom: 8px;
-  &:last-child {
-    bottom: 3px;
-  }
+  ${p => p.horizontal && `right: 8px;`}
+  ${p => p.second && `bottom: 3px;`}
+  ${p => p.overloaded && `
+    &:after {
+      background: ${p.theme.colors.error};
+    }
+  `}
+`;
+const InventoryLabel = styled.div`
+  color: ${p => p.overloaded ? p.theme.colors.error : 'white'};
+  font-size: 12px;
+  position: absolute;
+  left: 8px;
+  bottom: 14px;
 `;
 
 const SliderLabel = styled.div`
+  flex: 1;
   height: 33px;
   margin-bottom: -4px;
   & > b {
     color: white;
-    font-size: 28px;
+    font-size: 175%;
     font-weight: normal;
   }
+`;
+const SliderInfo = styled.div`
+  color: white;
+  font-size: 22px;
+  line-height: 1em;
+  margin-right: 8px;
 `;
 
 const SliderTextInput = styled.input`
@@ -542,8 +617,8 @@ const SliderTextInput = styled.input`
   border: 1px solid ${borderColor};
   color: white;
   font-family: inherit;
-  font-size: 26px;
-  height: 33px;
+  font-size: 175%;
+  height: 100%;
   text-align: right;
   width: 120px;
 `;
@@ -552,6 +627,7 @@ const SliderWrapper = styled.div`
   flex: 1;
 `;
 const SliderInfoRow = styled.div`
+  align-items: flex-end;
   display: flex;
   justify-content: space-between;
   & > button {
@@ -562,178 +638,165 @@ const SliderInfoRow = styled.div`
   }
 `;
 
-const LoadingBar = styled.div`
-  background: rgba(${p => p.theme.colors.mainRGB}, 0.4);
-  color: white;
-  font-size: 18px;
-  left: 0;
-  padding: 9px 15px;
-  position: absolute;
-  right: 0;
-  text-transform: uppercase;
-  top: 0;
-  z-index: 1;
-  &:before {
-    content: "";
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.7);
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: ${p => Math.min(100, Math.max(0.02, p.progress))}%;
-    z-index: -1;
-  }
-`;
-
-const NotificationEnabler = styled.div`
-  align-items: center;
-  cursor: ${p => p.theme.cursors.active};
+const ProductWrapper = styled.div`
   display: flex;
-  transition: color 250ms ease;
-  & > svg {
-    color: ${p => p.theme.colors.main};
-    margin-right: 6px;
-  }
-
-  &:hover {
-    color: white;
-  }
+  flex-direction: row;
 `;
-
-const ReadyIconWrapper = styled.div`
-  align-self: stretch;
-  color: ${p => p.theme.colors.main};
-  display: flex;
-  flex-direction: column;
-  font-size: 30px;
-  justify-content: center;
-  margin-bottom: -15px;
-  margin-top: -15px;
-  margin-right: 20px;
+const ProductGridWrapper = styled.div`
+  column-gap: 5px;
+  display: grid;
+  grid-template-columns: repeat(3, 87px);
+  row-gap: 5px;
+`;
+const ProductSelector = styled.div`
+  padding: 4px;
   position: relative;
-`;
-const CompletedIconWrapper = styled(ReadyIconWrapper)`
-  font-size: 36px;
-  & > svg {
-    flex: 1;
-  }
-  &:before, &:after {
-    content: '';
-    border: 4px solid transparent;
-    width: 32px;
-  }
-  &:before {
-    border-top: 5px solid ${p => p.theme.colors.main};
-  }
-  &:after {
-    border-bottom: 5px solid ${p => p.theme.colors.main};
-  }
-`;
-
-const ItemSelectionWrapper = styled.div`
-  width: 100%;
-  & > div:first-child {
-    overflow: auto visible;
-    padding: 1px 5px 5px 1px;
-    & > div:after {
-      content: " ";
-      flex-shrink: 0;
-      width: 1px;
+  ${p => p.input && `
+    padding-bottom: 0;
+    padding-top: 0;
+  `}
+  ${p => p.output && `
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% calc(100% - 10px),
+      calc(100% - 10px) 100%,
+      0 100%
+    );
+  `}
+  ${p => p.output && p.primary && `
+    background: rgba(${p.theme.colors.mainRGB}, 0.2);
+    border: 1px solid ${p.theme.colors.main};
+    padding: 3px;
+  `}
+  ${p => p.output && !p.primary && `
+    cursor: ${p.theme.cursors.active};
+    &:hover {
+      background: #171717;
     }
-  }
-  & > div:last-child {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    height: 32px;
-    justify-content: space-between;
-    & > div:first-child {
-      color: white;
-    }
-  }
-`;
-
-const ItemsList = styled.div`
-  display: flex;
-  white-space: nowrap;
-  & > div {
-    flex-shrink: 0;
-    outline: 1px solid ${borderColor};
-    margin-right: 10px;
-    &:last-child {
-      margin-right: 0;
-    }
-  }
-`;
-const IngredientsList = styled(ItemsList)`
-  & > div {
-    outline: 1px dashed ${p => p.empty ? borderColor : p.theme.colors.main};
-  }
-`;
-
-const AbandonmentTimer = styled.div`
-  text-align: right;
-  & > div {
-    color: ${p => p.theme.colors.error};
-    font-size: 17px;
-  }
-  & > h3 {
-    color: white;
-    font-size: 28px;
-    margin: 5px 0 0;
+  `}
+  & > label {
+    color: ${p => p.primary ? p.theme.colors.main : 'inherit'};
+    display: block;
+    font-size: 15px;
+    font-weight: bold;
+    padding-top: 3px;
+    text-align: center;
+    text-transform: uppercase;
     & > svg {
-      color: ${p => p.theme.colors.error};
+      font-size: 65%;
+      height: 15px;
     }
   }
 `;
-const PopperBody = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 20px;
-`;
-const PopperFooter = styled.div`
-  border-top: 1px solid ${borderColor};
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  padding-top: 6px;
-`;
-const PopperList = styled.div`
-  height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
-  margin-left: -20px;
-  width: calc(100% + 40px);
-`;
-const PopperListItem = styled.div`
-  cursor: ${p => p.theme.cursors.active};
-  margin: 0 8px;
-  padding: 8px 12px;
-  &:hover {
-    background: rgba(255,255,255,0.1);
-  }
-`;
-const PoppableTitle = styled.div`
-  align-items: flex-end;
+const RecipeLabel = styled.div`
   color: white;
+  font-size: 13px;
+  line-height: 13px;
+  margin-top: 2px;
+  margin-left: 4px;
+`;
+
+const PropulsionTypeOption = styled.div`
+  align-items: center;
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  & > h3 {
-    font-size: 30px;
-    font-weight: normal;
-    margin: 0;
+  font-size: 90%;
+  height: 28px;
+  ${p => p.onClick && `
+    cursor: ${p.theme.cursors.active};
+    opacity: 0.8;
+    &:hover {
+      opacity: 1;
+    }
+  `}
+
+  ${p => p.selected && `
+    color: white;
+    opacity: 1;
+  `}
+
+  & svg {
+    color: ${p => p.theme.colors.main};
+    font-size: 22px;
+    margin-right: 5px;
+  }
+  & label {
+    text-transform: uppercase;
   }
 `;
-const PoppableTableRow = styled.tr`
+
+const TugWarning = styled.div`
+  align-items: center;
+  background: rgba(${p => hexToRGB(p.theme.colors.error)}, 0.2);
+  color: ${p => p.theme.colors.error};
+  display: flex;
+  padding: 12px;
+  white-space: pre-line;
+  & svg {
+    font-size: 32px;
+    margin-right: 10px;
+  }
+`;
+
+const IngredientsList = styled(FlexSectionInputBody)`
+  ${p => p.theming === 'warning' && `
+    background: rgba(${hexToRGB(p.theme.colors.lightOrange)}, 0.15);
+  `}
+  ${p => p.theming === 'success' && `
+    background: rgba(${p.theme.colors.successRGB}, 0.15);
+  `}
+  column-gap: 5px;
+  display: grid;
+  grid-template-columns: repeat(${p => p.columns || 7}, 95px);
+  padding: 5px;
+  position: relative;
+  row-gap: 5px;
+  width: 100%;
+  ${p => p.hasSummary && `padding-bottom: 36px;`}
+  ${p => p.onClick && `
+    ${ResourceThumbnailWrapper} {
+      background: rgba(0, 0, 0, 0.5);
+    }
+  `}
+`;
+
+const DialogIngredientsList = styled(IngredientsList)`
+  background: transparent;
+  grid-template-columns: repeat(6, 95px);
+`;
+
+const IngredientSummary = styled.div`
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  & > span {
+    background:
+      ${p => p.theming === 'warning' && `rgba(${hexToRGB(p.theme.colors.lightOrange)}, 0.45)`}
+      ${p => p.theming === 'success' && `rgba(${p.theme.colors.successRGB}, 0.2)`}
+      ${p => (!p.theming || p.theming === 'default') && `rgba(${p.theme.colors.mainRGB}, 0.45)`}
+    ;
+    color: white;
+    padding: 5px 32px;
+  }
+`;
+const SelectionTableRow = styled.tr`
   ${p => p.disabledRow && `
     opacity: 0.33;
     pointer-events: none;
   `}
+  ${p => p.selectedRow && `
+    & > td,
+    &:hover > td {
+      background: rgba(${p.theme.colors.mainRGB}, 0.3) !important;
+    }
+  `}
 `;
-const PoppableTableWrapper = styled.div`
+const SelectionTableWrapper = styled.div`
   border: solid ${borderColor};
   border-width: 1px 0;
   flex: 1;
@@ -757,7 +820,8 @@ const PoppableTableWrapper = styled.div`
     }
 
     & thead {
-      font-size: 12px;
+      color: #aaa;
+      font-size: 14px;
       & > tr > td {
         border-bottom: 1px solid ${borderColor};
       }
@@ -765,7 +829,7 @@ const PoppableTableWrapper = styled.div`
 
     & tbody {
       color: white;
-      font-size: 14px;
+      font-size: 16px;
       & > tr {
         cursor: ${p => p.theme.cursors.active};
         &:hover > td {
@@ -775,156 +839,1160 @@ const PoppableTableWrapper = styled.div`
     }
   }
 `;
-const TitleCell = styled.td`
-  &:after {
-    content: '${p => p.title}';
-  }
+const EmptyMessage = styled.div`
+  background: rgba(255, 255, 255, 0.15);
+  opacity: 0.7;
+  padding: 20px;
+  text-align: center;
 `;
-const TransferSelectionBody = styled.div`
+const InputOutputTableCell = styled.div`
+  align-items: center;
   display: flex;
-  flex: 1;
-  flex-direction: column;
-  max-height: calc(100% - 47px);
-`;
-const TransferSelectionTableWrapper = styled(PoppableTableWrapper)`
-  border-width: 0;
-  flex: 1 0 auto;
-  max-height: 200px;
-
-  &:first-child {
-    border-top-width: 1px;
-    flex: 0 1 100%;
-    max-height: 100%;
+  & > * {
+    margin-left: 2px;
   }
-  &:not(:first-child) tbody {
-    color: ${p => p.theme.colors.main};
-  }
-
-  td:nth-child(2) { width: 100px; }
-  td:nth-child(3) { width: 112px; }
-  td:nth-child(4) { width: 98px; }
-  td:nth-child(5) { width: 135px; }
-  td:nth-child(6) { width: 48px; }
-
-  td {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  & > table > thead > tr > ${TitleCell} {
-    border-bottom: 0;
-    padding: 0;
-    &:before {
-      content: '';
-      border-top: 1px solid ${borderColor};
-      display: block;
-      height: 4px;
-      margin-top: 24px;
-    }
-    &:after {
-      background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
-      color: ${p => p.theme.colors.main};
-      display: block;
-      margin-bottom: 4px;
-      padding: 4px 6px;
-    }
+  & > label {
+    opacity: 0.5;
+    margin-left: 0;
+    padding-right: 8px;
   }
 `;
-const QuantaInput = styled.input`
-  background: transparent;
-  border: 1px solid white;
-  color: white;
-  font-family: inherit;
-  text-align: right;
-  width: 100px;
+
+const TextInputWithNote = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 10px;
+`;
+const TextInputNote = styled.div`
+  align-items: center;
+  align-self: stretch;
+  background: ${p => p.error ? p.theme.colors.error : '#222'};
+  color: ${p => p.error ? 'white' : '#aaa'};
+  display: flex;
+  font-size: 14px;
+  justify-content: center;
+  margin-left: 10px;
+  padding: 0 20px;
+  & > svg {
+    font-size: 18px;
+    margin-right: 6px;
+  }
+  transition: border-color 500ms ease, color 500ms ease;
 `;
 
-const MouseoverContent = styled.div`
+export const MouseoverContent = styled.div`
   & b {
     color: ${p => p.highlightColor || 'white'};
+    white-space: nowrap;
   }
   color: #999;
   font-size: 90%;
   padding-bottom: 15px;
 `;
 
-const FutureSectionOverlay = styled.div`
+const SelectionTitle = styled.div`
   align-items: center;
-  background: rgba(150, 150, 150, 0.1);
-  backdrop-filter: blur(5px);
-  border-radius: 2px;
+  border-bottom: 1px solid ${borderColor};
   display: flex;
-  justify-content: center;
-  pointer-events: none;
-  position: absolute;
-  top: 2px;
-  bottom: 2px;
-  left: -3px;
-  right: -3px;
-  z-index: 30;
-  &:before {
-    background: black;
-    border: 1px solid #665600;
-    border-radius: 4px;
-    content: 'This section will be enabled in a future release.';
-    display: block;
-    padding: 10px 20px;
-    text-align: center;
+  flex: 0 0 60px;
+  justify-content: space-between;
+  margin: 0 20px 0 20px;
+  position: relative;
+  z-index: 1;
+  & > div {
+    border-left: 2px solid ${p => p.theme.colors.main};
+    font-size: 20px;
+    height: 36px;
+    line-height: 36px;
+    padding-left: 10px;
+    text-transform: uppercase;
+    & > b {
+      font-weight: normal;
+      opacity: 0.5;
+    }
+  }
+`;
+const SelectionBody = styled.div`
+  flex: 1;
+  overflow: hidden auto;
+  margin: 10px 0;
+  padding: 0 20px;
+`;
+
+const SelectionButtons = styled.div`
+  align-items: center;
+  border-top: 1px solid ${borderColor};
+  display: flex;
+  flex-direction: row;
+  flex: 0 0 60px;
+  justify-content: flex-end;
+  padding-right: 0px;
+  margin: 0 20px 0 20px;
+  & > button {
+    margin-top: 0;
+    margin-left: 10px;
+    &:first-child {
+      margin-left: 0;
+    }
   }
 `;
 
-const ingredients = [
-  [700, 5, 700], [700, 19, 500], [400, 22, 0],
-  // [700, 5, 0], [700, 19, 0], [400, 22, 0], [700, 5, 0], [700, 19, 0], [400, 22, 0],
-];
+const selectionDialogCornerSize = 20;
+const dialogCss = css`
+  border: 1px solid ${borderColor};
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - ${selectionDialogCornerSize}px),
+    calc(100% - ${selectionDialogCornerSize}px) 100%,
+    0 100%
+  );
+  display: flex;
+  flex-direction: column;
+  max-height: 80%;
+  max-width: ${SECTION_WIDTH - 60}px;
+  overflow: hidden;
+  position: relative;
+`;
 
-const EmptyImage = ({ children }) => (
-  <EmptyThumbnail>
-    <div />
-    <div />
-    <div />
-    <div />
-    {children}
-  </EmptyThumbnail>
-);
+const SelectionGrid = styled.div`
+  column-gap: 10px;
+  display: grid;
+  grid-template-columns: calc(50% - 5px) calc(50% - 5px);
+  row-gap: 10px;
+  width: 100%;
+`;
 
-// TODO: this component is functionally overloaded... create more components so not trying to use in so many different ways
-export const ResourceImage = ({ resource, badge, badgeColor, badgeDenominator, outlineColor, outlineStyle, overlayIcon, progress, showTooltip }) => {
-  const tooltipProps = showTooltip ? {
-    'data-tip': resource.name,
-    'data-for': 'global'
-  } : {}
-  return (
-    <ResourceThumbnailWrapper
-      badgeColor={badgeColor}
-      hasDenominator={!!badgeDenominator}
-      outlineColor={outlineColor}
-      outlineStyle={outlineStyle}
-      {...tooltipProps}>
-      <ResourceThumbnail src={resource.iconUrls.w125} />
-      {badge !== undefined && <ResourceBadge badge={badge} badgeDenominator={badgeDenominator} />}
-      {progress !== undefined && <ResourceProgress progress={progress} />}
-      {overlayIcon && <ThumbnailIconOverlay>{overlayIcon}</ThumbnailIconOverlay>}
-    </ResourceThumbnailWrapper>
+
+const gradientWidth = 23;
+const gradientAngle = 135;
+const gradientAngleSine = Math.sin(Math.PI * gradientAngle / 180);
+const widthOverSine = gradientWidth / gradientAngleSine;
+const actionProgressBarAnimation = keyframes`
+  0% { background-position: ${widthOverSine}px 0; }
+`;
+const ActionProgress = styled.div.attrs((p) => ({
+  style: {
+    filter: p.progress >= 1 ? 'brightness(0.45)' : undefined,
+    opacity: p.progress >= 1 ? '1' : undefined,
+    width: `${100 * p.progress}%`
+  }
+}))`
+  transition: all 250ms ease;
+`;
+const ActionProgressLabels = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  font-size: 20px;
+  justify-content: space-between;
+  padding: 0 12px;
+  & > div:first-child {
+    text-transform: uppercase;
+  }
+`;
+const ActionProgressWrapper = styled.div`
+  border: 1px solid ${borderColor};
+  padding: 8px;
+`;
+const ActionProgressContainer = styled.div`
+  height: 34px;
+  width: 100%;
+  position: relative;
+  z-index: 0;
+
+  &:before, ${ActionProgress}, ${ActionProgressLabels} {
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: -1;
+  }
+
+  &:before {
+    content: "";
+    ${p => p.animating && css`
+      animation: ${actionProgressBarAnimation} 1s linear infinite ${p.reverseAnimation ? '' : 'reverse'};
+    `}
+    background: repeating-linear-gradient(
+      ${gradientAngle}deg,
+      ${p => p.color || '#ffffff'} 0,
+      ${p => p.color || '#ffffff'} 16px,
+      transparent 16px,
+      transparent ${gradientWidth}px
+    );
+    background-size: ${widthOverSine}px 100%;
+    opacity: 0.1;
+  }
+
+  ${ActionProgress} {
+    background: ${p => p.color};
+    opacity: 0.4;
+  }
+  ${ActionProgressLabels} {
+    color: ${p => p.labelColor || p.color};
+  }
+`;
+
+const barChartHeight = 22;
+const barChartPadding = 3;
+const barChartRounding = barChartHeight / 2;
+const BarChart = styled.div`
+  background: rgba(${p => hexToRGB(p.bgColor || p.color)}, 0.3);
+  border-radius: ${barChartRounding}px;
+  height: ${barChartHeight}px;
+  margin: ${(28 - barChartHeight) / 2}px 0;
+  position: relative;
+  width: 100%;
+  &:before, &:after {
+    content: "";
+    bottom: ${barChartPadding}px;
+    border-radius: ${barChartRounding - barChartPadding}px;
+    position: absolute;
+    top: ${barChartPadding}px;
+    transition: width 500ms ease;
+    z-index: 0;
+  }
+  &:after {
+    background: ${p => p.color};
+    left: ${barChartPadding}px;
+    width: ${p => 100 * p.value}%;
+    z-index: 1;
+  }
+  ${p => p.postValue !== undefined && `
+    &:before {
+      background: ${p.color};
+      left: ${barChartPadding}px;
+      opacity: 0.7;
+      width: ${100 * p.postValue}%;
+      z-index: 1;
+    }
+  `}
+`;
+const BarChartLimitLine = styled.div`
+  border: solid ${p => p.theme.colors.red};
+  border-width: 0 1px;
+  top: 0;
+  bottom: 0;
+  position: absolute;
+  left: calc(${barChartPadding + 1}px + ${p => p.position * 100}%);
+  z-index: 3;
+`;
+const BarChartNotes = styled.div`
+  color: ${p => p.color || 'inherit'};
+  display: flex;
+  flex-direction: row;
+  font-size: 92%;
+  font-weight: bold;
+  line-height: 28px;
+  justify-content: space-between;
+  width: 100%;
+  & b {
+    color: white;
+  }
+  & > div:first-child, & > div:last-child {
+    min-width: 150px;
+  }
+  & > div:last-child {
+    text-align: right;
+  }
+`;
+
+export const MiniBarChartSection = styled(FlexSectionInputBody)`
+  background: transparent;
+`;
+const MiniBarWrapper = styled.div`
+  margin-top: 15px;
+  &:first-child {
+    margin-top: 0;
+  }
+`;
+const ChartLabels = styled.div`
+  align-items: center;
+  color: #999;
+  display: flex;
+  flex-direction: row;
+  font-size: 14.5px;
+  justify-content: space-between;
+  & > label:last-child {
+    color: white;
+  }
+`;
+const UnderChartLabels = styled(ChartLabels)``;
+const miniBarChartHeight = 4;
+const miniBarChartRounding = miniBarChartHeight / 2;
+const DeltaIcon = styled.div`
+  font-size: 120%;
+  position: absolute;
+  top: -0.4em;
+  z-index: 1;
+  ${p => p.negativeDelta
+    ? `
+      left: calc(${100 * p.value}% - 4px);
+      transform: scaleX(-1);
+    `
+    : `
+      left: calc(${100 * p.value}% - 12px);
+    `
+  }
+`;
+const MiniBar = styled.div`
+  background: #333;
+  border-radius: ${miniBarChartRounding}px;
+  color: ${p => p.deltaColor || p.color || p.theme.colors.brightMain};
+  height: ${miniBarChartHeight}px;
+  margin: 4px 0;
+  position: relative;
+  width: 100%;
+  &:before {
+    content: "";
+    background: ${p => p.color || p.theme.colors.main};
+    bottom: 0px;
+    border-radius: ${miniBarChartRounding}px;
+    left: 0px;
+    opacity: ${p => p.deltaValue ? 0.5 : 1};
+    position: absolute;
+    top: 0px;
+    transition: width 500ms ease;
+    width: ${p => 100 * p.value}%;
+    z-index: 1;
+  }
+  ${p => p.deltaValue && `
+    &:after {
+      content: "";
+      background: ${p.deltaColor || p.color || p.theme.colors.brightMain};
+      bottom: 0px;
+      border-radius: ${miniBarChartRounding}px;
+      position: absolute;
+      top: 0px;
+      transition: width 500ms ease;
+      width: ${Math.abs(100 * p.deltaValue)}%;
+      z-index: 1;
+      ${p.deltaValue < 0
+        ? `
+          right: ${100 * (1 - (p.value - p.deltaValue))}%;
+        `
+        : `
+          left: ${100 * (p.value - p.deltaValue)}%;
+        `}
+    }
+  `}
+`;
+
+export const ProgressBarNote = styled.div`
+  color: ${p => p.color || p.theme.colors[p.themeColor] || 'inherit'};
+  font-size: 92%;
+  margin: 10px 0;
+  text-align: center;
+  & b {
+    color: white;
+    font-weight: normal;
+  }
+`;
+
+const CrewCards = styled.div`
+  display: flex;
+  flex-direction: row;
+  & > div {
+    margin-right: 5px;
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+`;
+const CrewCardPlaceholder = styled.div`
+  width: ${p => p.width}px;
+  &:before {
+    content: "";
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.07);
+    display: block;
+    height: 0;
+    padding-top: 128%;
+  }
+`;
+
+const ShipStatus = styled.span`
+  color: ${p => p.theme.colors.main};
+  display: inline-block;
+  margin-top: 4px;
+  text-transform: uppercase;
+  &:after {
+    content: "${p => formatShipStatus(p.ship)}";
+    color: ${p => p.theme.colors.main};
+    text-transform: uppercase;
+    ${p => {
+      switch (p.status) {
+        case 'IN_FLIGHT':
+        case 'LAUNCHING':
+        case 'LANDING':
+          return `color: ${p.theme.colors.warning};`;
+        case 'IN_ORBIT':
+          return `color: ${p.theme.colors.main};`;
+        case 'IN_PORT':
+        case 'ON_SURFACE':
+          return `color: ${p.theme.colors.purple};`;
+      }
+    }}
+  }
+`;
+
+export const WarningAlert = styled.div`
+  align-items: center;
+  background: rgba(${p => hexToRGB(p.theme.colors[p.severity === 'warning' ? 'orange' : 'red'])}, 0.2);
+  color: ${p => p.theme.colors[p.severity === 'warning' ? 'orange' : 'red']};
+  display: flex;
+  flex-direction: row;
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
+  & > div:first-child {
+    font-size: 30px;
+    margin-right: 12px;
+  }
+  & > div:last-child {
+    font-size: 96%;
+  }
+  &:first-child {
+    margin-top: 0;
+  }
+`;
+
+const SwayInputInstruction = styled.div`
+  color: white;
+  margin-top: -5px;
+  margin-bottom: 10px;
+`;
+const SwayInputRow = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  & input {
+    margin-bottom: 0;
+  }
+`;
+const SwayInputIconWrapper = styled.div`
+  color: white;
+  font-size: 36px;
+  line-height: 0;
+`;
+const SwayInputFieldWrapper = styled.div`
+  flex: 1;
+  position: relative;
+  &:after {
+    content: "SWAY";
+    color: ${p => p.theme.colors.main};
+    font-size: 18px;
+    margin-top: -10px;
+    opacity: 0.5;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+  }
+
+  & input {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+    font-size: 18px;
+    padding-right: 72px;
+    width: 100%;
+  }
+`;
+const SwayInputHelp = styled.div`
+  font-size: 20px;
+  margin-left: 10px;
+`;
+const QuestionIcon = styled.div`
+  align-items: center;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 1.2em;
+  color: white;
+  display: flex;
+  height: 1.2em;
+  justify-content: center;
+  width: 1.2em;
+  &:after {
+    content: "?";
+  }
+`;
+
+export const TransferDistanceTitleDetails = styled.span`
+  font-size: 15px;
+  line-height: 15px;
+  & label {
+    color: ${p => p.theme.colors.main};
+    font-weight: bold;
+  }
+`;
+const FreeTransferNote = styled.div`
+  color: #999;
+  & > div:first-child {
+    color: ${p => p.theme.colors.main};
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+`;
+
+export const CrewLocationWrapper = styled.div`
+  text-transform: none;
+  & span {
+    opacity: 0.6;
+    &:before {
+      content: ">";
+      margin: 0 4px;
+    }
+  }
+`;
+
+export const SelectionDialog = ({ children, isCompletable, open, onClose, onComplete, style = {}, title }) => {
+  if (!open) return null;
+  return createPortal(
+    <Dialog opaque dialogCss={dialogCss} dialogStyle={style}>
+      <ReactTooltip id="selectionDialog" effect="solid" />
+      <SelectionTitle>
+        <div>{title}</div>
+        <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
+      </SelectionTitle>
+      <SelectionBody>
+        <div>{children}</div>
+      </SelectionBody>
+      <SelectionButtons style={{ position: 'relative'}}>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onComplete} disabled={!isCompletable}>Done</Button>
+      </SelectionButtons>
+      <ClipCorner color={borderColor} dimension={selectionDialogCornerSize} />
+    </Dialog>,
+    document.body
   );
 };
 
-export const EmptyResourceImage = ({ iconOverride }) => (
-  <ResourceThumbnailWrapper><EmptyImage>{iconOverride || <PlusIcon />}</EmptyImage></ResourceThumbnailWrapper>
-);
+export const CrewSelectionDialog = ({ crews, onClose, onSelected, open }) => {
+  const [selection, setSelection] = useState();
 
-const getCapacityUsage = (building, inventories, type) => {
+  const onComplete = useCallback(() => {
+    onSelected(selection?.id);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  const nonEmptyCrews = useMemo(() => crews.filter((c) => c.Crew.roster.length > 0), [crews]);
+  const emptyCrews = useMemo(() => crews.filter((c) => c.Crew.roster.length === 0), [crews]);
+  const hydratedLocation = useHydratedLocation(nonEmptyCrews[0]?._location);
+
+  return (
+    <SelectionDialog
+      isCompletable={!!selection}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title="Exchange With Crew">
+      <div style={{ minHeight: 300 }}>
+        {nonEmptyCrews.map((crew, i) => {
+          return (
+            <CrewInputBlock
+              key={crew.id}
+              cardWidth={64}
+              crew={crew}
+              inlineDetails
+              isSelected={crew.id === selection?.id}
+              onClick={() => setSelection(crew)}
+              title={
+                i === 0
+                ? <CrewLocationWrapper><CrewLocationLabel hydratedLocation={hydratedLocation} /></CrewLocationWrapper>
+                : ''
+              }
+              style={{ marginBottom: 8, width: '100%' }} />
+          );
+        })}
+        {emptyCrews.map((crew, i) => {
+          return (
+            <CrewInputBlock
+              key={crew.id}
+              cardWidth={64}
+              crew={crew}
+              hideCrewmates
+              inlineDetails
+              isSelected={crew.id === selection?.id}
+              onClick={() => setSelection(crew)}
+              title={i === 0 ? <CrewLocationWrapper style={{ marginTop: 8 }}>Empty Crews</CrewLocationWrapper> : ''}
+              style={{ marginBottom: 8, width: '100%' }} />
+          );
+        })}
+      </div>
+    </SelectionDialog>
+  );
+};
+
+export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected, open }) => {
+  const [selection, setSelection] = useState(initialSelection);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title="Select Site Type">
+      <SelectionGrid>
+        {Object.keys(Building.TYPES).filter((c) => c > 0).map((buildingType) => (
+          <FlexSectionInputBlock
+            key={buildingType}
+            fullWidth
+            image={<BuildingImage buildingType={buildingType} unfinished />}
+            isSelected={buildingType === selection}
+            label={Building.TYPES[buildingType].name}
+            sublabel="Site"
+            onClick={() => setSelection(buildingType)}
+            style={{ width: '100%' }}
+          />
+        ))}
+      </SelectionGrid>
+    </SelectionDialog>
+  );
+};
+
+export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, onClose, onSelected, open }) => {
+  const [selection, setSelection] = useState(initialSelection);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  const nonzeroAbundances = useMemo(() => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={`Lot #${(lotId || 0).toLocaleString()}`}>
+      {/* TODO: replace with DataTable? */}
+      <SelectionTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>{(nonzeroAbundances || 0).toLocaleString()} Available Resource{nonzeroAbundances === 1 ? '' : 's'}</td>
+              <td>Abundance at Lot</td>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(abundances)
+              .sort((a, b) => abundances[b] - abundances[a])
+              .map((resourceId) => (
+                <SelectionTableRow
+                  key={`${resourceId}`}
+                  disabledRow={abundances[resourceId] === 0}
+                  onClick={() => setSelection(resourceId)}
+                  selectedRow={selection === Number(resourceId)}>
+                  <td><ResourceColorIcon category={Product.TYPES[resourceId].category} /> {Product.TYPES[resourceId].name}</td>
+                  <td>{(100 * abundances[resourceId]).toFixed(1)}%</td>
+                </SelectionTableRow>
+              ))
+            }
+          </tbody>
+        </table>
+      </SelectionTableWrapper>
+    </SelectionDialog>
+  );
+}
+
+export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, onClose, onSelected, open }) => {
+  const [selection, setSelection] = useState(initialSelection);
+
+  useEffect(() => {
+    setSelection(initialSelection);
+  }, [initialSelection]);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection?.sampleId > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={`Lot #${(lotId || 0).toLocaleString()}`}>
+      {/* TODO: replace with DataTable? */}
+      <SelectionTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>Resource</td>
+              <td>Deposit Amount</td>
+            </tr>
+          </thead>
+          <tbody>
+            {options.sort((a, b) => b.remainingYield - a.remainingYield).map((sample) => (
+              <SelectionTableRow
+                key={`${sample.resourceId}_${sample.sampleId}`}
+                onClick={() => setSelection(sample)}
+                selectedRow={selection?.resourceId === sample.resourceId && selection?.sampleId === sample.sampleId}>
+                <td><ResourceColorIcon category={Product.TYPES[sample.resourceId].category} /> {Product.TYPES[sample.resourceId].name} #{sample.sampleId.toLocaleString()}</td>
+                <td>{formatSampleMass(sample.remainingYield * Product.TYPES[sample.resourceId].massPerUnit)} tonnes</td>
+              </SelectionTableRow>
+            ))}
+          </tbody>
+        </table>
+      </SelectionTableWrapper>
+    </SelectionDialog>
+  );
+};
+
+// TODO: pass options?
+export const DestinationSelectionDialog = ({
+  asteroid,
+  includeDeconstruction, // includes deconstructed origin's site plan as an option
+  originLotId,
+  initialSelection,
+  onClose,
+  onSelected,
+  open
+}) => {
+  const { data: crewLots, isLoading } = useAsteroidCrewLots(asteroid.i);
+  const [selection, setSelection] = useState(initialSelection);
+
+  useEffect(() => {
+    setSelection(initialSelection);
+  }, [initialSelection]);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  const inventories = useMemo(() => {
+    return (crewLots || [])
+      .filter((lot) => (includeDeconstruction && lot.i === originLotId) || (
+        lot.building && lot.i !== originLotId && (lot.building.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)
+      ))
+      .reduce((acc, lot) => {
+        (lot.building.Inventories || []).forEach((inventory, slot) => {
+          let usedMass = 0, usedVolume = 0, type;
+
+          // deconstructing in place (use currently-locked inventory)
+          if (includeDeconstruction && lot.i === originLotId && inventory.status === Inventory.STATUSES.LOCKED) {
+            type = `(construction site)`;
+
+          // going to another lot (if unlocked)
+          } else if (inventory.status === Inventory.STATUSES.AVAILABLE) {
+            usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0));
+            usedVolume = ((inventory?.volume || 0) + (inventory?.reservedVolume || 0));
+            type = Building.TYPES[lot.building?.Building?.buildingType]?.name || 'Construction Site';
+
+          // else, continue
+          } else {
+            return;
+          }
+
+          // TODO: use this here instead? also need to apply product restrictions in some cases
+          // const { filledMass, filledVolume } = Inventory.getFilledCapacity(inventory.inventoryType);
+          const inventoryConfig = Inventory.getType(inventory.inventoryType) || {};
+          const availMass = inventoryConfig.massConstraint - usedMass;
+          const availVolume = inventoryConfig.volumeConstraint - usedVolume;
+          const fullness = Math.max(
+            1 - availMass / inventoryConfig.massConstraint,
+            1 - availVolume / inventoryConfig.volumeConstraint,
+          ) || 0;
+
+          acc.push({
+            lot,
+            slot,
+            distance: Asteroid.getLotDistance(asteroid.i, originLotId, lot.i) || 0,
+            type,
+            fullness,
+            availMass,
+            availVolume
+          });
+        });
+        return acc;
+      }, [])
+      .sort((a, b) => a.distance - b.distance)
+  }, [crewLots, originLotId]);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection?.i > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={`Origin Lot #${(originLotId || 0).toLocaleString()}`}>
+      {/* TODO: isLoading */}
+      {/* TODO: replace with DataTable? */}
+      <SelectionTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>Destination</td>
+              <td>Distance</td>
+              <td>Type</td>
+              <td>% Full</td>
+              <td>Avail. Mass</td>
+              <td>Avail. Volume</td>
+            </tr>
+          </thead>
+          <tbody>
+            {inventories.map((inventory, i) => {
+              const warningColor = inventory.fullness > 0.8
+                ? theme.colors.error
+                : (inventory.fullness > 0.5 ? theme.colors.yellow : theme.colors.success);
+              return (
+                <SelectionTableRow
+                  key={`${asteroid.i}_${inventory.lot.i}`}
+                  disabled={inventory.fullness >= 1}
+                  onClick={() => setSelection(inventory.lot)}
+                  selectedRow={inventory.lot.i === Number(selection?.i)}>
+                  <td>{inventory.lot.i === originLotId ? '(in place)' : `Lot #${inventory.lot.i}`}</td>
+                  <td>{formatFixed(inventory.distance, 1)} km</td>
+                  <td>{inventory.type}</td>
+                  <td style={{ color: warningColor }}>{(100 * inventory.fullness).toFixed(1)}%</td>
+                  <td style={{ color: warningColor }}>{formatFixed(inventory.availMass)} t</td>
+                  <td style={{ color: warningColor }}>{formatFixed(inventory.availVolume)} m<sup>3</sup></td>
+                </SelectionTableRow>
+              );
+            })}
+          </tbody>
+        </table>
+      </SelectionTableWrapper>
+    </SelectionDialog>
+  );
+}
+
+export const TransferSelectionDialog = ({ requirements, inventory, lot, initialSelection, onClose, onSelected, open }) => {
+  const [selection, setSelection] = useState({});
+
+  useEffect(() => {
+    setSelection({ ...initialSelection });
+  }, [initialSelection]);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  const onSelectItem = useCallback((resourceId) => (selectedAmount) => {
+    setSelection((currentlySelected) => {
+      const updated = {...currentlySelected};
+      if (selectedAmount > 0) {
+        updated[resourceId] = selectedAmount;
+      } else {
+        delete updated[resourceId];
+      }
+      return updated;
+    });
+  }, []);
+
+  const cells = useMemo(() => [...Array(6 * Math.max(2, Math.ceil(Object.keys(inventory).length / 6))).keys()], [inventory]);
+  const items = useMemo(() => Object.keys(inventory).map((resourceId) => ({
+    selected: selection[resourceId],
+    available: inventory[resourceId],
+    resource: Product.TYPES[resourceId],
+    maxSelectable: requirements
+      ? Math.min(inventory[resourceId], requirements.find((r) => r.i === Number(resourceId))?.inNeed || 0)
+      : inventory[resourceId]
+  })), [inventory, requirements, selection]);
+
+  const { tally, totalMass, totalVolume } = useMemo(() => {
+    return items.reduce((acc, { selected, resource }) => {
+      acc.tally += selected > 0 ? 1 : 0;
+      acc.totalMass += (selected || 0) * resource.massPerUnit * 1e6;
+      acc.totalVolume += (selected || 0) * (resource.volumePerUnit || 0) * 1e6;
+      return acc;
+    }, { tally: 0, totalMass: 0, totalVolume: 0 });
+  }, [items]);
+
+  // TODO: should title be inventory type name instead?
+  return (
+    <SelectionDialog
+      isCompletable
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={<>{Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name} Inventory <b>{'> '}Lot {(lot?.i || 0).toLocaleString()}</b></>}>
+      <DialogIngredientsList>
+        {cells.map((i) => (
+          items[i]
+            ? (
+              <ResourceSelection
+                key={i}
+                item={items[i]}
+                onSelectItem={onSelectItem(items[i].resource.i)} />
+            )
+            : (
+              <EmptyResourceImage
+                key={i}
+                backgroundColor="#111"
+                outlineColor="#111"
+                noIcon />
+            )
+        ))}
+        <IngredientSummary>
+          <span>
+            {tally > 0
+              ? `${tally} Items: ${formatMass(totalMass)} | ${formatVolume(totalVolume)}`
+              : `None Selected`
+            }
+          </span>
+        </IngredientSummary>
+      </DialogIngredientsList>
+    </SelectionDialog>
+  );
+};
+
+export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, onSelected, open, ship }) => {
+  const [error, setError] = useState();
+  const [selection, setSelection] = useState(initialSelection);
+
+  // TODO: to get spaceport names, it will probably make more sense to have
+  //  a "get spaceports" api endpoint
+  const { data: lotData, isLoading: lotDataLoading } = useQuery(
+    [ 'asteroidLots', asteroid?.i ],
+    () => api.getAsteroidLotData(asteroid?.i),
+    { enabled: !!asteroid?.i }
+  );
+
+  const spaceports = useMemo(() => {
+    if (!lotData) return [];
+    return lotData.reduce((acc, cur, i) => {
+      if (cur >> 4 === 7) acc.push(i)
+      return acc;
+    }, []);
+  }, [lotData]);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter') {
+      const lot = parseInt(e.target.value);
+      if (lot && lotData[lot] !== undefined) {
+        const buildingType = lotData[lot] >> 4;
+        if (buildingType === 0 || buildingType === 7) {
+          onSelected(lot);
+          onClose();
+          return;
+        }
+      }
+      setError(true);
+      setTimeout(() => {
+        setError(false);
+      }, 4000);
+    }
+  }, [lotData]);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={`Landing Sites`}>
+      {/* TODO: isLoading */}
+      {/* TODO: replace with DataTable? */}
+      <div style={{ minWidth: 500 }}></div>
+      {ship?.landing && (
+        <TextInputWithNote>
+          <TextInput
+            onKeyDown={handleKeyDown}
+            placeholder="Specify Lot by Id..."
+            type="number" />
+          <TextInputNote error={!!error}>
+            <WarningOutlineIcon />
+            This ship may land at a Spaceport or Empty Lot.
+          </TextInputNote>
+        </TextInputWithNote>
+      )}
+      {spaceports.length > 0
+        ? (
+          <SelectionTableWrapper>
+            <table>
+              <thead>
+                <tr>
+                  <td>Name</td>
+                  <td>Building</td>
+                  <td>Lot Id</td>
+                  <td>Landing Fee</td>
+                </tr>
+              </thead>
+              <tbody>
+                {spaceports.map((lotId) => {
+                  return (
+                    <SelectionTableRow
+                      key={lotId}
+                      onClick={() => setSelection(lotId)}
+                      selectedRow={lotId === selection}>
+                      <td>Parking @ {lotId}</td>
+                      <td>Spaceport</td>
+                      <td><LocationIcon /> {lotId}</td>
+                      <td>0</td>
+                    </SelectionTableRow>
+                  );
+                })}
+              </tbody>
+            </table>
+          </SelectionTableWrapper>
+        )
+        : <EmptyMessage>There are no available spaceports.</EmptyMessage>
+      }
+    </SelectionDialog>
+  );
+};
+
+export const ProcessSelectionDialog = ({ initialSelection, processorType, onClose, onSelected, open }) => {
+  const [error, setError] = useState();
+  const [selection, setSelection] = useState(initialSelection);
+
+  const processes = useMemo(() => {
+    return Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
+  }, [processorType])
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={`Select Process`}
+      style={{ maxWidth: '90vw' }}>
+      {/* TODO: isLoading */}
+      {/* TODO: replace with DataTable? */}
+      <SelectionTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>Process Name</td>
+              <td style={{ textAlign: 'left'}}>Inputs</td>
+              <td style={{ textAlign: 'left'}}>Outputs</td>
+            </tr>
+          </thead>
+          <tbody>
+            {processes.map(({ i, name, inputs, outputs }) => {
+              return (
+                <SelectionTableRow
+                  key={i}
+                  onClick={() => setSelection(i)}
+                  selectedRow={i === selection}>
+                  <td><div style={{ display: 'flex', alignItems: 'center' }}><ProcessIcon style={{ marginRight: 6 }} /> {name}</div></td>
+                  <td>
+                    <InputOutputTableCell>
+                      <label>{Object.keys(inputs).length}</label>
+                      {Object.keys(inputs).map((resourceId) => (
+                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                      ))}
+                    </InputOutputTableCell>
+                  </td>
+                  <td>
+                    <InputOutputTableCell>
+                      <label>{Object.keys(outputs).length}</label>
+                      {Object.keys(outputs).map((resourceId) => (
+                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                      ))}
+                    </InputOutputTableCell>
+                  </td>
+                </SelectionTableRow>
+              );
+            })}
+          </tbody>
+        </table>
+      </SelectionTableWrapper>
+    </SelectionDialog>
+  );
+}
+
+export const ShipConstructionSelectionDialog = ({ initialSelection, onClose, onSelected, open }) => {
+  const [error, setError] = useState();
+  const [selection, setSelection] = useState(initialSelection);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  return (
+    <SelectionDialog
+      isCompletable={selection > 0}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={`Select Process`}
+      style={{ maxWidth: '90vw' }}>
+      {/* TODO: isLoading */}
+      {/* TODO: replace with DataTable? */}
+      <SelectionTableWrapper>
+        <table>
+          <thead>
+            <tr>
+              <td>Process Name</td>
+              <td style={{ textAlign: 'left'}}>Inputs</td>
+              <td style={{ textAlign: 'left'}}>Outputs</td>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(Ship.CONSTRUCTION_TYPES).map((shipType) => {
+              return (
+                <SelectionTableRow
+                  key={shipType}
+                  onClick={() => setSelection(shipType)}
+                  selectedRow={shipType === selection}>
+                  <td><div style={{ display: 'flex', alignItems: 'center' }}><ProcessIcon style={{ marginRight: 6 }} /> {Ship.TYPES[shipType]?.name} Integration</div></td>
+                  <td>
+                    <InputOutputTableCell>
+                      <label>{Object.keys(Ship.CONSTRUCTION_TYPES[shipType].requirements).length}</label>
+                      {Object.keys(Ship.CONSTRUCTION_TYPES[shipType].requirements).map((resourceId) => (
+                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                      ))}
+                    </InputOutputTableCell>
+                  </td>
+                  <td>
+                    <InputOutputTableCell>
+                      <ShipImage shipType={shipType} style={{ height: '45px', width: '74px' }} tooltipContainer="selectionDialog" />
+                    </InputOutputTableCell>
+                  </td>
+                </SelectionTableRow>
+              );
+            })}
+          </tbody>
+        </table>
+      </SelectionTableWrapper>
+    </SelectionDialog>
+  );
+};
+
+
+//
+//  FORMATTERS
+//
+
+export const getCapacityUsage = (inventories, type) => {
   const capacity = {
     mass: { max: 0, used: 0, reserved: 0 },
     volume: { max: 0, used: 0, reserved: 0 },
   }
-  if (building && type !== undefined) {
-    let { mass: maxMass, volume: maxVolume } = Inventory.CAPACITIES[building.i][type];
-    capacity.mass.max = maxMass * 1e6; // TODO: it seems like this mult should be handled in CAPACITIES
-    capacity.volume.max = maxVolume * 1e6;
+  if (type !== undefined) {
+    const inventory = (inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
 
-    const { reservedMass, reservedVolume, mass, volume } = (inventories || {})[type] || {};
+    const { filledMass, filledVolume } = Inventory.getFilledCapacity(inventory.inventoryType);
+    capacity.mass.max = filledMass;
+    capacity.volume.max = filledVolume;
+
+    const { reservedMass, reservedVolume, mass, volume } = inventory || {};
     capacity.mass.used = (mass || 0);
     capacity.mass.reserved = (reservedMass || 0);
     capacity.volume.used = (volume || 0);
@@ -932,38 +2000,136 @@ const getCapacityUsage = (building, inventories, type) => {
   }
   return capacity;
 }
-const formatCapacity = (value) => {
-  return formatFixed(value / 1e6, 1);
+
+export const getBuildingRequirements = (building = {}, deliveries = []) => {
+  const { Building: { buildingType }, Inventories = [] } = building;
+  const inventory = Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
+
+  // TODO: presumably ingredients will come from sdk per building
+  return Object.keys(Building.CONSTRUCTION_TYPES[buildingType]?.requirements || {}).map((productId) => {
+    const totalRequired = Building.CONSTRUCTION_TYPES[buildingType].requirements[productId];
+    const inInventory = (inventory?.contents || []).find((c) => c.product === productId)?.amount;
+    const inTransit = deliveries
+      .filter((d) => d.Delivery.status === Delivery.STATUSES.IN_PROGRESS)
+      .reduce((acc, d) => acc + d.contents.find((c) => c.product === productId)?.amount || 0, 0);
+    return {
+      i: productId,
+      totalRequired,
+      inInventory,
+      inTransit,
+      inNeed: Math.max(0, totalRequired - inInventory - inTransit)
+    };
+  })
+};
+
+
+//
+// SUB-COMPONENTS
+//
+
+export const AsteroidImage = ({ asteroid, size }) => {
+  return (
+    <AsteroidThumbnailWrapper size={size}>
+      <AsteroidRendering asteroid={asteroid} brightness={1.2} />
+      <ClipCorner dimension={10} />
+    </AsteroidThumbnailWrapper>
+  )
 }
 
-const BuildingImage = ({ building, inventories, showInventoryStatusForType, unfinished }) => {
-  if (!building) return null;
-  const capacity = getCapacityUsage(building, inventories, showInventoryStatusForType);
+export const ShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, simulated, square, style = {} }) => {
+  const shipAsset = Ship.TYPES[Math.abs(shipType)]; // abs for simulated ships
+  if (!shipAsset) return null;
+
+  const capacity = getCapacityUsage(inventories, showInventoryStatusForType);
   return (
-    <BuildingThumbnailWrapper>
-      <ResourceThumbnail src={building[unfinished ? 'siteIconUrls' : 'iconUrls']?.w150} />
+    <ShipThumbnailWrapper style={style}>
+      <ResourceImage src={getShipIcon(shipAsset.i, 'w150', simulated)} />
       {showInventoryStatusForType !== undefined && (
         <>
           <InventoryUtilization
             progress={capacity.volume.used / capacity.volume.max}
             secondaryProgress={(capacity.volume.reserved + capacity.volume.used) / capacity.volume.max}
-            horizontal />
+          />
           <InventoryUtilization
             progress={capacity.mass.used / capacity.mass.max}
             secondaryProgress={(capacity.mass.reserved + capacity.mass.used) / capacity.mass.max}
-            horizontal />
+          />
         </>
       )}
+      {iconBadge && <ThumbnailBadge style={{ color: iconBadgeColor || 'white' }}>{iconBadge}</ThumbnailBadge>}
+      {iconOverlay && <ThumbnailOverlay color={iconOverlayColor}>{iconOverlay}</ThumbnailOverlay>}
+      <ClipCorner dimension={10} />
+    </ShipThumbnailWrapper>
+  );
+};
+
+export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, unfinished }) => {
+  const buildingAsset = Building.TYPES[buildingType];
+  if (!buildingAsset) return null;
+
+  const capacity = getCapacityUsage(inventories, showInventoryStatusForType);
+  const closerLimit = (capacity.volume.used + capacity.volume.reserved) / capacity.volume.max > (capacity.mass.used + capacity.mass.reserved) / capacity.mass.max ? 'volume' : 'mass';
+  return (
+    <BuildingThumbnailWrapper>
+      <ResourceImage src={getBuildingIcon(buildingAsset.i, 'w150', unfinished)} />
+      {showInventoryStatusForType !== undefined && (
+        <>
+          <InventoryLabel overloaded={error}>
+            {formatFixed(100 * (capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max, 1)}% {closerLimit === 'volume' ? `m³` : `t`}
+          </InventoryLabel>
+          <InventoryUtilization
+            horizontal
+            overloaded={error}
+            progress={capacity[closerLimit].used / capacity[closerLimit].max}
+            secondaryProgress={(capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max} />
+        </>
+      )}
+      {iconOverlay && <ThumbnailOverlay color={iconOverlayColor}>{iconOverlay}</ThumbnailOverlay>}
+      <ClipCorner dimension={10} />
     </BuildingThumbnailWrapper>
   );
 };
-const EmptyBuildingImage = ({ iconOverride }) => (
-  <BuildingThumbnailWrapper><EmptyImage>{iconOverride || <LocationPinIcon />}</EmptyImage></BuildingThumbnailWrapper>
+
+export const EmptyBuildingImage = ({ iconOverride }) => (
+  <BuildingThumbnailWrapper>
+    <EmptyThumbnail>{iconOverride || <LocationIcon />}</EmptyThumbnail>
+    <ClipCorner dimension={10} />
+  </BuildingThumbnailWrapper>
 );
 
-const ReadyHighlight = () => <ReadyIconWrapper><div><NavIcon animate selected /></div></ReadyIconWrapper>;
+export const EmptyResourceImage = ({ iconOverride, noIcon, ...props }) => (
+  <ResourceThumbnailWrapper {...props}>
+    <EmptyThumbnail>{noIcon ? null : (iconOverride || <PlusIcon />)}</EmptyThumbnail>
+    <ClipCorner dimension={10} />
+  </ResourceThumbnailWrapper>
+);
 
-const CompletedHighlight = () => <CompletedIconWrapper><CheckIcon /></CompletedIconWrapper>;
+export const MiniBarChart = ({ color, deltaColor, deltaValue, label, valueLabel, value, valueStyle, underLabels }) => (
+  <MiniBarWrapper>
+    <ChartLabels>
+      <label>{label}</label>
+      <label style={valueStyle || {}}>{valueLabel}</label>
+    </ChartLabels>
+    <MiniBar color={color} value={Math.min(value, 1)} deltaColor={deltaColor} deltaValue={Math.max(-1, Math.min(deltaValue, 1))}>
+      {deltaValue ? <DeltaIcon negativeDelta={deltaValue < 0} value={value}><FastForwardIcon /></DeltaIcon> : null}
+    </MiniBar>
+    {underLabels && <UnderChartLabels>{underLabels}</UnderChartLabels>}
+  </MiniBarWrapper>
+);
+
+export const SwayInput = () => {
+  return (
+    <SwayInputRow>
+      <SwayInputIconWrapper><SwayIcon /></SwayInputIconWrapper>
+      <SwayInputFieldWrapper>
+        <TextInput type="number" min={0} value={0} />
+      </SwayInputFieldWrapper>
+      <SwayInputHelp>{/* TODO: this doesn't do anything */}
+        <QuestionIcon />
+      </SwayInputHelp>
+    </SwayInputRow>
+  );
+};
 
 const MouseoverIcon = ({ children, icon, iconStyle = {}, themeColor }) => {
   const refEl = useRef();
@@ -986,824 +2152,446 @@ const MouseoverIcon = ({ children, icon, iconStyle = {}, themeColor }) => {
   );
 };
 
-const ResourceRequirement = ({ resource, hasTally, isGathering, needsTally }) => {
-  const props = { resource };
-  if (isGathering) {
-    props.badge = hasTally;
-    if (hasTally >= needsTally) {
-      props.badgeColor = theme.colors.main;
-      props.overlayIcon = <CheckIcon />;
-    } else {
-      props.badgeDenominator = needsTally;
-      props.badgeColor = theme.colors.yellow;
-      props.outlineColor = theme.colors.yellow;
-      props.outlineStyle = 'dashed';
-    }
-  } else {
-    props.badge = needsTally;
-    props.badgeDenominator = null;
-  }
+export const Mouseoverable = ({ children, tooltip, style = {}, themeColor }) => {
+  const refEl = useRef();
+  const [hovered, setHovered] = useState();
   return (
-    <ResourceImage {...props} />
+    <>
+      <span
+        ref={refEl}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={style}>
+        {children}
+      </span>
+      <MouseoverInfoPane referenceEl={refEl.current} visible={hovered}>
+        <MouseoverContent highlightColor={themeColor}>
+          {tooltip}
+        </MouseoverContent>
+      </MouseoverInfoPane>
+    </>
+  );
+}
+
+//
+// COMPONENTS
+//
+
+const ActionDialogActionBar = ({ location, onClose, overrideColor, stage }) => (
+  <ActionBar {...theming[stage]} overrideColor={overrideColor}>
+    {(stage === actionStage.STARTING || stage === actionStage.COMPLETING) && (
+      <BarLoadingContainer>
+        <BarLoader color={theme.colors.lightPurple} height="5" speedMultiplier={0.5} width="100%" />
+      </BarLoadingContainer>
+    )}
+    <ActionLocation {...theming[stage]} overrideColor={overrideColor}>
+      <b>{formatters.asteroidName(location?.asteroid)}</b>
+      <span>{location?.lot?.i ? `> LOT ${location.lot.i.toLocaleString()}` : ''}</span>
+      <span>{location?.ship && !location?.lot ? `> ${formatShipStatus(location.ship)}` : ''}</span>
+    </ActionLocation>
+    <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
+      <CloseIcon />
+    </IconButton>
+  </ActionBar>
+);
+
+export const ActionDialogHeader = ({ action, captain, crewAvailableTime, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
+  return (
+    <>
+      <ActionDialogActionBar
+        location={location}
+        onClose={onClose}
+        overrideColor={overrideColor}
+        stage={stage}
+      />
+      <Header theming={theming[stage]} overrideHighlightColor={overrideColor} wide={wide}>
+        {captain && (
+          <CrewCardFramed
+            crewmate={captain}
+            isCaptain
+            width={75} />
+        )}
+        <IconAndLabel>
+          <IconContainer>{action.icon}</IconContainer>
+          <LabelContainer>
+            <h1>{action.label}</h1>
+            <div>
+              <h2>{action.status || theming[stage]?.label}</h2>
+              {crewAvailableTime !== undefined && <TimePill type="crew"><CrewIcon /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
+              {taskCompleteTime !== undefined && <TimePill type="total"><AlertIcon /> {formatTimer(taskCompleteTime, 2)}</TimePill>}
+            </div>
+          </LabelContainer>
+        </IconAndLabel>
+      </Header>
+    </>
   );
 };
 
-//
-// Selectors
-//
-const BuildingPlanSelection = ({ onBuildingSelected }) => {
-  const buildings = useBuildingAssets();
+export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, innerBodyStyle, isSelected, label, onClick, style = {}, sublabel, title, titleDetails, tooltip }) => {
+  const refEl = useRef();
+  const [hovered, setHovered] = useState();
   return (
-    <PopperBody style={{ paddingBottom: 5, paddingTop: 5 }}>
-      <PopperList>
-        {buildings.filter(({i}) => i > 0).filter(({i}) => [1, 2].includes(i)).map((building) => (
-          <PopperListItem key={building.i} onClick={onBuildingSelected(building.i)}>
-            <BuildingPlan>
-              <BuildingImage building={building} unfinished />
+    <>
+      {tooltip && (
+        <MouseoverInfoPane referenceEl={refEl.current} visible={hovered}>
+          <MouseoverContent highlightColor={theme.colors.lightOrange}>
+            {tooltip}
+          </MouseoverContent>
+        </MouseoverInfoPane>
+      )}
+      <FlexSectionInputContainer style={style}>
+        {title && <SectionTitle>{title}{titleDetails && <><b style={{ flex: 1 }} /><SectionTitleRight>{titleDetails}</SectionTitleRight></>}</SectionTitle>}
+
+        <FlexSectionInputBody
+          isSelected={isSelected}
+          onClick={disabled ? null : onClick}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          ref={refEl}
+          style={bodyStyle}>
+          {children && (
+            <FlexSectionInputBodyInner style={innerBodyStyle}>
+              {children}
+            </FlexSectionInputBodyInner>
+          )}
+          {!children && (
+            <ThumbnailWithData>
+              {image}
               <label>
-                <h3>{building.name}</h3>
-                <b>Site Plan</b>
+                <h3>{label}</h3>
+                {sublabel && <b>{sublabel}</b>}
               </label>
-            </BuildingPlan>
-          </PopperListItem>
-        ))}
-      </PopperList>
-    </PopperBody>
+            </ThumbnailWithData>
+          )}
+          <ClipCorner dimension={sectionBodyCornerSize} />
+        </FlexSectionInputBody>
+      </FlexSectionInputContainer>
+    </>
   );
 };
 
-const CoreSampleSelection = ({ onClick, options, plot, resources }) => {
+export const FlexSectionBlock = ({ bodyStyle, children, style = {}, title, titleDetails }) => {
   return (
-    <PopperBody>
-      <PoppableTitle>
-        <h3>Lot #{(plot?.i || 0).toLocaleString()}</h3>
-        <div>{(options.length || 0).toLocaleString()} Available Sample{options.length === 1 ? '' : 's'}</div>
-      </PoppableTitle>
-      {/* TODO: replace with DataTable? */}
-      <PoppableTableWrapper>
-        <table>
-          <thead>
-            <tr>
-              <td>Resource</td>
-              <td>Deposit Amount</td>
-            </tr>
-          </thead>
-          <tbody>
-            {options.sort((a, b) => b.remainingYield - a.remainingYield).map((sample, i) => (
-              <tr key={`${sample.resourceId}_${sample.sampleId}`} onClick={onClick(sample)}>
-                <td><ResourceColorIcon category={resources[sample.resourceId].category} /> {resources[sample.resourceId].name} #{sample.sampleId.toLocaleString()}</td>
-                <td>{formatSampleMass(sample.remainingYield * resources[sample.resourceId].massPerUnit)} tonnes</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </PoppableTableWrapper>
-    </PopperBody>
+    <FlexSectionInputContainer style={style}>
+      {title && <SectionTitle>{title}{titleDetails && <><b style={{ flex: 1 }} /><SectionTitleRight>{titleDetails}</SectionTitleRight></>}</SectionTitle>}
+      <FlexSectionBlockInner style={bodyStyle}>
+        {children}
+      </FlexSectionBlockInner>
+    </FlexSectionInputContainer>
   );
 };
 
-const DestinationSelection = ({ asteroid, inventoryType = 1, onClick, originPlotId }) => {
-  const { data: crewPlots, isLoading } = useAsteroidCrewPlots(asteroid.i);
-
-  const inventories = useMemo(() => {
-    return (crewPlots || [])
-      .filter((plot) => (
-        plot.building
-        && plot.i !== originPlotId // not the origin
-        && Inventory.CAPACITIES[plot.building.capableType][inventoryType] // building has inventoryType
-        && ( // building is built (or this is construction inventory and building is planned)
-          (inventoryType === 0 && plot.building.construction?.status === Construction.STATUS_PLANNED)
-          || (inventoryType !== 0 && plot.building.construction?.status === Construction.STATUS_OPERATIONAL)
-        )
-      ))
-      .map((plot) => {
-        const capacity = { ...Inventory.CAPACITIES[plot.building.capableType][inventoryType] };
-
-        const inventory = (plot.building?.inventories || {})[inventoryType];
-        const usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0)) / 1e6;
-        const usedVolume = ((inventory?.volume || 0) + (inventory?.reservedVolume || 0)) / 1e6;
-
-        const availMass = capacity.mass - usedMass;
-        const availVolume = capacity.volume - usedVolume;
-        const fullness = Math.max(
-          1 - availMass / capacity.mass,
-          1 - availVolume / capacity.volume,
-        );
-
-        return {
-          plot,
-          distance: Asteroid.getLotDistance(asteroid.i, originPlotId, plot.i) || 0,
-          type: plot.building?.__t || 'Empty Lot',
-          fullness,
-          availMass,
-          availVolume
-        };
-      })
-      .sort((a, b) => a.distance - b.distance)
-  }, [crewPlots]);
-
-  // TODO: use isLoading
-  return (
-    <PopperBody>
-      <PoppableTitle style={{ marginTop: -10 }}>
-        <h3>{asteroid.customName || asteroid.baseName}</h3>
-        <div>{inventories.length.toLocaleString()} Inventor{inventories.length === 1 ? 'y': 'ies'} Available</div>
-      </PoppableTitle>
-      {/* TODO: replace with DataTable? */}
-      <PoppableTableWrapper>
-        <table>
-          <thead>
-            <tr>
-              <td>Location</td>
-              <td>Distance</td>
-              <td>Type</td>
-              <td>% Full</td>
-              <td>Avail. Mass</td>
-              <td>Avail. Volume</td>
-            </tr>
-          </thead>
-          <tbody>
-            {inventories.map((inventory, i) => {
-              const warningColor = inventory.fullness > 0.8
-                ? theme.colors.error
-                : (inventory.fullness > 0.5 ? theme.colors.yellow : theme.colors.success);
-              return (
-                <tr key={`${asteroid.i}_${inventory.plot.i}`} onClick={onClick(inventory.plot)}>
-                  <td>Lot #{inventory.plot.i}</td>
-                  <td>{formatFixed(inventory.distance, 1)} km</td>
-                  <td>{inventory.type}</td>
-                  <td style={{ color: warningColor }}>{(100 * inventory.fullness).toFixed(1)}%</td>
-                  <td style={{ color: warningColor }}>{formatFixed(inventory.availMass)} t</td>
-                  <td style={{ color: warningColor }}>{formatFixed(inventory.availVolume)} m<sup>3</sup></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </PoppableTableWrapper>
-    </PopperBody>
-  );
-};
-
-const ResourceSelection = ({ abundances, onSelect, plotId, resources }) => {
-  const nonzeroAbundances = useMemo(() => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
-  return (
-    <PopperBody>
-      <PoppableTitle>
-        <h3>Lot #{(plotId || 0).toLocaleString()}</h3>
-        <div>{(nonzeroAbundances || 0).toLocaleString()} Available Resource{nonzeroAbundances === 1 ? '' : 's'}</div>
-      </PoppableTitle>
-      {/* TODO: replace with DataTable? */}
-      <PoppableTableWrapper>
-        <table>
-          <thead>
-            <tr>
-              <td>Resource</td>
-              <td>Abundance at Lot</td>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.keys(abundances)
-              .sort((a, b) => abundances[b] - abundances[a])
-              .map((resourceId) => (
-              <PoppableTableRow key={`${resourceId}`} disabledRow={abundances[resourceId] === 0} onClick={onSelect(resourceId)}>
-                <td><ResourceColorIcon category={resources[resourceId].category} /> {resources[resourceId].name}</td>
-                <td>{(100 * abundances[resourceId]).toFixed(1)}%</td>
-              </PoppableTableRow>
-            ))}
-          </tbody>
-        </table>
-      </PoppableTableWrapper>
-    </PopperBody>
-  );
-};
-
-const TransferSelectionRow = ({ onUpdate, quanta, resource, selecting }) => {
-  const [focusOn, setFocusOn] = useState();
-  const [mouseIn, setMouseIn] = useState(false);
-  const [amount, setAmount] = useState(quanta);
-
-  const resourceId = Number(resource.i);
-
-  useEffect(() => {
-    setAmount(quanta);
-  }, [quanta]);
-
-  const onFocusEvent = useCallback((e) => {
-    if (e.type === 'focus') {
-      setFocusOn(true);
-      setAmount(quanta);
-      e.target.select();
-    } else {
-      setFocusOn(false);
-    }
-  }, [quanta]);
-
-  const onMouseEvent = useCallback((e) => {
-    setMouseIn(e.type === 'mouseenter')
-  }, []);
-
-  const onChange = useCallback((e) => {
-    let newValue = parseInt(e.target.value.replace(/^0+/g, '').replace(/[^0-9]/g, ''));
-    if (!(newValue > -1)) newValue = 0;
-    if (newValue > quanta) newValue = quanta;
-    setAmount(newValue);
-  }, [quanta]);
-
-  const onSubmit = useCallback(() => {
-    const nAmount = parseInt(amount);
-    if (nAmount > 0 && nAmount <= quanta) {
-      onUpdate(resourceId, nAmount, selecting);
-    }
-  }, [amount, quanta, resourceId]);
-
-  return (
-    <tr key={resourceId} onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent}>
-      <td>{resource.name}</td>
-      <td>{resource.category}</td>
-      <td>{formatResourceVolume(quanta, resourceId)}</td>
-      <td>{formatResourceMass(quanta, resourceId)}</td>
-      <td>
-        {!(mouseIn || focusOn) && (
-          <>
-            {quanta.toLocaleString()}
-          </>
-        )}
-        {(mouseIn || focusOn) && (
-          <QuantaInput
-            type="number"
-            max={quanta}
-            min={0}
-            onBlur={onFocusEvent}
-            onChange={onChange}
-            onFocus={onFocusEvent}
-            step={1}
-            value={amount} />
-        )}
-        {resource.massPerUnit === 0.001 ? ' kg' : ''}
-      </td>
-      <td>
-        <IconButtonRounded flatter onClick={onSubmit}>
-          {selecting ? <ChevronDoubleDownIcon /> : <ChevronDoubleUpIcon />}
-        </IconButtonRounded>
-      </td>
-    </tr>
-  );
-};
-
-const TransferSelection = ({ inventory, onComplete, resources, selectedItems }) => {
-  const [newSelectedItems, setNewSelectedItems] = useState({ ...selectedItems });
-
-  const onUpdate = useCallback((resourceId, amount, isSelected) => {
-    setNewSelectedItems((currentlySelected) => {
-      const updated = {...currentlySelected};
-
-      if (isSelected) {
-        if (!updated[resourceId]) updated[resourceId] = 0;
-        updated[resourceId] += amount;
-      } else {
-        updated[resourceId] -= amount;
-        if (updated[resourceId] <= 0) delete updated[resourceId];
-      }
-      return updated;
-    });
-  }, []);
-
-  const unselectedItems = useMemo(() => {
-    return Object.keys(inventory).reduce((acc, cur) => {
-      acc[cur] -= newSelectedItems[cur] || 0;
-      if (acc[cur] <= 0) delete acc[cur];
-      return acc;
-    }, { ...inventory });
-  }, [inventory, newSelectedItems]);
-
-  return (
-    <PopperBody>
-      {/* TODO: see mockup for title area */}
-      <TransferSelectionBody>
-        <TransferSelectionTableWrapper>
-          <table>
-            <thead>
-              <tr>
-                <td>Item</td>
-                <td>Category</td>
-                <td>Volume</td>
-                <td>Mass</td>
-                <td>Quanta</td>
-                <td></td>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.keys(unselectedItems).map((resourceId) => (
-                <TransferSelectionRow
-                  key={resourceId}
-                  onUpdate={onUpdate}
-                  quanta={unselectedItems[resourceId]}
-                  resource={resources[resourceId]}
-                  selecting={true}
-                  />
-              ))}
-            </tbody>
-          </table>
-        </TransferSelectionTableWrapper>
-        {Object.keys(newSelectedItems).length > 0 && (
-          <TransferSelectionTableWrapper>
-            <table>
-              <thead>
-                <tr><TitleCell colSpan="6" title="Selected" /></tr>
-              </thead>
-              <tbody>
-                {Object.keys(newSelectedItems).map((resourceId) => (
-                  <TransferSelectionRow
-                    key={resourceId}
-                    onUpdate={onUpdate}
-                    quanta={newSelectedItems[resourceId]}
-                    resource={resources[resourceId]}
-                    selecting={false}
-                    />
-                ))}
-              </tbody>
-            </table>
-          </TransferSelectionTableWrapper>
-        )}
-      </TransferSelectionBody>
-      <PopperFooter>
-        <Button onClick={() => onComplete(newSelectedItems)}>Done</Button>
-      </PopperFooter>
-    </PopperBody>
-  );
-};
 
 //
 // Sections
 //
 
-export const ExistingSampleSection = ({ improvableSamples, plot, onSelectSample, selectedSample, resources, overrideTonnage, status }) => {
-  const [clicked, setClicked] = useState(0);
-  const onClick = useCallback((id) => () => {
-    setClicked((x) => x + 1);
-    if (onSelectSample) onSelectSample(id);
-  }, []);
-  const resource = useMemo(() => resources[selectedSample?.resourceId], [selectedSample]);
-  return (
-    <Section>
-      <SectionTitle><ChevronRightIcon /> Core Sample</SectionTitle>
-      <SectionBody highlight={status === 'AFTER'}>
-        {selectedSample ? (
-          <ResourceWithData>
-            <ResourceImage resource={resource} />
-            <label>
-              <h3>{resource?.name} Deposit #{selectedSample.sampleId.toLocaleString()}{(status === 'AFTER' && overrideTonnage) ? ' (Improved)' : ''}</h3>
-              <div>
-                <b><ResourceIcon /> {formatSampleMass(overrideTonnage || (selectedSample?.remainingYield * resource.massPerUnit))}</b>
-                {' '}tonnes {status !== 'BEFORE' && !overrideTonnage ? ' (before improvement)' : ''}
-              </div>
-            </label>
-          </ResourceWithData>
-        ) : (
-          <EmptyResourceWithData>
-            <EmptyResourceImage />
-            <label>
-              <div>Existing Deposit</div>
-              <h3>Select</h3>
-            </label>
-          </EmptyResourceWithData>
-        )}
-        {status === 'BEFORE' && improvableSamples?.length > 1 && (
-          <div>
-            <Poppable label="Select" closeOnChange={clicked} title="Select Improvable Sample">
-              <CoreSampleSelection plot={plot} onClick={onClick} options={improvableSamples} resources={resources} />
-            </Poppable>
-          </div>
-        )}
+export const ResourceGridSectionInner = ({
+  columns,
+  isGathering,
+  items,
+  onClick,
+  minCells = 0,
+  noCellStyles,
+  theming = 'default'
+}) => {
+  const { totalItems, totalMass, totalVolume } = useMemo(() => {
+    return items.reduce((acc, { i, numerator, denominator, selected }) => {
+      let sumValue = numerator;
+      if (selected !== undefined) sumValue = selected;
+      else if (denominator !== undefined) sumValue = denominator;
 
-        {status === 'AFTER' && !overrideTonnage && <ReadyHighlight />}
-        {status === 'AFTER' && overrideTonnage && <CompletedHighlight />}
-      </SectionBody>
-    </Section>
+      acc.totalItems += (selected === undefined || selected > 0) ? 1 : 0;
+      acc.totalMass += sumValue * Product.TYPES[i].massPerUnit * 1e6;
+      acc.totalVolume += sumValue * (Product.TYPES[i].volumePerUnit || 0) * 1e6;
+      return acc;
+    }, { totalItems: 0, totalMass: 0, totalVolume: 0 });
+  }, [items]);
+
+  return (
+    <IngredientsList
+      columns={columns}
+      hasSummary
+      theming={theming}
+      isSelected={boolAttr(onClick)}
+      onClick={onClick}>
+      {items.length > 0
+        ? (
+          <>
+            {items.map((item) => (
+              <ResourceRequirement
+                key={item.i}
+                isGathering={isGathering}
+                item={item}
+                resource={Product.TYPES[item.i]}
+                noStyles={noCellStyles}
+                size="92px"
+                tooltipContainer="actionDialog" />
+            ))}
+            {Array.from({ length: Math.max(0, minCells - items.length) }).map((_, i) => (
+              <EmptyResourceImage key={i} noIcon outlineColor="transparent" style={{ background: 'rgba(0, 0, 0, 0.25)' }} />
+            ))}
+            <IngredientSummary theming={theming}>
+              <span>
+                {totalItems} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
+              </span>
+            </IngredientSummary>
+          </>
+        )
+        : (
+          <>
+            <div style={{ height: 92 }}>
+              <ThumbnailWithData style={{ marginLeft: 4, position: 'absolute' }}>
+                <EmptyResourceImage />
+                <label>
+                  <h3>Select</h3>
+                  <b>Items</b>
+                </label>
+              </ThumbnailWithData>
+            </div>
+            <IngredientSummary>
+              <span>None Selected</span>
+            </IngredientSummary>
+          </>
+        )}
+      <ClipCorner dimension={sectionBodyCornerSize} />
+    </IngredientsList>
   );
 };
 
-export const ExtractSampleSection = ({ amount, plot, resources, onSelectSample, selectedSample, status, usableSamples }) => {
-  const remainingAfterExtraction = useMemo(() => selectedSample
-    ? selectedSample.remainingYield - amount
-    : null
-  , [amount, selectedSample]);
-  const getTonnage = useCallback((y) => y * resources[selectedSample.resourceId].massPerUnit, [selectedSample?.resourceId]);
-
-  const [clicked, setClicked] = useState(0);
-  const onClick = useCallback((id) => () => {
-    setClicked((x) => x + 1);
-    if (onSelectSample) onSelectSample(id);
-  }, []);
-
-  return (
-    <Section>
-      <SectionTitle><ChevronRightIcon /> Extraction Target</SectionTitle>
-      <SectionBody highlight={status === 'AFTER'}>
-        {selectedSample ? (
-          <ResourceWithData>
-            <ResourceImage resource={resources[selectedSample.resourceId]} />
-            <label>
-              <h3>
-                {resources[selectedSample.resourceId].name} Deposit #{selectedSample.sampleId.toLocaleString()}
-              </h3>
-              <div>
-                {status === 'BEFORE' && (
-                  <>
-                    <b style={{ color: 'white', fontWeight: 'normal' }}>
-                      <ResourceIcon /> {formatSampleMass(getTonnage(selectedSample.remainingYield))}
-                    </b> tonnes {selectedSample.remainingYield < selectedSample.initialYield ? 'remaining' : ''}
-                  </>
-                )}
-                {status !== 'BEFORE' && (
-                  <>
-                    <b><ResourceIcon /> {formatSampleMass(getTonnage(amount))}</b> tonnes
-                  </>
-                )}
-              </div>
-              <footer style={status === 'BEFORE' ? {} : { color: '#777' }}>
-                {remainingAfterExtraction === 0
-                    ? 'Deposit will be depleted following this Extraction'
-                    : `${formatSampleMass(getTonnage(remainingAfterExtraction))} tonnes will remain following this Extraction`}
-              </footer>
-            </label>
-          </ResourceWithData>
-        ) : (
-          <EmptyResourceWithData>
-            <EmptyResourceImage />
-            <label>
-              <div>Extract from Deposit</div>
-              <h3>Select</h3>
-            </label>
-          </EmptyResourceWithData>
-        )}
-        {status === 'BEFORE' && (
-          <div>
-            <Poppable label="Select" closeOnChange={clicked} title="Select Core Sample">
-              <CoreSampleSelection plot={plot} onClick={onClick} options={usableSamples} resources={resources} />
-            </Poppable>
-          </div>
-        )}
-        {status === 'AFTER' && (
-          <ReadyHighlight />
-        )}
-      </SectionBody>
-    </Section>
-  );
-};
-
-export const RawMaterialSection = ({ abundances, goToResourceMap, plotId, resourceId, resources, onSelectResource, tonnage, status }) => {
-  const [clicked, setClicked] = useState(0);
-  const onClick = useCallback((resourceId) => () => {
-    setClicked((x) => x + 1);
-    if (onSelectResource) onSelectResource(resourceId);
-  }, []);
-  const resource = resources[resourceId] || null;
-  const abundance = abundances[resourceId] || 0;
-
-  return (
-    <Section>
-      <SectionTitle><ChevronRightIcon /> Target Resource</SectionTitle>
-      <SectionBody highlight={status === 'AFTER'}>
-        {resource
-          ? (
-            <ResourceWithData>
-              <ResourceImage resource={resource} />
-              <label>
-                {/* TODO: adding sampleId here might be most consistent with other dialogs */}
-                <h3>{resource.name}{tonnage !== undefined ? ' Deposit Discovered' : ''}</h3>
-                {tonnage !== undefined
-                  ? <div><b><ResourceIcon /> {formatSampleMass(tonnage)}</b> tonnes</div>
-                  : <div><b>{formatFixed(100 * abundance, 1)}%</b> Abundance at lot</div>
-                }
-              </label>
-            </ResourceWithData>
-          )
-          : (
-            <EmptyResourceWithData>
-              <EmptyResourceImage />
-              <label>
-                <div>Sample Resource</div>
-                <h3>Select</h3>
-              </label>
-            </EmptyResourceWithData>
-          )
-        }
-        {status === 'BEFORE' && (
-          <div style={{ display: 'flex' }}>
-            {goToResourceMap && (
-              <IconButtonRounded
-                data-for="actionDialog"
-                data-place="left"
-                data-tip="View Resource Map"
-                onClick={goToResourceMap}
-                style={{ marginRight: 6 }}>
-                <TargetIcon />
-              </IconButtonRounded>
-            )}
-            <Poppable label="Select" title="Select Target Resource" closeOnChange={clicked} contentHeight={360}>
-              <ResourceSelection abundances={abundances} onSelect={onClick} plotId={plotId} resources={resources} />
-            </Poppable>
-          </div>
-        )}
-        {status === 'AFTER' && tonnage === undefined && <ReadyHighlight />}
-        {status === 'AFTER' && tonnage !== undefined && <CompletedHighlight />}
-      </SectionBody>
-    </Section>
-  );
-};
-
-// TODO: this needs an empty state if source is not yet selected
-export const ToolSection = ({ resource, sourcePlot }) => {
-  return (
-    <Section>
-      <SectionTitle><ChevronRightIcon /> Tool</SectionTitle>
-      <SectionBody>
-        <FutureSectionOverlay />
-        {resource && (
-          <ResourceWithData>
-            <ResourceImage badge="∞" resource={resource} />{/* TODO: badge */}
-            <label>
-              <h3>{resource.name}</h3>
-              {sourcePlot && sourcePlot.building && (
-                <div>{sourcePlot.building.__t} (Lot {sourcePlot.i.toLocaleString()})</div>
-              )}
-              <footer>NOTE: This item will be consumed.</footer>
-            </label>
-          </ResourceWithData>
-        )}
-        {/*
-        <div>
-          <Poppable label="Source">
-            TODO: select where to get the tool from
-          </Poppable>
-        </div>
-        */}
-      </SectionBody>
-    </Section>
-  );
-}
-
-const SelectionPopper = ({ closeOnChange, inventory, onSelectionCompleted, resources, selectedItems }) => (
-  <Poppable label="Select" title="Items to Transfer" closeOnChange={closeOnChange} contentHeight={360} contentWidth={700}>
-    <TransferSelection
-      inventory={inventory}
-      onComplete={onSelectionCompleted}
-      resources={resources}
-      selectedItems={selectedItems} />
-  </Poppable>
+const ResourceGridSection = ({ label, ...props }) => (
+  <Section style={{ marginBottom: 25 }}>
+    <SectionTitle>{label}</SectionTitle>
+    <SectionBody>
+      <ResourceGridSectionInner {...props} />
+    </SectionBody>
+  </Section>
 );
 
-export const ItemSelectionSection = ({ inventory, onSelectItems, resources, selectedItems, status }) => {
-  const selectedItemKeys = Object.keys(selectedItems || {});
-
-  const [completed, setCompleted] = useState(0);
-  const onSelectionCompleted = useCallback((items) => {
-    setCompleted((x) => x + 1);
-    if (onSelectItems) onSelectItems(items);
-  }, [onSelectItems]);
-
-  return (
-    <Section>
-      <SectionTitle><ChevronRightIcon /> Items</SectionTitle>
-      <SectionBody highlight={status === 'AFTER'}>
-        {selectedItemKeys.length === 0 && (
-          <>
-            <EmptyResourceWithData>
-              <EmptyResourceImage />
-              <label>
-                <div>Items:</div>
-                <h3>Select</h3>
-              </label>
-            </EmptyResourceWithData>
-            <div>
-              <SelectionPopper
-                closeOnChange={completed}
-                inventory={inventory}
-                onSelectionCompleted={onSelectionCompleted}
-                resources={resources}
-                selectedItems={selectedItems} />
-            </div>
-          </>
-        )}
-        {selectedItemKeys.length > 0 && (
-          <ItemSelectionWrapper>
-            <div>
-              <ItemsList>
-                {selectedItemKeys.map((resourceId, x) => (
-                  <ResourceImage
-                    key={resourceId}
-                    badge={formatResourceAmount(selectedItems[resourceId], resourceId)}
-                    resource={resources[resourceId]}
-                    progress={selectedItems[resourceId] / inventory[resourceId]} />
-                ))}
-              </ItemsList>
-            </div>
-            <div>
-              <div>{selectedItemKeys.length} item{selectedItemKeys.length === 1 ? '' : 's'}</div>
-              {status === 'BEFORE' && (
-                <SelectionPopper
-                  closeOnChange={completed}
-                  inventory={inventory}
-                  onSelectionCompleted={onSelectionCompleted}
-                  resources={resources}
-                  selectedItems={selectedItems} />
-              )}
-            </div>
-          </ItemSelectionWrapper>
-        )}
-      </SectionBody>
-    </Section>
-  );
-};
-
-export const DestinationPlotSection = ({ asteroid, destinationPlot, futureFlag, onDestinationSelect, originPlot, status }) => {
-  const buildings = useBuildingAssets();  // TODO: probably more consistent to move this up a level
-  const [clicked, setClicked] = useState(0);
-  const onClick = useCallback((plot) => () => {
-    setClicked((x) => x + 1);
-    if (onDestinationSelect) onDestinationSelect(plot);
-  }, []);
-
-  const destinationBuilding = useMemo(() => {
-    if (destinationPlot?.building) {
-      return buildings[destinationPlot.building?.capableType];
-    }
-    return null;
-  }, [destinationPlot?.building]);
-
-  const capacity = getCapacityUsage(destinationBuilding, destinationPlot?.building?.inventories, 1);
-  return (
-    <Section>
-      <SectionTitle><ChevronRightIcon /> Destination</SectionTitle>
-      <SectionBody>
-        {futureFlag && <FutureSectionOverlay />}
-        {destinationBuilding
-          ? (
-            <Destination status={status}>
-              <BuildingImage
-                building={destinationBuilding}
-                inventories={destinationPlot?.building?.inventories}
-                showInventoryStatusForType={1} />
-              <label>
-                <h3>{destinationBuilding?.name}</h3>
-                <div>{asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName} &gt; <b>Lot {destinationPlot.i.toLocaleString()}</b></div>
-                <div />
-                {status === 'BEFORE' && (
-                  <div>
-                    <b>{formatCapacity(capacity.volume.reserved + capacity.volume.used)}</b> / {formatCapacity(capacity.volume.max)} m<sup>3</sup>
-                    <br/>
-                    <b>{formatCapacity(capacity.mass.reserved + capacity.mass.used)}</b> / {formatCapacity(capacity.mass.max)} tonnes
-                  </div>
-                )}
-              </label>
-            </Destination>
-          )
-          : (
-            <EmptyResourceWithData>
-              <EmptyBuildingImage />
-              <label>
-                <div>Location:</div>
-                <h3>Select</h3>
-              </label>
-            </EmptyResourceWithData>
-          )
+export const BuildingRequirementsSection = ({ mode, label, requirements, requirementsMet }) => {
+  const items = useMemo(() => {
+    return requirements.map((item) => ({
+      i: item.i,
+      numerator: item.inInventory + item.inTransit,
+      denominator: item.totalRequired,
+      customIcon: item.inTransit > 0
+        ? {
+          animated: true,
+          icon: <SurfaceTransferIcon />
         }
-        {status === 'BEFORE' && (
-          <div style={{ display: 'flex' }}>
-            {/* TODO: (select on map)
-              <IconButtonRounded style={{ marginRight: 6 }}>
-                <TargetIcon />
-              </IconButtonRounded>
-            */}
-            <Poppable label="Select" title="Select Destination" closeOnChange={clicked}>
-              <DestinationSelection asteroid={asteroid} onClick={onClick} originPlotId={originPlot.i} />
-            </Poppable>
-          </div>
-        )}
-      </SectionBody>
+        : undefined
+    }));
+  }, [requirements]);
+
+  return (
+    <ResourceGridSection
+      isGathering={mode === 'gathering'}
+      items={items}
+      label={label}
+      theming={requirementsMet ? undefined : 'warning'} />
+  );
+};
+
+export const TransferBuildingRequirementsSection = ({ label, onClick, requirements, selectedItems }) => {
+  const items = useMemo(() => requirements.map((item) => ({
+    i: item.i,
+    numerator: item.inInventory + item.inTransit + (selectedItems[item.i] || 0),
+    denominator: item.totalRequired,
+    requirementMet: (item.inInventory + item.inTransit) >= item.totalRequired,
+    selected: selectedItems[item.i] || 0,
+    customIcon: item.inTransit > 0
+      ? {
+        animated: true,
+        icon: <SurfaceTransferIcon />
+      }
+      : undefined
+  })), [requirements, selectedItems]);
+
+  return (
+    <ResourceGridSection
+      isGathering
+      items={items}
+      selectedItems={selectedItems}
+      label={label}
+      onClick={onClick} />
+  );
+};
+
+export const DeconstructionMaterialsSection = ({ label, itemsReturned }) => {
+  const items = useMemo(() => {
+    return itemsReturned.map((item) => ({
+      i: item.i,
+      customIcon: { icon: <PlusIcon /> },
+      numerator: item.totalRequired
+    }));
+  }, [itemsReturned]);
+
+  return (
+    <ResourceGridSection
+      items={items}
+      label={label} />
+  );
+};
+
+export const ItemSelectionSection = ({ columns = 7, label, items, onClick, stage, unwrapped }) => {
+  const formattedItems = useMemo(() => {
+    return Object.keys(items || {}).map((resourceId) => ({
+      i: resourceId,
+      numerator: items[resourceId]
+    }));
+  }, [items]);
+
+  return unwrapped
+    ? (
+      <ResourceGridSectionInner
+        columns={columns}
+        items={formattedItems}
+        minCells={columns * 2}
+        noCellStyles={stage !== actionStage.NOT_STARTED}
+        onClick={onClick}
+        theming={stage === actionStage.READY_TO_COMPLETE ? 'success' : 'default'} />
+    )
+    : (
+      <ResourceGridSection
+        columns={columns}
+        items={formattedItems}
+        label={label}
+        minCells={columns * 2}
+        noCellStyles={stage !== actionStage.NOT_STARTED}
+        onClick={onClick}
+        theming={stage === actionStage.READY_TO_COMPLETE ? 'success' : 'default'} />
+    );
+};
+
+export const TransferDistanceDetails = ({ distance }) => (
+  <TransferDistanceTitleDetails>
+    {distance && distance < Asteroid.FREE_TRANSPORT_RADIUS ? (
+      <Mouseoverable tooltip={(
+        <FreeTransferNote>
+          <div>Instant Transfer Radius</div>
+          <div>Transfers less than {Asteroid.FREE_TRANSPORT_RADIUS}km in distance are instantaneous.</div>
+        </FreeTransferNote>
+      )}>
+        <label><WarningOutlineIcon /> {Math.round(distance)}km Away</label>
+      </Mouseoverable>
+    ) : ''}
+    {distance && distance >= Asteroid.FREE_TRANSPORT_RADIUS ? `${Math.round(distance)}km Away` : ''}
+  </TransferDistanceTitleDetails>
+);
+
+export const ProgressBarSection = ({
+  finishTime,
+  isCountDown,
+  overrides = {
+    barColor: null,
+    color: null,
+    left: '',
+    right: ''
+  },
+  stage,
+  startTime,
+  title,
+  tooltip,
+  totalTime
+}) => {
+  const chainTime = useChainTime();
+
+  const refEl = useRef();
+  const [hovered, setHovered] = useState();
+
+  const { animating, barWidth, color, left, reverseAnimation, right } = useMemo(() => {
+    const r = {
+      animating: false,
+      reverseAnimation: false,
+      barWidth: 0,
+      color: null,
+      left: '',
+      right: '',
+    }
+    if (stage === actionStage.NOT_STARTED) {
+      if (isCountDown) {
+        const isZero = chainTime > finishTime;
+        const progress = startTime && finishTime && chainTime
+          ? Math.max(0, 1 - (chainTime - startTime) / (finishTime - startTime))
+          : 1;
+        r.animating = !isZero;
+        r.reverseAnimation = true;
+        r.barWidth = progress;
+        r.left = `${formatFixed(100 * progress, 1)}%`;
+        r.right = isZero
+          ? <span style={{ color: theme.colors.error }}>ABANDONED</span>
+          : <><LiveTimer target={finishTime} maxPrecision={2} /> left</>;
+      }
+      r.color = '#AAA';
+      r.left = '0.0%';
+
+    } else if (stage === actionStage.STARTING) {
+      r.animating = true;
+      r.color = '#AAA';
+      r.left = '0.0%';
+
+    } else if (stage === actionStage.IN_PROGRESS) {
+      const progress = startTime && finishTime && chainTime
+        ? Math.min(1, (chainTime - startTime) / (finishTime - startTime))
+        : 0;
+      r.animating = true;
+      r.barWidth = progress;
+      r.color = '#FFF';
+      r.left = `${formatFixed(100 * progress, 1)}%`;
+      r.right = <LiveTimer target={finishTime} />
+
+    } else if (stage === actionStage.READY_TO_COMPLETE) {
+      r.barWidth = 1;
+      r.color = '#FFF';
+      r.left = '100%';
+
+    } else if (stage === actionStage.COMPLETING) {
+      r.animating = true;
+
+    } else if (stage === actionStage.COMPLETED) {
+      r.barWidth = 1;
+      r.color = '#FFF';
+    }
+    return r;
+  }, [chainTime, finishTime, stage, startTime]);
+
+  const totalTimeNote = useMemo(() => {
+    if (!totalTime) return '';
+    if ([actionStage.NOT_STARTED, actionStage.COMPLETING, actionStage.COMPLETED].includes(stage)) return '';
+    return `TOTAL: ${formatTimer(totalTime, 2)}`;
+  }, [stage, totalTime]);
+
+  return (
+    <Section>
+      <SectionTitle note={totalTimeNote}>{title}</SectionTitle>
+      {tooltip && (
+        <MouseoverInfoPane referenceEl={refEl.current} visible={hovered}>
+          <MouseoverContent>
+            {tooltip}
+          </MouseoverContent>
+        </MouseoverInfoPane>
+      )}
+      <ActionProgressWrapper>
+        <ActionProgressContainer
+          animating={animating}
+          color={overrides.barColor || theming[stage].highlight}
+          labelColor={overrides.color || color || undefined}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          ref={refEl}
+          reverseAnimation={reverseAnimation}>
+          <ActionProgress progress={barWidth || 0} />
+          <ActionProgressLabels>
+            <div>{overrides.left || left}</div>
+            <div>{overrides.right || right}</div>
+          </ActionProgressLabels>
+        </ActionProgressContainer>
+      </ActionProgressWrapper>
     </Section>
   );
 };
 
-export const BuildingPlanSection = ({ building, canceling, gracePeriodEnd, onBuildingSelected, status }) => {
-  const [clicked, setClicked] = useState(0);
-  const _onBuildingSelected = useCallback((id) => () => {
-    setClicked((x) => x + 1);
-    if (onBuildingSelected) onBuildingSelected(id);
-  }, []);
-
-  return (
-    <Section>
-      <SectionTitle><ChevronRightIcon /> Building Plan</SectionTitle>
-      <SectionBody highlight={status === 'AFTER'}>
-        {!building && (
-          <EmptyResourceWithData>
-            <EmptyBuildingImage iconOverride={<PlanBuildingIcon />} />
-            <label>
-              <div>Site Plan:</div>
-              <h3>Select</h3>
-            </label>
-          </EmptyResourceWithData>
-        )}
-        {building && (
-          <BuildingPlan>
-            <BuildingImage building={building} unfinished />
-            <label>
-              <h3>{building.name}</h3>
-              <b>Site Plan</b>
-            </label>
-          </BuildingPlan>
-        )}
-        {status === 'BEFORE' && (
-          <>
-            {canceling && (
-              <>
-                <span style={{ color: theme.colors.error, textAlign: 'right' }}>On-site materials<br/>will be abandoned</span>
-                <span style={{ color: theme.colors.error, fontSize: '175%', lineHeight: '1em', marginLeft: 8, marginRight: 8 }}><WarningOutlineIcon /></span>
-              </>
-            )}
-            {gracePeriodEnd && !canceling && (
-              <AbandonmentTimer>
-                <div>Abandonment Timer:</div>
-                <h3><LiveTimer target={gracePeriodEnd} /> <WarningOutlineIcon /></h3>
-              </AbandonmentTimer>
-            )}
-            {!gracePeriodEnd && !canceling && (
-              <Poppable label="Select" closeOnChange={clicked} title="Site Plan">
-                <BuildingPlanSelection onBuildingSelected={_onBuildingSelected} />
-              </Poppable>
-            )}
-          </>
-        )}
-        {status === 'AFTER' && (
-          <ReadyHighlight />
-        )}
-      </SectionBody>
-    </Section>
-  );
-}
-
-export const BuildingRequirementsSection = ({ isGathering, label, building, resources }) => {
-  const gatheringComplete = isGathering && !ingredients.find(([tally, i, hasTally]) => hasTally < tally);
-  return (
-    <Section>
-      <SectionTitle><ChevronRightIcon /> {label}</SectionTitle>
-      <SectionBody>
-        <FutureSectionOverlay />
-        <IngredientsList empty={!building}>
-          {building && (
-            <>
-              {ingredients.map(([tally, i, hasTally]) => (
-                <ResourceRequirement
-                  key={i}
-                  isGathering={isGathering}
-                  hasTally={hasTally}
-                  needsTally={tally}
-                  resource={resources[i]} />
-              ))}
-              {!gatheringComplete && (
-                <MouseoverIcon
-                  icon={(<WarningOutlineIcon />)}
-                  iconStyle={{ alignSelf: 'center', fontSize: '150%', marginLeft: 5 }}
-                  themeColor={isGathering ? theme.colors.yellow : theme.colors.main}>
-                  After placing a site, the required construction materials must be transfered to the location before construction can begin.
-                </MouseoverIcon>
-              )}
-            </>
-          )}
-          {!building && [0,1,2].map((i) => (
-            <EmptyResourceImage key={i} iconOverride={<ConstructIcon />} />
-          ))}
-        </IngredientsList>
-      </SectionBody>
-    </Section>
-  );
-};
-
-export const DeconstructionMaterialsSection = ({ label, resources, status }) => {
-  return (
-    <Section>
-      <SectionTitle><ChevronRightIcon /> {label}</SectionTitle>
-      <SectionBody highlight={status === 'AFTER'}>
-        <FutureSectionOverlay />
-        <IngredientsList>
-          {ingredients.map(([tally, i, hasTally]) => (
-            <ResourceImage key={i}
-              badge={`+${tally}`}
-              badgeColor={theme.colors.main}
-              outlineColor={borderColor}
-              resource={resources[i]} />
-          ))}
-        </IngredientsList>
-        {status === 'AFTER' && <><Spacer /><CompletedHighlight /></>}
-      </SectionBody>
-    </Section>
-  );
-};
-
-export const ExtractionAmountSection = ({ amount, extractionTime, min, max, resource, setAmount }) => {
+export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resource, setAmount }) => {
   const tonnage = useMemo(() => amount * resource?.massPerUnit || 0, [amount, resource]);
   const tonnageValue = useMemo(() => Math.round(1e3 * tonnage) / 1e3, [tonnage]);
 
@@ -1830,108 +2618,615 @@ export const ExtractionAmountSection = ({ amount, extractionTime, min, max, reso
     setAmount(quanta);
   };
   return (
-    <Section>
-      <SectionTitle><ChevronRightIcon /> Extraction Amount</SectionTitle>
-      <SectionBody>
-        <SliderWrapper>
-          <SliderInfoRow>
-            <SliderLabel onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent}>
-              {(mouseIn || focusOn) ? (
-                <SliderTextInput
-                  type="number"
-                  step={0.1}
-                  value={tonnageValue}
-                  onChange={onChangeInput}
-                  onBlur={onFocusEvent}
-                  onFocus={onFocusEvent} />
-                )
-                : (
-                  <b>{formatSampleMass(tonnage)}</b>
-                )
-              }
-              {' '}
-              tonnes
-            </SliderLabel>
-            <ButtonRounded disabled={amount === max} onClick={() => setAmount(max)}>Max</ButtonRounded>
-          </SliderInfoRow>
-          <SliderInput
-            min={min}
-            max={max}
-            increment={resource ? (0.1 / resource?.massPerUnit) : 1}
-            onChange={setAmount}
-            value={amount || 0} />
-          <SliderInfoRow style={{ marginTop: -5 }}>
-            <div>{resource ? formatResourceVolume(amount, resource?.i, { fixedPrecision: 1 }) : `0 L`}</div>
-            <div>{formatTimer(extractionTime)}</div>
-          </SliderInfoRow>
-        </SliderWrapper>
-      </SectionBody>
-    </Section>
+    <SliderWrapper>
+      <SliderInfoRow>
+        <SliderLabel onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent}>
+          {(mouseIn || focusOn) ? (
+            <SliderTextInput
+              type="number"
+              step={0.1}
+              value={tonnageValue}
+              onChange={onChangeInput}
+              onBlur={onFocusEvent}
+              onFocus={onFocusEvent} />
+            )
+            : (
+              <b>{formatSampleMass(tonnage)}</b>
+            )
+          }
+          {' '}
+          tonnes
+        </SliderLabel>
+        <SliderInfo>{formatTimer(extractionTime, 3)}</SliderInfo>
+        <Button
+          disabled={amount === max}
+          onClick={() => setAmount(max)}
+          size="small"
+          style={{ padding: 0, minWidth: 75 }}>Max</Button>
+      </SliderInfoRow>
+      <SliderInput
+        min={min}
+        max={max}
+        increment={resource ? (0.1 / resource?.massPerUnit) : 1}
+        onChange={setAmount}
+        value={amount || 0} />
+    </SliderWrapper>
+  );
+};
+
+export const RecipeSlider = ({ amount, processingTime, min, max, setAmount }) => {
+  const [focusOn, setFocusOn] = useState();
+  const [mouseIn, setMouseIn] = useState(false);
+
+  const onFocusEvent = useCallback((e) => {
+    if (e.type === 'focus') {
+      setFocusOn(true);
+      e.target.select();
+    } else {
+      setFocusOn(false);
+    }
+  }, []);
+
+  const onMouseEvent = useCallback((e) => {
+    setMouseIn(e.type === 'mouseenter')
+  }, []);
+
+  const onChangeInput = (e) => {
+    let currentValue = Math.round(1000 * e.currentTarget.value) / 1000;
+    if (currentValue > max) currentValue = max;
+    if (currentValue < min) currentValue = min;
+    setAmount(currentValue);
+  };
+
+  const onRound = () => {
+    let newValue = Math.round(amount);
+    if (newValue > max) newValue = Math.floor(amount);
+    if (newValue < min) newValue = Math.ceil(amount);
+    setAmount(newValue);
+  };
+
+  return (
+    <SliderWrapper>
+      <SliderInput
+        min={min}
+        max={max}
+        increment={0.001}
+        onChange={setAmount}
+        value={amount || 0} />
+      <SliderInfoRow style={{ alignItems: 'center' }}>
+        <SliderInfo style={{ flex: 1 }}>{formatTimer(processingTime, 3)}</SliderInfo>
+        <SliderLabel onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent} style={{ flex: 'none', fontSize: '10px', lineHeight: '29px' }}>
+          {(mouseIn || focusOn) ? (
+            <SliderTextInput
+              type="number"
+              step={0.001}
+              value={amount}
+              onChange={onChangeInput}
+              onBlur={onFocusEvent}
+              onFocus={onFocusEvent}
+              style={{ marginTop: -2 }} />
+            )
+            : (
+              <b>{amount.toLocaleString(undefined, { minimumFractionDigits: 3 })}</b>
+            )
+          }
+          {' '}
+          <span style={{ fontSize: 14 }}>SRs</span>
+        </SliderLabel>
+        <Button
+          disabled={amount === Math.round(amount)}
+          onClick={onRound}
+          size="small"
+          style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Round</Button>
+        <Button
+          disabled={amount === max}
+          onClick={() => setAmount(max)}
+          size="small"
+          style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Max</Button>
+      </SliderInfoRow>
+    </SliderWrapper>
+  );
+};
+
+export const ProcessInputOutputSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, ...props }) => {
+  return (
+    <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
+      <ProductWrapper>
+        {products.map(({ resourceId, recipe, amount }) => (
+          <ProductSelector
+            key={resourceId}
+            input={input}
+            output={output}
+            primary={primaryOutput === resourceId}
+            onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
+            <ResourceThumbnail
+              resource={Product.TYPES[resourceId]}
+              backgroundColor={output ? `rgba(${hexToRGB(theme.colors.green)}, 0.15)` : undefined}
+              badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
+              badgeColor={output ? theme.colors.green : theme.colors.main}
+              progress={0.5}
+              iconBadge={<RecipeLabel>{recipe}</RecipeLabel>}
+              tooltipContainer="actionDialog"
+            />
+            {output && (
+              <label>
+                {primaryOutput === resourceId
+                  ? (
+                    <>
+                      <CheckIcon /> Primary
+                      <ClipCorner dimension={10} color={theme.colors.main} />
+                    </>
+                  )
+                  : `-50%`
+                }
+              </label>
+            )}
+          </ProductSelector>
+        ))}
+      </ProductWrapper>
+    </FlexSectionBlock>
+  );
+};
+
+export const ProcessInputSquareSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, ...props }) => {
+  return (
+    <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
+      <ProductGridWrapper>
+        {products.map(({ resourceId, recipe, amount }) => (
+          <ProductSelector
+            key={resourceId}
+            input={input}
+            output={output}
+            primary={primaryOutput === resourceId}
+            onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
+            <ResourceThumbnail
+              resource={Product.TYPES[resourceId]}
+              backgroundColor={output ? `rgba(${hexToRGB(theme.colors.green)}, 0.15)` : undefined}
+              badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
+              badgeColor={output ? theme.colors.green : theme.colors.main}
+              progress={0.5}
+              iconBadge={<RecipeLabel>{recipe}</RecipeLabel>}
+              size="87px"
+              tooltipContainer="actionDialog"
+            />
+            {output && <label>{primaryOutput === resourceId ? <><CheckIcon /> Primary</> : `-50%`}</label>}
+          </ProductSelector>
+        ))}
+      </ProductGridWrapper>
+    </FlexSectionBlock>
+  );
+};
+
+export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, selected, onSelect, warning }) => {
+  return (
+    <FlexSectionBlock title={`${objectLabel} Type`} bodyStyle={{ padding: 0 }}>
+      <>
+        {(onSelect || selected === 'propulsive') && (
+          <PropulsionTypeOption
+            onClick={onSelect ? onSelect('propulsive') : undefined}
+            selected={selected === 'propulsive'}>
+            {onSelect && (selected === 'propulsive' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
+            <div style={{ flex: 1 }}>
+              <label>Propulsive:</label> Thruster {objectLabel}
+            </div>
+            <div>{formatTimer(propulsiveTime || 0, 2)}</div>
+          </PropulsionTypeOption>
+        )}
+        {(onSelect || selected === 'tug') && (
+          <PropulsionTypeOption
+            onClick={onSelect ? onSelect('tug') : undefined}
+            selected={selected === 'tug'}>
+            {onSelect && (selected === 'tug' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
+            <div style={{ flex: 1 }}>
+              <label>Tug:</label> Hopper-Assisted {objectLabel}
+            </div>
+            <div>{formatTimer(tugTime || 0, 2)}</div>
+          </PropulsionTypeOption>
+        )}
+        {warning && (
+          <TugWarning>
+            <WarningOutlineIcon />
+            <span>{warning}</span>
+          </TugWarning>
+        )}
+      </>
+    </FlexSectionBlock>
   );
 }
 
-export const ActionDialogLoader = () => {
+export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired, propellantLoaded, propellantRequired }) => {
+  const [deltaVMode, setDeltaVMode] = useState(false);
+  // useEffect(() => ReactTooltip.rebuild(), []);
+
+  const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : 1;
+  const deltaVUse = deltaVLoaded > 0 ? deltaVRequired / deltaVLoaded : 1;
+
   return (
-    <PuffLoader />
+    <FlexSectionBlock
+      title={title}
+      titleDetails={(
+        <SectionTitleRightTabs>
+          <SectionTitleTab
+            data-for="actionDialog"
+            data-tip="Propellant Usage"
+            data-place="left"
+            onClick={() => setDeltaVMode(false)}
+            isSelected={!deltaVMode}><GasIcon /></SectionTitleTab>
+          <SectionTitleTab
+            data-for="actionDialog"
+            data-tip="Delta-V Usage"
+            data-place="left"
+            onClick={() => setDeltaVMode(true)}
+            isSelected={!!deltaVMode}><DeltaVIcon /></SectionTitleTab>
+        </SectionTitleRightTabs>
+      )}
+      bodyStyle={{ padding: '1px 0' }}
+      style={narrow ? {} : { width: '100%' }}>
+        {narrow && (
+          <BarChartNotes color={deltaVMode ? '#aaaaaa' : theme.colors.main}>
+            <div>
+              <b>Required: </b>
+              {propellantRequired
+                ? (deltaVMode ? formatVelocity(deltaVRequired) : formatMass(propellantRequired * 1e3))
+                : 'NONE'
+              }
+            </div>
+            <div />
+            <div>
+              <b>Loaded:</b> {deltaVMode ? formatVelocity(deltaVLoaded) : formatMass(propellantLoaded * 1e3)}
+              {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax * 1e3)} max</small> */}
+            </div>
+          </BarChartNotes>
+        )}
+        {deltaVMode
+          ? <BarChart
+              color="#cccccc"
+              value={deltaVUse} />
+          : <BarChart
+              color={theme.colors.orange}
+              bgColor={theme.colors.main}
+              value={propellantUse} />
+        }
+        {!(narrow && !propellantRequired) && (
+          <BarChartNotes color={deltaVMode ? '#aaaaaa' : theme.colors.main}>
+            {!narrow && (
+              <div>
+                <b>Required: </b>
+                {propellantRequired
+                  ? (deltaVMode ? formatVelocity(deltaVRequired) : formatMass(propellantRequired * 1e3))
+                  : 'NONE'
+                }
+              </div>
+            )}
+            <div style={{ color: deltaVMode ? '#ccc' : theme.colors.orange, ...(narrow ? { textAlign: 'center', width: '100%'} : {}) }}>
+              {formatFixed(100 * (deltaVMode ? deltaVUse : propellantUse))}% of Loaded
+            </div>
+            {!narrow && (
+              <div>
+                <b>Loaded:</b> {deltaVMode ? formatVelocity(deltaVLoaded) : formatMass(propellantLoaded * 1e3)}
+                {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax * 1e3)} max</small>*/}
+              </div>
+            )}
+          </BarChartNotes>
+        )}
+    </FlexSectionBlock>
   );
 };
 
-export const ActionDialogHeader = ({ action, asteroid, captain, onClose, plot, status, startTime, targetTime }) => {
-  const buildings = useBuildingAssets();
-  const chainTime = useChainTime();
+export const EmergencyPropellantSection = ({ title, propellantPregeneration, propellantPostgeneration, propellantTankMax }) => {
+  // useEffect(() => ReactTooltip.rebuild(), []);
 
-  const progress = useMemo(() => {
-    return startTime && targetTime ? Math.min(100, 100 * (chainTime - startTime) / (targetTime - startTime)) : 0;
-  }, [chainTime, startTime, targetTime]);
+  const propellantPre = propellantPregeneration / propellantTankMax;
+  const propellantPost = propellantPostgeneration / propellantTankMax;
+
+  return (
+    <FlexSectionBlock
+      title={title}
+      bodyStyle={{ padding: '1px 0' }}
+      style={{ width: '100%' }}>
+        <BarChart
+          color={theme.colors.main}
+          bgColor={theme.colors.main}
+          value={propellantPre}
+          postValue={propellantPost}>
+          <BarChartLimitLine position={0.1} />
+        </BarChart>
+        <BarChartNotes color={theme.colors.main}>
+          <div>
+            <span style={{ color: theme.colors.red }}>Emergency Limit: </span>
+            <b>{formatMass(0.1 * propellantTankMax * 1e3)}</b>
+          </div>
+          <div style={{ color: propellantPost > 0.1 ? theme.colors.error : theme.colors.main }}>
+            {propellantPost > 0.1 && <span style={{ verticalAlign: 'middle', fontSize: 20, lineHeight: '1em' }}><CloseIcon /></span>}
+            {formatFixed(100 * propellantPost / 0.1)}% of Limit
+          </div>
+          <div>
+            After Generation: <b>{formatMass(propellantPostgeneration * 1e3)}</b>
+          </div>
+        </BarChartNotes>
+    </FlexSectionBlock>
+  );
+};
+
+export const SwayInputBlockInner = ({ instruction }) => {
+  return (
+    <>
+      {instruction && <SwayInputInstruction>{instruction}</SwayInputInstruction>}
+      <SwayInput />
+    </>
+  )
+};
+
+export const SwayInputBlock = ({ title, ...props }) => (
+  <FlexSectionInputBlock
+    title={title}
+    bodyStyle={{ background: 'transparent' }}>
+    <SwayInputBlockInner {...props} />
+  </FlexSectionInputBlock>
+);
+
+export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, title, inlineDetails, ...props }) => (
+  <FlexSectionInputBlock
+    title={title}
+    titleDetails={inlineDetails ? null : (
+      <div>
+        <CrewIcon />
+        <span style={{ fontSize: '85%', marginLeft: 4 }}>
+          {formatters.crewName(crew)}
+        </span>
+      </div>
+    )}
+    bodyStyle={{ paddingRight: 8, ...(hideCrewmates ? { paddingBottom: 0 } : {}) }}
+    innerBodyStyle={{ height: 'auto' }}
+    {...props}>
+    <div>
+      {inlineDetails && (
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+          <div>
+            <CrewIcon />
+            <span style={{ marginLeft: 4 }}>
+              {formatters.crewName(crew)}
+            </span>
+          </div>
+          <div style={{ flex: 1 }} />
+          <FoodStatus percentage={100} />
+        </div>
+      )}
+      {!hideCrewmates && (
+        <CrewCards>
+          {Array.from({ length: 5 }).map((_, i) =>
+            crew._crewmates[i]
+              ? (
+                <CrewCardFramed
+                  key={i}
+                  borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
+                  crewmate={crew._crewmates[i]}
+                  isCaptain={i === 0}
+                  lessPadding
+                  noArrow={i > 0}
+                  width={cardWidth || 60} />
+              )
+              : <CrewCardPlaceholder key={i} width={cardWidth || 60} />
+          )}
+        </CrewCards>
+      )}
+    </div>
+  </FlexSectionInputBlock>
+);
+
+export const CrewOwnerBlock = ({ title, ...innerProps }) => {
+  return (
+    <FlexSectionInputBlock
+      title={title}
+      bodyStyle={{ background: 'transparent' }}>
+      <CrewIndicator {...innerProps} />
+    </FlexSectionInputBlock>
+  );
+};
+
+export const LotInputBlock = ({ lot, fallbackLabel = 'Select', fallbackSublabel = 'Lot', imageProps = {}, ...props }) => {
+  const buildingType = lot?.building?.Building?.buildingType || 0;
+  return (
+    <FlexSectionInputBlock
+      image={
+        lot
+          ? <BuildingImage buildingType={buildingType} {...imageProps} />
+          : <EmptyBuildingImage {...imageProps} />
+      }
+      label={lot ? `${lot.building?.Name?.name || Building.TYPES[buildingType].name}` : fallbackLabel}
+      sublabel={lot ? `${lot.building?.Name?.name ? Building.TYPES[buildingType].name : `Lot #${lot.i.toLocaleString()}`}` : fallbackSublabel}
+      {...props}
+    />
+  );
+};
+
+export const BuildingInputBlock = ({ building, imageProps = {}, ...props }) => {
+  const buildingType = building?.Building?.buildingType || 0;
+  return (
+    <FlexSectionInputBlock
+      image={
+        buildingType
+          ? <BuildingImage buildingType={buildingType} {...imageProps} />
+          : <EmptyBuildingImage {...imageProps} />
+      }
+      label={building?.Name?.name || Building.TYPES[buildingType].name}
+      sublabel={building?.Name?.name ? Building.TYPES[buildingType].name : `Lot #${(Entity.toPosition(building.Location?.location)?.lotId || 0).toLocaleString()}`}
+      {...props}
+    />
+  );
+};
+
+export const ShipInputBlock = ({ ship, ...props }) => {
+  const { crew } = useCrewContext();
+  const hasMyCrew = crew && crew._location?.shipId === ship?.id;
+  const isMine = crew && crew.i === ship?.Control?.controller?.id;
+  const inEmergencyMode = ship?.Ship?.operationMode === Ship.MODES.EMERGENCY;
+  return (
+    <FlexSectionInputBlock
+      image={(
+        <ShipImage
+          iconBadge={isMine ? <MyAssetIcon /> : null}
+          iconOverlay={inEmergencyMode ? <EmergencyModeEnterIcon /> : null}
+          iconOverlayColor={theme.colors.orange}
+          shipType={ship?.shipType} />
+      )}
+      label={formatters.shipName(ship)}
+      sublabel={(
+        <>
+          <div>{Ship.TYPES[ship?.shipType]?.name}</div>
+          <ShipStatus ship={ship}>{hasMyCrew && <CaptainIcon />}</ShipStatus>
+        </>
+      )}
+      bodyStyle={inEmergencyMode ? { backgroundColor: `rgba(${hexToRGB(theme.colors.orange)}, 0.2)` } : {}}
+      {...props}
+    />
+  );
+};
+
+export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings = [] }) => {
+  const shipConfig = Ship.TYPES[ship?.shipType] || {};
+
+  // TODO: if want to include "reserved", it would probably make sense to use getCapacityUsage helper instead
+  const inventory = useMemo(() => {
+    if (!ship) return {};
+    const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
+    const cargoInventory = ship.Inventories.find((i) => i.slot === shipConfig.cargoSlot);
+    return {
+      propellantMass: propellantInventory?.mass || 0,
+      maxPropellantMass: Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint || 0,
+      propellantVolume: propellantInventory?.volume || 0,
+      maxPropellantVolume: Inventory.TYPES[propellantInventory?.inventoryType]?.volumeConstraint || 0,
+      cargoMass: cargoInventory?.mass || 0,
+      maxCargoMass: Inventory.TYPES[cargoInventory?.inventoryType]?.massConstraint || 0,
+      cargoVolume: cargoInventory?.volume || 0,
+      maxCargoVolume: Inventory.TYPES[cargoInventory?.inventoryType]?.volumeConstraint || 0,
+    };
+  }, [shipConfig, ship?.Inventories]);
 
   return (
     <>
-      {status === 'DURING' && (
-        <LoadingBar progress={progress}>{action.label}: {(progress || 0).toFixed(1)}%</LoadingBar>
-      )}
-      {status === 'AFTER' && (
-        <LoadingBar progress={progress}>{action.completeLabel || action.label} Ready</LoadingBar>
-      )}
-      <CloseButton backgroundColor={status !== 'BEFORE' && 'black'} onClick={onClose} borderless>
-        <CloseIcon />
-      </CloseButton>
-      <Header backgroundSrc={action.headerBackground}>
-        <HeaderSectionBody>
-          <HeaderInfo padTop={status !== 'BEFORE'}>
-            <Title>
-              {status !== 'DURING' && <>{action.actionIcon} {action.label.toUpperCase()}</>}
-              {status === 'DURING' && <><RingLoader color={theme.colors.main} size="1em" /> <span style={{ marginLeft: 40 }}><LiveTimer target={targetTime} /></span></>}
-            </Title>
-            <Subtitle>
-              {asteroid.customName ? `'${asteroid.customName}'` : asteroid.baseName}
-              {' > '}
-              <b>
-                Lot {(plot.i || '').toLocaleString()}{' '}
-                (
-                  {buildings[plot.building?.capableType]?.name || 'Empty Lot'}
-                  {plot.building?.construction?.status === Construction.STATUS_PLANNED && ' - Planned'}
-                  {plot.building?.construction?.status === Construction.STATUS_UNDER_CONSTRUCTION && ' - Under Construction'}
-                )
-              </b>
-            </Subtitle>
-            {captain && action.crewRequirement && status === 'BEFORE' && (
-              <CrewInfo requirement={action.crewRequirement} status={status}>
-                <CrewRequirement />
-                <CardContainer>
-                  <CrewCard
-                    crew={captain}
-                    hideHeader
-                    hideFooter
-                    hideMask />
-                </CardContainer>
-              </CrewInfo>
-            )}
-          </HeaderInfo>
-        </HeaderSectionBody>
-      </Header>
+      <FlexSection>
+        <ShipInputBlock
+          title="Ship"
+          disabled={stage !== actionStage.NOT_STARTED}
+          ship={ship} />
+
+        <FlexSectionSpacer />
+
+        <CrewInputBlock
+          title="Flight Crew"
+          crew={pilotCrew} />
+      </FlexSection>
+
+      <FlexSection>
+        <div style={{ width: '50%'}}>
+          <MiniBarChartSection>
+            <MiniBarChart
+              color="#8cc63f"
+              label="Propellant Mass"
+              valueLabel={`${formatFixed(inventory.propellantMass / 1e3)} / ${formatFixed(inventory.maxPropellantMass / 1e3)}t`}
+              value={0.5}
+              {...(/* TODO: would probably be more performant to do this in a memo hook */
+                previousStats.propellantMass
+                  ? {
+                    deltaValue: previousStats.propellantMass / inventory.maxPropellantMass
+                  }
+                  : {}
+              )}
+            />
+            <MiniBarChart
+              color="#557826"
+              label="Propellant Volume"
+              valueLabel={`${formatFixed(inventory.propellantVolume / 1e3)} / ${formatFixed(inventory.maxPropellantVolume / 1e3)}m³`}
+              value={0.7}
+            />
+            <MiniBarChart
+              label="Cargo Mass"
+              valueLabel={`${formatFixed(inventory.cargoMass / 1e3)} / ${formatFixed(inventory.maxCargoMass / 1e3)}t`}
+              value={0.8}
+            />
+            <MiniBarChart
+              color="#1f5f75"
+              label="Cargo Volume"
+              valueLabel={`${formatFixed(inventory.cargoVolume / 1e3)} / ${formatFixed(inventory.maxCargoVolume / 1e3)}m³`}
+              value={0.3}
+            />
+            <MiniBarChart
+              color="#92278f"
+              label="Passengers"
+              valueLabel={`${pilotCrew.Crew.roster.length} / 5`}
+              value={pilotCrew.Crew.roster.length / 5}
+            />
+          </MiniBarChartSection>
+        </div>
+
+        <FlexSectionSpacer />
+
+        {warnings?.length > 0 && (
+          <div style={{ alignSelf: 'flex-start', width: '50%' }}>
+            {warnings.map(({ icon, text }) => (
+              <WarningAlert>
+                <div>{icon}</div>
+                <div>{text}</div>
+              </WarningAlert>
+            ))}
+          </div>
+        )}
+      </FlexSection>
     </>
   );
 };
+
+export const InventoryChangeCharts = ({ building, inventoryType, deltaMass, deltaVolume }) => {
+  if (!(building && building.inventories && inventoryType !== undefined)) return null;
+
+  const capacity = getCapacityUsage(building?.inventories, inventoryType);
+  const postDeltaMass = capacity.mass.used + capacity.mass.reserved + deltaMass;
+  const postDeltaVolume = capacity.volume.used + capacity.volume.reserved + deltaVolume;
+  const overMassCapacity = postDeltaMass > capacity.mass.max;
+  const overVolumeCapacity = postDeltaVolume > capacity.volume.max;
+  const massColor = overMassCapacity ? theme.colors.error : theme.colors.main;
+  const volumeColor = overVolumeCapacity ? theme.colors.error : theme.colors.main;
+  return (
+    <>
+      <div style={{ paddingBottom: 15 }}>
+        <MiniBarChart
+          color={massColor}
+          label="Mass Capacity"
+          valueStyle={{ color: massColor, fontWeight: 'bold' }}
+          valueLabel={`${formatFixed(100 * postDeltaMass / capacity.mass.max, 1)}%`}
+          value={postDeltaMass / capacity.mass.max}
+          deltaColor={overMassCapacity ? theme.colors.error : theme.colors.brightMain}
+          deltaValue={deltaMass * 1e6 / capacity.mass.max}
+          underLabels={(
+            <>
+              <span style={{ color: massColor, opacity: deltaMass < 0 ? 0.6 : 1 }}>{deltaMass < 0 ? '-' : '+'}{formatMass(Math.abs(deltaMass))}</span>
+              <span style={{ color: overMassCapacity ? theme.colors.error : 'white' }}>{formatMass(capacity.mass.max)}</span>
+            </>
+          )}
+        />
+      </div>
+
+      <div style={{ paddingBottom: 5 }}>
+        <MiniBarChart
+          color={volumeColor}
+          label="Volume Capacity"
+          valueStyle={{ color: volumeColor, fontWeight: 'bold' }}
+          valueLabel={`${formatFixed(100 * postDeltaVolume / capacity.volume.max, 1)}%`}
+          value={postDeltaVolume / capacity.volume.max}
+          deltaColor={overVolumeCapacity ? theme.colors.error : theme.colors.brightMain}
+          deltaValue={deltaVolume * 1e6 / capacity.volume.max}
+          underLabels={(
+            <>
+              <span style={{ color: volumeColor, opacity: deltaVolume < 0 ? 0.6 : 1 }}>{deltaVolume < 0 ? '-' : '+'}{formatVolume(Math.abs(deltaVolume * 1e6))}</span>
+              <span style={{ color: overVolumeCapacity ? theme.colors.error : 'white' }}>{formatVolume(capacity.volume.max)}</span>
+            </>
+          )}
+        />
+      </div>
+    </>
+  );
+}
 
 const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip, warning }}) => {
   const refEl = useRef();
@@ -1940,7 +3235,7 @@ const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip
     <StatRow
       key={label}
       direction={direction}
-      isTimeStat={isTimeStat || undefined}
+      isTimeStat={boolAttr(isTimeStat)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       ref={refEl}>
@@ -1964,50 +3259,37 @@ const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip
   );
 };
 
-export const ActionDialogStats = ({ stats, status }) => (
-  <>
-    {stats?.length > 0 && (
-      <StatSection status={status}>
-        <SectionBody>
-          {[0,1].map((statGroup) => (
-            <div key={statGroup}>
-              {(statGroup === 0
-                ? stats.slice(0, Math.ceil(stats.length / 2))
-                : stats.slice(Math.ceil(stats.length / 2))
-              ).map((stat) => <ActionDialogStat key={stat.label} stat={stat} />)}
-            </div>
-          ))}
-        </SectionBody>
-      </StatSection>
-    )}
-  </>
-);
+export const ActionDialogStats = ({ stage, stats, wide }) => {
+  const [open, setOpen] = useState();
 
+  useEffect(() => {
+    setOpen(stage === actionStage.NOT_STARTED);
+  }, [stage]);
 
-export const ActionDialogTimers = ({ actionReadyIn, crewAvailableIn }) => (
-  <StatSection status="BEFORE">
-    <SectionBody>
-      <TimerRow>
-        <div>
-          <label>Crew Available In:</label>
-          <h6>
-            <CrewIcon />
-            <span>{crewAvailableIn > 0 ? formatTimer(crewAvailableIn) : 'Immediately'}</span>
-          </h6>
-        </div>
-        <div>
-          <label>Action Ready In:</label>
-          <h6>
-            <TimerIcon />
-            <span>{actionReadyIn > 0 ? formatTimer(actionReadyIn) : 'Immediately'}</span>
-          </h6>
-        </div>
-      </TimerRow>
-    </SectionBody>
-  </StatSection>
-);
+  if (!stats?.length) return null;
+  return (
+    <StatSection actionStage={stage} wide={wide}>
+      <SectionTitle
+        isDetailsHeader
+        isOpen={open}
+        onClick={() => setOpen((o) => !o)}>
+        <ChevronRightIcon /> Details
+      </SectionTitle>
+      <SectionBody collapsible isOpen={open}>
+        {[0,1].map((statGroup) => (
+          <div key={statGroup}>
+            {(statGroup === 0
+              ? stats.slice(0, Math.ceil(stats.length / 2))
+              : stats.slice(Math.ceil(stats.length / 2))
+            ).map((stat) => <ActionDialogStat key={stat.label} stat={stat} />)}
+          </div>
+        ))}
+      </SectionBody>
+    </StatSection>
+  );
+};
 
-export const ActionDialogFooter = ({ buttonsLoading, buttonsOverride, goDisabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, status }) => {
+export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, stage, wide }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // TODO: connect notifications to top-level state
@@ -2020,47 +3302,66 @@ export const ActionDialogFooter = ({ buttonsLoading, buttonsOverride, goDisabled
   }, []);
 
   return (
-    <Footer>
+    <Footer wide={wide}>
       <SectionBody>
-        {buttonsOverride
-          ? buttonsOverride.map(({ label, onClick }) => (
-            <Button key={label} loading={buttonsLoading} onClick={onClick}>{label}</Button>
-          ))
-          : (
-            <>
-              {status === 'BEFORE' && (
-                  <>
-                    {/* TODO: ...
-                    <NotificationEnabler onClick={enableNotifications}>
-                      {notificationsEnabled ? <CheckedIcon /> : <UncheckedIcon />}
-                      Notify on Completion
-                    </NotificationEnabler>
-                    */}
-                    <Spacer />
-                    <Button loading={buttonsLoading} onClick={onClose}>Cancel</Button>
-                    <Button
-                      disabled={goDisabled}
-                      loading={buttonsLoading}
-                      isTransaction
-                      onClick={onGo}>{goLabel}</Button>
-                  </>
-                )}
-              {status === 'DURING' && (
-                <Button loading={buttonsLoading} onClick={onClose}>{'Close'}</Button>
-              )}
-              {status === 'AFTER' && (
-                <Button
-                  isTransaction
-                  loading={buttonsLoading}
-                  onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
-              )}
-            </>
-          )}
+        {/* TODO: ...
+          <NotificationEnabler onClick={enableNotifications}>
+            {notificationsEnabled ? <CheckedIcon /> : <UncheckedIcon />}
+            Notify on Completion
+          </NotificationEnabler>
+        */}
+        <Spacer />
 
+        {stage === actionStage.NOT_STARTED
+          ? (
+            <>
+              <Button
+                loading={boolAttr(buttonsLoading)}
+                onClick={onClose}>Cancel</Button>
+              <Button
+                isTransaction
+                disabled={boolAttr(disabled)}
+                loading={boolAttr(buttonsLoading)}
+                onClick={onGo}>{goLabel}</Button>
+            </>
+          )
+          : (
+              stage === actionStage.READY_TO_COMPLETE
+              ? (
+                <>
+                  <Button
+                    loading={boolAttr(buttonsLoading)}
+                    onClick={onClose}>Close</Button>
+                  <Button
+                    isTransaction
+                    disabled={boolAttr(disabled)}
+                    loading={boolAttr(buttonsLoading)}
+                    onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
+                </>
+              )
+              : (
+                <Button
+                  loading={boolAttr(buttonsLoading)}
+                  onClick={onClose}>Close</Button>
+              )
+          )}
       </SectionBody>
     </Footer>
   );
 };
+
+export const ActionDialogTabs = ({ tabs, selected, onSelect }) => (
+  <Section>
+    <Tabs>
+      {tabs.map((tab, i) => (
+        <Tab key={i} onClick={() => onSelect(i)} isSelected={boolAttr(i === selected)}>
+          {tab.icon && <TabIcon style={tab.iconStyle || {}}>{tab.icon}</TabIcon>}
+          <div>{tab.label}</div>
+        </Tab>
+      ))}
+    </Tabs>
+  </Section>
+);
 
 //
 // bonus tooltips
@@ -2137,7 +3438,7 @@ const BonusesFootnote = styled.div`
   margin-top: -5px;
 `;
 
-const BonusTooltip = ({ bonus, crewRequired, details, hideFooter, title, titleValue, isTimeStat }) => {
+export const BonusTooltip = ({ bonus, crewRequired, details, title, titleValue, isTimeStat }) => {
   const { titles, traits, others, totalBonus } = bonus;
   const timeMult = isTimeStat ? -1 : 1;
   const titleDirection = getBonusDirection({ totalBonus });
@@ -2288,10 +3589,10 @@ export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps
   let totalDistance = 0;
   let totalTime = 0;
 
-  const tripDetails = steps.map(({ label, plot, skipTo }) => {
-    const stepDistance = Asteroid.getLotDistance(asteroidId, currentLocation, plot) || 0;
-    const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLocation, plot, crewTravelBonus) || 0;
-    currentLocation = skipTo || plot;
+  const tripDetails = steps.map(({ label, lot, skipTo }) => {
+    const stepDistance = Asteroid.getLotDistance(asteroidId, currentLocation, lot) || 0;
+    const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLocation, lot, crewTravelBonus) || 0;
+    currentLocation = skipTo || lot;
 
     // agg
     totalDistance += stepDistance;
@@ -2308,9 +3609,7 @@ export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps
 };
 
 export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
-  const { massPerUnit } = Inventory.RESOURCES[resourceId];
-
-  if (massPerUnit === 0.001) {
+  if (!Product.TYPES[resourceId].isAtomic) {
     return formatResourceMass(units, resourceId, { abbrev, minPrecision, fixedPrecision });
   }
   // granular units
@@ -2320,7 +3619,7 @@ export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrec
 export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   return formatMass(
     resourceId
-      ? units * Inventory.RESOURCES[resourceId].massPerUnit * 1e6
+      ? units * Product.TYPES[resourceId].massPerUnit
       : 0,
     { abbrev, minPrecision, fixedPrecision }
   );
@@ -2329,7 +3628,12 @@ export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecis
 export const formatMass = (grams, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   let unitLabel;
   let scale;
-  if (grams >= 1e12) {
+  if (grams >= 1e18) {
+    return `${(grams / 1e3).toExponential((fixedPrecision || minPrecision || 1) - 1)} ${abbrev ? 'kg' : 'kilograms'}`;
+  } else if (grams >= 1e15) {
+    scale = 1e15;
+    unitLabel = abbrev ? 'Gt' : 'gigatonnes';
+  } else if (grams >= 1e12) {
     scale = 1e12;
     unitLabel = abbrev ? 'Mt' : 'megatonnes';
   } else if (grams >= 1e9) {
@@ -2362,7 +3666,7 @@ export const formatMass = (grams, { abbrev = true, minPrecision = 3, fixedPrecis
 export const formatResourceVolume = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   return formatVolume(
     resourceId
-      ? units * Inventory.RESOURCES[resourceId].volumePerUnit * 1e6
+      ? units * Product.TYPES[resourceId].volumePerUnit * 1e6
       : 0,
     { abbrev, minPrecision, fixedPrecision }
   );
@@ -2394,3 +3698,55 @@ export const formatVolume = (ml, { abbrev = true, minPrecision = 3, fixedPrecisi
   }
   return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
 };
+
+export const formatBeltDistance = (m) => {
+  if (m > constants.AU) {
+    return `${(Math.round(100 * m / constants.AU) / 100).toLocaleString()} AU`;
+  } else if (m > 1e9) {
+    return `${(Math.round(m / 1e8) / 10).toLocaleString()}m km`;
+  } else if (m > 1e6) {
+    return `${(Math.round(m / 1e5) / 10).toLocaleString()}k km`;
+  }
+  return `${Math.round(m / 1e3).toLocaleString()} km`;
+}
+
+export const formatVelocity = (metersPerSecond, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  let unitLabel;
+  let scale;
+  if (metersPerSecond >= 1e3) {
+    scale = 1e3;
+    unitLabel = abbrev ? 'km/s' : 'kilometers / second';
+  } else {
+    scale = 1;
+    unitLabel = abbrev ? 'm/s' : 'meters / second';
+  }
+
+  const workingUnits = (metersPerSecond / scale);
+
+  let fixedPlaces = fixedPrecision || 0;
+  if (fixedPrecision === undefined) {
+    while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
+      fixedPlaces++;
+    }
+  }
+  return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+};
+
+export const formatShipStatus = (ship) => {
+  if (ship?.Ship?.status === Ship.STATUSES.IN_FLIGHT) {
+    return 'In Flight'; // TODO: do we need to distinguish Launching, Landing
+  }
+
+  const loc = ship?.Location.location;
+
+  if (loc.label === Entity.IDS.SHIP) {
+    return 'In Port';
+  } else if (loc.label === Entity.IDS.LOT) {
+    return 'On Surface';
+  } else if (loc.label === Entity.IDS.ASTEROID) {
+    return 'In Orbit';
+  }
+
+  console.warn('Unknown ship status', ship)
+  return '';
+}

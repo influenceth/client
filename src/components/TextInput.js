@@ -3,8 +3,8 @@ import styled from 'styled-components';
 
 const StyledInput = styled.input`
   background-color: transparent;
-  border: 0px;
-  border-bottom: 1px solid ${p => p.theme.colors.main};
+  border: solid ${p => p.theme.colors.main};
+  border-width: 0px 0px 1px;
   color: ${p => p.theme.colors.mainText};
   font-family: 'Jura', sans-serif;
   font-size: ${p => p.theme.fontSizes.mainText};
@@ -32,6 +32,7 @@ const TextInput = forwardRef((props, forwardedRef) => {
     setValue(e.target.value);
     if (onChange) onChange(e.target.value);
 
+    // TODO (bug): below does not seem to use pattern (should probably be an OR with maxlength also)
     // pattern takes precedence over maxlength, so this will apply maxlength
     // explicitly if both properties are set
     if (ref.current && props.pattern && props.maxlength) {

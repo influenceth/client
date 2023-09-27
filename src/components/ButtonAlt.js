@@ -6,17 +6,27 @@ import { uniqueId } from 'lodash';
 
 import useStore from '~/hooks/useStore';
 import Badge from '~/components/Badge';
-import theme, { getContrastText } from '~/theme';
+import theme, { getContrastText, hexToRGB } from '~/theme';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+
+const bgOpacity = 0.175;
+const hoverBgOpacity = 0.35;
 
 const InnerContainer = styled.div`
   align-items: center;
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(100% - ${p => p.sizeParams.line - 3.5}px),
-    calc(100% - ${p => p.sizeParams.line - 3.5}px) 100%,
-    0 100%
+    ${p => p.flip ? `
+      100% 100%,
+      ${p.sizeParams.line - 3.5}px 100%,
+      0 calc(100% - ${p.sizeParams.line - 3.5}px)
+    `
+    : `
+      100% calc(100% - ${p.sizeParams.line - 3.5}px),
+      calc(100% - ${p.sizeParams.line - 3.5}px) 100%,
+      0 100%
+    `}
   );
   display: flex;
   justify-content: center;
@@ -25,6 +35,9 @@ const InnerContainer = styled.div`
 
   & > * {
     margin-right: 5px;
+    &:last-child {
+      margin-right: 0;
+    }
   }
 `;
 
@@ -39,22 +52,29 @@ const StyledButton = styled.button`
     animation: ${opacityAnimation} 1250ms ease infinite;
   `}
   background: transparent;
-  border: ${p => p.sizeParams.borderWidth}px solid ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)};
+  border: ${p => p.sizeParams.borderWidth}px solid ${p => p.borderless ? 'transparent' : (p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton))};
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(100% - ${p => p.sizeParams.line - 0.5}px),
-    calc(100% - ${p => p.sizeParams.line - 0.5}px) 100%,
-    0 100%
+    ${p => p.flip ? `
+      100% 100%,
+      ${p.sizeParams.line - 0.5}px 100%,
+      0 calc(100% - ${p.sizeParams.line - 0.5}px)
+    `
+    : `
+      100% calc(100% - ${p.sizeParams.line - 0.5}px),
+      calc(100% - ${p.sizeParams.line - 0.5}px) 100%,
+      0 100%
+    `}
   );
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: ${p => p.sizeParams.font}px;
-  min-width: ${p => p.sizeParams.width}px;
+  min-width: ${p => p.width || p.sizeParams.width}px;
   padding: 3px; /* must match loadingCss.top */
   pointer-events: auto;
   position: relative;
-  text-transform: uppercase;
+  text-transform: ${p => p.sizeParams.textTransform || 'uppercase'};
   transition: all 300ms ease;
 
   & > svg {
@@ -64,31 +84,39 @@ const StyledButton = styled.button`
 
   & ${InnerContainer} {
     min-height: ${p => p.sizeParams.height}px;
-    padding: 0 10px;
+    ${p => p.sizeParams.isIconOnly ? '' : `padding: ${p.padding || '0 10px'};`}
   }
 
   ${p => p.disabled
     ? `
-      color: rgba(255, 255, 255, 0.7);
+      color: rgba(255, 255, 255, 0.5);
       cursor: ${p.theme.cursors.default};
-      border-color: ${p.theme.colors.disabledText};
+      border-color: ${p.borderless ? 'transparent' : p.theme.colors.disabledText};
       & > div {
-        background-color: ${p.disabledColor || '#222'};
+        background-color: ${p.disabledColor || (p.background === 'transparent' ? 'transparent' : `rgba(${hexToRGB(p.theme.colors.disabledButton)}, ${bgOpacity * (p.bgStrength || 1)})`)};
       }
       & > svg {
         stroke: ${p.theme.colors.disabledText};
       }
     `
     : `
-      color: ${p.color ? getContrastText(p.color) : 'white'};
+      color: ${p.color || (
+        p.subtle
+          ? (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)
+          : (
+            p.background && p.background !== 'transparent'
+              ? getContrastText(p.background)
+              : 'white'
+          )
+      )};
       & > div {
-        background-color: ${p.color || (p.isTransaction ? '#232d64' : '#1a404f')};
+        background-color: ${p.background || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${bgOpacity * (p.bgStrength || 1)})`};
       }
       &:active > div {
-        background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main};
+        background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton};
       }
       &:hover > div {
-        background-color: ${p.isTransaction ? 'rgba(53, 80, 228, 0.75)' : 'rgba(54, 167, 205, 0.25)'};
+        background-color: rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${hoverBgOpacity * (p.bgStrength || 1)});
       }
     `
   }
@@ -99,16 +127,27 @@ const Corner = styled.svg`
   height: ${p => p.sizeParams.line - (p.sizeParams.borderWidth === 1 ? 0 : p.sizeParams.borderWidth - 1)}px;
   margin-right: 0;
   position: absolute;
-  right: -1px;
-  stroke: ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)};
+  stroke: ${p => p.borderless ? 'transparent' : (p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton))};
   stroke-width: ${p => p.sizeParams.borderWidth + 0.5}px;
   width: ${p => p.sizeParams.line - (p.sizeParams.borderWidth === 1 ? 0 : p.sizeParams.borderWidth - 1)}px;
+
+  ${p => p.flip
+    ? `
+      left: -1px;
+      transform: scaleX(-1);
+    `
+    : `
+      right: -1px;
+    `
+  }
 `;
 
 const StyledBadge = styled(Badge)`
+  position: absolute;
   font-size: 80%;
-  margin-left: 12px;
-  margin-right: -6px;
+  margin-left: calc(${p => p.width || p.sizeParams.width}px - 0.8em);
+  margin-top: -0.5em;
+  z-index: 1;
 `;
 
 const DisabledTooltip = styled.span`
@@ -131,6 +170,12 @@ const loadingCss = css`
 `;
 
 const sizes = {
+  icon: { font: 16, height: 26, width: 34, line: 8, borderWidth: 1, isIconOnly: true },
+  bigicon: { font: 16, height: 32, width: 40, line: 10, borderWidth: 1, isIconOnly: true },
+  hugeicon: { font: 24, height: 40, width: 48, line: 10, borderWidth: 1, isIconOnly: true },
+  wideicon: { font: 25, height: 32, width: 85, line: 10, borderWidth: 1, isIconOnly: true },
+  legacy: { font: 14, height: 18, width: 100, line: 10, borderWidth: 1, textTransform: 'none', background: 'transparent' },
+  small: { font: 14, height: 26, width: 100, line: 10, borderWidth: 1 },
   medium: { font: 16, height: 32, width: 185, line: 10, borderWidth: 1 },
   large: { font: 20, height: 50, width: 250, line: 15, borderWidth: 1 },
   huge: { font: 32, height: 52, width: 275, line: 18, borderWidth: 2 }
@@ -158,36 +203,41 @@ const StandardButton = (props) => {
   if (setRef) restProps.ref = setRef;
 
   return (
-    <StyledButton
-      onClick={_onClick}
-      data-tip={dataTip}
-      data-place={dataPlace || "right"}
-      sizeParams={sizeParams}
-      {...restProps}>
-      <InnerContainer sizeParams={sizeParams}>
-        {loading && (
-          <BarLoader
-            color={props.color
-              ? getContrastText(props.color)
-              : (props.isTransaction ? 'rgb(73, 100, 248)' : theme.colors.main)}
-            css={loadingCss}
-            height={1} />
-        )}
-        {props.children}
-        {props.badge && <StyledBadge value={props.badge} />}
-      </InnerContainer>
-      <Corner
-        color={props.color}
-        isTransaction={props.isTransaction}
+    <>
+      {props.badge ? <StyledBadge value={props.badge} {...restProps} sizeParams={sizeParams} /> : null}
+      <StyledButton
+        onClick={_onClick}
+        data-tip={dataTip}
+        data-place={dataPlace || "right"}
         sizeParams={sizeParams}
-        viewBox={`0 0 ${sizeParams.line} ${sizeParams.line}`}
-        xmlns="http://www.w3.org/2000/svg">
-        <line x1="0" y1={sizeParams.line} x2={sizeParams.line} y2="0" />
-      </Corner>
-      {props.disabled && props.disabledTooltip && (
-        <DisabledTooltip {...(props.disabledTooltip || {})} />
-      )}
-    </StyledButton>
+        background={sizeParams.background}
+        {...restProps}>
+        <InnerContainer flip={restProps.flip} sizeParams={sizeParams}>
+          {loading && (
+            <BarLoader
+              color={props.color
+                ? getContrastText(props.color)
+                : (props.isTransaction ? theme.colors.txButton : theme.colors.mainButton)}
+              css={loadingCss}
+              height={1} />
+          )}
+          {props.children}
+        </InnerContainer>
+        <Corner
+          borderless={props.borderless}
+          color={props.color}
+          flip={restProps.flip}
+          isTransaction={props.isTransaction}
+          sizeParams={sizeParams}
+          viewBox={`0 0 ${sizeParams.line} ${sizeParams.line}`}
+          xmlns="http://www.w3.org/2000/svg">
+          <line x1="0" y1={sizeParams.line} x2={sizeParams.line} y2="0" />
+        </Corner>
+        {props.disabled && props.disabledTooltip && (
+          <DisabledTooltip {...(props.disabledTooltip || {})} />
+        )}
+      </StyledButton>
+    </>
   );
 };
 

@@ -12,6 +12,8 @@ import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import AsteroidInformation from './asteroidDetails/Information';
 import AsteroidResources from './asteroidDetails/Resources';
+import formatters from '~/lib/formatters';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const breakpoint = 1375;
 const tabContainerCss = css`
@@ -32,11 +34,12 @@ const tabContainerCss = css`
 `;
 
 // TODO (enhancement): would be nice if at least the asteroid render was shared between the tabs
-const AsteroidDetails = (props) => {
+const AsteroidDetails = () => {
   const { account } = useAuth();
   const history = useHistory();
   const { i, tab } = useParams();
   const { data: asteroid } = useAsteroid(Number(i));
+  const { crew } = useCrewContext();
   const groupAbundances = useAsteroidAbundances(asteroid);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
 
@@ -45,19 +48,20 @@ const AsteroidDetails = (props) => {
     if (i) dispatchOriginSelected(Number(i));
   }, [ i, dispatchOriginSelected ]);
 
-  const isOwner = account && asteroid?.owner && Address.areEqual(account, asteroid.owner);
+  const isOwner = account && asteroid?.Nft?.owner && Address.areEqual(account, asteroid.Nft.owner);
+  const isManager = crew && asteroid?.Control?.controller?.id === crew.id;
 
   const onTabChange = (tabIndex) => {
     if (tabIndex === 1) {
-      history.replace(`/asteroids/${asteroid.i}/resources`);
+      history.replace(`/asteroids/${asteroid.id}/resources`);
     } else {
-      history.replace(`/asteroids/${asteroid.i}`);
+      history.replace(`/asteroids/${asteroid.id}`);
     }
   };
 
   return (
     <Details
-      title={`Details - ${asteroid ? (asteroid.customName || asteroid.baseName) : '...'}`}
+      title={`Details - ${formatters.asteroidName(asteroid, '...')}`}
       width="max">
       {asteroid && (
         <TabContainer
@@ -76,10 +80,18 @@ const AsteroidDetails = (props) => {
             }
           ]}
           panes={[
-            <AsteroidInformation asteroid={asteroid} isOwner={isOwner} abundances={groupAbundances} />,
-            <AsteroidResources asteroid={asteroid} isOwner={isOwner} abundances={groupAbundances} />
+            <AsteroidInformation
+              asteroid={asteroid}
+              isManager={isManager}
+              isOwner={isOwner}
+              abundances={groupAbundances} />,
+            <AsteroidResources
+              asteroid={asteroid}
+              isManager={isManager}
+              isOwner={isOwner}
+              abundances={groupAbundances} />
           ]}
-          
+
         />
       )}
     </Details>

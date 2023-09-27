@@ -1,6 +1,11 @@
 import axios from 'axios';
+import { Asteroid, Building, Entity } from '@influenceth/sdk';
+import esb from 'elastic-builder';
 
 import useStore from '~/hooks/useStore';
+
+// set default app version
+const apiVersion = 'v2';
 
 // pass initial config to axios
 const config = { baseURL: process.env.REACT_APP_API_URL, headers: {} };
@@ -21,209 +26,339 @@ useStore.subscribe(
   }
 );
 
+const buildQuery = (queryObj) => {
+  return Object.keys(queryObj || {}).map((key) => {
+    return `${encodeURIComponent(key)}=${encodeURIComponent(queryObj[key])}`;
+  }).join('&');
+};
+
+const backwardCompatibility = (entity) => {
+  return { ...entity, i: entity.id }; // TODO: deprecate the `i` thing, remove this function
+};
+
+const getEntityById = async ({ label, id, components }) => {
+  return new Promise((resolve, reject) => {
+    getEntities({ label, ids: [id], components }).then(entities => {
+      if (entities[0]) resolve(entities[0]);
+      resolve(null);
+    });
+  });
+};
+
+const getEntities = async ({ ids, match, label, components }) => {
+  const query = {};
+  if (ids) {
+    query.id = ids.join(',');
+  } else if (match) {
+    // i.e. { 'Celestial.celestialType': 2 }
+    // i.e. { 'Location.location': { label: Entity.IDS.LOT, id: 123 } }
+    query.match = `${Object.keys(match)[0]}:${JSON.stringify(Object.values(match)[0])}`;
+  }
+  if (label) {
+    query.label = label;  // i.e. 'asteroid'
+  }
+  if (components) {
+    query.components = components.join(',');  // i.e. [ 'celestial', 'control' ]
+  }
+
+  const response = await instance.get(`/${apiVersion}/entities?${buildQuery(query)}`);
+  return (response.data || []).map(backwardCompatibility);
+};
+
 const api = {
   getUser: async () => {
-    const response = await instance.get('/v1/user');
+    const response = await instance.get(`/${apiVersion}/user`);
+    return response.data;
+  },
+
+  getEntityActivities: async (entity) => {
+    const response = await instance.get(`/${apiVersion}/entities/${Entity.packEntity(entity)}/activity`);
     return response.data;
   },
 
   getCrewActionItems: async () => {
-    const response = await instance.get('/v1/user/actionitems');
+    const response = await instance.get(`/${apiVersion}/user/actionitems`);
     return response.data;
   },
 
-  getCrewPlannedLots: async () => {
-    const response = await instance.get('/v1/user/plans');
-    return response.data;
+  getCrewPlannedBuildings: async (crewId) => {
+    const queryBuilder = esb.boolQuery();
+    queryBuilder.filter(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUS_IDS.PLANNED));
+    queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    q.from(0);
+    q.size(10000);
+    const query = q.toJSON();
+
+    const response = await instance.post(`/_search/building`, query);
+    return response.data.hits.hits.map((h) => h._source) || [];
   },
 
-  getUserAssignments: async () => {
-    const response = await instance.get('/v1/user/assignments');
-    return response.data;
-  },
+  getCrewLocation: async (id) => {
+    // this is a little unconventional compared to the rest of the api (i.e. to pull a single id from es),
+    // but since es already has a flattened location, it feels like a worthwhile shortcut
+    const q = esb.requestBodySearch();
+    const queryBuilder = esb.boolQuery();
+    queryBuilder.filter(esb.termQuery('id', id));
+    q.query(queryBuilder);
+    q.from(0);
+    q.size(1);
+    const query = q.toJSON();
 
-  getEvents: async (since) => {
-    const response = await instance.get(`/v1/user/events${since ? `?since=${since}` : ''}`);
+    const response = await instance.post(`/_search/crew`, query);
+    const [crew] = (response.data.hits.hits.map((h) => h._source) || []);
+
+    const lotLocation = crew.Location.locations.find((l) => l.label === Entity.IDS.LOT);
     return {
-      events: response.data,
+      asteroidId: crew.Location.locations.find((l) => Number(l.label) === Entity.IDS.ASTEROID)?.id,
+      lotId: lotLocation ? Entity.toPosition(lotLocation)?.lotId : null,
+      buildingId: crew.Location.locations.find((l) => l.label === Entity.IDS.BUILDING)?.id,
+      shipId: crew.Location.locations.find((l) => l.label === Entity.IDS.SHIP)?.id,
+    };
+  },
+
+  // TODO: will we want this for "random" story events
+  // getUserAssignments: async () => {
+  //   const response = await instance.get(`/${apiVersion}/user/assignments`);
+  //   return response.data;
+  // },
+
+  getActivities: async (query) => {
+    const response = await instance.get(`/${apiVersion}/user/activity${query ? `?${buildQuery(query)}` : ''}`);
+    console.log({ response });
+    return {
+      activities: response.data,
+      totalHits: query?.returnTotal ? parseInt(response.headers['total-hits']) : undefined,
       blockNumber: parseInt(response.headers['starknet-block-number']),
       // ethBlockNumber: parseInt(response.headers['eth-block-number'])  // NOTE: probably not needed anymore
     };
   },
 
   getWatchlist: async () => {
-    const response = await instance.get('/v1/user/watchlist');
+    const response = await instance.get(`/${apiVersion}/user/watchlist`); // TODO: server-side update
     return response.data;
   },
 
   watchAsteroid: async (i) => {
-    const response = await instance.post(`/v1/user/watchlist/${i}`);
+    const response = await instance.post(`/${apiVersion}/user/watchlist/${i}`);
     return response.data;
   },
 
   unWatchAsteroid: async (i) => {
-    const response = await instance.delete(`/v1/user/watchlist/${i}`);
+    const response = await instance.delete(`/${apiVersion}/user/watchlist/${i}`);
     return response.data;
   },
 
   getReferralCount: async () => {
-    const response = await instance.get('v1/user/referrals');
+    const response = await instance.get(`/${apiVersion}/user/referrals`);
     return response.data;
   },
 
   createReferral: async (referral) => {
     if (!referral?.referrer) return null;
-    const response = await instance.post(`/v1/user/referrals`, referral);
+    const response = await instance.post(`/${apiVersion}/user/referrals`, referral);
     return response.status;
   },
 
-  getAssets: async (i) => {
-    const response = await instance.get(`/v1/assets`);
-    return response.data;
+  getAsteroid: async (id) => { //, extended = false) => {
+    // TODO: deprecate `extended` OR need to pass extra queryString to getEntityById OR need a separate call for that data
+    // const response = await instance.get(`/${apiVersion}/asteroids/${i}${extended ? '?extended=1' : ''}`);
+    return getEntityById({ label: Entity.IDS.ASTEROID, id });
   },
 
-  getAsteroid: async (i, extended = false) => {
-    const response = await instance.get(`/v1/asteroids/${i}${extended ? '?extended=1' : ''}`);
-    return response.data;
-  },
+  getAsteroidLotData: async (i) => {
+    const response = await instance.get(`/${apiVersion}/asteroids/${i}/lots/packed`, { responseType: 'blob' });
+    const lotTally = Asteroid.getSurfaceArea(i);
 
-  getAsteroids: async (query) => {
-    const response = await instance.get('/v1/asteroids', { params: query });
-    return response.data;
-  },
+    let shift;
+    const mask = 0b11111111;
 
-  getOccupiedPlots: async (i, plotTally) => {
-    const response = await instance.get(`/v1/asteroids/${i}/lots/occupied`, { responseType: 'blob' });
+    // TODO (enhancement?): any benefit to returning a sparse array here instead?
+    // (probably yes unless going to send as a buffer to worker as part of a performance enhancement)
     if (response.data) {
-      const occupied = '1';
-      const padding = '0';
-      
       return (new Uint32Array(await response.data.arrayBuffer())).reduce((acc, byte, i) => {
-        const x = Number(byte).toString(2).padStart(32, padding);
-        for (let j = 0; j < 32; j++) {
-          const index = i * 32 + j;
-          if (index < plotTally) {
-            if (x[j] === occupied) {
-              acc[index + 1] = true; // (adjust for one-index of plot ids)
-            }
+        for (let j = 0; j < 4; j++) {
+          const index = i * 4 + j;
+          if (index < lotTally) {
+            // shift right 24, 16, 8, then 0
+            shift = (3 - j) * 8;
+
+            // (adjust for one-index of lot ids)
+            acc[index + 1] = (Number(byte) >> shift) & mask;
           }
         }
         return acc;
-      }, []);
+      }, [0]);
     }
     return null;
   },
 
-  getCrewOccupiedPlots: async (a, c) => {
-    const response = await instance.get(`/v1/asteroids/${a}/lots/occupier/${c}`);
+  getAsteroidShips: async (i) => {
+    // TODO: use elasticsearch so can search by flattened location
+    return [];
+  },
+
+  // TODO: ecs refactor -- probably better to use a single resolve location endpoint
+  getBuilding: async (i) => {
+    return getEntityById({ label: Entity.IDS.BUILDING, i });
+  },
+
+  getCrewOccupiedLots: async (a, c) => {
+    // TODO: elasticsearch
+    const response = await instance.get(`/${apiVersion}/asteroids/${a}/lots/occupier/${c}`);
+    return response.data;
+    // return getEntities({
+    //   match: { 'control.controller': c },
+    //   label: Entity.IDS.BUILDING
+    // });
+  },
+
+  getCrewSampledLots: async (a, c, r) => {
+    // TODO: elasticsearch
+    const response = await instance.get(`/${apiVersion}/asteroids/${a}/lots/sampled/${c}/${r}`);
     return response.data;
   },
 
-  getCrewSampledPlots: async (a, c, r) => {
-    const response = await instance.get(`/v1/asteroids/${a}/lots/sampled/${c}/${r}`);
-    return response.data;
+  getCrewShips: async (c) => {
+    return getEntities({
+      match: { 'Control.controller.id': c },
+      label: Entity.IDS.SHIP
+    })
   },
 
-  getPlot: async (asteroidId, plotId) => {
-    const response = await instance.get(`/v1/asteroids/${asteroidId}/lots/${plotId}`);
-    return response.data;
+  getEntities,
+  getEntityById,
+
+  getLot: async (asteroidId, lotId) => {
+    let entity = await getEntityById(Entity.fromPosition({ asteroidId, lotId }));
+    entity = entity ? entity : Entity.fromPosition({ asteroidId, lotId });
+    const entities = await getEntities({
+      match: { 'Location.location': Entity.fromPosition({ asteroidId, lotId }) },
+      components: [ 'Building', 'Control' ]
+    });
+
+    entity.building = entities.find(e => e.label === Entity.IDS.BUILDING);
+    entity.ship = entities.find(e => e.label === Entity.IDS.SHIP);
+    entity.deposits = entities.filter(e => e.label === Entity.IDS.DEPOSIT);
+
+    return entity;
   },
 
-  getOwnedAsteroidsCount: async () => {
-    const response = await instance.get('/v1/asteroids/ownedCount');
-    return response.data;
+  getNameUse: async (label, name) => {
+    return getEntities({ match: { 'Name.name': name }, label, components: [] });
   },
 
-  getOwnedCrews: async () => {
-    const response = await instance.get(`/v1/crews/owned`);
-    return response.data;
+  getOwnedCrews: async (account) => {
+    return getEntities({ match: { 'Crew.delegatedTo': account }, label: Entity.IDS.CREW });
   },
 
-  getCrewMember: async (i) => {
-    const response = await instance.get(`/v1/crewmates/${i}`);
-    return response.data;
+  getCrew: async (id) => {
+    return getEntityById({ id, label: Entity.IDS.CREW });
   },
 
-  getOwnedCrewMembers: async () => {
-    const response = await instance.get('/v1/crewmates/owned');
-    return response.data;
+  getCrewmate: async (id) => {
+    return getEntityById({ id, label: Entity.IDS.CREWMATE });
   },
 
-  getCrewMembers: async (query) => {
-    const response = await instance.get('/v1/crewmates', { params: query });
-    return response.data;
+  getCrewmates: async (ids) => {
+    return ids?.length > 0 ? getEntities({ ids, label: Entity.IDS.CREWMATE }) : [];
   },
 
-  getMintableCrew: async (query) => {
-    const response = await instance.get('/v1/crewmates/mintable', { params: query });
-    return response.data;
+  getAccountCrewmates: async (account) => {
+    return getEntities({ match: { 'Nft.owners.starknet': account }, label: Entity.IDS.CREWMATE });
   },
 
-  getPlanets: async () => {
-    const response = await instance.get('/v1/planets');
-    return response.data;
+  getShip: async (id) => {
+    return getEntityById({ id, label: Entity.IDS.SHIP });
   },
 
-  getSale: async (assetType) => {
-    const params = assetType ? { assetType } : {};
-    const response = await instance.get('/v1/sales', { params });
-    return response.data[0];
+  getShipCrews: async (shipId) => {
+    return getEntities({
+      match: { 'Location.location': { id: shipId, label: Entity.IDS.SHIP } },
+      label: Entity.IDS.CREW
+    });
+  },
+
+  getConstants: async (names) => {
+    const response = await instance.get(`/${apiVersion}/constants/${Array.isArray(names) ? names.join(',') : names}`);
+    return response.data;
   },
 
   getBook: async (id) => {
-    const response = await instance.get(`/v1/books/${id}`);
+    return null;  // TODO: restore this when story is ready again
+    const response = await instance.get(`/${apiVersion}/books/${id}`);
     return response.data;
   },
 
   getStory: async (id, sessionId) => {
-    const response = await instance.get(`/v1/stories/${id}`, { params: { session: sessionId }});
+    return null;  // TODO: restore this when story is ready again
+    const response = await instance.get(`/${apiVersion}/stories/${id}`, { params: { session: sessionId }});
     return response.data;
   },
 
-  createStorySession: async (crewMember, story) => {
-    const response = await instance.post(`/v1/stories/sessions`, { crewMember, story });
+  createStorySession: async (crewmate, story) => {
+    return null;  // TODO: restore this when story is ready again
+    const response = await instance.post(`/${apiVersion}/stories/sessions`, { crewmate, story });
     return response.data;
   },
 
   getStorySession: async (id) => {
-    const response = await instance.get(`/v1/stories/sessions/${id}`);
+    return null;  // TODO: restore this when story is ready again
+    const response = await instance.get(`/${apiVersion}/stories/sessions/${id}`);
     return response.data;
   },
 
   getStoryPath: async (storyId, pathId, sessionId) => {
+    return null;  // TODO: restore this when story is ready again
     const response = await instance.get(
-      `/v1/stories/${storyId}/paths/${pathId}`,
+      `/${apiVersion}/stories/${storyId}/paths/${pathId}`,
       { params: { session: sessionId } }
     );
     return response.data;
   },
 
   patchStorySessionPath: async (sessionId, pathId) => {
-    const response = await instance.patch(`/v1/stories/sessions/${sessionId}/paths/${pathId}`);
+    return null;  // TODO: restore this when story is ready again
+    const response = await instance.patch(`/${apiVersion}/stories/sessions/${sessionId}/paths/${pathId}`);
     return response.data;
   },
 
   deleteStorySessionPath: async (sessionId, pathId) => {
-    const response = await instance.delete(`/v1/stories/sessions/${sessionId}/paths/${pathId}`);
+    return null;  // TODO: restore this when story is ready again
+    const response = await instance.delete(`/${apiVersion}/stories/sessions/${sessionId}/paths/${pathId}`);
     return response.data;
   },
 
   getAdalianRecruitmentStory: async (id, sessionId) => {
-    const response = await instance.get(`/v1/stories/adalian-recruitment`);
+    return null;  // TODO: restore this when story is ready again
+    const response = await instance.get(`/${apiVersion}/stories/adalian-recruitment`);
     return response.data;
   },
 
+  searchAssets: async (asset, query) => {
+    const assetIndex = asset.replace(/s$/, '').toLowerCase();
+    const response = await instance.post(`/_search/${assetIndex}`, query);
+
+    return {
+      hits: response.data.hits.hits.map((h) => h._source),
+      total: response.data.hits.total.value
+    }
+  },
+
   requestLogin: async (account) => {
-    const response = await instance.get(`/v1/auth/login/${account}`);
+    const response = await instance.get(`/${apiVersion}/auth/login/${account}`);
     return response.data.message;
   },
 
   verifyLogin: async (account, params) => {
-    const response = await instance.post(`/v1/auth/login/${account}`, params);
+    const response = await instance.post(`/${apiVersion}/auth/login/${account}`, params);
     return response.data.token;
   },
 
   createDevnetBlock: async () => {
+    return;
     try {
       axios.post(`${process.env.REACT_APP_STARKNET_NETWORK}/create_block`, {});
     } catch (e) {

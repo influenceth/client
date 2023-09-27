@@ -5,24 +5,23 @@ import Button from '~/components/ButtonAlt';
 import Dialog from '~/components/Dialog';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
+import { boolAttr } from '~/lib/utils';
 
 const ConfirmationTitle = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
   height: 60px;
-  padding: 8px 16px;
   & > h4 { flex: 1, margin: 0 }
 `;
 const ConfirmationBody = styled.div`
   flex: 1;
   font-size: 15px;
-  padding: 15px 80px 30px;
+  padding: 0 0 8px;
   & > article {
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     border-top: 1px solid rgba(255, 255, 255, 0.2);
-    color: ${p => p.theme.colors.main};
-    padding: 1em 2em;
+    padding: 2em 2em;
   }
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
@@ -36,7 +35,7 @@ const ConfirmationButtons = styled.div`
   display: flex;
   flex-direction: row;
   height: 60px;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   padding: 8px 8px 16px;
   & > button {
@@ -51,6 +50,7 @@ const Confirmation = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 300px;
+  padding: 10px 30px;
   width: 650px;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
@@ -73,8 +73,8 @@ const ConfirmationDialog = ({ loading, onConfirm, onReject, isTransaction, ...pr
         {loading ? <Loader /> : props.body}
       </ConfirmationBody>
       <ConfirmationButtons>
-        <Button onClick={onReject} disabled={loading}>{props.rejectText || 'Back'}</Button>
-        <Button onClick={onConfirm} disabled={loading} isTransaction={isTransaction}>{props.confirmText || 'Confirm'}</Button>
+        <Button onClick={onReject} disabled={boolAttr(loading)} subtle>{props.rejectText || 'Back'}</Button>
+        <Button onClick={onConfirm} disabled={boolAttr(loading)} isTransaction={isTransaction} subtle>{props.confirmText || 'Confirm'}</Button>
       </ConfirmationButtons>
     </Confirmation>
   </Dialog>

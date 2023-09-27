@@ -1,22 +1,22 @@
 import { useCallback, useMemo } from 'react';
+import { Delivery } from '@influenceth/sdk';
 
 import { SurfaceTransferIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import ActionButton from './ActionButton';
 
-const SurfaceTransferIncoming = ({ asteroid, plot, onSetAction, _disabled }) => {
+const SurfaceTransferIncoming = ({ asteroid, lot, onSetAction, _disabled }) => {
   const incoming = useMemo(() => {
-    return (plot?.building?.deliveries || [])
-      .filter((d) => d.status !== 'COMPLETE')
-      .sort((a, b) => (a.completionTime || 0) - (b.completionTime || 0))
-  }, [plot?.building?.deliveries]);
+    return (lot?.deliveries || [])
+      .filter((d) => d.Delivery.status !== Delivery.STATUSES.COMPLETE)
+      .sort((a, b) => (a.Delivery.finishTime || 0) - (b.Delivery.finishTime || 0))
+  }, [lot?.deliveries]);
   const nextIncoming = incoming?.length > 0 ? incoming[0] : null;
-  const { deliveryStatus } = useDeliveryManager(asteroid?.i, plot?.i, nextIncoming?.deliveryId);
+  const { deliveryStatus } = useDeliveryManager(asteroid?.i, lot?.i, nextIncoming?.id);
   
-
   const handleClick = useCallback(() => {
-    onSetAction('SURFACE_TRANSFER', { deliveryId: nextIncoming?.deliveryId });
-  }, [onSetAction, nextIncoming?.deliveryId]);
+    onSetAction('SURFACE_TRANSFER', { deliveryId: nextIncoming?.id });
+  }, [onSetAction, nextIncoming?.id]);
 
   if (!nextIncoming) return null;
   const isReadyToFinish = deliveryStatus === 'READY_TO_FINISH';
@@ -25,9 +25,10 @@ const SurfaceTransferIncoming = ({ asteroid, plot, onSetAction, _disabled }) => 
       label={`${deliveryStatus === 'READY_TO_FINISH' ? 'Finish' : 'Incoming'} Surface Transfer`}
       flags={{
         attention: isReadyToFinish || undefined,
-        badge: isReadyToFinish ? '✓' : (incoming.length > 1 ? incoming.length : undefined),
+        badge: !isReadyToFinish && incoming.length > 1 ? incoming.length : 0,
         disabled: _disabled || undefined,
-        loading: !isReadyToFinish || undefined
+        loading: !isReadyToFinish || undefined,
+        finishTime: nextIncoming?.Delivery?.finishTime
       }}
       icon={<SurfaceTransferIcon />}
       onClick={handleClick} />

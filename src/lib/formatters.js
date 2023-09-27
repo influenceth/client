@@ -1,25 +1,26 @@
-import { KeplerianOrbit, toSpectralType } from '@influenceth/sdk';
+import { AdalianOrbit, Asteroid, Building, Ship } from '@influenceth/sdk';
 import { utils as ethersUtils } from 'ethers';
+import { constants } from '@influenceth/astro';
 
 const formatters = {
 
   // Orbital element formatters
-  axis: (a) => a.toLocaleString() + ' AU',
+  axis: (a) => (a * 1000 / constants.AU).toLocaleString() + ' AU',
 
   inclination: (i) => (i * 180 / Math.PI).toLocaleString() + '°',
 
-  period: (a) => {
-    const orbit = new KeplerianOrbit({ a });
-    return orbit.getPeriod().toFixed(0).toLocaleString() + ' days';
+  period: (orbital) => {
+    const orbit = new AdalianOrbit(orbital, { units: 'km' });
+    return Math.round(orbit.getPeriod()).toLocaleString() + ' days';
   },
 
   // Asteroid attribute formatters
-  radius: (r) => r.toLocaleString() + ' m',
+  radius: (r) => r.toLocaleString() + ' km',
 
-  spectralType: (t) => toSpectralType(t) + '-type',
+  spectralType: (t) => Asteroid.getSpectralType(t) + '-type',
 
   surfaceArea: (r) => {
-    const area = (4 * Math.PI * Math.pow(r / 1000, 2)).toFixed(1);
+    const area = (4 * Math.PI * Math.pow(r, 2)).toFixed(1);
     return Number(area).toLocaleString() + ' km²';
   },
 
@@ -31,20 +32,51 @@ const formatters = {
     return desc;
   },
 
-  asteroidPrice: (r, sale) => {
-    if (!sale?.basePrice || !sale?.saleModifier) return '?';
-    const base = Number(ethersUtils.formatEther(String(sale.basePrice)));
-    const lot = Number(ethersUtils.formatEther(String(sale.saleModifier)));
-    const lotCount = Math.floor(4 * Math.PI * (r / 1000) ** 2);
+  asteroidName: (a, fallbackText) => {
+    if (!a) return fallbackText || 'Asteroid';
+    return a.Name?.name || Asteroid.Entity.getBaseName(a) || `Asteroid #${a.id.toLocaleString()}`;
+  },
+
+  asteroidPrice: (r, priceConstants) => {
+    if (!priceConstants?.ASTEROID_BASE_PRICE_ETH || !priceConstants?.ASTEROID_LOT_PRICE_ETH) return '?';
+    const base = Number(ethersUtils.formatEther(String(priceConstants.ASTEROID_BASE_PRICE_ETH)));
+    const lot = Number(ethersUtils.formatEther(String(priceConstants.ASTEROID_LOT_PRICE_ETH)));
+
+    const lotCount = Asteroid.getSurfaceArea(0, r);
     const price = base + lot * lotCount;
     return price.toLocaleString([], { maximumFractionDigits: 4 });
   },
 
-  crewPrice: (sale) => {
-    if (!sale?.basePrice) return '?';
-    const price = Number(ethersUtils.formatEther(String(sale.basePrice)));
-    return price.toLocaleString([], { maximumFractionDigits: 3 });
-  }
+  buildingName: (b, fallbackText) => {
+    if (!b) return fallbackText || 'Building';
+    return b.Name?.name || `${Building.TYPES[b.Building?.buildingType]?.name || 'Building'} #${b.id.toLocaleString()}`;
+  },
+
+  crewName: (c, fallbackText) => {
+    if (!c) return fallbackText || 'Crew';
+    return c.Name?.name || `Crew #${c.id.toLocaleString()}`;
+  },
+
+  crewmatePrice: (priceConstants) => {
+    if (!priceConstants?.ADALIAN_PRICE_ETH) return '?';
+    const price = Number(ethersUtils.formatEther(String(priceConstants?.ADALIAN_PRICE_ETH)));
+    return price.toLocaleString([]);
+  },
+
+  crewmateName: (c, fallbackText) => {
+    if (!c) return fallbackText || 'Crewmate';
+    return c.Name?.name || `Crewmate #${(c.id || 0).toLocaleString()}`;
+  },
+
+  lotName: (lotId) => {
+    if (!lotId) return 'Lot';
+    return `Lot ${lotId.toLocaleString()}`;
+  },
+
+  shipName: (s, fallbackText) => {
+    if (!s) return fallbackText || 'Ship';
+    return s.Name?.name || `${Ship.TYPES[s.Ship?.shipType]?.name || 'Ship'} #${s.id.toLocaleString()}`;
+  },
 };
 
 export default formatters;

@@ -4,6 +4,7 @@ import { VscListUnordered as PopperIcon } from 'react-icons/vsc';
 
 import Button from '~/components/ButtonRounded';
 import useScreenSize from '~/hooks/useScreenSize';
+import { createPortal } from 'react-dom';
 
 const Wrapper = styled.div`
   position: relative;
@@ -37,7 +38,7 @@ const Content = styled.div.attrs(p => {
   background: black;
   margin-left: ${p => -0.2 * (p.contentWidth || defaultWidth)}px;
   position: fixed;
-  z-index: 31;
+  z-index: 1000;
 `;
 
 const Title = styled.div`
@@ -55,23 +56,10 @@ const Body = styled.div.attrs(p => ({
   }
 }))``;
 
-const Poppable = ({ children, closeOnChange, closeOnClickAway = true, disabled, label, title, ...styleProps }) => {
-  const [open, setOpen] = useState(false);
-  const [override, setOverride] = useState();
+
+export const PoppableContent = ({ children, ignoreClickAway, open, onClose, title, styleProps }) => {
   const { height, width } = useScreenSize();
-
-  const handleToggle = useCallback(() => {
-    if (!disabled)
-    setOpen((o) => !o);
-  }, [disabled]);
-
-  useEffect(() => {
-    setOpen(false);
-  }, [disabled]);
-
-  useEffect(() => {
-    if (open) setOpen(false);
-  }, [closeOnChange]);
+  const [override, setOverride] = useState();
 
   const contentRef = useRef();
   const initialPosition = useRef();
@@ -104,27 +92,56 @@ const Poppable = ({ children, closeOnChange, closeOnClickAway = true, disabled, 
       setOverride(override);
     }
   }, [height, width, open]);
+  
+  if (!open) return null;
+  return (
+    <>
+      {!ignoreClickAway && <ClickAwayListener onClick={onClose} />}
+      {createPortal(
+        <Content ref={contentRef} {...styleProps} overrides={override}>
+          <Title>{title}</Title>
+          <Body>
+            {children}
+          </Body>
+        </Content>,
+        document.body
+      )}
+    </>
+  );
+};
+
+const Poppable = ({ children, closeOnChange, closeOnClickAway = true, disabled, label, title, ...styleProps }) => {
+  const [open, setOpen] = useState(false);
+
+  const handleToggle = useCallback(() => {
+    if (!disabled)
+    setOpen((o) => !o);
+  }, [disabled]);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [disabled]);
+
+  useEffect(() => {
+    if (open) setOpen(false);
+  }, [closeOnChange]);
 
   return (
     <Wrapper>
       <Button
-        disabled={disabled}
+        disabled={boolAttr(disabled)}
         onClick={handleToggle}
         buttonWidth="135px"
         {...styleProps}>
         <PopperIcon /> <span>{label}</span>
       </Button>
-      {open && (
-        <>
-          {closeOnClickAway && <ClickAwayListener onClick={() => setOpen(false)} />}
-          <Content ref={contentRef} {...styleProps} overrides={override}>
-            <Title>{title}</Title>
-            <Body {...styleProps} overrides={override}>
-              {children}
-            </Body>
-          </Content>
-        </>
-      )}
+      <PoppableContent
+        ignoreClickAway={!closeOnClickAway}
+        open={open}
+        onClose={() => setOpen(false)}
+        title={title}>
+        {children}
+      </PoppableContent>
     </Wrapper>
   );
 };

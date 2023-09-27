@@ -1,12 +1,13 @@
 import { useQuery } from 'react-query';
+import { Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 
-const useAsteroid = (i, extended = false) => {
+const useAsteroid = (id) => {
   return useQuery(
-    [ 'asteroids', i, extended || undefined ],
-    () => api.getAsteroid(i, extended),
-    { enabled: !!i }
+    [ 'entity', Entity.IDS.ASTEROID, id ],
+    () => api.getAsteroid(id),
+    { enabled: !!id }
   );
 };
 

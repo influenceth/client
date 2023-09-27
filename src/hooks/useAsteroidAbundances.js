@@ -1,18 +1,17 @@
 import { useMemo } from 'react';
+import { Asteroid, Product } from '@influenceth/sdk';
+
 import { keyify } from '~/lib/utils';
 
-import { useResourceAssets } from './useAssets';
-
 const useAsteroidAbundances = (asteroid) => {
-  const assets = useResourceAssets();
-
   const data = useMemo(() => {
-    if (assets?.length > 0 && asteroid?.scanned) {
+    if (asteroid?.scanned) {
       const categories = {};
-      Object.keys(asteroid.resources || {}).forEach((i) => {
-        const abundance = asteroid.resources[i];
+      const abundances = Asteroid.getAbundances(asteroid.Celestial.abundances);
+      Object.keys(abundances).forEach((i) => {
+        const abundance = abundances[i];
         if (abundance > 0) {
-          const { category, name, iconUrls } = (assets.find((a) => a?.i === i) || {});
+          const { category, name } = Product.TYPES[i];
 
           const categoryKey = keyify(category);
           if (!categories[category]) {
@@ -31,7 +30,6 @@ const useAsteroidAbundances = (asteroid) => {
             categoryKey,
             category,
             name,
-            iconUrls,
             abundance
           });
         }
@@ -46,7 +44,7 @@ const useAsteroidAbundances = (asteroid) => {
         .sort((a, b) => b.abundance - a.abundance);
     }
     return [];
-  }, [!!assets, asteroid?.scanned, asteroid?.resources]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [asteroid?.scanned, asteroid?.Celestial?.abundances]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   return data;
 };

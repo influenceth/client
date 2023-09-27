@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import screenfull from 'screenfull';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
@@ -71,7 +71,7 @@ const AutodetectButton = styled(Button)`
   }
 `;
 
-const Settings = (props) => {
+const Settings = () => {
   const gpuInfo = useDetectGPU();
 
   const { account } = useAuth();
@@ -84,6 +84,7 @@ const Settings = (props) => {
   const turnOnLensflare = useStore(s => s.dispatchLensflareUnhidden);
   const turnOffLensflare = useStore(s => s.dispatchLensflareHidden);
   const setAutodetect = useStore(s => s.dispatchGraphicsAutodetectSet);
+  const setPixelRatio = useStore(s => s.dispatchPixelRatio);
   const setShadowQuality = useStore(s => s.dispatchShadowQualitySet);
   const setTextureQuality = useStore(s => s.dispatchTextureQualitySet);
   const setFOV = useStore(s => s.dispatchFOVSet);
@@ -106,6 +107,23 @@ const Settings = (props) => {
   const toggleAutodetectGraphics = () => {
     setAutodetect(!graphics.autodetect, gpuInfo);
   };
+
+  const pixelRatioOptions = useMemo(() => {
+    const options = new Set();
+
+    // add device settings and current selection always
+    if (graphics.pixelRatio) options.add(graphics.pixelRatio);
+    options.add(window.devicePixelRatio);
+
+    // add others dynamically
+    options.add(0.5);
+    options.add(1);
+    if (window.devicePixelRatio >= 2) options.add(2);
+    if (window.devicePixelRatio >= 4) options.add(4);
+    if (window.devicePixelRatio >= 8) options.add(8);
+
+    return Array.from(options).sort();
+  }, [graphics?.pixelRatio]);
 
   return (
     <StyledSettings>
@@ -138,6 +156,19 @@ const Settings = (props) => {
                 {graphics.autodetect ? <CheckedIcon /> : <UncheckedIcon />}
                 Autodetect
               </AutodetectButton>
+            </ControlGroup>
+          </StyledDataReadout>
+
+          <StyledDataReadout label="Render Pixel Ratio">
+            <ControlGroup>
+              {pixelRatioOptions.map((option) => (
+                <Button
+                  key={option}
+                  active={graphics.pixelRatio === option || (!graphics.pixelRatio && option === 1)}
+                  onClick={() => setPixelRatio(option)}>
+                  {option}x
+                </Button>
+              ))}
             </ControlGroup>
           </StyledDataReadout>
 

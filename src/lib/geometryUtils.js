@@ -1,15 +1,15 @@
-import { KeplerianOrbit } from '@influenceth/sdk';
+import { AdalianOrbit } from '@influenceth/sdk';
 import { Vector3 } from 'three';
-
-import constants from '~/lib/constants';
 
 export const getUpdatedAsteroidPositions = function(orbitals, elapsed = 0) {
   const positions = new Float32Array(orbitals.length * 3);
+
   orbitals.forEach((orbital, i) => {
-    const coords = (new KeplerianOrbit(orbital)).getPositionAtTime(elapsed);
-    positions[i * 3 + 0] = coords.x * constants.AU;
-    positions[i * 3 + 1] = coords.y * constants.AU;
-    positions[i * 3 + 2] = coords.z * constants.AU;
+    const coords = (new AdalianOrbit(orbital, { units: 'km' })).getPositionAtTime(elapsed);
+    if (isNaN(coords.x)) console.log(i, orbital);
+    positions[i * 3 + 0] = coords.x;
+    positions[i * 3 + 1] = coords.y;
+    positions[i * 3 + 2] = coords.z;
   });
   return positions;
 };
@@ -17,10 +17,10 @@ export const getUpdatedAsteroidPositions = function(orbitals, elapsed = 0) {
 export const getUpdatedPlanetPositions = function(orbitals, elapsed = 0) {
   const positions = new Float32Array(orbitals.length * 3);
   orbitals.forEach((orbital, i) => {
-    const coords = (new KeplerianOrbit(orbital)).getPositionAtTime(elapsed);
-    positions[i * 3 + 0] = coords.x * constants.AU;
-    positions[i * 3 + 1] = coords.y * constants.AU;
-    positions[i * 3 + 2] = coords.z * constants.AU;
+    const coords = (new AdalianOrbit(orbital, { units: 'km' })).getPositionAtTime(elapsed);
+    positions[i * 3 + 0] = coords.x;
+    positions[i * 3 + 1] = coords.y;
+    positions[i * 3 + 2] = coords.z;
   });
   return positions;
 };
@@ -61,5 +61,31 @@ const getPerpendicular = (n) => {
     return n.clone().cross(new Vector3(1, 0, 0));
   }
   return n.clone().cross(new Vector3(0, 1, 0));
+}
+
+// TODO: should this go into sdk's AdalianOrbit?
+export const sampleAsteroidOrbit = (baseTime, orbital, minOffset, maxOffset, increment) => {
+  const positions = [];
+  const velocities = [];
+  const orbit = new AdalianOrbit(orbital, { units: 'km' });
+  for (let delay = minOffset; delay < maxOffset + 1; delay += increment) {
+    // to safely deal with floats
+    const basePlusDelay = Math.round(100 * (baseTime + delay)) / 100;
+    const delayMinusIncr = Math.round(100 * (delay - increment)) / 100;
+
+    // set positions
+    const p = orbit.getPositionAtTime(basePlusDelay)
+    positions[delay] = new Vector3(p.x, p.y, p.z);
+
+    // set velocity of previous based on this position
+    if (positions[delayMinusIncr]) {
+      velocities[delayMinusIncr] = (new Vector3()).subVectors(
+        positions[delay],
+        positions[delayMinusIncr]
+      );
+      velocities[delayMinusIncr].divideScalar(increment * 86400);
+    }
+  }
+  return { positions, velocities };
 }
 

@@ -4,7 +4,7 @@ import styled, { css, keyframes } from 'styled-components';
 import LoadingSpinner from 'react-spinners/PuffLoader';
 
 import useAuth from '~/hooks/useAuth';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import ButtonAlt from '~/components/ButtonAlt';
 import ButtonPill from '~/components/ButtonPill';
 import CrewCard from '~/components/CrewCard';
@@ -260,10 +260,10 @@ const MainButton = styled(ButtonAlt)`
   }
 `;
 
-const Account = (props) => {
+const Account = () => {
   const history = useHistory();
-  const { account, logout, walletContext } = useAuth();
-  const { captain, loading: crewLoading, crew, crewMemberMap } = useCrew();
+  const { account, authenticating, login, logout, walletContext } = useAuth();
+  const { captain, loading: crewLoading, crew, crewmateMap } = useCrewContext();
 
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
   const dispatchCutscene = useStore(s => s.dispatchCutscene);
@@ -273,9 +273,9 @@ const Account = (props) => {
   const loggedIn = !!account;
 
   const onClickPlay = useCallback(() => {
-    // if crew is done loading and there are no crew members, send to owned-crew first
-    if (loggedIn && !crewLoading && !(crew?.crewMembers?.length > 0)) {
-      history.push('/owned-crew');
+    // if crew is done loading and there are no crewmates, send to /crew first
+    if (loggedIn && !crewLoading && !(crew?._crewmates?.length > 0)) {
+      history.push('/crew');
     }
     dispatchLauncherPage();
 
@@ -287,7 +287,16 @@ const Account = (props) => {
         true
       );
     }
-  }, [crewLoading, crew?.crewMembers, dispatchLauncherPage, dispatchCutscene, dispatchSeenIntroVideo, hasSeenIntroVideo]);
+  },
+  [
+    loggedIn,
+    crewLoading,
+    crew?._crewmates,
+    dispatchLauncherPage,
+    dispatchCutscene,
+    dispatchSeenIntroVideo,
+    hasSeenIntroVideo
+  ]);
 
   const [openedSessionInstructions, setOpenedSessionInstructions] = useState(false);
   const onClickSession = useCallback(() => {
@@ -315,7 +324,7 @@ const Account = (props) => {
         <AccountCTA>
           <NotConnected>
             <span>Account Not Connected</span>
-            <ButtonPill onClick={() => dispatchLauncherPage('wallets')}>Login</ButtonPill>
+            <ButtonPill disabled={authenticating} onClick={login}>Login</ButtonPill>
           </NotConnected>
         </AccountCTA>
       }
@@ -345,7 +354,7 @@ const Account = (props) => {
               <h4>Loading Crew...</h4>
             </Loading>
           )}
-          {!crewLoading && crew?.crewMembers?.length > 0 && (
+          {!crewLoading && crew?._crewmates?.length > 0 && (
             <CrewContainer>
               {captain && <>
                 <CaptainDetails>
@@ -353,24 +362,24 @@ const Account = (props) => {
                   <CaptainName>{captain.name}</CaptainName>
                 </CaptainDetails>
                 <CaptainCardContainer>
-                  <CrewCard crew={captain} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
+                  <CrewCard crewmate={captain} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
                   <StyledTriangleTip extendStroke strokeColor="currentColor" strokeWidth="1.5" />
                   <StyledCaptainIcon />
                 </CaptainCardContainer>
               </>}
-              {crew.crewMembers.slice(1).map((crewmateId) => {
-                const crewmate = crewMemberMap[crewmateId];
+              {crew._crewmates.slice(1).map((crewmateId) => {
+                const crewmate = crewmateMap[crewmateId];
                 if (crewmate) {
                   return (
                     <CrewCardContainer key={crewmate.i}>
-                      <CrewCard crew={crewmate} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
+                      <CrewCard crewmate={crewmate} hideNameInHeader hideCollectionInHeader hideFooter hideMask />
                     </CrewCardContainer>
                   );
                 }
               })}
             </CrewContainer>
           )}
-          {!crewLoading && !(crew?.crewMembers?.length > 0) && (
+          {!crewLoading && !(crew?._crewmates?.length > 0) && (
             <CrewContainer noCrew>
               <>
                 <CaptainDetails>
@@ -400,6 +409,7 @@ const Account = (props) => {
       }
       <PlayCTA loggedIn={loggedIn}>
         <MainButton
+          background={theme.colors.main}
           color={theme.colors.main}
           size="huge"
           onClick={onClickPlay}>

@@ -22,7 +22,7 @@ class TerrainChunkManager {
     this.config = config;
     this.workerPool = workerPool;
     this.materialOverrides = materialOverrides;
-    
+
     const {
       ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
       ...prunedConfig

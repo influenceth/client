@@ -36,7 +36,7 @@ const Container = styled.div`
 const noop = () => {};
 
 const Cutscene = () => {
-  const { source, allowSkip } = useStore(s => s.cutscene) || {};
+  const { source, allowSkip } = useStore(s => s.cutscene || {});
   const dispatchCutscene = useStore(s => s.dispatchCutscene);
 
   const [highlightButtons, setHighlightButtons] = useState(true);

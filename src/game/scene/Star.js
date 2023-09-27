@@ -16,7 +16,7 @@ lensflareElements.forEach((e) => lensflare.addElement(e));
 
 const worldPos = new Vector3();
 
-const Star = (props) => {
+const Star = () => {
   const path = `${process.env.PUBLIC_URL}/textures/star/`;
   const textures = useTexture([
     `${path}lensflare1.png`,

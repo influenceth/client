@@ -1,4 +1,4 @@
-import { toRarity, toSpectralType } from '@influenceth/sdk';
+import { Asteroid } from '@influenceth/sdk';
 import DataTable, { createTheme } from 'react-data-table-component';
 
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
@@ -9,69 +9,44 @@ import theme from '~/theme';
 const columns = [
   {
     name: 'Name',
-    selector: row => row.name,
+    selector: row => row.Name?.name,
     sortable: false
   },
   {
     name: 'Radius',
-    selector: row => row.radius,
+    selector: row => row.Celestial.radius,
     sortable: true,
-    format: row => `${row.radius?.toLocaleString()} km`
+    format: row => `${row.Celestial.radius?.toLocaleString()} km`
   },
   {
     name: 'Spectral Type',
-    selector: row => row.spectralType,
+    selector: row => row.Celestial.spectralType,
     sortable: true,
-    format: row => `${toSpectralType(row.spectralType)}-type`
+    format: row => `${Asteroid.getSpectralType(row)}-type`
   },
   {
     name: 'Rarity',
-    selector: row => row.bonuses,
-    format: row => toRarity(row.bonuses)
+    selector: row => row.Celestial.bonuses,
+    format: row => Asteroid.getRarity(row.Celestial.bonuses)
   },
   {
     name: 'Semi-major Axis',
-    selector: row => row.orbital.a,
+    selector: row => row.Orbit.a,
     sortable: true,
-    format: row => `${row.orbital?.a} AU`
+    format: row => `${row.Orbit.a} AU`
   },
   {
     name: 'Eccentricity',
-    selector: row => row.orbital.e,
+    selector: row => row.Orbit.ecc,
     sortable: true,
   },
   {
     name: 'Inclination',
-    selector: row => row.orbital.i,
+    selector: row => row.Orbit.inc,
     sortable: true,
-    format: row => `${(row.orbital.i * 180 / Math.PI).toLocaleString()}°`
+    format: row => `${(row.Orbit.inc * 180 / Math.PI).toLocaleString()}°`
   }
 ];
-
-// Create custom theme based on primary theme for DataTable
-createTheme('influence', {
-  text: {
-    primary: theme.colors.mainText,
-    secondary: theme.colors.secondaryText,
-  },
-  background: {
-    default: 'transparent'
-  },
-  divider: {
-    default: theme.colors.contentBorder,
-  },
-  button: {
-    default: theme.colors.main,
-    disabled: theme.colors.disabledText,
-  },
-  highlightOnHover: {
-    default: 'rgba(255, 255, 255, 0.15)',
-    text: theme.colors.main,
-  },
-  sortFocus: {
-    default: 'white',
-  }
-});
 
 const styleOverrides = {
   headCells: {
@@ -84,7 +59,7 @@ const styleOverrides = {
   }
 };
 
-const OwnedAsteroidsTable = (props) => {
+const OwnedAsteroidsTable = () => {
   const { data: asteroids } = useOwnedAsteroids();
 
   return (

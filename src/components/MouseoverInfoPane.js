@@ -13,7 +13,7 @@ const InfoTooltip = styled.div`
   opacity: 0;
   transform: translateY(0);
   transition: opacity 250ms ease, transform 250ms ease;
-  width: 360px;
+  width: 415px;
 
   ${p => p.css || ''};
 
@@ -23,15 +23,15 @@ const InfoTooltip = styled.div`
   `}
 `;
 
-const MouseoverInfoPane = ({ children, css, cssWhenVisible, referenceEl, visible }) => {
+const MouseoverInfoPane = ({ children, css, cssWhenVisible, placement, referenceEl, visible }) => {
   const [popperEl, setPopperEl] = useState();
   const { styles, attributes } = usePopper(referenceEl, popperEl, {
-    placement: 'top',
+    placement: placement || 'top',
     modifiers: [
       {
         name: 'flip',
         options: {
-          fallbackPlacements: ['top-start', 'top-end', 'right', 'left'],
+          fallbackPlacements: ['top-start', 'top-end', 'bottom', 'right', 'left'],
         },
       },
     ],

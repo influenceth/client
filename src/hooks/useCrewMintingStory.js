@@ -1,19 +1,21 @@
-import { useQuery } from 'react-query';
-import useAuth from '~/hooks/useAuth';
+// TODO: ecs refactor -- maybe deprecated?
 
-import api from '~/lib/api';
+// import { useQuery } from 'react-query';
+// import useAuth from '~/hooks/useAuth';
 
-const useCrewMintingStory = () => {
-  const { token } = useAuth();
+// import api from '~/lib/api';
 
-  return useQuery(
-    [ 'stories', 'recruitment' ],
-    () => api.getAdalianRecruitmentStory(),
-    {
-      enabled: !!token,
-      retry: false
-    }
-  );
-};
+// const useCrewMintingStory = () => {
+//   const { token } = useAuth();
 
-export default useCrewMintingStory;
+//   return useQuery(
+//     [ 'stories', 'recruitment' ],
+//     () => api.getAdalianRecruitmentStory(),
+//     {
+//       enabled: !!token,
+//       retry: false
+//     }
+//   );
+// };
+
+// export default useCrewMintingStory;

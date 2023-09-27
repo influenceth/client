@@ -41,7 +41,7 @@ const CrewSilhouetteCard = ({ onClick, overlay, ...props }) => {
   return (
     <Card onClick={onClick} hasOverlay={!!overlay} {...props}>
       <CardImage>
-        <img alt="Crew Member" src={silhouette} />
+        <img alt="Crewmate" src={silhouette} />
       </CardImage>
       {overlay && <CrewCardOverlay {...overlay} />}
     </Card>

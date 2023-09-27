@@ -5,12 +5,18 @@ import OnClickLink from '~/components/OnClickLink';
 import useAuth from '~/hooks/useAuth';
 
 const AddressLink = (props) => {
-  const { address, chain } = props;
+  const { address, chain, truncate } = props;
   const { account } = useAuth();
 
   const label = useMemo(() => {
-    return (account && account === address) ? 'you' : address;
-  }, [account, address]);
+    return (account && account === address)
+      ? 'you'
+      : (
+        address && truncate
+        ? `${address.substr(0, 6)}...${address.substr(-4)}`
+        : address
+      );
+  }, [account, address, truncate]);
 
   if (address) {
     return (

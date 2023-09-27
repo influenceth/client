@@ -1,19 +1,21 @@
-import { useQuery } from 'react-query';
-import useAuth from '~/hooks/useAuth';
+// TODO: ecs refactor -- maybe deprecated? what about random event stories?
 
-import api from '~/lib/api';
+// import { useQuery } from 'react-query';
+// import useAuth from '~/hooks/useAuth';
 
-const useBook = (id) => {
-  const { token } = useAuth();
+// import api from '~/lib/api';
 
-  return useQuery(
-    [ 'book', id, token ],
-    () => id && api.getBook(id),
-    {
-      enabled: !!id,
-      retry: false
-    }
-  );
-};
+// const useBook = (id) => {
+//   const { token } = useAuth();
 
-export default useBook;
+//   return useQuery(
+//     [ 'book', id, token ],
+//     () => api.getBook(id),
+//     {
+//       enabled: !!id,
+//       retry: false
+//     }
+//   );
+// };
+
+// export default useBook;

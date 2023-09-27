@@ -21,34 +21,43 @@ export const getContrastText = (rgb) => {
   return (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000 > 125 ? 'black' : 'white';
 }
 
+const main = '#36a7cd';
+const brightMain = '#57d5ff';
+const success = '#00ffe7';
+
+const green = '#88e675';
 const gray = '#bbbbbb';
 const teal = '#69ebf4';
 const blue = '#4f90ff';
+const lightPurple = '#636ee1';
 const purple = '#884fff';
+const lightOrange = '#faaf42';
 const orange = '#ff984f';
 const yellow = '#ffd94f';
 const red = '#df4300';
 
 const theme = {
   colors: {
-    main: '#36a7cd',
-    mainRGB: '0, 191, 255', // NOTE: this should be rgb of `main`
+    main,
+    mainRGB: hexToRGB(main),
     mainBorder: 'rgba(255, 255, 255, 0.25)',
+    brightMain,
     mobileBackground: '#181818',
     contentBorder: '#666666',
     contentBackdrop: 'rgba(0, 0, 0, 0.5)',
     contentHighlight: 'rgba(40, 40, 40, 0.5)',
     contentDark: 'rgb(40, 40, 40)',
+    hudMenuBackground: 'rgba(15, 15, 15, 0.85)',
     mainText: '#cccccc',
     secondaryText: '#999999',
     disabledText: 'rgba(255,255,255,0.4)',
     borderBottom: '#555555',
     borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
-    success: '#54de94',
-    successRGB: '84, 222, 148', // NOTE: this should be rgb of `success`
-    txButton: '#4444b8',
+    success,
+    successRGB: hexToRGB(success),
+    warning: orange,
     error: red,
-    teal, blue, purple, orange, yellow, red,
+    teal, blue, lightPurple, purple, lightOrange, orange, yellow, red, green,
     bonus: {
       level0: '#999999',
       level1: 'rgb(105, 235, 244)',
@@ -83,7 +92,10 @@ const theme = {
         Merchant: hexToRGB(yellow),
         Scientist: hexToRGB(blue),
       }
-    }
+    },
+    mainButton: main,
+    disabledButton: '#676767',
+    txButton: '#6c6adc',
   },
   fontSizes: {
     smallText: '12px',

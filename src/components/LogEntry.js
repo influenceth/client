@@ -29,7 +29,6 @@ const Icon = styled.div`
   font-size: 130%;
   padding-left: 5px;
   padding-right: 5px;
-
 `;
 
 const Description = styled.div`

@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { Asteroid, Entity, Name } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
-import useSale from '~/hooks/useSale';
 import useWebWorker from '~/hooks/useWebWorker';
 import useBuyAsteroid from '~/hooks/useBuyAsteroid';
+import useChangeName from '~/hooks/useChangeName';
 import useCreateReferral from '~/hooks/useCreateReferral';
-import useNameAsteroid from '~/hooks/useNameAsteroid';
 import constants from '~/lib/constants';
 import formatters from '~/lib/formatters';
 import exportGLTF from '~/lib/graphics/exportGLTF';
@@ -35,6 +35,10 @@ import {
 import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import useNameAvailability from '~/hooks/useNameAvailability';
+import { boolAttr } from '~/lib/utils';
+import usePriceConstants from '~/hooks/usePriceConstants';
+import useControlAsteroid from '~/hooks/useControlAsteroid';
+import useActivities from '~/hooks/useActivities';
 
 const paneStackBreakpoint = 720;
 
@@ -182,7 +186,7 @@ const ModelButton = styled(Button)`
 const HighlightOwnership = styled.div`
   font-size: 115%;
   font-weight: bold;
-  color: ${p => p.theme.colors.main};
+  color: ${p => p.warning ? p.theme.colors.warning : p.theme.colors.main};
   margin-top: 0.25em;
   margin-bottom: 1.25em;
 `;
@@ -201,7 +205,7 @@ const ButtonRow = styled.div`
   }
 `;
 
-// TODO: componentize this (shared w/ crewmemberdetails)
+// TODO: componentize this (shared w/ crewmatedetails)
 const breakpoint = 1375;
 const LogHeader = styled.ul``;
 const Log = styled.div`
@@ -267,16 +271,16 @@ const SmHidden = styled.span`
 `;
 
 
-const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
+const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   const { account } = useAuth();
-  const { data: sale } = useSale();
-  const createReferral = useCreateReferral(Number(asteroid.i));
-  const { getAsteroidNameAvailability } = useNameAvailability();
-  const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.i));
-  const { nameAsteroid, naming } = useNameAsteroid(Number(asteroid.i));
+  const createReferral = useCreateReferral(Number(asteroid.id));
+  const isNameValid = useNameAvailability(Entity.IDS.ASTEROID);
+  const { data: activities } = useActivities({ id: asteroid.id, label: Entity.IDS.ASTEROID });
+  const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.id));
+  const { controlAsteroid, takingControl } = useControlAsteroid(Number(asteroid.id));
+  const { changeName, changingName } = useChangeName({ id: Number(asteroid.id), label: Entity.IDS.ASTEROID });
+  const { data: priceConstants } = usePriceConstants();
   const webWorkerPool = useWebWorker();
-
-  const saleIsActive = useStore(s => s.sale);
 
   const [exportingModel, setExportingModel] = useState(false);
   const [newName, setNewName] = useState('');
@@ -286,7 +290,7 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
     if (exportingModel || !asteroid) return;
     setExportingModel(true);
     renderDummyAsteroid(asteroid, constants.MODEL_EXPORT_RESOLUTION, webWorkerPool, (asteroidModel, dispose) => {
-      exportGLTF(asteroidModel, `asteroid_${asteroid.asteroidId}`, () => {
+      exportGLTF(asteroidModel, `asteroid_${asteroid.id}`, () => {
         try {
           dispose();
         } catch (e) { console.warn(e); }
@@ -299,27 +303,27 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
   useEffect(() => {
     setNewName('');
     setOpenNameChangeForm(false);
-  }, [asteroid.customName]);
+  }, [asteroid.Name?.name]);
 
   const attemptUpdateAsteroidName = useCallback(async () => {
-    if (await getAsteroidNameAvailability(newName)) {
-      nameAsteroid(newName);
+    if (await isNameValid(newName)) {
+      changeName(newName);
     }
-  }, [nameAsteroid, getAsteroidNameAvailability, newName]);
+  }, [changeName, isNameValid, newName]);
 
   return (
     <Wrapper>
       <LeftPane>
-        <DataReadout style={{ fontSize: '18px', padding: '0 0 5px' }} label="Asteroid ID#">{asteroid.i}</DataReadout>
+        <DataReadout style={{ fontSize: '18px', padding: '0 0 5px' }} label="Asteroid ID#">{asteroid.id}</DataReadout>
         <DataReadout style={{ fontSize: '18px', padding: '0 0 5px' }} label="Owner">
-          <AddressLink address={asteroid.owner} chain={asteroid.chain} />
+          <AddressLink address={asteroid.Nft?.owner} chain={asteroid.Nft?.chain} />
         </DataReadout>
         <GraphicSection>
           <GraphicWrapper>
             <AsteroidGraphic
               abundances={abundances}
               asteroid={asteroid}
-              noColor={!asteroid.scanned}
+              noColor={asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED}
               noGradient />
           </GraphicWrapper>
         </GraphicSection>
@@ -329,32 +333,32 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
             <div>
               <OrbitalPeriodIcon />
               <label>Orbital Period</label>
-              <span>{formatters.period(asteroid.orbital.a)}</span>
+              <span>{formatters.period(asteroid.Orbit)}</span>
             </div>
             <div>
               <InclinationIcon />
               <label>Inclination</label>
-              <span>{formatters.inclination(asteroid.orbital.i)}</span>
+              <span>{formatters.inclination(asteroid.Orbit.inc)}</span>
             </div>
             <div>
               <SemiMajorAxisIcon />
               <label>Semi-Major Axis</label>
-              <span>{formatters.axis(asteroid.orbital.a)}</span>
+              <span>{formatters.axis(asteroid.Orbit.a)}</span>
             </div>
             <div>
               <EccentricityIcon />
               <label>Eccentricity</label>
-              <span>{asteroid.orbital.e}</span>
+              <span>{asteroid.Orbit.ecc}</span>
             </div>
             <div>
               <RadiusIcon />
               <label>Diameter</label>
-              <span>{formatters.radius(asteroid.radius * 2)}</span>
+              <span>{formatters.radius(asteroid.Celestial.radius * 2)}</span>
             </div>
             <div>
               <SurfaceAreaIcon />
               <label>Surface Area</label>
-              <span>{formatters.surfaceArea(asteroid.radius)}</span>
+              <span>{formatters.surfaceArea(asteroid.Celestial.radius)}</span>
             </div>
           </Attributes>
         </SectionBody>
@@ -370,14 +374,15 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
               </LogHeader>
               <div>
                 <ul>
-                  {asteroid.events.length > 0
-                    ? asteroid.events.map(e => (
+                  {/* TODO: totalCount from api, pagination, custom columns (see mocks) */}
+                  {activities?.docs?.length > 0
+                    ? activities.docs.map(a => (
                       <LogEntry
-                        key={e.id}
+                        key={a.id}
                         css={{ fontSize: '13px', fontWeight: 'bold', padding: '6px 4px' }}
-                        data={{ ...e, i: asteroid.i }}
+                        data={a.event}
                         timestampBreakpoint="1400px"
-                        type={`Asteroid_${e.event}`}
+                        type={`Asteroid_${a.event.event}`}
                         isTabular />
                     ))
                     : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
@@ -391,9 +396,10 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
         <div>
           <SectionHeader>Management</SectionHeader>
           <SectionBody>
-            {isOwner && <HighlightOwnership>You own this asteriod.</HighlightOwnership>}
+            {isOwner && !isManager && <HighlightOwnership warning>You own this Asteroid, but your crew does not currently manage it.</HighlightOwnership>}
+            {isManager && <HighlightOwnership>Your crew manages this Asteroid.</HighlightOwnership>}
             <ButtonRow>
-              {isOwner && (
+              {isManager && (
                 <>
                   <StaticForm
                     css={{
@@ -408,60 +414,71 @@ const AsteroidInformation = ({ abundances, asteroid, isOwner }) => {
                     }}
                     onClose={() => setOpenNameChangeForm(false)}
                     title={<><EditIcon /><span>Change Name</span></>}
-                    loading={naming}>
+                    loading={boolAttr(changingName)}>
                     <Text>Names must be unique, and can only include letters, numbers, and single spaces.</Text>
                     <NameForm>
                       <TextInput
-                        disabled={naming}
+                        disabled={boolAttr(changingName)}
                         initialValue=""
-                        maxlength={31}
-                        pattern="^(([a-zA-Z0-9]+\s)*[a-zA-Z0-9]+){1,31}$"
+                        minlength={Name.TYPES[Entity.IDS.ASTEROID].min}
+                        maxlength={Name.TYPES[Entity.IDS.ASTEROID].max}
+                        pattern={Name.getTypeRegex(Entity.IDS.ASTEROID)}
                         onChange={(v) => setNewName(v)} />
                       <IconButton
                         data-tip="Submit"
                         data-for="global"
-                        disabled={naming}
+                        disabled={boolAttr(changingName)}
                         onClick={attemptUpdateAsteroidName}>
                         <CheckCircleIcon />
                       </IconButton>
                     </NameForm>
                   </StaticForm>
                   <Button
-                    disabled={naming}
+                    disabled={boolAttr(changingName)}
                     isTransaction
-                    loading={naming}
+                    loading={boolAttr(changingName)}
                     onClick={() => setOpenNameChangeForm(true)}>
                     Re-Name
                   </Button>
                 </>
               )}
 
+              {isOwner && !isManager && (
+                <Button
+                  disabled={boolAttr(takingControl)}
+                  isTransaction
+                  loading={boolAttr(takingControl)}
+                  onClick={controlAsteroid}>
+                  Manage Asteroid
+                </Button>
+              )}
+
               {isOwner && (
                 <ModelButton
-                  disabled={exportingModel}
-                  loading={exportingModel}
+                  disabled={boolAttr(exportingModel)}
+                  loading={boolAttr(exportingModel)}
                   onClick={download3dModel}>
-                  <SmHidden>Download</SmHidden> 3D Model
+                  <><SmHidden>Download{' '}</SmHidden><span>3D Model</span></>
                 </ModelButton>
               )}
 
-              {sale && !asteroid.owner && (
+              {priceConstants && !asteroid.Nft?.owner && (
                 <Button
                   data-tip="Purchase development rights"
                   data-for="global"
-                  disabled={!account || !saleIsActive || buying}
+                  disabled={boolAttr(!account || buying)}
                   isTransaction
-                  loading={buying}
+                  loading={boolAttr(buying)}
                   onClick={() => {
                     buyAsteroid();
                     createReferral.mutate();
                   }}>
-                  Purchase -&nbsp;<Ether>{formatters.asteroidPrice(asteroid.r, sale)}</Ether>
+                  Purchase -&nbsp;<Ether>{formatters.asteroidPrice(asteroid.Celestial.radius, priceConstants)}</Ether>
                 </Button>
               )}
-              {asteroid.owner && (
+              {asteroid.Nft?.owner && (
                 <MarketplaceLink
-                  chain={asteroid.chain}
+                  chain={asteroid.Nft?.chain}
                   assetType="asteroid"
                   id={asteroid.i}>
                   {(onClick, setRefEl) => (

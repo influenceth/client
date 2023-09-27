@@ -1,5 +1,7 @@
+import { constants as astroConstants } from '@influenceth/astro';
+
 const constants = {
-  AU: 149597870700, // in meters
+  AU: astroConstants.AU, // in meters
   MAX_SYSTEM_RADIUS: 10, // in AU
   MAX_ASTEROID_RADIUS: 376000, // in meters
   MIN_ASTEROID_RADIUS: 1000, // in meters
@@ -13,7 +15,7 @@ const constants = {
 
   // Asteroid settings
   // (resolution)
-  CHUNK_RESOLUTION: 64,      // NOTE: multiplied by 1, 2, 4 (per user's texture settings) -- should be power of 2
+  CHUNK_RESOLUTION: 64, // NOTE: multiplied by 1, 2, 4 (per user's texture settings) -- should be power of 2
   MIN_CHUNK_SIZE: 2000,
   CHUNK_SPLIT_DISTANCE: 1.25,  // NOTE: this should probably always be >= 0.5 functionally
   OVERSAMPLE_CHUNK_TEXTURES: true,  // NOTE: this probably doesn't need to be a constant; we should always do this
@@ -26,6 +28,9 @@ const constants = {
 
   MIN_FOV: 30,
   MAX_FOV: 105,
+
+  // Lot instancing
+  MAX_LOTS_RENDERED: 8000, // NOTE: could reasonably make this dependent on GPU tier / settings
 
   // (performance)
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: true,

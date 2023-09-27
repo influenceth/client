@@ -69,6 +69,7 @@ patchNpmModules = () => config => {
   return config;
 };
 
+
 module.exports = override(
   setWebpackTarget('web'),
   addBabelPlugin([

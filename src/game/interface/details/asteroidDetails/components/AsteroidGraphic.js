@@ -1,14 +1,15 @@
 import { useCallback, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
-import { toSize, toSpectralType } from '@influenceth/sdk';
+import { Asteroid, Entity } from '@influenceth/sdk';
 
-import useStore from '~/hooks/useStore';
 import AsteroidComposition from './AsteroidComposition';
-import AsteroidRendering from './AsteroidRendering';
+import AsteroidRendering from '../../../../../components/AsteroidRendering';
 import AsteroidSpinner from './AsteroidSpinner';
+import formatters from '~/lib/formatters';
 import { WarningOutlineIcon } from '~/components/Icons';
 import theme from '~/theme';
 import useScanManager from '~/hooks/useScanManager';
+import useSale from '~/hooks/useSale';
 
 const OPACITY_ANIMATION = 400;
 
@@ -85,8 +86,8 @@ const LastRow = styled.div`
 `;
 
 const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
-  const saleIsActive = useStore(s => s.sale);
-  const { scanStatus } = useScanManager(asteroid);
+  const saleIsActive = useSale(Entity.IDS.ASTEROID);
+  const { scanStatus, scanType } = useScanManager(asteroid);
 
   const [ready, setReady] = useState();
 
@@ -114,14 +115,14 @@ const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
       </OpacityContainer>
       <GraphicData>
         <div>
-          {toSize(asteroid.radius)} <b>{toSpectralType(asteroid.spectralType)}-type</b>
+          {Asteroid.Entity.getSize(asteroid)} <b>{Asteroid.Entity.getSpectralType(asteroid)}-type</b>
         </div>
         <AsteroidName>
-          {asteroid.customName ? `\`${asteroid.customName}\`` : asteroid.baseName}
+          {formatters.asteroidName(asteroid)}
         </AsteroidName>
-        {scanStatus === 'FINISHED' && (
+        {(scanStatus === 'FINISHED' || (scanType === 'RESOURCE' && scanStatus === 'UNSCANNED')) && (
           <LastRow style={{ color: 'white' }}>
-            {defaultLastRow || `${Number(Math.floor(4 * Math.PI * Math.pow(asteroid.radius / 1000, 2))).toLocaleString()} lots`}
+            {defaultLastRow || `${Asteroid.Entity.getSurfaceArea(asteroid).toLocaleString()} lots`}
           </LastRow>
         )}
         {scanStatus === 'SCANNING' && (
@@ -134,21 +135,25 @@ const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
             Resource<br/>Analysis Ready
           </LastRow>
         )}
-        {scanStatus === 'UNSCANNED' && asteroid.owner && (
-          <LastRow style={{ color: theme.colors.error }}>
-            Un-Scanned<br/>
-            <WarningOutlineIcon />
-          </LastRow>
-        )}
-        {scanStatus === 'UNSCANNED' && !asteroid.owner && saleIsActive && (
-          <LastRow style={{ color: '#55d0fa', fontWeight: 'bold' }}>
-            Available<br/>for Purchase
-          </LastRow>
-        )}
-        {scanStatus === 'UNSCANNED' && !asteroid.owner && !saleIsActive && (
-          <LastRow>
-            Unavailable
-          </LastRow>
+        {scanType === 'SURFACE' && scanStatus === 'UNSCANNED' && (
+          <>
+            {asteroid.Control?.controller && (
+              <LastRow style={{ color: theme.colors.error }}>
+                Un-Scanned<br/>
+                <WarningOutlineIcon />
+              </LastRow>
+            )}
+            {!asteroid.Control?.controller && saleIsActive && (
+              <LastRow style={{ color: '#55d0fa', fontWeight: 'bold' }}>
+                Available<br/>for Purchase
+              </LastRow>
+            )}
+            {!asteroid.Control?.controller && !saleIsActive && (
+              <LastRow>
+                Unavailable
+              </LastRow>
+            )}
+          </>
         )}
       </GraphicData>
     </Graphic>

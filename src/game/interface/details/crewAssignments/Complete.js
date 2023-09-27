@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { toCrewTrait } from '@influenceth/sdk';
+import { Crewmate } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import Button from '~/components/Button';
@@ -10,7 +10,7 @@ import CrewCard from '~/components/CrewCard';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/DetailsModal';
 import { LinkIcon, TwitterIcon } from '~/components/Icons';
-import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStorySession from '~/hooks/useStorySession';
 
 const slideOutTransition = keyframes`
@@ -283,11 +283,11 @@ const FinishContainer = styled.div`
   }
 `;
 
-const CrewAssignmentComplete = (props) => {
+const CrewAssignmentComplete = () => {
   const { account } = useAuth();
   const { id: sessionId } = useParams();
   const history = useHistory();
-  const { crewMemberMap } = useCrew();
+  const { crewmateMap } = useCrewContext();
   const { storyState } = useStorySession(sessionId);
 
   const onCloseDestination = useMemo(
@@ -296,14 +296,14 @@ const CrewAssignmentComplete = (props) => {
   );
 
   const crew = useMemo(
-    () => crewMemberMap && storyState && crewMemberMap[storyState.owner],
-    [storyState, crewMemberMap]
+    () => crewmateMap && storyState && crewmateMap[storyState.owner],
+    [storyState, crewmateMap]
   );
 
   const rewards = useMemo(() => {
     return (storyState?.accruedTraits || []).map((id) => ({
       id,
-      ...toCrewTrait(id)
+      ...Crewmate.getTrait(id)
     }));
   }, [storyState?.accruedTraits]);
 
@@ -337,7 +337,7 @@ const CrewAssignmentComplete = (props) => {
       ? (
           <RewardSection>
             <div>
-              <h4>This crew member has gained traits:</h4>
+              <h4>This crewmate has gained traits:</h4>
               {rewards.map((reward) => (
                 <div key={reward.id}>
                   <CrewTraitIcon trait={reward.id} />
@@ -372,7 +372,7 @@ const CrewAssignmentComplete = (props) => {
             <CardWrapper>
               <CardContainer>
                 <div>
-                  <CrewCard crew={crew} />
+                  <CrewCard crewmate={crew} />
                 </div>
               </CardContainer>
               {slideOutContents && (

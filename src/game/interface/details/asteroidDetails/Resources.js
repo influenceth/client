@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
-import { toRarity, toSpectralType } from '@influenceth/sdk';
+import { Asteroid } from '@influenceth/sdk';
 import { BsChevronRight as NextIcon } from 'react-icons/bs';
 
 import BonusBar from '~/components/BonusBar';
@@ -16,6 +16,10 @@ import useStore from '~/hooks/useStore';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import theme, { hexToRGB } from '~/theme';
 import LiveTimer from '~/components/LiveTimer';
+import AsteroidBonuses from './AsteroidBonuses';
+import { getProductIcon } from '~/lib/assetUtils';
+import { boolAttr } from '~/lib/utils';
+import useCrewContext from '~/hooks/useCrewContext';
 
 // TODO (enhancement): if these stay the same, then should just export from Information or extract to shared component vvv
 const paneStackBreakpoint = 720;
@@ -344,12 +348,12 @@ const UnscannedWrapper = styled.div`
   justify-content: center;
 `;
 const UnscannedContainer = styled.div`
-  max-width: 540px;
+  max-width: 570px;
   width: 100%;
 `;
 const UnscannedHeader = styled.div`
-  background: ${p => p.isOwner ? p.theme.colors.main : '#3d3d3d'};
-  color: ${p => p.isOwner ? 'black' : 'white'};
+  background: ${p => p.isManager ? p.theme.colors.main : '#3d3d3d'};
+  color: ${p => p.isManager ? 'black' : 'white'};
   font-size: 20px;
   line-height: 1.8em;
   position: relative;
@@ -394,30 +398,7 @@ const spectralLabels = {
   m: 'Metallic'
 };
 
-const bonusLabels = {
-  yield: 'Overall',
-  fissile: 'Fissile',
-  metal: 'Metal',
-  organic: 'Organic',
-  rareearth: 'Rare-Earth',
-  volatile: 'Volatile',
-};
-
-const StartScanButton = ({ i }) => {
-  const { data: extendedAsteroid, isLoading } = useAsteroid(Number(i), true);
-  const { startAsteroidScan } = useScanManager(extendedAsteroid);
-  return (
-    <Button
-      disabled={!extendedAsteroid}
-      loading={isLoading}
-      onClick={startAsteroidScan}
-      isTransaction>
-      Start Scan
-    </Button>
-  );
-};
-
-const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
+const ResourceDetails = ({ abundances, asteroid, isManager }) => {
   const history = useHistory();
   const { category: initialCategory } = useParams();
   const selectOrigin = useStore(s => s.dispatchOriginSelected);
@@ -425,7 +406,8 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const { finalizeAsteroidScan, scanStatus } = useScanManager(asteroid);
+  const { crew } = useCrewContext();
+  const { startAsteroidScan, finalizeAsteroidScan, scanStatus, scanType } = useScanManager(asteroid);
 
   const [selected, setSelected] = useState();
   const [hover, setHover] = useState();
@@ -435,8 +417,8 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     setSelected(toBeSelected);
     setHover(null);
 
-    history.replace(`/asteroids/${asteroid.i}/resources${toBeSelected ? `/${toBeSelected.categoryKey}` : ``}`);
-  }, [abundances, asteroid.i]); // eslint-disable-line react-hooks/exhaustive-deps
+    history.replace(`/asteroids/${asteroid.id}/resources${toBeSelected ? `/${toBeSelected.categoryKey}` : ``}`);
+  }, [abundances, asteroid.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleHover = useCallback((category, isHovering) => () => {
     setHover(isHovering ? category : null);
@@ -445,7 +427,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
   const goToResourceViewer = useCallback((resource) => (e) => {
     e.stopPropagation();
     ReactTooltip.hide();
-    history.push(`/resource-viewer/${resource.i}?back=${encodeURIComponent(history.location.pathname)}`)
+    history.push(`/model/resource/${resource.i}?back=${encodeURIComponent(history.location.pathname)}`)
     return false;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -457,9 +439,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     dispatchResourceMapToggle(true);
     history.push('/');
     return false;
-  }, [asteroid?.i, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const nonzeroBonuses = useMemo(() => (asteroid?.bonuses || []).filter((b) => b.level > 0), [asteroid?.bonuses]);
+  }, [asteroid?.id, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [infoPaneAnchor, setInfoPaneAnchor] = useState();
   const setInfoPaneRef = (which) => (e) => {
@@ -476,13 +456,16 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
     }
   }, [abundances?.length, initialCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const unpackedBonuses = useMemo(() => Asteroid.Entity.getBonuses(asteroid) || [], [asteroid]);
+  const nonzeroBonuses = useMemo(() => unpackedBonuses.filter((b) => b.level > 0), [unpackedBonuses]);
+
   useEffect(() => ReactTooltip.rebuild(), [selected]);
 
   return (
     <Wrapper>
       <LeftPane>
         <SpectralLegend>
-          {toSpectralType(asteroid.spectralType).toLowerCase().split('').map((l) => (
+          {Asteroid.getSpectralType(asteroid.Celestial.spectralType).toLowerCase().split('').map((l) => (
             <div key={l}>
               <span>{l}</span>
               <span>{spectralLabels[l]}</span>
@@ -494,43 +477,66 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             <AsteroidGraphic
               abundances={abundances}
               asteroid={asteroid}
-              defaultLastRow={toRarity(asteroid.bonuses)}
+              defaultLastRow={Asteroid.Entity.getRarity(asteroid)}
               focus={selected?.category}
               hover={hover}
-              noColor={!asteroid.scanned} />
+              noColor={asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED} />
           </GraphicWrapper>
         </GraphicSection>
       </LeftPane>
       <RightPane>
-        {!asteroid.scanned && (
+        {/* TODO: consider stacking two UnscannedContainer's in this right pane until complete so the complete
+            flow is more clear to the user */}
+        {asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED && (
           <UnscannedWrapper>
-            {isOwner && (
+            {isManager && (
               <UnscannedContainer>
                 {scanStatus === 'READY_TO_FINISH' && (
-                  <UnscannedHeader isOwner>
+                  <UnscannedHeader isManager>
                     <WarningOutlineIcon />
-                    Un-Scanned Asteroid
+                    {scanType === 'RESOURCE'
+                      ? 'Asteroid Resource Scan'
+                      : 'Un-Scanned Asteroid'}
                   </UnscannedHeader>
                 )}
                 <UnscannedBody>
                   {scanStatus === 'UNSCANNED' && (
                     <>
-                      <p><b>You own this asteroid.</b> Perform a scan to determine its final resource composition and bonuses.</p>
-                      <StartScanButton i={asteroid?.i} />
+                      {scanType === 'SURFACE' && (
+                        <p>
+                          <b>You manage this asteroid.</b> Perform a long-range surface scan to determine its final bonuses.
+                        </p>
+                      )}
+                      {scanType === 'RESOURCE' && (
+                        <p>
+                          A resource scan to determine the final resource composition of this asteroid must be performed
+                          at short-range.
+                          <br/><br/>
+                          <span style={crew._location?.asteroidId !== asteroid.id ? { color: theme.colors.error } : {}}>
+                            Your crew must be in orbit or on the surface of the asteroid.
+                          </span>
+                        </p>
+                      )}
+                      <Button
+                        disabled={scanType === 'RESOURCE' && crew._location?.asteroidId !== asteroid.id}
+                        onClick={startAsteroidScan}
+                        isTransaction>
+                        Start {scanType} Scan
+                      </Button>
                     </>
                   )}
                   {scanStatus === 'SCANNING' && (
                     <>
-                      <h3>SCANNING</h3>
-                      <LiveTimer target={asteroid.scanCompletionTime} />
+                      <h3>SCANNING {scanType === 'RESOURCE' ? 'RESOURCES' : 'SURFACE'}</h3>
+                      <LiveTimer target={asteroid.Celestial.scanFinishTime} />
                     </>
                   )}
                   {(scanStatus === 'READY_TO_FINISH' || scanStatus === 'FINISHING') && (
                     <>
-                      <p>Asteroid scan is complete. Ready to finalize.</p>
+                      <p>{scanType === 'RESOURCE' ? 'Short-range resource' : 'Long-range surface'} scan is complete. Ready to finalize.</p>
                       <Button
-                        disabled={scanStatus === 'FINISHING'}
-                        loading={scanStatus === 'FINISHING'}
+                        disabled={boolAttr(scanStatus === 'FINISHING')}
+                        loading={boolAttr(scanStatus === 'FINISHING')}
                         onClick={finalizeAsteroidScan}
                         isTransaction>
                         Finalize
@@ -540,14 +546,16 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                 </UnscannedBody>
               </UnscannedContainer>
             )}
-            {!isOwner && (
+            {!isManager && (
               <UnscannedContainer>
                 <UnscannedHeader>
                   <WarningOutlineIcon />
-                  Un-Scanned Asteroid
+                  {scanType === 'RESOURCE'
+                      ? 'Long-range Scan Incomplete'
+                      : 'Un-Scanned Asteroid'}
                 </UnscannedHeader>
-                <UnscannedBody isOwner={isOwner}>
-                  You do not own this asteroid. The owner must complete a scan to determine its final resource composition and bonuses.
+                <UnscannedBody isManager={isManager}>
+                  The managing crew must complete both long-range and short-range scans to determine its resource composition and bonuses.
                 </UnscannedBody>
               </UnscannedContainer>
             )}
@@ -575,7 +583,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
               )}
               {selected.resources.map((resource) => { return (
                 <ResourceRow key={resource.i} category={selected.categoryKey} onClick={goToResourceViewer(resource)}>
-                  <ResourceIcon style={{ backgroundImage: `url(${resource.iconUrls.w85})` }} />
+                  <ResourceIcon style={{ backgroundImage: `url(${getProductIcon(resource.i, 'w85')})` }} />
                   <ResourceInfo>
                     <label>{resource.name}</label>
                     <BarChart value={resource.abundance} maxValue={selected.resources[0].abundance} twoLine>
@@ -597,7 +605,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
         )}
         {!selected && (
           <>
-            {asteroid.scanned && (
+            {asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED && (
               <div>
                 <SectionHeader>Resource Groups</SectionHeader>
                 <SectionBody>
@@ -630,7 +638,7 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
                               data-tip={resource.name}
                               data-for="global"
                               onClick={goToResourceViewer(resource)}
-                              style={{ backgroundImage: `url(${resource.iconUrls.w25})` }} />
+                              style={{ backgroundImage: `url(${getProductIcon(resource.i, 'w25')})` }} />
                           ))}
                         </div>
                       </ResourceGroupItems>
@@ -644,21 +652,11 @@ const ResourceDetails = ({ abundances, asteroid, isOwner }) => {
             )}
 
             {/* NOTE: for L1-scanned asteroids, these bonuses will already be set even though "unscanned" */}
-            {nonzeroBonuses?.length > 0 && (
+            {nonzeroBonuses.length > 0 && (
               <div>
                 <SectionHeader>Yield Bonuses</SectionHeader>
                 <SectionBody>
-                  <Bonuses>
-                    {nonzeroBonuses.map((bonus) => (
-                      <BonusItem key={bonus.name}
-                        category={bonusLabels[bonus.type]}
-                        onMouseEnter={setInfoPaneRef(true)}
-                        onMouseLeave={setInfoPaneRef(false)}>
-                        <BonusBar bonus={bonus.level} />
-                        <label>{bonusLabels[bonus.type]} Yield: +{bonus.modifier}%</label>
-                      </BonusItem>
-                    ))}
-                  </Bonuses>
+                  <AsteroidBonuses bonuses={nonzeroBonuses} />
                 </SectionBody>
               </div>
             )}

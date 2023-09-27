@@ -1,14 +1,14 @@
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
-import { Capable, Inventory } from '@influenceth/sdk';
+import { Building, Product } from '@influenceth/sdk';
 
 import AddressLink from '~/components/AddressLink';
 import AsteroidLink from '~/components/AsteroidLink';
 import CrewLink from '~/components/CrewLink';
-import PlotLink from '~/components/PlotLink';
+import LotLink from '~/components/LotLink';
 import {
   ConstructIcon,
-  CoreSampleIcon,
+  NewCoreSampleIcon,
   CrewIcon,
   DeconstructIcon,
   ExtractionIcon,
@@ -18,6 +18,7 @@ import {
   SurfaceTransferIcon,
   UnplanBuildingIcon,
 } from '~/components/Icons';
+import getActivityConfig from './activities';
 
 const getTxLink = (event) => {
   if (event.__t === 'Ethereum') {
@@ -25,6 +26,8 @@ const getTxLink = (event) => {
   }
   return `${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${event.transactionHash}`;
 }
+
+// TODO: ecs refactor
 
 // const saleLabels = {
 //   Asteroid: 'asteroid development rights',
@@ -77,6 +80,23 @@ const entries = {
   //
   // Events
   //
+
+  ActivityLog: (e) => {
+    const config = getActivityConfig(e);
+    if (!config) return null;
+
+    const logContent = config.getLogContent();
+    if (!logContent) return null;
+    
+    const { icon, content, txHash } = logContent;
+    return {
+      icon,
+      content,
+      txLink: txHash ? `${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${txHash}` : null,
+    }
+  },
+
+
 
   Asteroid_Transfer: (e) => ({
     icon: <TransferIcon />,
@@ -143,7 +163,7 @@ const entries = {
   //   icon: <CrewIcon />,
   //   content: (
   //     <>
-  //       <span>Crew member </span>
+  //       <span>Crewmate </span>
   //       <CrewLink id={e.returnValues.crewId} />
   //       <span> minted with </span>
   //       <AsteroidLink id={e.returnValues.asteroidId} />
@@ -156,8 +176,8 @@ const entries = {
     icon: <PlanBuildingIcon />,
     content: (
       <>
-        <span>{Capable.TYPES[e.returnValues.capableType]?.name} site plan completed on </span>
-        <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
+        <span>{Building.TYPES[e.returnValues.buildingType]?.title} site plan completed on </span>
+        <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} />
       </>
     ),
     txLink: getTxLink(e),
@@ -168,7 +188,7 @@ const entries = {
     content: (
       <>
         <span>Construction plans canceled on </span>
-        <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
+        <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} />
       </>
     ),
     txLink: getTxLink(e),
@@ -194,7 +214,7 @@ const entries = {
       content: (
         <>
           <span>{capableName ? `${capableName} construction` : 'Construction'} finished on </span>
-          <PlotLink asteroidId={asteroidId} plotId={lotId} />
+          <LotLink asteroidId={asteroidId} lotId={lotId} />
         </>
       ),
       txLink: getTxLink(e),
@@ -211,7 +231,7 @@ const entries = {
       content: (
         <>
           <span>{capableName ? `${capableName} ` : 'Building'} deconstructed on </span>
-          <PlotLink asteroidId={asteroidId} plotId={lotId} />
+          <LotLink asteroidId={asteroidId} lotId={lotId} />
         </>
       ),
       txLink: getTxLink(e),
@@ -219,11 +239,11 @@ const entries = {
   },
 
   // Dispatcher_CoreSampleStartSampling: (e) => ({
-  //   icon: <CoreSampleIcon />,
+  //   icon: <NewCoreSampleIcon />,
   //   content: (
   //     <>
-  //       <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample started at </span>
-  //       <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+  //       <span>{Product.TYPES[e.returnValues.resourceId]?.name} core sample started at </span>
+  //       <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
   //     </>
   //   ),
   //   txLink: getTxLink(e),
@@ -232,11 +252,11 @@ const entries = {
   // TODO: add data from server that this was an improvement?
   Dispatcher_CoreSampleFinishSampling: (e) => {
     return {
-      icon: <CoreSampleIcon />,
+      icon: <NewCoreSampleIcon />,
       content: (
         <>
-          <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} core sample completed at </span>
-          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+          <span>{Product.TYPES[e.returnValues.resourceId]?.name} core sample completed at </span>
+          <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
         </>
       ),
       txLink: getTxLink(e),
@@ -248,8 +268,8 @@ const entries = {
       icon: <ExtractionIcon />,
       content: (
         <>
-          <span>{Inventory.RESOURCES[e.returnValues.resourceId]?.name} extraction started at </span>
-          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
+          <span>{Product.TYPES[e.returnValues.resourceId]?.name} extraction started at </span>
+          <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
         </>
       ),
       txLink: getTxLink(e),
@@ -262,7 +282,7 @@ const entries = {
       content: (
         <>
           <span>Extraction completed at </span>
-          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.lotId} />
+          <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} />
         </>
       ),
       txLink: getTxLink(e),
@@ -275,7 +295,7 @@ const entries = {
       content: (
         <>
           <span>Delivery completed to </span>
-          <PlotLink asteroidId={e.returnValues.asteroidId} plotId={e.returnValues.destinationLotId} />
+          <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.destinationLotId} />
         </>
       ),
       txLink: getTxLink(e),
@@ -303,7 +323,7 @@ const entries = {
         icon,
         content: (
           <>
-            <span>Crew member </span>
+            <span>Crewmate </span>
             <CrewLink id={e.i} />
             <span> {action}.</span>
           </>
@@ -313,11 +333,68 @@ const entries = {
     }
   },
 
+  // TODO: pretty these up
+  Crew_AsteroidManaged: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+  Crew_AsteroidPurchased: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+  Crew_CrewmateRecruited: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+  Crew_NameChanged: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+  Crew_SurfaceScanFinished: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+  Crew_SurfaceScanStarted: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+  Crew_Transfer: (e) => {
+    return {
+      icon: <CrewIcon />,
+      content: e.event,
+      txLink: getTxLink(e),
+    };
+  },
+
+
+
+
+
+
+
   Crewmate_Transfer: (e) => ({
     icon: <TransferIcon />,
     content: (
       <>
-        <span>Crew member </span>
+        <span>Crewmate </span>
         <CrewLink id={e.returnValues.tokenId} />
         <span> transferred from </span>
         <AddressLink address={e.returnValues.from} chain={e.__t} maxWidth={addressMaxWidth} />
@@ -332,43 +409,16 @@ const entries = {
     icon: <NameIcon />,
     content: (
       <>
-        <span>Crew member </span>
+        <span>Crewmate </span>
         <CrewLink id={e.returnValues.crewId || e.returnValues.tokenId} />
         <span>{` re-named to "${e.returnValues.newName}"`}</span>
       </>
     ),
     txLink: getTxLink(e),
   }),
-
-  // Sale_TimeToStart: (e) => ({
-  //   content: (
-  //     <span>
-  //       The next {saleLabels[e.asset]} sale will start at
-  //       {` ${(new Date(e.start)).toLocaleString()}`}
-  //     </span>
-  //   ),
-  // }),
-
-  // Sale_Started: (e) => {
-  //   const singular = e.available === 1;
-  //   return {
-  //     content: (
-  //       <span>
-  //         An {saleLabels[e.asset]} sale is now open!
-  //         There {singular ? 'is' : 'are'} {e.available.toLocaleString()} remaining asteroid{singular ? '' : 's'} available.
-  //       </span>
-  //     ),
-  //   }
-  // },
-
-  // Sale_Ended: (e) => ({
-  //   content: (
-  //     <span>
-  //       The {saleLabels[e.asset]} sale has completed.
-  //     </span>
-  //   ),
-  // })
 };
+
+export const types = Object.keys(entries);
 
 const getLogContent = ({ type, data }) => {
   try {

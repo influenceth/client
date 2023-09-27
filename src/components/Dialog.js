@@ -14,11 +14,15 @@ const Backdrop = styled.div`
   right: 0;
   left: 0;
   bottom: 0;
-  background-color: ${p => p.backdrop || p.theme.colors.contentBackdrop};
   z-index: 10001;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  ${p => p.invisibleBackdrop ? '' : `
+    backdrop-filter: blur(1.5px);
+    background-color: ${p.backdrop || p.theme.colors.contentBackdrop};
+  `}
 `;
 
 const Modal = styled.div`
@@ -29,11 +33,12 @@ const Modal = styled.div`
   max-width: 90%;
   max-height: 90%;
   overflow: auto;
+  ${p => p.css || ``};
 `;
 
-const Dialog = ({ children, ...props }) => (
+const Dialog = ({ children, dialogCss, dialogStyle = {}, ...props }) => (
   <Backdrop {...props}>
-    <Modal {...props}>
+    <Modal {...props} css={dialogCss} style={dialogStyle}>
       {children}
     </Modal>
   </Backdrop>

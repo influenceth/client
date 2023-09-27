@@ -1,108 +1,68 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
-import {
-  FiCrosshair as TargetIcon,
-  FiSquare as UncheckedIcon,
-  FiCheckSquare as CheckedIcon
-} from 'react-icons/fi';
-import { RingLoader } from 'react-spinners';
-import DataTable, { createTheme } from 'react-data-table-component';
-import { Crew, Asteroid, Construction, Lot } from '@influenceth/sdk';
+import { useEffect, useMemo, useState } from 'react';
+import { Asteroid, Building, Crew, Crewmate } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
-import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
-import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
-import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
-import Button from '~/components/ButtonAlt';
-import ButtonRounded from '~/components/ButtonRounded';
-import Dialog from '~/components/Dialog';
-import Dropdown from '~/components/Dropdown';
-import IconButton from '~/components/IconButton';
 import {
-  UnplanBuildingIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  CloseIcon,
-  ConstructIcon,
-  CoreSampleIcon,
-  CrewIcon,
   DeconstructIcon,
-  ExtractionIcon,
-  ImproveCoreSampleIcon,
-  PlanBuildingIcon,
-  LocationPinIcon,
-  PlusIcon,
-  ResourceIcon,
-  SurfaceTransferIcon,
-  TimerIcon,
-  WarningOutlineIcon
+  InventoryIcon,
+  ForwardIcon
 } from '~/components/Icons';
-import Poppable from '~/components/Popper';
-import SliderInput from '~/components/SliderInput';
-import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import { useBuildingAssets, useResourceAssets } from '~/hooks/useAssets';
-import useCrew from '~/hooks/useCrew';
-import useStore from '~/hooks/useStore';
-import theme from '~/theme';
-import MouseoverInfoPane from '~/components/MouseoverInfoPane';
+import useCrewContext from '~/hooks/useCrewContext';
 import useConstructionManager from '~/hooks/useConstructionManager';
-import useInterval from '~/hooks/useInterval';
-import { formatTimer, getCrewAbilityBonus } from '~/lib/utils';
+import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
 
 import {
-  CoreSampleSelection,
-  DestinationSelection,
-
-  BuildingPlanSection,
-  BuildingRequirementsSection,
   DeconstructionMaterialsSection,
-  DestinationPlotSection,
-  ExistingSampleSection,
-  ExtractionAmountSection,
-  ExtractSampleSection,
-  ItemSelectionSection,
-  RawMaterialSection,
-  ToolSection,
-
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
-  ActionDialogTimers,
-
   getBonusDirection,
   TravelBonusTooltip,
-  getTravelStep,
-  getTripDetails,
-  TransportBonusTooltip,
-  TimeBonusTooltip,
-  ActionDialogLoader,
+  ActionDialogBody,
+  ProgressBarSection,
+  FlexSection,
+  FlexSectionInputBlock,
+  FlexSectionSpacer,
+  BuildingImage,
+  DestinationSelectionDialog,
+  EmptyBuildingImage,
+  getBuildingRequirements,
+  LotInputBlock
 } from './components';
+import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
+import actionStage from '~/lib/actionStages';
+import useLot from '~/hooks/useLot';
 
-const Deconstruct = ({ asteroid, plot, ...props }) => {
-  const resources = useResourceAssets();
-  const { constructionStatus, deconstruct } = useConstructionManager(asteroid?.i, plot?.i);
-  const { crew, crewMemberMap } = useCrew();
+const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
+  const { crew, crewmateMap } = useCrewContext();
+  const { deconstruct, deconstructTx } = constructionManager;
+  const { data: inProgressDestination } = useLot(asteroid?.i, deconstructTx?.returnValues?.destinationLotId);
 
-  const crewMembers = crew.crewMembers.map((i) => crewMemberMap[i]);
-  const captain = crewMembers[0];
-  const crewTravelBonus = getCrewAbilityBonus(3, crewMembers);
+  const crewmates = crew._crewmates.map((i) => crewmateMap[i]);
+  const captain = crewmates[0];
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+
+  const [destinationLot, setDestinationLot] = useState();
+  const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
+
+  useEffect(() => {
+    if (inProgressDestination) setDestinationLot(inProgressDestination);
+  }, [inProgressDestination]);
 
   // TODO: ...
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-  //   if (!asteroid?.i || !plot?.i) return {};
+  //   if (!asteroid?.i || !lot?.i) return {};
   //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
-  //     { label: 'Travel to destination', plot: plot.i },
-  //     { label: 'Return from destination', plot: 1 },
+  //     { label: 'Travel to destination', lot: lot.i },
+  //     { label: 'Return from destination', lot: 1 },
   //   ])
-  // }, [asteroid?.i, plot?.i, crewTravelBonus]);
+  // }, [asteroid?.i, lot?.i, crewTravelBonus]);
   const crewTravelTime = 0;
   const tripDetails = null;
 
-  const constructionTime = Construction.getConstructionTime(plot?.building?.capableType || 0, 1);
+  const constructionTime = Building.getConstructionTime(lot?.building?.Building?.buildingType || 0, 1);
 
   const stats = useMemo(() => [
-    { label: 'Returned Volume', value: '0 m³', direction: 0 },    // TODO: ...
-    { label: 'Returned Mass', value: '0 tonnes', direction: 0 },   // TODO: ...
     {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
@@ -121,48 +81,139 @@ const Deconstruct = ({ asteroid, plot, ...props }) => {
       value: formatTimer(constructionTime),
       direction: 0,
       isTimeStat: true,
+    },
+    {
+      label: 'Transfer Distance',
+      value: `${formatFixed(lot.i === destinationLot?.i ? 0 : (Asteroid.getLotDistance(asteroid.i, lot.i, destinationLot?.i) || 0), 1)} km`,
+      direction: 0,
     }
-  ], []);
+  ], [destinationLot]);
 
-  // stay in this window until PLANNED, then swap to UNPLAN / SURFACE_TRANSFER
-  useEffect(() => {
-    if (!['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
-      // TODO: if materials are recovered, open surface transport dialog w/ all materials selected
-      // else, open "unplan" dialog
-      props.onSetAction('UNPLAN_BUILDING');
-    }
-  }, [constructionStatus]);
-
-  const status = 'BEFORE';
+  const itemsReturned = getBuildingRequirements(lot?.building);
 
   return (
     <>
       <ActionDialogHeader
-        asteroid={asteroid}
-        captain={captain}
-        plot={plot}
         action={{
-          actionIcon: <DeconstructIcon />,
-          headerBackground: constructionBackground,
+          icon: <DeconstructIcon />,
           label: 'Deconstruct Building',
-          completeLabel: 'Deconstruction',
-          crewRequirement: 'start',
+          status: stage === actionStage.NOT_STARTED ? 'Confirm' : '',
         }}
-        status="BEFORE"
-        {...props} />
+        captain={captain}
+        location={{ asteroid, lot }}
+        crewAvailableTime={crewTravelTime}
+        taskCompleteTime={crewTravelTime + constructionTime}
+        onClose={props.onClose}
+        stage={stage} />
 
-      <DeconstructionMaterialsSection label="Recovered Materials" resources={resources} status={status} />
+      <ActionDialogBody>
+        <FlexSection>
+          <LotInputBlock
+            title="Deconstruct"
+            lot={lot}
+            disabled
+          />
+          
+          <FlexSectionSpacer>
+            <ForwardIcon />
+          </FlexSectionSpacer>
 
-      <ActionDialogStats stats={stats} status="BEFORE" />
-      <ActionDialogTimers crewAvailableIn={0} actionReadyIn={0} />
+          <LotInputBlock
+            title="Transfer To"
+            lot={destinationLot}
+            fallbackSublabel="Inventory"
+            imageProps={destinationLot && destinationLot.i === lot.i
+              ? {
+                unfinished: true
+              }
+              : {
+                iconOverride: <InventoryIcon />,
+                inventories: destinationLot?.building?.inventories,
+                showInventoryStatusForType: 1
+              }
+            }
+            isSelected={stage === actionStage.NOT_STARTED}
+            onClick={() => { setDestinationSelectorOpen(true) }}
+            disabled={stage !== actionStage.NOT_STARTED}
+          />
+        </FlexSection>
+
+        <DeconstructionMaterialsSection
+          label="Recovered Materials"
+          itemsReturned={itemsReturned || []} />
+
+        {/* TODO: progress bar if this takes time */}
+        {stage !== actionStage.NOT_STARTED && (
+          <ProgressBarSection
+            stage={stage}
+            title="Progress"
+          />
+        )}
+
+        <ActionDialogStats
+          stage={stage}
+          stats={stats}
+        />
+      </ActionDialogBody>
+
       <ActionDialogFooter
-        {...props}
-        buttonsLoading={constructionStatus === 'DECONSTRUCTING'}
+        disabled={!destinationLot}
         goLabel="Deconstruct"
         onGo={deconstruct}
-        status={constructionStatus === 'DECONSTRUCTING' ? 'DURING' : 'BEFORE'} />
+        stage={stage}
+        {...props} />
+
+      {stage === actionStage.NOT_STARTED && (
+        <DestinationSelectionDialog
+          asteroid={asteroid}
+          originLotId={lot?.i}
+          includeDeconstruction
+          initialSelection={undefined/* TODO: default to self... */}
+          onClose={() => setDestinationSelectorOpen(false)}
+          onSelected={setDestinationLot}
+          open={destinationSelectorOpen}
+        />
+      )}
     </>
   );
 };
 
-export default Deconstruct;
+
+const Wrapper = (props) => {
+  const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
+  const constructionManager = useConstructionManager(asteroid?.i, lot?.i);
+  const { stageByActivity } = constructionManager;
+
+  useEffect(() => {
+    if (!asteroid || !lot) {
+      if (!isLoading) {
+        if (props.onClose) props.onClose();
+      }
+    }
+  }, [asteroid, lot, isLoading]);
+
+  // stay in this window until PLANNED, then swap to UNPLAN / SURFACE_TRANSFER
+  useEffect(() => {
+    if (!['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionManager.constructionStatus)) {
+      // TODO: if materials are recovered, open surface transport dialog w/ all materials selected
+      // else, open "unplan" dialog
+      props.onSetAction('UNPLAN_BUILDING');
+    }
+  }, [constructionManager.constructionStatus]);
+
+  return (
+    <ActionDialogInner
+      actionImage={constructionBackground}
+      isLoading={boolAttr(isLoading)}
+      stage={stageByActivity.deconstruct}>
+      <Deconstruct
+        asteroid={asteroid}
+        lot={lot}
+        constructionManager={constructionManager}
+        stage={stageByActivity.deconstruct}
+        {...props} />
+    </ActionDialogInner>
+  )
+};
+
+export default Wrapper;

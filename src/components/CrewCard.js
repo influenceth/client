@@ -9,6 +9,8 @@ import CrewCardOverlay, { cardTransitionSpeed, cardTransitionFunction } from '~/
 import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewCollectionEmblem from '~/components/CrewCollectionEmblem';
 import DataReadout from '~/components/DataReadout';
+import { boolAttr } from '~/lib/utils';
+import formatters from '~/lib/formatters';
 
 const CardLayer = styled.div`
   position: absolute;
@@ -76,6 +78,7 @@ const Card = styled.div`
   ` : ''}
 
   ${p => p.hideHeader && `
+    padding-top: 128%;
     & ${CardHeader} {
       display: none;
     }
@@ -133,23 +136,22 @@ const loadingCss = css`
   top: 50%;
 `;
 
-const CrewCard = ({ crew: crewmate, onClick, overlay, ...props }) => {
+const CrewCard = ({ crewmate, onClick, overlay, ...props }) => {
   const [ imageFailed, setImageFailed ] = useState(false);
   const [ imageLoaded, setImageLoaded ] = useState(false);
 
-  const useName = crewmate.name || (crewmate.i && `Crew Member #${crewmate.i}`) || '';
-  const classLabel = Crewmate.getClass(crewmate.crewClass)?.name;
+  const useName = props.hideIfNoName
+    ? (crewmate.Name?.name || '')
+    : formatters.crewmateName(crewmate);
+  const classLabel = Crewmate.Entity.getClass(crewmate)?.name;
 
   let imageUrl = useMemo(() => {
     let url = silhouette;
-    if (crewmate.i) {
-      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crewmate.i}/image.svg?bustOnly=true`;
-    } else if (crewmate.crewClass) {
+    if (crewmate.id) {
+      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crewmate.id}/image.svg?bustOnly=true`;
+    } else if (crewmate.Crewmate?.appearance) {
       url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
-        pick(crewmate, [
-          'crewCollection', 'sex', 'body', 'crewClass', 'outfit', 'title',
-          'hair', 'facialFeature', 'hairColor', 'headPiece', 'bonusItem'
-        ])
+        pick(crewmate.Crewmate, ['coll', 'class', 'title', 'appearance'])
       )}`;
     }
     return url;
@@ -173,7 +175,7 @@ const CrewCard = ({ crew: crewmate, onClick, overlay, ...props }) => {
       hasOverlay={!!overlay}
       classLabel={classLabel}
       {...props}>
-      <LoadingAnimation color={'white'} css={loadingCss} loading={!imageLoaded} />
+      {!imageLoaded && <LoadingAnimation color={'white'} css={loadingCss} />}
       <CardImage visible={imageLoaded} applyMask={!overlay && !props.hideMask}>
         <img
           alt={useName}
@@ -183,7 +185,7 @@ const CrewCard = ({ crew: crewmate, onClick, overlay, ...props }) => {
       </CardImage>
       <CardHeader>
         <CrewName {...props}>
-          <CrewClassIcon crewClass={crewmate.crewClass} />{' '}
+          <CrewClassIcon crewClass={crewmate.Crewmate?.class} />{' '}
           {!props.hideNameInHeader && useName}
         </CrewName>
         {!props.hideCollectionInHeader && (
@@ -197,21 +199,23 @@ const CrewCard = ({ crew: crewmate, onClick, overlay, ...props }) => {
               : {}
             )
             }}>
-            {Crewmate.getCollection(crewmate.crewCollection)?.name}
+            {Crewmate.getCollection(crewmate)?.name}
           </DataReadout>
         )}
-        {props.showClassInHeader && <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>{Crewmate.getClass(crewmate.crewClass)?.name}</DataReadout>}
+        {props.showClassInHeader && <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>{Crewmate.Entity.getClass(crewmate)?.name}</DataReadout>}
       </CardHeader>
       {!overlay && (
         <CardFooter>
-          <EmblemContainer>
-            <CrewCollectionEmblem
-              collection={crewmate.crewCollection}
-              style={{ width: '100%' }} />
-          </EmblemContainer>
+          {crewmate.Crewmate?.coll && (
+            <EmblemContainer>
+              <CrewCollectionEmblem
+                collection={crewmate.Crewmate.coll}
+                style={{ width: '100%' }} />
+            </EmblemContainer>
+          )}
           <FooterStats>
-            <div>{Crewmate.getClass(crewmate.crewClass)?.name}</div>
-            {crewmate.title > 0 && <div>{Crewmate.getTitle(crewmate.title)?.name}</div>}
+            {!props.showClassInHeader && <div>{Crewmate.Entity.getClass(crewmate)?.name}</div>}
+            {crewmate.Crewmate.title > 0 && <div>{Crewmate.Entity.getTitle(crewmate)?.name}</div>}
           </FooterStats>
         </CardFooter>
       )}

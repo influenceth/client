@@ -1,11 +1,14 @@
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
+import ReactTooltip from 'react-tooltip';
 
 import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
+import ClipCorner from './ClipCorner';
+import theme from '~/theme';
 
 const defaultMaxWidth = '1400px';
-const cornerWidth = '35px';
+const cornerWidth = 35;
 
 const Wrapper = styled.div`
   align-items: center;
@@ -22,7 +25,7 @@ const Wrapper = styled.div`
   position: absolute;
   right: 0;
   top: 0;
-  z-index: 3;
+  z-index: 5;
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding: 0 0 50px 0;
@@ -36,8 +39,8 @@ const StyledDetails = styled.div`
   clip-path: polygon(
     0 0,
     100% 0,
-    100% calc(100% - ${cornerWidth}),
-    calc(100% - ${cornerWidth}) 100%,
+    100% calc(100% - ${cornerWidth}px),
+    calc(100% - ${cornerWidth}px) 100%,
     0 100%
   );
   display: flex;
@@ -56,28 +59,40 @@ const StyledDetails = styled.div`
   }
 `;
 
-const Corner = styled.svg`
-  bottom: -1px;
-  height: ${cornerWidth};
-  margin-right: 0;
-  position: absolute;
-  right: -1px;
-  stroke: ${p => p.theme.colors.borderBottom};
-  stroke-width: 1px;
-  width: ${cornerWidth};
-`;
-
 const headerHeight = 60;
 const Header = styled.h1`
-  border-left: 5px solid ${p => p.theme.colors.main};
+  ${p => p.background ? `background: rgba(26, 71, 86, 0.3);` : ''}
+  ${p => p.underline ? 'border-bottom: 1px solid #333;' : ''}
+  ${p => p.v2
+    ? `
+      align-items: center;
+      display: flex;
+      span {
+        border-left: 3px solid ${p.theme.colors.main};
+        display: block;
+        font-size: 20px;
+        padding: 5px 10px;
+        text-transform: uppercase;
+      }
+    `
+    : `
+      border-left: 5px solid ${p.theme.colors.main};
+      line-height: ${headerHeight}px;
+    `
+  }
   font-size: 24px;
   font-weight: 400;
   height: ${headerHeight}px;
-  line-height: ${headerHeight}px;
   padding: 0 0 0 30px;
   position: relative;
   margin: 0;
   z-index: 1;
+
+  & b {
+    color: ${p => p.theme.colors.main};
+    font-weight: normal;
+    margin-left: 10px;
+  }
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding-left: 20px;
@@ -93,7 +108,7 @@ const Content = styled.div`
       }
       return 'margin: 0;';
     }
-    return 'margin: 25px 35px 35px 25px;';
+    return 'margin: 25px 35px 35px;';
   }}
   overflow-y: auto;
   position: relative;
@@ -124,13 +139,14 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Details = (props) => {
-  const { title, contentProps = {}, edgeToEdge, onCloseDestination, width, ...restProps } = props;
+  const { title, contentProps = {}, contentInnerProps = {}, edgeToEdge, headerProps, onCloseDestination, outerNode, width, ...restProps } = props;
   const history = useHistory();
 
   return (
     <Wrapper {...restProps}>
       <StyledDetails {...restProps}>
-        {title && <Header>{title}</Header>}
+        {outerNode || null}
+        {title && <Header {...headerProps}><span>{title}</span></Header>}
         <CloseButton
           onClick={() => history.push(onCloseDestination || '/')}
           hasBackground={edgeToEdge}
@@ -138,14 +154,13 @@ const Details = (props) => {
           <CloseIcon />
         </CloseButton>
         <Content edgeToEdge={edgeToEdge} hasTitle={!!title} {...contentProps}>
-          <ContentWrapper width={width}>
+          <ContentWrapper width={width} maxWidth={restProps.maxWidth} {...contentInnerProps}>
             {props.children}
           </ContentWrapper>
         </Content>
-        <Corner viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg" color={props.color}>
-          <line x1="0" y1="10" x2="10" y2="0" />
-        </Corner>
+        <ClipCorner dimension={cornerWidth} color={theme.colors.borderBottom} />
       </StyledDetails>
+      <ReactTooltip id="details" effect="solid" />
     </Wrapper>
   );
 };

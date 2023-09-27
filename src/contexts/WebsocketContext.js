@@ -7,7 +7,7 @@ const WebsocketContext = createContext();
 
 const DEFAULT_ROOM = '_';
 
-// NOTE: could maybe roll this back into EventsContext if there was a reason to combine them
+// NOTE: could maybe roll this back into ActivitiesContext if there was a reason to combine them
 export function WebsocketProvider({ children }) {
   const { token } = useAuth();
 
@@ -16,11 +16,21 @@ export function WebsocketProvider({ children }) {
 
   const [wsReady, setWsReady] = useState(false);
 
-  const handleMessage = useCallback(({ room, ...message }) => {
+  const handleMessage = useCallback((messageLabel, payload) => {
+    // NOTES:
+    // - messageLabel can be "event" or "NameChanged" or anything... we do not use the value currently
+    // - payload also contains type, most of which are ignored (i.e. CURRENT_STARKNET_BLOCK_NUMBER, ActionItem, etc.)
+    // - for all but CURRENT_STARKNET_BLOCK_NUMBER, body contains { event }
+    const { type, body, room } = payload;
+
+    if (type !== 'CURRENT_STARKNET_BLOCK_NUMBER') {
+      body.id = body.event.id;  // TODO: this is a hack to make it look like an activity
+    }
+    
     const roomKey = (room || '').includes('::') ? room : DEFAULT_ROOM;
-    // console.log(room, roomKey, message);
     if (registeredHandlers.current[roomKey]) {
-      registeredHandlers.current[roomKey](message);
+      console.log('handleMessage', roomKey, { type, body });
+      registeredHandlers.current[roomKey]({ type, body });
     }
   }, []);
 
@@ -62,7 +72,7 @@ export function WebsocketProvider({ children }) {
         transports: [ 'websocket' ],
         query: `token=${token}`
       });
-      socket.current.on('event', handleMessage);
+      socket.current.onAny(handleMessage);
       setWsReady(true);
     }
     return () => {

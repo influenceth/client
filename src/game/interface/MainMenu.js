@@ -1,225 +1,321 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
-import { MdWorkspacesOutline as ResourcesIcon } from 'react-icons/md';
-
-import IconButton from '~/components/IconButton';
 import {
-  ConstructIcon as BuildingsIcon,
-  CloseIcon,
+  MdFullscreen as FullscreenIcon,
+  MdFullscreenExit as ExitFullscreenIcon } from 'react-icons/md';
+import screenfull from 'screenfull';
+
+import {
+  BackIcon,
+  BuildingIcon,
+  CoreSampleIcon,
   CrewIcon,
+  CrewStoryIcon,
   EyeIcon,
-  FilterIcon,
-  MapIcon,
-  MenuIcon,
-  RocketIcon,
+  FavoriteIcon,
+  LeaseIcon,
+  OrderIcon,
+  RadiusIcon,
+  ResourceIcon,
   RouteIcon,
-  StarIcon,
-  TimeIcon
+  ShipIcon,
+  TransactionIcon,
 } from '~/components/Icons';
-import InfluenceLogo from '~/components/InfluenceLogo';
 import useAuth from '~/hooks/useAuth';
-import useCrewAssignments from '~/hooks/useCrewAssignments';
-import useCrew from '~/hooks/useCrew';
+// import useCrewAssignments from '~/hooks/useCrewAssignments';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import Menu from './mainMenu/Menu';
 import MenuItem from './mainMenu/MenuItem';
-import Time from './mainMenu/Time';
-import Logo from './mainMenu/menu-logo.svg';
+import HudIconButton from '~/components/HudIconButton';
+import TimeControls from './mainMenu/TimeControls';
 
 const StyledMainMenu = styled.div`
-  align-items: flex-end;
-  bottom: 0;
-  box-sizing: border-box;
-  display: flex;
-  flex: 0 1 auto;
-  height: 75px;
-  padding: 25px 0 25px 25px;
-  pointer-events: auto;
-  position: relative;
-  width: 100%;
-  z-index: 3;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    background-color: black;
-    height: ${p => p.showMenu ? '100%' : '50px'};
-    padding: 10px;
-    position: absolute;
-    transition: all 0.3s ease;
-    width: ${p => p.showMenu ? '100%' : '50px'};
-    z-index: 1;
-  }
-`;
-
-const Background = styled.div`
-  background: linear-gradient(
-    to right,
-    rgba(0, 0, 0, 0),
-    ${p => p.theme.colors.contentBackdrop} 50%,
-    ${p => p.theme.colors.contentBackdrop}
-  );
-  backdrop-filter: blur(4px);
+  pointer-events: none;
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 25px;
-  position: absolute;
+  z-index: 3;
 `;
 
-const StyledLogo = styled(Logo)`
-  bottom: 25px;
-  height: 40px;
-  position: absolute;
-  width: auto;
-`;
-
-const StyledLogoLong = styled(InfluenceLogo)`
-  height: 40px;
-  min-width: 100%;
-  padding-right: 20px;
-  position: absolute;
-  top: 15px;
-`;
-
-const MenuWrapper = styled.div`
-  align-items: flex-end;
-  display: flex;
-  flex: 1 0 auto;
-  margin-left: 98px;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    display: ${p => p.showMenu ? 'block': 'none'};
-    flex-direction: column;
-    height: 100%;
-    margin: 0;
-    padding-top: 60px;
-    width: 100%;
+const Actionable = styled.div`
+  & > * {
+    pointer-events: all;
   }
 `;
 
-const MenuFiller = styled.div`
-  border-bottom: 4px solid ${p => p.theme.colors.mainBorder};
-  flex: 1 0 auto;
-`;
-
-const EndMenuFiller = styled(MenuFiller)`
-  flex: 0 0 auto;
-  width: 10px;
-`;
-
-const MenuControl = styled(IconButton)`
+const barHeight = 50;
+const centerAreaWidth = 560;
+const centerAreaHalfWidth = centerAreaWidth / 2;
+const cornerButtonWidth = 40;
+const dipAmount = 15;
+const transitionWidth = dipAmount;
+const secondDipMult = 0.6;
+const minWidth = 2 * (centerAreaHalfWidth + cornerButtonWidth + 2 * transitionWidth);
+const BottomBar = styled.div`
+  background: black;
+  height: ${barHeight}px;
   position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  @media (min-width: ${minWidth}px) {
+    clip-path: polygon(
+      0% 100%,
+      0% 0%,
+      ${cornerButtonWidth}px 0%,
+      ${cornerButtonWidth + transitionWidth}px ${dipAmount}px,
+      calc(50% - ${centerAreaHalfWidth + transitionWidth * secondDipMult}px) ${dipAmount}px,
+      calc(50% - ${centerAreaHalfWidth}px) ${(1 + secondDipMult) * dipAmount}px,
+      calc(50% + ${centerAreaHalfWidth}px) ${(1 + secondDipMult) * dipAmount}px,
+      calc(50% + ${centerAreaHalfWidth + transitionWidth * secondDipMult}px) ${dipAmount}px,
+      calc(100% - ${cornerButtonWidth + transitionWidth}px) ${dipAmount}px,
+      calc(100% - ${cornerButtonWidth}px) 0%,
+      100% 0%,
+      100% 100%
+    );
+  }
 `;
 
-const MainMenu = (props) => {
-  const activateSection = useStore(s => s.dispatchOutlinerSectionActivated);
+const BottomBarBackground = styled(BottomBar)`
+  background: #444;
+  bottom: 1px;
+`;
+
+const HudButtonArea = styled.div`
+  position: absolute;
+  bottom: 4px;
+  z-index: 4;
+`;
+
+const LeftHudButtonArea = styled(HudButtonArea)`
+  left: 4px;
+`;
+
+const RightHudButtonArea = styled(HudButtonArea)`
+  right: 4px;
+`;
+
+const TimeSection = styled.div`
+  position: absolute;
+  right: ${cornerButtonWidth + transitionWidth}px;
+  bottom: ${barHeight - dipAmount}px;
+`;
+
+const MenuWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+
+  align-items: flex-end;
+  justify-content: space-around;
+
+  position: absolute;
+  left: 50%;
+  bottom: ${barHeight - 1.5 * dipAmount}px;
+  margin-left: -${centerAreaHalfWidth}px;
+  width: ${centerAreaWidth}px;
+
+  z-index: 4;
+`;
+
+const MainMenu = () => {
   const playSound = useStore(s => s.dispatchSoundRequested);
   const { isMobile } = useScreenSize();
   const history = useHistory();
 
+  const { lotId } = useStore(s => s.asteroids.lot || {});
+  const zoomScene = useStore(s => s.asteroids.zoomScene);
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+  const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
+  const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
+  const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
+
   const { account } = useAuth();
-  const { data: crewAssignmentData } = useCrewAssignments();
-  const { totalAssignments } = crewAssignmentData || {};
+  // const { data: crewAssignmentData } = useCrewAssignments();
+
+  const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
   // TODO: genesis book deprecation vvv
-  const { crew, crewMemberMap } = useCrew();
+  const { crew, crewmateMap } = useCrewContext();
   const hasGenesisCrewmate = useMemo(() => {
-    return crew && crew?.crewMembers && crewMemberMap && crew.crewMembers.find((i) => [1,2,3].includes(crewMemberMap[i]?.crewCollection));
-  }, [crew?.crewMembers, crewMemberMap]); // eslint-disable-line react-hooks/exhaustive-deps
+    return crew && crew?._crewmates && crewmateMap && crew._crewmates.find((i) => [1,2,3].includes(crewmateMap[i]?.coll));
+  }, [crew?._crewmates, crewmateMap]); // eslint-disable-line react-hooks/exhaustive-deps
   // ^^^
 
   const [ showMenu, setShowMenu ] = useState(!isMobile);
 
-  const openSection = (section) => {
-    activateSection(section);
+  const openSection = useCallback((section) => {
+    // activateSection(section);
+    // TODO: ... this used to reference outliner, but outliner is gone
     playSound('effects.click');
     if (isMobile) setShowMenu(false);
-  };
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (screenfull.isEnabled) {
+      screenfull.on('change', () => {
+        setFullscreen(screenfull.isEnabled && screenfull.isFullscreen);
+      });
+    }
+  }, []);
+
+  const { backLabel, onClickBack } = useMemo(() => {
+    if (zoomStatus !== 'in') return {};
+    if (zoomScene?.type === 'LOT' || zoomScene?.type === 'SHIP') {
+      return {
+        backLabel: 'Back to Asteroid',
+        onClickBack: () => dispatchZoomScene()
+      }
+    }
+    if (lotId) {
+      return {
+        backLabel: 'Deselect Lot',
+        onClickBack: () => dispatchLotSelected()
+      }
+    }
+    return {
+      backLabel: 'Back to Belt',
+      onClickBack: () => updateZoomStatus('zooming-out')
+    }
+  }, [lotId, zoomScene, zoomStatus]);
+
+  const notYet = useCallback(() => {
+    createAlert({
+      type: 'GenericAlert',
+      level: 'warning',
+      content: 'Not yet.',
+      duration: 1000
+    });
+  }, []);
 
   return (
-    <StyledMainMenu showMenu={showMenu}>
-      {!isMobile && (
-        <>
-          <StyledLogo />
-          <Background />
-        </>
-      )}
-      {isMobile && (
-        <MenuControl
-          onClick={() => setShowMenu(!showMenu)}
-          borderless>
-          {!showMenu ? <MenuIcon /> : <CloseIcon />}
-        </MenuControl>
-      )}
-      <MenuWrapper showMenu={showMenu}>
-        {isMobile && <StyledLogoLong />}
-        {!!account && (
-          <Menu title="Account">
+    <StyledMainMenu>
+      <Actionable>
+        <LeftHudButtonArea>
+          {onClickBack
+            ? (
+              <HudIconButton
+                data-tip={backLabel}
+                onClick={onClickBack}>
+                <BackIcon />
+              </HudIconButton>
+            )
+            : (
+              <img
+                src={`${process.env.PUBLIC_URL}/maskable-logo-48x48.png`}
+                style={{ height: 38, marginLeft: 3 }} />
+            )
+          }
+        </LeftHudButtonArea>
+
+        <MenuWrapper>
+          {!!account && (
+            <Menu title="Assets">
+              <MenuItem
+                name="My Asteroids"
+                icon={<RadiusIcon />}
+                onClick={notYet} />
+              <MenuItem
+                name="My Crew"
+                icon={<CrewIcon />}
+                onClick={() => history.push('/crew')} />
+              {/* <MenuItem
+                name="My Ships"
+                icon={<ShipIcon />}
+                onClick={notYet} /> */}
+              <MenuItem
+                name="My Buildings"
+                icon={<BuildingIcon />}
+                onClick={notYet} />
+              {/* <MenuItem
+                name="My Resources"
+                icon={<ResourceIcon />}
+                onClick={notYet} />
+              <MenuItem
+                name="My Deposits"
+                icon={<CoreSampleIcon />}
+                onClick={notYet} /> */}
+              <MenuItem
+                name="Favorites"
+                icon={<FavoriteIcon />}
+                onClick={() => openSection('belt.Favorites')} />
+            </Menu>
+          )}
+          {/* {!!account && (
+            <Menu title="Events">
+              <MenuItem
+                name="Captain's Log"
+                icon={<EyeIcon />}
+                onClick={notYet} />
+              <MenuItem
+                name="Trips"
+                icon={<RouteIcon />}
+                onClick={notYet} />
+              <MenuItem
+                name="Crew Stories"
+                icon={<CrewStoryIcon />}
+                onClick={notYet} />
+            </Menu>
+          )} */}
+          {/* <Menu title="Finances">
             <MenuItem
-              name="Watchlist"
-              icon={<EyeIcon />}
-              onClick={() => openSection('watchlist')} />
-          </Menu>
-        )}
-        {!!account && (
-          <Menu title="Assets">
+              name="Transactions"
+              icon={<TransactionIcon />}
+              onClick={notYet} />
             <MenuItem
-              name="Asteroids"
-              icon={<StarIcon />}
-              onClick={() => openSection('ownedAsteroids')} />
+              name="Market Orders"
+              icon={<OrderIcon />}
+              onClick={notYet} />
             <MenuItem
-              name="Crew"
-              icon={<CrewIcon />}
-              onClick={() => history.push('/owned-crew')} />
-          </Menu>
-        )}
-        <Menu title="Map">
-          <MenuItem
-            name="Filters"
-            icon={<FilterIcon />}
-            onClick={() => openSection('filters')} />
-          <MenuItem
-            name="Mapped Asteroids"
-            icon={<MapIcon />}
-            onClick={() => openSection('mappedAsteroids')} />
-          <MenuItem
-            name="Route Planner"
-            icon={<RouteIcon />}
-            onClick={() => openSection('routePlanner')} />
-          <MenuItem
-            name="Time Controls"
-            icon={<TimeIcon />}
-            onClick={() => openSection('timeControl')} />
-        </Menu>
-        {/* 
-        <Menu title="Viewer">
-          <MenuItem
-            name="Buildings"
-            icon={<BuildingsIcon />}
-            onClick={() => history.push('/building-viewer')} />
-          <MenuItem
-            name="Resources"
-            icon={<ResourcesIcon />}
-            onClick={() => history.push('/resource-viewer')} />
-        </Menu>
-        */}
-        {!!account && hasGenesisCrewmate && (
-          <Menu title="Activities" badge={totalAssignments}>
-            <MenuItem
-              name="Crew Assignments"
-              icon={<RocketIcon />}
-              onClick={() => openSection('crewAssignments')} />
-          </Menu>
-        )}
+              name="Leases"
+              icon={<LeaseIcon />}
+              onClick={notYet} />
+          </Menu> */}
+
+          {/*
+          {!!account && hasGenesisCrewmate && (
+            <Menu title="Activities" badge={totalAssignments}>
+              <MenuItem
+                name="Crew Assignments"
+                icon={<RocketIcon />}
+                onClick={() => openSection('crewAssignments')} />
+            </Menu>
+          )}
+          */}
+        </MenuWrapper>
+
         {!isMobile && (
-          <>
-            <MenuFiller />
-            <Time onClick={() => openSection('timeControl')} />
-            <EndMenuFiller />
-          </>
+          <TimeSection>
+            <TimeControls />
+          </TimeSection>
         )}
-      </MenuWrapper>
+
+        <RightHudButtonArea>
+          {screenfull.isEnabled && !fullscreen && !isMobile && (
+            <HudIconButton
+              data-tip="Go Fullscreen"
+              onClick={() => screenfull.request()}>
+              <FullscreenIcon />
+            </HudIconButton>
+          )}
+          {screenfull.isEnabled && fullscreen && !isMobile && (
+            <HudIconButton
+              data-tip="Exit Fullscreen"
+              onClick={() => screenfull.exit()}>
+              <ExitFullscreenIcon />
+            </HudIconButton>
+          )}
+        </RightHudButtonArea>
+      </Actionable>
+
+      <BottomBarBackground />
+      <BottomBar />
     </StyledMainMenu>
   );
 };

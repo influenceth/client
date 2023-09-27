@@ -9,8 +9,8 @@ const labelDict = {
   PLANNING: 'Planning Site...'
 };
 
-const PlanBuilding = ({ asteroid, plot, onSetAction, _disabled }) => {
-  const { constructionStatus } = useConstructionManager(asteroid?.i, plot?.i);
+const PlanBuilding = ({ asteroid, lot, onSetAction, _disabled }) => {
+  const { constructionStatus } = useConstructionManager(asteroid?.i, lot?.i);
   const handleClick = useCallback(() => {
     onSetAction('PLAN_BUILDING');
   }, [onSetAction]);

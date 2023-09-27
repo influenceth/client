@@ -1,29 +1,32 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Construction, CoreSample, Inventory } from '@influenceth/sdk';
+import { Deposit } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useCrew from './useCrew';
-import usePlot from './usePlot';
+import actionStages from '~/lib/actionStages';
+import useCrewContext from './useCrewContext';
+import useLot from './useLot';
 import useActionItems from './useActionItems';
 
-const useCoreSampleManager = (asteroidId, plotId) => {
+const useCoreSampleManager = (asteroidId, lotId) => {
   const { actionItems, readyItems, liveBlockTime } = useActionItems();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
-  const { crew } = useCrew();
-  const { data: plot } = usePlot(asteroidId, plotId);
+  const { crew } = useCrewContext();
+  const { data: lot } = useLot(asteroidId, lotId);
 
   const payload = useMemo(() => ({
     asteroidId,
-    plotId,
+    lotId,
     crewId: crew?.i
-  }), [asteroidId, plotId, crew?.i]);
+  }), [asteroidId, lotId, crew?.i]);
+
+  const [completingSample, setCompletingSample] = useState();
 
   // status flow
   // READY > SAMPLING > READY_TO_FINISH > FINISHING
-  const [currentSample, samplingStatus] = useMemo(() => {
+  const [currentSamplingAction, samplingStatus, actionStage] = useMemo(() => {
     let current = {
       _crewmates: null,
-      completionTime: null,
+      finishTime: null,
       isNew: null,
       owner: null,
       resourceId: null,
@@ -33,31 +36,37 @@ const useCoreSampleManager = (asteroidId, plotId) => {
     };
 
     let status = 'READY';
-    const activeSample = plot?.coreSamples.find((c) => c.owner === crew?.i && c.status < CoreSample.STATUS_FINISHED);
+    let stage = actionStages.NOT_STARTED;
+    const activeSample = (lot?.deposits || []).find((c) => c.Control.controller.id === crew?.i && c.Deposit.status < Deposit.STATUSES.SAMPLED);
     if (activeSample) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_CoreSampleStartSampling'
         && item.event.returnValues.asteroidId === asteroidId
-        && item.event.returnValues.lotId === plotId
-        && item.event.returnValues.resourceId === activeSample.resourceId
-        && item.event.returnValues.sampleId === activeSample.sampleId
+        && item.event.returnValues.lotId === lotId
+        && item.event.returnValues.resourceId === activeSample.Deposit.resource
+        && item.event.returnValues.sampleId === activeSample.id
       ));
-      if (actionItem) current._crewmates = actionItem.assets.crew.crewmates;
-      current.completionTime = activeSample.completionTime;
-      current.isNew = !(activeSample.initialYield > 0);
-      current.owner = activeSample.owner;
-      current.resourceId = activeSample.resourceId;
-      current.sampleId = activeSample.sampleId;
-      current.startTime = activeSample.startTime;
+      if (actionItem) {
+        current._crewmates = actionItem.assets.crew.crewmates;
+        current.startTime = actionItem.startTime;
+      }
+      current.finishTime = activeSample.Deposit.finishTime;
+      current.isNew = !(activeSample.Deposit.initialYield > 0);
+      current.owner = activeSample.Control.controller.id;
+      current.resourceId = activeSample.Deposit.resource;
+      current.sampleId = activeSample.id;
 
-      if (activeSample.completionTime < liveBlockTime) {
+      if (activeSample.Deposit.finishTime <= liveBlockTime) {
         if (getStatus('FINISH_CORE_SAMPLE', payload) === 'pending') {
           status = 'FINISHING';
+          stage = actionStages.COMPLETING;
         } else {
           status = 'READY_TO_FINISH';
+          stage = actionStages.READY_TO_COMPLETE;
         }
       } else {
         status = 'SAMPLING';
+        stage = actionStages.IN_PROGRESS;
       }
     } else {
       const sampleTx = getPendingTx('START_CORE_SAMPLE', payload);
@@ -67,14 +76,34 @@ const useCoreSampleManager = (asteroidId, plotId) => {
         current.resourceId = sampleTx.vars.resourceId;
         current.sampleId = sampleTx.vars.sampleId;
         status = 'SAMPLING';
+        stage = actionStages.IN_PROGRESS;
       }
+    }
+
+    // if did not update status beyond NOT_STARTED but there was a completingSample
+    //  previously, must now be COMPLETED
+    // NOTE: if ever change this to output different status as well (and / or
+    //  currentSamplingAction), then need to review references to this hook to make sure
+    //  behavior doesn't change (i.e. actionButtons)
+    if (completingSample && stage === actionStages.NOT_STARTED) {
+      stage = actionStages.COMPLETED;
     }
 
     return [
       status === 'READY' ? null : current,
-      status
+      status,
+      stage
     ];
-  }, [actionItems, readyItems, getPendingTx, getStatus, payload, plot?.coreSamples]);
+  }, [actionItems, completingSample, readyItems, getPendingTx, getStatus, payload, lot?.coreSamples]);
+
+  // manage the "completed" stage explicitly
+  useEffect(() => {
+    if (currentSamplingAction && actionStage === actionStages.COMPLETING) {
+      if (completingSample?.resourceId !== currentSamplingAction.resourceId || completingSample?.sampleId !== currentSamplingAction.sampleId) {
+        setCompletingSample(currentSamplingAction);
+      }
+    }
+  }, [currentSamplingAction, actionStage]);
 
   const startSampling = useCallback((resourceId, sampleId = 0) => {
     execute('START_CORE_SAMPLE', {
@@ -86,17 +115,18 @@ const useCoreSampleManager = (asteroidId, plotId) => {
 
   const finishSampling = useCallback(() => {
     execute('FINISH_CORE_SAMPLE', {
-      sampleId: currentSample.sampleId,
-      resourceId: currentSample.resourceId,
+      sampleId: currentSamplingAction.sampleId,
+      resourceId: currentSamplingAction.resourceId,
       ...payload
     })
-  }, [currentSample, payload]);
+  }, [currentSamplingAction, payload]);
 
   return {
     startSampling,
     finishSampling,
     samplingStatus,
-    currentSample,
+    currentSamplingAction,
+    actionStage
   }
 };
 

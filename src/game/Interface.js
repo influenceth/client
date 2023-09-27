@@ -5,31 +5,28 @@ import { Switch, Route, Redirect } from 'react-router-dom';
 import { useIsFetching } from 'react-query'
 import LoadingAnimation from 'react-spinners/BarLoader';
 
-import useSale from '~/hooks/useSale';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
+import theme from '~/theme';
 import Alerts from './interface/Alerts';
 import Draggables from './interface/Draggables';
 import HUD from './interface/HUD';
 import MainMenu from './interface/MainMenu';
-import ModelViewer from './interface/ModelViewer';
-import Outliner from './interface/Outliner';
-import SaleNotifier from './interface/SaleNotifier';
+import RecruitCrewmate from './interface/RecruitCrewmate';
+import ListView from './interface/details/ListView';
 import AsteroidDetails from './interface/details/AsteroidDetails';
-import AsteroidsTable from './interface/details/AsteroidsTable';
-import CrewAssignment from './interface/details/crewAssignments/Assignment';
-import CrewAssignmentComplete from './interface/details/crewAssignments/Complete';
-import CrewCreation from './interface/details/crewAssignments/Create';
-import CrewAssignments from './interface/details/CrewAssignments';
-import CrewMemberDetails from './interface/details/CrewMemberDetails';
+// import CrewAssignmentComplete from './interface/details/crewAssignments/Complete';
+import CrewmateDetails from './interface/details/CrewmateDetails';
 import OwnedAsteroidsTable from './interface/details/OwnedAsteroidsTable';
-import OwnedCrew from './interface/details/OwnedCrew';
-import PlotViewer from './interface/PlotViewer';
-import RouteDetails from './interface/details/RouteDetails';
+import Marketplace from './interface/details/Marketplace';
+import LotViewer from './interface/modelViewer/LotViewer';
+import ShipViewer from './interface/modelViewer/ShipViewer';
 import WatchlistTable from './interface/details/WatchlistTable';
-import theme from '~/theme';
+import LinkedViewer from './interface/modelViewer/LinkedViewer';
+import DevToolsViewer from './interface/modelViewer/DevToolsViewer';
 import Cutscene from './Cutscene';
 import Launcher from './Launcher';
+import CrewDetails from './interface/details/CrewDetails';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -82,18 +79,20 @@ const loadingCss = css`
 
 const Interface = () => {
   const { isMobile } = useScreenSize();
-  const { data: sale } = useSale();
   const isFetching = useIsFetching();
   const cutscene = useStore(s => s.cutscene);
   const launcherPage = useStore(s => s.launcherPage);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
-  const hideInterface = useStore(s => s.dispatchHideInterface);
-  const showInterface = useStore(s => s.dispatchShowInterface);
+  const showDevTools = useStore(s => s.graphics.showDevTools);
+  const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
+  const dispatchToggleDevTools = useStore(s => s.dispatchToggleDevTools);
 
   const handleInterfaceShortcut = useCallback((e) => {
     // ctrl+f9
-    if (e.ctrlKey && e.which === 120) interfaceHidden ? showInterface() : hideInterface();
-  }, [interfaceHidden]);
+    if (e.ctrlKey && e.which === 120) dispatchToggleInterface();
+    // ctrl+f10
+    if (e.ctrlKey && e.which === 121) dispatchToggleDevTools();
+  }, [dispatchToggleInterface, dispatchToggleDevTools]);
 
   useEffect(() => {
     document.addEventListener('keyup', handleInterfaceShortcut);
@@ -107,62 +106,71 @@ const Interface = () => {
       <Alerts />
       {launcherPage && <Launcher />}
       {cutscene && <Cutscene />}
+      {showDevTools && <DevToolsViewer />}
       <StyledInterface hide={interfaceHidden}>
         {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
         {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
-        {sale && <SaleNotifier sale={sale} />}
         <MainContainer>
           <Switch>
-            <Route exact path="/asteroids">
-              <AsteroidsTable />
+            <Route exact path="/listview/:assetType?">
+              <ListView />
             </Route>
-            <Route path="/building-viewer/:model?">
-              <ModelViewer assetType="Building" />
+            <Route path="/model/:assetType/:assetName?">
+              <LinkedViewer />
             </Route>
-            <Route path="/resource-viewer/:model?">
-              <ModelViewer assetType="Resource" />
+            <Route path="/crew/:i(\d+)?">
+              <CrewDetails />
             </Route>
-            <Route path="/crew/:i(\d+)">
-              <CrewMemberDetails />
+            <Route path="/crewmate/:i(\d+)">
+              <CrewmateDetails />
             </Route>
             <Route path="/owned-asteroids">
               <OwnedAsteroidsTable />
-            </Route>
-            <Route path="/route">
-              <RouteDetails />
             </Route>
             <Route path="/watchlist">
               <WatchlistTable />
             </Route>
           </Switch>
 
-          <PlotViewer />
+          <LotViewer />
+          <ShipViewer />
           <HUD />
           <MainMenu />
         </MainContainer>
 
+        {/* TODO: ecs refactor -- it's unclear why this switch is different from the above... maybe reconcile? */}
         <Switch>
           <Redirect from="/:i(\d+)" to="/asteroids/:i" />
           <Route path="/asteroids/:i(\d+)/:tab?/:category?">
             <AsteroidDetails />
           </Route>
-          <Route path="/owned-crew">
-            <OwnedCrew />
+          <Route path="/recruit/:crewId([0-9]+)/:locationId([0-9]+)?/:crewmateId([0-9]+)?/:page?">
+            <RecruitCrewmate />
           </Route>
+          {/* 
+          <Route exact path="/recruit/:crewmateId([0-9]+)/">
+            <CrewAssignment />
+          </Route>
+          <Route path="/recruit/:crewmateId([0-9]+)/create">
+            <CrewCreation />
+          </Route>
+          */}
+
+          {/* TODO: deprecated?
           <Route exact path="/crew-assignments/:id([a-z0-9]+)/:selected?">
             <CrewAssignments />
           </Route>
-          <Route exact path="/crew-assignment/:id([a-z0-9]+)">
-            <CrewAssignment />
-          </Route>
-          <Route path="/crew-assignment/:id([a-z0-9]+)/complete">
+          */}
+          {/*
+          /crew-assignment/* will use the same components as /recruit/* 
+          <Route path="/crew-assignment/:crewmateId([0-9]+)/complete">
             <CrewAssignmentComplete />
           </Route>
-          <Route path="/crew-assignment/:id([a-z0-9]+)/create">
-            <CrewCreation />
+          */}
+          <Route path="/marketplace/:asteroidId([0-9]+)/:lotId(all|[0-9]+)?/:discriminator?">
+            <Marketplace />
           </Route>
         </Switch>
-        <Outliner />
         <Draggables />
       </StyledInterface>
     </>

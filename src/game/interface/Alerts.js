@@ -64,7 +64,7 @@ const StyledReactNotification = styled(ReactNotifications)`
 }
 `;
 
-const Alerts = (props) => {
+const Alerts = () => {
   const alerts = useStore(s => s.logs.alerts);
   const notifyAlert = useStore(s => s.dispatchAlertNotified);
   const playSound = useStore(s => s.dispatchSoundRequested);

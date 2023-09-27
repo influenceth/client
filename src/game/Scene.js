@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient, QueryClientProvider } from 'react-query';
 import { Object3D, Vector3 } from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
@@ -46,7 +46,7 @@ const StyledContainer = styled.div`
   width: 100%;
 `;
 
-const WrappedScene = (props) => {
+const WrappedScene = () => {
   const { clock, controls } = useThree();
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
@@ -65,7 +65,7 @@ const WrappedScene = (props) => {
     }
   }, [!!controls, zoomStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return (
+  return !controls ? null : (
     <>
       <Star />
       <Planets />
@@ -75,7 +75,7 @@ const WrappedScene = (props) => {
   );
 }
 
-const Scene = (props) => {
+const Scene = () => {
 
   /**
    * Grab reference to queryClient to recreate QueryClientProvider within Canvas element
@@ -97,10 +97,11 @@ const Scene = (props) => {
   const canvasStack = useStore(s => s.canvasStack); // TODO: this might be easier to manage in a dedicated context
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
+  const pixelRatio = useStore(s => s.graphics.pixelRatio || 1);
   const statsOn = useStore(s => s.graphics.stats);
 
   const [contextLost, setContextLost] = useState(false);
-  const canvasStyle = useMemo(() => (contextLost ? { opacity: 0, pointerEvents: 'none' } : {}), [contextLost]);
+  const canvasStyle = useMemo(() => (contextLost ? { opacity: 0, pointerEvents: 'none' } : { zIndex: 0 }), [contextLost]);
 
   useEffect(() => {
     if (!zoomedFrom) {
@@ -117,9 +118,9 @@ const Scene = (props) => {
 
   return (
     <StyledContainer>
-      {statsOn && (<Stats />)}
+      {statsOn && <Stats />}
       {contextLost && <GpuContextLostMessage />}
-      <Canvas {...glConfig} frameloop={frameloop} style={canvasStyle}>
+      <Canvas key={pixelRatio} {...glConfig} frameloop={frameloop} style={canvasStyle}>
         <GpuContextLostReporter setContextLost={setContextLost} />
         <ContextBridge>
           <SettingsManager />

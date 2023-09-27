@@ -10,7 +10,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
 import { cleanupScene } from '~/game/scene/asteroid/helpers/utils';
 
-const AsteroidSpinner = (props) => {
+const AsteroidSpinner = () => {
   const { camera, scene, size } = useThree();
   
   const meshRef = useRef();
@@ -94,7 +94,7 @@ const AsteroidSpinner = (props) => {
   return null;
 };
 
-const AsteroidSpinnerInCanvas = (props) => (
+const AsteroidSpinnerInCanvas = () => (
   <Canvas
     antialias
     frameloop="always"
