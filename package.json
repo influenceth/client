@@ -2,6 +2,9 @@
   "name": "influence-client",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@argent/get-starknet": "^6.4.7",
     "@influenceth/astro": "^0.2.5",

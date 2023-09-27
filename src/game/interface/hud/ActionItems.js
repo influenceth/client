@@ -577,14 +577,6 @@ const ActionItemRow = styled.div`
 //   return formatted;
 // };
 
-const itemColors = {
-  pending: hexToRGB(theme.colors.purple),
-  failed: hexToRGB(theme.colors.error),
-  ready: theme.colors.mainRGB,
-  unready: '90, 90, 90',
-  plans: '248, 133, 44',
-};
-
 const statuses = {
   pending: 'Processing',
   failed: 'Failed',
