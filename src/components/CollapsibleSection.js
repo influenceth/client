@@ -13,6 +13,7 @@ const Uncollapsible = styled.div`
   flex-direction: row;
   pointer-events: all;
 `;
+
 const Toggle = styled.div`
   align-items: center;
   display: flex;
@@ -31,6 +32,7 @@ const Toggle = styled.div`
     opacity: 1;
   }
 `;
+
 const Title = styled.div`
   align-items: center;
   color: white;
@@ -48,9 +50,10 @@ const Title = styled.div`
     padding-left: 8px;
   }
 `;
+
 const Collapsible = styled.div`
   border-bottom: 1px solid transparent;
-  max-height: calc(100% - ${titleHeight + marginBottom}px);
+  max-height: ${p => p.containerHeight + titleHeight + marginBottom}px;
   overflow: hidden auto;
   margin-left: ${toggleWidth}px;
   margin-bottom: ${marginBottom}px;
@@ -68,11 +71,14 @@ const TitleAction = styled.div``;
 
 const CollapsibleSection = ({ borderless, children, initiallyClosed, openOnChange, title, titleAction, ...props }) => {
   const [collapsed, setCollapsed] = useState(!!initiallyClosed);
+  const [height, setHeight] = useState(0);
   const toggleCollapse = useCallback(() => {
     setCollapsed((c) => !c);
   }, []);
 
   const hasLoaded = useRef();
+  const collapsible = useRef();
+
   useEffect(() => {
     if (hasLoaded.current) {
       setCollapsed(false);
@@ -80,6 +86,14 @@ const CollapsibleSection = ({ borderless, children, initiallyClosed, openOnChang
       hasLoaded.current = true;
     }
   }, [openOnChange, toggleCollapse]);
+
+  // Get the height of the collapsible content
+  useEffect(() => {
+    if (collapsible.current) {
+      const children = collapsible.current.children ? [...collapsible.current.children] : [];
+      setHeight(children.reduce((acc, child) => acc + child.offsetHeight, 0));
+    }
+  }, [children, collapsible.current]);
 
   return (
     <>
@@ -92,7 +106,12 @@ const CollapsibleSection = ({ borderless, children, initiallyClosed, openOnChang
         </Title>
         {titleAction && <TitleAction>{titleAction(!collapsed)}</TitleAction>}
       </Uncollapsible>
-      <Collapsible borderless={borderless} collapsed={collapsed} {...props.collapsibleProps}>
+      <Collapsible
+        ref={collapsible}
+        borderless={borderless}
+        collapsed={collapsed}
+        containerHeight={height}
+        {...props.collapsibleProps}>
         {children}
       </Collapsible>
     </>
