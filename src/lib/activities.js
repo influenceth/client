@@ -1,11 +1,10 @@
-import { Address, Entity, Building, Product } from '@influenceth/sdk';
+import { Address, Entity } from '@influenceth/sdk';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 
 import AddressLink from '~/components/AddressLink';
 import EntityLink from '~/components/EntityLink';
 import {
-  CaptainIcon,
   CrewIcon,
   CrewmateIcon,
   KeysIcon,
@@ -35,7 +34,9 @@ const invalidationDefaults = (label, id) => {
   if (label === Entity.IDS.SHIP) searchKey = 'ships';
   if (searchKey) i.push(['search', searchKey]);
 
-  // TODO: if finishTime, add ActionItems to invalidations?
+  // TODO: if finishTime, add ActionItems to invalidations? if getActionItem entry?
+  //  these work for Start event, but not finish, so probably better to do explicitly
+  //  so the invalidation isn't forgotten
 
   return i;
 };
@@ -89,6 +90,10 @@ const activities = {
   BridgedToL1: {},
 
   // ConstructionDeconstructed,
+    // = invalidations
+    //   ['lots', returnValues.asteroidId, returnValues.lotId],
+    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
+    // = content log
     // return {
     //   icon: <DeconstructIcon />,
     //   content: (
@@ -99,6 +104,11 @@ const activities = {
     //   ),
     // };
   // ConstructionFinished,
+    // = invalidations
+    //   ['actionItems'],
+    //   ['lots', returnValues.asteroidId, returnValues.lotId],
+    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
+    // = content log
     // return {
     //   icon: <ConstructIcon />,
     //   content: (
@@ -109,6 +119,12 @@ const activities = {
     //   ),
     // };
   // ConstructionPlanned,
+    // = invalidations
+    //   ['planned'],
+    //   ['lots', returnValues.asteroidId, returnValues.lotId],
+    //   // ['asteroidLots', returnValues.asteroidId], (handled by asteroid room connection now)
+    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
+    // = content log
     // ({
     //   icon: <PlanBuildingIcon />,
     //   content: (
@@ -120,7 +136,32 @@ const activities = {
     //   txLink: getTxLink(e),
     // })
   // ConstructionStarted,
+    //  = invalidations
+    //   ['planned'],
+    //   ['actionItems'],
+    //   ['lots', returnValues.asteroidId, returnValues.lotId],
+    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
+    //  = action item:
+    //     formatted.icon = <ConstructIcon />;
+    //     formatted.label = `${Building.TYPES[item.assets.building.type]?.name || 'Building'} Construction`;
+    //     formatted.asteroidId = item.assets.asteroid.i;
+    //     formatted.lotId = item.assets.lot.i;
+    //     formatted.onClick = ({ openDialog }) => {
+    //       openDialog('CONSTRUCT');
+    //     };
+    //  = actionitem hidden:
+    //     return !pendingTransactions.find((tx) => (
+    //       tx.key === 'FINISH_CONSTRUCTION'
+    //       && tx.vars.asteroidId === item.assets.asteroid.i
+    //       && tx.vars.lotId === item.assets.lot.i
+    //     ));
   // ConstructionUnplanned,
+    // = invalidations
+    //   ['planned'],
+    //   ['lots', returnValues.asteroidId, returnValues.lotId],
+    //   // ['asteroidLots', returnValues.asteroidId], (handled by asteroid room connection now)
+    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
+    // = content log
     // ({
     //   icon: <UnplanBuildingIcon />,
     //   content: (
@@ -359,6 +400,10 @@ const activities = {
   },
 
   // DeliveryFinished,
+    // = invalidations
+    //   ['actionItems'],
+    //   ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+    // = content log
     // return {
     //   icon: <SurfaceTransferIcon />,
     //   content: (
@@ -370,6 +415,25 @@ const activities = {
     //   txLink: getTxLink(e),
     // };
   // DeliveryStarted,
+  // = invalidations
+  //   ['actionItems'],
+  //   ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
+  // = action item
+  //     formatted.icon = <SurfaceTransferIcon />;
+  //     formatted.label = 'Surface Transfer';
+  //     formatted.asteroidId = item.event.returnValues?.asteroidId;
+  //     formatted.lotId = item.event.returnValues?.destinationLotId;  // after start, link to destination
+  //     formatted.onClick = ({ openDialog }) => {
+  //       openDialog('SURFACE_TRANSFER', { deliveryId: item.assets.delivery?.deliveryId });
+  //     };
+  // = action item hidden
+  //     return !pendingTransactions.find((tx) => (
+  //       tx.key === 'FINISH_DELIVERY'
+  //       && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+  //       && tx.vars.destLotId === item.event.returnValues?.destinationLotId
+  //       && tx.vars.deliveryId === item.assets.delivery?.deliveryId
+  //     ));
+
   // DockShip,
   // EarlyAdopterRewardClaimed,
   // FoodSupplied,
@@ -400,6 +464,11 @@ const activities = {
   // PublicPolicyAssigned,
   // RemovedFromWhitelist,
   // ResourceExtractionFinished,
+    // = invalidations
+    //   ['actionItems'],
+    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
+    //   ['lots', returnValues.asteroidId, returnValues.lotId]
+    // = content log
     // return {
     //   icon: <ExtractionIcon />,
     //   content: (
@@ -411,6 +480,28 @@ const activities = {
     //   txLink: getTxLink(e),
     // };
   // ResourceExtractionStarted,
+    // = invalidations
+    //   ['actionItems'],
+    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
+    //   ['asteroidCrewSampledLots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
+    //   ['lots', returnValues.asteroidId, returnValues.lotId],
+    //   // ['lots', returnValues.asteroidId, returnValues.destinationLotId] // (this should happen in inventory_changed)
+    // = action item
+    //     formatted.icon = <ExtractionIcon />;
+    //     formatted.label = `${Product.TYPES[item.event.returnValues?.resourceId]?.name || 'Resource'} Extraction`;
+    //     formatted.asteroidId = item.event.returnValues?.asteroidId;
+    //     formatted.lotId = item.event.returnValues?.lotId;
+    //     formatted.resourceId = item.event.returnValues?.resourceId;
+    //     formatted.onClick = ({ openDialog }) => {
+    //       openDialog('EXTRACT_RESOURCE');
+    //     };
+    // = action item hidden
+    //    return !pendingTransactions.find((tx) => (
+    //       tx.key === 'FINISH_EXTRACTION'
+    //       && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+    //       && tx.vars.lotId === item.event.returnValues?.lotId
+    //     ));
+    // = content log
     // return {
     //   icon: <ExtractionIcon />,
     //   content: (
@@ -425,6 +516,10 @@ const activities = {
   // ResourceScanStarted,
   // SaleOffered,
   // SamplingDepositFinished,
+    // = invalidations
+    //   ['actionItems'],
+    //   ['lots', returnValues.asteroidId, returnValues.lotId],
+    // = content log
     // return {
     //   icon: <NewCoreSampleIcon />,
     //   content: (
@@ -436,6 +531,27 @@ const activities = {
     //   txLink: getTxLink(e),
     // };
   // SamplingDepositStarted,
+    //  = invalidations
+    //   ['actionItems'],
+    //   ['asteroidCrewSampledLots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
+    //   ['lots', returnValues.asteroidId, returnValues.lotId],
+    //  = action item
+    //     const isImprovement = item.assets?.coreSample?.initialYield > 0;
+    //     formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
+    //     formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
+    //     formatted.asteroidId = item.event.returnValues?.asteroidId;
+    //     formatted.lotId = item.event.returnValues?.lotId;
+    //     formatted.resourceId = item.event.returnValues?.resourceId;
+    //     formatted.locationDetail = Product.TYPES[item.event.returnValues?.resourceId].name;
+    //     formatted.onClick = ({ openDialog }) => {
+    //       openDialog(isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
+    //     };
+    // = action item hidden
+    //    return !pendingTransactions.find((tx) => (
+    //    tx.key === 'FINISH_CORE_SAMPLE'
+    //    && tx.vars.asteroidId === item.event.returnValues?.asteroidId
+    //    && tx.vars.lotId === item.event.returnValues?.lotId
+    // = (optional) log content
     // ({
     //   icon: <NewCoreSampleIcon />,
     //   content: (
@@ -474,7 +590,7 @@ const activities = {
         history.push(`/asteroids/${returnValues.asteroid.id}/resources`);
       }
     }),
-    hideActionItem: ({ returnValues }) => (pendingTransactions) => {
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
       return pendingTransactions.find((tx) => (
         tx.key === 'ScanSurfaceFinish'
         && tx.vars.asteroid.id === returnValues.asteroid.id
@@ -561,7 +677,7 @@ const getActivityConfig = (activity, viewingAs = {}) => {
   const triggerAlert = !!config?.triggerAlert;
   
   const isActionItemHidden = (pendingTransactions) => {
-    return config?.hideActionItem && config.hideActionItem(activity.event, pendingTransactions);
+    return config?.getIsActionItemHidden && config.getIsActionItemHidden(activity.event, pendingTransactions);
   };
 
   return {
@@ -577,10 +693,9 @@ export const typesWithLogContent = Object.keys(activities).filter((type) => !!ac
 
 export default getActivityConfig;
 
+// TODO: write a test to make sure all activities (from sdk) have a config
 
-// TODO: remove old invalidations below when no longer need the reference
-
-
+// TODO: remove references to old methods below when no longer need the reference
 
 // useQuery cache keys:
 // [ 'actionItems', crew?.i ],
@@ -620,69 +735,7 @@ export default getActivityConfig;
 //                                                  (and then return a reference to those individual results)
 // (...special stuff)
 
-// Dispatcher_ConstructionPlan: [
-//   ['planned'],
-//   ['lots', returnValues.asteroidId, returnValues.lotId],
-//   // ['asteroidLots', returnValues.asteroidId], (handled by asteroid room connection now)
-//   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-// ],
-// Dispatcher_ConstructionUnplan: [
-//   ['planned'],
-//   ['lots', returnValues.asteroidId, returnValues.lotId],
-//   // ['asteroidLots', returnValues.asteroidId], (handled by asteroid room connection now)
-//   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-// ],
-// Dispatcher_ConstructionStart: [
-//   ['planned'],
-//   ['actionItems'],
-//   ['lots', returnValues.asteroidId, returnValues.lotId],
-//   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-// ],
-// Dispatcher_ConstructionFinish: [
-//   ['actionItems'],
-//   ['lots', returnValues.asteroidId, returnValues.lotId],
-//   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-// ],
-// Dispatcher_ConstructionDeconstruct: [
-//   ['lots', returnValues.asteroidId, returnValues.lotId],
-//   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-// ],
-
-// Dispatcher_CoreSampleStartSampling: [
-//   ['actionItems'],
-//   ['asteroidCrewSampledLots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
-//   ['lots', returnValues.asteroidId, returnValues.lotId],
-// ],
-// Dispatcher_CoreSampleFinishSampling: [
-//   ['actionItems'],
-//   ['lots', returnValues.asteroidId, returnValues.lotId],
-// ],
-// // (invalidations done in extractionStart)
-// // CoreSample_Used: [
-// //   ['asteroidCrewSampledLots', returnValues.asteroidId, returnValues.resourceId, getLinkedAsset(linked, 'Crew').i],
-// //   ['lots', returnValues.asteroidId, returnValues.lotId],
-// // ],
-// Dispatcher_ExtractionStart: [
-//   ['actionItems'],
-//   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-//   ['asteroidCrewSampledLots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
-//   ['lots', returnValues.asteroidId, returnValues.lotId],
-//   // ['lots', returnValues.asteroidId, returnValues.destinationLotId] // (this should happen in inventory_changed)
-// ],
-// Dispatcher_ExtractionFinish: [
-//   ['actionItems'],
-//   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-//   ['lots', returnValues.asteroidId, returnValues.lotId]
-// ],
-
-// Inventory_DeliveryStarted: [
-//   ['actionItems'],
-//   ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
-// ],
-// Inventory_DeliveryFinished: [
-//   ['actionItems'],
-//   ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
-// ],
+// TODO: old events that do not have a corresponding entry yet:
 // Inventory_ReservedChanged: [
 //   ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
 //   ['asteroidCrewLots',  getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Crew').i],
@@ -691,39 +744,3 @@ export default getActivityConfig;
 //   ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
 //   ['asteroidCrewLots',  getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Crew').i],
 // ],
-
-
-// hiders:
-
-// switch (item.event.name) {
-//   case 'Dispatcher_AsteroidStartScan':
-//     return !pendingTransactions.find((tx) => (
-//       tx.key === 'FINISH_ASTEROID_SCAN'
-//       && tx.vars.i === item.event.returnValues?.asteroidId
-//     ));
-//   case 'Dispatcher_CoreSampleStartSampling':
-//     return !pendingTransactions.find((tx) => (
-//       tx.key === 'FINISH_CORE_SAMPLE'
-//       && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-//       && tx.vars.lotId === item.event.returnValues?.lotId
-//     ));
-//   case 'Dispatcher_ConstructionStart':
-//     return !pendingTransactions.find((tx) => (
-//       tx.key === 'FINISH_CONSTRUCTION'
-//       && tx.vars.asteroidId === item.assets.asteroid.i
-//       && tx.vars.lotId === item.assets.lot.i
-//     ));
-//   case 'Dispatcher_ExtractionStart':
-//     return !pendingTransactions.find((tx) => (
-//       tx.key === 'FINISH_EXTRACTION'
-//       && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-//       && tx.vars.lotId === item.event.returnValues?.lotId
-//     ));
-//   case 'Dispatcher_InventoryTransferStart':
-//     return !pendingTransactions.find((tx) => (
-//       tx.key === 'FINISH_DELIVERY'
-//       && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-//       && tx.vars.destLotId === item.event.returnValues?.destinationLotId
-//       && tx.vars.deliveryId === item.assets.delivery?.deliveryId
-//     ));
-// }
