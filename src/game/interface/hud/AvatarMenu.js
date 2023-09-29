@@ -150,6 +150,7 @@ const AvatarMenu = () => {
     <Wrapper>
       <CollapsibleSection
         borderless={!account}
+        containerHeight={140}
         title={(
           <>
             <IconWrapper style={{ color: theme.colors.main }}><CrewIcon /></IconWrapper>

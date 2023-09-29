@@ -69,7 +69,7 @@ const Asteroids = () => {
   const highlightConfig = useStore(s => s.assetSearch.asteroidsMapped.highlight);
   const cameraNeedsReorientation = useStore(s => s.cameraNeedsReorientation);
   const isAssetSearchMatchingDefault = useStore(s => s.isAssetSearchMatchingDefault);
-  const filters = useStore(s => s.assetSearch.asteroids?.filters);
+  const filters = useStore(s => s.assetSearch.asteroidsMapped?.filters);
   const openHudMenu = useStore(s => s.openHudMenu);
   const travelMode = useStore(s => s.asteroids.travelMode);
   const travelSolution = useStore(s => s.asteroids.travelSolution);
@@ -80,7 +80,7 @@ const Asteroids = () => {
   const selectDestination = useStore(s => s.dispatchDestinationSelected);
   const dispatchSwapOriginDestination = useStore(s => s.dispatchSwapOriginDestination);
 
-  const isDefaultSearch = useMemo(() => isAssetSearchMatchingDefault('asteroids'), [filters]);
+  const isDefaultSearch = useMemo(() => isAssetSearchMatchingDefault('asteroidsMapped'), [filters]);
 
   const { processInBackground } = useWebWorker();
 
@@ -118,6 +118,7 @@ const Asteroids = () => {
 
   // Update state when asteroids from server, origin, or destination change
   const isZoomedIn = zoomStatus === 'in';
+
   useEffect(() => {
     const newMappedAsteroids = !!asteroids ? asteroids.slice() : [];
 
@@ -127,6 +128,7 @@ const Asteroids = () => {
       if (already) already.isAsseted = 1;
       else if (isDefaultSearch) newMappedAsteroids.push(Object.assign({ isAsseted: 1 }, assetedAsteroids[i].asteroid));
     });
+
     (watchlist || []).forEach((wa) => {
       const already = newMappedAsteroids.find((a) => a.id === wa.asteroid.id);
       if (already) already.isWatched = 1;
@@ -308,6 +310,7 @@ const Asteroids = () => {
         watchlistPositions.push(positions[i * 3 + 0], positions[i * 3 + 1], positions[i * 3 + 2]);
       }
     });
+
     return {
       assetPositions: new Float32Array(assetPositions),
       assetPositionsById,

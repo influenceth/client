@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 
 import { CollapsedIcon } from '~/components/Icons';
 
@@ -13,6 +13,7 @@ const Uncollapsible = styled.div`
   flex-direction: row;
   pointer-events: all;
 `;
+
 const Toggle = styled.div`
   align-items: center;
   display: flex;
@@ -31,6 +32,7 @@ const Toggle = styled.div`
     opacity: 1;
   }
 `;
+
 const Title = styled.div`
   align-items: center;
   color: white;
@@ -48,10 +50,19 @@ const Title = styled.div`
     padding-left: 8px;
   }
 `;
+
+const expandedAnim = keyframes`
+  from {
+    overflow: hidden;
+  }
+`;
+
 const Collapsible = styled.div`
   border-bottom: 1px solid transparent;
-  max-height: calc(100% - ${titleHeight + marginBottom}px);
-  overflow: hidden auto;
+  ${p => p.containerHeight ?
+    `max-height: ${p.containerHeight + titleHeight + marginBottom}px;` :
+    `max-height: calc(100% - ${titleHeight + marginBottom}px)`
+  };
   margin-left: ${toggleWidth}px;
   margin-bottom: ${marginBottom}px;
   transition: max-height 250ms ease, border-color 250ms ease, margin-bottom 250ms ease;
@@ -62,17 +73,31 @@ const Collapsible = styled.div`
     overflow: hidden;
     margin-bottom: 4px;
   `};
+  ${p => !p.collapsed && css`
+    animation: ${expandedAnim} 500ms;
+    overflow: hidden auto;
+  `};
 `;
 
 const TitleAction = styled.div``;
 
-const CollapsibleSection = ({ borderless, children, initiallyClosed, openOnChange, title, titleAction, ...props }) => {
+const CollapsibleSection = ({
+  borderless,
+  children,
+  initiallyClosed,
+  openOnChange,
+  title,
+  containerHeight,
+  titleAction,
+  ...props
+}) => {
   const [collapsed, setCollapsed] = useState(!!initiallyClosed);
   const toggleCollapse = useCallback(() => {
     setCollapsed((c) => !c);
   }, []);
 
   const hasLoaded = useRef();
+
   useEffect(() => {
     if (hasLoaded.current) {
       setCollapsed(false);
@@ -92,7 +117,11 @@ const CollapsibleSection = ({ borderless, children, initiallyClosed, openOnChang
         </Title>
         {titleAction && <TitleAction>{titleAction(!collapsed)}</TitleAction>}
       </Uncollapsible>
-      <Collapsible borderless={borderless} collapsed={collapsed} {...props.collapsibleProps}>
+      <Collapsible
+        borderless={borderless}
+        collapsed={collapsed}
+        containerHeight={containerHeight}
+        {...props.collapsibleProps}>
         {children}
       </Collapsible>
     </>

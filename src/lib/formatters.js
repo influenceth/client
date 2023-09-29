@@ -44,7 +44,7 @@ const formatters = {
 
     const lotCount = Asteroid.getSurfaceArea(0, r);
     const price = base + lot * lotCount;
-    return price.toLocaleString([], { maximumFractionDigits: 4 });
+    return price.toLocaleString([], { maximumFractionDigits: 3 });
   },
 
   buildingName: (b, fallbackText) => {
@@ -66,6 +66,17 @@ const formatters = {
   crewmateName: (c, fallbackText) => {
     if (!c) return fallbackText || 'Crewmate';
     return c.Name?.name || `Crewmate #${(c.id || 0).toLocaleString()}`;
+  },
+
+  crewmateTraitDescription: (desc) => {
+    if (!desc) return '';
+    let bonus = desc.match(/[0-9]*\%/)
+    bonus = bonus ? bonus[0] : null;
+    const parts = desc.split(/([0-9]*\%)/)
+    return <span> { parts.map((part, i) =>
+      <span key={i} style={part === bonus ? { color: 'white', fontWeight: 'bold' } : {} }>{ part }</span>
+    )
+  } </span>;
   },
 
   lotName: (lotId) => {

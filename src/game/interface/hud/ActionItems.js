@@ -22,7 +22,7 @@ import formatters from '~/lib/formatters';
 import useCrewContext from '~/hooks/useCrewContext';
 
 const ICON_WIDTH = 34;
-const ITEM_WIDTH = 400;
+const ITEM_WIDTH = 410;
 const TRANSITION_TIME = 400;
 
 const TitleWrapper = styled.div`
@@ -104,6 +104,7 @@ const OuterWrapper = styled.div`
   height: 0;
   pointer-events: none;
   position: relative;
+  width: 100%;
 `;
 
 const ActionItemContainer = styled.div`
