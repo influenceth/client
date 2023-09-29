@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
+import { Entity } from '@influenceth/sdk';
 
+import getActivityConfig, { typesWithLogContent } from '~/lib/activities';
 import api from '~/lib/api';
-import getLogContent, { types } from '~/lib/getLogContent';
-import useStore from './useStore';
+import useCrewContext from '~/hooks/useCrewContext';
+import useStore from '~/hooks/useStore';
 
 const assetType = 'eventlog';
 const pageSize = 25;
 
 const usePagedEvents = () => {
+  const { crew } = useCrewContext();
   const [data, setData] = useState({ hits: [], total: 0 });
   const [loading, setLoading] = useState();
   const [page, setPage] = useState(1);
@@ -26,13 +29,19 @@ const usePagedEvents = () => {
     // TODO (enhancement): if not using any filters, should probably use react-query here...
     //  but will need to invalidate these queries when get event updates from WS
 
-    api.getActivities({ page, pageSize, types, returnTotal: true })
-      .then(({ events, totalHits }) => {
+    api.getActivities({ page, pageSize, types: typesWithLogContent, returnTotal: true })
+      .then(({ activities, totalHits }) => {
         setData({
-          hits: events.map((e) => ({
-            ...getLogContent({ type: e.event, data: e }),
-            e
-          })),
+          hits: activities
+            .map((activity) => {
+              const { logContent } = getActivityConfig(activity, { label: Entity.IDS.CREW, id: crew?.id });
+              if (!logContent) return null;
+              return {
+                ...logContent,
+                activity
+              };
+            })
+            .filter((a) => !!a),
           total: totalHits
         });
         setLoading(false);

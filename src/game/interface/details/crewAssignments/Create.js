@@ -845,7 +845,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
       }
     };
 
-    if (c.id === 0) { // TODO: remove this
+    if (c.id === 0 && adalianRecruits?.length > 0) {
       console.warn('OVERRIDING ID -- should not need to do this');
       c.id = adalianRecruits?.[0]?.id || 0;
     }
@@ -1214,7 +1214,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
                           onMouseEnter={animationComplete ? () => setHovered('class') : noop}
                           onMouseLeave={() => setHovered()}
                           side="right"
-                          isClickable={!traitsLocked && crewmate._canReclass}
+                          isClickable={!pendingCrewmate && !traitsLocked && crewmate._canReclass}
                           isToggling={toggling === 'class'}
                           isEmpty={!crewmate.Crewmate.class}>
                           <div>
@@ -1280,7 +1280,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
                                     onMouseLeave={() => setHovered()}
                                     side={side}
                                     type={trait?.type}
-                                    isClickable={!traitsLocked && crewmate.Crewmate.class && traitIndex <= selectedTraits?.length}
+                                    isClickable={!pendingCrewmate && !traitsLocked && crewmate.Crewmate.class && traitIndex <= selectedTraits?.length}
                                     isEmpty={!trait}
                                     isToggling={toggling === hoverKey}
                                     isAtRisk={toggling === 'class' || toggling < traitIndex}>

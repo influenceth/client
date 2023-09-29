@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { Building, Entity, Name } from '@influenceth/sdk';
+import { Building, Entity, Name, Time } from '@influenceth/sdk';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 
 import CoverImageSrc from '~/assets/images/modal_headers/OwnedCrew.png';
@@ -32,6 +32,7 @@ import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
 import { boolAttr, locationsArrToObj } from '~/lib/utils';
 import theme from '~/theme';
+import useEarliestActivity from '~/hooks/useEarliestActivity';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -313,6 +314,7 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const isNameValid = useNameAvailability(Entity.IDS.CREW);
   const { data: activities } = useActivities({ id: crewId, label: Entity.IDS.CREW });
+  const { data: earliestActivity, isLoading: earliestLoading } = useEarliestActivity({ id: crewId, label: Entity.IDS.CREW });
   const { changeName, changingName } = useChangeName({ id: crewId, label: Entity.IDS.CREW });
 
   const hydratedLocation = useHydratedLocation(locationsArrToObj(crew.Location?.locations));
@@ -362,10 +364,18 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew }) => {
     history.push('/');
   }, [hydratedLocation]);
 
-  const [ready, setReady] = useState();
-  useEffect(() => {
-    setTimeout(() => setReady(true), 1000);
-  }, []);
+  const formationDate = useMemo(() => {
+    if (earliestLoading) return '...';
+    if (!earliestActivity) return 'Unknown';
+    return `${Time.fromUnixTime(earliestActivity?.event?.timestamp, false).toGameClockADays(true)} SA`;
+  }, [earliestActivity, earliestLoading]);
+
+  // TODO: was this just debug? remove?
+  const ready = true;
+  // const [ready, setReady] = useState();
+  // useEffect(() => {
+  //   setTimeout(() => setReady(true), 1000);
+  // }, []);
 
   // TODO: we need to support empty crews here
 
@@ -504,7 +514,7 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew }) => {
           <ManagementContainer>
             {isMyCrew && <MyCrewStatement><MyAssetIcon /> This crew is owned by me.</MyCrewStatement>}
             <Stat label="No. Members">{crew.Crew?.roster?.length || 0}</Stat>
-            <Stat label="Formed">TODO</Stat>
+            <Stat label="Formed">{formationDate}</Stat>
             {isMyCrew && (
               <div style={{ paddingTop: 15 }}>
                 <Button subtle onClick={() => onSetAction('MANAGE_CREW')}>Manage Crew</Button>
@@ -545,13 +555,12 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew }) => {
                     <div>
                       <ul>
                         {/* TODO: totalCount from api, pagination, custom columns (see mocks) */}
-                        {activities?.docs?.length > 0
-                          ? activities.docs.map(a => (
+                        {activities?.length > 0
+                          ? activities.map((activity) => (
                             <LogEntry
-                              key={a.id}
-                              data={a.event}
+                              key={activity.id}
+                              activity={activity}
                               timestampBreakpoint="1500px"
-                              type={`Crew_${a.event.event}`}
                               isTabular />
                           ))
                           : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>

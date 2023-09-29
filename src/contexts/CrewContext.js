@@ -60,7 +60,7 @@ export function CrewProvider({ children }) {
     if (!rawCrews || !crewmateMap) return [];
     return rawCrews.map((c) => {
       if (!!crewmateMap) {
-        c._crewmates = c.Crew.roster.map((i) => crewmateMap[i]);
+        c._crewmates = c.Crew.roster.map((i) => crewmateMap[i]).filter((c) => !!c);
       }
       if (c.Location?.locations) {
         c._location = locationsArrToObj(c.Location.locations);

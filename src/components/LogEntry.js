@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import moment from 'moment';
 
 import { LinkIcon } from '~/components/Icons';
-import getLogContent from '~/lib/getLogContent';
+import getActivityConfig from '~/lib/activities';
 
 const LogEntryItem = styled.li`
   align-items: center;
@@ -125,13 +125,13 @@ const LinkLabel = styled.div`
   flex: 0 0 28px;
 `;
 
-const LogEntry = ({ data = {}, css = {}, isHeaderRow, isTabular, timestampBreakpoint, type }) => {
+const LogEntry = ({ activity, css = {}, isHeaderRow, isTabular, timestampBreakpoint, viewingAs = {} }) => {
   const m = useMemo(() => {
-    if (isTabular) {
-      return moment(new Date(data.timestamp * 1000));
+    if (isTabular && activity?.event?.timestamp) {
+      return moment(new Date(activity.event.timestamp * 1000));
     }
     return null;
-  }, [data.timestamp, isTabular]);
+  }, [activity?.event?.timestamp, isTabular]);
 
   if (isHeaderRow) {
     return (
@@ -143,13 +143,9 @@ const LogEntry = ({ data = {}, css = {}, isHeaderRow, isTabular, timestampBreakp
     );
   }
   
-  const {
-    icon,
-    content,
-    txLink
-  } = getLogContent({ type, data }) || {};
-
-  if (content) {
+  const logContent = getActivityConfig(activity, viewingAs)?.logContent;
+  if (logContent) {
+    const { icon, content, txLink } = logContent || {};
     return (
       <LogEntryItem isTabular={isTabular} css={css}>
         <Icon>

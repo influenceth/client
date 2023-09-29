@@ -55,15 +55,15 @@ const useColumns = () => {
         key: 'time',
         align: 'center',
         label: 'Time',
-        selector: row => (new moment(new Date(1000 * (row.e.timestamp || 0)))).fromNow(),
+        selector: row => (new moment(new Date(1000 * (row.activity.event.timestamp || 0)))).fromNow(),
       },
       {
         key: 'location',
         label: ' ',
         align: 'right',
         selector: row => {
-          if (!row.e.linked) return null;
           return null;
+          if (!row.e.linked) return null;
 
           // TODO: ecs refactor
           const asteroid = row.e.linked.find((l) => l.type === 'Asteroid')?.asset;
@@ -87,7 +87,7 @@ const useColumns = () => {
         key: 'txLink',
         align: 'center',
         bodyStyle: { fontSize: '20px' },
-        selector: row => (
+        selector: row => row.txLink && (
           <a style={{ color: theme.colors.main }} href={row.txLink} target="_blank" rel="noopener noreferrer">
             <LinkIcon />
           </a>

@@ -4,8 +4,9 @@ import { ReactNotifications, Store as notify } from 'react-notifications-compone
 import 'react-notifications-component/dist/theme.css';
 import 'animate.css';
 
+import { LinkIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
-import LogEntry from '~/components/LogEntry';
+import getAlertContent from '~/lib/getAlertContent';
 
 const defaults = {
   type: 'info',
@@ -64,6 +65,62 @@ const StyledReactNotification = styled(ReactNotifications)`
 }
 `;
 
+const AlertWrapper = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.mainText};
+  display: flex;
+  font-size: ${p => p.theme.fontSizes.mainText};
+  margin: 12px 0;
+
+  & > * {
+    padding: 0 5px;
+    &:first-child,
+    &:last-child {
+      padding: 0;
+    }
+  }
+`;
+
+const Icon = styled.div`
+  color: ${p => p.theme.colors.main};
+  flex: 0 0 26px;
+  font-size: 130%;
+  padding-left: 5px;
+  padding-right: 5px;
+`;
+
+const Description = styled.div`
+  flex: 1;
+  & a {
+    color: ${p => p.theme.colors.mainText};
+    display: inline-block;
+    text-overflow: ellipsis;
+    max-width: 100px;
+    overflow: hidden;
+    vertical-align: top;
+    white-space: nowrap;
+  }
+`;
+
+const TransactionLink = styled.a`
+  flex: 0 0 28px;
+  font-size: 116%;
+  height: 20px;
+  margin-left: auto;
+  padding-left: 8px;
+  text-align: center;
+
+  & > svg {
+    color: ${p => p.theme.colors.main};
+  }
+
+  &:hover {
+    & > svg {
+      color: white;
+    }
+  }
+`;
+
 const Alerts = () => {
   const alerts = useStore(s => s.logs.alerts);
   const notifyAlert = useStore(s => s.dispatchAlertNotified);
@@ -72,7 +129,7 @@ const Alerts = () => {
   useEffect(() => {
     if (alerts?.length === 0) return;
     alerts.filter(a => !a.notified).forEach(a => {
-      const { level, type, duration, hideCloseIcon, onRemoval, ...data } = a;
+      const { level, type, duration, hideCloseIcon, onRemoval, data } = a;
       const options = level ? { type: level } : {};
       if (duration) options.dismiss = { duration: duration };
       if (hideCloseIcon) {
@@ -82,12 +139,32 @@ const Alerts = () => {
         };
       }
       if (onRemoval) options.onRemoval = onRemoval;
-      send(<LogEntry type={type} data={data} />, options);
 
-      if (level === 'warning') {
-        playSound('effects.failure');
-      } else {
-        playSound('effects.success');
+      const alertContent = getAlertContent({ type, data });
+      if (alertContent) {
+        const { icon, content, txLink } = alertContent;
+        send(
+          <AlertWrapper>
+            <Icon>
+              {icon}
+            </Icon>
+            <Description>
+              {content}
+            </Description>
+            {txLink && (
+              <TransactionLink href={txLink} rel="noreferrer" target="_blank">
+                <LinkIcon />
+              </TransactionLink>
+            )}
+          </AlertWrapper>,
+          options
+        );
+
+        if (level === 'warning') {
+          playSound('effects.failure');
+        } else {
+          playSound('effects.success');
+        }
       }
 
       notifyAlert(a);

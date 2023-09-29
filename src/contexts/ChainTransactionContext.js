@@ -67,7 +67,6 @@ const customConfigs = {
       ]);
       const base = Number(ethersUtils.formatEther(String(ASTEROID_BASE_PRICE_ETH)));
       const lot = Number(ethersUtils.formatEther(String(ASTEROID_LOT_PRICE_ETH)));
-      console.log({ ASTEROID_BASE_PRICE_ETH, ASTEROID_LOT_PRICE_ETH, base, lot });
       return base + lot * Asteroid.Entity.getSurfaceArea(asteroid);
     },
     equalityTest: ['asteroid.id']
@@ -143,13 +142,10 @@ export function ChainTransactionProvider({ children }) {
             }
 
             if (totalPrice > 0) {
-              console.log('totalPrice', totalPrice);
               const amount = totalPrice * 1e18; // convert to wei
-              console.log('totalPrice amount', amount);
               calls.unshift(System.getApproveEthCall(amount, process.env.REACT_APP_ERC20_TOKEN_ADDRESS, process.env.REACT_APP_STARKNET_DISPATCHER));
             }
 
-            console.log('pmk calls2', calls, starknet.account);
             return starknet.account.execute(calls);
           },
 

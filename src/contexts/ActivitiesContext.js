@@ -3,15 +3,11 @@ import { useQueryClient } from 'react-query';
 import uniq from 'lodash.uniqby';
 
 import useAuth from '~/hooks/useAuth';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
 import getActivityConfig from '~/lib/activities';
 import api from '~/lib/api';
-import useCrewContext from '~/hooks/useCrewContext';
-
-const getLinkedAsset = (linked, type) => {
-  return linked.find((l) => l.type === type && !!l.asset)?.asset || {};
-};
 
 // TODO (enhancement): rather than invalidating, make optimistic updates to cache value directly
 // (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)
@@ -26,6 +22,9 @@ export function ActivitiesProvider({ children }) {
   const { crew } = useCrewContext();
   const queryClient = useQueryClient();
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
+
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+
   const [ lastBlockNumber, setLastBlockNumber ] = useState(0);
   const [ activities, setActivities ] = useState([]);
 
@@ -45,12 +44,11 @@ export function ActivitiesProvider({ children }) {
     // TODO: this timeout can be removed if/when we start optimistically updating query cache from
     //        the event's linked assets
     setTimeout(() => {
-      transformedActivities.forEach(e => {
-        const config = getActivityConfig(e);
-        if (!config) return;
-
+      transformedActivities.forEach(activity => {
         if (!skipInvalidations) {
-          config.getInvalidations().forEach((queryKey) => {
+          const activityConfig = getActivityConfig(activity);
+
+          activityConfig.invalidations.forEach((queryKey) => {
             console.log('invalidate', queryKey);
 
             // TODO: ecs refactor -- probably want to restore what this was doing below...
@@ -84,6 +82,14 @@ export function ActivitiesProvider({ children }) {
               queryClient.invalidateQueries({ queryKey });
             }
           });
+
+          if (activityConfig.triggerAlert) {
+            createAlert({
+              type: 'ActivityLog',
+              data: activity,
+              duration: 10000
+            })
+          };
         }
       });
 

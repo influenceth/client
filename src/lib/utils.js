@@ -64,3 +64,15 @@ export const locationsArrToObj = (locations) => {
     shipId: locations.find((l) => l.label === Entity.IDS.SHIP)?.id,
   }
 };
+
+export const andList = (items) => {
+  if (items.length <= 1) return <>{items}</>;
+  if (items.length === 2) return <>{items[0]} and {items[1]}</>;
+  return <>{items.slice(0, -1).join(', ')}, and {items[items.length - 1]}</>;
+}
+
+export const ucfirst = (str) => {
+  if (!str) return str;
+  const s = (str || '').toLowerCase();
+  return s.charAt(0).toUpperCase() + s.slice(1)
+};
