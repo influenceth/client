@@ -431,9 +431,9 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
             {altCrews.length > 0 && (
               <FlexSectionInputBlock
                 image={<EmptyResourceImage iconOverride={<CrewIcon />} />}
-                isSelected
+                isSelected={boolAttr(stage === actionStages.NOT_STARTED)}
                 label="Crew Exchange"
-                onClick={() => setCrewSelectorOpen(true)}
+                onClick={stage === actionStages.NOT_STARTED ? () => setCrewSelectorOpen(true) : undefined}
                 sublabel={`${altCrews.length} Available Crew${altCrews.length === 1 ? '' : 's'}`}
               />
             )}

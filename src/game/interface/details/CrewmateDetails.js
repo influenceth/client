@@ -602,13 +602,12 @@ const CrewmateDetails = () => {
                 <div>
                   <ul>
                     {/* TODO: totalCount from api, pagination, custom columns (see mocks) */}
-                    {activities?.docs?.length > 0
-                      ? activities.docs.map(a => (
+                    {activities?.length > 0
+                      ? activities.map((activity) => (
                         <LogEntry
-                          key={a.id}
-                          data={a.event}
+                          key={activity.id}
+                          activity={activity}
                           timestampBreakpoint="1500px"
-                          type={`Crewmate_${a.event.event}`}
                           isTabular />
                       ))
                       : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>

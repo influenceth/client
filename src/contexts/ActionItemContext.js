@@ -133,10 +133,7 @@ export function ActionItemProvider({ children }) {
     // return the readyItems whose "finishing transaction" is not already pending
     const visibleReadyItems = readyItems.filter((item) => {
       if (pendingTransactions) {
-        const config = getActivityConfig(item);
-        if (config && config.hideActionItem) {
-          return !config.hideActionItem(pendingTransactions);
-        }
+        return !getActivityConfig(item).isActionItemHidden(pendingTransactions);
       }
       return true;
     });

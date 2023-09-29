@@ -71,8 +71,8 @@ const api = {
     return response.data;
   },
 
-  getEntityActivities: async (entity) => {
-    const response = await instance.get(`/${apiVersion}/entities/${Entity.packEntity(entity)}/activity`);
+  getEntityActivities: async (entity, query = {}) => {
+    const response = await instance.get(`/${apiVersion}/entities/${Entity.packEntity(entity)}/activity?${buildQuery(query)}`);
     return response.data;
   },
 
@@ -286,56 +286,56 @@ const api = {
     return response.data;
   },
 
-  getBook: async (id) => {
-    return null;  // TODO: restore this when story is ready again
-    const response = await instance.get(`/${apiVersion}/books/${id}`);
-    return response.data;
-  },
+  // getBook: async (id) => {
+  //   return null;  // TODO: restore this when story is ready again
+  //   const response = await instance.get(`/${apiVersion}/books/${id}`);
+  //   return response.data;
+  // },
 
-  getStory: async (id, sessionId) => {
-    return null;  // TODO: restore this when story is ready again
-    const response = await instance.get(`/${apiVersion}/stories/${id}`, { params: { session: sessionId }});
-    return response.data;
-  },
+  // getStory: async (id, sessionId) => {
+  //   return null;  // TODO: restore this when story is ready again
+  //   const response = await instance.get(`/${apiVersion}/stories/${id}`, { params: { session: sessionId }});
+  //   return response.data;
+  // },
 
-  createStorySession: async (crewmate, story) => {
-    return null;  // TODO: restore this when story is ready again
-    const response = await instance.post(`/${apiVersion}/stories/sessions`, { crewmate, story });
-    return response.data;
-  },
+  // createStorySession: async (crewmate, story) => {
+  //   return null;  // TODO: restore this when story is ready again
+  //   const response = await instance.post(`/${apiVersion}/stories/sessions`, { crewmate, story });
+  //   return response.data;
+  // },
 
-  getStorySession: async (id) => {
-    return null;  // TODO: restore this when story is ready again
-    const response = await instance.get(`/${apiVersion}/stories/sessions/${id}`);
-    return response.data;
-  },
+  // getStorySession: async (id) => {
+  //   return null;  // TODO: restore this when story is ready again
+  //   const response = await instance.get(`/${apiVersion}/stories/sessions/${id}`);
+  //   return response.data;
+  // },
 
-  getStoryPath: async (storyId, pathId, sessionId) => {
-    return null;  // TODO: restore this when story is ready again
-    const response = await instance.get(
-      `/${apiVersion}/stories/${storyId}/paths/${pathId}`,
-      { params: { session: sessionId } }
-    );
-    return response.data;
-  },
+  // getStoryPath: async (storyId, pathId, sessionId) => {
+  //   return null;  // TODO: restore this when story is ready again
+  //   const response = await instance.get(
+  //     `/${apiVersion}/stories/${storyId}/paths/${pathId}`,
+  //     { params: { session: sessionId } }
+  //   );
+  //   return response.data;
+  // },
 
-  patchStorySessionPath: async (sessionId, pathId) => {
-    return null;  // TODO: restore this when story is ready again
-    const response = await instance.patch(`/${apiVersion}/stories/sessions/${sessionId}/paths/${pathId}`);
-    return response.data;
-  },
+  // patchStorySessionPath: async (sessionId, pathId) => {
+  //   return null;  // TODO: restore this when story is ready again
+  //   const response = await instance.patch(`/${apiVersion}/stories/sessions/${sessionId}/paths/${pathId}`);
+  //   return response.data;
+  // },
 
-  deleteStorySessionPath: async (sessionId, pathId) => {
-    return null;  // TODO: restore this when story is ready again
-    const response = await instance.delete(`/${apiVersion}/stories/sessions/${sessionId}/paths/${pathId}`);
-    return response.data;
-  },
+  // deleteStorySessionPath: async (sessionId, pathId) => {
+  //   return null;  // TODO: restore this when story is ready again
+  //   const response = await instance.delete(`/${apiVersion}/stories/sessions/${sessionId}/paths/${pathId}`);
+  //   return response.data;
+  // },
 
-  getAdalianRecruitmentStory: async (id, sessionId) => {
-    return null;  // TODO: restore this when story is ready again
-    const response = await instance.get(`/${apiVersion}/stories/adalian-recruitment`);
-    return response.data;
-  },
+  // getAdalianRecruitmentStory: async (id, sessionId) => {
+  //   return null;  // TODO: restore this when story is ready again
+  //   const response = await instance.get(`/${apiVersion}/stories/adalian-recruitment`);
+  //   return response.data;
+  // },
 
   searchAssets: async (asset, query) => {
     const assetIndex = asset.replace(/s$/, '').toLowerCase();
@@ -357,14 +357,14 @@ const api = {
     return response.data.token;
   },
 
-  createDevnetBlock: async () => {
-    return;
-    try {
-      axios.post(`${process.env.REACT_APP_STARKNET_NETWORK}/create_block`, {});
-    } catch (e) {
-      console.warn(e);
-    }
-  }
+  // createDevnetBlock: async () => {
+  //   return;
+  //   try {
+  //     axios.post(`${process.env.REACT_APP_STARKNET_NETWORK}/create_block`, {});
+  //   } catch (e) {
+  //     console.warn(e);
+  //   }
+  // }
 };
 
 export default api;

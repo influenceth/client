@@ -38,13 +38,10 @@ const formatAsItem = (activity) => {
     onClick: null
   };
 
-  const config = getActivityConfig(activity);
-  if (config) {
-    const actionItem = config.getActionItem() || {};
-    Object.keys(actionItem).forEach((key) => {
-      formatted[key] = actionItem[key];
-    });
-  }
+  const { actionItem } = getActivityConfig(activity);
+  Object.keys(actionItem || {}).forEach((key) => {
+    formatted[key] = actionItem[key];
+  });
 
   // switch(item.event.name) {
   //   case 'Dispatcher_AsteroidStartScan':

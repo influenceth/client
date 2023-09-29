@@ -1,8 +1,9 @@
 import { useQuery } from 'react-query';
-import { Entity } from '@influenceth/sdk';
+import { Asteroid, Entity } from '@influenceth/sdk';
 
 import formatters from '~/lib/formatters';
 import api from '~/lib/api';
+import { useMemo } from 'react';
 
 const formatterByLabel = {
   [Entity.IDS.ASTEROID]: formatters.asteroidName,
@@ -12,16 +13,24 @@ const formatterByLabel = {
   [Entity.IDS.SHIP]: formatters.shipName,
 }
 
-const EntityName = ({ id, label }) => {
-  // TODO: do we want `components: ['Name']` in the query?
-  //  ^ more redundancy in cache, but save bandwidth when not
+const EntityName = ({ id, label, forceBaseName }) => {
   const { data: entity, isLoading } = useQuery(
     [ 'entity', label, id ],
     () => api.getEntityById({ label, id }),
-    { enabled: label && id }
+    { enabled: !!(label && id) }
   );
 
-  return isLoading ? <>...</> : <>{formatterByLabel[label](entity)}</>;
+  const name = useMemo(() => {
+    if (isLoading) return '...';
+    if (forceBaseName && entity) {
+      if (label === Entity.IDS.ASTEROID) return Asteroid.Entity.getBaseName(entity);
+      return `#${(id || '').toLocaleString()}`;
+    } else {
+      return formatterByLabel[label](entity);
+    }
+  }, [entity, forceBaseName, isLoading, label])
+
+  return <>{name}</>;
 };
 
 export default EntityName;
