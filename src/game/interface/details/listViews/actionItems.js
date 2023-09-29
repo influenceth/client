@@ -103,7 +103,7 @@ const useColumns = () => {
         key: 'asteroid',
         label: 'Asteroid',
         sortField: 'asteroidId',
-        selector: row => (
+        selector: row => row.asteroidId && (
           <>
             <LocationLink asteroidId={row.asteroidId} resourceId={row.resourceId} />
             <span>{row.asteroidId.toLocaleString()}</span>
@@ -114,7 +114,7 @@ const useColumns = () => {
         key: 'lot',
         label: 'Lot',
         sortField: 'lotId',
-        selector: row => (
+        selector: row => row.lotId && (
           <>
             <LocationLink asteroidId={row.asteroidId} lotId={row.lotId} resourceId={row.resourceId} />
             <span>{row.lotId.toLocaleString()}</span>

@@ -22,7 +22,7 @@ import theme, { hexToRGB } from '~/theme';
 const formatAsItem = (activity) => {
   const formatted = {
     key: `activity_${activity._id}`,
-    type: activity.event.event,
+    type: activity.type,
     icon: null,
     label: '',
     asteroidId: null,
@@ -83,6 +83,9 @@ const formatAsTx = (item) => {
     onClick: null,
     _timestamp: item.timestamp // (only used for dismissing failed tx's)
   };
+
+  // TODO: should these all go in lib/activities?
+  //  if so, copy in all the deprecated / not-yet-implemented items as well for reference
   const eventName = item.event?.event || item.key;
   switch(eventName) {
     case 'ChangeName': {
