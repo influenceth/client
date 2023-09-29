@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 
 import { CollapsedIcon } from '~/components/Icons';
 
@@ -51,10 +51,18 @@ const Title = styled.div`
   }
 `;
 
+const expandedAnim = keyframes`
+  from {
+    overflow: hidden;
+  }
+`;
+
 const Collapsible = styled.div`
   border-bottom: 1px solid transparent;
-  max-height: ${p => p.containerHeight + titleHeight + marginBottom}px;
-  overflow: hidden auto;
+  ${p => p.containerHeight ?
+    `max-height: ${p.containerHeight + titleHeight + marginBottom}px;` :
+    `max-height: calc(100% - ${titleHeight + marginBottom}px)`
+  };
   margin-left: ${toggleWidth}px;
   margin-bottom: ${marginBottom}px;
   transition: max-height 250ms ease, border-color 250ms ease, margin-bottom 250ms ease;
@@ -65,19 +73,30 @@ const Collapsible = styled.div`
     overflow: hidden;
     margin-bottom: 4px;
   `};
+  ${p => !p.collapsed && css`
+    animation: ${expandedAnim} 500ms;
+    overflow: hidden auto;
+  `};
 `;
 
 const TitleAction = styled.div``;
 
-const CollapsibleSection = ({ borderless, children, initiallyClosed, openOnChange, title, titleAction, ...props }) => {
+const CollapsibleSection = ({
+  borderless,
+  children,
+  initiallyClosed,
+  openOnChange,
+  title,
+  containerHeight,
+  titleAction,
+  ...props
+}) => {
   const [collapsed, setCollapsed] = useState(!!initiallyClosed);
-  const [height, setHeight] = useState(0);
   const toggleCollapse = useCallback(() => {
     setCollapsed((c) => !c);
   }, []);
 
   const hasLoaded = useRef();
-  const collapsible = useRef();
 
   useEffect(() => {
     if (hasLoaded.current) {
@@ -86,14 +105,6 @@ const CollapsibleSection = ({ borderless, children, initiallyClosed, openOnChang
       hasLoaded.current = true;
     }
   }, [openOnChange, toggleCollapse]);
-
-  // Get the height of the collapsible content
-  useEffect(() => {
-    if (collapsible.current) {
-      const children = collapsible.current.children ? [...collapsible.current.children] : [];
-      setHeight(children.reduce((acc, child) => acc + child.offsetHeight, 0));
-    }
-  }, [children, collapsible.current]);
 
   return (
     <>
@@ -107,10 +118,9 @@ const CollapsibleSection = ({ borderless, children, initiallyClosed, openOnChang
         {titleAction && <TitleAction>{titleAction(!collapsed)}</TitleAction>}
       </Uncollapsible>
       <Collapsible
-        ref={collapsible}
         borderless={borderless}
         collapsed={collapsed}
-        containerHeight={height}
+        containerHeight={containerHeight}
         {...props.collapsibleProps}>
         {children}
       </Collapsible>

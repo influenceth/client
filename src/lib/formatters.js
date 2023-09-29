@@ -68,6 +68,17 @@ const formatters = {
     return c.Name?.name || `Crewmate #${(c.id || 0).toLocaleString()}`;
   },
 
+  crewmateTraitDescription: (desc) => {
+    if (!desc) return '';
+    let bonus = desc.match(/[0-9]*\%/)
+    bonus = bonus ? bonus[0] : null;
+    const parts = desc.split(/([0-9]*\%)/)
+    return <span> { parts.map((part, i) =>
+      <span key={i} style={part === bonus ? { color: 'white', fontWeight: 'bold' } : {} }>{ part }</span>
+    )
+  } </span>;
+  },
+
   lotName: (lotId) => {
     if (!lotId) return 'Lot';
     return `Lot ${lotId.toLocaleString()}`;

@@ -5,6 +5,7 @@ import { Address, Crewmate, Entity, Time } from '@influenceth/sdk';
 import { FaBookOpen as BioIcon } from 'react-icons/fa';
 import { RiBarChart2Fill as StatsIcon } from 'react-icons/ri';
 
+import formatters from '~/lib/formatters';
 import Button from '~/components/Button';
 import CrewCard from '~/components/CrewCard';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
@@ -108,7 +109,7 @@ const BelowCardWrapper = styled.div`
 `;
 
 const CrewDetails = styled.div`
-  display: flex;  
+  display: flex;
   flex: 3;
   flex-direction: column;
   height: 100%;
@@ -248,7 +249,7 @@ const NoTraitsMessage = styled.div`
     white-space: nowrap;
     width: auto;
   }
-  
+
   @media (max-width: ${breakpoint}px) {
     border-bottom: 2px solid #18313a;
   }
@@ -490,7 +491,7 @@ const CrewmateDetails = () => {
                       setRef={setRefEl}
                       onClick={onClick}>
                       <ClaimIcon /> {Address.areEqual(account, crewmate?.Nft?.owner) ? 'List for Sale' : 'Purchase Crew'}
-                    </Button>  
+                    </Button>
                   )}
                 </MarketplaceLink>
 
@@ -561,7 +562,7 @@ const CrewmateDetails = () => {
                           {selectedTrait?.description && (
                             <Description>
                               <div>
-                                {selectedTrait?.description}
+                                {formatters.crewmateTraitDescription(selectedTrait?.description)}
                               </div>
                             </Description>
                           )}
