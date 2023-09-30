@@ -13,6 +13,7 @@ import {
   MdExpandMore,
   MdFastRewind,
   MdFastForward,
+  MdOutlineLocalGroceryStore,
   MdPlayArrow,
   MdPause,
   MdRadioButtonChecked,
@@ -28,6 +29,7 @@ import {
   RiTableFill,
   RiRouteFill,
   RiLoginCircleFill,
+  RiLogoutBoxRFill,
   RiAlertFill,
   RiSortDesc
 } from 'react-icons/ri';
@@ -64,6 +66,7 @@ import GasSVG from '~/assets/icons/GasIcon.svg';
 import GenesisSVG from '~/assets/icons/GenesisIcon.svg';
 import HexagonSVG from '~/assets/icons/HexagonIcon.svg';
 import InclinationSVG from '~/assets/icons/InclinationIcon.svg';
+import InfluenceSVG from '~/assets/images/logo-icon.svg';
 import InfoSVG from '~/assets/icons/InfoIcon.svg';
 import InventorySVG from '~/assets/icons/InventoryIcon.svg';
 import LeaderboardSVG from '~/assets/icons/LeaderboardIcon.svg';
@@ -204,6 +207,7 @@ export const GenesisIcon = () => <GenesisSVG className="icon" />;
 export const HexagonIcon = () => <HexagonSVG className="icon" />;
 export const InclinationIcon = () => <InclinationSVG className="icon" />;
 export const InfoIcon = () => <InfoSVG className="icon" />;
+export const InfluenceIcon = () => <InfluenceSVG className="icon" />;
 export const InventoryIcon = () => <InventorySVG className="icon" />;
 export const LeaderboardIcon = () => <LeaderboardSVG className="icon" />;
 export const LeaseIcon = () => <LeaseSVG className="icon" />;
@@ -326,6 +330,7 @@ export {
   MdFirstPage as BeginningIcon,
   MdFlag as ClaimIcon,
   MdKeyboardArrowDown as CaretIcon,
+  MdOutlineLocalGroceryStore as StoreIcon,  // TODO: ...
   FaCaretDown as TriangleDownIcon,
   FaCaretUp as TriangleUpIcon,
   MdNavigateBefore as PreviousIcon,
@@ -337,7 +342,8 @@ export {
   MdStop as StopIcon,
   RiAlertFill as WarningIcon,
   RiLayoutGridFill as GridIcon,
-  RiLoginCircleFill as LoginIcon,
+  RiLoginCircleFill as LoginIcon, // TODO: ...
+  RiLogoutBoxRFill as LogoutIcon, // TODO: ...
   RiSortDesc as SortIcon,
   RiTableFill as TableIcon,
   RiRouteFill as TripsIcon,
