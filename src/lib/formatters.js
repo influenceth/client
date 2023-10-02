@@ -57,11 +57,13 @@ const formatters = {
     return c.Name?.name || `Crew #${c.id.toLocaleString()}`;
   },
 
-  crewmatePrice: (priceConstants) => {
+  crewmatePrice: (priceConstants, minimumFractionDigits = 0) => {
     if (!priceConstants?.ADALIAN_PRICE_ETH) return '?';
-    const price = Number(ethersUtils.formatEther(String(priceConstants?.ADALIAN_PRICE_ETH)));
-    return price.toLocaleString([]);
+    const price = Number(ethersUtils.formatEther(String(priceConstants.ADALIAN_PRICE_ETH)));
+    return price.toLocaleString([], { minimumFractionDigits });
   },
+
+  ethPrice: (price, minimumFractionDigits = 0) => price ? Number(ethersUtils.formatEther(price)).toLocaleString([], { minimumFractionDigits }) : '',
 
   crewmateName: (c, fallbackText) => {
     if (!c) return fallbackText || 'Crewmate';

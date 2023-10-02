@@ -17,7 +17,15 @@ const useCrewManager = () => {
     [getPendingTx]
   );
 
-  const purchaseAndOrInitializeCrew = useCallback(
+  const purchaseCredits = useCallback((tally) => {
+    execute('BulkPurchaseAdalians', { collection: Crewmate.COLLECTION_IDS.ADALIAN, tally });
+  }, [execute]);
+
+  const getPendingCreditPurchase = useCallback(() => {
+    return getPendingTx('BulkPurchaseAdalians', {});
+  }, [getPendingTx]);
+
+  const purchaseAndOrInitializeCrewmate = useCallback(
     ({ crewmate }) => {
       if (crewmate.Crewmate.coll !== Crewmate.COLLECTION_IDS.ADALIAN) {
         execute('InitializeArvadian', {
@@ -65,8 +73,10 @@ const useCrewManager = () => {
   return {
     changeActiveCrew,
     getPendingActiveCrewChange,
-    purchaseAndOrInitializeCrew,
+    purchaseCredits,
+    purchaseAndOrInitializeCrewmate,
     getPendingCrewmate,
+    getPendingCreditPurchase,
     adalianRecruits,
   };
 };

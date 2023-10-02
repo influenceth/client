@@ -772,7 +772,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
 
   const { bookError, bookSession, storySession, undoPath, restart } = bookSessionHook;
   const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
-  const { purchaseAndOrInitializeCrew, getPendingCrewmate, adalianRecruits, arvadianRecruits } = useCrewManager();
+  const { purchaseAndOrInitializeCrewmate, getPendingCrewmate, adalianRecruits, arvadianRecruits } = useCrewManager();
   const { crew, crewmateMap } = useCrewContext();
   const { data: priceConstants } = usePriceConstants();
 
@@ -1017,8 +1017,8 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
 
   const finalize = useCallback(() => {
     setConfirming(false);
-    purchaseAndOrInitializeCrew({ crewmate });
-  }, [crewmate, purchaseAndOrInitializeCrew]); // eslint-disable-line react-hooks/exhaustive-deps
+    purchaseAndOrInitializeCrewmate({ crewmate });
+  }, [crewmate, purchaseAndOrInitializeCrewmate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBack = useCallback(() => {
     history.push(backLocation);

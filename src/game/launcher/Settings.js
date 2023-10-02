@@ -19,20 +19,30 @@ import constants from '~/lib/constants';
 const { ENABLE_SHADOWS, MIN_FOV, MAX_FOV } = constants;
 
 const StyledSettings = styled.div`
-  background-color: black;
-  border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
-  border-top: 1px solid ${p => p.theme.colors.mainBorder};
-  overflow: auto;
-  padding: 0 15px 25px 0px;
   height: 100%;
-  width: 700px;
+  width: 100%;
+`;
 
-  & h3 {
+const Section = styled.div`
+  padding-bottom: 12px;
+  & > h3 {
     border-bottom: 1px solid ${p => p.theme.colors.contentBorder};
-    font-size: 14px;
-    padding: 20px 0 10px 0;
-    margin-left: 15px;
+    color: white;
+    font-size: 18px;
+    margin: 0 0 8px;
+    padding-bottom: 8px;
     text-transform: uppercase;
+  }
+  & > div {
+    background-color: black;
+    padding: 20px 10px;
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+    & > div {
+      padding-bottom: 10px;
+    }
   }
 `;
 
@@ -128,169 +138,179 @@ const Settings = () => {
   return (
     <StyledSettings>
       {!isMobile && (
-        <>
+        <Section>
           <h3>Graphics</h3>
-          <StyledDataReadout label="Texture Quality">
-            <ControlGroup>
-              <Button
-                active={!graphics.textureQuality || graphics.textureQuality === 1}
-                disabled={graphics.autodetect}
-                onClick={() => setTextureQuality(1)}>
-                Low
-              </Button>
-              <Button
-                active={graphics.textureQuality === 2}
-                disabled={graphics.autodetect}
-                onClick={() => setTextureQuality(2)}>
-                Medium
-              </Button>
-              <Button
-                active={graphics.textureQuality === 3}
-                disabled={graphics.autodetect}
-                onClick={() => setTextureQuality(3)}>
-                High
-              </Button>
-              <AutodetectButton
-                active={graphics.autodetect}
-                onClick={toggleAutodetectGraphics}>
-                {graphics.autodetect ? <CheckedIcon /> : <UncheckedIcon />}
-                Autodetect
-              </AutodetectButton>
-            </ControlGroup>
-          </StyledDataReadout>
-
-          <StyledDataReadout label="Render Pixel Ratio">
-            <ControlGroup>
-              {pixelRatioOptions.map((option) => (
+          <div>
+            <StyledDataReadout label="Texture Quality">
+              <ControlGroup>
                 <Button
-                  key={option}
-                  active={graphics.pixelRatio === option || (!graphics.pixelRatio && option === 1)}
-                  onClick={() => setPixelRatio(option)}>
-                  {option}x
+                  active={!graphics.textureQuality || graphics.textureQuality === 1}
+                  disabled={graphics.autodetect}
+                  onClick={() => setTextureQuality(1)}>
+                  Low
                 </Button>
-              ))}
-            </ControlGroup>
-          </StyledDataReadout>
+                <Button
+                  active={graphics.textureQuality === 2}
+                  disabled={graphics.autodetect}
+                  onClick={() => setTextureQuality(2)}>
+                  Medium
+                </Button>
+                <Button
+                  active={graphics.textureQuality === 3}
+                  disabled={graphics.autodetect}
+                  onClick={() => setTextureQuality(3)}>
+                  High
+                </Button>
+                <AutodetectButton
+                  active={graphics.autodetect}
+                  onClick={toggleAutodetectGraphics}>
+                  {graphics.autodetect ? <CheckedIcon /> : <UncheckedIcon />}
+                  Autodetect
+                </AutodetectButton>
+              </ControlGroup>
+            </StyledDataReadout>
 
-          {ENABLE_SHADOWS && (
-            <>
-              <StyledDataReadout label="Dynamic Shadows">
+            <StyledDataReadout label="Render Pixel Ratio">
+              <ControlGroup>
+                {pixelRatioOptions.map((option) => (
+                  <Button
+                    key={option}
+                    active={graphics.pixelRatio === option || (!graphics.pixelRatio && option === 1)}
+                    onClick={() => setPixelRatio(option)}>
+                    {option}x
+                  </Button>
+                ))}
+              </ControlGroup>
+            </StyledDataReadout>
+
+            {ENABLE_SHADOWS && (
+              <>
+                <StyledDataReadout label="Dynamic Shadows">
+                  <IconButton
+                    data-tip="Toggle Shadows"
+                    data-for="global"
+                    onClick={() => setShadowQuality(graphics.shadowQuality > 0 ? 0 : 1)}
+                    borderless>
+                    {graphics.shadowQuality > 0 ? <CheckedIcon /> : <UncheckedIcon />}
+                  </IconButton>
+                </StyledDataReadout>
+                {graphics.shadowQuality > 0 && (
+                  <StyledDataReadout label="Shadow Quality">
+                    <ControlGroup>
+                      <Button
+                        active={graphics.shadowQuality === 1}
+                        onClick={() => setShadowQuality(1)}>
+                        Low
+                      </Button>
+                      <Button
+                        active={graphics.shadowQuality === 2}
+                        onClick={() => setShadowQuality(2)}>
+                        Medium
+                      </Button>
+                      <Button
+                        active={graphics.shadowQuality === 3}
+                        onClick={() => setShadowQuality(3)}>
+                        High
+                      </Button>
+                    </ControlGroup>
+                  </StyledDataReadout>
+                )}
+              </>
+            )}
+            <StyledDataReadout label="Field of View">
+              <ControlGroup>
+                <NumberInput
+                  initialValue={graphics.fov}
+                  onChange={v => setLocalFOV(v)}
+                  min={MIN_FOV}
+                  max={MAX_FOV} />
+                <Button
+                  onClick={() => setFOV(localFOV)}
+                  disabled={localFOV === graphics.fov}>
+                  Update
+                </Button>
+              </ControlGroup>
+            </StyledDataReadout>
+            {screenfull.isEnabled && (
+              <StyledDataReadout label="Fullscreen">
                 <IconButton
-                  data-tip="Toggle Shadows"
+                  data-tip="Toggle Fullscreen"
                   data-for="global"
-                  onClick={() => setShadowQuality(graphics.shadowQuality > 0 ? 0 : 1)}
+                  onClick={() => fullscreen ? screenfull.exit() : screenfull.request()}
                   borderless>
-                  {graphics.shadowQuality > 0 ? <CheckedIcon /> : <UncheckedIcon />}
+                  {fullscreen ? <CheckedIcon /> : <UncheckedIcon />}
                 </IconButton>
               </StyledDataReadout>
-              {graphics.shadowQuality > 0 && (
-                <StyledDataReadout label="Shadow Quality">
-                  <ControlGroup>
-                    <Button
-                      active={graphics.shadowQuality === 1}
-                      onClick={() => setShadowQuality(1)}>
-                      Low
-                    </Button>
-                    <Button
-                      active={graphics.shadowQuality === 2}
-                      onClick={() => setShadowQuality(2)}>
-                      Medium
-                    </Button>
-                    <Button
-                      active={graphics.shadowQuality === 3}
-                      onClick={() => setShadowQuality(3)}>
-                      High
-                    </Button>
-                  </ControlGroup>
-                </StyledDataReadout>
-              )}
-            </>
-          )}
-          <StyledDataReadout label="Field of View">
-            <ControlGroup>
-              <NumberInput
-                initialValue={graphics.fov}
-                onChange={v => setLocalFOV(v)}
-                min={MIN_FOV}
-                max={MAX_FOV} />
-              <Button
-                onClick={() => setFOV(localFOV)}
-                disabled={localFOV === graphics.fov}>
-                Update
-              </Button>
-            </ControlGroup>
-          </StyledDataReadout>
-          {screenfull.isEnabled && (
-            <StyledDataReadout label="Fullscreen">
+            )}
+            <StyledDataReadout label="Skybox">
               <IconButton
-                data-tip="Toggle Fullscreen"
+                data-tip="Toggle Skybox"
                 data-for="global"
-                onClick={() => fullscreen ? screenfull.exit() : screenfull.request()}
+                onClick={() => graphics.skybox ? turnOffSkybox() : turnOnSkybox()}
                 borderless>
-                {fullscreen ? <CheckedIcon /> : <UncheckedIcon />}
+                {graphics.skybox ? <CheckedIcon /> : <UncheckedIcon />}
               </IconButton>
             </StyledDataReadout>
+            <StyledDataReadout label="Stellar Lensflare">
+              <IconButton
+                data-tip="Toggle Stellar Lensflare"
+                data-for="global"
+                onClick={() => graphics.lensflare ? turnOffLensflare() : turnOnLensflare()}
+                borderless>
+                {graphics.lensflare ? <CheckedIcon /> : <UncheckedIcon />}
+              </IconButton>
+            </StyledDataReadout>
+            <StyledDataReadout label="Performance Stats">
+              <IconButton
+                data-tip="Toggle Performance Stats"
+                data-for="global"
+                onClick={() => graphics.stats ? turnOffStats() : turnOnStats()}
+                borderless>
+                {graphics.stats ? <CheckedIcon /> : <UncheckedIcon />}
+              </IconButton>
+            </StyledDataReadout>
+          </div>
+        </Section>
+      )}
+
+      <Section>
+        <h3>Sound</h3>
+        <div>
+          <StyledDataReadout label="Music Volume">
+            <Range
+              type="slider"
+              min={0}
+              max={100}
+              defaultValue={sounds.music}
+              onChange={adjustMusicVolume} />
+          </StyledDataReadout>
+          <StyledDataReadout label="Effects Volume">
+            <Range
+              type="slider"
+              min={0}
+              max={100}
+              defaultValue={sounds.effects}
+              onChange={adjustEffectsVolume} />
+          </StyledDataReadout>
+        </div>
+      </Section>
+
+      <Section>
+        <h3>Recruitment</h3>
+        <div>
+          <StyledDataReadout label="Recruitment Link">
+            <CopyReferralLink
+              fallbackContent={(
+                <span>Connect wallet to generate link</span>
+              )}>
+              <Button>Generate Link</Button>
+            </CopyReferralLink>
+          </StyledDataReadout>
+          {account && (
+            <StyledDataReadout label="Recruitments Count">{referralsCount || 0}</StyledDataReadout>
           )}
-          <StyledDataReadout label="Skybox">
-            <IconButton
-              data-tip="Toggle Skybox"
-              data-for="global"
-              onClick={() => graphics.skybox ? turnOffSkybox() : turnOnSkybox()}
-              borderless>
-              {graphics.skybox ? <CheckedIcon /> : <UncheckedIcon />}
-            </IconButton>
-          </StyledDataReadout>
-          <StyledDataReadout label="Stellar Lensflare">
-            <IconButton
-              data-tip="Toggle Stellar Lensflare"
-              data-for="global"
-              onClick={() => graphics.lensflare ? turnOffLensflare() : turnOnLensflare()}
-              borderless>
-              {graphics.lensflare ? <CheckedIcon /> : <UncheckedIcon />}
-            </IconButton>
-          </StyledDataReadout>
-          <StyledDataReadout label="Performance Stats">
-            <IconButton
-              data-tip="Toggle Performance Stats"
-              data-for="global"
-              onClick={() => graphics.stats ? turnOffStats() : turnOnStats()}
-              borderless>
-              {graphics.stats ? <CheckedIcon /> : <UncheckedIcon />}
-            </IconButton>
-          </StyledDataReadout>
-        </>
-      )}
-
-      <h3>Sound</h3>
-      <StyledDataReadout label="Music Volume">
-        <Range
-          type="slider"
-          min={0}
-          max={100}
-          defaultValue={sounds.music}
-          onChange={adjustMusicVolume} />
-      </StyledDataReadout>
-      <StyledDataReadout label="Effects Volume">
-        <Range
-          type="slider"
-          min={0}
-          max={100}
-          defaultValue={sounds.effects}
-          onChange={adjustEffectsVolume} />
-      </StyledDataReadout>
-
-      <h3>Recruitment</h3>
-      <StyledDataReadout label="Recruitment Link">
-        <CopyReferralLink
-          fallbackContent={(
-            <span>Connect wallet to generate link</span>
-          )}>
-          <Button>Generate Link</Button>
-        </CopyReferralLink>
-      </StyledDataReadout>
-      {account && (
-        <StyledDataReadout label="Completed Recruitments">{referralsCount}</StyledDataReadout>
-      )}
+        </div>
+      </Section>
     </StyledSettings>
   );
 };

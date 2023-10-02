@@ -1,7 +1,7 @@
 import { AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle, BsPieChartFill, BsSliders, BsStopwatch, BsThreeDots } from 'react-icons/bs';
-import { FaBan, FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
-import { FiCheckSquare, FiExternalLink, FiMenu, FiSquare } from 'react-icons/fi';
+import { FaBan, FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaEthereum, FaList, FaMapMarkedAlt, FaUser } from 'react-icons/fa';
+import { FiCheckSquare, FiDownload, FiExternalLink, FiLogIn, FiLogOut, FiMenu, FiSquare } from 'react-icons/fi';
 import { GiHouseKeys } from 'react-icons/gi';
 import { HiClock, HiCog, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import {
@@ -29,7 +29,6 @@ import {
   RiTableFill,
   RiRouteFill,
   RiLoginCircleFill,
-  RiLogoutBoxRFill,
   RiAlertFill,
   RiSortDesc
 } from 'react-icons/ri';
@@ -185,6 +184,7 @@ export const ChatIcon = () => <ChatSVG className="icon" />;
 export const CheckIcon = () => <CheckSVG className="icon" style={{ width: '1.314em' }} />;
 export const ChevronDoubleDownIcon = () => <ChevronDoubleDownSVG className="icon" />;
 export const ChevronDoubleUpIcon = () => <ChevronDoubleDownSVG className="icon" style={{ transform: 'rotate(180deg)' }} />;
+export const ChevronDoubleRightIcon = () => <ChevronDoubleDownSVG className="icon" style={{ transform: 'rotate(270deg)' }} />;
 export const ColumnsIcon = () => <ColumnsSVG className="icon" />;
 export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
 export const CrewIcon = () => <CrewSVG className="icon" />;
@@ -304,6 +304,7 @@ export {
   BsSliders as SlidersIcon,
   BsStopwatch as TimerIcon,
   BsThreeDots as DotsIcon,
+  FiDownload as DownloadIcon,
   FaBan as BanIcon,
   FaCogs as ProcessIcon,
   FaCopy as CopyIcon,
@@ -342,8 +343,8 @@ export {
   MdStop as StopIcon,
   RiAlertFill as WarningIcon,
   RiLayoutGridFill as GridIcon,
-  RiLoginCircleFill as LoginIcon, // TODO: ...
-  RiLogoutBoxRFill as LogoutIcon, // TODO: ...
+  FiLogIn as LoginIcon, // TODO: ...
+  FiLogOut as LogoutIcon, // TODO: ...
   RiSortDesc as SortIcon,
   RiTableFill as TableIcon,
   RiRouteFill as TripsIcon,
@@ -352,4 +353,6 @@ export {
   WiMoonAltWaningCrescent5 as DownloadModelIcon,
   FiCheckSquare as CheckedIcon,
   FiSquare as UncheckedIcon,
+  // FaUser as UserIcon
+  BsFillPersonFill as UserIcon
 };

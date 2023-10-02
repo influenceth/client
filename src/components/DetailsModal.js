@@ -36,13 +36,7 @@ const Wrapper = styled.div`
 const StyledDetails = styled.div`
   background-color: black;
   border: 1px solid ${p => p.theme.colors.borderBottom};
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - ${cornerWidth}px),
-    calc(100% - ${cornerWidth}px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(cornerWidth)};
   display: flex;
   flex-direction: column;
   height: 100%;

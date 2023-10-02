@@ -1,52 +1,115 @@
-import { useContext, useCallback, useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import styled from 'styled-components';
+import { RingLoader as Loader } from 'react-spinners';
+import { Entity } from '@influenceth/sdk';
 
-import ClockContext from '~/contexts/ClockContext';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
-import ButtonPill from '~/components/ButtonPill';
+import Badge from '~/components/Badge';
 import InfluenceLogo from '~/components/InfluenceLogo';
-import OnClickLink from '~/components/OnClickLink';
-import Time from '~/components/Time';
-import Account, { logoDisplacementHeight } from './launcher/Account';
+import NavIcon from '~/components/NavIcon';
+import {
+  ChevronDoubleRightIcon,
+  DownloadIcon,
+  InfluenceIcon,
+  LogoutIcon,
+  MyAssetIcon,
+  UserIcon
+} from '~/components/Icons';
+import useCrewContext from '~/hooks/useCrewContext';
+import Crews from './launcher/Crews';
 import Settings from './launcher/Settings';
+import HudMenu from './interface/hud/HudMenu';
+import Store from './launcher/Store';
+import useSale from '~/hooks/useSale';
+import usePriceConstants from '~/hooks/usePriceConstants';
 
-const headerFooterHeight = 100;
+const menuPadding = 25;
+const headerHeight = 68;
+const footerHeight = 80;
 
 // TODO: should add in/out transitions to this page
 const StyledLauncher = styled.div`
-  align-items: center;
-  backdrop-filter: blur(0.75px) saturate(70%) brightness(70%);
-  display: flex;
-  flex-direction: column;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.15) 25%, rgba(0,0,0,0.15) 75%, rgba(0,0,0,0.5) 100%);
+  backdrop-filter: blur(0.75px) saturate(70%);
   height: 100vh;
-  justify-content: space-between;
   opacity: 1;
-  padding: ${headerFooterHeight}px 0;
+  padding: ${headerHeight + menuPadding}px 0 0;
   position: absolute;
   width: 100vw;
   z-index: 8999;
 `;
 
-const Header = styled.ul`
-  background-color: black;
-  border-bottom: 1px solid ${p => p.theme.colors.mainBorder};
+const ContentWrapper = styled.div`
+  align-items: center;
   display: flex;
-  height: ${headerFooterHeight}px;
-  justify-content: center;
-  left: 0;
-  margin: 0;
-  padding: 0;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+`;
+
+const TopLeftMenu = styled.div`
   position: absolute;
-  right: 0;
   top: 0;
+  left: 0;
+  padding: ${menuPadding}px;
+`;
+const TopRightMenu = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: ${menuPadding}px;
+`;
+const BottomLeftMenu = styled.div`
+  position: absolute;
+  bottom: ${footerHeight / 4}px;
+  left: 0;
+  padding: ${menuPadding}px;
+`;
+
+const Nav = styled.div`
+  margin-top: ${menuPadding}px;
+  width: 225px;
+`;
+
+const Icon = styled.div``;
+const NavItem = styled.div`
+  align-items: center;
+  color: ${p => p.selected ? 'white' : '#b7b7b7'};
+  cursor: ${p => p.selected ? p.theme.cursors.default : p.theme.cursors.active};
+  display: flex;
+  flex-direction: row;
+  font-size: 17px;
+  height: 40px;
+  text-transform: uppercase;
+  transition: color 250ms ease;
+
+  ${p => p.isRule && `
+    height: 24px;
+    color: white;
+    &:before {
+      content: "";
+      border-top: 1px solid #444;
+      margin-left: 25px;
+      width: 100%;
+    }
+  `}
+
+  &:hover {
+    color: white;
+  }
+
+  & ${Icon} {
+    color: ${p => p.theme.colors.main};
+    margin-right: 8px;
+    opacity: ${p => p.selected ? 1 : 0};
+    transition: opacity 250ms ease;
+  }
 `;
 
 const LogoWrapper = styled.div`
-  left: 25px;
-  height: ${headerFooterHeight - 50}px;
-  position: absolute;
-  top: 25px;
+  height: ${headerHeight}px;
+  
   & > svg {
     height: 100%;
   }
@@ -58,231 +121,304 @@ const LogoWrapper = styled.div`
   `}
 `;
 
-const StyledLink = styled(OnClickLink)`
-  align-items: flex-end;
-  color: inherit;
-  display: flex;
-  height: 100%;
-  justify-content: center;
-  padding-bottom: 12px;
-  text-align: center;
-  text-decoration: none;
-  text-transform: uppercase;
-  width: 100%;
-`;
-
-const MenuItem = styled.li`
-  color: ${p => p.theme.colors.secondaryText};
-  list-style-type: none;
-  position: relative;
-
-  & ${StyledLink} {
-    transition: all 0.15s ease;
-    width: 165px;
-
-    &:after {
-      background-clip: padding-box;
-      background-color: ${p => p.theme.colors.main};
-      border: 2px solid rgba(${p => p.theme.colors.mainRGB}, 0.5);
-      bottom: -5.5px;
-      content: "";
-      height: 6px;
-      margin-left -8.4px;
-      opacity: 0;
-      position: absolute;
-      transform: translateX(50%) rotate(45deg);
-      transition: opacity 0.15s ease;
-      width: 6px;
-    }
-
-    &:hover:after, &.current:after {
-      opacity: 1;
-      transition: opacity 0.3s ease;
-    }
-
-    &:hover, &.current {
-      color: ${p => p.theme.colors.mainText};
-      font-size: 20px;
-      transition: all 0.3s ease;
-    }
-  }
-`;
-
-const AccountName = styled.span`
-  color: white;
-  font-weight: bold;
-  padding: 2px 6px;
-
-  &:before {
-    content: "${p => p.account.substr(0, 6)}"
-  }
-  &:after {
-    content: "...${p => p.account.substr(-4)}"
-  }
-`;
-
-const WalletLogo = styled.div`
-  background-color: ${p => p.theme.colors.contentDark};
-  border-radius: 50%;
-  height: 35px;
-  margin-right: 5px;
-  padding: 7px;
-  width: 35px;
-
-  & img {
-    height: 100%;
-    object-fit: contain;
-    width: 100%;
-  }
-`;
-
-const CurrentAccount = styled.div`
+const LeftIcon = styled.div`
   align-items: center;
+  background: #333;
+  border-radius: 100%;
+  display: flex;
+  font-size: 32px;
+  height: 40px;
+  justify-content: center;
+  position: relative;
+  width: 40px;
+  ${p => p.connecting
+    ? `
+      background: rgba(${p.theme.colors.mainRGB}, 0.4);
+      color: white;
+    `
+    : `
+      &:after {
+        content: "";
+        background: ${p.connected ? p.theme.colors.success : p.theme.colors.error};
+        position: absolute;
+        bottom: 0;
+        right: -3px;
+        border-radius: 6px;
+        height: 12px;
+        width: 12px;
+      }
+    `
+  }
+  & > img {
+    width: 1em;
+  }
+`;
+const RightIcon = styled.div``;
+const HoverContent = styled.label`
+  display: none;
+`;
+const AccountButton = styled.div`
+  align-items: center;
+  background: black;
+  border: 1px solid black;
+  border-radius: 24px;
+  color: #AAA;
   cursor: ${p => p.theme.cursors.active};
   display: flex;
-  height: ${headerFooterHeight}px;
-  justify-content: flex-end;
-  position: absolute;
-  right: 40px;
-  top: 0;
-  width: 200px;
+  height: 48px;
+  padding: 3px 12px 3px 4px;
+  width: 280px;
+  & label {
+    flex: 1;
+    font-weight: bold;
+    line-height: 0;
+    margin-left: 9px;
+  }
+  transition: background 250ms ease, border-color 250ms ease, color 250ms ease;
 
-  & ${AccountName} {
-    color: ${p => p.theme.colors.secondaryText};
+  &:hover {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.4);
+    border-color: rgba(${p => p.theme.colors.mainRGB}, 0.8);
+    color: white;
+    ${p => p.hasHoverContent && `
+      & label {
+        display: none;
+      }
+      & ${HoverContent} {
+        color: ${p.theme.colors.error};
+        display: block;
+      }
+      & ${RightIcon} {
+        color: ${p.theme.colors.error};
+      }
+    `}
+  }
+`;
+
+const PlayButton = styled.div`
+  align-items: center;
+  background: black;
+  border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 1);
+  border-radius: 50px;
+  color: white;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  font-size: 26px;
+  justify-content: center;
+  margin: 40px 0 20px;
+  opacity: 1;
+  padding: 0.5em;
+  position: relative;
+  text-transform: uppercase;
+  transition: border-color 250ms ease;
+  width: 300px;
+  z-index: 1;
+  &:before {
+    content: "";
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
+    border-radius: 50px;
+    position: absolute;
+    top: 4px; bottom: 4px; left: 4px; right: 4px;
+    transition: background 250ms ease;
+    z-index: -1;
   }
 
-  &:hover ${AccountName} {
-    color: inherit;
+  &:hover {
+    border-color: rgba(${p => p.theme.colors.mainRGB}, 1);
+    &:before {
+      background: rgba(${p => p.theme.colors.mainRGB}, 0.5);
+    }
   }
 `;
 
 const MainContent = styled.div`
   align-items: center;
   display: flex;
-  flex: 1 0 0;
-  flex-direction: column;
+  flex: 1;
   justify-content: center;
-  overflow: hidden;
-  // height: calc(100vh - 2 * ${headerFooterHeight}px);
-`;
-
-const StyledTime = styled(Time)`
-  font-size: 20px !important;
-  margin: 20px 0;
+  overflow: auto;
+  padding-right: 15px;
 `;
 
 const Footer = styled.div`
-  background-color: black;
-  border-top: 1px solid ${p => p.theme.colors.mainBorder};
-  bottom: 0;
-  display: flex;
-  height: ${headerFooterHeight}px;
-  justify-content: center;
-  left: 0;
-  position: absolute;
-  right: 0;
-`;
-
-const Diamond = styled.div`
   align-items: center;
-  background-color: black;
-  border: 1px solid ${p => p.theme.colors.mainBorder};
+  color: #777;
   display: flex;
-  height: 25px;
+  flex-direction: row;
+  flex: 0 0 ${footerHeight}px;
   justify-content: center;
-  position: absolute;
-  transform: translateY(-50%) rotate(45deg);
-  width: 25px;
+  text-align: center;
+  width: 100%;
 
-  & div {
-    background-color: ${p => p.theme.colors.main};
-    height: 9px;
-    width: 9px;
-  }
+  & > div {
+    flex: 1;
+
+    &:first-child,
+    &:last-child {
+      flex: 0 1 400px;
+      text-align: right;
+      text-transform: uppercase;
+      & > a {
+        border-left: 0 !important;
+      }
+    }
+
+    & > a {
+      border-left: 1px solid #777;
+      color: inherit;
+      display: inline-block;
+      line-height: 1.5em;
+      padding: 0 20px;
+      text-decoration: none;
+      transition: color 250ms ease;
+  
+      &:first-child {
+        border-left: 0;
+      }
+  
+      &:hover {
+        color: #CCC;
+      }
+    }
+  }  
 `;
 
-const InfoBar = styled.ul`
-  align-items: center;
-  display: flex;
-  justify-content: center;
-  padding: 0;
-
-  & a {
-    border-right: 1px solid ${p => p.theme.colors.mainBorder};
-    color: ${p => p.theme.colors.secondaryText};
-    font-size: 14px;
-    padding: 5px 20px;
-  }
-
-  & a:hover {
-    color: ${p => p.theme.colors.mainText};
-    text-decoration: none;
-  }
-
-  & a:last-child {
-    border: 0;
-  }
-`;
+const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
-  const { displayTime } = useContext(ClockContext);
+  const { authenticating, login, logout, token, walletContext } = useAuth();
+  const { crews, loading: crewsLoading } = useCrewContext();
+  const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
+
   const launcherPage = useStore(s => s.launcherPage);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
-  const { walletContext, token } = useAuth();
-  const { account, walletIcon, walletName } = walletContext;
+
+  const { account, walletIcon } = walletContext;
   const loggedIn = account && token;
 
-  const goToWallet = useCallback(() => {
-  }, [ walletContext ]);
+  useEffect(() => {
+    if (!interfaceHidden) {
+      dispatchToggleInterface(true);
+    }
+    return () => {
+      if (interfaceHidden) {
+        dispatchToggleInterface(false);
+      }
+    }
+  }, [interfaceHidden]);
 
   useEffect(() => {
-    if (interfaceHidden) {
-      dispatchToggleInterface(false);
-      return () => dispatchToggleInterface(true);
+    if (!loggedIn && launcherPage === 'crews') {
+      dispatchLauncherPage('account');
     }
-  }, []);
+    if (!priceConstantsLoading && !priceConstants?.ADALIAN_PRICE_ETH && launcherPage === 'store') {
+      dispatchLauncherPage('account');
+    }
+  }, [launcherPage, loggedIn, priceConstants, priceConstantsLoading])
 
   return (
     <StyledLauncher {...props}>
-      <Header>
-        <LogoWrapper hideHeader={launcherPage === 'account' ? logoDisplacementHeight : 0}>
-          <InfluenceLogo />
-        </LogoWrapper>
-        <MenuItem>
-          <StyledLink activeClassName="current" onClick={() => dispatchLauncherPage('account')}>
-            <span>{launcherPage === 'account' ? "Account" : "‹ Back"}</span>
-          </StyledLink>
-        </MenuItem>
-        <MenuItem>
-          <StyledLink activeClassName="current" onClick={() => dispatchLauncherPage('settings')}>
-            <span>Settings</span>
-          </StyledLink>
-        </MenuItem>
-        {loggedIn &&
-          <CurrentAccount onClick={goToWallet}>
-            <WalletLogo>{walletIcon}</WalletLogo>
-            <AccountName account={account} wallet={walletName} />
-          </CurrentAccount>
+
+      <TopLeftMenu>
+        <LogoWrapper><InfluenceLogo /></LogoWrapper>
+        <Nav>
+          <NavItem
+            onClick={() => dispatchLauncherPage('account')}
+            selected={launcherPage === 'account'}>
+            <StyledNavIcon /> Account
+          </NavItem>
+          <NavItem
+            onClick={() => dispatchLauncherPage('settings')}
+            selected={launcherPage === 'settings'}>
+            <StyledNavIcon /> Settings
+          </NavItem>
+          {!!priceConstants?.ADALIAN_PRICE_ETH && (
+            <NavItem
+              onClick={() => dispatchLauncherPage('store')}
+              selected={launcherPage === 'store'}>
+              <StyledNavIcon /> Store
+            </NavItem>
+          )}
+          {loggedIn && crews?.length > 0 && (
+            <>
+              <NavItem isRule />
+              <NavItem
+                onClick={() => dispatchLauncherPage('crews')}
+                selected={launcherPage === 'crews'}>
+                <StyledNavIcon /> My Crews
+                <Badge subtler value={crews?.length} />
+              </NavItem>
+            </>
+          )}
+        </Nav>
+      </TopLeftMenu>
+
+      <TopRightMenu>
+        {loggedIn
+          ? (
+            <AccountButton onClick={logout} hasHoverContent>
+              <LeftIcon connected={loggedIn}>{walletIcon || <InfluenceIcon />}</LeftIcon>
+              <label>{account && <>{account.substr(0, 6)}...{account.substr(-6)}</>}</label>
+              <HoverContent style={{ color: 'red' }}>Log Out</HoverContent>
+              <RightIcon><LogoutIcon /></RightIcon>
+            </AccountButton>
+          )
+          : (
+            authenticating
+            ? (
+              <AccountButton>
+                <LeftIcon connecting><Loader color="currentColor" size="0.9em" /></LeftIcon>
+                <label>Logging In</label>
+                <RightIcon><ChevronDoubleRightIcon /></RightIcon>
+              </AccountButton>
+            )
+            : (
+              <AccountButton onClick={login}>
+                <LeftIcon connected={loggedIn}><UserIcon /></LeftIcon>
+                <label>Log-In</label>
+                <RightIcon><ChevronDoubleRightIcon /></RightIcon>
+              </AccountButton>
+            )
+          )
         }
-      </Header>
-      <MainContent>
-        {launcherPage === 'account' && <Account />}
-        {launcherPage === 'settings' && <Settings />}
-      </MainContent>
-      <StyledTime displayTime={displayTime} />
-      <Footer>
-        <Diamond><div /></Diamond>
-        <InfoBar>
-          <a href="https://influenceth.io" target="_blank" rel="noopener noreferrer">About</a>
-          {process.env.REACT_APP_BRIDGE_URL &&
-            <a href={process.env.REACT_APP_BRIDGE_URL} target="_blank" rel="noopener noreferrer">Bridge</a>
-          }
-          <a href="https://discord.gg/influenceth" target="_blank" rel="noopener noreferrer">Discord</a>
-          <a href="https://wiki.influenceth.io" target="_blank" rel="noopener noreferrer">Wiki</a>
-        </InfoBar>
-      </Footer>
+        <br /><br />
+      </TopRightMenu>
+
+      {/* TODO: animate transitions between menus (slide in/out hudmenu, slide in/out crew, slide nav diamond between selections) */}
+      <BottomLeftMenu>
+        {loggedIn && launcherPage === 'crews' && <Crews />}
+      </BottomLeftMenu>
+      {loggedIn && launcherPage === 'crews' && <HudMenu forceOpenMenu="MY_CREWS" />}
+
+      <ContentWrapper>
+        <MainContent>
+          {launcherPage === 'account' && (<></>)}
+          {launcherPage === 'settings' && <Settings />}
+          {launcherPage === 'store' && <Store />}
+        </MainContent>
+
+        <PlayButton disabled={authenticating} onClick={() => dispatchLauncherPage()}>
+          {loggedIn ? 'Play' : 'Explore'}
+        </PlayButton>
+
+        <Footer>
+          <div>
+          </div>
+          <div>
+            <a href="https://influenceth.io" target="_blank" rel="noopener noreferrer">About</a>
+            <a href="https://discord.gg/influenceth" target="_blank" rel="noopener noreferrer">Discord</a>
+            <a href="https://wiki.influenceth.io" target="_blank" rel="noopener noreferrer">Wiki</a>
+          </div>
+          <div>
+            {process.env.REACT_APP_BRIDGE_URL &&
+              <a href={process.env.REACT_APP_BRIDGE_URL} target="_blank" rel="noopener noreferrer"><MyAssetIcon /> Assets Portal</a>
+            }
+            <a href={process.env.REACT_APP_BRIDGE_URL} target="_blank" rel="noopener noreferrer"><DownloadIcon /> Install App</a>
+          </div>
+        </Footer>
+      </ContentWrapper>
     </StyledLauncher>
   );
 };

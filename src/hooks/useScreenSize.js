@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useThrottle } from '@react-hook/throttle';
 
 import theme from '~/theme';
 
 const useScreenSize = () => {
-  const [ height, setHeight ] = useState(window.innerHeight);
-  const [ width, setWidth ] = useState(window.innerWidth);
+  const [ height, setHeight ] = useThrottle(window.innerHeight, 30, true);
+  const [ width, setWidth ] = useThrottle(window.innerWidth, 30, true);
   const isMobile = width <= theme.breakpoints.mobile;
   const isTablet = width < 1200 && width > theme.breakpoints.mobile;
   const isDesktop = width >= 1200;

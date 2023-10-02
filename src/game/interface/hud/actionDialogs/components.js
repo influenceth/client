@@ -129,13 +129,7 @@ export const FlexSectionSpacer = styled.div`
 
 export const sectionBodyCornerSize = 15;
 export const FlexSectionInputBody = styled.div`
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - ${sectionBodyCornerSize}px),
-    calc(100% - ${sectionBodyCornerSize}px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(sectionBodyCornerSize)};
   padding: 8px 16px 8px 8px;
   position: relative;
   transition-properties: background, border-color;
@@ -153,7 +147,7 @@ export const FlexSectionInputBody = styled.div`
       }
     `
     : `
-      background: rgba(${p.theme.colors.mainRGB}, 0.15);
+      background: ${p.subtle ? '#1c1c1c' : `rgba(${p.theme.colors.mainRGB}, 0.15)`};
       border: 1px solid transparent;
       & > svg {
         stroke: transparent;
@@ -348,13 +342,7 @@ export const SublabelBanner = styled.div`
   align-items: center;
   background: rgba(${p => hexToRGB(p.color)}, 0.3);
   color: white;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 15px),
-    calc(100% - 15px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(15)};
   display: flex;
   flex-direction: row;
   font-size: 26px;
@@ -655,15 +643,7 @@ const ProductSelector = styled.div`
     padding-bottom: 0;
     padding-top: 0;
   `}
-  ${p => p.output && `
-    clip-path: polygon(
-      0 0,
-      100% 0,
-      100% calc(100% - 10px),
-      calc(100% - 10px) 100%,
-      0 100%
-    );
-  `}
+  ${p => p.output && p.theme.clipCorner(10)};
   ${p => p.output && p.primary && `
     background: rgba(${p.theme.colors.mainRGB}, 0.2);
     border: 1px solid ${p.theme.colors.main};
@@ -941,13 +921,7 @@ const SelectionButtons = styled.div`
 const selectionDialogCornerSize = 20;
 const dialogCss = css`
   border: 1px solid ${borderColor};
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - ${selectionDialogCornerSize}px),
-    calc(100% - ${selectionDialogCornerSize}px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(selectionDialogCornerSize)};
   display: flex;
   flex-direction: column;
   max-height: 80%;
@@ -2227,7 +2201,7 @@ export const ActionDialogHeader = ({ action, captain, crewAvailableTime, locatio
   );
 };
 
-export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, innerBodyStyle, isSelected, label, onClick, style = {}, sublabel, title, titleDetails, tooltip }) => {
+export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, innerBodyStyle, isSelected, label, onClick, style = {}, sublabel, title, titleDetails, tooltip, ...props }) => {
   const refEl = useRef();
   const [hovered, setHovered] = useState();
   return (
@@ -2248,7 +2222,8 @@ export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, in
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           ref={refEl}
-          style={bodyStyle}>
+          style={bodyStyle}
+          {...props}>
           {children && (
             <FlexSectionInputBodyInner style={innerBodyStyle}>
               {children}
@@ -2989,7 +2964,7 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, title, inlineDe
             </span>
           </div>
           <div style={{ flex: 1 }} />
-          <FoodStatus percentage={100} />
+          <FoodStatus percentage={100} style={(props.subtle && !props.isSelected) ? { color: '#777' } : {}} />
         </div>
       )}
       {!hideCrewmates && (

@@ -135,13 +135,7 @@ const thumbCornerSize = 10;
 const ThumbPreview = styled.div`
   background: #000;
   border: 1px solid rgba(255,255,255,0.25);
-  clip-path: polygon(
-    0% 0%,
-    100% 0%,
-    100% calc(100% - ${thumbCornerSize}px),
-    calc(100% - ${thumbCornerSize}px) 100%,
-    0% 100%
-  );
+  ${p => p.theme.clipCorner(thumbCornerSize)};
   color: #999;
   font-size: 14px;
   height: 145px;

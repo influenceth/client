@@ -115,13 +115,7 @@ const Listing = styled.div`
   text-align: center;
   width: 180px;
 
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(10)};
 
   transition: background 250ms ease;
   &:hover {
@@ -212,13 +206,7 @@ const ListingOffer = styled.div`
     text-transform: uppercase;
   }
 
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 8px),
-    calc(100% - 8px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(8)};
 
   ${Listing}:hover & {
     background: rgba(${p => p.theme.colors.mainRGB}, 0.4);

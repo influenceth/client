@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
-import useStore from '~/hooks/useStore';
+import Badge from '~/components/Badge';
+import Button from '~/components/ButtonAlt';
 import HudIconButton from '~/components/HudIconButton';
 import {
   BugIcon,
@@ -19,7 +20,8 @@ import {
 } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useActivitiesContext from '~/hooks/useActivitiesContext';
-import Button from '~/components/ButtonAlt';
+import useCrewContext from '~/hooks/useCrewContext';
+import useStore from '~/hooks/useStore';
 
 const menuAnimationTime = 250;
 
@@ -51,6 +53,7 @@ const SwayBalance = styled.div`
   color: white;
   display: flex;
   font-size: 24px;
+  margin-left: 25px;
   & label {
     color: #FFF;
     font-size: 85%;
@@ -194,11 +197,12 @@ const MainMenuItem = styled.li`
 const SystemControls = () => {
   const { account, login, logout, token, walletContext: { starknet } } = useAuth();
   const { data: activities } = useActivitiesContext();
+  const { crews } = useCrewContext();
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [swayBalance, setSwayBalance] = useState(123456);
+  const [swayBalance, setSwayBalance] = useState();
 
   const openHelpChannel = useCallback(() => {
     window.open(process.env.REACT_APP_HELP_URL, '_blank');
@@ -228,16 +232,6 @@ const SystemControls = () => {
     window.open(process.env.REACT_APP_BRIDGE_URL, '_blank');
   }, []);
 
-  const handleLogin = useCallback(() => {
-    login();
-    setMenuOpen(false);
-  }, [login]);
-
-  const handleLogout = useCallback(() => {
-    logout();
-    setMenuOpen(false);
-  }, [logout]);
-
   useEffect(() => updateSwayBalance, [account, activities]);
 
   return (
@@ -252,7 +246,7 @@ const SystemControls = () => {
         onClick={dispatchReorientCamera}
         size="bigicon"
         subtle
-        style={{ fontSize: '26px', marginRight: 25 }}>
+        style={{ fontSize: '26px', marginRight: swayBalance === undefined ? 15 : 0 }}>
         <ResetCameraIcon />
       </Button>
 
@@ -283,19 +277,40 @@ const SystemControls = () => {
               <MenuIcon />
             </HudIconButton>
           </div>
-          <ul>
-            {/* TODO: put crew tally in badge */}
-            {token && <MainMenuItem><CrewIcon /> <label>My Crews</label></MainMenuItem>}
-            <MainMenuItem><SettingsIcon /> <label>Settings</label></MainMenuItem>
-            {token && <MainMenuItem><StoreIcon /> <label>Store</label></MainMenuItem>}
+          <ul onClick={() => setMenuOpen(false)}>
+            {token && (
+              <MainMenuItem onClick={() => dispatchLauncherPage('crews')}>
+                <CrewIcon /> <label>My Crews <Badge subtler value={crews?.length} /></label>
+              </MainMenuItem>
+            )}
+            <MainMenuItem onClick={() => dispatchLauncherPage('settings')}>
+              <SettingsIcon /> <label>Settings</label>
+            </MainMenuItem>
+            {token && (
+              <MainMenuItem onClick={() => dispatchLauncherPage('store')}>
+                <StoreIcon /> <label>Store</label>
+              </MainMenuItem>
+            )}
             <MainMenuItem isRule />
             {token
-              ? <MainMenuItem onClick={handleLogout}><LogoutIcon /> <label>Log Out</label></MainMenuItem>
-              : <MainMenuItem onClick={handleLogin}><LoginIcon /> <label>Log In</label></MainMenuItem>
+              ? (
+                <MainMenuItem onClick={logout}>
+                  <LogoutIcon /> <label>Log Out</label>
+                </MainMenuItem>
+              )
+              : (
+                <MainMenuItem onClick={login}>
+                  <LoginIcon /> <label>Log In</label>
+                </MainMenuItem>
+              )
             }
-            <MainMenuItem onClick={openAssetsPortal}><MyAssetIcon /> <label>Assets Portal</label></MainMenuItem>
+            <MainMenuItem onClick={openAssetsPortal}>
+              <MyAssetIcon /> <label>Assets Portal</label>
+            </MainMenuItem>
             {process.env.REACT_APP_HELP_URL && (
-              <MainMenuItem onClick={openHelpChannel}><BugIcon /> <label>Bug Report</label></MainMenuItem>
+              <MainMenuItem onClick={openHelpChannel}>
+                <BugIcon /> <label>Bug Report</label>
+              </MainMenuItem>
             )}
           </ul>
         </MainMenu>

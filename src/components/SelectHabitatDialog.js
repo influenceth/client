@@ -14,13 +14,7 @@ const coverImage = getCloudfrontUrl('influence/production/images/stories/adalian
 
 const BuildingThumbnailWrapper = styled.div`
   border: 1px solid #333;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(10)};
   color: #333;
   position: relative;
   height: 140px;
@@ -43,13 +37,7 @@ const Flourish = styled.div`
 `;
 const HabCard = styled.div`
   background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(10)};
   flex: 1;
   padding: 15px;
 

@@ -42,13 +42,7 @@ const MenuOpenWrapper = styled.div`
 
 export const ResourceThumbnailWrapper = styled.div`
   border: 1px solid;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(10)};
   ${p => !p.disabled && `
     ${p.onClick && `cursor: ${p.theme.cursors.active};`}
     &:hover {

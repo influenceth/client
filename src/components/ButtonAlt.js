@@ -12,6 +12,18 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 const bgOpacity = 0.175;
 const hoverBgOpacity = 0.35;
 
+const sizes = {
+  icon: { font: 16, height: 26, width: 34, line: 8, borderWidth: 1, isIconOnly: true },
+  bigicon: { font: 16, height: 32, width: 40, line: 10, borderWidth: 1, isIconOnly: true },
+  hugeicon: { font: 24, height: 40, width: 48, line: 10, borderWidth: 1, isIconOnly: true },
+  wideicon: { font: 25, height: 32, width: 85, line: 10, borderWidth: 1, isIconOnly: true },
+  legacy: { font: 14, height: 18, width: 100, line: 10, borderWidth: 1, textTransform: 'none', background: 'transparent' },
+  small: { font: 14, height: 26, width: 100, line: 10, borderWidth: 1 },
+  medium: { font: 16, height: 32, width: 185, line: 10, borderWidth: 1 },
+  large: { font: 20, height: 50, width: 250, line: 15, borderWidth: 1 },
+  huge: { font: 32, height: 52, width: 275, line: 18, borderWidth: 2 }
+};
+
 const InnerContainer = styled.div`
   align-items: center;
   clip-path: polygon(
@@ -168,18 +180,6 @@ const loadingCss = css`
   top: 3px;
   width: 100%;
 `;
-
-const sizes = {
-  icon: { font: 16, height: 26, width: 34, line: 8, borderWidth: 1, isIconOnly: true },
-  bigicon: { font: 16, height: 32, width: 40, line: 10, borderWidth: 1, isIconOnly: true },
-  hugeicon: { font: 24, height: 40, width: 48, line: 10, borderWidth: 1, isIconOnly: true },
-  wideicon: { font: 25, height: 32, width: 85, line: 10, borderWidth: 1, isIconOnly: true },
-  legacy: { font: 14, height: 18, width: 100, line: 10, borderWidth: 1, textTransform: 'none', background: 'transparent' },
-  small: { font: 14, height: 26, width: 100, line: 10, borderWidth: 1 },
-  medium: { font: 16, height: 32, width: 185, line: 10, borderWidth: 1 },
-  large: { font: 20, height: 50, width: 250, line: 15, borderWidth: 1 },
-  huge: { font: 32, height: 52, width: 275, line: 18, borderWidth: 2 }
-};
 
 const StandardButton = (props) => {
   const {

@@ -86,13 +86,21 @@ const customConfigs = {
   // TODO: could do fancier conditional multisystems if that would help
   // i.e. `multisystemCalls: [{ name: 'InitializeAsteroid', cond: (a) => !a.AsteroidProof.used }, 'ScanAsteroid'],`
 
+  BulkPurchaseAdalians: {
+    bulkSystemCall: 'PurchaseAdalian',
+    getRepeatTally: (vars) => Math.max(1, Math.floor(vars.tally)),
+    equalityTest: true,
+    isVirtual: true
+  },
   InitializeAndManageAsteroid: {
     multisystemCalls: ['InitializeAsteroid', 'ManageAsteroid'],
     equalityTest: ['asteroid.id'],
+    isVirtual: true
   },
   InitializeAndPurchaseAsteroid: {
     multisystemCalls: ['InitializeAsteroid', 'PurchaseAsteroid'],
     equalityTest: ['asteroid.id'],
+    isVirtual: true
   },
 };
 
@@ -116,7 +124,7 @@ export function ChainTransactionProvider({ children }) {
       // include all default systems + any virtuals included in customConfigs
       const systemKeys = [
         ...Object.keys(System.Systems),
-        ...(Object.keys(customConfigs).filter((k) => !!customConfigs[k].multisystemCalls))
+        ...(Object.keys(customConfigs).filter((k) => !!customConfigs[k].isVirtual))
       ];
 
       return systemKeys.reduce((acc, systemName) => {
@@ -129,7 +137,14 @@ export function ChainTransactionProvider({ children }) {
           equalityTest: config.equalityTest,
 
           execute: async (rawVars) => {
-            const runSystems = config.multisystemCalls || [systemName];
+            let runSystems;
+            if (config.multisystemCalls) {
+              runSystems = config.multisystemCalls;
+            } else if (config.bulkSystemCall) {
+              runSystems = Array.from(Array(config.getRepeatTally(rawVars))).map(() => config.bulkSystemCall);
+            } else {
+              runSystems = [systemName];
+            }
 
             let totalPrice = 0;
             const calls = [];

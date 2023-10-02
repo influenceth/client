@@ -10,13 +10,7 @@ const StyledForm = styled.div`
   align-items: flex-start;
   border: 1px solid ${p => p.theme.colors.main};
   background-color: black;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 9.5px),
-    calc(100% - 9.5px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(9.5)};
   color: white;
   display: flex;
   flex: 1 1 0;
