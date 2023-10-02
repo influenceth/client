@@ -275,6 +275,7 @@ const ActionItem = ({ data }) => {
   const history = useHistory();
   const currentAsteroid = useStore(s => s.asteroids);
   const dispatchActionDialog = useStore(s => s.dispatchActionDialog);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dismissFailedTx = useStore(s => s.dispatchFailedTransactionDismissed);
   const type = data?.type;
 
@@ -308,6 +309,7 @@ const ActionItem = ({ data }) => {
       setTimeout(() => {
         item.onClick({
           openDialog: (dialog, vars) => dispatchActionDialog(dialog, { asteroidId: item.asteroidId, lotId: item.lotId, ...vars }),
+          openLauncher: (launcherPage) => dispatchLauncherPage(launcherPage),
           history,
           asteroid,
           lot
