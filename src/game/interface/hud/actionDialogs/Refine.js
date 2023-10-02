@@ -48,13 +48,7 @@ const SelectorInner = styled.div`
 const IconWrapper = styled.div`
   align-items: center;
   background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - ${sectionBodyCornerSize * 0.6}px),
-    calc(100% - ${sectionBodyCornerSize * 0.6}px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(sectionBodyCornerSize * 0.6)};
   display: flex;
   font-size: 30px;
   height: 50px;

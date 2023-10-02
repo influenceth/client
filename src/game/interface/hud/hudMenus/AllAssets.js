@@ -36,13 +36,7 @@ const MyAssetWrapper = styled.div`
 const Thumbnail = styled.div`
   background: black;
   border: 1px solid ${majorBorderColor};
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(10)};
   height: ${thumbnailDimension}px;
   margin-right: 8px;
   position: relative;
@@ -65,13 +59,7 @@ const SelectableRow = styled.div`
     ? `
       border: 1px solid ${p.theme.colors.main};
       background: rgba(${p.theme.colors.mainRGB}, 0.2);
-      clip-path: polygon(
-        0 0,
-        100% 0,
-        100% calc(100% - 10px),
-        calc(100% - 10px) 100%,
-        0 100%
-      );
+      ${p.theme.clipCorner(10)};
       margin: 4px 0;
       padding: 4px 8px 4px 4px;
     `

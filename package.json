@@ -8,7 +8,7 @@
   "dependencies": {
     "@argent/get-starknet": "^6.4.7",
     "@influenceth/astro": "^0.2.5",
-    "@influenceth/sdk": "^2.0.0-beta.89",
+    "@influenceth/sdk": "^2.0.0-beta.90",
     "@popperjs/core": "^2.11.6",
     "@react-hook/throttle": "^2.2.0",
     "@react-three/drei": "^8.8.1",

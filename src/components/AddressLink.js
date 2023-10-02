@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Address } from '@influenceth/sdk';
 
 import MarketplaceLink from '~/components/MarketplaceLink';
 import OnClickLink from '~/components/OnClickLink';
@@ -21,7 +22,7 @@ const AddressLink = (props) => {
   if (address) {
     return (
       <MarketplaceLink
-        chain={(chain || 'STARKNET').toUpperCase()}
+        chain={(chain || Address.getChain(address)).toUpperCase()}
         assetType="account"
         id={address}>
         {(onClick, setRefEl) => (

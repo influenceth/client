@@ -10,13 +10,7 @@ const StyledForm = styled.div`
   align-items: flex-start;
   border: 1px solid ${p => p.theme.colors.main};
   background-color: black;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 9.5px),
-    calc(100% - 9.5px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(9.5)};
   color: white;
   display: flex;
   flex: 1 1 0;
@@ -44,17 +38,6 @@ const Title = styled.div`
   @media (max-width: 380px) {
     display: none;
   }
-`;
-
-const Corner = styled.svg`
-  bottom: -1px;
-  height: 10px;
-  margin-right: 0;
-  position: absolute;
-  right: -1px;
-  stroke: ${p => p.theme.colors.main};
-  stroke-width: 1px;
-  width: 10px;
 `;
 
 const CloseButton = styled(IconButton)`

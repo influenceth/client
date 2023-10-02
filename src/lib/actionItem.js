@@ -143,6 +143,14 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'BulkPurchaseAdalians':
+      formatted.icon = <CrewmateIcon />;
+      formatted.label = 'Purchase Crewmate Credits';
+      formatted.onClick = ({ openLauncher }) => {
+        openLauncher('store');
+      };
+      break;
+
     case 'RecruitAdalian':
     case 'InitializeArvadian': {
       formatted.icon = <CrewIcon />;

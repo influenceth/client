@@ -11,9 +11,9 @@ const Food = styled.div`
   }
 `;
 
-const FoodStatus = ({ isRationing, onClick, percentage }) => {
+const FoodStatus = ({ isRationing, onClick, percentage, ...props }) => {
   return (
-    <Food isRationing={isRationing} onClick={onClick}>
+    <Food isRationing={isRationing} onClick={onClick} {...props}>
       {percentage < 50 && <WarningOutlineIcon />}
       <span>{percentage}%</span>
       <FoodIcon />

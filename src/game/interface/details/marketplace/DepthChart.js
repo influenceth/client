@@ -33,13 +33,7 @@ const ActionPanel = styled.div`
   width: 320px;
   & > div {
     background: #171717;
-    clip-path: polygon(
-      0 0,
-      100% 0,
-      100% calc(100% - 15px),
-      calc(100% - 15px) 100%,
-      0 100%
-    );
+    ${p => p.theme.clipCorner(15)};
     height: calc(100% - 25px);
   }
 `;

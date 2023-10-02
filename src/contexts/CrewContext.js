@@ -50,7 +50,7 @@ export function CrewProvider({ children }) {
   const crewmateMap = useMemo(() => {
     if (!crewsLoading && !crewmatesLoading) {
       const allMyCrewmates = {};
-      (allCrewmates || []).forEach((crewmate) => allMyCrewmates[crewmate.i] = crewmate);
+      (allCrewmates || []).forEach((crewmate) => allMyCrewmates[crewmate.id] = crewmate);
       return allMyCrewmates;
     }
     return null;
@@ -70,7 +70,7 @@ export function CrewProvider({ children }) {
   }, [rawCrews, crewmateMap]);
 
   const selectedCrew = useMemo(() => {
-    return selectedCrewId ? (crews || []).find((crew) => crew.i === selectedCrewId) : null;
+    return selectedCrewId ? (crews || []).find((crew) => crew.id === selectedCrewId) : null;
   }, [crews, selectedCrewId, !!crewmateMap]);
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export function CrewProvider({ children }) {
         // if there is no selected crew, select default crew
         if (!selectedCrew) {
           const defaultCrew = crews.find((crew) => crew.Crew.roster.length > 0);
-          dispatchCrewSelected(defaultCrew?.i || crews[0].i);
+          dispatchCrewSelected(defaultCrew?.id || crews[0].id);
         }
       } else {
         dispatchCrewSelected();

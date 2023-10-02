@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Crewmate } from '@influenceth/sdk';
+import { useCallback, useMemo } from 'react';
 
 import adalianRecruitmentBook from '~/assets/stories/adalian-recruitment.json'
 import arvadianRecruitmentBook from '~/assets/stories/arvadian-recruitment.json'
@@ -114,7 +113,7 @@ const useBookSession = (rawCrewId, rawCrewmateId) => {
         const crewmateClass = [selectedClass || crewmate?.Crewmate?.class];
         if (linkedPath.requiredCrewClasses?.anyOf && !anyOf(linkedPath.requiredCrewClasses.anyOf, crewmateClass)) return false;
         if (linkedPath.requiredCrewClasses?.allOf && !allOf(linkedPath.requiredCrewClasses.allOf, crewmateClass)) return false;
-    
+
         const allTraits = [
           ...selectedTraits,
           ...(crewmate?.Crewmate?.cosmetic || []),
@@ -122,10 +121,10 @@ const useBookSession = (rawCrewId, rawCrewmateId) => {
         ];
         if (linkedPath.requiredTraits?.anyOf && !anyOf(linkedPath.requiredTraits.anyOf, allTraits)) return false;
         if (linkedPath.requiredTraits?.allOf && !allOf(linkedPath.requiredTraits.allOf, allTraits)) return false;
-    
+
         if (linkedPath.requiredPathHistory?.anyOf && !anyOf(linkedPath.requiredPathHistory.anyOf, fullPathHistory)) return false;
         if (linkedPath.requiredPathHistory?.allOf && !allOf(linkedPath.requiredPathHistory.allOf, fullPathHistory)) return false;
-    
+
         return true;
       });
     }

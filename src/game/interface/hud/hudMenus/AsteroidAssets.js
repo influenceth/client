@@ -93,13 +93,7 @@ const ImageWrapper = styled.div`
   align-items: center;
   background: black;
   border: 1px solid #222;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 8px),
-    calc(100% - 8px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(8)};
   display: flex;
   font-size: 22px;
   height: 36px;

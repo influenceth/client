@@ -22,13 +22,7 @@ const Wrapper = styled.div`
 const StyledDetails = styled.div`
   background-color: ${p => p.theme.colors.contentBackdrop};
   backdrop-filter: blur(4px);
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 35px),
-    calc(100% - 35px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(35)};
   display: flex;
   flex-direction: column;
   height: 100%;

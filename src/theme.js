@@ -21,6 +21,16 @@ export const getContrastText = (rgb) => {
   return (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000 > 125 ? 'black' : 'white';
 }
 
+export const clipCorner = (size) => `
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - ${size}px),
+    calc(100% - ${size}px) 100%,
+    0 100%
+  );
+`;
+
 const main = '#36a7cd';
 const brightMain = '#57d5ff';
 const success = '#00ffe7';
@@ -110,7 +120,8 @@ const theme = {
   breakpoints: {
     mobile: 1023,
     xl: 1599
-  }
+  },
+  clipCorner
 };
 
 export default theme;

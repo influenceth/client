@@ -11,13 +11,7 @@ const StyledForm = styled.div`
   align-items: flex-start;
   border: 1px solid ${p => p.theme.colors.main};
   background-color: ${p => p.active ? p.theme.colors.main : 'transparent'};
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 9.5px),
-    calc(100% - 9.5px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(9.5)};
   color: ${p => p.open ? 'white' : p.theme.colors.main};
   cursor: ${p => p.open ? p.theme.cursors.default : p.theme.cursors.active};
   display: flex;

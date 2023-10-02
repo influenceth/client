@@ -98,13 +98,7 @@ const SiteThumb = styled.div`
   background-repeat: no-repeat;
   background-size: contain;
   border: 1px solid #333;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(10)};
   height: 136px;
   position: relative;
   width: 240px;

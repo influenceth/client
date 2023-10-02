@@ -94,16 +94,14 @@ const BridgeModalDialog = ({ onClose }) => {
             <div>
               All of your assets are still accounted for and can still be traded on either
               L1 Ethereum (i.e. via <a href={`${process.env.REACT_APP_ETHEREUM_NFT_MARKET_URL}/Influence?tab=created`} target="_blank" rel="noreferrer">OpenSea</a>)
-              or Starknet (i.e. via{' '}
-                <a href={`${process.env.REACT_APP_ASPECT_URL}/collection/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}`} target="_blank" rel="noreferrer">Aspect</a>
-                {' or '}<a href={`${process.env.REACT_APP_MINTSQUARE_URL}/collection/${process.env.REACT_APP_MINTSQUARE_MODIFIER}${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}/nfts`} target="_blank" rel="noreferrer">Mint Square</a>).
+              or Starknet (i.e. via <a href={process.env.REACT_APP_STARKNET_NFT_MARKET_URL} target="_blank" rel="noreferrer">Unframed</a>)
             </div>
             <div>
               In the interest of lower transaction fees, however, Influence itself will only be
               playable with assets that have been bridged to Layer 2.
             </div>
           </InnerContainer>
-          <ButtonContainer> 
+          <ButtonContainer>
             <BrightButton onClick={openBridge}>Open the L1/L2 Bridge</BrightButton>
           </ButtonContainer>
         </ContentBody>

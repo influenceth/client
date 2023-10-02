@@ -68,13 +68,7 @@ const LoadingContainer = styled.div`
 const ModalCushion = styled.div`
   background: rgba(50, 50, 50, 0.5);
   box-sizing: border-box;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - ${cornerSize + 4}px),
-    calc(100% - ${cornerSize + 4}px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(cornerSize + 4)};
   max-height: 95vh;
   max-width: 90vw;
   overflow: hidden;
@@ -84,13 +78,7 @@ const ModalCushion = styled.div`
 const Modal = styled.div`
   background: ${p => p.background};
   border: 1px solid ${p => p.borderColor};
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - ${cornerSize}px),
-    calc(100% - ${cornerSize}px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(cornerSize)};
   position: relative;
 `;
 

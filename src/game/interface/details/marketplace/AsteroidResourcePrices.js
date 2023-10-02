@@ -124,24 +124,12 @@ const SelectedMarketplace = styled.div`
 `;
 const MarketplaceImage = styled.div`
   border: 1px solid #333;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(10)};
   margin-left: 15px;
   padding: 6px;
   position: relative;
   & img {
-    clip-path: polygon(
-      0 0,
-      100% 0,
-      100% calc(100% - 6px),
-      calc(100% - 6px) 100%,
-      0 100%
-    );
+    ${p => p.theme.clipCorner(6)};
     width: 232px;
   }
 `;

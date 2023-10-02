@@ -76,13 +76,7 @@ const ActionButtonWrapper = styled.div`
 
 const ActionButton = styled.div`
   border: 1px solid ${p => p.overrideColor || p.theme.colors.main};
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - ${cornerSize}px),
-    calc(100% - ${cornerSize}px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(cornerSize)};
   height: ${dimension}px;
   width: ${dimension}px;
   padding: ${padding}px;
@@ -95,13 +89,7 @@ const ActionButton = styled.div`
   & > div {
     align-items: center;
     background-color: rgba(${p => p.overrideColor ? hexToRGB(p.overrideColor) : p.theme.colors.mainRGB}, 0.2);
-    clip-path: polygon(
-      0 0,
-      100% 0,
-      100% calc(100% - ${cornerSize - 4}px),
-      calc(100% - ${cornerSize - 4}px) 100%,
-      0 100%
-    );
+    ${p => p.theme.clipCorner(cornerSize - 4)};
     display: flex;
     font-size: 55px;
     height: 100%;

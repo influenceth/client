@@ -25,6 +25,7 @@ import useAuth from '~/hooks/useAuth';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import hudMenus from './hudMenus';
+import { boolAttr } from '~/lib/utils';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -116,7 +117,7 @@ const Panel = styled.div`
   height: 75%;
   max-height: calc(100vh - 150px);
   padding-left: ${cornerWidth}px;
-  padding-right: ${buttonsWidth}px;
+  padding-right: ${p => p.forcedOpen ? 0 : buttonsWidth}px;
   pointer-events: all;
   width: ${panelWidth}px;
 
@@ -136,6 +137,7 @@ const PanelTitle = styled.div`
   display: flex;
   flex-direction: row;
   font-size: 22px;
+  height: 43px;
   padding-bottom: 12px;
   text-transform: uppercase;
   & button:last-child {
@@ -150,7 +152,7 @@ const PanelContent = styled.div`
   height: 0;
 `;
 
-const HudMenu = () => {
+const HudMenu = ({ forceOpenMenu }) => {
   const history = useHistory();
   const { account } = useAuth();
   const asteroidId = useStore(s => s.asteroids.origin);
@@ -160,7 +162,7 @@ const HudMenu = () => {
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const showDevTools = useStore(s => s.graphics.showDevTools);
-  const openHudMenu = useStore(s => s.openHudMenu);
+  const openHudMenu = useStore(s => forceOpenMenu || s.openHudMenu);
 
   const { data: lot } = useLot(lotAsteroidId, lotId);
 
@@ -219,6 +221,17 @@ const HudMenu = () => {
 
   const buttons = useMemo(() => {
     let buttons = [];
+
+    // "force open" options
+    if (forceOpenMenu === "MY_CREWS") {
+      buttons.push({
+        key: 'MY_CREWS',
+        label: 'My Crews',
+        Component: hudMenus.MyCrews,
+        noClose: true,
+        noDetail: true,
+      })
+    }
 
     // "system view"
     if (zoomStatus === 'out') {
@@ -396,30 +409,34 @@ const HudMenu = () => {
     return buttons;
   }, [asteroidId, destination, lot, lotId, showDevTools, zoomStatus, zoomScene]);
 
-  const { label, onDetailClick, detailType, Component, componentProps, hideInsteadOfClose, noDetail } = useMemo(() => {
+  const { label, onDetailClick, detailType, Component, componentProps, hideInsteadOfClose, noClose, noDetail } = useMemo(() => {
     return buttons.find((b) => b.key === openHudMenu) || {};
   }, [buttons, openHudMenu]);
 
   return (
     <Wrapper>
-      <ReactTooltip id="hudMenu" effect="solid" />
-      <Buttons open={open}>
-        {buttons.map(({ key, label, icon, onOpen, requireLogin, hideInsteadOfClose }) => {
-          if (requireLogin && !account) return null;
-          return (
-            <Button
-              key={key}
-              onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
-              selected={key === openHudMenu}
-              data-for="hudMenu"
-              data-place="left"
-              data-tip={label}>
-              {icon}
-            </Button>
-          );
-        })}
-      </Buttons>
-      <Panel open={open && !hidden}>
+      {!forceOpenMenu && (
+        <>
+          <ReactTooltip id="hudMenu" effect="solid" />
+          <Buttons open={open}>
+            {buttons.map(({ key, label, icon, onOpen, requireLogin, hideInsteadOfClose }) => {
+              if (requireLogin && !account) return null;
+              return (
+                <Button
+                  key={key}
+                  onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
+                  selected={key === openHudMenu}
+                  data-for="hudMenu"
+                  data-place="left"
+                  data-tip={label}>
+                  {icon}
+                </Button>
+              );
+            })}
+          </Buttons>
+        </>
+      )}
+      <Panel open={open && !hidden} forcedOpen={boolAttr(forceOpenMenu)}>
         <PanelInner>
           <PanelTitle>
             <span style={{ flex: 1 }}>{label}</span>
@@ -432,7 +449,11 @@ const HudMenu = () => {
                 {detailType === 'detail' ? <DetailIcon /> : <ListViewIcon />}
               </IconButton>
             )}
-            <IconButton onClick={() => handleButtonClick(openHudMenu, null, hideInsteadOfClose)}><CloseIcon /></IconButton>
+            {!noClose && (
+              <IconButton onClick={() => handleButtonClick(openHudMenu, null, hideInsteadOfClose)}>
+                <CloseIcon />
+              </IconButton>
+            )}
           </PanelTitle>
           <PanelContent>
             {Component && (

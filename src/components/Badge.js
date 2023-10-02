@@ -1,37 +1,39 @@
 import styled from 'styled-components';
 
+const height = 1.27;
 const Badge = styled.span`
   align-items: center;
-  background: ${p => p.theme.colors.main};
-  border-radius: 0.7em;
+  background: rgba(${p => p.theme.colors.mainRGB}, ${p => p.subtler ? 0.9 : 1});
+  border-radius: ${height / 2}em;
   color: white;
-  display: flex;
-  font-weight: bold;
-  height: 1.4em;
+  display: inline-flex;
   justify-content: center;
-  letter-spacing: 0;
-  line-height: 1.4em;
-  min-width: 1.4em;
-  opacity: 1;
+  height: ${height}em;
+  margin-left: 0.3em;
+  min-width: ${height}em;
   padding: 0 3px;
   transition: opacity 0.4s ease 0.2s;
+  ${p => !p.subtler && `font-weight: bold;`}
 
-  & > sup {
-    position: relative;
-    top: -3px;
+  &:before {
+    content: "${p => p.max ? Math.min(p.max, p.value) : p.value}";
+    font-size: 0.9em;
   }
+
+  ${p => p.max && p.value > p.max && `
+    &:after {
+      content: "+";
+      font-size: smaller;
+      position: relative;
+      top: -3px;
+      vertical-align: super;
+    }
+  `}
 `;
 
 const FunctionalBadge = ({ max, showOnZero, value, ...otherProps }) => {
   if (showOnZero || value > 0) {
-    return (
-      <Badge {...otherProps}>
-        {max && value > max
-          ? (<>{max}<sup>+</sup></>)
-          : value
-        }
-      </Badge>
-    )
+    return <Badge max={max} value={value} {...otherProps} />;
   }
   return null;
 };

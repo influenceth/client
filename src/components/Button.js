@@ -19,13 +19,7 @@ const StyledButton = styled.button`
     }
     return inactiveColor;
   }};
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 9.5px),
-    calc(100% - 9.5px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(9.5)};
   color: ${p => p.active ? 'white' : (p.color || p.theme.colors.main)};
   display: flex;
   font-family: 'Jura', sans-serif;

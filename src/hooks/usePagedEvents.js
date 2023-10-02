@@ -22,7 +22,7 @@ const usePagedEvents = () => {
   useEffect(() => {
     setPage(1);
   }, [filters, sort]);
-  
+
   useEffect(() => {
     setLoading(true);
 
@@ -50,7 +50,7 @@ const usePagedEvents = () => {
         console.warn(err);
         setLoading(false);
       });
-  }, [filters, sort, page]);
+  }, [crew?.id, filters, sort, page]);
 
   return {
     page,

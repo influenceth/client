@@ -108,26 +108,14 @@ const OrderAlert = styled.div`
   `}
 
   color: white;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 15px),
-    calc(100% - 15px) 100%,
-    0 100%
-  );
+  ${p => p.theme.clipCorner(15)};
   
   padding: 5px;
   width: 100%;
   
   & > div {
     align-items: center;
-    clip-path: polygon(
-      0 0,
-      100% 0,
-      100% calc(100% - 12px),
-      calc(100% - 12px) 100%,
-      0 100%
-    );
+    ${p => p.theme.clipCorner(12)};
     display: flex;
     flex-direction: row;
     height: 65px;
