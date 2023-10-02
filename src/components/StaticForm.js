@@ -46,17 +46,6 @@ const Title = styled.div`
   }
 `;
 
-const Corner = styled.svg`
-  bottom: -1px;
-  height: 10px;
-  margin-right: 0;
-  position: absolute;
-  right: -1px;
-  stroke: ${p => p.theme.colors.main};
-  stroke-width: 1px;
-  width: 10px;
-`;
-
 const CloseButton = styled(IconButton)`
   position: absolute !important;
   top: 3px;

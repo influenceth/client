@@ -4,7 +4,6 @@ import CrewCard from '~/components/CrewCard';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
 import { CaptainIcon } from '~/components/Icons';
 import TriangleTip from '~/components/TriangleTip';
-import { boolAttr } from '~/lib/utils';
 
 const bgColor = '#000';
 const hoverBgColor = '#183541';
@@ -59,7 +58,7 @@ const StyledCaptainIcon = styled(CaptainIcon)`
 
 const AvatarWrapper = styled.div`
   cursor: ${p => p.theme.cursors[p.clickable ? 'active' : 'default']};
-  
+
   ${p => {
     const widthMult = p.width / 96;
     const iconWidth = p.lessPadding ? 58 * widthMult : 67 * widthMult;

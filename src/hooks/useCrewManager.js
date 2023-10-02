@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext } from 'react';
 import { Crewmate, Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -6,7 +6,7 @@ import useCrewContext from './useCrewContext';
 
 const useCrewManager = () => {
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
-  const { adalianRecruits, crewmateMap } = useCrewContext();
+  const { adalianRecruits } = useCrewContext();
 
   const changeActiveCrew = useCallback(
     (params) => execute('SET_ACTIVE_CREW', params),
@@ -48,7 +48,7 @@ const useCrewManager = () => {
         });
       }
     },
-    [adalianRecruits, execute]
+    [execute]
   );
 
   const getPendingCrewmate = useCallback(
