@@ -371,7 +371,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
         </Controls>
 
         <MainWrapper>
-          <FilterContainer open={boolAttr(filtersOpen)}>
+          <FilterContainer open={filtersOpen}>
             <InnerFilterContainer>
               <SearchFilters
                 assetType={assetType}

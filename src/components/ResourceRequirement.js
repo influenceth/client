@@ -1,6 +1,6 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
-import { CheckIcon, SurfaceTransferIcon } from '~/components/Icons';
+import { CheckIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 
@@ -49,7 +49,7 @@ const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
       if (item.numerator > 0) { // (needs partially met)
         props.underlay = <PartialUnderlay />;
       }
-    
+
     // (needs met or no needs specified)
     } else {
       props.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.1)`;
@@ -71,7 +71,7 @@ const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
       props.backgroundColor = props.outlineColor = 'rgba(50, 50, 50, 0.3)';
     }
   }
-  
+
   return (
     <ResourceThumbnail {...props} />
   );

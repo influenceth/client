@@ -677,7 +677,7 @@ const getActivityConfig = (activity, viewingAs = {}) => {
   const triggerAlert = !!config?.triggerAlert;
   
   const isActionItemHidden = (pendingTransactions) => {
-    return config?.getIsActionItemHidden && config.getIsActionItemHidden(activity.event, pendingTransactions);
+    return config?.getIsActionItemHidden && config.getIsActionItemHidden(activity.event)(pendingTransactions);
   };
 
   return {

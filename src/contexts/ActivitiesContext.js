@@ -72,7 +72,7 @@ export function ActivitiesProvider({ children }) {
             //     if (!needsBuilding || !!optimisticLot.building) {
             //       queryClient.setQueryData(queryKey, optimisticLot);
             //       optimisticUpdate = true;
-            //     }                
+            //     }
             //   }
             // }
             // // ^^^
@@ -109,7 +109,7 @@ export function ActivitiesProvider({ children }) {
 
     const activitiesToProcess = (pendingBatchActivities.current || []).slice(0);
     pendingBatchActivities.current = [];
-    
+
     if (activitiesToProcess.length > 0) {
       handleActivities(activitiesToProcess);
     }
@@ -146,7 +146,7 @@ export function ActivitiesProvider({ children }) {
         .filter((txHash) => !!txHash);
       if (pendingTxHashes?.length > 0) {
         // NOTE: since is to make sure no pagination occurs... we should fix this endpoint on the server
-        api.getActivities({ since: 1, txHash: pendingTxHashes.join(',') }).then((data) => {
+        api.getActivities({ txHash: pendingTxHashes.join(',') }).then((data) => {
           handleActivities(data.activities, true);
           setLastBlockNumber(data.blockNumber);
         });

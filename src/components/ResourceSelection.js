@@ -1,11 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled, { keyframes } from 'styled-components';
-import { FaEllipsisH as MenuIcon } from 'react-icons/fa';
+import styled from 'styled-components';
 
-import { CheckIcon, SurfaceTransferIcon } from '~/components/Icons';
+import theme from '~/theme';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
-
-import theme, { hexToRGB } from '~/theme';
 import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 
 const Miniform = styled.div`
@@ -77,7 +74,7 @@ const ResourceSelection = ({ item, onSelectItem }) => {
       config.badgeColor = theme.colors.main;
       config.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.1)`;
       config.outlineColor = `rgba(${theme.colors.mainRGB}, 0.4)`;
-  
+
       if (item.selected < item.available) {
         config.badge = formatResourceAmount(item.selected, item.resource.i);
         config.badgeDenominator = formatResourceAmount(item.available, item.resource.i);
@@ -102,7 +99,7 @@ const ResourceSelection = ({ item, onSelectItem }) => {
     if (item.selected > 0) onSelectItem(0);
     else onSelectItem(item.maxSelectable);
   }, [item]);
-  
+
   return (
     <ResourceThumbnail
       {...props}

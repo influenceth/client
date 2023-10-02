@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import styled from 'styled-components';
 
 import { PreviousIcon, NextIcon, BeginningIcon } from '~/components/Icons';
-import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
 
 const StyledPagination = styled.div`

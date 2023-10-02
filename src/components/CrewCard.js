@@ -9,7 +9,6 @@ import CrewCardOverlay, { cardTransitionSpeed, cardTransitionFunction } from '~/
 import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewCollectionEmblem from '~/components/CrewCollectionEmblem';
 import DataReadout from '~/components/DataReadout';
-import { boolAttr } from '~/lib/utils';
 import formatters from '~/lib/formatters';
 
 const CardLayer = styled.div`

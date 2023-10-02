@@ -206,6 +206,7 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
     if (esAssetType) {
       const q = esb.requestBodySearch();
       q.query(filtersToQuery[esAssetType](filters || {}));
+      if (esAssetType === 'asteroids') q.source({ excludes: [ 'AsteroidProof' ]});
       if (sort) q.sort(esb.sort(...sort));
       q.from(from);
       q.size(size);
