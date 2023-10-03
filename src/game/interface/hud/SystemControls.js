@@ -7,9 +7,9 @@ import HudIconButton from '~/components/HudIconButton';
 import {
   BugIcon,
   MenuIcon,
-  SettingsIcon, 
+  SettingsIcon,
   ResetCameraIcon,
-  WarningIcon, 
+  WarningIcon,
   StoreIcon,
   SwayIcon,
   CrewIcon,
@@ -213,7 +213,7 @@ const SystemControls = () => {
     if (!starknet?.account?.provider) return null;
 
     if (swayUpdateTimeout.current) clearTimeout(swayUpdateTimeout.current);
-    
+
     try {
       // TODO: uncomment this when sway contract deployed
       // const balance = await starknet.account.provider.invoke({
@@ -266,12 +266,11 @@ const SystemControls = () => {
               <LogoWrapper connected={!!account}>
                 <InfluenceIcon />
               </LogoWrapper>
-              
+
               <LoggedInUser account={account} />
             </div>
 
             <HudIconButton
-              data-tip="Toggle Main Menu"
               isActive={menuOpen}
               onClick={() => setMenuOpen((o) => !o)}>
               <MenuIcon />
