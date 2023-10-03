@@ -6,9 +6,9 @@ import Button from '~/components/ButtonAlt';
 import {
   BugIcon,
   MenuIcon,
-  SettingsIcon, 
+  SettingsIcon,
   ResetCameraIcon,
-  WarningIcon, 
+  WarningIcon,
   StoreIcon,
   SwayIcon,
   CrewIcon,
@@ -85,7 +85,7 @@ const SystemControls = () => {
     if (!starknet?.account?.provider) return null;
 
     if (swayUpdateTimeout.current) clearTimeout(swayUpdateTimeout.current);
-    
+
     try {
       // TODO: uncomment this when sway contract deployed
       // const balance = await starknet.account.provider.invoke({
