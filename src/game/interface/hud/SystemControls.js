@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 import Badge from '~/components/Badge';
 import Button from '~/components/ButtonAlt';
-import HudIconButton from '~/components/HudIconButton';
 import {
   BugIcon,
   MenuIcon,
@@ -15,15 +14,13 @@ import {
   CrewIcon,
   LoginIcon,
   LogoutIcon,
-  MyAssetIcon,
-  InfluenceIcon
+  MyAssetIcon
 } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-
-const menuAnimationTime = 250;
+import DropdownNavMenu, { NavMenuLoggedInUser, menuAnimationTime } from './DropdownNavMenu';
 
 const MobileWarning = styled.div`
   align-items: center;
@@ -69,131 +66,6 @@ const VerticalRule = styled.div`
   transition: opacity ${menuAnimationTime}ms ease;
 `;
 
-const MainMenuWrapper = styled.div`
-  align-self: flex-start;
-  position: relative;
-  display: flex;
-  height: 50px;
-  overflow: hidden;
-  width: 50px;
-
-  transition: width ${menuAnimationTime}ms ease ${p => p.open ? 0 : menuAnimationTime}ms,
-              height ${menuAnimationTime}ms ease ${p => p.open ? menuAnimationTime : 0}ms;
-
-  ${p => p.open && `
-    width: 300px;
-    height: 320px;
-  `}
-`;
-const MainMenu = styled.div`
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 5px;
-
-  background: black;
-  text-align: right;
-  width: 100%;
-
-  & > div {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    & > div {
-      align-items: center;
-      color: white;
-      display: flex;
-      flex: 1;
-      justify-content: flex-start;
-      overflow: hidden;
-      max-width: calc(100% - 40px);
-    }
-  }
-  & > ul {
-    margin: 15px 0 0;
-    padding: 0;
-  }
-`;
-const LogoWrapper = styled.span`
-  position: relative;
-  & > svg {
-    font-size: 34px;
-  }
-  &:after {
-    content: "";
-    background: ${p => p.connected ? p.theme.colors.success : p.theme.colors.error};
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    border-radius: 5px;
-    height: 10px;
-    width: 10px;
-  }
-`;
-
-const LoggedInUser = styled.div`
-  flex: 1;
-  font-size: 15px;
-  margin-left: 10px;
-  overflow: hidden;
-  padding-right: 10px;
-  text-align: left;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  width: 100%;
-
-  ${p => p.account
-    ? `
-      &:before {
-        content: "${p.account.substr(0, 6)}"
-      }
-      &:after {
-        content: "...${p.account.substr(-6)}"
-      }
-    `
-    : `
-      &:before {
-        content: "";
-      }
-    `
-  }
-`;
-
-const MainMenuItem = styled.li`
-  align-items: center;
-  color: #888;
-  display: flex;
-  flex-direction: row;
-  padding: 0 5px;
-  svg {
-    font-size: 25px;
-  }
-  label {
-    flex: 1;
-    text-transform: uppercase;
-  }
-
-  ${p => p.isRule
-    ? `
-      height: 18px;
-      &:before {
-        content: "";
-        display: block;
-        border-top: 1px solid #333;
-        width: 100%;
-      }
-    `
-    : `
-      cursor: ${p.theme.cursors.active};
-      height: 36px;
-      &:hover {
-        background: rgba(${p.theme.colors.mainRGB}, 0.6);
-        color: white;
-      }
-    `
-  }
-`;
-
 const SystemControls = () => {
   const { account, login, logout, token, walletContext: { starknet } } = useAuth();
   const { data: activities } = useActivitiesContext();
@@ -234,6 +106,57 @@ const SystemControls = () => {
 
   useEffect(() => updateSwayBalance, [account, activities]);
 
+  const menuItems = useMemo(() => {
+    const items = [];
+
+    if (token) {
+      items.push({
+        onClick: () => dispatchLauncherPage('crews'),
+        content: <><CrewIcon /> <label>My Crews <Badge subtler value={crews?.length} /></label></>
+      });
+    }
+
+    items.push({
+      onClick: () => dispatchLauncherPage('settings'),
+      content: <><SettingsIcon /> <label>Settings</label></>
+    });
+
+    if (token) {
+      items.push({
+        onClick: () => dispatchLauncherPage('store'),
+        content: <><StoreIcon /> <label>Store</label></>
+      })
+    }
+
+    items.push({ isRule: true });
+
+    if (token) {
+      items.push({
+        onClick: logout,
+        content: <><LogoutIcon /> <label>Log Out</label></>
+      })
+    } else {
+      items.push({
+        onClick: login,
+        content: <><LoginIcon /> <label>Log In</label></>
+      })
+    }
+
+    items.push({
+      onClick: openAssetsPortal,
+      content: <><MyAssetIcon /> <label>Assets Portal</label></>
+    });
+
+    if (process.env.REACT_APP_HELP_URL) {
+      items.push({
+        onClick: openHelpChannel,
+        content: <><BugIcon /> <label>Bug Report</label></>
+      })
+    }
+
+    return items;
+  }, [])
+
   return (
     <StyledSystemControls>
       <MobileWarning>
@@ -259,62 +182,17 @@ const SystemControls = () => {
 
       <VerticalRule hide={menuOpen} />
 
-      <MainMenuWrapper open={menuOpen}>
-        <MainMenu open={menuOpen}>
-          <div>
-            <div>
-              <LogoWrapper connected={!!account}>
-                <InfluenceIcon />
-              </LogoWrapper>
-              
-              <LoggedInUser account={account} />
-            </div>
-
-            <HudIconButton
-              data-tip="Toggle Main Menu"
-              isActive={menuOpen}
-              onClick={() => setMenuOpen((o) => !o)}>
-              <MenuIcon />
-            </HudIconButton>
-          </div>
-          <ul onClick={() => setMenuOpen(false)}>
-            {token && (
-              <MainMenuItem onClick={() => dispatchLauncherPage('crews')}>
-                <CrewIcon /> <label>My Crews <Badge subtler value={crews?.length} /></label>
-              </MainMenuItem>
-            )}
-            <MainMenuItem onClick={() => dispatchLauncherPage('settings')}>
-              <SettingsIcon /> <label>Settings</label>
-            </MainMenuItem>
-            {token && (
-              <MainMenuItem onClick={() => dispatchLauncherPage('store')}>
-                <StoreIcon /> <label>Store</label>
-              </MainMenuItem>
-            )}
-            <MainMenuItem isRule />
-            {token
-              ? (
-                <MainMenuItem onClick={logout}>
-                  <LogoutIcon /> <label>Log Out</label>
-                </MainMenuItem>
-              )
-              : (
-                <MainMenuItem onClick={login}>
-                  <LoginIcon /> <label>Log In</label>
-                </MainMenuItem>
-              )
-            }
-            <MainMenuItem onClick={openAssetsPortal}>
-              <MyAssetIcon /> <label>Assets Portal</label>
-            </MainMenuItem>
-            {process.env.REACT_APP_HELP_URL && (
-              <MainMenuItem onClick={openHelpChannel}>
-                <BugIcon /> <label>Bug Report</label>
-              </MainMenuItem>
-            )}
-          </ul>
-        </MainMenu>
-      </MainMenuWrapper>
+      <DropdownNavMenu
+        header={<NavMenuLoggedInUser account={account} />}
+        hCollapse
+        isOpen={menuOpen}
+        menuItems={menuItems}
+        onClickOpener={() => setMenuOpen((o) => !o)}
+        onClose={() => setMenuOpen(false)}
+        openerIcon={<MenuIcon />}
+        openerHighlight
+        openerTooltip="Toggle Main Menu"
+      />
     </StyledSystemControls>
   );
 };
