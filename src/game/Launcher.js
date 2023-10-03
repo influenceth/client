@@ -59,12 +59,14 @@ const TopLeftMenu = styled.div`
   left: 0;
   padding: ${menuPadding}px;
 `;
+
 const TopRightMenu = styled.div`
   position: absolute;
   top: 0;
   right: 0;
   padding: ${p => p.noPadding ? 0 : menuPadding}px;
 `;
+
 const BottomLeftMenu = styled.div`
   position: absolute;
   bottom: ${footerHeight / 4}px;
@@ -158,10 +160,12 @@ const LeftIcon = styled.div`
     width: 1em;
   }
 `;
+
 const RightIcon = styled.div``;
 const HoverContent = styled.label`
   display: none;
 `;
+
 const AccountButton = styled.div`
   align-items: center;
   background: black;
@@ -299,7 +303,7 @@ const Launcher = (props) => {
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
-  
+
   const [menuOpen, setMenuOpen] = useState(false);
 
   const { account, walletIcon } = walletContext;
@@ -375,7 +379,6 @@ const Launcher = (props) => {
               onClickHeader={() => setMenuOpen((o) => !o)}
               onClose={() => setMenuOpen(false)}
               openerIcon={<Button size="icon"><CloseIcon /></Button>}
-              openerTooltip="Back to Game"
               onClickOpener={() => dispatchLauncherPage()}
             />
           )
