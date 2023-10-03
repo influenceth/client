@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { RingLoader as Loader } from 'react-spinners';
 import { Entity } from '@influenceth/sdk';
@@ -10,6 +10,7 @@ import InfluenceLogo from '~/components/InfluenceLogo';
 import NavIcon from '~/components/NavIcon';
 import {
   ChevronDoubleRightIcon,
+  CloseIcon,
   DownloadIcon,
   InfluenceIcon,
   LogoutIcon,
@@ -23,6 +24,10 @@ import HudMenu from './interface/hud/HudMenu';
 import Store from './launcher/Store';
 import useSale from '~/hooks/useSale';
 import usePriceConstants from '~/hooks/usePriceConstants';
+import DropdownNavMenu, { NavMenuLoggedInUser } from './interface/hud/DropdownNavMenu';
+import { boolAttr } from '~/lib/utils';
+import theme from '~/theme';
+import Button from '~/components/ButtonAlt';
 
 const menuPadding = 25;
 const headerHeight = 68;
@@ -58,7 +63,7 @@ const TopRightMenu = styled.div`
   position: absolute;
   top: 0;
   right: 0;
-  padding: ${menuPadding}px;
+  padding: ${p => p.noPadding ? 0 : menuPadding}px;
 `;
 const BottomLeftMenu = styled.div`
   position: absolute;
@@ -294,6 +299,8 @@ const Launcher = (props) => {
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
+  
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const { account, walletIcon } = walletContext;
   const loggedIn = account && token;
@@ -355,15 +362,22 @@ const Launcher = (props) => {
         </Nav>
       </TopLeftMenu>
 
-      <TopRightMenu>
+      <TopRightMenu noPadding={boolAttr(loggedIn)}>
         {loggedIn
           ? (
-            <AccountButton onClick={logout} hasHoverContent>
-              <LeftIcon connected={loggedIn}>{walletIcon || <InfluenceIcon />}</LeftIcon>
-              <label>{account && <>{account.substr(0, 6)}...{account.substr(-6)}</>}</label>
-              <HoverContent style={{ color: 'red' }}>Log Out</HoverContent>
-              <RightIcon><LogoutIcon /></RightIcon>
-            </AccountButton>
+            <DropdownNavMenu
+              header={<NavMenuLoggedInUser account={account} />}
+              isOpen={menuOpen}
+              menuItems={[{
+                onClick: logout,
+                content: <><LogoutIcon /> <label>Log Out</label></>
+              }]}
+              onClickHeader={() => setMenuOpen((o) => !o)}
+              onClose={() => setMenuOpen(false)}
+              openerIcon={<Button size="icon"><CloseIcon /></Button>}
+              openerTooltip="Back to Game"
+              onClickOpener={() => dispatchLauncherPage()}
+            />
           )
           : (
             authenticating
