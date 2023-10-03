@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import Button from '~/components/ButtonAlt';
@@ -6,7 +6,6 @@ import ClipCorner from '~/components/ClipCorner';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import Ether from '~/components/Ether';
 import { PlusIcon } from '~/components/Icons';
-import TextInput from '~/components/TextInput';
 import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontrolled';
 import useCrewManager from '~/hooks/useCrewManager';
 import usePriceConstants from '~/hooks/usePriceConstants';
@@ -27,6 +26,7 @@ const Wrapper = styled.div`
 const Group = styled.div`
   flex: 0 1 360px;
 `;
+
 const GroupTitle = styled.div`
   border-bottom: 1px solid #333;
   color: white;
@@ -35,10 +35,12 @@ const GroupTitle = styled.div`
   padding-bottom: 15px;
   text-transform: uppercase;
 `;
+
 const SKUWrapper = styled.div`
   background: black;
   padding: 20px 15px;
 `;
+
 const innerPadding = 10;
 const SKUInner = styled.div`
   background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
@@ -46,14 +48,15 @@ const SKUInner = styled.div`
   padding: ${innerPadding}px;
   position: relative;
   ${p => p.theme.clipCorner(10)};
-
 `;
+
 const Title = styled.div`
   font-size: 28px;
   margin: 5px 0 15px;
   text-align: center;
   text-transform: uppercase;
 `;
+
 const Imagery = styled.div`
   display: flex;
   justify-content: center;
@@ -62,29 +65,34 @@ const Imagery = styled.div`
     box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.33);
   }
 `;
+
 const TypeLabel = styled.div`
   color: ${p => p.theme.colors.main};
   font-size: 15px;
 `;
+
 const Main = styled.div`
   align-items: center;
   background: rgba(0, 0, 0, 0.3);
   display: flex;
-  justify-content: space-between;
   margin: 10px -${innerPadding}px;
   padding: ${innerPadding}px;
   & > input {
     font-size: 18px;
     height: 30px;
+    text-align: right;
     width: 75px;
   }
   & > label {
+    padding-left: 10px;
     font-size: 20px;
   }
 `;
+
 const Description = styled(TypeLabel)`
   padding: 5px 5px 15px 0;
 `;
+
 const Price = styled.div`
   color: white;
   font-size: 30px;
@@ -96,6 +104,7 @@ const Price = styled.div`
     text-transform: uppercase;
   }
 `;
+
 const Footnote = styled.div`
   font-size: 15px;
   opacity: 0.6;
@@ -135,7 +144,9 @@ const CrewmateSKU = () => {
             }}
             width={135} />
         </Imagery>
-        <TypeLabel>Direct Purchase</TypeLabel>
+        <Description>
+          Crewmates are the individual workers that perform all game tasks and form your crew.
+        </Description>
         <Main>
           <UncontrolledTextInput
             disabled={boolAttr(isPendingPurchase)}
@@ -147,9 +158,6 @@ const CrewmateSKU = () => {
 
           <label>Crewmates</label>
         </Main>
-        <Description>
-          Crewmates are purchased directly from Unstoppable Games to fund ongoing game development.
-        </Description>
         <Price>
           <span>{formatters.crewmatePrice(priceConstants, 4)}</span>
           <label>Eth each</label>
@@ -161,7 +169,7 @@ const CrewmateSKU = () => {
           onClick={onPurchaseCrewmates}
           subtle
           style={{ width: '100%' }}>
-          Buy Directly
+          Buy Now
           {priceConstants && (
             <span style={{ color: 'white', flex: 1, fontSize: '90%', textAlign: 'right', marginLeft: 15 }}>
               {/* TODO: should this update price before "approve"? what about asteroids? */}
@@ -171,7 +179,6 @@ const CrewmateSKU = () => {
         </Button>
         <ClipCorner dimension={10} color={borderColor} />
       </SKUInner>
-      <Footnote>Individual workers that perform all game tasks.</Footnote>
     </SKUWrapper>
   );
 };
