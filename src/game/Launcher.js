@@ -114,7 +114,7 @@ const NavItem = styled.div`
 
 const LogoWrapper = styled.div`
   height: ${headerHeight}px;
-  
+
   & > svg {
     height: 100%;
   }
@@ -276,16 +276,16 @@ const Footer = styled.div`
       padding: 0 20px;
       text-decoration: none;
       transition: color 250ms ease;
-  
+
       &:first-child {
         border-left: 0;
       }
-  
+
       &:hover {
         color: #CCC;
       }
     }
-  }  
+  }
 `;
 
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
