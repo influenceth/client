@@ -115,143 +115,153 @@ const useActionButtons = () => {
         }
       }
 
-      if (crew && zoomStatus === 'in') {
+      if (zoomStatus === 'in') {
 
-        // TODO: pilotedShip?
-        // if there is a crewedShip and it is selected (or no other ship is selected)
-        if (crewedShip && (!ship || crewedShip.i === ship.i)) {
-
-          // if ship on surface and the lot is selected (or no other lot is selected)
-          if (crew._location.lotId && (!lotId || lotId === crew._location.lotId)) {
-            a.push(actionButtons.LaunchShip);
-          }
-
-          // else, if ship is in orbit
-          else if (!crew._location.lotId) {
-            a.push(actionButtons.LandShip);
-          }
+        // if operational habitat, can recruit there
+        if (lot && lot.building?.Building?.buildingType === Building.IDS.HABITAT && constructionStatus === 'OPERATIONAL') {
+          a.push(actionButtons.RecruitCrewmate);
         }
 
-        // if ship (or single-ship lot) is selected
-        if (ship) {
-          // TODO: check in buttons that crew is on asteroid
-          //  AND check that both in orbit or both on surface
+        // all other actions require a crew
+        if (crew) {
 
-          // if i own a ship, can pilot it
-          if (ship.Control.controller.id === crew.i) {
-            a.push(actionButtons.StationCrewAsPilots);
+          // TODO: pilotedShip?
+          // if there is a crewedShip and it is selected (or no other ship is selected)
+          if (crewedShip && (!ship || crewedShip.i === ship.i)) {
 
-          // if i don't own it, can ride it
-          } else {
-            a.push(actionButtons.StationCrewAsPassengers);
-          }
-
-          // if my crew is on ship, can eject
-          if (crew._location.shipId === ship.i) {
-            a.push(actionButtons.EjectCrew);
-          }
-
-          // if i own the ship and there are other crews on the ship
-          if (ship.Control.controller.id === crew.i && crewsOnShip?.length > 0) {
-            a.push(actionButtons.EjectGuestCrew);
-          }
-
-          // if i am piloting the ship and it is eligible to enter or leave emergency mode
-          if (crew._location?.shipId === ship.i && crew.i === ship.Control.controller.id) {
-
-            // if in emergency mode or ship has < 10% propellant, can toggle emergency mode
-            const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
-            const propellantInventoryMassMax = Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint;
-            if (ship.Ship.operatingMode === Ship.MODES.EMERGENCY || propellantInventory.mass <= 0.1 * propellantInventoryMassMax) {
-              a.push(actionButtons.EmergencyModeToggle);
+            // if ship on surface and the lot is selected (or no other lot is selected)
+            if (crew._location.lotId && (!lotId || lotId === crew._location.lotId)) {
+              a.push(actionButtons.LaunchShip);
             }
 
-            // if in emergency mode, can generate
-            if (ship.Ship.operatingMode === Ship.MODES.EMERGENCY) {
-              a.push(actionButtons.EmergencyModeGenerate);
+            // else, if ship is in orbit
+            else if (!crew._location.lotId) {
+              a.push(actionButtons.LandShip);
             }
           }
-        }
 
-        // if lot is selected and asteroid has been scanned
-        if (lot && asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
+          // if ship (or single-ship lot) is selected
+          if (ship) {
+            // TODO: check in buttons that crew is on asteroid
+            //  AND check that both in orbit or both on surface
 
-          // can always core sample
-          a.push(actionButtons.CoreSample);
+            // if i own a ship, can pilot it
+            if (ship.Control.controller.id === crew.i) {
+              a.push(actionButtons.StationCrewAsPilots);
 
-          // if there is a building
-          if (lot.building) {
+            // if i don't own it, can ride it
+            } else {
+              a.push(actionButtons.StationCrewAsPassengers);
+            }
 
-            // if it's operational...
-            if (constructionStatus === 'OPERATIONAL') {
+            // if my crew is on ship, can eject
+            if (crew._location.shipId === ship.i) {
+              a.push(actionButtons.EjectCrew);
+            }
 
-              // potentially public functions...
-              if (lot.building.Station) {
-                // if my crew is stationed in building, can eject
-                if (crew?._location.buildingId === lot.building.i) {
-                  a.push(actionButtons.EjectCrew);
+            // if i own the ship and there are other crews on the ship
+            if (ship.Control.controller.id === crew.i && crewsOnShip?.length > 0) {
+              a.push(actionButtons.EjectGuestCrew);
+            }
 
-                // else, can station my crew
-                } else {
-                  a.push(actionButtons.StationCrew);
-                }
+            // if i am piloting the ship and it is eligible to enter or leave emergency mode
+            if (crew._location?.shipId === ship.i && crew.i === ship.Control.controller.id) {
+
+              // if in emergency mode or ship has < 10% propellant, can toggle emergency mode
+              const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
+              const propellantInventoryMassMax = Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint;
+              if (ship.Ship.operatingMode === Ship.MODES.EMERGENCY || propellantInventory.mass <= 0.1 * propellantInventoryMassMax) {
+                a.push(actionButtons.EmergencyModeToggle);
+              }
+
+              // if in emergency mode, can generate
+              if (ship.Ship.operatingMode === Ship.MODES.EMERGENCY) {
+                a.push(actionButtons.EmergencyModeGenerate);
               }
             }
+          }
 
-            // if i control the building
-            if (lot.building.Control?.controller?.id === crew.i) {
+          // if lot is selected and asteroid has been scanned
+          if (lot && asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
 
-              // if it's operational
+            // can always core sample
+            a.push(actionButtons.CoreSample);
+
+            // if there is a building
+            if (lot.building) {
+
+              // if it's operational...
               if (constructionStatus === 'OPERATIONAL') {
-                if (lot.building.Station) { // TODO: hide/disable if no guests
-                  a.push(actionButtons.EjectGuestCrew);
-                }
 
-                if (lot.building.Extractor?.length > 0) {
-                  a.push(actionButtons.Extract);
-                }
+                // potentially public functions...
+                if (lot.building.Station) {
 
-                // TODO: these should be different
-                //  (or a single "Refine" button should have dynamic icons based on processor type)
-                if (lot.building.Processor?.processorType === Processor.IDS.REFINERY) {
-                  a.push(actionButtons.Refine);
-                } else if (lot.building.Processor?.processorType === Processor.IDS.FACTORY) {
-                  a.push(actionButtons.Refine);
-                } else if (lot.building.Processor?.processorType === Processor.IDS.BIOREACTOR) {
-                  a.push(actionButtons.Refine);
-                } else if (lot.building.Processor?.processorType === Processor.IDS.SHIPYARD) {
-                  a.push(actionButtons.Refine);
+                  // if my crew is stationed in building, can eject
+                  if (crew?._location.buildingId === lot.building.i) {
+                    a.push(actionButtons.EjectCrew);
+
+                  // else, can station my crew
+                  } else {
+                    a.push(actionButtons.StationCrew);
+                  }
                 }
               }
 
-              // contruction flows
-              if (['PLANNING'].includes(constructionStatus)) {
-                a.push(actionButtons.PlanBuilding);
+              // if i control the building
+              if (lot.building.Control?.controller?.id === crew.i) {
+
+                // if it's operational
+                if (constructionStatus === 'OPERATIONAL') {
+                  if (lot.building.Station) { // TODO: hide/disable if no guests
+                    a.push(actionButtons.EjectGuestCrew);
+                  }
+
+                  if (lot.building.Extractor?.length > 0) {
+                    a.push(actionButtons.Extract);
+                  }
+
+                  // TODO: these should be different
+                  //  (or a single "Refine" button should have dynamic icons based on processor type)
+                  if (lot.building.Processor?.processorType === Processor.IDS.REFINERY) {
+                    a.push(actionButtons.Refine);
+                  } else if (lot.building.Processor?.processorType === Processor.IDS.FACTORY) {
+                    a.push(actionButtons.Refine);
+                  } else if (lot.building.Processor?.processorType === Processor.IDS.BIOREACTOR) {
+                    a.push(actionButtons.Refine);
+                  } else if (lot.building.Processor?.processorType === Processor.IDS.SHIPYARD) {
+                    a.push(actionButtons.Refine);
+                  }
+                }
+
+                // contruction flows
+                if (['PLANNING'].includes(constructionStatus)) {
+                  a.push(actionButtons.PlanBuilding);
+                }
+                if (['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus)) {
+                  a.push(actionButtons.Construct);
+                }
+                if (['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
+                  a.push(actionButtons.Deconstruct);
+                }
+                if (['PLANNED', 'CANCELING'].includes(constructionStatus)) {
+                  a.push(actionButtons.UnplanBuilding);
+                }
               }
-              if (['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus)) {
-                a.push(actionButtons.Construct);
-              }
-              if (['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus)) {
-                a.push(actionButtons.Deconstruct);
-              }
-              if (['PLANNED', 'CANCELING'].includes(constructionStatus)) {
-                a.push(actionButtons.UnplanBuilding);
-              }
+            } else if (constructionStatus === 'READY_TO_PLAN') {
+              // TODO: cannot plan a building under a ship (disable)
+              a.push(actionButtons.PlanBuilding);
             }
-          } else if (constructionStatus === 'READY_TO_PLAN') {
-            // TODO: cannot plan a building under a ship (disable)
-            a.push(actionButtons.PlanBuilding);
-          }
 
-          // if this lot or ship has an unlocked inventory, can transfer things from it
-          if ((lot.building || ship || {}).Inventory.find((i) => i.status === Inventory.STATUSES.AVAILABLE)) {
-            a.push(actionButtons.SurfaceTransferOutgoing);
-          }
+            // if this lot or ship has an unlocked inventory, can transfer things from it
+            if ((lot.building || ship || {}).Inventory.find((i) => i.status === Inventory.STATUSES.AVAILABLE)) {
+              a.push(actionButtons.SurfaceTransferOutgoing);
+            }
 
-          // if this lot or ship has incoming deliveries, link to those deliveries
-          // TODO: these deliveries should be filtered to only those that are to/from something user controls
-          if ((lot.delivery || []).find((d) => d.delivery.Delivery.status !== Delivery.STATUSES.COMPLETE)) {
-            a.push(actionButtons.SurfaceTransferIncoming);
+            // if this lot or ship has incoming deliveries, link to those deliveries
+            // TODO: these deliveries should be filtered to only those that are to/from something user controls
+            if ((lot.delivery || []).find((d) => d.delivery.Delivery.status !== Delivery.STATUSES.COMPLETE)) {
+              a.push(actionButtons.SurfaceTransferIncoming);
+            }
           }
         }
       }

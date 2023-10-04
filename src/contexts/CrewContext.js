@@ -1,11 +1,11 @@
-import { createContext, useEffect, useMemo } from 'react';
+import { createContext, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Crewmate, Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
-import { locationEntitiesToObj, locationsArrToObj } from '~/lib/utils';
+import { locationsArrToObj } from '~/lib/utils';
 
 const CrewContext = createContext();
 
@@ -20,10 +20,11 @@ export function CrewProvider({ children }) {
     { enabled: !!account }
   );
 
+  const combinedCrewRoster = useMemo(() => (rawCrews || []).reduce((acc, c) => [...acc, ...c.Crew.roster], []), [rawCrews]);
   const { data: allCrewmates, isLoading: crewmatesLoading } = useQuery(
-    [ 'entities', Entity.IDS.CREWMATE, 'owned', account ],
-    () => api.getCrewmates(rawCrews.reduce((acc, c) => [...acc, ...c.Crew.roster], [])),
-    { enabled: rawCrews?.length > 0 }
+    [ 'entities', Entity.IDS.CREWMATE, combinedCrewRoster.join(',') ],
+    () => api.getCrewmates(combinedCrewRoster),
+    { enabled: combinedCrewRoster?.length > 0 }
   );
 
   const { data: allRecruits, isLoading: recruitsLoading } = useQuery(
@@ -38,7 +39,7 @@ export function CrewProvider({ children }) {
   const [adalianRecruits, arvadianRecruits] = useMemo(() => {
     if (!allRecruits) return [[], []];
     return [
-      allRecruits.filter((c) => !c.Crewmate.coll),
+      allRecruits.filter((c) => !c.Crewmate.class),
       allRecruits.filter((c) => [
         Crewmate.COLLECTION_IDS.ARVAD_CITIZEN,
         Crewmate.COLLECTION_IDS.ARVAD_SPECIALIST,
@@ -70,23 +71,21 @@ export function CrewProvider({ children }) {
   }, [rawCrews, crewmateMap]);
 
   const selectedCrew = useMemo(() => {
-    return selectedCrewId ? (crews || []).find((crew) => crew.id === selectedCrewId) : null;
-  }, [crews, selectedCrewId, !!crewmateMap]);
-
-  useEffect(() => {
-    // if logged in and done loading and there are crews
-    if (!crewsLoading && !crewmatesLoading) {
-      if (account && crews?.length) {
-        // if there is no selected crew, select default crew
-        if (!selectedCrew) {
-          const defaultCrew = crews.find((crew) => crew.Crew.roster.length > 0);
-          dispatchCrewSelected(defaultCrew?.id || crews[0].id);
-        }
-      } else {
-        dispatchCrewSelected();
+    if (crews && crews.length > 0) {
+      if (selectedCrewId) {
+        return crews.find((crew) => crew.id === selectedCrewId);
       }
+      return crews.find((crew) => crew.Crew.roster.length > 0) || crews[0];
     }
-  }, [account, crews, crewsLoading, crewmatesLoading, dispatchCrewSelected, selectedCrew]);
+    return null;
+  }, [crews, selectedCrewId]);
+
+  // make sure a default-selected crew makes it into state
+  useEffect(() => {
+    if (!crewsLoading && selectedCrew?.id !== selectedCrew) {
+      dispatchCrewSelected(selectedCrew?.id || undefined);
+    }
+  }, [crewsLoading, selectedCrewId, selectedCrew]);
 
   const captain = useMemo(() => selectedCrew?._crewmates?.[0] || null, [crewmateMap, selectedCrew]);
 

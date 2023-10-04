@@ -6,7 +6,8 @@ import CrewCard from '~/components/CrewCard';
 import { GenesisIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import { getCloudfrontUrl } from '~/lib/assetUtils';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { boolAttr } from '~/lib/utils';
 
 const coverImage = getCloudfrontUrl('influence/production/images/stories/earth-and-the-void/1.jpg', { w: 1500 });
 
@@ -78,9 +79,17 @@ const CardOuter = styled.div`
 `;
 
 const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
-  const { adalianRecruits, arvadianRecruits } = useCrewContext();
+  const { adalianRecruits, arvadianRecruits, loading } = useCrewContext();
 
   const [selected, setSelected] = useState();
+
+  useEffect(() => {
+    if (!loading) {
+      if (!arvadianRecruits?.length) {
+        onSelect(adalianRecruits?.[0]?.id || 0);
+      }
+    }
+  }, [adalianRecruits, arvadianRecruits?.length, loading])
 
   return (
     <ChoicesDialog
@@ -117,7 +126,7 @@ const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
       rightButton={{
         label: 'Next',
         onClick: () => selected ? onSelect(selected) : null,
-        props: { disabled: !selected }
+        props: { disabled: boolAttr(!selected) }
       }}
       title="Arvad Crewmates"
       subtitle={<Subtitle>Your account has <b>Arvad Crewmates</b> that can be recruited</Subtitle>}

@@ -135,7 +135,7 @@ const loadingCss = css`
   top: 50%;
 `;
 
-const CrewCard = ({ crewmate, onClick, overlay, ...props }) => {
+const CrewCard = ({ crewmate, useExplicitAppearance, onClick, overlay, ...props }) => {
   const [ imageFailed, setImageFailed ] = useState(false);
   const [ imageLoaded, setImageLoaded ] = useState(false);
 
@@ -146,15 +146,15 @@ const CrewCard = ({ crewmate, onClick, overlay, ...props }) => {
 
   let imageUrl = useMemo(() => {
     let url = silhouette;
-    if (crewmate.id) {
+    if (crewmate.id && !useExplicitAppearance) {
       url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crewmate.id}/image.svg?bustOnly=true`;
-    } else if (crewmate.Crewmate?.appearance) {
+    } else if (BigInt(crewmate.Crewmate?.appearance || 0) > 0n) {
       url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
         pick(crewmate.Crewmate, ['coll', 'class', 'title', 'appearance'])
       )}`;
     }
     return url;
-  }, [crewmate]);
+  }, [crewmate, useExplicitAppearance]);
 
   // make sure onLoad and onError get called by making sure they are reset to false on imageUrl change
   const [ readyToLoadUrl, setReadyToLoadUrl ] = useState(imageUrl);

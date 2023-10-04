@@ -155,7 +155,7 @@ const SystemControls = () => {
     }
 
     return items;
-  }, [])
+  }, [crews?.length, login, logout, token])
 
   return (
     <StyledSystemControls>

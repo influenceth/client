@@ -33,6 +33,7 @@ import formatters from '~/lib/formatters';
 import { boolAttr, locationsArrToObj } from '~/lib/utils';
 import theme from '~/theme';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
+import useAuth from '~/hooks/useAuth';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -307,7 +308,7 @@ const PopperWrapper = (props) => {
   return props.children(refEl, props.disableRefSetter ? noop : setRefEl);
 }
 
-const CrewDetails = ({ crewId, crew, crewmates, isMyCrew }) => {
+const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCrew }) => {
   const history = useHistory();
 
   const onSetAction = useStore(s => s.dispatchActionDialog);
@@ -420,8 +421,8 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew }) => {
                   const crewmate = crewmates?.[0];
                   if (!crewmate) {
                     return (
-                      <EmptyCrewCardFramed isCaptain onClick={onClickRecruit} width={146}>
-                        <PlusIcon />
+                      <EmptyCrewCardFramed isCaptain onClick={isMyCrew ? onClickRecruit : null} width={146}>
+                        {isMyCrew && <PlusIcon />}
                       </EmptyCrewCardFramed>
                     );
                   }
@@ -456,8 +457,8 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew }) => {
                     const crewmate = crewmates?.[i + 1];
                     if (!crewmate) {
                       return (
-                        <EmptyCrewCardFramed key={i} onClick={onClickRecruit} width={146}>
-                          <PlusIcon />
+                        <EmptyCrewCardFramed key={i} onClick={isMyCrew ? onClickRecruit : null} width={146}>
+                          {isMyCrew && <PlusIcon />}
                         </EmptyCrewCardFramed>
                       );
                     }
@@ -512,7 +513,7 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew }) => {
             
           </CrewDetailsContainer>
           <ManagementContainer>
-            {isMyCrew && <MyCrewStatement><MyAssetIcon /> This crew is owned by me.</MyCrewStatement>}
+            {isOwnedCrew && <MyCrewStatement><MyAssetIcon /> This crew is owned by me.</MyCrewStatement>}
             <Stat label="No. Members">{crew.Crew?.roster?.length || 0}</Stat>
             <Stat label="Formed">{formationDate}</Stat>
             {isMyCrew && (
@@ -520,6 +521,11 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew }) => {
                 <Button subtle onClick={() => onSetAction('MANAGE_CREW')}>Manage Crew</Button>
                 <Button subtle onClick={onClickNewCrew}>Form New Crew</Button>
                 <Button subtle onClick={onClickRecruit}>Recruit Crewmate</Button>
+              </div>
+            )}
+            {isOwnedCrew && !isMyCrew && (
+              <div style={{ paddingTop: 15 }}>
+                <Button subtle onClick={() => selectCrew(crewId)}>Switch to Crew</Button>
               </div>
             )}
           </ManagementContainer>
@@ -583,7 +589,8 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew }) => {
 
 const Wrapper = () => {
   const { i } = useParams();
-  const { crew: myCrew, loading: myCrewLoading } = useCrewContext();
+  const { account } = useAuth();
+  const { crew: myCrew, selectCrew, loading: myCrewLoading } = useCrewContext();
   const history = useHistory();
 
   const crewId = Number(i || myCrew?.id);
@@ -592,7 +599,7 @@ const Wrapper = () => {
 
   useEffect(() => {
     if (!crewLoading && !crew) {
-      history.push('/');
+      history.replace(`/recruit/0`);
     } else if (!i && myCrew?.id) {
       history.replace(`/crew/${myCrew.id}`);
     }
@@ -619,6 +626,8 @@ const Wrapper = () => {
           crew={crew}
           crewmates={crewmates}
           isMyCrew={crewId === myCrew?.id}
+          isOwnedCrew={crew?.Nft?.owner === account}
+          selectCrew={selectCrew}
         />
       )}
     </Details>

@@ -14,14 +14,13 @@ const useHydratedLocation = (location = {}) => {
   const { data: building } = useBuilding(location?.buildingId);
   const { data: ship } = useShip(location?.shipId);
 
-  // console.log(`${!!asteroid}, ${!!building}, ${location?.lotId}, ${!!ship}, ${!!onShipLink}, ${!!onLotLink}`);
-  return useMemo(() => /*{ console.log('re-memo'); return*/ ({
+  return useMemo(() => ({
     asteroid,
     building,
     lotId: location?.lotId,
     ship,
     onLink: (ship && !location?.lotId) ? onShipLink : onLotLink
-  }) /*}*/, [asteroid, building, location?.lotId, ship, onShipLink, onLotLink]);
+  }), [asteroid, building, location?.lotId, ship, onShipLink, onLotLink]);
 };
 
 export default useHydratedLocation;

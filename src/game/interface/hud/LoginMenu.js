@@ -33,7 +33,7 @@ const LoginMenu = () => {
 
   const [tooltip, status, onClick] = useMemo(() => {
     if (!account) return ['Log-In', 'Account Not Connected', login];
-    else return ['Start Crew', 'Crew Needs Recruits', () => history.push('/crew')];  // TODO: right place?
+    else return ['Start Crew', 'Crew Needs Recruits', () => history.push('/crew')];
   }, [ account ]);
 
   useEffect(() => ReactTooltip.rebuild(), [tooltip]);

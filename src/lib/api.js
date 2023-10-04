@@ -21,7 +21,7 @@ useStore.subscribe(
   ([newToken, crewId]) => {
     instance.defaults.headers = {
       Authorization: `Bearer ${newToken}`,
-      'X-Crew-Id': crewId
+      'X-Crew-Id': crewId || 0
     };
   }
 );
@@ -205,9 +205,10 @@ const api = {
   },
 
   getCrewOccupiedLots: async (a, c) => {
+    return [];
     // TODO: elasticsearch
-    const response = await instance.get(`/${apiVersion}/asteroids/${a}/lots/occupier/${c}`);
-    return response.data;
+    // const response = await instance.get(`/${apiVersion}/asteroids/${a}/lots/occupier/${c}`);
+    // return response.data;
     // return getEntities({
     //   match: { 'control.controller': c },
     //   label: Entity.IDS.BUILDING

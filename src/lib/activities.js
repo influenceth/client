@@ -216,8 +216,8 @@ const activities = {
 
   CrewmateRecruited: {
     getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(Entity.IDS.CREWMATE, returnValues.crewmate.id),
       ...invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id),
+      ...invalidationDefaults(Entity.IDS.CREWMATE, returnValues.crewmate.id),
       ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.station.id) // station population
     ]),
     // v0 and v1 are the same content
@@ -307,7 +307,6 @@ const activities = {
         const fromCrew = viewingAs.id === returnValues.crew1.id ? returnValues.crew2 : returnValues.crew1;
         const toList = viewingAs.id === returnValues.crew1.id ? to1 : to2;
         const fromList = viewingAs.id === returnValues.crew1.id ? to2 : to1;
-        console.log({ toCrew, fromCrew, toList, fromList });
         return {
           icon: <CrewIcon />,
           content: (
@@ -656,7 +655,7 @@ const activities = {
 };
 
 const getActivityConfig = (activity, viewingAs = {}) => {
-  const name = activity?.event?.event;
+  const name = activity?.event?.name;
   if (!activities[name]) {
     console.warn(`No activity config for ${name}`);
     return null;

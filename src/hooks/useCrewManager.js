@@ -6,7 +6,6 @@ import useCrewContext from './useCrewContext';
 
 const useCrewManager = () => {
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
-  const { adalianRecruits } = useCrewContext();
 
   const changeActiveCrew = useCallback(
     (params) => execute('SET_ACTIVE_CREW', params),
@@ -60,14 +59,8 @@ const useCrewManager = () => {
   );
 
   const getPendingCrewmate = useCallback(
-    () => {
-      if (adalianRecruits.length > 0) {
-        return getPendingTx('InitializeArvadian', {});
-      } else {
-        return getPendingTx('RecruitAdalian', {});
-      }
-    },
-    [adalianRecruits, getPendingTx]
+    () => getPendingTx('InitializeArvadian', {}) || getPendingTx('RecruitAdalian', {}),
+    [getPendingTx]
   );
 
   return {
@@ -77,7 +70,6 @@ const useCrewManager = () => {
     purchaseAndOrInitializeCrewmate,
     getPendingCrewmate,
     getPendingCreditPurchase,
-    adalianRecruits,
   };
 };
 

@@ -23,6 +23,7 @@ import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import theme from '~/theme';
 import useAuth from './hooks/useAuth';
+import WelcomeFlow from './WelcomeFlow';
 
 
 const { GRAPHICS_DEFAULTS } = constants;
@@ -50,7 +51,7 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const DISABLE_LAUNCHER_LANDING = process.env.NODE_ENV === 'development';
+const DISABLE_LAUNCHER_LANDING = false && process.env.NODE_ENV === 'development';
 
 const LauncherRedirect = () => {
   const { account } = useAuth();
@@ -164,6 +165,7 @@ const Game = () => {
                                 <Interface />
                                 {showScene && <Scene />}
                                 <Audio />
+                                <WelcomeFlow />
                               </StyledMain>
                             </ClockProvider>
                           </Route>

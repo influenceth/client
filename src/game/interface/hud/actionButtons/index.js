@@ -11,6 +11,7 @@ import LandShip from './LandShip';
 import LaunchShip from './LaunchShip';
 import PlanBuilding from './PlanBuilding';
 import PurchaseAsteroid from './PurchaseAsteroid';
+import RecruitCrewmate from './RecruitCrewmate';
 import Refine from './Refine';
 import ScanAsteroid from './ScanAsteroid';
 import SelectTravelDestination from './SelectTravelDestination';
@@ -36,6 +37,7 @@ const ActionsButtons = {
   LaunchShip,
   PlanBuilding,
   PurchaseAsteroid,
+  RecruitCrewmate,
   Refine,
   ScanAsteroid,
   SelectTravelDestination,
