@@ -191,7 +191,6 @@ const SystemControls = () => {
         onClose={() => setMenuOpen(false)}
         openerIcon={<MenuIcon />}
         openerHighlight
-        openerTooltip="Toggle Main Menu"
       />
     </StyledSystemControls>
   );

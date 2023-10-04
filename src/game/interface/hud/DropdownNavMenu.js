@@ -76,7 +76,7 @@ const MainMenuItem = styled.li`
   display: flex;
   flex-direction: row;
   margin: 0 -10px;
-  padding: 0 10px;
+  padding: 0 15px 0 10px;
   svg {
     font-size: 25px;
   }
@@ -167,7 +167,7 @@ export const NavMenuLoggedInUser = ({ account }) => (
     <LogoWrapper connected={!!account}>
       <InfluenceIcon />
     </LogoWrapper>
-    
+
     <LoggedInUser account={account} />
   </>
 );
@@ -186,7 +186,7 @@ const DropdownNavMenu = ({
   onClose
 }) => {
   useEffect(() => ReactTooltip.rebuild(), [openerTooltip]);
-  
+
   return (
     <MainMenuWrapper open={isOpen} hCollapse={hCollapse} itemTally={menuItems.length}>
       <MainMenu open={isOpen}>

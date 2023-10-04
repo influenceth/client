@@ -142,7 +142,7 @@ export function WalletProvider({ children }) {
       disconnect,
       error: useMemo(() => error && getErrorMessage(error), [error]),
       isConnecting: connecting,
-      walletIcon: starknet?.icon && <img src={starknet.icon} alt={`${starknet.name}`} />,
+      walletIcon: starknet?.icon && starknet?.name !== 'Argent Web Wallet' && <img src={starknet.icon} alt={`${starknet.name}`} />,
       walletName: starknet?.name,
       starknet
     }}>
