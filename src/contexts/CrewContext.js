@@ -1,11 +1,11 @@
-import { createContext, useEffect, useMemo } from 'react';
+import { createContext, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Crewmate, Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
-import { locationEntitiesToObj, locationsArrToObj } from '~/lib/utils';
+import { locationsArrToObj } from '~/lib/utils';
 
 const CrewContext = createContext();
 
@@ -71,23 +71,21 @@ export function CrewProvider({ children }) {
   }, [rawCrews, crewmateMap]);
 
   const selectedCrew = useMemo(() => {
-    return selectedCrewId ? (crews || []).find((crew) => crew.id === selectedCrewId) : null;
-  }, [crews, selectedCrewId, !!crewmateMap]);
-
-  useEffect(() => {
-    // if logged in and done loading and there are crews
-    if (!crewsLoading && !crewmatesLoading) {
-      if (account && crews?.length) {
-        // if there is no selected crew, select default crew
-        if (!selectedCrew) {
-          const defaultCrew = crews.find((crew) => crew.Crew.roster.length > 0);
-          dispatchCrewSelected(defaultCrew?.id || crews[0].id);
-        }
-      } else {
-        dispatchCrewSelected();
+    if (crews && crews.length > 0) {
+      if (selectedCrewId) {
+        return crews.find((crew) => crew.id === selectedCrewId);
       }
+      return crews.find((crew) => crew.Crew.roster.length > 0) || crews[0];
     }
-  }, [account, crews, crewsLoading, crewmatesLoading, dispatchCrewSelected, selectedCrew]);
+    return null;
+  }, [crews, selectedCrewId]);
+
+  // make sure a default-selected crew makes it into state
+  useEffect(() => {
+    if (!crewsLoading && selectedCrew?.id !== selectedCrew) {
+      dispatchCrewSelected(selectedCrew?.id || undefined);
+    }
+  }, [crewsLoading, selectedCrewId, selectedCrew]);
 
   const captain = useMemo(() => selectedCrew?._crewmates?.[0] || null, [crewmateMap, selectedCrew]);
 

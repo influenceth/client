@@ -321,10 +321,12 @@ const Launcher = (props) => {
   }, [interfaceHidden]);
 
   useEffect(() => {
-    if (!loggedIn && ['crews', 'store'].includes(launcherPage)) {
+    // only allow account and settings unless logged in
+    if (!loggedIn && !['account', 'settings'].includes(launcherPage)) {
       dispatchLauncherPage('account');
     }
-    if (!priceConstantsLoading && !priceConstants?.ADALIAN_PRICE_ETH && launcherPage === 'store') {
+    // disallow store if no sale available
+    else if (!priceConstantsLoading && !priceConstants?.ADALIAN_PRICE_ETH && launcherPage === 'store') {
       dispatchLauncherPage('account');
     }
   }, [launcherPage, loggedIn, priceConstants, priceConstantsLoading])

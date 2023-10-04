@@ -95,7 +95,7 @@ const WelcomeFlow = () => {
   }, [token, crew, loading, adalianRecruits, arvadianRecruits]);
 
   useEffect(() => {
-    if (prompting && status >= STATUS.LOGGED_IN && status < STATUS.READY) {
+    if (prompting && status > STATUS.LOGGED_OUT && status < STATUS.READY) {
       if (launcherPage) {
         dispatchLauncherPage();
         dispatchToggleInterface(false);
