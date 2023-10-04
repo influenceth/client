@@ -49,7 +49,6 @@ export function ActivitiesProvider({ children }) {
           const activityConfig = getActivityConfig(activity);
 
           activityConfig.invalidations.forEach((queryKey) => {
-            console.log('invalidate', queryKey);
 
             // TODO: ecs refactor -- probably want to restore what this was doing below...
 

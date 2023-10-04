@@ -20,10 +20,11 @@ export function CrewProvider({ children }) {
     { enabled: !!account }
   );
 
+  const combinedCrewRoster = useMemo(() => (rawCrews || []).reduce((acc, c) => [...acc, ...c.Crew.roster], []), [rawCrews]);
   const { data: allCrewmates, isLoading: crewmatesLoading } = useQuery(
-    [ 'entities', Entity.IDS.CREWMATE, 'owned', account ],
-    () => api.getCrewmates(rawCrews.reduce((acc, c) => [...acc, ...c.Crew.roster], [])),
-    { enabled: rawCrews?.length > 0 }
+    [ 'entities', Entity.IDS.CREWMATE, combinedCrewRoster.join(',') ],
+    () => api.getCrewmates(combinedCrewRoster),
+    { enabled: combinedCrewRoster?.length > 0 }
   );
 
   const { data: allRecruits, isLoading: recruitsLoading } = useQuery(
@@ -38,7 +39,7 @@ export function CrewProvider({ children }) {
   const [adalianRecruits, arvadianRecruits] = useMemo(() => {
     if (!allRecruits) return [[], []];
     return [
-      allRecruits.filter((c) => !c.Crewmate.coll),
+      allRecruits.filter((c) => !c.Crewmate.class),
       allRecruits.filter((c) => [
         Crewmate.COLLECTION_IDS.ARVAD_CITIZEN,
         Crewmate.COLLECTION_IDS.ARVAD_SPECIALIST,

@@ -317,7 +317,7 @@ const Launcher = (props) => {
   }, [interfaceHidden]);
 
   useEffect(() => {
-    if (!loggedIn && launcherPage === 'crews') {
+    if (!loggedIn && ['crews', 'store'].includes(launcherPage)) {
       dispatchLauncherPage('account');
     }
     if (!priceConstantsLoading && !priceConstants?.ADALIAN_PRICE_ETH && launcherPage === 'store') {
@@ -341,7 +341,7 @@ const Launcher = (props) => {
             selected={launcherPage === 'settings'}>
             <StyledNavIcon /> Settings
           </NavItem>
-          {!!priceConstants?.ADALIAN_PRICE_ETH && (
+          {loggedIn && !!priceConstants?.ADALIAN_PRICE_ETH && (
             <NavItem
               onClick={() => dispatchLauncherPage('store')}
               selected={launcherPage === 'store'}>
@@ -374,7 +374,8 @@ const Launcher = (props) => {
               }]}
               onClickHeader={() => setMenuOpen((o) => !o)}
               onClose={() => setMenuOpen(false)}
-              openerIcon={<Button size="icon"><CloseIcon /></Button>}
+              openerIcon={<CloseIcon />}
+              openerAsButton
               openerTooltip="Back to Game"
               onClickOpener={() => dispatchLauncherPage()}
             />

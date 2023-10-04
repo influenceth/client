@@ -112,7 +112,7 @@ const Footnote = styled.div`
   text-align: center;
 `;
 
-const CrewmateSKU = () => {
+export const CrewmateSKU = () => {
   const { purchaseCredits, getPendingCreditPurchase } = useCrewManager();
   const { data: priceConstants } = usePriceConstants();
   const [tally, setTally] = useState(1);
@@ -169,7 +169,7 @@ const CrewmateSKU = () => {
           onClick={onPurchaseCrewmates}
           subtle
           style={{ width: '100%' }}>
-          Buy Now
+          Purchase
           {priceConstants && (
             <span style={{ color: 'white', flex: 1, fontSize: '90%', textAlign: 'right', marginLeft: 15 }}>
               {/* TODO: should this update price before "approve"? what about asteroids? */}

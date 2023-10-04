@@ -133,7 +133,7 @@ const CloseButton = styled(IconButton)`
 `;
 
 const Details = (props) => {
-  const { title, contentProps = {}, contentInnerProps = {}, edgeToEdge, headerProps, onCloseDestination, outerNode, width, ...restProps } = props;
+  const { title, contentProps = {}, contentInnerProps = {}, edgeToEdge, headerProps, onClose, onCloseDestination, outerNode, width, ...restProps } = props;
   const history = useHistory();
 
   return (
@@ -142,7 +142,7 @@ const Details = (props) => {
         {outerNode || null}
         {title && <Header {...headerProps}><span>{title}</span></Header>}
         <CloseButton
-          onClick={() => history.push(onCloseDestination || '/')}
+          onClick={onClose || (() => history.push(onCloseDestination || '/'))}
           hasBackground={edgeToEdge}
           borderless>
           <CloseIcon />

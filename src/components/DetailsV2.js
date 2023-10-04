@@ -9,14 +9,17 @@ export const borderColor = '#333';
 const cornerSize = 35;
 
 const Wrapper = styled.div`
+  align-items: center;
   backdrop-filter: blur(2px);
+  display: flex;
   flex: 1;
+  height: 100%;
+  justify-content: center;
   padding: 25px;
   position: relative;
-  height: 100%;
   overflow: hidden;
   width: 100%;
-  z-index: 4;
+  z-index: ${p => p.modalMode ? 1001 : 4};
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding: 0 0 50px 0;
@@ -30,10 +33,14 @@ const StyledDetails = styled.div`
   ${p => p.theme.clipCorner(cornerSize)};
   display: flex;
   flex-direction: column;
-  height: 100%;
   overflow: hidden;
   pointer-events: auto;
   position: relative;
+
+  ${p => !p.modalMode && `
+    height: 100%;
+    width: 100%;
+  `}
 
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     background-color: ${p => p.theme.colors.mobileBackground};
@@ -157,6 +164,7 @@ const Details = (props) => {
     coverImage,
     coverImageHeight,
     edgeToEdge,
+    onClose,
     onCloseDestination,
     ...restProps } = props;
   const history = useHistory();
@@ -166,7 +174,7 @@ const Details = (props) => {
       <StyledDetails {...restProps}>
         {title && <HeaderWrapper edgeToEdge={edgeToEdge}><Header>{title}</Header></HeaderWrapper>}
         <CloseButton
-          onClick={() => history.push(onCloseDestination || '/')}
+          onClick={onClose || (() => history.push(onCloseDestination || '/'))}
           hasBackground={edgeToEdge}
           borderless>
           <CloseIcon />

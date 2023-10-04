@@ -95,7 +95,7 @@ const Description = styled.div`
     color: ${p => p.theme.colors.mainText};
     display: inline-block;
     text-overflow: ellipsis;
-    max-width: 100px;
+    max-width: 150px;
     overflow: hidden;
     vertical-align: top;
     white-space: nowrap;

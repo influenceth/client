@@ -45,14 +45,19 @@ const RecruitCrewmate = () => {
   if (page === 'create') {
     return (
       <CrewAssignmentCreate
-        crewId={crewId}
-        crewmateId={crewmateId}
-        locationId={locationId}
+        crewId={Number(crewId)}
+        crewmateId={Number(crewmateId)}
+        locationId={Number(locationId)}
         backLocation={`/recruit/${crewId}/${locationId}/${crewmateId}`}
       />
     );
   }
-  return <CrewAssignment crewId={crewId} crewmateId={crewmateId} onFinish={onFinishAssignment} />;
+  return (
+    <CrewAssignment
+      crewId={Number(crewId)}
+      crewmateId={Number(crewmateId)}
+      onFinish={onFinishAssignment} />
+  );
 };
 
 export default RecruitCrewmate;

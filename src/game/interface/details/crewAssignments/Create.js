@@ -1,5 +1,5 @@
-import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import { Crewmate, Entity, Name } from '@influenceth/sdk';
 import {
@@ -28,12 +28,12 @@ import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/DetailsModal';
 import Ether from '~/components/Ether';
-import { CheckIcon, CloseIcon, LinkIcon, TwitterIcon } from '~/components/Icons';
+import { CloseIcon, LinkIcon } from '~/components/Icons';
 import IconButton from '~/components/IconButton';
 import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
 import useAuth from '~/hooks/useAuth';
-import useBookSession, { bookIds } from '~/hooks/useBookSession';
+import useBookSession, { bookIds, getBookCompletionImage } from '~/hooks/useBookSession';
 import useCrewManager from '~/hooks/useCrewManager';
 import useCrewContext from '~/hooks/useCrewContext';
 import useNameAvailability from '~/hooks/useNameAvailability';
@@ -42,6 +42,8 @@ import formatters from '~/lib/formatters';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import theme from '~/theme';
 import useStore from '~/hooks/useStore';
+import { boolAttr } from '~/lib/utils';
+import useCrewmate from '~/hooks/useCrewmate';
 
 const CollectionImages = {
   1: Collection1,
@@ -764,16 +766,14 @@ const TraitSelector = ({ crewmate, currentTraits, onUpdateTraits, traitIndex }) 
   );
 };
 
-const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateId, locationId, ...props }) => {
-  const { account } = useAuth();
+const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, crewmateId, locationId, pendingCrewmate }) => {
   const history = useHistory();
 
   const dispatchCrewAssignmentRestart = useStore((s) => s.dispatchCrewAssignmentRestart);
 
-  const { bookError, bookSession, storySession, undoPath, restart } = bookSessionHook;
   const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
-  const { purchaseAndOrInitializeCrewmate, getPendingCrewmate, adalianRecruits, arvadianRecruits } = useCrewManager();
-  const { crew, crewmateMap } = useCrewContext();
+  const { purchaseAndOrInitializeCrewmate } = useCrewManager();
+  const { crew, crewmateMap, adalianRecruits, arvadianRecruits } = useCrewContext();
   const { data: priceConstants } = usePriceConstants();
 
   const [confirming, setConfirming] = useState();
@@ -785,29 +785,33 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
 
   const [toggling, setToggling] = useState();
 
-  const [selectedTraits, setSelectedTraits] = useState(bookSession?.selectedTraits || []);
-  const [traitsLocked, setTraitsLocked] = useState(!!bookSession.isComplete);
-
-  const [finalizing, setFinalizing] = useState();
-  const [finalized, setFinalized] = useState();
-  const [name, setName] = useState('');
-
-  const pendingCrewmate = useMemo(() => getPendingCrewmate(), [getPendingCrewmate]);
+  // TODO: should these be defaulted at all? should the default also include crewmate? pendingCrewmate?
   const [selectedClass, setSelectedClass] = useState(
     pendingCrewmate?.Crewmate?.class
     || bookSession?.crewmate?.Crewmate?.class
     || bookSession?.selectedClass
   );
+  const [selectedTraits, setSelectedTraits] = useState(bookSession?.selectedTraits || []);
+  const [traitsLocked, setTraitsLocked] = useState(!!bookSession?.isComplete);
+
+  const [finalizing, setFinalizing] = useState();
+  const [name, setName] = useState('');
+
+  const mappedCrewmate = useMemo(() => crewmateMap?.[crewmateId] || null, [crewmateMap, crewmateId]);
+
+  const finalized = useMemo(() => mappedCrewmate?.Crewmate?.status > 0, [mappedCrewmate]);
 
   useEffect(() => {
-    if (bookError) history.push(onCloseDestination);
-  }, [bookError, onCloseDestination]);
+    if (!bookSession && !pendingCrewmate && !mappedCrewmate) {
+      history.push(onCloseDestination);
+    }
+  }, [bookSession, pendingCrewmate, mappedCrewmate]);
 
   // derive crewmate-structured crewmate based on selections
   const crewmate = useMemo(() => {
 
     // if already finalized, return final version
-    if (finalized) return finalized;
+    if (finalized) return mappedCrewmate;
 
     // if already pending, format from pending tx
     if (pendingCrewmate) {
@@ -868,7 +872,6 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
       c.Crewmate.class = selectedClass;
       c._canReclass = true;
     }
-    console.log('- - - - name', name, c.Name?.name);
     if (!c.Name?.name) {
       c.Name = { name };
       c._canRename = true;
@@ -881,7 +884,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
     }
 
     // get appearance
-    if (!c.Crewmate.appearance) {
+    if (BigInt(c.Crewmate.appearance || 0) === 0n) {
       if (appearanceOptions.length) {
         const { clothesOffset, ...appearance } = appearanceOptions[appearanceSelection];
         c.Crewmate.appearance = Crewmate.packAppearance({
@@ -905,7 +908,9 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
     appearanceSelection,
     crewId,
     crew?._location,
+    finalized,
     locationId,
+    mappedCrewmate,
     name,
     pendingCrewmate,
     selectedClass,
@@ -917,7 +922,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
 
   // init appearance options as desired
   useEffect(() => {
-    if (crewmate && !crewmate.Crewmate.appearance && appearanceOptions?.length === 0) {
+    if (crewmate && BigInt(crewmate.Crewmate?.appearance || 0) === 0n && appearanceOptions?.length === 0) {
       setAppearanceOptions([getRandomAdalianAppearance()]);
       setAppearanceSelection(0);
     }
@@ -925,46 +930,39 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
 
   // handle finalizing
   useEffect(() => {
-    if (crewmate?._finalizing) setFinalizing(true);
-  }, [crewmate?._finalizing]);
+    if (crewmate?._finalizing || crewmate?.Crewmate?.status > 0) setFinalizing(true);
+  }, [crewmate?._finalizing, crewmate?.Crewmate?.status]);
 
   // handle finalized
   useEffect(() => {
-    console.log('finalizing', finalizing, );
-    if (finalizing) {
-      const finalizedCrewmate = Object.values(crewmateMap).find((c) => c.Name.name === name);
-      if (finalizedCrewmate) {
-        setFinalizing(false);
-        setFinalized(finalizedCrewmate);
+    if (finalized) {
+      setFinalizing(false);
 
-        // clear session data
-        dispatchCrewAssignmentRestart(finalizedCrewmate?.Control?.controller?.id, finalizedCrewmate?.id);
-        if (crewmateId !== finalizedCrewmate?.id) {
-          dispatchCrewAssignmentRestart(finalizedCrewmate?.Control?.controller?.id, crewmateId);
-        }
-      }
+      // clear session data (for finalized crewmate and/or 0 if just created)
+      dispatchCrewAssignmentRestart(mappedCrewmate?.Control?.controller?.id, mappedCrewmate?.id);
+
       // TODO (enhancement): after timeout, show error
     }
-  }, [ crewmateId, crewmateMap, finalizing ]);
+  }, [ crewmateId, finalized, mappedCrewmate ]);
 
-  const shareOnTwitter = useCallback(() => {
-    // TODO: ...
-    const params = new URLSearchParams({
-      text: [
-        `I just minted an Adalian Citizen.`,
-        `Be one of the first to join @influenceth and explore Adalia today!`,
-        `Join Now:`,
-      ].join('\n\n'),
-      hashtags: 'PlayToEarn,NFTGaming',
-      url: `${document.location.origin}/play/crew-assignment/?r=${account}`,
-      //via: 'influenceth'
-    });
-    window.open(`https://twitter.com/intent/tweet?${params.toString()}`, '_blank');
-  }, [account]);
+  // const shareOnTwitter = useCallback(() => {
+  //   // TODO: ...
+  //   const params = new URLSearchParams({
+  //     text: [
+  //       `I just minted an Adalian Citizen.`,
+  //       `Be one of the first to join @influenceth and explore Adalia today!`,
+  //       `Join Now:`,
+  //     ].join('\n\n'),
+  //     hashtags: 'PlayToEarn,NFTGaming',
+  //     url: `${document.location.origin}/play/crew-assignment/?r=${account}`,
+  //     //via: 'influenceth'
+  //   });
+  //   window.open(`https://twitter.com/intent/tweet?${params.toString()}`, '_blank');
+  // }, [account]);
 
-  const handleFinish = useCallback(() => {
-    history.push(onCloseDestination);
-  }, [history]);
+  // const handleFinish = useCallback(() => {
+  //   history.push(onCloseDestination);
+  // }, [history]);
 
   const handleNameChange = useCallback((newName) => {
     setName(newName);
@@ -1024,12 +1022,12 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
     history.push(backLocation);
   }, [backLocation]);
 
-  // show "complete" page (instead of "create") for non-recruitment assignments
-  useEffect(() => {
-    if (bookSession && !bookSession.isMintingStory) {
-      history.push(`/crew-assignment/${crewmateId}/complete`);
-    }
-  }, [!!bookSession]); // eslint-disable-line react-hooks/exhaustive-deps
+  // // show "complete" page (instead of "create") for non-recruitment assignments
+  // useEffect(() => {
+  //   if (bookSession && !bookSession.isMintingStory) {
+  //     history.push(`/crew-assignment/${crewmateId}/complete`);
+  //   }
+  // }, [!!bookSession]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // place mouseovers after animation complete
   const [animationComplete, setAnimationComplete] = useState();
@@ -1081,7 +1079,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
 
   return (
     <>
-      <ImageryContainer src={storySession.completionImage || storySession.image}>
+      <ImageryContainer src={coverImage}>
         <div />
         <MainContent>
           {!finalized && (
@@ -1097,8 +1095,8 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
                         hideFooter
                         hideIfNoName
                         hideMask
-                        noWrapName={finalized}
-                        showClassInHeader={finalized} />
+                        noWrapName
+                        useExplicitAppearance={boolAttr(crewmate?.Crewmate?.coll === Crewmate.COLLECTION_IDS.ADALIAN)} />
                     </div>
                   </CardContainer>
                 </CardWrapper>
@@ -1122,6 +1120,10 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
                       )}
 
                       <div style={{ flex: 1 }} />
+
+                      {/* TODO: all "randomization" actions **and selection** actions
+                        should be disabled when wallet is prompting for transaction to
+                        avoid confusion... see transaction button for reference */}
 
                       {crewmate._canRerollAppearance && (
                         <RerollContainer>
@@ -1177,8 +1179,6 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
                           )
                         }
                       </RerollContainer>
-                      
-                      {/* TODO: _canRerollTraits, _canUnlockTraits */}
 
                     </NameSection>
                   </>
@@ -1374,7 +1374,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
               </CopyReferralLink>
               
               <div style={{ flex: 1 }} />
-              <Button subtle onClick={() => history.push('/crew')}>Go to Crew</Button>
+              <Button subtle onClick={() => history.push(`/crew/${mappedCrewmate?.Control?.controller?.id}`)}>Go to Crew</Button>
             </>
           )}
           {!finalized && (
@@ -1441,8 +1441,51 @@ const CrewAssignmentCreate = ({ backLocation, bookSessionHook, crewId, crewmateI
   );
 };
 
+// TODO: for recruit to 0, clears story session (and name?) when finalized, 
+//  how can it match back to the new crewmate? need to set something permanent
+//  for page-state so doesn't reload
+
 const Wrapper = ({ backLocation, crewId, crewmateId, locationId }) => {
-  const bookSessionHook = useBookSession(crewId, crewmateId);
+  const { bookSession, bookError } = useBookSession(crewId, crewmateId);
+  const { crews, crewmateMap, arvadianRecruits, loading: crewIsLoading } = useCrewContext();
+  const { getPendingCrewmate } = useCrewManager();
+  const history = useHistory();
+
+  const dispatchCrewAssignmentRestart = useStore((s) => s.dispatchCrewAssignmentRestart);
+  
+  const coverImage = useMemo(() => {
+    const bookId = (crewmateId > 0 && arvadianRecruits.find((c) => c.id === crewmateId))
+      ? bookIds.ARVADIAN_RECRUITMENT
+      : bookIds.ADALIAN_RECRUITMENT;
+    return getBookCompletionImage(bookId);
+  }, [arvadianRecruits]);
+
+  // for recruit of crewmateId 0, things get weird when completed
+  const finalizing = useRef();
+  const pendingCrewmate = useMemo(() => getPendingCrewmate(), [getPendingCrewmate]);
+  useEffect(() => {
+    if (pendingCrewmate) finalizing.current = true;
+      // TODO (enhancement): set a timeout? what if crewmateMap is already updated?
+  }, [ pendingCrewmate ]);
+
+  useEffect(() => {
+    if (finalizing.current) {
+      if (crewId === 0 || crewmateId === 0) {
+        if (crews && crewmateMap) {
+          const newCrewId = crewId || crews.reduce((acc, c) => Math.max(acc, Number(c.id)), 0);
+          const newCrewmateId = crewmateId || Object.keys(crewmateMap || {}).reduce((acc, id) => Math.max(acc, Number(id)), 0);
+
+          // make sure clearing out the 0-keyed sessions here
+          dispatchCrewAssignmentRestart(crewId, crewmateId);
+
+          history.replace(`/recruit/${newCrewId}/${locationId}/${newCrewmateId}/create`);
+        }
+      }
+    }
+  }, [crewmateMap])
+
+  const bookSessionIsLoading = !(bookSession || bookError);
+
   return (
     <Details
       edgeToEdge
@@ -1451,18 +1494,20 @@ const Wrapper = ({ backLocation, crewId, crewmateId, locationId }) => {
       contentInnerProps={{ style: { display: 'flex', flexDirection: 'column', height: '100%' } }}
       title="Crewmate Recruitment"
       width="1150px">
-      {!bookSessionHook.bookSession && (
+      {(bookSessionIsLoading || crewIsLoading) && (
         <div style={{ position: 'absolute', left: 'calc(50% - 30px)', top: 'calc(50% - 30px)' }}>
           <LoadingAnimation color="white" />
         </div>
       )}
-      {bookSessionHook.bookSession && (
+      {!(bookSessionIsLoading || crewIsLoading) && (
         <CrewAssignmentCreate
           backLocation={backLocation}
+          coverImage={coverImage}
           crewId={crewId}
           crewmateId={crewmateId}
           locationId={locationId}
-          bookSessionHook={bookSessionHook} />
+          bookSession={bookSession}
+          pendingCrewmate={pendingCrewmate} />
       )}
     </Details>
   );

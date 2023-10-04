@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import ReactTooltip from 'react-tooltip';
 import styled from 'styled-components';
+import Button from '~/components/ButtonAlt';
 
 import HudIconButton from '~/components/HudIconButton';
 import { InfluenceIcon } from '~/components/Icons';
@@ -25,12 +26,12 @@ const MainMenu = styled.div`
   right: 0;
   padding: 5px;
 
-  background: black;
+  background: ${p => p.open ? 'black' : 'transparent'};
   border-color: ${p => false && p.open ? '#444' : 'transparent'};
   border-style: solid;
   border-width: 0 0 1px 1px;
   text-align: right;
-  transition: border-color ${menuAnimationTime}ms ease;
+  transition: background ${menuAnimationTime}ms ease, border-color ${menuAnimationTime}ms ease;
   width: 100%;
   z-index: 3;
 
@@ -152,6 +153,15 @@ const LogoWrapper = styled.span`
   }
 `;
 
+const OpenerAsButtonWrapper = styled.div`
+  align-items: center;  
+  display: flex;
+  font-size: 18px;
+  height: 40px;
+  justify-content: flex-end;
+  width: 40px;
+`;
+
 export const NavMenuLoggedInUser = ({ account }) => (
   <>
     <LogoWrapper connected={!!account}>
@@ -167,6 +177,7 @@ const DropdownNavMenu = ({
   header,
   hCollapse,
   openerHighlight,
+  openerAsButton,
   openerIcon,
   openerTooltip,
   onClickHeader,
@@ -182,12 +193,20 @@ const DropdownNavMenu = ({
         <div>
           <HeaderWrapper onClick={onClickHeader}>{header}</HeaderWrapper>
 
-          <HudIconButton
-            data-tip={openerTooltip}
-            isActive={openerHighlight && isOpen}
-            onClick={onClickOpener}>
-            {openerIcon}
-          </HudIconButton>
+          {openerAsButton
+            ? (
+              <OpenerAsButtonWrapper>
+                <Button data-tip={openerTooltip} onClick={onClickOpener} size="icon">{openerIcon}</Button>
+              </OpenerAsButtonWrapper>
+            )
+            : (
+              <HudIconButton
+                data-tip={openerTooltip}
+                isActive={openerHighlight && isOpen}
+                onClick={onClickOpener}>
+                {openerIcon}
+              </HudIconButton>
+            )}
         </div>
         <ul onClick={onClose}>
           {menuItems.map((item, i) => {

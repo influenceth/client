@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { Crewmate } from '@influenceth/sdk';
 
 import adalianRecruitmentBook from '~/assets/stories/adalian-recruitment.json'
 import arvadianRecruitmentBook from '~/assets/stories/arvadian-recruitment.json'
@@ -14,9 +15,15 @@ export const bookIds = {
 const anyOf = (mustHave, tests) => !!mustHave.find((x) => tests.includes(x));
 const allOf = (mustHave, tests) => !mustHave.find((x) => !tests.includes(x));
 
-const useBookSession = (rawCrewId, rawCrewmateId) => {
-  const crewId = Number(rawCrewId);
-  const crewmateId = Number(rawCrewmateId);
+const defaultImageWidth = 1500;
+
+export const getBookCompletionImage = (bookId, imageWidth = defaultImageWidth) => {
+  const book = bookId === bookIds.ADALIAN_RECRUITMENT ? adalianRecruitmentBook : arvadianRecruitmentBook;
+  const lastStory = book[book.length - 1];
+  return getCloudfrontUrl(lastStory.completionImage || lastStory.image, { w: imageWidth });
+}
+
+const useBookSession = (crewId, crewmateId) => {
   const { adalianRecruits, arvadianRecruits, loading: crewIsLoading } = useCrewContext();
 
   const [bookId, crewmate] = useMemo(() => {
@@ -30,7 +37,7 @@ const useBookSession = (rawCrewId, rawCrewmateId) => {
   }, [adalianRecruits, arvadianRecruits, crewmateId]);
 
   const error = useMemo(() => {
-    // validate crewmate (must be adalian w/ 0, or owned uninitialized arvadian w/ !0)
+    // validate crewmate (must have crewmate if non-zero id, crewmate must be uninitialized if present)
     if ((crewmateId > 0 && !crewmate) || (crewmate && crewmate.Crewmate?.status > 0)) return 'Invalid params!';
     return null;
   }, [crewmate, crewmateId]);
@@ -50,6 +57,7 @@ const useBookSession = (rawCrewId, rawCrewmateId) => {
   }, [bookId]);
 
   const { bookSession, storySession } = useMemo(() => {
+    // console.log({ book, crewIsLoading, crewmateId, crewmate });
     if (!book) return {};
     if (crewIsLoading) return {};
     if (crewmateId && !crewmate) return {};
@@ -130,7 +138,7 @@ const useBookSession = (rawCrewId, rawCrewmateId) => {
     }
 
     // resize the cover images (add fullsizeImage for "download art" button)
-    const imageWidth = 1500;
+    const imageWidth = defaultImageWidth;
     const fullsizeSlug = pathContent?.image || currentStory?.image;
     const imageOverrides = { fullsizeImage: getCloudfrontUrl(fullsizeSlug) };
     if (fullsizeSlug) imageOverrides.image = getCloudfrontUrl(fullsizeSlug, { w: imageWidth });
@@ -159,7 +167,7 @@ const useBookSession = (rawCrewId, rawCrewmateId) => {
         totalSteps: bookId === bookIds.ADALIAN_RECRUITMENT ? 5 : 3,
       }
     };
-  }, [book, crewmate, crewIsLoading, sessionData]);
+  }, [book, crewmate, crewmateId, crewIsLoading, sessionData]);
 
   const choosePath = useCallback((pathId) => {
     dispatchCrewAssignmentPathSelection(crewId, crewmateId, bookSession?.currentStoryId, pathId);
@@ -187,7 +195,7 @@ const useBookSession = (rawCrewId, rawCrewmateId) => {
     choosePath,
     undoPath,
     restart
-  }), [bookSession, storySession, choosePath, undoPath, restart]);
+  }), [error, bookSession, storySession, choosePath, undoPath, restart]);
 };
 
 export default useBookSession;
