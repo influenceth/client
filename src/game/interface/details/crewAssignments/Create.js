@@ -920,7 +920,9 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     bookSession
   ]);
   
-  const traitTally = crewmate.Crewmate.coll === Crewmate.COLLECTION_IDS.ADALIAN ? 4 : 8;
+  const traitTally = crewmate
+    ? (crewmate.Crewmate.coll === Crewmate.COLLECTION_IDS.ADALIAN ? 4 : 8)
+    : 0;
 
   // init appearance options as desired
   useEffect(() => {
@@ -1080,6 +1082,8 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [adalianRecruits, arvadianRecruits]);
 
   const disableChanges = pendingCrewmate || traitsLocked || promptingTransaction;
+  
+  if (!crewmate) return null;
   return (
     <>
       <ImageryContainer src={coverImage}>
